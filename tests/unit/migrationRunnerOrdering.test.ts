@@ -107,13 +107,32 @@ describe('GATE I1 — kolejność producent → konsument', () => {
     // `create table if not exists "public"."tool_initiative_links"`.
     // Zakotwiczenie na wielkich literach przeoczyło ten producent podczas
     // analizy I2 i o mało nie doprowadziło do błędnej decyzji.
-    const re = /create\s+table\s+(if\s+not\s+exists\s+)?"?(public"?\."?)?tool_initiative_links/i;
+    // Granica `"?(?!\w)` jest KONIECZNA i musi być DOKŁADNIE taka:
+    // - bez niej wzorzec łapie `tool_initiative_links_backfill_reports`
+    //   (inna tabela) i fałszywie zgłasza trzeciego producenta;
+    // - ale `(?![\w"])` jest z kolei ZA CIASNE i odrzuca poprawny zapis
+    //   `"public"."tool_initiative_links"`, gubiąc kanonicznego producenta.
+    // Obie pomyłki popełniono tu realnie — dlatego są zapisane wprost.
+    // Stary opis (zbyt luźny wariant) zachowany dla kontekstu:
+    // też `tool_initiative_links_backfill_reports` (inna tabela) i fałszywie
+    // zgłasza trzeciego producenta. Ta sama pomyłka zdarzyła się przy analizie
+    // ręcznej — dlatego jest tu zapisana wprost.
+    const re =
+      /create\s+table\s+(if\s+not\s+exists\s+)?"?(public"?\."?)?tool_initiative_links"?(?!\w)/i;
     const producers = allMigrations()
       .map((m) => m.filename)
       .filter((f) => {
         const p = path.join(MIGRATIONS_DIR, f);
         if (!fs.existsSync(p)) return false;
-        return re.test(fs.readFileSync(p, 'utf8'));
+        // Komentarze MUSZĄ zostać usunięte przed dopasowaniem: migracja 948
+        // CYTUJE w nagłówku instrukcję kanonicznego producenta, przez co
+        // surowe dopasowanie fałszywie uznaje ją za producenta. Wykryte na
+        // realnym pliku, nie teoretycznie.
+        const sqlWithoutComments = fs
+          .readFileSync(p, 'utf8')
+          .replace(/--[^\n]*/g, '')
+          .replace(/\/\*[\s\S]*?\*\//g, '');
+        return re.test(sqlWithoutComments);
       });
 
     expect(

@@ -30,7 +30,21 @@ export const DATED_RE = /^(\d{4})-?(\d{2})-?(\d{2})[_-]/;
 // would otherwise place it too early relative to other dated migrations it
 // actually depends on. See STRICT_SCHEMA_REPAIR_REPORT.md ETAP 1 for the
 // per-file dependency trace that justifies each entry.
-export const LATE_PHASE_MANIFEST: string[] = [];
+export const LATE_PHASE_MANIFEST: string[] = [
+  // 948_tool_promotion_tenant_idempotency.sql jest KONSUMENTEM
+  // `tool_initiative_links`, którego kanonicznym producentem jest
+  // `20260719_baseline_gap.sql:9533` — migracja fazy 1 (datowana). Jej własny
+  // numeryczny prefiks („948") umieściłby ją w fazie 0, która biegnie ściśle
+  // PRZED fazą 1, czyli zanim producent w ogóle utworzy tabelę. Wpis tutaj
+  // wymusza fazę 2 (late), uruchamianą po fazie 0 i 1, więc migracja na pewno
+  // zobaczy tabelę, którą konsumuje.
+  //
+  // UWAGA: to obecność DOKŁADNEJ nazwy pliku przesuwa go do fazy 2 — sam numer
+  // 948 tego NIE robi. Literówka tutaj nie da żadnego błędu: plik po prostu
+  // wróci do fazy 0 i cicho pobiegnie za wcześnie. Strzeże tego
+  // `tests/unit/migrationRunnerOrdering.test.ts`.
+  '948_tool_promotion_tenant_idempotency.sql',
+];
 export const LATE_PHASE_SET = new Set(LATE_PHASE_MANIFEST);
 
 // `isSqliteOnlyMigration()` blanket-excludes every numbered migration with

@@ -1,0 +1,39 @@
+-- 951_report_builder_reports_source_refs_json_gap.sql
+-- (renumbered from 949 on 2026-08-13 — 949 was reassigned to the C14
+-- migration per coordinator instruction, see 949_tool_initiative_links_org_scope.sql)
+--
+-- P0 gap discovered 2026-08-13 while proving the clean-database bootstrap
+-- for `promoteToOutput` (outputType='report' path). See
+-- docs/program/METHOD_TOOLS_2026-08-13/CLEAN_BOOTSTRAP.md for the full
+-- trace.
+--
+-- `ReportBuilderService.createReport()` (server/src/services/ReportBuilderService.ts,
+-- both the standard and V3 INSERT variants, ~L1127-1160) writes
+-- `report_builder_reports.source_refs_json` on every report creation —
+-- including every tool -> report promotion via
+-- `ToolController.promoteToOutput`. On a fresh, fully strict-migrated
+-- database that column does not exist: `20260719_baseline_gap.sql` only
+-- contains a defensive `ALTER COLUMN source_refs_json DROP DEFAULT` wrapped
+-- in `DO $$ ... EXCEPTION WHEN OTHERS THEN NULL; END $$;` (L13487-13490) —
+-- i.e. it assumes the column already exists (it was present on whatever
+-- database that migration was diffed from) and silently no-ops if it
+-- doesn't, rather than creating it. No other migration creates the column.
+--
+-- Contrast with `report_builder_sections.source_refs_json`: that one IS
+-- self-healed at runtime by `ToolController.promoteToOutput` itself
+-- (`ALTER TABLE report_builder_sections ADD COLUMN IF NOT EXISTS
+-- source_refs_json TEXT`, guarded by DB_TYPE/DATABASE_URL, right before the
+-- `ReportBuilderService.createReport` call) — but the equivalent statement
+-- for `report_builder_reports` was never added alongside it. Confirmed
+-- empirically: SQLSTATE 42703 `column "source_refs_json" of relation
+-- "report_builder_reports" does not exist` on a real Postgres container
+-- after a full strict migration run (exit 0; see CLEAN_BOOTSTRAP.md for the
+-- exact migration count).
+--
+-- Purely additive: guarded ADD COLUMN IF NOT EXISTS, no DROP, no DELETE, no
+-- ALTER of any existing column. Matches the type/default already used for
+-- the sibling `presentation_decks.source_refs_json` column
+-- (`text default '{}'::text`) added in the same 20260719_baseline_gap.sql.
+
+ALTER TABLE report_builder_reports
+  ADD COLUMN IF NOT EXISTS source_refs_json TEXT DEFAULT '{}'::text;
