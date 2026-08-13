@@ -31,13 +31,15 @@
  *    screen only knows about ones created in the CURRENT browser session
  *    (see `DrdHttpRuntimeState.reports`/`.initiatives`'s own comment).
  */
-import { AlertTriangle, ArrowLeft, CheckCircle2, CloudOff, FileText, Lightbulb, Loader2, Lock, RefreshCw, RotateCcw } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, CheckCircle2, CloudOff, FileText, Layers, Lightbulb, Loader2, Lock, RefreshCw, RotateCcw, Users, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { MethodWorkspaceShell } from '@/components/method-workspace/MethodWorkspaceShell';
 import { StandardTable } from '@/components/standard/StandardTable';
 import type { InterviewFocusQuestion, MethodWorkspaceViewMode } from '@/components/method-workspace/types';
 import { useMethodWorkspaceSave } from '@/components/method-workspace/useMethodWorkspaceSave';
+import { DrdArtifactsPanel } from './DrdArtifactsPanel';
+import { DrdRolesPanel } from './DrdRolesPanel';
 import { DRD_METHOD_PACK_ID } from '@/method-core/methods/drd/compileDrdPack';
 import {
   deriveDrdSourceKind,
@@ -347,6 +349,89 @@ const ErrorRetryView: React.FC<{ message: string; onRetry: () => void; onExit: (
 );
 
 // ---------------------------------------------------------------------------
+// Utilities layer (S3, 2026-08-13) — ASSESSMENT_UI_NAVIGATION_AND_MATRIX_
+// STANDARD.md §2 level 5: "utilities: Comments, Activity, History,
+// Relations, Used In." Session artefacts (Output/Report/Presentation/
+// Initiative Draft lineage — `DrdArtifactsPanel`, S1) and role/approval
+// history (`DrdRolesPanel`, S2) are exactly that layer — NOT a sixth
+// primary tab next to Interview/Split/Matrix. Reached via two small,
+// on-demand buttons (consultify-gestosc §13: governance panels hidden by
+// default, opened on demand) that open the SAME drawer overlay from either
+// the active-session view or the frozen-Output view — one implementation,
+// two call sites, never two different panels for the same data.
+// ---------------------------------------------------------------------------
+
+type DrdUtilityPanelKind = 'artifacts' | 'roles' | null;
+
+const UtilityLauncherButtons: React.FC<{
+  onOpenArtifacts: () => void;
+  onOpenRoles: () => void;
+}> = ({ onOpenArtifacts, onOpenRoles }) => (
+  <div className="ml-auto flex shrink-0 items-center gap-1.5">
+    <button
+      type="button"
+      data-testid="drd-open-artifacts"
+      onClick={onOpenArtifacts}
+      className="inline-flex items-center gap-1.5 rounded-md border border-c-border px-2 py-1 text-[11px] font-medium text-c-text-secondary hover:bg-c-surface-raised focus:outline-none focus:ring-1 focus:ring-c-focus"
+    >
+      <Layers size={12} /> Artefakty
+    </button>
+    <button
+      type="button"
+      data-testid="drd-open-roles"
+      onClick={onOpenRoles}
+      className="inline-flex items-center gap-1.5 rounded-md border border-c-border px-2 py-1 text-[11px] font-medium text-c-text-secondary hover:bg-c-surface-raised focus:outline-none focus:ring-1 focus:ring-c-focus"
+    >
+      <Users size={12} /> Role
+    </button>
+  </div>
+);
+
+/**
+ * ★ Never touches `DrdHttpSessionRuntime` — `DrdArtifactsPanel`/`DrdRolesPanel`
+ * each make their OWN real HTTP calls (`getSessionLineage`/`listRoles`/…),
+ * entirely independent of the workspace runtime's `status`. Opening this
+ * drawer cannot, structurally, change `deriveDrdSourceKind`'s result — see
+ * `__tests__/DrdHttpMethodWorkspaceScreen.test.tsx`'s "opening the artifacts
+ * panel never changes the SERVER badge" for the regression guard.
+ */
+const UtilityDrawer: React.FC<{
+  panel: DrdUtilityPanelKind;
+  sessionId: string;
+  currentUserId: string;
+  onClose: () => void;
+}> = ({ panel, sessionId, currentUserId, onClose }) => {
+  if (!panel) return null;
+  return (
+    <div className="fixed inset-0 z-40 flex justify-end" role="dialog" aria-modal="true" aria-label={panel === 'artifacts' ? 'Artefakty sesji' : 'Role sesji'}>
+      <button type="button" aria-label="Zamknij" onClick={onClose} className="absolute inset-0 bg-black/30 focus:outline-none" />
+      {/* w-3xl (not w-lg): the artefact/role StandardTables have 4-5 columns
+          each — a narrower drawer clipped their rightmost column against the
+          viewport edge instead of wrapping (caught in the S3 screenshot
+          review, not by any automated check). */}
+      <div data-testid="drd-utility-drawer" data-panel={panel} className="relative flex h-full w-full max-w-3xl flex-col overflow-y-auto border-l border-c-border bg-c-bg p-4 shadow-xl">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-c-text">{panel === 'artifacts' ? 'Artefakty sesji (linia rewizji)' : 'Role i zatwierdzenia'}</h2>
+          <button
+            type="button"
+            data-testid="drd-utility-drawer-close"
+            onClick={onClose}
+            className="rounded-md border border-c-border p-1 text-c-text-secondary hover:bg-c-surface-raised focus:outline-none focus:ring-1 focus:ring-c-focus"
+          >
+            <X size={14} />
+          </button>
+        </div>
+        {panel === 'artifacts' ? (
+          <DrdArtifactsPanel sessionId={sessionId} />
+        ) : (
+          <DrdRolesPanel sessionId={sessionId} currentUserId={currentUserId} />
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
@@ -378,6 +463,11 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
   const [activeUnitId, setActiveUnitId] = useState<string>(DRD_STRUCTURE[0].areas[0].id);
   const [matrixSelection, setMatrixSelection] = useState<{ unitId: string; level: number } | null>(null);
   const [draftAnswerText, setDraftAnswerText] = useState<Record<string, string>>({});
+  // Utilities layer (Artefakty / Role) — see the components' own header
+  // comment above. Lifted here (not local to either return branch) so the
+  // SAME drawer state survives the active-session <-> frozen-Output branch
+  // switch without losing the user's open panel.
+  const [utilityPanel, setUtilityPanel] = useState<DrdUtilityPanelKind>(null);
 
   // -- bootstrap: resume (demoSessionId) or create --------------------------
   useEffect(() => {
@@ -702,6 +792,10 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
       <FrozenOutputHttpView
         state={state}
         sourceKind={sourceKind}
+        utilityPanel={utilityPanel}
+        onOpenArtifacts={() => setUtilityPanel('artifacts')}
+        onOpenRoles={() => setUtilityPanel('roles')}
+        onCloseUtility={() => setUtilityPanel(null)}
         onGenerateReport={() =>
           runtime?.generateReport({
             title: 'Raport DRD',
@@ -778,6 +872,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
             {axis.id}. {axis.namePL || axis.name} ({axis.levelCount}L)
           </button>
         ))}
+        <UtilityLauncherButtons onOpenArtifacts={() => setUtilityPanel('artifacts')} onOpenRoles={() => setUtilityPanel('roles')} />
       </div>
       <div className="min-h-0 flex-1">
         <MethodWorkspaceShell
@@ -900,6 +995,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
           Zamroź (tylko approver)
         </button>
       </div>
+      <UtilityDrawer panel={utilityPanel} sessionId={session.id} currentUserId={session.ownerUserId} onClose={() => setUtilityPanel(null)} />
     </div>
   );
 };
@@ -911,10 +1007,14 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
 const FrozenOutputHttpView: React.FC<{
   state: DrdHttpRuntimeState;
   sourceKind: DrdVisibleSourceState;
+  utilityPanel: DrdUtilityPanelKind;
+  onOpenArtifacts: () => void;
+  onOpenRoles: () => void;
+  onCloseUtility: () => void;
   onGenerateReport: () => void;
   onGenerateInitiative: () => void;
   onExit: () => void;
-}> = ({ state, sourceKind, onGenerateReport, onGenerateInitiative, onExit }) => {
+}> = ({ state, sourceKind, utilityPanel, onOpenArtifacts, onOpenRoles, onCloseUtility, onGenerateReport, onGenerateInitiative, onExit }) => {
   const session = state.session!;
   const output = state.output;
 
@@ -941,6 +1041,7 @@ const FrozenOutputHttpView: React.FC<{
               : 'Sesja potwierdzona przez serwer — tylko lokalny wskaźnik do treści Outputu jest nieznany w tej karcie.'
           }
         />
+        <UtilityLauncherButtons onOpenArtifacts={onOpenArtifacts} onOpenRoles={onOpenRoles} />
       </div>
 
       {/* Output */}
@@ -1051,6 +1152,7 @@ const FrozenOutputHttpView: React.FC<{
           Reopen sesji (niedostępne przez HTTP)
         </button>
       </section>
+      <UtilityDrawer panel={utilityPanel} sessionId={session.id} currentUserId={session.ownerUserId} onClose={onCloseUtility} />
     </div>
   );
 };
