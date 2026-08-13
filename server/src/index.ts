@@ -40,6 +40,8 @@ import { rateLimitUserIdMiddleware } from './middleware/rateLimitUserId.middlewa
 import { v8FeatureGate } from './middleware/v8FeatureGate.middleware.js';
 import { publicKnowledgeBaseRoutes as publicV8KnowledgeBaseRoutes } from './routes/v8/knowledge-base.routes.js';
 import { sendSystemAlert } from './services/systemAlertNotifier.js';
+import { shouldMountFullGateway, shouldRunDatabaseInit } from './startup/testModeGates.js';
+import { withTimeout } from './startup/withTimeout.js';
 import {
   sendApiGatewayRateLimitedResponse,
   sendApiMethodNotAllowed,
@@ -250,17 +252,26 @@ if (String(process.env.DB_READONLY || '').trim()) {
 // Bind the port before heavy async startup completes so the frontend proxy does not see ECONNREFUSED.
 startHttpListener();
 
-const databaseInitPromise: Promise<void> =
-  !isTest || process.env.E2E_MODE === 'true' || process.env.ENABLE_TEST_GATEWAY === 'true'
-    ? (async () => {
+// A14 fix (2026-08-13): see server/src/startup/testModeGates.ts for the full
+// story. Short version — this gate used to check ONLY
+// `!isTest || E2E_MODE || ENABLE_TEST_GATEWAY`. Under
+// `NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false` (the documented way to run the
+// server against a REAL database in test mode) that condition was FALSE, so
+// the entire IIFE below — including the only code that ever sets
+// `dbReady = true` or `dbInitError` — never ran at all. `dbReady` stayed
+// `false` forever with `dbInitError` staying `null`: not a slow/stuck
+// migration, but the readiness sequence never being started in the first
+// place.
+const databaseInitPromise: Promise<void> = shouldRunDatabaseInit(process.env)
+  ? (async () => {
         try {
+          logger.info('[Server] Initializing database...');
           const mockDbEnabled =
             process.env.MOCK_DB === 'true' ||
             (process.env.NODE_ENV === 'test' &&
               process.env.RUN_DB_TESTS !== '1' &&
               process.env.MOCK_DB !== 'false');
 
-          logger.info('[Server] Initializing database...');
           const db = await getDatabaseAsync();
           logger.info('[Server] Database instance created:', db ? 'OK' : 'MOCK');
 
@@ -322,39 +333,54 @@ const databaseInitPromise: Promise<void> =
           // migration failure to a log line. The sequence now lives in
           // ./startup/databaseReadiness.ts so its order and failure policy are
           // testable; schema init already succeeded above.
+          // Defensive bound: readiness must never hang the process forever.
+          // Migrations/seeding run real SQL against a possibly slow or locked
+          // database; if that stalls we want an explicit "timed out" error on
+          // /api/ready (and a production exit) rather than an eternal 503 with
+          // `error: null`. Configurable because a very large migration set can
+          // legitimately take longer than the default on first boot.
+          const READINESS_TIMEOUT_MS = Number(process.env.DB_READINESS_TIMEOUT_MS) || 120_000;
+
           const { establishDatabaseReadiness } = await import('./startup/databaseReadiness.js');
-          const outcome = await establishDatabaseReadiness({
-            initializeSchema: async () => ({ success: true, message: 'verified above' }),
-            // No arguments: production always resolves the canonical directory.
-            runMigrations: async () => {
-              const { runMigrations } = await import('./services/tablePlatform/migrationRunner.js');
-              return runMigrations();
-            },
-            seedTemplates: async () => {
-              const { default: templateService } =
-                await import('./services/tablePlatform/TemplateService.js');
-              if (templateService?.seedDefaultTemplates) {
-                await templateService.seedDefaultTemplates();
-              }
-            },
-            isProduction,
-            migrationsDisabled: process.env.DISABLE_TP_MIGRATIONS === 'true',
-            logger: {
-              info: (m) => logger.info(m),
-              warn: (m) => logger.warn(m),
-              error: (m) => logger.error(m),
-            },
-            alert: async (title, message) => {
-              await sendSystemAlert({
-                title,
-                message,
-                severity: 'CRITICAL',
-                source: 'Database',
-                throttleKey: 'tp_migration_failed',
-                throttleMs: 15 * 60 * 1000,
-              });
-            },
-          });
+          const outcome = await withTimeout(
+            establishDatabaseReadiness({
+              initializeSchema: async () => ({ success: true, message: 'verified above' }),
+              // No arguments: production always resolves the canonical directory.
+              runMigrations: async () => {
+                const { runMigrations } = await import(
+                  './services/tablePlatform/migrationRunner.js'
+                );
+                return runMigrations();
+              },
+              seedTemplates: async () => {
+                const { default: templateService } = await import(
+                  './services/tablePlatform/TemplateService.js'
+                );
+                if (templateService?.seedDefaultTemplates) {
+                  await templateService.seedDefaultTemplates();
+                }
+              },
+              isProduction,
+              migrationsDisabled: process.env.DISABLE_TP_MIGRATIONS === 'true',
+              logger: {
+                info: (m) => logger.info(m),
+                warn: (m) => logger.warn(m),
+                error: (m) => logger.error(m),
+              },
+              alert: async (title, message) => {
+                await sendSystemAlert({
+                  title,
+                  message,
+                  severity: 'CRITICAL',
+                  source: 'Database',
+                  throttleKey: 'tp_migration_failed',
+                  throttleMs: 15 * 60 * 1000,
+                });
+              },
+            }),
+            READINESS_TIMEOUT_MS,
+            `Database readiness sequence (migrations/seeding) did not settle within ${READINESS_TIMEOUT_MS}ms`
+          );
 
           tpMigrationStatus = outcome.migrations;
 
@@ -1154,7 +1180,15 @@ app.use('/api/public/kb-v8', v8FeatureGate, publicV8KnowledgeBaseRoutes);
 const workspacesRoutes = await import('./routes/workspaces.routes.js').then((m) => m.default || m);
 app.use('/api/workspaces', workspacesRoutes as any);
 
-if (isTest && process.env.ENABLE_TEST_GATEWAY !== 'true') {
+// A14 fix (2026-08-13): same class of bug as the databaseInitPromise gate
+// above — this branch only opened the full API Gateway (hundreds of routes,
+// including /api/method/*) for `E2E_MODE`/`ENABLE_TEST_GATEWAY`, not for
+// `RUN_DB_TESTS=1` real-DB test mode. With only the readiness gate fixed,
+// `/api/ready` correctly reported "ready" but `/api/method/packs` still 404'd
+// — not "starting", but genuinely unregistered — because this branch fell
+// into the lightweight `managementReportsRoutes`-only path instead of
+// `apiGateway.initializeRoutes(app)`. See testModeGates.ts.
+if (!shouldMountFullGateway(process.env)) {
   const managementReportsRoutes = await import('./routes/managementReports.routes.js').then(
     (m) => m.default || m
   );
