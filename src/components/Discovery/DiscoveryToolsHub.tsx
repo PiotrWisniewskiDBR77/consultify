@@ -61,6 +61,7 @@ import {
 // 5-blokowy kebab sekcyjny i stany empty/loading — 1:1 jak Interview/Assessment.
 import { StandardTable } from '@/components/standard';
 import { useHelpSidePanel } from '@/contexts/HelpContext';
+import { resolveToolStatus } from '@/domain/toolStatus';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api, clearGlobalTransportFailure, resetAuthLoopGuard } from '@/services/api';
@@ -130,6 +131,7 @@ import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { ChipBase } from '../ui/primitives/chips/chipBase';
 import { PriorityChip, type PriorityLevel } from '../ui/primitives/chips/PriorityChip';
 import { useSurfaceUrlSync } from './hooks/useSurfaceUrlSync';
+import { renderToolStatusCell, TOOL_STATUS_DOMAIN_TO_ITEM_STATUS } from './toolStatusCell';
 
 // Tool category types (V3: includes licensed assessments)
 type ToolCategory = 'strategic' | 'operational' | 'digital' | 'automation' | 'licensed';
@@ -614,6 +616,10 @@ interface DisplayItem {
   toolType: ToolType;
   category: ToolCategory;
   status: ItemStatus;
+  /** Raw backend status (tool_sessions.status), pre-collapse. Drives the
+   *  visible label via `resolveToolStatus()` — `status` above is only the
+   *  ItemStatus tone/filter bucket, never the source of the displayed text. */
+  statusRaw?: string;
   progress: number;
   createdAt?: Date;
   updatedAt: Date;
@@ -633,6 +639,9 @@ interface OutputItem {
   id: string;
   name: string;
   status: ItemStatus;
+  /** Raw backend status (tool_outputs.status / source-specific), pre-collapse.
+   *  See DisplayItem.statusRaw for why this exists alongside `status`. */
+  statusRaw?: string;
   updatedAt: Date;
   createdAt?: Date;
   projectId?: string;
@@ -808,6 +817,8 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       name: string;
       assessmentType: string;
       status: ItemStatus;
+      /** Raw backend status, pre-collapse — see DisplayItem.statusRaw. */
+      statusRaw?: string;
       progress: number;
       createdAt?: Date;
       updatedAt: Date;
@@ -884,19 +895,17 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       short: 'SWT' as ToolType,
       category: 'strategic' as ToolCategory,
     };
-    const statusMap: Record<string, ItemStatus> = {
-      DRAFT: 'DRAFT',
-      REVIEW: 'PENDING_REVIEW',
-      APPROVED: 'APPROVED',
-      GENERATED: 'DONE',
-      COMPLETED: 'DONE',
-    };
+    // Canonical mapper (src/domain/toolStatus.ts) — closes the defect where
+    // IN_PROGRESS/FINALIZED/FAILED tool_sessions.status values (not in this
+    // map's old hand-picked subset) silently rendered as "Draft".
+    const statusDomain = resolveToolStatus(session.status).domain;
     return {
       id: session.id,
       name: session.name,
       toolType: mapping.short,
       category: mapping.category,
-      status: statusMap[session.status?.toUpperCase()] || 'DRAFT',
+      status: TOOL_STATUS_DOMAIN_TO_ITEM_STATUS[statusDomain],
+      statusRaw: session.status,
       progress: session.progress || 0,
       createdAt: session.createdAt ? new Date(session.createdAt) : undefined,
       updatedAt: session.updatedAt ? new Date(session.updatedAt) : new Date(),
@@ -921,20 +930,10 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       ).trim() || 'DRD';
     const rawName = String(session?.name || session?.title || '').trim();
 
-    const statusMap: Record<string, ItemStatus> = {
-      DRAFT: 'DRAFT',
-      IN_PROGRESS: 'EXECUTING',
-      EXECUTING: 'EXECUTING',
-      REVIEW: 'PENDING_REVIEW',
-      IN_REVIEW: 'PENDING_REVIEW',
-      PENDING_REVIEW: 'PENDING_REVIEW',
-      APPROVED: 'APPROVED',
-      GENERATED: 'DONE',
-      COMPLETED: 'DONE',
-      DONE: 'DONE',
-    };
-
-    const status = statusMap[String(session?.status || 'DRAFT').toUpperCase()] || 'DRAFT';
+    // Canonical mapper (src/domain/toolStatus.ts) — see transformToolSession
+    // above for why a hand-picked Record here was the bug.
+    const statusRaw = String(session?.status ?? '');
+    const status = TOOL_STATUS_DOMAIN_TO_ITEM_STATUS[resolveToolStatus(statusRaw).domain];
     const progressRaw =
       session?.completionPercent ??
       session?.completion_percent ??
@@ -948,6 +947,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       name: rawName || `${rawType} Assessment`,
       assessmentType: rawType,
       status,
+      statusRaw,
       progress,
       createdAt: session?.createdAt ? new Date(session.createdAt) : undefined,
       updatedAt: session?.updatedAt ? new Date(session.updatedAt) : new Date(),
@@ -1036,29 +1036,15 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         );
         setDiscoveries(discoveryItems);
 
-        // Reports & Presentations: real artifacts (assessment reports, report builder reports, decks)
-        const mapOutputStatus = (raw: any): ItemStatus => {
-          const s = String(raw || '').toUpperCase();
-          const map: Record<string, ItemStatus> = {
-            DRAFT: 'DRAFT',
-            GENERATING: 'EXECUTING',
-            IN_PROGRESS: 'EXECUTING',
-            PENDING_APPROVAL: 'PENDING_REVIEW',
-            IN_REVIEW: 'PENDING_REVIEW',
-            REVIEW: 'PENDING_REVIEW',
-            APPROVED: 'APPROVED',
-            FINAL: 'DONE',
-            COMPLETED: 'DONE',
-            DONE: 'DONE',
-            UTILIZED: 'DONE',
-            REJECTED: 'CANCELLED',
-            ARCHIVED: 'ARCHIVED',
-            CANCELLED: 'CANCELLED',
-            FAILED: 'BLOCKED',
-            ERROR: 'BLOCKED',
-          };
-          return map[s] || 'DRAFT';
-        };
+        // Reports & Presentations: real artifacts (assessment reports, report builder
+        // reports, decks). This used to be its own hand-rolled Record<string,
+        // ItemStatus> that was MISSING 'GENERATED' and 'SUPERSEDED' — the exact
+        // defect: an approved report stamped GENERATED, or a superseded one,
+        // silently fell to DRAFT. It is now a thin wrapper over the canonical
+        // mapper (src/domain/toolStatus.ts), which also carries the
+        // output-lifecycle aliases (GENERATING/UTILIZED/ARCHIVED/CANCELLED).
+        const mapOutputStatus = (raw: any): ItemStatus =>
+          TOOL_STATUS_DOMAIN_TO_ITEM_STATUS[resolveToolStatus(raw).domain];
 
         const normalizeDate = (v: any): Date => {
           try {
@@ -1079,6 +1065,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             id: String(r?.id || ''),
             name: String(r?.name || r?.title || 'Assessment Report'),
             status: mapOutputStatus(r?.status),
+            statusRaw: r?.status != null ? String(r.status) : undefined,
             createdAt: r?.createdAt ? normalizeDate(r.createdAt) : undefined,
             updatedAt: normalizeDate(
               r?.updatedAt || r?.updated_at || r?.createdAt || r?.created_at
@@ -1102,6 +1089,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             id: String(r?.id || ''),
             name: String(r?.title || r?.name || 'Report'),
             status: mapOutputStatus(r?.status),
+            statusRaw: r?.status != null ? String(r.status) : undefined,
             createdAt: r?.createdAt
               ? normalizeDate(r.createdAt)
               : r?.created_at
@@ -1126,6 +1114,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             id: String(d?.id || ''),
             name: String(d?.title || 'Presentation'),
             status: mapOutputStatus(d?.status),
+            statusRaw: d?.status != null ? String(d.status) : undefined,
             createdAt: d?.created_at ? normalizeDate(d.created_at) : undefined,
             updatedAt: normalizeDate(d?.updated_at || d?.updatedAt || d?.created_at),
             projectId: currentProjectId || undefined,
@@ -1665,6 +1654,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           { value: 'approved', label: t('common.approved', 'Approved'), color: 'bg-emerald-400' },
           { value: 'done', label: t('common.completed', 'Completed'), color: 'bg-emerald-400' },
         ],
+        render: (row: any) => renderToolStatusCell(row?.statusRaw ?? row?.status, isPolish),
       },
       {
         id: 'progress',
@@ -1691,7 +1681,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         sortable: true,
       },
     ],
-    [t, getAuthorLabel]
+    [t, getAuthorLabel, isPolish]
   );
 
   const sessionsColumns: TableColumn[] = useMemo(
@@ -1796,6 +1786,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           { value: 'approved', label: t('common.approved', 'Approved'), color: 'bg-emerald-400' },
           { value: 'done', label: t('common.done', 'Done'), color: 'bg-emerald-400' },
         ],
+        render: (row: any) => renderToolStatusCell(row?.statusRaw ?? row?.status, isPolish),
       },
       {
         id: 'progress',
@@ -1822,7 +1813,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         sortable: true,
       },
     ],
-    [t, getAuthorLabel]
+    [t, getAuthorLabel, isPolish]
   );
 
   const libraryColumns: TableColumn[] = useMemo(
@@ -2098,6 +2089,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         id: 'status',
         label: t('tools.hub.outputs.columns.status', 'Status'),
         width: '120px',
+        render: (row: any) => renderToolStatusCell(row?.statusRaw ?? row?.status, isPolish),
       },
       {
         id: 'updatedAt',
