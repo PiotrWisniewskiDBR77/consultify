@@ -50,6 +50,7 @@ import {
 import {
   createAssessmentOutput,
   createInitiativeProposalDraft,
+  deepFreeze,
   groupFindingsForInitiativeDrafts,
   buildReportSnapshot,
   markRecordSuperseded,
@@ -226,6 +227,16 @@ export class DrdSessionRuntime {
   private read(): RuntimeState {
     const state = readStorage(this.storage, this.sessionId);
     if (!state) throw new Error(`drd-session-runtime: no stored session ${this.sessionId}`);
+    // ★ Object.freeze does NOT survive a JSON.stringify/parse round trip —
+    // `readStorage` above just deserialized plain, unfrozen objects. The
+    // pure factories (createAssessmentOutput etc.) deep-freeze at
+    // construction time specifically so mutation THROWS rather than
+    // silently no-opping; re-applying it here on every read is what keeps
+    // that guarantee real across this runtime's localStorage persistence,
+    // not just at the moment of construction.
+    for (const record of state.outputs) deepFreeze(record.content);
+    for (const record of state.reports) deepFreeze(record.content);
+    for (const record of state.initiatives) deepFreeze(record.content);
     return state;
   }
 
@@ -769,6 +780,11 @@ export class DrdSessionRuntime {
     });
     const revState = revision.read();
     revState.session = { ...revState.session, state: 'active' };
+    // A reopen is the SAME case, same team — role assignments carry over to
+    // the revision (a fresh, empty roles map would silently strip everyone's
+    // authority and make e.g. the very next in_review/frozen transition fail
+    // for people who legitimately hold those roles on this case).
+    revState.roles = { ...state.roles };
     revision.write(revState);
     return revision;
   }

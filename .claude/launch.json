@@ -213,6 +213,19 @@
         "--strictPort"
       ],
       "port": 3500
+    },
+    {
+      "name": "a6-drd-slice",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "3512",
+        "--strictPort"
+      ],
+      "port": 3512
     }
   ]
 }

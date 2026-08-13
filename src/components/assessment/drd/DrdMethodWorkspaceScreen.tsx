@@ -208,6 +208,10 @@ export interface DrdMethodWorkspaceScreenProps {
   onExit?: () => void;
   /** Seed data straight to a given lifecycle stage — dev-render harness only. */
   seedTo?: 'interview' | 'matrix' | 'teresa' | 'approval' | 'frozen' | 'reopened';
+  /** dev-render harness only — jump straight to a view mode for a screenshot. */
+  initialViewMode?: MethodWorkspaceViewMode;
+  /** dev-render harness only — preselect which demo identity is "logged in". */
+  initialActorUserId?: string;
 }
 
 function seedSession(runtime: DrdSessionRuntime, seedTo: DrdMethodWorkspaceScreenProps['seedTo']) {
@@ -217,7 +221,7 @@ function seedSession(runtime: DrdSessionRuntime, seedTo: DrdMethodWorkspaceScree
   runtime.assignRole(APPROVER_ACTOR, 'approver');
   runtime.transition('prepared', OWNER_ACTOR);
   runtime.transition('active', OWNER_ACTOR);
-  if (!seedTo || seedTo === 'interview') return;
+  if (!seedTo) return;
 
   const area1A = DRD_STRUCTURE[0].areas[0];
   runtime.recordAnswer({
@@ -253,6 +257,8 @@ function seedSession(runtime: DrdSessionRuntime, seedTo: DrdMethodWorkspaceScree
     actorUserId: OWNER_ACTOR,
   });
   runtime.recordTargetDecision({ unitId: area1A.id, level: 4, rationale: 'Cel ustalony z zarządem na ten rok.', actorUserId: OWNER_ACTOR });
+
+  if (seedTo === 'interview') return;
 
   // aboveGap demo: 1B confirmed at level 4 while level 1 was never confirmed —
   // drdAdapter must report blockedAtLevel=1, aboveGapLevels=[4], currentLevel=null.
@@ -309,6 +315,8 @@ export const DrdMethodWorkspaceScreen: React.FC<DrdMethodWorkspaceScreenProps> =
   demoSessionId,
   onExit,
   seedTo,
+  initialViewMode,
+  initialActorUserId,
 }) => {
   const storage = storageProp ?? window.localStorage;
   const [tick, setTick] = useState(0);
@@ -323,9 +331,9 @@ export const DrdMethodWorkspaceScreen: React.FC<DrdMethodWorkspaceScreenProps> =
     return result ?? created;
   });
 
-  const [actorUserId, setActorUserId] = useState(OWNER_ACTOR);
+  const [actorUserId, setActorUserId] = useState(initialActorUserId ?? OWNER_ACTOR);
   const [mode, setMode] = useState<'guided_manual' | 'teresa_led'>('guided_manual');
-  const [viewMode, setViewMode] = useState<MethodWorkspaceViewMode>('interview');
+  const [viewMode, setViewMode] = useState<MethodWorkspaceViewMode>(initialViewMode ?? 'interview');
   const [activeAxisId, setActiveAxisId] = useState<number>(DRD_STRUCTURE[0].id);
   const [activeUnitId, setActiveUnitId] = useState<string>(DRD_STRUCTURE[0].areas[0].id);
   const [matrixSelection, setMatrixSelection] = useState<{ unitId: string; level: number } | null>(null);
@@ -375,14 +383,24 @@ export const DrdMethodWorkspaceScreen: React.FC<DrdMethodWorkspaceScreenProps> =
   const readiness: MethodReadiness = useMemo(() => {
     const totalUnits = pack.units.length;
     let answeredUnits = 0;
+    // Feeds the shell's bottom-bar "Evidence: N/Total" (N = totalUnits -
+    // unitsMissingEvidence) — counted across ALL units, not just answered
+    // ones, so an untouched unit honestly reads as "missing", never as
+    // silently "covered".
     let unitsMissingEvidence = 0;
+    // Narrower: answered but no evidence at all — a real freeze-blocking
+    // quality problem, distinct from "not started yet".
+    let answeredUnitsMissingEvidence = 0;
     for (const unit of pack.units) {
       const confirmed = confirmedLevelsFor(events, unit.unitId);
+      const hasEvidence = evidenceEventsFor(events, unit.unitId).length > 0;
       if (confirmed.length > 0) answeredUnits++;
-      if (confirmed.length > 0 && evidenceEventsFor(events, unit.unitId).length === 0) unitsMissingEvidence++;
+      if (!hasEvidence) unitsMissingEvidence++;
+      if (confirmed.length > 0 && !hasEvidence) answeredUnitsMissingEvidence++;
     }
     const freezeBlockers: string[] = [];
-    if (unitsMissingEvidence > 0) freezeBlockers.push(`${unitsMissingEvidence} jednostek bez dowodu`);
+    if (answeredUnits === 0) freezeBlockers.push('Brak potwierdzonych jednostek — wywiad nie został jeszcze rozpoczęty.');
+    if (answeredUnitsMissingEvidence > 0) freezeBlockers.push(`${answeredUnitsMissingEvidence} odpowiedzianych jednostek bez dowodu`);
     if (pendingPreviews.length > 0) freezeBlockers.push(`${pendingPreviews.length} propozycji Teresy oczekuje decyzji`);
     return {
       answeredUnits,

@@ -105,6 +105,19 @@ export function isAssessmentReadOnly(opts: {
   return opts.manuallyLocked;
 }
 
+/**
+ * A6 (2026-08-13): pure gate for the DRD vertical slice early-return above.
+ * Exported/extracted so the OFF-by-default / DRD-only scope is directly
+ * testable without mounting this 2700+ line view (which needs a live store +
+ * API mocks). OFF or non-DRD framework -> false -> legacy editor untouched.
+ */
+export function shouldMountDrdMethodWorkspace(
+  framework: string | undefined,
+  flagEnabled: boolean
+): boolean {
+  return framework === 'drd' && flagEnabled;
+}
+
 function calcConfidenceAvgFromCompletion(completionPercent: number): number {
   const c = Number(completionPercent || 0);
   if (!Number.isFinite(c)) return 1;
@@ -1750,7 +1763,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
   // return BEFORE renderEditor()/DRDForm/DRDAssessmentEditor/DRDMatrixSession
   // are ever reached, not a branch woven into the legacy DRD rendering path.
   // See src/hooks/useFeatureFlags.tsx `drdMethodWorkspaceSliceV1` for scope.
-  if (framework === 'drd' && isEnabled('drdMethodWorkspaceSliceV1')) {
+  if (shouldMountDrdMethodWorkspace(framework, isEnabled('drdMethodWorkspaceSliceV1'))) {
     return (
       <DrdMethodWorkspaceScreen
         demoSessionId={assessmentId}

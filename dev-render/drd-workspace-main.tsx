@@ -56,13 +56,29 @@ const SEED_BY_SCREEN: Record<string, Parameters<typeof DrdMethodWorkspaceScreen>
   reopen: 'reopened',
 };
 
+const VIEW_MODE_BY_SCREEN: Record<string, Parameters<typeof DrdMethodWorkspaceScreen>[0]['initialViewMode']> = {
+  matrix: 'matrix',
+};
+
+// Approval screenshot must show the ACTOR who is allowed to freeze —
+// switching to the approver identity is the whole point of that screenshot.
+const ACTOR_BY_SCREEN: Record<string, string> = {
+  approval: 'demo-approver-anna',
+};
+
 const mount = document.getElementById('dev-render-root')!;
 
 function Root(): React.ReactElement {
   if (screen === 'library') {
     return <DrdLibraryEntryHarness />;
   }
-  return <DrdMethodWorkspaceScreen seedTo={SEED_BY_SCREEN[screen] ?? 'interview'} />;
+  return (
+    <DrdMethodWorkspaceScreen
+      seedTo={SEED_BY_SCREEN[screen] ?? 'interview'}
+      initialViewMode={VIEW_MODE_BY_SCREEN[screen]}
+      initialActorUserId={ACTOR_BY_SCREEN[screen]}
+    />
+  );
 }
 
 createRoot(mount).render(
