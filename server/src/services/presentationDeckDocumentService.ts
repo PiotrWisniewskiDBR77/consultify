@@ -404,10 +404,12 @@ function blocksFromUnifiedSlide(
       break;
     }
     case 'roadmap': {
+      if (content.context) push('paragraph', { text: String(content.context) });
       push('timeline_block', { items: Array.isArray(content.phases) ? content.phases : [] }, true);
       break;
     }
     case 'risk_management': {
+      if (content.context) push('paragraph', { text: String(content.context) });
       push(
         'table',
         {
