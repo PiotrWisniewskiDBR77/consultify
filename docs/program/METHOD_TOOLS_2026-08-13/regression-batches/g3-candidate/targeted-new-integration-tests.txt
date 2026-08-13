@@ -1,0 +1,1091 @@
+=== batch: targeted-new-integration-tests (candidate) ===
+=== started: 2026-08-13T18:11:35Z ===
+
+ RUN  v4.1.8 /Users/piotrwisniewski/.codex/worktrees/g3-regress
+
+·······stdout | tests/integration/tools-clean-bootstrap.realdb.test.ts > Tools clean-database bootstrap — promoteToOutput (real Postgres)
+2026-08-13 20:11:44:1144 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-13 20:11:44:1144 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-13 20:11:44:1144 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-13 20:11:44:1144 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-13 20:11:44:1144 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/integration/tools-clean-bootstrap.realdb.test.ts > Tools clean-database bootstrap — promoteToOutput (real Postgres) > POST /api/tools/:toolId/promote (outputType=initiative) does not return 42P01
+2026-08-13 20:11:46:1146 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-08-13 20:11:46:1146 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-08-13 20:11:46:1146 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-08-13 20:11:46:1146 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-08-13 20:11:46:1146 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"localhost","database":"consultinity","max":10}
+2026-08-13 20:11:46:1146 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | tests/integration/tools-clean-bootstrap.realdb.test.ts > Tools clean-database bootstrap — promoteToOutput (real Postgres) > POST /api/tools/:toolId/promote (outputType=initiative) does not return 42P01
+2026-08-13 20:11:46:1146 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-clean-bootstrap.realdb.test.ts > Tools clean-database bootstrap — promoteToOutput (real Postgres) > POST /api/tools/:toolId/promote (outputType=initiative) does not return 42P01
+2026-08-13 20:11:46:1146 [32minfo[39m: [32m[toolOutputSnapshotService] skipping tool_output_initiative_proposals for output 59e003b6-f71c-4d03-9284-cb5293bddac2: no conclusions in snapshot[39m
+
+·stdout | tests/integration/tools-clean-bootstrap.realdb.test.ts > Tools clean-database bootstrap — promoteToOutput (real Postgres) > a fresh import of the router repeats promotion (dedup) and survives reopen
+2026-08-13 20:11:46:1146 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-13 20:11:46:1146 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-13 20:11:46:1146 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-13 20:11:46:1146 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-13 20:11:46:1146 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/integration/tools-clean-bootstrap.realdb.test.ts > Tools clean-database bootstrap — promoteToOutput (real Postgres) > a fresh import of the router repeats promotion (dedup) and survives reopen
+2026-08-13 20:11:46:1146 [31merror[39m: [31m[Postgres] Query Error [RUN]:[39m
+2026-08-13 20:11:46:1146 [31merror[39m: [31m[Postgres] Failed SQL: INSERT INTO tool_initiative_links ([39m
+[31m             id, tool_session_id, batch_id, initiative_id, organization_id,[39m
+[31m             source_revision, output_type, idempotency_key, payload_hash, created_at[39m
+[31m           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)[39m
+
+stdout | tests/integration/tools-clean-bootstrap.realdb.test.ts > Tools clean-database bootstrap — promoteToOutput (real Postgres) > a fresh import of the router repeats promotion (dedup) and survives reopen
+2026-08-13 20:11:46:1146 [31merror[39m: [31m[Postgres] Run Error:[39m
+2026-08-13 20:11:46:1146 [31merror[39m: [31m[QueryHelper] Error in queryRun: duplicate key value violates unique constraint "uq_tool_initiative_links_promotion"[39m {"length":458,"name":"error","severity":"ERROR","code":"23505","detail":"Key (organization_id, tool_session_id, source_revision, output_type, idempotency_key)=(org-bootstrap-8d82ecc6-9f09-4008-9a2f-e4c5baf69e64, tool-bootstrap-8d82ecc6-9f09-4008-9a2f-e4c5baf69e64, 1, initiative, promote-initiative) already exists.","schema":"public","table":"tool_initiative_links","constraint":"uq_tool_initiative_links_promotion","file":"nbtinsert.c","line":"664","routine":"_bt_check_unique","stack":"error: duplicate key value violates unique constraint \"uq_tool_initiative_links_promotion\"\n    at /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/pg-pool/index.js:45:11\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at executeWithLogging (/Users/piotrwisniewski/.codex/worktrees/g3-regress/server/src/database/PostgresDatabase.ts:664:17)"}
+
+stdout | tests/integration/tools-clean-bootstrap.realdb.test.ts > Tools clean-database bootstrap — promoteToOutput (real Postgres) > a fresh import of the router repeats promotion (dedup) and survives reopen
+2026-08-13 20:11:46:1146 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-clean-bootstrap.realdb.test.ts > Tools clean-database bootstrap — promoteToOutput (real Postgres) > a fresh import of the router repeats promotion (dedup) and survives reopen
+2026-08-13 20:11:46:1146 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-13 20:11:46:1146 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-13 20:11:46:1146 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-13 20:11:46:1146 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-13 20:11:46:1146 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/integration/tools-clean-bootstrap.realdb.test.ts > Tools clean-database bootstrap — promoteToOutput (real Postgres) > a fresh import of the router repeats promotion (dedup) and survives reopen
+2026-08-13 20:11:47:1147 [31merror[39m: [31m[Postgres] Query Error [ALL]:[39m
+2026-08-13 20:11:47:1147 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, title FROM initiatives[39m
+[31m        WHERE organization_id = $1[39m
+[31m          AND ([39m
+[31m            source_assessment_id = $2[39m
+[31m            OR source_report_id = $3[39m
+[31m            OR (source_id = $4 AND lower(coalesce(source_type, '')) = $5)[39m
+[31m          )[39m
+[31m        LIMIT 50[39m
+
+stdout | tests/integration/tools-clean-bootstrap.realdb.test.ts > Tools clean-database bootstrap — promoteToOutput (real Postgres) > a fresh import of the router repeats promotion (dedup) and survives reopen
+2026-08-13 20:11:47:1147 [33mwarn[39m: [33m[ReportBuilder] resolveReportSourceRefs: initiatives lookup failed[39m {"error":{"name":"error","message":"column \"source_report_id\" does not exist","stack":"error: column \"source_report_id\" does not exist\n    at /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/pg-pool/index.js:45:11\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at executeWithLogging (/Users/piotrwisniewski/.codex/worktrees/g3-regress/server/src/database/PostgresDatabase.ts:664:17)"},"sourceType":"TOOL"}
+
+stdout | tests/integration/tools-clean-bootstrap.realdb.test.ts > Tools clean-database bootstrap — promoteToOutput (real Postgres) > a fresh import of the router repeats promotion (dedup) and survives reopen
+2026-08-13 20:11:47:1147 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-clean-bootstrap.realdb.test.ts > Tools clean-database bootstrap — promoteToOutput (real Postgres) > a fresh import of the router repeats promotion (dedup) and survives reopen
+2026-08-13 20:11:47:1147 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report:d4c0e393-e30e-4aea-80cd-377ee42da707 as artifact 0f07487f-c65a-4119-b993-d9a2ab72f750[39m
+
+stdout | tests/integration/tools-clean-bootstrap.realdb.test.ts > Tools clean-database bootstrap — promoteToOutput (real Postgres) > a fresh import of the router repeats promotion (dedup) and survives reopen
+2026-08-13 20:11:47:1147 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"org-bootstrap-8d82ecc6-9f09-4008-9a2f-e4c5baf69e64","module":"outputs"}
+
+··stdout | tests/integration/tools-presentation-persistence.realdb.test.ts
+2026-08-13 20:11:48:1148 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-13 20:11:48:1148 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-13 20:11:48:1148 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-13 20:11:48:1148 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-13 20:11:48:1148 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP2 — NEW behaviour: full transaction completes, correct persistence, org scope, exact lineage > the presentation endpoint responds, persists a real reopenable deck, registers it, and writes lineage to the exact tool_output_id — never touching v8_artifact_runs
+2026-08-13 20:11:50:1150 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-08-13 20:11:50:1150 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-08-13 20:11:50:1150 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-08-13 20:11:50:1150 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-08-13 20:11:50:1150 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"localhost","database":"consultinity","max":10}
+2026-08-13 20:11:50:1150 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP2 — NEW behaviour: full transaction completes, correct persistence, org scope, exact lineage > the presentation endpoint responds, persists a real reopenable deck, registers it, and writes lineage to the exact tool_output_id — never touching v8_artifact_runs
+2026-08-13 20:11:50:1150 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP2 — NEW behaviour: full transaction completes, correct persistence, org scope, exact lineage > the presentation endpoint responds, persists a real reopenable deck, registers it, and writes lineage to the exact tool_output_id — never touching v8_artifact_runs
+2026-08-13 20:11:50:1150 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered presentation:b3b9273f-df8f-45ed-977d-3c387f93c717 as artifact 85e005ca-fa19-4027-b103-9e11ac30806b[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP2 — NEW behaviour: full transaction completes, correct persistence, org scope, exact lineage > the presentation endpoint responds, persists a real reopenable deck, registers it, and writes lineage to the exact tool_output_id — never touching v8_artifact_runs
+2026-08-13 20:11:50:1150 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgA","module":"outputs"}
+
+·stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered presentation:07ba0587-39cd-470e-bb92-94e127546fed as artifact 4ce44115-4c6b-4ba0-b33d-3e82cfcfb2d0[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgA","module":"outputs"}
+
+·stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-interview-summary as artifact 08a239de-4b8b-498f-8d96-f9a469063687[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered presentation_template:pt-program as artifact facf79c5-b909-4c71-9cf1-557a7c941827[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgA","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgA","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-interview-detailed as artifact b162c890-0ab7-4adf-8c9a-0ede8cae9c80[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgA","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered presentation_template:pt-tool-workshop as artifact 745502d1-dace-4480-837f-2ae1377df462[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgA","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-drd-full-diagnostic-v2 as artifact f98ffb8c-30c5-4390-b34e-658727b68fb3[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered presentation_template:pt-steering as artifact 588a6890-9e15-435d-b568-b5921d4857dd[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgA","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgA","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-drd-board-report-v2 as artifact 32f667e9-0338-420e-acb9-c481b2d1f034[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered presentation_template:pt-valuation as artifact 914b70aa-afa3-4e00-ac68-1c641ecab2f1[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgA","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgA","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered presentation_template:pt-assessment as artifact 44df1d65-c177-499c-9f68-15fff33a2c13[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-drd-presentation-v2 as artifact a401de5c-e996-4348-9bf9-0b0dba34d33d[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgA","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgA","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-finance-section as artifact 301b8285-7a2e-4f1a-884a-e7f8ae2ca987[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgA","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-results-kpi-review as artifact d10ffaa1-8cbd-4d79-a197-85f0ffd6c4fe[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgA","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-tool-evaluation as artifact f58ec934-1859-428d-9388-4d81b4e708e5[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgA","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-tool-comparison as artifact 3e47c064-8238-4131-91e3-b968fa343016[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgA","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-strategic-review-exec as artifact f5215a9b-444b-43e0-a6f1-d3800b37adcb[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgA","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-transformation-roadmap as artifact ba07a13d-89ab-4c6b-9a35-afacbedee51a[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgA","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-results-kpi-report-default as artifact ea6565d0-a194-492f-8ef0-6442ac38d92f[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgA","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-financial-analysis as artifact 6d5dfce9-47f3-4159-80e6-cda20b82b66f[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgA","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-steering-committee as artifact 1b482186-1783-4ea0-ae4e-225dd05e8138[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgA","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-valuation-pack as artifact 4cc3a500-f3b7-4a63-9594-277ce1676722[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgA","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-tool-workshop-summary as artifact ec98ff31-fae0-4c43-b298-10f774b13e12[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgA","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-assessment-summary-v2 as artifact 41dacbc5-868d-4d47-90da-56c301834332[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgA","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-financial-analysis-export as artifact e6eb2565-1b26-455b-99a7-ab0412015e72[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgA","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-program-3axis as artifact a06dfc94-d3bc-4e28-8b9e-854c9bd55e84[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgA","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-pm-sponsor-onepager as artifact 3da234b5-3258-438f-9aad-ebb68e96eca9[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgA","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-pm-steering as artifact 5e5734f5-4e05-47de-8182-2b2aa8d23498[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgA","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-pm-weekly as artifact f7d4e11d-224c-4426-b564-5befe86a351a[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgA","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP3 — list/get/reopen visibility after a fresh API import ("restart") > a freshly re-imported artifactRegistryService (simulating a process restart) can list, get-by-origin and resolve the reopen target — all from Postgres, no in-memory state
+2026-08-13 20:11:50:1150 [32minfo[39m: [32m[V8:ArtifactRegistry] Backfilled 0 reports, 0 presentations, 0 native documents, 22 report templates, 5 presentation templates, and 0 document templates for org pp-1786644707964-orgA[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered presentation:2a8836d9-bf9e-412f-a82f-a5cd223ef8cc as artifact 27896d9c-7541-45c5-ae0c-182bbcbb79ae[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgA","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-interview-summary as artifact f9af0581-b066-42e9-8e20-2c8062873b99[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered presentation_template:pt-program as artifact ca297107-1c6a-40fb-8fc9-17139f4a1056[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgB","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgB","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-interview-detailed as artifact e7ccaf12-9dff-4fbf-ab95-9f322be01089[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered presentation_template:pt-tool-workshop as artifact 3f4334f4-8b02-4dc9-93b9-e9fe801d3097[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgB","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgB","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered presentation_template:pt-steering as artifact 3ae3df3a-cc22-47ee-af91-31451d13b16f[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-drd-full-diagnostic-v2 as artifact 1c12a4f5-4a49-4926-8f8f-ecb4dba6f9df[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgB","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgB","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered presentation_template:pt-valuation as artifact 3d6c5007-a9e8-4996-88ba-b5dff83353e9[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgB","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-drd-board-report-v2 as artifact 088ab520-fee6-406d-8816-2631d6b9bf6b[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgB","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered presentation_template:pt-assessment as artifact 766fb2e0-b7cc-4398-a0ff-36e0b8c280e9[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgB","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-drd-presentation-v2 as artifact 5e6421c9-7305-43f5-adf6-bef47917a049[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgB","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-finance-section as artifact e823809a-b7d5-491e-adea-a4bfcb95ff20[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgB","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-results-kpi-review as artifact 3c3ec652-d531-4a43-acdf-df67bb3477c7[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgB","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-tool-evaluation as artifact f986488f-7df5-4a6a-a8dd-c84a39cceed0[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgB","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-tool-comparison as artifact 53fe6e98-b432-437a-974b-103af5fcb9ca[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgB","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-strategic-review-exec as artifact 5f9e82be-4ef4-4299-a0df-a1d575c7f790[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgB","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-transformation-roadmap as artifact 9d98c24b-fe58-443a-9ca5-c99aeba236b3[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgB","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-results-kpi-report-default as artifact 57a94b7f-1a00-4f1e-afd8-b667ae6054e8[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgB","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-financial-analysis as artifact b1259a9c-5395-4115-aac2-78fc8d7afb0b[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgB","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-steering-committee as artifact 21f2fa1b-188f-4264-a0ec-a54b1e452938[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgB","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-valuation-pack as artifact 66da75f1-bb02-489d-87d2-c7cfc200edc4[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgB","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-tool-workshop-summary as artifact 03d03149-30bb-4cde-bd55-f397bb43dcc0[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgB","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-assessment-summary-v2 as artifact cb1e5bd5-d514-40d6-8fef-c378a80d0495[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgB","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-financial-analysis-export as artifact 3de7d2bb-9434-4a98-afd2-a89582a05166[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgB","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-program-3axis as artifact 2bff3346-1aa1-4a0f-86d3-eb984ee7fb6d[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgB","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-pm-sponsor-onepager as artifact 083ddb06-6ecc-4712-a05b-7f747a3e2858[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgB","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-pm-steering as artifact d334ca0f-493b-4c78-8e7b-d9ac906ecdbf[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgB","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report_template:tpl-pm-weekly as artifact 504fb5cc-9a97-4198-9241-76aa3d2389d1[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgB","module":"outputs"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP4 — organization scope > org B cannot see org A's promoted presentation via the registry, and cross-org promotion writes nothing
+2026-08-13 20:11:51:1151 [32minfo[39m: [32m[V8:ArtifactRegistry] Backfilled 0 reports, 0 presentations, 0 native documents, 22 report templates, 5 presentation templates, and 0 document templates for org pp-1786644707964-orgB[39m
+
+·stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP5 — retry without duplication > two promotions with the same idempotency key converge on ONE deck, ONE registry row, ONE ledger row
+2026-08-13 20:11:51:1151 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered presentation:50f26358-6d4d-4667-be8b-46765647f428 as artifact 96840d60-c133-40ea-b6a5-fdd10c7827b8[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP5 — retry without duplication > two promotions with the same idempotency key converge on ONE deck, ONE registry row, ONE ledger row
+2026-08-13 20:11:51:1151 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgA","module":"outputs"}
+
+·stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP5 — retry without duplication > two promotions with the same idempotency key converge on ONE deck, ONE registry row, ONE ledger row
+2026-08-13 20:11:51:1151 [31merror[39m: [31m[Postgres] Query Error [RUN]:[39m
+2026-08-13 20:11:51:1151 [31merror[39m: [31m[Postgres] Failed SQL: INSERT INTO tool_initiative_links ([39m
+[31m             id, tool_session_id, batch_id, initiative_id, organization_id,[39m
+[31m             source_revision, output_type, idempotency_key, payload_hash, created_at[39m
+[31m           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP5 — retry without duplication > two promotions with the same idempotency key converge on ONE deck, ONE registry row, ONE ledger row
+2026-08-13 20:11:51:1151 [31merror[39m: [31m[Postgres] Run Error:[39m
+2026-08-13 20:11:51:1151 [31merror[39m: [31m[QueryHelper] Error in queryRun: duplicate key value violates unique constraint "uq_tool_initiative_links_promotion"[39m {"length":412,"name":"error","severity":"ERROR","code":"23505","detail":"Key (organization_id, tool_session_id, source_revision, output_type, idempotency_key)=(pp-1786644707964-orgA, pp-1786644707964-s-retry, 1, presentation, pp-1786644707964-retry-key) already exists.","schema":"public","table":"tool_initiative_links","constraint":"uq_tool_initiative_links_promotion","file":"nbtinsert.c","line":"664","routine":"_bt_check_unique","stack":"error: duplicate key value violates unique constraint \"uq_tool_initiative_links_promotion\"\n    at /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/pg-pool/index.js:45:11\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at executeWithLogging (/Users/piotrwisniewski/.codex/worktrees/g3-regress/server/src/database/PostgresDatabase.ts:664:17)"}
+
+·stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP6 — explicit error when persistence fails (never a false success) > a forced registry failure fails the request closed, rolls back the deck, and a retry with the same key is a controlled 409 — never a fake dedup success
+2026-08-13 20:11:51:1151 [31merror[39m: [31m[Postgres] Query Error [RUN]:[39m
+2026-08-13 20:11:51:1151 [31merror[39m: [31m[Postgres] Failed SQL: INSERT INTO tool_initiative_links ([39m
+[31m             id, tool_session_id, batch_id, initiative_id, organization_id,[39m
+[31m             source_revision, output_type, idempotency_key, payload_hash, created_at[39m
+[31m           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP6 — explicit error when persistence fails (never a false success) > a forced registry failure fails the request closed, rolls back the deck, and a retry with the same key is a controlled 409 — never a fake dedup success
+2026-08-13 20:11:51:1151 [31merror[39m: [31m[Postgres] Run Error:[39m
+2026-08-13 20:11:51:1151 [31merror[39m: [31m[QueryHelper] Error in queryRun: duplicate key value violates unique constraint "uq_tool_initiative_links_promotion"[39m {"length":422,"name":"error","severity":"ERROR","code":"23505","detail":"Key (organization_id, tool_session_id, source_revision, output_type, idempotency_key)=(pp-1786644707964-orgA, pp-1786644707964-s-failclosed, 1, presentation, pp-1786644707964-failclosed-key) already exists.","schema":"public","table":"tool_initiative_links","constraint":"uq_tool_initiative_links_promotion","file":"nbtinsert.c","line":"664","routine":"_bt_check_unique","stack":"error: duplicate key value violates unique constraint \"uq_tool_initiative_links_promotion\"\n    at /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/pg-pool/index.js:45:11\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at executeWithLogging (/Users/piotrwisniewski/.codex/worktrees/g3-regress/server/src/database/PostgresDatabase.ts:664:17)"}
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP6 — explicit error when persistence fails (never a false success) > a forced registry failure fails the request closed, rolls back the deck, and a retry with the same key is a controlled 409 — never a fake dedup success
+2026-08-13 20:11:51:1151 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered presentation:4eea0478-1cce-45bc-afb9-ba82a9bdb1bd as artifact a998bbbd-b9f9-4145-85b9-45af9a2f460d[39m
+
+stdout | tests/integration/tools-presentation-persistence.realdb.test.ts > PP6 — explicit error when persistence fails (never a false success) > a forced registry failure fails the request closed, rolls back the deck, and a retry with the same key is a controlled 409 — never a fake dedup success
+2026-08-13 20:11:51:1151 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"pp-1786644707964-orgA","module":"outputs"}
+
+·stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts
+2026-08-13 20:11:53:1153 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-13 20:11:53:1153 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-13 20:11:53:1153 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-13 20:11:53:1153 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-13 20:11:53:1153 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R1: list outputs for a session (org-scoped) returns exactly the promoted snapshot
+2026-08-13 20:11:54:1154 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-08-13 20:11:54:1154 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-08-13 20:11:54:1154 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-08-13 20:11:54:1154 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-08-13 20:11:54:1154 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"localhost","database":"consultinity","max":10}
+2026-08-13 20:11:54:1154 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R1: list outputs for a session (org-scoped) returns exactly the promoted snapshot
+2026-08-13 20:11:54:1154 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R1: list outputs for a session (org-scoped) returns exactly the promoted snapshot
+2026-08-13 20:11:54:1154 [31merror[39m: [31m[Postgres] Query Error [ALL]:[39m
+2026-08-13 20:11:54:1154 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, title FROM initiatives[39m
+[31m        WHERE organization_id = $1[39m
+[31m          AND ([39m
+[31m            source_assessment_id = $2[39m
+[31m            OR source_report_id = $3[39m
+[31m            OR (source_id = $4 AND lower(coalesce(source_type, '')) = $5)[39m
+[31m          )[39m
+[31m        LIMIT 50[39m
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R1: list outputs for a session (org-scoped) returns exactly the promoted snapshot
+2026-08-13 20:11:54:1154 [33mwarn[39m: [33m[ReportBuilder] resolveReportSourceRefs: initiatives lookup failed[39m {"error":{"name":"error","message":"column \"source_report_id\" does not exist","stack":"error: column \"source_report_id\" does not exist\n    at /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/pg-pool/index.js:45:11\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at executeWithLogging (/Users/piotrwisniewski/.codex/worktrees/g3-regress/server/src/database/PostgresDatabase.ts:664:17)"},"sourceType":"TOOL"}
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R1: list outputs for a session (org-scoped) returns exactly the promoted snapshot
+2026-08-13 20:11:54:1154 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R1: list outputs for a session (org-scoped) returns exactly the promoted snapshot
+2026-08-13 20:11:54:1154 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report:6eadab74-94a9-4225-a326-dad5fdf87445 as artifact f9bf7af5-baaf-44dd-b081-ec61a2d13a8b[39m
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R1: list outputs for a session (org-scoped) returns exactly the promoted snapshot
+2026-08-13 20:11:54:1154 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"rr-1786644712353-org-a","module":"outputs"}
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R2: cross-org list returns an empty array, never another org's output
+2026-08-13 20:11:54:1154 [31merror[39m: [31m[Postgres] Query Error [ALL]:[39m
+2026-08-13 20:11:54:1154 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, title FROM initiatives[39m
+[31m        WHERE organization_id = $1[39m
+[31m          AND ([39m
+[31m            source_assessment_id = $2[39m
+[31m            OR source_report_id = $3[39m
+[31m            OR (source_id = $4 AND lower(coalesce(source_type, '')) = $5)[39m
+[31m          )[39m
+[31m        LIMIT 50[39m
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R2: cross-org list returns an empty array, never another org's output
+2026-08-13 20:11:54:1154 [33mwarn[39m: [33m[ReportBuilder] resolveReportSourceRefs: initiatives lookup failed[39m {"error":{"name":"error","message":"column \"source_report_id\" does not exist","stack":"error: column \"source_report_id\" does not exist\n    at /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/pg-pool/index.js:45:11\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at executeWithLogging (/Users/piotrwisniewski/.codex/worktrees/g3-regress/server/src/database/PostgresDatabase.ts:664:17)"},"sourceType":"TOOL"}
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R2: cross-org list returns an empty array, never another org's output
+2026-08-13 20:11:54:1154 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+·stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R2: cross-org list returns an empty array, never another org's output
+2026-08-13 20:11:54:1154 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report:01c83490-b40e-4a10-8a74-85f50d3da5a7 as artifact bd5a0f6f-d3af-4a8c-8a32-f49592c95815[39m
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R2: cross-org list returns an empty array, never another org's output
+2026-08-13 20:11:54:1154 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"rr-1786644712353-org-a","module":"outputs"}
+
+·stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R3: org-wide list (no toolSessionId) never mixes orgs
+2026-08-13 20:11:54:1154 [31merror[39m: [31m[Postgres] Query Error [ALL]:[39m
+2026-08-13 20:11:54:1154 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, title FROM initiatives[39m
+[31m        WHERE organization_id = $1[39m
+[31m          AND ([39m
+[31m            source_assessment_id = $2[39m
+[31m            OR source_report_id = $3[39m
+[31m            OR (source_id = $4 AND lower(coalesce(source_type, '')) = $5)[39m
+[31m          )[39m
+[31m        LIMIT 50[39m
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R3: org-wide list (no toolSessionId) never mixes orgs
+2026-08-13 20:11:54:1154 [33mwarn[39m: [33m[ReportBuilder] resolveReportSourceRefs: initiatives lookup failed[39m {"error":{"name":"error","message":"column \"source_report_id\" does not exist","stack":"error: column \"source_report_id\" does not exist\n    at /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/pg-pool/index.js:45:11\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at executeWithLogging (/Users/piotrwisniewski/.codex/worktrees/g3-regress/server/src/database/PostgresDatabase.ts:664:17)"},"sourceType":"TOOL"}
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R3: org-wide list (no toolSessionId) never mixes orgs
+2026-08-13 20:11:54:1154 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R3: org-wide list (no toolSessionId) never mixes orgs
+2026-08-13 20:11:54:1154 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report:2bfef479-e55f-4312-9e3b-454aca3c7d00 as artifact 67f138ab-f8c8-4bf6-92eb-6f47ccf0967c[39m
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R3: org-wide list (no toolSessionId) never mixes orgs
+2026-08-13 20:11:54:1154 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"rr-1786644712353-org-a","module":"outputs"}
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R3: org-wide list (no toolSessionId) never mixes orgs
+2026-08-13 20:11:54:1154 [31merror[39m: [31m[Postgres] Query Error [ALL]:[39m
+2026-08-13 20:11:54:1154 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, title FROM initiatives[39m
+[31m        WHERE organization_id = $1[39m
+[31m          AND ([39m
+[31m            source_assessment_id = $2[39m
+[31m            OR source_report_id = $3[39m
+[31m            OR (source_id = $4 AND lower(coalesce(source_type, '')) = $5)[39m
+[31m          )[39m
+[31m        LIMIT 50[39m
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R3: org-wide list (no toolSessionId) never mixes orgs
+2026-08-13 20:11:54:1154 [33mwarn[39m: [33m[ReportBuilder] resolveReportSourceRefs: initiatives lookup failed[39m {"error":{"name":"error","message":"column \"source_report_id\" does not exist","stack":"error: column \"source_report_id\" does not exist\n    at /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/pg-pool/index.js:45:11\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at executeWithLogging (/Users/piotrwisniewski/.codex/worktrees/g3-regress/server/src/database/PostgresDatabase.ts:664:17)"},"sourceType":"TOOL"}
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R3: org-wide list (no toolSessionId) never mixes orgs
+2026-08-13 20:11:54:1154 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R3: org-wide list (no toolSessionId) never mixes orgs
+2026-08-13 20:11:54:1154 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report:6d9de35f-883a-4e38-801c-5850a25d03b3 as artifact abe90758-d144-49b4-bd58-a6a03ca44520[39m
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R3: org-wide list (no toolSessionId) never mixes orgs
+2026-08-13 20:11:54:1154 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"rr-1786644712353-org-b","module":"outputs"}
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R4: get one output by id (org-scoped) returns full detail; cross-org 404s
+2026-08-13 20:11:55:1155 [31merror[39m: [31m[Postgres] Query Error [ALL]:[39m
+2026-08-13 20:11:55:1155 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, title FROM initiatives[39m
+[31m        WHERE organization_id = $1[39m
+[31m          AND ([39m
+[31m            source_assessment_id = $2[39m
+[31m            OR source_report_id = $3[39m
+[31m            OR (source_id = $4 AND lower(coalesce(source_type, '')) = $5)[39m
+[31m          )[39m
+[31m        LIMIT 50[39m
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R4: get one output by id (org-scoped) returns full detail; cross-org 404s
+2026-08-13 20:11:55:1155 [33mwarn[39m: [33m[ReportBuilder] resolveReportSourceRefs: initiatives lookup failed[39m {"error":{"name":"error","message":"column \"source_report_id\" does not exist","stack":"error: column \"source_report_id\" does not exist\n    at /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/pg-pool/index.js:45:11\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at executeWithLogging (/Users/piotrwisniewski/.codex/worktrees/g3-regress/server/src/database/PostgresDatabase.ts:664:17)"},"sourceType":"TOOL"}
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R4: get one output by id (org-scoped) returns full detail; cross-org 404s
+2026-08-13 20:11:55:1155 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+·stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R4: get one output by id (org-scoped) returns full detail; cross-org 404s
+2026-08-13 20:11:55:1155 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report:f282a576-4feb-4582-99c1-23a1bcf3901b as artifact 80b413c1-9731-4f03-b8a3-956e2a195cd3[39m
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R4: get one output by id (org-scoped) returns full detail; cross-org 404s
+2026-08-13 20:11:55:1155 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"rr-1786644712353-org-a","module":"outputs"}
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R5: reports for an output are traceable via tool_report_sources; cross-org 404s
+2026-08-13 20:11:55:1155 [31merror[39m: [31m[Postgres] Query Error [ALL]:[39m
+2026-08-13 20:11:55:1155 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, title FROM initiatives[39m
+[31m        WHERE organization_id = $1[39m
+[31m          AND ([39m
+[31m            source_assessment_id = $2[39m
+[31m            OR source_report_id = $3[39m
+[31m            OR (source_id = $4 AND lower(coalesce(source_type, '')) = $5)[39m
+[31m          )[39m
+[31m        LIMIT 50[39m
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R5: reports for an output are traceable via tool_report_sources; cross-org 404s
+2026-08-13 20:11:55:1155 [33mwarn[39m: [33m[ReportBuilder] resolveReportSourceRefs: initiatives lookup failed[39m {"error":{"name":"error","message":"column \"source_report_id\" does not exist","stack":"error: column \"source_report_id\" does not exist\n    at /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/pg-pool/index.js:45:11\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at executeWithLogging (/Users/piotrwisniewski/.codex/worktrees/g3-regress/server/src/database/PostgresDatabase.ts:664:17)"},"sourceType":"TOOL"}
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R5: reports for an output are traceable via tool_report_sources; cross-org 404s
+2026-08-13 20:11:55:1155 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+·stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R5: reports for an output are traceable via tool_report_sources; cross-org 404s
+2026-08-13 20:11:55:1155 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report:b92437f6-a8ff-47b2-8126-939e8ab6e8ac as artifact 797e3a79-752a-4ec8-b263-2a3c3a0135d0[39m
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R5: reports for an output are traceable via tool_report_sources; cross-org 404s
+2026-08-13 20:11:55:1155 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"rr-1786644712353-org-a","module":"outputs"}
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R6: initiative proposals for an output record source_conclusion_id lineage; cross-org 404s
+2026-08-13 20:11:55:1155 [32minfo[39m: [32m[createInitiativeService] §B3 quality (advisory) — initiative 8919af7c-bf77-476b-a7f6-048171df5626: 10/10 failed [kpi_baseline_target, raid_mix, scope_out_mece, scope_in_count, deliverables_count, success_count, kill_count, milestones_count, roi_sizing, owner_assigned][39m
+
+·stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R7: reopen without edits produces a NEW revision with an IDENTICAL content hash (reopen = identical read)
+2026-08-13 20:11:55:1155 [31merror[39m: [31m[Postgres] Query Error [ALL]:[39m
+2026-08-13 20:11:55:1155 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, title FROM initiatives[39m
+[31m        WHERE organization_id = $1[39m
+[31m          AND ([39m
+[31m            source_assessment_id = $2[39m
+[31m            OR source_report_id = $3[39m
+[31m            OR (source_id = $4 AND lower(coalesce(source_type, '')) = $5)[39m
+[31m          )[39m
+[31m        LIMIT 50[39m
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R7: reopen without edits produces a NEW revision with an IDENTICAL content hash (reopen = identical read)
+2026-08-13 20:11:55:1155 [33mwarn[39m: [33m[ReportBuilder] resolveReportSourceRefs: initiatives lookup failed[39m {"error":{"name":"error","message":"column \"source_report_id\" does not exist","stack":"error: column \"source_report_id\" does not exist\n    at /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/pg-pool/index.js:45:11\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at executeWithLogging (/Users/piotrwisniewski/.codex/worktrees/g3-regress/server/src/database/PostgresDatabase.ts:664:17)"},"sourceType":"TOOL"}
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R7: reopen without edits produces a NEW revision with an IDENTICAL content hash (reopen = identical read)
+2026-08-13 20:11:55:1155 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R7: reopen without edits produces a NEW revision with an IDENTICAL content hash (reopen = identical read)
+2026-08-13 20:11:55:1155 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report:32a21f89-3647-4de3-a5c8-6d7923187919 as artifact 54178e10-2919-486d-92ef-8e91ad99ef3b[39m
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R7: reopen without edits produces a NEW revision with an IDENTICAL content hash (reopen = identical read)
+2026-08-13 20:11:55:1155 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"rr-1786644712353-org-a","module":"outputs"}
+
+·stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R8: reopen WITH edited conclusions produces a NEW revision with a DIFFERENT content hash
+2026-08-13 20:11:55:1155 [31merror[39m: [31m[Postgres] Query Error [ALL]:[39m
+2026-08-13 20:11:55:1155 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, title FROM initiatives[39m
+[31m        WHERE organization_id = $1[39m
+[31m          AND ([39m
+[31m            source_assessment_id = $2[39m
+[31m            OR source_report_id = $3[39m
+[31m            OR (source_id = $4 AND lower(coalesce(source_type, '')) = $5)[39m
+[31m          )[39m
+[31m        LIMIT 50[39m
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R8: reopen WITH edited conclusions produces a NEW revision with a DIFFERENT content hash
+2026-08-13 20:11:55:1155 [33mwarn[39m: [33m[ReportBuilder] resolveReportSourceRefs: initiatives lookup failed[39m {"error":{"name":"error","message":"column \"source_report_id\" does not exist","stack":"error: column \"source_report_id\" does not exist\n    at /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/pg-pool/index.js:45:11\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at executeWithLogging (/Users/piotrwisniewski/.codex/worktrees/g3-regress/server/src/database/PostgresDatabase.ts:664:17)"},"sourceType":"TOOL"}
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R8: reopen WITH edited conclusions produces a NEW revision with a DIFFERENT content hash
+2026-08-13 20:11:55:1155 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R8: reopen WITH edited conclusions produces a NEW revision with a DIFFERENT content hash
+2026-08-13 20:11:55:1155 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report:fc4ea338-239f-4bea-b316-4e68f8065033 as artifact b22b7a50-b342-4637-9168-bb4aa40d8e6d[39m
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R8: reopen WITH edited conclusions produces a NEW revision with a DIFFERENT content hash
+2026-08-13 20:11:55:1155 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"rr-1786644712353-org-a","module":"outputs"}
+
+·stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R10: reopen on a cross-org output 404s (never a 409 that would confirm it exists)
+2026-08-13 20:11:56:1156 [31merror[39m: [31m[Postgres] Query Error [ALL]:[39m
+2026-08-13 20:11:56:1156 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, title FROM initiatives[39m
+[31m        WHERE organization_id = $1[39m
+[31m          AND ([39m
+[31m            source_assessment_id = $2[39m
+[31m            OR source_report_id = $3[39m
+[31m            OR (source_id = $4 AND lower(coalesce(source_type, '')) = $5)[39m
+[31m          )[39m
+[31m        LIMIT 50[39m
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R10: reopen on a cross-org output 404s (never a 409 that would confirm it exists)
+2026-08-13 20:11:56:1156 [33mwarn[39m: [33m[ReportBuilder] resolveReportSourceRefs: initiatives lookup failed[39m {"error":{"name":"error","message":"column \"source_report_id\" does not exist","stack":"error: column \"source_report_id\" does not exist\n    at /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/pg-pool/index.js:45:11\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at executeWithLogging (/Users/piotrwisniewski/.codex/worktrees/g3-regress/server/src/database/PostgresDatabase.ts:664:17)"},"sourceType":"TOOL"}
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R10: reopen on a cross-org output 404s (never a 409 that would confirm it exists)
+2026-08-13 20:11:56:1156 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R10: reopen on a cross-org output 404s (never a 409 that would confirm it exists)
+2026-08-13 20:11:56:1156 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report:4a775abf-6d25-46cc-bd03-d772bb3679a3 as artifact c7ed88d6-f0a5-4a2b-89ec-2bbd40f93875[39m
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R10: reopen on a cross-org output 404s (never a 409 that would confirm it exists)
+2026-08-13 20:11:56:1156 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"rr-1786644712353-org-a","module":"outputs"}
+
+··stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R11: retrying reopen on an already-superseded id does not duplicate — it 409s (already-superseded is not approved)
+2026-08-13 20:11:56:1156 [31merror[39m: [31m[Postgres] Query Error [ALL]:[39m
+2026-08-13 20:11:56:1156 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, title FROM initiatives[39m
+[31m        WHERE organization_id = $1[39m
+[31m          AND ([39m
+[31m            source_assessment_id = $2[39m
+[31m            OR source_report_id = $3[39m
+[31m            OR (source_id = $4 AND lower(coalesce(source_type, '')) = $5)[39m
+[31m          )[39m
+[31m        LIMIT 50[39m
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R11: retrying reopen on an already-superseded id does not duplicate — it 409s (already-superseded is not approved)
+2026-08-13 20:11:56:1156 [33mwarn[39m: [33m[ReportBuilder] resolveReportSourceRefs: initiatives lookup failed[39m {"error":{"name":"error","message":"column \"source_report_id\" does not exist","stack":"error: column \"source_report_id\" does not exist\n    at /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/pg-pool/index.js:45:11\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at executeWithLogging (/Users/piotrwisniewski/.codex/worktrees/g3-regress/server/src/database/PostgresDatabase.ts:664:17)"},"sourceType":"TOOL"}
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R11: retrying reopen on an already-superseded id does not duplicate — it 409s (already-superseded is not approved)
+2026-08-13 20:11:56:1156 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R11: retrying reopen on an already-superseded id does not duplicate — it 409s (already-superseded is not approved)
+2026-08-13 20:11:56:1156 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report:88e20439-fb03-49b2-b1f2-aa8520e781b3 as artifact 48c8a503-457e-4b38-a700-c9828473f45d[39m
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts > tool-outputs read/list/reopen routes (real Postgres) > R11: retrying reopen on an already-superseded id does not duplicate — it 409s (already-superseded is not approved)
+2026-08-13 20:11:56:1156 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"rr-1786644712353-org-a","module":"outputs"}
+
+···stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts
+2026-08-13 20:11:56:1156 [32minfo[39m: [32m[2026-08-13T18:11:56.712Z] [INFO] [AI:CircuitBreaker] LLM circuit breakers initialized[39m
+
+stdout | tests/integration/tool-outputs-read-routes.realdb.test.ts
+2026-08-13 20:11:56:1156 [32minfo[39m: [32m[2026-08-13T18:11:56.713Z] [INFO] [AI:CircuitBreaker] Health check function set for [openai][39m
+2026-08-13 20:11:56:1156 [32minfo[39m: [32m[2026-08-13T18:11:56.713Z] [INFO] [AI:CircuitBreaker] Health check registered for [openai][39m
+2026-08-13 20:11:56:1156 [32minfo[39m: [32m[2026-08-13T18:11:56.713Z] [INFO] [AI:CircuitBreaker] Health check function set for [google][39m
+2026-08-13 20:11:56:1156 [32minfo[39m: [32m[2026-08-13T18:11:56.713Z] [INFO] [AI:CircuitBreaker] Health check registered for [google][39m
+
+stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts
+2026-08-13 20:11:57:1157 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-13 20:11:57:1157 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-13 20:11:57:1157 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-13 20:11:57:1157 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-13 20:11:57:1157 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts
+2026-08-13 20:11:58:1158 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-08-13 20:11:58:1158 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-08-13 20:11:58:1158 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-08-13 20:11:58:1158 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-08-13 20:11:58:1158 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"localhost","database":"consultinity","max":10}
+2026-08-13 20:11:58:1158 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts
+2026-08-13 20:11:58:1158 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts
+2026-08-13 20:11:58:1158 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts
+2026-08-13 20:11:58:1158 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 20:11:58:1158 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts
+2026-08-13 20:11:58:1158 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["httpadapter-1786644716691-org"]}
+2026-08-13 20:11:58:1158 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["httpadapter-1786644716691-org"]}
+
+stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts
+2026-08-13 20:11:58:1158 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts
+2026-08-13 20:11:58:1158 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts
+2026-08-13 20:11:58:1158 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts
+2026-08-13 20:11:58:1158 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts
+2026-08-13 20:11:58:1158 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts
+2026-08-13 20:11:58:1158 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts
+2026-08-13 20:11:58:1158 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts
+2026-08-13 20:11:58:1158 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts
+2026-08-13 20:11:58:1158 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts > create -> update -> reload -> identical state (real Postgres) > POST /api/tools creates a real row a subsequent GET can see
+2026-08-13 20:11:58:1158 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 20:11:58:1158 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts > create -> update -> reload -> identical state (real Postgres) > POST /api/tools creates a real row a subsequent GET can see
+2026-08-13 20:11:58:1158 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["httpadapter-1786644716691-org"]}
+2026-08-13 20:11:58:1158 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["httpadapter-1786644716691-org"]}
+
+·stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts > create -> update -> reload -> identical state (real Postgres) > PUT (answers) -> GET reload returns byte-identical answers -- the adapter/hook contract
+2026-08-13 20:11:59:1159 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 20:11:59:1159 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts > create -> update -> reload -> identical state (real Postgres) > PUT (answers) -> GET reload returns byte-identical answers -- the adapter/hook contract
+2026-08-13 20:11:59:1159 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["httpadapter-1786644716691-org"]}
+2026-08-13 20:11:59:1159 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["httpadapter-1786644716691-org"]}
+
+stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts > create -> update -> reload -> identical state (real Postgres) > PUT (answers) -> GET reload returns byte-identical answers -- the adapter/hook contract
+2026-08-13 20:11:59:1159 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts > create -> update -> reload -> identical state (real Postgres) > PUT (answers) -> GET reload returns byte-identical answers -- the adapter/hook contract
+2026-08-13 20:11:59:1159 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 20:11:59:1159 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts > create -> update -> reload -> identical state (real Postgres) > PUT (answers) -> GET reload returns byte-identical answers -- the adapter/hook contract
+2026-08-13 20:11:59:1159 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["httpadapter-1786644716691-org"]}
+2026-08-13 20:11:59:1159 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["httpadapter-1786644716691-org"]}
+
+stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts > create -> update -> reload -> identical state (real Postgres) > PUT (answers) -> GET reload returns byte-identical answers -- the adapter/hook contract
+2026-08-13 20:11:59:1159 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+·stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts > create -> update -> reload -> identical state (real Postgres) > a second update+reload cycle stays consistent (no drift across repeated saves)
+2026-08-13 20:11:59:1159 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 20:11:59:1159 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts > create -> update -> reload -> identical state (real Postgres) > a second update+reload cycle stays consistent (no drift across repeated saves)
+2026-08-13 20:11:59:1159 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["httpadapter-1786644716691-org"]}
+2026-08-13 20:11:59:1159 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["httpadapter-1786644716691-org"]}
+
+stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts > create -> update -> reload -> identical state (real Postgres) > a second update+reload cycle stays consistent (no drift across repeated saves)
+2026-08-13 20:11:59:1159 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts > create -> update -> reload -> identical state (real Postgres) > a second update+reload cycle stays consistent (no drift across repeated saves)
+2026-08-13 20:11:59:1159 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 20:11:59:1159 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts > create -> update -> reload -> identical state (real Postgres) > a second update+reload cycle stays consistent (no drift across repeated saves)
+2026-08-13 20:11:59:1159 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["httpadapter-1786644716691-org"]}
+2026-08-13 20:11:59:1159 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["httpadapter-1786644716691-org"]}
+
+stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts > create -> update -> reload -> identical state (real Postgres) > a second update+reload cycle stays consistent (no drift across repeated saves)
+2026-08-13 20:11:59:1159 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts > create -> update -> reload -> identical state (real Postgres) > a second update+reload cycle stays consistent (no drift across repeated saves)
+2026-08-13 20:11:59:1159 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 20:11:59:1159 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts > create -> update -> reload -> identical state (real Postgres) > a second update+reload cycle stays consistent (no drift across repeated saves)
+2026-08-13 20:11:59:1159 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["httpadapter-1786644716691-org"]}
+2026-08-13 20:11:59:1159 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["httpadapter-1786644716691-org"]}
+
+stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts > create -> update -> reload -> identical state (real Postgres) > a second update+reload cycle stays consistent (no drift across repeated saves)
+2026-08-13 20:11:59:1159 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+·stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts > create -> update -> reload -> identical state (real Postgres) > cross-organization GET cannot see the session (404) -- the same isolation the adapter relies on
+2026-08-13 20:11:59:1159 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 20:11:59:1159 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts > create -> update -> reload -> identical state (real Postgres) > cross-organization GET cannot see the session (404) -- the same isolation the adapter relies on
+2026-08-13 20:11:59:1159 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["httpadapter-1786644716691-org"]}
+2026-08-13 20:11:59:1159 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["httpadapter-1786644716691-org"]}
+
+stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts > create -> update -> reload -> identical state (real Postgres) > cross-organization GET cannot see the session (404) -- the same isolation the adapter relies on
+2026-08-13 20:11:59:1159 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+·stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts > create -> update -> reload -> identical state (real Postgres) > CLOSES the former "known gap": GET returns `version`, and PUT enforces it as a real CAS token
+2026-08-13 20:11:59:1159 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 20:11:59:1159 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts > create -> update -> reload -> identical state (real Postgres) > CLOSES the former "known gap": GET returns `version`, and PUT enforces it as a real CAS token
+2026-08-13 20:11:59:1159 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["httpadapter-1786644716691-org"]}
+2026-08-13 20:11:59:1159 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["httpadapter-1786644716691-org"]}
+
+stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts > create -> update -> reload -> identical state (real Postgres) > CLOSES the former "known gap": GET returns `version`, and PUT enforces it as a real CAS token
+2026-08-13 20:11:59:1159 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts > create -> update -> reload -> identical state (real Postgres) > CLOSES the former "known gap": GET returns `version`, and PUT enforces it as a real CAS token
+2026-08-13 20:11:59:1159 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 20:11:59:1159 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts > create -> update -> reload -> identical state (real Postgres) > CLOSES the former "known gap": GET returns `version`, and PUT enforces it as a real CAS token
+2026-08-13 20:11:59:1159 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["httpadapter-1786644716691-org"]}
+2026-08-13 20:11:59:1159 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["httpadapter-1786644716691-org"]}
+
+stdout | tests/integration/toolSessionHttpAdapter.realdb.test.ts > create -> update -> reload -> identical state (real Postgres) > CLOSES the former "known gap": GET returns `version`, and PUT enforces it as a real CAS token
+2026-08-13 20:11:59:1159 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+·stdout | tests/integration/tool-sessions-cas.realdb.test.ts
+2026-08-13 20:12:02:122 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-13 20:12:02:122 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-13 20:12:02:122 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-13 20:12:02:122 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-13 20:12:02:122 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/integration/tool-sessions-cas.realdb.test.ts > CAS — tool_sessions optimistic concurrency (real Postgres) > GET returns the real server version and a serverTime
+2026-08-13 20:12:03:123 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-08-13 20:12:03:123 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-08-13 20:12:03:123 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-08-13 20:12:03:123 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-08-13 20:12:03:123 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"localhost","database":"consultinity","max":10}
+2026-08-13 20:12:03:123 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | tests/integration/tool-sessions-cas.realdb.test.ts > CAS — tool_sessions optimistic concurrency (real Postgres) > GET returns the real server version and a serverTime
+2026-08-13 20:12:03:123 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+··stdout | tests/integration/tool-sessions-cas.realdb.test.ts > CAS — tool_sessions optimistic concurrency (real Postgres) > PUT with the correct expectedVersion saves and returns the new version
+2026-08-13 20:12:03:123 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tool-sessions-cas.realdb.test.ts > CAS — tool_sessions optimistic concurrency (real Postgres) > PUT with the correct expectedVersion saves and returns the new version
+2026-08-13 20:12:03:123 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 20:12:03:123 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tool-sessions-cas.realdb.test.ts > CAS — tool_sessions optimistic concurrency (real Postgres) > PUT with the correct expectedVersion saves and returns the new version
+2026-08-13 20:12:03:123 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["cas-1786644721624-orgA"]}
+2026-08-13 20:12:03:123 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["cas-1786644721624-orgA"]}
+
+stdout | tests/integration/tool-sessions-cas.realdb.test.ts > CAS — tool_sessions optimistic concurrency (real Postgres) > PUT with the correct expectedVersion saves and returns the new version
+2026-08-13 20:12:03:123 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tool-sessions-cas.realdb.test.ts > CAS — tool_sessions optimistic concurrency (real Postgres) > PUT with the correct expectedVersion saves and returns the new version
+2026-08-13 20:12:03:123 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tool-sessions-cas.realdb.test.ts > CAS — tool_sessions optimistic concurrency (real Postgres) > PUT with the correct expectedVersion saves and returns the new version
+2026-08-13 20:12:03:123 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tool-sessions-cas.realdb.test.ts > CAS — tool_sessions optimistic concurrency (real Postgres) > PUT with the correct expectedVersion saves and returns the new version
+2026-08-13 20:12:03:123 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tool-sessions-cas.realdb.test.ts > CAS — tool_sessions optimistic concurrency (real Postgres) > PUT with the correct expectedVersion saves and returns the new version
+2026-08-13 20:12:03:123 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tool-sessions-cas.realdb.test.ts > CAS — tool_sessions optimistic concurrency (real Postgres) > PUT with the correct expectedVersion saves and returns the new version
+2026-08-13 20:12:03:123 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tool-sessions-cas.realdb.test.ts > CAS — tool_sessions optimistic concurrency (real Postgres) > PUT with the correct expectedVersion saves and returns the new version
+2026-08-13 20:12:03:123 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tool-sessions-cas.realdb.test.ts > CAS — tool_sessions optimistic concurrency (real Postgres) > PUT with the correct expectedVersion saves and returns the new version
+2026-08-13 20:12:03:123 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tool-sessions-cas.realdb.test.ts > CAS — tool_sessions optimistic concurrency (real Postgres) > PUT with the correct expectedVersion saves and returns the new version
+2026-08-13 20:12:03:123 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tool-sessions-cas.realdb.test.ts > CAS — tool_sessions optimistic concurrency (real Postgres) > PUT with a stale expectedVersion is rejected (409) with the CURRENT server state, and does NOT write
+2026-08-13 20:12:04:124 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 20:12:04:124 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tool-sessions-cas.realdb.test.ts > CAS — tool_sessions optimistic concurrency (real Postgres) > PUT with a stale expectedVersion is rejected (409) with the CURRENT server state, and does NOT write
+2026-08-13 20:12:04:124 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["cas-1786644721624-orgA"]}
+2026-08-13 20:12:04:124 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["cas-1786644721624-orgA"]}
+
+·stdout | tests/integration/tool-sessions-cas.realdb.test.ts > CAS — tool_sessions optimistic concurrency (real Postgres) > two GENUINELY CONCURRENT writes at the same expectedVersion: exactly ONE succeeds, the loser gets 409 + current state
+2026-08-13 20:12:04:124 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tool-sessions-cas.realdb.test.ts > CAS — tool_sessions optimistic concurrency (real Postgres) > two GENUINELY CONCURRENT writes at the same expectedVersion: exactly ONE succeeds, the loser gets 409 + current state
+2026-08-13 20:12:04:124 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 20:12:04:124 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tool-sessions-cas.realdb.test.ts > CAS — tool_sessions optimistic concurrency (real Postgres) > two GENUINELY CONCURRENT writes at the same expectedVersion: exactly ONE succeeds, the loser gets 409 + current state
+2026-08-13 20:12:04:124 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["cas-1786644721624-orgA"]}
+2026-08-13 20:12:04:124 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["cas-1786644721624-orgA"]}
+
+·stdout | tests/integration/tool-sessions-cas.realdb.test.ts > CAS — tool_sessions optimistic concurrency (real Postgres) > retrying the SAME write (same expectedVersion, already applied) does not duplicate — it 409s cleanly against the new version
+2026-08-13 20:12:04:124 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 20:12:04:124 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tool-sessions-cas.realdb.test.ts > CAS — tool_sessions optimistic concurrency (real Postgres) > retrying the SAME write (same expectedVersion, already applied) does not duplicate — it 409s cleanly against the new version
+2026-08-13 20:12:04:124 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["cas-1786644721624-orgA"]}
+2026-08-13 20:12:04:124 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["cas-1786644721624-orgA"]}
+
+stdout | tests/integration/tool-sessions-cas.realdb.test.ts > CAS — tool_sessions optimistic concurrency (real Postgres) > retrying the SAME write (same expectedVersion, already applied) does not duplicate — it 409s cleanly against the new version
+2026-08-13 20:12:04:124 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+····stdout | tests/integration/tool-sessions-cas.realdb.test.ts > CAS — tool_sessions optimistic concurrency (real Postgres) > a local draft older than the server never overwrites the server (client holding a stale copy retries and loses)
+2026-08-13 20:12:04:124 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 20:12:04:124 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tool-sessions-cas.realdb.test.ts > CAS — tool_sessions optimistic concurrency (real Postgres) > a local draft older than the server never overwrites the server (client holding a stale copy retries and loses)
+2026-08-13 20:12:04:124 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["cas-1786644721624-orgA"]}
+2026-08-13 20:12:04:124 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["cas-1786644721624-orgA"]}
+
+stdout | tests/integration/tool-sessions-cas.realdb.test.ts > CAS — tool_sessions optimistic concurrency (real Postgres) > a local draft older than the server never overwrites the server (client holding a stale copy retries and loses)
+2026-08-13 20:12:04:124 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tool-sessions-cas.realdb.test.ts > CAS — tool_sessions optimistic concurrency (real Postgres) > a local draft older than the server never overwrites the server (client holding a stale copy retries and loses)
+2026-08-13 20:12:04:124 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 20:12:04:124 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tool-sessions-cas.realdb.test.ts > CAS — tool_sessions optimistic concurrency (real Postgres) > a local draft older than the server never overwrites the server (client holding a stale copy retries and loses)
+2026-08-13 20:12:04:124 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["cas-1786644721624-orgA"]}
+2026-08-13 20:12:04:124 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["cas-1786644721624-orgA"]}
+
+stdout | tests/integration/tool-sessions-cas.realdb.test.ts > CAS — tool_sessions optimistic concurrency (real Postgres) > a local draft older than the server never overwrites the server (client holding a stale copy retries and loses)
+2026-08-13 20:12:04:124 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tool-sessions-cas.realdb.test.ts > CAS — tool_sessions optimistic concurrency (real Postgres) > reload (a fresh GET) reflects the persisted version after multiple writes
+2026-08-13 20:12:04:124 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 20:12:04:124 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tool-sessions-cas.realdb.test.ts > CAS — tool_sessions optimistic concurrency (real Postgres) > reload (a fresh GET) reflects the persisted version after multiple writes
+2026-08-13 20:12:04:124 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["cas-1786644721624-orgA"]}
+2026-08-13 20:12:04:124 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["cas-1786644721624-orgA"]}
+
+stdout | tests/integration/tool-sessions-cas.realdb.test.ts > CAS — tool_sessions optimistic concurrency (real Postgres) > reload (a fresh GET) reflects the persisted version after multiple writes
+2026-08-13 20:12:04:124 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tool-sessions-cas.realdb.test.ts > CAS — tool_sessions optimistic concurrency (real Postgres) > reload (a fresh GET) reflects the persisted version after multiple writes
+2026-08-13 20:12:04:124 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 20:12:04:124 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tool-sessions-cas.realdb.test.ts > CAS — tool_sessions optimistic concurrency (real Postgres) > reload (a fresh GET) reflects the persisted version after multiple writes
+2026-08-13 20:12:04:124 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["cas-1786644721624-orgA"]}
+2026-08-13 20:12:04:124 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["cas-1786644721624-orgA"]}
+
+stdout | tests/integration/tool-sessions-cas.realdb.test.ts > CAS — tool_sessions optimistic concurrency (real Postgres) > reload (a fresh GET) reflects the persisted version after multiple writes
+2026-08-13 20:12:04:124 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+·stdout | tests/integration/tool-sessions-cas.realdb.test.ts > CAS — tool_sessions optimistic concurrency (real Postgres) > version survives a "server restart" — it lives in the tool_sessions.version column, not process memory
+2026-08-13 20:12:04:124 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 20:12:04:124 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tool-sessions-cas.realdb.test.ts > CAS — tool_sessions optimistic concurrency (real Postgres) > version survives a "server restart" — it lives in the tool_sessions.version column, not process memory
+2026-08-13 20:12:04:124 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["cas-1786644721624-orgA"]}
+2026-08-13 20:12:04:124 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["cas-1786644721624-orgA"]}
+
+stdout | tests/integration/tool-sessions-cas.realdb.test.ts > CAS — tool_sessions optimistic concurrency (real Postgres) > version survives a "server restart" — it lives in the tool_sessions.version column, not process memory
+2026-08-13 20:12:04:124 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+·············stdout | tests/integration/teresa/teresaKernel.realdb.test.ts
+2026-08-13 20:12:09:129 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-13 20:12:09:129 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-13 20:12:09:129 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-13 20:12:09:129 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-13 20:12:09:129 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/integration/teresa/teresaKernel.realdb.test.ts > commit without a preview > is rejected: preview_not_found
+2026-08-13 20:12:09:129 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-08-13 20:12:09:129 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-08-13 20:12:09:129 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-08-13 20:12:09:129 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-08-13 20:12:09:129 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"localhost","database":"consultinity","max":10}
+2026-08-13 20:12:09:129 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | tests/integration/teresa/teresaKernel.realdb.test.ts > commit without a preview > is rejected: preview_not_found
+2026-08-13 20:12:09:129 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+···········
+
+ Test Files  8 passed (8)
+      Tests  66 passed (66)
+   Start at  20:11:37
+   Duration  32.23s (transform 2.46s, setup 3.89s, import 5.95s, tests 22.37s, environment 25.53s)
+
+EXIT_CODE=0
+=== finished: 2026-08-13T18:12:10Z ===

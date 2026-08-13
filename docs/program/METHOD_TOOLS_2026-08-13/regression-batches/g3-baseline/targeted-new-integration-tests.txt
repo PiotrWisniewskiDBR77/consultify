@@ -1,0 +1,14 @@
+=== batch: targeted-new-integration-tests (baseline — only the 1 file that exists at fb6dfedd42: tool-session-roundtrip.contract.test.ts, pre-CAS-update version) ===
+=== started: 2026-08-13T18:11:40Z ===
+
+ RUN  v4.1.8 /Users/piotrwisniewski/.codex/worktrees/g3-baseline
+
+···········
+
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+   Start at  20:11:43
+   Duration  6.99s (transform 1.22s, setup 538ms, import 863ms, tests 1.80s, environment 3.42s)
+
+EXIT_CODE=0
+=== finished: 2026-08-13T18:11:50Z ===
