@@ -229,6 +229,28 @@ function toMethodSession(row: MethodSessionRow): MethodSession {
   };
 }
 
+/**
+ * List filter for `listForOrganization` — org-scoped by construction
+ * (`organizationId` is required, never optional, so a caller cannot forget
+ * to scope a list read). `limit`/`offset` are validated by the HTTP layer
+ * (`server/src/routes/method-core.routes.ts`'s `parsePagination`) before
+ * reaching here — this service trusts them as already-clamped integers.
+ */
+export interface ListSessionsFilter {
+  readonly organizationId: string;
+  readonly methodPackId?: string;
+  readonly state?: MethodSessionState;
+  readonly projectId?: string;
+  readonly ownerUserId?: string;
+  readonly limit: number;
+  readonly offset: number;
+}
+
+export interface ListSessionsResult {
+  readonly items: readonly MethodSession[];
+  readonly total: number;
+}
+
 /** Minimal pack-readiness lookup this service depends on — kept narrow on
  * purpose so a unit test can stub it without wiring the whole registry. */
 export interface PackReadinessLookup {
@@ -353,6 +375,52 @@ export class MethodSessionService {
    * existed, and — just as important — NO second `method_session_role_events`
    * row either, so replaying the same assignment never inflates history.
    */
+  /**
+   * Org-wide, paginated Session listing — powers `GET /api/method/sessions`
+   * ("po restarcie użytkownik ma punkt wejścia „pokaż moje sesje", nie tylko
+   * wznowienie po znanym id"). Same convention as the sibling downstream-
+   * artefact list endpoints (Outputs/Reports/Presentations/Initiative
+   * Drafts, see `MethodOutputService.listForOrganization`'s doc comment):
+   * loads the full `method_sessions` table for the org with a single
+   * `SELECT * WHERE organization_id` (never a narrower WHERE — the kernel
+   * filters/sorts in memory rather than trusting SQL ORDER BY, the
+   * documented root cause of a prior non-deterministic-hash defect), filters
+   * in memory, sorts DETERMINISTICALLY (`created_at DESC, id DESC` — the
+   * `id` tie-breaker keeps two calls with identical timestamps in the same
+   * order), and only THEN slices `[offset, offset+limit)` — so `total`
+   * reflects the full filtered set, not just the returned page.
+   *
+   * `revisionOfSessionId` and `frozenSnapshotId` are already on the returned
+   * `MethodSession` — a `frozen -> active` reopen lands here as a SEPARATE
+   * row (see `transition`'s header comment: the original frozen row is never
+   * mutated), so both the original and its reopened revision show up as
+   * distinct list entries, each individually resumable.
+   */
+  async listForOrganization(filter: ListSessionsFilter): Promise<ListSessionsResult> {
+    const rows = await DbPromise.all<MethodSessionRow>(
+      `SELECT * FROM method_sessions WHERE organization_id = ?`,
+      [filter.organizationId]
+    );
+    // organizationId is already the SQL predicate above; this re-check is a
+    // defensive backstop against the test-mock's narrow WHERE-column
+    // allow-list (see MethodEventStore's header comment on the same pattern,
+    // and MethodOutputService.listForOrganization's identical backstop).
+    let matching = rows.filter((row) => row.organization_id === filter.organizationId);
+    if (filter.methodPackId) matching = matching.filter((row) => row.method_pack_id === filter.methodPackId);
+    if (filter.state) matching = matching.filter((row) => row.state === filter.state);
+    if (filter.projectId) matching = matching.filter((row) => row.project_id === filter.projectId);
+    if (filter.ownerUserId) matching = matching.filter((row) => row.owner_user_id === filter.ownerUserId);
+
+    matching.sort((a, b) => {
+      const byTime = new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      return byTime !== 0 ? byTime : b.id.localeCompare(a.id);
+    });
+
+    const total = matching.length;
+    const page = matching.slice(filter.offset, filter.offset + filter.limit);
+    return { items: page.map(toMethodSession), total };
+  }
+
   async assignRole(
     organizationId: string,
     sessionId: string,
