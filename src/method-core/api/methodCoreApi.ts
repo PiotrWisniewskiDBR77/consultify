@@ -385,3 +385,202 @@ export async function createInitiativeDraft(outputId: string, input: CreateIniti
   );
   return res.draft;
 }
+
+// ---------------------------------------------------------------------------
+// S1 — recovery/lineage read surface (CEL 2, 2026-08-13).
+//
+// After a browser restart the user reopens a session and must see every
+// artefact they already produced against it — the WHOLE reopen lineage, not
+// just what the current session id happens to own. These functions are thin
+// wrappers over server/src/routes/method-core.routes.ts's read-only S1
+// endpoints; every list is paginated (`limit`/`offset`) and returns an
+// explicit `total`, and every Output/Report/Presentation/Draft in a list
+// carries the SAME server-computed record `DrdArtifactsPanel` renders — this
+// file never reconstructs one from local/session state, only relays what the
+// server returned.
+// ---------------------------------------------------------------------------
+
+export interface PaginationParams {
+  readonly limit?: number;
+  readonly offset?: number;
+}
+
+function paginationQuery(params?: PaginationParams): string {
+  if (!params) return '';
+  const search = new URLSearchParams();
+  if (typeof params.limit === 'number') search.set('limit', String(params.limit));
+  if (typeof params.offset === 'number') search.set('offset', String(params.offset));
+  const qs = search.toString();
+  return qs ? `?${qs}` : '';
+}
+
+export interface MethodOutputListItem extends MethodOutputSummary {
+  readonly status: 'current' | 'superseded';
+  readonly supersededByOutputId: string | null;
+}
+
+export interface PaginatedResult<T> {
+  readonly items: readonly T[];
+  readonly total: number;
+  readonly limit: number;
+  readonly offset: number;
+}
+
+/** GET /sessions/:id/outputs — Outputs across the WHOLE reopen lineage of
+ * this session (not just this session id's own Output), newest-relevant
+ * first is NOT assumed — callers get `outputVersion` ascending with explicit
+ * `status`/`supersededByOutputId` per item. */
+export async function listSessionOutputs(
+  sessionId: string,
+  params?: PaginationParams
+): Promise<PaginatedResult<MethodOutputListItem>> {
+  const res = await handle<{ outputs: MethodOutputListItem[]; total: number; limit: number; offset: number }>(
+    fetchWithRetry(`${BASE}/sessions/${sessionId}/outputs${paginationQuery(params)}`, {
+      method: 'GET',
+      headers: getHeaders(),
+    })
+  );
+  return { items: res.outputs, total: res.total, limit: res.limit, offset: res.offset };
+}
+
+/** GET /outputs/:id/revisions — the full revision chain this Output sits in,
+ * version ascending. */
+export async function listOutputRevisions(
+  outputId: string,
+  params?: PaginationParams
+): Promise<PaginatedResult<MethodOutputListItem>> {
+  const res = await handle<{ revisions: MethodOutputListItem[]; total: number; limit: number; offset: number }>(
+    fetchWithRetry(`${BASE}/outputs/${outputId}/revisions${paginationQuery(params)}`, {
+      method: 'GET',
+      headers: getHeaders(),
+    })
+  );
+  return { items: res.revisions, total: res.total, limit: res.limit, offset: res.offset };
+}
+
+export interface MethodArtefactSnapshot {
+  readonly id: string;
+  readonly organizationId: string;
+  readonly outputId: string;
+  readonly sessionId: string;
+  readonly title: string;
+  readonly content: unknown;
+  readonly contentHash: string;
+  readonly status: 'current' | 'superseded' | 'source_updated';
+  readonly supersededByOutputId: string | null;
+  readonly supersededAt: string | null;
+  readonly createdAt: string;
+  readonly kind: 'report' | 'presentation';
+}
+
+/** GET /sessions/:id/reports — Report snapshots across the whole lineage. */
+export async function listSessionReports(
+  sessionId: string,
+  params?: PaginationParams
+): Promise<PaginatedResult<MethodArtefactSnapshot>> {
+  const res = await handle<{ reports: MethodArtefactSnapshot[]; total: number; limit: number; offset: number }>(
+    fetchWithRetry(`${BASE}/sessions/${sessionId}/reports${paginationQuery(params)}`, {
+      method: 'GET',
+      headers: getHeaders(),
+    })
+  );
+  return { items: res.reports, total: res.total, limit: res.limit, offset: res.offset };
+}
+
+/** GET /sessions/:id/presentations — Presentations across the whole lineage. */
+export async function listSessionPresentations(
+  sessionId: string,
+  params?: PaginationParams
+): Promise<PaginatedResult<MethodArtefactSnapshot>> {
+  const res = await handle<{
+    presentations: MethodArtefactSnapshot[];
+    total: number;
+    limit: number;
+    offset: number;
+  }>(
+    fetchWithRetry(`${BASE}/sessions/${sessionId}/presentations${paginationQuery(params)}`, {
+      method: 'GET',
+      headers: getHeaders(),
+    })
+  );
+  return { items: res.presentations, total: res.total, limit: res.limit, offset: res.offset };
+}
+
+export interface MethodInitiativeDraftListItem {
+  readonly id: string;
+  readonly organizationId: string;
+  readonly outputId: string;
+  readonly sessionId: string;
+  readonly title: string;
+  readonly summary: string | null;
+  readonly findingIds: readonly string[];
+  readonly rationale: string;
+  readonly expectedOutcome: string;
+  readonly confidence: 'low' | 'medium' | 'high';
+  readonly status: 'current' | 'superseded' | 'source_updated';
+  readonly supersededByOutputId: string | null;
+  readonly supersededAt: string | null;
+  readonly createdAt: string;
+}
+
+/** GET /sessions/:id/initiative-drafts — Drafts across the whole lineage. */
+export async function listSessionInitiativeDrafts(
+  sessionId: string,
+  params?: PaginationParams
+): Promise<PaginatedResult<MethodInitiativeDraftListItem>> {
+  const res = await handle<{
+    drafts: MethodInitiativeDraftListItem[];
+    total: number;
+    limit: number;
+    offset: number;
+  }>(
+    fetchWithRetry(`${BASE}/sessions/${sessionId}/initiative-drafts${paginationQuery(params)}`, {
+      method: 'GET',
+      headers: getHeaders(),
+    })
+  );
+  return { items: res.drafts, total: res.total, limit: res.limit, offset: res.offset };
+}
+
+/** GET /reports/:id — a single Report snapshot (approved server record). */
+export async function getReport(reportId: string): Promise<MethodArtefactSnapshot> {
+  const res = await handle<{ report: MethodArtefactSnapshot }>(
+    fetchWithRetry(`${BASE}/reports/${reportId}`, { method: 'GET', headers: getHeaders() })
+  );
+  return res.report;
+}
+
+/** GET /presentations/:id — a single Presentation snapshot. */
+export async function getPresentation(presentationId: string): Promise<MethodArtefactSnapshot> {
+  const res = await handle<{ presentation: MethodArtefactSnapshot }>(
+    fetchWithRetry(`${BASE}/presentations/${presentationId}`, { method: 'GET', headers: getHeaders() })
+  );
+  return res.presentation;
+}
+
+/** GET /initiative-drafts/:id — a single Initiative Proposal Draft. */
+export async function getInitiativeDraft(draftId: string): Promise<MethodInitiativeDraftListItem> {
+  const res = await handle<{ draft: MethodInitiativeDraftListItem }>(
+    fetchWithRetry(`${BASE}/initiative-drafts/${draftId}`, { method: 'GET', headers: getHeaders() })
+  );
+  return res.draft;
+}
+
+export interface MethodSessionLineage {
+  readonly rootSessionId: string;
+  readonly sessions: readonly MethodSession[];
+  readonly outputs: readonly MethodOutputListItem[];
+  readonly reports: readonly MethodArtefactSnapshot[];
+  readonly presentations: readonly MethodArtefactSnapshot[];
+  readonly initiativeDrafts: readonly MethodInitiativeDraftListItem[];
+}
+
+/** GET /sessions/:id/lineage — the full lineage tree (sessions + Outputs +
+ * downstream Reports/Presentations/Initiative Drafts) this session belongs
+ * to. Used to render the recovery lineage tree in `DrdArtifactsPanel`. */
+export async function getSessionLineage(sessionId: string): Promise<MethodSessionLineage> {
+  const res = await handle<{ lineage: MethodSessionLineage }>(
+    fetchWithRetry(`${BASE}/sessions/${sessionId}/lineage`, { method: 'GET', headers: getHeaders() })
+  );
+  return res.lineage;
+}
