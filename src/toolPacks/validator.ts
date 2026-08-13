@@ -157,6 +157,15 @@ export function validateToolPack(pack: ToolPack): ValidationResult {
     }
   });
 
+  // --- kontrakt konkluzji W2 (CONCLUSION_LAYER_STANDARD) ---
+  (
+    ['k1FactSource', 'k2GroundingScope', 'k3PrioritySource', 'k4EffectRule', 'tradeoffRule'] as const
+  ).forEach((key) => {
+    if (isEvidenceMissing(pack.conclusion?.[key]) && !declaredMissing) {
+      err(`conclusion.${key}`, 'Brak kontraktu konkluzji W2 wymaganego przez FROZEN standard.');
+    }
+  });
+
   // --- provenance ---
   if (!declaredMissing && (!pack.provenance || pack.provenance.length === 0)) {
     err('provenance', 'Pack bez źródeł nie może być kompletny.');
