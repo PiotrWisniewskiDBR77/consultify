@@ -261,6 +261,18 @@ export const DEFAULT_FLAGS: FeatureFlag[] = [
     allowLocalOverride: true,
   },
   {
+    id: 'auditsFiveSurfacesV1',
+    name: 'Audits: Five-surface Method Hub (Library/Processes/Outputs/Reports/Initiatives)',
+    description:
+      'U7: parallel Audits Method Hub at `/audit-programs/method`, with URL-synced ' +
+      'Library/Processes/Outputs/Reports/Initiatives surfaces. It does not replace ' +
+      'the existing `/audit-programs` route. OFF by default until fresh runtime and ' +
+      'visual acceptance are complete.',
+    defaultValue: false,
+    category: 'experimental',
+    allowLocalOverride: true,
+  },
+  {
     id: 'mindmapHeuristicAiOverlays',
     name: 'Mind Map: Heuristic AI Overlays (DP-5)',
     description:
