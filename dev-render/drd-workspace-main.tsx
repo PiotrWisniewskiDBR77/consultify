@@ -8,8 +8,11 @@
  *
  * URL params: &screen=library|interview|matrix|teresa|approval|output|
  *                      report|initiative|reopen|
- *                      http-server|http-loading|http-conflict|http-offline|
- *                      http-recovery|http-frozen
+ *                      http-server|http-saving|http-saved|http-offline|
+ *                      http-recovery-draft|http-conflict|http-reconnecting|
+ *                      http-recovered|
+ *                      http-loading|http-recovery|http-frozen (retained,
+ *                      pre-CEL-4 aliases — see HTTP_FORCE_STATE_BY_SCREEN)
  *             &theme=light|dark (default light)
  *             &demoSessionId=<id>  (http-* screens only — resume a session
  *                                   pre-created + role-seeded out-of-band,
@@ -18,16 +21,23 @@
  *                                   has no endpoint to grant — see
  *                                   DrdHttpMethodWorkspaceScreen.tsx header)
  *
- * The `http-*` screens are P0C (2026-08-13): they mount
- * `DrdMethodWorkspaceScreen` with `forceHttpSourceOfTruth`, so
- * `DrdHttpSessionRuntime` makes REAL fetch calls to `/api/method/...` on
- * whatever server this harness's origin is proxied/served against — start
- * the real server first (see that component's own header for the exact
- * command) and run this harness with `NODE_ENV=test`-style auth bypass so
- * the browser needs no login (see server/src/middleware/auth.middleware.ts's
- * `ENABLE_TEST_AUTH_BYPASS` — ONLY active outside production, requires an
- * explicit operator flag AND a request with no token at all, matching what
- * this harness already sends).
+ * The `http-*` screens are P0C (2026-08-13; extended to the full eight-state
+ * offline/recovery model by S3, CEL 4, 2026-08-13). They mount
+ * `DrdHttpMethodWorkspaceScreen` DIRECTLY (not through the
+ * `DrdMethodWorkspaceScreen` flag gate) for two reasons: (1) that gate's own
+ * `forceState` prop type is intentionally narrower (out of this agent's
+ * scope — see that component's header) and would not admit the CEL 4
+ * states (`saving`/`saved`/`recovery_draft`/`reconnecting`/`recovered`)
+ * without editing a file this agent must not touch; (2) it removes one
+ * layer of indirection for a harness whose entire job is determinism.
+ * `DrdHttpSessionRuntime` still makes REAL fetch calls to `/api/method/...`
+ * on whatever server this harness's origin is proxied/served against —
+ * start the real server first (see that component's own header for the
+ * exact command) and run this harness with `NODE_ENV=test`-style auth
+ * bypass so the browser needs no login (see
+ * server/src/middleware/auth.middleware.ts's `ENABLE_TEST_AUTH_BYPASS` —
+ * ONLY active outside production, requires an explicit operator flag AND a
+ * request with no token at all, matching what this harness already sends).
  */
 import '../src/index.css';
 
@@ -39,6 +49,10 @@ import i18n from '../src/i18n';
 import { useAppStore } from '../src/store/useAppStore';
 import { DrdLibraryEntryHarness } from './screens/drd-library-entry';
 import { DrdMethodWorkspaceScreen } from '../src/components/assessment/drd/DrdMethodWorkspaceScreen';
+import {
+  DrdHttpMethodWorkspaceScreen,
+  type DrdHttpDebugForcedState,
+} from '../src/components/assessment/drd/DrdHttpMethodWorkspaceScreen';
 
 const params = new URLSearchParams(window.location.search);
 const theme = params.get('theme') || 'light';
@@ -89,15 +103,32 @@ const ACTOR_BY_SCREEN: Record<string, string> = {
   approval: 'demo-approver-anna',
 };
 
-// -- P0C (2026-08-13): HTTP source-of-truth screens ------------------------
+// -- P0C (2026-08-13) / CEL 4 (S3, 2026-08-13): HTTP source-of-truth screens
+//
+// `http-server` seeds through the interview lifecycle for real (proves a
+// genuinely fresh, non-forced SERVER state — none of the other seven need a
+// real seed, they overlay `forceState` on top of a freshly created session).
 const HTTP_SEED_BY_SCREEN: Record<string, Parameters<typeof DrdMethodWorkspaceScreen>[0]['seedTo']> = {
   'http-server': 'interview',
   'http-frozen': 'frozen',
 };
-const HTTP_FORCE_STATE_BY_SCREEN: Record<string, 'offline' | 'conflict' | 'recovery' | 'loading'> = {
-  'http-loading': 'loading',
-  'http-conflict': 'conflict',
+
+// The eight CEL 4 screenshot names (01..08) plus the pre-CEL-4 aliases this
+// harness already had (`http-loading`/`http-recovery`/`http-offline` map to
+// the SAME underlying `forceState` values as their CEL 4 equivalents, kept
+// so any existing reference to the old names still resolves).
+const HTTP_FORCE_STATE_BY_SCREEN: Record<string, DrdHttpDebugForcedState> = {
+  // 01-server.png: no forceState — a real, freshly-seeded 'ready' session IS
+  // the SERVER state; forcing it would defeat the point of that screenshot.
+  'http-saving': 'saving',
+  'http-saved': 'saved',
   'http-offline': 'offline',
+  'http-recovery-draft': 'recovery_draft',
+  'http-conflict': 'conflict',
+  'http-reconnecting': 'reconnecting',
+  'http-recovered': 'recovered',
+  // Retained pre-CEL-4 aliases.
+  'http-loading': 'loading',
   'http-recovery': 'recovery',
 };
 
@@ -109,8 +140,7 @@ function Root(): React.ReactElement {
   }
   if (isHttpScreen) {
     return (
-      <DrdMethodWorkspaceScreen
-        forceHttpSourceOfTruth
+      <DrdHttpMethodWorkspaceScreen
         demoSessionId={demoSessionIdParam}
         seedTo={HTTP_SEED_BY_SCREEN[screen]}
         forceState={HTTP_FORCE_STATE_BY_SCREEN[screen]}

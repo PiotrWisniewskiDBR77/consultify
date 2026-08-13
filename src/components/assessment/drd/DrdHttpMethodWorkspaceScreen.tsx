@@ -31,7 +31,7 @@
  *    screen only knows about ones created in the CURRENT browser session
  *    (see `DrdHttpRuntimeState.reports`/`.initiatives`'s own comment).
  */
-import { AlertTriangle, ArrowLeft, CloudOff, FileText, Lightbulb, Lock, RefreshCw, RotateCcw } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, CheckCircle2, CloudOff, FileText, Lightbulb, Loader2, Lock, RefreshCw, RotateCcw } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { MethodWorkspaceShell } from '@/components/method-workspace/MethodWorkspaceShell';
@@ -40,8 +40,10 @@ import type { InterviewFocusQuestion, MethodWorkspaceViewMode } from '@/componen
 import { useMethodWorkspaceSave } from '@/components/method-workspace/useMethodWorkspaceSave';
 import { DRD_METHOD_PACK_ID } from '@/method-core/methods/drd/compileDrdPack';
 import {
+  deriveDrdSourceKind,
   DrdHttpSessionRuntime,
   type DrdHttpRuntimeState,
+  type DrdVisibleSourceState,
 } from '@/method-core/methods/drd/drdHttpSessionRuntime';
 import type { MethodReadiness, TeresaCommitRequest } from '@/method-core/contracts';
 import { DRD_STRUCTURE } from '@/services/drdStructure';
@@ -60,12 +62,31 @@ import type { DrdMethodWorkspaceScreenProps } from './DrdMethodWorkspaceScreen';
 type HttpScreenProps = Omit<DrdMethodWorkspaceScreenProps, 'forceHttpSourceOfTruth' | 'initialActorUserId' | 'forceState'>;
 
 // ---------------------------------------------------------------------------
-// Dev-render / test only — reach offline/conflict/recovery deterministically
-// without depending on a genuinely flaky network. See this component's own
-// `forceState` prop and `DrdHttpSessionRuntime`'s (absence of a) production
-// code path that would ever call this — only the harness/tests do.
+// Dev-render / test only — reach any of the eight visible states (CEL 4)
+// deterministically without depending on a genuinely flaky network. See this
+// component's own `forceState` prop and `DrdHttpSessionRuntime`'s (absence
+// of a) production code path that would ever call this — only the
+// harness/tests do.
+//
+// ★ 'offline' / 'conflict' / 'recovery' / 'loading' are the ORIGINAL four
+// values (P0C) — kept byte-for-byte so `DrdMethodWorkspaceScreen.tsx`'s own
+// (narrower, out-of-this-agent's-scope) `forceState` prop type stays
+// assignable into this one without editing that file. Everything after is
+// additive (CEL 4, S3): 'recovery_draft' forces the STILL-OFFLINE-with-a-
+// queued-draft moment (scenario 2) distinct from 'recovery' (back online,
+// explicit reconciliation UI, scenario 3's third act).
 // ---------------------------------------------------------------------------
-export type DrdHttpDebugForcedState = 'offline' | 'conflict' | 'recovery' | 'loading';
+export type DrdHttpDebugForcedState =
+  | 'loading'
+  | 'server'
+  | 'saving'
+  | 'saved'
+  | 'offline'
+  | 'recovery_draft'
+  | 'recovery'
+  | 'reconnecting'
+  | 'conflict'
+  | 'recovered';
 
 async function seedHttpSession(
   runtime: DrdHttpSessionRuntime,
@@ -172,7 +193,10 @@ async function seedHttpSession(
 
 const BootstrapLoadingView: React.FC<{ label: string }> = ({ label }) => (
   <div data-testid="drd-http-bootstrap-loading" className="flex h-full flex-col items-center justify-center gap-3 text-sm text-c-text-muted">
-    <DrdSourceIndicator source="RECOVERY_DRAFT" title="Jeszcze bez potwierdzonej odpowiedzi serwera." />
+    {/* No badge here: before the FIRST server response, there is nothing to
+        badge yet — not confirmed data (SERVER), not an unsaved draft
+        (RECOVERY_DRAFT would misleadingly imply something was edited). */}
+    <Loader2 size={20} className="animate-spin text-c-text-muted" />
     {label}
   </div>
 );
@@ -183,13 +207,24 @@ const ConflictView: React.FC<{
   onExit: () => void;
 }> = ({ state, onLoadServerVersion, onExit }) => (
   <div data-testid="drd-http-conflict-view" role="alert" className="flex h-full flex-col items-center justify-center gap-4 p-6 text-center">
-    <DrdSourceIndicator source="RECOVERY_DRAFT" title="Konflikt wersji — lokalny widok jest nieaktualny." />
+    <DrdSourceIndicator source="CONFLICT" title="Konflikt wersji — nic nie zostało nadpisane." />
     <AlertTriangle size={28} className="text-c-danger" />
     <h2 className="text-sm font-semibold text-c-text">Sesja zmieniła się na serwerze</h2>
     <p className="max-w-md text-xs text-c-text-secondary">
-      Twoja przeglądarka miała wersję {state.session?.version ?? '—'}, serwer ma już wersję {state.serverVersion ?? '—'}.
-      Nic nie zostało nadpisane automatycznie — wybierz, jak kontynuować.
+      Twoja przeglądarka miała wersję {state.conflictDetail?.localBaseVersion ?? state.session?.version ?? '—'}, serwer ma już wersję{' '}
+      {state.serverVersion ?? '—'}. Nic nie zostało nadpisane automatycznie — wybierz, jak kontynuować.
     </p>
+    {state.conflictDetail && (
+      <div data-testid="conflict-diff" className="max-w-md rounded-lg border border-c-danger/30 bg-c-danger/5 p-3 text-left text-[11px] text-c-text-secondary">
+        <p className="font-semibold text-c-danger">Różnica (diff)</p>
+        <p>
+          <span className="text-c-text-muted">Twoja niezapisana zmiana:</span> {state.conflictDetail.localSummary}
+        </p>
+        <p>
+          <span className="text-c-text-muted">Serwer:</span> {state.conflictDetail.serverSummary ?? `wersja ${state.conflictDetail.serverVersion} (treść nieznana bez wczytania)`}
+        </p>
+      </div>
+    )}
     <div className="flex items-center gap-2">
       <button
         type="button"
@@ -240,10 +275,56 @@ const RecoveryQueueView: React.FC<{
   </div>
 );
 
-const OfflineBanner: React.FC<{ onRetry: () => void }> = ({ onRetry }) => (
+/** RECONNECTING — transient, shown while the runtime re-checks the server
+ * right after connectivity returns, BEFORE offering the explicit
+ * reconciliation choice (RecoveryQueueView above). Never auto-resolves
+ * anything by itself — see `DrdHttpSessionRuntime.reconnect()`. */
+const ReconnectingView: React.FC<{ pendingWriteCount: number }> = ({ pendingWriteCount }) => (
+  <div data-testid="drd-http-reconnecting-view" className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center text-sm text-c-text-muted">
+    <DrdSourceIndicator source="RECONNECTING" title="Połączenie wróciło — sprawdzam bieżący stan serwera przed rekoncyliacją." />
+    <Loader2 size={24} className="animate-spin text-c-info" />
+    <p>Połączenie wróciło — sprawdzam serwer{pendingWriteCount > 0 ? ` (${pendingWriteCount} zmian czeka na rekoncyliację)` : ''}…</p>
+  </div>
+);
+
+/** RECOVERED — transient success banner shown on top of the normal
+ * workspace right after an explicit reconciliation (`retryPending()`)
+ * finished with nothing left queued. The workspace underneath is already
+ * usable — this is a confirmation, not a blocking screen. */
+const RecoveredBanner: React.FC<{ onDismiss: () => void }> = ({ onDismiss }) => (
+  <div data-testid="drd-http-recovered-banner" role="status" className="flex items-center gap-3 border-b border-c-success/30 bg-c-success/10 px-4 py-1.5 text-[11px] text-c-success">
+    <CheckCircle2 size={13} className="shrink-0" />
+    <span>Zaległe zmiany zastosowane i potwierdzone przez serwer — dane na ekranie są znowu w pełni zsynchronizowane.</span>
+    <button type="button" onClick={onDismiss} className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-md border border-c-success/40 px-2 py-0.5 font-semibold hover:bg-c-success/20">
+      OK
+    </button>
+  </div>
+);
+
+const StaleDraftNoticeBanner: React.FC<{ notices: readonly string[]; onDismiss: () => void }> = ({ notices, onDismiss }) => (
+  <div data-testid="drd-http-stale-draft-notice" role="status" className="flex items-start gap-3 border-b border-c-warning/30 bg-c-warning/10 px-4 py-1.5 text-[11px] text-c-warning">
+    <AlertTriangle size={13} className="mt-0.5 shrink-0" />
+    <ul className="list-disc pl-4">
+      {notices.map((n, i) => (
+        <li key={i}>{n}</li>
+      ))}
+    </ul>
+    <button type="button" onClick={onDismiss} className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-md border border-c-warning/40 px-2 py-0.5 font-semibold hover:bg-c-warning/20">
+      OK
+    </button>
+  </div>
+);
+
+const OfflineBanner: React.FC<{ pendingWriteCount: number; onRetry: () => void }> = ({ pendingWriteCount, onRetry }) => (
   <div data-testid="drd-http-offline-banner" role="alert" className="flex items-center gap-3 border-b border-c-warning/30 bg-c-warning/10 px-4 py-1.5 text-[11px] text-c-warning">
     <CloudOff size={13} className="shrink-0" />
-    <span>Brak połączenia z serwerem — zapisy są kolejkowane lokalnie i nigdy nie znikają, ale to NIE jest potwierdzony stan serwera.</span>
+    <span>
+      Brak połączenia z serwerem
+      {pendingWriteCount > 0
+        ? ` — masz ${pendingWriteCount} niezapisaną zmianę (RECOVERY_DRAFT) kolejkowaną lokalnie, nigdy nie zniknie sama.`
+        : ' — na razie nic nie zostało zmienione lokalnie.'}{' '}
+      To NIE jest potwierdzony stan serwera.
+    </span>
     <button type="button" onClick={onRetry} className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-md border border-c-warning/40 px-2 py-0.5 font-semibold hover:bg-c-warning/20">
       <RefreshCw size={11} /> Spróbuj połączyć ponownie
     </button>
@@ -252,7 +333,6 @@ const OfflineBanner: React.FC<{ onRetry: () => void }> = ({ onRetry }) => (
 
 const ErrorRetryView: React.FC<{ message: string; onRetry: () => void; onExit: () => void }> = ({ message, onRetry, onExit }) => (
   <div data-testid="drd-http-error-view" role="alert" className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
-    <DrdSourceIndicator source="RECOVERY_DRAFT" />
     <AlertTriangle size={24} className="text-c-danger" />
     <p className="max-w-md text-xs text-c-danger">{message}</p>
     <div className="flex items-center gap-2">
@@ -346,14 +426,37 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
       }
       if (forceState && runtimeRef.current && !forceStateAppliedRef.current) {
         forceStateAppliedRef.current = true;
+        const currentVersion = runtimeRef.current.getState().session?.version ?? 1;
         const debugPatch: Partial<DrdHttpRuntimeState> =
-          forceState === 'offline'
-            ? { status: 'offline', error: 'Brak połączenia z serwerem.' }
-            : forceState === 'conflict'
-              ? { status: 'conflict', serverVersion: (runtimeRef.current.getState().session?.version ?? 1) + 1, error: 'Sesja zmieniła się na serwerze.' }
-              : forceState === 'recovery'
-                ? { status: 'recovery', pendingWriteCount: 2 }
-                : { status: 'loading' };
+          forceState === 'server'
+            ? { status: 'ready', pendingWriteCount: 0 }
+            : forceState === 'saving'
+              ? { status: 'saving' }
+              : forceState === 'saved'
+                ? { status: 'saved' }
+                : forceState === 'offline'
+                  ? { status: 'offline', pendingWriteCount: 0, error: 'Brak połączenia z serwerem.' }
+                  : forceState === 'recovery_draft'
+                    ? { status: 'offline', pendingWriteCount: 2, error: 'Zapis w kolejce — offline.' }
+                    : forceState === 'recovery'
+                      ? { status: 'recovery', pendingWriteCount: 2 }
+                      : forceState === 'reconnecting'
+                        ? { status: 'reconnecting', pendingWriteCount: 2 }
+                        : forceState === 'conflict'
+                          ? {
+                              status: 'conflict',
+                              serverVersion: currentVersion + 1,
+                              error: 'Sesja zmieniła się na serwerze.',
+                              conflictDetail: {
+                                localBaseVersion: currentVersion,
+                                serverVersion: currentVersion + 1,
+                                localSummary: 'Odpowiedź 1A-L1-Q1 (confirmed) — zapisana lokalnie, jeszcze nie wysłana.',
+                                serverSummary: null,
+                              },
+                            }
+                          : forceState === 'recovered'
+                            ? { status: 'recovered', pendingWriteCount: 0 }
+                            : { status: 'loading' };
         runtimeRef.current.debugForceState(debugPatch);
       }
     }
@@ -401,7 +504,13 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
     };
   });
 
-  const isOnline = state?.status !== 'offline' && state?.status !== 'recovery';
+  // Allowlist, not a denylist — a NEW status added later must prove itself
+  // "safe to write through" rather than silently being treated as online by
+  // default (the opposite of `!== 'offline' && !== 'recovery'`, which would
+  // have quietly counted 'reconnecting'/'conflict' as online too).
+  const isOnline = state
+    ? state.status === 'ready' || state.status === 'saving' || state.status === 'saved' || state.status === 'recovered'
+    : false;
 
   const { state: saveState, lastSavedAt, errorMessage: saveErrorMessage, markDirty, saveNow } = useMethodWorkspaceSave({
     isOnline,
@@ -571,6 +680,9 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
       />
     );
   }
+  if (state.status === 'reconnecting') {
+    return <ReconnectingView pendingWriteCount={state.pendingWriteCount} />;
+  }
   if (state.status === 'error' && !state.session) {
     return <ErrorRetryView message={state.error ?? 'Nieznany błąd.'} onRetry={() => void runtime?.refresh()} onExit={onExit ?? (() => {})} />;
   }
@@ -580,11 +692,10 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
     return <BootstrapLoadingView label="Wczytywanie sesji…" />;
   }
 
-  // status is 'ready' (with a possibly-error-decorated retry still showing
-  // the last known session), 'offline' (queued writes, still show the last
-  // known session so work is never blocked), or a transient 'loading' with a
-  // session already known (handled by the shell's own `loading` prop below).
-  const sourceKind = state.status === 'ready' ? 'SERVER' : 'RECOVERY_DRAFT';
+  // ★ Single source of truth for the badge — see `deriveDrdSourceKind`'s own
+  // header for exactly why every branch (including the frozen-Output view
+  // below) MUST go through this instead of re-deriving it ad hoc.
+  const sourceKind: DrdVisibleSourceState = deriveDrdSourceKind(state);
 
   if (session.state === 'frozen' || session.state === 'closed') {
     return (
@@ -619,16 +730,28 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
   const canSendBack = session.state === 'in_review';
   const canFreeze = session.state === 'in_review';
 
+  const sourceKindTitle: Record<DrdVisibleSourceState, string> = {
+    SERVER: 'Świeżo potwierdzone przez serwer.',
+    SAVING: 'Zapis w toku…',
+    SAVED: 'Zapis właśnie potwierdzony przez serwer.',
+    OFFLINE: 'Brak połączenia — nic lokalnie nie czeka na wysłanie.',
+    RECOVERY_DRAFT: 'Zawiera niezapisaną lokalną zmianę — serwer jej jeszcze nie widział.',
+    CONFLICT: 'Konflikt wersji — wymaga decyzji człowieka, nic nie nadpisano.',
+    RECONNECTING: 'Połączenie wróciło — sprawdzam serwer przed rekoncyliacją.',
+    RECOVERED: 'Rekoncyliacja zakończona — potwierdzone przez serwer.',
+  };
+
   return (
     <div className="flex h-full flex-col">
-      {state.status === 'offline' && <OfflineBanner onRetry={() => void runtime?.refresh()} />}
+      {state.status === 'offline' && <OfflineBanner pendingWriteCount={state.pendingWriteCount} onRetry={() => void runtime?.reconnect()} />}
+      {state.status === 'recovered' && <RecoveredBanner onDismiss={() => runtime?.acknowledgeRecovered()} />}
+      {state.staleDraftNotices.length > 0 && (
+        <StaleDraftNoticeBanner notices={state.staleDraftNotices} onDismiss={() => runtime?.acknowledgeStaleDraftNotices()} />
+      )}
       <div className="flex items-center gap-3 border-b border-c-border-subtle bg-c-warning/5 px-4 py-1.5 text-[11px] text-c-text-secondary">
         <AlertTriangle size={12} className="shrink-0 text-c-warning" />
         <span>Sesja DRD przez HTTP — {DRD_METHOD_PACK_ID} — demo bypass gotowości packa (methodology_review), jak w legacy runtime.</span>
-        <DrdSourceIndicator
-          source={sourceKind}
-          title={sourceKind === 'SERVER' ? 'Świeżo potwierdzone przez serwer.' : 'Nie w pełni zsynchronizowane z serwerem.'}
-        />
+        <DrdSourceIndicator source={sourceKind} title={sourceKindTitle[sourceKind]} />
       </div>
       {state.status === 'error' && state.error && (
         <div role="alert" className="flex items-center gap-2 border-b border-c-danger/30 bg-c-danger/10 px-4 py-1.5 text-xs text-c-danger">
@@ -676,7 +799,9 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
           loading={state.status === 'loading' && Boolean(state.session)}
           degradedMessage={
             state.status === 'offline'
-              ? 'Offline — praca kolejkowana lokalnie, nie potwierdzona przez serwer.'
+              ? state.pendingWriteCount > 0
+                ? `Offline — ${state.pendingWriteCount} zmian kolejkowanych lokalnie (RECOVERY_DRAFT), nie potwierdzonych przez serwer.`
+                : 'Offline — brak połączenia z serwerem.'
               : session.state === 'active'
                 ? null
                 : `Status: ${session.state}`
@@ -785,7 +910,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
 
 const FrozenOutputHttpView: React.FC<{
   state: DrdHttpRuntimeState;
-  sourceKind: 'SERVER' | 'RECOVERY_DRAFT';
+  sourceKind: DrdVisibleSourceState;
   onGenerateReport: () => void;
   onGenerateInitiative: () => void;
   onExit: () => void;
@@ -802,11 +927,20 @@ const FrozenOutputHttpView: React.FC<{
         <h1 className="text-sm font-semibold text-c-text">
           Sesja {session.id.slice(0, 8)} — {session.state === 'closed' ? 'Zamknięta' : 'Zamrożona'}
         </h1>
-        {/* ★ Frozen Output must NEVER be labeled SERVER unless `output` is a
-            confirmed server response for THIS session's current freeze —
-            `state.output` is only ever set from `freeze()`'s own response or
-            a `getOutput()` re-fetch (see drdHttpSessionRuntime.ts refresh()). */}
-        <DrdSourceIndicator source={output ? sourceKind : 'RECOVERY_DRAFT'} title="Frozen Output pochodzi wyłącznie z odpowiedzi serwera, nigdy z localStorage." />
+        {/* ★ Hard rule #1: the SESSION itself (frozen, on the server) is what
+            this badge describes — `deriveDrdSourceKind` already encodes
+            "the server has data" -> never RECOVERY_DRAFT (see that
+            function's own header). A missing LOCAL Output pointer is a
+            separate, honestly-labeled gap explained in prose below, not a
+            reason to mislabel confirmed server data as an unsaved draft. */}
+        <DrdSourceIndicator
+          source={sourceKind}
+          title={
+            output
+              ? 'Frozen Output pochodzi wyłącznie z odpowiedzi serwera, nigdy z localStorage.'
+              : 'Sesja potwierdzona przez serwer — tylko lokalny wskaźnik do treści Outputu jest nieznany w tej karcie.'
+          }
+        />
       </div>
 
       {/* Output */}
