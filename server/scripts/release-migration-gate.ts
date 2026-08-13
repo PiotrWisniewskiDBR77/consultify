@@ -28,7 +28,10 @@ import { Pool } from 'pg';
 import '../src/config/loadEnv.js';
 import { resolveReachableDatabaseUrl } from '../src/config/databaseTargetResolver.js';
 import { isRuntimeMigrationFile } from '../src/services/tablePlatform/migrationIdentity.js';
-import { isExecutableMigration } from '../src/services/releaseGate/migrationExecutionPolicy.js';
+import {
+  evaluateSqlChain,
+  isSqlChainAcceptable,
+} from '../src/services/releaseGate/sqlChainEvaluator.js';
 import {
   assertExpectedTarget,
   assertNoForbiddenFlags,
@@ -50,51 +53,33 @@ async function collectFindings(pool: Pool, migrationsDir: string): Promise<GateF
     .readdirSync(migrationsDir)
     .filter((f: string) => /\.(sql|js|ts)$/.test(f));
 
-  // 1. SQL ledger must contain no failed and no skipped rows.
-  const sm = await pool.query(
-    `SELECT status, count(*)::int AS n FROM schema_migrations GROUP BY status`
-  );
-  const byStatus = new Map<string, number>(sm.rows.map((r: any) => [String(r.status), r.n]));
-  add('sql_ledger_no_failed', (byStatus.get('failed') ?? 0) === 0, `failed=${byStatus.get('failed') ?? 0}`);
+  // 1-3. SQL chain state — via the SHARED evaluator, the same one readiness uses. There is
+  // deliberately no second implementation here: an earlier draft of this gate computed "pending"
+  // from a raw directory listing and reported 212 phantom pending migrations.
+  const evaluation = await evaluateSqlChain({ db: pool as any, migrationsDir });
+  add('sql_ledger_present', evaluation.ledgerPresent, evaluation.ledgerPresent ? 'schema_migrations present' : 'schema_migrations missing');
+  add('sql_ledger_no_failed', evaluation.failed.length === 0, `failed=${evaluation.failed.length}`);
+  add('sql_ledger_no_skipped', evaluation.skipped.length === 0, `skipped=${evaluation.skipped.length}`);
+  add('sql_chain_no_pending', evaluation.pending.length === 0, `pending=${evaluation.pending.length}`);
   add(
-    'sql_ledger_no_skipped',
-    (byStatus.get('skipped') ?? 0) === 0,
-    `skipped=${byStatus.get('skipped') ?? 0} (a skipped row means a migration did not actually apply)`
+    'sql_chain_no_unexplained_drift',
+    evaluation.unexplainedDrift.length === 0,
+    evaluation.unexplainedDrift.length === 0
+      ? `no unexplained drift (${evaluation.approvedVariants.length} approved variant(s), ${evaluation.attestedLegacyVariants.length} schema-attested)`
+      : `unexplained=${evaluation.unexplainedDrift.length}: ${evaluation.unexplainedDrift.slice(0, 5).join(', ')}`
   );
+  add('sql_chain_acceptable', isSqlChainAcceptable(evaluation), `state=${evaluation.state}: ${evaluation.detail}`);
 
-  // 2. Nothing pending: every runner-consumed file must be recorded success.
-  const applied = await pool.query(`SELECT filename FROM schema_migrations WHERE status='success'`);
-  const appliedSet = new Set<string>(applied.rows.map((r: any) => String(r.filename)));
-  // Only files the runner would actually execute count as "required".
-  // "Required" means what the RUNNER would execute — not every file on disk. The runner skips
-  // legacy (<500), 000_initdb_*, seed/demo and SQLite-only files by design.
-  const required = onDisk.filter((f) => isExecutableMigration(f));
-  const pending = required.filter((f) => !appliedSet.has(f));
-  add(
-    'sql_chain_no_pending',
-    pending.length === 0,
-    pending.length === 0 ? `all ${required.length} executable migrations recorded` : `pending=${pending.length}: ${pending.slice(0, 10).join(', ')}${pending.length > 10 ? ' …' : ''}`
-  );
-
-  // 3. Table Platform ledger: everything the runtime runner would discover must be recorded.
+  // Table Platform ledger — pre-deploy runs before the app boots, so absence is expected here;
+  // readiness enforces it at boot.
   const tpExists = await pool.query(`SELECT to_regclass('public.tp_migration_history') IS NOT NULL AS e`);
   if (tpExists.rows[0].e) {
     const tp = await pool.query(`SELECT filename FROM tp_migration_history`);
     const tpSet = new Set<string>(tp.rows.map((r: any) => String(r.filename)));
     const tpPending = onDisk.filter((f) => isRuntimeMigrationFile(f) && !tpSet.has(f));
-    add(
-      'tp_chain_no_pending',
-      tpPending.length === 0,
-      tpPending.length === 0 ? 'runtime ledger complete' : `pending=${tpPending.length}: ${tpPending.slice(0, 10).join(', ')}`
-    );
+    add('tp_chain_no_pending', tpPending.length === 0, tpPending.length === 0 ? 'runtime ledger complete' : `pending=${tpPending.length}`);
   } else {
-    // Pre-deploy runs BEFORE the app boots, and the runtime runner creates this table on its
-    // first start. Absence here is expected, not a failure; readiness enforces it at boot.
-    add(
-      'tp_chain_no_pending',
-      true,
-      'tp_migration_history not yet created (expected pre-deploy; enforced by readiness at boot)'
-    );
+    add('tp_chain_no_pending', true, 'tp_migration_history not yet created (expected pre-deploy; enforced by readiness at boot)');
   }
 
   // 4. PRESENT-WITHOUT-HISTORY: schema that exists although no ledger records the migration.

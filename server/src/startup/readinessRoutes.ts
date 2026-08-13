@@ -8,12 +8,14 @@
  */
 import type { NextFunction, Request, Response } from 'express';
 
-import type { TpMigrationStatus } from './databaseReadiness.js';
+import type { SqlMigrationStatus, TpMigrationStatus } from './databaseReadiness.js';
 
 export interface ReadinessState {
   dbReady: boolean;
   dbInitError: string | null;
   migrations: TpMigrationStatus;
+  sqlMigrations: SqlMigrationStatus;
+  buildSha: string;
 }
 
 export type ReadinessStateGetter = () => ReadinessState;
@@ -21,10 +23,12 @@ export type ReadinessStateGetter = () => ReadinessState;
 /** GET /api/ready — 200 only when the database is ready. */
 export function createReadyHandler(getState: ReadinessStateGetter) {
   return (_req: Request, res: Response) => {
-    const { dbReady, dbInitError, migrations } = getState();
+    const { dbReady, dbInitError, migrations, sqlMigrations, buildSha } = getState();
     if (dbReady) {
       return res.status(200).json({
         status: 'ready',
+        buildSha,
+        sqlMigrations,
         database: 'ready',
         migrations,
         timestamp: new Date().toISOString(),
@@ -32,6 +36,8 @@ export function createReadyHandler(getState: ReadinessStateGetter) {
     }
     return res.status(503).json({
       status: 'not_ready',
+      buildSha,
+      sqlMigrations,
       database: 'initializing',
       error: dbInitError,
       migrations,
@@ -47,11 +53,14 @@ export function createReadyHandler(getState: ReadinessStateGetter) {
  */
 export function createMigrationsHealthHandler(getState: ReadinessStateGetter) {
   return (_req: Request, res: Response) => {
-    const { dbReady, migrations } = getState();
-    const healthy = migrations.state === 'ok' && dbReady;
+    const { dbReady, migrations, sqlMigrations, buildSha } = getState();
+    // Healthy requires BOTH ledgers, not just Table Platform.
+    const healthy = migrations.state === 'ok' && sqlMigrations.state === 'ok' && dbReady;
     return res.status(healthy ? 200 : 503).json({
       status: healthy ? 'ok' : 'degraded',
+      buildSha,
       migrations,
+      sqlMigrations,
       databaseReady: dbReady,
       timestamp: new Date().toISOString(),
     });

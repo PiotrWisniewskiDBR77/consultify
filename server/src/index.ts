@@ -9,6 +9,7 @@
 // CRITICAL (ESM): load env via a side-effect module that is imported FIRST.
 import './config/loadEnv.js';
 import { BUILD_SHA_UNKNOWN, resolveBuildSha } from './config/buildSha.js';
+import type { SqlMigrationStatus } from './startup/databaseReadiness.js';
 
 import fs from 'fs';
 import path from 'path';
@@ -209,6 +210,21 @@ export function getTpMigrationStatus(): typeof tpMigrationStatus {
 }
 
 /**
+ * SQL-chain (schema_migrations) receipt, computed ONCE during startup readiness and served by
+ * /api/ready and /api/health/migrations. Never recomputed per request.
+ */
+let sqlMigrationStatus: SqlMigrationStatus = {
+  state: 'error',
+  failed: 0,
+  skipped: 0,
+  pending: 0,
+  unexplainedDrift: 0,
+  approvedVariants: 0,
+  attestedLegacyVariants: 0,
+  detail: 'not evaluated yet',
+};
+
+/**
  * Single state source for the extracted readiness probes/gate.
  *
  * A function DECLARATION on purpose: `/api/health/migrations` is registered
@@ -217,7 +233,13 @@ export function getTpMigrationStatus(): typeof tpMigrationStatus {
  * request time, long after initialisation.
  */
 function getReadinessState() {
-  return { dbReady, dbInitError, migrations: tpMigrationStatus };
+  return {
+    dbReady,
+    dbInitError,
+    migrations: tpMigrationStatus,
+    sqlMigrations: sqlMigrationStatus,
+    buildSha: resolveBuildSha(),
+  };
 }
 
 // Readiness probe for load balancers / orchestration.
@@ -331,6 +353,15 @@ const databaseInitPromise: Promise<void> =
               const { runMigrations } = await import('./services/tablePlatform/migrationRunner.js');
               return runMigrations();
             },
+            evaluateSqlChain: async () => {
+              const { evaluateSqlChain } = await import('./services/releaseGate/sqlChainEvaluator.js');
+              const { getDatabase } = await import('./database/Database.js');
+              const path = await import('path');
+              return evaluateSqlChain({
+                db: getDatabase() as any,
+                migrationsDir: path.resolve(process.cwd(), 'server/migrations'),
+              });
+            },
             seedTemplates: async () => {
               const { default: templateService } =
                 await import('./services/tablePlatform/TemplateService.js');
@@ -358,6 +389,7 @@ const databaseInitPromise: Promise<void> =
           });
 
           tpMigrationStatus = outcome.migrations;
+          sqlMigrationStatus = outcome.sqlMigrations;
 
           if (!outcome.ready) {
             dbReady = false;
