@@ -403,7 +403,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   return (
     <div
       className={
-        'h-14 border-b border-c-border-subtle bg-c-surface flex items-center px-4 gap-3 flex-shrink-0 relative z-sticky ' +
+        'min-h-14 border-b border-c-border-subtle bg-c-surface flex flex-wrap md:flex-nowrap items-center px-2 py-2 md:px-4 md:py-0 gap-2 md:gap-3 flex-shrink-0 relative z-sticky ' +
         (className ?? '')
       }
       data-testid={testId ?? 'mels-topbar'}
@@ -479,14 +479,17 @@ export const TopBar: React.FC<TopBarProps> = ({
 
       {titleTrailingSlot ? (
         <div
-          className="flex items-center gap-2 flex-shrink-0"
+          className="hidden sm:flex items-center gap-2 flex-shrink-0"
           data-testid="mels-topbar-title-trailing"
         >
           {titleTrailingSlot}
         </div>
       ) : null}
 
-      <div className="flex items-center gap-1 flex-shrink-0" data-testid="mels-topbar-chips">
+      <div
+        className="order-3 md:order-none flex w-full md:w-auto max-w-full items-center gap-1 overflow-x-auto flex-shrink-0"
+        data-testid="mels-topbar-chips"
+      >
         <ToolActionSlot />
         {leadingActionSlot ? (
           <>
@@ -518,7 +521,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
       {presenceSlot ? (
         <div
-          className="flex items-center gap-2 flex-shrink-0 ml-auto pl-2"
+          className="hidden md:flex items-center gap-2 flex-shrink-0 ml-auto pl-2"
           data-testid="mels-topbar-presence"
         >
           {presenceSlot}
