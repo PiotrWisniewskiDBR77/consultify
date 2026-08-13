@@ -497,8 +497,16 @@ describe.skipIf(!REAL_DB)('T4 — SIRI travels the same kernel path as DRD (real
     const pack = await methodPackRegistry.getPack(ORG, SIRI_METHOD_PACK_ID, SIRI_METHOD_PACK_VERSION);
     expect(pack?.readiness).toBe('draft');
 
+    // `/api/method/packs` zwraca rejestr współdzielony przez cały przebieg
+    // suity, a inne pliki testowe rejestrują w nim własne pakiety. Szukamy
+    // więc konkretnego wpisu i wymagamy, żeby ISTNIAŁ — brak wpisu to inny
+    // defekt niż podniesiona gotowość i nie wolno ich mylić w jednej asercji.
     const libraryAfter = await request(app).get('/api/method/packs').set('Authorization', `Bearer ${ownerToken}`);
     const siriPackAfter = libraryAfter.body.packs.find((p: any) => p.packId === SIRI_METHOD_PACK_ID);
+    expect(
+      siriPackAfter,
+      'pakiet SIRI zniknął z rejestru w trakcie przebiegu — to nie jest problem gotowości, tylko izolacji testów',
+    ).toBeDefined();
     expect(siriPackAfter.readiness).toBe('draft');
   });
 
