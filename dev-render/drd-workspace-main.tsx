@@ -118,8 +118,11 @@ const HTTP_SEED_BY_SCREEN: Record<string, Parameters<typeof DrdMethodWorkspaceSc
 // the SAME underlying `forceState` values as their CEL 4 equivalents, kept
 // so any existing reference to the old names still resolves).
 const HTTP_FORCE_STATE_BY_SCREEN: Record<string, DrdHttpDebugForcedState> = {
-  // 01-server.png: no forceState — a real, freshly-seeded 'ready' session IS
-  // the SERVER state; forcing it would defeat the point of that screenshot.
+  // 01-server.png: the seed's own last write settles on the transient SAVED
+  // confirmation (by design — see runWrite's header) rather than the plain
+  // steady state, so this screenshot pins it explicitly to the settled
+  // SERVER badge on top of the SAME real, freshly-seeded HTTP content.
+  'http-server': 'server',
   'http-saving': 'saving',
   'http-saved': 'saved',
   'http-offline': 'offline',
