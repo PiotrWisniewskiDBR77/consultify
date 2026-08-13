@@ -111,8 +111,6 @@ import {
 import { isClientVaultEnabled } from '@/utils/clientVaultFlag';
 import { IDEA_TOP_BAR_SLOT_ID, isIdeaTopBarOneLineEnabled } from '@/utils/ideaTopBarOneLineFlag';
 import { lazyWithRetry } from '@/utils/lazyWithRetry';
-import { isM05DecisionWorkspaceEnabled } from '@/utils/m05DecisionWorkspaceFlag';
-import { isMyWorkTwoLevelNavEnabled } from '@/utils/myWorkTwoLevelNavFlag';
 import {
   dispatchPilotAccessBlocked,
   getPilotLockedAreaDetail,
@@ -124,10 +122,20 @@ import {
   resolveTablePlatformWorkspaceIdForTable,
 } from '@/utils/sheetArtifactOpen';
 
+import { AIAnalysisProposalReviewQueue } from './AIAnalysisProposalReviewQueue';
+import { AnalysisDecisionQueue } from './AnalysisDecisionQueue';
 import { CalendarView } from './Calendar/CalendarView';
 import { useObjectEditBarSlotHasContent } from './canvas/objectEditBarDock';
+import { ClosureDecisionQueue } from './ClosureDecisionQueue';
 import { type DecisionsBulkBarPayload, DecisionsPanelContent } from './DecisionsPanelContent';
+import { DefinitionDecisionQueue } from './DefinitionDecisionQueue';
+import { DefinitionRemediationQueue } from './DefinitionRemediationQueue';
+import { DeliveryResultsAcceptanceQueue } from './DeliveryResultsAcceptanceQueue';
+import { EffectivenessClosureQueue } from './EffectivenessClosureQueue';
+import { ExecutionCanonicalWorkQueue } from './ExecutionCanonicalWorkQueue';
 import type { FocusFilter, FocusItem, FocusSort } from './Focus/FocusView';
+import { GateSignoffQueue } from './GateSignoffQueue';
+import { HandoffAcceptanceQueue } from './HandoffAcceptanceQueue';
 import type { HomeScreenAction } from './Home/homeV2Types';
 import {
   composeIdeaBodyFromSeedIntent,
@@ -147,13 +155,15 @@ import {
 } from './ideaWorkspaceState';
 import { getIdeaWorkspaceToolLabel } from './IdeaWorkspaceToolbar';
 import { type InboxBulkBarPayload, InboxContent, type InboxCounts } from './InboxContent';
+import { MaterialChangeQueue } from './MaterialChangeQueue';
 import { MyIdeasListContent } from './MyIdeasListContent';
 import type { IdeasBulkBarPayload, IdeasHomeShellPayload, IdeaStage, MyIdea } from './myIdeasTypes';
 import { MyTasksListContent } from './MyTasksListContent';
-import { MyWorkNav, type MyWorkNavTab, type NavGroup } from './MyWorkNav';
 import { NotebookContent } from './NotebookContent';
 import { NotebookLibraryContent } from './NotebookLibraryContent';
 import { resolveOpenItemRoute } from './openItemRouting';
+import { PortfolioDecisionQueue } from './PortfolioDecisionQueue';
+import { ScheduleDecisionQueue } from './ScheduleDecisionQueue';
 import { IdeaStartupTemplates } from './table/IdeaStartupTemplates';
 
 // Heavy sub-views (TipTap, DnD, calendars, detailed editors) are lazy-loaded.
@@ -166,14 +176,6 @@ const IdeaMapWorkspace = lazyWithRetry(() =>
 );
 const DecisionDetailView = lazyWithRetry(() =>
   import('./DecisionDetailView').then((m) => ({ default: m.DecisionDetailView }))
-);
-// MW-06 — controlled swap: DecisionWorkspace (real backend, supports create)
-// replaces DecisionDetailView (localStorage-faked) behind a default-OFF flag
-// until the product owner accepts a clean screenshot. See MW-DEC-004
-// integration note (docs/modules/02_moja-praca/golden-flow-packet/) for the
-// full rationale.
-const DecisionWorkspace = lazyWithRetry(() =>
-  import('./Decision/DecisionWorkspace').then((m) => ({ default: m.DecisionWorkspace }))
 );
 const NotificationDetailView = lazyWithRetry(() =>
   import('./NotificationDetailView').then((m) => ({ default: m.NotificationDetailView }))
@@ -557,24 +559,6 @@ function getDocumentTab(type: OpenDocument['type']): ModuleTab {
 // (otwarta wcześniej na Ideas) wisiała nad Run agent, gdzie nie ma sensu.
 const OPEN_DOCUMENT_TABS: ModuleTab[] = ['tasks', 'ideas', 'decisions', 'inbox'];
 
-// RV-002 (CB-02) — canonical route-state contract for My Work's tab-scoped
-// object params: each of these query keys identifies an object that only
-// makes sense while its OWNING tab is active. `handleSelectTab` below clears
-// every key not owned by the tab being switched TO, so a stale param (e.g.
-// `?notebook=<id>` left over after clicking "Ideas") can never cause a later
-// action (like Open on a Whiteboard idea) to be misinterpreted as "reopen
-// that notebook" — the exact RV-002 repro (stale Notebook identity blocking
-// Whiteboard from opening). Unrelated query state (anything not in this map)
-// is left untouched.
-const TAB_OWNED_PARAM_KEYS: Partial<Record<ModuleTab, string[]>> = {
-  ideas: ['ideaId', 'idea'],
-  tasks: ['taskId', 'task'],
-  decisions: ['decisionId', 'decision'],
-  notebook: ['notebook'],
-  vault: ['safeId'],
-};
-const ALL_TAB_OWNED_PARAM_KEYS = Array.from(new Set(Object.values(TAB_OWNED_PARAM_KEYS).flat()));
-
 function getInitialMyWorkTab(
   searchParams: URLSearchParams,
   _canViewManager: boolean,
@@ -591,93 +575,31 @@ function getInitialMyWorkTab(
   const tabParam = searchParams.get('tab');
   if (tabParam === 'vault' && isClientVaultEnabled()) return 'vault';
   if (tabParam === 'agent' && isAgentPlanEnabled()) return 'agent';
-  // RB-029/RV-010 (CB-02): a direct entry/refresh/back-forward carrying
-  // `?safeId=` (ClientDocumentsVault's own canonical safe-selection param)
-  // must land on the Vault tab even without an explicit `tab=vault` —
-  // otherwise the safe-restoration fix below is unreachable on reload.
-  if (searchParams.get('safeId') && isClientVaultEnabled()) return 'vault';
-
-  // RB-016 (CB-02 pass 2): a bare legacy `?tab=<tab>&tool=<tool>` link (the
-  // pre-path-based deep-link format, e.g. `?tab=ideas&tool=table`) used to
-  // fall all the way through to the default tab because only `vault`/`agent`
-  // were special-cased above — every other tab silently required an
-  // owning-object param (`ideaId`/`taskId`/...) to be recognized. Resolve
-  // any other KNOWN, currently-available tab canonically instead of losing
-  // the link's intent.
-  if (tabParam && isKnownMyWorkTab(tabParam)) {
-    if (tabParam === 'ideas' && allowIdeas) return 'ideas';
-    if (tabParam === 'manager' && _canViewManager) return 'manager';
-    if (
-      tabParam === 'tasks' ||
-      tabParam === 'decisions' ||
-      tabParam === 'notebook' ||
-      tabParam === 'inbox' ||
-      tabParam === 'calendar'
-    ) {
-      return tabParam;
-    }
-    // 'home' (only when Radar is enabled), a gate-failed 'ideas'/'manager', or
-    // an already-handled 'vault'/'agent' whose flag is off: fall through to
-    // the honest default below instead of landing on a hidden/unavailable tab.
-  }
 
   return RADAR_ENABLED ? 'home' : MY_WORK_FALLBACK_TAB;
-}
-
-const KNOWN_MY_WORK_TABS: ReadonlySet<string> = new Set<ModuleTab>([
-  'home',
-  'ideas',
-  'notebook',
-  'inbox',
-  'calendar',
-  'tasks',
-  'decisions',
-  'manager',
-  'vault',
-  'agent',
-]);
-
-function isKnownMyWorkTab(value: string): value is ModuleTab {
-  return KNOWN_MY_WORK_TABS.has(value);
-}
-
-// RB-016 (CB-02 pass 2): legacy `?tool=` query param (paired with
-// `?tab=ideas`) resolved with the same segment parser as the modern
-// path-based deep link, so `?tab=ideas&tool=table` opens the Table canvas
-// tool directly instead of always landing on the default (Mind Map).
-function getInitialIdeaTool(searchParams: URLSearchParams): CanvasToolType | null {
-  if (searchParams.get('tab') !== 'ideas') return null;
-  return parseIdeaToolSegment(searchParams.get('tool')) ?? null;
-}
-
-// RB-016 (CB-02 pass 2): shared segment/query-value -> tool parser. Used both
-// by the modern path-based deep link (`/my-work/ideas/<id>/workspace/table`)
-// and by `getInitialIdeaTool` below for the legacy query-string form
-// (`?tab=ideas&tool=table`) so the two formats resolve identically instead
-// of the legacy one falling back to the default canvas tool.
-function parseIdeaToolSegment(segment?: string | null): CanvasToolType | undefined {
-  switch (segment) {
-    case 'mind-map':
-    case 'mindmap':
-      return 'mindmap';
-    case 'whiteboard':
-      return 'whiteboard';
-    case 'process-flow':
-    case 'process_flow':
-    case 'flow':
-      return 'process_flow';
-    case 'table':
-      return 'table';
-    default:
-      return undefined;
-  }
 }
 
 function parseMyWorkPathIntent(
   pathname: string,
   isPolish: boolean
 ): { tab: ModuleTab; doc?: OpenDocument; notebookPageId?: string } | null {
-  const parseIdeaTool = parseIdeaToolSegment;
+  const parseIdeaTool = (segment?: string): CanvasToolType | undefined => {
+    switch (segment) {
+      case 'mind-map':
+      case 'mindmap':
+        return 'mindmap';
+      case 'whiteboard':
+        return 'whiteboard';
+      case 'process-flow':
+      case 'process_flow':
+      case 'flow':
+        return 'process_flow';
+      case 'table':
+        return 'table';
+      default:
+        return undefined;
+    }
+  };
   const normalized = pathname.replace(/\/+$/, '');
   if (!normalized.startsWith('/my-work')) return null;
   const segments = normalized.split('/').filter(Boolean);
@@ -963,33 +885,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const [taskFilter, setTaskFilter] = useState<TaskFilter>('all');
   const [tasksViewMode, setTasksViewMode] = useState<TasksViewMode>('table');
   const [ideasViewMode, setIdeasViewMode] = useState<IdeasViewMode>('table');
-  const [ideaActiveTool, setIdeaActiveTool] = useState<CanvasToolType>(
-    () => getInitialIdeaTool(searchParams) ?? 'mindmap'
-  );
-
-  // RB-016 (CB-02 pass 2): keeps the legacy `?tab=<tab>&tool=<tool>` link in
-  // sync with `activeTab` after mount too — browser back/forward that lands
-  // on a URL carrying this legacy pair resolves canonically instead of
-  // relying only on the initial-mount lazy state above. Skipped while a
-  // document is open (its own restore effects own tab identity then) and
-  // skipped for tabs already covered by an owning-object param (ideaId/
-  // taskId/...), which have their own dedicated restore effects.
-  useEffect(() => {
-    if (activeDocumentId) return;
-    const tabParam = searchParams.get('tab');
-    if (!tabParam || !isKnownMyWorkTab(tabParam)) return;
-    const resolvedTab = getInitialMyWorkTab(searchParams, canViewManager, !isPilotParticipant);
-    if (resolvedTab !== activeTab) {
-      setActiveTab(resolvedTab);
-    }
-    if (resolvedTab === 'ideas') {
-      const resolvedTool = getInitialIdeaTool(searchParams);
-      if (resolvedTool && resolvedTool !== ideaActiveTool) {
-        setIdeaActiveTool(resolvedTool);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  const [ideaActiveTool, setIdeaActiveTool] = useState<CanvasToolType>('mindmap');
   const [ideaActivePanel, setIdeaActivePanel] = useState<WorkspacePanelKey>(null);
   const [ideaSelection, setIdeaSelection] = useState<IdeaWorkspaceSelection>(EMPTY_SELECTION);
   const [ideaLocked, setIdeaLocked] = useState(true);
@@ -1149,65 +1045,6 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const [activeDocumentId, setActiveDocumentId] = useState<string | null>(
     () => restoredDocumentState.activeDocumentId
   );
-
-  // RV-002 (CB-02 pass 2): the SINGLE canonical tab-transition function.
-  // Every place in this component that switches `activeTab` — Menu 1 clicks,
-  // programmatic redirects, chat/command-row shortcuts, empty-state CTAs —
-  // goes through this instead of calling `setActiveTab` directly, so
-  // `activeTab` and the URL's tab-owned object params (see
-  // TAB_OWNED_PARAM_KEYS) can never drift apart. Clears every tab-owned
-  // param except the ones the destination tab itself owns, so a previous
-  // tab's deep-link identity (e.g. `?notebook=<id>`) never survives into a
-  // different tab and gets misread by a later URL -> state reconciliation
-  // effect (the exact RV-002 repro: a stale Notebook identity blocking
-  // Whiteboard from opening after switching to Ideas). Leaves all other
-  // (unowned) query state intact. Deliberately does NOT touch
-  // `activeDocumentId` — callers that are restoring/opening a document set
-  // that separately; callers that are navigating AWAY from a document use
-  // `handleSelectTab` below, which clears it explicitly.
-  const changeMyWorkTab = useCallback(
-    (tabId: ModuleTab) => {
-      setActiveTab(tabId);
-      const ownedByTarget = new Set(TAB_OWNED_PARAM_KEYS[tabId] || []);
-      const keysToClear = ALL_TAB_OWNED_PARAM_KEYS.filter((key) => !ownedByTarget.has(key));
-      setSearchParams(
-        (prev) => {
-          const next = new URLSearchParams(prev);
-          let changed = false;
-          keysToClear.forEach((key) => {
-            if (next.has(key)) {
-              next.delete(key);
-              changed = true;
-            }
-          });
-          // RB-016 (CB-02 pass 2): also write `?tab=` explicitly — several
-          // tabs (tasks/decisions/notebook/inbox/calendar/manager without a
-          // specific object open) have no owning identity param at all, so
-          // without this a refresh/direct-entry on e.g. plain "Tasks" had
-          // nothing in the URL to restore from and fell back to the default
-          // tab.
-          if (next.get('tab') !== tabId) {
-            next.set('tab', tabId);
-            changed = true;
-          }
-          return changed ? next : prev;
-        },
-        { replace: true }
-      );
-    },
-    [setSearchParams, setActiveTab]
-  );
-
-  // User-initiated navigation (Menu 1 tab clicks): switches tab AND closes
-  // whatever document was open, since the user is explicitly leaving it.
-  const handleSelectTab = useCallback(
-    (tabId: ModuleTab) => {
-      changeMyWorkTab(tabId);
-      setActiveDocumentId(null);
-    },
-    [changeMyWorkTab, setActiveDocumentId]
-  );
-
   const [pendingDocument, setPendingDocument] = useState<OpenDocument | null>(null);
   const [pendingUrlCleanup, setPendingUrlCleanup] = useState<{
     documentId: string;
@@ -1385,7 +1222,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       return [...prev, doc];
     });
     programmaticTabSwitchRef.current = true;
-    changeMyWorkTab(getDocumentTab(doc.type));
+    setActiveTab(getDocumentTab(doc.type));
     setActiveDocumentId(doc.id);
   }, []);
 
@@ -1569,7 +1406,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         clearMyWorkIntent();
         return;
       }
-      changeMyWorkTab(targetTab);
+      setActiveTab(targetTab);
     }
     setActiveDocumentId(null);
     if (myWorkIntent.open) {
@@ -1663,7 +1500,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         notebook: 'notebook',
         initiative: 'tasks',
       };
-      if (tabMap[type]) changeMyWorkTab(tabMap[type]);
+      if (tabMap[type]) setActiveTab(tabMap[type]);
       if (type === 'notebook') {
         setNotebookOpenPageId(String(id));
         return;
@@ -1710,7 +1547,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         name: t('myWork.hub.name4', 'Task'),
         status: 'todo',
       };
-      changeMyWorkTab('tasks');
+      setActiveTab('tasks');
       if (activeTab === 'tasks') handleOpenDocument(nextDoc);
       else setPendingDocument(nextDoc);
       setPendingUrlCleanup({ documentId: taskId, keys: ['taskId', 'task'] });
@@ -1723,7 +1560,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         name: t('myWork.hub.name5', 'Decision'),
         status: 'pending',
       };
-      changeMyWorkTab('decisions');
+      setActiveTab('decisions');
       if (activeTab === 'decisions') handleOpenDocument(nextDoc);
       else setPendingDocument(nextDoc);
       setPendingUrlCleanup({ documentId: decisionId, keys: ['decisionId', 'decision'] });
@@ -1736,7 +1573,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         name: t('myWork.hub.name6', 'Idea'),
         status: 'idea',
       };
-      changeMyWorkTab('ideas');
+      setActiveTab('ideas');
       if (activeTab === 'ideas') handleOpenDocument(nextDoc);
       else setPendingDocument(nextDoc);
       setPendingUrlCleanup({ documentId: ideaId, keys: ['ideaId', 'idea'] });
@@ -1756,7 +1593,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       setNotebookOpenTitle('');
       return;
     }
-    changeMyWorkTab('notebook');
+    setActiveTab('notebook');
     setNotebookOpenId(nbId);
     setNotebookOpenTitle('');
     setNotebookOpenPageId(null);
@@ -1778,7 +1615,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   useEffect(() => {
     const intent = parseMyWorkPathIntent(location.pathname, isPolish);
     if (!intent) return;
-    changeMyWorkTab(intent.tab);
+    setActiveTab(intent.tab);
     // /my-work/notebook/<pageId> opens the page editor directly (bypasses the
     // notebooks library, which knows nothing about container-less ingested
     // pages such as canvas save-as-note materializations).
@@ -1832,9 +1669,6 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         count: tabCounts.home,
         color: 'bg-sky-500',
         requiresManagerAccess: false,
-        // Never reaches MyWorkNav (filtered out below while RADAR_ENABLED is
-        // false); navGroup is only here so the array stays uniformly typed.
-        navGroup: 'queues' as NavGroup,
       },
       {
         id: 'ideas' as ModuleTab,
@@ -1845,7 +1679,6 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         requiresManagerAccess: false,
         isLocked: isPilotParticipant || ideasBetaLocked,
         betaLocked: ideasBetaLocked,
-        navGroup: 'knowledge' as NavGroup,
       },
       {
         id: 'notebook' as ModuleTab,
@@ -1854,7 +1687,6 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         count: tabCounts.notebook,
         color: 'bg-slate-500',
         requiresManagerAccess: false,
-        navGroup: 'knowledge' as NavGroup,
       },
       {
         id: 'inbox' as ModuleTab,
@@ -1863,7 +1695,6 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         count: tabCounts.inbox,
         color: 'bg-blue-500',
         requiresManagerAccess: false,
-        navGroup: 'queues' as NavGroup,
       },
       {
         id: 'calendar' as ModuleTab,
@@ -1872,7 +1703,6 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         count: tabCounts.calendar,
         color: 'bg-indigo-500',
         requiresManagerAccess: false,
-        navGroup: 'queues' as NavGroup,
       },
       {
         id: 'tasks' as ModuleTab,
@@ -1881,7 +1711,6 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         count: tabCounts.tasks,
         color: 'bg-blue-500',
         requiresManagerAccess: false,
-        navGroup: 'queues' as NavGroup,
       },
       {
         id: 'decisions' as ModuleTab,
@@ -1890,7 +1719,6 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         count: tabCounts.decisions,
         color: 'bg-blue-500',
         requiresManagerAccess: false,
-        navGroup: 'queues' as NavGroup,
       },
       // VLT-004 (relokacja Client Vault). Same gate as the old sidebar entry
       // (isClientVaultEnabled) — hidden entirely when off, so removing the
@@ -1902,7 +1730,6 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         color: 'bg-slate-500',
         requiresManagerAccess: false,
         requiresVaultFlag: true,
-        navGroup: 'knowledge' as NavGroup,
       },
       // AGT-003 (relokacja Run agent). Same gate as the old sidebar entry
       // (isAgentPlanEnabled).
@@ -1913,7 +1740,6 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         color: 'bg-slate-500',
         requiresManagerAccess: false,
         requiresAgentFlag: true,
-        navGroup: 'automation' as NavGroup,
       },
       {
         id: 'manager' as ModuleTab,
@@ -1922,7 +1748,6 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         count: tabCounts.manager,
         color: 'bg-sky-500',
         requiresManagerAccess: true,
-        navGroup: 'oversight' as NavGroup,
       },
     ];
 
@@ -1936,33 +1761,6 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       return true;
     });
   }, [isPilotParticipant, ideasBetaLocked, isPolish, tabCounts, canViewManager]);
-
-  // M02-P01 (Shell/Nav, flag `isMyWorkTwoLevelNavEnabled`): group labels and
-  // the locked-tab callback for the two-level nav. `home` is never a member
-  // (filtered out of `tabs` above while RADAR_ENABLED is false), so it never
-  // needs a group label here.
-  const myWorkNavGroupLabels = useMemo<Record<NavGroup, string>>(
-    () => ({
-      queues: t('myWork.hub.navGroup.queues', 'Work queues'),
-      knowledge: t('myWork.hub.navGroup.knowledge', 'Knowledge'),
-      automation: t('myWork.hub.navGroup.automation', 'Automation'),
-      oversight: t('myWork.hub.navGroup.oversight', 'Oversight'),
-    }),
-    [t]
-  );
-
-  const handleBlockedNavTab = useCallback(
-    (tab: MyWorkNavTab) => {
-      const sourceTab = tabs.find((candidate) => candidate.id === tab.id);
-      if (sourceTab && 'betaLocked' in sourceTab && sourceTab.betaLocked) {
-        dispatchBetaAccessBlocked(t('access.blocked.BETA_LOCKED'));
-        return;
-      }
-      const detail = getPilotLockedAreaDetail('IDEAS_TAB', tab.label);
-      dispatchPilotAccessBlocked({ message: detail.message, href: detail.href });
-    },
-    [tabs, t]
-  );
 
   // Task filters configuration
   const taskFilters = useMemo(
@@ -2575,22 +2373,22 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       switch (action.type) {
         case 'create':
           if (action.target === 'idea') {
-            changeMyWorkTab('ideas');
+            setActiveTab('ideas');
             handleCreateIdea();
             return;
           }
           if (action.target === 'note') {
-            changeMyWorkTab('notebook');
+            setActiveTab('notebook');
             setNotebookCreateReqId((value) => value + 1);
             return;
           }
           if (action.target === 'task') {
-            changeMyWorkTab('tasks');
+            setActiveTab('tasks');
             handleCreateTask();
             return;
           }
           if (action.target === 'decision') {
-            changeMyWorkTab('decisions');
+            setActiveTab('decisions');
             handleCreateDecision();
             return;
           }
@@ -2608,7 +2406,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             navigate(`/presentations?tab=${presentationsTabQueryForHomeBridge('outputs_review')}`);
             return;
           }
-          changeMyWorkTab(action.target);
+          setActiveTab(action.target);
           return;
         case 'open':
           if (action.target === 'idea') {
@@ -2616,7 +2414,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             return;
           }
           if (action.target === 'note') {
-            changeMyWorkTab('notebook');
+            setActiveTab('notebook');
             setNotebookOpenPageId(action.id);
             return;
           }
@@ -2688,11 +2486,11 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           if (result) {
             const mod = action.targetModule;
             if (mod === 'initiatives' || mod === 'Inicjatywy') {
-              changeMyWorkTab('ideas');
+              setActiveTab('ideas');
             } else if (mod === 'execution' || mod === 'Wdrożenia') {
-              changeMyWorkTab('tasks');
+              setActiveTab('tasks');
             } else if (mod === 'notebook' || mod === 'Notatki') {
-              changeMyWorkTab('notebook');
+              setActiveTab('notebook');
               setNotebookCreateReqId((value) => value + 1);
             }
           }
@@ -3874,7 +3672,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         label: t('myWork.hub.label49', 'Overdue'),
         count: taskFilterCounts.overdue,
         onClick: () => {
-          changeMyWorkTab('tasks');
+          setActiveTab('tasks');
           setTaskFilter('overdue');
           setActiveDocumentId(null);
         },
@@ -3884,7 +3682,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         label: t('myWork.hub.label50', 'Urgent'),
         count: taskFilterCounts.urgent,
         onClick: () => {
-          changeMyWorkTab('tasks');
+          setActiveTab('tasks');
           setTaskFilter('urgent');
           setActiveDocumentId(null);
         },
@@ -3894,7 +3692,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         label: t('myWork.hub.label51', 'Decisions (pending)'),
         count: decisionFilterCounts.my + decisionFilterCounts.awaiting,
         onClick: () => {
-          changeMyWorkTab('decisions');
+          setActiveTab('decisions');
           setDecisionFilter('my');
           setActiveDocumentId(null);
         },
@@ -3904,7 +3702,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         label: t('myWork.hub.label52', 'Inbox'),
         count: tabCounts.inbox,
         onClick: () => {
-          changeMyWorkTab('inbox');
+          setActiveTab('inbox');
           setActiveDocumentId(null);
         },
       },
@@ -3977,20 +3775,11 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       case 'decision':
         return (
           <React.Suspense fallback={lazyFallback}>
-            {isM05DecisionWorkspaceEnabled() ? (
-              <DecisionWorkspace
-                decisionId={activeDoc.data?.isNew ? null : activeDoc.id}
-                projectId={currentProjectId}
-                onClose={() => handleCloseDocument(activeDoc.id)}
-                onSaved={(data) => handleDocumentSaved(activeDoc.id, data)}
-              />
-            ) : (
-              <DecisionDetailView
-                decisionId={activeDoc.data?.isNew ? null : activeDoc.id}
-                onClose={() => handleCloseDocument(activeDoc.id)}
-                onSaved={(data) => handleDocumentSaved(activeDoc.id, data)}
-              />
-            )}
+            <DecisionDetailView
+              decisionId={activeDoc.data?.isNew ? null : activeDoc.id}
+              onClose={() => handleCloseDocument(activeDoc.id)}
+              onSaved={(data) => handleDocumentSaved(activeDoc.id, data)}
+            />
           </React.Suspense>
         );
       case 'notification':
@@ -4061,15 +3850,15 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             <ExecutiveDashboard
               onNavigate={(section, options) => {
                 if (section === 'tasks') {
-                  changeMyWorkTab('tasks');
+                  setActiveTab('tasks');
                   if (options?.filter) setTaskFilter(options.filter as TaskFilter);
                 }
                 if (section === 'decisions') {
-                  changeMyWorkTab('decisions');
+                  setActiveTab('decisions');
                   if (options?.filter === 'pending') setDecisionFilter('my');
                 }
-                if (section === 'focus') changeMyWorkTab('home');
-                if (section === 'inbox') changeMyWorkTab('inbox');
+                if (section === 'focus') setActiveTab('home');
+                if (section === 'inbox') setActiveTab('inbox');
               }}
               refreshTrigger={refreshTrigger}
             />
@@ -4243,15 +4032,30 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           );
         }
         return (
-          <DecisionsPanelContent
-            viewMode={decisionFilter}
-            priorityFilter={decisionPriorityFilter}
-            searchQuery={searchQuery}
-            onDecisionClick={handleDecisionClick}
-            onCountsChange={handleDecisionCountsChange}
-            onBulkBarChange={handleDecisionsBulkBarChange}
-            refreshTrigger={refreshTrigger}
-          />
+          <>
+            <DefinitionRemediationQueue />
+            <GateSignoffQueue />
+            <DefinitionDecisionQueue />
+            <AnalysisDecisionQueue />
+            <PortfolioDecisionQueue />
+            <AIAnalysisProposalReviewQueue />
+            <ScheduleDecisionQueue />
+            <HandoffAcceptanceQueue />
+            <DeliveryResultsAcceptanceQueue />
+            <EffectivenessClosureQueue />
+            <ClosureDecisionQueue />
+            <MaterialChangeQueue />
+            <ExecutionCanonicalWorkQueue />
+            <DecisionsPanelContent
+              viewMode={decisionFilter}
+              priorityFilter={decisionPriorityFilter}
+              searchQuery={searchQuery}
+              onDecisionClick={handleDecisionClick}
+              onCountsChange={handleDecisionCountsChange}
+              onBulkBarChange={handleDecisionsBulkBarChange}
+              refreshTrigger={refreshTrigger}
+            />
+          </>
         );
       case 'vault':
         // VLT-004 (relokacja Client Vault z menu głównego). ClientDocumentsVault
@@ -4342,75 +4146,47 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               <Search size={18} />
             </button>
 
-            {/* Main Tabs — M02-P01: two-level grouped nav behind a default-OFF
-                flag (`isMyWorkTwoLevelNavEnabled`); OFF renders the exact
-                pre-existing flat single-row bar unchanged. */}
-            {isMyWorkTwoLevelNavEnabled() ? (
-              <MyWorkNav
-                tabs={tabs.map((tab): MyWorkNavTab => ({
-                  id: tab.id,
-                  label: tab.label,
-                  icon: tab.icon,
-                  navGroup: tab.navGroup,
-                  count: 'count' in tab ? tab.count : undefined,
-                  isLocked: 'isLocked' in tab ? tab.isLocked : undefined,
-                  lockedReason:
-                    'isLocked' in tab && tab.isLocked
-                      ? 'betaLocked' in tab && tab.betaLocked
-                        ? t('access.blocked.BETA_LOCKED')
-                        : getPilotLockedAreaDetail('IDEAS_TAB', tab.label).message
-                      : undefined,
-                }))}
-                activeTabId={activeTab}
-                groupLabels={myWorkNavGroupLabels}
-                groupsAriaLabel={t('myWork.hub.navGroup.ariaLabel', 'My Work navigation groups')}
-                onSelectTab={(tabId) => {
-                  handleSelectTab(tabId as ModuleTab);
-                }}
-                onBlockedTab={handleBlockedNavTab}
-                activeChipClassName={BUTTON_ACTIVE}
-                inactiveChipClassName={BUTTON_INACTIVE}
-              />
-            ) : (
-              <div className="flex items-center gap-2 min-w-0 overflow-x-auto whitespace-nowrap">
-                {tabs.map((tab) => {
-                  const isActive = activeTab === tab.id;
-                  return (
-                    <button
-                      key={tab.id}
-                      onClick={() => {
-                        if (tab.isLocked) {
-                          if (tab.betaLocked) {
-                            dispatchBetaAccessBlocked(t('access.blocked.BETA_LOCKED'));
-                          } else {
-                            const detail = getPilotLockedAreaDetail('IDEAS_TAB', tab.label);
-                            dispatchPilotAccessBlocked({
-                              message: detail.message,
-                              href: detail.href,
-                            });
-                          }
-                          return;
+            {/* Main Tabs */}
+            <div className="flex items-center gap-2 min-w-0 overflow-x-auto whitespace-nowrap">
+              {tabs.map((tab) => {
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => {
+                      if (tab.isLocked) {
+                        if (tab.betaLocked) {
+                          dispatchBetaAccessBlocked(t('access.blocked.BETA_LOCKED'));
+                        } else {
+                          const detail = getPilotLockedAreaDetail('IDEAS_TAB', tab.label);
+                          dispatchPilotAccessBlocked({
+                            message: detail.message,
+                            href: detail.href,
+                          });
                         }
-                        handleSelectTab(tab.id);
-                      }}
-                      className={isActive ? BUTTON_ACTIVE : BUTTON_INACTIVE}
-                      data-testid={`mywork-tab-${tab.id}`}
-                      title={
-                        tab.isLocked
-                          ? tab.betaLocked
-                            ? t('access.blocked.BETA_LOCKED')
-                            : getPilotLockedAreaDetail('IDEAS_TAB', tab.label).message
-                          : undefined
+                        return;
                       }
-                    >
-                      {tab.icon}
-                      <span>{tab.label}</span>
-                      {tab.isLocked && <Lock size={14} className="opacity-70" />}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+                      setActiveTab(tab.id);
+                      // Close document when switching tabs to show list view
+                      setActiveDocumentId(null);
+                    }}
+                    className={isActive ? BUTTON_ACTIVE : BUTTON_INACTIVE}
+                    data-testid={`mywork-tab-${tab.id}`}
+                    title={
+                      tab.isLocked
+                        ? tab.betaLocked
+                          ? t('access.blocked.BETA_LOCKED')
+                          : getPilotLockedAreaDetail('IDEAS_TAB', tab.label).message
+                        : undefined
+                    }
+                  >
+                    {tab.icon}
+                    <span>{tab.label}</span>
+                    {tab.isLocked && <Lock size={14} className="opacity-70" />}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Right cluster (KANON v3, left→right): Filters → View → Tool → Add → Area */}

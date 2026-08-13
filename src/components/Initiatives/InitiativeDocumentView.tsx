@@ -113,7 +113,6 @@ import {
 import { exportReportToPDF } from '@/services/pdf/pdfExport';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
-import { bumpInitiativeRefresh } from '@/store/useInitiativeRefreshStore';
 import { AppView } from '@/types';
 import {
   type GateAiCheckResponse,
@@ -613,7 +612,6 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       lastName?: string;
       avatarUrl?: string;
       source?: 'manual' | 'ai';
-      version?: number;
     }>
   >([]);
   const [apiBudgetItems, setApiBudgetItems] = useState<
@@ -2790,7 +2788,6 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 firstName: item.firstName,
                 lastName: item.lastName,
                 avatarUrl: item.avatarUrl,
-                version: typeof item.version === 'number' ? item.version : undefined,
               }))
             );
           })
@@ -3648,9 +3645,6 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           { ...data, id: newItem.id || `res-${Date.now()}` },
         ]);
         toast.success(t('initiatives.resourceAdded2'));
-        // INI-05: any other open view reading this initiative's capacity
-        // (portfolio list, timeline) must not keep showing a pre-add snapshot.
-        bumpInitiativeRefresh();
       } catch (e: any) {
         toast.error(e?.message || t('initiatives.failedToAddResource2'));
       }
@@ -3658,54 +3652,18 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     [initiativeId, isPolish]
   );
 
-  // INI-05: was fire-and-forget (`catch { /* best-effort */ }`) — a failed
-  // PUT left the optimistic edit on screen showing false success, and a
-  // concurrent edit elsewhere could be silently overwritten with no signal
-  // to either user. Now: send the last-known `version` for CAS, and on
-  // ANY failure (network, 403, 404, or a real 409 version conflict) revert
-  // the optimistic change and surface it — never a silent/false success.
   const handleUpdateResource = useCallback(
     async (id: string, data: Partial<(typeof apiResourceItems)[0]>) => {
-      let previousItem: (typeof apiResourceItems)[0] | undefined;
       setApiResourceItems((prev) =>
-        prev.map((item) => {
-          if (item.id !== id) return item;
-          previousItem = item;
-          return { ...item, ...data };
-        })
+        prev.map((item) => (item.id === id ? { ...item, ...data } : item))
       );
       try {
-        const expectedVersion = previousItem?.version;
-        const res = await Api.put(`/initiatives/${initiativeId}/resources/${id}`, {
-          ...data,
-          ...(expectedVersion !== undefined ? { expectedVersion } : {}),
-        });
-        const nextVersion = res?.version;
-        if (typeof nextVersion === 'number') {
-          setApiResourceItems((prev) =>
-            prev.map((item) => (item.id === id ? { ...item, version: nextVersion } : item))
-          );
-        }
-        bumpInitiativeRefresh();
-      } catch (e: any) {
-        setApiResourceItems((prev) =>
-          prev.map((item) => (item.id === id && previousItem ? previousItem : item))
-        );
-        if (e?.status === 409) {
-          toast.error(
-            t(
-              'initiatives.resourceUpdateConflict',
-              'This resource was changed elsewhere — refresh and try again'
-            )
-          );
-        } else {
-          toast.error(
-            e?.message || t('initiatives.failedToUpdateResource', 'Failed to update resource')
-          );
-        }
+        await Api.put(`/initiatives/${initiativeId}/resources/${id}`, data);
+      } catch {
+        // best-effort
       }
     },
-    [initiativeId, t]
+    [initiativeId]
   );
 
   const handleDeleteResource = useCallback(
@@ -3714,7 +3672,6 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       toast.success(t('initiatives.resourceRemoved2'));
       try {
         await Api.delete(`/initiatives/${initiativeId}/resources/${id}`);
-        bumpInitiativeRefresh();
       } catch {
         // best-effort
       }
@@ -5920,13 +5877,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         ) {
           return [];
         }
-        // CB-06 / RV-015: never fall back to the raw internal source_id (a
-        // UUID like "ii_<uuid>") as the user-facing label — show a plain
-        // localized placeholder instead when no title was captured.
-        const sourceTitle =
-          initiative?.source_title ||
-          initiative?.sourceTitle ||
-          t('initiatives.initiativeDocumentView.untitledSource', 'Untitled source');
+        const sourceTitle = initiative?.source_title || initiative?.sourceTitle || srcId;
         const sourcePath =
           normalizedSourceType === 'interview' ||
           normalizedSourceType === 'interview_insight' ||
@@ -8217,19 +8168,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
         // ── V4-IDEA-09: Used in (backlinks) — LinkGraph parity with Ideas/Notebook/Tools ──
         case 'used-in': {
-          // CB-06 / RV-015: the backlinks list has no human-readable title
-          // for the linked item (only type + internal id) — never show the
-          // raw id as a navigation name; the localized type label is the
-          // safe identity shown to the user, the raw id stays payload-only
-          // (used to open the item, never rendered).
           const openBacklinkItem = (sourceType: string, sourceId: string) => {
             window.dispatchEvent(
               new CustomEvent('mywork-open-item', {
-                detail: {
-                  type: sourceType,
-                  id: sourceId,
-                  name: getSourceDisplayLabel(sourceType, isPolish),
-                },
+                detail: { type: sourceType, id: sourceId, name: `${sourceType} ${sourceId}` },
               })
             );
           };
@@ -8256,6 +8198,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         <div className="text-[11px] font-medium text-c-text truncate">
                           {getSourceDisplayLabel(bl.sourceType, isPolish)}
                         </div>
+                        <div className="text-[10px] text-c-text-muted truncate">{bl.sourceId}</div>
                       </div>
                       <button
                         onClick={() => openBacklinkItem(bl.sourceType, bl.sourceId)}

@@ -10,7 +10,6 @@ import type React from 'react';
 
 // Section component imports
 import { AttachmentsSection } from './AttachmentsSection';
-import { ClosureSection } from './ClosureSection';
 import { CommentsSection } from './CommentsSection';
 import { CompetencyRequirementsSection } from './CompetencyRequirementsSection';
 import { ControlSection } from './ControlSection';
@@ -66,7 +65,6 @@ export const SECTION_REGISTRY: Record<string, React.ComponentType<InitiativeSect
   pilot: PilotSection,
   comments: CommentsSection,
   history: HistorySection,
-  closure: ClosureSection,
 
   // Right column - Control/Meta
   control: ControlSection,
@@ -116,7 +114,6 @@ export const DEFAULT_SECTION_ORDER: Record<string, number> = {
   pilot: 120,
   comments: 130,
   history: 140,
-  closure: 150,
   // Right column (control/meta)
   control: 10,
   team: 20,
@@ -155,7 +152,6 @@ export const DEFAULT_VISIBLE_SECTIONS: Record<string, boolean> = {
   skillsGap: true,
   comments: true,
   history: true,
-  closure: true,
   control: true,
   team: true,
   timeline: true,

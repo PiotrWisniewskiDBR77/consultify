@@ -21,6 +21,9 @@ import { getDatabase } from '../database/Database.js';
  *   the same env vars are already the *sole* source for `announceDeploy()` /
  *   `detectCrashLoop()` in `server/src/index.ts`, which simply fail soft when
  *   they are absent. Local dev now behaves identically: no env, no `gitSha`.
+ * - CLI uploads may carry Railway's source-linked SHA from an older deployment.
+ *   `APP_BUILD_SHA` is the explicit immutable release identity and therefore
+ *   takes precedence when the release operator supplies it.
  *
  * The branch name is intentionally NOT exposed. It is internal information with
  * no consumer; only `gitSha` is read (by deploy verification, which curls

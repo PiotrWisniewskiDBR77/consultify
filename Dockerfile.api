@@ -186,6 +186,24 @@ RUN test -f tsconfig.build.json || (echo "ERROR: tsconfig.build.json not found!"
 # Production backend compilation is fail-hard. `noEmitOnError` is enabled in
 # tsconfig.build.json, so a failed check can never leave a shippable partial dist.
 RUN rm -rf dist && NODE_OPTIONS="--max-old-space-size=3072" ./node_modules/.bin/tsc --build tsconfig.build.json
+# Fail the image build if a stale cached backend dist is ever paired with the
+# current migration files.  Demo carries this exact, reviewed historical
+# checksum variant and also legacy NULL checksum rows.  Both classifications
+# are production-readiness invariants; checking the compiled module here makes
+# the Docker image itself prove that it contains the current runner rather than
+# trusting layer-cache metadata.
+RUN node --input-type=module -e "\
+import fs from 'node:fs'; \
+import { classifyMigrationChecksum } from './dist/src/services/tablePlatform/migrationIdentity.js'; \
+const filename='20260228_budget_initiative_links.sql'; \
+const sql=fs.readFileSync('./migrations/'+filename,'utf8'); \
+const historical=classifyMigrationChecksum(filename,'7826f403a14163b1',sql); \
+const legacy=classifyMigrationChecksum(filename,null,sql); \
+if (historical !== 'accepted_historical_variant' || legacy !== 'unverifiable') { \
+  throw new Error('Compiled migration identity invariant failed: historical='+historical+', legacy='+legacy); \
+} \
+console.log('OK: compiled migration identity accepts exact reviewed history and preserves legacy NULL semantics'); \
+"
 RUN test -f dist/scripts/migrate.postgres.js || (echo "FATAL: strict Postgres migration runner missing from production dist" && exit 1)
 RUN if find dist -type f \( -path '*/scripts/*RealDbProof.js' -o -path '*/scripts/*RestartWorker.js' -o -path '*/scripts/t01BrowserFixtureServer.js' \) | grep -q .; then \
       echo "FATAL: proof/fixture/restart-worker script emitted into production dist"; \
