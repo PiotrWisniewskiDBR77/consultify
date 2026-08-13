@@ -124,25 +124,20 @@ describe('Handoff and Realizacje', () => {
     );
     expect(await screen.findByText(/Execution Case case1/)).toBeInTheDocument();
   });
-  it('opens canonical executionCaseId registry and workspace with keyboard', async () => {
+  it('renders an in-execution initiative as a canonical card linked to its workspace', async () => {
     render(<ExecutionRealizationsSurface scope="all" />);
-    const row = (await screen.findByText('Program poprawy jakości')).closest('tr')!;
-    fireEvent.click(row);
-    fireEvent.keyDown(row.closest('div[tabindex="0"]')!, { key: 'Enter' });
-    expect(await screen.findByLabelText('Karta realizacji')).toBeInTheDocument();
+    const card = (await screen.findByText('Program poprawy jakości')).closest('a');
+    expect(card).toHaveAttribute('href', '/initiatives?mode=doc&open=i1');
+    expect(screen.getByText('W realizacji')).toBeInTheDocument();
+    expect(screen.getByText('Rosnący poziom reklamacji.')).toBeInTheDocument();
+    expect(screen.getByText('1 otwarta luka')).toBeInTheDocument();
     expect(readExecutionCase).toHaveBeenCalledWith('case1');
-    expect(screen.getByText('Zakres')).toBeInTheDocument();
-    expect(screen.getAllByText('Pakiet przekazania').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Zaakceptowana baza').length).toBeGreaterThan(0);
   });
 
-  it('shows the exact Execution Case relation and opens it from preview', async () => {
+  it('does not expose execution-case implementation identifiers in the portfolio card', async () => {
     render(<ExecutionRealizationsSurface scope="all" />);
-    const row = (await screen.findByText('Program poprawy jakości')).closest('tr')!;
-    fireEvent.click(row);
-    expect(await screen.findByText('Execution Case case1@v1')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /Otwórz|Open/ }));
-    expect(await screen.findByLabelText('Karta realizacji')).toBeInTheDocument();
-    expect(screen.getAllByText(/Execution Case case1/).length).toBeGreaterThan(0);
+    expect(await screen.findByText('Program poprawy jakości')).toBeInTheDocument();
+    expect(screen.queryByText(/Execution Case case1/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/pack1/)).not.toBeInTheDocument();
   });
 });

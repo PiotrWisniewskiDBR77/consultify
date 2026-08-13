@@ -1,24 +1,17 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
-import {
-  StandardPreview,
-  StandardTable,
-  type TableColumn,
-  type TableRow,
-} from '@/components/standard';
 import {
   listExecutionCases,
   readExecutionCase,
   readRegisteredInitiative,
 } from '@/services/initiatives-execution/runtimeApi';
+import { buildInitiativeDeepLink } from '@/utils/initiativeDeepLink';
 
-import { AcceptanceRequesterPanel } from './AcceptanceRequesterPanel';
 import { countExecutionPresets, type ExecutionMenu3Contract } from './canonicalMenu3';
 
 type Knowledge = Record<string, any>;
 
-interface ExecutionRow extends TableRow {
+interface ExecutionRow {
   id: string;
   title: string;
   description: string;
@@ -121,8 +114,6 @@ export const ExecutionRealizationsSurface = ({
 }: { scope: 'active' | 'all' } & ExecutionMenu3Contract) => {
   const [state, setState] = useState<'LOADING' | 'READY' | 'ERROR'>('LOADING');
   const [rows, setRows] = useState<ExecutionRow[]>([]);
-  const [selectedExecutionCaseId, setSelectedExecutionCaseId] = useState<string | null>(null);
-  const [showWorkbench, setShowWorkbench] = useState(false);
 
   const load = useCallback(async () => {
     setState('LOADING');
@@ -172,164 +163,88 @@ export const ExecutionRealizationsSurface = ({
     () => rows.filter((row) => matches(row, activePreset ?? 'active')),
     [activePreset, matches, rows]
   );
-  const selected = useMemo(
-    () => rows.find((row) => row.id === selectedExecutionCaseId) ?? null,
-    [rows, selectedExecutionCaseId]
-  );
-
-  const columns: TableColumn[] = [
-    { id: 'title', label: 'Realizacja', sortable: true, width: '260px' },
-    { id: 'lifecycle', label: 'Stan', sortable: true, filterable: true, width: '140px' },
-    { id: 'phase', label: 'Faza', sortable: true, width: '170px' },
-    { id: 'owner', label: 'Manager realizacji', sortable: true, width: '190px' },
-    { id: 'handoffRef', label: 'Pakiet przekazania', width: '220px' },
-    { id: 'baselineRef', label: 'Zaakceptowana baza', width: '190px' },
-    { id: 'openGaps', label: 'Otwarte luki', sortable: true, align: 'right', width: '120px' },
-    { id: 'nextMilestone', label: 'Następny kamień milowy', width: '220px' },
-    { id: 'nextAction', label: 'Następne działanie', width: '180px' },
-    { id: 'updatedAt', label: 'Aktualizacja', sortable: true, width: '160px' },
-  ];
-
   useEffect(
     () => onCountsChange?.(countExecutionPresets(rows, presets, matches)),
     [matches, onCountsChange, rows]
   );
 
   return (
-    <section aria-label="Realizacje" className="min-h-0 flex-1">
+    <section aria-label="Realizowane inicjatywy" className="min-h-0 flex-1 px-4 pb-6">
       {state === 'ERROR' ? (
-        <div role="alert">
+        <div
+          role="alert"
+          className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-c-text"
+        >
           Nie udało się załadować realizacji.{' '}
           <button onClick={() => void load()}>Spróbuj ponownie</button>
         </div>
       ) : null}
-      <TableWithPreviewLayout<ExecutionRow>
-        selectedId={selectedExecutionCaseId}
-        selectedItem={selected}
-        onSelect={(id) => {
-          setSelectedExecutionCaseId(id);
-          setShowWorkbench(false);
-        }}
-        onOpenFull={(id) => {
-          setSelectedExecutionCaseId(id);
-          setShowWorkbench(true);
-        }}
-        itemIds={visibleRows.map((row) => row.id)}
-        getItemById={(id) => rows.find((row) => row.id === id) ?? null}
-        previewOpen={!showWorkbench && Boolean(selectedExecutionCaseId)}
-        renderPreview={(row) => (
-          <StandardPreview
-            embedded
-            title={row.title}
-            onClose={() => setSelectedExecutionCaseId(null)}
-            onOpenFull={() => setShowWorkbench(true)}
-            openLabel="Otwórz"
-            meta={{
-              pills: [
-                { label: row.lifecycle, tone: row.lifecycle === 'Aktywna' ? 'success' : 'neutral' },
-                { label: row.phase, tone: 'info' },
-              ],
-              trailing: <span className="text-xs">v{row.version}</span>,
-              recommendation: row.nextAction,
-            }}
-            details={{
-              label: 'Szczegóły realizacji',
-              text: row.description,
-              properties: [
-                { id: 'manager', label: 'Manager', value: row.owner },
-                { id: 'handoff', label: 'Pakiet przekazania', value: row.handoffRef },
-                { id: 'baseline', label: 'Zaakceptowana baza', value: row.baselineRef },
-                { id: 'gaps', label: 'Otwarte luki', value: String(row.openGaps) },
-                { id: 'milestone', label: 'Następny kamień milowy', value: row.nextMilestone },
-              ],
-            }}
-            relations={[
-              { label: `Execution Case ${row.id}@v${row.version}` },
-              { label: `Inicjatywa · …${row.initiativeId.slice(-8)}` },
-              { label: `Pakiet przekazania · ${row.handoffRef}` },
-            ]}
-          />
-        )}
-      >
-        <StandardTable
-          columns={columns}
-          data={visibleRows}
-          loading={state === 'LOADING'}
-          selectedRowId={selectedExecutionCaseId}
-          onRowClick={(row) => {
-            setSelectedExecutionCaseId(String(row.id));
-            setShowWorkbench(false);
-          }}
-          onRowDoubleClick={(row) => {
-            setSelectedExecutionCaseId(String(row.id));
-            setShowWorkbench(true);
-          }}
-          rowMenu={(row) => ({
-            primary: [
-              {
-                id: 'open',
-                label: 'Otwórz realizację',
-                onClick: () => {
-                  setSelectedExecutionCaseId(String(row.id));
-                  setShowWorkbench(true);
-                },
-              },
-            ],
-            universalHandlers: {
-              preview: () => {
-                setSelectedExecutionCaseId(String(row.id));
-                setShowWorkbench(false);
-              },
-              archiveNote: 'Zamknięcie realizacji wymaga decyzji.',
-            },
-          })}
-          persistKey="execution.canonical.execution-cases.v2"
-          empty={{
-            title: 'Brak zaakceptowanych realizacji',
-            description: 'Realizacja pojawi się po zaakceptowaniu pakietu przekazania.',
-          }}
-        />
-      </TableWithPreviewLayout>
-
-      {showWorkbench && selected ? (
-        <div className="border-t border-c-border p-4" aria-label="Karta realizacji">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <div>
-              <h3 className="text-base font-semibold text-c-text">{selected.title}</h3>
-              <p className="text-xs text-c-text-muted">
-                Execution Case {selected.id} · v{selected.version} · {selected.phase}
-              </p>
-            </div>
-            <button
-              type="button"
-              className="h-9 rounded-full border border-c-border px-4 text-sm font-medium"
-              onClick={() => setShowWorkbench(false)}
+      {state === 'LOADING' ? (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3" aria-label="Ładowanie inicjatyw">
+          {[0, 1, 2].map((item) => (
+            <div
+              key={item}
+              className="h-64 animate-pulse rounded-2xl border border-c-border bg-c-surface"
+            />
+          ))}
+        </div>
+      ) : null}
+      {state === 'READY' && visibleRows.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-c-border bg-c-surface/60 p-10 text-center">
+          <h3 className="text-base font-semibold text-c-text">Brak inicjatyw w realizacji</h3>
+          <p className="mt-2 text-sm text-c-text-muted">
+            Karta pojawi się tutaj, gdy inicjatywa przejdzie do realizacji.
+          </p>
+        </div>
+      ) : null}
+      {state === 'READY' && visibleRows.length > 0 ? (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {visibleRows.map((initiative) => (
+            <a
+              key={initiative.id}
+              href={buildInitiativeDeepLink(initiative.initiativeId, { mode: 'doc' })}
+              className="group flex min-h-64 flex-col rounded-2xl border border-c-border bg-c-surface p-5 transition hover:-translate-y-0.5 hover:border-primary-500/50 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
             >
-              Zamknij kartę
-            </button>
-          </div>
-          <div className="grid gap-3 md:grid-cols-4">
-            <SummaryCard label="Execution Case" value={`${selected.id}@v${selected.version}`} />
-            <SummaryCard label="Zakres" value={selected.description} />
-            <SummaryCard label="Pakiet przekazania" value={selected.handoffRef} />
-            <SummaryCard label="Zaakceptowana baza" value={selected.baselineRef} />
-          </div>
-          <AcceptanceRequesterPanel
-            executionCaseId={selected.id}
-            executionCaseVersion={selected.version}
-            initiativeId={selected.initiativeId}
-          />
+              <div className="flex items-start justify-between gap-3">
+                <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-300">
+                  W realizacji
+                </span>
+                <span
+                  className={
+                    initiative.openGaps > 0
+                      ? 'rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-300'
+                      : 'rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-300'
+                  }
+                >
+                  {initiative.openGaps > 0
+                    ? `${initiative.openGaps} otwarta luka`
+                    : 'Bez otwartych luk'}
+                </span>
+              </div>
+              <h3 className="mt-5 text-lg font-semibold leading-6 text-c-text group-hover:text-primary-300">
+                {initiative.title}
+              </h3>
+              <p className="mt-2 line-clamp-3 text-sm leading-5 text-c-text-muted">
+                {initiative.description}
+              </p>
+              <dl className="mt-5 grid grid-cols-2 gap-3 border-t border-c-border pt-4 text-sm">
+                <div>
+                  <dt className="text-xs text-c-text-muted">Odpowiedzialny</dt>
+                  <dd className="mt-1 font-medium text-c-text">{initiative.owner}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-c-text-muted">Najbliższy kamień</dt>
+                  <dd className="mt-1 font-medium text-c-text">{initiative.nextMilestone}</dd>
+                </div>
+              </dl>
+              <div className="mt-auto flex items-center justify-between pt-5 text-sm font-medium text-primary-300">
+                <span>{initiative.nextAction}</span>
+                <span aria-hidden="true">→</span>
+              </div>
+            </a>
+          ))}
         </div>
       ) : null}
     </section>
   );
 };
-
-const SummaryCard = ({ label, value }: { label: string; value: string }) => (
-  <section className="rounded-xl border border-c-border bg-c-surface p-3">
-    <div className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
-      {label}
-    </div>
-    <div className="mt-1 text-sm text-c-text">{value || '—'}</div>
-  </section>
-);
