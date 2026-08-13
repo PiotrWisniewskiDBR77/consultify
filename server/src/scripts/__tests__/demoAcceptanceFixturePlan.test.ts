@@ -38,6 +38,15 @@ describe('demo acceptance fixtures safety contract',()=>{
       expect(flag.verifySql).toContain('enabled=true');
     }
   });
+  it('seeds a materializable, evidence-backed presentation instead of sparse placeholders',()=>{
+    const presentation=buildFixturePlan(ctx).find(item=>item.domain==='artifact');
+    expect(presentation).toBeDefined();
+    const unified=JSON.parse(String(presentation!.params[7]));
+    expect(unified.slides).toHaveLength(6);
+    expect(unified.slides.every((slide:any)=>slide.content.type===slide.intent)).toBe(true);
+    expect(unified.slides.every((slide:any)=>slide.source_refs?.length>0)).toBe(true);
+    expect(presentation!.sql).toContain('deck_json=NULL');
+  });
   it('documents the dedicated acceptance owner and Piotr readback without exposing a password',()=>{
     const source=readFileSync(resolve(process.cwd(),'server/scripts/acceptance-fixtures/run.ts'),'utf8');
     expect(source).toContain('acceptance.owner@consultify.local');

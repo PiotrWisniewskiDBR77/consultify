@@ -2427,7 +2427,29 @@ export const TransformationCasesPanel: React.FC<{
               <div className="space-y-4" data-testid="transformation-case-preview">
                 <PreviewMetaCard
                   pills={[
-                    { label: isPolish ? 'Status' : 'Status', value: item.status },
+                    {
+                      label: 'Status',
+                      value:
+                        item.status === 'plan_proposed'
+                          ? isPolish
+                            ? 'Plan do przeglądu'
+                            : 'Plan needs review'
+                          : item.status === 'plan_approved'
+                            ? isPolish
+                              ? 'Plan zatwierdzony'
+                              : 'Plan approved'
+                            : item.status === 'active'
+                              ? isPolish
+                                ? 'W realizacji'
+                                : 'Active'
+                              : item.status === 'cancelled'
+                                ? isPolish
+                                  ? 'Anulowany'
+                                  : 'Cancelled'
+                                : isPolish
+                                  ? 'Szkic'
+                                  : 'Draft',
+                    },
                     { label: isPolish ? 'Wersja' : 'Version', value: `v${item.version}` },
                     { label: isPolish ? 'Etapy' : 'Stages', value: steps.length },
                   ]}
