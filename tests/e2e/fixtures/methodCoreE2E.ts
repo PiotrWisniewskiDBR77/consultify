@@ -1,14 +1,16 @@
 /**
- * Method Kernel — DRD full-chain browser E2E fixtures (agent S2, CEL 1,
- * 2026-08-13).
+ * Method Kernel — DRD full-chain browser E2E fixtures. Originally agent S2
+ * (CEL 1, 2026-08-13), extended by agent S8 (2026-08-13) for the full
+ * 19-step chain against its OWN disposable Postgres (`mac-pg-s8`, port
+ * 55520 — S2's own `mac-pg-s2b`/55505 was scoped to that agent's worktree
+ * and is not this agent's to reuse; see `DISPOSABLE_DB` below).
  *
  * Self-contained process/DB lifecycle helpers for
  * `tests/e2e/drd-full-chain.spec.ts`. Deliberately does NOT use the shared
  * `playwright.config.ts` `webServer` mechanism — that config starts exactly
  * one long-lived backend for the whole suite, but this spec needs to STOP
- * and RESTART the backend twice mid-test (CEL 1 steps 9/16) against ITS OWN
- * disposable Postgres (`mac-pg-s2b`, port 55505 — never the shared
- * `mac-pg-team`), so it manages its own child processes end to end.
+ * and RESTART the backend twice mid-test (steps 9/16) against ITS OWN
+ * disposable Postgres, so it manages its own child processes end to end.
  *
  * Auth: two mechanisms, matching the two things this suite needs to prove —
  *
@@ -50,11 +52,11 @@ export const REPO_ROOT = path.resolve(__dirname, '..', '..', '..');
 export const SERVER_DIR = path.join(REPO_ROOT, 'server');
 
 export const DISPOSABLE_DB = {
-  container: 'mac-pg-s2b',
-  port: 55505,
-  user: 's2b',
-  password: 's2b',
-  database: 's2b_test',
+  container: 'mac-pg-s8',
+  port: 55520,
+  user: 's8',
+  password: 's8',
+  database: 's8_test',
 } as const;
 
 export const DATABASE_URL = `postgresql://${DISPOSABLE_DB.user}:${DISPOSABLE_DB.password}@localhost:${DISPOSABLE_DB.port}/${DISPOSABLE_DB.database}`;
@@ -84,8 +86,9 @@ export interface RunningServer {
  * IIFE and the full API Gateway — including `/api/method/*` — actually run;
  * see `server/src/startup/testModeGates.ts`) and `E2E_MODE=true` +
  * `METHOD_CORE_DEMO_BYPASS_PACK_READINESS=true` (see header comment).
- * Polls `/api/ready` until `status === 'ready'` — budget 90s (measured
- * ~55-75s cold on this box; the coordinator's "~60s" pitfall note).
+ * Polls `/api/ready` until `status === 'ready'` — budget 130s (coordinator's
+ * pitfall note: cold boot measured ~60-68s on this box; 90s was cutting it
+ * close on a loaded machine, bumped to 130s by agent S8, 2026-08-13).
  */
 export async function startServer(port: number, logPath: string): Promise<RunningServer> {
   fs.mkdirSync(path.dirname(logPath), { recursive: true });
@@ -116,7 +119,7 @@ export async function startServer(port: number, logPath: string): Promise<Runnin
   proc.stderr.pipe(logStream);
 
   const baseUrl = `http://localhost:${port}`;
-  const readyAt = await waitForReady(baseUrl, 90_000);
+  const readyAt = await waitForReady(baseUrl, 130_000);
 
   return {
     port,

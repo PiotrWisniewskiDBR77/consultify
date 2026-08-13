@@ -20,6 +20,21 @@
  *                                   'approver' role the HTTP surface itself
  *                                   has no endpoint to grant — see
  *                                   DrdHttpMethodWorkspaceScreen.tsx header)
+ *             &token=<jwt>         (agent S8, 2026-08-13 — http-* screens
+ *                                   only. Same mechanism `drd-artifacts-
+ *                                   main.tsx` already uses: written to
+ *                                   localStorage BEFORE mount so every fetch
+ *                                   this harness makes — via
+ *                                   `src/services/tokenService.ts`'s
+ *                                   `getToken()` — authenticates as that
+ *                                   SPECIFIC actor (owner/approver/
+ *                                   lead_assessor/cross-org token), not the
+ *                                   server's ENABLE_TEST_AUTH_BYPASS fixed
+ *                                   identity. Needed for the E2E full-chain
+ *                                   spec to drive steps 4-6/9-19 through the
+ *                                   REAL DrdHttpMethodWorkspaceScreen as a
+ *                                   SPECIFIC role holder — this harness had
+ *                                   no way to do that before.
  *
  * The `http-*` screens are P0C (2026-08-13; extended to the full eight-state
  * offline/recovery model by S3, CEL 4, 2026-08-13). They mount
@@ -59,6 +74,16 @@ const theme = params.get('theme') || 'light';
 const screen = params.get('screen') || 'interview';
 const isHttpScreen = screen.startsWith('http-');
 const demoSessionIdParam = params.get('demoSessionId') || undefined;
+const tokenParam = params.get('token');
+
+// Auth (agent S8, 2026-08-13): see this file's header — only http-* screens
+// make real fetch calls this matters for, but writing/clearing it
+// unconditionally is harmless for the localStorage-only screens too.
+if (tokenParam) {
+  window.localStorage.setItem('token', tokenParam);
+} else {
+  window.localStorage.removeItem('token');
+}
 
 const root = document.documentElement;
 root.classList.toggle('dark', theme === 'dark');

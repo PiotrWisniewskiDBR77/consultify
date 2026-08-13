@@ -1,0 +1,5 @@
+DRD E2E — dowód demonstracyjny (agent S8, 2026-08-13).
+
+Ten plik jest realnie wgrywany przez tests/e2e/drd-full-chain.spec.ts (krok 4)
+przez prawdziwy input[type=file] wewnątrz [data-testid="evidence-drop-zone"]
+w DrdHttpMethodWorkspaceScreen — nie jest to fikcyjny załącznik.

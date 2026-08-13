@@ -1,0 +1,116 @@
+[
+  {
+    "step": 1,
+    "title": "Library — GET /packs",
+    "verdict": "PASS",
+    "note": "HTTP 200 rendered in browser; 1 pack row(s) visible."
+  },
+  {
+    "step": 2,
+    "title": "create/resume Session",
+    "verdict": "PASS",
+    "note": "POST /sessions -> 201, id=bea045df-d569-49fa-9cc7-75aff0609100, resumed via GET, state=draft shown in browser."
+  },
+  {
+    "step": 3,
+    "title": "assignment przez HTTP",
+    "verdict": "PASS",
+    "note": "Granted approver (to a distinct actor) + lead_assessor (to owner) via DrdRolesPanel form clicks; self-approver correctly refused in-browser."
+  },
+  {
+    "step": 4,
+    "title": "manual input + evidence",
+    "verdict": "PASS",
+    "note": "Real DrdHttpMethodWorkspaceScreen interview UI (unit 1A, level 1): typed answer text + clicked the real \"Potwierdzone\" radio -> real POST /events (ANSWER_CONFIRMED, HTTP 201, event=574834b1-dd45-4e67-9bcf-065191ae532c); uploaded a real file via evidence-drop-zone's real (sr-only, not disabled) <input type=file> -> real POST /events (EVIDENCE_ATTACHED, HTTP 201, event=58e6b2cd-f912-499c-8109-8b61b089456e). Genuine Playwright DOM interactions against S3's real screen, not page.evaluate fetch — upgrade over the prior BLOCKED verdict now that the workspace harness (drd-workspace.html) supports &token= (added by this agent)."
+  },
+  {
+    "step": 5,
+    "title": "autosave, status zapisu",
+    "verdict": "PASS",
+    "note": "DrdSourceIndicator (real runtime status, never localStorage) shows \"SAVED\" immediately after step 4's two real writes — confirms both POST /events round-trips actually landed and were re-confirmed via GET, not just fired-and-forgotten. \"Zapisz teraz\" manual-save control also present."
+  },
+  {
+    "step": 6,
+    "title": "Live Matrix",
+    "verdict": "PASS",
+    "note": "Clicked the real \"Matrix\" tab (MethodWorkspaceShell viewMode, S3's screen) -> real LiveMatrix component rendered with 63 matrix-cell nodes, reflecting the SAME real event derived from step 4 (unit 1A/L1 confirmed+evidenced). Upgrade over the prior BLOCKED verdict."
+  },
+  {
+    "step": 7,
+    "title": "revision conflict (409)",
+    "verdict": "PASS",
+    "note": "Stale expectedVersion=999 -> HTTP 409 version_conflict, currentVersion=1. Captured in HAR."
+  },
+  {
+    "step": 8,
+    "title": "reload strony",
+    "verdict": "PASS",
+    "note": "Hard reload of the workspace harness re-fetches session+events from the server — the confirmed answer (radio still aria-checked) and the EVIDENCE_ATTACHED event from step 4 are both still there, confirmed via GET /events, not client cache."
+  },
+  {
+    "step": 9,
+    "title": "pełny restart API #1",
+    "verdict": "PASS",
+    "note": "stop@2026-08-13T15:43:46.815Z -> start -> ready@2026-08-13T15:43:55.837Z (9022ms) — session, confirmed answer and evidence all reopened from Postgres against a brand-new server process."
+  },
+  {
+    "step": 10,
+    "title": "freeze przez approvera",
+    "verdict": "PASS",
+    "note": "prepared/active via pageFetch (no button in this screen); active->in_review via the REAL \"Wyślij do przeglądu\" button (owner/lead_assessor); in_review->frozen via the REAL \"Zamroź (tylko approver)\" button, clicked as the approver token -> HTTP 200, output=555c2065-6d79-4f06-91c8-a79cf59e937d, contentHash=2e315d8a5e21122f…"
+  },
+  {
+    "step": 11,
+    "title": "immutable Output",
+    "verdict": "PASS",
+    "note": "Real DrdHttpMethodWorkspaceScreen shows the immutable AssessmentOutput card (contentHash=2e315d8a5e21122f…). BONUS (Task 1 proof, real browser): clicked the real \"Reopen sesji\" button -> POST /sessions/bea045df-d569-49fa-9cc7-75aff0609100/reopen -> HTTP 201, new revision 3006d0eb-5989-4bcf-9093-47bc4e58703e (revisionOfSessionId=bea045df-d569-49fa-9cc7-75aff0609100), shown in the panel's own confirmation text. SQL confirms the original frozen session's state (\"frozen\") and its Output's content_hash are UNCHANGED after the reopen. This bonus revision is a sibling of the one steps 12/13 produce via send-back and is not used further — it exists only as live evidence for the new endpoint."
+  },
+  {
+    "step": 12,
+    "title": "send back z komentarzem",
+    "verdict": "PASS",
+    "note": "DrdRolesPanel form: empty comment blocked client-side; with comment -> real POST /send-back (200), captured via page.waitForResponse."
+  },
+  {
+    "step": 13,
+    "title": "nowa rewizja",
+    "verdict": "PASS",
+    "note": "frozen -> active send-back produced NEW session id 4adeafd4-0786-4872-b7f2-eb8c6815f43e (revisionOfSessionId=bea045df-d569-49fa-9cc7-75aff0609100), distinct from the bonus reopen revision (3006d0eb-5989-4bcf-9093-47bc4e58703e) from step 11 — both are legal independent siblings of the same frozen parent."
+  },
+  {
+    "step": 14,
+    "title": "approval",
+    "verdict": "PASS",
+    "note": "Second cycle on revision 4adeafd4-0786-4872-b7f2-eb8c6815f43e: roles re-granted (browser form), active->in_review and freeze both via REAL buttons (approver token for freeze) -> output=abd29395-7564-47de-a041-776598a93f7a, DECISION_APPROVED appended (v5), confirmed present in GET .../approval-trail."
+  },
+  {
+    "step": 15,
+    "title": "Report + Presentation + Initiative Proposal",
+    "verdict": "PASS",
+    "note": "Report Snapshot AND Initiative Proposal Draft generated via the REAL \"Generuj raport z Outputu\" / \"Wygeneruj z findingów\" buttons in DrdHttpMethodWorkspaceScreen — genuine upgrade over pageFetch-only. Presentation has NO UI button anywhere in scope (FrozenOutputHttpView only has Output/Report/Initiative/Reopen sections) — driven via real fetch, same honest-exception pattern as elsewhere in this spec."
+  },
+  {
+    "step": 16,
+    "title": "drugi pełny restart",
+    "verdict": "PASS",
+    "note": "stop@2026-08-13T15:43:59.755Z -> start -> ready@2026-08-13T15:44:08.779Z (9024ms)."
+  },
+  {
+    "step": 17,
+    "title": "list/reopen wszystkich artefaktów",
+    "verdict": "PASS",
+    "note": "After restart #2, DrdArtifactsPanel (real GET /sessions/:id/lineage) lists 2 Outputs, 1 Report, 1 Presentation, 1 Initiative Draft. 3 lineage session(s) shown in the UI list (includes the send-back sibling AND the bonus reopen sibling from step 11 — both share revision_of_session_id=bea045df-d569-49fa-9cc7-75aff0609100, so both are legitimately part of this lineage tree; only bea045df-d569-49fa-9cc7-75aff0609100 and 4adeafd4-0786-4872-b7f2-eb8c6815f43e carry Outputs/artefacts, confirmed by the exact counts above). NOTE (still open, S1's DrdArtifactsPanel, out of this agent's scope): the lineage list itself has no click-to-reopen handler (static entries) — \"reopen\" is proven at the DATA layer, not as a clickable UI affordance."
+  },
+  {
+    "step": 18,
+    "title": "lineage widoczny w UI i potwierdzony SQL-em",
+    "verdict": "PASS",
+    "note": "UI: 3 lineage session(s) listed. SQL (/Users/piotrwisniewski/.codex/worktrees/mac-s8-reopen-e2e/docs/qa/e2e-full-2026-08-13/sql-lineage.txt): method_sessions confirms BOTH siblings' revision_of_session_id=bea045df-d569-49fa-9cc7-75aff0609100 (send-back's 4adeafd4-0786-4872-b7f2-eb8c6815f43e AND the bonus reopen's 3006d0eb-5989-4bcf-9093-47bc4e58703e); method_outputs has 2 rows (only the frozen root and the send-back sibling ever froze) chained by revisionOfOutputId."
+  },
+  {
+    "step": 19,
+    "title": "cross-org rejection",
+    "verdict": "PASS",
+    "note": "Different org token -> DrdRolesPanel shows its error state in-browser (not the real roles); underlying roles fetch confirmed HTTP 403. Also confirmed for the NEW reopen endpoint: POST /sessions/bea045df-d569-49fa-9cc7-75aff0609100/reopen with a cross-org token -> HTTP 403."
+  }
+]
