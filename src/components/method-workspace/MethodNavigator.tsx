@@ -87,10 +87,34 @@ const NodeRow: React.FC<{
   // treeitem may own a group), not as its sibling. The <li> itself is left
   // unstyled/non-flex (so the nested <ul> doesn't get pulled into a flex
   // row) — the visual row (background/hover/focus ring) lives on the inner
-  // div, driven off the <li>'s focus-visible state via Tailwind `group`.
+  // div.
+  //
+  // 2026-08-13 fix: this was previously driven by a Tailwind *named group*
+  // (`group/treeitem` on the <li> + `group-focus-visible/treeitem:ring-*` on
+  // the div), which compiles to a plain CSS DESCENDANT selector
+  // (`.group\/treeitem:focus-visible .group-focus-visible\/treeitem\:ring-2`).
+  // Because a parent node's `<ul role="group">` of children is NESTED INSIDE
+  // its own <li> (required by the ARIA treeitem/group pattern above), every
+  // descendant treeitem also carries the `group/treeitem` class — so
+  // focusing a PARENT node lit up the ring on every descendant row too
+  // (confirmed via a real Tab + getComputedStyle check: focusing "Strategia
+  // i governance" showed the identical ring box-shadow on its child rows
+  // "Governance danych"/"Mapa drogowa cyfrowa", not just the focused li).
+  // Visually this reads as one big highlighted block, not "which row has
+  // focus" — the exact defect flagged by audit. Fixed with a SINGLE combined
+  // arbitrary variant `[&:focus-visible>div]:ring-*` on the <li>: `&` is
+  // this li, `:focus-visible>div` requires BOTH that this exact li is
+  // focus-visible AND targets only its own DIRECT-CHILD row div — so it only
+  // ever reaches this li's own row, never a nested li's row (several levels
+  // down, inside the sibling <ul>). NOTE: writing this as two stacked
+  // variants (`focus-visible:[&>div]:ring-2`) does NOT work — Tailwind
+  // resolves that to `.li-class > div:focus-visible` (the DIV must be
+  // focus-visible, not the li), confirmed empirically via inspecting the
+  // compiled dev-server stylesheet (`document.styleSheets`) before landing
+  // on the single-bracket form below.
   return (
     <li
-      className="group/treeitem list-none focus-visible:outline-none"
+      className="list-none focus-visible:outline-none [&:focus-visible>div]:ring-2 [&:focus-visible>div]:ring-c-focus"
       role="treeitem"
       aria-expanded={hasChildren ? expanded : undefined}
       aria-selected={active}
@@ -105,7 +129,7 @@ const NodeRow: React.FC<{
       }}
     >
       <div
-        className={`flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs cursor-pointer transition-colors group-focus-visible/treeitem:ring-2 group-focus-visible/treeitem:ring-c-focus ${
+        className={`flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs cursor-pointer transition-colors ${
           active ? 'bg-c-surface-raised text-c-text font-semibold' : 'text-c-text-secondary hover:bg-c-surface-raised'
         }`}
         style={{ paddingLeft: `${8 + depth * 14}px` }}
