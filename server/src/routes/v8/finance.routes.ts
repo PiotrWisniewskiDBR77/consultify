@@ -392,6 +392,7 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const models = await listModels(organizationId);
+    logger.info('[finance:models] runtime readback', { organizationId, count: models.length });
     return res.json({
       data: { models, count: models.length },
       meta: financeMeta(),
