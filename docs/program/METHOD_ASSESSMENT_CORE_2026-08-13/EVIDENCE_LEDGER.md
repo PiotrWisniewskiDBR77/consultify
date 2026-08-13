@@ -390,3 +390,73 @@ partial unique index działa · FK i kaskady działają · idempotencja działa.
 przeglądarki **z bazy** · realny wyścig współbieżny (dwa równoległe `append`) ·
 `409`/version conflict · retry bez podwójnego Outputu · role i cross-org przez API.
 To jest zakres A9, nieuruchomiony w tym kroku.
+
+---
+
+## G10 — Ścieżka HTTP (P0) i **blokada A9**
+
+### G10.A — Warstwa routera: DZIAŁA na realnym Postgresie
+
+| # | Wymaganie | Dowód (przebieg własny Opusa) | Werdykt |
+| --- | --- | --- | --- |
+| G10.1 | Router zamontowany | `server/src/Gateway.ts:820` → `app.use('/api/method', methodCoreRoutes)` | PASS |
+| G10.2 | Testy integracyjne na **realnej bazie** | `NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=postgresql://mac:mac@localhost:55440/mac_test npx vitest run server/src/method-core` → **EXIT=0**, `Tests 115 passed (115)` | PASS |
+| G10.3 | Migracja P0 stosuje się przyrostowo | `Applying migrations: 1 → 20260813_method_core_http_idempotency.sql`, `✅ complete` | PASS |
+| G10.4 | Tabela idempotencji `create` | `method_session_create_idempotency` istnieje w bazie | PASS |
+
+### G10.B — ★ BLOKADA: serwer nigdy nie osiąga gotowości
+
+Próbowałem przeprowadzić **realny obieg HTTP** przez uruchomiony serwer
+(nie przez vitest montujący router). Serwer **wstaje, ale nigdy nie zaczyna
+obsługiwać tras biznesowych**.
+
+| Krok | Polecenie / obserwacja |
+| --- | --- |
+| start | `PORT=3099 NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres DATABASE_URL=... npx tsx src/index.ts` |
+| log | `✅ Server started on port 3099` · `[Postgres] Schema initialization completed successfully` · `[AI:CircuitBreaker] initialized` — **i koniec** |
+| żądanie | `GET /api/method/packs` → **HTTP 503** `{"error":"Server starting","code":"SERVER_STARTING","database":"initializing"}` |
+
+**Dwa sprzeczne raporty gotowości w tym samym procesie:**
+
+| Endpoint | Odpowiedź |
+| --- | --- |
+| `/api/health` | `{"status":"ok","database":"connected","dbResponseTime":7}` |
+| `/api/health/ready` | `{"status":"ready","checks":{"database":true,...}}` |
+| **`/api/ready`** (ten, który bramkuje trasy) | **`{"status":"not_ready","database":"initializing","error":null,"migrations":{"state":"pending","detail":null}}`** |
+
+**Charakter defektu:**
+- `migrations.state` zostaje na `pending` i **nigdy się nie ustala**;
+- `error: null` — **nie ma żadnego komunikatu błędu**, proces po prostu wisi;
+- log zamarza po inicjalizacji schematu (73 linie, brak przyrostu po >60 s);
+- proces żyje, port odpowiada, ale **każda trasa `/api/*` zwraca 503**;
+- `DISABLE_TP_MIGRATIONS=true` **nie pomaga** — zawieszenie jest przed tym krokiem albo flaga nie jest honorowana na tej ścieżce.
+
+**To nie jest defekt wprowadzony przez tę pracę.** Dotyczy sekwencji startowej
+aplikacji (`server/src/index.ts` → `settleDatabaseReadiness`), nietkniętej przez
+żaden agent tej fali. Ujawnił się dopiero przy **realnym uruchomieniu** serwera
+przeciw świeżo zmigrowanej bazie — czyli dokładnie tam, gdzie kazał patrzeć
+koordynator.
+
+### G10.C — Skutek dla A9
+
+**A9 jest BLOCKED w krokach 2–16.** Nie da się:
+utworzyć sesji przez HTTP · zamknąć i otworzyć przeglądarki · potwierdzić
+odczytu z bazy · wykonać freeze/approval/Report/Initiative przez sieć —
+dopóki serwer nie zaczyna obsługiwać tras.
+
+**Co mimo to jest dowiedzione:** warstwa HTTP kernela **działa przeciw realnemu
+Postgresowi** (115/115), łącznie z idempotencją, 409, izolacją tenantów i
+retry-bez-duplikatu-Outputu. Testy montują router bezpośrednio, omijając
+zablokowaną bramkę startową.
+
+### G10.D — Świadoma decyzja P0, którą podtrzymuję
+
+`DrdHttpSessionRuntime` **nie został podłączony** do `DrdMethodWorkspaceScreen`.
+P0 powołał się na regułę #7 (właściciel nie jest pierwszym testerem wizualnym).
+Podtrzymuję: podłączenie bez możliwości zrobienia zrzutu z **działającego**
+backendu byłoby zmianą domyślnie renderowanego ekranu bez odbioru wzrokowego.
+Ekran nadal używa runtime'u na `localStorage`.
+
+**Konsekwencja, nazwana wprost:** wymaganie koordynatora „UI nie może utrzymywać
+drugiej prawdy równoległej do serwera" **NIE jest jeszcze spełnione**.
+Jest odblokowane po stronie serwera, zablokowane po stronie startu aplikacji.
