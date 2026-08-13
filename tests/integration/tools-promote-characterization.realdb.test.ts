@@ -293,22 +293,26 @@ describeDb('FAZA 0 — charakterystyka promoteToOutput', () => {
 
   // --- LUKI STRUKTURALNE ujawnione przez charakteryzację -------------------
 
-  it('C14: LUKA — tool_initiative_links NIE jest org-scoped', async () => {
+  it('C14: FAZA 1 domknięta — tool_initiative_links JEST teraz org-scoped', async () => {
     const c = await db();
     try {
       const r = await c.query(
         `SELECT COUNT(*)::int n FROM information_schema.columns
           WHERE table_name='tool_initiative_links' AND column_name='organization_id'`
       );
-      // Stan zastany: brak kolumny tenanta w tabeli, która pełni rolę
-      // rejestru promocji i klucza idempotencji.
-      expect(r.rows[0].n).toBe(0);
+      // Był 0 w FAZIE 0 (brak kolumny tenanta w tabeli pełniącej rolę
+      // rejestru promocji i klucza idempotencji). Świadomie zmieniony na 1
+      // po zastosowaniu migracji 948_tool_promotion_idempotency.sql, która
+      // dodaje `organization_id` (NOT NULL, backfillowana z tool_sessions)
+      // i indeksuje po niej odczyty w promoteToOutput. Zob.
+      // docs/program/METHOD_TOOLS_2026-08-13/IDP_SEMANTICS.md.
+      expect(r.rows[0].n).toBe(1);
     } finally {
       await c.end();
     }
   });
 
-  it('C15: LUKA — brak UNIQUE na (tool_session_id, batch_id)', async () => {
+  it('C15: FAZA 1 domknięta — UNIQUE teraz egzekwuje idempotencję promocji (nie na literalnej parze tool_session_id+batch_id)', async () => {
     const c = await db();
     try {
       const r = await c.query(
@@ -318,9 +322,25 @@ describeDb('FAZA 0 — charakterystyka promoteToOutput', () => {
       const hasUniquePair = defs.some(
         (d) => /UNIQUE/i.test(d) && /tool_session_id/.test(d) && /batch_id/.test(d)
       );
-      // Idempotencja opiera się WYŁĄCZNIE na SELECT-potem-INSERT w kodzie.
-      // Baza jej nie egzekwuje, więc jest podatna na wyścig.
+      // Nadal PRAWDA dosłownie: żaden UNIQUE index nie wiąże się z parą
+      // (tool_session_id, batch_id) literalnie — 948's migration header
+      // wyjaśnia dlaczego (batch_id ma DWA różne znaczenia współdzielone
+      // przez ToolInitiativeService.persistInitiatives — jeden batch_id =
+      // wiele wierszy — i ToolController.promoteToOutput — jeden batch_id
+      // = jeden wiersz — więc literalny UNIQUE(tool_session_id, batch_id)
+      // złamałby pierwszą ścieżkę).
       expect(hasUniquePair).toBe(false);
+
+      // Rzeczywista ochrona TERAZ istnieje — tylko na innej kombinacji
+      // kolumn (organization_id, tool_session_id, source_revision,
+      // output_type, idempotency_key), która rozróżnia obie ścieżki
+      // zapisu zamiast kolidować z nimi. Dowodzone realnie w
+      // tests/integration/tools-promotion-race.realdb.test.ts (C15/C16
+      // close-out).
+      const hasPromotionUnique = defs.some(
+        (d) => /UNIQUE/i.test(d) && d.includes('uq_tool_initiative_links_promotion')
+      );
+      expect(hasPromotionUnique).toBe(true);
     } finally {
       await c.end();
     }
@@ -370,16 +390,19 @@ describeDb('FAZA 0 — charakterystyka promoteToOutput', () => {
   });
 
   // --- 6. LUKA: brak kanonicznego tool_outputs ----------------------------
-  it('C12: LUKA — tabela tool_outputs NIE istnieje na tej bazie', async () => {
+  it('C12: FAZA 1 domknięta — tabela tool_outputs istnieje (946 zastosowana)', async () => {
     const c = await db();
     try {
       const r = await c.query(
         `SELECT COUNT(*)::int n FROM information_schema.tables
           WHERE table_schema='public' AND table_name='tool_outputs'`
       );
-      // Charakteryzujemy stan zastany: migracja 946 nie jest jeszcze zastosowana.
-      // Ten test zmieni się na 1 dopiero po Fazie 1 — świadomie.
-      expect(r.rows[0].n).toBe(0);
+      // Był 0 w FAZIE 0 (migracja 946 jeszcze nie zastosowana) — ten test
+      // świadomie zmienił się na 1, dokładnie jak zapowiadał własny komentarz
+      // powyżej, po zastosowaniu 946/947 i wpięciu promoteToOutput
+      // (services/tools/toolOutputSnapshotService.ts). Zob.
+      // tests/integration/tools-outputs-immutable.realdb.test.ts po właściwości.
+      expect(r.rows[0].n).toBe(1);
     } finally {
       await c.end();
     }

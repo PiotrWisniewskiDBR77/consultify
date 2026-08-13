@@ -3,6 +3,8 @@
  * Tools -> Initiatives workflow
  */
 
+import { createHash } from 'crypto';
+
 import type { Response } from 'express';
 import type { PoolClient } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
@@ -22,6 +24,12 @@ import {
   handoffSwotRecommendation,
   SwotCandidateHandoffError,
 } from '../services/tools/swotCandidateHandoffService.js';
+import {
+  ensureToolOutputSnapshot,
+  persistCanonicalReport,
+  recordInitiativeProposal,
+  renderToolReportSectionFromOutput,
+} from '../services/tools/toolOutputSnapshotService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { decodeHtmlEntities } from '../utils/htmlEntities.js';
@@ -32,6 +40,20 @@ import {
   type ToolRuntimeContract,
   ToolRuntimeContractSchema,
 } from '../validators/toolRuntime.validators.js';
+
+// C15 close-out (docs/program/METHOD_TOOLS_2026-08-13/IDP_SEMANTICS.md):
+// `ensureToolsSchema()` self-bootstraps this controller's tables against
+// BOTH Postgres (production/demo/CI) and SQLite (e.g.
+// tests/integration/tools/tool-session-roundtrip.contract.test.ts's
+// in-memory queryHelpers seam — see that file's own header comment). A
+// unique-index violation surfaces a DIFFERENT `.code` per engine: Postgres
+// reports '23505'; node-sqlite3 reports 'SQLITE_CONSTRAINT' (verified
+// directly against the sqlite3 driver). Checking only '23505' made every
+// SQLite-backed re-promotion 500 instead of deduplicating.
+const isUniqueViolation = (err: unknown): boolean => {
+  const code = (err as { code?: unknown })?.code;
+  return code === '23505' || code === 'SQLITE_CONSTRAINT';
+};
 
 type ToolSessionRow = {
   id: string;
@@ -70,83 +92,12 @@ const normalizeStatus = (status: string | null | undefined) =>
     .replace(/^['"]|['"]$/g, '')
     .toUpperCase();
 
-const renderToolReportSection = (
-  sectionTitle: string,
-  sectionKey: string,
-  session: ToolSessionRow,
-  answers: Record<string, any>
-): string => {
-  const items = Array.isArray(answers.items) ? answers.items : [];
-  const tensions = Array.isArray(answers.tensions) ? answers.tensions : [];
-  const moves = Array.isArray(answers.recommendedMoves) ? answers.recommendedMoves : [];
-  const summary = answers.summary && typeof answers.summary === 'object' ? answers.summary : {};
-  const itemLines = items
-    .slice(0, 20)
-    .map(
-      (item: any) =>
-        `- **${item.quadrant || 'finding'}:** ${item.text || item.content || item.title || 'Finding'}`
-    );
-  const moveLines = moves
-    .slice(0, 12)
-    .map(
-      (move: any) =>
-        `- **${move.title || 'Recommendation'}** — ${move.rationale || move.description || 'Derived from the approved tool session.'}`
-    );
-  const tensionLines = tensions
-    .slice(0, 12)
-    .map(
-      (tension: any) =>
-        `- **${tension.title || 'Strategic tension'}** — ${tension.insight || tension.whyNow || 'Validated in the approved session.'}`
-    );
-  const executive = String(
-    summary.executiveSummary || summary.verdict || 'Approved tool-session output.'
-  );
-  const base = [
-    `# ${sectionTitle}`,
-    '',
-    `Source: ${session.name} (${session.tool_type})`,
-    '',
-    executive,
-  ];
-
-  if (sectionKey === 'cover')
-    return [
-      `# ${session.name}`,
-      '',
-      'Tool Evaluation Report',
-      '',
-      `Approved source session: ${session.id}`,
-    ].join('\n');
-  if (sectionKey.includes('recommend') || sectionKey.includes('next')) {
-    return [
-      ...base,
-      '',
-      '## Recommended actions',
-      ...(moveLines.length ? moveLines : ['- No explicit actions were selected.']),
-    ].join('\n');
-  }
-  if (
-    sectionKey.includes('finding') ||
-    sectionKey.includes('gap') ||
-    sectionKey.includes('overview')
-  ) {
-    return [
-      ...base,
-      '',
-      '## Approved findings',
-      ...(itemLines.length ? itemLines : ['- No structured findings were recorded.']),
-    ].join('\n');
-  }
-  return [
-    ...base,
-    '',
-    '## Strategic tensions',
-    ...(tensionLines.length ? tensionLines : ['- No explicit strategic tensions were recorded.']),
-    '',
-    '## Recommended actions',
-    ...(moveLines.length ? moveLines : ['- No explicit actions were selected.']),
-  ].join('\n');
-};
+// NOTE (controller-merge, 2026-08-13): the ad-hoc `renderToolReportSection`
+// (session.answers_json -> markdown) that used to live here was removed —
+// Report/Presentation content is now rendered FROM the canonical
+// `tool_outputs` snapshot via `renderToolReportSectionFromOutput`
+// (services/tools/toolOutputSnapshotService.ts), never from a fresh session
+// re-read. See promoteToOutput's `report` branch.
 const safeJsonParse = (value: string | null | undefined): Record<string, unknown> => {
   if (!value) return {};
   try {
@@ -522,6 +473,77 @@ const ensureToolsSchema = async (): Promise<void> => {
     );
     await queryHelpers.queryRun(
       `CREATE INDEX IF NOT EXISTS idx_tool_links_batch ON tool_initiative_links(batch_id)`
+    );
+
+    // C15/C16 close-out (server/migrations/948_tool_promotion_idempotency.sql,
+    // docs/program/METHOD_TOOLS_2026-08-13/IDP_SEMANTICS.md). Self-managed /
+    // fresh databases that never run the migration set still need these
+    // columns — same rationale as the `tool_sessions.version` loop above:
+    // the managed migration is the source of truth for demo/prod, this loop
+    // is the source of truth for dev/self-managed DBs (and, critically, for
+    // tests/integration/tools/tool-session-roundtrip.contract.test.ts's
+    // in-memory SQLite, which never runs the numbered migration set at
+    // all) — they must agree.
+    const linkColumns = new Set(
+      (await queryHelpers.getTableColumns('tool_initiative_links')).map((column) => column.name)
+    );
+    for (const col of [
+      { name: 'organization_id', def: 'TEXT' },
+      { name: 'source_revision', def: 'INTEGER NOT NULL DEFAULT 1' },
+      { name: 'output_type', def: 'TEXT' },
+      { name: 'idempotency_key', def: 'TEXT' },
+      { name: 'payload_hash', def: 'TEXT' },
+    ]) {
+      if (linkColumns.has(col.name)) continue;
+      try {
+        await queryHelpers.queryRun(
+          `ALTER TABLE tool_initiative_links ADD COLUMN ${col.name} ${col.def}`
+        );
+        linkColumns.add(col.name);
+      } catch {
+        // Concurrent first-use initialization may have added it after the
+        // column inspection. A following request re-reads the schema.
+      }
+    }
+    // Backfill+enforce NOT NULL on a freshly-bootstrapped table (no
+    // pre-existing rows to reconcile — self-managed DBs bootstrap this table
+    // on first use). The managed migration does the equivalent, more careful
+    // (duplicate-safe) backfill for databases that already have rows.
+    try {
+      await queryHelpers.queryRun(
+        `UPDATE tool_initiative_links l SET organization_id = s.organization_id
+         FROM tool_sessions s WHERE l.tool_session_id = s.id AND l.organization_id IS NULL`
+      );
+      await queryHelpers.queryRun(
+        `UPDATE tool_initiative_links SET output_type = 'initiative' WHERE output_type IS NULL`
+      );
+      await queryHelpers.queryRun(
+        `UPDATE tool_initiative_links SET idempotency_key = 'bulk:' || batch_id || ':' || id
+         WHERE idempotency_key IS NULL`
+      );
+    } catch {
+      // Best-effort — the managed migration is authoritative for databases
+      // where this matters (i.e. ones with pre-existing rows). Also covers
+      // engines (e.g. older SQLite) that reject `UPDATE ... FROM` syntax —
+      // new inserts always supply organization_id/output_type/idempotency_key
+      // directly (see promoteToOutput's insertLedgerRow), so this backfill
+      // failing silently does not block the idempotency guarantee going
+      // forward, only historical-row cleanup.
+    }
+    try {
+      await queryHelpers.queryRun(
+        `CREATE UNIQUE INDEX IF NOT EXISTS uq_tool_initiative_links_promotion
+         ON tool_initiative_links (organization_id, tool_session_id, source_revision, output_type, idempotency_key)`
+      );
+    } catch {
+      // If residual duplicate rows exist on this self-managed DB the index
+      // creation fails safe (table remains usable, just without the DB-level
+      // guarantee) rather than blocking every request through this
+      // bootstrap path — the managed migration's dedup step is what should
+      // be relied on for that case.
+    }
+    await queryHelpers.queryRun(
+      `CREATE INDEX IF NOT EXISTS idx_tool_initiative_links_org ON tool_initiative_links(organization_id)`
     );
 
     // Note: permissions table may not have 'name' and 'icon' columns in PostgreSQL
@@ -2107,19 +2129,111 @@ export class ToolController {
       }
 
       const now = new Date().toISOString();
-      const promoteBatchId = `promote-${outputType}`;
-      const existingPromotion = (await queryHelpers.queryOne(
-        `SELECT initiative_id FROM tool_initiative_links
-         WHERE tool_session_id = ? AND batch_id = ?
-         ORDER BY created_at DESC
-         LIMIT 1`,
-        [toolId, promoteBatchId]
-      )) as { initiative_id?: string | null } | null;
 
-      if (existingPromotion?.initiative_id) {
+      // AUTHORITATIVE SNAPSHOT (946/947): every successful promotion, of any
+      // outputType, is fed FROM this canonical `tool_outputs` row — never
+      // from a fresh re-read of `session.answers_json`. `ensureToolOutputSnapshot`
+      // is idempotent (read-first, then a DB-enforced partial-unique insert
+      // on Postgres; a computed-but-unpersisted fallback on the SQLite-backed
+      // characterization harness — see that function's own header), so
+      // calling it here — ahead of the idempotency-ledger claim below — is
+      // safe on every retry/duplicate-click/concurrent-request path: it is
+      // scoped to (tool_session_id, organization_id), not to this one HTTP
+      // call, so every concurrent caller (whichever one wins the ledger
+      // claim below) converges on the SAME snapshot.
+      // `tool_initiative_links` remains the compatibility/lineage projection
+      // that existing consumers (getGeneratedInitiatives, the idempotency
+      // ledger below) already rely on; it is NOT a second source of truth
+      // for content — `tool_outputs` is.
+      const canonicalOutput = await ensureToolOutputSnapshot(session, { id: user.id }, now);
+
+      const promoteBatchId = `promote-${outputType}`;
+
+      // C15/C16 close-out (see docs/program/METHOD_TOOLS_2026-08-13/IDP_SEMANTICS.md).
+      // `source_revision` used to be hardcoded to 1 even though `session.version`
+      // (already in hand from the `SELECT *` above) is the real CAS token for this
+      // session — read it for real so a promotion after an edit doesn't collide
+      // with a stale earlier promotion.
+      const rawSessionVersion = Number((session as any).version);
+      const sourceRevision = Number.isFinite(rawSessionVersion) && rawSessionVersion > 0
+        ? rawSessionVersion
+        : 1;
+      // No caller sends an Idempotency-Key today (src/services/api.ts's
+      // promoteToolOutput() only sends outputType/title/description/
+      // selectedSections) — default to the same deterministic value `batch_id`
+      // always held, so existing behavior is unchanged for every current
+      // caller. An explicit `idempotencyKey` body field (matching this repo's
+      // existing convention, e.g. InitiativeController milestone/gate creation)
+      // lets a future caller distinguish a deliberate second promotion of the
+      // same type from an accidental retry.
+      const rawIdempotencyKey =
+        typeof (req.body as any)?.idempotencyKey === 'string' &&
+        (req.body as any).idempotencyKey.trim()
+          ? String((req.body as any).idempotencyKey).trim()
+          : promoteBatchId;
+      // Payload identity is deliberately scoped to `title` only — the ONE
+      // field this endpoint actually requires (`ToolController.ts`'s own
+      // `if (!outputType || !rawOutputTitle)` guard above). `description`
+      // and `selectedSections` are optional enrichments; a caller retrying
+      // with just `{outputType, title}` (omitting fields it sent the first
+      // time) is a normal, common retry shape — not a "different payload".
+      // Hashing those optional fields too would treat that ordinary retry
+      // as a conflict (verified against
+      // tests/integration/tools/tool-session-roundtrip.contract.test.ts,
+      // whose re-promotion re-sends only outputType+title).
+      const payloadHash = createHash('sha256').update(JSON.stringify({ title })).digest('hex');
+
+      type PromotionLedgerRow = { initiative_id?: string | null; payload_hash?: string | null };
+
+      const insertLedgerRow = (linkedOutputId: string) =>
+        queryHelpers.queryRun(
+          `INSERT INTO tool_initiative_links (
+             id, tool_session_id, batch_id, initiative_id, organization_id,
+             source_revision, output_type, idempotency_key, payload_hash, created_at
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            uuidv4(),
+            toolId,
+            promoteBatchId,
+            linkedOutputId,
+            user.organizationId,
+            sourceRevision,
+            outputType,
+            rawIdempotencyKey,
+            payloadHash,
+            now,
+          ]
+        );
+
+      const fetchExistingPromotion = () =>
+        queryHelpers.queryOne(
+          `SELECT initiative_id, payload_hash FROM tool_initiative_links
+           WHERE organization_id = ? AND tool_session_id = ? AND source_revision = ?
+             AND output_type = ? AND idempotency_key = ?
+           ORDER BY created_at ASC
+           LIMIT 1`,
+          [user.organizationId, toolId, sourceRevision, outputType, rawIdempotencyKey]
+        ) as Promise<PromotionLedgerRow | null>;
+
+      // Same idempotency_key reused with a DIFFERENT payload is a caller
+      // error, not a duplicate — previously this silently returned the FIRST
+      // title/description and discarded the caller's new ones (see
+      // IDP_SEMANTICS.md §8). Report it instead.
+      const respondIfConflictingPayload = (existing: PromotionLedgerRow): boolean => {
+        if (existing.payload_hash && existing.payload_hash !== payloadHash) {
+          res.status(409).json({
+            error: 'Idempotency key already used with a different payload',
+            existingId: existing.initiative_id,
+          });
+          return true;
+        }
+        return false;
+      };
+
+      const respondDeduplicated = async (existingOutputId: string): Promise<void> => {
         if (outputType === 'report') {
           const existingReport = await ReportBuilderService.getReport(
-            existingPromotion.initiative_id,
+            existingOutputId,
             user.organizationId
           );
           if (!existingReport) {
@@ -2128,7 +2242,7 @@ export class ToolController {
           }
         }
         res.json({
-          id: existingPromotion.initiative_id,
+          id: existingOutputId,
           outputType,
           title,
           sourceSessionId: toolId,
@@ -2136,11 +2250,53 @@ export class ToolController {
           createdAt: now,
           deduplicated: true,
         });
-        return;
-      }
+      };
+
+      // Types whose final id we control up front, so the ledger row can be
+      // claimed with a real DB-enforced INSERT BEFORE any downstream content
+      // is created — the loser of a race creates nothing. `report`
+      // (ReportBuilderService.createReport mints its own id internally) and
+      // `initiative` under INITIATIVE_FUNNEL_ENABLED (funnelCreateInitiative
+      // mints its own id) cannot be pre-claimed this way; those two fall back
+      // to create-then-claim below, which still gets DB-enforced dedup on the
+      // ledger and a correct caller-visible response, but can leave one
+      // orphaned content row behind under a genuine concurrent race — a
+      // documented residual gap, see IDP_SEMANTICS.md §7.
+      const canClaimUpfront =
+        outputType === 'presentation' ||
+        outputType === 'idea' ||
+        (outputType === 'initiative' && process.env.INITIATIVE_FUNNEL_ENABLED !== 'true');
 
       const outputId = uuidv4();
-      const sourceVersion = 1;
+
+      if (canClaimUpfront) {
+        try {
+          await insertLedgerRow(outputId);
+        } catch (err: any) {
+          if (!isUniqueViolation(err)) throw err;
+          const existing = await fetchExistingPromotion();
+          if (!existing?.initiative_id) {
+            // Nothing deletes tool_initiative_links in product code — this
+            // would mean the conflicting row vanished between the failed
+            // INSERT and this SELECT. Surface a conflict rather than
+            // silently retrying forever.
+            res.status(409).json({ error: 'Tool session promotion is already in progress' });
+            return;
+          }
+          if (respondIfConflictingPayload(existing)) return;
+          await respondDeduplicated(existing.initiative_id);
+          return;
+        }
+      } else {
+        const existing = await fetchExistingPromotion();
+        if (existing?.initiative_id) {
+          if (respondIfConflictingPayload(existing)) return;
+          await respondDeduplicated(existing.initiative_id);
+          return;
+        }
+      }
+
+      const sourceVersion = sourceRevision;
       const toolTrace = {
         source_type: 'tool',
         source_id: toolId,
@@ -2217,6 +2373,18 @@ export class ToolController {
           await queryHelpers.queryRun(
             `ALTER TABLE report_builder_sections ADD COLUMN IF NOT EXISTS rag TEXT`
           );
+          // GAP found while wiring 946 (tools-outputs-immutable.realdb.test.ts
+          // P8): `ReportBuilderService.createReport` also writes
+          // `report_builder_reports.source_refs_json` (reportBuilderService.ts
+          // ~L863/L1132), but only the SECTIONS table had this defensive
+          // guard — on a fresh migrate.postgres.ts bootstrap the REPORTS
+          // table lacks the column, so EVERY `outputType: 'report'`
+          // promotion failed with `column "source_refs_json" of relation
+          // "report_builder_reports" does not exist` before this fix, for
+          // reasons unrelated to the tool_outputs work in this file.
+          await queryHelpers.queryRun(
+            `ALTER TABLE report_builder_reports ADD COLUMN IF NOT EXISTS source_refs_json TEXT`
+          );
         }
         const normalizedSections = Array.isArray(selectedSections)
           ? selectedSections.filter((value): value is string => typeof value === 'string')
@@ -2237,11 +2405,15 @@ export class ToolController {
           createdBy: user.id,
         });
         initiativeOutputId = created.report.id;
-        const approvedAnswers = safeJsonParseAny<Record<string, any>>(session.answers_json, {});
+        // Fed FROM the canonical, frozen snapshot — NOT a fresh
+        // session.answers_json re-read. This is the L8 fix: content comes
+        // from `canonicalOutput`, pinned at promotion time, so a later edit
+        // to the session cannot retroactively change an already-generated
+        // report's content.
         const sectionSourceRefs = JSON.stringify([
           {
-            artifact_id: toolId,
-            artifact_type: 'tool_session',
+            artifact_id: canonicalOutput.id,
+            artifact_type: 'tool_output',
             artifact_name: session.name,
           },
         ]);
@@ -2251,7 +2423,12 @@ export class ToolController {
              SET generated_content = ?, source_refs_json = ?, updated_at = ?
              WHERE id = ? AND report_id = ?`,
             [
-              renderToolReportSection(section.title, section.sectionKey, session, approvedAnswers),
+              renderToolReportSectionFromOutput(
+                section.title,
+                section.sectionKey,
+                session.name,
+                canonicalOutput
+              ),
               sectionSourceRefs,
               now,
               section.id,
@@ -2265,6 +2442,21 @@ export class ToolController {
            WHERE id = ? AND organization_id = ?`,
           [now, created.report.id, session.organization_id]
         );
+
+        // Canonical lineage record (946's tool_reports/tool_report_sources) —
+        // additive alongside the legacy report_builder_* tables above, which
+        // stay the read path existing consumers use. This is the
+        // lineage-accurate ledger: it points at the exact tool_outputs row
+        // that fed this document, which report_builder_reports cannot express.
+        await persistCanonicalReport({
+          output: canonicalOutput,
+          kind: 'report',
+          title,
+          organizationId: session.organization_id,
+          projectId: session.project_id ?? null,
+          createdBy: user.id,
+          now,
+        });
       }
 
       if (outputType === 'presentation') {
@@ -2295,6 +2487,19 @@ export class ToolController {
         } catch {
           // Table may not exist
         }
+
+        // Canonical lineage record, same rationale as the `report` branch
+        // above — the deck is a deterministic render of `canonicalOutput`,
+        // not of the session at whatever state it happens to be in later.
+        await persistCanonicalReport({
+          output: canonicalOutput,
+          kind: 'presentation',
+          title,
+          organizationId: session.organization_id,
+          projectId: session.project_id ?? null,
+          createdBy: user.id,
+          now,
+        });
       }
 
       if (outputType === 'idea') {
@@ -2325,12 +2530,57 @@ export class ToolController {
       const effectiveOutputId =
         outputType === 'initiative' || outputType === 'report' ? initiativeOutputId : outputId;
 
-      // Record promotion link for traceability
-      await queryHelpers.queryRun(
-        `INSERT INTO tool_initiative_links (id, tool_session_id, batch_id, initiative_id, created_at)
-         VALUES (?, ?, ?, ?, ?)`,
-        [uuidv4(), toolId, promoteBatchId, effectiveOutputId, now]
-      );
+      if (canClaimUpfront) {
+        // The ledger row was already claimed above using `outputId` as the
+        // placeholder. For every canClaimUpfront branch (presentation, idea,
+        // initiative-without-funnel) `outputId` IS the id the content was
+        // actually created with, so this is normally a no-op — guarded in
+        // case that ever changes upstream.
+        if (effectiveOutputId !== outputId) {
+          await queryHelpers.queryRun(
+            `UPDATE tool_initiative_links
+             SET initiative_id = ?
+             WHERE organization_id = ? AND tool_session_id = ? AND source_revision = ?
+               AND output_type = ? AND idempotency_key = ?`,
+            [effectiveOutputId, user.organizationId, toolId, sourceRevision, outputType, rawIdempotencyKey]
+          );
+        }
+      } else {
+        // report / funnel-enabled initiative: claim now, after content
+        // exists. A 23505/SQLITE_CONSTRAINT here means we lost a genuine
+        // concurrent race after already creating our own content — that
+        // content is now orphaned (see IDP_SEMANTICS.md §7); return the
+        // winner's row so every caller still converges on ONE canonical id.
+        try {
+          await insertLedgerRow(effectiveOutputId);
+        } catch (err: any) {
+          if (!isUniqueViolation(err)) throw err;
+          const existing = await fetchExistingPromotion();
+          if (!existing?.initiative_id) {
+            res.status(409).json({ error: 'Tool session promotion is already in progress' });
+            return;
+          }
+          if (respondIfConflictingPayload(existing)) return;
+          await respondDeduplicated(existing.initiative_id);
+          return;
+        }
+      }
+
+      if (outputType === 'initiative') {
+        // Traceability from snapshot conclusion -> created initiative (946's
+        // tool_output_initiative_proposals). Only reached on the WINNING
+        // path (both branches above return early on a lost race), so this
+        // never records a proposal for content that didn't actually become
+        // canonical. Skipped internally when the snapshot has zero
+        // conclusions (see recordInitiativeProposal doc) — never fabricates
+        // a source conclusion id.
+        await recordInitiativeProposal({
+          output: canonicalOutput,
+          initiativeId: effectiveOutputId,
+          actorUserId: user.id,
+          now,
+        });
+      }
 
       await logAudit(user.organizationId, user.id, `tool_promoted_to_${outputType}`, toolId, {
         outputId: effectiveOutputId,

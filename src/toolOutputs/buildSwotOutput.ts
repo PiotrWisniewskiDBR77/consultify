@@ -27,6 +27,14 @@ import type {
   ToolOutput,
 } from './types';
 
+/**
+ * Wersja silnika Dynamic SWOT (isAcceptedSwotItem/validateRecommendedMove).
+ * Podbijana wyłącznie, gdy zmienia się REGUŁA klasyfikacji/bramki W2 — nie przy
+ * kosmetyce. Zapisywana w snapshotcie, żeby historia Outputów była odtwarzalna
+ * po zmianie reguł silnika (ta sama sesja pod inną wersją silnika może dać inny wynik).
+ */
+export const SWOT_ENGINE_VERSION = '1.0.0';
+
 /** Waga wpływu — ta sama skala, której używa silnik napięć. */
 const IMPACT_WEIGHT: Record<SWOTItem['impact'], number> = { high: 3, medium: 2, low: 1 };
 
@@ -52,6 +60,9 @@ export interface BuildSwotOutputInput {
   items: SWOTItem[];
   tensions: SWOTTension[];
   moves: SWOTMove[];
+  /** `tool_sessions.version` w chwili budowy — lineage, patrz types.ts. */
+  sourceRevision?: number;
+  createdBy?: string;
 }
 
 export interface BuildSwotOutputResult {
@@ -159,6 +170,9 @@ export function buildSwotOutput(input: BuildSwotOutputInput): BuildSwotOutputRes
     tensions,
     conclusions,
     createdAt: input.createdAt,
+    createdBy: input.createdBy,
+    sourceRevision: input.sourceRevision,
+    engineVersion: SWOT_ENGINE_VERSION,
   };
 
   return {
