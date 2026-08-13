@@ -1,0 +1,43 @@
+import crypto from 'node:crypto';
+
+export const ACCEPTANCE_NAMESPACE = 'consultify-demo-acceptance-v1';
+
+export type FixtureContext = { organizationId: string; userId: string };
+export type FixtureStatement = { domain: string; sql: string; params: unknown[]; verifySql: string; verifyParams: unknown[] };
+
+export function stableTextId(ctx: FixtureContext, entity: string): string {
+  return `${ctx.organizationId}--acceptance--${entity}`;
+}
+
+export function stableUuid(ctx: FixtureContext, entity: string): string {
+  const hex = crypto.createHash('sha256').update(`${ACCEPTANCE_NAMESPACE}:${ctx.organizationId}:${entity}`).digest('hex');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-a${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
+}
+
+function row(domain: string, sql: string, params: unknown[], table: string, key: string, id: string, organizationId: string): FixtureStatement {
+  return { domain, sql, params, verifySql: `SELECT count(*)::int AS count FROM ${table} WHERE ${key} = $1 AND organization_id = $2`, verifyParams: [id, organizationId] };
+}
+
+/** Root records only. They make every acceptance surface non-empty while normal UI/API flows create children. */
+export function buildFixturePlan(ctx: FixtureContext): FixtureStatement[] {
+  const project = stableTextId(ctx, 'case-project');
+  const initiative = stableTextId(ctx, 'initiative');
+  const caseId = stableTextId(ctx, 'case');
+  const kpi = stableUuid(ctx, 'kpi');
+  const roi = stableUuid(ctx, 'roi');
+  const okr = stableUuid(ctx, 'okr-program');
+  const finance = stableTextId(ctx, 'finance-model');
+  const deck = stableTextId(ctx, 'artifact-presentation');
+  const idea = stableTextId(ctx, 'idea');
+  return [
+    row('case', `INSERT INTO projects (id, organization_id, name, status) VALUES ($1,$2,$3,'active') ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name`, [project,ctx.organizationId,'[ACCEPTANCE] Transformation Case'], 'projects','id',project,ctx.organizationId),
+    row('case', `INSERT INTO case_core (case_id,project_id,organization_id,case_profile,governance_tier,case_status,contracted_closure_type,delivery_status,decision_status,implementation_status,outcome_status,sponsor_user_id,acceptance_criteria_ref,created_by_actor_id) VALUES ($1,$2,$3,'TRANSFORMATION','CONTROLLED','ACTIVE','OUTCOME_VALIDATED','PENDING','PENDING','PENDING','PENDING',$4,$5,$4) ON CONFLICT (case_id) DO NOTHING`, [caseId,project,ctx.organizationId,ctx.userId,`${ACCEPTANCE_NAMESPACE}:case`], 'case_core','case_id',caseId,ctx.organizationId),
+    row('shared', `INSERT INTO initiatives (id,organization_id,name,status) VALUES ($1,$2,$3,'EXECUTING') ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name`, [initiative,ctx.organizationId,'[ACCEPTANCE] Benefits realization'], 'initiatives','id',initiative,ctx.organizationId),
+    row('kpi', `INSERT INTO rvn_kpi_definitions (kpi_id,organization_id,kpi_code,status,owner_user_id,created_by) VALUES ($1,$2,'ACC-KPI-001','draft',$3,$3) ON CONFLICT (kpi_id) DO NOTHING`, [kpi,ctx.organizationId,ctx.userId], 'rvn_kpi_definitions','kpi_id',kpi,ctx.organizationId),
+    row('roi', `INSERT INTO rvn_roi_cases (case_id,organization_id,initiative_id,title,owner_user_id,status,currency,analysis_start,analysis_end,created_by) VALUES ($1,$2,$3,$4,$5,'draft','PLN',CURRENT_DATE,CURRENT_DATE + 365,$5) ON CONFLICT (case_id) DO NOTHING`, [roi,ctx.organizationId,initiative,'[ACCEPTANCE] ROI baseline to PIR',ctx.userId], 'rvn_roi_cases','case_id',roi,ctx.organizationId),
+    row('okr', `INSERT INTO okr_vnext_programs (program_id,organization_id,name,status,created_by) VALUES ($1,$2,$3,'draft',$4) ON CONFLICT (program_id) DO NOTHING`, [okr,ctx.organizationId,'[ACCEPTANCE] Transformation outcomes',ctx.userId], 'okr_vnext_programs','program_id',okr,ctx.organizationId),
+    row('finance', `INSERT INTO financial_models (id,organization_id,initiative_id,name,description,start_date,status,assumptions_json,created_by) VALUES ($1,$2,$3,$4,$5,CURRENT_DATE,'draft',$6,$7) ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name`, [finance,ctx.organizationId,initiative,'[ACCEPTANCE] Integrated transformation model',ACCEPTANCE_NAMESPACE,JSON.stringify({acceptanceFixture:ACCEPTANCE_NAMESPACE}),ctx.userId], 'financial_models','id',finance,ctx.organizationId),
+    row('artifact', `INSERT INTO presentation_decks (id,organization_id,project_id,title,description,status,generated_by) VALUES ($1,$2,$3,$4,$5,'draft',$6) ON CONFLICT (id) DO UPDATE SET title=EXCLUDED.title`, [deck,ctx.organizationId,project,'[ACCEPTANCE] Owner review deck',ACCEPTANCE_NAMESPACE,ctx.userId], 'presentation_decks','id',deck,ctx.organizationId),
+    row('ideas', `INSERT INTO my_ideas (id,user_id,organization_id,title,body,tags,source_type) VALUES ($1,$2,$3,$4,$5,$6,'acceptance_fixture') ON CONFLICT (id) DO UPDATE SET title=EXCLUDED.title,body=EXCLUDED.body,tags=EXCLUDED.tags`, [idea,ctx.userId,ctx.organizationId,'[ACCEPTANCE] One idea, all representations',ACCEPTANCE_NAMESPACE,JSON.stringify(['acceptance-fixture','decision-log','financial-case','business-case'])], 'my_ideas','id',idea,ctx.organizationId),
+  ];
+}
