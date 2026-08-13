@@ -21,7 +21,7 @@ export function ProposalStatusBadge({
   };
   const tone =
     status === 'ai-proposed'
-      ? 'border-primary-200 bg-primary-50 text-primary-700 dark:border-primary-900/40 dark:bg-primary-950/30 dark:text-primary-300'
+      ? 'border-c-info/40 bg-c-info/10 text-c-info'
       : status === 'rejected'
         ? 'border-danger-200 bg-danger-50 text-danger-700 dark:border-danger-900/40 dark:bg-danger-900/30 dark:text-danger-300'
         : status === 'rethinking'
@@ -75,7 +75,7 @@ export function ProposalCardActions({
         <button
           type="button"
           onClick={() => setIsCommenting((value) => !value)}
-          className="rounded-lg bg-primary-50 p-1.5 text-primary-700 hover:bg-primary-100 dark:bg-primary-950/30 dark:text-primary-300"
+          className="rounded-lg bg-c-info/10 p-1.5 text-c-info hover:bg-c-info/20"
           aria-label={t('discoveryToolsSteps.proposalCardGovernance.rethink')}
           title={t('discoveryToolsSteps.proposalCardGovernance.askAiToRethink')}
         >
@@ -97,13 +97,13 @@ export function ProposalCardActions({
             value={comment}
             onChange={(event) => setComment(event.target.value)}
             rows={2}
-            className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-200"
+            className="rounded-lg border border-c-border bg-c-surface px-2 py-1 text-xs text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
             placeholder={t('discoveryToolsSteps.proposalCardGovernance.rethinkPlaceholder')}
           />
           <button
             type="button"
             onClick={submitRethink}
-            className="self-end rounded-lg bg-navy-900 dark:bg-[#F4F7FB] px-2 py-1 text-xs text-white dark:text-navy-950 hover:bg-navy-800 dark:hover:bg-[#DDE5EF]"
+            className="self-end rounded-lg bg-c-text px-2 py-1 text-xs text-c-surface hover:opacity-90"
           >
             {t('discoveryToolsSteps.proposalCardGovernance.send')}
           </button>

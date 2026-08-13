@@ -611,9 +611,13 @@ export function KnownToolDetailView(props: {
           <div className="text-[11px] uppercase tracking-[0.18em] text-c-text-muted">
             {t('discoveryToolsMain.knownToolDetailView.toolPositioning')}
           </div>
-          <div className="mt-3 text-lg font-semibold leading-tight text-c-text">
+          {/* CANON FIX (stream G5, 2026-08-13): was a plain <div> — the
+              default "Goal" tab had zero semantic headings (h1-h3) reachable
+              by assistive tech, unlike every other tab in this view (Process/
+              Outcomes/etc. already use <h2>). */}
+          <h2 className="mt-3 text-lg font-semibold leading-tight text-c-text">
             {t('discoveryToolsMain.knownToolDetail.dynamicSwot.goal.positioningHeadline')}
-          </div>
+          </h2>
           <div className="mt-3 text-sm leading-relaxed max-w-prose text-c-text-secondary">
             {t('discoveryToolsMain.knownToolDetail.dynamicSwot.goal.positioningBody')}
           </div>

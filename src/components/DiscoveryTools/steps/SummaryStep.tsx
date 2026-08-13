@@ -61,9 +61,12 @@ const INITIATIVE_TYPE_META: Record<
   InitiativeDraft['type'],
   { label: { en: string; pl: string }; color: string; icon: typeof Rocket }
 > = {
+  // CANON FIX (stream G5, 2026-08-13): 'strategic' used `primary-*` (=
+  // crimson #85182F) purely as a category color — CLAUDE.md pułapka nr 1
+  // forbids crimson as data. Category swatches use `c-tag-*`.
   strategic: {
     label: { en: 'Strategic', pl: 'Strategiczna' },
-    color: 'text-primary-600 dark:text-primary-400',
+    color: 'text-c-tag-2',
     icon: Target,
   },
   operational: {
@@ -150,7 +153,7 @@ function ContentSelector({
             !s.available
               ? 'cursor-not-allowed border-slate-200 bg-slate-50/30 opacity-50 dark:border-navy-800 dark:bg-navy-950/20'
               : selected.has(s.id)
-                ? 'border-primary-300 bg-primary-50/40 dark:border-primary-800 dark:bg-primary-950/20'
+                ? 'border-c-info bg-c-info/5 dark:border-c-info/60'
                 : 'border-slate-200/60 bg-white/60 hover:border-slate-300 dark:border-navy-700/50 dark:bg-navy-950/30 dark:hover:border-navy-600'
           }`}
         >
@@ -159,7 +162,7 @@ function ContentSelector({
             checked={selected.has(s.id)}
             onChange={() => s.available && onToggle(s.id)}
             disabled={!s.available}
-            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-600"
+            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-c-info focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-600"
           />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
@@ -495,8 +498,9 @@ function DynamicSwotOutputs({
               {
                 label: t('discoveryToolsSteps.summaryStep.dynamicSwot.metricPills.moves'),
                 value: moves.length,
-                color:
-                  'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300',
+                // CANON FIX (stream G5, 2026-08-13): was primary-* (crimson) as
+                // a routine metric-pill color — category swatch → c-tag-*.
+                color: 'bg-c-tag-2/10 text-c-tag-2',
               },
               {
                 label: t('discoveryToolsSteps.summaryStep.dynamicSwot.metricPills.initiatives'),
@@ -672,7 +676,8 @@ function DynamicSwotOutputs({
                               onClick={() =>
                                 setExpandedInitiative(isExpanded ? null : initiative.id)
                               }
-                              className="text-xs text-slate-600 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
+                              aria-expanded={isExpanded}
+                              className="rounded text-xs text-slate-600 hover:text-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus dark:text-slate-500 dark:hover:text-slate-300"
                             >
                               {isExpanded ? (
                                 <ChevronUp className="inline h-3 w-3" />
@@ -686,7 +691,8 @@ function DynamicSwotOutputs({
                             <div className="ml-auto flex gap-1.5">
                               <button
                                 onClick={() => setAction(initiative.id, 'develop')}
-                                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all ${
+                                aria-pressed={action === 'develop'}
+                                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
                                   action === 'develop'
                                     ? 'bg-emerald-600 text-white shadow-sm'
                                     : 'bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 dark:bg-navy-800 dark:text-slate-300 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-300'
@@ -697,7 +703,8 @@ function DynamicSwotOutputs({
                               </button>
                               <button
                                 onClick={() => setAction(initiative.id, 'defer')}
-                                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all ${
+                                aria-pressed={action === 'defer'}
+                                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
                                   action === 'defer'
                                     ? 'bg-amber-500 text-white shadow-sm'
                                     : 'bg-slate-100 text-slate-600 hover:bg-amber-50 hover:text-amber-700 dark:bg-navy-800 dark:text-slate-300 dark:hover:bg-amber-900/20 dark:hover:text-amber-300'
@@ -708,7 +715,8 @@ function DynamicSwotOutputs({
                               </button>
                               <button
                                 onClick={() => setAction(initiative.id, 'idea')}
-                                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all ${
+                                aria-pressed={action === 'idea'}
+                                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
                                   action === 'idea'
                                     ? 'bg-blue-500 text-white shadow-sm'
                                     : 'bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-700 dark:bg-navy-800 dark:text-slate-300 dark:hover:bg-blue-900/20 dark:hover:text-blue-300'
@@ -1266,7 +1274,7 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({
         !toolConclusionModel.isPublishable && (
           <div className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
             <h3 className="font-medium text-slate-900 dark:text-white mb-3 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-primary-500" />
+              <TrendingUp className="w-4 h-4 text-c-info" />
               {t('discoveryToolsSteps.summaryStep.generic.keyInsights')}
             </h3>
             <ul className="space-y-2">
@@ -1275,7 +1283,7 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({
                   key={index}
                   className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"
                 >
-                  <span className="text-primary-500">•</span>
+                  <span className="text-c-info">•</span>
                   {insight}
                 </li>
               ))}
@@ -1334,7 +1342,7 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({
                     <span
                       className={`px-2 py-0.5 text-xs rounded-full ${
                         initiative.type === 'strategic'
-                          ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
+                          ? 'bg-c-tag-2/10 text-c-tag-2'
                           : initiative.type === 'operational'
                             ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
                             : initiative.type === 'defensive'

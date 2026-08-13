@@ -72,7 +72,8 @@ export const ToolHeader: React.FC<ToolHeaderProps> = ({
         <div className="flex items-center gap-4">
           <button
             onClick={onBack}
-            className="p-2 rounded-lg hover:bg-c-surface-raised text-c-text-muted transition-colors"
+            aria-label={t('common.back')}
+            className="p-2 rounded-lg hover:bg-c-surface-raised text-c-text-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
