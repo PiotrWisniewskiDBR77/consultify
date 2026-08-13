@@ -312,3 +312,123 @@ z kanonem.
 
 **czy praca niezależna może być kontynuowana:** **TAK** — mechanika, workspace,
 Outputs i testy nie zależą od tej treści.
+
+---
+
+## COORD-08 — ★ SIRI: trzy defekty w istniejącym silniku Prioritisation Matrix
+
+**Waga: P1.** Dotyczy kodu, który **jest już w repo** i liczy ranking priorytetów.
+
+**decyzja:** czy naprawić `src/services/siriPrioritisation.ts` — naprawa **zmienia
+kolejność rankingu** na istniejących danych, więc nie jest zmianą neutralną.
+
+**stan faktyczny — zweryfikowany przez Opusa WPROST z licencjonowanego źródła**
+(`knowledge/SIRI/SIRI-PM Whitepaper.pdf`, odczyt własny, nie z drugiej ręki):
+
+### Defekt 1 — brak kroku normalizacji (Step 6)
+
+Whitepaper, str. 36, **Step 6 „Normalise the values for all 3 factors"**:
+> „the Cost, KPI, and Proximity Factors differ in the magnitude of their ranges.
+> To allow for a more equitable comparison, the factors are normalised" —
+> każdy czynnik dzieli się przez wartość w kolumnie `Total`, **zanim** Step 7
+> przyłoży wagi.
+
+Kod (`calculateImpactValue`, linia 113) mnoży wagi przez **surowe** termy.
+Kroku normalizacji **nie ma**.
+
+**Dowód liczbowy (sonda Opusa, test w suicie):**
+dwa wymiary o identycznym profilu, różniące się tylko skalą `costProfile`:
+`IV(costProfile=1) = 1,8` vs `IV(costProfile=100) = 31,5`.
+Surowa skala dominuje wynik — czyli ranking jest przechylony przez jednostkę
+miary, a nie przez istotność. To jest dokładnie to, czemu Step 6 zapobiega.
+
+### Defekt 2 — ujemny Proximity nie jest obcinany do zera (Step 4)
+
+Whitepaper, str. 36, **Step 4**:
+> „If the difference has a negative value, indicate »0« into the Proximity
+> Factor row."
+
+Kod liczy `input.bic - input.ams` **bez obcięcia**.
+
+**Dowód liczbowy:** przy `BIC=1`, `AMS=5` (firma **lepsza** niż best-in-class)
+wynik `IV = −1,6`. Zamiast neutralnego zera powstaje wartość ujemna, która
+odejmuje się od członów kosztowego i KPI.
+
+*(Ten defekt znalazł Opus samodzielnie — agent A4 go nie zgłosił.)*
+
+### Defekt 3 — domyślne wagi nie odpowiadają żadnemu oficjalnemu presetowi
+
+Whitepaper, str. 29, **Figure 12 „Weightage Distribution according to Planning
+Horizon"** — trzy oficjalne zestawy:
+
+| Horyzont | Wc | Wk | Wp |
+| --- | ---: | ---: | ---: |
+| Strategic (3–5 lat) | 30% | 40% | 30% |
+| Tactical (1–2 lata) | 45% | 30% | 25% |
+| Operational (3–6 mies.) | 60% | 20% | 20% |
+
+Kod: `DEFAULT_SIRI_PM_WEIGHTS = { cost: 0.3, kpi: 0.3, proximity: 0.4 }` —
+**nie odpowiada żadnemu** z trzech. Przykład rachunkowy w whitepaperze (str. 37)
+używa `0.30 / 0.40 / 0.30`, czyli presetu **Strategic**.
+
+Whitepaper dopuszcza, by firma dostosowała wagi do swoich okoliczności — ale
+wartość **domyślna**, która nie odpowiada żadnemu presetowi i nie jest nigdzie
+udokumentowana jako świadomy wybór, jest defektem, nie konfiguracją.
+
+### Czego NIE zrobiono i dlaczego
+
+Silnika **nie naprawiono** w tej rundzie. Naprawa któregokolwiek z trzech
+punktów **zmienia kolejność priorytetów** wyliczoną dla istniejących danych.
+To jest zmiana semantyczna widoczna dla klienta, nie refaktor — wymaga decyzji
+i ponownego przeliczenia istniejących wyników.
+
+Adapter A4 **nie duplikuje** formuły (potwierdzone: woła `buildDefaultInputs`
+i `rankByImpactValue`), dokłada jedynie wagi per horyzont ze źródła oraz regułę
+wyboru fokusów z whitepaper str. 37 Step 8.
+
+**wariant rekomendowany:** naprawić wszystkie trzy w jednym kroku, za flagą,
+z testem porównującym ranking przed/po na danych demo, i z jawną informacją
+dla użytkownika, że ranking został przeliczony wg poprawionej formuły.
+Dodatkowo: wagi domyślne → wybór presetu wg horyzontu, bez wartości „własnej".
+
+**alternatywy:**
+1. Naprawić tylko Defekt 2 (obcięcie ujemnego) — najmniejsza zmiana, ale
+   zostawia największy defekt (brak normalizacji) nietknięty.
+2. Nie naprawiać, udokumentować jako znane ograniczenie — odrzucone: to wynik
+   pokazywany klientowi jako priorytet inwestycyjny.
+
+**wpływ na Assessment:** ranking TIER, raport SIRI, Initiative Drafts z SIRI.
+**wpływ na Tools / Audits:** brak.
+
+**pliki:** `src/services/siriPrioritisation.ts`,
+`src/method-core/methods/siri/siriAdapter.ts`.
+
+**czy praca niezależna może być kontynuowana:** **TAK** — defekty są
+udowodnione, otestowane i udokumentowane; naprawa jest osobnym krokiem.
+
+---
+
+## COORD-09 — Niespójność sygnatur kompilatorów Method Packa
+
+**decyzja:** ujednolicić kształt zwracany przez kompilatory packów.
+
+**stan faktyczny:**
+
+| Kompilator | Sygnatura |
+| --- | --- |
+| `compileDrdPack()` | `DrdCompileResult` = `{ pack: MethodPack, report: DrdCompileReport }` |
+| `compileSiriPack()` | `MethodPack` (wprost) |
+
+Oba są poprawne wobec `MethodAdapter.loadPack()`, ale **różnią się punktem
+wejścia**, co już raz wywróciło sondę weryfikacyjną. Przy trzeciej i czwartej
+metodzie (ADMA, CMMI) rozjazd się utrwali.
+
+**wariant rekomendowany:** ujednolicić do kształtu z raportem —
+`{ pack, report }` — bo raport pokrycia jest tym, co pozwala **uczciwie**
+ustawić `readiness`, a to jest wymóg kanonu, nie ozdoba. Dodać do kontraktu typ
+`MethodCompileResult<TReport>`.
+
+**wpływ:** Assessment (2 pliki), oraz **Tools i Audits**, gdy będą kompilować
+własne packi — dlatego trafia do koordynatora, a nie jest zmieniane po cichu.
+
+**czy praca niezależna może być kontynuowana:** **TAK.**
