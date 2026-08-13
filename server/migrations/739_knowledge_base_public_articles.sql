@@ -93,5 +93,9 @@ CREATE TABLE IF NOT EXISTS kb_article_views (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Older Knowledge Base installations already have kb_article_views but predate
+-- timestamp tracking. Reconcile the existing table before creating its index.
+ALTER TABLE kb_article_views ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+
 CREATE INDEX IF NOT EXISTS idx_kb_views_article ON kb_article_views(article_id);
 CREATE INDEX IF NOT EXISTS idx_kb_views_created ON kb_article_views(created_at);

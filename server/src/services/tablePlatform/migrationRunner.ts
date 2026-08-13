@@ -1,4 +1,5 @@
 import fs from 'fs';
+import crypto from 'crypto';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -283,6 +284,32 @@ export async function runMigrations(options?: RunMigrationsOptions): Promise<Mig
     `SELECT filename, checksum FROM ${MIGRATION_TABLE}`
   );
   const appliedChecksums = new Map(appliedResult.rows.map((r) => [r.filename, r.checksum]));
+
+  // The canonical SQL runner and the legacy Table Platform runner share migration files but
+  // maintain separate ledgers. When the strict SQL chain has already applied the exact current
+  // bytes, executing the same DDL again is both unnecessary and unsafe for older non-idempotent
+  // files. Reconcile the TP ledger only after proving filename + success + full SHA-256.
+  const sqlLedgerExists = await db.query<{ present: boolean }>(
+    `SELECT to_regclass('public.schema_migrations') IS NOT NULL AS present`
+  );
+  if (sqlLedgerExists.rows[0]?.present) {
+    const sqlApplied = await db.query<{ filename: string; checksum: string; status: string }>(
+      `SELECT filename, checksum, status FROM schema_migrations WHERE status = 'success'`
+    );
+    const successfulSql = new Map(sqlApplied.rows.map((r) => [r.filename, r.checksum]));
+    for (const file of files) {
+      if (appliedChecksums.has(file)) continue;
+      const content = fs.readFileSync(path.join(migrationsDir, file), 'utf-8');
+      const fullChecksum = crypto.createHash('sha256').update(content).digest('hex');
+      if (successfulSql.get(file) !== fullChecksum) continue;
+      const shortChecksum = fileChecksum(content);
+      await db.query(
+        `INSERT INTO ${MIGRATION_TABLE} (filename, checksum) VALUES ($1, $2) ON CONFLICT (filename) DO NOTHING`,
+        [file, shortChecksum]
+      );
+      appliedChecksums.set(file, shortChecksum);
+    }
+  }
 
   // ── Checksum verification (fail-closed) ─────────────────────────────────
   // An applied migration whose file changed underneath us means the schema in

@@ -87,7 +87,7 @@ describe('checksum policy — the 25 approved pairs', () => {
     // 542/548/573 (semantic divergences that the newer file can never close on an existing
     // table) and 520/700/000_z_core_baseline (approved ONLY because the 20260813_repair_*
     // forward migrations now deliver the columns their newer versions add).
-    expect(Object.keys(APPROVED_SQL_CHAIN_VARIANTS)).toHaveLength(31);
+    expect(Object.keys(APPROVED_SQL_CHAIN_VARIANTS)).toHaveLength(32);
     expect(APPROVED_SQL_CHAIN_VARIANTS[SCHEMA_ATTESTED_FILENAME]).toBeUndefined();
   });
 

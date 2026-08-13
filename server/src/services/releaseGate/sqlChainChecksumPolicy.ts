@@ -22,9 +22,8 @@
  *
  * DELIBERATELY EXCLUDED (do not add without a new forensic pass + CTO decision):
  *   730_partner_users_uuid_columns.sql        -> SCHEMA_ATTESTED_LEGACY_VARIANT (see below)
- *   20260628_initiative_core_section_prompts  -> DML gap; NO_REPAIR_NEEDED (the app ships
- *                                                CORE_FALLBACK_PROMPTS.raid, which engages
- *                                                automatically), so nothing to approve.
+ *   20260628_initiative_core_section_prompts is accepted below only for the exact reviewed
+ *   pair. Its change is guarded, idempotent DML; runtime also ships CORE_FALLBACK_PROMPTS.
  *
  * 520, 700 and 000_z_core_baseline ARE listed below, but ONLY because their confirmed schema
  * gaps are now closed by the 20260813_repair_* forward migrations. Approving a drifted file
@@ -49,6 +48,10 @@ export interface ApprovedVariant {
  * Both halves must match exactly; any other combination is DRIFT.
  */
 export const APPROVED_SQL_CHAIN_VARIANTS: Readonly<Record<string, ApprovedVariant>> = Object.freeze({
+  '20260628_initiative_core_section_prompts.sql': {
+    stored: 'b6daed308fe8cb687a1dcfc82ffaf19c376ca553e2981e307b0683102c54eaf1',
+    current: 'dcdc767fed782b797c08ca9eddbbb49e299698ed7ff974a0cb787141cb7b5ae3',
+  },
   '20260127_pmo_task_fields.sql': {
     stored: '3c826aa199b5b449a2a5d1e3922b8a30b50459b1300808045d428e3458989553',
     current: '80fcccdd05d45c95916c537249dd3e19643b6343d77df52858be0d45de663d5b',

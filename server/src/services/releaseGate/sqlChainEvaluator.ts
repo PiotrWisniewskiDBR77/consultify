@@ -136,7 +136,11 @@ export async function evaluateSqlChain(deps: SqlChainEvaluatorDeps): Promise<Sql
 
     const acc = { ...empty, ledgerPresent: true };
 
+    const requiredSet = new Set(required);
     for (const [filename, row] of applied) {
+      // Historical ledgers can retain rows for files that no longer exist or are now explicitly
+      // excluded from the Postgres chain. They are audit history, not a missing required step.
+      if (!requiredSet.has(filename)) continue;
       if (row.status === 'failed') acc.failed.push(filename);
       else if (row.status === 'skipped') acc.skipped.push(filename);
     }

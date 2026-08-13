@@ -22,6 +22,14 @@ export type HistoricalChecksumVariants =
 export const APPROVED_HISTORICAL_CHECKSUM_VARIANTS: Readonly<
   Record<string, HistoricalChecksumVariants>
 > = Object.freeze({
+  '739_knowledge_base_public_articles.sql': {
+    stored: '444c848e37783b96',
+    current: '2d18c96665b82f8c',
+  },
+  '20260330_v81_templates_as_outputs_artifacts.sql': {
+    stored: '5eca0e1ace91934a',
+    current: '8c6fb6d01926935a',
+  },
   '20260221_01_prompt_ssot_compat.sql': {
     stored: '3b86817e1f71b412',
     current: '28b9f553054e4be9',
