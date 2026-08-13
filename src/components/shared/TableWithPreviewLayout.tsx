@@ -65,6 +65,8 @@ interface TableWithPreviewLayoutProps<T extends PreviewableItem> {
    * Default false → existing flex-sibling behaviour for every other consumer.
    */
   desktopPreviewOverlay?: boolean;
+  /** Render the selected entity as the main full-width card instead of table + preview. */
+  fullView?: boolean;
 }
 
 export function TableWithPreviewLayout<T extends PreviewableItem>({
@@ -84,6 +86,7 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
   renderBatchPreview,
   getItemById,
   desktopPreviewOverlay = false,
+  fullView = false,
 }: TableWithPreviewLayoutProps<T>) {
   const { t } = useTranslation();
   const { isMobile, safeAreaInsets } = useDeviceType();
@@ -367,6 +370,25 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
         )}
       </>
     ) : null;
+
+  if (fullView && selectedItem) {
+    return (
+      <div
+        className="app-table-scrollbar h-full min-h-0 overflow-y-auto bg-c-bg p-4"
+        role="region"
+        aria-label={t('common.fullCard', 'Full card')}
+      >
+        <div className="mx-auto w-full max-w-6xl space-y-4">
+          {renderPreview(selectedItem)}
+          {renderPreviewFooter ? (
+            <div className="sticky bottom-0 rounded-xl border border-c-border bg-c-surface/95 p-3 shadow-lg backdrop-blur">
+              {renderPreviewFooter(selectedItem)}
+            </div>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

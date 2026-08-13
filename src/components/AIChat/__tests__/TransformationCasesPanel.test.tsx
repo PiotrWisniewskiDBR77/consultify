@@ -240,6 +240,7 @@ describe('TransformationCasesPanel', () => {
     render(
       <MemoryRouter initialEntries={['/my-work?tab=agent&transformationCaseId=case-linked']}>
         <TransformationCasesPanel
+          fullView
           onCanonicalContextChange={contextChange}
           onOpenOperations={openOperations}
         />
@@ -288,7 +289,7 @@ describe('TransformationCasesPanel', () => {
 
     render(
       <MemoryRouter initialEntries={['/my-work?tab=agent&transformationCaseId=case-linked']}>
-        <TransformationCasesPanel />
+        <TransformationCasesPanel fullView />
       </MemoryRouter>
     );
 
@@ -364,7 +365,7 @@ describe('TransformationCasesPanel', () => {
 
     render(
       <MemoryRouter initialEntries={['/my-work?tab=agent&transformationCaseId=case-linked']}>
-        <TransformationCasesPanel />
+        <TransformationCasesPanel fullView />
       </MemoryRouter>
     );
 
@@ -422,7 +423,7 @@ describe('TransformationCasesPanel', () => {
 
     render(
       <MemoryRouter initialEntries={['/my-work?tab=agent&transformationCaseId=case-linked']}>
-        <TransformationCasesPanel />
+        <TransformationCasesPanel fullView />
       </MemoryRouter>
     );
 
@@ -440,7 +441,7 @@ describe('TransformationCasesPanel', () => {
     listMock.mockResolvedValue([makeCase()]);
     render(
       <MemoryRouter initialEntries={['/my-work?tab=agent&transformationCaseId=case-linked']}>
-        <TransformationCasesPanel />
+        <TransformationCasesPanel fullView />
       </MemoryRouter>
     );
 
@@ -464,7 +465,7 @@ describe('TransformationCasesPanel', () => {
     vi.spyOn(crypto, 'randomUUID').mockReturnValue('11111111-2222-4333-8444-555555555555');
     render(
       <MemoryRouter initialEntries={['/my-work?tab=agent&transformationCaseId=case-linked']}>
-        <TransformationCasesPanel />
+        <TransformationCasesPanel fullView />
       </MemoryRouter>
     );
     fireEvent.change(await screen.findByLabelText('Cel biznesowy stage-0'), {
@@ -528,7 +529,7 @@ describe('TransformationCasesPanel', () => {
     listMock.mockResolvedValue([makeCase()]);
     render(
       <MemoryRouter initialEntries={['/my-work?tab=agent&transformationCaseId=case-linked']}>
-        <TransformationCasesPanel />
+        <TransformationCasesPanel fullView />
       </MemoryRouter>
     );
     fireEvent.change(await screen.findByLabelText('Zależności stage-1'), {
@@ -556,7 +557,7 @@ describe('TransformationCasesPanel', () => {
 
     render(
       <MemoryRouter initialEntries={['/my-work?tab=agent&transformationCaseId=case-linked']}>
-        <TransformationCasesPanel />
+        <TransformationCasesPanel fullView />
       </MemoryRouter>
     );
 
@@ -606,7 +607,7 @@ describe('TransformationCasesPanel', () => {
 
     render(
       <MemoryRouter initialEntries={['/my-work?tab=agent&transformationCaseId=case-linked']}>
-        <TransformationCasesPanel />
+        <TransformationCasesPanel fullView />
       </MemoryRouter>
     );
 
@@ -675,7 +676,7 @@ describe('TransformationCasesPanel', () => {
 
     render(
       <MemoryRouter initialEntries={['/my-work?tab=agent&transformationCaseId=case-linked']}>
-        <TransformationCasesPanel />
+        <TransformationCasesPanel fullView />
       </MemoryRouter>
     );
 
@@ -720,7 +721,7 @@ describe('TransformationCasesPanel', () => {
 
     render(
       <MemoryRouter initialEntries={['/my-work?tab=agent&transformationCaseId=case-linked']}>
-        <TransformationCasesPanel />
+        <TransformationCasesPanel fullView />
       </MemoryRouter>
     );
 

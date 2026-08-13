@@ -395,12 +395,21 @@ export const TransformationCasesPanel: React.FC<{
     canonicalRunId?: string;
   }) => void;
   onOpenOperations?: (context: { transformationCaseId: string; canonicalRunId: string }) => void;
-}> = ({ onCanonicalContextChange, onOpenOperations }) => {
+  onOpenCase?: (transformationCase: TransformationCaseDto) => void;
+  workspaceCaseId?: string | null;
+  fullView?: boolean;
+}> = ({
+  onCanonicalContextChange,
+  onOpenOperations,
+  onOpenCase,
+  workspaceCaseId = null,
+  fullView = false,
+}) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const [searchParams] = useSearchParams();
   const currentUserId = useAppStore((state) => state.currentUser?.id ?? null);
-  const linkedCaseId = searchParams.get('transformationCaseId');
+  const linkedCaseId = workspaceCaseId ?? searchParams.get('transformationCaseId');
   const [cases, setCases] = useState<TransformationCaseDto[] | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(linkedCaseId);
   const [error, setError] = useState<string | null>(null);
@@ -2266,11 +2275,64 @@ export const TransformationCasesPanel: React.FC<{
         selectedId={selectedId}
         selectedItem={selectedRow ? { id: selectedRow.id, title: selectedRow.title } : null}
         onSelect={selectCase}
+        onOpenFull={
+          !fullView && onOpenCase && selectedRow
+            ? () => onOpenCase(selectedRow.transformationCase)
+            : undefined
+        }
         itemIds={rows.map((row) => row.id)}
+        fullView={fullView}
         renderPreview={() => {
           if (!selectedRow) return null;
           const item = selectedRow.transformationCase;
           const steps = item.activePlan?.steps ?? [];
+          if (!fullView) {
+            return (
+              <div className="space-y-4" data-testid="transformation-case-preview">
+                <PreviewMetaCard
+                  pills={[
+                    { label: isPolish ? 'Status' : 'Status', value: item.status },
+                    { label: isPolish ? 'Wersja' : 'Version', value: `v${item.version}` },
+                    { label: isPolish ? 'Etapy' : 'Stages', value: steps.length },
+                  ]}
+                />
+                <PreviewDetailsSection text={item.mandate} />
+                <section className="rounded-lg border border-c-border bg-c-surface p-3">
+                  <h3 className="text-xs font-semibold text-c-text">
+                    {isPolish ? 'Rezultaty' : 'Outcomes'}
+                  </h3>
+                  {item.desiredOutcomes.length > 0 ? (
+                    <ul className="mt-2 space-y-1.5 text-xs text-c-text-secondary">
+                      {item.desiredOutcomes.slice(0, 3).map((outcome) => (
+                        <li key={outcome} className="flex gap-2">
+                          <span aria-hidden>•</span>
+                          <span>{outcome}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-2 text-xs text-c-text-muted">
+                      {isPolish ? 'Nie zdefiniowano rezultatów.' : 'No outcomes defined.'}
+                    </p>
+                  )}
+                </section>
+                <section className="rounded-lg border border-c-border bg-c-surface p-3">
+                  <h3 className="text-xs font-semibold text-c-text">
+                    {isPolish ? 'Następny krok' : 'Next step'}
+                  </h3>
+                  <p className="mt-1 text-xs text-c-text-secondary">
+                    {item.status === 'plan_proposed'
+                      ? isPolish
+                        ? 'Otwórz kartę, przejrzyj plan i zdecyduj o jego zatwierdzeniu.'
+                        : 'Open the card, review the plan and decide whether to approve it.'
+                      : isPolish
+                        ? 'Otwórz kartę, aby kontynuować pracę.'
+                        : 'Open the card to continue work.'}
+                  </p>
+                </section>
+              </div>
+            );
+          }
           return (
             <div className="space-y-4" data-testid="transformation-case-preview">
               <PreviewMetaCard
@@ -3209,528 +3271,550 @@ export const TransformationCasesPanel: React.FC<{
             </div>
           );
         }}
-        renderPreviewFooter={() => {
-          if (!selectedRow) return null;
-          const cancelled = selectedRow.transformationCase.status === 'cancelled';
-          return (
-            <div className="grid grid-cols-2 gap-2">
-              <PreviewActionButton
-                variant="neutral"
-                icon={RefreshCw}
-                label={isPolish ? 'Odśwież' : 'Refresh'}
-                onClick={() => void loadCases()}
-              />
-              <PreviewActionButton
-                variant="positive"
-                icon={PlayCircle}
-                label={isPolish ? 'Uruchom (zablokowane)' : 'Run (blocked)'}
-                onClick={() => undefined}
-                disabled
-              />
-              {selectedRow.transformationCase.status === 'plan_proposed' ? (
-                <PreviewActionButton
-                  variant="positive"
-                  label={
-                    stageAction === 'approve-plan'
-                      ? isPolish
-                        ? 'Zatwierdzanie…'
-                        : 'Approving…'
-                      : isPolish
-                        ? 'Zatwierdź plan'
-                        : 'Approve plan'
-                  }
-                  onClick={() => void handleApprovePlan()}
-                  disabled={Boolean(stageAction)}
-                />
-              ) : null}
-              {selectedRow.transformationCase.status === 'plan_approved' &&
-              ideasProposal === null ? (
-                <PreviewActionButton
-                  variant="positive"
-                  label={
-                    stageAction === 'propose-ideas'
-                      ? isPolish
-                        ? 'Przygotowywanie…'
-                        : 'Preparing…'
-                      : isPolish
-                        ? 'Przygotuj listę idei'
-                        : 'Prepare Ideas list'
-                  }
-                  onClick={() => void handleProposeIdeas()}
-                  disabled={Boolean(stageAction)}
-                />
-              ) : null}
-              {ideasProposal && ['pending_review', 'approved'].includes(ideasProposal.status) ? (
-                <>
-                  <PreviewActionButton
-                    variant="positive"
-                    label={
-                      ideasProposal.status === 'approved'
-                        ? isPolish
-                          ? 'Wznów tworzenie Ideas'
-                          : 'Resume Ideas materialization'
-                        : isPolish
-                          ? 'Zatwierdź i utwórz Ideas'
-                          : 'Approve and create Ideas'
-                    }
-                    onClick={() => void handleReviewIdeas('approve')}
-                    disabled={Boolean(stageAction)}
-                  />
-                  {ideasProposal.status === 'pending_review' && (
+        renderPreviewFooter={
+          fullView
+            ? () => {
+                if (!selectedRow) return null;
+                const cancelled = selectedRow.transformationCase.status === 'cancelled';
+                return (
+                  <div className="grid grid-cols-2 gap-2">
                     <PreviewActionButton
-                      variant="warning"
-                      label={isPolish ? 'Odrzuć propozycję' : 'Reject proposal'}
-                      onClick={() => void handleReviewIdeas('reject')}
-                      disabled={Boolean(stageAction)}
+                      variant="neutral"
+                      icon={RefreshCw}
+                      label={isPolish ? 'Odśwież' : 'Refresh'}
+                      onClick={() => void loadCases()}
                     />
-                  )}
-                </>
-              ) : null}
-              {ideasProposal?.status === 'applied' && interviewsProposal === null ? (
-                <PreviewActionButton
-                  variant="positive"
-                  label={isPolish ? 'Przygotuj plan Interview' : 'Prepare Interview plan'}
-                  onClick={() => void handleProposeInterviews()}
-                  disabled={
-                    Boolean(stageAction) ||
-                    !stakeholderUserId.trim() ||
-                    !stakeholderRole.trim() ||
-                    !stakeholderFocus.trim()
-                  }
-                />
-              ) : null}
-              {interviewsProposal &&
-              ['pending_review', 'approved'].includes(interviewsProposal.status) ? (
-                <>
-                  <PreviewActionButton
-                    variant="positive"
-                    label={
-                      interviewsProposal.status === 'approved'
-                        ? isPolish
-                          ? 'Wznów przypisanie Interview'
-                          : 'Resume Interview assignment'
-                        : isPolish
-                          ? 'Zatwierdź i przypisz Interview'
-                          : 'Approve and assign Interviews'
-                    }
-                    onClick={() => void handleReviewInterviews('approve')}
-                    disabled={Boolean(stageAction)}
-                  />
-                  {interviewsProposal.status === 'pending_review' && (
                     <PreviewActionButton
-                      variant="warning"
-                      label={isPolish ? 'Odrzuć plan Interview' : 'Reject Interview plan'}
-                      onClick={() => void handleReviewInterviews('reject')}
-                      disabled={Boolean(stageAction)}
+                      variant="positive"
+                      icon={PlayCircle}
+                      label={isPolish ? 'Uruchom (zablokowane)' : 'Run (blocked)'}
+                      onClick={() => undefined}
+                      disabled
                     />
-                  )}
-                </>
-              ) : null}
-              {interviewsProposal?.status === 'applied' &&
-              selectedRow.transformationCase.lifecycleStage === 'interviews' ? (
-                <PreviewActionButton
-                  variant="positive"
-                  label={
-                    isPolish ? 'Zaakceptuj wyniki i otwórz DRD' : 'Accept results and open DRD'
-                  }
-                  onClick={() => void handleAcceptInterviewResults()}
-                  disabled={Boolean(stageAction) || !acceptedInsightIds.trim()}
-                />
-              ) : null}
-              {selectedRow.transformationCase.lifecycleStage === 'drd' && drdProposal === null ? (
-                <PreviewActionButton
-                  variant="positive"
-                  label={isPolish ? 'Przygotuj propozycję DRD' : 'Prepare DRD proposal'}
-                  onClick={() => void handleProposeDrd()}
-                  disabled={Boolean(stageAction) || !drdName.trim()}
-                />
-              ) : null}
-              {drdProposal && ['pending_review', 'approved'].includes(drdProposal.status) ? (
-                <>
-                  <PreviewActionButton
-                    variant="positive"
-                    label={
-                      drdProposal.status === 'approved'
-                        ? isPolish
-                          ? 'Wznów tworzenie DRD'
-                          : 'Resume DRD materialization'
-                        : isPolish
-                          ? 'Zatwierdź i utwórz DRD'
-                          : 'Approve and create DRD'
-                    }
-                    onClick={() => void handleReviewDrd('approve')}
-                    disabled={Boolean(stageAction)}
-                  />
-                  {drdProposal.status === 'pending_review' && (
-                    <PreviewActionButton
-                      variant="warning"
-                      label={isPolish ? 'Odrzuć propozycję DRD' : 'Reject DRD proposal'}
-                      onClick={() => void handleReviewDrd('reject')}
-                      disabled={Boolean(stageAction)}
-                    />
-                  )}
-                </>
-              ) : null}
-              {drdProposal?.status === 'applied' &&
-              selectedRow.transformationCase.lifecycleStage === 'drd' ? (
-                <PreviewActionButton
-                  variant="positive"
-                  label={isPolish ? 'Przyjmij wynik DRD' : 'Accept DRD result'}
-                  onClick={() => void handleAcceptDrdResults()}
-                  disabled={Boolean(stageAction) || !drdProposal.assessmentId}
-                />
-              ) : null}
-              {selectedRow.transformationCase.lifecycleStage === 'opportunity_synthesis' &&
-              synthesisProposal === null ? (
-                <PreviewActionButton
-                  variant="positive"
-                  label={isPolish ? 'Przygotuj syntezę szans' : 'Prepare opportunity synthesis'}
-                  onClick={() => void handleProposeSynthesis()}
-                  disabled={Boolean(stageAction)}
-                />
-              ) : null}
-              {synthesisProposal &&
-              ['pending_review', 'approved'].includes(synthesisProposal.status) ? (
-                <>
-                  <PreviewActionButton
-                    variant="positive"
-                    label={
-                      synthesisProposal.status === 'approved'
-                        ? isPolish
-                          ? 'Wznów tworzenie Candidate'
-                          : 'Resume Candidate materialization'
-                        : isPolish
-                          ? 'Zatwierdź i utwórz Candidate'
-                          : 'Approve and create Candidate'
-                    }
-                    onClick={() => void handleReviewSynthesis('approve')}
-                    disabled={Boolean(stageAction)}
-                  />
-                  {synthesisProposal.status === 'pending_review' && (
-                    <PreviewActionButton
-                      variant="warning"
-                      label={isPolish ? 'Odrzuć syntezę' : 'Reject synthesis'}
-                      onClick={() => void handleReviewSynthesis('reject')}
-                      disabled={Boolean(stageAction)}
-                    />
-                  )}
-                </>
-              ) : null}
-              {synthesisProposal?.status === 'applied' &&
-              selectedRow.transformationCase.lifecycleStage === 'initiative_candidates' ? (
-                <PreviewActionButton
-                  variant="positive"
-                  label={
-                    isPolish ? 'Zweryfikuj zaakceptowaną Initiative' : 'Verify accepted Initiative'
-                  }
-                  onClick={() => void handleAcceptInitiativeResults()}
-                  disabled={Boolean(stageAction) || !synthesisProposal.candidateId}
-                />
-              ) : null}
-              {selectedRow.transformationCase.lifecycleStage === 'finance_kpi' &&
-              financeProposal === null ? (
-                <PreviewActionButton
-                  variant="positive"
-                  label={isPolish ? 'Policz Finance i KPI' : 'Calculate Finance and KPI'}
-                  onClick={() => void handleProposeFinance()}
-                  disabled={Boolean(stageAction)}
-                />
-              ) : null}
-              {financeProposal &&
-              ['pending_review', 'approved'].includes(financeProposal.status) ? (
-                <>
-                  <PreviewActionButton
-                    variant="positive"
-                    label={
-                      financeProposal.status === 'approved'
-                        ? isPolish
-                          ? 'Wznów Finance i KPI'
-                          : 'Resume Finance and KPI'
-                        : isPolish
-                          ? 'Zatwierdź Finance i KPI'
-                          : 'Approve Finance and KPI'
-                    }
-                    onClick={() => void handleReviewFinance('approve')}
-                    disabled={Boolean(stageAction)}
-                  />
-                  {financeProposal.status === 'pending_review' && (
-                    <PreviewActionButton
-                      variant="warning"
-                      label={isPolish ? 'Odrzuć Finance i KPI' : 'Reject Finance and KPI'}
-                      onClick={() => void handleReviewFinance('reject')}
-                      disabled={Boolean(stageAction)}
-                    />
-                  )}
-                </>
-              ) : null}
-              {financeProposal?.status === 'applied' &&
-              selectedRow.transformationCase.lifecycleStage === 'finance_kpi' ? (
-                <PreviewActionButton
-                  variant="positive"
-                  label={isPolish ? 'Zweryfikuj zatwierdzoną analizę' : 'Verify approved analysis'}
-                  onClick={() => void handleAcceptFinance()}
-                  disabled={
-                    Boolean(stageAction) ||
-                    !financeProposal.financialAnalysisId ||
-                    !financeProposal.kpiId
-                  }
-                />
-              ) : null}
-              {selectedRow.transformationCase.lifecycleStage === 'portfolio_decision' &&
-              portfolioProposal === null ? (
-                <PreviewActionButton
-                  variant="positive"
-                  label={isPolish ? 'Przygotuj decyzję GO/NO-GO' : 'Prepare GO/NO-GO decision'}
-                  onClick={() => void handleProposePortfolio()}
-                  disabled={Boolean(stageAction) || !decisionMakerId.trim()}
-                />
-              ) : null}
-              {portfolioProposal &&
-              ['pending_review', 'approved'].includes(portfolioProposal.status) ? (
-                <>
-                  <PreviewActionButton
-                    variant="positive"
-                    label={
-                      portfolioProposal.status === 'approved'
-                        ? isPolish
-                          ? 'Wznów tworzenie decyzji'
-                          : 'Resume decision materialization'
-                        : isPolish
-                          ? 'Zatwierdź i utwórz decyzję'
-                          : 'Approve and create decision'
-                    }
-                    onClick={() => void handleReviewPortfolio('approve')}
-                    disabled={Boolean(stageAction)}
-                  />
-                  {portfolioProposal.status === 'pending_review' && (
-                    <PreviewActionButton
-                      variant="warning"
-                      label={isPolish ? 'Odrzuć pakiet decyzji' : 'Reject decision packet'}
-                      onClick={() => void handleReviewPortfolio('reject')}
-                      disabled={Boolean(stageAction)}
-                    />
-                  )}
-                </>
-              ) : null}
-              {portfolioProposal?.status === 'applied' &&
-              selectedRow.transformationCase.lifecycleStage === 'portfolio_decision' ? (
-                <PreviewActionButton
-                  variant="positive"
-                  label={
-                    isPolish
-                      ? 'Zweryfikuj GO i APPROVED Initiative'
-                      : 'Verify GO and APPROVED Initiative'
-                  }
-                  onClick={() => void handleAcceptPortfolio()}
-                  disabled={Boolean(stageAction) || !portfolioProposal.decisionId}
-                />
-              ) : null}
-              {selectedRow.transformationCase.lifecycleStage === 'mobilization' &&
-              mobilizationProposal === null ? (
-                <PreviewActionButton
-                  variant="positive"
-                  label={isPolish ? 'Przygotuj mobilizację' : 'Prepare mobilization'}
-                  onClick={() => void handleProposeMobilization()}
-                  disabled={Boolean(stageAction) || !mobilizationInputs.ownerUserId.trim()}
-                />
-              ) : null}
-              {mobilizationProposal &&
-              ['pending_review', 'approved'].includes(mobilizationProposal.status) ? (
-                <>
-                  <PreviewActionButton
-                    variant="positive"
-                    label={
-                      mobilizationProposal.status === 'approved'
-                        ? isPolish
-                          ? 'Wznów tworzenie planu wykonania'
-                          : 'Resume execution-plan materialization'
-                        : isPolish
-                          ? 'Zatwierdź i utwórz plan wykonania'
-                          : 'Approve and create execution plan'
-                    }
-                    onClick={() => void handleReviewMobilization('approve')}
-                    disabled={Boolean(stageAction)}
-                  />
-                  {mobilizationProposal.status === 'pending_review' && (
-                    <PreviewActionButton
-                      variant="warning"
-                      label={isPolish ? 'Odrzuć mobilizację' : 'Reject mobilization'}
-                      onClick={() => void handleReviewMobilization('reject')}
-                      disabled={Boolean(stageAction)}
-                    />
-                  )}
-                </>
-              ) : null}
-              {mobilizationProposal?.status === 'applied' &&
-              selectedRow.transformationCase.lifecycleStage === 'mobilization' ? (
-                <PreviewActionButton
-                  variant="positive"
-                  label={
-                    isPolish ? 'Zweryfikuj SCHEDULED Initiative' : 'Verify SCHEDULED Initiative'
-                  }
-                  onClick={() => void handleAcceptMobilization()}
-                  disabled={Boolean(stageAction) || !mobilizationProposal.blueprintId}
-                />
-              ) : null}
-              {selectedRow.transformationCase.lifecycleStage === 'execution' ? (
-                <PreviewActionButton
-                  variant="neutral"
-                  icon={RefreshCw}
-                  label={isPolish ? 'Odśwież wykonanie' : 'Refresh execution'}
-                  onClick={() => void refreshExecution()}
-                  disabled={Boolean(stageAction)}
-                />
-              ) : null}
-              {selectedRow.transformationCase.lifecycleStage === 'execution' &&
-              executionCheckpoint &&
-              !executionCheckpoint.executionStarted ? (
-                <PreviewActionButton
-                  variant="positive"
-                  label={isPolish ? 'Przyjmij start wykonania' : 'Accept execution start'}
-                  onClick={() => void handleAcceptExecutionStart()}
-                  disabled={
-                    Boolean(stageAction) || executionCheckpoint.initiativeStatus !== 'EXECUTING'
-                  }
-                />
-              ) : null}
-              {selectedRow.transformationCase.lifecycleStage === 'final_outputs' ? (
-                <>
-                  <PreviewActionButton
-                    variant="neutral"
-                    label={
-                      stageAction === 'prepare-final-output-publication'
-                        ? isPolish
-                          ? 'Przygotowywanie zgody…'
-                          : 'Preparing approval…'
-                        : finalOutputPublication
-                          ? isPolish
-                            ? 'Odśwież zgodę publikacji'
-                            : 'Refresh publication approval'
-                          : isPolish
-                            ? 'Przygotuj publikację'
-                            : 'Prepare publication'
-                    }
-                    onClick={() => void handlePrepareFinalOutputPublication()}
-                    disabled={Boolean(stageAction)}
-                    ariaBusy={stageAction === 'prepare-final-output-publication'}
-                  />
-                  <PreviewActionButton
-                    variant="positive"
-                    label={
-                      finalOutputRun
-                        ? isPolish
-                          ? 'Odtwórz końcowy Word + PowerPoint'
-                          : 'Regenerate final Word + PowerPoint'
-                        : isPolish
-                          ? 'Wygeneruj końcowy Word + PowerPoint'
-                          : 'Generate final Word + PowerPoint'
-                    }
-                    onClick={() => void handleGenerateFinalOutputs()}
-                    disabled={Boolean(stageAction) || !finalPublicationExecutable}
-                    ariaBusy={stageAction === 'generate-final-outputs'}
-                    ariaDescribedBy={`final-publication-state-${selectedRow.id}`}
-                  />
-                </>
-              ) : null}
-              {selectedRow.transformationCase.lifecycleStage === 'delivery' ? (
-                <PreviewActionButton
-                  variant="neutral"
-                  icon={RefreshCw}
-                  label={isPolish ? 'Odśwież korzyści' : 'Refresh benefits'}
-                  onClick={() => void refreshBenefits()}
-                  disabled={Boolean(stageAction)}
-                />
-              ) : null}
-              {selectedRow.transformationCase.lifecycleStage === 'delivery' &&
-              benefitsCheckpoint ? (
-                <PreviewActionButton
-                  variant="positive"
-                  label={isPolish ? 'Przyjmij odbiór korzyści' : 'Accept benefits handoff'}
-                  onClick={() => void handleAcceptDeliveryHandoff()}
-                  disabled={
-                    Boolean(stageAction) ||
-                    benefitsCheckpoint.benefits.total < 1 ||
-                    benefitsCheckpoint.benefits.measured !== benefitsCheckpoint.benefits.total ||
-                    benefitsCheckpoint.benefits.owned !== benefitsCheckpoint.benefits.total ||
-                    benefitsCheckpoint.financeActuals.verified !==
-                      benefitsCheckpoint.financeActuals.total
-                  }
-                />
-              ) : null}
-              {selectedRow.transformationCase.lifecycleStage === 'benefits' ? (
-                <PreviewActionButton
-                  variant="positive"
-                  label={isPolish ? 'Zweryfikuj osiągnięte korzyści' : 'Verify achieved benefits'}
-                  onClick={() => void handleAcceptBenefitsReview()}
-                  disabled={Boolean(stageAction)}
-                />
-              ) : null}
-              {selectedRow.transformationCase.lifecycleStage === 'sustainability' ? (
-                <PreviewActionButton
-                  variant="neutral"
-                  icon={RefreshCw}
-                  label={isPolish ? 'Odśwież trwałość' : 'Refresh sustainability'}
-                  onClick={() => void refreshSustainability()}
-                  disabled={Boolean(stageAction)}
-                />
-              ) : null}
-              {selectedRow.transformationCase.lifecycleStage === 'sustainability' &&
-              sustainabilityCheckpoint ? (
-                <>
-                  <PreviewActionButton
-                    variant="positive"
-                    label={isPolish ? 'Potwierdź trwały efekt' : 'Confirm sustained outcome'}
-                    onClick={() => void handleSustainabilityReview('sustained')}
-                    disabled={
-                      Boolean(stageAction) ||
-                      sustainabilityCheckpoint.benefits.total < 1 ||
-                      sustainabilityCheckpoint.benefits.sustainedAcrossWindow !==
-                        sustainabilityCheckpoint.benefits.total
-                    }
-                  />
-                  <PreviewActionButton
-                    variant="warning"
-                    label={isPolish ? 'Uruchom korektę' : 'Start corrective continuation'}
-                    onClick={() => void handleSustainabilityReview('corrective_continuation')}
-                    disabled={Boolean(stageAction)}
-                  />
-                </>
-              ) : null}
-              {selectedRow.transformationCase.lifecycleStage === 'execution' &&
-              executionCheckpoint?.executionStarted ? (
-                <PreviewActionButton
-                  variant="positive"
-                  label={isPolish ? 'Przyjmij wynik wykonania' : 'Accept execution results'}
-                  onClick={() => void handleAcceptExecutionResults()}
-                  disabled={
-                    Boolean(stageAction) ||
-                    executionCheckpoint.initiativeStatus !== 'DONE' ||
-                    executionCheckpoint.tasks.completed !== executionCheckpoint.tasks.total ||
-                    executionCheckpoint.milestones.completed !==
-                      executionCheckpoint.milestones.total
-                  }
-                />
-              ) : null}
-              {!cancelled ? (
-                <PreviewActionButton
-                  variant="destructive"
-                  icon={Ban}
-                  label={
-                    cancelling
-                      ? isPolish
-                        ? 'Anulowanie…'
-                        : 'Cancelling…'
-                      : isPolish
-                        ? 'Anuluj plan'
-                        : 'Cancel plan'
-                  }
-                  onClick={() => void handleCancel()}
-                  disabled={cancelling}
-                />
-              ) : null}
-            </div>
-          );
-        }}
+                    {selectedRow.transformationCase.status === 'plan_proposed' ? (
+                      <PreviewActionButton
+                        variant="positive"
+                        label={
+                          stageAction === 'approve-plan'
+                            ? isPolish
+                              ? 'Zatwierdzanie…'
+                              : 'Approving…'
+                            : isPolish
+                              ? 'Zatwierdź plan'
+                              : 'Approve plan'
+                        }
+                        onClick={() => void handleApprovePlan()}
+                        disabled={Boolean(stageAction)}
+                      />
+                    ) : null}
+                    {selectedRow.transformationCase.status === 'plan_approved' &&
+                    ideasProposal === null ? (
+                      <PreviewActionButton
+                        variant="positive"
+                        label={
+                          stageAction === 'propose-ideas'
+                            ? isPolish
+                              ? 'Przygotowywanie…'
+                              : 'Preparing…'
+                            : isPolish
+                              ? 'Przygotuj listę idei'
+                              : 'Prepare Ideas list'
+                        }
+                        onClick={() => void handleProposeIdeas()}
+                        disabled={Boolean(stageAction)}
+                      />
+                    ) : null}
+                    {ideasProposal &&
+                    ['pending_review', 'approved'].includes(ideasProposal.status) ? (
+                      <>
+                        <PreviewActionButton
+                          variant="positive"
+                          label={
+                            ideasProposal.status === 'approved'
+                              ? isPolish
+                                ? 'Wznów tworzenie Ideas'
+                                : 'Resume Ideas materialization'
+                              : isPolish
+                                ? 'Zatwierdź i utwórz Ideas'
+                                : 'Approve and create Ideas'
+                          }
+                          onClick={() => void handleReviewIdeas('approve')}
+                          disabled={Boolean(stageAction)}
+                        />
+                        {ideasProposal.status === 'pending_review' && (
+                          <PreviewActionButton
+                            variant="warning"
+                            label={isPolish ? 'Odrzuć propozycję' : 'Reject proposal'}
+                            onClick={() => void handleReviewIdeas('reject')}
+                            disabled={Boolean(stageAction)}
+                          />
+                        )}
+                      </>
+                    ) : null}
+                    {ideasProposal?.status === 'applied' && interviewsProposal === null ? (
+                      <PreviewActionButton
+                        variant="positive"
+                        label={isPolish ? 'Przygotuj plan Interview' : 'Prepare Interview plan'}
+                        onClick={() => void handleProposeInterviews()}
+                        disabled={
+                          Boolean(stageAction) ||
+                          !stakeholderUserId.trim() ||
+                          !stakeholderRole.trim() ||
+                          !stakeholderFocus.trim()
+                        }
+                      />
+                    ) : null}
+                    {interviewsProposal &&
+                    ['pending_review', 'approved'].includes(interviewsProposal.status) ? (
+                      <>
+                        <PreviewActionButton
+                          variant="positive"
+                          label={
+                            interviewsProposal.status === 'approved'
+                              ? isPolish
+                                ? 'Wznów przypisanie Interview'
+                                : 'Resume Interview assignment'
+                              : isPolish
+                                ? 'Zatwierdź i przypisz Interview'
+                                : 'Approve and assign Interviews'
+                          }
+                          onClick={() => void handleReviewInterviews('approve')}
+                          disabled={Boolean(stageAction)}
+                        />
+                        {interviewsProposal.status === 'pending_review' && (
+                          <PreviewActionButton
+                            variant="warning"
+                            label={isPolish ? 'Odrzuć plan Interview' : 'Reject Interview plan'}
+                            onClick={() => void handleReviewInterviews('reject')}
+                            disabled={Boolean(stageAction)}
+                          />
+                        )}
+                      </>
+                    ) : null}
+                    {interviewsProposal?.status === 'applied' &&
+                    selectedRow.transformationCase.lifecycleStage === 'interviews' ? (
+                      <PreviewActionButton
+                        variant="positive"
+                        label={
+                          isPolish
+                            ? 'Zaakceptuj wyniki i otwórz DRD'
+                            : 'Accept results and open DRD'
+                        }
+                        onClick={() => void handleAcceptInterviewResults()}
+                        disabled={Boolean(stageAction) || !acceptedInsightIds.trim()}
+                      />
+                    ) : null}
+                    {selectedRow.transformationCase.lifecycleStage === 'drd' &&
+                    drdProposal === null ? (
+                      <PreviewActionButton
+                        variant="positive"
+                        label={isPolish ? 'Przygotuj propozycję DRD' : 'Prepare DRD proposal'}
+                        onClick={() => void handleProposeDrd()}
+                        disabled={Boolean(stageAction) || !drdName.trim()}
+                      />
+                    ) : null}
+                    {drdProposal && ['pending_review', 'approved'].includes(drdProposal.status) ? (
+                      <>
+                        <PreviewActionButton
+                          variant="positive"
+                          label={
+                            drdProposal.status === 'approved'
+                              ? isPolish
+                                ? 'Wznów tworzenie DRD'
+                                : 'Resume DRD materialization'
+                              : isPolish
+                                ? 'Zatwierdź i utwórz DRD'
+                                : 'Approve and create DRD'
+                          }
+                          onClick={() => void handleReviewDrd('approve')}
+                          disabled={Boolean(stageAction)}
+                        />
+                        {drdProposal.status === 'pending_review' && (
+                          <PreviewActionButton
+                            variant="warning"
+                            label={isPolish ? 'Odrzuć propozycję DRD' : 'Reject DRD proposal'}
+                            onClick={() => void handleReviewDrd('reject')}
+                            disabled={Boolean(stageAction)}
+                          />
+                        )}
+                      </>
+                    ) : null}
+                    {drdProposal?.status === 'applied' &&
+                    selectedRow.transformationCase.lifecycleStage === 'drd' ? (
+                      <PreviewActionButton
+                        variant="positive"
+                        label={isPolish ? 'Przyjmij wynik DRD' : 'Accept DRD result'}
+                        onClick={() => void handleAcceptDrdResults()}
+                        disabled={Boolean(stageAction) || !drdProposal.assessmentId}
+                      />
+                    ) : null}
+                    {selectedRow.transformationCase.lifecycleStage === 'opportunity_synthesis' &&
+                    synthesisProposal === null ? (
+                      <PreviewActionButton
+                        variant="positive"
+                        label={
+                          isPolish ? 'Przygotuj syntezę szans' : 'Prepare opportunity synthesis'
+                        }
+                        onClick={() => void handleProposeSynthesis()}
+                        disabled={Boolean(stageAction)}
+                      />
+                    ) : null}
+                    {synthesisProposal &&
+                    ['pending_review', 'approved'].includes(synthesisProposal.status) ? (
+                      <>
+                        <PreviewActionButton
+                          variant="positive"
+                          label={
+                            synthesisProposal.status === 'approved'
+                              ? isPolish
+                                ? 'Wznów tworzenie Candidate'
+                                : 'Resume Candidate materialization'
+                              : isPolish
+                                ? 'Zatwierdź i utwórz Candidate'
+                                : 'Approve and create Candidate'
+                          }
+                          onClick={() => void handleReviewSynthesis('approve')}
+                          disabled={Boolean(stageAction)}
+                        />
+                        {synthesisProposal.status === 'pending_review' && (
+                          <PreviewActionButton
+                            variant="warning"
+                            label={isPolish ? 'Odrzuć syntezę' : 'Reject synthesis'}
+                            onClick={() => void handleReviewSynthesis('reject')}
+                            disabled={Boolean(stageAction)}
+                          />
+                        )}
+                      </>
+                    ) : null}
+                    {synthesisProposal?.status === 'applied' &&
+                    selectedRow.transformationCase.lifecycleStage === 'initiative_candidates' ? (
+                      <PreviewActionButton
+                        variant="positive"
+                        label={
+                          isPolish
+                            ? 'Zweryfikuj zaakceptowaną Initiative'
+                            : 'Verify accepted Initiative'
+                        }
+                        onClick={() => void handleAcceptInitiativeResults()}
+                        disabled={Boolean(stageAction) || !synthesisProposal.candidateId}
+                      />
+                    ) : null}
+                    {selectedRow.transformationCase.lifecycleStage === 'finance_kpi' &&
+                    financeProposal === null ? (
+                      <PreviewActionButton
+                        variant="positive"
+                        label={isPolish ? 'Policz Finance i KPI' : 'Calculate Finance and KPI'}
+                        onClick={() => void handleProposeFinance()}
+                        disabled={Boolean(stageAction)}
+                      />
+                    ) : null}
+                    {financeProposal &&
+                    ['pending_review', 'approved'].includes(financeProposal.status) ? (
+                      <>
+                        <PreviewActionButton
+                          variant="positive"
+                          label={
+                            financeProposal.status === 'approved'
+                              ? isPolish
+                                ? 'Wznów Finance i KPI'
+                                : 'Resume Finance and KPI'
+                              : isPolish
+                                ? 'Zatwierdź Finance i KPI'
+                                : 'Approve Finance and KPI'
+                          }
+                          onClick={() => void handleReviewFinance('approve')}
+                          disabled={Boolean(stageAction)}
+                        />
+                        {financeProposal.status === 'pending_review' && (
+                          <PreviewActionButton
+                            variant="warning"
+                            label={isPolish ? 'Odrzuć Finance i KPI' : 'Reject Finance and KPI'}
+                            onClick={() => void handleReviewFinance('reject')}
+                            disabled={Boolean(stageAction)}
+                          />
+                        )}
+                      </>
+                    ) : null}
+                    {financeProposal?.status === 'applied' &&
+                    selectedRow.transformationCase.lifecycleStage === 'finance_kpi' ? (
+                      <PreviewActionButton
+                        variant="positive"
+                        label={
+                          isPolish ? 'Zweryfikuj zatwierdzoną analizę' : 'Verify approved analysis'
+                        }
+                        onClick={() => void handleAcceptFinance()}
+                        disabled={
+                          Boolean(stageAction) ||
+                          !financeProposal.financialAnalysisId ||
+                          !financeProposal.kpiId
+                        }
+                      />
+                    ) : null}
+                    {selectedRow.transformationCase.lifecycleStage === 'portfolio_decision' &&
+                    portfolioProposal === null ? (
+                      <PreviewActionButton
+                        variant="positive"
+                        label={
+                          isPolish ? 'Przygotuj decyzję GO/NO-GO' : 'Prepare GO/NO-GO decision'
+                        }
+                        onClick={() => void handleProposePortfolio()}
+                        disabled={Boolean(stageAction) || !decisionMakerId.trim()}
+                      />
+                    ) : null}
+                    {portfolioProposal &&
+                    ['pending_review', 'approved'].includes(portfolioProposal.status) ? (
+                      <>
+                        <PreviewActionButton
+                          variant="positive"
+                          label={
+                            portfolioProposal.status === 'approved'
+                              ? isPolish
+                                ? 'Wznów tworzenie decyzji'
+                                : 'Resume decision materialization'
+                              : isPolish
+                                ? 'Zatwierdź i utwórz decyzję'
+                                : 'Approve and create decision'
+                          }
+                          onClick={() => void handleReviewPortfolio('approve')}
+                          disabled={Boolean(stageAction)}
+                        />
+                        {portfolioProposal.status === 'pending_review' && (
+                          <PreviewActionButton
+                            variant="warning"
+                            label={isPolish ? 'Odrzuć pakiet decyzji' : 'Reject decision packet'}
+                            onClick={() => void handleReviewPortfolio('reject')}
+                            disabled={Boolean(stageAction)}
+                          />
+                        )}
+                      </>
+                    ) : null}
+                    {portfolioProposal?.status === 'applied' &&
+                    selectedRow.transformationCase.lifecycleStage === 'portfolio_decision' ? (
+                      <PreviewActionButton
+                        variant="positive"
+                        label={
+                          isPolish
+                            ? 'Zweryfikuj GO i APPROVED Initiative'
+                            : 'Verify GO and APPROVED Initiative'
+                        }
+                        onClick={() => void handleAcceptPortfolio()}
+                        disabled={Boolean(stageAction) || !portfolioProposal.decisionId}
+                      />
+                    ) : null}
+                    {selectedRow.transformationCase.lifecycleStage === 'mobilization' &&
+                    mobilizationProposal === null ? (
+                      <PreviewActionButton
+                        variant="positive"
+                        label={isPolish ? 'Przygotuj mobilizację' : 'Prepare mobilization'}
+                        onClick={() => void handleProposeMobilization()}
+                        disabled={Boolean(stageAction) || !mobilizationInputs.ownerUserId.trim()}
+                      />
+                    ) : null}
+                    {mobilizationProposal &&
+                    ['pending_review', 'approved'].includes(mobilizationProposal.status) ? (
+                      <>
+                        <PreviewActionButton
+                          variant="positive"
+                          label={
+                            mobilizationProposal.status === 'approved'
+                              ? isPolish
+                                ? 'Wznów tworzenie planu wykonania'
+                                : 'Resume execution-plan materialization'
+                              : isPolish
+                                ? 'Zatwierdź i utwórz plan wykonania'
+                                : 'Approve and create execution plan'
+                          }
+                          onClick={() => void handleReviewMobilization('approve')}
+                          disabled={Boolean(stageAction)}
+                        />
+                        {mobilizationProposal.status === 'pending_review' && (
+                          <PreviewActionButton
+                            variant="warning"
+                            label={isPolish ? 'Odrzuć mobilizację' : 'Reject mobilization'}
+                            onClick={() => void handleReviewMobilization('reject')}
+                            disabled={Boolean(stageAction)}
+                          />
+                        )}
+                      </>
+                    ) : null}
+                    {mobilizationProposal?.status === 'applied' &&
+                    selectedRow.transformationCase.lifecycleStage === 'mobilization' ? (
+                      <PreviewActionButton
+                        variant="positive"
+                        label={
+                          isPolish
+                            ? 'Zweryfikuj SCHEDULED Initiative'
+                            : 'Verify SCHEDULED Initiative'
+                        }
+                        onClick={() => void handleAcceptMobilization()}
+                        disabled={Boolean(stageAction) || !mobilizationProposal.blueprintId}
+                      />
+                    ) : null}
+                    {selectedRow.transformationCase.lifecycleStage === 'execution' ? (
+                      <PreviewActionButton
+                        variant="neutral"
+                        icon={RefreshCw}
+                        label={isPolish ? 'Odśwież wykonanie' : 'Refresh execution'}
+                        onClick={() => void refreshExecution()}
+                        disabled={Boolean(stageAction)}
+                      />
+                    ) : null}
+                    {selectedRow.transformationCase.lifecycleStage === 'execution' &&
+                    executionCheckpoint &&
+                    !executionCheckpoint.executionStarted ? (
+                      <PreviewActionButton
+                        variant="positive"
+                        label={isPolish ? 'Przyjmij start wykonania' : 'Accept execution start'}
+                        onClick={() => void handleAcceptExecutionStart()}
+                        disabled={
+                          Boolean(stageAction) ||
+                          executionCheckpoint.initiativeStatus !== 'EXECUTING'
+                        }
+                      />
+                    ) : null}
+                    {selectedRow.transformationCase.lifecycleStage === 'final_outputs' ? (
+                      <>
+                        <PreviewActionButton
+                          variant="neutral"
+                          label={
+                            stageAction === 'prepare-final-output-publication'
+                              ? isPolish
+                                ? 'Przygotowywanie zgody…'
+                                : 'Preparing approval…'
+                              : finalOutputPublication
+                                ? isPolish
+                                  ? 'Odśwież zgodę publikacji'
+                                  : 'Refresh publication approval'
+                                : isPolish
+                                  ? 'Przygotuj publikację'
+                                  : 'Prepare publication'
+                          }
+                          onClick={() => void handlePrepareFinalOutputPublication()}
+                          disabled={Boolean(stageAction)}
+                          ariaBusy={stageAction === 'prepare-final-output-publication'}
+                        />
+                        <PreviewActionButton
+                          variant="positive"
+                          label={
+                            finalOutputRun
+                              ? isPolish
+                                ? 'Odtwórz końcowy Word + PowerPoint'
+                                : 'Regenerate final Word + PowerPoint'
+                              : isPolish
+                                ? 'Wygeneruj końcowy Word + PowerPoint'
+                                : 'Generate final Word + PowerPoint'
+                          }
+                          onClick={() => void handleGenerateFinalOutputs()}
+                          disabled={Boolean(stageAction) || !finalPublicationExecutable}
+                          ariaBusy={stageAction === 'generate-final-outputs'}
+                          ariaDescribedBy={`final-publication-state-${selectedRow.id}`}
+                        />
+                      </>
+                    ) : null}
+                    {selectedRow.transformationCase.lifecycleStage === 'delivery' ? (
+                      <PreviewActionButton
+                        variant="neutral"
+                        icon={RefreshCw}
+                        label={isPolish ? 'Odśwież korzyści' : 'Refresh benefits'}
+                        onClick={() => void refreshBenefits()}
+                        disabled={Boolean(stageAction)}
+                      />
+                    ) : null}
+                    {selectedRow.transformationCase.lifecycleStage === 'delivery' &&
+                    benefitsCheckpoint ? (
+                      <PreviewActionButton
+                        variant="positive"
+                        label={isPolish ? 'Przyjmij odbiór korzyści' : 'Accept benefits handoff'}
+                        onClick={() => void handleAcceptDeliveryHandoff()}
+                        disabled={
+                          Boolean(stageAction) ||
+                          benefitsCheckpoint.benefits.total < 1 ||
+                          benefitsCheckpoint.benefits.measured !==
+                            benefitsCheckpoint.benefits.total ||
+                          benefitsCheckpoint.benefits.owned !== benefitsCheckpoint.benefits.total ||
+                          benefitsCheckpoint.financeActuals.verified !==
+                            benefitsCheckpoint.financeActuals.total
+                        }
+                      />
+                    ) : null}
+                    {selectedRow.transformationCase.lifecycleStage === 'benefits' ? (
+                      <PreviewActionButton
+                        variant="positive"
+                        label={
+                          isPolish ? 'Zweryfikuj osiągnięte korzyści' : 'Verify achieved benefits'
+                        }
+                        onClick={() => void handleAcceptBenefitsReview()}
+                        disabled={Boolean(stageAction)}
+                      />
+                    ) : null}
+                    {selectedRow.transformationCase.lifecycleStage === 'sustainability' ? (
+                      <PreviewActionButton
+                        variant="neutral"
+                        icon={RefreshCw}
+                        label={isPolish ? 'Odśwież trwałość' : 'Refresh sustainability'}
+                        onClick={() => void refreshSustainability()}
+                        disabled={Boolean(stageAction)}
+                      />
+                    ) : null}
+                    {selectedRow.transformationCase.lifecycleStage === 'sustainability' &&
+                    sustainabilityCheckpoint ? (
+                      <>
+                        <PreviewActionButton
+                          variant="positive"
+                          label={isPolish ? 'Potwierdź trwały efekt' : 'Confirm sustained outcome'}
+                          onClick={() => void handleSustainabilityReview('sustained')}
+                          disabled={
+                            Boolean(stageAction) ||
+                            sustainabilityCheckpoint.benefits.total < 1 ||
+                            sustainabilityCheckpoint.benefits.sustainedAcrossWindow !==
+                              sustainabilityCheckpoint.benefits.total
+                          }
+                        />
+                        <PreviewActionButton
+                          variant="warning"
+                          label={isPolish ? 'Uruchom korektę' : 'Start corrective continuation'}
+                          onClick={() => void handleSustainabilityReview('corrective_continuation')}
+                          disabled={Boolean(stageAction)}
+                        />
+                      </>
+                    ) : null}
+                    {selectedRow.transformationCase.lifecycleStage === 'execution' &&
+                    executionCheckpoint?.executionStarted ? (
+                      <PreviewActionButton
+                        variant="positive"
+                        label={isPolish ? 'Przyjmij wynik wykonania' : 'Accept execution results'}
+                        onClick={() => void handleAcceptExecutionResults()}
+                        disabled={
+                          Boolean(stageAction) ||
+                          executionCheckpoint.initiativeStatus !== 'DONE' ||
+                          executionCheckpoint.tasks.completed !== executionCheckpoint.tasks.total ||
+                          executionCheckpoint.milestones.completed !==
+                            executionCheckpoint.milestones.total
+                        }
+                      />
+                    ) : null}
+                    {!cancelled ? (
+                      <PreviewActionButton
+                        variant="destructive"
+                        icon={Ban}
+                        label={
+                          cancelling
+                            ? isPolish
+                              ? 'Anulowanie…'
+                              : 'Cancelling…'
+                            : isPolish
+                              ? 'Anuluj plan'
+                              : 'Cancel plan'
+                        }
+                        onClick={() => void handleCancel()}
+                        disabled={cancelling}
+                      />
+                    ) : null}
+                  </div>
+                );
+              }
+            : undefined
+        }
       >
         <div className="p-4 pt-3">
           <StandardTable
