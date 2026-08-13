@@ -38,7 +38,7 @@ import {
 // return the same `OkrSetDto` shape, see okrApi.ts header note).
 // ==========================================
 
-export function buildOkrSetColumns(isPolish: boolean): TableColumn[] {
+export function buildOkrSetColumns(isPolish: boolean, currentUserId?: string): TableColumn[] {
   return [
     {
       id: 'title',
@@ -91,8 +91,12 @@ export function buildOkrSetColumns(isPolish: boolean): TableColumn[] {
       label: isPolish ? 'Właściciel' : 'Owner',
       width: '140px',
       render: (row: OkrSetDto) => (
-        <span className="block truncate text-sm text-c-text-secondary font-mono" title={row.ownerUserId}>
-          {shortOkrId(row.ownerUserId)}
+        <span className="block truncate text-sm text-c-text-secondary" title={row.ownerUserId}>
+          {currentUserId && row.ownerUserId === currentUserId
+            ? isPolish
+              ? 'Ty'
+              : 'You'
+            : shortOkrId(row.ownerUserId)}
         </span>
       ),
     },
@@ -246,6 +250,7 @@ export function buildOkrSetRowMenu(
 export interface OkrSetPreviewDeps {
   isPolish: boolean;
   onClose: () => void;
+  currentUserId?: string;
   /** RN-G2 §G #25 — optional, same addytywne posture as
    * `buildOkrSetRowMenu`'s own `onOpenObjectives`. */
   onOpenObjectives?: (row: OkrSetDto) => void;
@@ -254,7 +259,7 @@ export interface OkrSetPreviewDeps {
 }
 
 export function buildOkrSetPreview(row: OkrSetDto, deps: OkrSetPreviewDeps): StandardPreviewProps {
-  const { isPolish, onClose, onOpenObjectives, onOpenWorkspace } = deps;
+  const { isPolish, onClose, onOpenObjectives, onOpenWorkspace, currentUserId } = deps;
   const lock = getOkrSetLockInfo(row.status);
   const progress = parseOkrProgress(row.overallProgress);
 
@@ -298,15 +303,22 @@ export function buildOkrSetPreview(row: OkrSetDto, deps: OkrSetPreviewDeps): Sta
       propertyLabel: isPolish ? 'Właściwość' : 'Property',
       valueLabel: isPolish ? 'Wartość' : 'Value',
       properties: [
-        { id: 'owner', label: isPolish ? 'Właściciel' : 'Owner', value: row.ownerUserId, mono: true },
+        {
+          id: 'owner',
+          label: isPolish ? 'Właściciel' : 'Owner',
+          value:
+            currentUserId && row.ownerUserId === currentUserId
+              ? isPolish
+                ? 'Ty'
+                : 'You'
+              : shortOkrId(row.ownerUserId),
+        },
         {
           id: 'reviewer',
           label: isPolish ? 'Recenzent' : 'Reviewer',
           value: row.reviewerUserId ?? '—',
           mono: !!row.reviewerUserId,
         },
-        { id: 'program', label: isPolish ? 'Program' : 'Program', value: row.programId, mono: true },
-        { id: 'cycle', label: isPolish ? 'Cykl' : 'Cycle', value: row.cycleId, mono: true },
         {
           id: 'progress',
           label: isPolish ? 'Ogólny postęp' : 'Overall progress',

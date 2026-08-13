@@ -79,6 +79,7 @@ import { useTranslation } from 'react-i18next';
 import type { StandardBreadcrumb, StandardCounterChip, StandardModuleTab, TableRow } from '@/components/standard';
 import { Button } from '@/components/ui/primitives';
 import { ROUTES } from '@/routes/routeConfig';
+import { tokenService } from '@/services/tokenService';
 
 import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
 import type { ResultsVNextForbiddenDetail } from '../types';
@@ -122,6 +123,15 @@ function withId<T extends { setId: string }>(row: T): T & { id: string } {
   return { ...row, id: row.setId };
 }
 
+function resolveCurrentUserIdFromToken(): string | null {
+  try {
+    const token = tokenService.getToken();
+    return token ? (tokenService.decodeToken(token)?.id ?? null) : null;
+  } catch {
+    return null;
+  }
+}
+
 // RN-G5 (2026-08-12) — see file header "RETURN-CONTEXT PRESERVATION". ONE
 // sessionStorage key for the whole surface, never per-record.
 const UI_STATE_KEY = 'results-vnext.okr-registry.ui-state';
@@ -151,6 +161,7 @@ function writeOkrHubUiState(state: OkrHubUiState): void {
 }
 
 export const ResultsOkrHub: React.FC = () => {
+  const currentUserId = useMemo(() => resolveCurrentUserIdFromToken(), []);
   const { i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
   const navigate = useNavigate();
@@ -414,7 +425,7 @@ export const ResultsOkrHub: React.FC = () => {
         primaryCtaContent: adminLinksCta,
       }}
       table={{
-        columns: buildOkrSetColumns(isPolish),
+        columns: buildOkrSetColumns(isPolish, currentUserId ?? undefined),
         data: rows,
         persistKey: `results-vnext.okr-registry.${tab}`,
         loading,
@@ -443,6 +454,7 @@ export const ResultsOkrHub: React.FC = () => {
         selectedSet
           ? buildOkrSetPreview(selectedSet, {
               isPolish,
+              currentUserId: currentUserId ?? undefined,
               onClose: () => setSelectedSetId(null),
               onOpenObjectives: (r) => setDrill({ level: 'objectives', set: r }),
               onOpenWorkspace: (r) => navigate(`${ROUTES.RESULTS_OKR.SET.replace(':okrSetId', r.setId)}${window.location.search}`),
