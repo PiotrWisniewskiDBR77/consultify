@@ -278,6 +278,10 @@ const InitiativesPortfolioAnalysisScreen = React.lazy(
 const FabRailKebabScreen = React.lazy(() => import('./screens/fab-rail-kebab'));
 const PrawyPanelSzynaIkonScreen = React.lazy(() => import('./screens/prawy-panel-szyna-ikon'));
 const Exe002004UiAuditScreen = React.lazy(() => import('./screens/exe-002-004-ui-audit'));
+const AudytyPiecPowierzchniScreen = React.lazy(() => import('./screens/audyty-piec-powierzchni'));
+const AudytyWarsztatKryteriumScreen = React.lazy(
+  () => import('./screens/audyty-warsztat-kryterium')
+);
 const Mw007CalendarNarrowViewportScreen = React.lazy(
   () => import('./screens/mw-007-calendar-narrow-viewport')
 );
@@ -341,6 +345,14 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'U8 — REALNY <AuditsMethodHub> (Library·Processes·Outputs·Reports·Initiatives), auditsFiveSurfacesV1. &tab=library|processes|outputs|reports|initiatives, &state=default|empty|loading|error',
     render: () => <AudytyPiecPowierzchniScreen />,
+  },
+  'audyty-warsztat-kryterium': {
+    label:
+      'W4 — REALNY <CriterionWorkspace> (łańcuch 18 ogniw: EvidencePanel·FindingPanel·RemediationPanel·TeresaProposalCard). ' +
+      '&role=auditee|auditor|lead_auditor|reviewer|action_owner, ' +
+      '&stage=fresh|evidence|tested|finding|remediation|closed, ' +
+      '&state=loading|error|forbidden, &teresa=1',
+    render: () => <AudytyWarsztatKryteriumScreen />,
   },
   'tools-swot-report': {
     label:
