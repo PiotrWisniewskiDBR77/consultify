@@ -81,6 +81,13 @@ export interface DrdMethodWorkspaceScreenProps {
    * exactly like `seedTo`/`initialViewMode` above.
    */
   forceHttpSourceOfTruth?: boolean;
+  /**
+   * dev-render harness / tests ONLY, and only meaningful when the HTTP path
+   * is active — synthetically overlays offline/conflict/recovery/loading so
+   * the screenshot harness can reach those states deterministically without
+   * a genuinely flaky network. See `DrdHttpSessionRuntime.debugForceState`.
+   */
+  forceState?: 'offline' | 'conflict' | 'recovery' | 'loading';
 }
 
 function seedSession(runtime: DrdSessionRuntime, seedTo: DrdMethodWorkspaceScreenProps['seedTo']) {
@@ -782,11 +789,15 @@ const FrozenOutputView: React.FC<{
 // only (see that file's header and CLAUDE.md rule #7/#9 — visual surfaces
 // only change behind a default-OFF flag, one at a time, after an accepted
 // dev-render screenshot).
-export const DrdMethodWorkspaceScreen: React.FC<DrdMethodWorkspaceScreenProps> = ({ forceHttpSourceOfTruth, ...props }) => {
+export const DrdMethodWorkspaceScreen: React.FC<DrdMethodWorkspaceScreenProps> = ({
+  forceHttpSourceOfTruth,
+  forceState,
+  ...props
+}) => {
   const { isEnabled } = useFeatureFlags();
   const httpSourceOfTruth = forceHttpSourceOfTruth ?? isEnabled('drdHttpSourceOfTruthV1');
   if (httpSourceOfTruth) {
-    return <DrdHttpMethodWorkspaceScreen {...props} />;
+    return <DrdHttpMethodWorkspaceScreen {...props} forceState={forceState} />;
   }
   return <DrdMethodWorkspaceScreenLegacy {...props} />;
 };

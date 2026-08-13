@@ -7,8 +7,27 @@
  * (the runtime is genuinely localStorage-backed, not a fetch stub).
  *
  * URL params: &screen=library|interview|matrix|teresa|approval|output|
- *                      report|initiative|reopen
+ *                      report|initiative|reopen|
+ *                      http-server|http-loading|http-conflict|http-offline|
+ *                      http-recovery|http-frozen
  *             &theme=light|dark (default light)
+ *             &demoSessionId=<id>  (http-* screens only — resume a session
+ *                                   pre-created + role-seeded out-of-band,
+ *                                   e.g. for http-frozen which needs the
+ *                                   'approver' role the HTTP surface itself
+ *                                   has no endpoint to grant — see
+ *                                   DrdHttpMethodWorkspaceScreen.tsx header)
+ *
+ * The `http-*` screens are P0C (2026-08-13): they mount
+ * `DrdMethodWorkspaceScreen` with `forceHttpSourceOfTruth`, so
+ * `DrdHttpSessionRuntime` makes REAL fetch calls to `/api/method/...` on
+ * whatever server this harness's origin is proxied/served against — start
+ * the real server first (see that component's own header for the exact
+ * command) and run this harness with `NODE_ENV=test`-style auth bypass so
+ * the browser needs no login (see server/src/middleware/auth.middleware.ts's
+ * `ENABLE_TEST_AUTH_BYPASS` — ONLY active outside production, requires an
+ * explicit operator flag AND a request with no token at all, matching what
+ * this harness already sends).
  */
 import '../src/index.css';
 
@@ -24,6 +43,8 @@ import { DrdMethodWorkspaceScreen } from '../src/components/assessment/drd/DrdMe
 const params = new URLSearchParams(window.location.search);
 const theme = params.get('theme') || 'light';
 const screen = params.get('screen') || 'interview';
+const isHttpScreen = screen.startsWith('http-');
+const demoSessionIdParam = params.get('demoSessionId') || undefined;
 
 const root = document.documentElement;
 root.classList.toggle('dark', theme === 'dark');
@@ -42,7 +63,9 @@ void i18n.changeLanguage('pl');
 // screenshot starts from the same seed instead of accumulating events
 // across repeated harness reloads.
 for (const key of Object.keys(window.localStorage)) {
-  if (key.startsWith('drd-method-workspace:')) window.localStorage.removeItem(key);
+  if (key.startsWith('drd-method-workspace:') || key.startsWith('method-core:')) {
+    window.localStorage.removeItem(key);
+  }
 }
 
 const SEED_BY_SCREEN: Record<string, Parameters<typeof DrdMethodWorkspaceScreen>[0]['seedTo']> = {
@@ -66,11 +89,33 @@ const ACTOR_BY_SCREEN: Record<string, string> = {
   approval: 'demo-approver-anna',
 };
 
+// -- P0C (2026-08-13): HTTP source-of-truth screens ------------------------
+const HTTP_SEED_BY_SCREEN: Record<string, Parameters<typeof DrdMethodWorkspaceScreen>[0]['seedTo']> = {
+  'http-server': 'interview',
+  'http-frozen': 'frozen',
+};
+const HTTP_FORCE_STATE_BY_SCREEN: Record<string, 'offline' | 'conflict' | 'recovery' | 'loading'> = {
+  'http-loading': 'loading',
+  'http-conflict': 'conflict',
+  'http-offline': 'offline',
+  'http-recovery': 'recovery',
+};
+
 const mount = document.getElementById('dev-render-root')!;
 
 function Root(): React.ReactElement {
   if (screen === 'library') {
     return <DrdLibraryEntryHarness />;
+  }
+  if (isHttpScreen) {
+    return (
+      <DrdMethodWorkspaceScreen
+        forceHttpSourceOfTruth
+        demoSessionId={demoSessionIdParam}
+        seedTo={HTTP_SEED_BY_SCREEN[screen]}
+        forceState={HTTP_FORCE_STATE_BY_SCREEN[screen]}
+      />
+    );
   }
   return (
     <DrdMethodWorkspaceScreen

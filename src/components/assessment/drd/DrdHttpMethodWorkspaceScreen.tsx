@@ -57,7 +57,7 @@ import {
 import { DrdSourceIndicator } from './DrdSourceIndicator';
 import type { DrdMethodWorkspaceScreenProps } from './DrdMethodWorkspaceScreen';
 
-type HttpScreenProps = Omit<DrdMethodWorkspaceScreenProps, 'forceHttpSourceOfTruth' | 'initialActorUserId'>;
+type HttpScreenProps = Omit<DrdMethodWorkspaceScreenProps, 'forceHttpSourceOfTruth' | 'initialActorUserId' | 'forceState'>;
 
 // ---------------------------------------------------------------------------
 // Dev-render / test only — reach offline/conflict/recovery deterministically
