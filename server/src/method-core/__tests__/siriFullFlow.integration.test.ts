@@ -158,7 +158,13 @@ describe.skipIf(!REAL_DB)('T4 — SIRI travels the same kernel path as DRD (real
   });
 
   afterAll(async () => {
-    process.env.METHOD_CORE_DEMO_BYPASS_PACK_READINESS = originalDemoBypassEnv;
+    // `process.env.X = undefined` would stringify to "undefined" instead of
+    // unsetting it — restore precisely by deleting when it was absent.
+    if (originalDemoBypassEnv === undefined) {
+      delete process.env.METHOD_CORE_DEMO_BYPASS_PACK_READINESS;
+    } else {
+      process.env.METHOD_CORE_DEMO_BYPASS_PACK_READINESS = originalDemoBypassEnv;
+    }
     await pool.query(`DELETE FROM users WHERE id = ANY($1)`, [[OWNER, APPROVER]]);
     await pool.query(`DELETE FROM organizations WHERE id = $1`, [ORG]);
     await pool.end();
