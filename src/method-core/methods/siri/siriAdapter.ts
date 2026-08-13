@@ -8,6 +8,7 @@
  */
 
 import type {
+  AdapterCapability,
   AggregationInput,
   AggregationResult,
   EvidenceStrength,
@@ -447,6 +448,53 @@ function prioritise(input: PrioritisationInput): PrioritisationResult {
     parametersVersion: `siri-pm-${calculationVersion === 'siri_pm_v2' ? 'v2' : 'v1'}:${planningHorizon}`,
     calculationVersion,
   };
+}
+
+// ---------------------------------------------------------------------------
+// getSiriLevelCanonicalText — honest per-dimension refusal via the kernel's
+// own `AdapterCapability<T>` contract (src/method-core/contracts/methodPack.ts)
+// ---------------------------------------------------------------------------
+// The kernel contract's header (methodPack.ts) is explicit: "A method that
+// cannot yet implement an adapter member honestly must return
+// `{ supported: false, reason: 'EVIDENCE_MISSING' }` rather than guess — this
+// is how ADMA/CMMI/Lean stay wired but visibly incomplete instead of
+// pretending." `MethodAdapter`'s four required members (loadPack,
+// resolveOpenLevels, computeScore, aggregate) have no honest way to express
+// a per-CALL refusal in their own return types — they are always callable,
+// just possibly with `verdict: 'needs_evidence'`. Per-dimension canonical
+// Band TEXT is different: it is either transcribed licensed content or it
+// is not, per (unitId, level) pair, which is exactly what `AdapterCapability`
+// is for. This is the adapter surface a caller (UI, Teresa prompt-builder,
+// Report renderer) MUST use instead of reading `MethodLevel.canonicalDefinition`
+// directly and risking silently rendering the `EVIDENCE_MISSING` sentinel
+// string as if it were real methodology text.
+let cachedPackForCapabilityLookup: MethodPack | null = null;
+function packForCapabilityLookup(): MethodPack {
+  if (!cachedPackForCapabilityLookup) cachedPackForCapabilityLookup = compileSiriPackOnly();
+  return cachedPackForCapabilityLookup;
+}
+
+/**
+ * Honest lookup for one dimension's one Band canonical text. Returns
+ * `{ supported: false, reason: 'EVIDENCE_MISSING' }` for every (unitId, level)
+ * in the currently compiled pack, because Module 2's per-dimension Assessment
+ * Matrix (pp.32-69) is licensed content this pack does not transcribe
+ * (`compileSiriPack.ts`'s `EVIDENCE_MISSING_MARKER`) — NEVER a guessed or
+ * generic substitute. Returns `{ supported: false, reason: 'NOT_LICENSED' }`
+ * for an (unitId, level) pair that is not part of the compiled pack at all
+ * (wrong unit id, or a level outside 0-5) — a structurally different refusal
+ * from "content exists upstream but is not transcribed here".
+ */
+export function getSiriLevelCanonicalText(unitId: string, level: number): AdapterCapability<string> {
+  const pack = packForCapabilityLookup();
+  const match = pack.levels.find((l) => l.unitId === unitId && l.level === level);
+  if (!match) {
+    return { supported: false, reason: 'NOT_LICENSED' };
+  }
+  if (match.canonicalDefinition.startsWith('EVIDENCE_MISSING')) {
+    return { supported: false, reason: 'EVIDENCE_MISSING' };
+  }
+  return { supported: true, value: match.canonicalDefinition };
 }
 
 // ---------------------------------------------------------------------------
