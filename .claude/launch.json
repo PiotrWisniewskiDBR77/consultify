@@ -213,6 +213,12 @@
         "--strictPort"
       ],
       "port": 3500
+    },
+    {
+      "name": "a7-siri-slice",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "dev-render", "--port", "5200", "--strictPort"],
+      "port": 5200
     }
   ]
 }
