@@ -1900,6 +1900,37 @@ if (startServer && shouldStartHttpServer) {
       logger.warn('[Server] Platform outbox drain not started:', err?.message);
     }
 
+    // Case Workspace outbox drain — same reason as the notification drain
+    // directly above, and it was missing entirely: every row committed to
+    // case_workspace_event_outbox sat there forever in a real deployment
+    // because nothing called the worker outside its own tests, so no
+    // subscribeToOutboxDelivery consumer ever ran. The transactional write
+    // side was correct; only the delivery side was never started.
+    try {
+      const { startCaseWorkspaceOutboxWorker } = await import(
+        './services/caseWorkspace/outboxWorker.js'
+      );
+      startCaseWorkspaceOutboxWorker();
+    } catch (err: any) {
+      logger.warn('[Server] Case Workspace outbox worker not started:', err?.message);
+    }
+
+    // Capability bindings are in-memory and must be rebuilt on every boot. The bootstrap
+    // remains fail-closed unless a configured actor is a real ADMIN of the configured org.
+    try {
+      const { bootstrapCaseWorkspaceCapabilities } = await import(
+        './services/caseWorkspace/capabilityBootstrap.js'
+      );
+      const bootResult = await bootstrapCaseWorkspaceCapabilities();
+      if (bootResult.status === 'REGISTERED') {
+        logger.info('[Server] Case Workspace capability adapters registered (7 adapters).');
+      } else {
+        logger.warn(`[Server] Case Workspace capability adapters not registered: ${bootResult.status}.`);
+      }
+    } catch (err: any) {
+      logger.warn('[Server] Case Workspace capability adapters not started:', err?.message);
+    }
+
     // EXE-09: closure→Results/Finance delivery receipt reconciliation sweep.
     // Opt-OUT (on by default) — retries any closure_delivery_receipts row
     // whose Results/Finance leg is still PENDING/FAILED, so a failed or

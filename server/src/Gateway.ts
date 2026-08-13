@@ -405,6 +405,7 @@ import wave9OutcomesRoutes from './routes/wave9-outcomes.routes.js';
 import webauthnRoutes from './routes/webauthn.routes.js';
 import sellixInboundWebhookRoutes from './routes/webhooks/sellix.routes.js';
 import v8SyncInboundWebhookRoutes from './routes/webhooks/v8-sync-inbound.routes.js';
+import caseWorkspaceEventInboxRoutes from './routes/caseWorkspace/eventInbox.routes.js';
 import workCanvasRoutes from './routes/work-canvas.routes.js';
 import workbookRoutes from './routes/workbook.routes.js';
 import workModeRoutes from './routes/workMode.routes.js';
@@ -873,6 +874,12 @@ export class ApiGateway {
       // Webhook routes (stripe webhook is handled by webhookRoutes)
       app.use('/api/webhooks', sellixInboundWebhookRoutes);
       app.use('/api/webhooks/v8-sync', v8SyncInboundWebhookRoutes);
+      // Case Workspace external event ingress — deliberately NOT under
+      // /api/v8, because that router applies attachV8Context and would 403
+      // every external sender (they carry an HMAC signature, not a
+      // first-party JWT). Same posture as the Sellix/v8-sync webhooks above:
+      // the route authenticates the delivery itself.
+      app.use('/api/webhooks/case-workspace', caseWorkspaceEventInboxRoutes);
       app.use('/api/webhooks', webhookRoutes);
 
       // Billing routes

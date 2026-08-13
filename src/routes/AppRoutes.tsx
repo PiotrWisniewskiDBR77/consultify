@@ -15,6 +15,7 @@ import {
 } from 'react-router-dom';
 
 import { ConversationRouteSync } from '@/components/AIChat/ConversationRouteSync';
+import { isCaseWorkspaceEnabled } from '@/components/CaseWorkspace/caseWorkspaceFlag';
 import { BetaGate, ProtectedRoute } from '@/components/ProtectedRoute';
 import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import { AnimationWrapper } from '@/components/shared/AnimationWrapper';
@@ -62,6 +63,21 @@ const MyWorkView = lazyWithRetry(() =>
 // M16 P0-4: ContextBuilderView is no longer routed standalone — /context/* now
 // redirects to the canonical /organization/* workspace. The view file is retained
 // because quick-step entry paths still resolve through these (redirected) routes.
+/**
+ * Zlecenia (Case Workspace, E7/E8) — lista zleceń + powłoka jednego zlecenia
+ * (Plan · Realizacja · Rezultaty). PODWÓJNIE zamknięty do czasu akceptu
+ * właściciela na zrzutach (CLAUDE.md #7 i #9):
+ *   1. `BetaGate moduleId="MODULE_CASE_WORKSPACE"` ('closed' w betaAccess),
+ *   2. `isCaseWorkspaceEnabled()` — flaga runtime, DOMYŚLNIE OFF.
+ * Sam BetaGate nie wystarczy: `BETA_ADMINS_EXEMPT = true`, więc moduł
+ * 'closed' i tak byłby widoczny dla każdego admina/ownera organizacji.
+ */
+const CaseWorkspaceRoute = lazyWithRetry(() =>
+  import('@/components/CaseWorkspace/CaseWorkspaceRoute').then((m) => ({
+    default: m.CaseWorkspaceRoute,
+  }))
+);
+
 // Discovery Tools Module - New Hub
 const DiscoveryToolsHub = lazyWithRetry(() =>
   import('@/components/Discovery/DiscoveryToolsHub').then((m) => ({ default: m.DiscoveryToolsHub }))
@@ -1469,6 +1485,29 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.CLIENT_VAULT}
           element={<Navigate to={`${ROUTES.MY_WORK}?tab=vault`} replace />}
+        />
+
+        {/* Zlecenia (Case Workspace E7/E8) — `/zlecenia` (lista) oraz
+            `/zlecenia/:caseId` (jedno zlecenie). Trasa jest ZAWSZE
+            zarejestrowana, ale przy wyłączonej fladze runtime przekierowuje na
+            /chat, więc dla nikogo poza sesją zrzutową moduł nie istnieje.
+            `CaseWorkspaceRoute` sam dokłada MainLayout (breadcrumb „Zlecenia"),
+            dlatego tutaj nie ma drugiego MainLayout. */}
+        <Route
+          path={`${ROUTES.CASE_WORKSPACE}/*`}
+          element={
+            isCaseWorkspaceEnabled() ? (
+              <BetaGate moduleId="MODULE_CASE_WORKSPACE">
+                <RouteErrorBoundary>
+                  <Suspense fallback={<LoadingScreen message="Ładowanie zleceń..." />}>
+                    <CaseWorkspaceRoute />
+                  </Suspense>
+                </RouteErrorBoundary>
+              </BetaGate>
+            ) : (
+              <Navigate to={ROUTES.AI_CHAT} replace />
+            )
+          }
         />
 
         {/* Run agent (HP-4 F3, Harvey-Parity) — AGT-003 (relokacja
