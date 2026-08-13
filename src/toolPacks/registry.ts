@@ -17,6 +17,7 @@
 
 import { evidenceMissingPack, type Bilingual, type SignatureArchetype, type ToolPack } from './contract';
 import type { ToolType } from '@/store/useToolStore';
+import { getToolReadinessRecord } from './readiness/manifests';
 
 // --- 19 packów spisanych (Dynamic SWOT + 18 z fali treści) ------------------
 import { dynamicSwotPack } from './packs/dynamicSwot.pack';
@@ -140,8 +141,30 @@ function notAuthoredPack(entry: (typeof ENGINE_BACKED)[number]): ToolPack {
 
 const authoredTypes = new Set<string>(AUTHORED_PACKS.map((p) => String(p.toolType)));
 
+/**
+ * Wiązanie manifestów gotowości runtime (STREAM H3, 2026-08-13) —
+ * `docs/program/METHOD_TOOLS_2026-08-13/readiness/`.
+ *
+ * ADDYTYWNE, ŚWIADOMIE: wypełnia WYŁĄCZNIE pole `runtimeReadiness`
+ * (dotąd zawsze `undefined` dla tych 19). NIE zmienia `contentStatus`,
+ * NIE zmienia `runtimeStatus`, NIE podnosi żadnego narzędzia do
+ * RUNTIME_ACTIVE — wszystkie 19 manifestów mają dziś co najmniej jedną
+ * bramkę != PASS (renderer/output/report/approval/initiative/automated
+ * tests/manual acceptance/MPQ), więc `evaluateRuntimeReadiness()` zwraca
+ * `publishable:false` dla każdego z nich. Podział 19 PACK_COMPLETE / 12
+ * EVIDENCE_MISSING pozostaje nienaruszony — patrz
+ * `readinessManifests.test.ts`.
+ */
+const AUTHORED_PACKS_WITH_READINESS: ToolPack[] = AUTHORED_PACKS.map((pack) => {
+  const record = getToolReadinessRecord(String(pack.toolType));
+  // engineBindingCoverage.test.ts pilnuje 1:1 pokrycia AUTHORED_PACKS <->
+  // manifestów gotowości — brak rekordu tu byłby regresją złapaną tam.
+  if (!record) return pack;
+  return { ...pack, runtimeReadiness: record.runtimeReadiness };
+});
+
 export const TOOL_PACKS: ToolPack[] = [
-  ...AUTHORED_PACKS,
+  ...AUTHORED_PACKS_WITH_READINESS,
   // Zaślepki tylko dla tych, których pack nie został jeszcze spisany.
   ...ENGINE_BACKED.filter((e) => !authoredTypes.has(e.toolType)).map(notAuthoredPack),
   ...NO_EVIDENCE.map((e) =>
