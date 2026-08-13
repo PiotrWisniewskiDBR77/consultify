@@ -61,13 +61,13 @@ export function BlockView({ block }: { block: ReportBlock }) {
 
     case 'evidence-list':
       return (
-        <section className="space-y-2">
+        <section className="space-y-2.5">
           <Eyebrow>Dowody</Eyebrow>
-          <ul className="space-y-1.5">
+          <ul className="space-y-2">
             {block.items.map((it, i) => (
-              <li key={i} className="flex items-baseline gap-2 text-sm text-c-text-secondary">
+              <li key={i} className="flex items-baseline gap-2.5 text-sm text-c-text-secondary">
                 <span className="mt-[2px] h-1.5 w-1.5 shrink-0 rounded-full bg-c-border-strong" />
-                <span className="flex-1">{it.label}</span>
+                <span className="flex-1 leading-relaxed">{it.label}</span>
                 <span
                   className={`shrink-0 text-[10px] uppercase tracking-[0.14em] ${
                     EVIDENCE_LABEL[it.evidenceKind].tone
@@ -83,11 +83,11 @@ export function BlockView({ block }: { block: ReportBlock }) {
 
     case 'tension-list':
       return (
-        <section className="space-y-2">
+        <section className="space-y-2.5">
           <Eyebrow>Napięcia strategiczne</Eyebrow>
           <ul className="divide-y divide-c-border-subtle">
             {block.items.map((t, i) => (
-              <li key={i} className="flex items-center gap-3 py-2">
+              <li key={i} className="flex items-center gap-3 py-2.5">
                 <span
                   className={`h-2 w-2 shrink-0 rounded-full ${
                     POSTURE_LABEL[t.posture]?.dot ?? 'bg-c-border-strong'
@@ -109,21 +109,25 @@ export function BlockView({ block }: { block: ReportBlock }) {
 
     case 'conclusion':
       return (
-        <section className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-4">
-          <div className="space-y-3">
+        <section className="rounded-2xl border border-c-border-subtle bg-c-surface-raised p-5">
+          <div className="space-y-4">
             <div>
               <Eyebrow>Co jest</Eyebrow>
-              <p className="mt-1 text-sm font-medium text-c-text">{block.k1Fact}</p>
+              <p className="mt-1.5 text-sm font-medium leading-relaxed text-c-text">
+                {block.k1Fact}
+              </p>
             </div>
             <div>
               <Eyebrow>Co to znaczy</Eyebrow>
-              <p className="mt-1 text-sm leading-relaxed text-c-text-secondary">{block.k2Meaning}</p>
+              <p className="mt-1.5 text-sm leading-relaxed text-c-text-secondary">
+                {block.k2Meaning}
+              </p>
             </div>
             <div>
               <Eyebrow>Co robić najpierw</Eyebrow>
-              <ol className="mt-1 space-y-1">
+              <ol className="mt-1.5 space-y-1.5">
                 {block.k3Actions.map((a, i) => (
-                  <li key={i} className="flex gap-2 text-sm text-c-text">
+                  <li key={i} className="flex gap-2 text-sm leading-relaxed text-c-text">
                     <span className="tabular-nums text-c-text-muted">{i + 1}.</span>
                     <span>{a}</span>
                   </li>
@@ -132,22 +136,24 @@ export function BlockView({ block }: { block: ReportBlock }) {
             </div>
             <div>
               <Eyebrow>Jaki efekt</Eyebrow>
-              <p className="mt-1 text-sm text-c-text-secondary">{block.k4Effect}</p>
+              <p className="mt-1.5 text-sm leading-relaxed text-c-text-secondary">
+                {block.k4Effect}
+              </p>
             </div>
 
             {/* Trade-off jest OBOWIĄZKOWY w W2 — bez niego nie było decyzji. */}
-            <div className="rounded-lg border border-c-border-subtle bg-c-surface p-3">
+            <div className="rounded-xl border border-c-border-subtle bg-c-surface p-4">
               <Eyebrow>Trade-off</Eyebrow>
-              <dl className="mt-1.5 space-y-1 text-[13px]">
-                <div className="flex gap-2">
+              <dl className="mt-2 space-y-1.5 text-[13px]">
+                <div className="flex gap-2.5">
                   <dt className="w-20 shrink-0 text-c-text-muted">Wybrane</dt>
                   <dd className="text-c-text">{block.tradeoff.chosen}</dd>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2.5">
                   <dt className="w-20 shrink-0 text-c-text-muted">Odrzucone</dt>
                   <dd className="text-c-text">{block.tradeoff.rejected || '—'}</dd>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2.5">
                   <dt className="w-20 shrink-0 text-c-text-muted">Dlaczego</dt>
                   <dd className="text-c-text-secondary">{block.tradeoff.why || '—'}</dd>
                 </div>
@@ -225,28 +231,40 @@ export function ToolReportView({ doc, presentationMode = false }: ToolReportView
       data-testid="tool-report-view"
       data-renderer-version={doc.rendererVersion}
       data-content-hash={doc.contentHash}
-      className="mx-auto w-full max-w-3xl bg-c-bg p-8 text-c-text"
+      // Rytm typograficzny (H1, 2026-08-13): szerszy margines dokumentu +
+      // większy odstęp nagłówek→treść niż w gęstym UI — to jest dokument
+      // do czytania, nie panel aplikacji. TREŚĆ bez zmian.
+      className="mx-auto w-full max-w-3xl bg-c-bg px-8 py-10 text-c-text sm:px-10"
     >
-      <header className="mb-6 border-b border-c-border-subtle pb-4">
+      <header className="mb-10 border-b border-c-border-subtle pb-5">
         <Eyebrow>{isDeck ? 'Prezentacja wykonawcza' : 'Raport'}</Eyebrow>
-        <h1 className="mt-1.5 text-2xl font-semibold leading-tight text-c-text">{doc.title}</h1>
+        <h1 className="mt-2 text-[26px] font-semibold leading-[1.2] tracking-tight text-c-text">
+          {doc.title}
+        </h1>
         {!presentationMode && (
-          <p className="mt-2 text-xs text-c-text-muted">
+          <p className="mt-2.5 text-xs tabular-nums text-c-text-muted">
             Renderer {doc.rendererVersion} · źródła: {doc.sourceOutputIds.length}
           </p>
         )}
       </header>
 
-      <div className="space-y-8">
-        {doc.sections.map((section) => (
-          <section key={section.id} className="space-y-4">
+      <div>
+        {doc.sections.map((section, index) => (
+          <section
+            key={section.id}
+            className={`space-y-4 ${
+              index === 0 ? '' : 'mt-10 border-t border-c-border-subtle pt-10'
+            }`}
+          >
             {/* Action title = wniosek. Jeden dominujący komunikat na sekcję. */}
-            <h2 className="text-base font-semibold leading-snug text-c-text">
+            <h2 className="text-[17px] font-semibold leading-snug tracking-tight text-c-text">
               {section.actionTitle}
             </h2>
-            {section.blocks.map((block, i) => (
-              <BlockView key={i} block={block} />
-            ))}
+            <div className="space-y-5">
+              {section.blocks.map((block, i) => (
+                <BlockView key={i} block={block} />
+              ))}
+            </div>
           </section>
         ))}
       </div>

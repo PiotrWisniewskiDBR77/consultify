@@ -10,11 +10,22 @@
  *
  * URL:
  *   /tools-swot-report.html?theme=light|dark&kind=report|presentation
+ *
+ * H1 (SPEC-A shell fala, 2026-08-13): `kind=presentation` teraz montuje
+ * `ToolReportViewerShell`, który (przez `NModeHeader`) woła
+ * `useTranslation()` — stąd `I18nextProvider` + czekanie na `i18n.init()`
+ * (ten sam wzorzec co `tools-swot-session-workspace-main.tsx`, race z
+ * HttpBackend). `kind=report` (bare `ToolReportView`) samo w sobie nie
+ * używa i18n, ale prowadzenie jednego wejścia dla obu jest prostsze i
+ * bezpieczniejsze niż rozjazd dwóch montaży.
  */
 import '../src/index.css';
 
 import React from 'react';
 import { createRoot } from 'react-dom/client';
+import { I18nextProvider } from 'react-i18next';
+
+import i18n from '../src/i18n';
 
 import ToolsSwotReportScreen from './screens/tools-swot-report';
 
@@ -27,9 +38,18 @@ document.documentElement.setAttribute('data-theme', theme);
 
 const el = document.getElementById('root');
 if (el) {
-  createRoot(el).render(
-    <React.StrictMode>
-      <ToolsSwotReportScreen />
-    </React.StrictMode>
-  );
+  const mount = () => {
+    createRoot(el).render(
+      <React.StrictMode>
+        <I18nextProvider i18n={i18n}>
+          <ToolsSwotReportScreen />
+        </I18nextProvider>
+      </React.StrictMode>
+    );
+  };
+  if (i18n.isInitialized) {
+    mount();
+  } else {
+    i18n.on('initialized', mount);
+  }
 }

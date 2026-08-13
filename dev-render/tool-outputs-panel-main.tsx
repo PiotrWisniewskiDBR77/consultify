@@ -24,11 +24,21 @@ document.documentElement.setAttribute('data-theme', theme);
 
 const el = document.getElementById('root');
 if (el) {
-  createRoot(el).render(
-    <React.StrictMode>
-      <I18nextProvider i18n={i18n}>
-        <ToolOutputsPanelScreen />
-      </I18nextProvider>
-    </React.StrictMode>
-  );
+  // H1 (SPEC-A shell fala): `ToolOutputsView` renders `NModeHeader`
+  // (useTranslation) — wait for init like the session-workspace harness to
+  // avoid a raw-key flash if HttpBackend hasn't resolved yet on first paint.
+  const mount = () => {
+    createRoot(el).render(
+      <React.StrictMode>
+        <I18nextProvider i18n={i18n}>
+          <ToolOutputsPanelScreen />
+        </I18nextProvider>
+      </React.StrictMode>
+    );
+  };
+  if (i18n.isInitialized) {
+    mount();
+  } else {
+    i18n.on('initialized', mount);
+  }
 }

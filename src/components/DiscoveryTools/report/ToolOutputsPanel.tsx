@@ -71,9 +71,22 @@ export interface ToolOutputsPanelProps {
   toolSessionId: string;
   /** Called after a successful reopen — parent can refresh session status, etc. */
   onReopened?: (revisionId: string) => void;
+  /**
+   * When provided, opening a Report/Presentation row calls this INSTEAD of
+   * switching this panel's own internal view — the parent owns where the
+   * document renders (e.g. `ToolOutputsView` swaps to `ToolReportViewerShell`
+   * as a sibling full-screen surface, so only ONE Menu 1 is ever on screen).
+   * Omit to keep the panel's own inline viewing behaviour (embedded usage,
+   * e.g. inside `ToolWorkspace` — unchanged 1:1).
+   */
+  onOpenReport?: (doc: ToolReportDocument) => void;
 }
 
-export const ToolOutputsPanel: React.FC<ToolOutputsPanelProps> = ({ toolSessionId, onReopened }) => {
+export const ToolOutputsPanel: React.FC<ToolOutputsPanelProps> = ({
+  toolSessionId,
+  onReopened,
+  onOpenReport,
+}) => {
   const { t } = useTranslation();
 
   const [outputs, setOutputs] = useState<OutputSummary[]>([]);
@@ -150,20 +163,26 @@ export const ToolOutputsPanel: React.FC<ToolOutputsPanelProps> = ({ toolSessionI
     };
   }, [selectedOutputId]);
 
-  const openReport = useCallback(async (reportId: string) => {
-    setDocLoading(true);
-    try {
-      const res = await Api.getToolOutputReport(reportId);
-      const doc = (res.report?.doc ?? null) as ToolReportDocument | null;
-      setViewingDoc(doc);
-      // Presentation docs open in Slide Mode by default — that is the
-      // difference between a Presentation and a Report. Reports open as the
-      // scrolling document. Both are reachable via the toggle either way.
-      setSlideMode(doc?.kind === 'presentation');
-    } finally {
-      setDocLoading(false);
-    }
-  }, []);
+  const openReport = useCallback(
+    async (reportId: string) => {
+      setDocLoading(true);
+      try {
+        const res = await Api.getToolOutputReport(reportId);
+        const doc = (res.report?.doc ?? null) as ToolReportDocument | null;
+        if (doc && onOpenReport) {
+          onOpenReport(doc);
+        } else {
+          setViewingDoc(doc);
+          // Presentation docs open in Slide Mode by default. Reports open as
+          // the scrolling document. Both remain reachable via the toggle.
+          setSlideMode(doc?.kind === 'presentation');
+        }
+      } finally {
+        setDocLoading(false);
+      }
+    },
+    [onOpenReport]
+  );
 
   const selectedOutput = outputs.find((o) => o.id === selectedOutputId) ?? null;
   const canReopen = selectedOutput?.status === 'approved';
@@ -216,7 +235,10 @@ export const ToolOutputsPanel: React.FC<ToolOutputsPanelProps> = ({ toolSessionI
           {slideMode ? (
             <SlideDeckView doc={viewingDoc} />
           ) : (
-            <ToolReportView doc={viewingDoc} />
+            <ToolReportView
+              doc={viewingDoc}
+              presentationMode={viewingDoc.kind === 'presentation'}
+            />
           )}
         </div>
       </div>

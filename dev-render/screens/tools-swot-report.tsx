@@ -15,12 +15,16 @@
  * `mode=slides` (STREAM H2, 2026-08-13) renderuje `SlideDeckView` zamiast
  * `ToolReportView` — REALNY Slide Mode, na tym samym `doc` z tego samego
  * łańcucha (zero osobnego stanu, zero nowego fetchu).
+ *
+ * W trybie dokumentowym Presentation używa powłoki SPEC-A, natomiast Report
+ * pozostaje bez powłoki jako dokument typograficzny.
  */
 
 import React from 'react';
 
 import SlideDeckView from '@/components/DiscoveryTools/report/SlideDeckView';
 import ToolReportView from '@/components/DiscoveryTools/report/ToolReportView';
+import ToolReportViewerShell from '@/components/DiscoveryTools/report/ToolReportViewerShell';
 import { buildSwotOutput } from '@/toolOutputs/buildSwotOutput';
 import { approve, submitForReview } from '@/toolOutputs/outputLifecycle';
 import { renderToolReport } from '@/toolOutputs/renderReport';
@@ -186,9 +190,17 @@ export default function ToolsSwotReportScreen() {
     );
   }
 
+  if (kind === 'presentation') {
+    return (
+      <div className="h-screen bg-c-bg">
+        <ToolReportViewerShell doc={doc} />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-c-bg">
-      <ToolReportView doc={doc} presentationMode={kind === 'presentation'} />
+      <ToolReportView doc={doc} presentationMode={false} />
     </div>
   );
 }

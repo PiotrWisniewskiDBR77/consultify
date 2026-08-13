@@ -5,11 +5,24 @@
  * Manages session state and AI interactions.
  */
 
+import { BookOpen, Check, Download, HelpCircle, Rocket, Sparkles } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { GlossaryPanel } from '@/components/assessment/panels/GlossaryPanel';
+import type {
+  NModeHeaderConfig,
+  NModeHeaderOverflowItem,
+} from '@/components/shared/NModeLayout/types';
+import { RelationItem } from '@/components/shared/PreviewPane/PreviewRelations';
+import PreviewRelations from '@/components/shared/PreviewPane/PreviewRelations';
 import { LoadingState } from '@/components/shared/states';
+import {
+  ARTIFACT_PANEL_CARD_CLASS_DOCKED,
+  ArtifactRightPanel,
+  ArtifactRightPanelSection,
+} from '@/components/standard/ArtifactRightPanel';
 import { computeTensionCoverage, validateMoveSet } from '@/config/swot/swotTensionEngine';
 import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { useToolAI } from '@/hooks/discovery/useToolAI';
@@ -21,6 +34,8 @@ import { AppView } from '@/types';
 import { countAiCardStatuses, getAiReviewTotal, scrollToAiCards } from './aiCardGovernance';
 import { GenerateInitiativesModal } from './GenerateInitiativesModal';
 import ToolOutputsPanel from './report/ToolOutputsPanel';
+import ToolOutputsView from './report/ToolOutputsView';
+import { ToolArtifactShell } from './shared/ToolArtifactShell';
 import { ToolActionBar } from './ToolActionBar';
 import { ToolCanvas } from './ToolCanvas';
 import { ToolHeader } from './ToolHeader';
@@ -198,6 +213,12 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
   }>({});
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [showRequestReviewModal, setShowRequestReviewModal] = useState(false);
+  const [isGlossaryOpen, setIsGlossaryOpen] = useState(false);
+  // "Otwórz pełny widok" na osadzonym panelu Outputs (poniżej) — pełnoekranowa
+  // powierzchnia `ToolOutputsView` z WŁASNYM Menu 1, więc zastępuje CAŁĄ
+  // powłokę Session Workspace zamiast się w nią zagnieżdżać (jeden Menu 1
+  // na ekranie na raz — patrz early-return niżej, tuż przed `headerConfig`).
+  const [showOutputsFullView, setShowOutputsFullView] = useState(false);
   const [reviewDueDate, setReviewDueDate] = useState('');
   const [reviewPriority, setReviewPriority] = useState<'low' | 'medium' | 'high' | 'critical'>(
     'medium'
@@ -734,37 +755,249 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
   const aiCardStatusCounts = countAiCardStatuses(currentSession.inputData);
   const aiReviewCount = getAiReviewTotal(aiCardStatusCounts);
 
-  return (
-    <div className="flex flex-col h-full bg-c-bg">
-      {/* Tool Header */}
-      <ToolHeader
-        toolType={toolType}
-        toolMeta={toolMeta}
-        sessionName={currentSession.name}
-        toolStatus={toolStatus}
-        progress={progress}
-        currentStep={currentStep}
-        totalSteps={stepDefs.length}
-        steps={stepDefs}
-        completedSteps={currentSession.steps
-          .filter((s) => s.status === 'completed')
-          .map((s) => s.stepId)}
-        onBack={onBack}
-        onStepClick={setCurrentStep}
-        onHelp={() => {
-          setKnowledgeModuleIdOverride(toolType);
-          setHelpTab('knowledge');
-          setHelpOpen(true);
-        }}
-        onExport={() => console.log('Export clicked')}
-        onCreateInitiative={onCreateInitiative}
-        onRequestReview={handleRequestReview}
-        canRequestReview={completionReady && toolPermissions.canRequestReview !== false}
+  // Pełnoekranowy widok Outputs (Menu 1 własny — zastępuje CAŁĄ powłokę
+  // Session Workspace, patrz komentarz przy `showOutputsFullView` wyżej).
+  if (showOutputsFullView && toolSessionId) {
+    return (
+      <ToolOutputsView
+        toolSessionId={toolSessionId}
+        sessionTitle={currentSession.name}
+        onBack={() => setShowOutputsFullView(false)}
         isPolish={isPolish}
       />
+    );
+  }
 
-      {/* Tool Canvas */}
-      <div className="flex-1 overflow-hidden">
+  // ── SPEC-A Menu 1 (shared ToolArtifactShell) ──────────────────────────────
+  // Status pill + save-state text are DISTINCT indicators (D-B/D-C canon):
+  // statusLabel = governance lifecycle (Szkic/Do przeglądu/Zatwierdzone),
+  // saveState = persistence only (reflects the live AI stream, not lifecycle).
+  const STATUS_TONE: Record<string, NModeHeaderConfig['statusTone']> = {
+    DRAFT: 'draft',
+    REVIEW: 'review',
+    APPROVED: 'approved',
+  };
+  const STATUS_LABEL: Record<string, { pl: string; en: string }> = {
+    DRAFT: { pl: 'Szkic', en: 'Draft' },
+    REVIEW: { pl: 'Do przeglądu', en: 'In review' },
+    APPROVED: { pl: 'Zatwierdzone', en: 'Approved' },
+  };
+
+  // M1 primary CTA (SPEC-A §299 — "Tool: Generuj inicjatywy"): the ONE action
+  // changes with lifecycle state rather than stacking every action on the bar.
+  const primaryAction =
+    toolStatus === 'APPROVED'
+      ? {
+          label: { pl: 'Generuj inicjatywy', en: 'Generate initiatives' },
+          icon: Sparkles,
+          onClick: () => setShowGenerateModal(true),
+          disabled: toolPermissions.canGenerate === false,
+        }
+      : toolStatus === 'DRAFT'
+        ? {
+            label: { pl: 'Wyślij do przeglądu', en: 'Request review' },
+            icon: Check,
+            onClick: handleRequestReview,
+            disabled: !(completionReady && toolPermissions.canRequestReview !== false),
+            title: !completionReady
+              ? {
+                  pl: 'Uzupełnij brakujące elementy DoD',
+                  en: 'Complete the missing DoD items first',
+                }
+              : undefined,
+          }
+        : undefined;
+
+  // Kebab (⋮) — techniczne/administracyjne pozycje standardu n-Type §3.5:
+  // słownik, pomoc, eksport, skrót do modułu Inicjatyw.
+  const overflowItems: NModeHeaderOverflowItem[] = [
+    {
+      id: 'glossary',
+      label: isPolish ? 'Słownik pojęć' : 'Glossary',
+      icon: BookOpen,
+      onClick: () => setIsGlossaryOpen(true),
+    },
+    {
+      id: 'help',
+      label: isPolish ? 'Pomoc' : 'Help',
+      icon: HelpCircle,
+      onClick: () => {
+        setKnowledgeModuleIdOverride(toolType);
+        setHelpTab('knowledge');
+        setHelpOpen(true);
+      },
+    },
+    {
+      id: 'export',
+      label: isPolish ? 'Eksportuj' : 'Export',
+      icon: Download,
+      onClick: () => console.log('Export clicked'),
+    },
+    {
+      id: 'open-initiatives',
+      label: isPolish ? 'Przejdź do inicjatyw' : 'Go to initiatives',
+      icon: Rocket,
+      onClick: handleOpenInitiatives,
+    },
+  ];
+
+  const headerConfig: NModeHeaderConfig = {
+    title: currentSession.name,
+    onTitleChange: () => {},
+    // Nazwa sesji narzędzia — edycja tytułu poza zakresem tej fali (SPEC-A
+    // powłoki); pole pozostaje read-only, bez utraty funkcji istniejących.
+    titleReadOnly: true,
+    artifactId: toolSessionId ?? undefined,
+    artifactType: 'tool',
+    onSave: () => {},
+    saveState: isStreaming ? 'saving' : 'saved',
+    onClose: onBack,
+    statusLabel: isPolish
+      ? (STATUS_LABEL[toolStatus]?.pl ?? toolStatus)
+      : (STATUS_LABEL[toolStatus]?.en ?? toolStatus),
+    statusTone: STATUS_TONE[toolStatus] ?? 'neutral',
+    primaryAction,
+    extraOverflowItems: overflowItems,
+  };
+
+  // ── Prawy panel (ArtifactRightPanel, kolejność ARTIFACT_PANEL_SECTION_ORDER) ─
+  const relationItems: RelationItem[] = recentInitiatives.map((i) => ({
+    id: i.id,
+    label: i.title,
+    type: 'initiative',
+    onClick: onCreateInitiative ? () => onCreateInitiative() : undefined,
+  }));
+
+  const rightPanelSections: ArtifactRightPanelSection[] = [
+    {
+      id: 'actions',
+      label: isPolish ? 'Akcje' : 'Actions',
+      defaultOpen: true,
+      children: (
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={handleRequestReview}
+            disabled={!(completionReady && toolPermissions.canRequestReview !== false)}
+            className="inline-flex h-9 items-center gap-1.5 rounded-full border border-c-border px-3 text-xs font-medium text-c-text transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+          >
+            <Check size={14} />
+            {isPolish ? 'Wyślij do przeglądu' : 'Request review'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowGenerateModal(true)}
+            disabled={toolPermissions.canGenerate === false}
+            className="inline-flex h-9 items-center gap-1.5 rounded-full border border-c-border px-3 text-xs font-medium text-c-text transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+          >
+            <Sparkles size={14} />
+            {isPolish ? 'Generuj inicjatywy' : 'Generate initiatives'}
+          </button>
+        </div>
+      ),
+    },
+    {
+      id: 'properties',
+      label: isPolish ? 'Właściwości' : 'Properties',
+      defaultOpen: true,
+      children: (
+        <dl className="space-y-2 text-sm">
+          <div className="flex justify-between gap-2">
+            <dt className="text-c-text-muted">{isPolish ? 'Narzędzie' : 'Tool'}</dt>
+            <dd className="text-right text-c-text">
+              {isPolish ? toolMeta.namePl : toolMeta.name}
+            </dd>
+          </div>
+          <div className="flex justify-between gap-2">
+            <dt className="text-c-text-muted">{isPolish ? 'Krok' : 'Step'}</dt>
+            <dd className="text-right tabular-nums text-c-text">
+              {currentStep}/{stepDefs.length}
+            </dd>
+          </div>
+          <div className="flex justify-between gap-2">
+            <dt className="text-c-text-muted">{isPolish ? 'Postęp' : 'Progress'}</dt>
+            <dd className="text-right tabular-nums text-c-text">{progress}%</dd>
+          </div>
+        </dl>
+      ),
+    },
+    {
+      id: 'relations',
+      label: isPolish ? 'Powiązania' : 'Relations',
+      defaultOpen: false,
+      isEmpty: relationItems.length === 0,
+      emptyLabel: isPolish ? 'Brak powiązanych inicjatyw' : 'No related initiatives',
+      children: (
+        <PreviewRelations
+          items={relationItems}
+          emptyLabel={isPolish ? 'Brak powiązanych inicjatyw' : 'No related initiatives'}
+        />
+      ),
+    },
+    ...(generatedInitiatives.length > 0
+      ? [
+          {
+            id: 'results',
+            label: isPolish ? 'Rezultaty' : 'Results',
+            defaultOpen: false,
+            badge: generatedInitiatives.length,
+            showZeroBadge: false,
+            children: (
+              <PreviewRelations
+                items={generatedInitiatives.map((i) => ({
+                  id: i.id,
+                  label: i.title,
+                  type: 'initiative',
+                }))}
+              />
+            ),
+          } satisfies ArtifactRightPanelSection,
+        ]
+      : []),
+    {
+      id: 'history',
+      label: isPolish ? 'Historia' : 'History',
+      defaultOpen: false,
+      isEmpty: toolDecisions.length === 0,
+      emptyLabel: isPolish ? 'Brak historii decyzji' : 'No decision history yet',
+      children: (
+        <ul className="space-y-1.5 text-xs text-c-text-secondary">
+          {toolDecisions.map((d, idx) => (
+            <li key={`${d.decision_type}-${idx}`} className="flex items-center justify-between gap-2">
+              <span>{d.decision_type}</span>
+              <span className="text-c-text-muted">{d.decision_status || d.status}</span>
+            </li>
+          ))}
+        </ul>
+      ),
+    },
+  ];
+
+  return (
+    <div className="flex flex-col h-full bg-c-bg">
+      <ToolArtifactShell
+        header={headerConfig}
+        rightPanel={
+          <ArtifactRightPanel
+            sections={rightPanelSections}
+            className={ARTIFACT_PANEL_CARD_CLASS_DOCKED}
+            ariaLabel={isPolish ? 'Szczegóły sesji narzędzia' : 'Tool session details'}
+          />
+        }
+        secondaryBar={
+          <ToolHeader
+            progress={progress}
+            currentStep={currentStep}
+            totalSteps={stepDefs.length}
+            steps={stepDefs}
+            completedSteps={currentSession.steps
+              .filter((s) => s.status === 'completed')
+              .map((s) => s.stepId)}
+            onStepClick={setCurrentStep}
+            isPolish={isPolish}
+          />
+        }
+      >
         {toolStatus === 'REVIEW' ? (
           <ToolReviewPanel
             toolType={toolType}
@@ -814,9 +1047,8 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
             } as any)}
           />
         )}
-      </div>
 
-      {/* Outputs — approved snapshot(s) promoted from this session, their
+        {/* Outputs — approved snapshot(s) promoted from this session, their
           Reports/Presentations and Initiative proposals, plus reopen for
           correction. Only meaningful once the session has been approved
           (promoteToOutput's own eligibility gate — server/src/controllers/
@@ -824,6 +1056,15 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
           toolOutputs.routes.ts. */}
       {toolStatus === 'APPROVED' && toolSessionId && (
         <div className="border-t border-c-border-subtle bg-c-bg px-6 py-4">
+          <div className="mb-2 flex justify-end">
+            <button
+              type="button"
+              onClick={() => setShowOutputsFullView(true)}
+              className="text-xs font-medium text-c-text-secondary hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+            >
+              {isPolish ? 'Otwórz pełny widok →' : 'Open full view →'}
+            </button>
+          </div>
           <ToolOutputsPanel toolSessionId={toolSessionId} />
         </div>
       )}
@@ -848,6 +1089,9 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
           } as any)}
         />
       )}
+      </ToolArtifactShell>
+
+      <GlossaryPanel isOpen={isGlossaryOpen} onClose={() => setIsGlossaryOpen(false)} />
 
       {showGenerateModal && (
         <GenerateInitiativesModal

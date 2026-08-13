@@ -3,11 +3,16 @@
  *
  * Same philosophy as tools-swot-report.tsx: builds a REAL Output through the
  * real domain chain (buildSwotOutput → approve → renderToolReport), then
- * serves it to the REAL production component (`ToolOutputsPanel`, which
- * calls `src/services/api.ts`) via a STATEFUL `fetch` stub — mutating the
- * stub's in-memory store on `reopen`, matching this repo's own established
- * lesson (loop-do-9: "mock w harnessie MUSI być stanowy") rather than a
- * static fixture that can't exercise the reopen flow at all.
+ * serves it to the REAL production component (`ToolOutputsView`, which wraps
+ * `ToolOutputsPanel` — same S4 read/list/reopen logic, calling
+ * `src/services/api.ts`) via a STATEFUL `fetch` stub — mutating the stub's
+ * in-memory store on `reopen`, matching this repo's own established lesson
+ * (loop-do-9: "mock w harnessie MUSI być stanowy") rather than a static
+ * fixture that can't exercise the reopen flow at all.
+ *
+ * H1 (SPEC-A shell fala): `ToolOutputsView` is the shared shell
+ * (`ToolArtifactShell` → Menu 1 + right panel) around the unchanged
+ * `ToolOutputsPanel` — see src/components/DiscoveryTools/report/ToolOutputsView.tsx.
  *
  * Renders the REAL component, not a screenshot mockup — CLAUDE.md #7.
  *
@@ -15,7 +20,7 @@
  */
 import React from 'react';
 
-import ToolOutputsPanel from '@/components/DiscoveryTools/report/ToolOutputsPanel';
+import ToolOutputsView from '@/components/DiscoveryTools/report/ToolOutputsView';
 import { approve, reopen as reopenLifecycle, submitForReview } from '@/toolOutputs/outputLifecycle';
 import { renderToolReport } from '@/toolOutputs/renderReport';
 import { buildSwotOutput } from '@/toolOutputs/buildSwotOutput';
@@ -203,10 +208,8 @@ installFetchStub();
 
 export default function ToolOutputsPanelScreen() {
   return (
-    <div className="min-h-screen bg-c-bg p-8">
-      <div className="mx-auto max-w-2xl">
-        <ToolOutputsPanel toolSessionId={SESSION_ID} />
-      </div>
+    <div className="h-screen bg-c-bg">
+      <ToolOutputsView toolSessionId={SESSION_ID} sessionTitle="Dynamic SWOT — wejście na rynek DACH" />
     </div>
   );
 }

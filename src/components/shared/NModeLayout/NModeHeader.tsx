@@ -28,9 +28,11 @@ import {
   CheckSquare,
   ChevronLeft,
   Copy,
+  FileBarChart2,
   Lightbulb,
   Link2,
   MoreVertical,
+  Presentation as PresentationIcon,
   Rocket,
   Scale,
   Sparkles,
@@ -96,6 +98,8 @@ const TYPE_ICON: Record<string, React.FC<{ size?: number; className?: string }>>
   Wrench, // tool
   Rocket, // initiative
   CheckCircle2, // interview / assessment
+  FileBarChart2, // report
+  Presentation: PresentationIcon, // presentation / deck
 };
 
 // ── Overflow (⋮) menu ───────────────────────────────────────────────────────
