@@ -17,6 +17,12 @@ export type { LiveMatrixProps } from './LiveMatrix';
 export { MethodNavigator } from './MethodNavigator';
 export type { MethodNavigatorProps } from './MethodNavigator';
 
+export { MethodPresentationView } from './MethodPresentationView';
+export type { MethodPresentationViewProps } from './MethodPresentationView';
+
+export { MethodReportView } from './MethodReportView';
+export type { MethodReportViewProps } from './MethodReportView';
+
 export { MethodWorkspaceShell } from './MethodWorkspaceShell';
 export type { MethodWorkspaceShellProps } from './MethodWorkspaceShell';
 

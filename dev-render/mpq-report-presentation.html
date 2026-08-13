@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CEL 8 / MPQ Report &amp; Presentation — Isolated Harness</title>
+  </head>
+  <body>
+    <!--
+      CEL 8 ISOLATED TEST HARNESS — separate entry point from the shared
+      dev-render/main.tsx registry (same rationale as method-workspace.html).
+
+      Mounts ONLY MethodReportView / MethodPresentationView
+      (mpq-report-presentation-main.tsx) with deterministic mock data.
+    -->
+    <div id="dev-render-root" style="min-height: 100vh; width: 100vw"></div>
+    <script type="module" src="/mpq-report-presentation-main.tsx"></script>
+  </body>
+</html>

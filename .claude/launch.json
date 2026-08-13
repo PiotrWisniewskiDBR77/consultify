@@ -314,6 +314,18 @@
         "--strictPort"
       ],
       "port": 42310
+    },
+    {
+      "name": "s4-mpq-devrender",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "dev-render",
+        "--port",
+        "43010",
+        "--strictPort"
+      ],
+      "port": 43010
     }
   ]
 }
