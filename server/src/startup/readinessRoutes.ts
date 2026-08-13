@@ -18,7 +18,19 @@ export interface ReadinessState {
 
 export type ReadinessStateGetter = () => ReadinessState;
 
-/** GET /api/ready — 200 only when the database is ready. */
+/**
+ * GET /api/ready — 200 only when schema verification + Table Platform
+ * migrations + seeding have all settled successfully (`dbReady === true`).
+ * This is the ONLY signal `createReadinessGate` below uses to gate business
+ * routes — it is the authoritative "safe to receive traffic" probe.
+ *
+ * A14 note (2026-08-13): `GET /api/health/ready`
+ * (controllers/HealthCheckController.ts `checkReadiness`) answers a
+ * DIFFERENT, narrower question — "can I run `SELECT 1` right now" — and is
+ * mounted before this gate, so it can report `database: true` while this
+ * endpoint still reports `not_ready` during a schema-incomplete boot. That
+ * is intentional, not a contradiction; see the note on `checkReadiness`.
+ */
 export function createReadyHandler(getState: ReadinessStateGetter) {
   return (_req: Request, res: Response) => {
     const { dbReady, dbInitError, migrations } = getState();
