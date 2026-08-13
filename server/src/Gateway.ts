@@ -173,6 +173,7 @@ import mcpRoutes from './routes/mcp.routes.js';
 import mediaIngestionRoutes from './routes/media-ingestion.routes.js';
 import meetingRoutes from './routes/meeting.routes.js';
 import megatrendRoutes from './routes/megatrend.routes.js';
+import methodCoreRoutes from './routes/method-core.routes.js';
 import metricsRoutes from './routes/metrics.routes.js';
 import mfaRoutes from './routes/mfa.routes.js';
 import modelRegistryRoutes from './routes/modelRegistry.routes.js';
@@ -813,6 +814,10 @@ export class ApiGateway {
       app.use('/api/token-billing', tokenBillingRoutes);
       app.use('/api/budgets', budgetsRoutes);
       mountStub('/api/pricing', pricingRoutes, 'pricingRoutes');
+
+      // Shared Method Kernel HTTP surface (P0, 2026-08-13) — router owns its
+      // own verifyToken/isAuthenticated gate (server/src/routes/method-core.routes.ts).
+      app.use('/api/method', methodCoreRoutes);
 
       // Organization routes
       app.use('/api/megatrends', megatrendRoutes);
