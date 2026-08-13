@@ -251,7 +251,9 @@ describe('TransformationCasesPanel', () => {
     expect(await screen.findByText('Przygotuj plan transformacji operacyjnej')).toBeInTheDocument();
     expect(screen.getAllByText('NOT_CONNECTED')).toHaveLength(14);
     expect(screen.getByRole('button', { name: 'Uruchom (zablokowane)' })).toBeDisabled();
-    expect(screen.getByText(/wymagane adaptery downstream/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/część etapów wymaga konfiguracji technicznej albo przypisania człowiekowi/i)
+    ).toBeInTheDocument();
     expect(screen.getByText('Kanoniczny przebieg agenta')).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Plany transformacji' })).toBeInTheDocument();
     expect(screen.getByTestId('canonical-runtime')).toHaveAttribute('role', 'status');
