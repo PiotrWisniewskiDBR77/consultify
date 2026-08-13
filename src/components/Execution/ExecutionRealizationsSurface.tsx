@@ -32,7 +32,15 @@ interface ExecutionRow {
 const roleLabel = (value: unknown): string => {
   const raw = String(value || '').trim();
   if (!raw) return '—';
-  return raw.replace(/[-_]+/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+  return raw
+    .replace(/[-_]+/g, ' ')
+    .split(/\s+/)
+    .map((word) =>
+      word
+        ? `${word[0].toLocaleUpperCase('pl-PL')}${word.slice(1).toLocaleLowerCase('pl-PL')}`
+        : word
+    )
+    .join(' ');
 };
 
 const phaseLabel = (state: unknown, deliveryState: unknown): string => {

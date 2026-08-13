@@ -32,7 +32,7 @@ import {
 // Table columns
 // ==========================================
 
-export function buildOkrObjectiveColumns(isPolish: boolean, parentSetStatus: string): TableColumn[] {
+export function buildOkrObjectiveColumns(isPolish: boolean, parentSetStatus: string, currentUserId?: string | null): TableColumn[] {
   const childLock = getOkrSetChildEditLock(parentSetStatus);
   return [
     {
@@ -75,8 +75,8 @@ export function buildOkrObjectiveColumns(isPolish: boolean, parentSetStatus: str
       label: isPolish ? 'Właściciel' : 'Owner',
       width: '140px',
       render: (row: OkrObjectiveWithKeyResultsDto) => (
-        <span className="block truncate text-sm text-c-text-secondary font-mono" title={row.ownerUserId}>
-          {shortOkrId(row.ownerUserId)}
+        <span className="block truncate text-sm text-c-text-secondary">
+          {currentUserId && row.ownerUserId === currentUserId ? (isPolish ? 'Ty' : 'You') : (isPolish ? 'Przypisany' : 'Assigned')}
         </span>
       ),
     },

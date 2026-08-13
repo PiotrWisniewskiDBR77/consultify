@@ -197,7 +197,7 @@ export const OkrObjectivesView: React.FC<OkrObjectivesViewProps> = ({ set, isPol
           },
         }}
         table={{
-          columns: buildOkrObjectiveColumns(isPolish, set.status),
+          columns: buildOkrObjectiveColumns(isPolish, set.status, currentUserId),
           data: rows,
           // D09 (task brief, 2026-08-11): persistKey is per SURFACE, never per
           // record id — a `${set.setId}` suffix here would (a) not carry

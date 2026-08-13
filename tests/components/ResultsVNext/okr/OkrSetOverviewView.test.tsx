@@ -87,63 +87,30 @@ function renderOverview(isPolish: boolean) {
   );
 }
 
-describe('OkrSetOverviewView — defect 1: no source-file leak in the lifecycle footer note', () => {
-  it('PL: footer note has no source-file reference', () => {
+describe('OkrSetOverviewView — contextual lifecycle actions', () => {
+  it('PL: a draft shows only actions that are available now', () => {
     const { container } = renderOverview(true);
     const text = container.textContent ?? '';
     expect(text).not.toContain('okrWorkspaceMappers.ts');
     expect(text).not.toMatch(/plik:linia/i);
-    // Still says SOMETHING meaningful — this isn't a test that the note
-    // was blanked out, only that the dev citation is gone.
-    expect(text).toMatch(/serwer/i);
+    expect(text).toContain('Złóż do akceptacji');
+    expect(text).toContain('Anuluj zestaw');
+    expect(text).not.toContain('Aktywuj');
+    expect(text).not.toContain('wymaga statusu');
   });
 
-  it('EN: footer note has no source-file reference', () => {
+  it('EN: a draft shows only actions that are available now', () => {
     const { container } = renderOverview(false);
     const text = container.textContent ?? '';
     expect(text).not.toContain('okrWorkspaceMappers.ts');
     expect(text).not.toMatch(/file:line/i);
-    expect(text).toMatch(/server/i);
-  });
-});
-
-describe('OkrSetOverviewView — defect 2: gate reason prefix appears exactly once per action', () => {
-  it('PL: approve/request-changes/activate/open-review reasons are not double-prefixed', () => {
-    const { container } = renderOverview(true);
-    const text = container.textContent ?? '';
-
-    // The bug produced "Zaakceptuj: Akceptacja: wymaga..." — the button's
-    // own label glued in front of the mapper's already-prefixed text.
-    expect(text).not.toMatch(/Zaakceptuj:\s*Akceptacja:/);
-    expect(text).not.toMatch(/Żądaj poprawek:\s*Żądanie poprawek:/);
-    expect(text).not.toMatch(/Aktywuj:\s*Aktywacja:/);
-    expect(text).not.toMatch(/Otwórz przegląd:\s*Otwarcie przeglądu:/);
-
-    // The mapper's own single prefix must still be there (not stripped to
-    // nothing — the fix relocates ownership, it doesn't delete the label).
-    expect(text).toContain('Akceptacja: wymaga statusu');
-    expect(text).toContain('Aktywacja: wymaga statusu');
-    expect(text).toContain('Otwarcie przeglądu: wymaga statusu');
+    expect(text).toContain('Submit for approval');
+    expect(text).toContain('Cancel set');
+    expect(text).not.toContain('Activate');
+    expect(text).not.toContain('requires status');
   });
 
-  it('EN: approve/request-changes/activate/open-review reasons are not double-prefixed', () => {
-    const { container } = renderOverview(false);
-    const text = container.textContent ?? '';
-
-    expect(text).not.toMatch(/Approve:\s*Approve:/);
-    expect(text).not.toMatch(/Request changes:\s*Request changes:/);
-    expect(text).not.toMatch(/Activate:\s*Activate:/);
-    expect(text).not.toMatch(/Open review:\s*Open review:/);
-
-    expect(text).toContain('Approve: requires status');
-    expect(text).toContain('Activate: requires status');
-    expect(text).toContain('Open review: requires status');
-  });
-
-  it('PL: the self-approval-denial gate text (a non-reasonWrongStatus gate) is also single-prefixed', () => {
-    // `submitted` + actor === submittedBy triggers `gateApprove`'s custom
-    // self-denial branch (not `reasonWrongStatus`) — a second code path in
-    // the mapper that also bakes in its own "Akceptacja:" prefix.
+  it('does not expose an unavailable self-approval control or its technical denial', () => {
     const { container } = render(
       <OkrSetOverviewView
         set={makeSet({ status: 'submitted', submittedBy: 'user-someone-else' })}
@@ -153,7 +120,8 @@ describe('OkrSetOverviewView — defect 2: gate reason prefix appears exactly on
       />
     );
     const text = container.textContent ?? '';
-    expect(text).not.toMatch(/Zaakceptuj:\s*Akceptacja:/);
-    expect(text).toContain('Akceptacja: autor złożenia nie może zaakceptować własnego zestawu');
+    expect(text).not.toContain('Zaakceptuj');
+    expect(text).not.toContain('autor złożenia');
+    expect(text).toContain('Anuluj zestaw');
   });
 });

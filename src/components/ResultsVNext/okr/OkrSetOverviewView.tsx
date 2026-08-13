@@ -102,8 +102,8 @@ export const OkrSetOverviewView: React.FC<OkrSetOverviewViewProps> = ({ set, isP
   const rows: ArtifactPropertyRow[] = [
     { id: 'status', label: isPolish ? 'Status' : 'Status', value: <StatusChip label={okrSetStatusLabel(set.status, isPolish)} tone={OKR_SET_STATUS_TONE[set.status]} /> },
     { id: 'scope', label: isPolish ? 'Zasięg' : 'Scope', value: okrSetScopeLabel(set.scopeType, isPolish) },
-    { id: 'owner', label: isPolish ? 'Właściciel' : 'Owner', value: <span className="font-mono">{shortOkrId(set.ownerUserId)}</span> },
-    { id: 'reviewer', label: isPolish ? 'Recenzent' : 'Reviewer', value: <span className="font-mono">{shortOkrId(set.reviewerUserId)}</span> },
+    { id: 'owner', label: isPolish ? 'Właściciel' : 'Owner', value: currentUserId && set.ownerUserId === currentUserId ? (isPolish ? 'Ty' : 'You') : (set.ownerUserId ? (isPolish ? 'Przypisany' : 'Assigned') : '—') },
+    { id: 'reviewer', label: isPolish ? 'Recenzent' : 'Reviewer', value: currentUserId && set.reviewerUserId === currentUserId ? (isPolish ? 'Ty' : 'You') : (set.reviewerUserId ? (isPolish ? 'Przypisany' : 'Assigned') : '—') },
     {
       id: 'progress',
       label: isPolish ? 'Postęp ogólny' : 'Overall progress',
@@ -246,7 +246,7 @@ export const OkrSetOverviewView: React.FC<OkrSetOverviewViewProps> = ({ set, isP
           />
         ) : null}
         <div className="flex flex-wrap gap-2">
-          {actions.map((action) => {
+          {actions.filter((action) => !action.gate).map((action) => {
             const disabled = !!action.gate || pending !== null;
             const cls = action.variant === 'primary' ? PRIMARY_BUTTON : action.variant === 'danger' ? DANGER_BUTTON : GHOST_BUTTON;
             const title = action.gate ? (isPolish ? action.gate.pl : action.gate.en) : undefined;
@@ -265,27 +265,11 @@ export const OkrSetOverviewView: React.FC<OkrSetOverviewViewProps> = ({ set, isP
             );
           })}
         </div>
-        {actions
-          .filter((a) => a.gate)
-          .map((a) => (
-            <p key={`gate-${a.id}`} className="mt-2 text-[11px] text-c-text-muted flex items-center gap-1">
-              <AlertTriangle size={12} className="shrink-0" />
-              {isPolish ? a.gate!.pl : a.gate!.en}
-            </p>
-          ))}
         {error ? (
           <div role="alert" className="mt-3 flex items-start gap-2 rounded-lg border border-c-danger/30 bg-c-danger/10 px-3 py-2 text-[12px] text-c-text" data-testid="okr-overview-error">
             <AlertTriangle size={14} className="mt-0.5 shrink-0 text-c-danger" />
             <span>{error}</span>
           </div>
-        ) : null}
-        {!error && pending === null ? (
-          <p className="mt-2 flex items-center gap-1 text-[11px] text-c-text-muted">
-            <CheckCircle2 size={12} className="shrink-0" />
-            {isPolish
-              ? 'Dostępność każdego przycisku odzwierciedla regułę wymaganą przez serwer.'
-              : "Each button's availability reflects the rule enforced by the server."}
-          </p>
         ) : null}
       </div>
     </div>
