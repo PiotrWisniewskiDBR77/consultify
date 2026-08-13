@@ -1471,37 +1471,6 @@ export const AgentHubShell: React.FC = () => {
     if (activeItemId) return null;
     return (
       <div className="flex flex-wrap items-center gap-2">
-        <Segmented<AgentHubTab>
-          value={tab}
-          options={[
-            {
-              value: 'transformations',
-              label: agentHubTabLabel('transformations', isPolish),
-            },
-            {
-              value: 'processes',
-              label: agentHubTabLabel('processes', isPolish),
-            },
-            {
-              value: 'templates',
-              label: agentHubTabLabel('templates', isPolish),
-            },
-            {
-              value: 'governed_templates',
-              label: agentHubTabLabel('governed_templates', isPolish),
-            },
-            ...(isOperator
-              ? [
-                  {
-                    value: 'operations' as const,
-                    label: agentHubTabLabel('operations', isPolish),
-                  },
-                ]
-              : []),
-          ]}
-          onChange={(id) => writeWorkspaceContext(id)}
-          testId="agent-hub-mode-switch"
-        />
         {/* AGT-FOLDERS (2026-07-28) — filtr "Folder", TYLKO na "Moje procesy"
             (foldery grupują PROCESY, nie bibliotekę statycznych szablonów).
             Wzór 1:1 `VaultDocumentsView.tsx` chip "Folder". */}
@@ -1656,6 +1625,37 @@ export const AgentHubShell: React.FC = () => {
           </div>
         </dl>
       </section>
+      {!activeItemId ? (
+        <nav
+          className="shrink-0 border-b border-c-border bg-c-bg px-4 py-2"
+          aria-label={isPolish ? 'Obszary Agent Hub' : 'Agent Hub areas'}
+        >
+          <div className="overflow-x-auto pb-0.5">
+            <Segmented<AgentHubTab>
+              value={tab}
+              options={[
+                { value: 'transformations', label: isPolish ? 'Sprawy' : 'Cases' },
+                { value: 'processes', label: isPolish ? 'Archiwum' : 'Archive' },
+                { value: 'templates', label: isPolish ? 'Start' : 'Start' },
+                {
+                  value: 'governed_templates',
+                  label: isPolish ? 'Szablony' : 'Templates',
+                },
+                ...(isOperator
+                  ? [
+                      {
+                        value: 'operations' as const,
+                        label: isPolish ? 'Operacje' : 'Operations',
+                      },
+                    ]
+                  : []),
+              ]}
+              onChange={(id) => writeWorkspaceContext(id)}
+              testId="agent-hub-mode-switch"
+            />
+          </div>
+        </nav>
+      ) : null}
       <div className="flex-1 min-h-0 overflow-y-auto">
         {unauthorizedOperationsRequest ? (
           <EmptyState

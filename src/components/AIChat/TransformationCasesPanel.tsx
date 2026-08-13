@@ -1,4 +1,4 @@
-import { Ban, GitBranch, ListChecks, PlayCircle, RefreshCw } from 'lucide-react';
+import { Ban, GitBranch, ListChecks, PlayCircle, Plus, RefreshCw, Sparkles } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
@@ -470,6 +470,9 @@ export const TransformationCasesPanel: React.FC<{
   const [synthesisProposal, setSynthesisProposal] = useState<
     OpportunitySynthesisProposalDto | null | undefined
   >(undefined);
+  const [newMandate, setNewMandate] = useState('');
+  const [newOutcome, setNewOutcome] = useState('');
+  const [creatingCase, setCreatingCase] = useState(false);
 
   const loadCases = useCallback(async () => {
     setError(null);
@@ -517,6 +520,32 @@ export const TransformationCasesPanel: React.FC<{
   useEffect(() => {
     void loadCases();
   }, [loadCases]);
+
+  const handleCreateCase = useCallback(async () => {
+    const mandate = newMandate.trim();
+    if (!mandate) return;
+    setCreatingCase(true);
+    setError(null);
+    try {
+      const created = await TransformationCasesApi.create(
+        {
+          mandate,
+          desiredOutcomes: newOutcome.trim() ? [newOutcome.trim()] : [],
+        },
+        `agent-hub-${crypto.randomUUID()}`
+      );
+      setNewMandate('');
+      setNewOutcome('');
+      await loadCases();
+      setSelectedId(created.transformationCaseId);
+    } catch (createError) {
+      setError(
+        createError instanceof Error ? createError.message : 'Failed to create transformation'
+      );
+    } finally {
+      setCreatingCase(false);
+    }
+  }, [loadCases, newMandate, newOutcome]);
 
   const rows = useMemo<TransformationCaseRow[]>(
     () =>
@@ -2127,16 +2156,98 @@ export const TransformationCasesPanel: React.FC<{
   }
   if (cases.length === 0) {
     return (
-      <EmptyState
-        icon={PlayCircle}
-        title={isPolish ? 'Brak planów transformacji' : 'No transformation plans'}
-        description={
-          isPolish
-            ? 'Napisz do Teresy: „Przygotuj plan transformacji”, aby utworzyć pierwszy trwały Transformation Case.'
-            : 'Ask Teresa to “Prepare a transformation plan” to create the first durable Transformation Case.'
-        }
-        className="h-full"
-      />
+      <section className="mx-auto flex min-h-full w-full max-w-5xl items-center px-4 py-8">
+        <div className="w-full overflow-hidden rounded-xl border border-c-border bg-c-surface shadow-sm">
+          <div className="grid gap-0 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="p-6 sm:p-8">
+              <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-c-primary/10 text-c-primary">
+                <Sparkles size={22} aria-hidden />
+              </div>
+              <h2 className="text-xl font-semibold text-c-text">
+                {isPolish ? 'Rozpocznij pracę Agenta' : 'Start Agent work'}
+              </h2>
+              <p className="mt-2 max-w-xl text-sm leading-6 text-c-text-secondary">
+                {isPolish
+                  ? 'Opisz rezultat biznesowy. Agent utworzy trwałą sprawę, plan, punkty akceptacji i historię wykonania.'
+                  : 'Describe the business result. Agent will create a durable case with a plan, approval gates and execution history.'}
+              </p>
+              <div className="mt-6 space-y-4">
+                <label className="block">
+                  <span className="mb-1.5 block text-xs font-semibold text-c-text">
+                    {isPolish ? 'Co ma zostać osiągnięte?' : 'What needs to be achieved?'}
+                  </span>
+                  <textarea
+                    value={newMandate}
+                    onChange={(event) => setNewMandate(event.target.value)}
+                    placeholder={
+                      isPolish
+                        ? 'Np. skrócić czas realizacji zamówienia o 30%'
+                        : 'E.g. reduce order fulfilment time by 30%'
+                    }
+                    rows={3}
+                    className="w-full resize-none rounded-lg border border-c-border bg-c-bg px-3 py-2.5 text-sm text-c-text outline-none placeholder:text-c-text-muted focus:border-c-primary focus:ring-2 focus:ring-c-primary/20"
+                    data-testid="agent-case-mandate"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-1.5 block text-xs font-semibold text-c-text">
+                    {isPolish ? 'Pierwszy mierzalny rezultat' : 'First measurable outcome'}
+                  </span>
+                  <input
+                    value={newOutcome}
+                    onChange={(event) => setNewOutcome(event.target.value)}
+                    placeholder={isPolish ? 'Np. lead time ≤ 5 dni' : 'E.g. lead time ≤ 5 days'}
+                    className="w-full rounded-lg border border-c-border bg-c-bg px-3 py-2.5 text-sm text-c-text outline-none placeholder:text-c-text-muted focus:border-c-primary focus:ring-2 focus:ring-c-primary/20"
+                    data-testid="agent-case-outcome"
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={() => void handleCreateCase()}
+                  disabled={!newMandate.trim() || creatingCase}
+                  className="inline-flex items-center gap-2 rounded-lg bg-c-text px-4 py-2.5 text-sm font-semibold text-c-surface transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                  data-testid="agent-case-create"
+                >
+                  <Plus size={16} aria-hidden />
+                  {creatingCase
+                    ? isPolish
+                      ? 'Tworzenie…'
+                      : 'Creating…'
+                    : isPolish
+                      ? 'Utwórz sprawę i plan'
+                      : 'Create case and plan'}
+                </button>
+              </div>
+              {error ? <p className="mt-4 text-sm text-c-danger">{error}</p> : null}
+            </div>
+            <aside className="border-t border-c-border bg-c-bg/60 p-6 sm:p-8 lg:border-l lg:border-t-0">
+              <p className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
+                {isPolish ? 'Co powstanie' : 'What you will get'}
+              </p>
+              <ol className="mt-5 space-y-4">
+                {[
+                  isPolish
+                    ? 'Sprawa z mandatem i miernikami sukcesu'
+                    : 'Case with mandate and success measures',
+                  isPolish
+                    ? 'Plan etapów z właścicielami i zależnościami'
+                    : 'Stage plan with owners and dependencies',
+                  isPolish
+                    ? 'Akceptacje, wyniki i pełna historia działań'
+                    : 'Approvals, outputs and complete activity history',
+                ].map((label, index) => (
+                  <li key={label} className="flex gap-3 text-sm text-c-text-secondary">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-c-border bg-c-surface text-xs font-semibold text-c-text">
+                      {index + 1}
+                    </span>
+                    <span className="pt-0.5">{label}</span>
+                  </li>
+                ))}
+              </ol>
+            </aside>
+          </div>
+        </div>
+      </section>
     );
   }
 
