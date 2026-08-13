@@ -7,7 +7,7 @@
  * PRAWDZIWY (`MemoryRouter` + `useSearchParams`), bo dokładnie to jest pod
  * testem: URL musi przetrwać reload/wstecz/dalej/deep-link.
  */
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
@@ -73,11 +73,44 @@ const packs: AuditPackSummary[] = [
     sourceId: 'src-1',
     sourceTitle: 'ISO 19011:2018',
     sourceVersion: '2018',
-    classification: 'VERIFIED_NORMATIVE',
+    sourceType: 'LICENSED_STANDARD',
+    verificationStatus: 'VERIFIED',
     publicationStatus: 'published',
     requiredRoles: [],
     criteriaCount: 42,
     updatedAt: '2026-08-01',
+  },
+  {
+    id: 'pack-2',
+    packKey: 'client-qms',
+    version: 1,
+    title: 'Client QMS Procedure',
+    summary: null,
+    sourceId: 'src-2',
+    sourceTitle: 'Client QMS v3',
+    sourceVersion: '3',
+    sourceType: 'INTERNAL_PROCEDURE',
+    verificationStatus: 'VERIFIED',
+    publicationStatus: 'published',
+    requiredRoles: [],
+    criteriaCount: 10,
+    updatedAt: '2026-08-02',
+  },
+  {
+    id: 'pack-3',
+    packKey: 'demo-pack',
+    version: 1,
+    title: 'Demonstration Pack',
+    summary: null,
+    sourceId: null,
+    sourceTitle: null,
+    sourceVersion: null,
+    sourceType: 'DEMONSTRATION',
+    verificationStatus: 'UNVERIFIED',
+    publicationStatus: 'draft',
+    requiredRoles: [],
+    criteriaCount: 3,
+    updatedAt: '2026-08-03',
   },
 ];
 
@@ -123,18 +156,20 @@ function renderHub(initialEntries: string[] = ['/audit-programs/method']) {
 }
 
 describe('AuditsMethodHub', () => {
-  it('renders exactly five tabs in the required order', async () => {
+  it('renders exactly five tabs in the required order — second tab reads "Sessions", not "Processes"', async () => {
     setupApiMocks();
     renderHub();
     await waitFor(() => expect(mockedListPacks).toHaveBeenCalled());
 
-    const tabButtons = ['Library', 'Processes', 'Outputs', 'Reports', 'Initiatives'].map((label) =>
+    const tabButtons = ['Library', 'Sessions', 'Outputs', 'Reports', 'Initiatives'].map((label) =>
       screen.getByRole('tab', { name: label })
     );
     expect(tabButtons).toHaveLength(5);
-    // Order in the DOM must match the required Library·Processes·Outputs·Reports·Initiatives order.
+    // Order in the DOM must match the required Library·Sessions·Outputs·Reports·Initiatives order.
     const allTabs = screen.getAllByRole('tab').map((b) => b.textContent);
-    expect(allTabs).toEqual(['Library', 'Processes', 'Outputs', 'Reports', 'Initiatives']);
+    expect(allTabs).toEqual(['Library', 'Sessions', 'Outputs', 'Reports', 'Initiatives']);
+    // "Processes" must not leak anywhere as a tab label.
+    expect(screen.queryByRole('tab', { name: 'Processes' })).toBeNull();
   });
 
   it('defaults to Library when ?tab= is absent', async () => {
@@ -181,11 +216,13 @@ describe('AuditsMethodHub', () => {
     await waitFor(() => expect(container.querySelector('table')).toBeInTheDocument());
   });
 
-  it('renders a real StandardTable element on the Processes tab', async () => {
+  it('renders a real StandardTable element on the Sessions tab — `?tab=processes` still works, only the label changed', async () => {
     setupApiMocks();
     renderHub(['/audit-programs/method?tab=processes']);
     await waitFor(() => expect(screen.getByText('Q3 Compliance Audit')).toBeInTheDocument());
     expect(document.querySelector('table')).toBeInTheDocument();
+    expect(screen.getByTestId('location-probe').textContent).toContain('tab=processes');
+    expect(screen.getByRole('tab', { name: 'Sessions', selected: true })).toBeInTheDocument();
   });
 
   it('shows an ErrorState with retry when the Library API call fails', async () => {
@@ -205,5 +242,59 @@ describe('AuditsMethodHub', () => {
     renderHub(['/audit-programs/method?tab=outputs']);
     await waitFor(() => expect(screen.getByText('No Outputs yet')).toBeInTheDocument());
     expect(screen.getByText(/created automatically when an audit program is finalized/i)).toBeInTheDocument();
+  });
+
+  describe('Library — two independent filter axes (P0 2026-08-13)', () => {
+    it('renders a source-type chip row AND a separate verification chip row, both with visible zero counts', async () => {
+      setupApiMocks();
+      renderHub();
+      await waitFor(() => expect(screen.getByText('ISO 19011 Audit Pack')).toBeInTheDocument());
+
+      // One axis chip per AuditSourceType, one per AuditVerificationState —
+      // both rows present at once (not a single merged chip row).
+      expect(screen.getByTestId('audits-library-source-type-chip-DEMONSTRATION')).toBeInTheDocument();
+      expect(screen.getByTestId('audits-library-verification-chip-VERIFIED')).toBeInTheDocument();
+      // A value with zero packs (REGULATION) still shows its chip with a "0".
+      const regulationChip = screen.getByTestId('audits-library-source-type-chip-REGULATION');
+      expect(within(regulationChip).getByText('0')).toBeInTheDocument();
+    });
+
+    it('combines both axes with AND — selecting one narrows the list without resetting the other', async () => {
+      setupApiMocks();
+      renderHub();
+      await waitFor(() => expect(screen.getByText('ISO 19011 Audit Pack')).toBeInTheDocument());
+
+      // Two packs are VERIFIED (ISO + Client QMS); narrow by verification first.
+      fireEvent.click(screen.getByTestId('audits-library-verification-chip-VERIFIED'));
+      await waitFor(() => {
+        expect(screen.getByText('ISO 19011 Audit Pack')).toBeInTheDocument();
+        expect(screen.getByText('Client QMS Procedure')).toBeInTheDocument();
+        expect(screen.queryByText('Demonstration Pack')).toBeNull();
+      });
+
+      // Now ALSO narrow by source type — the verification pick must still hold
+      // (combined AND, not a reset of the first axis).
+      fireEvent.click(screen.getByTestId('audits-library-source-type-chip-LICENSED_STANDARD'));
+      await waitFor(() => {
+        expect(screen.getByText('ISO 19011 Audit Pack')).toBeInTheDocument();
+        expect(screen.queryByText('Client QMS Procedure')).toBeNull();
+        expect(screen.queryByText('Demonstration Pack')).toBeNull();
+      });
+
+      // The verification chip is still shown as active — the click on the
+      // other axis did not clear it.
+      expect(screen.getByTestId('audits-library-verification-chip-VERIFIED')).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
+    });
+
+    it('the two library filter rows do not appear on the Sessions (processes) tab', async () => {
+      setupApiMocks();
+      renderHub(['/audit-programs/method?tab=processes']);
+      await waitFor(() => expect(screen.getByText('Q3 Compliance Audit')).toBeInTheDocument());
+      expect(screen.queryByTestId('audits-library-source-type-chip-all')).toBeNull();
+      expect(screen.queryByTestId('audits-library-verification-chip-all')).toBeNull();
+    });
   });
 });

@@ -1,12 +1,24 @@
 /**
- * auditStatusTones — mapowanie statusów domeny Audits (klasyfikacja pakietu,
- * status publikacji, etap lifecycle programu, status raportu/proposala) na
- * `StatusTone` + etykietę PL/EN.
+ * auditStatusTones — mapowanie statusów domeny Audits (typ źródła + status
+ * weryfikacji pakietu, status publikacji, etap lifecycle programu, status
+ * raportu/proposala) na `StatusTone` + etykietę PL/EN.
  *
- * Wymóg prawny (brief U7, sekcja D): pakiet NIEZWERYFIKOWANY nie może wyglądać
- * jak norma. `packClassificationTone` jest jedynym miejscem, które decyduje o
- * tonie chipa klasyfikacji — `DEMONSTRATION`/`LEGACY`/`EVIDENCE_MISSING` nigdy
- * nie dostają tonu `success` (patrz test w `__tests__/auditStatusTones.test.ts`).
+ * Wymóg prawny (P0 2026-08-13, patrz `server/src/services/audits/types.ts`):
+ * DWIE NIEZALEŻNE OSIE. `sourceType` (czym jest źródło) i `verificationStatus`
+ * (czy je sprawdzono) NIGDY nie mieszają się w jedną etykietę ani jeden ton —
+ * to był dokładnie ten błąd kategorii, który renderował procedurę QMS klienta
+ * jako „Zweryfikowana norma". Reguły egzekwowane tutaj:
+ *
+ *   1. Słowo „norma" wolno pokazać WYŁĄCZNIE dla `LICENSED_STANDARD` i
+ *      `REGULATION` (`packSourceTypeLabel`) — żadna wartość `verificationStatus`
+ *      tego nie zmienia, bo `packSourceTypeLabel` nawet nie przyjmuje tego
+ *      argumentu.
+ *   2. Ton `success` przysługuje WYŁĄCZNIE `VERIFIED` na osi weryfikacji
+ *      (`packVerificationTone`). Oś typu źródła (`packSourceTypeTone`) nigdy
+ *      nie zwraca `success` — typ nie jest „dobry" ani „zły".
+ *   3. `DEMONSTRATION` (warning) i `LEGACY` (neutral, etykieta wprost mówi
+ *      „wycofany") muszą być wizualnie odróżnialne od normy i od siebie —
+ *      patrz `__tests__/auditStatusTones.test.ts`.
  */
 
 import type { StatusTone } from '@/components/ui/primitives/chips';
@@ -15,45 +27,78 @@ import type {
   AuditLifecycleState,
   AuditProposalStatus,
   AuditReportStatus,
-  PackClassification,
+  AuditSourceType,
+  AuditVerificationState,
   PackPublicationStatus,
 } from './auditsMethodApi';
 
 // ---------------------------------------------------------------------------
-// Klasyfikacja pakietu (Library)
+// Typ źródła pakietu (Library) — oś 1: CZYM jest źródło
 // ---------------------------------------------------------------------------
 
-const PACK_CLASSIFICATION_TONE: Record<PackClassification, StatusTone> = {
-  // Jedyna klasyfikacja, która wolno wyglądać jak "zweryfikowana norma".
-  VERIFIED_NORMATIVE: 'success',
-  // Użyteczny wewnętrznie, ale NIE jest zweryfikowaną normą zewnętrzną.
+// Celowo BEZ `success` w żadnej wartości — typ źródła nie jest „dobry"/„zły",
+// to `verificationStatus` niesie osąd (patrz nagłówek pliku, reguła 2).
+const SOURCE_TYPE_TONE: Record<AuditSourceType, StatusTone> = {
+  INTERNAL_PROCEDURE: 'neutral',
   INTERNAL_FRAMEWORK: 'info',
-  // Ostrzegawczy/neutralny, nigdy success (brief §D).
+  REGULATION: 'info',
+  LICENSED_STANDARD: 'info',
+  // Wyjątek świadomy (reguła 3): nigdy nie jest podstawą audytu u klienta —
+  // to realne ostrzeżenie, nie tylko opis.
   DEMONSTRATION: 'warning',
+  // Neutralny = brak wypełnienia koloru (patrz StatusChip) — nie czyta się
+  // jako "aktywny/aktualny", co jest tu celem (reguła 3).
   LEGACY: 'neutral',
-  // Brak dowodu źródła — najpoważniejszy przypadek spośród niezweryfikowanych,
-  // ale wciąż NIE "success". Danger, żeby odróżnić od zwykłego ostrzeżenia.
+};
+
+// Słowo „norma"/„normative" WYŁĄCZNIE dla LICENSED_STANDARD i REGULATION
+// (reguła 1) — sprawdzane też testem po renderowanym tekście, nie po kluczu.
+const SOURCE_TYPE_LABEL: Record<AuditSourceType, { pl: string; en: string }> = {
+  INTERNAL_PROCEDURE: { pl: 'Procedura wewnętrzna', en: 'Internal procedure' },
+  INTERNAL_FRAMEWORK: { pl: 'Framework wewnętrzny', en: 'Internal framework' },
+  REGULATION: { pl: 'Regulacja / akt prawny', en: 'Regulation' },
+  LICENSED_STANDARD: { pl: 'Norma licencjonowana', en: 'Licensed standard' },
+  DEMONSTRATION: { pl: 'Demonstracja', en: 'Demonstration' },
+  LEGACY: { pl: 'Wycofany (historyczny)', en: 'Legacy (retired)' },
+};
+
+export function packSourceTypeTone(sourceType: AuditSourceType): StatusTone {
+  return SOURCE_TYPE_TONE[sourceType] ?? 'neutral';
+}
+
+export function packSourceTypeLabel(sourceType: AuditSourceType, isPolish = false): string {
+  const entry = SOURCE_TYPE_LABEL[sourceType];
+  if (!entry) return sourceType;
+  return isPolish ? entry.pl : entry.en;
+}
+
+// ---------------------------------------------------------------------------
+// Status weryfikacji pakietu (Library) — oś 2: CZY sprawdzono
+// ---------------------------------------------------------------------------
+
+const VERIFICATION_TONE: Record<AuditVerificationState, StatusTone> = {
+  // Jedyna wartość tej osi (i jedyna z obu osi razem), która wolno mieć `success`.
+  VERIFIED: 'success',
+  PENDING_REVIEW: 'warning',
+  UNVERIFIED: 'neutral',
+  // Brak dowodu źródła — najpoważniejszy przypadek, ale wciąż NIE "success".
   EVIDENCE_MISSING: 'danger',
 };
 
-const PACK_CLASSIFICATION_LABEL: Record<PackClassification, { pl: string; en: string }> = {
-  VERIFIED_NORMATIVE: { pl: 'Zweryfikowana norma', en: 'Verified normative' },
-  INTERNAL_FRAMEWORK: { pl: 'Framework wewnętrzny', en: 'Internal framework' },
-  DEMONSTRATION: { pl: 'Demonstracja', en: 'Demonstration' },
-  LEGACY: { pl: 'Historyczny (niezweryfikowany)', en: 'Legacy (unverified)' },
+const VERIFICATION_LABEL: Record<AuditVerificationState, { pl: string; en: string }> = {
+  VERIFIED: { pl: 'Zweryfikowane', en: 'Verified' },
+  PENDING_REVIEW: { pl: 'W przeglądzie', en: 'Pending review' },
+  UNVERIFIED: { pl: 'Niezweryfikowane', en: 'Unverified' },
   EVIDENCE_MISSING: { pl: 'Brak dowodu źródła', en: 'Evidence missing' },
 };
 
-export function packClassificationTone(classification: PackClassification): StatusTone {
-  return PACK_CLASSIFICATION_TONE[classification] ?? 'neutral';
+export function packVerificationTone(status: AuditVerificationState): StatusTone {
+  return VERIFICATION_TONE[status] ?? 'neutral';
 }
 
-export function packClassificationLabel(
-  classification: PackClassification,
-  isPolish = false
-): string {
-  const entry = PACK_CLASSIFICATION_LABEL[classification];
-  if (!entry) return classification;
+export function packVerificationLabel(status: AuditVerificationState, isPolish = false): string {
+  const entry = VERIFICATION_LABEL[status];
+  if (!entry) return status;
   return isPolish ? entry.pl : entry.en;
 }
 

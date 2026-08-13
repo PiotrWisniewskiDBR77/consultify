@@ -4,6 +4,11 @@
  * Mockuje `../auditsMethodApi` NA POZIOMIE MODUŁU (kształt serwera:
  * `getPack` zwraca `AuditPackDetail`, nie surowy fetch) — zgodnie z briefem
  * U7 "mock musi mieć kształt serwera".
+ *
+ * P0 2026-08-13 (rozdzielenie osi): te testy egzekwują wprost, że
+ * `sourceType` (CZYM jest źródło) i `verificationStatus` (CZY sprawdzono)
+ * nigdy się nie mieszają w renderowanym UI — patrz komentarze przy każdym
+ * teście dla dokładnego wymogu z briefu.
  */
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
@@ -30,41 +35,78 @@ vi.mock('../auditsMethodApi', async () => {
 });
 
 import { AuditLibraryTab } from '../tabs/AuditLibraryTab';
-import { getPack, type AuditPackDetail, type AuditPackSummary } from '../auditsMethodApi';
+import {
+  AUDIT_VERIFICATION_STATES,
+  getPack,
+  type AuditPackDetail,
+  type AuditPackSummary,
+  type AuditVerificationState,
+} from '../auditsMethodApi';
 
 const mockedGetPack = vi.mocked(getPack);
 
-const verifiedPack: AuditPackSummary = {
-  id: 'pack-1',
-  packKey: 'iso-19011',
-  version: 2,
-  title: 'ISO 19011 Audit Pack',
-  summary: 'Guidelines for auditing management systems',
-  sourceId: 'src-1',
-  sourceTitle: 'ISO 19011:2018',
-  sourceVersion: '2018',
-  classification: 'VERIFIED_NORMATIVE',
-  publicationStatus: 'published',
-  requiredRoles: ['lead_auditor', 'auditor'],
-  criteriaCount: 42,
-  updatedAt: '2026-08-01',
-};
+function makePack(overrides: Partial<AuditPackSummary> = {}): AuditPackSummary {
+  return {
+    id: 'pack-1',
+    packKey: 'demo-key',
+    version: 1,
+    title: 'Demo Pack',
+    summary: null,
+    sourceId: 'src-1',
+    sourceTitle: 'Some source',
+    sourceVersion: '1',
+    sourceType: 'INTERNAL_PROCEDURE',
+    verificationStatus: 'UNVERIFIED',
+    publicationStatus: 'draft',
+    requiredRoles: [],
+    criteriaCount: 1,
+    updatedAt: '2026-08-01',
+    ...overrides,
+  };
+}
 
-const demoPack: AuditPackSummary = {
+// Procedura QMS klienta, zweryfikowana przez eksperta — DOKŁADNIE ten pakiet,
+// który w starej (jednoosiowej) wersji renderował się jako „Zweryfikowana
+// norma". Musi renderować sie jako "Internal procedure" + "Verified".
+const verifiedInternalProcedure = makePack({
+  id: 'pack-1',
+  title: 'Client QMS Procedure',
+  sourceType: 'INTERNAL_PROCEDURE',
+  verificationStatus: 'VERIFIED',
+  publicationStatus: 'published',
+  sourceId: 'src-1',
+});
+
+const demoPack = makePack({
   id: 'pack-2',
-  packKey: 'demo-pack',
-  version: 1,
   title: 'Demonstration Pack',
-  summary: 'For demo purposes only',
+  sourceType: 'DEMONSTRATION',
+  verificationStatus: 'UNVERIFIED',
+  publicationStatus: 'draft',
   sourceId: null,
   sourceTitle: null,
-  sourceVersion: null,
-  classification: 'DEMONSTRATION',
-  publicationStatus: 'draft',
-  requiredRoles: [],
-  criteriaCount: 3,
-  updatedAt: '2026-08-02',
-};
+});
+
+const legacyPack = makePack({
+  id: 'pack-3',
+  title: 'Legacy ISO Mapping',
+  sourceType: 'LEGACY',
+  verificationStatus: 'UNVERIFIED',
+  publicationStatus: 'deprecated',
+  sourceId: 'src-3',
+});
+
+const noSourcePublishedPack = makePack({
+  id: 'pack-4',
+  title: 'No-Source Pack',
+  sourceType: 'INTERNAL_FRAMEWORK',
+  verificationStatus: 'PENDING_REVIEW',
+  // API defensywnie mówi "published", ale bez źródła to nie może liczyć się
+  // jako opublikowana podstawa audytu w UI.
+  publicationStatus: 'published',
+  sourceId: null,
+  sourceTitle: null,
+});
 
 const packDetailFixture = (pack: AuditPackSummary): AuditPackDetail => ({
   ...pack,
@@ -84,7 +126,7 @@ function renderTab(overrides: Partial<React.ComponentProps<typeof AuditLibraryTa
   const onStartAudit = vi.fn();
   const utils = render(
     <AuditLibraryTab
-      packs={[verifiedPack, demoPack]}
+      packs={[verifiedInternalProcedure, demoPack, legacyPack]}
       loading={false}
       error={null}
       onRetry={onRetry}
@@ -103,25 +145,95 @@ describe('AuditLibraryTab', () => {
     expect(container.querySelector('table')).toBeInTheDocument();
   });
 
-  it('shows the classification chip for every pack row', () => {
+  it('shows a source-type chip AND a separate verification chip for every pack row (two axes, two columns)', () => {
     renderTab();
-    expect(screen.getByText('Verified normative')).toBeInTheDocument();
+    expect(screen.getByText('Internal procedure')).toBeInTheDocument();
     expect(screen.getByText('Demonstration')).toBeInTheDocument();
+    expect(screen.getByText('Legacy (retired)')).toBeInTheDocument();
+    // Verification axis is a separate label from the type axis.
+    expect(screen.getByText('Verified')).toBeInTheDocument();
+    expect(screen.getAllByText('Unverified').length).toBeGreaterThan(0);
   });
 
-  it('never gives the DEMONSTRATION chip a success (emerald) shell', () => {
+  it('never renders a "norm…" label for the verified internal procedure — the exact bug this model fixes', () => {
+    const { container } = renderTab();
+    const row = screen.getByText('Client QMS Procedure').closest('tr');
+    expect(row).toBeTruthy();
+    expect(within(row as HTMLElement).queryByText(/norm/i)).toBeNull();
+    // Belt and braces: scan the whole rendered table text too.
+    expect(container.textContent).not.toMatch(/verified normative/i);
+  });
+
+  it('never gives the DEMONSTRATION source-type chip a success (emerald) shell', () => {
     renderTab();
     const chip = screen.getByText('Demonstration').closest('[role="status"]');
     expect(chip).toBeTruthy();
     expect(chip?.className).not.toMatch(/emerald/);
-    // Warning shell uses the amber scale (see auditStatusTones.packClassificationTone).
     expect(chip?.className).toMatch(/amber/);
   });
 
-  it('gives the VERIFIED_NORMATIVE chip the success (emerald) shell', () => {
+  it('LEGACY chip never looks current — no emerald/blue/amber vivid fill (neutral shell)', () => {
     renderTab();
-    const chip = screen.getByText('Verified normative').closest('[role="status"]');
+    const chip = screen.getByText('Legacy (retired)').closest('[role="status"]');
+    expect(chip).toBeTruthy();
+    expect(chip?.className).not.toMatch(/emerald|blue|amber/);
+  });
+
+  it('VERIFIED gets the success (emerald) shell on the verification axis', () => {
+    renderTab();
+    const chip = screen.getByText('Verified').closest('[role="status"]');
     expect(chip?.className).toMatch(/emerald/);
+  });
+
+  it('changing verificationStatus never changes the rendered source-type label — same pack, four verification states', async () => {
+    for (const verificationStatus of AUDIT_VERIFICATION_STATES) {
+      const pack = makePack({
+        id: 'stable-type',
+        title: 'Stable Type Pack',
+        sourceType: 'REGULATION',
+        verificationStatus,
+      });
+      const { unmount } = render(
+        <AuditLibraryTab
+          packs={[pack]}
+          loading={false}
+          error={null}
+          onRetry={vi.fn()}
+          isPolish={false}
+          onStartAudit={vi.fn()}
+          startingPackId={null}
+        />
+      );
+      expect(screen.getByText('Regulation')).toBeInTheDocument();
+      unmount();
+    }
+  });
+
+  it('a pack with no source can never count as "published" in the UI — Start audit stays disabled with a visible reason', async () => {
+    mockedGetPack.mockResolvedValue(packDetailFixture(noSourcePublishedPack));
+    renderTab({ packs: [noSourcePublishedPack] });
+
+    fireEvent.click(screen.getByText('No-Source Pack'));
+
+    await waitFor(() => expect(mockedGetPack).toHaveBeenCalledWith('pack-4'));
+
+    const startButtons = await screen.findAllByRole('button', { name: 'Start audit' });
+    const previewButton = startButtons[startButtons.length - 1];
+    expect(previewButton).toBeDisabled();
+    expect(screen.getByText(/no source attached/i)).toBeInTheDocument();
+  });
+
+  it('shows the "compliance-audit basis" pill as No for DEMONSTRATION, keeping it visibly distinct from a compliance audit', async () => {
+    mockedGetPack.mockResolvedValue(packDetailFixture(demoPack));
+    renderTab();
+
+    fireEvent.click(screen.getByText('Demonstration Pack'));
+    await waitFor(() => expect(mockedGetPack).toHaveBeenCalledWith('pack-2'));
+
+    // MetaPill renders "label: value" as one text node.
+    const basisPill = await screen.findByText('Compliance-audit basis: No');
+    expect(basisPill).toBeInTheDocument();
+    expect(basisPill.className).not.toMatch(/emerald/);
   });
 
   it('opens the docked preview on row click and disables "Start audit" for a draft pack with a visible reason', async () => {
@@ -137,23 +249,20 @@ describe('AuditLibraryTab', () => {
     const startButtons = await screen.findAllByRole('button', { name: 'Start audit' });
     const previewButton = startButtons[startButtons.length - 1];
     expect(previewButton).toBeDisabled();
-    expect(
-      screen.getByText(/not in "Published" status/i)
-    ).toBeInTheDocument();
   });
 
-  it('enables "Start audit" for a published pack and calls onStartAudit', async () => {
-    mockedGetPack.mockResolvedValue(packDetailFixture(verifiedPack));
+  it('enables "Start audit" for a published pack that HAS a source, and calls onStartAudit', async () => {
+    mockedGetPack.mockResolvedValue(packDetailFixture(verifiedInternalProcedure));
     const { onStartAudit } = renderTab();
 
-    fireEvent.click(screen.getByText('ISO 19011 Audit Pack'));
+    fireEvent.click(screen.getByText('Client QMS Procedure'));
 
     const startButtons = await screen.findAllByRole('button', { name: 'Start audit' });
     const previewButton = startButtons[startButtons.length - 1];
     expect(previewButton).not.toBeDisabled();
 
     fireEvent.click(previewButton);
-    expect(onStartAudit).toHaveBeenCalledWith(verifiedPack);
+    expect(onStartAudit).toHaveBeenCalledWith(verifiedInternalProcedure);
   });
 
   it('shows ErrorState with a working retry when the pack list failed to load', () => {

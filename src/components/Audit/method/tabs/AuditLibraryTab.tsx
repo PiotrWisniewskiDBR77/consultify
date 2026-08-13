@@ -1,16 +1,18 @@
 /**
  * AuditLibraryTab — U7 Library surface: pakiety audytowe (`AuditPack`).
  *
- * Prezentacyjny komponent — listę i filtr klasyfikacji dostaje z
- * `AuditsMethodHub` (Menu 3 tam żyją chipy klasyfikacji z licznikami; ten
- * komponent tylko renderuje `StandardTable`/`StandardPreview`). Szczegóły
- * pakietu (cel, zakres, taksonomia ustaleń) dociąga sam przy zaznaczeniu
- * wiersza — `GET /audits/packs/:id`.
+ * Prezentacyjny komponent — listę i DWA niezależne filtry (typ źródła,
+ * weryfikacja) dostaje z `AuditsMethodHub` (Menu 3 tam żyją oba rzędy chipów
+ * z licznikami; ten komponent tylko renderuje `StandardTable`/
+ * `StandardPreview`). Szczegóły pakietu (cel, zakres, taksonomia ustaleń)
+ * dociąga sam przy zaznaczeniu wiersza — `GET /audits/packs/:id`.
  *
- * Kanon prawny (brief §D): pakiet NIEZWERYFIKOWANY nie może wyglądać jak
- * norma — kolumna i chip klasyfikacji w preview używają WYŁĄCZNIE
- * `packClassificationTone` (patrz `auditStatusTones.ts`), nigdy `success`
- * poza `VERIFIED_NORMATIVE`.
+ * Kanon prawny (P0 2026-08-13 — patrz `server/src/services/audits/types.ts`):
+ * DWIE NIEZALEŻNE OSIE. Kolumna „Typ źródła" (`packSourceTypeLabel`/
+ * `packSourceTypeTone`) NIGDY nie odpowiada na „czy sprawdzono", a kolumna
+ * „Weryfikacja" (`packVerificationLabel`/`packVerificationTone`) NIGDY nie
+ * zmienia etykiety typu. Ton `success` przysługuje wyłącznie
+ * `verificationStatus === 'VERIFIED'` — oś typu źródła go nie zna.
  */
 import { Library as LibraryIcon, PlayCircle } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
@@ -25,16 +27,22 @@ import {
 import type { ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
 import { ErrorState } from '@/components/shared/states';
 import { StatusChip } from '@/components/ui/primitives/chips';
+import { formatListDate } from '@/utils/listDateFormat';
 
+import { auditRoleLabel } from '../auditRoleLabels';
 import {
-  packClassificationLabel,
-  packClassificationTone,
   packPublicationLabel,
   packPublicationTone,
+  packSourceTypeLabel,
+  packSourceTypeTone,
+  packVerificationLabel,
+  packVerificationTone,
 } from '../auditStatusTones';
 import {
+  AUDIT_SOURCE_TYPES,
+  AUDIT_VERIFICATION_STATES,
   getPack,
-  PACK_CLASSIFICATIONS,
+  isComplianceGrade,
   PACK_PUBLICATION_STATUSES,
   type AuditPackDetail,
   type AuditPackSummary,
@@ -48,6 +56,36 @@ export interface AuditLibraryTabProps {
   isPolish: boolean;
   onStartAudit: (pack: AuditPackSummary) => void;
   startingPackId: string | null;
+}
+
+/**
+ * Bramka „czy ten pakiet wolno traktować jako opublikowaną podstawę audytu".
+ * Wymaga OBU: `publicationStatus === 'published'` I przypisanego źródła —
+ * pakiet bez źródła (`sourceId` puste) nie może zachowywać się w UI jak
+ * opublikowany, niezależnie od tego, co zwróci API (test: „pakiet bez źródła
+ * nie może mieć statusu published w UI").
+ */
+function evaluateStartGate(
+  row: AuditPackSummary,
+  isPolish: boolean
+): { allowed: boolean; reason?: string } {
+  if (!row.sourceId) {
+    return {
+      allowed: false,
+      reason: isPolish
+        ? 'Pakiet nie ma przypisanego źródła — nie może mieć statusu „opublikowany" do audytu.'
+        : 'Pack has no source attached — it cannot count as "published" for an audit.',
+    };
+  }
+  if (row.publicationStatus !== 'published') {
+    return {
+      allowed: false,
+      reason: isPolish
+        ? 'Pakiet nie jest opublikowany — nie można rozpocząć audytu.'
+        : 'Pack is not published — an audit cannot be started from it.',
+    };
+  }
+  return { allowed: true };
 }
 
 export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
@@ -117,18 +155,34 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
       ),
     },
     {
-      id: 'classification',
-      label: isPolish ? 'Klasyfikacja' : 'Classification',
+      id: 'sourceType',
+      label: isPolish ? 'Typ źródła' : 'Source type',
       width: '190px',
       filterable: true,
-      filterOptions: PACK_CLASSIFICATIONS.map((value) => ({
+      filterOptions: AUDIT_SOURCE_TYPES.map((value) => ({
         value,
-        label: packClassificationLabel(value, isPolish),
+        label: packSourceTypeLabel(value, isPolish),
       })),
       render: (row: AuditPackSummary) => (
         <StatusChip
-          label={packClassificationLabel(row.classification, isPolish)}
-          tone={packClassificationTone(row.classification)}
+          label={packSourceTypeLabel(row.sourceType, isPolish)}
+          tone={packSourceTypeTone(row.sourceType)}
+        />
+      ),
+    },
+    {
+      id: 'verificationStatus',
+      label: isPolish ? 'Weryfikacja' : 'Verification',
+      width: '170px',
+      filterable: true,
+      filterOptions: AUDIT_VERIFICATION_STATES.map((value) => ({
+        value,
+        label: packVerificationLabel(value, isPolish),
+      })),
+      render: (row: AuditPackSummary) => (
+        <StatusChip
+          label={packVerificationLabel(row.verificationStatus, isPolish)}
+          tone={packVerificationTone(row.verificationStatus)}
         />
       ),
     },
@@ -161,6 +215,9 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
       label: isPolish ? 'Zaktualizowano' : 'Updated',
       width: '140px',
       sortable: true,
+      render: (row: AuditPackSummary) => (
+        <span className="text-xs text-c-text-secondary tabular-nums">{formatListDate(row.updatedAt)}</span>
+      ),
     },
   ];
 
@@ -168,20 +225,16 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
   // `packs`, więc zawężenie jest bezpieczne i trzymane w jednym miejscu.
   const rowMenu = (rawRow: TableRow): StandardRowMenu => {
     const row = rawRow as unknown as AuditPackSummary;
-    const canStart = row.publicationStatus === 'published';
+    const gate = evaluateStartGate(row, isPolish);
     return {
       primary: [
         {
           id: 'start',
           label: isPolish ? 'Rozpocznij audyt' : 'Start audit',
           icon: PlayCircle,
-          onClick: canStart ? () => onStartAudit(row) : undefined,
-          disabled: !canStart || startingPackId === row.id,
-          note: canStart
-            ? undefined
-            : isPolish
-              ? 'Pakiet nie jest opublikowany — nie można rozpocząć audytu.'
-              : 'Pack is not published — an audit cannot be started from it.',
+          onClick: gate.allowed ? () => onStartAudit(row) : undefined,
+          disabled: !gate.allowed || startingPackId === row.id,
+          note: gate.reason,
         },
       ],
       universalHandlers: {
@@ -227,7 +280,9 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
         {
           id: 'roles',
           label: isPolish ? 'Wymagane role' : 'Required roles',
-          value: detail.requiredRoles.length ? detail.requiredRoles.join(', ') : '—',
+          value: detail.requiredRoles.length
+            ? detail.requiredRoles.map((role) => auditRoleLabel(role, isPolish)).join(', ')
+            : '—',
         },
         {
           id: 'taxonomy',
@@ -246,6 +301,11 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
         },
       ]
     : undefined;
+
+  const startGate = selectedPack ? evaluateStartGate(selectedPack, isPolish) : { allowed: false };
+  const complianceGrade = selectedPack
+    ? isComplianceGrade(selectedPack.sourceType, selectedPack.verificationStatus)
+    : false;
 
   return (
     <div className="flex h-full min-h-0">
@@ -276,24 +336,38 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
             meta={{
               pills: [
                 {
-                  label: isPolish ? 'Klasyfikacja' : 'Classification',
-                  value: packClassificationLabel(selectedPack.classification, isPolish),
-                  tone: packClassificationTone(selectedPack.classification),
+                  label: isPolish ? 'Typ źródła' : 'Source type',
+                  value: packSourceTypeLabel(selectedPack.sourceType, isPolish),
+                  tone: packSourceTypeTone(selectedPack.sourceType),
+                },
+                {
+                  label: isPolish ? 'Weryfikacja' : 'Verification',
+                  value: packVerificationLabel(selectedPack.verificationStatus, isPolish),
+                  tone: packVerificationTone(selectedPack.verificationStatus),
                 },
                 {
                   label: isPolish ? 'Publikacja' : 'Publication',
                   value: packPublicationLabel(selectedPack.publicationStatus, isPolish),
                   tone: packPublicationTone(selectedPack.publicationStatus),
                 },
+                {
+                  // Widoczny dowód, że DEMONSTRATION/LEGACY nigdy nie liczą się
+                  // jako podstawa audytu zgodności — nawet gdyby verificationStatus
+                  // było VERIFIED, `isComplianceGrade` wymaga też normatywnego
+                  // `sourceType`.
+                  label: isPolish ? 'Podstawa audytu zgodności' : 'Compliance-audit basis',
+                  value: complianceGrade ? (isPolish ? 'Tak' : 'Yes') : isPolish ? 'Nie' : 'No',
+                  tone: complianceGrade ? 'success' : 'neutral',
+                },
               ],
-              recommendation:
-                selectedPack.publicationStatus !== 'published'
-                  ? isPolish
-                    ? 'CTA „Rozpocznij audyt" jest nieaktywne: ten pakiet nie ma statusu „Opublikowany".'
-                    : 'The "Start audit" CTA is disabled: this pack is not in "Published" status.'
-                  : undefined,
+              recommendation: startGate.reason,
             }}
-            details={{ properties: detailProperties, label: isPolish ? 'Szczegóły' : 'Details' }}
+            details={{
+              properties: detailProperties,
+              label: isPolish ? 'Szczegóły' : 'Details',
+              propertyLabel: isPolish ? 'Właściwość' : 'Property',
+              valueLabel: isPolish ? 'Wartość' : 'Value',
+            }}
             actions={{
               resolutions: [
                 {
@@ -305,7 +379,7 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
                   label: isPolish ? 'Rozpocznij audyt' : 'Start audit',
                   icon: PlayCircle,
                   onClick: () => onStartAudit(selectedPack),
-                  disabled: selectedPack.publicationStatus !== 'published' || startingPackId === selectedPack.id,
+                  disabled: !startGate.allowed || startingPackId === selectedPack.id,
                 },
               ],
             }}

@@ -29,6 +29,47 @@ import { Api } from '@/services/api';
 // Klasyfikacja i statusy — mirror server/src/services/audits/types.ts
 // ---------------------------------------------------------------------------
 
+/**
+ * DWIE NIEZALEŻNE OSIE (P0 2026-08-13 — patrz `server/src/services/audits/types.ts`
+ * dla pełnego uzasadnienia). `sourceType` = CZYM jest źródło; `verificationStatus`
+ * = CZY zostało sprawdzone. Zmiana jednej NIGDY nie zmienia drugiej.
+ */
+export const AUDIT_SOURCE_TYPES = [
+  'INTERNAL_PROCEDURE',
+  'INTERNAL_FRAMEWORK',
+  'REGULATION',
+  'LICENSED_STANDARD',
+  'DEMONSTRATION',
+  'LEGACY',
+] as const;
+export type AuditSourceType = (typeof AUDIT_SOURCE_TYPES)[number];
+
+export const AUDIT_VERIFICATION_STATES = [
+  'VERIFIED',
+  'PENDING_REVIEW',
+  'UNVERIFIED',
+  'EVIDENCE_MISSING',
+] as const;
+export type AuditVerificationState = (typeof AUDIT_VERIFICATION_STATES)[number];
+
+/** Typy źródła, którym wolno pokazać w UI słowo „norma" — niezależnie od `verificationStatus`. */
+export const NORMATIVE_SOURCE_TYPES: readonly AuditSourceType[] = ['LICENSED_STANDARD', 'REGULATION'];
+
+export function isNormativeSourceType(value: unknown): boolean {
+  return NORMATIVE_SOURCE_TYPES.includes(value as AuditSourceType);
+}
+
+/** Czy pakiet wolno przedstawić jako podstawę audytu zgodności — wymaga OBU osi. */
+export function isComplianceGrade(sourceType: unknown, verification: unknown): boolean {
+  return isNormativeSourceType(sourceType) && verification === 'VERIFIED';
+}
+
+/**
+ * Stara, jednoosiowa klasyfikacja. Zachowana WYŁĄCZNIE dla odczytu danych
+ * sprzed rozdzielenia osi (np. `legacyClassification` z backendu) — nowy kod
+ * UI (kolumny, chipy, filtry) używa `sourceType` + `verificationStatus`.
+ * @deprecated
+ */
 export const PACK_CLASSIFICATIONS = [
   'VERIFIED_NORMATIVE',
   'INTERNAL_FRAMEWORK',
@@ -36,10 +77,26 @@ export const PACK_CLASSIFICATIONS = [
   'LEGACY',
   'EVIDENCE_MISSING',
 ] as const;
+/** @deprecated Użyj `AuditSourceType` + `AuditVerificationState`. */
 export type PackClassification = (typeof PACK_CLASSIFICATIONS)[number];
 
 export const PACK_PUBLICATION_STATUSES = ['draft', 'in_review', 'published', 'deprecated'] as const;
 export type PackPublicationStatus = (typeof PACK_PUBLICATION_STATUSES)[number];
+
+/** Mirror `server/src/services/audits/types.ts` — role audytowe (member role programu). */
+export const AUDIT_ROLES = [
+  'program_owner',
+  'lead_auditor',
+  'auditor',
+  'technical_expert',
+  'auditee',
+  'evidence_owner',
+  'reviewer',
+  'action_owner',
+  'administrator',
+  'viewer',
+] as const;
+export type AuditRole = (typeof AUDIT_ROLES)[number];
 
 export const AUDIT_LIFECYCLE_STATES = [
   'planning',
@@ -87,7 +144,10 @@ export interface AuditPackSummary {
   sourceId: string | null;
   sourceTitle: string | null;
   sourceVersion: string | null;
-  classification: PackClassification;
+  /** CZYM jest źródło — niezależne od tego, czy je sprawdzono. */
+  sourceType: AuditSourceType;
+  /** CZY sprawdzono — nie ma prawa zmienić `sourceType`. */
+  verificationStatus: AuditVerificationState;
   publicationStatus: PackPublicationStatus;
   requiredRoles: string[];
   criteriaCount: number;
@@ -119,7 +179,8 @@ export interface AuditPackDetail extends AuditPackSummary {
 export interface ListPacksParams {
   search?: string;
   status?: PackPublicationStatus | 'all';
-  classification?: PackClassification | 'all';
+  sourceType?: AuditSourceType | 'all';
+  verificationStatus?: AuditVerificationState | 'all';
   limit?: number;
   offset?: number;
 }
@@ -297,7 +358,8 @@ export async function listPacks(params: ListPacksParams = {}): Promise<ListResul
   const qs = buildQuery({
     search: params.search,
     status: params.status,
-    classification: params.classification,
+    sourceType: params.sourceType,
+    verificationStatus: params.verificationStatus,
     limit: params.limit,
     offset: params.offset,
   });

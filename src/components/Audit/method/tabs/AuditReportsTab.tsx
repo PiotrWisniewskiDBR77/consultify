@@ -8,6 +8,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { StandardTable, type TableColumn } from '@/components/standard';
 import { ErrorState } from '@/components/shared/states';
 import { StatusChip } from '@/components/ui/primitives/chips';
+import { formatListDate } from '@/utils/listDateFormat';
 
 import { reportStatusLabel, reportStatusTone } from '../auditStatusTones';
 import { AUDIT_REPORT_STATUSES, listReports, type AuditReportSummary } from '../auditsMethodApi';
@@ -81,7 +82,15 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({ isPolish }) =>
         <span className="text-xs text-c-text-secondary">{row.language?.toUpperCase() || '—'}</span>
       ),
     },
-    { id: 'publishedAt', label: isPolish ? 'Data publikacji' : 'Published at', width: '150px', sortable: true },
+    {
+      id: 'publishedAt',
+      label: isPolish ? 'Data publikacji' : 'Published at',
+      width: '150px',
+      sortable: true,
+      render: (row: AuditReportSummary) => (
+        <span className="text-xs text-c-text-secondary tabular-nums">{formatListDate(row.publishedAt)}</span>
+      ),
+    },
   ];
 
   if (error) {

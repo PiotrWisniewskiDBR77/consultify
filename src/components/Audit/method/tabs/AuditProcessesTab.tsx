@@ -26,7 +26,9 @@ import {
 import type { ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
 import { ErrorState } from '@/components/shared/states';
 import { StatusChip } from '@/components/ui/primitives/chips';
+import { formatListDate } from '@/utils/listDateFormat';
 
+import { auditRoleLabel } from '../auditRoleLabels';
 import { programLifecycleLabel, programLifecycleTone } from '../auditStatusTones';
 import {
   AUDIT_LIFECYCLE_STATES,
@@ -180,12 +182,18 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
       label: isPolish ? 'Termin' : 'Due',
       width: '120px',
       sortable: true,
+      render: (row: AuditProgramSummary) => (
+        <span className="text-xs text-c-text-secondary tabular-nums">{formatListDate(row.plannedEnd)}</span>
+      ),
     },
     {
       id: 'updatedAt',
       label: isPolish ? 'Zaktualizowano' : 'Updated',
       width: '140px',
       sortable: true,
+      render: (row: AuditProgramSummary) => (
+        <span className="text-xs text-c-text-secondary tabular-nums">{formatListDate(row.updatedAt)}</span>
+      ),
     },
   ];
 
@@ -275,12 +283,17 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
                 },
               ],
             }}
-            details={{ properties: detailProperties, label: isPolish ? 'Szczegóły' : 'Details' }}
+            details={{
+              properties: detailProperties,
+              label: isPolish ? 'Szczegóły' : 'Details',
+              propertyLabel: isPolish ? 'Właściwość' : 'Property',
+              valueLabel: isPolish ? 'Wartość' : 'Value',
+            }}
             relations={
               detail?.members.map((member) => ({
                 id: member.userId,
                 label: member.name || member.userId,
-                value: member.memberRole,
+                value: auditRoleLabel(member.memberRole, isPolish),
               })) ?? []
             }
             relationsEmptyLabel={isPolish ? 'Brak przypisanego zespołu' : 'No team assigned'}

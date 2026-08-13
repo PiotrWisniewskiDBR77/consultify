@@ -17,10 +17,16 @@
  * kontraktem (`/api/audits`, liczba mnoga, kernel metodyczny U0-U7).
  *
  * Menu 2 (StandardModuleBar): lupa (jedyny slot wyszukiwania w fasadzie) +
- * pięć pigułek zakładek. Menu 3: chipy klasyfikacji (Library) / etapu
- * lifecycle (Processes) z LICZNIKAMI — to tu, a NIE na pigułkach zakładek
- * (kanon: „bez liczników w Menu 2"; `StandardModuleTab` nawet nie ma pola
- * `count`, więc naruszenie nie jest tu fizycznie możliwe).
+ * pięć pigułek zakładek — druga nazywa się „Sesje"/„Sessions" (Piotr,
+ * P0 2026-08-13: „Processes" mylące dla klienta; id `?tab=processes`
+ * ZOSTAJE dla zgodności istniejących linków — zmienia się WYŁĄCZNIE etykieta
+ * widoczna). Menu 3: DWA niezależne rzędy chipów na Library (typ źródła +
+ * weryfikacja — P0 rozdzielenia osi, patrz `auditStatusTones.ts`) przez luk
+ * ucieczkowy `commandRowContent` (fasada ma tylko JEDEN wbudowany tor
+ * `chips`/`activeChip`/`onChipChange`, za mało na dwie niezależne osie) /
+ * chipy etapu lifecycle (Processes) — wszystkie z LICZNIKAMI, to tu a NIE na
+ * pigułkach zakładek (kanon: „bez liczników w Menu 2"; `StandardModuleTab`
+ * nawet nie ma pola `count`, więc naruszenie nie jest tu fizycznie możliwe).
  */
 import { ClipboardList, FileText, Library, Lightbulb, Package } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -30,10 +36,14 @@ import { useSearchParams } from 'react-router-dom';
 
 import { type StandardCounterChip, StandardModuleBar, type StandardModuleTab } from '@/components/standard';
 import type { StatusTone } from '@/components/ui/primitives/chips';
+import { formatListDate } from '@/utils/listDateFormat';
 
+import { Menu3Badge, Menu3Chip, MENU_3_LEFT_CLASS } from '../../shared/ModuleMenu3';
 import {
-  packClassificationLabel,
-  packClassificationTone,
+  packSourceTypeLabel,
+  packSourceTypeTone,
+  packVerificationLabel,
+  packVerificationTone,
   programLifecycleLabel,
   programLifecycleTone,
 } from './auditStatusTones';
@@ -41,11 +51,13 @@ import {
   createProgram,
   listPacks,
   listPrograms,
-  PACK_CLASSIFICATIONS,
+  AUDIT_SOURCE_TYPES,
+  AUDIT_VERIFICATION_STATES,
   AUDIT_LIFECYCLE_STATES,
   type AuditPackSummary,
   type AuditProgramSummary,
-  type PackClassification,
+  type AuditSourceType,
+  type AuditVerificationState,
   type AuditLifecycleState,
 } from './auditsMethodApi';
 import { AuditInitiativesTab } from './tabs/AuditInitiativesTab';
@@ -120,7 +132,9 @@ export const AuditsMethodHub: React.FC = () => {
   }, [searchParams]);
 
   const [search, setSearch] = useState('');
-  const [libraryClassification, setLibraryClassification] = useState<'all' | PackClassification>('all');
+  // DWIE NIEZALEŻNE OSIE Library — patrz nagłówek pliku i `auditStatusTones.ts`.
+  const [librarySourceType, setLibrarySourceType] = useState<'all' | AuditSourceType>('all');
+  const [libraryVerification, setLibraryVerification] = useState<'all' | AuditVerificationState>('all');
   const [processesLifecycle, setProcessesLifecycle] = useState<'all' | AuditLifecycleState>('all');
 
   const [packsAll, setPacksAll] = useState<AuditPackSummary[]>([]);
@@ -165,12 +179,15 @@ export const AuditsMethodHub: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
 
+  // Filtry kombinowalne: oba warunki AND — wybranie osi A nie resetuje osi B.
   const filteredPacks = useMemo(
     () =>
-      libraryClassification === 'all'
-        ? packsAll
-        : packsAll.filter((p) => p.classification === libraryClassification),
-    [packsAll, libraryClassification]
+      packsAll.filter(
+        (p) =>
+          (librarySourceType === 'all' || p.sourceType === librarySourceType) &&
+          (libraryVerification === 'all' || p.verificationStatus === libraryVerification)
+      ),
+    [packsAll, librarySourceType, libraryVerification]
   );
 
   const filteredPrograms = useMemo(
@@ -181,17 +198,42 @@ export const AuditsMethodHub: React.FC = () => {
     [programsAll, processesLifecycle]
   );
 
-  const libraryChips: StandardCounterChip[] = useMemo(
+  // Liczniki „faceted": każda oś liczy na podstawie packsAll przefiltrowanych
+  // przez WYBÓR DRUGIEJ osi (nie przez samą siebie) — więc liczby aktualizują
+  // się, gdy użytkownik zawęzi drugi filtr, a chipy obu osi zawsze widać razem.
+  const packsForSourceTypeCounts = useMemo(
+    () => packsAll.filter((p) => libraryVerification === 'all' || p.verificationStatus === libraryVerification),
+    [packsAll, libraryVerification]
+  );
+  const packsForVerificationCounts = useMemo(
+    () => packsAll.filter((p) => librarySourceType === 'all' || p.sourceType === librarySourceType),
+    [packsAll, librarySourceType]
+  );
+
+  const sourceTypeChips: StandardCounterChip[] = useMemo(
     () => [
-      { id: 'all', label: isPolish ? 'Wszystkie' : 'All', count: packsAll.length },
-      ...PACK_CLASSIFICATIONS.map((value) => ({
+      { id: 'all', label: isPolish ? 'Wszystkie' : 'All', count: packsForSourceTypeCounts.length },
+      ...AUDIT_SOURCE_TYPES.map((value) => ({
         id: value,
-        label: packClassificationLabel(value, isPolish),
-        count: packsAll.filter((p) => p.classification === value).length,
-        dot: TONE_DOT_CLASS[packClassificationTone(value)],
+        label: packSourceTypeLabel(value, isPolish),
+        count: packsForSourceTypeCounts.filter((p) => p.sourceType === value).length,
+        dot: TONE_DOT_CLASS[packSourceTypeTone(value)],
       })),
     ],
-    [packsAll, isPolish]
+    [packsForSourceTypeCounts, isPolish]
+  );
+
+  const verificationChips: StandardCounterChip[] = useMemo(
+    () => [
+      { id: 'all', label: isPolish ? 'Wszystkie' : 'All', count: packsForVerificationCounts.length },
+      ...AUDIT_VERIFICATION_STATES.map((value) => ({
+        id: value,
+        label: packVerificationLabel(value, isPolish),
+        count: packsForVerificationCounts.filter((p) => p.verificationStatus === value).length,
+        dot: TONE_DOT_CLASS[packVerificationTone(value)],
+      })),
+    ],
+    [packsForVerificationCounts, isPolish]
   );
 
   const processesChips: StandardCounterChip[] = useMemo(
@@ -216,7 +258,11 @@ export const AuditsMethodHub: React.FC = () => {
       try {
         await createProgram({
           packId: pack.id,
-          name: `${pack.title} — ${new Date().toLocaleDateString()}`,
+          // `formatListDate` (SSOT `utils/listDateFormat.ts`), NIE
+          // `toLocaleDateString()` bez locale — ten ostatni bierze locale z
+          // przeglądarki, nie z języka konta, i to jest dokładnie defekt,
+          // który dał `6/18/2026` na koncie polskim (C4 audytu jakości list).
+          name: `${pack.title} — ${formatListDate(new Date())}`,
         });
         toast.success(isPolish ? 'Program audytowy utworzony' : 'Audit program created', { id: toastId });
         loadPrograms();
@@ -236,23 +282,80 @@ export const AuditsMethodHub: React.FC = () => {
   const tabs: StandardModuleTab[] = useMemo(
     () => [
       { id: 'library', label: t('audits.method.tabs.library', 'Library'), icon: <Library size={16} /> },
-      { id: 'processes', label: t('audits.method.tabs.processes', 'Processes'), icon: <ClipboardList size={16} /> },
+      {
+        id: 'processes',
+        // Id URL zostaje `processes` (linki/deep-linki nie mogą się zepsuć) —
+        // zmienia się WYŁĄCZNIE etykieta widoczna. Świadomie isPolish zamiast
+        // `t()`: klucz nie ma dziś wpisu w `public/locales/*/translation.json`
+        // (i5next zwraca wtedy zawsze angielski `defaultValue`, niezależnie od
+        // języka konta) — dotykanie 35k-liniowych plików tłumaczeń dla jednej
+        // etykiety byłoby nieproporcjonalne do zmiany.
+        label: isPolish ? 'Sesje' : 'Sessions',
+        icon: <ClipboardList size={16} />,
+      },
       { id: 'outputs', label: t('audits.method.tabs.outputs', 'Outputs'), icon: <Package size={16} /> },
       { id: 'reports', label: t('audits.method.tabs.reports', 'Reports'), icon: <FileText size={16} /> },
       { id: 'initiatives', label: t('audits.method.tabs.initiatives', 'Initiatives'), icon: <Lightbulb size={16} /> },
     ],
-    [t]
+    [t, isPolish]
   );
 
-  const chips = activeTab === 'library' ? libraryChips : activeTab === 'processes' ? processesChips : undefined;
-  const activeChip =
-    activeTab === 'library' ? libraryClassification : activeTab === 'processes' ? processesLifecycle : null;
+  // Library ma DWIE niezależne osie filtrów — więcej niż fasada obsługuje
+  // przez wbudowany `chips` (jeden tor). Budujemy własny rząd (dwa
+  // podrzędy) przez luk ucieczkowy `commandRowContent`; Processes zostaje na
+  // wbudowanym torze `chips`, bez zmian.
+  const libraryCommandRow =
+    activeTab === 'library' ? (
+      <div className="flex flex-col gap-1 px-4 pb-3">
+        <div className={`${MENU_3_LEFT_CLASS} overflow-x-auto whitespace-nowrap no-scrollbar`}>
+          <span className="mr-1 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
+            {isPolish ? 'Typ źródła' : 'Source type'}
+          </span>
+          {sourceTypeChips.map((chip) => {
+            const active = librarySourceType === chip.id;
+            return (
+              <Menu3Chip
+                key={chip.id}
+                active={active}
+                onClick={() => setLibrarySourceType(chip.id as 'all' | AuditSourceType)}
+                aria-pressed={active}
+                data-testid={`audits-library-source-type-chip-${chip.id}`}
+              >
+                {chip.dot ? <span className={`h-1.5 w-1.5 rounded-full ${chip.dot}`} /> : null}
+                <span>{chip.label}</span>
+                {chip.count !== undefined ? <Menu3Badge count={chip.count} active={active} /> : null}
+              </Menu3Chip>
+            );
+          })}
+        </div>
+        <div className={`${MENU_3_LEFT_CLASS} overflow-x-auto whitespace-nowrap no-scrollbar`}>
+          <span className="mr-1 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
+            {isPolish ? 'Weryfikacja' : 'Verification'}
+          </span>
+          {verificationChips.map((chip) => {
+            const active = libraryVerification === chip.id;
+            return (
+              <Menu3Chip
+                key={chip.id}
+                active={active}
+                onClick={() => setLibraryVerification(chip.id as 'all' | AuditVerificationState)}
+                aria-pressed={active}
+                data-testid={`audits-library-verification-chip-${chip.id}`}
+              >
+                {chip.dot ? <span className={`h-1.5 w-1.5 rounded-full ${chip.dot}`} /> : null}
+                <span>{chip.label}</span>
+                {chip.count !== undefined ? <Menu3Badge count={chip.count} active={active} /> : null}
+              </Menu3Chip>
+            );
+          })}
+        </div>
+      </div>
+    ) : undefined;
+
+  const chips = activeTab === 'processes' ? processesChips : undefined;
+  const activeChip = activeTab === 'processes' ? processesLifecycle : null;
   const onChipChange =
-    activeTab === 'library'
-      ? (id: string) => setLibraryClassification(id as 'all' | PackClassification)
-      : activeTab === 'processes'
-        ? (id: string) => setProcessesLifecycle(id as 'all' | AuditLifecycleState)
-        : undefined;
+    activeTab === 'processes' ? (id: string) => setProcessesLifecycle(id as 'all' | AuditLifecycleState) : undefined;
 
   return (
     <StandardModuleBar
@@ -264,6 +367,7 @@ export const AuditsMethodHub: React.FC = () => {
       chips={chips}
       activeChip={activeChip}
       onChipChange={onChipChange}
+      commandRowContent={libraryCommandRow}
     >
       <div className="min-h-0 flex-1 overflow-hidden">
         {activeTab === 'library' ? (
