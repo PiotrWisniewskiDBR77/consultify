@@ -605,3 +605,77 @@ rodzica (`outputVersion = poprzedni + 1`).
    złapałem u A3. Po korekcie hash jest niepusty i porównanie realne.
 
 Dane sondy usunięte z bazy po weryfikacji (`DELETE FROM organizations WHERE id LIKE 'opus-%'`).
+
+---
+
+## G13 — ★ Instalacja OD ZERA: dwa defekty dające fałszywą zieleń
+
+P0D dostał zadanie wykonania pełnego A9 i **zatrzymał się na kroku 2/16**,
+raportując FAIL z dowodem zamiast obejść problem. Postąpił prawidłowo.
+Weryfikacja własna Opusa wykazała **dwa niezależne defekty**, oba niewidoczne
+w biegach przyrostowych.
+
+### G13.A — Defekt 1: kolejność leksykalna, konsument przed producentem
+
+Runner (`server/scripts/migrate.postgres.ts`, `compareMigrationOrder`) sortuje
+pliki o tej samej dacie **leksykalnie po nazwie**. Rodzina `20260813_method_*`
+miała **dwie** inwersje:
+
+| Konsument | < | Producent | Zależność |
+| --- | --- | --- | --- |
+| `..._http_idempotency` | `h < k` | `..._kernel` | FK do `method_sessions` |
+| `..._demo_status` | `d < o` | `..._outputs` | `ALTER TABLE method_outputs` |
+
+Skutek: instalacja od zera padała na
+`relation "method_sessions" does not exist` (P0D, `EXIT=1`, 582/583 plików).
+
+**Naprawa:** jawna numeracja `1_kernel → 2_outputs → 3_http_idempotency →
+4_bypass_status`, plus nagłówek w **każdym** pliku wyjaśniający, że numer nie
+jest ozdobą, tylko kontraktem kolejności.
+
+### G13.B — ★ Defekt 2: słowo `demo` w nazwie pliku (znaleziony przez Opusa)
+
+Po naprawie kolejności migracje dały **`EXIT=0`** — ale weryfikacja
+`information_schema` pokazała, że kolumn `demo_bypass_active` i `kind`
+**nie ma**.
+
+Przyczyna: `isSqliteOnlyMigration()` (linie ~318–327) traktuje **każdy** plik,
+którego nazwa zawiera `seed`, `mock` albo **`demo`**, jako plik z danymi
+demonstracyjnymi i **cicho wyklucza go** z przepływu migracji schematu.
+Bez błędu, bez ostrzeżenia — runner kończy się `✅ complete`, exit 0.
+
+Plik `20260813_method_demo_status.sql` **nigdy nie wykonywał się na świeżej
+instalacji**. Wcześniejsze biegi „działały", bo P0B zastosował go ręcznie przez
+`--only`, co ten filtr **omija**.
+
+**Naprawa:** `20260813_method_core_4_bypass_status.sql` + nota ostrzegawcza
+w pliku. Nazwa **kolumny** `demo_bypass_active` jest w porządku — problem
+dotyczył wyłącznie nazwy **pliku**.
+
+### G13.C — Dowód na drugiej, całkowicie świeżej bazie
+
+Kontener `mac-pg-fresh2` (`pgvector/pgvector:pg15`, port 55470), zero historii:
+
+| Sprawdzenie | Wynik |
+| --- | --- |
+| migracje | **EXIT=0** |
+| wszystkie 4 pliki w logu | `1_kernel` · `2_outputs` · `3_http_idempotency` · `4_bypass_status` ✅ |
+| tabel `method_*` | **12** |
+| `demo_bypass_active` w `method_outputs` | **1** |
+| `demo_bypass_active` w `method_sessions` | **1** |
+| `kind` w `method_report_snapshots` | **1** |
+
+### G13.D — Wniosek metodyczny
+
+**Kod wyjścia migracji NIE dowodzi kompletności schematu.** Runner zwrócił
+`exit 0` przy cicho pominiętym pliku. Jedynym wiarygodnym sprawdzeniem jest
+zapytanie do `information_schema` o konkretne tabele i kolumny.
+
+To jest **trzeci** w tym programie przypadek narzędzia pomiarowego, które
+kłamie: po błędnym greppie A1, pustym teście determinizmu A3 i pustej sondzie
+Opusa — teraz zielony runner migracji przy niekompletnym schemacie.
+
+### G13.E — Skutek dla A9
+
+A9 kroki 3–16 pozostają **NOT VERIFIED** — nie zostały wykonane, bo blokada
+występowała przed nimi. Blokada jest **zdjęta**; A9 może zostać wznowione.
