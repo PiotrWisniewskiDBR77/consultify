@@ -92,7 +92,7 @@ const SmartFollowupBodySchema = z.object({
   question: z.string().min(1).max(2000),
   response: z.string().min(1).max(8000),
   screenContext: z.string().max(200).optional(),
-  language: z.enum(['en', 'pl', 'de', 'ar', 'jp', 'es']).optional(),
+  language: z.enum(['en', 'pl', 'de', 'ar', 'ja', 'es']).optional(),
 });
 
 // ==================== GENERATE SUGGESTIONS ====================

@@ -3,9 +3,11 @@
  * and applies color coding (positive/neutral/negative).
  */
 import { Loader2, SmilePlus, Sparkles, X } from 'lucide-react';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 
 import { Api } from '@/services/api';
 
@@ -93,6 +95,9 @@ export const AISentimentOverlay: React.FC<AISentimentOverlayProps> = ({
     onClose();
   }, [onApplySentiment, onClose, results]);
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  useDialogA11y({ open, onClose, containerRef });
+
   if (!open) return null;
 
   const counts = { positive: 0, neutral: 0, negative: 0 };
@@ -100,11 +105,18 @@ export const AISentimentOverlay: React.FC<AISentimentOverlayProps> = ({
 
   return (
     <div className="fixed inset-0 z-modal flex items-center justify-center p-4 bg-c-bg">
-      <div className="w-full max-w-lg rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl shadow-2xl overflow-hidden">
+      <div
+        ref={containerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="a-i-sentiment-overlay-modal-heading"
+        tabIndex={-1}
+        className="w-full max-w-lg rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl shadow-2xl overflow-hidden outline-none"
+      >
         <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
           <div className="flex items-center gap-2">
             <SmilePlus size={16} className="text-c-success" />
-            <h3 className="text-sm font-bold text-c-text dark:text-c-text">
+            <h3 className="text-sm font-bold text-c-text dark:text-c-text" id="a-i-sentiment-overlay-modal-heading">
               {t('ideas.mindmap.aiSentimentAnalysis', 'AI: Sentiment Analysis')}
             </h3>
           </div>

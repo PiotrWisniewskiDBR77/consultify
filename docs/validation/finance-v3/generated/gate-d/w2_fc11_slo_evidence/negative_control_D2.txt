@@ -1,0 +1,29 @@
+Kontrola negatywna — sciezka D2 (Analysis KPI), próg = 750ms (ceilingMs).
+Mechanizm: W2_PERF_NEGATIVE_CONTROL_PATH=D2 W2_PERF_NEGATIVE_CONTROL_INJECT_MS=<X>
+— opóźnienie wstrzykiwane WEWNĄTRZ mierzonego okna w perfSlo.pg.test.ts (plik,
+który jest moją własnością), nigdy w kpiComputeService.ts. n=8 dla szybkości
+(diagnostyka, nie oficjalny pomiar).
+
+1) INJECT_MS=900 (jawne, mocne spowolnienie)
+   -> p95=1132.72ms > 750ms  =>  CZERWONY
+   Komunikat: "D2 KPI compute p95=1132.72ms exceeds regression ceiling 750ms
+   (= 140.23ms observed-max-p95 × 5). Basis: max p95 across own run#1 n=20
+   (140.23ms), own run#2 n=20 (25.88ms), cited W9 n=20 (26.4ms), cited W9
+   n=12 (46.9ms).: expected 1132.72 to be less than 750"
+
+2) COFNIĘCIE (bez wstrzyknięcia, INJECT_MS=0/unset)
+   -> p95=356.55ms < 750ms  =>  ZIELONY
+   (Sam szum maszyny na n=8 dał p95=356ms -- 47% progu -- próg NIE zapala się
+   na zwyklym szumie.)
+
+3) Szukanie minimalnego wstrzyknięcia, które zapala próg (odwrotność —
+   sprawdzenie, że próg NIE jest zbyt luźny):
+     +400ms -> p95=564.12ms  (< 750, ZIELONY, 75% progu)
+     +550ms -> p95=735.73ms  (< 750, ZIELONY, 98% progu -- bardzo blisko)
+     +600ms -> p95=711.91ms  (< 750, ZIELONY -- powtórzenie przy nowym szumie)
+     +650ms -> p95=969.69ms  (> 750, CZERWONY)
+   Wniosek: granica zapłonu leży między +600ms a +650ms wstrzykniętego
+   opóźnienia -- czyli ok. 4.3-4.6x wartości observedMaxP95Ms (140.23ms), NIE
+   10x. Próg NIE jest bezużyteczny (nie trzeba spowalniać 10-krotnie, żeby go
+   złapać) -- wystarczy spowolnienie rzędu samego multiplikatora projektowego
+   (5x).

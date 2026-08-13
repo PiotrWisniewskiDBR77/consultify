@@ -298,6 +298,10 @@ describe('Slice E15.wiring.materialize — DocumentSchema artifact-ref populatio
       userId: 'user-A',
       intake: {
         title: 'Test memo',
+        // `description` is required on DocumentIntake; every consumer reads it
+        // through `?? ''` / truthiness, so '' is behaviourally identical to the
+        // omitted field this fixture previously produced.
+        description: '',
         documentType: 'executive_memo',
         language: 'en',
         audience: ['Board'],
@@ -363,6 +367,7 @@ describe('Slice E15.wiring.materialize — DocumentSchema artifact-ref populatio
       userId: 'user-B',
       intake: {
         title: 'Tpl memo',
+        description: '',
         documentType: 'executive_memo',
         language: 'en',
         audience: ['Board'],
@@ -427,6 +432,7 @@ describe('Slice E15.wiring.materialize — DocumentSchema artifact-ref populatio
       userId: 'user-C',
       intake: {
         title: 'Tpl3 memo',
+        description: '',
         documentType: 'executive_memo',
         language: 'en',
         audience: ['Board'],
@@ -465,6 +471,7 @@ describe('Slice E15.wiring.materialize — DocumentSchema artifact-ref populatio
       userId: 'user-D',
       intake: {
         title: 'No tpl',
+        description: '',
         documentType: 'executive_memo',
         language: 'en',
         audience: ['Board'],

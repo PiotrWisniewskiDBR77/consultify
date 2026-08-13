@@ -39,7 +39,10 @@ describe('transformationAgentExecutionContextService', () => {
     });
   });
 
-  it.each([
+  // Typed as an open row map: each case deliberately overrides a subset of the
+  // base row, and inferring the literal key set makes the spread read as a
+  // duplicate-property overwrite of the base fixture.
+  it.each<[Record<string, unknown>, string]>([
     [{ execution_run_id: null, identity_run_id: null }, 'canonical_run_identity_missing'],
     [
       { execution_run_id: 'run-1', identity_run_id: 'run-1', identity_lineage_id: 'wrong' },

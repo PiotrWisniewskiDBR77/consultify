@@ -15,6 +15,12 @@ import {
   getCanonicalLineById,
   getRequiredCanonicalLineIds,
 } from './financeCanonicalRegistry.js';
+import {
+  detectNumberNotation,
+  type NumberNotation,
+  type NumberNotationProfile,
+  parseStatementNumber,
+} from './finance/numberNotation.js';
 import { detachStatementFromPack } from './financialStatementPackService.js';
 
 // ---------------------------------------------------------------------------
@@ -67,6 +73,10 @@ export interface ExtractedLine {
   mappingReason?: string;
   isNonFinancial?: boolean;
   classificationReason?: string;
+  /** RC-00: notation used to read this row's separators (`en` = 1,234.56 · `eu` = 1.234,56). */
+  numberNotation?: NumberNotation;
+  /** RC-00: the row's magnitude could not be resolved from the document — needs human attention. */
+  separatorAmbiguous?: boolean;
   mappingCandidates?: Array<{
     canonicalLineId: string;
     canonicalLabel: string;
@@ -80,6 +90,10 @@ export interface ExtractionResult {
   lines: ExtractedLine[];
   rawTableCount: number;
   warnings: string[];
+  /** RC-00: how the document's thousands/decimal separators were resolved, and on what evidence. */
+  numberNotation?: NumberNotationProfile;
+  /** RC-00: rows whose magnitude stayed ambiguous (never silently guessed). */
+  ambiguousSeparatorCount?: number;
 }
 
 const PDF_PAGE_MARKER = /^--\s*(\d+)\s+of\s+\d+\s*--$/i;
@@ -1635,6 +1649,8 @@ export function extractFinancialLines(
     templateFamily?: string | null;
     selectedPeriodLabel?: string | null;
     comparisonPeriodLabel?: string | null;
+    /** RC-00: force the document's number notation instead of detecting it from the text. */
+    numberNotation?: NumberNotation | null;
   }
 ): ExtractionResult {
   const lines: ExtractedLine[] = [];
@@ -1654,41 +1670,57 @@ export function extractFinancialLines(
   let rawTableCount = 0;
   let pendingLabel: string | null = null;
 
+  // RC-00 — the notation (which separator groups thousands) is a property of the DOCUMENT.
+  // Resolve it once, from the document's own unambiguous shapes, falling back to the detected
+  // language/currency. Parsing "122,070" or "267.732" per token, without this, is a silent 1000x
+  // error: the digit sequence survives and only the magnitude changes.
+  const lowerForHints = String(text || '')
+    .slice(0, 200000)
+    .toLowerCase();
+  const notationProfile: NumberNotationProfile = options?.numberNotation
+    ? {
+        notation: options.numberNotation,
+        confidence: 'high',
+        source: 'document_evidence',
+        evidence: {
+          enGrouping: 0,
+          euGrouping: 0,
+          enDecimal: 0,
+          euDecimal: 0,
+          spaceGrouping: 0,
+          ambiguousShape: 0,
+        },
+      }
+    : detectNumberNotation(text, {
+        language: detectLanguage(lowerForHints),
+        currency: detectCurrency(lowerForHints),
+      });
+  const documentNotation: NumberNotation = notationProfile.notation;
+  let ambiguousTokenCount = 0;
+  const ambiguousTokenSamples: string[] = [];
+
   // Number normalization: handle (negative), spaces in thousands, comma vs dot
   const normalizeNumber = (raw: string): number | null => {
-    let s = raw.trim();
+    const s = raw.trim();
     if (/^\d{1,2}\.\d{1,2}\.\d{4}$/.test(s)) return null;
     if (/^\d{4}$/.test(s)) {
       const maybeYear = Number(s);
       if (maybeYear >= 1900 && maybeYear <= 2100) return null;
     }
-    const isNeg = s.startsWith('(') && s.endsWith(')');
-    if (isNeg) s = s.slice(1, -1);
-    if (s.startsWith('-')) {
-      s = s.slice(1);
-    }
 
-    // Detect separator style: "1,234.56" vs "1.234,56" vs "1 234,56"
-    s = s.replace(/\s/g, '');
-    const lastComma = s.lastIndexOf(',');
-    const lastDot = s.lastIndexOf('.');
-    const commaOnlyThousands = lastComma >= 0 && lastDot < 0 && /^\d{1,3}(?:,\d{3})+$/.test(s);
-    if (commaOnlyThousands) {
-      // English-language reports use commas as thousands separators even
-      // when no decimal point is present (e.g. Tesco £m: "5,092").
-      s = s.replace(/,/g, '');
-    } else if (lastComma > lastDot) {
-      // European: 1.234,56
-      s = s.replace(/\./g, '').replace(',', '.');
-    } else {
-      // US/UK: 1,234.56
-      s = s.replace(/,/g, '');
+    const parsed = parseStatementNumber(s, documentNotation);
+    if (parsed.ambiguous) {
+      ambiguousTokenCount += 1;
+      if (ambiguousTokenSamples.length < 8 && !ambiguousTokenSamples.includes(s)) {
+        ambiguousTokenSamples.push(s);
+      }
     }
-
-    const num = parseFloat(s);
-    if (!Number.isFinite(num)) return null;
-    return isNeg || raw.trim().startsWith('-') ? -num : num;
+    return parsed.value;
   };
+
+  /** True when this token's magnitude depends on the document notation and none was resolved. */
+  const isAmbiguousToken = (raw: string): boolean =>
+    parseStatementNumber(String(raw || '').trim(), documentNotation).ambiguous;
 
   const noisePatterns = [
     /^strona\s+\d+/i,
@@ -2086,6 +2118,11 @@ export function extractFinancialLines(
       selectedNumericToken: selectedToken,
       isNonFinancial: lineClassification.isNonFinancial,
       classificationReason: lineClassification.reason,
+      numberNotation: documentNotation,
+      separatorAmbiguous:
+        isAmbiguousToken(rawValue) ||
+        (comparisonRawValue ? isAmbiguousToken(comparisonRawValue) : false) ||
+        undefined,
       comparisonValue: comparisonValue ?? undefined,
       comparisonRawValue: comparisonRawValue ?? undefined,
     });
@@ -2161,7 +2198,22 @@ export function extractFinancialLines(
     }
   }
 
-  return { lines, rawTableCount, warnings };
+  // RC-00: never let an unresolved separator pass as a confident number.
+  if (ambiguousTokenCount > 0) {
+    warnings.push(
+      `Number notation could not be resolved for this document (evidence: ${notationProfile.evidence.enGrouping} English-grouped, ` +
+        `${notationProfile.evidence.euGrouping} European-grouped shapes). ${ambiguousTokenCount} value(s) such as ` +
+        `${ambiguousTokenSamples.join(', ')} may be off by 1000x — read as thousands groups and flagged for review.`
+    );
+  }
+
+  return {
+    lines,
+    rawTableCount,
+    warnings,
+    numberNotation: notationProfile,
+    ambiguousSeparatorCount: ambiguousTokenCount,
+  };
 }
 
 // ---------------------------------------------------------------------------

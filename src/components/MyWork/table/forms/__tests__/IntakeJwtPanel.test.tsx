@@ -17,6 +17,25 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
+// i18n: resolve against the REAL shipped en/pl JSON rather than the global
+// key-returning mock. The allow-list summary is a pluralized string
+// (`ideas.table.intakeJwt.fieldCount_one/_other`), so a key-returning mock
+// renders the raw key and this assertion cannot see the product's actual
+// output. Asserting through the real resource is STRICTER than the literal
+// '2 fields' this test used before the string was localized: it now also
+// fails if the key, or its plural form, goes missing from the JSON.
+import { createRealT } from '@/test-utils/realTranslations';
+
+vi.mock('react-i18next', () => {
+  const t = createRealT('en');
+  return {
+    useTranslation: () => ({ t, i18n: { language: 'en' } }),
+    initReactI18next: { type: '3rdParty', init: vi.fn() },
+    Trans: ({ children, i18nKey }: any) => children || i18nKey,
+    I18nextProvider: ({ children }: any) => children,
+  };
+});
+
 const mocks = vi.hoisted(() => ({
   getFormIntakeContext: vi.fn(),
   issueFormIntakeJwt: vi.fn(),

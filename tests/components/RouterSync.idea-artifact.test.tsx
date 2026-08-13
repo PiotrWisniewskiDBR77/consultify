@@ -20,7 +20,7 @@ const routerState = {
 };
 
 vi.mock('react-router-dom', () => ({
-  useLocation: () => ({ pathname: routerState.pathname }),
+  useLocation: () => ({ pathname: routerState.pathname, search: '' }),
   useNavigate: () => navigateMock,
   useSearchParams: () => [routerState.searchParams],
 }));
@@ -107,7 +107,9 @@ describe('RouterSync idea artifact deep links', () => {
     render(<RouterSync />);
 
     await waitFor(() => {
-      expect(navigateMock).toHaveBeenCalledWith('/login', { replace: true });
+      expect(navigateMock).toHaveBeenCalledWith('/login?redirect=%2Fimplementation', {
+        replace: true,
+      });
     });
 
     navigateMock.mockReset();
@@ -116,7 +118,7 @@ describe('RouterSync idea artifact deep links', () => {
     render(<RouterSync />);
 
     await waitFor(() => {
-      expect(navigateMock).toHaveBeenCalledWith('/login', { replace: true });
+      expect(navigateMock).toHaveBeenCalledWith('/login?redirect=%2Frollout', { replace: true });
     });
 
     navigateMock.mockReset();
@@ -125,7 +127,7 @@ describe('RouterSync idea artifact deep links', () => {
     render(<RouterSync />);
 
     await waitFor(() => {
-      expect(navigateMock).toHaveBeenCalledWith('/login', { replace: true });
+      expect(navigateMock).toHaveBeenCalledWith('/login?redirect=%2Fkpi-okr', { replace: true });
     });
 
     navigateMock.mockReset();
@@ -134,7 +136,7 @@ describe('RouterSync idea artifact deep links', () => {
     render(<RouterSync />);
 
     await waitFor(() => {
-      expect(navigateMock).toHaveBeenCalledWith('/login', { replace: true });
+      expect(navigateMock).toHaveBeenCalledWith('/login?redirect=%2Ffinance', { replace: true });
     });
 
     navigateMock.mockReset();
@@ -143,7 +145,7 @@ describe('RouterSync idea artifact deep links', () => {
     render(<RouterSync />);
 
     await waitFor(() => {
-      expect(navigateMock).toHaveBeenCalledWith('/login', { replace: true });
+      expect(navigateMock).toHaveBeenCalledWith('/login?redirect=%2Fportfolio', { replace: true });
     });
   });
 
@@ -155,19 +157,9 @@ describe('RouterSync idea artifact deep links', () => {
     render(<RouterSync />);
 
     await waitFor(() => {
-      expect(navigateMock).toHaveBeenCalledWith('/login', { replace: true });
-    });
-  });
-
-  it('protects AI OS routes for unauthenticated users', async () => {
-    appState.currentUser = null as any;
-    routerState.searchParams = new URLSearchParams();
-    routerState.pathname = '/ai/actions';
-
-    render(<RouterSync />);
-
-    await waitFor(() => {
-      expect(navigateMock).toHaveBeenCalledWith('/login', { replace: true });
+      expect(navigateMock).toHaveBeenCalledWith('/login?redirect=%2Fai%2Factions', {
+        replace: true,
+      });
     });
   });
 

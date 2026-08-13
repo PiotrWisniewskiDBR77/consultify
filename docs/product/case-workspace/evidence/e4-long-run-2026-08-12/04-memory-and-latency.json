@@ -1,0 +1,1495 @@
+{
+  "machineLoadAtStart": [
+    5.013671875,
+    10.7529296875,
+    19.2861328125
+  ],
+  "cpuCount": 16,
+  "samples": [
+    {
+      "atIso": "2026-08-12T11:11:08.376Z",
+      "elapsedFromRunStartMs": 212872,
+      "rssBytes": 106217472,
+      "heapUsedBytes": 28015576,
+      "loadavg": [
+        57.40625,
+        50.1748046875,
+        42.61572265625
+      ],
+      "outboxTickDurationMsP50": 19,
+      "outboxTickDurationMsP95": 141,
+      "outboxTicks": 37
+    },
+    {
+      "atIso": "2026-08-12T11:11:23.378Z",
+      "elapsedFromRunStartMs": 227874,
+      "rssBytes": 107069440,
+      "heapUsedBytes": 27959832,
+      "loadavg": [
+        49.76416015625,
+        48.88134765625,
+        42.2880859375
+      ],
+      "outboxTickDurationMsP50": 18,
+      "outboxTickDurationMsP95": 95,
+      "outboxTicks": 42
+    },
+    {
+      "atIso": "2026-08-12T11:11:38.380Z",
+      "elapsedFromRunStartMs": 242876,
+      "rssBytes": 107233280,
+      "heapUsedBytes": 27836208,
+      "loadavg": [
+        40.11279296875,
+        46.794921875,
+        41.65869140625
+      ],
+      "outboxTickDurationMsP50": 17,
+      "outboxTickDurationMsP95": 95,
+      "outboxTicks": 47
+    },
+    {
+      "atIso": "2026-08-12T11:11:53.381Z",
+      "elapsedFromRunStartMs": 257877,
+      "rssBytes": 107282432,
+      "heapUsedBytes": 28423656,
+      "loadavg": [
+        32.4931640625,
+        44.77978515625,
+        41.029296875
+      ],
+      "outboxTickDurationMsP50": 16,
+      "outboxTickDurationMsP95": 87,
+      "outboxTicks": 52
+    },
+    {
+      "atIso": "2026-08-12T11:12:08.382Z",
+      "elapsedFromRunStartMs": 272878,
+      "rssBytes": 107282432,
+      "heapUsedBytes": 28181968,
+      "loadavg": [
+        26.70947265625,
+        42.896484375,
+        40.42236328125
+      ],
+      "outboxTickDurationMsP50": 14,
+      "outboxTickDurationMsP95": 48,
+      "outboxTicks": 57
+    },
+    {
+      "atIso": "2026-08-12T11:12:23.383Z",
+      "elapsedFromRunStartMs": 287879,
+      "rssBytes": 107298816,
+      "heapUsedBytes": 28688224,
+      "loadavg": [
+        22.7041015625,
+        41.21875,
+        39.86669921875
+      ],
+      "outboxTickDurationMsP50": 13,
+      "outboxTickDurationMsP95": 48,
+      "outboxTicks": 62
+    },
+    {
+      "atIso": "2026-08-12T11:12:38.385Z",
+      "elapsedFromRunStartMs": 302881,
+      "rssBytes": 107315200,
+      "heapUsedBytes": 28430240,
+      "loadavg": [
+        19.20166015625,
+        39.52783203125,
+        39.2861328125
+      ],
+      "outboxTickDurationMsP50": 13,
+      "outboxTickDurationMsP95": 46,
+      "outboxTicks": 67
+    },
+    {
+      "atIso": "2026-08-12T11:12:53.386Z",
+      "elapsedFromRunStartMs": 317882,
+      "rssBytes": 107331584,
+      "heapUsedBytes": 28959216,
+      "loadavg": [
+        18.6357421875,
+        38.4072265625,
+        38.89013671875
+      ],
+      "outboxTickDurationMsP50": 13,
+      "outboxTickDurationMsP95": 46,
+      "outboxTicks": 72
+    },
+    {
+      "atIso": "2026-08-12T11:13:08.388Z",
+      "elapsedFromRunStartMs": 332884,
+      "rssBytes": 107347968,
+      "heapUsedBytes": 28534872,
+      "loadavg": [
+        19.30224609375,
+        37.599609375,
+        38.59375
+      ],
+      "outboxTickDurationMsP50": 13,
+      "outboxTickDurationMsP95": 46,
+      "outboxTicks": 76
+    },
+    {
+      "atIso": "2026-08-12T11:13:23.390Z",
+      "elapsedFromRunStartMs": 347886,
+      "rssBytes": 107347968,
+      "heapUsedBytes": 28969640,
+      "loadavg": [
+        21.431640625,
+        37.17724609375,
+        38.42529296875
+      ],
+      "outboxTickDurationMsP50": 13,
+      "outboxTickDurationMsP95": 48,
+      "outboxTicks": 81
+    },
+    {
+      "atIso": "2026-08-12T11:13:38.393Z",
+      "elapsedFromRunStartMs": 362889,
+      "rssBytes": 107413504,
+      "heapUsedBytes": 28798032,
+      "loadavg": [
+        24.2958984375,
+        37.01123046875,
+        38.34228515625
+      ],
+      "outboxTickDurationMsP50": 13,
+      "outboxTickDurationMsP95": 54,
+      "outboxTicks": 86
+    },
+    {
+      "atIso": "2026-08-12T11:13:53.394Z",
+      "elapsedFromRunStartMs": 377890,
+      "rssBytes": 107462656,
+      "heapUsedBytes": 29240352,
+      "loadavg": [
+        25.36181640625,
+        36.658203125,
+        38.1943359375
+      ],
+      "outboxTickDurationMsP50": 14,
+      "outboxTickDurationMsP95": 54,
+      "outboxTicks": 91
+    },
+    {
+      "atIso": "2026-08-12T11:14:08.395Z",
+      "elapsedFromRunStartMs": 392891,
+      "rssBytes": 107560960,
+      "heapUsedBytes": 29085648,
+      "loadavg": [
+        30.57958984375,
+        37.248046875,
+        38.376953125
+      ],
+      "outboxTickDurationMsP50": 15,
+      "outboxTickDurationMsP95": 54,
+      "outboxTicks": 96
+    },
+    {
+      "atIso": "2026-08-12T11:14:23.396Z",
+      "elapsedFromRunStartMs": 407892,
+      "rssBytes": 107610112,
+      "heapUsedBytes": 29524520,
+      "loadavg": [
+        30.92333984375,
+        36.95263671875,
+        38.24853515625
+      ],
+      "outboxTickDurationMsP50": 17,
+      "outboxTickDurationMsP95": 66,
+      "outboxTicks": 101
+    },
+    {
+      "atIso": "2026-08-12T11:14:38.399Z",
+      "elapsedFromRunStartMs": 422895,
+      "rssBytes": 107757568,
+      "heapUsedBytes": 29266248,
+      "loadavg": [
+        33.91259765625,
+        37.32763671875,
+        38.35986328125
+      ],
+      "outboxTickDurationMsP50": 19,
+      "outboxTickDurationMsP95": 68,
+      "outboxTicks": 106
+    },
+    {
+      "atIso": "2026-08-12T11:14:53.402Z",
+      "elapsedFromRunStartMs": 437898,
+      "rssBytes": 107839488,
+      "heapUsedBytes": 29577800,
+      "loadavg": [
+        38.4990234375,
+        38.20166015625,
+        38.65478515625
+      ],
+      "outboxTickDurationMsP50": 20,
+      "outboxTickDurationMsP95": 70,
+      "outboxTicks": 110
+    },
+    {
+      "atIso": "2026-08-12T11:15:08.404Z",
+      "elapsedFromRunStartMs": 452900,
+      "rssBytes": 107970560,
+      "heapUsedBytes": 29295336,
+      "loadavg": [
+        35.15283203125,
+        37.47314453125,
+        38.38671875
+      ],
+      "outboxTickDurationMsP50": 22,
+      "outboxTickDurationMsP95": 77,
+      "outboxTicks": 115
+    },
+    {
+      "atIso": "2026-08-12T11:15:23.406Z",
+      "elapsedFromRunStartMs": 467902,
+      "rssBytes": 108036096,
+      "heapUsedBytes": 29829888,
+      "loadavg": [
+        41.09326171875,
+        38.63525390625,
+        38.78271484375
+      ],
+      "outboxTickDurationMsP50": 22,
+      "outboxTickDurationMsP95": 100,
+      "outboxTicks": 120
+    },
+    {
+      "atIso": "2026-08-12T11:15:38.407Z",
+      "elapsedFromRunStartMs": 482903,
+      "rssBytes": 108183552,
+      "heapUsedBytes": 29567304,
+      "loadavg": [
+        36.60009765625,
+        37.794921875,
+        38.48193359375
+      ],
+      "outboxTickDurationMsP50": 22,
+      "outboxTickDurationMsP95": 100,
+      "outboxTicks": 125
+    },
+    {
+      "atIso": "2026-08-12T11:15:53.408Z",
+      "elapsedFromRunStartMs": 497904,
+      "rssBytes": 108232704,
+      "heapUsedBytes": 29993512,
+      "loadavg": [
+        30.49267578125,
+        36.39697265625,
+        37.9716796875
+      ],
+      "outboxTickDurationMsP50": 20,
+      "outboxTickDurationMsP95": 100,
+      "outboxTicks": 130
+    },
+    {
+      "atIso": "2026-08-12T11:16:08.409Z",
+      "elapsedFromRunStartMs": 512905,
+      "rssBytes": 108331008,
+      "heapUsedBytes": 29798824,
+      "loadavg": [
+        25.31982421875,
+        34.95751953125,
+        37.4296875
+      ],
+      "outboxTickDurationMsP50": 18,
+      "outboxTickDurationMsP95": 100,
+      "outboxTicks": 135
+    },
+    {
+      "atIso": "2026-08-12T11:16:23.410Z",
+      "elapsedFromRunStartMs": 527906,
+      "rssBytes": 108412928,
+      "heapUsedBytes": 30250096,
+      "loadavg": [
+        24.21630859375,
+        34.25390625,
+        37.1357421875
+      ],
+      "outboxTickDurationMsP50": 16,
+      "outboxTickDurationMsP95": 100,
+      "outboxTicks": 140
+    },
+    {
+      "atIso": "2026-08-12T11:16:38.411Z",
+      "elapsedFromRunStartMs": 542907,
+      "rssBytes": 108544000,
+      "heapUsedBytes": 30050448,
+      "loadavg": [
+        22.88330078125,
+        33.43310546875,
+        36.7900390625
+      ],
+      "outboxTickDurationMsP50": 13,
+      "outboxTickDurationMsP95": 100,
+      "outboxTicks": 145
+    },
+    {
+      "atIso": "2026-08-12T11:16:53.412Z",
+      "elapsedFromRunStartMs": 557908,
+      "rssBytes": 108576768,
+      "heapUsedBytes": 30478272,
+      "loadavg": [
+        20.841796875,
+        32.490234375,
+        36.39599609375
+      ],
+      "outboxTickDurationMsP50": 13,
+      "outboxTickDurationMsP95": 100,
+      "outboxTicks": 150
+    },
+    {
+      "atIso": "2026-08-12T11:17:08.414Z",
+      "elapsedFromRunStartMs": 572910,
+      "rssBytes": 108724224,
+      "heapUsedBytes": 30218352,
+      "loadavg": [
+        18.60498046875,
+        31.4345703125,
+        35.951171875
+      ],
+      "outboxTickDurationMsP50": 13,
+      "outboxTickDurationMsP95": 77,
+      "outboxTicks": 155
+    },
+    {
+      "atIso": "2026-08-12T11:17:23.417Z",
+      "elapsedFromRunStartMs": 587913,
+      "rssBytes": 108806144,
+      "heapUsedBytes": 30602952,
+      "loadavg": [
+        16.43359375,
+        30.3203125,
+        35.4736328125
+      ],
+      "outboxTickDurationMsP50": 12,
+      "outboxTickDurationMsP95": 77,
+      "outboxTicks": 159
+    },
+    {
+      "atIso": "2026-08-12T11:17:38.417Z",
+      "elapsedFromRunStartMs": 602913,
+      "rssBytes": 108920832,
+      "heapUsedBytes": 30419016,
+      "loadavg": [
+        17.27001953125,
+        29.85498046875,
+        35.21875
+      ],
+      "outboxTickDurationMsP50": 12,
+      "outboxTickDurationMsP95": 28,
+      "outboxTicks": 164
+    },
+    {
+      "atIso": "2026-08-12T11:17:53.418Z",
+      "elapsedFromRunStartMs": 617914,
+      "rssBytes": 108969984,
+      "heapUsedBytes": 31025464,
+      "loadavg": [
+        16.54052734375,
+        29.064453125,
+        34.84228515625
+      ],
+      "outboxTickDurationMsP50": 12,
+      "outboxTickDurationMsP95": 19,
+      "outboxTicks": 169
+    },
+    {
+      "atIso": "2026-08-12T11:18:08.419Z",
+      "elapsedFromRunStartMs": 632915,
+      "rssBytes": 109084672,
+      "heapUsedBytes": 30830960,
+      "loadavg": [
+        18.97119140625,
+        28.994140625,
+        34.7158203125
+      ],
+      "outboxTickDurationMsP50": 12,
+      "outboxTickDurationMsP95": 19,
+      "outboxTicks": 174
+    },
+    {
+      "atIso": "2026-08-12T11:18:23.420Z",
+      "elapsedFromRunStartMs": 647916,
+      "rssBytes": 109199360,
+      "heapUsedBytes": 30636768,
+      "loadavg": [
+        17.1630859375,
+        28.12353515625,
+        34.30615234375
+      ],
+      "outboxTickDurationMsP50": 13,
+      "outboxTickDurationMsP95": 28,
+      "outboxTicks": 179
+    },
+    {
+      "atIso": "2026-08-12T11:18:38.421Z",
+      "elapsedFromRunStartMs": 662917,
+      "rssBytes": 109281280,
+      "heapUsedBytes": 31265952,
+      "loadavg": [
+        20.484375,
+        28.26171875,
+        34.24365234375
+      ],
+      "outboxTickDurationMsP50": 13,
+      "outboxTickDurationMsP95": 50,
+      "outboxTicks": 184
+    },
+    {
+      "atIso": "2026-08-12T11:18:53.424Z",
+      "elapsedFromRunStartMs": 677920,
+      "rssBytes": 109445120,
+      "heapUsedBytes": 31097520,
+      "loadavg": [
+        25.2236328125,
+        28.880859375,
+        34.35693359375
+      ],
+      "outboxTickDurationMsP50": 14,
+      "outboxTickDurationMsP95": 67,
+      "outboxTicks": 189
+    },
+    {
+      "atIso": "2026-08-12T11:19:08.427Z",
+      "elapsedFromRunStartMs": 692923,
+      "rssBytes": 109576192,
+      "heapUsedBytes": 30990280,
+      "loadavg": [
+        27.61669921875,
+        29.255859375,
+        34.3955078125
+      ],
+      "outboxTickDurationMsP50": 15,
+      "outboxTickDurationMsP95": 98,
+      "outboxTicks": 194
+    },
+    {
+      "atIso": "2026-08-12T11:19:23.430Z",
+      "elapsedFromRunStartMs": 707926,
+      "rssBytes": 109625344,
+      "heapUsedBytes": 31485448,
+      "loadavg": [
+        30.6953125,
+        29.822265625,
+        34.505859375
+      ],
+      "outboxTickDurationMsP50": 15,
+      "outboxTickDurationMsP95": 153,
+      "outboxTicks": 199
+    },
+    {
+      "atIso": "2026-08-12T11:19:38.432Z",
+      "elapsedFromRunStartMs": 722928,
+      "rssBytes": 109658112,
+      "heapUsedBytes": 31738720,
+      "loadavg": [
+        32.68359375,
+        30.31689453125,
+        34.6005859375
+      ],
+      "outboxTickDurationMsP50": 17,
+      "outboxTickDurationMsP95": 160,
+      "outboxTicks": 203
+    },
+    {
+      "atIso": "2026-08-12T11:19:53.437Z",
+      "elapsedFromRunStartMs": 737933,
+      "rssBytes": 109805568,
+      "heapUsedBytes": 31629016,
+      "loadavg": [
+        38.54833984375,
+        31.69677734375,
+        35.015625
+      ],
+      "outboxTickDurationMsP50": 25,
+      "outboxTickDurationMsP95": 160,
+      "outboxTicks": 208
+    },
+    {
+      "atIso": "2026-08-12T11:20:08.438Z",
+      "elapsedFromRunStartMs": 752934,
+      "rssBytes": 109920256,
+      "heapUsedBytes": 31417976,
+      "loadavg": [
+        40.1142578125,
+        32.3408203125,
+        35.1845703125
+      ],
+      "outboxTickDurationMsP50": 34,
+      "outboxTickDurationMsP95": 160,
+      "outboxTicks": 213
+    },
+    {
+      "atIso": "2026-08-12T11:20:23.441Z",
+      "elapsedFromRunStartMs": 767937,
+      "rssBytes": 110018560,
+      "heapUsedBytes": 32061488,
+      "loadavg": [
+        48.2939453125,
+        34.52783203125,
+        35.91455078125
+      ],
+      "outboxTickDurationMsP50": 34,
+      "outboxTickDurationMsP95": 160,
+      "outboxTicks": 218
+    },
+    {
+      "atIso": "2026-08-12T11:20:38.443Z",
+      "elapsedFromRunStartMs": 782939,
+      "rssBytes": 110149632,
+      "heapUsedBytes": 31895944,
+      "loadavg": [
+        48.84130859375,
+        35.27978515625,
+        36.15576171875
+      ],
+      "outboxTickDurationMsP50": 34,
+      "outboxTickDurationMsP95": 160,
+      "outboxTicks": 223
+    },
+    {
+      "atIso": "2026-08-12T11:20:53.446Z",
+      "elapsedFromRunStartMs": 797942,
+      "rssBytes": 110313472,
+      "heapUsedBytes": 31694088,
+      "loadavg": [
+        42.33544921875,
+        34.51220703125,
+        35.8671875
+      ],
+      "outboxTickDurationMsP50": 34,
+      "outboxTickDurationMsP95": 160,
+      "outboxTicks": 228
+    },
+    {
+      "atIso": "2026-08-12T11:21:08.448Z",
+      "elapsedFromRunStartMs": 812944,
+      "rssBytes": 110379008,
+      "heapUsedBytes": 32204472,
+      "loadavg": [
+        36.12890625,
+        33.52294921875,
+        35.490234375
+      ],
+      "outboxTickDurationMsP50": 30,
+      "outboxTickDurationMsP95": 160,
+      "outboxTicks": 233
+    },
+    {
+      "atIso": "2026-08-12T11:21:23.451Z",
+      "elapsedFromRunStartMs": 827947,
+      "rssBytes": 110510080,
+      "heapUsedBytes": 32021912,
+      "loadavg": [
+        30.34619140625,
+        32.37060546875,
+        35.0439453125
+      ],
+      "outboxTickDurationMsP50": 27,
+      "outboxTickDurationMsP95": 153,
+      "outboxTicks": 238
+    },
+    {
+      "atIso": "2026-08-12T11:21:38.451Z",
+      "elapsedFromRunStartMs": 842947,
+      "rssBytes": 110575616,
+      "heapUsedBytes": 32642176,
+      "loadavg": [
+        25.46337890625,
+        31.1923828125,
+        34.57666015625
+      ],
+      "outboxTickDurationMsP50": 25,
+      "outboxTickDurationMsP95": 153,
+      "outboxTicks": 243
+    },
+    {
+      "atIso": "2026-08-12T11:21:53.452Z",
+      "elapsedFromRunStartMs": 857948,
+      "rssBytes": 110723072,
+      "heapUsedBytes": 32449928,
+      "loadavg": [
+        21.447265625,
+        30.02294921875,
+        34.099609375
+      ],
+      "outboxTickDurationMsP50": 18,
+      "outboxTickDurationMsP95": 87,
+      "outboxTicks": 248
+    },
+    {
+      "atIso": "2026-08-12T11:22:08.454Z",
+      "elapsedFromRunStartMs": 872950,
+      "rssBytes": 110870528,
+      "heapUsedBytes": 32359928,
+      "loadavg": [
+        18.54736328125,
+        28.96044921875,
+        33.6484375
+      ],
+      "outboxTickDurationMsP50": 16,
+      "outboxTickDurationMsP95": 78,
+      "outboxTicks": 253
+    },
+    {
+      "atIso": "2026-08-12T11:22:23.456Z",
+      "elapsedFromRunStartMs": 887952,
+      "rssBytes": 110952448,
+      "heapUsedBytes": 32870352,
+      "loadavg": [
+        16.40673828125,
+        27.9814453125,
+        33.216796875
+      ],
+      "outboxTickDurationMsP50": 16,
+      "outboxTickDurationMsP95": 46,
+      "outboxTicks": 258
+    },
+    {
+      "atIso": "2026-08-12T11:22:38.457Z",
+      "elapsedFromRunStartMs": 902953,
+      "rssBytes": 111067136,
+      "heapUsedBytes": 32658040,
+      "loadavg": [
+        14.248046875,
+        26.9365234375,
+        32.75244140625
+      ],
+      "outboxTickDurationMsP50": 15,
+      "outboxTickDurationMsP95": 31,
+      "outboxTicks": 263
+    },
+    {
+      "atIso": "2026-08-12T11:22:53.457Z",
+      "elapsedFromRunStartMs": 917953,
+      "rssBytes": 111214592,
+      "heapUsedBytes": 32554112,
+      "loadavg": [
+        13.06640625,
+        26.056640625,
+        32.33642578125
+      ],
+      "outboxTickDurationMsP50": 15,
+      "outboxTickDurationMsP95": 31,
+      "outboxTicks": 268
+    },
+    {
+      "atIso": "2026-08-12T11:23:08.458Z",
+      "elapsedFromRunStartMs": 932954,
+      "rssBytes": 111329280,
+      "heapUsedBytes": 33076232,
+      "loadavg": [
+        12.873046875,
+        25.3955078125,
+        31.9912109375
+      ],
+      "outboxTickDurationMsP50": 15,
+      "outboxTickDurationMsP95": 35,
+      "outboxTicks": 273
+    },
+    {
+      "atIso": "2026-08-12T11:23:23.459Z",
+      "elapsedFromRunStartMs": 947955,
+      "rssBytes": 111443968,
+      "heapUsedBytes": 32960576,
+      "loadavg": [
+        11.4052734375,
+        24.46044921875,
+        31.5419921875
+      ],
+      "outboxTickDurationMsP50": 13,
+      "outboxTickDurationMsP95": 29,
+      "outboxTicks": 278
+    },
+    {
+      "atIso": "2026-08-12T11:23:38.461Z",
+      "elapsedFromRunStartMs": 962957,
+      "rssBytes": 111542272,
+      "heapUsedBytes": 33466320,
+      "loadavg": [
+        10.55859375,
+        23.63623046875,
+        31.12353515625
+      ],
+      "outboxTickDurationMsP50": 13,
+      "outboxTickDurationMsP95": 29,
+      "outboxTicks": 283
+    },
+    {
+      "atIso": "2026-08-12T11:23:53.462Z",
+      "elapsedFromRunStartMs": 977958,
+      "rssBytes": 111656960,
+      "heapUsedBytes": 33366784,
+      "loadavg": [
+        10.3544921875,
+        22.951171875,
+        30.74755859375
+      ],
+      "outboxTickDurationMsP50": 13,
+      "outboxTickDurationMsP95": 29,
+      "outboxTicks": 288
+    },
+    {
+      "atIso": "2026-08-12T11:24:08.462Z",
+      "elapsedFromRunStartMs": 992958,
+      "rssBytes": 111788032,
+      "heapUsedBytes": 33164616,
+      "loadavg": [
+        9.3701171875,
+        22.119140625,
+        30.314453125
+      ],
+      "outboxTickDurationMsP50": 13,
+      "outboxTickDurationMsP95": 25,
+      "outboxTicks": 293
+    },
+    {
+      "atIso": "2026-08-12T11:24:23.464Z",
+      "elapsedFromRunStartMs": 1007960,
+      "rssBytes": 111837184,
+      "heapUsedBytes": 33647416,
+      "loadavg": [
+        7.89111328125,
+        21.16552734375,
+        29.8310546875
+      ],
+      "outboxTickDurationMsP50": 13,
+      "outboxTickDurationMsP95": 25,
+      "outboxTicks": 298
+    },
+    {
+      "atIso": "2026-08-12T11:24:38.466Z",
+      "elapsedFromRunStartMs": 1022962,
+      "rssBytes": 111935488,
+      "heapUsedBytes": 33545216,
+      "loadavg": [
+        7.25537109375,
+        20.373046875,
+        29.396484375
+      ],
+      "outboxTickDurationMsP50": 13,
+      "outboxTickDurationMsP95": 25,
+      "outboxTicks": 303
+    },
+    {
+      "atIso": "2026-08-12T11:24:53.468Z",
+      "elapsedFromRunStartMs": 1037964,
+      "rssBytes": 112066560,
+      "heapUsedBytes": 33322616,
+      "loadavg": [
+        7.09423828125,
+        19.69970703125,
+        28.99853515625
+      ],
+      "outboxTickDurationMsP50": 12,
+      "outboxTickDurationMsP95": 25,
+      "outboxTicks": 308
+    },
+    {
+      "atIso": "2026-08-12T11:25:08.469Z",
+      "elapsedFromRunStartMs": 1052965,
+      "rssBytes": 112132096,
+      "heapUsedBytes": 33926600,
+      "loadavg": [
+        7.1591796875,
+        19.09423828125,
+        28.61962890625
+      ],
+      "outboxTickDurationMsP50": 12,
+      "outboxTickDurationMsP95": 21,
+      "outboxTicks": 313
+    },
+    {
+      "atIso": "2026-08-12T11:25:23.469Z",
+      "elapsedFromRunStartMs": 1067965,
+      "rssBytes": 112263168,
+      "heapUsedBytes": 33735304,
+      "loadavg": [
+        6.24853515625,
+        18.3056640625,
+        28.17138671875
+      ],
+      "outboxTickDurationMsP50": 12,
+      "outboxTickDurationMsP95": 19,
+      "outboxTicks": 318
+    },
+    {
+      "atIso": "2026-08-12T11:25:38.470Z",
+      "elapsedFromRunStartMs": 1082966,
+      "rssBytes": 112328704,
+      "heapUsedBytes": 34233904,
+      "loadavg": [
+        5.8486328125,
+        17.62158203125,
+        27.75390625
+      ],
+      "outboxTickDurationMsP50": 11,
+      "outboxTickDurationMsP95": 18,
+      "outboxTicks": 323
+    },
+    {
+      "atIso": "2026-08-12T11:25:53.472Z",
+      "elapsedFromRunStartMs": 1097968,
+      "rssBytes": 112443392,
+      "heapUsedBytes": 34178760,
+      "loadavg": [
+        6.873046875,
+        17.27783203125,
+        27.4541015625
+      ],
+      "outboxTickDurationMsP50": 11,
+      "outboxTickDurationMsP95": 18,
+      "outboxTicks": 328
+    },
+    {
+      "atIso": "2026-08-12T11:26:08.474Z",
+      "elapsedFromRunStartMs": 1112970,
+      "rssBytes": 112590848,
+      "heapUsedBytes": 33981808,
+      "loadavg": [
+        6.30322265625,
+        16.64306640625,
+        27.04931640625
+      ],
+      "outboxTickDurationMsP50": 11,
+      "outboxTickDurationMsP95": 18,
+      "outboxTicks": 333
+    },
+    {
+      "atIso": "2026-08-12T11:26:23.476Z",
+      "elapsedFromRunStartMs": 1127972,
+      "rssBytes": 112656384,
+      "heapUsedBytes": 27626912,
+      "loadavg": [
+        6.25390625,
+        16.13525390625,
+        26.6865234375
+      ],
+      "outboxTickDurationMsP50": 11,
+      "outboxTickDurationMsP95": 17,
+      "outboxTicks": 338
+    },
+    {
+      "atIso": "2026-08-12T11:26:38.478Z",
+      "elapsedFromRunStartMs": 1142974,
+      "rssBytes": 112672768,
+      "heapUsedBytes": 27380984,
+      "loadavg": [
+        5.60009765625,
+        15.50732421875,
+        26.27783203125
+      ],
+      "outboxTickDurationMsP50": 11,
+      "outboxTickDurationMsP95": 17,
+      "outboxTicks": 343
+    },
+    {
+      "atIso": "2026-08-12T11:26:53.480Z",
+      "elapsedFromRunStartMs": 1157976,
+      "rssBytes": 112672768,
+      "heapUsedBytes": 27957824,
+      "loadavg": [
+        5.4912109375,
+        15.005859375,
+        25.91064453125
+      ],
+      "outboxTickDurationMsP50": 11,
+      "outboxTickDurationMsP95": 17,
+      "outboxTicks": 348
+    },
+    {
+      "atIso": "2026-08-12T11:27:08.482Z",
+      "elapsedFromRunStartMs": 1172978,
+      "rssBytes": 112672768,
+      "heapUsedBytes": 27729640,
+      "loadavg": [
+        17.20703125,
+        17.0234375,
+        26.43359375
+      ],
+      "outboxTickDurationMsP50": 11,
+      "outboxTickDurationMsP95": 16,
+      "outboxTicks": 353
+    },
+    {
+      "atIso": "2026-08-12T11:27:23.483Z",
+      "elapsedFromRunStartMs": 1187979,
+      "rssBytes": 112721920,
+      "heapUsedBytes": 28201800,
+      "loadavg": [
+        15.55029296875,
+        16.64990234375,
+        26.13427734375
+      ],
+      "outboxTickDurationMsP50": 11,
+      "outboxTickDurationMsP95": 17,
+      "outboxTicks": 358
+    },
+    {
+      "atIso": "2026-08-12T11:27:38.485Z",
+      "elapsedFromRunStartMs": 1202981,
+      "rssBytes": 112738304,
+      "heapUsedBytes": 28088280,
+      "loadavg": [
+        13.6865234375,
+        16.19091796875,
+        25.8046875
+      ],
+      "outboxTickDurationMsP50": 11,
+      "outboxTickDurationMsP95": 17,
+      "outboxTicks": 363
+    },
+    {
+      "atIso": "2026-08-12T11:27:53.488Z",
+      "elapsedFromRunStartMs": 1217984,
+      "rssBytes": 112738304,
+      "heapUsedBytes": 28318984,
+      "loadavg": [
+        15.65771484375,
+        16.5068359375,
+        25.74951171875
+      ],
+      "outboxTickDurationMsP50": 11,
+      "outboxTickDurationMsP95": 21,
+      "outboxTicks": 367
+    },
+    {
+      "atIso": "2026-08-12T11:28:08.490Z",
+      "elapsedFromRunStartMs": 1232986,
+      "rssBytes": 112738304,
+      "heapUsedBytes": 28189032,
+      "loadavg": [
+        13.6591796875,
+        16.02392578125,
+        25.41552734375
+      ],
+      "outboxTickDurationMsP50": 11,
+      "outboxTickDurationMsP95": 21,
+      "outboxTicks": 372
+    },
+    {
+      "atIso": "2026-08-12T11:28:23.492Z",
+      "elapsedFromRunStartMs": 1247988,
+      "rssBytes": 112836608,
+      "heapUsedBytes": 28046336,
+      "loadavg": [
+        24.369140625,
+        18.28955078125,
+        26.0595703125
+      ],
+      "outboxTickDurationMsP50": 12,
+      "outboxTickDurationMsP95": 34,
+      "outboxTicks": 377
+    },
+    {
+      "atIso": "2026-08-12T11:28:38.495Z",
+      "elapsedFromRunStartMs": 1262991,
+      "rssBytes": 112836608,
+      "heapUsedBytes": 28515096,
+      "loadavg": [
+        25.67578125,
+        18.91748046875,
+        26.1494140625
+      ],
+      "outboxTickDurationMsP50": 11,
+      "outboxTickDurationMsP95": 34,
+      "outboxTicks": 382
+    },
+    {
+      "atIso": "2026-08-12T11:28:53.496Z",
+      "elapsedFromRunStartMs": 1277992,
+      "rssBytes": 112836608,
+      "heapUsedBytes": 28371400,
+      "loadavg": [
+        22.9130859375,
+        18.6416015625,
+        25.9248046875
+      ],
+      "outboxTickDurationMsP50": 11,
+      "outboxTickDurationMsP95": 34,
+      "outboxTicks": 387
+    },
+    {
+      "atIso": "2026-08-12T11:29:08.497Z",
+      "elapsedFromRunStartMs": 1292993,
+      "rssBytes": 112836608,
+      "heapUsedBytes": 28824464,
+      "loadavg": [
+        22.78173828125,
+        18.8349609375,
+        25.86669921875
+      ],
+      "outboxTickDurationMsP50": 11,
+      "outboxTickDurationMsP95": 34,
+      "outboxTicks": 392
+    },
+    {
+      "atIso": "2026-08-12T11:29:23.499Z",
+      "elapsedFromRunStartMs": 1307995,
+      "rssBytes": 112852992,
+      "heapUsedBytes": 28679544,
+      "loadavg": [
+        24.08349609375,
+        19.302734375,
+        25.9091796875
+      ],
+      "outboxTickDurationMsP50": 11,
+      "outboxTickDurationMsP95": 34,
+      "outboxTicks": 397
+    },
+    {
+      "atIso": "2026-08-12T11:29:38.502Z",
+      "elapsedFromRunStartMs": 1322998,
+      "rssBytes": 112852992,
+      "heapUsedBytes": 29131072,
+      "loadavg": [
+        22.9345703125,
+        19.298828125,
+        25.79296875
+      ],
+      "outboxTickDurationMsP50": 12,
+      "outboxTickDurationMsP95": 34,
+      "outboxTicks": 402
+    },
+    {
+      "atIso": "2026-08-12T11:29:53.505Z",
+      "elapsedFromRunStartMs": 1338001,
+      "rssBytes": 112869376,
+      "heapUsedBytes": 28891272,
+      "loadavg": [
+        23.2294921875,
+        19.556640625,
+        25.77197265625
+      ],
+      "outboxTickDurationMsP50": 13,
+      "outboxTickDurationMsP95": 34,
+      "outboxTicks": 407
+    },
+    {
+      "atIso": "2026-08-12T11:30:08.507Z",
+      "elapsedFromRunStartMs": 1353003,
+      "rssBytes": 112902144,
+      "heapUsedBytes": 28767616,
+      "loadavg": [
+        22.4189453125,
+        19.50830078125,
+        25.642578125
+      ],
+      "outboxTickDurationMsP50": 14,
+      "outboxTickDurationMsP95": 34,
+      "outboxTicks": 412
+    },
+    {
+      "atIso": "2026-08-12T11:30:23.509Z",
+      "elapsedFromRunStartMs": 1368005,
+      "rssBytes": 112902144,
+      "heapUsedBytes": 29244496,
+      "loadavg": [
+        22.5380859375,
+        19.73046875,
+        25.61767578125
+      ],
+      "outboxTickDurationMsP50": 14,
+      "outboxTickDurationMsP95": 23,
+      "outboxTicks": 417
+    },
+    {
+      "atIso": "2026-08-12T11:30:38.511Z",
+      "elapsedFromRunStartMs": 1383007,
+      "rssBytes": 112918528,
+      "heapUsedBytes": 29116264,
+      "loadavg": [
+        23.25341796875,
+        19.99560546875,
+        25.60693359375
+      ],
+      "outboxTickDurationMsP50": 13,
+      "outboxTickDurationMsP95": 23,
+      "outboxTicks": 422
+    },
+    {
+      "atIso": "2026-08-12T11:30:53.514Z",
+      "elapsedFromRunStartMs": 1398010,
+      "rssBytes": 112918528,
+      "heapUsedBytes": 29570632,
+      "loadavg": [
+        39.173828125,
+        23.7109375,
+        26.83544921875
+      ],
+      "outboxTickDurationMsP50": 13,
+      "outboxTickDurationMsP95": 21,
+      "outboxTicks": 427
+    },
+    {
+      "atIso": "2026-08-12T11:31:08.517Z",
+      "elapsedFromRunStartMs": 1413013,
+      "rssBytes": 112918528,
+      "heapUsedBytes": 29451664,
+      "loadavg": [
+        39.62744140625,
+        24.572265625,
+        27.08740234375
+      ],
+      "outboxTickDurationMsP50": 14,
+      "outboxTickDurationMsP95": 21,
+      "outboxTicks": 432
+    },
+    {
+      "atIso": "2026-08-12T11:31:23.519Z",
+      "elapsedFromRunStartMs": 1428015,
+      "rssBytes": 112934912,
+      "heapUsedBytes": 29887736,
+      "loadavg": [
+        34.05419921875,
+        24.05810546875,
+        26.8583984375
+      ],
+      "outboxTickDurationMsP50": 14,
+      "outboxTickDurationMsP95": 21,
+      "outboxTicks": 437
+    },
+    {
+      "atIso": "2026-08-12T11:31:38.521Z",
+      "elapsedFromRunStartMs": 1443017,
+      "rssBytes": 112934912,
+      "heapUsedBytes": 29668472,
+      "loadavg": [
+        28.33251953125,
+        23.2734375,
+        26.5283203125
+      ],
+      "outboxTickDurationMsP50": 14,
+      "outboxTickDurationMsP95": 21,
+      "outboxTicks": 442
+    },
+    {
+      "atIso": "2026-08-12T11:31:53.523Z",
+      "elapsedFromRunStartMs": 1458019,
+      "rssBytes": 112951296,
+      "heapUsedBytes": 29531336,
+      "loadavg": [
+        24.40283203125,
+        22.65478515625,
+        26.25048828125
+      ],
+      "outboxTickDurationMsP50": 14,
+      "outboxTickDurationMsP95": 21,
+      "outboxTicks": 447
+    },
+    {
+      "atIso": "2026-08-12T11:32:08.526Z",
+      "elapsedFromRunStartMs": 1473022,
+      "rssBytes": 112951296,
+      "heapUsedBytes": 29998984,
+      "loadavg": [
+        20.23974609375,
+        21.8212890625,
+        25.8896484375
+      ],
+      "outboxTickDurationMsP50": 14,
+      "outboxTickDurationMsP95": 19,
+      "outboxTicks": 452
+    },
+    {
+      "atIso": "2026-08-12T11:32:23.527Z",
+      "elapsedFromRunStartMs": 1488023,
+      "rssBytes": 112967680,
+      "heapUsedBytes": 29843472,
+      "loadavg": [
+        17.455078125,
+        21.140625,
+        25.576171875
+      ],
+      "outboxTickDurationMsP50": 14,
+      "outboxTickDurationMsP95": 17,
+      "outboxTicks": 457
+    },
+    {
+      "atIso": "2026-08-12T11:32:38.529Z",
+      "elapsedFromRunStartMs": 1503025,
+      "rssBytes": 112967680,
+      "heapUsedBytes": 30296448,
+      "loadavg": [
+        14.85595703125,
+        20.38232421875,
+        25.22802734375
+      ],
+      "outboxTickDurationMsP50": 14,
+      "outboxTickDurationMsP95": 16,
+      "outboxTicks": 462
+    },
+    {
+      "atIso": "2026-08-12T11:32:53.532Z",
+      "elapsedFromRunStartMs": 1518028,
+      "rssBytes": 112967680,
+      "heapUsedBytes": 30035968,
+      "loadavg": [
+        13.1142578125,
+        19.7265625,
+        24.90869140625
+      ],
+      "outboxTickDurationMsP50": 14,
+      "outboxTickDurationMsP95": 16,
+      "outboxTicks": 467
+    },
+    {
+      "atIso": "2026-08-12T11:33:08.535Z",
+      "elapsedFromRunStartMs": 1533031,
+      "rssBytes": 113000448,
+      "heapUsedBytes": 30634624,
+      "loadavg": [
+        11.02734375,
+        18.939453125,
+        24.537109375
+      ],
+      "outboxTickDurationMsP50": 14,
+      "outboxTickDurationMsP95": 17,
+      "outboxTicks": 472
+    },
+    {
+      "atIso": "2026-08-12T11:33:23.538Z",
+      "elapsedFromRunStartMs": 1548034,
+      "rssBytes": 113147904,
+      "heapUsedBytes": 30554264,
+      "loadavg": [
+        9.92578125,
+        18.3056640625,
+        24.21240234375
+      ],
+      "outboxTickDurationMsP50": 14,
+      "outboxTickDurationMsP95": 17,
+      "outboxTicks": 477
+    },
+    {
+      "atIso": "2026-08-12T11:33:38.541Z",
+      "elapsedFromRunStartMs": 1563037,
+      "rssBytes": 113147904,
+      "heapUsedBytes": 30405352,
+      "loadavg": [
+        8.92041015625,
+        17.67041015625,
+        23.8818359375
+      ],
+      "outboxTickDurationMsP50": 14,
+      "outboxTickDurationMsP95": 17,
+      "outboxTicks": 482
+    },
+    {
+      "atIso": "2026-08-12T11:33:53.542Z",
+      "elapsedFromRunStartMs": 1578038,
+      "rssBytes": 113147904,
+      "heapUsedBytes": 30870376,
+      "loadavg": [
+        7.76220703125,
+        16.984375,
+        23.52783203125
+      ],
+      "outboxTickDurationMsP50": 14,
+      "outboxTickDurationMsP95": 17,
+      "outboxTicks": 487
+    },
+    {
+      "atIso": "2026-08-12T11:34:08.545Z",
+      "elapsedFromRunStartMs": 1593041,
+      "rssBytes": 113246208,
+      "heapUsedBytes": 30809896,
+      "loadavg": [
+        7.66015625,
+        16.5107421875,
+        23.24365234375
+      ],
+      "outboxTickDurationMsP50": 14,
+      "outboxTickDurationMsP95": 17,
+      "outboxTicks": 492
+    },
+    {
+      "atIso": "2026-08-12T11:34:23.548Z",
+      "elapsedFromRunStartMs": 1608044,
+      "rssBytes": 113360896,
+      "heapUsedBytes": 31383232,
+      "loadavg": [
+        7.82666015625,
+        16.1103515625,
+        22.98291015625
+      ],
+      "outboxTickDurationMsP50": 14,
+      "outboxTickDurationMsP95": 16,
+      "outboxTicks": 497
+    },
+    {
+      "atIso": "2026-08-12T11:34:38.550Z",
+      "elapsedFromRunStartMs": 1623046,
+      "rssBytes": 113377280,
+      "heapUsedBytes": 31166224,
+      "loadavg": [
+        7.69775390625,
+        15.6787109375,
+        22.708984375
+      ],
+      "outboxTickDurationMsP50": 14,
+      "outboxTickDurationMsP95": 16,
+      "outboxTicks": 502
+    },
+    {
+      "atIso": "2026-08-12T11:34:53.554Z",
+      "elapsedFromRunStartMs": 1638050,
+      "rssBytes": 113410048,
+      "heapUsedBytes": 31713688,
+      "loadavg": [
+        7.025390625,
+        15.13818359375,
+        22.392578125
+      ],
+      "outboxTickDurationMsP50": 14,
+      "outboxTickDurationMsP95": 16,
+      "outboxTicks": 507
+    },
+    {
+      "atIso": "2026-08-12T11:35:08.555Z",
+      "elapsedFromRunStartMs": 1653051,
+      "rssBytes": 113410048,
+      "heapUsedBytes": 31481232,
+      "loadavg": [
+        6.42822265625,
+        14.6083984375,
+        22.076171875
+      ],
+      "outboxTickDurationMsP50": 14,
+      "outboxTickDurationMsP95": 16,
+      "outboxTicks": 512
+    },
+    {
+      "atIso": "2026-08-12T11:35:23.556Z",
+      "elapsedFromRunStartMs": 1668052,
+      "rssBytes": 113442816,
+      "heapUsedBytes": 31379232,
+      "loadavg": [
+        5.96875,
+        14.1044921875,
+        21.765625
+      ],
+      "outboxTickDurationMsP50": 14,
+      "outboxTickDurationMsP95": 16,
+      "outboxTicks": 517
+    },
+    {
+      "atIso": "2026-08-12T11:35:38.559Z",
+      "elapsedFromRunStartMs": 1683055,
+      "rssBytes": 113442816,
+      "heapUsedBytes": 31832144,
+      "loadavg": [
+        5.59326171875,
+        13.62451171875,
+        21.4599609375
+      ],
+      "outboxTickDurationMsP50": 14,
+      "outboxTickDurationMsP95": 16,
+      "outboxTicks": 522
+    },
+    {
+      "atIso": "2026-08-12T11:35:53.560Z",
+      "elapsedFromRunStartMs": 1698056,
+      "rssBytes": 113442816,
+      "heapUsedBytes": 31589728,
+      "loadavg": [
+        6.0654296875,
+        13.345703125,
+        21.2236328125
+      ],
+      "outboxTickDurationMsP50": 14,
+      "outboxTickDurationMsP95": 17,
+      "outboxTicks": 527
+    },
+    {
+      "atIso": "2026-08-12T11:36:08.560Z",
+      "elapsedFromRunStartMs": 1713056,
+      "rssBytes": 113475584,
+      "heapUsedBytes": 32129616,
+      "loadavg": [
+        5.61328125,
+        12.8876953125,
+        20.921875
+      ],
+      "outboxTickDurationMsP50": 13,
+      "outboxTickDurationMsP95": 19,
+      "outboxTicks": 532
+    },
+    {
+      "atIso": "2026-08-12T11:36:23.563Z",
+      "elapsedFromRunStartMs": 1728059,
+      "rssBytes": 113475584,
+      "heapUsedBytes": 31885176,
+      "loadavg": [
+        5.3115234375,
+        12.46728515625,
+        20.630859375
+      ],
+      "outboxTickDurationMsP50": 14,
+      "outboxTickDurationMsP95": 20,
+      "outboxTicks": 537
+    },
+    {
+      "atIso": "2026-08-12T11:36:38.549Z",
+      "elapsedFromRunStartMs": 1743045,
+      "rssBytes": 113475584,
+      "heapUsedBytes": 32437264,
+      "loadavg": [
+        5.185546875,
+        12.0859375,
+        20.35107421875
+      ],
+      "outboxTickDurationMsP50": 14,
+      "outboxTickDurationMsP95": 20,
+      "outboxTicks": 542
+    },
+    {
+      "atIso": "2026-08-12T11:36:53.536Z",
+      "elapsedFromRunStartMs": 1758032,
+      "rssBytes": 113491968,
+      "heapUsedBytes": 32189712,
+      "loadavg": [
+        5.11376953125,
+        11.73681640625,
+        20.08154296875
+      ],
+      "outboxTickDurationMsP50": 14,
+      "outboxTickDurationMsP95": 20,
+      "outboxTicks": 547
+    },
+    {
+      "atIso": "2026-08-12T11:37:08.531Z",
+      "elapsedFromRunStartMs": 1773027,
+      "rssBytes": 113491968,
+      "heapUsedBytes": 32414136,
+      "loadavg": [
+        4.80517578125,
+        11.34130859375,
+        19.79443359375
+      ],
+      "outboxTickDurationMsP50": 13,
+      "outboxTickDurationMsP95": 20,
+      "outboxTicks": 551
+    },
+    {
+      "atIso": "2026-08-12T11:37:23.530Z",
+      "elapsedFromRunStartMs": 1788026,
+      "rssBytes": 113508352,
+      "heapUsedBytes": 32251768,
+      "loadavg": [
+        4.88427734375,
+        11.03173828125,
+        19.53515625
+      ],
+      "outboxTickDurationMsP50": 13,
+      "outboxTickDurationMsP95": 20,
+      "outboxTicks": 556
+    }
+  ],
+  "wallClockTestDurationMs": 1800235
+}

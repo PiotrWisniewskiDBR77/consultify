@@ -24,7 +24,9 @@ import type { DocumentSection, FormattingSchema } from '../documentStudioTypes.j
 
 function makeSection(overrides: Partial<DocumentSection> & { sectionId: string }): DocumentSection {
   return {
-    sectionId: overrides.sectionId,
+    // `sectionId` is required on `overrides` and the trailing spread already
+    // supplies it — restating it here was dead (and flagged as an overwritten
+    // duplicate property).
     orderIndex: overrides.orderIndex ?? 0,
     level: overrides.level ?? 1,
     title: overrides.title ?? 'Untitled',

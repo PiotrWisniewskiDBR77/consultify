@@ -1,0 +1,202 @@
+[setup] org=org-apator-real-85fe834b-85b6-4780-8ec5-b983ad653a99 periods FY2022/23/24 chained via previous_period_id
+
+================ PASS A: AS-EXTRACTED (no analyst derivation) ================
+[PASS A] 280 real extracted line-values across FY2022-FY2024; 68 have a P0 canonical target, 212 excluded (NO_P0_CANONICAL_TARGET, 89 distinct extractor line ids)
+  [FINDING RC-01 P1] P0 canonical taxonomy carries only a fraction of a real IFRS statement :: 212 of 280 real Apator line-values (89 distinct extractor canonical ids) have NO target in the 31-code Finance v3 P0 taxonomy (financial_statement_lines, is_system). The real extractor emits a 251-entry registry (server/src/services/financeCanonicalRegistry.ts). Everything below EBIT-level detail (leasing, goodwill, ROU, deferred tax, WC movements, OCI) is dropped at the Gate D boundary.
+  [PASS A] buckets={"MAPPED":68,"EXCLUDED":212}
+  [PASS A] reconciliation status=CLEAN residual=0 ready=true
+  [PASS A] approve ok=true
+[PASS A] statement pack ok=true bv=c1d23b5f-b7d8-4524-9d41-f2233e0a8fee
+
+  [ANALYSIS PASS A (as-extracted)] 36 KPI cells (18 KPIs x 2 periods)
+    FY2023 CASH_CONVERSION_CYCLE        MISSING            null
+    FY2023 CASH_RATIO                   PRESENT_NONZERO    0.064423
+    FY2023 CURRENT_RATIO                PRESENT_NONZERO    1.355218
+    FY2023 DEBT_TO_EBITDA               MISSING            null
+    FY2023 DEBT_TO_EQUITY               PRESENT_NONZERO    0.148613
+    FY2023 DIO                          NOT_APPLICABLE     null
+    FY2023 DPO                          NOT_APPLICABLE     null
+    FY2023 DSO                          MISSING            null
+    FY2023 EBITDA_MARGIN_PCT            MISSING            null
+    FY2023 FCF_MARGIN                   MISSING            null
+    FY2023 GROSS_MARGIN_PCT             PRESENT_NONZERO    0.224968
+    FY2023 INTEREST_COVERAGE            PRESENT_NONZERO    -3.188116  flag=NEGATIVE_DENOMINATOR
+    FY2023 NET_MARGIN_PCT               MISSING            null
+    FY2023 OPERATING_CASH_FLOW_MARGIN   MISSING            null
+    FY2023 QUICK_RATIO                  PRESENT_NONZERO    0.674743
+    FY2023 REVENUE_GROWTH_YOY           PRESENT_NONZERO    0.051195
+    FY2023 ROA                          MISSING            null
+    FY2023 ROE                          MISSING            null
+    FY2024 CASH_CONVERSION_CYCLE        MISSING            null
+    FY2024 CASH_RATIO                   PRESENT_NONZERO    0.057226
+    FY2024 CURRENT_RATIO                PRESENT_NONZERO    1.509815
+    FY2024 DEBT_TO_EBITDA               MISSING            null
+    FY2024 DEBT_TO_EQUITY               PRESENT_NONZERO    0.106791
+    FY2024 DIO                          NOT_APPLICABLE     null
+    FY2024 DPO                          NOT_APPLICABLE     null
+    FY2024 DSO                          MISSING            null
+    FY2024 EBITDA_MARGIN_PCT            MISSING            null
+    FY2024 FCF_MARGIN                   MISSING            null
+    FY2024 GROSS_MARGIN_PCT             PRESENT_NONZERO    0.256340
+    FY2024 INTEREST_COVERAGE            PRESENT_NONZERO    -11.203316  flag=NEGATIVE_DENOMINATOR
+    FY2024 NET_MARGIN_PCT               MISSING            null
+    FY2024 OPERATING_CASH_FLOW_MARGIN   MISSING            null
+    FY2024 QUICK_RATIO                  PRESENT_NONZERO    0.781540
+    FY2024 REVENUE_GROWTH_YOY           PRESENT_NONZERO    0.079693
+    FY2024 ROA                          MISSING            null
+    FY2024 ROE                          MISSING            null
+
+================ PASS B: ANALYST-COMPLETED ================
+[PASS B] 84 rows (as-reported + analyst-derived); derivation ledger has 27 entries, 2 not derivable
+  [PASS B] buckets={"MAPPED":84}
+  [PASS B] reconciliation status=CLEAN residual=0 ready=true
+  [PASS B] approve ok=true
+[PASS B] statement pack ok=true bv=f973f131-e90a-4579-b009-80aeaffee258
+
+  [ANALYSIS PASS B (analyst-completed)] 36 KPI cells (18 KPIs x 2 periods)
+    FY2023 CASH_CONVERSION_CYCLE        MISSING            null
+    FY2023 CASH_RATIO                   PRESENT_NONZERO    0.064423
+    FY2023 CURRENT_RATIO                PRESENT_NONZERO    1.355218
+    FY2023 DEBT_TO_EBITDA               MISSING            null
+    FY2023 DEBT_TO_EQUITY               PRESENT_NONZERO    0.148613
+    FY2023 DIO                          PRESENT_NONZERO    102.274388
+    FY2023 DPO                          PRESENT_NONZERO    44.620402
+    FY2023 DSO                          MISSING            null
+    FY2023 EBITDA_MARGIN_PCT            PRESENT_NONZERO    0.050146
+    FY2023 FCF_MARGIN                   MISSING            null
+    FY2023 GROSS_MARGIN_PCT             PRESENT_NONZERO    0.224968
+    FY2023 INTEREST_COVERAGE            PRESENT_NONZERO    2.560092
+    FY2023 NET_MARGIN_PCT               PRESENT_NONZERO    0.007478
+    FY2023 OPERATING_CASH_FLOW_MARGIN   MISSING            null
+    FY2023 QUICK_RATIO                  PRESENT_NONZERO    0.674743
+    FY2023 REVENUE_GROWTH_YOY           PRESENT_NONZERO    0.051195
+    FY2023 ROA                          PRESENT_NONZERO    0.008431
+    FY2023 ROE                          PRESENT_NONZERO    0.015775
+    FY2024 CASH_CONVERSION_CYCLE        MISSING            null
+    FY2024 CASH_RATIO                   PRESENT_NONZERO    0.057226
+    FY2024 CURRENT_RATIO                PRESENT_NONZERO    1.509815
+    FY2024 DEBT_TO_EBITDA               MISSING            null
+    FY2024 DEBT_TO_EQUITY               PRESENT_NONZERO    0.106791
+    FY2024 DIO                          PRESENT_NONZERO    93.749457
+    FY2024 DPO                          PRESENT_NONZERO    18.902574
+    FY2024 DSO                          MISSING            null
+    FY2024 EBITDA_MARGIN_PCT            PRESENT_NONZERO    0.116017
+    FY2024 FCF_MARGIN                   PRESENT_NONZERO    -0.017627
+    FY2024 GROSS_MARGIN_PCT             PRESENT_NONZERO    0.256340
+    FY2024 INTEREST_COVERAGE            PRESENT_NONZERO    8.619419
+    FY2024 NET_MARGIN_PCT               PRESENT_NONZERO    0.059630
+    FY2024 OPERATING_CASH_FLOW_MARGIN   PRESENT_NONZERO    0.017958
+    FY2024 QUICK_RATIO                  PRESENT_NONZERO    0.781540
+    FY2024 REVENUE_GROWTH_YOY           PRESENT_NONZERO    0.079693
+    FY2024 ROA                          PRESENT_NONZERO    0.075457
+    FY2024 ROE                          PRESENT_NONZERO    0.129408
+
+================ APATOR SCALE PROOF ================
+  CASH               stored=17,716 unit=THOUSANDS -> full PLN 17,716,000  (naive unit-blind read would be 17,716, 1000x too small)
+  EBIT               stored=85,134 unit=THOUSANDS -> full PLN 85,134,000  (naive unit-blind read would be 85,134, 1000x too small)
+  EBITDA             stored=142,446 unit=THOUSANDS -> full PLN 142,446,000  (naive unit-blind read would be 142,446, 1000x too small)
+  EQUITY             stored=592,502 unit=THOUSANDS -> full PLN 592,502,000  (naive unit-blind read would be 592,502, 1000x too small)
+  LONG_TERM_DEBT     stored=63,274 unit=THOUSANDS -> full PLN 63,274,000  (naive unit-blind read would be 63,274, 1000x too small)
+  NET_INCOME         stored=73,214 unit=THOUSANDS -> full PLN 73,214,000  (naive unit-blind read would be 73,214, 1000x too small)
+  REVENUE            stored=1,227,799 unit=THOUSANDS -> full PLN 1,227,799,000  (naive unit-blind read would be 1,227,799, 1000x too small)
+  TOTAL_ASSETS       stored=965,357 unit=THOUSANDS -> full PLN 965,357,000  (naive unit-blind read would be 965,357, 1000x too small)
+  VERDICT scale: equity=592,502,000 PLN, revenue=1,227,799,000 PLN -> passed=true
+
+[scale control] re-importing the SAME real FY2022-24 numbers at unit=UNITS (x1000 pre-multiplied)
+  [SCALE CONTROL (UNITS)] buckets={"MAPPED":84}
+  [SCALE CONTROL (UNITS)] reconciliation status=CLEAN residual=0 ready=true
+  [SCALE CONTROL (UNITS)] approve ok=true
+
+  [ANALYSIS SCALE CONTROL (UNITS)] 36 KPI cells (18 KPIs x 2 periods)
+    FY2023 CASH_CONVERSION_CYCLE        MISSING            null
+    FY2023 CASH_RATIO                   PRESENT_NONZERO    0.064423
+    FY2023 CURRENT_RATIO                PRESENT_NONZERO    1.355218
+    FY2023 DEBT_TO_EBITDA               MISSING            null
+    FY2023 DEBT_TO_EQUITY               PRESENT_NONZERO    0.148613
+    FY2023 DIO                          PRESENT_NONZERO    102.274388
+    FY2023 DPO                          PRESENT_NONZERO    44.620402
+    FY2023 DSO                          MISSING            null
+    FY2023 EBITDA_MARGIN_PCT            PRESENT_NONZERO    0.050146
+    FY2023 FCF_MARGIN                   MISSING            null
+    FY2023 GROSS_MARGIN_PCT             PRESENT_NONZERO    0.224968
+    FY2023 INTEREST_COVERAGE            PRESENT_NONZERO    2.560092
+    FY2023 NET_MARGIN_PCT               PRESENT_NONZERO    0.007478
+    FY2023 OPERATING_CASH_FLOW_MARGIN   MISSING            null
+    FY2023 QUICK_RATIO                  PRESENT_NONZERO    0.674743
+    FY2023 REVENUE_GROWTH_YOY           PRESENT_NONZERO    0.051195
+    FY2023 ROA                          PRESENT_NONZERO    0.008431
+    FY2023 ROE                          PRESENT_NONZERO    0.015775
+    FY2024 CASH_CONVERSION_CYCLE        MISSING            null
+    FY2024 CASH_RATIO                   PRESENT_NONZERO    0.057226
+    FY2024 CURRENT_RATIO                PRESENT_NONZERO    1.509815
+    FY2024 DEBT_TO_EBITDA               MISSING            null
+    FY2024 DEBT_TO_EQUITY               PRESENT_NONZERO    0.106791
+    FY2024 DIO                          PRESENT_NONZERO    93.749457
+    FY2024 DPO                          PRESENT_NONZERO    18.902574
+    FY2024 DSO                          MISSING            null
+    FY2024 EBITDA_MARGIN_PCT            PRESENT_NONZERO    0.116017
+    FY2024 FCF_MARGIN                   PRESENT_NONZERO    -0.017627
+    FY2024 GROSS_MARGIN_PCT             PRESENT_NONZERO    0.256340
+    FY2024 INTEREST_COVERAGE            PRESENT_NONZERO    8.619419
+    FY2024 NET_MARGIN_PCT               PRESENT_NONZERO    0.059630
+    FY2024 OPERATING_CASH_FLOW_MARGIN   PRESENT_NONZERO    0.017958
+    FY2024 QUICK_RATIO                  PRESENT_NONZERO    0.781540
+    FY2024 REVENUE_GROWTH_YOY           PRESENT_NONZERO    0.079693
+    FY2024 ROA                          PRESENT_NONZERO    0.075457
+    FY2024 ROE                          PRESENT_NONZERO    0.129408
+[scale control] KPI cells compared=36 identical=36 mismatches=0
+
+================ PROBE 1: RE roll-forward with real dividends ================
+  [PROBE 1 (with dividends)] mapStatementLines THREW: finance_stmt_lines: retained earnings roll-forward failed for version=1519ef2c-460a-45df-b2e9-43e11d7f7167 entity=10bbbe42-8560-4a5f-a0ab-66be09e5a425 period=58ebfcb8-e05c-4564-bd30-b2ad1e71faae scope=CONSOLIDATED: opening=-29215 + NI=8504 - dividends=14612 != closing=-72699 (diff=37376, tolerance=1000)
+  PROBE 1 outcome=REJECTED error=finance_stmt_lines: retained earnings roll-forward failed for version=1519ef2c-460a-45df-b2e9-43e11d7f7167 entity=10bbbe42-8560-4a5f-a0ab-66be09e5a425 period=58ebfcb8-e05c-4564-bd30-b2ad1e71faae scope=CONSOLIDATED: opening=-29215 + NI=8504 - dividends=14612 != closing=-72699 (diff=37376, tolerance=1000)
+    FY2023: opening RE -29215 + NI 8504 - div 14612 = -35323, but reported closing RE = -72699 (gap -37376 tys. PLN)
+    FY2024: opening RE -72699 + NI 73214 - div 17428 = -16913, but reported closing RE = 8590 (gap 25503 tys. PLN)
+  [FINDING RC-02 P1] RETAINED_EARNINGS roll-forward constraint rejects a real, correctly-filed IFRS consolidated pack :: The P0 identity openingRE + NI - dividends = closingRE does not hold for Apator's real consolidated equity (transfers to/from other reserves, treasury shares, OCI, NCI). Adding the real dividends line makes the whole import fail: finance_stmt_lines: retained earnings roll-forward failed for version=1519ef2c-460a-45df-b2e9-43e11d7f7167 entity=10bbbe42-8560-4a5f-a0ab-66be09e5a425 period=58ebfcb8-e05c-4564-bd30-b2ad1e71faae scope=CONSOLIDATED: opening=-29215 + NI=8504 - dividends=14612 != closing=-72699 (diff=37376, tolerance=1000)
+
+================ PROBE 2: balance tolerance at unit=THOUSANDS ================
+  imbalance 500 tys. PLN (= 500,000 PLN): ACCEPTED (balance check passed)
+  imbalance 1500 tys. PLN (= 1,500,000 PLN): REJECTED
+  [FINDING RC-03 P1] Balance-check tolerance is expressed in raw stored units, so it scales 1000x with the declared unit :: finance_stmt_balance_tolerance() returns finance_stmt_unit_value(unit) (=1000 for THOUSANDS) and compares it against value_decimal, which is ALREADY expressed in thousands. At unit=THOUSANDS the Assets=L+E check therefore tolerates up to 1,000,000 PLN of imbalance instead of the intended 1,000 PLN ("1 full presentation unit"). Probe: a 500 tys. PLN (=500,000 PLN) imbalance on the real Apator FY2024 balance sheet was ACCEPTED. At unit=UNITS the same code tolerates 1 PLN. Same unit-multiplier class of bug as the Apator 1000x finding, in the opposite direction.
+
+================ PROBE 3: sign_convention=CONTRA on as-filed negative COGS ================
+  [PROBE 3 (CONTRA)] buckets={"MAPPED":68}
+  [PROBE 3 (CONTRA)] reconciliation status=CLEAN residual=0 ready=true
+  [PROBE 3 (CONTRA)] approve ok=true
+
+  [ANALYSIS PROBE 3 (CONTRA)] 18 KPI cells (18 KPIs x 1 periods)
+    FY2024 CASH_CONVERSION_CYCLE        MISSING            null
+    FY2024 CASH_RATIO                   PRESENT_NONZERO    0.057226
+    FY2024 CURRENT_RATIO                PRESENT_NONZERO    1.509815
+    FY2024 DEBT_TO_EBITDA               MISSING            null
+    FY2024 DEBT_TO_EQUITY               PRESENT_NONZERO    0.106791
+    FY2024 DIO                          NOT_APPLICABLE     null
+    FY2024 DPO                          NOT_APPLICABLE     null
+    FY2024 DSO                          MISSING            null
+    FY2024 EBITDA_MARGIN_PCT            MISSING            null
+    FY2024 FCF_MARGIN                   MISSING            null
+    FY2024 GROSS_MARGIN_PCT             PRESENT_NONZERO    0.256340
+    FY2024 INTEREST_COVERAGE            PRESENT_NONZERO    -11.203316  flag=NEGATIVE_DENOMINATOR
+    FY2024 NET_MARGIN_PCT               MISSING            null
+    FY2024 OPERATING_CASH_FLOW_MARGIN   MISSING            null
+    FY2024 QUICK_RATIO                  PRESENT_NONZERO    0.781540
+    FY2024 REVENUE_GROWTH_YOY           PRESENT_NONZERO    0.079693
+    FY2024 ROA                          MISSING            null
+    FY2024 ROE                          MISSING            null
+  stored sign_convention: [{"line_code":"COGS","sign_convention":"CONTRA","value_decimal":"-913065"},{"line_code":"REVENUE","sign_convention":"NATURAL","value_decimal":"1227799"}]
+  DIO FY2024 with COGS declared CONTRA: {"period":"FY2024","kpi":"DIO","status":"NOT_APPLICABLE","value":null,"qualityFlag":null} -> sign_convention IGNORED
+  [FINDING RC-04 P1] finance_stmt_lines.sign_convention is written but never applied by the KPI engine :: Real filings carry costs as negatives (Apator FY2024 COGS = -913065 tys. PLN); the P0 KPI formulas assume the positive-cost convention the GoldCo oracle uses. Declaring the line sign_convention='CONTRA' at map time is accepted and persisted, but kpiComputeService.loadStmtLineCells() selects only (entity, canonical_line, period, scope, basis, value_status, value_decimal) — sign_convention is not in the projection and is never applied. Result: DIO/DPO stay NOT_APPLICABLE (negative denominator) even though the analyst declared the correct convention. The only way through is to physically flip the stored value, which loses the as-filed figure.
+
+================ PROBE 4: valuation scale on real Apator FY2024 FCFF ================
+  real inputs (full PLN): EBIT=85,134,000 effTax=10.52% D&A=57,312,000 capex=43,691,000 dWC=31,347,000
+  FCFF FY2024 = 58,455,288.665 PLN
+  EV band across 15 cells: 531,411,715.137 .. 1,169,105,773.302 PLN
+  all cells >= PLN 100m: true; a unit-blind read would put the same company at under PLN 1m
+
+================ REAL-DATA QUALITY OBSERVATIONS ================
+  AP by year: [{"year":2022,"ap":121894},{"year":2023,"ap":93591},{"year":2024,"ap":722}]
+  [FINDING RC-05 P1] Real extraction produced an implausible AP for FY2024 and the engine computes on it without complaint :: fsl-bs-ap FY2024 = 722 tys. PLN vs FY2023 = 93591 and FY2022 = 121894. A >99% one-year collapse in trade payables for a group with PLN 1.23bn revenue is an extraction defect, not a business event. No readiness check, reconciliation rule or KPI quality flag catches it — DPO is computed and stored as a normal value.
+  FY2022 P0 codes NOT directly extracted (7): EBITDA, DEPRECIATION, TAX_EXPENSE, NET_INCOME, WORKING_CAPITAL, CFO, FCF
+  FY2023 P0 codes NOT directly extracted (9): EBITDA, DEPRECIATION, TAX_EXPENSE, NET_INCOME, AR, WORKING_CAPITAL, CFO, CFF, FCF
+  FY2024 P0 codes NOT directly extracted (6): EBITDA, DEPRECIATION, NET_INCOME, WORKING_CAPITAL, CFO, FCF
+  AR by year: [{"year":2022,"ar":189804},{"year":2023,"ar":null},{"year":2024,"ar":185495}]
+  [FINDING RC-06 P2] A required KPI input is missing for one year only, silently degrading two KPIs :: fsl-bs-ar is extracted for FY2022 (189804) and FY2024 (185495) but NOT for FY2023 — the same statement type from the same issuer, one year apart. Average-balance DSO and CASH_CONVERSION_CYCLE for FY2024 therefore cannot be computed. This is an extractor coverage gap, and its downstream effect is visible only as a MISSING KPI status.

@@ -8,6 +8,8 @@
 
 // CRITICAL (ESM): load env via a side-effect module that is imported FIRST.
 import './config/loadEnv.js';
+import { BUILD_SHA_UNKNOWN, resolveBuildSha } from './config/buildSha.js';
+import type { SqlMigrationStatus } from './startup/databaseReadiness.js';
 
 import fs from 'fs';
 import path from 'path';
@@ -214,6 +216,21 @@ export function getTpMigrationStatus(): typeof tpMigrationStatus {
 }
 
 /**
+ * SQL-chain (schema_migrations) receipt, computed ONCE during startup readiness and served by
+ * /api/ready and /api/health/migrations. Never recomputed per request.
+ */
+let sqlMigrationStatus: SqlMigrationStatus = {
+  state: 'error',
+  failed: 0,
+  skipped: 0,
+  pending: 0,
+  unexplainedDrift: 0,
+  approvedVariants: 0,
+  attestedLegacyVariants: 0,
+  detail: 'not evaluated yet',
+};
+
+/**
  * Single state source for the extracted readiness probes/gate.
  *
  * A function DECLARATION on purpose: `/api/health/migrations` is registered
@@ -222,7 +239,13 @@ export function getTpMigrationStatus(): typeof tpMigrationStatus {
  * request time, long after initialisation.
  */
 function getReadinessState() {
-  return { dbReady, dbInitError, migrations: tpMigrationStatus };
+  return {
+    dbReady,
+    dbInitError,
+    migrations: tpMigrationStatus,
+    sqlMigrations: sqlMigrationStatus,
+    buildSha: resolveBuildSha(),
+  };
 }
 
 // Readiness probe for load balancers / orchestration.
@@ -352,47 +375,67 @@ const databaseInitPromise: Promise<void> = shouldInitializeTestDatabase(process.
           const READINESS_TIMEOUT_MS = Number(process.env.DB_READINESS_TIMEOUT_MS) || 120_000;
 
           const { establishDatabaseReadiness } = await import('./startup/databaseReadiness.js');
+          // Scalenie: ciało z demo (dodaje evaluateSqlChain — bramkę
+          // release gate), opakowane w withTimeout z gałęzi Assessment
+          // (P0A). Bez timeoutu sekwencja gotowości potrafiła wisieć w
+          // nieskończoność, przez co serwer nigdy nie zaczynał obsługiwać
+          // tras; bez evaluateSqlChain traci się nową bramkę spójności SQL.
           const outcome = await withTimeout(
             establishDatabaseReadiness({
-              initializeSchema: async () => ({ success: true, message: 'verified above' }),
-              // No arguments: production always resolves the canonical directory.
-              runMigrations: async () => {
-                const { runMigrations } = await import(
-                  './services/tablePlatform/migrationRunner.js'
-                );
-                return runMigrations();
-              },
-              seedTemplates: async () => {
-                const { default: templateService } = await import(
-                  './services/tablePlatform/TemplateService.js'
-                );
-                if (templateService?.seedDefaultTemplates) {
-                  await templateService.seedDefaultTemplates();
-                }
-              },
-              isProduction,
-              migrationsDisabled: process.env.DISABLE_TP_MIGRATIONS === 'true',
-              logger: {
-                info: (m) => logger.info(m),
-                warn: (m) => logger.warn(m),
-                error: (m) => logger.error(m),
-              },
-              alert: async (title, message) => {
-                await sendSystemAlert({
-                  title,
-                  message,
-                  severity: 'CRITICAL',
-                  source: 'Database',
-                  throttleKey: 'tp_migration_failed',
-                  throttleMs: 15 * 60 * 1000,
-                });
-              },
-            }),
+            initializeSchema: async () => ({ success: true, message: 'verified above' }),
+            // No arguments: production always resolves the canonical directory.
+            runMigrations: async () => {
+              const { runMigrations } = await import('./services/tablePlatform/migrationRunner.js');
+              return runMigrations();
+            },
+            evaluateSqlChain: async () => {
+              const { evaluateSqlChain } = await import('./services/releaseGate/sqlChainEvaluator.js');
+              const { getDatabase } = await import('./database/Database.js');
+              const fs = await import('fs');
+              const path = await import('path');
+              const migrationsDir = [
+                path.resolve(process.cwd(), 'server/migrations'),
+                path.resolve(process.cwd(), 'migrations'),
+              ].find((candidate) => fs.existsSync(candidate));
+              if (!migrationsDir) {
+                throw new Error('Canonical migrations directory not found for readiness evaluation');
+              }
+              return evaluateSqlChain({
+                db: getDatabase() as any,
+                migrationsDir,
+              });
+            },
+            seedTemplates: async () => {
+              const { default: templateService } =
+                await import('./services/tablePlatform/TemplateService.js');
+              if (templateService?.seedDefaultTemplates) {
+                await templateService.seedDefaultTemplates();
+              }
+            },
+            isProduction,
+            migrationsDisabled: process.env.DISABLE_TP_MIGRATIONS === 'true',
+            logger: {
+              info: (m) => logger.info(m),
+              warn: (m) => logger.warn(m),
+              error: (m) => logger.error(m),
+            },
+            alert: async (title, message) => {
+              await sendSystemAlert({
+                title,
+                message,
+                severity: 'CRITICAL',
+                source: 'Database',
+                throttleKey: 'tp_migration_failed',
+                throttleMs: 15 * 60 * 1000,
+              });
+            },
+          }),
             READINESS_TIMEOUT_MS,
             `Database readiness sequence (migrations/seeding) did not settle within ${READINESS_TIMEOUT_MS}ms`
           );
 
           tpMigrationStatus = outcome.migrations;
+          sqlMigrationStatus = outcome.sqlMigrations;
 
           if (!outcome.ready) {
             dbReady = false;
@@ -803,7 +846,12 @@ app.use(
       ? {
           directives: {
             defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", "'unsafe-inline'", 'https://js.stripe.com'],
+            scriptSrc: [
+              "'self'",
+              "'unsafe-inline'",
+              'https://js.stripe.com',
+              'https://www.googletagmanager.com',
+            ],
             styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
             imgSrc: [
               "'self'",
@@ -813,6 +861,7 @@ app.use(
               'https://*.stripe.com',
               'https://www.gravatar.com',
               'https://*.googleusercontent.com',
+              'https://www.googletagmanager.com',
             ],
             connectSrc: [
               "'self'",
@@ -825,6 +874,9 @@ app.use(
               'https://*.sentry.io',
               'https://fonts.googleapis.com',
               'https://fonts.gstatic.com',
+              'https://www.google-analytics.com',
+              'https://region1.google-analytics.com',
+              'https://www.googletagmanager.com',
             ],
             fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
             objectSrc: ["'none'"],
@@ -1762,11 +1814,10 @@ function startHttpListener(): void {
 async function detectCrashLoop(): Promise<void> {
   if (isTest) return;
   try {
-    const gitSha =
-      process.env.APP_BUILD_SHA ||
-      process.env.RAILWAY_GIT_COMMIT_SHA ||
-      process.env.GITHUB_SHA ||
-      process.env.GIT_SHA;
+    // Shared resolver (server/src/config/buildSha.ts) — same precedence as /api/health,
+    // /api/ready and the release receipt, so every surface reports the same commit.
+    const resolvedSha = resolveBuildSha();
+    const gitSha = resolvedSha === BUILD_SHA_UNKNOWN ? undefined : resolvedSha;
     if (!gitSha) return; // local dev / unconfigured
     const shortSha = gitSha.slice(0, 10);
     const env = process.env.APP_ENV || process.env.NODE_ENV || 'development';
@@ -1839,11 +1890,10 @@ async function detectCrashLoop(): Promise<void> {
 async function announceDeploy(): Promise<void> {
   if (isTest) return;
   try {
-    const gitSha =
-      process.env.APP_BUILD_SHA ||
-      process.env.RAILWAY_GIT_COMMIT_SHA ||
-      process.env.GITHUB_SHA ||
-      process.env.GIT_SHA;
+    // Shared resolver (server/src/config/buildSha.ts) — same precedence as /api/health,
+    // /api/ready and the release receipt, so every surface reports the same commit.
+    const resolvedSha = resolveBuildSha();
+    const gitSha = resolvedSha === BUILD_SHA_UNKNOWN ? undefined : resolvedSha;
     if (!gitSha) return; // local dev / unconfigured — nothing to announce
     const shortSha = gitSha.slice(0, 10);
     const env = process.env.APP_ENV || process.env.NODE_ENV || 'development';
@@ -1921,6 +1971,47 @@ if (startServer && shouldStartHttpServer) {
       startNotificationOutboxDrainCron();
     } catch (err: any) {
       logger.warn('[Server] Notification outbox drain not started:', err?.message);
+    }
+
+    // Results vNext events are written atomically with their outbox rows. Drain them by
+    // default so KPI/ROI/OKR projections cannot remain permanently pending after a restart.
+    try {
+      const { startPlatformOutboxDrainCron } =
+        await import('./services/resultsVnext/platform/platformOutboxDrainCron.js');
+      startPlatformOutboxDrainCron();
+    } catch (err: any) {
+      logger.warn('[Server] Platform outbox drain not started:', err?.message);
+    }
+
+    // Case Workspace outbox drain — same reason as the notification drain
+    // directly above, and it was missing entirely: every row committed to
+    // case_workspace_event_outbox sat there forever in a real deployment
+    // because nothing called the worker outside its own tests, so no
+    // subscribeToOutboxDelivery consumer ever ran. The transactional write
+    // side was correct; only the delivery side was never started.
+    try {
+      const { startCaseWorkspaceOutboxWorker } = await import(
+        './services/caseWorkspace/outboxWorker.js'
+      );
+      startCaseWorkspaceOutboxWorker();
+    } catch (err: any) {
+      logger.warn('[Server] Case Workspace outbox worker not started:', err?.message);
+    }
+
+    // Capability bindings are in-memory and must be rebuilt on every boot. The bootstrap
+    // remains fail-closed unless a configured actor is a real ADMIN of the configured org.
+    try {
+      const { bootstrapCaseWorkspaceCapabilities } = await import(
+        './services/caseWorkspace/capabilityBootstrap.js'
+      );
+      const bootResult = await bootstrapCaseWorkspaceCapabilities();
+      if (bootResult.status === 'REGISTERED') {
+        logger.info('[Server] Case Workspace capability adapters registered (7 adapters).');
+      } else {
+        logger.warn(`[Server] Case Workspace capability adapters not registered: ${bootResult.status}.`);
+      }
+    } catch (err: any) {
+      logger.warn('[Server] Case Workspace capability adapters not started:', err?.message);
     }
 
     // EXE-09: closure→Results/Finance delivery receipt reconciliation sweep.

@@ -112,6 +112,22 @@ const IKONY: Record<IdeaPanel6SectionId, LucideIcon> = {
 };
 
 /**
+ * MM-P3-01: dla Mapy myśli sekcja „Narzędzie"/„Tool" pokazuje WYŁĄCZNIE ustawienia
+ * wyglądu węzłów/mapy (`MindmapInspector`: Styl/Układ/Motyw) — nazwa „Narzędzie"
+ * myliła to z narzędziem-aplikacją (audyt `01_MIND_MAP_AUDIT.md`, `MM-P3-01`).
+ * Pozostałe trzy reprezentacje (Whiteboard sesja, Process Flow/Table „brak
+ * ustawień jeszcze") NIE są ustawieniami wyglądu — zostają przy generycznej
+ * etykiecie „Narzędzie"/„Tool", żeby nie okłamać ich zawartości.
+ */
+export function ideaPanel6ToolLabel(
+  activeTool: string | null | undefined,
+  isPolish: boolean
+): string {
+  if (activeTool === 'mindmap') return isPolish ? 'Wygląd' : 'Appearance';
+  return isPolish ? IDEA_PANEL_6_LABELS_PL.tool : IDEA_PANEL_6_LABELS_EN.tool;
+}
+
+/**
  * Pasek sześciu ikon prawego panelu.
  *
  * ŻADNA sekcja nie jest wyłączana: w układzie „przedmiot decyduje o treści"
@@ -121,13 +137,16 @@ const IKONY: Record<IdeaPanel6SectionId, LucideIcon> = {
  */
 export function buildIdeaPanel6RailTools(args?: {
   isPolish?: boolean;
+  /** Aktywna reprezentacja — MM-P3-01: zmienia tylko etykietę sekcji `tool`. */
+  activeTool?: string | null;
   /** Liczniki na plakietkach (np. liczba wpisów Aktywności). Opcjonalne. */
   badges?: Partial<Record<IdeaPanel6SectionId, string | number>>;
 }): RightRailToolDescriptor[] {
-  const etykiety = args?.isPolish ? IDEA_PANEL_6_LABELS_PL : IDEA_PANEL_6_LABELS_EN;
+  const isPolish = Boolean(args?.isPolish);
+  const etykiety = isPolish ? IDEA_PANEL_6_LABELS_PL : IDEA_PANEL_6_LABELS_EN;
   return IDEA_PANEL_6_SECTION_IDS.map((id) => ({
     id,
-    label: etykiety[id],
+    label: id === 'tool' ? ideaPanel6ToolLabel(args?.activeTool, isPolish) : etykiety[id],
     icon: IKONY[id],
     badge: args?.badges?.[id],
     testId: `idea-panel6-rail-${id}`,

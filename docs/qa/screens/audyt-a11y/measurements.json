@@ -1,0 +1,1183 @@
+{
+  "generatedAt": "2026-08-10T20:17:09.888Z",
+  "viewports": [
+    {
+      "theme": "light",
+      "width": 320,
+      "measurement": {
+        "innerW": 320,
+        "scrollW": 320,
+        "pageOverflow": 0,
+        "htmlClass": "focus-highlight",
+        "top": [
+          {
+            "tag": "DIV",
+            "cls": "flex items-center justify-between gap-2 overflow-x-auto no-scrollbar",
+            "maxScrollLeft": 228,
+            "overflowX": "auto",
+            "scrollbarHidden": true
+          },
+          {
+            "tag": "DIV",
+            "cls": "flex items-center gap-2 min-w-0 flex-1",
+            "maxScrollLeft": 228,
+            "overflowX": "visible",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "min-w-0",
+            "maxScrollLeft": 228,
+            "overflowX": "visible",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "MAIN",
+            "cls": "\n                    flex-1 flex flex-col overflow-hidden relative min-w-0 h-full min-h-0 transition",
+            "maxScrollLeft": 224,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "flex flex-col z-sticky shrink-0",
+            "maxScrollLeft": 224,
+            "overflowX": "visible",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "relative z-50 h-12 border-b border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900 shadow-s",
+            "maxScrollLeft": 224,
+            "overflowX": "visible",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "A",
+            "cls": "sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 z-toast bg-white dark:bg-navy-900 ",
+            "maxScrollLeft": 135,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "min-w-0 space-y-1 rounded outline-none focus-visible:ring-2 focus-visible:ring-c-focus",
+            "maxScrollLeft": 7,
+            "overflowX": "visible",
+            "scrollbarHidden": false
+          }
+        ]
+      },
+      "axeCriticalSerious": [],
+      "consoleErrors": []
+    },
+    {
+      "theme": "light",
+      "width": 375,
+      "measurement": {
+        "innerW": 375,
+        "scrollW": 375,
+        "pageOverflow": 0,
+        "htmlClass": "focus-highlight",
+        "top": [
+          {
+            "tag": "DIV",
+            "cls": "flex items-center justify-between gap-2 overflow-x-auto no-scrollbar",
+            "maxScrollLeft": 173,
+            "overflowX": "auto",
+            "scrollbarHidden": true
+          },
+          {
+            "tag": "DIV",
+            "cls": "flex items-center gap-2 min-w-0 flex-1",
+            "maxScrollLeft": 173,
+            "overflowX": "visible",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "min-w-0",
+            "maxScrollLeft": 173,
+            "overflowX": "visible",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "MAIN",
+            "cls": "\n                    flex-1 flex flex-col overflow-hidden relative min-w-0 h-full min-h-0 transition",
+            "maxScrollLeft": 169,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "flex flex-col z-sticky shrink-0",
+            "maxScrollLeft": 169,
+            "overflowX": "visible",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "relative z-50 h-12 border-b border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900 shadow-s",
+            "maxScrollLeft": 169,
+            "overflowX": "visible",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "A",
+            "cls": "sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 z-toast bg-white dark:bg-navy-900 ",
+            "maxScrollLeft": 135,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "\n          absolute right-full mr-2\n          px-2.5 py-1.5\n          bg-navy-900/95 dark:bg-slate-8",
+            "maxScrollLeft": 6,
+            "overflowX": "visible",
+            "scrollbarHidden": false
+          }
+        ]
+      },
+      "axeCriticalSerious": [],
+      "consoleErrors": []
+    },
+    {
+      "theme": "light",
+      "width": 430,
+      "measurement": {
+        "innerW": 430,
+        "scrollW": 430,
+        "pageOverflow": 0,
+        "htmlClass": "focus-highlight",
+        "top": [
+          {
+            "tag": "A",
+            "cls": "sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 z-toast bg-white dark:bg-navy-900 ",
+            "maxScrollLeft": 135,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "flex items-center justify-between gap-2 overflow-x-auto no-scrollbar",
+            "maxScrollLeft": 118,
+            "overflowX": "auto",
+            "scrollbarHidden": true
+          },
+          {
+            "tag": "DIV",
+            "cls": "flex items-center gap-2 min-w-0 flex-1",
+            "maxScrollLeft": 118,
+            "overflowX": "visible",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "min-w-0",
+            "maxScrollLeft": 118,
+            "overflowX": "visible",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "MAIN",
+            "cls": "\n                    flex-1 flex flex-col overflow-hidden relative min-w-0 h-full min-h-0 transition",
+            "maxScrollLeft": 114,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "flex flex-col z-sticky shrink-0",
+            "maxScrollLeft": 114,
+            "overflowX": "visible",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "relative z-50 h-12 border-b border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900 shadow-s",
+            "maxScrollLeft": 114,
+            "overflowX": "visible",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "\n          absolute right-full mr-2\n          px-2.5 py-1.5\n          bg-navy-900/95 dark:bg-slate-8",
+            "maxScrollLeft": 6,
+            "overflowX": "visible",
+            "scrollbarHidden": false
+          }
+        ]
+      },
+      "axeCriticalSerious": [],
+      "consoleErrors": []
+    },
+    {
+      "theme": "light",
+      "width": 768,
+      "measurement": {
+        "innerW": 768,
+        "scrollW": 768,
+        "pageOverflow": 0,
+        "htmlClass": "focus-highlight",
+        "top": [
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 909,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 868,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "w-full overflow-x-auto",
+            "maxScrollLeft": 694,
+            "overflowX": "auto",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 393,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 221,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 220,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 217,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 217,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          }
+        ]
+      },
+      "axeCriticalSerious": [
+        {
+          "id": "aria-prohibited-attr",
+          "impact": "serious",
+          "help": "Elements must only use permitted ARIA attributes",
+          "nodes": 6,
+          "targets": [
+            [
+              ".text-left:nth-child(1) > .-right-1\\.5.w-3.cursor-col-resize"
+            ],
+            [
+              ".text-left:nth-child(2) > .-right-1\\.5.w-3.cursor-col-resize"
+            ],
+            [
+              ".text-left:nth-child(3) > .-right-1\\.5.w-3.cursor-col-resize"
+            ]
+          ]
+        }
+      ],
+      "consoleErrors": []
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "measurement": {
+        "innerW": 1024,
+        "scrollW": 1024,
+        "pageOverflow": 0,
+        "htmlClass": "focus-highlight",
+        "top": [
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 909,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 868,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "w-full overflow-x-auto",
+            "maxScrollLeft": 438,
+            "overflowX": "auto",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 393,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 221,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 220,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 217,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 217,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          }
+        ]
+      },
+      "axeCriticalSerious": [
+        {
+          "id": "aria-prohibited-attr",
+          "impact": "serious",
+          "help": "Elements must only use permitted ARIA attributes",
+          "nodes": 6,
+          "targets": [
+            [
+              ".text-left:nth-child(1) > .-right-1\\.5.w-3.cursor-col-resize"
+            ],
+            [
+              ".text-left:nth-child(2) > .-right-1\\.5.w-3.cursor-col-resize"
+            ],
+            [
+              ".text-left:nth-child(3) > .-right-1\\.5.w-3.cursor-col-resize"
+            ]
+          ]
+        }
+      ],
+      "consoleErrors": []
+    },
+    {
+      "theme": "light",
+      "width": 1440,
+      "measurement": {
+        "innerW": 1440,
+        "scrollW": 1440,
+        "pageOverflow": 0,
+        "htmlClass": "focus-highlight",
+        "top": [
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 909,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 868,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 393,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 221,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 220,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 217,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 217,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 217,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          }
+        ]
+      },
+      "axeCriticalSerious": [
+        {
+          "id": "aria-prohibited-attr",
+          "impact": "serious",
+          "help": "Elements must only use permitted ARIA attributes",
+          "nodes": 6,
+          "targets": [
+            [
+              ".text-left:nth-child(1) > .-right-1\\.5.w-3.cursor-col-resize"
+            ],
+            [
+              ".text-left:nth-child(2) > .-right-1\\.5.w-3.cursor-col-resize"
+            ],
+            [
+              ".text-left:nth-child(3) > .-right-1\\.5.w-3.cursor-col-resize"
+            ]
+          ]
+        }
+      ],
+      "consoleErrors": []
+    },
+    {
+      "theme": "light",
+      "width": 1920,
+      "measurement": {
+        "innerW": 1920,
+        "scrollW": 1920,
+        "pageOverflow": 0,
+        "htmlClass": "focus-highlight",
+        "top": [
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 901,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 860,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 385,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 213,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 212,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 209,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 209,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 209,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          }
+        ]
+      },
+      "axeCriticalSerious": [
+        {
+          "id": "aria-prohibited-attr",
+          "impact": "serious",
+          "help": "Elements must only use permitted ARIA attributes",
+          "nodes": 6,
+          "targets": [
+            [
+              ".text-left:nth-child(1) > .-right-1\\.5.w-3.cursor-col-resize"
+            ],
+            [
+              ".text-left:nth-child(2) > .-right-1\\.5.w-3.cursor-col-resize"
+            ],
+            [
+              ".text-left:nth-child(3) > .-right-1\\.5.w-3.cursor-col-resize"
+            ]
+          ]
+        }
+      ],
+      "consoleErrors": []
+    },
+    {
+      "theme": "dark",
+      "width": 320,
+      "measurement": {
+        "innerW": 320,
+        "scrollW": 320,
+        "pageOverflow": 0,
+        "htmlClass": "dark focus-highlight",
+        "top": [
+          {
+            "tag": "DIV",
+            "cls": "flex items-center justify-between gap-2 overflow-x-auto no-scrollbar",
+            "maxScrollLeft": 228,
+            "overflowX": "auto",
+            "scrollbarHidden": true
+          },
+          {
+            "tag": "DIV",
+            "cls": "flex items-center gap-2 min-w-0 flex-1",
+            "maxScrollLeft": 228,
+            "overflowX": "visible",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "min-w-0",
+            "maxScrollLeft": 228,
+            "overflowX": "visible",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "MAIN",
+            "cls": "\n                    flex-1 flex flex-col overflow-hidden relative min-w-0 h-full min-h-0 transition",
+            "maxScrollLeft": 224,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "flex flex-col z-sticky shrink-0",
+            "maxScrollLeft": 224,
+            "overflowX": "visible",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "relative z-50 h-12 border-b border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900 shadow-s",
+            "maxScrollLeft": 224,
+            "overflowX": "visible",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "A",
+            "cls": "sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 z-toast bg-white dark:bg-navy-900 ",
+            "maxScrollLeft": 135,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "min-w-0 space-y-1 rounded outline-none focus-visible:ring-2 focus-visible:ring-c-focus",
+            "maxScrollLeft": 7,
+            "overflowX": "visible",
+            "scrollbarHidden": false
+          }
+        ]
+      },
+      "axeCriticalSerious": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "nodes": 5,
+          "targets": [
+            [
+              "button[data-testid=\"bottom-nav-mywork\"] > .text-\\[10px\\]"
+            ],
+            [
+              "button[data-testid=\"bottom-nav-assessment\"] > .text-\\[10px\\]"
+            ],
+            [
+              "button[data-testid=\"bottom-nav-initiatives\"] > .text-\\[10px\\]"
+            ]
+          ]
+        }
+      ],
+      "consoleErrors": []
+    },
+    {
+      "theme": "dark",
+      "width": 375,
+      "measurement": {
+        "innerW": 375,
+        "scrollW": 375,
+        "pageOverflow": 0,
+        "htmlClass": "dark focus-highlight",
+        "top": [
+          {
+            "tag": "DIV",
+            "cls": "flex items-center justify-between gap-2 overflow-x-auto no-scrollbar",
+            "maxScrollLeft": 173,
+            "overflowX": "auto",
+            "scrollbarHidden": true
+          },
+          {
+            "tag": "DIV",
+            "cls": "flex items-center gap-2 min-w-0 flex-1",
+            "maxScrollLeft": 173,
+            "overflowX": "visible",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "min-w-0",
+            "maxScrollLeft": 173,
+            "overflowX": "visible",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "MAIN",
+            "cls": "\n                    flex-1 flex flex-col overflow-hidden relative min-w-0 h-full min-h-0 transition",
+            "maxScrollLeft": 169,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "flex flex-col z-sticky shrink-0",
+            "maxScrollLeft": 169,
+            "overflowX": "visible",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "relative z-50 h-12 border-b border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900 shadow-s",
+            "maxScrollLeft": 169,
+            "overflowX": "visible",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "A",
+            "cls": "sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 z-toast bg-white dark:bg-navy-900 ",
+            "maxScrollLeft": 135,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "\n          absolute right-full mr-2\n          px-2.5 py-1.5\n          bg-navy-900/95 dark:bg-slate-8",
+            "maxScrollLeft": 6,
+            "overflowX": "visible",
+            "scrollbarHidden": false
+          }
+        ]
+      },
+      "axeCriticalSerious": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "nodes": 5,
+          "targets": [
+            [
+              "button[data-testid=\"bottom-nav-mywork\"] > .text-\\[10px\\]"
+            ],
+            [
+              "button[data-testid=\"bottom-nav-assessment\"] > .text-\\[10px\\]"
+            ],
+            [
+              "button[data-testid=\"bottom-nav-initiatives\"] > .text-\\[10px\\]"
+            ]
+          ]
+        }
+      ],
+      "consoleErrors": []
+    },
+    {
+      "theme": "dark",
+      "width": 430,
+      "measurement": {
+        "innerW": 430,
+        "scrollW": 430,
+        "pageOverflow": 0,
+        "htmlClass": "dark focus-highlight",
+        "top": [
+          {
+            "tag": "A",
+            "cls": "sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 z-toast bg-white dark:bg-navy-900 ",
+            "maxScrollLeft": 135,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "flex items-center justify-between gap-2 overflow-x-auto no-scrollbar",
+            "maxScrollLeft": 118,
+            "overflowX": "auto",
+            "scrollbarHidden": true
+          },
+          {
+            "tag": "DIV",
+            "cls": "flex items-center gap-2 min-w-0 flex-1",
+            "maxScrollLeft": 118,
+            "overflowX": "visible",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "min-w-0",
+            "maxScrollLeft": 118,
+            "overflowX": "visible",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "MAIN",
+            "cls": "\n                    flex-1 flex flex-col overflow-hidden relative min-w-0 h-full min-h-0 transition",
+            "maxScrollLeft": 114,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "flex flex-col z-sticky shrink-0",
+            "maxScrollLeft": 114,
+            "overflowX": "visible",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "relative z-50 h-12 border-b border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900 shadow-s",
+            "maxScrollLeft": 114,
+            "overflowX": "visible",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "\n          absolute right-full mr-2\n          px-2.5 py-1.5\n          bg-navy-900/95 dark:bg-slate-8",
+            "maxScrollLeft": 6,
+            "overflowX": "visible",
+            "scrollbarHidden": false
+          }
+        ]
+      },
+      "axeCriticalSerious": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "nodes": 5,
+          "targets": [
+            [
+              "button[data-testid=\"bottom-nav-mywork\"] > .text-\\[10px\\]"
+            ],
+            [
+              "button[data-testid=\"bottom-nav-assessment\"] > .text-\\[10px\\]"
+            ],
+            [
+              "button[data-testid=\"bottom-nav-initiatives\"] > .text-\\[10px\\]"
+            ]
+          ]
+        }
+      ],
+      "consoleErrors": []
+    },
+    {
+      "theme": "dark",
+      "width": 768,
+      "measurement": {
+        "innerW": 768,
+        "scrollW": 768,
+        "pageOverflow": 0,
+        "htmlClass": "dark focus-highlight",
+        "top": [
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 909,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 868,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "w-full overflow-x-auto",
+            "maxScrollLeft": 694,
+            "overflowX": "auto",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 393,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 221,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 220,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 217,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 217,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          }
+        ]
+      },
+      "axeCriticalSerious": [
+        {
+          "id": "aria-prohibited-attr",
+          "impact": "serious",
+          "help": "Elements must only use permitted ARIA attributes",
+          "nodes": 6,
+          "targets": [
+            [
+              ".text-left:nth-child(1) > .-right-1\\.5.w-3.cursor-col-resize"
+            ],
+            [
+              ".text-left:nth-child(2) > .-right-1\\.5.w-3.cursor-col-resize"
+            ],
+            [
+              ".text-left:nth-child(3) > .-right-1\\.5.w-3.cursor-col-resize"
+            ]
+          ]
+        }
+      ],
+      "consoleErrors": []
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "measurement": {
+        "innerW": 1024,
+        "scrollW": 1024,
+        "pageOverflow": 0,
+        "htmlClass": "dark focus-highlight",
+        "top": [
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 909,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 868,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "w-full overflow-x-auto",
+            "maxScrollLeft": 438,
+            "overflowX": "auto",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 393,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 221,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 220,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 217,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 217,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          }
+        ]
+      },
+      "axeCriticalSerious": [
+        {
+          "id": "aria-prohibited-attr",
+          "impact": "serious",
+          "help": "Elements must only use permitted ARIA attributes",
+          "nodes": 6,
+          "targets": [
+            [
+              ".text-left:nth-child(1) > .-right-1\\.5.w-3.cursor-col-resize"
+            ],
+            [
+              ".text-left:nth-child(2) > .-right-1\\.5.w-3.cursor-col-resize"
+            ],
+            [
+              ".text-left:nth-child(3) > .-right-1\\.5.w-3.cursor-col-resize"
+            ]
+          ]
+        }
+      ],
+      "consoleErrors": []
+    },
+    {
+      "theme": "dark",
+      "width": 1440,
+      "measurement": {
+        "innerW": 1440,
+        "scrollW": 1440,
+        "pageOverflow": 0,
+        "htmlClass": "dark focus-highlight",
+        "top": [
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 909,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 868,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 393,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 221,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 220,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 217,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 217,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 217,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          }
+        ]
+      },
+      "axeCriticalSerious": [
+        {
+          "id": "aria-prohibited-attr",
+          "impact": "serious",
+          "help": "Elements must only use permitted ARIA attributes",
+          "nodes": 6,
+          "targets": [
+            [
+              ".text-left:nth-child(1) > .-right-1\\.5.w-3.cursor-col-resize"
+            ],
+            [
+              ".text-left:nth-child(2) > .-right-1\\.5.w-3.cursor-col-resize"
+            ],
+            [
+              ".text-left:nth-child(3) > .-right-1\\.5.w-3.cursor-col-resize"
+            ]
+          ]
+        }
+      ],
+      "consoleErrors": []
+    },
+    {
+      "theme": "dark",
+      "width": 1920,
+      "measurement": {
+        "innerW": 1920,
+        "scrollW": 1920,
+        "pageOverflow": 0,
+        "htmlClass": "dark focus-highlight",
+        "top": [
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 901,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 860,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 385,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 213,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 212,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 209,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 209,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          },
+          {
+            "tag": "DIV",
+            "cls": "truncate text-xs text-c-text-muted",
+            "maxScrollLeft": 209,
+            "overflowX": "hidden",
+            "scrollbarHidden": false
+          }
+        ]
+      },
+      "axeCriticalSerious": [
+        {
+          "id": "aria-prohibited-attr",
+          "impact": "serious",
+          "help": "Elements must only use permitted ARIA attributes",
+          "nodes": 6,
+          "targets": [
+            [
+              ".text-left:nth-child(1) > .-right-1\\.5.w-3.cursor-col-resize"
+            ],
+            [
+              ".text-left:nth-child(2) > .-right-1\\.5.w-3.cursor-col-resize"
+            ],
+            [
+              ".text-left:nth-child(3) > .-right-1\\.5.w-3.cursor-col-resize"
+            ]
+          ]
+        }
+      ],
+      "consoleErrors": []
+    }
+  ]
+}

@@ -22,8 +22,6 @@ import { useTranslation } from 'react-i18next';
 import { PreviewPaneShell } from '@/components/ui/ResizableTable/PreviewPaneShell';
 import { useDeviceType } from '@/hooks/useDeviceType';
 
-import { PREVIEW_PANE_WIDTH } from './PreviewPane/previewGeometry';
-
 export interface PreviewableItem {
   id: string;
   title: string;
@@ -92,8 +90,21 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
   // #4b — desktop overlay: float the preview above the table (no reflow). Never on mobile
   // (mobile already renders a full-screen `fixed inset-0` drawer below).
   const overlayMode = desktopPreviewOverlay && !isMobile;
+  const [reduceMotion, setReduceMotion] = useState(false);
   const [internalPreviewOpen, setInternalPreviewOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const mobileDialogRef = useRef<HTMLDivElement>(null);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
+    const query = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (!query) return;
+    const update = () => setReduceMotion(query.matches);
+    update();
+    query.addEventListener?.('change', update);
+    return () => query.removeEventListener?.('change', update);
+  }, []);
 
   const isPreviewOpen = controlledPreviewOpen ?? internalPreviewOpen;
   const isBatchMode = (selectedIds?.size ?? 0) > 1 && !!renderBatchPreview;
@@ -154,29 +165,29 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
     if (!autoOpenPreview) return;
 
     if (selectedId) {
+      if (
+        document.activeElement instanceof HTMLElement &&
+        document.activeElement !== containerRef.current &&
+        containerRef.current?.contains(document.activeElement) &&
+        !document.activeElement.closest('[data-preview-pane]')
+      ) {
+        returnFocusRef.current = document.activeElement;
+      }
       setInternalPreviewOpen(true);
     } else {
       setInternalPreviewOpen(false);
     }
   }, [selectedId, controlledPreviewOpen, autoOpenPreview]);
 
-  /**
-   * R03-2 — focus return (§6 Kontener i otwieranie: „Esc i × zamykają, focus
-   * wraca do rekordu").
-   *
-   * Zapamiętujemy element, który miał focus w chwili otwarcia preview — czyli
-   * zwykle wiersz albo kontrolkę, z której użytkownik przyszedł. Zamknięcie
-   * oddaje focus tam, zamiast zostawiać go w nicości: bez tego po Escape focus
-   * wypadał poza kontener, a razem z nim przestawała działać nawigacja j/k,
-   * bo listener klawiatury wisi właśnie na kontenerze.
-   */
-  const openerRef = useRef<HTMLElement | null>(null);
-
   const handleSelect = useCallback(
     (id: string) => {
-      // Ostatni aktywny element PRZED przejęciem uwagi przez preview.
-      const active = typeof document !== 'undefined' ? document.activeElement : null;
-      if (active instanceof HTMLElement) openerRef.current = active;
+      if (
+        document.activeElement instanceof HTMLElement &&
+        document.activeElement !== containerRef.current &&
+        containerRef.current?.contains(document.activeElement)
+      ) {
+        returnFocusRef.current = document.activeElement;
+      }
       if (selectedId && selectedId !== id) pushHistory(selectedId);
       onSelect(id);
       if (autoOpenPreview) {
@@ -189,17 +200,39 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
   const handleClose = useCallback(() => {
     setInternalPreviewOpen(false);
     onSelect(null);
-
-    const opener = openerRef.current;
-    openerRef.current = null;
-    // Element mógł zniknąć razem z przefiltrowaną listą — wtedy focus wraca na
-    // kontener (ma `tabIndex={0}`), żeby skróty klawiszowe nadal działały.
-    if (opener && document.contains(opener)) {
-      opener.focus();
-      return;
-    }
-    containerRef.current?.focus();
+    requestAnimationFrame(() => returnFocusRef.current?.focus());
   }, [onSelect]);
+
+  useEffect(() => {
+    const dialog = mobileDialogRef.current;
+    if (!isMobile || !isPreviewOpen || !dialog) return;
+    const focusable = () =>
+      Array.from(
+        dialog.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      );
+    (focusable()[0] ?? dialog).focus();
+    const trap = (event: KeyboardEvent) => {
+      if (event.key !== 'Tab') return;
+      const nodes = focusable();
+      if (!nodes.length) {
+        event.preventDefault();
+        return;
+      }
+      const first = nodes[0],
+        last = nodes[nodes.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    dialog.addEventListener('keydown', trap);
+    return () => dialog.removeEventListener('keydown', trap);
+  }, [isMobile, isPreviewOpen, selectedId]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -233,7 +266,7 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
           break;
         }
         case 'Enter': {
-          if (selectedId && onOpenFull) {
+          if (!isInput && selectedId && onOpenFull) {
             e.preventDefault();
             onOpenFull(selectedId);
           }
@@ -293,6 +326,7 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
               disabled={!historyBack.length}
               className="inline-flex items-center justify-center h-7 w-7 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors disabled:opacity-30"
               title="Alt+←"
+              aria-label={t('common.back', 'Back')}
             >
               <ChevronLeft size={14} />
             </button>
@@ -301,6 +335,7 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
               disabled={!historyForward.length}
               className="inline-flex items-center justify-center h-7 w-7 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors disabled:opacity-30"
               title="Alt+→"
+              aria-label={t('common.forward', 'Forward')}
             >
               <ChevronRight size={14} />
             </button>
@@ -315,6 +350,7 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
                 : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
             }`}
             title={pinnedId === selectedItem.id ? 'Unpin' : 'Pin for comparison'}
+            aria-label={pinnedId === selectedItem.id ? 'Unpin' : 'Pin for comparison'}
           >
             {pinnedId === selectedItem.id ? <PinOff size={14} /> : <Pin size={14} />}
           </button>
@@ -333,7 +369,13 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
     ) : null;
 
   return (
-    <div ref={containerRef} className="relative flex h-full overflow-hidden gap-1.5" tabIndex={0}>
+    <div
+      ref={containerRef}
+      className="relative flex h-full overflow-hidden gap-1.5"
+      tabIndex={0}
+      role="region"
+      aria-label={t('common.tableWithPreview', 'Table and preview workspace')}
+    >
       {/* Table area */}
       <div
         className="app-table-scrollbar flex-1 min-w-0 overflow-auto pr-2 [scrollbar-gutter:stable]"
@@ -357,11 +399,12 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
         {pinnedItem && pinnedId !== selectedId && isPreviewOpen && !isBatchMode && !isMobile ? (
           <motion.div
             key={`pinned-${pinnedId}`}
-            initial={{ opacity: 0, x: 12 }}
+            initial={reduceMotion ? false : { opacity: 0, x: 12 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -8 }}
-            transition={{ duration: 0.15, ease: 'easeOut' }}
+            transition={{ duration: reduceMotion ? 0 : 0.15, ease: 'easeOut' }}
             className="shrink-0 bg-slate-50 dark:bg-navy-950 p-3 pointer-events-auto"
+            data-preview-pane
             style={{ width: 'clamp(280px, 22%, 400px)' }}
           >
             <PreviewPaneShell
@@ -373,6 +416,7 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
                   onClick={handleUnpin}
                   className="inline-flex items-center justify-center h-7 w-7 rounded-full text-primary-500 bg-primary-50 dark:bg-primary-500/10"
                   title="Unpin"
+                  aria-label="Unpin"
                 >
                   <PinOff size={14} />
                 </button>
@@ -388,12 +432,18 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
           {isMobile && isBatchMode && renderBatchPreview ? (
             <motion.div
               key="mobile-batch"
-              initial={{ opacity: 0 }}
+              initial={reduceMotion ? false : { opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.15, ease: 'easeOut' }}
+              transition={{ duration: reduceMotion ? 0 : 0.15, ease: 'easeOut' }}
               className="fixed inset-0 z-[70]"
               data-testid="mobile-preview-overlay"
+              data-preview-pane
+              ref={mobileDialogRef}
+              role="dialog"
+              aria-modal="true"
+              aria-label={t('common.batchOperations', 'Batch Operations')}
+              tabIndex={-1}
             >
               <button
                 type="button"
@@ -421,12 +471,18 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
           ) : isMobile && isPreviewOpen && selectedItem ? (
             <motion.div
               key={`mobile-${selectedItem.id}`}
-              initial={{ opacity: 0 }}
+              initial={reduceMotion ? false : { opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.15, ease: 'easeOut' }}
+              transition={{ duration: reduceMotion ? 0 : 0.15, ease: 'easeOut' }}
               className="fixed inset-0 z-[70]"
               data-testid="mobile-preview-overlay"
+              data-preview-pane
+              ref={mobileDialogRef}
+              role="dialog"
+              aria-modal="true"
+              aria-label={selectedItem.title}
+              tabIndex={-1}
             >
               <button
                 type="button"
@@ -456,12 +512,13 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
           ) : isBatchMode && renderBatchPreview ? (
             <motion.div
               key="batch"
-              initial={{ opacity: 0, x: 12 }}
+              initial={reduceMotion ? false : { opacity: 0, x: 12 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -8 }}
-              transition={{ duration: 0.15, ease: 'easeOut' }}
+              transition={{ duration: reduceMotion ? 0 : 0.15, ease: 'easeOut' }}
               className="shrink-0 bg-slate-50 dark:bg-navy-950 p-3 pointer-events-auto"
-              style={{ width: PREVIEW_PANE_WIDTH }}
+              data-preview-pane
+              style={{ width: 'clamp(340px, 28%, 480px)' }}
             >
               <PreviewPaneShell
                 title={t('common.batchOperations', 'Batch Operations')}
@@ -474,12 +531,13 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
           ) : isPreviewOpen && selectedItem ? (
             <motion.div
               key={selectedItem.id}
-              initial={{ opacity: 0, x: 12 }}
+              initial={reduceMotion ? false : { opacity: 0, x: 12 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -8 }}
-              transition={{ duration: 0.15, ease: 'easeOut' }}
+              transition={{ duration: reduceMotion ? 0 : 0.15, ease: 'easeOut' }}
               className="shrink-0 bg-slate-50 dark:bg-navy-950 p-3 pointer-events-auto"
-              style={{ width: PREVIEW_PANE_WIDTH }}
+              data-preview-pane
+              style={{ width: 'clamp(340px, 28%, 480px)' }}
             >
               <PreviewPaneShell
                 title={selectedItem.title}

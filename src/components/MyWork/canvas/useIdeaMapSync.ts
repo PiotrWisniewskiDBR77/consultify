@@ -508,9 +508,32 @@ export function useIdeaMapSync({
         lastKnownNodeCountRef.current = Math.max(lastKnownNodeCountRef.current, hydratedNodeCount);
       }
       const draft = readIdeaMapDraft(ideaId);
-      if (draft?.pending) {
+      // D3: a `pending` draft recovered from localStorage is only a REAL
+      // unsaved edit if it is still ahead of the server version we were just
+      // given — the exact test resolveIdeaMapHydration() already applies to
+      // the canvas content. Without this check, a draft whose flush actually
+      // reached the server (e.g. the beforeunload/visibilitychange keepalive
+      // POST below, whose success handler never got to run because the page
+      // was torn down before the response arrived) is trusted forever: the
+      // save indicator gets stuck on "queued" across page reloads even though
+      // GET /map already reflects the save, because nothing here compares
+      // versions or clears the now-stale localStorage entry.
+      const draftIsStale =
+        !!draft?.pending && Number(draft.baseVersion || 1) < serverVersionRef.current;
+      if (draftIsStale) {
+        clearIdeaMapDraft(ideaId);
+      }
+      if (draft?.pending && !draftIsStale) {
         queuedPayloadRef.current = draft.payload;
         setSyncState('queued');
+        // D3: a genuinely-recovered pending draft (crash, closed tab, failed
+        // flush) must not just sit there labeled "queued" until the user
+        // HAPPENS to make another edit later — that leaves real unsaved work
+        // silently waiting indefinitely with no indication anything is wrong.
+        // Retry the flush immediately: it either lands right away (state
+        // becomes "saved", the honest outcome) or fails and surfaces an
+        // explicit offline/conflict state instead of a stale, inert "queued".
+        void flushNowRef.current?.(draft.payload, { reason: 'draft' }).catch(() => null);
       } else {
         setSyncState('idle');
         if (draft?.lastSavedAt) {

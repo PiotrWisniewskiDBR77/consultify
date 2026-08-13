@@ -19,6 +19,7 @@ import {
 } from '../canvas/edgeArrowMarkers';
 import type { MapStructureType, MindMapInteractionMode } from '../ideaSelectionTypes';
 import { findIdeaTemplate } from '../IdeaTemplateGallery';
+import { isRelationEdge } from './useMindMapNodes';
 import { applyForceLayout } from './ForceDirectedLayout';
 import { applyRadialLayout } from './RadialTreeLayout';
 import { applyStructureLayout } from './StructureLayouts';
@@ -106,6 +107,33 @@ export interface MindMapQuickActionHandlers {
   focusSelectedNode: () => void;
   reparentSelectedPromote: () => void;
   reparentSelectedDemote: () => void;
+  /**
+   * N5 kontynuacja, druga fala (2026-08-09, `NodeContextMenu.tsx` grupa
+   * Structure) — istniały już w `IdeaRecommendationMap.tsx` (V5-IDEA-17), NIE
+   * przekazywane dotąd do tego hooka (więc niedostępne na szynie/dla Teresy).
+   * Opcjonalne: harnessy testowe (`useMindMapQuickActions.*.test.tsx`) nie
+   * dostarczają ich wszystkich, `?.()` poniżej jest bezpieczny bez zmiany
+   * istniejących testów.
+   */
+  detachBranch?: (nodeId?: string) => void;
+  duplicateBranch?: (nodeId?: string) => void;
+  /**
+   * N5 kontynuacja, trzecia fala (2026-08-09, `NodeContextMenu.tsx` grupy
+   * Convert/„Convert branch to…" + dual-surface `FloatingNodeToolbar.tsx`
+   * „Convert branch") — `convertBranch` istniał już w `IdeaRecommendationMap.tsx`
+   * (dispatch na `idea-workspace-quick-action` z `nodeIds` = węzeł + potomkowie),
+   * NIE przekazywany dotąd do tego hooka. Ten sam sygnał (target+nodeId) co
+   * klik człowieka — patrz `idea.node.mm_convert_branch_*` w rejestrze akcji.
+   */
+  convertBranch?: (target: string, nodeId?: string) => void;
+  /**
+   * E11 fix (2026-08-10, docs/standards/idea-workspace/10_*, §2.1 „Element"):
+   * the non-cascading counterpart of `convertBranch` above — converts ONLY
+   * the given nodeId, no descendants. Backs the plain "Convert" node items
+   * (`idea.node.mm_convert_initiative`/`_decision`/`_tasks`), which used to
+   * be wired to `convertBranch` (always cascaded despite the label).
+   */
+  convertSingleNode?: (target: string, nodeId?: string) => void;
   pushUndo: () => void;
   undo: () => void;
   redo: () => void;
@@ -228,8 +256,79 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
     }
     if (action === 'mm_duplicate') handlers.duplicateSelected();
     if (action === 'mm_toggle_collapse') {
-      const sel = handlers.getSelectedNode();
-      if (sel) handlers.toggleCollapse(sel.id);
+      // HONEST FIX (2026-08-09, N5 druga fala): `targetNodeId` (detail.nodeId)
+      // was already parsed above but silently ignored in favor of
+      // getSelectedNode() — harmless for the human click path (right-click
+      // already selects the target node, see IdeaRecommendationMap.onNodeContextMenu)
+      // but meant Teresa/FloatingNodeToolbar's explicit nodeId was dropped on
+      // the floor. `toggleCollapse`'s own signature already takes a nodeId —
+      // preferring it here is a minimal, safe correction, not new mechanics.
+      const collapseTargetId = targetNodeId || handlers.getSelectedNode()?.id;
+      if (collapseTargetId) handlers.toggleCollapse(collapseTargetId);
+    }
+    // NOWE odbiorniki (2026-08-09, N5 druga fala — rejestr akcji
+    // `idea.node.mm_detach_branch`/`idea.node.mm_duplicate_branch`,
+    // `NodeContextMenu.tsx` grupa Structure). `detachBranch`/`duplicateBranch`
+    // już istniały (IdeaRecommendationMap.tsx V5-IDEA-17, oba przyjmują
+    // opcjonalny `nodeId`) — tylko nigdy nie były przekazane do `handlers` tego
+    // hooka. `targetNodeId` = detail.nodeId, sparsowane wyżej.
+    if (action === 'mm_detach_branch') handlers.detachBranch?.(targetNodeId);
+    if (action === 'mm_duplicate_branch') handlers.duplicateBranch?.(targetNodeId);
+    // NOWY odbiornik (2026-08-09, N5 trzecia fala — rejestr akcji
+    // `idea.node.mm_convert_initiative`/`.mm_convert_decision`/`.mm_convert_tasks`/
+    // `.mm_convert_branch_*`, `NodeContextMenu.tsx` grupy Convert/„Convert
+    // branch to…" + dual-surface `FloatingNodeToolbar.tsx` „Convert branch").
+    // `convertBranch(target, nodeId)` już istniał w `IdeaRecommendationMap.tsx`
+    // (V5-IDEA-17/MM-15) — tylko nigdy nie był przekazany do `handlers` tego
+    // hooka. `detail.target` przychodzi z rejestru (jeden string per akcja —
+    // Teresa nie wybiera targetu dowolnie, wybiera KTÓRĄ akcję woła).
+    if (action === 'mm_convert_branch') {
+      const target = typeof detail?.target === 'string' ? detail.target : undefined;
+      if (target && targetNodeId) handlers.convertBranch?.(target, targetNodeId);
+    }
+    // E11 fix (2026-08-10) — rejestr akcji `idea.node.mm_convert_initiative`/
+    // `_decision`/`_tasks` (plain "Convert", scope: single_item). Odrębny bus
+    // action od `mm_convert_branch` powyżej: ten NIGDY nie zbiera potomków —
+    // konwertuje wyłącznie wskazany węzeł, zgodnie z etykietą i deklarowanym
+    // zasięgiem (poprzednio dzieliły `mm_convert_branch`, więc zawsze
+    // kaskadowały mimo etykiety — E02-N5-CONVERT honesty finding, naprawione).
+    if (action === 'mm_convert_single') {
+      const target = typeof detail?.target === 'string' ? detail.target : undefined;
+      if (target && targetNodeId) handlers.convertSingleNode?.(target, targetNodeId);
+    }
+    // NOWY odbiornik (2026-08-09, N5 druga fala — rejestr akcji
+    // `idea.node.mm_connect_to_selected`, `NodeContextMenu.tsx` „Connect to
+    // selected"). Kliknięcie człowieka (ctx.params.run, patrz
+    // NodeContextMenu.tsx) idzie NADAL przez `handleContextAction`'s
+    // `ctx_connect_to_selected` lokalny branch (peer = poprzednie zaznaczenie
+    // sprzed prawego kliku, `preContextMenuSelectionRef` — stan lokalny
+    // komponentu, którego ten hook nie dzieli). DLA TERESY implementacja jest
+    // TUTAJ, samodzielna (nie woła handleContextAction) — bo `targetNodeId`
+    // (węzeł źródłowy) jest, ale drugi węzeł MUSI przyjść jako jawny parametr
+    // (`detail.targetNodeId`), nie "co było zaznaczone wcześniej" (Teresa nie
+    // ma takiego pojęcia). Mutacja lustrzana wobec `ctx_connect_to_selected`
+    // (`IdeaRecommendationMap.tsx`: type 'labeled', edgeRole 'relation',
+    // relation 'related').
+    if (action === 'mm_connect_nodes') {
+      if (locked) return;
+      const peerNodeId = typeof detail?.targetNodeId === 'string' ? detail.targetNodeId : undefined;
+      if (!targetNodeId || !peerNodeId || targetNodeId === peerNodeId) {
+        toast(i18n.t('mindmap.selectAnotherNodeToCreateA'), { icon: 'ℹ️' });
+        return;
+      }
+      const peerExists = nodes.some((n) => n.id === peerNodeId);
+      if (!peerExists) return;
+      handlers.pushUndo();
+      setters.setEdges((prev) => [
+        ...prev,
+        {
+          id: `edge-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+          source: targetNodeId,
+          target: peerNodeId,
+          type: 'labeled',
+          data: { userCreated: true, edgeRole: 'relation', relation: 'related' },
+        } as Edge,
+      ]);
     }
     if (
       action === 'mm_fold_0' ||
@@ -246,6 +345,13 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
     if (action === 'mm_expand_all') {
       handlers.setFoldLevel?.(Infinity);
       toast.success(i18n.t('mindmap.quickActions.allExpanded'), { duration: 1200 });
+    }
+    // NOWY odbiornik (2026-08-09, rejestr akcji N5 — `idea.view.select_all`,
+    // `PaneContextMenu.tsx` „Zaznacz wszystko"). Selekcja jest stanem UI, nie
+    // treścią mapy — nie wymaga pushUndo (ten sam wzorzec co `mm_focus_selected`
+    // niżej, które też tylko przesuwa uwagę, niczego nie zmienia w grafie).
+    if (action === 'mm_select_all') {
+      setters.setNodes((prev) => prev.map((n) => ({ ...n, selected: true })));
     }
     if (action === 'mm_focus_selected') handlers.focusSelectedNode();
     if (action === 'mm_reparent_promote') handlers.reparentSelectedPromote();
@@ -1315,6 +1421,186 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
         }),
         { duration: 900 }
       );
+    }
+
+    // ── Menu krawędzi, pozostałe 6 pozycji (2026-08-09, rejestr akcji Z1/Z4 —
+    // `EdgeContextMenu.tsx`) ─────────────────────────────────────────────────
+    // Przed tym dopiskiem TYLKO `mm_edge_arrow` (wyżej) miało odbiornik na tej
+    // szynie; pozostałe 6 pozycji menu prawego kliku szły przez `onAction` prop
+    // → `handleEdgeContextAction` w `IdeaRecommendationMap.tsx` (zamknięcie nad
+    // lokalnym stanem `edgeContextMenu`/`edges`). Logika PRZENIESIONA stąd 1:1
+    // (mutacje bez zmian, patrz komentarze przy każdym bloku) — komponent nie ma
+    // już własnej implementacji tych 6 akcji, tylko dispatchuje przez rejestr
+    // (`getActionsForSurface`/`runIdeaAction`), DOKŁADNIE jak `mm_edge_arrow` już
+    // robił od 2026-07-28 — ten sam wzorzec, rozszerzony, nie duplikowany.
+    //
+    // Etykieta/relacja: `detail.label`/`detail.relation` obecne → Teresa podała
+    // treść wprost, pomijamy `window.prompt` (headless caller nie odpowie na
+    // natywny prompt) — 1:1 z konwencją `addLabel` przy `mm_add_child` wyżej.
+    // Nieobecne → klik człowieka, pytamy jak dawniej.
+    //
+    // `isRelationEdge` gate: `edge_reverse`/`edge_insert_node`/`edge_edit_relation`/
+    // `edge_delete` działały w oryginale TYLKO na krawędziach relacji (nie
+    // strukturalnych) — na innych po cichu nic się nie działo (menu samo NIE
+    // wyszarzało tych pozycji dla krawędzi strukturalnych, więc ten cichy no-op
+    // jest ŚWIADOMIE zachowany 1:1, nie "naprawiany" tutaj).
+    //
+    // `handlers.pushUndo()`: DOPISANE dla edit_label/cycle_style/edit_relation —
+    // oryginał (`handleEdgeContextAction`) NIE wołał tam pushUndo (w
+    // przeciwieństwie do reverse/insert_node/delete, które już wołały), więc te
+    // 3 akcje nie wspierały Ctrl+Z. Rejestr wymaga uczciwego `undo` dla każdej
+    // `mutates: true` akcji (R4) — zamiast fałszywie to zadeklarować, dodajemy tu
+    // realny pushUndo() (funkcja już istnieje i jest już używana przez sąsiednie
+    // akcje w tej samej funkcji — niskie ryzyko, brak nowej mechaniki).
+    if (action === 'mm_edge_edit_label') {
+      const edgeId = typeof detail?.edgeId === 'string' ? detail.edgeId : undefined;
+      if (!edgeId || locked) return;
+      const edge = edges.find((e) => e.id === edgeId);
+      if (!edge) return;
+      const current = String(edge.data?.label || '');
+      const providedLabel = typeof detail?.label === 'string' ? detail.label : undefined;
+      const next =
+        providedLabel !== undefined
+          ? providedLabel
+          : window.prompt(i18n.t('mindmap.connectionLabel'), current);
+      if (next === null || next === undefined) return;
+      handlers.pushUndo();
+      setters.setEdges((prev) =>
+        prev.map((e) => (e.id === edgeId ? { ...e, data: { ...e.data, label: next } } : e))
+      );
+    }
+
+    if (action === 'mm_edge_insert_node') {
+      const edgeId = typeof detail?.edgeId === 'string' ? detail.edgeId : undefined;
+      if (!edgeId || locked) return;
+      const edge = edges.find((e) => e.id === edgeId);
+      if (!edge || !isRelationEdge(edge)) return;
+      handlers.pushUndo();
+      const newId = `node-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+      const sourceNode = nodes.find((n) => n.id === edge.source);
+      const targetNode = nodes.find((n) => n.id === edge.target);
+      const posX = sourceNode && targetNode ? (sourceNode.position.x + targetNode.position.x) / 2 : 0;
+      const posY = sourceNode && targetNode ? (sourceNode.position.y + targetNode.position.y) / 2 : 0;
+      const newNode: Node = {
+        id: newId,
+        type: 'idea',
+        position: { x: posX, y: posY },
+        data: {
+          label: '',
+          branchKey: 'uncategorized',
+          sourceType: 'manual',
+          priority: 50,
+          _startEditing: Date.now(),
+        },
+      } as any;
+      setters.setEdges((prev) => {
+        const without = prev.filter((e) => e.id !== edgeId);
+        return [
+          ...without,
+          { ...edge, id: `edge-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`, target: newId } as Edge,
+          {
+            ...edge,
+            id: `edge-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+            source: newId,
+            target: edge.target,
+          } as Edge,
+        ];
+      });
+      setters.setNodes((prev) => [
+        ...prev.map((n) => ({ ...n, selected: false })),
+        { ...newNode, selected: true },
+      ]);
+    }
+
+    if (action === 'mm_edge_reverse') {
+      const edgeId = typeof detail?.edgeId === 'string' ? detail.edgeId : undefined;
+      if (!edgeId || locked) return;
+      const edge = edges.find((e) => e.id === edgeId);
+      if (!edge || !isRelationEdge(edge)) return;
+      handlers.pushUndo();
+      setters.setEdges((prev) =>
+        prev.map((e) =>
+          e.id === edgeId
+            ? {
+                ...e,
+                source: e.target,
+                target: e.source,
+                sourceHandle: e.targetHandle,
+                targetHandle: e.sourceHandle,
+              }
+            : e
+        )
+      );
+      toast.success(i18n.t('mindmap.directionReversed'), { duration: 800 });
+    }
+
+    if (action === 'mm_edge_cycle_style') {
+      const edgeId = typeof detail?.edgeId === 'string' ? detail.edgeId : undefined;
+      if (!edgeId || locked) return;
+      const edge = edges.find((e) => e.id === edgeId);
+      if (!edge) return;
+      const styles = ['solid', 'dashed', 'dotted'];
+      // Canonical representation is data.edgeStyle — LabeledEdge.tsx renders
+      // strokeDasharray purely from data.edgeStyle. Edges saved before this
+      // fix may only carry the legacy style.strokeDasharray shape (which the
+      // renderer never read, hence "no visual change" bug), so fall back to
+      // deriving current state from it for a correct cycle on old maps too.
+      const legacyDasharray = (edge.style as { strokeDasharray?: string } | undefined)
+        ?.strokeDasharray;
+      const current =
+        typeof edge.data?.edgeStyle === 'string' && styles.includes(edge.data.edgeStyle)
+          ? edge.data.edgeStyle
+          : legacyDasharray
+            ? legacyDasharray === '2 2'
+              ? 'dotted'
+              : 'dashed'
+            : 'solid';
+      const nextIdx = (styles.indexOf(current) + 1) % styles.length;
+      const nextStyle = styles[nextIdx];
+      handlers.pushUndo();
+      setters.setEdges((prev) =>
+        prev.map((e) =>
+          e.id === edgeId ? { ...e, data: { ...e.data, edgeStyle: nextStyle } } : e
+        )
+      );
+      toast.success(
+        i18n.t('myWork.ideaMap.toast.styleChanged', 'Style: {{style}}', { style: nextStyle }),
+        { duration: 800 }
+      );
+    }
+
+    if (action === 'mm_edge_edit_relation') {
+      const edgeId = typeof detail?.edgeId === 'string' ? detail.edgeId : undefined;
+      if (!edgeId || locked) return;
+      const edge = edges.find((e) => e.id === edgeId);
+      if (!edge || !isRelationEdge(edge)) return;
+      const current = String(edge.data?.relation || '');
+      const relations = ['related', 'depends_on', 'blocks', 'supports', 'contradicts'];
+      const providedRelation = typeof detail?.relation === 'string' ? detail.relation : undefined;
+      const next =
+        providedRelation !== undefined
+          ? providedRelation
+          : window.prompt(
+              i18n.t('mindmap.relationTypePrompt', { relations: relations.join(', ') }),
+              current
+            );
+      if (next === null || next === undefined) return;
+      handlers.pushUndo();
+      setters.setEdges((prev) =>
+        prev.map((e) =>
+          e.id === edgeId ? { ...e, data: { ...e.data, relation: next, label: next } } : e
+        )
+      );
+    }
+
+    if (action === 'mm_edge_delete') {
+      const edgeId = typeof detail?.edgeId === 'string' ? detail.edgeId : undefined;
+      if (!edgeId || locked) return;
+      const edge = edges.find((e) => e.id === edgeId);
+      if (!edge || !isRelationEdge(edge)) return;
+      handlers.pushUndo();
+      setters.setEdges((prev) => prev.filter((e) => e.id !== edgeId));
+      toast.success(i18n.t('mindmap.connectionRemoved'), { duration: 800 });
     }
   };
 

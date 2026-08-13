@@ -23,6 +23,12 @@ import {
   normalizeFinancialData,
   validateFinancialData,
 } from '../services/economicsFinancials.js';
+import {
+  detectAndReconcile,
+  findReconciliationTargetForInitiative,
+} from '../services/finance/canonical/roiFinanceReconciliationAdapter.js';
+import { FinanceCandidateHandoffError } from '../services/finance/financeCandidateHandoffCore.js';
+import { resolveEffectiveAccess } from '../services/effectiveAccessService.js';
 import * as finAnalysisSvc from '../services/financialAnalysisService.js';
 import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
 import { resolveInitiativeProjectId } from '../services/initiativeProjectPolicyService.js';
@@ -35,7 +41,6 @@ import {
   resolveStoredDepth,
   setValuationDepth,
 } from '../services/valuationDepthProfileService.js';
-import { FinanceCandidateHandoffError } from '../services/finance/financeCandidateHandoffCore.js';
 import { exportValuationPptx } from '../services/valuationExportService.js';
 import * as valuationSvc from '../services/valuationService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -1557,8 +1562,39 @@ router.put(
       return res.status(400).json({ error: 'trackingPeriod is required' });
     }
 
-    const variancePercent =
-      plannedBenefits > 0 ? ((actualBenefits - plannedBenefits) / plannedBenefits) * 100 : 0;
+    // ROI-E007 Stream C — `benefit_tracking.actual_*` is physically
+    // append-only since
+    // `server/migrations/20260809_finance_v3_e007_03_legacy_actual_protection.sql`
+    // (`trg_benefit_tracking_deny_actual_overwrite`). This handler's old
+    // UPDATE branch set `actual_cost_savings = ?` unconditionally on an
+    // existing period row — before that migration it SILENTLY OVERWROTE a
+    // previously recorded actual (the exact "cichy overwrite" ROI-E007
+    // exists to close), and after it the trigger raises, which this handler
+    // surfaced as a bare 500 (its try/catch only special-cases
+    // `FinanceStorageUnavailableError`). Neither is acceptable.
+    //
+    // The rule now: a recorded actual is never re-written and never
+    // destroyed. When the request carries a DIFFERENT actual, that column is
+    // left out of the UPDATE entirely (every other column in the request is
+    // still saved), and the disagreement is routed to the canonical
+    // ROI/Finance seam as a reconciliation record. If there is nowhere to
+    // record it — no active ROI case for this initiative, or no finance link
+    // on that case — the caller is told so explicitly (409) rather than
+    // getting a success it did not receive or a 500 it cannot act on.
+    let actualWriteRejected = false;
+    let storedActualBenefits = actualBenefits;
+    let existingRow: { id: string; actual_cost_savings: number | null } | null = null;
+
+    /** Recognises `trg_benefit_tracking_deny_actual_overwrite`'s own
+     * `RAISE EXCEPTION` (SQLSTATE P0001, message pinned by the migration).
+     * Local to this handler — it is the only call site, and nothing else in
+     * this router touches the protected columns. */
+    const isBenefitTrackingActualProtectionError = (error: unknown): boolean => {
+      const message = error instanceof Error ? error.message : String(error ?? '');
+      return /benefit_tracking\.actual_\*? is append-only|benefit_tracking is append-only/i.test(
+        message
+      );
+    };
 
     // M08-H02 — fail closed. Both writes previously ran with the default
     // `fallback: true`, so a missing `benefit_tracking` table was swallowed and
@@ -1566,21 +1602,137 @@ router.put(
     try {
       const existing = await financeWrite('benefit_tracking', () =>
         dbGet<any>(
-          `SELECT id FROM benefit_tracking WHERE organization_id = ? AND initiative_id = ? AND tracking_period = ?`,
+          `SELECT id, actual_cost_savings FROM benefit_tracking WHERE organization_id = ? AND initiative_id = ? AND tracking_period = ?`,
           [orgId, analysis.initiative_id, trackingPeriod],
           { fallback: false }
         )
       );
+      existingRow = existing ?? null;
 
       if (existing) {
-        await financeWrite('benefit_tracking', () =>
-          dbRun(
-            `UPDATE benefit_tracking SET
+        // Compare against what is ALREADY stored — the trigger's own
+        // `IS DISTINCT FROM` semantics, evaluated before we build the SQL so
+        // the protected column is never named in an UPDATE that would trip it.
+        const currentActual = Number(existing.actual_cost_savings ?? 0);
+        actualWriteRejected = currentActual !== actualBenefits;
+        storedActualBenefits = actualWriteRejected ? currentActual : actualBenefits;
+      }
+    } catch (error) {
+      if (error instanceof FinanceStorageUnavailableError) {
+        return respondFinanceStorageUnavailable(res, error);
+      }
+      throw error;
+    }
+
+    // Variance is derived from the value that will actually be STORED, not
+    // from the rejected one — writing a variance computed against a number
+    // the row does not hold would be a quieter version of the same lie.
+    const variancePercent =
+      plannedBenefits > 0 ? ((storedActualBenefits - plannedBenefits) / plannedBenefits) * 100 : 0;
+
+    // ── Divergence path: record it on the canonical seam BEFORE mutating
+    // anything, so a caller that gets 409 knows nothing at all changed. ──
+    let reconciliation: Awaited<ReturnType<typeof detectAndReconcile>> | null = null;
+    if (actualWriteRejected) {
+      let target: Awaited<ReturnType<typeof findReconciliationTargetForInitiative>>;
+      try {
+        target = await findReconciliationTargetForInitiative({
+          organizationId: orgId,
+          initiativeId: analysis.initiative_id,
+          userId: userId || '',
+        });
+      } catch (error) {
+        logger.error('[economics] reconciliation target lookup failed', {
+          initiativeId: analysis.initiative_id,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        return res.status(503).json({
+          success: false,
+          error: 'ROI_RECONCILIATION_STORAGE_UNAVAILABLE',
+          actualBenefitsWriteRejected: true,
+          storedActualBenefits,
+          requestedActualBenefits: actualBenefits,
+          message:
+            'Nie udało się sprawdzić powiązanego ROI Case — nic nie zostało zapisane, ' +
+            'zarejestrowana wartość rzeczywista pozostaje niezmieniona.',
+        });
+      }
+
+      if (!target.target) {
+        return res.status(409).json({
+          success: false,
+          error: 'ROI_RECONCILIATION_TARGET_MISSING',
+          reason: target.missingReason,
+          actualBenefitsWriteRejected: true,
+          storedActualBenefits,
+          requestedActualBenefits: actualBenefits,
+          message:
+            target.missingReason === 'NO_ACTIVE_ROI_CASE'
+              ? 'Brak powiązanego ROI Case — wartość niezmieniona. Zarejestrowanej wartości ' +
+                'rzeczywistej nie można nadpisać; załóż ROI Case dla tej inicjatywy, aby ' +
+                'zapisać rozbieżność.'
+              : 'Brak powiązanego ROI Case — wartość niezmieniona. ROI Case istnieje, ale nie ' +
+                'ma powiązania z artefaktem Finance; dodaj powiązanie, aby zapisać rozbieżność.',
+        });
+      }
+
+      try {
+        const access = await resolveEffectiveAccess({
+          userId: userId || '',
+          organizationId: orgId,
+          applicationRole: req.user?.role,
+        });
+        reconciliation = await detectAndReconcile({
+          organizationId: orgId,
+          caseId: target.target.caseId,
+          linkId: target.target.linkId,
+          roiValue: storedActualBenefits,
+          financeValue: actualBenefits,
+          actorId: userId || 'unknown',
+          divergenceReason:
+            `PUT /api/economics/analyses/${id}/benefits attempted to change ` +
+            `benefit_tracking.actual_cost_savings for tracking_period ${trackingPeriod}`,
+          access,
+        });
+      } catch (error) {
+        logger.error('[economics] opening ROI/Finance reconciliation failed', {
+          caseId: target.target.caseId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        return res.status(503).json({
+          success: false,
+          error: 'ROI_RECONCILIATION_WRITE_FAILED',
+          actualBenefitsWriteRejected: true,
+          storedActualBenefits,
+          requestedActualBenefits: actualBenefits,
+          message:
+            'Nie udało się zapisać rozbieżności na seamie ROI/Finance — nic nie zostało ' +
+            'zapisane, zarejestrowana wartość rzeczywista pozostaje niezmieniona.',
+        });
+      }
+    }
+
+    try {
+      const existing = existingRow;
+
+      if (existing) {
+        // `actual_cost_savings` is named in the UPDATE only when it is
+        // unchanged (a no-op for the trigger's `IS DISTINCT FROM` check);
+        // on the divergence path it is omitted, so the recorded actual
+        // survives while planned/variance/updated_at still save.
+        const updateSql = actualWriteRejected
+          ? `UPDATE benefit_tracking SET
+          planned_cost_savings = ?, overall_variance_percent = ?, updated_at = ?
+         WHERE id = ?`
+          : `UPDATE benefit_tracking SET
           planned_cost_savings = ?, actual_cost_savings = ?, overall_variance_percent = ?, updated_at = ?
-         WHERE id = ?`,
-            [plannedBenefits, actualBenefits, variancePercent, now, existing.id],
-            { fallback: false }
-          )
+         WHERE id = ?`;
+        const updateParams = actualWriteRejected
+          ? [plannedBenefits, variancePercent, now, existing.id]
+          : [plannedBenefits, actualBenefits, variancePercent, now, existing.id];
+
+        await financeWrite('benefit_tracking', () =>
+          dbRun(updateSql, updateParams, { fallback: false })
         );
       } else {
         await financeWrite('benefit_tracking', () =>
@@ -1612,7 +1764,47 @@ router.put(
       if (error instanceof FinanceStorageUnavailableError) {
         return respondFinanceStorageUnavailable(res, error);
       }
+      // Defence in depth: the pre-checks above mean the append-only trigger
+      // should never fire from this handler, but a concurrent writer can
+      // change `actual_cost_savings` between our SELECT and our UPDATE. Even
+      // then the answer is an honest 409, never a 500 the caller cannot read.
+      if (isBenefitTrackingActualProtectionError(error)) {
+        logger.warn(
+          '[economics] benefit_tracking actual_* protection tripped after pre-check (concurrent writer)',
+          {
+            initiativeId: analysis.initiative_id,
+            trackingPeriod,
+          }
+        );
+        return res.status(409).json({
+          success: false,
+          error: 'BENEFIT_ACTUAL_APPEND_ONLY',
+          actualBenefitsWriteRejected: true,
+          requestedActualBenefits: actualBenefits,
+          message:
+            'Zarejestrowana wartość rzeczywista zmieniła się równolegle — nic nie nadpisano. ' +
+            'Odśwież dane i spróbuj ponownie.',
+        });
+      }
       throw error;
+    }
+
+    if (actualWriteRejected) {
+      return res.json({
+        success: true,
+        actualBenefitsWriteRejected: true,
+        storedActualBenefits,
+        requestedActualBenefits: actualBenefits,
+        reconciliationId: reconciliation?.reconciliationId ?? null,
+        reconciliationOpened: reconciliation?.reconciliationOpened ?? false,
+        materialityThresholdPercent: reconciliation?.thresholdPercent ?? null,
+        divergencePercent: reconciliation?.divergencePercent ?? null,
+        message: reconciliation?.reconciliationOpened
+          ? 'Zarejestrowanej wartości rzeczywistej nie nadpisano — rozbieżność zapisano jako ' +
+            'uzgodnienie ROI/Finance do wyjaśnienia.'
+          : 'Zarejestrowanej wartości rzeczywistej nie nadpisano — rozbieżność mieści się w ' +
+            'progu istotności, więc nie otwarto uzgodnienia. Pozostałe pola zapisano.',
+      });
     }
 
     return res.json({ success: true });

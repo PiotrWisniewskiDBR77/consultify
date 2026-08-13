@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { normalizeDeckDocument } from '../presentationDeckDocumentService';
+import { normalizeDeckDocument } from '../presentationDeckDocumentService.js';
 
 describe('presentationDeckDocumentService.normalizeDeckDocument', () => {
   it('falls back to unified_json when schemaVersion deck_json has empty cards', () => {

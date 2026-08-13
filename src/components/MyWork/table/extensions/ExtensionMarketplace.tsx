@@ -1,4 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
+// `TFunction` is exported by `i18next`, not by `react-i18next` — importing it from the
+// latter compiles under esbuild (which strips types without checking them) and fails
+// under `tsc` with TS2305.
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 
 interface MarketplaceExtension {
   id: string;
@@ -23,27 +28,39 @@ interface ExtensionMarketplaceProps {
   onOpenExtension?: (ext: InstalledExtension) => void;
 }
 
-const CATEGORIES = [
-  { key: 'all', label: 'All' },
-  { key: 'utility', label: 'Utility' },
-  { key: 'visualization', label: 'Visualization' },
-  { key: 'integration', label: 'Integration' },
-  { key: 'automation', label: 'Automation' },
-] as const;
+const getCategories = (t: TFunction) =>
+  [
+    { key: 'all', label: t('myWorkTable.extensionMarketplace.categoryAll', 'All') },
+    { key: 'utility', label: t('myWorkTable.extensionMarketplace.categoryUtility', 'Utility') },
+    {
+      key: 'visualization',
+      label: t('myWorkTable.extensionMarketplace.categoryVisualization', 'Visualization'),
+    },
+    {
+      key: 'integration',
+      label: t('myWorkTable.extensionMarketplace.categoryIntegration', 'Integration'),
+    },
+    {
+      key: 'automation',
+      label: t('myWorkTable.extensionMarketplace.categoryAutomation', 'Automation'),
+    },
+  ] as const;
 
-const SCOPE_LABELS: Record<string, string> = {
-  'records:read': 'Read records',
-  'records:write': 'Write records',
-  'metadata:read': 'Read schema',
-  'metadata:write': 'Modify schema',
-  network: 'Network access',
-  ui: 'UI controls',
-};
+const getScopeLabels = (t: TFunction): Record<string, string> => ({
+  'records:read': t('myWorkTable.extensionMarketplace.scopeRecordsRead', 'Read records'),
+  'records:write': t('myWorkTable.extensionMarketplace.scopeRecordsWrite', 'Write records'),
+  'metadata:read': t('myWorkTable.extensionMarketplace.scopeMetadataRead', 'Read schema'),
+  'metadata:write': t('myWorkTable.extensionMarketplace.scopeMetadataWrite', 'Modify schema'),
+  network: t('myWorkTable.extensionMarketplace.scopeNetwork', 'Network access'),
+  ui: t('myWorkTable.extensionMarketplace.scopeUi', 'UI controls'),
+});
 
 export const ExtensionMarketplace: React.FC<ExtensionMarketplaceProps> = ({
   baseId,
   onOpenExtension,
 }) => {
+  const { t } = useTranslation();
+  const CATEGORIES = getCategories(t);
   const [tab, setTab] = useState<'marketplace' | 'installed'>('installed');
   const [category, setCategory] = useState('all');
   const [marketplace, setMarketplace] = useState<MarketplaceExtension[]>([]);
@@ -116,7 +133,7 @@ export const ExtensionMarketplace: React.FC<ExtensionMarketplaceProps> = ({
               : 'border-transparent text-c-text-muted hover:text-c-text-secondary'
           }`}
         >
-          Installed ({installed.length})
+          {t('myWorkTable.extensionMarketplace.installedCount', 'Installed ({{count}})', { count: installed.length })}
         </button>
         <button
           onClick={() => setTab('marketplace')}
@@ -126,7 +143,7 @@ export const ExtensionMarketplace: React.FC<ExtensionMarketplaceProps> = ({
               : 'border-transparent text-c-text-muted hover:text-c-text-secondary'
           }`}
         >
-          Marketplace
+          {t('myWorkTable.extensionMarketplace.marketplace', 'Marketplace')}
         </button>
       </div>
 
@@ -153,13 +170,13 @@ export const ExtensionMarketplace: React.FC<ExtensionMarketplaceProps> = ({
       <div className="flex-1 overflow-y-auto p-4">
         {loading ? (
           <div className="flex items-center justify-center py-12 text-c-text-secondary text-sm">
-            Loading extensions...
+            {t('myWorkTable.extensionMarketplace.loadingExtensions', 'Loading extensions...')}
           </div>
         ) : tab === 'marketplace' ? (
           marketplace.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-c-text-secondary">
-              <p className="text-sm">No extensions available yet.</p>
-              <p className="text-xs mt-1">Check back later or register your own.</p>
+              <p className="text-sm">{t('myWorkTable.extensionMarketplace.noneAvailable', 'No extensions available yet.')}</p>
+              <p className="text-xs mt-1">{t('myWorkTable.extensionMarketplace.checkBackLater', 'Check back later or register your own.')}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -177,12 +194,12 @@ export const ExtensionMarketplace: React.FC<ExtensionMarketplaceProps> = ({
           )
         ) : installed.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-c-text-secondary">
-            <p className="text-sm">No extensions installed.</p>
+            <p className="text-sm">{t('myWorkTable.extensionMarketplace.noneInstalled', 'No extensions installed.')}</p>
             <button
               onClick={() => setTab('marketplace')}
               className="mt-2 text-xs text-c-tag-2 hover:text-c-tag-2"
             >
-              Browse marketplace
+              {t('myWorkTable.extensionMarketplace.browseMarketplace', 'Browse marketplace')}
             </button>
           </div>
         ) : (
@@ -222,6 +239,8 @@ const ExtensionCard: React.FC<ExtensionCardProps> = ({
   onUninstall,
   onOpen,
 }) => {
+  const { t } = useTranslation();
+  const SCOPE_LABELS = getScopeLabels(t);
   const [showScopes, setShowScopes] = useState(false);
 
   return (
@@ -242,7 +261,13 @@ const ExtensionCard: React.FC<ExtensionCardProps> = ({
         )}
         <div className="flex-1 min-w-0">
           <h3 className="text-sm font-semibold text-c-text truncate">{extension.name}</h3>
-          {extension.author && <p className="text-xs text-c-text-muted">by {extension.author}</p>}
+          {extension.author && (
+            <p className="text-xs text-c-text-muted">
+              {t('myWorkTable.extensionMarketplace.byAuthor', 'by {{author}}', {
+                author: extension.author,
+              })}
+            </p>
+          )}
         </div>
         <span className="text-xs text-c-text-secondary flex-shrink-0">v{extension.version}</span>
       </div>
@@ -256,13 +281,13 @@ const ExtensionCard: React.FC<ExtensionCardProps> = ({
           {extension.category}
         </span>
         <span>
-          {extension.install_count} install{extension.install_count !== 1 ? 's' : ''}
+          {t('myWorkTable.extensionMarketplace.installCount', { count: extension.install_count })}
         </span>
         <button
           onClick={() => setShowScopes(!showScopes)}
           className="ml-auto text-c-text-secondary hover:text-c-text-secondary"
         >
-          {extension.scopes.length} scope{extension.scopes.length !== 1 ? 's' : ''}
+          {t('myWorkTable.extensionHost.scopeCount', { count: extension.scopes.length })}
         </button>
       </div>
 
@@ -287,14 +312,14 @@ const ExtensionCard: React.FC<ExtensionCardProps> = ({
                 onClick={onOpen}
                 className="flex-1 px-3 py-1.5 text-xs font-medium text-c-text bg-c-tag-2 rounded hover:bg-c-tag-2 transition-colors"
               >
-                Open
+                {t('myWorkTable.extensionMarketplace.open', 'Open')}
               </button>
             )}
             <button
               onClick={onUninstall}
               className="px-3 py-1.5 text-xs font-medium text-c-danger bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] rounded hover:bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] transition-colors"
             >
-              Uninstall
+              {t('myWorkTable.extensionMarketplace.uninstall', 'Uninstall')}
             </button>
           </>
         ) : (
@@ -303,7 +328,9 @@ const ExtensionCard: React.FC<ExtensionCardProps> = ({
             disabled={isInstalling}
             className="flex-1 px-3 py-1.5 text-xs font-medium text-c-text bg-c-tag-2 rounded hover:bg-c-tag-2 disabled:opacity-50 transition-colors"
           >
-            {isInstalling ? 'Installing...' : 'Install'}
+            {isInstalling
+              ? t('myWorkTable.extensionMarketplace.installing', 'Installing...')
+              : t('myWorkTable.extensionMarketplace.install', 'Install')}
           </button>
         )}
       </div>

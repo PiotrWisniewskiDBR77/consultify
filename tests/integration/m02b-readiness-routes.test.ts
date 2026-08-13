@@ -46,7 +46,24 @@ describe('M02-019 — readiness routes (production handlers)', () => {
   let app: Express;
 
   beforeEach(() => {
-    state = { dbReady: false, dbInitError: null, migrations: { state: 'pending', detail: null } };
+    state = {
+      dbReady: false,
+      dbInitError: null,
+      migrations: { state: 'pending', detail: null },
+      // Readiness now requires BOTH ledgers; default the SQL chain to healthy so these cases
+      // continue to exercise the Table Platform dimension they were written for.
+      sqlMigrations: {
+        state: 'ok',
+        failed: 0,
+        skipped: 0,
+        pending: 0,
+        unexplainedDrift: 0,
+        approvedVariants: 0,
+        attestedLegacyVariants: 0,
+        detail: 'chain complete',
+      },
+      buildSha: 'testsha0000',
+    };
     app = buildApp(state);
   });
 

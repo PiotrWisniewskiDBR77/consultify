@@ -18,12 +18,13 @@ import {
   X,
   XCircle,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui';
 import { LoadingState } from '@/components/ui/primitives';
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import * as Api from '@/services/api/tablePlatform.api';
 
 import { DataLineageView } from './DataLineageView';
@@ -192,6 +193,9 @@ function CreateModelWizard({
   const { t } = useTranslation();
   const [step, setStep] = useState<WizardStep>(1);
   const [saving, setSaving] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  useDialogA11y({ open: true, onClose, containerRef: dialogRef, initialFocusRef: nameInputRef });
   const [wiz, setWiz] = useState<WizardState>({
     name: '',
     description: '',
@@ -267,12 +271,17 @@ function CreateModelWizard({
       onClick={onClose}
     >
       <div
-        className="w-[560px] max-w-[95vw] max-h-[85vh] bg-c-bg rounded-2xl shadow-2xl border border-c-border-subtle flex flex-col overflow-hidden"
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="create-model-wizard-title"
+        tabIndex={-1}
+        className="w-[560px] max-w-[95vw] max-h-[85vh] bg-c-bg rounded-2xl shadow-2xl border border-c-border-subtle flex flex-col overflow-hidden outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
-          <h3 className="text-sm font-semibold text-c-text">
+          <h3 id="create-model-wizard-title" className="text-sm font-semibold text-c-text">
             {t('myWorkTable.governedModels.newDataModel')}
           </h3>
           <button onClick={onClose} className="p-1 rounded hover:bg-c-surface-raised">
@@ -308,11 +317,11 @@ function CreateModelWizard({
                 {t('myWorkTable.governedModels.modelName')}
               </label>
               <input
+                ref={nameInputRef}
                 className={inputCls}
                 value={wiz.name}
                 onChange={(e) => setWiz((p) => ({ ...p, name: e.target.value }))}
                 placeholder={t('myWorkTable.governedModels.eGRevenueModel')}
-                autoFocus
               />
               <label className="block text-xs font-medium text-c-text-muted mt-3">
                 {t('myWorkTable.governedModels.description')}
@@ -405,10 +414,18 @@ function CreateModelWizard({
                         setWiz((p) => ({ ...p, kpis }));
                       }}
                     >
-                      <option value="field_sum">SUM</option>
-                      <option value="field_avg">AVG</option>
-                      <option value="field_count">COUNT</option>
-                      <option value="expression">Expression</option>
+                      <option value="field_sum">
+                        {t('myWorkTable.governedModels.formulaSum', 'SUM')}
+                      </option>
+                      <option value="field_avg">
+                        {t('myWorkTable.governedModels.formulaAvg', 'AVG')}
+                      </option>
+                      <option value="field_count">
+                        {t('myWorkTable.governedModels.formulaCount', 'COUNT')}
+                      </option>
+                      <option value="expression">
+                        {t('myWorkTable.governedModels.formulaExpression', 'Expression')}
+                      </option>
                     </select>
                     <input
                       className={inputCls}
@@ -727,6 +744,9 @@ function EditModelModal({
   const [description, setDescription] = useState(model.description ?? '');
   const [status, setStatus] = useState(model.status ?? 'draft');
   const [saving, setSaving] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  useDialogA11y({ open: true, onClose, containerRef: dialogRef, initialFocusRef: nameInputRef });
 
   const inputCls =
     'w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-crimson-500/40';
@@ -766,11 +786,16 @@ function EditModelModal({
       onClick={onClose}
     >
       <div
-        className="w-[480px] max-w-[95vw] max-h-[85vh] bg-c-bg rounded-2xl shadow-2xl border border-c-border-subtle flex flex-col overflow-hidden"
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="edit-model-modal-title"
+        tabIndex={-1}
+        className="w-[480px] max-w-[95vw] max-h-[85vh] bg-c-bg rounded-2xl shadow-2xl border border-c-border-subtle flex flex-col overflow-hidden outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
-          <h3 className="text-sm font-semibold text-c-text">
+          <h3 id="edit-model-modal-title" className="text-sm font-semibold text-c-text">
             {t('myWorkTable.governedModels.editModel')}
           </h3>
           <button
@@ -788,10 +813,10 @@ function EditModelModal({
               {t('myWorkTable.governedModels.modelName')}
             </label>
             <input
+              ref={nameInputRef}
               className={inputCls}
               value={name}
               onChange={(e) => setName(e.target.value)}
-              autoFocus
             />
           </div>
           <div>
@@ -874,6 +899,13 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
   const [kpiValues, setKpiValues] = useState<Record<string, KpiValue>>({});
   const [selectedModel, setSelectedModel] = useState<GovernedModel | null>(null);
   const [editModel, setEditModel] = useState<GovernedModel | null>(null);
+  const selectedModelDialogRef = useRef<HTMLDivElement>(null);
+  const closeSelectedModel = useCallback(() => setSelectedModel(null), []);
+  useDialogA11y({
+    open: !!selectedModel,
+    onClose: closeSelectedModel,
+    containerRef: selectedModelDialogRef,
+  });
 
   const loadModels = useCallback(async () => {
     setLoading(true);
@@ -1012,16 +1044,23 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
       {selectedModel && (
         <div
           className="fixed inset-0 z-[150] flex items-stretch justify-end bg-black/20 backdrop-blur-[2px]"
-          onClick={() => setSelectedModel(null)}
+          onClick={closeSelectedModel}
         >
           <div
-            className="w-[480px] max-w-[90vw] h-full bg-c-bg border-l border-c-border-subtle shadow-2xl overflow-y-auto p-5"
+            ref={selectedModelDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="governed-model-detail-title"
+            tabIndex={-1}
+            className="w-[480px] max-w-[90vw] h-full bg-c-bg border-l border-c-border-subtle shadow-2xl overflow-y-auto p-5 outline-none"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-c-text">{selectedModel.name}</h3>
+              <h3 id="governed-model-detail-title" className="text-sm font-semibold text-c-text">
+                {selectedModel.name}
+              </h3>
               <button
-                onClick={() => setSelectedModel(null)}
+                onClick={closeSelectedModel}
                 className="p-1 rounded hover:bg-c-surface-raised"
               >
                 <X size={16} className="text-c-text-secondary" />

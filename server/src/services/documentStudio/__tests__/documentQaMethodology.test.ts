@@ -29,7 +29,9 @@ function makeSchema(overrides: Partial<DocumentSchema> = {}): DocumentSchema {
     documentType: 'ai_audit_report',
     language: 'en',
     audience: ['Board'],
-    goal: 'audit',
+    // 'audit' is not a member of DocumentGoal (inform|decide|approve|recommend|align);
+    // the QA service never reads `goal`, so 'inform' keeps the fixture behaviour identical.
+    goal: 'inform',
     communicationRegister: 'executive',
     density: 'detailed',
     languageStyle: 'consulting',
@@ -129,10 +131,12 @@ function makeAuditTemplate(overrides: Partial<DocumentTemplate> = {}): DocumentT
 function makeSection(
   sectionId: string,
   title: string,
-  bodyWords = 35
+  bodyWords = 35,
+  orderIndex = 0
 ): DocumentSchema['sections'][number] {
   return {
     sectionId,
+    orderIndex,
     title,
     level: 1,
     blocks: [makeParagraph(`${sectionId}-b1`, longPara().split(' ').slice(0, bodyWords).join(' '))],

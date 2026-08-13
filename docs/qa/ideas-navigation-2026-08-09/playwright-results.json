@@ -1,0 +1,153 @@
+{
+  "config": {
+    "configFile": "/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/playwright.ideas-navigation.config.ts",
+    "rootDir": "/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/tests/e2e",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "docs/qa/ideas-navigation-2026-08-09/playwright-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "ideas-navigation-matrix.spec.ts"
+        ],
+        "timeout": 600000
+      }
+    ],
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.57.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "ideas-navigation-matrix.spec.ts",
+      "file": "ideas-navigation-matrix.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "Ideas context menu keyboard contract",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 600000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 27670,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/chat/\u001b[39m\nReceived string:  \u001b[31m\"http://127.0.0.1:3000/login\"\u001b[39m\nTimeout: 20000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 20000ms\u001b[22m\n\u001b[2m    23 × unexpected value \"http://127.0.0.1:3000/login\"\u001b[22m\n",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/chat/\u001b[39m\nReceived string:  \u001b[31m\"http://127.0.0.1:3000/login\"\u001b[39m\nTimeout: 20000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 20000ms\u001b[22m\n\u001b[2m    23 × unexpected value \"http://127.0.0.1:3000/login\"\u001b[22m\n\n    at localPinLogin (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/tests/e2e/ideas-navigation-matrix.spec.ts:29:22)\n    at /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/tests/e2e/ideas-navigation-matrix.spec.ts:158:3",
+                    "location": {
+                      "file": "/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/tests/e2e/ideas-navigation-matrix.spec.ts",
+                      "column": 22,
+                      "line": 29
+                    },
+                    "snippet": "  27 |   // Four digits submit automatically. Pressing Enter races the route change\n  28 |   // and can retry forever against a detached input.\n> 29 |   await expect(page).toHaveURL(/\\/chat/, { timeout: 20000 });\n     |                      ^\n  30 | }\n  31 |\n  32 | async function openTransientWorkspace("
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/tests/e2e/ideas-navigation-matrix.spec.ts",
+                        "column": 22,
+                        "line": 29
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/chat/\u001b[39m\nReceived string:  \u001b[31m\"http://127.0.0.1:3000/login\"\u001b[39m\nTimeout: 20000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 20000ms\u001b[22m\n\u001b[2m    23 × unexpected value \"http://127.0.0.1:3000/login\"\u001b[22m\n\n\n  27 |   // Four digits submit automatically. Pressing Enter races the route change\n  28 |   // and can retry forever against a detached input.\n> 29 |   await expect(page).toHaveURL(/\\/chat/, { timeout: 20000 });\n     |                      ^\n  30 | }\n  31 |\n  32 | async function openTransientWorkspace(\n    at localPinLogin (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/tests/e2e/ideas-navigation-matrix.spec.ts:29:22)\n    at /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/tests/e2e/ideas-navigation-matrix.spec.ts:158:3"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-09T05:05:23.122Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/test-results/ideas-navigation-matrix-Ideas-context-menu-keyboard-contract/test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/test-results/ideas-navigation-matrix-Ideas-context-menu-keyboard-contract/error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/test-results/ideas-navigation-matrix-Ideas-context-menu-keyboard-contract/trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/tests/e2e/ideas-navigation-matrix.spec.ts",
+                    "column": 22,
+                    "line": 29
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "014d47e35cd0debb685f-4a0516cf411515cee8dc",
+          "file": "ideas-navigation-matrix.spec.ts",
+          "line": 156,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-08-09T05:05:19.626Z",
+    "duration": 33973.644,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

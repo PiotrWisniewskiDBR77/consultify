@@ -292,9 +292,10 @@ describe('Chat Routes (/api/v8/chat)', () => {
       mockCaptureSnapshot.mockRejectedValue(
         new ZodError([
           {
+            // zod v4 dropped `received` from invalid_type issues; the assertion
+            // below only reads the mapped VALIDATION_ERROR code.
             code: 'invalid_type',
             expected: 'string',
-            received: 'undefined',
             path: ['workspaceId'],
             message: 'Required',
           },

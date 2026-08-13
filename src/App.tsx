@@ -10,6 +10,7 @@ import { Api } from '@/services/api';
 import { syncLanguageFromAccount } from '@/services/languagePreference';
 import { initializeTokenServiceOnce, tokenService } from '@/services/tokenService';
 import { bootstrapAccessibilityPreferences } from '@/utils/accessibilityRuntime';
+import { isCaseWorkspaceEnabled } from '@/components/CaseWorkspace/caseWorkspaceFlag';
 import { seedReviewModeFlags } from '@/utils/reviewModeSeed';
 import { isRuntimeDiagnosticMode, logRuntimeDiagnosticMarker } from '@/utils/runtimeDiagnostics';
 
@@ -49,6 +50,13 @@ const SubscriberDashboardPage = React.lazy(
 // routes above (this is a design-system reference, not user data).
 const StyleGuidePage = React.lazy(() => import('./pages/dev/StyleGuide'));
 const isStyleGuideEnabled = import.meta.env.VITE_ENABLE_STYLEGUIDE === 'true';
+// Zlecenia (Case Workspace) — moduł ZA FLAGĄ, DOMYŚLNIE WYŁĄCZONY.
+// Ta sama mechanika co `isStyleGuideEnabled` powyżej: przy wyłączonej fladze
+// <Route> w ogóle nie trafia do <Routes>, więc dla wszystkich pozostałych
+// użytkowników nic się nie zmienia (CLAUDE.md reguła #9 — zakaz masowego
+// włączania; moduł wchodzi na demo dopiero po akcepcie właściciela).
+const CaseWorkspaceRoute = React.lazy(() => import('./components/CaseWorkspace/CaseWorkspaceRoute'));
+const isCaseWorkspaceEnabledAtBoot = isCaseWorkspaceEnabled();
 
 type AuthBootState = {
   inflightMeRequest: Promise<User | null> | null;
@@ -532,6 +540,26 @@ function AppContent() {
                 }
               >
                 <StyleGuidePage />
+              </React.Suspense>
+            }
+          />
+        ) : null}
+        {/* Zlecenia (Case Workspace) — DOMYŚLNIE WYŁĄCZONE. Trasa istnieje tylko
+            przy włączonej fladze (`?ff_zlecenia=1` / localStorage / env), więc dla
+            wszystkich pozostałych `/zlecenia` spada do `AppRoutes` jak dotąd.
+            Musi stać PRZED catch-allem `/*`, inaczej nigdy nie zostanie trafiona. */}
+        {isCaseWorkspaceEnabledAtBoot ? (
+          <Route
+            path="/zlecenia/*"
+            element={
+              <React.Suspense
+                fallback={
+                  <div className="flex h-screen items-center justify-center">
+                    <Loader2 className="animate-spin text-c-text-muted" />
+                  </div>
+                }
+              >
+                <CaseWorkspaceRoute />
               </React.Suspense>
             }
           />

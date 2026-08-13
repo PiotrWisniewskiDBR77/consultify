@@ -26,7 +26,7 @@ BEGIN
     ADD CONSTRAINT artifact_evidence_artifact_type_check
     CHECK (artifact_type IN (
       'insight', 'initiative', 'task', 'decision', 'report', 'deck',
-      'document', 'kpi', 'finance_number', 'benefit', 'canvas', 'project',
+      'document', 'sheet', 'kpi', 'finance_number', 'benefit', 'canvas', 'project',
       'source', 'assessment', 'note', 'other'
     ));
 EXCEPTION WHEN undefined_table THEN

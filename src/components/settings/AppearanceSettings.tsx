@@ -545,7 +545,7 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
               de: '🇩🇪',
               es: '🇪🇸',
               ar: '🇸🇦',
-              jp: '🇯🇵',
+              ja: '🇯🇵',
             };
             const allLanguages = SUPPORTED_LANGUAGES.map((code) => ({
               code,

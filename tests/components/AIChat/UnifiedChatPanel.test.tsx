@@ -11,6 +11,13 @@ import toast from 'react-hot-toast';
 
 const h = vi.hoisted(() => ({
   trackFunnelEventMock: vi.fn(),
+  // RISK-30 (S22-TERESA, 2026-08-12) — controllable per-test double for the
+  // Z4 tool-executor. Real `executeTeresaTool` runs the full registry
+  // (`runIdeaAction` -> handler); these reply-layer tests only care about
+  // what UnifiedChatPanel DOES with a given `ActionResult`, so they drive it
+  // directly rather than re-exercising the whole registry here (that is
+  // covered separately by `runtimeHelpers`-level tests).
+  executeTeresaToolMock: vi.fn(),
   apiMock: {
     agentAuditAcceptRun: vi.fn(),
     agentAuditListAgents: vi.fn(),
@@ -39,6 +46,18 @@ vi.mock('../../../src/services/funnelAnalytics', () => ({
 vi.mock('../../../src/services/api', () => ({
   Api: h.apiMock,
   default: h.apiMock,
+}));
+
+// RISK-30 (S22-TERESA): `buildTeresaToolManifest`/`toServerIdeaActionManifest`
+// stay harmless stubs — they only run when `activeIdeaWorkspaceTool` is one
+// of the four canvas tools (null by default, so every PRE-EXISTING test in
+// this file never touches them). `executeTeresaTool` is the one function the
+// new `describe` block below configures per test.
+vi.mock('../../../src/actions/teresaActionManifest', () => ({
+  buildTeresaToolManifest: () => [],
+  toServerIdeaActionManifest: () => [],
+  shouldUseLegacyIdeaIntentFallback: () => false,
+  executeTeresaTool: h.executeTeresaToolMock,
 }));
 
 function renderWithRouter(ui: React.ReactElement) {
@@ -345,11 +364,40 @@ vi.mock('../../../src/components/AIChat/MessageRenderer', () => ({
       handleMultiSelectToggle,
       handleMultiSelectConfirm,
       handleAgentAuditAccept,
+      teresaPendingConfirm,
+      teresaConfirmBusy,
+      onTeresaConfirmProceed,
+      onTeresaConfirmCancel,
     } = props;
 
     return (
       <div data-testid="message-renderer">
         <div data-testid="msg-id">{msg.id}</div>
+        {/* RISK-30 (S22-TERESA, 2026-08-12) — real props from UnifiedChatPanel's
+            own `teresaPendingConfirm` state (set inside `onIdeaAction` when the
+            registry asks for confirmation), not a stub: clicking these buttons
+            exercises the ACTUAL `handleTeresaConfirmProceed`/`handleTeresaConfirmCancel`
+            callbacks. Renders once per message row (same as every other prop
+            here); harmless no-op for every OTHER test in this file because
+            `teresaPendingConfirm` stays null unless a test drives `onIdeaAction`
+            into the confirm-required branch. */}
+        {msg?.metadata?.teresaConfirm ? (
+          <div data-testid="teresa-confirm-message">{msg.content}</div>
+        ) : null}
+        {teresaPendingConfirm ? (
+          <div data-testid="teresa-confirm-block">
+            <button
+              data-testid="teresa-confirm-proceed"
+              disabled={teresaConfirmBusy}
+              onClick={() => onTeresaConfirmProceed?.()}
+            >
+              teresa-confirm-proceed
+            </button>
+            <button data-testid="teresa-confirm-cancel" onClick={() => onTeresaConfirmCancel?.()}>
+              teresa-confirm-cancel
+            </button>
+          </div>
+        ) : null}
         <div data-testid="copied-id">{copiedMessageId || ''}</div>
         <div data-testid="editing-id">{editingMessageId || ''}</div>
         <div data-testid="editing-text">{editingText || ''}</div>
@@ -1762,5 +1810,326 @@ describe('UnifiedChatPanel (L2)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'multi-confirm' }));
 
     expect(onMultiSelectSubmit).toHaveBeenCalledWith(['a', 'b']);
+  });
+
+  // ==========================================================================
+  // RISK-30 (S22-TERESA, 2026-08-12) — reply layer honesty for Teresa's
+  // idea-action tool calls. Every test here asserts what `addChatMessage` was
+  // called with — the exact `content` string that `MessageRenderer` puts on
+  // screen for an AI message (this file's own precedent for "what the user
+  // sees", e.g. the "agent audit accept" test above) — never just the raw
+  // `ActionResult` object. `executeTeresaTool` is fully mocked
+  // (`h.executeTeresaToolMock`) so each test controls exactly the result
+  // `onIdeaAction`/`handleTeresaConfirmProceed` receive, independent of the
+  // real registry (covered separately for the runtimeHelpers.ts migration).
+  // ==========================================================================
+  describe('RISK-30 S22 — Teresa idea-action reply layer', () => {
+    // The outer `beforeEach` above only does `vi.clearAllMocks()`, which
+    // clears call history but NOT queued `mockResolvedValueOnce`/
+    // `mockRejectedValueOnce` implementations — those survive a retry
+    // (`vitest.config.ts` retries once locally), so a failed first attempt
+    // can leave an unconsumed queued value that shifts the RETRY's calls out
+    // of order. `mockReset()` clears the queue too; each test queues its own.
+    beforeEach(() => {
+      h.executeTeresaToolMock.mockReset();
+    });
+
+    // Fake `t` matching real i18next's `{{var}}` interpolation (the global
+    // test-setup mock in `tests/setup.ts` only replaces single-brace `{var}`,
+    // a test-environment quirk unrelated to production — see the "unconfirmed"
+    // component-level test below, which asserts via `toMatch`/`toContain`
+    // specifically to stay correct under that quirk). This unit describe
+    // tests the pure function directly, so it uses the REAL interpolation
+    // syntax the production keys actually use.
+    const fakeT = (_key: string, opts: { defaultValue: string; action?: string }) =>
+      opts.defaultValue.replace('{{action}}', String(opts.action ?? ''));
+
+    describe('describeUnconfirmedTeresaResult (pure helper — decides what the user sees)', () => {
+      it('passes an existing result.message through verbatim (refusals keep the registry\'s own text)', () => {
+        const content = unifiedChatPrivate.describeUnconfirmedTeresaResult(
+          { ok: false, actionId: 'x', message: 'Nie mogę tego zrobić.' },
+          'idea_x',
+          fakeT
+        );
+        expect(content).toBe('Nie mogę tego zrobić.');
+      });
+
+      it('ok:true + confirmed:true + no message -> null (a real confirmation is not the RISK-30 defect)', () => {
+        const content = unifiedChatPrivate.describeUnconfirmedTeresaResult(
+          { ok: true, actionId: 'x', confirmed: true },
+          'idea_x',
+          fakeT
+        );
+        expect(content).toBeNull();
+      });
+
+      it('ok:true + confirmed:false + no message -> honest "unconfirmed" fallback naming the action', () => {
+        const content = unifiedChatPrivate.describeUnconfirmedTeresaResult(
+          { ok: true, actionId: 'x', confirmed: false },
+          'idea_lane_pf_delete',
+          fakeT
+        );
+        expect(content).toContain('idea_lane_pf_delete');
+        expect(content).toMatch(/nie mam potwierdzenia/i);
+      });
+
+      it('ok:true + confirmed left undefined (never-migrated shape) is treated exactly like confirmed:false', () => {
+        const content = unifiedChatPrivate.describeUnconfirmedTeresaResult(
+          { ok: true, actionId: 'x' },
+          'idea_y',
+          fakeT
+        );
+        expect(content).toContain('idea_y');
+        expect(content).toMatch(/nie mam potwierdzenia/i);
+      });
+
+      it('ok:false + no message (defensive — registry convention says this should not happen) -> honest generic refusal naming the action', () => {
+        const content = unifiedChatPrivate.describeUnconfirmedTeresaResult(
+          { ok: false, actionId: 'x' },
+          'idea_z',
+          fakeT
+        );
+        expect(content).toContain('idea_z');
+        expect(content).toMatch(/odmówił/i);
+      });
+
+      it('no result at all (the catch/exception path) -> null, left to the caller', () => {
+        const content = unifiedChatPrivate.describeUnconfirmedTeresaResult(undefined, 'idea_w', fakeT);
+        expect(content).toBeNull();
+      });
+    });
+
+    // Populates `teresaIdeaCtxRef` (a ref read only inside `onIdeaAction`) by
+    // driving the SAME path a real Idea workspace uses: broadcast the active
+    // tool, then send one message so `handleSendMessage` runs and captures it
+    // — exactly like the pre-existing "agent audit (post Deep Thinking)" test
+    // above (`renderWithRouter` + `send-button` + `waitFor(startStreamMock)`).
+    async function openMindmapContextAndSend() {
+      act(() => {
+        window.dispatchEvent(
+          new CustomEvent('idea-workspace-active-tool', { detail: { tool: 'mindmap' } })
+        );
+      });
+      fireEvent.click(screen.getByTestId('send-button'));
+      await waitFor(() => expect(startStreamMock).toHaveBeenCalled());
+    }
+
+    // `displayMessages` is `customMessages || messages` — an EMPTY array is
+    // still truthy in JS, so `customMessages={[]}` would permanently starve
+    // `.map(renderMessage)` and `MessageRenderer` (and the `teresaPendingConfirm`
+    // props it carries) would never render even once, regardless of how many
+    // `addChatMessage` calls happen afterwards (that mock has no store side
+    // effect — same reason the pre-existing tests in this file seed BOTH
+    // `conversationStoreState.activeMessages` and a matching `customMessages`
+    // prop, e.g. the "inline edit & regenerate" test above). One seed row is
+    // enough to give `MessageRenderer` a mount point to read live props from.
+    function renderWithIdeaWorkspace() {
+      conversationStoreState.activeMessages = [
+        { id: 'seed-1', role: 'user', content: 'hi', createdAt: new Date(), metadata: {} },
+      ];
+      return renderWithRouter(
+        <UnifiedChatPanel
+          workspaceContext={
+            {
+              view: 'MY_WORK',
+              type: 'idea',
+              entityId: 'idea-1',
+              timestamp: new Date(),
+            } as any
+          }
+          customMessages={[{ id: 'seed-1', role: 'user', content: 'hi', timestamp: new Date() } as any]}
+        />
+      );
+    }
+
+    it('proposal -> confirm -> execution -> result: shows the confirm prompt, then the real result after Confirm', async () => {
+      conversationStoreState.activeConversationId = 'conv-risk30-1';
+      h.executeTeresaToolMock
+        .mockResolvedValueOnce({
+          ok: false,
+          actionId: 'idea.lane.pf_delete',
+          message: 'Usunąć jedyny tor? Nie da się tego cofnąć.',
+          data: { needsConfirmation: true },
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          actionId: 'idea.lane.pf_delete',
+          confirmed: true,
+          message: 'Usunięto tor.',
+        });
+
+      renderWithIdeaWorkspace();
+      await openMindmapContextAndSend();
+
+      await act(async () => {
+        await aiStreamOptionsCaptured.onIdeaAction({
+          toolName: 'idea_lane_pf_delete',
+          args: { laneId: 'lane-1' },
+        });
+      });
+
+      // The confirm prompt is exactly the registry's own message — no
+      // fallback text needed, `result.message` was present.
+      expect(addChatMessageMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: 'Usunąć jedyny tor? Nie da się tego cofnąć.',
+          metadata: { teresaConfirm: true },
+        })
+      );
+
+      const proceedBtn = await screen.findByTestId('teresa-confirm-proceed');
+      fireEvent.click(proceedBtn);
+
+      await waitFor(() => expect(h.executeTeresaToolMock).toHaveBeenCalledTimes(2));
+      // The second call is the REAL confirmed execution — same tool, `confirmed: true`.
+      expect(h.executeTeresaToolMock.mock.calls[1][0]).toBe('idea_lane_pf_delete');
+      expect(h.executeTeresaToolMock.mock.calls[1][1]).toEqual(
+        expect.objectContaining({ confirmed: true })
+      );
+      await waitFor(() =>
+        expect(addChatMessageMock).toHaveBeenCalledWith(
+          expect.objectContaining({ content: 'Usunięto tor.' })
+        )
+      );
+    });
+
+    it('decline: registry refusal shows its own message, with no confirm buttons', async () => {
+      conversationStoreState.activeConversationId = 'conv-risk30-2';
+      h.executeTeresaToolMock.mockResolvedValueOnce({
+        ok: false,
+        actionId: 'idea.lane.pf_delete',
+        message:
+          'NIE usunąłem toru `lane-1` — to jedyny pozostały tor Przepływu, a przepływ bez torów nie jest poprawnym stanem.',
+      });
+
+      renderWithIdeaWorkspace();
+      await openMindmapContextAndSend();
+
+      await act(async () => {
+        await aiStreamOptionsCaptured.onIdeaAction({
+          toolName: 'idea_lane_pf_delete',
+          args: { laneId: 'lane-1' },
+        });
+      });
+
+      expect(addChatMessageMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: expect.stringContaining('NIE usunąłem toru'),
+        })
+      );
+      // A plain refusal never sets `teresaConfirm` metadata and never renders
+      // the confirm block — the screen shows exactly one honest message, no
+      // buttons implying there is anything left to confirm.
+      const call = addChatMessageMock.mock.calls.find((c) =>
+        String(c[0]?.content || '').includes('NIE usunąłem toru')
+      );
+      expect(call?.[0]?.metadata).toBeUndefined();
+      expect(screen.queryByTestId('teresa-confirm-block')).not.toBeInTheDocument();
+    });
+
+    it('cancel: clicking "Anuluj" posts the cancellation message and never re-invokes the tool', async () => {
+      conversationStoreState.activeConversationId = 'conv-risk30-3';
+      h.executeTeresaToolMock.mockResolvedValueOnce({
+        ok: false,
+        actionId: 'idea.lane.pf_delete',
+        message: 'Usunąć jedyny tor? Nie da się tego cofnąć.',
+        data: { needsConfirmation: true },
+      });
+
+      renderWithIdeaWorkspace();
+      await openMindmapContextAndSend();
+
+      await act(async () => {
+        await aiStreamOptionsCaptured.onIdeaAction({
+          toolName: 'idea_lane_pf_delete',
+          args: { laneId: 'lane-1' },
+        });
+      });
+
+      const cancelBtn = await screen.findByTestId('teresa-confirm-cancel');
+      fireEvent.click(cancelBtn);
+
+      expect(addChatMessageMock).toHaveBeenCalledWith(
+        expect.objectContaining({ content: 'Cancelled.' })
+      );
+      // Cancelling never re-calls the tool — only the ORIGINAL (unconfirmed) call happened.
+      expect(h.executeTeresaToolMock).toHaveBeenCalledTimes(1);
+      expect(screen.queryByTestId('teresa-confirm-block')).not.toBeInTheDocument();
+    });
+
+    it('error: a thrown/rejected tool call still posts a truthful message naming the action', async () => {
+      conversationStoreState.activeConversationId = 'conv-risk30-4';
+      h.executeTeresaToolMock.mockRejectedValueOnce(new Error('network exploded'));
+
+      renderWithIdeaWorkspace();
+      await openMindmapContextAndSend();
+
+      await act(async () => {
+        await aiStreamOptionsCaptured.onIdeaAction({
+          toolName: 'idea_lane_pf_delete',
+          args: { laneId: 'lane-1' },
+        });
+      });
+
+      // BEFORE this change, the catch block only did `console.warn` — the
+      // model's already-streamed reply stood unchallenged on screen. Now a
+      // real message lands, naming the tool that failed.
+      await waitFor(() =>
+        expect(addChatMessageMock).toHaveBeenCalledWith(
+          expect.objectContaining({
+            content: expect.stringContaining('idea_lane_pf_delete'),
+          })
+        )
+      );
+      const call = addChatMessageMock.mock.calls.find((c) =>
+        String(c[0]?.content || '').includes('idea_lane_pf_delete')
+      );
+      expect(String(call?.[0]?.content)).toMatch(/błąd|error/i);
+    });
+
+    it('unconfirmed/timeout: ok:true with confirmed:false and no message still posts an honest, non-success message naming the action', async () => {
+      conversationStoreState.activeConversationId = 'conv-risk30-5';
+      // Shape of a migrated UI-closure site (`runUiClosureAsync`) whose
+      // closure returned nothing usable, or a bus dispatch whose
+      // `awaitQuickActionAck` resolved `no_receiver` — `ok:true`,
+      // `confirmed:false`, and (the defect) NO `message`.
+      h.executeTeresaToolMock.mockResolvedValueOnce({
+        ok: true,
+        actionId: 'idea.node.duplicate',
+        confirmed: false,
+      });
+
+      renderWithIdeaWorkspace();
+      await openMindmapContextAndSend();
+
+      await act(async () => {
+        await aiStreamOptionsCaptured.onIdeaAction({
+          toolName: 'idea_node_duplicate',
+          args: {},
+        });
+      });
+
+      // BEFORE this change: `if (result?.message)` was false (no message),
+      // so `addChatMessage` was NEVER called — the model's streamed "done"
+      // stood unchallenged. Now a message is posted, and it must not read as
+      // a plain success.
+      await waitFor(() =>
+        expect(addChatMessageMock).toHaveBeenCalledWith(
+          expect.objectContaining({
+            content: expect.stringContaining('idea_node_duplicate'),
+          })
+        )
+      );
+      const call = addChatMessageMock.mock.calls.find((c) =>
+        String(c[0]?.content || '').includes('idea_node_duplicate')
+      );
+      const shown = String(call?.[0]?.content || '');
+      // Explicitly says NO confirmation exists — "nie mam potwierdzenia" —
+      // never a bare claim of success on its own (a standalone "Zrobione."/
+      // "Done." would be the RISK-30 defect this test guards against).
+      expect(shown).toMatch(/nie mam potwierdzenia|no confirmation/i);
+      expect(shown.trim().toLowerCase()).not.toBe('zrobione.');
+      expect(shown.trim().toLowerCase()).not.toBe('done.');
+    });
   });
 });

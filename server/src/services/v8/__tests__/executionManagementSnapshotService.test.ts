@@ -1,11 +1,19 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { getExecutionManagementSnapshot } from '../executionManagementSnapshotService.js';
+import type { ExecutionManagementSnapshotQueryDeps } from '../executionManagementSnapshotService.js';
 
 const ORG = 'org-1';
 const INITIATIVE = 'ini-1';
 
-function deps(overrides: { all?: ReturnType<typeof vi.fn>; get?: ReturnType<typeof vi.fn> } = {}) {
+/**
+ * `QueryDeps.get` / `.all` are generic (`<T>(sql, params?) => Promise<T | T[]>`),
+ * which a vitest mock cannot express; the double is asserted once, here, at the
+ * seam. The stub bodies still return exactly the rows the service reads.
+ */
+function deps(
+  overrides: { all?: ReturnType<typeof vi.fn>; get?: ReturnType<typeof vi.fn> } = {}
+): ExecutionManagementSnapshotQueryDeps {
   return {
     get:
       overrides.get ||
@@ -23,7 +31,7 @@ function deps(overrides: { all?: ReturnType<typeof vi.fn>; get?: ReturnType<type
       }),
     all: overrides.all || vi.fn().mockResolvedValue([]),
     now: () => new Date('2026-08-01T10:00:00.000Z'),
-  };
+  } as unknown as ExecutionManagementSnapshotQueryDeps;
 }
 
 describe('getExecutionManagementSnapshot', () => {

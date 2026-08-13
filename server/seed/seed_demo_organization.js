@@ -1304,12 +1304,14 @@ async function seedProjects() {
 async function seedInitiatives() {
   console.log('🚀 Creating demo initiatives...');
 
-  // Map status to db values
+  // Map status to db values (canonical InitiativeStatus — SSOT:
+  // server/src/constants/initiativeStatuses.ts). The legacy funnel vocabulary
+  // ('step3'/'step4_pilot'/'step5_full') is rejected by initiatives_status_check.
   const statusMap = {
-    IDEA: 'step3',
-    PLANNING: 'step3',
-    EXECUTING: 'step4_pilot',
-    COMPLETED: 'step5_full',
+    IDEA: 'DRAFT',
+    PLANNING: 'PLANNING',
+    EXECUTING: 'EXECUTING',
+    COMPLETED: 'DONE',
   };
 
   // Map priority to business_value
@@ -1336,7 +1338,7 @@ async function seedInitiatives() {
         init.name,
         init.description,
         `Problem: ${init.valueDriver} - ${init.description.substring(0, 100)}`,
-        statusMap[init.status] || 'step3',
+        statusMap[init.status] || 'DRAFT',
         init.status.toLowerCase(),
         priorityMap[init.priority] || 'Med',
         init.costCapex,

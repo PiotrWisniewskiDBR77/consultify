@@ -2,7 +2,8 @@
  * @vitest-environment jsdom
  * StandardTable — podstawowe testy renderu (Triada standard).
  */
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -138,5 +139,68 @@ describe('StandardTable', () => {
   it('shows the mandatory Settings2 view-settings trigger (TableSettingsPopover)', () => {
     render(<StandardTable columns={columns} data={data} rowMenu={rowMenu} />);
     expect(screen.getByLabelText('View settings')).toBeInTheDocument();
+  });
+
+  it('persists column visibility per table and restores it after remount', async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(
+      <StandardTable
+        columns={columns}
+        data={data}
+        rowMenu={rowMenu}
+        persistKey="acceptance.initiatives"
+      />
+    );
+
+    await user.click(screen.getByLabelText('View settings'));
+    await user.click(screen.getAllByText('Status')[1]);
+
+    await waitFor(() => expect(screen.queryByText('APPROVED')).not.toBeInTheDocument());
+    await waitFor(() => {
+      const stored = JSON.parse(
+        window.localStorage.getItem('filterableTable.cols.acceptance.initiatives') ?? '{}'
+      );
+      expect(stored.visibility?.status).toBe(false);
+    });
+
+    unmount();
+    render(
+      <StandardTable
+        columns={columns}
+        data={data}
+        rowMenu={rowMenu}
+        persistKey="acceptance.initiatives"
+      />
+    );
+    expect(screen.queryByText('APPROVED')).not.toBeInTheDocument();
+    expect(screen.queryByText('Status')).not.toBeInTheDocument();
+  });
+
+  it('uses the same row action contract for kebab, right click and Shift+F10', async () => {
+    const open = vi.fn();
+    const preview = vi.fn();
+    const menu: typeof rowMenu = () => ({
+      primary: [{ id: 'open', label: 'Open workspace', onClick: open }],
+      universalHandlers: { preview },
+    });
+    const user = userEvent.setup();
+    render(<StandardTable columns={columns} data={data} rowMenu={menu} />);
+
+    await user.click(screen.getAllByLabelText('Row actions')[0]);
+    expect(screen.getByText('Open workspace')).toBeInTheDocument();
+    expect(screen.getByText('Open preview')).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+
+    const alphaRow = screen.getByText('Alpha').closest('tr');
+    expect(alphaRow).not.toBeNull();
+    fireEvent.contextMenu(alphaRow!, { clientX: 240, clientY: 180 });
+    expect(screen.getByText('Open workspace')).toBeInTheDocument();
+    expect(screen.getByText('Open preview')).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+
+    alphaRow!.focus();
+    await user.keyboard('{Shift>}{F10}{/Shift}');
+    expect(screen.getByText('Open workspace')).toBeInTheDocument();
+    expect(screen.getByText('Open preview')).toBeInTheDocument();
   });
 });

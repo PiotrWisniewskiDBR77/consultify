@@ -1,0 +1,565 @@
+/**
+ * ROI-E002 — benefit-evidence-link command layer (AC-02: a typed
+ * `BenefitEvidenceLink`, never a loose `kpi_id`).
+ *
+ * Design: docs/product/results-vnext/ROI_E002_DESIGN.md §4, Decision D14.
+ * Schema: server/migrations/20260816_rvn_roi_economic_model.sql.
+ *
+ * `addBenefitEvidenceLink` validates that `kpiId`/`pinnedKpiDefinitionVersionId`
+ * exist and share the case's `organization_id` — an ORGANIZATION-scoped
+ * existence check only, NOT a KPI-visibility check on the linker (Decision
+ * D14: referencing a KPI by id/pinned-version is not itself a content leak;
+ * only a repository read that HYDRATES the link into display-ready KPI
+ * content must pass through KPI's own visibility scope —
+ * `roiEconomicModelRepository.ts` owns that hydration rule).
+ *
+ * ROI-E007 §4/Decision D7 (Changed file): `flagEvidenceLinkFreshnessCheck`
+ * appended below — a human acknowledgment that a link's staleness (computed
+ * read-time only by `roiEconomicModelRepository.ts`'s `isStale`, never
+ * stored) has been reviewed. Sets `freshness_checked_at=now()` and NOTHING
+ * else — this command MUST NEVER write to any `rvn_kpi_*` table (AC-05's
+ * "does not auto-propagate values"), verified by a dedicated static
+ * source-text test (design §7). Unlike `addBenefitEvidenceLink`/
+ * `removeBenefitEvidenceLink`, it goes through `executeAtomicCreate` (not
+ * CAS'd `executeAtomicCommand`) — same rationale `verifyActualEntry`
+ * (ROI-E004) uses for a low-stakes acknowledgment action: the row is locked
+ * `FOR UPDATE` inside one transaction, so no lost-update race is possible,
+ * without requiring the caller to first fetch and resupply the link's
+ * current `row_version`.
+ */
+import { randomUUID } from 'node:crypto';
+
+import type { PoolClient } from 'pg';
+
+import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
+import { executeAtomicCommand, executeAtomicCreate, type AtomicCommandOutcome, type AtomicEventInput } from '../platform/atomicWrite.js';
+import {
+  assertCommandCapability,
+  type CommandAccessContext,
+} from '../platform/commandCapabilityGuard.js';
+
+import { RoiEconomicModelNotEditableError } from './roiCalculationPolicyCommands.js';
+import { NON_EDITABLE_STATUSES, ROI_EVENT_SOURCE } from './roiCaseCommands.js';
+import {
+  toRoiBenefitEvidenceLink,
+  type RoiBenefitEvidenceLink,
+  type RoiBenefitEvidenceLinkRow,
+  type RoiEvidenceLinkPurpose,
+} from './roiEconomicModelTypes.js';
+
+// ==========================================
+// ERRORS
+// ==========================================
+
+export class RoiBenefitEvidenceLinkValidationError extends Error {
+  code: string;
+  details?: Record<string, unknown>;
+  constructor(message: string, code = 'INVALID_BENEFIT_EVIDENCE_LINK', details?: Record<string, unknown>) {
+    super(message);
+    this.name = 'RoiBenefitEvidenceLinkValidationError';
+    this.code = code;
+    this.details = details;
+  }
+}
+
+// RN-G5 — command capability names (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md)
+export const ROI_BENEFIT_EVIDENCE_LINK_CAPABILITIES = {
+  add: 'results.roi.benefit_evidence_link.add',
+  remove: 'results.roi.benefit_evidence_link.remove',
+  flagDisputed: 'results.roi.benefit_evidence_link.flag_disputed',
+  flagFreshness: 'results.roi.benefit_evidence_link.flag_freshness',
+} as const;
+
+/** RN-G5: authorization runs FIRST — same rationale as roiAssumptionCommands.ts's
+ * identical helper (that file's own doc comment has the full rationale). */
+async function assertCaseEditableForUpdate(
+  client: PoolClient,
+  caseId: string,
+  organizationId: string,
+  op: string,
+  auth: { access: CommandAccessContext; actorUserId: string; capability: string }
+): Promise<void> {
+  const caseResult = await client.query<{ status: string; owner_user_id: string }>(
+    `SELECT status, owner_user_id FROM rvn_roi_cases WHERE case_id = $1 AND organization_id = $2 FOR UPDATE`,
+    [caseId, organizationId]
+  );
+  const caseRow = caseResult.rows[0];
+  if (!caseRow) {
+    throw new Error(`[${op}] case ${caseId} not found`);
+  }
+
+  assertCommandCapability({
+    access: auth.access,
+    actorUserId: auth.actorUserId,
+    capability: auth.capability,
+    responsibleUserIds: [caseRow.owner_user_id],
+  });
+
+  if (NON_EDITABLE_STATUSES.includes(caseRow.status as (typeof NON_EDITABLE_STATUSES)[number])) {
+    throw new RoiEconomicModelNotEditableError(caseId, caseRow.status);
+  }
+}
+
+// ==========================================
+// addBenefitEvidenceLink
+// ==========================================
+
+export interface AddBenefitEvidenceLinkInput {
+  benefitLineId: string;
+  caseId: string;
+  organizationId: string;
+  kpiId: string;
+  pinnedKpiDefinitionVersionId: string;
+  expectedUnit?: string | null;
+  purpose: RoiEvidenceLinkPurpose;
+  notes?: string | null;
+  actorUserId: string;
+  actorEffectiveRole: string;
+  idempotencyKey: string;
+  correlationId?: string;
+  causationId?: string | null;
+  reason?: string | null;
+  access: CommandAccessContext;
+}
+
+export async function addBenefitEvidenceLink(
+  input: AddBenefitEvidenceLinkInput
+): Promise<AtomicCommandOutcome<RoiBenefitEvidenceLink>> {
+  const {
+    benefitLineId,
+    caseId,
+    organizationId,
+    kpiId,
+    pinnedKpiDefinitionVersionId,
+    expectedUnit = null,
+    purpose,
+    notes = null,
+    actorUserId,
+    actorEffectiveRole,
+    idempotencyKey,
+    correlationId,
+    causationId = null,
+    reason = null,
+    access,
+  } = input;
+
+  return executeAtomicCreate<RoiBenefitEvidenceLink>({
+    organizationId,
+    applyMutation: async (client) => {
+      await assertCaseEditableForUpdate(client, caseId, organizationId, 'addBenefitEvidenceLink', {
+        access,
+        actorUserId,
+        capability: ROI_BENEFIT_EVIDENCE_LINK_CAPABILITIES.add,
+      });
+
+      const benefitLineResult = await client.query<{ benefit_line_id: string }>(
+        `SELECT benefit_line_id FROM rvn_roi_benefit_lines
+          WHERE benefit_line_id = $1 AND case_id = $2 AND organization_id = $3 AND deleted_at IS NULL`,
+        [benefitLineId, caseId, organizationId]
+      );
+      if (!benefitLineResult.rows[0]) {
+        throw new RoiBenefitEvidenceLinkValidationError(
+          `Benefit line ${benefitLineId} not found on case ${caseId}`,
+          'BENEFIT_LINE_NOT_FOUND',
+          { benefitLineId, caseId }
+        );
+      }
+
+      // Decision D14: organization-scoped existence check only — no
+      // KPI-visibility check on the linker.
+      const kpiResult = await client.query<{ kpi_id: string }>(
+        `SELECT kpi_id FROM rvn_kpi_definitions WHERE kpi_id = $1 AND organization_id = $2`,
+        [kpiId, organizationId]
+      );
+      if (!kpiResult.rows[0]) {
+        throw new RoiBenefitEvidenceLinkValidationError(
+          `KPI ${kpiId} not found in organization ${organizationId}`,
+          'KPI_NOT_FOUND',
+          { kpiId }
+        );
+      }
+      const versionResult = await client.query<{ definition_version_id: string }>(
+        `SELECT definition_version_id FROM rvn_kpi_definition_versions
+          WHERE definition_version_id = $1 AND kpi_id = $2 AND organization_id = $3`,
+        [pinnedKpiDefinitionVersionId, kpiId, organizationId]
+      );
+      if (!versionResult.rows[0]) {
+        throw new RoiBenefitEvidenceLinkValidationError(
+          `KPI definition version ${pinnedKpiDefinitionVersionId} not found for KPI ${kpiId}`,
+          'KPI_DEFINITION_VERSION_NOT_FOUND',
+          { kpiId, pinnedKpiDefinitionVersionId }
+        );
+      }
+
+      const insertResult = await client.query<RoiBenefitEvidenceLinkRow>(
+        `INSERT INTO rvn_roi_benefit_evidence_links
+           (benefit_line_id, case_id, organization_id, kpi_id, pinned_kpi_definition_version_id,
+            expected_unit, purpose, linked_by, notes, created_by)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+         RETURNING *`,
+        [
+          benefitLineId,
+          caseId,
+          organizationId,
+          kpiId,
+          pinnedKpiDefinitionVersionId,
+          expectedUnit,
+          purpose,
+          actorUserId,
+          notes,
+          actorUserId,
+        ]
+      );
+      const row = insertResult.rows[0];
+      if (!row) throw new Error('[addBenefitEvidenceLink] insert returned no row');
+      return toRoiBenefitEvidenceLink(row);
+    },
+    buildEvent: ({ result }) => {
+      const afterState = { link: result };
+      return {
+        schemaVersion: 1,
+        eventType: 'roi.benefit_evidence_link_added',
+        aggregateType: 'roi_case',
+        aggregateId: caseId,
+        organizationId,
+        actorUserId,
+        actorEffectiveRole,
+        commandId: randomUUID(),
+        correlationId: correlationId ?? randomUUID(),
+        causationId,
+        occurredAt: new Date().toISOString(),
+        policyVersion: '',
+        beforeState: null,
+        afterState,
+        stateHash: computeStateHash(afterState),
+        reason,
+        evidenceRefs: [],
+        source: ROI_EVENT_SOURCE,
+        idempotencyKey,
+        expectedVersion: null,
+        resultingVersion: 1,
+        payload: { caseId, benefitLineId, linkId: result.linkId },
+      } satisfies AtomicEventInput;
+    },
+  });
+}
+
+// ==========================================
+// removeBenefitEvidenceLink / flagBenefitEvidenceLinkDisputed — shared loader
+// ==========================================
+
+async function loadEvidenceLinkForUpdate(
+  client: PoolClient,
+  linkId: string,
+  organizationId: string
+): Promise<RoiBenefitEvidenceLinkRow | undefined> {
+  const result = await client.query<RoiBenefitEvidenceLinkRow>(
+    `SELECT * FROM rvn_roi_benefit_evidence_links WHERE link_id = $1 AND organization_id = $2 FOR UPDATE`,
+    [linkId, organizationId]
+  );
+  return result.rows[0];
+}
+const evidenceLinkRowVersion = (row: RoiBenefitEvidenceLinkRow) => row.row_version;
+
+export interface RemoveBenefitEvidenceLinkInput {
+  linkId: string;
+  caseId: string;
+  organizationId: string;
+  expectedVersion: number;
+  actorUserId: string;
+  actorEffectiveRole: string;
+  idempotencyKey: string;
+  correlationId?: string;
+  causationId?: string | null;
+  reason?: string | null;
+  access: CommandAccessContext;
+}
+
+/** Hard delete — `rvn_roi_benefit_evidence_links` has no `deleted_at` column
+ * (design §3 DDL); a link is pure metadata about a relationship, not an
+ * independent financial fact requiring soft-delete's audit trail (Decision
+ * D6 is scoped to assumptions/cost/benefit lines/scenarios). */
+export async function removeBenefitEvidenceLink(
+  input: RemoveBenefitEvidenceLinkInput
+): Promise<AtomicCommandOutcome<{ linkId: string }>> {
+  const {
+    linkId,
+    caseId,
+    organizationId,
+    expectedVersion,
+    actorUserId,
+    actorEffectiveRole,
+    idempotencyKey,
+    correlationId,
+    causationId = null,
+    reason = null,
+    access,
+  } = input;
+
+  let beforeState: Record<string, unknown> | null = null;
+
+  return executeAtomicCommand<RoiBenefitEvidenceLinkRow, { linkId: string }>({
+    organizationId,
+    aggregateId: linkId,
+    expectedVersion,
+    loadForUpdate: loadEvidenceLinkForUpdate,
+    getCurrentVersion: evidenceLinkRowVersion,
+    applyMutation: async (client, currentRow, _nextVersion) => {
+      await assertCaseEditableForUpdate(client, caseId, organizationId, 'removeBenefitEvidenceLink', {
+        access,
+        actorUserId,
+        capability: ROI_BENEFIT_EVIDENCE_LINK_CAPABILITIES.remove,
+      });
+      beforeState = { link: toRoiBenefitEvidenceLink(currentRow) };
+      await client.query(`DELETE FROM rvn_roi_benefit_evidence_links WHERE link_id = $1`, [linkId]);
+      return { linkId };
+    },
+    buildEvent: ({ result, nextVersion }) => {
+      const afterState = { link: null };
+      return {
+        schemaVersion: 1,
+        eventType: 'roi.benefit_evidence_link_removed',
+        aggregateType: 'roi_case',
+        aggregateId: caseId,
+        organizationId,
+        actorUserId,
+        actorEffectiveRole,
+        commandId: randomUUID(),
+        correlationId: correlationId ?? randomUUID(),
+        causationId,
+        occurredAt: new Date().toISOString(),
+        policyVersion: '',
+        beforeState,
+        afterState,
+        stateHash: computeStateHash(afterState),
+        reason,
+        evidenceRefs: [],
+        source: ROI_EVENT_SOURCE,
+        idempotencyKey,
+        expectedVersion,
+        resultingVersion: nextVersion,
+        payload: { caseId, linkId: result.linkId },
+      } satisfies AtomicEventInput;
+    },
+  });
+}
+
+// ==========================================
+// flagBenefitEvidenceLinkDisputed
+// ==========================================
+
+export interface FlagBenefitEvidenceLinkDisputedInput {
+  linkId: string;
+  caseId: string;
+  organizationId: string;
+  expectedVersion: number;
+  disputeStatus: 'none' | 'stale' | 'disputed';
+  notes?: string | null;
+  actorUserId: string;
+  actorEffectiveRole: string;
+  idempotencyKey: string;
+  correlationId?: string;
+  causationId?: string | null;
+  reason?: string | null;
+  access: CommandAccessContext;
+}
+
+/** Not gated by `NON_EDITABLE_STATUSES`/case-editable — flagging a link
+ * stale/disputed is an evidence-quality signal, legitimately raised at any
+ * point in the case's lifecycle (including post-approval, mirroring
+ * `double_counting_resolution_note`'s own "stays editable" carve-out). RN-G5
+ * gate IS still checked (this remains a WRITE) — the case's owner_user_id
+ * is fetched fresh here since this function, unlike add/remove above,
+ * never otherwise reads the case row. */
+export async function flagBenefitEvidenceLinkDisputed(
+  input: FlagBenefitEvidenceLinkDisputedInput
+): Promise<AtomicCommandOutcome<RoiBenefitEvidenceLink>> {
+  const {
+    linkId,
+    caseId,
+    organizationId,
+    expectedVersion,
+    disputeStatus,
+    notes,
+    actorUserId,
+    actorEffectiveRole,
+    idempotencyKey,
+    correlationId,
+    causationId = null,
+    reason = null,
+    access,
+  } = input;
+
+  let beforeState: Record<string, unknown> | null = null;
+
+  return executeAtomicCommand<RoiBenefitEvidenceLinkRow, RoiBenefitEvidenceLink>({
+    organizationId,
+    aggregateId: linkId,
+    expectedVersion,
+    loadForUpdate: loadEvidenceLinkForUpdate,
+    getCurrentVersion: evidenceLinkRowVersion,
+    applyMutation: async (client, currentRow, nextVersion) => {
+      const caseOwnerResult = await client.query<{ owner_user_id: string }>(
+        `SELECT owner_user_id FROM rvn_roi_cases WHERE case_id = $1 AND organization_id = $2`,
+        [caseId, organizationId]
+      );
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: ROI_BENEFIT_EVIDENCE_LINK_CAPABILITIES.flagDisputed,
+        responsibleUserIds: [caseOwnerResult.rows[0]?.owner_user_id ?? null],
+      });
+
+      beforeState = { link: toRoiBenefitEvidenceLink(currentRow) };
+      const mergedNotes = notes !== undefined ? notes : currentRow.notes;
+      const updateResult = await client.query<RoiBenefitEvidenceLinkRow>(
+        `UPDATE rvn_roi_benefit_evidence_links
+            SET dispute_status = $1, notes = $2, freshness_checked_at = now(),
+                row_version = $3, updated_at = now()
+          WHERE link_id = $4
+          RETURNING *`,
+        [disputeStatus, mergedNotes, nextVersion, linkId]
+      );
+      const updatedRow = updateResult.rows[0];
+      if (!updatedRow) throw new Error(`[flagBenefitEvidenceLinkDisputed] update returned no row for ${linkId}`);
+      return toRoiBenefitEvidenceLink(updatedRow);
+    },
+    buildEvent: ({ result, nextVersion }) => {
+      const afterState = { link: result };
+      return {
+        schemaVersion: 1,
+        eventType: 'roi.benefit_evidence_link_disputed',
+        aggregateType: 'roi_case',
+        aggregateId: caseId,
+        organizationId,
+        actorUserId,
+        actorEffectiveRole,
+        commandId: randomUUID(),
+        correlationId: correlationId ?? randomUUID(),
+        causationId,
+        occurredAt: new Date().toISOString(),
+        policyVersion: '',
+        beforeState,
+        afterState,
+        stateHash: computeStateHash(afterState),
+        reason,
+        evidenceRefs: [],
+        source: ROI_EVENT_SOURCE,
+        idempotencyKey,
+        expectedVersion,
+        resultingVersion: nextVersion,
+        payload: { caseId, linkId },
+      } satisfies AtomicEventInput;
+    },
+  });
+}
+
+// ==========================================
+// flagEvidenceLinkFreshnessCheck (ROI-E007 §4, Decision D7)
+// ==========================================
+
+export interface FlagEvidenceLinkFreshnessCheckInput {
+  linkId: string;
+  caseId: string;
+  organizationId: string;
+  actorUserId: string;
+  actorEffectiveRole: string;
+  idempotencyKey: string;
+  correlationId?: string;
+  causationId?: string | null;
+  reason?: string | null;
+  access: CommandAccessContext;
+}
+
+/** Not gated by `NON_EDITABLE_STATUSES`/case-editable, same rationale as
+ * `flagBenefitEvidenceLinkDisputed` above — acknowledging staleness is an
+ * evidence-quality signal, legitimately raised at any point in the case's
+ * lifecycle. Touches ONLY `freshness_checked_at`/`row_version`/`updated_at`
+ * on `rvn_roi_benefit_evidence_links` — no other column, no other table.
+ * Never reads or writes any `rvn_kpi_*` table: `isStale` is computed
+ * separately, read-time-only, by `roiEconomicModelRepository.ts`; this
+ * command does not need to know the value to record that a human checked
+ * it. */
+export async function flagEvidenceLinkFreshnessCheck(
+  input: FlagEvidenceLinkFreshnessCheckInput
+): Promise<AtomicCommandOutcome<RoiBenefitEvidenceLink>> {
+  const {
+    linkId,
+    caseId,
+    organizationId,
+    actorUserId,
+    actorEffectiveRole,
+    idempotencyKey,
+    correlationId,
+    causationId = null,
+    reason = null,
+    access,
+  } = input;
+
+  let beforeState: Record<string, unknown> | null = null;
+
+  return executeAtomicCreate<RoiBenefitEvidenceLink>({
+    organizationId,
+    applyMutation: async (client) => {
+      const currentRow = await loadEvidenceLinkForUpdate(client, linkId, organizationId);
+      if (!currentRow || currentRow.case_id !== caseId) {
+        throw new RoiBenefitEvidenceLinkValidationError(
+          `Benefit evidence link ${linkId} not found on case ${caseId}`,
+          'BENEFIT_EVIDENCE_LINK_NOT_FOUND',
+          { linkId, caseId }
+        );
+      }
+
+      const caseOwnerResult = await client.query<{ owner_user_id: string }>(
+        `SELECT owner_user_id FROM rvn_roi_cases WHERE case_id = $1 AND organization_id = $2`,
+        [caseId, organizationId]
+      );
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: ROI_BENEFIT_EVIDENCE_LINK_CAPABILITIES.flagFreshness,
+        responsibleUserIds: [caseOwnerResult.rows[0]?.owner_user_id ?? null],
+      });
+
+      beforeState = { link: toRoiBenefitEvidenceLink(currentRow) };
+
+      const updateResult = await client.query<RoiBenefitEvidenceLinkRow>(
+        `UPDATE rvn_roi_benefit_evidence_links
+            SET freshness_checked_at = now(), row_version = row_version + 1, updated_at = now()
+          WHERE link_id = $1
+          RETURNING *`,
+        [linkId]
+      );
+      const updatedRow = updateResult.rows[0];
+      if (!updatedRow) throw new Error(`[flagEvidenceLinkFreshnessCheck] update returned no row for ${linkId}`);
+      return toRoiBenefitEvidenceLink(updatedRow);
+    },
+    buildEvent: ({ result }) => {
+      const afterState = { link: result };
+      return {
+        schemaVersion: 1,
+        eventType: 'roi.evidence_link_freshness_flagged',
+        aggregateType: 'roi_case',
+        aggregateId: caseId,
+        organizationId,
+        actorUserId,
+        actorEffectiveRole,
+        commandId: randomUUID(),
+        correlationId: correlationId ?? randomUUID(),
+        causationId,
+        occurredAt: new Date().toISOString(),
+        policyVersion: '',
+        beforeState,
+        afterState,
+        stateHash: computeStateHash(afterState),
+        reason,
+        evidenceRefs: [],
+        source: ROI_EVENT_SOURCE,
+        idempotencyKey,
+        expectedVersion: null,
+        resultingVersion: result.rowVersion,
+        payload: { caseId, linkId },
+      } satisfies AtomicEventInput;
+    },
+  });
+}

@@ -1085,20 +1085,37 @@ function renderSection(
     heading: headingLevelForSection(level),
     children: [new TextRun({ text: headingText, font: ctx.headingFont })],
     pageBreakBefore: options.pageBreakBefore === true ? true : undefined,
+    // A section heading must travel with at least the first paragraph/table.
+    // Without this explicit pagination hint Word/LibreOffice may leave a
+    // heading as the last line on a page while its body starts on the next.
+    keepNext: true,
   });
-  const purpose = section.purpose
-    ? [
-        new Paragraph({
-          style: DOCX_STYLE_IDS.CAPTION,
-          children: [
-            new TextRun({
-              text: section.purpose,
-              font: ctx.bodyFont,
-            }),
-          ],
-        }),
-      ]
-    : [];
+  const normalizedPurpose = asString(section.purpose ?? '').trim();
+  const normalizedTitle = asString(section.title ?? '').trim();
+  // Generated outlines often use the section title verbatim as `purpose`.
+  // Rendering both produces an accidental duplicate immediately below the
+  // heading (for example "Executive decision" twice). Keep a genuinely
+  // descriptive purpose, but suppress title-equivalent metadata.
+  const purpose =
+    normalizedPurpose &&
+    normalizedPurpose.localeCompare(normalizedTitle, undefined, { sensitivity: 'base' }) !== 0
+      ? [
+          new Paragraph({
+            style: DOCX_STYLE_IDS.CAPTION,
+            // Chain heading -> purpose -> first body element. Keeping only
+            // the heading was insufficient when a purpose line followed it:
+            // LibreOffice could still leave both metadata lines at the foot
+            // of a page and move the substantive paragraph to the next one.
+            keepNext: true,
+            children: [
+              new TextRun({
+                text: normalizedPurpose,
+                font: ctx.bodyFont,
+              }),
+            ],
+          }),
+        ]
+      : [];
 
   const blockOutputs: (Paragraph | Table)[] = [];
   for (const block of section.blocks) {
@@ -1121,8 +1138,7 @@ function renderCoverBlock(ctx: RenderContext, options: DocumentRenderOptions = {
     public: 'publiczne',
   };
   const documentTypeLabel = isPolish
-    ? (documentTypeLabels[schema.documentType] ??
-      schema.documentType.replace(/_/g, ' '))
+    ? (documentTypeLabels[schema.documentType] ?? schema.documentType.replace(/_/g, ' '))
     : schema.documentType.replace(/_/g, ' ');
   const densityLabel = isPolish
     ? (densityLabels[schema.density] ?? schema.density)
@@ -1331,11 +1347,16 @@ function renderTocBlock(ctx: RenderContext): unknown[] {
           children: [new TextRun({ text, font: ctx.bodyFont })],
         })
     );
-  const trailingBreak = new Paragraph({
+  // A static TOC cannot reliably know page numbers until Word updates fields.
+  // Let the first body section follow the concise navigation list instead of
+  // forcing a mostly-empty standalone TOC page in server-rendered PDFs.
+  const trailingSpacer = new Paragraph({
     style: DOCX_STYLE_IDS.BODY_TEXT,
-    children: [new PageBreak()],
+    spacing: { after: 160 },
+    border: { bottom: { color: DOCX_PALETTE.faint, space: 1, style: 'single', size: 4 } },
+    children: [new TextRun({ text: '', font: ctx.bodyFont })],
   });
-  return [heading, ...entries, trailingBreak];
+  return [heading, ...entries, trailingSpacer];
 }
 
 function renderSources(ctx: RenderContext): (Paragraph | Table)[] {
@@ -1369,11 +1390,26 @@ function renderSources(ctx: RenderContext): (Paragraph | Table)[] {
   }
   const items = schema.sourceRefs.map((ref, i) => {
     const title = ref.sourceTitle ? ` — ${ref.sourceTitle}` : '';
+    const version = ref.sourceVersion ? ` · ${ref.sourceVersion}` : '';
+    const snapshot = ref.sourceSnapshotId ? ` · snapshot ${ref.sourceSnapshotId}` : '';
+    const excerpt = asString(ref.sourceExcerpt ?? '').trim();
     return new Paragraph({
       style: DOCX_STYLE_IDS.SOURCE_LIST,
       children: [
         new TextRun({ text: `${i + 1}. `, bold: true, font: ctx.bodyFont }),
-        new TextRun({ text: `${ref.sourceType}#${ref.sourceId}${title}`, font: ctx.bodyFont }),
+        new TextRun({
+          text: `${ref.sourceType}#${ref.sourceId}${title}${version}${snapshot}`,
+          font: ctx.bodyFont,
+        }),
+        ...(excerpt
+          ? [
+              new TextRun({
+                text: ` — ${excerpt.length > 280 ? `${excerpt.slice(0, 277).trimEnd()}…` : excerpt}`,
+                color: DOCX_PALETTE.muted,
+                font: ctx.bodyFont,
+              }),
+            ]
+          : []),
       ],
     });
   });

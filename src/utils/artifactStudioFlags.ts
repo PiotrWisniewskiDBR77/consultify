@@ -1,3 +1,5 @@
+import { isDemoAcceptanceProfileEnabled } from './demoAcceptanceProfile';
+
 export type ArtifactStudioLane = 'document' | 'presentation' | 'spreadsheet';
 
 const GLOBAL_QUERY_KEY = 'ff_artifactStudio';
@@ -65,6 +67,7 @@ export interface ArtifactStudioFlagSource {
   query?: URLSearchParams;
   storage?: Pick<Storage, 'getItem'>;
   env?: Record<string, string | undefined>;
+  hostname?: string;
 }
 
 export type ArtifactStudioFlagResolutionSource = 'query' | 'storage' | 'env' | 'default';
@@ -82,9 +85,7 @@ function resolveFlagWithSource(
   keys: { query: string; storage: string; env: string },
   source?: ArtifactStudioFlagSource
 ): { value: boolean | null; source: ArtifactStudioFlagResolutionSource } {
-  const queryValue = source
-    ? parseFlag(source.query?.get(keys.query))
-    : readQuery(keys.query);
+  const queryValue = source ? parseFlag(source.query?.get(keys.query)) : readQuery(keys.query);
   if (queryValue !== null) return { value: queryValue, source: 'query' };
 
   const storageValue = source
@@ -119,6 +120,7 @@ export function isArtifactStudioLaneEnabled(
   lane: ArtifactStudioLane,
   source?: ArtifactStudioFlagSource
 ): boolean {
+  if (isDemoAcceptanceProfileEnabled({ env: source?.env, hostname: source?.hostname })) return true;
   const global = resolveFlagFromSource(
     {
       query: GLOBAL_QUERY_KEY,
@@ -140,6 +142,16 @@ export function getArtifactStudioRolloutDecision(
   lane: ArtifactStudioLane,
   source?: ArtifactStudioFlagSource
 ): ArtifactStudioRolloutDecision {
+  if (isDemoAcceptanceProfileEnabled({ env: source?.env, hostname: source?.hostname })) {
+    return {
+      lane,
+      enabled: true,
+      globalEnabled: true,
+      laneEnabled: true,
+      globalSource: 'env',
+      laneSource: 'env',
+    };
+  }
   const global = resolveFlagWithSource(
     {
       query: GLOBAL_QUERY_KEY,

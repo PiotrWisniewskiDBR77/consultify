@@ -52,7 +52,9 @@ describe('P11 §2.3.2 — forbidden transitions (AC-30)', () => {
   });
 
   it('every transition in VALID_TRANSITIONS is forward or explicitly allowed (no hidden backward)', () => {
-    const forwardOrder = [
+    // Typed as the full status union: the literal list omits members (BLOCKED,
+    // CANCELLED) that `indexOf` is legitimately probed with below.
+    const forwardOrder: InitiativeStatusType[] = [
       InitiativeStatus.DRAFT,
       InitiativeStatus.PENDING_REVIEW,
       InitiativeStatus.REVIEW,

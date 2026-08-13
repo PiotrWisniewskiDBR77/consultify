@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>R4-P1 dowod</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; background:#0b1220; color:#e6edf5; margin:0; padding:32px; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  h2 { font-size:14px; text-transform:uppercase; letter-spacing:0.08em; color:#8fa3c0; margin:28px 0 10px; border-bottom:1px solid #223047; padding-bottom:6px;}
+  .sub { color:#9fb0c8; font-size:13px; margin-bottom:20px;}
+  .step { background:#101a2c; border:1px solid #223047; border-radius:10px; padding:14px 16px; margin-bottom:10px; }
+  .step .title { font-weight:600; font-size:13px; color:#7dd3fc; margin-bottom:6px; }
+  .req { color:#fbbf24; font-family: ui-monospace, monospace; font-size:12px; white-space:pre-wrap; }
+  .res { color:#86efac; font-family: ui-monospace, monospace; font-size:12px; white-space:pre-wrap; margin-top:4px;}
+  .status { display:inline-block; font-weight:700; padding:1px 8px; border-radius:6px; font-size:11px; margin-right:6px;}
+  .s200 { background:#164e63; color:#a5f3fc;}
+  .s201 { background:#14532d; color:#bbf7d0;}
+  .note { color:#f472b6; font-size:12px; margin-top:6px;}
+  table { border-collapse:collapse; width:100%; margin-top:6px; font-size:12px;}
+  td,th { border:1px solid #223047; padding:6px 8px; text-align:left; }
+  th { color:#8fa3c0; font-weight:600; }
+  .pill { display:inline-block; background:#1e293b; border:1px solid #334155; border-radius:999px; padding:2px 10px; font-size:11px; color:#cbd5e1; margin-right:6px;}
+</style>
+</head>
+<body>
+  <h1>R4-P1 — Teresa produkcyjna ma ścieżkę do zlecenia</h1>
+  <div class="sub">Żywy stos: backend <code>:3001</code> (bez ENABLE_TEST_AUTH_BYPASS/E2E_MODE) · realny PostgreSQL <code>127.0.0.1:55432/case_workspace_test</code> · realny <code>POST /api/auth/login</code> · aktor <code>cw.local@local.test</code></div>
+
+  <span class="pill">conversationId = conv-live-1786396851</span>
+  <span class="pill">projectId = cw-stream-a-project</span>
+  <span class="pill">router = server/src/routes/v10/teresa.routes.ts</span>
+
+  <h2>1 · Propozycja (Teresa pokazuje podsumowanie)</h2>
+  <div class="step">
+    <div class="title">POST /api/v10/teresa/case-intake/conversations/:id/summary</div>
+    <div class="req">goal: "Przygotowac plan wdrozenia nowego systemu raportowania finansowego."
+scope: [3 pozycje] · expectedOutcome: "Zatwierdzony plan wdrozenia..."</div>
+    <div class="res"><span class="status s200">200</span>caseCreated:false · runCreated:false · workOrderDigest: sha256:f5b58179...</div>
+    <div class="note">CW-CANON-01: zero Case'ów, zero Runów — sama propozycja niczego nie tworzy.</div>
+  </div>
+
+  <h2>2 · Potwierdzenie (kliknięcie "Potwierdź")</h2>
+  <div class="step">
+    <div class="title">POST /api/v10/teresa/case-intake/conversations/:id/confirm — pierwsze wywołanie</div>
+    <div class="req">confirmedDigest: sha256:f5b58179...</div>
+    <div class="res"><span class="status s201">201</span>caseId: case-009780fb-3a25-4397-b11c-efbc6726cb33 · caseCreated:true</div>
+  </div>
+  <div class="step">
+    <div class="title">POST .../confirm — DRUGIE wywołanie (refresh / podwójny klik / retry, TEN SAM digest)</div>
+    <div class="req">confirmedDigest: sha256:f5b58179... (identyczny)</div>
+    <div class="res"><span class="status s200">200</span>caseId: case-009780fb-3a25-4397-b11c-efbc6726cb33 (TEN SAM) · caseCreated:false · reused:true</div>
+    <div class="note">Refresh/retry nie tworzy duplikatu — potwierdzone niezależnym SELECT-em poniżej.</div>
+  </div>
+
+  <h2>3 · SELECT z bazy (osobne połączenie, poza odpowiedzią HTTP)</h2>
+  <table>
+    <tr><th>Zapytanie</th><th>Wynik</th></tr>
+    <tr><td>case_core WHERE case_id = case-009780fb...</td><td>1 wiersz (case_status: DRAFT, profile: STANDARD)</td></tr>
+    <tr><td>outbox: count(*) WHERE event_type='case.intake.work_order_confirmed' AND sourceConversationId = conv-live-...</td><td>n = 1, case_ids = [case-009780fb...]</td></tr>
+  </table>
+
+  <h2>4 · Ślad w outboxie (case_workspace_event_outbox)</h2>
+  <table>
+    <tr><th>event_type</th><th>aggregate_type</th><th>case_id</th><th>occurred_at</th></tr>
+    <tr><td>case.intake.work_order_proposed</td><td>CASE_INTAKE</td><td>NULL</td><td>21:20:51.702Z</td></tr>
+    <tr><td>case.intake.work_order_confirmed</td><td>CASE</td><td>case-009780fb-3a25...</td><td>21:21:03.283Z</td></tr>
+  </table>
+
+  <h2>5 · Jeden mechanizm, nie dwa</h2>
+  <div class="step">
+    <div class="title">GET /api/v8/chat/conversations/:id/case-intake/work-order (INNA trasa, TA SAMA rozmowa)</div>
+    <div class="res"><span class="status s200">200</span>workOrderDigest: sha256:f5b58179... — IDENTYCZNY z krokiem 1</div>
+    <div class="note">/api/v10/teresa i /api/v8/chat czytają ten sam caseIntakeService/outbox — potwierdza automatyczny test #3 w teresaProductionIntake.pg.test.ts.</div>
+  </div>
+
+  <h2>6 · Kontrola negatywna</h2>
+  <div class="step">
+    <div class="title">teresa.routes.ts (v10) cofnięty do stanu przed poprawką (bez bloku case-intake)</div>
+    <div class="res" style="color:#fca5a5">7/7 testów teresaProductionIntake.pg.test.ts CZERWONYCH (404)</div>
+    <div class="title" style="margin-top:8px;">Poprawka przywrócona</div>
+    <div class="res">7/7 testów ZIELONYCH</div>
+  </div>
+</body>
+</html>

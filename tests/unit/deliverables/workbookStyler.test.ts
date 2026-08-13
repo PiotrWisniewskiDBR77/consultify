@@ -11,9 +11,7 @@
 import JSZip from 'jszip';
 import { describe, expect, it } from 'vitest';
 
-import {
-  buildWorkbookBuffer,
-} from '../../../server/src/services/workbook/WorkbookBuilder.js';
+import { buildWorkbookBuffer } from '../../../server/src/services/workbook/WorkbookBuilder.js';
 import type { WorkbookSchema } from '../../../server/src/services/workbook/WorkbookSchema.js';
 import {
   accountingCurrencyFormat,
@@ -85,7 +83,14 @@ describe('WorkbookStyler — content-aware column widths (min/max clamp)', () =>
       { key: 'num', header: 'N', type: 'number' },
     ],
     rows: [
-      { cells: { short: { value: 'ab' }, long: { value: 'y' }, huge: { value: 'x'.repeat(120) }, num: { value: 3 } } },
+      {
+        cells: {
+          short: { value: 'ab' },
+          long: { value: 'y' },
+          huge: { value: 'x'.repeat(120) },
+          num: { value: 3 },
+        },
+      },
     ],
   };
 
@@ -109,10 +114,22 @@ describe('WorkbookStyler — content-aware column widths (min/max clamp)', () =>
 
 describe('WorkbookStyler — currency inference', () => {
   it('detects PL from zł / pln in title/description, EUR/USD from symbols, defaults PL', () => {
-    const pl: WorkbookSchema = { title: 'Budżet w zł', sheets: [{ name: 'S', columns: [], rows: [] }] };
-    const eur: WorkbookSchema = { title: 'Budget €', sheets: [{ name: 'S', columns: [], rows: [] }] };
-    const usd: WorkbookSchema = { title: 'Budget in USD', sheets: [{ name: 'S', columns: [], rows: [] }] };
-    const none: WorkbookSchema = { title: 'Plain plan', sheets: [{ name: 'S', columns: [], rows: [] }] };
+    const pl: WorkbookSchema = {
+      title: 'Budżet w zł',
+      sheets: [{ name: 'S', columns: [], rows: [] }],
+    };
+    const eur: WorkbookSchema = {
+      title: 'Budget €',
+      sheets: [{ name: 'S', columns: [], rows: [] }],
+    };
+    const usd: WorkbookSchema = {
+      title: 'Budget in USD',
+      sheets: [{ name: 'S', columns: [], rows: [] }],
+    };
+    const none: WorkbookSchema = {
+      title: 'Plain plan',
+      sheets: [{ name: 'S', columns: [], rows: [] }],
+    };
     expect(inferCurrency(pl)).toBe('pln');
     expect(inferCurrency(eur)).toBe('eur');
     expect(inferCurrency(usd)).toBe('usd');
@@ -149,6 +166,7 @@ describe('WorkbookStyler — status semaphore classification', () => {
     expect(classifyStatus('Needs evidence')?.fill).toBe('FFFCE4E4');
     expect(classifyStatus('In Progress')?.fill).toBe('FFFDF3E0'); // amber
     expect(classifyStatus('Częściowo')?.fill).toBe('FFFDF3E0');
+    expect(classifyStatus('UNKNOWN')?.fill).toBe('FFEEF2F7'); // neutral evidence gap
   });
 
   it('returns null for non-status text and overlong strings', () => {
@@ -160,7 +178,9 @@ describe('WorkbookStyler — status semaphore classification', () => {
   it('looksLikeStatusColumn matches status/health/readiness text columns only', () => {
     expect(looksLikeStatusColumn({ key: 'status', header: 'Status', type: 'text' })).toBe(true);
     expect(looksLikeStatusColumn({ key: 'health', header: 'Health', type: 'text' })).toBe(true);
-    expect(looksLikeStatusColumn({ key: 'readiness', header: 'Readiness', type: 'text' })).toBe(true);
+    expect(looksLikeStatusColumn({ key: 'readiness', header: 'Readiness', type: 'text' })).toBe(
+      true
+    );
     // numeric column never a text-semaphore column
     expect(looksLikeStatusColumn({ key: 'status', header: 'Status', type: 'number' })).toBe(false);
     expect(looksLikeStatusColumn({ key: 'owner', header: 'Owner', type: 'text' })).toBe(false);
@@ -194,9 +214,31 @@ const SEED: WorkbookSchema = {
         { key: 'score', header: 'Priority Score', type: 'number' },
       ],
       rows: [
-        { cells: { pozycja: { value: 'Przychody' }, y2026: { value: 100000 }, marza: { value: 0.4 }, score: { value: 10 } } },
-        { cells: { pozycja: { value: 'COGS' }, y2026: { value: 35000 }, marza: { value: 0.3 }, score: { value: 50 } } },
-        { cells: { pozycja: { value: 'Zysk' }, y2026: { formula: '=B2-B3' }, marza: { value: 0.7 }, score: { value: 90 } }, isSummary: true },
+        {
+          cells: {
+            pozycja: { value: 'Przychody' },
+            y2026: { value: 100000 },
+            marza: { value: 0.4 },
+            score: { value: 10 },
+          },
+        },
+        {
+          cells: {
+            pozycja: { value: 'COGS' },
+            y2026: { value: 35000 },
+            marza: { value: 0.3 },
+            score: { value: 50 },
+          },
+        },
+        {
+          cells: {
+            pozycja: { value: 'Zysk' },
+            y2026: { formula: '=B2-B3' },
+            marza: { value: 0.7 },
+            score: { value: 90 },
+          },
+          isSummary: true,
+        },
       ],
     },
   ],
@@ -226,7 +268,7 @@ describe('WorkbookBuilder — consultant styling ON', () => {
     expect(styles).toContain('F3F7FB');
   });
 
-  it('appends an "Info" metadata sheet (data sheets keep sheet1..N order)', async () => {
+  it('prepends an "Info" metadata sheet before the data sheets', async () => {
     const buf = await buildWorkbookBuffer(SEED, {
       applyConsultantStyling: true,
       meta: { organizationName: 'Acme', source: 'seed' },
@@ -234,17 +276,26 @@ describe('WorkbookBuilder — consultant styling ON', () => {
     const ExcelJS = (await import('exceljs')).default;
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load(buf);
-    // Data sheet stays first (sheet1.xml) so golden tests + formulas are safe.
-    expect(wb.worksheets[0].name).toBe('P&L');
-    // Info sheet is present (appended last).
-    expect(wb.worksheets.map((w) => w.name)).toContain('Info');
+    expect(wb.worksheets.map((w) => w.name)).toEqual(['Info', 'P&L']);
     const info = wb.getWorksheet('Info')!;
     expect(String(info.getCell('A1').value)).toContain('Model finansowy');
   });
 
+  it('prints narrow decision tables in portrait with readable business-row height', async () => {
+    const buf = await buildWorkbookBuffer(SEED, { applyConsultantStyling: true });
+    const ExcelJS = (await import('exceljs')).default;
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(buf);
+    const sheet = wb.getWorksheet('P&L')!;
+
+    expect(sheet.pageSetup.orientation).toBe('portrait');
+    expect(sheet.pageSetup.verticalCentered).toBe(true);
+    expect(sheet.getRow(2).height).toBeGreaterThanOrEqual(24);
+  });
+
   it('adds a color scale on %/score columns (marza + score → CF blocks)', async () => {
     const buf = await buildWorkbookBuffer(SEED, { applyConsultantStyling: true });
-    const xml = await sheetXml(buf, 1); // sheet1 = P&L (Info appended last)
+    const xml = await sheetXml(buf, 2); // sheet1 = Info, sheet2 = P&L
     expect(xml).toContain('colorScale');
     expect(xml.toUpperCase()).toContain('FF2E9098'); // teal high stop
   });
@@ -314,13 +365,36 @@ const STATUS_SEED: WorkbookSchema = {
       rows: [
         { cells: { name: { value: 'A' }, value: { value: 10 }, health: { value: 'On Track' } } },
         { cells: { name: { value: 'B' }, value: { value: 20 }, health: { value: 'At Risk' } } },
-        { cells: { name: { value: 'TOTAL' }, value: { formula: 'SUM(B2:B3)' }, health: { value: '' } } },
+        {
+          cells: {
+            name: { value: 'TOTAL' },
+            value: { formula: 'SUM(B2:B3)' },
+            health: { value: '' },
+          },
+        },
       ],
     },
   ],
 };
 
 describe('WorkbookBuilder — R4 depth (semaphores + total rule)', () => {
+  it('prints short operational sheets as dense, centered A5 exhibits', async () => {
+    const buf = await buildWorkbookBuffer(STATUS_SEED, { applyConsultantStyling: true });
+    const ExcelJS = (await import('exceljs')).default;
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(buf);
+    const ws = wb.getWorksheet('Portfolio')!;
+    expect(ws.pageSetup.paperSize).toBe(11);
+    expect(ws.pageSetup.orientation).toBe('portrait');
+    expect(ws.pageSetup.fitToWidth).toBe(1);
+    expect(ws.pageSetup.fitToHeight).toBe(1);
+    expect(ws.pageSetup.horizontalCentered).toBe(true);
+    expect(ws.pageSetup.verticalCentered).toBe(true);
+    expect(ws.getRow(1).height).toBe(28);
+    expect(ws.getRow(2).height).toBe(48);
+    expect(ws.getCell('A2').font?.size).toBeGreaterThanOrEqual(11);
+  });
+
   it('auto RAG-fills an un-CF status column (green + red land in styles)', async () => {
     const buf = await buildWorkbookBuffer(STATUS_SEED, { applyConsultantStyling: true });
     const styles = await styleXml(buf);
@@ -349,7 +423,17 @@ describe('WorkbookBuilder — R4 depth (semaphores + total rule)', () => {
         {
           ...STATUS_SEED.sheets[0],
           conditionalFormatting: [
-            { ref: 'C2:C3', rules: [{ type: 'cellIs', operator: 'equal', formulae: ['"At Risk"'], style: { bgColor: 'FF0000' } }] },
+            {
+              ref: 'C2:C3',
+              rules: [
+                {
+                  type: 'cellIs',
+                  operator: 'equal',
+                  formulae: ['"At Risk"'],
+                  style: { bgColor: 'FF0000' },
+                },
+              ],
+            },
           ],
         },
       ],

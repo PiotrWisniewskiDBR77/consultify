@@ -1,0 +1,221 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/consultify-wt/fv3-product
+
+ ✓ tests/components/Economics/useFinanceData.v8-analyses.test.tsx > useFinanceData V8 analyses seam > prefers governed finance analyses before legacy economics fallback 64ms
+ ✓ tests/components/Economics/useFinanceData.v8-analyses.test.tsx > useFinanceData V8 analyses seam > prefers governed finance statement packs before legacy finance-statements fallback 54ms
+ ✓ tests/components/Economics/useFinanceData.v8-analyses.test.tsx > useFinanceData V8 analyses seam > falls back to legacy statement packs when V8 seam returns a bounded compatibility status 55ms
+ ✓ tests/components/Economics/useFinanceData.v8-analyses.test.tsx > useFinanceData V8 analyses seam > falls back to legacy analyses when V8 seam returns a bounded compatibility status 53ms
+ ✓ tests/components/Economics/useFinanceData.v8-analyses.test.tsx > useFinanceData V8 analyses seam > prefers governed finance models before legacy financial-modeling fallback 55ms
+ ✓ tests/components/Economics/useFinanceData.v8-analyses.test.tsx > useFinanceData V8 analyses seam > falls back to legacy finance models when V8 seam returns a bounded compatibility status 53ms
+ ✓ tests/components/Economics/useFinanceData.v8-analyses.test.tsx > useFinanceData V8 analyses seam > keeps valuation list reads on the same legacy family as valuation writes 54ms
+ ✓ tests/components/Economics/useFinanceData.v8-analyses.test.tsx > useFinanceData V8 analyses seam > returns an empty valuation list when the legacy valuation payload lacks valuations 54ms
+ ✓ tests/components/Economics/useFinanceData.v8-analyses.test.tsx > useFinanceData V8 analyses seam > keeps budget list reads on the same legacy family as budget writes 54ms
+ ✓ tests/components/Economics/useFinanceData.v8-analyses.test.tsx > useFinanceData V8 analyses seam > keeps legacy budget payloads as the single source of truth for prediction budgets 54ms
+ ✓ tests/components/Economics/useFinanceLane.test.tsx > useFinanceLane > calls getLaneRuns on mount 51ms
+ ✓ tests/components/Economics/useFinanceLane.test.tsx > useFinanceLane > sets activeLaneRun from the first non-completed run 53ms
+ ✓ tests/components/Economics/useFinanceLane.test.tsx > useFinanceLane > maps degraded entries to alerts with correct severity 54ms
+ ✓ tests/components/Economics/useFinanceLane.test.tsx > useFinanceLane > startRun calls API and updates state 1ms
+ ✓ tests/components/Economics/useFinanceLane.test.tsx > useFinanceLane > advanceStep calls API and refreshes run 54ms
+ ✓ tests/components/Economics/useFinanceLane.test.tsx > useFinanceLane > refreshCoherence calls checkKpiCoherence and sets kpiCoherence state 52ms
+ ✓ tests/components/Economics/useFinanceLane.test.tsx > useFinanceLane > refreshCoherence falls back to unavailable on API error 53ms
+ ✓ tests/components/Economics/useFinanceLane.test.tsx > useFinanceLane > uses getFinanceErrorMessage for error reporting 2ms
+stdout | tests/integration/routes/v8.finance-intelligence.test.ts
+2026-08-12 23:43:25:4325 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+
+ ✓ tests/integration/routes/v8.finance-intelligence.test.ts > V8 Finance Intelligence — orphaned engine wiring > rejects requests without V8 org context (getV8Context throws -> 500, never 200) 74ms
+ ✓ tests/integration/routes/v8.finance-intelligence.test.ts > V8 Finance Intelligence — orphaned engine wiring > GET /packs/:packId/tie-out -> crossStatementTieOutService > 404s when the pack is not owned by the caller org 6ms
+ ✓ tests/integration/routes/v8.finance-intelligence.test.ts > V8 Finance Intelligence — orphaned engine wiring > GET /packs/:packId/tie-out -> crossStatementTieOutService > runs the 5 tie-out checks over the pack canonical value maps 4ms
+stdout | tests/integration/routes/v8.finance-intelligence.test.ts > V8 Finance Intelligence — orphaned engine wiring > POST /pipeline/* -> llmFinancialPipelineService (LLM, grounded in supplied text) > propagates the caller org into the pipeline options
+2026-08-12 23:43:25:4325 [32minfo[39m: [32m[finance-intelligence] pipeline.run org=org-1 user=user-1[39m
+
+stdout | tests/integration/routes/v8.finance-intelligence.test.ts > V8 Finance Intelligence — orphaned engine wiring > POST /pipeline/* -> llmFinancialPipelineService (LLM, grounded in supplied text) > runs the whole-document pipeline and serializes the per-type result map
+2026-08-12 23:43:25:4325 [32minfo[39m: [32m[finance-intelligence] pipeline.document org=org-1 user=user-1[39m
+
+ ✓ tests/integration/routes/v8.finance-intelligence.test.ts > V8 Finance Intelligence — orphaned engine wiring > POST /anomalies/detect -> financeAnomalyDetectorService (rule-based, no LLM) > 400s without lines[] 15ms
+ ✓ tests/integration/routes/v8.finance-intelligence.test.ts > V8 Finance Intelligence — orphaned engine wiring > POST /anomalies/detect -> financeAnomalyDetectorService (rule-based, no LLM) > flags a tie-out break as critical and blocks confirmation 4ms
+ ✓ tests/integration/routes/v8.finance-intelligence.test.ts > V8 Finance Intelligence — orphaned engine wiring > POST /variance/narrate -> varianceNarrationService (rule-based, no LLM) > 400s without bridge[] 2ms
+ ✓ tests/integration/routes/v8.finance-intelligence.test.ts > V8 Finance Intelligence — orphaned engine wiring > POST /variance/narrate -> varianceNarrationService (rule-based, no LLM) > narrates a plan-vs-actual bridge with drivers and severity 4ms
+ ✓ tests/integration/routes/v8.finance-intelligence.test.ts > V8 Finance Intelligence — orphaned engine wiring > POST /completeness/* -> statementCompletenessService (pure) > normalizes lines to the presentation currency via supplied FX rates 3ms
+ ✓ tests/integration/routes/v8.finance-intelligence.test.ts > V8 Finance Intelligence — orphaned engine wiring > POST /completeness/* -> statementCompletenessService (pure) > merges multi-year statements and computes YoY for a requested code 3ms
+ ✓ tests/integration/routes/v8.finance-intelligence.test.ts > V8 Finance Intelligence — orphaned engine wiring > POST /completeness/* -> statementCompletenessService (pure) > reports readiness against REQUIRED lines only 2ms
+ ✓ tests/integration/routes/v8.finance-intelligence.test.ts > V8 Finance Intelligence — orphaned engine wiring > POST /business-case/* -> businessCaseGeneratorService (pure NPV/IRR math) > generates a one-pager with verdict at the supplied WACC 20ms
+ ✓ tests/integration/routes/v8.finance-intelligence.test.ts > V8 Finance Intelligence — orphaned engine wiring > POST /business-case/* -> businessCaseGeneratorService (pure NPV/IRR math) > ranks a portfolio by NPV 3ms
+ ✓ tests/integration/routes/v8.finance-intelligence.test.ts > V8 Finance Intelligence — orphaned engine wiring > POST /business-case/from-analysis/:analysisId -> livingBusinessCaseService (DB-grounded) > 404s when the analysis is not owned by the caller org 3ms
+ ✓ tests/integration/routes/v8.finance-intelligence.test.ts > V8 Finance Intelligence — orphaned engine wiring > POST /business-case/from-analysis/:analysisId -> livingBusinessCaseService (DB-grounded) > reconstructs the benefit stream from the REAL roi_pct ratio (grounded fallback) and recomputes at live WACC 3ms
+ ✓ tests/integration/routes/v8.finance-intelligence.test.ts > V8 Finance Intelligence — orphaned engine wiring > POST /pipeline/* -> llmFinancialPipelineService (LLM, grounded in supplied text) > 400s without text 2ms
+ ✓ tests/integration/routes/v8.finance-intelligence.test.ts > V8 Finance Intelligence — orphaned engine wiring > POST /pipeline/* -> llmFinancialPipelineService (LLM, grounded in supplied text) > 413s when text exceeds the cap 4ms
+ ✓ tests/integration/routes/v8.finance-intelligence.test.ts > V8 Finance Intelligence — orphaned engine wiring > POST /pipeline/* -> llmFinancialPipelineService (LLM, grounded in supplied text) > propagates the caller org into the pipeline options 3ms
+ ✓ tests/integration/routes/v8.finance-intelligence.test.ts > V8 Finance Intelligence — orphaned engine wiring > POST /pipeline/* -> llmFinancialPipelineService (LLM, grounded in supplied text) > runs the whole-document pipeline and serializes the per-type result map 4ms
+ ✓ tests/integration/routes/v8.finance-intelligence.test.ts > V8 Finance Intelligence — orphaned engine wiring > GET /canonical-lines/:statementType > returns the canonical catalog for a statement type 2ms
+ ✓ tests/integration/routes/v8.finance-planning.test.ts > V8 Finance Planning — orphaned engine wiring > auth gate > rejects when v8Context is not attached (no upstream auth middleware) 47ms
+ ✓ tests/integration/routes/v8.finance-planning.test.ts > V8 Finance Planning — orphaned engine wiring > POST /cash-forecast -> cashForecastService > validates periods is an array 5ms
+ ✓ tests/integration/routes/v8.finance-planning.test.ts > V8 Finance Planning — orphaned engine wiring > POST /cash-forecast -> cashForecastService > runs the direct method pipeline: forecast -> runway -> alerts -> curve 2ms
+ ✓ tests/integration/routes/v8.finance-planning.test.ts > V8 Finance Planning — orphaned engine wiring > POST /rolling-forecast/* -> rollingForecastService > reforecast blends actuals with plan 2ms
+ ✓ tests/integration/routes/v8.finance-planning.test.ts > V8 Finance Planning — orphaned engine wiring > POST /rolling-forecast/* -> rollingForecastService > roll-forward extrapolates N periods from trailing trend 1ms
+ ✓ tests/integration/routes/v8.finance-planning.test.ts > V8 Finance Planning — orphaned engine wiring > POST /rolling-forecast/* -> rollingForecastService > fy-bridge computes YTD actual + remaining forecast vs plan 1ms
+ ✓ tests/integration/routes/v8.finance-planning.test.ts > V8 Finance Planning — orphaned engine wiring > POST /rolling-forecast/* -> rollingForecastService > snapshot rejects missing label/createdPeriod 1ms
+ ✓ tests/integration/routes/v8.finance-planning.test.ts > V8 Finance Planning — orphaned engine wiring > POST /rolling-forecast/* -> rollingForecastService > snapshot captures a labelled, deep-copied forecast 1ms
+ ✓ tests/integration/routes/v8.finance-planning.test.ts > V8 Finance Planning — orphaned engine wiring > POST /headcount/* -> headcountPlannerService > opex aggregates headcount/salary/loaded cost per period 2ms
+ ✓ tests/integration/routes/v8.finance-planning.test.ts > V8 Finance Planning — orphaned engine wiring > POST /headcount/* -> headcountPlannerService > cash applies payroll lag to loaded cost 2ms
+ ✓ tests/integration/routes/v8.finance-planning.test.ts > V8 Finance Planning — orphaned engine wiring > POST /headcount/* -> headcountPlannerService > summary reports roster-level loaded annual average 1ms
+ ✓ tests/integration/routes/v8.finance-planning.test.ts > V8 Finance Planning — orphaned engine wiring > POST /headcount/* -> headcountPlannerService > role-cost validates role object + numeric period 1ms
+ ✓ tests/integration/routes/v8.finance-planning.test.ts > V8 Finance Planning — orphaned engine wiring > POST /headcount/* -> headcountPlannerService > role-cost returns single-role, single-period cost 1ms
+ ✓ tests/integration/routes/v8.finance-planning.test.ts > V8 Finance Planning — orphaned engine wiring > POST /run-rate/* -> runRatePhasingService > split divides total into run-rate + one-time 1ms
+ ✓ tests/integration/routes/v8.finance-planning.test.ts > V8 Finance Planning — orphaned engine wiring > POST /run-rate/* -> runRatePhasingService > phasing-curve validates required numeric fields 1ms
+ ✓ tests/integration/routes/v8.finance-planning.test.ts > V8 Finance Planning — orphaned engine wiring > POST /run-rate/* -> runRatePhasingService > phasing-curve produces a monotonic ramp to full run-rate 1ms
+ ✓ tests/integration/routes/v8.finance-planning.test.ts > V8 Finance Planning — orphaned engine wiring > POST /run-rate/* -> runRatePhasingService > in-year pro-rates the full-year run-rate 1ms
+ ✓ tests/integration/routes/v8.finance-planning.test.ts > V8 Finance Planning — orphaned engine wiring > POST /run-rate/* -> runRatePhasingService > bankable sums only run-rate value across benefits 1ms
+ ✓ tests/integration/routes/v8.finance-planning.test.ts > V8 Finance Planning — orphaned engine wiring > POST /driver-tree/* -> driverTreeService > evaluate computes topological values 1ms
+ ✓ tests/integration/routes/v8.finance-planning.test.ts > V8 Finance Planning — orphaned engine wiring > POST /driver-tree/* -> driverTreeService > evaluate 400s on a cyclic tree instead of 500ing 1ms
+ ✓ tests/integration/routes/v8.finance-planning.test.ts > V8 Finance Planning — orphaned engine wiring > POST /driver-tree/* -> driverTreeService > propagate reports before/after/delta for a changed input 1ms
+ ✓ tests/integration/routes/v8.finance-planning.test.ts > V8 Finance Planning — orphaned engine wiring > POST /driver-tree/* -> driverTreeService > chart builds a recursive DriverTree component shape 1ms
+ ✓ tests/integration/routes/v8.finance-planning.test.ts > V8 Finance Planning — orphaned engine wiring > POST /nl-to-model -> nlToModelService (rule-based, no LLM call) > validates non-empty text 1ms
+ ✓ tests/integration/routes/v8.finance-planning.test.ts > V8 Finance Planning — orphaned engine wiring > POST /nl-to-model -> nlToModelService (rule-based, no LLM call) > parses drivers + builds driver tree + assumptions from free text 2ms
+ ✓ tests/integration/routes/v8.finance-valuation.test.ts > V8 Finance Valuation/Risk — orphaned engine wiring > auth gating (no v8Context attached) > 500s (context-not-attached) rather than silently computing without auth 59ms
+ ✓ tests/integration/routes/v8.finance-valuation.test.ts > V8 Finance Valuation/Risk — orphaned engine wiring > POST /monte-carlo-npv -> monteCarloNpvService.{simulateNpv,histogram} > rejects an empty drivers map 4ms
+ ✓ tests/integration/routes/v8.finance-valuation.test.ts > V8 Finance Valuation/Risk — orphaned engine wiring > POST /monte-carlo-npv -> monteCarloNpvService.{simulateNpv,histogram} > runs a deterministic simulation and buckets a histogram 4ms
+ ✓ tests/integration/routes/v8.finance-valuation.test.ts > V8 Finance Valuation/Risk — orphaned engine wiring > POST /monte-carlo-npv -> monteCarloNpvService.{simulateNpv,histogram} > is deterministic for a fixed seed 4ms
+ ✓ tests/integration/routes/v8.finance-valuation.test.ts > V8 Finance Valuation/Risk — orphaned engine wiring > POST /value-at-risk -> valueAtRiskService.valueAtRisk > requires a numeric benefitForecast 1ms
+ ✓ tests/integration/routes/v8.finance-valuation.test.ts > V8 Finance Valuation/Risk — orphaned engine wiring > POST /value-at-risk -> valueAtRiskService.valueAtRisk > computes VaR from schedule health 2ms
+ ✓ tests/integration/routes/v8.finance-valuation.test.ts > V8 Finance Valuation/Risk — orphaned engine wiring > POST /value-at-risk/portfolio -> valueAtRiskService.{portfolioVaR,varHeatmapCells} > aggregates portfolio VaR and returns heatmap cells 2ms
+ ✓ tests/integration/routes/v8.finance-valuation.test.ts > V8 Finance Valuation/Risk — orphaned engine wiring > POST /real-options/defer -> realOptionsService.deferOption > requires all numeric fields 2ms
+ ✓ tests/integration/routes/v8.finance-valuation.test.ts > V8 Finance Valuation/Risk — orphaned engine wiring > POST /real-options/defer -> realOptionsService.deferOption > values the option to wait 2ms
+ ✓ tests/integration/routes/v8.finance-valuation.test.ts > V8 Finance Valuation/Risk — orphaned engine wiring > POST /real-options/abandon -> realOptionsService.abandonOption > values the option to abandon 2ms
+ ✓ tests/integration/routes/v8.finance-valuation.test.ts > V8 Finance Valuation/Risk — orphaned engine wiring > POST /real-options/staged -> realOptionsService.stagedInvestment > recommends pilot-first for a risky staged bet 2ms
+ ✓ tests/integration/routes/v8.finance-valuation.test.ts > V8 Finance Valuation/Risk — orphaned engine wiring > POST /efficient-frontier -> efficientFrontierService.frontier > builds a value-vs-risk curve 2ms
+ ✓ tests/integration/routes/v8.finance-valuation.test.ts > V8 Finance Valuation/Risk — orphaned engine wiring > POST /efficient-frontier/portfolio -> efficientFrontierService.portfolioRiskValue > computes value and weighted risk for a selection 1ms
+ ✓ tests/integration/routes/v8.finance-valuation.test.ts > V8 Finance Valuation/Risk — orphaned engine wiring > POST /sensitivity/one-way -> whatIfSensitivityService.oneWaySensitivity > sweeps a single driver through the linear model 1ms
+ ✓ tests/integration/routes/v8.finance-valuation.test.ts > V8 Finance Valuation/Risk — orphaned engine wiring > POST /sensitivity/tornado -> whatIfSensitivityService.tornado > ranks drivers by swing impact 1ms
+ ✓ tests/integration/routes/v8.finance-valuation.test.ts > V8 Finance Valuation/Risk — orphaned engine wiring > POST /sensitivity/data-table -> whatIfSensitivityService.dataTable2D > evaluates the cartesian product of two drivers 1ms
+ ✓ tests/integration/routes/v8.finance-valuation.test.ts > V8 Finance Valuation/Risk — orphaned engine wiring > POST /sensitivity/break-even -> whatIfSensitivityService.breakEven > finds the driver value that zeroes the linear target 2ms
+ ✓ tests/integration/routes/v8.finance-valuation.test.ts > V8 Finance Valuation/Risk — orphaned engine wiring > POST /scenarios/apply -> scenarioComputeService.applyScenario > scales growth/cost fields by scenario multipliers 2ms
+ ✓ tests/integration/routes/v8.finance-valuation.test.ts > V8 Finance Valuation/Risk — orphaned engine wiring > POST /scenarios/apply -> scenarioComputeService.applyScenario > rejects an unknown scenario name 1ms
+ ✓ tests/integration/routes/v8.finance-valuation.test.ts > V8 Finance Valuation/Risk — orphaned engine wiring > POST /scenarios/compare -> scenarioComputeService.compareScenarios > reports base/optimistic/conservative metrics and deltas 2ms
+ ✓ tests/integration/routes/v8.finance-valuation.test.ts > V8 Finance Valuation/Risk — orphaned engine wiring > POST /scenarios/fan -> scenarioComputeService.scenarioFanData > shapes per-scenario series into a base + bands structure 2ms
+ ✓ tests/integration/routes/v8.finance-valuation.test.ts > V8 Finance Valuation/Risk — orphaned engine wiring > POST /capital-decision/hurdle-rate -> capitalDecisionService.hurdleRate > adds the risk-class premium to WACC 2ms
+ ✓ tests/integration/routes/v8.finance-valuation.test.ts > V8 Finance Valuation/Risk — orphaned engine wiring > POST /capital-decision/risk-adjusted-npv -> capitalDecisionService.riskAdjustedNpv > applies probability and leakage haircuts 1ms
+ ✓ tests/integration/routes/v8.finance-valuation.test.ts > V8 Finance Valuation/Risk — orphaned engine wiring > POST /capital-decision/evaluate-hurdle -> capitalDecisionService.evaluateAgainstHurdle > classifies IRR vs hurdle 1ms
+ ✓ tests/integration/routes/v8.finance-valuation.test.ts > V8 Finance Valuation/Risk — orphaned engine wiring > POST /capital-decision/rank -> capitalDecisionService.rankByRiskAdjusted > ranks a portfolio by risk-adjusted NPV descending 1ms
+ ✓ tests/integration/routes/v8.finance-value.test.ts > V8 Finance — Value Tracking cluster wiring (M16) > ledger (valueLedgerService) > POST /ledger/baselines freezes a new active baseline 78ms
+ ✓ tests/integration/routes/v8.finance-value.test.ts > V8 Finance — Value Tracking cluster wiring (M16) > ledger (valueLedgerService) > POST /ledger/baselines 400s when initiativeId/kpiId missing 3ms
+ ✓ tests/integration/routes/v8.finance-value.test.ts > V8 Finance — Value Tracking cluster wiring (M16) > ledger (valueLedgerService) > GET /ledger/baselines/active reads the active baseline org-scoped 3ms
+ ✓ tests/integration/routes/v8.finance-value.test.ts > V8 Finance — Value Tracking cluster wiring (M16) > ledger (valueLedgerService) > POST /ledger/entries appends a correction entry 3ms
+ ✓ tests/integration/routes/v8.finance-value.test.ts > V8 Finance — Value Tracking cluster wiring (M16) > ledger (valueLedgerService) > GET /ledger/entries lists entries for an initiative 3ms
+ ✓ tests/integration/routes/v8.finance-value.test.ts > V8 Finance — Value Tracking cluster wiring (M16) > ledger (valueLedgerService) > GET /ledger/current-value composes baseline + entries into a current value + audit trail 2ms
+ ✓ tests/integration/routes/v8.finance-value.test.ts > V8 Finance — Value Tracking cluster wiring (M16) > attribution rollup (valueAttributionRollupService) > POST /attribution/rollup caps overlapping contributions per KPI 2ms
+ ✓ tests/integration/routes/v8.finance-value.test.ts > V8 Finance — Value Tracking cluster wiring (M16) > attribution rollup (valueAttributionRollupService) > POST /attribution/by-initiative attributes capped value per initiative 2ms
+stdout | tests/integration/routes/v8.finance-value.test.ts > V8 Finance — Value Tracking cluster wiring (M16) > capture gates (valueCapturePipelineService) > POST /capture/gates rejects an invalid gate label
+2026-08-12 23:43:27:4327 [33mwarn[39m: [33m[V8:FinanceValue] createGate rejected: Invalid gate: G9[39m
+
+stdout | tests/integration/routes/v8.finance-value.test.ts > V8 Finance — Value Tracking cluster wiring (M16) > capture gates (valueCapturePipelineService) > POST /capture/gates/:id/advance advances when criteria met + signed off
+2026-08-12 23:43:27:4327 [32minfo[39m: [32m[valueCapture] gate g1 advanced (G0) by user-1[39m
+
+stdout | tests/integration/routes/v8.finance-value.test.ts > V8 Finance — Value Tracking cluster wiring (M16) > capture gates (valueCapturePipelineService) > POST /capture/gates/:id/advance 404s when the gate is not found
+2026-08-12 23:43:27:4327 [33mwarn[39m: [33m[V8:FinanceValue] advanceGate rejected for missing: Gate not found[39m
+
+stdout | tests/integration/routes/v8.finance-value.test.ts > V8 Finance — Value Tracking cluster wiring (M16) > reconciliation (realizedValueReconciliationService) > GET /reconciliation/organization loads + reconciles org rows (degrades to empty on DB error)
+2026-08-12 23:43:27:4327 [33mwarn[39m: [33m[realizedValueReconciliation] loadReconciliationRows failed for org org-1: no such table[39m
+
+ ✓ tests/integration/routes/v8.finance-value.test.ts > V8 Finance — Value Tracking cluster wiring (M16) > capture gates (valueCapturePipelineService) > GET /capture/gates lists org-scoped gates 2ms
+ ✓ tests/integration/routes/v8.finance-value.test.ts > V8 Finance — Value Tracking cluster wiring (M16) > capture gates (valueCapturePipelineService) > POST /capture/gates creates a gate record 2ms
+ ✓ tests/integration/routes/v8.finance-value.test.ts > V8 Finance — Value Tracking cluster wiring (M16) > capture gates (valueCapturePipelineService) > POST /capture/gates rejects an invalid gate label 4ms
+ ✓ tests/integration/routes/v8.finance-value.test.ts > V8 Finance — Value Tracking cluster wiring (M16) > capture gates (valueCapturePipelineService) > POST /capture/gates/:id/advance advances when criteria met + signed off 3ms
+ ✓ tests/integration/routes/v8.finance-value.test.ts > V8 Finance — Value Tracking cluster wiring (M16) > capture gates (valueCapturePipelineService) > POST /capture/gates/:id/advance 404s when the gate is not found 2ms
+ ✓ tests/integration/routes/v8.finance-value.test.ts > V8 Finance — Value Tracking cluster wiring (M16) > capture gates (valueCapturePipelineService) > GET /capture/funnel builds a conversion funnel from stored gates 2ms
+ ✓ tests/integration/routes/v8.finance-value.test.ts > V8 Finance — Value Tracking cluster wiring (M16) > reconciliation (realizedValueReconciliationService) > POST /reconciliation/check flags a variance beyond tolerance 2ms
+ ✓ tests/integration/routes/v8.finance-value.test.ts > V8 Finance — Value Tracking cluster wiring (M16) > reconciliation (realizedValueReconciliationService) > POST /reconciliation/portfolio aggregates matched/variance/unmapped 1ms
+ ✓ tests/integration/routes/v8.finance-value.test.ts > V8 Finance — Value Tracking cluster wiring (M16) > reconciliation (realizedValueReconciliationService) > GET /reconciliation/organization loads + reconciles org rows (degrades to empty on DB error) 1ms
+ ✓ tests/integration/routes/v8.finance-value.test.ts > V8 Finance — Value Tracking cluster wiring (M16) > lineage (kpiLineageService) > POST /lineage/early-warnings detects a leading/lagging divergence 1ms
+ ✓ tests/integration/routes/v8.finance-value.test.ts > V8 Finance — Value Tracking cluster wiring (M16) > banking (bankingValueService) > POST /banking/bank wires a hard run-rate cost saving into the budget line (negative delta) 1ms
+ ✓ tests/integration/routes/v8.finance-value.test.ts > V8 Finance — Value Tracking cluster wiring (M16) > banking (bankingValueService) > POST /banking/status reports leaked when actual falls short of plan 1ms
+ ✓ tests/integration/routes/v8.finance-value.test.ts > V8 Finance — Value Tracking cluster wiring (M16) > banking (bankingValueService) > POST /banking/portfolio aggregates banked/pending/leaked totals 2ms
+ ✓ tests/integration/routes/v8.finance-value.test.ts > V8 Finance — Value Tracking cluster wiring (M16) > extended ratios (extendedRatiosService) > POST /ratios/extended computes the 10-ratio extended set 2ms
+ ✓ tests/integration/routes/v8.finance-value.test.ts > V8 Finance — Value Tracking cluster wiring (M16) > extended ratios (extendedRatiosService) > POST /ratios/dupont decomposes ROE into netMargin x assetTurnover x equityMultiplier 2ms
+ ✓ tests/integration/routes/v8.finance-value.test.ts > V8 Finance — Value Tracking cluster wiring (M16) > extended ratios (extendedRatiosService) > POST /ratios/benchmark positions a value against an industry quartile distribution 1ms
+ ✓ tests/integration/routes/v8.finance-value.test.ts > V8 Finance — Value Tracking cluster wiring (M16) > rejects unauthenticated calls before reaching any service (no v8Context attached) 5ms
+ ✓ tests/components/Economics/FinancePreviewPanel.v8-analysis-mutations.test.tsx > FinancePreviewPanel V8 analysis mutations > prefers governed preview run and approve actions before legacy fallback 133ms
+ ✓ tests/components/Economics/FinancePreviewPanel.v8-analysis-mutations.test.tsx > FinancePreviewPanel V8 analysis mutations > falls back to legacy preview run and approve actions on bounded compatibility statuses 38ms
+ ✓ tests/components/Economics/FinancePreviewPanel.v8-analysis-mutations.test.tsx > FinancePreviewPanel V8 analysis mutations > prefers governed preview compute action before legacy fallback 12ms
+ ✓ tests/components/Economics/FinancePreviewPanel.v8-analysis-mutations.test.tsx > FinancePreviewPanel V8 analysis mutations > falls back to legacy preview compute action on bounded compatibility statuses 9ms
+ ✓ tests/components/Economics/FinancePreviewPanel.v8-analysis-mutations.test.tsx > FinancePreviewPanel V8 analysis mutations > prefers governed preview model approve action before legacy fallback 10ms
+ ✓ tests/components/Economics/FinancePreviewPanel.v8-analysis-mutations.test.tsx > FinancePreviewPanel V8 analysis mutations > falls back to legacy preview model approve action on bounded compatibility statuses 10ms
+ ✓ tests/integration/routes/financeValueRoutes.test.ts > v8 finance value routes (M16/9.1) > POST /value-bridge returns waterfall steps 58ms
+ ✓ tests/integration/routes/financeValueRoutes.test.ts > v8 finance value routes (M16/9.1) > POST /portfolio/prioritize ranks initiatives 5ms
+ ✓ tests/integration/routes/financeValueRoutes.test.ts > v8 finance value routes (M16/9.1) > POST /capital/ration selects within budget 2ms
+ ✓ tests/integration/routes/financeValueRoutes.test.ts > v8 finance value routes (M16/9.1) > POST /appraise computes NPV / verdict 2ms
+ ✓ tests/integration/routes/financeValueRoutes.test.ts > v8 finance value routes (M16/9.1) > POST /variance-bridge decomposes budget vs actual 2ms
+ ✓ tests/integration/routes/financeValueRoutes.test.ts > v8 finance value routes (M16/9.1) > POST /value-assurance summarizes realization 2ms
+ ✓ tests/integration/routes/financeValueRoutes.test.ts > v8 finance value routes (M16/9.1) > returns 401 for all endpoints when unauthenticated 7ms
+ ✓ src/routes/__tests__/financeCanonicalRoute.test.ts > Finance canonical route > keeps /finance as the route emitted for the Finance app view 53ms
+ ✓ src/routes/__tests__/financeCanonicalRoute.test.ts > Finance canonical route > preserves legacy query and hash when redirecting /economics 0ms
+stdout | tests/integration/p05-finance-lane.contract.test.ts > P05 Finance Lane E2E > Import outcome taxonomy > failed import blocks downstream mutation
+2026-08-12 23:43:31:4331 [32minfo[39m: [32m[V8:FinanceLane] Advanced run run-1 to import (outcome=failed)[39m
+
+stdout | tests/integration/p05-finance-lane.contract.test.ts > P05 Finance Lane E2E > Mutation audit > failed mutation creates audit event and safe degraded state
+2026-08-12 23:43:31:4331 [32minfo[39m: [32m[V8:FinanceLane] Recorded mutation audit da0cdf23-1c5d-4066-9cc7-f45a0f9cd08d for run run-1[39m
+
+ ✓ tests/integration/p05-finance-lane.contract.test.ts > P05 Finance Lane E2E > Lane steps > has exactly 4 steps in canonical order 51ms
+ ✓ tests/integration/p05-finance-lane.contract.test.ts > P05 Finance Lane E2E > Import outcome taxonomy > has 8 import outcomes (base §2.3.4 + mapping_missing, schema_drift) 1ms
+ ✓ tests/integration/p05-finance-lane.contract.test.ts > P05 Finance Lane E2E > Import outcome taxonomy > failed import blocks downstream mutation 2ms
+ ✓ tests/integration/p05-finance-lane.contract.test.ts > P05 Finance Lane E2E > Import outcome taxonomy > completed_with_warnings allows analysis in warning posture 0ms
+ ✓ tests/integration/p05-finance-lane.contract.test.ts > P05 Finance Lane E2E > Mutation audit > mutation has 4 outcomes 0ms
+ ✓ tests/integration/p05-finance-lane.contract.test.ts > P05 Finance Lane E2E > Mutation audit > failed mutation creates audit event and safe degraded state 1ms
+ ✓ tests/integration/p05-finance-lane.contract.test.ts > P05 Finance Lane E2E > Versioning semantics > supports current and actual version types 0ms
+ ✓ tests/integration/p05-finance-lane.contract.test.ts > P05 Finance Lane E2E > Versioning semantics > switchover is explicit event with actor and date 0ms
+ ✓ tests/integration/p05-finance-lane.contract.test.ts > P05 Finance Lane E2E > Degraded scenarios (§2.3.6) > has at least 9 degraded scenarios per contract 0ms
+ ✓ tests/integration/p05-finance-lane.contract.test.ts > P05 Finance Lane E2E > KPI↔Finance coherence > coherence check returns one of: coherent, stale, unavailable 0ms
+ ✓ tests/components/FinanceWaterfall.test.tsx > FinanceWaterfall > renderuje root z data-testid 27ms
+ ✓ tests/components/FinanceWaterfall.test.tsx > FinanceWaterfall > renderuje N słupków dla N kroków 6ms
+ ✓ tests/components/FinanceWaterfall.test.tsx > FinanceWaterfall > increase i decrease mają różne kolory (emerald vs rose, §1) 8ms
+ ✓ tests/components/FinanceWaterfall.test.tsx > FinanceWaterfall > start/total używają slate/violet (§1) 4ms
+ ✓ tests/components/FinanceWaterfall.test.tsx > FinanceWaterfall > skumulowana suma liczy się poprawnie wzdłuż mostka 4ms
+ ✓ tests/components/FinanceWaterfall.test.tsx > FinanceWaterfall > słupek niesie tooltip <title> z wartością i skumulowaną 3ms
+ ✓ tests/components/FinanceWaterfall.test.tsx > FinanceWaterfall > klik słupka wywołuje onSelect(label) 6ms
+ ✓ tests/components/FinanceWaterfall.test.tsx > FinanceWaterfall > pusty stan gdy steps puste 2ms
+ ✓ tests/components/FinanceWaterfall.test.tsx > FinanceWaterfall > honoruje custom formatValue 6ms
+ ✓ tests/components/Economics/FinanceLaneStrip.test.tsx > FinanceLaneStrip — unit tests > returns null when no active lane run 49ms
+ ✓ tests/components/Economics/FinanceLaneStrip.test.tsx > FinanceLaneStrip — unit tests > renders 4 step indicators in canonical order 5ms
+ ✓ tests/components/Economics/FinanceLaneStrip.test.tsx > FinanceLaneStrip — unit tests > shows degraded badge when alerts exist 1ms
+ ✓ tests/components/Economics/FinanceLaneStrip.test.tsx > FinanceLaneStrip — unit tests > shows KPI coherence chip 1ms
+ ✓ tests/components/Economics/FinanceLaneStrip.test.tsx > FinanceLaneStrip — unit tests > shows version type badge 1ms
+ ✓ tests/components/Economics/FinanceLaneStrip.test.tsx > FinanceLanePanel — unit tests > renders nothing when closed 1ms
+ ✓ tests/components/Economics/FinanceLaneStrip.test.tsx > FinanceLanePanel — unit tests > shows lane progress section with 4 steps when open 22ms
+ ✓ tests/components/Economics/FinanceLaneStrip.test.tsx > FinanceLanePanel — unit tests > shows degraded alerts section with severity styling 4ms
+ ✓ tests/components/Economics/FinanceLaneStrip.test.tsx > FinanceLanePanel — unit tests > shows KPI coherence section 3ms
+ ✓ tests/components/Economics/FinanceHub.v8-runtime-strip.test.tsx > FinanceHub governed runtime contract > keeps Finance tabs as list surfaces without restoring below-list tool panels 42ms
+ ✓ tests/components/Economics/FinanceHub.v8-runtime-strip.test.tsx > FinanceHub governed runtime contract > retains governed statement-pack lookup for import completion 0ms
+ ✓ tests/components/Economics/FinanceHub.v8-runtime-strip.test.tsx > FinanceHub governed runtime contract > retains the governed V8 health seam without coupling to obsolete tab mocks 0ms
+ ✓ tests/integration/routes/initiativeEconomicsLinks.test.ts > initiative economics-links routes (M16 integration) > POST /:initiativeId/economics-links returns 201 with linkage when initiative exists 59ms
+ ✓ tests/integration/routes/initiativeEconomicsLinks.test.ts > initiative economics-links routes (M16 integration) > POST /:initiativeId/economics-links returns 401 when no auth 3ms
+ ✓ tests/integration/routes/initiativeEconomicsLinks.test.ts > initiative economics-links routes (M16 integration) > GET /:initiativeId/economics-links returns 200 with links array when initiative exists 2ms
+ ✓ tests/components/Economics/FinanceHub.list-only-contract.test.ts > FinanceHub list-only contract > does not mount analysis tools, planners or charts below Finance lists 49ms
+ ✓ tests/components/Economics/useFinanceSelection.v8-statement-pack-detail.test.tsx > useFinanceSelection V8 statement-pack detail seam > prefers governed statement-pack detail before legacy fallback for statement preview 15ms
+ ✓ tests/components/Economics/useFinanceSelection.v8-statement-pack-detail.test.tsx > useFinanceSelection V8 statement-pack detail seam > falls back to legacy statement-pack detail on bounded compatibility statuses 3ms
+ ✓ tests/components/Economics/useFinanceSelection.v8-statement-pack-detail.test.tsx > useFinanceSelection V8 statement-pack detail seam > uses the governed statement-pack detail seam for model preview pack hydration 4ms
+ ✓ tests/components/Economics/useFinanceSelection.v8-statement-pack-detail.test.tsx > useFinanceSelection V8 statement-pack detail seam > falls back to legacy child statement detail on bounded compatibility statuses during model preview hydration 3ms
+ ✓ tests/components/Economics/useFinanceSelection.v8-statement-pack-detail.test.tsx > useFinanceSelection V8 statement-pack detail seam > falls back to legacy model detail on bounded compatibility statuses during model preview hydration 3ms
+ ✓ tests/components/Economics/useFinanceSelection.v8-statement-pack-detail.test.tsx > useFinanceSelection V8 statement-pack detail seam > prefers governed model validations before legacy fallback for prediction preview 3ms
+ ✓ tests/components/Economics/useFinanceSelection.v8-statement-pack-detail.test.tsx > useFinanceSelection V8 statement-pack detail seam > falls back to legacy model validations on bounded compatibility statuses for prediction preview 3ms
+ ✓ tests/backend/services/economicsFinancials.test.ts > economicsFinancials helpers > calculates positive NPV for strong benefits 45ms
+ ✓ tests/backend/services/economicsFinancials.test.ts > economicsFinancials helpers > returns null ROI when costs are zero 0ms
+ ✓ tests/components/Economics/useFinanceRowActions.v8-analysis-mutations.test.tsx > useFinanceRowActions V8 analysis mutations > prefers governed analysis run and approve actions before legacy fallback 14ms
+ ✓ tests/components/Economics/useFinanceRowActions.v8-analysis-mutations.test.tsx > useFinanceRowActions V8 analysis mutations > falls back to legacy analysis run and approve actions on bounded compatibility statuses 2ms
+ ✓ tests/components/Economics/useFinanceRowActions.v8-analysis-mutations.test.tsx > useFinanceRowActions V8 analysis mutations > prefers governed model compute action before legacy fallback 1ms
+ ✓ tests/components/Economics/useFinanceRowActions.v8-analysis-mutations.test.tsx > useFinanceRowActions V8 analysis mutations > falls back to legacy model compute action on bounded compatibility statuses 1ms
+ ✓ tests/components/Economics/useFinanceRowActions.v8-analysis-mutations.test.tsx > useFinanceRowActions V8 analysis mutations > prefers governed model approve action before legacy fallback 2ms
+ ✓ tests/components/Economics/useFinanceRowActions.v8-analysis-mutations.test.tsx > useFinanceRowActions V8 analysis mutations > falls back to legacy model approve action on bounded compatibility statuses 1ms
+ ✓ tests/components/Economics/useFinanceSelection.v8-analysis-ratios.test.tsx > useFinanceSelection V8 analysis ratios seam > prefers governed finance analysis ratios before legacy fallback 15ms
+ ✓ tests/components/Economics/useFinanceSelection.v8-analysis-ratios.test.tsx > useFinanceSelection V8 analysis ratios seam > falls back to legacy analysis ratios when V8 seam returns a bounded compatibility status 3ms
+ ✓ tests/components/Economics/useFinanceRowActions.v8-analysis-create.test.tsx > useFinanceRowActions V8 analysis create seam > prefers governed analysis creation for duplicate before legacy fallback 14ms
+ ✓ tests/components/Economics/useFinanceRowActions.v8-analysis-create.test.tsx > useFinanceRowActions V8 analysis create seam > falls back to legacy analysis creation for duplicate on bounded compatibility statuses 2ms
+ ✓ tests/components/Economics/useFinanceRowActions.v8-analysis-create.test.tsx > useFinanceRowActions V8 analysis create seam > prefers governed model creation for duplicate before legacy fallback 2ms
+ ✓ tests/components/Economics/useFinanceRowActions.v8-analysis-create.test.tsx > useFinanceRowActions V8 analysis create seam > falls back to legacy model creation for duplicate on bounded compatibility statuses 2ms
+ ✓ tests/components/Economics/useFinanceRowActions.v8-analysis-delete.test.tsx > useFinanceRowActions V8 analysis delete seam > prefers governed analysis deletion before legacy fallback 14ms
+ ✓ tests/components/Economics/useFinanceRowActions.v8-analysis-delete.test.tsx > useFinanceRowActions V8 analysis delete seam > falls back to legacy analysis deletion on bounded compatibility statuses 2ms
+ ✓ tests/components/Economics/useFinanceRowActions.v8-analysis-delete.test.tsx > useFinanceRowActions V8 analysis delete seam > prefers governed model deletion before legacy fallback 2ms
+ ✓ tests/components/Economics/useFinanceRowActions.v8-analysis-delete.test.tsx > useFinanceRowActions V8 analysis delete seam > falls back to legacy model deletion on bounded compatibility statuses 1ms
+
+ Test Files  21 passed (21)
+      Tests  186 passed (186)
+   Start at  23:43:22
+   Duration  15.96s (transform 1.02s, setup 1.19s, import 2.63s, tests 2.26s, environment 7.58s)

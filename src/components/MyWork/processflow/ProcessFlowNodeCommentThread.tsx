@@ -13,6 +13,8 @@ import { AtSign, Send, Trash2, X } from 'lucide-react';
 import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
+
 import type { ProcessFlowNodeComment } from './nodeComments';
 import { buildProcessFlowComment } from './nodeComments';
 
@@ -57,6 +59,8 @@ export const ProcessFlowNodeCommentThread: React.FC<ProcessFlowNodeCommentThread
   const { t } = useTranslation();
   const [text, setText] = useState('');
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogA11y({ open, onClose, containerRef: dialogRef, initialFocusRef: inputRef });
 
   const handleSubmit = useCallback(() => {
     if (!text.trim()) return;
@@ -78,11 +82,21 @@ export const ProcessFlowNodeCommentThread: React.FC<ProcessFlowNodeCommentThread
   if (!open) return null;
 
   return (
-    <div className="fixed top-0 right-0 bottom-0 z-[86] w-[360px] max-w-[85vw] bg-c-surface border-l border-c-border-subtle shadow-2xl flex flex-col overflow-hidden">
+    <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="processflow-node-comment-thread-title"
+      tabIndex={-1}
+      className="fixed top-0 right-0 bottom-0 z-[86] w-[360px] max-w-[85vw] bg-c-surface border-l border-c-border-subtle shadow-2xl flex flex-col overflow-hidden outline-none"
+    >
       {/* Header */}
       <div className="flex items-center gap-2.5 px-4 py-3 border-b border-c-border-subtle">
         <div className="min-w-0 flex-1">
-          <div className="text-[11px] font-bold text-c-text truncate">
+          <div
+            id="processflow-node-comment-thread-title"
+            className="text-[11px] font-bold text-c-text truncate"
+          >
             {t('processFlow.nodeCommentThread.title', 'Comments')}
           </div>
           <div className="text-[9px] text-c-text-muted truncate">{nodeLabel}</div>

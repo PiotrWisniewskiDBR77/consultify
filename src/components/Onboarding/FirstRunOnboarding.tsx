@@ -24,7 +24,7 @@ import { useDemo } from '../../hooks/useDemo';
 import { Button } from '../ui/primitives/Button';
 import { Modal } from '../ui/primitives/Modal';
 import type { FirstRunRole } from './firstRunConfig';
-import { DEFAULT_ENTRY_ROUTE, FIRST_RUN_ROLES, routeForRole } from './firstRunConfig';
+import { FIRST_RUN_ROLES, routeForRole } from './firstRunConfig';
 import { onFirstRunRelaunch } from './firstRunEvents';
 import { useFirstRunOnboarding } from './useFirstRunOnboarding';
 
@@ -64,8 +64,20 @@ export const FirstRunOnboarding: React.FC = () => {
     navigate(route);
   };
 
+  // D4 (P3, 2026-08-12): "Skip for now" must only dismiss the onboarding
+  // modal and record that it was skipped (so it doesn't come back) — it must
+  // NOT navigate. The modal is mounted as an overlay on top of whatever
+  // screen the user was already on (e.g. My Work / Ideas); the previous
+  // implementation called finishAndGo(DEFAULT_ENTRY_ROUTE) (the default
+  // door, '/chat'), which force-navigated away and threw away that screen.
+  // `complete()` already closes the modal and persists the skip (server +
+  // local) synchronously before its awaited call, so simply not navigating
+  // leaves the user exactly where they were, regardless of which screen
+  // that was.
   const handleSkip = () => {
-    void finishAndGo(DEFAULT_ENTRY_ROUTE);
+    if (finishing) return;
+    setFinishing(true);
+    void complete(selectedRole);
   };
 
   const handleStartFresh = () => {

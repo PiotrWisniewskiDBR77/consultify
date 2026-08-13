@@ -256,12 +256,14 @@ describe('R01 · kolory i stany', () => {
   });
 
   /**
-   * Decyzja zarządzająca R01 (2026-08-06), NADRZĘDNA wobec P-17/P-18
-   * z 2026-07-28: pozycja wyłączona zostaje widoczna i jaśniejsza, ale powód
-   * blokady NIE jest prezentowany — ani jako dopisek, ani jako tooltip.
-   * Stan biznesowy i sama blokada pozostają nietknięte.
+   * D06 (tor PLATFORMY, `rn-g3-lane-platform2`, 2026-08-11) NADPISUJE decyzję
+   * zarządzającą R01 (2026-08-06) — patrz komentarz przy renderze w
+   * `RowActionsMenu.tsx`. TRIADA §C3 wygrywa: pozycja ograniczona regułą
+   * produktu zostaje widoczna, disabled, ZE zwięzłym powodem — jako dopisek
+   * pod etykietą ORAZ jako tooltip (`title`). Stan biznesowy i sama blokada
+   * pozostają nietknięte — zmienia się wyłącznie prezentacja.
    */
-  it('powód blokady NIE jest prezentowany — ani dopiskiem, ani tooltipem (§1, §7, §10)', () => {
+  it('powód blokady JEST prezentowany — dopiskiem i tooltipem (D06 nadpisuje R01)', () => {
     render(
       <RowActionsMenu
         sections={[
@@ -284,13 +286,13 @@ describe('R01 · kolory i stany', () => {
 
     // Blokada działa i jest widoczna…
     expect(archive).toBeDisabled();
-    // …ale powód nigdzie nie wycieka do UI.
-    expect(screen.queryByText(/Finish or cancel it first/)).toBeNull();
-    expect(archive.getAttribute('title')).toBeNull();
-    expect(archive.textContent).toBe('Archive');
+    // …i powód jest widoczny w UI (D06): dopisek pod etykietą + tooltip.
+    expect(screen.getByText('Finish or cancel it first')).toBeInTheDocument();
+    expect(archive.getAttribute('title')).toBe('Finish or cancel it first');
+    expect(archive.textContent).toContain('Archive');
   });
 
-  it('opis pozycji AKTYWNEJ nadal się renderuje — usunięta jest tylko prezentacja POWODU', () => {
+  it('opis pozycji AKTYWNEJ nadal się renderuje — ta sama ścieżka co disabled (D06)', () => {
     render(
       <RowActionsMenu
         sections={[

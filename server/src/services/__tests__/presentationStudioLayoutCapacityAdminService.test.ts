@@ -7,20 +7,20 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { _clearApprovalTicketStoreForTests } from '../presentationStudioApprovalTicketService';
+import { _clearApprovalTicketStoreForTests } from '../presentationStudioApprovalTicketService.js';
 import {
   _setLayoutCapacityAdminDependenciesForTests,
   executeLayoutCapacityOverrides,
   executeLayoutCapacityReset,
   proposeLayoutCapacityOverrides,
   proposeLayoutCapacityReset,
-} from '../presentationStudioLayoutCapacityAdminService';
+} from '../presentationStudioLayoutCapacityAdminService.js';
 import {
   applyOverrides,
   getCurrentRegistrySnapshot,
   getDefaultRegistrySnapshot,
   resetToDefaults,
-} from '../presentationStudioLayoutCapacityRegistryService';
+} from '../presentationStudioLayoutCapacityRegistryService.js';
 
 beforeEach(() => {
   resetToDefaults();

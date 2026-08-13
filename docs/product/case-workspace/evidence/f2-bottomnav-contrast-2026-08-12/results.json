@@ -1,0 +1,1063 @@
+[
+  {
+    "width": 320,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-mywork",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-assessment",
+    "isActive": true,
+    "fgColor": "rgb(133,24,47)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 9.68,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-initiatives",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-ai",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-more",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "light",
+    "variant": "before",
+    "axe": {
+      "violations": [],
+      "passes": [
+        "color-contrast"
+      ]
+    }
+  },
+  {
+    "width": 320,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-mywork",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-assessment",
+    "isActive": true,
+    "fgColor": "rgb(133,24,47)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 9.68,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-initiatives",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-ai",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-more",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "light",
+    "variant": "after",
+    "axe": {
+      "violations": [],
+      "passes": [
+        "color-contrast"
+      ]
+    }
+  },
+  {
+    "width": 320,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-mywork",
+    "isActive": false,
+    "fgColor": "rgb(100,116,139)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 3.75,
+    "passesAA": false
+  },
+  {
+    "width": 320,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-assessment",
+    "isActive": true,
+    "fgColor": "rgb(228,88,104)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 5.01,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-initiatives",
+    "isActive": false,
+    "fgColor": "rgb(100,116,139)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 3.75,
+    "passesAA": false
+  },
+  {
+    "width": 320,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-ai",
+    "isActive": false,
+    "fgColor": "rgb(100,116,139)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 3.75,
+    "passesAA": false
+  },
+  {
+    "width": 320,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-more",
+    "isActive": false,
+    "fgColor": "rgb(100,116,139)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 3.75,
+    "passesAA": false
+  },
+  {
+    "width": 320,
+    "theme": "dark",
+    "variant": "before",
+    "axe": {
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".dark\\:text-slate-500.text-slate-600[data-testid=\"bottom-nav-mywork\"] > span"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.75 (foreground color: #64748b, background color: #0f1729, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "target": [
+                ".dark\\:text-slate-500.text-slate-600[data-testid=\"bottom-nav-initiatives\"] > span"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.75 (foreground color: #64748b, background color: #0f1729, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "target": [
+                ".dark\\:text-slate-500.text-slate-600[data-testid=\"bottom-nav-ai\"] > span"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.75 (foreground color: #64748b, background color: #0f1729, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "target": [
+                ".dark\\:text-slate-500.text-slate-600[data-testid=\"bottom-nav-more\"] > span"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.75 (foreground color: #64748b, background color: #0f1729, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ]
+        }
+      ],
+      "passes": [
+        "color-contrast"
+      ]
+    }
+  },
+  {
+    "width": 320,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-mywork",
+    "isActive": false,
+    "fgColor": "rgb(138,153,176)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 6.18,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-assessment",
+    "isActive": true,
+    "fgColor": "rgb(228,88,104)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 5.01,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-initiatives",
+    "isActive": false,
+    "fgColor": "rgb(138,153,176)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 6.18,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-ai",
+    "isActive": false,
+    "fgColor": "rgb(138,153,176)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 6.18,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-more",
+    "isActive": false,
+    "fgColor": "rgb(138,153,176)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 6.18,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "dark",
+    "variant": "after",
+    "axe": {
+      "violations": [],
+      "passes": [
+        "color-contrast"
+      ]
+    }
+  },
+  {
+    "width": 375,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-mywork",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-assessment",
+    "isActive": true,
+    "fgColor": "rgb(133,24,47)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 9.68,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-initiatives",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-ai",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-more",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "light",
+    "variant": "before",
+    "axe": {
+      "violations": [],
+      "passes": [
+        "color-contrast"
+      ]
+    }
+  },
+  {
+    "width": 375,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-mywork",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-assessment",
+    "isActive": true,
+    "fgColor": "rgb(133,24,47)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 9.68,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-initiatives",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-ai",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-more",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "light",
+    "variant": "after",
+    "axe": {
+      "violations": [],
+      "passes": [
+        "color-contrast"
+      ]
+    }
+  },
+  {
+    "width": 375,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-mywork",
+    "isActive": false,
+    "fgColor": "rgb(100,116,139)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 3.75,
+    "passesAA": false
+  },
+  {
+    "width": 375,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-assessment",
+    "isActive": true,
+    "fgColor": "rgb(228,88,104)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 5.01,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-initiatives",
+    "isActive": false,
+    "fgColor": "rgb(100,116,139)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 3.75,
+    "passesAA": false
+  },
+  {
+    "width": 375,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-ai",
+    "isActive": false,
+    "fgColor": "rgb(100,116,139)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 3.75,
+    "passesAA": false
+  },
+  {
+    "width": 375,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-more",
+    "isActive": false,
+    "fgColor": "rgb(100,116,139)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 3.75,
+    "passesAA": false
+  },
+  {
+    "width": 375,
+    "theme": "dark",
+    "variant": "before",
+    "axe": {
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".dark\\:text-slate-500.text-slate-600[data-testid=\"bottom-nav-mywork\"] > span"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.75 (foreground color: #64748b, background color: #0f1729, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "target": [
+                ".dark\\:text-slate-500.text-slate-600[data-testid=\"bottom-nav-initiatives\"] > span"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.75 (foreground color: #64748b, background color: #0f1729, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "target": [
+                ".dark\\:text-slate-500.text-slate-600[data-testid=\"bottom-nav-ai\"] > span"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.75 (foreground color: #64748b, background color: #0f1729, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "target": [
+                ".dark\\:text-slate-500.text-slate-600[data-testid=\"bottom-nav-more\"] > span"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.75 (foreground color: #64748b, background color: #0f1729, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ]
+        }
+      ],
+      "passes": [
+        "color-contrast"
+      ]
+    }
+  },
+  {
+    "width": 375,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-mywork",
+    "isActive": false,
+    "fgColor": "rgb(138,153,176)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 6.18,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-assessment",
+    "isActive": true,
+    "fgColor": "rgb(228,88,104)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 5.01,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-initiatives",
+    "isActive": false,
+    "fgColor": "rgb(138,153,176)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 6.18,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-ai",
+    "isActive": false,
+    "fgColor": "rgb(138,153,176)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 6.18,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-more",
+    "isActive": false,
+    "fgColor": "rgb(138,153,176)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 6.18,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "dark",
+    "variant": "after",
+    "axe": {
+      "violations": [],
+      "passes": [
+        "color-contrast"
+      ]
+    }
+  },
+  {
+    "width": 430,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-mywork",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-assessment",
+    "isActive": true,
+    "fgColor": "rgb(133,24,47)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 9.68,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-initiatives",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-ai",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-more",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "light",
+    "variant": "before",
+    "axe": {
+      "violations": [],
+      "passes": [
+        "color-contrast"
+      ]
+    }
+  },
+  {
+    "width": 430,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-mywork",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-assessment",
+    "isActive": true,
+    "fgColor": "rgb(133,24,47)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 9.68,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-initiatives",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-ai",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-more",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "light",
+    "variant": "after",
+    "axe": {
+      "violations": [],
+      "passes": [
+        "color-contrast"
+      ]
+    }
+  },
+  {
+    "width": 430,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-mywork",
+    "isActive": false,
+    "fgColor": "rgb(100,116,139)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 3.75,
+    "passesAA": false
+  },
+  {
+    "width": 430,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-assessment",
+    "isActive": true,
+    "fgColor": "rgb(228,88,104)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 5.01,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-initiatives",
+    "isActive": false,
+    "fgColor": "rgb(100,116,139)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 3.75,
+    "passesAA": false
+  },
+  {
+    "width": 430,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-ai",
+    "isActive": false,
+    "fgColor": "rgb(100,116,139)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 3.75,
+    "passesAA": false
+  },
+  {
+    "width": 430,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-more",
+    "isActive": false,
+    "fgColor": "rgb(100,116,139)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 3.75,
+    "passesAA": false
+  },
+  {
+    "width": 430,
+    "theme": "dark",
+    "variant": "before",
+    "axe": {
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".dark\\:text-slate-500.text-slate-600[data-testid=\"bottom-nav-mywork\"] > span"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.75 (foreground color: #64748b, background color: #0f1729, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "target": [
+                ".dark\\:text-slate-500.text-slate-600[data-testid=\"bottom-nav-initiatives\"] > span"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.75 (foreground color: #64748b, background color: #0f1729, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "target": [
+                ".dark\\:text-slate-500.text-slate-600[data-testid=\"bottom-nav-ai\"] > span"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.75 (foreground color: #64748b, background color: #0f1729, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "target": [
+                ".dark\\:text-slate-500.text-slate-600[data-testid=\"bottom-nav-more\"] > span"
+              ],
+              "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.75 (foreground color: #64748b, background color: #0f1729, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ]
+        }
+      ],
+      "passes": [
+        "color-contrast"
+      ]
+    }
+  },
+  {
+    "width": 430,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-mywork",
+    "isActive": false,
+    "fgColor": "rgb(138,153,176)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 6.18,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-assessment",
+    "isActive": true,
+    "fgColor": "rgb(228,88,104)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 5.01,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-initiatives",
+    "isActive": false,
+    "fgColor": "rgb(138,153,176)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 6.18,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-ai",
+    "isActive": false,
+    "fgColor": "rgb(138,153,176)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 6.18,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-more",
+    "isActive": false,
+    "fgColor": "rgb(138,153,176)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 6.18,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "dark",
+    "variant": "after",
+    "axe": {
+      "violations": [],
+      "passes": [
+        "color-contrast"
+      ]
+    }
+  },
+  {
+    "width": 768,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-mywork",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-assessment",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-initiatives",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-ai",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-more",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "light",
+    "variant": "before",
+    "axe": {
+      "violations": [],
+      "passes": []
+    }
+  },
+  {
+    "width": 768,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-mywork",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-assessment",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-initiatives",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-ai",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-more",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "light",
+    "variant": "after",
+    "axe": {
+      "violations": [],
+      "passes": []
+    }
+  },
+  {
+    "width": 768,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-mywork",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-assessment",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-initiatives",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-ai",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-more",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "dark",
+    "variant": "before",
+    "axe": {
+      "violations": [],
+      "passes": []
+    }
+  },
+  {
+    "width": 768,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-mywork",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-assessment",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-initiatives",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-ai",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-more",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "dark",
+    "variant": "after",
+    "axe": {
+      "violations": [],
+      "passes": []
+    }
+  }
+]

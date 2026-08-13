@@ -203,7 +203,23 @@ export async function createNativeDeck(
   });
   const slideCount = params.unifiedJson.slides.length;
 
-  await dbRun(
+  // Persist-honesty fix (Case Workspace V1, packet E6): the pooled `dbRun`
+  // used to run with NO `{ fallback: false }` override, so `DbPromise.run`'s
+  // default `fallback: true` swallowed a genuine SQL failure (e.g. this
+  // table's own `status` CHECK constraint) into `{ success: false }` instead
+  // of rejecting — and the return value was never inspected before this
+  // function went on to register an artifact-registry row and report a
+  // normal-looking success for a deck that was NEVER WRITTEN. `{fallback:
+  // false}` makes the pooled path reject on error too, matching what the
+  // PINNED path (see `dbRun` above) already did unconditionally — a genuine
+  // single-row `INSERT ... VALUES (...)` with no WHERE/ON CONFLICT clause
+  // either fully commits exactly one row or throws, so there is no
+  // in-between "reported success but wrote nothing" state left for a
+  // post-write readback to catch; the explicit `changes` check below is
+  // therefore belt-and-suspenders (documenting the same "inspect the write's
+  // return value" contract `createWave5Artifact`/`materializeDocumentArtifact`
+  // already use for their own writes), not load-bearing on its own.
+  const insertResult = await dbRun(
     `INSERT INTO presentation_decks (
        id, organization_id, project_id, title, template_id, deck_type, audience, goal, language,
        confidentiality, theme, source_artifacts, outline_json, status, deck_json,
@@ -229,8 +245,12 @@ export async function createNativeDeck(
       params.sourceId,
       params.createdAt,
       params.createdAt,
-    ]
+    ],
+    { fallback: false }
   );
+  if (!insertResult.success || !insertResult.changes) {
+    throw new Error('native_deck_persist_failed');
+  }
 
   let registryArtifactId: string | null = null;
   if (params.registerArtifact !== false) {

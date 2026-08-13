@@ -12,9 +12,9 @@ import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
 import type { FieldFillProposal, FieldFillRowChange } from './AITableFieldProposal';
-import { downloadCSV, exportToCSV } from './csvUtils';
+import { copyTableToClipboard, downloadCSV, exportToCSV } from './csvUtils';
 import { isTableFieldProposalEnabled } from './tableFieldProposalFlag';
-import type { ColumnDef, TableNode } from './tableTypes';
+import type { ColumnDef, FilterGroup, SavedView, SortConfig, TableNode } from './tableTypes';
 import type { ViewLayout } from './useTableViews';
 import type { UseUndoRedoReturn } from './useUndoRedo';
 
@@ -76,6 +76,81 @@ export interface QuickActionHandlers {
    * pisać prosto do komórek. Ustawiane tylko gdy flaga `ff_tableFieldProposal` = ON.
    */
   onFieldFillProposal?: (proposal: FieldFillProposal) => void;
+  /**
+   * N8 (2026-08-10) — legacy (non-platform) widok zapisany. Te same funkcje,
+   * które `IdeaTableTool.tsx`'s `viewContextMenu` ("Rename"/"Update"/"Delete")
+   * i inline-rename input już wołają — dodane tu jako drugi wywołujący, nie
+   * duplikowane. Sync, `useTableViews.ts`'s `updateSavedView`/`deleteSavedView`
+   * (nie mylić z platform `TableDataProvider`'s async wersją tych samych nazw,
+   * którą TableToolbar.tsx woła przez `useTableData()` — INNY mechanizm,
+   * patrz `ideaActionRegistry.ts` przy `idea.view.saved_view_*`).
+   */
+  updateSavedView: (viewId: string, patch: Partial<SavedView>) => void;
+  deleteSavedView: (viewId: string) => void;
+  /**
+   * N10 (2026-08-10) — PLATFORM widok zapisany (`idea.view.table_platform_saved_view_rename`/
+   * `_delete` w ideaActionRegistry.ts). `TableToolbar.tsx` woła te SAME
+   * funkcje bezpośrednio przez `useTableData()` (`ctx.updateSavedView`/
+   * `.deleteSavedView` = `platformIntegration.updateSavedView`/
+   * `.deleteSavedView`, `useTablePlatformViews.ts`) — realne, asynchroniczne
+   * wywołania serwera, INNY mechanizm niż `updateSavedView`/`deleteSavedView`
+   * wyżej (legacy, `useTableViews.ts`, synchroniczne).
+   */
+  platformUpdateSavedView: (viewId: string, patch: Partial<SavedView>) => Promise<void>;
+  platformDeleteSavedView: (viewId: string) => Promise<void>;
+  /**
+   * N8.2 (2026-08-10) — menu kolumny (`idea.column.*` w ideaActionRegistry.ts).
+   * Cztery funkcje przekazywane DOKŁADNIE takie, jakie woła dziś klik człowieka
+   * w `IdeaTableTool.tsx` — nic tu nie jest nową funkcją ani „poprawioną"
+   * wersją istniejącej:
+   *  • `cycleSort` = `effectiveCycleSort` (~L518) — JEDYNA z czterech, która
+   *    jest DWUTOROWA (sama w sobie: `usePlatform ? effectiveSetSort : setSort`),
+   *    więc ta sama funkcja jest poprawna niezależnie od `usePlatform`.
+   *  • `toggleColumn`/`deleteColumn`/`renameColumn` = wersje LEGACY z
+   *    `useTableSchema.ts`. To NIE jest przeoczenie: dokładnie te legacy funkcje
+   *    woła dziś klik człowieka w menu kolumny (odpowiednio L4009/L4018) i w
+   *    inline-rename inpucie nagłówka (L3745/L3750), mimo że
+   *    `platformIntegration` ma własne, RÓŻNE MECHANIZMEM odpowiedniki
+   *    (`deleteColumn` = realne `TablePlatformApi.deleteField`, czyli kasowanie
+   *    po stronie serwera). Trzymamy parytet z klikiem człowieka zamiast po
+   *    cichu dawać Teresie MOCNIEJSZE (trwałe, serwerowe) uprawnienia niż ma
+   *    użytkownik przy tym samym menu — rozjazd legacy/platform jest
+   *    udokumentowany jako PREISTNIEJĄCY defekt przy `idea.column.hide`
+   *    w rejestrze, nie naprawiany po cichu w tym zadaniu.
+   */
+  cycleSort: (key: string) => void;
+  toggleColumn: (key: string) => void;
+  deleteColumn: (key: string) => void;
+  renameColumn: (key: string, newHeader: string) => void;
+  /**
+   * N8.2 (2026-08-10) — row context menu ("Edit"/"Add note"). Exactly the
+   * closures `IdeaTableTool.tsx`'s `rowContextMenu` onSelect handlers call
+   * (`openRowEditPanel`/`openRowNotePanel`, declared right above the hook
+   * call) — passed here so Teresa reaches the identical UI-state transition
+   * a human right-click makes, not a re-implementation.
+   */
+  openRowEditPanel: (rowId: string) => void;
+  openRowNotePanel: (rowId: string) => void;
+  /**
+   * N8.2 (2026-08-10) — row context menu ("Duplicate row"/"Delete row").
+   * These are `effectiveHandleDuplicateRow`/a toast-wrapped
+   * `effectiveHandleDeleteRow` (IdeaTableTool.tsx ~line 511-516) — the SAME
+   * usePlatform-branching functions the row menu already calls, so Teresa's
+   * mutation lands through whichever mechanism (legacy in-memory vs platform
+   * server-backed) is actually active for this table today.
+   */
+  duplicateRow: (rowId: string) => void;
+  deleteRow: (rowId: string) => void;
+  /**
+   * N9 (2026-08-10) — `idea.cell.clear` (ideaActionRegistry.ts). DOKŁADNIE
+   * `_fieldChange` z `IdeaTableTool.tsx` (dual-path: `handleFieldChange`
+   * legacy vs `platformIntegration.handleFieldChange`, wybór po
+   * `usePlatform`, ~L665) — przekazane 1:1, żeby ta ścieżka Teresy trafiała w
+   * TE SAME dane co klik człowieka na "Clear cell" (~L4169), nie zawsze w
+   * legacy `nodes` (który reszta tego hooka, np. `tbl_export_csv`, dziś
+   * używa bez względu na tryb — osobny, nienaprawiany tu wzorzec).
+   */
+  fieldChange: (rowId: string, colKey: string, value: unknown) => void;
 }
 
 export interface UseTableQuickActionsOpts {
@@ -86,10 +161,50 @@ export interface UseTableQuickActionsOpts {
   nodesUndo: UseUndoRedoReturn<TableNode[]>;
   selectedRowIds: Set<string>;
   handlers: QuickActionHandlers;
+  /**
+   * N8 (2026-08-10) — bieżący stan widoku, potrzebny WYŁĄCZNIE do zbudowania
+   * payloadu `tbl_view_update` (dokładnie ten sam kształt, co
+   * `viewContextMenu`'s "Update" item w `IdeaTableTool.tsx`: `sort`/`filters`/
+   * `groupBy`/`layout`/`columns` migawka BIEŻĄCEGO stanu tabeli w momencie
+   * wywołania — stąd wartości, nie settery, i osobne od `handlers` powyżej).
+   */
+  savedViews: SavedView[];
+  sort: SortConfig | null;
+  filters: FilterGroup;
+  groupBy: string | null;
+  viewLayout: ViewLayout;
+  /**
+   * N10 (2026-08-10) — PLATFORM widok zapisany, guard dla
+   * `tbl_view_rename_platform`/`tbl_view_delete_platform` (`idea.view.table_platform_saved_view_*`
+   * w ideaActionRegistry.ts). Osobne od `savedViews` wyżej (legacy) —
+   * `platformIntegration.savedViews`, przekazywane 1:1 z `IdeaTableTool.tsx`.
+   */
+  platformSavedViews: SavedView[];
+  /**
+   * N9 (2026-08-10) — `tbl_cell_clear` guard. Ta sama wartość, którą
+   * `cellContextMenu`'s "Clear cell" czyta z domknięcia komponentu
+   * (`IdeaTableTool.tsx` prop `locked`, domyślnie `false`).
+   */
+  locked: boolean;
 }
 
 export function useTableQuickActions(opts: UseTableQuickActionsOpts): void {
-  const { ideaId, isPl, columns, nodes, nodesUndo, selectedRowIds, handlers } = opts;
+  const {
+    ideaId,
+    isPl,
+    columns,
+    nodes,
+    nodesUndo,
+    selectedRowIds,
+    handlers,
+    savedViews,
+    sort,
+    filters,
+    groupBy,
+    viewLayout,
+    platformSavedViews,
+    locked,
+  } = opts;
 
   useEffect(() => {
     const handler = async (e: Event) => {
@@ -161,16 +276,6 @@ export function useTableQuickActions(opts: UseTableQuickActionsOpts): void {
         return;
       }
 
-      if (action === 'tbl_sort') {
-        handlers.setSort((prev) =>
-          prev
-            ? { ...prev, direction: prev.direction === 'asc' ? 'desc' : 'asc' }
-            : { key: 'label', direction: 'asc' }
-        );
-        trackFunnelEvent('ideas_table_sort_applied', { ideaId });
-        return;
-      }
-
       if (action === 'tbl_filter') {
         handlers.setShowFilterPanel(true);
         trackFunnelEvent('ideas_table_filter_applied', { ideaId });
@@ -180,6 +285,19 @@ export function useTableQuickActions(opts: UseTableQuickActionsOpts): void {
       if (action === 'tbl_export_csv') {
         const csv = exportToCSV(columns, nodes);
         downloadCSV(csv, `idea-${ideaId}.csv`);
+        return;
+      }
+
+      // `idea.table.copy_clipboard` (ideaActionRegistry.ts) — NOT an export
+      // (docs/standards/idea-workspace/10_KONWERSJA_EKSPORT_IMPORT_SZABLONY.md
+      // §1 deciding rule: produces neither a file nor a persistent record, so
+      // it is neither Export nor Convert). Mirrors `tbl_export_csv` immediately
+      // above 1:1 (same `columns`/`nodes` source, same pre-existing legacy/
+      // platform divergence noted at `QuickActionHandlers.fieldChange` above —
+      // not fixed here).
+      if (action === 'tbl_copy_clipboard') {
+        copyTableToClipboard(columns, nodes);
+        toast.success(i18n.t('ideas.table.copied', 'Copied'));
         return;
       }
 
@@ -372,6 +490,227 @@ export function useTableQuickActions(opts: UseTableQuickActionsOpts): void {
         return;
       }
 
+      // N8 (2026-08-10) — saved-view menu (`idea.view.saved_view_*` w
+      // ideaActionRegistry.ts). Teresa-only ścieżka: klik człowieka (menu
+      // kontekstowe PRAWEGO klika na zakładce widoku + inline-rename input,
+      // `IdeaTableTool.tsx`) NIE przechodzi przez tę szynę — woła
+      // `updateSavedView`/`deleteSavedView` bezpośrednio, nietknięte tym
+      // wpisem. Te trzy gałęzie istnieją, żeby ta sama, realna mutacja była
+      // osiągalna też z czatu.
+      if (action === 'tbl_view_rename' || action === 'tbl_view_update' || action === 'tbl_view_delete') {
+        const viewId = typeof detail?.viewId === 'string' ? detail.viewId : undefined;
+        // Uczciwa reakcja zamiast cichego no-opu, gdy Teresa poda nieistniejące
+        // (lub już usunięte) `viewId` — `updateSavedView`/`deleteSavedView`
+        // (useTableViews.ts) same by po cichu nic nie zrobiły (prev.map/filter
+        // bez dopasowania).
+        const view = viewId ? savedViews.find((v) => v.id === viewId) : undefined;
+        if (!viewId || !view) {
+          toast.error(
+            i18n.t('ideas.table.quickActions.viewNotFound', 'View not found: {{viewId}}', {
+              viewId: viewId ?? '?',
+            })
+          );
+          return;
+        }
+        if (action === 'tbl_view_rename') {
+          const name = typeof detail?.name === 'string' ? detail.name.trim() : undefined;
+          if (name) handlers.updateSavedView(viewId, { name });
+          return;
+        }
+        if (action === 'tbl_view_update') {
+          handlers.updateSavedView(viewId, {
+            sort: sort ? [sort] : undefined,
+            filters,
+            groupBy: groupBy ?? undefined,
+            layout: viewLayout,
+            columns: columns.map((c) => ({ key: c.key, visible: c.visible !== false, width: c.width })),
+          });
+          toast.success(i18n.t('ideas.table.viewUpdated', 'View updated'));
+          return;
+        }
+        // tbl_view_delete
+        handlers.deleteSavedView(viewId);
+        toast.success(i18n.t('ideas.table.viewDeleted', 'View deleted'));
+        return;
+      }
+
+      // N10 (2026-08-10) — `TableToolbar.tsx`'s widok zapisany, ścieżka
+      // PLATFORM (`idea.view.table_platform_saved_view_rename`/`_delete` w
+      // ideaActionRegistry.ts). Odrębna od `tbl_view_rename`/`tbl_view_delete`
+      // wyżej — TE wołają `platformIntegration.updateSavedView`/
+      // `.deleteSavedView` (realne, asynchroniczne wywołania serwera), NIE
+      // legacy `useTableViews.ts`. Teresa-only ścieżka: klik człowieka
+      // (`TableToolbar.tsx`'s `viewContextMenu`, ~L502-555) NIE przechodzi
+      // przez tę szynę — woła `ctx.updateSavedView`/`.deleteSavedView`
+      // bezpośrednio z `useTableData()`, nietknięte tym wpisem.
+      if (action === 'tbl_view_rename_platform' || action === 'tbl_view_delete_platform') {
+        const viewId = typeof detail?.viewId === 'string' ? detail.viewId : undefined;
+        const view = viewId ? platformSavedViews.find((v) => v.id === viewId) : undefined;
+        if (!viewId || !view) {
+          toast.error(
+            i18n.t('ideas.table.quickActions.viewNotFound', 'View not found: {{viewId}}', {
+              viewId: viewId ?? '?',
+            })
+          );
+          return;
+        }
+        if (action === 'tbl_view_rename_platform') {
+          const name = typeof detail?.name === 'string' ? detail.name.trim() : undefined;
+          if (name) void handlers.platformUpdateSavedView(viewId, { name });
+          return;
+        }
+        // tbl_view_delete_platform
+        void handlers.platformDeleteSavedView(viewId);
+        toast.success(i18n.t('ideas.table.viewDeleted', 'View deleted'));
+        return;
+      }
+
+      // N8.2 (2026-08-10) — menu kolumny (`idea.column.*` w
+      // ideaActionRegistry.ts). Ścieżka WYŁĄCZNIE dla Teresy: klik człowieka w
+      // `colContextMenu` (`IdeaTableTool.tsx` ~L3990-4022) NIE przechodzi tędy —
+      // woła te same cztery funkcje bezpośrednio z domknięcia i został
+      // NIETKNIĘTY (bajt-identyczne zachowanie kliku). Te gałęzie istnieją, żeby
+      // ta sama, realna zmiana była osiągalna też z czatu.
+      if (
+        action === 'tbl_column_rename' ||
+        action === 'tbl_column_sort' ||
+        action === 'tbl_column_hide' ||
+        action === 'tbl_column_delete'
+      ) {
+        const colKey = typeof detail?.colKey === 'string' ? detail.colKey : undefined;
+        // Uczciwa odmowa zamiast cichego no-opu: wszystkie cztery funkcje
+        // (`useTableSchema.ts`) to `prev.map`/`prev.filter` po `c.key === key` —
+        // przy nieistniejącym kluczu nie zrobiłyby NIC i nie powiedziały nic.
+        const column = colKey ? columns.find((c) => c.key === colKey) : undefined;
+        if (!colKey || !column) {
+          toast.error(
+            i18n.t('ideas.table.quickActions.columnNotFound', 'Column not found: {{colKey}}', {
+              colKey: colKey ?? '?',
+            })
+          );
+          return;
+        }
+        if (action === 'tbl_column_rename') {
+          // Klik człowieka otwiera TYLKO inline-edytor nagłówka
+          // (`setEditingHeaderKey`); dokończeniem jest `renameColumn` na
+          // blur/Enter. Teresa nie ma jak „wpisać" w input, więc wykonuje
+          // dokończony gest — TĄ SAMĄ funkcją, której używa commit inputa.
+          const name = typeof detail?.name === 'string' ? detail.name.trim() : undefined;
+          if (!name) {
+            toast.error(
+              i18n.t(
+                'ideas.table.quickActions.columnNameRequired',
+                'Provide a new column name to rename it.'
+              )
+            );
+            return;
+          }
+          handlers.renameColumn(colKey, name);
+          return;
+        }
+        if (action === 'tbl_column_sort') {
+          handlers.cycleSort(colKey);
+          return;
+        }
+        if (action === 'tbl_column_hide') {
+          handlers.toggleColumn(colKey);
+          return;
+        }
+        // tbl_column_delete
+        handlers.deleteColumn(colKey);
+        toast.success(i18n.t('ideas.table.columnDeleted', 'Column deleted'));
+        return;
+      }
+
+      // N8.2 (2026-08-10) — row context menu (`table.row.*` w
+      // ideaActionRegistry.ts). Teresa-only ścieżka: klik człowieka
+      // (IdeaTableTool.tsx's `rowContextMenu`) NIE przechodzi przez tę szynę —
+      // woła `openRowEditPanel`/`openRowNotePanel`/`effectiveHandleDuplicateRow`/
+      // `effectiveHandleDeleteRow` bezpośrednio (nietknięte tym wpisem — te
+      // handlery TU wołane to te same funkcje, tylko przekazane jako props).
+      if (
+        action === 'tbl_row_edit' ||
+        action === 'tbl_row_note' ||
+        action === 'tbl_row_duplicate' ||
+        action === 'tbl_row_delete'
+      ) {
+        const rowId = typeof detail?.rowId === 'string' ? detail.rowId : undefined;
+        if (!rowId) {
+          toast.error(
+            i18n.t('ideas.table.quickActions.rowIdRequired', 'Podaj rowId wiersza Tabeli')
+          );
+          return;
+        }
+        if (action === 'tbl_row_edit') {
+          handlers.openRowEditPanel(rowId);
+          return;
+        }
+        if (action === 'tbl_row_note') {
+          handlers.openRowNotePanel(rowId);
+          return;
+        }
+        if (action === 'tbl_row_duplicate') {
+          handlers.duplicateRow(rowId);
+          return;
+        }
+        // tbl_row_delete — `handlers.deleteRow` already wraps
+        // `effectiveHandleDeleteRow` + the same success toast the human
+        // right-click path shows (see IdeaTableTool.tsx handlers object).
+        handlers.deleteRow(rowId);
+        return;
+      }
+
+      // N9 (2026-08-10) — cell menu, jedyna z czterech pozycji z realnym
+      // wejściem dla Teresy (`idea.cell.clear` w ideaActionRegistry.ts;
+      // copy/paste/expand zostają UI-only — schowek systemowy / popover
+      // zakotwiczony na ekranie, brak sensownego odpowiednika po stronie
+      // czatu, patrz komentarz przy `runTableCellUiOnlyCallback`). Guard
+      // odtwarza REGUŁĘ `cellContextMenu.editable` z `IdeaTableTool.tsx`
+      // (kolumna „type"/formuła = pochodna, nie do edycji) z `columns`
+      // dostępnym tu w zakresie hooka — Teresa nie ma dostępu do lokalnego
+      // stanu `cellContextMenu`. Celowo BEZ sprawdzenia „czy wiersz istnieje"
+      // przez legacy `nodes` (jak reszta tego hooka) — w trybie platformy
+      // `nodes` tutaj NIE jest tablicą renderowaną na ekranie
+      // (`platformIntegration.nodes` jest), więc taki check dawałby
+      // fałszywe „nie znaleziono" dla poprawnych wierszy platformy;
+      // `handlers.fieldChange` (przekazane jako `_fieldChange`, dual-path)
+      // sam po cichu nic nie robi dla nieistniejącego `rowId` — ten sam
+      // cichy no-op, co dzisiejszy klik człowieka na nieistniejącą komórkę
+      // nie może w ogóle się zdarzyć (klik zawsze celuje w realną komórkę).
+      if (action === 'tbl_cell_clear') {
+        const rowId = typeof detail?.rowId === 'string' ? detail.rowId : undefined;
+        const colKey = typeof detail?.colKey === 'string' ? detail.colKey : undefined;
+        if (!rowId || !colKey) {
+          toast.error(
+            i18n.t('ideas.table.quickActions.cellTargetMissing', 'Missing cell target')
+          );
+          return;
+        }
+        if (locked) {
+          toast.error(i18n.t('ideas.table.lockedReason', 'Table is locked'));
+          return;
+        }
+        const col = columns.find((c) => c.key === colKey);
+        if (!col || colKey === 'type' || col.type === 'formula') {
+          toast.error(i18n.t('ideas.table.readOnlyCell', 'Cell is read-only'));
+          return;
+        }
+        // ŚWIADOMA różnica wobec kliku człowieka, spisana zamiast przemilczana:
+        // menu wyszarza „Wyczyść komórkę" także gdy komórka JEST JUŻ pusta
+        // (`value == null || value === ''`, `IdeaTableTool.tsx` ~L4167). Tu tego
+        // warunku NIE odtwarzam, bo wymagałby czytania wartości komórki, a
+        // legacy `nodes` w tym hooku nie jest tablicą renderowaną w trybie
+        // platformy (patrz akapit wyżej) — czytanie z niej dałoby FAŁSZYWE
+        // „już pusta" dla realnie wypełnionych wierszy platformy, czyli ciche
+        // odmówienie poprawnej operacji. Skutek świadomie przyjęty: Teresa może
+        // wyczyścić komórkę już pustą — zapis `''` na `''`, bez zmiany dla
+        // użytkownika, ale NA ŚCIEŻCE LEGACY dokłada wpis na stos cofania
+        // (jedno „puste" Ctrl+Z). Nie ukrywam tego — patrz raport N9.
+        handlers.fieldChange(rowId, colKey, '');
+        toast.success(i18n.t('ideas.table.cellCleared', 'Cell cleared'));
+        return;
+      }
+
       // Link artifact to row
       if (action === 'tbl_link_artifact_to_row') {
         if (selectedRowIds.size > 0) {
@@ -393,5 +732,36 @@ export function useTableQuickActions(opts: UseTableQuickActionsOpts): void {
     window.addEventListener('idea-workspace-quick-action', handler);
     return () => window.removeEventListener('idea-workspace-quick-action', handler);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [columns, ideaId, isPl, nodes, nodesUndo, selectedRowIds, handlers.handleAddRow]);
+  }, [
+    columns,
+    ideaId,
+    isPl,
+    nodes,
+    nodesUndo,
+    selectedRowIds,
+    handlers.handleAddRow,
+    savedViews,
+    sort,
+    filters,
+    groupBy,
+    viewLayout,
+    // N8.2 (2026-08-10) — te cztery MUSZĄ być w zależnościach, inaczej Teresa
+    // dostaje nieświeże domknięcie. Krytyczny przypadek: `cycleSort`
+    // (`effectiveCycleSort`) czyta w trybie PLATFORMY `effectiveSort`, a nie
+    // legacy `sort` — bez tej pozycji efekt nie przepiąłby się przy zmianie
+    // sortowania platformy i `tbl_column_sort` cyklowałby ze STANU SPRZED
+    // zmiany (asc→desc→null policzone od złego punktu). Pozostałe trzy dodane
+    // dla tej samej klasy bezpieczeństwa; przepięcie listenera jest tanie.
+    handlers.cycleSort,
+    handlers.toggleColumn,
+    handlers.deleteColumn,
+    handlers.renameColumn,
+    locked,
+    handlers.fieldChange,
+    // N10 (2026-08-10) — PLATFORM widok zapisany (patrz komentarz przy
+    // `tbl_view_rename_platform`/`tbl_view_delete_platform` wyżej).
+    platformSavedViews,
+    handlers.platformUpdateSavedView,
+    handlers.platformDeleteSavedView,
+  ]);
 }

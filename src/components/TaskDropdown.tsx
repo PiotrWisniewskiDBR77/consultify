@@ -140,7 +140,7 @@ export const TaskDropdown = () => {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative text-slate-600 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white transition-colors p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 outline-none focus:ring-2 focus:ring-primary-500/20"
+        className="relative text-slate-600 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white transition-colors p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 outline-none focus:ring-2 focus:ring-c-focus"
         title={t('taskDropdown.titleButton', "Today's tasks")}
       >
         <CheckSquare size={20} />

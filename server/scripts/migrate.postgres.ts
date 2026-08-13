@@ -149,7 +149,21 @@ const DATED_RE = /^(\d{4})-?(\d{2})-?(\d{2})[_-]/;
 // would otherwise place it too early relative to other dated migrations it
 // actually depends on. See STRICT_SCHEMA_REPAIR_REPORT.md ETAP 1 for the
 // per-file dependency trace that justifies each entry.
-const LATE_PHASE_MANIFEST: string[] = [];
+//
+// AP-02 discovery (2026-08-10, Excel/CSV round-trip work package): a fresh
+// strict migration run failed with `relation "finance_artifacts" does not
+// exist` while applying `20260809_finance_v3_ap06_comments_01_tables.sql`.
+// Both files share the `20260809` date prefix, so phase-1 sorts them by
+// full filename — and `ap06` < `b01` lexicographically ('a' < 'b'), so the
+// AP-06 comments migration (which FK-references `finance_business_versions`/
+// `finance_artifacts`, both created by `..._b01_core_artifacts.sql`) was
+// running BEFORE its own foundation. Confirmed via `ps aux`-isolated
+// ephemeral cluster (`/private/tmp/finance-v3-ap02-pgdata-*`, port 58217,
+// never the shared PID 911 instance) — not a guess from reading the SQL.
+// `finance_comments`/`finance_comment_assignments`/`finance_review_checklists`
+// are self-contained otherwise (no other migration in this repo references
+// them), so "run after everything" is safe, not just "run after b01".
+const LATE_PHASE_MANIFEST: string[] = ['20260809_finance_v3_ap06_comments_01_tables.sql'];
 const LATE_PHASE_SET = new Set(LATE_PHASE_MANIFEST);
 
 // `isSqliteOnlyMigration()` blanket-excludes every numbered migration with
@@ -192,6 +206,23 @@ const PROMOTED_LEGACY_PRODUCERS: string[] = [
   '256_integrations_system.sql',
 ];
 const PROMOTED_LEGACY_SET = new Set(PROMOTED_LEGACY_PRODUCERS);
+
+// Same-day Case Workspace migrations have real FK dependencies that their
+// filenames do not encode. Keep this explicit topological order inside the
+// dated phase; unlisted files retain their normal filename tie-breaker.
+const DATED_SAME_DAY_ORDER: Record<string, number> = {
+  '20260809_case_workspace_case_core.sql': 0,
+  '20260809_case_workspace_capability_registry.sql': 1,
+  '20260809_case_workspace_case_plan_version.sql': 2,
+  '20260809_case_workspace_run_binding.sql': 3,
+  '20260809_case_workspace_proposals_approvals.sql': 4,
+  '20260809_case_workspace_wait_subscription.sql': 5,
+  '20260809_case_workspace_history_value.sql': 6,
+  '20260809_case_workspace_plays.sql': 7,
+  '20260809_case_workspace_artifact_links.sql': 8,
+  '20260809_case_workspace_execution_graph.sql': 9,
+  '20260809_case_workspace_migration_readiness.sql': 10,
+};
 
 // Two kinds of producer/consumer inversion that phase + numeric/date sort
 // alone cannot fix, because they invert relative to their OWN phase's sort
@@ -290,7 +321,10 @@ function phaseAndKeyFor(m: Migration): { phase: number; key: string } {
   const dated = f.match(DATED_RE);
   if (dated) {
     const [, y, mo, d] = dated;
-    return { phase: 1, key: `${y}${mo}${d}_${f}` };
+    const tiebreaker = Object.prototype.hasOwnProperty.call(DATED_SAME_DAY_ORDER, f)
+      ? String(DATED_SAME_DAY_ORDER[f]).padStart(6, '0')
+      : f;
+    return { phase: 1, key: `${y}${mo}${d}_${tiebreaker}` };
   }
   return { phase: 3, key: f };
 }

@@ -59,6 +59,15 @@ export const CreateDecisionSchema = z.object({
   impact: z.enum(['low', 'medium', 'high']).optional(),
   decisionType: z.string().optional(),
   type: z.string().optional(),
+  // OKR-E006 (IO-6 additive cross-module seam, docs/product/results-vnext/
+  // OKR_E006_DESIGN.md §10.2): optional origin-tracking pair — already-
+  // existing, already-nullable, already-indexed columns on `decisions`
+  // (server/migrations/20260311_origin_tracking.sql) that `createDecision`
+  // never read or wrote before this change. Purely additive: omitting both
+  // fields (every existing caller) leaves validation and behavior
+  // byte-for-byte unchanged.
+  sourceType: z.string().optional(),
+  sourceId: z.string().optional(),
   impacts: z
     .array(
       z.object({

@@ -14,7 +14,8 @@ ALTER TABLE v8_artifact_origin_links ADD CONSTRAINT v8_artifact_origin_links_ori
       'sheet',
       'native_artifact',
       'report_template',
-      'presentation_template'
+      'presentation_template',
+      'document_template',
+      'sheet_template'
     )
   );
-

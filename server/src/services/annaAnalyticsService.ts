@@ -30,7 +30,7 @@ type PublicAnnaFunnelMetadata = {
   // Canonical (contract)
   session_id?: string | null;
   cta_type?: 'demo' | 'trial' | 'contact' | null;
-  language?: 'pl' | 'en' | 'es' | 'de' | 'jp' | 'ar' | null;
+  language?: 'pl' | 'en' | 'es' | 'de' | 'ja' | 'ar' | null;
   channel?: 'text' | 'voice' | null;
   turn_id?: string | null;
   source_intent?:

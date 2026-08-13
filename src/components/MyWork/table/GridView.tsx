@@ -521,7 +521,11 @@ const DataGrid: React.FC<DataGridProps> = ({
                     >
                       <div className="flex items-center gap-1.5 pr-2">
                         <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                        <span className="min-w-0 truncate">[Missing: {missingFieldName}]</span>
+                        <span className="min-w-0 truncate">
+                          {t('ideas.table.viewRouter.missingField', '[Missing: {{name}}]', {
+                            name: missingFieldName,
+                          })}
+                        </span>
                         <button
                           type="button"
                           onClick={() => onRemoveMissingField?.(col.key)}

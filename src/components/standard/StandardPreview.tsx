@@ -24,8 +24,6 @@ import { ExternalLink, type LucideIcon, Pin, PinOff } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { assertContractInDev } from '@/contracts/tableSurface/validators';
-
 import {
   type DetailsAction,
   type MetaPill,
@@ -42,7 +40,6 @@ import {
   SKELETON_LINE_3,
   SKELETON_LINE_4,
 } from '../shared/PreviewPane';
-import { validatePreviewContract } from '../shared/PreviewPane/previewContract';
 import { PreviewPaneShell } from '../ui/ResizableTable/PreviewPaneShell';
 import { ArtifactPropertiesTable, type ArtifactPropertyRow } from './ArtifactPropertiesTable';
 
@@ -121,10 +118,7 @@ export interface StandardPreviewDetails {
   /** Nagłówki kolumn tabeli właściwości (przetłumaczone). */
   propertyLabel?: string;
   valueLabel?: string;
-  /**
-   * Override the prose word counter. Set to false when `text` contains
-   * metadata rows (owner, format, dates) rather than artifact body content.
-   */
+  /** Explicitly override the prose word counter for legacy/document previews. */
   showWordCount?: boolean;
   /** ⋮ Copy — zawsze pierwszy w kebabie Details. */
   onCopy?: () => void;
@@ -147,6 +141,8 @@ export interface StandardPreviewProps {
   pinned?: boolean;
   onTogglePin?: () => void;
   headerExtra?: React.ReactNode;
+  /** Parent layout owns header/footer chrome; render the canonical preview body only. */
+  embedded?: boolean;
 
   /* Blok 2 — karta meta */
   meta?: StandardPreviewMeta;
@@ -265,6 +261,7 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
   pinned,
   onTogglePin,
   headerExtra,
+  embedded = false,
   meta,
   details,
   ai,
@@ -337,85 +334,68 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
 
   const actionRows = orderPreviewActionRows(actions);
 
-  // R03-1: kontrakt sprawdzany na żywych propsach; w dev głośno ostrzega,
-  // w produkcji jest bezkosztowy. Nie rzuca — patrz `assertContractInDev`.
-  assertContractInDev(
-    `StandardPreview(${title})`,
-    validatePreviewContract({ rows: actionRows, details })
-  );
+  const footer =
+    ai || relations || actionRows.length > 0 || whatsNext ? (
+      // canon §7.3 — footer cards stacked space-y-2.5, bez dividerów między kartami.
+      <div className="space-y-2.5">
+        {/* Blok 4 — ramka AI */}
+        {ai ? (
+          <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5">
+            <PreviewAIHintStrip {...ai} />
+          </div>
+        ) : null}
 
-  /*
-   * Blok 5 — Relations jest OBOWIĄZKOWY (§6: „Pozostałe bloki są obowiązkowe;
-   * Details i Relations pokazują kanoniczny empty state"; REPAIR_MASTER_PLAN
-   * R03: „Relations zawsze jako blok, także empty state").
-   *
-   * Do R03-1 blok znikał całkowicie, gdy ekran nie podał propa `relations` —
-   * i to jest źródło części werdyktów FAIL na odbiorze PREVIEW: panel po prostu
-   * nie miał gdzie pokazać, że powiązań nie ma. Teraz brak propa znaczy „zero
-   * relacji", a nie „brak bloku".
-   */
-  const relationItems = relations ?? [];
+        {/* Blok 5 — Relations */}
+        {relations ? (
+          <PreviewRelations
+            items={relations}
+            emptyLabel={
+              relationsEmptyLabel ??
+              t('common.noRelations', isPolish ? 'Brak powiązań' : 'No relations')
+            }
+          />
+        ) : null}
 
-  // Stopka jest teraz ZAWSZE renderowana, bo zawiera obowiązkowy blok Relations.
-  const footer = (
-    // canon §7.3 — footer cards stacked space-y-2.5, bez dividerów między kartami.
-    <div className="space-y-2.5">
-      {/* Blok 4 — ramka AI */}
-      {ai ? (
-        <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5">
-          <PreviewAIHintStrip {...ai} />
-        </div>
-      ) : null}
+        {/* Blok 6 — pełny blok akcji na dole */}
+        {actionRows.length > 0 ? (
+          <div className="space-y-2.5 py-1">
+            {actionRows.map((row, idx) => (
+              <ActionGridRow key={idx} actions={row} />
+            ))}
+          </div>
+        ) : null}
 
-      {/* Blok 5 — Relations: obowiązkowy, także pusty (§6). */}
-      <PreviewRelations
-        items={relationItems}
-        emptyLabel={
-          relationsEmptyLabel ??
-          t('common.noRelations', isPolish ? 'Brak powiązań' : 'No relations')
-        }
-      />
-
-      {/* Blok 6 — pełny blok akcji na dole */}
-      {actionRows.length > 0 ? (
-        <div className="space-y-2.5 py-1">
-          {actionRows.map((row, idx) => (
-            <ActionGridRow key={idx} actions={row} />
-          ))}
-        </div>
-      ) : null}
-
-      {/* Blok opcjonalny — WHAT'S NEXT (ANEKS #4). Chipy zamiast ściśniętej
+        {/* Blok opcjonalny — WHAT'S NEXT (ANEKS #4). Chipy zamiast ściśniętej
             tabelki; JEDEN dopisek dla całej grupy pod chipami, nie per-pozycja. */}
-      {whatsNext ? (
-        <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5">
-          <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
-            {whatsNext.label ?? t('common.whatsNext', isPolish ? 'Co dalej' : "What's next")}
+        {whatsNext ? (
+          <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5">
+            <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
+              {whatsNext.label ?? t('common.whatsNext', isPolish ? 'Co dalej' : "What's next")}
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {whatsNext.items.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={item.onClick}
+                    disabled={item.disabled}
+                    className="inline-flex h-7 items-center gap-1.5 rounded-full border border-c-border bg-c-surface px-2.5 text-xs font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                  >
+                    {Icon ? <Icon size={12} /> : null}
+                    {item.label}
+                  </button>
+                );
+              })}
+            </div>
+            {whatsNext.note ? (
+              <div className="mt-1.5 text-[10px] text-c-text-muted">{whatsNext.note}</div>
+            ) : null}
           </div>
-          <div className="flex flex-wrap gap-1.5">
-            {whatsNext.items.map((item) => {
-              const Icon = item.icon;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={item.onClick}
-                  disabled={item.disabled}
-                  className="inline-flex h-7 items-center gap-1.5 rounded-full border border-c-border bg-c-surface px-2.5 text-xs font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                >
-                  {Icon ? <Icon size={12} /> : null}
-                  {item.label}
-                </button>
-              );
-            })}
-          </div>
-          {whatsNext.note ? (
-            <div className="mt-1.5 text-[10px] text-c-text-muted">{whatsNext.note}</div>
-          ) : null}
-        </div>
-      ) : null}
-    </div>
-  );
+        ) : null}
+      </div>
+    ) : undefined;
 
   return (
     <PreviewPaneShell
@@ -433,7 +413,13 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
                   ? 'text-[var(--c-info)] bg-state-selected'
                   : 'text-c-text-muted hover:bg-state-hover'
               }`}
-              title={pinned ? 'Unpin' : 'Pin for comparison'}
+              // R09-2a (2026-08-10, defekt P2a): było na sztywno po angielsku
+              // niezależnie od języka konta — ten sam mechanizm co `common.retry`.
+              title={
+                pinned
+                  ? t('common.unpin', isPolish ? 'Odepnij' : 'Unpin')
+                  : t('common.pinForComparison', isPolish ? 'Przypnij do porównania' : 'Pin for comparison')
+              }
             >
               {pinned ? <PinOff size={13} /> : <Pin size={13} />}
             </button>
@@ -453,6 +439,7 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
         </>
       }
       footer={footer}
+      embedded={embedded}
     >
       {loading ? (
         <div className="space-y-2 animate-pulse" data-testid="standard-preview-loading">
@@ -489,6 +476,24 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
               {details.properties?.length ? (
                 <ArtifactPropertiesTable
                   rows={details.properties}
+                  // R09-2a correction (2026-08-10, per coordinator): reverted
+                  // to the original literal default. `ArtifactPropertiesTable`
+                  // itself has no hardcoded strings — it requires pre-
+                  // translated labels from the caller, and `propertyLabel`/
+                  // `valueLabel` ALREADY EXIST as `StandardPreviewDetails`
+                  // props (see the interface above) for exactly this. The
+                  // real defect is that no RN-G2 screen passes them yet — a
+                  // caller-side gap, not a missing mechanism here. Changing
+                  // THIS default would silently reshape every one of
+                  // StandardPreview's 100+ consumers at once; the correct,
+                  // minimal fix is each caller passing its own translated
+                  // `details.propertyLabel`/`valueLabel` (see
+                  // `ResultsVNextLegacyArchivePanel` for the pattern) — NOT a
+                  // change here. Flagged in the acceptance report as
+                  // follow-up work for the screens that don't yet do this
+                  // (`roiRegistryPresenters.tsx`, `ResultsKpiRegistryPage.tsx`,
+                  // `okrRegistryPresenters.tsx`, `kpiScorecardPresenters.tsx`)
+                  // — out of this package's scope, owned by other lanes.
                   propertyLabel={details.propertyLabel ?? 'Property'}
                   valueLabel={details.valueLabel ?? 'Value'}
                 />

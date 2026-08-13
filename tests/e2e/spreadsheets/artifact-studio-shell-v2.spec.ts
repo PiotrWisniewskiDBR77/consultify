@@ -182,7 +182,6 @@ test.describe('Spreadsheet Artifact Studio shell V2 [@module:spreadsheets]', () 
 
     const firstCell = shell.getByRole('gridcell').first();
     await firstCell.click();
-    await firstCell.focus();
     await expect(firstCell).toBeFocused();
 
     await page.keyboard.press('Shift+F10');

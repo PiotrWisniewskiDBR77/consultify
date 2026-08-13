@@ -1,0 +1,27 @@
+{
+  "environment": {
+    "frontend": "http://127.0.0.1:3000",
+    "runtime": "http://127.0.0.1:3311",
+    "tenant": "nordwerk-browser",
+    "project": "operations-transformation-2027",
+    "database": "isolated consultify_ie_acceptance PostgreSQL",
+    "candidateBaseline": "635fd2d48d5a396c45bcb43b7f363535403ecf93",
+    "candidateCommit": null
+  },
+  "method": "Full-shell DOM and keyboard audit after the production-command ACO 1-59 journey. Each data register was checked for the shared table, Settings2 column chooser, single-click preview, row kebab and Shift+F10 context-menu parity.",
+  "results": [
+    { "function": "Inicjatywy", "dataRows": 1, "table": "PASS", "columnChooser": "PASS", "preview": "PASS", "kebab": "PASS", "shiftF10": "PASS" },
+    { "function": "Portfel", "dataRows": 1, "table": "PASS", "columnChooser": "PASS", "preview": "PASS", "kebab": "PASS", "shiftF10": "PASS" },
+    { "function": "Plan", "dataRows": 1, "table": "PASS", "columnChooser": "PASS", "preview": "PASS", "kebab": "PASS", "shiftF10": "PASS" },
+    { "function": "Obciążenie", "dataRows": 4, "table": "PASS", "columnChooser": "PASS", "preview": "PASS", "kebab": "PASS", "shiftF10": "PASS" },
+    { "function": "Realizacje", "dataRows": 0, "state": "EMPTY_AFTER_ARCHIVE", "emptyState": "PASS", "dataStateEvidence": "aco-browser-execution-registry-step-34.png", "componentContractEvidence": "canonicalInitiativeRegisterParity.test.tsx and handoffExecutionSurfaces.test.tsx" },
+    { "function": "Praca", "dataRows": 4, "table": "PASS", "columnChooser": "PASS", "preview": "PASS", "kebab": "PASS", "shiftF10": "PASS" },
+    { "function": "Zasoby", "dataRows": 1, "table": "PASS", "columnChooser": "PASS", "preview": "PASS", "kebab": "PASS", "shiftF10": "PASS" },
+    { "function": "Sterowanie", "dataRows": 1, "table": "PASS", "columnChooser": "PASS", "preview": "PASS", "kebab": "PASS", "shiftF10": "PASS" },
+    { "function": "Raporty", "dataRows": 2, "table": "PASS", "columnChooser": "PASS", "preview": "PASS", "kebab": "PASS", "shiftF10": "PASS" }
+  ],
+  "limitations": [
+    "The final ACO state is ARCHIVED, so the full-shell Realizacje active register correctly renders its first-use/filtered empty state. Its populated register is evidenced at ACO step 34 before closure and by focused component tests.",
+    "No candidate commit or exact candidate SHA exists because commit authorization has not been granted."
+  ]
+}

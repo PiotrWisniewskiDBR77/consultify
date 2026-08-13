@@ -41,7 +41,7 @@ describe('virtualWorkerService release and evaluation gates', () => {
         results_json: {},
         score: null,
       })
-    ).rejects.toMatchObject<VirtualWorkerValidationError>({
+    ).rejects.toMatchObject({
       code: 'VW_EVAL_DATASET_REQUIRED',
     });
     expect(mockQuery).not.toHaveBeenCalled();
@@ -99,7 +99,7 @@ describe('virtualWorkerService release and evaluation gates', () => {
         evaluation_id: 'eval-1',
         status: 'ready',
       })
-    ).rejects.toMatchObject<VirtualWorkerValidationError>({
+    ).rejects.toMatchObject({
       code: 'VW_RELEASE_EVAL_NOT_PASSED',
     });
   });

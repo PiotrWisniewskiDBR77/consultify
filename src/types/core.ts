@@ -166,6 +166,7 @@ export enum AppView {
   PROJECTS = 'PROJECTS', // Zwornik (#78): project stakeholder registry + finance rollup
   CLIENT_VAULT = 'CLIENT_VAULT', // HP-22 Harvey-Parity: org-scoped client document vault (gated, ff.client_vault)
   AGENT_PLAN = 'AGENT_PLAN', // HP-4 F3 Harvey-Parity: run-agent workspace entry (gated, ff.agent_plan)
+  CASE_WORKSPACE = 'CASE_WORKSPACE', // Zlecenia (Case Workspace E7/E8) — gated: MODULE_CASE_WORKSPACE + ff.caseWorkspace (default OFF)
 
   // Initiative Lifecycle Management
   INITIATIVE_MANAGEMENT = 'INITIATIVE_MANAGEMENT', // @deprecated - use PORTFOLIO_ROADMAP
@@ -3747,7 +3748,7 @@ export interface User {
   accessLevel: 'free' | 'full';
   preferredLanguage?: Language;
   /**
-   * P0.3 (2026-07-26): account-level UI interface language (en/pl/de/ar/jp/es
+   * P0.3 (2026-07-26): account-level UI interface language (en/pl/de/ar/ja/es
    * from src/i18n.ts SUPPORTED_LANGUAGES). Distinct from `preferredLanguage`
    * (AI content-generation language). SSOT priority for a logged-in session
    * is account (`language`) > localStorage > navigator — see

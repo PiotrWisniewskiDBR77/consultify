@@ -472,6 +472,12 @@ const StatusCell: React.FC<CellProps> = ({ column, value, onChange, locked }) =>
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const statusOptions = column.options?.length ? column.options : Object.keys(STATUS_DISPLAY);
+  // 2026-08-10 (E13 visual audit, doc 11 §3.7 "labels use business
+  // language"): `display?.en` was hardcoded regardless of app language — the
+  // pl/en pair in STATUS_DISPLAY existed but was never read for pl, so a PL
+  // session always showed "To Do"/"In Progress"/… on Table status pills.
+  const { i18n } = useTranslation();
+  const isPl = i18n.language?.startsWith('pl');
 
   useEffect(() => {
     if (!open) return;
@@ -485,7 +491,7 @@ const StatusCell: React.FC<CellProps> = ({ column, value, onChange, locked }) =>
   const current = String(value ?? 'todo');
   const display = STATUS_DISPLAY[current];
   const bg = column.optionColors?.[current] || display?.bg || '#e0e7ff';
-  const label = display?.en || current;
+  const label = (isPl ? display?.pl : display?.en) || current;
 
   return (
     <div ref={ref} className="relative" onClick={(e) => e.stopPropagation()}>
@@ -515,7 +521,7 @@ const StatusCell: React.FC<CellProps> = ({ column, value, onChange, locked }) =>
                   className="w-3 h-3 rounded-sm flex-shrink-0"
                   style={{ backgroundColor: column.optionColors?.[opt] || d?.bg || '#e0e7ff' }}
                 />
-                {d?.en || opt}
+                {(isPl ? d?.pl : d?.en) || opt}
               </button>
             );
           })}

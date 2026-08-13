@@ -267,8 +267,20 @@ export const ProvenanceBadge: React.FC<ProvenanceBadgeProps> = ({
           </div>
           {(connectorRunId || recordId) && (
             <div className="px-3 py-1.5 border-t border-c-border-subtle text-[9px] text-c-text-secondary space-y-0.5">
-              {connectorRunId && <p>Run: {connectorRunId.slice(0, 12)}…</p>}
-              {recordId && <p>Record: {recordId.slice(0, 12)}…</p>}
+              {connectorRunId && (
+                <p>
+                  {t('ideas.table.provenanceRunId', 'Run: {{id}}…', {
+                    id: connectorRunId.slice(0, 12),
+                  })}
+                </p>
+              )}
+              {recordId && (
+                <p>
+                  {t('ideas.table.provenanceRecordId', 'Record: {{id}}…', {
+                    id: recordId.slice(0, 12),
+                  })}
+                </p>
+              )}
             </div>
           )}
         </div>

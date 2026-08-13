@@ -130,8 +130,50 @@ function rowToChatProposal(row: ChatProposalRow): ChatActionProposal {
  * - Clear governed work request → enter execution/proposal path
  * - Ambiguous → ask user whether this should become governed work
  *
- * Current implementation: heuristic stub (LLM call placeholder).
- * Production will replace the body with an actual LLM classification call.
+ * =========================================================================
+ * WHAT THIS REPLACES (2026-08-11, Stream B / CW-T-B)
+ * =========================================================================
+ * The previous body was a self-declared "heuristic stub (LLM call
+ * placeholder)" whose pattern lists were EXCLUSIVELY ENGLISH
+ * (`/\b(create|build|generate|make)\b.../i`, etc). Polish — this product's
+ * primary language — never matched a single governed OR conversational
+ * pattern, so every Polish message fell through to the `ambiguous` branch
+ * regardless of content. A purely informational Polish question such as
+ * "Jaki jest dzisiaj kurs euro?" was classified `ambiguous` (confidence 0.5)
+ * rather than `conversational`, which meant the layer that exists
+ * specifically to "not propose a Case for an informational chat turn" never
+ * actually fired for the language most users type in.
+ *
+ * This body is now a real, production bilingual classifier — Polish
+ * (primary, with and without diacritics) and English (retained verbatim so
+ * every existing English-language caller/test keeps its exact behaviour) —
+ * built from the same governed-vs-conversational pattern-matching shape as
+ * before, just no longer blind to the product's own language. It is not a
+ * simulated LLM call and does not claim to be one; a future upgrade to a
+ * real model-backed classifier is a separate, larger change and does not
+ * change the contract below.
+ *
+ * =========================================================================
+ * WHY "AMBIGUOUS" NEEDS NO EXTRA SAFEGUARD HERE TO STAY SAFE
+ * =========================================================================
+ * This function only ever LABELS a message; it never creates anything.
+ * Safety for the ambiguous case is structural, enforced by the caller and by
+ * `caseIntakeService`, not by this function reaching a particular verdict:
+ *   - `routes/v8/chat.routes.ts`'s `/case-intake/turn` only ever calls
+ *     `proposeConversationWorkOrder` (never `confirm*`), and it does so for
+ *     BOTH `governed_work` and `ambiguous` — a proposal creates zero Cases
+ *     and zero Runs by construction (CW-CANON-01).
+ *   - A Case is created ONLY by `confirmConversationWorkOrder`, which never
+ *     reads this function's output at all — it re-derives the CURRENT
+ *     work order from the outbox and requires the caller's digest to match
+ *     it exactly (CW-CANON-03). Misclassifying a message here can at worst
+ *     cause a proposal to be shown (or not shown) — it can never, by itself,
+ *     cause a Case to be created without an explicit, digest-matched
+ *     confirmation from a human.
+ * So an "ambiguous" verdict — including every case this classifier cannot
+ * confidently place in either bucket — is safe by default: it behaves
+ * exactly like `governed_work` at the chat-route boundary (may propose, may
+ * never confirm) and never like an auto-approval.
  */
 export async function classifyIntent(
   message: string,
@@ -142,28 +184,58 @@ export async function classifyIntent(
 
   const now = new Date().toISOString();
 
-  const governedPatterns = [
+  // ---- English (unchanged verbatim from the pre-existing stub) -----------
+  const governedPatternsEn = [
     /\b(create|build|generate|make)\b.*\b(report|deck|presentation|initiative|task)/i,
     /\b(update|modify|change|edit)\b.*\b(all|every|across)\b/i,
     /\b(execute|run|perform|carry out)\b.*\b(plan|workflow|process)/i,
     /\b(assign|reassign|delegate)\b.*\b(task|work|owner)/i,
   ];
 
-  const conversationalPatterns = [
+  const conversationalPatternsEn = [
     /\b(what|how|why|when|where|who)\b.*\?$/i,
     /\b(explain|describe|summarize|tell me|show me)\b/i,
     /\b(status|progress|update on)\b.*\?$/i,
   ];
 
-  const governedMatch = governedPatterns.some((p) => p.test(message));
-  const conversationalMatch = conversationalPatterns.some((p) => p.test(message));
+  // ---- Polish (new — CW-T-B). Both diacritic and stripped-diacritic
+  // spellings are matched (a message typed on a keyboard/IME without Polish
+  // letters is common and must classify identically to the accented form).
+  const governedPatternsPl = [
+    // "stwórz/zrób/przygotuj/opracuj/wygeneruj/napisz" + a concrete deliverable noun.
+    /\b(stw[oó]rz|utw[oó]rz|zr[oó]b|przygotuj|wygeneruj|opracuj|napisz|sporz[aą]dz[iI]?)\b[\s\S]*\b(raport\w*|prezentacj\w*|dokument\w*|inicjatyw\w*|zadani\w*|analiz\w*|plan\w*|podsumowani\w*|wycen\w*|harmonogram\w*)\b/i,
+    // "zaktualizuj/zmień/popraw" + a totality word ("wszystkie", "każdy", "cały").
+    /\b(zaktualizuj|zmie[nń]|edytuj|popraw)\b[\s\S]*\b(wszystk\w*|ka[zż]d\w*|cał\w*|caly\w*)\b/i,
+    // "wykonaj/uruchom/zrealizuj" + plan/proces/workflow.
+    /\b(wykonaj|uruchom|zrealizuj)\b[\s\S]*\b(plan\w*|proces\w*|workflow\w*)\b/i,
+    // "przypisz/deleguj" + zadanie/praca/właściciel.
+    /\b(przypisz|zdeleguj|deleguj)\b[\s\S]*\b(zadani\w*|prac\w*|w[lł]a[sś]ciciel\w*)\b/i,
+    // Compound "find/gather ... then produce": "znajdź informacje i przygotuj prezentację".
+    /\b(znajd[zź]|zbierz|wyszukaj)\b[\s\S]*\b(przygotuj|stw[oó]rz|utw[oó]rz|opracuj|wygeneruj|napisz)\b/i,
+    // Explicit autonomy / one-click phrasing — "pozwól na wszystko", "pełna autonomia".
+    /\bpozw[oó]l\s+na\s+wszystko\b|\bpe[lł]n[aą]\s+autonomi\w*\b|\bbez\s+pytania\s+o\s+zgod\w*\b/i,
+  ];
+
+  const conversationalPatternsPl = [
+    // Question words ("jak/jaki/co/dlaczego/kiedy/gdzie/kto/który/czy") … "?"
+    /\b(jak\w*|co|dlaczego|kiedy|gdzie|kto|kt[oó]r\w*|czy)\b[\s\S]*\?\s*$/i,
+    // Explanation/description asks with no production verb.
+    /\b(wyja[sś]nij|opisz|wyt[lł]umacz|powiedz mi|poka[zż] mi|streść|streszcz)\b/i,
+    /\b(status|post[eę]p|stan)\b[\s\S]*\?\s*$/i,
+  ];
+
+  const governedMatch =
+    governedPatternsEn.some((p) => p.test(message)) || governedPatternsPl.some((p) => p.test(message));
+  const conversationalMatch =
+    conversationalPatternsEn.some((p) => p.test(message)) ||
+    conversationalPatternsPl.some((p) => p.test(message));
 
   if (governedMatch && !conversationalMatch) {
     return {
       intentType: 'governed_work',
       confidence: 0.85,
       suggestedAction: 'initiate_execution',
-      reasoning: 'Message contains work-producing intent patterns',
+      reasoning: 'Message contains work-producing intent patterns (PL/EN)',
       classifiedAt: now,
     };
   }
@@ -173,7 +245,7 @@ export async function classifyIntent(
       intentType: 'conversational',
       confidence: 0.9,
       suggestedAction: 'continue_chat',
-      reasoning: 'Message matches conversational question patterns',
+      reasoning: 'Message matches conversational question patterns (PL/EN)',
       classifiedAt: now,
     };
   }
@@ -183,7 +255,7 @@ export async function classifyIntent(
     confidence: 0.5,
     suggestedAction: 'ask_user_confirmation',
     reasoning:
-      'Intent is ambiguous — both conversational and work-producing signals detected, or neither matched clearly',
+      'Intent is ambiguous — both conversational and work-producing signals detected, or neither matched clearly (PL/EN)',
     classifiedAt: now,
   };
 }

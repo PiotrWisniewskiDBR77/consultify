@@ -42,7 +42,7 @@ export const WhiteboardEmptyState: React.FC<WhiteboardEmptyStateProps> = ({
                 className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised transition-colors ${FOCUS_RING}`}
               >
                 <Sparkles size={14} />
-                Brainstorm
+                {t('myWork.whiteboard.empty.brainstorm', 'Brainstorm')}
               </button>
               <button
                 onClick={() => onSeedQuickStart('affinity')}
@@ -50,14 +50,14 @@ export const WhiteboardEmptyState: React.FC<WhiteboardEmptyStateProps> = ({
                 style={{ backgroundColor: 'color-mix(in srgb, var(--c-info) 12%, transparent)' }}
               >
                 <Layers size={14} />
-                Affinity map
+                {t('myWork.whiteboard.empty.affinityMap', 'Affinity map')}
               </button>
               <button
                 onClick={() => onSeedQuickStart('workshop')}
                 className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-warning-500/10 text-warning-600 dark:text-warning-400 hover:bg-warning-500/20 transition-colors ${FOCUS_RING}`}
               >
                 <LayoutGrid size={14} />
-                Workshop wall
+                {t('myWork.whiteboard.empty.workshopWall', 'Workshop wall')}
               </button>
             </div>
             <button

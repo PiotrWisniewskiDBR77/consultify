@@ -15,7 +15,7 @@ import {
   RotateCcw,
   X,
 } from 'lucide-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -806,6 +806,31 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
       recordExportRequest,
     ]
   );
+
+  // `idea.export.file` (ideaActionRegistry.ts, closed 2026-08-10 —
+  // 04_ACTION_COVERAGE_INVENTORY.csv class-d: handleExport ~L838 + the
+  // exportJSON fallback button ~L1045 had zero registry coverage even
+  // though `idea.export.open` already covered opening this menu). Listens
+  // on the SAME bus as every other quick action
+  // (`idea-workspace-quick-action`) for a `run_export_format` request and
+  // calls the REAL `handleExport`, unconditionally of `open` — this
+  // component is always mounted by IdeaMapWorkspace.tsx (`open` only gates
+  // the visual dialog), and `canvasContainerRef`/`graphNodes`/`graphEdges`
+  // are the workspace's own persistent refs/props, not modal-local state, so
+  // Teresa genuinely produces a real downloadable file whether or not a
+  // human currently has the export dialog open.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.action !== 'run_export_format') return;
+      if (detail?.ideaId && detail.ideaId !== ideaId) return;
+      const format = typeof detail?.format === 'string' ? detail.format : undefined;
+      if (!format) return;
+      handleExport(format);
+    };
+    window.addEventListener('idea-workspace-quick-action', handler);
+    return () => window.removeEventListener('idea-workspace-quick-action', handler);
+  }, [handleExport, ideaId]);
 
   if (!open) return null;
 

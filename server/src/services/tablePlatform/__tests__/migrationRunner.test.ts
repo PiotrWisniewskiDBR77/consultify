@@ -3,6 +3,31 @@ import path from 'path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('Migration Runner', () => {
+  it('accepts every exact approved historical checksum variant and rejects unknown history', async () => {
+    const { classifyMigrationChecksum } = await import('../migrationIdentity.js');
+    const current = fs.readFileSync(
+      path.resolve(process.cwd(), 'server/migrations/20260623_distribution_delivery.sql'),
+      'utf-8'
+    );
+
+    expect(classifyMigrationChecksum('20260623_distribution_delivery.sql', 'afb449dbaf10f409', current)).toBe(
+      'accepted_historical_variant'
+    );
+    expect(classifyMigrationChecksum('20260623_distribution_delivery.sql', '7712332cdc298d49', current)).toBe(
+      'accepted_historical_variant'
+    );
+    expect(classifyMigrationChecksum('20260623_distribution_delivery.sql', '0000000000000000', current)).toBe(
+      'drift'
+    );
+    expect(
+      classifyMigrationChecksum(
+        '20260623_distribution_delivery.sql',
+        '7712332cdc298d49',
+        `${current}\n-- unreviewed edit`
+      )
+    ).toBe('drift');
+  });
+
   it('keeps the mounted Studio persistence producer in the strict Postgres path', () => {
     const runner = fs.readFileSync(
       path.resolve(process.cwd(), 'server/scripts/migrate.postgres.ts'),

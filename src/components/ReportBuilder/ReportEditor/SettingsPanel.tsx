@@ -181,7 +181,7 @@ const REPORT_LANGUAGES = [
   { value: 'de', label: 'DE', fullName: 'Deutsch', flag: '🇩🇪' },
   { value: 'es', label: 'ES', fullName: 'Español', flag: '🇪🇸' },
   { value: 'ar', label: 'AR', fullName: 'العربية', flag: '🇸🇦' },
-  { value: 'jp', label: 'JP', fullName: '日本語', flag: '🇯🇵' },
+  { value: 'ja', label: 'JP', fullName: '日本語', flag: '🇯🇵' },
 ] as const;
 
 // ==========================================

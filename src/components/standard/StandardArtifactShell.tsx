@@ -38,6 +38,7 @@ import type {
   NModeSection,
 } from '@/components/shared/NModeLayout/types';
 
+import { ArtifactBreadcrumb } from './ArtifactBreadcrumb';
 import { ArtifactRightPanel, type ArtifactRightPanelSection } from './ArtifactRightPanel';
 import type { KartaNKey, KartaNKlasa } from './registry';
 import {
@@ -251,6 +252,7 @@ export function StandardArtifactShell<const S extends readonly StandardSekcjaDef
   karta,
   klasa,
   header,
+  breadcrumb,
   primaryAction,
   sections,
   rightPanel,
@@ -373,39 +375,47 @@ export function StandardArtifactShell<const S extends readonly StandardSekcjaDef
   );
 
   return (
-    <NModeShell
-      header={naglowek}
-      properties={wlasciwosci}
-      propertiesMaxColumns={propertiesMaxColumns}
-      sections={sekcjeNMode}
-      actions={akcjePaska}
-      actionsVisible={headerActionsVisible ?? akcjePaska.length > 0}
-      aiContextActions={akcjeAISekcji}
-      toolAIActions={akcjeAINarzedzia}
-      // §2.4 — slot `toolbar` to JEDYNA droga własnego paska; surowy `renderActionBar`
-      // nie jest wystawiony w propsach powłoki, więc bespoke <div> nie ma którędy wejść.
-      renderActionBar={toolbar ? () => toolbar : undefined}
-      activeSection={activeSection}
-      onSectionChange={onSectionChange}
-      onSectionReorder={onSectionReorder}
-      presentationMode={densityMode}
-      onPresentationModeChange={onDensityModeChange}
-      showModeSwitcher={false}
-      buildArtifactCode={buildArtifactCode}
-      loading={loading}
-      reducedMotion={reducedMotion}
-      motionDuration={motionDuration}
-      rightPanel={
-        <ArtifactRightPanel
-          sections={sekcjePanelu}
-          width={panelWidth}
-          ariaLabel={panelAriaLabel}
-          statusBar={panelStatusBar}
-        />
-      }
-    >
-      {nakladki}
-    </NModeShell>
+    <div className="flex h-full min-h-0 flex-col">
+      {/* Element ㉛ Menu 1 (§9.2/§11.2) — patrz komentarz propa `breadcrumb` w
+          StandardArtifactShell.types.ts. Pusta/pominięta tablica → `null`,
+          zero zmiany dla istniejących 7 kart, które go nie podają. */}
+      <ArtifactBreadcrumb items={breadcrumb ? [...breadcrumb] : []} />
+      <div className="min-h-0 flex-1">
+        <NModeShell
+          header={naglowek}
+          properties={wlasciwosci}
+          propertiesMaxColumns={propertiesMaxColumns}
+          sections={sekcjeNMode}
+          actions={akcjePaska}
+          actionsVisible={headerActionsVisible ?? akcjePaska.length > 0}
+          aiContextActions={akcjeAISekcji}
+          toolAIActions={akcjeAINarzedzia}
+          // §2.4 — slot `toolbar` to JEDYNA droga własnego paska; surowy `renderActionBar`
+          // nie jest wystawiony w propsach powłoki, więc bespoke <div> nie ma którędy wejść.
+          renderActionBar={toolbar ? () => toolbar : undefined}
+          activeSection={activeSection}
+          onSectionChange={onSectionChange}
+          onSectionReorder={onSectionReorder}
+          presentationMode={densityMode}
+          onPresentationModeChange={onDensityModeChange}
+          showModeSwitcher={false}
+          buildArtifactCode={buildArtifactCode}
+          loading={loading}
+          reducedMotion={reducedMotion}
+          motionDuration={motionDuration}
+          rightPanel={
+            <ArtifactRightPanel
+              sections={sekcjePanelu}
+              width={panelWidth}
+              ariaLabel={panelAriaLabel}
+              statusBar={panelStatusBar}
+            />
+          }
+        >
+          {nakladki}
+        </NModeShell>
+      </div>
+    </div>
   );
 }
 

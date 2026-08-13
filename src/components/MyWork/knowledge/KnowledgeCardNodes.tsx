@@ -11,6 +11,7 @@
 import { BookOpen, ExternalLink, FileText, Lightbulb, StickyNote } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Handle, type NodeProps, Position } from 'reactflow';
+import { useTranslation } from 'react-i18next';
 
 import {
   MindMapNodeResizer,
@@ -29,6 +30,7 @@ import {
 // ── Knowledge Card ──────────────────────────────────────────────────────────
 
 const KnowledgeCardNode: React.FC<NodeProps> = ({ id, data, selected }) => {
+  const { t } = useTranslation();
   const hasExplicitSize = useNodeHasExplicitSize(id);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(data?.label || ''));
@@ -65,7 +67,7 @@ const KnowledgeCardNode: React.FC<NodeProps> = ({ id, data, selected }) => {
       <div className="flex items-center gap-1.5 mb-1">
         <BookOpen size={12} className="text-c-tag-2 shrink-0" />
         <span className="text-[9px] font-bold uppercase tracking-wider text-c-tag-2">
-          {data?.category || 'Knowledge'}
+          {data?.category || t('myWork.knowledge.cardNodes.knowledgeDefault', 'Knowledge')}
         </span>
       </div>
 
@@ -103,6 +105,7 @@ const KnowledgeCardNode: React.FC<NodeProps> = ({ id, data, selected }) => {
 // ── Note Card ───────────────────────────────────────────────────────────────
 
 const NoteCardNode: React.FC<NodeProps> = ({ id, data, selected }) => {
+  const { t } = useTranslation();
   const hasExplicitSize = useNodeHasExplicitSize(id);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(data?.label || ''));
@@ -138,7 +141,9 @@ const NoteCardNode: React.FC<NodeProps> = ({ id, data, selected }) => {
 
       <div className="flex items-center gap-1.5 mb-1">
         <StickyNote size={12} className="text-c-tag-9 shrink-0" />
-        <span className="text-[9px] font-bold uppercase tracking-wider text-c-tag-9">Note</span>
+        <span className="text-[9px] font-bold uppercase tracking-wider text-c-tag-9">
+          {t('myWork.knowledge.cardNodes.noteBadge', 'Note')}
+        </span>
       </div>
 
       {editing ? (
@@ -174,14 +179,23 @@ const NoteCardNode: React.FC<NodeProps> = ({ id, data, selected }) => {
 // ── Evidence Card ───────────────────────────────────────────────────────────
 
 const EvidenceCardNode: React.FC<NodeProps> = ({ id, data, selected }) => {
+  const { t } = useTranslation();
   const hasExplicitSize = useNodeHasExplicitSize(id);
   const evidenceType: 'url' | 'artifact' | 'note' | 'document' = data?.evidenceType || 'note';
 
   const typeConfig = {
-    url: { icon: ExternalLink, color: 'cyan', label: 'URL' },
-    artifact: { icon: FileText, color: 'emerald', label: 'Artifact' },
-    note: { icon: StickyNote, color: 'amber', label: 'Note' },
-    document: { icon: FileText, color: 'violet', label: 'Document' },
+    url: { icon: ExternalLink, color: 'cyan', label: t('myWork.knowledge.cardNodes.typeUrl', 'URL') },
+    artifact: {
+      icon: FileText,
+      color: 'emerald',
+      label: t('myWork.knowledge.cardNodes.typeArtifact', 'Artifact'),
+    },
+    note: { icon: StickyNote, color: 'amber', label: t('myWork.knowledge.cardNodes.typeNote', 'Note') },
+    document: {
+      icon: FileText,
+      color: 'violet',
+      label: t('myWork.knowledge.cardNodes.typeDocument', 'Document'),
+    },
   };
 
   const cfg = typeConfig[evidenceType] || typeConfig.note;
@@ -215,7 +229,7 @@ const EvidenceCardNode: React.FC<NodeProps> = ({ id, data, selected }) => {
       </div>
 
       <div className="text-xs font-medium text-c-text-secondary line-clamp-2">
-        {data?.label || data?.title || 'Evidence'}
+        {data?.label || data?.title || t('myWork.knowledge.cardNodes.evidenceDefault', 'Evidence')}
       </div>
 
       {data?.url && (
@@ -226,7 +240,9 @@ const EvidenceCardNode: React.FC<NodeProps> = ({ id, data, selected }) => {
       )}
 
       {data?.artifactId && (
-        <div className="mt-1 text-[8px] text-c-tag-6 truncate">ID: {data.artifactId}</div>
+        <div className="mt-1 text-[8px] text-c-tag-6 truncate">
+          {t('myWork.knowledge.cardNodes.idPrefix', 'ID: {{id}}', { id: data.artifactId })}
+        </div>
       )}
 
       <Handle type="source" position={Position.Right} className="!w-2 !h-2 !bg-c-tag-8" />

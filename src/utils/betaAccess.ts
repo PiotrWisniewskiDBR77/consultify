@@ -51,6 +51,13 @@ export const BETA_MENU_STATUS: Record<string, BetaStatus> = {
   MODULE_PREZENTACJE_GEN: 'open', // Presentation Studio
   MODULE_TABELE: 'open', // Table Studio
   MODULE_MEETING: 'closed', // Meeting (M21 — post-GA beta per _FINISZ_MASTER_PLAN)
+  // Zlecenia (Case Workspace E7/E8). ZAMKNIĘTE do akceptu właściciela.
+  // ★ UWAGA: 'closed' NIE wystarczy jako jedyna bramka — `BETA_ADMINS_EXEMPT`
+  // wyżej jest `true`, więc każdy admin/owner i tak by moduł zobaczył. Realną
+  // niewidzialność daje DRUGA bramka: flaga runtime `isCaseWorkspaceEnabled()`
+  // (`src/components/CaseWorkspace/caseWorkspaceFlag.ts`, domyślnie OFF),
+  // sprawdzana przy rejestracji trasy w AppRoutes.tsx.
+  MODULE_CASE_WORKSPACE: 'closed',
   // Internal Tools (AI OS) is a footer item rendered outside the gated main menu
   // (not run through lockClosedBetaModules), and is already restricted to DBR77
   // via canUseInternalTools(). Tracked here as 'open' = beta badge only, no lock.

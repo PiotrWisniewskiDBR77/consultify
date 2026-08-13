@@ -13,7 +13,7 @@ import {
   decideLayoutAuditMarker,
   HIGH_PRIORITY_FLAGS,
   KNOWN_FLAGS,
-} from '../layoutAuditFlagPriority';
+} from '../layoutAuditFlagPriority.js';
 
 describe('layoutAuditFlagPriority — decideLayoutAuditMarker', () => {
   it('returns no-render for null', () => {

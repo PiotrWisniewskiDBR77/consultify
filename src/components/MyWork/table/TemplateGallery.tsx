@@ -18,11 +18,12 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { EmptyState, LoadingState } from '@/components/shared/states';
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import { listTemplates, useTemplate as applyTableTemplate } from '@/services/api/tablePlatform.api';
 
 interface TemplateGalleryProps {
@@ -112,25 +113,34 @@ export function TemplateGallery({ workspaceId, onClose, onTemplateUsed }: Templa
     [workspaceId, t, onTemplateUsed, onClose]
   );
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  useDialogA11y({ open: true, onClose, containerRef });
+
   return (
     <div
       className="fixed inset-0 z-[70] flex items-center justify-center bg-black/30 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className="bg-c-surface rounded-2xl shadow-2xl border border-slate-200/60 dark:border-white/[0.03] w-[720px] max-w-[95vw] max-h-[85vh] flex flex-col overflow-hidden"
+        ref={containerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="template-gallery-heading"
+        tabIndex={-1}
+        className="bg-c-surface rounded-2xl shadow-2xl border border-slate-200/60 dark:border-white/[0.03] w-[720px] max-w-[95vw] max-h-[85vh] flex flex-col overflow-hidden outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-c-border-subtle">
           <div className="flex items-center gap-2">
             <LayoutTemplate size={18} className="text-c-text-secondary" />
-            <h2 className="text-base font-semibold text-c-text">
+            <h2 id="template-gallery-heading" className="text-base font-semibold text-c-text">
               {t('ideas.table.templateGallery.templateGalleryTitle', 'Template Gallery')}
             </h2>
           </div>
           <button
             onClick={onClose}
+            aria-label={t('common.close', 'Close')}
             className="p-1.5 rounded-lg text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface-raised transition-colors"
           >
             <X size={16} />

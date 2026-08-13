@@ -1,0 +1,2 @@
+=== UPTIME before run 2 ===
+21:43  up 13:08, 1 user, load averages: 90.01 141.19 120.46

@@ -1,5 +1,9 @@
 # 06 — Lewy rail
 
+> **Zastąpienie kierunku 2026-08-09:** narzędzia opisane w tym rozdziale
+> migrują na prawy `CanvasToolRail`; lewa strona jest jednym panelem informacji.
+> Kontrakt migracji: [rozdział 13](13_MIGRACJA_NAWIGACJI_2026-08-09.md).
+
 Lewy rail to pionowy, wąski, ikonowy pasek narzędzi edycji bieżącej reprezentacji. Ten rozdział ustala jego rolę, twarde zakazy, wspólny szkielet dla trzech narzędzi-płócien (Mind Map, Whiteboard, Process Flow) oraz osobną treść dla Table, która nie jest płótnem. Warstwa i jej miejsce na ekranie: `03_ARCHITEKTURA_EKRANU.md` §1 (warstwa 3) i §2.
 
 ## 1. Rola

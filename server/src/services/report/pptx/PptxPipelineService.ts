@@ -8,6 +8,7 @@
  * The old service remains as v1 fallback.
  */
 
+import JSZip from 'jszip';
 import { createRequire } from 'module';
 
 import logger from '../../../utils/Logger.js';
@@ -30,6 +31,99 @@ import { type TransformOptions, transformToUnifiedJson } from './UnifiedJsonTran
 
 const require = createRequire(import.meta.url);
 const PptxGenJS: any = require('pptxgenjs');
+
+const DECORATIVE_EXTENSION =
+  '<a:extLst><a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">' +
+  '<adec:decorative xmlns:adec="http://schemas.microsoft.com/office/drawing/2017/decorative" val="1"/>' +
+  '</a:ext></a:extLst>';
+
+function accessibleObjectLabel(value: unknown, fallback: string): string {
+  const text = Array.isArray(value)
+    ? value
+        .map((entry) => (typeof entry === 'string' ? entry : String(entry?.text || '')))
+        .join(' ')
+    : String(value || '');
+  const normalized = text.replace(/\s+/g, ' ').trim();
+  return (normalized || fallback).slice(0, 120);
+}
+
+/**
+ * Give generated objects stable semantic names in the same order in which
+ * layouts apply them. PowerPoint's Reading Order pane is backed by the slide
+ * XML object order; the ordinal makes that contract visible and testable.
+ * Empty shapes are explicitly tagged for the OOXML decorative post-pass.
+ */
+function installAccessibleSlideContract(slide: any, slideData: any): void {
+  let ordinal = 0;
+  const next = (role: string, label: string) =>
+    `${String(++ordinal).padStart(2, '0')} ${role}: ${label}`.slice(0, 180);
+  const fallback = accessibleObjectLabel(
+    slideData?.key_message || slideData?.content?.title,
+    'Slide content'
+  );
+
+  const addText = slide.addText.bind(slide);
+  slide.addText = (text: unknown, options: Record<string, unknown> = {}) =>
+    addText(text, {
+      ...options,
+      objectName: options.objectName || next('Text', accessibleObjectLabel(text, fallback)),
+    });
+
+  const addTable = slide.addTable.bind(slide);
+  slide.addTable = (rows: unknown, options: Record<string, unknown> = {}) =>
+    addTable(rows, {
+      ...options,
+      objectName: options.objectName || next('Table', fallback),
+    });
+
+  const addChart = slide.addChart.bind(slide);
+  slide.addChart = (type: unknown, data: unknown, options: Record<string, unknown> = {}) =>
+    addChart(type, data, {
+      ...options,
+      objectName: options.objectName || next('Chart', fallback),
+      altText: options.altText || fallback,
+    });
+
+  const addImage = slide.addImage.bind(slide);
+  slide.addImage = (options: Record<string, unknown> = {}) =>
+    addImage({
+      ...options,
+      objectName: options.objectName || next('Image', fallback),
+      altText: options.altText || fallback,
+    });
+
+  const addShape = slide.addShape.bind(slide);
+  slide.addShape = (shape: unknown, options: Record<string, unknown> = {}) =>
+    addShape(shape, {
+      ...options,
+      objectName: options.objectName || next('Decorative', 'layout accent'),
+    });
+}
+
+async function applyDecorativeOoxmlMetadata(buffer: Buffer): Promise<Buffer> {
+  const zip = await JSZip.loadAsync(buffer);
+  const slideNames = Object.keys(zip.files).filter((name) =>
+    /^ppt\/slides\/slide\d+\.xml$/.test(name)
+  );
+  await Promise.all(
+    slideNames.map(async (name) => {
+      const file = zip.file(name);
+      if (!file) return;
+      const xml = await file.async('string');
+      const updated = xml
+        .replace(
+          /<p:cNvPr([^>]*\bname="\d+ Decorative:[^"]*"[^>]*)><\/p:cNvPr>/g,
+          `<p:cNvPr$1>${DECORATIVE_EXTENSION}</p:cNvPr>`
+        )
+        .replace(
+          /<p:cNvPr([^>]*\bname="\d+ Decorative:[^"]*"[^>]*)\/>/g,
+          `<p:cNvPr$1>${DECORATIVE_EXTENSION}</p:cNvPr>`
+        );
+      zip.file(name, updated);
+    })
+  );
+  return zip.generateAsync({ type: 'nodebuffer' });
+}
 
 // ============================================================
 // MASTER SLIDE DEFINITIONS
@@ -247,6 +341,7 @@ export class PptxPipelineService {
         const masterName =
           (customLayoutId && customMasters.get(customLayoutId)) || layoutResult.masterName;
         const slide = pptx.addSlide({ masterName });
+        installAccessibleSlideContract(slide, slideData);
 
         // Apply any slide-level options
         if (layoutResult.slideOptions) {
@@ -283,6 +378,11 @@ export class PptxPipelineService {
 
         this.addHeaderFooter(slide, report.meta, tokens, i + 1, report.slides.length);
 
+        const speakerNotes = String((slideData as any).speaker_notes || '').trim();
+        if (speakerNotes && typeof slide.addNotes === 'function') {
+          slide.addNotes(speakerNotes.split(/\r?\n/));
+        }
+
         renderedCount++;
       } catch (err: any) {
         logger.error(
@@ -303,13 +403,14 @@ export class PptxPipelineService {
     }
 
     // 7. Generate buffer
-    const buffer = await pptx.write({ outputType: 'nodebuffer' });
+    const rawBuffer = (await pptx.write({ outputType: 'nodebuffer' })) as Buffer;
+    const buffer = await applyDecorativeOoxmlMetadata(rawBuffer);
 
     const elapsed = Date.now() - startTime;
     logger.info(`[PptxPipeline] Generated ${renderedCount} slides in ${elapsed}ms`);
 
     return {
-      buffer: buffer as Buffer,
+      buffer,
       validation,
       slideCount: renderedCount,
       warnings,

@@ -1,13 +1,21 @@
 import React from 'react';
 
+import { type ActionContext, runIdeaAction } from '@/actions/ideaActionRegistry';
+
 /**
  * CommentPinBadge — shared comment-count indicator for whiteboard nodes.
  *
  * Renders a small circular badge showing how many comments a node has, and on
- * click opens the shared IdeaNodeDetailDrawer via the global
- * `idea-node-open-detail` event (the same mechanism StickyNoteNode has always
- * used). The badge is intentionally invisible when there are no comments so it
- * never adds clutter to nodes without discussion.
+ * click opens the shared IdeaNodeDetailDrawer via the registered action
+ * `idea.node.wb_open_detail` (N-inventory-c5, 2026-08-10 — was a raw
+ * `idea-node-open-detail` CustomEvent dispatch bypassing the registry; the
+ * action's handler dispatches the IDENTICAL event/detail shape, so this is a
+ * pure routing change, zero behavior change). `ideaId: ''` matches the
+ * established pattern for leaf components with no idea-id in scope (see e.g.
+ * `WhiteboardToolbar.tsx`/`ProcessFlowToolbar.tsx` context-menu call sites) —
+ * this action's real effect (dispatching the window event) never reads it.
+ * The badge is intentionally invisible when there are no comments so it never
+ * adds clutter to nodes without discussion.
  *
  * Visual treatment is copied verbatim from the original StickyNoteNode badge so
  * every node type reads identically.
@@ -38,7 +46,15 @@ export const CommentPinBadge: React.FC<CommentPinBadgeProps> = ({
       className={`absolute ${positionClassName} z-10 flex items-center justify-center w-5 h-5 rounded-full bg-c-info text-white text-[8px] font-bold shadow-sm cursor-pointer hover:brightness-110 transition-all`}
       onClick={(e) => {
         e.stopPropagation();
-        window.dispatchEvent(new CustomEvent('idea-node-open-detail', { detail: { nodeId } }));
+        const ctx: ActionContext = {
+          ideaId: '',
+          tool: 'whiteboard',
+          selection: { type: 'node', count: 1, ids: [nodeId], primaryId: nodeId },
+          surface: 'inline',
+          source: 'ui',
+          params: { nodeId },
+        };
+        void runIdeaAction('idea.node.wb_open_detail', ctx);
       }}
       title={`${count} comment${count !== 1 ? 's' : ''}`}
     >

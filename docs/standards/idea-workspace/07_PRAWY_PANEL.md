@@ -1,5 +1,10 @@
 # 07 — Prawy panel
 
+> **Zastąpienie kierunku 2026-08-09:** treść tego panelu pozostaje ważna, ale
+> jest renderowana w jednym panelu po lewej. Prawa krawędź canvasa należy do
+> raila narzędzi, a skrajna prawa powierzchnia wyłącznie do globalnej Teresy.
+> Kontrakt migracji: [rozdział 13](13_MIGRACJA_NAWIGACJI_2026-08-09.md).
+
 Prawy panel to system informacji o Idei i o tym, co jest zaznaczone. Dziś działa najgorzej ze wszystkich powierzchni — pięć ikon udaje zakładki, ale nie przełącza treści, a układ miesza poziomy informacji. Ten rozdział opisuje panel docelowy: **jeden kanon dla całego produktu**, z zaakceptowanym językiem wizualnym.
 
 ## 1. Decyzja: jeden kanon dla Idei i kart N (D1)

@@ -1,13 +1,24 @@
 import React, { useCallback, useEffect, useState } from 'react';
+// `TFunction` is exported by `i18next`, not by `react-i18next` — importing it from the
+// latter compiles under esbuild (which strips types without checking them) and fails
+// under `tsc` with TS2305.
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 
 import { offlineQueue } from './OfflineQueue';
 
-function formatRelativeTime(ts: number | null): string {
+function formatRelativeTime(t: TFunction, ts: number | null): string {
   if (!ts) return '';
   const diff = Date.now() - ts;
-  if (diff < 60_000) return 'just now';
-  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`;
-  if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h ago`;
+  if (diff < 60_000) return t('myWorkTable.offlineIndicator.justNow', 'just now');
+  if (diff < 3_600_000)
+    return t('myWorkTable.offlineIndicator.minutesAgo', '{{count}}m ago', {
+      count: Math.floor(diff / 60_000),
+    });
+  if (diff < 86_400_000)
+    return t('myWorkTable.offlineIndicator.hoursAgo', '{{count}}h ago', {
+      count: Math.floor(diff / 3_600_000),
+    });
   return new Date(ts).toLocaleDateString(undefined, {
     month: 'short',
     day: 'numeric',
@@ -17,6 +28,7 @@ function formatRelativeTime(ts: number | null): string {
 }
 
 export const OfflineIndicator: React.FC = () => {
+  const { t } = useTranslation();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [pendingCount, setPendingCount] = useState(offlineQueue.getPendingCount());
   const [syncing, setSyncing] = useState(false);
@@ -60,7 +72,7 @@ export const OfflineIndicator: React.FC = () => {
 
   if (isOnline && pendingCount === 0) return null;
 
-  const syncLabel = lastSync ? formatRelativeTime(lastSync) : null;
+  const syncLabel = lastSync ? formatRelativeTime(t, lastSync) : null;
 
   return (
     <div
@@ -73,11 +85,11 @@ export const OfflineIndicator: React.FC = () => {
       <div
         className={`w-2 h-2 rounded-full flex-shrink-0 ${isOnline ? 'bg-c-warning' : 'bg-c-danger animate-pulse'}`}
       />
-      {!isOnline && <span>Offline</span>}
+      {!isOnline && <span>{t('myWorkTable.offlineIndicator.offline', 'Offline')}</span>}
       {pendingCount > 0 && (
         <>
           <span className="whitespace-nowrap">
-            {pendingCount} pending change{pendingCount !== 1 ? 's' : ''}
+            {t('myWorkTable.offlineIndicator.pendingChanges', { count: pendingCount })}
           </span>
           {isOnline && (
             <button
@@ -85,7 +97,9 @@ export const OfflineIndicator: React.FC = () => {
               disabled={syncing}
               className="ml-1 px-2 py-0.5 bg-c-warning text-c-text rounded text-xs hover:bg-c-warning disabled:opacity-50 transition-colors whitespace-nowrap"
             >
-              {syncing ? 'Syncing...' : 'Sync now'}
+              {syncing
+                ? t('myWorkTable.offlineIndicator.syncing', 'Syncing...')
+                : t('myWorkTable.offlineIndicator.syncNow', 'Sync now')}
             </button>
           )}
         </>
@@ -95,7 +109,7 @@ export const OfflineIndicator: React.FC = () => {
           className="text-[10px] opacity-60 whitespace-nowrap"
           title={lastSync ? new Date(lastSync).toLocaleString() : undefined}
         >
-          Last sync: {syncLabel}
+          {t('myWorkTable.offlineIndicator.lastSync', 'Last sync: {{time}}', { time: syncLabel })}
         </span>
       )}
     </div>

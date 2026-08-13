@@ -29,6 +29,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { type ActionContext, runIdeaAction } from '@/actions/ideaActionRegistry';
+import { EMPTY_SELECTION } from '@/components/MyWork/ideaSelectionTypes';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 
 import { AutomationBuilder, type AutomationFormData } from './AutomationBuilder';
@@ -146,23 +148,56 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
     }
   };
 
-  const handleDelete = async (id: string) => {
-    try {
-      await TablePlatformApi.deleteAutomation(id);
-      setAutomations((prev) => prev.filter((a) => a.id !== id));
-      toast.success(t('myWorkTable.automationsManager.automationDeleted'));
-    } catch {
-      toast.error(t('myWorkTable.automationsManager.failedToDelete'));
-    }
+  // Program B (E02) — dwie ścieżki, jedna funkcja rejestru: klik człowieka =
+  // `ctx.params.run` (rejestr wykonuje ORYGINALNY callback wprost); Teresa =
+  // ta sama funkcja rejestru woła REST bezpośrednio (`runTableAutomation*Callback`
+  // w `ideaActionRegistry.ts`).
+  const runAutomationAction = (
+    actionId: string,
+    run: () => void,
+    params?: Record<string, unknown>
+  ) => {
+    const ctx: ActionContext = {
+      ideaId: baseId,
+      tool: 'table',
+      selection: EMPTY_SELECTION,
+      surface: 'panel',
+      source: 'ui',
+      language: isPl ? 'pl' : 'en',
+      params: { run, ...(params || {}) },
+    };
+    void runIdeaAction(actionId, ctx);
   };
 
-  const handleRunNow = async (auto: Automation) => {
-    try {
-      await TablePlatformApi.runAutomationNow(auto.id);
-      toast.success(t('myWorkTable.automationsManager.triggered'));
-    } catch {
-      toast.error(t('myWorkTable.automationsManager.failedToTrigger'));
-    }
+  const handleDelete = (id: string) => {
+    runAutomationAction(
+      'table.automation.delete',
+      async () => {
+        try {
+          await TablePlatformApi.deleteAutomation(id);
+          setAutomations((prev) => prev.filter((a) => a.id !== id));
+          toast.success(t('myWorkTable.automationsManager.automationDeleted'));
+        } catch {
+          toast.error(t('myWorkTable.automationsManager.failedToDelete'));
+        }
+      },
+      { automationId: id }
+    );
+  };
+
+  const handleRunNow = (auto: Automation) => {
+    runAutomationAction(
+      'table.automation.run_now',
+      async () => {
+        try {
+          await TablePlatformApi.runAutomationNow(auto.id);
+          toast.success(t('myWorkTable.automationsManager.triggered'));
+        } catch {
+          toast.error(t('myWorkTable.automationsManager.failedToTrigger'));
+        }
+      },
+      { automationId: auto.id }
+    );
   };
 
   const handleCreate = async (data: AutomationFormData) => {

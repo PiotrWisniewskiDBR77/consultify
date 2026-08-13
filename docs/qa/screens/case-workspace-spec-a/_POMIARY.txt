@@ -1,0 +1,22 @@
+login: HTTP 200, token 367 znaków (realny podpis JWT)
+01-powloka-artefaktu-dark.png — Menu 1 + lewa nawigacja + prawy panel
+02-prawy-panel-powiazania-dark.png — 5 obiektów, w tym niedostępny i nieznany typ
+03-sekcja-plan-dark.png — nawigacja powłoki przełącza centrum
+01-powloka-artefaktu-light.png — Menu 1 + lewa nawigacja + prawy panel
+02-prawy-panel-powiazania-light.png — 5 obiektów, w tym niedostępny i nieznany typ
+03-sekcja-plan-light.png — nawigacja powłoki przełącza centrum
+04-rezultaty-tabela-otworz-dark.png — kolumna „Otwórz", przyciski aktywne i wyłączone
+05-stan-niedostepny-dark.png — „Tego obiektu nie otworzymy" + powód
+05b-podglad-otwieralny-dark.png — podgląd dokumentu z akcją „Otwórz obiekt"
+POMIAR przewinięcia PRZED wyjściem: 293 px
+POMIAR przewinięcia w chwili kliknięcia: 293 px
+ADRES po kliknięciu „Otwórz" (Dokument): http://127.0.0.1:3010/document-studio?artifactId=doc-cw-local-0001&artifact=report%3Adoc-cw-local-0001&code=REP-DOC-CW-LOCAL
+07-otwarty-deliverable-dark.png — obiekt otwarty w SWOIM module (Materiały › Dokumenty › Document Studio); moduł docelowy sam mówi, czy dokument istnieje
+POMIAR po powrocie: {"fokus":"obiekt:cwlink-doc-otwieralny","scrollKontenera":293,"komunikat":"Wróciłeś do zlecenia — kursor stoi przy: Dokument.","adres":"http://127.0.0.1:3010/zlecenia/case-8099338b-f730-48d8-83e3-26c9e8ece272?ff_zlecenia=1&zakladka=rezultaty&widok-planu=prosty"}
+08-powrot-scroll-fokus-dark.png — powrót z odtworzonym przewinięciem i fokusem
+RYZYKO — adres po kliknięciu „Otwórz" na obiekcie Projekt: http://127.0.0.1:3010/chat
+07c-ryzyko-modul-wylaczony-dark.png — wyłączony moduł docelowy przekierowuje na /chat
+10-brak-rezultatu-light.png — zlecenie bez powiązań: przycisków „Otwórz rezultat" = 0 (brak jest JAWNY, zamiast martwego przycisku wyglądającego na aktywny)
+KONTROLA: po zawieszeniu członkostwa GET /cases/:id → HTTP 404
+09-brak-dostepu-dark.png — REALNA odpowiedź backendu po odebraniu członkostwa (kod HTTP wyżej), ekran pokazuje jawny stan i bezpieczny powrót
+KONTROLA: po przywróceniu członkostwa GET /cases/:id → HTTP 200

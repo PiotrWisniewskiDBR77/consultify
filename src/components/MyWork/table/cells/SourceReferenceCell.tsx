@@ -23,6 +23,7 @@
  */
 import { Anchor, ExternalLink, Link2Off } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { SourceReferenceFieldOptions } from '@/types/tablePlatform';
 
@@ -53,6 +54,7 @@ export const SourceReferenceCell: React.FC<SourceReferenceCellProps> = ({
   fieldOptions,
   onOpenSource,
 }) => {
+  const { t } = useTranslation();
   const allowExternal = fieldOptions?.allow_external === true;
 
   if (value == null || value === '') {
@@ -62,7 +64,7 @@ export const SourceReferenceCell: React.FC<SourceReferenceCellProps> = ({
         data-testid="source-ref-empty"
       >
         <Anchor size={10} className="flex-shrink-0" />
-        <span>No source</span>
+        <span>{t('myWorkTable.sourceReferenceCell.noSource', 'No source')}</span>
       </span>
     );
   }
@@ -76,10 +78,12 @@ export const SourceReferenceCell: React.FC<SourceReferenceCellProps> = ({
         className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-c-success bg-c-success text-[10px] font-semibold text-c-success hover:bg-c-success transition-colors"
         data-testid="source-ref-internal"
         data-source-id={value}
-        title={`Internal source ${value}`}
+        title={t('myWorkTable.sourceReferenceCell.internalSource', 'Internal source {{id}}', {
+          id: value,
+        })}
       >
         <Anchor size={10} className="flex-shrink-0" />
-        <span>Source</span>
+        <span>{t('myWorkTable.sourceReferenceCell.source', 'Source')}</span>
       </button>
     );
   }
@@ -92,10 +96,10 @@ export const SourceReferenceCell: React.FC<SourceReferenceCellProps> = ({
         <span
           className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-c-danger bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] text-[10px] font-semibold text-c-danger"
           data-testid="source-ref-blocked"
-          title="External sources not allowed for this field"
+          title={t('myWorkTable.sourceReferenceCell.externalBlocked', 'External sources not allowed for this field')}
         >
           <Link2Off size={10} className="flex-shrink-0" />
-          <span>Blocked</span>
+          <span>{t('myWorkTable.sourceReferenceCell.blocked', 'Blocked')}</span>
         </span>
       );
     }
@@ -104,7 +108,9 @@ export const SourceReferenceCell: React.FC<SourceReferenceCellProps> = ({
         <span
           className="inline-flex items-center gap-1 text-xs text-c-danger px-1"
           data-testid="source-ref-invalid"
-          title={`source_reference value invalid (length ${trimmed.length})`}
+          title={t('myWorkTable.sourceReferenceCell.invalidLength', 'source_reference value invalid (length {{length}})', {
+            length: trimmed.length,
+          })}
         >
           !
         </span>
@@ -140,10 +146,12 @@ export const SourceReferenceCell: React.FC<SourceReferenceCellProps> = ({
           className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-c-success bg-c-success text-[10px] font-semibold text-c-success hover:bg-c-success transition-colors"
           data-testid="source-ref-internal"
           data-source-id={sid}
-          title={`Internal source ${sid}`}
+          title={t('myWorkTable.sourceReferenceCell.internalSource', 'Internal source {{id}}', {
+            id: sid,
+          })}
         >
           <Anchor size={10} className="flex-shrink-0" />
-          <span>Source</span>
+          <span>{t('myWorkTable.sourceReferenceCell.source', 'Source')}</span>
         </button>
       );
     }
@@ -154,10 +162,10 @@ export const SourceReferenceCell: React.FC<SourceReferenceCellProps> = ({
           <span
             className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-c-danger bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] text-[10px] font-semibold text-c-danger"
             data-testid="source-ref-blocked"
-            title="External sources not allowed for this field"
+            title={t('myWorkTable.sourceReferenceCell.externalBlocked', 'External sources not allowed for this field')}
           >
             <Link2Off size={10} className="flex-shrink-0" />
-            <span>Blocked</span>
+            <span>{t('myWorkTable.sourceReferenceCell.blocked', 'Blocked')}</span>
           </span>
         );
       }
@@ -183,7 +191,7 @@ export const SourceReferenceCell: React.FC<SourceReferenceCellProps> = ({
     <span
       className="inline-flex items-center gap-1 text-xs text-c-danger px-1"
       data-testid="source-ref-invalid"
-      title="source_reference value has unrecognized shape"
+      title={t('myWorkTable.sourceReferenceCell.invalidShape', 'source_reference value has unrecognized shape')}
     >
       !
     </span>

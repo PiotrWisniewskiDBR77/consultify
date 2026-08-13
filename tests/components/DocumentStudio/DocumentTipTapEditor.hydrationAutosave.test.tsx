@@ -86,6 +86,20 @@ vi.mock('@/components/DocumentStudio/editor/tipTapToSchema', () => ({
 import { DocumentTipTapEditor } from '@/components/DocumentStudio/editor/DocumentTipTapEditor';
 
 describe('DocumentTipTapEditor hydration autosave boundary', () => {
+  it('gives the editable document surface an accessible name', () => {
+    const schema = {
+      artifactId: 'artifact-accessible-editor',
+      title: 'Accessible editor',
+      updatedAt: '2026-08-06T12:00:00.000Z',
+      sections: [],
+    } as any;
+    render(<DocumentTipTapEditor schema={schema} artifactId="artifact-accessible-editor" />);
+
+    expect(editorOptions.editorProps.attributes).toEqual(
+      expect.objectContaining({ 'aria-label': 'Treść dokumentu' })
+    );
+  });
+
   beforeEach(() => {
     vi.useFakeTimers();
     saveMock.mockReset().mockResolvedValue({});

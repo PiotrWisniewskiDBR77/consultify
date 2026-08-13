@@ -5,7 +5,9 @@
  * - updates document <html lang|dir>
  * - persists via localStorage (i18nextLng)
  * - survives a full page reload
- * - handles alias values (e.g. stored "ja" -> app "jp")
+ * - handles alias values (e.g. legacy stored "jp" -> app "ja"; see
+ *   S23-LOCALE, 2026-08-12: the app's Japanese code was migrated from the
+ *   invalid BCP47 subtag "jp" to the correct "ja" — src/i18n.ts)
  */
 
 import { expect, test } from '@playwright/test';
@@ -73,12 +75,12 @@ test.describe('i18n: manual switching + persistence', () => {
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
   });
 
-  test('should persist Japanese (jp) across reload', async ({ page }) => {
+  test('should persist Japanese (ja) across reload', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
-    const jpTranslationResponse = page
-      .waitForResponse((r: any) => r.url().includes('/locales/jp/translation.json') && r.status() === 200, {
+    const jaTranslationResponse = page
+      .waitForResponse((r: any) => r.url().includes('/locales/ja/translation.json') && r.status() === 200, {
         timeout: 15000,
       })
       .catch(() => null);
@@ -86,30 +88,32 @@ test.describe('i18n: manual switching + persistence', () => {
     await openTopBarLanguageMenu(page);
     await selectLanguageFromMenu(page, '日本語');
 
-    await jpTranslationResponse;
+    await jaTranslationResponse;
 
     // Wait until the user's choice is persisted (detector key).
-    await page.waitForFunction(() => localStorage.getItem('i18nextLng') === 'jp');
-    await expect(page.locator('html')).toHaveAttribute('lang', 'jp', { timeout: 30000 });
+    await page.waitForFunction(() => localStorage.getItem('i18nextLng') === 'ja');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ja', { timeout: 30000 });
     await expect(page.locator('html')).toHaveAttribute('dir', 'ltr', { timeout: 30000 });
 
     await page.reload();
     await page.waitForLoadState('networkidle');
 
-    await expect(page.locator('html')).toHaveAttribute('lang', 'jp');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ja');
     await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
   });
 
-  test('should normalize stored "ja" -> app "jp" on boot', async ({ page }) => {
-    // Add after the clear() init script, so "ja" survives.
+  test('should normalize legacy stored "jp" -> app "ja" on boot', async ({ page }) => {
+    // Add after the clear() init script, so "jp" survives.
+    // "jp" is the pre-migration code this app used to persist for Japanese
+    // (not a valid BCP47 subtag) — see LANGUAGE_ALIASES in src/i18n.ts.
     await page.addInitScript(() => {
-      localStorage.setItem('i18nextLng', 'ja');
+      localStorage.setItem('i18nextLng', 'jp');
     });
 
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
-    await expect(page.locator('html')).toHaveAttribute('lang', 'jp');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ja');
     await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
   });
 });

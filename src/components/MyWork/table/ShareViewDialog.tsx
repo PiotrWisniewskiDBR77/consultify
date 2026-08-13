@@ -1,7 +1,8 @@
 import { Calendar, Check, Copy, Lock, Share2, X } from 'lucide-react';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 
 interface ShareViewDialogProps {
@@ -29,6 +30,8 @@ export const ShareViewDialog: React.FC<ShareViewDialogProps> = ({
   const [expiresAt, setExpiresAt] = useState('');
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogA11y({ open: true, onClose, containerRef: dialogRef });
 
   const shareUrl = token ? `${window.location.origin}/public/views/${token}` : '';
 
@@ -59,24 +62,34 @@ export const ShareViewDialog: React.FC<ShareViewDialogProps> = ({
     setTimeout(() => setCopied(false), 2000);
   }, [shareUrl]);
 
+
   return (
     <div
       className="fixed inset-0 z-context-menu flex items-center justify-center bg-black/20 backdrop-blur-[2px]"
       onClick={onClose}
     >
       <div
-        className="w-[440px] bg-c-surface rounded-2xl border border-slate-200/60 dark:border-white/[0.03] shadow-2xl p-6"
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="share-view-dialog-title"
+        tabIndex={-1}
+        className="w-[440px] bg-c-surface rounded-2xl border border-slate-200/60 dark:border-white/[0.03] shadow-2xl p-6 outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Share2 size={16} className="text-c-text-secondary" />
-            <h3 className="font-semibold text-sm">
+            <h3 id="share-view-dialog-title" className="font-semibold text-sm">
               {t('ideas.table.shareView.title', 'Share View')}
             </h3>
           </div>
-          <button onClick={onClose} className="p-1 rounded hover:bg-c-surface-raised">
+          <button
+            onClick={onClose}
+            aria-label={t('common.close', 'Close')}
+            className="p-1 rounded hover:bg-c-surface-raised"
+          >
             <X size={14} />
           </button>
         </div>

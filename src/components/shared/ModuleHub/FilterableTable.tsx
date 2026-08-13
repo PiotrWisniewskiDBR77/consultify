@@ -20,7 +20,6 @@ import { useTranslation } from 'react-i18next';
 
 import { type ColumnConfig, ColumnSelector } from '@/components/Admin/shared/ColumnSelector';
 import { EntityStatusChip } from '@/components/ui/primitives/chips';
-import { ColumnResizer } from '@/components/ui/ResizableTable';
 
 import { type RowAction, type RowActionSection, RowActionsMenu } from '../RowActionsMenu';
 import { FilterChip } from './ActiveFilters';
@@ -150,7 +149,48 @@ interface FilterableTableProps {
    * Omit for zero visual change (default undefined → no-op).
    */
   rowClassName?: string | ((row: TableRow) => string);
+  /**
+   * ── Minimalna szerokość elementu `table` (opt-in) ─────────────────────────
+   *
+   * (W komentarzach tego pliku NIE piszemy znacznika `table` w ostrych
+   * nawiasach — `scripts/check-list-canon.sh` szuka go tekstowo i uznałby
+   * wzmiankę w prozie za drugą, nieoznaczoną tabelę, przez co znacznik
+   * §27-exempt przestałby obejmować `thead`/`tbody` niżej.)
+   *
+   * Do tej pory element `table` miał ZAHARDKODOWANE `min-width: 980px` bez żadnego
+   * wyjścia. Na telefonie (kontener ~244 px przy oknie 320 px) oznaczało to
+   * 736 px poziomego przewijania UKRYTEGO wewnątrz `overflow-x-auto` — metryka
+   * strony zostawała czysta (`documentElement.scrollWidth === innerWidth`),
+   * a treść wiersza i tak była ucięta. Moduł, który świadomie deklaruje na
+   * wąskim ekranie JEDNĄ kolumnę, nie miał jak tego wyłączyć.
+   *
+   * Prop jest ADDYTYWNY. Domyślna wartość odtwarza dotychczasowe 980 px
+   * co do piksela, więc ~100 istniejących list (My Work, Audits, Interview,
+   * Initiatives, Execution, Results, Finance, Materiały, Meeting, Admin…)
+   * zachowuje się identycznie jak przed zmianą.
+   *
+   *  · `number`    → dokładnie ta wartość w px (domyślnie `DEFAULT_MIN_TABLE_WIDTH`),
+   *  · `'auto'`    → BEZ `min-width`; tabela zwęża się do kontenera,
+   *  · `'columns'` → wariant wyliczany: gdy widocznych kolumn danych jest
+   *                  ≤ `AUTO_MIN_WIDTH_COLUMN_THRESHOLD`, `min-width` znika;
+   *                  powyżej — wraca `DEFAULT_MIN_TABLE_WIDTH`. Kolumna
+   *                  zaznaczenia (`type: 'select'`) i strukturalna kolumna
+   *                  akcji NIE liczą się jako kolumny danych.
+   */
+  minTableWidth?: number | 'auto' | 'columns';
 }
+
+/**
+ * Dotychczasowa, zahardkodowana wartość — teraz jawna domyślka propa
+ * `minTableWidth`. Zmiana tej stałej zmienia KAŻDĄ listę w produkcie.
+ */
+export const DEFAULT_MIN_TABLE_WIDTH = 980;
+
+/**
+ * Próg dla `minTableWidth="columns"`: przy jednej lub dwóch kolumnach danych
+ * wymuszanie 980 px nie daje nic poza ukrytym przewijaniem.
+ */
+export const AUTO_MIN_WIDTH_COLUMN_THRESHOLD = 2;
 
 // True when a regular cell value should render as an em-dash placeholder
 // (null / undefined / empty-or-whitespace string).
@@ -322,6 +362,174 @@ const FilterDropdown: React.FC<{
   );
 };
 
+// ── Accessible column resize handle (R6-P1b a11y fix) ──────────────────────
+// The shared `ColumnResizer` (`@/components/ui/ResizableTable/ColumnResizer.tsx`)
+// renders a bare `<div onMouseDown>` with no `tabIndex`/keyboard handling —
+// mouse users can resize columns, keyboard users cannot reach the handle at
+// all. This is a LOCAL replacement scoped to `FilterableTable` (the canon
+// list shell every `StandardTable` consumer renders through), not an edit to
+// the shared `ColumnResizer` file — so the fix cannot regress the other four
+// direct consumers of that file (MyTasksListContent/InboxContent/
+// NotificationsContent/IdeasTableContent), which keep using the original,
+// unmodified `ColumnResizer`.
+//
+// Pattern: WAI-ARIA APG "Window Splitter" (role="separator", resizable):
+// https://www.w3.org/WAI/ARIA/apg/patterns/windowsplitter/
+//   Tab             → focus the handle.
+//   ArrowLeft/Right → shrink/grow by RESIZE_STEP px (Shift = large step).
+//   Home / End      → jump to minWidth / maxWidth.
+//   Escape          → revert to the width the column had when the handle
+//                      received focus (keyboard equivalent of releasing a
+//                      drag without committing).
+//
+// Declared at MODULE scope, not inside FilterableTable's render body — an
+// inline component definition there would get a NEW type identity on every
+// FilterableTable re-render (e.g. the very next render after an ArrowRight
+// keypress changes columnWidths), which unmounts/remounts the DOM node and
+// silently drops keyboard focus after a single keystroke.
+const RESIZE_STEP = 12;
+const RESIZE_STEP_LARGE = 48;
+
+const ColumnResizeHandle: React.FC<{
+  columnId: string;
+  columnLabel: string;
+  currentWidth: number;
+  minWidth: number;
+  maxWidth: number;
+  onResize: (columnId: string, newWidth: number) => void;
+}> = ({ columnId, columnLabel, currentWidth, minWidth, maxWidth, onResize }) => {
+  const [isDragging, setIsDragging] = useState(false);
+  const startXRef = useRef(0);
+  const startWidthRef = useRef(0);
+  const focusStartWidthRef = useRef(currentWidth);
+
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(true);
+      startXRef.current = e.clientX;
+      startWidthRef.current = currentWidth;
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    },
+    [currentWidth]
+  );
+
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (!isDragging) return;
+      const delta = e.clientX - startXRef.current;
+      const clamped = Math.max(minWidth, Math.min(maxWidth, startWidthRef.current + delta));
+      onResize(columnId, clamped);
+    },
+    [isDragging, columnId, minWidth, maxWidth, onResize]
+  );
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  }, []);
+
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+    return undefined;
+  }, [isDragging, handleMouseMove, handleMouseUp]);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      const step = e.shiftKey ? RESIZE_STEP_LARGE : RESIZE_STEP;
+      // stopPropagation on every handled key: proven necessary, not
+      // defensive boilerplate — the app shell has a GLOBAL Escape listener
+      // (return focus to the main content landmark on Escape, likely meant
+      // for closing modals/dropdowns). Without stopPropagation, our
+      // Escape correctly reverted the width but the global handler then
+      // yanked focus off the handle onto that landmark right after —
+      // confirmed via a live Playwright probe (`document.activeElement`
+      // became the `<main>`-level wrapper, not the separator) before this
+      // line was added. Same guard applied to the arrow/Home/End cases so a
+      // future global arrow-key handler (e.g. row navigation) can't do the
+      // same thing to those.
+      switch (e.key) {
+        case 'ArrowLeft':
+          e.preventDefault();
+          e.stopPropagation();
+          onResize(columnId, Math.max(minWidth, currentWidth - step));
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          e.stopPropagation();
+          onResize(columnId, Math.min(maxWidth, currentWidth + step));
+          break;
+        case 'Home':
+          e.preventDefault();
+          e.stopPropagation();
+          onResize(columnId, minWidth);
+          break;
+        case 'End':
+          e.preventDefault();
+          e.stopPropagation();
+          onResize(columnId, maxWidth);
+          break;
+        case 'Escape':
+          e.preventDefault();
+          e.stopPropagation();
+          onResize(columnId, focusStartWidthRef.current);
+          break;
+        default:
+          break;
+      }
+    },
+    [columnId, currentWidth, minWidth, maxWidth, onResize]
+  );
+
+  return (
+    <div
+      role="separator"
+      aria-orientation="vertical"
+      aria-label={`Resize ${columnLabel} column`}
+      aria-valuenow={Math.round(currentWidth)}
+      aria-valuemin={Math.round(minWidth)}
+      aria-valuemax={Math.round(maxWidth)}
+      tabIndex={0}
+      onMouseDown={handleMouseDown}
+      onKeyDown={handleKeyDown}
+      onFocus={() => {
+        focusStartWidthRef.current = currentWidth;
+      }}
+      className={`
+        absolute -right-1.5 top-0 h-full w-3 cursor-col-resize
+        touch-none select-none
+        group/resizer
+        outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-inset rounded-sm
+        ${isDragging ? 'z-50' : 'z-10'}
+      `}
+      title={`Resize ${columnLabel} column`}
+    >
+      {/* Excel-like: grip sits exactly on the column boundary. */}
+      <div
+        className={[
+          'absolute left-1/2 top-2 bottom-2 w-[2px] -translate-x-1/2 rounded-full transition-colors duration-150',
+          // TRIADA_KANON B.38 — uchwyt resize to STAN UI, nie semantyka
+          // krytyczna, więc nie może być crimsonem. Hover/drag/focus na
+          // niebieskim `--c-focus-solid` (ten sam sygnał co fokus klawiatury).
+          isDragging
+            ? 'bg-[color:var(--c-focus-solid)]'
+            : 'bg-slate-300/80 dark:bg-white/[0.10] group-hover/resizer:bg-[color:var(--c-focus-solid)] dark:group-hover/resizer:bg-[color:var(--c-focus-solid)] group-focus-visible/resizer:bg-[color:var(--c-focus-solid)]',
+        ].join(' ')}
+      />
+    </div>
+  );
+};
+
 export const FilterableTable: React.FC<FilterableTableProps> = ({
   columns,
   data,
@@ -344,6 +552,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
   defaultSort = null,
   rowDescription,
   rowClassName,
+  minTableWidth = DEFAULT_MIN_TABLE_WIDTH,
 }) => {
   const { t } = useTranslation();
   /**
@@ -488,6 +697,23 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
       .filter((c) => byId.get(c.id)?.visible !== false)
       .sort((a, b) => (byId.get(a.id)?.order ?? 0) - (byId.get(b.id)?.order ?? 0));
   }, [columns, columnConfigs]);
+
+  /**
+   * Rozwiązanie `minTableWidth` → konkretna wartość `style.minWidth` albo
+   * `undefined` (brak wymuszenia). `undefined` jest tu ZAMIERZONE: React
+   * pomija właściwość, więc tabela (`w-full table-fixed`) zwęża się do
+   * kontenera i poziome przewijanie wewnątrz `overflow-x-auto` znika.
+   */
+  const resolvedMinTableWidth = useMemo<number | undefined>(() => {
+    if (minTableWidth === 'auto') return undefined;
+    if (minTableWidth === 'columns') {
+      const dataColumnCount = visibleColumns.filter((c) => c.type !== 'select').length;
+      return dataColumnCount <= AUTO_MIN_WIDTH_COLUMN_THRESHOLD
+        ? undefined
+        : DEFAULT_MIN_TABLE_WIDTH;
+    }
+    return minTableWidth;
+  }, [minTableWidth, visibleColumns]);
 
   // First data (non-select) column hosts the optional row-description line.
   const firstDataColumnId = useMemo(
@@ -680,7 +906,8 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
         <div className="w-full overflow-x-auto">
           <table
             /* §27-exempt: to JEST kanoniczny komponent FilterableTable (§2 SSOT) — surowy <table> tutaj to jego implementacja, nie luka */ className="w-full table-fixed"
-            style={{ minWidth: 980 }}
+            data-min-table-width={resolvedMinTableWidth ?? 'auto'}
+            style={{ minWidth: resolvedMinTableWidth }}
           >
             <thead className="sticky top-0 z-10 bg-slate-50/80 dark:bg-navy-900/50 backdrop-blur-hig">
               <tr>
@@ -757,8 +984,9 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                         </div>
                       )}
                       {!isLastDataCol && !isSelectCol ? (
-                        <ColumnResizer
+                        <ColumnResizeHandle
                           columnId={column.id}
+                          columnLabel={column.label}
                           currentWidth={width}
                           minWidth={minWidth}
                           maxWidth={maxWidth}
@@ -769,8 +997,20 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                   );
                 })}
                 {!hideRowActions ? (
+                  // R09-1a (2026-08-10): `sticky right-0` — na wąskim obszarze tabeli
+                  // (np. otwarty panel podglądu obok, TRIADA §C9) `table-fixed` NIE
+                  // kurczy kolumn (szerokości z pierwszego wiersza są sztywne, patrz
+                  // ColumnResizer — zmiana tylko ręczna), więc kolumna z Settings2
+                  // po prostu wypadała poza widoczny obszar bez paska przewijania w
+                  // linii wzroku. Ikona TRIADA B.16 jest OBOWIĄZKOWA na każdym
+                  // odbiorze — przypinamy ją do prawej krawędzi widocznego obszaru,
+                  // żeby nigdy nie wymagała przewijania. `bg-slate-50 dark:bg-navy-900`
+                  // (pełne, nie tłumaczone przez `thead`'s `/80` + blur) zapobiega
+                  // przebijaniu przewijanej treści spod przypiętej kolumny. Cień
+                  // po lewej krawędzi sygnalizuje, że to przypięty fragment, nie
+                  // zwykła kolumna — czytelne domknięcie zamiast twardej krawędzi.
                   <th
-                    className={`${ROW_HEIGHT_CLASS} ${cellPadding} text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-20`}
+                    className={`${ROW_HEIGHT_CLASS} ${cellPadding} text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-20 sticky right-0 z-[11] bg-slate-50 dark:bg-navy-900 shadow-[-6px_0_6px_-6px_rgba(0,0,0,0.12)]`}
                   >
                     {enableColumnSettings && rowDescription ? (
                       /* Triada standard: Settings2 → TableSettingsPopover
@@ -925,8 +1165,35 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                         onRowClick?.(row);
                       }
                     }}
+                    // `aria-selected` przyszło z demo — czytnik ekranu musi
+                    // wiedzieć, który wiersz jest wybrany, niezależnie od tego,
+                    // że wizualnie widać to po tle.
+                    aria-selected={row.id === selectedRowId}
                     onClick={() => onRowClick?.(row)}
                     onDoubleClick={() => onRowDoubleClick?.(row)}
+                    onKeyDown={(e) => {
+                      if (
+                        !(
+                          !hideRowActions &&
+                          (e.key === 'ContextMenu' || (e.shiftKey && e.key === 'F10'))
+                        )
+                      )
+                        return;
+                      const sections = getRowActionSections?.(row);
+                      const hasMenu = sections
+                        ? sections.length > 0
+                        : getRowActions
+                          ? (getRowActions(row)?.length ?? 0) > 0
+                          : true;
+                      if (!hasMenu) return;
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      setContextMenuRow({
+                        rowId: String(row.id),
+                        point: { x: Math.max(rect.left + 24, rect.right - 40), y: rect.top + 28 },
+                      });
+                    }}
                     onContextMenu={
                       hideRowActions
                         ? undefined
@@ -952,11 +1219,11 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                     }
                     className={[
                       'group cursor-pointer transition-colors',
-                      // Wiersz jest fokusowalny (tabIndex wyżej), więc musi mieć
-                      // WŁASNY, widoczny wskaźnik fokusa w kolorze kanonu.
-                      // Bez tego przeglądarka rysuje swój domyślny bursztynowy
-                      // outline — zmierzony rgb(229,151,0) — co łamie regułę
-                      // „fokus zawsze niebieski c-focus, nigdy inny kolor".
+                      // Wiersz jest fokusowalny, więc musi mieć WŁASNY, widoczny
+                      // wskaźnik fokusa w kolorze kanonu. Bez tego przeglądarka
+                      // rysuje swój domyślny bursztynowy outline — zmierzony
+                      // rgb(229,151,0). Demo doszło do tej samej poprawki
+                      // niezależnie; treść klas jest identyczna.
                       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-c-focus',
                       row.id === selectedRowId ? 'bg-state-selected' : 'hover:bg-state-hover',
                       typeof rowClassName === 'function' ? rowClassName(row) : rowClassName,
@@ -1028,7 +1295,37 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                       </td>
                     ))}
                     {!hideRowActions ? (
-                      <td className={`${ROW_HEIGHT_CLASS} ${cellPadding} text-right`}>
+                      // R09-1a — sam mirror nagłówka: kebab przypięty do prawej
+                      // krawędzi, żeby nie wypadał poza widoczny obszar razem z
+                      // Settings2 (patrz komentarz przy `<th>` powyżej).
+                      // sticky-defect1a (2026-08-11): baza `bg-white dark:bg-navy-900`
+                      // zostaje (musi być nieprzezroczysta — jedyna ochrona przed
+                      // przebijaniem przewiniętej treści spod przypiętej kolumny).
+                      // `background-color: inherit` z wiersza NIE działa tutaj: wiersz
+                      // w stanie domyślnym nie ma WŁASNEGO tła (przezroczysty, pokazuje
+                      // rozmyte tło karty przez `bg-white/70 backdrop-blur`), więc
+                      // odziedziczona wartość byłaby `transparent` — zniosłoby to
+                      // ochronę przed przewijaniem właśnie w stanie domyślnym.
+                      // Zamiast tego: stan wiersza (`--state-selected`/`--state-hover`,
+                      // te same tokeny co `bg-state-selected`/`hover:bg-state-hover`
+                      // na `<tr>`) nakładamy jako `box-shadow: inset` — to INNA
+                      // właściwość CSS niż `background-color`, więc nie ma konfliktu
+                      // "dwóch klas Tailwind na jednej właściwości" i tło + cień
+                      // przewijania + odcień stanu współistnieją bez wyliczania kolejnych
+                      // wariantów. Mirror warunku z `<tr>` (linia ~941) 1:1 — UWAGA:
+                      // musi być `group-hover:`, NIE `hover:` — hover trafia myszą
+                      // gdziekolwiek w wierszu (tekst tytułu po lewej), rzadko
+                      // bezpośrednio nad przypiętą komórką; `<tr>` już niesie klasę
+                      // `group` (patrz linia ~940), więc `group-hover:` na tej
+                      // komórce reaguje na hover CAŁEGO wiersza, tak jak `hover:` na
+                      // `<tr>` reaguje na siebie.
+                      <td
+                        className={`${ROW_HEIGHT_CLASS} ${cellPadding} text-right sticky right-0 z-[11] bg-white dark:bg-navy-900 ${
+                          row.id === selectedRowId
+                            ? 'shadow-[-6px_0_6px_-6px_rgba(0,0,0,0.12),inset_0_0_0_999px_var(--state-selected)]'
+                            : 'shadow-[-6px_0_6px_-6px_rgba(0,0,0,0.12)] group-hover:shadow-[-6px_0_6px_-6px_rgba(0,0,0,0.12),inset_0_0_0_999px_var(--state-hover)]'
+                        }`}
+                      >
                         <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
                           {(() => {
                             // PPM-mirror (ANEKS #3b): this row's context-menu

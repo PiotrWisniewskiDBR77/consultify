@@ -20,6 +20,9 @@ import { createRoot } from 'react-dom/client';
 import { Toaster } from 'react-hot-toast';
 
 import PanelUwag from './PanelUwag';
+const IdeaFinancialCasePersistenceScreen = React.lazy(
+  () => import('./screens/idea-financial-case-persistence')
+);
 const MaterialyLauncherScreen = React.lazy(() => import('./screens/materialy-launcher'));
 const MaterialyTemplateLibrarySliceScreen = React.lazy(
   () => import('./screens/materialy-template-library-slice')
@@ -139,12 +142,29 @@ const ExecutionExportPrezentacjaScreen = React.lazy(
   () => import('./screens/execution-export-prezentacja')
 );
 const FinanceValuePanelsScreen = React.lazy(() => import('./screens/finance-value-panels'));
+const FinanceModelWorkspaceScreen = React.lazy(() => import('./screens/finance-model-workspace'));
+const FinanceWorkspaceBarScreen = React.lazy(() => import('./screens/finance-workspace-bar'));
+const FinanceFocusModeScreen = React.lazy(() => import('./screens/finance-focus-mode'));
+const FinanceStatementPackWorkspaceV2Screen = React.lazy(() => import('./screens/finance-statement-pack-workspace-v2'));
+const FinanceBaselineWorkspaceScreen = React.lazy(() => import('./screens/finance-baseline-workspace'));
+const FinancePredictionWorkspaceScreen = React.lazy(() => import('./screens/finance-prediction-workspace'));
+const FinanceIdBridgeScreen = React.lazy(() => import('./screens/finance-id-bridge'));
+const FinanceAnalysisWorkspaceScreen = React.lazy(() => import('./screens/finance-analysis-workspace'));
+const FinanceValuationWorkspaceScreen = React.lazy(() => import('./screens/finance-valuation-workspace'));
+const FinanceLineageNavigatorScreen = React.lazy(() => import('./screens/finance-lineage-navigator'));
+const FinanceComparePanelScreen = React.lazy(() => import('./screens/finance-compare-panel'));
+const FinanceCommentsPanelScreen = React.lazy(() => import('./screens/finance-comments-panel'));
+const FinanceSavedViewsPanelScreen = React.lazy(() => import('./screens/finance-saved-views-panel'));
+const FinanceExportImportPanelScreen = React.lazy(() => import('./screens/finance-export-import-panel'));
 const GenDeckContentHintsScreen = React.lazy(() => import('./screens/gen-deck-content-hints'));
 const GenExcelTemplatesTabScreen = React.lazy(() => import('./screens/gen-excel-templates-tab'));
 const GenWordContentHintsScreen = React.lazy(() => import('./screens/gen-word-content-hints'));
 const DeckQualityBadgeScreen = React.lazy(() => import('./screens/deck-quality-badge'));
 const WordQualityBadgeScreen = React.lazy(() => import('./screens/word-quality-badge'));
 const I18nFala1SmokeScreen = React.lazy(() => import('./screens/i18n-fala1-smoke'));
+const IdeaConfidentialityControlScreen = React.lazy(
+  () => import('./screens/idea-confidentiality-control')
+);
 const IdeaTemplatesCatalogScreen = React.lazy(() => import('./screens/idea-templates-catalog'));
 const IdeasTeresaPanelScreen = React.lazy(() => import('./screens/ideas-teresa-panel'));
 const MelsCanvasWorkspaceScreen = React.lazy(() => import('./screens/melscanvas-workspace'));
@@ -156,6 +176,7 @@ const IdeaTableTimelineStuckScreen = React.lazy(
 const WhiteboardWorkshopScreen = React.lazy(() => import('./screens/whiteboard-workshop'));
 const B2TemplateGalleryScreen = React.lazy(() => import('./screens/b2-template-gallery'));
 const MindmapI18nSmokeScreen = React.lazy(() => import('./screens/mindmap-i18n-smoke'));
+const MmPpmMeasureScreen = React.lazy(() => import('./screens/mm-ppm-measure'));
 const ModelCatalogTableScreen = React.lazy(() => import('./screens/model-catalog-table'));
 const NavDeclutterSidebarScreen = React.lazy(() => import('./screens/navdeclutter-sidebar'));
 const NotatnikCentrumMysliScreen = React.lazy(() => import('./screens/notatnik-centrum-mysli'));
@@ -194,6 +215,9 @@ const KartaNotificationScreen = React.lazy(() => import('./screens/karta-notific
 const KartaTaskScreen = React.lazy(() => import('./screens/karta-task'));
 const PreviewZakladkiScreen = React.lazy(() => import('./screens/preview-4-zakladki'));
 const IdeaTableToolKebabScreen = React.lazy(() => import('./screens/idea-table-tool-kebab'));
+const IdeaTableRecordTemplatesScreen = React.lazy(
+  () => import('./screens/idea-table-record-templates')
+);
 const IdeaTableToolEmptyFilterScreen = React.lazy(
   () => import('./screens/idea-table-tool-empty-filter')
 );
@@ -203,6 +227,7 @@ const IdeaTableToolSortFilterScreen = React.lazy(
 );
 const IdeaTableToolGroupingScreen = React.lazy(() => import('./screens/idea-table-tool-grouping'));
 const IdeaTableScreen = React.lazy(() => import('./screens/idea-table'));
+const IdeaTableProductionScreen = React.lazy(() => import('./screens/idea-table-production'));
 const MindmapCanvasScreen = React.lazy(() => import('./screens/mindmap-canvas'));
 const MyWorkIdeaTopBarScreen = React.lazy(() => import('./screens/mywork-idea-topbar'));
 const TeresaConfirmChipScreen = React.lazy(() => import('./screens/teresa-confirm-chip'));
@@ -258,6 +283,53 @@ const DrdHttpWorkspaceScreen = React.lazy(() => import('./screens/drd-http-works
 const AssessmentArtifactsRestartScreen = React.lazy(
   () => import('./screens/assessment-artifacts-restart')
 );
+const ResultsVNextRegistryShellScreen = React.lazy(
+  () => import('./screens/results-vnext-registry-shell')
+);
+const ResultsVNextKpiRegistryScreen = React.lazy(
+  () => import('./screens/results-vnext-kpi-registry')
+);
+const ResultsVNextRoiRegistryScreen = React.lazy(
+  () => import('./screens/results-vnext-roi-registry')
+);
+const ResultsVNextRoiModelScreen = React.lazy(
+  () => import('./screens/results-vnext-roi-model')
+);
+const ResultsVNextRoiFullToolScreen = React.lazy(
+  () => import('./screens/results-vnext-roi-full-tool')
+);
+const ResultsVNextOkrRegistryScreen = React.lazy(
+  () => import('./screens/results-vnext-okr-registry')
+);
+const ResultsVNextOkrObjectivesScreen = React.lazy(
+  () => import('./screens/results-vnext-okr-objectives')
+);
+const ResultsVNextOkrWorkspaceScreen = React.lazy(
+  () => import('./screens/results-vnext-okr-workspace')
+);
+const ResultsVNextOkrAdminScreen = React.lazy(
+  () => import('./screens/results-vnext-okr-admin')
+);
+const ResultsVNextKpiScorecardsScreen = React.lazy(
+  () => import('./screens/results-vnext-kpi-scorecards')
+);
+const ResultsVNextKpiToolScreen = React.lazy(
+  () => import('./screens/results-vnext-kpi-tool')
+);
+const ResultsVNextLegacyArchiveScreen = React.lazy(
+  () => import('./screens/results-vnext-legacy-archive')
+);
+const ResultsVNextAttentionScreen = React.lazy(() => import('./screens/results-vnext-attention'));
+const ResultsVNextRoiPirOutcomesScreen = React.lazy(
+  () => import('./screens/results-vnext-roi-pir-outcomes')
+);
+const RnG3ClassLRecordShellScreen = React.lazy(() => import('./screens/rn-g3-class-l-record-shell'));
+const ResultsVNextTeresaKpiDeviationScreen = React.lazy(
+  () => import('./screens/results-vnext-teresa-kpi-deviation')
+);
+const ResultsVNextTeresaOkrReflectionScreen = React.lazy(
+  () => import('./screens/results-vnext-teresa-okr-reflection')
+);
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
   'drd-http-workspace': {
@@ -274,6 +346,95 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'A5 — Method Workspace shell (interview/split/matrix), ff methodWorkspaceShellV1. &view=interview|split|matrix &state=default|resolution|savefailed|teresaRich',
     render: () => <MethodWorkspaceScreen />,
+  },
+  'results-vnext-registry-shell': {
+    label:
+      'RN-G2 P0 — REALNY <ResultsVNextRegistryShell> (KPI/ROI/OKR): loading/empty/error/forbidden + locked/honest-missing. &domain=kpi|roi|okr &state=ready|loading|empty|error|forbidden &reason=<deny> &selected=<id|none>',
+    render: () => <ResultsVNextRegistryShellScreen />,
+  },
+  'results-vnext-kpi-registry': {
+    label:
+      'RN-G2 P1 — REALNY <ResultsKpiRegistryPage> (KPI registry, real GET/POST /vnext/results/kpi* stubbed): My/Org tabs, status chips, lifecycle kebab (activate/suspend/archive), lazy measurement preview, deep-link forbidden. &state=ready|loading|empty|error &kpiId=<id> &ff=off',
+    render: () => <ResultsVNextKpiRegistryScreen />,
+  },
+  'results-vnext-roi-registry': {
+    label:
+      'RN-G2 P2 — REALNY route entry <ResultsRoiRegistryPage> (flaga roiRegistry: OFF -> EmptyState "results-vnext-roi-disabled", ON -> realny <ResultsRoiHub>): All cases + Benefits realization, honest NPV/IRR/payback, lock badges. &tab=all|benefits &state=ready|loading|empty|error &selected=<caseId|none> &calc=loading|ready &ff=off',
+    render: () => <ResultsVNextRoiRegistryScreen />,
+  },
+  'results-vnext-roi-model': {
+    label:
+      'RN-G2 §G #12-14 — REALNY <RoiCaseFullTool initialPhase="build"> -> <RoiCaseModelWorkspace>: Baseline+polityka (2-wierszowa tabela), Założenia/Koszty/Korzyści CRUD. &tab=settings|assumptions|cost-lines|benefit-lines &state=ready|loading|empty|error &selected=<id|none> &locked=1 &nullBaseline=1 &nullPolicy=1 &editBaseline=1 &editPolicy=1 &assumptionForm=create|edit &costLineForm=create|edit &benefitLineForm=create|edit &removeAssumption=1 &removeCostLine=1 &removeBenefitLine=1 &formState=idle|saving|error|conflict',
+    render: () => <ResultsVNextRoiModelScreen />,
+  },
+  'results-vnext-roi-full-tool': {
+    label:
+      'FALA 1 (ROI) — REALNY <ResultsRoiHub> -> <RoiCaseFullTool> (4 fazy: Build Case/Decision/Realize Value/Learn), window.fetch stubbed statefully for the whole /vnext/results/roi surface, real onClose (no harness no-op). Click the case row, then kebab "Otwórz pełne narzędzie".',
+    render: () => <ResultsVNextRoiFullToolScreen />,
+  },
+  'results-vnext-okr-registry': {
+    label:
+      'RN-G2 P3 #23 — REALNY route entry <ResultsOkrRegistryPage> (flaga okrRegistry: OFF -> EmptyState "results-vnext-okr-disabled", ON -> realny <ResultsOkrHub>), window.fetch stubbed for /api/vnext/results/okr*. Organization/My/Company tabs (real clicks, real fetch per tab), honest progress/confidence, lock badges, real ?setId= deep link. &state=ready|loading|empty|error &ff=off',
+    render: () => <ResultsVNextOkrRegistryScreen />,
+  },
+  'results-vnext-okr-objectives': {
+    label:
+      'RN-G2 §G #25 — REALNE <OkrObjectivesView>/<OkrKeyResultsView>/<OkrCheckInsView> (OQ-UI-I fix 2026-08-11: production components + window.fetch stub, real modals with real onClose — not eight no-ops). Click through the real drill (Cele -> Kluczowe Rezultaty -> Check-iny) inside the harness. &level=objectives|keyResults|checkIns (initial level) &setStatus=<status> &state=ready|loading|empty|error',
+    render: () => <ResultsVNextOkrObjectivesScreen />,
+  },
+  'results-vnext-okr-workspace': {
+    label:
+      'RN-G3 lane okr full-tool task (2026-08-11) — REALNY <OkrSetWorkspace> (pełne narzędzie: Przegląd/Cele i KR/Dopasowania/Rozmowy i wsparcie/Przegląd i refleksja/Historia), window.fetch stubbed, real component + real tab clicks; onSetChanged/onBackToSets real (harness state), status po przejściu cyklu życia faktycznie się odświeża. &setStatus=<status> &asOwner=1',
+    render: () => <ResultsVNextOkrWorkspaceScreen />,
+  },
+  'results-vnext-okr-admin': {
+    label:
+      'RN-G3 lane okr full-tool task (2026-08-11) — REALNE <OkrProgramsPage>/<OkrCyclesPage> (powierzchnie administracyjne Programu/Cyklu, OSOBNE od Set workspace), window.fetch stubbed. &page=programs|cycles',
+    render: () => <ResultsVNextOkrAdminScreen />,
+  },
+  'results-vnext-kpi-scorecards': {
+    label:
+      'RN-G2 P1 #8 — REALNY <ResultsKpiScorecardDetailPage> (trasa /results/kpi/scorecards/:scorecardId pod MemoryRouter, Api.get/Api.post stubbed) — szczegóły karty (Pozycje/Migawki), status GET .../status, lock NO_MEMBERS. Lista kart wyników = zakładka "Karty wyników" w results-vnext-kpi-registry (REALNY <ResultsKpiRegistryPage>), nie osobny ekran tutaj. &tab=items|snapshots &state=ready|loading|empty|error|forbidden &selected=<id|none> &scorecard=sc-1|sc-2|sc-3|sc-4',
+    render: () => <ResultsVNextKpiScorecardsScreen />,
+  },
+  'results-vnext-kpi-tool': {
+    label:
+      'RN-G3 lane — REALNY <KpiToolPage> + <KpiDeviationCaseSubview> (klasa L, D03/D05), zamontowane pod jednym <MemoryRouter> z prawdziwym useNavigate() między nimi. &view=tool|case &state=ready|loading|error &caseState=open|analysis_required|plan_required|plan_submitted|approved|executing|recovery_observed|verification|closed &severity=warning|critical &escalated=1 &impacts=0 &ff=off',
+    render: () => <ResultsVNextKpiToolScreen />,
+  },
+  'results-vnext-teresa-kpi-deviation': {
+    label:
+      'RN-G5 lane teresa (2026-08-12) — REALNY <KpiDeviationCaseSubview> Phase 2 "Poproś Teresę o zapis przez pipeline" (reflection_rca), window.fetch stubbed statefully for /api/v8/teresa/proposal* (P08) PLUS Api.get/post/put for /vnext/results/kpi*. Case starts at analysis_required. &teresaDown=1 (transport failure -> manual fallback) &teresaDeny=1 (first execute denies -> blocked banner, no silent success)',
+    render: () => <ResultsVNextTeresaKpiDeviationScreen />,
+  },
+  'results-vnext-teresa-okr-reflection': {
+    label:
+      'RN-G5 lane teresa (2026-08-12) — REALNY <OkrReviewReflectionView> "Poproś Teresę o szkic refleksji" (reflection_synthesis), window.fetch stubbed statefully for /api/v8/teresa/proposal* (P08) PLUS /api/vnext/results/okr/*. Set status=review, one Objective. &teresaDown=1 (transport failure -> manual fallback) &teresaDeny=1 (first execute denies -> blocked banner, no silent success)',
+    render: () => <ResultsVNextTeresaOkrReflectionScreen />,
+  },
+  'results-vnext-legacy-archive': {
+    label:
+      'RN-G2 R09-3 — REALNY <ResultsVNextLegacyArchivePanel> (kpi/roi/okr .../legacy index, tylko do odczytu, prep pod kolejną falę — NIEPODPIĘty do żadnego huba). &domain=kpi|roi|okr &state=ready|loading|empty|error',
+    render: () => <ResultsVNextLegacyArchiveScreen />,
+  },
+  'results-vnext-attention': {
+    label:
+      'RN-G5 §G #30 — REALNY <ResultsAttentionPage> (przekrojowy widok KPI+OKR attention/team-health, Api.get stubbed). Menu2 KPI/OKR, Menu3 = bucket (real counts). &kpiState=ready|loading|empty|error &okrState=ready|loading|empty|error &ff=off',
+    render: () => <ResultsVNextAttentionScreen />,
+  },
+  'results-vnext-roi-pir-outcomes': {
+    label:
+      'RN-G5 §G #11 — REALNY <RoiPirOutcomesTab> przez <ResultsRoiPirOutcomesPage> (ROI org PIR-outcomes, window.fetch stubbed dla /org/pir-outcomes). Gotowy do wpięcia jako 3. zakładka ResultsRoiHub. &state=ready|loading|empty|error &ff=off',
+    render: () => <ResultsVNextRoiPirOutcomesScreen />,
+  },
+  'rn-g3-class-l-record-shell': {
+    label:
+      'RN-G3 tor PLATFORMY §1 — DEMONSTRACJA przepisu powłoki klasy L (archetyp Rekord): ArtifactBreadcrumb + NModeShell + ArtifactRightPanel/ArtifactPropertiesTable, zero nowego standardu. &save=idle|saving|saved|error|conflict &teresa=1',
+    render: () => <RnG3ClassLRecordShellScreen />,
+  'idea-financial-case-persistence': {
+    label:
+      'E09 RISK-12 — REALNY <FinancialCaseDialog> z REALNYM zapisem: ?state=empty|loading|dirty|saving|saved|error|conflict|reopened (stanowy mock transportu)',
+    render: () => <IdeaFinancialCasePersistenceScreen />,
   },
   'mw-007-calendar-narrow-viewport': {
     label:
@@ -436,6 +597,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'idea-table-tool-kebab': {
     label: 'IDEE Table — K1 kebab wiersza (PlatformGridView, prawy-klik) — audyt-idee 2026-07-22',
     render: () => <IdeaTableToolKebabScreen />,
+  },
+  'idea-table-record-templates': {
+    label: 'IDEE Table — RecordTemplateManager (RISK-06 dead-mount wiring) — 2026-08-12',
+    render: () => <IdeaTableRecordTemplatesScreen />,
   },
   'idea-table-tool-paste': {
     label: 'IDEE Table — Ctrl/Cmd+V wklejanie (PlatformGridView, Z16b domknięcie) — 2026-07-22',
@@ -616,6 +781,20 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
       'Section B — M16 ValueOffice + DriverPlanner: real-data wiring, POPULATED vs EMPTY (&panel=value|driver &state=populated|empty)',
     render: () => <FinanceValuePanelsScreen />,
   },
+  'finance-model-workspace': { label: 'Finance model workspace', render: () => <FinanceModelWorkspaceScreen /> },
+  'finance-workspace-bar': { label: 'Finance workspace bar', render: () => <FinanceWorkspaceBarScreen /> },
+  'finance-focus-mode': { label: 'Finance focus mode', render: () => <FinanceFocusModeScreen /> },
+  'finance-statement-pack-workspace-v2': { label: 'Finance statement pack workspace', render: () => <FinanceStatementPackWorkspaceV2Screen /> },
+  'finance-baseline-workspace': { label: 'Finance baseline workspace', render: () => <FinanceBaselineWorkspaceScreen /> },
+  'finance-prediction-workspace': { label: 'Finance prediction workspace', render: () => <FinancePredictionWorkspaceScreen /> },
+  'finance-id-bridge': { label: 'Finance ID bridge', render: () => <FinanceIdBridgeScreen /> },
+  'finance-analysis-workspace': { label: 'Finance analysis workspace', render: () => <FinanceAnalysisWorkspaceScreen /> },
+  'finance-valuation-workspace': { label: 'Finance valuation workspace', render: () => <FinanceValuationWorkspaceScreen /> },
+  'finance-lineage-navigator': { label: 'Finance lineage navigator', render: () => <FinanceLineageNavigatorScreen /> },
+  'finance-compare-panel': { label: 'Finance compare panel', render: () => <FinanceComparePanelScreen /> },
+  'finance-comments-panel': { label: 'Finance comments panel', render: () => <FinanceCommentsPanelScreen /> },
+  'finance-saved-views-panel': { label: 'Finance saved views panel', render: () => <FinanceSavedViewsPanelScreen /> },
+  'finance-export-import-panel': { label: 'Finance export import panel', render: () => <FinanceExportImportPanelScreen /> },
   'execution-change-signals': {
     label:
       'M14-wire — ExecutionChangeSignalsPanel (capacity signals · ADKAR readiness · champions), flaga changeSignals default OFF',
@@ -719,6 +898,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label: 'Smoke i18n fala 2 — M06 Mind Map modale (ideas.mindmap.*)',
     render: () => <MindmapI18nSmokeScreen />,
   },
+  'mm-ppm-measure': {
+    label: 'MM-P2 (2026-08-10) — pomiar wysokości PPM węzła Mind Map (1280×800, do-usuniecia po odbiorze)',
+    render: () => <MmPpmMeasureScreen />,
+  },
   'navdeclutter-sidebar': {
     label: 'ODB O5 — REALNY <Sidebar> (navDeclutterFlag, default OFF); &ff_navDeclutter=1 dla ON',
     render: () => <NavDeclutterSidebarScreen />,
@@ -765,6 +948,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label: 'D16/D17 JEDEN prawy panel idei = dok Teresy (IdeaRightPanel)',
     render: () => <IdeasTeresaPanelScreen />,
   },
+  'idea-confidentiality-control': {
+    label:
+      'RISK-22 Poufność Idei — REALNY IdeaWorkspaceTools w IdeaRightPanel (?lang=pl|en, ?level=, ?fail=1)',
+    render: () => <IdeaConfidentialityControlScreen />,
+  },
   'idea-templates-catalog': {
     label: '#10-AB Baza ~40 startowych szablonów konsultingowych (7 kategorii)',
     render: () => <IdeaTemplatesCatalogScreen />,
@@ -809,6 +997,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'idea-table': {
     label: 'IDEE — Idea jako tabela (pełny obiekt: lista + podgląd + prawy panel)',
     render: () => <IdeaTableScreen />,
+  },
+  'idea-table-production': {
+    label:
+      'IDEE — Idea jako tabela, KSZTAŁT PRODUKCYJNY (MyIdeasListContent.tsx:1785-1791, bez ArtifactRightPanel — S9-GATE4EVIDENCE TASK 1)',
+    render: () => <IdeaTableProductionScreen />,
   },
   'mindmap-canvas': {
     label: 'IDEE — Idea jako mapa myśli (pełny obiekt, archetyp Canvas)',

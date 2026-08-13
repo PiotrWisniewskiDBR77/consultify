@@ -27,8 +27,8 @@ describe('routeConfig helpers', () => {
     expect(getAppViewFromPath('/chat/abc')).toBe(AppView.AI_CHAT);
   });
 
-  it('does not expose the removed Wnioski route', () => {
-    expect('CONCLUSIONS' in ROUTES).toBe(false);
+  it('keeps the closed Conclusions route internal and does not expose the removed Wnioski alias', () => {
+    expect(ROUTES.CONCLUSIONS).toBe('/conclusions');
     expect(getAppViewFromPath('/wnioski')).toBeNull();
   });
 
@@ -88,7 +88,7 @@ describe('routeConfig helpers', () => {
     expect(getAppViewFromPath('/ai-actions/queue')).toBe(AppView.AI_ACTION_PROPOSALS);
     expect(getAppViewFromPath('/consultant/panel/team')).toBe(AppView.CONSULTANT_PANEL);
     expect(getAppViewFromPath('/consultant/invites')).toBe(AppView.CONSULTANT_INVITES);
-    expect(getAppViewFromPath('/affiliate/overview')).toBe(AppView.AFFILIATE_DASHBOARD);
+    expect(getAppViewFromPath('/affiliate/overview')).toBeNull();
     expect(getAppViewFromPath('/setup/organization')).toBe(AppView.ORG_SETUP_WIZARD);
     expect(getAppViewFromPath('/setup/onboarding/admin')).toBe(AppView.ONBOARDING_WIZARD);
     expect(getAppViewFromPath('/setup/onboarding/seed/persona-a')).toBe(AppView.ONBOARDING_WIZARD);

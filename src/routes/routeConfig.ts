@@ -61,6 +61,11 @@ export const ROUTES = {
   // HP-4 F3 Harvey-Parity: run-agent workspace entry point (AgentPlanWorkspace).
   // Gated by agentPlanFlag (default OFF) — see AppRoutes.tsx registration.
   AGENT_PLAN: '/agent-plan',
+  // Zlecenia (Case Workspace). DOUBLE-gated: BetaGate `MODULE_CASE_WORKSPACE`
+  // ('closed') + runtime flag `isCaseWorkspaceEnabled()` (default OFF) —
+  // `BETA_ADMINS_EXEMPT=true` means the beta gate alone would still show the
+  // module to every admin/owner. See AppRoutes.tsx registration.
+  CASE_WORKSPACE: '/zlecenia',
   DASHBOARD: '/chat', // DEPRECATED: Dashboard removed, redirects to Chat
 
   // Assessment Module
@@ -123,6 +128,54 @@ export const ROUTES = {
   KPI_OKR: '/kpi-okr',
   BENEFITS: '/benefits',
   RESULTS: '/results',
+  // RN-G2 (2026-08-10) — Results Next registries. Nested objects mirror the
+  // ROUTES.DISCOVERY_TOOLS pattern. These are NEW exact-path routes that live
+  // alongside (not instead of) the legacy `RESULTS` route above — React
+  // Router matches exact paths, so `/results` and `/results/kpi` are
+  // different routes and do not collide. Master plan §11 routing contract
+  // (docs/product/results-vnext/01_RESULTS_MASTER_IMPLEMENTATION_PLAN.md).
+  // Already auth-protected + already resolve to the Results sidebar mirror
+  // via the `normalized.startsWith(ROUTES.RESULTS)` prefix check below —
+  // zero RouterSync changes required (verified, see RN_G2_UI_SCOPE.md §E).
+  RESULTS_KPI: {
+    ROOT: '/results/kpi',
+    SCORECARD: '/results/kpi/scorecards/:scorecardId',
+    // RN-G3 lane (2026-08-11) — full KPI tool, klasa L (D03) + Deviation
+    // Case subview (D05: subview of the tool, never a top-level registry —
+    // master plan §11's route list only names ROOT/SCORECARD; these two are
+    // additive, not a change to the frozen contract). React Router v6 ranks
+    // by specificity, so `/results/kpi/scorecards/:scorecardId` above still
+    // wins over `/results/kpi/:kpiId` for that literal path segment —
+    // verified against v6's route-ranking algorithm, not order-dependent.
+    TOOL: '/results/kpi/:kpiId',
+    DEVIATION_CASE: '/results/kpi/:kpiId/deviation-cases/:caseId',
+  },
+  RESULTS_ROI: {
+    ROOT: '/results/roi',
+    CASE: '/results/roi/cases/:roiCaseId',
+    // RN-G5 scopegap task 3 (§G #11) — organization PIR-outcomes perspective
+    // (`GET /api/vnext/results/roi/org/pir-outcomes`). Own top-level route
+    // (not a `ResultsRoiHub.tsx` tab) because that hub file is out of this
+    // package's edit allowlist — see RN_G5_SCOPEGAP_DESIGN.md §3 for the
+    // ready-to-paste diff that folds this into the hub as a third Menu 2 tab
+    // once that file is next touched by its owning workstream.
+    PIR_OUTCOMES: '/results/roi/pir-outcomes',
+  },
+  RESULTS_OKR: {
+    ROOT: '/results/okr',
+    SET: '/results/okr/sets/:okrSetId',
+    // RN-G3 lane `okr` full-tool task (2026-08-11) — Program/Cycle admin
+    // surfaces, OWN top-level routes per design §8.3 ("Program Settings and
+    // Cycle Management have their own governed admin routes/tools... not
+    // tabs belonging to a selected Set").
+    PROGRAMS: '/results/okr/programs',
+    CYCLES: '/results/okr/cycles',
+  },
+  // RN-G5 scopegap task 1 (§G #30) — cross-cutting "Attention" view over the
+  // KPI + OKR manager attention read-models. D10: ONE view, not a fourth
+  // registry namespace — a bare top-level route, not `RESULTS_ATTENTION.ROOT`
+  // nested-object shape the three real registries use.
+  RESULTS_ATTENTION: '/results/attention',
   CONCLUSIONS: '/conclusions',
   MCP_IRIS: '/mcp/iris',
   MCP_MARKETPLACE: '/mcp/marketplace',
@@ -297,6 +350,7 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   [AppView.PROJECTS]: ROUTES.PROJECTS,
   [AppView.CLIENT_VAULT]: ROUTES.CLIENT_VAULT,
   [AppView.AGENT_PLAN]: ROUTES.AGENT_PLAN,
+  [AppView.CASE_WORKSPACE]: ROUTES.CASE_WORKSPACE,
   [AppView.DASHBOARD]: ROUTES.AI_CHAT, // DEPRECATED: redirects to Chat
   [AppView.USER_DASHBOARD]: ROUTES.AI_CHAT, // DEPRECATED: redirects to Chat
   [AppView.DASHBOARD_OVERVIEW]: ROUTES.AI_CHAT, // DEPRECATED: redirects to Chat
@@ -684,6 +738,8 @@ export function getAppViewFromPath(path: string): AppView | null {
   if (normalized.startsWith(ROUTES.PROJECTS)) return AppView.PROJECTS;
   if (normalized.startsWith(ROUTES.CLIENT_VAULT)) return AppView.CLIENT_VAULT;
   if (normalized.startsWith(ROUTES.AGENT_PLAN)) return AppView.AGENT_PLAN;
+  // /zlecenia oraz /zlecenia/:caseId → jeden moduł (powłoka trzyma zakładki w adresie).
+  if (normalized.startsWith(ROUTES.CASE_WORKSPACE)) return AppView.CASE_WORKSPACE;
   if (normalized.startsWith(ROUTES.INITIATIVES)) return AppView.FULL_STEP2_INITIATIVES;
   if (normalized.startsWith(ROUTES.PORTFOLIO) || normalized.startsWith(ROUTES.ROADMAP)) {
     return AppView.PORTFOLIO_ROADMAP;

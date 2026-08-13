@@ -1,0 +1,126 @@
+=== Frontend (root vitest) Finance/Economics scope: 155 files ===
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed | 152 passed (155)
+      Tests  6 failed | 1587 passed (1593)
+   Duration  214.44s (transform 9.67s, setup 17.48s, import 33.67s, tests 23.42s, environment 108.57s)
+
+=== Failed tests (6) ===
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/finance/financeFallbackGating.test.ts > beta gating — MODULE_ECONOMICS (Finance) is GA / open (M16 per D-A GA-set) > MODULE_ECONOMICS is registered as an open beta (badge only, not locked)
+ FAIL  tests/unit/finance/financeFallbackGating.test.ts > beta gating — MODULE_ECONOMICS (Finance) is GA / open (M16 per D-A GA-set) > MODULE_ECONOMICS is registered as an open beta (badge only, not locked)
+AssertionError: expected 'closed' to be 'open' // Object.is equality
+
+Expected: "open"
+Received: "closed"
+
+ ❯ tests/unit/finance/financeFallbackGating.test.ts:87:47
+     85| describe('beta gating — MODULE_ECONOMICS (Finance) is GA / open (M16 p…
+     86|   it('MODULE_ECONOMICS is registered as an open beta (badge only, not …
+     87|     expect(BETA_MENU_STATUS.MODULE_ECONOMICS).toBe('open');
+       |                                               ^
+     88|     expect(getBetaStatus('MODULE_ECONOMICS')).toBe('open');
+     89|     expect(isBetaModule('MODULE_ECONOMICS')).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  tests/unit/finance/financeFallbackGating.test.ts > lockClosedBetaModules — decorates Meeting menu item with the locked plate > locks MODULE_MEETING for a regular USER with BETA_LOCKED code + message
+ FAIL  tests/unit/finance/financeFallbackGating.test.ts > lockClosedBetaModules — decorates Meeting menu item with the locked plate > locks MODULE_MEETING for a regular USER with BETA_LOCKED code + message
+AssertionError: expected true to be undefined
+
+- Expected:
+undefined
+
++ Received:
+true
+
+ ❯ tests/unit/finance/financeFallbackGating.test.ts:140:30
+    138|     // GA (open) modules are left fully accessible
+    139|     const finance = locked.find((m: any) => m.id === 'MODULE_ECONOMICS…
+    140|     expect(finance.isLocked).toBeUndefined();
+       |                              ^
+    141|     const docs = locked.find((m: any) => m.id === 'MODULE_PRESENTATION…
+    142|     expect(docs.isLocked).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  tests/unit/finance/rawEnumLeakScanner.test.ts > Finance/** — no raw SCREAMING_SNAKE_CASE enum leaks to rendered text > no .tsx file under Finance/** bare-interpolates a known enum property (excluding tracked, deliberately-unfixed exceptions)
+ FAIL  tests/unit/finance/rawEnumLeakScanner.test.ts > Finance/** — no raw SCREAMING_SNAKE_CASE enum leaks to rendered text > no .tsx file under Finance/** bare-interpolates a known enum property (excluding tracked, deliberately-unfixed exceptions)
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "src/components/Finance/Prediction/PredictionWorkspace.tsx: {mountCheck.version.status}",
++ ]
+
+ ❯ tests/unit/finance/rawEnumLeakScanner.test.ts:269:26
+    267|     }
+    268|     const newOffenders = offenders.filter((o) => !KNOWN_UNFIXED_LEAKS.…
+    269|     expect(newOffenders).toEqual([]);
+       |                          ^
+    270|   });
+    271|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  tests/unit/results/resultsFinanceReconciliationService.postmortem.test.ts > resultsFinanceReconciliationService — O4.7 post-mortem wiring > real off-plan gap, no market-shift feed → postMortem.verdict = undetermined (not a guessed execution failure)
+ FAIL  tests/unit/results/resultsFinanceReconciliationService.postmortem.test.ts > resultsFinanceReconciliationService — O4.7 post-mortem wiring > real off-plan gap, no market-shift feed → postMortem.verdict = undetermined (not a guessed execution failure)
+AssertionError: expected null to be 70000 // Object.is equality
+
+- Expected:
+70000
+
++ Received:
+null
+
+ ❯ tests/unit/results/resultsFinanceReconciliationService.postmortem.test.ts:70:32
+     68|     const item = res.items[0];
+     69|     expect(item.projectedValue).toBe(100000);
+     70|     expect(item.realizedValue).toBe(70000);
+       |                                ^
+     71|     expect(item.postMortem).not.toBeNull();
+     72|     expect(item.postMortem!.totalVariance).toBe(-30000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+
+ FAIL  tests/unit/results/resultsFinanceReconciliationService.postmortem.test.ts > resultsFinanceReconciliationService — O4.7 post-mortem wiring > within ±5% of plan → postMortem.verdict = on-plan (not undetermined)
+ FAIL  tests/unit/results/resultsFinanceReconciliationService.postmortem.test.ts > resultsFinanceReconciliationService — O4.7 post-mortem wiring > within ±5% of plan → postMortem.verdict = on-plan (not undetermined)
+AssertionError: expected undefined to be 'on-plan' // Object.is equality
+
+- Expected:
+"on-plan"
+
++ Received:
+undefined
+
+ ❯ tests/unit/results/resultsFinanceReconciliationService.postmortem.test.ts:99:46
+     97|     ]);
+     98|
+     99|     expect(res.items[0].postMortem?.verdict).toBe('on-plan');
+       |                                              ^
+    100|   });
+    101|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/12]⎯
+
+ FAIL  tests/unit/results/resultsFinanceReconciliationService.postmortem.test.ts > resultsFinanceReconciliationService — O4.7 post-mortem wiring > persists postMortem as a sibling key inside conclusion_json (additive, no migration)
+ FAIL  tests/unit/results/resultsFinanceReconciliationService.postmortem.test.ts > resultsFinanceReconciliationService — O4.7 post-mortem wiring > persists postMortem as a sibling key inside conclusion_json (additive, no migration)
+AssertionError: expected undefined to be defined
+ ❯ tests/unit/results/resultsFinanceReconciliationService.postmortem.test.ts:155:31
+    153|     expect(parsed.k1Fact).toBeDefined();
+    154|     // …postMortem sits alongside it, not in place of it.
+    155|     expect(parsed.postMortem).toBeDefined();
+       |                               ^
+    156|     expect(parsed.postMortem.verdict).toBe('undetermined');
+    157|     expect(parsed.postMortem.totalVariance).toBe(-30000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/12]⎯
+
+
+ Test Files  3 failed | 152 passed (155)
+      Tests  6 failed | 1587 passed (1593)
+   Start at  21:46:43
+   Duration  214.44s (transform 9.67s, setup 17.48s, import 33.67s, tests 23.42s, environment 108.57s)

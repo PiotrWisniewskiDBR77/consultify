@@ -4,11 +4,23 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+// Whole-module mock: anything the import graph reaches must be returned here, or the
+// file fails to COLLECT ("0 test") instead of failing an assertion — and a file that
+// was already red hides that completely. That is exactly what happened here: this file
+// ran 7 tests at `origin/demo` (5 passing) and collected 0 after the locale sweep pulled
+// `src/i18n.ts` into the graph via a newly-translated component. Five passing tests
+// disappeared silently. Shape copied from `tests/setup.ts`.
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     i18n: { language: 'en' },
     t: (key: string) => key,
   }),
+  initReactI18next: {
+    type: '3rdParty',
+    init: vi.fn(),
+  },
+  Trans: ({ children, i18nKey }: any) => children || i18nKey,
+  I18nextProvider: ({ children }: any) => children,
 }));
 
 import { FloatingNodeToolbar } from '@/components/MyWork/mindmap/FloatingNodeToolbar';

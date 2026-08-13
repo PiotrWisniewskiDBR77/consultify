@@ -319,9 +319,20 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
   const leftRailRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLElement | null>(null);
   const [railGutter, setRailGutter] = useState(0);
+  // Realny (nie wyzerowany dla centerMode='canvas') pomiar tej samej rynny —
+  // udostepniony potomkom `canvas` jako CSS var `--mels-rail-gutter`. Rail w
+  // trybie 'canvas' wciaz plywa NAD plotnem (railGutter=0, plotno zostaje
+  // pelnej szerokosci — decyzja z komentarza nizej), ALE chrome-paski, ktore
+  // same renderuja narzedzia (ProcessFlowToolbar/WhiteboardToolbar), niosa
+  // prawdziwa tresc (etykiety, plakietki) siegajaca do krawedzi i NIE moga
+  // polegac na tym samym zwolnieniu — inaczej rail obcina im tekst (2026-08-10,
+  // Gate 4: „Brak ostrzeżeń” → „Brak os…” na 720×450). Te paski czytaja
+  // zmienna i same rezerwuja miejsce; plotno (ReactFlow/tlo) jej nie uzywa.
+  const [railExtent, setRailExtent] = useState(0);
   useEffect(() => {
     if (!floatingLeftRail) {
       setRailGutter(0);
+      setRailExtent(0);
       return;
     }
     let zywy = true;
@@ -339,12 +350,14 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
       const pr = plotno.getBoundingClientRect();
       const gutter =
         floatingToolRailSide === 'right' ? pr.right - rr.left + 8 : rr.right - pr.left + 8;
+      const clamped = Math.max(0, Math.ceil(gutter));
+      setRailExtent(clamped);
       // Canvas tool rails are overlay controls. They must never shorten the
       // working surface: the canvas keeps its full width and the rail floats
       // above it (the same spatial contract as zoom controls and context menus).
       // Keep the measurement code temporarily for compatibility with legacy
       // callers, but do not reserve a structural gutter in canvas mode.
-      setRailGutter(centerMode === 'canvas' ? 0 : Math.max(0, Math.ceil(gutter)));
+      setRailGutter(centerMode === 'canvas' ? 0 : clamped);
     };
     zmierz();
     const obs = new ResizeObserver(zmierz);
@@ -450,23 +463,31 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
             onKeyDownCapture={handleKeyboardContextMenu}
           >
             {/*
-              Rail plywa NAD plotnem, wiec bez rezerwacji miejsca zaslania wlasne
-              paski reprezentacji — widoczne jako ucieta tresc („Klasyczny
-              przeplyw" → „…czny przeplyw", „Framework" → „mework"). Rezerwujemy
-              rynne o szerokosci railа na zawartosci, a sam rail zostawiamy przy
-              krawedzi: padding jest na WEWNETRZNYM opakowaniu, nie na <main> —
-              padding na <main> przesunalby takze absolutnie pozycjonowany rail
-              (jego `left:0` liczy sie od krawedzi padding-boxa).
+              Rail plywa NAD plotnem — w trybie 'canvas' plotno CELOWO zostaje
+              pelnej szerokosci (railGutter=0, patrz komentarz przy jego
+              obliczeniu), zeby ReactFlow/tlo nie tracilo roboczej powierzchni.
+              Ale wlasne paski reprezentacji (ProcessFlowToolbar,
+              WhiteboardToolbar) niosa prawdziwa, siegajaca do krawedzi tresc
+              (etykiety trybu, plakietki „Kroki"/„Brak ostrzeżeń") i bez
+              rezerwacji rail je obcina — widoczne jako ucieta tresc
+              („Klasyczny przeplyw" → „…czny przeplyw", „Brak ostrzeżeń" →
+              „Brak os…", 2026-08-10 Gate 4 na 720×450). Zamiast zwezac CALE
+              plotno, udostepniamy zmierzona szerokosc railа jako CSS var —
+              paski chrome same rezerwuja sobie `paddingRight:
+              var(--mels-rail-gutter)`, plotno pod nimi jej nie uzywa.
             */}
             <div
               className="h-full w-full"
-              style={
-                floatingLeftRail
+              style={{
+                ...(floatingLeftRail
                   ? floatingToolRailSide === 'right'
                     ? { paddingRight: railGutter }
                     : { paddingLeft: railGutter }
-                  : undefined
-              }
+                  : undefined),
+                ...(floatingLeftRail && floatingToolRailSide === 'right'
+                  ? ({ '--mels-rail-gutter': `${railExtent}px` } as React.CSSProperties)
+                  : undefined),
+              }}
               data-testid="mels-canvas-content"
             >
               {canvas}

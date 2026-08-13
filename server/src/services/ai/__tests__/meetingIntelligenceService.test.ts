@@ -25,11 +25,19 @@ const baseContext = {
   userId: 'user-1',
 };
 
+/** Shape of the single argument the service passes to `completions.create`. */
+interface ChatCompletionCall {
+  messages: Array<{ role: string; content: string }>;
+  [key: string]: unknown;
+}
+
 function makeLLMClient(json: unknown) {
   return {
     chat: {
       completions: {
-        create: vi.fn(async () => ({
+        // Declare the parameter so `mock.calls[n][0]` is the recorded request
+        // rather than an element of an empty tuple.
+        create: vi.fn(async (_request: ChatCompletionCall) => ({
           choices: [{ message: { content: JSON.stringify(json) } }],
         })),
       },
@@ -81,7 +89,7 @@ describe('M21 · meetingIntelligenceService — AI notes pipeline (S6)', () => {
       context: baseContext,
     });
 
-    const callArg = client.chat.completions.create.mock.calls[0][0];
+    const [callArg] = client.chat.completions.create.mock.calls[0]!;
     const roles = callArg.messages.map((m: { role: string }) => m.role);
     expect(roles).toEqual(['system', 'user']);
     // instrukcje NIE zawierają surowego transkryptu; transkrypt jest w user-data
@@ -100,7 +108,7 @@ describe('M21 · meetingIntelligenceService — AI notes pipeline (S6)', () => {
       context: baseContext,
     });
 
-    const dataMsg = client.chat.completions.create.mock.calls[0][0].messages[1].content;
+    const dataMsg = client.chat.completions.create.mock.calls[0]![0].messages[1]!.content;
     // closing tag stripped → injection cannot terminate the data block early
     expect(dataMsg.match(/<\/transcript>/g)?.length).toBe(1); // only our own closer
   });

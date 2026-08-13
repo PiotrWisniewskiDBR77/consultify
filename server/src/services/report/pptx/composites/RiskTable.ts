@@ -8,8 +8,8 @@ import type { DesignTokens, ElementPosition, RenderedElement } from '../types.js
 export interface RiskTableProps {
   risks: Array<{
     risk: string;
-    likelihood: 'high' | 'medium' | 'low';
-    impact: 'high' | 'medium' | 'low';
+    likelihood: string;
+    impact: string;
     mitigation: string;
     owner?: string;
   }>;

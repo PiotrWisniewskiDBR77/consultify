@@ -19,6 +19,7 @@ import {
   Paperclip,
   Pencil,
   Plus,
+  RefreshCw,
   Sparkles,
   StickyNote,
   Unlock,
@@ -67,6 +68,10 @@ import {
 
 import TeresaMark from '../shared/TeresaMark';
 import { getCanvasBg } from './canvas/canvasBackground';
+import {
+  isCanvasKeyboardScope,
+  resolveMindMapGrammarAction,
+} from './canvas/mindmapKeyboardScope';
 import {
   canvasObjectSurfaceStyle,
   canvasObjectTextStyle,
@@ -985,7 +990,7 @@ const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
           className="!opacity-0 !w-1 !h-1"
         />
         <div className={`text-xs font-semibold ${colors.text}`}>{data.label}</div>
-        <div className="text-[10px] text-slate-500 dark:text-slate-400">{childCount} nodes</div>
+        <div className="text-[10px] text-slate-600 dark:text-c-text-muted">{childCount} nodes</div>
       </div>
     );
   }
@@ -1047,7 +1052,7 @@ const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
         <GitBranch size={12} />
         {data.label}
       </div>
-      <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+      <div className="text-[10px] text-slate-600 dark:text-c-text-muted mt-0.5">
         {childCount} {childCount === 1 ? 'node' : 'nodes'}
         {collapsed ? ` (${collapsed ? '...' : ''})` : ''}
       </div>
@@ -1755,8 +1760,38 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                   </span>
                 )}
                 {depth > 0 && (
+                  // RISK-35 (S1-CONTRAST, 2026-08-12): dark:text-slate-500 measured
+                  // 3.22:1 at depth 2 (this badge inherits the node's depth-based fade,
+                  // `depthOpacity` above — opacity-90 at depth 2, opacity-80 at depth
+                  // 3+) against the 4.5:1 WCAG 1.4.3 text bar. text-c-text-secondary
+                  // cleared it in both themes AT DEPTH 2 (8.92:1 dark / 5.60:1 light —
+                  // see docs/qa/ideas-complete-transformation-2026-08-09/21_FOCUS_AND_CONTRAST.md
+                  // §8), but S1-CONTRAST only measured depth 2 and called depth 3+
+                  // "hypothetical". S9-GATE4EVIDENCE (2026-08-12) built a real
+                  // depth-3 node (dev-render/screens/mindmap-canvas.tsx,
+                  // idea-scope-1-detail) and measured it: at opacity-80 (depth 3+),
+                  // text-c-text-secondary composites to 4.41:1 in LIGHT theme — a
+                  // real, reachable sub-4.5 failure (dark stays fine at 7.22:1,
+                  // min-opacity for text-c-text-secondary to clear 4.5:1 is 0.8096,
+                  // i.e. the depth-3 fade of 0.8 misses by less than 0.01 alpha).
+                  //
+                  // Fix: text-c-text (the strong-text token, NEVER the tailwind
+                  // "primary" family — every shade of that is crimson) instead
+                  // of text-c-text-secondary. Three options were
+                  // weighed: (1) exempt the badge from depthOpacity entirely —
+                  // rejected, it would need moving the badge outside the node's
+                  // opacity stacking context (portal/absolute overlay), a much
+                  // bigger structural change for a 1-line contrast fix; (2) raise
+                  // the depth-3 opacity value itself — rejected, that refades the
+                  // WHOLE node (border+bg+every child), not just this label, losing
+                  // the depth-hierarchy visual the opacity ladder exists for;
+                  // (3) THIS: strengthen only the badge's own color token. Clears
+                  // with margin at every depth in both themes (light: 9.32:1 at
+                  // depth3 / 13.01:1 at depth2; dark: 11.48:1 at depth3 / 14.43:1 at
+                  // depth2 — computed via scripts/contrast-ratio.mjs), so it never
+                  // regresses if the opacity ladder changes again later.
                   <div
-                    className="text-[8px] text-slate-600 dark:text-slate-500 ml-auto"
+                    className="text-[8px] text-c-text ml-auto"
                     title={`Depth ${depth}`}
                   >
                     L{depth}
@@ -1829,6 +1864,8 @@ type IdeaRecommendationMapProps = {
   externalRuntime?: {
     version: number;
     loading: boolean;
+    /** D2: non-null when the last GET /map attempt failed. See useMindMapPersistence. */
+    loadError?: string | null;
     saving: boolean;
     lastSavedAt: number | null;
     syncState: 'idle' | 'queued' | 'saving' | 'saved' | 'offline' | 'conflict';
@@ -2522,8 +2559,17 @@ function MindMapInner({
       if (n.type === 'branch') {
         const count = structuralChildCount.get(n.id) || 0;
         if (count !== n.data?.count || simplifiedMode || Object.keys(extra).length > 0) {
-          return { ...n, data: { ...n.data, count, ...extra } };
+          return {
+            ...n,
+            focusable: false,
+            data: { ...n.data, count, ...extra },
+          };
         }
+        // React Flow 11 hard-codes role="button" for every focusable node.
+        // Branch cards contain native buttons, so keep the wrapper mouse-
+        // selectable but remove its duplicate keyboard stop; the real branch
+        // commands remain natively focusable inside the card.
+        return n.focusable === false ? n : { ...n, focusable: false };
       }
       if (Object.keys(extra).length > 0) {
         return { ...n, data: { ...n.data, ...extra } };
@@ -2882,6 +2928,8 @@ function MindMapInner({
     saving,
     lastSavedAt,
     persistence,
+    mapLoadError,
+    retryLoadMap,
     setSaving,
     setLastSavedAt,
     scheduleSave,
@@ -2911,6 +2959,20 @@ function MindMapInner({
     refreshToken,
     externalRuntime,
   });
+
+  // D2: retry affordance for the map-load-error state below. Tracks its own
+  // in-flight flag (rather than reusing `loading`) so the retry button shows
+  // a spinner without flipping the whole canvas back to the full-screen
+  // loading state.
+  const [retryingMapLoad, setRetryingMapLoad] = useState(false);
+  const handleRetryMapLoad = useCallback(async () => {
+    setRetryingMapLoad(true);
+    try {
+      await retryLoadMap();
+    } finally {
+      setRetryingMapLoad(false);
+    }
+  }, [retryLoadMap]);
 
   const debouncedSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const nodesRef = useRef(nodes);
@@ -3562,21 +3624,6 @@ function MindMapInner({
       const target = e.target as HTMLElement;
       const container = containerRef.current;
       const active = document.activeElement;
-      // ReactFlow nodes are not focusable, so clicking a node leaves focus on
-      // <body> (activeElement === body, target === body). The map's keyboard
-      // grammar (Tab=child, Enter=sibling, Delete, …) must still work in that
-      // state — otherwise "select a branch and press Tab" silently does nothing.
-      // We therefore treat "no real focus target" (body/null) as in-map. Typing
-      // in any OTHER surface keeps activeElement on that input (not body), so it
-      // stays excluded and we never hijack keystrokes from another module.
-      const noRealFocus =
-        !active || active === document.body || active === document.documentElement;
-      const isWithinMap =
-        !!container &&
-        (container.contains(target) ||
-          (!!active && container.contains(active)) ||
-          (noRealFocus && (target === document.body || container.contains(target))));
-      if (!isWithinMap) return;
 
       const keyLabel = formatDebugKey(e);
       const isEditing = editingNodeIdRef.current !== null;
@@ -3699,6 +3746,37 @@ function MindMapInner({
         return;
       }
 
+      // ReactFlow nodes are not focusable, so clicking a node leaves focus on
+      // the container itself (it carries `tabIndex={-1}` — see the JSX root
+      // below — so the browser's click-to-focus ancestor walk lands there).
+      // The map's keyboard grammar (Tab=child, Enter=sibling, Delete, …)
+      // keeps working in that state because `container.contains(active)`
+      // is still true.
+      //
+      // F-K1 fix (G4-KBD-P0, 2026-08-11): this used to ALSO treat "nothing
+      // real is focused" (activeElement === body/documentElement) as
+      // in-scope, which is true EVERYWHERE on the page before anything has
+      // been focused — that's what let a bare Tab keypress anywhere hijack
+      // focus/add a node. The container already gets real DOM focus on
+      // mount (see the viewport-restore effect's `containerRef.current?.
+      // focus()` call below) specifically to keep "select a branch and
+      // press Tab" working from a fresh load, so that fallback was both
+      // redundant and unsafe. See `mindmapKeyboardScope.ts` for the
+      // extracted, unit-tested containment check.
+      //
+      // Scoped here — AFTER Ctrl/Cmd+S/Z/Shift+Z/Shift+H/A/D and Alt+0-9 —
+      // deliberately, not at the top of the handler: those modifier combos
+      // are this map's "always on while open" shortcuts (mirrors the same
+      // fix in useIdeasToolKeyboard.ts for Process Flow/Whiteboard, which
+      // discovered — via tests/components/MyWork/IdeaWhiteboardTool.
+      // drawUndo.test.tsx firing Ctrl+Z directly on `document` with nothing
+      // focused — that scoping modifier-combo undo/save this strictly
+      // breaks a real, tested, deliberate contract). Only the plain
+      // "grammar" keys below (mode toggles, Tab/Enter/F2/Delete/Escape,
+      // arrow navigation) require genuine in-map focus.
+      const isWithinMap = isCanvasKeyboardScope(container, target, active);
+      if (!isWithinMap) return;
+
       if (isEditing || isInput) {
         debugLog('KEY_IGNORED editing_or_input', {
           source: 'keyboard',
@@ -3743,7 +3821,12 @@ function MindMapInner({
         return;
       }
 
-      if (e.key === 'Tab') {
+      // F-K2 fix (G4-KBD-P0, 2026-08-11): `resolveMindMapGrammarAction`
+      // requires `!e.shiftKey` for Tab — this used to fire on Shift+Tab too
+      // (a pure focus-navigation key), silently spawning a real empty child
+      // node with its inline editor open on every backward-Tab.
+      const grammarAction = resolveMindMapGrammarAction(e);
+      if (grammarAction === 'add_child') {
         e.preventDefault();
         debugLog('KEY_HANDLED addChild', {
           source: 'keyboard',
@@ -3753,7 +3836,7 @@ function MindMapInner({
         addChildNode();
         return;
       }
-      if (e.key === 'Enter') {
+      if (grammarAction === 'add_sibling') {
         e.preventDefault();
         debugLog('KEY_HANDLED addSibling', {
           source: 'keyboard',
@@ -4065,135 +4148,15 @@ function MindMapInner({
     return () => window.removeEventListener('mindmap-edge-contextmenu', handler);
   }, []);
 
-  const handleEdgeContextAction = useCallback(
-    (action: string) => {
-      if (!edgeContextMenu) return;
-      const targetEdge = (edges as Edge[]).find((e) => e.id === edgeContextMenu.edgeId);
-      if (!targetEdge) return;
-      const relationEdge = isRelationEdge(targetEdge);
-
-      if (action === 'edge_add_label') {
-        const current = targetEdge.data?.label || '';
-        const label = window.prompt(t('mindmap.connectionLabel'), current);
-        if (label !== null) {
-          setEdges((prev: Edge[]) =>
-            prev.map((e) => (e.id === targetEdge.id ? { ...e, data: { ...e.data, label } } : e))
-          );
-        }
-      }
-
-      if (action === 'edge_insert_node' && relationEdge) {
-        pushUndo();
-        const newId = `node-${uid()}`;
-        const midX = 0;
-        const midY = 0;
-        const sourceNode = (nodes as Node[]).find((n) => n.id === targetEdge.source);
-        const targetNode = (nodes as Node[]).find((n) => n.id === targetEdge.target);
-        const posX =
-          sourceNode && targetNode ? (sourceNode.position.x + targetNode.position.x) / 2 : midX;
-        const posY =
-          sourceNode && targetNode ? (sourceNode.position.y + targetNode.position.y) / 2 : midY;
-
-        const newNode: Node = {
-          id: newId,
-          type: 'idea',
-          position: { x: posX, y: posY },
-          data: {
-            label: '',
-            branchKey: 'uncategorized',
-            sourceType: 'manual',
-            priority: 50,
-            _startEditing: Date.now(),
-          },
-        } as any;
-
-        setEdges((prev: Edge[]) => {
-          const without = prev.filter((e) => e.id !== targetEdge.id);
-          return [
-            ...without,
-            { ...targetEdge, id: `edge-${uid()}`, target: newId } as Edge,
-            {
-              ...targetEdge,
-              id: `edge-${uid()}`,
-              source: newId,
-              target: targetEdge.target,
-            } as Edge,
-          ];
-        });
-        setNodes((prev: Node[]) => [
-          ...prev.map((n) => ({ ...n, selected: false })),
-          { ...newNode, selected: true },
-        ]);
-      }
-
-      if (action === 'edge_reverse' && relationEdge) {
-        pushUndo();
-        setEdges((prev: Edge[]) =>
-          prev.map((e) =>
-            e.id === targetEdge.id
-              ? {
-                  ...e,
-                  source: e.target,
-                  target: e.source,
-                  sourceHandle: e.targetHandle,
-                  targetHandle: e.sourceHandle,
-                }
-              : e
-          )
-        );
-        toast.success(t('mindmap.directionReversed'), { duration: 800 });
-      }
-
-      if (action === 'edge_change_style') {
-        const styles = ['solid', 'dashed', 'dotted'];
-        const current = targetEdge.style?.strokeDasharray
-          ? targetEdge.style.strokeDasharray === '2 2'
-            ? 'dotted'
-            : 'dashed'
-          : 'solid';
-        const nextIdx = (styles.indexOf(current) + 1) % styles.length;
-        const nextStyle = styles[nextIdx];
-        const dasharray =
-          nextStyle === 'dashed' ? '5 5' : nextStyle === 'dotted' ? '2 2' : undefined;
-        setEdges((prev: Edge[]) =>
-          prev.map((e) =>
-            e.id === targetEdge.id ? { ...e, style: { ...e.style, strokeDasharray: dasharray } } : e
-          )
-        );
-        toast.success(
-          t('myWork.ideaMap.toast.styleChanged', 'Style: {{style}}', { style: nextStyle }),
-          {
-            duration: 800,
-          }
-        );
-      }
-
-      if (action === 'edge_edit_relation' && relationEdge) {
-        const current = targetEdge.data?.relation || '';
-        const relations = ['related', 'depends_on', 'blocks', 'supports', 'contradicts'];
-        const label = window.prompt(
-          t('mindmap.relationTypePrompt', { relations: relations.join(', ') }),
-          current
-        );
-        if (label !== null) {
-          setEdges((prev: Edge[]) =>
-            prev.map((e) =>
-              e.id === targetEdge.id ? { ...e, data: { ...e.data, relation: label, label } } : e
-            )
-          );
-        }
-      }
-
-      if (action === 'edge_delete' && relationEdge) {
-        pushUndo();
-        setEdges((prev: Edge[]) => prev.filter((e) => e.id !== targetEdge.id));
-        toast.success(t('mindmap.connectionRemoved'), { duration: 800 });
-      }
-
-      setEdgeContextMenu(null);
-    },
-    [edgeContextMenu, edges, isPolish, nodes, pushUndo, setEdges, setNodes]
-  );
+  // handleEdgeContextAction USUNIĘTE (2026-08-09, rejestr akcji Z1/E02
+  // rozszerzenie z Tablicy). Wszystkie 7 pozycji menu krawędzi (dawniej 6 tu +
+  // „Kierunek strzałki" już wcześniej poza tą funkcją) idzie teraz przez
+  // rejestr: `EdgeContextMenu.tsx` dispatchuje `runIdeaAction(...)`, realna
+  // mutacja żyje w `useMindMapQuickActions.ts` (`mm_edge_*`), adresowana
+  // `edgeId` — DOKŁADNIE jak „Kierunek strzałki" (`mm_edge_arrow`) już
+  // działało od 2026-07-28. Menu samo zamyka się przez `CanvasContextMenu`
+  // (`closeOnSelect` domyślnie true) — nie trzeba już `setEdgeContextMenu(null)`
+  // z tego miejsca.
 
   const selectedBranchKey = useMemo(() => {
     const selected = nodes.find((n: any) => n?.selected);
@@ -4554,6 +4517,23 @@ function MindMapInner({
     [edges, i18n.language, ideaId, isPolish, locked, nodes, persistence, selectedBranchKey]
   );
 
+  // N5 druga fala (2026-08-09) — see the `handlers.detachBranch`/
+  // `duplicateBranch` comment below for why these are refs, not direct
+  // function values.
+  const detachBranchRef = useRef<((nodeId?: string) => void) | undefined>(undefined);
+  const duplicateBranchRef = useRef<((nodeId?: string) => void) | undefined>(undefined);
+  // N5 trzecia fala (2026-08-09) — same TDZ reason as the two refs above:
+  // `convertBranch` (Convert/Convert-branch groups) is declared later in this
+  // component too.
+  const convertBranchRef = useRef<((target: string, nodeId?: string) => void) | undefined>(
+    undefined
+  );
+  // E11 fix (2026-08-10) — same TDZ reason: `convertSingleNode` is declared
+  // later in this component (next to `convertBranch`).
+  const convertSingleNodeRef = useRef<((target: string, nodeId?: string) => void) | undefined>(
+    undefined
+  );
+
   // ── Quick action listener (extracted to useMindMapQuickActions) ──────────
   useMindMapQuickActions({
     ideaId,
@@ -4571,6 +4551,24 @@ function MindMapInner({
       addRootTopic,
       duplicateSelected,
       deleteSelected,
+      // N5 druga fala (2026-08-09) — NodeContextMenu.tsx Structure group
+      // (`idea.node.mm_detach_branch`/`idea.node.mm_duplicate_branch`).
+      // Functions already existed (V5-IDEA-17) but are declared LATER in this
+      // component (after `getContextTargetNode`/`collectDescendants`, which
+      // this `useMindMapQuickActions(...)` call precedes) — a direct
+      // reference here would be a TDZ error. Forwarded through a ref instead
+      // of reordering ~100 lines of this already-large component; the ref is
+      // populated synchronously right after the real functions are defined
+      // (see `detachBranchRef.current = detachBranch;` below), well before
+      // any click could invoke it.
+      detachBranch: (nodeId?: string) => detachBranchRef.current?.(nodeId),
+      duplicateBranch: (nodeId?: string) => duplicateBranchRef.current?.(nodeId),
+      // N5 trzecia fala (2026-08-09) — `idea.node.mm_convert_branch_*`.
+      convertBranch: (target: string, nodeId?: string) => convertBranchRef.current?.(target, nodeId),
+      // E11 fix (2026-08-10) — `idea.node.mm_convert_initiative`/`_decision`/
+      // `_tasks` (single_item, no cascade).
+      convertSingleNode: (target: string, nodeId?: string) =>
+        convertSingleNodeRef.current?.(target, nodeId),
       getSelectedNode,
       toggleCollapse,
       setFoldLevel,
@@ -4812,17 +4810,29 @@ function MindMapInner({
     (nodeId?: string) => {
       const targetId = nodeId || getContextTargetNode()?.id;
       if (!targetId) return;
+      // HONEST FIX (2026-08-09, N5 druga fala — rejestr akcji
+      // `idea.node.mm_detach_branch`): znalezione przy wiringu, nie
+      // wprowadzone tym wpisem — ta mutacja NIGDY nie wołała pushUndo(), więc
+      // Ctrl+Z jej nie cofał (w przeciwieństwie do sąsiednich operacji na
+      // węzłach, które pushUndo już miały). Naprawione tutaj, tak samo jak
+      // przy 3 pozycjach menu krawędzi w poprzedniej fali.
+      pushUndo();
       setEdges((prev: Edge[]) => prev.filter((e) => e.target !== targetId));
       toast.success(t('mindmap.branchDetached'), { duration: 800 });
     },
-    [getContextTargetNode, isPolish, setEdges]
+    [getContextTargetNode, isPolish, pushUndo, setEdges]
   );
+  detachBranchRef.current = detachBranch;
 
   // V5-IDEA-17: Duplicate branch — clone node + all descendants
   const duplicateBranch = useCallback(
     (nodeId?: string) => {
       const targetId = nodeId || getContextTargetNode()?.id;
       if (!targetId) return;
+      // HONEST FIX (2026-08-09, N5 druga fala — rejestr akcji
+      // `idea.node.mm_duplicate_branch`): tak samo jak `detachBranch` powyżej,
+      // ta mutacja nigdy nie wołała pushUndo(). Naprawione tutaj.
+      pushUndo();
       const descendants = collectDescendants(targetId);
       const allIds = [targetId, ...descendants];
       const idMap = new Map<string, string>();
@@ -4873,8 +4883,9 @@ function MindMapInner({
         duration: 1000,
       });
     },
-    [collectDescendants, edges, getContextTargetNode, isPolish, nodes, setEdges, setNodes]
+    [collectDescendants, edges, getContextTargetNode, isPolish, nodes, pushUndo, setEdges, setNodes]
   );
+  duplicateBranchRef.current = duplicateBranch;
 
   // V5-IDEA-17: Summarize branch — send to AI chat
   const summarizeBranch = useCallback(
@@ -4914,17 +4925,53 @@ function MindMapInner({
         presentation: 'convert_presentation',
       };
       const action = actionMap[target] || `convert_${target}`;
+      // E11 fix (2026-08-10): this used to fire a `toast.success("Converting
+      // branch to…")` immediately on click, before anything was actually
+      // converted — a premature-success pattern. The receiver now opens a
+      // mandatory preview (IdeaMapWorkspace.handleConvert); the real success/
+      // error toast fires only after the user confirms and the server call
+      // resolves, so no toast belongs here.
       window.dispatchEvent(
         new CustomEvent('idea-workspace-quick-action', {
-          detail: { action, nodeIds: branchNodeIds, ideaId },
+          detail: { action, nodeIds: branchNodeIds, ideaId, scope: 'single_item_cascade' },
         })
       );
-      toast.success(t('mindmap.convertingBranchTo', { target }), {
-        duration: 1000,
-      });
     },
-    [collectDescendants, getContextTargetNode, ideaId, isPolish]
+    [collectDescendants, getContextTargetNode, ideaId]
   );
+  // N5 trzecia fala (2026-08-09) — see `detachBranchRef.current = detachBranch;`
+  // above for why this is a ref assignment, not a direct handler value.
+  convertBranchRef.current = convertBranch;
+
+  // E11 fix (2026-08-10, docs/standards/idea-workspace/10_*, §2.1 „Element"):
+  // the plain "Convert" node-menu items (ctx_convert_initiative/decision/tasks)
+  // used to be wired to `convertBranch` — same function as "Convert branch" —
+  // so a single-node label silently cascaded to every descendant
+  // (E02-N5-CONVERT honesty finding). This is the real single-item version:
+  // exactly one nodeId, never descendants.
+  const convertSingleNode = useCallback(
+    (target: string, nodeId?: string) => {
+      const targetNodeId = nodeId || getContextTargetNode()?.id;
+      if (!targetNodeId) return;
+
+      const actionMap: Record<string, string> = {
+        initiative: 'convert_initiative',
+        decision: 'convert_decision',
+        task_set: 'convert_task_set',
+        report: 'convert_report',
+        presentation: 'convert_presentation',
+      };
+      const action = actionMap[target] || `convert_${target}`;
+      window.dispatchEvent(
+        new CustomEvent('idea-workspace-quick-action', {
+          detail: { action, nodeIds: [targetNodeId], ideaId, scope: 'single_item' },
+        })
+      );
+    },
+    [getContextTargetNode, ideaId]
+  );
+  // ref declared earlier (near convertBranchRef) for the same TDZ reason.
+  convertSingleNodeRef.current = convertSingleNode;
 
   const handleContextAction = useCallback(
     (action: string) => {
@@ -5012,9 +5059,11 @@ function MindMapInner({
           setDrawerNodeId(ctxNode.id);
         }
       }
-      if (action === 'ctx_dependencies') setShowDependencyDetector(true);
-      if (action === 'ctx_priority') setShowPriorityRecommender(true);
-      if (action === 'ctx_competitive') setShowCompetitiveLandscape(true);
+      // E10 (2026-08-10): ctx_dependencies/ctx_priority/ctx_competitive MOVED
+      // to handlePaneContextAction (pane_dependencies/pane_priority/
+      // pane_competitive below) — see NodeContextMenu.tsx header comment.
+      // These three generators take the whole map regardless of which node
+      // was clicked, so they no longer live in this per-node handler.
       if (action === 'ctx_change_shape') {
         if (ctxNode && ctxNode.type === 'idea') {
           const shapes = ['default', 'circle', 'diamond', 'hexagon'];
@@ -5034,6 +5083,11 @@ function MindMapInner({
         if (!peer) {
           toast(t('mindmap.selectAnotherNodeToCreateA'));
         } else {
+          // HONEST FIX (2026-08-09, N5 druga fala — rejestr akcji
+          // `idea.node.mm_connect_to_selected`): znalezione przy wiringu, ta
+          // mutacja nigdy nie wołała pushUndo() — naprawione tutaj, tak samo
+          // jak `detachBranch`/`duplicateBranch` powyżej.
+          pushUndo();
           setEdges((prev: Edge[]) => [
             ...prev,
             {
@@ -5050,9 +5104,14 @@ function MindMapInner({
       if (action === 'ctx_detach_branch') detachBranch(ctxNode?.id);
       if (action === 'ctx_duplicate_branch') duplicateBranch(ctxNode?.id);
       if (action === 'ctx_summarize_branch') summarizeBranch(ctxNode?.id);
-      if (action === 'ctx_convert_tasks') convertBranch('task_set', ctxNode?.id);
-      if (action === 'ctx_convert_initiative') convertBranch('initiative', ctxNode?.id);
-      if (action === 'ctx_convert_decision') convertBranch('decision', ctxNode?.id);
+      // E11 fix (2026-08-10): these are the plain, non-"branch" Convert items
+      // (single_item scope per docs/standards/idea-workspace/10_*, §2.1) — they
+      // must convert ONLY the right-clicked node, never its descendants. Prior
+      // code routed them through convertBranch() (identical to the "Convert
+      // branch" items below), which silently cascaded despite the label.
+      if (action === 'ctx_convert_tasks') convertSingleNode('task_set', ctxNode?.id);
+      if (action === 'ctx_convert_initiative') convertSingleNode('initiative', ctxNode?.id);
+      if (action === 'ctx_convert_decision') convertSingleNode('decision', ctxNode?.id);
       // MM-15: Subtree conversion actions
       if (action === 'ctx_subtree_convert_decision') convertBranch('decision', ctxNode?.id);
       if (action === 'ctx_subtree_convert_tasks') convertBranch('task_set', ctxNode?.id);
@@ -5116,6 +5175,7 @@ function MindMapInner({
       ideaId,
       nodes,
       pasteNodes,
+      pushUndo,
       setEdges,
       setNodes,
       styleClipboard,
@@ -5280,6 +5340,16 @@ function MindMapInner({
         );
       }
 
+      // E10 (2026-08-10): relocated from handleContextAction (per-node menu)
+      // — see NodeContextMenu.tsx's header comment. `setShowDependencyDetector`
+      // /`setShowPriorityRecommender`/`setShowCompetitiveLandscape` themselves
+      // are unchanged (same modals, same whole-map generators); only the menu
+      // that triggers them moved, since the node under the cursor never
+      // affected their result.
+      if (action === 'pane_dependencies') setShowDependencyDetector(true);
+      if (action === 'pane_priority') setShowPriorityRecommender(true);
+      if (action === 'pane_competitive') setShowCompetitiveLandscape(true);
+
       setPaneContextMenu(null);
     },
     [
@@ -5301,6 +5371,9 @@ function MindMapInner({
       setEdges,
       setFoldLevel,
       setNodes,
+      setShowCompetitiveLandscape,
+      setShowDependencyDetector,
+      setShowPriorityRecommender,
       setViewport,
       undo,
     ]
@@ -5792,7 +5865,6 @@ function MindMapInner({
           canPasteStyle={!!styleClipboard}
           canPasteNodes={hasMindMapClipboard()}
           hasChildren={findChildrenIds(contextMenu.nodeId).length > 0}
-          comingSoonIds={heuristicAiOverlaysEnabled ? [] : ['ctx_dependencies']}
           onClose={() => setContextMenu(null)}
           onAction={handleContextAction}
         />
@@ -5811,6 +5883,9 @@ function MindMapInner({
           canRedo={redoStackRef.current.length > 0}
           canPaste={hasMindMapClipboard()}
           hasSelection={selectedNodeIds.length > 0}
+          // E10 (2026-08-10): gate moved with `pane_dependencies` from
+          // NodeContextMenu.tsx (was `comingSoonIds={['ctx_dependencies']}` there).
+          comingSoonIds={heuristicAiOverlaysEnabled ? [] : ['pane_dependencies']}
           onClose={() => setPaneContextMenu(null)}
           onAction={handlePaneContextAction}
         />
@@ -5826,7 +5901,6 @@ function MindMapInner({
           isLocked={locked}
           isUserCreated={edgeContextMenu.isUserCreated}
           onClose={() => setEdgeContextMenu(null)}
-          onAction={handleEdgeContextAction}
         />
       )}
 
@@ -5872,7 +5946,7 @@ function MindMapInner({
         </div>
       )}
 
-      {!loading && (
+      {!loading && !mapLoadError && (
         <CanvasZoomControls
           isPolish={isPolish}
           selectedNodeId={selectedNodeIds[0] || null}
@@ -5897,6 +5971,40 @@ function MindMapInner({
       {loading ? (
         <div className="w-full h-full flex items-center justify-center">
           <Loader2 className="animate-spin text-amber-500" size={34} />
+        </div>
+      ) : mapLoadError ? (
+        // D2: GET /map failed and there is no real graph to fall back on —
+        // show an explicit, accessible error instead of silently rendering
+        // an empty/starter canvas that looks like a normal (if boring) map.
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="w-full h-full flex flex-col items-center justify-center gap-4 bg-c-surface-raised dark:bg-c-surface p-8 text-center"
+        >
+          <div className="p-3 rounded-2xl bg-c-surface border border-c-danger">
+            <AlertTriangle size={32} className="text-c-danger" aria-hidden="true" />
+          </div>
+          <div>
+            <div className="text-sm font-semibold text-c-text mb-1">
+              {t('mindmap.persistence.mapLoadErrorTitle')}
+            </div>
+            <div className="text-xs text-c-text-secondary dark:text-c-text-muted max-w-sm">
+              {t('mindmap.persistence.mapLoadErrorBody')}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleRetryMapLoad}
+            disabled={retryingMapLoad}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-c-surface dark:bg-c-surface-raised text-c-text-secondary dark:text-c-text hover:bg-c-surface dark:hover:bg-c-surface-raised transition-colors disabled:opacity-60"
+          >
+            {retryingMapLoad ? (
+              <Loader2 size={14} className="animate-spin" aria-hidden="true" />
+            ) : (
+              <RefreshCw size={14} aria-hidden="true" />
+            )}
+            {t('mindmap.persistence.mapLoadErrorRetry')}
+          </button>
         </div>
       ) : (
         <MindMapIdeaIdContext.Provider value={ideaId}>
@@ -6788,6 +6896,15 @@ function MindMapInner({
           nodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
           locked={locked}
           onAddToMap={(items) => {
+            // HONEST FIX (2026-08-09, N5 czwarta fala — rejestr akcji
+            // `idea.view.mm_ai_competitors`, E10 2026-08-10: przeniesione z
+            // `idea.node.mm_ai_competitors` na menu tła, patrz
+            // PaneContextMenu.tsx): znalezione przy wiringu, ta
+            // mutacja nigdy nie wołała pushUndo(), w przeciwieństwie do
+            // WSZYSTKICH innych wywołujących `idea-workspace-insert` w tym
+            // pliku (onAddBlindSpot/onAddNodes×2/onImport itd.) — naprawione
+            // tutaj, ten sam wzorzec co `mm_connect_to_selected` w drugiej fali.
+            pushUndo();
             for (const item of items) {
               window.dispatchEvent(
                 new CustomEvent('idea-workspace-insert', {
@@ -6869,17 +6986,18 @@ function MindMapInner({
               isPl={isPolish}
               current={structureType}
               onSelect={(type) => {
-                pushUndo();
-                setStructureType(type);
-                const laid = applyStructureLayout(type, nodes, edges, autoLayout);
-                setNodes(laid);
-                setTimeout(() => {
-                  try {
-                    fitView({ padding: 0.3, duration: 400 });
-                  } catch {
-                    /* */
-                  }
-                }, 50);
+                // Closure (2026-08-10, `idea.view.mm_structure_type` in
+                // ideaActionRegistry.ts): routed through the SAME bus event
+                // Teresa uses (and MindmapCommandPalette.tsx:330 already used)
+                // instead of duplicating pushUndo+setStructureType+
+                // applyStructureLayout+setNodes+fitView a second time in this
+                // component — one real mechanism (useMindMapQuickActions.ts
+                // `mm_set_structure`), not two.
+                window.dispatchEvent(
+                  new CustomEvent('idea-workspace-quick-action', {
+                    detail: { action: 'mm_set_structure', structureType: type },
+                  })
+                );
               }}
               onClose={() => setShowStructurePicker(false)}
             />

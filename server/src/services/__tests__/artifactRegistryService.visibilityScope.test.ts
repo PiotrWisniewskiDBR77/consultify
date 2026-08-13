@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { deriveArtifactVisibilityScope } from '../v8/artifactRegistryService';
+import { deriveArtifactVisibilityScope } from '../v8/artifactRegistryService.js';
 
 describe('artifactRegistryService.deriveArtifactVisibilityScope', () => {
   it('keeps private visibility for presentation with owner', () => {

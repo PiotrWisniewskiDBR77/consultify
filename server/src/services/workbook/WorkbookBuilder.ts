@@ -27,6 +27,7 @@ import {
   addInfoSheet,
   addSubtleColorScale,
   alignmentForType,
+  applyCompactPrintDensity,
   applyPrintSetup,
   classifyStatus,
   colLetter as colLetterLocal,
@@ -139,7 +140,7 @@ function applyStyle(cell: ExcelJS.Cell, style?: CellStyle): void {
   }
 
   if (style.numberFormat) {
-    cell.numFmt = style.numberFormat;
+    cell.numFmt = sanitizeNumberFormat(style.numberFormat);
   }
 
   const border = mapBorder(style.border);
@@ -350,7 +351,42 @@ function cellTextWidth(value: unknown): number {
  * (aside from trimming). This never alters the meaning of a valid formula.
  */
 function sanitizeFormula(raw: string): string {
-  return raw.trim().replace(/^=+/, '');
+  // API input sanitization HTML-encodes apostrophes before the mutation is
+  // persisted (`'Sheet Name'!A1` becomes `&#x27;Sheet Name&#x27;!A1`).  Formula
+  // XML is not HTML: passing that entity through makes LibreOffice parse the
+  // expression as invalid and return Err:510.  Decode only the five entities
+  // emitted by our sanitizer, then let ExcelJS perform the required XML
+  // escaping exactly once.
+  return raw
+    .trim()
+    .replace(/^=+/, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#x27;/g, "'")
+    .replace(/&#96;/g, '`')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>');
+}
+
+/** Decode persistence-layer HTML entities before assigning an Excel number
+ * format. ExcelJS performs XML escaping itself; passing `&amp;quot;` through
+ * produces a malformed format code that spreadsheet readers may classify as
+ * a date instead of a number. Decode repeatedly because older rows can be
+ * encoded more than once by the mutation boundary. */
+function sanitizeNumberFormat(raw: string): string {
+  let decoded = raw.trim();
+  for (let pass = 0; pass < 3; pass++) {
+    const next = decoded
+      .replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"')
+      .replace(/&#x27;/g, "'")
+      .replace(/&#96;/g, '`')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>');
+    if (next === decoded) break;
+    decoded = next;
+  }
+  return decoded;
 }
 
 // ---------------------------------------------------------------------------
@@ -752,7 +788,7 @@ function emitScenarioSwitch(
     scenCols.forEach((c, i) => {
       const cell = ws.getCell(a1(c, r));
       cell.value = driver.values[i];
-      if (driver.numberFormat) cell.numFmt = driver.numberFormat;
+      if (driver.numberFormat) cell.numFmt = sanitizeNumberFormat(driver.numberFormat);
     });
 
     // Active = CHOOSE(MATCH(selector, {scenarios}, 0), <scen1>, <scen2>, ...).
@@ -761,7 +797,7 @@ function emitScenarioSwitch(
     const activeFormula = `CHOOSE(MATCH($${colLetterLocal(selParsed.col)}$${selParsed.row},{${scenList}},0),${bandRefs})`;
     const activeCell = ws.getCell(a1(activeCol, r));
     activeCell.value = { formula: activeFormula } as ExcelJS.CellFormulaValue;
-    if (driver.numberFormat) activeCell.numFmt = driver.numberFormat;
+    if (driver.numberFormat) activeCell.numFmt = sanitizeNumberFormat(driver.numberFormat);
     activeCell.font = { ...(activeCell.font ?? {}), bold: true };
 
     // Per-driver named ranges over the 3 (or N) scenario columns — proof that
@@ -833,7 +869,7 @@ function emitSensitivityTable(ws: ExcelJS.Worksheet, st: SensitivityTable): void
   cols.forEach((cv, j) => {
     const cell = ws.getCell(a1(c0 + 1 + j, r0));
     cell.value = cv;
-    if (headerFmt) cell.numFmt = headerFmt;
+    if (headerFmt) cell.numFmt = sanitizeNumberFormat(headerFmt);
     cell.font = {
       ...(cell.font ?? {}),
       bold: true,
@@ -850,7 +886,7 @@ function emitSensitivityTable(ws: ExcelJS.Worksheet, st: SensitivityTable): void
     if (is2D) {
       const rc = ws.getCell(a1(c0, rowNum));
       rc.value = rv as number;
-      if (headerFmt) rc.numFmt = headerFmt;
+      if (headerFmt) rc.numFmt = sanitizeNumberFormat(headerFmt);
       rc.font = {
         ...(rc.font ?? {}),
         bold: true,
@@ -868,7 +904,7 @@ function emitSensitivityTable(ws: ExcelJS.Worksheet, st: SensitivityTable): void
       if (is2D) formula = formula.replace(/\{row\}/g, rowHeaderA1);
       const cell = ws.getCell(a1(colNum, rowNum));
       cell.value = { formula } as ExcelJS.CellFormulaValue;
-      if (st.numberFormat) cell.numFmt = st.numberFormat;
+      if (st.numberFormat) cell.numFmt = sanitizeNumberFormat(st.numberFormat);
       // D3 — interior cells are formulas: green when they reach into another
       // sheet (the usual case — they recompute from Assumptions), else black.
       cell.font = {
@@ -968,6 +1004,24 @@ export async function buildWorkbookBuffer(
   // cached result we could not compute still render (never blank) in Excel.
   // Additive & harmless for viewers that ignore it.
   wb.calcProperties = { ...(wb.calcProperties ?? {}), fullCalcOnLoad: true };
+
+  // Create the navigation sheet first so both the tab order and print/export
+  // order begin with context rather than a raw data grid.
+  if (applyStyling && !schema.sheets.some((sheet) => sheet.name === 'Info')) {
+    try {
+      addInfoSheet(wb, {
+        title: schema.title || 'Workbook',
+        description: schema.description,
+        organizationName: options.meta?.organizationName,
+        source: options.meta?.source,
+        generatedAt: options.meta?.generatedAt || new Date().toISOString().slice(0, 10),
+        author: schema.author || 'Consultify',
+        sheetNames: schema.sheets.map((s) => s.name),
+      });
+    } catch (infoErr) {
+      logger.warn('[WorkbookBuilder] Info sheet creation failed', infoErr);
+    }
+  }
 
   for (const sheetDef of schema.sheets) {
     // P1 — literal-number grid for THIS sheet, used to fold trivial formulas
@@ -1069,6 +1123,14 @@ export async function buildWorkbookBuffer(
       const rowDef = sheetDef.rows[rowIdx];
       const excelRow = ws.getRow(rowIdx + 2); // +2 because row 1 is header
 
+      // Compact decision tables otherwise occupy only a small strip of an A4
+      // printout. Give each business row enough vertical rhythm to remain
+      // legible when the sheet is fitted to one page, while allowing wrapped
+      // evidence rows to grow further in Excel/LibreOffice.
+      if (applyStyling && !excelRow.height) {
+        excelRow.height = 24;
+      }
+
       // W7.7 — detect total rows for bold styling
       const isTotal = isTotalRow(rowDef.cells);
 
@@ -1138,7 +1200,7 @@ export async function buildWorkbookBuffer(
               ? TYPE_FORMATS[col.type]
               : undefined;
         const numFmt = cellDef.style?.numberFormat || col.numberFormat || typeDefaultFmt;
-        if (numFmt) cell.numFmt = numFmt;
+        if (numFmt) cell.numFmt = sanitizeNumberFormat(numFmt);
 
         // Cell style
         applyStyle(cell, cellDef.style);
@@ -1163,6 +1225,16 @@ export async function buildWorkbookBuffer(
           }
           if (conventionHex) {
             cell.font = { ...(cell.font ?? {}), color: { argb: hexToArgb(conventionHex) } };
+          }
+          // A formula that deliberately preserves UNKNOWN is an evidence
+          // state, not a successful cross-sheet calculation. Do not color it
+          // green merely because it references another sheet.
+          // Mutation persistence HTML-encodes quotes in formulas. Inspect the
+          // decoded formula that is actually written to XLSX, otherwise
+          // `&quot;UNKNOWN&quot;` slips through and inherits the green
+          // cross-sheet convention.
+          if (cellDef.formula && /["']UNKNOWN["']/i.test(sanitizeFormula(cellDef.formula))) {
+            cell.font = { ...(cell.font ?? {}), color: { argb: 'FF64748B' } };
           }
         }
 
@@ -1228,7 +1300,28 @@ export async function buildWorkbookBuffer(
       if (rowDef.style) {
         excelRow.eachCell((cell) => applyStyle(cell, rowDef.style));
       }
-      if (rowDef.height) excelRow.height = rowDef.height;
+      if (rowDef.height) {
+        excelRow.height = rowDef.height;
+      } else if (applyStyling) {
+        // Excel/LibreOffice do not reliably auto-grow exported wrapped rows.
+        // Estimate the tallest wrapped cell from its visible column width so
+        // evidence excerpts remain readable in the printed/PDF artifact.
+        let estimatedLines = 1;
+        for (const col of sheetDef.columns) {
+          const cellDef = rowDef.cells[col.key];
+          const wrap = cellDef?.style?.wrapText ?? col.style?.wrapText ?? rowDef.style?.wrapText;
+          if (!wrap || cellDef?.value == null) continue;
+          const text = String(cellDef.value);
+          const width = Math.max(8, col.width ?? 30);
+          const explicitLines = text.split(/\r?\n/);
+          const lines = explicitLines.reduce(
+            (sum, line) => sum + Math.max(1, Math.ceil(line.length / Math.max(6, width - 2))),
+            0
+          );
+          estimatedLines = Math.max(estimatedLines, lines);
+        }
+        excelRow.height = Math.min(120, Math.max(24, 8 + estimatedLines * 15));
+      }
       if (rowDef.hidden) excelRow.hidden = true;
 
       // Summary row styling
@@ -1322,6 +1415,10 @@ export async function buildWorkbookBuffer(
     if (applyStyling) {
       addAutoFilter(ws, sheetDef.columns.length, sheetDef.rows.length);
       applyPrintSetup(ws, sheetDef.name);
+      applyCompactPrintDensity(ws, sheetDef.rows.length, sheetDef.columns.length, sheetDef.name);
+      const lastColumn = colLetterLocal(Math.max(sheetDef.columns.length, 1));
+      const lastRow = Math.max(sheetDef.rows.length + 1, 1);
+      ws.pageSetup.printArea = `A1:${lastColumn}${lastRow}`;
     }
 
     // P3 — Named ranges for assumptions inputs. Additive: never rewrites an
@@ -1361,26 +1458,6 @@ export async function buildWorkbookBuffer(
     // EQ-C — Pre-rendered chart image(s) via worksheet.addImage.
     if (sheetDef.chartImages && sheetDef.chartImages.length > 0) {
       emitChartImages(wb, ws, sheetDef.chartImages);
-    }
-  }
-
-  // Trailing "Info" metadata sheet (branding band + source/date/org + sheet
-  // inventory). Appended LAST so data sheets keep their sheet1..N file order
-  // (existing golden tests + formula/cross-sheet references are unaffected).
-  // Fully additive — never shifts data rows.
-  if (applyStyling) {
-    try {
-      addInfoSheet(wb, {
-        title: schema.title || 'Workbook',
-        description: schema.description,
-        organizationName: options.meta?.organizationName,
-        source: options.meta?.source,
-        generatedAt: options.meta?.generatedAt || new Date().toISOString().slice(0, 10),
-        author: schema.author || 'Consultify',
-        sheetNames: schema.sheets.map((s) => s.name),
-      });
-    } catch (infoErr) {
-      logger.warn('[WorkbookBuilder] Info sheet creation failed', infoErr);
     }
   }
 

@@ -80,10 +80,16 @@ analyze_payload() {
       line = lower($0)
       if (line ~ /toolbaraction|primaryaction|modulebaraction|baraction|toolbaritem/) { zone = "toolbar"; tzone = "toolbar" }
       else if (line ~ /kebabaction|kebabitem|overflowaction|secondaryaction|dropdownaction|kebabmenu|rowaction/) { zone = "kebab"; tzone = "" }
-      else if (tzone == "toolbar" && line ~ /^\s*\]/) { tzone = "" }
+      # `\s` is a GNU-awk extension. On macOS this runs under BSD awk, where
+      # `\s` matches a literal `s`, so these zone-closing rules never fired:
+      # the toolbar and tabs zones stayed open to end-of-file and swept up every
+      # later `id:` in the module. That is how ResultsRoiHub and ResultsOkrHub
+      # were both reported as "7/8 tabs" while really declaring 2 Menu-2 pills
+      # and 5 Menu-3 chips. Use the same POSIX class line 85 already uses.
+      else if (tzone == "toolbar" && line ~ /^[ \t]*\]/) { tzone = "" }
 
       if (line ~ /[ \t.]tabs[ \t]*[:=]|hubtabs|moduletabs|tabdefinitions|tabconfig/) { tabzone = "tabs" }
-      else if (tabzone == "tabs" && line ~ /^\s*\]/) { tabzone = "" }
+      else if (tabzone == "tabs" && line ~ /^[ \t]*\]/) { tabzone = "" }
 
       s = $0
       while (match(s, /id:[ \t]*["'"'"'][a-zA-Z0-9_-]+["'"'"']/)) {

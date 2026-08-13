@@ -69,6 +69,7 @@ import {
   shouldUseLegacyIdeaIntentFallback,
   toServerIdeaActionManifest,
 } from '../../actions/teresaActionManifest';
+import type { ActionResult } from '../../actions/registry/types';
 import { useTeresaVoiceContext } from '../../contexts/TeresaVoiceContext';
 import { useAIStream } from '../../hooks/useAIStream';
 import { useChatActions } from '../../hooks/useChatActions';
@@ -102,7 +103,7 @@ import { detectMessageLanguage } from '../../utils/detectMessageLanguage';
 import { cleanTextForSpeech } from '../../utils/textCleaning';
 import { isRtlLanguage } from '../../utils/textDirection';
 import { ChatSmartSuggestions, type ChatSuggestion } from '../Chat/ChatSmartSuggestions';
-import type { CanvasToolType } from '../MyWork/ideaSelectionTypes';
+import type { CanvasToolType, IdeaWorkspaceSelection } from '../MyWork/ideaSelectionTypes';
 import { EMPTY_SELECTION } from '../MyWork/ideaSelectionTypes';
 import TeresaMark from '../shared/TeresaMark';
 import { BranchSelector, type ConversationBranch } from './BranchSelector';
@@ -293,6 +294,52 @@ export function buildCanvasContextPacket(
       ],
     },
   };
+}
+
+/**
+ * RISK-30 (S22-TERESA, 2026-08-12) — reply layer must not stay silent when
+ * `ActionResult.confirmed` is not `true`. Before this change, `onIdeaAction`
+ * and `handleTeresaConfirmProceed` below only called `addChatMessage` when
+ * `result.message` was already non-empty — any handler that returned
+ * `ok: true` WITHOUT a `message` (the 58 UI-closure sites in
+ * `runtimeHelpers.ts` after their `runUiClosureAsync` migration, or any
+ * `runByTool`-style dispatch when `awaitQuickActionAck` resolves
+ * `no_receiver`) left Teresa's already-streamed "done" standing unchallenged
+ * on screen — the exact anti-pattern named in RISK-30's problem statement.
+ *
+ * This function is the SINGLE place that decides what the user sees when the
+ * result itself is silent:
+ *   • `result.message` present  → returned verbatim (existing behaviour,
+ *     unchanged — refusals from the registry already carry their own text).
+ *   • `ok: true` but `confirmed !== true` → honest "not confirmed" text,
+ *     naming the action, so an unconfirmed result never reads as success.
+ *   • `ok: false` with no message (defensive — the registry convention is
+ *     that every refusal carries one, but never assume) → honest generic
+ *     refusal, still naming the action, never silence.
+ *   • `ok: true` and `confirmed === true` with no message → `null` (nothing
+ *     to add; a real, explicit confirmation is not the RISK-30 defect).
+ */
+function describeUnconfirmedTeresaResult(
+  result: ActionResult | undefined,
+  toolName: string,
+  t: (key: string, options: Record<string, unknown>) => string
+): string | null {
+  if (result?.message) return result.message;
+  if (!result) return null; // brak wyniku obsługuje wywołujący (catch → błąd)
+  if (result.ok && result.confirmed !== true) {
+    return t('aiChat.teresaAction.unconfirmed', {
+      defaultValue:
+        'Nie mam potwierdzenia, że akcja „{{action}}” się wykonała — nic tego nie potwierdziło. Sprawdź ręcznie, zanim uznasz to za zrobione.',
+      action: toolName,
+    });
+  }
+  if (!result.ok) {
+    return t('aiChat.teresaAction.refusedNoReason', {
+      defaultValue: 'Nie wykonałem akcji „{{action}}” — rejestr odmówił bez podania powodu.',
+      action: toolName,
+    });
+  }
+  return null;
 }
 
 function mapChatArtifactToWave5Type(artifact: Artifact): string {
@@ -632,6 +679,7 @@ export const __private__ = {
   extractSlashPayload,
   parseChatCanvasIntent,
   parseChatSaveIntent,
+  describeUnconfirmedTeresaResult,
 };
 
 interface UnifiedChatPanelProps {
@@ -853,6 +901,56 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     return () => window.removeEventListener('idea-workspace-active-tool', onActiveIdeaTool);
   }, []);
 
+  // E10 (2026-08-10, doc09 §9 Z4 "Teresa controls everything" / master
+  // program §8.4): mirror of the `activeIdeaWorkspaceTool` listener above,
+  // for the live element/edge/row selection — `IdeaMapWorkspace.tsx`
+  // broadcasts it on 'idea-workspace-active-selection' every time it changes
+  // (same shell state its own Tools/right panel already uses). Kept as a
+  // ref, not state: it must be read at tool-call time inside `onIdeaAction`
+  // without forcing that whole callback to re-close over fresh state on
+  // every selection change (same pattern as `teresaIdeaCtxRef` right below).
+  // BEFORE this change `executeTeresaTool` always sent
+  // `selection: EMPTY_SELECTION` here — Teresa's `ctx.selection` was dead for
+  // every real chat call (the only working path was the LLM supplying an
+  // element id directly as a tool argument). This makes "act on what I have
+  // selected" actually reach the registry the same way a UI click does.
+  const teresaIdeaSelectionRef = useRef<{
+    ideaId: string;
+    tool: string | null;
+    selection: IdeaWorkspaceSelection;
+  } | null>(null);
+  useEffect(() => {
+    const onActiveIdeaSelection = (event: Event) => {
+      const detail = (event as CustomEvent).detail as
+        | { ideaId?: string; tool?: string | null; selection?: IdeaWorkspaceSelection }
+        | undefined;
+      teresaIdeaSelectionRef.current = detail
+        ? {
+            ideaId: detail.ideaId || '',
+            tool: detail.tool ?? null,
+            selection: detail.selection || EMPTY_SELECTION,
+          }
+        : null;
+    };
+    window.addEventListener('idea-workspace-active-selection', onActiveIdeaSelection);
+    return () =>
+      window.removeEventListener('idea-workspace-active-selection', onActiveIdeaSelection);
+  }, []);
+
+  // E10: read the live selection ONLY when its ideaId+tool still match the
+  // idea/tool this specific tool-call is executing against — a broadcast
+  // left over from a just-closed workspace or a just-switched tool must NOT
+  // silently apply to a different one (same "no silent fallback" rule this
+  // whole wiring exists to satisfy, applied to the wiring itself).
+  const getLiveTeresaSelection = useCallback(
+    (ideaId: string, tool: string): IdeaWorkspaceSelection => {
+      const live = teresaIdeaSelectionRef.current;
+      if (!live || live.ideaId !== ideaId || live.tool !== tool) return EMPTY_SELECTION;
+      return live.selection;
+    },
+    []
+  );
+
   // Z4 transport — kontekst Idei zapamiętany W CHWILI WYSYŁKI (tool + ideaId), z
   // którym wróci tool-call. Dzięki temu wykonanie na froncie dotyczy dokładnie
   // tej reprezentacji, którą model widział (manifest jest po niej filtrowany).
@@ -1001,6 +1099,13 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     ideaId: string;
     tool: CanvasToolType;
     language: 'pl' | 'en';
+    // E10 (2026-08-10): the selection captured at PROPOSAL time, not
+    // re-sampled when the user clicks "Confirm" — the confirm dialog shows
+    // the target based on this selection, so executing against a
+    // possibly-drifted live selection instead (user clicked something else
+    // in the canvas while the confirmation was pending) would silently
+    // change what "Confirm" actually does versus what was shown.
+    selection: IdeaWorkspaceSelection;
   } | null>(null);
   const [teresaConfirmBusy, setTeresaConfirmBusy] = useState(false);
 
@@ -1982,28 +2087,32 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       }
       const uiLang: 'pl' | 'en' = (i18n.language || 'en').split('-')[0] === 'pl' ? 'pl' : 'en';
       try {
+        const liveSelection = getLiveTeresaSelection(ideaCtx.ideaId, ideaCtx.tool);
         const result = await executeTeresaTool(payload.toolName, {
           ideaId: ideaCtx.ideaId,
           tool: ideaCtx.tool,
-          selection: EMPTY_SELECTION,
+          selection: liveSelection,
           language: uiLang,
           params: payload.args,
         });
         // Rejestr sam mówi, czego NIE potrafi / że wymaga potwierdzenia — nie
-        // udajemy sukcesu. Komunikat (PL) trafia do czatu tylko gdy jest treść.
-        if (result?.message) {
+        // udajemy sukcesu. RISK-30 (S22-TERESA): `describeUnconfirmedTeresaResult`
+        // dogląda przypadków, w których SAM wynik milczy (`ok:true` bez
+        // `confirmed:true` i bez `message`) — zero cichego „zrobione".
+        const content = describeUnconfirmedTeresaResult(result, payload.toolName, t);
+        if (content) {
           // Krok A: `runIdeaAction` odmawia z `data.needsConfirmation` gdy akcja
           // ma `teresa.confirmBeforeRun` — zamiast samego tekstu odmowy dajemy
           // wiadomości znacznik, który MessageRenderer zamienia w przyciski
           // „Potwierdź"/„Anuluj" (JEDNO oczekujące potwierdzenie na raz).
           const needsConfirmation = Boolean(
-            (result.data as { needsConfirmation?: boolean } | undefined)?.needsConfirmation
+            (result?.data as { needsConfirmation?: boolean } | undefined)?.needsConfirmation
           );
           const messageId = `idea-action-${Date.now()}`;
           addChatMessage({
             id: messageId,
             role: 'ai',
-            content: result.message,
+            content,
             timestamp: new Date(),
             ...(needsConfirmation ? { metadata: { teresaConfirm: true } } : {}),
           });
@@ -2015,11 +2124,25 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               ideaId: ideaCtx.ideaId,
               tool: ideaCtx.tool,
               language: uiLang,
+              selection: liveSelection,
             });
           }
         }
       } catch (err) {
         console.warn('[UnifiedChatPanel] idea-action execute failed', err);
+        // RISK-30 (S22-TERESA): wyjątek nie może zostawić Teresy w milczeniu —
+        // do tej zmiany catch robił WYŁĄCZNIE `console.warn`, więc streamowana
+        // odpowiedź modelu stała nieoprotestowana na ekranie nawet przy realnym
+        // błędzie wykonania.
+        addChatMessage({
+          id: `idea-action-error-${Date.now()}`,
+          role: 'ai',
+          content: t('aiChat.teresaAction.error', {
+            defaultValue: 'Nie udało się wykonać akcji „{{action}}” — wystąpił błąd. Nic nie zostało potwierdzone jako zrobione.',
+            action: payload.toolName,
+          }),
+          timestamp: new Date(),
+        });
       }
     },
   });
@@ -2036,21 +2159,36 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       const result = await executeTeresaTool(pending.toolName, {
         ideaId: pending.ideaId,
         tool: pending.tool,
-        selection: EMPTY_SELECTION,
+        // E10: reuse the selection captured at proposal time — see the
+        // comment on `teresaPendingConfirm`'s `selection` field above.
+        selection: pending.selection,
         language: pending.language,
         params: pending.args,
         confirmed: true,
       });
-      if (result?.message) {
+      // RISK-30 (S22-TERESA): ta sama zasada co w `onIdeaAction` — `ok:true`
+      // bez `confirmed:true` i bez `message` nie może przejść bez echa, bo to
+      // JEST ścieżka, na której użytkownik dosłownie kliknął „Potwierdź".
+      const content = describeUnconfirmedTeresaResult(result, pending.toolName, t);
+      if (content) {
         addChatMessage({
           id: `idea-action-confirm-${Date.now()}`,
           role: 'ai',
-          content: result.message,
+          content,
           timestamp: new Date(),
         });
       }
     } catch (err) {
       console.warn('[UnifiedChatPanel] idea-action confirm execute failed', err);
+      addChatMessage({
+        id: `idea-action-confirm-error-${Date.now()}`,
+        role: 'ai',
+        content: t('aiChat.teresaAction.error', {
+          defaultValue: 'Nie udało się wykonać akcji „{{action}}” — wystąpił błąd. Nic nie zostało potwierdzone jako zrobione.',
+          action: pending.toolName,
+        }),
+        timestamp: new Date(),
+      });
     } finally {
       setTeresaConfirmBusy(false);
       // Wyczyszczenie stanu USUWA przyciski z wiadomości źródłowej (dopasowanie
@@ -2058,7 +2196,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       // na tę samą wiadomość nic już nie robi.
       setTeresaPendingConfirm(null);
     }
-  }, [teresaPendingConfirm, teresaConfirmBusy, addChatMessage]);
+  }, [teresaPendingConfirm, teresaConfirmBusy, addChatMessage, t]);
 
   // Krok A — klik „Anuluj": bez wywołania akcji, krótki komunikat, przyciski znikają.
   const handleTeresaConfirmCancel = useCallback(() => {

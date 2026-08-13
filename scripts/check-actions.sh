@@ -22,6 +22,34 @@
 #   R8  każdy endpoint wołany z rejestru (przez `Api.*`) istnieje w routerze serwera
 #   R9  generator manifestu Teresy nadal produkuje kształt `ToolDefinition`
 #       (name/description/parameters) — inaczej Z4 przestaje się spinać z serwerem
+#   R10 (E02 DoD "machine check detects unregistered commands", 2026-08-10)
+#       companion scripts/check-action-coverage.sh — R1-R9 powyżej widzą TYLKO
+#       akcje JUŻ zadeklarowane w rejestrze; R10 skanuje src/components/MyWork/
+#       pod kątem onClick/onSelect z czasownikiem-komendą (create/delete/save/
+#       apply/...), Api.* albo CustomEvent, które NIE są traceable do rejestru
+#       (runIdeaAction/runAction) — dokładnie ten drift, którego R1-R9 nie widzą.
+#       Ratchet/baseline (jak check-list-canon.sh) w
+#       scripts/check-action-coverage.baseline.txt — SSOT heurystyki i jej
+#       false-positive story: scripts/check-action-coverage.awk (nagłówek).
+#   R11 (QG-01, 2026-08-10) tablica `ORIGINAL_ORDER` w ideaActionRegistry.ts jest
+#       permutacją zbioru akcji — po podziale rejestru na pięć plików to ONA, a
+#       nie kolejność zapisu w źródle, ustala kolejność pozycji w Menu 3 i menu
+#       kontekstowym. Brak wpisu = akcja cicho spada na koniec listy.
+#
+# ★ REJESTR WIELOPLIKOWY (QG-01, 2026-08-10) ★ — `ideaActionRegistry.ts`
+# przekroczył 9000 linii/231 akcji i został rozbity per narzędzie w
+# `src/actions/registry/`. Publiczne API (import path) się NIE zmieniło —
+# `ideaActionRegistry.ts` jest teraz barrel + `RUNTIME_*`/`run*Callback` żyją
+# w `registry/runtimeHelpers.ts` + same definicje akcji żyją w pięciu plikach
+# `registry/{mindmap,whiteboard,processFlow,table,shared}Actions.ts`. Ten
+# skrypt skanuje WSZYSTKIE te pliki (nie tylko `ideaActionRegistry.ts`) — patrz
+# `ACTION_FILES`/`RUNTIME_FILE`/`ALL_REGISTRY_FILES` niżej. R1-R5 parsują
+# konkatenację `ACTION_FILES` (każdy ma dokładnie jedną tablicę
+# `export const XXX_ACTIONS: ActionDef[] = [ … ];`, ten sam kontrakt wcięć co
+# dawne `IDEA_ACTIONS`). R6 parsuje `RUNTIME_FILE` (tam dziś mieszkają mapy
+# `RUNTIME_*`). R7/R8 skanują `ALL_REGISTRY_FILES`, bo `CustomEvent`/`Api.*`
+# występują ZARÓWNO w `runtimeHelpers.ts`, JAK I bezpośrednio w treści
+# niektórych akcji (zweryfikowane przy podziale — nie jest to tylko silnik).
 #
 # UWAGA — parsowanie: skrypt czyta rejestr awk-em wg KONTRAKTU FORMATU opisanego
 # w nagłówku `src/actions/ideaActionRegistry.ts`. Jeśli nie znajdzie ANI JEDNEJ
@@ -34,6 +62,10 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT" || exit 1
 
 REGISTRY="src/actions/ideaActionRegistry.ts"
+REGISTRY_DIR="src/actions/registry"
+RUNTIME_FILE="$REGISTRY_DIR/runtimeHelpers.ts"
+ACTION_FILES="$REGISTRY_DIR/mindmapActions.ts $REGISTRY_DIR/whiteboardActions.ts $REGISTRY_DIR/processFlowActions.ts $REGISTRY_DIR/tableActions.ts $REGISTRY_DIR/sharedActions.ts"
+ALL_REGISTRY_FILES="$REGISTRY $RUNTIME_FILE $ACTION_FILES"
 MANIFEST="src/actions/teresaActionManifest.ts"
 API_CLIENT="src/services/api.ts"
 ROUTES_DIR="server/src/routes"
@@ -54,13 +86,22 @@ if [ ! -f "$REGISTRY" ]; then
   err "brak rejestru $REGISTRY — bez niego nic nie pilnuje martwych kliknięć."
   exit 1
 fi
+for f in $ACTION_FILES $RUNTIME_FILE; do
+  if [ ! -f "$f" ]; then
+    err "brak modułu rejestru $f (QG-01 split) — bez niego nic nie pilnuje martwych kliknięć."
+    exit 1
+  fi
+done
 
 # ── Rozbicie rejestru na akcje ──────────────────────────────────────────────
-# Blok akcji = literał obiektu wcięty o 2 spacje wewnątrz `const IDEA_ACTIONS`.
-# Dla każdej akcji zbieramy jedną linię: id|handler|surfaces|showsDisabled|
-# disabledReason|mutates|undo|teresa_desc
+# Blok akcji = literał obiektu wcięty o 2 spacje wewnątrz jednej z pięciu
+# tablic `export const XXX_ACTIONS: ActionDef[] = [ … ];` w $ACTION_FILES
+# (QG-01, 2026-08-10 — dawniej JEDNA tablica `const IDEA_ACTIONS` w
+# $REGISTRY; kontrakt wcięć identyczny, zmienił się tylko wzorzec
+# wejścia/wyjścia i liczba plików źródłowych). Dla każdej akcji zbieramy
+# jedną linię: id|handler|surfaces|showsDisabled|disabledReason|mutates|undo|teresa_desc
 ACTIONS=$(awk '
-  /^const IDEA_ACTIONS/ { inreg = 1; next }
+  /^export const [A-Z_]+_ACTIONS: ActionDef\[\] = \[$/ { inreg = 1; next }
   inreg && /^\];/ { inreg = 0 }
   !inreg { next }
   /^  \{/ {
@@ -81,11 +122,11 @@ ACTIONS=$(awk '
     if ($0 ~ /^    undo: /)            { undo=1 }
     if ($0 ~ /^    teresa: /)          { teresa=1 }
   }
-' "$REGISTRY")
+' $ACTION_FILES)
 
 ACTION_COUNT=$(printf '%s\n' "$ACTIONS" | grep -c . || true)
 if [ "${ACTION_COUNT:-0}" -eq 0 ]; then
-  err "nie sparsowałem ŻADNEJ akcji z $REGISTRY — format pliku rozjechał się z kontraktem opisanym w jego nagłówku."
+  err "nie sparsowałem ŻADNEJ akcji z $ACTION_FILES — format plików rozjechał się z kontraktem opisanym w nagłówku $REGISTRY."
   exit 1
 fi
 
@@ -136,7 +177,9 @@ hook_for_tool() {
 # [a-z0-9_], wiec identyfikator z wielka litera czy myslnikiem NIE PASOWAL i po
 # cichu wypadal z kontroli — straznik meldowal OK na zepsutym rejestrze.
 # Zle zbudowany identyfikator ma byc ODRZUCONY, nie POMINIETY.
-RUNTIME_LINES=$(grep -nE "^  (mindmap|whiteboard|process_flow|table): '[^']*'," "$REGISTRY" || true)
+# QG-01 (2026-08-10): mapy RUNTIME_* mieszkają dziś w $RUNTIME_FILE (dawniej
+# w $REGISTRY, zanim rejestr rozbito per narzędzie).
+RUNTIME_LINES=$(grep -nE "^  (mindmap|whiteboard|process_flow|table): '[^']*'," "$RUNTIME_FILE" || true)
 RUNTIME_PAIRS=$(printf '%s\n' "$RUNTIME_LINES" \
   | sed -E "s/^([0-9]+): +([a-z_]+): '([^']*)',.*$/\1 \2 \3/")
 
@@ -154,19 +197,19 @@ while read -r lineno tool action; do
   [ -n "${action:-}" ] || continue
   hook=$(hook_for_tool "$tool")
   if [ -z "$hook" ] || [ ! -f "$hook" ]; then
-    err "$REGISTRY:$lineno — nieznana reprezentacja '$tool' (R6)."
+    err "$RUNTIME_FILE:$lineno — nieznana reprezentacja '$tool' (R6)."
     continue
   fi
   case "$action" in
     [a-z0-9_]*) : ;;
-    *) err "$REGISTRY:$lineno — identyfikator runtime '$action' łamie konwencję (dozwolone: małe litery, cyfry, podkreślenie) (R6)."; continue ;;
+    *) err "$RUNTIME_FILE:$lineno — identyfikator runtime '$action' łamie konwencję (dozwolone: małe litery, cyfry, podkreślenie) (R6)."; continue ;;
   esac
   if printf '%s' "$action" | grep -qE '[^a-z0-9_]'; then
-    err "$REGISTRY:$lineno — identyfikator runtime '$action' łamie konwencję (dozwolone: małe litery, cyfry, podkreślenie) (R6)."
+    err "$RUNTIME_FILE:$lineno — identyfikator runtime '$action' łamie konwencję (dozwolone: małe litery, cyfry, podkreślenie) (R6)."
     continue
   fi
   if ! grep -qE "(=== *'$action'|^ *$action:|'$action' *:|\"$action\")" "$hook"; then
-    err "$REGISTRY:$lineno — akcja '$action' ($tool) NIE MA odbiornika w $(basename "$hook") → klik w próżnię (R6)."
+    err "$RUNTIME_FILE:$lineno — akcja '$action' ($tool) NIE MA odbiornika w $(basename "$hook") → klik w próżnię (R6)."
   else
     note "✓ $tool/$action → $(basename "$hook")"
   fi
@@ -175,7 +218,10 @@ $RUNTIME_PAIRS
 EOF
 
 # ── R7: każdy CustomEvent nadawany z rejestru ma listenera ──────────────────
-EVENTS=$(grep -oE "new CustomEvent\('[^']+'" "$REGISTRY" | sed -E "s/.*'([^']+)'.*/\1/" | sort -u)
+# QG-01: skanujemy WSZYSTKIE pliki rejestru — `new CustomEvent(` występuje i w
+# $RUNTIME_FILE (silnik), i bezpośrednio w treści niektórych akcji w
+# $ACTION_FILES (zweryfikowane przy podziale, nie tylko teoretycznie).
+EVENTS=$(grep -ohE "new CustomEvent\('[^']+'" $ALL_REGISTRY_FILES | sed -E "s/.*'([^']+)'.*/\1/" | sort -u)
 if [ -z "$EVENTS" ]; then
   note "rejestr nie nadaje żadnego CustomEvent (R7 bez zastosowania)"
 fi
@@ -192,7 +238,9 @@ EOF
 
 # ── R8: każdy endpoint wołany z rejestru istnieje w routerze serwera ────────
 # Api.<metoda> → ścieżka z src/services/api.ts → dopasowanie w server/src/routes.
-API_METHODS=$(grep -oE "Api\.[A-Za-z0-9_]+\(" "$REGISTRY" | sed -E 's/^Api\.([A-Za-z0-9_]+)\(/\1/' | sort -u)
+# QG-01: skanujemy WSZYSTKIE pliki rejestru (silnik + pięć plików akcji), z
+# tego samego powodu co R7 wyżej.
+API_METHODS=$(grep -ohE "Api\.[A-Za-z0-9_]+\(" $ALL_REGISTRY_FILES | sed -E 's/^Api\.([A-Za-z0-9_]+)\(/\1/' | sort -u)
 while IFS= read -r m; do
   [ -n "$m" ] || continue
   DEF_LINE=$(grep -nE "^  $m: (async )?\(" "$API_CLIENT" | head -1 | cut -d: -f1)
@@ -237,12 +285,82 @@ else
     || err "$MANIFEST nie czyta z IDEA_ACTION_REGISTRY — manifest musi być GENEROWANY z rejestru, nie pisany ręcznie (R9)."
 fi
 
+# ── R11: ORIGINAL_ORDER == permutacja zbioru akcji (QG-01, 2026-08-10) ──────
+# Po podziale rejestru na pięć plików kolejność pozycji w Menu 3 i w menu
+# kontekstowym NIE wynika już z kolejności zapisu w źródle — odtwarza ją
+# tablica `ORIGINAL_ORDER` w $REGISTRY. Akcja dopisana do `registry/*Actions.ts`
+# bez wpisu w `ORIGINAL_ORDER` skompiluje się, zadziała i przejdzie R1-R10 —
+# po prostu wyląduje na końcu listy zamiast tam, gdzie autor ją widział. To
+# dokładnie ten rodzaj cichego rozjazdu, który ten strażnik ma czynić
+# NIEMOŻLIWYM: zbiór id-ków w `ORIGINAL_ORDER` musi być permutacją zbioru
+# id-ków sparsowanych z $ACTION_FILES — ani jednego brakującego, ani jednego
+# osieroconego (id usunięte z rejestru, ale zostawione w kolejności).
+ORDER_IDS=$(awk "
+  /^const ORIGINAL_ORDER/ { ino = 1; next }
+  ino && /^\]\)/          { ino = 0 }
+  !ino                    { next }
+  /^  '/                  { gsub(/^  '|',\$/, \"\"); print }
+" "$REGISTRY")
+ORDER_COUNT=$(printf '%s\n' "$ORDER_IDS" | grep -c . || true)
+if [ "${ORDER_COUNT:-0}" -eq 0 ]; then
+  err "nie sparsowałem ŻADNEJ pozycji z ORIGINAL_ORDER w $REGISTRY — kolejność menu przestała być pilnowana (R11)."
+else
+  ACTION_IDS_ONLY=$(printf '%s\n' "$ACTIONS" | cut -d'|' -f1 | grep -c . >/dev/null; printf '%s\n' "$ACTIONS" | cut -d'|' -f1)
+  MISSING_IN_ORDER=$(comm -23 <(printf '%s\n' "$ACTION_IDS_ONLY" | sort -u) <(printf '%s\n' "$ORDER_IDS" | sort -u))
+  ORPHAN_IN_ORDER=$(comm -13 <(printf '%s\n' "$ACTION_IDS_ONLY" | sort -u) <(printf '%s\n' "$ORDER_IDS" | sort -u))
+  DUP_IN_ORDER=$(printf '%s\n' "$ORDER_IDS" | sort | uniq -d)
+  while IFS= read -r id; do
+    [ -n "$id" ] || continue
+    err "akcja '$id' NIE MA wpisu w ORIGINAL_ORDER ($REGISTRY) → cicho spadnie na koniec Menu 3 / menu kontekstowego (R11)."
+  done <<EOF
+$MISSING_IN_ORDER
+EOF
+  while IFS= read -r id; do
+    [ -n "$id" ] || continue
+    err "ORIGINAL_ORDER ($REGISTRY) wymienia '$id', którego nie ma w żadnym z $ACTION_FILES → osierocony wpis kolejności (R11)."
+  done <<EOF
+$ORPHAN_IN_ORDER
+EOF
+  while IFS= read -r id; do
+    [ -n "$id" ] || continue
+    err "ORIGINAL_ORDER ($REGISTRY) wymienia '$id' więcej niż raz — kolejność niejednoznaczna (R11)."
+  done <<EOF
+$DUP_IN_ORDER
+EOF
+  [ -n "$MISSING_IN_ORDER$ORPHAN_IN_ORDER$DUP_IN_ORDER" ] \
+    || note "✓ ORIGINAL_ORDER = permutacja $ORDER_COUNT akcji (R11)"
+fi
+
+# ── R10: drift POZA rejestrem (companion, E02 DoD) ──────────────────────────
+# Domyślnie sprawdza tylko staged pliki w zakresie (szybko, jak reszta hooka);
+# `--verbose` tutaj przekłada się na pełny skan repo w companion skrypcie, bo
+# to jest tryb, w którym ktoś świadomie chce zobaczyć CAŁY stan R10, nie tylko
+# to, co akurat jest stagowane.
+COVERAGE_SCRIPT="scripts/check-action-coverage.sh"
+if [ -f "$COVERAGE_SCRIPT" ]; then
+  if [ "$VERBOSE" = "1" ]; then
+    COVERAGE_OUT=$(bash "$COVERAGE_SCRIPT" --all --report 2>&1)
+  else
+    COVERAGE_OUT=$(bash "$COVERAGE_SCRIPT" 2>&1)
+  fi
+  COVERAGE_RC=$?
+  if [ "$COVERAGE_RC" -ne 0 ]; then
+    printf '%s\n' "$COVERAGE_OUT" >&2
+    err "R10: check-action-coverage.sh znalazł NOWĄ akcjopodobną konstrukcję spoza rejestru (patrz wyżej)."
+  else
+    note "$COVERAGE_OUT"
+  fi
+else
+  err "brak $COVERAGE_SCRIPT — R10 (E02 DoD, machine check detects unregistered commands) nie ma czego uruchomić."
+fi
+
 # ── Podsumowanie ────────────────────────────────────────────────────────────
 if [ "$fail" -eq 1 ]; then
   echo "" >&2
   echo "  REJESTR AKCJI (docs/standards/idea-workspace/02_REJESTR_AKCJI.md, Z3):" >&2
-  echo "  akcja bez handlera/powierzchni, martwy event, endpoint bez routera albo" >&2
-  echo "  string akcji bez odbiornika w hooku = MARTWE KLIKNIĘCIE u klienta." >&2
+  echo "  akcja bez handlera/powierzchni, martwy event, endpoint bez routera, string" >&2
+  echo "  akcji bez odbiornika w hooku, albo (R10) onClick/onSelect z czasownikiem-" >&2
+  echo "  komendą bez traceability do rejestru = MARTWE/NIEZAREJESTROWANE KLIKNIĘCIE." >&2
   echo "  Napraw deklarację w $REGISTRY albo dorób odbiornik po stronie narzędzia." >&2
   exit 1
 fi

@@ -1,24 +1,17 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    // Strictness recovery plan — re-enable checks incrementally:
-    //   Phase 1 (now):  strictBindCallApply, strictFunctionTypes, noImplicitThis ✅
-    //   Phase 2 (next): noImplicitAny
-    //   Phase 3 (goal): strictNullChecks, strictPropertyInitialization → full strict
-
-    // Production emit follows the repository's currently accepted backend
-    // compatibility level. Tightening these flags is a separate recovery lane.
-    "strict": false,
-    "strictBindCallApply": false,
-    "strictFunctionTypes": false,
-    "noImplicitThis": false,
-
-    // Phase 2+ — still relaxed, requires targeted fixes
-    "noImplicitAny": false,
-    "strictNullChecks": false,
-    "strictPropertyInitialization": false,
-    "useUnknownInCatchVariables": false,
-    "noFallthroughCasesInSwitch": false,
+    // Keep production emit aligned with the source typecheck. In particular,
+    // discriminated result unions only narrow soundly with strict null checks.
+    "strict": true,
+    "strictBindCallApply": true,
+    "strictFunctionTypes": true,
+    "noImplicitThis": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictPropertyInitialization": true,
+    "useUnknownInCatchVariables": true,
+    "noFallthroughCasesInSwitch": true,
 
     // Code quality — relaxed for now
     "noUnusedLocals": false,
@@ -43,5 +36,5 @@
     "src/scripts/**",
     "**/*.js"
   ],
-  "include": ["src/**/*", "types/**/*", "scripts/migrate.postgres.ts"]
+  "include": ["src/**/*", "types/**/*", "scripts/migrate.postgres.ts", "scripts/release-migration-gate.ts"]
 }

@@ -114,6 +114,19 @@ async function unzipDocx(buffer: Buffer): Promise<{ document: string; styles: st
 }
 
 describe('documentDocxRenderer — named styles', () => {
+  it.each([
+    ['en', 'en-US'],
+    ['pl', 'pl-PL'],
+  ])('writes the schema language %s into inherited Word run properties', async (language, tag) => {
+    const buffer = await renderDocumentSchemaToDocxBuffer(makeSchema({ language }));
+    const zip = await JSZip.loadAsync(buffer);
+    const stylesXml = (await zip.file('word/styles.xml')?.async('string')) || '';
+
+    expect(stylesXml).toContain(`<w:lang w:val="${tag}"`);
+    expect(stylesXml).toContain(`w:eastAsia="${tag}"`);
+    expect(stylesXml).toContain(`w:bidi="${tag}"`);
+  });
+
   it('localizes Polish system labels in cover, TOC, sources and footer', async () => {
     const schema = makeSchema({
       title: 'Raport transformacji',
@@ -177,6 +190,60 @@ describe('documentDocxRenderer — named styles', () => {
     expect(document).not.toContain('&amp;quot;');
     expect(document).not.toContain('&amp;#x27;');
     expect(document).not.toContain('&amp;nbsp;');
+  });
+
+  it('suppresses title-equivalent purpose metadata and keeps a descriptive purpose', async () => {
+    const schema = makeSchema({
+      formattingSchema: makeFormattingSchema({ coverPage: false, toc: false }),
+      sections: [
+        {
+          sectionId: 'decision',
+          orderIndex: 0,
+          level: 1,
+          title: 'Executive decision',
+          purpose: 'Executive decision',
+          blocks: [{ blockId: 'decision-body', type: 'paragraph', content: { text: 'Defer.' } }],
+          sourceRefs: [],
+        },
+        {
+          sectionId: 'context',
+          orderIndex: 1,
+          level: 1,
+          title: 'Decision context',
+          purpose: 'Explains the decision boundary.',
+          blocks: [],
+          sourceRefs: [],
+        },
+      ],
+    });
+    const buffer = await renderDocumentSchemaToDocxBuffer(schema);
+    const { document } = await unzipDocx(buffer);
+    expect(document.match(/Executive decision/g) || []).toHaveLength(1);
+    expect(document).toContain('Explains the decision boundary.');
+  });
+
+  it('renders a compact static TOC and source traceability details', async () => {
+    const schema = makeSchema({
+      formattingSchema: makeFormattingSchema({ coverPage: false, toc: true }),
+      sourceRefs: [
+        {
+          sourceType: 'decision_pack',
+          sourceId: 'SRC-1',
+          sourceTitle: 'Board mandate',
+          sourceVersion: 'v3',
+          sourceSnapshotId: 'snap-3',
+          sourceExcerpt: 'Approve, defer, or reject at the current decision gate.',
+        },
+      ],
+    });
+    const buffer = await renderDocumentSchemaToDocxBuffer(schema);
+    const { document } = await unzipDocx(buffer);
+    expect(document).toContain('Table of Contents');
+    expect(document).toContain('1. Executive Summary');
+    expect(document).toContain('decision_pack#SRC-1 — Board mandate · v3 · snapshot snap-3');
+    expect(document).toContain('Approve, defer, or reject at the current decision gate.');
+    // The compact TOC no longer consumes a dedicated mostly-empty page.
+    expect(document.match(/w:type="page"/g) || []).toHaveLength(0);
   });
 
   it('produces a non-empty buffer with ZIP magic and Office Open XML content type', async () => {

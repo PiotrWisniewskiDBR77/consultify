@@ -1,0 +1,1384 @@
+{
+  "generatedAt": "2026-08-10T07:06:30.211Z",
+  "wallClockMs": 1730,
+  "company": "Grupa Apator SA",
+  "sourceProvenance": {
+    "sourceFile": "docs/validation/finance-v3/generated/STATEMENT_IMPORT_SAMPLE_AUDIT_2026-03-15.json",
+    "note": "Distilled Apator subset. Values are VERBATIM from the committed extraction audit; nothing recomputed here."
+  },
+  "realLineValuesLoaded": 280,
+  "p0TaxonomySize": 31,
+  "passA": {
+    "ok": true,
+    "businessVersionId": "c1d23b5f-b7d8-4524-9d41-f2233e0a8fee",
+    "buckets": {
+      "MAPPED": 68,
+      "EXCLUDED": 212
+    },
+    "error": null,
+    "excludedNoP0Target": 212,
+    "distinctExcludedExtractorIds": 89,
+    "kpis": [
+      {
+        "period": "FY2023",
+        "kpi": "CASH_CONVERSION_CYCLE",
+        "status": "MISSING",
+        "value": null,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "CASH_RATIO",
+        "status": "PRESENT_NONZERO",
+        "value": 0.06442290679615467,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "CURRENT_RATIO",
+        "status": "PRESENT_NONZERO",
+        "value": 1.3552176684856025,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "DEBT_TO_EBITDA",
+        "status": "MISSING",
+        "value": null,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "DEBT_TO_EQUITY",
+        "status": "PRESENT_NONZERO",
+        "value": 0.1486133244778052,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "DIO",
+        "status": "NOT_APPLICABLE",
+        "value": null,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "DPO",
+        "status": "NOT_APPLICABLE",
+        "value": null,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "DSO",
+        "status": "MISSING",
+        "value": null,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "EBITDA_MARGIN_PCT",
+        "status": "MISSING",
+        "value": null,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "FCF_MARGIN",
+        "status": "MISSING",
+        "value": null,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "GROSS_MARGIN_PCT",
+        "status": "PRESENT_NONZERO",
+        "value": 0.2249682106696073,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "INTEREST_COVERAGE",
+        "status": "PRESENT_NONZERO",
+        "value": -3.188115665713378,
+        "qualityFlag": "NEGATIVE_DENOMINATOR"
+      },
+      {
+        "period": "FY2023",
+        "kpi": "NET_MARGIN_PCT",
+        "status": "MISSING",
+        "value": null,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "OPERATING_CASH_FLOW_MARGIN",
+        "status": "MISSING",
+        "value": null,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "QUICK_RATIO",
+        "status": "PRESENT_NONZERO",
+        "value": 0.6747428167012574,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "REVENUE_GROWTH_YOY",
+        "status": "PRESENT_NONZERO",
+        "value": 0.05119468437555463,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "ROA",
+        "status": "MISSING",
+        "value": null,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "ROE",
+        "status": "MISSING",
+        "value": null,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "CASH_CONVERSION_CYCLE",
+        "status": "MISSING",
+        "value": null,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "CASH_RATIO",
+        "status": "PRESENT_NONZERO",
+        "value": 0.057225734137430914,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "CURRENT_RATIO",
+        "status": "PRESENT_NONZERO",
+        "value": 1.5098148788200827,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "DEBT_TO_EBITDA",
+        "status": "MISSING",
+        "value": null,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "DEBT_TO_EQUITY",
+        "status": "PRESENT_NONZERO",
+        "value": 0.10679120070480774,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "DIO",
+        "status": "NOT_APPLICABLE",
+        "value": null,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "DPO",
+        "status": "NOT_APPLICABLE",
+        "value": null,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "DSO",
+        "status": "MISSING",
+        "value": null,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "EBITDA_MARGIN_PCT",
+        "status": "MISSING",
+        "value": null,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "FCF_MARGIN",
+        "status": "MISSING",
+        "value": null,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "GROSS_MARGIN_PCT",
+        "status": "PRESENT_NONZERO",
+        "value": 0.25634000353478054,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "INTEREST_COVERAGE",
+        "status": "PRESENT_NONZERO",
+        "value": -11.203316225819187,
+        "qualityFlag": "NEGATIVE_DENOMINATOR"
+      },
+      {
+        "period": "FY2024",
+        "kpi": "NET_MARGIN_PCT",
+        "status": "MISSING",
+        "value": null,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "OPERATING_CASH_FLOW_MARGIN",
+        "status": "MISSING",
+        "value": null,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "QUICK_RATIO",
+        "status": "PRESENT_NONZERO",
+        "value": 0.7815402108010504,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "REVENUE_GROWTH_YOY",
+        "status": "PRESENT_NONZERO",
+        "value": 0.07969316920717498,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "ROA",
+        "status": "MISSING",
+        "value": null,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "ROE",
+        "status": "MISSING",
+        "value": null,
+        "qualityFlag": null
+      }
+    ]
+  },
+  "passB": {
+    "ok": true,
+    "businessVersionId": "f973f131-e90a-4579-b009-80aeaffee258",
+    "buckets": {
+      "MAPPED": 84
+    },
+    "error": null,
+    "derivationLedger": [
+      {
+        "year": 2022,
+        "code": "NET_INCOME",
+        "value": 7205,
+        "derivation": "as reported: fsl-pl-net-continuing",
+        "status": "OK"
+      },
+      {
+        "year": 2022,
+        "code": "DEPRECIATION",
+        "value": 14616,
+        "derivation": "sum of CF add-backs: intangibles + PPE + right-of-use amortisation",
+        "status": "OK"
+      },
+      {
+        "year": 2022,
+        "code": "EBITDA",
+        "value": 45956,
+        "derivation": "EBIT + D&A (fsl-pl-ebit + summed CF depreciation add-backs)",
+        "status": "OK"
+      },
+      {
+        "year": 2022,
+        "code": "CFO",
+        "value": 41164,
+        "derivation": "net change in cash - CFI - CFF (Apator PDFs do not expose a single CFO subtotal line to the extractor)",
+        "status": "OK"
+      },
+      {
+        "year": 2022,
+        "code": "FCF",
+        "value": 2253,
+        "derivation": "CFO + capex (capex reported negative)",
+        "status": "OK"
+      },
+      {
+        "year": 2022,
+        "code": "OPEX",
+        "value": 179171,
+        "derivation": "selling + general&admin costs, sign-normalised to positive",
+        "status": "OK"
+      },
+      {
+        "year": 2022,
+        "code": "WORKING_CAPITAL",
+        "value": 56343,
+        "derivation": "current assets - current liabilities",
+        "status": "OK"
+      },
+      {
+        "year": 2022,
+        "code": "INTEREST_EXPENSE",
+        "value": 14690,
+        "derivation": "CF interest-cost add-back (fsl-cf-operating-interest-cost) — the true interest expense; the extractor put NET finance result on fsl-pl-interest",
+        "status": "OK"
+      },
+      {
+        "year": 2022,
+        "code": "COGS",
+        "value": 857531,
+        "derivation": "as reported, sign-normalised to positive (P0 KPI formulas assume positive cost convention — see finding RC-04)",
+        "status": "OK"
+      },
+      {
+        "year": 2023,
+        "code": "NET_INCOME",
+        "value": 8504,
+        "derivation": "as reported: fsl-pl-net-continuing",
+        "status": "OK"
+      },
+      {
+        "year": 2023,
+        "code": "DEPRECIATION",
+        "value": 16893,
+        "derivation": "sum of CF add-backs: intangibles + PPE + right-of-use amortisation",
+        "status": "OK"
+      },
+      {
+        "year": 2023,
+        "code": "EBITDA",
+        "value": 57025,
+        "derivation": "EBIT + D&A (fsl-pl-ebit + summed CF depreciation add-backs)",
+        "status": "OK"
+      },
+      {
+        "year": 2023,
+        "code": "CFO",
+        "value": null,
+        "derivation": "net change in cash - CFI - CFF (Apator PDFs do not expose a single CFO subtotal line to the extractor)",
+        "status": "NOT_DERIVABLE"
+      },
+      {
+        "year": 2023,
+        "code": "FCF",
+        "value": null,
+        "derivation": "CFO + capex (capex reported negative)",
+        "status": "NOT_DERIVABLE"
+      },
+      {
+        "year": 2023,
+        "code": "OPEX",
+        "value": 198558,
+        "derivation": "selling + general&admin costs, sign-normalised to positive",
+        "status": "OK"
+      },
+      {
+        "year": 2023,
+        "code": "WORKING_CAPITAL",
+        "value": 126482,
+        "derivation": "current assets - current liabilities",
+        "status": "OK"
+      },
+      {
+        "year": 2023,
+        "code": "INTEREST_EXPENSE",
+        "value": 15676,
+        "derivation": "CF interest-cost add-back (fsl-cf-operating-interest-cost) — the true interest expense; the extractor put NET finance result on fsl-pl-interest",
+        "status": "OK"
+      },
+      {
+        "year": 2023,
+        "code": "COGS",
+        "value": 881346,
+        "derivation": "as reported, sign-normalised to positive (P0 KPI formulas assume positive cost convention — see finding RC-04)",
+        "status": "OK"
+      },
+      {
+        "year": 2024,
+        "code": "NET_INCOME",
+        "value": 73214,
+        "derivation": "EBT + tax expense (tax reported negative): fsl-pl-ebt + fsl-pl-tax",
+        "status": "OK"
+      },
+      {
+        "year": 2024,
+        "code": "DEPRECIATION",
+        "value": 57312,
+        "derivation": "sum of CF add-backs: intangibles + PPE + right-of-use amortisation",
+        "status": "OK"
+      },
+      {
+        "year": 2024,
+        "code": "EBITDA",
+        "value": 142446,
+        "derivation": "EBIT + D&A (fsl-pl-ebit + summed CF depreciation add-backs)",
+        "status": "OK"
+      },
+      {
+        "year": 2024,
+        "code": "CFO",
+        "value": 22049,
+        "derivation": "net change in cash - CFI - CFF (Apator PDFs do not expose a single CFO subtotal line to the extractor)",
+        "status": "OK"
+      },
+      {
+        "year": 2024,
+        "code": "FCF",
+        "value": -21642,
+        "derivation": "CFO + capex (capex reported negative)",
+        "status": "OK"
+      },
+      {
+        "year": 2024,
+        "code": "OPEX",
+        "value": 211275,
+        "derivation": "selling + general&admin costs, sign-normalised to positive",
+        "status": "OK"
+      },
+      {
+        "year": 2024,
+        "code": "WORKING_CAPITAL",
+        "value": 157829,
+        "derivation": "current assets - current liabilities",
+        "status": "OK"
+      },
+      {
+        "year": 2024,
+        "code": "INTEREST_EXPENSE",
+        "value": 9877,
+        "derivation": "CF interest-cost add-back (fsl-cf-operating-interest-cost) — the true interest expense; the extractor put NET finance result on fsl-pl-interest",
+        "status": "OK"
+      },
+      {
+        "year": 2024,
+        "code": "COGS",
+        "value": 913065,
+        "derivation": "as reported, sign-normalised to positive (P0 KPI formulas assume positive cost convention — see finding RC-04)",
+        "status": "OK"
+      }
+    ],
+    "kpis": [
+      {
+        "period": "FY2023",
+        "kpi": "CASH_CONVERSION_CYCLE",
+        "status": "MISSING",
+        "value": null,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "CASH_RATIO",
+        "status": "PRESENT_NONZERO",
+        "value": 0.06442290679615467,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "CURRENT_RATIO",
+        "status": "PRESENT_NONZERO",
+        "value": 1.3552176684856025,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "DEBT_TO_EBITDA",
+        "status": "MISSING",
+        "value": null,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "DEBT_TO_EQUITY",
+        "status": "PRESENT_NONZERO",
+        "value": 0.1486133244778052,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "DIO",
+        "status": "PRESENT_NONZERO",
+        "value": 102.27438769790751,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "DPO",
+        "status": "PRESENT_NONZERO",
+        "value": 44.62040163567997,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "DSO",
+        "status": "MISSING",
+        "value": null,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "EBITDA_MARGIN_PCT",
+        "status": "PRESENT_NONZERO",
+        "value": 0.05014623971353548,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "FCF_MARGIN",
+        "status": "MISSING",
+        "value": null,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "GROSS_MARGIN_PCT",
+        "status": "PRESENT_NONZERO",
+        "value": 0.2249682106696073,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "INTEREST_COVERAGE",
+        "status": "PRESENT_NONZERO",
+        "value": 2.56009186016841,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "NET_MARGIN_PCT",
+        "status": "PRESENT_NONZERO",
+        "value": 0.007478187155175901,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "OPERATING_CASH_FLOW_MARGIN",
+        "status": "MISSING",
+        "value": null,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "QUICK_RATIO",
+        "status": "PRESENT_NONZERO",
+        "value": 0.6747428167012574,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "REVENUE_GROWTH_YOY",
+        "status": "PRESENT_NONZERO",
+        "value": 0.05119468437555463,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "ROA",
+        "status": "PRESENT_NONZERO",
+        "value": 0.00843130110621169,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "ROE",
+        "status": "PRESENT_NONZERO",
+        "value": 0.015774863171055427,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "CASH_CONVERSION_CYCLE",
+        "status": "MISSING",
+        "value": null,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "CASH_RATIO",
+        "status": "PRESENT_NONZERO",
+        "value": 0.057225734137430914,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "CURRENT_RATIO",
+        "status": "PRESENT_NONZERO",
+        "value": 1.5098148788200827,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "DEBT_TO_EBITDA",
+        "status": "MISSING",
+        "value": null,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "DEBT_TO_EQUITY",
+        "status": "PRESENT_NONZERO",
+        "value": 0.10679120070480774,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "DIO",
+        "status": "PRESENT_NONZERO",
+        "value": 93.74945704851243,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "DPO",
+        "status": "PRESENT_NONZERO",
+        "value": 18.902574296463012,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "DSO",
+        "status": "MISSING",
+        "value": null,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "EBITDA_MARGIN_PCT",
+        "status": "PRESENT_NONZERO",
+        "value": 0.11601736114787518,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "FCF_MARGIN",
+        "status": "PRESENT_NONZERO",
+        "value": -0.017626663647714324,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "GROSS_MARGIN_PCT",
+        "status": "PRESENT_NONZERO",
+        "value": 0.25634000353478054,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "INTEREST_COVERAGE",
+        "status": "PRESENT_NONZERO",
+        "value": 8.6194188518781,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "NET_MARGIN_PCT",
+        "status": "PRESENT_NONZERO",
+        "value": 0.05963028150373147,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "OPERATING_CASH_FLOW_MARGIN",
+        "status": "PRESENT_NONZERO",
+        "value": 0.017958151130600366,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "QUICK_RATIO",
+        "status": "PRESENT_NONZERO",
+        "value": 0.7815402108010504,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "REVENUE_GROWTH_YOY",
+        "status": "PRESENT_NONZERO",
+        "value": 0.07969316920717498,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "ROA",
+        "status": "PRESENT_NONZERO",
+        "value": 0.07545676365781954,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "ROE",
+        "status": "PRESENT_NONZERO",
+        "value": 0.12940765780694197,
+        "qualityFlag": null
+      }
+    ]
+  },
+  "scaleControlUnits": {
+    "ok": true,
+    "businessVersionId": "84eef2d8-556e-45e2-8af1-25d8c59f9e64",
+    "error": null,
+    "kpis": [
+      {
+        "period": "FY2023",
+        "kpi": "CASH_CONVERSION_CYCLE",
+        "status": "MISSING",
+        "value": null,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "CASH_RATIO",
+        "status": "PRESENT_NONZERO",
+        "value": 0.06442290679615467,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "CURRENT_RATIO",
+        "status": "PRESENT_NONZERO",
+        "value": 1.3552176684856025,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "DEBT_TO_EBITDA",
+        "status": "MISSING",
+        "value": null,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "DEBT_TO_EQUITY",
+        "status": "PRESENT_NONZERO",
+        "value": 0.1486133244778052,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "DIO",
+        "status": "PRESENT_NONZERO",
+        "value": 102.27438769790753,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "DPO",
+        "status": "PRESENT_NONZERO",
+        "value": 44.620401635679976,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "DSO",
+        "status": "MISSING",
+        "value": null,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "EBITDA_MARGIN_PCT",
+        "status": "PRESENT_NONZERO",
+        "value": 0.05014623971353548,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "FCF_MARGIN",
+        "status": "MISSING",
+        "value": null,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "GROSS_MARGIN_PCT",
+        "status": "PRESENT_NONZERO",
+        "value": 0.2249682106696073,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "INTEREST_COVERAGE",
+        "status": "PRESENT_NONZERO",
+        "value": 2.56009186016841,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "NET_MARGIN_PCT",
+        "status": "PRESENT_NONZERO",
+        "value": 0.007478187155175901,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "OPERATING_CASH_FLOW_MARGIN",
+        "status": "MISSING",
+        "value": null,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "QUICK_RATIO",
+        "status": "PRESENT_NONZERO",
+        "value": 0.6747428167012574,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "REVENUE_GROWTH_YOY",
+        "status": "PRESENT_NONZERO",
+        "value": 0.05119468437555463,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "ROA",
+        "status": "PRESENT_NONZERO",
+        "value": 0.00843130110621169,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2023",
+        "kpi": "ROE",
+        "status": "PRESENT_NONZERO",
+        "value": 0.015774863171055427,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "CASH_CONVERSION_CYCLE",
+        "status": "MISSING",
+        "value": null,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "CASH_RATIO",
+        "status": "PRESENT_NONZERO",
+        "value": 0.057225734137430914,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "CURRENT_RATIO",
+        "status": "PRESENT_NONZERO",
+        "value": 1.5098148788200827,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "DEBT_TO_EBITDA",
+        "status": "MISSING",
+        "value": null,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "DEBT_TO_EQUITY",
+        "status": "PRESENT_NONZERO",
+        "value": 0.10679120070480774,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "DIO",
+        "status": "PRESENT_NONZERO",
+        "value": 93.74945704851243,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "DPO",
+        "status": "PRESENT_NONZERO",
+        "value": 18.902574296463012,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "DSO",
+        "status": "MISSING",
+        "value": null,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "EBITDA_MARGIN_PCT",
+        "status": "PRESENT_NONZERO",
+        "value": 0.11601736114787518,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "FCF_MARGIN",
+        "status": "PRESENT_NONZERO",
+        "value": -0.017626663647714324,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "GROSS_MARGIN_PCT",
+        "status": "PRESENT_NONZERO",
+        "value": 0.25634000353478054,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "INTEREST_COVERAGE",
+        "status": "PRESENT_NONZERO",
+        "value": 8.6194188518781,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "NET_MARGIN_PCT",
+        "status": "PRESENT_NONZERO",
+        "value": 0.05963028150373147,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "OPERATING_CASH_FLOW_MARGIN",
+        "status": "PRESENT_NONZERO",
+        "value": 0.017958151130600366,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "QUICK_RATIO",
+        "status": "PRESENT_NONZERO",
+        "value": 0.7815402108010504,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "REVENUE_GROWTH_YOY",
+        "status": "PRESENT_NONZERO",
+        "value": 0.07969316920717498,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "ROA",
+        "status": "PRESENT_NONZERO",
+        "value": 0.07545676365781954,
+        "qualityFlag": null
+      },
+      {
+        "period": "FY2024",
+        "kpi": "ROE",
+        "status": "PRESENT_NONZERO",
+        "value": 0.12940765780694197,
+        "qualityFlag": null
+      }
+    ]
+  },
+  "apatorScaleProof": {
+    "rows": [
+      {
+        "lineCode": "CASH",
+        "period": "FY2024",
+        "unit": "THOUSANDS",
+        "multiplier": 1,
+        "storedValueDecimal": 17716,
+        "fullUnitValuePLN": 17716000,
+        "naiveUnitBlindReadPLN": 17716,
+        "ratioCorrectOverNaive": 1000,
+        "correctScaleBand": "millions"
+      },
+      {
+        "lineCode": "EBIT",
+        "period": "FY2024",
+        "unit": "THOUSANDS",
+        "multiplier": 1,
+        "storedValueDecimal": 85134,
+        "fullUnitValuePLN": 85134000,
+        "naiveUnitBlindReadPLN": 85134,
+        "ratioCorrectOverNaive": 1000,
+        "correctScaleBand": "millions"
+      },
+      {
+        "lineCode": "EBITDA",
+        "period": "FY2024",
+        "unit": "THOUSANDS",
+        "multiplier": 1,
+        "storedValueDecimal": 142446,
+        "fullUnitValuePLN": 142446000,
+        "naiveUnitBlindReadPLN": 142446,
+        "ratioCorrectOverNaive": 1000,
+        "correctScaleBand": "hundreds of millions or more"
+      },
+      {
+        "lineCode": "EQUITY",
+        "period": "FY2024",
+        "unit": "THOUSANDS",
+        "multiplier": 1,
+        "storedValueDecimal": 592502,
+        "fullUnitValuePLN": 592502000,
+        "naiveUnitBlindReadPLN": 592502,
+        "ratioCorrectOverNaive": 1000,
+        "correctScaleBand": "hundreds of millions or more"
+      },
+      {
+        "lineCode": "LONG_TERM_DEBT",
+        "period": "FY2024",
+        "unit": "THOUSANDS",
+        "multiplier": 1,
+        "storedValueDecimal": 63274,
+        "fullUnitValuePLN": 63274000,
+        "naiveUnitBlindReadPLN": 63274,
+        "ratioCorrectOverNaive": 1000,
+        "correctScaleBand": "millions"
+      },
+      {
+        "lineCode": "NET_INCOME",
+        "period": "FY2024",
+        "unit": "THOUSANDS",
+        "multiplier": 1,
+        "storedValueDecimal": 73214,
+        "fullUnitValuePLN": 73214000,
+        "naiveUnitBlindReadPLN": 73214,
+        "ratioCorrectOverNaive": 1000,
+        "correctScaleBand": "millions"
+      },
+      {
+        "lineCode": "REVENUE",
+        "period": "FY2024",
+        "unit": "THOUSANDS",
+        "multiplier": 1,
+        "storedValueDecimal": 1227799,
+        "fullUnitValuePLN": 1227799000,
+        "naiveUnitBlindReadPLN": 1227799,
+        "ratioCorrectOverNaive": 1000,
+        "correctScaleBand": "hundreds of millions or more"
+      },
+      {
+        "lineCode": "TOTAL_ASSETS",
+        "period": "FY2024",
+        "unit": "THOUSANDS",
+        "multiplier": 1,
+        "storedValueDecimal": 965357,
+        "fullUnitValuePLN": 965357000,
+        "naiveUnitBlindReadPLN": 965357,
+        "ratioCorrectOverNaive": 1000,
+        "correctScaleBand": "hundreds of millions or more"
+      }
+    ],
+    "verdict": {
+      "anchorFromHandoff": "Apator must keep the correct scale, ~PLN 466 million, not 466 thousand",
+      "equityFullPLN": 592502000,
+      "revenueFullPLN": 1227799000,
+      "allInHundredsOfMillionsOrMore": true,
+      "passed": true
+    },
+    "kpiInvariance": {
+      "compared": 36,
+      "identical": 36,
+      "mismatches": []
+    }
+  },
+  "probe1RetainedEarningsRollforward": {
+    "intent": "Add the real, reported dividends-paid line so the RETAINED_EARNINGS roll-forward constraint trigger actually fires",
+    "outcome": "REJECTED",
+    "error": "finance_stmt_lines: retained earnings roll-forward failed for version=1519ef2c-460a-45df-b2e9-43e11d7f7167 entity=10bbbe42-8560-4a5f-a0ab-66be09e5a425 period=58ebfcb8-e05c-4564-bd30-b2ad1e71faae scope=CONSOLIDATED: opening=-29215 + NI=8504 - dividends=14612 != closing=-72699 (diff=37376, tolerance=1000)",
+    "handComputed": [
+      {
+        "year": 2023,
+        "openingRE": -29215,
+        "netIncome": 8504,
+        "dividends": 14612,
+        "closingREReported": -72699,
+        "closingREImplied": -35323,
+        "gapThousandsPLN": -37376
+      },
+      {
+        "year": 2024,
+        "openingRE": -72699,
+        "netIncome": 73214,
+        "dividends": 17428,
+        "closingREReported": 8590,
+        "closingREImplied": -16913,
+        "gapThousandsPLN": 25503
+      }
+    ]
+  },
+  "probe2BalanceTolerance": {
+    "unitValues": {
+      "thousands": "1000",
+      "units": "1"
+    },
+    "results": [
+      {
+        "injectedImbalanceThousandsPLN": 500,
+        "injectedImbalanceFullPLN": 500000,
+        "accepted": true,
+        "error": null
+      },
+      {
+        "injectedImbalanceThousandsPLN": 1500,
+        "injectedImbalanceFullPLN": 1500000,
+        "accepted": false,
+        "error": "finance_stmt_lines: balance check failed for version=bdadf231-cd1d-46d3-bd4c-b53a25414c0a entity=dfdeeed5-5ebf-4138-bc17-f3241b49c8c6 period=f59e72c0-628f-43f3-8717-d1c669f84faf basis=FULL_YEAR scope=CONSOLIDATED: assets=965357 liab+equity=966857 diff=1500 tolerance=1000"
+      }
+    ]
+  },
+  "probe3SignConvention": {
+    "ok": true,
+    "storedSignConventions": [
+      {
+        "line_code": "COGS",
+        "sign_convention": "CONTRA",
+        "value_decimal": "-913065"
+      },
+      {
+        "line_code": "REVENUE",
+        "sign_convention": "NATURAL",
+        "value_decimal": "1227799"
+      }
+    ],
+    "dio": {
+      "period": "FY2024",
+      "kpi": "DIO",
+      "status": "NOT_APPLICABLE",
+      "value": null,
+      "qualityFlag": null
+    },
+    "verdict": "IGNORED"
+  },
+  "probe4RealFcffValuationScale": {
+    "disclaimer": "WACC/g are an ILLUSTRATIVE sensitivity band, not a valuation opinion. The point of this probe is ORDER OF MAGNITUDE: every cell must land in hundreds of millions / billions of PLN, never in thousands.",
+    "realInputsFullPLN": {
+      "ebit": 85134000,
+      "effectiveTaxRate": 0.1051602336894082,
+      "dAndA": 57312000,
+      "capex": 43691000,
+      "deltaWorkingCapital": 31347000,
+      "fcff": 58455288.66508593,
+      "netDebt": 155751000,
+      "cash": 17716000
+    },
+    "grid": [
+      {
+        "waccPct": 8,
+        "gPct": 1,
+        "enterpriseValuePLN": 835075552.3583702,
+        "equityValuePLN": 697040552.3583702,
+        "naiveUnitBlindEVPLN": 835075.5523583702
+      },
+      {
+        "waccPct": 8,
+        "gPct": 2,
+        "enterpriseValuePLN": 974254811.0847654,
+        "equityValuePLN": 836219811.0847654,
+        "naiveUnitBlindEVPLN": 974254.8110847655
+      },
+      {
+        "waccPct": 8,
+        "gPct": 3,
+        "enterpriseValuePLN": 1169105773.3017182,
+        "equityValuePLN": 1031070773.3017182,
+        "naiveUnitBlindEVPLN": 1169105.7733017183
+      },
+      {
+        "waccPct": 9,
+        "gPct": 1,
+        "enterpriseValuePLN": 730691108.3135741,
+        "equityValuePLN": 592656108.3135741,
+        "naiveUnitBlindEVPLN": 730691.1083135741
+      },
+      {
+        "waccPct": 9,
+        "gPct": 2,
+        "enterpriseValuePLN": 835075552.3583705,
+        "equityValuePLN": 697040552.3583705,
+        "naiveUnitBlindEVPLN": 835075.5523583705
+      },
+      {
+        "waccPct": 9,
+        "gPct": 3,
+        "enterpriseValuePLN": 974254811.0847654,
+        "equityValuePLN": 836219811.0847654,
+        "naiveUnitBlindEVPLN": 974254.8110847655
+      },
+      {
+        "waccPct": 10,
+        "gPct": 1,
+        "enterpriseValuePLN": 649503207.3898435,
+        "equityValuePLN": 511468207.38984346,
+        "naiveUnitBlindEVPLN": 649503.2073898434
+      },
+      {
+        "waccPct": 10,
+        "gPct": 2,
+        "enterpriseValuePLN": 730691108.313574,
+        "equityValuePLN": 592656108.313574,
+        "naiveUnitBlindEVPLN": 730691.108313574
+      },
+      {
+        "waccPct": 10,
+        "gPct": 3,
+        "enterpriseValuePLN": 835075552.3583703,
+        "equityValuePLN": 697040552.3583703,
+        "naiveUnitBlindEVPLN": 835075.5523583703
+      },
+      {
+        "waccPct": 11,
+        "gPct": 1,
+        "enterpriseValuePLN": 584552886.6508591,
+        "equityValuePLN": 446517886.6508591,
+        "naiveUnitBlindEVPLN": 584552.8866508591
+      },
+      {
+        "waccPct": 11,
+        "gPct": 2,
+        "enterpriseValuePLN": 649503207.3898436,
+        "equityValuePLN": 511468207.3898436,
+        "naiveUnitBlindEVPLN": 649503.2073898435
+      },
+      {
+        "waccPct": 11,
+        "gPct": 3,
+        "enterpriseValuePLN": 730691108.3135741,
+        "equityValuePLN": 592656108.3135741,
+        "naiveUnitBlindEVPLN": 730691.1083135741
+      },
+      {
+        "waccPct": 12,
+        "gPct": 1,
+        "enterpriseValuePLN": 531411715.1371447,
+        "equityValuePLN": 393376715.1371447,
+        "naiveUnitBlindEVPLN": 531411.7151371447
+      },
+      {
+        "waccPct": 12,
+        "gPct": 2,
+        "enterpriseValuePLN": 584552886.6508594,
+        "equityValuePLN": 446517886.65085936,
+        "naiveUnitBlindEVPLN": 584552.8866508594
+      },
+      {
+        "waccPct": 12,
+        "gPct": 3,
+        "enterpriseValuePLN": 649503207.3898436,
+        "equityValuePLN": 511468207.3898436,
+        "naiveUnitBlindEVPLN": 649503.2073898435
+      }
+    ],
+    "minEVPLN": 531411715.1371447,
+    "maxEVPLN": 1169105773.3017182,
+    "allCellsAtLeast100mPLN": true,
+    "naiveUnitBlindWouldBeBelow1mPLN": true
+  },
+  "dataQuality": [
+    {
+      "id": "DQ-AP",
+      "observation": "trade payables",
+      "values": [
+        {
+          "year": 2022,
+          "ap": 121894
+        },
+        {
+          "year": 2023,
+          "ap": 93591
+        },
+        {
+          "year": 2024,
+          "ap": 722
+        }
+      ]
+    },
+    {
+      "id": "DQ-MISSING",
+      "missingPerYear": [
+        {
+          "year": 2022,
+          "missingP0Codes": [
+            "EBITDA",
+            "DEPRECIATION",
+            "TAX_EXPENSE",
+            "NET_INCOME",
+            "WORKING_CAPITAL",
+            "CFO",
+            "FCF"
+          ]
+        },
+        {
+          "year": 2023,
+          "missingP0Codes": [
+            "EBITDA",
+            "DEPRECIATION",
+            "TAX_EXPENSE",
+            "NET_INCOME",
+            "AR",
+            "WORKING_CAPITAL",
+            "CFO",
+            "CFF",
+            "FCF"
+          ]
+        },
+        {
+          "year": 2024,
+          "missingP0Codes": [
+            "EBITDA",
+            "DEPRECIATION",
+            "NET_INCOME",
+            "WORKING_CAPITAL",
+            "CFO",
+            "FCF"
+          ]
+        }
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "RC-01",
+      "severity": "P1",
+      "title": "P0 canonical taxonomy carries only a fraction of a real IFRS statement",
+      "detail": "212 of 280 real Apator line-values (89 distinct extractor canonical ids) have NO target in the 31-code Finance v3 P0 taxonomy (financial_statement_lines, is_system). The real extractor emits a 251-entry registry (server/src/services/financeCanonicalRegistry.ts). Everything below EBIT-level detail (leasing, goodwill, ROU, deferred tax, WC movements, OCI) is dropped at the Gate D boundary."
+    },
+    {
+      "id": "RC-02",
+      "severity": "P1",
+      "title": "RETAINED_EARNINGS roll-forward constraint rejects a real, correctly-filed IFRS consolidated pack",
+      "detail": "The P0 identity openingRE + NI - dividends = closingRE does not hold for Apator's real consolidated equity (transfers to/from other reserves, treasury shares, OCI, NCI). Adding the real dividends line makes the whole import fail: finance_stmt_lines: retained earnings roll-forward failed for version=1519ef2c-460a-45df-b2e9-43e11d7f7167 entity=10bbbe42-8560-4a5f-a0ab-66be09e5a425 period=58ebfcb8-e05c-4564-bd30-b2ad1e71faae scope=CONSOLIDATED: opening=-29215 + NI=8504 - dividends=14612 != closing=-72699 (diff=37376, tolerance=1000)"
+    },
+    {
+      "id": "RC-03",
+      "severity": "P1",
+      "title": "Balance-check tolerance is expressed in raw stored units, so it scales 1000x with the declared unit",
+      "detail": "finance_stmt_balance_tolerance() returns finance_stmt_unit_value(unit) (=1000 for THOUSANDS) and compares it against value_decimal, which is ALREADY expressed in thousands. At unit=THOUSANDS the Assets=L+E check therefore tolerates up to 1,000,000 PLN of imbalance instead of the intended 1,000 PLN (\"1 full presentation unit\"). Probe: a 500 tys. PLN (=500,000 PLN) imbalance on the real Apator FY2024 balance sheet was ACCEPTED. At unit=UNITS the same code tolerates 1 PLN. Same unit-multiplier class of bug as the Apator 1000x finding, in the opposite direction."
+    },
+    {
+      "id": "RC-04",
+      "severity": "P1",
+      "title": "finance_stmt_lines.sign_convention is written but never applied by the KPI engine",
+      "detail": "Real filings carry costs as negatives (Apator FY2024 COGS = -913065 tys. PLN); the P0 KPI formulas assume the positive-cost convention the GoldCo oracle uses. Declaring the line sign_convention='CONTRA' at map time is accepted and persisted, but kpiComputeService.loadStmtLineCells() selects only (entity, canonical_line, period, scope, basis, value_status, value_decimal) — sign_convention is not in the projection and is never applied. Result: DIO/DPO stay NOT_APPLICABLE (negative denominator) even though the analyst declared the correct convention. The only way through is to physically flip the stored value, which loses the as-filed figure."
+    },
+    {
+      "id": "RC-05",
+      "severity": "P1",
+      "title": "Real extraction produced an implausible AP for FY2024 and the engine computes on it without complaint",
+      "detail": "fsl-bs-ap FY2024 = 722 tys. PLN vs FY2023 = 93591 and FY2022 = 121894. A >99% one-year collapse in trade payables for a group with PLN 1.23bn revenue is an extraction defect, not a business event. No readiness check, reconciliation rule or KPI quality flag catches it — DPO is computed and stored as a normal value."
+    },
+    {
+      "id": "RC-06",
+      "severity": "P2",
+      "title": "A required KPI input is missing for one year only, silently degrading two KPIs",
+      "detail": "fsl-bs-ar is extracted for FY2022 (189804) and FY2024 (185495) but NOT for FY2023 — the same statement type from the same issuer, one year apart. Average-balance DSO and CASH_CONVERSION_CYCLE for FY2024 therefore cannot be computed. This is an extractor coverage gap, and its downstream effect is visible only as a MISSING KPI status."
+    }
+  ]
+}

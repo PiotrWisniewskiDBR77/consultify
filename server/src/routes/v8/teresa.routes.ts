@@ -18,9 +18,13 @@
  */
 import type { Response } from 'express';
 import { Router } from 'express';
+import { z } from 'zod';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
+import { caseWorkspaceHandler } from '../caseWorkspace/_shared/handler.js';
+import { parseBody, parseParams } from '../caseWorkspace/_shared/validate.js';
+import * as caseIntakeService from '../../services/caseWorkspace/caseIntakeService.js';
 import {
   type HandoffTargetModule,
   P08_ACCEPTANCE_CHECKLIST,
@@ -399,6 +403,170 @@ router.get(
         .json({ error: 'Degraded scenario not found', code: 'P08_SCENARIO_NOT_FOUND' });
     }
     return res.json({ data: scenario, meta: teresaMeta() });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// Case Intake — Teresa's work-order summary -> Case (Stream B / E8)
+// ---------------------------------------------------------------------------
+/**
+ * The Teresa-side twin of the `/api/v8/chat/conversations/:id/case-intake/*`
+ * family. Same service, same guarantees, same error codes — deliberately, so
+ * a Case born from the Teresa panel is indistinguishable from one born in the
+ * chat stream and neither surface can drift into its own semantics.
+ *
+ * WHY A SEPARATE PATH RATHER THAN THE EXISTING PROPOSAL ENVELOPE. Teresa's
+ * `POST /proposal` (above) is an ACTION envelope: approve -> execute, aimed at
+ * a target module. It carries no versioned digest of what the human read —
+ * `teresaCopilotService.ts` contains no `digest`/`sha256`/`createHash` at all
+ * — so approving one proves only that a proposal id was approved, never that
+ * the human saw the goal/scope/outcome that will be executed. Bolting a digest
+ * onto that envelope would change the meaning of an existing, used contract.
+ * These routes add the missing one instead.
+ *
+ * Confirmation takes ONLY a digest. Teresa never re-sends the summary at
+ * confirm time: the server reads back the conversation's current work order,
+ * so a summary that was redrafted between display and click can no longer be
+ * confirmed (409 `intake_work_order_digest_stale`).
+ */
+
+const teresaClosureTypeEnum = z.enum([
+  'DELIVERY_COMPLETED',
+  'DECISION_COMPLETED',
+  'IMPLEMENTATION_COMPLETED',
+  'OUTCOME_VALIDATED',
+  'COMPLETED_PARTIAL',
+]);
+
+/**
+ * The three fields the human actually reads before clicking — goal, scope,
+ * expected outcome — are required. Everything below them is governance
+ * metadata that is nonetheless part of the digest, so the human confirms the
+ * profile and the autonomy policy too, not just the prose.
+ */
+const teresaWorkOrderBody = z.object({
+  projectId: z.string().trim().min(1),
+  goal: z.string().min(1),
+  scope: z.array(z.string()).min(1),
+  expectedOutcome: z.string().min(1),
+  constraints: z.array(z.string()).nullable().optional(),
+  successCriteria: z.array(z.string()).nullable().optional(),
+  contractedClosureType: teresaClosureTypeEnum,
+  caseProfile: z.enum(['LIGHT', 'STANDARD', 'TRANSFORMATION', 'MONITORING']).nullable().optional(),
+  governanceTier: z.enum(['LIGHTWEIGHT', 'STANDARD', 'CONTROLLED']).nullable().optional(),
+  autonomyPolicy: z
+    .enum(['ASK_EACH_ACTION', 'ASK_MATERIAL_ACTIONS', 'EXECUTE_APPROVED_PLAN'])
+    .nullable()
+    .optional(),
+  sourceMessageId: z.string().trim().min(1).nullable().optional(),
+});
+
+const teresaConversationParams = z.object({ conversationId: z.string().trim().min(1) });
+
+const teresaConfirmBody = z.object({
+  confirmedDigest: z
+    .string()
+    .trim()
+    .regex(/^sha256:[0-9a-f]{64}$/, 'confirmedDigest must be sha256:<64 hex chars>'),
+});
+
+/**
+ * POST /case-intake/conversations/:conversationId/summary
+ *
+ * "Here is exactly what I understood you want." Records that this summary was
+ * SHOWN and returns it with its digest. Creates ZERO Cases and ZERO Runs.
+ * 200, not 201 — nothing was created.
+ */
+router.post(
+  '/case-intake/conversations/:conversationId/summary',
+  caseWorkspaceHandler(async (req, res, actor) => {
+    const { conversationId } = parseParams(teresaConversationParams, req.params);
+    const workOrder = parseBody(teresaWorkOrderBody, req.body);
+
+    const proposal = await caseIntakeService.proposeConversationWorkOrder({
+      conversationId,
+      workOrder: { ...workOrder, organizationId: actor.organizationId },
+      proposedByActorId: actor.actorUserId,
+      correlationId: actor.correlationId,
+    });
+
+    res.status(200).json({
+      data: {
+        conversationId,
+        // The digested object, not the request body.
+        workOrder: proposal.workOrder,
+        workOrderId: proposal.workOrderId,
+        workOrderDigest: proposal.workOrderDigest,
+        alreadyProposed: proposal.alreadyProposed,
+        runStartPolicy: proposal.runStartPolicy,
+        caseCreated: false,
+        runCreated: false,
+      },
+      meta: teresaMeta({ action: 'case_intake_work_order_proposed' }),
+    });
+  })
+);
+
+/** GET /case-intake/conversations/:conversationId/work-order — current summary. */
+router.get(
+  '/case-intake/conversations/:conversationId/work-order',
+  caseWorkspaceHandler(async (req, res, actor) => {
+    const { conversationId } = parseParams(teresaConversationParams, req.params);
+    const current = await caseIntakeService.getCurrentConversationWorkOrder({
+      conversationId,
+      organizationId: actor.organizationId,
+      actorUserId: actor.actorUserId,
+    });
+    res.status(200).json({ data: current, meta: teresaMeta({ action: 'case_intake_current' }) });
+  })
+);
+
+/**
+ * POST /case-intake/conversations/:conversationId/confirm
+ * 201 when this call created the Case, 200 on any reuse (refresh, retry, race).
+ */
+router.post(
+  '/case-intake/conversations/:conversationId/confirm',
+  caseWorkspaceHandler(async (req, res, actor) => {
+    const { conversationId } = parseParams(teresaConversationParams, req.params);
+    const body = parseBody(teresaConfirmBody, req.body);
+
+    const result = await caseIntakeService.confirmConversationWorkOrder({
+      conversationId,
+      organizationId: actor.organizationId,
+      confirmedDigest: body.confirmedDigest,
+      confirmedByActorId: actor.actorUserId,
+      correlationId: actor.correlationId,
+    });
+
+    res.status(result.caseCreated ? 201 : 200).json({
+      data: result,
+      meta: teresaMeta({ action: 'case_intake_work_order_confirmed' }),
+    });
+  })
+);
+
+/** GET /case-intake/conversations/:conversationId/case — conversation -> Case. */
+router.get(
+  '/case-intake/conversations/:conversationId/case',
+  caseWorkspaceHandler(async (req, res, actor) => {
+    const { conversationId } = parseParams(teresaConversationParams, req.params);
+    const link = await caseIntakeService.findCaseForConversation({
+      conversationId,
+      organizationId: actor.organizationId,
+      actorUserId: actor.actorUserId,
+    });
+    res.status(200).json({ data: link, meta: teresaMeta({ action: 'case_intake_link' }) });
+  })
+);
+
+/** GET /case-intake/cases/:caseId/conversation — Case -> conversation. */
+router.get(
+  '/case-intake/cases/:caseId/conversation',
+  caseWorkspaceHandler(async (req, res, actor) => {
+    const params = parseParams(z.object({ caseId: z.string().trim().min(1) }), req.params);
+    const link = await caseIntakeService.findConversationForCase(params.caseId, actor.actorUserId);
+    res.status(200).json({ data: link, meta: teresaMeta({ action: 'case_intake_link' }) });
   })
 );
 

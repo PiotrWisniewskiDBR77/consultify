@@ -1,0 +1,559 @@
+{
+  "domSignals": {
+    "tableRoleCount": 1,
+    "tabsRoleCount": 4,
+    "menuRoleCount": 0,
+    "dialogRoleCount": 0,
+    "rowRoleCount": 0,
+    "columnheaderCount": 6,
+    "ariaSortEls": [],
+    "ariaLiveEls": [],
+    "totalButtons": 51,
+    "iconOnlyButtonsTotal": 34,
+    "iconOnlyButtonsWithAccessibleName": 34,
+    "iconOnlyButtonsMissingName": []
+  },
+  "contrastResults": [
+    {
+      "text": "LOCAL",
+      "fg": [
+        226,
+        232,
+        240
+      ],
+      "bgComposited": [
+        8,
+        14,
+        29
+      ],
+      "fontSize": "11px",
+      "fontWeight": "600",
+      "ratio": 15.62,
+      "passesAA_normalText": true,
+      "passesAA_largeText": true
+    },
+    {
+      "text": "?",
+      "fg": [
+        228,
+        88,
+        104
+      ],
+      "bgComposited": [
+        10,
+        15,
+        30
+      ],
+      "fontSize": "14px",
+      "fontWeight": "600",
+      "ratio": 5.36,
+      "passesAA_normalText": true,
+      "passesAA_largeText": true
+    },
+    {
+      "text": "77",
+      "fg": [
+        200,
+        50,
+        74
+      ],
+      "bgComposited": [
+        10,
+        15,
+        30
+      ],
+      "fontSize": "20px",
+      "fontWeight": "700",
+      "ratio": 3.65,
+      "passesAA_normalText": false,
+      "passesAA_largeText": true
+    },
+    {
+      "text": "Skip to main content",
+      "fg": [
+        255,
+        255,
+        255
+      ],
+      "bgComposited": [
+        15,
+        23,
+        42
+      ],
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "ratio": 17.85,
+      "passesAA_normalText": true,
+      "passesAA_largeText": true
+    },
+    {
+      "text": "Resultaty",
+      "fg": [
+        255,
+        255,
+        255
+      ],
+      "bgComposited": [
+        15,
+        23,
+        42
+      ],
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "ratio": 17.85,
+      "passesAA_normalText": true,
+      "passesAA_largeText": true
+    },
+    {
+      "text": "Data",
+      "fg": [
+        255,
+        255,
+        255
+      ],
+      "bgComposited": [
+        15,
+        23,
+        42
+      ],
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "ratio": 17.85,
+      "passesAA_normalText": true,
+      "passesAA_largeText": true
+    },
+    {
+      "text": "Model",
+      "fg": [
+        255,
+        255,
+        255
+      ],
+      "bgComposited": [
+        37,
+        21,
+        43
+      ],
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "ratio": 17.2,
+      "passesAA_normalText": true,
+      "passesAA_largeText": true
+    },
+    {
+      "text": "Moje",
+      "fg": [
+        203,
+        213,
+        225
+      ],
+      "bgComposited": [
+        25,
+        32,
+        51
+      ],
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "ratio": 10.92,
+      "passesAA_normalText": true,
+      "passesAA_largeText": true
+    },
+    {
+      "text": "Organizacja",
+      "fg": [
+        241,
+        245,
+        249
+      ],
+      "bgComposited": [
+        15,
+        23,
+        42
+      ],
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "ratio": 16.3,
+      "passesAA_normalText": true,
+      "passesAA_largeText": true
+    },
+    {
+      "text": "Karty wyników",
+      "fg": [
+        203,
+        213,
+        225
+      ],
+      "bgComposited": [
+        25,
+        32,
+        51
+      ],
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "ratio": 10.92,
+      "passesAA_normalText": true,
+      "passesAA_largeText": true
+    },
+    {
+      "text": "Nowy KPI",
+      "fg": [
+        10,
+        15,
+        30
+      ],
+      "bgComposited": [
+        244,
+        247,
+        251
+      ],
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "ratio": 17.77,
+      "passesAA_normalText": true,
+      "passesAA_largeText": true
+    },
+    {
+      "text": "Wszystkie",
+      "fg": [
+        255,
+        255,
+        255
+      ],
+      "bgComposited": [
+        15,
+        23,
+        42
+      ],
+      "fontSize": "11px",
+      "fontWeight": "500",
+      "ratio": 17.85,
+      "passesAA_normalText": true,
+      "passesAA_largeText": true
+    },
+    {
+      "text": "9",
+      "fg": [
+        255,
+        255,
+        255
+      ],
+      "bgComposited": [
+        51,
+        58,
+        74
+      ],
+      "fontSize": "10px",
+      "fontWeight": "600",
+      "ratio": 11.38,
+      "passesAA_normalText": true,
+      "passesAA_largeText": true
+    },
+    {
+      "text": "Szkic",
+      "fg": [
+        138,
+        153,
+        176
+      ],
+      "bgComposited": [
+        15,
+        23,
+        42
+      ],
+      "fontSize": "11px",
+      "fontWeight": "500",
+      "ratio": 6.18,
+      "passesAA_normalText": true,
+      "passesAA_largeText": true
+    },
+    {
+      "text": "2",
+      "fg": [
+        203,
+        213,
+        225
+      ],
+      "bgComposited": [
+        42,
+        54,
+        85
+      ],
+      "fontSize": "10px",
+      "fontWeight": "600",
+      "ratio": 8.05,
+      "passesAA_normalText": true,
+      "passesAA_largeText": true
+    },
+    {
+      "text": "Do zatwierdzenia",
+      "fg": [
+        138,
+        153,
+        176
+      ],
+      "bgComposited": [
+        15,
+        23,
+        42
+      ],
+      "fontSize": "11px",
+      "fontWeight": "500",
+      "ratio": 6.18,
+      "passesAA_normalText": true,
+      "passesAA_largeText": true
+    },
+    {
+      "text": "3",
+      "fg": [
+        203,
+        213,
+        225
+      ],
+      "bgComposited": [
+        42,
+        54,
+        85
+      ],
+      "fontSize": "10px",
+      "fontWeight": "600",
+      "ratio": 8.05,
+      "passesAA_normalText": true,
+      "passesAA_largeText": true
+    },
+    {
+      "text": "Aktywny",
+      "fg": [
+        138,
+        153,
+        176
+      ],
+      "bgComposited": [
+        15,
+        23,
+        42
+      ],
+      "fontSize": "11px",
+      "fontWeight": "500",
+      "ratio": 6.18,
+      "passesAA_normalText": true,
+      "passesAA_largeText": true
+    },
+    {
+      "text": "Zawieszony",
+      "fg": [
+        138,
+        153,
+        176
+      ],
+      "bgComposited": [
+        15,
+        23,
+        42
+      ],
+      "fontSize": "11px",
+      "fontWeight": "500",
+      "ratio": 6.18,
+      "passesAA_normalText": true,
+      "passesAA_largeText": true
+    },
+    {
+      "text": "1",
+      "fg": [
+        203,
+        213,
+        225
+      ],
+      "bgComposited": [
+        42,
+        54,
+        85
+      ],
+      "fontSize": "10px",
+      "fontWeight": "600",
+      "ratio": 8.05,
+      "passesAA_normalText": true,
+      "passesAA_largeText": true
+    },
+    {
+      "text": "Zarchiwizowany",
+      "fg": [
+        138,
+        153,
+        176
+      ],
+      "bgComposited": [
+        15,
+        23,
+        42
+      ],
+      "fontSize": "11px",
+      "fontWeight": "500",
+      "ratio": 6.18,
+      "passesAA_normalText": true,
+      "passesAA_largeText": true
+    },
+    {
+      "text": "Kod KPI",
+      "fg": [
+        148,
+        163,
+        184
+      ],
+      "bgComposited": [
+        14,
+        22,
+        40
+      ],
+      "fontSize": "11px",
+      "fontWeight": "600",
+      "ratio": 7.04,
+      "passesAA_normalText": true,
+      "passesAA_largeText": true
+    },
+    {
+      "text": "Status",
+      "fg": [
+        148,
+        163,
+        184
+      ],
+      "bgComposited": [
+        14,
+        22,
+        40
+      ],
+      "fontSize": "11px",
+      "fontWeight": "600",
+      "ratio": 7.04,
+      "passesAA_normalText": true,
+      "passesAA_largeText": true
+    },
+    {
+      "text": "Właściciel",
+      "fg": [
+        148,
+        163,
+        184
+      ],
+      "bgComposited": [
+        14,
+        22,
+        40
+      ],
+      "fontSize": "11px",
+      "fontWeight": "600",
+      "ratio": 7.04,
+      "passesAA_normalText": true,
+      "passesAA_largeText": true
+    },
+    {
+      "text": "Proces",
+      "fg": [
+        148,
+        163,
+        184
+      ],
+      "bgComposited": [
+        14,
+        22,
+        40
+      ],
+      "fontSize": "11px",
+      "fontWeight": "600",
+      "ratio": 7.04,
+      "passesAA_normalText": true,
+      "passesAA_largeText": true
+    },
+    {
+      "text": "Zaktualizowano",
+      "fg": [
+        148,
+        163,
+        184
+      ],
+      "bgComposited": [
+        14,
+        22,
+        40
+      ],
+      "fontSize": "11px",
+      "fontWeight": "600",
+      "ratio": 7.04,
+      "passesAA_normalText": true,
+      "passesAA_largeText": true
+    },
+    {
+      "text": "KPI-G6-EVID-P0A-001",
+      "fg": [
+        244,
+        247,
+        251
+      ],
+      "bgComposited": [
+        14,
+        21,
+        38
+      ],
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "ratio": 16.94,
+      "passesAA_normalText": true,
+      "passesAA_largeText": true
+    },
+    {
+      "text": "rn-g6-us…",
+      "fg": [
+        244,
+        247,
+        251
+      ],
+      "bgComposited": [
+        14,
+        21,
+        38
+      ],
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "ratio": 16.94,
+      "passesAA_normalText": true,
+      "passesAA_largeText": true
+    },
+    {
+      "text": "—",
+      "fg": [
+        244,
+        247,
+        251
+      ],
+      "bgComposited": [
+        14,
+        21,
+        38
+      ],
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "ratio": 16.94,
+      "passesAA_normalText": true,
+      "passesAA_largeText": true
+    },
+    {
+      "text": "12 sie 2026",
+      "fg": [
+        244,
+        247,
+        251
+      ],
+      "bgComposited": [
+        14,
+        21,
+        38
+      ],
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "ratio": 16.94,
+      "passesAA_normalText": true,
+      "passesAA_largeText": true
+    }
+  ],
+  "screenshot": "/Users/piotrwisniewski/rn-g2-lanes/g6-matrix/docs/qa/screens/rn-g6-uicx/a11y-kpi-registry-org-tab-v2.png"
+}

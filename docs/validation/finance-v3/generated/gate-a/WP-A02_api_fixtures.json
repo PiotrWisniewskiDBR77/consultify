@@ -1,0 +1,303 @@
+{
+  "_meta": {
+    "purpose": "WP-A02 Gate A — frozen request/response shape fixtures for 10 representative Finance endpoints, derived STATICALLY from TypeScript interfaces/zod schemas/inline body reads found in the route source files. NOT captured from a live request/response — no server was run, no database was touched, per the hard ban in this task's brief.",
+    "generatedAt": "2026-08-09",
+    "branch": "codex/finance-v3-gate-a-20260809",
+    "worktree": "/private/tmp/finance-v3-gate-a-20260809",
+    "sourceMasterPlan": "docs/validation/finance-v3/FINANCE_IMPLEMENTATION_MASTER_PLAN_2026-08-09.md — NOT FOUND in this worktree (EVIDENCE_MISSING); fixtures selection and shape derivation are based purely on the route source files cited per fixture.",
+    "method": "static code reading only — TS interfaces, zod schemas, and inline destructured request bodies as written in the cited source files",
+    "selectionRationale": "Picked to cover: the most idempotency-critical endpoint (statement upload), the FIN-03/04 idempotency+CAS pattern on models, the documented Date-leak split-brain pair, a legacy-only (no v8 equivalent) write endpoint, the undocumented /analyses vs /financial-analyses split-brain pair, a cross-module FIN-06 candidate-handoff bridge, the third undocumented 'finance value' contract, and the Idempotency-Key-REQUIRED post-investment-review endpoint that crosses into the Results module."
+  },
+  "fixtures": [
+    {
+      "id": "F1_statements_upload_and_analyze_v8",
+      "method": "POST",
+      "path": "/api/v8/finance/statements/upload-and-analyze",
+      "sourceFile": "server/src/routes/v8/finance.routes.ts",
+      "sourceLines": "1360-1971",
+      "classification": "ADAPTER_TARGET",
+      "auth": ["verifyToken", "requireV8OrgContext", "v8OrgGate", "attachV8Context", "v8MetricsMiddleware", "mutationAbortCanary"],
+      "middleware": ["upload.single('file')"],
+      "request": {
+        "contentType": "multipart/form-data",
+        "headers": {
+          "Idempotency-Key": "string, optional but drives retry-safety; IdempotencyKeyTooLongError -> 400 IDEMPOTENCY_KEY_TOO_LONG if oversized"
+        },
+        "body": {
+          "file": "binary, PDF|XLSX|XLS|CSV"
+        }
+      },
+      "response": {
+        "success_201_fallback": {
+          "success": true,
+          "mode": "fallback",
+          "statementPackId": "string",
+          "statementIds": ["string"],
+          "statements": "optional array (single-statement heuristic path)"
+        },
+        "success_201_smart": {
+          "success": true,
+          "mode": "smart",
+          "statementPackId": "string",
+          "statementIds": ["string"],
+          "analysis": "object — multi-section LLM analysis result, cannot be honestly reconstructed from an id alone (per code comment)"
+        },
+        "error_409_conflict": { "code": "IDEMPOTENCY_KEY_REUSED" },
+        "error_409_in_progress": { "code": "UPLOAD_IN_PROGRESS", "header": "Retry-After: 5" },
+        "error_503_schema_missing": {},
+        "error_500_finalize_failed": { "code": "STATEMENT_UPLOAD_FINALIZE_FAILED" },
+        "replay_header": "Idempotency-Replayed: true (set on replay/recover outcome)"
+      },
+      "idempotency": {
+        "mechanism": "getIdempotencyKey(req) -> withStatementUploadIdempotencyLock -> reserveIdempotentUpload/finalizeIdempotentUpload/failIdempotentUpload",
+        "notes": "This is the v8 twin of legacy POST /api/finance-statements/upload-and-analyze; code comment at finance.routes.ts:1376-1380 explicitly names the legacy route as sharing the same defect class/fix pattern."
+      },
+      "legacyTwin": "POST /api/finance-statements/upload-and-analyze (server/src/routes/finance-statements.routes.ts, line 1097) — same idempotency machinery, separate helper buildUploadAndAnalyzeRecoveryResponseBody"
+    },
+    {
+      "id": "F2_models_create_v8",
+      "method": "POST",
+      "path": "/api/v8/finance/models",
+      "sourceFile": "server/src/routes/v8/finance.routes.ts",
+      "sourceLines": "402-499",
+      "classification": "ADAPTER_TARGET",
+      "auth": ["verifyToken", "requireV8OrgContext", "v8OrgGate", "attachV8Context", "v8MetricsMiddleware", "mutationAbortCanary"],
+      "request": {
+        "headers": {
+          "Idempotency-Key": "string, optional; alt via body.idempotencyKey"
+        },
+        "body": {
+          "name": "string, required",
+          "startDate": "string (date), required",
+          "projectId": "string, optional",
+          "initiativeId": "string, optional",
+          "description": "string, optional",
+          "currency": "string, optional",
+          "horizonMonths": "number, optional",
+          "granularity": "string, optional",
+          "scenario": "string, optional",
+          "assumptions": "object, optional",
+          "sourceStatementId": "string, optional",
+          "sourceStatementPackId": "string, optional",
+          "caseId": "string, optional"
+        }
+      },
+      "response": {
+        "success_201": { "success": true, "id": "string" }
+      },
+      "idempotency": {
+        "mechanism": "findIdempotentResource(..., 'create_model') + withFinancialModelIdempotencyLock",
+        "notes": "FIN-03/FIN-04: a double-click save or network retry replaying the same POST with the same Idempotency-Key returns the ORIGINAL model/scenario, never mints a second one."
+      },
+      "legacyTwin": "POST /api/financial-modeling/models (server/src/routes/financial-modeling.routes.ts, line 170) — createModelSchema (zod, exported for Health Panel probe), NO idempotency-key support at all — a genuine capability gap vs the v8 twin."
+    },
+    {
+      "id": "F3_models_get_detail_split_brain",
+      "note": "Documented split-brain pair — same 'Date leak' defect class confirmed by an explicit in-file comment naming the other side.",
+      "pair": [
+        {
+          "method": "GET",
+          "path": "/api/v8/finance/models/:modelId",
+          "sourceFile": "server/src/routes/v8/finance.routes.ts",
+          "sourceLines": "499-563",
+          "classification": "ADAPTER_TARGET",
+          "response": "model detail object including events[] and source_statement/source_statement_pack (serialized date fields)"
+        },
+        {
+          "method": "GET",
+          "path": "/api/financial-modeling/models/:id",
+          "sourceFile": "server/src/routes/financial-modeling.routes.ts",
+          "sourceLines": "283-326",
+          "classification": "ADAPTER_TARGET",
+          "response": "model + events + source_statement/source_statement_pack (serialized dates)",
+          "codeComment": "\"FIN-005: same Date leak as the v8 model-detail route — see there.\" (line 326)"
+        }
+      ]
+    },
+    {
+      "id": "F4_models_approve_v8",
+      "method": "POST",
+      "path": "/api/v8/finance/models/:modelId/approve",
+      "sourceFile": "server/src/routes/v8/finance.routes.ts",
+      "sourceLines": "749-836",
+      "classification": "ADAPTER_TARGET",
+      "auth": ["verifyToken", "requireV8OrgContext", "v8OrgGate", "attachV8Context", "v8MetricsMiddleware", "mutationAbortCanary"],
+      "request": {
+        "headers": {
+          "Idempotency-Key": "string, optional",
+          "X-Model-Version": "number, optional — optimistic-concurrency CAS token, alt via body.expectedVersion"
+        },
+        "body": {
+          "expectedVersion": "number, optional (alternative to X-Model-Version header)"
+        }
+      },
+      "response": {
+        "success_200": { "success": true, "status": "approved" },
+        "error_409_version_conflict": { "code": "VERSION_CONFLICT" }
+      },
+      "idempotency": {
+        "mechanism": "Idempotency-Key check; a double-click 'save version' retry with the same key returns the already-approved outcome instead of bumping the version a second time.",
+        "concurrencyControl": "expectedVersion / X-Model-Version CAS — same pattern documented as mirroring presentations.routes.ts's deck version guard"
+      },
+      "legacyTwin": "POST /api/financial-modeling/models/:id/approve (financial-modeling.routes.ts, line 538) — NO CAS, NO idempotency-key; simple {success:true, status:'approved'}."
+    },
+    {
+      "id": "F5_valuations_create_legacy_only",
+      "method": "POST",
+      "path": "/api/economics/valuations",
+      "sourceFile": "server/src/routes/economics.routes.ts",
+      "sourceLines": "2445-2494",
+      "classification": "ADAPTER_TARGET",
+      "note": "LEGACY-ONLY end-to-end: v8/finance.routes.ts exposes only GET /finance/valuations (read-only list) — there is no v8 write path today. Frontend confirmed caller: CreateValuationModal.tsx, ValuationWorkspace.tsx (11 raw fetch calls in this file targeting /economics/valuations*).",
+      "auth": ["verifyToken (router-mounted)", "betaGate (router-mounted)", "inline orgId presence check -> 401"],
+      "request": {
+        "body": {
+          "title": "string, required",
+          "description": "string, optional",
+          "projectId": "string, optional",
+          "initiativeId": "string, optional",
+          "sourceType": "enum('financial_model'|'financial_analysis'|'budget'|'manual'), required",
+          "sourceId": "string, optional",
+          "horizonYears": "number, optional",
+          "currency": "string, optional",
+          "depth": "enum('managerial'|'banking'), optional — F-4 additive switch, omitted means byte-identical old behavior"
+        },
+        "zodSchema": "createValuationSchema (.strict())"
+      },
+      "response": {
+        "success_201": { "success": true, "id": "string" }
+      },
+      "idempotency": { "mechanism": "none found" }
+    },
+    {
+      "id": "F6_budgets_create_legacy_only",
+      "method": "POST",
+      "path": "/api/economics/budgets",
+      "sourceFile": "server/src/routes/economics.routes.ts",
+      "sourceLines": "2892-2904",
+      "classification": "ADAPTER_TARGET",
+      "note": "v8/finance.routes.ts exposes GET+POST /finance/budgets only (create + list) — lines/scenarios/approve/import-document/initiatives management exists ONLY under /api/economics. Confirmed FE caller: CreateBudgetModal.tsx.",
+      "auth": ["verifyToken (router-mounted)", "betaGate (router-mounted)", "inline orgId presence check -> 401"],
+      "request": {
+        "body": {
+          "title": "string, required",
+          "description": "string, optional",
+          "projectId": "string, optional",
+          "periodStart": "string (date), required",
+          "periodEnd": "string (date), required",
+          "granularity": "string, optional",
+          "currency": "string, optional"
+        },
+        "zodSchema": "createBudgetSchema (.strict())"
+      },
+      "response": {
+        "success_201": { "success": true, "budget": "object" }
+      },
+      "idempotency": { "mechanism": "none found" }
+    },
+    {
+      "id": "F7_analyses_list_undocumented_split_brain",
+      "note": "Undocumented split-brain — near 1:1 suffix match (run/approve/ratios/initiative-proposals/initiatives) between two different tables/services, no code comment on either side acknowledging the other (unlike F3). Both sides have confirmed live frontend consumers via a v8-first/legacy-fallback wrapper pattern (useFinanceData.ts, useFinanceRowActions.ts, FinancialAnalysisWorkspace.tsx).",
+      "pair": [
+        {
+          "method": "GET",
+          "path": "/api/v8/finance/analyses",
+          "sourceFile": "server/src/routes/v8/finance.routes.ts",
+          "sourceLines": "2840-2855",
+          "classification": "ADAPTER_TARGET",
+          "response": "{ data: { analyses, count }, meta } — backed by financial_analyses table"
+        },
+        {
+          "method": "GET",
+          "path": "/api/economics/financial-analyses",
+          "sourceFile": "server/src/routes/economics.routes.ts",
+          "sourceLines": "2121-2134",
+          "classification": "ADAPTER_TARGET",
+          "response": "{ analyses } — via finAnalysisSvc, likely same underlying financial_analyses table through a different service layer"
+        }
+      ],
+      "alsoNoteDistinctResource": "economics.routes.ts ALSO exposes a differently-shaped /analyses resource (digitization_analyses table — npv/roi/currency/axisScores) that is NOT the same concept as /financial-analyses, adding a third name collision worth resolving before Gate A closes."
+    },
+    {
+      "id": "F8_candidate_handoff_investment_case_confirm",
+      "method": "POST",
+      "path": "/api/finance/candidate-handoff/investment-case/:modelId/confirm",
+      "sourceFile": "server/src/routes/financeCandidateHandoffInvestmentCase.routes.ts",
+      "sourceLines": "77-97",
+      "classification": "SUPPORTED_FROZEN",
+      "note": "FIN-06 one-way bridge FROM the Finance domain (approved financial_models) INTO initiative_candidates (Ideas/Initiatives module). Explicitly designed to never touch the frozen finance-statements/financial-modeling/economics runtimes — out of scope for the v3 engine rewrite, contract stays exactly as-is.",
+      "auth": {
+        "expected": "requireUser(req) only — throws plain Error('Unauthorized'), not mapped to a clean 401 by mapError",
+        "warning": "Gateway.ts mounts this router with NO middleware at all (app.use('/api/finance/candidate-handoff/investment-case', financeCandidateHandoffInvestmentCaseRoutes) — no verifyToken). This differs from its two siblings (statement-pack uses router.use(verifyToken, isAuthenticated); valuation-recommendation uses per-route verifyToken). Flagged as a correctness/security issue independent of the API freeze — recommend fixing in the same window as adapter work, not deferring."
+      },
+      "request": { "body": "none" },
+      "response": {
+        "success_201_created": { "data": { "created": true, "candidateId": "string" } },
+        "success_200_existing": { "data": { "created": false, "candidateId": "string" } }
+      },
+      "idempotency": {
+        "mechanism": "domain-level create-or-return keyed by (organizationId, modelId) uniqueness in the underlying service — NOT a client-supplied Idempotency-Key header"
+      },
+      "consumer": "src/components/Finance/ExportToOutputDialog.tsx"
+    },
+    {
+      "id": "F9_finance_value_appraise_third_contract",
+      "method": "POST",
+      "path": "/api/v8/finance/value/appraise",
+      "sourceFile": "server/src/routes/v8/financeValueRoutes.ts",
+      "sourceLines": "107-142",
+      "classification": "ADAPTER_TARGET",
+      "note": "Part of the THIRD, undocumented 'finance value' contract surface — this file double-mounts at both /api/v8/finance/value/* (canonical, restored after being lost in a 2026-06-25 rebase) and /api/v8/finance-value/* (alias). Called RAW by src/components/Economics/panels/InvestmentAppraisalPanel.tsx via Api.post — no typed client wraps this mount (the typed financeValue.ts client only covers the SEPARATE /api/v8/finance/value-tracking mount — do not confuse the two).",
+      "auth": ["resolveOrganizationId(req) — local helper, distinct from getV8Context used elsewhere in v8 routes; 401 if org id absent"],
+      "request": {
+        "body": {
+          "cashFlows": "number[], required (alias: cashflows)",
+          "discountRatePct": "number, optional (alias: discountRate)",
+          "hurdleRatePct": "number, optional",
+          "initialInvestment": "number, optional — auto-derived from first negative cash flow if 0/omitted"
+        }
+      },
+      "response": {
+        "success_200": { "data": "appraise(...) result object", "meta": "object" }
+      },
+      "idempotency": { "mechanism": "none found — pure stateless compute, no DB access" },
+      "demoGuardRisk": "This route is POST with no GET counterpart; demoWriteProtection classifies purely by HTTP verb, so this pure-compute endpoint 403s in demo mode despite touching no database. financeValueDemoAllowlist.ts (unmounted proposal) explicitly lists this route as an exemption candidate with this exact caller confirmed."
+    },
+    {
+      "id": "F10_post_investment_reviews_idempotency_required",
+      "method": "POST",
+      "path": "/api/v8/finance/value-tracking/post-investment-reviews",
+      "sourceFile": "server/src/routes/v8/finance-value.routes.ts",
+      "sourceLines": "657-766",
+      "classification": "ADAPTER_TARGET",
+      "note": "Cross-module contract: consumed by the Results module (PostInvestmentActualForm.tsx), not just Finance's own UI. Adapter must preserve this contract byte-for-byte since the Results module code is out of scope for this program.",
+      "auth": ["getV8Context(req)", "401 if organizationId/userId absent"],
+      "request": {
+        "headers": {
+          "Idempotency-Key": "string, REQUIRED — 400 IDEMPOTENCY_KEY_REQUIRED if absent (this is the only endpoint across all 293 inventoried that hard-requires the header rather than treating it as optional)"
+        },
+        "body": {
+          "initiativeId": "string, required",
+          "actualIds": "string[], required",
+          "baselineModelId": "string, required",
+          "baselineExpectedVersion": "number, required",
+          "baselineStatementType": "enum('P&L'|'BS'|'CF'), required",
+          "baselineLineCode": "string, required",
+          "baselinePeriodDate": "string (date), required",
+          "tolerancePct": "number, optional"
+        }
+      },
+      "response": {
+        "success_201": { "data": "review object", "meta": "object" },
+        "error_400_missing_key": { "code": "IDEMPOTENCY_KEY_REQUIRED" },
+        "error_409_key_reused": { "code": "IDEMPOTENCY_KEY_REUSED", "cause": "ReviewKeyConflictError" },
+        "error_other": "400/422/404 typed error codes for baseline/version/statement mismatches"
+      },
+      "idempotency": {
+        "mechanism": "const operationKey = req.headers['idempotency-key']; if (!operationKey) return 400 IDEMPOTENCY_KEY_REQUIRED",
+        "notes": "The strictest idempotency contract in the whole Finance surface — required, not optional, unlike F1/F2/F4 which treat the header as optional-but-recommended."
+      },
+      "consumers": ["src/components/Results/PostInvestmentActualForm.tsx (create)", "src/components/Results/PostInvestmentReviewPanel.tsx (list, via GET .../post-investment-reviews?initiativeId=)"]
+    }
+  ]
+}

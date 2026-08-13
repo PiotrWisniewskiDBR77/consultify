@@ -461,7 +461,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                     <button
                       type="button"
                       onClick={() => toggleChatCollapse()}
-                      className="absolute top-2 right-2 z-10 w-8 h-8 inline-flex items-center justify-center rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
+                      className="absolute top-2 right-2 z-30 w-8 h-8 inline-flex items-center justify-center rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
                       title={t('layout.aiPanel.close', 'Close AI panel')}
                       aria-label={t('layout.aiPanel.close', 'Close AI panel')}
                     >

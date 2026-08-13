@@ -17,17 +17,35 @@ import {
   Trash2,
   TrendingUp,
   Undo2,
+  Wand2,
   Workflow,
 } from 'lucide-react';
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
+import {
+  type ActionContext,
+  getActionsForSurface,
+  runIdeaAction,
+} from '@/actions/ideaActionRegistry';
 import { isCanvasUndoInRailOnlyEnabled } from '@/utils/canvasUndoInRailOnlyFlag';
 
-import type { CanvasBgPattern } from '../ideaSelectionTypes';
+import { EMPTY_SELECTION, type CanvasBgPattern } from '../ideaSelectionTypes';
 import type { WhiteboardSessionState, WhiteboardSharePolicy } from './whiteboardContracts';
 import { ToolbarBtn, ToolbarDropdown } from './WhiteboardToolbarPrimitives';
+
+/**
+ * N7 kontynuacja (2026-08-09, Program B/E02) — te 17 lucide-icon (jeden mniej
+ * niż 18 akcji: koło jest użyte dwukrotnie, insert-circle i bg-dots) już były
+ * importowane lokalnie PRZED tą migracją i renderują się BEZ pośrednictwa
+ * rejestru (`ideaActionRegistry.ts` niesie `icon: IconName` tylko dla
+ * Teresy/manifestu i przyszłych powierzchni bez własnej ikonografii — patrz
+ * `WhiteboardEdgeContextMenu.tsx` dla przykładu, gdzie TO rejestr rysuje
+ * ikonę). Tutaj, żeby zachować dokładnie ten sam wygląd co przed migracją
+ * (wymóg zadania: zero zmian wizualnych), ikony i etykiety i18n ZOSTAJĄ
+ * lokalne — migruje wyłącznie WYKONANIE (`onClick` → `runAction` → rejestr).
+ */
 
 export interface WhiteboardToolbarProps {
   isPl: boolean;
@@ -60,6 +78,12 @@ export interface WhiteboardToolbarProps {
   onSave: () => void;
   onUndo: () => void;
   onRedo: () => void;
+  /** WB-P2-03: "Tidy board" — arranges the whole board (or the current
+   *  selection, when 2+ unlocked objects are selected) with the same
+   *  collision-free placement service used for new inserts. Optional so
+   *  existing call sites/tests that don't pass it keep compiling; the
+   *  overflow item below no-ops via `?.()` when omitted. */
+  onTidyBoard?: () => void;
 }
 
 interface OverflowItem {
@@ -194,17 +218,63 @@ export const WhiteboardToolbar: React.FC<WhiteboardToolbarProps> = ({
   onSave,
   onUndo,
   onRedo,
+  onTidyBoard,
   hideSaveIndicator = false,
 }) => {
   const { t } = useTranslation();
   /** C: Cofnij/Ponów tylko w lewym pasku (flaga, domyślnie OFF). */
   const undoRedoInRailOnly = isCanvasUndoInRailOnlyEnabled();
 
+  /**
+   * N7 kontynuacja (2026-08-09, Program B/E02) — te 18 przycisków paska są
+   * teraz wpisami `surface: 'toolbar'` w `ideaActionRegistry.ts` (patrz
+   * komentarz tam: 5×Wstaw, Cofnij/Ponów, 9×overflow, Zapisz, Wyczyść
+   * rysunki). Layout, i18n-owe etykiety i lokalny stan `active`/`disabled`
+   * (locked/saving/loading/canUndo/canRedo/sessionState/bgPattern) ZOSTAJĄ
+   * DOKŁADNIE takie jak przed migracją — jedyna zmiana to WYKONANIE: zamiast
+   * wołać prop-callback wprost, każdy handler idzie przez `runIdeaAction`,
+   * dokładnie jak `WhiteboardEdgeContextMenu.tsx` (7b0604cd80). Rejestr
+   * decyduje, CZY dana akcja istnieje na tej powierzchni (Z3) — brakujący
+   * wpis odpala oryginalny callback zamiast wyciszać klik (patrz `runAction`
+   * niżej), ale to sygnał do naprawy rejestru, nie zamierzona ścieżka.
+   */
+  const registryActionsById = React.useMemo(() => {
+    const map = new Map<string, ReturnType<typeof getActionsForSurface>[number]>();
+    for (const entry of getActionsForSurface('toolbar', { tool: 'whiteboard' })) {
+      map.set(entry.def.id, entry);
+    }
+    return map;
+  }, []);
+
+  const runAction = React.useCallback(
+    (id: string, run: () => void) => {
+      if (!registryActionsById.has(id)) {
+        run();
+        return;
+      }
+      const ctx: ActionContext = {
+        ideaId: '',
+        tool: 'whiteboard',
+        selection: EMPTY_SELECTION,
+        surface: 'toolbar',
+        source: 'ui',
+        language: isPl ? 'pl' : 'en',
+        params: { run },
+      };
+      void runIdeaAction(id, ctx);
+    },
+    [registryActionsById, isPl]
+  );
+
   return (
     <div
       className="flex items-center gap-1 px-3 py-1.5 border-b border-c-border-subtle bg-c-surface-raised backdrop-blur-sm flex-shrink-0 overflow-x-auto"
       role="toolbar"
       aria-label={t('myWork.whiteboard.toolbarExtra.ariaLabel')}
+      // Same shell contract as ProcessFlowToolbar (Gate 4, 720×450): reserve
+      // the floating right tool rail's measured width so this bar's own
+      // content never sits under it. Falls back to 0px when unset.
+      style={{ paddingRight: 'var(--mels-rail-gutter, 0px)' }}
     >
       <div className="text-xs font-semibold text-c-text-secondary mr-1.5 shrink-0">
         {t('myWork.whiteboard.toolbarExtra.title')}
@@ -227,34 +297,36 @@ export const WhiteboardToolbar: React.FC<WhiteboardToolbarProps> = ({
             id: 'shape_circle',
             label: t('myWork.whiteboard.shapes.circle'),
             icon: Circle,
-            onClick: () => onAddElement('shape_circle'),
+            onClick: () => runAction('idea.canvas.insert_shape_circle', () => onAddElement('shape_circle')),
           },
           {
             id: 'shape_diamond',
             label: t('myWork.whiteboard.shapes.diamond'),
             icon: Diamond,
-            onClick: () => onAddElement('shape_diamond'),
+            onClick: () =>
+              runAction('idea.canvas.insert_shape_diamond', () => onAddElement('shape_diamond')),
           },
           {
             id: 'shape_hexagon',
             label: t('myWork.whiteboard.shapes.hexagon'),
             icon: Hexagon,
-            onClick: () => onAddElement('shape_hexagon'),
+            onClick: () =>
+              runAction('idea.canvas.insert_shape_hexagon', () => onAddElement('shape_hexagon')),
           },
           {
             id: 'image',
             label: t('myWork.whiteboard.toolbar.image'),
             icon: ImageIcon,
-            onClick: () => onAddElement('image'),
+            onClick: () => runAction('idea.canvas.insert_image', () => onAddElement('image')),
           },
           {
             id: 'link',
             label: t('myWork.whiteboard.toolbar.link'),
             icon: Link2,
-            onClick: () => onAddElement('link'),
+            onClick: () => runAction('idea.canvas.insert_link', () => onAddElement('link')),
           },
         ]}
-        onMainClick={() => onAddElement('image')}
+        onMainClick={() => runAction('idea.canvas.insert_image', () => onAddElement('image'))}
       />
 
       {/*
@@ -273,14 +345,14 @@ export const WhiteboardToolbar: React.FC<WhiteboardToolbarProps> = ({
           <ToolbarBtn
             icon={Undo2}
             label={t('myWork.whiteboard.toolbar.undo')}
-            onClick={onUndo}
+            onClick={() => runAction('idea.canvas.undo', onUndo)}
             disabled={!canUndo || locked}
             ariaLabel={t('myWork.whiteboard.toolbar.undo')}
           />
           <ToolbarBtn
             icon={Redo2}
             label={t('myWork.whiteboard.toolbar.redo')}
-            onClick={onRedo}
+            onClick={() => runAction('idea.canvas.redo', onRedo)}
             disabled={!canRedo || locked}
             ariaLabel={t('myWork.whiteboard.toolbar.redo')}
           />
@@ -301,7 +373,7 @@ export const WhiteboardToolbar: React.FC<WhiteboardToolbarProps> = ({
             id: 'voting',
             label: t('myWork.whiteboard.toolbar.voting'),
             icon: ThumbsUp,
-            onClick: onToggleVoting,
+            onClick: () => runAction('idea.canvas.toggle_voting', onToggleVoting),
             disabled: locked,
             active: sessionState.votingOpen,
           },
@@ -309,55 +381,65 @@ export const WhiteboardToolbar: React.FC<WhiteboardToolbarProps> = ({
             id: 'role',
             label: t('myWork.whiteboard.toolbarExtra.role'),
             icon: Workflow,
-            onClick: onCycleRole,
+            onClick: () => runAction('idea.canvas.cycle_role', onCycleRole),
             disabled: locked,
           },
           {
             id: 'follow',
             label: t('myWork.whiteboard.toolbarExtra.follow'),
             icon: TrendingUp,
-            onClick: onToggleFollow,
+            onClick: () => runAction('idea.canvas.toggle_follow', onToggleFollow),
             disabled: locked,
             active: sessionState.followMe,
+          },
+          {
+            // WB-P2-03: "Tidy board" — whole-board entry point (the
+            // selection edit bar carries the "Auto arrange selection" one
+            // when there's an active selection; same underlying command).
+            id: 'tidy-board',
+            label: t('myWork.whiteboard.toolbarExtra.tidyBoard'),
+            icon: Wand2,
+            onClick: () => runAction('idea.canvas.tidy_board', () => onTidyBoard?.()),
+            disabled: locked,
           },
           {
             id: 'export',
             label: t('myWork.whiteboard.toolbar.export'),
             icon: ExternalLink,
-            onClick: onExport,
+            onClick: () => runAction('idea.canvas.export_view', onExport),
           },
           {
             id: 'shortcuts',
             label: t('myWork.whiteboard.toolbar.shortcuts'),
             icon: Keyboard,
-            onClick: onToggleShortcuts,
+            onClick: () => runAction('idea.canvas.toggle_shortcuts', onToggleShortcuts),
           },
           {
             id: 'bg-dots',
             label: `${t('myWork.whiteboard.toolbar.background')}: ${t('myWork.whiteboard.toolbarExtra.bgDots')}`,
             icon: Circle,
-            onClick: () => onSetBgPattern('dots'),
+            onClick: () => runAction('idea.canvas.set_bg_dots', () => onSetBgPattern('dots')),
             active: bgPattern === 'dots',
           },
           {
             id: 'bg-grid',
             label: `${t('myWork.whiteboard.toolbar.background')}: ${t('myWork.whiteboard.toolbarExtra.bgGrid')}`,
             icon: Grid3X3,
-            onClick: () => onSetBgPattern('grid'),
+            onClick: () => runAction('idea.canvas.set_bg_grid', () => onSetBgPattern('grid')),
             active: bgPattern === 'grid',
           },
           {
             id: 'bg-lines',
             label: `${t('myWork.whiteboard.toolbar.background')}: ${t('myWork.whiteboard.toolbarExtra.bgLines')}`,
             icon: LayoutGrid,
-            onClick: () => onSetBgPattern('lines'),
+            onClick: () => runAction('idea.canvas.set_bg_lines', () => onSetBgPattern('lines')),
             active: bgPattern === 'lines',
           },
           {
             id: 'bg-blank',
             label: `${t('myWork.whiteboard.toolbar.background')}: ${t('myWork.whiteboard.toolbarExtra.bgBlank')}`,
             icon: Shapes,
-            onClick: () => onSetBgPattern('blank'),
+            onClick: () => runAction('idea.canvas.set_bg_blank', () => onSetBgPattern('blank')),
             active: bgPattern === 'blank',
           },
         ]}
@@ -375,7 +457,7 @@ export const WhiteboardToolbar: React.FC<WhiteboardToolbarProps> = ({
       {!hideSaveIndicator && (
         <button
           type="button"
-          onClick={onSave}
+          onClick={() => runAction('idea.canvas.save', onSave)}
           disabled={saving || loading || locked}
           aria-label={t('myWork.whiteboard.toolbar.save')}
           aria-busy={saving}
@@ -405,7 +487,7 @@ export const WhiteboardToolbar: React.FC<WhiteboardToolbarProps> = ({
           <ToolbarBtn
             icon={Trash2}
             label={t('myWork.whiteboard.toolbar.clearDrawings')}
-            onClick={onClearDrawings}
+            onClick={() => runAction('idea.canvas.clear_drawings', onClearDrawings)}
             disabled={locked}
             danger
           />

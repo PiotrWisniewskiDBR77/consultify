@@ -16,8 +16,10 @@ import {
   Wand2,
   X,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 
 import type { IdeaWorkspaceSeedIntent } from '../ideaEntryTypes';
 import type { CanvasToolType } from '../ideaSelectionTypes';
@@ -213,6 +215,10 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
     </button>
   );
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const heroTextareaRef = useRef<HTMLTextAreaElement>(null);
+  useDialogA11y({ open, onClose, containerRef, initialFocusRef: heroTextareaRef });
+
   if (!open) return null;
 
   return (
@@ -222,7 +228,14 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-[520px] max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-[0_32px_64px_-12px_rgba(0,0,0,0.35)] backdrop-blur-xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
+      <div
+        ref={containerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="idea-startup-templates-heading"
+        tabIndex={-1}
+        className="w-[520px] max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-[0_32px_64px_-12px_rgba(0,0,0,0.35)] backdrop-blur-xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 outline-none"
+      >
         {/* ── Header ─────────────────────────────────────────── */}
         <div className="relative flex items-center justify-between px-6 py-4 border-b border-c-border-subtle">
           <div className="absolute inset-0 bg-c-surface-raised" />
@@ -231,7 +244,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
               <Sparkles size={16} className="text-c-text-secondary" />
             </div>
             <div>
-              <h3 className="text-[15px] font-semibold text-c-text">
+              <h3 id="idea-startup-templates-heading" className="text-[15px] font-semibold text-c-text">
                 {t('myWorkTable.ideaStartupTemplates.newIdea')}
               </h3>
               <p className="text-[11px] text-c-text-muted mt-0.5">
@@ -261,11 +274,11 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
               {t('myWorkTable.ideaStartupTemplates.lightStartWithoutAHeavy')}
             </p>
             <textarea
+              ref={heroTextareaRef}
               value={heroText}
               onChange={(e) => setHeroText(e.target.value)}
               rows={3}
               placeholder={t('myWorkTable.ideaStartupTemplates.eGIWantTo')}
-              autoFocus
               className="mt-3 w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-c-border-subtle bg-c-surface px-4 py-3 text-sm text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-none transition-shadow duration-200"
             />
           </div>

@@ -1,0 +1,152 @@
+{
+  "steps": [
+    {
+      "n": 102,
+      "title": "Spor o pomiar (Dispute) — naprawiony selektor",
+      "actor": "rn-g6-user-a-owner",
+      "screenshot": "docs/qa/screens/rn-g6-kpi/10b-measurement-disputed-fixed.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "apiErrors": [
+        {
+          "url": "http://localhost:3197/api/v8/admin/flags",
+          "status": 404
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "n": 111,
+      "title": "Potwierdzenie sprawy (open -> analysis_required)",
+      "actor": "rn-g6-user-a-owner",
+      "screenshot": "docs/qa/screens/rn-g6-kpi/11b-case-acknowledged.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "apiErrors": [
+        {
+          "url": "http://localhost:3197/api/v8/admin/flags",
+          "status": 404
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "n": 12,
+      "title": "Przyczyna zrodlowa (nawigacja bezposrednia z flaga — omija F8)",
+      "actor": "rn-g6-user-a-owner",
+      "screenshot": "docs/qa/screens/rn-g6-kpi/12-root-cause-submitted.png",
+      "consoleErrors": [],
+      "apiErrors": [],
+      "notes": ""
+    },
+    {
+      "n": 13,
+      "title": "Dzialanie korygujace i zlozenie planu",
+      "actor": "rn-g6-user-a-owner",
+      "screenshot": "docs/qa/screens/rn-g6-kpi/13a-corrective-action-plan-submitted.png",
+      "consoleErrors": [],
+      "apiErrors": [],
+      "notes": ""
+    },
+    {
+      "n": 131,
+      "title": "[most] Zatwierdzenie planu przez recenzenta (maker-checker, drugi aktor)",
+      "actor": "rn-g6-user-a-admin",
+      "screenshot": "docs/qa/screens/rn-g6-kpi/13b-corrective-plan-approved.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "apiErrors": [
+        {
+          "url": "http://localhost:3197/api/v8/admin/flags",
+          "status": 404
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "n": 133,
+      "title": "[most] Dzialanie -> \"Active\" (auto-przejscie approved->executing)",
+      "actor": "rn-g6-user-a-owner",
+      "screenshot": "docs/qa/screens/rn-g6-kpi/13c-action-set-active-executing.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "apiErrors": [
+        {
+          "url": "http://localhost:3197/api/v8/admin/flags",
+          "status": 404
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "n": 14,
+      "title": "Obserwacja odbudowy",
+      "actor": "rn-g6-user-a-owner",
+      "screenshot": "docs/qa/screens/rn-g6-kpi/14-fixup.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "apiErrors": [
+        {
+          "url": "http://localhost:3197/api/v8/admin/flags",
+          "status": 404
+        }
+      ],
+      "notes": "EXCEPTION: locator.selectOption: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('[data-testid=\"kpi-deviation-recovery-measurement\"]')\n    - locator resolved to <select disabled data-testid=\"kpi-deviation-recovery-measurement\" class=\"w-full h-9 rounded-lg border border-c-border bg-c-surface px-3 text-sm text-c-text placeholder:text-c-text-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:border-c-border-strong\">…</select>\n  - attempting select option action\n    2 × waiting for element to be visible and enabled\n      - element is not enabled\n    - retrying select option action\n    - waiting 20ms\n    2 × waiting for element to be visible and enabled\n      - element is not enabled\n    - retrying select option action\n      - waiting 100ms\n    60 × waiting for element to be visible and enabled\n       - element is not enabled\n     - retrying select option action\n       - waiting 500ms\n"
+    },
+    {
+      "n": 15,
+      "title": "Weryfikacja skutecznosci i zamkniecie sprawy",
+      "actor": "rn-g6-user-a-owner",
+      "screenshot": "docs/qa/screens/rn-g6-kpi/15-fixup.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "apiErrors": [
+        {
+          "url": "http://localhost:3197/api/v8/admin/flags",
+          "status": 404
+        }
+      ],
+      "notes": "EXCEPTION: locator.selectOption: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('[data-testid=\"kpi-deviation-verification-outcome\"]')\n    - locator resolved to <select disabled data-testid=\"kpi-deviation-verification-outcome\" class=\"w-full h-9 rounded-lg border border-c-border bg-c-surface px-3 text-sm text-c-text placeholder:text-c-text-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:border-c-border-strong\">…</select>\n  - attempting select option action\n    2 × waiting for element to be visible and enabled\n      - element is not enabled\n    - retrying select option action\n    - waiting 20ms\n    2 × waiting for element to be visible and enabled\n      - element is not enabled\n    - retrying select option action\n      - waiting 100ms\n    60 × waiting for element to be visible and enabled\n       - element is not enabled\n     - retrying select option action\n       - waiting 500ms\n"
+    },
+    {
+      "n": 17,
+      "title": "Publikacja migawki przegladu karty wynikow (naprawiony formularz)",
+      "actor": "rn-g6-user-a-owner",
+      "screenshot": "docs/qa/screens/rn-g6-kpi/17-fixup.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "[ResultsVNext] request failed: Error: Internal server error\n    at handleResponse (http://localhost:3197/src/services/api.ts:696:15)\n    at async Object.get (http://localhost:3197/src/services/api.ts:7993:21)\n    at async listKpiScorecardReviewSnapshots (http://localhost:3197/src/components/ResultsVNext/kpiScorecards/kpiScorecardApi.ts:59:16)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "[ResultsVNext] request failed: Error: Internal server error\n    at handleResponse (http://localhost:3197/src/services/api.ts:696:15)\n    at async Object.get (http://localhost:3197/src/services/api.ts:7993:21)\n    at async listKpiScorecardReviewSnapshots (http://localhost:3197/src/components/ResultsVNext/kpiScorecards/kpiScorecardApi.ts:59:16)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "[ResultsVNext] request failed: Error: Internal server error\n    at handleResponse (http://localhost:3197/src/services/api.ts:696:15)\n    at async Object.get (http://localhost:3197/src/services/api.ts:7993:21)\n    at async listKpiScorecardReviewSnapshots (http://localhost:3197/src/components/ResultsVNext/kpiScorecards/kpiScorecardApi.ts:59:16)"
+      ],
+      "apiErrors": [
+        {
+          "url": "http://localhost:3197/api/v8/admin/flags",
+          "status": 404
+        },
+        {
+          "url": "http://localhost:3197/api/vnext/results/kpi/scorecards/a7a84b5c-cfae-4680-8680-a7a84bcfaea3/review-snapshots?limit=100&offset=0",
+          "status": 500
+        },
+        {
+          "url": "http://localhost:3197/api/vnext/results/kpi/scorecards/a7a84b5c-cfae-4680-8680-a7a84bcfaea3/review-snapshots?limit=100&offset=0",
+          "status": 500
+        },
+        {
+          "url": "http://localhost:3197/api/vnext/results/kpi/scorecards/a7a84b5c-cfae-4680-8680-a7a84bcfaea3/review-snapshots?limit=100&offset=0",
+          "status": 500
+        }
+      ],
+      "notes": "EXCEPTION: locator.click: Timeout 8000ms exceeded.\nCall log:\n  - waiting for locator('[data-testid=\"kpi-scorecard-publish-snapshot-submit\"]')\n"
+    }
+  ]
+}

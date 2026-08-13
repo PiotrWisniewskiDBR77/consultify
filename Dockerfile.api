@@ -48,6 +48,17 @@ ENV GEMINI_API_KEY=${GEMINI_API_KEY}
 ARG VITE_ENABLE_DELIVERABLES_LIGHT
 ENV VITE_ENABLE_DELIVERABLES_LIGHT=${VITE_ENABLE_DELIVERABLES_LIGHT}
 
+# Acceptance gates are intentionally build-time Vite inputs. Keep the central
+# demo profile and the separately governed Case Workspace gate explicit so a
+# Railway runtime variable cannot falsely appear enabled while the compiled UI
+# remains fail-closed.
+ARG VITE_DEMO_ACCEPTANCE
+ARG VITE_ENABLE_CASE_WORKSPACE
+ARG VITE_INITIATIVE_DEDUP_ACTIONABLE
+ENV VITE_DEMO_ACCEPTANCE=${VITE_DEMO_ACCEPTANCE}
+ENV VITE_ENABLE_CASE_WORKSPACE=${VITE_ENABLE_CASE_WORKSPACE}
+ENV VITE_INITIATIVE_DEDUP_ACTIONABLE=${VITE_INITIATIVE_DEDUP_ACTIONABLE}
+
 # Copy package files and workspace structure for npm workspaces
 COPY package.json package-lock.json ./
 COPY packages/ ./packages/
@@ -86,6 +97,12 @@ RUN NODE_OPTIONS="--max-old-space-size=4096" npm run build
 # ==========================================
 FROM node:20-alpine AS backend-builder
 WORKDIR /app
+
+# The immutable release identity is a backend build input. This invalidates the
+# compiled server layer for every exact-SHA candidate and fails closed when the
+# deployment operator did not supply the identity expected by /api/health.
+ARG APP_BUILD_SHA
+RUN test -n "$APP_BUILD_SHA" && echo "Building backend for $APP_BUILD_SHA"
 
 # Copy root package files first (server dependencies are in root package.json due to monorepo/workspace setup)
 COPY package.json package-lock.json ./
@@ -186,6 +203,24 @@ RUN test -f tsconfig.build.json || (echo "ERROR: tsconfig.build.json not found!"
 # Production backend compilation is fail-hard. `noEmitOnError` is enabled in
 # tsconfig.build.json, so a failed check can never leave a shippable partial dist.
 RUN rm -rf dist && NODE_OPTIONS="--max-old-space-size=3072" ./node_modules/.bin/tsc --build tsconfig.build.json
+# Fail the image build if a stale cached backend dist is ever paired with the
+# current migration files.  Demo carries this exact, reviewed historical
+# checksum variant and also legacy NULL checksum rows.  Both classifications
+# are production-readiness invariants; checking the compiled module here makes
+# the Docker image itself prove that it contains the current runner rather than
+# trusting layer-cache metadata.
+RUN node --input-type=module -e "\
+import fs from 'node:fs'; \
+import { classifyMigrationChecksum } from './dist/src/services/tablePlatform/migrationIdentity.js'; \
+const filename='20260228_budget_initiative_links.sql'; \
+const sql=fs.readFileSync('./migrations/'+filename,'utf8'); \
+const historical=classifyMigrationChecksum(filename,'7826f403a14163b1',sql); \
+const legacy=classifyMigrationChecksum(filename,null,sql); \
+if (historical !== 'accepted_historical_variant' || legacy !== 'unverifiable') { \
+  throw new Error('Compiled migration identity invariant failed: historical='+historical+', legacy='+legacy); \
+} \
+console.log('OK: compiled migration identity accepts exact reviewed history and preserves legacy NULL semantics'); \
+"
 RUN test -f dist/scripts/migrate.postgres.js || (echo "FATAL: strict Postgres migration runner missing from production dist" && exit 1)
 RUN if find dist -type f \( -path '*/scripts/*RealDbProof.js' -o -path '*/scripts/*RestartWorker.js' -o -path '*/scripts/t01BrowserFixtureServer.js' \) | grep -q .; then \
       echo "FATAL: proof/fixture/restart-worker script emitted into production dist"; \

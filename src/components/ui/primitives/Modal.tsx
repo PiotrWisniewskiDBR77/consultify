@@ -153,9 +153,69 @@ export const Modal: React.FC<ModalProps> = ({
     [getFocusable]
   );
 
+  // Capture the trigger element in TWO PASSES (RN-G5 platform lane,
+  // 2026-08-12, P1 nr 2 — root cause measured with instrumented Playwright,
+  // see task report, not guessed):
+  //
+  // Pass 1 — DURING RENDER, on the false→true edge, not in ANY effect.
+  // React implements the HTML `autoFocus` attribute (e.g. the title input
+  // `RoiCaseCreateModal` opens with) by calling `.focus()` itself inside
+  // `commitMount`, which runs DURING the mutation phase of the SAME commit
+  // that mounts this modal's children — strictly BEFORE even
+  // `useLayoutEffect` fires (tried first; still lost the race). So no
+  // effect in this component, however early, can read
+  // `document.activeElement` before a body `autoFocus` field has already
+  // stolen it: a persistent Menu 2 CTA (which survives the commit) lost
+  // that race and got overwritten with the input; on close, restoring
+  // focus to that (now-unmounted) input silently fell back to `<body>`.
+  // Reading here, in the render body itself, runs before ANY commit for
+  // this render, so the DOM still reflects the PREVIOUS commit — the real
+  // trigger, always. Mutating a ref during render (not `setState`) is the
+  // standard, sanctioned way to derive state from a prop transition
+  // without an effect (React docs, "Adjusting state based on a prop
+  // change"); it has no side effect, so it stays idempotent under
+  // StrictMode's double-render.
+  //
+  // Pass 2 — self-heal in the passive effect below, ONLY if pass 1's
+  // element didn't survive to this commit's cleanup. This exists for the
+  // opposite failure mode, also measured: a kebab's row-actions menu item
+  // (`RowActionsMenu.tsx`, a DIFFERENT component, out of scope for this
+  // lane) is what's actually focused at click time — it is itself removed
+  // from the DOM in the SAME commit that opens this modal (the popover
+  // closes together with its menu-item click), so pass 1 there correctly
+  // captures an element that's ABOUT to vanish. `RowActionsMenu` already
+  // owns a "return focus to the kebab button" effect of its own (§7/§8) —
+  // untouched here — which fires as a passive effect BEFORE this one
+  // (earlier in commit order) and re-points real focus at the kebab
+  // button. So: if pass 1's capture is gone by the time we'd restore to
+  // it, trust whatever the DOM says is focused *right now* instead of the
+  // stale reference — that reflects the opener's own cleanup, already
+  // done, rather than a blind guess.
+  // `useRef(false)`, NOT `useRef(open)` — some callers (`RoiTransitionDialog`)
+  // return `null` instead of rendering `<Modal>` until they have content,
+  // so this `<Modal>` fiber's FIRST EVER render can already have
+  // `open=true` (no prior `open=false` render happened for this instance).
+  // Seeding the ref with `open` would then start `wasOpenRef.current` at
+  // `true`, permanently hiding the false→true edge for that mount. Seeding
+  // with a hardcoded `false` makes "first render already open" register as
+  // a fresh open, same as any later open transition.
+  const wasOpenRef = useRef(false);
+  if (open && !wasOpenRef.current) {
+    previousActiveElement.current = document.activeElement as HTMLElement;
+  }
+  wasOpenRef.current = open;
+
   useEffect(() => {
     if (open) {
-      previousActiveElement.current = document.activeElement as HTMLElement;
+      if (
+        previousActiveElement.current &&
+        !document.contains(previousActiveElement.current)
+      ) {
+        const fallback = document.activeElement;
+        if (fallback instanceof HTMLElement && fallback !== document.body) {
+          previousActiveElement.current = fallback;
+        }
+      }
       document.addEventListener('keydown', handleKeyDown);
       document.body.style.overflow = 'hidden';
 

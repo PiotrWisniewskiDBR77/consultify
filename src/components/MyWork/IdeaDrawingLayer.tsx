@@ -8,6 +8,7 @@ import {
   Circle,
   Eraser,
   Highlighter,
+  Keyboard,
   Minus,
   Pen,
   Plus,
@@ -33,6 +34,23 @@ export interface IdeaDrawingLayerProps {
   onClose: () => void;
   paths: DrawingPath[];
   onPathsChange: (paths: DrawingPath[]) => void;
+  /**
+   * Undo/redo ownership (defect fix, 2026-08-10): this layer used to keep
+   * its OWN private undo/redo stack of `paths` snapshots, with its own
+   * document-level Ctrl+Z/Ctrl+Y listener active whenever `active` is true.
+   * That ran in parallel with the parent canvas's ALWAYS-ON Ctrl+Z listener
+   * (not gated on draw mode), so a single keypress fired both — two stacks
+   * disagreeing about "the last action", silently losing or duplicating
+   * strokes. The canvas-level stack now owns ALL undo/redo for drawn
+   * strokes (the parent wraps `onPathsChange` to push a canvas snapshot
+   * before every path mutation this layer makes); these props drive the
+   * toolbar's Undo/Redo buttons directly, and this layer keeps no undo
+   * state and no Ctrl+Z/Ctrl+Y listener of its own.
+   */
+  onUndo: () => void;
+  onRedo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
   viewportTransform?: { x: number; y: number; zoom: number };
 }
 
@@ -45,12 +63,18 @@ const COLORS = [
   '#3b82f6',
   '#6366f1',
   '#ec4899',
-  '#3b82f6',
+  '#06b6d4',
   '#ffffff',
 ];
 
 const MIN_STROKE = 1;
 const MAX_STROKE = 12;
+
+// P1.5 (WB-P1-04) — keyboard drawing mode step size, in canvas units.
+// Plain arrow key = fine movement; Shift+arrow = coarse movement, so a
+// keyboard-only user can both sketch detail and cover distance quickly.
+const KB_STEP = 10;
+const KB_STEP_LARGE = 36;
 
 type DrawTool = 'pen' | 'highlighter' | 'eraser';
 
@@ -59,6 +83,10 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
   onClose,
   paths,
   onPathsChange,
+  onUndo,
+  onRedo,
+  canUndo,
+  canRedo,
   viewportTransform,
 }) => {
   const { t } = useTranslation();
@@ -69,8 +97,16 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
   const [strokeWidth, setStrokeWidth] = useState(3);
   const [drawing, setDrawing] = useState(false);
   const [currentPath, setCurrentPath] = useState('');
-  const [undoStack, setUndoStack] = useState<DrawingPath[][]>([]);
-  const [redoStack, setRedoStack] = useState<DrawingPath[][]>([]);
+
+  // P1.5 (WB-P1-04) — keyboard drawing mode state. Freehand drawing was
+  // pointer-drag-only, which fails "core work possible without raw-coordinate
+  // drag" (doc 09 §11.7 / doc 11 DoD §3.8). This lets a keyboard-only user
+  // move a cursor with the arrow keys, toggle the pen with Space/Enter, and
+  // finish the stroke with Escape — no mouse or scripted coordinates needed.
+  const [kbKeyboardActive, setKbKeyboardActive] = useState(false);
+  const [kbCursor, setKbCursor] = useState({ x: 0, y: 0 });
+  const [kbPenDown, setKbPenDown] = useState(false);
+  const [kbAnnouncement, setKbAnnouncement] = useState('');
 
   const screenToCanvas = useCallback(
     (clientX: number, clientY: number) => {
@@ -97,8 +133,6 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
         const target = e.target as SVGElement;
         const pathId = target.getAttribute('data-path-id');
         if (pathId) {
-          setUndoStack((prev) => [...prev, paths]);
-          setRedoStack([]);
           onPathsChange(paths.filter((p) => p.id !== pathId));
         }
         return;
@@ -120,68 +154,186 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
     [active, drawing, screenToCanvas]
   );
 
-  const endDrawing = useCallback(
-    (e: React.PointerEvent) => {
-      if (!drawing || !active) return;
-      setDrawing(false);
-      if (currentPath.length < 10) return;
-
+  // Shared commit path for both pointer-drawn and keyboard-drawn strokes —
+  // one place that builds the DrawingPath and pushes undo history, so the
+  // two input methods stay behaviourally identical (same undo/redo, same
+  // persistence). Returns whether a stroke was actually committed (a stroke
+  // shorter than the minimum is discarded, same threshold as before).
+  const commitPath = useCallback(
+    (pathD: string) => {
+      if (pathD.length < 10) return false;
       const newPath: DrawingPath = {
         id: `draw-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        d: currentPath,
+        d: pathD,
         stroke: color,
         strokeWidth,
         opacity: tool === 'highlighter' ? 0.35 : 1,
         tool: tool as 'pen' | 'highlighter',
       };
 
-      setUndoStack((prev) => [...prev, paths]);
-      setRedoStack([]);
       onPathsChange([...paths, newPath]);
-      setCurrentPath('');
+      return true;
     },
-    [active, color, currentPath, drawing, onPathsChange, paths, strokeWidth, tool]
+    [color, onPathsChange, paths, strokeWidth, tool]
   );
 
-  const handleUndo = useCallback(() => {
-    if (undoStack.length === 0) return;
-    const prev = undoStack[undoStack.length - 1];
-    setRedoStack((r) => [...r, paths]);
-    setUndoStack((u) => u.slice(0, -1));
-    onPathsChange(prev);
-  }, [onPathsChange, paths, undoStack]);
+  const endDrawing = useCallback(
+    (e: React.PointerEvent) => {
+      if (!drawing || !active) return;
+      setDrawing(false);
+      commitPath(currentPath);
+      setCurrentPath('');
+    },
+    [active, commitPath, currentPath, drawing]
+  );
 
-  const handleRedo = useCallback(() => {
-    if (redoStack.length === 0) return;
-    const next = redoStack[redoStack.length - 1];
-    setUndoStack((u) => [...u, paths]);
-    setRedoStack((r) => r.slice(0, -1));
-    onPathsChange(next);
-  }, [onPathsChange, paths, redoStack]);
+  // ── Keyboard drawing mode (P1.5 / WB-P1-04) ────────────────────────────
+  const screenCenterToCanvas = useCallback(() => {
+    const svg = svgRef.current;
+    if (!svg) return { x: 0, y: 0 };
+    const rect = svg.getBoundingClientRect();
+    return screenToCanvas(rect.left + rect.width / 2, rect.top + rect.height / 2);
+  }, [screenToCanvas]);
+
+  // Idempotent: repeated arrow-key presses call this every time, but the
+  // cursor should only re-centre and the mode-entered announcement should
+  // only fire on the FIRST activation. Returns the cursor position to use
+  // RIGHT NOW — callers that need the position synchronously (e.g. starting
+  // a stroke on the very first keypress, before any state update has
+  // flushed) must use the return value, not the `kbCursor` state variable.
+  const ensureKeyboardMode = useCallback((): { x: number; y: number } => {
+    if (kbKeyboardActive) return kbCursor;
+    const center = screenCenterToCanvas();
+    setKbCursor(center);
+    setKbKeyboardActive(true);
+    setKbAnnouncement(t('myWorkIdeas.drawingLayer.kbModeEntered'));
+    return center;
+  }, [kbCursor, kbKeyboardActive, screenCenterToCanvas, t]);
+
+  const focusAndActivateKeyboardMode = useCallback(() => {
+    ensureKeyboardMode();
+    svgRef.current?.focus();
+  }, [ensureKeyboardMode]);
+
+  const moveKeyboardCursor = useCallback(
+    (dx: number, dy: number) => {
+      setKbCursor((prev) => {
+        const next = { x: prev.x + dx, y: prev.y + dy };
+        if (kbPenDown) {
+          setCurrentPath((p) => `${p} L ${next.x} ${next.y}`);
+        }
+        return next;
+      });
+    },
+    [kbPenDown]
+  );
+
+  const startKeyboardStroke = useCallback(
+    (at: { x: number; y: number }) => {
+      setCurrentPath(`M ${at.x} ${at.y}`);
+      setKbPenDown(true);
+      setKbAnnouncement(t('myWorkIdeas.drawingLayer.kbPenDown'));
+    },
+    [t]
+  );
+
+  const liftKeyboardPen = useCallback(() => {
+    setKbPenDown(false);
+    setKbAnnouncement(t('myWorkIdeas.drawingLayer.kbPenUp'));
+  }, [t]);
+
+  const finishKeyboardStroke = useCallback(() => {
+    const committed = commitPath(currentPath);
+    setCurrentPath('');
+    setKbPenDown(false);
+    setKbAnnouncement(
+      t(
+        committed
+          ? 'myWorkIdeas.drawingLayer.kbStrokeCompleted'
+          : 'myWorkIdeas.drawingLayer.kbStrokeDiscarded'
+      )
+    );
+  }, [commitPath, currentPath, t]);
+
+  const handleCanvasFocus = useCallback(() => {
+    ensureKeyboardMode();
+  }, [ensureKeyboardMode]);
+
+  const handleCanvasKeyDown = useCallback(
+    (e: React.KeyboardEvent<SVGSVGElement>) => {
+      if (!active || tool === 'eraser') return;
+      const step = e.shiftKey ? KB_STEP_LARGE : KB_STEP;
+      switch (e.key) {
+        case 'ArrowUp':
+          e.preventDefault();
+          ensureKeyboardMode();
+          moveKeyboardCursor(0, -step);
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          ensureKeyboardMode();
+          moveKeyboardCursor(0, step);
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          ensureKeyboardMode();
+          moveKeyboardCursor(-step, 0);
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          ensureKeyboardMode();
+          moveKeyboardCursor(step, 0);
+          break;
+        case ' ':
+        case 'Enter': {
+          e.preventDefault();
+          const at = ensureKeyboardMode();
+          if (kbPenDown) liftKeyboardPen();
+          else startKeyboardStroke(at);
+          break;
+        }
+        case 'Escape':
+          if (currentPath) {
+            e.preventDefault();
+            e.stopPropagation();
+            finishKeyboardStroke();
+          }
+          break;
+        default:
+          break;
+      }
+    },
+    [
+      active,
+      currentPath,
+      ensureKeyboardMode,
+      finishKeyboardStroke,
+      kbPenDown,
+      liftKeyboardPen,
+      moveKeyboardCursor,
+      startKeyboardStroke,
+      tool,
+    ]
+  );
 
   const handleClear = useCallback(() => {
     if (paths.length === 0) return;
-    setUndoStack((prev) => [...prev, paths]);
-    setRedoStack([]);
     onPathsChange([]);
   }, [onPathsChange, paths]);
 
+  // Ctrl+Z/Ctrl+Y are intentionally NOT handled here — see `onUndo`/`onRedo`
+  // prop doc above. The parent canvas's `useCanvasKeyboard` listener is
+  // always attached (regardless of draw mode) and already fires
+  // `undoWhiteboard`/`redoWhiteboard` for these keys; a second listener here
+  // would double-handle every press against a second, disagreeing stack.
   useEffect(() => {
     if (!active) return;
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
-        e.preventDefault();
-        handleUndo();
-      }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
-        e.preventDefault();
-        handleRedo();
-      }
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, [active, handleRedo, handleUndo, onClose]);
+  }, [active, onClose]);
 
   const vpTransformStr = viewportTransform
     ? `translate(${viewportTransform.x}, ${viewportTransform.y}) scale(${viewportTransform.zoom})`
@@ -214,7 +366,7 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
       {/* Drawing SVG */}
       <svg
         ref={svgRef}
-        className={`absolute inset-0 w-full h-full ${tool === 'eraser' ? 'cursor-crosshair' : 'cursor-crosshair'}`}
+        className={`absolute inset-0 w-full h-full ${tool === 'eraser' ? 'cursor-crosshair' : 'cursor-crosshair'} focus-visible:outline focus-visible:outline-2 focus-visible:outline-c-focus focus-visible:-outline-offset-2`}
         onPointerDown={startDrawing}
         onPointerMove={continueDrawing}
         onPointerUp={endDrawing}
@@ -225,6 +377,16 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
         // React Flow niżej. Brakowało tu analogicznego `preventDefault()`.
         onContextMenu={(e) => e.preventDefault()}
         style={{ touchAction: 'none' }}
+        // P1.5 (WB-P1-04) — keyboard drawing mode: focusable canvas, arrow
+        // keys move a virtual cursor, Space/Enter toggles the pen, Escape
+        // commits the stroke. See handleCanvasKeyDown.
+        tabIndex={tool === 'eraser' ? -1 : 0}
+        role="application"
+        aria-roledescription={t('myWorkIdeas.drawingLayer.kbCanvasRole')}
+        aria-label={t('myWorkIdeas.drawingLayer.kbCanvasLabel')}
+        aria-describedby="wb-draw-kb-instructions"
+        onFocus={handleCanvasFocus}
+        onKeyDown={handleCanvasKeyDown}
       >
         <g transform={vpTransformStr}>
           {/* Existing paths */}
@@ -270,8 +432,32 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
               opacity={tool === 'highlighter' ? 0.35 : 1}
             />
           )}
+          {/* Keyboard cursor (P1.5 / WB-P1-04) — visible position + pen
+              state for sighted keyboard-only users; screen readers get the
+              same state via the aria-live announcement below. */}
+          {kbKeyboardActive && tool !== 'eraser' && (
+            <circle
+              cx={kbCursor.x}
+              cy={kbCursor.y}
+              r={Math.max(6, strokeWidth + 4)}
+              fill={kbPenDown ? color : 'none'}
+              fillOpacity={kbPenDown ? 0.35 : 0}
+              stroke={kbPenDown ? color : '#3b82f6'}
+              strokeWidth={2}
+              strokeDasharray={kbPenDown ? undefined : '3 3'}
+              aria-hidden="true"
+            />
+          )}
         </g>
       </svg>
+
+      {/* Screen-reader instructions + live status (P1.5 / WB-P1-04) */}
+      <p id="wb-draw-kb-instructions" className="sr-only">
+        {t('myWorkIdeas.drawingLayer.kbInstructions')}
+      </p>
+      <div role="status" aria-live="polite" className="sr-only">
+        {kbAnnouncement}
+      </div>
 
       {/* Toolbar */}
       <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[75]">
@@ -295,6 +481,32 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
             icon={Eraser}
             label={t('myWorkIdeas.drawingLayer.eraser')}
           />
+
+          <div className="w-px h-6 bg-slate-200 dark:bg-navy-700 mx-1" />
+
+          {/* P1.5 (WB-P1-04) — accessible entry point into keyboard drawing
+              mode: focuses the canvas and shows the keyboard cursor, so a
+              user who cannot drag a pointer can still create a stroke. */}
+          <button
+            onClick={focusAndActivateKeyboardMode}
+            disabled={tool === 'eraser'}
+            aria-label={t('myWorkIdeas.drawingLayer.kbToggleLabel')}
+            title={t('myWorkIdeas.drawingLayer.kbToggleLabel')}
+            className={`p-1.5 rounded-lg transition-all disabled:opacity-30 ${
+              kbKeyboardActive
+                ? 'bg-c-info/10 text-c-info'
+                : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
+            }`}
+          >
+            <Keyboard size={14} />
+          </button>
+          {kbKeyboardActive && (
+            <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 px-1 whitespace-nowrap">
+              {kbPenDown
+                ? t('myWorkIdeas.drawingLayer.kbStatusPenDown')
+                : t('myWorkIdeas.drawingLayer.kbStatusPenUp')}
+            </span>
+          )}
 
           <div className="w-px h-6 bg-slate-200 dark:bg-navy-700 mx-1" />
 
@@ -349,8 +561,8 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
 
           {/* Undo/Redo/Clear */}
           <button
-            onClick={handleUndo}
-            disabled={undoStack.length === 0}
+            onClick={onUndo}
+            disabled={!canUndo}
             aria-label={t('myWorkIdeas.drawingLayer.undo')}
             title={t('myWorkIdeas.drawingLayer.undo')}
             className="p-1.5 text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 disabled:opacity-30"
@@ -358,8 +570,8 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
             <Undo2 size={14} />
           </button>
           <button
-            onClick={handleRedo}
-            disabled={redoStack.length === 0}
+            onClick={onRedo}
+            disabled={!canRedo}
             aria-label={t('myWorkIdeas.drawingLayer.redo')}
             title={t('myWorkIdeas.drawingLayer.redo')}
             className="p-1.5 text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 disabled:opacity-30"

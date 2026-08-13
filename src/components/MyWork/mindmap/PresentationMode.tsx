@@ -17,6 +17,8 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
+
 interface PresentationBranch {
   branchKey: string;
   label: string;
@@ -131,7 +133,9 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
     }
   }, []);
 
-  // Keyboard navigation
+  // Keyboard navigation. Escape-to-close, focus trap, and focus restore are
+  // handled by useDialogA11y (below) instead of here — this handler only
+  // owns the presentation-specific shortcuts.
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
@@ -143,13 +147,15 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
         e.preventDefault();
         goPrev();
       }
-      if (e.key === 'Escape') onClose();
       if (e.key === 'f' || e.key === 'F') toggleFullscreen();
       if (e.key === 'n' || e.key === 'N') setShowNotes((p) => !p);
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [goNext, goPrev, onClose, open, toggleFullscreen]);
+  }, [goNext, goPrev, open, toggleFullscreen]);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  useDialogA11y({ open, onClose, containerRef });
 
   if (!open) return null;
 
@@ -159,7 +165,14 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
   const totalNodeCount = branches.reduce((s, b) => s + b.nodes.length, 0);
   if (totalNodeCount === 0) {
     return (
-      <div className="fixed inset-0 z-modal bg-c-surface-raised dark:bg-c-surface flex flex-col items-center justify-center gap-4 px-8 text-center">
+      <div
+        ref={containerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('ideas.mindmap.presentationMode', 'Presentation Mode')}
+        tabIndex={-1}
+        className="fixed inset-0 z-modal bg-c-surface-raised dark:bg-c-surface flex flex-col items-center justify-center gap-4 px-8 text-center outline-none"
+      >
         <Lightbulb size={40} className="text-c-warning" />
         <p className="max-w-sm text-sm text-c-text-secondary dark:text-c-text-muted">
           {t(
@@ -182,7 +195,14 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
   const progress = ((currentSlide + 1) / slides.length) * 100;
 
   return (
-    <div className="fixed inset-0 z-modal bg-c-surface-raised dark:bg-c-surface flex flex-col">
+    <div
+      ref={containerRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label={t('ideas.mindmap.presentationMode', 'Presentation Mode')}
+      tabIndex={-1}
+      className="fixed inset-0 z-modal bg-c-surface-raised dark:bg-c-surface flex flex-col outline-none"
+    >
       {/* Progress bar */}
       <div className="h-1 bg-c-surface-raised dark:bg-c-surface">
         <div

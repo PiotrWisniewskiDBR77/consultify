@@ -1,4 +1,5 @@
 import fs from 'fs';
+import crypto from 'crypto';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -79,6 +80,58 @@ export interface RunMigrationsOptions {
   migrationsDir?: string;
 }
 
+// Explicit intra-day ordering for same-date-prefix migrations whose plain
+// filename order inverts a real producer/consumer dependency.
+//
+// Bug this exists to fix: on a genuinely fresh database, this runtime
+// runner failed with `relation "case_core" does not exist` while applying
+// `20260809_case_workspace_artifact_links.sql`. Root cause: all eleven
+// `20260809_case_workspace_*.sql` files share the identical date prefix, so
+// the fallback tiebreak below (raw filename compare) put them in ASCII
+// order — 'a' (artifact_links) before 'c' (case_core, the sole producer of
+// the `case_core` table `artifact_links` FKs into). This was invisible on
+// any database where `case_core` already existed from an earlier run,
+// which is why it went undetected until a from-scratch replay caught it.
+//
+// This table is a deliberately narrow override, not a general dependency
+// resolver: it only reorders files it explicitly names, and only relative
+// to each other (the length/locale prefix comparison above still governs
+// everything else, including ordering against files with a DIFFERENT date
+// prefix). It changes DISCOVERY ORDER only — it never edits SQL content, so
+// it has no effect on any database where these files are already recorded
+// in `tp_migration_history` (already-applied files are skipped by filename
+// lookup before ordering is ever consulted; see the skip check in
+// `runMigrations()` below). It is therefore safe for already-migrated
+// databases (demo, prod, the shared local `case_workspace_test`) by
+// construction, not merely by argument — verified directly, see this
+// packet's regression evidence.
+//
+// Mirrors the SAME dependency order already reviewed and shipped in the
+// separate manual runner's `DATED_SAME_DAY_ORDER` map
+// (`server/scripts/migrate.postgres.ts`), which fixed this identical root
+// cause for that runner earlier (see that file's own comment + git history,
+// and `server/scripts/case-workspace-realdb-harness/EVIDENCE.md`). That fix
+// never propagated to THIS runner — the one that actually gates
+// `/api/ready` at server startup — which is the defect this map closes.
+// Keep the two maps in sync if a new same-day case_workspace file is added;
+// they are intentionally not shared code, since the two runners have
+// independent discovery/sort machinery and duplicating eleven lines is
+// lower risk than coupling a `server/scripts/*` CLI tool to runtime service
+// code.
+const SAME_PREFIX_ORDER: Record<string, number> = {
+  '20260809_case_workspace_case_core.sql': 0, // sole producer of `case_core` — every other file here FKs into it, directly or transitively
+  '20260809_case_workspace_capability_registry.sql': 1, // no case_workspace FK dependency; kept early
+  '20260809_case_workspace_case_plan_version.sql': 2, // FKs case_core
+  '20260809_case_workspace_run_binding.sql': 3, // FKs case_core, case_plan_versions, v8_execution_runs (unaffected, far-earlier-dated table)
+  '20260809_case_workspace_proposals_approvals.sql': 4, // FKs case_core, run_binding, case_plan_versions, capability_registry
+  '20260809_case_workspace_wait_subscription.sql': 5, // FKs case_core, run_binding, proposals_approvals
+  '20260809_case_workspace_history_value.sql': 6, // FKs case_core
+  '20260809_case_workspace_plays.sql': 7, // no FK into case_core/case_plan_versions by design (Plays are pre-Case)
+  '20260809_case_workspace_artifact_links.sql': 8, // FKs case_core — the file that originally exposed this bug (sorted alphabetically before case_core.sql)
+  '20260809_case_workspace_execution_graph.sql': 9, // FKs case_core, run_binding
+  '20260809_case_workspace_migration_readiness.sql': 10, // no FK into any other case_workspace table
+};
+
 export function compareMigrationFilenames(a: string, b: string): number {
   const prefixA = a.split('_')[0];
   const prefixB = b.split('_')[0];
@@ -91,6 +144,15 @@ export function compareMigrationFilenames(a: string, b: string): number {
   // producer). Raw code-point order is deterministic on every runtime and
   // naturally places `name.sql` before `name_extension.sql`.
   if (a === b) return 0;
+
+  // Same-prefix dependency override: only applies when BOTH filenames are
+  // explicitly listed above, so it can never silently reorder a file it
+  // does not know about (an unlisted same-prefix file keeps the plain
+  // filename tiebreak below).
+  const orderA = SAME_PREFIX_ORDER[a];
+  const orderB = SAME_PREFIX_ORDER[b];
+  if (orderA !== undefined && orderB !== undefined) return orderA - orderB;
+
   return a < b ? -1 : 1;
 }
 
@@ -222,6 +284,32 @@ export async function runMigrations(options?: RunMigrationsOptions): Promise<Mig
     `SELECT filename, checksum FROM ${MIGRATION_TABLE}`
   );
   const appliedChecksums = new Map(appliedResult.rows.map((r) => [r.filename, r.checksum]));
+
+  // The canonical SQL runner and the legacy Table Platform runner share migration files but
+  // maintain separate ledgers. When the strict SQL chain has already applied the exact current
+  // bytes, executing the same DDL again is both unnecessary and unsafe for older non-idempotent
+  // files. Reconcile the TP ledger only after proving filename + success + full SHA-256.
+  const sqlLedgerExists = await db.query<{ present: boolean }>(
+    `SELECT to_regclass('public.schema_migrations') IS NOT NULL AS present`
+  );
+  if (sqlLedgerExists.rows[0]?.present) {
+    const sqlApplied = await db.query<{ filename: string; checksum: string; status: string }>(
+      `SELECT filename, checksum, status FROM schema_migrations WHERE status = 'success'`
+    );
+    const successfulSql = new Map(sqlApplied.rows.map((r) => [r.filename, r.checksum]));
+    for (const file of files) {
+      if (appliedChecksums.has(file)) continue;
+      const content = fs.readFileSync(path.join(migrationsDir, file), 'utf-8');
+      const fullChecksum = crypto.createHash('sha256').update(content).digest('hex');
+      if (successfulSql.get(file) !== fullChecksum) continue;
+      const shortChecksum = fileChecksum(content);
+      await db.query(
+        `INSERT INTO ${MIGRATION_TABLE} (filename, checksum) VALUES ($1, $2) ON CONFLICT (filename) DO NOTHING`,
+        [file, shortChecksum]
+      );
+      appliedChecksums.set(file, shortChecksum);
+    }
+  }
 
   // ── Checksum verification (fail-closed) ─────────────────────────────────
   // An applied migration whose file changed underneath us means the schema in

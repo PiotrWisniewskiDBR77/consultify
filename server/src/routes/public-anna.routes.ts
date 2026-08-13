@@ -76,7 +76,7 @@ type AnnaRateLimitEntry = {
   resetAtMs: number;
 };
 
-type AnnaConversationLanguage = 'pl' | 'en' | 'es' | 'de' | 'jp' | 'ar' | 'unsupported';
+type AnnaConversationLanguage = 'pl' | 'en' | 'es' | 'de' | 'ja' | 'ar' | 'unsupported';
 
 type AnnaKnowledgePayload = {
   contextText: string;
@@ -230,12 +230,14 @@ function buildAnnaPublicTrustBundle(params: {
   };
 }
 
-function resolveAnnaLocale(locale?: string): 'pl' | 'en' | 'es' | 'de' | 'jp' | 'ar' {
+function resolveAnnaLocale(locale?: string): 'pl' | 'en' | 'es' | 'de' | 'ja' | 'ar' {
   const normalized = String(locale || '').toLowerCase();
   if (normalized.startsWith('pl')) return 'pl';
   if (normalized.startsWith('es')) return 'es';
   if (normalized.startsWith('de')) return 'de';
-  if (normalized.startsWith('jp') || normalized.startsWith('ja')) return 'jp';
+  // 'jp' is the pre-migration legacy code (S23-LOCALE, 2026-08-12) — kept
+  // here so an already-cached client sending the old code still resolves.
+  if (normalized.startsWith('jp') || normalized.startsWith('ja')) return 'ja';
   if (normalized.startsWith('ar')) return 'ar';
   return 'en';
 }
@@ -251,7 +253,7 @@ function buildAnnaRateLimitMessage(locale?: string): string {
   if (resolvedLocale === 'de') {
     return 'Bitte warte einen Moment, bevor du eine weitere Nachricht sendest. In der Zwischenzeit kannst du das Demo nutzen, einen Trial starten oder uns kontaktieren.';
   }
-  if (resolvedLocale === 'jp') {
+  if (resolvedLocale === 'ja') {
     return '次のメッセージを送る前に少し待ってください。その間に、デモ、トライアル、またはお問い合わせをご利用いただけます。';
   }
   if (resolvedLocale === 'ar') {
@@ -272,11 +274,11 @@ function detectAnnaConversationLanguage(
   }
 
   if (/[\u3040-\u30FF]/u.test(normalized)) {
-    return 'jp';
+    return 'ja';
   }
 
-  if (/[\u3400-\u9FFF]/u.test(normalized) && resolveAnnaLocale(locale) === 'jp') {
-    return 'jp';
+  if (/[\u3400-\u9FFF]/u.test(normalized) && resolveAnnaLocale(locale) === 'ja') {
+    return 'ja';
   }
 
   if (/[\u0600-\u06FF]/u.test(normalized)) {
@@ -386,7 +388,7 @@ function buildAnnaServiceUnavailableMessage(locale?: string): string {
   if (resolvedLocale === 'de') {
     return 'Unser AI-Assistent ist vorubergehend nicht verfugbar. Schau dir bitte die Seite an oder kontaktiere uns direkt.';
   }
-  if (resolvedLocale === 'jp') {
+  if (resolvedLocale === 'ja') {
     return 'AIアシスタントは現在一時的に利用できません。ページをご覧いただくか、直接お問い合わせください。';
   }
   if (resolvedLocale === 'ar') {
@@ -428,7 +430,7 @@ function enforceAnnaCitationsOrUncertainty(
         ? 'Puede que me equivoque — si necesitas una respuesta confirmada, contáctanos.'
         : resolvedLocale === 'de'
           ? 'Ich könnte mich irren — wenn du eine bestätigte Antwort brauchst, kontaktiere uns.'
-          : resolvedLocale === 'jp'
+          : resolvedLocale === 'ja'
             ? '確実ではありません。確認が必要ならお問い合わせください。'
             : resolvedLocale === 'ar'
               ? 'قد أكون مخطئًا — إذا كنت بحاجة لإجابة مؤكدة، يرجى التواصل معنا.'
@@ -1312,7 +1314,7 @@ const CanonicalAnnaLpCtaEventSchema = z.object({
     ) as unknown as z.ZodType<`anna_lp.cta.${z.infer<typeof AnnaLpCtaVerbSchema>}`>,
   session_id: z.string().min(1).max(120),
   cta_type: z.enum(['demo', 'trial', 'contact']),
-  language: z.enum(['pl', 'en', 'es', 'de', 'jp', 'ar']),
+  language: z.enum(['pl', 'en', 'es', 'de', 'ja', 'ar']),
   channel: z.enum(['text', 'voice']),
   turn_id: z.string().min(1).max(120),
   source_intent: z.enum([

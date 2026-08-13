@@ -1,0 +1,14 @@
+{
+  "capturedAtIso": "2026-08-12T11:07:45.900Z",
+  "processALauncherPid": 40576,
+  "processAWorkerPid": "40582",
+  "n2RetriedNodeRun": {
+    "node_run_id": "cwnode-951369d9-d69c-45b6-be12-0aaa4c0c0f3f",
+    "status": "RUNNING",
+    "attempt": 2,
+    "lease_owner": "e4-process-A-40582",
+    "lease_expires_at": "2026-08-12 11:07:53.855639+00",
+    "current_attempt_id": "cwattempt-a833aeb6-719f-4833-bb8a-7441fa93fdb8",
+    "version": 6
+  }
+}

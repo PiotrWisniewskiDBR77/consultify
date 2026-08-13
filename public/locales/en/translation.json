@@ -1516,6 +1516,9 @@
     "periodEnd": "Period end",
     "noOrganizations": "No organizations found",
     "retry": "Try again",
+    "pin": "Pin",
+    "unpin": "Unpin",
+    "pinForComparison": "Pin for comparison",
     "saved": "Saved",
     "optional": "optional",
     "analysis": "Analysis",
@@ -1539,6 +1542,7 @@
     "reason": "Reason",
     "reply": "Reply",
     "selectAll": "Select all",
+    "selectedCount": "{{count}} selected",
     "selectRow": "Select row",
     "statusLabel": "Status",
     "you": "You",
@@ -1568,6 +1572,7 @@
     "decision": "Decision",
     "currency": "Currency",
     "noRelations": "No relations",
+    "artifactDetailsPanel": "Artifact details",
     "archive": "Archive",
     "convertTo": "Convert to",
     "openPreview": "Open preview",
@@ -2577,6 +2582,8 @@
         "alignBottom": "Align bottom",
         "distributeH": "Distribute horizontally",
         "distributeV": "Distribute vertically",
+        "tidyBoard": "Tidy board",
+        "tidySelection": "Auto arrange selection",
         "group": "Group",
         "ungroup": "Ungroup",
         "duplicate": "Duplicate",
@@ -2587,7 +2594,10 @@
         "title": "Empty whiteboard",
         "subtitle": "Add sticky notes, shapes, or text from the toolbar",
         "quickStart": "Quick start with template",
-        "addSticky": "Add blank sticky"
+        "addSticky": "Add blank sticky",
+        "affinityMap": "Affinity map",
+        "brainstorm": "Brainstorm",
+        "workshopWall": "Workshop wall"
       },
       "facilitation": {
         "start": "Start",
@@ -2611,7 +2621,8 @@
         "generating": "AI is analyzing the board…",
         "generateFailed": "AI generation failed",
         "noProposals": "AI returned no proposals for this board",
-        "needsElements": "Add elements to the board first"
+        "needsElements": "Add elements to the board first",
+        "needsRealLabels": "Give at least one sticky or text note a real name before finding themes — everything in scope still has a default name like \"New note\" or \"Text\", so AI has nothing meaningful to group."
       },
       "errors": {
         "saveFailed": "Save failed",
@@ -2675,10 +2686,20 @@
         "duplicated": "Duplicated",
         "grouped": "Grouped",
         "ungrouped": "Ungrouped",
+        "tidiedBoard": "Board tidied",
+        "tidiedSelection": "Selection arranged",
         "quickStartBrainstorm": "Brainstorm starter created",
         "quickStartAffinity": "Affinity map starter created",
         "quickStartWorkshop": "Workshop wall created",
-        "phaseChanged": "Phase: {{phase}}"
+        "phaseChanged": "Phase: {{phase}}",
+        "frameEmpty": "Frame has no contents",
+        "frameNoSelection": "Select unlocked elements first (outside this frame)",
+        "frameAdded": "Added to frame",
+        "frameReleaseOne": "Removed from frame",
+        "frameAlreadyFits": "Frame already fits its contents",
+        "frameResized": "Frame resized to fit contents",
+        "frameDeletedReleased": "Frame deleted, contents released",
+        "frameDeletedWithContents": "Frame and its contents deleted"
       },
       "history": {
         "insertLibraryFragment": "Inserted library fragment",
@@ -2737,6 +2758,7 @@
         "ariaLabel": "Whiteboard toolbar",
         "title": "Whiteboard",
         "create": "Create",
+        "insert": "Insert",
         "role": "Role",
         "bgDots": "Dots",
         "bgGrid": "Grid",
@@ -2744,7 +2766,8 @@
         "bgBlank": "Blank",
         "saving": "Saving…",
         "more": "More",
-        "follow": "Follow"
+        "follow": "Follow",
+        "tidyBoard": "Tidy board"
       },
       "selectionBar": {
         "ariaLabel": "Selection actions",
@@ -2782,7 +2805,23 @@
           "parkingLot": "Parking lot"
         }
       },
-      "facilitationError": "Facilitation session unavailable"
+      "facilitationError": "Facilitation session unavailable",
+      "styleBar": {
+        "ariaLabel": "Element style",
+        "color": "Set color",
+        "clearColor": "Reset color",
+        "fontSize": "Font size {{step}}",
+        "bold": "Bold"
+      },
+      "reactions": {
+        "removeReaction": "Remove your reaction",
+        "addReaction": "Add your reaction",
+        "reactWith": "React {{emoji}}",
+        "openTray": "Add reaction"
+      },
+      "linkedArtifactsCount_one": "{{count}} linked artifact",
+      "linkedArtifactsCount_other": "{{count}} linked artifacts",
+      "convertedBadge": "Converted"
     },
     "notebook": {
       "title": "Notebook",
@@ -5202,7 +5241,22 @@
       "toastInputRequested": "Input requested",
       "toastCoDecisionRequested": "Co-decision requested"
     },
-    "closeOpenDocument": "Close: {{nazwa}}"
+    "closeOpenDocument": "Close: {{nazwa}}",
+    "knowledge": {
+      "cardNodes": {
+        "evidenceDefault": "Evidence",
+        "idPrefix": "ID: {{id}}",
+        "knowledgeDefault": "Knowledge",
+        "noteBadge": "Note",
+        "typeArtifact": "Artifact",
+        "typeDocument": "Document",
+        "typeNote": "Note",
+        "typeUrl": "URL"
+      }
+    },
+    "shared": {
+      "dragHandleTitle": "Drag to reorder"
+    }
   },
   "step1": {
     "title": "Step 1",
@@ -15758,7 +15812,12 @@
       "urlReady": "Link processed."
     },
     "stopTTS": "Stop reading",
-    "sidebarEmptyHint": "Ask Teresa from this side panel when you need quick context or next-step help."
+    "sidebarEmptyHint": "Ask Teresa from this side panel when you need quick context or next-step help.",
+    "teresaAction": {
+      "unconfirmed": "I don't have confirmation that the “{{action}}” action actually happened — nothing confirmed it. Check manually before assuming it's done.",
+      "error": "The “{{action}}” action failed — an error occurred. Nothing was confirmed as done.",
+      "refusedNoReason": "I did not perform the “{{action}}” action — the registry refused without giving a reason."
+    }
   },
   "agentAudit": {
     "title": "Agent Audit Layer",
@@ -25363,7 +25422,44 @@
   "formBuilder": {
     "published": "Published",
     "draft": "Draft",
-    "delete": "Delete"
+    "delete": "Delete",
+    "title": "Form Builder",
+    "tabFields": "Fields",
+    "tabSettings": "Settings",
+    "tabPreview": "Preview",
+    "fieldListHint": "Drag to reorder. Toggle visibility and configure each field.",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "toggleRequired": "Toggle required",
+    "required": "Required",
+    "optional": "Optional",
+    "showField": "Show field",
+    "hideField": "Hide field",
+    "customLabel": "Custom label",
+    "helpText": "Help text",
+    "helpTextPlaceholder": "Instructions for this field...",
+    "defaultValue": "Default value",
+    "conditionalVisibility": "Conditional visibility",
+    "selectField": "Select field...",
+    "opEquals": "equals",
+    "opNotEquals": "not equals",
+    "opIsEmpty": "is empty",
+    "opIsNotEmpty": "is not empty",
+    "condValue": "Value...",
+    "formName": "Form name",
+    "formDescription": "Description",
+    "slug": "URL slug",
+    "submitMessage": "Success message",
+    "redirectUrl": "Redirect URL (optional)",
+    "notificationEmail": "Notification email (optional)",
+    "notificationEmailHint": "Receive an email when a new response is submitted",
+    "allowMultiple": "Allow multiple submissions",
+    "requireAuth": "Require authentication",
+    "submit": "Submit",
+    "save": "Save",
+    "shareLink": "Share link",
+    "copied": "Copied!",
+    "submissions": "submissions"
   },
   "formsIndex": {
     "active": "Active",
@@ -25371,13 +25467,59 @@
     "backToList": "Back to list",
     "saved": "Saved",
     "cancel": "Cancel",
-    "delete": "Delete"
+    "delete": "Delete",
+    "title": "Forms",
+    "createForm": "Create Form",
+    "newFormName": "New Form",
+    "createError": "Failed to create form",
+    "deleted": "Form deleted",
+    "deleteError": "Failed to delete form",
+    "shareUpdated": "Sharing updated",
+    "shareError": "Failed to update sharing",
+    "loadError": "Failed to load forms",
+    "emptyTitle": "Create a form to collect data",
+    "emptyDescription": "Forms let you collect structured data from anyone — no login required for public forms.",
+    "created": "Created",
+    "responses": "responses",
+    "copied": "Copied!",
+    "copyLink": "Copy Link",
+    "sharing": "Sharing",
+    "sharePublic": "Public",
+    "shareOrg": "Organization only",
+    "shareAuth": "Authenticated users",
+    "preview": "Preview",
+    "manageIntake": "Manage intake (private link)",
+    "edit": "Edit",
+    "confirmDelete": "Confirm"
   },
   "interfacesIndex": {
     "backToList": "Back to list",
     "saved": "Saved",
     "cancel": "Cancel",
-    "delete": "Delete"
+    "delete": "Delete",
+    "title": "Interfaces",
+    "createInterface": "Create Interface",
+    "chooseTemplate": "Choose a template",
+    "createError": "Failed to create interface",
+    "deleted": "Interface deleted",
+    "deleteError": "Failed to delete interface",
+    "saveError": "Failed to save interface",
+    "emptyTitle": "Build custom views of your data",
+    "emptyDescription": "Interfaces let you create dashboards, detail views, and custom layouts.",
+    "lastModified": "Last modified",
+    "blocks": "blocks",
+    "copied": "Copied!",
+    "share": "Share",
+    "edit": "Edit",
+    "confirmDelete": "Confirm",
+    "tplBlank": "Blank",
+    "tplBlankDesc": "Empty canvas",
+    "tplDashboard": "Dashboard",
+    "tplDashboardDesc": "Pre-configured with chart blocks",
+    "tplFormView": "Form view",
+    "tplFormViewDesc": "Data entry optimized",
+    "tplRecordDetail": "Record detail",
+    "tplRecordDetailDesc": "Single record view with all fields"
   },
   "onboarding": {
     "toast": {
@@ -25621,7 +25763,10 @@
       "mapTableMissing": "Map table missing — run DB migrations.",
       "failedToLoadMap": "Failed to load map",
       "conflictDetected": "Change conflict detected. Refreshing map from server.",
-      "failedToSaveMap": "Failed to save map"
+      "failedToSaveMap": "Failed to save map",
+      "mapLoadErrorTitle": "Couldn't load this mind map",
+      "mapLoadErrorBody": "Something went wrong while loading your data. Nothing was lost — try again.",
+      "mapLoadErrorRetry": "Retry"
     },
     "quickActions": {
       "viewLevel": "Showing level {{level}}",
@@ -25816,6 +25961,7 @@
     "aiExpandBranch": "AI expand branch",
     "failedToApplyProposals": "Failed to apply proposals",
     "aiRequiresBackend": "AI requires backend.",
+    "aiExpandTargetNodeMissing": "That node is no longer on the canvas — pick another node to expand.",
     "noNewSuggestions": "No new suggestions",
     "aiFailed": "AI failed",
     "branchDetached": "Branch detached",
@@ -25885,6 +26031,13 @@
       "ideasMerged": "Ideas merged",
       "rankingApplied": "Ranking applied",
       "emptyCsvFile": "Empty CSV file",
+      "csvImportBlockedAtCap": "Table has reached the {{max}}-row limit — remove rows before importing more.",
+      "csvImportTruncatedAtCap": "Imported {{imported}} of {{total}} rows — table limit is {{max}} rows. {{skipped}} rows were not imported.",
+      "aiAddRowsBlockedAtCap": "Table has reached the {{max}}-row limit — remove rows before adding more with AI.",
+      "aiAddRowsTruncatedAtCap": "Added {{added}} of {{total}} AI-generated rows — table limit is {{max}} rows. {{skipped}} rows were not added.",
+      "frameworkApplyBlockedAtCap": "Table has reached the {{max}}-row limit — remove rows before applying this framework.",
+      "frameworkApplyTruncatedAtCap": "Added {{added}} of {{total}} framework rows — table limit is {{max}} rows. {{skipped}} rows were not added.",
+      "rowRenderCapBanner": "Showing first {{shown}} of {{total}} rows — {{hidden}} more are not rendered to keep the table responsive. Export or filter to see the rest.",
       "undoSuccessful": "Undo successful",
       "nothingToUndo": "Nothing to undo",
       "undoFailed": "Undo failed",
@@ -26562,7 +26715,16 @@
         "mustBeValidEmail": "{{label}} must be a valid email address",
         "mustBeValidUrl": "{{label}} must be a valid URL",
         "tooLongMax30": "{{label}} is too long (max 30 characters)",
-        "mustBeValidDate": "{{label}} must be a valid date"
+        "mustBeValidDate": "{{label}} must be a valid date",
+        "linkExpires": "This private link expires {{date}}.",
+        "noFieldsShared": "The sender hasn't shared any fields with you yet.",
+        "noOptionsConfigured": "No options configured",
+        "poweredBy": "Powered by Consultify Table Platform",
+        "poweredByPrivate": "Powered by Consultify Table Platform · Private link",
+        "responseRecorded": "Response recorded!",
+        "selectOption": "Select...",
+        "submitAnother": "Submit another response",
+        "uploadFile": "Upload a file"
       },
       "fileNumbered": "File {{n}}",
       "recordTemplates": {
@@ -26649,7 +26811,12 @@
         "refreshedFields": "Refreshed {{count}} fields",
         "noChangesToApply": "No changes to apply",
         "refreshFailed": "Refresh failed",
-        "selectRowFirst": "Select a row first"
+        "selectRowFirst": "Select a row first",
+        "viewNotFound": "View not found: {{viewId}}",
+        "columnNotFound": "Column not found: {{colKey}}",
+        "columnNameRequired": "Provide a new column name to rename it.",
+        "rowIdRequired": "Provide the row ID of the Table.",
+        "cellTargetMissing": "Missing cell target"
       },
       "smartSuggestions": {
         "incompleteRowsTitle": "Incomplete rows",
@@ -26695,7 +26862,9 @@
         "sum": "Sum",
         "aiNarrative": "AI Narrative",
         "generating": "Generating...",
-        "generateAiSummary": "Generate AI summary"
+        "generateAiSummary": "Generate AI summary",
+        "max": "Max",
+        "min": "Min"
       },
       "toolbar": {
         "aiViewName": "AI view",
@@ -26739,7 +26908,16 @@
         "notes": "Notes",
         "viewLayout": "View layout",
         "record": "Record",
-        "filter": "Filter"
+        "filter": "Filter",
+        "densityCompact": "Compact",
+        "densityNormal": "Normal",
+        "densityComfortable": "Comfortable",
+        "rowDensity": "Row density",
+        "filterColumn": "Filter…",
+        "filterColumnAria": "Filter by",
+        "resizeColumn": "Resize column",
+        "sortColumn": "Sort by {{name}}",
+        "selectRow": "Select row"
       },
       "viewSwitcher": {
         "views": "Views",
@@ -26952,7 +27130,80 @@
         "sectionMore": "More",
         "sectionPlatform": "Platform",
         "title": "More tools"
-      }
+      },
+      "alreadyEmpty": "Cell is already empty",
+      "areYouSureYouWantToDeleteThisColumn": "Are you sure you want to delete this column? This cannot be undone.",
+      "cellActions": "Cell actions",
+      "columnActions": "Column actions",
+      "edgeKind": "Kind",
+      "groupBy": "Group by",
+      "lockedReason": "Table is locked",
+      "noGrouping": "No grouping",
+      "readOnlyCell": "Cell is read-only",
+      "rowActions": "Row actions",
+      "savedViewActions": "Saved view actions",
+      "typeCannotExpand": "Type cell cannot be expanded",
+      "emptyFilterState": {
+        "headline": "No results for this filter",
+        "description": "No record matches the active filters. Clear the filters to see all records.",
+        "clearFilters": "Clear filters"
+      },
+      "email": "Email",
+      "provenanceRecordId": "Record: {{id}}…",
+      "provenanceRunId": "Run: {{id}}…",
+      "validationBadgeAdmin": "admin",
+      "webhookUrl": "Webhook URL",
+      "intakeJwt": {
+        "failedToLoad": "Failed to load intake context",
+        "subjectRequired": "Recipient subject is required",
+        "subjectTooLong": "Subject must be {{max}} characters or fewer",
+        "linkIssued": "Intake link issued",
+        "failedToIssue": "Failed to issue link: {{message}}",
+        "unknown": "unknown",
+        "failedToCopy": "Failed to copy to clipboard",
+        "allowListSaved": "Allow-list saved",
+        "failedToSaveAllowList": "Failed to save allow-list: {{message}}",
+        "panelAriaLabel": "Form intake settings",
+        "panelTitle": "Form intake (private link)",
+        "closePanel": "Close intake panel",
+        "loadingContext": "Loading intake context…",
+        "summaryAriaLabel": "Intake summary",
+        "summary": "Summary",
+        "targetTable": "Target table",
+        "allowList": "Allow-list",
+        "allConfiguredFields": "All configured fields",
+        "hardExpiry": "Hard expiry",
+        "none": "None",
+        "status": "Status",
+        "published": "Published",
+        "draftWontVerify": "Draft (links will not verify)",
+        "allowListEditorAriaLabel": "Allow-list editor",
+        "fieldAllowList": "Field allow-list",
+        "selectAll": "Select all",
+        "clearAllowList": "Clear allow-list (use form fields)",
+        "clear": "Clear",
+        "allowListHint": "Empty allow-list falls back to the form's configured fields. Selecting a subset narrows what recipients can submit.",
+        "noConfiguredFields": "The form has no configured fields yet.",
+        "saveAllowList": "Save allow-list",
+        "issueLinkAriaLabel": "Issue intake link",
+        "issuePrivateLink": "Issue private link",
+        "recipientSubject": "Recipient subject (email or label)",
+        "recipientSubjectAriaLabel": "Recipient subject",
+        "expiresIn": "Expires in",
+        "issueLink": "Issue link",
+        "publishFirst": "Publish the form first; private links won't verify on a draft form.",
+        "copied": "Copied",
+        "copyUrl": "Copy URL",
+        "expires": "Expires {{date}}",
+        "copyToken": "Copy token",
+        "ttl1Day": "1 day",
+        "ttl7Days": "7 days",
+        "ttl30Days": "30 days",
+        "ttl90Days": "90 days",
+        "fieldCount_one": "{{count}} field",
+        "fieldCount_other": "{{count}} fields"
+      },
+      "recordDetails": "Record details"
     },
     "mindmap": {
       "addNodeTab": "Add node (Tab)",
@@ -27352,7 +27603,113 @@
       "summaryUnavailable": "Could not prepare a summary for this branch. Please try again.",
       "branchHasNoChildren": "This node has no sub-nodes, so there is no branch to summarize.",
       "tryAgain": "Try again",
-      "arrowDirectionBranch": "Arrows in branch"
+      "arrowDirectionBranch": "Arrows in branch",
+      "resetView": "Reset view",
+      "doubleClickToAddLabel": "Double-click to add label",
+      "mindMapOverview": "Mind Map Overview",
+      "noIdeasYet": "No ideas yet",
+      "mindMapPresentationTitle": "Mind Map Presentation",
+      "copyFailed": "Failed to copy",
+      "canvasNotFound": "Mind map canvas not found. Please try again.",
+      "canvasEmptyNothingToExport": "Mind map appears empty — nothing to export.",
+      "preparingPdfExport": "Preparing PDF export…",
+      "popupBlockedForPdf": "Pop-up blocked. Please allow pop-ups to export the PDF.",
+      "failedToRenderImageRetry": "Failed to render the mind map image. Please close this tab and try again.",
+      "pdfReadyPrintDialog": "PDF ready — use the print dialog to save it.",
+      "pdfExportFailedRetry": "PDF export failed. Please try again."
+    },
+    "financial": {
+      "dialogTitle": "Financial case",
+      "costDrivers": "Cost drivers",
+      "benefitDrivers": "Benefit drivers",
+      "addCost": "Add cost driver",
+      "addBenefit": "Add benefit driver",
+      "collapsePeriods": "Collapse monthly periods",
+      "expandPeriods": "Edit monthly periods",
+      "col": {
+        "label": "Driver",
+        "type": "Type",
+        "category": "Category",
+        "unit": "Unit",
+        "total": "Total",
+        "confidence": "Confidence",
+        "evidence": "Evidence"
+      },
+      "monthlyValues": "Monthly values",
+      "months": "mo",
+      "labelPlaceholder": "Untitled driver",
+      "categoryPlaceholder": "Category",
+      "confidenceHigh": "High",
+      "confidenceMedium": "Medium",
+      "confidenceLow": "Low",
+      "removeDriver": "Remove driver",
+      "noDriversYet": "No drivers yet.",
+      "currency": "Currency",
+      "horizon": "Horizon",
+      "discountRate": "Discount rate",
+      "scenarioMultipliers": "Scenario multiplier (vs Base)",
+      "recompute": "Recompute",
+      "lastComputed": "Last computed",
+      "evidenceHealth": "Evidence health",
+      "evidenceNeeded": "Evidence needed",
+      "evidenceMissingFor": "Evidence needed: {{list}}",
+      "driverCounts": "Drivers",
+      "minimumsNotMet": "Needs ≥{{min}} of each for the acceptance case",
+      "engineNotWired": "Calculation engine not connected in this build — no numbers are being fabricated.",
+      "convert": {
+        "reasonStale": "Recompute the case first — a stale case cannot be converted.",
+        "reasonNotBuilt": "Conversion to a governed downstream artifact is not built yet in this release (epic E11)."
+      },
+      "analytics": "Analytics",
+      "cost": "Cost",
+      "benefit": "Benefit",
+      "costShort": "cost",
+      "benefitShort": "benefit",
+      "chart": {
+        "cashFlow": {
+          "title": "Cumulative cash flow",
+          "subtitle": "When does the case cross zero (payback)?"
+        },
+        "composition": {
+          "title": "Benefit / cost composition",
+          "subtitle": "What is driving each period (Base scenario)?"
+        },
+        "range": {
+          "title": "Scenario range (NPV)",
+          "subtitle": "Base vs Upside vs Downside",
+          "subtitleSpread": "Spread across scenarios: {{spread}}"
+        },
+        "sensitivity": {
+          "title": "Sensitivity",
+          "subtitle": "Which driver assumption swings NPV most (±20%)?",
+          "low": "-20%",
+          "high": "+20%"
+        },
+        "noResult": "Recompute to see this chart.",
+        "noSensitivity": "No sensitivity rows returned by the engine yet."
+      },
+      "evidenceCount_one": "{{count}} source",
+      "evidenceCount_other": "{{count}} sources",
+      "staleLabel": "stale",
+      "persistence": {
+        "loading": "Loading…",
+        "saving": "Saving…",
+        "saved": "Saved",
+        "unsaved": "Unsaved changes",
+        "save": "Save",
+        "conflict": "Changed by someone else",
+        "conflictBody": "Someone else saved this financial case while you were editing. Your changes are still here — reload their version or save again to overwrite.",
+        "reload": "Reload theirs",
+        "error": "Save failed",
+        "retry": "Retry",
+        "retrySave": "Try saving again",
+        "unavailable": "Not saved — no idea context",
+        "confirmTitle": "Unsaved changes",
+        "confirmBody": "This financial case has unsaved changes.",
+        "keepEditing": "Keep editing",
+        "discard": "Discard changes",
+        "saveAndClose": "Save and close"
+      }
     }
   },
   "notebook": {
@@ -27988,6 +28345,8 @@
       "selectDecisionNode": "Select a decision node",
       "alternativePath": "Alternative path",
       "pathSplit": "Path split",
+      "nodeLimitWarning": "You are approaching the step limit ({{warn}} steps). Consider splitting into multiple flows.",
+      "nodeLimitReached": "Step limit reached ({{limit}} maximum). Please delete some steps or split the process into multiple flows.",
       "selectProcessStepFirst": "Select a process step first",
       "stepMetricsSaved": "Step metrics saved",
       "addProcessStepsFirst": "Add process steps first",
@@ -28046,7 +28405,19 @@
       "validationFailedRetry": "Flow validation failed. Try again.",
       "deleteNodesConfirm": "{{value}} nodes and their connections will be deleted. You can undo with Ctrl+Z.",
       "warningsCount": "{{value}} warning(s)",
-      "laneDefaultName": "Lane {{index}}"
+      "laneDefaultName": "Lane {{index}}",
+      "cannotDeleteLastLane": "This is the only lane left in the process — it can't be deleted. Add another lane first if you want to move its steps there, or rename this lane instead of removing it.",
+      "aiRewriteStep": "AI: rewrite step",
+      "nodeTooltip": {
+        "accept": "Accept",
+        "automation": "Automation: {{level}}",
+        "cost": "Cost:",
+        "duration": "Duration:",
+        "owner": "Owner:",
+        "status": "Status:",
+        "attachmentCount_one": "{{count}} attachment",
+        "attachmentCount_other": "{{count}} attachments"
+      }
     },
     "nodeDetailDrawer": {
       "failedAddComment": "Failed to add comment",
@@ -28126,6 +28497,18 @@
       "branch2": "Branch",
       "area": "Area…",
       "area2": "Area",
+      "confidentiality": "Confidentiality",
+      "confidentialityStandard": "Standard",
+      "confidentialityConfidential": "Confidential",
+      "confidentialityRestricted": "Restricted",
+      "confidentialityUnauthorized": "You don't have permission to change this",
+      "confidentialityDowngradeTitle": "Lower confidentiality?",
+      "confidentialityDowngradeDescription": "\"{{title}}\" will change from {{from}} to {{to}}.",
+      "confidentialityDowngradeRestrictedWarning": "This removes the block on AI prompts and file exports (mind map, table, whiteboard, process flow) — anyone who can open this Idea will be able to send its content to an AI model or export it.",
+      "confidentialityDowngradeConfirm": "Lower protection",
+      "confidentialityDowngradeCancel": "Cancel",
+      "confidentialityChanged": "Confidentiality updated",
+      "confidentialityChangeFailed": "Failed to update confidentiality",
       "convert": "Convert",
       "comingSoon": "Coming soon",
       "soon": "Soon",
@@ -28251,7 +28634,18 @@
       "redo": "Redo",
       "clearDrawing": "Clear drawing",
       "closeDrawing": "Close drawing",
-      "close": "Close"
+      "close": "Close",
+      "kbToggleLabel": "Draw with keyboard",
+      "kbCanvasRole": "drawing canvas",
+      "kbCanvasLabel": "Drawing canvas. Use arrow keys to move the cursor, Space or Enter to start or stop a stroke, Escape to finish it.",
+      "kbInstructions": "Keyboard drawing mode: arrow keys move the drawing cursor, Space or Enter toggles the pen down or up, Escape finishes the current stroke and adds it to the canvas. Shift plus an arrow key moves in larger steps.",
+      "kbModeEntered": "Keyboard drawing mode. Arrow keys move the cursor, Space or Enter starts or stops the pen, Escape finishes the stroke.",
+      "kbPenDown": "Pen down. Move with arrow keys to draw.",
+      "kbPenUp": "Pen up. Move to reposition, or press Escape to finish the stroke.",
+      "kbStrokeCompleted": "Stroke completed and added to the canvas.",
+      "kbStrokeDiscarded": "No stroke drawn — nothing to add.",
+      "kbStatusPenDown": "Pen down",
+      "kbStatusPenUp": "Pen up"
     },
     "pinnedCard": {
       "addTitle": "Add a title",
@@ -28421,6 +28815,7 @@
       "flowModeAriaLabel": "Flow mode",
       "kitTitle": "Notation kit set from chat",
       "stepsCount": "Steps {{value}}",
+      "lanesCount": "Lanes {{value}}",
       "warningsCount": "Warnings {{value}}",
       "noWarnings": "No warnings",
       "buildFlow": "Build flow",
@@ -28454,7 +28849,8 @@
       "convertInitiative": "Initiative",
       "convertTaskSet": "Task set",
       "convertReport": "Report",
-      "convertAnalysis": "Analysis"
+      "convertAnalysis": "Analysis",
+      "aiCoach": "AI Coach"
     },
     "propertiesPanel": {
       "emptyState": "Select a node or edge to view properties",
@@ -28483,7 +28879,9 @@
       "unitHour": "h",
       "unitDay": "d",
       "costField": "Cost",
-      "fteField": "FTE count"
+      "fteField": "FTE count",
+      "systemLabel": "System",
+      "unitMin": "min"
     },
     "aiProposalPanel": {
       "title": "AI proposal",
@@ -28579,13 +28977,18 @@
       "edgeInsertNode": "Insert node on connection",
       "edgeReverse": "Reverse direction",
       "edgeCondition": "Condition",
-      "edgeDelete": "Delete connection"
+      "edgeDelete": "Delete connection",
+      "menuAriaLabel": "Process Flow actions"
     },
     "laneSystem": {
       "expandLane": "Expand lane",
       "collapseLane": "Collapse lane",
       "resizeLane": "Resize lane",
-      "setColor": "Set lane color"
+      "setColor": "Set lane color",
+      "moveUp": "Move lane up",
+      "moveDown": "Move lane down",
+      "changeColor": "Change lane color",
+      "deleteLane": "Delete lane"
     },
     "exportDialog": {
       "jsonDesc": "Typed graph for integration",
@@ -28783,7 +29186,11 @@
       "stepSources": "Sources",
       "stepKpis": "KPIs",
       "stepDimensions": "Dimensions",
-      "stepTrust": "Trust"
+      "stepTrust": "Trust",
+      "formulaAvg": "AVG",
+      "formulaCount": "COUNT",
+      "formulaExpression": "Expression",
+      "formulaSum": "SUM"
     },
     "viewConfigPanel": {
       "viewConfiguration": "View Configuration",
@@ -28876,7 +29283,17 @@
       "next": "Next",
       "createConnector": "Create connector",
       "newDataConnector": "New Data Connector",
-      "importDataFromAnExternal": "Import data from an external source"
+      "importDataFromAnExternal": "Import data from an external source",
+      "apiKey": "API Key",
+      "apiToken": "API Token",
+      "baseId": "Base ID",
+      "database": "Database",
+      "email": "Email",
+      "host": "Host",
+      "jqlLabel": "JQL ({{optional}})",
+      "port": "Port",
+      "schema": "Schema",
+      "spreadsheetId": "Spreadsheet ID"
     },
     "fieldManager": {
       "failedToReorderFields": "Failed to reorder fields",
@@ -29489,7 +29906,26 @@
       "actionNotSupported": "Action not supported",
       "aiError": "AI error",
       "commandPlaceholder": "Type a table command…",
-      "examples": "Examples"
+      "examples": "Examples",
+      "cancel": "Cancel",
+      "cancelled": "Command cancelled.",
+      "send": "Send",
+      "closeAssistant": "Close assistant",
+      "commandRequired": "Type a command before sending.",
+      "columnNotFound": "Column \"{{column}}\" was not found in this table.",
+      "noRowsToAdd": "The AI didn't return any rows to add.",
+      "noChanges": "This command didn't map to any change.",
+      "transportError": "Couldn't reach the AI service. Check your connection and retry.",
+      "retry": "Retry",
+      "edit": "Edit",
+      "historyLabel": "Command history",
+      "statusPending": "Working on it…",
+      "statusApplied": "Applied",
+      "statusProposal": "Proposal ready",
+      "statusUnsupported": "Not supported",
+      "statusValidation": "Couldn't run this command",
+      "statusTransport": "Connection problem",
+      "statusCancelled": "Cancelled"
     },
     "kanbanView": {
       "uncategorized": "Uncategorized",
@@ -29540,6 +29976,108 @@
       "promoteTo": "Promote to: {{stage}}",
       "meetCriteriaFirst": "Meet all criteria first",
       "clickStageHint": "Click a stage to see ideas and criteria"
+    },
+    "fieldProposal": {
+      "refreshTitle": "Refresh from artifacts",
+      "autofillTitle": "Autofill from artifacts",
+      "summary": "{{rows}} rows · {{cells}} fields to change",
+      "selectAll": "Select all",
+      "deselectAll": "Deselect all",
+      "dismiss": "Dismiss",
+      "empty": "(empty)",
+      "reject": "Reject",
+      "apply": "Apply ({{count}})",
+      "applied": "Applied {{count}} field(s)",
+      "fieldCount_one": "{{count}} field",
+      "fieldCount_other": "{{count}} fields"
+    },
+    "aiCell": {
+      "pending": "AI pending…",
+      "promptTooltip": "AI prompt: {{template}}"
+    },
+    "cellEditor": {
+      "list": "List"
+    },
+    "chartConfigPanel": {
+      "aggAverage": "Average",
+      "aggCount": "Count",
+      "aggMax": "Max",
+      "aggMin": "Min",
+      "aggregation": "Aggregation",
+      "aggSum": "Sum",
+      "chartType": "Chart Type",
+      "chartTypeBar": "Bar",
+      "chartTypeDonut": "Donut",
+      "chartTypeLine": "Line",
+      "chartTypePie": "Pie",
+      "noneCountOnly": "None (count only)",
+      "selectField": "Select field...",
+      "title": "Title",
+      "titlePlaceholder": "Chart title...",
+      "xAxisField": "X-Axis Field",
+      "yAxisField": "Y-Axis Field",
+      "yAxisFieldHint": "(numeric, optional)"
+    },
+    "extensionHost": {
+      "closeExtension": "Close extension",
+      "extension": "Extension",
+      "loading": "Loading...",
+      "scopeCount_one": "{{count}} scope",
+      "scopeCount_other": "{{count}} scopes"
+    },
+    "extensionMarketplace": {
+      "browseMarketplace": "Browse marketplace",
+      "byAuthor": "by {{author}}",
+      "categoryAll": "All",
+      "categoryAutomation": "Automation",
+      "categoryIntegration": "Integration",
+      "categoryUtility": "Utility",
+      "categoryVisualization": "Visualization",
+      "checkBackLater": "Check back later or register your own.",
+      "install": "Install",
+      "installedCount": "Installed ({{count}})",
+      "installing": "Installing...",
+      "loadingExtensions": "Loading extensions...",
+      "marketplace": "Marketplace",
+      "noneAvailable": "No extensions available yet.",
+      "noneInstalled": "No extensions installed.",
+      "open": "Open",
+      "scopeMetadataRead": "Read schema",
+      "scopeMetadataWrite": "Modify schema",
+      "scopeNetwork": "Network access",
+      "scopeRecordsRead": "Read records",
+      "scopeRecordsWrite": "Write records",
+      "scopeUi": "UI controls",
+      "uninstall": "Uninstall",
+      "installCount_one": "{{count}} install",
+      "installCount_other": "{{count}} installs"
+    },
+    "offlineIndicator": {
+      "hoursAgo": "{{count}}h ago",
+      "justNow": "just now",
+      "lastSync": "Last sync: {{time}}",
+      "minutesAgo": "{{count}}m ago",
+      "offline": "Offline",
+      "syncing": "Syncing...",
+      "syncNow": "Sync now",
+      "pendingChanges_one": "{{count}} pending change",
+      "pendingChanges_other": "{{count}} pending changes"
+    },
+    "sourceReferenceCell": {
+      "blocked": "Blocked",
+      "externalBlocked": "External sources not allowed for this field",
+      "internalSource": "Internal source {{id}}",
+      "invalidLength": "source_reference value invalid (length {{length}})",
+      "invalidShape": "source_reference value has unrecognized shape",
+      "noSource": "No source",
+      "source": "Source"
+    },
+    "syncManager": {
+      "csvUrl": "CSV URL",
+      "googleSheetsUrl": "Google Sheets URL"
+    },
+    "voiceImageInput": {
+      "previewAlt": "Preview"
     }
   },
   "myWorkNotebook": {
@@ -30106,9 +30644,16 @@
         "ai": "AI",
         "convert": "Convert",
         "convertBranch": "Convert branch to...",
-        "styleData": "Style & data"
+        "styleData": "Style & data",
+        "data": "Data",
+        "appearance": "Appearance",
+        "expert": "Expert tools",
+        "more": "More"
       },
-      "ctx_ai_rewrite_node": "AI: Rewrite this node"
+      "ctx_ai_rewrite_node": "AI: Rewrite this node",
+      "scopeSelection": "Selection",
+      "scopeBranch": "Branch",
+      "scopeDocument": "Document"
     },
     "health": {
       "gapsCount_one": "{{count}} gap to fill",
@@ -35199,7 +35744,9 @@
       "end": "Forward",
       "start": "Backward",
       "both": "Both ways"
-    }
+    },
+    "edgeLabel": "Label",
+    "edgeCondition": "Connection type"
   },
   "statusChip": {
     "onboarding": "Onboarding",
@@ -35276,6 +35823,10 @@
       "description": "Load the latest version before saving again.",
       "byAt": "Last change: {{who}}{{when}}",
       "someoneElse": "another user"
+    },
+    "teresa": {
+      "unavailableTitle": "Teresa is unavailable",
+      "unavailableDescription": "AI suggestions are paused. You can keep working manually."
     }
   },
   "initiativeStatus": {

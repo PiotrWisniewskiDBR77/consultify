@@ -23,6 +23,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { type ActionContext, runIdeaAction } from '@/actions/ideaActionRegistry';
 import { LoadingState, SkeletonState } from '@/components/shared/states';
 import type { WorkspacePanelKey } from '@/components/shared/WorkspacePanelStrip';
 import { IdeaRightPanel } from '@/components/standard/IdeaRightPanel';
@@ -34,10 +35,10 @@ import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { generateAIProposal } from '@/services/ideaAIGenerator';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
+import { buildIdeaWorkspacePath } from '@/routes/ideaWorkspaceNavigation';
 import { isEvidencePanelEnabled } from '@/utils/evidencePanelFlag';
 import { isIdeaDetailsInPanelEnabled } from '@/utils/ideaDetailsInPanelFlag';
 import { IDEA_TOP_BAR_SLOT_ID, isIdeaTopBarOneLineEnabled } from '@/utils/ideaTopBarOneLineFlag';
-import { isMelsCanvasEnabled } from '@/utils/melsCanvasFlag';
 import { isVf1CanvasSpecAEnabled } from '@/utils/vf1CanvasSpecAFlag';
 
 import {
@@ -64,8 +65,13 @@ import { IdeaCanvasMelsView } from './IdeaCanvasMelsView';
 import { IdeaSaveIndicator, IdeaStageChip, IdeaToolIcon } from './IdeaCanvasMenu1Bits';
 import { IdeaCanvasSecondBar } from './IdeaCanvasSecondBar';
 import { IdeaContextPanel } from './IdeaContextPanel';
+import {
+  ConversionPreviewDialog,
+  type ConversionPreviewData,
+} from './ConversionPreviewDialog';
 import { IdeaConvertMenu } from './IdeaConvertMenu';
 import {
+  getConvertTargetMeta,
   IDEA_CONVERT_TARGETS,
   type IdeaConvertTarget,
   isLiveConvertTarget,
@@ -125,6 +131,7 @@ import { useConfirmDialog } from './shared/ConfirmDialog';
 import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
 import { countNodesByFamily, type ObjectFamily } from './superCanvasTypes';
 import { type TransformInput, transformSelection } from './transforms/crossToolTransform';
+import { useIdeaConfidentialityGate } from './useIdeaConfidentialityGate';
 
 // React StrictMode can remount brand-new workspaces in development.
 // Keep one creation request per temporary draft id to avoid duplicate ideas.
@@ -357,6 +364,27 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const [area, setArea] = useState<string>('');
   const [priority, setPriority] = useState<number>(50);
 
+  // E12 (RISK-22) — confidentiality gate. Extracted to useIdeaConfidentialityGate
+  // (src/components/MyWork/useIdeaConfidentialityGate.ts) so the confirm/save/
+  // revert logic is one directly-testable unit instead of inline state here.
+  const {
+    confidentiality,
+    confidentialitySupported,
+    confidentialitySaving,
+    hydrateFromIdea: hydrateConfidentiality,
+    handleConfidentialityChange: handleConfidentialityChangeForId,
+    confidentialityDowngradeDialog,
+  } = useIdeaConfidentialityGate({ t, isPolish, title });
+
+  // E08 (idea maturity model) — real signals for ideaMaturityModel.ts, read
+  // straight off the same `idea`/`created` objects already fetched below
+  // (no extra network calls). See IdeaWorkspaceTools.tsx's `maturityReport`.
+  const [ideaSourceType, setIdeaSourceType] = useState<string | null>(null);
+  const [ideaPromotedTo, setIdeaPromotedTo] = useState<string | null>(null);
+  const [ideaEvidenceRefsCount, setIdeaEvidenceRefsCount] = useState(0);
+  const [maturityGates, setMaturityGates] = useState<Record<string, any>>({});
+  const [maturityGatesSupported, setMaturityGatesSupported] = useState(false);
+
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
@@ -466,22 +494,24 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const autoCollapsedTablePanelRef = useRef(false);
 
   const setActiveTool = useCallback(
-    (tool: CanvasToolType) => {
+    (tool: CanvasToolType, options: { persistPreference?: boolean } = {}) => {
       if (onActiveToolChange) onActiveToolChange(tool);
       else setInternalActiveTool(tool);
       // P0-5: persist the view preference LOCALLY (this browser only) so it
       // survives reloads/reopens for THIS user without ever touching the
       // shared idea map row other org members read.
-      writeLocalToolPreference(realIdRef.current || ideaId, tool);
-      try {
-        const url = new URL(window.location.href);
-        url.searchParams.set('tool', tool);
-        window.history.replaceState(null, '', url.toString());
-      } catch {
-        /* ignore */
+      if (options.persistPreference !== false) {
+        writeLocalToolPreference(realIdRef.current || ideaId, tool);
+      }
+      const currentIdeaId = realIdRef.current || ideaId;
+      if (!currentIdeaId.startsWith('new-idea-')) {
+        const nextSearch = new URLSearchParams(window.location.search);
+        nextSearch.delete('tool');
+        const query = nextSearch.toString();
+        navigate(`${buildIdeaWorkspacePath(currentIdeaId, tool)}${query ? `?${query}` : ''}`);
       }
     },
-    [ideaId, onActiveToolChange]
+    [ideaId, navigate, onActiveToolChange]
   );
 
   const setActivePanel = useCallback(
@@ -524,8 +554,17 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       window.dispatchEvent(
         new CustomEvent('idea-workspace-active-tool', { detail: { tool: null } })
       );
+      // E10 (2026-08-10): also clear the selection broadcast on unmount/tool
+      // switch — same reasoning as clearing the active-tool signal above, so
+      // a listener (UnifiedChatPanel's Teresa selection context) can't act on
+      // a selection that belonged to a workspace/tool that just closed.
+      window.dispatchEvent(
+        new CustomEvent('idea-workspace-active-selection', {
+          detail: { ideaId: realId, tool: activeTool, selection: EMPTY_SELECTION },
+        })
+      );
     };
-  }, [activeTool]);
+  }, [activeTool, realId]);
 
   // Cofnij/Ponów lewego paska: jeden autobus (`idea-undo-state` + most dla starych
   // kanałów Mapy/Tabeli). Przyjmujemy TYLKO stan aktywnego narzędzia, a przy
@@ -565,6 +604,22 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       selectionRef.current = next;
       setSelection(next);
       externalOnSelectionChange?.(next);
+      // E10 (2026-08-10, doc09 §9 Z4 "Teresa controls everything"): broadcast
+      // the SAME selection this shell already lifts from the active tool for
+      // its own Tools panel — same event-broadcast shape as
+      // 'idea-workspace-active-tool' above. Verified BEFORE adding this: this
+      // was the missing link, not a duplicate — grep of
+      // `UnifiedChatPanel.tsx` before this change showed `executeTeresaTool`
+      // always sent `selection: EMPTY_SELECTION`, so Teresa's `ctx.selection`
+      // was dead for real chat calls (the LLM had to supply an element id
+      // directly as a tool argument instead). Includes `ideaId`/`tool` so a
+      // listener can discard a stale broadcast from a just-closed/just-
+      // switched workspace instead of trusting selection blindly.
+      window.dispatchEvent(
+        new CustomEvent('idea-workspace-active-selection', {
+          detail: { ideaId: realId, tool: activeTool, selection: next },
+        })
+      );
       if (next.type !== 'none') {
         trackFunnelEvent('ideas_selection_changed', {
           tool: activeTool,
@@ -573,7 +628,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         });
       }
     },
-    [activeTool, externalOnSelectionChange]
+    [activeTool, externalOnSelectionChange, realId]
   );
 
   const conflictRefreshRef = useRef<(() => Promise<void>) | null>(null);
@@ -861,9 +916,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   }, []);
 
   // ── Quick tool actions ──────────────────────────────────────────────────────
-  const handleConvertRef = useRef<(target: IdeaConvertTarget, nodeIds?: string[]) => void>(
-    () => {}
-  );
+  const handleConvertRef = useRef<
+    (target: IdeaConvertTarget, nodeIds?: string[], scope?: string) => void
+  >(() => {});
   const handleAcceptChallengeRef = useRef<() => void>(() => {});
 
   const handleQuickAction = useCallback(
@@ -1000,6 +1055,22 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         setExportMenuOpen(true);
         return;
       }
+      // Odbiornik dla akcji rejestru `idea.template.apply` gdy woła ją Teresa
+      // (`ideaActionRegistry.ts`, closure 2026-08-10). Świadomie REUŻYWA
+      // `handleApplyTemplate` (ten sam, który `onApplyTemplate` niżej daje
+      // lewemu railowi) zamiast wołać `applyIdeaTemplate` bezpośrednio z
+      // rejestru — `handleApplyTemplate` niesie poprawny `baseVersion`
+      // (`graphRuntime.graph.version`) i `handleTemplateApplied()` (refresh
+      // + bump `mapRefreshToken`), którego brak historycznie gubił treść w
+      // Przepływie/Mapie po zastosowaniu szablonu (patrz komentarz przy
+      // `handleTemplateApplied` wyżej) — rejestr NIE duplikuje tej naprawy.
+      if (action === 'apply_idea_template') {
+        const templateId = eventDetail?.templateId;
+        if (typeof templateId === 'string' && templateId) {
+          void handleApplyTemplate(templateId);
+        }
+        return;
+      }
       // Odbiornik dla akcji rejestru `idea.templates.open` (Menu 3 „Szablony").
       // Rejestr nadaje ten string na szynę, bo otwarcie modala żyje w stanie
       // React hosta — analogicznie do `open_export_menu` wyżej.
@@ -1038,7 +1109,13 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         const explicitNodeIds = Array.isArray(eventDetail?.nodeIds)
           ? eventDetail.nodeIds
           : undefined;
-        handleConvertRef.current(target, explicitNodeIds);
+        // E11 (2026-08-10): forward the caller's real scope (convertBranch/
+        // convertSingleNode in IdeaRecommendationMap.tsx now attach one —
+        // 'single_item' / 'single_item_cascade') so the preview shows the
+        // TRUE scope instead of handleConvert's coarser nodeIds-based guess.
+        const explicitScope =
+          typeof eventDetail?.scope === 'string' ? eventDetail.scope : undefined;
+        handleConvertRef.current(target, explicitNodeIds, explicitScope);
         return;
       }
 
@@ -1135,6 +1212,11 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         action === 'accept_challenge' ||
         action === 'open_export_menu' ||
         action === 'open_template_gallery' ||
+        // `idea.template.apply` (ideaActionRegistry.ts, closure 2026-08-10) —
+        // Teresa path dispatches this after `findIdeaTemplate` validation;
+        // without this line the event was silently dropped by this allowlist
+        // before ever reaching `handleQuickAction`/`handleApplyTemplate`.
+        action === 'apply_idea_template' ||
         action.startsWith('convert_') ||
         action.startsWith('wb_convert_') ||
         action.startsWith('pf_convert_') ||
@@ -1539,11 +1621,19 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         setBranch(String(created?.branch || ''));
         setArea(String(created?.area || ''));
         setPriority(Number.isFinite(Number(created?.priority)) ? Number(created.priority) : 50);
+        setIdeaSourceType((created as any)?.sourceType ?? null);
+        setIdeaPromotedTo((created as any)?.promotedTo ?? null);
+        setIdeaEvidenceRefsCount(
+          Array.isArray((created as any)?.evidenceRefs) ? (created as any).evidenceRefs.length : 0
+        );
+        setMaturityGates((created as any)?.maturityGates ?? {});
+        setMaturityGatesSupported(Boolean((created as any)?.maturityGatesSupported));
+        hydrateConfidentiality(created as any);
         onSaved(created as MyIdea);
         setDirty(true);
 
         if (preferredSeedSystem && !initialTool && !userSelectedToolRef.current) {
-          setActiveTool(preferredSeedSystem);
+          setActiveTool(preferredSeedSystem, { persistPreference: false });
         }
 
         try {
@@ -1601,6 +1691,12 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         setPriority(Number.isFinite(Number(idea?.priority)) ? Number(idea.priority) : 50);
         setDirty(false);
         setLastSavedAt(idea?.updatedAt ? new Date(idea.updatedAt).getTime() : null);
+        setIdeaSourceType(idea?.sourceType ?? null);
+        setIdeaPromotedTo(idea?.promotedTo ?? null);
+        setIdeaEvidenceRefsCount(Array.isArray(idea?.evidenceRefs) ? idea.evidenceRefs.length : 0);
+        setMaturityGates(idea?.maturityGates ?? {});
+        setMaturityGatesSupported(Boolean(idea?.maturityGatesSupported));
+        hydrateConfidentiality(idea);
 
         try {
           const mapRes = await Api.getMyIdeaMap(String(idea?.id || ideaId), {
@@ -1637,7 +1733,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                 wlasnaNatura === 'process_flow' ||
                 wlasnaNatura === 'table'
               ) {
-                setActiveTool(wlasnaNatura);
+                // This is the Idea's structural fallback, not a user choice.
+                // Route to the canonical representation without manufacturing
+                // a per-browser preference that would mask later fallbacks.
+                setActiveTool(wlasnaNatura, { persistPreference: false });
               }
             }
           }
@@ -1721,6 +1820,36 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   // in the address bar for shareability.
 
   // ── V4-IDEA-07: Keyboard shortcuts ─────────────────────────────────────────
+  //
+  // Reconciliacja z Rejestrem Akcji (2026-08-10, E02 DoD "toolbar, rail,
+  // inspector, PPM, keyboard i Teresa wołają ten sam kontrakt"): każdy
+  // callback poniżej, dla którego istnieje wpis w `ideaActionRegistry.ts`,
+  // idzie teraz przez `runIdeaAction` z `ctx.params.run` ustawionym na
+  // DOKŁADNIE ten sam `handleQuickAction(...)`, który wołał przed tym
+  // wpisem — każdy z wywoływanych helperów (`runMindmapNodeBusAction`,
+  // `runToolbarBusAction`) wykonuje `run()` wprost dla `ctx.source==='ui'`,
+  // więc zachowanie klawisza jest bajtowo identyczne, zyskuje tylko wpis w
+  // rejestrze (shortcut recorded) i drugie, realne wejście dla Teresy przez
+  // ten sam string runtime. `onCancel`/`onSlashCommand`/`onFocusSelection`
+  // ŚWIADOMIE NIE przechodzą przez rejestr — czysta nawigacja/stan UI (jak
+  // `onFocusSelection`: `focusSelectedNode()` tylko przesuwa kamerę, zero
+  // mutacji), nie akcje w sensie rozdz. 02.
+  const runMindmapKeyboardAction = useCallback(
+    (actionId: string, run: () => void) => {
+      const ctx: ActionContext = {
+        ideaId: realId,
+        tool: 'mindmap',
+        selection,
+        surface: 'context',
+        source: 'ui',
+        language: isPolish ? 'pl' : 'en',
+        params: { run },
+      };
+      void runIdeaAction(actionId, ctx);
+    },
+    [isPolish, realId, selection]
+  );
+
   const {
     showHelp: shortcutsHelpOpen,
     setShowHelp: setShortcutsHelpOpen,
@@ -1735,15 +1864,52 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       else if (focusMode !== 'full') handleExitFocus();
     },
     onSlashCommand: () => setSearchOpen(true),
-    onAddChild: () => handleQuickAction('mm_add_child'),
-    onAddSibling: () => handleQuickAction('mm_add_sibling'),
-    onGroup: () => handleQuickAction('group'),
-    onAIExpand: () => handleQuickAction('mm_ai_expand_branch'),
-    onToggleCollapse: () => handleQuickAction('mm_toggle_collapse'),
+    onAddChild: () =>
+      runMindmapKeyboardAction('idea.node.mm_add_child', () => handleQuickAction('mm_add_child')),
+    onAddSibling: () =>
+      runMindmapKeyboardAction('idea.node.mm_add_sibling', () =>
+        handleQuickAction('mm_add_sibling')
+      ),
+    onGroup: () =>
+      runMindmapKeyboardAction('idea.node.mm_group_selected', () => handleQuickAction('group')),
+    onAIExpand: () =>
+      runMindmapKeyboardAction('idea.node.mm_ai_expand_node', () =>
+        handleQuickAction('mm_ai_expand_branch')
+      ),
+    onToggleCollapse: () =>
+      runMindmapKeyboardAction('idea.node.mm_toggle_collapse', () =>
+        handleQuickAction('mm_toggle_collapse')
+      ),
+    // Nawigacja kamery (fitView na zaznaczonym węźle), zero mutacji danych —
+    // NIE jest akcją Rejestru (analogicznie do "focus movement" z ustaleń
+    // programu). Bez menu/przycisku gdziekolwiek w kodzie — czysto
+    // klawiaturowe, ale bez żadnego skutku poza kamerą, więc bez wpisu.
     onFocusSelection: () => handleQuickAction('mm_focus_selected'),
-    onReparentPromote: () => handleQuickAction('mm_reparent_promote'),
-    onReparentDemote: () => handleQuickAction('mm_reparent_demote'),
-    onSelectAll: () => handleQuickAction('selectAll'),
+    onReparentPromote: () =>
+      runMindmapKeyboardAction('idea.node.mm_reparent_promote', () =>
+        handleQuickAction('mm_reparent_promote')
+      ),
+    onReparentDemote: () =>
+      runMindmapKeyboardAction('idea.node.mm_reparent_demote', () =>
+        handleQuickAction('mm_reparent_demote')
+      ),
+    // ZASTRZEŻENIE (odkryte przy tej reconciliacji, NIE naprawiane tu):
+    // `handleQuickAction('selectAll')` dispatchuje string BEZ ŻADNEGO
+    // odbiornika (sprawdzone grepem: `useMindMapQuickActions.ts` nie ma
+    // gałęzi `'selectAll'`/`'clearSelection'`) — te dwa skróty są dziś
+    // wizualnie martwe TU, ale realny Ctrl+A/Ctrl+D na Mapie myśli i tak
+    // DZIAŁA dzięki NIEZALEŻNEMU, osobnemu listenerowi w
+    // `IdeaRecommendationMap.tsx` (~L3635-3682, `setNodes` wprost) — poza
+    // trzema hookami tego zadania, nietknięty. `onSelectAll` i tak dostaje
+    // wpis rejestru (istniejący `idea.view.select_all`, shortcut ⌘A) przez
+    // `ctx.params.run`, bez zmiany zachowania (`run()` wciąż woła martwy
+    // string — Teresa może wywołać TĘ SAMĄ akcję realnie, bo jej ścieżka
+    // idzie przez `mm_select_all`, nie przez ten skrót). `onClearSelection`
+    // NIE dostaje wpisu — nie ma nawet istniejącego rejestrowego id do
+    // podpięcia (żaden "clear selection" nie jest dziś zarejestrowany), a
+    // rejestrowanie akcji bez JAKIEGOKOLWIEK żywego odbiornika łamałoby Z3.
+    onSelectAll: () =>
+      runMindmapKeyboardAction('idea.view.select_all', () => handleQuickAction('selectAll')),
     onClearSelection: () => handleQuickAction('clearSelection'),
   });
 
@@ -2188,24 +2354,61 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     [isDraft, realId]
   );
 
+  // E08 (idea maturity model) — persists ONE attested stage-gate criterion.
+  // Optimistic local update + real server confirmation of `applied`; if the
+  // additive migration hasn't run, the server honestly reports
+  // `applied:false` and we revert rather than pretend it saved (house rule:
+  // no silent no-op behind a success state).
+  const handleAttestMaturity = useCallback(
+    async (criterionId: string, met: boolean, note: string) => {
+      const previous = maturityGates;
+      setMaturityGates((prev) => ({
+        ...prev,
+        [criterionId]: { met, note, at: new Date().toISOString() },
+      }));
+      try {
+        const res = await Api.setIdeaMaturityAttestation(realId, criterionId, met, note);
+        if (res?.applied) {
+          setMaturityGates(res.maturityGates || {});
+          setMaturityGatesSupported(true);
+        } else {
+          setMaturityGates(previous);
+          setMaturityGatesSupported(false);
+        }
+      } catch {
+        setMaturityGates(previous);
+      }
+    },
+    [realId, maturityGates]
+  );
+
   // ── Convert ─────────────────────────────────────────────────────────────────
   // Targets known to the SSOT registry (ideaConvertTargets.ts). Only `live` ones
   // have a server handler — `soon` ones must never be sent (CANON §4, no raw 400).
-  const handleConvert = useCallback(
-    async (target: IdeaConvertTarget, explicitNodeIds?: string[]) => {
-      if (isDraft) return;
-      if (!IDEA_CONVERT_TARGETS.some((t) => t.id === target)) {
-        toast.error(t('mindmap.thisConversionTargetIsNotYet'));
-        return;
-      }
-      if (!isLiveConvertTarget(target)) {
-        toast(t('mindmap.thisConversionIsComingSoon'), {
-          icon: '🔜',
-        });
-        return;
-      }
-      const nodeIds = explicitNodeIds?.length ? explicitNodeIds : selection.ids;
+  //
+  // E11 (2026-08-10, docs/standards/idea-workspace/10_*, §2.2): a mandatory
+  // preview now gates every convert call from EVERY entry point (Menu 1
+  // dropdown, right-panel Convert section, Mind Map node menu via the quick-
+  // action bus, Table bulk convert, Process Flow node convert) — they all
+  // call this same `handleConvert`, which used to go straight to
+  // `Api.convertMyIdea` with only a toast AFTER the fact (E02-N5-CONVERT
+  // honesty finding, confirmed true before this change). It now only BUILDS
+  // and shows a preview; the actual server call moved to `performConvert`,
+  // invoked solely from the dialog's confirm button.
+  const [conversionPreviewOpen, setConversionPreviewOpen] = useState(false);
+  const [conversionPreviewData, setConversionPreviewData] =
+    useState<ConversionPreviewData | null>(null);
+  const [conversionSubmitting, setConversionSubmitting] = useState(false);
+  const conversionPendingRef = useRef<{
+    target: IdeaConvertTarget;
+    nodeIds: string[];
+    scopeKind: string;
+  } | null>(null);
+
+  const performConvert = useCallback(
+    async (target: IdeaConvertTarget, nodeIds: string[], scopeKind: string) => {
       setSaving(true);
+      setConversionSubmitting(true);
       try {
         trackFunnelEvent('mywork_convert_clicked', { from: 'idea', to: target });
         const wbContext =
@@ -2224,6 +2427,12 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           target: target as any,
           options: {
             language: i18n.language,
+            // E11: explicit scope, shown in the preview the user just
+            // confirmed — the backend now records it verbatim into
+            // my_idea_conversions.scope instead of collapsing every non-
+            // workspace conversion into one bucket (see promote() in
+            // my-work.routes.ts).
+            scope: scopeKind,
             ...(nodeIds?.length ? { nodeIds } : {}),
             ...(wbContext ? { whiteboardContext: wbContext } : {}),
           },
@@ -2293,23 +2502,239 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         }
 
         toast.success(t('mindmap.doneOutputAvailableInTargetModule'));
+        return true;
       } catch (err: any) {
         toast.error(err?.message || t('mindmap.failed'));
+        return false;
       } finally {
         setSaving(false);
+        setConversionSubmitting(false);
       }
     },
-    [
-      activeTool,
-      i18n.language,
-      isDraft,
-      isPolish,
-      realId,
-      selection.ids,
-      whiteboardOutcomes,
-      whiteboardSession,
-    ]
+    [activeTool, i18n.language, realId, whiteboardOutcomes, whiteboardSession]
   );
+
+  // Builds the real preview content — real Idea title/body/AI-expansion (a
+  // fresh GET, not stale local state) + real node labels for the included
+  // scope + real prior-conversion count from the append-only lineage table.
+  // Best-effort on the two network calls: if either fails, the preview still
+  // opens with what IS known locally and an honest warning, never silently
+  // skips the gate.
+  const buildConversionPreview = useCallback(
+    async (
+      target: IdeaConvertTarget,
+      nodeIds: string[],
+      scopeKind: string
+    ): Promise<ConversionPreviewData> => {
+      const meta = getConvertTargetMeta(target);
+      const liveNodes = graphNodesRef.current || [];
+      const nodeIdSet = new Set(nodeIds);
+      const elementLabels = liveNodes
+        .filter((n: any) => nodeIdSet.has(String(n?.id)))
+        .map((n: any) => String(n?.data?.label || n?.data?.text || '').trim())
+        .filter(Boolean);
+
+      const warnings: ConversionPreviewData['warnings'] = [];
+      let ideaBody = '';
+      let ideaExpansion = '';
+      let priorConversionCount = 0;
+
+      const [ideaResult, conversionsResult] = await Promise.allSettled([
+        Api.getMyIdea(realId),
+        Api.getMyIdeaConversions(realId),
+      ]);
+      if (ideaResult.status === 'fulfilled') {
+        ideaBody = String(ideaResult.value?.body || '').trim();
+        ideaExpansion = String(ideaResult.value?.aiExpansion || '').trim();
+      } else {
+        warnings.push({
+          pl: 'Nie udało się pobrać pełnej treści Idei — podgląd może być niepełny.',
+          en: "Couldn't load the Idea's full content — this preview may be incomplete.",
+        });
+      }
+      if (conversionsResult.status === 'fulfilled') {
+        priorConversionCount = conversionsResult.value?.conversions?.length || 0;
+      }
+
+      const hasContent = Boolean(ideaBody || ideaExpansion || elementLabels.length);
+      if (!hasContent) {
+        warnings.push({
+          pl: 'Idea nie ma jeszcze treści (pusty tytuł/opis/mapa) — nowy artefakt też będzie prawie pusty.',
+          en: 'This Idea has no content yet (empty body/map) — the new artifact will be nearly empty too.',
+        });
+      }
+
+      const mappedFields: ConversionPreviewData['mappedFields'] = [
+        {
+          sourcePl: 'Tytuł Idei',
+          sourceEn: 'Idea title',
+          targetPl: `Nazwa (${meta ? meta.labelPl : target})`,
+          targetEn: `Name (${meta ? meta.labelEn : target})`,
+        },
+      ];
+      if (target === 'task_set') {
+        mappedFields.push({
+          sourcePl:
+            elementLabels.length > 0
+              ? `Uwzględnione elementy (${elementLabels.length})`
+              : 'Kolejne kroki (next steps)',
+          sourceEn:
+            elementLabels.length > 0
+              ? `Included elements (${elementLabels.length})`
+              : 'Next steps',
+          targetPl: 'Po jednym zadaniu na element',
+          targetEn: 'One task per element',
+        });
+      }
+      if (ideaBody || ideaExpansion) {
+        mappedFields.push({
+          sourcePl: 'Treść / rozwinięcie AI',
+          sourceEn: 'Body / AI expansion',
+          targetPl: target === 'task_set' ? 'Opis każdego zadania' : 'Opis',
+          targetEn: target === 'task_set' ? "Each task's description" : 'Description',
+        });
+      }
+
+      const scopeLabelByKind: Record<
+        string,
+        { pl: string; en: string }
+      > = {
+        workspace: { pl: 'Cała Idea', en: 'Whole Idea' },
+        selected_items: {
+          pl: `Zaznaczenie (${nodeIds.length})`,
+          en: `Selection (${nodeIds.length})`,
+        },
+        single_item: { pl: 'Węzeł', en: 'Single node' },
+        single_item_cascade: {
+          pl: `Gałąź (${nodeIds.length} elem.)`,
+          en: `Branch (${nodeIds.length} elements)`,
+        },
+        selection: {
+          pl: `Zaznaczenie (${nodeIds.length})`,
+          en: `Selection (${nodeIds.length})`,
+        },
+      };
+      const scopeLabel = scopeLabelByKind[scopeKind] || {
+        pl: `Zaznaczenie (${nodeIds.length})`,
+        en: `Selection (${nodeIds.length})`,
+      };
+
+      const willPromoteStage = scopeKind === 'workspace';
+      if (willPromoteStage && stage === 'promoted') {
+        warnings.push({
+          pl: 'Ta Idea jest już oznaczona jako Promowana.',
+          en: 'This Idea is already marked as Promoted.',
+        });
+      }
+
+      return {
+        targetLabelPl: meta ? meta.labelPl : target,
+        targetLabelEn: meta ? meta.labelEn : target,
+        targetArtifactName:
+          title || safeTitleFromSeed(seedText, isPolish) || t('mindmap.untitled'),
+        scope: {
+          kind:
+            scopeKind === 'workspace'
+              ? 'workspace'
+              : scopeKind === 'single_item'
+                ? 'single_item'
+                : scopeKind === 'single_item_cascade'
+                  ? 'branch'
+                  : 'selection',
+          labelPl: scopeLabel.pl,
+          labelEn: scopeLabel.en,
+          elementLabels,
+          elementCount: nodeIds.length,
+        },
+        mappedFields,
+        warnings,
+        willPromoteStage,
+        priorConversionCount,
+      };
+    },
+    [isPolish, realId, seedText, stage, t, title]
+  );
+
+  const handleConvert = useCallback(
+    async (target: IdeaConvertTarget, explicitNodeIds?: string[], explicitScope?: string) => {
+      if (isDraft) return;
+      if (!IDEA_CONVERT_TARGETS.some((t) => t.id === target)) {
+        toast.error(t('mindmap.thisConversionTargetIsNotYet'));
+        return;
+      }
+      if (!isLiveConvertTarget(target)) {
+        toast(t('mindmap.thisConversionIsComingSoon'), {
+          icon: '🔜',
+        });
+        return;
+      }
+      const nodeIds = explicitNodeIds?.length ? explicitNodeIds : selection.ids || [];
+      const scopeKind = explicitScope || (nodeIds.length > 0 ? 'selected_items' : 'workspace');
+      conversionPendingRef.current = { target, nodeIds, scopeKind };
+      setConversionPreviewData(null);
+      setConversionPreviewOpen(true);
+      try {
+        const preview = await buildConversionPreview(target, nodeIds, scopeKind);
+        // Guard against a stale response landing after the user already
+        // cancelled or a newer request superseded this one.
+        if (conversionPendingRef.current?.target === target) {
+          setConversionPreviewData(preview);
+        }
+      } catch {
+        // Never silently skip the gate — fall back to a minimal, honest
+        // preview built from data already in memory.
+        if (conversionPendingRef.current?.target === target) {
+          setConversionPreviewData({
+            targetLabelPl: getConvertTargetMeta(target)?.labelPl || target,
+            targetLabelEn: getConvertTargetMeta(target)?.labelEn || target,
+            targetArtifactName: title || t('mindmap.untitled'),
+            scope: {
+              kind: nodeIds.length > 0 ? 'selection' : 'workspace',
+              labelPl: nodeIds.length > 0 ? `Zaznaczenie (${nodeIds.length})` : 'Cała Idea',
+              labelEn: nodeIds.length > 0 ? `Selection (${nodeIds.length})` : 'Whole Idea',
+              elementLabels: [],
+              elementCount: nodeIds.length,
+            },
+            mappedFields: [],
+            warnings: [
+              {
+                pl: 'Nie udało się przygotować pełnego podglądu — dostępne są tylko podstawowe informacje.',
+                en: 'Could not build a full preview — only basic information is available.',
+              },
+            ],
+            willPromoteStage: nodeIds.length === 0,
+            priorConversionCount: 0,
+          } as ConversionPreviewData);
+        }
+      }
+    },
+    [buildConversionPreview, isDraft, selection.ids, t, title]
+  );
+
+  const handleConversionPreviewConfirm = useCallback(async () => {
+    const pending = conversionPendingRef.current;
+    if (!pending) return;
+    const ok = await performConvert(pending.target, pending.nodeIds, pending.scopeKind);
+    if (ok) {
+      setConversionPreviewOpen(false);
+      setConversionPreviewData(null);
+      conversionPendingRef.current = null;
+    }
+    // On failure the error toast already fired (performConvert) — keep the
+    // preview closed either way rather than leaving a stale one open; the
+    // user can reopen Convert to try again with a fresh preview.
+    else {
+      setConversionPreviewOpen(false);
+      setConversionPreviewData(null);
+      conversionPendingRef.current = null;
+    }
+  }, [performConvert]);
+
+  const handleConversionPreviewCancel = useCallback(() => {
+    setConversionPreviewOpen(false);
+    setConversionPreviewData(null);
+    conversionPendingRef.current = null;
+  }, []);
 
   handleConvertRef.current = handleConvert;
   handleAcceptChallengeRef.current = handleAcceptChallenge;
@@ -2971,13 +3396,12 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     () => getIdeaWorkspaceToolLabel(activeTool, Boolean(isPolish)),
     [activeTool, isPolish]
   );
-  // ── EditorShell Wave W-1 (flag-gated, default OFF) ──────────────────────
-  // When `isMelsCanvasEnabled()` is true, the four canvases render inside the
-  // EditorShell (`IdeaCanvasMelsView`, `centerMode='canvas'`) instead of the
-  // floating canvas-chrome. Chip descriptors are memoised here (after all
-  // handlers/hooks — TDZ-safe). Flag OFF → nothing below is consumed and the
-  // legacy render is byte-for-byte unchanged.
-  const melsCanvasEnabled = isMelsCanvasEnabled();
+  // ── Canonical EditorShell for all four Ideas tools ──────────────────────
+  // Chip descriptors are memoised here after all handlers/hooks (TDZ-safe).
+  // The canonical Ideas shell is no longer feature-gated. Keeping two runtime
+  // anatomies made navigation fixes non-deterministic and allowed URL flags to
+  // bring the overlapping legacy drawers back.
+  const melsCanvasEnabled = true;
   // ── Górny pasek w JEDNEJ LINII (flaga, domyślnie OFF) ───────────────────
   // ON: Menu 3 (Dodaj · Auto-układ · AI rozwiń · Szablony · Eksport) znika w
   // całości — te same wejścia są w lewym pasku narzędzi (CanvasLeftToolbar),
@@ -3037,11 +3461,27 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     try {
       await Api.deleteMyIdea(realId);
       toast.success(isPolish ? 'Usunięto' : 'Deleted');
-      navigate('/my-work');
+      navigate('/my-work/ideas');
     } catch (err: any) {
       toast.error(err?.message || (isPolish ? 'Nie udało się usunąć' : 'Failed to delete'));
     }
   }, [realId, confirmDeleteIdea, isPolish, title, navigate]);
+
+  /**
+   * E12 (RISK-22) — sets `my_ideas.confidentiality` via `PUT /my-ideas/:id`
+   * (server/src/routes/my-work.routes.ts ~3217-3230; validated + audited
+   * there — before/after confidentiality lands in the IDEA_UPDATE audit
+   * event). The confirm/save/revert logic lives in useIdeaConfidentialityGate
+   * (src/components/MyWork/useIdeaConfidentialityGate.ts) — this is just the
+   * `realId` binding, so the pill in IdeaWorkspaceTools.tsx doesn't need to
+   * know the idea id itself.
+   */
+  const handleConfidentialityChange = useCallback(
+    (next: 'standard' | 'confidential' | 'restricted') =>
+      handleConfidentialityChangeForId(realId, next),
+    [handleConfidentialityChangeForId, realId]
+  );
+
   // Duplicate: clone the idea + its map on the server, then deep-link into the
   // NEW copy's workspace on the same tool the user is currently in (backend drops
   // promotion state and suffixes the title with (kopia)/(copy)).
@@ -3167,7 +3607,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     // Układ SZEŚCIU sekcji (flaga `ff_ideaPanel6Sections`, default OFF) ma
     // własny, niezależny budowniczy paska — patrz `panel/ideaPanel6Sections.ts`.
     // Przy fladze OFF nie zmienia się nic: leci stary builder pięciu ikon.
-    if (panel6Enabled) return buildIdeaPanel6RailTools({ isPolish: Boolean(isPolish) });
+    if (panel6Enabled)
+      return buildIdeaPanel6RailTools({ isPolish: Boolean(isPolish), activeTool });
     const inspektorJest =
       activeTool === 'mindmap' || activeTool === 'whiteboard' || activeTool === 'process_flow';
     const kondycjaJest = activeTool === 'mindmap' || activeTool === 'process_flow';
@@ -3211,6 +3652,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       branch,
       area,
       priority,
+      confidentiality,
+      confidentialitySupported,
+      confidentialitySaving,
+      onConfidentialityChange: handleConfidentialityChange,
       isDraft,
       isAccepted,
       saving,
@@ -3245,6 +3690,14 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       graphNodes,
       graphEdges,
       evidenceCount: graphNodes.filter((n: any) => n?.data?.evidenceLinks?.length > 0).length,
+      // E08 (idea maturity model) — real signals + attestation handler, see
+      // ideaMaturityModel.ts and IdeaWorkspaceTools.tsx's `maturityReport`.
+      sourceType: ideaSourceType,
+      evidenceRefsCount: ideaEvidenceRefsCount,
+      promotedTo: ideaPromotedTo,
+      maturityGates,
+      maturityGatesSupported,
+      onAttestMaturity: handleAttestMaturity,
       // P1-1 (Z3): wiersz „Podsumuj AI / Rozwiń AI" w sekcji Status prawego
       // panelu wysyła mm_ai_summarize / mm_ai_expand — obsługuje je wyłącznie
       // useMindMapQuickActions (zamontowany tylko w Mapie myśli). Poza Mapą
@@ -3318,6 +3771,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       branch,
       area,
       priority,
+      confidentiality,
+      confidentialitySupported,
+      confidentialitySaving,
+      handleConfidentialityChange,
       isDraft,
       isAccepted,
       saving,
@@ -3522,7 +3979,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const floatingLeftRailNode = renderFloatingLeftRail();
   // D2: przelacznik w prawym dolnym rogu — portal do body, wiec jeden wezel
   // dziala w obu sciezkach renderu (mels i legacy). OFF => null.
-  const viewSwitcherNode = switcherBottomRight ? (
+  // MELS always exposes the four representations in the canonical bottom bar.
+  // The legacy path still honours its reversible feature flag.
+  const viewSwitcherNode = melsCanvasEnabled || switcherBottomRight ? (
     <IdeaViewSwitcher
       activeTool={activeTool}
       onToolChange={setActiveTool}
@@ -3545,7 +4004,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         <div ref={canvasContainerRef} className="flex-1 min-w-0 min-h-0 relative">
           <IdeaCanvasMelsView
             title={title || safeTitleFromSeed(seedText, isPolish) || t('mindmap.untitled')}
-            onBack={() => navigate('/my-work')}
+            onBack={() => navigate('/my-work/ideas')}
             backLabel={t('mindmap.ideas')}
             moduleLabel={t('mindmap.ideas')}
             topBarChips={melsCanvasChips}
@@ -3606,6 +4065,21 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             }}
           />
         </div>
+
+        {/* E11 (2026-08-10) — same mandatory-preview gate as the legacy shell
+            below. Without this, the mels shell's `IdeaConvertMenu` above sets
+            `conversionPreviewOpen` with nothing to render it — a dead click
+            (the mels branch returns early and skips the legacy branch's
+            modal block entirely, confirmed by reading both return paths
+            before adding this). */}
+        <ConversionPreviewDialog
+          open={conversionPreviewOpen}
+          isPolish={Boolean(isPolish)}
+          data={conversionPreviewData}
+          submitting={conversionSubmitting}
+          onConfirm={handleConversionPreviewConfirm}
+          onCancel={handleConversionPreviewCancel}
+        />
       </div>
     );
   }
@@ -3865,6 +4339,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               externalRuntime={{
                 version: graphRuntime.graph.version,
                 loading: graphRuntime.loading,
+                loadError: graphRuntime.loadError,
                 saving: graphRuntime.saving,
                 lastSavedAt: graphRuntime.lastSavedAt,
                 syncState: graphRuntime.syncState,
@@ -3994,6 +4469,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   function renderFloatingLeftRail(): React.ReactNode {
     return (
       <CanvasLeftToolbar
+        side={melsCanvasEnabled ? 'right' : 'left'}
         activeTool={activeTool}
         interactionMode={mindMapInteractionMode}
         selection={selection}
@@ -4011,7 +4487,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         onApplyTemplate={handleApplyTemplate}
         onOpenTemplateGallery={() => setTemplateGalleryOpen(true)}
         // D2: gdy przelacznik jest w prawym dolnym rogu, zdejmujemy go z railа.
-        onToolChange={switcherBottomRight ? undefined : setActiveTool}
+        onToolChange={melsCanvasEnabled || switcherBottomRight ? undefined : setActiveTool}
         familyCounts={familyCounts}
       />
     );
@@ -4077,24 +4553,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           />
         )}
 
-        {/* Ścieżka mels-canvas (default OFF): legacy szuflady bez zmian. Tools jest
-          renderowany embedded w rail shellu (renderMelsCanvasRightRailPanel), więc
-          tu tylko Kontekst + Sugestie jako przesuwane szuflady — parytet z dawnym
-          zachowaniem sprzed konsolidacji. */}
-        {melsCanvasEnabled && (
-          <>
-            <IdeaContextPanel
-              {...ideaContextPanelSharedProps}
-              open={contextPanelOpen}
-              onClose={() => handlePanelChange(null)}
-            />
-            <IdeaAISuggestionsPanel
-              {...ideaAISuggestionsPanelSharedProps}
-              open={aiPanelOpen}
-              onClose={() => handlePanelChange(null)}
-            />
-          </>
-        )}
+        {/* MELS owns exactly one semantic information panel. Legacy Context and
+            AI Suggestions drawers remain available only on ff_melsCanvas=0;
+            mounting them here created a second panel over the canvas. */}
 
         {/* MM-12: AI Governance Panel */}
         <AIGovernancePanel
@@ -4137,6 +4598,19 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           }}
           canvasContainerRef={canvasContainerRef}
           onImportGraph={handleImportGraph}
+        />
+
+        {/* E11 (2026-08-10) — the single mandatory-preview gate shared by every
+            Convert entry point (Menu 1, right-panel Convert section, Mind Map
+            node menu, Table bulk convert, Process Flow node convert). See
+            handleConvert/performConvert above. */}
+        <ConversionPreviewDialog
+          open={conversionPreviewOpen}
+          isPolish={Boolean(isPolish)}
+          data={conversionPreviewData}
+          submitting={conversionSubmitting}
+          onConfirm={handleConversionPreviewConfirm}
+          onCancel={handleConversionPreviewCancel}
         />
 
         {drawerUnifiedEnabled ? (
@@ -4237,6 +4711,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
 
         {/* Z-menu1-delete: Menu 1 kebab "Usuń" confirm dialog */}
         {deleteIdeaDialog}
+
+        {/* E12 (RISK-22): confidentiality downgrade confirm dialog */}
+        {confidentialityDowngradeDialog}
 
         {/* Z-menu1-history: Menu 1 kebab "Historia" — all canvas tools */}
         <SnapshotHistory

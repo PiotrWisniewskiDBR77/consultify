@@ -11,6 +11,23 @@
   opacity: 1 !important;
 }
 
+/* G4-KBD-P0 (2026-08-11, focus-ring contract / QA 21_FOCUS_AND_CONTRAST.md
+   P1 F-01): ReactFlow's own base.css (`reactflow/dist/style.css`) sets
+   `.react-flow__node.selectable:focus-visible { outline: none; }` and only
+   restores a compensating box-shadow for its four BUILT-IN node classnames
+   (`.react-flow__node-default/-input/-output/-group`) — none of which our
+   custom Process Flow node types use, so every custom node was genuinely
+   keyboard-focusable (ReactFlow gives `selectable` nodes a real tabIndex)
+   with LITERALLY NO visible indicator. Restored here, once, for every node
+   type in this tool, instead of touching each node component individually.
+   Color = c-focus (blue) per canon — focus is never crimson `primary-*`
+   (CLAUDE.md §3). */
+.react-flow__node.selectable:focus-visible {
+  outline: 2px solid var(--c-focus-solid, #2563eb) !important;
+  outline-offset: 2px !important;
+  border-radius: 4px;
+}
+
 /* Connection preview line — c-focus, not c-accent (tokens rule). */
 .react-flow__connection-path {
   stroke: var(--c-focus-solid) !important;

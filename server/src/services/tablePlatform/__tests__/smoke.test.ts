@@ -370,7 +370,10 @@ describe('Table Platform Smoke Tests', () => {
 
       expect(proposal).toBeDefined();
       expect(proposal.id).toBe('smoke-uuid-001');
-      expect(proposal.workspace_id).toBe('ws-1');
+      // `generateProposal` returns the raw `tp_schema_proposals` row (snake_case)
+      // while `SchemaProposal` declares camelCase — see ChatToSchemaService.ts:467.
+      // Assert against the shape actually returned.
+      expect((proposal as unknown as { workspace_id: string }).workspace_id).toBe('ws-1');
       expect(proposal.intent).toBeTruthy();
       expect(typeof proposal.confidence).toBe('number');
       expect(proposal.status).toBeTruthy();

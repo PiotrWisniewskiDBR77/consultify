@@ -42,6 +42,10 @@ import {
   P10_EVIDENCE_POINTER_TYPES,
   P10_HANDOFF_TO_INITIATIVES,
 } from '../../../interviewInsightCanon.js';
+import type {
+  P10EvidencePointer,
+  P10EvidencePointerType,
+} from '../../../interviewInsightCanon.js';
 import { P07_HANDOFF_COMMON_FIELDS, P07_HANDOFF_TARGETS } from '../../../notebookCanon.js';
 import {
   buildP09HandoffPayloadSkeleton,
@@ -104,6 +108,30 @@ beforeEach(() => {
 // C1: P09 → P10 → P11  (Survey → Insight → Initiative)
 // ═══════════════════════════════════════════════════════════════════════════
 
+
+/**
+ * The frozen P10 evidence pointer is
+ * `{ pointerId, type, sourceRef, capturedAt, sourceFingerprint, isTombstone }`.
+ * The fixtures below were authored against an ad-hoc `{ type, ref, label }`
+ * shape the canon never defined, so the "frozen contract" specs were not in
+ * fact exercising the frozen contract. Same source refs, canonical shape.
+ */
+function p10Pointer(
+  type: P10EvidencePointerType,
+  sourceRef: string,
+  label: string
+): P10EvidencePointer {
+  return {
+    pointerId: `pointer-${sourceRef}`,
+    type,
+    sourceRef,
+    capturedAt: '2026-03-30T12:00:00Z',
+    sourceFingerprint: `fingerprint-${sourceRef}`,
+    capturedExcerpt: label,
+    isTombstone: false,
+  };
+}
+
 describe('C1 — Survey → Insight → Initiative chain', () => {
   it('P09 handoff payload satisfies P10 ingestion contract', () => {
     const payload = buildP09HandoffPayloadSkeleton({
@@ -143,8 +171,8 @@ describe('C1 — Survey → Insight → Initiative chain', () => {
       limits: 'Sample size limited to 15 interviews',
       nextAction: 'Create initiative for onboarding redesign',
       evidencePointers: [
-        { type: 'interview_session', ref: 'session-001', label: 'Interview #1' },
-        { type: 'transcript_excerpt', ref: 'transcript-001', label: 'Full transcript' },
+        p10Pointer('interview_session', 'session-001', 'Interview #1'),
+        p10Pointer('transcript_excerpt', 'transcript-001', 'Full transcript'),
       ],
     });
 
@@ -185,12 +213,10 @@ describe('C1 — Survey → Insight → Initiative chain', () => {
       confidenceLevel: 'medium',
       limits: 'Based on survey ' + p09Payload.surveyId,
       nextAction: 'Seed initiative from insight',
-      evidencePointers: [
-        { type: 'survey_linkage', ref: p09Payload.surveyId, label: 'Source survey' },
-      ],
+      evidencePointers: [p10Pointer('survey_linkage', p09Payload.surveyId, 'Source survey')],
     });
 
-    expect(p10Payload.evidence_pointers[0].ref).toBe(p09Payload.surveyId);
+    expect(p10Payload.evidence_pointers[0].sourceRef).toBe(p09Payload.surveyId);
     expect(p10Payload.limits).toContain(p09Payload.surveyId);
 
     expect(P10_HANDOFF_TO_INITIATIVES.rule).toContain('links-first');
@@ -372,9 +398,20 @@ describe('C3 — Teresa copilot → handoff targets', () => {
       ])
     );
 
+    // `P08_HANDOFF_TARGET_MODULES` is annotated with the full `HandoffTargetModule`
+    // union, but `P08_HANDOFF_TARGETS` only carries the modules that actually have
+    // a contract. Widen the lookup so a missing contract fails the assertion below
+    // instead of failing to compile.
+    const contractedTargets = P08_HANDOFF_TARGETS as Partial<
+      Record<
+        (typeof P08_HANDOFF_TARGET_MODULES)[number],
+        { module: string; contract_ref: string; required_extra_fields: readonly string[] }
+      >
+    >;
     for (const mod of P08_HANDOFF_TARGET_MODULES) {
-      const target = P08_HANDOFF_TARGETS[mod];
+      const target = contractedTargets[mod];
       expect(target).toBeDefined();
+      if (!target) continue;
       expect(target.module).toBeTruthy();
       expect(target.contract_ref).toBeTruthy();
       expect(target.required_extra_fields.length).toBeGreaterThan(0);
@@ -746,7 +783,7 @@ describe('Cross-chain contract shape compatibility', () => {
         confidenceLevel: level,
         limits: 'Test limits',
         nextAction: 'Test action',
-        evidencePointers: [{ type: 'interview_session', ref: 'ref-1', label: 'Test' }],
+        evidencePointers: [p10Pointer('interview_session', 'ref-1', 'Test')],
       });
       expect(payload.confidence_level).toBe(level);
       expect(payload.source_insight_artifact_id).toBeTruthy();
@@ -845,9 +882,9 @@ describe('C7 — Initiative → Finance economics linkage', () => {
 
   it('evaluatePromotionGate computes overall gate result', async () => {
     const gate = await evaluatePromotionGate({
+      // `initiativeId` / `financeModelRef` are not members of
+      // EvaluatePromotionGateParams and were stripped by the zod parse.
       organizationId: ORG,
-      initiativeId: INITIATIVE_ID,
-      financeModelRef: FINANCE_REF,
       sourceArtifactRef: 'artifact-001',
       targetInitiativeId: INITIATIVE_ID,
       permissionGateResult: 'approved',
@@ -889,8 +926,6 @@ describe('C7 — Initiative → Finance economics linkage', () => {
 
     const gate = await evaluatePromotionGate({
       organizationId: ORG,
-      initiativeId: INITIATIVE_ID,
-      financeModelRef: linkage.financeModelRef,
       sourceArtifactRef: 'artifact-002',
       targetInitiativeId: INITIATIVE_ID,
       permissionGateResult: 'approved',

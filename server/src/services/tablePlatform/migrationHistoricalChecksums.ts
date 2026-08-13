@@ -15,9 +15,25 @@ export interface HistoricalChecksumVariant {
   current: string;
 }
 
+export type HistoricalChecksumVariants =
+  | HistoricalChecksumVariant
+  | readonly HistoricalChecksumVariant[];
+
 export const APPROVED_HISTORICAL_CHECKSUM_VARIANTS: Readonly<
-  Record<string, HistoricalChecksumVariant>
+  Record<string, HistoricalChecksumVariants>
 > = Object.freeze({
+  '739_knowledge_base_public_articles.sql': {
+    stored: '444c848e37783b96',
+    current: '2d18c96665b82f8c',
+  },
+  '20260330_v81_templates_as_outputs_artifacts.sql': {
+    stored: '5eca0e1ace91934a',
+    current: '8c6fb6d01926935a',
+  },
+  '20260221_01_prompt_ssot_compat.sql': {
+    stored: '3b86817e1f71b412',
+    current: '28b9f553054e4be9',
+  },
   '20260213_task_source_origin.sql': {
     stored: 'cccdd95deb254c7c',
     current: '3a48f93ad30c262c',
@@ -205,6 +221,14 @@ export const APPROVED_HISTORICAL_CHECKSUM_VARIANTS: Readonly<
     stored: 'a7b4246356c8d5cd',
     current: '2284dc30a267f0c5',
   },
+  '20260508_block_a_template_lifecycle.sql': {
+    stored: '321f9398bf479c22',
+    current: '6770c511adeeea13',
+  },
+  '20260508_block_b_record_provenance.sql': {
+    stored: '8eccabb700dbd814',
+    current: '0d8754e1235ec0ad',
+  },
   '20260508_block_c_ai_operator.sql': { stored: '828716f8d06609f8', current: 'dc0a1da0297d9497' },
   '20260509_block_c_qa_engine.sql': { stored: '36fb3a4cfa0088a6', current: 'b128a83ca6b9a887' },
   '20260510_block_c_source_pack.sql': { stored: '7fb7186d6985c553', current: '7fca6f31685b28bd' },
@@ -225,7 +249,10 @@ export const APPROVED_HISTORICAL_CHECKSUM_VARIANTS: Readonly<
     stored: 'd6e7b86bc8514598',
     current: '7d08e60f4ea10393',
   },
-  '20260623_distribution_delivery.sql': { stored: 'afb449dbaf10f409', current: '947a918d7445c294' },
+  '20260623_distribution_delivery.sql': [
+    { stored: 'afb449dbaf10f409', current: '947a918d7445c294' },
+    { stored: '7712332cdc298d49', current: '947a918d7445c294' },
+  ],
   '20260623_raid_assumption_issue.sql': { stored: '9d44483e49c782a6', current: 'efde02c1e44a9671' },
   '20260624_finance_analysis_investment_category.sql': {
     stored: 'f2f3a0704a888827',
@@ -284,5 +311,9 @@ export const APPROVED_HISTORICAL_CHECKSUM_VARIANTS: Readonly<
   '771_demo_mock_seed_cleanup.sql': {
     stored: '1f26ddd1cdfd9d91',
     current: '3ee78d938ffd1a86',
+  },
+  '797_user_sessions_missing_columns.sql': {
+    stored: '514a8fd88eaddc59',
+    current: 'fb44072d9e737ce7',
   },
 });

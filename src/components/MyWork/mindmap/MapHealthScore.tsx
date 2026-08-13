@@ -111,20 +111,38 @@ export function computeBranchHealth(
 
 /* ── BranchHealthDot — small colored indicator ────────────────────── */
 
+/**
+ * 2026-08-10 (E13 visual audit, HARD VISUAL FAIL „status conveyed by color
+ * alone"): dawniej wyłącznie kolorowe kółko + `title` (hover-only, niepewne
+ * dla czytników ekranu i niedostępne dla klawiatury/dotyku). Teraz: właściwa
+ * nazwa dostępna (`role="img"` + `aria-label`) NIEZALEŻNA od hovera, plus
+ * nie-kolorowy sygnał kształtu (pierścień u „needs-work", podwójny pierścień
+ * u „empty") — rozróżnialne bez polegania na odcieniu.
+ */
 export const BranchHealthDot: React.FC<{ score: number; size?: number }> = ({
   score,
   size = 8,
 }) => {
+  const { t } = useTranslation();
+  const tier: 'healthy' | 'needs-work' | 'empty' =
+    score >= 70 ? 'healthy' : score >= 30 ? 'needs-work' : 'empty';
   const color =
-    score >= 70 ? 'var(--c-success)' : score >= 30 ? 'var(--c-warning)' : 'var(--c-danger)';
+    tier === 'healthy' ? 'var(--c-success)' : tier === 'needs-work' ? 'var(--c-warning)' : 'var(--c-danger)';
+  const label = t('ideas.mindmap.branchHealthLabel', 'Zdrowie gałęzi: {{score}}%', { score });
+  const ringWidth = tier === 'healthy' ? 0 : tier === 'needs-work' ? 1 : 2;
   return (
     <div
-      title={`Health: ${score}%`}
+      role="img"
+      aria-label={label}
+      title={label}
       style={{
         width: size,
         height: size,
         borderRadius: '50%',
         backgroundColor: color,
+        boxShadow: ringWidth > 0 ? `0 0 0 ${ringWidth}px var(--c-surface)` : undefined,
+        outline: ringWidth > 0 ? `1px solid ${color}` : undefined,
+        outlineOffset: ringWidth > 0 ? 1 : undefined,
         flexShrink: 0,
         pointerEvents: 'auto',
       }}

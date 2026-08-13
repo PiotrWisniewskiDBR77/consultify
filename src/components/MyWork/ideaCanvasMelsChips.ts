@@ -49,7 +49,7 @@ import {
   Workflow,
 } from 'lucide-react';
 
-import { getActionsForSurface, type IconName, runIdeaAction } from '@/actions/ideaActionRegistry';
+import { getActionsForSurface, runIdeaAction, type IconName } from '@/actions/ideaActionRegistry';
 import type {
   RightRailToolDescriptor,
   TopBarChipDescriptor,
@@ -114,12 +114,24 @@ export function buildIdeaMenu1Chips(args: {
     });
   }
 
-  // Kebab `⋯` — document-level actions.
+  // Kebab `⋯` — document-level actions grouped by user outcome.
+  chips.push({
+    id: 'idea-duplicate',
+    label: isPolish ? 'Duplikuj pomysł' : 'Duplicate idea',
+    icon: Copy,
+    group: 'overflow',
+    overflowSection: isPolish ? 'Organizacja' : 'Organize',
+    disabled: !handlers.onDuplicate,
+    onClick: handlers.onDuplicate,
+    tooltip: handlers.onDuplicate ? undefined : soon,
+    testId: 'idea-menu1-duplicate',
+  });
   chips.push({
     id: 'idea-export',
-    label: isPolish ? 'Eksport' : 'Export',
+    label: isPolish ? 'Eksportuj' : 'Export',
     icon: Download,
     group: 'overflow',
+    overflowSection: isPolish ? 'Udostępnianie' : 'Share',
     disabled: !handlers.onExport,
     onClick: handlers.onExport,
     testId: 'idea-menu1-export',
@@ -129,6 +141,7 @@ export function buildIdeaMenu1Chips(args: {
     label: isPolish ? 'Historia' : 'History',
     icon: History,
     group: 'overflow',
+    overflowSection: isPolish ? 'Wersje' : 'Versions',
     // Enabled once a version-history flow is wired (SnapshotHistory, all canvas
     // tools). Stays honest-disabled only if the caller passes no handler.
     disabled: !handlers.onHistory,
@@ -136,28 +149,6 @@ export function buildIdeaMenu1Chips(args: {
     tooltip: handlers.onHistory ? undefined : soon,
     testId: 'idea-menu1-history',
   });
-  chips.push({
-    id: 'idea-duplicate',
-    label: isPolish ? 'Duplikuj' : 'Duplicate',
-    icon: Copy,
-    group: 'overflow',
-    disabled: !handlers.onDuplicate,
-    onClick: handlers.onDuplicate,
-    tooltip: handlers.onDuplicate ? undefined : soon,
-    testId: 'idea-menu1-duplicate',
-  });
-  chips.push({
-    id: 'idea-delete',
-    label: isPolish ? 'Usuń' : 'Delete',
-    icon: Trash2,
-    group: 'overflow',
-    danger: true,
-    disabled: !handlers.onDelete,
-    onClick: handlers.onDelete,
-    tooltip: handlers.onDelete ? undefined : soon,
-    testId: 'idea-menu1-delete',
-  });
-
   // "Więcej" — power-user overflow (kept reachable, never hidden).
   if (handlers.onSearch) {
     chips.push({
@@ -181,6 +172,19 @@ export function buildIdeaMenu1Chips(args: {
       testId: 'idea-menu1-shortcuts',
     });
   }
+
+  chips.push({
+    id: 'idea-delete',
+    label: isPolish ? 'Usuń pomysł' : 'Delete idea',
+    icon: Trash2,
+    group: 'overflow',
+    overflowSection: isPolish ? 'Strefa niebezpieczna' : 'Danger zone',
+    danger: true,
+    disabled: !handlers.onDelete,
+    onClick: handlers.onDelete,
+    tooltip: handlers.onDelete ? undefined : soon,
+    testId: 'idea-menu1-delete',
+  });
 
   return chips;
 }
@@ -218,8 +222,20 @@ const MENU3_ADD_ICON: Record<CanvasToolType, LucideIcon> = {
  * ale nie mają jeszcze wpisu w `MENU3_PRESENTATION`. Dzięki temu nowa akcja
  * `surfaces:['menu3']` pojawi się w pasku AUTOMATYCZNIE (o to chodzi w migracji
  * na render z rejestru), a nie zniknie po cichu.
+ *
+ * ŹRÓDŁO PRAWDY (naprawa Group B, 2026-08-10): `IconName` (rejestr akcji, ~70
+ * wartości) obejmuje ikony WSZYSTKICH powierzchni — menu kontekstowe, toolbar,
+ * panel, rail, keyboard… — nie tylko Menu 3. `ICON_BY_NAME` jest fallbackiem
+ * WYŁĄCZNIE dla Menu 3, więc jego domena naturalnie jest WĄSKIM podzbiorem
+ * `IconName` (dziś: ikony pięciu wpisów `MENU3_PRESENTATION` + potencjalnych
+ * przyszłych akcji `surfaces:['menu3']`, których jeszcze nie ma w rejestrze).
+ * Deklarowanie tego jako PEŁNY `Record<IconName, LucideIcon>` było fałszywą
+ * obietnicą kompletności (73 minus 13 kluczy = TS2740, `tsc` to złapał) —
+ * PRAWDZIWA odpowiedź na "co się dzieje z ikoną spoza tej listy" to jawny,
+ * przetestowany fallback (`MENU3_FALLBACK_ICON`), nie próba wypełnienia mapy
+ * ikonami z menu kontekstowego, które ta ścieżka nigdy nie czyta.
  */
-const ICON_BY_NAME: Record<IconName, LucideIcon> = {
+const ICON_BY_NAME: Partial<Record<IconName, LucideIcon>> = {
   Plus,
   LayoutGrid,
   LayoutTemplate,
@@ -234,6 +250,33 @@ const ICON_BY_NAME: Record<IconName, LucideIcon> = {
   Download,
   Copy,
 };
+
+/**
+ * Ikona zapasowa, gdy `IconName` akcji Menu 3 nie ma wpisu w `ICON_BY_NAME`
+ * (dziś: teoretyczny przypadek — patrz `resolveMenu3Icon`). `HelpCircle` jest
+ * już importowane w tym pliku (pozycja „Skróty" Menu 1) — reużyta tu z tym
+ * samym znaczeniem: „coś nierozpoznanego, sprawdź". Renderuje SIĘ ZAWSZE
+ * coś klikalnego, nigdy pustki.
+ */
+const MENU3_FALLBACK_ICON: LucideIcon = HelpCircle;
+
+/**
+ * Rozstrzyga ikonę dla wpisu Menu 3 bez `Menu3Presentation`. Gdy `iconName`
+ * nie ma wpisu w `ICON_BY_NAME`, NIE zwraca `undefined` po cichu — loguje
+ * ostrzeżenie (widoczne w konsoli/testach, żeby luka była wykrywalna od razu
+ * przy dodaniu nowej akcji `surfaces:['menu3']`) i oddaje `MENU3_FALLBACK_ICON`.
+ * Wyodrębnione z `buildIdeaMenu3Actions`, żeby dało się to przetestować wprost
+ * (patrz `ideaCanvasMelsChipsIconFallback.test.ts`).
+ */
+export function resolveMenu3Icon(actionId: string, iconName: IconName): LucideIcon {
+  const icon = ICON_BY_NAME[iconName];
+  if (icon) return icon;
+  // eslint-disable-next-line no-console -- celowa, widoczna sygnalizacja luki (nie cichy no-op).
+  console.warn(
+    `[ideaCanvasMelsChips] Brak ikony Menu 3 dla '${iconName}' (akcja '${actionId}') w ICON_BY_NAME — używam zapasowej ikony. Dopisz wpis w ICON_BY_NAME albo Menu3Presentation.`
+  );
+  return MENU3_FALLBACK_ICON;
+}
 
 /**
  * Prezentacja Menu 3 per identyfikator akcji z rejestru. Rejestr decyduje, KTÓRE
@@ -345,7 +388,11 @@ export function buildIdeaMenu3Actions(args: {
           : pres.labelEn
         : def.label[pl ? 'pl' : 'en'];
 
-    const icon = isAdd ? MENU3_ADD_ICON[tool] : pres ? pres.icon : ICON_BY_NAME[def.icon];
+    const icon = isAdd
+      ? MENU3_ADD_ICON[tool]
+      : pres
+        ? pres.icon
+        : resolveMenu3Icon(def.id, def.icon);
 
     const needsContent = pres?.needsContent ?? false;
     const disabled = needsContent && !hasContent;

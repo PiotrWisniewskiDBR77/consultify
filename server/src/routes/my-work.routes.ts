@@ -26,6 +26,12 @@ import {
   selectReadableMapRow,
 } from '../realtime/ideaMapAccess.js';
 import auditEventsService from '../services/AuditEventsService.js';
+import {
+  getIdeaConfidentiality,
+  IDEA_CONFIDENTIALITY_BLOCKED_RESPONSE,
+  IDEA_CONFIDENTIALITY_LEVELS,
+  isIdeaRestricted,
+} from '../services/ideaConfidentiality.js';
 import { createIdeaMapSnapshot } from '../services/ideaMapSnapshotService.js';
 import { InboxAiAssistItemSchema, runInboxAiAssist } from '../services/inboxAiAssistService.js';
 import inboxService from '../services/inboxService.js';
@@ -382,9 +388,20 @@ const decorateIdeaLineage = (row: any) => ({
   creativeProposals:
     row?.creativeProposals != null ? parseJsonField(row.creativeProposals, []) : undefined,
   summaryData: row?.summaryData != null ? parseJsonField(row.summaryData, null) : undefined,
+  // E08 (idea maturity model, docs/qa/ideas-manual-audit-2026-08-09/09_...md §6.1):
+  // user attestations for the handful of stage-gate criteria that have no
+  // backing field anywhere else (recommendation / financial scenario /
+  // dependencies / unresolved assumptions / initial economics — see
+  // src/components/MyWork/ideaMaturityModel.ts). `undefined` when the
+  // additive column (server/migrations/20260810_idea_maturity_gates.sql,
+  // NOT applied yet) doesn't exist on this database — the row simply won't
+  // carry the raw key in that case (see `lineageSelect` guards below).
+  maturityGates:
+    row?.maturity_gates_json !== undefined ? parseJsonField(row.maturity_gates_json, {}) : {},
   action_contract_json: undefined,
   source_pack_json: undefined,
   evidence_refs_json: undefined,
+  maturity_gates_json: undefined,
 });
 
 const normalizeDecisionStatus = (status?: string | null) => String(status || '').toLowerCase();
@@ -2661,6 +2678,10 @@ router.get(
         : "'{}' as action_contract_json",
       ideaColumns.has('source_pack_json') ? 'source_pack_json' : "'{}' as source_pack_json",
       ideaColumns.has('evidence_refs_json') ? 'evidence_refs_json' : "'[]' as evidence_refs_json",
+      // E12: same feature-detect pattern as the JSON columns above — degrade
+      // honestly to the implicit default on a database where the additive
+      // 20260810_idea_confidentiality.sql migration hasn't run yet.
+      ideaColumns.has('confidentiality') ? 'confidentiality' : "'standard' as confidentiality",
     ].join(',\n          ');
 
     // Home-shell columns (folders / favorites / recents). Guarded so the list
@@ -2994,12 +3015,21 @@ router.get(
 
     const id = String(req.params.id || '').trim();
     const ideaColumns = await getTableColumns('my_ideas');
+    const hasMaturityGatesColumn = ideaColumns.has('maturity_gates_json');
+    const hasConfidentialityColumn = ideaColumns.has('confidentiality');
     const lineageSelect = [
       ideaColumns.has('action_contract_json')
         ? 'action_contract_json'
         : "'{}' as action_contract_json",
       ideaColumns.has('source_pack_json') ? 'source_pack_json' : "'{}' as source_pack_json",
       ideaColumns.has('evidence_refs_json') ? 'evidence_refs_json' : "'[]' as evidence_refs_json",
+      // E08: only select the real column when the additive migration has run —
+      // never fabricate a fake "supported" value here (see maturityGatesSupported below).
+      hasMaturityGatesColumn ? 'maturity_gates_json' : "NULL as maturity_gates_json",
+      // E12: same honest-degrade pattern — a database without the
+      // 20260810_idea_confidentiality.sql migration reports the implicit
+      // default rather than 500ing or fabricating a "gate applied" signal.
+      hasConfidentialityColumn ? 'confidentiality' : "'standard' as confidentiality",
     ].join(',\n        ');
     const homeSelectDetail = [
       ideaColumns.has('folder_id') ? 'folder_id as "folderId"' : 'NULL as "folderId"',
@@ -3052,8 +3082,74 @@ router.get(
         ...row,
         tags: parseTagsArray((row as any)?.tags),
         isFavorite: !!(row as any)?.isFavorite,
+        // E08: explicit capability flag — never let the client infer "supported"
+        // from data shape alone (empty {} is ambiguous between "not run yet"
+        // and "run but nothing attested"). See ideaMaturityModel.ts header.
+        maturityGatesSupported: hasMaturityGatesColumn,
+        // E12: same explicit capability flag for the confidentiality gate —
+        // lets a future UI distinguish "this idea is 'standard'" from "this
+        // database can't persist a level at all yet".
+        confidentialitySupported: hasConfidentialityColumn,
       })
     );
+  })
+);
+
+/**
+ * PATCH /api/my-work/my-ideas/:id/maturity-gates
+ *
+ * E08 (idea maturity model) — sets ONE user attestation for an `attested`
+ * stage-gate criterion (see src/components/MyWork/ideaMaturityModel.ts —
+ * initial economics / recommendation / financial scenario / dependencies /
+ * unresolved assumptions have no other backing field in the product).
+ *
+ * Honest degrade: if the additive `maturity_gates_json` column
+ * (server/migrations/20260810_idea_maturity_gates.sql) has not been applied
+ * on this database, responds `{ success: true, applied: false }` — NEVER a
+ * fake `applied: true` — so the client can show "not saved" instead of a
+ * false success toast (house rule: no silent no-op behind a success state).
+ */
+router.patch(
+  '/my-ideas/:id/maturity-gates',
+  requireAudit,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['my_ideas']))) return;
+
+    const id = String(req.params.id || '').trim();
+    const criterionId = String(req.body?.criterionId || '').trim();
+    if (!criterionId) {
+      return res.status(400).json({ error: 'criterionId is required' });
+    }
+    const met = Boolean(req.body?.met);
+    const note = req.body?.note ? String(req.body.note).trim().slice(0, 500) : undefined;
+
+    const ideaColumns = await getTableColumns('my_ideas');
+    if (!ideaColumns.has('maturity_gates_json')) {
+      return res.json({ success: true, applied: false, maturityGates: {} });
+    }
+
+    const existing = await queryHelpers.queryOne<{ maturity_gates_json: string | null }>(
+      `SELECT maturity_gates_json FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ?`,
+      [id, userId, orgId]
+    );
+    if (!existing) return res.status(404).json({ error: 'Idea not found' });
+
+    const current = parseJsonField<Record<string, unknown>>(existing.maturity_gates_json, {});
+    const next = {
+      ...current,
+      [criterionId]: { met, note, byUserId: userId, at: new Date().toISOString() },
+    };
+
+    await queryHelpers.queryRun(
+      `UPDATE my_ideas SET maturity_gates_json = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ? AND user_id = ? AND organization_id = ?`,
+      [JSON.stringify(next), id, userId, orgId]
+    );
+
+    res.json({ success: true, applied: true, maturityGates: next });
   })
 );
 
@@ -3067,8 +3163,16 @@ router.put(
     if (!(await requireTables(res, ['my_ideas']))) return;
 
     const id = String(req.params.id || '').trim();
+    // `confidentiality` is feature-detected like every other additive column on this
+    // table: without it the audit event below would silently record `undefined ->
+    // undefined` for the one field on this route that is a security classification.
+    const ideaColumnsForExisting = await getTableColumns('my_ideas');
     const existing = await queryHelpers.queryOne<any>(
-      `SELECT id, title, body, tags, stage, branch, area, priority FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+      `SELECT id, title, body, tags, stage, branch, area, priority, ${
+        ideaColumnsForExisting.has('confidentiality')
+          ? 'confidentiality'
+          : "'standard' as confidentiality"
+      } FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
       [id, userId, orgId]
     );
     if (!existing) {
@@ -3101,6 +3205,28 @@ router.put(
     }
     if (req.body?.folderId !== undefined && ideaColumns.has('folder_id')) {
       set('folder_id', req.body.folderId ? String(req.body.folderId) : null);
+    }
+
+    // E12: confidentiality gate (server/src/services/ideaConfidentiality.ts).
+    // Validated against the closed value set BEFORE it ever reaches the
+    // query — the column has a CHECK constraint, and letting a bad value
+    // through would surface as an opaque 500 instead of a clear 400.
+    // Feature-detected the same way as the home-shell fields above so a
+    // database without the additive 20260810_idea_confidentiality.sql
+    // migration silently no-ops the persist instead of erroring.
+    if (req.body?.confidentiality !== undefined) {
+      const requestedConfidentiality = String(req.body.confidentiality).trim().toLowerCase();
+      if (
+        !(IDEA_CONFIDENTIALITY_LEVELS as readonly string[]).includes(requestedConfidentiality)
+      ) {
+        res.status(400).json({
+          error: `confidentiality must be one of: ${IDEA_CONFIDENTIALITY_LEVELS.join(', ')}`,
+        });
+        return;
+      }
+      if (ideaColumns.has('confidentiality')) {
+        set('confidentiality', requestedConfidentiality);
+      }
     }
 
     if (setParts.length === 0) {
@@ -3156,6 +3282,7 @@ router.put(
         ${ideaColumns.has('folder_id') ? 'folder_id as "folderId"' : 'NULL as "folderId"'},
         ${ideaColumns.has('is_favorite') ? 'is_favorite as "isFavorite"' : '0 as "isFavorite"'},
         ${ideaColumns.has('last_opened_at') ? 'last_opened_at as "lastOpenedAt"' : 'NULL as "lastOpenedAt"'},
+        ${ideaColumns.has('confidentiality') ? 'confidentiality' : "'standard' as confidentiality"},
         created_at as "createdAt",
         updated_at as "updatedAt"
       FROM my_ideas
@@ -3179,12 +3306,20 @@ router.put(
           branch: existing.branch,
           area: existing.area,
           priority: existing.priority,
+          // Security classification — the ONE field on this route whose change is a
+          // security event rather than an edit. Downgrading `restricted` -> `standard`
+          // re-opens all eight AI/export endpoints on the very next request (the gate
+          // re-reads the column per call, by design — it is a live classification, not
+          // a one-way lock). Without this pair, a downgrade-then-exfiltrate sequence is
+          // indistinguishable from someone fixing a typo in the title.
+          confidentiality: existing.confidentiality,
         },
         after: {
           title: (row as any)?.title,
           body: (row as any)?.body,
           tags: (row as any)?.tags,
           stage: (row as any)?.stage,
+          confidentiality: (row as any)?.confidentiality,
         },
         metadata: { fromAI: Boolean(req.body?.fromAI) },
       })
@@ -4366,6 +4501,15 @@ router.post(
 
     if (!(await requireTables(res, ['my_ideas']))) return;
 
+    // E12 (10.4): a restricted Idea's content must never leave as an export file.
+    const exportConfidentiality = await getIdeaConfidentiality(ideaId, orgId);
+    if (exportConfidentiality === 'restricted') {
+      return res.status(403).json({
+        error: 'This Idea is marked restricted and cannot be exported.',
+        code: 'IDEA_CONFIDENTIALITY_BLOCKED',
+      });
+    }
+
     const idea = await queryHelpers.queryOne<any>(
       `SELECT id, title FROM my_ideas WHERE id = ? AND organization_id = ? LIMIT 1`,
       [ideaId, orgId]
@@ -4410,7 +4554,11 @@ router.post(
       const report = mapMindMapToUnifiedReport(ideaTitle, branches, {
         language,
         template,
-        confidentiality: 'internal',
+        // E12 (10.4): propagate the Idea's real classification instead of the
+        // previous hardcoded 'internal' — 'confidential' ideas now actually
+        // reach PptxPipelineService's confidentiality handling (watermark /
+        // access banner) instead of silently exporting as unclassified.
+        confidentiality: exportConfidentiality === 'confidential' ? 'confidential' : 'internal',
       });
 
       const pipeline = new PptxPipelineService();
@@ -5153,6 +5301,13 @@ router.post(
     const ideaId = String(req.params.id || '').trim();
     if (!ideaId || ideaId === 'all') return res.status(400).json({ error: 'Invalid idea id' });
 
+    // E12 (10.4): a restricted Idea's content must never reach an LLM prompt.
+    if (await isIdeaRestricted(ideaId, orgId)) {
+      return res
+        .status(IDEA_CONFIDENTIALITY_BLOCKED_RESPONSE.status)
+        .json(IDEA_CONFIDENTIALITY_BLOCKED_RESPONSE.body);
+    }
+
     const countRaw = Number(req.body?.count);
     const count =
       Number.isFinite(countRaw) && countRaw > 0 ? Math.min(10, Math.max(1, countRaw)) : 5;
@@ -5403,6 +5558,13 @@ router.post(
     const ideaId = String(req.params.id || '').trim();
     if (!ideaId || ideaId === 'all') return res.status(400).json({ error: 'Invalid idea id' });
 
+    // E12 (10.4): a restricted Idea's content must never reach an LLM prompt.
+    if (await isIdeaRestricted(ideaId, orgId)) {
+      return res
+        .status(IDEA_CONFIDENTIALITY_BLOCKED_RESPONSE.status)
+        .json(IDEA_CONFIDENTIALITY_BLOCKED_RESPONSE.body);
+    }
+
     const idea = await queryHelpers.queryOne<any>(
       `SELECT id, title, seed_text as "seedText" FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
       [ideaId, userId, orgId]
@@ -5512,6 +5674,13 @@ router.post(
 
     const ideaId = String(req.params.id || '').trim();
     if (!ideaId || ideaId === 'all') return res.status(400).json({ error: 'Invalid idea id' });
+
+    // E12 (10.4): a restricted Idea's content must never reach an LLM prompt.
+    if (await isIdeaRestricted(ideaId, orgId)) {
+      return res
+        .status(IDEA_CONFIDENTIALITY_BLOCKED_RESPONSE.status)
+        .json(IDEA_CONFIDENTIALITY_BLOCKED_RESPONSE.body);
+    }
 
     const idea = await queryHelpers.queryOne<any>(
       `SELECT id, title, seed_text as "seedText" FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
@@ -5704,6 +5873,22 @@ router.post(
 
     const ideaId = String(req.params.id || '').trim();
     if (!ideaId) return res.status(400).json({ error: 'Invalid idea id' });
+
+    // E12 (10.4): every other map write endpoint in this file verifies the
+    // idea belongs to the caller's org before writing — this one didn't, so
+    // a client could silently attach a snapshot row to any ideaId string
+    // regardless of org ownership. GET/DELETE are already user+org scoped so
+    // this was never a cross-tenant READ leak, but it let a caller write
+    // garbage history under an id it has no real relationship to. Mirrors
+    // the org-scope check ideaCollabWs.gateway.ts uses for its legacy
+    // (ENABLE_SHARED_IDEA_MAPS off) branch rather than the stricter
+    // assertIdeaMembership, so this doesn't newly require an
+    // organization_members row beyond what every other write path assumes.
+    const ideaOrgCheck = await queryHelpers.queryOne<{ id: string }>(
+      `SELECT id FROM my_ideas WHERE id = ? AND organization_id = ?`,
+      [ideaId, orgId]
+    );
+    if (!ideaOrgCheck) return res.status(404).json({ error: 'Idea not found' });
 
     const schema = z.object({
       label: z.string().min(1).max(200),
@@ -6206,6 +6391,16 @@ router.post(
       [ideaId, userId, orgId]
     );
     if (!ownsGenerate) return res.status(404).json({ error: 'Idea not found' });
+
+    // E12 (10.4): a restricted Idea's content must never reach an LLM prompt.
+    // Body carries title/seedText/nodes/edges straight to generateIdeaAI() below —
+    // the same leak class as map/expand, map/ai-suggestions and map/gap-analysis,
+    // which this endpoint had not yet been gated the same way as.
+    if (await isIdeaRestricted(ideaId, orgId)) {
+      return res
+        .status(IDEA_CONFIDENTIALITY_BLOCKED_RESPONSE.status)
+        .json(IDEA_CONFIDENTIALITY_BLOCKED_RESPONSE.body);
+    }
 
     const { generatorType, tool, context } = parsed.data;
 
@@ -6733,6 +6928,15 @@ const LIVE_CONVERT_TARGETS = [
 ] as const;
 
 /**
+ * E11 (2026-08-10) — version tag for the field-mapping logic below (title →
+ * target name, aiExpansion/body → description, summaryData.nextSteps →
+ * tasks, …). Bump this string whenever that mapping logic changes materially
+ * so lineage rows can be told apart by which mapping produced them
+ * (docs/qa/ideas-manual-audit-2026-08-09/09_*, §9 `mappingVersion`).
+ */
+const CONVERSION_MAPPING_VERSION = 'v1';
+
+/**
  * POST /api/my-work/my-ideas/:id/convert
  * Body: { target: 'initiative'|'task_set'|'decision'|'team_chat'|'report'|'presentation', options?: {...} }
  */
@@ -6834,7 +7038,17 @@ router.post(
     // ścisłym nadzbiorem informacji, którą backend miał do tej pory (żadnej).
     const explicitScope = typeof options?.scope === 'string' ? options.scope.trim() : '';
     const isWholeIdeaScope = explicitScope ? explicitScope === 'workspace' : nodeIds.length === 0;
-    const conversionScope = isWholeIdeaScope ? 'workspace' : 'selection';
+    // E11 (2026-08-10): when the caller sends a real `options.scope` (now wired
+    // from IdeaMapWorkspace.handleConvert's preview gate + convertSingleNode/
+    // convertBranch), record it verbatim (single_item / single_item_cascade /
+    // selected_items / …) instead of collapsing every non-workspace conversion
+    // into the single bucket 'selection' — the column is an open TEXT list
+    // (no CHECK, see 20260723_idea_conversion_history.sql), so finer values
+    // need no migration. Legacy callers that still omit `scope` keep the old
+    // 'selection' fallback — behavior for them is unchanged.
+    const conversionScope = isWholeIdeaScope
+      ? 'workspace'
+      : explicitScope || 'selection';
 
     const promote = async (promotedTo: string, promotedEntityId: string | null) => {
       // Historia KAŻDEJ konwersji — insert, NIGDY update. Zastępuje pojedyncze pole
@@ -6842,20 +7056,41 @@ router.post(
       // (defekt P0-1). Best-effort: brak tabeli (migracja 20260723_idea_conversion_history
       // jeszcze nie uruchomiona) nie może zablokować samej konwersji.
       try {
+        // E11 (2026-08-10): fill in the two fields the §9 lineage shape
+        // ({conversionId,targetType,targetId,scope,sourceElementIds,createdAt,
+        // createdBy,mappingVersion,sourceLink}) was still missing —
+        // `source_link_json` (column existed, unused since the P0-1 migration)
+        // and `mapping_version` (new additive column, feature-detected exactly
+        // like `maturity_gates_json` above — see 20260810_idea_conversion_
+        // mapping_version.sql, NOT applied by this task, DB SAFETY).
+        const conversionCols = await getTableColumns('my_idea_conversions');
+        const hasMappingVersion = conversionCols.has('mapping_version');
+        const sourceLink = JSON.stringify({
+          type: 'idea',
+          id: ideaId,
+          containerType: 'idea_workspace',
+          containerId: ideaId,
+        });
+        const insertCols = ['id', 'idea_id', 'organization_id', 'target', 'entity_id', 'scope', 'node_ids_json', 'source_link_json', 'created_by'];
+        const insertVals: any[] = [
+          uuidv4(),
+          ideaId,
+          orgId,
+          promotedTo,
+          promotedEntityId,
+          conversionScope,
+          JSON.stringify(nodeIds),
+          sourceLink,
+          userId,
+        ];
+        if (hasMappingVersion) {
+          insertCols.push('mapping_version');
+          insertVals.push(CONVERSION_MAPPING_VERSION);
+        }
         await queryHelpers.queryRun(
-          `INSERT INTO my_idea_conversions
-             (id, idea_id, organization_id, target, entity_id, scope, node_ids_json, created_by)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            uuidv4(),
-            ideaId,
-            orgId,
-            promotedTo,
-            promotedEntityId,
-            conversionScope,
-            JSON.stringify(nodeIds),
-            userId,
-          ]
+          `INSERT INTO my_idea_conversions (${insertCols.join(', ')})
+           VALUES (${insertCols.map(() => '?').join(', ')})`,
+          insertVals
         );
       } catch (err: any) {
         logger.warn(
@@ -7523,6 +7758,94 @@ router.post(
         created: { conversationId, chatProjectId },
       });
     }
+  })
+);
+
+/**
+ * GET /api/my-work/my-ideas/:id/conversions
+ *
+ * E11 (2026-08-10) — read-only lineage list for the §9 append-only
+ * `conversions[]` contract (docs/qa/ideas-manual-audit-2026-08-09/09_*, §9;
+ * docs/standards/idea-workspace/10_*, §2.3). Backs the FE conversion preview
+ * (prior-conversion count/warnings) and any future "Powiązania" backlink
+ * list. Read-only — creates nothing, mutates nothing.
+ */
+router.get(
+  '/my-ideas/:id/conversions',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['my_ideas']))) return;
+
+    const ideaId = String(req.params.id || '').trim();
+    if (!ideaId) return res.status(400).json({ error: 'Missing idea id' });
+
+    // Ownership check — same guard as the convert route above.
+    const idea = await queryHelpers.queryOne<{ id: string }>(
+      `SELECT id FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+      [ideaId, userId, orgId]
+    );
+    if (!idea) return res.status(404).json({ error: 'Idea not found' });
+
+    if (!(await requireTables(res, ['my_idea_conversions']))) {
+      // Additive table from 20260723_idea_conversion_history.sql — if a
+      // database somehow lacks it, degrade honestly to an empty list rather
+      // than a 500; the FE preview treats this as "no known prior conversions".
+      return res.json({ conversions: [] });
+    }
+
+    const conversionCols = await getTableColumns('my_idea_conversions');
+    const mappingVersionSelect = conversionCols.has('mapping_version')
+      ? 'mapping_version as "mappingVersion"'
+      : "NULL as \"mappingVersion\"";
+
+    const rows = await queryHelpers.queryAll<any>(
+      `
+      SELECT
+        id as "conversionId",
+        target as "targetType",
+        entity_id as "targetId",
+        scope,
+        node_ids_json as "sourceElementIdsJson",
+        source_link_json as "sourceLinkJson",
+        created_by as "createdBy",
+        created_at as "createdAt",
+        ${mappingVersionSelect}
+      FROM my_idea_conversions
+      WHERE idea_id = ? AND organization_id = ?
+      ORDER BY created_at DESC
+      `,
+      [ideaId, orgId]
+    );
+
+    const conversions = (rows || []).map((r: any) => {
+      let sourceElementIds: string[] = [];
+      try {
+        sourceElementIds = r.sourceElementIdsJson ? JSON.parse(r.sourceElementIdsJson) : [];
+      } catch {
+        sourceElementIds = [];
+      }
+      let sourceLink: unknown = null;
+      try {
+        sourceLink = r.sourceLinkJson ? JSON.parse(r.sourceLinkJson) : null;
+      } catch {
+        sourceLink = null;
+      }
+      return {
+        conversionId: r.conversionId,
+        targetType: r.targetType,
+        targetId: r.targetId,
+        scope: r.scope,
+        sourceElementIds,
+        createdAt: r.createdAt,
+        createdBy: r.createdBy,
+        mappingVersion: r.mappingVersion,
+        sourceLink,
+      };
+    });
+
+    res.json({ conversions });
   })
 );
 
@@ -9475,6 +9798,13 @@ router.post(
     );
     if (!ownsSuggest) return res.status(404).json({ error: 'Idea not found' });
 
+    // E12 (10.4): a restricted Idea's content must never reach an LLM prompt.
+    if (await isIdeaRestricted(ideaId, orgId)) {
+      return res
+        .status(IDEA_CONFIDENTIALITY_BLOCKED_RESPONSE.status)
+        .json(IDEA_CONFIDENTIALITY_BLOCKED_RESPONSE.body);
+    }
+
     const context = req.body?.context || {};
     const mode = String(req.body?.mode || 'passive');
     const prompt = req.body?.prompt ? String(req.body.prompt) : undefined;
@@ -9531,6 +9861,13 @@ router.post(
     );
     if (!ownsAction) return res.status(404).json({ error: 'Idea not found' });
 
+    // E12 (10.4): a restricted Idea's content must never reach an LLM prompt.
+    if (await isIdeaRestricted(ideaId, orgId)) {
+      return res
+        .status(IDEA_CONFIDENTIALITY_BLOCKED_RESPONSE.status)
+        .json(IDEA_CONFIDENTIALITY_BLOCKED_RESPONSE.body);
+    }
+
     const tableSchema = Array.isArray(req.body?.schema) ? req.body.schema : [];
     const language = String(req.body?.language || 'en');
 
@@ -9577,6 +9914,13 @@ router.post(
     );
     if (!ownsFill) return res.status(404).json({ error: 'Idea not found' });
 
+    // E12 (10.4): a restricted Idea's content must never reach an LLM prompt.
+    if (await isIdeaRestricted(ideaId, orgId)) {
+      return res
+        .status(IDEA_CONFIDENTIALITY_BLOCKED_RESPONSE.status)
+        .json(IDEA_CONFIDENTIALITY_BLOCKED_RESPONSE.body);
+    }
+
     const rows = Array.isArray(req.body?.rows) ? req.body.rows : [];
     const language = String(req.body?.language || 'en');
 
@@ -9616,6 +9960,14 @@ router.get(
 
     const ideaId = String(req.params.id || '').trim();
     if (!ideaId) return res.status(400).json({ error: 'Invalid idea id' });
+
+    // E12 (10.4): a restricted Idea's content must never leave as an export file
+    // (same rule as the mind-map PPTX export). CSV export had no gate at all.
+    if (await isIdeaRestricted(ideaId, orgId)) {
+      return res
+        .status(IDEA_CONFIDENTIALITY_BLOCKED_RESPONSE.status)
+        .json(IDEA_CONFIDENTIALITY_BLOCKED_RESPONSE.body);
+    }
 
     try {
       // Read-side parity with GET /map (see resolveMapReadRow): shared mode reads

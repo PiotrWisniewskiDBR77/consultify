@@ -3,6 +3,27 @@
  *
  * Users define weights for numeric/rating columns, the model auto-calculates
  * a composite score and ranks all ideas. Supports AI-assisted weight calibration.
+ *
+ * ── CANON MODEL (Program D / epic E08, §6.3, 2026-08-10) ───────────────────
+ * A "9 canon dimensions" toggle switches this modal from the original
+ * free-form (pick-any-numeric-column) weighting to `ideaScoringGovernance`'s
+ * fixed nine dimensions (strategic fit, customer/business value, financial
+ * impact, urgency, confidence/evidence, delivery effort, implementation
+ * risk, dependency complexity, compliance/security) — real weight
+ * versioning (`reviseWeights`/`currentWeightVersion`, visible as "v{n}") and
+ * `computeCompositeScore`'s per-idea-meaningful 0-10 scale (not portfolio
+ * min-max), instead of the original ad hoc normalization. Applying writes
+ * an append-only `data.scoreHistory` (via `appendComputedEvent`) alongside
+ * `data.score`/`data.rank`, so "why is this score what it is" has a real
+ * answer — see `ideaScoringGovernance.ts` header for what this closes.
+ *
+ * HONEST LIMITATION: the weight-version history lives in this component's
+ * state only (like the original free-form weights already did) — it is
+ * NOT persisted to a backend across reopens of this dialog. Row-level
+ * results (`score`/`rank`/`scoreHistory`) DO persist, through the same
+ * `nodesUndo`-backed realtime sync every other tool in `IdeaTableTool` uses.
+ * A future idea-level persistence layer for the weight model itself is out
+ * of this task's scope.
  */
 import {
   BarChart3,
@@ -15,9 +36,23 @@ import {
   Trophy,
   X,
 } from 'lucide-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
+
+import {
+  appendComputedEvent,
+  computeCompositeScore,
+  type CompositeScoreResult,
+  createInitialWeightVersion,
+  currentWeightVersion,
+  defaultWeightSet,
+  reviseWeights,
+  SCORING_DIMENSIONS,
+  type ScoreHistory,
+  type ScoringWeightHistory,
+} from './ideaScoringGovernance';
 import type { ColumnDef, TableNode } from './tableTypes';
 import { ROW_ACCENT_COLORS } from './tableTypes';
 
@@ -32,6 +67,12 @@ interface ScoredNode {
   score: number;
   rank: number;
   breakdown: { colKey: string; rawValue: number; normalizedValue: number; weightedValue: number }[];
+  /** Present only in canon mode — dimensions with a weight but no input for
+   *  this idea, per `computeCompositeScore`'s honest-gap contract. */
+  missingDimensions?: string[];
+  /** Present only in canon mode — the raw engine result, carried through so
+   *  `handleApply` can append a real, unmodified `ScoreHistoryEvent`. */
+  compositeResult?: CompositeScoreResult;
 }
 
 interface IdeaScoringModelProps {
@@ -40,7 +81,17 @@ interface IdeaScoringModelProps {
   nodes: TableNode[];
   columns: ColumnDef[];
   ideaId: string;
-  onApplyScores: (scores: { nodeId: string; score: number; rank: number }[]) => void;
+  onApplyScores: (
+    scores: {
+      nodeId: string;
+      score: number;
+      rank: number;
+      /** Only set in canon mode — caller appends to the row's persisted
+       *  `data.scoreHistory`. */
+      canonHistoryEvent?: ScoreHistory[number];
+      canonModelVersion?: number;
+    }[]
+  ) => void;
 }
 
 const SCORABLE_TYPES = new Set(['number', 'rating', 'progress', 'currency']);
@@ -54,6 +105,7 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
   onApplyScores,
 }) => {
   const { t, i18n } = useTranslation();
+  const isPl = i18n.language?.startsWith('pl');
 
   const scorableColumns = useMemo(
     () => columns.filter((c) => SCORABLE_TYPES.has(c.type) && c.visible),
@@ -69,10 +121,62 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
   );
   const [aiLoading, setAiLoading] = useState(false);
 
-  const totalWeight = weights.reduce((s, w) => s + w.weight, 0);
+  // ── Canon model (9 dimensions, ideaScoringGovernance) ───────────────────
+  const [canonMode, setCanonMode] = useState(false);
+  const [weightHistory, setWeightHistory] = useState<ScoringWeightHistory>(() =>
+    createInitialWeightVersion()
+  );
+  const activeWeightVersion = currentWeightVersion(weightHistory)!;
+
+  const canonWeights = useMemo<WeightConfig[]>(
+    () =>
+      SCORING_DIMENSIONS.map((d) => ({
+        colKey: d.key,
+        weight: activeWeightVersion.weights[d.key] ?? d.defaultWeight,
+        invert: d.lowerIsBetter,
+      })),
+    [activeWeightVersion]
+  );
+
+  const handleToggleCanonMode = useCallback(() => {
+    setCanonMode((v) => !v);
+  }, []);
+
+  const totalWeight = (canonMode ? canonWeights : weights).reduce((s, w) => s + w.weight, 0);
 
   const scoredNodes: ScoredNode[] = useMemo(() => {
-    if (scorableColumns.length === 0 || nodes.length === 0) return [];
+    if (nodes.length === 0) return [];
+
+    if (canonMode) {
+      const scored = nodes.map((node) => {
+        const inputs: Record<string, number> = {};
+        for (const d of SCORING_DIMENSIONS) {
+          const raw = Number(node.data?.[d.key]);
+          if (Number.isFinite(raw)) inputs[d.key] = raw;
+        }
+        const result = computeCompositeScore(inputs, activeWeightVersion);
+        return {
+          node,
+          score: result.score,
+          rank: 0,
+          missingDimensions: result.missingDimensions,
+          compositeResult: result,
+          breakdown: result.breakdown.map((b) => ({
+            colKey: b.dimension,
+            rawValue: b.rawValue ?? 0,
+            normalizedValue: b.normalizedValue ?? 0,
+            weightedValue: b.contribution / 100,
+          })),
+        };
+      });
+      scored.sort((a, b) => b.score - a.score);
+      scored.forEach((s, i) => {
+        s.rank = i + 1;
+      });
+      return scored;
+    }
+
+    if (scorableColumns.length === 0) return [];
 
     const colStats = new Map<string, { min: number; max: number }>();
     for (const col of scorableColumns) {
@@ -109,17 +213,33 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
       s.rank = i + 1;
     });
     return scored;
-  }, [nodes, scorableColumns, totalWeight, weights]);
+  }, [activeWeightVersion, canonMode, nodes, scorableColumns, totalWeight, weights]);
 
-  const handleWeightChange = useCallback((colKey: string, value: number) => {
-    setWeights((prev) => prev.map((w) => (w.colKey === colKey ? { ...w, weight: value } : w)));
-  }, []);
+  const handleWeightChange = useCallback(
+    (colKey: string, value: number) => {
+      if (canonMode) {
+        setWeightHistory((prev) =>
+          reviseWeights(prev, { ...currentWeightVersion(prev)!.weights, [colKey]: value })
+        );
+        return;
+      }
+      setWeights((prev) => prev.map((w) => (w.colKey === colKey ? { ...w, weight: value } : w)));
+    },
+    [canonMode]
+  );
 
   const handleToggleInvert = useCallback((colKey: string) => {
+    // Canon dimensions have a fixed, model-defined lowerIsBetter — inversion
+    // is not user-editable there (that is exactly what makes the composite
+    // meaningful across ideas without per-user reinterpretation).
     setWeights((prev) => prev.map((w) => (w.colKey === colKey ? { ...w, invert: !w.invert } : w)));
   }, []);
 
   const handleReset = useCallback(() => {
+    if (canonMode) {
+      setWeightHistory((prev) => reviseWeights(prev, defaultWeightSet(), { note: 'Reset to defaults' }));
+      return;
+    }
     setWeights(
       scorableColumns.map((c) => ({
         colKey: c.key,
@@ -127,7 +247,7 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
         invert: false,
       }))
     );
-  }, [scorableColumns]);
+  }, [canonMode, scorableColumns]);
 
   const handleAICalibrate = useCallback(async () => {
     setAiLoading(true);
@@ -163,11 +283,31 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
   }, [i18n.language, ideaId, nodes, scorableColumns, weights]);
 
   const handleApply = useCallback(() => {
-    onApplyScores(scoredNodes.map((s) => ({ nodeId: s.node.id, score: s.score, rank: s.rank })));
+    onApplyScores(
+      scoredNodes.map((s) => ({
+        nodeId: s.node.id,
+        score: s.score,
+        rank: s.rank,
+        canonHistoryEvent: s.compositeResult
+          ? appendComputedEvent([], s.compositeResult)[0]
+          : undefined,
+        canonModelVersion: s.compositeResult?.modelVersion,
+      }))
+    );
     onClose();
   }, [onApplyScores, onClose, scoredNodes]);
 
-  const getColHeader = (key: string) => columns.find((c) => c.key === key)?.header || key;
+  const canonDimensionLabel = (key: string): string | undefined => {
+    const dim = SCORING_DIMENSIONS.find((d) => d.key === key);
+    if (!dim) return undefined;
+    return isPl ? dim.labelPl : dim.labelEn;
+  };
+
+  const getColHeader = (key: string) =>
+    canonDimensionLabel(key) || columns.find((c) => c.key === key)?.header || key;
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  useDialogA11y({ open, onClose, containerRef });
 
   if (!open) return null;
 
@@ -177,13 +317,18 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-[560px] max-w-[90vw] max-h-[85vh] rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl overflow-hidden flex flex-col"
+        ref={containerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="idea-scoring-model-heading"
+        tabIndex={-1}
+        className="w-[560px] max-w-[90vw] max-h-[85vh] rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl overflow-hidden flex flex-col outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center gap-2 px-5 py-3.5 border-b border-c-border-subtle">
           <Trophy size={16} className="text-amber-500" />
-          <span className="text-sm font-bold text-c-text">
+          <span id="idea-scoring-model-heading" className="text-sm font-bold text-c-text">
             {t('myWorkTable.ideaScoringModel.title')}
           </span>
           <div className="flex-1" />
@@ -202,7 +347,30 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
             <span className="text-[10px] font-bold uppercase tracking-wider text-c-text-muted">
               {t('myWorkTable.ideaScoringModel.criteriaWeights')}
             </span>
+            {canonMode && (
+              <span
+                className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-c-info/10 text-c-info"
+                title={
+                  isPl
+                    ? 'Numer wersji wag — rośnie przy każdej zmianie (reviseWeights, append-only).'
+                    : 'Weight version number — bumps on every change (reviseWeights, append-only).'
+                }
+              >
+                v{activeWeightVersion.version}
+              </span>
+            )}
             <div className="flex-1" />
+            <button
+              onClick={handleToggleCanonMode}
+              className={`px-2 py-1 rounded-lg text-[9px] font-bold transition-colors ${canonMode ? 'bg-c-text text-c-surface' : 'bg-c-surface-raised text-c-text-secondary'}`}
+              title={
+                isPl
+                  ? 'Model kanoniczny: 9 stałych wymiarów (§6.3), wersjonowane wagi, skala 0-10 per idea.'
+                  : 'Canon model: 9 fixed dimensions (§6.3), versioned weights, per-idea 0-10 scale.'
+              }
+            >
+              {isPl ? '9 wymiarów' : '9 dimensions'}
+            </button>
             <button
               onClick={handleReset}
               className="p-1 rounded text-c-text-secondary hover:text-c-text-secondary transition-colors"
@@ -212,7 +380,14 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
             </button>
             <button
               onClick={handleAICalibrate}
-              disabled={aiLoading}
+              disabled={aiLoading || canonMode}
+              title={
+                canonMode
+                  ? isPl
+                    ? 'Niedostępne w modelu kanonicznym — wagi tych dziewięciu wymiarów są stałą częścią modelu.'
+                    : 'Not available in canon mode — the nine dimension weights are a fixed part of the model.'
+                  : undefined
+              }
               className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-bold bg-c-text text-c-surface hover:bg-c-text/90 transition-colors disabled:opacity-50"
             >
               {aiLoading ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
@@ -220,13 +395,13 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
             </button>
           </div>
 
-          {scorableColumns.length === 0 ? (
+          {!canonMode && scorableColumns.length === 0 ? (
             <p className="text-xs text-c-text-secondary text-center py-3">
               {t('myWorkTable.ideaScoringModel.noNumericColumns')}
             </p>
           ) : (
             <div className="space-y-2.5">
-              {weights.map((w) => (
+              {(canonMode ? canonWeights : weights).map((w) => (
                 <div key={w.colKey} className="flex items-center gap-3">
                   <span className="text-[11px] font-medium text-c-text w-24 truncate">
                     {getColHeader(w.colKey)}
@@ -242,13 +417,26 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
                   <span className="text-[10px] font-bold text-c-text-secondary w-8 text-right">
                     {w.weight}%
                   </span>
-                  <button
-                    onClick={() => handleToggleInvert(w.colKey)}
-                    className={`text-[8px] font-bold px-1.5 py-0.5 rounded transition-colors ${w.invert ? 'bg-amber-500/10 text-amber-600' : 'bg-c-surface-raised text-c-text-secondary'}`}
-                    title={t('myWorkTable.ideaScoringModel.invertHint')}
-                  >
-                    {w.invert ? '↓' : '↑'}
-                  </button>
+                  {canonMode ? (
+                    <span
+                      className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-c-surface-raised text-c-text-muted"
+                      title={
+                        isPl
+                          ? 'Kierunek ustalony przez model (nie do edycji w tym wymiarze).'
+                          : 'Direction fixed by the model (not editable for this dimension).'
+                      }
+                    >
+                      {w.invert ? '↓' : '↑'}
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => handleToggleInvert(w.colKey)}
+                      className={`text-[8px] font-bold px-1.5 py-0.5 rounded transition-colors ${w.invert ? 'bg-amber-500/10 text-amber-600' : 'bg-c-surface-raised text-c-text-secondary'}`}
+                      title={t('myWorkTable.ideaScoringModel.invertHint')}
+                    >
+                      {w.invert ? '↓' : '↑'}
+                    </button>
+                  )}
                 </div>
               ))}
               <div className="flex items-center gap-2 pt-1">
@@ -264,6 +452,13 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
                   {totalWeight}%
                 </span>
               </div>
+              {canonMode && (
+                <p className="text-[10px] text-c-text-muted italic">
+                  {isPl
+                    ? 'Brakujące wymiary są pomijane i wagi są przeliczane tylko na podane — patrz „Potrzebne dane" przy każdej idei.'
+                    : 'Missing dimensions are excluded and weights are renormalized across the ones provided — see "Needs input" per idea.'}
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -308,6 +503,18 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
                     <span className="text-[11px] font-medium text-c-text flex-1 truncate">
                       {scored.node.data?.label || scored.node.id}
                     </span>
+                    {canonMode && (scored.missingDimensions?.length ?? 0) > 0 && (
+                      <span
+                        className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-c-warning/10 text-c-warning shrink-0"
+                        title={
+                          isPl
+                            ? `Brak danych dla: ${scored.missingDimensions!.map((k) => canonDimensionLabel(k) || k).join(', ')}`
+                            : `Missing input for: ${scored.missingDimensions!.map((k) => canonDimensionLabel(k) || k).join(', ')}`
+                        }
+                      >
+                        {isPl ? 'Potrzebne dane' : 'Needs input'}
+                      </span>
+                    )}
                     <div className="flex items-center gap-1.5 flex-shrink-0">
                       <div className="w-16 h-1.5 rounded-full bg-c-border-subtle overflow-hidden">
                         <div

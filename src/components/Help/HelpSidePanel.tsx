@@ -240,7 +240,7 @@ type RenderGuide = {
 
 export const HelpSidePanel: React.FC = () => {
   const { t, i18n } = useTranslation();
-  const HELP_LANGS = ['en', 'pl', 'de', 'ar', 'jp', 'es'] as const;
+  const HELP_LANGS = ['en', 'pl', 'de', 'ar', 'ja', 'es'] as const;
   const baseLang = (i18n.language || 'en').split('-')[0].toLowerCase();
   const lang = (HELP_LANGS as readonly string[]).includes(baseLang)
     ? (baseLang as (typeof HELP_LANGS)[number])

@@ -4,13 +4,7 @@
     {
       "name": "p10-p11-p12-document-studio",
       "runtimeExecutable": "npx",
-      "runtimeArgs": [
-        "vite",
-        "--config",
-        "dev-render/vite.config.ts",
-        "--port",
-        "3079"
-      ],
+      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3079"],
       "port": 3079
     },
     {
@@ -149,53 +143,25 @@
     {
       "name": "execution-export-prezentacja",
       "runtimeExecutable": "npx",
-      "runtimeArgs": [
-        "vite",
-        "--config",
-        "dev-render/vite.config.ts",
-        "--port",
-        "3421",
-        "--strictPort"
-      ],
+      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3421", "--strictPort"],
       "port": 3421
     },
     {
       "name": "document-studio-menu-pliku",
       "runtimeExecutable": "npx",
-      "runtimeArgs": [
-        "vite",
-        "--config",
-        "dev-render/vite.config.ts",
-        "--port",
-        "3077",
-        "--strictPort"
-      ],
+      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3077", "--strictPort"],
       "port": 3077
     },
     {
       "name": "fix-wzorce-kolory-ekstrakcja",
       "runtimeExecutable": "npx",
-      "runtimeArgs": [
-        "vite",
-        "--config",
-        "dev-render/vite.config.ts",
-        "--port",
-        "3082",
-        "--strictPort"
-      ],
+      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3082", "--strictPort"],
       "port": 3082
     },
     {
       "name": "tabele-fala2",
       "runtimeExecutable": "npx",
-      "runtimeArgs": [
-        "vite",
-        "--config",
-        "dev-render/vite.config.ts",
-        "--port",
-        "3450",
-        "--strictPort"
-      ],
+      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3450", "--strictPort"],
       "port": 3450
     },
     {
@@ -214,20 +180,13 @@
     {
       "name": "mw007-browser-backend",
       "runtimeExecutable": "bash",
-      "runtimeArgs": [
-        "scripts/dev/mw007-browser-backend.sh"
-      ],
+      "runtimeArgs": ["scripts/dev/mw007-browser-backend.sh"],
       "port": 3001
     },
     {
       "name": "mw007-browser-frontend",
       "runtimeExecutable": "npx",
-      "runtimeArgs": [
-        "vite",
-        "--port",
-        "3000",
-        "--strictPort"
-      ],
+      "runtimeArgs": ["vite", "--port", "3000", "--strictPort"],
       "port": 3000
     },
     {
@@ -256,40 +215,108 @@
       "port": 3500
     },
     {
-      "name": "a7-siri-slice",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": [
-        "vite",
-        "dev-render",
-        "--port",
-        "5200",
-        "--strictPort"
-      ],
-      "port": 5200
-    },
-    {
-      "name": "a6-drd-slice",
+      "name": "fv3p-m-inventory",
       "runtimeExecutable": "npx",
       "runtimeArgs": [
         "vite",
         "--config",
         "dev-render/vite.config.ts",
         "--port",
-        "3512",
+        "58021",
         "--strictPort"
       ],
-      "port": 3512
+      "port": 58021
     },
     {
-      "name": "p0c-drd-http-source",
+      "name": "fv3p-c-uiplatform",
       "runtimeExecutable": "npx",
       "runtimeArgs": [
         "vite",
-        "dev-render",
+        "--config",
+        "dev-render/vite.config.ts",
         "--port",
-        "5202"
+        "58022",
+        "--strictPort"
       ],
-      "port": 5202
+      "port": 58022
+    },
+    {
+      "name": "fv3p-d-statements",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "58123",
+        "--strictPort"
+      ],
+      "port": 58123
+    },
+    {
+      "name": "fv3p-f-baseline",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "58023",
+        "--strictPort"
+      ],
+      "port": 58023
+    },
+    {
+      "name": "fv3p-g-prediction",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "58028",
+        "--strictPort"
+      ],
+      "port": 58028
+    },
+    {
+      "name": "fv3p-e-analysis",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "58023",
+        "--strictPort"
+      ],
+      "port": 58023
+    },
+    {
+      "name": "fv3p-h-valuation",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "58033",
+        "--strictPort"
+      ],
+      "port": 58033
+    },
+    {
+      "name": "fv3p-l-idbridge",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "58040",
+        "--strictPort"
+      ],
+      "port": 58040
     }
   ]
 }

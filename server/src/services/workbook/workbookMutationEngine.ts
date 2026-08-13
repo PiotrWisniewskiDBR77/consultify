@@ -27,7 +27,8 @@ export type WorkbookMutation =
       startColumn: number;
       endColumn: number;
       patch: Partial<CellStyle>;
-    };
+    }
+  | { type: 'setColumn'; sheetIndex: number; columnIndex: number; header: string; width?: number };
 
 export type WorkbookAnchorTransform = Extract<
   WorkbookMutation,
@@ -48,8 +49,9 @@ const ALLOWED_TYPES = new Set<WorkbookMutation['type']>([
   'insertColumns',
   'deleteColumns',
   'setCellStyle',
+  'setColumn',
 ]);
-const FORBIDDEN_SHEET_NAME = /[\[\]:*?/\\]/;
+const FORBIDDEN_SHEET_NAME = new RegExp(String.raw`[\[\]:*?/\\]`);
 const STYLE_KEYS = new Set([
   'bold',
   'italic',
@@ -192,6 +194,27 @@ function applyStyle(
       row.cells[key] = cell;
     }
   }
+}
+
+function applyColumn(
+  schema: WorkbookSchema,
+  operation: Extract<WorkbookMutation, { type: 'setColumn' }>
+): void {
+  if (!Number.isInteger(operation.sheetIndex) || operation.sheetIndex < 0)
+    throw new Error('Invalid sheetIndex');
+  if (!Number.isInteger(operation.columnIndex) || operation.columnIndex < 0)
+    throw new Error('Invalid columnIndex');
+  const header = typeof operation.header === 'string' ? operation.header.trim() : '';
+  if (!header || header.length > 200) throw new Error('Invalid column header');
+  if (
+    operation.width !== undefined &&
+    (!Number.isFinite(operation.width) || operation.width < 4 || operation.width > 100)
+  )
+    throw new Error('Invalid column width');
+  const column = schema.sheets[operation.sheetIndex]?.columns?.[operation.columnIndex];
+  if (!column) throw new Error('Unknown columnIndex');
+  column.header = header;
+  if (operation.width !== undefined) column.width = operation.width;
 }
 
 function lettersIndex(value: string): number {
@@ -404,6 +427,9 @@ export function applyWorkbookMutations(
         break;
       case 'setCellStyle':
         applyStyle(schema, operation);
+        break;
+      case 'setColumn':
+        applyColumn(schema, operation);
         break;
       case 'insertRows':
       case 'deleteRows':

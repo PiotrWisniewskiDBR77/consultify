@@ -113,44 +113,46 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
               key={card.card_id}
               data-testid={`deck-slide-${index}`}
               draggable
-              role="button"
-              tabIndex={0}
-              aria-label={`${t('presentations.builder.selectSlide', 'Select slide')} ${index + 1}: ${card.title}`}
               onDragStart={() => handleDragStart(index)}
               onDragOver={(e) => handleDragOver(e, index)}
               onDragEnd={handleDragEnd}
-              onClick={() => {
-                onSelect(index);
-                closeContextMenu();
-              }}
-              onKeyDown={(event) => {
-                if (event.key !== 'Enter' && event.key !== ' ') return;
-                event.preventDefault();
-                onSelect(index);
-                closeContextMenu();
-              }}
-              className={`relative group cursor-pointer rounded-lg transition-all ${
+              className={`relative group rounded-lg transition-all ${
                 index === activeIndex ? 'ring-2 ring-c-focus' : 'hover:ring-1 hover:ring-c-border'
               } ${dragIndex === index ? 'opacity-50' : ''}`}
             >
               {viewMode === 'cards' ? (
                 <div className="relative bg-c-surface rounded-lg overflow-hidden">
-                  <div
-                    className="relative pointer-events-none overflow-hidden aspect-video rounded-t-lg bg-c-surface-raised"
-                    data-testid={`deck-slide-thumbnail-${index}`}
-                    data-thumbnail-fit="contain"
-                    aria-hidden="true"
+                  <button
+                    type="button"
+                    aria-label={`${t('presentations.builder.selectSlide', 'Select slide')} ${index + 1}: ${card.title}`}
+                    aria-current={index === activeIndex ? 'true' : undefined}
+                    onClick={() => {
+                      onSelect(index);
+                      closeContextMenu();
+                    }}
+                    className="block w-full cursor-pointer text-left"
                   >
-                    <div className="absolute left-0 top-0 h-[540px] w-[960px] origin-top-left scale-[0.1708333333]">
-                      <CardRenderer card={card} colorSetId={colorSetId} animationsEnabled={false} />
+                    <div
+                      className="relative pointer-events-none overflow-hidden aspect-video rounded-t-lg bg-c-surface-raised"
+                      data-testid={`deck-slide-thumbnail-${index}`}
+                      data-thumbnail-fit="contain"
+                      aria-hidden="true"
+                    >
+                      <div className="absolute left-0 top-0 h-[540px] w-[960px] origin-top-left scale-[0.1708333333]">
+                        <CardRenderer
+                          card={card}
+                          colorSetId={colorSetId}
+                          animationsEnabled={false}
+                        />
+                      </div>
                     </div>
-                  </div>
-                  <p
-                    className="truncate px-2 py-1.5 text-[10px] font-medium text-c-text"
-                    title={card.title}
-                  >
-                    {card.title}
-                  </p>
+                    <span
+                      className="block truncate px-2 py-1.5 text-[10px] font-medium text-c-text"
+                      title={card.title}
+                    >
+                      {card.title}
+                    </span>
+                  </button>
                   <div className="absolute top-1 left-1 flex items-center gap-0.5">
                     <GripVertical
                       size={10}
@@ -218,14 +220,25 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
                     index === activeIndex ? 'bg-c-accent-soft' : 'hover:bg-c-surface-raised'
                   }`}
                 >
-                  <GripVertical size={10} className="text-c-text-secondary cursor-grab" />
-                  <span className="font-bold text-c-text-secondary w-4 text-right">
-                    {index + 1}
-                  </span>
-                  <span
-                    className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${INTENT_COLORS[card.intent] || 'bg-c-text-muted'}`}
-                  />
-                  <span className="text-c-text truncate flex-1">{card.title}</span>
+                  <button
+                    type="button"
+                    aria-label={`${t('presentations.builder.selectSlide', 'Select slide')} ${index + 1}: ${card.title}`}
+                    aria-current={index === activeIndex ? 'true' : undefined}
+                    onClick={() => {
+                      onSelect(index);
+                      closeContextMenu();
+                    }}
+                    className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-left"
+                  >
+                    <GripVertical size={10} className="text-c-text-secondary cursor-grab" />
+                    <span className="font-bold text-c-text-secondary w-4 text-right">
+                      {index + 1}
+                    </span>
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${INTENT_COLORS[card.intent] || 'bg-c-text-muted'}`}
+                    />
+                    <span className="text-c-text truncate flex-1">{card.title}</span>
+                  </button>
                   {card.is_locked && (
                     <button
                       type="button"

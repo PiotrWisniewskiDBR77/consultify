@@ -5,13 +5,13 @@ export interface FAQItem {
   questionPl?: string;
   questionDe?: string;
   questionAr?: string;
-  questionJp?: string;
+  questionJa?: string;
   questionEs?: string;
   answer: string;
   answerPl?: string;
   answerDe?: string;
   answerAr?: string;
-  answerJp?: string;
+  answerJa?: string;
   answerEs?: string;
   tags?: string[];
 }
@@ -20,7 +20,7 @@ export function getLocalizedQuestion(faq: FAQItem, lang: string): string {
   if (lang === 'pl' && faq.questionPl) return faq.questionPl;
   if (lang === 'de' && faq.questionDe) return faq.questionDe;
   if (lang === 'ar' && faq.questionAr) return faq.questionAr;
-  if (lang === 'jp' && faq.questionJp) return faq.questionJp;
+  if (lang === 'ja' && faq.questionJa) return faq.questionJa;
   if (lang === 'es' && faq.questionEs) return faq.questionEs;
   return faq.question;
 }
@@ -29,7 +29,7 @@ export function getLocalizedAnswer(faq: FAQItem, lang: string): string {
   if (lang === 'pl' && faq.answerPl) return faq.answerPl;
   if (lang === 'de' && faq.answerDe) return faq.answerDe;
   if (lang === 'ar' && faq.answerAr) return faq.answerAr;
-  if (lang === 'jp' && faq.answerJp) return faq.answerJp;
+  if (lang === 'ja' && faq.answerJa) return faq.answerJa;
   if (lang === 'es' && faq.answerEs) return faq.answerEs;
   return faq.answer;
 }

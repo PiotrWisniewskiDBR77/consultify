@@ -20,10 +20,13 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const persistTemplateMock = vi.fn(async () => ({ ok: true }));
-const persistAuditEntryMock = vi.fn(async () => ({ ok: true }));
-const loadTemplatesForOrgMock = vi.fn(async () => [] as never[]);
-const loadAuditForTemplateMock = vi.fn(async () => [] as never[]);
+// The DAO stubs are invoked through the `vi.mock` factory below with the real
+// DAO arguments; declare the rest signature so `mock.calls[n][0]` is typed as a
+// captured argument rather than as an element of an empty tuple.
+const persistTemplateMock = vi.fn(async (..._args: unknown[]) => ({ ok: true }));
+const persistAuditEntryMock = vi.fn(async (..._args: unknown[]) => ({ ok: true }));
+const loadTemplatesForOrgMock = vi.fn(async (..._args: unknown[]) => [] as never[]);
+const loadAuditForTemplateMock = vi.fn(async (..._args: unknown[]) => [] as never[]);
 
 vi.mock('../documentStudio/documentTemplateRegistryDao.js', () => ({
   SYSTEM_ORG_ID: '__system__',
@@ -43,12 +46,14 @@ vi.mock('../documentStudio/documentTemplateSeeder.js', () => ({
 
 const queryOneMock = vi.fn();
 const queryRunMock = vi.fn();
-const queryAllMock = vi.fn(async () => []);
+// `queryAll(sql, params?)` — mirror the real helper signature so the mock
+// factory can forward positionally and `mockImplementation` can read `sql`.
+const queryAllMock = vi.fn(async (_sql: string, _params?: unknown[]): Promise<unknown[]> => []);
 
 vi.mock('../../utils/queryHelpers.js', () => ({
   queryOne: (...args: unknown[]) => queryOneMock(...args),
   queryRun: (...args: unknown[]) => queryRunMock(...args),
-  queryAll: (...args: unknown[]) => queryAllMock(...args),
+  queryAll: (sql: string, params?: unknown[]) => queryAllMock(sql, params),
 }));
 
 vi.mock('../v8/artifactRegistryService.js', () => ({

@@ -84,9 +84,12 @@ vi.mock('../../wave5ArtifactRuntimeService.js', () => ({
   buildWave5ExportManifest: vi.fn(async () => ({})),
 }));
 
-const persistProposalMock = vi.fn(async () => ({ ok: true }));
-const persistAuditEntryMock = vi.fn(async () => ({ ok: true }));
-const persistSchemaOverlayMock = vi.fn(async () => ({ ok: true }));
+// The DAO stubs are invoked through the `vi.mock` factory below with the real
+// DAO arguments; declare the rest signature so `mock.calls[n][0]` is typed as a
+// captured argument rather than as an element of an empty tuple.
+const persistProposalMock = vi.fn(async (..._args: unknown[]) => ({ ok: true }));
+const persistAuditEntryMock = vi.fn(async (..._args: unknown[]) => ({ ok: true }));
+const persistSchemaOverlayMock = vi.fn(async (..._args: unknown[]) => ({ ok: true }));
 const loadProposalsForArtifactMock = vi.fn(
   async (_a: string, _o: string) => [] as DocumentEditorProposal[]
 );

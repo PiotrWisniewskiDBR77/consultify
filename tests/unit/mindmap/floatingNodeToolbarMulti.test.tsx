@@ -9,11 +9,22 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+// This mock replaces the WHOLE module, so anything the import graph pulls in must be
+// present or the file fails to collect ("0 test") rather than failing an assertion.
+// It broke when the locale sweep added `useTranslation` to a component in this graph:
+// that reached `src/i18n.ts`, which needs `initReactI18next`, which this mock did not
+// return. Shape copied from `tests/setup.ts` (the repo's canonical react-i18next mock).
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     i18n: { language: 'en' },
     t: (key: string) => key,
   }),
+  initReactI18next: {
+    type: '3rdParty',
+    init: vi.fn(),
+  },
+  Trans: ({ children, i18nKey }: any) => children || i18nKey,
+  I18nextProvider: ({ children }: any) => children,
 }));
 
 import { FloatingNodeToolbar } from '@/components/MyWork/mindmap/FloatingNodeToolbar';

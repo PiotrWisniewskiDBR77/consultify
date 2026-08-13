@@ -34,9 +34,10 @@ vi.mock('../../../../server/src/middleware/rateLimiting.middleware.js', () => ({
 }));
 
 const queryOneMock = vi.fn();
+const queryRunMock = vi.fn().mockResolvedValue(undefined);
 
 vi.mock('../../../../server/src/utils/queryHelpers.js', () => ({
-  queryRun: vi.fn().mockResolvedValue(undefined),
+  queryRun: (...args: unknown[]) => queryRunMock(...args),
   queryOne: (...args: unknown[]) => queryOneMock(...args),
   queryAll: vi.fn().mockResolvedValue([]),
 }));
@@ -53,6 +54,7 @@ vi.mock('../../../../server/src/services/v8/artifactRegistryService.js', () => (
 describe('GET /api/workbook/:id/schema', () => {
   beforeEach(() => {
     queryOneMock.mockReset();
+    queryRunMock.mockClear();
     mockUser.organizationId = 'org-1';
   });
 
@@ -74,9 +76,8 @@ describe('GET /api/workbook/:id/schema', () => {
       schema_json: JSON.stringify({ title: 'Test WB', description: 'desc', sheets }),
     });
 
-    const { default: workbookRouter } = await import(
-      '../../../../server/src/routes/workbook.routes.js'
-    );
+    const { default: workbookRouter } =
+      await import('../../../../server/src/routes/workbook.routes.js');
     const app = express();
     app.use('/workbook', workbookRouter);
 
@@ -99,9 +100,8 @@ describe('GET /api/workbook/:id/schema', () => {
   it('returns 404 when the workbook is not found for this organization', async () => {
     queryOneMock.mockResolvedValueOnce(null);
 
-    const { default: workbookRouter } = await import(
-      '../../../../server/src/routes/workbook.routes.js'
-    );
+    const { default: workbookRouter } =
+      await import('../../../../server/src/routes/workbook.routes.js');
     const app = express();
     app.use('/workbook', workbookRouter);
 
@@ -112,16 +112,13 @@ describe('GET /api/workbook/:id/schema', () => {
   });
 
   it('does not expose a cached workbook schema to another organization', async () => {
-    const { default: workbookRouter } = await import(
-      '../../../../server/src/routes/workbook.routes.js'
-    );
+    const { default: workbookRouter } =
+      await import('../../../../server/src/routes/workbook.routes.js');
     const app = express();
     app.use(express.json());
     app.use('/workbook', workbookRouter);
 
-    const created = await request(app)
-      .post('/workbook/blank')
-      .send({ title: 'Tenant A workbook' });
+    const created = await request(app).post('/workbook/blank').send({ title: 'Tenant A workbook' });
     expect(created.status).toBe(201);
 
     mockUser.organizationId = 'org-2';
@@ -133,16 +130,13 @@ describe('GET /api/workbook/:id/schema', () => {
   });
 
   it('does not expose cached XLSX bytes to another organization', async () => {
-    const { default: workbookRouter } = await import(
-      '../../../../server/src/routes/workbook.routes.js'
-    );
+    const { default: workbookRouter } =
+      await import('../../../../server/src/routes/workbook.routes.js');
     const app = express();
     app.use(express.json());
     app.use('/workbook', workbookRouter);
 
-    const created = await request(app)
-      .post('/workbook/blank')
-      .send({ title: 'Tenant A download' });
+    const created = await request(app).post('/workbook/blank').send({ title: 'Tenant A download' });
     expect(created.status).toBe(201);
 
     mockUser.organizationId = 'org-2';
@@ -153,18 +147,52 @@ describe('GET /api/workbook/:id/schema', () => {
     expect(queryOneMock).toHaveBeenCalledWith(expect.any(String), [created.body.id, 'org-2']);
   });
 
-  it('marks the backward-compatible workbook download as a draft export', async () => {
-    const { default: workbookRouter } = await import(
-      '../../../../server/src/routes/workbook.routes.js'
-    );
+  it('persists native source-pack and evidence references for a blank workbook', async () => {
+    const { default: workbookRouter } =
+      await import('../../../../server/src/routes/workbook.routes.js');
     const app = express();
     app.use(express.json());
     app.use('/workbook', workbookRouter);
 
+    const sourcePack = { packId: 'PACK-1', name: 'Decision evidence pack' };
+    const evidenceRefs = [
+      { sourceId: 'SRC-1', sourceVersion: 'v1', sourceExcerpt: 'Validated baseline.' },
+    ];
     const created = await request(app)
       .post('/workbook/blank')
-      .send({ title: 'Governed workbook' });
+      .send({ title: 'Grounded workbook', sourcePack, evidenceRefs });
+
     expect(created.status).toBe(201);
+    expect(created.body).toMatchObject({ sourcePack, evidenceRefs });
+    const insert = queryRunMock.mock.calls.find((call) =>
+      String(call[0]).includes('INSERT INTO generated_workbooks')
+    );
+    expect(insert?.[1]?.[13]).toBe(JSON.stringify(sourcePack));
+    expect(insert?.[1]?.[14]).toBe(JSON.stringify(evidenceRefs));
+  });
+
+  it('marks the backward-compatible workbook download as a draft export', async () => {
+    const { default: workbookRouter } =
+      await import('../../../../server/src/routes/workbook.routes.js');
+    const app = express();
+    app.use(express.json());
+    app.use('/workbook', workbookRouter);
+
+    const created = await request(app).post('/workbook/blank').send({ title: 'Governed workbook' });
+    expect(created.status).toBe(201);
+
+    // Download is intentionally rebuilt from the persisted authority rather
+    // than a generation-time memory buffer.
+    queryOneMock.mockResolvedValueOnce({
+      schema_json: JSON.stringify({
+        title: 'Governed workbook',
+        sheets: [{ name: 'Sheet1', columns: [], rows: [] }],
+      }),
+      file_name: 'Governed_workbook.xlsx',
+      classification: 'internal',
+      approval_current: 0,
+      quality_report_json: JSON.stringify({ issues: [] }),
+    });
 
     const res = await request(app).get(`/workbook/${created.body.id}/download`);
     expect(res.status).toBe(200);
@@ -185,9 +213,8 @@ describe('GET /api/workbook/:id/schema', () => {
       quality_report_json: JSON.stringify({ issues: [] }),
     });
 
-    const { default: workbookRouter } = await import(
-      '../../../../server/src/routes/workbook.routes.js'
-    );
+    const { default: workbookRouter } =
+      await import('../../../../server/src/routes/workbook.routes.js');
     const app = express();
     app.use('/workbook', workbookRouter);
 
@@ -212,9 +239,8 @@ describe('GET /api/workbook/:id/schema', () => {
       quality_report_json: JSON.stringify({ issues: [{ severity: 'critical' }] }),
     });
 
-    const { default: workbookRouter } = await import(
-      '../../../../server/src/routes/workbook.routes.js'
-    );
+    const { default: workbookRouter } =
+      await import('../../../../server/src/routes/workbook.routes.js');
     const app = express();
     app.use('/workbook', workbookRouter);
 

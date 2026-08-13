@@ -1,0 +1,345 @@
+{
+  "summary": {
+    "caseId": "case-b0ffee7b-6e32-46e6-a9cd-ddc08154c028",
+    "planVersionId": "planv-6abf17ff-e59b-427e-b844-cc9603e041da",
+    "runId": "cwrun-281457d86a89a55aabcb99b7a44b98d7",
+    "gwNodeRunId": "cwnode-81cb507e-2130-4578-ab77-3cb265beba37",
+    "branchANodeRunId": "cwnode-f37531c1-1ae6-41c2-807a-65e19fa7d648",
+    "deliverableId": "f3-deliverable-2026-08-12T12-56-54-559Z",
+    "linkId": "cwlink-8cc3fd23-cbcf-44cb-aabe-0f42a4e6a75b",
+    "partialNodeResultRow": {
+      "nodeRunId": "cwnode-f37531c1-1ae6-41c2-807a-65e19fa7d648",
+      "organizationId": "cw-local-org",
+      "projectId": "cw-local-project",
+      "caseId": "case-b0ffee7b-6e32-46e6-a9cd-ddc08154c028",
+      "runId": "cwrun-281457d86a89a55aabcb99b7a44b98d7",
+      "nodeType": "CAPABILITY",
+      "nodeCompletionState": "COMPLETED",
+      "resultAcceptance": "PARTIAL",
+      "skipAuthorizedByGraphCondition": null,
+      "skipConditionRef": null,
+      "causedByGatewayNodeRunId": null,
+      "acceptanceInputSnapshot": {
+        "summary": "F3: branch A delivered a draft; sign-off still pending — genuinely partial.",
+        "artifactType": "document",
+        "artifactId": "f3-deliverable-2026-08-12T12-56-54-559Z"
+      },
+      "acceptanceInputDigest": "sha256:7b1341162375f75f0a0e1cb3c67044cd02b15f5898cca6cb41033f6e2dd3935d",
+      "occurredAt": "2026-08-12T12:57:00.392Z",
+      "recordedAt": "2026-08-12T12:57:00.674Z",
+      "recordedByActorId": "cw-local-user"
+    },
+    "skippedRowFromList": {
+      "nodeRunId": "cwskip-4a333d9184afed5e2195a38ae808a685",
+      "organizationId": "cw-local-org",
+      "projectId": "cw-local-project",
+      "caseId": "case-b0ffee7b-6e32-46e6-a9cd-ddc08154c028",
+      "runId": "cwrun-281457d86a89a55aabcb99b7a44b98d7",
+      "nodeType": "CAPABILITY",
+      "nodeCompletionState": "SKIPPED",
+      "resultAcceptance": "NOT_APPLICABLE",
+      "skipAuthorizedByGraphCondition": true,
+      "skipConditionRef": "ref:decision-gateway:gw:selected:e_a",
+      "causedByGatewayNodeRunId": "cwnode-81cb507e-2130-4578-ab77-3cb265beba37",
+      "acceptanceInputSnapshot": {
+        "gatewayNodeId": "gw",
+        "gatewayNodeRunId": "cwnode-81cb507e-2130-4578-ab77-3cb265beba37",
+        "selectedEdgeId": "e_a",
+        "unselectedEdgeId": "e_b",
+        "skippedNodeId": "branchB"
+      },
+      "acceptanceInputDigest": "sha256:a87fdb2f6bdde7728ec5296fe863b7991aee5987054879887c1c3057e76dd585",
+      "occurredAt": "2026-08-12T12:56:59.648Z",
+      "recordedAt": "2026-08-12T12:56:59.811Z",
+      "recordedByActorId": "cw-local-user"
+    },
+    "partialRowFromList": {
+      "nodeRunId": "cwnode-f37531c1-1ae6-41c2-807a-65e19fa7d648",
+      "organizationId": "cw-local-org",
+      "projectId": "cw-local-project",
+      "caseId": "case-b0ffee7b-6e32-46e6-a9cd-ddc08154c028",
+      "runId": "cwrun-281457d86a89a55aabcb99b7a44b98d7",
+      "nodeType": "CAPABILITY",
+      "nodeCompletionState": "COMPLETED",
+      "resultAcceptance": "PARTIAL",
+      "skipAuthorizedByGraphCondition": null,
+      "skipConditionRef": null,
+      "causedByGatewayNodeRunId": null,
+      "acceptanceInputSnapshot": {
+        "summary": "F3: branch A delivered a draft; sign-off still pending — genuinely partial.",
+        "artifactType": "document",
+        "artifactId": "f3-deliverable-2026-08-12T12-56-54-559Z"
+      },
+      "acceptanceInputDigest": "sha256:7b1341162375f75f0a0e1cb3c67044cd02b15f5898cca6cb41033f6e2dd3935d",
+      "occurredAt": "2026-08-12T12:57:00.392Z",
+      "recordedAt": "2026-08-12T12:57:00.674Z",
+      "recordedByActorId": "cw-local-user"
+    },
+    "allRowsSecondRead": [
+      {
+        "nodeRunId": "cwskip-4a333d9184afed5e2195a38ae808a685",
+        "organizationId": "cw-local-org",
+        "projectId": "cw-local-project",
+        "caseId": "case-b0ffee7b-6e32-46e6-a9cd-ddc08154c028",
+        "runId": "cwrun-281457d86a89a55aabcb99b7a44b98d7",
+        "nodeType": "CAPABILITY",
+        "nodeCompletionState": "SKIPPED",
+        "resultAcceptance": "NOT_APPLICABLE",
+        "skipAuthorizedByGraphCondition": true,
+        "skipConditionRef": "ref:decision-gateway:gw:selected:e_a",
+        "causedByGatewayNodeRunId": "cwnode-81cb507e-2130-4578-ab77-3cb265beba37",
+        "acceptanceInputSnapshot": {
+          "gatewayNodeId": "gw",
+          "gatewayNodeRunId": "cwnode-81cb507e-2130-4578-ab77-3cb265beba37",
+          "selectedEdgeId": "e_a",
+          "unselectedEdgeId": "e_b",
+          "skippedNodeId": "branchB"
+        },
+        "acceptanceInputDigest": "sha256:a87fdb2f6bdde7728ec5296fe863b7991aee5987054879887c1c3057e76dd585",
+        "occurredAt": "2026-08-12T12:56:59.648Z",
+        "recordedAt": "2026-08-12T12:56:59.811Z",
+        "recordedByActorId": "cw-local-user"
+      },
+      {
+        "nodeRunId": "cwnode-f37531c1-1ae6-41c2-807a-65e19fa7d648",
+        "organizationId": "cw-local-org",
+        "projectId": "cw-local-project",
+        "caseId": "case-b0ffee7b-6e32-46e6-a9cd-ddc08154c028",
+        "runId": "cwrun-281457d86a89a55aabcb99b7a44b98d7",
+        "nodeType": "CAPABILITY",
+        "nodeCompletionState": "COMPLETED",
+        "resultAcceptance": "PARTIAL",
+        "skipAuthorizedByGraphCondition": null,
+        "skipConditionRef": null,
+        "causedByGatewayNodeRunId": null,
+        "acceptanceInputSnapshot": {
+          "summary": "F3: branch A delivered a draft; sign-off still pending — genuinely partial.",
+          "artifactType": "document",
+          "artifactId": "f3-deliverable-2026-08-12T12-56-54-559Z"
+        },
+        "acceptanceInputDigest": "sha256:7b1341162375f75f0a0e1cb3c67044cd02b15f5898cca6cb41033f6e2dd3935d",
+        "occurredAt": "2026-08-12T12:57:00.392Z",
+        "recordedAt": "2026-08-12T12:57:00.674Z",
+        "recordedByActorId": "cw-local-user"
+      }
+    ]
+  },
+  "log": [
+    {
+      "step": "login",
+      "status": 200,
+      "userId": "cw-local-user",
+      "orgId": "cw-local-org"
+    },
+    {
+      "step": "createCase",
+      "status": 201,
+      "caseId": "case-b0ffee7b-6e32-46e6-a9cd-ddc08154c028",
+      "caseStatus": "DRAFT"
+    },
+    {
+      "step": "createPlanDraft",
+      "status": 201,
+      "planVersionId": "planv-6abf17ff-e59b-427e-b844-cc9603e041da",
+      "version": 1
+    },
+    {
+      "step": "propose",
+      "status": 200,
+      "version": 2
+    },
+    {
+      "step": "publish",
+      "status": 200,
+      "version": 3,
+      "graphDigest": "sha256:99c44a49f886bee3904b1a1d56e4285f0ab84741c95c4cb135f7c9b305eca81e"
+    },
+    {
+      "step": "createRun",
+      "status": 201,
+      "runId": "cwrun-281457d86a89a55aabcb99b7a44b98d7",
+      "runStatus": "CREATED"
+    },
+    {
+      "step": "startRun",
+      "status": 200,
+      "outcome": "started",
+      "nodeRunIds": [
+        "cwnode-81cb507e-2130-4578-ab77-3cb265beba37"
+      ],
+      "gwNodeRunId": "cwnode-81cb507e-2130-4578-ab77-3cb265beba37"
+    },
+    {
+      "step": "recordGatewayEvaluation",
+      "status": 201,
+      "data": {
+        "nodeRunId": "cwnode-81cb507e-2130-4578-ab77-3cb265beba37",
+        "organizationId": "cw-local-org",
+        "projectId": "cw-local-project",
+        "caseId": "case-b0ffee7b-6e32-46e6-a9cd-ddc08154c028",
+        "runId": "cwrun-281457d86a89a55aabcb99b7a44b98d7",
+        "gatewayNodeType": "DECISION_GATEWAY",
+        "joinPolicy": null,
+        "joinRequiredCount": null,
+        "joinBranchTotalCount": null,
+        "conditionExpression": "input.choice == &quot;A&quot;",
+        "conditionSchemaVersion": "v1",
+        "evaluationInputSnapshot": {
+          "choice": "A"
+        },
+        "evaluationInputDigest": "sha256:8fbedba22667454c97b89d45b65f7e3f1d29b5f5e821adad0fe57c2c74de9f05",
+        "outcomeStatus": "BRANCH_SELECTED",
+        "outcomeDetail": {
+          "selectedEdgeId": "e_a"
+        },
+        "evaluatedAt": "2026-08-12T12:56:58.489Z",
+        "recordedAt": "2026-08-12T12:56:58.736Z",
+        "recordedByActorId": "cw-local-user"
+      }
+    },
+    {
+      "step": "advanceRun",
+      "status": 200,
+      "runStatus": "RUNNING",
+      "createdNodeRunIds": [
+        "cwnode-f37531c1-1ae6-41c2-807a-65e19fa7d648"
+      ]
+    },
+    {
+      "step": "createArtifactLink",
+      "status": 201,
+      "linkId": "cwlink-8cc3fd23-cbcf-44cb-aabe-0f42a4e6a75b",
+      "deliverableId": "f3-deliverable-2026-08-12T12-56-54-559Z"
+    },
+    {
+      "step": "recordPartialAcceptance",
+      "status": 201,
+      "data": {
+        "nodeRunId": "cwnode-f37531c1-1ae6-41c2-807a-65e19fa7d648",
+        "organizationId": "cw-local-org",
+        "projectId": "cw-local-project",
+        "caseId": "case-b0ffee7b-6e32-46e6-a9cd-ddc08154c028",
+        "runId": "cwrun-281457d86a89a55aabcb99b7a44b98d7",
+        "nodeType": "CAPABILITY",
+        "nodeCompletionState": "COMPLETED",
+        "resultAcceptance": "PARTIAL",
+        "skipAuthorizedByGraphCondition": null,
+        "skipConditionRef": null,
+        "causedByGatewayNodeRunId": null,
+        "acceptanceInputSnapshot": {
+          "summary": "F3: branch A delivered a draft; sign-off still pending — genuinely partial.",
+          "artifactType": "document",
+          "artifactId": "f3-deliverable-2026-08-12T12-56-54-559Z"
+        },
+        "acceptanceInputDigest": "sha256:7b1341162375f75f0a0e1cb3c67044cd02b15f5898cca6cb41033f6e2dd3935d",
+        "occurredAt": "2026-08-12T12:57:00.392Z",
+        "recordedAt": "2026-08-12T12:57:00.674Z",
+        "recordedByActorId": "cw-local-user"
+      }
+    },
+    {
+      "step": "listNodeResultAcceptancesForCase",
+      "status": 200,
+      "rows": [
+        {
+          "nodeRunId": "cwskip-4a333d9184afed5e2195a38ae808a685",
+          "organizationId": "cw-local-org",
+          "projectId": "cw-local-project",
+          "caseId": "case-b0ffee7b-6e32-46e6-a9cd-ddc08154c028",
+          "runId": "cwrun-281457d86a89a55aabcb99b7a44b98d7",
+          "nodeType": "CAPABILITY",
+          "nodeCompletionState": "SKIPPED",
+          "resultAcceptance": "NOT_APPLICABLE",
+          "skipAuthorizedByGraphCondition": true,
+          "skipConditionRef": "ref:decision-gateway:gw:selected:e_a",
+          "causedByGatewayNodeRunId": "cwnode-81cb507e-2130-4578-ab77-3cb265beba37",
+          "acceptanceInputSnapshot": {
+            "gatewayNodeId": "gw",
+            "gatewayNodeRunId": "cwnode-81cb507e-2130-4578-ab77-3cb265beba37",
+            "selectedEdgeId": "e_a",
+            "unselectedEdgeId": "e_b",
+            "skippedNodeId": "branchB"
+          },
+          "acceptanceInputDigest": "sha256:a87fdb2f6bdde7728ec5296fe863b7991aee5987054879887c1c3057e76dd585",
+          "occurredAt": "2026-08-12T12:56:59.648Z",
+          "recordedAt": "2026-08-12T12:56:59.811Z",
+          "recordedByActorId": "cw-local-user"
+        },
+        {
+          "nodeRunId": "cwnode-f37531c1-1ae6-41c2-807a-65e19fa7d648",
+          "organizationId": "cw-local-org",
+          "projectId": "cw-local-project",
+          "caseId": "case-b0ffee7b-6e32-46e6-a9cd-ddc08154c028",
+          "runId": "cwrun-281457d86a89a55aabcb99b7a44b98d7",
+          "nodeType": "CAPABILITY",
+          "nodeCompletionState": "COMPLETED",
+          "resultAcceptance": "PARTIAL",
+          "skipAuthorizedByGraphCondition": null,
+          "skipConditionRef": null,
+          "causedByGatewayNodeRunId": null,
+          "acceptanceInputSnapshot": {
+            "summary": "F3: branch A delivered a draft; sign-off still pending — genuinely partial.",
+            "artifactType": "document",
+            "artifactId": "f3-deliverable-2026-08-12T12-56-54-559Z"
+          },
+          "acceptanceInputDigest": "sha256:7b1341162375f75f0a0e1cb3c67044cd02b15f5898cca6cb41033f6e2dd3935d",
+          "occurredAt": "2026-08-12T12:57:00.392Z",
+          "recordedAt": "2026-08-12T12:57:00.674Z",
+          "recordedByActorId": "cw-local-user"
+        }
+      ]
+    },
+    {
+      "step": "secondRead",
+      "status": 200,
+      "rows": [
+        {
+          "nodeRunId": "cwskip-4a333d9184afed5e2195a38ae808a685",
+          "organizationId": "cw-local-org",
+          "projectId": "cw-local-project",
+          "caseId": "case-b0ffee7b-6e32-46e6-a9cd-ddc08154c028",
+          "runId": "cwrun-281457d86a89a55aabcb99b7a44b98d7",
+          "nodeType": "CAPABILITY",
+          "nodeCompletionState": "SKIPPED",
+          "resultAcceptance": "NOT_APPLICABLE",
+          "skipAuthorizedByGraphCondition": true,
+          "skipConditionRef": "ref:decision-gateway:gw:selected:e_a",
+          "causedByGatewayNodeRunId": "cwnode-81cb507e-2130-4578-ab77-3cb265beba37",
+          "acceptanceInputSnapshot": {
+            "gatewayNodeId": "gw",
+            "gatewayNodeRunId": "cwnode-81cb507e-2130-4578-ab77-3cb265beba37",
+            "selectedEdgeId": "e_a",
+            "unselectedEdgeId": "e_b",
+            "skippedNodeId": "branchB"
+          },
+          "acceptanceInputDigest": "sha256:a87fdb2f6bdde7728ec5296fe863b7991aee5987054879887c1c3057e76dd585",
+          "occurredAt": "2026-08-12T12:56:59.648Z",
+          "recordedAt": "2026-08-12T12:56:59.811Z",
+          "recordedByActorId": "cw-local-user"
+        },
+        {
+          "nodeRunId": "cwnode-f37531c1-1ae6-41c2-807a-65e19fa7d648",
+          "organizationId": "cw-local-org",
+          "projectId": "cw-local-project",
+          "caseId": "case-b0ffee7b-6e32-46e6-a9cd-ddc08154c028",
+          "runId": "cwrun-281457d86a89a55aabcb99b7a44b98d7",
+          "nodeType": "CAPABILITY",
+          "nodeCompletionState": "COMPLETED",
+          "resultAcceptance": "PARTIAL",
+          "skipAuthorizedByGraphCondition": null,
+          "skipConditionRef": null,
+          "causedByGatewayNodeRunId": null,
+          "acceptanceInputSnapshot": {
+            "summary": "F3: branch A delivered a draft; sign-off still pending — genuinely partial.",
+            "artifactType": "document",
+            "artifactId": "f3-deliverable-2026-08-12T12-56-54-559Z"
+          },
+          "acceptanceInputDigest": "sha256:7b1341162375f75f0a0e1cb3c67044cd02b15f5898cca6cb41033f6e2dd3935d",
+          "occurredAt": "2026-08-12T12:57:00.392Z",
+          "recordedAt": "2026-08-12T12:57:00.674Z",
+          "recordedByActorId": "cw-local-user"
+        }
+      ]
+    }
+  ]
+}

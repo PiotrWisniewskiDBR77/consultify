@@ -178,7 +178,10 @@ describe('Document Studio Mode 3 (template-driven)', () => {
       ],
       recommendedDensity: 'standard' as const,
       recommendedRegister: 'executive' as const,
-      recommendedLanguageStyle: 'concise' as const,
+      // 'concise' is a DocumentDensity value, not a DocumentLanguageStyle
+      // (formal|consulting|legal|narrative). Nothing in this suite asserts on the
+      // resulting schema.languageStyle, so the repo default is used.
+      recommendedLanguageStyle: 'consulting' as const,
     };
     const result = await materializeDocumentArtifact({
       organizationId: 'org-A',

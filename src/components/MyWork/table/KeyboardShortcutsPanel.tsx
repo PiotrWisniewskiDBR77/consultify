@@ -3,8 +3,10 @@
  * Opens with `?` key or from toolbar button.
  */
 import { Keyboard, X } from 'lucide-react';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 
 interface KeyboardShortcutsPanelProps {
   open: boolean;
@@ -85,14 +87,21 @@ export const KeyboardShortcutsPanel: React.FC<KeyboardShortcutsPanelProps> = ({
 }) => {
   const { t } = useTranslation();
 
+  // `?` still closes as a bespoke shortcut; Escape-to-close, focus trap,
+  // and focus restore now come from useDialogA11y below (this used to
+  // also handle Escape here, duplicating the hook's document-level
+  // listener).
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' || e.key === '?') onClose();
+      if (e.key === '?') onClose();
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [onClose, open]);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  useDialogA11y({ open, onClose, containerRef });
 
   if (!open) return null;
 
@@ -102,13 +111,18 @@ export const KeyboardShortcutsPanel: React.FC<KeyboardShortcutsPanelProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-[480px] max-w-[90vw] max-h-[80vh] rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl overflow-hidden"
+        ref={containerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="keyboard-shortcuts-panel-heading"
+        tabIndex={-1}
+        className="w-[480px] max-w-[90vw] max-h-[80vh] rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl overflow-hidden outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center gap-2 px-5 py-3.5 border-b border-c-border-subtle">
           <Keyboard size={16} className="text-c-text-secondary" />
-          <span className="text-sm font-bold text-c-text">
+          <span id="keyboard-shortcuts-panel-heading" className="text-sm font-bold text-c-text">
             {t('ideas.table.shortcuts.title', 'Keyboard Shortcuts')}
           </span>
           <div className="flex-1" />

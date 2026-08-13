@@ -1,0 +1,86 @@
+-- =============================================================================
+-- Finance v3 — W3 backfill-lock work package: F-2 structural (schema) fix.
+--
+-- Source: docs/validation/finance-v3/generated/gate-d/
+-- W3_BACKFILL_LOCK_EXPORT_HASH_report.md
+--
+-- `finance_artifacts.natural_key` has never had a uniqueness constraint at any
+-- scope, since the founding migration
+-- (20260809_finance_v3_b01_core_artifacts.sql) that created the column —
+-- confirmed directly against `pg_constraint`/`pg_indexes` in the report (§F-2,
+-- "confirmation query"), not inferred from reading the DDL alone.
+--
+-- getOrCreateArtifact() (server/scripts/finance-v3-backfill-dry-run.ts) does
+-- `SELECT artifact_id FROM finance_artifacts WHERE organization_id = $1 AND
+-- natural_key = $2`, then `INSERT ... RETURNING artifact_id` if nothing was
+-- found — so (organization_id, natural_key) is the intended identity key, NOT
+-- natural_key alone (two different orgs may legitimately reuse the same
+-- legacy-derived natural_key string). This migration's scope is the SAME pair
+-- the application code already uses as its lookup key.
+--
+-- Reproduced as exploitable — not just theoretical — in the report: two
+-- concurrent Postgres sessions running the exact SELECT/INSERT statement
+-- shape above, with a `pg_sleep` forcing the SELECTs to overlap before either
+-- INSERT commits, both committed successfully, leaving TWO finance_artifacts
+-- rows for the identical (organization_id, natural_key) pair with no error
+-- raised anywhere (§F-2b). The companion fix in
+-- server/scripts/finance-v3-backfill-dry-run.ts (pg_try_advisory_lock, single-
+-- writer guard) closes the race at the application level; this migration adds
+-- the database-level backstop so the invariant holds even for any OTHER
+-- caller that does not take that lock (today: only
+-- server/src/services/finance/canonical/artifactVersionService.ts
+-- createArtifact() writes finance_artifacts in production code, and it does
+-- not currently take this lock either — see the report's recommendation).
+--
+-- natural_key is NULLable BY DESIGN (artifactVersionService.ts's
+-- `CreateArtifactParams.naturalKey?: string | null` — a caller that has no
+-- legacy natural key is a legitimate, existing case), so a plain
+-- `UNIQUE (organization_id, natural_key)` constraint would be the wrong
+-- shape: Postgres already treats every NULL as distinct under a plain
+-- UNIQUE constraint (so it would not actually block two NULL rows), and
+-- relying on that NULL-handling detail to get "not enforced when unset"
+-- would be an accident of implementation, not a documented, obviously-
+-- intentional scope. A partial unique index says the same thing explicitly.
+--
+-- ADDITIVE ONLY. Does not modify, rename, or drop any existing column,
+-- table, or constraint.
+--
+-- SAFE ON EXISTING DATA, NOT SAFE ON EXISTING DUPLICATES: `CREATE UNIQUE
+-- INDEX` validates every existing row in the same transaction and fails
+-- outright (SQLSTATE 23505) if a duplicate (organization_id, natural_key)
+-- pair already exists in the table, rather than silently half-applying or
+-- silently picking a winner between the two rows. On a fresh schema (this
+-- work package's own ephemeral cluster, and any environment that has not yet
+-- run a concurrent, unlocked backfill) there is no existing data, so this is
+-- a no-op concern here — confirmed empirically in the report by applying this
+-- exact migration on top of both a fresh database and a database carrying
+-- the injected duplicate from the reproduction above (the latter fails with
+-- 23505, exactly as expected, proving the migration's own protection is not
+-- a no-op assertion).
+--
+-- IF THIS MIGRATION FAILS WITH 23505 ON A REAL DEPLOY TARGET: that database
+-- already has at least one duplicate (organization_id, natural_key) pair —
+-- most likely surviving evidence of exactly the pre-fix concurrent-backfill
+-- race this work package closes. Find it first:
+--
+--   SELECT organization_id, natural_key, count(*), array_agg(artifact_id)
+--   FROM finance_artifacts
+--   WHERE natural_key IS NOT NULL
+--   GROUP BY organization_id, natural_key
+--   HAVING count(*) > 1;
+--
+-- Deciding which of the duplicate artifact_ids is "correct" (e.g. by
+-- created_at, by which one has real business_version history vs. an empty
+-- shell) is a DATA decision that depends on what has already been built on
+-- top of each duplicate (child business_versions, aliases, lineage edges) —
+-- deliberately NOT automated here. Resolve the duplicate(s) manually (merge
+-- or archive the loser, repoint any children), THEN re-run this migration.
+-- =============================================================================
+
+BEGIN;
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_finance_artifacts_org_natural_key
+  ON finance_artifacts (organization_id, natural_key)
+  WHERE natural_key IS NOT NULL;
+
+COMMIT;

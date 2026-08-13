@@ -47,6 +47,7 @@ import {
   Lightbulb,
   Link2,
   ListChecks,
+  Lock,
   MessageSquare,
   MessageSquarePlus,
   MousePointerClick,
@@ -90,6 +91,13 @@ import {
   normalizeStageToV5,
 } from './ideaEntryTypes';
 import type { CanvasToolType, IdeaWorkspaceSelection } from './ideaSelectionTypes';
+import {
+  canAdvanceToStage,
+  deriveCanvasSignals,
+  evaluateIdeaMaturity,
+  type MaturityAttestations,
+  type MaturityStageId,
+} from './ideaMaturityModel';
 import { getIdeaWorkspaceToolLabel } from './IdeaWorkspaceToolbar';
 import { MapHealthScore } from './mindmap/MapHealthScore';
 import { MindmapInspector } from './mindmap/MindmapInspector';
@@ -98,16 +106,20 @@ import {
   IDEA_PANEL_6_LABELS_PL,
   IDEA_PANEL_AI_SLOT_ID,
   IDEA_PANEL_TOOL_SLOT_ID,
+  ideaPanel6ToolLabel,
   type IdeaPanel6SectionId,
   normalizujDoSzesciu,
 } from './panel/ideaPanel6Sections';
 import { isIdeaPanel6SectionsEnabled } from './panel/ideaPanel6SectionsFlag';
+import { IdeaBusinessCaseSection } from './panel/IdeaBusinessCaseSection';
 import { IdeaPanelActivity } from './panel/IdeaPanelActivity';
 import { IdeaPanelComments } from './panel/IdeaPanelComments';
 import { IdeaPanelHistory } from './panel/IdeaPanelHistory';
 import { isIdeaPanelVisualEnabled } from './panel/ideaPanelVisualFlag';
+import { isIdeaBusinessCaseEnabled } from '@/utils/ideaBusinessCaseSchemaFlag';
 import { ProcessFlowHealthScore } from './processflow/ProcessFlowHealthScore';
 import { ProcessFlowPropertiesPanel } from './processflow/ProcessFlowPropertiesPanel';
+import { IdeaMaturityGate } from './shared/IdeaMaturityGate';
 import { IdeaCompletenessWidget } from './table/IdeaCompletenessWidget';
 
 const FIELD_CLASS =
@@ -215,6 +227,33 @@ interface IdeaWorkspaceToolsProps {
   branch: string;
   area: string;
   priority: number;
+  /**
+   * E12 — security classification (RISK-22). Optional/undefined on any host
+   * that hasn't wired it yet — treated exactly like 'standard' when absent
+   * (see myIdeasTypes.ts IdeaConfidentiality) so no caller is forced to
+   * thread it through before it renders.
+   */
+  confidentiality?: 'standard' | 'confidential' | 'restricted';
+  /** Capability flag — GET /my-ideas(/:id) `confidentialitySupported`. The
+   * pill hides entirely when false: a DB without the additive migration
+   * can't persist the value, so offering the control would be a false
+   * promise (same honest-degrade rule as maturityGatesSupported). */
+  confidentialitySupported?: boolean;
+  /** True while a confidentiality PUT is in flight — disables the control
+   * so a second click can't race the first. */
+  confidentialitySaving?: boolean;
+  /**
+   * Defense-in-depth UI gate: false renders the current level as a
+   * non-interactive badge instead of a clickable control. Every production
+   * caller today can only ever load an Idea it owns (GET/PUT /my-ideas/:id
+   * are both scoped `WHERE user_id = ?`), so this always resolves true in
+   * practice — the real authorization boundary is that server-side
+   * ownership scope, not this flag. Kept so a future non-owner surface
+   * (if one is ever built) fails closed by default rather than needing a
+   * new prop invented under pressure.
+   */
+  canEditConfidentiality?: boolean;
+  onConfidentialityChange?: (next: 'standard' | 'confidential' | 'restricted') => void;
   isDraft: boolean;
   isAccepted: boolean;
   saving: boolean;
@@ -287,6 +326,21 @@ interface IdeaWorkspaceToolsProps {
   onAINodeAction?: (action: string, nodeId: string) => void;
   /** Rozszerzenia grafu (`graphRuntime.graph.extensions`) dla panelu kontekstu. */
   mapExtensions?: Record<string, any>;
+
+  /**
+   * E08 (idea maturity model, docs/qa/ideas-manual-audit-2026-08-09/09_...md
+   * §6.1) — real signals for `ideaMaturityModel.ts`'s stage-gate evaluator.
+   * All optional/best-effort: when a host doesn't pass them, the affected
+   * derived criteria simply read as unmet rather than crashing.
+   */
+  sourceType?: string | null;
+  evidenceRefsCount?: number;
+  promotedTo?: string | null;
+  /** Informational only — see ideaMaturityModel.ts header re: P0-1. */
+  partialConversionCount?: number;
+  maturityGates?: MaturityAttestations;
+  maturityGatesSupported?: boolean;
+  onAttestMaturity?: (criterionId: string, met: boolean, note: string) => void;
 }
 
 /* ── Collapsible section wrapper ── */
@@ -339,7 +393,17 @@ const Section: React.FC<{
         </span>
       )}
       <span className={iconCls}>{icon}</span>
-      <span className={labelCls}>{title}</span>
+      {/* `data-idea-section-header` marks a TOP-LEVEL inspector section, and only that.
+          The density guard (UI-L16, „at most 5 top-level sections") used to count
+          `button > span.uppercase.tracking-wide`, which is a shape — not a meaning — and
+          E08's maturity gate legitimately renders five NESTED collapsible stage rows
+          inside the Status section using the same shape. The guard therefore read 10 and
+          flagged a regression that was not one. Counting this attribute measures what the
+          rule is actually about, and stays correct however many nested accordions any
+          future section grows. */}
+      <span className={labelCls} data-idea-section-header="">
+        {title}
+      </span>
       {badge}
     </>
   );
@@ -367,6 +431,33 @@ const PRIORITY_COLORS: Record<number, string> = {
   100: 'bg-danger-50 text-danger-700 dark:bg-danger-500/10 dark:text-danger-300',
 };
 
+/**
+ * E12 — same "danger token for the genuinely critical state" precedent as
+ * PRIORITY_COLORS[100] above (TRIADA_KANON.md §A10: red is reserved for
+ * critical semantics, never used as a UI/CTA/focus color). 'restricted'
+ * blocks 8 AI/export endpoints server-side — that IS a critical state, so
+ * the `danger` semantic token applies deliberately here, same as the
+ * Critical priority tier. This is the `c-*`/`danger-*` semantic scale, never
+ * `primary-*` (which is crimson brand accent, banned as a UI color).
+ */
+type IdeaConfidentialityLevel = 'standard' | 'confidential' | 'restricted';
+const CONFIDENTIALITY_COLORS: Record<IdeaConfidentialityLevel, string> = {
+  standard: 'bg-slate-100 text-slate-600 dark:bg-slate-700/40 dark:text-slate-300',
+  confidential: 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300',
+  restricted: 'bg-danger-50 text-danger-700 dark:bg-danger-500/10 dark:text-danger-300',
+};
+const CONFIDENTIALITY_LEVELS: readonly IdeaConfidentialityLevel[] = [
+  'standard',
+  'confidential',
+  'restricted',
+];
+/** Downgrade = moving left in this list (restricted -> confidential -> standard). */
+const CONFIDENTIALITY_RANK: Record<IdeaConfidentialityLevel, number> = {
+  standard: 0,
+  confidential: 1,
+  restricted: 2,
+};
+
 export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
   open,
   onClose,
@@ -378,6 +469,11 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
   branch,
   area,
   priority,
+  confidentiality = 'standard',
+  confidentialitySupported = false,
+  confidentialitySaving = false,
+  canEditConfidentiality = true,
+  onConfidentialityChange,
   isDraft,
   isAccepted,
   saving,
@@ -417,6 +513,13 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
   onInsertContextToCanvas,
   onAINodeAction,
   mapExtensions,
+  sourceType = null,
+  evidenceRefsCount = 0,
+  promotedTo = null,
+  partialConversionCount = 0,
+  maturityGates = {},
+  maturityGatesSupported = false,
+  onAttestMaturity,
 }) => {
   const { t, i18n } = useTranslation();
   const isPl = i18n.language === 'pl';
@@ -458,9 +561,73 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
   })();
   const canAdvance = nextVisibleStageIdx >= 0;
 
+  /**
+   * E08 — real stage-gate evaluation (ideaMaturityModel.ts), replacing the
+   * zero-criteria "is there a next bucket" check above for GATING purposes.
+   * `canAdvance`/`nextVisibleStageIdx` above are kept for the V5 label-jump
+   * math (which sub-stage to jump TO); `maturityReport` decides whether that
+   * jump is actually ALLOWED.
+   */
+  const maturityReport = useMemo(() => {
+    const canvasSignals = deriveCanvasSignals(graphNodes as Array<{ data?: Record<string, unknown> }>);
+    return evaluateIdeaMaturity(
+      {
+        title,
+        body: seedText,
+        seedText,
+        sourceType,
+        evidenceRefsCount,
+        evidenceLinkedNodeCount: evidenceCount,
+        promotedTo,
+        processFlowLaneCount: processFlowLanes?.length ?? 0,
+        partialConversionCount,
+        ...canvasSignals,
+      },
+      maturityGates,
+      stageBucket
+    );
+  }, [
+    graphNodes,
+    title,
+    seedText,
+    sourceType,
+    evidenceRefsCount,
+    evidenceCount,
+    promotedTo,
+    processFlowLanes,
+    partialConversionCount,
+    maturityGates,
+    stageBucket,
+  ]);
+
+  /** DoD (doc 11 E08): "stage gates enforce completeness" — never let a manual
+   * pick move the Idea past what its own criteria support. Moving backward
+   * (or re-picking the current bucket) is always allowed. */
+  const [blockedStageAttempt, setBlockedStageAttempt] = useState<{
+    bucket: IdeaStageListBucket;
+    missing: string[];
+  } | null>(null);
+  const attemptStageChange = useCallback(
+    (bucket: IdeaStageListBucket, representative: IdeaStageV5) => {
+      const gate = canAdvanceToStage(maturityReport, bucket as MaturityStageId);
+      if (!gate.allowed) {
+        setBlockedStageAttempt({
+          bucket,
+          missing: gate.missing.map((c) => (isPl ? c.label.pl : c.label.en)),
+        });
+        return;
+      }
+      setBlockedStageAttempt(null);
+      onStageChange?.(bucket === stageBucket ? v5Stage : representative);
+      setStageDropdownOpen(false);
+    },
+    [maturityReport, isPl, onStageChange, stageBucket, v5Stage]
+  );
+
   const [branchEditing, setBranchEditing] = useState(false);
   const [areaEditing, setAreaEditing] = useState(false);
   const [priorityOpen, setPriorityOpen] = useState(false);
+  const [confidentialityOpen, setConfidentialityOpen] = useState(false);
   const branchRef = useRef<HTMLInputElement>(null);
   const areaRef = useRef<HTMLInputElement>(null);
 
@@ -481,6 +648,21 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
     [onPriorityChange, onSave]
   );
 
+  // E12 — unlike Priority above, this does NOT optimistically apply here.
+  // The pill only ever displays the `confidentiality` PROP (owned by the
+  // host — IdeaMapWorkspace's `handleConfidentialityChange`), which decides
+  // whether a downgrade needs confirmation and only calls back with the new
+  // value after a successful PUT. That keeps "no false success" true even
+  // if this component re-renders mid-request.
+  const handleConfidentialitySelect = useCallback(
+    (level: IdeaConfidentialityLevel) => {
+      setConfidentialityOpen(false);
+      if (level === confidentiality) return;
+      onConfidentialityChange?.(level);
+    },
+    [confidentiality, onConfidentialityChange]
+  );
+
   // PIATA kopia etykiet narzedzi — i jedyna, ktora zostala z „Mapa rekomendacji"
   // (zgloszenie Piotra 2026-07-24: w kolumnie ma byc czytelnie „Mapa mysli").
   // Czytamy z tego samego SSOT co lista, przelacznik i rail.
@@ -498,6 +680,21 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
   ];
   const currentPriorityLabel =
     priorityOptions.find((o) => o.value === normalizedPriority)?.label ?? 'Medium';
+
+  // E12 — confidentiality options + labels (RISK-22).
+  const confidentialityOptions: Array<{ value: IdeaConfidentialityLevel; label: string }> = [
+    { value: 'standard', label: t('myWorkIdeas.workspaceTools.confidentialityStandard') },
+    { value: 'confidential', label: t('myWorkIdeas.workspaceTools.confidentialityConfidential') },
+    { value: 'restricted', label: t('myWorkIdeas.workspaceTools.confidentialityRestricted') },
+  ];
+  const normalizedConfidentiality: IdeaConfidentialityLevel = CONFIDENTIALITY_LEVELS.includes(
+    confidentiality as IdeaConfidentialityLevel
+  )
+    ? (confidentiality as IdeaConfidentialityLevel)
+    : 'standard';
+  const currentConfidentialityLabel =
+    confidentialityOptions.find((o) => o.value === normalizedConfidentiality)?.label ??
+    confidentialityOptions[0].label;
 
   // Visual map (icon + gradient) keyed by target id; labels/desc/status come from the SSOT registry.
   const CONVERT_VISUALS: Record<
@@ -840,7 +1037,9 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                   </div>
                 </div>
                 <span className="shrink-0 rounded-md bg-c-surface px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-c-text-muted">
-                  {etykieta6[sekcja6 ?? 'overview']}
+                  {sekcja6 === 'tool'
+                    ? ideaPanel6ToolLabel(activeTool, !!isPl)
+                    : etykieta6[sekcja6 ?? 'overview']}
                 </span>
               </div>
             )}
@@ -933,7 +1132,12 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                       </button>
                       {canAdvance && onStageChange && v5Stage !== 'converted' && (
                         <button
-                          onClick={() => onStageChange(IDEA_STAGES_V5[nextVisibleStageIdx])}
+                          onClick={() =>
+                            attemptStageChange(
+                              bucketIdeaStageForList(IDEA_STAGES_V5[nextVisibleStageIdx]),
+                              IDEA_STAGES_V5[nextVisibleStageIdx]
+                            )
+                          }
                           className="ml-2 inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-c-info hover:bg-c-info/5 transition-colors"
                         >
                           →{' '}
@@ -953,33 +1157,63 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                               ? IDEA_STAGE_BUCKET_LABELS[bucket].pl
                               : IDEA_STAGE_BUCKET_LABELS[bucket].en;
                             const isActive = bucket === stageBucket;
+                            // E08: mandatory criteria of every stage up to `bucket` must be
+                            // met before a forward jump is allowed — see canAdvanceToStage.
+                            const gate = canAdvanceToStage(maturityReport, bucket as MaturityStageId);
+                            const isBlocked = !isActive && !gate.allowed;
                             return (
                               <button
                                 key={bucket}
-                                onClick={() => {
-                                  // Re-picking the current bucket keeps today's granular
-                                  // V5 value (no silent regression to the bucket's first
-                                  // sub-stage); picking a different bucket jumps to it.
-                                  onStageChange?.(isActive ? v5Stage : representative);
-                                  setStageDropdownOpen(false);
-                                }}
+                                onClick={() => attemptStageChange(bucket, representative)}
+                                title={
+                                  isBlocked
+                                    ? (isPl ? 'Brakuje kryteriów — patrz "Model dojrzałości" poniżej.' : 'Missing criteria — see "Maturity model" below.')
+                                    : undefined
+                                }
                                 className={`w-full text-left px-3 py-1.5 text-[11px] transition-colors ${
                                   isActive
                                     ? 'font-semibold text-c-info bg-c-info/5'
-                                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.03]'
+                                    : isBlocked
+                                      ? 'text-c-text-muted opacity-50'
+                                      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.03]'
                                 }`}
                               >
                                 <span
                                   className={`inline-block w-1.5 h-1.5 rounded-full mr-2 bg-gradient-to-r ${IDEA_STAGE_COLORS[representative].split(' ')[0]} ${IDEA_STAGE_COLORS[representative].split(' ')[1]}`}
                                 />
                                 {label}
+                                {isBlocked && ' 🔒'}
                               </button>
                             );
                           })}
                         </div>
                       )}
                     </div>
+                    {blockedStageAttempt && (
+                      <div className="mt-2 rounded-lg border border-c-warning/40 bg-c-warning/10 px-2 py-1.5">
+                        <p className="text-[10.5px] font-medium text-c-warning">
+                          {isPl
+                            ? `Nie można ustawić "${isPl ? IDEA_STAGE_BUCKET_LABELS[blockedStageAttempt.bucket].pl : IDEA_STAGE_BUCKET_LABELS[blockedStageAttempt.bucket].en}" — brakuje:`
+                            : `Cannot set "${IDEA_STAGE_BUCKET_LABELS[blockedStageAttempt.bucket].en}" — missing:`}
+                        </p>
+                        <ul className="mt-0.5 space-y-0.5">
+                          {blockedStageAttempt.missing.slice(0, 5).map((m) => (
+                            <li key={m} className="text-[10.5px] text-c-text-muted">
+                              • {m}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </div>
+
+                  {/* E08: inspectable stage gates — WHY not the next stage, what's missing. */}
+                  <IdeaMaturityGate
+                    report={maturityReport}
+                    isPolish={isPl}
+                    attestationsSupported={maturityGatesSupported}
+                    onAttest={onAttestMaturity}
+                  />
 
                   {/* Save status + evidence */}
                   <div className="flex items-center gap-3 flex-wrap">
@@ -1109,6 +1343,71 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                           </div>
                         )}
                       </div>
+
+                      {/*
+                       * E12 (RISK-22) — confidentiality pill. Hidden entirely when
+                       * confidentialitySupported is false: a database without the
+                       * additive migration can't persist the value, so offering the
+                       * control here would be a false promise (same honest-degrade
+                       * rule as maturityGatesSupported above).
+                       */}
+                      {confidentialitySupported && (
+                        <div className="relative">
+                          {canEditConfidentiality ? (
+                            <button
+                              onClick={() => setConfidentialityOpen((v) => !v)}
+                              disabled={confidentialitySaving}
+                              data-testid="idea-confidentiality-pill"
+                              className={`inline-flex items-center gap-1 h-7 px-2.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 ${CONFIDENTIALITY_COLORS[normalizedConfidentiality]}`}
+                            >
+                              {normalizedConfidentiality === 'restricted' ? (
+                                <Lock size={11} className="shrink-0" />
+                              ) : (
+                                <Shield size={11} className="shrink-0" />
+                              )}
+                              {currentConfidentialityLabel}
+                              <ChevronDown size={10} className="opacity-60" />
+                            </button>
+                          ) : (
+                            <span
+                              data-testid="idea-confidentiality-pill"
+                              title={t('myWorkIdeas.workspaceTools.confidentialityUnauthorized')}
+                              className={`inline-flex items-center gap-1 h-7 px-2.5 rounded-lg text-xs font-medium opacity-70 cursor-not-allowed ${CONFIDENTIALITY_COLORS[normalizedConfidentiality]}`}
+                            >
+                              {normalizedConfidentiality === 'restricted' ? (
+                                <Lock size={11} className="shrink-0" />
+                              ) : (
+                                <Shield size={11} className="shrink-0" />
+                              )}
+                              {currentConfidentialityLabel}
+                            </span>
+                          )}
+                          {confidentialityOpen && canEditConfidentiality && (
+                            <div
+                              data-testid="idea-confidentiality-menu"
+                              className="absolute top-full left-0 mt-1 z-[120] w-40 rounded-xl bg-white dark:bg-navy-900 shadow-xl py-1"
+                            >
+                              {confidentialityOptions.map((o) => (
+                                <button
+                                  key={o.value}
+                                  data-testid={`idea-confidentiality-option-${o.value}`}
+                                  onClick={() => handleConfidentialitySelect(o.value)}
+                                  className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${
+                                    o.value === normalizedConfidentiality
+                                      ? 'font-semibold text-c-info bg-c-info/5'
+                                      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.03]'
+                                  }`}
+                                >
+                                  <span
+                                    className={`inline-block w-2 h-2 rounded-full mr-2 ${CONFIDENTIALITY_COLORS[o.value].split(' ')[0]}`}
+                                  />
+                                  {o.label}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1146,6 +1445,34 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                       </div>
                     ))}
                   </div>
+                </Section>
+              )}
+
+            {/*
+             * ── Przegląd · Karta biznesowa (Program D / epic E08, §6.2) ──
+             * Jedna karta więcej w tej samej zakładce Przegląd — nie szósta
+             * zakładka najwyższego poziomu (rozdział 07 kanonu ustala pięć:
+             * Przegląd · Właściwości · Powiązania · Komentarze · Historia).
+             * Karta biznesowa odpowiada dokładnie na pytanie „Czym jest ten
+             * obiekt jako całość?" na większej głębokości niż istniejące karty
+             * Problem/Status, więc mieszka obok nich. Poziom idei (bez
+             * zaznaczenia elementu) — ten sam warunek co Problem/Status wyżej.
+             * Za flagą `ff_ideaBusinessCase`, default OFF (CLAUDE.md #7).
+             */}
+            {pokaz('overview') &&
+              (!szesc || !maZaznaczenie) &&
+              isIdeaBusinessCaseEnabled() && (
+                <Section
+                  title={isPl ? 'Karta biznesowa' : 'Business case'}
+                  icon={<LayoutDashboard size={12} />}
+                >
+                  <IdeaBusinessCaseSection
+                    ideaId={ideaId}
+                    tool={activeTool}
+                    selection={selection}
+                    graphNodes={graphNodes ?? []}
+                    isPolish={isPl}
+                  />
                 </Section>
               )}
 
@@ -1574,8 +1901,8 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                     'Select an element to see its fields.'
                   ),
                   pl6(
-                    'Ustawienia samej reprezentacji (styl, układ, motyw) są w sekcji „Narzędzie".',
-                    'Representation settings (style, layout, theme) live under “Tool”.'
+                    `Ustawienia samej reprezentacji (styl, układ, motyw) są w sekcji „${ideaPanel6ToolLabel(activeTool, !!isPl)}".`,
+                    `Representation settings (style, layout, theme) live under “${ideaPanel6ToolLabel(activeTool, !!isPl)}”.`
                   )
                 )}
               </Section>
@@ -1738,7 +2065,11 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
             {/* ── Narzędzie — opisuje NARZĘDZIE, nie element (stąd brak wariantu
              „element" w tabeli układu). ── */}
             {szesc && sekcja6 === 'tool' && (
-              <Section title={etykieta6.tool} icon={<Layers size={12} />} defaultOpen>
+              <Section
+                title={ideaPanel6ToolLabel(activeTool, !!isPl)}
+                icon={<Layers size={12} />}
+                defaultOpen
+              >
                 <div className="space-y-3 text-[11px]" data-testid="idea-panel6-tool">
                   {activeTool === 'mindmap' && (
                     // Ustawienia REPREZENTACJI (struktura / układ / motyw). Bez

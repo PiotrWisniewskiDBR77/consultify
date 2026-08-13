@@ -21,7 +21,7 @@ describe('frontend utils/textDirection', () => {
     expect(isRtlLanguage('pl')).toBe(false);
     expect(isRtlLanguage('en-US')).toBe(false);
     expect(isRtlLanguage('de')).toBe(false);
-    expect(isRtlLanguage('jp')).toBe(false);
+    expect(isRtlLanguage('ja')).toBe(false);
   });
 
   it('returns stable text direction values', () => {

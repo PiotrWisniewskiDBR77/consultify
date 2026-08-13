@@ -32,7 +32,7 @@
  * zarezerwowany dla semantyki krytycznej (CLAUDE.md UI pkt 3). Wyróżnienie
  * ścieżki zalecanej = obwódka `c-focus`.
  */
-import { FileSpreadsheet, LayoutTemplate, Rows3, Sparkles, Table2 } from 'lucide-react';
+import { Columns3, FileSpreadsheet, LayoutTemplate, Rows3, Sparkles, Table2 } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -47,6 +47,13 @@ export interface TableStartEmptyStateProps {
   onStartBlank: () => void;
   /** Cichsza droga — plik CSV/TSV. */
   onImportCSV?: () => void;
+  /**
+   * TB-P1-02 — czwarta, cicha droga: otwiera kreator pola wprost, bez
+   * zakładania żadnych wierszy/kolumn startowych. Dla użytkownika, który
+   * wie dokładnie jakich pól potrzebuje (np. Obszar/Koszt/Korzyść/Ryzyko/
+   * Właściciel) i nie chce przechodzić przez żadną z trzech ścieżek wyżej.
+   */
+  onAddField?: () => void;
 }
 
 interface PathCard {
@@ -66,6 +73,7 @@ export const TableStartEmptyState: React.FC<TableStartEmptyStateProps> = ({
   onStartWithAI,
   onStartBlank,
   onImportCSV,
+  onAddField,
 }) => {
   const { t } = useTranslation();
 
@@ -163,16 +171,31 @@ export const TableStartEmptyState: React.FC<TableStartEmptyStateProps> = ({
             })}
           </div>
 
-          {onImportCSV && (
-            <button
-              type="button"
-              onClick={onImportCSV}
-              data-testid="table-start-import-csv"
-              className="mt-5 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-c-text-muted transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-            >
-              <FileSpreadsheet className="h-3.5 w-3.5 shrink-0" />
-              {t('ideas.table.start.importCsv', 'Mam już dane w pliku — wczytaj CSV')}
-            </button>
+          {(onImportCSV || onAddField) && (
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-1">
+              {onAddField && (
+                <button
+                  type="button"
+                  onClick={onAddField}
+                  data-testid="table-start-add-field"
+                  className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-c-text-muted transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                >
+                  <Columns3 className="h-3.5 w-3.5 shrink-0" />
+                  {t('ideas.table.newColumn', 'Dodaj pole')}
+                </button>
+              )}
+              {onImportCSV && (
+                <button
+                  type="button"
+                  onClick={onImportCSV}
+                  data-testid="table-start-import-csv"
+                  className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-c-text-muted transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                >
+                  <FileSpreadsheet className="h-3.5 w-3.5 shrink-0" />
+                  {t('ideas.table.start.importCsv', 'Mam już dane w pliku — wczytaj CSV')}
+                </button>
+              )}
+            </div>
           )}
         </>
       )}

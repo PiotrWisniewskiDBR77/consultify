@@ -4,7 +4,13 @@ import HttpBackend from 'i18next-http-backend';
 import { initReactI18next } from 'react-i18next';
 
 // Supported languages in the application
-export const SUPPORTED_LANGUAGES = ['en', 'pl', 'de', 'ar', 'jp', 'es'] as const;
+// NOTE (S23-LOCALE, 2026-08-12): 'jp' was never a valid BCP47 subtag for
+// Japanese (the correct subtag is 'ja') — Intl.PluralRules('jp') silently
+// resolved to en-US plural rules instead of the real Japanese rule. Migrated
+// the canonical code to 'ja'; 'jp' is kept below as a LEGACY alias so any
+// already-persisted value (localStorage 'i18nextLng', account/org/conversation
+// `language` columns) keeps resolving correctly instead of stranding users.
+export const SUPPORTED_LANGUAGES = ['en', 'pl', 'de', 'ar', 'ja', 'es'] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 
 // Helper function to check if language is supported
@@ -13,9 +19,11 @@ export const isValidLanguage = (lang: string): lang is SupportedLanguage => {
 };
 
 // Normalize language codes (aliases -> supported codes)
-// Example: browser/system often uses "ja" which we map to our app locale folder "jp".
+// 'jp' is the pre-migration legacy code this app used to store/serve for
+// Japanese (see note above) — kept as an alias so old persisted values still
+// resolve to the now-canonical 'ja'.
 const LANGUAGE_ALIASES: Record<string, SupportedLanguage> = {
-  ja: 'jp',
+  jp: 'ja',
 };
 
 export const normalizeLanguageCode = (lng: string | null | undefined): SupportedLanguage | null => {
@@ -38,7 +46,7 @@ export const LANGUAGE_NAMES: Record<SupportedLanguage, string> = {
   pl: 'Polski',
   de: 'Deutsch',
   ar: 'العربية',
-  jp: '日本語',
+  ja: '日本語',
   es: 'Español',
 };
 
@@ -48,7 +56,7 @@ export const LANGUAGE_DISPLAY_CODES: Record<SupportedLanguage, string> = {
   pl: 'PL',
   de: 'DE',
   ar: 'AR',
-  jp: 'JP',
+  ja: 'JP',
   es: 'ES',
 };
 
@@ -58,7 +66,7 @@ export const LANGUAGE_DIRECTION: Record<SupportedLanguage, 'ltr' | 'rtl'> = {
   pl: 'ltr',
   de: 'ltr',
   ar: 'rtl',
-  jp: 'ltr',
+  ja: 'ltr',
   es: 'ltr',
 };
 
@@ -76,7 +84,7 @@ i18n
       de: ['de', 'en'],
       es: ['es', 'en'],
       ar: ['ar', 'en'],
-      jp: ['jp', 'en'],
+      ja: ['ja', 'en'],
       default: ['en'],
     },
     // Use browser language like "pl-PL" -> "pl"
@@ -112,7 +120,7 @@ i18n
       // Persist language choice so switching language is stable across reloads.
       caches: ['localStorage'],
       // Map common browser locales to our supported language codes
-      // (e.g. browser "ja" should use app locale folder "jp")
+      // (e.g. a legacy stored/cached "jp" should resolve to app locale folder "ja")
       convertDetectedLanguage: (lng: string) => {
         const base = String(lng || '')
           .toLowerCase()

@@ -16,7 +16,7 @@ import {
   getDemoStats,
   setUserDemoPreference,
 } from '../middleware/demoGuard.middleware.js';
-import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import {
   getAtelierToysDemoScenarios,
   getAtelierToysToolCoverage,
@@ -66,7 +66,10 @@ function getDemoExperienceType(source: string | undefined | null): 'sales_demo' 
 }
 
 // Apply rate limiting
-router.use(authRateLimiter);
+// This authenticated product router is polled for demo status by the SPA.
+// The login/register limiter (15 requests / 15 min) is intentionally too low
+// for that read traffic and caused normal multi-screen sessions to self-429.
+router.use(apiAuthRateLimiter);
 
 // ==========================================
 // DEMO MODE TOGGLE

@@ -1,0 +1,132 @@
+ID,Tool,Surface,Context,Label/Icon,Expected purpose,Result,Persistence,Sense,Duplicate/where,Recommendation,Evidence
+SYS-001,System,Navigation,workspace,List,return to Ideas list,PASS,PASS,CORE,"",Repaired stale activeDocumentId,system__navigation__list-url__workspace-stale.png
+SYS-002,System,Context menu,keyboard,Enter/Space,activate focused menu item,PASS,NOT APPLICABLE,CORE,"",Repaired shared CanvasContextMenu and added tests,03_WHITEBOARD_AUDIT.md
+SYS-003,System,Representation switcher,open tab,Mind Map/Whiteboard/Process Flow/Table,change active tool and canonical URL,PASS,PASS,CORE,"",Repaired stale open-tab tool metadata,00_ENVIRONMENT_AND_VERSION.md
+SYS-004,System,Viewport,1280x800/1440x900/1920x1080,all key controls,remain reachable,PARTIAL,NOT APPLICABLE,CORE,"",Mind Map verified; other tools NOT VERIFIED,cross-tool__viewport__1280x800-mind-map.png
+SYS-005,System,Browser zoom,200%,all key controls,remain reachable,PARTIAL,NOT APPLICABLE,CORE,"",Mind Map verified; other tools NOT VERIFIED,cross-tool__browser-zoom__200-percent.png
+MM-XLINK,Mind Map,Right rail/PPM,two nodes,Connect/create cross-link,create a non-parent edge,PASS,PASS,CORE,"",Repaired explicit source-target click flow,mind-map__persistence__two-cross-links-after-reopen.png
+PF-EDGE,Process Flow,Toolbar,canvas,Connect,create Yes-No branches and correction loop,PASS,PASS,CORE,"",Repaired with explicit source-target flow; persisted after reopen,02_PROCESS_FLOW_AUDIT.md
+WB-CONNECT,Whiteboard,Toolbar,two objects,Connect elements,create four links,PASS,PASS,CORE,"",Repaired explicit source-target flow,whiteboard__persistence__four-connections-after-reopen.png
+WB-DRAW,Whiteboard,Toolbar,canvas,Draw,create freehand stroke,PASS,PASS,CORE,"",Keep with Clear drawings feedback,whiteboard__scene__freehand-drawing.png
+WB-RAIL,Whiteboard,Rail handle,canvas,Move/reset rail,relocate and restore rail,PASS,PASS,USEFUL,"",Repaired click arrows and Home alternatives,whiteboard__rail__reset-home.png
+TB-SCHEMA,Table,Columns,portfolio schema,New column typed field,add Nazwa Obszar Koszt Korzyść Ryzyko Właściciel,PASS,PASS,CORE,"",Keep typed field dialog discoverable,table__persistence__required-schema-ai-after-reopen.png
+TB-AI-TERM,Table,AI Assistant,command,Preview/result,error or proposal after schema command,PASS,PASS,CORE,"",Repaired deterministic explicit-column preview,table__ai__deadline-column-preview-after-repair.png
+MM-001,Mind Map,Menu 1,idea,Stage,show maturity,PASS,PASS,CORE,"",Keep,01_MIND_MAP_AUDIT.md
+MM-002,Mind Map,Menu 1,idea,Save state,show persistence,PASS,PASS,CORE,"",Keep,01_MIND_MAP_AUDIT.md
+MM-003,Mind Map,Menu 1,idea,Teresa,open assistant,PASS,NOT VERIFIED,USEFUL,"",Clarify selection vs whole idea,01_MIND_MAP_AUDIT.md
+MM-004,Mind Map,Menu 1,idea,More actions,document actions,PASS,NOT VERIFIED,CORE,"",Keep,01_MIND_MAP_AUDIT.md
+MM-005,Mind Map,Menu 1,idea,Convert,conversion targets,PASS,NOT VERIFIED,CORE,"",Keep,01_MIND_MAP_AUDIT.md
+MM-007,Mind Map,Menu 3,node,Add child (Tab),create child,PASS,PASS,CORE,"","",01_MIND_MAP_AUDIT.md
+MM-008,Mind Map,Menu 3,node,Add sibling (Shift+Enter),create sibling,PARTIAL,PASS,CORE,"",Ensure exactly one editor,01_MIND_MAP_AUDIT.md
+MM-009,Mind Map,Menu 3,node,Rename (F2),rename node,PASS,PASS,CORE,"","",01_MIND_MAP_AUDIT.md
+MM-010,Mind Map,Menu 3,node,Font,font family,PASS,NOT VERIFIED,USEFUL,"","",01_MIND_MAP_AUDIT.md
+MM-011,Mind Map,Menu 3,node,Size,font size,PASS,NOT VERIFIED,USEFUL,"","",01_MIND_MAP_AUDIT.md
+MM-012,Mind Map,Menu 3,node,Bold,format text,PASS,NOT VERIFIED,USEFUL,"","",01_MIND_MAP_AUDIT.md
+MM-013,Mind Map,Menu 3,node,Underline,format text,PASS,NOT VERIFIED,USEFUL,"","",01_MIND_MAP_AUDIT.md
+MM-014,Mind Map,Menu 3,node,Text color,format text,PASS,NOT VERIFIED,USEFUL,"","",01_MIND_MAP_AUDIT.md
+MM-015,Mind Map,Menu 3,node,Background color,style node,PASS,NOT VERIFIED,USEFUL,"","",01_MIND_MAP_AUDIT.md
+MM-016,Mind Map,Menu 3,node,Border color,style node,PASS,NOT VERIFIED,USEFUL,"","",01_MIND_MAP_AUDIT.md
+MM-017,Mind Map,Menu 3,node,Object shape,change shape,PASS,NOT VERIFIED,USEFUL,"","",01_MIND_MAP_AUDIT.md
+MM-018,Mind Map,Menu 3,node,Arrows and direction,edge direction,PASS,NOT VERIFIED,USEFUL,"","",01_MIND_MAP_AUDIT.md
+MM-019,Mind Map,Menu 3,node,Lock,lock node,PASS,NOT VERIFIED,USEFUL,"","",01_MIND_MAP_AUDIT.md
+MM-020,Mind Map,Menu 3,node,More options,advanced node actions,PASS,NOT VERIFIED,EXPERT,"","",01_MIND_MAP_AUDIT.md
+MM-021,Mind Map,Inspector,idea,Overview,open overview,PASS,NOT VERIFIED,CORE,"","",01_MIND_MAP_AUDIT.md
+MM-022,Mind Map,Inspector,selection,Properties,open properties,PASS,NOT VERIFIED,CORE,"","",01_MIND_MAP_AUDIT.md
+MM-023,Mind Map,Inspector,selection,Relations,open relations,PASS,NOT VERIFIED,USEFUL,"","",01_MIND_MAP_AUDIT.md
+MM-024,Mind Map,Inspector,selection,AI,open AI inspector,PASS,NOT VERIFIED,USEFUL,Right rail AI,"",01_MIND_MAP_AUDIT.md
+MM-025,Mind Map,Inspector,idea,Activity,open history,PASS,NOT VERIFIED,USEFUL,More tools history,"",01_MIND_MAP_AUDIT.md
+MM-026,Mind Map,Inspector,idea,Tool,appearance settings,PASS,NOT VERIFIED,MISPLACED,"",Rename Appearance,01_MIND_MAP_AUDIT.md
+MM-027,Mind Map,Right rail,view,Move tool rail,drag/reset rail,PASS,NOT VERIFIED,USEFUL,"","",01_MIND_MAP_AUDIT.md
+MM-028,Mind Map,Right rail,view,Select/Pan,interaction mode,PASS,NOT VERIFIED,CORE,"","",01_MIND_MAP_AUDIT.md
+MM-029,Mind Map,Right rail,selection,AI,AI actions,PASS,PASS,USEFUL,Inspector AI,"",01_MIND_MAP_AUDIT.md
+MM-030,Mind Map,Right rail,view,Templates,open templates,PASS,NOT VERIFIED,USEFUL,"","",01_MIND_MAP_AUDIT.md
+MM-031,Mind Map,Right rail,view,Frame,create frame,PASS,PASS,USEFUL,"","",01_MIND_MAP_AUDIT.md
+MM-032,Mind Map,Right rail,selection,Add node,add menu,PASS,PASS,CORE,"","",01_MIND_MAP_AUDIT.md
+MM-033,Mind Map,Right rail,selection,Knowledge,knowledge cards,PASS,NOT VERIFIED,USEFUL,"","",01_MIND_MAP_AUDIT.md
+MM-034,Mind Map,Right rail,selection,Comments,comments,PASS,NOT VERIFIED,CORE,"","",01_MIND_MAP_AUDIT.md
+MM-035,Mind Map,Right rail,selection,Connect,cross-link mode,PASS,NOT VERIFIED,CORE,"","",01_MIND_MAP_AUDIT.md
+MM-036,Mind Map,Right rail,view,Present,presentation mode,PASS,NOT VERIFIED,DUPLICATE,More tools Present,"",01_MIND_MAP_AUDIT.md
+MM-037,Mind Map,Right rail,document,Import / Export,document IO,PASS,NOT VERIFIED,MISPLACED,Menu 1 More,"",01_MIND_MAP_AUDIT.md
+MM-038,Mind Map,Right rail,view,More tools,advanced actions,PASS,NOT VERIFIED,EXPERT,"","",01_MIND_MAP_AUDIT.md
+MM-039,Mind Map,Right rail,history,Undo,undo,PASS,PASS,CORE,"","",01_MIND_MAP_AUDIT.md
+MM-040,Mind Map,Right rail,history,Redo,redo,PASS,NOT VERIFIED,CORE,"","",01_MIND_MAP_AUDIT.md
+MM-041,Mind Map,Bottom,view,Zoom out,reduce zoom,PASS,NOT VERIFIED,CORE,"","",01_MIND_MAP_AUDIT.md
+MM-042,Mind Map,Bottom,view,Zoom percentage,show zoom,PASS,NOT VERIFIED,CORE,"","",01_MIND_MAP_AUDIT.md
+MM-043,Mind Map,Bottom,view,Zoom in,increase zoom,PASS,NOT VERIFIED,CORE,"","",01_MIND_MAP_AUDIT.md
+MM-044,Mind Map,Bottom,view,More view controls,rare view actions,PASS,NOT VERIFIED,USEFUL,"","",01_MIND_MAP_AUDIT.md
+PF-001,Process Flow,Modes,view,Classic Flow,classic process semantics,PASS,PASS,CORE,"","",02_PROCESS_FLOW_AUDIT.md
+PF-002,Process Flow,Modes,view,Automation,automation semantics,PASS,PASS,USEFUL,"","",02_PROCESS_FLOW_AUDIT.md
+PF-003,Process Flow,Modes,view,Value Stream,VSM semantics,PASS,PASS,USEFUL,"","",02_PROCESS_FLOW_AUDIT.md
+PF-004,Process Flow,Toolbar,canvas,Start,add start,PASS,PASS,CORE,Right rail Start/End,"",02_PROCESS_FLOW_AUDIT.md
+PF-005,Process Flow,Toolbar,canvas,End,add end,PASS,PASS,CORE,Right rail Start/End,"",02_PROCESS_FLOW_AUDIT.md
+PF-006,Process Flow,Toolbar,canvas,Action,add step,PASS,PASS,CORE,Right rail Action,"",02_PROCESS_FLOW_AUDIT.md
+PF-007,Process Flow,Toolbar,canvas,Decision,add decision,PASS,PASS,CORE,Right rail Decision,"",02_PROCESS_FLOW_AUDIT.md
+PF-008,Process Flow,Toolbar,canvas,Lane,add lane,PASS,PASS,CORE,Right rail Lane,"",02_PROCESS_FLOW_AUDIT.md
+PF-009,Process Flow,Toolbar,selection,Insert,insert between,PASS,NOT VERIFIED,USEFUL,"","",02_PROCESS_FLOW_AUDIT.md
+PF-010,Process Flow,Toolbar,selection,Split,split path,PASS,NOT VERIFIED,USEFUL,"","",02_PROCESS_FLOW_AUDIT.md
+PF-011,Process Flow,Toolbar,canvas,More actions,advanced actions,PASS,NOT VERIFIED,EXPERT,"","",02_PROCESS_FLOW_AUDIT.md
+PF-012,Process Flow,Lane,lane,Collapse lane,collapse,PASS,NOT VERIFIED,USEFUL,"","",02_PROCESS_FLOW_AUDIT.md
+PF-013,Process Flow,Lane,lane,Change color,style lane,PASS,NOT VERIFIED,USEFUL,"","",02_PROCESS_FLOW_AUDIT.md
+PF-014,Process Flow,Right rail,view,Grid,helper grid,PASS,PASS,USEFUL,"","",02_PROCESS_FLOW_AUDIT.md
+PF-015,Process Flow,Right rail,view,Snap,grid alignment,PASS,PASS,USEFUL,"","",02_PROCESS_FLOW_AUDIT.md
+PF-016,Process Flow,Right rail,AI,Process analysis,bottleneck analysis,PASS,PASS,USEFUL,"","",02_PROCESS_FLOW_AUDIT.md
+PF-017,Process Flow,Right rail,view,Templates,open templates,PASS,NOT VERIFIED,USEFUL,"","",02_PROCESS_FLOW_AUDIT.md
+PF-018,Process Flow,Right rail,history,Undo,undo,PASS,PASS,CORE,"","",02_PROCESS_FLOW_AUDIT.md
+PF-019,Process Flow,Right rail,history,Redo,redo,PASS,NOT VERIFIED,CORE,"","",02_PROCESS_FLOW_AUDIT.md
+WB-001,Whiteboard,Toolbar,canvas,Create,add sticky,PASS,PASS,CORE,Right rail Sticky,"",03_WHITEBOARD_AUDIT.md
+WB-002,Whiteboard,Toolbar,canvas,Create options,creation menu,PASS,NOT VERIFIED,CORE,"","",03_WHITEBOARD_AUDIT.md
+WB-003,Whiteboard,Toolbar,canvas,Draw,draw mode,PASS,NOT VERIFIED,USEFUL,Right rail Draw,"",03_WHITEBOARD_AUDIT.md
+WB-004,Whiteboard,Toolbar,canvas,More,advanced board actions,PASS,NOT VERIFIED,EXPERT,"","",03_WHITEBOARD_AUDIT.md
+WB-005,Whiteboard,Right rail,canvas,Sticky,add sticky,PASS,PASS,CORE,Toolbar Create,"",03_WHITEBOARD_AUDIT.md
+WB-006,Whiteboard,Right rail,canvas,Text,add text,PASS,NOT VERIFIED,CORE,"","",03_WHITEBOARD_AUDIT.md
+WB-007,Whiteboard,Right rail,canvas,Shape,add shape,PASS,PASS,CORE,"","",03_WHITEBOARD_AUDIT.md
+WB-008,Whiteboard,Right rail,canvas,Draw,draw mode,PASS,NOT VERIFIED,USEFUL,Toolbar Draw,"",03_WHITEBOARD_AUDIT.md
+WB-009,Whiteboard,Right rail,canvas,Frame,add frame,PASS,PASS,CORE,"","",03_WHITEBOARD_AUDIT.md
+WB-010,Whiteboard,Selection,selection,Duplicate,duplicate,PASS,NOT VERIFIED,CORE,"","",03_WHITEBOARD_AUDIT.md
+WB-011,Whiteboard,Selection,selection,Lock,lock,PASS,NOT VERIFIED,USEFUL,"","",03_WHITEBOARD_AUDIT.md
+WB-012,Whiteboard,Selection,selection,Attach,attach URL/artifact,PASS,NOT VERIFIED,USEFUL,"","",03_WHITEBOARD_AUDIT.md
+WB-013,Whiteboard,Selection,selection,Linked,linked objects,PASS,NOT VERIFIED,USEFUL,"","",03_WHITEBOARD_AUDIT.md
+WB-014,Whiteboard,Selection,selection,Promote to decision,convert semantic type,PASS,NOT VERIFIED,USEFUL,"","",03_WHITEBOARD_AUDIT.md
+WB-015,Whiteboard,Selection,selection,Promote to action,convert semantic type,PASS,NOT VERIFIED,USEFUL,"","",03_WHITEBOARD_AUDIT.md
+WB-016,Whiteboard,Selection,selection,Delete,delete selection,PASS,NOT VERIFIED,CORE,"","",03_WHITEBOARD_AUDIT.md
+WB-017,Whiteboard,AI,canvas,Find themes,theme proposals,PASS,PASS,USEFUL,"","",03_WHITEBOARD_AUDIT.md
+WB-018,Whiteboard,AI,canvas,Name clusters,cluster naming,PASS,NOT VERIFIED,USEFUL,"","",03_WHITEBOARD_AUDIT.md
+WB-019,Whiteboard,AI,canvas,Extract action items,action extraction,PASS,NOT VERIFIED,USEFUL,"","",03_WHITEBOARD_AUDIT.md
+WB-020,Whiteboard,AI,canvas,Convert to mind map,cross-tool conversion,PASS,NOT VERIFIED,USEFUL,"","",03_WHITEBOARD_AUDIT.md
+WB-021,Whiteboard,AI,canvas,Convert to table,cross-tool conversion,PASS,NOT VERIFIED,USEFUL,"","",03_WHITEBOARD_AUDIT.md
+WB-022,Whiteboard,Right rail,history,Undo,undo,PASS,PASS,CORE,"","",03_WHITEBOARD_AUDIT.md
+WB-023,Whiteboard,Right rail,history,Redo,redo,PASS,NOT VERIFIED,CORE,"","",03_WHITEBOARD_AUDIT.md
+TB-001,Table,Preset,view,Default,default table,PASS,PASS,CORE,"","",04_TABLE_AUDIT.md
+TB-002,Table,Preset,view,Triage,triage view,PASS,PASS,USEFUL,"","",04_TABLE_AUDIT.md
+TB-003,Table,Preset,view,Scoring,scoring view,PASS,PASS,USEFUL,"","",04_TABLE_AUDIT.md
+TB-004,Table,Preset,view,Decision Log,decision view,PASS,PASS,USEFUL,"","",04_TABLE_AUDIT.md
+TB-005,Table,Preset,view,Timeline,timeline view,PASS,PASS,USEFUL,"","",04_TABLE_AUDIT.md
+TB-006,Table,Toolbar,view,Save view,persist view,PASS,NOT VERIFIED,USEFUL,"","",04_TABLE_AUDIT.md
+TB-007,Table,Toolbar,view,Filter,quick filter,PASS,NOT VERIFIED,CORE,Right rail Filter,"",04_TABLE_AUDIT.md
+TB-008,Table,Toolbar,view,Advanced filters,compound filters,PASS,NOT VERIFIED,EXPERT,"","",04_TABLE_AUDIT.md
+TB-009,Table,Toolbar,view,Group,group rows,PASS,NOT VERIFIED,USEFUL,"","",04_TABLE_AUDIT.md
+TB-010,Table,View,view,Table,table layout,PASS,PASS,CORE,"","",04_TABLE_AUDIT.md
+TB-011,Table,View,view,Kanban,kanban layout,PASS,NOT VERIFIED,USEFUL,"","",04_TABLE_AUDIT.md
+TB-012,Table,View,view,Timeline / Gantt,timeline layout,PASS,PASS,USEFUL,"","",04_TABLE_AUDIT.md
+TB-013,Table,View,view,Calendar,calendar layout,PASS,NOT VERIFIED,USEFUL,"","",04_TABLE_AUDIT.md
+TB-014,Table,View,view,Matrix,matrix layout,PASS,NOT VERIFIED,EXPERT,"","",04_TABLE_AUDIT.md
+TB-015,Table,View,view,Gallery,card layout,PASS,NOT VERIFIED,USEFUL,Right rail Gallery,"",04_TABLE_AUDIT.md
+TB-016,Table,AI,schema,AI Assistant,NL table command,PASS,PARTIAL,USEFUL,Right rail Table AI assistant,Unsupported empty proposals now produce explicit terminal error; visual copy NOT VERIFIED,04_TABLE_AUDIT.md
+TB-017,Table,AI,cells,AI Fill,fill empty cells,PASS,NOT VERIFIED,USEFUL,"","",04_TABLE_AUDIT.md
+TB-018,Table,AI,schema,Framework,framework generator,PASS,NOT VERIFIED,USEFUL,Right rail Framework,"",04_TABLE_AUDIT.md
+TB-019,Table,Toolbar,schema,Columns,manage columns,PASS,PASS,CORE,Right rail Columns,"",04_TABLE_AUDIT.md
+TB-020,Table,Toolbar,rows,Row,add blank row,PASS,PASS,CORE,Right rail Add row,"",04_TABLE_AUDIT.md
+TB-021,Table,Toolbar,rows,Add from template,row templates,PASS,PASS,CORE,"","",04_TABLE_AUDIT.md
+TB-022,Table,Toolbar,document,Save,save table,PASS,PASS,CORE,"","",04_TABLE_AUDIT.md
+TB-023,Table,Toolbar,history,Undo,undo,PASS,PASS,CORE,Right rail Undo,"",04_TABLE_AUDIT.md
+TB-024,Table,Toolbar,history,Redo,redo,PASS,NOT VERIFIED,CORE,Right rail Redo,"",04_TABLE_AUDIT.md
+TB-025,Table,More,data,Data,data tools,PASS,NOT VERIFIED,EXPERT,"","",04_TABLE_AUDIT.md
+TB-026,Table,More,data,Forms,forms,PASS,NOT VERIFIED,EXPERT,"","",04_TABLE_AUDIT.md
+TB-027,Table,More,data,Interfaces,interfaces,PASS,NOT VERIFIED,EXPERT,"","",04_TABLE_AUDIT.md
+TB-028,Table,More,data,Models,models,PASS,NOT VERIFIED,EXPERT,"","",04_TABLE_AUDIT.md
+TB-029,Table,More,automation,Workflow,workflow,PASS,NOT VERIFIED,EXPERT,"","",04_TABLE_AUDIT.md
+TB-030,Table,More,automation,Webhook Relays,external relays,PASS,NOT VERIFIED,EXPERT,"","",04_TABLE_AUDIT.md
+TB-031,Table,More,document,Import CSV,import,PASS,NOT VERIFIED,USEFUL,"","",04_TABLE_AUDIT.md
+TB-032,Table,More,document,Export CSV,export,PASS,NOT VERIFIED,USEFUL,"","",04_TABLE_AUDIT.md
+TB-033,Table,More,document,Copy to clipboard,copy data,PASS,NOT VERIFIED,USEFUL,"","",04_TABLE_AUDIT.md
+TB-034,Table,Right rail,view,Dashboard,open dashboard,PASS,NOT VERIFIED,USEFUL,"","",04_TABLE_AUDIT.md
