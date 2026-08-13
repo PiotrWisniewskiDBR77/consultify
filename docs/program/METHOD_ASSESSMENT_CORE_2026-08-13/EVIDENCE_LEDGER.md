@@ -191,3 +191,66 @@ właściciela metodyki.
   migracji, nie żywej bazy — zgodnie z złotą regułą wymaga `information_schema`).
 - Wartość `ENABLE_V8_GLOBAL` na dev/demo/prod: NOT VERIFIED.
 - Czy Audits czyta `siriStructure.ts`/`drdStructure.ts`: NOT VERIFIED (COORD-03).
+
+---
+
+## G5 — SIRI Method Pack + TIER (A4, zweryfikowane niezależnie)
+
+| # | Twierdzenie A4 | Pomiar własny Opusa | Werdykt |
+| --- | --- | --- | --- |
+| G5.1 | „11/11 testów, exit 0" | Własny przebieg → **EXIT=0**, `Tests 11 passed (11)` | POTWIERDZONE |
+| G5.2 | „16 wymiarów = jednostki oceny, Bands 0–5" | Sonda Opusa: `units.length`=16, każdy `levelScale`=[0..5], 8 filarów, **zero sierot** | POTWIERDZONE |
+| G5.3 | „no-leapfrog działa" | Sonda: `[0,1,4]` → `{currentLevel:1, blockedAtLevel:2, aboveGapLevels:[4]}` | POTWIERDZONE |
+| G5.4 | „readiness `draft`, uczciwy" | Sonda → `readiness='draft'`, `canStartSession()`=**false** | POTWIERDZONE |
+| G5.5 | „`prioritise()` nie duplikuje formuły" | Odczyt kodu: importuje i woła `buildDefaultInputs`, `rankByImpactValue` — brak reimplementacji | POTWIERDZONE |
+| G5.6 | „silnik PM: brak normalizacji (Step 6)" | **Opus odczytał whitepaper sam** (str. 36): Step 6 istnieje i jest obowiązkowy. Dowód liczbowy: `IV(costProfile=1)=1,8` vs `IV(costProfile=100)=31,5` | POTWIERDZONE |
+| G5.7 | „wagi domyślne nie pasują do presetów" | **Opus odczytał Figure 12 sam** (str. 29): 30/40/30, 45/30/25, 60/20/20. Kod: 0,3/0,3/0,4 | POTWIERDZONE |
+| G5.8 | *(A4 nie zgłosił)* ujemny Proximity nieobcinany | **Znalezione przez Opusa.** Whitepaper str. 36 Step 4: „If the difference has a negative value, indicate 0". Dowód: `BIC=1, AMS=5` → `IV=−1,6` | **NOWY DEFEKT** |
+
+Uczciwość licencyjna A4: **nie transkrybował** stron 32–69 Module 2 (macierz per
+wymiar z klauzulą „no part may be reproduced"). Zamiast zmyślić — oznaczył
+**96/96** poziomów jako `EVIDENCE_MISSING`. QBank v1: **0 z 16** wymiarów ma
+dedykowane pytania. To jest powód `readiness='draft'`.
+
+---
+
+## G6 — Runtime kernela (A2, zweryfikowane niezależnie)
+
+| # | Twierdzenie A2 | Pomiar własny Opusa | Werdykt |
+| --- | --- | --- | --- |
+| G6.1 | „polecenie testowe z briefu daje fałszywy fail" | Własny przebieg polecenia **z mojego briefu** → `No test files found`, **EXIT=1**. `vitest --config` nie zmienia `root`. | **A2 MA RACJĘ — mój brief był błędny** |
+| G6.2 | „71/71, exit 0" | Własny przebieg `npx vitest run server/src/method-core` → **EXIT=0**, `Tests 71 passed (71)` | POTWIERDZONE |
+| G6.3 | „`server/` nie może importować z korzenia" | Odczyt `server/tsconfig.json`: `rootDir: "."`, `include: ["src/**/*"]`; `build: tsc --build`, `start: node dist/src/index.js` | POTWIERDZONE — kopia uzasadniona |
+| G6.4 | „kopia bajt-w-bajt" | `endsWith()` na 5 plikach: **true**, delta = 1202 znaki nagłówka. Twierdzenie „bajt-w-bajt" dotyczy **treści pod nagłówkiem**, nie całego pliku — sformułowanie w podsumowaniu A2 nieprecyzyjne, sama kopia poprawna | POTWIERDZONE z zastrzeżeniem |
+| G6.5 | „ryzyko ręcznej synchronizacji zostaje otwarte" | **Zamknięte przez Opusa**: `contractMirrorDrift.test.ts` — 7/7 PASS na zgodnych plikach, **EXIT=1 po wstrzyknięciu rozjazdu** (test negatywny wykonany, strażnik nie jest pusty) | **RYZYKO ZAMKNIĘTE** |
+
+### G6.A — Braki zgłoszone przez A2 (uczciwie)
+
+- `readiness_blocked` (wariant `TransitionRefusal`) — **brak implementacji**,
+  hak w typach bez logiki.
+- Konflikt optymistycznej blokady nie ma dedykowanego `TransitionRefusal.kind`
+  w zamrożonym kontrakcie — zgłaszany jako `illegal_transition` wobec świeżego
+  stanu. **Brak testu współbieżności.**
+- Zachowanie na prawdziwym Postgresie (partial unique index, `ON CONFLICT`,
+  realny race na `23505`) — **NOT VERIFIED**, zero uruchomień na bazie.
+
+---
+
+## G7 — Bramka integracyjna na gałęzi scalonej
+
+| Bramka | Polecenie | Exit | Wynik |
+| --- | --- | ---: | --- |
+| Testy `method-core` (łącznie) | `npx vitest run src/method-core --config vitest.config.ts` | **0** | `Test Files 12 passed`, **`Tests 131 passed (131)`** |
+| Testy runtime serwera | `npx vitest run server/src/method-core` | **0** | `Test Files 5 passed`, `Tests 78 passed (78)` |
+| Type-check (scoped tsconfig z aliasami `@/`) | `npx tsc -p .tmp-opus-tsconfig.json` | **0** | **0 linii wyjścia** |
+
+**Uwaga metodologiczna do liczby 131:** filtr `src/method-core` jest dopasowaniem
+po **podciągu**, więc jeden przebieg objął także `server/src/method-core`.
+131 = 53 (metodyki DRD+SIRI) + 78 (runtime serwera). Podanie 131 jako „testów
+frontu" byłoby zawyżeniem — dlatego rozbicie jest tutaj jawne.
+
+**Pułapki narzędziowe napotkane przez Opusa w tej sesji (4):**
+1. `PIPESTATUS` zgubił kod wyjścia `tsc` → pomiar powtórzony z `; echo "EXIT=$?"`.
+2. Cytowanie w `zsh` rozbiło pętlę `grep` → 11× fałszywe „BRAK", powtórzone w `node`.
+3. `zsh` nie word-splituje `$FILES` → `tsc` dostał jedną nazwę pliku, TS6054.
+4. Alias `@/` nie działa z gołych flag CLI → wymagany scoped `tsconfig`.
