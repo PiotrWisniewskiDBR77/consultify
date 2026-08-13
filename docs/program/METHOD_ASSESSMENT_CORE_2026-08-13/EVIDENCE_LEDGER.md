@@ -460,3 +460,83 @@ Ekran nadal używa runtime'u na `localStorage`.
 **Konsekwencja, nazwana wprost:** wymaganie koordynatora „UI nie może utrzymywać
 drugiej prawdy równoległej do serwera" **NIE jest jeszcze spełnione**.
 Jest odblokowane po stronie serwera, zablokowane po stronie startu aplikacji.
+
+---
+
+## G11 — ★ BLOKADA ZDJĘTA: realny obieg HTTP przez żywy serwer
+
+### G11.A — Przyczyna blokady (A14, zweryfikowana przez Opusa)
+
+To **nie było zawieszenie**. Sekwencja inicjalizacji bazy **nigdy się nie uruchomiła**.
+
+`server/src/index.ts` miał **dwie** bramki sprawdzające wyłącznie
+`E2E_MODE`/`ENABLE_TEST_GATEWAY` i **ignorujące `RUN_DB_TESTS=1`**:
+
+1. `databaseInitPromise` — pod `NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false` warunek
+   dawał `false`, więc cały async IIFE ustawiający `dbReady` **nie wykonywał się
+   w ogóle**. Stąd `error: null` — nie było błędu, bo nie było próby.
+   Dowód: log **nigdy** nie zawierał `[Server] Initializing database...`;
+   `pg_stat_activity` nie pokazywał żadnego zapytania w toku (zero blokady).
+2. Montaż API Gateway — montował okrojony zestaw tras, pomijając
+   `apiGateway.initializeRoutes(app)`. Po naprawie (1) trasa dawała **404**,
+   nie 503 — czyli realnie nie istniała.
+
+Naprawa: `server/src/startup/testModeGates.ts` (czyste funkcje
+`shouldRunDatabaseInit`/`shouldMountFullGateway`) + `withTimeout.ts`
+(`DB_READINESS_TIMEOUT_MS`, domyślnie 120 s) — realnie wisząca operacja kończy
+się **błędem, nie ciszą**.
+
+### G11.B — Serwer osiąga gotowość (przebieg własny Opusa)
+
+```
+PORT=3099 NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres \
+  DATABASE_URL="postgresql://mac:mac@localhost:55440/mac_test" npx tsx src/index.ts
+```
+| Sprawdzenie | Wynik |
+| --- | --- |
+| log | `[Server] Initializing database...` → **`✅ Database ready — serving traffic`** |
+| `/api/ready` | **`{"status":"ready","database":"ready","migrations":{"state":"ok","detail":"0 applied, 461 already up to date"}}`** |
+| `/api/method/packs` bez tokena | **401** (nie 503, nie 404 — trasa obsługiwana, auth egzekwowane) |
+
+Bramka **nadal blokuje** przy niekompletnym schemacie: z `DISABLE_TP_MIGRATIONS=true`
+→ `/api/ready` **503** `not_ready` z **jawnym `error`**, trasy **503**.
+Zabezpieczenie nie zostało rozbrojone.
+
+### G11.C — ★ Realny obieg HTTP: żywy serwer + realny PostgreSQL
+
+Skrypt Opusa, prawdziwy JWT (`config.JWT_SECRET`, `issuer`/`audience`),
+prawdziwe `fetch`, weryfikacja **zapytaniami SQL do bazy**:
+
+| # | Krok | HTTP | Dowód z bazy | Werdykt |
+| --- | --- | ---: | --- | --- |
+| 1 | `POST /sessions` (create) | **201** | id `ceb2b94c-e2f9-40ab-b2c5-80a476e278ff` | PASS |
+| 2 | `POST /sessions` **retry** z tym samym `Idempotency-Key` | **200** | **ten sam id**; `count(method_sessions)` = **1** | PASS |
+| 3 | `POST /events` **×2** z tym samym kluczem | 201 / 201 | `count(method_events … idempotency_key)` = **1** | PASS |
+| 4 | `GET /sessions/:id` (resume) | **200** | `state=draft`, `version=1` — **odczyt z bazy** | PASS |
+| 5 | dostęp **cross-org** | **403** | — | PASS |
+| 6 | **bez auth** | **401** | — | PASS |
+| 7 | `POST /transition` ze **stale version** (999) | **409** | zero zapisu | PASS |
+
+Stan końcowy w bazie: `state=draft version=1`, event `ANSWER_CONFIRMED` utrwalony.
+
+### G11.D — Bramka gotowości packa działa uczciwie
+
+Pierwsza próba `POST /sessions` **odmówiła**: **422**
+`{"error":"pack_not_released","refusal":{"kind":"pack_not_released","methodPackId":"drd"}}`
+— bo pack DRD ma `readiness='methodology_review'`.
+
+Sesja powstała dopiero po **trzech niezależnych warunkach** demo bypass:
+środowisko nie-produkcyjne **∧** flaga operatora `METHOD_CORE_DEMO_BYPASS_PACK_READINESS=true`
+**∧** jawne żądanie klienta. Sam `demoBypass: true` w body **nie wystarczył**.
+`method_packs.readiness` **pozostało `methodology_review`** — bypass go nie podniósł.
+
+### G11.E — Co to zamyka, a czego nadal nie
+
+**Zamknięte:** serwer wstaje przeciw świeżo zmigrowanej bazie · trasy kernela
+obsługiwane · auth, role, izolacja org · idempotencja create i append ·
+optimistic concurrency 409 · odczyt po zapisie z bazy · bramka packa i demo bypass.
+
+**Nadal NOT VERIFIED:** freeze→Output przez HTTP w tym obiegu (kroki 10–16 A9) ·
+restart **przeglądarki** i odczyt z bazy przez UI · `DrdHttpSessionRuntime`
+**nie jest podłączony** do ekranu — wymaganie „UI nie może utrzymywać drugiej
+prawdy" **wciąż niespełnione** · A10 (odbiór ręczny) · MPQ.
