@@ -88,19 +88,35 @@ zakończone czysto (`Tests N failed | M passed` obecne).
 
 ### Partie zmierzone — baseline
 
-Brak — do zrobienia w kolejnym kroku tej sesji.
+**Pomiar celowany (priorytet: wykryć `introduced` jak najszybciej)** — uruchomiono na baseline
+DOKŁADNIE te 26 plików, które failują na candidate w liniach 1-660 (patrz sekcja niżej), zamiast
+czekać na pełny sekwencyjny przebieg baseline. Dwa przebiegi:
+
+1. `t6-base-targeted-2.log` — 25 z 26 plików (bez `workbook.routes.grounding-hydration.test.ts`,
+   który zawieszał cały batch — patrz niżej), `--maxWorkers=1 --maxConcurrency=1`:
+   `Tests 32 failed | 244 passed (276)`, `Test Files 25 failed (25)`.
+2. `t6-base-workbook-hydration.log` — `tests/unit/backend/routes/workbook.routes.grounding-hydration.test.ts`
+   osobno, z `--testTimeout=10000 --retry=0` (na baseline ten plik wisi ~120s/test przy domyślnym
+   timeout+retry — DUŻO wolniej niż na candidate, gdzie te same testy padają w kilka ms na asercji;
+   różny TRYB porażki, ale porażka po obu stronach): `Tests 4 failed (4)`, `Test Files 1 failed (1)`.
+
+Brak jeszcze pełnego sekwencyjnego przebiegu baseline poza tym — to osobny, szerszy krok (patrz
+NOT_VERIFIED niżej).
 
 ## Lista `introduced` (blokujące)
 
-**PUSTA NA TĘ CHWILĘ** — bo baseline jeszcze nie zmierzony dla żadnego pliku. Żadnego testu candidate
-nie można jeszcze zaklasyfikować jako `introduced`, dopóki nie ma odpowiadającego wyniku baseline.
-To NIE znaczy "brak regresji" — to znaczy "jeszcze nie sprawdzone". Priorytet w dalszej pracy: zmierzyć
-baseline dla plików, które already failują na candidate (36 unikalnych testów, plików ~30), żeby jak
-najszybciej ustalić czy któryś jest `introduced`.
+**PUSTA.** Wszystkie 36 unikalnych testów failujących na candidate w liniach 1-660 (patrz lista niżej)
+zostały sprawdzone na baseline po pełnej nazwie (`plik > describe > test`) — **wszystkie 36 failują
+też na baseline** (`comm -23` dało zero wyników = brak testów failujących WYŁĄCZNIE na candidate).
+Zero `introduced` znalezionych jak dotąd. To dotyczy tylko zmierzonego zakresu (patrz "Postęp pomiaru")
+— reszta plików (candidate 661-1574, cała reszta baseline poza tym pomiarem celowanym) jest
+`NOT_VERIFIED` i może jeszcze ujawnić `introduced`.
 
 ## Lista `fixed`
 
-Do ustalenia po zmierzeniu baseline (patrz wyżej).
+**PUSTA** w zmierzonym zakresie — `comm -13` (testy failujące tylko na baseline, nie na candidate)
+też dało zero wyników dla tych 26 plików. Żaden z testów, które failują na baseline w tych plikach,
+nie został naprawiony na candidate — bo to te same testy, failujące identycznie po obu stronach.
 
 ## Failujące testy na candidate (linie 1-660) — kandydaci do klasyfikacji
 
@@ -149,21 +165,21 @@ tests/unit/backend/services/systemAlertNotifier.test.ts > systemAlertNotifier > 
 
 - **candidate linie 661-1574** (914 plików, ~58% strony candidate) — partie jeszcze nieuruchomione w
   tej sesji. Powód: praca w toku, kontynuacja w kolejnych krokach tej samej sesji.
-- **baseline linie 1-1661** (całość, 1661 plików) — jeszcze nie rozpoczęte w tej sesji. Powód: sesja
-  skupiła się najpierw na candidate; baseline w kolejnym kroku.
-- Wszystkie 36 testów failujących na candidate (patrz lista wyżej) — tymczasowo `NOT_VERIFIED` co do
-  kategorii `introduced`/`identical_pre_existing`/`fixed`, bo brak jeszcze odpowiadającego wyniku
-  baseline dla tych plików. **To jest priorytet numer 1 w kolejnym kroku** (małe, szybkie partie —
-  tylko te ~30 plików na baseline, żeby jak najszybciej wykryć ewentualne `introduced`).
+- **baseline pełny sekwencyjny przebieg** (1661 plików minus 26 już zmierzonych celowanie = 1635
+  plików) — jeszcze nie rozpoczęty. Powód: priorytet poszedł na celowane sprawdzenie plików już
+  failujących na candidate (zrobione, zero `introduced`); pełny sekwencyjny przebieg baseline to
+  osobny, szerszy krok, potrzebny żeby wykryć `introduced`/`fixed` w plikach które na candidate
+  jeszcze PRZECHODZĄ (bo test może przechodzić na candidate, a mieć inny — gorszy lub lepszy —
+  wynik na baseline; to również trzeba sprawdzić, nie tylko listę już-failujących).
 
 ## Tabela zbiorcza (na tę chwilę — niekompletna, patrz Postęp pomiaru)
 
 | Kategoria | Liczba |
 |---|---|
-| identical_pre_existing | 0 (niezmierzone) |
-| fixed | 0 (niezmierzone) |
-| introduced | 0 (niezmierzone — patrz wyżej, priorytet) |
-| NOT_VERIFIED | 36 testów candidate (oczekują baseline) + 914 plików candidate + 1661 plików baseline |
+| identical_pre_existing | 36 testów (26 plików, celowany pomiar candidate-fails × baseline) |
+| fixed | 0 |
+| introduced | 0 |
+| NOT_VERIFIED | 914 plików candidate (linie 661-1574) + ~1635 plików baseline (poza celowanym pomiarem) |
 
 ## Higiena
 
