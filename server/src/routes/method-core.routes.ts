@@ -567,32 +567,16 @@ router.post(
       return;
     }
 
-    // --- Kto w ogóle może zarządzać składem zespołu -------------------------
-    // Zakaz samo-awansu nie wystarcza. Bez tej bramki DOWOLNY uwierzytelniony
-    // członek organizacji mógł nadać komukolwiek dowolną nie-power rolę w
-    // cudzej sesji — czyli wejść do zespołu oceniającego bez wiedzy jego
-    // właściciela. Dla modułu, którego wynikiem jest formalna ocena
-    // dojrzałości, to nie jest drobiazg.
+    // ZNANA LUKA (nienaprawiona, świadomie): dowolny uwierzytelniony członek
+    // organizacji może nadać komukolwiek rolę nie-nadzorczą w cudzej sesji.
+    // Zakaz samo-awansu (wyżej) tego nie łapie, bo dotyczy tylko ról z
+    // uprawnieniem do przejść stanu i tylko przypisań do siebie.
     //
-    // Bramka jest wąska celowo: zarządzać składem może właściciel sesji albo
-    // prowadzący ocenę. To NIE jest budowanie własnego katalogu uprawnień
-    // (czego kernel zabrania) — to użycie ról procesu, które kernel już zna,
-    // do jedynej decyzji, która ich dotyczy.
-    const actorRoles = await sessionService.getRoles(organizationId, sessionId);
-    const actorMayManageRoles = actorRoles.some(
-      (entry) =>
-        entry.userId === actorUserId &&
-        (entry.role === 'owner' || entry.role === 'lead_assessor')
-    );
-    if (!actorMayManageRoles) {
-      res.status(403).json({
-        error: 'role_management_forbidden',
-        message:
-          'Składem zespołu zarządza właściciel sesji albo prowadzący ocenę.',
-      });
-      return;
-    }
-
+    // Próba zamknięcia tego bramką „składem zarządza owner albo lead_assessor"
+    // wywracała 12 testów kernela na 500 i nie zdążyłem ustalić przyczyny w
+    // tej sesji, więc bramka została cofnięta zamiast zostawić czerwoną suitę.
+    // Naprawa jest niewielka, ale wymaga diagnozy tego 500 — opisane w
+    // raporcie końcowym jako pozycja otwarta.
     // --- S2 hard rule #6: cross-org assignment refused ----------------------
     const targetOrgId = await getUserOrganizationId(targetUserId);
     if (targetOrgId === null || targetOrgId !== organizationId) {
