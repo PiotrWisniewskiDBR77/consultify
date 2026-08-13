@@ -1,0 +1,15 @@
+                  id                  | state  |        revision_of_session_id        | version 
+--------------------------------------+--------+--------------------------------------+---------
+ f87f0923-f76f-49f9-b8e9-c56ae4244d77 | frozen |                                      |       5
+ e857a69f-574f-4204-905c-74199a452d09 | active | f87f0923-f76f-49f9-b8e9-c56ae4244d77 |       1
+ 2105ce12-df71-4e81-8e9a-f5ef71a9c579 | frozen | f87f0923-f76f-49f9-b8e9-c56ae4244d77 |       5
+(3 rows)
+
+
+-- output content_hash: unchanged before/after reopen+send-back cycle
+                  id                  |              session_id              | output_version |                           content_hash                           |        revision_of_output_id         
+--------------------------------------+--------------------------------------+----------------+------------------------------------------------------------------+--------------------------------------
+ 989b058c-fd97-4bc3-a39e-4b6e059bcbe0 | f87f0923-f76f-49f9-b8e9-c56ae4244d77 |              1 | 1ef997a7c9428337f25ff64cd4b6d37e495a6d5a571927628a3de3a6eb85efe9 | 
+ 4b6bb882-adda-40cf-97ee-93e9ae7dd290 | 2105ce12-df71-4e81-8e9a-f5ef71a9c579 |              2 | 27b6751a763727461cdc0890a6e02e376b2dbd869b267d92a843dd0ee440ad69 | 989b058c-fd97-4bc3-a39e-4b6e059bcbe0
+(2 rows)
+
