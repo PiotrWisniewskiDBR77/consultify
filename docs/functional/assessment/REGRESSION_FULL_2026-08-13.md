@@ -50,9 +50,9 @@ z linii `FAIL` w logu) kategoria:
 
 | Strona | Plików zmierzonych | Plików razem | % |
 |---|---|---|---|
-| candidate | 840 | 1574 | 53% |
+| candidate | 990 | 1574 | 63% |
 | baseline (pełny sekwencyjny) | 0 | 1661 | 0% |
-| baseline (celowany — pliki failujące na candidate) | 39 | — | — |
+| baseline (celowany — pliki failujące na candidate) | 45 | — | — |
 
 **Uwaga**: pełny sekwencyjny przebieg baseline jeszcze nie uruchomiony — strategia w tej sesji: (1)
 zmierz candidate sekwencyjnie, (2) dla KAŻDEGO pliku z failem na candidate odpal ten sam plik na
@@ -95,6 +95,11 @@ zakończone czysto (`Tests N failed | M passed` obecne).
 | 22 | 751-780 | 30 | t6-cand-22.log | 4 failed plików (6 testów + 1 suite-level) / 200 |
 | 23 | 781-810 | 30 | t6-cand-23.log | 5 failed plików (9 testów) / 170 |
 | 24 | 811-840 | 30 | t6-cand-24.log | 2 failed / 251 |
+| 25 | 841-870 | 30 | t6-cand-25.log | 0 failed / 306 |
+| 26 | 871-900 | 30 | t6-cand-26.log | 2 failed (suite-level) / 61 |
+| 27 | 901-930 | 30 | t6-cand-27.log | 3 failed / 199 |
+| 28 | 931-960 | 30 | t6-cand-28.log | 0 failed / 288 |
+| 29 | 961-990 | 30 | t6-cand-29.log | 5 failed / 357 |
 
 ### Partie zmierzone — baseline
 
@@ -115,6 +120,11 @@ czekać na pełny sekwencyjny przebieg baseline. Dwa przebiegi:
    controls and merges omitted values with defaults`. Zweryfikowane osobno na obu stronach z
    `-t "<pełna nazwa testu>"` (logi `verify-cand-admincollab.log` / `verify-base-admincollab.log`) —
    potwierdzone, nie flaky. Szczegóły w sekcji `introduced` niżej.
+4. `t6-base-targeted-4.log` — 6 plików failujących na candidate w liniach 841-990, `--testTimeout=15000
+   --retry=0`: `Tests 7 failed | 41 passed (48)`. Diff ujawnił **kolejny test, który na baseline
+   PRZECHODZI, a na candidate PADA** — `artifactContractParity.test.ts > keeps origin runtime literals
+   aligned`. Zweryfikowane osobno (`verify-cand-artifactparity.log` / `verify-base-artifactparity.log`)
+   — potwierdzone. Szczegóły w sekcji `introduced` niżej.
 
 Brak jeszcze pełnego sekwencyjnego przebiegu baseline poza tym — to osobny, szerszy krok (patrz
 NOT_VERIFIED niżej).
@@ -148,11 +158,33 @@ przy częściowym payloadzie z API (bez pola `guestAccessEnabled`) candidate wyc
 baseline poprawnie merge'uje `true` z defaultów. To wygląda na realną regresję w logice merge
 domyślnych wartości panelu (nie flaky — dwa niezależne uruchomienia po obu stronach dały spójny wynik).
 
-Reszta zmierzonego zakresu (patrz "Postęp pomiaru"): wszystkie pozostałe 77 unikalnych testów
-failujących na candidate w liniach 1-840 (36 z 1-660 + 42 wspólnych z 661-840, licząc bez duplikatów)
-zostało sprawdzonych na baseline po pełnej nazwie (`plik > describe > test`) i failują też na
+### `tests/unit/contracts/artifactContractParity.test.ts`
+Test: `Artifact client/server contract parity > keeps origin runtime literals aligned`
+
+- **candidate**: FAIL (potwierdzone osobno, log `/tmp/claude-501/verify-cand-artifactparity.log`)
+- **baseline**: PASS (potwierdzone osobno, log `/tmp/claude-501/verify-base-artifactparity.log`)
+
+Błąd na candidate:
+```
+AssertionError: expected [ 'report', 'presentation', …(8) ] to deeply equal [ 'report', 'presentation', …(9) ]
+- Expected
++ Received
+  [
+    "report", "presentation", "sheet", "native_artifact",
+-   "assessment_report",
+    "report_template", "presentation_template", "sheet_template", "document_template", "work_canvas",
+```
+Client-side runtime lista `ClientArtifactOriginRuntimeValues` na candidate **nie zawiera**
+`assessment_report`, którą server-side lista (`ServerArtifactOriginRuntimeValues`) wciąż ma — kontrakt
+klient/serwer rozjechał się na tej gałęzi. To jest test kontraktowy zaprojektowany specjalnie do
+wyłapywania takiego rozjazdu, więc wygląda na realną, świeżą regresję (literał usunięty po jednej
+stronie, nie po drugiej), nie na flaky test.
+
+Reszta zmierzonego zakresu (patrz "Postęp pomiaru"): wszystkie pozostałe 84 unikalne testy failujące
+na candidate w liniach 1-990 (77 z 1-840 + 7 nowych z 841-990, bez `artifactContractParity` opisanego
+wyżej) zostały sprawdzone na baseline po pełnej nazwie (`plik > describe > test`) i failują też na
 baseline — `identical_pre_existing`. To dotyczy tylko zmierzonego zakresu — reszta plików
-(candidate 841-1574, cała reszta baseline poza pomiarem celowanym) jest `NOT_VERIFIED` i może
+(candidate 991-1574, cała reszta baseline poza pomiarem celowanym) jest `NOT_VERIFIED` i może
 jeszcze ujawnić kolejne `introduced`.
 
 ## Lista `fixed`
@@ -206,11 +238,11 @@ tests/unit/backend/services/systemAlertNotifier.test.ts > systemAlertNotifier > 
 
 ## NOT_VERIFIED
 
-- **candidate linie 841-1574** (734 plików, ~47% strony candidate) — partie jeszcze nieuruchomione w
+- **candidate linie 991-1574** (584 plików, ~37% strony candidate) — partie jeszcze nieuruchomione w
   tej sesji. Powód: praca w toku, kontynuacja w kolejnych krokach tej samej sesji.
-- **baseline pełny sekwencyjny przebieg** (1661 plików minus 39 już zmierzonych celowanie = ~1622
+- **baseline pełny sekwencyjny przebieg** (1661 plików minus 45 już zmierzonych celowanie = ~1616
   plików) — jeszcze nie rozpoczęty. Powód: priorytet poszedł na celowane sprawdzenie plików już
-  failujących na candidate (zrobione dla linii 1-840, znaleziono 1 `introduced`); pełny sekwencyjny
+  failujących na candidate (zrobione dla linii 1-990, znaleziono 2 `introduced`); pełny sekwencyjny
   przebieg baseline to osobny, szerszy krok, potrzebny żeby wykryć `introduced`/`fixed` w plikach
   które na candidate jeszcze PRZECHODZĄ (bo test może przechodzić na candidate, a mieć inny wynik na
   baseline — np. istnieć tylko na baseline i failować tam, co nie jest `introduced` z definicji, ale
@@ -220,10 +252,10 @@ tests/unit/backend/services/systemAlertNotifier.test.ts > systemAlertNotifier > 
 
 | Kategoria | Liczba |
 |---|---|
-| identical_pre_existing | 77 testów (celowany pomiar candidate-fails w liniach 1-840 × baseline) |
+| identical_pre_existing | 84 testów (celowany pomiar candidate-fails w liniach 1-990 × baseline) |
 | fixed | 0 |
-| introduced | **1** — `AdminCollaborationControlsPanel.test.tsx > loads controls and merges omitted values with defaults` |
-| NOT_VERIFIED | 734 plików candidate (linie 841-1574) + ~1622 plików baseline (poza celowanym pomiarem) |
+| introduced | **2** — `AdminCollaborationControlsPanel.test.tsx > loads controls and merges omitted values with defaults`; `artifactContractParity.test.ts > keeps origin runtime literals aligned` |
+| NOT_VERIFIED | 584 plików candidate (linie 991-1574) + ~1616 plików baseline (poza celowanym pomiarem) |
 
 ## Higiena
 
