@@ -909,6 +909,134 @@ router.post(
 );
 
 // ---------------------------------------------------------------------------
+// POST /api/method/sessions/:id/reopen — frozen -> active, NEW revision
+// (Idempotency-Key required; a retry with the SAME key replays the SAME
+// revision, never mints a second one). Agent S8, 2026-08-13.
+//
+// ★ Authority — uzasadnienie: the kernel's `TRANSITION_AUTHORITY` table
+// (src/method-core/contracts/session.ts) is keyed by the TARGET state of a
+// transition, never the source state. Reopening IS a `frozen -> active`
+// transition (see `MethodSessionService.transition`'s dedicated branch for
+// that pair), so the role gate that governs it is
+// `TRANSITION_AUTHORITY['active'] = ['owner', 'lead_assessor']` — the SAME
+// gate that already governs every OTHER way a session enters 'active'
+// (`prepared -> active`, and `MethodSessionRoleService.sendBack`'s
+// `in_review -> active` / `frozen -> active` path). Reopen is not a special
+// case of WHO may resume work on a session, only a special case of WHAT ELSE
+// happens once that's allowed (a brand new session row, never an in-place
+// mutation of the frozen one) — so this handler delegates the actual check
+// to `sessionService.transition()` exactly like `POST .../transition` and
+// `POST .../freeze` already do, rather than re-implementing it here.
+// `POST .../freeze` uses the mirror-image rule
+// (`TRANSITION_AUTHORITY['frozen'] = ['approver']`) for the identical reason.
+// ---------------------------------------------------------------------------
+
+router.post(
+  '/sessions/:id/reopen',
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
+    const organizationId = requireOrg(req, res);
+    if (!organizationId) return;
+    const actorUserId = requireActor(req, res);
+    if (!actorUserId) return;
+    const idempotencyKey = requireIdempotencyKey(req, res);
+    if (!idempotencyKey) return;
+    const session = await loadOwnedSession(req, res, req.params.id);
+    if (!session) return;
+
+    // --- idempotency: same (org, key) replays the SAME revision, never a
+    // second one. Checked BEFORE calling transition() because the kernel's
+    // frozen->active branch unconditionally inserts a new row on every call
+    // — it has no concept of "this exact request already happened" (see this
+    // block's header comment above). This table is the HTTP-boundary anchor
+    // that makes the ENDPOINT idempotent even though the kernel primitive
+    // underneath it is not — same shape as POST /sessions'
+    // method_session_create_idempotency above.
+    const existingIdemRow = await DbPromise.get<{ revision_session_id: string }>(
+      `SELECT revision_session_id FROM method_session_reopen_idempotency WHERE organization_id = ? AND idempotency_key = ?`,
+      [organizationId, idempotencyKey]
+    );
+    if (existingIdemRow) {
+      const existingRevision = await sessionService.getSession(existingIdemRow.revision_session_id);
+      if (existingRevision) {
+        res.status(200).json({ session: existingRevision, idempotentReplay: true });
+        return;
+      }
+      // Anchor row survived but the revision vanished (should be unreachable
+      // — ON DELETE CASCADE removes both together). Fall through to retry.
+    }
+
+    // Snapshot which revisions of THIS session already exist before asking
+    // the kernel to transition — `transition()` reports `{ ok: true }` with
+    // no id for the frozen->active branch (see MethodSessionService's own
+    // header comment: "the new revision's id is discoverable via
+    // listRevisions(), not via the transition call itself"), so the only way
+    // to learn WHICH row this call produced is to diff before/after. Same
+    // technique `MethodSessionRoleService.sendBack` uses for its own
+    // `newRevision` lookup, refined here to a set-diff (rather than "newest
+    // by createdAt" across ALL revisions) so a sibling revision a DIFFERENT
+    // concurrent reopen call created can never be mistaken for the one THIS
+    // request made.
+    const revisionsBefore = await sessionService.listRevisions(organizationId, session.id);
+    const beforeIds = new Set(revisionsBefore.map((r) => r.id));
+
+    const result = await sessionService.transition({
+      sessionId: session.id,
+      to: 'active',
+      actorKind: 'human',
+      actorUserId,
+      idempotencyKey,
+    });
+
+    if (!result.ok) {
+      const refusal = result.refusal;
+      if (refusal.kind === 'missing_permission') {
+        res.status(403).json({ error: refusal.kind, requiredRole: refusal.requiredRole });
+        return;
+      }
+      if (refusal.kind === 'illegal_transition') {
+        // Most common cause: session isn't 'frozen' — reopen only makes
+        // sense on a frozen session. The kernel's own
+        // METHOD_SESSION_TRANSITIONS table decides this; never
+        // re-implemented here.
+        res.status(409).json({ error: refusal.kind, from: refusal.from, to: refusal.to });
+        return;
+      }
+      res.status(422).json({ error: refusal.kind, refusal });
+      return;
+    }
+
+    const revisionsAfter = await sessionService.listRevisions(organizationId, session.id);
+    const created = revisionsAfter.filter((r) => !beforeIds.has(r.id));
+    if (created.length === 0) {
+      throw new Error(
+        `method-core-http: reopen transition succeeded but no new revision found for session ${session.id}`
+      );
+    }
+    // Deterministic tiebreak on the (practically unreachable, given the
+    // set-diff above) chance of >1 new row: newest first, id as a final
+    // tiebreak — matches this file's own compareByCreatedAt convention.
+    created.sort((a, b) => {
+      const at = new Date(a.createdAt).getTime();
+      const bt = new Date(b.createdAt).getTime();
+      return at !== bt ? bt - at : b.id.localeCompare(a.id);
+    });
+    const revision = created[0];
+
+    const idemInsert = await DbPromise.run(
+      `INSERT INTO method_session_reopen_idempotency (organization_id, idempotency_key, root_session_id, revision_session_id, created_at)
+       VALUES (?, ?, ?, ?, ?) ON CONFLICT (organization_id, idempotency_key) DO NOTHING`,
+      [organizationId, idempotencyKey, session.id, revision.id, nowIso()],
+      { fallback: false }
+    );
+    if (!idemInsert.success) {
+      throw new Error(`method-core-http: reopen idempotency anchor insert failed: ${idemInsert.error ?? 'unknown'}`);
+    }
+
+    res.status(201).json({ session: revision, idempotentReplay: false });
+  })
+);
+
+// ---------------------------------------------------------------------------
 // GET /api/method/outputs/:id — immutable Output
 // ---------------------------------------------------------------------------
 

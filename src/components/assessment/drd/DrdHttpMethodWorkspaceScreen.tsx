@@ -25,8 +25,13 @@
  *    (approver-only) will 403 for a lone demo user unless roles were seeded
  *    directly in the database out-of-band (dev/test only, never this file's
  *    job to fake).
- *  - no HTTP endpoint reopens a frozen session into a new revision — the
- *    Reopen action is disabled with an explicit message instead of faked.
+ *  - ~~no HTTP endpoint reopens a frozen session into a new revision~~ —
+ *    CLOSED (agent S8, 2026-08-13): `POST /api/method/sessions/:id/reopen`
+ *    (`server/src/routes/method-core.routes.ts`) + `reopen()`
+ *    (`src/method-core/api/methodCoreApi.ts`). The "Reopen — nowa rewizja"
+ *    panel below calls it directly (bypassing `DrdHttpSessionRuntime` — a
+ *    reopen mints a BRAND NEW session id, which does not fit that runtime's
+ *    single-session write/offline-queue model; see the panel's own comment).
  *  - no HTTP endpoint lists Reports/Initiative Drafts by session — this
  *    screen only knows about ones created in the CURRENT browser session
  *    (see `DrdHttpRuntimeState.reports`/`.initiatives`'s own comment).
@@ -48,6 +53,7 @@ import {
   type DrdVisibleSourceState,
 } from '@/method-core/methods/drd/drdHttpSessionRuntime';
 import type { MethodReadiness, TeresaCommitRequest } from '@/method-core/contracts';
+import { MethodCoreApiError, newIdempotencyKey, reopen as apiReopen } from '@/method-core/api/methodCoreApi';
 import { DRD_STRUCTURE } from '@/services/drdStructure';
 
 import {
@@ -1018,6 +1024,45 @@ const FrozenOutputHttpView: React.FC<{
   const session = state.session!;
   const output = state.output;
 
+  // -- Reopen (agent S8, 2026-08-13) -----------------------------------------
+  // Calls `POST /sessions/:id/reopen` directly through the thin
+  // `methodCoreApi` client, NOT through `DrdHttpSessionRuntime` — that
+  // runtime's whole model (dedupedWrite/offline queue/output cache) is
+  // scoped to ONE session id for its lifetime, but a reopen mints a BRAND
+  // NEW session id (`frozen -> active`, new revision — the original frozen
+  // row and its Output are never touched). Confirmation-only UX, same shape
+  // as `DrdRolesPanel`'s send-back result text: shows the new revision id
+  // rather than silently navigating into it (this card has no session-id
+  // navigation prop to do so, and shouldn't invent one just for this).
+  const [reopenBusy, setReopenBusy] = useState(false);
+  const [reopenError, setReopenError] = useState<string | null>(null);
+  const [reopenResult, setReopenResult] = useState<string | null>(null);
+
+  const handleReopen = useCallback(async () => {
+    setReopenBusy(true);
+    setReopenError(null);
+    try {
+      const res = await apiReopen(session.id, newIdempotencyKey());
+      setReopenResult(
+        `${res.idempotentReplay ? 'Powtórka tego samego żądania — ' : ''}Nowa rewizja: ${res.session.id.slice(0, 8)} (stan: ${res.session.state}).`
+      );
+    } catch (err) {
+      if (err instanceof MethodCoreApiError) {
+        if (err.status === 403) {
+          setReopenError('Brak uprawnień — reopen wymaga roli owner lub lead_assessor.');
+        } else if (err.status === 409) {
+          setReopenError('Sesja nie jest już zamrożona (reopen dotyczy tylko frozen -> active).');
+        } else {
+          setReopenError(err.message);
+        }
+      } else {
+        setReopenError('Nieznany błąd reopen.');
+      }
+    } finally {
+      setReopenBusy(false);
+    }
+  }, [session.id]);
+
   return (
     <div className="flex h-full flex-col overflow-y-auto bg-c-bg p-6" data-testid="drd-http-frozen-output-view">
       <div className="mb-4 flex items-center gap-3">
@@ -1138,19 +1183,34 @@ const FrozenOutputHttpView: React.FC<{
         )}
       </section>
 
-      {/* Reopen — no HTTP path yet */}
+      {/* Reopen — POST /sessions/:id/reopen (agent S8, 2026-08-13) */}
       <section data-testid="reopen-panel" className="rounded-xl border border-c-border bg-c-surface p-4">
         <div className="mb-2 flex items-center gap-2">
           <RotateCcw size={14} className="text-c-text-secondary" />
           <h2 className="text-sm font-semibold text-c-text">Reopen — nowa rewizja</h2>
         </div>
         <p className="mb-2 text-xs text-c-text-muted">
-          Brak endpointu HTTP do reopen (poza zakresem tego pliku — server/src/method-core/*, server/src/routes/method-core.routes.ts).
-          Akcja wyłączona jawnie, nie udawana.
+          Tworzy nową rewizję (frozen → active) — ta zamrożona sesja i jej Output pozostają nietknięte. Wymaga roli owner lub lead_assessor.
         </p>
-        <button type="button" disabled data-testid="reopen-button" className="rounded-md border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary opacity-40">
-          Reopen sesji (niedostępne przez HTTP)
+        <button
+          type="button"
+          onClick={() => void handleReopen()}
+          disabled={reopenBusy}
+          data-testid="reopen-button"
+          className="rounded-md border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-40"
+        >
+          {reopenBusy ? 'Reopen…' : 'Reopen sesji'}
         </button>
+        {reopenError ? (
+          <p className="mt-2 text-[11px] text-c-danger" data-testid="reopen-error">
+            {reopenError}
+          </p>
+        ) : null}
+        {reopenResult ? (
+          <p className="mt-2 text-[11px] text-c-text-secondary" data-testid="reopen-result">
+            {reopenResult}
+          </p>
+        ) : null}
       </section>
       <UtilityDrawer panel={utilityPanel} sessionId={session.id} currentUserId={session.ownerUserId} onClose={onCloseUtility} />
     </div>

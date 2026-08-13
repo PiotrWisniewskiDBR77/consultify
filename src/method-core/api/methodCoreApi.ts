@@ -308,6 +308,38 @@ export async function freeze(
 }
 
 // ---------------------------------------------------------------------------
+// Reopen — frozen -> active, NEW revision (agent S8, 2026-08-13)
+// ---------------------------------------------------------------------------
+
+export interface ReopenResponse {
+  readonly session: MethodSession;
+  /** True when this call replayed an EARLIER reopen of the SAME
+   * Idempotency-Key instead of minting a new revision — see
+   * `server/src/routes/method-core.routes.ts`'s `/reopen` handler. */
+  readonly idempotentReplay: boolean;
+}
+
+/**
+ * Reopens a `frozen` session into a brand-new `active` revision — never an
+ * in-place mutation of the frozen one (its Output/snapshot are untouched).
+ * Requires `owner` or `lead_assessor` on the FROZEN session (server-enforced
+ * via `TRANSITION_AUTHORITY['active']`, never re-checked here) — a caller
+ * without one gets a 403 `missing_permission` via `MethodCoreApiError`. A
+ * retry with the SAME `idempotencyKey` (e.g. after a network timeout)
+ * replays the SAME revision (`idempotentReplay: true`), never mints a
+ * second one.
+ */
+export async function reopen(sessionId: string, idempotencyKey: string): Promise<ReopenResponse> {
+  return handle<ReopenResponse>(
+    fetchWithRetry(`${BASE}/sessions/${sessionId}/reopen`, {
+      method: 'POST',
+      headers: { ...getHeaders(), ...idempotencyHeader(idempotencyKey) },
+      body: JSON.stringify({}),
+    })
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Outputs / Reports / Initiative Drafts
 // ---------------------------------------------------------------------------
 
