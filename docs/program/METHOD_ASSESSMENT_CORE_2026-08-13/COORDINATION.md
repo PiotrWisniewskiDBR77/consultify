@@ -142,6 +142,50 @@ programu pokazuje, że to produkuje fantomowe defekty.
 **pliki/kontrakty:** sekcja „pliki wyłącznej własności" w
 `SHARED_CONTRACT_MANIFEST.md`.
 
+**★ POMIAR ROZSTRZYGAJĄCY (Opus, baseline `f3e7df565e`):** grep konsumentów
+`drdStructure` / `siriStructure` / `admaStructure` w `src` + `server/src`
+z filtrem po „audit" daje **ZERO trafień**. Wszystkich 14 konsumentów
+`siriStructure` leży wewnątrz Assessment (`components/assessment/*`,
+`services/assessmentKnowledge/*`, `services/report/*`, `views/AssessmentSessionEditorView.tsx`,
+`store/useMultiFrameworkStore.ts`, `services/frameworkRegistry.ts`,
+`services/siriPrioritisation.ts`).
+
+Czyli **kolizja z Audits dziś NIE ISTNIEJE** — obawa z kanonu
+(`10_ASSESSMENT_REVIEW.md` §17/§18.8) dotyczy warstwy raportów i routingu, nie
+tych plików. COORD-03 spada z „ryzyko kolizji" do **„tania formalizacja
+istniejącego stanu"**.
+
+**czy praca niezależna może być kontynuowana:** **TAK.**
+
+---
+
+## COORD-05 — SIRI: formuła TIER **już istnieje** w repo (znalezisko)
+
+**decyzja:** nie jest potrzebna decyzja koordynatora — punkt **informacyjny**,
+istotny dla zespołów Tools i Audits oraz dla planowania SIRI.
+
+**stan faktyczny:** `src/services/siriPrioritisation.ts` (222 linie) **już
+implementuje** formułę SIRI-PM Impact Value:
+
+```
+Impact Value(dim_i) = Wc·[DOR_c · Cost_i] + Wk·[DOR_k · KPI_i] + Wp·[… BIC …]
+```
+
+z jawnym mapowaniem członów na TIER („Impact to bottom line → Cost",
+„Essential objectives → KPI", „References → BIC"), wagami `Wc+Wk+Wp = 1`,
+benchmarkiem `BIC` 0–5 i współczynnikami `DOR` 0–1.
+Eksporty: `calculateImpactValue()`, `rankByImpactValue()`, `buildDefaultInputs()`,
+`DEFAULT_SIRI_PM_WEIGHTS`.
+
+**Znaczenie:** wcześniejszy wniosek „TIER nie istnieje, do zbudowania od zera"
+był **błędny** — pochodził z grepu ograniczonego do `siriStructure.ts`.
+Adapter SIRI ma ten kod **opakować, nie przepisać**; druga implementacja tej
+samej formuły oznaczałaby dwie prawdy, czego kanon zakazuje wprost.
+
+**otwarte do potwierdzenia:** czy formuła w kodzie zgadza się z
+`knowledge/SIRI/SIRI-PM Whitepaper.pdf` i czy `DEFAULT_SIRI_PM_WEIGHTS` mają
+pokrycie w źródle — **NOT VERIFIED**, w toku.
+
 **czy praca niezależna może być kontynuowana:** **TAK.**
 
 ---
@@ -176,7 +220,8 @@ bazowały na **tym samym** SHA.
 
 | ID | Temat | Blokuje pracę? | Status |
 | --- | --- | --- | --- |
-| COORD-01 | Nazwy pięciu powierzchni | NIE | OTWARTY |
-| COORD-02 | SIRI 8D → 16D + TIER | NIE | OTWARTY |
-| COORD-03 | Właścicielstwo plików struktur | NIE | OTWARTY |
+| COORD-01 | Nazwy pięciu powierzchni | NIE | OTWARTY — koszt zmiany zmierzony: **1 etykieta**, nie 5 |
+| COORD-02 | SIRI 8D → 16D + TIER | NIE | OTWARTY — zakres **zmalał**: dane 16D już są w repo |
+| COORD-03 | Właścicielstwo plików struktur | NIE | OTWARTY — ryzyko **zmierzone jako zerowe** (0 konsumentów w Audits) |
 | COORD-04 | Baza: demo vs gałąź integracyjna | NIE | OTWARTY |
+| COORD-05 | TIER już istnieje (`siriPrioritisation.ts`) | NIE | INFORMACYJNY |
