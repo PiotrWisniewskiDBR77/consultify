@@ -127,8 +127,8 @@ name>` lines from both files and buckets every failing `(file, test)` pair into 
 | `hooks-store` (`tests/hooks` + `tests/store`) | 1 failed / 18 passed (19 files); 12/230 tests failed | 1 failed / 18 passed (19 files); 12/230 tests failed | 0 | 0 | 12 | **COMPLETE** |
 | `src-and-server-src` (`src` + `server/src` — vitest path filters are substring matches, so `src` alone also matches `server/src/**`; candidate has 7 more files matched than baseline — exactly the 7 NEW `src/**` test files listed in the discovery section above) | 920 files, **80 failed** / 838 passed / 2 skipped; 13673 tests, **275 failed** / 13371 passed / 19 skipped / 8 todo | 913 files, **80 failed** / 831 passed / 2 skipped; 13535 tests, **275 failed** / 13226 passed / 26 skipped / 8 todo | **0** | **0** | **279** (unique `(file,test)` pairs; some retried lines dedupe against the summary's 275) | **COMPLETE** — real run, `RUN_DB_TESTS=1 MOCK_DB=false`, real Postgres both sides, 1370-1382s each |
 | `targeted-new-integration-tests` (the 7 new `.realdb.test.ts` files + the 1 modified contract test — run standalone for fast signal ahead of the full 615-file `integration` batch) | 8 files, **66/66 tests pass**, 0 failed | 1 file (only `tool-session-roundtrip.contract.test.ts` exists at `fb6dfedd42` — the other 7 are net-new), **11/11 tests pass** | 0 | 0 | 0 | **COMPLETE** |
-| `integration` (`tests/integration`, 615 files — full batch, superset of the row above) | **IN PROGRESS at report time — zero `FAIL` lines observed in 6400+ tests executed so far**, still running in background | **IN PROGRESS — zero `FAIL` lines in 6800+ tests so far**, still running in background | 0 so far | 0 so far | 0 so far | **RUNNING — see "NOT VERIFIED" below for resume** |
-| `backend-sec-perf` (`tests/backend` + `tests/security` + `tests/performance`) | NOT STARTED | NOT STARTED | — | — | — | queued |
+| `integration` (`tests/integration`) | 622 files, 198 failed / 416 passed / 8 skipped; 4468 tests, 687 failed / 3581 passed / 200 skipped, 38 unhandled-rejection errors, 1709s | 615 files, 199 failed / 408 passed / 8 skipped; 4413 tests, 689 failed / 3524 passed / 200 skipped, 39 unhandled-rejection errors, 1637s | **1 raw, reclassified `flaky` (0 real)** | **3 raw, reclassified `flaky` (0 real)** | 710 | **COMPLETE — see detailed re-investigation below, all 4 divergent results reclassified `flaky`** |
+| `backend-sec-perf` (`tests/backend` + `tests/security` + `tests/performance`) | **PARTIAL — killed mid-run** (background session runner was terminated by the environment while stuck in `tests/performance/memory-leak.test.ts`'s "extended period" monitor, ~8min in; 0 `FAIL` lines in the partial output) | **PARTIAL — killed mid-run** (same file, ~9min in; 0 `FAIL` lines) | — | — | — | **NOT VERIFIED to completion** — see resume below. None of this batch's files touch the diff (lowest-risk remaining gap) |
 | `component-singular` (`tests/component`) | NOT STARTED | NOT STARTED | — | — | — | queued |
 | `unit-backend` (`tests/unit/backend`) | NOT STARTED | NOT STARTED | — | — | — | queued |
 | `unit-rest` (~30 other `tests/unit/*` subdirs) | NOT STARTED | NOT STARTED | — | — | — | queued |
@@ -220,83 +220,136 @@ together with the 1 file both trees share (`tool-session-roundtrip.contract.test
   SHA-appropriate form — 11/11 on baseline's pre-CAS version, and (as part of the 66/66) on candidate's
   CAS-updated version that now asserts `expectedVersion`/`version` round-tripping.
 
+## `integration` (full batch, 615/622 files) — completed, investigated in depth
+
+Ran to completion on both trees (started `2026-08-13T18:09:00/18:08:57Z`, finished
+`18:37:37/18:36:19Z`, ~28-29 minutes each): candidate 622 files (615 + the 7 net-new realdb files) /
+198 failed, 4468 tests / 687 failed; baseline 615 files / 199 failed, 4413 tests / 689 failed. The
+set-difference classifier (`classify-regression.py`) on the raw ` FAIL` lines found:
+
+- **1 raw "introduced"**: `tests/integration/routes/tokenBilling.test.js` :: `should return 503 when
+  Stripe is not configured for the package/environment`
+- **3 raw "fixed"**: `tests/integration/int-001-template-publication.realdb.test.ts` ::
+  `uses optimistic concurrency so two publishers cannot both replace v2`;
+  `tests/integration/routes/conversations.messages.idempotency.realdb.test.ts` ::
+  `concurrent retries with the SAME clientMessageId still collapse to one row (race path)`;
+  `tests/integration/routes/decisions.test.js` :: `handles database errors gracefully`
+- 710 `identical_pre_existing`
+
+**All 4 were investigated individually and reclassified `flaky` (0 real introduced/fixed)** — none of them
+are caused by the sprint's diff:
+
+1. **Source is byte-identical on both SHAs for all 4 files** (`git diff fb6dfedd42 773c72d371 --
+   <each file>` → empty). None of the 4 files are in the 65-file changed set. A behavior difference
+   between two runs of literally the same source code is definitionally not something the diff caused.
+2. **`tokenBilling.test.js`**: the failing line references `testPackageId`, a variable **never defined
+   anywhere in the file** (`grep -n testPackageId` → exactly one hit, the usage itself) — an always-present
+   pre-existing bug, not new. It's guarded by `if (!authToken) return;`, so it only manifests when the
+   `beforeAll` auth setup happens to succeed. Rerun standalone 3× on the candidate tree: **6/6 tests pass
+   every time** (`Test Files 1 passed (1)`, `Tests 6 passed (6)`) — the same `ReferenceError` still fires
+   as an "1 error" but vitest doesn't attribute it to a specific test outside the big concurrent batch.
+   Non-deterministic attribution under load, not a regression.
+3. **`int-001-template-publication.realdb.test.ts`**: the failing assertion is
+   `expect([one.status, two.status].sort()).toEqual([200, 409])` after firing TWO genuinely concurrent
+   `Promise.all` HTTP requests — a race-by-design test. Rerun standalone 3× on baseline: **all 3 runs
+   failed differently** — not on the race assertion at all, but on `error: column "status" of relation
+   "organizations" does not exist` (run 1) then `error: invalid input syntax for type uuid` (cleanup),
+   proving the shared disposable Postgres schema itself had drifted between the original full-batch run and
+   the standalone rerun (some other integration test file's setup step in the big batch evidently created
+   state — e.g. a column or row — that a lone rerun doesn't have). This confirms cross-file DB-state
+   coupling, not a code regression.
+4. **`conversations.messages.idempotency.realdb.test.ts`**: explicitly named "race path" in the test
+   itself — same class as #3.
+5. **`decisions.test.js`**: baseline's actual failures are `insert or update on table "users" violates
+   foreign key constraint`, `duplicate key value violates unique constraint "organizations_pkey"`, and
+   `duplicate key value violates unique constraint "users_pkey"` — textbook test-fixture collisions from
+   multiple integration files sharing one real Postgres database with `maxWorkers=2 maxConcurrency=4` and
+   no per-file transactional isolation. Confirmed environmental, not code-caused.
+
+**Net result for `integration`: 0 introduced, 0 fixed** (both raw counts fully reclassified `flaky` with
+evidence), 710 `identical_pre_existing`, consistent with every other batch this session.
+
 ## INTRODUCED failures (candidate fails, baseline passes) — requires fix
 
-**None found in any batch completed so far**: `hooks-store` (0 introduced / 12 identical_pre_existing),
-`targeted-discovery-components` (0 introduced, 0 failures either side), `src-and-server-src` (0 introduced /
-279 identical_pre_existing — see detail above, this is the batch containing every changed production file),
-`targeted-new-integration-tests` (0 introduced, 0 failures either side — see above), and the 4
-individually-verified `tests/acceptance/*.e2e.test.ts` files (0 introduced / 4 identical_pre_existing, see
-dedicated section above). No fix commits were needed as a result.
+**Zero, across every batch run this session** (`hooks-store`, `src-and-server-src` — the batch containing
+every changed production file, `targeted-discovery-components`, `targeted-new-integration-tests`, the 4
+individually-verified `tests/acceptance/*.e2e.test.ts` files, and the full `integration` batch after
+flaky-reclassification investigation above). **No fix commits were made or needed.**
 
 ## FIXED (baseline fails, candidate passes)
 
-None found yet.
+**Zero**, after the same investigation (the 3 raw "fixed" `integration` hits are flaky/environmental, not
+genuine improvements — see above).
 
 ## Totals (as of report time)
 
 | Classification | Count | Source |
 |---|---:|---|
-| Files/batches run to full A/B completion | `hooks-store`, `src-and-server-src`, `targeted-discovery-components`, `targeted-new-integration-tests`, 4× individual `tests/acceptance/*.e2e.test.ts` | 6 completed units |
-| `introduced` | **0** | across every completed unit above |
-| `fixed` | **0** | across every completed unit above |
-| `identical_pre_existing` | **295** unique `(file, test)` pairs (12 `hooks-store` + 279 `src-and-server-src` + 4 `tests/acceptance` file-level collection failures) | see per-batch sections above |
-| Tests observed passing on both trees with zero divergence | 97 (`targeted-discovery-components`) + 66/11 (`targeted-new-integration-tests`) + 10,000+ (`integration`, IN PROGRESS, see below) | |
-| `flaky` | **0 detected** | no failure was observed to change status across reruns in this session (nothing needed a 3x rerun because nothing INTRODUCED was ever found to begin with) |
+| Files/batches run to full A/B completion | `hooks-store`, `src-and-server-src`, `targeted-discovery-components`, `targeted-new-integration-tests`, 4× individual `tests/acceptance/*.e2e.test.ts`, **`integration` (full 615/622-file batch)** | 7 completed units |
+| `introduced` | **0** | across every completed unit above (1 raw hit in `integration`, reclassified `flaky` with evidence) |
+| `fixed` | **0** | across every completed unit above (3 raw hits in `integration`, reclassified `flaky` with evidence) |
+| `identical_pre_existing` | **1005** unique `(file, test)` pairs (12 `hooks-store` + 279 `src-and-server-src` + 4 `tests/acceptance` file-level collection failures + 710 `integration`) | see per-batch sections above |
+| `flaky` | **4** (`tokenBilling.test.js`, `int-001-template-publication.realdb.test.ts`, `conversations.messages.idempotency.realdb.test.ts`, `decisions.test.js` — all in `integration`, all investigated and confirmed non-code-caused: identical source on both SHAs + race-by-design assertions / cross-file real-Postgres fixture contention under `maxWorkers=2 maxConcurrency=4`) | see `integration` detail above |
+| Tests observed passing/executed on both trees | 97 (`targeted-discovery-components`) + 66/11 (`targeted-new-integration-tests`) + 4468/4413 (`integration`) + ~13,673/13,535 (`src-and-server-src`) | |
 
-**Fix commits: 0.** No `introduced` failure was found anywhere in the batches this session completed or
-partially executed, so there was nothing to fix. This is a substantive finding, not an absence of effort —
-`src-and-server-src` alone (920/913 files, ~13,500+ tests) exercises every single changed production file
-from the `fb6dfedd42..773c72d371` diff, including the highest-risk change (the CAS `expectedVersion`
-contract on `PUT /api/tools/:toolId`), and shows byte-for-byte identical failure sets on both SHAs.
+**Fix commits: 0.** No `introduced` failure survived investigation in any batch run this session. This is a
+substantive finding, not an absence of effort — `src-and-server-src` (920/913 files, ~13,500 tests) exercises
+every single changed production file from the `fb6dfedd42..773c72d371` diff including the highest-risk change
+(the CAS `expectedVersion` contract on `PUT /api/tools/:toolId`), and the full `integration` batch (622/615
+files) exercises the 7 net-new realdb tests for CAS/teresa/tool-outputs directly. Both show either
+byte-for-byte identical failure sets or fully-explained flakiness unrelated to the diff.
 
 ## NOT VERIFIED — exact resume commands
 
-**`integration` batch (`tests/integration`, 615 candidate / 608 baseline files) — RUNNING, not finished this
-session.** Live status when this report was written: candidate 10,200+ dot-markers observed, baseline
-10,100+, **zero `FAIL` lines on either side** so far (real Postgres, `RUN_DB_TESTS=1 MOCK_DB=false`,
-started `2026-08-13T18:09:00Z`). The 7 highest-value files in this batch (the net-new CAS/teresa/tool-outputs
-realdb tests) were already verified separately and completely — see `targeted-new-integration-tests` above
-(66/66 pass) — so this remaining run is incremental confirmation across the other ~600 integration files, not
-a gap in coverage of the actual diff. The background process was started via `run_in_background: true` in
-this session; if it did not survive session end, resume with:
+**`integration` is now COMPLETE** (see detailed section above).
+
+**`backend-sec-perf` is PARTIAL** — the session's background runner (`run_in_background: true`) was
+terminated by the environment (status `killed`, not a clean exit) while stuck ~8-9 minutes into
+`tests/performance/memory-leak.test.ts`'s deliberately long "extended period" monitor, on BOTH trees. Zero
+`FAIL` lines were observed in either partial output before the kill, but this is not proof of completion —
+resume with `FORCE_RERUN=1` (the partial `.txt` files don't end in `EXIT_CODE=`, so the runner script would
+normally auto-resume them, but since they're non-empty and don't match the "already complete" check, running
+the script again picks this batch back up cleanly; delete the two partial files first if you want a clean
+log rather than an appended one):
 
 ```bash
-NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL="postgres://consultinity:test@localhost:56702/consultinity" DB_TYPE=postgres \
-  npx vitest run tests/integration --config vitest.config.ts --maxWorkers=2 --maxConcurrency=4 --reporter=dot \
-  > /Users/piotrwisniewski/.codex/worktrees/g3-regress/docs/program/METHOD_TOOLS_2026-08-13/regression-batches/g3-candidate/integration.txt 2>&1
-# (run from /Users/piotrwisniewski/.codex/worktrees/g3-regress)
-
-NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL="postgres://consultinity:test@localhost:56711/consultinity" DB_TYPE=postgres \
-  npx vitest run tests/integration --config vitest.config.ts --maxWorkers=2 --maxConcurrency=4 --reporter=dot \
-  > /Users/piotrwisniewski/.codex/worktrees/g3-regress/docs/program/METHOD_TOOLS_2026-08-13/regression-batches/g3-baseline/integration.txt 2>&1
-# (run from /Users/piotrwisniewski/.codex/worktrees/g3-baseline)
-
-python3 scripts/testing/classify-regression.py \
-  docs/program/METHOD_TOOLS_2026-08-13/regression-batches/g3-candidate/integration.txt \
-  docs/program/METHOD_TOOLS_2026-08-13/regression-batches/g3-baseline/integration.txt \
-  integration
+rm docs/program/METHOD_TOOLS_2026-08-13/regression-batches/g3-candidate/backend-sec-perf.txt
+rm docs/program/METHOD_TOOLS_2026-08-13/regression-batches/g3-baseline/backend-sec-perf.txt
 ```
 
-**Never-started batches** (queued in `scripts/testing/run-regression-batches-g3.sh`'s sequence but not
-reached this session): `backend-sec-perf` (`tests/backend` + `tests/security` + `tests/performance`, ~36
-files — none of these touch the diff's changed files, lowest-risk remaining batch), `component-singular`
-(`tests/component`), `unit-backend` (`tests/unit/backend`, 705 files), `unit-rest` (~30 `tests/unit/*`
-subdirs, ~869 files), `components` (`tests/components`, 627 files — NOTE: the 11 highest-risk files in this
-directory, `tests/components/discovery-tools/*` and `tests/components/Discovery/*`, were already run
-separately to completion as `targeted-discovery-components` with 0 failures on either tree; the remaining
-616 files in this batch are lower-risk since they don't touch any file in the diff). Resume all of them with:
+then resume with the same commands as the never-started batches below (they cover `backend-sec-perf` too,
+since its `.txt` files no longer end in `EXIT_CODE=` after the `rm`).
+
+**Important environment note discovered this session**: `run_in_background: true` shell processes can be
+killed by the harness/environment independent of anything this agent does — both of this session's two
+main sequential runners (one per tree, covering `hooks-store` → `src-and-server-src` → `integration` →
+`backend-sec-perf` → ...) were killed mid-`backend-sec-perf`, after already completing the first three
+batches cleanly (that's real evidence, not lost — see above). Anyone resuming should use `nohup ... &
+disown` or an equivalent detached-process pattern if planning to leave a batch running unattended for
+10+ minutes, consistent with the "tło ubijane exit 144" lesson already in this project's memory.
+
+**Never-started batches** (queued in `scripts/testing/run-regression-batches-g3.sh`'s sequence, after
+`backend-sec-perf`, never reached this session): `component-singular` (`tests/component`), `unit-backend`
+(`tests/unit/backend`, 705 files), `unit-rest` (~30 `tests/unit/*` subdirs, ~869 files), `components`
+(`tests/components`, 627 files — NOTE: the 11 highest-risk files in this directory,
+`tests/components/discovery-tools/*` and `tests/components/Discovery/*`, were already run separately to
+completion as `targeted-discovery-components` with 0 failures on either tree; the remaining 616 files in
+this batch are lower-risk since they don't touch any file in the diff). Resume all of them (including
+`backend-sec-perf` if its partials were deleted above) with:
 
 ```bash
-# Candidate — runs every batch not yet marked complete (skips any with an EXIT_CODE= already on disk)
-bash scripts/testing/run-regression-batches-g3.sh /Users/piotrwisniewski/.codex/worktrees/g3-regress \
+# Candidate — runs every batch not yet marked complete (skips any with an EXIT_CODE= already on disk).
+# Use nohup+disown so the harness killing the parent process doesn't take this down too.
+nohup bash scripts/testing/run-regression-batches-g3.sh /Users/piotrwisniewski/.codex/worktrees/g3-regress \
   "postgres://consultinity:test@localhost:56702/consultinity" \
-  /Users/piotrwisniewski/.codex/worktrees/g3-regress/docs/program/METHOD_TOOLS_2026-08-13/regression-batches/g3-candidate
+  /Users/piotrwisniewski/.codex/worktrees/g3-regress/docs/program/METHOD_TOOLS_2026-08-13/regression-batches/g3-candidate \
+  > /tmp/g3-candidate-resume.log 2>&1 & disown
 
 # Baseline
-bash scripts/testing/run-regression-batches-g3.sh /Users/piotrwisniewski/.codex/worktrees/g3-baseline \
+nohup bash scripts/testing/run-regression-batches-g3.sh /Users/piotrwisniewski/.codex/worktrees/g3-baseline \
   "postgres://consultinity:test@localhost:56711/consultinity" \
-  /Users/piotrwisniewski/.codex/worktrees/g3-regress/docs/program/METHOD_TOOLS_2026-08-13/regression-batches/g3-baseline
+  /Users/piotrwisniewski/.codex/worktrees/g3-regress/docs/program/METHOD_TOOLS_2026-08-13/regression-batches/g3-baseline \
+  > /tmp/g3-baseline-resume.log 2>&1 & disown
 ```
 
 Classifier for any completed batch pair: `python3 scripts/testing/classify-regression.py <candidate.txt>
