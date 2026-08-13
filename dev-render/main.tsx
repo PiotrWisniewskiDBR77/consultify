@@ -113,6 +113,7 @@ const AssessmentMenu3StatusChipsScreen = React.lazy(
 );
 const AssessmentReportsPanelScreen = React.lazy(() => import('./screens/assessment-reports-panel'));
 const AssessmentReportsTableScreen = React.lazy(() => import('./screens/assessment-reports-table'));
+const AssessmentOutputReportScreen = React.lazy(() => import('./screens/assessment-output-report'));
 const CanvasKebabRestructureScreen = React.lazy(() => import('./screens/canvas-kebab-restructure'));
 const CanvasNewDocScreen = React.lazy(() => import('./screens/canvas-new-doc'));
 const CanvasToolbarMdHistoryScreen = React.lazy(
@@ -872,6 +873,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'assessment-reports-table': {
     label: '§27-todo batch2: ReportsTable (Assessment→Board→Reports, global) → StandardTable',
     render: () => <AssessmentReportsTableScreen />,
+  },
+  'assessment-output-report': {
+    label:
+      'Assessment Report (SPEC-A Dokument) — renderer zamrożonego Outputu; ?variant=happy|edge|not-frozen',
+    render: () => <AssessmentOutputReportScreen />,
   },
   'canvas-new-doc': {
     label: '#87a Canvas "+" New — 3 opcje startu (Czysty/Z szablonu/Z canvasa) → Teresa',
