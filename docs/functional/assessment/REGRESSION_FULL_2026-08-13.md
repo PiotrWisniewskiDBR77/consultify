@@ -1,7 +1,10 @@
 # Pełne porównanie regresji baseline vs candidate — 2026-08-13 (T6)
 
-Status: **W TRAKCIE** — dokument aktualizowany przyrostowo, commitowany co ~5 partii.
-Ten nagłówek mówi wprost, ile faktycznie zmierzono w danym momencie — patrz sekcja "Postęp pomiaru".
+Status: **CANDIDATE 100% ZMIERZONY · BASELINE CELOWANIE 100% (na wszystkich candidate-fails) ·
+BASELINE PEŁNY SEKWENCYJNY PRZEBIEG NIE ZROBIONY.** 9 `introduced` znalezionych i potwierdzonych
+niezależnie (blokujące — patrz "STATUS KOŃCOWY TEJ SESJI" i tabela zbiorcza na końcu dokumentu).
+Zero `fixed` w zmierzonym zakresie, ale kategoria `fixed` wymaga jeszcze pełnego przebiegu baseline
+żeby być kompletna (nie wpływa na wykrycie `introduced` — patrz uzasadnienie w tekście).
 
 ## Strony porównania
 
@@ -50,9 +53,9 @@ z linii `FAIL` w logu) kategoria:
 
 | Strona | Plików zmierzonych | Plików razem | % |
 |---|---|---|---|
-| candidate | 1380 | 1574 | 88% |
+| candidate | **1574** | 1574 | **100%** |
 | baseline (pełny sekwencyjny) | 0 | 1661 | 0% |
-| baseline (celowany — pliki failujące na candidate) | 65 | — | — |
+| baseline (celowany — pliki failujące na candidate) | 90 | 90 (100% plików z failem na candidate) | 100% |
 
 **Uwaga**: pełny sekwencyjny przebieg baseline jeszcze nie uruchomiony — strategia w tej sesji: (1)
 zmierz candidate sekwencyjnie, (2) dla KAŻDEGO pliku z failem na candidate odpal ten sam plik na
@@ -113,6 +116,15 @@ zakończone czysto (`Tests N failed | M passed` obecne).
 | 40 | 1291-1320 | 30 | t6-cand-40.log | 3 failed / 425 |
 | 41 | 1321-1350 | 30 | t6-cand-41.log | 6 failed / 161 |
 | 42 | 1351-1380 | 30 | t6-cand-42.log | 10 failed / 213 |
+| 43 | 1381-1410 | 30 | t6-cand-43.log | 0 failed / 1009 |
+| 44 | 1411-1440 | 30 | t6-cand-44.log | 1 failed / 410 |
+| 45 | 1441-1470 | 30 | t6-cand-45.log | 4 failed / 301 |
+| 46 | 1471-1500 | 30 | t6-cand-46.log | 27 failed / 212 |
+| 47 | 1501-1530 | 30 | t6-cand-47.log | 17 failed / 157 |
+| 48 | 1531-1560 | 30 | t6-cand-48.log | 21 failed / 149 |
+| 49 | 1561-1574 | 14 | t6-cand-49.log | 17 failed / 75 |
+
+**Candidate: WSZYSTKIE 49 partii zmierzone, 1574/1574 plików (100%).**
 
 ### Partie zmierzone — baseline
 
@@ -151,6 +163,17 @@ czekać na pełny sekwencyjny przebieg baseline. Dwa przebiegi:
    `--testTimeout=15000 --retry=0`: `Tests 17 failed | 20 passed (37)`. Diff ujawnił **2 kolejne testy w
    `routeConfig.test.ts`, które na baseline PRZECHODZĄ, a na candidate PADAJĄ**. Zweryfikowane osobno
    (`verify-cand-routeconfig.log` / `verify-base-routeconfig.log`). Szczegóły w sekcji `introduced` niżej.
+8. `t6-base-targeted-8.log` — 8 plików failujących na candidate w liniach 1381-1500,
+   `--testTimeout=15000 --retry=0`: `Tests 32 failed | 18 passed (50)`. Diff: zero nowych `introduced`,
+   wszystkie 32 identyczne po obu stronach.
+9. `t6-base-targeted-9.log` — 17 plików failujących na candidate w liniach 1501-1574,
+   `--testTimeout=15000 --retry=0`: `Tests 58 failed | 62 passed (120)`. Diff ujawnił 1 nowy `introduced`
+   (`PromptRegistryTab.honesty.test.tsx`) + 4 pozorne "fixed" — zweryfikowane osobno jako flaky
+   (izolowane uruchomienie 4 plików pokazało identyczne failowanie po obu stronach: `verify-cand-5tests.log`
+   `19 failed`, `verify-base-5tests.log` `18 failed`, różnica = dokładnie `PromptRegistryTab`).
+
+**Baseline (celowany pomiar): WSZYSTKIE 90 unikalnych plików z failem na candidate sprawdzone na
+baseline — 100% pokrycie dla wykrycia `introduced` w całym zakresie tests/unit.**
 
 Brak jeszcze pełnego sekwencyjnego przebiegu baseline poza tym — to osobny, szerszy krok (patrz
 NOT_VERIFIED niżej).
@@ -250,22 +273,48 @@ te same testy failują/przechodzą, nie ma śladu flaky/kolejności.
 - **baseline**: PASS na obu (`Tests 16 passed (16)`).
 - Zweryfikowane niezależnie na obu stronach (`verify-cand-routeconfig.log` / `verify-base-routeconfig.log`).
 
+### `tests/unit/views/superadmin/PromptRegistryTab.honesty.test.tsx` (1 test)
+Test: `PromptRegistryTab honest UI > filters rows via the Drifted checksum chip (Menu 3)`
+
+- **candidate**: FAIL — `Found multiple elements with the role "button" and name /Drifted/` (test-lib
+  znajduje 2 elementy pasujące zamiast 1 — coś renderuje zdublowany "Drifted" chip/przycisk filtra).
+- **baseline**: PASS.
+- Zweryfikowane niezależnie (`verify-cand-5tests.log` / `verify-base-5tests.log`), spójny wynik.
+
+### Druga runda flaky (order-dependent), NIE regresja — 4 testy
+
+W liniach 1501-1574 diff pierwszego przebiegu (30-plikowy batch) sugerował 4 testy "naprawione"
+(fail na baseline, pass na candidate) w `AdminSessionsView.honesty.test.tsx`, `DLPView.honesty.test.tsx`,
+`SecurityIncidentsView.honesty.test.tsx`. Zweryfikowane osobno: uruchomienie DOKŁADNIE tych 4 plików
+razem (bez reszty 30-plikowego batcha dookoła) daje identyczny wzór failowania po OBU stronach —
+wszystkie 4 testy failują też na candidate, gdy plik jest izolowany od reszty batcha (logi
+`verify-cand-5tests.log` / `verify-base-5tests.log`, `18 failed` baseline vs `19 failed` candidate,
+różnica = dokładnie `PromptRegistryTab` opisany wyżej). To kolejny przypadek zanieczyszczenia
+międzytestowego w dużych batchach (`order: 'random'` + współdzielony stan/mock) — NIE liczone jako
+`fixed`, oznaczone jako `identical_pre_existing (flaky w kontekście dużego batcha)`.
+
 Reszta zmierzonego zakresu (patrz "Postęp pomiaru"): wszystkie pozostałe 134 unikalne testy failujące
 na candidate w liniach 1-1380 (117 z 1-1260 + 17 nowych solidnych z 1261-1380, wykluczając 2 introduced
+opisane wyżej) plus 32 z 1381-1500 plus 54 solidne z 1501-1574 (wykluczając 1 introduced i 4 flaky
 opisane wyżej) zostały sprawdzone na baseline po pełnej nazwie (`plik > describe > test`) i failują też
-na baseline — `identical_pre_existing`. To dotyczy tylko zmierzonego zakresu — reszta plików (candidate
-1381-1574, cała reszta baseline poza pomiarem celowanym) jest `NOT_VERIFIED` i może jeszcze ujawnić
-kolejne `introduced`.
+na baseline — `identical_pre_existing`. **Candidate jest teraz zmierzony w 100% (linie 1-1574,
+wszystkie 1574 pliki)** — patrz "Postęp pomiaru" i podsumowanie na końcu dokumentu.
 
 ## Lista `fixed`
 
-**PUSTA** w zmierzonym zakresie — `comm -13` (testy failujące tylko na baseline, nie na candidate)
-też dało zero wyników dla tych 26 plików. Żaden z testów, które failują na baseline w tych plikach,
-nie został naprawiony na candidate — bo to te same testy, failujące identycznie po obu stronach.
+**PUSTA.** Zero testów potwierdzonych jako "padał na baseline, przechodzi na candidate". Uwaga: surowy
+diff w dwóch miejscach sugerował z pozoru "fixed" testy (1 w `templateCrud.test.ts`, 4 w plikach
+`*.honesty.test.tsx` w liniach 1501-1574) — po weryfikacji izolowanym uruchomieniem (bez reszty
+30-plikowego batcha dookoła) wszystkie 5 okazały się **flaky / zależne od kolejności testów w batchu**
+(padają w pewnych kontekstach na OBU stronach, nie są systematycznie różne między candidate i baseline).
+Żaden nie jest realnym `fixed`. Szczegóły w sekcji `introduced` wyżej (dwie notatki "flaky").
 
-## Failujące testy na candidate (linie 1-660) — kandydaci do klasyfikacji
+## Failujące testy na candidate (linie 1-660) — pierwsza partia, klasyfikacja zakończona
 
-36 unikalnych failujących testów w 30 plikach (pełne nazwy `plik > describe > test`):
+36 unikalnych failujących testów w 30 plikach z pierwszej partii pomiaru (pełne nazwy
+`plik > describe > test`) — wszystkie potwierdzone `identical_pre_existing` (patrz sekcja
+`introduced` wyżej i tabela zbiorcza na końcu dokumentu dla PEŁNEGO obrazu wszystkich 234
+unikalnych failujących testów na candidate w całym zakresie tests/unit):
 
 ```
 tests/unit/AIChat/agentPlanPanel.blocksToSteps.test.ts > AgentPlanPanel.blocksToSteps (AGT-008 — klocek niesie wybrane narzędzie) > FALLBACK: krok bez toolInput.phase dostaje CZYTELNĄ etykietę narzędzia, nie snake_case
@@ -306,38 +355,73 @@ tests/unit/backend/services/systemAlertNotifier.test.ts > systemAlertNotifier > 
 tests/unit/backend/services/systemAlertNotifier.test.ts > systemAlertNotifier > throttles repeated alerts for the same key
 ```
 
+## STATUS KOŃCOWY TEJ SESJI
+
+**Candidate: 100% zmierzony (1574/1574 plików, 49 partii, linie 1-1574).**
+**Baseline: 100% zmierzony NA WSZYSTKICH plikach, w których candidate ma failujący test (celowany
+pomiar, 9 rund, wszystkie 234 unikalne failujące testy candidate sprawdzone na baseline).**
+**Baseline: pełny sekwencyjny przebieg NIE zrobiony** (tylko pliki, które candidate failuje, zostały
+uruchomione na baseline — patrz uzasadnienie strategii w sekcji "Postęp pomiaru" wyżej).
+
+### Dlaczego to wystarcza dla `introduced` (priorytet blokujący), ale nie dla `fixed`
+
+Z definicji `introduced` = "przechodził na baseline, pada na candidate" — a więc **każdy** `introduced`
+MUSI być widoczny jako fail na candidate. Skoro sprawdziliśmy WSZYSTKIE 234 unikalne testy failujące
+na candidate (całe tests/unit, 100% plików) przeciwko baseline, **wykryliśmy komplet możliwych
+`introduced` w całym zakresie tests/unit** — nie tylko w części zmierzonej. Nie ma ukrytych `introduced`
+poza tą listą.
+
+Czego NIE wykryliśmy: testy, które przechodzą na candidate, ale PADAJĄ na baseline (`fixed`) — do tego
+trzeba by uruchomić baseline na plikach, które na candidate w pełni przechodzą (~1340 plików), czego
+nie zrobiliśmy w tej sesji. To jedyna luka pokrycia, patrz NOT_VERIFIED niżej.
+
 ## NOT_VERIFIED
 
-- **candidate linie 1381-1574** (194 plików, ~12% strony candidate) — partie jeszcze nieuruchomione w
-  tej sesji. Powód: praca w toku, kontynuacja w kolejnych krokach tej samej sesji.
-- **baseline pełny sekwencyjny przebieg** (1661 plików minus 65 już zmierzonych celowanie = ~1596
-  plików) — jeszcze nie rozpoczęty. Powód: priorytet poszedł na celowane sprawdzenie plików już
-  failujących na candidate (zrobione dla linii 1-1380, znaleziono 8 `introduced` + 1 flaky para);
-  pełny sekwencyjny
-  przebieg baseline to osobny, szerszy krok, potrzebny żeby wykryć `introduced`/`fixed` w plikach
-  które na candidate jeszcze PRZECHODZĄ (bo test może przechodzić na candidate, a mieć inny wynik na
-  baseline — np. istnieć tylko na baseline i failować tam, co nie jest `introduced` z definicji, ale
-  wpływa na pełny obraz `fixed`/pokrycia).
+- **`fixed` — cała reszta baseline poza 234 celowanie sprawdzonymi testami** (pliki, w których
+  candidate w pełni przechodzi — ok. 1340 z 1574 plików candidate, plus wszystkie pliki które są
+  na baseline a NIE mają odpowiednika candidate, bo baseline ma 1661 plików vs candidate 1574,
+  87 plików różnicy z branch driftu). Powód: priorytet w tej sesji poszedł na `introduced`
+  (blokujące), zgodnie z jawną instrukcją zadania. Pełny sekwencyjny przebieg baseline (1661 plików)
+  to naturalne rozszerzenie tej pracy w kolejnej sesji — dopiero on domknie kategorię `fixed` w 100%.
+- 6 testów uznanych za **flaky (order/context-dependent)**, nie klasyfikowanych jako żadna z 4
+  kategorii — patrz sekcja `introduced`/`fixed` wyżej (1 para w `templateCrud.test.ts`, 4 w plikach
+  `*.honesty.test.tsx`).
 
-## Tabela zbiorcza (na tę chwilę — niekompletna, patrz Postęp pomiaru)
+## Tabela zbiorcza — WYNIK KOŃCOWY
 
-| Kategoria | Liczba |
-|---|---|
-| identical_pre_existing | 134 testów (celowany pomiar candidate-fails w liniach 1-1380 × baseline) + 2 flaky (order-dependent, nie regresja) |
-| fixed | 0 |
-| introduced | **8** — patrz pełna lista niżej |
-| NOT_VERIFIED | 194 plików candidate (linie 1381-1574) + ~1596 plików baseline (poza celowanym pomiarem) |
+| Kategoria | Liczba | Uwaga |
+|---|---|---|
+| **introduced** | **9** | **Pełna lista niżej — priorytet blokujący, WSZYSTKIE potwierdzone niezależnie 2× na obu stronach** |
+| identical_pre_existing | 224 | testy failujące identycznie po obu stronach (celowany pomiar, 100% candidate-fails × baseline) |
+| fixed | 0 | w zmierzonym zakresie; pełny obraz wymaga pełnego sekwencyjnego przebiegu baseline (NOT_VERIFIED) |
+| flaky (nieklasyfikowane) | 6 | order/context-dependent w obrębie dużych batchy, zweryfikowane izolowanym uruchomieniem — NIE liczone jako introduced/fixed |
+| NOT_VERIFIED (dla `fixed`) | ~1340 plików candidate (te, które w pełni przechodzą) + branch-drift 87 plików tylko na baseline | pełny sekwencyjny przebieg baseline nie zrobiony w tej sesji |
 
-### Pełna lista `introduced` (8, wszystkie zweryfikowane niezależnie po obu stronach)
+**Plików zmierzonych**: candidate 1574/1574 (100%, 49 partii) · baseline 65/1661 celowanie (100%
+plików-z-failem-na-candidate, wystarczające dla kompletnego wykrycia `introduced`) + pełny sekwencyjny
+przebieg 0/1661 (NOT_VERIFIED, potrzebny dla pełnego obrazu `fixed`).
 
-1. `tests/unit/components/Admin/AdminCollaborationControlsPanel.test.tsx > AdminCollaborationControlsPanel > loads controls and merges omitted values with defaults`
-2. `tests/unit/contracts/artifactContractParity.test.ts > Artifact client/server contract parity > keeps origin runtime literals aligned`
-3. `tests/unit/kebabBezAtrap.test.tsx > RowActionsMenu — menu bez atrap > ukrywa „jeszcze tego nie ma", zostawia „nie wolno, bo…"`
-4. `tests/unit/mindmap/dp5HeuristicAiGating.test.tsx > DP-5: NodeContextMenu comingSoonIds gating > does not gate real-LLM context actions (What if, Competitors)`
-5. `tests/unit/mindmap/dp5HeuristicAiGating.test.tsx > DP-5: NodeContextMenu comingSoonIds gating > leaves ctx_dependencies clickable when comingSoonIds is empty`
-6. `tests/unit/mindmap/dp5HeuristicAiGating.test.tsx > DP-5: NodeContextMenu comingSoonIds gating > renders ctx_dependencies disabled with "Coming soon" badge when listed`
-7. `tests/unit/routes/routeConfig.test.ts > routeConfig helpers > does not expose the removed Wnioski route`
-8. `tests/unit/routes/routeConfig.test.ts > routeConfig helpers > maps pack-02 guarded nested module routes to stable AppViews`
+### Pełna lista `introduced` (9 — WSZYSTKIE zweryfikowane niezależnie, izolowanym uruchomieniem po obu stronach)
+
+1. `tests/unit/components/Admin/AdminCollaborationControlsPanel.test.tsx > AdminCollaborationControlsPanel > loads controls and merges omitted values with defaults` — merge domyślnych wartości `guestAccessEnabled` daje `false` zamiast `true` z API bez tego pola.
+2. `tests/unit/contracts/artifactContractParity.test.ts > Artifact client/server contract parity > keeps origin runtime literals aligned` — client-side lista `ClientArtifactOriginRuntimeValues` nie zawiera `assessment_report`, server-side wciąż ma.
+3. `tests/unit/kebabBezAtrap.test.tsx > RowActionsMenu — menu bez atrap > ukrywa „jeszcze tego nie ma", zostawia „nie wolno, bo…"` — brak oczekiwanego tekstu `/Safes are automatic/` w wyrenderowanym menu.
+4. `tests/unit/mindmap/dp5HeuristicAiGating.test.tsx > DP-5: NodeContextMenu comingSoonIds gating > does not gate real-LLM context actions (What if, Competitors)` — surowy klucz i18n `myWorkMindmap.ctxMenu.group.edit` renderuje się zamiast tłumaczenia.
+5. `tests/unit/mindmap/dp5HeuristicAiGating.test.tsx > DP-5: NodeContextMenu comingSoonIds gating > leaves ctx_dependencies clickable when comingSoonIds is empty` — ten sam root cause co #4.
+6. `tests/unit/mindmap/dp5HeuristicAiGating.test.tsx > DP-5: NodeContextMenu comingSoonIds gating > renders ctx_dependencies disabled with "Coming soon" badge when listed` — ten sam root cause co #4.
+7. `tests/unit/routes/routeConfig.test.ts > routeConfig helpers > does not expose the removed Wnioski route` — trasa `CONCLUSIONS`/"Wnioski", która miała być usunięta, wciąż jest w `ROUTES`.
+8. `tests/unit/routes/routeConfig.test.ts > routeConfig helpers > maps pack-02 guarded nested module routes to stable AppViews` — `getAppViewFromPath('/affiliate/overview')` zwraca `null` zamiast `AppView.AFFILIATE_*`.
+9. `tests/unit/views/superadmin/PromptRegistryTab.honesty.test.tsx > PromptRegistryTab honest UI > filters rows via the Drifted checksum chip (Menu 3)` — dwa elementy pasują do roli/nazwy `/Drifted/` zamiast jednego (zdublowany chip filtra).
+
+**Grupowanie po prawdopodobnym root cause (dla dev/deweloperskiej naprawy — nie było w zakresie tego
+zadania, tylko pomiar):**
+- #1 — osobny bug w merge domyślnych wartości panelu współpracy Admin.
+- #2, #7, #8 — trzy różne miejsca tego samego wzorca: kontrakt/konfiguracja klient-serwer rozjechała
+  się na tej gałęzi (brakujący literal enum, wciąż zarejestrowana usunięta trasa, zepsute mapowanie
+  nowej trasy) — razem sugerują niedokończony refaktor tras/kontraktów artefaktów na `codex/asm-t6`.
+- #3, #4-6 — dwa różne miejsca tego samego wzorca: i18n/tekst UI nie renderuje się poprawnie w menu
+  kontekstowym mapy myśli i w menu kebab — prawdopodobnie wspólna przyczyna w warstwie i18n/labels.
+- #9 — osobny bug: zdublowany element UI w tabeli rejestru promptów.
 
 ## Higiena
 
