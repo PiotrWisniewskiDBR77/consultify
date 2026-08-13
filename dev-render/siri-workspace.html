@@ -1,19 +1,21 @@
 <!doctype html>
-<html lang="en">
+<html lang="pl">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>A7 SIRI Workspace — Isolated Harness</title>
+    <title>S5 SIRI Method Workspace — Isolated Harness</title>
   </head>
   <body>
     <!--
-      A7 ISOLATED TEST HARNESS — separate entry point, mirroring A5's
-      `method-workspace.html` pattern (see that file's header for why: the
-      shared `dev-render/index.html` -> `main.tsx` registry statically
-      imports every registered screen, including at least one file that does
-      not exist at some worktree base commits — an unrelated, pre-existing
-      gap). This entry mounts ONLY `siri-workspace` directly
-      (`siri-workspace-main.tsx`), bypassing the shared registry entirely.
+      S5 ISOLATED TEST HARNESS — mirrors drd-workspace.html. Mounts ONLY the
+      SIRI vertical slice (siri-workspace-main.tsx) directly, avoiding the
+      shared dev-render/main.tsx registry (which statically imports unrelated
+      screens that may be missing in this worktree).
+
+      URL params:
+        &screen=matrix|leapfrog|evidence|frozen|tier
+        &theme=light|dark
+        &demoSessionId=<id>  (resume a session created earlier this run)
     -->
     <div id="dev-render-root" style="height: 100vh; width: 100vw"></div>
     <script type="module" src="/siri-workspace-main.tsx"></script>
