@@ -27,10 +27,29 @@ export default async function globalSetup(config: FullConfig) {
     await page.goto('/login', { waitUntil: 'domcontentloaded' });
     await page.getByTestId('email-input').fill(email);
     await page.getByTestId('password-input').fill(password);
-    await Promise.all([
+    const [loginResponse] = await Promise.all([
       page.waitForResponse((response) => response.url().includes('/api/auth/login'), { timeout: 60_000 }),
       page.getByTestId('login-button').click(),
     ]);
+    if (!loginResponse.ok()) {
+      throw new Error(`REAL_OWNER_LOGIN_FAILED: HTTP ${loginResponse.status()}`);
+    }
+    const loginPayload = await loginResponse.json().catch(() => null);
+    const serverIdentity = loginPayload?.user || null;
+    const serverRole = String(serverIdentity?.role || serverIdentity?.userRole || '').toUpperCase();
+    if (
+      String(serverIdentity?.email || '').toLowerCase() !== EXPECTED_EMAIL ||
+      serverRole !== 'OWNER' ||
+      String(serverIdentity?.organizationId || '') !== EXPECTED_ORGANIZATION_ID
+    ) {
+      throw new Error(
+        `SERVER_OWNER_IDENTITY_MISMATCH: ${JSON.stringify({
+          email: serverIdentity?.email,
+          role: serverRole,
+          organizationId: serverIdentity?.organizationId,
+        })}`
+      );
+    }
     await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 60_000 });
 
     const identity = await page.evaluate(() => {
