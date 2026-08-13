@@ -9,6 +9,7 @@ import { AlertTriangle, Check, CloudOff, Loader2, PencilLine } from 'lucide-reac
 import React from 'react';
 
 import type { MethodSaveState } from '@/method-core/contracts';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 export interface SaveStateIndicatorProps {
   state: MethodSaveState;
@@ -19,6 +20,13 @@ export interface SaveStateIndicatorProps {
   onStay?: () => void;
   /** Compact = icon + short label only (Header). Default full label (bottom bar). */
   compact?: boolean;
+  /**
+   * Whether this instance announces state changes via `aria-live` (default true).
+   * The shell renders this component twice (header + bottom bar) for the SAME
+   * state — pass `false` on one of the two so screen reader users hear the
+   * change once, not twice.
+   */
+  announce?: boolean;
   className?: string;
 }
 
@@ -39,8 +47,10 @@ export const SaveStateIndicator: React.FC<SaveStateIndicatorProps> = ({
   onRetry,
   onStay,
   compact = false,
+  announce = true,
   className = '',
 }) => {
+  const prefersReducedMotion = useReducedMotion();
   const base = 'inline-flex items-center gap-1.5 text-xs font-medium';
 
   let icon: React.ReactNode;
@@ -64,7 +74,7 @@ export const SaveStateIndicator: React.FC<SaveStateIndicatorProps> = ({
       tone = 'text-c-warning';
       break;
     case 'SAVING':
-      icon = <Loader2 size={13} className="animate-spin" />;
+      icon = <Loader2 size={13} className={prefersReducedMotion ? '' : 'animate-spin'} />;
       label = 'Zapisywanie…';
       tone = 'text-c-info';
       break;
@@ -84,7 +94,14 @@ export const SaveStateIndicator: React.FC<SaveStateIndicatorProps> = ({
   }
 
   return (
-    <div className={`${base} ${tone} ${className}`} data-testid="save-state-indicator" data-state={state}>
+    <div
+      role="status"
+      aria-live={announce ? 'polite' : 'off'}
+      aria-atomic="true"
+      className={`${base} ${tone} ${className}`}
+      data-testid="save-state-indicator"
+      data-state={state}
+    >
       {icon}
       <span>{label}</span>
       {!compact && state === 'DIRTY' && onSaveNow && (

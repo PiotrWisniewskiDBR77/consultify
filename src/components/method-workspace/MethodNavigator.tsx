@@ -10,6 +10,8 @@
 import { ChevronRight } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
+import { useReducedMotion } from '@/hooks/useReducedMotion';
+
 import type { MethodEvidenceState, MethodNavigatorNode } from './types';
 
 export interface MethodNavigatorProps {
@@ -59,30 +61,53 @@ const NodeRow: React.FC<{
   const hasChildren = node.children.length > 0;
   const isLeaf = !hasChildren;
   const active = node.unitId === activeUnitId;
+  const prefersReducedMotion = useReducedMotion();
 
+  const activate = (e: React.SyntheticEvent) => {
+    // Stop propagation: role="treeitem" now lives on <li>, and <li>s nest
+    // (a parent's <li> wraps its children's <ul role="group">) — without
+    // this, a click/Enter on a DEEP child would bubble to every ancestor
+    // <li>'s own handler and re-toggle/re-select them too.
+    e.stopPropagation();
+    isLeaf ? onSelect(node.unitId) : setExpanded((v) => !v);
+  };
+
+  // `role="treeitem"` MUST live on the <li> itself (the ARIA treeview pattern
+  // requires <ul role="tree"|"group"> to own only treeitem/group children —
+  // axe: aria-required-children/aria-required-parent/listitem all fail when
+  // the role instead sits on an inner <div>, because the <li> then reads as
+  // "just a list item" to the accessibility tree, not a tree node). The
+  // `<ul role="group">` for children stays NESTED inside this <li> (a
+  // treeitem may own a group), not as its sibling. The <li> itself is left
+  // unstyled/non-flex (so the nested <ul> doesn't get pulled into a flex
+  // row) — the visual row (background/hover/focus ring) lives on the inner
+  // div, driven off the <li>'s focus-visible state via Tailwind `group`.
   return (
-    <li>
+    <li
+      className="group/treeitem list-none focus-visible:outline-none"
+      role="treeitem"
+      aria-expanded={hasChildren ? expanded : undefined}
+      aria-selected={active}
+      aria-label={`${node.name}${isLeaf ? `, poziom ${node.currentLevel ?? 'nieustalony'}${node.targetLevel !== null ? ` z ${node.targetLevel}` : ''}, evidence ${node.evidenceState}${node.openQuestionCount > 0 ? `, ${node.openQuestionCount} otwartych pytań` : ''}` : ''}`}
+      tabIndex={0}
+      onClick={activate}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          activate(e);
+        }
+      }}
+    >
       <div
-        className={`flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs cursor-pointer transition-colors ${
+        className={`flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs cursor-pointer transition-colors group-focus-visible/treeitem:ring-2 group-focus-visible/treeitem:ring-c-focus ${
           active ? 'bg-c-surface-raised text-c-text font-semibold' : 'text-c-text-secondary hover:bg-c-surface-raised'
         }`}
         style={{ paddingLeft: `${8 + depth * 14}px` }}
-        role="treeitem"
-        aria-expanded={hasChildren ? expanded : undefined}
-        aria-selected={active}
-        tabIndex={0}
-        onClick={() => (isLeaf ? onSelect(node.unitId) : setExpanded((v) => !v))}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            isLeaf ? onSelect(node.unitId) : setExpanded((v) => !v);
-          }
-        }}
       >
         {hasChildren && (
           <ChevronRight
             size={12}
-            className={`shrink-0 transition-transform text-c-text-muted ${expanded ? 'rotate-90' : ''}`}
+            className={`shrink-0 text-c-text-muted ${prefersReducedMotion ? '' : 'transition-transform'} ${expanded ? 'rotate-90' : ''}`}
           />
         )}
         <span

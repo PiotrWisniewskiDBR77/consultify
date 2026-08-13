@@ -81,6 +81,29 @@ describe('AnswerStateControl', () => {
     expect(onChange).toHaveBeenCalledWith('not_applicable', 'Proces nie istnieje w tej organizacji.');
   });
 
+  it('the selected answer state is visually distinguished from the rest — not color-via-CSS-attribute alone (regression: `data-[selected=true]:` Tailwind variant does not compile in this repo, so the class must be applied directly in JS)', () => {
+    render(
+      <AnswerStateControl
+        value="dont_know"
+        onChange={vi.fn()}
+        resolutionData={makeResolutionData()}
+        onResolutionAction={vi.fn()}
+      />
+    );
+    const selectedBtn = screen.getByText('Nie wiem / potrzebuję pomocy').closest('button')!;
+    const unselectedBtn = screen.getByText('Potwierdzone').closest('button')!;
+
+    expect(selectedBtn).toHaveAttribute('aria-checked', 'true');
+    // The visually-selected tone class must be literally present in the
+    // rendered class list (not delegated to a `data-[selected=true]:` CSS
+    // variant, which this repo's Tailwind build silently drops).
+    expect(selectedBtn.className).toMatch(/border-c-info/);
+    expect(selectedBtn.className).not.toMatch(/data-\[selected/);
+
+    expect(unselectedBtn).toHaveAttribute('aria-checked', 'false');
+    expect(unselectedBtn.className).not.toMatch(/border-c-success/);
+  });
+
   it('ResolutionCard actions forward to onResolutionAction', () => {
     const onResolutionAction = vi.fn();
     render(
