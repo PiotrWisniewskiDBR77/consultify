@@ -83,6 +83,18 @@ const KPI_ROW = {
   updatedAt: '2026-08-01T00:00:00.000Z',
 };
 
+const APPROVED_VERSION = {
+  definitionVersionId: 'dv-1', kpiId: KPI_ID, organizationId: 'org-1', versionNumber: 1,
+  name: 'Realizacja korzyści', description: null, unit: '%', targetGeometry: 'threshold_min',
+  targetValue: 90, targetMin: null, targetMax: null, warningLow: 80, warningHigh: null,
+  criticalLow: 70, criticalHigh: null, binarySuccessValue: null, formulaText: null,
+  approvalStatus: 'approved', effectiveFrom: null, effectiveTo: null, createdBy: 'user-owner',
+  createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z',
+  submittedBy: 'reviewer', submittedAt: '2026-01-01T00:00:00.000Z',
+  approvedBy: 'reviewer', approvedAt: '2026-01-01T00:00:00.000Z',
+  rejectedBy: null, rejectedAt: null, rejectionReason: null, rowVersion: 1,
+};
+
 const MEASUREMENT_ROW = {
   measurementId: 'm-1',
   kpiId: KPI_ID,
@@ -141,6 +153,9 @@ const DEVIATION_CASE_ROW = {
 
 function mockApiGet(overrides: Partial<Record<string, unknown>> = {}) {
   vi.mocked(Api.get).mockImplementation(async (url: string) => {
+    if (url === `/vnext/results/kpi/${KPI_ID}/version`) {
+      return overrides.version ?? { definitionVersion: APPROVED_VERSION };
+    }
     if (url.startsWith(`/vnext/results/kpi/${KPI_ID}/measurements`)) {
       return overrides.measurements ?? { measurements: [MEASUREMENT_ROW] };
     }
@@ -201,6 +216,17 @@ describe('KpiToolPage — /results/kpi/:kpiId (klasa L full tool)', () => {
     // Both dimensions rendered as separate chips (plan §4.3/§4.4 — never one field).
     expect(screen.getByText('warning')).toBeInTheDocument();
     expect(screen.getByText('verified')).toBeInTheDocument();
+  });
+
+  it('enables activation when the current definition version is approved', async () => {
+    window.localStorage.setItem('ff.results_vnext_kpi_registry', '1');
+    mockApiGet({ kpi: { kpi: { ...KPI_ROW, status: 'draft' } } });
+
+    renderAt(`/results/kpi/${KPI_ID}`);
+
+    const activate = await screen.findByRole('button', { name: 'Aktywuj' });
+    await waitFor(() => expect(activate).toBeEnabled());
+    expect(screen.queryByText(/brak GET dla wersji/i)).not.toBeInTheDocument();
   });
 
   it('Deviations section lists the real case and clicking it requests navigation to the exact subview route', async () => {

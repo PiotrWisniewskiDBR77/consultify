@@ -447,9 +447,11 @@ export const KpiToolPage: React.FC = () => {
   }
 
   const isBusy = pending !== null;
+  const hasApprovedDefinition =
+    definitionVersion !== 'loading' && definitionVersion?.approvalStatus === 'approved';
   const noApprovedVersionReason = t(
-    'Aktywacja wymaga zatwierdzonej wersji definicji KPI (sprawdzane przez serwer — brak GET dla wersji, żeby zweryfikować to po stronie klienta).',
-    'Activation requires an approved KPI definition version (server-enforced — no GET exists for the version to verify this client-side).'
+    'Aktywacja wymaga zatwierdzonej wersji definicji KPI.',
+    'Activation requires an approved KPI definition version.'
   );
   const archivedReason = t('KPI zarchiwizowane — stan końcowy, tylko odczyt.', 'KPI archived — terminal state, read-only.');
 
@@ -467,8 +469,10 @@ export const KpiToolPage: React.FC = () => {
     primaryAction = {
       label: { pl: 'Aktywuj', en: 'Activate' },
       onClick: () => void runLifecycleAction('activate'),
-      disabled: true,
-      title: { pl: noApprovedVersionReason, en: noApprovedVersionReason },
+      disabled: isBusy || !hasApprovedDefinition,
+      title: hasApprovedDefinition
+        ? undefined
+        : { pl: noApprovedVersionReason, en: noApprovedVersionReason },
     };
   } else {
     primaryAction = {
@@ -504,13 +508,12 @@ export const KpiToolPage: React.FC = () => {
   };
 
   const propertyRows: ArtifactPropertyRow[] = [
-    { id: 'owner', label: t('Właściciel', 'Owner'), value: shortId(kpi.ownerUserId) },
+    { id: 'owner', label: t('Właściciel', 'Owner'), value: kpi.ownerUserId ? t('Przypisany', 'Assigned') : '—' },
     { id: 'process', label: t('Proces', 'Process'), value: shortId(kpi.primaryProcessId) },
     { id: 'responsePolicy', label: t('Polityka odpowiedzi', 'Response policy'), value: shortId(kpi.responsePolicyId) },
-    { id: 'definitionVersion', label: t('Bieżąca wersja definicji', 'Current definition version'), value: shortId(kpi.currentDefinitionVersionId), mono: true },
+    { id: 'definitionVersion', label: t('Bieżąca wersja definicji', 'Current definition version'), value: definitionVersion === 'loading' ? t('Wczytywanie…', 'Loading…') : definitionVersion ? `v${definitionVersion.versionNumber}` : '—' },
     { id: 'created', label: t('Utworzono', 'Created'), value: formatDate(kpi.createdAt, isPolish) },
     { id: 'updated', label: t('Zaktualizowano', 'Updated'), value: formatDate(kpi.updatedAt, isPolish) },
-    { id: 'rowVersion', label: t('Wersja (CAS)', 'Version (CAS)'), value: String(kpi.rowVersion), mono: true },
   ];
 
   const rightPanelSections: ArtifactRightPanelSection[] = [
