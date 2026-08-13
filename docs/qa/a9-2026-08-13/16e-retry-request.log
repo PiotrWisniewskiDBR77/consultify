@@ -1,0 +1,49 @@
+=== TEST 16e: retry żądania — POST events z tym samym Idempotency-Key dwa razy ===
+-- 1. pierwsze wywolanie --
+HTTP/1.1 201 Created
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Resource-Policy: same-site
+Origin-Agent-Cluster: ?1
+Referrer-Policy: strict-origin-when-cross-origin
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+X-Content-Type-Options: nosniff
+X-DNS-Prefetch-Control: off
+X-Download-Options: noopen
+X-Frame-Options: DENY
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 0
+Vary: Origin, Accept-Encoding
+Access-Control-Allow-Credentials: true
+X-Correlation-ID: d1b4c4e7-5835-4726-8478-61c8f0883fe0
+Content-Type: application/json; charset=utf-8
+Content-Length: 369
+ETag: W/"171-3diT15Wm1C1gSWh9Q2LImBMaOaM"
+Date: Thu, 13 Aug 2026 13:14:08 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"event":{"id":"7ac563a9-3e71-4d62-944d-ae1bb454db0e","type":"NOTE_ADDED","organizationId":"a9-org","sessionId":"baff6fbc-6346-4dd6-b9f7-3909ed32d620","unitId":"1A","actorKind":"human","actorUserId":"a9-user","methodPackVersion":"2.0.0-methodpack.1","occurredAt":"2026-08-13T13:14:08.686Z","idempotencyKey":"a9-retry-event-001","payload":{"text":"A9 retry-test note"}}}
+-- 2. RETRY (ten sam Idempotency-Key) --
+HTTP/1.1 201 Created
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Resource-Policy: same-site
+Origin-Agent-Cluster: ?1
+Referrer-Policy: strict-origin-when-cross-origin
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+X-Content-Type-Options: nosniff
+X-DNS-Prefetch-Control: off
+X-Download-Options: noopen
+X-Frame-Options: DENY
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 0
+Vary: Origin, Accept-Encoding
+Access-Control-Allow-Credentials: true
+X-Correlation-ID: 844e4321-5216-449f-b3cb-3e1e704d34e5
+Content-Type: application/json; charset=utf-8
+Content-Length: 369
+ETag: W/"171-3diT15Wm1C1gSWh9Q2LImBMaOaM"
+Date: Thu, 13 Aug 2026 13:14:08 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"event":{"id":"7ac563a9-3e71-4d62-944d-ae1bb454db0e","type":"NOTE_ADDED","organizationId":"a9-org","sessionId":"baff6fbc-6346-4dd6-b9f7-3909ed32d620","unitId":"1A","actorKind":"human","actorUserId":"a9-user","methodPackVersion":"2.0.0-methodpack.1","occurredAt":"2026-08-13T13:14:08.686Z","idempotencyKey":"a9-retry-event-001","payload":{"text":"A9 retry-test note"}}}

@@ -1,0 +1,25 @@
+                  id                  | state  |        revision_of_session_id        | version 
+--------------------------------------+--------+--------------------------------------+---------
+ 3601eb4f-3777-4f7e-9273-562e03fce4f4 | frozen |                                      |       5
+ baff6fbc-6346-4dd6-b9f7-3909ed32d620 | active |                                      |       7
+ e7dec513-8c68-4d5d-9f5d-bbbde312bd3a | frozen | 3601eb4f-3777-4f7e-9273-562e03fce4f4 |       3
+(3 rows)
+
+                  id                  |     kind     |   status   |              output_id               |       superseded_by_output_id        |       superseded_at        |                      title                      
+--------------------------------------+--------------+------------+--------------------------------------+--------------------------------------+----------------------------+-------------------------------------------------
+ 7d7f5a79-24c5-4250-9a35-c8e2587170b5 | report       | superseded | 8056c205-6b80-465a-96bc-b98c9382b436 | feb577d6-4446-45fe-90af-fa9b4ec74436 | 2026-08-13 13:12:18.788+00 | A9 Proof — DRD Assessment Report
+ 9ffc6593-2094-4fcf-bfea-96ccbbd28fff | presentation | superseded | 8056c205-6b80-465a-96bc-b98c9382b436 | feb577d6-4446-45fe-90af-fa9b4ec74436 | 2026-08-13 13:12:18.788+00 | A9 Proof — DRD Deck
+ 41352163-e067-4518-991d-ce5f2624a7d2 | report       | current    | feb577d6-4446-45fe-90af-fa9b4ec74436 |                                      |                            | A9 Proof — DRD Assessment Report v2 (po reopen)
+(3 rows)
+
+                  id                  |   status   |              output_id               |       superseded_by_output_id        |       superseded_at       |        title        
+--------------------------------------+------------+--------------------------------------+--------------------------------------+---------------------------+---------------------
+ 6dcef056-d12e-40d4-8ec2-ddf939931248 | superseded | 8056c205-6b80-465a-96bc-b98c9382b436 | feb577d6-4446-45fe-90af-fa9b4ec74436 | 2026-08-13 13:12:18.79+00 | A9 Proof Initiative
+(1 row)
+
+                  id                  |              session_id              | output_version |        revision_of_output_id         
+--------------------------------------+--------------------------------------+----------------+--------------------------------------
+ 8056c205-6b80-465a-96bc-b98c9382b436 | 3601eb4f-3777-4f7e-9273-562e03fce4f4 |              1 | 
+ feb577d6-4446-45fe-90af-fa9b4ec74436 | e7dec513-8c68-4d5d-9f5d-bbbde312bd3a |              2 | 8056c205-6b80-465a-96bc-b98c9382b436
+(2 rows)
+

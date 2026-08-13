@@ -1,0 +1,24 @@
+=== POST /sessions/3601eb4f-3777-4f7e-9273-562e03fce4f4/transition to=active (REOPEN) ===
+HTTP/1.1 200 OK
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Resource-Policy: same-site
+Origin-Agent-Cluster: ?1
+Referrer-Policy: strict-origin-when-cross-origin
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+X-Content-Type-Options: nosniff
+X-DNS-Prefetch-Control: off
+X-Download-Options: noopen
+X-Frame-Options: DENY
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 0
+Vary: Origin, Accept-Encoding
+Access-Control-Allow-Credentials: true
+X-Correlation-ID: 7e14ea6d-c4d7-4043-ae04-a59892ada04b
+Content-Type: application/json; charset=utf-8
+Content-Length: 442
+ETag: W/"1ba-09Hryd7tuMrKX/p6SJTeYGBfhW4"
+Date: Thu, 13 Aug 2026 13:11:33 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"session":{"id":"3601eb4f-3777-4f7e-9273-562e03fce4f4","organizationId":"a9-org","projectId":null,"module":"assessment","methodPackId":"drd","methodPackVersion":"2.0.0-methodpack.1","state":"frozen","domainStage":null,"mode":"guided_manual","ownerUserId":"a9-user","createdAt":"2026-08-13T13:01:13.201Z","updatedAt":"2026-08-13T13:03:31.924Z","version":5,"frozenSnapshotId":"80960e8c-c805-42e2-99f6-1762d1b4beb3","revisionOfSessionId":null}}

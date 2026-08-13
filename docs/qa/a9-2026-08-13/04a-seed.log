@@ -1,0 +1,19 @@
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+   id    | organization_id |      email       | role  
+---------+-----------------+------------------+-------
+ a9-user | a9-org          | a9-user@a9.local | ADMIN
+(1 row)
+
+     id      | organization_id | role  | status 
+-------------+-----------------+-------+--------
+ a9-member-1 | a9-org          | ADMIN | ACTIVE
+(1 row)
+
+     id      | organization_id | pack_id |      version       |     readiness      
+-------------+-----------------+---------+--------------------+--------------------
+ a9-pack-drd | a9-org          | drd     | 2.0.0-methodpack.1 | methodology_review
+(1 row)
+

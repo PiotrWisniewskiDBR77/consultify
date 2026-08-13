@@ -1,0 +1,256 @@
+2026-08-13T12:44:10Z
+=== docker ps before ===
+CONTAINER ID   IMAGE                    COMMAND                  CREATED          STATUS                      PORTS                                           NAMES
+df3d496dc527   pgvector/pgvector:pg15   "docker-entrypoint.s…"   7 minutes ago    Up 7 minutes                0.0.0.0:56102->5432/tcp, [::]:56102->5432/tcp   cfy-wt-idem
+2f4249b16433   pgvector/pgvector:pg16   "docker-entrypoint.s…"   8 minutes ago    Up 8 minutes                0.0.0.0:56101->5432/tcp, [::]:56101->5432/tcp   cfy-wt-bootstrap
+fe323d01de1f   pgvector/pgvector:pg15   "docker-entrypoint.s…"   27 minutes ago   Up 27 minutes               0.0.0.0:56103->5432/tcp, [::]:56103->5432/tcp   cfy-wt-outputs
+688ae58eec27   pgvector/pgvector:pg15   "docker-entrypoint.s…"   2 hours ago      Up 2 hours                  0.0.0.0:55440->5432/tcp, [::]:55440->5432/tcp   mac-pg-disposable
+761fb6d1ae10   pgvector/pgvector:pg16   "docker-entrypoint.s…"   2 hours ago      Up 2 hours                  127.0.0.1:55439->5432/tcp                       consultify-realdb-86680bd11
+61f5211d2297   pgvector/pgvector:pg16   "docker-entrypoint.s…"   2 hours ago      Up 2 hours                  0.0.0.0:55444->5432/tcp, [::]:55444->5432/tcp   fz120-web-b2b-db
+e0f70f326003   pgvector/pgvector:pg16   "docker-entrypoint.s…"   5 hours ago      Up 5 hours                  127.0.0.1:32770->5432/tcp                       consultify-final-gate-20260813
+b8afdf51ece2   pgvector/pgvector:pg16   "docker-entrypoint.s…"   5 hours ago      Up 5 hours                  0.0.0.0:55433->5432/tcp, [::]:55433->5432/tcp   fz120-rc-ffc95f6f-db
+4620e58e9592   pgvector/pgvector:pg16   "docker-entrypoint.s…"   5 hours ago      Up 5 hours (healthy)        0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp     fizzup-120-canon-integration-db-1
+8e020d2d785c   pgvector/pgvector:pg16   "docker-entrypoint.s…"   7 hours ago      Up 7 hours                  127.0.0.1:5433->5432/tcp                        fizzup-120-gate-035e9ee7
+9a1650546214   pgvector/pgvector:pg16   "docker-entrypoint.s…"   7 hours ago      Up 7 hours                  127.0.0.1:55490->5432/tcp                       consultify-relgate-20260813
+006dbe8a0ab5   pgvector/pgvector:pg16   "docker-entrypoint.s…"   8 hours ago      Up 8 hours                  127.0.0.1:55480->5432/tcp                       consultify-foundation-20260813
+6ab130c4a6f6   pgvector/pgvector:pg16   "docker-entrypoint.s…"   16 hours ago     Exited (137) 16 hours ago                                                   consultify-artifact-recovery-pg
+74ee2b57d2c8   pgvector/pgvector:pg16   "docker-entrypoint.s…"   17 hours ago     Exited (0) 17 hours ago                                                     consultify-artifact-613f6869
+2f7d7df3422d   pgvector/pgvector:pg18   "docker-entrypoint.s…"   25 hours ago     Exited (0) 23 hours ago                                                     consultify-ie-demo-restore-20260812
+abfb88dbe643   pgvector/pgvector:pg16   "docker-entrypoint.s…"   25 hours ago     Up 23 hours                 127.0.0.1:55472->5432/tcp                       consultify-artifact-qa-73f13b2
+9a0bf618fd91   pgvector/pgvector:pg16   "docker-entrypoint.s…"   38 hours ago     Exited (0) 38 hours ago                                                     fizzup-120-uiux-recovery-db-1
+76a4d3939b77   pgvector/pgvector:pg16   "docker-entrypoint.s…"   2 days ago       Exited (0) 23 hours ago                                                     fizzup-fz120-podcast-db
+bfa763e4716d   postgres:15              "docker-entrypoint.s…"   2 days ago       Exited (0) 23 hours ago                                                     consultify-ie-acceptance-20260810
+ae4bef94eb3d   pgvector/pgvector:pg16   "docker-entrypoint.s…"   3 days ago       Up 23 hours                 127.0.0.1:55432->5432/tcp                       case-workspace-test-pg
+e35b2f04eb37   pgvector/pgvector:pg16   "docker-entrypoint.s…"   3 days ago       Exited (255) 3 days ago     127.0.0.1:55439->5432/tcp                       fizzup-fz120-content-acceptance
+30c41fe365ee   postgres:15              "docker-entrypoint.s…"   3 days ago       Exited (255) 3 days ago     127.0.0.1:55433->5432/tcp                       consultify-ie-e2e-pg
+
+=== Krok 1: nowa baza mac-pg-a9 ===
+Start: 2026-08-13T12:44:10Z (docker run)
+Container ID: 38d79f3bed1f1133f0816219a79f40facb0b9a8bdd2a9958a119232e8434371f
+Port: 55450 -> 5432
+Ready (pg_isready): 2026-08-13T12:44:19Z
+DB: a9_test / user a9 / password a9
+
+=== Krok 2: migracje — FAIL (blokujące) ===
+Komenda: NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres DATABASE_URL=postgres://a9:a9@localhost:55450/a9_test npx tsx server/scripts/migrate.postgres.ts
+EXIT=1
+Blad: "20260813_method_core_http_idempotency.sql: relation \"method_sessions\" does not exist"
+Przyczyna (potwierdzona, PRE-EXISTING, nie wprowadzona w tym biegu):
+  - HEAD worktree = 3e3955a82a = dokladnie baseline zlecony w zadaniu (bez lokalnych zmian w server/migrations/)
+  - server/migrations/20260813_method_core_kernel.sql (commit 123eec72e5, 2026-08-13 09:41:44+02) tworzy method_sessions
+  - server/migrations/20260813_method_core_http_idempotency.sql (commit 472fda28c8, 2026-08-13 13:20:22+02) odwoluje sie
+    do method_sessions (FK), ale ma TA SAMA DATE w nazwie -> deterministyczny sort w
+    server/scripts/migrate.postgres.ts (compareMigrationOrder/phaseAndKeyFor, linie ~272-304) sortuje
+    w obrebie tej samej daty leksykograficznie po nazwie pliku: "..._http_idempotency.sql" < "..._kernel.sql"
+    (h < k) -> http_idempotency probuje sie wykonac PRZED kernel.
+  - Brak wpisu w EARLY_VERSION_OVERRIDES (linie 210-269) dla ktoregokolwiek z tych dwoch plikow.
+  - Sprawdzono git log --all + origin/demo: brak jakiejkolwiek istniejacej naprawy tej pary plikow.
+Stan bazy po awarii: ~przed-tabela liczba tabel zaladowanych z wczesniejszych ~790 migracji (patrz
+  docs/qa/a9-2026-08-13/02b-post-fail-db-state.log), method_sessions = NULL (nie istnieje), schemat
+  method-core NIEKOMPLETNY.
+DECYZJA: zgodnie z mandatem "jesli cos nie dziala - zaraportuj FAIL z dowodem, nie obchodz" — NIE
+  modyfikowano zadnego pliku migracji/skryptu, NIE uzyto --safe (znany fantom zielonego expit0),
+  NIE ponawiano probably-deterministycznego biegu. Krok 2 = FAIL. Kroki 3-16 = BLOCKED/NOT VERIFIED,
+  bo serwer API wymaga kompletnego schematu method-core (a wlasnie sesje DRD sa przedmiotem A9).
+2026-08-13T12:46:37Z
+
+=== WZNOWIENIE A9 (po naprawie koordynatora) ===
+Merge fix branch: codex/method-assessment-core-20260813 -> codex/mac-p0d-a9-20260813 (fast-forward 3e3955a82a..6634752bdd)
+Naprawa potwierdzona: 4 pliki 20260813_method_core_[1-4]_*.sql obecne w server/migrations/
+Nowy HEAD: 6634752bdd
+
+=== Krok 1 (v2): nowa baza mac-pg-a9b ===
+Uwaga: 55480 zajete przez inny zywy kontener (consultify-foundation-20260813) -> uzyto 55481
+Start: 2026-08-13T12:55:04Z
+Container ID: 597ae516db85b1a6e6079f7fd7f520b24a550ce770109069adf58b9ce0348569
+Port: 55481 -> 5432
+Ready (pg_isready): 2026-08-13T12:55:06Z
+
+=== Krok 2 (v2): migracje na mac-pg-a9b — PASS ===
+Komenda: NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres DATABASE_URL=postgres://a9:a9@localhost:55481/a9_test npx tsx server/scripts/migrate.postgres.ts
+EXIT=0 ; "Postgres migrations complete"
+Kolejnosc method_core potwierdzona w logu: 1_kernel -> 2_outputs -> 3_http_idempotency -> 4_bypass_status (poprawna)
+WERYFIKACJA information_schema (nie tylko exit code, zgodnie z zaleceniem koordynatora):
+  - 12 tabel method_* (method_events, method_evidence, method_findings, method_initiative_drafts,
+    method_outputs, method_packs, method_report_snapshots, method_session_create_idempotency,
+    method_session_roles, method_sessions, method_snapshots, method_teresa_previews)
+  - demo_bypass_active: obecna w method_sessions, method_outputs, method_report_snapshots (boolean)
+  - kind: obecna w method_report_snapshots (text)
+  - method_sessions i method_session_create_idempotency: potwierdzone przez to_regclass (nie NULL)
+Pelny dowod: docs/qa/a9-2026-08-13/02c-schema-verify.log
+2026-08-13T12:56:37Z
+
+=== Krok 3: API + frontend ===
+API: PORT=41560, start ~2026-08-13T12:56:39Z, /api/ready = 200 o 2026-08-13T12:57:27Z
+  Payload: {"status":"ready","database":"ready","migrations":{"state":"ok","detail":"13 applied, 449 already up to date"},...}
+Frontend: dev-render --port 41570, proxy DEV_RENDER_API_PROXY_TARGET=http://localhost:41560, listening potwierdzone lsof
+
+=== Seed danych testowych (wlasna baza a9_test) ===
+organizations: a9-org
+users: a9-user (rola ADMIN, email a9-user@a9.local)
+organization_members: a9-org/a9-user status=ACTIVE role=ADMIN
+method_packs: a9-pack-drd (pack_id=drd, version=2.0.0-methodpack.1, readiness=methodology_review — zgodnie z DRD_METHOD_PACK_VERSION w src/method-core/methods/drd/compileDrdPack.ts)
+Dowod: docs/qa/a9-2026-08-13/04a-seed.log
+
+=== JWT dla a9-user ===
+Payload: {id:'a9-user', organizationId:'a9-org', role:'user', email:'a9-user@a9.local'}, exp 2h
+Podpisany JWT_SECRET=test-secret-key-for-testing-only-min-32-chars (ten sam co w env serwera)
+Weryfikacja curl: GET /api/method/packs z Authorization: Bearer <token> -> 200, zwraca a9-pack-drd (potwierdza auth + org-scoped query dziala)
+
+=== ZNALEZISKO (krok 7, nieplanowane ale wazne): refresh po freeze via API w INNEJ karcie ===
+Kolejnosc faktyczna: sesje przeprowadzilem czesciowo przez API bezposrednio (freeze/Output/Report/
+Presentation/Initiative-draft), NIE przez ta sama karte przegladarki, ktora stworzyla sesje. Po
+odswiezeniu tej karty (ktora wczesniej pokazywala stan "active" z cache), ekran przeszedl na WIDOK
+ODZYSKIWANIA: "Sesja 3601eb4f — Zamrozona [RECOVERY_DRAFT]" — TO JEST DOWOD ze stan pochodzi z
+serwera (frozen), nie z lokalnego cache (bylby nadal "active" gdyby czytal z localStorage/pamieci).
+Ekran jawnie i uczciwie komunikuje ZNANY, UDOKUMENTOWANY brak P0A/P0B:
+  "Sesja jest zamrozona na serwerze, ale ta przegladarka nie ma lokalnego wskaznika jej Outputu
+  (zaden freeze() nie wykonal sie w tej karcie) — serwer nie udostepnia listy Outputow po sesji."
+  "Reopen — nowa rewizja: Brak endpointu HTTP do reopen [...] Akcja wylaczona jawnie, nie udawana."
+POTWIERDZONE w kodzie: server/src/routes/method-core.routes.ts ma TYLKO GET /outputs/:id (po znanym
+id), BRAK GET /sessions/:id/outputs (lista). To jest realne, uczciwie oznaczone ograniczenie UI tej
+gałęzi P0C, NIE defekt wprowadzony przeze mnie — UI POPRAWNIE odmawia zmyslania danych, ktorych nie
+ma lokalnie, zamiast pokazac cos falszywego. Zanotowane jako NOT VERIFIED / KNOWN GAP w raporcie.
+Zrzut: widziany inline w transkrypcie sesji (patrz narzedzie computer/screenshot, timestamp ~13:05Z).
+
+=== Krok 4: sesja DRD z przegladarki ===
+URL: http://localhost:41570/drd-workspace.html?screen=http-server&theme=light
+Sesja utworzona przez UI: baff6fbc-6346-4dd6-b9f7-3909ed32d620 (druga, "czysta" sesja — pierwsza,
+3601eb4f, uzyta do dowodu freeze->Output->Report->Presentation->Initiative-draft przez API, patrz nizej)
+Wskaznik SERVER widoczny w nagłówku (zielona plakietka "SERVER" prawy gorny róg paska)
+
+=== Krok 5: udzielenie odpowiedzi + dowod ===
+Reczne kliknięcie w textarea (ref_38), wpisanie tekstu:
+  " [A9 PROOF 2026-08-13T13:xx] Odpowiedz zlozona reczne z przegladarki podczas dowodu A9 P0D."
+Klik "Zapisz teraz" (ref_11) -> UI pokazalo "Zapisano 15:06"
+POTWIERDZONE W BAZIE (SELECT method_events WHERE session_id='baff6fbc...'):
+  id=f3bde6bb-b832-4033-8ef8-16b4a4def903, type=ANSWER_DRAFTED, unit_id=1A,
+  occurred_at=2026-08-13 13:06:43.338+00,
+  payload_json.text zawiera doslownie wpisany tekst " [A9 PROOF 2026-08-13T13:xx] Odpowiedz zlozona
+  reczne z przegladarki podczas dowodu A9 P0D."
+-> DOWOD: odpowiedz wpisana w przegladarce faktycznie dotarla przez HTTP POST /sessions/:id/events
+   do PostgreSQL (nie do localStorage/pamieci).
+
+=== Krok 6: network log ===
+mcp__Claude_Browser__read_network_requests potwierdza dla sesji baff6fbc:
+  GET .../events -> 200, POST .../events -> 201, GET session -> 200, GET .../events -> 200 (x3 cykle
+  zapisu — pasujace do 3 eventow w bazie: EVIDENCE_ATTACHED, DECISION_APPROVED, ANSWER_DRAFTED)
+Pelny zrzut listy: docs/qa/a9-2026-08-13/06-network-browser.log (sesja 3601eb4f) — analogiczny wzorzec
+dla baff6fbc potwierdzony live w tym kroku (401->201 nie wystapil bo token juz byl w localStorage).
+
+=== Krok 7: refresh — obserwacja i wyjasnienie (NIE defekt produktu) ===
+Po odswiezeniu ekranu http-server z &demoSessionId=baff6fbc..., tekst mojej recznej odpowiedzi
+zostal NADPISANY przez kolejny automatyczny ANSWER_CONFIRMED (21490355..., 13:07:21.7Z) z tekstem
+kanonicznym demo. Przyczyna POTWIERDZONA W KODZIE (nie zgadywana): dev-render/drd-workspace-main.tsx
+mapuje screen=http-server -> seedTo='interview'; DrdHttpMethodWorkspaceScreen.tsx linia ~337:
+"if (seedTo && !seedStartedRef.current) { seedHttpSession(runtime, seedTo); }" URUCHAMIA SIE PRZY
+KAZDYM zaladowaniu tego ekranu (bootstrap harnessu do deterministycznych zrzutow), niezaleznie od
+demoSessionId — wiec KAZDY reload tego URL dopisuje nowa runde kanonicznych zdarzen demo NA WIERZCH
+prawdziwej historii. To cecha TEGO TESTOWEGO HARNESSU (dev-render, nie realna trasa produktu), nie
+utrata stanu przez serwer/DB.
+DOWOD ze stan i tak jest z serwera (nie z cache): (a) ID sesji (baff6fbc...) nie zmienilo sie miedzy
+zaladowaniami; (b) licznik postepu "1/39 jednostek" jest identyczny po kazdym reload, bo liczony z
+realnych eventow w DB; (c) moja reczna odpowiedz (eventid f3bde6bb) POZOSTAJE trwale w method_events
+mimo ze UI pozniej narysowal nowszy event na wierzchu — to jest append-only event store dzialajacy
+zgodnie z projektem (kazdy zapis to NOWY event, zaden nie ginie), a nie "state wraca z cache".
+Bezposredni dowod server-authoritative refresh: GET /api/method/sessions/:id oraz .../events zawsze
+zwracaja BIEZACY stan z Postgres (patrz 06-network-browser.log — kazdy zapis nastepuje GET odswiezajacy).
+
+=== Krok 8: zamkniecie przegladarki ===
+Karta (tab-5) zamknieta o 2026-08-13T13:08:00Z (przed timestampem ponizej)
+
+=== Krok 9: zatrzymanie frontend + API ===
+Timestamp zlecenia stop: 2026-08-13T13:08:54Z
+API PID 26035 (port 41560) -> kill
+Frontend PID 26430 (port 41570) -> kill
+
+=== Krok 10: ponowny start frontend + API ===
+Zlecenie startu: 2026-08-13T13:09:00Z
+API /api/ready = 200 o 2026-08-13T13:09:33Z
+{"status":"ready","database":"ready","migrations":{"state":"ok","detail":"0 applied, 462 already up to date"},"timestamp":"2026-08-13T13:09:22.978Z"}
+Frontend (port 41570) potwierdzony lsof przed API (vite startuje szybciej)
+
+=== Krok 11+12: Session z PostgreSQL po restarcie + wskaznik SERVER ===
+Nowa karta przegladarki (tab-6), NAVIGATE do http-server&demoSessionId=baff6fbc... PO restarcie API+FE.
+Ekran poprawnie odtworzyl: "Sesja baff6fbc" (ten sam ID sprzed restartu), postep "1/39 jednostek",
+plakietka "SERVER" widoczna w prawym gornym rogu paska naglowka (zrzut oglądany inline w transkrypcie
+sesji, tabId tab-6).
+Network log (read_network_requests, tab-6) potwierdza SWIEZE zapytania HTTP GET/POST przeciw
+zrestartowanemu procesowi API (nowy PID) -> dane NIE pochodza z pamieci przegladarki sprzed restartu
+(karta byla utworzona OD NOWA, tab-5 zamknieto w kroku 8).
+Dodatkowo (GET bezposrednio, 11-req-reopen-after-restart.log): GET /sessions/3601eb4f... i
+GET /outputs/8056c205... zwracaja 200 z PELNYMI danymi (w tym roles:["owner","lead_assessor",
+"approver"]) PO restarcie.
+
+=== Krok 13: freeze -> Output -> approval -> Report -> Initiative (wykonane PRZED restartem, przez API) ===
+Kolejnosc faktyczna: transition->in_review (06-req...), freeze (07-req-freeze.log, Output+finding
+utworzone), Report (08-req-report.log), Presentation+Initiative-draft (09-req-presentation-initiative.log).
+Wszystkie 201/200, ID zebrane. Rola approver+lead_assessor nadana JAWNIE przez SQL (05a-roles-seed.log)
+zgodnie z kanonem "jedna osoba moze trzymac kilka rol, ale wprost" (server/src/method-core/contracts/session.ts:130).
+
+=== Krok 14: ponowne otwarcie artefaktow — CZESCIOWY GAP (uczciwie udokumentowany) ===
+Session: GET /sessions/:id -> DZIALA (potwierdzone po restarcie).
+Output: GET /outputs/:id -> DZIALA (potwierdzone po restarcie).
+Report/Presentation/Initiative Draft: BRAK endpointu GET w server/src/routes/method-core.routes.ts
+(grep potwierdza TYLKO 4 trasy GET w calym routerze: /packs, /sessions/:id, /sessions/:id/events,
+/outputs/:id — zaden GET dla /outputs/:id/report, /outputs/:id/presentation ani
+/outputs/:id/initiative-drafts). Mozna je UTWORZYC (POST) ale NIE ODCZYTAC pojedynczo przez HTTP po
+fakcie w tej wersji P0. To pasuje do udokumentowanego w UI ograniczenia widzianego w kroku 7/recovery
+("serwer nie udostepnia listy Outputow po sesji" — analogicznie brak GET dla samych snapshotow).
+Odczyt "ponowny" dla tych trzech artefaktow zweryfikowany WYLACZNIE przez bezposrednie zapytanie SQL
+do PostgreSQL (patrz krok 15) — NIE przez HTTP, bo taki endpoint nie istnieje.
+
+=== Krok 15: lineage potwierdzony SQL (PELNY DOWOD) ===
+Wykonano REOPEN naprawde: transition frozen->active na sesji 3601eb4f -> nowa rewizja
+e7dec513 (revision_of_session_id=3601eb4f) -> in_review -> freeze -> Output v2 (feb577d6,
+revision_of_output_id=8056c205=Output v1) -> nowy Report na Output v2.
+SQL POTWIERDZA (docs/qa/a9-2026-08-13/15-lineage.sql.txt):
+  - method_sessions: e7dec513.revision_of_session_id = 3601eb4f (poprawny lancuch rewizji)
+  - method_outputs: feb577d6.revision_of_output_id = 8056c205 (poprawny lancuch Outputow)
+  - method_report_snapshots: Report v1 (7d7f5a79) i Presentation v1 (9ffc6593) oba
+    status=superseded, superseded_by_output_id=feb577d6, superseded_at ustawione; nowy
+    Report v2 (41352163) status=current
+  - method_initiative_drafts: Initiative Draft (6dcef056), utworzony TYLKO na Output v1,
+    TAKZE superseded_by_output_id=feb577d6 mimo ze nie ma wlasnego odpowiednika na v2 —
+    dowodzi ze supersedeLineageResultsFor dziala na CALEJ linii sesji (collectLineageSessionIds),
+    nie tylko na tym samym Output — dokladnie tak jak opisuje komentarz w method-core.routes.ts.
+
+=== Krok 16: testy awaryjne — WYNIKI ===
+16a. Duplicate submit / retry bez duplikatu (POST /sessions z tym samym Idempotency-Key x2):
+     1. wywolanie 201 idempotentReplay:false; 2. wywolanie 200 idempotentReplay:true, TEN SAM id
+     sesji (4a903468...). PASS. Dowod: 16a-duplicate-submit.log
+16b. Stale revision (transition z expectedVersion=999 na sesji o version=1):
+     409 version_conflict, currentVersion:1 zwrocone poprawnie. PASS. Dowod: 16b-stale-revision.log
+16c. Unauthorized role (a9-user ma tylko 'owner' na baff6fbc, transition->in_review wymaga
+     lead_assessor|assessor): 403 missing_permission, requiredRole:"lead_assessor". PASS.
+     Dowod: 16c-unauthorized-role.log
+16d. Cross-organization (nowy user a9-user-2 w NOWEJ org a9-org-2 probuje czytac zasoby a9-org):
+     GET /sessions/:id (obcej org) -> 403 "Session does not belong to this organization"
+     GET /outputs/:id (obcej org) -> 404 "Output not found" (org-scoped query, nie ujawnia istnienia)
+     GET /packs -> 200 {"packs":[]} (pusta lista, BRAK wycieku packow a9-org)
+     PASS (pelna izolacja tenant). Dowod: 16d-cross-org.log, seed: 16d-seed-other-org.log
+16e. Retry żądania — POST events z tym samym Idempotency-Key x2: oba 201, ALE TEN SAM event.id
+     (7ac563a9...) i ten sam occurredAt; SQL potwierdza dokladnie 1 wiersz w method_events dla tego
+     klucza. PASS funkcjonalnie (brak duplikatu danych); DROBNA UWAGA: kod statusu HTTP przy replay
+     to 201 zamiast bardziej semantycznie poprawnego 200 (kosmetyczne, NIE utrata danych/integralnosci).
+     Dowod: 16e-retry-request.log
+16f. Przerwanie miedzy freeze a Output (self-heal): zamrozono sesje realnie (Output utworzony), potem
+     RECZNIE skasowano wiersz method_outputs (symulacja procesu, ktory padl miedzy dwoma zapisami),
+     nastepnie ponowny POST /freeze (inny Idempotency-Key, bo to NOWA proba operatora) -> 200,
+     selfHealed:true, NOWY Output (fdf07cce...) utworzony z frozen_snapshot_id sesji. SQL potwierdza
+     dokladnie 1 Output dla tej sesji po naprawie. PASS. Dowod: 16f-selfheal-*.log
+16g. API niedostepne: zatrzymano API (kill), curl do endpointu -> exit code 7 (connection refused,
+     "Failed to connect"), potwierdzajac ze klient poprawnie nie dostaje falszywej odpowiedzi 200 gdy
+     serwer nie zyje. API zrestartowane zaraz potem (patrz timestampy nizej). PASS (poziom
+     transportu/HTTP potwierdzony bezposrednio; warstwa UI "offline" state — DrdHttpSessionRuntime
+     isOfflineError — zweryfikowana W KODZIE (src/method-core/methods/drd/drdHttpSessionRuntime.ts),
+     NIE ponownie zademonstrowana wizualnie w przegladarce w tym kroku z powodu budzetu czasu — patrz
+     NOT VERIFIED w raporcie koncowym).
+
+=== SPRZATANIE KONCOWE ===
+Ostatnia inwentaryzacja bazy (17-final-full-inventory.sql.txt): 3 orgs, 3 users, 1 pack, 4 sessions,
+10 role, 22 eventy, 3 outputy, 3 snapshoty (2 report+1 presentation... wlasciwie sprawdzic kind), 1 draft,
+3 wpisy idempotency.
+Stop API+FE (koncowy): 2026-08-13T13:16:10Z (potwierdzone: porty wolne)
+Karta przegladarki zamknieta.
+2026-08-13T13:16:25Z

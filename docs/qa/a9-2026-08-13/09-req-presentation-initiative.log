@@ -1,0 +1,48 @@
+=== POST /outputs/8056c205-6b80-465a-96bc-b98c9382b436/presentation ===
+HTTP/1.1 201 Created
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Resource-Policy: same-site
+Origin-Agent-Cluster: ?1
+Referrer-Policy: strict-origin-when-cross-origin
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+X-Content-Type-Options: nosniff
+X-DNS-Prefetch-Control: off
+X-Download-Options: noopen
+X-Frame-Options: DENY
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 0
+Vary: Origin, Accept-Encoding
+Access-Control-Allow-Credentials: true
+X-Correlation-ID: 804977df-8ddf-4039-b579-e9c7337f6ba1
+Content-Type: application/json; charset=utf-8
+Content-Length: 896
+ETag: W/"380-VnJRxKHCApqcXQBwJIVwOX40N7E"
+Date: Thu, 13 Aug 2026 13:03:58 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"report":{"id":"9ffc6593-2094-4fcf-bfea-96ccbbd28fff","organizationId":"a9-org","outputId":"8056c205-6b80-465a-96bc-b98c9382b436","sessionId":"3601eb4f-3777-4f7e-9273-562e03fce4f4","title":"A9 Proof — DRD Deck","content":{"slides":[{"title":"Podsumowanie","body":"A9 end-to-end proof"}]},"contentHash":"4fdb10436507936f1df3ae77d04f15982715d37744c7fd6ea5e2a6de91b464c5","status":"current","supersededByOutputId":null,"supersededAt":null,"createdAt":"2026-08-13T13:03:58.026Z","kind":"presentation","demoBypassActive":true},"demoBypassActive":true,"demoBypassNotice":"Sesja utworzona z pominięciem bramki gotowości packa (demo bypass) — pack NIE jest released/pilot. To jest ŚCIEŻKA DEMONSTRACYJNA, wyłączona strukturalnie na produkcji i domyślnie wyłączona wszędzie indziej. Gotowość packa (method_packs.readiness) nie została i nie może zostać przez ten mechanizm zmieniona."}
+=== POST /outputs/8056c205-6b80-465a-96bc-b98c9382b436/initiative-drafts ===
+HTTP/1.1 201 Created
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Resource-Policy: same-site
+Origin-Agent-Cluster: ?1
+Referrer-Policy: strict-origin-when-cross-origin
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+X-Content-Type-Options: nosniff
+X-DNS-Prefetch-Control: off
+X-Download-Options: noopen
+X-Frame-Options: DENY
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 0
+Vary: Origin, Accept-Encoding
+Access-Control-Allow-Credentials: true
+X-Correlation-ID: efc2dfe1-adc4-4226-b36a-c44e38021781
+Content-Type: application/json; charset=utf-8
+Content-Length: 575
+ETag: W/"23f-YrSkx0lVFHIx35uS7V4k+v4wU70"
+Date: Thu, 13 Aug 2026 13:03:58 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"draft":{"id":"6dcef056-d12e-40d4-8ec2-ddf939931248","organizationId":"a9-org","outputId":"8056c205-6b80-465a-96bc-b98c9382b436","sessionId":"3601eb4f-3777-4f7e-9273-562e03fce4f4","title":"A9 Proof Initiative","summary":null,"findingIds":["23850fce-210c-4b72-bb8e-57dc334aa24e"],"rationale":"Zamkniecie luki 1A wykryte w A9","expectedOutcome":"Podniesienie 1A z poziomu 2 do 4","kpiProposal":null,"dependencies":[],"risks":[],"evidenceLinks":[],"confidence":"medium","status":"current","supersededByOutputId":null,"supersededAt":null,"createdAt":"2026-08-13T13:03:58.043Z"}}

@@ -1,0 +1,46 @@
+
+  VITE v6.4.3  ready in 136 ms
+
+  ➜  Local:   http://localhost:41570/
+  ➜  Network: http://192.168.68.59:41570/
+3:00:47 PM [vite] (client) warning: Duplicate key "document-studio-blocks-i18n" in object literal
+557|      render: () => <DocumentStudioNowyDokumentMartweprzyciskiScreen />
+558|    },
+559|    'document-studio-blocks-i18n': {
+   |    ^
+560|      label: 'M18 #3 — Document Studio bloki: puste stany i18n (Table/Kpi/Chart)',
+561|      render: () => <DocumentStudioBlocksI18nScreen />
+
+  Plugin: vite:esbuild
+  File: /Users/piotrwisniewski/.codex/worktrees/mac-p0d-a9/dev-render/main.tsx
+3:00:47 PM [vite] Internal server error: Failed to resolve import "./screens/tools-sesja-wyjscie" from "dev-render/main.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /Users/piotrwisniewski/.codex/worktrees/mac-p0d-a9/dev-render/main.tsx:59:56
+  56 |  const MenuCanonSidebarCheckScreen = React.lazy(_c25 = () => import("./screens/menu-canon-sidebar-check"));
+  57 |  _c26 = MenuCanonSidebarCheckScreen;
+  58 |  const ToolsSesjaWyjscieScreen = React.lazy(_c27 = () => import("./screens/tools-sesja-wyjscie"));
+     |                                                                 ^
+  59 |  _c28 = ToolsSesjaWyjscieScreen;
+  60 |  const AssessmentQualityReviewPanelScreen = React.lazy(
+      at TransformPluginContext._formatLog (file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:42658:41)
+      at TransformPluginContext.error (file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:42655:16)
+      at normalizeUrl (file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:40634:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at async file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:40753:37
+      at async Promise.all (index 20)
+      at async TransformPluginContext.transform (file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:40680:7)
+      at async EnvironmentPluginContainer.transform (file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:42453:18)
+      at async loadAndTransform (file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:35845:27)
+3:00:47 PM [vite] Pre-transform error: Failed to resolve import "./screens/tools-sesja-wyjscie" from "dev-render/main.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /Users/piotrwisniewski/.codex/worktrees/mac-p0d-a9/dev-render/main.tsx:59:56
+  56 |  const MenuCanonSidebarCheckScreen = React.lazy(_c25 = () => import("./screens/menu-canon-sidebar-check"));
+  57 |  _c26 = MenuCanonSidebarCheckScreen;
+  58 |  const ToolsSesjaWyjscieScreen = React.lazy(_c27 = () => import("./screens/tools-sesja-wyjscie"));
+     |                                                                 ^
+  59 |  _c28 = ToolsSesjaWyjscieScreen;
+  60 |  const AssessmentQualityReviewPanelScreen = React.lazy(
+Browserslist: browsers data (caniuse-lite) is 8 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+[BABEL] Note: The code generator has deoptimised the styling of /Users/piotrwisniewski/.codex/worktrees/mac-p0d-a9/dev-render/.vite-cache/deps/react-dom_client.js?v=09c930ce as it exceeds the max of 500KB.

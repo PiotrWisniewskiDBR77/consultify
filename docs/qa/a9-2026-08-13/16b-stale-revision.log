@@ -1,0 +1,24 @@
+=== TEST 16b: stale revision — transition z celowo zla expectedVersion (999) ===
+HTTP/1.1 409 Conflict
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Resource-Policy: same-site
+Origin-Agent-Cluster: ?1
+Referrer-Policy: strict-origin-when-cross-origin
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+X-Content-Type-Options: nosniff
+X-DNS-Prefetch-Control: off
+X-Download-Options: noopen
+X-Frame-Options: DENY
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 0
+Vary: Origin, Accept-Encoding
+Access-Control-Allow-Credentials: true
+X-Correlation-ID: 76c87784-8f74-4d5a-be89-7736147e62dc
+Content-Type: application/json; charset=utf-8
+Content-Length: 453
+ETag: W/"1c5-0402pVmjgSCBX5bu9kqM/zrxOJM"
+Date: Thu, 13 Aug 2026 13:13:26 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"error":"version_conflict","currentVersion":1,"session":{"id":"4a903468-ba62-4bb2-8fe1-d11446feac71","organizationId":"a9-org","projectId":null,"module":"assessment","methodPackId":"drd","methodPackVersion":"2.0.0-methodpack.1","state":"draft","domainStage":null,"mode":"guided_manual","ownerUserId":"a9-user","createdAt":"2026-08-13T13:13:14.084Z","updatedAt":"2026-08-13T13:13:14.084Z","version":1,"frozenSnapshotId":null,"revisionOfSessionId":null}}
