@@ -373,7 +373,18 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
   useEffect(() => {
     if (!fiveSurfacesEnabled) return;
     const raw = searchParams.get('tab');
-    const mapped = resolveFiveSurfacesTabFromUrl(raw) || 'library';
+    // ★ 2026-08-13 (T5): when the URL has no `?tab=` yet, prefer an explicit
+    // `initialTab` prop over the hardcoded 'library' fallback — this effect
+    // used to overwrite `initialTab` back to 'library' on every mount
+    // (production never passes `initialTab` — always bare `<AssessmentHub />`,
+    // see src/routes/AppRoutes.tsx — so this had no live impact, but it
+    // silently broke dev-render harnesses that DO pass it, e.g.
+    // assessment-five-surfaces.tsx and assessment-artifacts-restart.tsx).
+    const mapped = raw
+      ? resolveFiveSurfacesTabFromUrl(raw) || 'library'
+      : initialTab && FIVE_SURFACES_TAB_IDS.has(initialTab)
+        ? initialTab
+        : 'library';
     // Canonicalize: missing (`?tab=` absent) or legacy/unknown values get
     // rewritten to the resolved tab id, so the URL is always the single
     // source of truth once the flag is ON.
@@ -385,7 +396,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
     if (mapped !== activeTab) {
       setActiveTabState(mapped);
     }
-  }, [fiveSurfacesEnabled, searchParams, activeTab, setSearchParams]);
+  }, [fiveSurfacesEnabled, searchParams, activeTab, setSearchParams, initialTab]);
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
