@@ -43,7 +43,7 @@ const IMPACT_WEIGHT: Record<SWOTItem['impact'], number> = { high: 3, medium: 2, 
  * `confirmed` → fakt; `declared-unconfirmed` → hipoteza. Brak stempla
  * traktujemy jako obserwację — nigdy jako fakt, bo brak pomiaru to nie pomiar.
  */
-function toEvidenceKind(item: SWOTItem): EvidenceKind {
+export function toEvidenceKind(item: SWOTItem): EvidenceKind {
   const status = String(item.evidenceStatus ?? '');
   if (status === 'confirmed') return 'fact';
   if (status.startsWith('declared')) return 'hypothesis';
