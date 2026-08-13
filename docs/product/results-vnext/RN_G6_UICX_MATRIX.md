@@ -104,7 +104,7 @@ pełnego narzędzia istnieje i działa:
 | 2 | Enter | otwiera dropdown menu (13 pozycji: Open, Open full tool, Measurements, Approve/Reject/Activate z powodami blokady, Open preview, Archive) |
 | 3 | Esc | **zamyka TYLKO menu (jedna warstwa)** — zweryfikowane (`menuStillOpenAfterEsc: false`), URL bez zmian |
 | 4 | (po Esc) | **fokus wraca na przycisk kebaba, który otworzył menu** — zweryfikowane (`focusReturnsToTriggerAfterEscFromMenu: true`) |
-| 5 | Enter → ArrowDown ×2 → Enter | fokusuje i aktywuje pozycję „Open full tool" wyłącznie klawiaturą | 
+| 5 | Enter → ArrowDown ×2 → Enter | fokusuje i aktywuje pozycję „Open full tool" wyłącznie klawiaturą |
 | 6 | wynik | **nawigacja do `/results/kpi/:id` potwierdzona przez samą klawiaturę** (`keyboardOnlyReachedFullTool: true`) |
 | 7 | Esc w pełnym narzędziu (brak otwartej warstwy) | **no-op** (`escFromFullToolNoLayerNoOp: true`) — poprawne, nie ma czego zwijać |
 
@@ -531,7 +531,7 @@ Skrypt pierwotny miał błąd (zrzut z ekranem ładowania zamiast
 zarenderowanej tabeli — zera w pierwszym przebiegu były ARTEFAKTEM
 własnego skryptu, NIE realnym wynikiem; poprawiono i uruchomiono ponownie
 z jawnym oczekiwaniem na treść tabeli przed pomiarem). Dane niżej pochodzą z
-POPRAWIONEGO przebiegu (`/tmp/rerun-a11y.mjs` → 
+POPRAWIONEGO przebiegu (`/tmp/rerun-a11y.mjs` →
 `docs/qa/screens/rn-g6-uicx/uicx-a11y-v2-report.json`,
 zrzut `a11y-kpi-registry-org-tab-v2.png`), rejestr KPI, zakładka
 „Organizacja", dark, PL, 1440×900.
