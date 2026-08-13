@@ -142,9 +142,23 @@ export function normalizeLineage(raw: unknown, sessionId: string): NormalizedLin
   const draftsRaw = extractArray(record, ['initiativeDrafts', 'drafts', 'initiatives']);
 
   // Nothing at all recognizable — neither a `session` key nor any of the
-  // known array keys. Treat as an unrecognized shape rather than a silently
-  // empty result.
-  if (!sessionObj && outputsRaw.length === 0 && reportsRaw.length === 0 && presentationsRaw.length === 0 && draftsRaw.length === 0 && Object.keys(record).length === 0) {
+  // known array keys is even PRESENT on the body (an empty array under a
+  // known key is a legitimate empty group, not this case). Treat as an
+  // unrecognized shape rather than silently rendering an all-empty chain.
+  const KNOWN_ARRAY_KEYS = [
+    'outputs',
+    'revisions',
+    'outputRevisions',
+    'reports',
+    'reportSnapshots',
+    'presentations',
+    'presentationSnapshots',
+    'initiativeDrafts',
+    'drafts',
+    'initiatives',
+  ];
+  const hasKnownArrayKey = KNOWN_ARRAY_KEYS.some((key) => key in record);
+  if (!sessionObj && !hasKnownArrayKey) {
     return null;
   }
 
