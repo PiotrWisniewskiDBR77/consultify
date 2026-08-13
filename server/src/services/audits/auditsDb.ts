@@ -17,6 +17,11 @@
 import { randomUUID } from 'crypto';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import {
+  normalizeActorKind,
+  toKernelEventType,
+  type KernelActorKind,
+} from './kernelEventMap.js';
 import logger from '../../utils/Logger.js';
 
 /** Odczyt wielu wierszy. Błąd SQL rzuca wyjątek zamiast zwracać pustą listę. */
@@ -104,6 +109,17 @@ export interface DomainEventInput {
   actorRole?: string | null;
   summary?: string | null;
   payload?: Record<string, unknown>;
+  /**
+   * Pola wymagane przez kontrakt wspólnego kernela (SHA e3b8be6cd7):
+   * bez wersji packa historia przestaje być odtwarzalna po podbiciu metody,
+   * a bez `actorKind` znika provenance przy akceptacji propozycji Teresy.
+   */
+  methodPackId?: string | null;
+  methodPackVersion?: string | null;
+  idempotencyKey?: string | null;
+  actorKind?: KernelActorKind;
+  /** Zdarzenie korygowane. Kernel jest append-only — nigdy nie nadpisujemy. */
+  supersedes?: string | null;
 }
 
 /**
@@ -116,8 +132,11 @@ export async function recordAuditEvent(input: DomainEventInput): Promise<void> {
     await auditRun(
       `INSERT INTO audit_domain_events
          (id, program_id, organization_id, entity_type, entity_id, event_type,
-          actor_id, actor_role, summary, payload)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+          actor_id, actor_role, summary, payload,
+          kernel_event_type, method_pack_id, method_pack_version,
+          idempotency_key, actor_kind, supersedes)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+       ON CONFLICT DO NOTHING`,
       [
         newId('ade'),
         input.programId ?? null,
@@ -129,6 +148,15 @@ export async function recordAuditEvent(input: DomainEventInput): Promise<void> {
         input.actorRole ?? null,
         input.summary ?? null,
         JSON.stringify(input.payload ?? {}),
+        // Przekład na zamknięty zbiór 18 zdarzeń kernela. `null` znaczy, że
+        // zdarzenie jest czysto domenowe i nie ma odpowiednika — wtedy zostaje
+        // wyłącznie w dzienniku Audits, zgodnie z manifestem §4.
+        toKernelEventType(input.eventType),
+        input.methodPackId ?? null,
+        input.methodPackVersion ?? null,
+        input.idempotencyKey ?? null,
+        normalizeActorKind(input.actorKind),
+        input.supersedes ?? null,
       ],
     );
   } catch (error) {
