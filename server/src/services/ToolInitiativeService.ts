@@ -313,11 +313,33 @@ export class ToolInitiativeService {
         );
       }
 
+      // C15 close-out (docs/program/METHOD_TOOLS_2026-08-13/IDP_SEMANTICS.md §1/§11):
+      // this bulk-generate path intentionally inserts MANY rows sharing one
+      // `batchId` (one per generated initiative) — the opposite shape from
+      // ToolController.promoteToOutput's one-row-per-promotion. The new
+      // uq_tool_initiative_links_promotion index therefore cannot use
+      // `batch_id` as (part of) its differentiator for this path; each row
+      // gets its own unique `idempotency_key` derived from the batch + the
+      // initiative it links, so the constraint never collides here. This
+      // path already has its own dedup guard one level up, against
+      // `tool_initiative_batches` (ToolController.ts generateInitiatives).
+      const linkId = uuidv4();
       await queryHelpers.queryRun(
         `INSERT INTO tool_initiative_links (
-          id, tool_session_id, batch_id, initiative_id, created_at
-        ) VALUES (?, ?, ?, ?, ?)`,
-        [uuidv4(), toolSession.id, batchId, effectiveInitiativeId, now]
+          id, tool_session_id, batch_id, initiative_id, organization_id,
+          source_revision, output_type, idempotency_key, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          linkId,
+          toolSession.id,
+          batchId,
+          effectiveInitiativeId,
+          toolSession.organization_id,
+          1,
+          'initiative',
+          `bulk:${batchId}:${effectiveInitiativeId}`,
+          now,
+        ]
       );
 
       created.push({ id: effectiveInitiativeId, title: initiative.title, status: 'DRAFT' });
