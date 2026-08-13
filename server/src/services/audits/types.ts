@@ -16,9 +16,75 @@
 // ---------------------------------------------------------------------------
 
 /**
- * Status wiarygodności pakietu/źródła. Widoczny w Library — użytkownik musi
- * odróżnić zweryfikowaną normę od demonstracji. Nie wolno sugerować
- * normatywności bez dowodu.
+ * DWIE NIEZALEŻNE OSIE. To jest poprawka błędu kategorii z pierwszej wersji
+ * modelu, w której jedno pole odpowiadało naraz na dwa różne pytania.
+ *
+ *   `sourceType`          — CZYM jest źródło (natura dokumentu)
+ *   `verificationStatus`  — CZY zostało sprawdzone (stan przeglądu)
+ *
+ * Procedura QMS klienta zweryfikowana przez eksperta to
+ * `INTERNAL_PROCEDURE` + `VERIFIED` — a NIE „zweryfikowana norma". Procedura
+ * klienta nie staje się normą przez to, że ktoś ją dokładnie sprawdził.
+ * Odwrotnie: rzeczywista norma pozostaje normą, gdy jej mapowanie czeka na
+ * przegląd (`LICENSED_STANDARD` + `PENDING_REVIEW`).
+ *
+ * Reguła nadrzędna: **zmiana `verificationStatus` nigdy nie zmienia
+ * `sourceType`**. Egzekwuje to `normSourceService` i test.
+ */
+export const AUDIT_SOURCE_TYPES = [
+  /** Wewnętrzna procedura organizacji lub klienta. */
+  'INTERNAL_PROCEDURE',
+  /** Własna metodyka/framework organizacji, szerszy niż pojedyncza procedura. */
+  'INTERNAL_FRAMEWORK',
+  /** Akt prawny lub regulacja (np. dyrektywa, rozporządzenie). */
+  'REGULATION',
+  /** Zidentyfikowany standard/norma, do której organizacja ma prawa. */
+  'LICENSED_STANDARD',
+  /** Materiał pokazowy — nigdy nie jest podstawą audytu u klienta. */
+  'DEMONSTRATION',
+  /** Wycofany z użycia; zachowany dla historii. */
+  'LEGACY',
+] as const;
+export type AuditSourceType = (typeof AUDIT_SOURCE_TYPES)[number];
+
+export const AUDIT_VERIFICATION_STATES = [
+  'VERIFIED',
+  'PENDING_REVIEW',
+  'UNVERIFIED',
+  'EVIDENCE_MISSING',
+] as const;
+export type AuditVerificationState = (typeof AUDIT_VERIFICATION_STATES)[number];
+
+/**
+ * Typy źródła, które wolno przedstawić w interfejsie jako „normę".
+ * Wszystko poza tym zbiorem MUSI renderować się inną etykietą — niezależnie od
+ * tego, jak dobrze zostało zweryfikowane.
+ */
+export const NORMATIVE_SOURCE_TYPES: readonly AuditSourceType[] = [
+  'LICENSED_STANDARD',
+  'REGULATION',
+];
+
+export function isNormativeSourceType(value: unknown): boolean {
+  return NORMATIVE_SOURCE_TYPES.includes(value as AuditSourceType);
+}
+
+/**
+ * Czy pakiet wolno przedstawić jako audyt zgodności z normą. Wymaga OBU osi:
+ * właściwej natury źródła i potwierdzonej weryfikacji.
+ */
+export function isComplianceGrade(
+  sourceType: unknown,
+  verification: unknown,
+): boolean {
+  return isNormativeSourceType(sourceType) && verification === 'VERIFIED';
+}
+
+/**
+ * Stara, jednoosiowa klasyfikacja. Zachowana wyłącznie dla odczytu danych
+ * sprzed rozdzielenia osi — nie używaj jej w nowym kodzie.
+ *
+ * @deprecated Użyj `sourceType` + `verificationStatus`.
  */
 export const PACK_CLASSIFICATIONS = [
   'VERIFIED_NORMATIVE',
@@ -58,6 +124,10 @@ export interface AuditNormSource {
   publisher: string | null;
   sourceVersion: string | null;
   sourceKind: SourceKind;
+  /** CZYM jest źródło — niezależne od tego, czy je sprawdzono. */
+  sourceType: AuditSourceType;
+  /** CZY sprawdzono — nie ma prawa zmienić `sourceType`. */
+  verificationStatus: AuditVerificationState;
   rightsStatus: RightsStatus;
   rightsNote: string | null;
   licenseReference: string | null;
@@ -66,7 +136,12 @@ export interface AuditNormSource {
   materialVersion: string | null;
   effectiveFrom: string | null;
   effectiveTo: string | null;
-  verificationStatus: PackClassification;
+  /**
+   * Stara, zlana klasyfikacja. Czytana wyłącznie dla danych sprzed
+   * rozdzielenia osi; nowy kod używa `sourceType` + `verificationStatus`.
+   * @deprecated
+   */
+  legacyClassification: PackClassification | null;
   verifiedBy: string | null;
   verifiedAt: string | null;
   verificationNote: string | null;
@@ -134,6 +209,9 @@ export interface AuditPack {
   purpose: string | null;
   sourceId: string | null;
   sourceVersion: string | null;
+  sourceType: AuditSourceType;
+  verificationStatus: AuditVerificationState;
+  /** @deprecated Oś zlana; czytana wyłącznie dla danych historycznych. */
   classification: PackClassification;
   publicationStatus: PublicationStatus;
   scope: string | null;
