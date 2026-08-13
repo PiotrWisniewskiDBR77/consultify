@@ -803,6 +803,17 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
   const seedSource = selectedModel?.assumptions_json?.seedSource || null;
   const seedStatus = selectedModel?.assumptions_json?.seedStatus || null;
   const baselineAssumptions = (assumptions?.baseline || {}) as Record<string, number>;
+  const hasManualBaseline =
+    Object.values(baselineAssumptions).some((value) => Number(value || 0) !== 0) ||
+    [
+      assumptions?.initialCash,
+      assumptions?.initialEquity,
+      assumptions?.initialDebt,
+      assumptions?.initialPPE,
+      assumptions?.initialAR,
+      assumptions?.initialInventory,
+      assumptions?.initialAP,
+    ].some((value) => Number(value || 0) !== 0);
   // #82e — Analysis→Models bridge (FinancialAnalysisWorkspace "Use as model
   // assumptions"): ratios pushed from a financial analysis, tagged with
   // provenance 'from-analysis'. Read-only display here; written via the
@@ -1060,13 +1071,20 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                   {t('finance.model.seedStatus', 'Seed status')}
                 </div>
                 <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
-                  {t('finance.model.seededManually', 'Manual / zero-seeded')}
+                  {hasManualBaseline
+                    ? t('finance.model.seededFromManualBaseline', 'Manual / prepared baseline')
+                    : t('finance.model.seededManually', 'Manual / zero-seeded')}
                 </div>
                 <div className="mt-1 text-xs text-slate-600 dark:text-slate-300">
-                  {t(
-                    'finance.model.notGroundedHint',
-                    'This model was created without a source statement. Opening balances start at zero.'
-                  )}
+                  {hasManualBaseline
+                    ? t(
+                        'finance.model.manualBaselineHint',
+                        'This model uses a manually prepared baseline. Review the assumptions before approval.'
+                      )
+                    : t(
+                        'finance.model.notGroundedHint',
+                        'This model was created without a source statement. Opening balances start at zero.'
+                      )}
                 </div>
               </div>
             )}
@@ -1192,7 +1210,12 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                       <span className="text-xs text-slate-500 dark:text-slate-400">
                         {isGrounded
                           ? t('finance.model.seededFromStatement', 'Seeded from statement')
-                          : t('finance.model.seededManually', 'Manual / zero-seeded')}
+                          : hasManualBaseline
+                            ? t(
+                                'finance.model.seededFromManualBaseline',
+                                'Manual / prepared baseline'
+                              )
+                            : t('finance.model.seededManually', 'Manual / zero-seeded')}
                       </span>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
