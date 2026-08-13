@@ -30,6 +30,20 @@
  *   row (deterministic `content_hash` via `computeContentHash`, sorted in
  *   memory — see db.ts) and points `frozen_snapshot_id` at it. Reopening
  *   never rewrites that snapshot row.
+ *
+ * - ★ A6/COORD (2026-08-13) — Output bridge: A8 built `MethodOutputService`
+ *   (immutable `AssessmentOutput`) but nothing called it from here — a
+ *   session could freeze and the Output surface would just never exist.
+ *   `outputBridge` (optional, 3rd constructor arg) closes that gap WITHOUT
+ *   teaching this file any DRD/SIRI/ADMA rule: the kernel only knows "freeze
+ *   happened, here is the snapshot id, tell whoever cares" — building the
+ *   actual `AssessmentOutput` (findings, evidence, business narrative) from
+ *   the method's own event log is the bridge implementation's job (see
+ *   `outputs/EventDerivedOutputBridge.ts`), not this service's. A missing
+ *   bridge is still legal (constructor arg is optional) — `snapshotOnFreeze`
+ *   degrades to "snapshot only, no Output", the pre-A6 behaviour, so callers
+ *   that never wire a bridge (SIRI/ADMA, until they do the same) are
+ *   unaffected.
  */
 
 import * as DbPromise from '../utils/DbPromise.js';
@@ -93,6 +107,25 @@ export type CreateSessionResult =
   | { readonly ok: true; readonly session: MethodSession }
   | { readonly ok: false; readonly refusal: CreateSessionRefusal };
 
+/**
+ * Narrow hook invoked exactly once, right after a freeze snapshot is
+ * durably written — never before. Deliberately has no DRD/SIRI/ADMA-shaped
+ * parameter (no `findings`, no `answers`): the kernel hands over only what
+ * it itself owns (ids + the pinned pack version), so this file stays
+ * method-agnostic. A throwing bridge implementation fails the whole
+ * `transition()` call (the freeze is not "half done" — see call site).
+ */
+export interface MethodOutputBridge {
+  onSessionFrozen(input: {
+    readonly organizationId: string;
+    readonly sessionId: string;
+    readonly snapshotId: string;
+    readonly module: MethodSession['module'];
+    readonly methodPackId: string;
+    readonly methodPackVersion: string;
+  }): Promise<void>;
+}
+
 function toMethodSession(row: MethodSessionRow): MethodSession {
   return {
     id: row.id,
@@ -126,7 +159,8 @@ export interface PackReadinessLookup {
 export class MethodSessionService {
   constructor(
     private readonly packs: PackReadinessLookup,
-    private readonly events: MethodEventStore
+    private readonly events: MethodEventStore,
+    private readonly outputBridge?: MethodOutputBridge
   ) {}
 
   async createSession(input: CreateSessionInput): Promise<CreateSessionResult> {
@@ -340,6 +374,23 @@ export class MethodSessionService {
       snapshotId,
       sessionId,
     ]);
+
+    // ★ A6 bridge: snapshot is durable — now let the Output surface exist.
+    // No bridge wired -> unchanged pre-A6 behaviour (snapshot only).
+    if (this.outputBridge) {
+      const sessionRow = await this.getSessionRow(sessionId);
+      if (!sessionRow) {
+        throw new Error(`method-core: session vanished mid-freeze: ${sessionId}`);
+      }
+      await this.outputBridge.onSessionFrozen({
+        organizationId,
+        sessionId,
+        snapshotId,
+        module: sessionRow.module as MethodSession['module'],
+        methodPackId: sessionRow.method_pack_id,
+        methodPackVersion,
+      });
+    }
   }
 
   private async getSessionRow(sessionId: string): Promise<MethodSessionRow | null> {

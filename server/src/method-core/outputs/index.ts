@@ -34,3 +34,8 @@ export {
   type DraftSupersedenceStatus,
   type MethodInitiativeDraftRecord,
 } from './MethodInitiativeDraftService.js';
+
+export {
+  EventDerivedOutputBridge,
+  deriveFindingsFromEvents,
+} from './EventDerivedOutputBridge.js';
