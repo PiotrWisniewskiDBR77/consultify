@@ -237,6 +237,30 @@ export const DEFAULT_FLAGS: FeatureFlag[] = [
     allowLocalOverride: true,
   },
   {
+    id: 'drdHttpSourceOfTruthV1',
+    name: 'DRD workspace — HTTP source of truth (P0C)',
+    description:
+      'P0C (2026-08-13): swaps `DrdSessionRuntime` (localStorage-only, still the default) for ' +
+      '`DrdHttpSessionRuntime` (src/method-core/methods/drd/drdHttpSessionRuntime.ts) inside ' +
+      'DrdMethodWorkspaceScreen — the server (`/api/method/...` via methodCoreApi.ts) becomes ' +
+      "the ONLY source of truth for session/events/Output when ON. localStorage is reduced to " +
+      'two roles only: a technical read cache (repaint-before-network-resolves) and an offline ' +
+      'write-recovery queue — it is never treated as authoritative, never silently overwrites a ' +
+      'newer server state (a 409 shows an explicit conflict, never an auto-merge), and a frozen ' +
+      'Output/Report/Initiative Draft is only ever rendered from a confirmed server response. A ' +
+      'visible SERVER/RECOVERY_DRAFT/DEMO_LOCAL indicator (DrdSourceIndicator) reports which one ' +
+      'backed the current paint. Known gap while server routes stay out of this ' +
+      "flag's scope (server/src/method-core/*, server/src/routes/method-core.routes.ts are " +
+      "P0A/P0B territory): there is no HTTP endpoint to assign extra process roles after create " +
+      '(only `owner` is auto-granted) or to reopen a frozen session, so those two actions are ' +
+      'disabled with an explicit message rather than faked. OFF by default until owner ' +
+      "acceptance on dev-render screenshots (CLAUDE.md #7); OFF = today's exact legacy behavior, " +
+      'zero HTTP calls from this screen.',
+    defaultValue: false,
+    category: 'experimental',
+    allowLocalOverride: true,
+  },
+  {
     id: 'mindmapHeuristicAiOverlays',
     name: 'Mind Map: Heuristic AI Overlays (DP-5)',
     description:

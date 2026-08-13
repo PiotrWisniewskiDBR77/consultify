@@ -18,12 +18,9 @@ import { AlertTriangle, ArrowLeft, FileText, Lightbulb, Lock, RotateCcw } from '
 import React, { useCallback, useMemo, useState } from 'react';
 
 import { MethodWorkspaceShell } from '@/components/method-workspace/MethodWorkspaceShell';
-import { StandardTable, type TableColumn } from '@/components/standard/StandardTable';
+import { StandardTable } from '@/components/standard/StandardTable';
 import type {
   InterviewFocusQuestion,
-  MatrixRow,
-  MethodEvidenceState,
-  MethodNavigatorNode,
   MethodWorkspaceViewMode,
 } from '@/components/method-workspace/types';
 import { useMethodWorkspaceSave } from '@/components/method-workspace/useMethodWorkspaceSave';
@@ -33,9 +30,21 @@ import type {
   InitiativeProposalDraft,
   ReportSnapshot,
 } from '@/method-core/outputs';
-import { DRD_STRUCTURE, type DRDAxis } from '@/services/drdStructure';
+import { DRD_STRUCTURE } from '@/services/drdStructure';
 
-import { compileDrdPack } from '@/method-core/methods/drd/compileDrdPack';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
+import {
+  buildMatrixRowsForAxis,
+  buildNavigatorNodes,
+  confirmedLevelsFor,
+  evidenceEventsFor,
+  evidenceStateFor,
+  OUTPUT_UNIT_COLUMNS,
+  pack,
+  questionAnswerState,
+} from './drdWorkspaceViewModel';
+import { DrdHttpMethodWorkspaceScreen } from './DrdHttpMethodWorkspaceScreen';
+import { DrdSourceIndicator } from './DrdSourceIndicator';
 import { drdAdapter } from '@/method-core/methods/drd/drdAdapter';
 import {
   createDrdDemoSession,
@@ -43,171 +52,10 @@ import {
   DrdSessionRuntime,
   listDemoSessionIds,
 } from '@/method-core/methods/drd/drdSessionRuntime';
-import type { MethodEvent, MethodReadiness } from '@/method-core/contracts';
+import type { MethodReadiness } from '@/method-core/contracts';
 
 const OWNER_ACTOR = 'demo-owner-piotr';
 const APPROVER_ACTOR = 'demo-approver-anna';
-
-const { pack } = compileDrdPack();
-
-// Output current/target/gap rollup IS a fixed-schema record list (rows =
-// units) — TRIADA doctrine case 1, not case 3 (LiveMatrix's unit×level grid
-// is the Matryca-shaped exception; this per-unit summary is not).
-const OUTPUT_UNIT_COLUMNS: TableColumn[] = [
-  { id: 'unitId', label: 'Jednostka' },
-  { id: 'current', label: 'Current' },
-  { id: 'target', label: 'Target' },
-  { id: 'gap', label: 'Gap' },
-];
-
-// ---------------------------------------------------------------------------
-// Pure derivation helpers — events + pack -> UI view models
-// ---------------------------------------------------------------------------
-
-function confirmedLevelsFor(events: readonly MethodEvent[], unitId: string): number[] {
-  const levels = new Set<number>();
-  for (const e of events) {
-    if (e.type === 'ANSWER_CONFIRMED' && e.unitId === unitId && typeof e.level === 'number') {
-      levels.add(e.level);
-    }
-  }
-  return [...levels].sort((a, b) => a - b);
-}
-
-function targetLevelFor(events: readonly MethodEvent[], unitId: string): number | null {
-  let target: number | null = null;
-  for (const e of events) {
-    if (
-      e.type === 'DECISION_APPROVED' &&
-      e.unitId === unitId &&
-      typeof e.level === 'number' &&
-      (e.payload as { subject?: string })?.subject === 'target_level'
-    ) {
-      target = e.level;
-    }
-  }
-  return target;
-}
-
-function evidenceEventsFor(events: readonly MethodEvent[], unitId: string): MethodEvent[] {
-  return events.filter((e) => e.type === 'EVIDENCE_ATTACHED' && e.unitId === unitId);
-}
-
-function evidenceStateFor(events: readonly MethodEvent[], unitId: string, blockedAtLevel: number | null): MethodEvidenceState {
-  const evidence = evidenceEventsFor(events, unitId);
-  if (evidence.length === 0) return 'missing';
-  if (blockedAtLevel !== null) return 'weak';
-  return 'complete';
-}
-
-function buildNavigatorNodes(events: readonly MethodEvent[]): MethodNavigatorNode[] {
-  const nodes: MethodNavigatorNode[] = [];
-  for (const axis of DRD_STRUCTURE as DRDAxis[]) {
-    const axisAreaStates = axis.areas.map((area) => {
-      const confirmed = confirmedLevelsFor(events, area.id);
-      const progression = drdAdapter.resolveOpenLevels({ unitId: area.id, confirmedLevels: confirmed, evidenceByLevel: {} });
-      return { area, progression };
-    });
-    const axisEvidenceState: MethodEvidenceState = axisAreaStates.some(
-      (s) => evidenceStateFor(events, s.area.id, s.progression.blockedAtLevel) === 'missing'
-    )
-      ? 'missing'
-      : axisAreaStates.every((s) => evidenceStateFor(events, s.area.id, s.progression.blockedAtLevel) === 'complete')
-        ? 'complete'
-        : 'weak';
-
-    nodes.push({
-      unitId: `axis-${axis.id}`,
-      name: axis.namePL || axis.name,
-      parentId: null,
-      order: axis.id,
-      currentLevel: null,
-      targetLevel: null,
-      evidenceState: axisEvidenceState,
-      gap: null,
-      openQuestionCount: 0,
-    });
-
-    axis.areas.forEach((area, idx) => {
-      const confirmed = confirmedLevelsFor(events, area.id);
-      const progression = drdAdapter.resolveOpenLevels({ unitId: area.id, confirmedLevels: confirmed, evidenceByLevel: {} });
-      const target = targetLevelFor(events, area.id);
-      const focusLevel = progression.blockedAtLevel ?? Math.min(...area.levels.map((l) => l.level));
-      const openCount = pack.questions.filter((q) => q.unitId === area.id && q.level === focusLevel).length;
-      nodes.push({
-        unitId: area.id,
-        name: area.namePL || area.name,
-        parentId: `axis-${axis.id}`,
-        order: idx,
-        currentLevel: progression.currentLevel,
-        targetLevel: target,
-        evidenceState: evidenceStateFor(events, area.id, progression.blockedAtLevel),
-        gap: target !== null && progression.currentLevel !== null ? target - progression.currentLevel : null,
-        openQuestionCount: openCount,
-      });
-    });
-  }
-  return nodes;
-}
-
-function buildMatrixRowsForAxis(events: readonly MethodEvent[], axis: DRDAxis, pendingPreviewUnitLevels: Set<string>): MatrixRow[] {
-  return axis.areas.map((area) => {
-    const confirmed = confirmedLevelsFor(events, area.id);
-    const progression = drdAdapter.resolveOpenLevels({ unitId: area.id, confirmedLevels: confirmed, evidenceByLevel: {} });
-    const target = targetLevelFor(events, area.id);
-    const levels = area.levels.map((l) => l.level).sort((a, b) => a - b);
-    return {
-      unitId: area.id,
-      unitName: area.namePL || area.name,
-      levels: levels.map((level) => {
-        const achieved = progression.currentLevel !== null && level <= progression.currentLevel;
-        const aboveGap = progression.aboveGapLevels.includes(level);
-        // Blocker ≠ „jeszcze nie zaczęte".
-        //
-        // `blockedAtLevel` dla nietkniętego obszaru wynosi 1 (pierwszy niespełniony),
-        // więc oznaczanie go blockerem malowało CAŁY świeży assessment 39 obszarów
-        // na czerwono — komunikat „wszystko zepsute" w dniu startu.
-        //
-        // Kanon ASSESSMENT_UI_NAVIGATION_AND_MATRIX_STANDARD.md §3 wymienia
-        // `absent`/`unresolved` jako stany ODRĘBNE od `blocker`, a
-        // TOOL_SESSION_WORKSPACE_STANDARD.md §7 rezerwuje czerwień wyłącznie dla
-        // blockera. Blokada istnieje dopiero wtedy, gdy praca ruszyła i utknęła:
-        // coś jest potwierdzone (rampa) albo istnieje praktyka POWYŻEJ luki.
-        // Obszar nierozpoczęty pozostaje `unresolved` — neutralny, nie czerwony.
-        const workHasStarted = confirmed.length > 0 || progression.aboveGapLevels.length > 0;
-        const isBlocker = level === progression.blockedAtLevel && workHasStarted;
-        return {
-          unitId: area.id,
-          level,
-          achieved,
-          proposed: pendingPreviewUnitLevels.has(`${area.id}#${level}`),
-          target: target === level,
-          answerState: confirmed.includes(level) ? ('confirmed' as const) : ('unresolved' as const),
-          evidenceState: evidenceStateFor(events, area.id, isBlocker ? level : null),
-          aiProposalPending: pendingPreviewUnitLevels.has(`${area.id}#${level}`),
-          // aboveGap: confirmed ABOVE the blocking gap — recorded, visible, never
-          // auto-promoting currentLevel (drdAdapter contract). Surfaced here as
-          // "needs review" since an out-of-order confirmation is exactly that.
-          reviewRequired: aboveGap,
-          blocker: isBlocker,
-        };
-      }),
-    };
-  });
-}
-
-function questionAnswerState(events: readonly MethodEvent[], questionId: string): { state: InterviewFocusQuestion['answerState']; text: string } {
-  let state: InterviewFocusQuestion['answerState'] = null;
-  let text = '';
-  for (const e of events) {
-    if ((e.type === 'ANSWER_CONFIRMED' || e.type === 'ANSWER_DRAFTED') && (e.payload as { questionId?: string })?.questionId === questionId) {
-      const payload = e.payload as { answerState?: InterviewFocusQuestion['answerState']; text?: string };
-      state = payload.answerState ?? state;
-      text = payload.text ?? text;
-    }
-  }
-  return { state, text };
-}
 
 // ---------------------------------------------------------------------------
 // Component
@@ -225,6 +73,21 @@ export interface DrdMethodWorkspaceScreenProps {
   initialViewMode?: MethodWorkspaceViewMode;
   /** dev-render harness only — preselect which demo identity is "logged in". */
   initialActorUserId?: string;
+  /**
+   * dev-render harness / tests ONLY — overrides the `drdHttpSourceOfTruthV1`
+   * flag read for this instance. Real navigation always goes through the
+   * flag (default OFF); this exists because the dev-render harness mounts
+   * this screen directly (bypassing the app's FeatureFlagsProvider/router),
+   * exactly like `seedTo`/`initialViewMode` above.
+   */
+  forceHttpSourceOfTruth?: boolean;
+  /**
+   * dev-render harness / tests ONLY, and only meaningful when the HTTP path
+   * is active — synthetically overlays offline/conflict/recovery/loading so
+   * the screenshot harness can reach those states deterministically without
+   * a genuinely flaky network. See `DrdHttpSessionRuntime.debugForceState`.
+   */
+  forceState?: 'offline' | 'conflict' | 'recovery' | 'loading';
 }
 
 function seedSession(runtime: DrdSessionRuntime, seedTo: DrdMethodWorkspaceScreenProps['seedTo']) {
@@ -323,7 +186,12 @@ function seedSession(runtime: DrdSessionRuntime, seedTo: DrdMethodWorkspaceScree
   return runtime;
 }
 
-export const DrdMethodWorkspaceScreen: React.FC<DrdMethodWorkspaceScreenProps> = ({
+/**
+ * Legacy (pre-P0C) localStorage-backed implementation — UNCHANGED behavior.
+ * Rendered whenever `drdHttpSourceOfTruthV1` is OFF (the default). See the
+ * flag-gate default export at the bottom of this file.
+ */
+const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = ({
   storage: storageProp,
   demoSessionId,
   onExit,
@@ -602,6 +470,7 @@ export const DrdMethodWorkspaceScreen: React.FC<DrdMethodWorkspaceScreenProps> =
       <div className="flex items-center gap-3 border-b border-c-border-subtle bg-c-warning/5 px-4 py-1.5 text-[11px] text-c-text-secondary">
         <AlertTriangle size={12} className="shrink-0 text-c-warning" />
         <span>{DRD_DEMO_SESSION_NOTICE}</span>
+        <DrdSourceIndicator source="DEMO_LOCAL" title="Stary runtime — localStorage jest jedynym magazynem (flaga drdHttpSourceOfTruthV1 = OFF)." />
         <span className="ml-auto flex items-center gap-2 shrink-0">
           Aktor:
           <select
@@ -782,6 +651,7 @@ const FrozenOutputView: React.FC<{
           Sesja {session.id.slice(0, 8)} — {session.state === 'closed' ? 'Zamknięta' : 'Zamrożona'}
           {session.revisionOfSessionId && <span className="ml-2 text-[11px] font-normal text-c-text-muted">(rewizja sesji {session.revisionOfSessionId.slice(0, 8)})</span>}
         </h1>
+        <DrdSourceIndicator source="DEMO_LOCAL" title="Stary runtime — localStorage jest jedynym magazynem (flaga drdHttpSourceOfTruthV1 = OFF)." />
         <span className="ml-auto flex items-center gap-2 text-[11px] text-c-text-secondary">
           Aktor:
           <select value={actorUserId} onChange={(e) => setActorUserId(e.target.value)} className="rounded border border-c-border bg-c-surface px-1.5 py-0.5">
@@ -906,6 +776,30 @@ const FrozenOutputView: React.FC<{
       </section>
     </div>
   );
+};
+
+// ---------------------------------------------------------------------------
+// Flag gate — `drdHttpSourceOfTruthV1` (P0C, 2026-08-13)
+// ---------------------------------------------------------------------------
+//
+// OFF (default): renders `DrdMethodWorkspaceScreenLegacy` unchanged — zero
+// change to today's behavior, zero HTTP calls made by this screen.
+// ON: renders `DrdHttpMethodWorkspaceScreen` — `DrdHttpSessionRuntime` (HTTP)
+// becomes the ONLY source of truth; localStorage is cache/recovery-draft
+// only (see that file's header and CLAUDE.md rule #7/#9 — visual surfaces
+// only change behind a default-OFF flag, one at a time, after an accepted
+// dev-render screenshot).
+export const DrdMethodWorkspaceScreen: React.FC<DrdMethodWorkspaceScreenProps> = ({
+  forceHttpSourceOfTruth,
+  forceState,
+  ...props
+}) => {
+  const { isEnabled } = useFeatureFlags();
+  const httpSourceOfTruth = forceHttpSourceOfTruth ?? isEnabled('drdHttpSourceOfTruthV1');
+  if (httpSourceOfTruth) {
+    return <DrdHttpMethodWorkspaceScreen {...props} forceState={forceState} />;
+  }
+  return <DrdMethodWorkspaceScreenLegacy {...props} />;
 };
 
 export default DrdMethodWorkspaceScreen;
