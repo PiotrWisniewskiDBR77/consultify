@@ -70,6 +70,7 @@ import {
   DEMO_BYPASS_NOTICE,
   isDemoBypassAllowed,
 } from '../method-core/demoBypass.js';
+import type { MethodArtefactKind } from '../method-core/outputs/MethodReportSnapshotService.js';
 import {
   EventDerivedOutputBridge,
   methodInitiativeDraftService,
@@ -164,6 +165,53 @@ async function loadOwnedSession(
   return session;
 }
 
+/**
+ * Walks `output.revisionOfOutputId` back through a reopen/correction chain
+ * (bounded — a runaway chain refuses to loop forever rather than hang a
+ * request) and returns every distinct `sessionId` in the lineage, INCLUDING
+ * the given output's own session. A "corrected revision" freezes under a
+ * NEW session id (`frozen -> active` reopen — see MethodSessionService), so
+ * a Report/Presentation/Initiative Draft superseded only by
+ * `output.sessionId` would never reach the artefacts that were built
+ * against the OLDER output in the same lineage — this is what makes "reopen
+ * wszystkich rezultatów" (reopen touches every downstream result, not just
+ * the ones on the newest session) actually true instead of only true for
+ * same-session re-generation.
+ */
+async function collectLineageSessionIds(
+  organizationId: string,
+  output: { readonly id: string; readonly sessionId: string; readonly revisionOfOutputId: string | null }
+): Promise<string[]> {
+  const sessionIds = new Set<string>([output.sessionId]);
+  let cursor = output.revisionOfOutputId;
+  let hops = 0;
+  while (cursor && hops < 25) {
+    const ancestor = await methodOutputService.getOutput(organizationId, cursor);
+    if (!ancestor) break;
+    sessionIds.add(ancestor.sessionId);
+    cursor = ancestor.revisionOfOutputId;
+    hops += 1;
+  }
+  return [...sessionIds];
+}
+
+/**
+ * Marks every `current` Report/Presentation snapshot AND Initiative Draft
+ * across the whole lineage of `output` as superseded by `output.id` — called
+ * once, right before creating a NEW Report/Presentation/Initiative Draft
+ * against a NEW Output. Never touches content columns (see each service's
+ * class-level doc comment on column-scoped UPDATEs only).
+ */
+async function supersedeLineageResultsFor(organizationId: string, output: MethodOutputRecordLike): Promise<void> {
+  const lineageSessionIds = await collectLineageSessionIds(organizationId, output);
+  for (const sessionId of lineageSessionIds) {
+    await methodReportSnapshotService.supersedeCurrentForSession(organizationId, sessionId, output.id, 'superseded');
+    await methodInitiativeDraftService.supersedeCurrentForSession(organizationId, sessionId, output.id, 'superseded');
+  }
+}
+
+type MethodOutputRecordLike = { readonly id: string; readonly sessionId: string; readonly revisionOfOutputId: string | null };
+
 // ---------------------------------------------------------------------------
 // GET /api/method/packs — Library
 // ---------------------------------------------------------------------------
@@ -241,6 +289,7 @@ router.post(
       methodPackVersion,
       ownerUserId: actorUserId,
       mode,
+      demoBypassActive: bypassActive,
     });
 
     if (!result.ok) {
@@ -686,6 +735,63 @@ router.get(
   })
 );
 
+/**
+ * Shared body for POST .../report and POST .../presentation — both render a
+ * structured snapshot from the SAME immutable Output, differing only in
+ * `kind` (10_ASSESSMENT_REVIEW.md §15 / METHOD_MODULE_FIVE_SURFACES_
+ * STANDARD.md §4: a Presentation is another view of the same frozen
+ * Artifact, not a second source of truth, and never a screenshot).
+ */
+async function createArtefactSnapshot(
+  req: AuthedRequest,
+  res: Response,
+  kind: MethodArtefactKind
+): Promise<void> {
+  const organizationId = requireOrg(req, res);
+  if (!organizationId) return;
+  const output = await methodOutputService.getOutput(organizationId, req.params.id);
+  if (!output) {
+    res.status(404).json({ error: 'Output not found' });
+    return;
+  }
+  const body = (req.body ?? {}) as Record<string, unknown>;
+  if (!isNonEmptyString(body.title)) {
+    res.status(400).json({ error: 'title is required' });
+    return;
+  }
+  if (body.content == null) {
+    res.status(400).json({ error: 'content (structured — never an image) is required' });
+    return;
+  }
+  // Integrity: the hash is computed server-side from the content actually
+  // stored, never trusted from the client.
+  const contentHash = computeContentHash(body.content);
+
+  // Supersede every current Report/Presentation/Initiative Draft across the
+  // WHOLE reopen lineage this Output belongs to, not just this Output's own
+  // session — see collectLineageSessionIds's doc comment.
+  await supersedeLineageResultsFor(organizationId, output);
+
+  const snapshot = await methodReportSnapshotService.create({
+    organizationId,
+    outputId: output.id,
+    sessionId: output.sessionId,
+    title: body.title,
+    content: body.content,
+    contentHash,
+    kind,
+    // ★ Explicit demonstration marker, inherited from the Output (which
+    // inherited it from the session) — never re-derived from the request,
+    // never silently dropped. See MethodOutputService.demoBypassActive.
+    demoBypassActive: output.demoBypassActive,
+  });
+
+  res.status(201).json({
+    report: snapshot,
+    ...(output.demoBypassActive ? { demoBypassActive: true, demoBypassNotice: DEMO_BYPASS_NOTICE } : {}),
+  });
+}
+
 // ---------------------------------------------------------------------------
 // POST /api/method/outputs/:id/report — Report Snapshot
 // ---------------------------------------------------------------------------
@@ -693,42 +799,20 @@ router.get(
 router.post(
   '/outputs/:id/report',
   asyncHandler(async (req: AuthedRequest, res: Response) => {
-    const organizationId = requireOrg(req, res);
-    if (!organizationId) return;
-    const output = await methodOutputService.getOutput(organizationId, req.params.id);
-    if (!output) {
-      res.status(404).json({ error: 'Output not found' });
-      return;
-    }
-    const body = (req.body ?? {}) as Record<string, unknown>;
-    if (!isNonEmptyString(body.title)) {
-      res.status(400).json({ error: 'title is required' });
-      return;
-    }
-    if (body.content == null) {
-      res.status(400).json({ error: 'content (structured — never an image) is required' });
-      return;
-    }
-    // Integrity: the hash is computed server-side from the content actually
-    // stored, never trusted from the client.
-    const contentHash = computeContentHash(body.content);
+    await createArtefactSnapshot(req, res, 'report');
+  })
+);
 
-    await methodReportSnapshotService.supersedeCurrentForSession(
-      organizationId,
-      output.sessionId,
-      output.id,
-      'superseded'
-    );
-    const snapshot = await methodReportSnapshotService.create({
-      organizationId,
-      outputId: output.id,
-      sessionId: output.sessionId,
-      title: body.title,
-      content: body.content,
-      contentHash,
-    });
+// ---------------------------------------------------------------------------
+// POST /api/method/outputs/:id/presentation — Presentation, SAME Output,
+// SAME snapshot discipline as Report (never a screenshot — see
+// createArtefactSnapshot's doc comment).
+// ---------------------------------------------------------------------------
 
-    res.status(201).json({ report: snapshot });
+router.post(
+  '/outputs/:id/presentation',
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
+    await createArtefactSnapshot(req, res, 'presentation');
   })
 );
 
@@ -771,6 +855,12 @@ router.post(
       res.status(400).json({ error: 'confidence must be low|medium|high' });
       return;
     }
+
+    // Same lineage-wide supersession as Report/Presentation — a fresh
+    // Initiative Draft against a NEW (corrected-revision) Output must mark
+    // the OLD session's current draft(s) as superseded, not just this
+    // Output's own (new) session, which has none yet on a first draft.
+    await supersedeLineageResultsFor(organizationId, output);
 
     // ★ No `register`/`registerInitiative` call exists anywhere in this file
     // or in MethodInitiativeDraftService — "Register as Initiative" has no

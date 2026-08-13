@@ -76,6 +76,18 @@ interface MethodSessionRow {
   revision_of_session_id: string | null;
   created_at: string;
   updated_at: string;
+  /**
+   * Whether this session was created via the demo bypass of the pack-
+   * readiness gate (server/src/method-core/demoBypass.ts). NOT part of the
+   * frozen `MethodSession` contract (see `contracts/session.ts`'s header on
+   * why that file must stay byte-identical to its src/ mirror) — kept on the
+   * internal row/service boundary only, and threaded through to
+   * `MethodOutputBridge.onSessionFrozen` so a demo-bypassed session's Output
+   * (and, downstream, its Report) can carry an explicit, visible
+   * demonstration marker instead of looking indistinguishable from a
+   * production one once the create-session response is gone.
+   */
+  demo_bypass_active: boolean;
 }
 
 interface MethodSessionRoleRow {
@@ -95,6 +107,8 @@ export interface CreateSessionInput {
   readonly methodPackVersion: string;
   readonly ownerUserId: string;
   readonly mode: MethodSession['mode'];
+  /** See `MethodSessionRow.demo_bypass_active`. Defaults to false. */
+  readonly demoBypassActive?: boolean;
 }
 
 /**
@@ -123,6 +137,17 @@ export interface MethodOutputBridge {
     readonly module: MethodSession['module'];
     readonly methodPackId: string;
     readonly methodPackVersion: string;
+    /** See `MethodSessionRow.demo_bypass_active`. */
+    readonly demoBypassActive: boolean;
+    /**
+     * Set when the session being frozen is a `frozen -> active` reopen
+     * revision (`MethodSession.revisionOfSessionId`). Lets the bridge chain
+     * the new Output's `revisionOfOutputId` back to the LATEST Output of the
+     * session this one reopened — without this, every reopened session's
+     * freeze would silently produce an unlinked `outputVersion: 1` row
+     * instead of a real correction in the same lineage.
+     */
+    readonly revisionOfSessionId: string | null;
   }): Promise<void>;
 }
 
@@ -190,14 +215,15 @@ export class MethodSessionService {
       revision_of_session_id: null,
       created_at: now,
       updated_at: now,
+      demo_bypass_active: input.demoBypassActive === true,
     };
 
     await runOrThrow(
       `INSERT INTO method_sessions
          (id, organization_id, project_id, module, method_pack_id, method_pack_version,
           state, domain_stage, mode, owner_user_id, version, frozen_snapshot_id,
-          revision_of_session_id, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          revision_of_session_id, created_at, updated_at, demo_bypass_active)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         row.id,
         row.organization_id,
@@ -214,6 +240,7 @@ export class MethodSessionService {
         row.revision_of_session_id,
         row.created_at,
         row.updated_at,
+        row.demo_bypass_active,
       ]
     );
 
@@ -303,13 +330,17 @@ export class MethodSessionService {
         revision_of_session_id: session.id,
         created_at: now,
         updated_at: now,
+        // Inherited, never re-decided: a reopened revision of a demo session
+        // is still a demo session — it cannot "launder" itself into a
+        // production-looking Output by being reopened.
+        demo_bypass_active: session.demo_bypass_active,
       };
       await runOrThrow(
         `INSERT INTO method_sessions
            (id, organization_id, project_id, module, method_pack_id, method_pack_version,
             state, domain_stage, mode, owner_user_id, version, frozen_snapshot_id,
-            revision_of_session_id, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            revision_of_session_id, created_at, updated_at, demo_bypass_active)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           revision.id,
           revision.organization_id,
@@ -326,6 +357,7 @@ export class MethodSessionService {
           revision.revision_of_session_id,
           revision.created_at,
           revision.updated_at,
+          revision.demo_bypass_active,
         ]
       );
       return { ok: true };
@@ -389,6 +421,8 @@ export class MethodSessionService {
         module: sessionRow.module as MethodSession['module'],
         methodPackId: sessionRow.method_pack_id,
         methodPackVersion,
+        demoBypassActive: sessionRow.demo_bypass_active,
+        revisionOfSessionId: sessionRow.revision_of_session_id,
       });
     }
   }

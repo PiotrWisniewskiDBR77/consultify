@@ -83,6 +83,16 @@ export interface FreezeOutputInput {
   /** Set when this freeze is produced by reopening a previously frozen Output. */
   readonly revisionOfOutputId?: string | null;
   readonly sourceRevisionOfSessionId?: string | null;
+  /**
+   * ★ Explicit demonstration marker (CLAUDE.md rule #7 / demoBypass.ts):
+   * true iff the session this Output was frozen from was created through
+   * the demo bypass of the pack-readiness gate. Durable and visible on every
+   * read of this Output (`GET /outputs/:id`, the `freeze` response's
+   * `output` field) — never inferred client-side, never silently dropped on
+   * a revision (see EventDerivedOutputBridge: inherited from the session
+   * row, which itself inherits it across `frozen -> active` reopens).
+   */
+  readonly demoBypassActive?: boolean;
 }
 
 export interface MethodFindingRecord {
@@ -132,6 +142,8 @@ export interface MethodOutputRecord {
   readonly contentHash: string;
   readonly createdAt: string;
   readonly frozenAt: string;
+  /** See `FreezeOutputInput.demoBypassActive`. */
+  readonly demoBypassActive: boolean;
 }
 
 interface MethodOutputRow {
@@ -157,6 +169,7 @@ interface MethodOutputRow {
   content_hash: string;
   created_at: string;
   frozen_at: string;
+  demo_bypass_active: boolean;
 }
 
 interface MethodFindingRow {
@@ -332,6 +345,7 @@ function toOutputRecord(row: MethodOutputRow, findings: MethodFindingRecord[]): 
     contentHash: row.content_hash,
     createdAt: row.created_at,
     frozenAt: row.frozen_at,
+    demoBypassActive: row.demo_bypass_active === true,
   };
 }
 
@@ -368,8 +382,8 @@ export class MethodOutputService {
           method_pack_version, output_version, revision_of_output_id, scope,
           current_json, target_json, gap_json, aggregation_json, visual_model_json,
           evidence_completeness_json, limitations_json, prioritisation_json,
-          lineage_json, content_hash, created_at, frozen_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          lineage_json, content_hash, created_at, frozen_at, demo_bypass_active)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         input.organizationId,
@@ -393,6 +407,7 @@ export class MethodOutputService {
         contentHash,
         now,
         now,
+        input.demoBypassActive === true,
       ]
     );
 

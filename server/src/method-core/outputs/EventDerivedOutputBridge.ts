@@ -28,6 +28,7 @@
  */
 
 import { genId, nowIso } from '../db.js';
+import { DEMO_BYPASS_NOTICE } from '../demoBypass.js';
 import type { MethodEventStore } from '../MethodEventStore.js';
 import type { MethodOutputBridge } from '../MethodSessionService.js';
 import type { EvidenceLocatorInput, FreezeOutputInput, OutputFindingInput } from './MethodOutputService.js';
@@ -176,12 +177,31 @@ export class EventDerivedOutputBridge implements MethodOutputBridge {
     readonly module: 'assessment' | 'tools' | 'audits';
     readonly methodPackId: string;
     readonly methodPackVersion: string;
+    readonly demoBypassActive: boolean;
+    readonly revisionOfSessionId: string | null;
   }): Promise<void> {
     const events = await this.events.listBySession(input.organizationId, input.sessionId);
     const { findings, current, target, gap } = deriveFindingsFromEvents(events);
 
     const totalUnits = Object.keys(current).length;
     const unitsWithAcceptedEvidence = findings.length;
+
+    // Reopen (frozen -> active -> frozen again) lineage: this session is a
+    // revision of `revisionOfSessionId` iff that field is set. Link the new
+    // Output to the LATEST Output already frozen for the session it reopened
+    // — `listOutputsBySession` returns newest-first (output_version DESC) —
+    // so `MethodOutputService.freezeOutput` can compute a real
+    // `outputVersion = previous + 1` instead of always defaulting to 1, and
+    // "corrected revision, old Output untouched" is a genuine INSERT-only
+    // chain, not just two unrelated rows that happen to share a method pack.
+    let revisionOfOutputId: string | null = null;
+    if (input.revisionOfSessionId) {
+      const priorOutputs = await this.outputs.listOutputsBySession(
+        input.organizationId,
+        input.revisionOfSessionId
+      );
+      revisionOfOutputId = priorOutputs[0]?.id ?? null;
+    }
 
     const freezeInput: FreezeOutputInput = {
       organizationId: input.organizationId,
@@ -214,11 +234,29 @@ export class EventDerivedOutputBridge implements MethodOutputBridge {
           'demo) — businessMeaning/recommendation to deterministyczne szablony z realnych danych ' +
           '(unit/level/evidence), NIE analiza LLM ani recenzja metodyka.',
         'aggregation.byGroup jest pusta — agregacja per-oś jest regułą metody i liczona jest client-side.',
+        // ★ Explicit, visible demonstration marker (CLAUDE.md rule #7) — only
+        // appended when the SOURCE SESSION was actually created through the
+        // demo bypass (server/src/method-core/demoBypass.ts). A production
+        // session's Output never carries this string. `demoBypassActive` on
+        // the record itself (see MethodOutputService) is the machine-
+        // readable form of the same fact; this is the human-readable one,
+        // and both are required by `validateFreezeInput`'s non-empty
+        // `limitations` rule anyway — an honest Output always states what it
+        // does not cover, and "this came from the demo bypass" is exactly
+        // that kind of disclosure.
+        ...(input.demoBypassActive
+          ? [
+              DEMO_BYPASS_NOTICE +
+                ' Ten Output pochodzi z sesji utworzonej przez demo bypass — NIE jest wynikiem ' +
+                'produkcyjnym i nie może zostać zatwierdzony jako released/pilot przez ten mechanizm.',
+            ]
+          : []),
       ],
       findings,
       prioritisationResult: null,
-      revisionOfOutputId: null,
-      sourceRevisionOfSessionId: null,
+      revisionOfOutputId,
+      sourceRevisionOfSessionId: input.revisionOfSessionId,
+      demoBypassActive: input.demoBypassActive,
     };
 
     const output = await this.outputs.freezeOutput(freezeInput);
