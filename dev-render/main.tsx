@@ -337,6 +337,11 @@ const ResultsVNextTeresaOkrReflectionScreen = React.lazy(
 const ToolsSwotReportScreen = React.lazy(() => import('./screens/tools-swot-report'));
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'audyty-piec-powierzchni': {
+    label:
+      'U8 — REALNY <AuditsMethodHub> (Library·Processes·Outputs·Reports·Initiatives), auditsFiveSurfacesV1. &tab=library|processes|outputs|reports|initiatives, &state=default|empty|loading|error',
+    render: () => <AudytyPiecPowierzchniScreen />,
+  },
   'tools-swot-report': {
     label:
       'Tools — Dynamic SWOT: Output -> Report/Presentation (deterministyczny renderer, Executive Paper/Night)',
