@@ -431,6 +431,7 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'RN-G3 tor PLATFORMY §1 — DEMONSTRACJA przepisu powłoki klasy L (archetyp Rekord): ArtifactBreadcrumb + NModeShell + ArtifactRightPanel/ArtifactPropertiesTable, zero nowego standardu. &save=idle|saving|saved|error|conflict &teresa=1',
     render: () => <RnG3ClassLRecordShellScreen />,
+  },
   'idea-financial-case-persistence': {
     label:
       'E09 RISK-12 — REALNY <FinancialCaseDialog> z REALNYM zapisem: ?state=empty|loading|dirty|saving|saved|error|conflict|reopened (stanowy mock transportu)',

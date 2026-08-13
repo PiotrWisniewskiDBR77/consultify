@@ -317,6 +317,19 @@
         "--strictPort"
       ],
       "port": 58040
+    },
+    {
+      "name": "assessment-mpq-odbior",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "5305",
+        "--strictPort"
+      ],
+      "port": 5305
     }
   ]
 }
