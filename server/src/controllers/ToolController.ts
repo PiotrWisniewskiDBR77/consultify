@@ -18,6 +18,7 @@ import { checkSimilarInitiatives } from '../services/initiativeSimilarityService
 import KnownToolsService from '../services/KnownToolsService.js';
 import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import { hasPermission } from '../services/permissionService.js';
+import { buildDeckDocumentFromStructuredSlides } from '../services/presentationDeckDocumentService.js';
 import * as ReportBuilderService from '../services/reportBuilderService.js';
 import ToolInitiativeService from '../services/ToolInitiativeService.js';
 import {
@@ -25,11 +26,13 @@ import {
   SwotCandidateHandoffError,
 } from '../services/tools/swotCandidateHandoffService.js';
 import {
+  buildPresentationSlidesFromOutput,
   ensureToolOutputSnapshot,
   persistCanonicalReport,
   recordInitiativeProposal,
   renderToolReportSectionFromOutput,
 } from '../services/tools/toolOutputSnapshotService.js';
+import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { decodeHtmlEntities } from '../utils/htmlEntities.js';
@@ -2336,6 +2339,28 @@ export class ToolController {
             return;
           }
         }
+        if (outputType === 'presentation') {
+          // `presentation` claims its `tool_initiative_links` ledger row
+          // UP FRONT (canClaimUpfront, below) — BEFORE the deck is created —
+          // so a failed content-creation attempt (deck insert, registry
+          // insert, or the DECISION-comment's explicit-error path in the
+          // `outputType === 'presentation'` branch) can leave an orphaned
+          // ledger row with no matching `presentation_decks` row behind it.
+          // Nothing in this codebase deletes `tool_initiative_links` rows
+          // (see the comment on the 409 branch above), so a caller retrying
+          // with the SAME idempotency key after such a failure must not be
+          // told the (nonexistent) presentation succeeded — verify the deck
+          // actually exists before reporting a deduplicated success, exactly
+          // like the `report` branch above does against `report_builder_reports`.
+          const existingDeck = await queryHelpers.queryOne(
+            `SELECT id FROM presentation_decks WHERE id = ? AND organization_id = ?`,
+            [existingOutputId, user.organizationId]
+          );
+          if (!existingDeck) {
+            res.status(409).json({ error: 'Existing presentation promotion is no longer available' });
+            return;
+          }
+        }
         res.json({
           id: existingOutputId,
           outputType,
@@ -2555,32 +2580,169 @@ export class ToolController {
       }
 
       if (outputType === 'presentation') {
+        // DECISION (evidence-based — read this before changing this branch
+        // again): `v8_artifact_runs` is NOT the right home for a promoted
+        // tool presentation, and this branch now stops writing to it
+        // entirely instead of trying to fix the INSERT.
+        //
+        // Its real contract, per the migration that OWNS the table
+        // (server/migrations/20260324_v81_artifact_runs_wave1.sql, later
+        // ALTERed by 20260330_p17b_.../20260409_p17c_... — never redefined):
+        // run_id, organization_id, execution_run_id, context_snapshot_id,
+        // trigger_type IN ('chat','module_action','template','refresh'),
+        // requested_by_user_id, plan_json — a chat-driven artifact
+        // PLANNING/RETRY envelope. None of that exists for this promotion.
+        // Its only readers are artifactRegistryService.ts's chat-planning
+        // functions (createArtifactRunFromChat / planArtifactFromChat /
+        // acceptArtifactRunPlan / retryArtifactRun / materializeArtifactRun)
+        // — grepped, nothing in the Outputs/Reports-and-Presentations list
+        // path ever reads it. The removed INSERT used a column set
+        // (id/artifact_type/output_type/status/config_json/result_json)
+        // that never existed on this table — it always failed — and the
+        // `catch { /* Table may not exist */ }` around it silently
+        // swallowed that failure, so the HTTP call "succeeded" while
+        // persisting nothing and the promoted deck was invisible everywhere.
+        //
+        // The table that ACTUALLY backs the Outputs/Reports-and-Presentations
+        // list, get and reopen surfaces is `v8_output_artifacts`, via
+        // `artifactRegistryService.registerArtifactOrigin` — confirmed by
+        // presentations.routes.ts's OWN `syncArtifactRegistryForDeck` (every
+        // other presentation-creation path in this codebase registers this
+        // way) and by artifacts.routes.ts's `buildActionTargetPayload`,
+        // which routes `originRuntime: 'presentation'` to
+        // `/presentations/builder/${originRecordId}` for reopen — i.e. reopen
+        // requires a REAL `presentation_decks` row at that id, not a
+        // synthetic id with no backing content. So this promotion now
+        // actually materializes one: a small deterministic deck (no model
+        // call — same "renderer, not generator" contract as
+        // `persistCanonicalReport` below) built with
+        // `buildDeckDocumentFromStructuredSlides`, the canonical
+        // `schemaVersion: 1` builder MAT-007/009 introduced specifically so
+        // `deck_json` is never empty relative to the deck's card count (see
+        // that function's own doc comment for the "Ready, 0 cards" incident
+        // it fixes) — `normalizeDeckDocument` (GET /decks/:id) reads
+        // `deck_json`, not `presentation_cards`.
+        //
+        // `outputId` was already DB-claimed above in `insertLedgerRow` (every
+        // canClaimUpfront type, presentation included, claims its ledger row
+        // BEFORE content exists) — reusing it as the deck's primary key means
+        // the id returned to the caller, the `tool_initiative_links`
+        // lineage row, and the actual openable deck are the SAME id, with no
+        // separate mapping to keep in sync.
+        const slides = buildPresentationSlidesFromOutput(canonicalOutput);
+        const deckDocument = buildDeckDocumentFromStructuredSlides({
+          deckId: outputId,
+          organizationId: session.organization_id,
+          title,
+          theme: 'modern',
+          slides,
+          status: 'ready',
+          createdBy: user.id,
+        });
+
         try {
           await queryHelpers.queryRun(
-            `INSERT INTO v8_artifact_runs (
-              id, organization_id, artifact_type, output_type, status,
-              config_json, result_json, created_by, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO presentation_decks (
+              id, organization_id, project_id, title, description, deck_type, theme,
+              slide_count, status, source_type, source_id, source_refs_json, deck_json,
+              generated_by, version, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, 'custom', ?, ?, ?, 'tool_promotion', ?, ?, ?, ?, 1, ?, ?)`,
             [
               outputId,
               session.organization_id,
-              'tool_promotion',
-              'presentation',
-              'completed',
-              JSON.stringify({ ...toolTrace, title }),
-              JSON.stringify({
-                title,
-                description: description || '',
-                promoted_from_session: toolId,
-                tool_trace: toolTrace,
-              }),
+              session.project_id ?? null,
+              title,
+              description || '',
+              'modern',
+              deckDocument.cards.length,
+              'ready',
+              toolId,
+              JSON.stringify([
+                {
+                  artifact_id: canonicalOutput.id,
+                  artifact_type: 'tool_output',
+                  artifact_name: session.name,
+                },
+              ]),
+              JSON.stringify(deckDocument),
               user.id,
               now,
               now,
             ]
           );
-        } catch {
-          // Table may not exist
+
+          for (const card of deckDocument.cards) {
+            await queryHelpers.queryRun(
+              `INSERT INTO presentation_cards (id, deck_id, card_index, intent, blocks_json, created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?)`,
+              [
+                card.card_id,
+                outputId,
+                card.order_index,
+                String(card.intent || 'content'),
+                JSON.stringify(card.blocks),
+                now,
+                now,
+              ]
+            );
+          }
+
+          const registered = await artifactRegistryService.registerArtifactOrigin({
+            organizationId: session.organization_id,
+            outputType: 'presentation',
+            artifactFamily: 'presentation',
+            originRuntime: 'presentation',
+            originRecordId: outputId,
+            titleSnapshot: title,
+            ownerUserId: user.id,
+            createdBy: user.id,
+            deliveryState: artifactRegistryService.mapPresentationStatusToDeliveryState('ready'),
+            visibilityScope: artifactRegistryService.deriveArtifactVisibilityScope({
+              outputType: 'presentation',
+              ownerUserId: user.id,
+            }),
+            projectId: session.project_id ?? null,
+            originSummary: {
+              source: 'tool_promotion',
+              promoted_from_session: toolId,
+              tool_output_id: canonicalOutput.id,
+              tool_trace: toolTrace,
+              sourceTable: 'presentation_decks',
+              slideCount: deckDocument.cards.length,
+              nativeStatus: 'ready',
+            },
+          });
+
+          // `registerArtifactOrigin` fails soft internally (returns `null`
+          // rather than throwing — it re-reads the row it just wrote and
+          // reports the miss instead of trusting the INSERT call; see its
+          // own comment on `DbPromise`'s `fallback: true` default). Treat a
+          // `null` here as the explicit persistence failure it is: this
+          // branch must not report HTTP success for a presentation the
+          // Outputs registry cannot see.
+          if (!registered) {
+            throw new Error(
+              `Failed to register presentation artifact ${outputId} in the Outputs registry ` +
+                `(v8_output_artifacts) — see artifactRegistryService warning logs for the rejected write`
+            );
+          }
+        } catch (err) {
+          // Fail closed: an incomplete presentation must not report success
+          // NOR leave a half-written deck/cards behind for a future retry's
+          // dedup lookup to serve (see the `respondDeduplicated` guard added
+          // above for the `outputType === 'presentation'` case). Same
+          // rollback shape as presentations.routes.ts's own deck-creation
+          // path on a `syncArtifactRegistryForDeck` failure.
+          await queryHelpers
+            .queryRun(`DELETE FROM presentation_cards WHERE deck_id = ?`, [outputId])
+            .catch(() => undefined);
+          await queryHelpers
+            .queryRun(`DELETE FROM presentation_decks WHERE id = ? AND organization_id = ?`, [
+              outputId,
+              session.organization_id,
+            ])
+            .catch(() => undefined);
+          throw err;
         }
 
         // Canonical lineage record, same rationale as the `report` branch
