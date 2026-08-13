@@ -1,0 +1,70 @@
+[
+  {
+    "theme": "light",
+    "target": "avatar-chip",
+    "label": "org-avatar chip (CW)",
+    "fgColor": "rgb(100,116,139)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 4.76,
+    "passesAA": true
+  },
+  {
+    "theme": "light",
+    "target": "btn-reload",
+    "label": "Wczytaj ponownie",
+    "fgColor": "rgb(51,65,85)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 10.35,
+    "passesAA": true
+  },
+  {
+    "theme": "light",
+    "target": "btn-back",
+    "label": "Wróć do listy zleceń",
+    "fgColor": "rgb(51,65,85)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 10.35,
+    "passesAA": true
+  },
+  {
+    "theme": "light",
+    "axe": {
+      "violations": [],
+      "passesCount": 4
+    }
+  },
+  {
+    "theme": "dark",
+    "target": "avatar-chip",
+    "label": "org-avatar chip (CW)",
+    "fgColor": "rgb(148,163,184)",
+    "bgColorComposed": "rgb(43,50,67)",
+    "contrastRatio": 4.99,
+    "passesAA": true
+  },
+  {
+    "theme": "dark",
+    "target": "btn-reload",
+    "label": "Wczytaj ponownie",
+    "fgColor": "rgb(226,232,240)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 14.48,
+    "passesAA": true
+  },
+  {
+    "theme": "dark",
+    "target": "btn-back",
+    "label": "Wróć do listy zleceń",
+    "fgColor": "rgb(226,232,240)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 14.48,
+    "passesAA": true
+  },
+  {
+    "theme": "dark",
+    "axe": {
+      "violations": [],
+      "passesCount": 4
+    }
+  }
+]

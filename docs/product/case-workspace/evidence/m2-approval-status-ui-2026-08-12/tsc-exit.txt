@@ -1,0 +1,3 @@
+EXIT=0
+Command: NODE_OPTIONS="--max-old-space-size=8192" ./node_modules/.bin/tsc --noEmit
+Run from worktree root: /Users/piotrwisniewski/dev/consultify-case-workspace-v1-20260809

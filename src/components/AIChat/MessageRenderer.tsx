@@ -45,6 +45,7 @@ import { formatExecutiveBrief } from '../../utils/textCleaning';
 import { ArtifactBadge } from './ArtifactBadge';
 import { ArtifactChip } from './ArtifactChip';
 import { shouldOfferDocumentEmission } from './canvasEmissionHeuristic';
+import { CaseIntakeConfirmCard } from './CaseIntakeConfirmCard';
 import { ChatCodeBlock } from './ChatCodeBlock';
 import { ChatTableProposalCard } from './ChatTableProposalCard';
 import { CitationList, CitationMarker } from './CitationList';
@@ -811,7 +812,26 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   </div>
                 )}
 
-              {(msg as any).metadata?.type === 'table_proposal' ? (
+              {(msg as any).metadata?.type === 'case_intake_proposal' ? (
+                // R4-P1: Teresa proposed a durable work order for THIS
+                // conversation (`caseIntakeService.proposeConversationWorkOrder`,
+                // reached via `/api/v10/teresa/case-intake/conversations/:id/summary`
+                // — see `routes/v10/teresa.routes.ts`). Nothing was created yet
+                // (CW-CANON-01); the card's own "Confirm" button is the only
+                // thing that can create the Case.
+                // ★ Nothing in this chat pipeline attaches this metadata type
+                // today — see `CaseIntakeConfirmCard.tsx`'s header for the
+                // literal PARTIAL this leaves.
+                <div className="not-prose">
+                  <CaseIntakeConfirmCard
+                    conversationId={
+                      (msg as any).metadata?.proposal?.conversationId || activeConversationId || ''
+                    }
+                    workOrder={(msg as any).metadata.proposal.workOrder}
+                    workOrderDigest={(msg as any).metadata.proposal.workOrderDigest}
+                  />
+                </div>
+              ) : (msg as any).metadata?.type === 'table_proposal' ? (
                 <div className="not-prose">
                   <ChatTableProposalCard
                     proposal={(msg as any).metadata.proposal}

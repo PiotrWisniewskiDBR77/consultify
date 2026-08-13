@@ -1,0 +1,52 @@
+R4-P1 — SELECT z bazy (kontrola POZA odpowiedzią HTTP, osobne połączenie pg.Pool)
+Baza: postgresql://case_workspace:case_workspace@127.0.0.1:55432/case_workspace_test
+
+=== SELECT case_core WHERE case_id = 'case-009780fb-3a25-4397-b11c-efbc6726cb33' ===
+[
+  {
+    "case_id": "case-009780fb-3a25-4397-b11c-efbc6726cb33",
+    "organization_id": "cw-local-org",
+    "project_id": "cw-stream-a-project",
+    "case_status": "DRAFT",
+    "case_profile": "STANDARD",
+    "governance_tier": "STANDARD",
+    "contracted_closure_type": "DECISION_COMPLETED",
+    "created_by_actor_id": "cw-local-user"
+  }
+]
+→ Dokładnie JEDEN wiersz, mimo DWÓCH wywołań POST .../confirm (201 potem 200).
+
+=== SELECT count(*), array_agg(DISTINCT case_id) FROM case_workspace_event_outbox
+    WHERE event_type='case.intake.work_order_confirmed'
+      AND redacted_summary->>'sourceConversationId' = 'conv-live-1786396851' ===
+{"n": 1, "case_ids": ["case-009780fb-3a25-4397-b11c-efbc6726cb33"]}
+→ Dokładnie JEDNO zdarzenie potwierdzenia dla tej rozmowy, jeden caseId — drugie
+  wywołanie /confirm nie dopisało drugiego zdarzenia (ON CONFLICT DO NOTHING w
+  caseIntakeService.confirmWorkOrder, potwierdzone przez confirmedEventDeduplicated:true
+  w odpowiedzi #4 w _zadania-sieciowe.txt).
+
+=== SELECT event_id, event_type, aggregate_type, case_id, actor_user_id, occurred_at
+    FROM case_workspace_event_outbox
+    WHERE redacted_summary->>'sourceConversationId' = 'conv-live-1786396851'
+    ORDER BY occurred_at ASC ===
+[
+  {
+    "event_id": "cwevt-intake-proposed-f5b5817928102b2891faf050ed7d1ec0ebf44d8219ca7ad2d2af643e0db7919b",
+    "event_type": "case.intake.work_order_proposed",
+    "aggregate_type": "CASE_INTAKE",
+    "case_id": null,
+    "actor_user_id": "cw-local-user",
+    "occurred_at": "2026-08-10T21:20:51.702Z"
+  },
+  {
+    "event_id": "cwevt-intake-confirmed-ick-e7e9adeb2c01daba78eb8d023188692a163d4accf6a16157a7dedcd8ffd50800",
+    "event_type": "case.intake.work_order_confirmed",
+    "aggregate_type": "CASE",
+    "case_id": "case-009780fb-3a25-4397-b11c-efbc6726cb33",
+    "actor_user_id": "cw-local-user",
+    "occurred_at": "2026-08-10T21:21:03.283Z"
+  }
+]
+→ Ślad w outboxie: DOKŁADNIE dwa zdarzenia dla całej rozmowy — jedna propozycja
+  (case_id NULL, CW-CANON-01), jedno potwierdzenie (case_id = realny Case). Drugie
+  kliknięcie "Potwierdź" (odpowiedź #4) NIE dopisało trzeciego wiersza.

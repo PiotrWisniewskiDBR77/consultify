@@ -1,0 +1,1750 @@
+[
+  {
+    "width": 320,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-mywork",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-mywork",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(133,24,47)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 9.68,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-assessment",
+    "state": "active-resting",
+    "isActive": true,
+    "fgColor": "rgb(133,24,47)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 9.68,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-assessment",
+    "state": "active-indicator-bar",
+    "isActive": true,
+    "fgColor": "rgb(133,24,47)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 9.68,
+    "passesNonText3to1": true
+  },
+  {
+    "width": 320,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-initiatives",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-initiatives",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(133,24,47)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 9.68,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-ai",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-ai",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(133,24,47)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 9.68,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-more",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-more",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(133,24,47)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 9.68,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "light",
+    "variant": "before",
+    "axe": {
+      "violations": [],
+      "passes": [
+        "color-contrast"
+      ]
+    }
+  },
+  {
+    "width": 320,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-mywork",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-mywork",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(15,23,42)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 17.85,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-assessment",
+    "state": "active-resting",
+    "isActive": true,
+    "fgColor": "rgb(15,23,42)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 17.85,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-assessment",
+    "state": "active-indicator-bar",
+    "isActive": true,
+    "fgColor": "rgb(59,40,131)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 11.56,
+    "passesNonText3to1": true
+  },
+  {
+    "width": 320,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-initiatives",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-initiatives",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(15,23,42)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 17.85,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-ai",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-ai",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(15,23,42)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 17.85,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-more",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-more",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(15,23,42)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 17.85,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "light",
+    "variant": "after",
+    "axe": {
+      "violations": [],
+      "passes": [
+        "color-contrast"
+      ]
+    }
+  },
+  {
+    "width": 320,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-mywork",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(138,153,176)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 6.18,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-mywork",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(228,88,104)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 5.01,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-assessment",
+    "state": "active-resting",
+    "isActive": true,
+    "fgColor": "rgb(228,88,104)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 5.01,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-assessment",
+    "state": "active-indicator-bar",
+    "isActive": true,
+    "fgColor": "rgb(228,88,104)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 5.01,
+    "passesNonText3to1": true
+  },
+  {
+    "width": 320,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-initiatives",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(138,153,176)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 6.18,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-initiatives",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(228,88,104)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 5.01,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-ai",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(138,153,176)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 6.18,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-ai",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(228,88,104)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 5.01,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-more",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(138,153,176)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 6.18,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-more",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(228,88,104)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 5.01,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "dark",
+    "variant": "before",
+    "axe": {
+      "violations": [],
+      "passes": [
+        "color-contrast"
+      ]
+    }
+  },
+  {
+    "width": 320,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-mywork",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(138,153,176)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 6.18,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-mywork",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(244,247,251)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 16.61,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-assessment",
+    "state": "active-resting",
+    "isActive": true,
+    "fgColor": "rgb(244,247,251)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 16.61,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-assessment",
+    "state": "active-indicator-bar",
+    "isActive": true,
+    "fgColor": "rgb(88,166,255)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 7.07,
+    "passesNonText3to1": true
+  },
+  {
+    "width": 320,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-initiatives",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(138,153,176)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 6.18,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-initiatives",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(244,247,251)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 16.61,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-ai",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(138,153,176)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 6.18,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-ai",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(244,247,251)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 16.61,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-more",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(138,153,176)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 6.18,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-more",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(244,247,251)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 16.61,
+    "passesAA": true
+  },
+  {
+    "width": 320,
+    "theme": "dark",
+    "variant": "after",
+    "axe": {
+      "violations": [],
+      "passes": [
+        "color-contrast"
+      ]
+    }
+  },
+  {
+    "width": 375,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-mywork",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-mywork",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(133,24,47)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 9.68,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-assessment",
+    "state": "active-resting",
+    "isActive": true,
+    "fgColor": "rgb(133,24,47)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 9.68,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-assessment",
+    "state": "active-indicator-bar",
+    "isActive": true,
+    "fgColor": "rgb(133,24,47)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 9.68,
+    "passesNonText3to1": true
+  },
+  {
+    "width": 375,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-initiatives",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-initiatives",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(133,24,47)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 9.68,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-ai",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-ai",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(133,24,47)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 9.68,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-more",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-more",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(133,24,47)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 9.68,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "light",
+    "variant": "before",
+    "axe": {
+      "violations": [],
+      "passes": [
+        "color-contrast"
+      ]
+    }
+  },
+  {
+    "width": 375,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-mywork",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-mywork",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(15,23,42)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 17.85,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-assessment",
+    "state": "active-resting",
+    "isActive": true,
+    "fgColor": "rgb(15,23,42)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 17.85,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-assessment",
+    "state": "active-indicator-bar",
+    "isActive": true,
+    "fgColor": "rgb(59,40,131)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 11.56,
+    "passesNonText3to1": true
+  },
+  {
+    "width": 375,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-initiatives",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-initiatives",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(15,23,42)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 17.85,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-ai",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-ai",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(15,23,42)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 17.85,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-more",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-more",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(15,23,42)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 17.85,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "light",
+    "variant": "after",
+    "axe": {
+      "violations": [],
+      "passes": [
+        "color-contrast"
+      ]
+    }
+  },
+  {
+    "width": 375,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-mywork",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(138,153,176)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 6.18,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-mywork",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(228,88,104)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 5.01,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-assessment",
+    "state": "active-resting",
+    "isActive": true,
+    "fgColor": "rgb(228,88,104)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 5.01,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-assessment",
+    "state": "active-indicator-bar",
+    "isActive": true,
+    "fgColor": "rgb(228,88,104)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 5.01,
+    "passesNonText3to1": true
+  },
+  {
+    "width": 375,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-initiatives",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(138,153,176)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 6.18,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-initiatives",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(228,88,104)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 5.01,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-ai",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(138,153,176)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 6.18,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-ai",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(228,88,104)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 5.01,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-more",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(138,153,176)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 6.18,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-more",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(228,88,104)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 5.01,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "dark",
+    "variant": "before",
+    "axe": {
+      "violations": [],
+      "passes": [
+        "color-contrast"
+      ]
+    }
+  },
+  {
+    "width": 375,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-mywork",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(138,153,176)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 6.18,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-mywork",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(244,247,251)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 16.61,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-assessment",
+    "state": "active-resting",
+    "isActive": true,
+    "fgColor": "rgb(244,247,251)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 16.61,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-assessment",
+    "state": "active-indicator-bar",
+    "isActive": true,
+    "fgColor": "rgb(88,166,255)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 7.07,
+    "passesNonText3to1": true
+  },
+  {
+    "width": 375,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-initiatives",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(138,153,176)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 6.18,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-initiatives",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(244,247,251)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 16.61,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-ai",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(138,153,176)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 6.18,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-ai",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(244,247,251)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 16.61,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-more",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(138,153,176)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 6.18,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-more",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(244,247,251)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 16.61,
+    "passesAA": true
+  },
+  {
+    "width": 375,
+    "theme": "dark",
+    "variant": "after",
+    "axe": {
+      "violations": [],
+      "passes": [
+        "color-contrast"
+      ]
+    }
+  },
+  {
+    "width": 430,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-mywork",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-mywork",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(133,24,47)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 9.68,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-assessment",
+    "state": "active-resting",
+    "isActive": true,
+    "fgColor": "rgb(133,24,47)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 9.68,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-assessment",
+    "state": "active-indicator-bar",
+    "isActive": true,
+    "fgColor": "rgb(133,24,47)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 9.68,
+    "passesNonText3to1": true
+  },
+  {
+    "width": 430,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-initiatives",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-initiatives",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(133,24,47)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 9.68,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-ai",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-ai",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(133,24,47)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 9.68,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-more",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-more",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(133,24,47)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 9.68,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "light",
+    "variant": "before",
+    "axe": {
+      "violations": [],
+      "passes": [
+        "color-contrast"
+      ]
+    }
+  },
+  {
+    "width": 430,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-mywork",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-mywork",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(15,23,42)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 17.85,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-assessment",
+    "state": "active-resting",
+    "isActive": true,
+    "fgColor": "rgb(15,23,42)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 17.85,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-assessment",
+    "state": "active-indicator-bar",
+    "isActive": true,
+    "fgColor": "rgb(59,40,131)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 11.56,
+    "passesNonText3to1": true
+  },
+  {
+    "width": 430,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-initiatives",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-initiatives",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(15,23,42)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 17.85,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-ai",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-ai",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(15,23,42)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 17.85,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-more",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(71,85,105)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 7.58,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-more",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(15,23,42)",
+    "bgColorComposed": "rgb(255,255,255)",
+    "contrastRatio": 17.85,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "light",
+    "variant": "after",
+    "axe": {
+      "violations": [],
+      "passes": [
+        "color-contrast"
+      ]
+    }
+  },
+  {
+    "width": 430,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-mywork",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(138,153,176)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 6.18,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-mywork",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(228,88,104)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 5.01,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-assessment",
+    "state": "active-resting",
+    "isActive": true,
+    "fgColor": "rgb(228,88,104)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 5.01,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-assessment",
+    "state": "active-indicator-bar",
+    "isActive": true,
+    "fgColor": "rgb(228,88,104)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 5.01,
+    "passesNonText3to1": true
+  },
+  {
+    "width": 430,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-initiatives",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(138,153,176)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 6.18,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-initiatives",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(228,88,104)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 5.01,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-ai",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(138,153,176)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 6.18,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-ai",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(228,88,104)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 5.01,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-more",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(138,153,176)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 6.18,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-more",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(228,88,104)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 5.01,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "dark",
+    "variant": "before",
+    "axe": {
+      "violations": [],
+      "passes": [
+        "color-contrast"
+      ]
+    }
+  },
+  {
+    "width": 430,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-mywork",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(138,153,176)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 6.18,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-mywork",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(244,247,251)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 16.61,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-assessment",
+    "state": "active-resting",
+    "isActive": true,
+    "fgColor": "rgb(244,247,251)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 16.61,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-assessment",
+    "state": "active-indicator-bar",
+    "isActive": true,
+    "fgColor": "rgb(88,166,255)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 7.07,
+    "passesNonText3to1": true
+  },
+  {
+    "width": 430,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-initiatives",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(138,153,176)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 6.18,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-initiatives",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(244,247,251)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 16.61,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-ai",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(138,153,176)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 6.18,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-ai",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(244,247,251)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 16.61,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-more",
+    "state": "inactive-resting",
+    "isActive": false,
+    "fgColor": "rgb(138,153,176)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 6.18,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-more",
+    "state": "inactive-active-press",
+    "isActive": false,
+    "fgColor": "rgb(244,247,251)",
+    "bgColorComposed": "rgb(15,23,42)",
+    "contrastRatio": 16.61,
+    "passesAA": true
+  },
+  {
+    "width": 430,
+    "theme": "dark",
+    "variant": "after",
+    "axe": {
+      "violations": [],
+      "passes": [
+        "color-contrast"
+      ]
+    }
+  },
+  {
+    "width": 768,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-mywork",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-assessment",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-initiatives",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-ai",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "light",
+    "variant": "before",
+    "testid": "bottom-nav-more",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "light",
+    "variant": "before",
+    "axe": {
+      "violations": [],
+      "passes": []
+    }
+  },
+  {
+    "width": 768,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-mywork",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-assessment",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-initiatives",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-ai",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "light",
+    "variant": "after",
+    "testid": "bottom-nav-more",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "light",
+    "variant": "after",
+    "axe": {
+      "violations": [],
+      "passes": []
+    }
+  },
+  {
+    "width": 768,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-mywork",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-assessment",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-initiatives",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-ai",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "dark",
+    "variant": "before",
+    "testid": "bottom-nav-more",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "dark",
+    "variant": "before",
+    "axe": {
+      "violations": [],
+      "passes": []
+    }
+  },
+  {
+    "width": 768,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-mywork",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-assessment",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-initiatives",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-ai",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "dark",
+    "variant": "after",
+    "testid": "bottom-nav-more",
+    "note": "nav not rendered at this width (md:hidden, by design — component is mobile-only)"
+  },
+  {
+    "width": 768,
+    "theme": "dark",
+    "variant": "after",
+    "axe": {
+      "violations": [],
+      "passes": []
+    }
+  }
+]

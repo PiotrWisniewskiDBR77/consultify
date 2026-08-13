@@ -1,0 +1,652 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Zlecenie — Redukcja kosztów operacyjnych (prototyp W2-V0, SPEC-A Archetyp C·L)</title>
+<link rel="stylesheet" href="../css/tokens.css" />
+<link rel="stylesheet" href="../css/shell.css" />
+<style>
+  /* ---- DIETA WIZUALNA (runda 2, uwaga #4 właściciela) -------------------
+   * Karty kroków były wysokie (padding 12–14 + ikona 32px + odstępy).
+   * Ścieśnione do padding 8–10 i ikony-glifu 18px BEZ usuwania treści.
+   * Zagnieżdżone pudełka tracą własną ramkę na rzecz subtelnego tła. */
+  .node-list { display: flex; flex-direction: column; gap: 4px; }
+  .node-card { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border: 1px solid var(--c-border-subtle); border-radius: var(--radius-sm); background: var(--c-surface); }
+  .node-icon { width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; font-size: 12px; flex: none; color: var(--c-text-muted); }
+  .node-icon.is-done { color: var(--c-success-text); }
+  .node-icon.is-blocked { color: var(--c-danger-text); }
+  .node-icon.is-waiting { color: var(--c-warning-text); }
+  .node-body { flex: 1; min-width: 0; }
+  .node-title { font-size: 13px; font-weight: 600; line-height: 1.3; color: var(--c-text); }
+  .node-sub { font-size: 11px; line-height: 1.3; color: var(--c-text-muted); }
+  .node-connector { width: 1px; height: 5px; background: var(--c-border); margin-left: 17px; }
+
+  /* DIETA (uwaga #4): „Plan Prosty" był STOSEM sześciu osobnych pudełek ze
+   * złączkami. Zostaje JEDNA ramka, a kroki to wiersze rozdzielone włoskową
+   * kreską — kolejność nadal czytelna, ramek 6→1, znika 5 złączek i 5 przerw.
+   * Treść kroku (tytuł + status) bez zmian. */
+  .node-steps { display: block; border: 1px solid var(--c-border-subtle); border-radius: var(--radius-md); background: var(--c-surface); overflow: hidden; }
+  .node-steps .node-card { border: none; border-top: 1px solid var(--c-border-subtle); border-radius: 0; background: transparent; padding: 7px 12px; }
+  .node-steps .node-card:first-child { border-top: none; }
+  .node-steps .node-connector { display: none; }
+
+  /* ---- GRAF (uwaga #1): układ łamany w 4 pasy, żeby CAŁOŚĆ mieściła się
+   * na desktopie bez zoomu; na wąskim ekranie viewport scrolluje + zoom/fit. */
+  .graph-stage { display: flex; flex-direction: column; gap: 10px; }
+  .graph-row { display: flex; align-items: center; gap: 0; min-width: max-content; }
+  .graph-node { display: flex; flex-direction: column; justify-content: center; gap: 2px; padding: 7px 9px; min-height: 46px; border-radius: var(--radius-sm); border: 1px solid var(--c-border); background: var(--c-surface-raised); width: 138px; flex: none; }
+  .graph-node__type { font-size: 9px; text-transform: uppercase; letter-spacing: .06em; color: var(--c-text-muted); }
+  .graph-node__title { font-size: 11px; font-weight: 600; }
+  .graph-node--gateway { border-style: dashed; }
+  .graph-node--blocked { border-color: color-mix(in srgb, var(--c-danger) 60%, var(--c-border)); }
+  .graph-node--waiting { border-color: color-mix(in srgb, var(--c-warning) 60%, var(--c-border)); }
+  .graph-arrow { width: 26px; height: 1px; background: var(--c-border-strong); flex: none; position: relative; }
+  .graph-arrow::after { content: '›'; position: absolute; right: -5px; top: -9px; color: var(--c-border-strong); font-size: 14px; }
+  .graph-wrap-out, .graph-wrap-in { font-size: 16px; line-height: 1; color: var(--c-focus-solid); flex: none; padding: 0 6px; font-weight: 700; }
+  .graph-indent { flex: none; }
+  .graph-lane-label { font-size: 9px; text-transform: uppercase; letter-spacing: .08em; color: var(--c-text-muted); width: 62px; flex: none; }
+
+  .approval-card { border: 1px solid var(--c-border-subtle); border-radius: var(--radius-sm); padding: 8px 10px; background: var(--c-surface); }
+  .approval-card__head { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; flex-wrap: wrap; }
+  .approval-card__title { font-size: 13px; font-weight: 600; flex: 1; min-width: 0; }
+  .approval-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+
+  .wait-card { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: var(--radius-sm); border: 1px solid var(--c-border-subtle); background: var(--c-surface); }
+  .wait-card.is-overdue { border-color: color-mix(in srgb, var(--c-danger) 55%, var(--c-border)); }
+  .wait-icon { width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; flex: none; font-size: 12px; }
+
+  /* Blok „Postęp" nie potrzebuje własnej karty — etykieta + pasek + liczba
+     to sama TREŚĆ I STAN; ramka była czystą dekoracją (dieta, uwaga #4). */
+  .progress-flat { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .progress-flat .section-title { margin: 0; flex: none; }
+
+  .deliverable-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  .deliverable-card { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border: 1px solid var(--c-border-subtle); border-radius: var(--radius-sm); background: var(--c-surface); cursor: pointer; text-align: left; }
+  .deliverable-card:hover { border-color: var(--c-border-strong); }
+  .deliverable-icon { width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; flex: none; font-size: 12px; }
+  .deliverable-title { font-size: 12px; font-weight: 600; line-height: 1.3; }
+  .deliverable-sub { font-size: 11px; line-height: 1.3; color: var(--c-text-muted); }
+
+  .value-row { display: flex; align-items: center; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--c-border-subtle); }
+  .value-row:last-child { border-bottom: none; }
+  .value-metric { flex: 1; min-width: 0; }
+  .value-nums { font-size: 11px; color: var(--c-text-muted); }
+
+  .timeline-item { display: flex; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--c-border-subtle); }
+  .timeline-item:last-child { border-bottom: none; }
+  .timeline-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--c-info); margin-top: 7px; flex: none; }
+
+  #deliverable-overlay { display: none; position: fixed; inset: 0; z-index: 300; background: var(--c-bg); flex-direction: column; }
+  .overlay-body { flex: 1; overflow: auto; padding: 24px 16px; max-width: 760px; margin: 0 auto; width: 100%; }
+
+  /* ---- mobile 320 / 375 / 430 (uwaga #3) ---- */
+  @media (max-width: 768px) {
+    .deliverable-grid { grid-template-columns: 1fr; }
+    .approval-actions .pill { flex: 1 1 auto; justify-content: center; }
+    .value-row { flex-wrap: wrap; gap: 6px; }
+    .graph-lane-label { width: 52px; }
+  }
+</style>
+</head>
+<body data-default-tab="overview" data-default-plan-view="prosty">
+<div class="proto-bar">
+  <span class="proto-bar__label">PROTOTYP — nieprodukcyjny mockup</span>
+  <a class="proto-link" href="../index.html">← Indeks</a>
+  <span class="proto-spacer"></span>
+  <span>Motyw:</span>
+  <button data-proto-theme-btn="light">Light</button>
+  <button data-proto-theme-btn="dark">Dark</button>
+  <div class="proto-bar__switches">
+  <span style="width:1px;height:16px;background:rgba(255,255,255,.4)"></span>
+  <span>Stan zlecenia:</span>
+  <button data-proto-state-btn="default">Domyślny</button>
+  <button data-proto-state-btn="empty">Pusty (DRAFT)</button>
+  <button data-proto-state-btn="loading">Ładowanie</button>
+  <button data-proto-state-btn="error">Błąd</button>
+  <button data-proto-state-btn="stale">Nieaktualne</button>
+  <button data-proto-state-btn="partial">Częściowe</button>
+  <button data-proto-state-btn="blocked">Zablokowane</button>
+  <span style="width:1px;height:16px;background:rgba(255,255,255,.4)"></span>
+  <span>Zakładka:</span>
+  <button data-tab-btn="overview">Przegląd</button>
+  <button data-tab-btn="plan">Plan</button>
+  <button data-tab-btn="realizacja">Realizacja</button>
+  <button data-tab-btn="rezultaty">Rezultaty</button>
+  <button data-tab-btn="relations">Powiązania</button>
+  <button data-tab-btn="activity">Aktywność</button>
+  </div>
+</div>
+
+<div class="app-frame">
+  <!-- MENU 1 — artefakt -->
+  <div class="menu1-artifact">
+    <div class="menu1-artifact__left">
+      <!-- Powrót do listy: JAWNIE opisany i zawsze widoczny (także na 320px),
+           nie polegamy na przycisku „wstecz" przeglądarki. -->
+      <button class="pill pill--sm pill--neutral" onclick="location.href='zlecenia-list.html'" title="Wróć do listy zleceń" style="flex:none;">← Zlecenia</button>
+      <div class="menu1-artifact__divider"></div>
+      <span class="menu1-artifact__icon">🎯</span>
+      <span class="menu1-artifact__title">Redukcja kosztów operacyjnych — Fabryka Wrocław</span>
+      <span class="lifecycle lifecycle--active" data-lifecycle="default,stale,partial">Aktywne</span>
+      <span class="lifecycle lifecycle--draft" data-lifecycle="empty" style="display:none;">Wersja robocza</span>
+      <span class="lifecycle lifecycle--blocked" data-lifecycle="blocked" style="display:none;">Zablokowane</span>
+      <span class="menu1-artifact__saved">Zapisano · 2 min temu</span>
+    </div>
+    <div class="menu1-artifact__right">
+      <button class="pill pill--neutral pill--sm" data-panel-toggle title="Właściwości zlecenia">☰<span class="pill-label"> Indeks</span></button>
+      <button class="pill pill--primary" data-primary-for="default,stale,partial">Poproś o decyzję →</button>
+      <button class="pill pill--primary" data-primary-for="empty" style="display:none;">Zatwierdź i rozpocznij →</button>
+      <button class="pill pill--warning" data-primary-for="blocked" style="display:none;">Rozwiąż blokadę</button>
+    </div>
+  </div>
+
+  <!-- case-level banner strip -->
+  <div style="padding: 10px 16px 0;">
+    <div class="state-banner state-banner--stale" data-case-banner="stale">
+      <div>⏱</div>
+      <div class="state-banner__text"><div class="state-banner__title">Widok może być nieaktualny</div>Graf planu (digest sha256:9f2c…) mógł zmienić się od ostatniego pobrania. Odśwież przed podjęciem decyzji.</div>
+      <button class="pill pill--sm pill--neutral">Odśwież</button>
+    </div>
+    <div class="state-banner state-banner--partial" data-case-banner="partial">
+      <div>◐</div>
+      <div class="state-banner__text"><div class="state-banner__title">Częściowa akceptacja wyników</div>4 z 11 zakończonych węzłów planu nie mają jeszcze zarejestrowanej akceptacji wyniku (node_result_acceptance). Realizacja i Rezultaty pokazują to jako „—”.</div>
+    </div>
+    <div class="state-banner state-banner--blocked" data-case-banner="blocked">
+      <div>⛔</div>
+      <div class="state-banner__text"><div class="state-banner__title">Zlecenie zablokowane od 08-09, 14:12</div>Oczekiwanie HUMAN „Zatwierdzenie cennika przez klienta” przekroczyło termin. Case_status = BLOCKED — realizacja wstrzymana do rozwiązania.</div>
+      <button class="pill pill--sm pill--warning">Przejdź do blokady</button>
+    </div>
+  </div>
+
+  <!-- MENU 3 — artefakt tabs (6 zakładek; przy 320px scrollowane w WŁASNYM pasku) -->
+  <div class="menu2-artifact">
+    <div class="tabscroll" data-tabscroll data-overflow="none">
+      <button class="tabscroll__edge tabscroll__edge--l" data-tabscroll-nudge="-1" title="Poprzednie zakładki" aria-label="Przewiń zakładki w lewo">‹</button>
+      <div class="tabscroll__track" data-tabscroll-track role="tablist">
+        <button class="underline-tab is-active" data-tab-btn="overview">Przegląd</button>
+        <button class="underline-tab" data-tab-btn="plan">Plan</button>
+        <button class="underline-tab" data-tab-btn="realizacja">Realizacja</button>
+        <button class="underline-tab" data-tab-btn="rezultaty">Rezultaty</button>
+        <button class="underline-tab" data-tab-btn="relations">Powiązania</button>
+        <button class="underline-tab" data-tab-btn="activity">Aktywność</button>
+      </div>
+      <button class="tabscroll__edge tabscroll__edge--r" data-tabscroll-nudge="1" title="Kolejne zakładki" aria-label="Przewiń zakładki w prawo">›</button>
+    </div>
+    <div class="menu3__right" style="flex:none; padding-left:8px;">
+      <button class="chip">✦ AI</button>
+    </div>
+  </div>
+
+  <div class="body-row">
+    <div class="center-col">
+
+      <!-- generic loading override -->
+      <div class="center-pad" data-state-view="loading" style="display:none;">
+        <div class="card"><span class="skel" style="width:220px;display:block;margin-bottom:10px;"></span><span class="skel" style="width:100%;display:block;height:8px;margin-bottom:14px;"></span><span class="skel" style="width:90%;display:block;margin-bottom:8px;"></span><span class="skel" style="width:75%;display:block;"></span></div>
+        <div class="card"><span class="skel" style="width:160px;display:block;margin-bottom:10px;"></span><span class="skel" style="width:100%;display:block;height:40px;"></span></div>
+      </div>
+
+      <!-- generic error override -->
+      <div class="center-pad" data-state-view="error" style="display:none;">
+        <div class="error-state">
+          <div>⚠️</div>
+          <div class="error-state__title">Nie udało się wczytać zlecenia</div>
+          <div class="error-state__sub">Wywołanie caseCoreService.getCase zwróciło błąd. Właściwości w prawym panelu mogą pochodzić z pamięci podręcznej.</div>
+          <button class="pill pill--neutral">↻ Spróbuj ponownie</button>
+        </div>
+      </div>
+
+      <div data-state-view="default,empty,stale,partial,blocked">
+
+        <!-- TAB: Przegląd -->
+        <div class="center-pad" data-tab-panel="overview">
+          <div data-empty-for="overview" style="display:none;">
+            <div class="empty-state">
+              <div class="empty-state__icon">🌱</div>
+              <div class="empty-state__title">Zlecenie utworzone, jeszcze bez opublikowanego planu</div>
+              <div class="empty-state__sub">Case jest w statusie DRAFT. Przejdź do zakładki Plan, aby zaproponować pierwszą wersję grafu, albo użyj „Zatwierdź i rozpocznij” dla prostego LIGHT-case.</div>
+            </div>
+          </div>
+          <div data-empty-hide-for="overview">
+            <div class="grid-3" style="margin-bottom: 16px;">
+              <div class="card kpi-tile"><span class="l4">Postęp realizacji</span><span class="kpi-num">64%</span><div class="progress-track"><div class="progress-fill" style="width:64%"></div></div></div>
+              <div class="card kpi-tile"><span class="l4">Propozycje do decyzji</span><span class="kpi-num">3</span><span class="l5">2 PENDING_REVIEW, 1 przeterm.</span></div>
+              <div class="card kpi-tile"><span class="l4">Aktywne oczekiwania</span><span class="kpi-num">2</span><span class="l5">1 HUMAN przeterminowany</span></div>
+            </div>
+            <div class="card">
+              <div class="section-title">Domknięcie kontraktu (closure axes)</div>
+              <div class="closure-grid">
+                <div class="kpi-tile"><span class="l5">Delivery</span><span class="status-chip status-chip--warning"><span class="status-chip__dot"></span><span data-i18n="status_pending">Oczekuje</span></span></div>
+                <div class="kpi-tile"><span class="l5">Decision</span><span class="status-chip status-chip--success"><span class="status-chip__dot"></span><span data-i18n="status_completed">Zakończone</span></span></div>
+                <div class="kpi-tile"><span class="l5">Implementation</span><span class="status-chip status-chip--warning"><span class="status-chip__dot"></span><span data-i18n="status_pending">Oczekuje</span></span></div>
+                <div class="kpi-tile"><span class="l5">Outcome</span><span class="status-chip status-chip--neutral"><span class="status-chip__dot"></span><span data-i18n="status_not_applicable">Nie dotyczy</span></span></div>
+              </div>
+              <div class="l5" style="margin-top:10px;">Kontraktowe domknięcie: <strong class="l4" style="color:var(--c-text)" data-i18n="closure_implementation_completed">Wdrożenie zakończone</strong> · Profil: <span data-i18n="profile_transformation">Transformacja</span> · <span data-i18n="field_governance_short">Nadzór</span>: <span data-i18n="gov_standard">Standardowy</span></div>
+            </div>
+            <div class="card">
+              <div class="section-title">Ostatnia aktywność</div>
+              <div class="timeline-item"><div class="timeline-dot"></div><div class="l3">Plan v3 opublikowany przez Martę Kowalską <span class="l5">— 2 dni temu</span></div></div>
+              <div class="timeline-item"><div class="timeline-dot"></div><div class="l3">Decyzja o wdrożeniu redukcji kosztów zakupowych: <span data-i18n="status_approve" data-i18n-upper>ZATWIERDZONO</span> <span class="l5">— 3 dni temu</span></div></div>
+              <div class="timeline-item"><div class="timeline-dot"></div><div class="l3"><span data-i18n="field_governance_tier">Poziom nadzoru</span> zmieniony na <span data-i18n="gov_standard">Standardowy</span> <span class="l5">— 5 dni temu</span></div></div>
+              <button class="pill pill--neutral pill--sm" data-tab-btn="activity" style="margin-top:8px;">Zobacz pełną aktywność →</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: Plan -->
+        <div data-tab-panel="plan" style="display:none;">
+          <div class="menu2-artifact menu2-artifact--meta" style="border-bottom:none; padding-top:4px;">
+            <button class="underline-tab is-active" data-plan-view-btn="prosty">Prosty</button>
+            <button class="underline-tab" data-plan-view-btn="ekspercki">Ekspercki</button>
+            <button class="underline-tab" data-plan-view-btn="lista">Lista</button>
+            <div class="menu3__right" style="margin-left:auto; padding-right:16px; display:flex; gap:8px; align-items:center;">
+              <span class="l5">Plan v3 · <span data-i18n="plan_status_published">Opublikowany</span> · digest sha256:9f2c1a…</span>
+            </div>
+          </div>
+          <div class="center-pad" style="padding-top:16px;">
+            <div data-empty-for="plan" style="display:none;">
+              <div class="empty-state">
+                <div class="empty-state__icon">🗺️</div>
+                <div class="empty-state__title">Brak opublikowanego planu</div>
+                <div class="empty-state__sub">Zaproponuj graf realizacji (Prosty/Ekspercki/Lista to trzy projekcje tego samego semantic_graph — nie ma trzech osobnych planów).</div>
+                <button class="pill pill--primary">+ Zaproponuj plan</button>
+              </div>
+            </div>
+            <div data-empty-hide-for="plan">
+              <!-- PROSTY -->
+              <div data-plan-view-panel="prosty">
+                <div class="l5" style="margin-bottom:10px;">Widok uproszczony — kroki główne, bez węzłów technicznych (gateway/split/join ukryte).</div>
+                <div class="node-list node-steps">
+                  <div class="node-card"><div class="node-icon is-done">✓</div><div class="node-body"><div class="node-title">Zbierz dane finansowe</div><div class="node-sub">Zakończone · wynik zaakceptowany</div></div></div>
+                  <div class="node-connector"></div>
+                  <div class="node-card"><div class="node-icon is-done">✓</div><div class="node-body"><div class="node-title">Wywiad z zespołem operacyjnym</div><div class="node-sub">Zakończone · wynik zaakceptowany</div></div></div>
+                  <div class="node-connector"></div>
+                  <div class="node-card"><div class="node-icon is-done">✓</div><div class="node-body"><div class="node-title">Wygeneruj rekomendacje oszczędności</div><div class="node-sub">Zakończone · wynik częściowy (PARTIAL)</div></div></div>
+                  <div class="node-connector"></div>
+                  <div class="node-card"><div class="node-icon is-waiting">◔</div><div class="node-body"><div class="node-title">Zatwierdzenie planu oszczędności</div><div class="node-sub">Oczekuje na decyzję — patrz zakładka Realizacja</div></div></div>
+                  <div class="node-connector"></div>
+                  <div class="node-card"><div class="node-icon is-blocked">⛔</div><div class="node-body"><div class="node-title">Wdróż redukcję kosztów zakupowych</div><div class="node-sub">Zablokowane — oczekiwanie na raport Q3 (przeterminowane)</div></div></div>
+                  <div class="node-connector"></div>
+                  <div class="node-card" style="opacity:.55"><div class="node-icon">○</div><div class="node-body"><div class="node-title">Zmierz wartość oszczędności</div><div class="node-sub">Nie rozpoczęte</div></div></div>
+                </div>
+              </div>
+              <!-- EKSPERCKI -->
+              <div data-plan-view-panel="ekspercki" style="display:none;">
+                <div class="l5" style="margin-bottom:8px;">Widok techniczny — pełny graf (nodeId/effectClass/bindings), włącznie z gateway i parallel split/join. Reprezentacja statyczna w tym prototypie (nie interaktywny canvas). Graf jest <strong>łamany do szerokości ekranu</strong>: ↴ oznacza ciąg dalszy w kolejnym pasie, pas „A" to gałąź równoległa uruchomiona przez n6 · PARALLEL_SPLIT.</div>
+
+                <div data-graph>
+                  <div class="graph-toolbar">
+                    <button class="pill pill--sm pill--neutral pill--icon-only" data-graph-zoom="-0.15" title="Pomniejsz" aria-label="Pomniejsz graf">−</button>
+                    <span class="graph-toolbar__scale" data-graph-scale-label>100%</span>
+                    <button class="pill pill--sm pill--neutral pill--icon-only" data-graph-zoom="0.15" title="Powiększ" aria-label="Powiększ graf">+</button>
+                    <button class="pill pill--sm pill--neutral" data-graph-fit>⤢ Dopasuj do widoku</button>
+                    <button class="pill pill--sm pill--neutral" data-graph-reset title="Skala rzeczywista">1:1</button>
+                    <span class="graph-toolbar__hint">Szerszy niż ekran? Przewiń graf w poziomie w jego własnej ramce.</span>
+                  </div>
+
+                  <div class="graph-viewport" data-graph-viewport tabindex="0">
+                    <div class="graph-sizer" data-graph-sizer>
+                      <div class="graph-stage" data-graph-stage>
+                        <div class="graph-row">
+                          <span class="graph-lane-label">Pas 1</span>
+                          <div class="graph-node"><span class="graph-node__type">START</span><span class="graph-node__title">n0 · start</span></div>
+                          <div class="graph-arrow"></div>
+                          <div class="graph-node"><span class="graph-node__type">CAPABILITY</span><span class="graph-node__title">n1 · zbierz-dane-fin</span></div>
+                          <div class="graph-arrow"></div>
+                          <div class="graph-node"><span class="graph-node__type">HUMAN_TASK</span><span class="graph-node__title">n2 · wywiad-ops</span></div>
+                          <div class="graph-arrow"></div>
+                          <div class="graph-node graph-node--gateway"><span class="graph-node__type">DECISION_GATEWAY</span><span class="graph-node__title">n3 · próg-oszczędności?</span></div>
+                          <span class="graph-wrap-out" title="ciąg dalszy w pasie 2">↴</span>
+                        </div>
+                        <div class="graph-row">
+                          <span class="graph-lane-label">Pas 2</span>
+                          <span class="graph-wrap-in" title="ciąg dalszy z pasa 1">↳</span>
+                          <div class="graph-node"><span class="graph-node__type">CAPABILITY</span><span class="graph-node__title">n4 · generuj-rekomendacje</span></div>
+                          <div class="graph-arrow"></div>
+                          <div class="graph-node graph-node--waiting"><span class="graph-node__type">APPROVAL</span><span class="graph-node__title">n5 · zatw-planu</span></div>
+                          <div class="graph-arrow"></div>
+                          <div class="graph-node graph-node--gateway"><span class="graph-node__type">PARALLEL_SPLIT</span><span class="graph-node__title">n6 · split</span></div>
+                          <span class="graph-wrap-out" title="rozgałęzienie do pasa A">↴</span>
+                        </div>
+                        <div class="graph-row">
+                          <span class="graph-lane-label">Gałąź A</span>
+                          <span class="graph-wrap-in" title="gałąź równoległa z n6">↳</span>
+                          <div class="graph-node graph-node--blocked"><span class="graph-node__type">CAPABILITY</span><span class="graph-node__title">n7 · redukcja-zakupowa</span></div>
+                          <div class="graph-arrow"></div>
+                          <div class="graph-node graph-node--waiting"><span class="graph-node__type">TIMER_WAIT</span><span class="graph-node__title">n8 · czekaj-raport-q3</span></div>
+                          <span class="graph-wrap-out" title="ciąg dalszy w pasie 3">↴</span>
+                        </div>
+                        <div class="graph-row">
+                          <span class="graph-lane-label">Pas 3</span>
+                          <span class="graph-wrap-in" title="ciąg dalszy z gałęzi A">↳</span>
+                          <div class="graph-node graph-node--gateway"><span class="graph-node__type">PARALLEL_JOIN</span><span class="graph-node__title">n9 · join (JOIN_PENDING)</span></div>
+                          <div class="graph-arrow"></div>
+                          <div class="graph-node" style="opacity:.55"><span class="graph-node__type">CAPABILITY</span><span class="graph-node__title">n10 · zmierz-wartość</span></div>
+                          <div class="graph-arrow"></div>
+                          <div class="graph-node" style="opacity:.55"><span class="graph-node__type">END</span><span class="graph-node__title">n11 · end</span></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- LISTA -->
+              <div data-plan-view-panel="lista" style="display:none;">
+                <div class="l5" style="margin-bottom:12px;">Widok listy — te same węzły jako płaska tabela (StandardTable-owy wygląd), bez topologii grafu. Kolejność, status, wykonawca, wynik i następne działanie widoczne w każdym wierszu (także na mobile — patrz karty poniżej 768px).</div>
+                <div class="table-wrap" style="max-height:520px;">
+                  <table class="std-table plan-lista-table">
+                    <thead><tr><th>Kolejność</th><th>Węzeł</th><th>Status</th><th>Wykonawca</th><th>Wynik</th><th>Następne działanie</th></tr></thead>
+                    <tbody>
+                      <tr><td class="num" data-th="Kolejność">1</td><td data-th="Węzeł" data-th-title><div class="row-title">start</div><div class="row-sub">n0 · START</div></td><td data-th="Status"><span class="status-chip status-chip--success"><span class="status-chip__dot"></span><span data-i18n="status_completed">Zakończone</span></span></td><td class="l4" data-th="Wykonawca">system</td><td class="l4 empty-cell" data-th="Wynik">—</td><td class="l4 empty-cell" data-th="Następne działanie" data-th-wide>—</td></tr>
+                      <tr><td class="num" data-th="Kolejność">2</td><td data-th="Węzeł" data-th-title><div class="row-title">Zbierz dane finansowe</div><div class="row-sub">n1 · CAPABILITY</div></td><td data-th="Status"><span class="status-chip status-chip--success"><span class="status-chip__dot"></span><span data-i18n="status_completed">Zakończone</span></span></td><td class="l4" data-th="Wykonawca">AGENT</td><td class="l4" data-th="Wynik"><span data-i18n="status_accepted">Zaakceptowane</span></td><td class="l4 empty-cell" data-th="Następne działanie" data-th-wide>—</td></tr>
+                      <tr><td class="num" data-th="Kolejność">3</td><td data-th="Węzeł" data-th-title><div class="row-title">Wywiad z zespołem operacyjnym</div><div class="row-sub">n2 · HUMAN_TASK</div></td><td data-th="Status"><span class="status-chip status-chip--success"><span class="status-chip__dot"></span><span data-i18n="status_completed">Zakończone</span></span></td><td class="l4" data-th="Wykonawca">Marta Kowalska</td><td class="l4" data-th="Wynik"><span data-i18n="status_accepted">Zaakceptowane</span></td><td class="l4 empty-cell" data-th="Następne działanie" data-th-wide>—</td></tr>
+                      <tr><td class="num" data-th="Kolejność">4</td><td data-th="Węzeł" data-th-title><div class="row-title">Próg oszczędności?</div><div class="row-sub">n3 · DECISION_GATEWAY</div></td><td data-th="Status"><span class="status-chip status-chip--success"><span class="status-chip__dot"></span><span data-i18n="status_branch_selected">Gałąź wybrana</span></span></td><td class="l4" data-th="Wykonawca">system</td><td class="l4 empty-cell" data-th="Wynik">—</td><td class="l4 empty-cell" data-th="Następne działanie" data-th-wide>—</td></tr>
+                      <tr><td class="num" data-th="Kolejność">5</td><td data-th="Węzeł" data-th-title><div class="row-title">Wygeneruj rekomendacje</div><div class="row-sub">n4 · CAPABILITY</div></td><td data-th="Status"><span class="status-chip status-chip--success"><span class="status-chip__dot"></span><span data-i18n="status_completed">Zakończone</span></span></td><td class="l4" data-th="Wykonawca">AGENT</td><td class="l4" data-th="Wynik"><span data-i18n="status_partial">Częściowe</span></td><td class="l4 empty-cell" data-th="Następne działanie" data-th-wide>—</td></tr>
+                      <tr><td class="num" data-th="Kolejność">6</td><td data-th="Węzeł" data-th-title><div class="row-title">Zatwierdzenie planu oszczędności</div><div class="row-sub">n5 · APPROVAL</div></td><td data-th="Status"><span class="status-chip status-chip--warning"><span class="status-chip__dot"></span><span data-i18n="status_pending_review">Oczekuje na przegląd</span></span></td><td class="l4" data-th="Wykonawca">Marta Kowalska</td><td class="l4 empty-cell" data-th="Wynik">—</td><td class="l4" data-th="Następne działanie" data-th-wide>Zatwierdź lub odrzuć propozycję</td></tr>
+                      <tr><td class="num" data-th="Kolejność">7</td><td data-th="Węzeł" data-th-title><div class="row-title">split</div><div class="row-sub">n6 · PARALLEL_SPLIT</div></td><td data-th="Status"><span class="status-chip status-chip--info"><span class="status-chip__dot"></span><span data-i18n="status_split_activated">Podział aktywowany</span></span></td><td class="l4" data-th="Wykonawca">system</td><td class="l4 empty-cell" data-th="Wynik">—</td><td class="l4 empty-cell" data-th="Następne działanie" data-th-wide>—</td></tr>
+                      <tr><td class="num" data-th="Kolejność">8</td><td data-th="Węzeł" data-th-title><div class="row-title">Wdróż redukcję kosztów zakupowych</div><div class="row-sub">n7 · CAPABILITY</div></td><td data-th="Status"><span class="status-chip status-chip--danger"><span class="status-chip__dot"></span><span data-i18n="status_blocked">Zablokowane</span></span></td><td class="l4" data-th="Wykonawca">AGENT</td><td class="l4 empty-cell" data-th="Wynik">—</td><td class="l4" data-th="Następne działanie" data-th-wide>Czeka na raport Q3 (przeterm.)</td></tr>
+                      <tr><td class="num" data-th="Kolejność">9</td><td data-th="Węzeł" data-th-title><div class="row-title">Oczekiwanie na raport Q3</div><div class="row-sub">n8 · TIMER_WAIT</div></td><td data-th="Status"><span class="status-chip status-chip--warning"><span class="status-chip__dot"></span><span data-i18n="status_active_overdue">Aktywne · po terminie</span></span></td><td class="l4" data-th="Wykonawca">system</td><td class="l4 empty-cell" data-th="Wynik">—</td><td class="l4" data-th="Następne działanie" data-th-wide>Eskaluj do klienta</td></tr>
+                      <tr><td class="num" data-th="Kolejność">10</td><td data-th="Węzeł" data-th-title><div class="row-title">join</div><div class="row-sub">n9 · PARALLEL_JOIN</div></td><td data-th="Status"><span class="status-chip status-chip--warning"><span class="status-chip__dot"></span><span data-i18n="status_join_pending">Oczekuje na złączenie</span></span></td><td class="l4" data-th="Wykonawca">system</td><td class="l4 empty-cell" data-th="Wynik">—</td><td class="l4" data-th="Następne działanie" data-th-wide>Czeka na gałąź zakupową</td></tr>
+                      <tr><td class="num" data-th="Kolejność">11</td><td data-th="Węzeł" data-th-title><div class="row-title">Zmierz wartość oszczędności</div><div class="row-sub">n10 · CAPABILITY</div></td><td data-th="Status"><span class="status-chip status-chip--neutral"><span class="status-chip__dot"></span><span data-i18n="status_not_started">Nie rozpoczęte</span></span></td><td class="l4 empty-cell" data-th="Wykonawca">—</td><td class="l4 empty-cell" data-th="Wynik">—</td><td class="l4" data-th="Następne działanie" data-th-wide>Rozpocznie się po n9</td></tr>
+                      <tr><td class="num" data-th="Kolejność">12</td><td data-th="Węzeł" data-th-title><div class="row-title">end</div><div class="row-sub">n11 · END</div></td><td data-th="Status"><span class="status-chip status-chip--neutral"><span class="status-chip__dot"></span><span data-i18n="status_not_started">Nie rozpoczęte</span></span></td><td class="l4 empty-cell" data-th="Wykonawca">—</td><td class="l4 empty-cell" data-th="Wynik">—</td><td class="l4 empty-cell" data-th="Następne działanie" data-th-wide>—</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: Realizacja -->
+        <div class="center-pad" data-tab-panel="realizacja" style="display:none;">
+          <div data-empty-for="realizacja" style="display:none;">
+            <div class="empty-state">
+              <div class="empty-state__icon">▶️</div>
+              <div class="empty-state__title">Realizacja jeszcze nie rozpoczęta</div>
+              <div class="empty-state__sub">Case jest w DRAFT — nie istnieje żaden Run powiązany z tym zleceniem. Uruchomi się automatycznie po publikacji planu i starcie.</div>
+            </div>
+          </div>
+          <div data-empty-hide-for="realizacja">
+            <div class="progress-flat">
+              <div class="section-title">Postęp</div>
+              <div class="progress-track" style="flex:1;"><div class="progress-fill" id="rz-progress-fill" style="width:64%"></div></div>
+              <span class="l4 tabular-nums" style="flex:none;">7 / 11 węzłów</span>
+            </div>
+
+            <div class="section-title">Wymaga uwagi — propozycje akcji</div>
+            <div class="node-list" style="margin-bottom:16px;">
+              <div class="approval-card">
+                <div class="approval-card__head">
+                  <span class="approval-card__title">Zatwierdzenie planu oszczędności zakupowych</span>
+                  <span class="status-chip status-chip--warning"><span class="status-chip__dot"></span><span data-i18n="status_pending_review">Oczekuje na przegląd</span></span>
+                </div>
+                <div class="l4">Proponujący: AGENT · Klasa efektu: MATERIAL · Wygasa: za 22 godz.</div>
+                <div class="l3" style="margin-top:6px;">Redukcja budżetu zakupowego o 8% w 3 kategoriach dostawców. Wymaga akceptacji zgodnie z polityką „<span data-i18n="autonomy_ask_material">Wymaga potwierdzenia dla istotnych działań</span>”.</div>
+                <div class="approval-actions">
+                  <button class="pill pill--positive pill--sm">✓ Zatwierdź</button>
+                  <button class="pill pill--destructive pill--sm">✕ Odrzuć</button>
+                  <button class="pill pill--neutral pill--sm">✎ Poproś o zmiany</button>
+                  <button class="pill pill--neutral pill--sm">⏲ Odłóż</button>
+                </div>
+              </div>
+              <div class="approval-card">
+                <div class="approval-card__head">
+                  <span class="approval-card__title">Rekomendacja: renegocjacja umowy z dostawcą X</span>
+                  <span class="status-chip status-chip--danger"><span class="status-chip__dot"></span>Przeterminowane</span>
+                </div>
+                <div class="l4">Proponujący: HUMAN (konsultant) · Klasa efektu: MATERIAL · Wygasło: 4 godz. temu</div>
+                <div class="approval-actions">
+                  <button class="pill pill--positive pill--sm">✓ Zatwierdź mimo to</button>
+                  <button class="pill pill--destructive pill--sm">✕ Odrzuć</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="section-title">Zablokowane i oczekujące</div>
+            <div class="node-list" style="margin-bottom:16px;">
+              <div class="wait-card is-overdue">
+                <div class="wait-icon">⏳</div>
+                <div class="node-body">
+                  <div class="node-title">TIMER — Oczekiwanie na raport Q3 od klienta</div>
+                  <div class="node-sub">Termin: 08-08 · Przeterminowane o 1 dzień · koreluje z węzłem n8</div>
+                </div>
+                <span class="status-chip status-chip--danger"><span class="status-chip__dot"></span><span data-i18n="status_overdue">Po terminie</span></span>
+              </div>
+              <div class="wait-card">
+                <div class="wait-icon">👤</div>
+                <div class="node-body">
+                  <div class="node-title">HUMAN — Zatwierdzenie cennika przez klienta</div>
+                  <div class="node-sub">Bez terminu · aktywne od 3 dni</div>
+                </div>
+                <span class="status-chip status-chip--neutral"><span class="status-chip__dot"></span><span data-i18n="status_no_deadline">Bez terminu</span></span>
+              </div>
+              <div class="wait-card">
+                <div class="wait-icon">⑂</div>
+                <div class="node-body">
+                  <div class="node-title">JOIN — Parallel join „n9” oczekuje na gałąź zakupową</div>
+                  <div class="node-sub">1 z 2 gałęzi ukończona · polityka ALL</div>
+                </div>
+                <span class="status-chip status-chip--warning"><span class="status-chip__dot"></span><span data-i18n="status_join_pending">Oczekuje na złączenie</span></span>
+              </div>
+            </div>
+
+            <div class="section-title">Ukończone węzły — akceptacja wyniku</div>
+            <div class="table-wrap">
+              <table class="std-table">
+                <thead><tr><th>Węzeł</th><th>Typ</th><th>Ukończono</th><th>Akceptacja</th></tr></thead>
+                <tbody>
+                  <tr><td class="row-title" data-th="Węzeł" data-th-title>Zbierz dane finansowe</td><td class="l4" data-th="Typ">CAPABILITY</td><td class="l4" data-th="Ukończono">6 dni temu</td><td data-th="Akceptacja"><span class="status-chip status-chip--success"><span class="status-chip__dot"></span><span data-i18n="status_accepted">Zaakceptowane</span></span></td></tr>
+                  <tr><td class="row-title" data-th="Węzeł" data-th-title>Wywiad z zespołem operacyjnym</td><td class="l4" data-th="Typ">HUMAN_TASK</td><td class="l4" data-th="Ukończono">5 dni temu</td><td data-th="Akceptacja"><span class="status-chip status-chip--success"><span class="status-chip__dot"></span><span data-i18n="status_accepted">Zaakceptowane</span></span></td></tr>
+                  <tr><td class="row-title" data-th="Węzeł" data-th-title>Wygeneruj rekomendacje oszczędności</td><td class="l4" data-th="Typ">CAPABILITY</td><td class="l4" data-th="Ukończono">3 dni temu</td><td data-th="Akceptacja"><span class="status-chip status-chip--warning"><span class="status-chip__dot"></span><span data-i18n="status_partial">Częściowe</span></span></td></tr>
+                  <tr data-partial-row><td class="row-title" data-th="Węzeł" data-th-title>Analiza ryzyka dostawców</td><td class="l4" data-th="Typ">CAPABILITY</td><td class="l4" data-th="Ukończono">2 dni temu</td><td class="l4 empty-cell" data-th="Akceptacja" data-th-wide>— (oczekuje na akceptację)</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: Rezultaty -->
+        <div class="center-pad" data-tab-panel="rezultaty" style="display:none;">
+          <div data-empty-for="rezultaty" style="display:none;">
+            <div class="empty-state">
+              <div class="empty-state__icon">🎁</div>
+              <div class="empty-state__title">Brak jeszcze rezultatów</div>
+              <div class="empty-state__sub">Decyzje, dostawy i pomiary wartości pojawią się tutaj w miarę postępu realizacji.</div>
+            </div>
+          </div>
+          <div data-empty-hide-for="rezultaty">
+            <div class="section-title">Decyzje</div>
+            <div class="deliverable-grid" style="margin-bottom:16px;">
+              <div class="deliverable-card" data-open-deliverable>
+                <div class="deliverable-icon">⚖️</div>
+                <div><div class="deliverable-title">Decyzja: renegocjacja umowy z dostawcą X</div><div class="deliverable-sub">decision_basis · zatwierdzona 3 dni temu</div></div>
+              </div>
+              <div class="deliverable-card" data-open-deliverable>
+                <div class="deliverable-icon">⚖️</div>
+                <div><div class="deliverable-title">Decyzja: model podziału oszczędności między BU</div><div class="deliverable-sub">decision_basis · zatwierdzona 1 tydzień temu</div></div>
+              </div>
+            </div>
+
+            <div class="section-title">Dostawy (deliverables)</div>
+            <div class="deliverable-grid" style="margin-bottom:16px;">
+              <div class="deliverable-card" data-open-deliverable>
+                <div class="deliverable-icon">📄</div>
+                <div><div class="deliverable-title">Raport rekomendacji oszczędności</div><div class="deliverable-sub">document · deliverable · v2</div></div>
+              </div>
+              <div class="deliverable-card" data-open-deliverable>
+                <div class="deliverable-icon">📊</div>
+                <div><div class="deliverable-title">Prezentacja dla zarządu — Q3</div><div class="deliverable-sub">presentation · deliverable</div></div>
+              </div>
+              <div class="deliverable-card" style="opacity:.6; cursor:default;" data-state-only="stale">
+                <div class="deliverable-icon">⚠️</div>
+                <div><div class="deliverable-title">Model finansowy oszczędności.xlsx</div><div class="deliverable-sub">document · <span data-i18n="field_link_status">status linku</span>: <span data-i18n="status_unavailable" data-i18n-upper>NIEDOSTĘPNY</span> (źródło usunięte)</div></div>
+              </div>
+              <div class="deliverable-card" data-open-deliverable>
+                <div class="deliverable-icon">🎯</div>
+                <div><div class="deliverable-title">Inicjatywa: Redukcja SG&amp;A</div><div class="deliverable-sub">initiative · output</div></div>
+              </div>
+            </div>
+
+            <div class="section-title">Wartość / pomiary</div>
+            <div class="card">
+              <div class="value-row">
+                <div class="value-metric"><div class="l3" style="color:var(--c-text)">Koszty operacyjne (roczne)</div><div class="value-nums">baza: 12.4M PLN → cel: 10.5M PLN → aktualnie: 11.1M PLN</div></div>
+                <span class="status-chip status-chip--warning"><span class="status-chip__dot"></span><span data-i18n="status_partial">Częściowe</span></span>
+              </div>
+              <div class="value-row">
+                <div class="value-metric"><div class="l3" style="color:var(--c-text)">Koszty zakupowe (kwartalne)</div><div class="value-nums">baza: 3.1M PLN → cel: 2.7M PLN → aktualnie: —</div></div>
+                <span class="status-chip status-chip--neutral"><span class="status-chip__dot"></span><span data-i18n="status_unmeasured">Niezmierzone</span></span>
+              </div>
+              <div class="value-row">
+                <div class="value-metric"><div class="l3" style="color:var(--c-text)">Satysfakcja zespołu operacyjnego</div><div class="value-nums">baza: 6.1/10 → cel: 7.5/10 → aktualnie: 7.6/10</div></div>
+                <span class="status-chip status-chip--success"><span class="status-chip__dot"></span><span data-i18n="status_confirmed">Potwierdzone</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: Powiązania -->
+        <div class="center-pad" data-tab-panel="relations" style="display:none;">
+          <div class="table-wrap">
+            <table class="std-table">
+              <thead><tr><th>Artefakt</th><th>Typ</th><th>Relacja</th><th>Status linku</th></tr></thead>
+              <tbody>
+                <tr><td class="row-title" data-th="Artefakt" data-th-title>🎯 Redukcja SG&amp;A</td><td class="l4" data-th="Typ" data-i18n="linked_type_initiative">inicjatywa</td><td class="l4" data-th="Relacja">OUTPUT</td><td data-th="Status linku"><span class="status-chip status-chip--success"><span class="status-chip__dot"></span><span data-i18n="status_active">Aktywny</span></span></td></tr>
+                <tr><td class="row-title" data-th="Artefakt" data-th-title>📄 Raport rekomendacji oszczędności</td><td class="l4" data-th="Typ" data-i18n="linked_type_document">dokument</td><td class="l4" data-th="Relacja">DELIVERABLE</td><td data-th="Status linku"><span class="status-chip status-chip--success"><span class="status-chip__dot"></span><span data-i18n="status_active">Aktywny</span></span></td></tr>
+                <tr><td class="row-title" data-th="Artefakt" data-th-title>⚖️ Decyzja: renegocjacja umowy z dostawcą X</td><td class="l4" data-th="Typ" data-i18n="linked_type_decision">decyzja</td><td class="l4" data-th="Relacja">DECISION_BASIS</td><td data-th="Status linku"><span class="status-chip status-chip--success"><span class="status-chip__dot"></span><span data-i18n="status_active">Aktywny</span></span></td></tr>
+                <tr><td class="row-title" data-th="Artefakt" data-th-title>📈 Dane finansowe źródłowe.xlsx</td><td class="l4" data-th="Typ" data-i18n="linked_type_document">dokument</td><td class="l4" data-th="Relacja">INPUT</td><td data-th="Status linku"><span class="status-chip status-chip--success"><span class="status-chip__dot"></span><span data-i18n="status_active">Aktywny</span></span></td></tr>
+                <tr><td class="row-title" data-th="Artefakt" data-th-title>🗒 Notatki z wywiadów</td><td class="l4" data-th="Typ" data-i18n="linked_type_document">dokument</td><td class="l4" data-th="Relacja">EVIDENCE</td><td data-th="Status linku"><span class="status-chip status-chip--success"><span class="status-chip__dot"></span><span data-i18n="status_active">Aktywny</span></span></td></tr>
+                <tr><td class="row-title" data-th="Artefakt" data-th-title>⚠️ Model finansowy oszczędności.xlsx</td><td class="l4" data-th="Typ" data-i18n="linked_type_document">dokument</td><td class="l4" data-th="Relacja">DELIVERABLE</td><td data-th="Status linku"><span class="status-chip status-chip--danger"><span class="status-chip__dot"></span><span data-i18n="status_unavailable">Niedostępny</span></span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- TAB: Aktywność -->
+        <div class="center-pad" data-tab-panel="activity" style="display:none;">
+          <div class="card">
+            <div class="timeline-item"><div class="timeline-dot"></div><div class="l3" style="color:var(--c-text)"><span data-i18n="evt_plan_version_published" data-event-code="PLAN_VERSION_PUBLISHED">Wersja planu opublikowana</span> — Plan v3 opublikowany <span class="l5">Marta Kowalska · 2 dni temu</span></div></div>
+            <div class="timeline-item"><div class="timeline-dot"></div><div class="l3" style="color:var(--c-text)"><span data-i18n="evt_action_proposal_decided" data-event-code="ACTION_PROPOSAL_DECIDED">Decyzja w sprawie propozycji akcji</span> — <span data-i18n="status_approve" data-i18n-upper>ZATWIERDZONO</span>: renegocjacja umowy z dostawcą X <span class="l5">Adam Sosnowski · 3 dni temu</span></div></div>
+            <div class="timeline-item"><div class="timeline-dot"></div><div class="l3" style="color:var(--c-text)"><span data-i18n="evt_value_measurement_recorded" data-event-code="VALUE_MEASUREMENT_RECORDED">Zarejestrowano pomiar wartości</span> — Satysfakcja zespołu: <span data-i18n="status_confirmed" data-i18n-upper>POTWIERDZONE</span> (7.6/10) <span class="l5">system · 3 dni temu</span></div></div>
+            <div class="timeline-item"><div class="timeline-dot"></div><div class="l3" style="color:var(--c-text)"><span data-i18n="evt_wait_resolved" data-event-code="WAIT_RESOLVED">Oczekiwanie rozwiązane</span> — HUMAN „Zatwierdzenie zakresu” <span data-i18n="status_satisfied">spełnione</span> <span class="l5">Piotr Wiśniewski · 4 dni temu</span></div></div>
+            <div class="timeline-item"><div class="timeline-dot"></div><div class="l3" style="color:var(--c-text)"><span data-i18n="evt_governance_tier_changed" data-event-code="GOVERNANCE_TIER_CHANGED">Zmieniono poziom nadzoru</span> — <span data-i18n="gov_lightweight">Lekki</span> → <span data-i18n="gov_standard">Standardowy</span> <span class="l5">Marta Kowalska · 5 dni temu</span></div></div>
+            <div class="timeline-item"><div class="timeline-dot"></div><div class="l3" style="color:var(--c-text)"><span data-i18n="evt_run_bound" data-event-code="RUN_BOUND">Powiązano przebieg (Run)</span> — Run r-88f2 powiązany ze Zleceniem <span class="l5">system · 6 dni temu</span></div></div>
+            <div class="timeline-item"><div class="timeline-dot"></div><div class="l3" style="color:var(--c-text)"><span data-i18n="evt_case_status_changed" data-event-code="CASE_STATUS_CHANGED">Zmieniono status zlecenia</span> — <span data-i18n="case_status_draft">Wersja robocza</span> → <span data-i18n="case_status_active">Aktywne</span> <span class="l5">Marta Kowalska · 6 dni temu</span></div></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="right-panel">
+      <div class="pv-mobile-back">
+        <button class="pill pill--sm pill--neutral" data-panel-toggle>← Wróć do zlecenia</button>
+        <span class="pv-mobile-back__ctx">Właściwości</span>
+      </div>
+      <div class="acc-section is-open">
+        <button class="acc-header"><span class="acc-header__label">Akcje</span><span class="acc-chevron">⌄</span></button>
+        <div class="acc-body">
+          <div class="acc-actions">
+            <button class="pill pill--neutral">⇩ Eksportuj ▸</button>
+            <button class="pill pill--neutral">🔗 Udostępnij</button>
+            <button class="pill pill--neutral">⧉ Kopiuj link</button>
+          </div>
+        </div>
+      </div>
+      <div class="acc-section is-open">
+        <button class="acc-header"><span class="acc-header__label">Właściwości</span><span class="acc-chevron">⌄</span></button>
+        <div class="acc-body">
+          <div class="pv-kv"><span class="pv-kv__label" data-i18n="field_case_profile">Profil zlecenia</span><span class="pv-kv__value" data-i18n="profile_transformation">Transformacja</span></div>
+          <div class="pv-kv"><span class="pv-kv__label" data-i18n="field_governance_tier">Poziom nadzoru</span><span class="pv-kv__value" data-i18n="gov_standard">Standardowy</span></div>
+          <div class="pv-kv"><span class="pv-kv__label">Polityka autonomii</span><span class="pv-kv__value" data-i18n="autonomy_ask_material">Wymaga potwierdzenia dla istotnych działań</span></div>
+          <div class="pv-kv"><span class="pv-kv__label">Sponsor</span><span class="pv-kv__value">Marta Kowalska</span></div>
+          <div class="pv-kv"><span class="pv-kv__label">Kontraktowe domknięcie</span><span class="pv-kv__value" data-i18n="closure_implementation_completed">Wdrożenie zakończone</span></div>
+          <div class="pv-kv"><span class="pv-kv__label">Utworzono</span><span class="pv-kv__value">2026-08-04</span></div>
+          <div class="pv-kv"><span class="pv-kv__label">Case ID</span><span class="pv-kv__value l5">CASE-2026-0142</span></div>
+        </div>
+      </div>
+      <div class="acc-section">
+        <button class="acc-header"><span class="acc-header__label">Powiązania</span><span class="acc-chevron">⌄</span></button>
+        <div class="acc-body">
+          <div class="pv-relations">
+            <span class="pv-relation-pill">🎯 Redukcja SG&amp;A</span>
+            <span class="pv-relation-pill">📄 Raport rekomendacji</span>
+            <span class="pv-relation-pill">+4</span>
+          </div>
+        </div>
+      </div>
+      <div class="acc-section">
+        <button class="acc-header"><span class="acc-header__label">Komentarze</span><span class="acc-chevron">⌄</span></button>
+        <div class="acc-body">
+          <div class="pv-empty">Brak komentarzy</div>
+        </div>
+      </div>
+      <div class="acc-section">
+        <button class="acc-header"><span class="acc-header__label">Historia / AI</span><span class="acc-chevron">⌄</span></button>
+        <div class="acc-body">
+          <div class="pv-ai-row" style="margin-bottom:10px;">
+            <button class="chip">✦ Podsumuj status</button>
+          </div>
+          <div class="l5">7 zdarzeń w historii — patrz zakładka Aktywność.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Return-to-Case mock transition (requirement #6) -->
+<div id="deliverable-overlay">
+  <div class="rtc-bar">
+    <button class="pill pill--sm pill--neutral" data-return-to-case>← Wróć do zlecenia</button>
+    <span>Przeglądasz dostawę z: <strong>Redukcja kosztów operacyjnych — Fabryka Wrocław</strong></span>
+  </div>
+  <div class="overlay-body">
+    <div class="l1" style="margin-bottom:8px;">DOCUMENT · DELIVERABLE</div>
+    <h2 style="margin:0 0 12px;">Raport rekomendacji oszczędności</h2>
+    <div class="card">
+      <p class="l3">To jest zamockowane miejsce docelowego widoku dostawy (pełny artefakt Dokumentu, SPEC-A Archetyp B). W tym prototypie nie buduje się realnego edytora treści — cel jest wyłącznie pokazać, że po otwarciu dostawy z zakładki Rezultaty użytkownik ma stały, widoczny pasek powrotu do macierzystego Zlecenia, a nie „gubi" kontekst pracy.</p>
+      <p class="l3">Otwarcie w produkcji: pełne archetyp-B Menu 1 (breadcrumb → Zlecenie → Dokument) + ten sam pasek „Wróć do zlecenia” zamiast zwykłego „← Dokumenty”.</p>
+    </div>
+    <button class="pill pill--primary" data-return-to-case style="margin-top:16px;">← Wróć do zlecenia</button>
+  </div>
+</div>
+
+<script src="../js/labels.js"></script>
+<script src="../js/app.js"></script>
+<script>
+  function applyCaseState(state) {
+    document.querySelectorAll('[data-case-banner]').forEach(function (b) {
+      b.style.display = b.getAttribute('data-case-banner') === state ? '' : 'none';
+    });
+    document.querySelectorAll('[data-lifecycle]').forEach(function (el) {
+      el.style.display = el.getAttribute('data-lifecycle') === state
+        || (el.getAttribute('data-lifecycle') === 'default' && ['stale','partial'].indexOf(state) === -1 && state === 'default')
+        ? '' : 'none';
+    });
+    // lifecycle chip: default group covers default/stale/partial explicitly via comma list
+    document.querySelectorAll('[data-lifecycle]').forEach(function (el) {
+      var groups = el.getAttribute('data-lifecycle').split(',');
+      el.style.display = groups.indexOf(state) > -1 ? '' : 'none';
+    });
+    document.querySelectorAll('[data-primary-for]').forEach(function (el) {
+      var groups = el.getAttribute('data-primary-for').split(',');
+      el.style.display = groups.indexOf(state) > -1 ? '' : 'none';
+    });
+    var isEmpty = state === 'empty';
+    document.querySelectorAll('[data-empty-for]').forEach(function (el) { el.style.display = isEmpty ? '' : 'none'; });
+    document.querySelectorAll('[data-empty-hide-for]').forEach(function (el) { el.style.display = isEmpty ? 'none' : ''; });
+    document.querySelectorAll('[data-partial-row]').forEach(function (el) { el.style.opacity = state === 'partial' ? '1' : '.55'; });
+  }
+  document.addEventListener('DOMContentLoaded', function () {
+    var params = new URLSearchParams(window.location.search);
+    var state = params.get('state') || 'default';
+    applyCaseState(state);
+    document.querySelectorAll('[data-proto-state-btn]').forEach(function (btn) {
+      btn.addEventListener('click', function () { applyCaseState(btn.dataset.protoStateBtn); });
+    });
+  });
+</script>
+</body>
+</html>

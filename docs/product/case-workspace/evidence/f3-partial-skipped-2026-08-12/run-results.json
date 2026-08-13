@@ -1,0 +1,22 @@
+{
+  "desktop-dark-table": "/Users/piotrwisniewski/dev/consultify-case-workspace-v1-20260809/docs/product/case-workspace/evidence/f3-partial-skipped-2026-08-12/desktop-dark-node-results-table.png",
+  "desktop-dark-partial-row-visible": true,
+  "desktop-dark-skipped-row-visible": true,
+  "desktop-light-table": "/Users/piotrwisniewski/dev/consultify-case-workspace-v1-20260809/docs/product/case-workspace/evidence/f3-partial-skipped-2026-08-12/desktop-light-node-results-table.png",
+  "desktop-light-partial-row-visible": true,
+  "desktop-light-skipped-row-visible": true,
+  "partialPreviewText": "LOCAL\n?\nHelp Center\nFeedback\nDocuments\n77\nSkip to main content\nZlecenia\nData\nModel\nCase Workspace\nCW\nF3 partial+skipped states (2026-08-12T12-56-54-559Z)\nW toku\nSaved\nProsty\nEkspercki\nLista\nRezultaty\nPlan\nRealizacja\nRezultaty\nRezultaty\n\nCo powstało i czy efekt został potwierdzony.\n\nCzy zlecenie jest domknięte\nUmówione zamknięcie: Dostarczenie zakończone\nDOSTARCZENIE\nNie dotyczy\nDECYZJA\nNie dotyczy\nWDROŻENIE\nNie dotyczy\nEFEKT\nNie dotyczy\nWyniki wykonania kroków\nKROK\n\t\nSTAN ZAKOŃCZENIA\n\t\nSTATUS AKCEPTACJI\n\t\nKIEDY\n\n\nRobi to system\n\t\nZakończony\n\tCzęściowo zakończone\t12.08.2026\n\nRobi to system\n\t\nPominięty\n\tNie dotyczy\t12.08.2026\nZmierzona wartość\nCO MIERZYMY\n\t\nPUNKT WYJŚCIA\n\t\nCEL\n\t\nWYNIK\n\t\nSTAN POMIARU\n\t\nDATA POMIARU\n\n\nNic jeszcze nie zmierzono\n\nEfekt zlecenia mierzy się po wdrożeniu. Do tego czasu ta lista pozostaje pusta — to nie jest błąd.\n\nPowiązane obiekty\nOBIEKT\n\t\nROLA W ZLECENIU\n\t\nSTAN POWIĄZANIA\n\t\nPOWIĄZANE\n\t\nOTWÓRZ\n\nDokument\t\nDostawa dla klienta\n\tPowiązany\t12.08.2026\t\nOtwórz\nRobi to system\nCzęściowo zakończone\nZakończony\nDETAILS\n\nWynik pojedynczego kroku wykonania tego zlecenia.\n\nWłaściwość\tWartość\nŹródłowy Run\tcwrun-281457d86a89a55aabcb99b7a44b98d7\nNodeRun\tcwnode-f37531c1-1ae6-41c2-807a-65e19fa7d648\nZdarzyło się\t12.08.2026, 14:57\nZapisano\t12.08.2026, 14:57\nKONTEKST RUN\nWersja planu: planv-6abf17ff-e59b-427e-b844-cc9603e041da\nSkrót grafu: sha256:99c44a49f886bee3904b1a1d56e4285f0ab84741c95c4cb135f7c9b305eca81e\nPowiązano z planem: 12.08.2026, 14:56\nDOWÓD\n\nF3: branch A delivered a draft; sign-off still pending — genuinely partial.\n\nTego obiektu nie otworzymy\n\nTen dokument nie istnieje w module Dokumenty (mógł zostać usunięty albo nigdy nie powstał mimo aktywnego powiązania). Sprawdzone na żywo przy otwarciu tego zlecenia.\n\nRELATIONS\nNo relations\nAKCJE\nWczytaj ponownie\nWróć do listy zleceń\nWŁAŚCIWOŚCI\nPOWIĄZANIA\n1\nŹRÓDŁA I ZAŁOŻENIA\nHISTORIA",
+  "urlAfterRefresh": "http://127.0.0.1:4501/zlecenia/case-b0ffee7b-6e32-46e6-a9cd-ddc08154c028?zakladka=rezultaty",
+  "partialVisibleAfterRefresh": true,
+  "skippedVisibleAfterRefresh": true,
+  "urlAfterClose": "http://127.0.0.1:4501/zlecenia",
+  "urlAfterReopen": "http://127.0.0.1:4501/zlecenia/case-b0ffee7b-6e32-46e6-a9cd-ddc08154c028?zakladka=rezultaty",
+  "partialVisibleAfterReopen": true,
+  "skippedVisibleAfterReopen": true,
+  "mobile-dark-table": "/Users/piotrwisniewski/dev/consultify-case-workspace-v1-20260809/docs/product/case-workspace/evidence/f3-partial-skipped-2026-08-12/mobile-dark-node-results-table.png",
+  "mobile-dark-partial-row-visible": true,
+  "mobile-dark-skipped-row-visible": true,
+  "mobile-light-table": "/Users/piotrwisniewski/dev/consultify-case-workspace-v1-20260809/docs/product/case-workspace/evidence/f3-partial-skipped-2026-08-12/mobile-light-node-results-table.png",
+  "mobile-light-partial-row-visible": true,
+  "mobile-light-skipped-row-visible": true
+}

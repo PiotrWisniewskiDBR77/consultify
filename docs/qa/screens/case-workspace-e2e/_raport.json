@@ -1,0 +1,433 @@
+{
+  "steps": [
+    {
+      "k": "lista.wierszy",
+      "v": 6
+    },
+    {
+      "k": "pasek-prototypu.fixed-czerwone",
+      "v": []
+    },
+    {
+      "k": "crimson-85182F.wystapienia",
+      "v": []
+    },
+    {
+      "k": "filtr.W-toku.wierszy",
+      "v": 2
+    },
+    {
+      "k": "preview.otwarty",
+      "v": {
+        "targetId": "zlc-2026-007",
+        "ma": true
+      }
+    },
+    {
+      "k": "preview.wyjscia",
+      "v": {
+        "otworzZlecenie": true,
+        "coDalej": true,
+        "plan": true,
+        "przyciski": [
+          "ZLECENIE I OCZEKIWANY REZULTAT",
+          "RODZAJ",
+          "STATUS",
+          "OSTATNIA AKTYWNOŚĆ",
+          "Otwórz zlecenie",
+          "Plan",
+          "Realizacja",
+          "Rezultaty"
+        ]
+      }
+    },
+    {
+      "k": "plan.prosty.tekst",
+      "v": "Zlecenia | Oxford Group — nadzór nad wdrożeniem CRM | Plan | Reali"
+    },
+    {
+      "k": "ekspercki.pan",
+      "v": {
+        "before": "translate(39.62416107382546 121.02684563758389) scale(0.825503355704698)",
+        "afterPan": "translate(159.62416107382546 181.0268456375839) scale(0.825503355704698)",
+        "zmiana": true
+      }
+    },
+    {
+      "k": "ekspercki.zoom-kolko",
+      "v": {
+        "afterPan": "translate(159.62416107382546 181.0268456375839) scale(0.825503355704698)",
+        "afterZoom": "translate(104.97906040268452 178.39006711409397) scale(0.9245637583892619)",
+        "zmiana": true,
+        "zoomBefore": "83%",
+        "zoomAfter": "92%"
+      }
+    },
+    {
+      "k": "ekspercki.zoom-nie-przewija-strony",
+      "v": {
+        "scrollY": 0
+      }
+    },
+    {
+      "k": "ekspercki.fit",
+      "v": {
+        "afterZoom": "translate(104.97906040268452 178.39006711409397) scale(0.9245637583892619)",
+        "afterFit": "translate(39.62416107382546 165.5268456375839) scale(0.825503355704698)",
+        "zmiana": true
+      }
+    },
+    {
+      "k": "ekspercki.przycinanie-po-fit",
+      "v": {
+        "liczba": 4,
+        "przyciete": []
+      }
+    },
+    {
+      "k": "ekspercki.klawiatura",
+      "v": {
+        "kBefore": "translate(39.62416107382546 165.5268456375839) scale(0.825503355704698)",
+        "kAfter": "translate(-20.375838926174538 165.5268456375839) scale(0.825503355704698)",
+        "strzalkaDziala": true,
+        "kFit": "translate(39.62416107382546 165.5268456375839) scale(0.825503355704698)",
+        "zeroDopasowuje": true
+      }
+    },
+    {
+      "k": "ekspercki.kierunek-przeplywu",
+      "v": {
+        "krawedzi": 4,
+        "zMarkerem": 3,
+        "marker": true
+      }
+    },
+    {
+      "k": "ekspercki.terminy-techniczne",
+      "v": {
+        "HUMAN_TASK": false,
+        "CAPABILITY": false,
+        "TIMER": false,
+        "JOIN": false,
+        "decision_basis": false,
+        "deliverable": false,
+        "CaseID": false
+      }
+    },
+    {
+      "k": "plan.lista.wierszy",
+      "v": 4
+    },
+    {
+      "k": "terminy.realizacja+rezultaty",
+      "v": {
+        "HUMAN_TASK": false,
+        "CAPABILITY": false,
+        "TIMER": false,
+        "JOIN": false,
+        "decision_basis": false,
+        "deliverable": false,
+        "CaseID": false
+      }
+    },
+    {
+      "k": "lekkosc.prawy-panel-w-szczegole",
+      "v": {
+        "maPanelPodgladu": false
+      }
+    },
+    {
+      "k": "back.A.po-przelaczaniu-zakladek",
+      "v": {
+        "jestLista": false,
+        "jestSzczegol": true,
+        "aktywnaZakladka": [
+          "Plan|sel=false",
+          "Realizacja|sel=true",
+          "Rezultaty|sel=false"
+        ],
+        "naglowek": "Oxford Group — nadzór nad wdrożeniem CRM"
+      }
+    },
+    {
+      "k": "back.B.kontrola-bez-zmian-zakladek",
+      "v": {
+        "wierszy": 10,
+        "chipy": [
+          {
+            "t": "Wszystkie zlecenia",
+            "aktywny": true
+          },
+          {
+            "t": "Zakończone",
+            "aktywny": false
+          },
+          {
+            "t": "Wszystkie 6",
+            "aktywny": false
+          },
+          {
+            "t": "W toku 2",
+            "aktywny": true
+          },
+          {
+            "t": "Zablokowane 1",
+            "aktywny": false
+          },
+          {
+            "t": "Szkic 1",
+            "aktywny": false
+          },
+          {
+            "t": "Zakończone 1",
+            "aktywny": false
+          }
+        ],
+        "fokusNaWierszu": "zlc-2026-007",
+        "fokusOczekiwany": "zlc-2026-007",
+        "fokusTag": "DIV"
+      }
+    },
+    {
+      "k": "klawiatura.tab-dosiegl-Wiecej",
+      "v": true
+    },
+    {
+      "k": "mobile.preview",
+      "v": {
+        "mobileRows": 1,
+        "ma": true,
+        "przyciski": [
+          "Zakończone\n1",
+          "ZLECENIE",
+          "Otwórz zlecenie",
+          "Plan",
+          "Realizacja",
+          "Rezultaty"
+        ]
+      }
+    },
+    {
+      "k": "mobile.back",
+      "v": {
+        "wierszy": 1,
+        "chipAktywny": [
+          "Wszystkie zlecenia",
+          "Zablokowane 1"
+        ],
+        "fokus": "zlc-2026-011"
+      }
+    }
+  ],
+  "console": [],
+  "network": [],
+  "measurements": {
+    "320-lista": {
+      "scrollWidth": 320,
+      "bodyScrollWidth": 320,
+      "innerWidth": 320,
+      "clientWidth": 320
+    },
+    "320-plan-prosty": {
+      "scrollWidth": 320,
+      "bodyScrollWidth": 320,
+      "innerWidth": 320,
+      "clientWidth": 320
+    },
+    "320-plan-ekspercki": {
+      "scrollWidth": 320,
+      "bodyScrollWidth": 320,
+      "innerWidth": 320,
+      "clientWidth": 320
+    },
+    "320-plan-lista": {
+      "scrollWidth": 320,
+      "bodyScrollWidth": 320,
+      "innerWidth": 320,
+      "clientWidth": 320
+    },
+    "320-realizacja": {
+      "scrollWidth": 320,
+      "bodyScrollWidth": 320,
+      "innerWidth": 320,
+      "clientWidth": 320
+    },
+    "320-rezultaty": {
+      "scrollWidth": 320,
+      "bodyScrollWidth": 320,
+      "innerWidth": 320,
+      "clientWidth": 320
+    },
+    "375-lista": {
+      "scrollWidth": 375,
+      "bodyScrollWidth": 375,
+      "innerWidth": 375,
+      "clientWidth": 375
+    },
+    "375-plan-prosty": {
+      "scrollWidth": 375,
+      "bodyScrollWidth": 375,
+      "innerWidth": 375,
+      "clientWidth": 375
+    },
+    "375-plan-ekspercki": {
+      "scrollWidth": 375,
+      "bodyScrollWidth": 375,
+      "innerWidth": 375,
+      "clientWidth": 375
+    },
+    "375-plan-lista": {
+      "scrollWidth": 375,
+      "bodyScrollWidth": 375,
+      "innerWidth": 375,
+      "clientWidth": 375
+    },
+    "375-realizacja": {
+      "scrollWidth": 375,
+      "bodyScrollWidth": 375,
+      "innerWidth": 375,
+      "clientWidth": 375
+    },
+    "375-rezultaty": {
+      "scrollWidth": 375,
+      "bodyScrollWidth": 375,
+      "innerWidth": 375,
+      "clientWidth": 375
+    },
+    "430-lista": {
+      "scrollWidth": 430,
+      "bodyScrollWidth": 430,
+      "innerWidth": 430,
+      "clientWidth": 430
+    },
+    "430-plan-prosty": {
+      "scrollWidth": 430,
+      "bodyScrollWidth": 430,
+      "innerWidth": 430,
+      "clientWidth": 430
+    },
+    "430-plan-ekspercki": {
+      "scrollWidth": 430,
+      "bodyScrollWidth": 430,
+      "innerWidth": 430,
+      "clientWidth": 430
+    },
+    "430-plan-lista": {
+      "scrollWidth": 430,
+      "bodyScrollWidth": 430,
+      "innerWidth": 430,
+      "clientWidth": 430
+    },
+    "430-realizacja": {
+      "scrollWidth": 430,
+      "bodyScrollWidth": 430,
+      "innerWidth": 430,
+      "clientWidth": 430
+    },
+    "430-rezultaty": {
+      "scrollWidth": 430,
+      "bodyScrollWidth": 430,
+      "innerWidth": 430,
+      "clientWidth": 430
+    }
+  },
+  "klawiatura": [
+    {
+      "etykieta": "start",
+      "fokus": "H1:Apator — skrócenie zamknięcia miesiąca",
+      "fokusRola": null,
+      "fokusChecked": null,
+      "przyciskExpanded": "false",
+      "przyciskHaspopup": "menu",
+      "przyciskLabel": "Więcej sekcji zlecenia",
+      "przyciskTekst": "Więcej",
+      "menuJest": false,
+      "menuPozycje": [],
+      "aktywnaZakladka": [
+        "Plan|sel=true"
+      ]
+    },
+    {
+      "etykieta": "po-Tab-na-Wiecej",
+      "fokus": "BUTTON:Więcej sekcji zlecenia",
+      "fokusRola": null,
+      "fokusChecked": null,
+      "przyciskExpanded": "false",
+      "przyciskHaspopup": "menu",
+      "przyciskLabel": "Więcej sekcji zlecenia",
+      "przyciskTekst": "Więcej",
+      "menuJest": false,
+      "menuPozycje": [],
+      "aktywnaZakladka": [
+        "Plan|sel=true"
+      ]
+    },
+    {
+      "etykieta": "po-Enter",
+      "fokus": "BUTTON:RealizacjaCo się dzieje teraz i na co cz",
+      "fokusRola": "menuitemradio",
+      "fokusChecked": "false",
+      "przyciskExpanded": "true",
+      "przyciskHaspopup": "menu",
+      "przyciskLabel": "Więcej sekcji zlecenia",
+      "przyciskTekst": "Więcej",
+      "menuJest": true,
+      "menuPozycje": [
+        "Realizacja\nCo się dzieje|checked=false",
+        "Rezultaty\nCo powstało i |checked=false"
+      ],
+      "aktywnaZakladka": [
+        "Plan|sel=true"
+      ]
+    },
+    {
+      "etykieta": "po-ArrowDown",
+      "fokus": "BUTTON:RezultatyCo powstało i czy efekt został ",
+      "fokusRola": "menuitemradio",
+      "fokusChecked": "false",
+      "przyciskExpanded": "true",
+      "przyciskHaspopup": "menu",
+      "przyciskLabel": "Więcej sekcji zlecenia",
+      "przyciskTekst": "Więcej",
+      "menuJest": true,
+      "menuPozycje": [
+        "Realizacja\nCo się dzieje|checked=false",
+        "Rezultaty\nCo powstało i |checked=false"
+      ],
+      "aktywnaZakladka": [
+        "Plan|sel=true"
+      ]
+    },
+    {
+      "etykieta": "po-Escape",
+      "fokus": "BUTTON:Więcej sekcji zlecenia",
+      "fokusRola": null,
+      "fokusChecked": null,
+      "przyciskExpanded": "false",
+      "przyciskHaspopup": "menu",
+      "przyciskLabel": "Więcej sekcji zlecenia",
+      "przyciskTekst": "Więcej",
+      "menuJest": false,
+      "menuPozycje": [],
+      "aktywnaZakladka": [
+        "Plan|sel=true"
+      ]
+    },
+    {
+      "etykieta": "po-wyborze-Enter",
+      "fokus": "BUTTON:Więcej sekcji zlecenia",
+      "fokusRola": null,
+      "fokusChecked": null,
+      "przyciskExpanded": "false",
+      "przyciskHaspopup": "menu",
+      "przyciskLabel": "Więcej sekcji zlecenia",
+      "przyciskTekst": "Więcej",
+      "menuJest": false,
+      "menuPozycje": [],
+      "aktywnaZakladka": [
+        "Rezultaty|sel=true"
+      ]
+    }
+  ],
+  "consoleErrors": []
+}

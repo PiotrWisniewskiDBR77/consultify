@@ -1,0 +1,31 @@
+{
+  "capturedAtIso": "2026-08-12T11:08:07.553Z",
+  "processBLauncherPid": 40733,
+  "processBWorkerPid": "40754",
+  "n2RetriedNodeRun": {
+    "node_run_id": "cwnode-951369d9-d69c-45b6-be12-0aaa4c0c0f3f",
+    "status": "SUCCEEDED",
+    "attempt": 3,
+    "max_attempts": 3,
+    "lease_owner": null,
+    "version": 9
+  },
+  "n2RetriedAttempts": [
+    {
+      "attempt_number": 1,
+      "status": "FAILED_RETRYABLE",
+      "error_code": "E4_SYNTHETIC_TRANSIENT"
+    },
+    {
+      "attempt_number": 2,
+      "status": "TIMED_OUT",
+      "error_code": "NODE_RUN_LEASE_EXPIRED"
+    },
+    {
+      "attempt_number": 3,
+      "status": "SUCCEEDED",
+      "error_code": null
+    }
+  ],
+  "n2TotalNodeRunRowsForRun": 2
+}

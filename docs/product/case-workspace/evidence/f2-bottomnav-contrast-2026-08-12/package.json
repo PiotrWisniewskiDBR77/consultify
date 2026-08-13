@@ -1,0 +1,6 @@
+{
+  "name": "f2-bottomnav-contrast-evidence",
+  "private": true,
+  "description": "Isolated npm project boundary so `npm install axe-core` in build.sh stays confined to this evidence directory's own node_modules and never touches the repo root's node_modules or package-lock.json.",
+  "devDependencies": {}
+}
