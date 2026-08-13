@@ -36,6 +36,31 @@ npm run test:method-core:front    # --exclude 'server/**'
 Migotanie (`socket hang up` przy 13 równoległych plikach dzielących pulę PG)
 rozwiązane **ograniczeniem współbieżności, nie retry**.
 
+### Pełna regresja frontu — zmierzona, nie zadeklarowana
+
+Ta sama komenda uruchomiona na HEAD i na baseline `f3e7df565e` (osobny worktree
+porządkowy, `node_modules` podlinkowane, worktree skasowany po pomiarze):
+
+| | HEAD | baseline `f3e7df565e` |
+| --- | ---: | ---: |
+| plików testowych czerwonych | **32** | **32** |
+| testów czerwonych | **88** | **88** |
+| testów zielonych | **4 521** | 4 149 |
+| testów łącznie | **4 618** | 4 238 |
+
+**Lista 32 czerwonych plików jest IDENTYCZNA na obu stronach** (`comm` po
+posortowanych nazwach: zbiór „tylko na HEAD" = **pusty**).
+
+| Kategoria | Liczba |
+| --- | ---: |
+| **wprowadzone przez tę falę** | **0** |
+| **pre-existing** (czerwone też na `origin/demo`) | **32 pliki / 88 testów** |
+| dodane przez tę falę i zielone | **+380 testów** |
+
+★ Pierwszy przebieg tego porównania dał mi „0 regresji" z **zepsutego wyciągania**
+nazw plików (porównałem zły plik logu). Wynik zgadzał się z oczekiwaniem, więc
+tym łatwiej było go przyjąć — powtórzone na właściwej parze logów.
+
 ---
 
 ## 2. Co jest dowiezione — z dowodem
