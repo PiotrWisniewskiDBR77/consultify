@@ -111,6 +111,7 @@ const AssessmentMenu3StatusChipsScreen = React.lazy(
 );
 const AssessmentReportsPanelScreen = React.lazy(() => import('./screens/assessment-reports-panel'));
 const AssessmentReportsTableScreen = React.lazy(() => import('./screens/assessment-reports-table'));
+const AssessmentOutputReportScreen = React.lazy(() => import('./screens/assessment-output-report'));
 const CanvasKebabRestructureScreen = React.lazy(() => import('./screens/canvas-kebab-restructure'));
 const CanvasNewDocScreen = React.lazy(() => import('./screens/canvas-new-doc'));
 const CanvasToolbarMdHistoryScreen = React.lazy(
@@ -431,6 +432,7 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'RN-G3 tor PLATFORMY §1 — DEMONSTRACJA przepisu powłoki klasy L (archetyp Rekord): ArtifactBreadcrumb + NModeShell + ArtifactRightPanel/ArtifactPropertiesTable, zero nowego standardu. &save=idle|saving|saved|error|conflict &teresa=1',
     render: () => <RnG3ClassLRecordShellScreen />,
+  },
   'idea-financial-case-persistence': {
     label:
       'E09 RISK-12 — REALNY <FinancialCaseDialog> z REALNYM zapisem: ?state=empty|loading|dirty|saving|saved|error|conflict|reopened (stanowy mock transportu)',
@@ -859,6 +861,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'assessment-reports-table': {
     label: '§27-todo batch2: ReportsTable (Assessment→Board→Reports, global) → StandardTable',
     render: () => <AssessmentReportsTableScreen />,
+  },
+  'assessment-output-report': {
+    label:
+      'Assessment Report (SPEC-A Dokument) — renderer zamrożonego Outputu; ?variant=happy|edge|not-frozen',
+    render: () => <AssessmentOutputReportScreen />,
   },
   'canvas-new-doc': {
     label: '#87a Canvas "+" New — 3 opcje startu (Czysty/Z szablonu/Z canvasa) → Teresa',
