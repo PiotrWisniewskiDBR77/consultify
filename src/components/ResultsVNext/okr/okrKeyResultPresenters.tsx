@@ -25,14 +25,17 @@ import {
   okrKeyResultStatusLabel,
   parseOkrKeyResultProgress,
   parseOkrNumericField,
-  shortOkrId,
 } from './okrObjectiveMappers';
 
 // ==========================================
 // Table columns
 // ==========================================
 
-export function buildOkrKeyResultColumns(isPolish: boolean, parentSetStatus: string): TableColumn[] {
+export function buildOkrKeyResultColumns(
+  isPolish: boolean,
+  parentSetStatus: string,
+  currentUserId?: string | null
+): TableColumn[] {
   const childLock = getOkrSetChildEditLock(parentSetStatus);
   return [
     {
@@ -126,8 +129,16 @@ export function buildOkrKeyResultColumns(isPolish: boolean, parentSetStatus: str
       label: isPolish ? 'Właściciel' : 'Owner',
       width: '140px',
       render: (row: OkrKeyResultDto) => (
-        <span className="block truncate text-sm text-c-text-secondary font-mono" title={row.ownerUserId}>
-          {shortOkrId(row.ownerUserId)}
+        <span className="block truncate text-sm text-c-text-secondary">
+          {currentUserId && row.ownerUserId === currentUserId
+            ? isPolish
+              ? 'Ty'
+              : 'You'
+            : row.ownerUserId
+              ? isPolish
+                ? 'Przypisany'
+                : 'Assigned'
+              : '—'}
         </span>
       ),
     },
@@ -193,6 +204,7 @@ export function buildOkrKeyResultRowMenu(
 
 export interface OkrKeyResultPreviewDeps {
   isPolish: boolean;
+  currentUserId?: string | null;
   parentSetStatus: string;
   onClose: () => void;
   onOpenCheckIns: (row: OkrKeyResultDto) => void;
@@ -201,14 +213,27 @@ export interface OkrKeyResultPreviewDeps {
 }
 
 export function buildOkrKeyResultPreview(row: OkrKeyResultDto, deps: OkrKeyResultPreviewDeps): StandardPreviewProps {
-  const { isPolish, parentSetStatus, onClose, onOpenCheckIns, onEdit, onCancel } = deps;
+  const { isPolish, currentUserId, parentSetStatus, onClose, onOpenCheckIns, onEdit, onCancel } = deps;
   const childLock = getOkrSetChildEditLock(parentSetStatus);
   const progress = parseOkrKeyResultProgress(row.progress, row.progressCalcReason);
   const cancelEligible = canCancelKeyResultStatus(row.status);
   const outOfRangeDistance = parseOkrNumericField(row.outOfRangeDistance);
 
   const properties = [
-    { id: 'owner', label: isPolish ? 'Właściciel' : 'Owner', value: row.ownerUserId, mono: true },
+    {
+      id: 'owner',
+      label: isPolish ? 'Właściciel' : 'Owner',
+      value:
+        currentUserId && row.ownerUserId === currentUserId
+          ? isPolish
+            ? 'Ty'
+            : 'You'
+          : row.ownerUserId
+            ? isPolish
+              ? 'Przypisany'
+              : 'Assigned'
+            : '—',
+    },
     { id: 'description', label: isPolish ? 'Opis' : 'Description', value: row.description ?? '—' },
     { id: 'measurementType', label: isPolish ? 'Typ pomiaru' : 'Measurement type', value: okrKeyResultMeasurementTypeLabel(row.measurementType, isPolish) },
     { id: 'direction', label: isPolish ? 'Geometria' : 'Geometry', value: okrKeyResultDirectionLabel(row.direction, isPolish) },

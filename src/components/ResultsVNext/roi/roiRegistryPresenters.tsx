@@ -490,7 +490,7 @@ export function buildRoiCasePreview(row: RoiCaseListItem, deps: RoiPreviewDeps):
           informational: [
             {
               id: 'open-workspace',
-              variant: 'primary',
+              variant: 'neutral',
               label: isPolish ? 'Otwórz kartę ROI' : 'Open ROI workspace',
               onClick: () => onOpenWorkspace(row),
             },

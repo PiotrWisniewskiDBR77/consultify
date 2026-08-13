@@ -563,7 +563,7 @@ export const ResultsRoiHub: React.FC = () => {
           },
         }}
         table={{
-          columns: buildRoiCaseColumns(isPolish, currentUserId),
+          columns: buildRoiCaseColumns(isPolish, currentUserId ?? undefined),
           data: rows,
           persistKey: 'results-vnext.roi-registry',
           loading: casesLoading,
@@ -619,7 +619,7 @@ export const ResultsRoiHub: React.FC = () => {
                 isPolish,
                 onClose: () => setSelectedCaseId(null),
                 calculationRun,
-                currentUserId,
+                currentUserId: currentUserId ?? undefined,
                 onOpenWorkspace: (row) =>
                   navigate({
                     pathname: ROUTES.RESULTS_ROI.CASE.replace(':roiCaseId', row.caseId),

@@ -205,7 +205,7 @@ export const OkrKeyResultsView: React.FC<OkrKeyResultsViewProps> = ({ set, objec
           },
         }}
         table={{
-          columns: buildOkrKeyResultColumns(isPolish, set.status),
+          columns: buildOkrKeyResultColumns(isPolish, set.status, currentUserId),
           data: rows,
           // D09 fix — see OkrObjectivesView.tsx's identical note. Was
           // `results-vnext.okr-key-results.${objectiveId}` (OQ-UI-H).
@@ -239,6 +239,7 @@ export const OkrKeyResultsView: React.FC<OkrKeyResultsViewProps> = ({ set, objec
           selected
             ? buildOkrKeyResultPreview(selected, {
                 isPolish,
+                currentUserId,
                 parentSetStatus: set.status,
                 onClose: () => setSelectedKeyResultId(null),
                 onOpenCheckIns: (r) => objective && onOpenCheckIns(r, objective, set),
