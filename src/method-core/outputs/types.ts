@@ -130,7 +130,16 @@ export interface OutputLineage {
   readonly sourceRevisionOfSessionId: string | null;
   /** Previous Output in this lineage, if this Output was produced by a reopen + re-freeze. */
   readonly revisionOfOutputId: string | null;
-  /** Set once a NEWER freeze exists for the same lineage. Never set by this Output itself. */
+  /**
+   * Always `null` at construction time. A historical Output row is NEVER
+   * updated after creation (METHOD_MODULE_FIVE_SURFACES_STANDARD.md §4,
+   * ASSESSMENT_OUTPUT_AND_PROVENANCE_CONTRACT.md §6) — so this field cannot
+   * be "set later" on the persisted row. Whether an Output has since been
+   * superseded is resolved at READ time by querying for a newer
+   * `version` in the same lineage (see
+   * server/src/method-core/outputs/MethodOutputService.ts `isSuperseded`),
+   * never by writing a pointer back onto this object.
+   */
   readonly supersededByOutputId: string | null;
 }
 

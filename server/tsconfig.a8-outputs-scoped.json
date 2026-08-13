@@ -1,0 +1,4 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["src/method-core/outputs/**/*", "src/method-core/db.ts"]
+}
