@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-08-13T17:22:22.663Z",
+  "generatedAt": "2026-08-13T17:27:27.498Z",
   "generatedBy": "scripts/testing/generate-test-inventory.ts",
-  "totalDiscovered": 4220,
+  "totalDiscovered": 4235,
   "counts": {
-    "ACTIVE": 3928,
+    "ACTIVE": 3943,
     "INTENTIONALLY_EXCLUDED": 7,
     "LEGACY": 1,
     "PLAYWRIGHT": 283,
@@ -4271,7 +4271,19 @@
       "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
     },
     {
+      "path": "src/components/Discovery/__tests__/toolStatusCell.test.tsx",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
       "path": "src/components/DiscoveryTools/__tests__/genericDomainStep.smoke.test.tsx",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "src/components/DiscoveryTools/__tests__/SwotLiveArtifact.test.tsx",
       "classification": "ACTIVE",
       "reason": "Collected by default vitest.config.ts.",
       "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
@@ -4284,6 +4296,12 @@
     },
     {
       "path": "src/components/DiscoveryTools/__tests__/ToolSessionPreviewV3.details.test.tsx",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "src/components/DiscoveryTools/tools/DynamicSWOT/__tests__/SWOTBuildPhase.interaction.test.tsx",
       "classification": "ACTIVE",
       "reason": "Collected by default vitest.config.ts.",
       "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
@@ -5225,6 +5243,12 @@
       "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
     },
     {
+      "path": "src/domain/__tests__/toolStatus.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
       "path": "src/hooks/__tests__/useTeresaVoice.capability-and-bargein.test.tsx",
       "classification": "ACTIVE",
       "reason": "Collected by default vitest.config.ts.",
@@ -5232,6 +5256,12 @@
     },
     {
       "path": "src/hooks/__tests__/useTeresaVoice.test.tsx",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "src/hooks/__tests__/useToolSessionSync.test.ts",
       "classification": "ACTIVE",
       "reason": "Collected by default vitest.config.ts.",
       "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
@@ -5328,6 +5358,18 @@
     },
     {
       "path": "src/services/__tests__/subscriberDashboardClient.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "src/services/__tests__/toolSessionApi.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "src/services/__tests__/toolSessionRecoveryDraft.test.ts",
       "classification": "ACTIVE",
       "reason": "Collected by default vitest.config.ts.",
       "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
@@ -15580,6 +15622,12 @@
       "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
     },
     {
+      "path": "tests/integration/teresa/teresaKernel.realdb.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
       "path": "tests/integration/test-support/testSupportRoutes.test.ts",
       "classification": "ACTIVE",
       "reason": "Collected by default vitest.config.ts.",
@@ -15592,7 +15640,37 @@
       "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
     },
     {
+      "path": "tests/integration/tool-outputs-read-routes.realdb.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "tests/integration/tool-sessions-cas.realdb.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "tests/integration/tools-clean-bootstrap.realdb.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "tests/integration/tools-links-org-scope.realdb.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
       "path": "tests/integration/tools-outputs-immutable.realdb.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "tests/integration/tools-presentation-persistence.realdb.test.ts",
       "classification": "ACTIVE",
       "reason": "Collected by default vitest.config.ts.",
       "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
@@ -15617,6 +15695,12 @@
     },
     {
       "path": "tests/integration/tools/tool-session-roundtrip.contract.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "tests/integration/toolSessionHttpAdapter.realdb.test.ts",
       "classification": "ACTIVE",
       "reason": "Collected by default vitest.config.ts.",
       "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
@@ -21970,6 +22054,12 @@
     },
     {
       "path": "tests/unit/detectMessageLanguage.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "tests/unit/devRenderRegistry.test.ts",
       "classification": "ACTIVE",
       "reason": "Collected by default vitest.config.ts.",
       "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
