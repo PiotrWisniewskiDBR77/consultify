@@ -76,6 +76,12 @@ export default async function globalSetup(config: FullConfig) {
     }
     await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 60_000 });
 
+    const skipOnboarding = page.getByRole('button', { name: /Skip for now/i });
+    if (await skipOnboarding.isVisible({ timeout: 10_000 }).catch(() => false)) {
+      await skipOnboarding.click();
+      await skipOnboarding.waitFor({ state: 'hidden', timeout: 30_000 });
+    }
+
     const identity = await page.evaluate(() => {
       const raw = localStorage.getItem('user');
       return raw ? JSON.parse(raw) : null;

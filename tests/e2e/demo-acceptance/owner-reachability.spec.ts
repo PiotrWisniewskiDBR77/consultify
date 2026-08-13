@@ -47,7 +47,7 @@ test.describe('real demo OWNER reachability (no auth or flag bypass)', () => {
   test('six acceptance modules are visible in normal navigation', async ({ page }, testInfo) => {
     const runtime = await capture(page);
     await page.goto('/chat', { waitUntil: 'domcontentloaded' });
-    const nav = page.locator('nav, aside').filter({ has: page.locator('a') });
+    const nav = page.locator('nav, aside');
     for (const label of [
       /Materials|Materiały|Documents|Dokumenty/i,
       /Initiatives|Inicjatywy/i,
