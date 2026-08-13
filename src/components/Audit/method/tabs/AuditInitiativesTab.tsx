@@ -13,6 +13,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { StandardTable, type TableColumn } from '@/components/standard';
 import { ErrorState } from '@/components/shared/states';
 import { PriorityChip, type PriorityLevel, StatusChip } from '@/components/ui/primitives/chips';
+import { formatListDate } from '@/utils/listDateFormat';
 
 import { proposalStatusLabel, proposalStatusTone } from '../auditStatusTones';
 import { AUDIT_PROPOSAL_STATUSES, listProposals, type AuditProposalSummary } from '../auditsMethodApi';
@@ -96,7 +97,15 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({ isPoli
         <StatusChip label={proposalStatusLabel(row.status, isPolish)} tone={proposalStatusTone(row.status)} />
       ),
     },
-    { id: 'updatedAt', label: isPolish ? 'Zaktualizowano' : 'Updated', width: '140px', sortable: true },
+    {
+      id: 'updatedAt',
+      label: isPolish ? 'Zaktualizowano' : 'Updated',
+      width: '140px',
+      sortable: true,
+      render: (row: AuditProposalSummary) => (
+        <span className="text-xs text-c-text-secondary tabular-nums">{formatListDate(row.updatedAt)}</span>
+      ),
+    },
   ];
 
   if (error) {
