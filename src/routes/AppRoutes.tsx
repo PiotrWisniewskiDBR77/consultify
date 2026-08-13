@@ -107,11 +107,7 @@ const InitiativesHub = lazyWithRetry(() =>
 const ExecutionHub = lazyWithRetry(() =>
   import('@/components/Execution/ExecutionHub').then((m) => ({ default: m.ExecutionHub }))
 );
-const ResultsHub = lazyWithRetry(() =>
-  import('@/components/Results/ResultsHub').then((m) => ({ default: m.default }))
-);
-// RN-G2 (2026-08-10) — Results Next registry shells (P0). New routes ALONGSIDE
-// the legacy ResultsHub above, not instead of it — see RN_G2_UI_SCOPE.md §E.
+// Results registries — the canonical product surfaces for KPI / ROI / OKR.
 const ResultsKpiRegistryPage = lazyWithRetry(() =>
   import('@/components/ResultsVNext/ResultsKpiRegistryPage').then((m) => ({
     default: m.default,
@@ -126,6 +122,9 @@ const ResultsOkrRegistryPage = lazyWithRetry(() =>
   import('@/components/ResultsVNext/ResultsOkrRegistryPage').then((m) => ({
     default: m.default,
   }))
+);
+const ResultsDomainNav = lazyWithRetry(() =>
+  import('@/components/ResultsVNext/ResultsDomainNav').then((m) => ({ default: m.default }))
 );
 // RN-G2 P1 #8 (2026-08-10) — KPI Scorecards detail route
 // (`/results/kpi/scorecards/:scorecardId`, master plan §11). List-only
@@ -2544,28 +2543,14 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.RESULTS}
           element={
-            <BetaGate moduleId="MODULE_BENEFITS">
-              <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.results', 'Results')]} noPadding>
-                <ProductionModuleGate
-                  enabled={!hideNonCoreModulesOnPublicProduction}
-                  moduleName="Results"
-                >
-                  <RouteErrorBoundary>
-                    <ResultsHub />
-                  </RouteErrorBoundary>
-                </ProductionModuleGate>
-              </MainLayout>
-            </BetaGate>
+            <RedirectPreservingQuery
+              from={ROUTES.RESULTS}
+              to={ROUTES.RESULTS_KPI.ROOT}
+              reason="results_vnext_canonical_entry"
+            />
           }
         />
-        {/* RN-G2 (2026-08-10) — Results Next registries: KPI / ROI / OKR.
-            EXACT-path routes new alongside the legacy `/results` route above
-            (React Router matches exact paths first, so no collision). Same
-            entitlement chain the legacy hub uses (BetaGate MODULE_BENEFITS +
-            ProductionModuleGate "Results") — reused, not reinvented, per
-            RN_G2_UI_SCOPE.md §E. Each page is internally gated OFF by its own
-            resultsVNextFeatureFlags.ts flag until its domain vertical ships
-            (P1/P2/P3) — see ResultsVNextRegistryRouteBase.tsx. */}
+        {/* Canonical Results registries: KPI / ROI / OKR. */}
         <Route
           path={ROUTES.RESULTS_KPI.ROOT}
           element={
@@ -2581,7 +2566,10 @@ export const AppRoutes: React.FC = () => {
                   moduleName="Results"
                 >
                   <RouteErrorBoundary>
-                    <ResultsKpiRegistryPage />
+                    <div className="flex h-full min-h-0 flex-col">
+                      <ResultsDomainNav />
+                      <div className="min-h-0 flex-1"><ResultsKpiRegistryPage /></div>
+                    </div>
                   </RouteErrorBoundary>
                 </ProductionModuleGate>
               </MainLayout>
@@ -2691,7 +2679,10 @@ export const AppRoutes: React.FC = () => {
                   moduleName="Results"
                 >
                   <RouteErrorBoundary>
-                    <ResultsRoiRegistryPage />
+                    <div className="flex h-full min-h-0 flex-col">
+                      <ResultsDomainNav />
+                      <div className="min-h-0 flex-1"><ResultsRoiRegistryPage /></div>
+                    </div>
                   </RouteErrorBoundary>
                 </ProductionModuleGate>
               </MainLayout>
@@ -2769,7 +2760,10 @@ export const AppRoutes: React.FC = () => {
                   moduleName="Results"
                 >
                   <RouteErrorBoundary>
-                    <ResultsOkrRegistryPage />
+                    <div className="flex h-full min-h-0 flex-col">
+                      <ResultsDomainNav />
+                      <div className="min-h-0 flex-1"><ResultsOkrRegistryPage /></div>
+                    </div>
                   </RouteErrorBoundary>
                 </ProductionModuleGate>
               </MainLayout>
