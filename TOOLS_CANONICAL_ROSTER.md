@@ -219,6 +219,38 @@ metod występują jako zwykłe etykiety. Baza deklaruje `is_licensed=0` /
 `license='free'` dla wszystkich 31 — ale to flaga produktowa, **nie oświadczenie
 prawne**. Zgodnie z decyzją właściciela: `EVIDENCE_MISSING`, bez zgadywania.
 
+## 3e. L11 — KRYTYCZNE: serwis kasuje bogatą treść Library przy każdym starcie
+
+Odkryte w fali Content Gap, **zweryfikowane osobiście w kodzie**.
+
+Repo ma DWIE warstwy treści Library, nie jedną cienką:
+
+1. **Migracje `559_tools_known_tools_library.sql` i `562_tools_toolsets_speed.sql`**
+   (obie **aktywne**, nie w `never-ran/`) wypełniają
+   `library_content_translations` **ośmioma** polami: `whenToUse`, `inputs`,
+   `steps`, `outputs`, `commonMistakes`, `example`, `nextSteps`, `whatYouGet`.
+2. **`server/src/services/KnownToolsService.ts:707` `ensureToolsSeedOnce()`**
+   buduje ten sam obiekt **wyłącznie z `whatYouGet`** (linie 723-726)
+   i nadpisuje kolumnę bezwarunkowo:
+   `library_content_translations = EXCLUDED.library_content_translations`
+   (linia 740).
+
+**Skutek:** raz na proces serwer kasuje 7 z 8 pól treści Library dla
+wszystkich 31 narzędzi. To wyjaśnia obserwację z Gate T0 — żywa baza demo
+zwracała wyłącznie `whatYouGet` z czterema punktami, mimo że migracje niosą
+pełny opis. Komentarz w kodzie tłumaczy intencję (propagacja poprawek flag),
+ale efekt uboczny niszczy treść.
+
+**To bezpośrednio blokuje wymaganie właścicielskie**, by Library było arkuszem
+informacyjno-edukacyjno-sprzedażowym (kiedy użyć, proces, dane wejściowe,
+rezultat, typowe błędy, przykład, następne kroki) — ta treść **istnieje
+w repo** i jest niszczona przed dotarciem do ekranu.
+
+**Drugie ustalenie:** `ACTIVE_KNOWN_TOOL_TYPES` (linia 205) to zaszyta lista
+19 pozycji, a `isActive` liczy się jako `rowIsActive && allowlist.has(toolType)`
+(linia 775). `getKnownTool()` zwraca `null` dla 12 spoza listy, więc ich
+szczegół nigdy nie wróci z API — niezależnie od zawartości bazy.
+
 ## 4. Granice zakresu
 
 **Moje (Tools):** 31 narzędzi powyżej, ich Tool Packi, renderery, mechanika
