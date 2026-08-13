@@ -128,7 +128,7 @@ name>` lines from both files and buckets every failing `(file, test)` pair into 
 | `src-and-server-src` (`src` + `server/src` — vitest path filters are substring matches, so `src` alone also matches `server/src/**`; candidate has 7 more files matched than baseline — exactly the 7 NEW `src/**` test files listed in the discovery section above) | 920 files, **80 failed** / 838 passed / 2 skipped; 13673 tests, **275 failed** / 13371 passed / 19 skipped / 8 todo | 913 files, **80 failed** / 831 passed / 2 skipped; 13535 tests, **275 failed** / 13226 passed / 26 skipped / 8 todo | **0** | **0** | **279** (unique `(file,test)` pairs; some retried lines dedupe against the summary's 275) | **COMPLETE** — real run, `RUN_DB_TESTS=1 MOCK_DB=false`, real Postgres both sides, 1370-1382s each |
 | `targeted-new-integration-tests` (the 7 new `.realdb.test.ts` files + the 1 modified contract test — run standalone for fast signal ahead of the full 615-file `integration` batch) | 8 files, **66/66 tests pass**, 0 failed | 1 file (only `tool-session-roundtrip.contract.test.ts` exists at `fb6dfedd42` — the other 7 are net-new), **11/11 tests pass** | 0 | 0 | 0 | **COMPLETE** |
 | `integration` (`tests/integration`) | 622 files, 198 failed / 416 passed / 8 skipped; 4468 tests, 687 failed / 3581 passed / 200 skipped, 38 unhandled-rejection errors, 1709s | 615 files, 199 failed / 408 passed / 8 skipped; 4413 tests, 689 failed / 3524 passed / 200 skipped, 39 unhandled-rejection errors, 1637s | **1 raw, reclassified `flaky` (0 real)** | **3 raw, reclassified `flaky` (0 real)** | 710 | **COMPLETE — see detailed re-investigation below, all 4 divergent results reclassified `flaky`** |
-| `backend-sec-perf` (`tests/backend` + `tests/security` + `tests/performance`) | NOT STARTED | NOT STARTED | — | — | — | queued |
+| `backend-sec-perf` (`tests/backend` + `tests/security` + `tests/performance`) | **PARTIAL — killed mid-run** (background session runner was terminated by the environment while stuck in `tests/performance/memory-leak.test.ts`'s "extended period" monitor, ~8min in; 0 `FAIL` lines in the partial output) | **PARTIAL — killed mid-run** (same file, ~9min in; 0 `FAIL` lines) | — | — | — | **NOT VERIFIED to completion** — see resume below. None of this batch's files touch the diff (lowest-risk remaining gap) |
 | `component-singular` (`tests/component`) | NOT STARTED | NOT STARTED | — | — | — | queued |
 | `unit-backend` (`tests/unit/backend`) | NOT STARTED | NOT STARTED | — | — | — | queued |
 | `unit-rest` (~30 other `tests/unit/*` subdirs) | NOT STARTED | NOT STARTED | — | — | — | queued |
@@ -301,30 +301,55 @@ byte-for-byte identical failure sets or fully-explained flakiness unrelated to t
 
 ## NOT VERIFIED — exact resume commands
 
-**`integration` is now COMPLETE** (see detailed section above) — removed from this list.
+**`integration` is now COMPLETE** (see detailed section above).
 
-The following batches were queued in `scripts/testing/run-regression-batches-g3.sh` but never started this
-session. Resume with the commands below.
-
-**Never-started batches** (queued in `scripts/testing/run-regression-batches-g3.sh`'s sequence but not
-reached this session): `backend-sec-perf` (`tests/backend` + `tests/security` + `tests/performance`, ~36
-files — none of these touch the diff's changed files, lowest-risk remaining batch), `component-singular`
-(`tests/component`), `unit-backend` (`tests/unit/backend`, 705 files), `unit-rest` (~30 `tests/unit/*`
-subdirs, ~869 files), `components` (`tests/components`, 627 files — NOTE: the 11 highest-risk files in this
-directory, `tests/components/discovery-tools/*` and `tests/components/Discovery/*`, were already run
-separately to completion as `targeted-discovery-components` with 0 failures on either tree; the remaining
-616 files in this batch are lower-risk since they don't touch any file in the diff). Resume all of them with:
+**`backend-sec-perf` is PARTIAL** — the session's background runner (`run_in_background: true`) was
+terminated by the environment (status `killed`, not a clean exit) while stuck ~8-9 minutes into
+`tests/performance/memory-leak.test.ts`'s deliberately long "extended period" monitor, on BOTH trees. Zero
+`FAIL` lines were observed in either partial output before the kill, but this is not proof of completion —
+resume with `FORCE_RERUN=1` (the partial `.txt` files don't end in `EXIT_CODE=`, so the runner script would
+normally auto-resume them, but since they're non-empty and don't match the "already complete" check, running
+the script again picks this batch back up cleanly; delete the two partial files first if you want a clean
+log rather than an appended one):
 
 ```bash
-# Candidate — runs every batch not yet marked complete (skips any with an EXIT_CODE= already on disk)
-bash scripts/testing/run-regression-batches-g3.sh /Users/piotrwisniewski/.codex/worktrees/g3-regress \
+rm docs/program/METHOD_TOOLS_2026-08-13/regression-batches/g3-candidate/backend-sec-perf.txt
+rm docs/program/METHOD_TOOLS_2026-08-13/regression-batches/g3-baseline/backend-sec-perf.txt
+```
+
+then resume with the same commands as the never-started batches below (they cover `backend-sec-perf` too,
+since its `.txt` files no longer end in `EXIT_CODE=` after the `rm`).
+
+**Important environment note discovered this session**: `run_in_background: true` shell processes can be
+killed by the harness/environment independent of anything this agent does — both of this session's two
+main sequential runners (one per tree, covering `hooks-store` → `src-and-server-src` → `integration` →
+`backend-sec-perf` → ...) were killed mid-`backend-sec-perf`, after already completing the first three
+batches cleanly (that's real evidence, not lost — see above). Anyone resuming should use `nohup ... &
+disown` or an equivalent detached-process pattern if planning to leave a batch running unattended for
+10+ minutes, consistent with the "tło ubijane exit 144" lesson already in this project's memory.
+
+**Never-started batches** (queued in `scripts/testing/run-regression-batches-g3.sh`'s sequence, after
+`backend-sec-perf`, never reached this session): `component-singular` (`tests/component`), `unit-backend`
+(`tests/unit/backend`, 705 files), `unit-rest` (~30 `tests/unit/*` subdirs, ~869 files), `components`
+(`tests/components`, 627 files — NOTE: the 11 highest-risk files in this directory,
+`tests/components/discovery-tools/*` and `tests/components/Discovery/*`, were already run separately to
+completion as `targeted-discovery-components` with 0 failures on either tree; the remaining 616 files in
+this batch are lower-risk since they don't touch any file in the diff). Resume all of them (including
+`backend-sec-perf` if its partials were deleted above) with:
+
+```bash
+# Candidate — runs every batch not yet marked complete (skips any with an EXIT_CODE= already on disk).
+# Use nohup+disown so the harness killing the parent process doesn't take this down too.
+nohup bash scripts/testing/run-regression-batches-g3.sh /Users/piotrwisniewski/.codex/worktrees/g3-regress \
   "postgres://consultinity:test@localhost:56702/consultinity" \
-  /Users/piotrwisniewski/.codex/worktrees/g3-regress/docs/program/METHOD_TOOLS_2026-08-13/regression-batches/g3-candidate
+  /Users/piotrwisniewski/.codex/worktrees/g3-regress/docs/program/METHOD_TOOLS_2026-08-13/regression-batches/g3-candidate \
+  > /tmp/g3-candidate-resume.log 2>&1 & disown
 
 # Baseline
-bash scripts/testing/run-regression-batches-g3.sh /Users/piotrwisniewski/.codex/worktrees/g3-baseline \
+nohup bash scripts/testing/run-regression-batches-g3.sh /Users/piotrwisniewski/.codex/worktrees/g3-baseline \
   "postgres://consultinity:test@localhost:56711/consultinity" \
-  /Users/piotrwisniewski/.codex/worktrees/g3-regress/docs/program/METHOD_TOOLS_2026-08-13/regression-batches/g3-baseline
+  /Users/piotrwisniewski/.codex/worktrees/g3-regress/docs/program/METHOD_TOOLS_2026-08-13/regression-batches/g3-baseline \
+  > /tmp/g3-baseline-resume.log 2>&1 & disown
 ```
 
 Classifier for any completed batch pair: `python3 scripts/testing/classify-regression.py <candidate.txt>
