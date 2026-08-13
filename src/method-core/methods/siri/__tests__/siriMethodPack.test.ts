@@ -227,7 +227,7 @@ describe('SIRI Method Pack — 16 Dimensions as source of truth', () => {
     it('QBank v1 has zero per-dimension question coverage (0/16)', () => {
       expect(SIRI_QBANK_V1_COVERAGE.totalDimensions).toBe(16);
       expect(SIRI_QBANK_V1_COVERAGE.dimensionsWithDedicatedQuestions).toBe(0);
-      expect(compileSiriPack().questions).toHaveLength(0);
+      expect(compileSiriPack().pack.questions).toHaveLength(0);
     });
 
     it('the Impact Value formula structurally matches the whitepaper, but two implementation gaps are confirmed', () => {
@@ -245,7 +245,7 @@ describe('SIRI Method Pack — 16 Dimensions as source of truth', () => {
     });
 
     it('the compiled pack readiness is honestly "draft" (cannot start a production session)', () => {
-      const pack = compileSiriPack();
+      const { pack } = compileSiriPack();
       expect(pack.manifest.readiness).toBe('draft');
     });
   });

@@ -169,6 +169,41 @@ export interface MethodSourceRef {
   readonly usageRight: 'quotable' | 'internal_reference' | 'restricted';
 }
 
+// ---------------------------------------------------------------------------
+// Compiler result — uniform across every method (COORD-09)
+// ---------------------------------------------------------------------------
+
+/**
+ * Every Method Pack compiler returns the pack AND a report about how complete
+ * it actually is. The report is not decoration: `readiness` in the manifest may
+ * only be set honestly, and the report is the evidence behind that call
+ * (ASSESSMENT_METHOD_PACK_CONTRACT.md §6 — „Pack bez pytań, scoring fixtures
+ * lub licencji nie może wyglądać jak gotowa metoda").
+ *
+ * Methods extend this with their own coverage counters; the two fields below
+ * are the minimum every method must answer.
+ */
+export interface MethodCompileReport {
+  /** Why the manifest carries the readiness it carries. Plain language. */
+  readonly readinessRationale: string;
+  /**
+   * Conflicts found while compiling — e.g. two sources disagreeing. Reported,
+   * never silently resolved by picking one.
+   */
+  readonly discrepancies: readonly string[];
+}
+
+/**
+ * Uniform compiler signature. DRD, SIRI and every future method return this.
+ * Consumers destructure `{ pack }`; tooling and DoD checks read `report`.
+ */
+export interface MethodCompileResult<
+  TReport extends MethodCompileReport = MethodCompileReport,
+> {
+  readonly pack: MethodPack;
+  readonly report: TReport;
+}
+
 /** Deterministic golden case. Scoring that cannot reproduce these is rejected. */
 export interface ScoringFixture {
   readonly fixtureId: string;

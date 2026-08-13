@@ -6,7 +6,7 @@ import { calculateImpactValue } from '@/services/siriPrioritisation';
 
 describe('OPUS PROBE — SIRI', () => {
   it('16 wymiarow jako jednostki oceny, Bands 0-5, mapowanie na 8 filarow i 3 bloki', () => {
-    const pack = compileSiriPack();
+    const { pack } = compileSiriPack();
     expect(pack.units).toHaveLength(16);
     for (const u of pack.units) {
       expect(u.levelScale).toEqual([0, 1, 2, 3, 4, 5]);
@@ -18,7 +18,7 @@ describe('OPUS PROBE — SIRI', () => {
   });
 
   it('readiness uczciwy — pack NIE startuje sesji', () => {
-    const pack = compileSiriPack();
+    const { pack } = compileSiriPack();
     console.log('PROBE readiness =', pack.manifest.readiness);
     expect(canStartSession(pack.manifest.readiness)).toBe(false);
   });

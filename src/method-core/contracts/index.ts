@@ -50,6 +50,8 @@ export type {
   ScoringFixture,
   MethodAdapter,
   AdapterCapability,
+  MethodCompileReport,
+  MethodCompileResult,
   ProgressionInput,
   ProgressionResult,
   ScoringInput,

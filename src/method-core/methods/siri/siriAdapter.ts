@@ -34,7 +34,7 @@ import {
   type SIRIPrioritisationWeights,
 } from '@/services/siriPrioritisation';
 import {
-  compileSiriPack,
+  compileSiriPackOnly,
   DEFAULT_MINIMUM_EVIDENCE_STRENGTH,
   SIRI_METHOD_PACK_ID,
   SIRI_METHOD_PACK_VERSION,
@@ -420,7 +420,7 @@ export const siriAdapter: MethodAdapter = {
           `"${SIRI_METHOD_PACK_VERSION}" is compiled in this build.`
       );
     }
-    return compileSiriPack();
+    return compileSiriPackOnly();
   },
 
   resolveOpenLevels,

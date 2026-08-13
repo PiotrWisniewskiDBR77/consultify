@@ -44,6 +44,8 @@ import { DRD_OVERRIDES_AXIS_3_4 } from '@/services/assessmentKnowledge/drdKnowle
 import { DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 } from '@/services/assessmentKnowledge/drdKnowledgeOverridesAxis5To7';
 
 import type {
+  MethodCompileReport,
+  MethodCompileResult,
   MethodLevel,
   MethodPack,
   MethodPackManifest,
@@ -98,17 +100,19 @@ export interface DrdCompileFieldGaps {
   readonly whyItMattersGranularity: 'axis-level (7 hints reused across all questions in that axis) — NOT per-question';
 }
 
-export interface DrdCompileReport {
+export interface DrdCompileReport extends MethodCompileReport {
   readonly coverage: DrdCompileCoverage;
   readonly fieldGaps: DrdCompileFieldGaps;
   readonly discrepancies: readonly string[];
   readonly readinessRationale: string;
 }
 
-export interface DrdCompileResult {
-  readonly pack: MethodPack;
-  readonly report: DrdCompileReport;
-}
+/**
+ * Uniform compiler result (COORD-09). Structurally identical to the previous
+ * hand-written `{ pack, report }` shape, so every existing caller keeps working —
+ * this is a widening to the shared type, not a breaking change.
+ */
+export type DrdCompileResult = MethodCompileResult<DrdCompileReport>;
 
 // ---------------------------------------------------------------------------
 // Constants

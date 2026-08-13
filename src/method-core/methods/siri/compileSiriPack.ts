@@ -50,6 +50,8 @@
  */
 
 import type {
+  MethodCompileReport,
+  MethodCompileResult,
   MethodLevel,
   MethodPack,
   MethodPackManifest,
@@ -373,7 +375,88 @@ export function buildSiriManifest(): MethodPackManifest {
 // Pack assembly
 // ---------------------------------------------------------------------------
 
-export function compileSiriPack(): MethodPack {
+/**
+ * Coverage counters specific to SIRI. Every number here is measured from the
+ * compiled pack, never estimated — they are what justifies `readiness: 'draft'`.
+ */
+export interface SiriCompileCoverage {
+  readonly dimensionsTotal: number;
+  readonly pillarsTotal: number;
+  readonly buildingBlocksTotal: number;
+  readonly bandsPerDimension: number;
+  readonly levelsTotal: number;
+  /** Levels whose canonical text is a licensed-source gap, not authored content. */
+  readonly levelsMarkedEvidenceMissing: number;
+  readonly dimensionsWithDedicatedQuestions: number;
+  readonly questionsTotal: number;
+}
+
+export interface SiriCompileReport extends MethodCompileReport {
+  readonly coverage: SiriCompileCoverage;
+  /** Human-readable list of what a methodology owner still has to supply. */
+  readonly evidenceMissing: readonly string[];
+}
+
+function buildSiriCompileReport(pack: MethodPack): SiriCompileReport {
+  const levels = pack.levels;
+  const levelsMarkedEvidenceMissing = levels.filter((l) =>
+    l.canonicalDefinition.startsWith('EVIDENCE_MISSING')
+  ).length;
+  const pillars = new Set(pack.units.map((u) => u.parentId));
+
+  return {
+    readinessRationale:
+      `SIRI pack is 'draft': ${levelsMarkedEvidenceMissing}/${levels.length} band descriptors ` +
+      'carry EVIDENCE_MISSING because the per-dimension assessment matrix is licensed ' +
+      'source material that must not be transcribed, and ' +
+      `${SIRI_QBANK_V1_COVERAGE.dimensionsWithDedicatedQuestions}/` +
+      `${SIRI_QBANK_V1_COVERAGE.totalDimensions} dimensions have dedicated questions. ` +
+      'Mechanics (no-leapfrog, 80:20, aggregation, TIER) are implemented and tested; ' +
+      'methodology CONTENT is not. Technical readiness and methodological readiness ' +
+      'are deliberately reported apart.',
+    discrepancies: [
+      'siriStructure.ts names the 8 pillars "SIRI_DIMENSIONS" and the 16 canonical ' +
+        'dimensions "SIRI_PRIORITISATION_AREAS" — inverted vs SIRI canon. This pack ' +
+        'uses the canonical meaning; the legacy file is untouched pending COORD-02.',
+      'QBank v1 holds one generic bucket keyed [dimension_id:all], not per-dimension ' +
+        'content; Band 1 is absent from it entirely. Not compiled into questions.',
+    ],
+    evidenceMissing: [
+      'Per-dimension Band descriptors (Bands 0-5 x 16 dimensions) — source: SIRI ' +
+        'Assessor Training Module 2, pp. 32-69. LICENSED, must not be transcribed.',
+      'Per-dimension x Band question bank — no source in repo.',
+      'DOR_c / DOR_k official lookup tables — SIRI-PM Whitepaper pp. 38-39, not encoded.',
+      'Industry Best-in-Class benchmarks for 14 industries — Whitepaper p. 40, not encoded.',
+      '16D -> 8 pillar aggregation weights — not defined by canon; current rule is ' +
+        'PENDING-OWNER-APPROVAL.',
+    ],
+    coverage: {
+      dimensionsTotal: pack.units.length,
+      pillarsTotal: pillars.size,
+      buildingBlocksTotal: 3,
+      bandsPerDimension: 6,
+      levelsTotal: levels.length,
+      levelsMarkedEvidenceMissing,
+      dimensionsWithDedicatedQuestions:
+        SIRI_QBANK_V1_COVERAGE.dimensionsWithDedicatedQuestions,
+      questionsTotal: pack.questions.length,
+    },
+  };
+}
+
+/**
+ * Compiles the SIRI Method Pack.
+ *
+ * Returns the uniform `{ pack, report }` shape shared by every method compiler
+ * (COORD-09). Use `compileSiriPackOnly()` when you genuinely need just the pack.
+ */
+export function compileSiriPack(): MethodCompileResult<SiriCompileReport> {
+  const pack = compileSiriPackOnly();
+  return { pack, report: buildSiriCompileReport(pack) };
+}
+
+/** The pack alone. Kept as the narrow accessor for adapter/internal use. */
+export function compileSiriPackOnly(): MethodPack {
   return {
     manifest: buildSiriManifest(),
     units: buildSiriUnits(),
