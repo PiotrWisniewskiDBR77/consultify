@@ -101,4 +101,12 @@ describe('railway deploy contract — declared preDeployCommand stays real', () 
     const [a, b] = RAILWAY_CONFIG_FILES.map((f) => commandText(readJson(f)?.deploy?.preDeployCommand).trim());
     expect(a).toBe(b);
   });
+
+  it('passes the verified absolute migrations directory to the spawned migrator', () => {
+    const source = fs.readFileSync(
+      path.resolve(REPO_ROOT, 'server/scripts/release-migration-gate.ts'),
+      'utf-8'
+    );
+    expect(source).toMatch(/const args = \[runner, ['"]--dir['"], migrationsDir\]/);
+  });
 });

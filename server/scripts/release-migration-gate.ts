@@ -197,7 +197,11 @@ async function main() {
         path.resolve(process.cwd(), 'node_modules/.bin/tsx'),
       ]) || 'tsx'
     : process.execPath;
-  const args = useTsx ? [runner] : [runner];
+  // The migrator resolves its default directory from process.cwd(). The production image runs
+  // with cwd=/app/server, where that default would incorrectly become
+  // /app/server/server/migrations. Pass the already verified absolute directory explicitly so
+  // repo and image execution use the identical chain.
+  const args = [runner, '--dir', migrationsDir];
 
   // eslint-disable-next-line no-console
   console.log('[release-gate] applying full migration chain (no --only, no --safe, no --allow-checksum-drift)');
