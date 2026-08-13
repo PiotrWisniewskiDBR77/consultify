@@ -785,6 +785,7 @@ CREATE TABLE IF NOT EXISTS approval_assignments(
     org_id TEXT NOT NULL,
     proposal_id TEXT NOT NULL,
     assigned_to_user_id TEXT NOT NULL,
+    requested_by_user_id TEXT,
     status TEXT NOT NULL DEFAULT 'PENDING',
     sla_due_at TIMESTAMP NOT NULL,
     escalated_to_user_id TEXT,
