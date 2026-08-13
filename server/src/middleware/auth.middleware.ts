@@ -813,10 +813,12 @@ const attachUser = async (
         !!resolvedMembership && String(resolvedMembership.status || '').toUpperCase() === 'ACTIVE';
       if (!resolvedActive) {
         const fallback = await dbGet<{ organization_id?: string; role?: string }>(
-          `SELECT organization_id, role
-           FROM organization_members
-           WHERE user_id = ? AND UPPER(status) = 'ACTIVE'
-           ORDER BY created_at DESC
+          `SELECT om.organization_id, om.role
+           FROM organization_members om
+           LEFT JOIN users u ON u.id = om.user_id
+           WHERE om.user_id = ? AND UPPER(om.status) = 'ACTIVE'
+           ORDER BY CASE WHEN om.organization_id = u.organization_id THEN 0 ELSE 1 END,
+                    om.created_at DESC
            LIMIT 1`,
           [decodedUserId]
         );
