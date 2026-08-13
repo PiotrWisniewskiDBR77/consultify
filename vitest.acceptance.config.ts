@@ -1,4 +1,5 @@
 /// <reference types="vitest" />
+import path from 'path';
 import { defineConfig } from 'vitest/config';
 
 /**
@@ -7,6 +8,14 @@ import { defineConfig } from 'vitest/config';
  * NOT part of the fast unit suite. Single-threaded, no global mocks.
  */
 export default defineConfig({
+  resolve: {
+    // Mirrors vitest.config.ts's `@` -> src alias. Without it, any acceptance
+    // test that mounts a REAL router pulling `@/config/**` (e.g. ToolController
+    // -> toolOutputSnapshotService -> buildSwotOutput -> @/config/swot/...)
+    // fails at import time with "Cannot find package '@/...'" — a test-infra
+    // gap, not a product bug (G4 roster stream, 2026-08-13).
+    alias: [{ find: '@', replacement: path.resolve(__dirname, './src') }],
+  },
   test: {
     globals: true,
     environment: 'node',
