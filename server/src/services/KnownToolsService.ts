@@ -1,6 +1,7 @@
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import { QueryAdapter } from '../utils/QueryAdapter.js';
+import { mergeLibraryContentJson } from './libraryContentMerge.js';
 
 type ToolRow = {
   id: string;
@@ -720,10 +721,40 @@ class KnownToolsService {
         en: seed.descriptionEn,
         pl: seed.descriptionPl,
       });
-      const libraryContentTranslations = JSON.stringify({
+
+      /*
+       * NAPRAWA L11 — treść Library scalamy, nie nadpisujemy.
+       *
+       * Wcześniej ta wartość szła prosto do
+       * `library_content_translations = EXCLUDED.library_content_translations`,
+       * przez co raz na proces kasowała 7 z 8 pól wniesionych przez migracje
+       * 559 i 562 (whenToUse, inputs, steps, outputs, commonMistakes, example,
+       * nextSteps) dla wszystkich 31 narzędzi.
+       *
+       * Teraz czytamy stan istniejący i scalamy per locale i per pole:
+       * niepusta wartość w bazie wygrywa, seed uzupełnia wyłącznie braki,
+       * nieznane pola i locale zostają nietknięte. Operacja jest idempotentna,
+       * więc kolejne restarty niczego nie degradują.
+       */
+      const seedLibraryContent = JSON.stringify({
         en: { whatYouGet: seed.whatYouGetEn },
         pl: { whatYouGet: seed.whatYouGetPl },
       });
+
+      // Klucz konfliktu to kolumna `name`, która trzyma slug narzędzia
+      // (w VALUES idzie tam `seed.toolType`, nie `seed.id`). Odczyt musi
+      // używać tego samego klucza, inaczej merge nigdy nie zobaczy
+      // istniejącego wiersza i cicho straciłby ochronę treści.
+      const existingRow = await q.get<Pick<ToolRow, 'library_content_translations'>>(
+        `SELECT library_content_translations FROM tools WHERE name = ? OR tool_type = ? LIMIT 1`,
+        [seed.toolType, seed.toolType]
+      );
+
+      const libraryContentTranslations = mergeLibraryContentJson(
+        existingRow?.library_content_translations ?? null,
+        seedLibraryContent
+      );
+
       const tagsJson = JSON.stringify(seed.tags);
 
       await q.run(
