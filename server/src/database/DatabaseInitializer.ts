@@ -13,6 +13,8 @@ import { fileURLToPath } from 'url';
 
 import { databaseConfig } from '../config/DatabaseConfig.js';
 import logger from '../utils/Logger.js';
+import { compareMigrationFilenames } from '../services/tablePlatform/migrationRunner.js';
+import { MIGRATION_PATTERN } from '../services/tablePlatform/migrationIdentity.js';
 import { getDatabase, getDatabaseAsync } from './Database.js';
 
 const __filename_esm = fileURLToPath(import.meta.url);
@@ -3163,6 +3165,52 @@ async function ensureSchemaColumnGaps(): Promise<void> {
 // ==========================================
 
 /**
+ * Discovers this runner's ("[TP-Migrations]", hyphen — mechanism #2 in
+ * docs/product/case-workspace/evidence/e7-migration-paths-2026-08-12/
+ * MIGRATION_PATH_ASSESSMENT.md) migration file set, in the order it will
+ * apply them.
+ *
+ * Extracted into its own exported function (E8) so the ordering fix below
+ * is directly testable without exercising the full, side-effectful
+ * `initializeDatabase()` — see
+ * tests/integration/migration-ordering-parity.realdb.test.ts, which asserts
+ * the SAME producer-before-consumer property this module's sibling runner
+ * (migrationRunner.ts / "[TP Migrations]", mechanism #1) is already pinned
+ * to by tests/integration/case-workspace-fresh-install-migration-order.realdb.test.ts.
+ *
+ * Pattern: imported from migrationIdentity.ts (the shared discovery
+ * predicate module also used by migrationRunner.ts / "[TP Migrations]") so
+ * the two runners can never drift on WHICH files count as a runtime
+ * migration. Deliberately NOT using `isRuntimeMigrationFile()` here, which
+ * would additionally admit RUNTIME_MIGRATION_ALLOWLIST (13 extra files,
+ * e.g. 654_canonical_inbox_items_producer_fresh_db_gap.sql) — this runner
+ * has always discovered a narrower set than migrationRunner.ts (see E7 §4).
+ * That gap is a deliberate, evidenced E8 scope call (harmless today: this
+ * runner's failure on 736_inbox_performance_indexes.sql is caught
+ * non-fatally by the try/catch around this function's caller, and
+ * migrationRunner.ts's own "[TP Migrations]" pass — which DOES carry the
+ * allowlist — always runs afterward in the same boot and creates every
+ * table this runner missed; verified via a real from-scratch boot, not just
+ * by reading the code). Widening discovery here is a separate, reviewable
+ * change with its own blast radius and belongs in its own packet.
+ *
+ * Ordering: was plain prefix-length/localeCompare with NO tiebreak for
+ * identical prefixes — the exact bug this shared with migrationRunner.ts
+ * before ITS fix; see that file's SAME_PREFIX_ORDER comment for the full
+ * root-cause story and E7 §3 for how this exact defect class was found
+ * still unfixed here. `compareMigrationFilenames` is imported directly from
+ * migrationRunner.ts — ONE shared ordering function for both runtime
+ * mechanisms, so a future same-day case_workspace-style file can no longer
+ * be correct in one runner and wrong in the other.
+ */
+export function discoverTablePlatformMigrationFiles(migrationsDir: string): string[] {
+  return fs
+    .readdirSync(migrationsDir)
+    .filter((f: string) => MIGRATION_PATTERN.test(f))
+    .sort(compareMigrationFilenames);
+}
+
+/**
  * Run Table Platform migrations (server/migrations/7*.sql).
  * Tracks executed migrations in tp_migration_history to ensure idempotency.
  * Each migration runs inside its own transaction.
@@ -3195,16 +3243,7 @@ async function runTablePlatformMigrations(db: any): Promise<void> {
     return;
   }
 
-  const migrationPattern = /^(7\d{2}|\d{8})_.*\.sql$/;
-  const allFiles = fs
-    .readdirSync(migrationsDir)
-    .filter((f: string) => migrationPattern.test(f))
-    .sort((a: string, b: string) => {
-      const prefixA = a.split('_')[0];
-      const prefixB = b.split('_')[0];
-      if (prefixA.length !== prefixB.length) return prefixA.length - prefixB.length;
-      return prefixA.localeCompare(prefixB);
-    });
+  const allFiles = discoverTablePlatformMigrationFiles(migrationsDir);
 
   if (allFiles.length === 0) {
     logger.info(`${TAG} No migration files found`);
