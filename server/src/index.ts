@@ -8,6 +8,7 @@
 
 // CRITICAL (ESM): load env via a side-effect module that is imported FIRST.
 import './config/loadEnv.js';
+import { BUILD_SHA_UNKNOWN, resolveBuildSha } from './config/buildSha.js';
 
 import fs from 'fs';
 import path from 'path';
@@ -1698,11 +1699,10 @@ function startHttpListener(): void {
 async function detectCrashLoop(): Promise<void> {
   if (isTest) return;
   try {
-    const gitSha =
-      process.env.APP_BUILD_SHA ||
-      process.env.RAILWAY_GIT_COMMIT_SHA ||
-      process.env.GITHUB_SHA ||
-      process.env.GIT_SHA;
+    // Shared resolver (server/src/config/buildSha.ts) — same precedence as /api/health,
+    // /api/ready and the release receipt, so every surface reports the same commit.
+    const resolvedSha = resolveBuildSha();
+    const gitSha = resolvedSha === BUILD_SHA_UNKNOWN ? undefined : resolvedSha;
     if (!gitSha) return; // local dev / unconfigured
     const shortSha = gitSha.slice(0, 10);
     const env = process.env.APP_ENV || process.env.NODE_ENV || 'development';
@@ -1775,11 +1775,10 @@ async function detectCrashLoop(): Promise<void> {
 async function announceDeploy(): Promise<void> {
   if (isTest) return;
   try {
-    const gitSha =
-      process.env.APP_BUILD_SHA ||
-      process.env.RAILWAY_GIT_COMMIT_SHA ||
-      process.env.GITHUB_SHA ||
-      process.env.GIT_SHA;
+    // Shared resolver (server/src/config/buildSha.ts) — same precedence as /api/health,
+    // /api/ready and the release receipt, so every surface reports the same commit.
+    const resolvedSha = resolveBuildSha();
+    const gitSha = resolvedSha === BUILD_SHA_UNKNOWN ? undefined : resolvedSha;
     if (!gitSha) return; // local dev / unconfigured — nothing to announce
     const shortSha = gitSha.slice(0, 10);
     const env = process.env.APP_ENV || process.env.NODE_ENV || 'development';

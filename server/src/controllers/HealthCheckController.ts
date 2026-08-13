@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 
+import { BUILD_SHA_UNKNOWN, resolveBuildSha } from '../config/buildSha.js';
 import { getDatabase } from '../database/Database.js';
 
 /**
@@ -26,7 +27,11 @@ import { getDatabase } from '../database/Database.js';
  * `/api/health` and compares the commit). Neither is any filesystem path.
  */
 const PUBLIC_GIT_SHA: string | undefined = (() => {
-  const raw = process.env.RAILWAY_GIT_COMMIT_SHA || process.env.GITHUB_SHA || process.env.GIT_SHA;
+  // Shared resolver (server/src/config/buildSha.ts). This site previously omitted
+  // APP_BUILD_SHA while index.ts consulted it first, so the two could report different
+  // commits for the same deployment. One precedence, one resolver, all consumers.
+  const resolved = resolveBuildSha();
+  const raw = resolved === BUILD_SHA_UNKNOWN ? undefined : resolved;
   // Keep the value byte-identical to what the platform set (deploy checks compare
   // full 40-char SHAs); only trim and bound it so a malformed var cannot bloat
   // the public body.
