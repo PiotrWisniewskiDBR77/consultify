@@ -244,11 +244,17 @@ const InitiativesPortfolioAnalysisScreen = React.lazy(
 const FabRailKebabScreen = React.lazy(() => import('./screens/fab-rail-kebab'));
 const PrawyPanelSzynaIkonScreen = React.lazy(() => import('./screens/prawy-panel-szyna-ikon'));
 const Exe002004UiAuditScreen = React.lazy(() => import('./screens/exe-002-004-ui-audit'));
+const AudytyPiecPowierzchniScreen = React.lazy(() => import('./screens/audyty-piec-powierzchni'));
 const Mw007CalendarNarrowViewportScreen = React.lazy(
   () => import('./screens/mw-007-calendar-narrow-viewport')
 );
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'audyty-piec-powierzchni': {
+    label:
+      'U8 — REALNY <AuditsMethodHub> (Library·Processes·Outputs·Reports·Initiatives), auditsFiveSurfacesV1. &tab=library|processes|outputs|reports|initiatives, &state=default|empty|loading|error',
+    render: () => <AudytyPiecPowierzchniScreen />,
+  },
   'mw-007-calendar-narrow-viewport': {
     label:
       'MW-07 Codex FINAL UX FIX_REQUIRED — REALNY <CalendarView>: sidebar nie nachodzi na grid poniżej breakpointu mobile (useIsMobile + Drawer)',
