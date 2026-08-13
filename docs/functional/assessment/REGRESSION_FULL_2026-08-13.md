@@ -50,9 +50,9 @@ z linii `FAIL` w logu) kategoria:
 
 | Strona | Plików zmierzonych | Plików razem | % |
 |---|---|---|---|
-| candidate | 1110 | 1574 | 71% |
+| candidate | 1260 | 1574 | 80% |
 | baseline (pełny sekwencyjny) | 0 | 1661 | 0% |
-| baseline (celowany — pliki failujące na candidate) | 48 | — | — |
+| baseline (celowany — pliki failujące na candidate) | 60 | — | — |
 
 **Uwaga**: pełny sekwencyjny przebieg baseline jeszcze nie uruchomiony — strategia w tej sesji: (1)
 zmierz candidate sekwencyjnie, (2) dla KAŻDEGO pliku z failem na candidate odpal ten sam plik na
@@ -104,6 +104,11 @@ zakończone czysto (`Tests N failed | M passed` obecne).
 | 31 | 1021-1050 | 30 | t6-cand-31.log | 0 failed / 369 |
 | 32 | 1051-1080 | 30 | t6-cand-32.log | 4 failed / 215 |
 | 33 | 1081-1110 | 30 | t6-cand-33.log | 2 failed / 476 |
+| 34 | 1111-1140 | 30 | t6-cand-34.log | 0 failed / 334 |
+| 35 | 1141-1170 | 30 | t6-cand-35.log | 2 failed / 383 |
+| 36 | 1171-1200 | 30 | t6-cand-36.log | 1 failed / 284 |
+| 37 | 1201-1230 | 30 | t6-cand-37.log | 23 failed / 227 |
+| 38 | 1231-1260 | 30 | t6-cand-38.log | 2 failed / 252 |
 
 ### Partie zmierzone — baseline
 
@@ -132,6 +137,12 @@ czekać na pełny sekwencyjny przebieg baseline. Dwa przebiegi:
 5. `t6-base-targeted-5.log` — 3 pliki failujące na candidate w liniach 991-1110, `--testTimeout=15000
    --retry=0`: `Tests 11 failed | 16 passed (27)`. Diff ujawnił pozorny swap w `templateCrud.test.ts`
    — zweryfikowany jako flaky (order-dependent), nie regresja. Patrz notatka w sekcji `introduced`.
+6. `t6-base-targeted-6.log` — 12 plików failujących na candidate w liniach 1111-1260,
+   `--testTimeout=15000 --retry=0`: `Tests 24 failed | 58 passed (82)`. Diff ujawnił **4 kolejne testy,
+   które na baseline PRZECHODZĄ, a na candidate PADAJĄ** — 1 w `kebabBezAtrap.test.tsx`, 3 w
+   `dp5HeuristicAiGating.test.tsx` (`NodeContextMenu comingSoonIds gating`). Zweryfikowane niezależnie
+   (`verify-cand-4tests.log` / `verify-base-4tests.log`), spójny powtarzalny wynik. Szczegóły w sekcji
+   `introduced` niżej.
 
 Brak jeszcze pełnego sekwencyjnego przebiegu baseline poza tym — to osobny, szerszy krok (patrz
 NOT_VERIFIED niżej).
@@ -198,12 +209,34 @@ templates"` (bez reszty pliku dookoła) daje **PASS na candidate dla obu** (log
 pliku (`order: 'random'` w `vitest.config.ts` + współdzielony mock/stan), nie realna regresja kodu —
 NIE liczone jako `introduced`/`fixed`, oznaczone jako `identical_pre_existing (flaky, order-dependent)`.
 
-Reszta zmierzonego zakresu (patrz "Postęp pomiaru"): wszystkie pozostałe 93 unikalne testy failujące
-na candidate w liniach 1-1110 (84 z 1-990 + 9 nowych solidnych z 991-1110, wyłączając parę flaky
-opisaną wyżej i wyłączając `artifactContractParity` opisany wyżej) zostały sprawdzone na baseline po
-pełnej nazwie (`plik > describe > test`) i failują też na baseline — `identical_pre_existing`. To
-dotyczy tylko zmierzonego zakresu — reszta plików (candidate 1111-1574, cała reszta baseline poza
-pomiarem celowanym) jest `NOT_VERIFIED` i może jeszcze ujawnić kolejne `introduced`.
+### `tests/unit/kebabBezAtrap.test.tsx` (1 test)
+Test: `RowActionsMenu — menu bez atrap > ukrywa „jeszcze tego nie ma", zostawia „nie wolno, bo…"`
+
+- **candidate**: FAIL — `Unable to find an element with the text: /Safes are automatic/`
+- **baseline**: PASS
+
+### `tests/unit/mindmap/dp5HeuristicAiGating.test.tsx` — `NodeContextMenu comingSoonIds gating` (3 testy)
+Testy: `does not gate real-LLM context actions (What if, Competitors)`,
+`leaves ctx_dependencies clickable when comingSoonIds is empty`,
+`renders ctx_dependencies disabled with "Coming soon" badge when listed`
+
+- **candidate**: FAIL na wszystkich 3 — `Unable to find an element with the text: AI`, a w wyrenderowanym
+  DOM widać surowy, nieprzetłumaczony klucz i18n `myWorkMindmap.ctxMenu.group.edit` zamiast tekstu
+  etykiety grupy menu — wygląda na regresję renderowania/i18n w `NodeContextMenu` (menu kontekstowe
+  mapy myśli), nie tylko problem z tym jednym testem.
+- **baseline**: PASS na wszystkich 3 (pozostałe 3 testy w tym samym pliku — `AIActionsPopover heuristic
+  action gating` — failują na OBU stronach, to osobna, już znana `identical_pre_existing` grupa).
+
+Wszystkie 4 potwierdzone niezależnie: uruchomienie kombinacji obu plików razem na candidate
+(`verify-cand-4tests.log`) i na baseline (`verify-base-4tests.log`) dało spójny, powtarzalny wynik —
+te same testy failują/przechodzą, nie ma śladu flaky/kolejności.
+
+Reszta zmierzonego zakresu (patrz "Postęp pomiaru"): wszystkie pozostałe 117 unikalnych testów
+failujących na candidate w liniach 1-1260 (93 z 1-1110 + 24 nowych solidnych z 1111-1260, wykluczając
+4 introduced opisane wyżej) zostały sprawdzone na baseline po pełnej nazwie (`plik > describe >
+test`) i failują też na baseline — `identical_pre_existing`. To dotyczy tylko zmierzonego zakresu —
+reszta plików (candidate 1261-1574, cała reszta baseline poza pomiarem celowanym) jest `NOT_VERIFIED`
+i może jeszcze ujawnić kolejne `introduced`.
 
 ## Lista `fixed`
 
@@ -256,11 +289,11 @@ tests/unit/backend/services/systemAlertNotifier.test.ts > systemAlertNotifier > 
 
 ## NOT_VERIFIED
 
-- **candidate linie 1111-1574** (464 plików, ~29% strony candidate) — partie jeszcze nieuruchomione w
+- **candidate linie 1261-1574** (314 plików, ~20% strony candidate) — partie jeszcze nieuruchomione w
   tej sesji. Powód: praca w toku, kontynuacja w kolejnych krokach tej samej sesji.
-- **baseline pełny sekwencyjny przebieg** (1661 plików minus 48 już zmierzonych celowanie = ~1613
+- **baseline pełny sekwencyjny przebieg** (1661 plików minus 60 już zmierzonych celowanie = ~1601
   plików) — jeszcze nie rozpoczęty. Powód: priorytet poszedł na celowane sprawdzenie plików już
-  failujących na candidate (zrobione dla linii 1-1110, znaleziono 2 `introduced` + 1 flaky para);
+  failujących na candidate (zrobione dla linii 1-1260, znaleziono 6 `introduced` + 1 flaky para);
   pełny sekwencyjny
   przebieg baseline to osobny, szerszy krok, potrzebny żeby wykryć `introduced`/`fixed` w plikach
   które na candidate jeszcze PRZECHODZĄ (bo test może przechodzić na candidate, a mieć inny wynik na
@@ -271,10 +304,19 @@ tests/unit/backend/services/systemAlertNotifier.test.ts > systemAlertNotifier > 
 
 | Kategoria | Liczba |
 |---|---|
-| identical_pre_existing | 93 testów (celowany pomiar candidate-fails w liniach 1-1110 × baseline) + 2 flaky (order-dependent, nie regresja) |
+| identical_pre_existing | 117 testów (celowany pomiar candidate-fails w liniach 1-1260 × baseline) + 2 flaky (order-dependent, nie regresja) |
 | fixed | 0 |
-| introduced | **2** — `AdminCollaborationControlsPanel.test.tsx > loads controls and merges omitted values with defaults`; `artifactContractParity.test.ts > keeps origin runtime literals aligned` |
-| NOT_VERIFIED | 464 plików candidate (linie 1111-1574) + ~1613 plików baseline (poza celowanym pomiarem) |
+| introduced | **6** — patrz pełna lista niżej |
+| NOT_VERIFIED | 314 plików candidate (linie 1261-1574) + ~1601 plików baseline (poza celowanym pomiarem) |
+
+### Pełna lista `introduced` (6, wszystkie zweryfikowane niezależnie po obu stronach)
+
+1. `tests/unit/components/Admin/AdminCollaborationControlsPanel.test.tsx > AdminCollaborationControlsPanel > loads controls and merges omitted values with defaults`
+2. `tests/unit/contracts/artifactContractParity.test.ts > Artifact client/server contract parity > keeps origin runtime literals aligned`
+3. `tests/unit/kebabBezAtrap.test.tsx > RowActionsMenu — menu bez atrap > ukrywa „jeszcze tego nie ma", zostawia „nie wolno, bo…"`
+4. `tests/unit/mindmap/dp5HeuristicAiGating.test.tsx > DP-5: NodeContextMenu comingSoonIds gating > does not gate real-LLM context actions (What if, Competitors)`
+5. `tests/unit/mindmap/dp5HeuristicAiGating.test.tsx > DP-5: NodeContextMenu comingSoonIds gating > leaves ctx_dependencies clickable when comingSoonIds is empty`
+6. `tests/unit/mindmap/dp5HeuristicAiGating.test.tsx > DP-5: NodeContextMenu comingSoonIds gating > renders ctx_dependencies disabled with "Coming soon" badge when listed`
 
 ## Higiena
 
