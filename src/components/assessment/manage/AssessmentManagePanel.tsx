@@ -652,7 +652,7 @@ export function AssessmentManagePanel(props: {
               onClick={() => setTab(id)}
               className={`h-9 px-3 rounded-lg border text-sm font-medium transition-colors ${
                 tab === id
-                  ? 'border-primary-200/60 dark:border-primary-900/30 bg-primary-50/70 dark:bg-primary-900/10 text-primary-700 dark:text-primary-200'
+                  ? 'border-slate-300 dark:border-white/25 bg-slate-900/[0.07] dark:bg-white/10 text-slate-900 dark:text-slate-100'
                   : 'border-slate-200/80 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-900'
               }`}
             >
