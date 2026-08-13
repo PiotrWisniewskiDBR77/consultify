@@ -319,17 +319,17 @@
       "port": 58040
     },
     {
-      "name": "asm-ic-presentation",
+      "name": "assessment-mpq-odbior",
       "runtimeExecutable": "npx",
       "runtimeArgs": [
         "vite",
         "--config",
         "dev-render/vite.config.ts",
         "--port",
-        "5302",
+        "5305",
         "--strictPort"
       ],
-      "port": 5302
+      "port": 5305
     }
   ]
 }
