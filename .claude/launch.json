@@ -290,6 +290,18 @@
         "5202"
       ],
       "port": 5202
+    },
+    {
+      "name": "s3-cel4-offline-recovery",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "dev-render",
+        "--port",
+        "41930",
+        "--strictPort"
+      ],
+      "port": 41930
     }
   ]
 }

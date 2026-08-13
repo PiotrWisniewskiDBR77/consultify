@@ -211,3 +211,112 @@ describe('sanity — MethodCoreApiError is the real class (mock did not replace 
     expect(err.isNetworkError).toBe(false);
   });
 });
+
+// ---------------------------------------------------------------------------
+// CEL 4 (S3, 2026-08-13) — component-visible half of the eight-state offline
+// / recovery model. Each `forceState` value below is the SAME deterministic
+// escape hatch requirement 3/5 above already rely on (`debugForceState`) —
+// see `DrdHttpSessionRuntime`'s own header for why no production path ever
+// reaches it.
+// ---------------------------------------------------------------------------
+describe('CEL 4 — OFFLINE vs RECOVERY_DRAFT are visibly distinct, never conflated', () => {
+  it('forceState="offline" (nothing queued) shows the OFFLINE badge and banner, workspace stays usable', async () => {
+    const storage = makeMemoryStorage();
+    hoisted.createSession.mockResolvedValue({ session: makeSession(), idempotentReplay: false });
+
+    render(<DrdHttpMethodWorkspaceScreen storage={storage} forceState="offline" />);
+
+    const banner = await screen.findByTestId('drd-http-offline-banner');
+    expect(banner.textContent).not.toMatch(/niezapisan/i);
+
+    const indicator = await screen.findByTestId('drd-source-indicator');
+    expect(indicator).toHaveAttribute('data-source', 'OFFLINE');
+    // The workspace itself is still there — offline never blocks the screen.
+    expect(await screen.findByTestId('method-workspace-shell')).toBeInTheDocument();
+  });
+
+  it('forceState="recovery_draft" (offline WITH a queued write) shows the RECOVERY_DRAFT badge, distinct from plain OFFLINE', async () => {
+    const storage = makeMemoryStorage();
+    hoisted.createSession.mockResolvedValue({ session: makeSession(), idempotentReplay: false });
+
+    render(<DrdHttpMethodWorkspaceScreen storage={storage} forceState="recovery_draft" />);
+
+    const banner = await screen.findByTestId('drd-http-offline-banner');
+    expect(banner.textContent).toMatch(/niezapisan.*RECOVERY_DRAFT|RECOVERY_DRAFT/i);
+
+    const indicator = await screen.findByTestId('drd-source-indicator');
+    expect(indicator).toHaveAttribute('data-source', 'RECOVERY_DRAFT');
+  });
+});
+
+describe('CEL 4 — RECONNECTING is its own visible, non-blocking-forever state', () => {
+  it('forceState="reconnecting" shows a dedicated transient view with the RECONNECTING badge', async () => {
+    const storage = makeMemoryStorage();
+    hoisted.createSession.mockResolvedValue({ session: makeSession(), idempotentReplay: false });
+
+    render(<DrdHttpMethodWorkspaceScreen storage={storage} forceState="reconnecting" />);
+
+    const view = await screen.findByTestId('drd-http-reconnecting-view');
+    const indicator = await screen.findByTestId('drd-source-indicator');
+    expect(indicator).toHaveAttribute('data-source', 'RECONNECTING');
+    expect(view.textContent).toMatch(/sprawdzam serwer/i);
+  });
+});
+
+describe('CEL 4 — RECOVERED is a dismissible confirmation, not a silent auto-clear', () => {
+  it('forceState="recovered" shows the success banner + badge, and dismissing it settles on SERVER', async () => {
+    const storage = makeMemoryStorage();
+    hoisted.createSession.mockResolvedValue({ session: makeSession(), idempotentReplay: false });
+
+    render(<DrdHttpMethodWorkspaceScreen storage={storage} forceState="recovered" />);
+
+    expect(await screen.findByTestId('drd-http-recovered-banner')).toBeInTheDocument();
+    let indicator = await screen.findByTestId('drd-source-indicator');
+    expect(indicator).toHaveAttribute('data-source', 'RECOVERED');
+
+    fireEvent.click(screen.getByText('OK'));
+
+    await waitFor(() => expect(screen.queryByTestId('drd-http-recovered-banner')).not.toBeInTheDocument());
+    indicator = await screen.findByTestId('drd-source-indicator');
+    expect(indicator).toHaveAttribute('data-source', 'SERVER');
+  });
+});
+
+describe('CEL 4 — SAVING / SAVED render as in-workspace badges, never a blocking screen', () => {
+  it('forceState="saving" keeps the workspace visible with a SAVING badge', async () => {
+    const storage = makeMemoryStorage();
+    hoisted.createSession.mockResolvedValue({ session: makeSession(), idempotentReplay: false });
+
+    render(<DrdHttpMethodWorkspaceScreen storage={storage} forceState="saving" />);
+
+    expect(await screen.findByTestId('method-workspace-shell')).toBeInTheDocument();
+    const indicator = await screen.findByTestId('drd-source-indicator');
+    expect(indicator).toHaveAttribute('data-source', 'SAVING');
+  });
+
+  it('forceState="saved" keeps the workspace visible with a SAVED badge', async () => {
+    const storage = makeMemoryStorage();
+    hoisted.createSession.mockResolvedValue({ session: makeSession(), idempotentReplay: false });
+
+    render(<DrdHttpMethodWorkspaceScreen storage={storage} forceState="saved" />);
+
+    expect(await screen.findByTestId('method-workspace-shell')).toBeInTheDocument();
+    const indicator = await screen.findByTestId('drd-source-indicator');
+    expect(indicator).toHaveAttribute('data-source', 'SAVED');
+  });
+});
+
+describe('CEL 4 — ★ hard rule regression guard: a frozen session with no local Output pointer is SERVER, never RECOVERY_DRAFT', () => {
+  it('resuming a frozen session (demoSessionId) with an uncached Output pointer shows SERVER, not RECOVERY_DRAFT', async () => {
+    const storage = makeMemoryStorage();
+    hoisted.getSession.mockResolvedValue({ session: makeSession({ state: 'frozen' }), roles: ['owner'] });
+    hoisted.listEvents.mockResolvedValue([]);
+
+    render(<DrdHttpMethodWorkspaceScreen storage={storage} demoSessionId="sess-http-1" />);
+
+    const view = await screen.findByTestId('drd-http-frozen-output-view');
+    const indicator = view.querySelector('[data-testid="drd-source-indicator"]');
+    expect(indicator).toHaveAttribute('data-source', 'SERVER');
+    expect(hoisted.getOutput).not.toHaveBeenCalled();
+  });
+});
