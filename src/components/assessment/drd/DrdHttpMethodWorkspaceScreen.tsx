@@ -38,6 +38,7 @@ import { MethodWorkspaceShell } from '@/components/method-workspace/MethodWorksp
 import { StandardTable } from '@/components/standard/StandardTable';
 import type { InterviewFocusQuestion, MethodWorkspaceViewMode } from '@/components/method-workspace/types';
 import { useMethodWorkspaceSave } from '@/components/method-workspace/useMethodWorkspaceSave';
+import { useAssessmentSaveIndicator } from '@/hooks/useAssessmentSaveIndicator';
 import { DRD_METHOD_PACK_ID } from '@/method-core/methods/drd/compileDrdPack';
 import {
   DrdHttpSessionRuntime,
@@ -54,6 +55,7 @@ import {
   pack,
   questionAnswerState,
 } from './drdWorkspaceViewModel';
+import { AssessmentSaveStateIndicator } from './AssessmentSaveStateIndicator';
 import { DrdSourceIndicator } from './DrdSourceIndicator';
 import type { DrdMethodWorkspaceScreenProps } from './DrdMethodWorkspaceScreen';
 
@@ -183,8 +185,16 @@ const ConflictView: React.FC<{
   onExit: () => void;
 }> = ({ state, onLoadServerVersion, onExit }) => (
   <div data-testid="drd-http-conflict-view" role="alert" className="flex h-full flex-col items-center justify-center gap-4 p-6 text-center">
-    <DrdSourceIndicator source="RECOVERY_DRAFT" title="Konflikt wersji — lokalny widok jest nieaktualny." />
-    <AlertTriangle size={28} className="text-c-danger" />
+    <div className="flex items-center gap-2">
+      <DrdSourceIndicator source="RECOVERY_DRAFT" title="Konflikt wersji — lokalny widok jest nieaktualny." />
+      {/* CONFLICT requires a human decision but is NOT a failure — kanon UI
+          (CLAUDE.md): not crimson, not c-danger. See AssessmentSaveStateIndicator.
+          Status here is always 'conflict' by construction (this view only
+          renders for `state.status === 'conflict'`), so the label is fixed
+          rather than threaded through as another prop. */}
+      <AssessmentSaveStateIndicator state="CONFLICT" />
+    </div>
+    <AlertTriangle size={28} className="text-c-info" />
     <h2 className="text-sm font-semibold text-c-text">Sesja zmieniła się na serwerze</h2>
     <p className="max-w-md text-xs text-c-text-secondary">
       Twoja przeglądarka miała wersję {state.session?.version ?? '—'}, serwer ma już wersję {state.serverVersion ?? '—'}.
@@ -212,7 +222,14 @@ const RecoveryQueueView: React.FC<{
   onDiscardPending: () => void;
 }> = ({ state, onApplyPending, onDiscardPending }) => (
   <div data-testid="drd-http-recovery-view" role="alert" className="flex h-full flex-col items-center justify-center gap-4 p-6 text-center">
-    <DrdSourceIndicator source="RECOVERY_DRAFT" title="Zmiany zapisane lokalnie, jeszcze nie potwierdzone przez serwer." />
+    <div className="flex items-center gap-2">
+      <DrdSourceIndicator source="RECOVERY_DRAFT" title="Zmiany zapisane lokalnie, jeszcze nie potwierdzone przez serwer." />
+      {/* Status here is always 'recovery' with pendingWriteCount > 0 by
+          construction (this view only renders for `state.status === 'recovery'`),
+          so RECOVERY_DRAFT is exactly what `deriveAssessmentSaveIndicator`
+          would compute — fixed here rather than re-derived. */}
+      <AssessmentSaveStateIndicator state="RECOVERY_DRAFT" />
+    </div>
     <CloudOff size={28} className="text-c-warning" />
     <h2 className="text-sm font-semibold text-c-text">Połączenie wróciło — {state.pendingWriteCount} zaległych zmian czeka</h2>
     <p className="max-w-md text-xs text-c-text-secondary">
@@ -298,6 +315,20 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
   const [activeUnitId, setActiveUnitId] = useState<string>(DRD_STRUCTURE[0].areas[0].id);
   const [matrixSelection, setMatrixSelection] = useState<{ unitId: string; level: number } | null>(null);
   const [draftAnswerText, setDraftAnswerText] = useState<Record<string, string>>({});
+  // True for the duration of an explicit reconciliation call (refresh() from
+  // the offline banner / ErrorRetryView, or the Conflict/Recovery views'
+  // "load server" / "apply pending" / "discard pending" actions) — feeds
+  // `useAssessmentSaveIndicator`'s RECONNECTING/RECOVERED transient labels.
+  // Never set by anything automatic; only by the explicit handlers below.
+  const [isReconciling, setIsReconciling] = useState(false);
+  const runReconciliation = useCallback(async (action: () => Promise<unknown>) => {
+    setIsReconciling(true);
+    try {
+      await action();
+    } finally {
+      setIsReconciling(false);
+    }
+  }, []);
 
   // -- bootstrap: resume (demoSessionId) or create --------------------------
   useEffect(() => {
@@ -418,6 +449,17 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
         return { ok: false, error: err instanceof Error ? err.message : 'Zapis nieudany.' };
       }
     },
+  });
+
+  // Single user-facing badge across the eight product states — a pure label
+  // over `saveState` (kernel `MethodSaveState`, via `useMethodWorkspaceSave`
+  // above) and the session runtime's connectivity status/pending-write queue.
+  // See `useAssessmentSaveIndicator`'s header for the full mapping table.
+  const { state: saveIndicatorState } = useAssessmentSaveIndicator({
+    runtimeStatus: state?.status ?? 'loading',
+    saveState,
+    pendingWriteCount: state?.pendingWriteCount ?? 0,
+    isReconciling,
   });
 
   const handleAnswerChange = useCallback((questionId: string, text: string) => {
@@ -558,7 +600,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
       <ConflictView
         state={state}
         onExit={onExit ?? (() => {})}
-        onLoadServerVersion={() => void runtime?.refresh()}
+        onLoadServerVersion={() => void runReconciliation(() => runtime?.refresh() ?? Promise.resolve())}
       />
     );
   }
@@ -566,13 +608,13 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
     return (
       <RecoveryQueueView
         state={state}
-        onApplyPending={() => void runtime?.retryPending()}
-        onDiscardPending={() => void runtime?.discardPendingAndReloadServer()}
+        onApplyPending={() => void runReconciliation(() => runtime?.retryPending() ?? Promise.resolve())}
+        onDiscardPending={() => void runReconciliation(() => runtime?.discardPendingAndReloadServer() ?? Promise.resolve())}
       />
     );
   }
   if (state.status === 'error' && !state.session) {
-    return <ErrorRetryView message={state.error ?? 'Nieznany błąd.'} onRetry={() => void runtime?.refresh()} onExit={onExit ?? (() => {})} />;
+    return <ErrorRetryView message={state.error ?? 'Nieznany błąd.'} onRetry={() => void runReconciliation(() => runtime?.refresh() ?? Promise.resolve())} onExit={onExit ?? (() => {})} />;
   }
 
   const session = state.session;
@@ -621,7 +663,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
 
   return (
     <div className="flex h-full flex-col">
-      {state.status === 'offline' && <OfflineBanner onRetry={() => void runtime?.refresh()} />}
+      {state.status === 'offline' && <OfflineBanner onRetry={() => void runReconciliation(() => runtime?.refresh() ?? Promise.resolve())} />}
       <div className="flex items-center gap-3 border-b border-c-border-subtle bg-c-warning/5 px-4 py-1.5 text-[11px] text-c-text-secondary">
         <AlertTriangle size={12} className="shrink-0 text-c-warning" />
         <span>Sesja DRD przez HTTP — {DRD_METHOD_PACK_ID} — demo bypass gotowości packa (methodology_review), jak w legacy runtime.</span>
@@ -629,12 +671,13 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
           source={sourceKind}
           title={sourceKind === 'SERVER' ? 'Świeżo potwierdzone przez serwer.' : 'Nie w pełni zsynchronizowane z serwerem.'}
         />
+        <AssessmentSaveStateIndicator state={saveIndicatorState} />
       </div>
       {state.status === 'error' && state.error && (
         <div role="alert" className="flex items-center gap-2 border-b border-c-danger/30 bg-c-danger/10 px-4 py-1.5 text-xs text-c-danger">
           <AlertTriangle size={12} />
           {state.error}
-          <button type="button" onClick={() => void runtime?.refresh()} className="ml-auto rounded border border-c-danger/40 px-2 py-0.5 font-semibold hover:bg-c-danger/20">
+          <button type="button" onClick={() => void runReconciliation(() => runtime?.refresh() ?? Promise.resolve())} className="ml-auto rounded border border-c-danger/40 px-2 py-0.5 font-semibold hover:bg-c-danger/20">
             Spróbuj ponownie
           </button>
         </div>
