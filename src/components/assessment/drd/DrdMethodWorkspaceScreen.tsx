@@ -162,7 +162,20 @@ function buildMatrixRowsForAxis(events: readonly MethodEvent[], axis: DRDAxis, p
       levels: levels.map((level) => {
         const achieved = progression.currentLevel !== null && level <= progression.currentLevel;
         const aboveGap = progression.aboveGapLevels.includes(level);
-        const isBlocker = level === progression.blockedAtLevel;
+        // Blocker ≠ „jeszcze nie zaczęte".
+        //
+        // `blockedAtLevel` dla nietkniętego obszaru wynosi 1 (pierwszy niespełniony),
+        // więc oznaczanie go blockerem malowało CAŁY świeży assessment 39 obszarów
+        // na czerwono — komunikat „wszystko zepsute" w dniu startu.
+        //
+        // Kanon ASSESSMENT_UI_NAVIGATION_AND_MATRIX_STANDARD.md §3 wymienia
+        // `absent`/`unresolved` jako stany ODRĘBNE od `blocker`, a
+        // TOOL_SESSION_WORKSPACE_STANDARD.md §7 rezerwuje czerwień wyłącznie dla
+        // blockera. Blokada istnieje dopiero wtedy, gdy praca ruszyła i utknęła:
+        // coś jest potwierdzone (rampa) albo istnieje praktyka POWYŻEJ luki.
+        // Obszar nierozpoczęty pozostaje `unresolved` — neutralny, nie czerwony.
+        const workHasStarted = confirmed.length > 0 || progression.aboveGapLevels.length > 0;
+        const isBlocker = level === progression.blockedAtLevel && workHasStarted;
         return {
           unitId: area.id,
           level,
