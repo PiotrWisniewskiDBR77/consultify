@@ -792,3 +792,31 @@ callback co ręczne pisanie, z prowenencją `{source:'voice'}`.
 Front pozwalał kliknąć „Zaakceptuj" na preview z werdyktem `invalid`, który
 serwer i tak odrzuci. Teraz wszystkie cztery przyciski decyzji są wyszarzone
 z jawnym komunikatem. Zweryfikowane wzrokowo na zrzucie.
+
+---
+
+## G16 — CEL 2 i CEL 3 zweryfikowane przez Opusa na żywym serwerze
+
+Własny przebieg, serwer `:43600` przeciw `t_test`, prawdziwe JWT dwóch
+tożsamości, **zero ręcznego SQL** poza seedem użytkownika i sprzątaniem.
+
+| # | Sprawdzenie | HTTP | Werdykt |
+| --- | --- | ---: | --- |
+| 1 | create session | **201** | PASS |
+| 2 | ★ **samonadanie roli `approver`** | **403** | PASS — reguła #1 CEL 3 trzyma się **także przeciw mnie** |
+| 3 | nadanie ról `lead_assessor` + `approver` **przez HTTP** | **201 / 201** | PASS — **bez ani jednego `INSERT`** |
+| 4 | freeze przez właściwego `approver` | **200** | PASS, Output utworzony |
+| 5 | `GET /sessions/:id/outputs` | **200** | 1 element |
+| 6 | `GET /outputs/:id/revisions` | **200** | 1 element |
+| 7 | `GET /sessions/:id/reports` | **200** | 1 element |
+| 8 | `GET /sessions/:id/presentations` | **200** | 1 element |
+| 9 | `GET /sessions/:id/initiative-drafts` | **200** | 0 (brak findings w tej minimalnej sesji — dane sondy, nie defekt) |
+| 10 | `GET /sessions/:id/lineage` | **200** | drzewo zwrócone |
+| 11 | **determinizm** — dwa identyczne zapytania | — | **odpowiedzi identyczne** |
+| 12 | potwierdzenie w bazie | — | `method_outputs`=1, `method_report_snapshots`=2 |
+
+Dane sondy usunięte po weryfikacji.
+
+**Wniosek:** wymaganie koordynatora „pełny E2E nie może wymagać ręcznego SQL"
+jest spełnione dla ścieżki role → freeze → artefakty. Discovery po restarcie
+działa i jest deterministyczne.
