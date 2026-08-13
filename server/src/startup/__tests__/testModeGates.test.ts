@@ -20,8 +20,8 @@ import { describe, expect, it } from 'vitest';
 import {
   isTestMode,
   runsRealDbInTestMode,
-  shouldMountFullGateway,
-  shouldRunDatabaseInit,
+  shouldMountTestGatewayRoutes,
+  shouldInitializeTestDatabase,
 } from '../testModeGates.js';
 
 const REAL_DB_TEST_ENV = {
@@ -45,65 +45,65 @@ describe('A14 — testModeGates (server boot readiness)', () => {
     });
   });
 
-  describe('shouldRunDatabaseInit — the flag that used to strand dbReady=false forever', () => {
+  describe('shouldInitializeTestDatabase — the flag that used to strand dbReady=false forever', () => {
     it('REGRESSION: opens under NODE_ENV=test + RUN_DB_TESTS=1 + MOCK_DB=false', () => {
       // Before the fix this was `false`, so the async IIFE that sets
       // `dbReady = true` / `dbInitError` in index.ts never ran at all —
       // dbReady stayed false and dbInitError stayed null indefinitely, which
       // is indistinguishable from "still starting" on /api/ready.
-      expect(shouldRunDatabaseInit(REAL_DB_TEST_ENV)).toBe(true);
+      expect(shouldInitializeTestDatabase(REAL_DB_TEST_ENV)).toBe(true);
     });
 
     it('still opens for E2E_MODE=true (pre-existing behavior preserved)', () => {
-      expect(shouldRunDatabaseInit({ NODE_ENV: 'test', E2E_MODE: 'true' })).toBe(true);
+      expect(shouldInitializeTestDatabase({ NODE_ENV: 'test', E2E_MODE: 'true' })).toBe(true);
     });
 
     it('still opens for ENABLE_TEST_GATEWAY=true (pre-existing behavior preserved)', () => {
       expect(
-        shouldRunDatabaseInit({ NODE_ENV: 'test', ENABLE_TEST_GATEWAY: 'true' })
+        shouldInitializeTestDatabase({ NODE_ENV: 'test', ENABLE_TEST_GATEWAY: 'true' })
       ).toBe(true);
     });
 
     it('still opens outside test mode entirely (production/dev, pre-existing behavior preserved)', () => {
-      expect(shouldRunDatabaseInit({ NODE_ENV: 'production' })).toBe(true);
-      expect(shouldRunDatabaseInit({ NODE_ENV: 'development' })).toBe(true);
+      expect(shouldInitializeTestDatabase({ NODE_ENV: 'production' })).toBe(true);
+      expect(shouldInitializeTestDatabase({ NODE_ENV: 'development' })).toBe(true);
     });
 
     it('stays CLOSED for the plain Vitest unit-test default (no regression: still mocks quietly)', () => {
       // NODE_ENV=test with none of E2E_MODE / ENABLE_TEST_GATEWAY /
       // RUN_DB_TESTS=1 set is the ordinary `vitest run` case, which must
       // keep mocking the database rather than opening a real connection.
-      expect(shouldRunDatabaseInit({ NODE_ENV: 'test' })).toBe(false);
+      expect(shouldInitializeTestDatabase({ NODE_ENV: 'test' })).toBe(false);
     });
 
     it('stays CLOSED when RUN_DB_TESTS=1 but MOCK_DB=true (explicit mock wins)', () => {
       expect(
-        shouldRunDatabaseInit({ NODE_ENV: 'test', RUN_DB_TESTS: '1', MOCK_DB: 'true' })
+        shouldInitializeTestDatabase({ NODE_ENV: 'test', RUN_DB_TESTS: '1', MOCK_DB: 'true' })
       ).toBe(false);
     });
   });
 
-  describe('shouldMountFullGateway — the flag that left /api/method/packs 404ing', () => {
+  describe('shouldMountTestGatewayRoutes — the flag that left /api/method/packs 404ing', () => {
     it('REGRESSION: opens under NODE_ENV=test + RUN_DB_TESTS=1 + MOCK_DB=false', () => {
       // Before the fix this was `false`, so index.ts mounted only the
       // `/api/management-reports` stub router instead of
       // `apiGateway.initializeRoutes(app)` — every other route, including
       // /api/method/*, was simply never registered (404, not 503).
-      expect(shouldMountFullGateway(REAL_DB_TEST_ENV)).toBe(true);
+      expect(shouldMountTestGatewayRoutes(REAL_DB_TEST_ENV)).toBe(true);
     });
 
     it('stays CLOSED for the plain Vitest unit-test default (no regression: gateway load stays cheap)', () => {
-      expect(shouldMountFullGateway({ NODE_ENV: 'test' })).toBe(false);
+      expect(shouldMountTestGatewayRoutes({ NODE_ENV: 'test' })).toBe(false);
     });
 
     it('still opens for ENABLE_TEST_GATEWAY=true (pre-existing behavior preserved)', () => {
       expect(
-        shouldMountFullGateway({ NODE_ENV: 'test', ENABLE_TEST_GATEWAY: 'true' })
+        shouldMountTestGatewayRoutes({ NODE_ENV: 'test', ENABLE_TEST_GATEWAY: 'true' })
       ).toBe(true);
     });
 
     it('still opens outside test mode entirely (pre-existing behavior preserved)', () => {
-      expect(shouldMountFullGateway({ NODE_ENV: 'production' })).toBe(true);
+      expect(shouldMountTestGatewayRoutes({ NODE_ENV: 'production' })).toBe(true);
     });
   });
 
