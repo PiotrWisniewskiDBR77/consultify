@@ -643,7 +643,7 @@ describe('verifyToken (L1)', () => {
           ? { status: 'ACTIVE', role: 'OWNER' }
           : undefined;
       }
-      if (sql.includes("UPPER(status) = 'ACTIVE'")) {
+      if (sql.includes("UPPER(om.status) = 'ACTIVE'")) {
         return { organization_id: 'canonical-org-uuid', role: 'OWNER' };
       }
       return undefined;
@@ -670,6 +670,10 @@ describe('verifyToken (L1)', () => {
 
     expect(next).toHaveBeenCalled();
     expect(req.organizationId).toBe('canonical-org-uuid');
+    expect(dbGet).toHaveBeenCalledWith(
+      expect.stringContaining('om.organization_id = u.organization_id'),
+      ['internal-owner']
+    );
   });
 
   it('rejects token issued before a revoke-all marker', async () => {
