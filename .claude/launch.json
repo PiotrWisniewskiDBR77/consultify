@@ -290,6 +290,18 @@
         "5202"
       ],
       "port": 5202
+    },
+    {
+      "name": "s4-teresa-devrender",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "dev-render",
+        "--port",
+        "42310",
+        "--strictPort"
+      ],
+      "port": 42310
     }
   ]
 }
