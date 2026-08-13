@@ -303,6 +303,14 @@ export function formatRoiPercent(value: number, isPolish: boolean): string {
   return `${value.toLocaleString(isPolish ? 'pl-PL' : 'en-US', { maximumFractionDigits: 1 })}%`;
 }
 
+/** ROI is stored as a decimal ratio (0.9535 means 95.35%), unlike IRR and
+ * coverage fields which are stored in percentage points. */
+export function formatRoiRatioPercent(value: number, isPolish: boolean): string {
+  return `${(value * 100).toLocaleString(isPolish ? 'pl-PL' : 'en-US', {
+    maximumFractionDigits: 1,
+  })}%`;
+}
+
 export function formatRoiDate(value: string | null, isPolish: boolean): string {
   if (!value) return '—';
   try {

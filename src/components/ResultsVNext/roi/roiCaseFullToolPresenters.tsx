@@ -59,7 +59,7 @@ import {
   roiVarianceStatusLabel,
   ROI_VARIANCE_STATUS_TONE,
 } from './roiCaseFullToolMappers';
-import { formatRoiCurrency, formatRoiDate, formatRoiNumber, formatRoiPercent, getRoiCaseLockInfo } from './roiRegistryMappers';
+import { formatRoiCurrency, formatRoiDate, formatRoiNumber, formatRoiPercent, formatRoiRatioPercent, getRoiCaseLockInfo } from './roiRegistryMappers';
 
 function propertyLabels(isPolish: boolean): { propertyLabel: string; valueLabel: string } {
   return { propertyLabel: isPolish ? 'Właściwość' : 'Property', valueLabel: isPolish ? 'Wartość' : 'Value' };
@@ -165,7 +165,7 @@ export function buildRoiCalculationRunColumns(isPolish: boolean): TableColumn[] 
     { id: 'status', label: isPolish ? 'Status' : 'Status', width: '110px', render: (row: RoiCalculationRun) => <StatusChip label={row.status === 'completed' ? (isPolish ? 'Ukończony' : 'Completed') : (isPolish ? 'Niepowodzenie' : 'Failed')} tone={row.status === 'completed' ? 'success' : 'danger'} /> },
     { id: 'npv', label: 'NPV', width: '130px', align: 'right', render: (row: RoiCalculationRun) => <HonestValueCell value={deriveRunOrForecastNpv(row)} format={(v) => formatRoiNumber(v, isPolish)} notCalculableReason={calcRunNpvReason(row, isPolish)} align="right" /> },
     { id: 'irrPct', label: 'IRR', width: '110px', align: 'right', render: (row: RoiCalculationRun) => <HonestValueCell value={deriveRunOrForecastIrr(row)} format={(v) => formatRoiPercent(v, isPolish)} notCalculableReason={calcRunIrrReason(row, isPolish)} align="right" /> },
-    { id: 'simpleRoi', label: isPolish ? 'Prosty ROI' : 'Simple ROI', width: '120px', align: 'right', render: (row: RoiCalculationRun) => <HonestValueCell value={row.status === 'failed' ? 'not_calculable' : row.simpleRoi} format={(v) => formatRoiPercent(v, isPolish)} align="right" /> },
+    { id: 'simpleRoi', label: isPolish ? 'Prosty ROI' : 'Simple ROI', width: '120px', align: 'right', render: (row: RoiCalculationRun) => <HonestValueCell value={row.status === 'failed' ? 'not_calculable' : row.simpleRoi} format={(v) => formatRoiRatioPercent(v, isPolish)} align="right" /> },
     { id: 'completedAt', label: isPolish ? 'Ukończono' : 'Completed', width: '140px', render: (row: RoiCalculationRun) => <span className="text-sm text-c-text-muted tabular-nums">{formatRoiDate(row.completedAt, isPolish)}</span> },
   ];
 }
@@ -187,7 +187,7 @@ export function buildRoiCalculationRunPreview(run: RoiCalculationRun, isPolish: 
       properties: [
         { id: 'npv', label: 'NPV', value: <HonestValueCell value={deriveRunOrForecastNpv(run)} format={(v) => formatRoiNumber(v, isPolish)} notCalculableReason={calcRunNpvReason(run, isPolish)} /> },
         { id: 'irr', label: 'IRR', value: <HonestValueCell value={deriveRunOrForecastIrr(run)} format={(v) => formatRoiPercent(v, isPolish)} notCalculableReason={calcRunIrrReason(run, isPolish)} /> },
-        { id: 'simpleRoi', label: isPolish ? 'Prosty ROI' : 'Simple ROI', value: <HonestValueCell value={run.status === 'failed' ? 'not_calculable' : run.simpleRoi} format={(v) => formatRoiPercent(v, isPolish)} /> },
+        { id: 'simpleRoi', label: isPolish ? 'Prosty ROI' : 'Simple ROI', value: <HonestValueCell value={run.status === 'failed' ? 'not_calculable' : run.simpleRoi} format={(v) => formatRoiRatioPercent(v, isPolish)} /> },
         { id: 'totalCosts', label: isPolish ? 'Suma kosztów' : 'Total costs', value: <HonestValueCell value={run.status === 'failed' ? 'not_calculable' : run.totalCosts} format={(v) => formatRoiNumber(v, isPolish)} /> },
         { id: 'totalBenefits', label: isPolish ? 'Suma korzyści' : 'Total benefits', value: <HonestValueCell value={run.status === 'failed' ? 'not_calculable' : run.totalFinancialBenefits} format={(v) => formatRoiNumber(v, isPolish)} /> },
         { id: 'payback', label: isPolish ? 'Okres zwrotu' : 'Payback', value: <HonestValueCell value={run.status === 'failed' ? 'not_calculable' : run.paybackPeriods} format={(v) => formatRoiNumber(v, isPolish)} /> },
@@ -475,7 +475,7 @@ export function buildRoiActualSnapshotPreview(s: RoiActualSnapshot, isPolish: bo
       properties: [
         { id: 'totalCosts', label: isPolish ? 'Suma kosztów rzeczywistych' : 'Total actual costs', value: <HonestValueCell value={s.totalActualCosts} format={(v) => formatRoiNumber(v, isPolish)} /> },
         { id: 'totalBenefits', label: isPolish ? 'Suma korzyści rzeczywistych' : 'Total actual benefits', value: <HonestValueCell value={s.totalActualFinancialBenefits} format={(v) => formatRoiNumber(v, isPolish)} /> },
-        { id: 'roi', label: isPolish ? 'Rzeczywisty prosty ROI' : 'Actual simple ROI', value: <HonestValueCell value={s.actualSimpleRoi} format={(v) => formatRoiPercent(v, isPolish)} /> },
+        { id: 'roi', label: isPolish ? 'Rzeczywisty prosty ROI' : 'Actual simple ROI', value: <HonestValueCell value={s.actualSimpleRoi} format={(v) => formatRoiRatioPercent(v, isPolish)} /> },
         { id: 'npv', label: isPolish ? 'Rzeczywiste NPV' : 'Actual NPV', value: <HonestValueCell value={s.actualNpv} format={(v) => formatRoiNumber(v, isPolish)} /> },
         { id: 'coverage', label: isPolish ? 'Pokrycie okresów' : 'Period coverage', value: <HonestValueCell value={s.coveragePct} format={(v) => formatRoiPercent(v, isPolish)} /> },
         { id: 'periodsWith', label: isPolish ? 'Okresy z wykonaniem' : 'Periods with actual', value: `${s.periodsWithActualCount} / ${s.periodsExpectedCount}` },
