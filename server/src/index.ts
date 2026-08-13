@@ -356,10 +356,18 @@ const databaseInitPromise: Promise<void> =
             evaluateSqlChain: async () => {
               const { evaluateSqlChain } = await import('./services/releaseGate/sqlChainEvaluator.js');
               const { getDatabase } = await import('./database/Database.js');
+              const fs = await import('fs');
               const path = await import('path');
+              const migrationsDir = [
+                path.resolve(process.cwd(), 'server/migrations'),
+                path.resolve(process.cwd(), 'migrations'),
+              ].find((candidate) => fs.existsSync(candidate));
+              if (!migrationsDir) {
+                throw new Error('Canonical migrations directory not found for readiness evaluation');
+              }
               return evaluateSqlChain({
                 db: getDatabase() as any,
-                migrationsDir: path.resolve(process.cwd(), 'server/migrations'),
+                migrationsDir,
               });
             },
             seedTemplates: async () => {
