@@ -676,6 +676,40 @@ describe('verifyToken (L1)', () => {
     );
   });
 
+  it('prefers the primary profile organization over an active legacy alias on demo', async () => {
+    const dbGet = vi.fn().mockImplementation(async (sql: string, params: unknown[]) => {
+      if (sql.includes('FROM users u')) {
+        return { organization_id: 'canonical-org-uuid', role: 'OWNER' };
+      }
+      if (sql.includes('WHERE user_id = ? AND organization_id = ?')) {
+        return { status: 'ACTIVE', role: 'OWNER', organization_id: params[1] };
+      }
+      return undefined;
+    });
+    setDependencies({
+      jwt: jwt.default || jwt,
+      config: { JWT_SECRET: jwtSecret },
+      PermissionService: { can: () => true },
+      dbGet,
+    });
+    const token = (jwt.default || (jwt as any)).sign(
+      { id: 'internal-owner', role: 'OWNER', organizationId: 'dbr77' },
+      jwtSecret,
+      { expiresIn: '1h' }
+    );
+    const req = mockReq({
+      headers: { authorization: `Bearer ${token}` },
+      get: (name: string) => (name.toLowerCase() === 'x-demo-mode' ? 'true' : undefined),
+    });
+    const res = mockRes();
+    const next = vi.fn();
+
+    await verifyToken(req, res, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(req.organizationId).toBe('canonical-org-uuid');
+  });
+
   it('rejects token issued before a revoke-all marker', async () => {
     const iatSec = Math.floor(Date.now() / 1000) - 10; // issued 10s ago
     const tokenIssuedAt = iatSec * 1000;

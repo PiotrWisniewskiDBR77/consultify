@@ -782,6 +782,33 @@ const attachUser = async (
     }
   }
 
+  // The demo hostname sets X-Demo-Mode for both public demo principals and
+  // authenticated internal owners. Internal users may still carry a legacy
+  // active alias in their token (for example `dbr77`) alongside their canonical
+  // primary organization. When no explicit organization switch was confirmed,
+  // prefer the user's primary organization and its active membership.
+  if (isDemoHeader && !publicDemo.isPublicDemoPrincipal && !orgContextConfirmed) {
+    try {
+      const primary = await dbGet<{ organization_id?: string; role?: string }>(
+        `SELECT u.organization_id, om.role
+         FROM users u
+         JOIN organization_members om
+           ON om.user_id = u.id AND om.organization_id = u.organization_id
+         WHERE u.id = ? AND UPPER(om.status) = 'ACTIVE'
+         LIMIT 1`,
+        [decodedUserId]
+      );
+      const primaryOrgId = normalizeBoundedOrgContextId(primary?.organization_id);
+      if (primaryOrgId) {
+        resolvedOrganizationId = primaryOrgId;
+        const primaryRole = normalizeRoleClaim(primary?.role);
+        if (primaryRole) resolvedUserRole = primaryRole;
+      }
+    } catch {
+      // Keep the token org; membership validation below remains authoritative.
+    }
+  }
+
   // QA-2026-06-08 (BUG-02/15): if the resolved org (the token org, or an unconfirmed
   // x-org-context) is NOT an ACTIVE membership for this user, fall back to the user's
   // actual current ACTIVE org instead of letting validateOrgMembership 403 with
