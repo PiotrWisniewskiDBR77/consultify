@@ -275,8 +275,27 @@ async function buildAIOpsHealthBlockResponse(message: unknown): Promise<string> 
   ].join('\n');
 }
 
-// Apply rate limiting to all AI routes
-router.use(aiRateLimiter);
+// Agent Hub registry reads are ordinary tenant-scoped database queries. They do
+// not call an LLM and must not consume the shared generative-AI quota; otherwise
+// opening/reloading My Work -> Run agent can exhaust chat capacity and return a
+// misleading "AI request rate limit exceeded" instead of the user's processes.
+// Mutations and every other AI route remain protected by aiRateLimiter.
+export function isAgentHubDatabaseRead(method: string, path: string): boolean {
+  return (
+    method === 'GET' &&
+    (path === '/agent-plan' ||
+      path.startsWith('/agent-plan/') ||
+      path === '/agent-manifests' ||
+      path.startsWith('/agent-manifests/'))
+  );
+}
+
+router.use((req, res, next) => {
+  const bypassGenerativeLimit = isAgentHubDatabaseRead(req.method, req.path);
+
+  if (bypassGenerativeLimit) return next();
+  return aiRateLimiter(req, res, next);
+});
 
 function isGovernedMutationApprovalBypassRequest(message: unknown): boolean {
   const text = String(message || '').toLowerCase();
