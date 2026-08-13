@@ -132,6 +132,77 @@ export function normalizeLineage(raw: unknown, sessionId: string): NormalizedLin
     };
   }
 
+  // ★ CONTRACT FIX (2026-08-13, T2): the REAL `GET /api/method/sessions/:id/
+  // lineage` response (method-core.routes.ts, the `router.get('/sessions/:id/
+  // lineage', ...)` handler) is `{ rootSessionId, sessions: [...],
+  // outputs: [{ output, status, supersededByOutputId, reports, presentations,
+  // initiativeDrafts }] }` — each `outputs[]` entry is a WRAPPER around the
+  // Output row (plus its own downstream Reports/Presentations/Initiative
+  // Drafts), not a flat Output row itself, and Reports/Presentations/
+  // Initiative Drafts never appear as TOP-LEVEL arrays on the body at all.
+  // The generic "named array envelope" branch below (`extractArray(record,
+  // ['outputs', ...])`) matched `outputs` as a key but then read each
+  // wrapper's absent `.id`/`.title` directly — every row silently failed
+  // `toItem`'s `id` check and every group rendered empty ("No frozen Output
+  // yet.", "No Report snapshot yet.", ...) even when the session HAD a full
+  // history. Detect and flatten this real shape FIRST, before the generic
+  // fallback gets a chance to misparse it.
+  const nestedOutputNodes = Array.isArray(record.outputs) ? (record.outputs as unknown[]) : null;
+  // `.every()` on an EMPTY array is vacuously `true` — without the explicit
+  // `length > 0` guard, a flat-shape body with a genuinely empty `outputs: []`
+  // (e.g. the named-array envelope test fixture) was misdetected as "nested",
+  // which discarded that shape's real top-level `session: {id, label}` object
+  // in favor of the `rootSessionId ?? sessionId` fallback. A body with zero
+  // output entries carries no shape-distinguishing evidence either way — fall
+  // through to the generic branch below, which reads `record.session`
+  // correctly and produces an identical (empty) result when that key is
+  // absent too (the real, nested lineage shape's actually-empty case).
+  const looksLikeNestedOutputNodes =
+    nestedOutputNodes !== null &&
+    nestedOutputNodes.length > 0 &&
+    nestedOutputNodes.every(
+      (n) => !!n && typeof n === 'object' && 'output' in (n as Record<string, unknown>)
+    );
+  if (looksLikeNestedOutputNodes) {
+    const nodes = nestedOutputNodes as Record<string, unknown>[];
+    const outputs: LineageGroupItem[] = [];
+    const reports: LineageGroupItem[] = [];
+    const presentations: LineageGroupItem[] = [];
+    const initiativeDrafts: LineageGroupItem[] = [];
+    for (const node of nodes) {
+      const outputRow = node.output;
+      // `status` lives on the WRAPPER (`node.status`), not on the nested
+      // Output row itself — merge it in before handing to `toItem`, which
+      // looks for `r.status`/`r.isSuperseded`.
+      const merged =
+        outputRow && typeof outputRow === 'object'
+          ? { ...(outputRow as Record<string, unknown>), status: node.status }
+          : outputRow;
+      const outputItem = toItem(merged, ['outputVersion', 'scope', 'label', 'title']);
+      if (outputItem) outputs.push(outputItem);
+      for (const row of extractArray(node, ['reports'])) {
+        const item = toItem(row, ['title', 'label']);
+        if (item) reports.push(item);
+      }
+      for (const row of extractArray(node, ['presentations'])) {
+        const item = toItem(row, ['title', 'label']);
+        if (item) presentations.push(item);
+      }
+      for (const row of extractArray(node, ['initiativeDrafts'])) {
+        const item = toItem(row, ['title', 'label']);
+        if (item) initiativeDrafts.push(item);
+      }
+    }
+    const rootSessionId = typeof record.rootSessionId === 'string' ? record.rootSessionId : sessionId;
+    return {
+      session: { id: rootSessionId, label: rootSessionId },
+      outputs,
+      reports,
+      presentations,
+      initiativeDrafts,
+    };
+  }
+
   const sessionRaw = record.session;
   const sessionObj =
     sessionRaw && typeof sessionRaw === 'object' ? (sessionRaw as Record<string, unknown>) : null;
