@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { buildFixturePlan, FINANCE_ACCEPTANCE_FLAG_KEYS, stableTextId, stableUuid } from '../../../scripts/acceptance-fixtures/fixturePlan';
 import { assertOrganizationAllowlisted, assertTarget } from '../../../scripts/acceptance-fixtures/run';
 import { buildGoldenChildPlan } from '../../../scripts/acceptance-fixtures/goldenChildPlan';
@@ -35,5 +37,12 @@ describe('demo acceptance fixtures safety contract',()=>{
       expect(flag.verifySql).toContain("environment='production'");
       expect(flag.verifySql).toContain('enabled=true');
     }
+  });
+  it('documents the dedicated acceptance owner and Piotr readback without exposing a password',()=>{
+    const source=readFileSync(resolve(process.cwd(),'server/scripts/acceptance-fixtures/run.ts'),'utf8');
+    expect(source).toContain('acceptance.owner@consultify.local');
+    expect(source).toContain("role:'OWNER',status:'active'");
+    expect(source).toContain('Piotr readback must be exactly one active OWNER');
+    expect(source).not.toMatch(/acceptanceOwner:\{[^}]*password/);
   });
 });
