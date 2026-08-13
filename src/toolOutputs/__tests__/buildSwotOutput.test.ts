@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { SWOTItem, SWOTMove, SWOTTension } from '@/store/useToolStore';
 
-import { buildSwotOutput } from '../buildSwotOutput';
+import { buildSwotOutput, odmienNapiecia } from '../buildSwotOutput';
 import { approve, submitForReview } from '../outputLifecycle';
 import { renderToolReport } from '../renderReport';
 
@@ -116,6 +116,32 @@ describe('buildSwotOutput — most sesja → Output', () => {
     const bad = validMove({ id: 'm4', linkedItemIds: ['nie-ma'], linkedTensionIds: [] });
     const { rejectedMoves } = buildSwotOutput({ ...BASE, items, tensions, moves: [bad] });
     expect(rejectedMoves.map((r) => r.moveId)).toContain('m4');
+  });
+
+  // Defekty jakości wykryte na zrzucie, zanim ekran zobaczył właściciel.
+  it('K1 ma poprawną polską odmianę liczebnika', () => {
+    expect(odmienNapiecia(1)).toBe('napięcie');
+    expect(odmienNapiecia(2)).toBe('napięcia');
+    expect(odmienNapiecia(4)).toBe('napięcia');
+    expect(odmienNapiecia(5)).toBe('napięć');
+    expect(odmienNapiecia(12)).toBe('napięć'); // nastka, nie „napięcia"
+    expect(odmienNapiecia(22)).toBe('napięcia');
+    expect(odmienNapiecia(25)).toBe('napięć');
+  });
+
+  it('K1 nie wypuszcza surowego enumu postawy do klienta', () => {
+    const { output } = buildSwotOutput({ ...BASE, items, tensions, moves: [validMove()] });
+    const k1 = output.conclusions[0].k1Fact;
+    expect(k1).toContain('postawa: atak');
+    expect(k1).not.toContain('attack');
+    expect(k1).toContain('1 napięcie');
+  });
+
+  it('K4 nie wypuszcza surowego enumu wpływu do klienta', () => {
+    const { output } = buildSwotOutput({ ...BASE, items, tensions, moves: [validMove()] });
+    const k4 = output.conclusions[0].k4Effect;
+    expect(k4).toContain('wysoki');
+    expect(k4).not.toContain('high');
   });
 
   it('K4 wskazuje rolę odpowiedzialną, nie „organizację"', () => {

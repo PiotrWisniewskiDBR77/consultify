@@ -334,7 +334,14 @@ const ResultsVNextTeresaOkrReflectionScreen = React.lazy(
   () => import('./screens/results-vnext-teresa-okr-reflection')
 );
 
+const ToolsSwotReportScreen = React.lazy(() => import('./screens/tools-swot-report'));
+
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'tools-swot-report': {
+    label:
+      'Tools — Dynamic SWOT: Output -> Report/Presentation (deterministyczny renderer, Executive Paper/Night)',
+    render: () => <ToolsSwotReportScreen />,
+  },
   'drd-http-workspace': {
     label:
       'T5 — REALNY <DrdHttpMethodWorkspaceScreen> (P0C, HTTP source-of-truth, ff drdHttpSourceOfTruthV1 not-yet-wired) — &stage=fresh|inprogress|blocked|frozen &state=loading|error|offline|conflict &view=interview|split|matrix',

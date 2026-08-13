@@ -133,8 +133,8 @@ export function buildSwotOutput(input: BuildSwotOutputInput): BuildSwotOutputRes
       // Brak pola expectedEffect na SWOTMove — efekt składamy z wpływu
       // i roli odpowiedzialnej. K4 musi mieć adresata, nie „organizację".
       k4Effect: move.ownerRole
-        ? `Oczekiwany wpływ: ${move.expectedImpact}. Odpowiedzialna rola: ${move.ownerRole}.`
-        : `Oczekiwany wpływ: ${move.expectedImpact}.`,
+        ? `Oczekiwany wpływ: ${IMPACT_PL[move.expectedImpact] ?? move.expectedImpact}. Odpowiedzialna rola: ${move.ownerRole}.`
+        : `Oczekiwany wpływ: ${IMPACT_PL[move.expectedImpact] ?? move.expectedImpact}.`,
       tradeoff: {
         chosen: tradeoff?.chosen ?? move.title,
         // W2 rozróżnia „co odroczone" (tradeoff.deferred) od „co odrzucone"
@@ -168,7 +168,41 @@ export function buildSwotOutput(input: BuildSwotOutputInput): BuildSwotOutputRes
   };
 }
 
-/** K1: fakt policzony z sesji — liczba napięć i ich waga, nie opinia. */
+/**
+ * Polska odmiana po liczebniku: 1 napięcie · 2-4 napięcia · 5+ napięć,
+ * z wyjątkiem nastek (12-14 → napięć).
+ */
+export function odmienNapiecia(n: number): string {
+  if (n === 1) return 'napięcie';
+  const ostatnie = n % 10;
+  const dwieOstatnie = n % 100;
+  const nastki = dwieOstatnie >= 12 && dwieOstatnie <= 14;
+  if (ostatnie >= 2 && ostatnie <= 4 && !nastki) return 'napięcia';
+  return 'napięć';
+}
+
+/** Postawa napięcia po polsku — enum silnika nie wychodzi do klienta. */
+const POSTURE_PL: Record<string, string> = {
+  attack: 'atak',
+  repair: 'naprawa',
+  defend: 'obrona',
+  protect: 'ochrona ekspozycji',
+};
+
+/** Wpływ po polsku — surowy enum na powierzchni klienckiej to defekt. */
+export const IMPACT_PL: Record<string, string> = {
+  high: 'wysoki',
+  medium: 'średni',
+  low: 'niski',
+};
+
+/**
+ * K1: FAKT policzony z sesji, nigdy z modelu językowego.
+ *
+ * Fakt opisuje materiał dowodowy stojący za ruchem — liczbę napięć, ich wagę
+ * i postawę. Świadomie NIE jest to tytuł rekomendacji: tytuł sekcji niesie
+ * wniosek biznesowy, a K1 niesie policzalną podstawę.
+ */
 function buildK1(
   move: SWOTMove,
   sourceTensionIds: string[],
@@ -176,9 +210,9 @@ function buildK1(
 ): string {
   const linked = tensions.filter((t) => sourceTensionIds.includes(t.id));
   if (linked.length === 0) {
-    return `Ruch "${move.title}" nie ma napięcia źródłowego w zaakceptowanym materiale.`;
+    return `Ruch „${move.title}" nie ma napięcia źródłowego w zaakceptowanym materiale.`;
   }
   const weight = linked.reduce((n, t) => n + t.priority, 0);
-  const postures = [...new Set(linked.map((t) => t.posture))].join(', ');
-  return `Ruch wynika z ${linked.length} napięć o łącznej wadze ${weight} (postawa: ${postures}).`;
+  const postures = [...new Set(linked.map((t) => POSTURE_PL[t.posture] ?? t.posture))].join(', ');
+  return `Podstawa: ${linked.length} ${odmienNapiecia(linked.length)} o łącznej wadze ${weight} (postawa: ${postures}).`;
 }
