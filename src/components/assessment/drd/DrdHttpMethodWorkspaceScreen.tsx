@@ -280,6 +280,16 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
 }) => {
   const storage = storageProp ?? window.localStorage;
   const runtimeRef = useRef<DrdHttpSessionRuntime | null>(null);
+  // React 18 StrictMode (dev only) double-invokes effects: mount -> cleanup
+  // -> mount again, on the SAME component instance (hooks/refs persist).
+  // Without these guards this effect would call `create()` twice (two real
+  // sessions over HTTP) and replay `seedHttpSession`'s writes twice on
+  // whichever runtime "won". Refs survive the synthetic remount, so the
+  // second invocation reuses the first's in-flight promise / already-applied
+  // seeding instead of repeating the side effect.
+  const bootPromiseRef = useRef<Promise<DrdHttpSessionRuntime> | null>(null);
+  const seedStartedRef = useRef(false);
+  const forceStateAppliedRef = useRef(false);
   const [state, setState] = useState<DrdHttpRuntimeState | null>(null);
   const [bootError, setBootError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<MethodWorkspaceViewMode>(initialViewMode ?? 'interview');
@@ -295,25 +305,26 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
     let unsubscribe: (() => void) | null = null;
 
     async function boot() {
+      if (!bootPromiseRef.current) {
+        bootPromiseRef.current = demoSessionId
+          ? Promise.resolve(new DrdHttpSessionRuntime(demoSessionId, storage))
+          : DrdHttpSessionRuntime.create(
+              {
+                module: 'assessment',
+                methodPackId: DRD_METHOD_PACK_ID,
+                methodPackVersion: pack.manifest.version,
+                mode: 'guided_manual',
+                demoBypass: true,
+              },
+              storage
+            );
+      }
       let runtime: DrdHttpSessionRuntime;
-      if (demoSessionId) {
-        runtime = new DrdHttpSessionRuntime(demoSessionId, storage);
-      } else {
-        try {
-          runtime = await DrdHttpSessionRuntime.create(
-            {
-              module: 'assessment',
-              methodPackId: DRD_METHOD_PACK_ID,
-              methodPackVersion: pack.manifest.version,
-              mode: 'guided_manual',
-              demoBypass: true,
-            },
-            storage
-          );
-        } catch (err) {
-          if (!cancelled) setBootError(err instanceof Error ? err.message : 'Nie udało się utworzyć sesji.');
-          return;
-        }
+      try {
+        runtime = await bootPromiseRef.current;
+      } catch (err) {
+        if (!cancelled) setBootError(err instanceof Error ? err.message : 'Nie udało się utworzyć sesji.');
+        return;
       }
       if (cancelled) return;
       runtimeRef.current = runtime;
@@ -323,7 +334,8 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
       setState(runtime.getState());
 
       if (demoSessionId) await runtime.refresh();
-      if (seedTo) {
+      if (seedTo && !seedStartedRef.current) {
+        seedStartedRef.current = true;
         try {
           await seedHttpSession(runtime, seedTo);
         } catch {
@@ -332,7 +344,8 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
           // whatever state the runtime landed in, never a faked one.
         }
       }
-      if (forceState && runtimeRef.current) {
+      if (forceState && runtimeRef.current && !forceStateAppliedRef.current) {
+        forceStateAppliedRef.current = true;
         const debugPatch: Partial<DrdHttpRuntimeState> =
           forceState === 'offline'
             ? { status: 'offline', error: 'Brak połączenia z serwerem.' }
