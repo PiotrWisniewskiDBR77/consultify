@@ -82,7 +82,12 @@ const buildRow = (
     initiativeId: String(summary.initiativeId || detail.initiativeId || ''),
     lifecycle,
     phase: phaseLabel(summary.state || detail.state, detail.deliveryState),
-    owner: roleLabel(summary.executionManagerId || detail.executionManagerId),
+    owner: roleLabel(
+      summary.executionManagerName ||
+        detail.executionManagerName ||
+        summary.executionManagerId ||
+        detail.executionManagerId
+    ),
     handoffRef:
       handoffVersion > 0 ? `${String(summary.handoffPackageId)}@v${handoffVersion}` : 'UNKNOWN',
     baselineRef:
