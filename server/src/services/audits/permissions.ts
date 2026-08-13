@@ -200,8 +200,17 @@ const ROLE_CAPABILITIES: Record<AuditRole, AuditCapability[]> = {
  * Czynności dostępne dla członka organizacji bez przypisanej roli audytowej.
  * Świadomie minimalne: kto nie należy do zespołu audytowego, nie widzi cudzych
  * dowodów ani ustaleń.
+ *
+ * `program.create` jest tu celowo, mimo że reszta czynności programowych
+ * wymaga roli. Powód jest strukturalny: ról audytowych udziela się W PROGRAMIE,
+ * więc dopóki program nie istnieje, nikt nie może mieć w nim roli — bramkowanie
+ * tworzenia rolą audytową zamknęłoby moduł w błędnym kole i zostawiło
+ * zakładanie audytów wyłącznie administratorom platformy. Ryzyko jest tu małe:
+ * utworzenie programu to zapis roboczy, a twórca staje się jego
+ * `program_owner`. Kosztowne czynności — wniosek o zgodności, ustalenie,
+ * zatwierdzenie, weryfikacja skuteczności, zamknięcie — pozostają za rolami.
  */
-const ORG_MEMBER_CAPABILITIES: AuditCapability[] = ['pack.read'];
+const ORG_MEMBER_CAPABILITIES: AuditCapability[] = ['pack.read', 'program.create'];
 
 /**
  * Czynności, których nie odblokuje żadna rola platformowa — wymagają jawnego
