@@ -19,6 +19,7 @@ describe('AnswerStateControl', () => {
         onChange={vi.fn()}
         resolutionData={makeResolutionData()}
         onResolutionAction={vi.fn()}
+        resolutionActions={['ask_teresa']}
       />
     );
     expect(screen.getByText('Potwierdzone')).toBeInTheDocument();
@@ -37,6 +38,7 @@ describe('AnswerStateControl', () => {
         onChange={onChange}
         resolutionData={makeResolutionData()}
         onResolutionAction={vi.fn()}
+        resolutionActions={['ask_teresa']}
       />
     );
 
@@ -54,6 +56,7 @@ describe('AnswerStateControl', () => {
         onChange={vi.fn()}
         resolutionData={makeResolutionData({ whatIsUnknown: 'Czy mamy proces X.' })}
         onResolutionAction={vi.fn()}
+        resolutionActions={['ask_teresa']}
       />
     );
     expect(screen.getByTestId('resolution-card')).toBeInTheDocument();
@@ -69,6 +72,7 @@ describe('AnswerStateControl', () => {
         onChange={onChange}
         resolutionData={makeResolutionData()}
         onResolutionAction={vi.fn()}
+        resolutionActions={['ask_teresa']}
       />
     );
     fireEvent.click(screen.getByText('Nie dotyczy'));
@@ -88,6 +92,7 @@ describe('AnswerStateControl', () => {
         onChange={vi.fn()}
         resolutionData={makeResolutionData()}
         onResolutionAction={vi.fn()}
+        resolutionActions={['ask_teresa']}
       />
     );
     const selectedBtn = screen.getByText('Nie wiem / potrzebuję pomocy').closest('button')!;
@@ -112,6 +117,7 @@ describe('AnswerStateControl', () => {
         onChange={vi.fn()}
         resolutionData={makeResolutionData()}
         onResolutionAction={onResolutionAction}
+        resolutionActions={['ask_teresa']}
       />
     );
     fireEvent.click(screen.getByText('Zapytaj Teresę'));

@@ -563,6 +563,10 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
             onAnswerChange: handleAnswerChange,
             onAnswerStateChange: handleAnswerStateChange,
             onResolutionAction: () => {},
+            // ★ A10/D3: ten ekran nie obsluguje zadnej akcji karty
+            // rozstrzygniecia, wiec nie pokazuje ani jednego przycisku.
+            // Martwy przycisk jest gorszy niz jego brak.
+            resolutionActions: [],
             onEvidenceDrop: handleEvidenceDrop,
             onBack: () => {},
             onSave: () => void saveNow(),

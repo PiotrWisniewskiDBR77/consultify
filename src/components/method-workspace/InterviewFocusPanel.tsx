@@ -29,6 +29,8 @@ export interface InterviewFocusPanelProps {
   onAnswerChange: (questionId: string, text: string) => void;
   onAnswerStateChange: (questionId: string, state: InterviewFocusQuestion['answerState'], justification?: string) => void;
   onResolutionAction: (questionId: string, action: ResolutionAction) => void;
+  /** Akcje, ktore wywolujacy potrafi obsluzyc — patrz ResolutionCard. */
+  resolutionActions: readonly ResolutionAction[];
   onEvidenceDrop: (questionId: string, files: FileList) => void;
   onBack: () => void;
   onSave: () => void;
@@ -56,6 +58,7 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
   onAnswerChange,
   onAnswerStateChange,
   onResolutionAction,
+  resolutionActions,
   onEvidenceDrop,
   onBack,
   onSave,
@@ -166,6 +169,7 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
             onChange={(state, justification) => onAnswerStateChange(q.question.questionId, state, justification)}
             resolutionData={{ ...resolutionData, questionId: q.question.questionId }}
             onResolutionAction={(action) => onResolutionAction(q.question.questionId, action)}
+            resolutionActions={resolutionActions}
           />
 
           {/* Evidence drop zone */}

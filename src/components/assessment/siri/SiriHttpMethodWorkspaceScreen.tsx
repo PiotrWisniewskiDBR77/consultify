@@ -766,6 +766,10 @@ export const SiriHttpMethodWorkspaceScreen: React.FC<SiriHttpMethodWorkspaceScre
             onAnswerChange: () => {},
             onAnswerStateChange: () => {},
             onResolutionAction: () => {},
+            // ★ A10/D3: ten ekran nie obsluguje zadnej akcji karty
+            // rozstrzygniecia, wiec nie pokazuje ani jednego przycisku.
+            // Martwy przycisk jest gorszy niz jego brak.
+            resolutionActions: [],
             onEvidenceDrop: () => {},
             onBack: () => {},
             onSave: () => void saveNow(),

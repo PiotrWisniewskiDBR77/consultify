@@ -60,6 +60,7 @@ function Harness({
         onAnswerChange: vi.fn(),
         onAnswerStateChange: vi.fn(),
         onResolutionAction: vi.fn(),
+        resolutionActions: ['ask_teresa'] as const,
         onEvidenceDrop: vi.fn(),
         onBack: vi.fn(),
         onSave: vi.fn(),

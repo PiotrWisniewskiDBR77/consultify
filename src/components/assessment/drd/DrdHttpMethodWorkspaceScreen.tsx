@@ -931,7 +931,15 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
             },
             onAnswerChange: handleAnswerChange,
             onAnswerStateChange: (qid, s, j) => void handleAnswerStateChange(qid, s, j),
-            onResolutionAction: () => {},
+            onResolutionAction: (questionId, action) => {
+              // ★ A10/D3: renderujemy WYLACZNIE akcje, ktore ten ekran umie
+              // obsluzyc (patrz `resolutionActions` ponizej). `assign_question`
+              // i `request_evidence` wymagaja przeplywow, ktorych ten ekran nie
+              // ma — dlatego nie sa deklarowane i przycisk sie nie pojawia,
+              // zamiast pojawiac sie i nic nie robic.
+              if (action === 'ask_teresa') void handleAskTeresa(questionId);
+            },
+            resolutionActions: ['ask_teresa'],
             onEvidenceDrop: (qid, files) => void handleEvidenceDrop(qid, files),
             onBack: () => {},
             onSave: () => void saveNow(),

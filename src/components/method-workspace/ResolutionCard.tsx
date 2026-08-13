@@ -14,6 +14,20 @@ import type { ResolutionAction, ResolutionCardData } from './types';
 export interface ResolutionCardProps {
   data: ResolutionCardData;
   onAction: (action: ResolutionAction) => void;
+  /**
+   * Akcje, które wywołujący POTRAFI obsłużyć. Renderujemy wyłącznie te.
+   *
+   * ★ A10/D3: wszystkie trzy ekrany podawały `onResolutionAction: () => {}`,
+   * więc karta pokazywała cztery przyciski, z których żaden nic nie robił.
+   * Martwy przycisk jest gorszy niż jego brak: użytkownik klika „Przypisz
+   * pytanie", nic się nie dzieje i traci zaufanie do całego ekranu — a przy
+   * luce wiedzy to jest dokładnie ten moment, w którym zaufanie jest potrzebne.
+   *
+   * Prop jest WYMAGANY (bez wartości domyślnej) celowo: nowy ekran musi
+   * świadomie zadeklarować, co realnie umie, zamiast odziedziczyć komplet
+   * przycisków i po cichu ich nie obsłużyć.
+   */
+  availableActions: readonly ResolutionAction[];
   className?: string;
 }
 
@@ -24,7 +38,12 @@ const ACTIONS: Array<{ id: ResolutionAction; label: string; icon: React.ReactNod
   { id: 'return_later', label: 'Wróć później', icon: <MessageSquareText size={14} /> },
 ];
 
-export const ResolutionCard: React.FC<ResolutionCardProps> = ({ data, onAction, className = '' }) => {
+export const ResolutionCard: React.FC<ResolutionCardProps> = ({
+  data,
+  onAction,
+  availableActions,
+  className = '',
+}) => {
   return (
     <div
       role="region"
@@ -64,7 +83,7 @@ export const ResolutionCard: React.FC<ResolutionCardProps> = ({ data, onAction, 
       </dl>
 
       <div className="flex flex-wrap gap-2 pt-1">
-        {ACTIONS.map((action) => (
+        {ACTIONS.filter((a) => availableActions.includes(a.id)).map((action) => (
           <button
             key={action.id}
             type="button"

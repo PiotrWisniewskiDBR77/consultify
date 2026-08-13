@@ -18,6 +18,8 @@ export interface AnswerStateControlProps {
   onChange: (state: MethodAnswerState, justification?: string) => void;
   resolutionData: ResolutionCardData;
   onResolutionAction: (action: ResolutionAction) => void;
+  /** Akcje, ktore wywolujacy potrafi obsluzyc — patrz ResolutionCard. */
+  resolutionActions: readonly ResolutionAction[];
   disabled?: boolean;
   className?: string;
 }
@@ -64,6 +66,7 @@ export const AnswerStateControl: React.FC<AnswerStateControlProps> = ({
   onChange,
   resolutionData,
   onResolutionAction,
+  resolutionActions,
   disabled = false,
   className = '',
 }) => {
@@ -145,7 +148,7 @@ export const AnswerStateControl: React.FC<AnswerStateControlProps> = ({
         </div>
       )}
 
-      {value === 'dont_know' && <ResolutionCard data={resolutionData} onAction={onResolutionAction} />}
+      {value === 'dont_know' && <ResolutionCard data={resolutionData} onAction={onResolutionAction} availableActions={resolutionActions} />}
     </div>
   );
 };
