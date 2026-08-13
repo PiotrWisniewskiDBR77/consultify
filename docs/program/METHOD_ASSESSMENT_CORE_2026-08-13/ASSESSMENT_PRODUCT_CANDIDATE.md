@@ -12,8 +12,8 @@
 | Baseline | `f3e7df565e` (== `origin/demo`) |
 | Contract SHA (kernel zamrożony) | `e3b8be6cd7` |
 | Poprzedni checkpoint (A9) | `0f4a1a53a6` |
-| **Candidate SHA** | `<uzupełniane na końcu>` |
-| Commitów od baseline | **125** |
+| **Candidate SHA** | `1024d892db` |
+| Commitów od baseline | **135** |
 | `git status --porcelain` | 0 |
 | Gałęzi zdalnych z HEAD | **0** — zero push |
 
