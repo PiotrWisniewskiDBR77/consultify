@@ -65,6 +65,7 @@ import type {
   ToolOutput,
   ToolReportKind,
 } from '../../../../src/toolOutputs/types';
+import type { StructuredSlideInput } from '../presentationDeckDocumentService.js';
 
 /** Minimal shape this module needs from a `tool_sessions` row. */
 export interface ToolOutputSourceSession {
@@ -564,6 +565,73 @@ export function renderToolReportSectionFromOutput(
     '## Recommended actions',
     ...(moveLines.length ? moveLines : ['- No explicit actions were recorded in the snapshot.']),
   ].join('\n');
+}
+
+/**
+ * Deterministic slide breakdown of an approved Output, for a promoted
+ * presentation's ACTUAL `presentation_decks` content (not just its
+ * lineage record — see `persistCanonicalReport` below for that).
+ *
+ * Same renderer contract as `renderToolReportSectionFromOutput` /
+ * `renderReport.ts`'s `buildSection`: no model call, content comes only
+ * from `output`, deterministic (same Output -> same slides every time).
+ * Feeds `buildDeckDocumentFromStructuredSlides` (presentationDeckDocumentService.ts),
+ * the canonical `schemaVersion: 1` builder MAT-007/009 introduced so a
+ * created deck's `deck_json` is never empty relative to its card count.
+ */
+export function buildPresentationSlidesFromOutput(output: ToolOutput): StructuredSlideInput[] {
+  const slides: StructuredSlideInput[] = [
+    {
+      type: 'title',
+      content: {
+        title: output.title,
+        subtitle: `${output.toolType} — zatwierdzony Output ${output.id}`,
+      },
+    },
+  ];
+
+  const tensions = [...output.tensions].sort(
+    (a, b) => b.priority - a.priority || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
+  );
+  if (tensions.length > 0) {
+    slides.push({
+      type: 'content',
+      content: {
+        title: 'Napięcia strategiczne',
+        items: tensions
+          .slice(0, 4)
+          .map((t) => `${t.title} (postawa: ${t.posture}, waga: ${t.priority})`),
+      },
+    });
+  }
+
+  const conclusions = output.conclusions.slice(0, 6);
+  conclusions.forEach((c, idx) => {
+    slides.push({
+      type: idx === conclusions.length - 1 ? 'next_steps' : 'content',
+      content: {
+        title: c.k3Actions[0] || c.k2Meaning || `Wniosek ${idx + 1}`,
+        body: c.k1Fact,
+        items: c.k3Actions,
+      },
+    });
+  });
+
+  if (slides.length === 1) {
+    // KNOWN GAP tools this module already documents (header comment,
+    // "only dynamic-swot has a real engine bridge"): a generic-fallback
+    // Output has empty items/tensions/conclusions. Rather than promote a
+    // 1-slide deck with no explanation, say so explicitly on the slide.
+    slides.push({
+      type: 'content',
+      content: {
+        title: 'Brak zarejestrowanych wniosków',
+        body: 'Ten Output nie zawiera jeszcze ustrukturyzowanych wniosków K1-K4.',
+      },
+    });
+  }
+
+  return slides;
 }
 
 /**
