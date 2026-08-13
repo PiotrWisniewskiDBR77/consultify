@@ -50,13 +50,16 @@ z linii `FAIL` w logu) kategoria:
 
 | Strona | Plików zmierzonych | Plików razem | % |
 |---|---|---|---|
-| candidate | 660 | 1574 | 42% |
-| baseline | 0 | 1661 | 0% |
+| candidate | 840 | 1574 | 53% |
+| baseline (pełny sekwencyjny) | 0 | 1661 | 0% |
+| baseline (celowany — pliki failujące na candidate) | 39 | — | — |
 
-**Uwaga**: baseline jeszcze nie uruchomiony w tej rundzie — pierwsza część sesji poszła na candidate.
-Dopóki baseline nie jest zmierzony dla danego pliku, żaden test z tego pliku nie może być
-sklasyfikowany jako `introduced`/`fixed`/`identical_pre_existing` — wszystkie faile z niezweryfikowanych
-plików candidate poniżej są tymczasowo `NOT_VERIFIED (baseline nie uruchomiony jeszcze)`.
+**Uwaga**: pełny sekwencyjny przebieg baseline jeszcze nie uruchomiony — strategia w tej sesji: (1)
+zmierz candidate sekwencyjnie, (2) dla KAŻDEGO pliku z failem na candidate odpal ten sam plik na
+baseline od razu (pomiar celowany) — to najszybsza droga do wykrycia `introduced`, bo właśnie różnice
+w already-failing testach są tam gdzie regresja się objawia najpierw. Pliki, które na candidate W
+PEŁNI przechodzą, nie są jeszcze sprawdzone na baseline (mogłyby teoretycznie ujawnić `fixed`, ale nie
+`introduced` — z definicji `introduced` wymaga failu na candidate).
 
 ### Partie zmierzone — candidate
 
@@ -86,6 +89,13 @@ Uwaga: oryginalna partia 13 (linie 481-520, 40 plików) padła z `EXIT=143` (pro
 prawdopodobnie limit czasu tła) po ok. 34/40 plikach — powtórzona jako 13a+13b (po 20 plików), obie
 zakończone czysto (`Tests N failed | M passed` obecne).
 
+| 19 | 661-690 | 30 | t6-cand-19.log | 1 failed (suite-level import error) / 265 |
+| 20 | 691-720 | 30 | t6-cand-20.log | 1 failed (17 testów w środku) / 214 |
+| 21 | 721-750 | 30 | t6-cand-21.log | 7 failed / 374 |
+| 22 | 751-780 | 30 | t6-cand-22.log | 4 failed plików (6 testów + 1 suite-level) / 200 |
+| 23 | 781-810 | 30 | t6-cand-23.log | 5 failed plików (9 testów) / 170 |
+| 24 | 811-840 | 30 | t6-cand-24.log | 2 failed / 251 |
+
 ### Partie zmierzone — baseline
 
 **Pomiar celowany (priorytet: wykryć `introduced` jak najszybciej)** — uruchomiono na baseline
@@ -99,18 +109,51 @@ czekać na pełny sekwencyjny przebieg baseline. Dwa przebiegi:
    osobno, z `--testTimeout=10000 --retry=0` (na baseline ten plik wisi ~120s/test przy domyślnym
    timeout+retry — DUŻO wolniej niż na candidate, gdzie te same testy padają w kilka ms na asercji;
    różny TRYB porażki, ale porażka po obu stronach): `Tests 4 failed (4)`, `Test Files 1 failed (1)`.
+3. `t6-base-targeted-3.log` — 13 plików failujących na candidate w liniach 661-840, `--testTimeout=15000
+   --retry=0`: `Tests 40 failed | 29 passed (69)`. Diff po pełnej nazwie testu ujawnił **1 test, który
+   na baseline PRZECHODZI, a na candidate PADA** — `AdminCollaborationControlsPanel.test.tsx > loads
+   controls and merges omitted values with defaults`. Zweryfikowane osobno na obu stronach z
+   `-t "<pełna nazwa testu>"` (logi `verify-cand-admincollab.log` / `verify-base-admincollab.log`) —
+   potwierdzone, nie flaky. Szczegóły w sekcji `introduced` niżej.
 
 Brak jeszcze pełnego sekwencyjnego przebiegu baseline poza tym — to osobny, szerszy krok (patrz
 NOT_VERIFIED niżej).
 
 ## Lista `introduced` (blokujące)
 
-**PUSTA.** Wszystkie 36 unikalnych testów failujących na candidate w liniach 1-660 (patrz lista niżej)
-zostały sprawdzone na baseline po pełnej nazwie (`plik > describe > test`) — **wszystkie 36 failują
-też na baseline** (`comm -23` dało zero wyników = brak testów failujących WYŁĄCZNIE na candidate).
-Zero `introduced` znalezionych jak dotąd. To dotyczy tylko zmierzonego zakresu (patrz "Postęp pomiaru")
-— reszta plików (candidate 661-1574, cała reszta baseline poza tym pomiarem celowanym) jest
-`NOT_VERIFIED` i może jeszcze ujawnić `introduced`.
+**1 znaleziony i zweryfikowany (2× osobno na obu stronach, nie tylko w batchu):**
+
+### `tests/unit/components/Admin/AdminCollaborationControlsPanel.test.tsx`
+Test: `AdminCollaborationControlsPanel > loads controls and merges omitted values with defaults`
+
+- **candidate**: FAIL (potwierdzone osobnym uruchomieniem `-t "loads controls and merges omitted values with defaults"`, log `/tmp/claude-501/verify-cand-admincollab.log`)
+- **baseline**: PASS (potwierdzone tą samą metodą, log `/tmp/claude-501/verify-base-admincollab.log`)
+
+Błąd na candidate:
+```
+AssertionError: expected "vi.fn()" to be called with arguments: [ { guestAccessEnabled: true, …(2) } ]
+Received:
+  1st vi.fn() call:
+  [
+    {
+      "externalLinkSharing": false,
+-     "guestAccessEnabled": true,
++     "guestAccessEnabled": false,
+      "toolApprovalRequired": true,
+    },
+  ]
+```
+Komponent na candidate merge'uje domyślną wartość `guestAccessEnabled` inaczej niż na baseline —
+przy częściowym payloadzie z API (bez pola `guestAccessEnabled`) candidate wychodzi na `false`,
+baseline poprawnie merge'uje `true` z defaultów. To wygląda na realną regresję w logice merge
+domyślnych wartości panelu (nie flaky — dwa niezależne uruchomienia po obu stronach dały spójny wynik).
+
+Reszta zmierzonego zakresu (patrz "Postęp pomiaru"): wszystkie pozostałe 77 unikalnych testów
+failujących na candidate w liniach 1-840 (36 z 1-660 + 42 wspólnych z 661-840, licząc bez duplikatów)
+zostało sprawdzonych na baseline po pełnej nazwie (`plik > describe > test`) i failują też na
+baseline — `identical_pre_existing`. To dotyczy tylko zmierzonego zakresu — reszta plików
+(candidate 841-1574, cała reszta baseline poza pomiarem celowanym) jest `NOT_VERIFIED` i może
+jeszcze ujawnić kolejne `introduced`.
 
 ## Lista `fixed`
 
@@ -163,23 +206,24 @@ tests/unit/backend/services/systemAlertNotifier.test.ts > systemAlertNotifier > 
 
 ## NOT_VERIFIED
 
-- **candidate linie 661-1574** (914 plików, ~58% strony candidate) — partie jeszcze nieuruchomione w
+- **candidate linie 841-1574** (734 plików, ~47% strony candidate) — partie jeszcze nieuruchomione w
   tej sesji. Powód: praca w toku, kontynuacja w kolejnych krokach tej samej sesji.
-- **baseline pełny sekwencyjny przebieg** (1661 plików minus 26 już zmierzonych celowanie = 1635
+- **baseline pełny sekwencyjny przebieg** (1661 plików minus 39 już zmierzonych celowanie = ~1622
   plików) — jeszcze nie rozpoczęty. Powód: priorytet poszedł na celowane sprawdzenie plików już
-  failujących na candidate (zrobione, zero `introduced`); pełny sekwencyjny przebieg baseline to
-  osobny, szerszy krok, potrzebny żeby wykryć `introduced`/`fixed` w plikach które na candidate
-  jeszcze PRZECHODZĄ (bo test może przechodzić na candidate, a mieć inny — gorszy lub lepszy —
-  wynik na baseline; to również trzeba sprawdzić, nie tylko listę już-failujących).
+  failujących na candidate (zrobione dla linii 1-840, znaleziono 1 `introduced`); pełny sekwencyjny
+  przebieg baseline to osobny, szerszy krok, potrzebny żeby wykryć `introduced`/`fixed` w plikach
+  które na candidate jeszcze PRZECHODZĄ (bo test może przechodzić na candidate, a mieć inny wynik na
+  baseline — np. istnieć tylko na baseline i failować tam, co nie jest `introduced` z definicji, ale
+  wpływa na pełny obraz `fixed`/pokrycia).
 
 ## Tabela zbiorcza (na tę chwilę — niekompletna, patrz Postęp pomiaru)
 
 | Kategoria | Liczba |
 |---|---|
-| identical_pre_existing | 36 testów (26 plików, celowany pomiar candidate-fails × baseline) |
+| identical_pre_existing | 77 testów (celowany pomiar candidate-fails w liniach 1-840 × baseline) |
 | fixed | 0 |
-| introduced | 0 |
-| NOT_VERIFIED | 914 plików candidate (linie 661-1574) + ~1635 plików baseline (poza celowanym pomiarem) |
+| introduced | **1** — `AdminCollaborationControlsPanel.test.tsx > loads controls and merges omitted values with defaults` |
+| NOT_VERIFIED | 734 plików candidate (linie 841-1574) + ~1622 plików baseline (poza celowanym pomiarem) |
 
 ## Higiena
 
