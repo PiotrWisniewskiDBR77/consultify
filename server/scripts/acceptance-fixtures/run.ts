@@ -1,6 +1,7 @@
 #!/usr/bin/env npx tsx
 import pg from 'pg';
 import { buildFixturePlan } from './fixturePlan.js';
+import { buildGoldenChildPlan } from './goldenChildPlan.js';
 
 export function assertTarget(env: NodeJS.ProcessEnv, write: boolean): void {
   if (!env.DATABASE_URL) throw new Error('DATABASE_URL is required');
@@ -15,7 +16,7 @@ async function main() {
   const organizationId = String(process.env.ACCEPTANCE_ORG_ID || '').trim();
   const userId = String(process.env.ACCEPTANCE_USER_ID || '').trim();
   if (!organizationId || !userId) throw new Error('ACCEPTANCE_ORG_ID and ACCEPTANCE_USER_ID are required');
-  const plan = buildFixturePlan({ organizationId, userId });
+  const plan = [...buildFixturePlan({ organizationId, userId }), ...buildGoldenChildPlan({ organizationId, userId })];
   if (!write) { console.log(JSON.stringify({ mode:'DRY_RUN', organizationId, domains:plan.map(x=>x.domain), statements:plan.length }, null, 2)); return; }
   const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
   await client.connect();
