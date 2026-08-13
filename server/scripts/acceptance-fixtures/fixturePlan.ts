@@ -5,6 +5,20 @@ export const ACCEPTANCE_NAMESPACE = 'consultify-demo-acceptance-v1';
 export type FixtureContext = { organizationId: string; userId: string };
 export type FixtureStatement = { domain: string; sql: string; params: unknown[]; verifySql: string; verifyParams: unknown[] };
 
+export const FINANCE_ACCEPTANCE_FLAG_KEYS = [
+  'financeWorkspacePlatformV1',
+  'financeLineageNavigatorV1',
+  'financeAnalysisWorkspaceV1',
+  'financePredictionWorkspaceV1',
+  'financeCompareV1',
+  'financeStatementPackWorkspaceV2',
+  'financeCommentsV1',
+  'financeValuationWorkspaceV1',
+  'financeSavedViewsV1',
+  'financeExportImportV1',
+  'financeBaselineWorkspaceV1',
+] as const;
+
 export function stableTextId(ctx: FixtureContext, entity: string): string {
   return `${ctx.organizationId}--acceptance--${entity}`;
 }
@@ -29,9 +43,23 @@ export function buildFixturePlan(ctx: FixtureContext): FixtureStatement[] {
   const finance = stableTextId(ctx, 'finance-model');
   const deck = stableTextId(ctx, 'artifact-presentation');
   const idea = stableTextId(ctx, 'idea');
+  const financeFlags: FixtureStatement[] = FINANCE_ACCEPTANCE_FLAG_KEYS.map(flagKey => ({
+    domain: `finance-flag:${flagKey}`,
+    sql: `INSERT INTO feature_flags
+      (id,flag_key,name,description,enabled,rules,flag_type,targeting_rules,rollout_percentage,environment,organization_id,variants,created_by,created_at,updated_at)
+      VALUES ($1,$2,$2,$3,true,'[]','boolean','[]',100,'production',$4,'[]',$5,now(),now())
+      ON CONFLICT (flag_key) DO UPDATE SET
+        enabled=true, environment='production', rollout_percentage=100,
+        name=EXCLUDED.name, description=EXCLUDED.description, updated_at=now()
+      WHERE feature_flags.organization_id = EXCLUDED.organization_id`,
+    params: [stableTextId(ctx, `finance-flag-${flagKey}`), flagKey, ACCEPTANCE_NAMESPACE, ctx.organizationId, ctx.userId],
+    verifySql: `SELECT count(*)::int AS count FROM feature_flags
+      WHERE flag_key=$1 AND organization_id=$2 AND environment='production' AND enabled=true`,
+    verifyParams: [flagKey, ctx.organizationId],
+  }));
   return [
     row('case', `INSERT INTO projects (id, organization_id, name, status) VALUES ($1,$2,$3,'active') ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name`, [project,ctx.organizationId,'[ACCEPTANCE] Transformation Case'], 'projects','id',project,ctx.organizationId),
-    row('case', `INSERT INTO case_core (case_id,project_id,organization_id,case_profile,governance_tier,case_status,contracted_closure_type,delivery_status,decision_status,implementation_status,outcome_status,sponsor_user_id,acceptance_criteria_ref,created_by_actor_id) VALUES ($1,$2,$3,'TRANSFORMATION','CONTROLLED','ACTIVE','OUTCOME_VALIDATED','PENDING','PENDING','PENDING','PENDING',$4,$5,$4) ON CONFLICT (case_id) DO NOTHING`, [caseId,project,ctx.organizationId,ctx.userId,`${ACCEPTANCE_NAMESPACE}:case`], 'case_core','case_id',caseId,ctx.organizationId),
+    row('case', `INSERT INTO case_core (case_id,project_id,organization_id,case_name,case_profile,governance_tier,case_status,contracted_closure_type,delivery_status,decision_status,implementation_status,outcome_status,sponsor_user_id,acceptance_criteria_ref,created_by_actor_id) VALUES ($1,$2,$3,$4,'TRANSFORMATION','CONTROLLED','ACTIVE','OUTCOME_VALIDATED','PENDING','PENDING','PENDING','PENDING',$5,$6,$5) ON CONFLICT (case_id) DO NOTHING`, [caseId,project,ctx.organizationId,'[ACCEPTANCE] Transformation Case',ctx.userId,`${ACCEPTANCE_NAMESPACE}:case`], 'case_core','case_id',caseId,ctx.organizationId),
     row('shared', `INSERT INTO initiatives (id,organization_id,name,status) VALUES ($1,$2,$3,'EXECUTING') ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name`, [initiative,ctx.organizationId,'[ACCEPTANCE] Benefits realization'], 'initiatives','id',initiative,ctx.organizationId),
     row('kpi', `INSERT INTO rvn_kpi_definitions (kpi_id,organization_id,kpi_code,status,owner_user_id,created_by) VALUES ($1,$2,'ACC-KPI-001','draft',$3,$3) ON CONFLICT (kpi_id) DO NOTHING`, [kpi,ctx.organizationId,ctx.userId], 'rvn_kpi_definitions','kpi_id',kpi,ctx.organizationId),
     row('roi', `INSERT INTO rvn_roi_cases (case_id,organization_id,initiative_id,title,owner_user_id,status,currency,analysis_start,analysis_end,created_by) VALUES ($1,$2,$3,$4,$5,'draft','PLN',CURRENT_DATE,CURRENT_DATE + 365,$5) ON CONFLICT (case_id) DO NOTHING`, [roi,ctx.organizationId,initiative,'[ACCEPTANCE] ROI baseline to PIR',ctx.userId], 'rvn_roi_cases','case_id',roi,ctx.organizationId),
@@ -39,5 +67,6 @@ export function buildFixturePlan(ctx: FixtureContext): FixtureStatement[] {
     row('finance', `INSERT INTO financial_models (id,organization_id,initiative_id,name,description,start_date,status,assumptions_json,created_by) VALUES ($1,$2,$3,$4,$5,CURRENT_DATE,'draft',$6,$7) ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name`, [finance,ctx.organizationId,initiative,'[ACCEPTANCE] Integrated transformation model',ACCEPTANCE_NAMESPACE,JSON.stringify({acceptanceFixture:ACCEPTANCE_NAMESPACE}),ctx.userId], 'financial_models','id',finance,ctx.organizationId),
     row('artifact', `INSERT INTO presentation_decks (id,organization_id,project_id,title,description,status,generated_by) VALUES ($1,$2,$3,$4,$5,'draft',$6) ON CONFLICT (id) DO UPDATE SET title=EXCLUDED.title`, [deck,ctx.organizationId,project,'[ACCEPTANCE] Owner review deck',ACCEPTANCE_NAMESPACE,ctx.userId], 'presentation_decks','id',deck,ctx.organizationId),
     row('ideas', `INSERT INTO my_ideas (id,user_id,organization_id,title,body,tags,source_type) VALUES ($1,$2,$3,$4,$5,$6,'acceptance_fixture') ON CONFLICT (id) DO UPDATE SET title=EXCLUDED.title,body=EXCLUDED.body,tags=EXCLUDED.tags`, [idea,ctx.userId,ctx.organizationId,'[ACCEPTANCE] One idea, all representations',ACCEPTANCE_NAMESPACE,JSON.stringify(['acceptance-fixture','decision-log','financial-case','business-case'])], 'my_ideas','id',idea,ctx.organizationId),
+    ...financeFlags,
   ];
 }

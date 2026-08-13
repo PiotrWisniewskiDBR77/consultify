@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { buildFixturePlan, stableTextId, stableUuid } from '../../../scripts/acceptance-fixtures/fixturePlan';
-import { assertTarget } from '../../../scripts/acceptance-fixtures/run';
+import { buildFixturePlan, FINANCE_ACCEPTANCE_FLAG_KEYS, stableTextId, stableUuid } from '../../../scripts/acceptance-fixtures/fixturePlan';
+import { assertOrganizationAllowlisted, assertTarget } from '../../../scripts/acceptance-fixtures/run';
 import { buildGoldenChildPlan } from '../../../scripts/acceptance-fixtures/goldenChildPlan';
 
 const ctx={organizationId:'a3e05d4a-5397-419d-b486-8e44366c0063',userId:'owner-1'};
@@ -8,7 +8,7 @@ describe('demo acceptance fixtures safety contract',()=>{
   it('uses deterministic IDs and covers every requested domain',()=>{
     expect(stableTextId(ctx,'case')).toBe(stableTextId(ctx,'case'));
     expect(stableUuid(ctx,'kpi')).toMatch(/^[0-9a-f-]{36}$/);
-    expect(new Set(buildFixturePlan(ctx).map(x=>x.domain))).toEqual(new Set(['case','shared','kpi','roi','okr','finance','artifact','ideas']));
+    expect(new Set(buildFixturePlan(ctx).map(x=>x.domain))).toEqual(new Set(['case','shared','kpi','roi','okr','finance','artifact','ideas',...FINANCE_ACCEPTANCE_FLAG_KEYS.map(key=>`finance-flag:${key}`)]));
   });
   it('contains no destructive SQL and every row has tenant-scoped readback',()=>{
     for(const item of [...buildFixturePlan(ctx),...buildGoldenChildPlan(ctx)]){ expect(item.sql).not.toMatch(/\b(delete|truncate|drop|alter)\b/i); expect(item.sql).toMatch(/ON CONFLICT/i); expect(item.verifySql).toMatch(/organization_id\s*=\s*\$2/); }
@@ -20,5 +20,20 @@ describe('demo acceptance fixtures safety contract',()=>{
     expect(()=>assertTarget({DATABASE_URL:'postgres://x',RAILWAY_ENVIRONMENT_NAME:'production'},false)).toThrow(/Production/);
     expect(()=>assertTarget({DATABASE_URL:'postgres://x',RAILWAY_ENVIRONMENT_NAME:'demo'},true)).toThrow(/confirmation/);
     expect(()=>assertTarget({DATABASE_URL:'postgres://x',RAILWAY_ENVIRONMENT_NAME:'demo',ACCEPTANCE_FIXTURES_CONFIRM:'SEED_DEMO_ACCEPTANCE_FIXTURES'},true)).not.toThrow();
+  });
+  it('requires the exact organization ID without changing organization type',()=>{
+    expect(()=>assertOrganizationAllowlisted({ACCEPTANCE_ORG_ALLOWLIST:'org-a, org-b'},'org-b')).not.toThrow();
+    expect(()=>assertOrganizationAllowlisted({ACCEPTANCE_ORG_ALLOWLIST:'org-a, org-b'},'org')).toThrow(/allowlist/i);
+    expect(buildFixturePlan(ctx).map(item=>item.sql).join('\n')).not.toMatch(/organization_type/i);
+  });
+  it('upserts all Finance runtime flags for the production-filtered endpoint',()=>{
+    const flags=buildFixturePlan(ctx).filter(item=>item.domain.startsWith('finance-flag:'));
+    expect(flags).toHaveLength(11);
+    for(const flag of flags){
+      expect(flag.sql).toContain("'production'");
+      expect(flag.sql).toContain('organization_id');
+      expect(flag.verifySql).toContain("environment='production'");
+      expect(flag.verifySql).toContain('enabled=true');
+    }
   });
 });
