@@ -50,9 +50,9 @@ z linii `FAIL` w logu) kategoria:
 
 | Strona | Plików zmierzonych | Plików razem | % |
 |---|---|---|---|
-| candidate | 990 | 1574 | 63% |
+| candidate | 1110 | 1574 | 71% |
 | baseline (pełny sekwencyjny) | 0 | 1661 | 0% |
-| baseline (celowany — pliki failujące na candidate) | 45 | — | — |
+| baseline (celowany — pliki failujące na candidate) | 48 | — | — |
 
 **Uwaga**: pełny sekwencyjny przebieg baseline jeszcze nie uruchomiony — strategia w tej sesji: (1)
 zmierz candidate sekwencyjnie, (2) dla KAŻDEGO pliku z failem na candidate odpal ten sam plik na
@@ -100,6 +100,10 @@ zakończone czysto (`Tests N failed | M passed` obecne).
 | 27 | 901-930 | 30 | t6-cand-27.log | 3 failed / 199 |
 | 28 | 931-960 | 30 | t6-cand-28.log | 0 failed / 288 |
 | 29 | 961-990 | 30 | t6-cand-29.log | 5 failed / 357 |
+| 30 | 991-1020 | 30 | t6-cand-30.log | 5 failed / 357 |
+| 31 | 1021-1050 | 30 | t6-cand-31.log | 0 failed / 369 |
+| 32 | 1051-1080 | 30 | t6-cand-32.log | 4 failed / 215 |
+| 33 | 1081-1110 | 30 | t6-cand-33.log | 2 failed / 476 |
 
 ### Partie zmierzone — baseline
 
@@ -125,6 +129,9 @@ czekać na pełny sekwencyjny przebieg baseline. Dwa przebiegi:
    PRZECHODZI, a na candidate PADA** — `artifactContractParity.test.ts > keeps origin runtime literals
    aligned`. Zweryfikowane osobno (`verify-cand-artifactparity.log` / `verify-base-artifactparity.log`)
    — potwierdzone. Szczegóły w sekcji `introduced` niżej.
+5. `t6-base-targeted-5.log` — 3 pliki failujące na candidate w liniach 991-1110, `--testTimeout=15000
+   --retry=0`: `Tests 11 failed | 16 passed (27)`. Diff ujawnił pozorny swap w `templateCrud.test.ts`
+   — zweryfikowany jako flaky (order-dependent), nie regresja. Patrz notatka w sekcji `introduced`.
 
 Brak jeszcze pełnego sekwencyjnego przebiegu baseline poza tym — to osobny, szerszy krok (patrz
 NOT_VERIFIED niżej).
@@ -180,12 +187,23 @@ klient/serwer rozjechał się na tej gałęzi. To jest test kontraktowy zaprojek
 wyłapywania takiego rozjazdu, więc wygląda na realną, świeżą regresję (literał usunięty po jednej
 stronie, nie po drugiej), nie na flaky test.
 
-Reszta zmierzonego zakresu (patrz "Postęp pomiaru"): wszystkie pozostałe 84 unikalne testy failujące
-na candidate w liniach 1-990 (77 z 1-840 + 7 nowych z 841-990, bez `artifactContractParity` opisanego
-wyżej) zostały sprawdzone na baseline po pełnej nazwie (`plik > describe > test`) i failują też na
-baseline — `identical_pre_existing`. To dotyczy tylko zmierzonego zakresu — reszta plików
-(candidate 991-1574, cała reszta baseline poza pomiarem celowanym) jest `NOT_VERIFIED` i może
-jeszcze ujawnić kolejne `introduced`.
+### Uwaga: 1 para testów FLAKY (order-dependent), NIE regresja
+
+W liniach 991-1110 diff pokazał pozorny swap w `tests/unit/deliverables/templateCrud.test.ts`:
+`updateDeliverableTemplate throws...` failuje TYLKO na candidate, `deleteDeliverableTemplate
+throws...` failuje TYLKO na baseline — wygląda jak 1 introduced + 1 fixed jednocześnie. Zweryfikowane
+osobno: uruchomienie **obu** testów razem przez `-t "throws TemplateForbiddenError for system
+templates"` (bez reszty pliku dookoła) daje **PASS na candidate dla obu** (log
+`verify-cand-templatecrud.log`, `Tests 2 passed`). To jest zanieczyszczenie międzytestowe w obrębie
+pliku (`order: 'random'` w `vitest.config.ts` + współdzielony mock/stan), nie realna regresja kodu —
+NIE liczone jako `introduced`/`fixed`, oznaczone jako `identical_pre_existing (flaky, order-dependent)`.
+
+Reszta zmierzonego zakresu (patrz "Postęp pomiaru"): wszystkie pozostałe 93 unikalne testy failujące
+na candidate w liniach 1-1110 (84 z 1-990 + 9 nowych solidnych z 991-1110, wyłączając parę flaky
+opisaną wyżej i wyłączając `artifactContractParity` opisany wyżej) zostały sprawdzone na baseline po
+pełnej nazwie (`plik > describe > test`) i failują też na baseline — `identical_pre_existing`. To
+dotyczy tylko zmierzonego zakresu — reszta plików (candidate 1111-1574, cała reszta baseline poza
+pomiarem celowanym) jest `NOT_VERIFIED` i może jeszcze ujawnić kolejne `introduced`.
 
 ## Lista `fixed`
 
@@ -238,11 +256,12 @@ tests/unit/backend/services/systemAlertNotifier.test.ts > systemAlertNotifier > 
 
 ## NOT_VERIFIED
 
-- **candidate linie 991-1574** (584 plików, ~37% strony candidate) — partie jeszcze nieuruchomione w
+- **candidate linie 1111-1574** (464 plików, ~29% strony candidate) — partie jeszcze nieuruchomione w
   tej sesji. Powód: praca w toku, kontynuacja w kolejnych krokach tej samej sesji.
-- **baseline pełny sekwencyjny przebieg** (1661 plików minus 45 już zmierzonych celowanie = ~1616
+- **baseline pełny sekwencyjny przebieg** (1661 plików minus 48 już zmierzonych celowanie = ~1613
   plików) — jeszcze nie rozpoczęty. Powód: priorytet poszedł na celowane sprawdzenie plików już
-  failujących na candidate (zrobione dla linii 1-990, znaleziono 2 `introduced`); pełny sekwencyjny
+  failujących na candidate (zrobione dla linii 1-1110, znaleziono 2 `introduced` + 1 flaky para);
+  pełny sekwencyjny
   przebieg baseline to osobny, szerszy krok, potrzebny żeby wykryć `introduced`/`fixed` w plikach
   które na candidate jeszcze PRZECHODZĄ (bo test może przechodzić na candidate, a mieć inny wynik na
   baseline — np. istnieć tylko na baseline i failować tam, co nie jest `introduced` z definicji, ale
@@ -252,10 +271,10 @@ tests/unit/backend/services/systemAlertNotifier.test.ts > systemAlertNotifier > 
 
 | Kategoria | Liczba |
 |---|---|
-| identical_pre_existing | 84 testów (celowany pomiar candidate-fails w liniach 1-990 × baseline) |
+| identical_pre_existing | 93 testów (celowany pomiar candidate-fails w liniach 1-1110 × baseline) + 2 flaky (order-dependent, nie regresja) |
 | fixed | 0 |
 | introduced | **2** — `AdminCollaborationControlsPanel.test.tsx > loads controls and merges omitted values with defaults`; `artifactContractParity.test.ts > keeps origin runtime literals aligned` |
-| NOT_VERIFIED | 584 plików candidate (linie 991-1574) + ~1616 plików baseline (poza celowanym pomiarem) |
+| NOT_VERIFIED | 464 plików candidate (linie 1111-1574) + ~1613 plików baseline (poza celowanym pomiarem) |
 
 ## Higiena
 
