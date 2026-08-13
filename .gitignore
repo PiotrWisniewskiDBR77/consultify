@@ -316,3 +316,7 @@ dev-render/.vite-cache/
 benchmark/answers/
 benchmark/results/
 /odbior-uwagi/
+
+# Dowody HAR sa DUZE (setki MB) — trzymamy je na dysku obok zrzutow,
+# nigdy w historii gita. Precedens: S1b 2026-08-13.
+*.har
