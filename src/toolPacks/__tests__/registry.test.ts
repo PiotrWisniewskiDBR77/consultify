@@ -47,11 +47,33 @@ describe('rejestr Tool Packów', () => {
   it('rozdziela stan treści od stanu runtime', () => {
     const { summary } = validateAll(TOOL_PACKS);
     expect(summary.total).toBe(31);
-    expect(summary.packComplete).toBe(1); // dynamic-swot — wzorzec pionowy
-    expect(summary.packNotAuthored).toBe(18); // silnik jest, pack do spisania
+    // 19 packów spisanych z realnych silników (Dynamic SWOT + fala 18)
+    expect(summary.packComplete).toBe(19);
+    expect(summary.packNotAuthored).toBe(0);
     expect(summary.evidenceMissing).toBe(12); // = dokładnie zbiór coming soon
+    // Kompletna treść NIE otwiera runtime — to jest cały sens rozdziału.
     expect(summary.runtimeActive).toBe(0);
     expect(summary.invalid).toBe(0);
+  });
+
+  it('19 spisanych packów pokrywa dokładnie narzędzia z silnikiem', () => {
+    const complete = TOOL_PACKS.filter((p) => p.contentStatus === 'PACK_COMPLETE');
+    expect(complete).toHaveLength(19);
+    complete.forEach((p) => {
+      expect(p.engine, `${p.toolType} bez wiązania z silnikiem`).toBeDefined();
+      expect(p.rights, `${p.toolType} bez rejestru praw`).toBeDefined();
+    });
+  });
+
+  // Rejestr praw: żadne narzędzie nie może twierdzić, że jest prawnie „free".
+  it('żaden pack nie deklaruje „Free" jako statusu prawnego', () => {
+    TOOL_PACKS.filter((p) => p.rights).forEach((p) => {
+      expect(
+        /^free$/i.test(String(p.rights!.commercialUseStatus)),
+        `${p.toolType} deklaruje Free`
+      ).toBe(false);
+      expect(p.rights!.legalReviewStatus).toBe('LEGAL_REVIEW_REQUIRED');
+    });
   });
 
   it('12 narzędzi bez dowodów jest oznaczonych COMING_SOON, nie PENDING', () => {

@@ -6,6 +6,7 @@ import {
   type Bilingual,
   type ToolPack,
 } from '../contract';
+import type { RuntimeReadinessManifest } from '../runtimeReadiness';
 import { validateAll, validateToolPack } from '../validator';
 
 const bi = (pl: string, en: string): Bilingual => ({ pl, en });
@@ -70,6 +71,25 @@ function completePack(overrides: Partial<ToolPack> = {}): ToolPack {
       output: 'Napięcia + rekomendowane ruchy jako niezmienny snapshot.',
       report: 'Sekcja diagnozy w raporcie wykonawczym.',
       initiative: 'Każdy ruch staje się kandydatem na inicjatywę.',
+    },
+    engine: {
+      engineDir: 'src/config/swot',
+      questionBankModule: 'src/config/swot/dynamicSwotQuestionBank.ts',
+      expectedQuestionNodeCount: 17,
+      bankBackedPhaseIds: ['mission'],
+      rendererComponent: 'src/components/DiscoveryTools/tools/DynamicSWOT',
+    },
+    rights: {
+      methodologyName: 'SWOT / TOWS',
+      commonlyAttributedTo: 'Atrybucja rozproszona.',
+      sourceUsed: 'knowledge/tool-kb/dynamic-swot/methodology/v1/dynamic-swot-methodology.pl.md',
+      sourceType: 'REPO_CANON',
+      copiedContent: 'no',
+      trademarkNote: 'Nie znaleziono znaku towarowego.',
+      commercialUseStatus: 'LEGAL_REVIEW_REQUIRED',
+      legalReviewStatus: 'LEGAL_REVIEW_REQUIRED',
+      publicationStatus: 'LEGAL_REVIEW_REQUIRED',
+      uncertainty: 'Brak noty licencyjnej w repo.',
     },
     conclusion: {
       k1FactSource: 'swotTensionEngine — napięcia liczone z zaakceptowanych pozycji.',
@@ -204,6 +224,158 @@ describe('validateToolPack', () => {
     const r = validateToolPack(completePack({ packVersion: 'v1' }));
     expect(r.valid).toBe(false);
     expect(r.issues.some((i) => i.field === 'packVersion')).toBe(true);
+  });
+});
+
+/**
+ * Bramka RUNTIME_ACTIVE po review Codexa (P0).
+ * Wcześniej wystarczyła kompletna treść — narzędzie z zerowym runtime
+ * przechodziło. Teraz wymagany jest manifest dowodów wobec candidate SHA.
+ */
+describe('bramka RUNTIME_ACTIVE — wymaga dowodów, nie deklaracji', () => {
+  const SHA = 'abc1234def';
+
+  function passingManifest(sha = SHA): RuntimeReadinessManifest {
+    return {
+      manifestVersion: '1.0.0',
+      toolType: 'dynamic-swot',
+      gates: {
+        sessionImplemented: 'PASS',
+        persistenceVerified: 'PASS',
+        reopenVerified: 'PASS',
+        rendererImplemented: 'PASS',
+        outputImplemented: 'PASS',
+        reportImplemented: 'PASS',
+        approvalVerified: 'PASS',
+        initiativeHandoffVerified: 'PASS',
+        automatedTestsPassed: 'PASS',
+        manualAcceptancePassed: 'PASS',
+      },
+      lightMpq: 29,
+      darkMpq: 29,
+      hasSignatureSurface: true,
+      evidenceLedgerRefs: ['docs/evidence/swot-light.png'],
+      verifiedAt: '2026-08-13T12:00:00Z',
+      verifiedAgainstSha: sha,
+    };
+  }
+
+  it('ODRZUCA RUNTIME_ACTIVE bez manifestu (dawna dziura)', () => {
+    const r = validateToolPack(
+      completePack({ runtimeStatus: 'RUNTIME_ACTIVE' }),
+      SHA
+    );
+    expect(r.publishableAsActive).toBe(false);
+    expect(r.issues.some((i) => i.field === 'runtimeReadiness')).toBe(true);
+  });
+
+  it('ODRZUCA, gdy choć jedna bramka nie jest PASS', () => {
+    const m = passingManifest();
+    m.gates.manualAcceptancePassed = 'NOT_RUN';
+    const r = validateToolPack(
+      completePack({ runtimeStatus: 'RUNTIME_ACTIVE', runtimeReadiness: m }),
+      SHA
+    );
+    expect(r.publishableAsActive).toBe(false);
+    expect(r.issues.some((i) => i.message.includes('manualAcceptancePassed'))).toBe(true);
+  });
+
+  it('ODRZUCA dowody z innego SHA (zestarzały manifest)', () => {
+    const r = validateToolPack(
+      completePack({ runtimeStatus: 'RUNTIME_ACTIVE', runtimeReadiness: passingManifest('stary999') }),
+      SHA
+    );
+    expect(r.publishableAsActive).toBe(false);
+    expect(r.issues.some((i) => i.message.includes('nieaktualny'))).toBe(true);
+  });
+
+  it('ODRZUCA MPQ poniżej progu dla powierzchni sygnaturowej', () => {
+    const m = passingManifest();
+    m.darkMpq = 27; // próg sygnaturowy to 29
+    const r = validateToolPack(
+      completePack({ runtimeStatus: 'RUNTIME_ACTIVE', runtimeReadiness: m }),
+      SHA
+    );
+    expect(r.publishableAsActive).toBe(false);
+    expect(r.issues.some((i) => i.message.includes('darkMpq'))).toBe(true);
+  });
+
+  it('ODRZUCA brak trwałych dowodów', () => {
+    const m = passingManifest();
+    m.evidenceLedgerRefs = [];
+    const r = validateToolPack(
+      completePack({ runtimeStatus: 'RUNTIME_ACTIVE', runtimeReadiness: m }),
+      SHA
+    );
+    expect(r.publishableAsActive).toBe(false);
+  });
+
+  it('PRZEPUSZCZA dopiero przy komplecie dowodów wobec bieżącego SHA', () => {
+    const r = validateToolPack(
+      completePack({ runtimeStatus: 'RUNTIME_ACTIVE', runtimeReadiness: passingManifest() }),
+      SHA
+    );
+    expect(r.issues.filter((i) => i.severity === 'error')).toHaveLength(0);
+    expect(r.publishableAsActive).toBe(true);
+  });
+});
+
+describe('walidacja treści PACK_COMPLETE (P1)', () => {
+  it('wymaga wiązania z silnikiem i bankiem pytań', () => {
+    const r = validateToolPack(completePack({ engine: undefined }));
+    expect(r.valid).toBe(false);
+    expect(r.issues.some((i) => i.field === 'engine')).toBe(true);
+  });
+
+  it('wymaga rejestru praw', () => {
+    const r = validateToolPack(completePack({ rights: undefined }));
+    expect(r.valid).toBe(false);
+    expect(r.issues.some((i) => i.field === 'rights')).toBe(true);
+  });
+
+  it('ZABRANIA wpisania „Free" jako wniosku prawnego', () => {
+    const pack = completePack();
+    pack.rights!.commercialUseStatus = 'Free';
+    const r = validateToolPack(pack);
+    expect(r.valid).toBe(false);
+    expect(r.issues.some((i) => i.field === 'rights.commercialUseStatus')).toBe(true);
+  });
+
+  it('wymaga zadeklarowania rozmiaru banku pytań', () => {
+    const pack = completePack();
+    pack.engine!.expectedQuestionNodeCount = 0;
+    const r = validateToolPack(pack);
+    expect(r.valid).toBe(false);
+    expect(r.issues.some((i) => i.field === 'engine.expectedQuestionNodeCount')).toBe(true);
+  });
+
+  it('wykrywa fazę banku, która nie istnieje w packu', () => {
+    const pack = completePack();
+    pack.engine!.bankBackedPhaseIds = ['nie-ma'];
+    const r = validateToolPack(pack);
+    expect(r.valid).toBe(false);
+    expect(r.issues.some((i) => i.field === 'engine.bankBackedPhaseIds')).toBe(true);
+  });
+
+  it('wymaga zastosowań i przeciwwskazań', () => {
+    expect(validateToolPack(completePack({ useCases: [] })).valid).toBe(false);
+    expect(validateToolPack(completePack({ contraindications: [] })).valid).toBe(false);
+  });
+
+  it('wymaga reguły challenge w każdym pytaniu', () => {
+    const pack = completePack();
+    pack.questions[0].challengeRule = EVIDENCE_MISSING;
+    const r = validateToolPack(pack);
+    expect(r.valid).toBe(false);
+    expect(r.issues.some((i) => i.field === 'questions[0].challengeRule')).toBe(true);
+  });
+
+  it('wymaga kompletu pól każdej fazy', () => {
+    const pack = completePack();
+    pack.phases[0].completionCriterion = EVIDENCE_MISSING;
+    const r = validateToolPack(pack);
+    expect(r.valid).toBe(false);
+    expect(r.issues.some((i) => i.field === 'phases[0].completionCriterion')).toBe(true);
   });
 });
 
