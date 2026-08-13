@@ -544,7 +544,10 @@ export function deckDocumentFromUnifiedJson(params: {
     deckId: params.deckId,
     organization_id: params.organizationId,
     title: params.title,
-    theme_id: setup.theme || params.unifiedJson.meta.template || 'corporate',
+    // Legacy and imported decks can contain a valid `slides` array without the
+    // optional `meta` envelope. Listing one such deck must not take down the
+    // entire canonical artifact registry (and therefore Documents/Sheets too).
+    theme_id: setup.theme || params.unifiedJson.meta?.template || 'corporate',
     presentation_mode: setup.presentationMode || 'briefing',
     communication_register: setup.communicationRegister || 'professional',
     image_style_preset: setup.imageStylePreset || 'minimal_no_images',
@@ -556,9 +559,9 @@ export function deckDocumentFromUnifiedJson(params: {
     generation_settings: {
       text_mode: setup.textMode || 'generate',
       content_depth: setup.contentDepth || 'concise',
-      audience: setup.audience || params.unifiedJson.meta.client || 'executive',
+      audience: setup.audience || params.unifiedJson.meta?.client || 'executive',
       tone: setup.communicationRegister || 'professional',
-      language: setup.language || params.unifiedJson.meta.language || 'en',
+      language: setup.language || params.unifiedJson.meta?.language || 'en',
       image_source: setup.imageSource || 'smart',
       additional_instructions: setup.additionalInstructions || undefined,
     },
@@ -570,9 +573,9 @@ export function deckDocumentFromUnifiedJson(params: {
       deckType: setup.deckType || 'custom',
       audience: setup.audience || null,
       goal: setup.goal || null,
-      language: setup.language || params.unifiedJson.meta.language,
-      confidentiality: setup.confidentiality || params.unifiedJson.meta.confidentiality,
-      theme: setup.theme || params.unifiedJson.meta.template || null,
+      language: setup.language || params.unifiedJson.meta?.language,
+      confidentiality: setup.confidentiality || params.unifiedJson.meta?.confidentiality,
+      theme: setup.theme || params.unifiedJson.meta?.template || null,
       presentationMode: setup.presentationMode || null,
       communicationRegister: setup.communicationRegister || null,
     },

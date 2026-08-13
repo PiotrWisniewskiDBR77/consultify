@@ -34,6 +34,18 @@ const baseSlide = (overrides: Partial<UnifiedSlide>): UnifiedSlide => ({
 });
 
 describe('deckDocumentFromUnifiedJson — audit flag propagation (S16)', () => {
+  it('accepts legacy unified JSON with slides but no meta envelope', () => {
+    const doc = deckDocumentFromUnifiedJson({
+      deckId: 'legacy-deck',
+      organizationId: 'org-1',
+      title: 'Legacy import',
+      unifiedJson: { slides: [baseSlide({})] } as UnifiedReportJSON,
+    });
+
+    expect(doc.theme_id).toBe('corporate');
+    expect(doc.cards).toHaveLength(1);
+  });
+
   it('omits audit_flags on cards whose UnifiedSlide carries no flags', () => {
     const doc = deckDocumentFromUnifiedJson({
       deckId: 'deck-1',
