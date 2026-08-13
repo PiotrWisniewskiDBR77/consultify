@@ -1,3 +1,20 @@
+-- ═══════════════════════════════════════════════════════════════════════
+-- KOLEJNOŚĆ: ten plik jest krokiem 1/4 rodziny `20260813_method_core_*`.
+--
+-- Numer w nazwie NIE jest ozdobą. Runner (`server/scripts/migrate.postgres.ts`,
+-- `compareMigrationOrder`) sortuje pliki o tej samej dacie LEKSYKALNIE po nazwie.
+-- Bez tego numeru kolejność była: http_idempotency → kernel → demo_status →
+-- outputs, czyli KONSUMENT PRZED PRODUCENTEM w dwóch miejscach naraz:
+--   • `..._http_idempotency` ma FK do `method_sessions`, którą tworzy `..._kernel`
+--   • `..._demo_status` robi ALTER na `method_outputs`, którą tworzy `..._outputs`
+--
+-- Skutek: instalacja OD ZERA padała na
+-- `relation "method_sessions" does not exist`. Biegi przyrostowe tego NIE
+-- pokazywały, bo każdy plik dochodził osobno, już po swoim producencie.
+--
+-- Dodając kolejny plik do tej rodziny — nadaj mu następny numer.
+-- ═══════════════════════════════════════════════════════════════════════
+
 -- Shared Method Kernel — runtime tables (Method Assessment Core, agent A2).
 --
 -- Method-agnostic persistence layer behind src/method-core/contracts/*.
