@@ -76,3 +76,6 @@ export {
 } from './initiativeDraft';
 
 export { markRecordSuperseded, wrapAsCurrent } from './supersession';
+
+export { buildPresentationBlocksFromOutput } from './presentationFromOutput';
+export type { BuildPresentationBlocksOptions } from './presentationFromOutput';

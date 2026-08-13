@@ -210,22 +210,35 @@ function TextList({ title, items }: { title: string; items: readonly string[] })
 export const MethodReportView: React.FC<MethodReportViewProps> = ({ report, findings, methodName, className = '' }) => {
   const sortedRows = [...report.unitResults].sort((a, b) => (b.gap ?? -1) - (a.gap ?? -1));
   const findingsByGap = [...findings].sort((a, b) => (b.gap ?? -1) - (a.gap ?? -1));
+  // Dowody liczone po UNIKALNYM identyfikatorze — ten sam dokument
+  // podpięty pod trzy wnioski to jeden dowód, nie trzy.
+  const evidenceCount = new Set(
+    findings.flatMap((f) => f.supportingEvidence.map((e) => e.evidenceId))
+  ).size;
 
   return (
     <div data-testid="method-report-view" className={`mx-auto max-w-3xl px-8 py-10 text-c-text ${className}`}>
       {/* Header — document, not dashboard chrome */}
+      {/*
+        ★ Nagłówek dokumentu to WNIOSEK, nie etykieta zakresu.
+        Do 2026-08-13 `<h1>` niósł `report.scope` („Sesja <uuid> — drd@2.0.0…"),
+        a prawdziwy wniosek był zepchnięty do akapitu pod spodem. To odwrotność
+        kanonu materiału doradczego — i niespójność wewnątrz jednego builda, bo
+        `MethodPresentationView` (ten sam autor, ten sam dzień) robił to już
+        poprawnie. Zakres schodzi do metadanych, gdzie jego miejsce.
+      */}
       <header className="mb-8 border-b border-c-border pb-6">
         <p className="text-xs font-medium uppercase tracking-wide text-c-info">{methodName}</p>
-        <h1 className="mt-1 text-2xl font-bold leading-tight text-c-text">{report.scope}</h1>
+        <h1
+          className="mt-1 text-2xl font-bold leading-tight text-c-text"
+          data-testid="report-action-title"
+        >
+          {report.executiveSummary}
+        </h1>
         <p className="mt-2 text-xs text-c-text-muted">
-          Metodyka {report.methodology.methodPackId} {report.methodology.version} · Uczestnicy: {report.participants.join(', ') || '—'}
+          {report.scope} · Metodyka {report.methodology.methodPackId} {report.methodology.version} · Uczestnicy: {report.participants.join(', ') || '—'}
         </p>
       </header>
-
-      {/* Executive summary — the governing thought of the whole document */}
-      <p className="mb-10 text-lg leading-relaxed text-c-text" data-testid="report-executive-summary">
-        {report.executiveSummary}
-      </p>
 
       {/* ONE dominant geometry: gap chart across every unit, worst gap first */}
       <section className="mb-10" aria-label="Bieżący vs docelowy poziom, wszystkie jednostki">
@@ -258,8 +271,22 @@ export const MethodReportView: React.FC<MethodReportViewProps> = ({ report, find
         </div>
       )}
 
-      <footer className="mt-10 border-t border-c-border-subtle pt-4 text-[11px] text-c-text-muted">
-        Output {report.outputId} · wersja {report.outputVersion} · wygenerowano {new Date(report.createdAt).toLocaleDateString('pl-PL')}
+      {/*
+        ★ Stopka kanonu materiału doradczego: liczba dowodów źródłowych +
+        klauzula poufności + data. Do 2026-08-13 były tu tylko id i wersja —
+        mimo że `MethodPresentationView` miał komplet. Klient musi widzieć,
+        na ilu dowodach stoi dokument i czy wolno go przekazać dalej.
+      */}
+      <footer className="mt-10 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-c-border-subtle pt-4 text-[11px] text-c-text-muted">
+        <span data-testid="report-evidence-count">
+          {evidenceCount} {evidenceCount === 1 ? 'dowód źródłowy' : evidenceCount % 10 >= 2 && evidenceCount % 10 <= 4 && (evidenceCount % 100 < 10 || evidenceCount % 100 >= 20) ? 'dowody źródłowe' : 'dowodów źródłowych'}
+        </span>
+        <span aria-hidden="true">·</span>
+        <span data-testid="report-confidentiality">🔒 Materiał dla klienta</span>
+        <span aria-hidden="true">·</span>
+        <span>Stan na {new Date(report.createdAt).toLocaleDateString('pl-PL')}</span>
+        <span aria-hidden="true">·</span>
+        <span>Output {report.outputId} · wersja {report.outputVersion}</span>
       </footer>
     </div>
   );

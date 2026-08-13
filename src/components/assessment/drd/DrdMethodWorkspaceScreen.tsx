@@ -18,6 +18,9 @@ import { AlertTriangle, ArrowLeft, FileText, Lightbulb, Lock, RotateCcw } from '
 import React, { useCallback, useMemo, useState } from 'react';
 
 import { MethodWorkspaceShell } from '@/components/method-workspace/MethodWorkspaceShell';
+import { MethodReportView } from '@/components/method-workspace/MethodReportView';
+import { MethodPresentationView } from '@/components/method-workspace/MethodPresentationView';
+import { buildPresentationBlocksFromOutput } from '@/method-core/outputs';
 import { StandardTable } from '@/components/standard/StandardTable';
 import type {
   InterviewFocusQuestion,
@@ -665,6 +668,19 @@ const FrozenOutputView: React.FC<{
 }> = ({ session, outputRecord, reports, initiatives, actorUserId, setActorUserId, lastRefusal, onGenerateReport, onGenerateInitiative, onReopen, onExit }) => {
   const output = outputRecord?.content ?? null;
   const currentReport = reports.find((r) => r.status === 'current')?.content ?? null;
+  // Nazwy jednostek podaje warstwa DRD — `buildPresentationBlocksFromOutput`
+  // jest metodyko-agnostyczny i nie zna struktury DRD.
+  const drdUnitNames = React.useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const axis of DRD_STRUCTURE) {
+      for (const area of axis.areas) map[area.id] = area.namePL || area.name;
+    }
+    return map;
+  }, []);
+  const presentationBlocks = React.useMemo(
+    () => (output ? buildPresentationBlocksFromOutput(output, { unitNames: drdUnitNames }) : []),
+    [output, drdUnitNames]
+  );
 
   return (
     <div className="flex h-full flex-col overflow-y-auto bg-c-bg p-6" data-testid="drd-frozen-output-view">
@@ -744,13 +760,46 @@ const FrozenOutputView: React.FC<{
         {!currentReport ? (
           <p className="text-xs text-c-text-muted">Brak wygenerowanego raportu.</p>
         ) : (
-          <div className="space-y-1 text-xs text-c-text-secondary">
-            <p className="text-c-text">{currentReport.executiveSummary}</p>
-            <p>Wynik ogólny: {currentReport.overallResult ?? '—'}</p>
-            <p>Uczestnicy: {currentReport.participants.join(', ')}</p>
-            <p>Rekomendacje: {currentReport.recommendations.join(' · ') || '—'}</p>
-            <p className="text-c-text-muted">Renderowane ze snapshotu Outputu v{currentReport.outputVersion} — zmiana sesji po freeze nie zmieni tego raportu.</p>
-          </div>
+          <>
+            {/*
+              ★ Do 2026-08-13 renderowały się tu cztery gołe <p> z tekstem, a
+              gotowy, przetestowany `MethodReportView` był OSIEROCONY — zero
+              callerów produkcyjnych, tylko barrel i testy. Niezależny audyt MPQ
+              wycenił to, co widział klient, na 13/30 przy progu 29, podczas gdy
+              nieużywany komponent dostawał 27-30/30. Klient oglądał panel
+              debugowy zamiast dokumentu.
+            */}
+            <MethodReportView
+              report={currentReport}
+              findings={output?.findings ?? []}
+              methodName="DRD"
+            />
+            <p className="mt-2 text-[11px] text-c-text-muted">
+              Renderowane ze snapshotu Outputu v{currentReport.outputVersion} — zmiana sesji po freeze nie zmieni tego raportu.
+            </p>
+          </>
+        )}
+      </section>
+
+      {/*
+        Presentation — ★ ta sekcja NIE ISTNIAŁA w produkcji do 2026-08-13.
+        Niezależny audyt MPQ zapisał ją jako NOT_IMPLEMENTED: ani ekranu, ani
+        sekcji, ani linku. `MethodPresentationView` był gotowy i oceniony na
+        30/30, ale osierocony. Bloki wyprowadza `buildPresentationBlocksFromOutput`
+        — treść slajdów to słowa findingów, nic nie jest tu dopisywane.
+      */}
+      <section data-testid="presentation-panel" className="mb-6 rounded-xl border border-c-border bg-c-surface p-4">
+        <div className="mb-2 flex items-center gap-2">
+          <FileText size={14} className="text-c-text-secondary" />
+          <h2 className="text-sm font-semibold text-c-text">Prezentacja dla klienta</h2>
+        </div>
+        {presentationBlocks.length === 0 ? (
+          <p className="text-xs text-c-text-muted">
+            Brak zatwierdzonych wniosków — prezentacja dla klienta powstaje wyłącznie
+            z treści zaakceptowanej.
+          </p>
+        ) : (
+          <MethodPresentationView blocks={presentationBlocks} methodName="DRD" />
         )}
       </section>
 

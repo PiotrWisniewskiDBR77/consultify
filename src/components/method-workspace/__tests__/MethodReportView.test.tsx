@@ -83,11 +83,32 @@ describe('MethodReportView', () => {
     expect(nodes.size).toBe(3);
   });
 
-  it('renders the executive summary as the governing statement of the document', () => {
+  it('★ tytuł dokumentu to WNIOSEK, a nie etykieta zakresu', () => {
     const { report, output } = buildSnapshot();
     render(<MethodReportView report={report} findings={output.findings} methodName="DRD" />);
-    expect(screen.getByTestId('report-executive-summary')).toHaveTextContent(
-      'Organizacja jest na wczesnym etapie transformacji cyfrowej.'
-    );
+
+    // Do 2026-08-13 <h1> niósł `report.scope` („Sesja <uuid> — drd@2.0.0…"),
+    // a wniosek był akapitem pod spodem. Niezależny audyt MPQ wskazał to jako
+    // odwrotność kanonu materiału doradczego.
+    const title = screen.getByTestId('report-action-title');
+    expect(title.tagName).toBe('H1');
+    expect(title).toHaveTextContent('Organizacja jest na wczesnym etapie transformacji cyfrowej.');
+    // ...a zakres schodzi do metadanych, nie znika.
+    expect(title).not.toHaveTextContent(report.scope);
+    expect(screen.getByText(new RegExp(report.scope.slice(0, 20)))).toBeInTheDocument();
+  });
+
+  it('★ stopka niesie liczbę dowodów i klauzulę poufności', () => {
+    const { report, output } = buildSnapshot();
+    render(<MethodReportView report={report} findings={output.findings} methodName="DRD" />);
+
+    // Oba elementy kanonu były w `MethodPresentationView`, ale brakowało ich
+    // tutaj — klient musi wiedzieć, na ilu dowodach stoi dokument i czy wolno
+    // go przekazać dalej.
+    const unique = new Set(
+      output.findings.flatMap((f) => f.supportingEvidence.map((e) => e.evidenceId))
+    ).size;
+    expect(screen.getByTestId('report-evidence-count')).toHaveTextContent(String(unique));
+    expect(screen.getByTestId('report-confidentiality')).toHaveTextContent('Materiał dla klienta');
   });
 });

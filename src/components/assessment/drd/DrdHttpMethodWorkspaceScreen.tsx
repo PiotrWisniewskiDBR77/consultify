@@ -803,7 +803,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
         onOpenRoles={() => setUtilityPanel('roles')}
         onCloseUtility={() => setUtilityPanel(null)}
         onGenerateReport={() =>
-          runtime?.generateReport({
+          void runtime?.generateReport({
             title: 'Raport DRD',
             content: {
               executiveSummary: 'Sesja DRD — wynik cząstkowy.',
@@ -811,15 +811,20 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
               strengths: ['Proces sprzedaży ma podstawową dokumentację.'],
             },
           })
+            // Błąd jest już widoczny przez `state.actionError` — tu tylko
+            // domykamy obietnicę, żeby nie było unhandled rejection.
+            .catch(() => undefined)
         }
         onGenerateInitiative={() =>
-          runtime?.generateInitiativeDraft({
+          void runtime
+            ?.generateInitiativeDraft({
             title: 'Domknij automatyzację procesu sprzedaży w CRM',
             findingIds: (state.output?.findings ?? []).map((f) => f.id),
             rationale: 'Znaleziska Outputu wskazują lukę między current a target.',
             expectedOutcome: 'Podniesienie poziomu dojrzałości.',
             confidence: 'medium',
-          })
+            })
+            .catch(() => undefined)
         }
         onExit={onExit ?? (() => {})}
       />
@@ -853,6 +858,18 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
         <span>Sesja DRD przez HTTP — {DRD_METHOD_PACK_ID} — demo bypass gotowości packa (methodology_review), jak w legacy runtime.</span>
         <DrdSourceIndicator source={sourceKind} title={sourceKindTitle[sourceKind]} />
       </div>
+      {/* ★ Błąd pojedynczej akcji — sesja jest zdrowa, więc NIE chowamy warsztatu.
+          Do 2026-08-13 nieudane generowanie raportu ginęło bez śladu (defekt #14
+          z realnego E2E: 500 -> unhandled rejection -> zero informacji na ekranie). */}
+      {state.actionError && (
+        <div role="alert" data-testid="action-error" className="flex items-center gap-2 border-b border-c-danger/30 bg-c-danger/10 px-4 py-1.5 text-xs text-c-danger">
+          <AlertTriangle size={12} />
+          {state.actionError}
+          <button type="button" onClick={() => runtime?.dismissActionError()} className="ml-auto rounded border border-c-danger/40 px-2 py-0.5 font-semibold hover:bg-c-danger/20">
+            Zamknij
+          </button>
+        </div>
+      )}
       {state.status === 'error' && state.error && (
         <div role="alert" className="flex items-center gap-2 border-b border-c-danger/30 bg-c-danger/10 px-4 py-1.5 text-xs text-c-danger">
           <AlertTriangle size={12} />

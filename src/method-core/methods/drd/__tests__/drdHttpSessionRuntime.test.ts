@@ -304,6 +304,37 @@ describe('409 conflict — never silently overwritten', () => {
 // hand-built state snapshots, is faster and more precise than re-deriving
 // the same coverage through a full mocked HTTP sequence for every state.
 // ---------------------------------------------------------------------------
+describe('★ defekt #14 z realnego E2E — nieudana akcja MUSI zostawić ślad na ekranie', () => {
+  it('generateReport() przy 500 ustawia actionError, nie znika po cichu', async () => {
+    const storage = makeMemoryStorage();
+    hoisted.getSession.mockResolvedValue({ session: makeSession({ state: 'frozen' }), roles: ['owner'] });
+    hoisted.listEvents.mockResolvedValue([]);
+    hoisted.getOutput.mockResolvedValue({ output: { id: 'out-1', version: 1, contentHash: 'h', findings: [] } });
+
+    const runtime = new DrdHttpSessionRuntime('sess-1', storage);
+    await runtime.refresh();
+    // wstrzykujemy Output, bo generateReport go wymaga
+    (runtime as unknown as { state: Record<string, unknown> }).state = {
+      ...runtime.getState(),
+      output: { id: 'out-1', version: 1, contentHash: 'h', findings: [] },
+    };
+
+    hoisted.createReport.mockRejectedValue(new Error('HTTP 500'));
+
+    // Do 2026-08-13: unhandled rejection i ZERO informacji dla użytkownika.
+    await expect(
+      runtime.generateReport({ title: 'R', content: { executiveSummary: 'x' } })
+    ).rejects.toThrow();
+
+    expect(runtime.getState().actionError).toContain('Nie udało się wygenerować raportu');
+    // Sesja pozostaje zdrowa — baner akcji nie chowa warsztatu.
+    expect(runtime.getState().status).not.toBe('error');
+
+    runtime.dismissActionError();
+    expect(runtime.getState().actionError).toBeNull();
+  });
+});
+
 describe('CEL 4 — deriveDrdSourceKind: the eight visible states', () => {
   const base: import('../drdHttpSessionRuntime').DrdHttpRuntimeState = {
     status: 'ready',
@@ -311,6 +342,7 @@ describe('CEL 4 — deriveDrdSourceKind: the eight visible states', () => {
     roles: [],
     events: [],
     error: null,
+    actionError: null,
     serverVersion: null,
     conflictDetail: null,
     pendingWriteCount: 0,

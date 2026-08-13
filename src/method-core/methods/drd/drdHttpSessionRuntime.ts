@@ -133,6 +133,17 @@ export interface DrdHttpRuntimeState {
   readonly roles: readonly MethodProcessRole[];
   readonly events: readonly MethodEvent[];
   readonly error: string | null;
+  /**
+   * Błąd POJEDYNCZEJ akcji (generowanie raportu, inicjatywy), oddzielony od
+   * `error`/`status`.
+   *
+   * ★ Bez tego pola nieudane `generateReport()` kończyło się unhandled promise
+   * rejection i ZEROWYM śladem na ekranie — użytkownik klikał „Generuj raport",
+   * serwer zwracał 500, a UI wyglądało tak, jakby nic się nie stało (defekt #14
+   * z realnego E2E). Nie używamy do tego `status:'error'`, bo to przełącza cały
+   * ekran w widok błędu i chowa warsztat — a sesja jest przecież zdrowa.
+   */
+  readonly actionError: string | null;
   /** Present only when status === 'conflict' — the version the server has
    * right now, so the UI can show "server has vN, you have vM" and offer a
    * refresh instead of silently overwriting. */
@@ -301,6 +312,7 @@ export class DrdHttpSessionRuntime {
     roles: [],
     events: [],
     error: null,
+    actionError: null,
     serverVersion: null,
     conflictDetail: null,
     pendingWriteCount: 0,
@@ -655,18 +667,32 @@ export class DrdHttpSessionRuntime {
     if (!this.state.output) {
       throw new Error('drd-http-runtime: cannot generate a Report Snapshot without a loaded Output');
     }
-    const report = await createReport(this.state.output.id, input);
-    this.setState({ reports: [...this.state.reports, report] });
-    return report;
+    try {
+      const report = await createReport(this.state.output.id, input);
+      this.setState({ reports: [...this.state.reports, report], actionError: null });
+      return report;
+    } catch (err) {
+      this.setState({
+        actionError: `Nie udało się wygenerować raportu: ${err instanceof Error ? err.message : 'nieznany błąd'}.`,
+      });
+      throw err;
+    }
   }
 
   async generateInitiativeDraft(input: CreateInitiativeDraftRequest): Promise<unknown> {
     if (!this.state.output) {
       throw new Error('drd-http-runtime: cannot generate an Initiative Proposal Draft without a loaded Output');
     }
-    const draft = await createInitiativeDraft(this.state.output.id, input);
-    this.setState({ initiatives: [...this.state.initiatives, draft] });
-    return draft;
+    try {
+      const draft = await createInitiativeDraft(this.state.output.id, input);
+      this.setState({ initiatives: [...this.state.initiatives, draft], actionError: null });
+      return draft;
+    } catch (err) {
+      this.setState({
+        actionError: `Nie udało się wygenerować propozycji inicjatywy: ${err instanceof Error ? err.message : 'nieznany błąd'}.`,
+      });
+      throw err;
+    }
   }
 
   // -- Teresa --------------------------------------------------------------
@@ -820,6 +846,11 @@ export class DrdHttpSessionRuntime {
   /** Clears the transient "recovered" banner back to the plain SERVER state
    * without any further network call — `refresh()` already ran at the end
    * of a successful `retryPending()`, this only dismisses the notice. */
+  /** Gasi baner błędu akcji. Nie dotyka stanu sesji ani danych. */
+  dismissActionError(): void {
+    if (this.state.actionError) this.setState({ actionError: null });
+  }
+
   acknowledgeRecovered(): void {
     if (this.state.status === 'recovered') this.setState({ status: 'ready' });
   }
