@@ -27,7 +27,7 @@ npm run test:method-core:front    # --exclude 'server/**'
 | Bramka | Exit | Wynik |
 | --- | ---: | --- |
 | serwer (realny PostgreSQL) | **0** | **170 / 170** (14 plików) |
-| front | **0** | **323 / 331** (8 skipped = testy live za flagą `RUN_TERESA_LIVE_TESTS`) |
+| front | **0** | **329 / 337** (8 skipped = testy live za flagą `RUN_TERESA_LIVE_TESTS`) |
 | obszary dotknięte (szerzej niż bramka) | **0** | **526 / 534** |
 | instalacja od zera (świeży kontener) | **0** | 6 migracji `method_core` w kolejności, **14 tabel `method_*` potwierdzonych w `information_schema`** — nie kodem wyjścia |
 | SIRI | **0** | **61 / 61** |
@@ -77,7 +77,7 @@ tym łatwiej było go przyjąć — powtórzone na właściwej parze logów.
 | **CEL 9** — SIRI | **DOWIEZIONE technicznie** | 16D×Bands 0–5, no-leapfrog z komunikatem, **80:20 jawnie widoczne** z cytatem `Module 5 §3.7`, rationale wymagane, assessor proponuje / uczestnik zatwierdza, TIER na osobnym ekranie. **0/16 wymiarów ma treść** — `EVIDENCE_MISSING`, licencja nietknięta |
 | **CEL 10** — migracje i regresja | **DOWIEZIONE** | fail-closed (`RUN_DB_TESTS`, `MOCK_DB`, realny PG, `current_database()`, `current_schema()`); kontrola negatywna **z plikiem kontrolnym** dowodzącym, że detektor nie jest tautologią; pre-existing dowiedzione przebiegiem na `origin/demo` (`diff` = 0) |
 | **CEL 1** — DRD jako produkt | **DOWIEZIONE** | pełny E2E **19/19 PASS** z **dwoma restartami API+FE** (#1 9022 ms, #2 9024 ms), **bez ani jednego ręcznego SQL**. `POST /sessions/:id/reopen` przez HTTP; lineage potwierdzony SQL-em: sesja root `frozen` + dwie rewizje wskazujące na nią, Output v2 z `revision_of_output_id` → v1, `contentHash` zamrożonego Output **identyczny przed i po reopen** |
-| **A10** | **WYKONANY** | pierwszy odbiór przez Sonnet (reguła #7), **109 zrzutów**, rejestr: 0×P0, 2×P1, 3×P2, 14 PASS, 6 NOT VERIFIED |
+| **A10** | **WYKONANY** | pierwszy odbiór przez Sonnet (reguła #7), **109 zrzutów**, rejestr: 0×P0, 2×P1, 3×P2, 14 PASS, 6 NOT VERIFIED. **D1/D3/D4 naprawione**, D2 otwarty |
 | **CEL 8** — MPQ | **CZĘŚCIOWO** | Report Light/Dark **30/30 PASS**, Presentation Light/Dark **30/30 PASS**, **Work View 22/30 FAIL** (próg 27) |
 
 ---
@@ -110,6 +110,20 @@ To było **przeszacowane** i prostuję to tutaj, zanim ktokolwiek się na tym op
 `debugForceState`" nie było formalnością — samo w sobie wykryło brakującą funkcję,
 której nie widziało 305 zielonych testów.
 
+### ★ Dwa defekty zaufania z A10 — naprawione, bo obie kłamały użytkownikowi
+
+| Defekt | Co widział użytkownik | Dlaczego to groźne |
+| --- | --- | --- |
+| **D4** — „Gotowe do zamrożenia" | zielony napis przy **1/39** odpowiedzianych jednostek | Technicznie prawda (zamrozić się dało — brak blokerów), ale czytało się jako **„ocena skończona"**. Prosta droga do zamrożenia pustej oceny u klienta. Kanon: **pewność nie zastępuje kompletności**. Teraz zielone tylko przy pełnym pokryciu, inaczej neutralne „Brak blokerów — ocena niekompletna (1/39)". |
+| **D3** — cztery martwe przyciski | „Przypisz pytanie", „Poproś o dowód"… klik → **nic** | Wszystkie trzy ekrany podawały `onResolutionAction: () => {}`. Martwy przycisk jest **gorszy niż jego brak**: kosztuje zaufanie dokładnie w chwili, gdy użytkownik przyznaje się do luki wiedzy. Teraz `availableActions` jest **wymagane** — nowy ekran musi zadeklarować, co umie. |
+
+★ **D4 nie był pokryty żadnym testem, a domyślny fixture to `12/39` z zerem blokerów** —
+fixture kodował scenariusz defektu i nikt na niego nie patrzył. Sprawdziłem, że nowy test
+**nie jest pusty**: na starej logice **pada**, na nowej przechodzi.
+
+★ Przy D3 wymagalność propu natychmiast wywaliła kompilator na 6 miejscach —
+**ta friction była celem**, nie efektem ubocznym.
+
 ### Znalezione przez Opusa przy integracji
 
 | Defekt | Dlaczego agent nie mógł go zobaczyć |
@@ -129,7 +143,8 @@ której nie widziało 305 zielonych testów.
 | **treść metodyczna DRD** | **BLOCKED** | `misScoringTraps` 0/233, pola pomocy pytania 0/699 — **brak źródła w repo**; uzupełnia właściciel metodyki, nie AI (COORD-07) |
 | **treść metodyczna SIRI** | **BLOCKED licencyjnie** | Module 2 str. 32–69 — „no part may be reproduced"; 0/16 wymiarów, `readiness` = `draft` |
 | **prawdziwy ekran Library** | NOT VERIFIED | istniejący `screen=library` to jawny harness zrzutowy, nie produkcyjny ekran |
-| **D2/D3/D4 z A10** | zgłoszone (P2) | hydratacja `LiveMatrix`; `onResolutionAction` pusty stub; „Gotowe do zamrożenia" przy 1/39 dowodów |
+| **akcje `assign_question` / `request_evidence`** | **NIE DOWIEZIONE — jawnie** | wymagają przepływów, których nie ma. **Nie wymyślam ich.** Przyciski nie są renderowane, zamiast być renderowane i nic nie robić |
+| **D2 z A10** | otwarte (P2) | ostrzeżenie hydratacji `LiveMatrix` |
 
 ---
 
