@@ -93,7 +93,13 @@ export function validateToolPack(pack: ToolPack): ValidationResult {
     err('packVersion', 'packVersion musi mieć postać semver (np. 1.0.0).');
   }
 
-  const declaredMissing = pack.contentStatus === 'EVIDENCE_MISSING';
+  /**
+   * Packi jeszcze niespisane i te bez dowodów wolno trzymać na placeholderach.
+   * Różnią się WYŁĄCZNIE raportowaniem — walidacja jest dla nich tak samo łagodna,
+   * a bramka publikacji tak samo twarda.
+   */
+  const declaredMissing =
+    pack.contentStatus === 'EVIDENCE_MISSING' || pack.contentStatus === 'PACK_NOT_AUTHORED';
 
   // --- Library ---
   for (const field of LIBRARY_FIELDS) {
@@ -216,6 +222,7 @@ export function validateAll(packs: ToolPack[]): {
   summary: {
     total: number;
     packComplete: number;
+    packNotAuthored: number;
     evidenceMissing: number;
     runtimeActive: number;
     invalid: number;
@@ -227,6 +234,7 @@ export function validateAll(packs: ToolPack[]): {
     summary: {
       total: packs.length,
       packComplete: packs.filter((p) => p.contentStatus === 'PACK_COMPLETE').length,
+      packNotAuthored: packs.filter((p) => p.contentStatus === 'PACK_NOT_AUTHORED').length,
       evidenceMissing: packs.filter((p) => p.contentStatus === 'EVIDENCE_MISSING').length,
       runtimeActive: packs.filter((p) => p.runtimeStatus === 'RUNTIME_ACTIVE').length,
       invalid: results.filter((r) => !r.valid).length,
