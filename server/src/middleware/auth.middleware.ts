@@ -607,6 +607,16 @@ const attachUser = async (
   );
   const isDemoHeader =
     normalizeOptionalStringClaim(safeGetHeader(req, 'X-Demo-Mode'))?.toLowerCase() === 'true';
+  const requestHost = (
+    normalizeOptionalStringClaim(safeGetHeader(req, 'x-forwarded-host')) ||
+    normalizeOptionalStringClaim(safeGetHeader(req, 'host')) ||
+    ''
+  )
+    .split(',')[0]
+    .trim()
+    .split(':')[0]
+    .toLowerCase();
+  const isCanonicalDemoHost = requestHost === 'demo.consultify.ai';
   const requestedOrgContextId =
     normalizeBoundedOrgContextId(safeGetHeader(req, 'x-org-context')) ||
     normalizeBoundedOrgContextId(safeGetHeader(req, 'x-organization-id')) ||
@@ -760,7 +770,12 @@ const attachUser = async (
 
   // Respect the UI-selected organization when the user is a valid active member.
   let orgContextConfirmed = false;
-  if (!isDemoHeader && !publicDemo.isPublicDemoPrincipal && requestedOrgContextId) {
+  if (
+    !isDemoHeader &&
+    !isCanonicalDemoHost &&
+    !publicDemo.isPublicDemoPrincipal &&
+    requestedOrgContextId
+  ) {
     try {
       const membership = await dbGet<{ role?: string; status?: string }>(
         `SELECT role, status
@@ -787,7 +802,11 @@ const attachUser = async (
   // active alias in their token (for example `dbr77`) alongside their canonical
   // primary organization. When no explicit organization switch was confirmed,
   // prefer the user's primary organization and its active membership.
-  if (isDemoHeader && !publicDemo.isPublicDemoPrincipal && !orgContextConfirmed) {
+  if (
+    (isDemoHeader || isCanonicalDemoHost) &&
+    !publicDemo.isPublicDemoPrincipal &&
+    !orgContextConfirmed
+  ) {
     try {
       const primary = await dbGet<{ organization_id?: string; role?: string }>(
         `SELECT u.organization_id, om.role
