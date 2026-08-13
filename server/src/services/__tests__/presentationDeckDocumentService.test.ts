@@ -34,6 +34,33 @@ const baseSlide = (overrides: Partial<UnifiedSlide>): UnifiedSlide => ({
 });
 
 describe('deckDocumentFromUnifiedJson — audit flag propagation (S16)', () => {
+  it('normalizes roadmap phases for both the canvas and PPTX renderer', () => {
+    const document = deckDocumentFromUnifiedJson({
+      deckId: 'deck-roadmap',
+      organizationId: 'org-1',
+      title: 'Roadmap',
+      unifiedJson: {
+        slides: [
+          {
+            intent: 'roadmap',
+            key_message: 'Three phases',
+            content: {
+              type: 'roadmap',
+              phases: [{ title: 'Mobilize', timing: 'Q1', owner: 'COO' }],
+            },
+          },
+        ],
+      } as any,
+    });
+    const timeline = document.cards[0].blocks.find((block) => block.type === 'timeline_block');
+    expect((timeline?.content as any).items[0]).toMatchObject({
+      label: 'Mobilize',
+      title: 'Mobilize',
+      timeframe: 'Q1',
+      timing: 'Q1',
+      items: ['Owner: COO'],
+    });
+  });
   it('accepts legacy unified JSON with slides but no meta envelope', () => {
     const doc = deckDocumentFromUnifiedJson({
       deckId: 'legacy-deck',

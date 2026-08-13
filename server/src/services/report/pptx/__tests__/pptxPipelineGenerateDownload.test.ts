@@ -100,6 +100,41 @@ describe('Generate -> PPTX download happy path', () => {
     expect(result.slideCount).toBeGreaterThanOrEqual(3);
   });
 
+  it('exports roadmap phases authored with title, timing and owner fields', async () => {
+    const report = buildUnifiedReport();
+    report.slides.push({
+      intent: 'roadmap',
+      key_message: 'Three phases sequence delivery',
+      content: {
+        type: 'roadmap',
+        phases: [{ title: 'Mobilize', timing: 'Q1', owner: 'COO' }],
+      },
+    } as any);
+    const deckDocument = deckDocumentFromUnifiedJson({
+      deckId: 'roadmap-export',
+      organizationId: 'org-1',
+      title: 'Roadmap export',
+      unifiedJson: report,
+    });
+    const exportPath = path.join(os.tmpdir(), `roadmap-export-${Date.now()}.pptx`);
+    tmpFiles.push(exportPath);
+
+    await ensureCurrentPptxExport(
+      {
+        id: 'roadmap-export',
+        organization_id: 'org-1',
+        export_path: exportPath,
+        version: 1,
+        exported_version: null,
+        deck_json: JSON.stringify(deckDocument),
+        unified_json: JSON.stringify(report),
+      },
+      { persist: vi.fn(async () => undefined) }
+    );
+
+    expect(fs.readFileSync(exportPath).subarray(0, 4).equals(ZIP_SIGNATURE)).toBe(true);
+  });
+
   it('localizes Polish confidentiality labels in rendered slide XML', async () => {
     const input = buildUnifiedReport();
     input.meta.language = 'pl';

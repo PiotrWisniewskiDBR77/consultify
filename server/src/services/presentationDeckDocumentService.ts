@@ -405,7 +405,29 @@ function blocksFromUnifiedSlide(
     }
     case 'roadmap': {
       if (content.context) push('paragraph', { text: String(content.context) });
-      push('timeline_block', { items: Array.isArray(content.phases) ? content.phases : [] }, true);
+      push(
+        'timeline_block',
+        {
+          items: (Array.isArray(content.phases) ? content.phases : []).map((phase: any) => {
+            const label = String(phase?.label || phase?.title || '').trim();
+            const timeframe = String(phase?.timeframe || phase?.timing || '').trim();
+            const phaseItems = Array.isArray(phase?.items)
+              ? phase.items.map(String)
+              : phase?.owner
+                ? [`Owner: ${String(phase.owner)}`]
+                : [];
+            return {
+              ...phase,
+              label,
+              title: String(phase?.title || label),
+              timeframe,
+              timing: String(phase?.timing || timeframe),
+              items: phaseItems,
+            };
+          }),
+        },
+        true
+      );
       break;
     }
     case 'risk_management': {
