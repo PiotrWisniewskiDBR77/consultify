@@ -487,7 +487,7 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
             data-testid="actor-select"
             value={actorUserId}
             onChange={(e) => setActorUserId(e.target.value)}
-            className="rounded border border-c-border bg-c-surface px-1.5 py-0.5 text-[11px] text-c-text"
+            className="rounded border border-c-border bg-c-surface px-1.5 py-0.5 text-[11px] text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
             <option value={OWNER_ACTOR}>Piotr (owner/lead_assessor/assessor)</option>
             <option value={APPROVER_ACTOR}>Anna (approver)</option>
@@ -507,11 +507,13 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
             key={axis.id}
             type="button"
             data-testid={`axis-tab-${axis.id}`}
+            // Stan aktywny niosło samo tło — czytnik ekranu nie miał sygnału.
+            aria-current={axis.id === activeAxisId ? 'true' : undefined}
             onClick={() => {
               setActiveAxisId(axis.id);
               setActiveUnitId(axis.areas[0].id);
             }}
-            className={`rounded-md px-2 py-1 font-medium ${axis.id === activeAxisId ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:text-c-text'}`}
+            className={`rounded-md px-2 py-1 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${axis.id === activeAxisId ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:text-c-text'}`}
           >
             {axis.id}. {axis.namePL || axis.name} ({axis.levelCount}L)
           </button>
