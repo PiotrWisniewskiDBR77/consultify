@@ -75,6 +75,7 @@ type ToolSessionRow = {
   updated_by?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
+  version?: number;
 };
 
 const safeParseJSON = <T>(value: string | null | undefined, fallback: T): T => {
@@ -837,7 +838,11 @@ export class ToolController {
         },
       });
 
-      res.json({ id, status: 'DRAFT' });
+      // tool_sessions.version has a DB-level DEFAULT 1 and is never set
+      // explicitly on INSERT (see below) — 1 is the real starting value a
+      // subsequent GET would return, so hand it back immediately and save
+      // callers an extra round-trip before their first PUT.
+      res.json({ id, status: 'DRAFT', version: 1 });
     }
   );
 
@@ -1161,6 +1166,15 @@ export class ToolController {
         updatedAt: session.updated_at,
         reviewRequestedAt: session.review_requested_at,
         approvedAt: session.approved_at,
+        // CAS: the caller's next PUT/PATCH must echo this back as
+        // `expectedVersion`. `Number(...)` guards against `pg` ever handing
+        // back an INTEGER column as a string (it normally doesn't for
+        // int4, but the codebase's own NUMERIC comment elsewhere warns this
+        // driver's type coercion is not something to trust blindly).
+        version: Number(session.version ?? 1),
+        // Server clock at response time — lets a client detect gross clock
+        // skew / staleness independent of the version counter.
+        serverTime: new Date().toISOString(),
         // Fail-soft: a corrupt JSON blob must degrade to an empty object (the UI
         // shows an empty-but-editable session), never a 500 that blocks resume.
         answers: safeJsonParse(session.answers_json),
@@ -1194,10 +1208,11 @@ export class ToolController {
         wizardState,
         missingItems,
         failureReason,
+        expectedVersion,
       } = req.body;
 
       const existing = (await queryHelpers.queryOne(
-        `SELECT status, missing_items_json, runtime_contract_json, answers_json, dod_status, completion_percent, confidence_avg, tool_type, name, project_id
+        `SELECT status, missing_items_json, runtime_contract_json, answers_json, dod_status, completion_percent, confidence_avg, tool_type, name, project_id, version
          FROM tool_sessions WHERE id = ? AND organization_id = ?`,
         [toolId, user.organizationId]
       )) as Pick<
@@ -1212,7 +1227,11 @@ export class ToolController {
         | 'tool_type'
         | 'name'
         | 'project_id'
+        | 'version'
       > | null;
+      // Cross-org / nonexistent session: same 404, same shape, no data
+      // leak either way — a caller cannot distinguish "wrong org" from
+      // "never existed" from this response.
       if (!existing) {
         res.status(404).json({ error: 'Tool session not found' });
         return;
@@ -1285,6 +1304,33 @@ export class ToolController {
         }
       }
 
+      // ---- CAS (optimistic concurrency) ----------------------------------
+      // Sprint S1 (2026-08-13): tool_sessions.version existed and was bumped
+      // on every save, but was never RETURNED by GET nor CHECKED by PUT —
+      // two concurrent editors (or an autosave racing a manual save) could
+      // silently clobber each other, last-write-wins. This closes that gap:
+      // every PUT must now declare which version it believes it is editing,
+      // and the write is REJECTED (not merged, not retried, not applied
+      // partially) if that belief is stale.
+      //
+      // Missing `expectedVersion` -> 428 Precondition Required (chosen over
+      // 400: this IS the HTTP-standard "you must supply a precondition"
+      // code — RFC 6585 — and keeps a version-mismatch 409 semantically
+      // distinct from a caller that never sent one at all). Placed AFTER the
+      // immutability/status-transition/finalize gates above on purpose: a
+      // request to a locked/APPROVED session, or one with an invalid status
+      // transition, must still get the SAME 409 it always did (see
+      // tests/integration/tools/tool-session-roundtrip.contract.test.ts's
+      // "locks content edits after approval" case) rather than a confusing
+      // 428 that has nothing to do with why the write was actually refused.
+      if (expectedVersion === undefined || expectedVersion === null) {
+        res.status(428).json({
+          error: 'expectedVersion is required to update a tool session (optimistic concurrency)',
+          code: 'MISSING_EXPECTED_VERSION',
+        });
+        return;
+      }
+
       const now = new Date().toISOString();
       // H3 resume-hardening: PARTIAL update semantics. All payload fields are
       // optional (UpdateToolSessionSchema) and live callers save different
@@ -1293,23 +1339,26 @@ export class ToolController {
       // zeroed completion/confidence on every partial save — destroying the
       // session state a user resumes into and permanently blocking the DoD
       // gate (confidence >= 3). Only update columns the caller actually sent.
-      const setClauses = ['status = ?', 'updated_by = ?', 'updated_at = ?'];
+      //
+      // `version = version + 1` is now UNCONDITIONAL (previously scoped to
+      // only `answers !== undefined`, per the TLS-04/Codex-BLOCKER-1 note
+      // this replaces): the general session-level CAS contract this sprint
+      // adds means EVERY successful PUT — even a wizardState-only or
+      // status-only autosave — must advance the version a client's next PUT
+      // has to name, or two partial saves racing on DIFFERENT fields could
+      // both match the same stale `expectedVersion` and the second would
+      // silently win over side effects (audit log, conclusion bridge) the
+      // first one triggered. This is a strict superset of the old
+      // SWOT-proposal-CAS guarantee (tests/unit/backend/
+      // toolSessionsAnswersVersionInventory.test.ts only asserts answers_json
+      // writes bump version — it does not assert the inverse — so widening
+      // the bump to all writes cannot regress it).
+      const setClauses = ['status = ?', 'updated_by = ?', 'updated_at = ?', 'version = version + 1'];
       const params: unknown[] = [newStatus, user.id, now];
 
       if (answers !== undefined) {
         setClauses.push('answers_json = ?');
         params.push(JSON.stringify(answers || {}));
-        // TLS-04 fix (Codex BLOCKER 1): every write to the SWOT/tool-session
-        // content itself must bump `version` -- this is the CAS anchor
-        // swot_proposals.expected_version is checked against. Before this
-        // fix, only acceptSwotProposal incremented it, so a stale AI
-        // proposal generated against an OLD version could still pass its
-        // CAS check and clobber a manual edit/autosave made in between
-        // (version never moved to reflect that edit). Scoped to ONLY this
-        // branch -- a wizardState-only or status-only save must NOT bump
-        // version, since it doesn't change SWOT content a proposal could
-        // conflict with.
-        setClauses.push('version = version + 1');
       }
       if (contextSnapshot !== undefined) {
         setClauses.push('context_snapshot = ?');
@@ -1337,12 +1386,58 @@ export class ToolController {
         params.push(failureReason || null);
       }
 
-      params.push(toolId, user.organizationId);
+      params.push(toolId, user.organizationId, expectedVersion);
 
-      await queryHelpers.queryRun(
-        `UPDATE tool_sessions SET ${setClauses.join(', ')} WHERE id = ? AND organization_id = ?`,
+      // The atomic CAS write itself: a SINGLE conditional UPDATE, never
+      // read-then-write. `version = ?` in the WHERE clause means Postgres's
+      // own row-level locking resolves a concurrent race — at most one of N
+      // simultaneous requests naming the same expectedVersion can match, and
+      // a mismatch (session moved since this client's last GET) affects
+      // ZERO rows: no partial write, nothing to roll back, because nothing
+      // was ever applied.
+      const updateResult = await queryHelpers.queryRun(
+        `UPDATE tool_sessions SET ${setClauses.join(', ')} WHERE id = ? AND organization_id = ? AND version = ?`,
         params
       );
+
+      if (!updateResult.changes) {
+        // Stale write — re-read the CURRENT server state (outside/after the
+        // failed conditional UPDATE, which touched nothing) so the caller
+        // can reconcile or force-retry with the real version, instead of
+        // guessing. Re-scoped by id+org exactly like the initial read, so a
+        // cross-org caller still cannot observe another org's data via this
+        // path (falls through to 404 below, same as a session that no
+        // longer exists in this org — e.g. deleted between the read above
+        // and this UPDATE).
+        const current = (await queryHelpers.queryOne(
+          `SELECT * FROM tool_sessions WHERE id = ? AND organization_id = ?`,
+          [toolId, user.organizationId]
+        )) as ToolSessionRow | null;
+        if (!current) {
+          res.status(404).json({ error: 'Tool session not found' });
+          return;
+        }
+        res.status(409).json({
+          error: 'Tool session has changed since it was last read',
+          code: 'STALE_VERSION',
+          expectedVersion,
+          current: {
+            id: current.id,
+            status: normalizeStatus(current.status),
+            version: Number(current.version ?? 1),
+            answers: safeJsonParse(current.answers_json),
+            contextSnapshot: safeJsonParse(current.context_snapshot),
+            completionPercent: current.completion_percent || 0,
+            confidenceAvg: current.confidence_avg || 0,
+            wizardState: safeParseJSON((current as any).wizard_state_json, null),
+            missingItems: safeParseJSON((current as any).missing_items_json, []),
+            updatedAt: current.updated_at,
+          },
+        });
+        return;
+      }
+
+      const newVersion = expectedVersion + 1;
 
       if (requestedStatus && requestedStatus !== existingStatus) {
         await logAudit(user.organizationId, user.id, 'tool_status_changed', toolId, {
@@ -1386,7 +1481,7 @@ export class ToolController {
         { logger }
       );
 
-      res.json({ id: toolId, status: newStatus, updatedAt: now });
+      res.json({ id: toolId, status: newStatus, updatedAt: now, version: newVersion });
     }
   );
 

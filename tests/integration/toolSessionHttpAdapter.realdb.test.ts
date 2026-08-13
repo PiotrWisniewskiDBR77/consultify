@@ -10,56 +10,37 @@
  *   create (POST /api/tools) -> update (PUT /api/tools/:id, answers_json)
  *   -> reload (GET /api/tools/:id) -> identical state.
  *
- * Exercises the real `ToolController` handlers (owned by another
- * workstream during this session and NOT modified here) through an
- * in-process Express app + supertest, exactly the pattern already
- * established by tests/integration/tools-promote-characterization.realdb.test.ts.
+ * Exercises the real `ToolController` handlers through an in-process
+ * Express app + supertest, exactly the pattern already established by
+ * tests/integration/tools-promote-characterization.realdb.test.ts.
  *
- * Run (against this stream's own throwaway Postgres, port 56203):
- *   RUN_DB_TESTS=1 MOCK_DB=false \
- *     DATABASE_URL=postgres://consultinity:test@localhost:56203/consultinity \
+ * Run (against this stream's own throwaway Postgres):
+ *   RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test DB_TYPE=postgres \
+ *     DATABASE_URL=postgres://consultinity:test@localhost:56500/consultinity \
  *     npx vitest run tests/integration/toolSessionHttpAdapter.realdb.test.ts
  *
- * Fail-closed: every test in here asserts RUN_DB_TESTS=1, MOCK_DB=false,
- * and (via `SELECT current_database(), current_schema()`) that it is
- * actually talking to a real Postgres database on the expected schema --
- * not a mock, and not silently skipped-but-green. If any of those
- * assertions fail, the suite fails loudly instead of passing empty.
+ * Sprint S1 update (2026-08-13): originally written against a server that
+ * did not yet check `expectedVersion` (see the file's original "DOCUMENTS
+ * the known gap" test, since replaced below) and used `describe.skip` when
+ * RUN_DB_TESTS was unset -- looks green in a report that never touched
+ * Postgres. Rebased onto the now-shared `assertRealPostgres.ts` helper
+ * (fail hard, never skip) and every PUT below now threads `expectedVersion`
+ * through, since `ToolController.updateToolSession` requires it (428
+ * otherwise) as of this sprint's CAS work.
  */
 import express, { type Express } from 'express';
 import { Client } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-const RUN_DB_TESTS = process.env.RUN_DB_TESTS === '1';
-const MOCK_DB = process.env.MOCK_DB;
-const DATABASE_URL = process.env.DATABASE_URL || '';
+import {
+  assertRealPostgresTestEnvironment,
+} from './_helpers/assertRealPostgres.js';
 
-// Fail-CLOSED gate: this suite must not silently report green when it never
-// actually reached Postgres. `describe.skip` only fires when the operator
-// explicitly did not ask for DB tests (RUN_DB_TESTS unset) -- if
-// RUN_DB_TESTS=1 was passed but the rest of the contract (MOCK_DB=false,
-// a DATABASE_URL) is missing, that is a misconfiguration and must throw,
-// not skip.
-if (RUN_DB_TESTS) {
-  if (MOCK_DB !== 'false') {
-    throw new Error(
-      'toolSessionHttpAdapter.realdb.test.ts: RUN_DB_TESTS=1 requires MOCK_DB=false (got ' +
-        `MOCK_DB=${String(MOCK_DB)}) -- refusing to run against a mocked DB and report false green.`
-    );
-  }
-  if (!DATABASE_URL) {
-    throw new Error(
-      'toolSessionHttpAdapter.realdb.test.ts: RUN_DB_TESTS=1 requires DATABASE_URL to be set.'
-    );
-  }
-}
-
-process.env.DATABASE_URL = DATABASE_URL;
 process.env.DB_TYPE = 'postgres';
 process.env.NODE_ENV = process.env.NODE_ENV || 'test';
 
-const describeDb = RUN_DB_TESTS ? describe : describe.skip;
+const DATABASE_URL = process.env.DATABASE_URL || '';
 
 const P = `httpadapter-${Date.now()}-`;
 const ORG = `${P}org`;
@@ -78,28 +59,10 @@ function asUser() {
 }
 
 beforeAll(async () => {
-  if (!RUN_DB_TESTS) return;
-
-  // Fail-closed connectivity + identity proof -- if this cannot connect, or
-  // is not really Postgres/the expected schema, everything below is moot.
-  const c = await db();
-  try {
-    const identity = await c.query('SELECT current_database() AS db, current_schema() AS schema');
-    const row = identity.rows[0] as { db: string; schema: string };
-    if (!row?.db || !row?.schema) {
-      throw new Error('toolSessionHttpAdapter.realdb.test.ts: could not read current_database()/current_schema() -- not a real Postgres connection.');
-    }
-    // eslint-disable-next-line no-console
-    console.log(
-      `[toolSessionHttpAdapter.realdb] connected to real Postgres — database=${row.db} schema=${row.schema}`
-    );
-    const kindProbe = await c.query('SHOW server_version');
-    if (!kindProbe.rows[0]?.server_version) {
-      throw new Error('toolSessionHttpAdapter.realdb.test.ts: server_version probe failed -- not talking to real Postgres.');
-    }
-  } finally {
-    await c.end();
-  }
+  // Fail hard (never skip) on a misconfigured run -- proves the connection
+  // with real queries (SELECT version()/current_database()), not just env
+  // var presence. See assertRealPostgres.ts.
+  await assertRealPostgresTestEnvironment({ expectedDatabase: 'consultinity' });
 
   const ToolController = (await import('../../server/src/controllers/ToolController.js')).default;
 
@@ -131,7 +94,6 @@ beforeAll(async () => {
 }, 60_000);
 
 afterAll(async () => {
-  if (!RUN_DB_TESTS) return;
   const c = await db();
   try {
     await c.query(`DELETE FROM tool_sessions WHERE organization_id = $1`, [ORG]);
@@ -140,7 +102,7 @@ afterAll(async () => {
   }
 });
 
-describeDb('create -> update -> reload -> identical state (real Postgres)', () => {
+describe('create -> update -> reload -> identical state (real Postgres)', () => {
   it('POST /api/tools creates a real row a subsequent GET can see', async () => {
     const created = await request(app)
       .post('/api/tools')
@@ -169,9 +131,15 @@ describeDb('create -> update -> reload -> identical state (real Postgres)', () =
       .set(asUser())
       .send({ toolType: 'dynamic-swot', name: `${P}session-2` });
     const toolId = created.body.id as string;
+    // createToolSession now hands back the starting version (always 1) --
+    // exactly what useToolSessionSync.ts's sessionRef would hold after its
+    // own load()/create() before the first performSave().
+    expect(created.body.version).toBe(1);
 
     // This is exactly the shape src/hooks/useToolSessionSync.ts's
-    // performSave() sends via toolSessionApi.update().
+    // performSave() sends via toolSessionApi.update() -- including
+    // `expectedVersion`, which the server now REQUIRES (this sprint's CAS
+    // work; see server/src/controllers/ToolController.ts:updateToolSession).
     const answers = {
       mission: 'Grow into adjacent markets',
       signals: [{ id: 'sig-1', text: 'Strong Q2 pipeline', category: 'strength' }],
@@ -182,9 +150,11 @@ describeDb('create -> update -> reload -> identical state (real Postgres)', () =
       answers,
       completionPercent: 40,
       confidenceAvg: 3,
+      expectedVersion: created.body.version,
     });
     expect(updated.status).toBe(200);
     expect(updated.body.id).toBe(toolId);
+    expect(updated.body.version).toBe(2);
 
     const reloaded = await request(app).get(`/api/tools/${toolId}`).set(asUser());
     expect(reloaded.status).toBe(200);
@@ -193,6 +163,7 @@ describeDb('create -> update -> reload -> identical state (real Postgres)', () =
     expect(reloaded.body.answers).toEqual(answers);
     expect(reloaded.body.progress).toBe(40);
     expect(reloaded.body.confidenceAvg).toBe(3);
+    expect(reloaded.body.version).toBe(2);
   });
 
   it('a second update+reload cycle stays consistent (no drift across repeated saves)', async () => {
@@ -202,19 +173,23 @@ describeDb('create -> update -> reload -> identical state (real Postgres)', () =
       .send({ toolType: 'dynamic-swot', name: `${P}session-3` });
     const toolId = created.body.id as string;
 
-    await request(app)
+    const first = await request(app)
       .put(`/api/tools/${toolId}`)
       .set(asUser())
-      .send({ answers: { mission: 'v1' } });
+      .send({ answers: { mission: 'v1' }, expectedVersion: 1 });
+    expect(first.status).toBe(200);
     const afterFirst = await request(app).get(`/api/tools/${toolId}`).set(asUser());
     expect(afterFirst.body.answers).toEqual({ mission: 'v1' });
+    expect(afterFirst.body.version).toBe(2);
 
-    await request(app)
+    const second = await request(app)
       .put(`/api/tools/${toolId}`)
       .set(asUser())
-      .send({ answers: { mission: 'v2', extra: true } });
+      .send({ answers: { mission: 'v2', extra: true }, expectedVersion: afterFirst.body.version });
+    expect(second.status).toBe(200);
     const afterSecond = await request(app).get(`/api/tools/${toolId}`).set(asUser());
     expect(afterSecond.body.answers).toEqual({ mission: 'v2', extra: true });
+    expect(afterSecond.body.version).toBe(3);
   });
 
   it('cross-organization GET cannot see the session (404) -- the same isolation the adapter relies on', async () => {
@@ -228,35 +203,57 @@ describeDb('create -> update -> reload -> identical state (real Postgres)', () =
       .get(`/api/tools/${toolId}`)
       .set({ 'x-test-user': USER, 'x-test-org': `${P}other-org`, 'x-test-role': 'admin' });
     expect(otherOrgRead.status).toBe(404);
+
+    // Cross-org PUT is rejected the same way, and never writes.
+    const otherOrgWrite = await request(app)
+      .put(`/api/tools/${toolId}`)
+      .set({ 'x-test-user': USER, 'x-test-org': `${P}other-org`, 'x-test-role': 'admin' })
+      .send({ answers: { hijacked: true }, expectedVersion: 1 });
+    expect(otherOrgWrite.status).toBe(404);
   });
 
-  it('DOCUMENTS the known gap: GET does not return `version`, even after an update bumped it in the DB', async () => {
-    // This is the exact gap toolSessionApi.ts's file header describes.
-    // Asserted here, against a real DB row, so the note cannot silently
-    // go stale if ToolController is ever extended (this test would then
-    // start failing the `toBeUndefined()` and force an update).
+  it('CLOSES the former "known gap": GET returns `version`, and PUT enforces it as a real CAS token', async () => {
+    // This replaces the original "DOCUMENTS the known gap" test, which
+    // pinned `reloaded.body.version` as `toBeUndefined()` — that gap is
+    // exactly what this sprint's server-side CAS work (ToolController.
+    // getToolSession/updateToolSession) closes. Proven end-to-end through
+    // the same adapter/hook HTTP contract this file exists to verify.
     const created = await request(app)
       .post('/api/tools')
       .set(asUser())
       .send({ toolType: 'dynamic-swot', name: `${P}session-version-gap` });
     const toolId = created.body.id as string;
 
-    await request(app)
+    const afterCreate = await request(app).get(`/api/tools/${toolId}`).set(asUser());
+    expect(afterCreate.body.version).toBe(1);
+
+    const bumped = await request(app)
       .put(`/api/tools/${toolId}`)
       .set(asUser())
-      .send({ answers: { mission: 'bump version' } });
+      .send({ answers: { mission: 'bump version' }, expectedVersion: 1 });
+    expect(bumped.status).toBe(200);
+    expect(bumped.body.version).toBe(2);
 
     const c = await db();
     let dbVersion: number;
     try {
       const row = await c.query(`SELECT version FROM tool_sessions WHERE id = $1`, [toolId]);
-      dbVersion = row.rows[0].version;
+      dbVersion = Number(row.rows[0].version);
     } finally {
       await c.end();
     }
-    expect(dbVersion).toBeGreaterThanOrEqual(2); // bumped by the answers_json write
+    expect(dbVersion).toBe(2);
 
     const reloaded = await request(app).get(`/api/tools/${toolId}`).set(asUser());
-    expect(reloaded.body.version).toBeUndefined();
+    expect(reloaded.body.version).toBe(2);
+
+    // And the enforcement half of the gap: a PUT with the now-stale
+    // version (1) is rejected, never silently applied.
+    const stale = await request(app)
+      .put(`/api/tools/${toolId}`)
+      .set(asUser())
+      .send({ answers: { mission: 'stale write' }, expectedVersion: 1 });
+    expect(stale.status).toBe(409);
+    expect(stale.body.current.version).toBe(2);
   });
 });

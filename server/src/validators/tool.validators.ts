@@ -39,6 +39,14 @@ export const UpdateToolSessionSchema = z.object({
     )
     .optional(),
   failureReason: z.string().optional(),
+  // CAS (optimistic concurrency): the caller's belief about the CURRENT
+  // tool_sessions.version, taken from a prior GET/PUT response. Left
+  // optional here (type-checked only) so the controller can return a
+  // specific 428 Precondition Required with a stable error `code` when it's
+  // missing, rather than the generic 400 shape validateBody would produce.
+  // See ToolController.updateToolSession for the enforcement + the atomic
+  // `WHERE version = expectedVersion` conditional UPDATE.
+  expectedVersion: z.number().int().nonnegative().optional(),
 });
 
 export const ToolDecisionSchema = z.object({
