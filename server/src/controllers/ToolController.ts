@@ -58,6 +58,35 @@ const isUniqueViolation = (err: unknown): boolean => {
   return code === '23505' || code === 'SQLITE_CONSTRAINT';
 };
 
+// canClaimUpfront output types (presentation, idea, non-funnel initiative)
+// claim their `tool_initiative_links` ledger row BEFORE their content exists
+// (see the `canClaimUpfront` comment below) — two separate statements, not
+// one transaction. A losing concurrent request can reach
+// `respondDeduplicated`'s existence check for the winner's content BEFORE
+// the winner's own content INSERT has committed (proven by
+// tests/integration/tools-promotion-race.realdb.test.ts's 25-way concurrent
+// `idea` promotion, which surfaced this exact window once the `idea` branch
+// started verifying content existence — see that check's own comment).
+// Poll briefly rather than checking once: the winner's write is normally
+// only milliseconds away. If content genuinely never lands (the winner's
+// write failed for real), this correctly falls through to the caller's
+// "not available" 409 after the bounded budget instead of hanging.
+async function waitForRow<T>(
+  fetchRow: () => Promise<T | null>,
+  opts: { attempts?: number; delayMs?: number } = {}
+): Promise<T | null> {
+  const attempts = opts.attempts ?? 40;
+  const delayMs = opts.delayMs ?? 25;
+  for (let i = 0; i < attempts; i++) {
+    const row = await fetchRow();
+    if (row) return row;
+    if (i < attempts - 1) {
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+  return null;
+}
+
 type ToolSessionRow = {
   id: string;
   organization_id: string;
@@ -355,8 +384,19 @@ const logAudit = async (
         new Date().toISOString(),
       ]
     );
-  } catch {
-    // audit_log table may not exist in all environments
+  } catch (err) {
+    // SWEEP (docs/program/METHOD_TOOLS_2026-08-13/SWALLOWED_ERRORS_AUDIT.md):
+    // legitimately optional — the audit trail is supplementary, never the
+    // user-visible content a promotion/approval call is responsible for, so
+    // a missing/broken `audit_log` table must not fail the calling request.
+    // But silent was wrong: previously NOTHING was logged, so a genuinely
+    // broken audit table (not just "table absent on this environment") was
+    // invisible to operators. Log it now; still never rethrown.
+    logger.warn('[ToolController] logAudit failed (non-blocking)', {
+      action,
+      resourceId,
+      error: err instanceof Error ? err.message : String(err),
+    });
   }
 };
 
@@ -593,8 +633,20 @@ const ensureToolsSchema = async (): Promise<void> => {
         ON CONFLICT (id) DO NOTHING`
       );
     }
-  } catch {
-    // no-op: schema might be managed elsewhere
+  } catch (err) {
+    // SWEEP (docs/program/METHOD_TOOLS_2026-08-13/SWALLOWED_ERRORS_AUDIT.md):
+    // legitimately optional — this whole function is the SELF-MANAGED-DB
+    // fallback bootstrap; the numbered migration set is authoritative for
+    // demo/prod (DB_MANAGED_SCHEMA on), and every statement inside is its
+    // own idempotent IF NOT EXISTS / ON CONFLICT, so re-running after a
+    // partial failure is safe. But this outer catch used to swallow with
+    // zero logging, hiding a genuinely broken self-managed bootstrap from
+    // operators (dev/self-managed DBs have no other signal). Log it now;
+    // still never rethrown — a caller on a managed-schema environment must
+    // not be blocked by this dev-only fallback.
+    logger.warn('[ToolController] ensureToolsSchema bootstrap failed (non-blocking)', {
+      error: err instanceof Error ? err.message : String(err),
+    });
   }
 };
 
@@ -2361,6 +2413,29 @@ export class ToolController {
             return;
           }
         }
+        if (outputType === 'idea') {
+          // Same rationale as the `presentation` block immediately above:
+          // `idea` also claims its `tool_initiative_links` ledger row UP
+          // FRONT (canClaimUpfront), before the `my_ideas` row is created.
+          // A retry with the same idempotency key after a failed INSERT
+          // (now fail-closed instead of swallowed — see the `outputType ===
+          // 'idea'` branch below) must get an honest 409, not a fake
+          // `deduplicated: true` pointing at a nonexistent idea. `waitForRow`
+          // (see its own comment above) tolerates the normal in-flight case —
+          // a concurrent WINNER whose ledger claim landed but whose content
+          // INSERT hasn't committed yet — without treating it the same as a
+          // genuine, permanent failure.
+          const existingIdea = await waitForRow(() =>
+            queryHelpers.queryOne(
+              `SELECT id FROM my_ideas WHERE id = ? AND organization_id = ?`,
+              [existingOutputId, user.organizationId]
+            )
+          );
+          if (!existingIdea) {
+            res.status(409).json({ error: 'Existing idea promotion is no longer available' });
+            return;
+          }
+        }
         res.json({
           id: existingOutputId,
           outputType,
@@ -2444,13 +2519,22 @@ export class ToolController {
           );
           initiativeOutputId = __r.id;
           // Extra column not set by the funnel — post-create UPDATE (best-effort).
+          // SWEEP (docs/program/METHOD_TOOLS_2026-08-13/SWALLOWED_ERRORS_AUDIT.md):
+          // legitimately optional — `priority_order` is a display sort hint,
+          // not required content; the initiative itself was already created
+          // by `funnelCreateInitiative` above, so a failure here must not
+          // fail the whole promotion. Log it (previously silent) so a
+          // genuinely broken column on a real environment is observable.
           try {
             await queryHelpers.queryRun(
               `UPDATE initiatives SET priority_order = ? WHERE id = ? AND organization_id = ?`,
               [2, initiativeOutputId, session.organization_id]
             );
-          } catch {
-            // priority_order column may be absent on legacy schemas
+          } catch (err) {
+            logger.warn('[ToolController] priority_order backfill failed (non-blocking)', {
+              initiativeId: initiativeOutputId,
+              error: err instanceof Error ? err.message : String(err),
+            });
           }
         } else {
           // D1 (Zwornik §9 Faza 3): live path (funnel flag off) — anchor to
@@ -2760,26 +2844,59 @@ export class ToolController {
       }
 
       if (outputType === 'idea') {
-        try {
-          await queryHelpers.queryRun(
-            `INSERT INTO my_ideas (
-              id, user_id, organization_id, title, body, tags, source_type, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-              outputId,
-              user.id,
-              session.organization_id,
-              title,
-              description || '',
-              JSON.stringify(['tool-output', session.tool_type]),
-              'tool',
-              now,
-              now,
-            ]
-          );
-        } catch {
-          // Table may not exist
-        }
+        // FIX (same defect class as the `presentation` branch above — see
+        // its DECISION comment, and
+        // docs/program/METHOD_TOOLS_2026-08-13/SWALLOWED_ERRORS_AUDIT.md):
+        // this INSERT used to be wrapped in `catch { /* Table may not exist */ }`.
+        // Unlike the presentation defect, `my_ideas` was never the wrong
+        // table — it is migration-owned (755_my_ideas_00base.sql /
+        // 20260220_my_work_my_ideas.sql both `CREATE TABLE IF NOT EXISTS
+        // my_ideas` with this exact column set; confirmed live via `\d
+        // my_ideas` against this worktree's migrated schema) and is the
+        // table `GET/PUT/DELETE /api/my-work/my-ideas/:id`
+        // (server/src/routes/my-work.routes.ts) actually reads. The comment
+        // was stale defensiveness from before the table existed, but the
+        // `catch` still swallowed EVERY failure — a future column rename, a
+        // constraint violation, a connection blip — so the endpoint kept
+        // returning 200 with an `id` that pointed at nothing in `my_ideas`:
+        // invisible on My Work > Ideas and un-reopenable, exactly the
+        // "API pretends success" shape the presentation fix closed. No catch
+        // here: a failed write must fail the request (propagates through
+        // asyncHandler to the error handler), exactly like the `initiative`
+        // branch's plain `INSERT INTO initiatives` above, which has never
+        // had a catch around it either.
+        //
+        // `source_pack_json` (the same generic lineage column
+        // initiatives/workbooks already use — read back as `sourcePack` by
+        // every my-work.routes.ts idea GET) now carries the exact
+        // `tool_outputs` row this idea was rendered from, so lineage to the
+        // source tool_output survives even though `idea` is not a
+        // `ToolReportKind` (`persistCanonicalReport`/`tool_reports` is a
+        // document/deck renderer — report and presentation only; an idea is
+        // a title/body record, not a rendered document, so it does not use
+        // that lineage table).
+        await queryHelpers.queryRun(
+          `INSERT INTO my_ideas (
+            id, user_id, organization_id, title, body, tags, source_type, source_pack_json, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            outputId,
+            user.id,
+            session.organization_id,
+            title,
+            description || '',
+            JSON.stringify(['tool-output', session.tool_type]),
+            'tool',
+            JSON.stringify({
+              tool_output_id: canonicalOutput.id,
+              tool_session_id: toolId,
+              tool_type: session.tool_type,
+              source_revision: sourceRevision,
+            }),
+            now,
+            now,
+          ]
+        );
       }
 
       // Thread the funnel-created id downstream for the initiative path (F1.8);

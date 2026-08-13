@@ -282,13 +282,21 @@ export class ToolInitiativeService {
         );
         effectiveInitiativeId = __r.id;
         // Extra column not set by the funnel — post-create UPDATE (best-effort).
+        // SWEEP (docs/program/METHOD_TOOLS_2026-08-13/SWALLOWED_ERRORS_AUDIT.md):
+        // legitimately optional — same rationale as ToolController.ts's
+        // matching `priority_order` backfill: a display sort hint, not
+        // required content; the initiative itself already exists. Log it
+        // (previously silent) so a real, ongoing failure is observable.
         try {
           await queryHelpers.queryRun(
             `UPDATE initiatives SET priority_order = ? WHERE id = ? AND organization_id = ?`,
             [priorityOrder, effectiveInitiativeId, toolSession.organization_id]
           );
-        } catch {
-          // priority_order column may be absent on legacy schemas
+        } catch (err) {
+          logger.warn('[ToolInitiativeService] priority_order backfill failed (non-blocking)', {
+            initiativeId: effectiveInitiativeId,
+            error: err instanceof Error ? err.message : String(err),
+          });
         }
       } else {
         await queryHelpers.queryRun(
@@ -346,6 +354,11 @@ export class ToolInitiativeService {
     }
 
     // Audit log (simple insert into audit_log if exists)
+    // SWEEP (docs/program/METHOD_TOOLS_2026-08-13/SWALLOWED_ERRORS_AUDIT.md):
+    // legitimately optional — same rationale as ToolController.ts's
+    // `logAudit`: supplementary trail, not the initiatives themselves
+    // (already created and pushed above). Log it (previously silent) so a
+    // genuinely broken audit table is observable.
     try {
       await queryHelpers.queryRun(
         `INSERT INTO audit_log (id, organization_id, user_id, action, resource_type, resource_id, details, created_at)
@@ -361,8 +374,11 @@ export class ToolInitiativeService {
           now,
         ]
       );
-    } catch {
-      // audit_log table may not exist in all environments
+    } catch (err) {
+      logger.warn('[ToolInitiativeService] audit_log insert failed (non-blocking)', {
+        batchId,
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
 
     return created;
