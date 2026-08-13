@@ -172,6 +172,64 @@ bazowały na **tym samym** SHA.
 
 ---
 
+## COORD-05 — Kontrakt kernela nie da się zaimportować przez granicę server/tsconfig (rootDir)
+
+**decyzja:** czy backend (`server/src/method-core/`) ma prawo trzymać osobną,
+zwierciadlaną kopię `src/method-core/contracts/*`, zamiast importować frozen
+kontrakt bezpośrednio przez relatywny import poza `server/`.
+
+**stan faktyczny — zweryfikowany bezpośrednio (agent A2, runtime kernela):**
+`server/tsconfig.json` ma `"rootDir": "."` (czyli `server/`), a produkcyjny
+start to `cd server && npm run build && node dist/src/index.js`
+(`tsc --build tsconfig.build.json`). Import z `server/src/...` sięgający
+poza `server/` (np. `../../../src/method-core/contracts`) łamie ten build
+błędem TS6059 („File is not under rootDir"). Sprawdzone: w całym
+`server/src/` **nie ma ani jednego** precedensu importu przekraczającego tę
+granicę (grep `from '../../../..'` itd. — same trafienia zostają wewnątrz
+`server/`). `tsx` (dev) i `vitest` (testy) tolerują import poza granicą
+(brak sztywnego rootDir), więc defekt jest **niewidoczny** dopóki ktoś nie
+uruchomi realnego `npm run build` w `server/`.
+
+**wariant przyjęty (nieblokujący, zrobione):** `server/src/method-core/contracts/`
+to bajt-w-bajt kopia treści z `src/method-core/contracts/` (identyczna od
+pierwszej linii kodu — różni się tylko nagłówek-komentarz w każdym pliku,
+opisujący dlaczego kopia istnieje). Zweryfikowane:
+`diff <(tail -n +23 server/src/method-core/contracts/X.ts) src/method-core/contracts/X.ts`
+= brak różnic, dla wszystkich 5 plików.
+
+**ryzyko pozostawione otwarte:** dryf. Jeśli ktoś zmieni frozen kontrakt w
+`src/method-core/contracts/` i nie zsynchronizuje ręcznie kopii w
+`server/src/method-core/contracts/`, backend zacznie działać na starej
+wersji kontraktu bez błędu kompilacji (dwie kopie to dwa źródła prawdy,
+tymczasowo). Żaden mechanizm nie pilnuje tego automatycznie dzisiaj.
+
+**alternatywy:**
+1. Rozszerzyć `server/tsconfig.json`/`tsconfig.build.json` o `rootDir`
+   obejmujący cały monorepo (lub usunąć `rootDir`) — większy promień
+   wybuchu, zmienia strukturę `dist/`, nie zrobione w tej sesji.
+   Podnieść: właściciel build/release.
+2. Wydzielić kontrakt jako osobny workspace-package (np. `packages/method-core-contracts`)
+   importowany przez oba drzewa przez `node_modules`/workspaces — czyste,
+   ale wymaga zmiany w `package.json` workspaces i osobnej decyzji.
+3. Zostawić dwie kopie (przyjęte tu) — najniższe ryzyko regresji **teraz**,
+   najwyższy dług synchronizacji later.
+
+**wpływ na Assessment:** żaden na model/scoring; dotyczy tylko
+mechaniki importu backendu.
+**wpływ na Tools/Audits:** te same konsekwencje, gdy ich runtime zacznie
+importować kontrakt po stronie `server/`.
+
+**pliki/kontrakty:** `server/src/method-core/contracts/*.ts` (kopia),
+`src/method-core/contracts/*.ts` (źródło prawdy, bez zmian),
+`server/tsconfig.json`, `server/tsconfig.build.json`.
+
+**czy praca niezależna może być kontynuowana:** **TAK** — runtime kernela
+(`MethodEventStore`, `MethodSessionService`, `MethodPackRegistry`,
+`TeresaProposalService`) jest zaimplementowany przeciwko kopii lokalnej i
+przechodzi testy jednostkowe niezależnie od rozstrzygnięcia tego punktu.
+
+---
+
 ## Status
 
 | ID | Temat | Blokuje pracę? | Status |
@@ -180,3 +238,4 @@ bazowały na **tym samym** SHA.
 | COORD-02 | SIRI 8D → 16D + TIER | NIE | OTWARTY |
 | COORD-03 | Właścicielstwo plików struktur | NIE | OTWARTY |
 | COORD-04 | Baza: demo vs gałąź integracyjna | NIE | OTWARTY |
+| COORD-05 | Kontrakt kernela przez granicę server/tsconfig rootDir | NIE | OTWARTY (kopia zrobiona, sync ręczny) |
