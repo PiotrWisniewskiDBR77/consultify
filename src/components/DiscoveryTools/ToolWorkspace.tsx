@@ -441,9 +441,25 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
   }, [completionReady, currentSession, progress]);
 
   // Initialize or load local session
+  //
+  // BUG FIX (stream G5, 2026-08-13): `loadSession()` calls
+  // `normalizeSessionForRuntime()` (useToolStore.ts:3666), which ALWAYS
+  // returns a brand-new object via spread — never a stable reference, even
+  // when nothing changed. Since this effect lists `currentSession` in its
+  // deps and unconditionally called `loadSession(sessionId)` whenever
+  // `sessionId` was set, every resumed session (the standard "continue
+  // working" path from the Library) produced: effect fires → loadSession →
+  // new currentSession reference → deps changed → effect fires again →
+  // "Maximum update depth exceeded", React error boundary, blank white
+  // screen. 100% reproducible with a session pre-seeded via
+  // `savedSessions` (dev-render/screens/tools-swot-session-workspace.tsx)
+  // and very plausibly the same for any live resumed session. Guarding on
+  // id equality breaks the loop without changing resume/switch semantics.
   useEffect(() => {
     if (sessionId) {
-      loadSession(sessionId);
+      if (currentSession?.id !== sessionId) {
+        loadSession(sessionId);
+      }
     } else if (!currentSession || currentSession.toolType !== toolType) {
       createSession(toolType);
     }

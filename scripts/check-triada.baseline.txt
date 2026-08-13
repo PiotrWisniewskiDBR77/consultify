@@ -6,8 +6,8 @@
 # plik albo wzrost w istniejącym) = FAIL. Regeneruj (--update) TYLKO gdy dług
 # ŚWIADOMIE SPADŁ — nigdy żeby uciszyć nową regresję.
 #
-# WYGENEROWANO: 2026-08-03 (scripts/check-triada.sh --update)
-# RAZEM: 3292 naruszeń w 899 plikach
+# WYGENEROWANO: 2026-08-13 (scripts/check-triada.sh --update)
+# RAZEM: 3269 naruszeń w 892 plikach
 #
 # Posortowane po ścieżce (stabilny diff). Dług maleje = wiersze znikają / liczby spadają.
 3	src/components/AIAnalyticsDashboard.tsx
@@ -72,7 +72,7 @@
 1	src/components/AIChat/UnifiedChatPanel.tsx
 9	src/components/AIChat/V8ArtifactRunControl.tsx
 5	src/components/AIChat/V8ContextIndicator.tsx
-2	src/components/AIChat/VoiceConversationOverlay.tsx
+1	src/components/AIChat/VoiceConversationOverlay.tsx
 2	src/components/AIChat/Wave5ArtifactRuntimePanel.tsx
 25	src/components/AIChat/WorkCanvasDocumentPanel.tsx
 5	src/components/AIChat/WorkModeMenu.tsx
@@ -132,13 +132,10 @@
 2	src/components/DiscoveryTools/ToolReviewPanel.tsx
 4	src/components/DiscoveryTools/ToolSessionPreview.tsx
 1	src/components/DiscoveryTools/ToolSessionPreviewV3.tsx
-2	src/components/DiscoveryTools/shared/ProposalCard.tsx
-2	src/components/DiscoveryTools/shared/ProposalCardGovernance.tsx
 1	src/components/DiscoveryTools/shared/StrategicCanvasVisuals.tsx
 1	src/components/DiscoveryTools/shared/createInitiativeFromMove.tsx
 24	src/components/DiscoveryTools/steps/ContextStep.tsx
 1	src/components/DiscoveryTools/steps/InitiativesStep.tsx
-7	src/components/DiscoveryTools/steps/SummaryStep.tsx
 1	src/components/DiscoveryTools/steps/ToolConclusionSummary.tsx
 1	src/components/DiscoveryTools/tools/AmbitionDecomposer/AmbitionDecomposerPhases.tsx
 1	src/components/DiscoveryTools/tools/AmbitionDecomposer/ThemeCard.tsx
@@ -164,7 +161,6 @@
 1	src/components/DiscoveryTools/tools/ValueChain/ValueChainPhases.tsx
 1	src/components/DiscoveryTools/visualizations/PorterRadar.tsx
 1	src/components/DiscoveryTools/visualizations/SWOTMatrix.tsx
-1	src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx
 1	src/components/DocumentStudio/editor/nodes/ChartNode.tsx
 1	src/components/DocumentStudio/editor/nodes/DocImageNode.tsx
 1	src/components/DocumentStudio/editor/nodes/KpiStripNode.tsx
@@ -193,7 +189,7 @@
 2	src/components/Execution/WhyRedChain.tsx
 9	src/components/Feedback/FeedbackSidePanel.tsx
 2	src/components/Finance/ExportButton.tsx
-14	src/components/Finance/ExportToOutputDialog.tsx
+13	src/components/Finance/ExportToOutputDialog.tsx
 1	src/components/Finance/StatementExplainPanel.tsx
 2	src/components/FullPilotWorkspace.tsx
 6	src/components/FullReportDocument.tsx
@@ -265,9 +261,8 @@
 2	src/components/MyWork/DecisionsPanel.tsx
 1	src/components/MyWork/DecisionsTimelineView.tsx
 3	src/components/MyWork/Executive/AIOperatorOverviewCard.tsx
-3	src/components/MyWork/Executive/ActionRequiredStrip.tsx
 3	src/components/MyWork/Executive/DecisionQueuePreview.tsx
-3	src/components/MyWork/Executive/ExecutiveDashboard.tsx
+2	src/components/MyWork/Executive/ExecutiveDashboard.tsx
 1	src/components/MyWork/Executive/TeamPerformancePreview.tsx
 3	src/components/MyWork/FocusCockpit.tsx
 6	src/components/MyWork/Home/AICompanionBrief.tsx
@@ -341,7 +336,6 @@
 1	src/components/PresentationStudio/PresentationStudioSetupForm.tsx
 1	src/components/PresentationStudio/PresentationStudioSourceArtifactPicker.tsx
 1	src/components/Presentations/DeckBuilder/BlockToolbar.tsx
-1	src/components/Presentations/DeckBuilder/CardFloatingToolbar.tsx
 1	src/components/Presentations/DeckBuilder/CommandPalette.tsx
 1	src/components/Presentations/DeckBuilder/DeckAuditLogModal.tsx
 1	src/components/Presentations/DeckBuilder/DeckGovernanceCardModal.tsx
@@ -718,7 +712,6 @@
 2	src/components/shared/NModeCompleteness/AIFillDialog.tsx
 2	src/components/shared/NModeCompleteness/MissingItemsList.tsx
 1	src/components/shared/Onboarding/OnboardingBanner.tsx
-1	src/components/shared/RowActionsMenu.tsx
 2	src/components/shared/SourceMetadataBlock.tsx
 1	src/components/shared/StatusChangeToast.tsx
 2	src/components/shared/TableWithPreviewLayout.tsx
@@ -834,13 +827,13 @@
 1	src/views/legal/CookiePolicyView.tsx
 6	src/views/legal/SecurityView.tsx
 8	src/views/partner/ClientAccessView.tsx
-53	src/views/partner/PartnerPortalView.tsx
+51	src/views/partner/PartnerPortalView.tsx
 16	src/views/partner/PartnerPricingView.tsx
 38	src/views/partner/ProviderHomeView.tsx
 2	src/views/partner/ResourcesView.tsx
 3	src/views/partner/partnerPricingData.ts
 13	src/views/partner/sections/EarningsSection.tsx
-22	src/views/partner/sections/ReferralToolsSection.tsx
+21	src/views/partner/sections/ReferralToolsSection.tsx
 1	src/views/reports/InitiativeExecutionReport.tsx
 1	src/views/reports/PublicReportBuilderView.tsx
 1	src/views/settings/AppearanceModule.tsx
