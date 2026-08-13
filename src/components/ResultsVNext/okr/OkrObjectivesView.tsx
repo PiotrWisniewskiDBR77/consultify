@@ -238,6 +238,7 @@ export const OkrObjectivesView: React.FC<OkrObjectivesViewProps> = ({ set, isPol
             ? buildOkrObjectivePreview(selected, {
                 isPolish,
                 parentSetStatus: set.status,
+                currentUserId,
                 onClose: () => setSelectedObjectiveId(null),
                 onOpenKeyResults: (r) => onOpenKeyResults(r, set),
                 onEdit: openEdit,

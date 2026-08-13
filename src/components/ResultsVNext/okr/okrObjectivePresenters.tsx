@@ -182,6 +182,7 @@ export function buildOkrObjectiveRowMenu(
 export interface OkrObjectivePreviewDeps {
   isPolish: boolean;
   parentSetStatus: string;
+  currentUserId?: string | null;
   onClose: () => void;
   onOpenKeyResults: (row: OkrObjectiveWithKeyResultsDto) => void;
   onEdit: (row: OkrObjectiveWithKeyResultsDto) => void;
@@ -189,7 +190,7 @@ export interface OkrObjectivePreviewDeps {
 }
 
 export function buildOkrObjectivePreview(row: OkrObjectiveWithKeyResultsDto, deps: OkrObjectivePreviewDeps): StandardPreviewProps {
-  const { isPolish, parentSetStatus, onClose, onOpenKeyResults, onEdit, onCancel } = deps;
+  const { isPolish, parentSetStatus, currentUserId, onClose, onOpenKeyResults, onEdit, onCancel } = deps;
   const childLock = getOkrSetChildEditLock(parentSetStatus);
   const progress = parseOkrObjectiveProgress(row.progress, row.progressCalcReason);
   const confidence = parseOkrObjectiveConfidence(row.confidence, row.confidenceCalcReason);
@@ -219,7 +220,20 @@ export function buildOkrObjectivePreview(row: OkrObjectiveWithKeyResultsDto, dep
       propertyLabel: isPolish ? 'Właściwość' : 'Property',
       valueLabel: isPolish ? 'Wartość' : 'Value',
       properties: [
-        { id: 'owner', label: isPolish ? 'Właściciel' : 'Owner', value: row.ownerUserId, mono: true },
+        {
+          id: 'owner',
+          label: isPolish ? 'Właściciel' : 'Owner',
+          value:
+            currentUserId && row.ownerUserId === currentUserId
+              ? isPolish
+                ? 'Ty'
+                : 'You'
+              : row.ownerUserId
+                ? isPolish
+                  ? 'Przypisany'
+                  : 'Assigned'
+                : '—',
+        },
         { id: 'description', label: isPolish ? 'Opis' : 'Description', value: row.description ?? '—' },
         { id: 'rationale', label: isPolish ? 'Uzasadnienie' : 'Rationale', value: row.rationale ?? '—' },
         {
