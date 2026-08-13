@@ -46,7 +46,12 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
   );
 }
 
-function BlockView({ block }: { block: ReportBlock }) {
+/**
+ * Wyeksportowany dla `SlideDeckView` (Slide Mode) — jedno źródło rendera
+ * bloku, żeby slajdy i przewijany dokument NIGDY nie rozjechały się w
+ * interpretacji tej samej treści (zero zduplikowanej logiki renderowania).
+ */
+export function BlockView({ block }: { block: ReportBlock }) {
   switch (block.kind) {
     case 'action-title':
       return <h3 className="text-lg font-semibold text-c-text">{block.text}</h3>;

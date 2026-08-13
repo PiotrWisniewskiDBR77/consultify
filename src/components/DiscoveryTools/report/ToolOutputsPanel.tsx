@@ -24,6 +24,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import SlideDeckView from '@/components/DiscoveryTools/report/SlideDeckView';
 import ToolReportView from '@/components/DiscoveryTools/report/ToolReportView';
 import { EntityStatusChip } from '@/components/ui/primitives/chips/EntityStatusChip';
 import { Api } from '@/services/api';
@@ -86,6 +87,11 @@ export const ToolOutputsPanel: React.FC<ToolOutputsPanelProps> = ({ toolSessionI
 
   const [viewingDoc, setViewingDoc] = useState<ToolReportDocument | null>(null);
   const [docLoading, setDocLoading] = useState(false);
+  // Slide Mode: pure UI toggle over the SAME immutable doc — no separate
+  // fetch, no separate content state. Presentation docs default to slides
+  // (that is the whole point of a Presentation output); Report docs default
+  // to the scrolling document view. Either doc kind can switch to either view.
+  const [slideMode, setSlideMode] = useState(false);
 
   const [reopening, setReopening] = useState(false);
   const [reopenError, setReopenError] = useState<string | null>(null);
@@ -148,7 +154,12 @@ export const ToolOutputsPanel: React.FC<ToolOutputsPanelProps> = ({ toolSessionI
     setDocLoading(true);
     try {
       const res = await Api.getToolOutputReport(reportId);
-      setViewingDoc((res.report?.doc ?? null) as ToolReportDocument | null);
+      const doc = (res.report?.doc ?? null) as ToolReportDocument | null;
+      setViewingDoc(doc);
+      // Presentation docs open in Slide Mode by default — that is the
+      // difference between a Presentation and a Report. Reports open as the
+      // scrolling document. Both are reachable via the toggle either way.
+      setSlideMode(doc?.kind === 'presentation');
     } finally {
       setDocLoading(false);
     }
@@ -176,15 +187,37 @@ export const ToolOutputsPanel: React.FC<ToolOutputsPanelProps> = ({ toolSessionI
   if (viewingDoc) {
     return (
       <div className="space-y-3">
-        <button
-          type="button"
-          onClick={() => setViewingDoc(null)}
-          className="text-xs font-medium text-c-text-secondary hover:text-c-text"
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => setViewingDoc(null)}
+            className="text-xs font-medium text-c-text-secondary hover:text-c-text"
+          >
+            ← {t('toolOutputs.backToOutputs', 'Back to outputs')}
+          </button>
+          <button
+            type="button"
+            onClick={() => setSlideMode((m) => !m)}
+            data-testid="tool-output-toggle-slide-mode"
+            className="rounded-lg border border-c-border-strong px-3 py-1.5 text-xs font-medium text-c-text hover:bg-c-surface-raised focus-visible:outline focus-visible:outline-2 focus-visible:outline-c-focus"
+          >
+            {slideMode
+              ? t('toolOutputs.viewAsDocument', 'View as document')
+              : t('toolOutputs.viewAsSlides', 'View as slides')}
+          </button>
+        </div>
+        <div
+          className={
+            slideMode
+              ? 'h-[70vh] min-h-[420px] overflow-hidden rounded-xl border border-c-border-subtle bg-c-surface'
+              : 'rounded-xl border border-c-border-subtle bg-c-surface'
+          }
         >
-          ← {t('toolOutputs.backToOutputs', 'Back to outputs')}
-        </button>
-        <div className="rounded-xl border border-c-border-subtle bg-c-surface">
-          <ToolReportView doc={viewingDoc} />
+          {slideMode ? (
+            <SlideDeckView doc={viewingDoc} />
+          ) : (
+            <ToolReportView doc={viewingDoc} />
+          )}
         </div>
       </div>
     );
