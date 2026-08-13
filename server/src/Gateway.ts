@@ -174,6 +174,7 @@ import mediaIngestionRoutes from './routes/media-ingestion.routes.js';
 import meetingRoutes from './routes/meeting.routes.js';
 import megatrendRoutes from './routes/megatrend.routes.js';
 import methodCoreRoutes from './routes/method-core.routes.js';
+import methodCoreRolesRoutes from './routes/method-core-roles.routes.js';
 import metricsRoutes from './routes/metrics.routes.js';
 import mfaRoutes from './routes/mfa.routes.js';
 import modelRegistryRoutes from './routes/modelRegistry.routes.js';
@@ -818,6 +819,11 @@ export class ApiGateway {
       // Shared Method Kernel HTTP surface (P0, 2026-08-13) — router owns its
       // own verifyToken/isAuthenticated gate (server/src/routes/method-core.routes.ts).
       app.use('/api/method', methodCoreRoutes);
+      // Roles/assignment/approval HTTP surface (S2, CEL 3, 2026-08-13) — own
+      // router, own paths (.../roles, .../approval-trail, .../send-back),
+      // mounted alongside the router above at the SAME prefix (see
+      // server/src/routes/method-core-roles.routes.ts header comment).
+      app.use('/api/method', methodCoreRolesRoutes);
 
       // Organization routes
       app.use('/api/megatrends', megatrendRoutes);
