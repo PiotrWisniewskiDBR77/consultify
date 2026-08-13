@@ -7150,6 +7150,49 @@ export const Api = {
     return handleResponse(res, 'Failed to retry tool');
   },
 
+  // --- TOOL OUTPUTS (S4: read/list/reopen surface for the canonical
+  // tool_outputs snapshot — server/src/routes/toolOutputs.routes.ts) ---
+
+  listToolOutputs: async (toolSessionId?: string): Promise<{ outputs: any[] }> => {
+    const qs = toolSessionId ? `?toolSessionId=${encodeURIComponent(toolSessionId)}` : '';
+    const res = await fetch(`${API_URL}/tool-outputs${qs}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to list tool outputs');
+  },
+
+  getToolOutput: async (outputId: string): Promise<{ output: any }> => {
+    const res = await fetch(`${API_URL}/tool-outputs/${outputId}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch tool output');
+  },
+
+  listToolOutputReports: async (outputId: string): Promise<{ reports: any[] }> => {
+    const res = await fetch(`${API_URL}/tool-outputs/${outputId}/reports`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to list tool output reports');
+  },
+
+  getToolOutputReport: async (reportId: string): Promise<{ report: any }> => {
+    const res = await fetch(`${API_URL}/tool-outputs/reports/${reportId}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch tool output report');
+  },
+
+  listToolOutputInitiativeProposals: async (outputId: string): Promise<{ proposals: any[] }> => {
+    const res = await fetch(`${API_URL}/tool-outputs/${outputId}/initiative-proposals`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to list tool output initiative proposals');
+  },
+
+  reopenToolOutput: async (
+    outputId: string,
+    payload?: { conclusions?: unknown[] }
+  ): Promise<{ superseded: { id: string; status: string }; revision: any }> => {
+    const res = await fetch(`${API_URL}/tool-outputs/${outputId}/reopen`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload || {}),
+    });
+    return handleResponse(res, 'Failed to reopen tool output');
+  },
+
   // --- WORKBOOK GENERATION (P23 extension) ---
 
   generateWorkbook: async (payload: {
