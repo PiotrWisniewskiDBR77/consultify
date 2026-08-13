@@ -18,7 +18,7 @@ const contracts: RouteContract[] = [
 ];
 
 const forbiddenFlagKey = /(flag|feature|beta|preview|demo_acceptance|artifact_studio|case_workspace|results_vnext|finance.*v1)/i;
-const ignoredFailure = /favicon|analytics|telemetry|sentry|clarity|intercom/i;
+const ignoredFailure = /favicon|analytics|telemetry|sentry|clarity|intercom|googletagmanager\.com|google-analytics\.com|fonts\.gstatic\.com/i;
 
 function evidencePath(testInfo: TestInfo, suffix: string) {
   const root = process.env.E2E_EVIDENCE_DIR || path.join('/tmp', 'consultify-demo-acceptance');
@@ -30,7 +30,9 @@ async function capture(page: Page) {
   const failedRequests: Array<{ url: string; error: string }> = [];
   const badResponses: Array<{ url: string; status: number }> = [];
   page.on('console', (message) => {
-    if (message.type() === 'error') consoleErrors.push(message.text());
+    if (message.type() === 'error' && !ignoredFailure.test(message.location().url)) {
+      consoleErrors.push(message.text());
+    }
   });
   page.on('requestfailed', (request) => {
     if (!ignoredFailure.test(request.url())) failedRequests.push({ url: request.url(), error: request.failure()?.errorText || 'unknown' });

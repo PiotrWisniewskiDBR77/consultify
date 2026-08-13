@@ -48,6 +48,17 @@ ENV GEMINI_API_KEY=${GEMINI_API_KEY}
 ARG VITE_ENABLE_DELIVERABLES_LIGHT
 ENV VITE_ENABLE_DELIVERABLES_LIGHT=${VITE_ENABLE_DELIVERABLES_LIGHT}
 
+# Acceptance gates are intentionally build-time Vite inputs. Keep the central
+# demo profile and the separately governed Case Workspace gate explicit so a
+# Railway runtime variable cannot falsely appear enabled while the compiled UI
+# remains fail-closed.
+ARG VITE_DEMO_ACCEPTANCE
+ARG VITE_ENABLE_CASE_WORKSPACE
+ARG VITE_INITIATIVE_DEDUP_ACTIONABLE
+ENV VITE_DEMO_ACCEPTANCE=${VITE_DEMO_ACCEPTANCE}
+ENV VITE_ENABLE_CASE_WORKSPACE=${VITE_ENABLE_CASE_WORKSPACE}
+ENV VITE_INITIATIVE_DEDUP_ACTIONABLE=${VITE_INITIATIVE_DEDUP_ACTIONABLE}
+
 # Copy package files and workspace structure for npm workspaces
 COPY package.json package-lock.json ./
 COPY packages/ ./packages/
