@@ -1,0 +1,28 @@
+-- Program D / E08 — Idea maturity model stage gates.
+-- SSOT: docs/qa/ideas-manual-audit-2026-08-09/09_IDEAS_COMPLETE_TRANSFORMATION_PROGRAM_FOR_CLAUDE.md
+-- §6.1, docs/qa/ideas-manual-audit-2026-08-09/11_IDEAS_EPICS_DOD_AND_FINAL_ACCEPTANCE_PROTOCOL.md E08.
+--
+-- ★★★ NOT APPLIED. This subagent has no deploy/DB authority (see task's
+-- DATABASE SAFETY rule). The orchestrator must run this explicitly before
+-- server/src/routes/my-work.routes.ts's `maturity_gates_json` feature-detect
+-- (`ideaColumns.has('maturity_gates_json')`) will start returning real data
+-- instead of gracefully degrading to "attestations not supported yet".
+--
+-- Purpose: most Idea-maturity criteria (owner, evidence, risks, alternatives,
+-- ...) are DERIVED at request time in src/components/MyWork/ideaMaturityModel.ts
+-- from data the product already stores (canvas node fields, evidenceRefs,
+-- promotedTo). A handful — initial economics, recommendation, financial
+-- scenario, dependencies, unresolved assumptions — have NO backing field
+-- anywhere in the product today (grep confirmed no such structured record
+-- exists for an Idea). Rather than fabricate a computed answer for those,
+-- this column stores explicit user attestations: {criterionId: {met, note,
+-- byUserId, at}}.
+--
+-- ADDITIVE ONLY: one nullable column with a default, zero ALTER on existing
+-- columns, zero DROP, zero NOT NULL, zero type changes. Same TEXT-JSON
+-- convention as the sibling *_json columns already on my_ideas
+-- (action_contract_json / source_pack_json / evidence_refs_json — see
+-- server/migrations/*_my_ideas_lineage*.sql neighborhood) for SQLite/Postgres
+-- compatibility in this repo.
+
+ALTER TABLE my_ideas ADD COLUMN IF NOT EXISTS maturity_gates_json TEXT DEFAULT '{}';
