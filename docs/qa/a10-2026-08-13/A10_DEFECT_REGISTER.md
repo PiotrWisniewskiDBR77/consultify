@@ -81,3 +81,21 @@ Oba gate'y PASS z realną liczbą testów (nie „0 tests found").
 ## Ryzyko środowiskowe zaobserwowane w trakcie audytu (do wiadomości, nie defekt produktu)
 
 Serwer testowy (port 42500) był **trzykrotnie ubity SIGTERM-em** w trakcie audytu przez `pkill -f "tsx src/index.ts"` uruchamiany przez INNĄ równoległą sesję (widoczne w `ps aux`: proces `mac-s2-roles` z komendą zawierającą `pkill -f "tsx src/index.ts"; pkill -f "vite dev-render"`) — wzorzec pasuje po nazwie procesu do WSZYSTKICH worktree, nie tylko własnego. Każdorazowo zrestartowano serwer i wznowiono przechwytywanie (`FORCE_RECAPTURE`/skip-istniejących), finalnie 100% zrzutów HTTP-states bez błędów sieciowych. Brak wpływu na treść defektów D1–D5 (zweryfikowane na żywym, stabilnym serwerze). Warto zgłosić do backlogu: `pkill` w skryptach sprzątających innych sesji powinien być zawężony do PID-u/portu własnego worktree, nie do nazwy procesu.
+
+---
+
+## Rozstrzygnięcia Opusa (integrator) — po audycie
+
+| # | Waga | Decyzja | Dowód |
+| --- | --- | --- | --- |
+| **D1** | P1 | **NAPRAWIONE.** `disabled` sprawdza teraz `actorIsApprover` wyliczone z `runtime.getRoles(actorUserId)` — źródłem prawdy są **te same role, które egzekwuje `TRANSITION_AUTHORITY`**, nie zgadywanie po nazwie aktora. Dołożony `title` wyjaśniający **powód** blokady (rola vs stan). | 3 testy regresyjne w `zz-opus-a10-d1.test.tsx`: owner zablokowany · approver aktywny · approver poza `in_review` nadal zablokowany. `tsc` 0 błędów, front 291/299 exit 0. |
+| **D5** | P1 | **UZNANE ZA LUKĘ POMIAROWĄ, nie defekt runtime.** Audytor ma rację: `dev-render/screens/drd-library-entry.tsx` jest jawnie udokumentowanym harnessem zrzutowym, nie ekranem Library. Realny readiness **jest** uczciwie ujawniony na ekranach Interview/Session (baner + test) oraz przez `GET /api/method/packs` (zweryfikowane przeze mnie: zwraca `draft` i `methodology_review` bez zawyżania). Prawdziwy ekran Library z listą packów pozostaje **NOT VERIFIED** — nie istnieje jako produkcyjny ekran w tym zakresie. |
+| **D2** | P2 | **ZGŁOSZONE, nienaprawione.** Ostrzeżenie hydratacji w `LiveMatrix` — białe znaki jako bezpośrednie dziecko `<table>`. Deterministyczne (12/12 kombinacji), **wizualnie niewidoczne**. Plik należy do agenta pracującego nad Dark/a11y; naprawa tam, żeby nie kolidować. |
+| **D3** | P2 | **ZGŁOSZONE.** `onResolutionAction` to pusty stub. Główne kryterium („Nie wiem" nie daje zera) jest **spełnione i potwierdzone** (1/39 → 1/39), ale obiecana `ResolutionCard` się nie pojawia. Wymaga decyzji: pomoc ambient w panelu Teresy czy dedykowana karta. |
+| **D4** | P2 | **ZGŁOSZONE.** „Gotowe do zamrożenia" na zielono przy 1/39 dowodów. Technicznie poprawne (liczy blokery strukturalne, nie completeness), ale **myli**. Rekomendacja: rozdzielić „brak blokerów" od „kompletność", zgodnie z `ASSESSMENT_EVIDENCE_AND_SCORING_CONTRACT.md` §5 („confidence nie zastępuje completeness"). |
+
+**Uwaga operacyjna:** audytor zgłosił, że jego serwer testowy był trzykrotnie
+zabijany przez `pkill -f "tsx src/index.ts"` z **równoległej sesji**. To mój
+wzorzec — zabija procesy we wszystkich worktree naraz. Nie wpłynęło na wyniki
+(wszystko zweryfikowane na stabilnym serwerze), ale przy pracy wieloagentowej
+`pkill` po nazwie procesu jest zbyt szeroki; należy zabijać po porcie albo PID.
