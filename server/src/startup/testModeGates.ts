@@ -53,6 +53,18 @@ export function runsRealDbInTestMode(env: TestModeGateEnv): boolean {
  * effect of `RUN_DB_TESTS`.
  */
 export function shouldUseMockDatabase(env: TestModeGateEnv): boolean {
+  // ★ Bramka produkcyjna (Opus, odbiór P0A).
+  //
+  // Ścieżka mocka jest JEDYNĄ, która ustawia `dbReady = true` z pominięciem
+  // weryfikacji schematu i migracji (`server/src/index.ts`). Bez tego strażnika
+  // `MOCK_DB=true` na produkcji dawał serwer ogłaszający gotowość na atrapie
+  // bazy — dokładnie ten stan, przed którym ma chronić bramka readiness.
+  //
+  // Gwarancja koordynatora brzmi „w produkcji nie wolno ustawić dbReady przed
+  // sukcesem migracji" i nie jest ograniczona do jednej zmiennej: żadna flaga,
+  // łącznie z jawnym `MOCK_DB=true`, nie może jej złamać.
+  if (env.NODE_ENV === 'production') return false;
+
   return (
     env.MOCK_DB === 'true' ||
     (env.NODE_ENV === 'test' && env.RUN_DB_TESTS !== '1' && env.MOCK_DB !== 'false')

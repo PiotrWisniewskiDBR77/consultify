@@ -380,3 +380,35 @@ describe('P0A — six production guarantees (RUN_DB_TESTS must never weaken prod
     expect(windowBeforeAnchor).toMatch(/tpMigrationStatus = \{\s*state: 'failed'/);
   });
 });
+
+// ---------------------------------------------------------------------------
+// G7 (Opus, odbiór P0A) — mock DB jest strukturalnie niemożliwy na produkcji
+// ---------------------------------------------------------------------------
+describe('G7 — produkcja nigdy nie używa atrapy bazy', () => {
+  it('MOCK_DB=true na produkcji NIE włącza mocka', () => {
+    expect(shouldUseMockDatabase({ NODE_ENV: 'production', MOCK_DB: 'true' } as never)).toBe(false);
+  });
+
+  it('żadna kombinacja flag testowych nie włącza mocka na produkcji', () => {
+    expect(
+      shouldUseMockDatabase({
+        NODE_ENV: 'production',
+        MOCK_DB: 'true',
+        RUN_DB_TESTS: '1',
+        E2E_MODE: 'true',
+        ENABLE_TEST_GATEWAY: 'true',
+      } as never)
+    ).toBe(false);
+  });
+
+  it('poza produkcją MOCK_DB=true nadal działa (regresja odwrotna)', () => {
+    expect(shouldUseMockDatabase({ NODE_ENV: 'development', MOCK_DB: 'true' } as never)).toBe(true);
+    expect(shouldUseMockDatabase({ NODE_ENV: 'test', MOCK_DB: 'true' } as never)).toBe(true);
+  });
+
+  it('test + RUN_DB_TESTS=1 + MOCK_DB=false → realna baza, nie mock', () => {
+    expect(
+      shouldUseMockDatabase({ NODE_ENV: 'test', RUN_DB_TESTS: '1', MOCK_DB: 'false' } as never)
+    ).toBe(false);
+  });
+});
