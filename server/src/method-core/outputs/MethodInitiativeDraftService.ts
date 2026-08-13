@@ -44,6 +44,27 @@ export interface CreateInitiativeDraftInput {
   readonly confidence: 'low' | 'medium' | 'high';
 }
 
+/**
+ * List filter for `listForOrganization` — org-scoped by construction, same
+ * `sessionIds`-carries-the-projectId-filter shape as
+ * `MethodOutputService.ListOutputsFilter` (this table has no `project_id`
+ * column either).
+ */
+export interface ListInitiativeDraftsFilter {
+  readonly organizationId: string;
+  readonly sessionId?: string;
+  readonly sessionIds?: readonly string[];
+  readonly outputId?: string;
+  readonly status?: DraftSupersedenceStatus;
+  readonly limit: number;
+  readonly offset: number;
+}
+
+export interface ListResult<T> {
+  readonly items: readonly T[];
+  readonly total: number;
+}
+
 export interface MethodInitiativeDraftRecord {
   readonly id: string;
   readonly organizationId: string;
@@ -194,6 +215,48 @@ export class MethodInitiativeDraftService {
       .filter((r) => r.session_id === sessionId)
       .sort((a, b) => a.id.localeCompare(b.id))
       .map(toRecord);
+  }
+
+  /** Tenant-scoped single read — `null` on not-found OR wrong org. */
+  async getById(organizationId: string, id: string): Promise<MethodInitiativeDraftRecord | null> {
+    const row = await DbPromise.get<MethodInitiativeDraftRow>(
+      `SELECT * FROM method_initiative_drafts WHERE id = ?`,
+      [id]
+    );
+    if (!row || row.organization_id !== organizationId) return null;
+    return toRecord(row);
+  }
+
+  /**
+   * Org-wide, paginated listing — powers `GET /api/method/initiative-drafts`.
+   * Same in-memory filter/sort/paginate discipline as
+   * `MethodOutputService.listForOrganization`. Deterministic order:
+   * `created_at DESC, id DESC`.
+   */
+  async listForOrganization(
+    filter: ListInitiativeDraftsFilter
+  ): Promise<ListResult<MethodInitiativeDraftRecord>> {
+    const rows = await DbPromise.all<MethodInitiativeDraftRow>(
+      `SELECT * FROM method_initiative_drafts WHERE organization_id = ?`,
+      [filter.organizationId]
+    );
+    let matching = rows.filter((r) => r.organization_id === filter.organizationId);
+    if (filter.sessionId) matching = matching.filter((r) => r.session_id === filter.sessionId);
+    if (filter.outputId) matching = matching.filter((r) => r.output_id === filter.outputId);
+    if (filter.sessionIds) {
+      const allow = new Set(filter.sessionIds);
+      matching = matching.filter((r) => allow.has(r.session_id));
+    }
+    if (filter.status) matching = matching.filter((r) => r.status === filter.status);
+
+    matching.sort((a, b) => {
+      const byTime = new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      return byTime !== 0 ? byTime : b.id.localeCompare(a.id);
+    });
+
+    const total = matching.length;
+    const page = matching.slice(filter.offset, filter.offset + filter.limit);
+    return { items: page.map(toRecord), total };
   }
 
   /**

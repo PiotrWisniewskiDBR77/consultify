@@ -55,6 +55,7 @@ import {
   type MethodActorKind,
   type MethodEventType,
   type MethodProcessRole,
+  type MethodSession,
   type MethodSessionState,
   type TeresaCapabilityId,
   type TeresaCommitRequest,
@@ -139,6 +140,115 @@ function requireIdempotencyKey(req: Request, res: Response): string | null {
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0;
+}
+
+// ---------------------------------------------------------------------------
+// Pagination — every list endpoint below goes through this. Default AND max
+// are both enforced (an unbounded `?limit=999999999` is refused, not
+// silently clamped-and-served) so "brak nielimitowanego zwrotu" is a real
+// property of the route, not just a convention callers are expected to
+// follow.
+// ---------------------------------------------------------------------------
+
+const DEFAULT_PAGE_LIMIT = 20;
+const MAX_PAGE_LIMIT = 100;
+
+interface Pagination {
+  readonly limit: number;
+  readonly offset: number;
+}
+
+function parsePagination(req: Request, res: Response): Pagination | null {
+  const rawLimit = req.query.limit;
+  const rawOffset = req.query.offset;
+  let limit = DEFAULT_PAGE_LIMIT;
+  let offset = 0;
+
+  if (rawLimit !== undefined) {
+    const n = Number(rawLimit);
+    if (!Number.isInteger(n) || n < 1) {
+      res.status(400).json({ error: 'limit must be a positive integer' });
+      return null;
+    }
+    if (n > MAX_PAGE_LIMIT) {
+      res.status(400).json({ error: `limit must not exceed ${MAX_PAGE_LIMIT}` });
+      return null;
+    }
+    limit = n;
+  }
+  if (rawOffset !== undefined) {
+    const n = Number(rawOffset);
+    if (!Number.isInteger(n) || n < 0) {
+      res.status(400).json({ error: 'offset must be a non-negative integer' });
+      return null;
+    }
+    offset = n;
+  }
+  return { limit, offset };
+}
+
+/**
+ * Resolves an optional `?projectId=` list-filter into the set of session ids
+ * it stands for (none of the Output/Report/Presentation/Initiative-Draft
+ * tables carry `project_id` themselves — only `method_sessions` does).
+ * Returns `undefined` when no `projectId` was given (no filtering by
+ * project), or an array — POSSIBLY EMPTY — when it was. An empty array is
+ * meaningful (the project exists in the token's org, or doesn't, either way
+ * it owns zero sessions) and callers must treat it as "match nothing", not
+ * "no filter".
+ */
+async function resolveProjectSessionIds(
+  organizationId: string,
+  req: Request
+): Promise<string[] | undefined> {
+  const projectId = isNonEmptyString(req.query.projectId) ? req.query.projectId : undefined;
+  if (!projectId) return undefined;
+  return sessionService.listSessionIdsByProject(organizationId, projectId);
+}
+
+/**
+ * Every session in the SAME reopen lineage as `anchorSessionId` — the root
+ * (walking back via `revisionOfSessionId`) plus every descendant revision
+ * (walking forward, breadth-first, via `MethodSessionService.listRevisions`,
+ * since a session may be reopened more than once, producing a chain longer
+ * than one hop). Powers `GET /sessions/:id/lineage` — the caller may pass
+ * ANY session in the chain, root or a later revision, and gets back the
+ * SAME full set either way. Bounded traversal (25 hops each direction) so a
+ * corrupt/cyclic pointer cannot hang the request.
+ */
+async function collectSessionLineage(
+  organizationId: string,
+  anchorSessionId: string
+): Promise<MethodSession[]> {
+  const anchor = await sessionService.getSession(anchorSessionId);
+  if (!anchor) return [];
+
+  let root = anchor;
+  let backHops = 0;
+  while (root.revisionOfSessionId && backHops < 25) {
+    const parent = await sessionService.getSession(root.revisionOfSessionId);
+    if (!parent) break;
+    root = parent;
+    backHops += 1;
+  }
+
+  const all: MethodSession[] = [root];
+  const seen = new Set<string>([root.id]);
+  const queue: string[] = [root.id];
+  let guard = 0;
+  while (queue.length > 0 && guard < 200) {
+    guard += 1;
+    const current = queue.shift() as string;
+    const children = await sessionService.listRevisions(organizationId, current);
+    for (const child of children) {
+      if (!seen.has(child.id)) {
+        seen.add(child.id);
+        all.push(child);
+        queue.push(child.id);
+      }
+    }
+  }
+  return all;
 }
 
 /**
@@ -717,6 +827,48 @@ router.post(
 );
 
 // ---------------------------------------------------------------------------
+// GET /api/method/outputs — list (filter: sessionId, projectId, status;
+// paginated, deterministic order). "Po restarcie użytkownik odnajduje
+// historię pracy" starts here — every item is read straight from
+// `method_outputs`, never reconstructed from current session state (see
+// MethodOutputService.listForOrganization's doc comment).
+// ---------------------------------------------------------------------------
+
+router.get(
+  '/outputs',
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
+    const organizationId = requireOrg(req, res);
+    if (!organizationId) return;
+    const pagination = parsePagination(req, res);
+    if (!pagination) return;
+
+    const sessionIds = await resolveProjectSessionIds(organizationId, req);
+    if (sessionIds && sessionIds.length === 0) {
+      res.status(200).json({ outputs: [], total: 0, limit: pagination.limit, offset: pagination.offset });
+      return;
+    }
+
+    const sessionId = isNonEmptyString(req.query.sessionId) ? req.query.sessionId : undefined;
+    const statusParam = isNonEmptyString(req.query.status) ? req.query.status : undefined;
+    if (statusParam !== undefined && statusParam !== 'current' && statusParam !== 'superseded') {
+      res.status(400).json({ error: 'status must be current|superseded' });
+      return;
+    }
+
+    const { items, total } = await methodOutputService.listForOrganization({
+      organizationId,
+      sessionId,
+      sessionIds,
+      status: statusParam,
+      limit: pagination.limit,
+      offset: pagination.offset,
+    });
+
+    res.status(200).json({ outputs: items, total, limit: pagination.limit, offset: pagination.offset });
+  })
+);
+
+// ---------------------------------------------------------------------------
 // GET /api/method/outputs/:id — immutable Output
 // ---------------------------------------------------------------------------
 
@@ -732,6 +884,26 @@ router.get(
     }
     const supersession = await methodOutputService.isSuperseded(organizationId, output.id);
     res.status(200).json({ output, ...supersession });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// GET /api/method/outputs/:id/revisions — full revision chain, current vs
+// superseded ("rewizje Output + rozróżnienie current / superseded"). `:id`
+// may be ANY output in the chain — always returns the SAME full chain.
+// ---------------------------------------------------------------------------
+
+router.get(
+  '/outputs/:id/revisions',
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
+    const organizationId = requireOrg(req, res);
+    if (!organizationId) return;
+    const chain = await methodOutputService.listRevisionChain(organizationId, req.params.id);
+    if (!chain) {
+      res.status(404).json({ error: 'Output not found' });
+      return;
+    }
+    res.status(200).json({ revisions: chain.items, total: chain.total });
   })
 );
 
@@ -816,6 +988,115 @@ router.post(
   })
 );
 
+/**
+ * Shared list handler for GET /reports and GET /presentations — same table,
+ * `kind` picks which. Filters: sessionId, projectId, outputId, status
+ * (current|superseded|source_updated). Paginated, deterministic order
+ * (created_at DESC, id DESC — see MethodReportSnapshotService.listForOrganization).
+ */
+async function listArtefactSnapshots(
+  req: AuthedRequest,
+  res: Response,
+  kind: MethodArtefactKind,
+  responseKey: 'reports' | 'presentations'
+): Promise<void> {
+  const organizationId = requireOrg(req, res);
+  if (!organizationId) return;
+  const pagination = parsePagination(req, res);
+  if (!pagination) return;
+
+  const sessionIds = await resolveProjectSessionIds(organizationId, req);
+  if (sessionIds && sessionIds.length === 0) {
+    res.status(200).json({ [responseKey]: [], total: 0, limit: pagination.limit, offset: pagination.offset });
+    return;
+  }
+
+  const sessionId = isNonEmptyString(req.query.sessionId) ? req.query.sessionId : undefined;
+  const outputId = isNonEmptyString(req.query.outputId) ? req.query.outputId : undefined;
+  const statusParam = isNonEmptyString(req.query.status) ? req.query.status : undefined;
+  if (
+    statusParam !== undefined &&
+    statusParam !== 'current' &&
+    statusParam !== 'superseded' &&
+    statusParam !== 'source_updated'
+  ) {
+    res.status(400).json({ error: 'status must be current|superseded|source_updated' });
+    return;
+  }
+
+  const { items, total } = await methodReportSnapshotService.listForOrganization({
+    organizationId,
+    sessionId,
+    sessionIds,
+    outputId,
+    kind,
+    status: statusParam,
+    limit: pagination.limit,
+    offset: pagination.offset,
+  });
+
+  res.status(200).json({ [responseKey]: items, total, limit: pagination.limit, offset: pagination.offset });
+}
+
+// ---------------------------------------------------------------------------
+// GET /api/method/reports — list Report snapshots
+// ---------------------------------------------------------------------------
+
+router.get(
+  '/reports',
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
+    await listArtefactSnapshots(req, res, 'report', 'reports');
+  })
+);
+
+// ---------------------------------------------------------------------------
+// GET /api/method/reports/:id — a single Report snapshot
+// ---------------------------------------------------------------------------
+
+router.get(
+  '/reports/:id',
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
+    const organizationId = requireOrg(req, res);
+    if (!organizationId) return;
+    const report = await methodReportSnapshotService.getById(organizationId, req.params.id);
+    if (!report || report.kind !== 'report') {
+      res.status(404).json({ error: 'Report not found' });
+      return;
+    }
+    res.status(200).json({ report });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// GET /api/method/presentations — list Presentation snapshots (SAME table
+// as Reports, kind='presentation' — see createArtefactSnapshot's doc comment).
+// ---------------------------------------------------------------------------
+
+router.get(
+  '/presentations',
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
+    await listArtefactSnapshots(req, res, 'presentation', 'presentations');
+  })
+);
+
+// ---------------------------------------------------------------------------
+// GET /api/method/presentations/:id — a single Presentation snapshot
+// ---------------------------------------------------------------------------
+
+router.get(
+  '/presentations/:id',
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
+    const organizationId = requireOrg(req, res);
+    if (!organizationId) return;
+    const presentation = await methodReportSnapshotService.getById(organizationId, req.params.id);
+    if (!presentation || presentation.kind !== 'presentation') {
+      res.status(404).json({ error: 'Presentation not found' });
+      return;
+    }
+    res.status(200).json({ presentation });
+  })
+);
+
 // ---------------------------------------------------------------------------
 // POST /api/method/outputs/:id/initiative-drafts — Initiative Proposal
 // ---------------------------------------------------------------------------
@@ -884,6 +1165,135 @@ router.post(
     });
 
     res.status(201).json({ draft });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// GET /api/method/initiative-drafts — list Initiative Proposal Drafts
+// ---------------------------------------------------------------------------
+
+router.get(
+  '/initiative-drafts',
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
+    const organizationId = requireOrg(req, res);
+    if (!organizationId) return;
+    const pagination = parsePagination(req, res);
+    if (!pagination) return;
+
+    const sessionIds = await resolveProjectSessionIds(organizationId, req);
+    if (sessionIds && sessionIds.length === 0) {
+      res
+        .status(200)
+        .json({ initiativeDrafts: [], total: 0, limit: pagination.limit, offset: pagination.offset });
+      return;
+    }
+
+    const sessionId = isNonEmptyString(req.query.sessionId) ? req.query.sessionId : undefined;
+    const outputId = isNonEmptyString(req.query.outputId) ? req.query.outputId : undefined;
+    const statusParam = isNonEmptyString(req.query.status) ? req.query.status : undefined;
+    if (
+      statusParam !== undefined &&
+      statusParam !== 'current' &&
+      statusParam !== 'superseded' &&
+      statusParam !== 'source_updated'
+    ) {
+      res.status(400).json({ error: 'status must be current|superseded|source_updated' });
+      return;
+    }
+
+    const { items, total } = await methodInitiativeDraftService.listForOrganization({
+      organizationId,
+      sessionId,
+      sessionIds,
+      outputId,
+      status: statusParam,
+      limit: pagination.limit,
+      offset: pagination.offset,
+    });
+
+    res
+      .status(200)
+      .json({ initiativeDrafts: items, total, limit: pagination.limit, offset: pagination.offset });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// GET /api/method/initiative-drafts/:id — a single Initiative Proposal Draft
+// ---------------------------------------------------------------------------
+
+router.get(
+  '/initiative-drafts/:id',
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
+    const organizationId = requireOrg(req, res);
+    if (!organizationId) return;
+    const draft = await methodInitiativeDraftService.getById(organizationId, req.params.id);
+    if (!draft) {
+      res.status(404).json({ error: 'Initiative Proposal Draft not found' });
+      return;
+    }
+    res.status(200).json({ draft });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// GET /api/method/sessions/:id/lineage — full provenance tree: sesja →
+// rewizje → Output → Report/Presentation → Initiative Proposal. `:id` may be
+// ANY session in the reopen lineage (root or a later revision) — the
+// response always covers the whole chain (see collectSessionLineage's doc
+// comment).
+// ---------------------------------------------------------------------------
+
+router.get(
+  '/sessions/:id/lineage',
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
+    const organizationId = requireOrg(req, res);
+    if (!organizationId) return;
+    const session = await loadOwnedSession(req, res, req.params.id);
+    if (!session) return;
+
+    const sessions = await collectSessionLineage(organizationId, session.id);
+    const sortedSessions = [...sessions].sort((a, b) => {
+      const byTime = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      return byTime !== 0 ? byTime : a.id.localeCompare(b.id);
+    });
+
+    const outputs: Array<{
+      output: Awaited<ReturnType<typeof methodOutputService.getOutput>>;
+      status: 'current' | 'superseded';
+      supersededByOutputId: string | null;
+      reports: Awaited<ReturnType<typeof methodReportSnapshotService.listBySession>>;
+      presentations: Awaited<ReturnType<typeof methodReportSnapshotService.listBySession>>;
+      initiativeDrafts: Awaited<ReturnType<typeof methodInitiativeDraftService.listBySession>>;
+    }> = [];
+
+    for (const s of sortedSessions) {
+      const sessionOutputs = await methodOutputService.listOutputsBySession(organizationId, s.id);
+      for (const output of sessionOutputs) {
+        const supersession = await methodOutputService.isSuperseded(organizationId, output.id);
+        const artefactsForSession = await methodReportSnapshotService.listBySession(organizationId, s.id);
+        const reports = artefactsForSession.filter((a) => a.outputId === output.id && a.kind === 'report');
+        const presentations = artefactsForSession.filter(
+          (a) => a.outputId === output.id && a.kind === 'presentation'
+        );
+        const draftsForSession = await methodInitiativeDraftService.listBySession(organizationId, s.id);
+        const initiativeDrafts = draftsForSession.filter((d) => d.outputId === output.id);
+
+        outputs.push({
+          output,
+          status: supersession.superseded ? 'superseded' : 'current',
+          supersededByOutputId: supersession.supersededByOutputId,
+          reports,
+          presentations,
+          initiativeDrafts,
+        });
+      }
+    }
+
+    res.status(200).json({
+      rootSessionId: sortedSessions[0]?.id ?? session.id,
+      sessions: sortedSessions,
+      outputs,
+    });
   })
 );
 
