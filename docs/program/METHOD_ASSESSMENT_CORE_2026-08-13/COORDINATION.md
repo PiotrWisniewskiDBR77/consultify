@@ -225,3 +225,90 @@ bazowały na **tym samym** SHA.
 | COORD-03 | Właścicielstwo plików struktur | NIE | OTWARTY — ryzyko **zmierzone jako zerowe** (0 konsumentów w Audits) |
 | COORD-04 | Baza: demo vs gałąź integracyjna | NIE | OTWARTY |
 | COORD-05 | TIER już istnieje (`siriPrioritisation.ts`) | NIE | INFORMACYJNY |
+
+---
+
+## COORD-06 — DRD: dwa niezgodne modele wymiarów w repo
+
+**decyzja:** który model DRD jest kanonem docelowym dla Workbencha i ścieżek
+dojrzałości.
+
+**stan faktyczny (zgłoszone przez A3, potwierdzone lokalizacją plików):**
+
+| Warstwa | Model | Plik |
+| --- | --- | --- |
+| Struktura oceny | **7 osi × 39 obszarów**, skale 1–5/1–6/1–7 per oś | `src/services/drdStructure.ts` |
+| Ścieżki dojrzałości | **`D1..D8`, poziomy `I..V`**, „Canon §3.2 MAP-1.0" | `src/services/assessmentKnowledge/maturityPathwayDrdData.ts` |
+
+Modele są **niezgodne co do liczby i nazewnictwa wymiarów oraz skali**.
+Kanon `ASSESSMENT_KB_DRD.md` §1 rozstrzyga na korzyść 7 osi / 39 obszarów
+i wprost odrzuca starszy komentarz o 34 obszarach — ale **nie odnosi się**
+do modelu `D1..D8` w warstwie pathway.
+
+A3 **nie podłączył** pathway do adaptera i zgłosił rozbieżność, zamiast wybrać
+po cichu — postąpił prawidłowo. Skutek: Method Pack DRD nie dostarcza dziś
+ścieżek rozwoju.
+
+**wariant rekomendowany:** kanonem jest **7 osi / 39 obszarów**;
+`maturityPathwayDrdData.ts` wymaga przemapowania na ten model w osobnym kroku.
+Do czasu przemapowania pathway pozostaje **odłączony i jawnie pusty** w packu,
+nie zasilany niezgodnymi danymi.
+
+**alternatywy:**
+1. Utrzymać oba modele z jawnym, wersjonowanym mapowaniem `D1..D8 ↔ 39 obszarów`
+   — możliwe, ale mapowanie 8 → 39 jest stratne i wymaga zatwierdzenia
+   właściciela metodyki.
+2. Uznać `D1..D8` za kanon pathway i zostawić jako równoległą warstwę
+   — odrzucone: produkuje drugą prawdę o dojrzałości DRD.
+
+**wpływ na Assessment:** brak ścieżek rozwoju w Output do czasu decyzji.
+**wpływ na Tools / Audits:** brak.
+
+**pliki/kontrakty:** `src/services/assessmentKnowledge/maturityPathwayDrdData.ts`,
+`maturityPathwayService.ts`, `src/method-core/methods/drd/compileDrdPack.ts`.
+
+**czy praca niezależna może być kontynuowana:** **TAK.**
+
+---
+
+## COORD-07 — DRD: brak źródeł dla wymaganych pól Method Packa
+
+**decyzja:** czy uzupełnić brakującą treść metodyczną DRD, a jeśli tak — kto ją
+autoryzuje.
+
+**stan faktyczny (zmierzone, nie oszacowane):**
+
+| Pole wymagane przez kanon | Pokrycie w repo |
+| --- | ---: |
+| `expectedEvidence` per poziom | **233 / 233** ✅ |
+| pytania walidacyjne | **699 / 699** ✅ |
+| `misScoringTraps` | **0 / 233** ❌ |
+| `distinctionFromPrevious` / `distinctionFromNext` | **0 / 233** ❌ |
+| `negativeEvidence`, `examples` | **0 / 233** ❌ |
+| `plainLanguageExplanation` + 10 pól pytania | **0 / 699** ❌ |
+
+Pola te są wymagane przez `ASSESSMENT_METHOD_PACK_CONTRACT.md` §4 oraz
+`ASSESSMENT_QUESTION_HELP_AND_CONVERSATION_STANDARD.md` §5. **Nie ma ich
+w żadnym źródle w repo** — ani w `drdStructure.ts`, ani w QBank v2, ani
+w `knowledge/DRD/`.
+
+Konsekwencja jest już wyegzekwowana w kodzie: `readiness = 'methodology_review'`,
+`canStartSession()` = **false**. Pack nie udaje gotowego.
+
+**wariant rekomendowany:** treść uzupełnia **właściciel metodyki DRD**, nie AI.
+DRD jest metodyką licencjonowaną; wygenerowanie brakujących „pułapek
+scoringowych" i „różnic między poziomami" przez model byłoby fabrykowaniem
+metodyki. Do tego czasu UI pokazuje jawne `Help content unavailable`, zgodnie
+z kanonem.
+
+**alternatywy:**
+1. Wygenerować treść modelem i oznaczyć jako `draft` do przeglądu — ryzykowne
+   przy metodyce licencjonowanej, ale przyspiesza; wymaga świadomej zgody.
+2. Obniżyć wymagania kontraktu Method Packa — odrzucone: to kanon UX pomocy,
+   a nie formalność.
+
+**wpływ na Assessment:** DRD nie może wejść w sesję produkcyjną do uzupełnienia.
+**wpływ na Tools / Audits:** precedens — ten sam próg dotyczy ich packów.
+
+**czy praca niezależna może być kontynuowana:** **TAK** — mechanika, workspace,
+Outputs i testy nie zależą od tej treści.

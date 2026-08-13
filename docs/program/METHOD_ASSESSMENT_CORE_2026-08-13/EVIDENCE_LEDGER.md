@@ -120,6 +120,69 @@ Czyli **dane kanoniczne już są w repo, tylko pod błędną nazwą i w błędne
 
 ---
 
+## G3 — Kernel: kontrakt wspólny (Opus, własne autorstwo)
+
+| # | Wymaganie | Pliki | Polecenie | Exit | Werdykt |
+| --- | --- | --- | --- | ---: | --- |
+| G3.1 | Kontrakt kernela kompiluje się w trybie strict | `src/method-core/contracts/{events,session,methodPack,teresa,index}.ts` | `npx tsc --noEmit --strict --target ES2022 --module ESNext --moduleResolution bundler --skipLibCheck <5 plików>` | **0** | PASS |
+| G3.2 | Kernel nie zawiera reguł metodyk | jw. | przegląd autorski | — | PASS — zero odwołań do DRD/SIRI/ADMA; metody wchodzą przez `MethodAdapter` |
+| G3.3 | Commit bez preview Teresy niereprezentowalny | `teresa.ts` | konstrukcja typu — `TeresaCommitRequest` wymaga `previewId` | — | PASS (poziom typów) |
+| G3.4 | `frozen` nie jest terminalny | `session.ts` | `METHOD_SESSION_TRANSITIONS.frozen` zawiera `active` | — | PASS |
+| G3.5 | Manifest kontraktu dla Tools i Audits | `SHARED_CONTRACT_MANIFEST.md` | — | — | PASS — Contract SHA `e3b8be6cd7` |
+
+---
+
+## G4 — DRD Method Pack + adapter (A3, **zweryfikowane niezależnie przez Opusa**)
+
+Branch `codex/mac-a3-drd-20260813` → scalone do gałęzi zespołu jako `22fe28069c`.
+
+### G4.A — Powtórzenie pomiarów A3 przez Opusa
+
+| # | Twierdzenie A3 | Pomiar własny Opusa | Werdykt |
+| --- | --- | --- | --- |
+| G4.1 | „33 testy przechodzą, exit 0" | Własny przebieg: `npx vitest run src/method-core/methods/drd --config vitest.config.ts` → **EXIT=0**, `Test Files 4 passed`, `Tests 33 passed (33)` | **POTWIERDZONE** |
+| G4.2 | „39/39 obszarów, skale per oś" | Sonda Opusa: `1A`=[1..7], `4A`=[1..7], `5A`=[1..6], `2A`=[1..5], `7A`=[1..5], `units.length`=39 | **POTWIERDZONE** |
+| G4.3 | „aboveGap nie podnosi currentLevel" | Sonda Opusa, wejście `confirmedLevels=[1,2,4,5]` → wynik `{currentLevel:2, blockedAtLevel:3, aboveGapLevels:[4,5]}` | **POTWIERDZONE** |
+| G4.4 | „brak dowodu → needs_evidence, nigdy 0" | Sonda Opusa, wejście puste → `{proposedLevel:null, verdict:'needs_evidence'}` | **POTWIERDZONE** |
+| G4.5 | „readiness uczciwy" | Sonda Opusa → `readiness='methodology_review'`, `canStartSession()`=**false** | **POTWIERDZONE** |
+| G4.6 | „kompilacja jest deterministyczna" | **Test A3 był PUSTY** — `compileDrdPack()` ma module-level `cached`, więc drugie wywołanie zwraca **ten sam obiekt**; `JSON.stringify(a)===JSON.stringify(a)` jest prawdziwe trywialnie | **A3 TEST WADLIWY** |
+| G4.7 | determinizm — pomiar poprawny | Sonda Opusa z `vi.resetModules()` między kompilacjami → dwa niezależne przebiegi, **802 744 znaki identyczne** | **POTWIERDZONE dopiero po naprawie testu** |
+
+Sonda Opusa (`zz-opus-probe.test.ts`, 4/4 PASS, exit 0) jest **trwałą częścią suity**,
+nie jednorazowym sprawdzeniem — commit `0dedfb4e13`.
+
+### G4.B — Luki zgłoszone przez A3 (uczciwie, nie ukryte)
+
+| Pole kontraktu | Pokrycie | Skutek |
+| --- | --- | --- |
+| `expectedEvidence` (poziomy) | **233/233** wypełnione | ok |
+| pytania z QBank v2 | **699/699** (3 × 233) | ok |
+| `misScoringTraps` | **0/233** | brak źródła w repo |
+| `distinctionFromPrevious` / `distinctionFromNext` | **0/233** | brak źródła |
+| `negativeEvidence`, `examples` | **0/233** | brak źródła |
+| `plainLanguageExplanation` i 10 dalszych pól pytania | **0/699** | brak źródła |
+| `whyItMatters` | wypełnione, ale granulacja **osiowa (7 hintów)**, nie per-pytanie | jawnie oznaczone |
+
+To jest **powód**, dla którego `readiness` = `methodology_review`, a nie `released`.
+Pack **nie może** wystartować sesji produkcyjnej i kod to egzekwuje.
+Kanon (`ASSESSMENT_METHOD_PACK_CONTRACT.md` §6) wymaga dokładnie takiej uczciwości.
+
+### G4.C — Rozbieżność zgłoszona przez A3 do rozstrzygnięcia
+
+`maturityPathwayDrdData.ts` / `getMaturityPathway()` używa **innego modelu DRD**
+(`D1..D8`, poziomy `I..V`) niż zweryfikowany model 7 osi / 39 obszarów.
+A3 **nie podłączył** pathway i zgłosił to zamiast wybrać po cichu — słusznie.
+→ nowy punkt koordynacyjny **COORD-06**.
+
+### G4.D — Ujawniona domyślna decyzja inżynierska (nie kanon)
+
+`DRD_DEFAULT_MINIMUM_EVIDENCE_STRENGTH = 'E2'` **nie pochodzi z kanonu DRD** —
+jest domyślną polityką wywnioskowaną ze wzorca QBank („Dowód" zawsze żąda
+artefaktu). Jawnie udokumentowana w kodzie i zgłoszona. Wymaga potwierdzenia
+właściciela metodyki.
+
+---
+
 ## Otwarte / niezweryfikowane
 
 - G1.9 — implementacja TIER: **potwierdzony BRAK** (grep `TIER`/`80:20`/`band`
