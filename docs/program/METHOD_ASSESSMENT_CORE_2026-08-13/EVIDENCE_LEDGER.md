@@ -716,3 +716,79 @@ dopasowaniem po podciągu** — `src/method-core` łapie także
 `server/src/method-core` i zawyża wynik frontu o testy serwera.
 
 Zweryfikowane oboma skryptami: **serwer 161/161**, **front 246/246**, oba `exit 0`.
+
+---
+
+## G15 — CEL 10 (dyscyplina migracji) i CEL 5/6 (Teresa, voice)
+
+### G15.A — Fail-closed dla testów bazy (S1, zweryfikowane sondą Opusa)
+
+`server/src/test-utils/dbFailClosed.ts` — `assertRealPostgresTestDb(pool)` podłączone
+do trzech suit realnej bazy (`artifactsRecovery`, `freezeOutputFlow`, `http.integration`).
+
+Sonda Opusa na atrapie puli — **każda** zła konfiguracja zablokowana:
+
+| Konfiguracja | Wynik |
+| --- | --- |
+| brak `RUN_DB_TESTS` | **ZABLOKOWANE** |
+| `MOCK_DB=true` | **ZABLOKOWANE** |
+| brak `MOCK_DB` | **ZABLOKOWANE** |
+| odpowiedź niebędąca PostgreSQL-em | **ZABLOKOWANE** |
+
+**Cichy mock jest niemożliwy.** Strażnik waliduje też `version()`,
+`current_database()` i `current_schema()`.
+
+### G15.B — ★ Kontrola negatywna migracji: dowód, że detektor nie jest tautologią
+
+| Sprawdzenie | Wynik |
+| --- | --- |
+| migracja z błędnym SQL, bez `--safe` | `exit ≠ 0`, `schema_migrations.status='failed'` |
+| ta sama z `--safe` | `exit 0`, ale **jawny** wiersz `status='skipped'` — nie cisza |
+| plik `20260813_zz_demo_marker.sql` (i warianty `seed`/`mock`) | `exit 0`, **brak w logu**, **brak tabeli**, **zero wierszy** w `schema_migrations` — nawet nie `skipped` |
+| **plik kontrolny bez frazy wykluczającej** | **stosuje się normalnie** |
+
+Ostatni wiersz jest kluczowy: dowodzi, że detektor cichego wykluczenia **wykrywa
+realny defekt**, a nie zawsze zwraca „wykryto".
+
+### G15.C — Pre-existing dowiedzione, nie zadeklarowane
+
+Te same testy uruchomione na `origin/demo` (`e45904dc79`) w odrębnym worktree:
+**identyczne 25 nazw padających testów**, `diff` = 0 różnic.
+Obszar `artifactRegistry*` / `mapOutlineBlueprintToDeckSlides` — **dziedziczone,
+nie nasze**, nienaprawiane zgodnie z poleceniem.
+
+### G15.D — Teresa: cykl kontraktowy **zweryfikowany przez Opusa na żywym serwerze**
+
+Własny przebieg: serwer `:43500` przeciw `t_test`, `RUN_TERESA_LIVE_TESTS=1`
+→ **EXIT=0, 8/8**.
+
+| # | Sprawdzenie | Wynik |
+| --- | --- | --- |
+| 1 | preview zwraca diff z **konkretną komórką** `unitId#level` | PASS |
+| 2 | commit **bez** `previewId` odrzucony przez serwer (typ **i** runtime) | PASS |
+| 3 | commit **wygasłego** preview odrzucony | PASS |
+| 4 | commit tego samego preview **dwa razy** — drugi odrzucony | PASS |
+| 5 | preview `quality.verdict=invalid` → commit odrzucony | PASS |
+| 11 | `TERESA_PROPOSAL_CREATED` niesie `actorKind='teresa'` **i** `actorUserId` wywołującego człowieka | PASS |
+| neg | akceptacja `draft_score_proposal` **nigdy sama nie zmienia stanu sesji** — brak ukrytego `approve_score` | PASS |
+| neg | **serwer niezależnie od klienta** odrzuca zakazaną `capabilityId` | PASS |
+
+### G15.E — Pięć zakazów Teresy: dowód **nieistnienia ścieżki**, nie blokady
+
+S4 udowodnił pięcioma niezależnymi warstwami: typ `TeresaCapabilityId` rozłączny
+z `TeresaForbiddenEffect` · rejestr klienta zbudowany wyłącznie z
+`TERESA_CAPABILITIES` nie ma takiego klucza · `resolveTeresaAssessmentCapability`
+zwraca `undefined` · serwer odrzuca 400 · `commit` nie mutuje `method_sessions`.
+
+### G15.F — Voice
+
+Ścieżka **transcript → draft → preview → commit** działa i woła **ten sam**
+callback co ręczne pisanie, z prowenencją `{source:'voice'}`.
+**NOT VERIFIED:** prawdziwe audio z mikrofonu (środowisko headless) oraz backend
+`/api/voice/stt`. Zgodnie z mandatem nie blokuje to reszty programu.
+
+### G15.G — Defekt naprawiony przy okazji (S4)
+
+Front pozwalał kliknąć „Zaakceptuj" na preview z werdyktem `invalid`, który
+serwer i tak odrzuci. Teraz wszystkie cztery przyciski decyzji są wyszarzone
+z jawnym komunikatem. Zweryfikowane wzrokowo na zrzucie.
