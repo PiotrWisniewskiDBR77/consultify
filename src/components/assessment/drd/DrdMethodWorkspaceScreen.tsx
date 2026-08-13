@@ -642,7 +642,13 @@ export const DrdMethodWorkspaceScreen: React.FC<DrdMethodWorkspaceScreenProps> =
           onSaveStay={() => {}}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
-          degradedMessage={session.state === 'active' ? null : `Status: ${session.state}`}
+          degradedMessage={
+            session.revisionOfSessionId
+              ? `Rewizja sesji ${session.revisionOfSessionId.slice(0, 8)} (utworzona przez reopen — poprzedni Output pozostaje nietknięty, oznaczony jako superseded po ponownym freeze).`
+              : session.state === 'active'
+                ? null
+                : `Status: ${session.state}`
+          }
           navigatorProps={{
             nodes: navigatorNodes,
             activeUnitId: activeArea.id,
