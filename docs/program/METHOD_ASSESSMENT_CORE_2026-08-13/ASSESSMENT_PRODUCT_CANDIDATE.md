@@ -96,7 +96,7 @@ tym łatwiej było go przyjąć — powtórzone na właściwej parze logów.
 | **CEL 10** — migracje i regresja | **DOWIEZIONE** | fail-closed (`RUN_DB_TESTS`, `MOCK_DB`, realny PG, `current_database()`, `current_schema()`); kontrola negatywna **z plikiem kontrolnym** dowodzącym, że detektor nie jest tautologią; pre-existing dowiedzione przebiegiem na `origin/demo` (`diff` = 0) |
 | **CEL 1** — DRD jako produkt | **DOWIEZIONE** | pełny E2E **19/19 PASS** z **dwoma restartami API+FE** (#1 9022 ms, #2 9024 ms), **bez ani jednego ręcznego SQL**. `POST /sessions/:id/reopen` przez HTTP; lineage potwierdzony SQL-em: sesja root `frozen` + dwie rewizje wskazujące na nią, Output v2 z `revision_of_output_id` → v1, `contentHash` zamrożonego Output **identyczny przed i po reopen** |
 | **A10** | **WYKONANY** | pierwszy odbiór przez Sonnet (reguła #7), **109 zrzutów**, rejestr: 0×P0, 2×P1, 3×P2, 14 PASS, 6 NOT VERIFIED. **D1/D3/D4 naprawione**, D2 otwarty |
-| **CEL 8** — MPQ | **CZĘŚCIOWO** | Report Light/Dark **30/30 PASS**, Presentation Light/Dark **30/30 PASS**, **Work View 22/30 FAIL** (próg 27) |
+| **CEL 8** — MPQ | **CZĘŚCIOWO** | Report Light/Dark **30/30 PASS**, Presentation Light/Dark **30/30 PASS**. Work View: przyczyny FAIL **usunięte i obejrzane na realnym renderze**, ale **punktacji nie wystawiam — jestem autorem poprawki** (patrz §4c) |
 
 ---
 
@@ -156,7 +156,7 @@ fixture kodował scenariusz defektu i nikt na niego nie patrzył. Sprawdziłem, 
 
 | Pozycja | Status | Powód |
 | --- | --- | --- |
-| **Work View MPQ** | **naprawione, ocena w toku** | obie przyczyny usunięte (patrz §7); niezależna re-ocena Light/Dark trwa — **wynik wpiszę dopiero po zrzutach, nie z góry** |
+| **Work View MPQ — punktacja** | **BEZ NIEZALEŻNEJ OCENY** | obie przyczyny FAIL usunięte i **zweryfikowane wzrokiem na realnym renderze** (zrzuty Light+Dark), ale **punktacji nie wystawiam sam** — jestem autorem poprawki. Niezależny odbiór **nie doszedł do skutku** (przyczyna środowiskowa, opis niżej) |
 | **realne audio (voice)** | NOT VERIFIED | środowisko headless, brak mikrofonu; ścieżka transcript **działa** |
 | **treść metodyczna DRD** | **BLOCKED** | `misScoringTraps` 0/233, pola pomocy pytania 0/699 — **brak źródła w repo**; uzupełnia właściciel metodyki, nie AI (COORD-07) |
 | **treść metodyczna SIRI** | **BLOCKED licencyjnie** | Module 2 str. 32–69 — „no part may be reproduced"; 0/16 wymiarów, `readiness` = `draft` |
@@ -203,6 +203,49 @@ i wypalał uwagę na ostrzeżenia, które coś znaczą.
 | **Methodology** | **ZABLOKOWANE** | DRD `methodology_review`, SIRI `draft`; `canStartSession()` = **false** dla obu — kod **egzekwuje**, nie obiecuje |
 | **Legal / licensing** | **ZABLOKOWANE dla SIRI** | treść per wymiar objęta klauzulą zakazu reprodukcji; **zero** wygenerowanej treści licencjonowanej |
 | **Runtime** | **warunkowe** | wszystko za flagami domyślnie **OFF**: `methodWorkspaceShellV1`, `drdMethodWorkspaceSliceV1`, `drdHttpSourceOfTruthV1`, `SIRI_PM_V2`, `drdScoringV2` |
+
+---
+
+## 4c. Work View MPQ — co realnie widziałem, a czego nie oceniłem
+
+**Zrzuty:** `docs/qa/mpq-workview-2026-08-13/` — `workview-{light,dark}.png`,
+`matrix-{light,dark}.png`. Renderowane z **realnego** harnessu na kodzie tej gałęzi,
+obejrzane osobiście. Reguła #7 spełniona: właściciel nie jest pierwszym testerem.
+
+**Obie przyczyny FAIL 22/30 są usunięte — widać to na zrzucie:**
+
+| Przyczyna (S4b) | Stan |
+| --- | --- |
+| „jeszcze nieodpowiedziane" wygląda jak „brak dowodu" | komórka nieoceniona ma **kropkowaną neutralną** ramkę, luka dowodowa **przerywaną bursztynową**; legenda nazywa oba |
+| goła siatka L1–L7 czyta się jak arkusz | każdy wiersz ma **`L2 → L4 · luka 2`**, a przy braku poziomu **`poniżej L1 → L3`** |
+
+**Dodatkowo potwierdzone wzrokiem na żywym ekranie:**
+- pasek stanu mówi **„Brak blokerów — ocena niekompletna (14/24)"** — poprawka D4 działa;
+- czerwień występuje **dokładnie raz** (bloker `Jakość danych` L3), w obu motywach;
+- Dark: granatowe tło, **zero białych/zapadniętych plam**, `luka` bursztynowa, `cel` zielony.
+
+**Czego NIE zrobiłem: nie wystawiam punktacji.** Jestem autorem tej poprawki, a
+sens reguły #7 i progu MPQ polega na tym, że **ocenia ktoś inny niż autor**.
+Poprzednie 22/30 przyjąłem bez sporu właśnie dlatego, że przyszło z zewnątrz.
+
+**Dlaczego niezależny odbiór nie doszedł do skutku (uczciwie):** agent oceniający
+oddał **NIE ZWERYFIKOWANO** zamiast zmyślić punkty — i to była właściwa decyzja.
+Zablokowało go środowisko, nie kod:
+- `dev-render/main.tsx` importuje **nieistniejący** `./screens/tools-sesja-wyjscie`
+  (potwierdziłem: pliku nie ma) — skaner Vite przechodzi przez cały wspólny rejestr;
+- transformacja `src/index.css` trwała u mnie **94 sekundy** przy `load average 45,8`
+  na 16 rdzeniach (dziesiątki równoległych `vitest`/`vite` z **innych** sesji).
+  To nie deadlock, tylko skrajna kontencja — agent mierzył krótszym limitem i
+  zinterpretował spowolnienie jako zawieszenie;
+- demon iCloud (`bird`) miał nierozwiązane błędy synchronizacji na `.git/objects/*`
+  — repo leży na iCloud Drive.
+
+Obejście, które **zadziałało** i warto powtórzyć: własny config Vite z
+`optimizeDeps.entries` ograniczonym do jednego harnessu + cierpliwość na pierwszy
+transform CSS.
+
+★ **Do domknięcia przez koordynatora:** niezależna punktacja Work View Light/Dark
+wobec progu 27. Ekran jest gotowy do oceny, zrzuty leżą w repo.
 
 ---
 
