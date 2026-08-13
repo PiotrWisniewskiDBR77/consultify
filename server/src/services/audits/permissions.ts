@@ -245,9 +245,19 @@ export async function getProgramRoles(
   return rows.map((r) => r.member_role as AuditRole);
 }
 
+/**
+ * Role platformowe uprawniające do administrowania biblioteką pakietów.
+ *
+ * `administrator` jest tu obowiązkowo: `mapRoleForAuthenticatedUser` w
+ * `auth.middleware.ts` normalizuje `admin` z tokenu właśnie do tej postaci.
+ * Sprawdzanie samego `admin` cicho odcinało administratorów organizacji od
+ * rejestru źródeł — wyszło dopiero na teście przez realny HTTP, bo testy
+ * serwisowe podają `platformRole` wprost i omijają middleware.
+ */
+const PLATFORM_ADMIN_ROLES = new Set(['admin', 'administrator', 'owner', 'superadmin']);
+
 export function isPlatformAdmin(actor: AuditActor): boolean {
-  const role = String(actor.platformRole || '').toLowerCase();
-  return role === 'admin' || role === 'owner' || role === 'superadmin';
+  return PLATFORM_ADMIN_ROLES.has(String(actor.platformRole || '').toLowerCase());
 }
 
 export function capabilitiesForRoles(roles: AuditRole[]): Set<AuditCapability> {
