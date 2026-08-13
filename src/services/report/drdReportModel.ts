@@ -27,11 +27,16 @@
 import type { DRDIndustryId } from '../assessmentKnowledge/drdIndustryProfiles';
 import DRD_STRUCTURE, {
   calculateAxisScore,
+  calculateAxisScoreV2,
   calculateOverallScore,
+  calculateOverallScoreV2,
   type DRDArea,
+  type DrdAggregateResultV2,
+  type DrdCalculationVersion,
   getTotalAreaCount,
 } from '../drdStructure';
 import { buildDRDVisualizationData } from '../drdVizAdapter';
+import { isDrdScoringV2Enabled } from '@/utils/drdScoringV2Flag';
 import {
   type ConclusionOutput,
   deterministicNarrator,
@@ -64,6 +69,21 @@ export interface DrdReportMeta {
 export interface DrdReportOptions {
   /** Narrator for prose. Defaults to the deterministic stub (no LLM). */
   narrator?: DrdNarrator;
+  /**
+   * COORD-11 — explicit engine selection for this report build. When omitted,
+   * falls back to `isDrdScoringV2Enabled()` (`src/utils/drdScoringV2Flag.ts`,
+   * default OFF) — an explicit value here always wins over the flag, same
+   * contract as `siriAdapter.prioritise()` (COORD-08).
+   *
+   * ★ `legacy_v1` numbers (`overall`, `dimensions`, `areas`, `chapters`, ...)
+   * are ALWAYS computed exactly as before, regardless of this option — this
+   * option only controls whether the ADDITIVE `scoringV2` block is also
+   * computed and attached. Nothing about the existing report shape/numbers
+   * changes when `drd_scoring_v2` is selected; see `DRD_SCORING_V1_VS_V2.md`
+   * for why the two engines' numbers differ and why they are kept side by
+   * side rather than one replacing the other in this round.
+   */
+  calculationVersion?: DrdCalculationVersion;
 }
 
 /** Per-area row in the 39-area matrix. */
@@ -163,6 +183,25 @@ export interface DrdReportModel {
    * `DEFAULT_DRD_BENCHMARK_INDUSTRY` when `meta.industry` is not supplied).
    */
   industryBenchmark: DrdIndustryBenchmarkSection;
+  /**
+   * COORD-11 — which engine authored this report's numbers. `legacy_v1`
+   * unless the caller (or the `drd_scoring_v2` flag) explicitly asked for
+   * `drd_scoring_v2`. Every report carries this tag — a report never claims
+   * a precision/version it didn't actually use (canon §6 traceability).
+   */
+  calculationVersion: DrdCalculationVersion;
+  /**
+   * COORD-11 — ADDITIVE §6.1/§6.2-correct numbers (normalized score_norm,
+   * explicit coverage/exclusions). Only populated when `calculationVersion`
+   * is `drd_scoring_v2`; `undefined` for a `legacy_v1` report. Does NOT
+   * replace `overall`/`dimensions` above — both can be inspected side by
+   * side. `null` inside `overall`/`byAxis` means "nothing assessed yet",
+   * never "zero".
+   */
+  scoringV2?: {
+    overall: DrdAggregateResultV2;
+    byAxis: Record<number, DrdAggregateResultV2>;
+  };
 }
 
 /**
@@ -323,10 +362,27 @@ export async function buildDrdReportModel(
   const language = meta.language;
   const isPL = language === 'pl';
   const narrator = options.narrator ?? deterministicNarrator;
+  // COORD-11: explicit option always wins over the flag; flag default is OFF
+  // (src/utils/drdScoringV2Flag.ts) so an un-opted-in caller still gets
+  // legacy_v1 — see DrdReportOptions.calculationVersion doc above.
+  const calculationVersion: DrdCalculationVersion =
+    options.calculationVersion ?? (isDrdScoringV2Enabled() ? 'drd_scoring_v2' : 'legacy_v1');
 
   const areas = buildAreaRows(areaScores, language);
   const dimensions = buildDimensions(areaScores, language);
+  // ★ Always legacy_v1 — unaffected by `calculationVersion`. See
+  // DrdReportOptions.calculationVersion doc: this round only ADDS the v2
+  // block below, it never swaps out these existing, already-consumed numbers.
   const overall = calculateOverallScore(areaScores);
+  const scoringV2 =
+    calculationVersion === 'drd_scoring_v2'
+      ? {
+          overall: calculateOverallScoreV2(areaScores),
+          byAxis: Object.fromEntries(
+            DRD_STRUCTURE.map((axis) => [axis.id, calculateAxisScoreV2(axis.id, areaScores)])
+          ) as Record<number, DrdAggregateResultV2>,
+        }
+      : undefined;
   const industryBenchmark = buildDrdIndustryBenchmarkSection(
     dimensions,
     meta.industry ?? DEFAULT_DRD_BENCHMARK_INDUSTRY
@@ -496,5 +552,7 @@ export async function buildDrdReportModel(
       totalAreas,
     },
     industryBenchmark,
+    calculationVersion,
+    scoringV2,
   };
 }

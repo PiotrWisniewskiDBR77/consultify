@@ -1859,6 +1859,309 @@ export const calculateAxisScore = (
   return { actual, target, gap };
 };
 
+// ============================================
+// COORD-11 — versioned scoring (§6.1/§6.2 of docs/product/DRD_CANON.md)
+// ============================================
+//
+// `calculateOverallScore` / `calculateAxisScore` above are frozen exactly as
+// they were before COORD-11 — DO NOT edit them. They have two confirmed
+// defects vs. canon §6:
+//
+//   DEFECT 1 (no normalization): a level-5 area on a 1-5 axis (=100% of that
+//   axis's ladder) and a level-5 area on a 1-7 axis (=66.7% of that ladder)
+//   both report `actual: 5` — see zz-opus-drd-agg-probe.test.ts.
+//
+//   DEFECT 2 (zero counted as a level): the only filter is `s !== undefined`,
+//   so an unassessed area recorded as `{actual: 0}` is averaged in as if "0"
+//   were a real, low maturity level. Canon §6.2: "Obszary nieocenione
+//   (score_raw = 0) nie wchodzą do średniej ... Zakaz liczenia zera jako
+//   poziomu."
+//
+// `legacy_v1` below is that exact behavior, explicitly named and re-exported
+// so callers can pin it on purpose. `drd_scoring_v2` is the canon-correct
+// engine. Nothing switches to v2 automatically — see
+// `src/utils/drdScoringV2Flag.ts` (default OFF) and
+// `docs/program/METHOD_ASSESSMENT_CORE_2026-08-13/DRD_SCORING_V1_VS_V2.md`.
+
+/** Traceability tag: which formula produced a given score. */
+export type DrdCalculationVersion = 'legacy_v1' | 'drd_scoring_v2';
+
+/**
+ * DRD maturity level bands per canon §6.2:
+ *   [0-0.2) I · [0.2-0.4) II · [0.4-0.6) III · [0.6-0.8) IV · [0.8-1.0] V
+ */
+export type DrdMaturityLevel = 'I' | 'II' | 'III' | 'IV' | 'V';
+
+export function drdLevelFromNorm(norm: number): DrdMaturityLevel {
+  if (norm < 0.2) return 'I';
+  if (norm < 0.4) return 'II';
+  if (norm < 0.6) return 'III';
+  if (norm < 0.8) return 'IV';
+  return 'V';
+}
+
+/**
+ * Four-plus-one area states the legacy engine conflates into a single
+ * `{actual: number}`. Canon §6.2 only explicitly names the first pair
+ * ("nieocenione" / assessed) — the other three are this engine's explicit,
+ * documented rules for cases the canon is silent on (see
+ * DRD_SCORING_V1_VS_V2.md "Canon citations" table); never silent imputation.
+ *
+ *  - 'assessed'              achieved_level ∈ [1, Lmax(a)] — a real measured
+ *                            value. The only state that contributes a
+ *                            non-null `scoreNorm`.
+ *  - 'assessed_zero'         achieved_level === 0, EXPLICITLY recorded as a
+ *                            real (not missing) zero. DRD's ladders are
+ *                            defined 1..Lmax (see DRD_STRUCTURE — every axis
+ *                            starts numbering areas' levels at 1), so a real
+ *                            achieved_level of 0 is NOT a valid position on
+ *                            any DRD ladder. This state exists in the type
+ *                            for API completeness (other method packs may
+ *                            allow a real zero); for DRD specifically it is
+ *                            normalized identically to 'unassessed' (excluded,
+ *                            never imputed as the lowest level) — see the
+ *                            EVIDENCE_MISSING note in DRD_SCORING_V1_VS_V2.md.
+ *  - 'unassessed'            not measured (null/undefined, or the legacy `0`
+ *                            sentinel when no explicit `state` is given).
+ *                            NEVER treated as the lowest level. Lowers
+ *                            `coverage`, excluded from the mean.
+ *  - 'insufficient_evidence' an answer/level was proposed but evidence does
+ *                            not support it (mirrors `needs_evidence` in
+ *                            `method-core/methods/drd/drdAdapter.ts`).
+ *                            NEVER promotes the level — excluded from the
+ *                            mean, same treatment as 'unassessed'.
+ *  - 'not_applicable'        out of scope for this organization. Canon §6
+ *                            does not state whether N/A areas lower the
+ *                            denominator — EVIDENCE_MISSING against a canon
+ *                            citation. Named rule adopted here (see
+ *                            DRD_SCORING_V1_VS_V2.md): N/A is removed from
+ *                            BOTH numerator and denominator, i.e. it does
+ *                            NOT lower `coverage`/`completeness` the way
+ *                            'unassessed' does.
+ */
+export type DrdAreaState =
+  | 'assessed'
+  | 'assessed_zero'
+  | 'unassessed'
+  | 'insufficient_evidence'
+  | 'not_applicable';
+
+/** Per-area input for the v2 engine. `state` is optional — when omitted it is
+ * inferred from `actual` (`null`/`undefined`/`0` → 'unassessed'), matching
+ * the shape most legacy callers already produce (`{actual, target}`). */
+export interface DrdAreaInputV2 {
+  readonly actual: number | null | undefined;
+  readonly target?: number | null;
+  readonly state?: DrdAreaState;
+}
+
+/** Per-area normalized result (score_norm/target_norm/gap per canon §6.1). */
+export interface DrdAreaNormResult {
+  readonly areaId: string;
+  readonly axisId: number;
+  readonly lmax: number;
+  readonly state: DrdAreaState;
+  readonly scoreNorm: number | null;
+  readonly targetNorm: number | null;
+  readonly gapNorm: number | null;
+}
+
+/** Aggregate result for `drd_scoring_v2` — always reports coverage/exclusions
+ * explicitly instead of hiding them behind a single averaged number. */
+export interface DrdAggregateResultV2 {
+  readonly calculationVersion: 'drd_scoring_v2';
+  /** Mean of `scoreNorm` over 'assessed' areas only. `null` when nothing is assessed. */
+  readonly scoreNorm: number | null;
+  readonly targetNorm: number | null;
+  readonly gapNorm: number | null;
+  readonly level: DrdMaturityLevel | null;
+  readonly assessedCount: number;
+  readonly assessedZeroCount: number;
+  readonly unassessedCount: number;
+  readonly insufficientEvidenceCount: number;
+  readonly notApplicableCount: number;
+  /** Areas counted in the coverage denominator (total minus not_applicable). */
+  readonly denominatorCount: number;
+  /** assessedCount / denominatorCount, in [0,1]. 0 when denominatorCount is 0. */
+  readonly coverage: number;
+  /** coverage * 100, rounded to 1 decimal place (e.g. 66.7). */
+  readonly coveragePercent: number;
+  /** Every area excluded from the mean, with its reason — "explicitly listed",
+   * per canon §6.2, never just silently dropped. */
+  readonly excluded: ReadonlyArray<{ readonly areaId: string; readonly state: DrdAreaState }>;
+}
+
+function round(n: number, decimals: number): number {
+  const f = 10 ** decimals;
+  return Math.round(n * f) / f;
+}
+
+function clamp01(n: number): number {
+  return Math.max(0, Math.min(1, n));
+}
+
+function inferDrdAreaState(actual: number | null | undefined): DrdAreaState {
+  if (actual === null || actual === undefined) return 'unassessed';
+  if (actual === 0) return 'unassessed'; // legacy sentinel — see DrdAreaState doc above
+  return 'assessed';
+}
+
+/**
+ * Normalizes one area's input into score_norm/target_norm/gap per canon §6.1:
+ *   score_norm(a)  = (achieved_level(a) − 1) / (Lmax(a) − 1)
+ *   target_norm(a) = (target_level(a) − 1) / (Lmax(a) − 1)
+ *   gap(a)         = max(0, target_norm(a) − score_norm(a))
+ * Returns `null` (not a thrown error) when `areaId` is not a known DRD area —
+ * callers filter these out and the caller-facing functions below never crash
+ * on an unknown id, they simply cannot score it.
+ */
+export function normalizeDrdAreaV2(areaId: string, input: DrdAreaInputV2): DrdAreaNormResult | null {
+  const axis = getAxisForArea(areaId);
+  if (!axis) return null;
+  const lmax = axis.levelCount;
+  const state: DrdAreaState = input.state ?? inferDrdAreaState(input.actual);
+
+  if (state !== 'assessed') {
+    return { areaId, axisId: axis.id, lmax, state, scoreNorm: null, targetNorm: null, gapNorm: null };
+  }
+
+  const achieved = input.actual as number;
+  const scoreNorm = lmax > 1 ? clamp01(round((achieved - 1) / (lmax - 1), 6)) : 0;
+
+  const target = input.target;
+  const targetNorm =
+    target === null || target === undefined
+      ? null
+      : lmax > 1
+        ? clamp01(round((target - 1) / (lmax - 1), 6))
+        : 0;
+  const gapNorm = targetNorm === null ? null : round(Math.max(0, targetNorm - scoreNorm), 6);
+
+  return { areaId, axisId: axis.id, lmax, state, scoreNorm, targetNorm, gapNorm };
+}
+
+function aggregateDrdAreasV2(
+  entries: ReadonlyArray<readonly [string, DrdAreaInputV2]>
+): DrdAggregateResultV2 {
+  const normalized = entries
+    .map(([id, v]) => normalizeDrdAreaV2(id, v))
+    .filter((r): r is DrdAreaNormResult => r !== null);
+
+  const assessed = normalized.filter((r) => r.state === 'assessed');
+  const assessedZero = normalized.filter((r) => r.state === 'assessed_zero');
+  const unassessed = normalized.filter((r) => r.state === 'unassessed');
+  const insufficientEvidence = normalized.filter((r) => r.state === 'insufficient_evidence');
+  const notApplicable = normalized.filter((r) => r.state === 'not_applicable');
+
+  // Named rule (canon silent — see DrdAreaState doc / DRD_SCORING_V1_VS_V2.md):
+  // not_applicable is removed from BOTH numerator and denominator.
+  const denominator = normalized.filter((r) => r.state !== 'not_applicable');
+
+  const scoreNorm =
+    assessed.length > 0
+      ? round(assessed.reduce((sum, r) => sum + (r.scoreNorm as number), 0) / assessed.length, 4)
+      : null;
+
+  const withTarget = assessed.filter((r) => r.targetNorm !== null);
+  const targetNorm =
+    withTarget.length > 0
+      ? round(withTarget.reduce((sum, r) => sum + (r.targetNorm as number), 0) / withTarget.length, 4)
+      : null;
+
+  const gapNorm = scoreNorm !== null && targetNorm !== null ? round(Math.max(0, targetNorm - scoreNorm), 4) : null;
+
+  const coverage = denominator.length > 0 ? assessed.length / denominator.length : 0;
+
+  return {
+    calculationVersion: 'drd_scoring_v2',
+    scoreNorm,
+    targetNorm,
+    gapNorm,
+    level: scoreNorm !== null ? drdLevelFromNorm(scoreNorm) : null,
+    assessedCount: assessed.length,
+    assessedZeroCount: assessedZero.length,
+    unassessedCount: unassessed.length,
+    insufficientEvidenceCount: insufficientEvidence.length,
+    notApplicableCount: notApplicable.length,
+    denominatorCount: denominator.length,
+    coverage: round(coverage, 4),
+    coveragePercent: round(coverage * 100, 1),
+    excluded: normalized.filter((r) => r.state !== 'assessed').map((r) => ({ areaId: r.areaId, state: r.state })),
+  };
+}
+
+/**
+ * Overall DRD score across ALL areas — `drd_scoring_v2` engine.
+ * Normalizes per §6.1 and excludes non-'assessed' areas from the mean per
+ * §6.2 (explicitly listed in `.excluded`, never silently dropped).
+ */
+export function calculateOverallScoreV2(
+  areaScores: Readonly<Record<string, DrdAreaInputV2>>
+): DrdAggregateResultV2 {
+  return aggregateDrdAreasV2(Object.entries(areaScores));
+}
+
+/**
+ * Axis score — `drd_scoring_v2` engine. Only areas belonging to `axisId` are
+ * considered (unknown/other-axis area ids in `areaScores` are ignored, same
+ * scoping as legacy `calculateAxisScore`).
+ */
+export function calculateAxisScoreV2(
+  axisId: number,
+  areaScores: Readonly<Record<string, DrdAreaInputV2>>
+): DrdAggregateResultV2 {
+  const axis = getAxisById(axisId);
+  if (!axis) return aggregateDrdAreasV2([]);
+  const entries: Array<readonly [string, DrdAreaInputV2]> = axis.areas
+    .filter((a) => areaScores[a.id] !== undefined)
+    .map((a) => [a.id, areaScores[a.id]] as const);
+  return aggregateDrdAreasV2(entries);
+}
+
+/** Explicit alias for `calculateOverallScore` — use this name when you want
+ * the caller/reader to see, unambiguously, that the frozen legacy formula
+ * (bit-for-bit, defects included) is being invoked on purpose. */
+export const calculateOverallScoreLegacyV1 = calculateOverallScore;
+
+/** Explicit alias for `calculateAxisScore` — see `calculateOverallScoreLegacyV1`. */
+export const calculateAxisScoreLegacyV1 = calculateAxisScore;
+
+export type DrdVersionedOverallResult =
+  | ({ calculationVersion: 'legacy_v1' } & ReturnType<typeof calculateOverallScore>)
+  | DrdAggregateResultV2;
+
+/**
+ * Version-dispatching entry point. Defaults to `legacy_v1` — callers that
+ * want `drd_scoring_v2` must say so explicitly, either by passing `version`
+ * directly or by reading `isDrdScoringV2Enabled()`
+ * (`src/utils/drdScoringV2Flag.ts`) themselves and forwarding the result.
+ * This function does NOT read the flag itself, mirroring
+ * `rankByImpactValue`/`rankByImpactValueV2` in `siriPrioritisation.ts`
+ * (COORD-08): the pure calculation layer stays free of `window`/env access;
+ * flag resolution happens at the call site (e.g. `drdReportModel.ts`).
+ */
+export function calculateOverallScoreVersioned(
+  areaScores: Record<string, { actual: number; target: number }>,
+  version: DrdCalculationVersion = 'legacy_v1'
+): DrdVersionedOverallResult {
+  if (version === 'drd_scoring_v2') {
+    return calculateOverallScoreV2(areaScores);
+  }
+  return { calculationVersion: 'legacy_v1', ...calculateOverallScore(areaScores) };
+}
+
+/** Version-dispatching entry point for axis scores. See `calculateOverallScoreVersioned`. */
+export function calculateAxisScoreVersioned(
+  axisId: number,
+  areaScores: Record<string, { actual: number; target: number }>,
+  version: DrdCalculationVersion = 'legacy_v1'
+): DrdVersionedOverallResult {
+  if (version === 'drd_scoring_v2') {
+    return calculateAxisScoreV2(axisId, areaScores);
+  }
+  return { calculationVersion: 'legacy_v1', ...calculateAxisScore(axisId, areaScores) };
+}
+
 /**
  * Map DRD axis ID to internal key used in assessment data
  */
