@@ -343,7 +343,7 @@ const FilterDropdown: React.FC<{
               <button
                 type="button"
                 onClick={handleClear}
-                className="text-xs font-medium text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white transition-colors"
+                className="text-xs font-medium text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
                 {t('common.clear', 'Clear')}
               </button>
@@ -965,7 +965,11 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                             <button
                               type="button"
                               onClick={() => handleSort(column.id)}
-                              className="inline-flex items-center gap-1 uppercase tracking-wider transition-colors hover:text-c-text-secondary"
+                              // Fokus MUSI być niebieski (`c-focus`). Bez tej klasy
+                              // przeglądarka rysuje własny outline — na tym motywie
+                              // bursztynowy rgb(229,151,0) — i łamie kanon na KAŻDYM
+                              // ekranie listowym, bo to wspólny nagłówek sortowania.
+                              className="inline-flex items-center gap-1 uppercase tracking-wider transition-colors hover:text-c-text-secondary rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                               aria-label={`Sort by ${column.label}`}
                             >
                               <span>{column.label}</span>
@@ -1083,7 +1087,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                           trigger={
                             <button
                               type="button"
-                              className="inline-flex items-center justify-center h-7 w-7 rounded-full text-slate-500 dark:text-slate-400 hover:bg-state-hover transition-colors"
+                              className="inline-flex items-center justify-center h-7 w-7 rounded-full text-slate-500 dark:text-slate-400 hover:bg-state-hover transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                               title={t('common.columns')}
                               aria-label={t('common.columns')}
                             >
