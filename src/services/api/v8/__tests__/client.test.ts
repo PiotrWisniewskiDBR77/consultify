@@ -28,7 +28,7 @@ vi.mock('../../baseClient', async () => {
 });
 
 import { fetchWithRetry } from '../../baseClient';
-import { v8Delete } from '../client';
+import { v8Delete, v8Get } from '../client';
 
 const mockedFetch = fetchWithRetry as unknown as ReturnType<typeof vi.fn>;
 
@@ -93,5 +93,19 @@ describe('v8Delete — 204 No Content regression + negative controls', () => {
   it('NEGATIVE CONTROL: a real error status still throws (204-handling must not swallow errors)', async () => {
     mockedFetch.mockResolvedValueOnce(jsonResponse(404, { error: 'Not found', code: 'NOT_FOUND' }));
     await expect(v8Delete('/finance/events/missing')).rejects.toThrow('Not found');
+  });
+});
+
+describe('v8Get — live registry cache policy', () => {
+  it('bypasses browser and proxy caches for operational registry reads', async () => {
+    mockedFetch.mockResolvedValueOnce(jsonResponse(200, { data: [{ id: 'case-1' }] }));
+
+    await expect(v8Get<Array<{ id: string }>>('/case-workspace/cases')).resolves.toEqual([
+      { id: 'case-1' },
+    ]);
+    expect(mockedFetch).toHaveBeenCalledWith(
+      'http://localhost:3000/api/v8/case-workspace/cases',
+      expect.objectContaining({ method: 'GET', cache: 'no-store' })
+    );
   });
 });
