@@ -5,7 +5,7 @@
  * Manages session state and AI interactions.
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -171,6 +171,15 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     currentProjectId,
   } = useAppStore();
   const [toolSessionId, setToolSessionId] = useState<string | null>(sessionId || null);
+  // CAS (Sprint S1): the server now REQUIRES `expectedVersion` on every PUT
+  // /api/tools/:toolId and rejects a stale one with 409 -- see
+  // ToolController.updateToolSession. Tracked in a ref (not state) because
+  // it must be read synchronously inside the debounced autosave closure
+  // below without forcing that effect to re-run on every version bump.
+  // Populated from every server response that carries a real `version`
+  // (create / GET / a successful PUT) -- NEVER incremented locally, so a
+  // stale local guess can never be sent as if it were server truth.
+  const sessionVersionRef = useRef<number | undefined>(undefined);
   const [toolStatus, setToolStatus] = useState<'DRAFT' | 'REVIEW' | 'APPROVED'>('DRAFT');
   const [generatedInitiatives, setGeneratedInitiatives] = useState<
     { id: string; title: string; status?: string }[]
@@ -464,6 +473,9 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
       });
       setToolSessionId(created.id);
       setToolStatus(created.status as 'DRAFT');
+      // createToolSession always starts a fresh session at version 1 (see
+      // ToolController.createToolSession) -- known without a round-trip.
+      sessionVersionRef.current = (created as { version?: number }).version ?? 1;
     };
     ensureToolSession();
   }, [toolSessionId, currentSession, toolType, currentProjectId]);
@@ -479,14 +491,39 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
         initiatives: recentInitiatives,
       };
 
-      await Api.updateToolSession(toolSessionId, {
-        answers: currentSession.inputData as Record<string, unknown>,
-        completionPercent: completionReady ? 100 : completionPercent,
-        confidenceAvg,
-        contextSnapshot,
-        missingItems: missingItemsPayload,
-        wizardState: wizardStatePayload,
-      });
+      // CAS: if the version isn't known yet (create/GET still in flight),
+      // skip this tick rather than sending expectedVersion: undefined and
+      // drawing a guaranteed 428 -- the next debounce tick (state keeps
+      // changing) or the create/load effect's own version write will
+      // unblock it; nothing here is a single, unrepeatable action.
+      if (sessionVersionRef.current === undefined) return;
+
+      try {
+        const result = await Api.updateToolSession(toolSessionId, {
+          answers: currentSession.inputData as Record<string, unknown>,
+          completionPercent: completionReady ? 100 : completionPercent,
+          confidenceAvg,
+          contextSnapshot,
+          missingItems: missingItemsPayload,
+          wizardState: wizardStatePayload,
+          expectedVersion: sessionVersionRef.current,
+        } as Parameters<typeof Api.updateToolSession>[1]);
+        sessionVersionRef.current =
+          (result as { version?: number })?.version ?? sessionVersionRef.current;
+      } catch (err) {
+        // A stale-version 409 (or any other autosave failure) must not
+        // crash this loop with an unhandled rejection -- re-read the
+        // server's current version so the NEXT debounce tick has a real
+        // expectedVersion to retry with, instead of looping on the same
+        // stale one forever.
+        console.warn('[ToolWorkspace] autosave failed', err);
+        try {
+          const fresh = await Api.getToolSession(toolSessionId);
+          sessionVersionRef.current = (fresh as { version?: number })?.version ?? sessionVersionRef.current;
+        } catch {
+          // Best-effort only -- next tick will retry the GET too.
+        }
+      }
     };
     const timeout = setTimeout(syncSession, 1500);
     return () => clearTimeout(timeout);
@@ -516,6 +553,11 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
       setGeneratedInitiatives(data.generatedInitiatives || []);
       setToolDecisions(data.decisions || []);
       setToolPermissions(data.permissions || {});
+      // CAS: this is the resume/reload path for a session that already
+      // existed (sessionId prop) -- the create-effect's version write above
+      // only covers a BRAND NEW session, so this GET is what populates
+      // sessionVersionRef for a resumed one.
+      sessionVersionRef.current = (data as { version?: number }).version ?? sessionVersionRef.current;
     };
     loadGenerated();
   }, [toolSessionId]);
@@ -527,6 +569,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     setGeneratedInitiatives(data.generatedInitiatives || []);
     setToolDecisions(data.decisions || []);
     setToolPermissions(data.permissions || {});
+    sessionVersionRef.current = (data as { version?: number }).version ?? sessionVersionRef.current;
   };
 
   useEffect(() => {
