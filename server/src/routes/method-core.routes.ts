@@ -299,11 +299,23 @@ async function getUserOrganizationId(userId: string): Promise<string | null> {
  * distinguishable in logs/tests from a typo'd id; either code refuses the
  * read/write, which is the actual security property under test).
  */
+/**
+ * Express typuje `req.params.x` jako `string | string[]` (parametr może się
+ * powtórzyć w ścieżce). Normalizujemy w JEDNYM miejscu zamiast rzutować w
+ * dwudziestu kilku wywołaniach — i bierzemy pierwszą wartość, bo duplikat w
+ * ścieżce zasobu to zniekształcone żądanie, nie lista do przetworzenia.
+ */
+function firstParam(value: string | string[] | undefined): string {
+  if (Array.isArray(value)) return value[0] ?? '';
+  return value ?? '';
+}
+
 async function loadOwnedSession(
   req: AuthedRequest,
   res: Response,
-  sessionId: string
+  sessionIdParam: string | string[] | undefined
 ): Promise<Awaited<ReturnType<MethodSessionService['getSession']>> | null> {
+  const sessionId = firstParam(sessionIdParam);
   const session = await sessionService.getSession(sessionId);
   if (!session) {
     res.status(404).json({ error: 'Session not found' });
@@ -702,7 +714,9 @@ router.delete(
     const session = await loadOwnedSession(req, res, req.params.id);
     if (!session) return;
 
-    const { userId: targetUserId, role } = req.params;
+    // Te same względy co przy `firstParam` wyżej — Express dopuszcza tablicę.
+    const targetUserId = firstParam(req.params.userId);
+    const role = firstParam(req.params.role);
     if (!(METHOD_PROCESS_ROLES as readonly string[]).includes(role)) {
       res.status(400).json({ error: 'role must be one of the closed METHOD_PROCESS_ROLES set', allowed: METHOD_PROCESS_ROLES });
       return;
@@ -1198,6 +1212,12 @@ router.post(
         module: session.module,
         methodPackId: session.methodPackId,
         methodPackVersion: session.methodPackVersion,
+        // Ścieżka samonaprawcza odtwarza Output dla sesji, która JUŻ jest
+        // zamrożona — te dwa pola muszą pochodzić z sesji, nie z domyślnych
+        // wartości, inaczej odtworzony Output różniłby się od pierwotnego
+        // w tym, czy powstał w trybie demo i której rewizji dotyczy.
+        demoBypassActive: Boolean(session.demoBypassActive),
+        revisionOfSessionId: session.revisionOfSessionId ?? null,
       });
       outputs = await methodOutputService.listOutputsBySession(organizationId, session.id);
       output = outputs[0] ?? null;
@@ -1262,7 +1282,7 @@ router.get(
   asyncHandler(async (req: AuthedRequest, res: Response) => {
     const organizationId = requireOrg(req, res);
     if (!organizationId) return;
-    const output = await methodOutputService.getOutput(organizationId, req.params.id);
+    const output = await methodOutputService.getOutput(organizationId, firstParam(req.params.id));
     if (!output) {
       res.status(404).json({ error: 'Output not found' });
       return;
@@ -1283,7 +1303,7 @@ router.get(
   asyncHandler(async (req: AuthedRequest, res: Response) => {
     const organizationId = requireOrg(req, res);
     if (!organizationId) return;
-    const chain = await methodOutputService.listRevisionChain(organizationId, req.params.id);
+    const chain = await methodOutputService.listRevisionChain(organizationId, firstParam(req.params.id));
     if (!chain) {
       res.status(404).json({ error: 'Output not found' });
       return;
@@ -1306,7 +1326,7 @@ async function createArtefactSnapshot(
 ): Promise<void> {
   const organizationId = requireOrg(req, res);
   if (!organizationId) return;
-  const output = await methodOutputService.getOutput(organizationId, req.params.id);
+  const output = await methodOutputService.getOutput(organizationId, firstParam(req.params.id));
   if (!output) {
     res.status(404).json({ error: 'Output not found' });
     return;
@@ -1443,7 +1463,7 @@ router.get(
   asyncHandler(async (req: AuthedRequest, res: Response) => {
     const organizationId = requireOrg(req, res);
     if (!organizationId) return;
-    const report = await methodReportSnapshotService.getById(organizationId, req.params.id);
+    const report = await methodReportSnapshotService.getById(organizationId, firstParam(req.params.id));
     if (!report || report.kind !== 'report') {
       res.status(404).json({ error: 'Report not found' });
       return;
@@ -1473,7 +1493,7 @@ router.get(
   asyncHandler(async (req: AuthedRequest, res: Response) => {
     const organizationId = requireOrg(req, res);
     if (!organizationId) return;
-    const presentation = await methodReportSnapshotService.getById(organizationId, req.params.id);
+    const presentation = await methodReportSnapshotService.getById(organizationId, firstParam(req.params.id));
     if (!presentation || presentation.kind !== 'presentation') {
       res.status(404).json({ error: 'Presentation not found' });
       return;
@@ -1491,7 +1511,7 @@ router.post(
   asyncHandler(async (req: AuthedRequest, res: Response) => {
     const organizationId = requireOrg(req, res);
     if (!organizationId) return;
-    const output = await methodOutputService.getOutput(organizationId, req.params.id);
+    const output = await methodOutputService.getOutput(organizationId, firstParam(req.params.id));
     if (!output) {
       res.status(404).json({ error: 'Output not found' });
       return;
@@ -1611,7 +1631,7 @@ router.get(
   asyncHandler(async (req: AuthedRequest, res: Response) => {
     const organizationId = requireOrg(req, res);
     if (!organizationId) return;
-    const draft = await methodInitiativeDraftService.getById(organizationId, req.params.id);
+    const draft = await methodInitiativeDraftService.getById(organizationId, firstParam(req.params.id));
     if (!draft) {
       res.status(404).json({ error: 'Initiative Proposal Draft not found' });
       return;

@@ -620,7 +620,7 @@ export class MethodSessionService {
     const requiredRoles = TRANSITION_AUTHORITY[to];
     if (requiredRoles && requiredRoles.length > 0) {
       const actorRoles = await this.getRoles(session.organization_id, session.id, request.actorUserId);
-      const authorized = requiredRoles.some((role) => actorRoles.includes(role));
+      const authorized = requiredRoles.some((role: MethodProcessRole) => actorRoles.includes(role));
       if (!authorized) {
         return { ok: false, refusal: { kind: 'missing_permission', requiredRole: requiredRoles[0] } };
       }
