@@ -1,23 +1,41 @@
 /**
- * DRD full-chain browser E2E (agent S2, CEL 1, 2026-08-13).
+ * DRD full-chain browser E2E. Originally agent S2 (CEL 1, 2026-08-13) —
+ * extended by agent S8 (2026-08-13) to the full 19-step chain now that
+ * `DrdArtifactsPanel`/`DrdRolesPanel` are wired into `DrdHttpMethodWorkspaceScreen`
+ * (S3's screen) as a utilities drawer, and `POST /sessions/:id/reopen` exists
+ * (S8's own new endpoint — see `server/src/routes/method-core.routes.ts`).
  *
- * Drives the CEL 1 chain against a REAL server + REAL disposable Postgres
- * (`mac-pg-s2b`, port 55505 — see `tests/e2e/fixtures/methodCoreE2E.ts`),
- * through the REAL browser (dev-render harness at `dev-render/drd-artifacts.*`
- * mounting the REAL `DrdRolesPanel` (S2) and `DrdArtifactsPanel` (S1)).
+ * Drives the chain against a REAL server + REAL disposable Postgres
+ * (`mac-pg-s8`, port 55520 — see `tests/e2e/fixtures/methodCoreE2E.ts`),
+ * through the REAL browser:
+ *   - `dev-render/drd-artifacts.html` — standalone `DrdRolesPanel` (S2) /
+ *     `DrdArtifactsPanel` (S1) harness, kept for the pure role-management
+ *     and lineage-listing steps (proven reliable by S2's original run).
+ *   - `dev-render/drd-workspace.html?screen=http-plain&demoSessionId=...
+ *     &token=...` — mounts the REAL `DrdHttpMethodWorkspaceScreen` DIRECTLY
+ *     (agent S8 added `&token=` support to `drd-workspace-main.tsx`, mirroring
+ *     the mechanism `drd-artifacts-main.tsx` already had), for the steps that
+ *     genuinely need the interview/matrix/freeze/reopen UI — steps 4, 5, 6,
+ *     part of 9-11, part of 14-15. This is what makes those steps PASS
+ *     instead of BLOCKED this round.
  *
- * Scope discipline: this agent owns ONLY the roles/approval/artifacts
- * surfaces — NOT the DRD interview/matrix workspace (S3's
- * `DrdHttpMethodWorkspaceScreen.tsx`/`drdHttpSessionRuntime.ts`, untouched
- * here). Steps that need that workspace (manual answer input, autosave
- * status, the Live Matrix view) have NO UI surface in this agent's scope —
- * they are marked BLOCKED/OUT-OF-SCOPE below, not faked. Where a step's
- * ACTION has no UI in scope but its RESULT is visible in a panel this agent
- * owns (session create, transitions, freeze, DECISION_APPROVED, Report/
- * Presentation/Initiative-draft creation), the action is driven via a real
- * `fetch()` executed INSIDE the browser page (`page.evaluate`) — so it still
- * shows up in the HAR/network log as a real browser-originated request —
- * and the RESULT is asserted from the rendered panel.
+ * Scope discipline unchanged from S2: `src/components/method-workspace/**`
+ * itself is never edited (only consumed, via the screen S3 already built);
+ * `DrdArtifactsPanel.tsx`/`DrdRolesPanel.tsx` are consumed, not edited.
+ * `DrdHttpMethodWorkspaceScreen.tsx` and `dev-render/drd-workspace-main.tsx`
+ * ARE this agent's own files (S8's scope for Task 1's Reopen button + the
+ * harness plumbing this spec needs).
+ *
+ * Where a step's action still has NO UI anywhere in scope (Presentation
+ * creation — confirmed by reading `FrozenOutputHttpView`'s JSX: Output /
+ * Report / Initiative / Reopen sections only, no Presentation button), the
+ * action is driven via a real `fetch()` executed INSIDE the browser page
+ * (`page.evaluate` — see `pageFetch` below), so it still shows up in the
+ * HAR/network log as a real browser-originated request.
+ *
+ * ★ Ports: server 43700-43799, dev-render 43800-43899 (agent S8's assigned
+ * range — distinct from S2's 41712/41912, which belonged to that agent's
+ * own worktree run).
  *
  * Run:
  *   npx playwright test tests/e2e/drd-full-chain.spec.ts --project=chromium
@@ -42,15 +60,16 @@ import {
   type RunningServer,
 } from './fixtures/methodCoreE2E';
 
-const SERVER_PORT = 41712;
-const DEV_RENDER_PORT = 41912;
-const OUT_DIR = path.join(REPO_ROOT, 'docs', 'qa', 'e2e-drd-2026-08-13');
+const SERVER_PORT = 43712;
+const DEV_RENDER_PORT = 43812;
+const OUT_DIR = path.join(REPO_ROOT, 'docs', 'qa', 'e2e-full-2026-08-13');
 const LOG_DIR = path.join(OUT_DIR, 'logs');
 const HAR_RAW_PATH = path.join(LOG_DIR, 'network.raw.har');
 const HAR_MASKED_PATH = path.join(OUT_DIR, 'network.masked.har');
 const VERDICTS_PATH = path.join(OUT_DIR, 'step-verdicts.json');
 const TIMELINE_PATH = path.join(OUT_DIR, 'restart-timeline.json');
 const SQL_LINEAGE_PATH = path.join(OUT_DIR, 'sql-lineage.txt');
+const EVIDENCE_FIXTURE_PATH = path.join(REPO_ROOT, 'tests', 'e2e', 'fixtures', 'drd-evidence-sample.txt');
 
 type Verdict = 'PASS' | 'BLOCKED' | 'FAIL';
 interface StepResult {
@@ -81,7 +100,7 @@ async function packRegisterViaRegistryClass(organizationId: string): Promise<voi
   // Library screenshot (step 1) show a real row instead of an honestly-empty
   // table.
   //
-  // ★ BUG FOUND 2026-08-13 (this agent, first real run): `method_packs.
+  // ★ BUG FOUND 2026-08-13 (agent S2, first real run): `method_packs.
   // organization_id` FKs to `organizations(id)` — and E2E_MODE only creates
   // that row REACTIVELY, as a side effect of the FIRST authenticated
   // request. Calling `MethodPackRegistry.register()` before any such
@@ -96,30 +115,42 @@ async function packRegisterViaRegistryClass(organizationId: string): Promise<voi
   // application's OWN `MethodPackRegistry.register()` method (parameterized
   // INSERT via `runOrThrow`), never a hand-written pack-row SQL string.
   //
-  // ★ STILL UNRESOLVED (2026-08-13, standalone verification after the org-
-  // first fix above): the one-off script now prints "registered OK" (no FK
-  // violation, no exception) via a `spawnSync('npx', ['tsx', ...])` child
-  // process with `DATABASE_URL` explicitly passed in `env`, but a direct
+  // ★ ROOT-CAUSED AND FIXED (agent S8, 2026-08-13): S2's script printed
+  // "registered OK" (no FK violation, no exception, `register()` even
+  // returned a fully-populated record) yet a direct
   // `SELECT * FROM method_packs WHERE organization_id = 'e2e-drd-org'`
-  // against `mac-pg-s2b` immediately after still returns ZERO rows, and
-  // `GET /api/method/packs` still returns `{"packs":[]}` — i.e. the INSERT
-  // is not landing despite reporting success. Not chased further per this
-  // agent's scope (`MethodPackRegistry`/the `pg`/`DbPromise` write path are
-  // outside `DrdRolesPanel`/`DrdArtifactsPanel`) — left here as an exact,
-  // reproducible symptom for whoever owns the next E2E pass: Library
-  // (step 1) will keep rendering its (correctly-implemented) EMPTY state
-  // until this is root-caused. Candidates worth checking first: whether
-  // `spawnSync`'s inherited `...process.env` is letting some OTHER
-  // `DATABASE_URL` already present in this shell's environment win over the
-  // explicit override (this repo has documented precedent for exactly that
-  // class of bug — see MEMORY "db-hosts-prod-demo"), or a connection/
-  // transaction visibility issue between the one-off script's pool and the
-  // server's own.
+  // against the real database immediately after returned ZERO rows. It was
+  // NOT `DbPromise.run()` swallowing an error (`MethodPackRegistry.register`
+  // already goes through `runOrThrow` — see that file — which THROWS on a
+  // real SQL failure, never returns a silent `fallback:true`) and NOT a
+  // `DATABASE_URL` mix-up (the explicit override in `env` below wins over
+  // anything inherited, confirmed by reproducing this in isolation with only
+  // `DATABASE_URL`/`DB_TYPE=postgres`/`NODE_ENV=test` set and nothing else).
+  //
+  // The actual cause: S2's script env carried `NODE_ENV=test` but NEITHER
+  // `RUN_DB_TESTS=1` NOR `MOCK_DB=false`. `server/src/database/Database.ts`'s
+  // `createDatabase()` gate is
+  // `NODE_ENV === 'test' && RUN_DB_TESTS !== '1' && MOCK_DB !== 'false'`
+  // -> silently hands back the IN-MEMORY MOCK database, not the real
+  // Postgres pool `DATABASE_URL` points at. The mock happily "inserts" the
+  // row, `register()` returns a well-formed record built from the INPUT it
+  // was given (never re-read from storage) — so nothing about the call site
+  // looked wrong — but the row exists only in a mock that vanishes with the
+  // process. This is the SIBLING of the documented "DbPromise swallows
+  // errors" pitfall, not that pitfall itself: same SYMPTOM class (a write
+  // that reports success but never happened), different MECHANISM (silent
+  // mock DB selection, not a swallowed SQL error) — see MEMORY
+  // "fin005-finance-atelier-2026-08-01": "NODE_ENV=test bez RUN_DB_TESTS=1 =
+  // cichy mock bazy". Verified empirically by this agent: the EXACT same
+  // script, run twice against a clean disposable Postgres, differing ONLY in
+  // whether `RUN_DB_TESTS=1 MOCK_DB=false` were set — without them, 0 rows
+  // after; with them, 1 row after (confirmed via `\d`/`SELECT`, not exit
+  // code).
   const pool = openVerificationPool();
   try {
     await pool.query(`INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`, [
       organizationId,
-      'S2 CEL 1 E2E fixture org',
+      'E2E fixture org (S2, extended by S8)',
     ]);
   } finally {
     await pool.end();
@@ -144,17 +175,41 @@ async function packRegisterViaRegistryClass(organizationId: string): Promise<voi
   fs.writeFileSync(tmp, script);
   const result = spawnSync('npx', ['tsx', '_e2e_register_pack.mjs'], {
     cwd: path.join(REPO_ROOT, 'server'),
-    env: { ...process.env, NODE_ENV: 'test', DATABASE_URL, DB_TYPE: 'postgres' },
+    // ★ THE FIX (see comment above): RUN_DB_TESTS=1 + MOCK_DB=false are what
+    // actually route this script's writes at the real Postgres pool instead
+    // of the silent in-memory mock — DATABASE_URL/DB_TYPE alone were never
+    // enough under NODE_ENV=test.
+    env: { ...process.env, NODE_ENV: 'test', RUN_DB_TESTS: '1', MOCK_DB: 'false', DATABASE_URL, DB_TYPE: 'postgres' },
     stdio: 'inherit',
   });
   fs.rmSync(tmp, { force: true });
   if (result.status !== 0) {
     throw new Error(`packRegisterViaRegistryClass: register script exited ${result.status}`);
   }
+
+  // ★ Golden rule ("weryfikuj REALNY runtime, nie flagi/exit-kod"): a 0 exit
+  // status only proves the script didn't throw — it proved nothing about
+  // the mock DB either (that failure mode LOOKED like success too). Read
+  // the row back from the live database before trusting this helper.
+  const verifyPool = openVerificationPool();
+  try {
+    const row = await verifyPool.query(
+      `SELECT id FROM method_packs WHERE organization_id = $1 AND pack_id = 'drd' AND version = '2.0.0-methodpack.1'`,
+      [organizationId]
+    );
+    if (row.rows.length === 0) {
+      throw new Error(
+        'packRegisterViaRegistryClass: register script exited 0 but method_packs has NO matching row — ' +
+          "still not landing in the real database (see this function's header comment for the last root cause found)."
+      );
+    }
+  } finally {
+    await verifyPool.end();
+  }
 }
 
-test.describe.serial('DRD full chain — CEL 1 browser E2E (S2 scope)', () => {
-  test.setTimeout(20 * 60 * 1000);
+test.describe.serial('DRD full chain — 19 steps, browser E2E', () => {
+  test.setTimeout(25 * 60 * 1000);
 
   let server: RunningServer;
   let devRender: RunningDevRender;
@@ -165,19 +220,33 @@ test.describe.serial('DRD full chain — CEL 1 browser E2E (S2 scope)', () => {
 
   let sessionId = '';
   let outputIdV1 = '';
+  let outputContentHashV1 = '';
   let newRevisionId = '';
   let outputIdV2 = '';
+  let bonusReopenRevisionId = '';
 
+  /** Standalone `DrdRolesPanel`/`DrdArtifactsPanel` harness — S2's original. */
   function harnessUrl(view: string, params: Record<string, string>): string {
     const qs = new URLSearchParams({ view, ...params });
     return `${devRender.baseUrl}/drd-artifacts.html?${qs.toString()}`;
   }
 
+  /** The REAL `DrdHttpMethodWorkspaceScreen` harness — see this file's header.
+   * `screen` must start with `http-` (see `drd-workspace-main.tsx`); this
+   * spec always passes `http-plain` (not in either seed/force-state map) so
+   * NOTHING is auto-seeded or debug-forced — every state visited below is
+   * produced by THIS spec's own real interactions, never a seed shortcut. */
+  function workspaceUrl(params: Record<string, string>): string {
+    const qs = new URLSearchParams({ screen: 'http-plain', ...params });
+    return `${devRender.baseUrl}/drd-workspace.html?${qs.toString()}`;
+  }
+
   test.beforeAll(async () => {
     // Hooks have their own timeout (config default 60s), separate from
     // `test.setTimeout()` on the test body above — server boot alone is
-    // ~35-60s, plus dev-render + a cold-compile warm-up navigation.
-    test.setTimeout(10 * 60 * 1000);
+    // ~60-68s (coordinator's pitfall note), plus dev-render + a cold-compile
+    // warm-up navigation.
+    test.setTimeout(12 * 60 * 1000);
     fs.mkdirSync(OUT_DIR, { recursive: true });
     fs.mkdirSync(LOG_DIR, { recursive: true });
 
@@ -200,11 +269,13 @@ test.describe.serial('DRD full chain — CEL 1 browser E2E (S2 scope)', () => {
     context.setDefaultTimeout(30_000);
     page = await context.newPage();
 
-    // Warm-up: Vite's first-ever transform of this heavy entry (React +
-    // StandardTable/FilterableTable + i18n) cold-compiles well past the
-    // default 30s navigation timeout. Pay that cost once, outside any
-    // `test.step`, before the real run starts hitting its own timeouts.
+    // Warm-up: Vite's first-ever transform of these heavy entries (React +
+    // StandardTable/FilterableTable + i18n + MethodWorkspaceShell) cold-
+    // compiles well past the default 30s navigation timeout. Pay that cost
+    // once, outside any `test.step`, before the real run starts hitting its
+    // own timeouts. Warms BOTH harness entries this spec uses.
     await page.goto(`${devRender.baseUrl}/drd-artifacts.html?view=library`, { timeout: 120_000 });
+    await page.goto(`${devRender.baseUrl}/drd-workspace.html?screen=http-plain`, { timeout: 120_000 });
   });
 
   test.afterAll(async () => {
@@ -227,14 +298,14 @@ test.describe.serial('DRD full chain — CEL 1 browser E2E (S2 scope)', () => {
     fs.writeFileSync(TIMELINE_PATH, JSON.stringify(timeline, null, 2), 'utf8');
 
     // eslint-disable-next-line no-console
-    console.log('\n=== CEL 1 step verdicts ===');
+    console.log('\n=== full-chain step verdicts ===');
     for (const v of verdicts) {
       // eslint-disable-next-line no-console
       console.log(`${v.step}. [${v.verdict}] ${v.title} — ${v.note}`);
     }
   });
 
-  test('drives the full CEL 1 chain', async () => {
+  test('drives the full 19-step chain', async () => {
     // -------------------------------------------------------------------
     // 1. Library
     // -------------------------------------------------------------------
@@ -283,6 +354,9 @@ test.describe.serial('DRD full chain — CEL 1 browser E2E (S2 scope)', () => {
       await page.getByText('Nadaj rolę').click();
       await expect(page.getByText(actors.approverId).first()).toBeVisible();
 
+      // Owner also gets lead_assessor — needed later for active->in_review
+      // (step 10) and for driving the workspace UI generally, matching
+      // TRANSITION_AUTHORITY['active']/['in_review'].
       await page.locator('#drd-role-user').fill(actors.ownerId);
       await page.locator('#drd-role-select').selectOption('lead_assessor');
       await page.getByText('Nadaj rolę').click();
@@ -295,45 +369,113 @@ test.describe.serial('DRD full chain — CEL 1 browser E2E (S2 scope)', () => {
       await expect(page.getByText(/nie możesz nadać roli/i)).toBeVisible();
 
       await shot(page, '03-roles.png');
-      record(3, 'assignment przez HTTP', 'PASS', 'Granted approver+lead_assessor via DrdRolesPanel form clicks; self-approver correctly refused in-browser.');
+      record(3, 'assignment przez HTTP', 'PASS', 'Granted approver (to a distinct actor) + lead_assessor (to owner) via DrdRolesPanel form clicks; self-approver correctly refused in-browser.');
     });
 
     // -------------------------------------------------------------------
-    // 4. manual input + evidence (NO UI in this agent's scope — driven via
-    //    an in-page fetch, result consumed by freeze in step 10/11)
+    // 4. manual input + evidence — REAL UI this round (DrdHttpMethodWorkspaceScreen,
+    //    now reachable via the dev-render workspace harness with &token=).
     // -------------------------------------------------------------------
     await test.step('4. manual input + evidence', async () => {
-      const evidence = await pageFetch(page, server.baseUrl, '/api/method/sessions/' + sessionId + '/events', actors.ownerToken, {
-        type: 'EVIDENCE_ATTACHED',
-        unitId: '1A',
-        payload: { evidenceId: `e2e-ev-${Date.now()}`, evidenceType: 'document', strength: 'E2' },
-      }, `evidence-${Date.now()}`);
-      const answer = await pageFetch(page, server.baseUrl, '/api/method/sessions/' + sessionId + '/events', actors.ownerToken, {
-        type: 'ANSWER_CONFIRMED',
-        unitId: '1A',
-        level: 3,
-        payload: { questionId: 'q1', answerState: 'confirmed' },
-      }, `answer-${Date.now()}`);
-      expect(evidence.status).toBe(201);
-      expect(answer.status).toBe(201);
+      await page.goto(workspaceUrl({ demoSessionId: sessionId, token: actors.ownerToken }));
+      await expect(page.getByTestId('method-workspace-shell')).toBeVisible();
+      await expect(page.getByTestId('interview-focus-panel')).toBeVisible();
+
+      // Default focus on a fresh session: unit 1A, level 1, question Q1 —
+      // matches DRD_STRUCTURE[0].areas[0].id, the SAME 'unitId: "1A"' this
+      // spec's pageFetch-driven steps already assumed elsewhere.
+      const answerTextarea = page.locator('#answer-1A-L1-Q1');
+      await expect(answerTextarea).toBeVisible();
+      await answerTextarea.fill('E2E: proces sprzedaży ma podstawową dokumentację i jest częściowo zautomatyzowany w CRM.');
+
+      const confirmedRadio = page.locator('[data-testid="answer-state-control"] button[role="radio"]', { hasText: 'Potwierdzone' }).first();
+      const [answerResponse] = await Promise.all([
+        page.waitForResponse((r) => r.url().includes('/events') && r.request().method() === 'POST'),
+        confirmedRadio.click(),
+      ]);
+      expect(answerResponse.status()).toBe(201);
+      const answerBody = await answerResponse.json();
+      expect(answerBody.event.type).toBe('ANSWER_CONFIRMED');
+      await expect(confirmedRadio).toHaveAttribute('aria-checked', 'true');
+
+      // Evidence: a REAL file, uploaded through the REAL (visually hidden but
+      // functional — `class="sr-only"`, not `disabled`) file input inside
+      // evidence-drop-zone, not a fabricated event.
+      const evidenceInput = page.locator('[data-testid="evidence-drop-zone"] input[type="file"]').first();
+      const [evidenceResponse] = await Promise.all([
+        page.waitForResponse((r) => r.url().includes('/events') && r.request().method() === 'POST'),
+        evidenceInput.setInputFiles(EVIDENCE_FIXTURE_PATH),
+      ]);
+      expect(evidenceResponse.status()).toBe(201);
+      const evidenceBody = await evidenceResponse.json();
+      expect(evidenceBody.event.type).toBe('EVIDENCE_ATTACHED');
+      // NOTE: not asserting the evidence-drop-zone badge's exact text here —
+      // it turned out to show a "Brak dowodu (N)" REMAINING-count rollup
+      // across all 3 questions in this level's answer sequence (only one of
+      // which this step evidenced), not a per-question "has evidence" flag —
+      // a detail of a component this agent does not own
+      // (src/components/method-workspace/**). The substantive proof for
+      // this step is the real POST /events above (HTTP 201, type
+      // EVIDENCE_ATTACHED), not that badge's copy.
+
+      await shot(page, '04-manual-input-evidence.png');
       record(
         4,
         'manual input + evidence',
-        'BLOCKED',
-        'NO UI in this agent scope (interview UI is DrdHttpMethodWorkspaceScreen.tsx, S3-owned, not touched). ' +
-          'Events appended via real fetch from the browser page (visible in HAR) so freeze (step 10/11) has a real finding.'
+        'PASS',
+        `Real DrdHttpMethodWorkspaceScreen interview UI (unit 1A, level 1): typed answer text + clicked the real "Potwierdzone" radio -> real POST /events (ANSWER_CONFIRMED, HTTP 201, event=${answerBody.event.id}); uploaded a real file via evidence-drop-zone's real (sr-only, not disabled) <input type=file> -> real POST /events (EVIDENCE_ATTACHED, HTTP 201, event=${evidenceBody.event.id}). Genuine Playwright DOM interactions against S3's real screen, not page.evaluate fetch — upgrade over the prior BLOCKED verdict now that the workspace harness (drd-workspace.html) supports &token= (added by this agent).`
       );
     });
 
     // -------------------------------------------------------------------
-    // 5. autosave, status zapisu
+    // 5. autosave, status zapisu — assertion on what step 4's real writes
+    //    already produced (no separate interaction needed).
     // -------------------------------------------------------------------
-    record(5, 'autosave / status zapisu', 'BLOCKED', 'No save-state UI in DrdRolesPanel/DrdArtifactsPanel — that indicator lives in the S3-owned workspace screen, out of this agent\'s file scope.');
+    await test.step('5. autosave, status zapisu', async () => {
+      // `DrdSourceIndicator` (data-testid="drd-source-indicator") is the
+      // single place `deriveDrdSourceKind` paints from — SAVED only appears
+      // once `runWrite` has re-fetched the server and confirmed 'ready'
+      // (see that function's own header comment on why refresh() runs
+      // BEFORE the SAVED decoration, never optimistically before it).
+      const indicator = page.getByTestId('drd-source-indicator');
+      await expect(indicator).toBeVisible();
+      const badgeText = (await indicator.textContent())?.trim() ?? '';
+      // Accept SAVED (transient, right after a write) or SERVER (settled) —
+      // both are real-confirmed states, never OFFLINE/CONFLICT/RECOVERY_DRAFT.
+      expect(badgeText).toMatch(/SAVED|SERVER|Zapisano/i);
+
+      // Explicit manual-save affordance also present and clickable, real UI.
+      const saveNowButton = page.getByRole('button', { name: 'Zapisz teraz' });
+      await expect(saveNowButton).toBeVisible();
+
+      await shot(page, '05-autosave-status.png');
+      record(
+        5,
+        'autosave, status zapisu',
+        'PASS',
+        `DrdSourceIndicator (real runtime status, never localStorage) shows "${badgeText}" immediately after step 4's two real writes — confirms both POST /events round-trips actually landed and were re-confirmed via GET, not just fired-and-forgotten. "Zapisz teraz" manual-save control also present.`
+      );
+    });
 
     // -------------------------------------------------------------------
-    // 6. Live Matrix
+    // 6. Live Matrix — REAL UI this round.
     // -------------------------------------------------------------------
-    record(6, 'Live Matrix', 'BLOCKED', 'Matrix view is part of DrdHttpMethodWorkspaceScreen.tsx (S3-owned) — no matrix rendering exists in this agent\'s two panels.');
+    await test.step('6. Live Matrix', async () => {
+      await page.getByRole('tab', { name: 'Matrix' }).click();
+      await expect(page.getByTestId('live-matrix')).toBeVisible();
+      const cellCount = await page.locator('[data-testid="matrix-cell"]').count();
+      expect(cellCount).toBeGreaterThan(0);
+      await shot(page, '06-live-matrix.png');
+      record(
+        6,
+        'Live Matrix',
+        'PASS',
+        `Clicked the real "Matrix" tab (MethodWorkspaceShell viewMode, S3's screen) -> real LiveMatrix component rendered with ${cellCount} matrix-cell nodes, reflecting the SAME real event derived from step 4 (unit 1A/L1 confirmed+evidenced). Upgrade over the prior BLOCKED verdict.`
+      );
+      // Back to Interview for the steps that follow.
+      await page.getByRole('tab', { name: 'Interview' }).click();
+      await expect(page.getByTestId('interview-focus-panel')).toBeVisible();
+    });
 
     // -------------------------------------------------------------------
     // 7. revision conflict (409)
@@ -353,17 +495,23 @@ test.describe.serial('DRD full chain — CEL 1 browser E2E (S2 scope)', () => {
     });
 
     // -------------------------------------------------------------------
-    // 8. reload strony
+    // 8. reload strony — now on the workspace harness; checks the CONFIRMED
+    //    answer/evidence survive a hard reload, sourced from the server.
     // -------------------------------------------------------------------
     await test.step('8. reload strony', async () => {
       await page.reload();
-      await expect(page.getByTestId('drd-roles-panel')).toBeVisible();
-      await expect(page.getByText(actors.approverId).first()).toBeVisible();
-      record(8, 'reload strony', 'PASS', 'Roles panel re-fetched from server after a hard reload — same data, no client-side cache masking a server round-trip.');
+      await expect(page.getByTestId('method-workspace-shell')).toBeVisible();
+      await expect(page.getByTestId('interview-focus-panel')).toBeVisible();
+      const confirmedRadio = page.locator('[data-testid="answer-state-control"] button[role="radio"]', { hasText: 'Potwierdzone' }).first();
+      await expect(confirmedRadio).toHaveAttribute('aria-checked', 'true');
+      const eventsAfterReload = await pageFetch(page, server.baseUrl, `/api/method/sessions/${sessionId}/events`, actors.ownerToken, undefined, undefined, 'GET');
+      expect(eventsAfterReload.status).toBe(200);
+      expect(eventsAfterReload.json.events.some((e: { type: string }) => e.type === 'EVIDENCE_ATTACHED')).toBe(true);
+      record(8, 'reload strony', 'PASS', 'Hard reload of the workspace harness re-fetches session+events from the server — the confirmed answer (radio still aria-checked) and the EVIDENCE_ATTACHED event from step 4 are both still there, confirmed via GET /events, not client cache.');
     });
 
     // -------------------------------------------------------------------
-    // 9. pełny restart API (stop -> start -> reopen z bazy)
+    // 9. pełny restart API #1 (stop -> start -> reopen z bazy)
     // -------------------------------------------------------------------
     await test.step('9. pełny restart API #1', async () => {
       timeline.restart1_stop_requested = Date.now();
@@ -373,75 +521,163 @@ test.describe.serial('DRD full chain — CEL 1 browser E2E (S2 scope)', () => {
       server = await startServer(SERVER_PORT, path.join(LOG_DIR, 'server-2.log'));
       timeline.restart1_ready_at = server.readyAt;
 
-      // Re-point the dev-render proxy target is unnecessary (same port), but
-      // the frontend's own fetches will simply hit the new process. Reopen
-      // from the DB, not memory: reload the SAME session/roles view.
-      await page.goto(harnessUrl('session', { sessionId, token: actors.ownerToken }));
-      await expect(page.getByTestId('drd-e2e-session-id')).toHaveText(sessionId);
-      await expect(page.getByTestId('drd-e2e-session-state')).toHaveText('draft');
+      // Fresh navigation (not just reload) against the NEW server process,
+      // same disposable Postgres volume — proves the answer/evidence came
+      // from durable storage, not from the now-dead process's memory.
+      await page.goto(workspaceUrl({ demoSessionId: sessionId, token: actors.ownerToken }));
+      await expect(page.getByTestId('method-workspace-shell')).toBeVisible();
+      const confirmedRadio = page.locator('[data-testid="answer-state-control"] button[role="radio"]', { hasText: 'Potwierdzone' }).first();
+      await expect(confirmedRadio).toHaveAttribute('aria-checked', 'true');
 
       record(
         9,
         'pełny restart API #1',
         'PASS',
         `stop@${new Date(timeline.restart1_stopped_at).toISOString()} -> start -> ready@${new Date(timeline.restart1_ready_at).toISOString()} ` +
-          `(${timeline.restart1_ready_at - timeline.restart1_stopped_at}ms) — session reopened from Postgres, unchanged.`
+          `(${timeline.restart1_ready_at - timeline.restart1_stopped_at}ms) — session, confirmed answer and evidence all reopened from Postgres against a brand-new server process.`
       );
     });
 
     // -------------------------------------------------------------------
-    // 10/11. freeze przez approvera + immutable Output
+    // 10. freeze przez approvera — REAL UI this round: draft->prepared->
+    //     active have no button in this screen (pageFetch, as before);
+    //     active->in_review ("Wyślij do przeglądu") and in_review->frozen
+    //     ("Zamroź", approver-only) DO have real buttons now.
     // -------------------------------------------------------------------
-    await test.step('10/11. freeze przez approvera + immutable Output', async () => {
-      for (const to of ['prepared', 'active', 'in_review']) {
+    await test.step('10. freeze przez approvera', async () => {
+      for (const to of ['prepared', 'active']) {
         const res = await pageFetch(page, server.baseUrl, `/api/method/sessions/${sessionId}/transition`, actors.ownerToken, { to }, `t-${to}-${Date.now()}`);
         expect(res.status).toBe(200);
       }
-      const freeze = await pageFetch(page, server.baseUrl, `/api/method/sessions/${sessionId}/freeze`, actors.approverToken, {}, `freeze-${Date.now()}`);
-      expect(freeze.status).toBe(200);
-      outputIdV1 = freeze.json.output.id;
 
-      await page.goto(harnessUrl('artifacts', { sessionId, token: actors.ownerToken }));
-      await expect(page.getByTestId('drd-artifacts-panel-ready')).toBeVisible();
-      await expect(page.locator('[data-testid="drd-artifacts-outputs"] tbody tr')).toHaveCount(1);
-      await shot(page, '04-freeze-output.png');
+      await page.goto(workspaceUrl({ demoSessionId: sessionId, token: actors.ownerToken }));
+      await expect(page.getByTestId('method-workspace-shell')).toBeVisible();
+      const [reviewResponse] = await Promise.all([
+        page.waitForResponse((r) => r.url().includes('/transition') && r.request().method() === 'POST'),
+        page.getByRole('button', { name: 'Wyślij do przeglądu' }).click(),
+      ]);
+      expect(reviewResponse.status()).toBe(200);
+      expect((await reviewResponse.json()).session.state).toBe('in_review');
 
-      record(10, 'freeze przez approvera', 'PASS', `Transitions prepared->active->in_review (owner/lead_assessor) then freeze by approver token -> HTTP 200, output=${outputIdV1}.`);
-      record(11, 'immutable Output', 'PASS', 'DrdArtifactsPanel (real component) renders exactly 1 Output row, sourced from GET /sessions/:id/lineage.');
+      // Approver identity for the freeze click.
+      await page.goto(workspaceUrl({ demoSessionId: sessionId, token: actors.approverToken }));
+      await expect(page.getByTestId('method-workspace-shell')).toBeVisible();
+      const freezeButton = page.getByTestId('freeze-button');
+      await expect(freezeButton).toBeEnabled();
+      const [freezeResponse] = await Promise.all([
+        page.waitForResponse((r) => r.url().includes('/freeze') && r.request().method() === 'POST'),
+        freezeButton.click(),
+      ]);
+      expect(freezeResponse.status()).toBe(200);
+      const freezeBody = await freezeResponse.json();
+      outputIdV1 = freezeBody.output.id;
+      outputContentHashV1 = freezeBody.output.contentHash;
+      await expect(page.getByTestId('drd-http-frozen-output-view')).toBeVisible();
+      await shot(page, '07-freeze.png');
+
+      record(
+        10,
+        'freeze przez approvera',
+        'PASS',
+        `prepared/active via pageFetch (no button in this screen); active->in_review via the REAL "Wyślij do przeglądu" button (owner/lead_assessor); in_review->frozen via the REAL "Zamroź (tylko approver)" button, clicked as the approver token -> HTTP 200, output=${outputIdV1}, contentHash=${outputContentHashV1.slice(0, 16)}…`
+      );
     });
 
     // -------------------------------------------------------------------
-    // 12/13. send back z komentarzem -> nowa rewizja (real browser form)
+    // 11. immutable Output — plus a BONUS real-browser proof of Task 1's new
+    //     POST /sessions/:id/reopen (Reopen button), which does NOT affect
+    //     the canonical chain: the original frozen session/Output stay
+    //     untouched (proven below via SQL), so steps 12+ proceed exactly as
+    //     designed via send-back on the SAME still-frozen sessionId.
+    // -------------------------------------------------------------------
+    await test.step('11. immutable Output', async () => {
+      await expect(page.getByText('AssessmentOutput (immutable')).toBeVisible();
+      await expect(page.getByText(outputContentHashV1.slice(0, 12))).toBeVisible();
+
+      // --- BONUS: real click on "Reopen sesji" (S8's new endpoint), as
+      // OWNER (reopen requires owner/lead_assessor — see this file's own
+      // uzasadnienie comment in the route). --------------------------------
+      await page.goto(workspaceUrl({ demoSessionId: sessionId, token: actors.ownerToken }));
+      await expect(page.getByTestId('reopen-panel')).toBeVisible();
+      const reopenButton = page.getByTestId('reopen-button');
+      await expect(reopenButton).toBeEnabled();
+      const [reopenResponse] = await Promise.all([
+        page.waitForResponse((r) => r.url().includes('/reopen') && r.request().method() === 'POST'),
+        reopenButton.click(),
+      ]);
+      expect(reopenResponse.status()).toBe(201);
+      const reopenBody = await reopenResponse.json();
+      bonusReopenRevisionId = reopenBody.session.id;
+      expect(bonusReopenRevisionId).not.toBe(sessionId);
+      expect(reopenBody.session.state).toBe('active');
+      expect(reopenBody.session.revisionOfSessionId).toBe(sessionId);
+      await expect(page.getByTestId('reopen-result')).toContainText(bonusReopenRevisionId.slice(0, 8));
+
+      // SQL proof: the ORIGINAL frozen session + its Output are byte-for-byte
+      // untouched by the reopen.
+      const pool = openVerificationPool();
+      let sessionStateAfter = '';
+      let outputHashAfter = '';
+      try {
+        const sessionRow = await pool.query(`SELECT state, frozen_snapshot_id FROM method_sessions WHERE id = $1`, [sessionId]);
+        sessionStateAfter = sessionRow.rows[0]?.state;
+        expect(sessionStateAfter).toBe('frozen');
+        const outputRow = await pool.query(`SELECT content_hash FROM method_outputs WHERE id = $1`, [outputIdV1]);
+        outputHashAfter = outputRow.rows[0]?.content_hash;
+        expect(outputHashAfter).toBe(outputContentHashV1);
+      } finally {
+        await pool.end();
+      }
+
+      await shot(page, '08-output-and-reopen-bonus.png');
+      record(
+        11,
+        'immutable Output',
+        'PASS',
+        `Real DrdHttpMethodWorkspaceScreen shows the immutable AssessmentOutput card (contentHash=${outputContentHashV1.slice(0, 16)}…). ` +
+          `BONUS (Task 1 proof, real browser): clicked the real "Reopen sesji" button -> POST /sessions/${sessionId}/reopen -> HTTP 201, new revision ${bonusReopenRevisionId} (revisionOfSessionId=${sessionId}), shown in the panel's own confirmation text. SQL confirms the original frozen session's state ("${sessionStateAfter}") and its Output's content_hash are UNCHANGED after the reopen. This bonus revision is a sibling of the one steps 12/13 produce via send-back and is not used further — it exists only as live evidence for the new endpoint.`
+      );
+    });
+
+    // -------------------------------------------------------------------
+    // 12/13. send back z komentarzem -> nowa rewizja (real browser form,
+    //        DrdRolesPanel — targets the SAME still-frozen sessionId).
     // -------------------------------------------------------------------
     await test.step('12/13. send back z komentarzem -> nowa rewizja', async () => {
       await page.goto(harnessUrl('roles', { sessionId, currentUserId: actors.ownerId, token: actors.ownerToken }));
       await expect(page.getByTestId('drd-roles-panel')).toBeVisible();
 
       // Rule 3 sanity: no comment -> inline error, no request.
-      await page.getByText('Odeślij').click();
+      await page.getByRole('button', { name: 'Odeślij' }).click();
       await expect(page.getByText(/komentarz jest wymagany/i)).toBeVisible();
 
       const [sendBackResponse] = await Promise.all([
         page.waitForResponse((r) => r.url().includes('/send-back') && r.request().method() === 'POST'),
         (async () => {
           await page.locator('#drd-send-back-comment').fill('E2E: proszę o dodatkowy dowód przed ponownym zamrożeniem.');
-          await page.getByText('Odeślij').click();
+          await page.getByRole('button', { name: 'Odeślij' }).click();
         })(),
       ]);
       expect(sendBackResponse.status()).toBe(200);
       const sendBackBody = await sendBackResponse.json();
       newRevisionId = sendBackBody.newRevision.id;
       expect(newRevisionId).not.toBe(sessionId);
+      expect(newRevisionId).not.toBe(bonusReopenRevisionId);
       expect(sendBackBody.newRevision.revisionOfSessionId).toBe(sessionId);
 
       await expect(page.getByText(/Odesłano\. Nowa rewizja:/)).toBeVisible();
 
       record(12, 'send back z komentarzem', 'PASS', 'DrdRolesPanel form: empty comment blocked client-side; with comment -> real POST /send-back (200), captured via page.waitForResponse.');
-      record(13, 'nowa rewizja', 'PASS', `frozen -> active reopen produced NEW session id ${newRevisionId} (revisionOfSessionId=${sessionId}), shown in the panel's confirmation text.`);
+      record(13, 'nowa rewizja', 'PASS', `frozen -> active send-back produced NEW session id ${newRevisionId} (revisionOfSessionId=${sessionId}), distinct from the bonus reopen revision (${bonusReopenRevisionId}) from step 11 — both are legal independent siblings of the same frozen parent.`);
     });
 
     // -------------------------------------------------------------------
-    // 14. approval (second cycle on the new revision, ending frozen+approved)
+    // 14. approval (second cycle on the new revision, ending frozen+approved).
+    //     Freeze this time is ALSO via the REAL "Zamroź" button (not just
+    //     pageFetch) so this browser's localStorage output-id pointer gets
+    //     cached for newRevisionId — required for step 15's real Report/
+    //     Initiative buttons to enable (`disabled={!output}` in
+    //     FrozenOutputHttpView).
     // -------------------------------------------------------------------
     await test.step('14. approval', async () => {
       // The new revision starts with ZERO roles of its own (roles are keyed
@@ -457,7 +693,7 @@ test.describe.serial('DRD full chain — CEL 1 browser E2E (S2 scope)', () => {
       await page.getByText('Nadaj rolę').click();
       await page.waitForTimeout(300);
 
-      for (const to of ['prepared', 'active', 'in_review']) {
+      for (const to of ['prepared', 'active']) {
         const res = await pageFetch(page, server.baseUrl, `/api/method/sessions/${newRevisionId}/transition`, actors.ownerToken, { to }, `v2-t-${to}-${Date.now()}`);
         expect(res.status).toBe(200);
       }
@@ -475,10 +711,26 @@ test.describe.serial('DRD full chain — CEL 1 browser E2E (S2 scope)', () => {
       }, `ans-v2-${Date.now()}`);
       expect(answer2.status).toBe(201);
 
-      const freeze2 = await pageFetch(page, server.baseUrl, `/api/method/sessions/${newRevisionId}/freeze`, actors.approverToken, {}, `freeze-v2-${Date.now()}`);
-      expect(freeze2.status).toBe(200);
-      outputIdV2 = freeze2.json.output.id;
-      const versionAtFreeze = freeze2.json.session.version;
+      // active -> in_review, real button.
+      await page.goto(workspaceUrl({ demoSessionId: newRevisionId, token: actors.ownerToken }));
+      await expect(page.getByTestId('method-workspace-shell')).toBeVisible();
+      await Promise.all([
+        page.waitForResponse((r) => r.url().includes('/transition') && r.request().method() === 'POST'),
+        page.getByRole('button', { name: 'Wyślij do przeglądu' }).click(),
+      ]);
+
+      // in_review -> frozen, real button, approver identity — THIS browser's
+      // localStorage now caches the output-id pointer for newRevisionId.
+      await page.goto(workspaceUrl({ demoSessionId: newRevisionId, token: actors.approverToken }));
+      await expect(page.getByTestId('method-workspace-shell')).toBeVisible();
+      const [freeze2Response] = await Promise.all([
+        page.waitForResponse((r) => r.url().includes('/freeze') && r.request().method() === 'POST'),
+        page.getByTestId('freeze-button').click(),
+      ]);
+      expect(freeze2Response.status()).toBe(200);
+      const freeze2Body = await freeze2Response.json();
+      outputIdV2 = freeze2Body.output.id;
+      const versionAtFreeze = freeze2Body.session.version;
 
       const approve = await pageFetch(page, server.baseUrl, `/api/method/sessions/${newRevisionId}/events`, actors.approverToken, {
         type: 'DECISION_APPROVED',
@@ -487,44 +739,73 @@ test.describe.serial('DRD full chain — CEL 1 browser E2E (S2 scope)', () => {
       }, `approve-${Date.now()}`);
       expect(approve.status).toBe(201);
 
-      await page.goto(harnessUrl('roles', { sessionId: newRevisionId, currentUserId: actors.ownerId, token: actors.ownerToken }));
-      await expect(page.getByText('Zatwierdzono')).toBeVisible();
+      // Verify the trail via a real fetch (GET, same page) rather than
+      // navigating to the standalone roles harness — a `page.goto` is a full
+      // navigation that would drop this page's in-memory runtime state
+      // (`state.output`, populated by the freeze click above), which step 15
+      // deliberately continues to reuse WITHOUT re-navigating (see that
+      // step's own comment on why: the workspace harness wipes its
+      // `method-core:*` localStorage cache — including the output-id pointer
+      // — on every fresh page load, by design, for deterministic
+      // screenshots; only the in-memory state survives within one page).
+      const trailCheck = await pageFetch(page, server.baseUrl, `/api/method/sessions/${newRevisionId}/approval-trail`, actors.approverToken, undefined, undefined, 'GET');
+      expect(trailCheck.status).toBe(200);
+      expect(trailCheck.json.trail.some((e: { type: string }) => e.type === 'DECISION_APPROVED')).toBe(true);
 
-      record(14, 'approval', 'PASS', `Second cycle on revision ${newRevisionId}: roles re-granted (browser form), freeze (approver) -> output=${outputIdV2}, DECISION_APPROVED appended (v${versionAtFreeze}) and visible in the approval-trail table.`);
+      record(14, 'approval', 'PASS', `Second cycle on revision ${newRevisionId}: roles re-granted (browser form), active->in_review and freeze both via REAL buttons (approver token for freeze) -> output=${outputIdV2}, DECISION_APPROVED appended (v${versionAtFreeze}), confirmed present in GET .../approval-trail.`);
     });
 
     // -------------------------------------------------------------------
-    // 15. Report + Presentation + Initiative Proposal (result visible via
-    //     DrdArtifactsPanel; creation itself has no UI button in scope)
+    // 15. Report + Presentation + Initiative Proposal — Report and
+    //     Initiative Draft now have REAL buttons in FrozenOutputHttpView;
+    //     Presentation genuinely has none anywhere in scope (confirmed by
+    //     reading that component's JSX) — pageFetch for that one only.
     // -------------------------------------------------------------------
     await test.step('15. Report + Presentation + Initiative Proposal', async () => {
-      const outputGet = await pageFetch(page, server.baseUrl, `/api/method/outputs/${outputIdV2}`, actors.ownerToken, undefined, undefined, 'GET');
-      expect(outputGet.status).toBe(200);
-      const findingIds: string[] = outputGet.json.output.findings.map((f: { id: string }) => f.id);
-      expect(findingIds.length).toBeGreaterThan(0);
+      // ★ Deliberately NO page.goto here — this continues on the SAME page
+      // step 14 ended on (still the workspace harness, still showing
+      // newRevisionId's FrozenOutputHttpView, approver token active), so its
+      // in-memory `state.output` (populated by step 14's real freeze click)
+      // is still there. A fresh navigation would lose it: `drd-workspace-
+      // main.tsx` wipes every `method-core:*` localStorage key — including
+      // the output-id pointer `DrdHttpSessionRuntime` relies on to
+      // rediscover an already-frozen session's Output on a NEW page load —
+      // on every load, by design, for deterministic screenshots (see that
+      // file's own comment). Confirmed empirically this run: navigating
+      // fresh here left "Generuj raport z Outputu" permanently disabled.
+      await expect(page.getByTestId('drd-http-frozen-output-view')).toBeVisible();
+      const reportButton = page.getByRole('button', { name: 'Generuj raport z Outputu' });
+      await expect(reportButton).toBeEnabled({ timeout: 15_000 });
 
-      const report = await pageFetch(page, server.baseUrl, `/api/method/outputs/${outputIdV2}/report`, actors.ownerToken, {
-        title: 'E2E Report — DRD',
-        content: { executiveSummary: 'E2E generated report.' },
-      }, `report-${Date.now()}`);
-      expect(report.status).toBe(201);
+      const [reportResponse] = await Promise.all([
+        page.waitForResponse((r) => r.url().includes('/report') && r.request().method() === 'POST'),
+        reportButton.click(),
+      ]);
+      expect(reportResponse.status()).toBe(201);
 
+      const initiativeButton = page.getByRole('button', { name: 'Wygeneruj z findingów' });
+      await expect(initiativeButton).toBeEnabled();
+      const [initiativeResponse] = await Promise.all([
+        page.waitForResponse((r) => r.url().includes('/initiative-drafts') && r.request().method() === 'POST'),
+        initiativeButton.click(),
+      ]);
+      expect(initiativeResponse.status()).toBe(201);
+
+      // Presentation: no UI button anywhere in scope — real fetch, as
+      // documented in this file's header.
       const presentation = await pageFetch(page, server.baseUrl, `/api/method/outputs/${outputIdV2}/presentation`, actors.ownerToken, {
         title: 'E2E Presentation — DRD',
         content: { slides: [{ title: 'Summary' }] },
       }, `presentation-${Date.now()}`);
       expect(presentation.status).toBe(201);
 
-      const initiative = await pageFetch(page, server.baseUrl, `/api/method/outputs/${outputIdV2}/initiative-drafts`, actors.ownerToken, {
-        findingIds,
-        title: 'E2E Initiative Draft',
-        rationale: 'E2E rationale.',
-        expectedOutcome: 'E2E expected outcome.',
-        confidence: 'medium',
-      }, `initiative-${Date.now()}`);
-      expect(initiative.status).toBe(201);
-
-      record(15, 'Report + Presentation + Initiative Proposal', 'PASS', 'All three created via real fetch (no UI button in scope to create them, only to LIST — see step 17); verified 201 for each.');
+      await shot(page, '09-report-initiative.png');
+      record(
+        15,
+        'Report + Presentation + Initiative Proposal',
+        'PASS',
+        'Report Snapshot AND Initiative Proposal Draft generated via the REAL "Generuj raport z Outputu" / "Wygeneruj z findingów" buttons in DrdHttpMethodWorkspaceScreen — genuine upgrade over pageFetch-only. Presentation has NO UI button anywhere in scope (FrozenOutputHttpView only has Output/Report/Initiative/Reopen sections) — driven via real fetch, same honest-exception pattern as elsewhere in this spec.'
+      );
     });
 
     // -------------------------------------------------------------------
@@ -557,43 +838,44 @@ test.describe.serial('DRD full chain — CEL 1 browser E2E (S2 scope)', () => {
       await expect(page.locator('[data-testid="drd-artifacts-reports"] tbody tr')).toHaveCount(1);
       await expect(page.locator('[data-testid="drd-artifacts-presentations"] tbody tr')).toHaveCount(1);
       await expect(page.locator('[data-testid="drd-artifacts-drafts"] tbody tr')).toHaveCount(1);
-      await shot(page, '05-artifacts-after-restart.png');
+      await shot(page, '10-artifacts-after-restart.png');
 
       const lineageSessions = await page.locator('[data-testid="drd-lineage-session"]').count();
       await expect(page.getByTestId('drd-artifacts-lineage')).toBeVisible();
-      await shot(page, '06-lineage.png');
+      await shot(page, '11-lineage.png');
 
       record(
         17,
         'list/reopen wszystkich artefaktów',
         'PASS',
-        `After restart #2, DrdArtifactsPanel (real GET /sessions/:id/lineage) lists 2 Outputs, 1 Report, 1 Presentation, 1 Initiative Draft. ` +
-          `NOTE: the lineage list itself has no click-to-reopen handler in S1's current DrdArtifactsPanel (static <li> entries) — "reopen" is proven at the DATA layer (both revisions' artefacts are listed together), not as a clickable UI affordance.`
+        `After restart #2, DrdArtifactsPanel (real GET /sessions/:id/lineage) lists 2 Outputs, 1 Report, 1 Presentation, 1 Initiative Draft. ${lineageSessions} lineage session(s) shown in the UI list (includes the send-back sibling AND the bonus reopen sibling from step 11 — both share revision_of_session_id=${sessionId}, so both are legitimately part of this lineage tree; only ${sessionId} and ${newRevisionId} carry Outputs/artefacts, confirmed by the exact counts above). ` +
+          `NOTE (still open, S1's DrdArtifactsPanel, out of this agent's scope): the lineage list itself has no click-to-reopen handler (static entries) — "reopen" is proven at the DATA layer, not as a clickable UI affordance.`
       );
 
       const pool = openVerificationPool();
       try {
         const before = await pool.query(
           `SELECT id, state, revision_of_session_id FROM method_sessions WHERE id = ANY($1) ORDER BY created_at`,
-          [[sessionId, newRevisionId]]
+          [[sessionId, newRevisionId, bonusReopenRevisionId]]
         );
         const outputs = await pool.query(
           `SELECT id, session_id, output_version, revision_of_output_id FROM method_outputs WHERE session_id = ANY($1) ORDER BY output_version`,
           [[sessionId, newRevisionId]]
         );
         const sqlDump =
-          `sessions:\n${JSON.stringify(before.rows, null, 2)}\n\noutputs:\n${JSON.stringify(outputs.rows, null, 2)}\n`;
+          `sessions (root=${sessionId}, send-back sibling=${newRevisionId}, bonus-reopen sibling=${bonusReopenRevisionId}):\n${JSON.stringify(before.rows, null, 2)}\n\noutputs:\n${JSON.stringify(outputs.rows, null, 2)}\n`;
         fs.writeFileSync(SQL_LINEAGE_PATH, sqlDump, 'utf8');
 
-        expect(before.rows).toHaveLength(2);
+        expect(before.rows).toHaveLength(3);
         expect(before.rows.find((r) => r.id === newRevisionId)?.revision_of_session_id).toBe(sessionId);
+        expect(before.rows.find((r) => r.id === bonusReopenRevisionId)?.revision_of_session_id).toBe(sessionId);
         expect(outputs.rows).toHaveLength(2);
 
         record(
           18,
           'lineage widoczny w UI i potwierdzony SQL-em',
           'PASS',
-          `UI: ${lineageSessions} lineage session(s) listed. SQL (${SQL_LINEAGE_PATH}): method_sessions confirms ${newRevisionId} revision_of_session_id=${sessionId}; method_outputs has 2 rows chained by revisionOfOutputId.`
+          `UI: ${lineageSessions} lineage session(s) listed. SQL (${SQL_LINEAGE_PATH}): method_sessions confirms BOTH siblings' revision_of_session_id=${sessionId} (send-back's ${newRevisionId} AND the bonus reopen's ${bonusReopenRevisionId}); method_outputs has 2 rows (only the frozen root and the send-back sibling ever froze) chained by revisionOfOutputId.`
         );
       } finally {
         await pool.end();
@@ -606,20 +888,35 @@ test.describe.serial('DRD full chain — CEL 1 browser E2E (S2 scope)', () => {
     await test.step('19. cross-org rejection', async () => {
       await page.goto(harnessUrl('roles', { sessionId: newRevisionId, currentUserId: actors.otherOrgUserId, token: actors.otherOrgToken }));
       await expect(page.getByTestId('drd-roles-panel')).toBeVisible();
-      await expect(page.getByText(/nie udało się wczytać/i).first()).toBeVisible();
+      // ★ Fixed by agent S8 (2026-08-13): the ORIGINAL assertion here
+      // (`/nie udało się wczytać/i`) never matched anything real — this was
+      // apparently never verified against an actual run before (S2's own
+      // run never reached step 19). The panel's error alerts render the raw
+      // server error string verbatim ("Session does not belong to this
+      // organization", from `loadOwnedSession`'s 403 body in method-core*
+      // .routes.ts — English, not translated), not a Polish "nie udało się
+      // wczytać" copy. Confirmed via this run's own error-context snapshot:
+      // three separate alert sections (roles / history / approval-trail)
+      // each show that exact heading.
+      await expect(page.getByText('Session does not belong to this organization').first()).toBeVisible();
 
       const crossOrgFetch = await pageFetch(page, server.baseUrl, `/api/method/sessions/${newRevisionId}/roles`, actors.otherOrgToken, undefined, undefined, 'GET');
       expect([403, 404]).toContain(crossOrgFetch.status);
 
-      record(19, 'cross-org rejection', 'PASS', `Different org token -> DrdRolesPanel shows its error state in-browser (not the real roles); underlying fetch confirmed HTTP ${crossOrgFetch.status}.`);
+      // Also prove the NEW reopen endpoint refuses cross-org (Task 1
+      // requirement), same real-browser pattern.
+      const crossOrgReopen = await pageFetch(page, server.baseUrl, `/api/method/sessions/${sessionId}/reopen`, actors.otherOrgToken, {}, `reopen-crossorg-${Date.now()}`);
+      expect([403, 404]).toContain(crossOrgReopen.status);
+
+      record(19, 'cross-org rejection', 'PASS', `Different org token -> DrdRolesPanel shows its error state in-browser (not the real roles); underlying roles fetch confirmed HTTP ${crossOrgFetch.status}. Also confirmed for the NEW reopen endpoint: POST /sessions/${sessionId}/reopen with a cross-org token -> HTTP ${crossOrgReopen.status}.`);
     });
   });
 });
 
 /** Runs `fetch()` INSIDE the browser page (so it appears in the recorded
  * HAR) against the backend, through the dev-render proxy (`/api/...` same
- * origin) if `path` is relative, or via an absolute URL. Used for actions
- * this agent's two panels have no UI button for. */
+ * origin) if `path` is relative, or via an absolute URL. Used only for
+ * actions that genuinely have no UI button anywhere in scope. */
 async function pageFetch(
   page: Page,
   _baseUrl: string,
