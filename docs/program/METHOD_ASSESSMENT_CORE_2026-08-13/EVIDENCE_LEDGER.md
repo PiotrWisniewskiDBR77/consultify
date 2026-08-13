@@ -820,3 +820,44 @@ Dane sondy usunięte po weryfikacji.
 **Wniosek:** wymaganie koordynatora „pełny E2E nie może wymagać ręcznego SQL"
 jest spełnione dla ścieżki role → freeze → artefakty. Discovery po restarcie
 działa i jest deterministyczne.
+
+---
+
+## G17 — Fala produktowa: integracja i defekty złapane przez Opusa
+
+### G17.A — Stan bramki po scaleniu S1·S2·S3·S4·S5
+
+| Zakres | Polecenie | Exit | Wynik |
+| --- | --- | ---: | --- |
+| serwer | `npm run test:method-core:server` | **0** | **161 / 161** (13 plików) |
+| front | `npm run test:method-core:front` | **0** | **291 / 299** (8 skipped = testy live za flagą) |
+| SIRI | `vitest run src/components/assessment/siri src/method-core/methods/siri --exclude 'server/**'` | **0** | **61 / 61** |
+
+### G17.B — Trzy defekty naprawione przez Opusa jako integratora
+
+| # | Defekt | Dlaczego agent nie mógł go zobaczyć | Naprawa |
+| --- | --- | --- | --- |
+| 1 | `GET /api/method/packs` → **500**. `MethodPackRegistry.listAll()` sortował `createdAt.localeCompare()`; `pg` zwraca `timestamp` jako **`Date`** mimo typu `string`. **Psuło Library.** | ujawnia się **tylko na realnym Postgresie**; ta sama pułapka wystąpiła **niezależnie w dwóch miejscach** (S1 złapał u siebie, S2 w cudzym kodzie) | `compareByCreatedAtDesc` z `new Date()`, komentarz ostrzegawczy |
+| 2 | `{ id: h.id, ...h }` → **TS2783**, blokuje realny `tsc --build` | **`vitest` i `esbuild` nie sprawdzają typów** — przechodzi przez całą zieloną bramkę | `data={history}` + komentarz |
+| 3 | bramka serwera **migotała** (`socket hang up`) po scaleniu | 13 równoległych plików wyczerpywało pulę PG; **każdy agent widział tylko swój podzbiór** | `--no-file-parallelism` jako skrypt + **dowód pełnego zakresu** (G14) |
+
+### G17.C — Defekty znalezione przez agentów w cudzym kodzie (wartość modelu wieloagentowego)
+
+| Znalazł | Defekt | Waga |
+| --- | --- | --- |
+| S2 | `GET /packs` 500 — poza jego zakresem, zgłosił zamiast przemilczeć | P1 |
+| S3 | `TS2783` w panelu S2 — zgłosił, nie przepisał | P1 |
+| S5 | `confirmBand()` pisał `DECISION_APPROVED`, a most freeze→Output czyta **wyłącznie** `ANSWER_CONFIRMED` → **zamrożony Output był cały pusty, po cichu** | **P0** |
+| S1 | `createdAt.localeCompare` na `Date` z `pg` — złapane własnym testem, nie hipotezą | P1 |
+
+### G17.D — Lekcja orkiestracyjna (zapisana, bo kosztowała)
+
+Jeden agent spalił **~500 000 tokenów** na siódmej próbie pełnego E2E, bo
+otrzymał zakres plików, z którego **kroków 4–6 łańcucha nie dało się przejść** —
+ekran interview/matrix/save-state należał do innego agenta. Agent postąpił
+prawidłowo (oznaczył `BLOCKED`, nie obszedł), **błąd był w podziale zakresu**.
+
+**Reguła na przyszłość:** zakres plikowy agenta musi pokrywać **cały** łańcuch,
+który ma przetestować. Inaczej agent brnie w próby zamiast zgłosić niewykonalność.
+Limit „po dwóch nieudanych próbach oddaj uczciwą tabelę zamiast kolejnego
+przebiegu" zadziałał i został utrwalony w briefach.
