@@ -102,6 +102,26 @@ export interface PackQuestion {
   followUpProbes?: string[];
 }
 
+/**
+ * Kontrakt konkluzji W2 — `docs/standards/CONCLUSION_LAYER_STANDARD.md` §W2
+ * („Output toola — rekomendacja z rationale i trade-offami").
+ *
+ * Twarda reguła standardu: K1 pochodzi z SILNIKA, nigdy z LLM. K2-K4 mogą być
+ * formułowane przez model, ale wyłącznie na zamkniętym groundingu.
+ */
+export interface PackConclusionContract {
+  /** K1 CO JEST — fakt liczony deterministycznie przez silnik metody. */
+  k1FactSource: Evidenced<string>;
+  /** K2 CO TO ZNACZY — na jakim groundingu wolno interpretować. */
+  k2GroundingScope: Evidenced<string>;
+  /** K3 CO ROBIĆ NAJPIERW — skąd bierze się kolejność (ranking silnika). */
+  k3PrioritySource: Evidenced<string>;
+  /** K4 JAKI EFEKT — jak wyrazić rezultat i horyzont czasowy. */
+  k4EffectRule: Evidenced<string>;
+  /** Trade-offy wymagane przez W2: co wybrano, co odrzucono i dlaczego. */
+  tradeoffRule: Evidenced<string>;
+}
+
 /** Mapowanie na 5 funkcji modułu. Bez tego brak traceability. */
 export interface PackMapping {
   /** Co trafia do Output po zatwierdzeniu. */
@@ -173,6 +193,8 @@ export interface ToolPack {
 
   // --- 5 funkcji ---
   mapping: PackMapping;
+  /** Kontrakt konkluzji W2 (CONCLUSION_LAYER_STANDARD). */
+  conclusion: PackConclusionContract;
 }
 
 /** Minimalny pack — narzędzie bez potwierdzonej merytoryki. */
@@ -223,6 +245,13 @@ export function evidenceMissingPack(
       output: EVIDENCE_MISSING,
       report: EVIDENCE_MISSING,
       initiative: EVIDENCE_MISSING,
+    },
+    conclusion: {
+      k1FactSource: EVIDENCE_MISSING,
+      k2GroundingScope: EVIDENCE_MISSING,
+      k3PrioritySource: EVIDENCE_MISSING,
+      k4EffectRule: EVIDENCE_MISSING,
+      tradeoffRule: EVIDENCE_MISSING,
     },
   };
 }

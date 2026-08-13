@@ -71,6 +71,13 @@ function completePack(overrides: Partial<ToolPack> = {}): ToolPack {
       report: 'Sekcja diagnozy w raporcie wykonawczym.',
       initiative: 'Każdy ruch staje się kandydatem na inicjatywę.',
     },
+    conclusion: {
+      k1FactSource: 'swotTensionEngine — napięcia liczone z zaakceptowanych pozycji.',
+      k2GroundingScope: 'Wyłącznie pozycje sesji + profil organizacji.',
+      k3PrioritySource: 'Ranking impact-weighted z silnika napięć.',
+      k4EffectRule: 'Efekt obserwowalny z horyzontem czasowym, bez kwot spoza wsadu.',
+      tradeoffRule: 'Każdy ruch podaje wybrane, odrzucone i uzasadnienie.',
+    },
     ...overrides,
   };
 }
@@ -158,6 +165,23 @@ describe('validateToolPack', () => {
     const r = validateToolPack(pack);
     expect(r.valid).toBe(false);
     expect(r.issues.some((i) => i.field === 'mapping.initiative')).toBe(true);
+  });
+
+  // K1 z silnika, nie z LLM — twarda reguła CONCLUSION_LAYER_STANDARD.
+  it('wymaga kontraktu konkluzji W2 (K1-K4 + trade-off)', () => {
+    const pack = completePack();
+    pack.conclusion.k1FactSource = EVIDENCE_MISSING;
+    const r = validateToolPack(pack);
+    expect(r.valid).toBe(false);
+    expect(r.issues.some((i) => i.field === 'conclusion.k1FactSource')).toBe(true);
+  });
+
+  it('wymaga reguły trade-off wymaganej przez W2', () => {
+    const pack = completePack();
+    pack.conclusion.tradeoffRule = EVIDENCE_MISSING;
+    const r = validateToolPack(pack);
+    expect(r.valid).toBe(false);
+    expect(r.issues.some((i) => i.field === 'conclusion.tradeoffRule')).toBe(true);
   });
 
   it('wymaga źródeł dla kompletnego packa', () => {

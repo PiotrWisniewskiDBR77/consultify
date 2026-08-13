@@ -154,6 +154,71 @@ Skutki w realnym runtime:
 To pogłębia L4: 15 narzędzi na rendererze generycznym nie ma ani sygnaturowej
 geometrii, ani dokumentacji metodyki.
 
+## 3a. Głębokość merytoryki (harvest T1, zweryfikowany osobiście)
+
+Renderer i TREŚĆ to dwie różne osie. Realna merytoryka nie leży w
+`docs/product/*` (tam w większości `TBD`), tylko w **`src/config/<narzędzie>/`**
+— wzorzec „OXFORD O3": drabinka pogłębiania + bank pytań + deterministyczny
+silnik syntezy + prompty konkluzji.
+
+**Dowód zweryfikowany osobiście:** `src/config/` zawiera dokładnie **19**
+katalogów metodycznych (swot, porter, ansoff, valuechain, portfolio,
+capabilitymapper, ambitiondecomposer, focustradeoffs, riskuncertainty,
+narrativeengine, sopbuilder, a3problemsolving, smedplanner, dmsbuilder,
+inventoryautopilot, rpascanner, aidiscovery, painexplorer, processautomation).
+
+| Stan treści | Liczba | Narzędzia |
+|---|---|---|
+| **RICH** (silnik + bank pytań) | **19** | 16 z rendererem + rpa-scanner, ai-discovery, pain-explorer |
+| **EVIDENCE_MISSING** | **12** | dokładnie te oznaczone „coming soon" |
+
+**Ważne potwierdzenie:** zbiór 12 `EVIDENCE_MISSING` pokrywa się **co do
+jednego** z 12 oznaczonymi `is_coming_soon=1`. Flaga „coming soon" jest więc
+uczciwa i zgodna ze stanem merytoryki — to nie jest dług, tylko poprawna
+deklaracja.
+
+**Uściślenie L4:** rpa-scanner, ai-discovery i pain-explorer mają **pełne
+silniki metodyczne**, brakuje im wyłącznie gałęzi w `ToolCanvas.tsx`. To nie
+jest brak merytoryki, tylko **niedokończone podłączenie UI** — wzorzec „kod
+jest, podłączeń nie ma".
+
+## 3b. L8 — KRYTYCZNA sprzeczność: Output ≠ Report/Presentation
+
+`src/config/consultingToolsStandard.ts:35`:
+
+```ts
+export const CONSULTING_TOOL_STANDARD_OUTPUTS = ['initiative'] as const;
+```
+
+Runtime dowozi **wyłącznie `initiative`**. Tymczasem
+`docs/product/UNIVERSAL_TOOL_OUTPUTS_STANDARD_V1.md` deklaruje cztery typy:
+`initiative | report | presentation | idea`. Zawężenie jest świadome (komentarz
+RB-025: pozostałe trzy „nie miały implementacji generowania, tworzenia, retry,
+reopen ani lineage"), a stała jest realnie konsumowana w `ToolDocumentView`,
+`outputsScaffolding`, `discoveryToolManifestMapper`, `defaultToolConfigs` i
+promptach AI — to żywy kontrakt, nie martwy kod.
+
+**Skutek dla zakresu:** wymagania „Reports: raport opisowy + executive
+presentation" oraz „Output → Report" **nie mają dziś żadnej implementacji**.
+To nie jest polerowanie — to budowa od zera.
+
+## 3c. L9 — Kontrakt konkluzji W2 jest wiążący
+
+`docs/standards/CONCLUSION_LAYER_STANDARD.md` §W2 nakłada na **output
+narzędzia** formułę K1–K4 z twardymi limitami (K1 ≤ 60 słów, K2 ≤ 80,
+K3 = 3–5 punktów po ≤ 25 słów, K4 ≤ 50) i regułą nadrzędną:
+**K1 pochodzi z silnika, NIGDY z LLM.** Każdy Tool Pack musi nieść ten kontrakt
+(pole `conclusion` w `src/toolPacks/contract.ts`), inaczej Output łamie FROZEN
+standard.
+
+## 3d. L10 — Licencje: EVIDENCE_MISSING w całości
+
+W `docs/` ani `src/` nie ma żadnej noty licencyjnej, atrybucji ani copyright
+dla metod bazowych (Porter, Ansoff, BCG, SMED, 5-Why/A3, Minto/SCQA). Nazwy
+metod występują jako zwykłe etykiety. Baza deklaruje `is_licensed=0` /
+`license='free'` dla wszystkich 31 — ale to flaga produktowa, **nie oświadczenie
+prawne**. Zgodnie z decyzją właściciela: `EVIDENCE_MISSING`, bez zgadywania.
+
 ## 4. Granice zakresu
 
 **Moje (Tools):** 31 narzędzi powyżej, ich Tool Packi, renderery, mechanika
