@@ -36,13 +36,19 @@
  *    może być osobnym Evidence Item") is a SIRI-owned UI/adapter-layer type,
  *    NOT an extension of the kernel's closed `EvidenceEventPayload.evidenceType`
  *    enum (`src/method-core/contracts/events.ts`, owned by Assessment/Core —
- *    changing it needs a COORDINATION_REQUIRED note, out of scope for this
- *    slice). `SiriEvidenceItem` here is a presentation/demo-layer shape used
- *    by the vertical slice; wiring it into the kernel's persisted evidence
- *    events is future work, not silently pretended to already exist.
+ *    zbiór kernela pozostaje ZAMKNIĘTY). Rozstrzygnięcie (Opus, właściciel
+ *    kontraktu): `factory_observation` jest **podtypem** kernelowego
+ *    `observation`, nie nowym bytem — mapuje je `toKernelEvidenceType()`
+ *    poniżej. Kernel nie dostaje nowego wariantu, a UI i raport SIRI nadal
+ *    odróżniają obchód hali od zwykłej demonstracji. Zapis eventów przez to
+ *    mapowanie jest zdefiniowany; brakuje jeszcze samego callera perystencji.
  */
 
-import type { EvidenceStrength, MethodQuestion } from '@/method-core/contracts';
+import type {
+  EvidenceEventPayload,
+  EvidenceStrength,
+  MethodQuestion,
+} from '@/method-core/contracts';
 import { EVIDENCE_STRENGTHS } from '@/method-core/contracts';
 import type {
   MatrixCellState,
@@ -278,6 +284,24 @@ export interface SiriEvidenceItem {
 
 export function isSiriFactoryObservation(item: Pick<SiriEvidenceItem, 'type'>): boolean {
   return item.type === 'factory_observation';
+}
+
+/**
+ * Mapowanie typu SIRI → zamknięty zbiór kernela (`EvidenceEventPayload.evidenceType`).
+ *
+ * Kernel celowo NIE dostaje nowego wariantu: jego zbiór jest zamknięty, a
+ * znaczenie domenowe niesie adapter metody — dokładnie tak, jak opisuje
+ * `SHARED_CONTRACT_MANIFEST.md` §4 („Jeśli Waszemu modułowi brakuje eventu —
+ * nie dodawajcie własnego"). `factory_observation` jest **podtypem**
+ * kernelowego `observation`, nie nowym bytem.
+ *
+ * Dzięki temu zapis do `method_events` jest jednoznaczny, a UI i raport SIRI
+ * nadal odróżniają obchód hali od zwykłej demonstracji.
+ */
+export function toKernelEvidenceType(
+  type: SiriEvidenceItemType
+): EvidenceEventPayload['evidenceType'] {
+  return type === 'factory_observation' ? 'observation' : type;
 }
 
 // ---------------------------------------------------------------------------
