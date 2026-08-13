@@ -1,0 +1,444 @@
+=== batch: hooks-store ===
+=== root: /Users/piotrwisniewski/.codex/worktrees/g3-baseline ===
+=== db: postgres://consultinity:test@localhost:56711/consultinity ===
+=== started: 2026-08-13T17:45:48Z ===
+=== paths: tests/hooks tests/store ===
+
+ RUN  v4.1.8 /Users/piotrwisniewski/.codex/worktrees/g3-baseline
+
+x··xxxxxxxxxxx·····stderr | tests/store/useConversationStore.p35-history.test.ts > P35-B: useConversationStore — History Library > Store Lifecycle Actions (real store) > serverSearch returns failed=true (not partial) on a hard API error (M01-P02 2026-08-04)
+[ConversationStore] Server search error: Error: Network error
+    at /Users/piotrwisniewski/.codex/worktrees/g3-baseline/tests/store/useConversationStore.p35-history.test.ts:142:41
+    at file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+stderr | tests/store/useConversationStore.p35-history.test.ts > P35-B: useConversationStore — History Library > Store Lifecycle Actions (real store) > serverSearch returns partial=true + rateLimited=true on a 429 (genuinely degraded, not failed)
+[ConversationStore] Server search error: Error: Too Many Requests
+    at /Users/piotrwisniewski/.codex/worktrees/g3-baseline/tests/store/useConversationStore.p35-history.test.ts:153:33
+    at file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64 {
+  status: 429
+}
+
+stderr | tests/store/useConversationStore.p35-history.test.ts > P35-B: useConversationStore — History Library > Write Conflict Detection (§2.3.5 E9) > renameConversation rolls back optimistic title when the API update fails
+[ConversationStore] Update error: Error: rename failed
+    at /Users/piotrwisniewski/.codex/worktrees/g3-baseline/tests/store/useConversationStore.p35-history.test.ts:268:56
+    at file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+··············stderr | tests/store/useConversationStore.p35-history.test.ts > P35-B: useConversationStore — History Library > Write Conflict Detection (§2.3.5 E9) > updateConversation handles 409 conflict by refreshing
+[ConversationStore] Write conflict on c1 — refreshing from server
+
+stderr | tests/store/useConversationStore.p35-history.test.ts > P35-B: useConversationStore — History Library > Write Conflict Detection (§2.3.5 E9) > updateConversation handles 409 conflict by refreshing
+[ConversationStore] Update error: Error: Conflict
+    at /Users/piotrwisniewski/.codex/worktrees/g3-baseline/tests/store/useConversationStore.p35-history.test.ts:284:34
+    at file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///Users/piotrwisniewski/Library/Mobile%20Documents/com%7Eapple%7ECloudDocs/Documents/Antygracity/DRD/consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64 {
+  response: { status: 409 }
+}
+
+················stdout | tests/store/useConversationStore.chat-root-rehydrate.test.ts > useConversationStore chat root rehydration > quarantines a deep-linked conversation after a 404 and stops rehydration
+[stability:conversation] {
+  marker: 'session_quarantine',
+  conversationId: 'missing-id',
+  reason: 'fetch_404'
+}
+[stability:conversation] {
+  marker: 'rehydrate_hard_stop',
+  conversationId: 'missing-id',
+  status: 404
+}
+
+stderr | tests/store/useConversationStore.chat-root-rehydrate.test.ts > useConversationStore chat root rehydration > quarantines a deep-linked conversation after a 404 and stops rehydration
+[ConversationStore] Fetch conversation error: { status: 404 }
+
+stdout | tests/store/useConversationStore.chat-root-rehydrate.test.ts > useConversationStore chat root rehydration > hard-stops a deep-linked conversation after a 401 without keeping it active
+[stability:conversation] {
+  marker: 'rehydrate_hard_stop',
+  conversationId: 'unauthorized-id',
+  status: 401
+}
+
+stderr | tests/store/useConversationStore.chat-root-rehydrate.test.ts > useConversationStore chat root rehydration > hard-stops a deep-linked conversation after a 401 without keeping it active
+[ConversationStore] Fetch conversation error: { status: 401 }
+
+stdout | tests/store/useConversationStore.chat-root-rehydrate.test.ts > useConversationStore chat root rehydration > does not fetch a deep-linked conversation already marked missing
+[stability:conversation] {
+  marker: 'session_quarantine',
+  conversationId: 'already-missing',
+  reason: 'merge_missing_route'
+}
+[stability:conversation] {
+  marker: 'session_quarantine',
+  conversationId: 'already-missing',
+  reason: 'rehydrate_missing_route'
+}
+
+··································································stderr | tests/hooks/useTokenBalance.test.ts > useTokenBalance Hook > Initial State > returns balance state
+[useTokenBalance] Failed to load balance: TypeError: __vite_ssr_import_1__.Api.getTokenBalance is not a function
+    at /Users/piotrwisniewski/.codex/worktrees/g3-baseline/src/hooks/useTokenBalance.ts:18:29
+    at /Users/piotrwisniewski/.codex/worktrees/g3-baseline/src/hooks/useTokenBalance.ts:32:5
+    at Object.react_stack_bottom_frame (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25989:20)
+    at runWithFiberInDEV (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+    at commitHookEffectListMount (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:13249:29)
+    at commitHookPassiveMountEffects (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:13336:11)
+    at commitPassiveMountOnFiber (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:15484:13)
+    at recursivelyTraversePassiveMountEffects (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:15439:11)
+    at commitPassiveMountOnFiber (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:15519:11)
+    at flushPassiveEffects (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:18432:9)
+
+stderr | tests/hooks/useTokenBalance.test.ts > useTokenBalance Hook > Initial State > returns loading state
+[useTokenBalance] Failed to load balance: TypeError: __vite_ssr_import_1__.Api.getTokenBalance is not a function
+    at /Users/piotrwisniewski/.codex/worktrees/g3-baseline/src/hooks/useTokenBalance.ts:18:29
+    at /Users/piotrwisniewski/.codex/worktrees/g3-baseline/src/hooks/useTokenBalance.ts:32:5
+    at Object.react_stack_bottom_frame (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25989:20)
+    at runWithFiberInDEV (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+    at commitHookEffectListMount (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:13249:29)
+    at commitHookPassiveMountEffects (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:13336:11)
+    at commitPassiveMountOnFiber (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:15484:13)
+    at recursivelyTraversePassiveMountEffects (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:15439:11)
+    at commitPassiveMountOnFiber (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:15519:11)
+    at flushPassiveEffects (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:18432:9)
+
+stderr | tests/hooks/useTokenBalance.test.ts > useTokenBalance Hook > Initial State > returns error state
+[useTokenBalance] Failed to load balance: TypeError: __vite_ssr_import_1__.Api.getTokenBalance is not a function
+    at /Users/piotrwisniewski/.codex/worktrees/g3-baseline/src/hooks/useTokenBalance.ts:18:29
+    at /Users/piotrwisniewski/.codex/worktrees/g3-baseline/src/hooks/useTokenBalance.ts:32:5
+    at Object.react_stack_bottom_frame (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25989:20)
+    at runWithFiberInDEV (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+    at commitHookEffectListMount (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:13249:29)
+    at commitHookPassiveMountEffects (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:13336:11)
+    at commitPassiveMountOnFiber (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:15484:13)
+    at recursivelyTraversePassiveMountEffects (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:15439:11)
+    at commitPassiveMountOnFiber (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:15519:11)
+    at flushPassiveEffects (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:18432:9)
+
+stderr | tests/hooks/useTokenBalance.test.ts > useTokenBalance Hook > Balance Thresholds > exposes LOW_BALANCE_THRESHOLD
+[useTokenBalance] Failed to load balance: TypeError: __vite_ssr_import_1__.Api.getTokenBalance is not a function
+    at /Users/piotrwisniewski/.codex/worktrees/g3-baseline/src/hooks/useTokenBalance.ts:18:29
+    at /Users/piotrwisniewski/.codex/worktrees/g3-baseline/src/hooks/useTokenBalance.ts:32:5
+    at Object.react_stack_bottom_frame (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25989:20)
+    at runWithFiberInDEV (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+    at commitHookEffectListMount (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:13249:29)
+    at commitHookPassiveMountEffects (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:13336:11)
+    at commitPassiveMountOnFiber (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:15484:13)
+    at recursivelyTraversePassiveMountEffects (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:15439:11)
+    at commitPassiveMountOnFiber (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:15519:11)
+    at flushPassiveEffects (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:18432:9)
+
+stderr | tests/hooks/useTokenBalance.test.ts > useTokenBalance Hook > Balance Thresholds > exposes ZERO_BALANCE_THRESHOLD
+[useTokenBalance] Failed to load balance: TypeError: __vite_ssr_import_1__.Api.getTokenBalance is not a function
+    at /Users/piotrwisniewski/.codex/worktrees/g3-baseline/src/hooks/useTokenBalance.ts:18:29
+    at /Users/piotrwisniewski/.codex/worktrees/g3-baseline/src/hooks/useTokenBalance.ts:32:5
+    at Object.react_stack_bottom_frame (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25989:20)
+    at runWithFiberInDEV (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+    at commitHookEffectListMount (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:13249:29)
+    at commitHookPassiveMountEffects (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:13336:11)
+    at commitPassiveMountOnFiber (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:15484:13)
+    at recursivelyTraversePassiveMountEffects (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:15439:11)
+    at commitPassiveMountOnFiber (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:15519:11)
+    at flushPassiveEffects (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:18432:9)
+
+stderr | tests/hooks/useTokenBalance.test.ts > useTokenBalance Hook > Balance Flags > returns isLowBalance flag
+[useTokenBalance] Failed to load balance: TypeError: __vite_ssr_import_1__.Api.getTokenBalance is not a function
+    at /Users/piotrwisniewski/.codex/worktrees/g3-baseline/src/hooks/useTokenBalance.ts:18:29
+    at /Users/piotrwisniewski/.codex/worktrees/g3-baseline/src/hooks/useTokenBalance.ts:32:5
+    at Object.react_stack_bottom_frame (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25989:20)
+    at runWithFiberInDEV (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+    at commitHookEffectListMount (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:13249:29)
+    at commitHookPassiveMountEffects (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:13336:11)
+    at commitPassiveMountOnFiber (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:15484:13)
+    at recursivelyTraversePassiveMountEffects (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:15439:11)
+    at commitPassiveMountOnFiber (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:15519:11)
+    at flushPassiveEffects (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:18432:9)
+
+stderr | tests/hooks/useTokenBalance.test.ts > useTokenBalance Hook > Balance Flags > returns isZeroBalance flag
+[useTokenBalance] Failed to load balance: TypeError: __vite_ssr_import_1__.Api.getTokenBalance is not a function
+    at /Users/piotrwisniewski/.codex/worktrees/g3-baseline/src/hooks/useTokenBalance.ts:18:29
+    at /Users/piotrwisniewski/.codex/worktrees/g3-baseline/src/hooks/useTokenBalance.ts:32:5
+    at Object.react_stack_bottom_frame (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25989:20)
+    at runWithFiberInDEV (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+    at commitHookEffectListMount (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:13249:29)
+    at commitHookPassiveMountEffects (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:13336:11)
+    at commitPassiveMountOnFiber (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:15484:13)
+    at recursivelyTraversePassiveMountEffects (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:15439:11)
+    at commitPassiveMountOnFiber (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:15519:11)
+    at flushPassiveEffects (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:18432:9)
+
+stderr | tests/hooks/useTokenBalance.test.ts > useTokenBalance Hook > Balance Flags > returns shouldShowWarning computed value
+[useTokenBalance] Failed to load balance: TypeError: __vite_ssr_import_1__.Api.getTokenBalance is not a function
+    at /Users/piotrwisniewski/.codex/worktrees/g3-baseline/src/hooks/useTokenBalance.ts:18:29
+    at /Users/piotrwisniewski/.codex/worktrees/g3-baseline/src/hooks/useTokenBalance.ts:32:5
+    at Object.react_stack_bottom_frame (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25989:20)
+    at runWithFiberInDEV (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+    at commitHookEffectListMount (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:13249:29)
+    at commitHookPassiveMountEffects (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:13336:11)
+    at commitPassiveMountOnFiber (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:15484:13)
+    at recursivelyTraversePassiveMountEffects (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:15439:11)
+    at commitPassiveMountOnFiber (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:15519:11)
+    at flushPassiveEffects (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:18432:9)
+
+stderr | tests/hooks/useTokenBalance.test.ts > useTokenBalance Hook > Balance Flags > returns shouldBlockAI computed value
+[useTokenBalance] Failed to load balance: TypeError: __vite_ssr_import_1__.Api.getTokenBalance is not a function
+    at /Users/piotrwisniewski/.codex/worktrees/g3-baseline/src/hooks/useTokenBalance.ts:18:29
+    at /Users/piotrwisniewski/.codex/worktrees/g3-baseline/src/hooks/useTokenBalance.ts:32:5
+    at Object.react_stack_bottom_frame (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25989:20)
+    at runWithFiberInDEV (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+    at commitHookEffectListMount (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:13249:29)
+    at commitHookPassiveMountEffects (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:13336:11)
+    at commitPassiveMountOnFiber (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:15484:13)
+    at recursivelyTraversePassiveMountEffects (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:15439:11)
+    at commitPassiveMountOnFiber (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:15519:11)
+    at flushPassiveEffects (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:18432:9)
+
+stderr | tests/hooks/useTokenBalance.test.ts > useTokenBalance Hook > API Methods > exposes refreshBalance method
+[useTokenBalance] Failed to load balance: TypeError: __vite_ssr_import_1__.Api.getTokenBalance is not a function
+    at /Users/piotrwisniewski/.codex/worktrees/g3-baseline/src/hooks/useTokenBalance.ts:18:29
+    at /Users/piotrwisniewski/.codex/worktrees/g3-baseline/src/hooks/useTokenBalance.ts:32:5
+    at Object.react_stack_bottom_frame (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25989:20)
+    at runWithFiberInDEV (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+    at commitHookEffectListMount (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:13249:29)
+    at commitHookPassiveMountEffects (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:13336:11)
+    at commitPassiveMountOnFiber (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:15484:13)
+    at recursivelyTraversePassiveMountEffects (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:15439:11)
+    at commitPassiveMountOnFiber (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:15519:11)
+    at flushPassiveEffects (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:18432:9)
+
+stderr | tests/hooks/useTokenBalance.test.ts > useTokenBalance Hook > Timestamp > returns lastUpdated timestamp
+[useTokenBalance] Failed to load balance: TypeError: __vite_ssr_import_1__.Api.getTokenBalance is not a function
+    at /Users/piotrwisniewski/.codex/worktrees/g3-baseline/src/hooks/useTokenBalance.ts:18:29
+    at /Users/piotrwisniewski/.codex/worktrees/g3-baseline/src/hooks/useTokenBalance.ts:32:5
+    at Object.react_stack_bottom_frame (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25989:20)
+    at runWithFiberInDEV (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+    at commitHookEffectListMount (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:13249:29)
+    at commitHookPassiveMountEffects (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:13336:11)
+    at commitPassiveMountOnFiber (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:15484:13)
+    at recursivelyTraversePassiveMountEffects (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:15439:11)
+    at commitPassiveMountOnFiber (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:15519:11)
+    at flushPassiveEffects (/Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/react-dom/cjs/react-dom-client.development.js:18432:9)
+
+···········stdout | tests/store/useConversationStore.displayMode.test.ts > useConversationStore - Display Mode Extensions > collapseToSplit > should set display mode to split
+[ConversationStore] collapseToSplit: undefined
+
+stdout | tests/store/useConversationStore.displayMode.test.ts > useConversationStore - Display Mode Extensions > collapseToSplit > should update workspace context if partial context provided
+[ConversationStore] collapseToSplit: ASSESSMENT_DRD
+
+········································································································
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/hooks/useKeyboardShortcuts.test.ts > useKeyboardShortcuts Hook > Initialization > returns allShortcuts array
+ FAIL  tests/hooks/useKeyboardShortcuts.test.ts > useKeyboardShortcuts Hook > Initialization > returns allShortcuts array
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/hooks/useKeyboardShortcuts.test.ts:41:58
+     39|       });
+     40|
+     41|       expect(Array.isArray(result.current.allShortcuts)).toBe(true);
+       |                                                          ^
+     42|       expect(result.current.allShortcuts.length).toBeGreaterThan(0);
+     43|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/24]⎯
+
+ FAIL  tests/hooks/useKeyboardShortcuts.test.ts > useKeyboardShortcuts Hook > Default Shortcuts > includes navigation shortcuts
+ FAIL  tests/hooks/useKeyboardShortcuts.test.ts > useKeyboardShortcuts Hook > Default Shortcuts > includes navigation shortcuts
+TypeError: Cannot read properties of undefined (reading 'filter')
+ ❯ tests/hooks/useKeyboardShortcuts.test.ts:69:56
+     67|       });
+     68|
+     69|       const navShortcuts = result.current.allShortcuts.filter((s) => s…
+       |                                                        ^
+     70|
+     71|       expect(navShortcuts.length).toBeGreaterThan(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/24]⎯
+
+ FAIL  tests/hooks/useKeyboardShortcuts.test.ts > useKeyboardShortcuts Hook > Default Shortcuts > includes task management shortcuts
+ FAIL  tests/hooks/useKeyboardShortcuts.test.ts > useKeyboardShortcuts Hook > Default Shortcuts > includes task management shortcuts
+TypeError: Cannot read properties of undefined (reading 'filter')
+ ❯ tests/hooks/useKeyboardShortcuts.test.ts:81:57
+     79|       });
+     80|
+     81|       const taskShortcuts = result.current.allShortcuts.filter(
+       |                                                         ^
+     82|         (s) => s.category === 'task_management'
+     83|       );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/24]⎯
+
+ FAIL  tests/hooks/useKeyboardShortcuts.test.ts > useKeyboardShortcuts Hook > Default Shortcuts > includes help shortcut
+ FAIL  tests/hooks/useKeyboardShortcuts.test.ts > useKeyboardShortcuts Hook > Default Shortcuts > includes help shortcut
+TypeError: Cannot read properties of undefined (reading 'find')
+ ❯ tests/hooks/useKeyboardShortcuts.test.ts:95:56
+     93|       });
+     94|
+     95|       const helpShortcut = result.current.allShortcuts.find((s) => s.i…
+       |                                                        ^
+     96|       expect(helpShortcut).toBeDefined();
+     97|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/24]⎯
+
+ FAIL  tests/hooks/useKeyboardShortcuts.test.ts > useKeyboardShortcuts Hook > Shortcut Information > provides name for each shortcut
+ FAIL  tests/hooks/useKeyboardShortcuts.test.ts > useKeyboardShortcuts Hook > Shortcut Information > provides name for each shortcut
+TypeError: Cannot read properties of undefined (reading 'forEach')
+ ❯ tests/hooks/useKeyboardShortcuts.test.ts:108:35
+    106|       });
+    107|
+    108|       result.current.allShortcuts.forEach((shortcut) => {
+       |                                   ^
+    109|         expect(shortcut.name).toBeDefined();
+    110|         expect(shortcut.name.length).toBeGreaterThan(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/24]⎯
+
+ FAIL  tests/hooks/useKeyboardShortcuts.test.ts > useKeyboardShortcuts Hook > Shortcut Information > provides description for each shortcut
+ FAIL  tests/hooks/useKeyboardShortcuts.test.ts > useKeyboardShortcuts Hook > Shortcut Information > provides description for each shortcut
+TypeError: Cannot read properties of undefined (reading 'forEach')
+ ❯ tests/hooks/useKeyboardShortcuts.test.ts:121:35
+    119|       });
+    120|
+    121|       result.current.allShortcuts.forEach((shortcut) => {
+       |                                   ^
+    122|         expect(shortcut.description).toBeDefined();
+    123|       });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/24]⎯
+
+ FAIL  tests/hooks/useKeyboardShortcuts.test.ts > useKeyboardShortcuts Hook > Shortcut Information > provides category for each shortcut
+ FAIL  tests/hooks/useKeyboardShortcuts.test.ts > useKeyboardShortcuts Hook > Shortcut Information > provides category for each shortcut
+TypeError: Cannot read properties of undefined (reading 'forEach')
+ ❯ tests/hooks/useKeyboardShortcuts.test.ts:133:35
+    131|       });
+    132|
+    133|       result.current.allShortcuts.forEach((shortcut) => {
+       |                                   ^
+    134|         expect(shortcut.category).toBeDefined();
+    135|       });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/24]⎯
+
+ FAIL  tests/hooks/useKeyboardShortcuts.test.ts > useKeyboardShortcuts Hook > Shortcut Information > provides defaultKey for each shortcut
+ FAIL  tests/hooks/useKeyboardShortcuts.test.ts > useKeyboardShortcuts Hook > Shortcut Information > provides defaultKey for each shortcut
+TypeError: Cannot read properties of undefined (reading 'forEach')
+ ❯ tests/hooks/useKeyboardShortcuts.test.ts:145:35
+    143|       });
+    144|
+    145|       result.current.allShortcuts.forEach((shortcut) => {
+       |                                   ^
+    146|         expect(shortcut.defaultKey).toBeDefined();
+    147|       });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/24]⎯
+
+ FAIL  tests/hooks/useKeyboardShortcuts.test.ts > useKeyboardShortcuts Hook > API Methods > exposes setEnabled method
+ FAIL  tests/hooks/useKeyboardShortcuts.test.ts > useKeyboardShortcuts Hook > API Methods > exposes setEnabled method
+AssertionError: expected 'undefined' to be 'function' // Object.is equality
+
+Expected: "function"
+Received: "undefined"
+
+ ❯ tests/hooks/useKeyboardShortcuts.test.ts:155:48
+    153|       const { result } = renderHook(() => useKeyboardShortcuts());
+    154|
+    155|       expect(typeof result.current.setEnabled).toBe('function');
+       |                                                ^
+    156|     });
+    157|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/24]⎯
+
+ FAIL  tests/hooks/useKeyboardShortcuts.test.ts > useKeyboardShortcuts Hook > API Methods > exposes setPreset method
+ FAIL  tests/hooks/useKeyboardShortcuts.test.ts > useKeyboardShortcuts Hook > API Methods > exposes setPreset method
+AssertionError: expected 'undefined' to be 'function' // Object.is equality
+
+Expected: "function"
+Received: "undefined"
+
+ ❯ tests/hooks/useKeyboardShortcuts.test.ts:161:47
+    159|       const { result } = renderHook(() => useKeyboardShortcuts());
+    160|
+    161|       expect(typeof result.current.setPreset).toBe('function');
+       |                                               ^
+    162|     });
+    163|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/24]⎯
+
+ FAIL  tests/hooks/useKeyboardShortcuts.test.ts > useKeyboardShortcuts Hook > API Methods > exposes setCustomShortcut method
+ FAIL  tests/hooks/useKeyboardShortcuts.test.ts > useKeyboardShortcuts Hook > API Methods > exposes setCustomShortcut method
+AssertionError: expected 'undefined' to be 'function' // Object.is equality
+
+Expected: "function"
+Received: "undefined"
+
+ ❯ tests/hooks/useKeyboardShortcuts.test.ts:167:55
+    165|       const { result } = renderHook(() => useKeyboardShortcuts());
+    166|
+    167|       expect(typeof result.current.setCustomShortcut).toBe('function');
+       |                                                       ^
+    168|     });
+    169|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/24]⎯
+
+ FAIL  tests/hooks/useKeyboardShortcuts.test.ts > useKeyboardShortcuts Hook > API Methods > exposes resetAll method
+ FAIL  tests/hooks/useKeyboardShortcuts.test.ts > useKeyboardShortcuts Hook > API Methods > exposes resetAll method
+AssertionError: expected 'undefined' to be 'function' // Object.is equality
+
+Expected: "function"
+Received: "undefined"
+
+ ❯ tests/hooks/useKeyboardShortcuts.test.ts:173:46
+    171|       const { result } = renderHook(() => useKeyboardShortcuts());
+    172|
+    173|       expect(typeof result.current.resetAll).toBe('function');
+       |                                              ^
+    174|     });
+    175|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/24]⎯
+
+
+ Test Files  1 failed | 18 passed (19)
+      Tests  12 failed | 218 passed (230)
+   Start at  19:45:49
+   Duration  12.35s (transform 1.15s, setup 2.11s, import 2.87s, tests 3.32s, environment 12.50s)
+
+EXIT_CODE=1
+=== finished: 2026-08-13T17:46:01Z ===
