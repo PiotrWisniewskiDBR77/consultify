@@ -98,7 +98,7 @@ function renderTab(overrides: Partial<React.ComponentProps<typeof AuditLibraryTa
 }
 
 describe('AuditLibraryTab', () => {
-  it('renders a real StandardTable (native <table>), not a bespoke grid', () => {
+  it('renders a real StandardTable element, not a bespoke grid', () => {
     const { container } = renderTab();
     expect(container.querySelector('table')).toBeInTheDocument();
   });

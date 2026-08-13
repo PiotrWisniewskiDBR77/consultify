@@ -21,6 +21,7 @@ import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import { AnimationWrapper } from '@/components/shared/AnimationWrapper';
 import { V8UnavailableBanner } from '@/components/shared/V8UnavailableBanner';
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
+import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { useBreadcrumbs } from '@/hooks/useBreadcrumbs';
 import { AuthLayout } from '@/layouts/AuthLayout';
 import { MainLayout } from '@/layouts/MainLayout';
@@ -528,6 +529,12 @@ const PublicBookingView = lazyWithRetry(() =>
 );
 // Audit Orchestrator hub (audit #19 family) — authenticated module route.
 const AuditProgramsHub = lazyWithRetry(() => import('@/components/Audit/AuditsHub'));
+// U7 — Audits methodical-kernel hub (Library/Processes/Outputs/Reports/
+// Initiatives, 5-surface Triada pattern, /api/audits). Parallel, separate
+// screen from AuditProgramsHub above (/api/audit orchestrator) — does NOT
+// replace it. Flag-gated (auditsFiveSurfacesV1, default OFF) — see
+// AuditsMethodHubRoute below for the OFF→redirect behavior.
+const AuditsMethodHub = lazyWithRetry(() => import('@/components/Audit/method/AuditsMethodHub'));
 // DRD Audit Report engine — full editor (AI chat, per-section AI actions, PDF
 // export, publishing-grade "Raport DRD" client report) wired to a live backend
 // but previously reachable by ZERO routes (audyt 2026-07-26). Flag-gated entry
@@ -725,6 +732,24 @@ const DRDAuditReportRoute: React.FC = () => {
     return <Navigate to="/audit-programs" replace />;
   }
   return <DRDAuditReportView reportId={params.reportId} />;
+};
+
+/**
+ * U7 — Audits methodical-kernel hub entry (`AuditsMethodHub`, five surfaces:
+ * Library/Processes/Outputs/Reports/Initiatives over `/api/audits`). Flag-gated
+ * (`auditsFiveSurfacesV1`, default OFF, see src/hooks/useFeatureFlags.tsx):
+ * OFF → redirects to /audit-programs, mirroring how `DRDAuditReportRoute`
+ * above gates its own flag. Kept as a separate route/component rather than
+ * folded into `AuditProgramsHub` — the two hubs read different backends
+ * (`/api/audit` orchestrator vs. `/api/audits` methodical kernel) and neither
+ * replaces the other yet.
+ */
+const AuditsMethodHubRoute: React.FC = () => {
+  const { isEnabled } = useFeatureFlagsContext();
+  if (!isEnabled('auditsFiveSurfacesV1')) {
+    return <Navigate to="/audit-programs" replace />;
+  }
+  return <AuditsMethodHub />;
 };
 
 /** Redirects /auth?action=trial to /trial/start */
@@ -1554,6 +1579,28 @@ export const AppRoutes: React.FC = () => {
                   <AnimationWrapper variant="slideUp">
                     <Suspense fallback={<LoadingScreen message="Loading DRD report..." />}>
                       <DRDAuditReportRoute />
+                    </Suspense>
+                  </AnimationWrapper>
+                </RouteErrorBoundary>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+
+        {/* U7 — Audits methodical-kernel hub (Library/Processes/Outputs/
+            Reports/Initiatives over /api/audits). Flag-gated
+            (auditsFiveSurfacesV1, default OFF) — see AuditsMethodHubRoute
+            above for the OFF→redirect behavior. Parallel to /audit-programs,
+            does not replace it. */}
+        <Route
+          path="/audit-programs/method"
+          element={
+            <BetaGate moduleId="MODULE_AUDITS">
+              <MainLayout breadcrumbs={breadcrumbs || ['Audits']}>
+                <RouteErrorBoundary>
+                  <AnimationWrapper variant="slideUp">
+                    <Suspense fallback={<LoadingScreen message="Loading audits..." />}>
+                      <AuditsMethodHubRoute />
                     </Suspense>
                   </AnimationWrapper>
                 </RouteErrorBoundary>
