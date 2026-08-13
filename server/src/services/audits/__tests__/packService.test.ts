@@ -70,11 +70,12 @@ async function makeVerifiedSource(actor: AuditActor): Promise<string> {
     sourceKey: `norm-${newId('k')}`,
     title: 'Norma testowa',
     sourceKind: 'normative_standard',
+    sourceType: 'LICENSED_STANDARD',
     rightsStatus: 'licensed',
   });
   cleanupSourceIds.push(source.id);
   await updateSource(actor, source.id, { sourceVersion: '2024', publisher: 'Wydawca testowy' });
-  await verifySource(actor, source.id, { verificationStatus: 'VERIFIED_NORMATIVE' });
+  await verifySource(actor, source.id, { verificationStatus: 'VERIFIED' });
   return source.id;
 }
 
@@ -149,6 +150,7 @@ describe('packService', () => {
       packKey: `blocked-${newId('k')}`,
       title: 'Pakiet niegotowy',
       classification: 'VERIFIED_NORMATIVE',
+      sourceType: 'LICENSED_STANDARD',
       // celowo brak sourceId — walidator musi to zablokować
     });
     cleanupPackIds.push(pack.id);
@@ -170,6 +172,7 @@ describe('packService', () => {
       packKey: `publishable-${newId('k')}`,
       title: 'Pakiet gotowy do publikacji',
       classification: 'VERIFIED_NORMATIVE',
+      sourceType: 'LICENSED_STANDARD',
       sourceId,
       sourceVersion: '2024',
       scope: 'Zakres',

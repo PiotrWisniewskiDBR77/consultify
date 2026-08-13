@@ -67,7 +67,8 @@ function verifiedSource(overrides: Partial<AuditNormSource> = {}): AuditNormSour
     materialVersion: null,
     effectiveFrom: null,
     effectiveTo: null,
-    verificationStatus: 'VERIFIED_NORMATIVE',
+    sourceType: 'LICENSED_STANDARD',
+    verificationStatus: 'VERIFIED',
     verifiedBy: 'expert-1',
     verifiedAt: new Date().toISOString(),
     verificationNote: null,
@@ -81,7 +82,7 @@ function verifiedSource(overrides: Partial<AuditNormSource> = {}): AuditNormSour
 describe('packValidator', () => {
   it('1. pakiet bez źródła nie może być VERIFIED_NORMATIVE', () => {
     const input: ValidatePackInput = {
-      pack: basePack({ classification: 'VERIFIED_NORMATIVE' }),
+      pack: basePack({ classification: 'VERIFIED_NORMATIVE', sourceType: 'LICENSED_STANDARD', verificationStatus: 'VERIFIED' }),
       criteria: [leafCriterion()],
       source: null,
       targetPublicationStatus: 'published',
@@ -93,7 +94,7 @@ describe('packValidator', () => {
 
   it('2. źródło z rights_status="not_verified" blokuje publikację normatywną', () => {
     const input: ValidatePackInput = {
-      pack: basePack({ classification: 'VERIFIED_NORMATIVE', sourceId: 'src-1' }),
+      pack: basePack({ classification: 'VERIFIED_NORMATIVE', sourceType: 'LICENSED_STANDARD', verificationStatus: 'VERIFIED', sourceId: 'src-1' }),
       criteria: [leafCriterion()],
       source: verifiedSource({ rightsStatus: 'not_verified' }),
       targetPublicationStatus: 'published',
@@ -105,7 +106,7 @@ describe('packValidator', () => {
 
   it('3. brak wersji źródła blokuje publikację normatywną', () => {
     const input: ValidatePackInput = {
-      pack: basePack({ classification: 'VERIFIED_NORMATIVE', sourceId: 'src-1' }),
+      pack: basePack({ classification: 'VERIFIED_NORMATIVE', sourceType: 'LICENSED_STANDARD', verificationStatus: 'VERIFIED', sourceId: 'src-1' }),
       criteria: [leafCriterion()],
       source: verifiedSource({ sourceVersion: null }),
       targetPublicationStatus: 'published',
@@ -188,7 +189,7 @@ describe('packValidator', () => {
 
   it('10. eligibleClassifications zawiera VERIFIED_NORMATIVE gdy źródło i ekspert w komplecie', () => {
     const input: ValidatePackInput = {
-      pack: basePack({ classification: 'VERIFIED_NORMATIVE', sourceId: 'src-1' }),
+      pack: basePack({ classification: 'VERIFIED_NORMATIVE', sourceType: 'LICENSED_STANDARD', verificationStatus: 'VERIFIED', sourceId: 'src-1' }),
       criteria: [leafCriterion()],
       source: verifiedSource(),
       targetPublicationStatus: 'draft',
@@ -199,7 +200,7 @@ describe('packValidator', () => {
 
   it('11. pełny normatywny pakiet z zatwierdzeniem eksperckim jest publikowalny (assertPublishable nie rzuca)', () => {
     const input: ValidatePackInput = {
-      pack: basePack({ classification: 'VERIFIED_NORMATIVE', sourceId: 'src-1', sourceVersion: '2018' }),
+      pack: basePack({ classification: 'VERIFIED_NORMATIVE', sourceType: 'LICENSED_STANDARD', verificationStatus: 'VERIFIED', sourceId: 'src-1', sourceVersion: '2018' }),
       criteria: [leafCriterion()],
       source: verifiedSource(),
     };
@@ -208,7 +209,7 @@ describe('packValidator', () => {
 
   it('12. assertPublishable rzuca z listą powodów, gdy pakiet nie jest gotowy', () => {
     const input: ValidatePackInput = {
-      pack: basePack({ classification: 'VERIFIED_NORMATIVE' }),
+      pack: basePack({ classification: 'VERIFIED_NORMATIVE', sourceType: 'LICENSED_STANDARD', verificationStatus: 'VERIFIED' }),
       criteria: [leafCriterion()],
       source: null,
     };
@@ -238,15 +239,15 @@ describe('packValidator', () => {
     expect(result.eligibleClassifications).toContain('DEMONSTRATION');
   });
 
-  it('15. źródło typu "checklist" nie uzasadnia VERIFIED_NORMATIVE (SOURCE_KIND_NOT_NORMATIVE)', () => {
+  it('15. źródło typu „checklist" nie uzasadnia audytu zgodności — pyta o TYP, nie o zaufanie (SOURCE_TYPE_NOT_NORMATIVE)', () => {
     const input: ValidatePackInput = {
-      pack: basePack({ classification: 'VERIFIED_NORMATIVE', sourceId: 'src-1' }),
+      pack: basePack({ classification: 'VERIFIED_NORMATIVE', sourceType: 'LICENSED_STANDARD', verificationStatus: 'VERIFIED', sourceId: 'src-1' }),
       criteria: [leafCriterion()],
-      source: verifiedSource({ sourceKind: 'checklist' }),
+      source: verifiedSource({ sourceKind: 'checklist', sourceType: 'INTERNAL_FRAMEWORK' }),
       targetPublicationStatus: 'published',
     };
     const result = validatePack(input);
-    expect(result.errors.some((e) => e.code === 'SOURCE_KIND_NOT_NORMATIVE')).toBe(true);
+    expect(result.errors.some((e) => e.code === 'SOURCE_TYPE_NOT_NORMATIVE')).toBe(true);
   });
 
   it('16. brak zakresu/celów blokuje publikację niezależnie od klasyfikacji', () => {
