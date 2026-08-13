@@ -111,4 +111,88 @@ describe('TeresaPreviewPanel', () => {
     );
     expect(screen.getByText('Podgląd zmiany')).toBeInTheDocument();
   });
+
+  it('points at the exact matrix cell (unitId#level) the proposal would change (requirement 7)', () => {
+    // fixture: intent.unitId='unit-1', no intent.level, but a score_proposal
+    // change with after=2 — the cell ref must fall back to that level.
+    render(
+      <TeresaPreviewPanel
+        sixQuestions={sixQuestions}
+        proposalQueue={[makeTeresaPreview()]}
+        onCommit={vi.fn()}
+        onTakeLead={vi.fn()}
+        onLetMeWorkManually={vi.fn()}
+        mode="guided_manual"
+      />
+    );
+    expect(screen.getByTestId('teresa-cell-ref')).toHaveTextContent('unit-1#2');
+  });
+
+  it('does not render a cell ref badge when the preview has no resolvable unit/level (e.g. cluster_findings)', () => {
+    render(
+      <TeresaPreviewPanel
+        sixQuestions={sixQuestions}
+        proposalQueue={[
+          makeTeresaPreview({
+            intent: {
+              capabilityId: 'cluster_findings',
+              sessionId: 'session-0001',
+              invokedBy: 'local_action',
+              actorUserId: 'user-1',
+            },
+            proposedChanges: [],
+          }),
+        ]}
+        onCommit={vi.fn()}
+        onTakeLead={vi.fn()}
+        onLetMeWorkManually={vi.fn()}
+        mode="guided_manual"
+      />
+    );
+    expect(screen.queryByTestId('teresa-cell-ref')).not.toBeInTheDocument();
+  });
+
+  it('disables ALL four decisions when quality.verdict is invalid — the server refuses every decision for a dead preview (test: quality invalid → commit odrzucony)', async () => {
+    const user = userEvent.setup();
+    const onCommit = vi.fn();
+    const invalidPreview = makeTeresaPreview({
+      quality: { verdict: 'invalid', failedChecks: ['no_unsupported_claim'] },
+    });
+    render(
+      <TeresaPreviewPanel
+        sixQuestions={sixQuestions}
+        proposalQueue={[invalidPreview]}
+        onCommit={onCommit}
+        onTakeLead={vi.fn()}
+        onLetMeWorkManually={vi.fn()}
+        mode="guided_manual"
+      />
+    );
+    const card = screen.getByTestId('teresa-proposal-card');
+    for (const label of ['Zaakceptuj', 'Zaakceptuj z edycją', 'Odrzuć', 'Przemyśl ponownie']) {
+      const button = within(card).getByText(label).closest('button')!;
+      expect(button).toBeDisabled();
+      await user.click(button);
+    }
+    expect(onCommit).not.toHaveBeenCalled();
+    expect(screen.getByTestId('teresa-quality-flag')).toHaveTextContent(/nie przeszła kontroli jakości/i);
+    expect(screen.getByTestId('teresa-quality-flag').className).toMatch(/text-c-danger/);
+  });
+
+  it('renders the AI-proposal card with the indigo/violet accent, never the same look as accepted content (kanon §7)', () => {
+    render(
+      <TeresaPreviewPanel
+        sixQuestions={sixQuestions}
+        proposalQueue={[makeTeresaPreview()]}
+        onCommit={vi.fn()}
+        onTakeLead={vi.fn()}
+        onLetMeWorkManually={vi.fn()}
+        mode="guided_manual"
+      />
+    );
+    const card = screen.getByTestId('teresa-proposal-card');
+    expect(card.className).toMatch(/violet/);
+    expect(card.className).not.toMatch(/teal/);
+    expect(screen.getByText(/Propozycja AI/)).toBeInTheDocument();
+  });
 });
