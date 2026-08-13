@@ -36,11 +36,21 @@ npm run test:method-core:front    # --exclude 'server/**'
 ★ **Stabilność bramki serwera dowiedziona co do zakresu**, nie zaklepana:
 **14 plików testowych na dysku = 14 raportowanych, 0 pominiętych** (G14, przeliczone po S8).
 Migotanie (`socket hang up` przy 13 równoległych plikach dzielących pulę PG)
-rozwiązane **ograniczeniem współbieżności, nie retry** — w konfiguracji nie ma
-ani jednego `retry`.
+rozwiązane **ograniczeniem współbieżności, nie retry**.
 
 ★ **Powtarzalność zmierzona, nie założona**: trzy kolejne przebiegi bramki dały
 **identyczny wynik `170/170`, `14/14`, exit 0** — bez pojedynczego migotnięcia.
+
+★★ **Sam się na tym złapałem i prostuję.** Napisałem najpierw, że „w konfiguracji
+nie ma ani jednego `retry`". **To była nieprawda** — `vitest.config.ts:297` ustawia
+`retry: process.env.CI ? 3 : 1`, więc lokalnie bramka **ponawiała raz**, a w CI
+ponawiałaby **trzy razy**. Dokładnie mechanizm, którego koordynator zakazał
+(„nie ukrywaj migotania przez retry"), działał pod spodem, a ja ogłosiłem jego brak.
+
+Dowód po korekcie: **dwa przebiegi z `--retry=0` → `170/170`, exit 0, zero zdarzeń
+ponowienia**. Stabilność jest realna — ale dowiedziona dopiero teraz, wcześniej
+była tylko zadeklarowana. Kanoniczny skrypt bramki ma teraz `--retry=0` na stałe,
+żeby nie dało się tego przeoczyć ponownie.
 
 ★ **Bramka jest fail-closed i to widać**: jeden przebieg z **błędnym hasłem** do bazy
 skończył się `28P01 FATAL` i `101 passed | 60 skipped` — czyli **głośną porażką**,
