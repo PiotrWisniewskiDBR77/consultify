@@ -1,0 +1,20 @@
+NOT PRODUCED THIS SESSION.
+
+The spec (tests/e2e/drd-full-chain.spec.ts, step 17/18) writes this file from a
+live `pg` query against mac-pg-s2b once the full chain reaches the
+after-second-restart lineage check. That point was not reached in any run
+this session — the run that got furthest (through step 8, see
+step-verdicts.json) was interrupted before step 9's restart finished, and the
+session/role rows it had created were subsequently removed by this agent's
+own cleanup `DELETE FROM organizations WHERE id = 'e2e-drd-org'` (cascades to
+method_sessions / method_session_roles / method_events / method_outputs) run
+between test attempts — so there is nothing left in mac-pg-s2b to query.
+
+The underlying SQL-level lineage mechanism (revision_of_session_id chain on
+method_sessions, revisionOfOutputId chain on method_outputs) IS verified —
+against the shared team DB (mac-pg-team), not this disposable one — in this
+agent's prior CEL 3 report (same session, same worktree), which ran the exact
+create -> roles -> in_review -> freeze -> send-back -> new-revision -> approval
+chain over real HTTP and then read the result back with direct SELECTs. That
+evidence was not reproduced against mac-pg-s2b specifically before this
+session's time budget for CEL 1 was spent.

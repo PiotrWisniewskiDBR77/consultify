@@ -1,0 +1,84 @@
+[
+  {
+    "step": 1,
+    "title": "Library — GET /packs",
+    "verdict": "PARTIAL — HTTP+render correct, no real pack content",
+    "owner": "S2 (this agent) — DrdArtifactsHarnessScreen library view",
+    "evidence": "01-library.png. HAR: 200 GET /api/method/packs (x2). GET /api/method/packs -> {\"packs\":[]}.",
+    "note": "The request succeeds and StandardTable correctly renders its EmptyState ('Brak packów') — this is NOT a defect in the harness screen or StandardTable. The test fixture's own pack-registration helper (packRegisterViaRegistryClass in tests/e2e/drd-full-chain.spec.ts, ~line 73) never got a pack row to actually land in method_packs, even after fixing one confirmed bug (FK violation from registering before the organization row existed) and confirming the register call reports success with no exception. Root cause of the still-missing row is undiagnosed — documented as an open, reproducible symptom in the spec file itself (see the '★ STILL UNRESOLVED' comment) rather than chased further, since MethodPackRegistry/the DB write path are outside this agent's DrdRolesPanel/DrdArtifactsPanel scope. Does not block anything downstream — session creation uses demoBypass, which never reads method_packs at all."
+  },
+  {
+    "step": 2,
+    "title": "create/resume Session",
+    "verdict": "PASS",
+    "owner": "S2 (this agent)",
+    "evidence": "02-session.png — id, state=draft, version=1, pack=drd@2.0.0-methodpack.1 shown, SERVER badge. HAR: 200 GET /api/method/sessions/2ff12892-9414-4eda-afba-46325556c500.",
+    "note": "POST /sessions with demoBypass:true (DRD pack is methodology_review, never released) -> 201; resumed via GET; rendered in the browser via DrdArtifactsHarnessScreen's session view."
+  },
+  {
+    "step": 3,
+    "title": "assignment uczestników przez HTTP (browser UI)",
+    "verdict": "PASS",
+    "owner": "S2 (this agent) — DrdRolesPanel",
+    "evidence": "03-roles.png — 3 real role rows (owner auto-granted, approver + lead_assessor granted via clicks), inline red error 'Nie możesz nadać roli „approver\" samemu sobie.', role history table with 2 'Nadano' entries, empty approval-trail correctly rendered. HAR: 3x 201 POST .../roles.",
+    "note": "Driven by real Playwright clicks on the DrdRolesPanel form (#drd-role-user / #drd-role-select / 'Nadaj rolę'). Server-side self-approver 403 already proven in this agent's CEL 3 report; this screenshot proves the CLIENT-side guard renders correctly too."
+  },
+  {
+    "step": 4,
+    "title": "manual input + evidence",
+    "verdict": "BLOCKED — out of scope (owner: S3)",
+    "owner": "S3 — DrdHttpMethodWorkspaceScreen.tsx / drdHttpSessionRuntime.ts",
+    "evidence": "HAR: 2x 201 POST .../events (EVIDENCE_ATTACHED, ANSWER_CONFIRMED) — driven via fetch executed inside the browser page, not a UI form.",
+    "note": "No answer/evidence-entry UI exists in DrdRolesPanel or DrdArtifactsPanel — that UI is the DRD interview surface, owned by S3, explicitly out of this agent's file scope (do-not-touch list). The events needed to exist so freeze (steps 10-11) would have a real finding; they were appended via a real in-page fetch (visible in the HAR) as a documented stand-in for the missing UI, not as a claim that this step has browser coverage."
+  },
+  {
+    "step": 5,
+    "title": "autosave, status zapisu",
+    "verdict": "BLOCKED — out of scope (owner: S3)",
+    "owner": "S3 — DrdHttpMethodWorkspaceScreen.tsx",
+    "evidence": "N/A",
+    "note": "The save-state indicator (useMethodWorkspaceSave / MethodSaveState) lives entirely in the S3-owned workspace screen. Neither of this agent's two components (DrdRolesPanel, DrdArtifactsPanel) has an autosave concept — they are read+action panels, not editable-document surfaces."
+  },
+  {
+    "step": 6,
+    "title": "Live Matrix",
+    "verdict": "BLOCKED — out of scope (owner: S3)",
+    "owner": "S3 — DrdHttpMethodWorkspaceScreen.tsx (drdWorkspaceViewModel.ts's buildMatrixRowsForAxis)",
+    "evidence": "N/A",
+    "note": "Matrix rendering is part of the S3-owned workspace screen's 'matrix' view mode — not present anywhere in this agent's scope."
+  },
+  {
+    "step": 7,
+    "title": "revision conflict (409)",
+    "verdict": "PASS",
+    "owner": "S2 (this agent)",
+    "evidence": "HAR: 409 POST /api/method/sessions/.../transition with expectedVersion=999 -> {\"error\":\"version_conflict\"}.",
+    "note": "Driven via a real fetch inside the browser page (no dedicated UI button in scope for triggering a transition), response captured in the masked HAR. Same mechanism already proven with full assertions in this agent's CEL 3 real-Postgres vitest suite."
+  },
+  {
+    "step": 8,
+    "title": "reload strony",
+    "verdict": "PASS",
+    "owner": "S2 (this agent) — DrdRolesPanel",
+    "evidence": "HAR: page.reload() triggers a fresh GET .../roles + .../roles/history + .../approval-trail — identical data to before the reload, all from the server, none from client cache.",
+    "note": ""
+  },
+  {
+    "step": 9,
+    "title": "pełny restart API #1 (stop -> start -> reopen z bazy)",
+    "verdict": "PARTIAL — stop proven, start+reopen interrupted",
+    "owner": "S2 (this agent) — tests/e2e/fixtures/methodCoreE2E.ts",
+    "evidence": "logs/server-1.log: '[Shutdown] Received SIGTERM ... uptimeSeconds:137 ... Graceful shutdown complete' — the test's own server.stop() call. logs/server-2.log: a second process started 5s later, was still mid-boot (past DatabaseInitializer, loading Economics/RatioAnalysis routes) when it stopped logging.",
+    "note": "The STOP half is real and clean (graceful SIGTERM, 0 exit). The START+reopen half was cut off by this agent's own inter-attempt cleanup (a `pkill` scoped too broadly, run between test attempts before this agent corrected its own process-management discipline) — not by the fixture's 90s readiness budget, and not a defect in startServer()/waitForReady(). Never re-verified end-to-end in one continuous run this session, per the coordinator's explicit instruction not to launch another full attempt."
+  },
+  { "step": 10, "title": "freeze przez approvera", "verdict": "NOT RUN — session ended before this point (see step 9)", "owner": "S2 (this agent), mechanism only", "evidence": "Already proven at HTTP+SQL level: this agent's CEL 3 report — real server, real Postgres (mac-pg-team), curl-driven — POST /freeze by an approver-role token -> 200 with an Output, and a non-approver -> 403 missing_permission.", "note": "Not re-exercised at browser level against mac-pg-s2b this session." },
+  { "step": 11, "title": "immutable Output", "verdict": "NOT RUN — session ended before this point (see step 9)", "owner": "S1 — DrdArtifactsPanel.tsx (component); S2 (this agent) — harness wiring", "evidence": "DrdArtifactsPanel's own component test suite (S1) proves it renders Outputs from GET /sessions/:id/lineage; CEL 3 report proves the Output itself is immutable (no PUT/PATCH/DELETE route) at HTTP+SQL level.", "note": "Not exercised together (server Output + this agent's harness rendering it) in one browser run this session." },
+  { "step": 12, "title": "send back z komentarzem", "verdict": "NOT RUN — session ended before this point (see step 9)", "owner": "S2 (this agent) — DrdRolesPanel", "evidence": "Component-level: DrdRolesPanel.test.tsx proves the client-side 'comment required' guard with zero API calls. Server-level: CEL 3 report proves 400 without a comment, 200 with one, real HTTP.", "note": "The real browser-click path (fill comment, click 'Odeślij', assert new revision in the response) was not exercised end-to-end this session." },
+  { "step": 13, "title": "nowa rewizja", "verdict": "NOT RUN — session ended before this point (see step 9)", "owner": "S2 (this agent) — MethodSessionRoleService.sendBack", "evidence": "Proven at HTTP+SQL level in CEL 3 report: frozen -> active reopen produces a NEW session id with revisionOfSessionId set, confirmed via direct SELECT against mac-pg-team.", "note": "Not re-verified against mac-pg-s2b this session — the interrupted run's rows were removed by this agent's own cleanup DELETE between attempts." },
+  { "step": 14, "title": "approval", "verdict": "NOT RUN — session ended before this point (see step 9)", "owner": "S2 (this agent) — MethodSessionRoleService.approvalTrail", "evidence": "Proven at HTTP+SQL level in CEL 3 report: DECISION_APPROVED appended via the generic events endpoint, visible in GET .../approval-trail, scoped to the exact revision (a reopened session's trail starts empty).", "note": "" },
+  { "step": 15, "title": "Report + Presentation + Initiative Proposal", "verdict": "NOT RUN — session ended before this point (see step 9)", "owner": "S1 — method-core.routes.ts (POST /outputs/:id/report|presentation|initiative-drafts)", "evidence": "Endpoints exist and are exercised by S1's own integration suite (freezeOutputFlow.integration.test.ts).", "note": "Not exercised by this agent's browser spec this session — no UI button exists to trigger creation in either of this agent's two panels (DrdArtifactsPanel only LISTS these, see step 17's caveat)." },
+  { "step": 16, "title": "drugi pełny restart", "verdict": "NOT RUN — session ended before this point (see step 9)", "owner": "S2 (this agent) — tests/e2e/fixtures/methodCoreE2E.ts", "evidence": "Same startServer()/stop() mechanism proven working for restart #1's stop half (step 9); never reached a second time.", "note": "" },
+  { "step": 17, "title": "list/reopen wszystkich artefaktów przez DrdArtifactsPanel", "verdict": "NOT RUN — session ended before this point (see step 9)", "owner": "S1 — DrdArtifactsPanel.tsx", "evidence": "Component itself proven by S1's own test suite (DrdArtifactsPanel.test.tsx) to render Outputs/Reports/Presentations/Initiative Drafts + a lineage list from a single GET /sessions/:id/lineage call, reading nothing from localStorage/session state.", "note": "CAVEAT for when this IS reached: DrdArtifactsPanel's current lineage list renders static <li> entries with no click-to-reopen handler — 'reopen' can only be proven at the DATA layer (both revisions' artefacts listed together under one lineage call), never as a clickable UI affordance, until S1 adds one." },
+  { "step": 18, "title": "lineage widoczny w UI i potwierdzony SQL-em", "verdict": "NOT RUN — session ended before this point (see step 9)", "owner": "S2 (this agent) — MethodSessionRoleService lineage / S1 — GET /sessions/:id/lineage", "evidence": "Lineage mechanism (method_sessions.revision_of_session_id chain, method_outputs.revisionOfOutputId chain) proven via direct SQL in this agent's CEL 3 report against mac-pg-team.", "note": "docs/qa/e2e-drd-2026-08-13/sql-lineage.txt explains why it could not be reproduced against mac-pg-s2b this session (rows removed by this agent's own cleanup between attempts)." },
+  { "step": 19, "title": "cross-org rejection", "verdict": "NOT RUN — session ended before this point (see step 9)", "owner": "S2 (this agent) — DrdRolesPanel error state + method-core-roles.routes.ts", "evidence": "Proven at HTTP+SQL level in CEL 3 report (403/404, no data leaked) and at component level (DrdRolesPanel.test.tsx's error-state test).", "note": "The real cross-org-token-in-browser path was not exercised this session." }
+]
