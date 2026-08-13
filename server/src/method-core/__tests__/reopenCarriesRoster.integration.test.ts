@@ -159,13 +159,20 @@ describe.skipIf(!REAL_DB)('reopen przenosi skład zespołu na nową rewizję', (
     const rosterOriginal = await sessionService.listRoles(ORG, sessionId);
     expect(rosterOriginal.map((r) => `${r.userId}:${r.role}`).sort()).toEqual(rolesBefore);
 
-    // sprzątanie
+    // Sprzątanie. Pakiet USUWAMY również — bez tego zostawał w rejestrze i był
+    // jedynym wpisem w `method_packs` na świeżej bazie, przez co „Pakiet testowy
+    // reopen" wyglądał jak zawartość produktu przy ręcznym oglądaniu rejestru.
+    // Reguła projektu: probe sprząta po sobie, zero rekordów testowych.
     await DbPromise.run(`DELETE FROM method_session_roles WHERE organization_id = ?`, [ORG], {
       fallback: false,
     });
     await DbPromise.run(`DELETE FROM method_sessions WHERE organization_id = ?`, [ORG], {
       fallback: false,
     });
+    await DbPromise.run(`DELETE FROM method_packs WHERE organization_id = ?`, [ORG], {
+      fallback: false,
+    });
+    await DbPromise.run(`DELETE FROM organizations WHERE id = ?`, [ORG], { fallback: false });
   }, 120_000);
 });
 
