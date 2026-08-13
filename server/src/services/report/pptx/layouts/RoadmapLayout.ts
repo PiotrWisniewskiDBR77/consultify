@@ -35,7 +35,23 @@ export function RoadmapLayout(
 
   const bandElements = RoadmapBand(
     {
-      phases: c.phases,
+      // Decks created before the canonical roadmap contract used
+      // `{title,timing,owner}` rather than `{label,timeframe,items}`.  The
+      // download route can legitimately render those persisted unified_json
+      // slides directly, so normalize at the renderer boundary as the final
+      // compatibility gate instead of assuming every upstream projection ran.
+      phases: (Array.isArray((c as any)?.phases) ? (c as any).phases : []).map(
+        (phase: any) => {
+          const label = String(phase?.label || phase?.title || '').trim();
+          const timeframe = String(phase?.timeframe || phase?.timing || '').trim();
+          const items = Array.isArray(phase?.items)
+            ? phase.items.map(String)
+            : phase?.owner
+              ? [`Owner: ${String(phase.owner)}`]
+              : [];
+          return { ...phase, label, timeframe, items };
+        }
+      ),
       position: { x: g.contentX, y: g.contentY, w: g.contentW, h: g.contentH },
     },
     tokens

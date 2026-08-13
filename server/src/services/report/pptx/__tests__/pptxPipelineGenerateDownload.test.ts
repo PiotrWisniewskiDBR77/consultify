@@ -135,6 +135,36 @@ describe('Generate -> PPTX download happy path', () => {
     expect(fs.readFileSync(exportPath).subarray(0, 4).equals(ZIP_SIGNATURE)).toBe(true);
   });
 
+  it('exports a legacy roadmap when download has only raw unified_json', async () => {
+    const report = buildUnifiedReport();
+    report.slides.push({
+      intent: 'roadmap',
+      key_message: 'Three phases sequence delivery',
+      content: {
+        type: 'roadmap',
+        phases: [{ title: 'Mobilize', timing: 'Q1', owner: 'COO' }],
+      },
+    } as any);
+    const exportPath = path.join(os.tmpdir(), `legacy-roadmap-export-${Date.now()}.pptx`);
+    tmpFiles.push(exportPath);
+
+    await ensureCurrentPptxExport(
+      {
+        id: 'legacy-roadmap-export',
+        organization_id: 'org-1',
+        title: 'Legacy roadmap export',
+        export_path: exportPath,
+        version: 1,
+        exported_version: null,
+        deck_json: null,
+        unified_json: JSON.stringify(report),
+      },
+      { persist: vi.fn(async () => undefined) }
+    );
+
+    expect(fs.readFileSync(exportPath).subarray(0, 4).equals(ZIP_SIGNATURE)).toBe(true);
+  });
+
   it('localizes Polish confidentiality labels in rendered slide XML', async () => {
     const input = buildUnifiedReport();
     input.meta.language = 'pl';
