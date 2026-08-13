@@ -294,7 +294,28 @@ export interface AggregationInput {
 }
 
 export interface AggregationResult {
+  /**
+   * Group scores in the group's own NATIVE scale.
+   *
+   * ⚠️ Values here are NOT comparable across groups whose ladders differ in
+   * length. DRD is the proof: `4.0` on an axis with a 1–7 ladder and `4.0` on
+   * an axis with a 1–5 ladder describe different maturity. Averaging within one
+   * group is sound (one scale); comparing two groups is not.
+   *
+   * Use `byGroupNorm` for anything cross-group — radar, overall, benchmark.
+   */
   readonly byGroup: Readonly<Record<string, number | null>>;
+  /**
+   * Same groups, min–max normalised to [0,1] against each group's own ladder,
+   * so cross-group comparison is valid.
+   *
+   * Canon `DRD_CANON.md` §6.1: `score_norm = (level − 1) / (Lmax − 1)` —
+   * *„Dzięki temu osie o różnych drabinach są porównywalne na radarze bez
+   * przycinania treści."*
+   *
+   * Optional so adapters whose method has one uniform scale need not compute it.
+   */
+  readonly byGroupNorm?: Readonly<Record<string, number | null>>;
   readonly mappingVersion: string;
   readonly rule: string;
   /** Units excluded from aggregation and why (N/A, unknown, missing). */

@@ -317,16 +317,53 @@ function aggregate(input: AggregationInput): AggregationResult {
   }
 
   const byGroup: Record<string, number | null> = {};
+  /**
+   * Normalised twin of `byGroup` (COORD-11 / canon §6.1).
+   *
+   * Averaging raw levels WITHIN one axis is sound — every area of an axis shares
+   * that axis' ladder. The trap is CROSS-axis: `byGroup` values carry different
+   * units (1–7 vs 1–5 vs 1–6), so a radar or an overall built from them compares
+   * incomparable numbers. `score_norm = (level − 1) / (Lmax − 1)` removes that.
+   *
+   * `byGroup` is left untouched on purpose — changing it would silently move
+   * every existing Output's numbers. The normalised figure is added ALONGSIDE.
+   */
+  const byGroupNorm: Record<string, number | null> = {};
   const axisIds = new Set(pack.units.map((u) => u.parentId).filter((id): id is string => id !== null));
-  for (const key of axisIds) {
-    const values = byAxis.get(key);
-    byGroup[key] =
-      values && values.length > 0
-        ? Math.round((values.reduce((a, b) => a + b, 0) / values.length) * 10) / 10
-        : null;
+  /** Ladder length per axis, read from the pack — never assumed. */
+  const axisLmax = new Map<string, number>();
+  for (const unit of pack.units) {
+    if (unit.parentId === null) continue;
+    const lmax = Math.max(...unit.levelScale);
+    const seen = axisLmax.get(unit.parentId);
+    if (seen === undefined || lmax > seen) axisLmax.set(unit.parentId, lmax);
   }
 
-  return { byGroup, mappingVersion: input.mappingVersion, rule: DRD_AGGREGATION_RULE, excluded };
+  for (const key of axisIds) {
+    const values = byAxis.get(key);
+    if (!values || values.length === 0) {
+      byGroup[key] = null;
+      byGroupNorm[key] = null;
+      continue;
+    }
+    byGroup[key] = Math.round((values.reduce((a, b) => a + b, 0) / values.length) * 10) / 10;
+
+    const lmax = axisLmax.get(key);
+    if (lmax === undefined || lmax <= 1) {
+      byGroupNorm[key] = null;
+      continue;
+    }
+    const norms = values.map((v) => (v - 1) / (lmax - 1));
+    byGroupNorm[key] = Math.round((norms.reduce((a, b) => a + b, 0) / norms.length) * 10000) / 10000;
+  }
+
+  return {
+    byGroup,
+    byGroupNorm,
+    mappingVersion: input.mappingVersion,
+    rule: DRD_AGGREGATION_RULE,
+    excluded,
+  };
 }
 
 // ---------------------------------------------------------------------------
