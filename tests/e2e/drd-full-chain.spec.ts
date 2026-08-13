@@ -79,10 +79,52 @@ async function packRegisterViaRegistryClass(organizationId: string): Promise<voi
   // this row (see `demoBypass` below — `alwaysStartablePacks` skips the
   // `method_packs` lookup entirely), so this call exists ONLY to make the
   // Library screenshot (step 1) show a real row instead of an honestly-empty
-  // table. It calls the application's OWN `MethodPackRegistry.register()`
-  // method (parameterized INSERT via `runOrThrow`) through a one-off tsx
-  // script — the same mechanism `http.integration.test.ts` uses for its own
-  // setup — never a hand-written SQL string from this file.
+  // table.
+  //
+  // ★ BUG FOUND 2026-08-13 (this agent, first real run): `method_packs.
+  // organization_id` FKs to `organizations(id)` — and E2E_MODE only creates
+  // that row REACTIVELY, as a side effect of the FIRST authenticated
+  // request. Calling `MethodPackRegistry.register()` before any such
+  // request hit a foreign-key violation that the original try/catch here
+  // silently swallowed (meant only to tolerate "already registered"),
+  // producing a genuinely-empty-but-correctly-rendered Library screenshot
+  // instead of the intended non-empty one. Fixed by ensuring the
+  // organization row exists FIRST — via the same minimal, parameterized
+  // `INSERT ... ON CONFLICT DO NOTHING` `server/src/method-core/__tests__/
+  // http.integration.test.ts` already uses in its own `beforeAll` for
+  // identical setup reasons — before registering the pack through the
+  // application's OWN `MethodPackRegistry.register()` method (parameterized
+  // INSERT via `runOrThrow`), never a hand-written pack-row SQL string.
+  //
+  // ★ STILL UNRESOLVED (2026-08-13, standalone verification after the org-
+  // first fix above): the one-off script now prints "registered OK" (no FK
+  // violation, no exception) via a `spawnSync('npx', ['tsx', ...])` child
+  // process with `DATABASE_URL` explicitly passed in `env`, but a direct
+  // `SELECT * FROM method_packs WHERE organization_id = 'e2e-drd-org'`
+  // against `mac-pg-s2b` immediately after still returns ZERO rows, and
+  // `GET /api/method/packs` still returns `{"packs":[]}` — i.e. the INSERT
+  // is not landing despite reporting success. Not chased further per this
+  // agent's scope (`MethodPackRegistry`/the `pg`/`DbPromise` write path are
+  // outside `DrdRolesPanel`/`DrdArtifactsPanel`) — left here as an exact,
+  // reproducible symptom for whoever owns the next E2E pass: Library
+  // (step 1) will keep rendering its (correctly-implemented) EMPTY state
+  // until this is root-caused. Candidates worth checking first: whether
+  // `spawnSync`'s inherited `...process.env` is letting some OTHER
+  // `DATABASE_URL` already present in this shell's environment win over the
+  // explicit override (this repo has documented precedent for exactly that
+  // class of bug — see MEMORY "db-hosts-prod-demo"), or a connection/
+  // transaction visibility issue between the one-off script's pool and the
+  // server's own.
+  const pool = openVerificationPool();
+  try {
+    await pool.query(`INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`, [
+      organizationId,
+      'S2 CEL 1 E2E fixture org',
+    ]);
+  } finally {
+    await pool.end();
+  }
+
   const { spawnSync } = await import('node:child_process');
   const script = `
     import('./src/method-core/MethodPackRegistry.js').then(async ({ methodPackRegistry }) => {
@@ -94,18 +136,21 @@ async function packRegisterViaRegistryClass(organizationId: string): Promise<voi
           name: 'DRD — Digital Readiness Diagnosis (E2E fixture)',
           readiness: 'methodology_review',
         });
-      } catch (e) { /* already registered — fine */ }
-      process.exit(0);
+      } catch (e) { console.error('pack register failed:', e); process.exitCode = 1; }
+      process.exit();
     });
   `;
   const tmp = path.join(REPO_ROOT, 'server', '_e2e_register_pack.mjs');
-  fs.writeFileSync(tmp, script.replace('./src/', './src/'));
-  spawnSync('npx', ['tsx', '_e2e_register_pack.mjs'], {
+  fs.writeFileSync(tmp, script);
+  const result = spawnSync('npx', ['tsx', '_e2e_register_pack.mjs'], {
     cwd: path.join(REPO_ROOT, 'server'),
     env: { ...process.env, NODE_ENV: 'test', DATABASE_URL, DB_TYPE: 'postgres' },
     stdio: 'inherit',
   });
   fs.rmSync(tmp, { force: true });
+  if (result.status !== 0) {
+    throw new Error(`packRegisterViaRegistryClass: register script exited ${result.status}`);
+  }
 }
 
 test.describe.serial('DRD full chain — CEL 1 browser E2E (S2 scope)', () => {
