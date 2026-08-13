@@ -7,6 +7,7 @@ import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { dbGet } from '../../../database/db.js';
+import { assertRealDatabase, fromAppDb } from '../../../testing/assertRealDatabase.js';
 
 const SUFFIX = randomUUID().slice(0, 8);
 const ORG = `org-m10-freeze-${SUFFIX}`;
@@ -53,8 +54,17 @@ describe('M10 accepted assessment freeze — real PostgreSQL', () => {
 
   beforeAll(async () => {
     if (process.env.NODE_ENV !== 'test' || process.env.RUN_DB_TESTS !== '1') {
-      throw new Error('Requires NODE_ENV=test RUN_DB_TESTS=1 and a real DATABASE_URL.');
+      throw new Error('Requires NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false and a real DATABASE_URL.');
     }
+
+    // CEL B fail-closed proof (S4, 2026-08-13): the guard above only checks
+    // env INTENT. `Database.ts`'s own mock-selection logic happens to also
+    // pick the real PostgresDatabase whenever RUN_DB_TESTS=1 regardless of
+    // MOCK_DB, but this suite must not rely on reading that implementation
+    // detail correctly — it proves it directly with a real round-trip query.
+    const { getDatabaseAsync } = await import('../../../database/Database.js');
+    const db = await getDatabaseAsync();
+    await assertRealDatabase(fromAppDb(db as unknown as { all: (sql: string) => Promise<unknown> }));
 
     await run(`INSERT INTO organizations (id, name) VALUES (?, ?) ON CONFLICT (id) DO NOTHING`, [
       ORG,
