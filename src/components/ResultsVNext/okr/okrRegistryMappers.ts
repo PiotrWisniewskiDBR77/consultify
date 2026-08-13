@@ -160,8 +160,8 @@ const OKR_SET_LOCK_INFO: Partial<Record<OkrSetStatus, OkrSetLockInfo>> = {
   active: {
     label: { pl: 'Aktywny', en: 'Active' },
     reason: {
-      pl: 'Zestaw aktywny — edycja pól szkicu z tego rejestru niedostępna; zmiany treści idą przez osobny mechanizm rewizji (poza zakresem tego pakietu).',
-      en: 'Set is active — editing draft fields from this registry is unavailable; content changes go through a separate revision mechanism (out of scope for this package).',
+      pl: 'Ten zestaw OKR jest aktywny. Otwórz przestrzeń OKR, aby przeglądać cele, wyniki kluczowe i rejestrować postęp.',
+      en: 'This OKR set is active. Open the OKR workspace to review objectives, key results, and record progress.',
     },
   },
   review: {
