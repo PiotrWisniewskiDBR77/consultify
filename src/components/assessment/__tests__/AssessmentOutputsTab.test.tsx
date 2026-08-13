@@ -189,7 +189,13 @@ describe('AssessmentOutputsTab', () => {
     expect(await screen.findByText('Failed to load Outputs. Please try again.')).toBeInTheDocument();
 
     hoisted.listOutputs.mockResolvedValueOnce({ outputs: [outputRow()], total: 1 });
-    await user.click(screen.getByRole('button', { name: /retry/i }));
+    // Accessible name is "Try again" (i18n `common.retry`), not "Retry" — the
+    // EmptyState error CTA was deliberately moved off a hardcoded English
+    // "Retry" label onto this translated copy (see R09-1 in
+    // AssessmentOutputsTab.tsx's module doc comment); the selector below was
+    // never updated to match, which is why this assertion — not the retry
+    // affordance itself — was the actual reason this test stayed red.
+    await user.click(screen.getByRole('button', { name: /try again/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Digital Readiness — Area A')).toBeInTheDocument();

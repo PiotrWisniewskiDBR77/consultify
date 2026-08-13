@@ -121,7 +121,9 @@ describe('AssessmentInitiativesTab', () => {
     ).toBeInTheDocument();
 
     hoisted.listInitiativeDrafts.mockResolvedValueOnce([draftRow()]);
-    await user.click(screen.getByRole('button', { name: /retry/i }));
+    // Accessible name is "Try again" (i18n `common.retry`), not "Retry" —
+    // see the matching note in AssessmentOutputsTab.test.tsx.
+    await user.click(screen.getByRole('button', { name: /try again/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Automate invoice intake')).toBeInTheDocument();
