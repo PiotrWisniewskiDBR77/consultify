@@ -63,6 +63,11 @@ describe.skipIf(!REAL_DB)('P0B — freeze -> Output -> approval -> Report -> Ini
 
     const { Pool } = await import('pg');
     pool = new Pool({ connectionString: CONNECTION_STRING });
+    // ★ Fail-closed (CEL 10): proves this suite is talking to a REAL
+    // PostgreSQL, not a mock/sqlite fallback — throws if not. See
+    // server/src/test-utils/dbFailClosed.ts header comment.
+    const { assertRealPostgresTestDb } = await import('../../test-utils/dbFailClosed.js');
+    await assertRealPostgresTestDb(pool);
 
     await pool.query(`INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`, [
       ORG,
