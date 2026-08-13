@@ -34,13 +34,29 @@ export interface BuildReportSnapshotInput {
   readonly initiativeCandidates: readonly ReportInitiativeCandidateRef[];
   readonly appendices: readonly string[];
   readonly createdAt: string;
+  /**
+   * Mapa `unitId -> nazwa czytelna dla człowieka`.
+   *
+   * ★ Bez tego raport dla klienta pokazywał kody `1A`/`1B`. `finding.unitName`
+   * NIE jest wiarygodnym źródłem nazwy — bywa ustawione dosłownie na `unitId`
+   * (tak robi runtime demo), więc fallback „nazwa z findingu" po cichu degraduje
+   * się do kodu. Nazwy dostarcza wywołujący, który zna strukturę swojej metody;
+   * ten moduł pozostaje metodyko-agnostyczny. Brak nazwy => zostaje identyfikator.
+   *
+   * Ten sam mechanizm ma `buildPresentationBlocksFromOutput` — celowo
+   * symetrycznie, żeby raport i prezentacja nie rozjechały się nazewnictwem.
+   */
+  readonly unitNames?: Readonly<Record<string, string>>;
 }
 
-function unitResultsFrom(output: AssessmentOutput): ReportUnitResult[] {
+function unitResultsFrom(
+  output: AssessmentOutput,
+  unitNames?: Readonly<Record<string, string>>
+): ReportUnitResult[] {
   const unitIds = Object.keys(output.current);
   return sortStrings(unitIds).map((unitId) => ({
     unitId,
-    unitName: findingByUnit(output.findings, unitId)?.unitName ?? unitId,
+    unitName: unitNames?.[unitId] ?? findingByUnit(output.findings, unitId)?.unitName ?? unitId,
     current: output.current[unitId] ?? null,
     target: output.target[unitId] ?? null,
     gap: output.gap[unitId] ?? null,
@@ -100,7 +116,7 @@ export function buildReportSnapshot(
     participants: sortStrings(input.participants),
     limitations: sortStrings(output.limitations),
     overallResult: overallResultFrom(output),
-    unitResults: unitResultsFrom(output),
+    unitResults: unitResultsFrom(output, input.unitNames),
     groupResults: groupResultsFrom(output),
     current: output.current,
     target: output.target,

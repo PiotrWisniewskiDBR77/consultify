@@ -64,6 +64,27 @@ import {
 } from '@/method-core/outputs';
 
 import { compileDrdPack, DRD_METHOD_PACK_ID } from './compileDrdPack';
+import { DRD_STRUCTURE } from '@/services/drdStructure';
+
+/**
+ * `unitId -> nazwa`. ★ Findingi trafiają wprost do raportu i prezentacji dla
+ * klienta, więc `unitName: unitId` (czyli „1A") było widoczne na slajdzie.
+ * Zasada projektu: dane demo to twarz produktu.
+ */
+const DRD_UNIT_NAMES: Readonly<Record<string, string>> = Object.freeze(
+  Object.fromEntries(
+    DRD_STRUCTURE.flatMap((axis) => axis.areas.map((area) => [area.id, area.namePL || area.name]))
+  )
+);
+const unitLabel = (unitId: string): string => DRD_UNIT_NAMES[unitId] ?? unitId;
+
+/** Polska odmiana: „1 dowód", „2 dowody", „5 dowodów". */
+function dowodyLabel(n: number): string {
+  if (n === 1) return '1 dowód';
+  const l2 = n % 100;
+  const l = n % 10;
+  return l >= 2 && l <= 4 && (l2 < 10 || l2 >= 20) ? `${n} dowody` : `${n} dowodów`;
+}
 
 export const DRD_DEMO_SESSION_NOTICE =
   'Metodyka DRD jest w statusie „w przeglądzie" (methodology_review) — canStartSession() ' +
@@ -565,7 +586,7 @@ export class DrdSessionRuntime {
       findings.push({
         id: genId(),
         unitId,
-        unitName: unitId,
+        unitName: unitLabel(unitId),
         currentLevel: acc.currentLevel,
         targetLevel: acc.targetLevel,
         gap: gap[unitId],
@@ -573,16 +594,16 @@ export class DrdSessionRuntime {
         contradictingEvidence: [],
         businessMeaning:
           acc.currentLevel !== null
-            ? `Jednostka ${unitId} potwierdzona na poziomie ${acc.currentLevel} (${acc.evidence.length} dowód/-ody).`
-            : `Jednostka ${unitId}: dowody zebrane, poziom nie został jeszcze potwierdzony.`,
+            ? `${unitLabel(unitId)}: potwierdzony poziom ${acc.currentLevel}, oparty o ${dowodyLabel(acc.evidence.length)}.`
+            : `${unitLabel(unitId)}: dowody zebrane, poziom nie został jeszcze potwierdzony.`,
         rootCauseHypothesis: '',
         riskOrOpportunity:
           gap[unitId] !== null && (gap[unitId] as number) > 0
-            ? `Luka ${gap[unitId]} poziomu/-ów do celu na jednostce ${unitId}.`
+            ? `Do celu brakuje ${gap[unitId]} ${(gap[unitId] as number) === 1 ? 'poziomu' : 'poziomów'} — ${unitLabel(unitId)}.`
             : '',
         recommendation:
           gap[unitId] !== null && (gap[unitId] as number) > 0
-            ? `Zaplanuj działania podnoszące jednostkę ${unitId} z poziomu ${acc.currentLevel} do ${acc.targetLevel}.`
+            ? `Zaplanuj działania podnoszące ${unitLabel(unitId)} z poziomu ${acc.currentLevel} do ${acc.targetLevel}.`
             : `Utrzymaj obecny poziom jednostki ${unitId}.`,
         prerequisite: null,
         expectedOutcome:

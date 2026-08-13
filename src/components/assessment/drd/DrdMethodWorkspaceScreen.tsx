@@ -21,6 +21,7 @@ import { MethodWorkspaceShell } from '@/components/method-workspace/MethodWorksp
 import { MethodReportView } from '@/components/method-workspace/MethodReportView';
 import { MethodPresentationView } from '@/components/method-workspace/MethodPresentationView';
 import { buildPresentationBlocksFromOutput } from '@/method-core/outputs';
+import { evidenceCountLabel } from '@/method-core/outputs/evidencePlural';
 import { StandardTable } from '@/components/standard/StandardTable';
 import type {
   InterviewFocusQuestion,
@@ -721,7 +722,10 @@ const FrozenOutputView: React.FC<{
           <p className="text-xs text-c-text-muted">Brak Outputu.</p>
         ) : (
           <div className="space-y-2 text-xs text-c-text-secondary">
-            <p>contentHash: <code className="text-c-text-muted">{output.contentHash.slice(0, 16)}…</code></p>
+            <p title={output.contentHash}>
+              Suma kontrolna treści: <code className="text-c-text-muted">{output.contentHash.slice(0, 8)}</code>
+              <span className="ml-1 text-c-text-muted">— zmiana wyniku zmieniłaby tę wartość.</span>
+            </p>
             <p>scope: {output.scope}</p>
             <p>limitations: {output.limitations.join(' · ')}</p>
             <div className="rounded-lg border border-c-border-subtle">
@@ -729,7 +733,8 @@ const FrozenOutputView: React.FC<{
                 columns={OUTPUT_UNIT_COLUMNS}
                 data={Object.keys(output.current).map((unitId) => ({
                   id: unitId,
-                  unitId,
+                  // ★ nazwa, nie kod `1A` — panel jest widoczny dla klienta
+                  unitId: drdUnitNames[unitId] ?? unitId,
                   current: output.current[unitId] ?? '—',
                   target: output.target[unitId] ?? '—',
                   gap: output.gap[unitId] ?? '—',
@@ -741,7 +746,7 @@ const FrozenOutputView: React.FC<{
               <div key={f.id} className="rounded-lg border border-c-border-subtle p-2">
                 <p className="text-c-text">{f.businessMeaning}</p>
                 <p className="text-c-text-muted">Rekomendacja: {f.recommendation}</p>
-                <p className="text-c-text-muted">Dowody: {f.supportingEvidence.map((e) => e.evidenceId).join(', ')}</p>
+                <p className="text-c-text-muted">{evidenceCountLabel(f.supportingEvidence.length)}</p>
               </div>
             ))}
           </div>
@@ -774,6 +779,7 @@ const FrozenOutputView: React.FC<{
             <MethodReportView
               report={currentReport}
               findings={output?.findings ?? []}
+              unitNames={drdUnitNames}
               methodName="DRD"
             />
             <p className="mt-2 text-[11px] text-c-text-muted">
@@ -825,7 +831,21 @@ const FrozenOutputView: React.FC<{
               <div key={rec.content.id} className="mb-2 rounded-lg border border-c-border-subtle p-2 text-xs">
                 <p className="font-medium text-c-text">{rec.content.title}</p>
                 <p className="text-c-text-secondary">{rec.content.summary}</p>
-                <p className="text-c-text-muted">Findings: {rec.content.findingIds.join(', ')} · confidence: {rec.content.confidence}</p>
+                {/* ★ Surowe UUID findingów były wypisywane wprost użytkownikowi
+                    biznesowemu. Liczba + nazwy jednostek niosą tę samą
+                    informację decyzyjną; pełne id zostaje w `title`. */}
+                <p className="text-c-text-muted" title={rec.content.findingIds.join(', ')}>
+                  Na podstawie {rec.content.findingIds.length}{' '}
+                  {rec.content.findingIds.length === 1 ? 'wniosku' : 'wniosków'}
+                  {(() => {
+                    const names = rec.content.findingIds
+                      .map((fid) => output?.findings.find((f) => f.id === fid)?.unitId)
+                      .filter((u): u is string => Boolean(u))
+                      .map((u) => drdUnitNames[u] ?? u);
+                    return names.length > 0 ? ` (${names.join(', ')})` : '';
+                  })()}
+                  {' · '}pewność: {rec.content.confidence}
+                </p>
                 <p className="mt-1 text-[10px] uppercase tracking-wide text-c-warning">Draft — decyzja „Register as Initiative" należy do człowieka, poza tym modułem.</p>
               </div>
             ))

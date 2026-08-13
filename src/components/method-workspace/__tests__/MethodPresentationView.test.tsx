@@ -49,7 +49,10 @@ describe('MethodPresentationView', () => {
 
   it('renders evidence count, confidentiality and freshness as three separate footer elements (criterion 6)', () => {
     render(<MethodPresentationView blocks={[makeBlock()]} methodName="DRD" />);
-    expect(screen.getByTestId('slide-evidence-count')).toHaveTextContent('2 dowodów');
+    // ★ Poprawna polska odmiana: dla 2 jest „2 dowody źródłowe", nie
+    // „2 dowodów". Ten test utrwalał wcześniej błędną formę, przez co defekt
+    // widoczny dla klienta był zielony w bramce.
+    expect(screen.getByTestId('slide-evidence-count')).toHaveTextContent('2 dowody źródłowe');
     expect(screen.getByTestId('slide-confidentiality')).toHaveTextContent('Materiał dla klienta');
     expect(screen.getByTestId('slide-freshness')).toBeInTheDocument();
   });

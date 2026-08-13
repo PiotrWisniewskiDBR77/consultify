@@ -29,6 +29,7 @@ import { ChevronLeft, ChevronRight, Lock, Sparkles } from 'lucide-react';
 import React from 'react';
 
 import type { PresentationSourceBlock, UnitLevelMap } from '@/method-core/outputs';
+import { evidenceCountLabel } from '@/method-core/outputs/evidencePlural';
 
 export interface MethodPresentationViewProps {
   blocks: readonly PresentationSourceBlock[];
@@ -122,7 +123,7 @@ const Slide: React.FC<{ block: PresentationSourceBlock }> = ({ block }) => {
           separate, differently-shaped elements (criterion 6). */}
       <div className="flex items-center justify-between border-t border-c-border-subtle pt-3 text-[11px] text-c-text-muted">
         <span data-testid="slide-evidence-count">
-          {block.evidenceRefs.length > 0 ? `${block.evidenceRefs.length} dowodów źródłowych` : 'Bez powiązanych dowodów'}
+          {evidenceCountLabel(block.evidenceRefs.length)}
         </span>
         <span className="flex items-center gap-1" data-testid="slide-confidentiality">
           <Lock size={11} /> {CONFIDENTIALITY_LABEL[block.confidentiality]}

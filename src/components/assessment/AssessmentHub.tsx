@@ -2616,15 +2616,21 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
               !activeDocumentId &&
               assessments.length === 0
             ) && (
-              <div className="mx-4 mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+              /* ★ Ten baner był pisany DARK-FIRST i nigdy nie sprawdzony w Light:
+                 `text-amber-100` na `bg-amber-500/10` dawało w jasnym motywie
+                 kontrast 1.38:1 (próg WCAG AA to 4.5:1) — komunikat o błędzie był
+                 praktycznie niewidoczny dokładnie wtedy, gdy jest najbardziej
+                 potrzebny. Wykryte dopiero po wymuszeniu stanu błędu w audycie.
+                 Tokeny `c-warning` niosą poprawny kontrast w OBU motywach. */
+              <div className="mx-4 mt-4 rounded-xl border border-c-warning/30 bg-c-warning/10 px-4 py-3 text-sm text-c-warning">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
-                    <AlertCircle size={16} className="mt-0.5 shrink-0 text-amber-300" />
+                    <AlertCircle size={16} className="mt-0.5 shrink-0 text-c-warning" />
                     <p>{loadWarning}</p>
                   </div>
                   <button
                     onClick={() => refreshData()}
-                    className="shrink-0 rounded-lg border border-amber-400/30 px-3 py-1.5 text-xs font-medium text-amber-100 hover:bg-amber-400/10"
+                    className="shrink-0 rounded-lg border border-c-warning/40 px-3 py-1.5 text-xs font-medium text-c-warning hover:bg-c-warning/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                   >
                     Retry
                   </button>

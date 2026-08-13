@@ -125,7 +125,7 @@ const Cell: React.FC<{
     >
       <span className={cell.achieved ? 'text-c-text' : 'text-c-text-muted'}>{cell.level}</span>
       {cell.aiProposalPending && (
-        <Sparkles size={9} className="absolute -top-1 -right-1 text-teal-500 dark:text-teal-400" aria-hidden="true" />
+        <Sparkles size={9} className="absolute -top-1 -right-1 text-c-info" aria-hidden="true" />
       )}
       {cell.reviewRequired && !cell.aiProposalPending && (
         <Eye size={9} className="absolute -top-1 -right-1 text-c-info" aria-hidden="true" />
@@ -163,7 +163,7 @@ export const LiveMatrix: React.FC<LiveMatrixProps> = ({
         {!legendCollapsed && (
           <div className="flex items-center gap-3 text-[10px] text-c-text-muted">
             <span className="flex items-center gap-1">
-              <Sparkles size={9} className="text-teal-500" /> Propozycja AI
+              <Sparkles size={9} className="text-c-info" /> Propozycja AI
             </span>
             <span className="flex items-center gap-1">
               <Eye size={9} className="text-c-info" /> Review

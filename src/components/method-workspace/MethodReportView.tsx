@@ -34,6 +34,7 @@ import { CheckCircle2, FileText } from 'lucide-react';
 import React from 'react';
 
 import type { EvidenceLocator, Finding, ReportSnapshot, ReportUnitResult } from '@/method-core/outputs';
+import { evidenceCountLabel } from '@/method-core/outputs/evidencePlural';
 
 export interface MethodReportViewProps {
   report: ReportSnapshot;
@@ -47,6 +48,11 @@ export interface MethodReportViewProps {
    * it trusts and labels what it is given.
    */
   findings: readonly Finding[];
+  /**
+   * Mapa `unitId -> nazwa`. Bez niej karta wniosku pokazuje `finding.unitName`,
+   * które bywa równe `unitId` — czyli klientowi wyświetla się `1A`.
+   */
+  unitNames?: Readonly<Record<string, string>>;
   methodName: string;
   className?: string;
 }
@@ -174,9 +180,9 @@ function GapChartRow({ row }: { row: ReportUnitResult }): React.ReactElement {
   );
 }
 
-const FindingCard: React.FC<{ finding: Finding }> = ({ finding }) => {
+const FindingCard: React.FC<{ finding: Finding; unitLabel: string }> = ({ finding, unitLabel }) => {
   // Criterion 1: the headline IS the conclusion/action, not a section label.
-  const actionTitle = finding.recommendation?.trim() || finding.riskOrOpportunity?.trim() || finding.unitName;
+  const actionTitle = finding.recommendation?.trim() || finding.riskOrOpportunity?.trim() || unitLabel;
   return (
     <article data-testid="report-finding-card" className="border-t border-c-border-subtle py-5 first:border-t-0 first:pt-0">
       <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
@@ -185,7 +191,7 @@ const FindingCard: React.FC<{ finding: Finding }> = ({ finding }) => {
         <ApprovalChip />
       </div>
       <h3 className="text-base font-semibold leading-snug text-c-text">{actionTitle}</h3>
-      <p className="mt-1 text-xs uppercase tracking-wide text-c-text-muted">{finding.unitName}</p>
+      <p className="mt-1 text-xs uppercase tracking-wide text-c-text-muted">{unitLabel}</p>
       {finding.businessMeaning && <p className="mt-2 text-sm text-c-text-secondary">{finding.businessMeaning}</p>}
     </article>
   );
@@ -207,7 +213,7 @@ function TextList({ title, items }: { title: string; items: readonly string[] })
   );
 }
 
-export const MethodReportView: React.FC<MethodReportViewProps> = ({ report, findings, methodName, className = '' }) => {
+export const MethodReportView: React.FC<MethodReportViewProps> = ({ report, findings, unitNames, methodName, className = '' }) => {
   const sortedRows = [...report.unitResults].sort((a, b) => (b.gap ?? -1) - (a.gap ?? -1));
   const findingsByGap = [...findings].sort((a, b) => (b.gap ?? -1) - (a.gap ?? -1));
   // Dowody liczone po UNIKALNYM identyfikatorze — ten sam dokument
@@ -255,7 +261,7 @@ export const MethodReportView: React.FC<MethodReportViewProps> = ({ report, find
         <section className="mb-10">
           <h2 className="text-sm font-semibold text-c-text mb-1">Wnioski</h2>
           {findingsByGap.map((finding) => (
-            <FindingCard key={finding.id} finding={finding} />
+            <FindingCard key={finding.id} finding={finding} unitLabel={unitNames?.[finding.unitId] ?? finding.unitName} />
           ))}
         </section>
       )}
@@ -278,15 +284,18 @@ export const MethodReportView: React.FC<MethodReportViewProps> = ({ report, find
         na ilu dowodach stoi dokument i czy wolno go przekazać dalej.
       */}
       <footer className="mt-10 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-c-border-subtle pt-4 text-[11px] text-c-text-muted">
-        <span data-testid="report-evidence-count">
-          {evidenceCount} {evidenceCount === 1 ? 'dowód źródłowy' : evidenceCount % 10 >= 2 && evidenceCount % 10 <= 4 && (evidenceCount % 100 < 10 || evidenceCount % 100 >= 20) ? 'dowody źródłowe' : 'dowodów źródłowych'}
-        </span>
+        <span data-testid="report-evidence-count">{evidenceCountLabel(evidenceCount)}</span>
         <span aria-hidden="true">·</span>
         <span data-testid="report-confidentiality">🔒 Materiał dla klienta</span>
         <span aria-hidden="true">·</span>
         <span>Stan na {new Date(report.createdAt).toLocaleDateString('pl-PL')}</span>
         <span aria-hidden="true">·</span>
-        <span>Output {report.outputId} · wersja {report.outputVersion}</span>
+        {/* ★ Skrócony identyfikator — pełny UUID w materiale dla klienta to
+            szum, a nie informacja. Pełna wartość zostaje w `title` dla kogoś,
+            kto naprawdę musi go odczytać. */}
+        <span title={`Output ${report.outputId}`}>
+          Output {report.outputId.slice(0, 8)} · wersja {report.outputVersion}
+        </span>
       </footer>
     </div>
   );

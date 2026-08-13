@@ -124,11 +124,16 @@ export function buildPresentationBlocksFromOutput(
           finding,
           // Klucz to NAZWA, nie `1A` — to snapshot prezentacyjny (etykiety
           // slajdu), nie rekord domenowy.
+          // ★ nameOf(), nie finding.unitName. Slajd przeglądowy używał mapy
+          // nazw, a ta pętla ją POMIJAŁA — niespójność w jednym pliku, przez
+          // którą 2 z 3 slajdów pokazywały klientowi „1A" zamiast nazwy.
+          // `finding.unitName` bywa równe `unitId` (tak ustawia je seed), więc
+          // poleganie na nim jest z definicji zawodne.
           dataSnapshot: {
-            [`${finding.unitName} — obecnie`]: finding.currentLevel,
-            [`${finding.unitName} — cel`]: finding.targetLevel,
+            [`${nameOf(finding.unitId)} — obecnie`]: finding.currentLevel,
+            [`${nameOf(finding.unitId)} — cel`]: finding.targetLevel,
           },
-          title: finding.unitName,
+          title: nameOf(finding.unitId),
           // ★ Słowa metodyki, nie moje. To jest wniosek dla klienta.
           keyMessage: finding.businessMeaning,
           visualIntent: 'recommendation',
