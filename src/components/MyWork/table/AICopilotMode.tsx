@@ -26,6 +26,8 @@ import {
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
+
 import type { TableNode } from './tableTypes';
 
 type CopilotMode = 'brainstorm' | 'devils_advocate' | 'expand' | 'summarize';
@@ -110,9 +112,13 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, streamingText]);
 
-  useEffect(() => {
-    if (open) inputRef.current?.focus();
-  }, [open]);
+  // Focus entry (initialFocusRef: inputRef below), Escape-to-close, and
+  // focus restore to the trigger are owned by useDialogA11y now. This used
+  // to be a bespoke `if (open) inputRef.current?.focus()` effect that ran
+  // and stole focus BEFORE the hook's own effect captured the
+  // previously-focused element (same race as native `autoFocus`), so the
+  // hook's "restore focus to trigger on close" bookkeeping never saw the
+  // real trigger.
 
   const simulateStreaming = useCallback((text: string): Promise<void> => {
     return new Promise((resolve) => {
@@ -239,6 +245,9 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
     [handleSend, isPl]
   );
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  useDialogA11y({ open, onClose, containerRef, initialFocusRef: inputRef });
+
   if (!open) return null;
 
   const currentModeConfig = MODE_CONFIG[mode];
@@ -249,13 +258,18 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-[480px] max-w-[95vw] h-[70vh] max-h-[600px] rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl overflow-hidden flex flex-col"
+        ref={containerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ai-copilot-mode-heading"
+        tabIndex={-1}
+        className="w-[480px] max-w-[95vw] h-[70vh] max-h-[600px] rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl overflow-hidden flex flex-col outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center gap-2 px-4 py-3 border-b border-c-border-subtle">
           <Brain size={16} className="text-c-text-secondary" />
-          <span className="text-sm font-bold text-c-text">
+          <span id="ai-copilot-mode-heading" className="text-sm font-bold text-c-text">
             {t('ideas.table.aiCopilot.title', 'AI Copilot')}
           </span>
 

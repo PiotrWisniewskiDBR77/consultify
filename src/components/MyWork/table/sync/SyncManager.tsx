@@ -21,6 +21,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { type ActionContext, runIdeaAction } from '@/actions/ideaActionRegistry';
+import { EMPTY_SELECTION } from '@/components/MyWork/ideaSelectionTypes';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 
 // ─── Types ───────────────────────────────────────────────────────
@@ -98,55 +100,92 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
     fetchSyncs();
   }, [fetchSyncs]);
 
-  const handleDelete = async (syncId: string) => {
-    try {
-      await TablePlatformApi.deleteTableSync(syncId);
-      setSyncs((prev) => prev.filter((s) => s.id !== syncId));
-      toast.success(t('ideas.table.syncDeleted', 'Sync deleted'));
-    } catch {
-      toast.error(t('ideas.table.failedToDelete', 'Failed to delete'));
-    }
+  // Program B (E02) — dwie ścieżki, jedna funkcja rejestru: klik człowieka =
+  // `ctx.params.run` (rejestr wykonuje ORYGINALNY callback wprost); Teresa =
+  // ta sama funkcja rejestru woła REST bezpośrednio (`runTableSync*Callback`
+  // w `ideaActionRegistry.ts`).
+  const runSyncAction = (actionId: string, run: () => void, params?: Record<string, unknown>) => {
+    const ctx: ActionContext = {
+      ideaId: baseId,
+      tool: 'table',
+      selection: EMPTY_SELECTION,
+      surface: 'panel',
+      source: 'ui',
+      language: isPl ? 'pl' : 'en',
+      params: { run, ...(params || {}) },
+    };
+    void runIdeaAction(actionId, ctx);
   };
 
-  const handleSyncNow = async (syncId: string) => {
-    setSyncingId(syncId);
-    try {
-      const result = await TablePlatformApi.executeTableSync(syncId);
-      toast.success(
-        t('ideas.table.syncResult', 'Synced: {{created}} created, {{updated}} updated', {
-          created: result?.created ?? 0,
-          updated: result?.updated ?? 0,
-        })
-      );
-      await fetchSyncs();
-    } catch {
-      toast.error(t('ideas.table.syncFailed', 'Sync failed'));
-    } finally {
-      setSyncingId(null);
-    }
+  const handleDelete = (syncId: string) => {
+    runSyncAction(
+      'table.sync.delete',
+      async () => {
+        try {
+          await TablePlatformApi.deleteTableSync(syncId);
+          setSyncs((prev) => prev.filter((s) => s.id !== syncId));
+          toast.success(t('ideas.table.syncDeleted', 'Sync deleted'));
+        } catch {
+          toast.error(t('ideas.table.failedToDelete', 'Failed to delete'));
+        }
+      },
+      { syncId }
+    );
   };
 
-  const handleCreateSync = async () => {
+  const handleSyncNow = (syncId: string) => {
+    runSyncAction(
+      'table.sync.run_now',
+      async () => {
+        setSyncingId(syncId);
+        try {
+          const result = await TablePlatformApi.executeTableSync(syncId);
+          toast.success(
+            t('ideas.table.syncResult', 'Synced: {{created}} created, {{updated}} updated', {
+              created: result?.created ?? 0,
+              updated: result?.updated ?? 0,
+            })
+          );
+          await fetchSyncs();
+        } catch {
+          toast.error(t('ideas.table.syncFailed', 'Sync failed'));
+        } finally {
+          setSyncingId(null);
+        }
+      },
+      { syncId }
+    );
+  };
+
+  const handleCreateSync = () => {
     if (!sourceTableId || !targetTableId) {
       toast.error(t('ideas.table.selectSourceAndTarget', 'Select source and target'));
       return;
     }
-    setCreating(true);
-    try {
-      await TablePlatformApi.createTableSync(
-        sourceTableId,
-        targetTableId,
-        Object.keys(fieldMapping).length > 0 ? fieldMapping : { '*': '*' },
-        syncMode
-      );
-      toast.success(t('ideas.table.syncCreated', 'Sync created'));
-      resetWizard();
-      await fetchSyncs();
-    } catch {
-      toast.error(t('ideas.table.failedToCreate', 'Failed to create'));
-    } finally {
-      setCreating(false);
-    }
+    const resolvedFieldMapping =
+      Object.keys(fieldMapping).length > 0 ? fieldMapping : { '*': '*' };
+    runSyncAction(
+      'table.sync.create',
+      async () => {
+        setCreating(true);
+        try {
+          await TablePlatformApi.createTableSync(
+            sourceTableId,
+            targetTableId,
+            resolvedFieldMapping,
+            syncMode
+          );
+          toast.success(t('ideas.table.syncCreated', 'Sync created'));
+          resetWizard();
+          await fetchSyncs();
+        } catch {
+          toast.error(t('ideas.table.failedToCreate', 'Failed to create'));
+        } finally {
+          setCreating(false);
+        }
+      },
+      { sourceTableId, targetTableId, fieldMapping: resolvedFieldMapping, syncMode }
+    );
   };
 
   const resetWizard = () => {
@@ -270,7 +309,9 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
 
               {sourceType === 'csv_url' && (
                 <div className="space-y-2">
-                  <label className="block text-xs font-medium text-c-text-muted">CSV URL</label>
+                  <label className="block text-xs font-medium text-c-text-muted">
+                    {t('myWorkTable.syncManager.csvUrl', 'CSV URL')}
+                  </label>
                   <input
                     type="url"
                     value={sourceTableId}
@@ -284,7 +325,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
               {sourceType === 'google_sheets' && (
                 <div className="space-y-2">
                   <label className="block text-xs font-medium text-c-text-muted">
-                    Google Sheets URL
+                    {t('myWorkTable.syncManager.googleSheetsUrl', 'Google Sheets URL')}
                   </label>
                   <input
                     type="url"

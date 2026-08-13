@@ -54,6 +54,7 @@ import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { type ActionContext, runIdeaAction } from '@/actions/ideaActionRegistry';
 import { Callout, EmptyStateInline, ToggleBlock } from '@/components/shared/NModeBlocks';
 import { Api, getMapVersionFromPayload } from '@/services/api';
 import { generateAIProposal } from '@/services/ideaAIGenerator';
@@ -65,7 +66,7 @@ import {
 } from '@/utils/ideaDetailsInPanelFlag';
 
 import TeresaMark from '../../shared/TeresaMark';
-import type { AIProposalBatch, CanvasToolType } from '../ideaSelectionTypes';
+import { EMPTY_SELECTION, type AIProposalBatch, type CanvasToolType } from '../ideaSelectionTypes';
 import {
   insertMentionIntoText,
   renderMentionText,
@@ -1821,7 +1822,22 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                       {s}
                     </span>
                     <button
-                      onClick={() => handleApplyAISuggestion(s)}
+                      onClick={() => {
+                        // `idea.node.mm_apply_ai_suggestion` (ideaActionRegistry.ts,
+                        // closure 2026-08-10) — shared id with NodeDetailDrawer.tsx
+                        // (identical handler, mutually-exclusive via
+                        // mindmapDrawerUnified flag); routes the SAME closure
+                        // through the registry so it's a real, connected entry.
+                        const actionCtx: ActionContext = {
+                          ideaId,
+                          tool: 'mindmap',
+                          selection: EMPTY_SELECTION,
+                          surface: 'panel',
+                          source: 'ui',
+                          params: { run: () => handleApplyAISuggestion(s) },
+                        };
+                        void runIdeaAction('idea.node.mm_apply_ai_suggestion', actionCtx);
+                      }}
                       className="text-[9px] font-bold text-c-text-secondary dark:text-c-text-muted hover:underline shrink-0"
                     >
                       {t('ideas.mindmap.add', 'Add')}

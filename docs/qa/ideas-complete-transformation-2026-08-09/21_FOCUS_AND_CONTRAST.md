@@ -1,0 +1,585 @@
+# 21 — Focus-visible + Contrast (Gate 4 gap closure)
+
+Stream: G4-FOCUS-CONTRAST. Worktree: `/Users/piotrwisniewski/consultify-wt/g4-focus-contrast`
+(detached, stamp **`e0fc428a33`**). Date: 2026-08-11. Changes left uncommitted per instruction.
+
+Closes two gaps the Gate 4 visual matrix (`19_VISUAL_CX_MATRIX.md`) explicitly logged as
+**NOT CAPTURED** (no `:focus-visible` screenshot) and **NOT MEASURED** (no contrast ratio —
+deliberately not guessed).
+
+Harness: `dev-render/`, port **3611** (`npx vite --config dev-render/vite.config.ts --port 3611
+--strictPort`, started manually via Bash — the browser-preview tool's `.claude/launch.json`
+resolves against the *outer* session checkout, not this worktree, so the server was started
+by hand from this worktree and the browser pane pointed at `http://localhost:3611` directly).
+`.claude/launch.json` in this worktree got one new entry appended (`g4-focus-contrast`, port
+3611) — nothing removed.
+
+---
+
+## 1. Method — how focus was driven, and a methodology finding that shaped everything else
+
+Instruction: drive focus with **real keyboard interaction**, not `.focus()`. That surfaced a
+defect before a single screenshot was taken:
+
+**Forward `Tab` does not move focus at all on Mind Map, Whiteboard, or Process Flow.** All
+three mount a document-level (`document.addEventListener('keydown', …)`, no `containerRef`,
+so it is global, not scoped to the canvas) keyboard-shortcut hook that intercepts bare `Tab`
+as "add child" / "add step" and calls `preventDefault()` — regardless of which element on the
+page currently has focus, as long as it isn't a text input:
+- `src/components/MyWork/hooks/useKeyboardShortcuts.ts:380` (Mind Map): `if (event.key ===
+  'Tab' && !event.shiftKey) { if (onAddChild) { event.preventDefault(); onAddChild(); ... } }`,
+  attached via `document.addEventListener('keydown', handleKeyDown)` at line 523.
+- `src/components/MyWork/canvas/useIdeasToolKeyboard.ts:160` (shared hook used by Whiteboard
+  `IdeaWhiteboardTool.tsx:3975` and Process Flow `IdeaProcessFlowTool.tsx:2544`, both called
+  with no `containerRef`, so `target = containerRef?.current || document` at line 204 resolves
+  to `document`): same `Tab && !shiftKey → onAddChild` pattern.
+
+Verified with a minimal repro: fresh page load, click the "Konwertuj" button (real mouse
+click, focuses it), press `Tab` once — focus stays on "Konwertuj" (confirmed via
+`document.activeElement` before/after) and no visible focus ring ever gets a chance to render
+on the *next* control, because there is no next control to land on.
+
+**Worse, on Mind Map specifically, `Shift+Tab` also fires the add-child side effect**, even
+though the guard explicitly reads `!event.shiftKey`. Minimal repro: fresh `resetMap=1` page
+load, **zero mouse interaction**, a single `Shift+Tab` keypress → a new empty child node
+("Wpisz…" placeholder) appears under the "Dyscyplina zakresu i wyceny" branch with its
+type-picker menu open (Key Insight / Open question / Action Item / Evidence needed /
+Hypothesis), confirmed reproducible across repeated clean runs (fresh browser context,
+`resetMap=1`, no prior state). A `document`-level capture-phase event log shows the
+synthesized `Tab` keydown already has `defaultPrevented: true` by the time it reaches even a
+capture-phase listener on `document` itself, meaning some other, earlier-registered handler
+intercepts it first. **Root cause not pinned to an exact line within this stream's budget** —
+flagged as an open item, not guessed at. Practical consequence: **every Mind Map screenshot in
+this report that required more than the very first Shift+Tab press shows that extra node and
+its type-picker overlaid on the canvas** — this is not a capture artifact, it is what a
+keyboard user actually gets, and it is reported as Finding F-K2 below, not silently cropped out.
+
+Because forward `Tab` is inert, **`Shift+Tab` was used as the sole navigation mechanism** for
+every capture (a real keyboard combo, dispatched via Playwright `keyboard.press('Shift+Tab')`,
+confirmed to correctly set `:focus-visible` — Chromium applies `:focus-visible` to any element
+whose focus resulted from a keyboard event, independent of what was focused immediately
+before). Each target was reached by an isolated walk (fresh browser page per screenshot, no
+cross-target reuse) from a side-effect-free anchor (an empty click on the canvas background for
+the 3 canvas tools; no click at all for Table, where `Shift+Tab` from an unfocused document
+already walks the real order). The Idea Table's own grid keyboard hook
+(`src/components/MyWork/table/useTableKeyboard.ts:145`) also remaps `Tab` — but scoped to a
+`containerRef` (the grid), not `document`, so it only affects `Tab` while focus is already
+inside a table cell; less severe than the two document-global cases above, still worth a P2
+note (see F-K3).
+
+A first pass reached the CTA and one canvas-node target by *clicking the target itself* — that
+was **wrong** (a mouse click on `Konwertuj` opens its dropdown and does not set
+`:focus-visible`) and was redone: every one of the 40 screenshots below was re-captured
+reaching the target exclusively via `Shift+Tab`, verified against a live event/state log before
+the screenshot was taken.
+
+## 2. Focus-visible matrix
+
+All 40 screenshots were opened with the Read tool and visually inspected (not just measured
+programmatically). Canon: ring must be blue `c-focus`
+(`--c-focus-solid` `#2563eb` light / `#5b8def` dark, box-shadow recipe
+`0 0 0 2px var(--c-focus-solid)`-ish, see `tailwind.config.js:701` `hig-focus`). Files live in
+`docs/qa/ideas-complete-transformation-2026-08-09/screenshots/`, prefix `g4focus__`.
+
+| Tool | Control | Light | Dark | Ring source | Verdict |
+|---|---|---|---|---|---|
+| Mind Map | CTA "Konwertuj" | `g4focus__mindmap__cta-convert__light__pl.png` | `…__dark__pl.png` | custom `c-focus` box-shadow (`rgba(37,99,235,.4)` / `rgba(91,141,239,.45)`) | PASS |
+| Mind Map | Menu-2 tool switcher ("Mapa myśli" tab) | `g4focus__mindmap__menu2-toolswitcher__light__pl.png` | `…__dark__pl.png` | custom `c-focus` box-shadow | PASS |
+| Mind Map | Toolbar icon-only ("AI") | `g4focus__mindmap__toolbar-ai-icon__light__pl.png` | `…__dark__pl.png` | native UA outline, `rgb(0,95,204)`/`rgb(153,200,255)` — blue, **not** the `c-focus` token | PASS (blue) / minor inconsistency, see F-K1 |
+| Mind Map | Right-rail control ("Zaznaczanie") | `g4focus__mindmap__rightrail-select__light__pl.png` | `…__dark__pl.png` | custom `c-focus` box-shadow | PASS |
+| Mind Map | Canvas node (idea card) | `g4focus__mindmap__canvas-node__light__pl.png` | `…__dark__pl.png` | **none** — `outline:none`, `box-shadow:none` | **FAIL — invisible** (F-01) |
+| Whiteboard | CTA "Konwertuj" | `g4focus__whiteboard__cta-convert__light__pl.png` | `…__dark__pl.png` | custom `c-focus` box-shadow | PASS |
+| Whiteboard | Menu-2 tab ("Whiteboard") | `g4focus__whiteboard__menu2-toolswitcher__light__pl.png` | `…__dark__pl.png` | custom `c-focus` box-shadow (dark capture: switcher pill lands outside this particular pan/zoom crop — element confirmed focused programmatically, not clearly visible in-frame; see NOT MEASURED) | PASS (light) / inconclusive (dark) |
+| Whiteboard | Toolbar icon-only ("Kształt") | `g4focus__whiteboard__toolbar-shape-icon__light__pl.png` | `…__dark__pl.png` | custom `c-focus` box-shadow | PASS |
+| Whiteboard | Right-rail control ("Zaznaczanie") | `g4focus__whiteboard__rightrail-select__light__pl.png` | `…__dark__pl.png` | custom `c-focus` box-shadow | PASS |
+| Whiteboard | Canvas node (sticky note) | `g4focus__whiteboard__canvas-node__light__pl.png` | `…__dark__pl.png` | **none** | **FAIL — invisible** (F-01) |
+| Process Flow | CTA "Konwertuj" | `g4focus__processflow__cta-convert__light__pl.png` | `…__dark__pl.png` | custom `c-focus` box-shadow | PASS |
+| Process Flow | Menu-2 tab ("Process Flow") | `g4focus__processflow__menu2-toolswitcher__light__pl.png` | `…__dark__pl.png` | custom `c-focus` box-shadow | PASS |
+| Process Flow | Toolbar icon-only ("Decyzja") | `g4focus__processflow__toolbar-decision-icon__light__pl.png` | `…__dark__pl.png` | custom `c-focus` box-shadow (blends into dark rail as a filled tint rather than a crisp ring at this icon size — still blue, still visibly distinct) | PASS |
+| Process Flow | Right-rail control ("Zaznaczanie") | `g4focus__processflow__rightrail-select__light__pl.png` | `…__dark__pl.png` | custom `c-focus` box-shadow | PASS |
+| Process Flow | Canvas node (flow step) | `g4focus__processflow__canvas-node__light__pl.png` | `…__dark__pl.png` | **none** (the "Koniec" node's red border is its baseline Yes/No/End semantic color, unrelated to focus — confirmed via computed style: `outline:none`, `box-shadow:none`) | **FAIL — invisible** (F-01) |
+| Table | CTA "Nowy pomysł" | `g4focus__table__cta-newidea__light__pl.png` | `…__dark__pl.png` | native UA outline, `rgb(0,95,204)`/`rgb(153,200,255)` — blue, not the token | PASS (blue) / minor inconsistency, see F-K1 |
+| Table | Toolbar icon-only (row kebab, "Row actions") | `g4focus__table__toolbar-rowactions-icon__light__pl.png` | `…__dark__pl.png` | custom `c-focus` box-shadow | PASS |
+| Table | Right-rail-equivalent ("Ustawienia widoku" gear) | `g4focus__table__rightrail-viewsettings__light__pl.png` | `…__dark__pl.png` | custom `c-focus` box-shadow | PASS |
+| Table | Row control (star toggle) | `g4focus__table__table-row-star__light__pl.png` | `…__dark__pl.png` | custom `c-focus` box-shadow | PASS |
+| Table | Row control (checkbox) | `g4focus__table__table-row-checkbox__light__pl.png` | `…__dark__pl.png` | native UA outline, blue | PASS (blue) / minor inconsistency, see F-K1 |
+
+**Count: 40 screenshots captured, 40 opened and visually inspected.** No crimson
+(`primary-*`/`#85182F`) focus ring found anywhere in the four tools. 3 controls FAIL with a
+completely invisible ring (canvas nodes, all three canvas tools, both themes — F-01). 1 control
+(Whiteboard's Menu-2 tab in dark theme) is programmatically confirmed focused but not clearly
+visible in that specific capture's pan/zoom framing — logged as inconclusive, not scored PASS
+or FAIL, see §4.
+
+## 3. Contrast — method and results
+
+**Method used: computed-style ancestor-walk compositing (Method 1)**, cross-verified with
+**pixel-sampling of the actual rendered PNG via `sharp`** (Method 2) wherever Method 1 flagged
+a translucent/`backdrop-filter` layer, and once to resolve an apparent contradiction (see
+below). Method 1: for each control's text (or, for icon-only controls, the SVG's computed
+`color`, matched against the WCAG "UI component" 3:1 threshold rather than the 4.5:1 text
+threshold), walk from the element up to `<html>`, composite every ancestor's
+`background-color` **in outermost-to-innermost order** (Porter-Duff "over"), and multiply the
+foreground's alpha by the cumulative `opacity` of the element and its ancestors. This is the
+"measure the actual composited background" approach the task specifically asked for, not a
+read of the nearest ancestor's nominal token value — it matters here because several controls
+sit on a `backdrop-filter: blur(...)` translucent panel (flagged `backdrop-blur` in the table;
+Menu-2 tab strips on Whiteboard/Process Flow, the "4 niepowiązanych elementów" toast, the
+Table's sticky column-header row) where reading only the immediate parent's nominal color would
+have been wrong.
+
+**One measurement was cross-checked and corrected.** A first look at
+`g4focus__table__table-row-checkbox__dark__pl.png` was misread by eye as "the table body stays
+white under `theme=dark`" — a plausible-looking dark-mode bug. Pixel-sampling the actual PNG at
+multiple points (`sharp`, raw RGB extraction) came back `rgb(15,23,42)` / `rgb(21,33,59)` etc.
+— genuinely dark navy, matching the computed-style read exactly. Re-cropping and re-viewing the
+same file confirmed the table body **is** correctly dark-themed; the original read was a
+misjudgment on a small inline preview, not a real defect. Retracted before it went in the
+findings list — flagged here as a reminder that Method 2 pixel-sampling is what catches both
+kinds of error (the token-vs-composited trap the task named, and a plain visual misread).
+
+Font-size/weight was read per element to apply the correct WCAG threshold (≥24px, or ≥18.66px
+bold = "large text", 3:1; otherwise 4.5:1; all UI-component/icon measurements use 3:1
+regardless of size).
+
+### 3.1 Results table
+
+| Tool | Theme | Control | Foreground | Composited background | Ratio | Threshold | Verdict |
+|---|---|---|---|---|---|---|---|
+| Mind Map | light | CTA "Konwertuj" text | rgb(255,255,255) | rgb(15,23,42) | 17.85 | 4.5 | PASS |
+| Mind Map | light | Menu-2 switcher label ("Mapa myśli") | rgb(100,116,139) | rgb(255,255,255) | 4.76 | 4.5 | PASS |
+| Mind Map | light | Canvas node title | rgb(88,101,119) | rgb(241,245,249) | 5.41 | 4.5 | PASS |
+| Mind Map | light | Branch node title | rgb(71,85,105) | rgb(241,245,249) | 6.92 | 4.5 | PASS |
+| Mind Map | light | Node sub-label "L2" | rgb(88,101,119) | rgb(241,245,249) | 5.41 | 4.5 | PASS |
+| Mind Map | light | Status pill "Kształtuje się" | rgb(71,85,105) | rgb(248,250,252) | 7.24 | 4.5 | PASS |
+| Mind Map | light | Status pill "Zmiany w kolejce" | rgb(100,116,139) | rgb(255,255,255) | 4.76 | 4.5 | PASS |
+| Mind Map | light | Note-card body text | rgb(71,85,105) | rgb(250,250,249) | 7.26 | 4.5 | PASS |
+| Mind Map | light | Icon-only rail button "AI" (UI comp.) | rgb(100,116,139) | rgb(255,255,255) | 4.76 | 3.0 | PASS |
+| Mind Map | light | Icon-only rail "Zaznaczanie" (UI comp.) | rgb(15,23,42) | rgb(248,250,252) *(backdrop-blur)* | 17.06 | 3.0 | PASS |
+| Mind Map | light | Disabled button (auto-detected) | rgb(15,23,42) | rgb(255,255,255) | 17.85 | 3.0 | PASS |
+| Mind Map | dark | CTA "Konwertuj" text | rgb(15,23,42) | rgb(244,247,251) | 16.61 | 4.5 | PASS |
+| Mind Map | dark | Menu-2 switcher label | rgb(138,153,176) | rgb(15,23,42) | 6.18 | 4.5 | PASS |
+| Mind Map | dark | Canvas node title | rgb(135,149,170) | rgb(18,25,42) | 5.76 | 4.5 | PASS |
+| Mind Map | dark | Branch node title | rgb(148,163,184) | rgb(18,25,42) | 6.82 | 4.5 | PASS |
+| Mind Map | dark | **Node sub-label "L2"** | rgb(92,107,129) | rgb(18,25,42) | **3.22** | 4.5 | **FAIL** |
+| Mind Map | dark | Status pill "Kształtuje się" | rgb(184,196,214) | rgb(21,33,59) | 9.07 | 4.5 | PASS |
+| Mind Map | dark | Status pill "Zmiany w kolejce" | rgb(138,153,176) | rgb(15,23,42) | 6.18 | 4.5 | PASS |
+| Mind Map | dark | Note-card body text | rgb(184,196,214) | rgb(10,15,30) | 10.82 | 4.5 | PASS |
+| Mind Map | dark | Icon-only rail "AI" (UI comp.) | rgb(148,163,184) | rgb(15,23,42) | 6.96 | 3.0 | PASS |
+| Mind Map | dark | Icon-only rail "Zaznaczanie" (UI comp.) | rgb(244,247,251) | rgb(15,23,42) *(backdrop-blur)* | 16.61 | 3.0 | PASS |
+| Mind Map | dark | Disabled button | rgb(255,255,255) | rgb(15,23,42) | 17.85 | 3.0 | PASS |
+| Whiteboard | light | CTA "Konwertuj" text | rgb(255,255,255) | rgb(15,23,42) | 17.85 | 4.5 | PASS |
+| Whiteboard | light | Menu-2 tab "Whiteboard" (active) | rgb(71,85,105) | rgb(248,250,252) *(backdrop-blur)* | 7.24 | 4.5 | PASS |
+| Whiteboard | light | Toolbar "Wstaw" label | rgb(71,85,105) | rgb(248,250,252) *(backdrop-blur)* | 7.24 | 4.5 | PASS |
+| Whiteboard | light | Section header "OBSZAR" | rgb(100,116,139) | rgb(255,255,255) | 4.76 | 4.5 | PASS |
+| Whiteboard | light | Area title "DISCOVERY — WARSZTAT 1" | rgb(15,23,42) | rgb(255,255,255) | 17.85 | 4.5 | PASS |
+| Whiteboard | light | Sticky-note header "NOTATKA" | rgb(100,116,139) | rgb(255,255,255) | 4.76 | 4.5 | PASS |
+| Whiteboard | light | Sticky-note body text | rgb(15,23,42) | rgb(248,250,252) | 17.06 | 4.5 | PASS |
+| Whiteboard | light | Toast "4 niepowiązanych elementów…" | rgb(51,65,85) | rgb(255,255,255) *(backdrop-blur)* | 10.35 | 4.5 | PASS |
+| Whiteboard | light | Toast CTA "Działaj" | rgb(59,40,131) | rgb(235,234,243) *(backdrop-blur)* | 9.66 | 4.5 | PASS |
+| Whiteboard | light | Icon-only "Kształt" (UI comp.) | rgb(71,85,105) | rgb(248,250,252) *(backdrop-blur)* | 7.24 | 3.0 | PASS |
+| Whiteboard | light | Disabled button | rgb(15,23,42) | rgb(255,255,255) | 17.85 | 3.0 | PASS |
+| Whiteboard | dark | CTA "Konwertuj" text | rgb(15,23,42) | rgb(244,247,251) | 16.61 | 4.5 | PASS |
+| Whiteboard | dark | Menu-2 tab "Whiteboard" | rgb(184,196,214) | rgb(21,33,59) *(backdrop-blur)* | 9.07 | 4.5 | PASS |
+| Whiteboard | dark | Toolbar "Wstaw" label | rgb(184,196,214) | rgb(21,33,59) *(backdrop-blur)* | 9.07 | 4.5 | PASS |
+| Whiteboard | dark | Section header "OBSZAR" | rgb(138,153,176) | rgb(15,23,42) | 6.18 | 4.5 | PASS |
+| Whiteboard | dark | Area title | rgb(255,255,255) | rgb(15,23,42) | 17.85 | 4.5 | PASS |
+| Whiteboard | dark | Sticky-note header "NOTATKA" | rgb(138,153,176) | rgb(15,23,42) *(backdrop-blur)* | 6.18 | 4.5 | PASS |
+| Whiteboard | dark | Sticky-note body text | rgb(244,247,251) | rgb(21,33,59) | 14.89 | 4.5 | PASS |
+| Whiteboard | dark | Toast text | rgb(226,232,240) | rgb(21,30,50) *(backdrop-blur)* | 13.53 | 4.5 | PASS |
+| Whiteboard | dark | Toast CTA "Działaj" | rgb(88,166,255) | rgb(27,43,70) *(backdrop-blur)* | 5.59 | 4.5 | PASS |
+| Whiteboard | dark | Icon-only "Kształt" (UI comp.) | rgb(138,153,176) | rgb(15,23,42) *(backdrop-blur)* | 6.18 | 3.0 | PASS |
+| Whiteboard | dark | Disabled button | rgb(255,255,255) | rgb(15,23,42) | 17.85 | 3.0 | PASS |
+| Process Flow | light | CTA "Konwertuj" text | rgb(255,255,255) | rgb(15,23,42) | 17.85 | 4.5 | PASS |
+| Process Flow | light | Menu-2 tab "Klasyczny przepływ" (active) | rgb(15,23,42) | rgb(248,250,252) | 17.06 | 4.5 | PASS |
+| Process Flow | light | Menu-2 tab "Automatyzacja" (inactive) | rgb(100,116,139) | rgb(255,255,255) | 4.76 | 4.5 | PASS |
+| Process Flow | light | Body/description text | rgb(71,85,105) | rgb(248,250,252) | 7.24 | 4.5 | PASS |
+| Process Flow | light | **Swimlane label "Klient"** | rgb(100,116,139) | rgb(246,247,249) | **4.43** | 4.5 | **FAIL (borderline)** |
+| Process Flow | light | Chip "Brak ostrzeżeń" | rgb(2,79,38) | rgb(231,242,231) | 8.47 | 4.5 | PASS |
+| Process Flow | light | Flow node "Start" | rgb(15,23,42) | rgb(243,250,236) | 16.74 | 4.5 | PASS |
+| Process Flow | light | Flow node "Koniec" | rgb(15,23,42) | rgb(253,241,237) | 16.14 | 4.5 | PASS |
+| Process Flow | light | Edge label "Nie" | rgb(71,85,105) | rgb(250,250,249) | 7.26 | 4.5 | PASS |
+| Process Flow | light | Decision node text | rgb(15,23,42) | rgb(250,250,249) | 17.09 | 4.5 | PASS |
+| Process Flow | light | Icon-only "Decyzja" (UI comp.) | rgb(71,85,105) | rgb(248,250,252) *(backdrop-blur)* | 7.24 | 3.0 | PASS |
+| Process Flow | light | Disabled button | rgb(15,23,42) | rgb(255,255,255) | 17.85 | 3.0 | PASS |
+| Process Flow | dark | CTA "Konwertuj" text | rgb(15,23,42) | rgb(244,247,251) | 16.61 | 4.5 | PASS |
+| Process Flow | dark | Menu-2 tab (active) | rgb(244,247,251) | rgb(21,33,59) | 14.89 | 4.5 | PASS |
+| Process Flow | dark | Menu-2 tab (inactive) | rgb(138,153,176) | rgb(15,23,42) | 6.18 | 4.5 | PASS |
+| Process Flow | dark | Body/description text | rgb(184,196,214) | rgb(21,33,59) | 9.07 | 4.5 | PASS |
+| Process Flow | dark | Swimlane label "Klient" | rgb(138,153,176) | rgb(25,31,48) | 5.67 | 4.5 | PASS |
+| Process Flow | dark | Chip "Brak ostrzeżeń" | rgb(179,213,106) | rgb(27,46,58) | 8.42 | 4.5 | PASS |
+| Process Flow | dark | Flow node "Start" | rgb(244,247,251) | rgb(7,27,29) | 16.51 | 4.5 | PASS |
+| Process Flow | dark | Flow node "Koniec" | rgb(244,247,251) | rgb(29,12,27) | 17.44 | 4.5 | PASS |
+| Process Flow | dark | Edge label "Nie" | rgb(184,196,214) | rgb(10,15,30) | 10.82 | 4.5 | PASS |
+| Process Flow | dark | Decision node text | rgb(244,247,251) | rgb(10,15,30) | 17.77 | 4.5 | PASS |
+| Process Flow | dark | Icon-only "Decyzja" (UI comp.) | rgb(138,153,176) | rgb(15,23,42) *(backdrop-blur)* | 6.18 | 3.0 | PASS |
+| Process Flow | dark | Disabled button | rgb(255,255,255) | rgb(15,23,42) | 17.85 | 3.0 | PASS |
+| Table | light | CTA "Nowy pomysł" | rgb(250,250,249) | rgb(15,23,42) | 17.09 | 4.5 | PASS |
+| Table | light | Column header "Tytuł" | rgb(100,116,139) | rgb(248,250,252) *(backdrop-blur)* | 4.55 | 4.5 | PASS (borderline) |
+| Table | light | Row title text | rgb(15,23,42) | rgb(255,255,255) | 17.85 | 4.5 | PASS |
+| Table | light | Row description text | rgb(100,116,139) | rgb(255,255,255) | 4.76 | 4.5 | PASS |
+| Table | light | Status pill "Kształtuje się" | rgb(71,85,105) | rgb(248,250,252) | 7.24 | 4.5 | PASS |
+| Table | light | Tag chip "rynek" | rgb(71,85,105) | rgb(248,250,252) | 7.24 | 4.5 | PASS |
+| Table | light | Right-panel header "WŁAŚCIWOŚCI" | rgb(100,116,139) | rgb(255,255,255) | 4.76 | 4.5 | PASS |
+| Table | light | Right-panel empty state "Brak komentarzy." | rgb(100,116,139) | rgb(255,255,255) | 4.76 | 4.5 | PASS |
+| Table | light | Right-panel value "Bez folderu" | rgb(71,85,105) | rgb(240,241,243) | 6.70 | 4.5 | PASS |
+| Table | light | **Icon-only "Row actions" kebab (UI comp.)** | rgb(181,187,195) | rgb(255,255,255) | **1.93** | 3.0 | **FAIL** |
+| Table | light | Icon-only "Ustawienia widoku" (UI comp.) | rgb(100,116,139) | rgb(248,250,252) *(backdrop-blur)* | 4.55 | 3.0 | PASS |
+| Table | light | Disabled button | rgb(15,23,42) | rgb(255,255,255) | 17.85 | 3.0 | PASS |
+| Table | dark | CTA "Nowy pomysł" | rgb(10,15,30) | rgb(244,247,251) | 17.77 | 4.5 | PASS |
+| Table | dark | Column header "Tytuł" | rgb(138,153,176) | rgb(21,33,59) *(backdrop-blur)* | 5.53 | 4.5 | PASS |
+| Table | dark | Row title text | rgb(244,247,251) | rgb(15,23,42) | 16.61 | 4.5 | PASS |
+| Table | dark | Row description text | rgb(138,153,176) | rgb(15,23,42) | 6.18 | 4.5 | PASS |
+| Table | dark | Status pill "Kształtuje się" | rgb(184,196,214) | rgb(21,33,59) | 9.07 | 4.5 | PASS |
+| Table | dark | Tag chip "rynek" | rgb(184,196,214) | rgb(21,33,59) | 9.07 | 4.5 | PASS |
+| Table | dark | Right-panel header "WŁAŚCIWOŚCI" | rgb(138,153,176) | rgb(15,23,42) | 6.18 | 4.5 | PASS |
+| Table | dark | Right-panel empty state | rgb(138,153,176) | rgb(15,23,42) | 6.18 | 4.5 | PASS |
+| Table | dark | Right-panel value "Bez folderu" | rgb(203,213,225) | rgb(32,41,59) | 9.83 | 4.5 | PASS |
+| Table | dark | **Icon-only "Row actions" kebab (UI comp.)** | rgb(49,60,81) | rgb(15,23,42) | **1.61** | 3.0 | **FAIL** |
+| Table | dark | Icon-only "Ustawienia widoku" (UI comp.) | rgb(138,153,176) | rgb(21,33,59) *(backdrop-blur)* | 5.53 | 3.0 | PASS |
+| Table | dark | Disabled button | rgb(255,255,255) | rgb(15,23,42) | 17.85 | 3.0 | PASS |
+
+87 controls measured (both themes), all computed via Method 1 with `hasGradient`/
+`hasBackdropBlur` flags recorded per row (12 rows sit on a `backdrop-filter: blur()` panel,
+flagged above; none sit on a CSS gradient in these four tools' resting states). The "Row
+actions" kebab FAIL was cross-checked with Method 2: extracting the actual button's 32×32
+pixel block from `g4focus__table__toolbar-rowactions-icon__light__pl.png` and averaging its RGB
+gives `(253,253,254)` — confirms the icon is genuinely a very light gray line on white at rest,
+not a computed-style artifact.
+
+## 4. Findings
+
+| ID | Severity | Where | What | Rule |
+|---|---|---|---|---|
+| F-K1 | **P0** | Mind Map, Whiteboard, Process Flow (all instances, all themes) | Forward `Tab` never moves focus — intercepted document-wide as "add child"/"add step" and `preventDefault()`-ed, regardless of current focus target. A keyboard-only user cannot Tab through the toolbar, rail, or CTA at all in the forward direction. | WCAG 2.1.1 Keyboard, 2.4.3 Focus Order |
+| F-K2 | **P0** | Mind Map (all instances) | `Shift+Tab` — the only working navigation key — also fires the "add child" side effect on the very first press, even on a completely fresh, unclicked page load. Creates a real, saved empty node with its type-picker open, visible in every Mind Map screenshot in §2. Root cause not pinned to an exact source line within this stream's budget (see §1) — a `document`-level listener earlier in the capture chain than this stream's own debug listener already has `defaultPrevented: true` on the synthesized `Tab` keydown before it's inspectable. | WCAG 2.1.1; data-integrity (mutates the map from pure navigation) |
+| F-01 | **P1** | Mind Map / Whiteboard / Process Flow canvas nodes, all themes | Canvas nodes (idea cards, sticky notes, flow steps) are keyboard-focusable (confirmed reachable via `Shift+Tab`, `document.activeElement` correctly reports the node) but render **zero** visible focus indication — `outline: none`, `box-shadow: none` on all 6 captures (3 tools × 2 themes). A keyboard user has no way to tell which node is selected. | TRIADA_KANON.md focus rule; WCAG 2.4.7 Focus Visible |
+| F-K3 | P2 | Idea Table | Idea Table's own grid keyboard hook (`useTableKeyboard.ts:145`) remaps `Tab` to move between grid cells rather than leaving the table, scoped to the grid container (not global like F-K1) — a debatable but non-standard pattern; not tested for keyboard escape from the last cell. | WCAG 2.1.1 (informational) |
+| F-C1 | P2 | Mind Map, dark, node sub-label "L2" | Measured 3.22:1 against a 4.5:1 threshold — small badge text on dark canvas cards. | WCAG 1.4.3 |
+| F-C2 | P3 | Process Flow, light, swimlane label "Klient" | Measured 4.43:1 against 4.5:1 — a hairline miss. | WCAG 1.4.3 |
+| F-C3 | **P1** | Idea Table, both themes, row-actions kebab icon at rest | Measured 1.93:1 (light) / 1.61:1 (dark) against the 3:1 UI-component threshold — well under, in both themes, cross-verified by pixel sampling. Likely an intentional "reveal on row hover" pattern (common in table UIs), but the icon is still the only way to reach per-row actions and currently fails the strict AA non-text-contrast bar at rest. | WCAG 1.4.11 Non-text Contrast |
+| F-K4 (informational) | — | Header row (Idee/Teresa/kebab), left icon rail (Przegląd/Właściwości/…/Wygląd), Table's "Nowy pomysł" CTA, Table row checkboxes | These controls render the browser's **native UA focus outline** (`rgb(0,95,204)` light / a lighter blue in dark) instead of the app's custom `c-focus` box-shadow recipe used everywhere else. Still blue, still visible, **not a canon violation** (canon requires blue, not a specific implementation) — flagged as a visual inconsistency worth a follow-up ticket, not fixed here per the "unambiguous token violations only" scope. | TRIADA_KANON.md (style consistency, not a hard rule) |
+
+**No crimson focus rings found** in any of the 4 tools, 40 captures, or the `check-focus-canon.sh`
+repo scan (below) — nothing to fix in this stream under the "unambiguous crimson → c-focus"
+mandate, because there was no crimson to fix.
+
+## 5. NOT CAPTURED / NOT MEASURED
+
+- **Root cause of F-K2** (why `Shift+Tab` fires `Tab`'s handler on Mind Map): reproduced
+  deterministically, not traced to an exact file/line within this stream's time budget.
+- **Whiteboard Menu-2 tab, dark theme, visual confirmation**: `document.activeElement` and its
+  computed `box-shadow` (`rgba(91,141,239,.45)`, correct `c-focus`) were captured
+  programmatically, but the switcher pill is not clearly visible within
+  `g4focus__whiteboard__menu2-toolswitcher__dark__pl.png`'s specific pan/zoom framing (130%
+  zoom, panned to the workshop board) — not re-shot due to time; logged as inconclusive rather
+  than scored PASS.
+- **Keyboard escape from the Idea Table grid** (does `Tab` ever leave the last cell forward,
+  and does `Shift+Tab` correctly leave the first cell backward into the toolbar) — not tested;
+  only the within-grid remap in `useTableKeyboard.ts` was read from source.
+- **Arrow-key navigation between canvas nodes** — the brief mentions arrow keys; this run used
+  `Shift+Tab` exclusively (the only mechanism that reliably worked given F-K1/F-K2) and did not
+  separately verify whether react-flow's own arrow-key node-to-node navigation exists or shows
+  a ring.
+- **Placeholder text contrast on Idea Table**: no `input[placeholder]`/`textarea[placeholder]`
+  element is present in this screen's resting state (no search/filter box open) — genuinely not
+  measurable without opening a different UI state; reported as not found, not guessed.
+- **Gradient backgrounds**: none of the 4 tools use a CSS gradient behind any of the 87 measured
+  controls in their resting/focused states surveyed here — 12 sit on `backdrop-filter: blur()`
+  translucent panels instead (flagged and measured via Method 1, cross-checked once via Method
+  2). A literal `background-image: gradient(...)` case was not found to test the "worst case
+  along the gradient" instruction against.
+- **Hover, active, and hover-then-focus compound states** — out of scope per the brief's focus
+  on `:focus-visible`; not captured.
+- **Focus ring on the "Column header 'Tytuł'" measurement** unexpectedly returned identical
+  fg/bg to the "Ustawienia widoku" gear in both themes — plausible (same sticky header-row
+  `backdrop-blur` strip) but not independently re-verified against a screenshot crop; flagged so
+  it isn't silently trusted at face value.
+
+## 6. Guard exit codes (real, not piped to `tail`)
+
+Run from this worktree's root:
+
+```
+$ ./scripts/check-focus-canon.sh; echo "EXIT=$?"
+```
+
+| Script | Exit code | Result summary |
+|---|---|---|
+| `scripts/check-focus-canon.sh` | **0** | Report mode (always exits 0 without `--ci`): 130 files / 261 occurrences of crimson-as-focus (`ring-primary-*` instead of `ring-c-focus`) at repo scale, 77% file coverage compliant, unchanged by this stream (no `ring-*` class was touched — nothing to fix, no crimson found in any of the 4 tools). Top-10 offenders are all outside the four Idea Workspace tools (billing, reports wizard, super-admin panels, partner portal, etc.) — none of the four tools examined here appear in the top offenders list. `IdeaMapWorkspace.tsx` appears once in the separate, non-gating **heuristic** section (dynamic `ring-2 ring-${cfg.color}-500/60`-style string construction) — flagged there as a manual-review candidate, not a confirmed violation, and unrelated to the focus rings actually rendered in this stream's 40 captures (all confirmed blue by direct inspection). |
+
+No source files were changed in this stream — no crimson focus ring existed in the four tools
+to fix, so nothing was touched under the "fix only unambiguous token violations" mandate.
+`.claude/launch.json` received one additive entry (`g4-focus-contrast`, port 3611); nothing
+removed.
+
+## 7. SHA
+
+Worktree base: **`e0fc428a33`** ("E15 PASS: two consecutive clean rounds, and the final gate
+board"), detached HEAD, no commits made in this stream.
+
+## 8. RISK-35 fix — S1-CONTRAST, 2026-08-12
+
+Stream S1-CONTRAST. Worktree `/Users/piotrwisniewski/.codex/worktrees/ideas-streams/s1-contrast`,
+branch `codex/ideas-s1-contrast`, base `edb38d6a29`. Closes the four measured contrast FAILs
+from §3.1 above (F-C1, F-C2, F-C3 in §4, plus the light-theme kebab row that shares F-C3's
+finding). All four rows were confirmed **product bugs, not dev-render-harness artifacts** —
+each was reproduced by loading the REAL production component through its existing dev-render
+harness screen (the same screens/components production mounts, per each screen file's own
+header comment), not a bespoke or broken harness composition.
+
+Method: same ancestor-walk compositing as §3 ("Method 1"), now implemented as a small reusable
+tool (`scripts/contrast-ratio.mjs` — `compositeOver`/`contrastRatio`/`minOpacityForRatio`,
+CLI + importable) instead of hand-computed per screenshot. Every predicted ratio below was
+additionally **cross-verified against the live render** two ways: (a) `page.evaluate` reading
+the real element's `getComputedStyle` color/opacity off the running dev-render page
+(`http://localhost:3733`, `npx vite --config dev-render/vite.config.ts --port 3733
+--strictPort`, started manually from this worktree — same reason as the port-3611 note in §0:
+the browser-preview tool's `.claude/launch.json` resolves against the outer session checkout),
+and (b) pixel-sampling the actual rendered PNG (`dev-render/shot.mjs`, Playwright,
+`deviceScaleFactor: 2`) for the darkest/lightest pixels in the control's bounding box — Method 2
+from §3, reused here for the same reason: catches both the token-vs-composited trap and any
+gap between the computed-style prediction and what a user's screen actually shows (font
+anti-aliasing dims small glyphs below their nominal fill color — see the L2 badge row).
+
+### 8.1 Results
+
+| # | Control | Theme | File:line changed | Old → new | Before | After (computed) | After (pixel-sampled) | Threshold | Verdict |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | Idea Table row-actions kebab (icon-only, at rest) | light | `src/components/MyWork/IdeasTableContent.tsx:1315` (wrapper `className` passed to the shared `RowActionsMenu`, whose own button color is `src/components/shared/RowActionsMenu.tsx:549`, untouched) | `opacity-40` → `opacity-90` (color unchanged: `text-slate-600`) | 1.93:1 | 5.84:1 | 5.93:1 (darkest icon-stroke pixels avg `rgb(88,101,119)` vs `rgb(255,255,255)`) | 3.0 (WCAG 1.4.11) | **PASS** |
+| 2 | Idea Table row-actions kebab (icon-only, at rest) | dark | same as above | `opacity-40` → `opacity-90` (color unchanged: `dark:text-slate-500`) | 1.61:1 | 3.29:1 | 3.25:1 (lightest icon-stroke pixels avg `rgb(91,106,129)` vs `rgb(15,23,42)`) | 3.0 (WCAG 1.4.11) | **PASS** |
+| 3 | Mind Map node sub-label badge "L2" | dark | `src/components/MyWork/IdeaRecommendationMap.tsx:1763` | `text-slate-600 dark:text-slate-500` → `text-c-text-secondary` | 3.22:1 | 8.26:1 (at depth 2, `opacity-90` node fade) | 8.28:1 (lightest text pixels avg `rgb(167,178,196)` vs `rgb(17,24,40)`; NOTE: 8px glyphs never reach full computed-style color even at their brightest pixel — anti-aliasing dims them, this is expected, still clears the bar by a wide margin) | 4.5 (WCAG 1.4.3) | **PASS** |
+| 4 | Process Flow swimlane label "Klient" | light | `src/components/MyWork/processflow/LaneSystem.tsx:236` | `text-c-text-muted` → `text-c-text-secondary` | 4.43:1 | 7.01–7.07:1 (composited-bg reading varied by ~1 RGB unit between the two harnesses' mock `lane.color`, both wells above the bar) | 7.01:1 (darkest text pixels avg `rgb(71,85,105)` — exact match to computed style, vs `rgb(245,246,249)`) | 4.5 (WCAG 1.4.3) | **PASS** |
+
+Row 4's dark theme was already PASS (5.67:1) before this fix and was not required to change;
+it now reads even higher (9.3:1, computed) because dark `c-text-secondary` (`rgb(184,196,214)`)
+is lighter than the dark `c-text-muted` (`rgb(138,153,176)`) it replaced — checked for
+regression, not a claimed fix.
+
+### 8.2 Tokens, not hex
+
+All three fixes reuse existing `c-*` tokens already defined in `src/index.css` (`--c-text-secondary`)
+— no new token was introduced, and `text-c-text-secondary` was already in use one line away in
+two of the three files (`LaneSystem.tsx:232`'s rename `<input>`, `IdeaRecommendationMap.tsx`'s
+node-title rendering) before this fix extended it to the sibling element that had been left on
+raw Tailwind `slate-*`. No `primary-*` touched.
+
+### 8.3 Screenshots
+
+Captured with `dev-render/shot.mjs` (Playwright, `--w=1440` or `--w=1800` for the Idea Table —
+see below — `--h=900`, `deviceScaleFactor: 2`), all under
+`docs/qa/ideas-complete-transformation-2026-08-09/screenshots/`, all opened with the Read tool
+and visually inspected (no clipping, no overlap, no layout regression vs. the pre-fix captures
+in §2/§3.1's evidence set):
+
+- `fix__table__rowactions-rest__light__pl.png`, `fix__table__rowactions-rest__dark__pl.png` —
+  Idea Table, kebab column now visible at rest in both themes. Captured at `--w=1800` (not 1440):
+  at 1440 the dev-render `idea-table` screen's inner table starts horizontally scrolled to 0 and
+  the fixed `table-fixed` column widths (sum ~1354px) plus the 320px `ArtifactRightPanel` don't
+  both fit in 1440 without a manual scroll the harness doesn't auto-perform — a **harness
+  viewport-fit limitation**, not a product bug (production's `MyIdeasListContent` mounts
+  `IdeasTableContent` without a competing flex sibling, per the existing comment at
+  `dev-render/screens/idea-table.tsx:277-293`). 1800px shows every column without scrolling.
+- `fix__mindmap__l2-badge__light__pl.png`, `fix__mindmap__l2-badge__dark__pl.png` — Mind Map,
+  10 "L2" badges visible across the tree at `--w=1440`, legible in both themes.
+- `fix__processflow__swimlane-klient__light__pl.png`,
+  `fix__processflow__swimlane-klient__dark__pl.png` — Process Flow, "Klient" / "Zespół
+  wdrożenia" lane labels at `--w=1440`, darker and more legible than the pre-fix captures,
+  no layout shift (label position/size unchanged, only color).
+
+### 8.4 Negative control
+
+Sabotaged commit `7d9d7f2fe0` (the kebab fix) in place — reverted
+`IdeasTableContent.tsx:1315`'s `opacity-90` back to the original `opacity-40` — and re-ran
+`scripts/risk35-kebab-contrast-check.mjs` (a Playwright script that reads the LIVE
+`getComputedStyle` off the running dev-render page and asserts ≥3:1 for both themes) against
+the running server with no other change:
+
+```
+$ node scripts/risk35-kebab-contrast-check.mjs http://localhost:3733
+[light] color=rgb(71,85,105) opacity=0.4 bg=rgb(255,255,255) composited=rgb(181,187,195) ratio=1.93 threshold=3 -> FAIL
+[dark] color=rgb(100,116,139) opacity=0.4 bg=rgb(15,23,42) composited=rgb(49,60,81) ratio=1.61 threshold=3 -> FAIL
+RESULT: FAIL
+EXIT=1
+```
+
+Ratios reproduce the original FAIL numbers exactly (1.93 / 1.61 — same as row 1/2's "Before"
+column), exit code 1. Restored `opacity-90` and re-ran the identical command with no other
+change:
+
+```
+$ node scripts/risk35-kebab-contrast-check.mjs http://localhost:3733
+[light] color=rgb(71,85,105) opacity=0.9 bg=rgb(255,255,255) composited=rgb(89,102,120) ratio=5.84 threshold=3 -> PASS
+[dark] color=rgb(100,116,139) opacity=0.9 bg=rgb(15,23,42) composited=rgb(92,107,129) ratio=3.29 threshold=3 -> PASS
+RESULT: ALL PASS
+EXIT=0
+```
+
+`git diff --stat` after the restore showed the same 3-file/27-line diff as before the sabotage
+(confirmed no residual change was left behind).
+
+### 8.5 Guards (real exit codes, run from this worktree's root after each commit via the
+pre-commit hook, and once more manually as instructed)
+
+```
+$ bash scripts/check-focus-canon.sh; echo "rc=$?"        # rc=0 (report mode; 130/261 baseline, unchanged — none of the 3 files touched are in the violation list)
+$ bash scripts/check-list-canon.sh; echo "rc=$?"          # rc=0 ("dług nie rośnie" — debt did not grow)
+$ bash scripts/check-artefakt.sh; echo "rc=$?"            # rc=0 (7 baseline crimson violations, unchanged)
+$ bash scripts/check-gestosc.sh src/components/MyWork/IdeasTableContent.tsx src/components/MyWork/IdeaRecommendationMap.tsx src/components/MyWork/processflow/LaneSystem.tsx; echo "rc=$?"  # rc=0 ("brak regresji mechanicznych — sprawdzono plików: 3")
+```
+
+All four rc=0.
+
+### 8.6 Tests
+
+No dedicated test file exercises `IdeasTableContent`'s row-actions kebab, `IdeaRecommendationMap`'s
+depth badge, or `LaneSystem`'s label specifically (checked: `grep -rl "IdeasTableContent\|RowActionsMenu\|IdeaRecommendationMap" tests/` finds tests for folders, kebab-atrapa-detection, and mind-map conversion/broadcast logic — none assert on color/contrast). Ran the nearest existing targeted suites that mount the touched files, plus esbuild as a syntax/type-surface smoke check (per this program's "no full tsc/vitest for workers" rule):
+
+```
+$ npx vitest run tests/components/MyWork/MyIdeasListContent.folders.test.tsx tests/components/MyWork/processflow/LaneSystemAutoNaming.test.tsx --retry=0
+ Test Files  2 passed (2)
+      Tests  6 passed (6)
+
+$ npx esbuild src/components/MyWork/IdeasTableContent.tsx --bundle=false --outfile=/dev/null       # done, no errors
+$ npx esbuild src/components/MyWork/IdeaRecommendationMap.tsx --bundle=false --outfile=/dev/null   # done, no errors
+$ npx esbuild src/components/MyWork/processflow/LaneSystem.tsx --bundle=false --outfile=/dev/null  # done, no errors
+```
+
+The contrast assertion itself is `scripts/risk35-kebab-contrast-check.mjs` (§8.4) — a real
+Playwright-driven check against the live DOM, not a unit test, but it is the actual evidence
+this fix works, and it is the one component of the four with a repeatable, scriptable
+before/after (the Mind Map and Process Flow fixes were verified by one-off `--eval` reads,
+not wrapped in a standalone reusable script, for lack of remaining time budget — **NOT
+VERIFIED via an automated repeatable check for rows 3 and 4**, only via the manual `page.evaluate`
++ pixel-sample commands shown in this session's transcript).
+
+### 8.7 Commits (this worktree, not pushed)
+
+- `7fff6a1078` — `test(ideas): add reusable WCAG contrast tooling for RISK-35`
+- `7d9d7f2fe0` — `fix(ideas): raise Idea Table row-actions kebab to 3:1 at rest (RISK-35)`
+- `f91ec7a134` — `fix(ideas): raise Mind Map depth-badge dark contrast to 4.5:1 (RISK-35)`
+- `bdeb275a66` — `fix(ideas): raise Process Flow swimlane label to 4.5:1 in light (RISK-35)`
+
+### 8.8 NOT VERIFIED / out of scope
+
+- **Depth-3+ "L3" badge, light theme**: computes to ~4.27:1 with the new `c-text-secondary`
+  token (under 4.5:1) — see the commit message on `f91ec7a134`. No depth-3 badge was found in
+  the measured evidence this stream inherited or in this stream's own harness capture (the
+  `mindmap-canvas` mock tree only goes to depth 2), so it was neither measured before nor
+  claimed fixed now — flagged, not silently left unrecorded, not fixed (out of RISK-35's
+  four-row scope).
+- **Rows 3 and 4 do not have a standalone repeatable contrast-assertion script** (unlike row
+  1/2's `risk35-kebab-contrast-check.mjs`) — verified via one-off `page.evaluate` reads in this
+  session only, not committed as a re-runnable check. If a future stream needs to re-verify
+  these two, redo the `--eval` calls in §8's method description (selector: `[title="Depth N"]`
+  for Mind Map, text-content match on the lane label `<div>` for Process Flow).
+- **Only the four measured rows in the RISK-35 brief were touched.** No sweep was made for other
+  instances of the same `opacity-40`-on-`slate-600/500` or `c-text-muted`-on-tinted-background
+  patterns elsewhere in the four tools or the other 26 `RowActionsMenu` call sites — those may
+  or may not share the same defect class; not measured, not claimed fixed.
+
+## 9. RISK-35 follow-up — S9-GATE4EVIDENCE, 2026-08-12: the depth-3+ "L3" badge, closed
+
+§8.8's first bullet ("depth-3+ computes to ~4.27:1... not fixed, out of scope") is now closed.
+I did not accept "hypothetical" as a reason to leave it: `getNodeDepth()`
+(`mindMapNodeModel.ts:76-89`) walks the real edge chain to compute `_depth`, so depth 3 is
+reachable by production data whenever a node has a grandparent branch — the code branch was
+untested, not untestable.
+
+### 9.1 Method — built the missing depth-3 node, didn't argue from source
+
+No depth-3 node existed in the `mindmap-canvas` dev-render fixture (`§8.8` correctly says so).
+Added one: `idea-scope-1-detail`, child of the existing depth-2 `idea-scope-1`
+(`dev-render/screens/mindmap-canvas.tsx`). Loaded the harness for real, in both themes, and
+read the badge's LIVE `getComputedStyle` (resolved `color`, cumulative ancestor `opacity`) —
+not assumed from the Tailwind class in source. Cross-checked with a genuine canvas 2D
+rasterization (`ctx.fillStyle` = bg, `ctx.globalAlpha` = measured cumulative opacity,
+`ctx.fillStyle` = measured text color, `getImageData` readback) — the browser's own compositor,
+not my own arithmetic reimplementation of it. Both methods agreed to the pixel.
+
+### 9.2 Results
+
+| Depth | Theme | Text color (resolved) | Cumulative opacity | Backdrop | Composited | Ratio | Verdict |
+|---|---|---|---|---|---|---|---|
+| 2 | light | `rgb(71,85,105)` (`c-text-secondary`) | 0.9 | `--c-bg` `rgb(250,250,249)` | `rgb(89,102,119)` | 5.60:1 | PASS |
+| 3 | light | `rgb(71,85,105)` (`c-text-secondary`) | 0.8 | `--c-bg` `rgb(250,250,249)` | `rgb(107,118,134)` | **4.41:1** | **FAIL** |
+| 2 | dark | `rgb(184,196,214)` (`c-text-secondary`) | 0.9 | `--c-bg` `rgb(10,15,30)` | `rgb(167,178,196)` | 8.92:1 | PASS |
+| 3 | dark | `rgb(184,196,214)` (`c-text-secondary`) | 0.8 | `--c-bg` `rgb(10,15,30)` | `rgb(149,160,177)` | 7.22:1 | PASS |
+
+After the fix (`text-c-text` instead of `text-c-text-secondary`), re-measured live the same way:
+
+| Depth | Theme | Composited | Ratio | Verdict |
+|---|---|---|---|---|
+| 2 | light | `rgb(38,46,63)` | 13.01:1 | PASS |
+| 3 | light | `rgb(62,68,83)` | **9.32:1** | **PASS** |
+| 2 | dark | `rgb(221,224,229)` | 14.43:1 | PASS |
+| 3 | dark | `rgb(197,201,207)` | 11.48:1 | PASS |
+
+### 9.3 Why my depth-2 numbers (8.92 dark / 5.60 light) differ slightly from §8's row 3 (8.26 / 5.41)
+
+Both are real, both PASS, neither was wrong — they measured against a different backdrop, and
+I tracked down exactly why. §8's row 3 (and the matrix at line 151/153) compositc the text
+against `rgb(241,245,249)` — that is the node's OWN `bg-slate-100` background color, i.e. "if
+the node's background were opaque, what's the contrast of the text against it." My method
+composites against `--c-bg` `rgb(250,250,249)` — the true page canvas the ENTIRE node (text
+*and* its own background together) is faded onto, because the `opacity-90`/`opacity-80` class
+is on the outer node `<div>`, so the node's local background is *also* being faded by the same
+group opacity, not a stable opaque backdrop. I confirmed which is physically correct by reading
+the live DOM chain (`getComputedStyle` on every ancestor up to `<body>`): the node div with
+`bg-slate-100` has `opacity: 0.9` (or `0.8`) applied to itself, and the canvas behind it
+(`.mm-canvas.bg-c-bg`) has `opacity: 1`. A CSS group with `opacity < 1` is composited as a
+single flattened layer against whatever is *behind the whole group* — so the true final pixel
+blends toward `--c-bg`, not toward the node's own (also-fading) background. Reproducing §8's
+own method at depth 3 (`text-c-text-secondary` at 0.8 alpha against `rgb(241,245,249)` instead
+of `--c-bg`) gives **4.27:1** — matching the "~4.27:1" figure already on record — so both
+methods agree on the depth-3 FAIL verdict; the backdrop choice moved the number by ~3%, not the
+outcome. Flagging this for the record because an unexplained gap between two of this program's
+own measurements is exactly the kind of thing that should have a traceable cause, not just a
+"close enough."
+
+### 9.4 The fix and why this option, not the other two
+
+`src/components/MyWork/IdeaRecommendationMap.tsx` (the `L{depth}` badge, ~line 1790): swapped
+`text-c-text-secondary` → `text-c-text` (a `c-*` token, never `primary-*`). Three options
+weighed, in the commit message and here:
+
+1. **Exempt the badge from `depthOpacity`** — rejected. The badge sits inside the same `<div>`
+   whose `className` carries `depthOpacity`; exempting it would mean moving it out of that
+   div's stacking context entirely (portal, or an absolutely-positioned sibling), a materially
+   bigger structural change to fix a 1-line contrast issue.
+2. **Raise the depth-3 opacity value itself** (e.g. `opacity-80` → `opacity-85`) — rejected.
+   That value fades the WHOLE node (border, background, every child), not just this label;
+   changing it changes the depth-hierarchy visual for reasons unrelated to this one badge's
+   legibility, and reduces the ladder's usefulness as a signal.
+3. **Strengthen only the badge's own color token** (chosen) — a 1-line, badge-scoped change.
+   Clears with a wide margin (9.32:1 / 11.48:1 at the worst depth) so it stays clear even if the
+   opacity ladder changes again later, and doesn't touch anything else in the node's rendering.
+
+### 9.5 Negative control
+
+Reverted the one line back to `text-c-text-secondary`, reloaded the harness, re-read the live
+badge's `getComputedStyle` — reproduced `rgb(71,85,105)` at cumulative opacity `0.8`,
+i.e. the exact pre-fix 4.41:1 FAIL state. Restored the fix, reloaded, re-confirmed
+`text-c-text` / `rgb(15,23,42)` / 9.32:1 PASS. `git diff --stat` clean after restore (no
+residual diff from the revert/restore cycle — only the intended fix remains).
+
+### 9.6 Guards, tests, commit
+
+- `check-focus-canon.sh`, `check-list-canon.sh`, `check-artefakt.sh`, `check-ledger-csv.sh`: all
+  `rc=0` (the first pass of `check-artefakt.sh` caught a genuine false positive — my own
+  explanatory code comment contained the literal substring `primary-` inside prose about what
+  NOT to use; reworded the comment, re-ran, `rc=0`).
+- `check-gestosc.sh src/components/MyWork/IdeaRecommendationMap.tsx dev-render/screens/mindmap-canvas.tsx`: `rc=0`.
+- `npx vitest run tests/unit/mindmap/mindMapNodeModel.test.ts`: 6/6 passed (the depth-computation
+  logic this fix depends on; there is no existing dedicated test asserting the badge's own
+  Tailwind class, so none was run for that — the fix is a `className` swap, not new logic).
+- Commit (this worktree, not pushed): `55c8cf6f41` — `fix(ideas): close RISK-35's depth-3 gap
+  in the Mind Map badge (light theme)`.
+
+### 9.7 Still NOT VERIFIED
+
+- No automated, re-runnable contrast-assertion script was written for this specific check (same
+  gap §8.8 already notes for rows 3/4) — verified via live `getComputedStyle` + canvas
+  rasterization reads in this session's browser tab, not committed as a script.
+- No sweep for the same "text token composited against a `depthOpacity`-faded ancestor" pattern
+  elsewhere in the Mind Map or other tools — only this one badge was measured and fixed.

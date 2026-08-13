@@ -14,7 +14,9 @@ const LANGUAGES = ['en', 'pl', 'de', 'es', 'ar', 'ja'] as const;
 type Language = typeof LANGUAGES[number];
 
 function expectedHtmlLang(lang: Language): string {
-  return lang === 'ja' ? 'jp' : lang;
+  // S23-LOCALE (2026-08-12): app locale code for Japanese is now 'ja'
+  // (BCP47-correct) — no remapping needed, see src/i18n.ts.
+  return lang;
 }
 
 // Expected translations for key UI elements

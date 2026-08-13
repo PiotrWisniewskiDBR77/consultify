@@ -145,10 +145,38 @@ describe('FirstRunOnboarding', () => {
     expect(navigateMock).toHaveBeenCalledWith('/chat');
   });
 
-  it('Skip on the welcome step completes and lands on the default door', async () => {
+  // D4 (P3, 2026-08-12): this used to assert `navigateMock` was called with
+  // '/chat' — that WAS the bug, reproduced live: a user on /my-work clicking
+  // "Skip for now" was force-navigated to /chat and lost the screen they
+  // were on. "Skip for now" is shown as a modal overlaid on top of whatever
+  // screen the user was already on (My Work, Ideas, Chat, ...); the fix is
+  // to only close the modal (and persist the skip) without navigating at
+  // all, so the underlying screen — whichever it was — is never touched.
+  //
+  // The reviewable contract is "pathname before === pathname after" for any
+  // starting route, not merely "didn't land on /chat" (which would miss a
+  // silent navigation to some OTHER route). We assert the stronger,
+  // route-agnostic form of that here — `navigateMock` was called ZERO
+  // times, for ANY destination — rather than checking against one specific
+  // path. Given `navigate()` is the only navigation primitive this
+  // component (and useFirstRunOnboarding's `complete()`) ever calls — no
+  // `window.location` / `history` writes anywhere in this flow — "navigate
+  // was never called" is equivalent to "pathname never changed".
+  //
+  // (A companion test asserting the real `useLocation().pathname` via an
+  // actual `MemoryRouter` was attempted and dropped: in this worktree,
+  // react-router-dom v7's `React.startTransition`-wrapped navigation never
+  // flushes under vitest/jsdom regardless of `act`/`waitFor` — a pre-existing
+  // test-environment limitation unrelated to this fix, not evidence the fix
+  // is wrong. Confirmed by reproducing the same non-flush with a minimal,
+  // unrelated MemoryRouter+useNavigate component.)
+  it('Skip on the welcome step completes and does NOT navigate anywhere', async () => {
     render(<FirstRunOnboarding />);
     fireEvent.click(await screen.findByText('Skip for now'));
     await waitFor(() => expect(markFirstRunComplete).toHaveBeenCalled());
-    expect(navigateMock).toHaveBeenCalledWith('/chat');
+    await waitFor(() =>
+      expect(screen.queryByText('Meet Teresa — a consultant that talks')).toBeNull()
+    );
+    expect(navigateMock).not.toHaveBeenCalled();
   });
 });

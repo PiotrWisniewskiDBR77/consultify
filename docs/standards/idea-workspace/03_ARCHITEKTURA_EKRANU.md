@@ -1,5 +1,10 @@
 # 03 — Architektura ekranu
 
+> **Aktualizacja 2026-08-09:** geometria lewy/prawy panel została zastąpiona
+> decyzją właścicielską w [rozdziale 13](13_MIGRACJA_NAWIGACJI_2026-08-09.md).
+> Ten rozdział pozostaje źródłem zakresów i zachowań warstw, ale nie rozstrzyga
+> już strony panelu informacji ani raila narzędzi.
+
 Ten rozdział ustala, z jakich warstw zbudowany jest ekran Idea Workspace, gdzie każda warstwa mieszka, czego jej wolno, a czego nie, oraz jak się zachowuje niezależnie od reprezentacji (przewijanie, stany akcji, tooltipy, puste stany). Jest wykonawczy dla layoutu — rozdział `01_MODEL_I_ZASADY.md` rozstrzyga zakresy i zasady, rozdział `07_PRAWY_PANEL.md` rozstrzyga treść i zachowanie prawego panelu. W razie sprzeczności o zakresie/zasadach wygrywa `01`, o treści prawego panelu wygrywa `07`, ten rozdział rozstrzyga wyłącznie **układ ekranu**.
 
 ## 1. Osiem warstw ekranu

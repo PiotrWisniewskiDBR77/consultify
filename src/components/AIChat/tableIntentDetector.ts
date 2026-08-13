@@ -4,6 +4,24 @@
  *
  * Also discriminates between Table Builder (structured data / tracker)
  * and Excele (workbook / Excel file / financial model) intents.
+ *
+ * ── NOT a "second command surface" (chapter 13 audit, 2026-08-10) ────────
+ * Unlike `mindmapIntentDetector.ts`/`processFlowIntentDetector.ts`/
+ * `whiteboardIntentDetector.ts` (regex fallbacks for commands on an
+ * ALREADY-OPEN idea representation, gated behind
+ * `shouldUseLegacyIdeaIntentFallback` now that the Action Registry covers
+ * the same ground), this file does something the registry has NO concept
+ * of at all: deciding WHICH GENERATOR/PANEL a chat message should open
+ * BEFORE anything exists yet — Table Builder vs the Excele workbook engine
+ * vs the plain GFM sheet track (see `resolveSheetLane`/
+ * `hasWorkbookLaneSignals`). The Action Registry only governs actions on an
+ * idea representation that's already open; artifact-CREATION routing is
+ * outside its scope entirely, so there is no registry entry to be
+ * "redundant" with and no flag gates this file — it stays permanently
+ * active. (This distinction was already noted, less explicitly, in
+ * `teresaActionManifest.ts`'s header comment: "dla Tabeli takiego detektora
+ * NIE MA w ogóle".) NOT gated, NOT retired, NOT a rollback — this is the
+ * one live path for this job.
  */
 
 const TABLE_INTENT_PATTERNS = [

@@ -11,11 +11,32 @@
  * Z3 (rejestr akcji): pokazujemy WYŁĄCZNIE pozycje z realnym handlerem. Whiteboard
  * NIE wspiera "Wstaw węzeł na połączeniu" (brak logiki rozcięcia krawędzi), więc
  * ta pozycja świadomie NIE występuje — zamiast atrapy.
+ *
+ * PILOT REJESTRU AKCJI (2026-08-09, Z1/E02): te 5 pozycji NIE są już
+ * hardkodowane lokalnie — pochodzą z `IDEA_ACTION_REGISTRY`
+ * (`getActionsForSurface('context', { tool: 'whiteboard' })`, filtr
+ * `scope === 'edge'`) i wykonują się przez `runIdeaAction(id, ctx)`, dokładnie
+ * jak Menu 3 (`ideaCanvasMelsChips.ts` — pierwsza powierzchnia przepięta na
+ * rejestr). Rejestrowe handlery tych 5 akcji (`idea.edge.*` w
+ * `ideaActionRegistry.ts`) są CIENKIM PRZEKAŹNIKIEM: wykonują ten sam prop-
+ * callback (`onEditLabel`/`onCycleStyle`/…) co przed migracją, przekazany jako
+ * `ctx.params.run` — Tablica NIE MA odbiornika akcji krawędzi na szynie
+ * `idea-workspace-quick-action` (patrz komentarz przy `runEdgeParamCallback`
+ * w rejestrze), więc realna mutacja nadal żyje WYŁĄCZNIE w
+ * `IdeaWhiteboardTool.tsx` (nietknięty w tym pilocie). Zachowanie wizualne i
+ * kolejność pozycji są 1:1 ze stanem sprzed migracji.
  */
 import { ArrowLeftRight, ArrowRight, Paintbrush, Trash2, Type } from 'lucide-react';
-import React, { useCallback, useEffect } from 'react';
+import React from 'react';
 
-import { useAccessibleMenu } from '../canvas/useAccessibleMenu';
+import {
+  type ActionContext,
+  getActionsForSurface,
+  type IconName,
+  runIdeaAction,
+} from '@/actions/ideaActionRegistry';
+import { CanvasContextMenu } from '@/components/shared/CanvasContextMenu';
+import { EMPTY_SELECTION } from '@/components/MyWork/ideaSelectionTypes';
 
 interface WhiteboardEdgeContextMenuProps {
   x: number;
@@ -35,15 +56,14 @@ interface WhiteboardEdgeContextMenuProps {
   onDelete: () => void;
 }
 
-interface EdgeMenuItem {
-  id: string;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
-  labelPl: string;
-  labelEn: string;
-  run: () => void;
-  danger?: boolean;
-  dividerBefore?: boolean;
-}
+/** Tylko ikony faktycznie użyte tu — pełna lista IconName żyje w rejestrze. */
+const ICON_BY_NAME: Partial<Record<IconName, React.ComponentType<{ size?: number }>>> = {
+  Type,
+  ArrowLeftRight,
+  ArrowRight,
+  Paintbrush,
+  Trash2,
+};
 
 export const WhiteboardEdgeContextMenu: React.FC<WhiteboardEdgeContextMenuProps> = ({
   x,
@@ -57,113 +77,63 @@ export const WhiteboardEdgeContextMenu: React.FC<WhiteboardEdgeContextMenuProps>
   onReverse,
   onDelete,
 }) => {
-  // CB-05/RB-042/RV-003: same accessible menu contract as the node menu
-  // (focus entry, arrows/Home/End, focus return); Escape is handled below via
-  // the existing document keydown listener → onClose → unmount → cleanup.
-  const ref = useAccessibleMenu<HTMLDivElement>(true);
+  // Łączy `def.id` z rejestru z ORYGINALNYM prop-callbackiem tego komponentu —
+  // ten sam callback, który przed migracją wołał `run()` bezpośrednio z
+  // hardkodowanej tablicy `items`.
+  const RUN_BY_ACTION_ID: Record<string, () => void> = {
+    'idea.edge.edit_label': onEditLabel,
+    'idea.edge.reverse': onReverse,
+    'idea.edge.cycle_arrow': onCycleArrow,
+    'idea.edge.cycle_style': onCycleStyle,
+    'idea.edge.delete': onDelete,
+  };
 
-  useEffect(() => {
-    const handleMouseDown = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as HTMLElement)) onClose();
-    };
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    // Faza przechwytywania — obowiązkowa: d3-zoom pod ReactFlow woła
-    // `stopImmediatePropagation()` na `mousedown` w `.react-flow__pane`, więc
-    // zwykły listener nigdy się nie odpali (patrz NodeContextMenu).
-    window.addEventListener('mousedown', handleMouseDown, true);
-    document.addEventListener('keydown', handleKey);
-    return () => {
-      window.removeEventListener('mousedown', handleMouseDown, true);
-      document.removeEventListener('keydown', handleKey);
-    };
-  }, [onClose]);
+  const lockedReason = isPl ? 'Połączenie jest zablokowane' : 'Connection is locked';
 
-  const handleClick = useCallback(
-    (run: () => void) => {
-      run();
-      onClose();
-    },
-    [onClose]
-  );
-
-  const items: EdgeMenuItem[] = [
-    {
-      id: 'edge_add_label',
-      icon: Type,
-      labelPl: 'Dodaj / edytuj etykietę',
-      labelEn: 'Add / edit label',
-      run: onEditLabel,
-    },
-    {
-      id: 'edge_reverse',
-      icon: ArrowLeftRight,
-      labelPl: 'Odwróć kierunek',
-      labelEn: 'Reverse direction',
-      run: onReverse,
-    },
-    {
-      id: 'edge_arrow_direction',
-      icon: ArrowRight,
-      labelPl: 'Kierunek strzałki',
-      labelEn: 'Arrow direction',
-      run: onCycleArrow,
-    },
-    {
-      id: 'edge_change_style',
-      icon: Paintbrush,
-      labelPl: 'Zmień styl linii',
-      labelEn: 'Change line style',
-      run: onCycleStyle,
-    },
-    {
-      id: 'edge_delete',
-      icon: Trash2,
-      labelPl: 'Usuń połączenie',
-      labelEn: 'Delete connection',
-      run: onDelete,
-      danger: true,
-      dividerBefore: true,
-    },
-  ];
-
-  const clampedX = Math.min(x, window.innerWidth - 220);
-  const clampedY = Math.min(y, window.innerHeight - items.length * 36 - 20);
+  const items = getActionsForSurface('context', { tool: 'whiteboard' })
+    .filter(({ def }) => def.scope === 'edge')
+    .map(({ def, disabledReason }) => {
+      const Icon = ICON_BY_NAME[def.icon];
+      const run = RUN_BY_ACTION_ID[def.id];
+      const disabled = isLocked || Boolean(disabledReason);
+      return {
+        id: def.id,
+        label: isPl ? def.label.pl : def.label.en,
+        icon: Icon ? <Icon size={14} /> : undefined,
+        disabled,
+        disabledReason: disabled ? (isLocked ? lockedReason : (disabledReason ?? undefined)) : undefined,
+        // `destructive` w rejestrze = jedyna dziś krawędziowa akcja
+        // nieodwracalna w sensie danych ("Usuń połączenie") — 1:1 z dawnym
+        // hardkodowanym `danger: true`.
+        danger: def.destructive,
+        // "Usuń połączenie" było jedyną pozycją z separatorem nad sobą w
+        // oryginalnej tablicy (`dividerBefore: true`) — zachowane po id, bo
+        // rejestr nie modeluje jeszcze wizualnego grupowania per-scope.
+        separatorBefore: def.id === 'idea.edge.delete',
+        onSelect: () => {
+          const ctx: ActionContext = {
+            ideaId: '',
+            tool: 'whiteboard',
+            selection: EMPTY_SELECTION,
+            surface: 'context',
+            source: 'ui',
+            language: isPl ? 'pl' : 'en',
+            params: { run },
+          };
+          void runIdeaAction(def.id, ctx);
+        },
+      };
+    });
 
   return (
-    <div
-      ref={ref}
-      role="menu"
-      aria-label={isPl ? 'Akcje połączenia' : 'Connection actions'}
-      className="fixed z-toast bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl shadow-xl py-1.5 min-w-[200px] animate-in fade-in zoom-in-95 duration-150"
-      style={{ left: clampedX, top: clampedY }}
-    >
-      {items.map((item) => {
-        const Icon = item.icon;
-        return (
-          <React.Fragment key={item.id}>
-            {item.dividerBefore && (
-              <div className="my-1 mx-2 h-px bg-slate-200/60 dark:bg-white/[0.06]" />
-            )}
-            <button
-              type="button"
-              role="menuitem"
-              disabled={isLocked}
-              onClick={() => handleClick(item.run)}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 text-[11px] font-medium transition-colors disabled:opacity-40 ${
-                item.danger
-                  ? 'text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20'
-                  : 'text-c-text hover:bg-c-surface-raised'
-              }`}
-            >
-              <Icon size={14} className={item.danger ? 'shrink-0' : 'text-c-text-muted shrink-0'} />
-              <span>{isPl ? item.labelPl : item.labelEn}</span>
-            </button>
-          </React.Fragment>
-        );
-      })}
-    </div>
+    <CanvasContextMenu
+      x={x}
+      y={y}
+      onClose={onClose}
+      ariaLabel={isPl ? 'Akcje połączenia tablicy' : 'Whiteboard connection actions'}
+      testId="whiteboard-edge-context-menu"
+      items={items}
+    />
   );
 };
 

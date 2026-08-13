@@ -34,6 +34,8 @@ import {
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { type ActionContext, getAction, runIdeaAction } from '@/actions/ideaActionRegistry';
+import { EMPTY_SELECTION } from '@/components/MyWork/ideaSelectionTypes';
 import type { ArtifactLink } from '@/utils/artifactLinks';
 
 import type { AlignMode } from './alignDistribute';
@@ -65,6 +67,23 @@ type DropdownId =
   | 'quickTags'
   | 'quickLink'
   | null;
+
+/**
+ * N5 trzecia fala (2026-08-09) — dual-surface z `NodeContextMenu.tsx`'s
+ * `REGISTRY_ID_BY_LOCAL_ID` (Convert branch group): TE SAME 5 lokalnych id
+ * (`ctx_subtree_convert_*`, renderowane tu 1:1 z tego samego zestawu co menu
+ * kontekstowe) → TE SAME 5 wpisów rejestru, `surfaces: ['context','floating']`
+ * po stronie `ideaActionRegistry.ts` (Z1: jedna realna akcja = jeden id).
+ * Lokalna kopia mapy (nie import z `NodeContextMenu.tsx`, który jej nie
+ * eksportuje) — duplikacja WYŁĄCZNIE tej stałej, nie logiki dispatchu.
+ */
+const CONVERT_BRANCH_REGISTRY_ID_BY_LOCAL_ID: Record<string, string> = {
+  ctx_subtree_convert_decision: 'idea.node.mm_convert_branch_decision',
+  ctx_subtree_convert_tasks: 'idea.node.mm_convert_branch_tasks',
+  ctx_subtree_convert_task_set: 'idea.node.mm_convert_branch_task_set',
+  ctx_subtree_convert_initiative: 'idea.node.mm_convert_branch_initiative',
+  ctx_subtree_convert_process_flow: 'idea.node.mm_convert_branch_process_flow',
+};
 
 export interface FloatingNodeToolbarProps {
   nodeId: string;
@@ -590,7 +609,35 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
                     key={item.id}
                     type="button"
                     onClick={() => {
-                      onAction(item.id);
+                      // N5 trzecia fala (2026-08-09): route through the action
+                      // registry (same wrapping `NodeContextMenu.tsx` already
+                      // does for every migrated item) instead of calling
+                      // `onAction(item.id)` bare. `ctx.params.run` = the exact
+                      // previous click path (`onAction(item.id)` →
+                      // `IdeaRecommendationMap.tsx`'s `onAction` prop for this
+                      // toolbar → local `SUBTREE_MAP` → `convertBranch()`) —
+                      // byte-identical human click behaviour, registry layers
+                      // the Teresa/bus path on top (see `runMindmapNodeConvertAction`).
+                      const registryId = CONVERT_BRANCH_REGISTRY_ID_BY_LOCAL_ID[item.id];
+                      if (registryId && !getAction(registryId)) {
+                        throw new Error(
+                          `FloatingNodeToolbar: brak wpisu rejestru dla pozycji „Convert branch" '${item.id}' (oczekiwano '${registryId}')`
+                        );
+                      }
+                      if (registryId) {
+                        const ctx: ActionContext = {
+                          ideaId: '',
+                          tool: 'mindmap',
+                          selection: EMPTY_SELECTION,
+                          surface: 'floating',
+                          source: 'ui',
+                          language: isPl ? 'pl' : 'en',
+                          params: { run: () => onAction(item.id) },
+                        };
+                        void runIdeaAction(registryId, ctx);
+                      } else {
+                        onAction(item.id);
+                      }
                       closeDD();
                     }}
                     className="w-full flex items-center gap-2 px-3 py-[6px] text-left text-[11px] font-medium text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-hig-md transition-colors"

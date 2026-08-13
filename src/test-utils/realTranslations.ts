@@ -42,6 +42,33 @@ function resolveKey(resource: Record<string, unknown>, key: string): string | un
   return typeof value === 'string' ? value : undefined;
 }
 
+/**
+ * i18next plural resolution, for keys stored as `key_one` / `key_few` /
+ * `key_many` / `key_other`.
+ *
+ * Added 2026-08-11: the locale sweep converted four hand-rolled English
+ * pluralizations into real i18next plural keys, and without this the helper
+ * resolved `t('…fieldCount', { count: 2 })` to nothing — the exact key does not
+ * exist in the JSON, only its suffixed forms do — so it fell back to the raw
+ * key and any test asserting a pluralized string failed. That is a gap in the
+ * HELPER, not in the product: the keys are present and Polish uses the correct
+ * one/few/many/other forms (`pole` / `pola` / `pól`).
+ *
+ * `Intl.PluralRules` is what i18next itself uses, so Polish resolves through the
+ * real Slavic rules rather than an English-shaped one/other guess.
+ */
+function resolvePlural(
+  resource: Record<string, unknown>,
+  key: string,
+  lang: SupportedTestLocale,
+  opts?: Record<string, unknown>
+): string | undefined {
+  const count = opts?.count;
+  if (typeof count !== 'number') return undefined;
+  const category = new Intl.PluralRules(lang).select(count);
+  return resolveKey(resource, `${key}_${category}`) ?? resolveKey(resource, `${key}_other`);
+}
+
 function interpolate(template: string, opts?: Record<string, unknown>): string {
   if (!opts) return template;
   return Object.keys(opts).reduce((str, k) => {
@@ -69,7 +96,7 @@ export function createRealT(lang: SupportedTestLocale) {
           : undefined;
     const fallback =
       typeof defaultOrOpts === 'string' ? defaultOrOpts : ((opts?.defaultValue as string) ?? key);
-    const resolved = resolveKey(resource, key) ?? fallback;
+    const resolved = resolveKey(resource, key) ?? resolvePlural(resource, key, lang, opts) ?? fallback;
     return interpolate(resolved, opts);
   };
 }

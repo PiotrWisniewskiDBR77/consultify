@@ -454,6 +454,31 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
   const addSiblingNode = useCallback(
     (anchorNodeId?: string) => {
       if (locked) return;
+      // MM-P1-01 (2026-08-10): reentrancy guard. Every "Add sibling" surface —
+      // the registry-routed PPM item (`idea.node.mm_add_sibling` in
+      // NodeContextMenu.tsx), FloatingNodeToolbar's "Add sibling" button, the
+      // raw canvas Enter-key shortcut, the inline hover "+" quick action, and
+      // the `mm_add_sibling` bus event (toolbar popover/command palette/Teresa)
+      // — all call this exact function; it is already the single converged
+      // mutation. But it used to have zero reentrancy protection: two calls
+      // landing close together (e.g. a pointer click on the floating toolbar
+      // racing the Enter-key shortcut — the toolbar button has no isEditing
+      // check today, only the keyboard handler does) each unconditionally
+      // created a brand-new blank node and flagged it `_startEditing`. Since
+      // every mind-map node opens its own inline editor independently via a
+      // per-node `useEffect` on `data._startEditing`
+      // (IdeaRecommendationMap.tsx ~line 1144), not a single shared "one
+      // editor" state, two such nodes meant two simultaneously open blank
+      // editors. `editingNodeIdRef` already marks "a freshly-created/being-
+      // edited node exists right now" (set below, by addChildNode, and by
+      // startEditingSelected; cleared the moment that edit is committed or
+      // cancelled — IdeaRecommendationMap.tsx's `idea-mindmap-node-edit`
+      // handler). Rejecting a new insert while it is non-null closes the race
+      // for every surface at once, and never blocks a legitimate NEXT insert:
+      // the ref is already null again by the time a later, separate keypress
+      // or click arrives, because it only stays set while the previous node's
+      // editor is still open.
+      if (editingNodeIdRef.current !== null) return;
       if (nodes.length >= MAX_MINDMAP_NODES) {
         toast.error(i18n.t('mindmap.nodes.mapLimitReached', { limit: MAX_MINDMAP_NODES }), {
           id: 'mm-limit',

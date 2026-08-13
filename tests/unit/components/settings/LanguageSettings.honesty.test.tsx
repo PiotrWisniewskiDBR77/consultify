@@ -26,10 +26,10 @@ vi.mock('@/i18n', () => ({
     de: 'Deutsch',
     es: 'Español',
     ar: 'العربية',
-    jp: '日本語',
+    ja: '日本語',
   },
   normalizeLanguageCode: (code: string) => code,
-  SUPPORTED_LANGUAGES: ['en', 'pl', 'de', 'es', 'ar', 'jp'],
+  SUPPORTED_LANGUAGES: ['en', 'pl', 'de', 'es', 'ar', 'ja'],
 }));
 
 vi.mock('react-i18next', () => ({

@@ -294,10 +294,12 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
                       <strong className="text-c-text">{sum}</strong>
                     </span>
                     <span className="text-c-text-muted">
-                      Min: <strong className="text-c-text">{min}</strong>
+                      {t('ideas.table.summaryDashboard.min', 'Min')}:{' '}
+                      <strong className="text-c-text">{min}</strong>
                     </span>
                     <span className="text-c-text-muted">
-                      Max: <strong className="text-c-text">{max}</strong>
+                      {t('ideas.table.summaryDashboard.max', 'Max')}:{' '}
+                      <strong className="text-c-text">{max}</strong>
                     </span>
                   </div>
                 </div>

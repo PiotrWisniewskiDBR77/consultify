@@ -30,6 +30,7 @@ vi.mock('@/services/api', () => ({
 import { DEFAULT_FLAGS } from '@/hooks/useFeatureFlags';
 import { AIActionsPopover } from '@/components/MyWork/mindmap/toolbar-popovers/AIActionsPopover';
 import { NodeContextMenu } from '@/components/MyWork/mindmap/NodeContextMenu';
+import { PaneContextMenu } from '@/components/MyWork/mindmap/PaneContextMenu';
 import { EMPTY_SELECTION } from '@/components/MyWork/ideaSelectionTypes';
 
 describe('DP-5: mindmapHeuristicAiOverlays flag definition', () => {
@@ -99,46 +100,107 @@ describe('DP-5: NodeContextMenu comingSoonIds gating', () => {
     onAction: vi.fn(),
   };
 
-  /** The AI group renders as a hover flyout — open it first. */
+  // MM-P2 (2026-08-10): AI rows moved from the flat first level into the AI
+  // flyout submenu (PPM reduction, `08_P1_P3_EXECUTION_PLAN_FOR_CLAUDE.md`
+  // §6). They only exist in the DOM once that submenu is open — open it the
+  // same way a user would (click the `ctx_group_ai` trigger row) before
+  // asserting on them.
   const openAiSubmenu = () => {
-    const aiHeader = screen.getByText('AI').closest('div');
-    expect(aiHeader).toBeTruthy();
-    if (aiHeader) fireEvent.mouseEnter(aiHeader);
+    const trigger = document.querySelector<HTMLButtonElement>('[data-command-id="ctx_group_ai"]');
+    if (!trigger) throw new Error('AI submenu trigger not found');
+    fireEvent.click(trigger);
   };
 
-  it('renders ctx_dependencies disabled with "Coming soon" badge when listed', () => {
+  // E10 (2026-08-10): `ctx_dependencies`/`ctx_priority`/`ctx_competitive`
+  // MOVED to PaneContextMenu (`pane_dependencies`/`pane_priority`/
+  // `pane_competitive`, see the "DP-5: PaneContextMenu" describe block
+  // below) — those generators take the whole map regardless of which node
+  // was clicked, so they no longer render inside NodeContextMenu at all.
+  // `ctx_ai_deepen` was REMOVED entirely (byte-identical duplicate of
+  // `ctx_ai_expand`, see NodeContextMenu.tsx's header comment) — the AI
+  // submenu now has one fewer row for both reasons.
+
+  it('MM-P2-03/E10: every remaining AI row exposes its real scope via the shortcut slot', () => {
+    render(<NodeContextMenu {...baseProps} comingSoonIds={[]} />);
+    openAiSubmenu();
+    const expectedScopeByCommandId: Record<string, string> = {
+      ctx_ai_rewrite_node: 'myWorkMindmap.ctxMenu.scopeSelection',
+      ctx_ai_expand: 'myWorkMindmap.ctxMenu.scopeBranch',
+      ctx_what_if: 'myWorkMindmap.ctxMenu.scopeSelection',
+      ctx_summarize_branch: 'myWorkMindmap.ctxMenu.scopeBranch',
+      ai_suggest_links: 'myWorkMindmap.ctxMenu.scopeSelection',
+    };
+    for (const [commandId, expectedKey] of Object.entries(expectedScopeByCommandId)) {
+      const btn = document.querySelector<HTMLButtonElement>(`[data-command-id="${commandId}"]`);
+      expect(btn, commandId).toBeTruthy();
+      // The i18n mock in this file returns the raw key, so the rendered
+      // `<kbd>` text IS the translation key — asserting on it still proves
+      // each row asked for the right scope label, not just SOME label.
+      expect(btn?.querySelector('kbd')?.textContent, commandId).toBe(expectedKey);
+    }
+  });
+
+  it('E10: ctx_ai_deepen no longer exists (merged into ctx_ai_expand)', () => {
+    render(<NodeContextMenu {...baseProps} comingSoonIds={[]} />);
+    openAiSubmenu();
+    expect(document.querySelector('[data-command-id="ctx_ai_deepen"]')).toBeNull();
+  });
+
+  it('E10: whole-map AI generators no longer render inside the node menu', () => {
+    render(<NodeContextMenu {...baseProps} comingSoonIds={[]} />);
+    openAiSubmenu();
+    for (const commandId of ['ctx_dependencies', 'ctx_priority', 'ctx_competitive']) {
+      expect(document.querySelector(`[data-command-id="${commandId}"]`), commandId).toBeNull();
+    }
+  });
+});
+
+describe('DP-5/E10: PaneContextMenu comingSoonIds gating (canvas-background AI)', () => {
+  const baseProps = {
+    x: 10,
+    y: 10,
+    canvasX: 0,
+    canvasY: 0,
+    isPl: false,
+    isLocked: false,
+    canUndo: false,
+    canRedo: false,
+    canPaste: false,
+    hasSelection: false,
+    onClose: vi.fn(),
+    onAction: vi.fn(),
+  };
+
+  it('renders pane_dependencies disabled with "Coming soon" badge when listed', () => {
     const onAction = vi.fn();
     render(
-      <NodeContextMenu {...baseProps} onAction={onAction} comingSoonIds={['ctx_dependencies']} />
+      <PaneContextMenu {...baseProps} onAction={onAction} comingSoonIds={['pane_dependencies']} />
     );
-    openAiSubmenu();
-    const btn = screen.getByText('Detect dependencies').closest('button');
+    const btn = document.querySelector<HTMLButtonElement>('[data-command-id="pane_dependencies"]');
     expect(btn).toBeTruthy();
     expect(btn).toBeDisabled();
     expect(screen.getByText('ideas.mindmap.comingSoon')).toBeTruthy();
     if (btn) fireEvent.click(btn);
-    expect(onAction).not.toHaveBeenCalledWith('ctx_dependencies');
+    expect(onAction).not.toHaveBeenCalledWith('pane_dependencies');
   });
 
-  it('leaves ctx_dependencies clickable when comingSoonIds is empty', () => {
+  it('leaves pane_dependencies clickable when comingSoonIds is empty', () => {
     const onAction = vi.fn();
-    render(<NodeContextMenu {...baseProps} onAction={onAction} comingSoonIds={[]} />);
-    openAiSubmenu();
-    const btn = screen.getByText('Detect dependencies').closest('button');
+    render(<PaneContextMenu {...baseProps} onAction={onAction} comingSoonIds={[]} />);
+    const btn = document.querySelector<HTMLButtonElement>('[data-command-id="pane_dependencies"]');
     expect(btn).toBeTruthy();
     expect(btn).not.toBeDisabled();
     expect(screen.queryByText('ideas.mindmap.comingSoon')).toBeNull();
     if (btn) fireEvent.click(btn);
-    expect(onAction).toHaveBeenCalledWith('ctx_dependencies');
+    expect(onAction).toHaveBeenCalledWith('pane_dependencies');
   });
 
-  it('does not gate real-LLM context actions (What if, Competitors)', () => {
-    render(<NodeContextMenu {...baseProps} comingSoonIds={['ctx_dependencies']} />);
-    openAiSubmenu();
-    for (const label of ['What if...?', 'Competitors']) {
-      const btn = screen.getByText(label).closest('button');
-      expect(btn, label).toBeTruthy();
-      expect(btn, label).not.toBeDisabled();
+  it('does not gate real-LLM pane actions (Prioritize, Competitors)', () => {
+    render(<PaneContextMenu {...baseProps} comingSoonIds={['pane_dependencies']} />);
+    for (const commandId of ['pane_priority', 'pane_competitive']) {
+      const btn = document.querySelector<HTMLButtonElement>(`[data-command-id="${commandId}"]`);
+      expect(btn, commandId).toBeTruthy();
+      expect(btn, commandId).not.toBeDisabled();
     }
   });
 });

@@ -18,6 +18,7 @@
  */
 import { Sparkles, UserCheck } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { AiGeneratedSummaryFieldOptions } from '@/types/tablePlatform';
 
@@ -38,6 +39,7 @@ export const AiSummaryCell: React.FC<AiSummaryCellProps> = ({
   fieldOptions,
   manualOverride,
 }) => {
+  const { t } = useTranslation();
   const max = Math.max(1, Math.min(HARD_LIMIT, Number(fieldOptions?.max_chars) || 200));
   const promptTemplate = fieldOptions?.prompt_template ?? '';
 
@@ -46,10 +48,16 @@ export const AiSummaryCell: React.FC<AiSummaryCellProps> = ({
       <span
         className="inline-flex items-center gap-1 px-1 text-xs text-c-text-muted italic"
         data-testid="ai-summary-pending"
-        title={promptTemplate ? `AI prompt: ${promptTemplate}` : undefined}
+        title={
+          promptTemplate
+            ? t('myWorkTable.aiCell.promptTooltip', 'AI prompt: {{template}}', {
+                template: promptTemplate,
+              })
+            : undefined
+        }
       >
         <Sparkles size={10} className="flex-shrink-0" />
-        <span>AI pending…</span>
+        <span>{t('myWorkTable.aiCell.pending', 'AI pending…')}</span>
       </span>
     );
   }

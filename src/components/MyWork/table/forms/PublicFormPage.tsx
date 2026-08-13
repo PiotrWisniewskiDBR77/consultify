@@ -4,6 +4,7 @@
  */
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
@@ -39,6 +40,7 @@ interface PublicFormData {
 // ── Component ────────────────────────────────────────────────────────────────
 
 export function PublicFormPage() {
+  const { t } = useTranslation();
   const { slug } = useParams<{ slug: string }>();
 
   const [form, setForm] = useState<PublicFormData | null>(null);
@@ -161,7 +163,9 @@ export function PublicFormPage() {
       <div className="flex min-h-screen items-center justify-center bg-c-surface-raised">
         <div className="max-w-md rounded-2xl border border-c-danger bg-c-surface p-8 text-center shadow-sm">
           <AlertCircle className="mx-auto mb-3 h-10 w-10 text-c-danger" />
-          <h2 className="mb-2 text-lg font-semibold text-c-text">Form not found</h2>
+          <h2 className="mb-2 text-lg font-semibold text-c-text">
+            {t('ideas.table.publicForm.formNotFound', 'Form not found')}
+          </h2>
           <p className="text-sm text-c-text-muted">{error}</p>
         </div>
       </div>
@@ -178,14 +182,15 @@ export function PublicFormPage() {
         <div className="max-w-md rounded-2xl border border-c-success bg-c-surface p-8 text-center shadow-sm">
           <CheckCircle2 className="mx-auto mb-3 h-10 w-10 text-c-success" />
           <h2 className="mb-2 text-lg font-semibold text-c-text">
-            {form.config?.submitMessage || 'Response recorded!'}
+            {form.config?.submitMessage ||
+              t('ideas.table.publicForm.responseRecorded', 'Response recorded!')}
           </h2>
           {form.config?.allowMultiple && (
             <button
               onClick={handleSubmitAnother}
               className="mt-4 rounded-xl bg-c-info px-6 py-2.5 text-sm font-medium text-c-text transition-colors hover:bg-c-info"
             >
-              Submit another response
+              {t('ideas.table.publicForm.submitAnother', 'Submit another response')}
             </button>
           )}
         </div>
@@ -241,12 +246,12 @@ export function PublicFormPage() {
           className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-c-info px-4 py-3 text-sm font-medium text-c-text transition-colors hover:bg-c-info disabled:opacity-50"
         >
           {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-          Submit
+          {t('ideas.table.publicForm.submit', 'Submit')}
         </button>
       </form>
 
       <p className="mt-4 text-center text-xs text-c-text-secondary">
-        Powered by Consultify Table Platform
+        {t('ideas.table.publicForm.poweredBy', 'Powered by Consultify Table Platform')}
       </p>
     </div>
   );

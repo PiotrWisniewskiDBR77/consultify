@@ -50,16 +50,15 @@ export const useVoiceChat = (): UseVoiceChatReturn => {
       // Get current language from browser settings
       const browserLocale = navigator.languages?.[0] || navigator.language || 'pl-PL';
       const base = String(browserLocale).split('-')[0].toLowerCase();
-      const i18nLang = base === 'ja' ? 'jp' : base;
       const langCodeMap: Record<string, string> = {
         pl: 'pl',
         en: 'en',
         de: 'de',
         es: 'es',
-        jp: 'jp',
+        ja: 'ja',
         ar: 'ar',
       };
-      const targetLang = langCodeMap[i18nLang] || 'pl';
+      const targetLang = langCodeMap[base] || 'pl';
 
       // Find best voice for target language
       let targetVoice = voices.find(

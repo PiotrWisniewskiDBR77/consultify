@@ -3,9 +3,11 @@
  * downloadable HTML presentation. Each branch becomes a slide.
  */
 import { Download, FileText, Loader2, Presentation, X } from 'lucide-react';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 
 import { Api } from '@/services/api';
 
@@ -23,7 +25,11 @@ interface ExportPowerPointProps {
   }>;
 }
 
-function generateSlideHTML(title: string, branches: ExportPowerPointProps['branches']): string {
+function generateSlideHTML(
+  title: string,
+  branches: ExportPowerPointProps['branches'],
+  t: (key: string, fallback: string) => string
+): string {
   const slideColors: Record<string, string> = {
     problem: '#fb7185',
     goal: '#34d399',
@@ -33,10 +39,17 @@ function generateSlideHTML(title: string, branches: ExportPowerPointProps['branc
     experiments: '#22d3ee',
   };
 
+  const mindMapOverviewLabel = t('ideas.mindmap.mindMapOverview', 'Mind Map Overview');
+  const branchesLabel = t('ideas.mindmap.branches', 'branches');
+  const ideasLabel = t('ideas.mindmap.ideas', 'ideas');
+  const noIdeasYetLabel = t('ideas.mindmap.noIdeasYet', 'No ideas yet');
+  const summaryLabel = t('ideas.mindmap.summary', 'Summary');
+  const presentationTitleLabel = t('ideas.mindmap.mindMapPresentationTitle', 'Mind Map Presentation');
+
   const slides = [
     `<div style="page-break-after:always;padding:60px;min-height:700px;display:flex;flex-direction:column;justify-content:center;align-items:center;background:linear-gradient(135deg,#f59e0b22,#f59e0b11);">
       <h1 style="font-size:48px;font-weight:800;color:#1e293b;margin-bottom:16px;text-align:center;">${title}</h1>
-      <p style="font-size:18px;color:#64748b;text-align:center;">Mind Map Overview &middot; ${branches.length} branches &middot; ${branches.reduce((s, b) => s + b.nodes.length, 0)} ideas</p>
+      <p style="font-size:18px;color:#64748b;text-align:center;">${mindMapOverviewLabel} &middot; ${branches.length} ${branchesLabel} &middot; ${branches.reduce((s, b) => s + b.nodes.length, 0)} ${ideasLabel}</p>
     </div>`,
     ...branches.map((branch) => {
       const color = slideColors[branch.branchKey] || '#94a3b8';
@@ -50,13 +63,13 @@ function generateSlideHTML(title: string, branches: ExportPowerPointProps['branc
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:32px;">
           <div style="width:12px;height:12px;border-radius:50%;background:${color};"></div>
           <h2 style="font-size:36px;font-weight:700;color:#1e293b;margin:0;">${branch.label}</h2>
-          <span style="font-size:14px;color:#94a3b8;margin-left:auto;">${branch.nodes.length} ideas</span>
+          <span style="font-size:14px;color:#94a3b8;margin-left:auto;">${branch.nodes.length} ${ideasLabel}</span>
         </div>
-        <ul style="list-style:none;padding:0;margin:0;">${nodesList || '<li style="color:#94a3b8;font-size:16px;">No ideas yet</li>'}</ul>
+        <ul style="list-style:none;padding:0;margin:0;">${nodesList || `<li style="color:#94a3b8;font-size:16px;">${noIdeasYetLabel}</li>`}</ul>
       </div>`;
     }),
     `<div style="page-break-after:always;padding:60px;min-height:700px;display:flex;flex-direction:column;justify-content:center;align-items:center;background:linear-gradient(135deg,#6366f122,#6366f111);">
-      <h2 style="font-size:36px;font-weight:700;color:#1e293b;margin-bottom:16px;">Summary</h2>
+      <h2 style="font-size:36px;font-weight:700;color:#1e293b;margin-bottom:16px;">${summaryLabel}</h2>
       <div style="display:flex;gap:24px;flex-wrap:wrap;justify-content:center;">
         ${branches.map((b) => `<div style="text-align:center;padding:16px 24px;border-radius:12px;background:white;box-shadow:0 2px 8px rgba(0,0,0,0.08);"><div style="font-size:28px;font-weight:800;color:${slideColors[b.branchKey] || '#94a3b8'};">${b.nodes.length}</div><div style="font-size:13px;color:#64748b;">${b.label}</div></div>`).join('')}
       </div>
@@ -67,7 +80,7 @@ function generateSlideHTML(title: string, branches: ExportPowerPointProps['branc
 <html>
 <head>
   <meta charset="utf-8">
-  <title>${title} - Mind Map Presentation</title>
+  <title>${title} - ${presentationTitleLabel}</title>
   <style>
     @media print { body { margin: 0; } div { page-break-inside: avoid; } }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 0; background: white; }
@@ -121,7 +134,7 @@ export const ExportPowerPoint: React.FC<ExportPowerPointProps> = ({
       }
 
       // OFF (default/fallback): legacy HTML blob, unchanged.
-      const html = generateSlideHTML(ideaTitle, branches);
+      const html = generateSlideHTML(ideaTitle, branches, t);
       const blob = new Blob([html], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -140,17 +153,20 @@ export const ExportPowerPoint: React.FC<ExportPowerPointProps> = ({
     } finally {
       setExporting(false);
     }
-  }, [branches, ideaId, ideaTitle, isPl, nativePptx, onClose]);
+  }, [branches, ideaId, ideaTitle, isPl, nativePptx, onClose, t]);
 
   const handlePrint = useCallback(() => {
-    const html = generateSlideHTML(ideaTitle, branches);
+    const html = generateSlideHTML(ideaTitle, branches, t);
     const win = window.open('', '_blank');
     if (win) {
       win.document.write(html);
       win.document.close();
       setTimeout(() => win.print(), 500);
     }
-  }, [branches, ideaTitle]);
+  }, [branches, ideaTitle, t]);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  useDialogA11y({ open, onClose, containerRef });
 
   if (!open) return null;
 
@@ -158,11 +174,18 @@ export const ExportPowerPoint: React.FC<ExportPowerPointProps> = ({
 
   return (
     <div className="fixed inset-0 z-modal flex items-center justify-center p-4 bg-c-bg">
-      <div className="w-full max-w-md rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl shadow-2xl overflow-hidden">
+      <div
+        ref={containerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="export-power-point-modal-heading"
+        tabIndex={-1}
+        className="w-full max-w-md rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl shadow-2xl overflow-hidden outline-none"
+      >
         <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
           <div className="flex items-center gap-2">
             <Presentation size={16} className="text-c-info" />
-            <h3 className="text-sm font-bold text-c-text dark:text-c-text">
+            <h3 className="text-sm font-bold text-c-text dark:text-c-text" id="export-power-point-modal-heading">
               {t('ideas.mindmap.exportPresentation', 'Export Presentation')}
             </h3>
           </div>

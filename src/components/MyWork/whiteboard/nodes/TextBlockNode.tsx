@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Handle, type NodeProps, NodeResizer, Position } from 'reactflow';
 
 import { commentCountOf, CommentPinBadge } from './CommentPinBadge';
@@ -10,10 +11,13 @@ import {
 } from './whiteboardNodeHelpers';
 
 export const TextBlockNode: React.FC<NodeProps> = ({ id: nodeId, data, selected }) => {
+  const { t } = useTranslation();
   // Z15: per-element style overrides written by the floating style bar.
   const accentBg = resolveNodeAccentBg(data?.accentColor);
   const fontStyle = resolveNodeFontStyle(data);
-  const [editing, setEditing] = React.useState(false);
+  // WB-P2-01: same immediate-naming contract as StickyNoteNode — see its
+  // comment for the `_isNew`/`onConsumeAutoEdit` rationale.
+  const [editing, setEditing] = React.useState(() => Boolean(data?._isNew));
   const [editValue, setEditValue] = React.useState(String(data?.label || ''));
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
@@ -23,6 +27,13 @@ export const TextBlockNode: React.FC<NodeProps> = ({ id: nodeId, data, selected 
       textareaRef.current?.select();
     }
   }, [editing]);
+
+  React.useEffect(() => {
+    if (data?._isNew && typeof data?.onConsumeAutoEdit === 'function') {
+      data.onConsumeAutoEdit();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const commitEdit = () => {
     setEditing(false);
@@ -106,7 +117,9 @@ export const TextBlockNode: React.FC<NodeProps> = ({ id: nodeId, data, selected 
                 })
               );
             }}
-            title={`${data.artifactLinks.length} linked artifact${data.artifactLinks.length !== 1 ? 's' : ''}`}
+            title={t('myWork.whiteboard.linkedArtifactsCount', {
+              count: data.artifactLinks.length,
+            })}
           >
             🔗
           </div>
@@ -114,7 +127,7 @@ export const TextBlockNode: React.FC<NodeProps> = ({ id: nodeId, data, selected 
         {data?._converted && (
           <div
             className="absolute top-1 right-1 z-10 flex items-center justify-center w-4 h-4 rounded-full bg-success-500 text-white text-[8px] shadow-sm"
-            title="Converted"
+            title={t('myWork.whiteboard.convertedBadge', 'Converted')}
           >
             ✓
           </div>

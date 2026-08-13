@@ -20,8 +20,32 @@ import {
 } from '../../../src/components/MyWork/ideaConvertTargets';
 import { FLOW_MODE_GUIDANCE } from '../../../src/components/MyWork/processflow/ProcessFlowToolbar';
 
+/**
+ * N6.4 (2026-08-10) — ten mock musiał urosnąć o DWIE rzeczy, obie z powodu
+ * REALNYCH braków w nim samym, nie z powodu zmiany w komponencie:
+ *
+ *  1. `initReactI18next` — od podłączenia paska do rejestru akcji
+ *     (`ideaActionRegistry.ts` → `services/api.ts` → `src/i18n.ts`) moduł
+ *     `src/i18n.ts` wykonuje się przy imporcie i woła `.use(initReactI18next)`.
+ *     Bez tego eksportu w mocku CAŁY plik testowy przestawał się nawet
+ *     ZBIERAĆ („no tests"), więc dopisanie go przywraca zbieralność.
+ *  2. `t` — mock NIGDY go nie zwracał, a `ProcessFlowToolbar` robi
+ *     `const { t } = useTranslation()`. Efekt: SIEDEM z dziewięciu testów w
+ *     tym pliku było CZERWONYCH na długo przed tą falą (`t is not a
+ *     function`) — sprawdzone `git stash`-em na commicie bazowym. Ten plik
+ *     strzeże dokładnie tej powierzchni, którą teraz okablowujemy (zakładki
+ *     trybu + menu „Więcej"), więc zostawienie go w całości czerwonego
+ *     znaczyłoby „przepuszczam zmianę bez żadnej osłony". Mock `t` zwraca
+ *     `defaultValue` (drugi argument), czyli DOKŁADNIE te angielskie napisy,
+ *     na których asercje tego pliku były pisane.
+ */
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ i18n: { language: 'en' } }),
+  useTranslation: () => ({
+    t: (_key: string, defaultValue?: unknown) =>
+      typeof defaultValue === 'string' ? defaultValue : _key,
+    i18n: { language: 'en' },
+  }),
+  initReactI18next: { type: '3rdParty', init: () => {} },
 }));
 
 function baseProps(overrides: Record<string, any> = {}) {

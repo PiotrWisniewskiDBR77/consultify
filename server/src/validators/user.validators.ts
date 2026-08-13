@@ -59,8 +59,9 @@ export const UpdateUserSchema = z.object({
   profileSurveyDismissedCount: z.number().int().min(0).optional(),
   profileSurveyLastDismissedAt: z.string().max(100).nullable().optional(),
   // P0.3 (2026-07-26): interface language preference. Must stay in sync with
-  // SUPPORTED_LANGUAGES in src/i18n.ts.
-  language: z.enum(['en', 'pl', 'de', 'ar', 'jp', 'es']).nullable().optional(),
+  // SUPPORTED_LANGUAGES in src/i18n.ts. ('ja' — S23-LOCALE, 2026-08-12: 'jp'
+  // was not a valid BCP47 subtag for Japanese and was migrated to 'ja'.)
+  language: z.enum(['en', 'pl', 'de', 'ar', 'ja', 'es']).nullable().optional(),
 });
 
 export const UpdateUserRoleSchema = z.object({

@@ -1,6 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
 import {
-  Archive,
   Bot,
   CheckCircle2,
   ChevronRight,
@@ -24,7 +23,7 @@ import {
   TreePine,
   Workflow,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   type TableSettingsColumn,
@@ -48,6 +47,7 @@ import {
 } from '@/components/shared/selectionTokens';
 import { EmptyState, ErrorState, SkeletonState } from '@/components/shared/states';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
+import { normalizeRowActionSections } from '@/components/standard/StandardTable';
 import { MetaChip, ToolChip } from '@/components/ui/primitives/chips';
 import { CHIP_TONE_VAR, ChipBase, ChipDot } from '@/components/ui/primitives/chips/chipBase';
 import type {
@@ -430,6 +430,87 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
   );
 
   const ideaIds = useMemo(() => ideas.map((idea) => idea.id), [ideas]);
+
+  // S18-NOOVERLAP (2026-08-12) — closes the Updated/actions column-overlap
+  // regression the owner rejected. Two independent defects, both measured
+  // in a real browser (dev-render/measure-idea-table-overlap.mjs against
+  // dev-render/screens/idea-table-production.tsx):
+  //
+  //   Defect A (width-proportional): DEFAULT_IDEAS_COLUMN_WIDTHS sums to
+  //   1354px; the fixed columns other than title alone are 794px, so at
+  //   1280×800 the title's real budget is 478px against a hard 560px
+  //   default — a 74px overflow that the sticky actions column (S13-STICKY)
+  //   then renders on top of.
+  //   Defect B (constant, viewport-independent): the sticky actions cell's
+  //   `right: 0` anchors to the scroller's PADDING box, but the scroller's
+  //   `scrollWidth` (TableWithPreviewLayout.tsx:339 `pr-2`, an 8px trailing
+  //   padding) never counts that padding — so max scroll leaves a permanent
+  //   8px sliver of the date column covered at every viewport tested.
+  //
+  // The scroll container that can overflow horizontally is
+  // TableWithPreviewLayout.tsx's `overflow-auto` div — a shared file with
+  // 39 importers, deliberately left untouched. Instead we watch it from
+  // here by walking up from our own wrapper (tableWrapperRef, set on the
+  // div below), the same `.closest('.overflow-auto')` approach the
+  // real-browser measurement script uses.
+  const tableWrapperRef = useRef<HTMLDivElement | null>(null);
+  const [scrollerAvailableWidth, setScrollerAvailableWidth] = useState<number | null>(null);
+  const [scrollerPaddingRight, setScrollerPaddingRight] = useState(0);
+
+  useEffect(() => {
+    const wrapper = tableWrapperRef.current;
+    const scroller = wrapper?.closest<HTMLElement>('.overflow-auto') ?? null;
+    if (!scroller) return undefined;
+
+    const measure = () => {
+      const paddingRight = parseFloat(getComputedStyle(scroller).paddingRight) || 0;
+      setScrollerPaddingRight(paddingRight);
+      setScrollerAvailableWidth(scroller.clientWidth - paddingRight);
+    };
+
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(scroller);
+    return () => observer.disconnect();
+  }, []);
+
+  // Sum of every OTHER visible column — the budget left for title once the
+  // fixed columns are subtracted from what the scroller can actually show.
+  // At 1280×800 production defaults: 40 + 150 + 230 + 190 + 128 + 56 = 794px.
+  const fixedColumnsWidthSum = useMemo(
+    () =>
+      columnWidths.select +
+      (isColumnVisible('stage') ? columnWidths.stage : 0) +
+      (isColumnVisible('tags') ? columnWidths.tags : 0) +
+      (isColumnVisible('tool') ? columnWidths.tool : 0) +
+      (isColumnVisible('date') ? columnWidths.date : 0) +
+      columnWidths.actions,
+    [
+      columnWidths.select,
+      columnWidths.stage,
+      columnWidths.tags,
+      columnWidths.tool,
+      columnWidths.date,
+      columnWidths.actions,
+      isColumnVisible,
+    ]
+  );
+
+  // Fix A — the title column's RENDERED width. `columnWidths.title`
+  // (user-persisted, resizable) stays the ceiling — a manual drag is still
+  // respected whenever there is room — but it no longer forces overflow
+  // past what the scroller can actually show. Falls back to the raw
+  // persisted width until the first real measurement lands (no ancestor
+  // scroller found yet, or a non-browser render), matching the pre-fix
+  // rendering for that one frame instead of guessing a shrunk width.
+  // Bounds reuse IDEAS_RESIZE_BOUNDS.title (360/900) — the same bounds the
+  // title ColumnResizer already enforces below, not a new invented range.
+  const renderedTitleWidth = useMemo(() => {
+    if (scrollerAvailableWidth === null) return columnWidths.title;
+    const fitWidth = Math.min(columnWidths.title, scrollerAvailableWidth - fixedColumnsWidthSum);
+    return Math.max(IDEAS_RESIZE_BOUNDS.title.min, Math.min(IDEAS_RESIZE_BOUNDS.title.max, fitWidth));
+  }, [scrollerAvailableWidth, fixedColumnsWidthSum, columnWidths.title]);
+
   const tableMinWidth = useMemo(() => {
     const optionalWidth =
       (isColumnVisible('stage') ? columnWidths.stage : 0) +
@@ -437,9 +518,12 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
       (isColumnVisible('tool') ? columnWidths.tool : 0) +
       (isColumnVisible('date') ? columnWidths.date : 0);
 
+    // S18-NOOVERLAP: uses the RENDERED title width, not the raw persisted
+    // one — otherwise this table's own inline minWidth style re-forces the
+    // exact overflow Fix A just removed from the header/body cells below.
     return Math.max(
       1120,
-      columnWidths.select + columnWidths.title + optionalWidth + columnWidths.actions
+      columnWidths.select + renderedTitleWidth + optionalWidth + columnWidths.actions
     );
   }, [
     columnWidths.actions,
@@ -447,7 +531,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
     columnWidths.select,
     columnWidths.stage,
     columnWidths.tags,
-    columnWidths.title,
+    renderedTitleWidth,
     columnWidths.tool,
     isColumnVisible,
   ]);
@@ -571,7 +655,6 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
     const detailsText = idea.body || '';
 
     const contextParts: string[] = [];
-    if (idea.sourceType) contextParts.push(`${isPolish ? 'Źródło' : 'Source'}: ${idea.sourceType}`);
     if (typeof idea.mapItems === 'number')
       contextParts.push(`${isPolish ? 'Elementy' : 'Items'}: ${idea.mapItems}`);
     if (typeof idea.mapNodes === 'number') contextParts.push(`Nodes: ${idea.mapNodes}`);
@@ -634,12 +717,6 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
       {
         columns: 2,
         buttons: [
-          {
-            label: isPolish ? 'Konwertuj' : 'Convert',
-            icon: Sparkles,
-            onClick: () => onStartConvert(idea),
-            colorScheme: 'primary',
-          },
           {
             label: isPolish ? 'Otwórz Flow' : 'Open Flow',
             icon: Workflow,
@@ -774,12 +851,15 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
         renderPreview={renderPreview}
         renderPreviewFooter={renderPreviewFooter}
       >
-        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl">
+        <div
+          ref={tableWrapperRef}
+          className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl"
+        >
           <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */
             className="w-full table-fixed bg-c-surface"
             style={{ minWidth: tableMinWidth }}
           >
-            <thead className="sticky top-0 z-10 bg-c-surface-raised shadow-[0_1px_0_rgba(15,23,42,0.08)] backdrop-blur dark:shadow-[0_1px_0_rgba(255,255,255,0.10)]">
+            <thead className="sticky top-0 z-sticky bg-c-surface-raised shadow-[0_1px_0_rgba(15,23,42,0.08)] backdrop-blur dark:shadow-[0_1px_0_rgba(255,255,255,0.10)]">
               <tr className="border-b border-c-border-subtle">
                 <th className="px-2 py-3" style={{ width: columnWidths.select }}>
                   <button
@@ -804,7 +884,10 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                 </th>
                 <th
                   className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-c-text-muted"
-                  style={{ width: columnWidths.title }}
+                  // S18-NOOVERLAP Fix A: renders at the width the scroller can
+                  // actually fit, not the raw persisted columnWidths.title —
+                  // see renderedTitleWidth above.
+                  style={{ width: renderedTitleWidth }}
                 >
                   <button
                     onClick={() => onSort('title')}
@@ -815,6 +898,11 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                   </button>
                   <ColumnResizer
                     columnId="title"
+                    // Deliberately the PERSISTED width, not renderedTitleWidth:
+                    // this is the ceiling a manual drag adjusts. When the
+                    // rendered width is currently clamped below it, dragging
+                    // takes effect as soon as room frees up (matches the
+                    // "still respected whenever there is room" contract).
                     currentWidth={columnWidths.title}
                     minWidth={IDEAS_RESIZE_BOUNDS.title.min}
                     maxWidth={IDEAS_RESIZE_BOUNDS.title.max}
@@ -959,9 +1047,61 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                     />
                   </th>
                 ) : null}
+                {/*
+                  S13-STICKY (2026-08-12): pin the actions column to the right
+                  edge instead of letting it scroll off-screen. At 1280×800 in
+                  the true production shape (no sibling ArtifactRightPanel),
+                  DEFAULT_IDEAS_COLUMN_WIDTHS sums to 1354px against a 1280px
+                  viewport — the row kebab, the ONLY route to per-row actions,
+                  sat ~74px past the right edge at rest with no visible
+                  affordance (confirmed via getBoundingClientRect on the
+                  production-shape dev-render harness). `overflow-auto` on the
+                  scroll container (TableWithPreviewLayout.tsx) makes it
+                  technically reachable by scrolling, but that is not an
+                  acceptable route to the primary row action on a required
+                  acceptance viewport.
+                  Rejected alternatives:
+                    - Shrinking `title` 560→486 to force a fit: brittle,
+                      because every column here is user-resizable
+                      (handleColumnBoundaryResize) — any resize reintroduces
+                      the overflow.
+                    - Hiding `date` below a width threshold: loses data and
+                      still breaks under user resize.
+                  Sticky is robust to resizing, keeps every column reachable,
+                  and keeps the primary action permanently visible — the
+                  actual acceptance criterion.
+                  z-index: `z-sticky` (20, canon "sticky headers, command
+                  rows, chrome bars" — tailwind.config.js) on the header row
+                  (bumped here from a raw `z-10`, matching the precedent in
+                  ResizableTable/TableHeader.tsx) beats `z-canvas` (10, canon
+                  "in-flow raised content") on the body's sticky cells below,
+                  so the header's pinned corner always wins the header-row ×
+                  sticky-column intersection during scroll. Both stay well
+                  under `z-context-menu` (120) — the row menu portals straight
+                  to `document.body` (RowActionsMenu.tsx), a DOM sibling of
+                  the whole app root, so its stacking is independent of
+                  anything set here.
+
+                  S18-NOOVERLAP Fix B (2026-08-12): `right-0` (the Tailwind
+                  class, kept — the S13-STICKY/S17-OVERLAPTEST contract tests
+                  assert its literal presence as the structural "still
+                  pinned" marker) sticks this cell to the scroller's PADDING
+                  box. `scrollWidth` on that same scroller does not include
+                  its own trailing padding (TableWithPreviewLayout.tsx:339
+                  `pr-2`, 8px), so max scroll can only bring the table's
+                  content-box edge flush with the viewport — a permanent 8px
+                  gap between that and where `right: 0` pins this column,
+                  measured at every viewport (1280, 720, 200% zoom alike).
+                  The inline `right` style below overrides the class (inline
+                  style beats a non-`!important` utility class) with the
+                  negative of that same padding, closing the gap exactly.
+                  Read from computed style, never hard-coded — and inert
+                  whenever Fix A already removed the overflow, since a
+                  sticky cell only ever applies its offset once "stuck".
+                */}
                 <th
-                  className="relative px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider text-c-text-muted"
-                  style={{ width: columnWidths.actions }}
+                  className="sticky right-0 z-sticky px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider text-c-text-muted bg-c-surface-raised border-l border-c-border-subtle"
+                  style={{ width: columnWidths.actions, right: -scrollerPaddingRight }}
                 >
                   <div className="flex items-center justify-end normal-case tracking-normal">
                     <TableSettingsPopover
@@ -1015,6 +1155,21 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                   isChecked || isPreviewSelected || isFocused
                     ? 'opacity-100'
                     : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus:opacity-100';
+
+                // S13-STICKY: the sticky actions cell needs its OWN opaque
+                // background — it overlays the data columns as they scroll
+                // underneath it, so it can't rely on the <tr> background
+                // showing through a transparent <td>. Mirrors the same four
+                // states the row's own className computes below (bg parts of
+                // SELECTED_ROW_CLASS / FOCUSED_ROW_CLASS / default+hover) so
+                // the pinned column reads as part of the row, not a foreign
+                // strip glued on top of it.
+                const stickyActionsCellBgClass =
+                  isPreviewSelected || isChecked
+                    ? 'bg-slate-100 dark:bg-white/[0.08]'
+                    : isFocused
+                      ? 'bg-slate-50/80 dark:bg-white/[0.04]'
+                      : 'bg-c-surface group-hover:bg-slate-100/80 dark:group-hover:bg-white/[0.04]';
 
                 const rowActionSections: RowActionSection[] = [
                   {
@@ -1131,20 +1286,6 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                             ? onConvertIdeaToTarget(idea, 'report')
                             : onStartConvert(idea),
                       },
-                      {
-                        // Z3 audit (2026-07-24): 'table' NIE istnieje jako convert
-                        // target NIGDZIE w systemie — brak w `IdeaConvertTarget` (SSOT
-                        // ideaConvertTargets.ts), brak w `LIVE_CONVERT_TARGETS`
-                        // (server/src/routes/my-work.routes.ts) — serwer zwróciłby 400
-                        // „Invalid target". To jedyny z trzech, który zostaje
-                        // wyłączony — bo naprawdę nie ma odbiornika, nie „na wiarę".
-                        id: 'output_table',
-                        label: isPolish ? 'Tabela' : 'Table',
-                        icon: Table2,
-                        disabled: true,
-                        rightLabel: isPolish ? 'wkrótce' : 'soon',
-                        onClick: () => undefined,
-                      },
                     ],
                   },
                   ...(folders && onMoveToFolder
@@ -1192,14 +1333,6 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                         label: isPolish ? 'Edytuj' : 'Edit',
                         icon: Edit2,
                         onClick: () => onOpenIdea(idea),
-                      },
-                      {
-                        id: 'archive',
-                        label: isPolish ? 'Archiwizuj' : 'Archive',
-                        icon: Archive,
-                        disabled: true,
-                        description: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
-                        onClick: () => {},
                       },
                     ],
                   },
@@ -1262,7 +1395,11 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                         />
                       </label>
                     </td>
-                    <td className="px-3 py-2.5 align-middle" style={{ width: columnWidths.title }}>
+                    <td
+                      className="px-3 py-2.5 align-middle"
+                      // S18-NOOVERLAP Fix A: mirrors the header <th> above.
+                      style={{ width: renderedTitleWidth }}
+                    >
                       <div className="flex items-center gap-1.5">
                         {onToggleFavorite ? (
                           <button
@@ -1334,14 +1471,34 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                       </td>
                     ) : null}
                     <td
-                      className="px-3 py-2.5 text-right align-middle"
-                      style={{ width: columnWidths.actions }}
+                      // S13-STICKY: pinned to the right edge (see the header
+                      // <th> comment above for the full "why sticky, not a
+                      // width squeeze" rationale + z-index reasoning).
+                      // `z-canvas` (10, canon "in-flow raised content") is
+                      // deliberately below the header's `z-sticky` (20) so
+                      // the corner cell never fights the header row for the
+                      // top spot, and both stay far under `z-context-menu`
+                      // (120) for the kebab's own portal-to-body menu.
+                      // S18-NOOVERLAP Fix B: mirrors the header <th>'s
+                      // `right: -scrollerPaddingRight` override above — same
+                      // padding-box-vs-scrollWidth gap, same compensation.
+                      className={`sticky right-0 z-canvas px-3 py-2.5 text-right align-middle border-l border-c-border-subtle transition-colors ${stickyActionsCellBgClass}`}
+                      style={{ width: columnWidths.actions, right: -scrollerPaddingRight }}
                       onClick={(event) => event.stopPropagation()}
                     >
                       <RowActionsMenu
-                        sections={rowActionSections}
+                        sections={normalizeRowActionSections(rowActionSections)}
                         iconVariant="vertical"
-                        className="opacity-40 transition-opacity group-hover:opacity-100"
+                        // RISK-35 (S1-CONTRAST, 2026-08-12): opacity-40 at rest measured
+                        // 1.93:1 (light) / 1.61:1 (dark) against the 3:1 WCAG 1.4.11
+                        // non-text-contrast bar for this icon-only button — it is the
+                        // only route to per-row actions, so it must be legible before
+                        // the row is hovered, not just after. opacity-90 clears both
+                        // themes with margin (5.84:1 / 3.29:1 — see
+                        // docs/qa/ideas-complete-transformation-2026-08-09/21_FOCUS_AND_CONTRAST.md
+                        // §8) while keeping the hover reveal (opacity-100) visibly
+                        // stronger, preserving the "reveal on row hover" pattern.
+                        className="opacity-90 transition-opacity group-hover:opacity-100"
                       />
                     </td>
                   </tr>

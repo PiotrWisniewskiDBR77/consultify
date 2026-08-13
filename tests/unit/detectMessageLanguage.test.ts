@@ -30,7 +30,7 @@ describe('detectMessageLanguage', () => {
   });
 
   it('detects Japanese by script', () => {
-    expect(detectMessageLanguage('会社について教えてください')).toBe('jp');
+    expect(detectMessageLanguage('会社について教えてください')).toBe('ja');
   });
 
   it('returns null on ambiguous / signal-less input so caller can fall back', () => {

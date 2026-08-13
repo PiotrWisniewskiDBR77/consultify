@@ -95,8 +95,14 @@ export interface UseProcessFlowAIProposalOpts {
   isPl: boolean;
   language?: string;
   selectedNodeIds?: string[];
-  /** Host applies the accepted simulation to canvas state (decision 5). */
-  onApply?: (result: ApplyPatchResult) => void;
+  /**
+   * Host applies the accepted simulation to canvas state (decision 5).
+   * G4-PF-GUARDRAIL: may return `false` to refuse the accept (e.g. the
+   * node-count cap) — `resolveProposal` then keeps the proposal open
+   * instead of clearing it, so the refusal isn't silent and the user can
+   * reject/regenerate. Returning `void`/`true`/anything else means "applied".
+   */
+  onApply?: (result: ApplyPatchResult) => void | boolean;
 }
 
 function localizeWarning(w: ApplyPatchWarning, isPl: boolean): string {
@@ -419,7 +425,11 @@ export function useProcessFlowAIProposal({
       if (!activeProposal || activeProposal.status !== 'pending') return;
       if (action === 'accept') {
         const result = applyProposalPatch(nodes, edges, lanes, activeProposal.patch);
-        onApply?.(result);
+        const applied = onApply?.(result);
+        // G4-PF-GUARDRAIL: host refused the accept (e.g. node-count cap) —
+        // keep the proposal open instead of clearing it below, so the user
+        // can reject/regenerate rather than it silently disappearing.
+        if (applied === false) return;
       }
       setActiveProposal(null);
     },

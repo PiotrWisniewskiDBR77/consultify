@@ -78,6 +78,7 @@ const TextEditor: React.FC<CellEditorProps> = ({ value, onSave, onCancel }) => {
 // ── Rich Text Editor (Long Text) ─────────────────────────────────────────────
 
 const RichTextEditor: React.FC<CellEditorProps> = ({ value, onSave, onCancel }) => {
+  const { t } = useTranslation();
   const editorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -133,7 +134,7 @@ const RichTextEditor: React.FC<CellEditorProps> = ({ value, onSave, onCancel }) 
           onClick={() => document.execCommand('insertUnorderedList')}
           className="px-1.5 py-0.5 rounded bg-c-surface-raised"
         >
-          • List
+          • {t('myWorkTable.cellEditor.list', 'List')}
         </button>
       </div>
       <div

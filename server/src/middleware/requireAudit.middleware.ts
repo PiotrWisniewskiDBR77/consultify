@@ -127,6 +127,56 @@ export function requireAudit(req: AuthRequest, res: Response, next: NextFunction
       }
     }
 
+    // Deep clone before/after state snapshots, under exactly the same rules as
+    // metadata above (structuredClone -> serializable -> size-capped).
+    //
+    // WHY THIS EXISTS (found 2026-08-10 by querying the audit table instead of
+    // reading the code): `AuditEventInput` accepts `before`/`after`,
+    // `AuditEventsService.log` persists them into `before_json`/`after_json`, and
+    // a dozen call sites across the app pass them — but the "controlled payload"
+    // built below never forwarded them, so they were dropped in between. Every
+    // audit row in the database had before_json = after_json = NULL (verified:
+    // 0 of 8 IDEA_UPDATE rows carried a payload). The audit trail recorded who
+    // touched which resource and never WHAT CHANGED. That is the difference
+    // between an audit trail and a hit counter, and it matters most for the
+    // fields where a change is itself the security event — e.g. downgrading an
+    // Idea's `confidentiality` from `restricted`, which re-opens eight AI/export
+    // endpoints on the next request.
+    const cloneStateField = (
+      value: unknown,
+      label: 'before' | 'after'
+    ): { ok: true; value: unknown } | { ok: false; err: TypeError } => {
+      let cloned: unknown;
+      try {
+        cloned = structuredClone(value);
+      } catch (err) {
+        return { ok: false, err: err instanceof TypeError ? err : new TypeError(String(err)) };
+      }
+      try {
+        const serialized = JSON.stringify(cloned);
+        if (serialized !== undefined && serialized.length > MAX_METADATA_BYTES) {
+          logger.warn(`[requireAudit] emitAuditEvent: ${label} payload too large`);
+          return { ok: false, err: new TypeError(`emitAuditEvent: ${label} payload too large`) };
+        }
+      } catch {
+        return { ok: false, err: new TypeError(`emitAuditEvent: ${label} is not serializable`) };
+      }
+      return { ok: true, value: cloned };
+    };
+
+    let clonedBefore: unknown;
+    if (input.before !== undefined) {
+      const r = cloneStateField(input.before, 'before');
+      if (!r.ok) return Promise.reject(r.err);
+      clonedBefore = r.value;
+    }
+    let clonedAfter: unknown;
+    if (input.after !== undefined) {
+      const r = cloneStateField(input.after, 'after');
+      if (!r.ok) return Promise.reject(r.err);
+      clonedAfter = r.value;
+    }
+
     // Cap check (before incrementing)
     if (emissionCount >= MAX_EMISSIONS) {
       logger.warn('[requireAudit] emitAuditEvent: per-request emission cap exceeded');
@@ -171,6 +221,12 @@ export function requireAudit(req: AuthRequest, res: Response, next: NextFunction
       ip,
       userAgent,
       ...(resourceId !== undefined ? { resourceId } : {}),
+      // Same shape-cast the line below uses for metadata: `AuditEventInput` types
+      // these as `Record<string, unknown>`, while `structuredClone` widens to
+      // `unknown`. The value has already been proven cloneable and serializable
+      // above, so the cast asserts nothing that was not checked.
+      ...(clonedBefore !== undefined ? { before: clonedBefore as Record<string, unknown> } : {}),
+      ...(clonedAfter !== undefined ? { after: clonedAfter as Record<string, unknown> } : {}),
       ...(clonedMetadata !== undefined
         ? { metadata: clonedMetadata as Record<string, unknown> }
         : {}),

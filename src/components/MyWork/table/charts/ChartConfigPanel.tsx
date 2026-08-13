@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 type ChartType = 'bar' | 'line' | 'pie' | 'donut';
 type Aggregation = 'count' | 'sum' | 'avg' | 'min' | 'max';
@@ -17,25 +18,26 @@ interface ChartConfigPanelProps {
   onChange: (config: ChartConfig) => void;
 }
 
-const CHART_TYPES: Array<{ value: ChartType; label: string }> = [
-  { value: 'bar', label: 'Bar' },
-  { value: 'line', label: 'Line' },
-  { value: 'pie', label: 'Pie' },
-  { value: 'donut', label: 'Donut' },
-];
-
-const AGGREGATIONS: Array<{ value: Aggregation; label: string }> = [
-  { value: 'count', label: 'Count' },
-  { value: 'sum', label: 'Sum' },
-  { value: 'avg', label: 'Average' },
-  { value: 'min', label: 'Min' },
-  { value: 'max', label: 'Max' },
-];
-
 const NUMERIC_TYPES = new Set(['number', 'currency', 'rating', 'progress']);
 
 export const ChartConfigPanel: React.FC<ChartConfigPanelProps> = ({ config, fields, onChange }) => {
+  const { t } = useTranslation();
   const numericFields = fields.filter((f) => NUMERIC_TYPES.has(f.type));
+
+  const CHART_TYPES: Array<{ value: ChartType; label: string }> = [
+    { value: 'bar', label: t('myWorkTable.chartConfigPanel.chartTypeBar', 'Bar') },
+    { value: 'line', label: t('myWorkTable.chartConfigPanel.chartTypeLine', 'Line') },
+    { value: 'pie', label: t('myWorkTable.chartConfigPanel.chartTypePie', 'Pie') },
+    { value: 'donut', label: t('myWorkTable.chartConfigPanel.chartTypeDonut', 'Donut') },
+  ];
+
+  const AGGREGATIONS: Array<{ value: Aggregation; label: string }> = [
+    { value: 'count', label: t('myWorkTable.chartConfigPanel.aggCount', 'Count') },
+    { value: 'sum', label: t('myWorkTable.chartConfigPanel.aggSum', 'Sum') },
+    { value: 'avg', label: t('myWorkTable.chartConfigPanel.aggAverage', 'Average') },
+    { value: 'min', label: t('myWorkTable.chartConfigPanel.aggMin', 'Min') },
+    { value: 'max', label: t('myWorkTable.chartConfigPanel.aggMax', 'Max') },
+  ];
 
   const update = <K extends keyof ChartConfig>(key: K, value: ChartConfig[K]) => {
     onChange({ ...config, [key]: value });
@@ -44,18 +46,22 @@ export const ChartConfigPanel: React.FC<ChartConfigPanelProps> = ({ config, fiel
   return (
     <div className="space-y-3">
       <div>
-        <label className="text-xs font-medium text-c-text-muted">Title</label>
+        <label className="text-xs font-medium text-c-text-muted">
+          {t('myWorkTable.chartConfigPanel.title', 'Title')}
+        </label>
         <input
           type="text"
           value={config.title || ''}
           onChange={(e) => update('title', e.target.value || undefined)}
-          placeholder="Chart title..."
+          placeholder={t('myWorkTable.chartConfigPanel.titlePlaceholder', 'Chart title...')}
           className="w-full mt-1 px-2 py-1.5 border rounded text-sm"
         />
       </div>
 
       <div>
-        <label className="text-xs font-medium text-c-text-muted">Chart Type</label>
+        <label className="text-xs font-medium text-c-text-muted">
+          {t('myWorkTable.chartConfigPanel.chartType', 'Chart Type')}
+        </label>
         <div className="grid grid-cols-4 gap-1 mt-1">
           {CHART_TYPES.map((ct) => (
             <button
@@ -74,13 +80,15 @@ export const ChartConfigPanel: React.FC<ChartConfigPanelProps> = ({ config, fiel
       </div>
 
       <div>
-        <label className="text-xs font-medium text-c-text-muted">X-Axis Field</label>
+        <label className="text-xs font-medium text-c-text-muted">
+          {t('myWorkTable.chartConfigPanel.xAxisField', 'X-Axis Field')}
+        </label>
         <select
           value={config.xFieldId}
           onChange={(e) => update('xFieldId', e.target.value)}
           className="w-full mt-1 px-2 py-1.5 border rounded text-sm"
         >
-          <option value="">Select field...</option>
+          <option value="">{t('myWorkTable.chartConfigPanel.selectField', 'Select field...')}</option>
           {fields.map((f) => (
             <option key={f.id} value={f.id}>
               {f.name}
@@ -91,14 +99,17 @@ export const ChartConfigPanel: React.FC<ChartConfigPanelProps> = ({ config, fiel
 
       <div>
         <label className="text-xs font-medium text-c-text-muted">
-          Y-Axis Field <span className="text-c-text-secondary">(numeric, optional)</span>
+          {t('myWorkTable.chartConfigPanel.yAxisField', 'Y-Axis Field')}{' '}
+          <span className="text-c-text-secondary">
+            {t('myWorkTable.chartConfigPanel.yAxisFieldHint', '(numeric, optional)')}
+          </span>
         </label>
         <select
           value={config.yFieldId || ''}
           onChange={(e) => update('yFieldId', e.target.value || undefined)}
           className="w-full mt-1 px-2 py-1.5 border rounded text-sm"
         >
-          <option value="">None (count only)</option>
+          <option value="">{t('myWorkTable.chartConfigPanel.noneCountOnly', 'None (count only)')}</option>
           {numericFields.map((f) => (
             <option key={f.id} value={f.id}>
               {f.name}
@@ -108,7 +119,9 @@ export const ChartConfigPanel: React.FC<ChartConfigPanelProps> = ({ config, fiel
       </div>
 
       <div>
-        <label className="text-xs font-medium text-c-text-muted">Aggregation</label>
+        <label className="text-xs font-medium text-c-text-muted">
+          {t('myWorkTable.chartConfigPanel.aggregation', 'Aggregation')}
+        </label>
         <select
           value={config.aggregation}
           onChange={(e) => update('aggregation', e.target.value as Aggregation)}

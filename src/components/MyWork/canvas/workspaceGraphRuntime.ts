@@ -117,6 +117,14 @@ export function useWorkspaceGraphRuntime({
     version: 1,
   });
   const [loading, setLoading] = useState(true);
+  // D2: GET /map failures used to vanish silently — `refresh()` had no catch,
+  // so `loading` still flipped to false (via `finally`) but nothing recorded
+  // that the fetch actually failed. Callers then read the untouched initial
+  // empty graph as "brand new idea, nothing saved yet" and rendered/persisted
+  // a starter template over it. `loadError` lets consumers tell "empty
+  // because new" apart from "empty because the load blew up" and show a real
+  // error + retry instead.
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [viewport, setViewport] = useState<{ x: number; y: number; zoom: number } | null>(
     initialViewport
   );
@@ -181,6 +189,7 @@ export function useWorkspaceGraphRuntime({
     setLoading(true);
     try {
       const res = await Api.getMyIdeaMap(ideaId, { language });
+      setLoadError(null);
       const serverMap = res?.map || {};
       const serverVersion = Math.max(1, Number(serverMap.version || 1));
       // eslint-disable-next-line no-console
@@ -249,6 +258,14 @@ export function useWorkspaceGraphRuntime({
             })
           : null;
       if (storedViewport) setViewport(storedViewport);
+    } catch (err: any) {
+      // Deliberately do NOT touch `graph` here: on a first-ever failed load it
+      // is still the untouched empty initial state (handled by the D2 fix in
+      // useMindMapPersistence), and on a later failed refresh it still holds
+      // the last successfully loaded map — either way, clobbering it here
+      // would destroy real data on a transient network blip.
+      setLoadError(err?.message ? String(err.message) : 'idea-map-load-failed');
+      throw err;
     } finally {
       setLoading(false);
       refreshInFlightRef.current = false;
@@ -257,7 +274,10 @@ export function useWorkspaceGraphRuntime({
 
   useEffect(() => {
     if (!open) return;
-    void refresh();
+    // `refresh()` now rethrows on failure (so awaiting callers elsewhere still
+    // see the rejection) — this mount-triggered call has no caller to await
+    // it, so swallow here. The failure is already recorded in `loadError`.
+    void refresh().catch(() => {});
   }, [open, refresh]);
 
   const replaceGraph = useCallback((next: Partial<WorkspaceGraphState>) => {
@@ -380,6 +400,7 @@ export function useWorkspaceGraphRuntime({
   return {
     graph,
     loading,
+    loadError,
     saving,
     lastSavedAt,
     syncState: syncState as IdeaMapSyncState,

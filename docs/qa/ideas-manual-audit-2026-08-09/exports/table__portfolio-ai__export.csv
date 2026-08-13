@@ -1,0 +1,12 @@
+﻿Type,Label,Status,Priority,Decision,Start date,End date
+center,Alert health-score po spadku aktywności,,,open,2026-08-09,2026-08-14
+idea,QBR w 30 dni,To Do,High,open,2026-08-16,2026-08-21
+idea,Checklista wartości do 14 dnia,To Do,High,open,2026-08-23,2026-08-28
+idea,Wywiady z klientami churned,In Progress,,open,2026-08-30,2026-09-04
+idea,Cohort retention według segmentu,To Do,Medium,open,2026-09-06,2026-09-11
+idea,Ryzyko przeciążenia CSM,,,open,2026-09-13,2026-09-18
+idea,Test nowego onboarding call,To Do,Medium,open,2026-09-20,2026-09-25
+idea,Asystent ofertowania AI,todo,Medium,,,
+idea,Automatyczna klasyfikacja reklamacji,todo,Medium,,,
+idea,Prognoza churn klientów B2B,todo,Medium,,,
+idea,Copilot dla CSM,todo,Medium,,,

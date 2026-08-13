@@ -9,9 +9,10 @@
  */
 
 import { Loader2, X } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import type { CreateRecordSourceInput, SourceType } from '@/services/api/recordProvenance.api';
 
 const SOURCE_TYPE_OPTIONS: Array<{ value: SourceType; en: string; pl: string }> = [
@@ -45,8 +46,7 @@ export const AddSourceDialog: React.FC<AddSourceDialogProps> = ({
   const [note, setNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  if (!open) return null;
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   const reset = (): void => {
     setType(defaultType);
@@ -56,6 +56,16 @@ export const AddSourceDialog: React.FC<AddSourceDialogProps> = ({
     setError(null);
     setSubmitting(false);
   };
+
+  const handleDialogClose = (): void => {
+    if (submitting) return;
+    reset();
+    onClose();
+  };
+
+  useDialogA11y({ open, onClose: handleDialogClose, containerRef: dialogRef });
+
+  if (!open) return null;
 
   const validate = (): string | null => {
     if (uri && uri.trim().length > 2048) {
@@ -101,11 +111,13 @@ export const AddSourceDialog: React.FC<AddSourceDialogProps> = ({
 
   return (
     <div
+      ref={dialogRef}
       className="fixed inset-0 z-overlay flex items-center justify-center backdrop-blur-sm p-4"
       style={{ backgroundColor: 'color-mix(in srgb, var(--c-bg) 60%, transparent)' }}
       role="dialog"
       aria-modal="true"
       aria-labelledby={`${testId}-title`}
+      tabIndex={-1}
       data-testid={testId}
       onClick={(e) => {
         if (e.target === e.currentTarget && !submitting) {

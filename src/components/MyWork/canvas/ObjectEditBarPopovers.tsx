@@ -215,6 +215,8 @@ export const MenuListPopover: React.FC<{
     icon?: React.ComponentType<{ size?: number }>;
     onClick: () => void;
     disabled?: boolean;
+    /** PF-P2 edge type/condition list: marks the option matching current state. */
+    active?: boolean;
   }>;
   close: () => void;
 }> = ({ title, items, close }) => (
@@ -225,11 +227,14 @@ export const MenuListPopover: React.FC<{
         key={item.id}
         type="button"
         disabled={item.disabled}
+        aria-pressed={item.active}
         onClick={() => {
           item.onClick();
           close();
         }}
-        className={`${ROW_BTN} disabled:opacity-40 disabled:cursor-not-allowed`}
+        className={`${ROW_BTN} disabled:opacity-40 disabled:cursor-not-allowed ${
+          item.active ? ROW_ACTIVE : ''
+        }`}
       >
         {item.icon ? <item.icon size={13} /> : null}
         {item.label}
@@ -237,6 +242,68 @@ export const MenuListPopover: React.FC<{
     ))}
   </div>
 );
+
+// ─────────────────────────────── TEKST SWOBODNY ─────────────────────────────
+
+/**
+ * PF-P2-03 (2026-08-10): free-text field inside a bar popover — first use is
+ * Process Flow's selected-edge LABEL (audit finding: deterministic quick
+ * labels cover the decision Yes/No scene, but a selected edge had no general
+ * "see current label, change it" surface outside the click-positioned
+ * `EdgeStylePopover`). Deliberately commits ONLY on Enter/the confirm button,
+ * never on blur — the wrapping `PopoverControl` already owns an
+ * outside-click/Escape-closes-me listener, and blur-on-unmount ordering is
+ * not guaranteed, so auto-committing on blur risks persisting a value the
+ * user meant to discard with Escape.
+ */
+export const TextInputPopover: React.FC<{
+  title: string;
+  value: string;
+  placeholder?: string;
+  confirmLabel?: string;
+  onCommit: (value: string) => void;
+  close: () => void;
+}> = ({ title, value, placeholder, confirmLabel, onCommit, close }) => {
+  const { t } = useTranslation();
+  const [draft, setDraft] = React.useState(value);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    inputRef.current?.focus();
+    inputRef.current?.select();
+  }, []);
+
+  const commit = () => {
+    onCommit(draft.trim());
+    close();
+  };
+
+  return (
+    <div className={`${PANEL} w-[220px]`}>
+      <div className={CAPTION}>{title}</div>
+      <input
+        ref={inputRef}
+        type="text"
+        value={draft}
+        placeholder={placeholder}
+        onChange={(e) => setDraft(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            commit();
+          }
+          // Escape: no local handling needed — PopoverControl's own
+          // document-level Escape listener closes this popover without
+          // calling onCommit, which is exactly "cancel, keep current value".
+        }}
+        className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-2 py-1.5 text-[11px] text-c-text outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+      />
+      <button type="button" onClick={commit} className={`${ROW_BTN} mt-1.5 justify-center`}>
+        {confirmLabel ?? t('canvasEditBar.save', 'Zapisz')}
+      </button>
+    </div>
+  );
+};
 
 // ─────────────────────── STRZAŁKI / KIERUNEK PRZEPŁYWU ──────────────────────
 

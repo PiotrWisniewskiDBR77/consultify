@@ -274,8 +274,26 @@ export function IdeaTableScreen(): React.ReactElement {
           onBack={() => {}}
         />
         <div className="flex min-h-0 flex-1">
-          <IdeasTableContent
-            ideas={ideas}
+          {/*
+            HARNESS-ONLY FIX (table-panel-clip, 2026-08-10): IdeasTableContent's
+            own root (`flex-1 min-h-0 bg-c-bg`, IdeasTableContent.tsx) has no
+            `min-w-0`, so as a flex ROW item its automatic minimum width is its
+            full min-content width (~1364px — sum of the fixed `table-fixed`
+            column widths). Production never hits this: MyIdeasListContent
+            mounts IdeasTableContent as the SOLE child of a COLUMN flex
+            (`flex flex-col flex-1 min-h-0`), where there is no sibling to
+            starve. This dev-render screen is the one place that puts
+            IdeasTableContent next to a shrink-0 sibling (the exploratory
+            "table as SPEC-A artefakt" ArtifactRightPanel below) in a ROW flex
+            — without this wrapper, IdeasTableContent refuses to shrink below
+            ~1364px and pushes the 320px panel off the right edge of the
+            viewport at 1440px (g4__table__baseline screenshots). Confined to
+            this harness composition; IdeasTableContent's production markup is
+            untouched.
+          */}
+          <div className="min-w-0 flex-1">
+            <IdeasTableContent
+              ideas={ideas}
             isPolish={isPl}
             tableFilters={tableFilters}
             availableStageOptions={STAGE_OPTIONS}
@@ -320,11 +338,12 @@ export function IdeaTableScreen(): React.ReactElement {
                 return next;
               })
             }
-            onOpenIdeaInProcessFlow={() => {}}
-            onStartConvert={() => {}}
-            onDeleteIdea={() => {}}
-            onRefresh={() => {}}
-          />
+              onOpenIdeaInProcessFlow={() => {}}
+              onStartConvert={() => {}}
+              onDeleteIdea={() => {}}
+              onRefresh={() => {}}
+            />
+          </div>
           <ArtifactRightPanel
             sections={rightSections}
             ariaLabel={isPl ? 'Szczegóły tabeli pomysłów' : 'Idea table details'}

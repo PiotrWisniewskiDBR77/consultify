@@ -27,6 +27,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { type ActionContext, runIdeaAction } from '@/actions/ideaActionRegistry';
+import { EMPTY_SELECTION } from '@/components/MyWork/ideaSelectionTypes';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 
 // ─── Types ───────────────────────────────────────────────────────
@@ -139,14 +141,43 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
     fetchDistributions();
   }, [fetchDistributions]);
 
-  const handleDelete = async (id: string) => {
-    try {
-      await TablePlatformApi.deleteDistribution(id);
-      setDistributions((prev) => prev.filter((d) => d.id !== id));
-      toast.success(t('ideas.table.deleted', 'Deleted'));
-    } catch {
-      toast.error(t('ideas.table.failedToDelete', 'Failed to delete'));
-    }
+  // Program B (E02) — dwie ścieżki, jedna funkcja rejestru: klik człowieka =
+  // `ctx.params.run` (rejestr wykonuje ORYGINALNY callback wprost); Teresa =
+  // ta sama funkcja rejestru woła REST bezpośrednio
+  // (`runTableDistribution*Callback` w `ideaActionRegistry.ts`, aliasowane
+  // `table.distribution.*` — INNY id niż legacy `table.distribution_builder.*`
+  // z `DistributionBuilder.tsx`, choć te same endpointy REST).
+  const runDistributionManagerAction = (
+    actionId: string,
+    run: () => void,
+    params?: Record<string, unknown>
+  ) => {
+    const ctx: ActionContext = {
+      ideaId: baseId,
+      tool: 'table',
+      selection: EMPTY_SELECTION,
+      surface: 'panel',
+      source: 'ui',
+      language: isPl ? 'pl' : 'en',
+      params: { run, ...(params || {}) },
+    };
+    void runIdeaAction(actionId, ctx);
+  };
+
+  const handleDelete = (id: string) => {
+    runDistributionManagerAction(
+      'table.distribution.delete',
+      async () => {
+        try {
+          await TablePlatformApi.deleteDistribution(id);
+          setDistributions((prev) => prev.filter((d) => d.id !== id));
+          toast.success(t('ideas.table.deleted', 'Deleted'));
+        } catch {
+          toast.error(t('ideas.table.failedToDelete', 'Failed to delete'));
+        }
+      },
+      { distributionId: id }
+    );
   };
 
   const handleToggle = async (id: string) => {
@@ -158,32 +189,60 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
     }
   };
 
-  const handleExecute = async (id: string) => {
-    setExecutingId(id);
-    try {
-      const result = await TablePlatformApi.executeDistribution(id);
-      toast.success(
-        t('ideas.table.sentRecordsVia', 'Sent {{count}} records via {{channel}}', {
-          count: result.recordCount,
-          channel: result.channel,
-        })
-      );
-      await fetchDistributions();
-    } catch {
-      toast.error(t('ideas.table.sendFailed', 'Send failed'));
-    } finally {
-      setExecutingId(null);
-    }
+  const handleExecute = (id: string) => {
+    runDistributionManagerAction(
+      'table.distribution.execute',
+      async () => {
+        setExecutingId(id);
+        try {
+          const result = await TablePlatformApi.executeDistribution(id);
+          toast.success(
+            t('ideas.table.sentRecordsVia', 'Sent {{count}} records via {{channel}}', {
+              count: result.recordCount,
+              channel: result.channel,
+            })
+          );
+          await fetchDistributions();
+        } catch {
+          toast.error(t('ideas.table.sendFailed', 'Send failed'));
+        } finally {
+          setExecutingId(null);
+        }
+      },
+      { distributionId: id }
+    );
   };
 
-  const handleCreate = async () => {
+  const handleCreate = () => {
     if (!name.trim()) {
       toast.error(t('ideas.table.nameIsRequired', 'Name is required'));
       return;
     }
-    setCreating(true);
-    try {
-      await TablePlatformApi.createDistribution(baseId, {
+    runDistributionManagerAction(
+      'table.distribution.create',
+      async () => {
+        setCreating(true);
+        try {
+          await TablePlatformApi.createDistribution(baseId, {
+            name: name.trim(),
+            sourceType,
+            sourceId: sourceId || tableId,
+            channel,
+            channelConfig,
+            format,
+            schedule: schedule || undefined,
+          });
+          toast.success(t('ideas.table.distributionCreated', 'Distribution created'));
+          resetWizard();
+          await fetchDistributions();
+        } catch {
+          toast.error(t('ideas.table.failedToCreate', 'Failed to create'));
+        } finally {
+          setCreating(false);
+        }
+      },
+      {
+        baseId,
         name: name.trim(),
         sourceType,
         sourceId: sourceId || tableId,
@@ -191,15 +250,8 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
         channelConfig,
         format,
         schedule: schedule || undefined,
-      });
-      toast.success(t('ideas.table.distributionCreated', 'Distribution created'));
-      resetWizard();
-      await fetchDistributions();
-    } catch {
-      toast.error(t('ideas.table.failedToCreate', 'Failed to create'));
-    } finally {
-      setCreating(false);
-    }
+      }
+    );
   };
 
   const resetWizard = () => {
@@ -407,7 +459,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                 {(channel === 'slack' || channel === 'teams') && (
                   <div>
                     <label className="mb-1 block text-[11px] font-medium text-c-text-muted">
-                      Webhook URL
+                      {t('ideas.table.webhookUrl', 'Webhook URL')}
                     </label>
                     <input
                       type="url"
@@ -421,7 +473,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                 {channel === 'webhook' && (
                   <div>
                     <label className="mb-1 block text-[11px] font-medium text-c-text-muted">
-                      Webhook URL
+                      {t('ideas.table.webhookUrl', 'Webhook URL')}
                     </label>
                     <input
                       type="url"

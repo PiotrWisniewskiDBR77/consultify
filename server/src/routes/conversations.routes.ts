@@ -150,7 +150,7 @@ const CreateConversationSchema = z.object({
   projectId: z.string().uuid().optional(),
   chatProjectId: z.string().uuid().optional(),
   pmoContext: z.record(z.string(), z.unknown()).optional(),
-  language: z.enum(['en', 'pl', 'de', 'ar', 'jp', 'es']).optional(),
+  language: z.enum(['en', 'pl', 'de', 'ar', 'ja', 'es']).optional(),
 });
 
 const ConversationIdParamSchema = z.object({
@@ -170,7 +170,7 @@ const UpdateConversationSchema = z.object({
   tags: z.array(z.string()).optional(),
   pmoContext: z.record(z.string(), z.unknown()).optional(),
   chatProjectId: z.string().uuid().nullable().optional(),
-  language: z.enum(['en', 'pl', 'de', 'ar', 'jp', 'es']).optional(),
+  language: z.enum(['en', 'pl', 'de', 'ar', 'ja', 'es']).optional(),
   /** Optimistic concurrency: expected version for conflict detection (§2.3.5 E9) */
   expectedVersion: z.number().int().positive().optional(),
 });

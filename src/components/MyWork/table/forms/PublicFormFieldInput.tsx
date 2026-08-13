@@ -9,6 +9,7 @@
 
 import { Star } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export interface PublicFormField {
   id: string;
@@ -28,6 +29,7 @@ interface PublicFormFieldInputProps {
 }
 
 export function PublicFormFieldInput({ field, value, onChange, error }: PublicFormFieldInputProps) {
+  const { t } = useTranslation();
   const base = `w-full rounded-lg border px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-info ${
     error
       ? 'border-c-danger bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)]'
@@ -138,7 +140,7 @@ export function PublicFormFieldInput({ field, value, onChange, error }: PublicFo
           onChange={(e) => onChange(e.target.value)}
           className={base}
         >
-          <option value="">Select...</option>
+          <option value="">{t('ideas.table.publicForm.selectOption', 'Select...')}</option>
           {options.map((opt) => (
             <option key={opt.id} value={opt.name}>
               {opt.name}
@@ -172,7 +174,9 @@ export function PublicFormFieldInput({ field, value, onChange, error }: PublicFo
             );
           })}
           {options.length === 0 && (
-            <p className="text-xs text-c-text-secondary">No options configured</p>
+            <p className="text-xs text-c-text-secondary">
+              {t('ideas.table.publicForm.noOptionsConfigured', 'No options configured')}
+            </p>
           )}
         </div>
       );
@@ -214,7 +218,9 @@ export function PublicFormFieldInput({ field, value, onChange, error }: PublicFo
             }}
             className="text-sm text-c-text-muted"
           />
-          <p className="mt-1 text-xs text-c-text-secondary">Upload a file</p>
+          <p className="mt-1 text-xs text-c-text-secondary">
+            {t('ideas.table.publicForm.uploadFile', 'Upload a file')}
+          </p>
         </div>
       );
 

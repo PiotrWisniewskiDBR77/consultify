@@ -20,6 +20,8 @@ import {
 import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
+
 import type { TableNode } from './tableTypes';
 
 interface VoiceImageInputProps {
@@ -224,6 +226,9 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
     setParsedIdeas((prev) => prev.map((p, i) => (i === idx ? { ...p, selected: !p.selected } : p)));
   }, []);
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  useDialogA11y({ open, onClose, containerRef });
+
   if (!open) return null;
 
   return (
@@ -232,7 +237,12 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-[480px] max-w-[90vw] max-h-[80vh] rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl overflow-hidden flex flex-col"
+        ref={containerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="voice-image-input-heading"
+        tabIndex={-1}
+        className="w-[480px] max-w-[90vw] max-h-[80vh] rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl overflow-hidden flex flex-col outline-none"
         onClick={(e) => e.stopPropagation()}
         onPaste={handlePaste}
       >
@@ -243,7 +253,7 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
           ) : (
             <Camera size={16} className="text-c-text-secondary" />
           )}
-          <span className="text-sm font-bold text-c-text">
+          <span id="voice-image-input-heading" className="text-sm font-bold text-c-text">
             {mode === 'voice'
               ? t('ideas.table.voiceImageInput.voiceInputTitle', 'Voice Input')
               : t('ideas.table.voiceImageInput.imageToIdeasTitle', 'Image → Ideas')}
@@ -318,7 +328,11 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
             >
               {imagePreview ? (
                 <div className="relative">
-                  <img src={imagePreview} alt="Preview" className="max-h-40 mx-auto rounded-lg" />
+                  <img
+                    src={imagePreview}
+                    alt={t('myWorkTable.voiceImageInput.previewAlt', 'Preview')}
+                    className="max-h-40 mx-auto rounded-lg"
+                  />
                   <button
                     onClick={() => setImagePreview(null)}
                     className="absolute top-1 right-1 p-1 rounded-full bg-black/50 text-white hover:bg-black/70"

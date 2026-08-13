@@ -2,10 +2,16 @@
  * useWhiteboardNodes — Extracted node CRUD, grouping, and distribution
  * for the Whiteboard component.
  */
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import type { Edge, Node } from 'reactflow';
+
+import {
+  computeTidyLayout,
+  rectOfWhiteboardNode,
+  type WhiteboardRect,
+} from './whiteboardPlacement';
 
 export interface UseWhiteboardNodesOpts {
   nodes: Node[];
@@ -19,6 +25,32 @@ export interface UseWhiteboardNodesOpts {
 
 function isNodeLocked(node: Node): boolean {
   return Boolean(node.data?.locked);
+}
+
+/**
+ * WB-FRAME-01 (frame context menu, 2026-08-10) — a node's containing frame
+ * id, if any. Data model check performed BEFORE writing the functions below
+ * (see report): a whiteboard node can carry containment on TWO different
+ * fields, which mean two DIFFERENT position semantics —
+ *   • `parentNode` — ReactFlow v11's own containment field, set ONLY by the
+ *     hydrate/normalize step in `IdeaWhiteboardTool.tsx` (loaded/reloaded
+ *     boards). ReactFlow reads it natively: once set, `position` is
+ *     RELATIVE to the parent frame's own `position`.
+ *   • `parentId` — this app's OWN bookkeeping field (read by `tidyBoard`/
+ *     collapse/visibility above), also set by `groupSelected` below, which
+ *     does NOT set `parentNode` — so a frame grouped in the CURRENT session
+ *     (not yet round-tripped through save/reload) has children whose
+ *     `position` is still ABSOLUTE, even though they already carry
+ *     `parentId`. This is a pre-existing inconsistency, not introduced here
+ *     — every function below reads `hasNativeParent = Boolean(node.parentNode)`
+ *     before treating a position as relative, rather than assuming either.
+ */
+function containingFrameId(node: Node): string | undefined {
+  return (
+    (node as { parentNode?: string }).parentNode ||
+    (node as { parentId?: string }).parentId ||
+    (node.data as { parentId?: string } | undefined)?.parentId
+  );
 }
 
 function cloneNodeData(node: Node, newId: string): Record<string, unknown> {
@@ -160,6 +192,100 @@ export function useWhiteboardNodes(opts: UseWhiteboardNodesOpts) {
     toast.success(t('myWork.whiteboard.toast.duplicated'), { duration: 600 });
   }, [locked, nodes, pushSnapshot, setEdges, setNodes, t]);
 
+  /**
+   * WB-CLIPBOARD-01 fix (2026-08-10): real object clipboard — mirrors Process
+   * Flow's proven `schowekRef`/`kopiujWezly`/`pasteClipboard` pattern in
+   * `processflow/useProcessFlowNodes.ts`. A `useRef` (not state — its change
+   * shouldn't rerender) holds the copied node(s) plus the edges BETWEEN them;
+   * this is the tool's OWN clipboard, separate from `handlePaste` in
+   * `IdeaWhiteboardTool.tsx` (OS-clipboard image/text drop-paste — untouched).
+   */
+  const clipboardRef = useRef<{ nodes: Node[]; edges: Edge[] }>({ nodes: [], edges: [] });
+
+  const copyNodesToClipboard = useCallback(
+    (toCopy: Node[]) => {
+      if (toCopy.length === 0) return 0;
+      const ids = new Set(toCopy.map((node) => node.id));
+      clipboardRef.current = {
+        nodes: toCopy.map((node) => ({ ...node, selected: false })),
+        // Only edges with BOTH endpoints inside the copied set travel along —
+        // an edge to a node outside the selection would dangle after paste.
+        edges: edges.filter((edge) => ids.has(edge.source) && ids.has(edge.target)),
+      };
+      return toCopy.length;
+    },
+    [edges]
+  );
+
+  /** Ctrl+C / context-menu "Copy" — copies the current selection. */
+  const copySelected = useCallback(
+    () => copyNodesToClipboard(nodes.filter((node) => node.selected && !isNodeLocked(node))),
+    [copyNodesToClipboard, nodes]
+  );
+
+  /**
+   * Copies a single node by id, for callers outside the selection flow.
+   * Whiteboard's right-click handler (`handleCanvasContextMenu` in
+   * IdeaWhiteboardTool.tsx) already re-selects the clicked node before the
+   * context menu opens, so `copySelected()` also covers that path — this is
+   * kept as an explicit, selection-independent entry point.
+   */
+  const copyNodeById = useCallback(
+    (nodeId: string) => {
+      const node = nodes.find((n: Node) => n.id === nodeId);
+      return node ? copyNodesToClipboard([node]) : 0;
+    },
+    [copyNodesToClipboard, nodes]
+  );
+
+  /** Surfaces query this to grey out "Paste" when the clipboard is empty. */
+  const clipboardCount = useCallback(() => clipboardRef.current.nodes.length, []);
+
+  /**
+   * Pastes the clipboard contents as NEW elements (new ids, offset from the
+   * originals so they don't land exactly on top). Edges between copied nodes
+   * are recreated between their pasted counterparts; nothing outside the
+   * copied set is touched.
+   */
+  const pasteClipboard = useCallback(() => {
+    if (locked) return 0;
+    const { nodes: copiedNodes, edges: copiedEdges } = clipboardRef.current;
+    if (copiedNodes.length === 0) return 0;
+
+    const pasteStamp = Date.now();
+    const idMap = new Map<string, string>();
+    const newNodes: Node[] = copiedNodes.map((node, index) => {
+      const newId = `${node.id}-paste-${pasteStamp}-${index}`;
+      idMap.set(node.id, newId);
+      return {
+        ...node,
+        id: newId,
+        position: { x: node.position.x + 40, y: node.position.y + 40 },
+        selected: false,
+        data: cloneNodeData(node, newId),
+      };
+    });
+    const newEdges: Edge[] = copiedEdges.map((edge, index) => ({
+      ...edge,
+      id: `${edge.id}-paste-${pasteStamp}-${index}`,
+      source: idMap.get(edge.source) as string,
+      target: idMap.get(edge.target) as string,
+      selected: false,
+      data: {
+        ...(edge.data || {}),
+        duplicatedFrom: edge.id,
+      },
+    }));
+
+    pushSnapshot?.();
+    setNodes((prev: Node[]) => [...prev, ...newNodes]);
+    if (newEdges.length > 0) {
+      setEdges((prev: Edge[]) => [...prev, ...newEdges]);
+    }
+    toast.success(t('myWork.whiteboard.toast.pasted'), { duration: 600 });
+    return newNodes.length;
+  }, [locked, pushSnapshot, setEdges, setNodes, t]);
+
   const groupSelected = useCallback(() => {
     if (locked) return;
     const selected = (nodes as Node[]).filter((n: Node) => n.selected && !isNodeLocked(n));
@@ -257,11 +383,469 @@ export function useWhiteboardNodes(opts: UseWhiteboardNodesOpts) {
     [pushSnapshot, setNodes]
   );
 
+  /**
+   * WB-P2 "Tidy board" / "Auto arrange selection" (08_P1_P3_EXECUTION_PLAN
+   * §6 Whiteboard). One command, two names depending on context: 2+
+   * unlocked nodes selected → arranges only the selection ("Auto arrange
+   * selection"); otherwise arranges the whole board ("Tidy board"). Reuses
+   * `computeTidyLayout`/`resolveWhiteboardPlacement` (whiteboardPlacement.ts)
+   * for the actual math — see that file's header comment for why this is an
+   * explicit opt-in call pattern that does NOT weaken `createNode`'s default
+   * "automatic insertion never moves an existing object" guarantee.
+   *
+   * Grouping/frames: a `frameNode` and all of its current children always
+   * move together as ONE unit (same delta), so their relative arrangement
+   * inside the frame is preserved. A child whose parent frame is NOT part of
+   * this tidy pass (frame unselected during an "Auto arrange selection", or
+   * the frame itself locked) is left untouched rather than drifting out of
+   * its (unmoved) frame — it still counts as a fixed obstacle so tidied
+   * items route around it.
+   */
+  const tidyBoard = useCallback(() => {
+    if (locked) return;
+    const all = nodes as Node[];
+    const selected = all.filter((n) => n.selected && !isNodeLocked(n));
+    const pool = selected.length >= 2 ? selected : all;
+
+    const childrenByParent = new Map<string, Node[]>();
+    for (const n of all) {
+      const pid = (n as { parentId?: string }).parentId;
+      if (pid) {
+        const list = childrenByParent.get(pid) || [];
+        list.push(n);
+        childrenByParent.set(pid, list);
+      }
+    }
+
+    interface TidyUnit {
+      rect: WhiteboardRect;
+      memberIds: string[];
+    }
+    const units: TidyUnit[] = [];
+    const movingIds = new Set<string>();
+
+    for (const n of pool) {
+      if (isNodeLocked(n)) continue;
+      const pid = (n as { parentId?: string }).parentId;
+      // Children are folded into their parent frame's unit below (if that
+      // frame is itself eligible) — never placed as independent units.
+      if (pid) continue;
+      const memberIds = [n.id];
+      if (n.type === 'frameNode') {
+        for (const child of childrenByParent.get(n.id) || []) memberIds.push(child.id);
+      }
+      units.push({ rect: rectOfWhiteboardNode(n), memberIds });
+      memberIds.forEach((id) => movingIds.add(id));
+    }
+
+    // Nothing meaningful to reorganize — mirrors distributeNodes' silent
+    // no-op below its own minimum-selection threshold.
+    if (units.length < 2) return;
+
+    const fixedRects: WhiteboardRect[] = all
+      .filter((n) => !movingIds.has(n.id))
+      .map((n) => rectOfWhiteboardNode(n));
+
+    const sortedUnits = [...units].sort(
+      (a, b) => a.rect.y - b.rect.y || a.rect.x - b.rect.x || a.memberIds[0].localeCompare(b.memberIds[0])
+    );
+    const anchor = {
+      x: Math.min(...sortedUnits.map((u) => u.rect.x)),
+      y: Math.min(...sortedUnits.map((u) => u.rect.y)),
+    };
+
+    const layout = computeTidyLayout({
+      items: sortedUnits.map((u) => ({ id: u.memberIds[0], rect: u.rect })),
+      anchor,
+      fixedRects,
+      grid: 8,
+    });
+
+    const deltaByNodeId = new Map<string, { dx: number; dy: number }>();
+    for (const unit of sortedUnits) {
+      const newPos = layout.get(unit.memberIds[0]);
+      if (!newPos) continue;
+      const dx = newPos.x - unit.rect.x;
+      const dy = newPos.y - unit.rect.y;
+      if (dx === 0 && dy === 0) continue;
+      for (const id of unit.memberIds) deltaByNodeId.set(id, { dx, dy });
+    }
+    if (deltaByNodeId.size === 0) return; // already tidy — no undo entry, no toast
+
+    pushSnapshot?.();
+    setNodes((prev: Node[]) =>
+      prev.map((n) => {
+        const delta = deltaByNodeId.get(n.id);
+        if (!delta) return n;
+        return { ...n, position: { x: n.position.x + delta.dx, y: n.position.y + delta.dy } };
+      })
+    );
+    toast.success(
+      t(
+        selected.length >= 2
+          ? 'myWork.whiteboard.toast.tidiedSelection'
+          : 'myWork.whiteboard.toast.tidiedBoard'
+      ),
+      { duration: 600 }
+    );
+  }, [locked, nodes, pushSnapshot, setNodes, t]);
+
+  /**
+   * WB-FRAME-01 — "Select contents": selects every node currently contained
+   * by `frameId` (the frame itself stays unselected, matching "select the
+   * things inside", not "select the frame too").
+   */
+  const selectFrameContents = useCallback(
+    (frameId: string) => {
+      const all = nodes as Node[];
+      const childIds = new Set(
+        all.filter((n) => containingFrameId(n) === frameId).map((n) => n.id)
+      );
+      if (childIds.size === 0) {
+        toast(t('myWork.whiteboard.toast.frameEmpty'), { duration: 900 });
+        return;
+      }
+      setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: childIds.has(n.id) })));
+    },
+    [nodes, setNodes, t]
+  );
+
+  /**
+   * WB-FRAME-01 — "Add selection to frame": assigns every currently
+   * selected, unlocked, currently-UNPARENTED, non-frame node as a child of
+   * `frameId`. Scoped down deliberately: moving a node that ALREADY belongs
+   * to a different frame, or nesting one frame inside another, is excluded
+   * rather than guessed at — neither has an established, tested position
+   * semantics elsewhere in this file (see `containingFrameId` header
+   * comment), so silently attempting either would risk a wrong visual jump.
+   * Sets BOTH `parentNode` (real ReactFlow containment — position becomes
+   * frame-relative) AND `parentId` (this app's own bookkeeping field), so
+   * the result behaves identically to a hydrated frame child, not just the
+   * same-session-only shape `groupSelected` above produces.
+   */
+  const addSelectionToFrame = useCallback(
+    (frameId: string) => {
+      if (locked) return;
+      const all = nodes as Node[];
+      const frame = all.find((n) => n.id === frameId);
+      if (!frame || isNodeLocked(frame)) return;
+      const toAdd = all.filter(
+        (n) =>
+          n.selected &&
+          n.id !== frameId &&
+          !isNodeLocked(n) &&
+          !containingFrameId(n) &&
+          n.type !== 'frameNode' &&
+          n.type !== 'groupNode'
+      );
+      if (toAdd.length === 0) {
+        toast(t('myWork.whiteboard.toast.frameNoSelection'), { duration: 900 });
+        return;
+      }
+      const addIds = new Set(toAdd.map((n) => n.id));
+      pushSnapshot?.();
+      setNodes((prev: Node[]) => {
+        const next = prev.map((n) => {
+          if (!addIds.has(n.id)) return n;
+          return {
+            ...n,
+            parentNode: frameId,
+            parentId: frameId,
+            position: { x: n.position.x - frame.position.x, y: n.position.y - frame.position.y },
+            selected: false,
+          };
+        });
+        // ReactFlow requires a parent node to precede its children in the
+        // array — move the frame to the front, the same convention
+        // `groupSelected` above already uses for brand-new frames.
+        const frameIdx = next.findIndex((n) => n.id === frameId);
+        if (frameIdx > 0) {
+          const [frameNode] = next.splice(frameIdx, 1);
+          next.unshift(frameNode);
+        }
+        return next;
+      });
+      toast.success(t('myWork.whiteboard.toast.frameAdded'), { duration: 600 });
+    },
+    [locked, nodes, pushSnapshot, setNodes, t]
+  );
+
+  /**
+   * WB-FRAME-01 — "Remove from frame": releases ONE child from its
+   * containing frame, converting its position back to absolute canvas
+   * coordinates so it doesn't visually jump (see `containingFrameId`
+   * header comment for why the conversion is conditional on
+   * `parentNode`/`hasNativeParent`).
+   */
+  const removeFromFrame = useCallback(
+    (nodeId: string) => {
+      if (locked) return;
+      const all = nodes as Node[];
+      const node = all.find((n) => n.id === nodeId);
+      if (!node || isNodeLocked(node)) return;
+      const frameId = containingFrameId(node);
+      if (!frameId) return;
+      const frame = all.find((n) => n.id === frameId);
+      const hasNativeParent = Boolean((node as { parentNode?: string }).parentNode);
+      const absolutePosition =
+        hasNativeParent && frame
+          ? { x: node.position.x + frame.position.x, y: node.position.y + frame.position.y }
+          : node.position;
+      pushSnapshot?.();
+      setNodes((prev: Node[]) =>
+        prev.map((n) => {
+          if (n.id !== nodeId) return n;
+          const { parentNode: _pn, parentId: _pid, ...rest } = n as Node & {
+            parentNode?: string;
+            parentId?: string;
+          };
+          const nextData = { ...(n.data as Record<string, unknown>) };
+          delete nextData.parentId;
+          return { ...rest, data: nextData, position: absolutePosition } as Node;
+        })
+      );
+      toast.success(t('myWork.whiteboard.toast.frameReleaseOne'), { duration: 600 });
+    },
+    [locked, nodes, pushSnapshot, setNodes, t]
+  );
+
+  /**
+   * WB-FRAME-01 — "Resize to fit contents": grows (never shrinks, never
+   * moves the frame's own top-left corner) the frame so every child's
+   * bottom-right extent fits inside it. Deliberately scoped down to
+   * grow-only: a child sitting above/left of the frame's own origin would
+   * need the frame's position AND every sibling's position renegotiated
+   * together to fit without the frame jumping — out of scope here, so such
+   * a child just stays partly outside after this runs (honest limitation,
+   * not silently "fixed").
+   */
+  const resizeFrameToFit = useCallback(
+    (frameId: string) => {
+      if (locked) return;
+      const all = nodes as Node[];
+      const frame = all.find((n) => n.id === frameId);
+      if (!frame || isNodeLocked(frame)) return;
+      const children = all.filter((n) => containingFrameId(n) === frameId);
+      if (children.length === 0) {
+        toast(t('myWork.whiteboard.toast.frameEmpty'), { duration: 900 });
+        return;
+      }
+      const PADDING = 24;
+      const HEADER = 40;
+      let maxX = 0;
+      let maxY = 0;
+      for (const child of children) {
+        const hasNativeParent = Boolean((child as { parentNode?: string }).parentNode);
+        const rel = hasNativeParent
+          ? child.position
+          : { x: child.position.x - frame.position.x, y: child.position.y - frame.position.y };
+        const rect = rectOfWhiteboardNode({ ...child, position: rel });
+        maxX = Math.max(maxX, rel.x + rect.width);
+        maxY = Math.max(maxY, rel.y + rect.height);
+      }
+      const currentWidth = Number((frame.data as any)?.width ?? (frame.style as any)?.width ?? 400);
+      const currentHeight = Number(
+        (frame.data as any)?.height ?? (frame.style as any)?.height ?? 300
+      );
+      const newWidth = Math.max(currentWidth, Math.ceil(maxX + PADDING));
+      const newHeight = Math.max(currentHeight, Math.ceil(maxY + PADDING + HEADER));
+      if (newWidth === currentWidth && newHeight === currentHeight) {
+        toast(t('myWork.whiteboard.toast.frameAlreadyFits'), { duration: 900 });
+        return;
+      }
+      pushSnapshot?.();
+      setNodes((prev: Node[]) =>
+        prev.map((n) =>
+          n.id === frameId
+            ? {
+                ...n,
+                data: { ...n.data, width: newWidth, height: newHeight },
+                style: { ...(n.style as Record<string, unknown>), width: newWidth, height: newHeight },
+              }
+            : n
+        )
+      );
+      toast.success(t('myWork.whiteboard.toast.frameResized'), { duration: 600 });
+    },
+    [locked, nodes, pushSnapshot, setNodes, t]
+  );
+
+  /**
+   * WB-FRAME-01 — "Delete frame": explicit choice between deleting the
+   * frame's contents along with it, or releasing the contents (converted
+   * back to absolute position, same conversion as `removeFromFrame`) and
+   * deleting only the frame node itself. Replaces the previous silent
+   * behavior of the generic `deleteSelected` on a frame, which removed the
+   * frame and left children with a dangling `parentId`/`parentNode`
+   * pointing at a node that no longer exists.
+   */
+  const deleteFrame = useCallback(
+    (frameId: string, releaseContents: boolean) => {
+      if (locked) return;
+      const all = nodes as Node[];
+      const frame = all.find((n) => n.id === frameId);
+      if (!frame || isNodeLocked(frame)) return;
+      const children = all.filter((n) => containingFrameId(n) === frameId);
+      pushSnapshot?.();
+      if (releaseContents) {
+        setNodes((prev: Node[]) =>
+          prev
+            .filter((n) => n.id !== frameId)
+            .map((n) => {
+              if (containingFrameId(n) !== frameId) return n;
+              const hasNativeParent = Boolean((n as { parentNode?: string }).parentNode);
+              const absolutePosition = hasNativeParent
+                ? { x: n.position.x + frame.position.x, y: n.position.y + frame.position.y }
+                : n.position;
+              const { parentNode: _pn, parentId: _pid, ...rest } = n as Node & {
+                parentNode?: string;
+                parentId?: string;
+              };
+              const nextData = { ...(n.data as Record<string, unknown>) };
+              delete nextData.parentId;
+              return { ...rest, data: nextData, position: absolutePosition } as Node;
+            })
+        );
+        toast.success(t('myWork.whiteboard.toast.frameDeletedReleased'), { duration: 700 });
+      } else {
+        const removedIds = new Set([frameId, ...children.map((c) => c.id)]);
+        setNodes((prev: Node[]) => prev.filter((n) => !removedIds.has(n.id)));
+        setEdges((prev: Edge[]) =>
+          prev.filter((e) => !removedIds.has(e.source) && !removedIds.has(e.target))
+        );
+        toast.success(t('myWork.whiteboard.toast.frameDeletedWithContents'), { duration: 700 });
+      }
+    },
+    [locked, nodes, pushSnapshot, setNodes, setEdges, t]
+  );
+
+  /**
+   * WB-FRAME-02 (drag containment, 2026-08-10) — WB-FRAME-01 above gave
+   * frames real container semantics (`parentNode`) but ONLY through explicit
+   * menu commands ("Add selection to frame" / "Remove from frame"); dragging
+   * a node's box physically into or out of a frame's drawn boundary did
+   * nothing to `parentNode` — the two only agreed by coincidence right after
+   * a menu action, and drifted apart the moment the user next dragged
+   * anything. This closes that gap on `onNodeDragStop` (see
+   * `IdeaWhiteboardTool.tsx`'s composed drag-stop handler): hit-test the
+   * dragged node's CENTER, in absolute canvas coordinates, against every
+   * frame's absolute rect, and reconcile `parentNode`/`parentId` to match
+   * what the user just visually did —
+   *   • center now inside a frame's box, none before → become that frame's
+   *     child (same join math `addSelectionToFrame` already uses).
+   *   • center now outside every frame's box, had one before → release back
+   *     to absolute position (the exact formula `removeFromFrame` already
+   *     uses — not a new rule).
+   *   • center now inside a DIFFERENT frame than the one it started in →
+   *     reparent directly, composing the same two known-correct formulas
+   *     (release-style absolute conversion, then join-style relative
+   *     conversion into the new frame) — not a new, untested position rule.
+   * Deliberately excluded, same "no established semantics" boundary
+   * `addSelectionToFrame` already documents: the dragged node being a frame
+   * itself (no nested-frame semantics anywhere in this file), a locked node
+   * or a locked/collapsed target frame, and any drag while the board itself
+   * is locked.
+   */
+  const reparentNodeOnDrag = useCallback(
+    (nodeId: string) => {
+      if (locked) return;
+      const all = nodes as Node[];
+      const node = all.find((n) => n.id === nodeId);
+      if (!node || isNodeLocked(node)) return;
+      if (node.type === 'frameNode' || node.type === 'groupNode') return;
+
+      const currentFrameId = containingFrameId(node);
+      const currentFrame = currentFrameId ? all.find((n) => n.id === currentFrameId) : undefined;
+      const hasNativeParent = Boolean((node as { parentNode?: string }).parentNode);
+      const absolutePosition =
+        currentFrameId && currentFrame && hasNativeParent
+          ? { x: node.position.x + currentFrame.position.x, y: node.position.y + currentFrame.position.y }
+          : node.position;
+
+      const nodeRect = rectOfWhiteboardNode({ ...node, position: absolutePosition });
+      const centerX = nodeRect.x + nodeRect.width / 2;
+      const centerY = nodeRect.y + nodeRect.height / 2;
+
+      const candidateFrames = all.filter(
+        (n) => n.type === 'frameNode' && n.id !== nodeId && !isNodeLocked(n) && !n.data?.collapsed
+      );
+      // Smallest-area match wins when frames overlap — the more specific
+      // (usually inner) frame is the one the dragged box visually landed in.
+      let matched: Node | undefined;
+      let matchedArea = Infinity;
+      for (const frame of candidateFrames) {
+        const rect = rectOfWhiteboardNode(frame, { width: 400, height: 300 });
+        const within =
+          centerX >= rect.x &&
+          centerX <= rect.x + rect.width &&
+          centerY >= rect.y &&
+          centerY <= rect.y + rect.height;
+        if (!within) continue;
+        const area = rect.width * rect.height;
+        if (area < matchedArea) {
+          matched = frame;
+          matchedArea = area;
+        }
+      }
+
+      if ((matched?.id ?? undefined) === currentFrameId) return; // visually unchanged — no toast, no undo entry
+
+      pushSnapshot?.();
+      if (matched) {
+        const frameId = matched.id;
+        const relative = {
+          x: absolutePosition.x - matched.position.x,
+          y: absolutePosition.y - matched.position.y,
+        };
+        setNodes((prev: Node[]) => {
+          const next = prev.map((n) =>
+            n.id === nodeId ? { ...n, parentNode: frameId, parentId: frameId, position: relative } : n
+          );
+          // ReactFlow requires a parent node to precede its children.
+          const frameIdx = next.findIndex((n) => n.id === frameId);
+          const childIdx = next.findIndex((n) => n.id === nodeId);
+          if (frameIdx > childIdx) {
+            const [frameNode] = next.splice(frameIdx, 1);
+            next.unshift(frameNode);
+          }
+          return next;
+        });
+        toast.success(t('myWork.whiteboard.toast.frameAdded'), { duration: 500 });
+      } else {
+        setNodes((prev: Node[]) =>
+          prev.map((n) => {
+            if (n.id !== nodeId) return n;
+            const { parentNode: _pn, parentId: _pid, ...rest } = n as Node & {
+              parentNode?: string;
+              parentId?: string;
+            };
+            const nextData = { ...(n.data as Record<string, unknown>) };
+            delete nextData.parentId;
+            return { ...rest, data: nextData, position: absolutePosition } as Node;
+          })
+        );
+        toast.success(t('myWork.whiteboard.toast.frameReleaseOne'), { duration: 500 });
+      }
+    },
+    [locked, nodes, pushSnapshot, setNodes, t]
+  );
+
   return {
     deleteSelected,
     duplicateSelected,
     groupSelected,
     ungroupSelected,
     distributeNodes,
+    tidyBoard,
+    copySelected,
+    copyNodeById,
+    pasteClipboard,
+    clipboardCount,
+    selectFrameContents,
+    addSelectionToFrame,
+    removeFromFrame,
+    resizeFrameToFit,
+    deleteFrame,
+    reparentNodeOnDrag,
   };
 }

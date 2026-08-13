@@ -19,11 +19,17 @@ import {
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import {
+  type ActionContext,
+  getActionsForSurface,
+  runIdeaAction,
+} from '@/actions/ideaActionRegistry';
 import { isCanvasUndoInRailOnlyEnabled } from '@/utils/canvasUndoInRailOnlyFlag';
 
 import TeresaMark from '../../shared/TeresaMark';
 import { type ProcessFlowSemanticKit } from '../canvas/canvasOsContract';
 import { FOCUS_RING } from '../canvas/motionTokens';
+import { EMPTY_SELECTION } from '../ideaSelectionTypes';
 import { type FlowShape, SHAPE_CONFIG } from './FlowNodeComponent';
 
 // M07 F2: useProcessFlowAIProposal / AIProposalPanel now consume the real
@@ -190,6 +196,27 @@ const OVERFLOW_ITEM = `flex w-full items-center gap-2 px-3 py-1.5 text-left text
 
 const MENU_HEADER = 'px-3 py-1 text-[9px] font-semibold uppercase tracking-wider text-c-text-muted';
 
+/**
+ * N6.4: tryb → id akcji rejestru. Osobna stała (nie inline w JSX), żeby pętla
+ * po trzech zakładkach nie musiała zgadywać nazwy z szablonu stringa — literalne
+ * id są łatwiejsze do wygrepowania przy audycie rejestru.
+ */
+const FLOW_MODE_ACTION_ID: Record<ProcessFlowMode, string> = {
+  classic: 'idea.view.pf_mode_classic',
+  automation: 'idea.view.pf_mode_automation',
+  vsm: 'idea.view.pf_mode_vsm',
+};
+
+/** N6.4: pozycja grupy „Konwertuj" → id akcji rejestru (patrz komentarz przy
+ *  `idea.node.pf_convert_analysis` — ta ostatnia jest dziś MARTWA i wpis
+ *  rejestru mówi to wprost; menu zostaje nietknięte, bo to decyzja właściciela). */
+const CONVERT_ACTION_ID: Record<string, string> = {
+  pf_convert_initiative: 'idea.node.pf_convert_initiative',
+  pf_convert_task_set: 'idea.node.pf_convert_task_set',
+  pf_convert_report: 'idea.node.pf_convert_report',
+  pf_convert_analysis: 'idea.node.pf_convert_analysis',
+};
+
 export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
   isPl,
   locked,
@@ -248,6 +275,46 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
     return () => document.removeEventListener('mousedown', handler);
   }, [overflowOpen]);
 
+  /**
+   * N6.4 (2026-08-10, Program B/E02) — przełącznik trybu (3 zakładki) i menu
+   * „Więcej" (13 pozycji) są teraz wpisami `surface: 'toolbar'` w
+   * `ideaActionRegistry.ts`. Wzorzec 1:1 z `WhiteboardToolbar.tsx` (N7):
+   * layout, etykiety i18n oraz lokalne stany `active`/`disabled`
+   * (locked/coachLoading/summaryLoading/showKPIDashboard/…) ZOSTAJĄ DOKŁADNIE
+   * takie jak przed migracją — zmienia się WYŁĄCZNIE sposób wykonania: zamiast
+   * wołać prop-callback wprost, klik idzie przez `runIdeaAction` z tym samym
+   * callbackiem w `ctx.params.run`. Brak wpisu w rejestrze = odpalamy
+   * oryginalny callback (nigdy nie wyciszamy kliku), ale to sygnał do naprawy
+   * rejestru, nie zamierzona ścieżka.
+   */
+  const registryActionsById = React.useMemo(() => {
+    const map = new Map<string, ReturnType<typeof getActionsForSurface>[number]>();
+    for (const entry of getActionsForSurface('toolbar', { tool: 'process_flow' })) {
+      map.set(entry.def.id, entry);
+    }
+    return map;
+  }, []);
+
+  const runAction = React.useCallback(
+    (id: string, run: () => void) => {
+      if (!registryActionsById.has(id)) {
+        run();
+        return;
+      }
+      const ctx: ActionContext = {
+        ideaId: '',
+        tool: 'process_flow',
+        selection: EMPTY_SELECTION,
+        surface: 'toolbar',
+        source: 'ui',
+        language: isPl ? 'pl' : 'en',
+        params: { run },
+      };
+      void runIdeaAction(id, ctx);
+    },
+    [registryActionsById, isPl]
+  );
+
   // UI-L13: the specialised semantic kits (bpmn/system/org) are set from chat and
   // change the shape palette; classic/automation/vsm mirror the flow mode, so we only
   // surface a "kit" chip for the specialised ones — no redundant second mode row.
@@ -259,7 +326,17 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
       : null;
 
   return (
-    <div className="border-b border-c-border-subtle bg-c-surface-raised flex-shrink-0">
+    <div
+      className="border-b border-c-border-subtle bg-c-surface-raised flex-shrink-0"
+      // Gate 4 (2026-08-10, 720×450): the floating right tool rail overlays this
+      // bar without shrinking the canvas (ExecutiveModuleShell keeps the canvas
+      // full-bleed on purpose), so this bar's own real content — the mode tabs
+      // and the Kroki/Ścieżki/warnings chips reaching the right edge — has to
+      // reserve its own space or the rail clips it ("Brak ostrzeżeń" → "Brak
+      // os…"). `--mels-rail-gutter` is the shell's measured rail width; it
+      // falls back to 0px wherever the var isn't set (no floating rail).
+      style={{ paddingRight: 'var(--mels-rail-gutter, 0px)' }}
+    >
       <div className="px-4 py-2 flex flex-col gap-2">
         {/* ── Top row: compact mode switch · status badges ───────────────── */}
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
@@ -281,7 +358,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                     type="button"
                     role="tab"
                     aria-selected={flowMode === mode}
-                    onClick={() => setFlowMode(mode)}
+                    onClick={() => runAction(FLOW_MODE_ACTION_ID[mode], () => setFlowMode(mode))}
                     title={tooltip}
                     aria-label={tooltip}
                     className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all ${FOCUS_RING} ${
@@ -310,15 +387,19 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
               {t('processFlow.toolbar.stepsCount', 'Steps {{value}}', { value: stepCount })}
             </span>
             <span className="inline-flex items-center rounded-full bg-c-surface px-2 py-0.5 text-[10px] font-medium text-c-text-secondary">
-              {/* Both locales render the same "Lanes N" string (term kept in EN
-                  intentionally in the original code) — no translation needed. */}
-              {`Lanes ${laneCount}`}
+              {/* Was a hardcoded `Lanes ${laneCount}` justified in-code as "term kept
+                  in EN intentionally". Found on a PL screenshot (2026-08-10): the chip
+                  immediately to the left IS translated, so a Polish consultant saw
+                  „Kroki 4 | Lanes 1" — half the pair localized, half not, side by side.
+                  „Ścieżki" is the term this repo already uses for swimlanes elsewhere
+                  (myWorkIdeas.processFlowTool.lanes = „Ścieżek"). */}
+              {t('processFlow.toolbar.lanesCount', 'Lanes {{value}}', { value: laneCount })}
             </span>
             <span
               className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${
                 warnings.length > 0
                   ? 'bg-warning-500/10 text-warning-600 dark:text-warning-300'
-                  : 'bg-success-500/10 text-success-600 dark:text-success-300'
+                  : 'bg-success-500/10 text-emerald-800 dark:text-success-300'
               }`}
             >
               {warnings.length > 0
@@ -477,10 +558,12 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                 <button
                   type="button"
                   role="menuitem"
-                  onClick={() => {
-                    setShowKPIDashboard((v) => !v);
-                    setOverflowOpen(false);
-                  }}
+                  onClick={() =>
+                    runAction('idea.view.pf_toggle_kpi', () => {
+                      setShowKPIDashboard((v) => !v);
+                      setOverflowOpen(false);
+                    })
+                  }
                   className={`${OVERFLOW_ITEM} ${showKPIDashboard ? 'text-c-text font-semibold' : ''}`}
                 >
                   <BarChart3 size={14} />
@@ -489,10 +572,12 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                 <button
                   type="button"
                   role="menuitem"
-                  onClick={() => {
-                    runValidation();
-                    setOverflowOpen(false);
-                  }}
+                  onClick={() =>
+                    runAction('idea.view.pf_validate', () => {
+                      runValidation();
+                      setOverflowOpen(false);
+                    })
+                  }
                   className={`${OVERFLOW_ITEM} ${
                     showWarnings ? 'text-warning-600 dark:text-warning-300' : ''
                   }`}
@@ -503,10 +588,12 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                 <button
                   type="button"
                   role="menuitem"
-                  onClick={() => {
-                    runProcessCoach();
-                    setOverflowOpen(false);
-                  }}
+                  onClick={() =>
+                    runAction('idea.ai.process_analysis', () => {
+                      runProcessCoach();
+                      setOverflowOpen(false);
+                    })
+                  }
                   disabled={locked || coachLoading}
                   className={`${OVERFLOW_ITEM} ${showCoach ? 'text-c-text font-semibold' : ''}`}
                 >
@@ -515,15 +602,17 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                   ) : (
                     <TeresaMark size={14} />
                   )}
-                  AI Coach
+                  {t('myWork.aiCoachPanel.aICoach', 'AI Coach')}
                 </button>
                 <button
                   type="button"
                   role="menuitem"
-                  onClick={() => {
-                    generateSummary();
-                    setOverflowOpen(false);
-                  }}
+                  onClick={() =>
+                    runAction('idea.ai.pf_process_summary', () => {
+                      generateSummary();
+                      setOverflowOpen(false);
+                    })
+                  }
                   disabled={locked || summaryLoading}
                   className={`${OVERFLOW_ITEM} ${
                     showSummary ? 'text-success-600 dark:text-success-300' : ''
@@ -540,10 +629,12 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                   <button
                     type="button"
                     role="menuitem"
-                    onClick={() => {
-                      onOpenReadback();
-                      setOverflowOpen(false);
-                    }}
+                    onClick={() =>
+                      runAction('idea.view.pf_readback', () => {
+                        onOpenReadback();
+                        setOverflowOpen(false);
+                      })
+                    }
                     className={`${OVERFLOW_ITEM} ${showReadbackPanel ? 'text-c-info' : ''}`}
                   >
                     <ScanText size={14} />
@@ -554,10 +645,12 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                   <button
                     type="button"
                     role="menuitem"
-                    onClick={() => {
-                      onOpenAIProposal();
-                      setOverflowOpen(false);
-                    }}
+                    onClick={() =>
+                      runAction('idea.view.pf_open_ai_proposal', () => {
+                        onOpenAIProposal();
+                        setOverflowOpen(false);
+                      })
+                    }
                     disabled={locked}
                     className={`${OVERFLOW_ITEM} ${showAIPanel ? 'text-c-tag-2' : ''}`}
                   >
@@ -575,10 +668,12 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                 <button
                   type="button"
                   role="menuitem"
-                  onClick={() => {
-                    handleAutoLayout();
-                    setOverflowOpen(false);
-                  }}
+                  onClick={() =>
+                    runAction('idea.view.auto_layout', () => {
+                      handleAutoLayout();
+                      setOverflowOpen(false);
+                    })
+                  }
                   disabled={locked}
                   className={OVERFLOW_ITEM}
                 >
@@ -588,10 +683,12 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                 <button
                   type="button"
                   role="menuitem"
-                  onClick={() => {
-                    duplicateSelected();
-                    setOverflowOpen(false);
-                  }}
+                  onClick={() =>
+                    runAction('idea.node.duplicate', () => {
+                      duplicateSelected();
+                      setOverflowOpen(false);
+                    })
+                  }
                   disabled={locked}
                   className={OVERFLOW_ITEM}
                 >
@@ -601,10 +698,12 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                 <button
                   type="button"
                   role="menuitem"
-                  onClick={() => {
-                    deleteSelected();
-                    setOverflowOpen(false);
-                  }}
+                  onClick={() =>
+                    runAction('idea.node.delete', () => {
+                      deleteSelected();
+                      setOverflowOpen(false);
+                    })
+                  }
                   disabled={locked}
                   className={`${OVERFLOW_ITEM} text-danger-600 dark:text-danger-400`}
                 >
@@ -617,10 +716,12 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                     <button
                       type="button"
                       role="menuitem"
-                      onClick={() => {
-                        onOpenChat();
-                        setOverflowOpen(false);
-                      }}
+                      onClick={() =>
+                        runAction('idea.node.pf_open_chat', () => {
+                          onOpenChat();
+                          setOverflowOpen(false);
+                        })
+                      }
                       className={OVERFLOW_ITEM}
                     >
                       <MessageSquare size={14} />
@@ -658,10 +759,12 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                         key={action}
                         type="button"
                         role="menuitem"
-                        onClick={() => {
-                          onConvert(action);
-                          setOverflowOpen(false);
-                        }}
+                        onClick={() =>
+                          runAction(CONVERT_ACTION_ID[action] || action, () => {
+                            onConvert(action);
+                            setOverflowOpen(false);
+                          })
+                        }
                         className={OVERFLOW_ITEM}
                       >
                         {label}

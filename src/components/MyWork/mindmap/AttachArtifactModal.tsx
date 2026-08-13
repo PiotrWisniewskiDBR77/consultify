@@ -3,9 +3,10 @@
  * Provides a type dropdown + ID input + optional label.
  */
 import { Link2, X } from 'lucide-react';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import type { ArtifactType } from '@/utils/artifactLinks';
 
 const ARTIFACT_TYPES: { value: ArtifactType; label: string }[] = [
@@ -32,6 +33,9 @@ export const AttachArtifactModal: React.FC<AttachArtifactModalProps> = ({
   const [type, setType] = useState<ArtifactType>('initiative');
   const [artifactId, setArtifactId] = useState('');
   const [label, setLabel] = useState('');
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const idInputRef = useRef<HTMLInputElement>(null);
+  useDialogA11y({ open, onClose, containerRef: dialogRef, initialFocusRef: idInputRef });
 
   const handleSubmit = useCallback(() => {
     const trimmedId = artifactId.trim();
@@ -50,16 +54,25 @@ export const AttachArtifactModal: React.FC<AttachArtifactModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-96 rounded-lg border border-c-border-subtle bg-c-surface-raised p-4 shadow-xl dark:border-c-border-subtle dark:bg-c-surface"
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="attach-artifact-modal-title"
+        tabIndex={-1}
+        className="w-96 rounded-lg border border-c-border-subtle bg-c-surface-raised p-4 shadow-xl outline-none dark:border-c-border-subtle dark:bg-c-surface"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-3 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm font-medium text-c-text-secondary dark:text-c-text">
+          <div
+            id="attach-artifact-modal-title"
+            className="flex items-center gap-2 text-sm font-medium text-c-text-secondary dark:text-c-text"
+          >
             <Link2 size={16} />
             {t('ideas.mindmap.attachArtifact', 'Attach artifact')}
           </div>
           <button
             onClick={onClose}
+            aria-label={t('common.close', 'Close')}
             className="text-c-text-secondary hover:text-c-text-secondary dark:hover:text-c-text-muted"
           >
             <X size={16} />
@@ -88,7 +101,7 @@ export const AttachArtifactModal: React.FC<AttachArtifactModalProps> = ({
             ID
           </label>
           <input
-            autoFocus
+            ref={idInputRef}
             value={artifactId}
             onChange={(e) => setArtifactId(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}

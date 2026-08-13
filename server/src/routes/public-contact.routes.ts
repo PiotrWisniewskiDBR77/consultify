@@ -37,7 +37,7 @@ const PublicContactSchema = z.object({
     .object({
       session_id: z.string().min(1).max(120),
       cta_type: z.enum(['contact']),
-      language: z.enum(['pl', 'en', 'es', 'de', 'jp', 'ar']),
+      language: z.enum(['pl', 'en', 'es', 'de', 'ja', 'ar']),
       channel: z.enum(['text', 'voice']),
       turn_id: z.string().min(1).max(120),
       source_intent: z.enum([

@@ -18,7 +18,7 @@ export type HelpRecoRationaleV1 = {
   pl: string;
   de?: string;
   ar?: string;
-  jp?: string;
+  ja?: string;
   es?: string;
 };
 
@@ -48,14 +48,16 @@ function firstParam(value: unknown): string | undefined {
   return undefined;
 }
 
-type HelpLang = 'en' | 'pl' | 'de' | 'ar' | 'jp' | 'es';
-const HELP_LANGUAGES: HelpLang[] = ['en', 'pl', 'de', 'ar', 'jp', 'es'];
+type HelpLang = 'en' | 'pl' | 'de' | 'ar' | 'ja' | 'es';
+const HELP_LANGUAGES: HelpLang[] = ['en', 'pl', 'de', 'ar', 'ja', 'es'];
 
 function normalizeHelpLang(locale: string): HelpLang {
   const raw = String(locale || '')
     .toLowerCase()
     .split('-')[0];
-  if (raw === 'ja') return 'jp';
+  // 'jp' is the pre-migration legacy code (S23-LOCALE, 2026-08-12) — kept as
+  // an input alias so an already-cached client sending it still resolves.
+  if (raw === 'jp') return 'ja';
   if ((HELP_LANGUAGES as string[]).includes(raw)) return raw as HelpLang;
   return 'en';
 }
@@ -79,7 +81,7 @@ function buildRationale(context: HelpRecoContextV1): HelpRecoRationaleV1 {
     pl: `Jesteś w ${label}${a} — ten artykuł pasuje do bieżącego kontekstu i prowadzi do następnego kroku.`,
     de: `Sie befinden sich in ${label}${a} — dieser Artikel passt zum aktuellen Kontext und leitet den nächsten Schritt.`,
     ar: `أنت في ${label}${a} — هذه المقالة تتوافق مع السياق الحالي وتوجه الخطوة التالية.`,
-    jp: `${label}${a}にいます — この記事は現在のコンテキストに一致し、次のステップを案内します。`,
+    ja: `${label}${a}にいます — この記事は現在のコンテキストに一致し、次のステップを案内します。`,
     es: `Estás en ${label}${a} — este artículo coincide con el contexto actual y guía al siguiente paso.`,
   };
 }

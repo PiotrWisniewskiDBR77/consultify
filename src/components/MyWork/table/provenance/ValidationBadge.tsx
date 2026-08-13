@@ -164,7 +164,7 @@ export const ValidationBadge: React.FC<ValidationBadgeProps> = ({
                   className="ml-auto text-[9px] uppercase tracking-wider text-c-text-secondary"
                   aria-hidden
                 >
-                  admin
+                  {t('ideas.table.validationBadgeAdmin', 'admin')}
                 </span>
               )}
             </button>

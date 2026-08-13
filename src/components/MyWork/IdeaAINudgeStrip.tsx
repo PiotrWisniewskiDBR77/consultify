@@ -61,6 +61,68 @@ export const IdeaAINudgeStrip: React.FC<IdeaAINudgeStripProps> = ({
   const [serverNudges, setServerNudges] = useState<Nudge[]>([]);
   const [loading, setLoading] = useState(false);
 
+  /**
+   * 2026-08-10 (E13 visual audit, doc 11 §3.7 "labels use business language" +
+   * §11.5 tool-specific semantics): dawniej WSZYSTKIE podpowiedzi tego paska
+   * były na sztywno po polsku „Mapa"/„gałęzie" — poprawne dla Mind Map, ale
+   * pasek jest montowany też w Whiteboard (`IdeaWhiteboardTool.tsx`), gdzie
+   * pokazywał „Mapa ma tylko N elementów" na płótnie, które w tym narzędziu
+   * nazywa się „Tablica". `activeTool` był już przyjmowany jako prop, ale
+   * nigdy nie sterował treścią — klasyczny „parametr jest, podłączenia nie
+   * ma". Pełne frazy per narzędzie (nie sklejanie fragmentów) — polski ma
+   * rodzaj gramatyczny („Mapa jest pusta" fem. vs „Diagram jest pusty" masc.),
+   * więc jedna sklejana końcówka byłaby niegramatyczna dla części narzędzi.
+   */
+  const toolCopy = useMemo(() => {
+    switch (activeTool) {
+      case 'whiteboard':
+        return {
+          fewNodesPl: (n: number) =>
+            `Tablica ma tylko ${n} elementów — AI zaproponuje nowe elementy na bazie danych firmy`,
+          fewNodesEn: (n: number) =>
+            `Board has only ${n} elements — AI will propose new elements from company data`,
+          emptyPl: 'Tablica jest pusta — pozwól AI wygenerować pierwszy szkic',
+          emptyEn: 'Board is empty — let AI generate the first draft',
+          readyPl: 'Tablica wygląda kompletnie — gotowa do konwersji na inicjatywę?',
+          readyEn: 'Board looks complete — ready to convert to initiative?',
+        };
+      case 'process_flow':
+        return {
+          fewNodesPl: (n: number) =>
+            `Diagram ma tylko ${n} kroków — AI zaproponuje nowe kroki na bazie danych firmy`,
+          fewNodesEn: (n: number) =>
+            `Flow has only ${n} steps — AI will propose new steps from company data`,
+          emptyPl: 'Diagram jest pusty — pozwól AI wygenerować pierwszy szkic',
+          emptyEn: 'Flow is empty — let AI generate the first draft',
+          readyPl: 'Diagram wygląda kompletnie — gotowy do konwersji na inicjatywę?',
+          readyEn: 'Flow looks complete — ready to convert to initiative?',
+        };
+      case 'table':
+        return {
+          fewNodesPl: (n: number) =>
+            `Tabela ma tylko ${n} wierszy — AI zaproponuje nowe wiersze na bazie danych firmy`,
+          fewNodesEn: (n: number) =>
+            `Table has only ${n} rows — AI will propose new rows from company data`,
+          emptyPl: 'Tabela jest pusta — pozwól AI wygenerować pierwszy szkic',
+          emptyEn: 'Table is empty — let AI generate the first draft',
+          readyPl: 'Tabela wygląda kompletnie — gotowa do konwersji na inicjatywę?',
+          readyEn: 'Table looks complete — ready to convert to initiative?',
+        };
+      case 'mindmap':
+      default:
+        return {
+          fewNodesPl: (n: number) =>
+            `Mapa ma tylko ${n} elementów — AI zaproponuje nowe gałęzie na bazie danych firmy`,
+          fewNodesEn: (n: number) =>
+            `Map has only ${n} elements — AI will propose new branches from company data`,
+          emptyPl: 'Mapa jest pusta — pozwól AI wygenerować pierwszy szkic',
+          emptyEn: 'Map is empty — let AI generate the first draft',
+          readyPl: 'Mapa wygląda kompletnie — gotowa do konwersji na inicjatywę?',
+          readyEn: 'Map looks complete — ready to convert to initiative?',
+        };
+    }
+  }, [activeTool]);
+
   const localNudges = useMemo<Nudge[]>(() => {
     if (!isAccepted) return [];
     const nudges: Nudge[] = [];
@@ -71,8 +133,8 @@ export const IdeaAINudgeStrip: React.FC<IdeaAINudgeStripProps> = ({
       nudges.push({
         id: 'few_nodes',
         icon: GitBranch,
-        textPl: `Mapa ma tylko ${nodeCount} elementów — AI zaproponuje nowe gałęzie na bazie danych firmy`,
-        textEn: `Map has only ${nodeCount} elements — AI will propose new branches from company data`,
+        textPl: toolCopy.fewNodesPl(nodeCount),
+        textEn: toolCopy.fewNodesEn(nodeCount),
         action: 'expand',
         priority: 90,
       });
@@ -82,8 +144,8 @@ export const IdeaAINudgeStrip: React.FC<IdeaAINudgeStripProps> = ({
       nudges.push({
         id: 'empty_map',
         icon: Sparkles,
-        textPl: 'Mapa jest pusta — pozwól AI wygenerować pierwszy szkic',
-        textEn: 'Map is empty — let AI generate the first draft',
+        textPl: toolCopy.emptyPl,
+        textEn: toolCopy.emptyEn,
         action: 'expand',
         priority: 100,
       });
@@ -111,15 +173,15 @@ export const IdeaAINudgeStrip: React.FC<IdeaAINudgeStripProps> = ({
       nudges.push({
         id: 'ready_convert',
         icon: Rocket,
-        textPl: 'Mapa wygląda kompletnie — gotowa do konwersji na inicjatywę?',
-        textEn: 'Map looks complete — ready to convert to initiative?',
+        textPl: toolCopy.readyPl,
+        textEn: toolCopy.readyEn,
         action: 'convert',
         priority: 50,
       });
     }
 
     return nudges;
-  }, [graphEdges, graphNodes, isAccepted, seedText]);
+  }, [graphEdges, graphNodes, isAccepted, seedText, toolCopy]);
 
   useEffect(() => {
     if (!isAccepted || !ideaId || graphNodes.length < 3) return;

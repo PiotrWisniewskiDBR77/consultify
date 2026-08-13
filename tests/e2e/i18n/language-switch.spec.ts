@@ -10,14 +10,15 @@
 import { test, expect } from '@playwright/test';
 
 // Browser locale -> expected app language code
-// Note: app maps browser "ja" to app locale "jp"
+// S23-LOCALE (2026-08-12): app locale code is "ja" (BCP47-correct), so
+// browser "ja" now maps to app "ja" directly — no remapping.
 const LOCALE_CASES = [
   { locale: 'en-US', code: 'en', name: 'English', direction: 'ltr' },
   { locale: 'pl-PL', code: 'pl', name: 'Polski', direction: 'ltr' },
   { locale: 'de-DE', code: 'de', name: 'Deutsch', direction: 'ltr' },
   { locale: 'es-ES', code: 'es', name: 'Español', direction: 'ltr' },
   { locale: 'ar-SA', code: 'ar', name: 'العربية', direction: 'rtl' },
-  { locale: 'ja-JP', code: 'jp', name: '日本語', direction: 'ltr' },
+  { locale: 'ja-JP', code: 'ja', name: '日本語', direction: 'ltr' },
 ] as const;
 
 test.describe('Language Switching', () => {

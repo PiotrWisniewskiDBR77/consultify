@@ -1,9 +1,13 @@
 import { X } from 'lucide-react';
 import * as React from 'react';
 
+import { useDialogA11y } from './primitives/useDialogA11y';
+
 interface DialogContextValue {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  titleId: string;
+  descriptionId: string;
 }
 
 const DialogContext = React.createContext<DialogContextValue | null>(null);
@@ -17,6 +21,7 @@ interface DialogProps {
 const Dialog: React.FC<DialogProps> = ({ open: controlledOpen, onOpenChange, children }) => {
   const [internalOpen, setInternalOpen] = React.useState(false);
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const generatedId = React.useId();
 
   const setOpen = React.useCallback(
     (value: React.SetStateAction<boolean>) => {
@@ -29,7 +34,18 @@ const Dialog: React.FC<DialogProps> = ({ open: controlledOpen, onOpenChange, chi
     [controlledOpen, open, onOpenChange]
   );
 
-  return <DialogContext.Provider value={{ open, setOpen }}>{children}</DialogContext.Provider>;
+  return (
+    <DialogContext.Provider
+      value={{
+        open,
+        setOpen,
+        titleId: `${generatedId}-title`,
+        descriptionId: `${generatedId}-description`,
+      }}
+    >
+      {children}
+    </DialogContext.Provider>
+  );
 };
 
 const DialogTrigger = React.forwardRef<
@@ -91,19 +107,51 @@ const DialogOverlay = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTML
 );
 DialogOverlay.displayName = 'DialogOverlay';
 
+// Merges the caller's forwarded ref with the internal ref this component
+// needs for the useDialogA11y focus-trap (CB-01: dialog.tsx had ZERO
+// role="dialog" / aria-modal / Escape / focus-trap / focus-restore despite
+// being the shared "Dialog" primitive — E14-A11Y-02).
+function useMergedRef<T>(
+  forwardedRef: React.ForwardedRef<T>,
+  localRef: React.RefObject<T>
+): (node: T | null) => void {
+  return React.useCallback(
+    (node: T | null) => {
+      (localRef as React.MutableRefObject<T | null>).current = node;
+      if (typeof forwardedRef === 'function') {
+        forwardedRef(node);
+      } else if (forwardedRef) {
+        (forwardedRef as React.MutableRefObject<T | null>).current = node;
+      }
+    },
+    [forwardedRef, localRef]
+  );
+}
+
 const DialogContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, children, ...props }, ref) => {
+  ({ className, children, ...props }, forwardedRef) => {
     const context = React.useContext(DialogContext);
     if (!context) throw new Error('DialogContent must be used within Dialog');
+
+    const localRef = React.useRef<HTMLDivElement>(null);
+    const mergedRef = useMergedRef(forwardedRef, localRef);
+    const handleClose = React.useCallback(() => context.setOpen(false), [context]);
+
+    useDialogA11y({ open: context.open, onClose: handleClose, containerRef: localRef });
 
     if (!context.open) return null;
 
     return (
       <DialogPortal>
-        <DialogOverlay onClick={() => context.setOpen(false)} />
+        <DialogOverlay onClick={handleClose} />
         <div
-          ref={ref}
-          className={`fixed left-[50%] top-[50%] z-modal grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 animate-in fade-in-0 zoom-in-95 slide-in-from-left-1/2 slide-in-from-top-[48%] sm:rounded-lg ${className || ''}`}
+          ref={mergedRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={context.titleId}
+          aria-describedby={context.descriptionId}
+          tabIndex={-1}
+          className={`fixed left-[50%] top-[50%] z-modal grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 animate-in fade-in-0 zoom-in-95 slide-in-from-left-1/2 slide-in-from-top-[48%] sm:rounded-lg outline-none ${className || ''}`}
           {...props}
         >
           {children}
@@ -132,22 +180,34 @@ const DialogFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivEleme
 DialogFooter.displayName = 'DialogFooter';
 
 const DialogTitle = React.forwardRef<HTMLHeadingElement, React.HTMLAttributes<HTMLHeadingElement>>(
-  ({ className, ...props }, ref) => (
-    <h2
-      ref={ref}
-      className={`text-lg font-semibold leading-none tracking-tight ${className || ''}`}
-      {...props}
-    />
-  )
+  ({ className, id, ...props }, ref) => {
+    const context = React.useContext(DialogContext);
+    return (
+      <h2
+        ref={ref}
+        id={id ?? context?.titleId}
+        className={`text-lg font-semibold leading-none tracking-tight ${className || ''}`}
+        {...props}
+      />
+    );
+  }
 );
 DialogTitle.displayName = 'DialogTitle';
 
 const DialogDescription = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
->(({ className, ...props }, ref) => (
-  <p ref={ref} className={`text-sm text-muted-foreground ${className || ''}`} {...props} />
-));
+>(({ className, id, ...props }, ref) => {
+  const context = React.useContext(DialogContext);
+  return (
+    <p
+      ref={ref}
+      id={id ?? context?.descriptionId}
+      className={`text-sm text-muted-foreground ${className || ''}`}
+      {...props}
+    />
+  );
+});
 DialogDescription.displayName = 'DialogDescription';
 
 export {

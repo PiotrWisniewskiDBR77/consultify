@@ -31,7 +31,7 @@ const LANG_TO_BCP47: Record<string, string> = {
   en: 'en-US',
   de: 'de-DE',
   ar: 'ar-SA',
-  jp: 'ja-JP',
+  ja: 'ja-JP',
   es: 'es-ES',
 };
 

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Handle, type NodeProps, Position } from 'reactflow';
 
 import { commentCountOf, CommentPinBadge } from './CommentPinBadge';
@@ -14,6 +15,7 @@ import {
 import { WhiteboardNodeReactions } from './WhiteboardNodeReactions';
 
 export const StickyNoteNode: React.FC<NodeProps> = ({ id: nodeId, data, selected }) => {
+  const { t } = useTranslation();
   const isDark = useIsDark();
   const colorIdx = (data?.colorIndex ?? 0) % STICKY_COLORS.length;
   const color = STICKY_COLORS[colorIdx];
@@ -22,7 +24,13 @@ export const StickyNoteNode: React.FC<NodeProps> = ({ id: nodeId, data, selected
   // Z15: per-element style overrides written by the floating style bar.
   const accentBg = resolveNodeAccentBg(data?.accentColor);
   const fontStyle = resolveNodeFontStyle(data);
-  const [editing, setEditing] = React.useState(false);
+  // WB-P2-01: a freshly-created note (`data._isNew`, set by
+  // IdeaWhiteboardTool.addElement for a rail/toolbar "Add sticky" with no
+  // caller-supplied label) opens straight into inline naming — a first-time
+  // user should never need to already know about double-click. Lazy
+  // initializer runs once per mount, so this only fires right after
+  // creation, not on every re-render.
+  const [editing, setEditing] = React.useState(() => Boolean(data?._isNew));
   const [editValue, setEditValue] = React.useState(String(data?.label || ''));
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
@@ -32,6 +40,15 @@ export const StickyNoteNode: React.FC<NodeProps> = ({ id: nodeId, data, selected
       textareaRef.current?.select();
     }
   }, [editing]);
+
+  // Clear `_isNew` once consumed so a later remount of this same node (e.g.
+  // its parent frame collapsing then expanding) doesn't reopen the editor.
+  React.useEffect(() => {
+    if (data?._isNew && typeof data?.onConsumeAutoEdit === 'function') {
+      data.onConsumeAutoEdit();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const commitEdit = () => {
     setEditing(false);
@@ -141,7 +158,9 @@ export const StickyNoteNode: React.FC<NodeProps> = ({ id: nodeId, data, selected
               })
             );
           }}
-          title={`${data.artifactLinks.length} linked artifact${data.artifactLinks.length !== 1 ? 's' : ''}`}
+          title={t('myWork.whiteboard.linkedArtifactsCount', {
+            count: data.artifactLinks.length,
+          })}
         >
           🔗
         </div>
@@ -150,7 +169,7 @@ export const StickyNoteNode: React.FC<NodeProps> = ({ id: nodeId, data, selected
       {data?._converted && (
         <div
           className="absolute top-1 right-1 z-10 flex items-center justify-center w-4 h-4 rounded-full bg-success-500 text-white text-[8px] shadow-sm"
-          title="Converted"
+          title={t('myWork.whiteboard.convertedBadge', 'Converted')}
         >
           ✓
         </div>

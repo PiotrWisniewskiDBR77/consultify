@@ -22,11 +22,21 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 
+// Closure (2026-08-10) 04_ACTION_COVERAGE_INVENTORY.csv class-d: this is the
+// ONE call site in this file that imports the registry (mirrors the registry's
+// own deliberate exception importing `findIdeaTemplate` FROM this file, see
+// `ideaActionRegistry.ts` top-of-file comment). Circular module reference is
+// safe here: both `runIdeaAction` (function declaration, hoisted) and
+// `findIdeaTemplate` are only ever CALLED from inside event-handler closures
+// (button onClick / registry action handler), never read at module-eval time,
+// so ESM live-bindings resolve correctly regardless of which side loads first.
+import { type ActionContext, runIdeaAction } from '@/actions/ideaActionRegistry';
+
 import type { CanvasTemplateGovernanceMeta } from './canvas/canvasOsContract';
 // #10-AB: baza ~40 startowych szablonów konsultingowych (7 kategorii). Import
 // value; moduł importuje z tego pliku wyłącznie TYP (erased) → brak cyklu runtime.
 import { CONSULTING_TEMPLATES } from './ideaConsultingTemplates';
-import type { CanvasToolType } from './ideaSelectionTypes';
+import { EMPTY_SELECTION, type CanvasToolType } from './ideaSelectionTypes';
 import { useConfirmDialog } from './shared/ConfirmDialog';
 
 // ── Template types ───────────────────────────────────────────────────────────
@@ -2103,6 +2113,33 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
     ]
   );
 
+  // Closure (2026-08-10) 04_ACTION_COVERAGE_INVENTORY.csv class-d:
+  // `idea.template.apply` (ideaActionRegistry.ts) — routes BOTH gallery
+  // buttons below (plain "Use template" and "AI Fill") through the ONE
+  // registered id; `withAIFill` is the second param, not a second command
+  // (see registry entry comment for the L-06 evidence this is genuinely one
+  // command, not two). `ctx.source === 'ui'` + `params.run` makes the
+  // registry call `handleApply` directly — byte-identical to the pre-wiring
+  // click, confirm-before-overwrite dialog included.
+  const runTemplateApplyAction = useCallback(
+    (template: TemplateDefinition, withAIFill: boolean) => {
+      const ctx: ActionContext = {
+        ideaId,
+        tool: activeTool,
+        selection: EMPTY_SELECTION,
+        surface: 'panel',
+        source: 'ui',
+        params: {
+          templateId: template.id,
+          withAIFill,
+          run: () => handleApply(template, withAIFill),
+        },
+      };
+      void runIdeaAction('idea.template.apply', ctx);
+    },
+    [activeTool, handleApply, ideaId]
+  );
+
   if (!open) return null;
 
   return (
@@ -2203,7 +2240,7 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
                           )}
                           <div className="mt-2 flex items-center gap-2">
                             <button
-                              onClick={() => handleApply(template)}
+                              onClick={() => runTemplateApplyAction(template, false)}
                               disabled={!!applying}
                               className="inline-flex items-center gap-1 text-[9px] font-semibold text-c-info hover:text-c-info/80 transition-colors disabled:opacity-50"
                             >
@@ -2214,7 +2251,7 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
                             </button>
                             {template.nodes.length > 0 && (
                               <button
-                                onClick={() => handleApply(template, true)}
+                                onClick={() => runTemplateApplyAction(template, true)}
                                 disabled={!!applying}
                                 className="inline-flex items-center gap-1 text-[9px] font-semibold text-c-info hover:text-c-info/80 transition-colors disabled:opacity-50"
                               >

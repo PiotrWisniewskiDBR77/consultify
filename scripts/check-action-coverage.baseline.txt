@@ -1,0 +1,103 @@
+# check-action-coverage.sh — BASELINE długu zastanego (ratchet, E02 DoD).
+# Format: <liczba>\t<ścieżka>. Liczba = ile onClick/onSelect w pliku są
+# akcjopodobne (heurystyka: scripts/check-action-coverage.awk) i NIE są
+# traceable do IDEA_ACTION_REGISTRY (runIdeaAction/runAction).
+#
+# Bramka przepuszcza plik dopóki liczba NIE ROŚNIE. Nowe naruszenie (nowy
+# plik w zakresie, albo wzrost liczby) = commit zablokowany. Regeneruj
+# (--update) TYLKO gdy dług ŚWIADOMIE SPADŁ (akcja przeniesiona do rejestru),
+# nigdy żeby uciszyć nową regresję.
+#
+# WYGENEROWANO: 2026-08-10 (scripts/check-action-coverage.sh --update)
+# RAZEM: 188 naruszeń w 89 plikach (zeskanowano 455 plików w zakresie)
+#
+# Posortowane po ścieżce (stabilny diff).
+1	src/components/MyWork/CreateProgramModal.tsx
+2	src/components/MyWork/Decision/DecisionAlternativesSection.tsx
+2	src/components/MyWork/Decision/DecisionCommentsSection.tsx
+3	src/components/MyWork/Decision/DecisionDecideBar.tsx
+2	src/components/MyWork/Decision/DecisionRisksSection.tsx
+2	src/components/MyWork/Decision/DecisionWorkspace.tsx
+11	src/components/MyWork/DecisionDetailView.tsx
+2	src/components/MyWork/Focus/FocusBoard.tsx
+2	src/components/MyWork/Focus/FocusView.tsx
+1	src/components/MyWork/IdeaAINudgeStrip.tsx
+2	src/components/MyWork/IdeaAISuggestionsPanel.tsx
+1	src/components/MyWork/IdeaContextPanel.tsx
+2	src/components/MyWork/IdeaExportMenu.tsx
+2	src/components/MyWork/IdeaNodeDetailDrawer.tsx
+1	src/components/MyWork/IdeaRecommendationMap.tsx
+4	src/components/MyWork/IdeaScenesManager.tsx
+5	src/components/MyWork/IdeaTableTool.tsx
+2	src/components/MyWork/IdeaTemplateGallery.tsx
+1	src/components/MyWork/IdeaTeresaSection.tsx
+2	src/components/MyWork/Inbox/InboxTriage.tsx
+3	src/components/MyWork/InboxContent.tsx
+1	src/components/MyWork/MyIdeasListContent.tsx
+3	src/components/MyWork/MyTasksListContent.tsx
+5	src/components/MyWork/MyWorkHub.tsx
+3	src/components/MyWork/NotebookContent.tsx
+1	src/components/MyWork/NotebookLibraryContent.tsx
+3	src/components/MyWork/NotificationDetailView.tsx
+2	src/components/MyWork/NotificationSettings.tsx
+1	src/components/MyWork/Notifications/NotificationCenter.tsx
+2	src/components/MyWork/NotificationsContent.tsx
+3	src/components/MyWork/NotificationsHub.tsx
+2	src/components/MyWork/TaskDetailModal.tsx
+13	src/components/MyWork/TaskDetailView.tsx
+1	src/components/MyWork/mindmap/AIBlindSpotsDetector.tsx
+1	src/components/MyWork/mindmap/AICompetitiveLandscape.tsx
+1	src/components/MyWork/mindmap/AIDependencyDetector.tsx
+1	src/components/MyWork/mindmap/BatchConvertModal.tsx
+1	src/components/MyWork/mindmap/MindmapCommandPalette.tsx
+1	src/components/MyWork/mindmap/NodeCommentThread.tsx
+1	src/components/MyWork/mindmap/NodeDetailDrawer.tsx
+2	src/components/MyWork/mindmap/SnapshotHistory.tsx
+2	src/components/MyWork/mindmap/UnifiedNodeDetailDrawer.tsx
+1	src/components/MyWork/mindmap/floating-toolbar/QuickEditPopovers.tsx
+1	src/components/MyWork/mindmap/floating-toolbar/SemanticControlsPopover.tsx
+3	src/components/MyWork/notebook/AIChatInlinePanel.tsx
+1	src/components/MyWork/notebook/ActionItemsPanel.tsx
+3	src/components/MyWork/notebook/NotebookExportMenu.tsx
+2	src/components/MyWork/notebook/NotebookInlineAIMenu.tsx
+1	src/components/MyWork/notebook/NotebookTopicChips.tsx
+1	src/components/MyWork/notebook/NotebookVersionHistory.tsx
+1	src/components/MyWork/notebook/PulseItemPickerModal.tsx
+1	src/components/MyWork/processflow/ProcessFlowToolbar.tsx
+2	src/components/MyWork/shared/AttachmentsSection.tsx
+1	src/components/MyWork/shared/CommentsSection.tsx
+1	src/components/MyWork/shared/DelegationModal.tsx
+5	src/components/MyWork/shared/DependenciesSection.tsx
+1	src/components/MyWork/shared/EscalationRulesSection.tsx
+2	src/components/MyWork/shared/LinkedItemsSection.tsx
+1	src/components/MyWork/shared/PostDecisionFollowUp.tsx
+2	src/components/MyWork/shared/SavedViewsMenu.tsx
+1	src/components/MyWork/shared/TaskTemplates.tsx
+1	src/components/MyWork/table/AICategorizeTool.tsx
+2	src/components/MyWork/table/AICopilotMode.tsx
+1	src/components/MyWork/table/AddColumnDialog.tsx
+1	src/components/MyWork/table/CellExpandPopover.tsx
+1	src/components/MyWork/table/ChatToSchemaPanel.tsx
+1	src/components/MyWork/table/ConditionalFormatting.tsx
+1	src/components/MyWork/table/CrossTableRelations.tsx
+2	src/components/MyWork/table/DateDependencyConfig.tsx
+3	src/components/MyWork/table/DistributionBuilder.tsx
+1	src/components/MyWork/table/FilterBuilder.tsx
+1	src/components/MyWork/table/FilterPanel.tsx
+1	src/components/MyWork/table/FormulaEditor.tsx
+1	src/components/MyWork/table/IdeaPipeline.tsx
+2	src/components/MyWork/table/InterfaceDesigner.tsx
+1	src/components/MyWork/table/LinkedRecordPicker.tsx
+1	src/components/MyWork/table/RecordTemplateManager.tsx
+1	src/components/MyWork/table/RowColoringConfig.tsx
+6	src/components/MyWork/table/RowDetailPanel.tsx
+2	src/components/MyWork/table/ViewRouter.tsx
+3	src/components/MyWork/table/automations/AutomationBuilder.tsx
+2	src/components/MyWork/table/automations/AutomationsManager.tsx
+1	src/components/MyWork/table/connectors/WebhookRelayPanel.tsx
+3	src/components/MyWork/table/distribution/DistributionManager.tsx
+3	src/components/MyWork/table/forms/FormsIndex.tsx
+3	src/components/MyWork/table/forms/IntakeJwtPanel.tsx
+3	src/components/MyWork/table/interfaces/InterfacesIndex.tsx
+3	src/components/MyWork/table/sharing/SharingManager.tsx
+3	src/components/MyWork/table/sync/SyncManager.tsx

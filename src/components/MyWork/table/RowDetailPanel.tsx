@@ -43,6 +43,7 @@ import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import { OrganizationApi } from '@/services/api/organizations.api';
 import type { ValidationStatus } from '@/services/api/recordProvenance.api';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
@@ -763,6 +764,9 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
     }
   };
 
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogA11y({ open: !!(open && node), onClose, containerRef: dialogRef });
+
   if (!open || !node) return null;
 
   // Nazwa rekordu do etykiet dostępności (aria-label) komórek edycji — a11y.
@@ -806,7 +810,12 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-[480px] max-w-[90vw] h-full bg-c-surface shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-200"
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={String(node.data?.label || t('ideas.table.recordDetails', 'Record details'))}
+        tabIndex={-1}
+        className="w-[480px] max-w-[90vw] h-full bg-c-surface shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-200 outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── Color accent bar ── */}

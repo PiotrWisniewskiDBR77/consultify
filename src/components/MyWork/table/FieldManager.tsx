@@ -33,6 +33,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 import type { FieldType, TablePlatformField } from '@/types/tablePlatform';
 
@@ -229,6 +230,14 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
     setOverIdx(null);
   }, []);
 
+  const dialogRef = useRef<HTMLDivElement>(null);
+  // Suspend this drawer's own Escape/focus-trap while the nested
+  // `AddFieldDialog` is showing — two simultaneously-open `useDialogA11y`
+  // document Escape listeners would both fire on a single Escape press
+  // (stopPropagation doesn't stop sibling listeners on the same `document`
+  // target), closing both dialogs instead of just the top one.
+  useDialogA11y({ open: open && !showAddField, onClose, containerRef: dialogRef });
+
   if (!open) return null;
 
   return (
@@ -237,12 +246,19 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-[380px] max-w-[90vw] h-full bg-c-surface border-l border-c-border-subtle shadow-2xl flex flex-col"
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="field-manager-title"
+        tabIndex={-1}
+        className="w-[380px] max-w-[90vw] h-full bg-c-surface border-l border-c-border-subtle shadow-2xl flex flex-col outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-c-border-subtle">
-          <h3 className="text-sm font-bold text-c-text">{t('myWorkTable.fieldManager.fields')}</h3>
+          <h3 id="field-manager-title" className="text-sm font-bold text-c-text">
+            {t('myWorkTable.fieldManager.fields')}
+          </h3>
           <div className="flex items-center gap-1">
             {!locked && (
               <button
@@ -654,6 +670,9 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
   const [ratingMax, setRatingMax] = useState(5);
   const [currencySymbol, setCurrencySymbol] = useState('$');
   const [adding, setAdding] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  useDialogA11y({ open: true, onClose, containerRef: dialogRef, initialFocusRef: nameInputRef });
 
   const handleCreate = async () => {
     if (!name.trim()) return;
@@ -691,12 +710,17 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
       onClick={onClose}
     >
       <div
-        className="w-[420px] max-h-[80vh] overflow-auto rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl"
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="add-field-dialog-title"
+        tabIndex={-1}
+        className="w-[420px] max-h-[80vh] overflow-auto rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
-          <h3 className="text-sm font-bold text-c-text">
+          <h3 id="add-field-dialog-title" className="text-sm font-bold text-c-text">
             {t('myWorkTable.fieldManager.newField')}
           </h3>
           <button
@@ -714,11 +738,11 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
               {t('myWorkTable.fieldManager.name')}
             </label>
             <input
+              ref={nameInputRef}
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={t('myWorkTable.fieldManager.eGStatusPriority')}
               className="w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
-              autoFocus
             />
           </div>
 

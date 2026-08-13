@@ -644,7 +644,6 @@ function getBrowserLanguage(): string {
     const raw =
       (typeof navigator !== 'undefined' && (navigator.languages?.[0] || navigator.language)) || '';
     const base = String(raw).split('-')[0].toLowerCase();
-    if (base === 'ja') return 'jp'; // app uses "jp" locale folder/code
     return base || 'en';
   } catch {
     return 'en';
@@ -4685,6 +4684,26 @@ export const Api = {
     return normalizeIdeaDisplayFields(await res.json());
   },
 
+  /**
+   * E08 (idea maturity model) — sets one user attestation for an `attested`
+   * stage-gate criterion. See src/components/MyWork/ideaMaturityModel.ts.
+   * `applied: false` in the response means the additive DB column hasn't
+   * been migrated yet — callers must reflect that honestly, never assume success.
+   */
+  setIdeaMaturityAttestation: async (
+    id: string,
+    criterionId: string,
+    met: boolean,
+    note?: string
+  ): Promise<{ success: boolean; applied: boolean; maturityGates: Record<string, unknown> }> => {
+    const res = await fetch(`${API_URL}/my-work/my-ideas/${id}/maturity-gates`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify({ criterionId, met, note }),
+    });
+    return handleResponse(res, 'Failed to save maturity attestation');
+  },
+
   createMyIdea: async (idea: {
     title: string;
     body?: string;
@@ -4928,7 +4947,8 @@ export const Api = {
 
   getIdeaAITableAction: async (
     ideaId: string,
-    payload: { command: string; schema: any[]; language?: string }
+    payload: { command: string; schema: any[]; language?: string },
+    signal?: AbortSignal
   ): Promise<any> => {
     const res = await fetch(
       `${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/ai-table-action`,
@@ -4936,6 +4956,7 @@ export const Api = {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify(payload),
+        signal,
       }
     );
     return handleResponse(res, 'Failed to process table action');
@@ -5194,6 +5215,33 @@ export const Api = {
       body: JSON.stringify(payload),
     });
     return handleResponse(res, 'Failed to convert idea');
+  },
+
+  /**
+   * E11 (2026-08-10) — read-only lineage list, §9 append-only `conversions[]`
+   * contract. Backs the mandatory conversion preview's "already converted N×"
+   * notice (docs/standards/idea-workspace/10_*, §2.3).
+   */
+  getMyIdeaConversions: async (
+    ideaId: string
+  ): Promise<{
+    conversions: Array<{
+      conversionId: string;
+      targetType: string;
+      targetId: string | null;
+      scope: string;
+      sourceElementIds: string[];
+      createdAt: string;
+      createdBy: string | null;
+      mappingVersion: string | null;
+      sourceLink: unknown;
+    }>;
+  }> => {
+    const res = await fetch(
+      `${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/conversions`,
+      { headers: getHeaders() }
+    );
+    return handleResponse(res, 'Failed to fetch idea conversions');
   },
 
   // ==========================================

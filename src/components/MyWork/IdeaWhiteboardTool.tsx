@@ -25,6 +25,7 @@ import {
   Rocket,
   Trash2,
   Ungroup,
+  Wand2,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -46,6 +47,7 @@ import ReactFlow, {
   useStore as useReactFlowStore,
 } from 'reactflow';
 
+import { type ActionContext, runIdeaAction } from '@/actions/ideaActionRegistry';
 import { SkeletonState } from '@/components/shared/states';
 import { Api } from '@/services/api';
 import { generateAIProposal } from '@/services/ideaAIGenerator';
@@ -130,8 +132,13 @@ import {
   type WhiteboardNodeComment,
 } from './whiteboard/nodes/whiteboardNodeComments';
 import { WhiteboardNodeCommentThread } from './whiteboard/nodes/WhiteboardNodeCommentThread';
-import { STICKY_COLORS, useIsDark } from './whiteboard/nodes/whiteboardNodeHelpers';
+import { STICKY_COLORS, STICKY_SIZES, useIsDark } from './whiteboard/nodes/whiteboardNodeHelpers';
 import { usePortalSlot } from './whiteboard/usePortalSlot';
+import {
+  DEFAULT_WHITEBOARD_NODE_SIZE,
+  resolveWhiteboardPlacement,
+  type WhiteboardRect,
+} from './whiteboard/whiteboardPlacement';
 import { useWhiteboardCollab } from './whiteboard/useWhiteboardCollab';
 import { useWhiteboardNodes } from './whiteboard/useWhiteboardNodes';
 import {
@@ -203,11 +210,21 @@ interface WhiteboardCanvasProps {
   onExternalInsert?: (items: WhiteboardExternalInsert[]) => void;
   onFullscreenToggle?: () => void;
   isFullscreen?: boolean;
-  onContextMenu?: (e: React.MouseEvent, nodeId?: string, nodeData?: any) => void;
+  // WB-FRAME-01 (frame context menu, 2026-08-10): `rfNode` carries the RAW
+  // ReactFlow node (type/parentNode/parentId) — `nodeData` alone (`node.data`)
+  // never carried the ReactFlow node TYPE (`frameNode`/`groupNode`) or its
+  // containment fields, so the menu had no reliable way to tell a frame
+  // apart from any other node (see report: it fell back to a generic label).
+  onContextMenu?: (e: React.MouseEvent, nodeId?: string, nodeData?: any, rfNode?: Node) => void;
   // P2-6 (rozdz. 08 §4): prawy klik na krawędzi otwiera menu krawędzi.
   onEdgeContextMenu?: (e: React.MouseEvent, edgeId: string) => void;
   // Z15: patch a single node's style (accent/fontSize/fontWeight) onto node.data.
   onNodeStyleChange?: (nodeId: string, patch: Record<string, unknown>) => void;
+  // WB-FRAME-02 (drag containment, 2026-08-10): fired after every unlocked
+  // node drag ends, so the outer component can reconcile the dragged node's
+  // frame membership against where it visually landed (see
+  // `useWhiteboardNodes.reparentNodeOnDrag`).
+  onNodeDragStopReconcile?: (nodeId: string) => void;
   /**
    * Gdy pasek edycji obiektu jest ZADOKOWANY w listwie Menu 3
    * (ff_canvasObjectEditBar), pływający `WhiteboardStyleBar` niósłby DOKŁADNIE
@@ -217,10 +234,26 @@ interface WhiteboardCanvasProps {
   suppressFloatingStyleBar?: boolean;
 }
 
+// WB-P1-02: `createNode`/`addElement`/`handleExternalInsert` live in the
+// OUTER `IdeaWhiteboardTool` component, which renders OUTSIDE
+// `<ReactFlowProvider>` (see the `<ReactFlowProvider><WhiteboardCanvas/>` JSX
+// below) — so they have no `useReactFlow()` access of their own and can't
+// call `screenToFlowPosition` directly. This imperative handle is the pull
+// side of that gap: the outer component asks the mounted canvas for a live
+// viewport reading (flow coords) at the moment it needs to place a new node,
+// rather than trying to keep a push-synced copy (which would go stale
+// between `onMoveEnd` events and initial mount).
+export interface WhiteboardCanvasHandle {
+  /** Flow-space point at the visual center of the current viewport. */
+  getCenter: () => { x: number; y: number };
+  /** Visible viewport, in flow coords, at the current pan/zoom. */
+  getViewportRect: () => WhiteboardRect;
+}
+
 // Z15: node types that expose the floating per-element style bar.
 const STYLEABLE_WB_NODE_TYPES = new Set(['stickyNote', 'textBlock', 'shapeNode']);
 
-const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
+const WhiteboardCanvas = React.forwardRef<WhiteboardCanvasHandle, WhiteboardCanvasProps>(({
   nodes,
   edges,
   locked,
@@ -239,7 +272,8 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
   onEdgeContextMenu: externalOnEdgeContextMenu,
   onNodeStyleChange,
   suppressFloatingStyleBar,
-}) => {
+  onNodeDragStopReconcile,
+}, ref) => {
   const { screenToFlowPosition, setViewport, fitView } = useReactFlow();
   // Z15: subscribe to the live viewport transform so the floating style bar
   // tracks the node while panning/zooming (re-renders on [x,y,zoom] change).
@@ -250,6 +284,17 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
     grid: 8,
     threshold: 6,
   });
+  // WB-FRAME-02 (drag containment, 2026-08-10): composes with the existing
+  // snap drag-stop handler (currently a no-op, kept for lifecycle parity —
+  // see useCanvasSnapping's own header) and then reconciles frame membership
+  // against wherever the node visually ended up.
+  const handleNodeDragStop = React.useCallback(
+    (event?: unknown, node?: Node) => {
+      onSnapNodeDragStop(event, node);
+      if (node?.id) onNodeDragStopReconcile?.(node.id);
+    },
+    [onSnapNodeDragStop, onNodeDragStopReconcile]
+  );
   const { t } = useTranslation();
   const isDarkCanvas = useIsDark();
   const containerRef = React.useRef<HTMLDivElement>(null);
@@ -371,6 +416,31 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
       y: (containerRef.current?.clientHeight ?? 300) / 2,
     });
   }, [screenToFlowPosition]);
+
+  // WB-P1-02: visible viewport in flow coordinates, used by the placement
+  // service to clamp fresh inserts on-screen at any pan/zoom (including
+  // browser-level zoom, which scales clientWidth/Height the same way).
+  const getViewportRect = React.useCallback((): WhiteboardRect => {
+    const topLeft = screenToFlowPosition({ x: 0, y: 0 });
+    const bottomRight = screenToFlowPosition({
+      x: containerRef.current?.clientWidth ?? 400,
+      y: containerRef.current?.clientHeight ?? 300,
+    });
+    return {
+      x: topLeft.x,
+      y: topLeft.y,
+      width: Math.max(bottomRight.x - topLeft.x, 1),
+      height: Math.max(bottomRight.y - topLeft.y, 1),
+    };
+  }, [screenToFlowPosition]);
+
+  // WB-P1-02: expose both to the outer `IdeaWhiteboardTool`, which needs
+  // them for the shared placement service but renders outside
+  // `<ReactFlowProvider>` (see `WhiteboardCanvasHandle` doc above).
+  React.useImperativeHandle(ref, () => ({ getCenter, getViewportRect }), [
+    getCenter,
+    getViewportRect,
+  ]);
 
   const handlePaste = React.useCallback(
     (e: ClipboardEvent) => {
@@ -524,6 +594,21 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
     return () => el.removeEventListener('paste', handlePaste);
   }, [handlePaste]);
 
+  // Perf measurement (docs/qa/ideas-complete-transformation-2026-08-09/
+  // 17_PERFORMANCE_MEASUREMENT.md): the whiteboard mounted every node's DOM
+  // unconditionally (no `onlyRenderVisibleElements`), unlike Mind Map which
+  // gates the same ReactFlow prop behind `mindmapVirtualization`
+  // (M06 Fala 3.3, threshold 300 — see mindmap/virtualization.ts). Manual
+  // "Add element" already hard-blocks at 500 nodes (see `addElement` P13
+  // limit enforcement above), so this only ever engages in the narrow
+  // 300–500 band that path can reach — paste/import/AI-batch paths are NOT
+  // confirmed to share that cap and could exceed it. Threshold matches Mind
+  // Map's for consistency. Deliberately NOT behind a new feature flag (kept
+  // inside this file per the fix's scope) — per CLAUDE.md rule #7/#9 this
+  // still needs a screenshot-acceptance pass before it ships to demo, since
+  // it changes what's mounted in the DOM.
+  const onlyRenderVisibleElements = nodes.length >= 300;
+
   return (
     <div
       ref={containerRef}
@@ -547,7 +632,8 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
         onEdgesChange={locked ? undefined : onEdgesChange}
         onConnect={onConnect}
         onNodeDrag={locked ? undefined : onSnapNodeDrag}
-        onNodeDragStop={locked ? undefined : onSnapNodeDragStop}
+        onNodeDragStop={locked ? undefined : handleNodeDragStop}
+        {...(onlyRenderVisibleElements ? { onlyRenderVisibleElements: true } : {})}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         onNodeDoubleClick={(_event: any, node: any) => {
@@ -555,7 +641,7 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
         }}
         onNodeContextMenu={(event: any, node: any) => {
           event.preventDefault();
-          externalOnContextMenu?.(event, node.id, node.data);
+          externalOnContextMenu?.(event, node.id, node.data, node);
         }}
         onEdgeContextMenu={(event: any, edge: any) => {
           event.preventDefault();
@@ -652,7 +738,8 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
       </ReactFlow>
     </div>
   );
-};
+});
+WhiteboardCanvas.displayName = 'WhiteboardCanvas';
 
 // ── Main component ───────────────────────────────────────────────────────────
 
@@ -701,6 +788,55 @@ function cloneCanvasSnapshot(snapshot: WhiteboardCanvasSnapshot): WhiteboardCanv
 
 function isNodeDataLocked(node: Node | null | undefined): boolean {
   return Boolean(node?.data?.locked);
+}
+
+// WB-P2-02 — "Find themes" must not present generic output as insight. The
+// i18n keys `createNode` stamps onto a brand-new, never-renamed sticky/text/
+// shape/frame/etc. — same list as `defaultLabelKeys` inside `createNode`.
+const GENERIC_WHITEBOARD_LABEL_I18N_KEYS = [
+  'defaultSticky',
+  'defaultText',
+  'defaultGroup',
+  'defaultShape',
+  'defaultFrame',
+  'defaultImage',
+  'defaultLink',
+  'defaultKpi',
+  'defaultScore',
+  'defaultProgress',
+  'defaultSummary',
+] as const;
+
+/**
+ * Builds the set of "still-default" labels in BOTH languages (not just the
+ * currently active one) — a board can mix content authored in either
+ * locale, and switching the UI language later must not make old default
+ * labels suddenly look "real". Uses the real `t` from the calling component
+ * (with an explicit `{ lng }` override) so this stays correct under the
+ * known pre-existing test-mock behavior where `t()` returns the raw key —
+ * in that case every entry collapses to the same raw key, which still
+ * matches because freshly-created nodes get their default label from that
+ * same `t()` call.
+ */
+export function collectGenericWhiteboardLabels(
+  t: (key: string, opts?: Record<string, unknown>) => string
+) {
+  const generic = new Set<string>();
+  for (const key of GENERIC_WHITEBOARD_LABEL_I18N_KEYS) {
+    for (const lng of ['en', 'pl']) {
+      const label = t(`myWork.whiteboard.nodes.${key}`, { lng });
+      if (typeof label === 'string' && label.trim()) generic.add(label.trim().toLowerCase());
+    }
+  }
+  return generic;
+}
+
+/** Empty/whitespace-only or matching a known default = not real semantic input yet. */
+export function isGenericWhiteboardLabel(label: unknown, generic: Set<string>): boolean {
+  if (typeof label !== 'string') return true;
+  const trimmed = label.trim();
+  if (!trimmed) return true;
+  return generic.has(trimmed.toLowerCase());
 }
 
 function normalizeVoteSummary(
@@ -868,12 +1004,24 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   // listener (below, near handleEdgeContextMenu) to this tool's own region
   // instead of the whole document.
   const wbKeyboardMenuContainerRef = useRef<HTMLDivElement>(null);
+  // WB-P1-02: pull-based handle onto the mounted `WhiteboardCanvas` — see
+  // `WhiteboardCanvasHandle` doc — so `createNode` can read a live viewport
+  // reading despite this component rendering outside `<ReactFlowProvider>`.
+  const canvasApiRef = useRef<WhiteboardCanvasHandle>(null);
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
   const [contextMenuTarget, setContextMenuTarget] = useState<{
     nodeId?: string;
     nodeLabel?: string;
     nodeType?: string;
     nodeLocked?: boolean;
+    // WB-FRAME-01 (frame context menu, 2026-08-10): raw ReactFlow node type
+    // (`frameNode`/`groupNode`/…) — distinct from `nodeType` above (the
+    // display-label semantic type), needed to reliably detect a frame.
+    nodeKind?: string;
+    // WB-FRAME-01: id of the containing frame, if any (checks BOTH
+    // `parentNode`/`parentId` — see `containingFrameId` in
+    // `useWhiteboardNodes.ts` for why there are two).
+    nodeParentId?: string;
   }>({});
   // P2-6 (rozdz. 08 §4): menu krawędzi — prawy klik na połączeniu.
   const [edgeContextMenu, setEdgeContextMenu] = useState<{
@@ -1029,6 +1177,36 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     lastSnapshotRef.current = snapshot;
     emitUndoState();
   }, [drawingPaths, edges, emitUndoState, nodes, scenes]);
+
+  // Undo ownership for freehand strokes (defect fix, 2026-08-10): IdeaDrawingLayer
+  // used to keep its OWN private undo/redo stack (paths-only) and its own
+  // document-level Ctrl+Z/Ctrl+Y listener, active in parallel with this
+  // component's ALWAYS-ON `useCanvasKeyboard` Ctrl+Z listener (registered at
+  // mount, not gated on draw mode). Neither listener called stopPropagation,
+  // so a single Ctrl+Z press while drawing fired BOTH: this component's
+  // `undoWhiteboard` (restoring a stale full-canvas snapshot that predates
+  // every stroke drawn so far, since strokes never pushed onto this stack)
+  // AND the layer's own `handleUndo` (popping from ITS stack using the
+  // pre-update `paths` closure) — two disagreeing stacks racing to call
+  // `setDrawingPaths` on the same keypress, silently losing or duplicating
+  // strokes depending on which one "won".
+  //
+  // Fix: single source of truth. The canvas stack now SUBSUMES the layer's
+  // stack — every path mutation from the drawing layer (stroke commit,
+  // eraser delete, the layer's own Clear button) snapshots BEFORE applying,
+  // exactly like `onClearDrawings` below already did for the rail's Clear
+  // Drawings action. IdeaDrawingLayer no longer keeps any undo state of its
+  // own or its own Ctrl+Z listener (see IdeaDrawingLayer.tsx) — its
+  // Undo/Redo toolbar buttons are wired straight to `undoWhiteboard`/
+  // `redoWhiteboard` via props below, so there is exactly ONE Ctrl+Z
+  // listener and ONE undo stack, in both focus contexts (drawing or not).
+  const handleDrawingPathsChange = useCallback(
+    (paths: DrawingPath[]) => {
+      pushUndoSnapshot();
+      setDrawingPaths(paths);
+    },
+    [pushUndoSnapshot]
+  );
 
   const restoreSnapshot = useCallback(
     (snapshot: WhiteboardCanvasSnapshot) => {
@@ -1964,9 +2142,22 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   // ── Add elements ─────────────────────────────────────────────────────────
 
   const createNode = useCallback(
-    (kind: WbNodeKind, extraData?: Record<string, unknown>, index = 0): Node => {
+    // `index` is kept for call-site compatibility (batch ordering) but no
+    // longer drives placement directly — see the placement service call
+    // below, which is collision-aware instead of a fixed per-index offset.
+    // `extraOccupiedRects` lets a caller building several nodes in one batch
+    // (paste, outline import, AI proposal apply) pass the rects of siblings
+    // it already created earlier in the *same* batch — those haven't reached
+    // `nodes` state yet, so without this a 12-item batch could still stack
+    // on itself even though each call is individually collision-checked
+    // against the canvas.
+    (
+      kind: WbNodeKind,
+      extraData?: Record<string, unknown>,
+      _index = 0,
+      extraOccupiedRects: WhiteboardRect[] = []
+    ): Node => {
       const id = `wb-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-      const offset = index * 30;
       const explicitPosition = extraData?.position as { x: number; y: number } | undefined;
 
       const typeMap: Record<WbNodeKind, string> = {
@@ -2037,6 +2228,22 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
             )
           );
         },
+        // WB-P2-01: paired with `_isNew` below — StickyNoteNode/TextBlockNode
+        // open straight into inline naming for a brand-new object (no need to
+        // already know about double-click) and call this back once, on
+        // mount, to clear the flag. Without the clear, `_isNew` would sit in
+        // persisted node data forever and re-trigger edit mode on every
+        // later remount of the SAME node (e.g. its parent frame collapsing
+        // then expanding), not just the one moment right after creation.
+        onConsumeAutoEdit: () => {
+          setNodes((nds: Node[]) =>
+            nds.map((nd: Node) =>
+              nd.id === id && nd.data?._isNew
+                ? { ...nd, data: { ...nd.data, _isNew: false } }
+                : nd
+            )
+          );
+        },
         // B4: seed reactions wiring on freshly-created nodes too — otherwise a
         // node added mid-session (after the one-shot hydrate/flag-flip sync
         // effect ran) would silently lack `onToggleReaction`/`currentUserId`
@@ -2097,10 +2304,65 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
         };
       }
 
+      // WB-P1-02: single shared placement service for every insertion path
+      // (toolbar add, paste, drop, outline import, AI proposal apply, ghost
+      // card materialization all funnel through this `createNode`). Explicit
+      // callers keep their intended top-left anchor (e.g. a template layout
+      // or the exact cursor drop point) — the service only nudges it when it
+      // would collide with something already on the canvas. Callers with no
+      // opinion (plain toolbar clicks) anchor on the current viewport center
+      // so the new object appears where the user is looking, not at a fixed
+      // canvas-origin offset that ignores pan/zoom.
+      const placementSize = initialStyle
+        ? initialStyle
+        : kind === 'sticky'
+          ? {
+              width: (STICKY_SIZES[String(extraData?.size || 'm')] || STICKY_SIZES.m).w,
+              height: (STICKY_SIZES[String(extraData?.size || 'm')] || STICKY_SIZES.m).h,
+            }
+          : DEFAULT_WHITEBOARD_NODE_SIZE;
+      // `canvasApiRef` is the pull-based bridge to the mounted
+      // `WhiteboardCanvas` (see `WhiteboardCanvasHandle`) — it's the only way
+      // this outer component can read a live viewport reading, since it
+      // renders outside `<ReactFlowProvider>` itself. Falls back to a fixed
+      // guess if the canvas hasn't mounted yet (shouldn't happen in practice:
+      // every call site runs from a user interaction after the board is open).
+      const anchor =
+        explicitPosition ||
+        (() => {
+          const center = canvasApiRef.current?.getCenter() ?? { x: 400, y: 300 };
+          return {
+            x: center.x - placementSize.width / 2,
+            y: center.y - placementSize.height / 2,
+          };
+        })();
+      const occupiedRects: WhiteboardRect[] = nodes
+        .filter((n) => !n.hidden)
+        .map((n) => ({
+          x: n.position.x,
+          y: n.position.y,
+          width:
+            (typeof n.width === 'number' && n.width > 0 ? n.width : undefined) ??
+            (typeof n.style?.width === 'number' ? (n.style.width as number) : undefined) ??
+            DEFAULT_WHITEBOARD_NODE_SIZE.width,
+          height:
+            (typeof n.height === 'number' && n.height > 0 ? n.height : undefined) ??
+            (typeof n.style?.height === 'number' ? (n.style.height as number) : undefined) ??
+            DEFAULT_WHITEBOARD_NODE_SIZE.height,
+        }))
+        .concat(extraOccupiedRects);
+      const resolvedPosition = resolveWhiteboardPlacement({
+        size: placementSize,
+        anchor,
+        occupiedRects,
+        viewport: canvasApiRef.current?.getViewportRect(),
+        grid: 8,
+      });
+
       const newNode: Node = {
         id,
         type: nodeType,
-        position: explicitPosition || { x: 100 + offset, y: 100 + offset },
+        position: resolvedPosition,
         data: nodeData,
         draggable: !nodeData.locked,
         connectable: !nodeData.locked,
@@ -2133,7 +2395,14 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       }
       return newNode;
     },
-    [currentUserId, handleToggleReaction, isPl, locked, setNodes]
+    [
+      currentUserId,
+      handleToggleReaction,
+      isPl,
+      locked,
+      nodes,
+      setNodes,
+    ]
   );
 
   const createOutcomeRecord = useCallback(
@@ -2178,9 +2447,24 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     (items: WhiteboardExternalInsert[]) => {
       if (locked || items.length === 0) return;
       pushUndoSnapshot();
+      // WB-P1-02: accumulate each created node's rect as we go so a batch of
+      // several items (e.g. a multi-file drop or an outline import) never
+      // stacks on its own earlier siblings — `nodes` state doesn't see them
+      // until the single `setNodes` call below.
+      const batchRects: WhiteboardRect[] = [];
+      const pushBatchRect = (node: Node) => {
+        const style = node.style as { width?: number; height?: number } | undefined;
+        batchRects.push({
+          x: node.position.x,
+          y: node.position.y,
+          width: style?.width ?? DEFAULT_WHITEBOARD_NODE_SIZE.width,
+          height: style?.height ?? DEFAULT_WHITEBOARD_NODE_SIZE.height,
+        });
+      };
       const created = items.map((item, index) => {
+        let node: Node;
         if (item.kind === 'image') {
-          return createNode(
+          node = createNode(
             'image',
             {
               label: item.label,
@@ -2192,11 +2476,11 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
               position: item.position,
               semanticType: 'image',
             },
-            index
+            index,
+            batchRects
           );
-        }
-        if (item.kind === 'link') {
-          return createNode(
+        } else if (item.kind === 'link') {
+          node = createNode(
             'link',
             {
               label: item.label,
@@ -2204,19 +2488,24 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
               position: item.position,
               semanticType: 'link',
             },
-            index
+            index,
+            batchRects
+          );
+        } else {
+          node = createNode(
+            item.label.length > 100 ? 'text' : 'sticky',
+            {
+              label: item.label,
+              position: item.position,
+              colorIndex: item.colorIndex,
+              semanticType: item.label.length > 100 ? undefined : 'note',
+            },
+            index,
+            batchRects
           );
         }
-        return createNode(
-          item.label.length > 100 ? 'text' : 'sticky',
-          {
-            label: item.label,
-            position: item.position,
-            colorIndex: item.colorIndex,
-            semanticType: item.label.length > 100 ? undefined : 'note',
-          },
-          index
-        );
+        pushBatchRect(node);
+        return node;
       });
       setNodes((prev) => [...prev, ...created]);
       appendActivity(
@@ -2281,7 +2570,22 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       }
 
       pushUndoSnapshot();
-      const newNode = createNode(kind, extraData, nodes.length);
+      // WB-P2-01: a brand-new sticky/text with no caller-supplied label yet
+      // (rail/toolbar "Add sticky"/"Add text" — the exact first-time-user
+      // path from the finding) opens straight into inline naming instead of
+      // requiring the user to already know about double-click. Skipped when
+      // the caller already provided real content (e.g. Teresa's
+      // `idea.element.add` with a label, or a semantic quick-add like
+      // wb_add_area) — that text is already meaningful, no need to
+      // interrupt with an editor.
+      const isNamableCreate = kind === 'sticky' || kind === 'text';
+      const hasExplicitLabel =
+        typeof extraData?.label === 'string' && extraData.label.trim().length > 0;
+      const newNode = createNode(
+        kind,
+        isNamableCreate && !hasExplicitLabel ? { ...extraData, _isNew: true } : extraData,
+        nodes.length
+      );
       setNodes((prev: Node[]) => [...prev, newNode]);
       collab.broadcastNodeAdd(newNode); // L-02: realtime add
       const semanticType =
@@ -2447,21 +2751,55 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   );
 
   // ── Node CRUD, grouping, distribution (extracted to useWhiteboardNodes) ──
-  const { deleteSelected, duplicateSelected, groupSelected, ungroupSelected, distributeNodes } =
-    useWhiteboardNodes({
-      nodes,
-      edges,
-      setNodes,
-      setEdges,
-      locked: locked || false,
-      isPl,
-      pushSnapshot: pushUndoSnapshot,
-    });
+  const {
+    deleteSelected,
+    duplicateSelected,
+    groupSelected,
+    ungroupSelected,
+    distributeNodes,
+    tidyBoard,
+    // WB-CLIPBOARD-01 fix: real object clipboard (node+edges), not the
+    // OS-clipboard text copy `handleBaseAction` used to do.
+    copySelected,
+    pasteClipboard,
+    clipboardCount,
+    // WB-FRAME-01 (frame context menu, 2026-08-10)
+    selectFrameContents,
+    addSelectionToFrame,
+    removeFromFrame,
+    resizeFrameToFit,
+    deleteFrame,
+    // WB-FRAME-02 (drag containment, 2026-08-10)
+    reparentNodeOnDrag,
+  } = useWhiteboardNodes({
+    nodes,
+    edges,
+    setNodes,
+    setEdges,
+    locked: locked || false,
+    isPl,
+    pushSnapshot: pushUndoSnapshot,
+  });
 
   // ── Quick action listener (extracted to useWhiteboardQuickActions) ───────
   // AI runner is defined below (needs handleGenerateProposal); bridged via ref
   // like the hook's own internal latest-handler pattern.
   const runAIActionRef = useRef<(generatorType: WhiteboardAIGeneratorType) => void>(() => {});
+  // Edge actions (2026-08-09, E02 follow-up): `handleEdge*` live further down
+  // (need `edges`/`edgeContextMenu` state declared later in this component),
+  // so they're bridged via the same latest-ref pattern as `runAIActionRef`
+  // above — the hook call below needs a stable function identity NOW, the
+  // real implementation is assigned after the `handleEdge*` useCallbacks.
+  // This is what gives Whiteboard edges a real, addressable dispatch-bus
+  // receiver (`wb_edge_*` on `idea-workspace-quick-action`), matching how
+  // Mind Map edges already dispatch `mm_edge_arrow` to
+  // `useMindMapQuickActions.ts` — see `runEdgeParamCallback` in
+  // `ideaActionRegistry.ts` for the caller side.
+  const editEdgeLabelRef = useRef<(edgeId: string, label?: string) => void>(() => {});
+  const reverseEdgeRef = useRef<(edgeId: string) => void>(() => {});
+  const cycleEdgeArrowRef = useRef<(edgeId: string) => void>(() => {});
+  const cycleEdgeStyleRef = useRef<(edgeId: string) => void>(() => {});
+  const deleteEdgeRef = useRef<(edgeId: string) => void>(() => {});
   useWhiteboardQuickActions({
     open,
     handlers: {
@@ -2471,6 +2809,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       groupSelected,
       ungroupSelected,
       distributeNodes,
+      tidyBoard,
       setMode: setBoardMode,
       setCursorMode,
       cycleSessionRole,
@@ -2486,6 +2825,17 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       undo: undoWhiteboard,
       redo: redoWhiteboard,
       runAIAction: (generatorType) => runAIActionRef.current(generatorType),
+      editEdgeLabel: (edgeId, label) => editEdgeLabelRef.current(edgeId, label),
+      reverseEdge: (edgeId) => reverseEdgeRef.current(edgeId),
+      cycleEdgeArrow: (edgeId) => cycleEdgeArrowRef.current(edgeId),
+      cycleEdgeStyle: (edgeId) => cycleEdgeStyleRef.current(edgeId),
+      deleteEdge: (edgeId) => deleteEdgeRef.current(edgeId),
+      // WB-FRAME-01 (frame context menu, 2026-08-10)
+      selectFrameContents,
+      addSelectionToFrame,
+      removeFromFrame,
+      resizeFrameToFit,
+      deleteFrame,
     },
   });
 
@@ -3070,7 +3420,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
 
   // ── Context menu handler ──────────────────────────────────────────────────
   const handleCanvasContextMenu = useCallback(
-    (e: React.MouseEvent, nodeId?: string, nodeData?: any) => {
+    (e: React.MouseEvent, nodeId?: string, nodeData?: any, rfNode?: Node) => {
       e.preventDefault();
       setContextMenuPos({ x: e.clientX, y: e.clientY });
       setContextMenuTarget(
@@ -3080,6 +3430,9 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
               nodeLabel: nodeData?.label,
               nodeType: nodeData?.semanticType || nodeData?.type,
               nodeLocked: Boolean(nodeData?.locked),
+              nodeKind: rfNode?.type,
+              nodeParentId:
+                (rfNode as any)?.parentNode || (rfNode as any)?.parentId || nodeData?.parentId,
             }
           : {}
       );
@@ -3130,6 +3483,8 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
           nodeLabel: node.data?.label,
           nodeType: node.data?.semanticType || node.data?.type,
           nodeLocked: Boolean(node.data?.locked),
+          nodeKind: node.type,
+          nodeParentId: (node as any)?.parentNode || (node as any)?.parentId || node.data?.parentId,
         });
         setNodes((nds: Node[]) => {
           const alreadySelected = nds.some((n) => n.id === target.nodeId && n.selected);
@@ -3155,97 +3510,137 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
 
   // edge.set_label — realny handler: aktualizuje data.label, autosave przez
   // onGraphChange, realtime przez collab update_edge.
-  const handleEdgeEditLabel = useCallback(() => {
-    if (!edgeContextMenu) return;
-    const edge = edges.find((ed) => ed.id === edgeContextMenu.edgeId);
-    if (!edge) return;
-    const current = String(edge.data?.label || '');
-    const next = window.prompt(isPl ? 'Etykieta połączenia:' : 'Connection label:', current);
-    if (next === null || next === current) return;
-    pushUndoSnapshot();
-    let updated: Edge | undefined;
-    setEdges((prev) =>
-      prev.map((ed) => {
-        if (ed.id !== edgeContextMenu.edgeId) return ed;
-        updated = { ...ed, data: { ...(ed.data || {}), label: next } };
-        return updated;
-      })
-    );
-    if (updated) collab.broadcastGraphPatch([{ op: 'update_edge', data: updated as any }]);
-  }, [collab, edgeContextMenu, edges, isPl, pushUndoSnapshot, setEdges]);
+  //
+  // `edgeIdArg`/`labelArg` (2026-08-09, E02 follow-up): opcjonalne — gdy
+  // podane (wywołanie z `wb_edge_edit_label` na szynie, patrz
+  // `useWhiteboardQuickActions.ts`), używamy ich zamiast lokalnego stanu
+  // `edgeContextMenu` i pomijamy `window.prompt` (headless caller, np.
+  // Teresa, nie odpowie na natywny prompt). Menu prawego kliku nadal woła
+  // `handleEdgeEditLabel()` bez argumentów — zachowanie 1:1 ze stanem sprzed
+  // tej zmiany.
+  const handleEdgeEditLabel = useCallback(
+    (edgeIdArg?: string, labelArg?: string) => {
+      const edgeId = edgeIdArg ?? edgeContextMenu?.edgeId;
+      if (!edgeId) return;
+      const edge = edges.find((ed) => ed.id === edgeId);
+      if (!edge) return;
+      const current = String(edge.data?.label || '');
+      const next =
+        edgeIdArg !== undefined
+          ? (labelArg ?? current)
+          : window.prompt(isPl ? 'Etykieta połączenia:' : 'Connection label:', current);
+      if (next === null || next === current) return;
+      pushUndoSnapshot();
+      let updated: Edge | undefined;
+      setEdges((prev) =>
+        prev.map((ed) => {
+          if (ed.id !== edgeId) return ed;
+          updated = { ...ed, data: { ...(ed.data || {}), label: next } };
+          return updated;
+        })
+      );
+      if (updated) collab.broadcastGraphPatch([{ op: 'update_edge', data: updated as any }]);
+    },
+    [collab, edgeContextMenu, edges, isPl, pushUndoSnapshot, setEdges]
+  );
 
   // edge.set_style — cykl styli obsługiwanych przez LabeledEdge.
-  const handleEdgeCycleStyle = useCallback(() => {
-    if (!edgeContextMenu) return;
-    const order = ['solid', 'dashed', 'dotted', 'wavy'] as const;
-    pushUndoSnapshot();
-    let updated: Edge | undefined;
-    setEdges((prev) =>
-      prev.map((ed) => {
-        if (ed.id !== edgeContextMenu.edgeId) return ed;
-        const cur = String(ed.data?.edgeStyle || 'solid');
-        const nextStyle = order[(order.indexOf(cur as any) + 1) % order.length];
-        updated = { ...ed, data: { ...(ed.data || {}), edgeStyle: nextStyle } };
-        return updated;
-      })
-    );
-    if (updated) collab.broadcastGraphPatch([{ op: 'update_edge', data: updated as any }]);
-  }, [collab, edgeContextMenu, pushUndoSnapshot, setEdges]);
+  const handleEdgeCycleStyle = useCallback(
+    (edgeIdArg?: string) => {
+      const edgeId = edgeIdArg ?? edgeContextMenu?.edgeId;
+      if (!edgeId) return;
+      const order = ['solid', 'dashed', 'dotted', 'wavy'] as const;
+      pushUndoSnapshot();
+      let updated: Edge | undefined;
+      setEdges((prev) =>
+        prev.map((ed) => {
+          if (ed.id !== edgeId) return ed;
+          const cur = String(ed.data?.edgeStyle || 'solid');
+          const nextStyle = order[(order.indexOf(cur as any) + 1) % order.length];
+          updated = { ...ed, data: { ...(ed.data || {}), edgeStyle: nextStyle } };
+          return updated;
+        })
+      );
+      if (updated) collab.broadcastGraphPatch([{ op: 'update_edge', data: updated as any }]);
+    },
+    [collab, edgeContextMenu, pushUndoSnapshot, setEdges]
+  );
 
   // edge.set_arrow — strzałka kierunku przepływu (2026-07-28, zgłoszenie
   // właściciela). Cykl none → end → both → start na `data.arrowDirection`,
   // czyli DOKŁADNIE tym polu, którego używa Przepływ procesu i Mapa myśli
   // (SSOT geometrii: `canvas/edgeArrowMarkers.tsx`). Ta sama ścieżka zapisu co
   // `handleEdgeCycleStyle` → undo + collab + autosave bez nowej mechaniki.
-  const handleEdgeCycleArrow = useCallback(() => {
-    if (!edgeContextMenu) return;
-    pushUndoSnapshot();
-    let updated: Edge | undefined;
-    let applied: EdgeArrowDirection = 'none';
-    setEdges((prev) =>
-      prev.map((ed) => {
-        if (ed.id !== edgeContextMenu.edgeId) return ed;
-        applied = nextArrowDirection(resolveArrowDirection(ed.data?.arrowDirection, 'none'));
-        updated = { ...ed, data: { ...(ed.data || {}), arrowDirection: applied } };
-        return updated;
-      })
-    );
-    if (updated) collab.broadcastGraphPatch([{ op: 'update_edge', data: updated as any }]);
-    toast.success(
-      t(`mindmap.edgeArrow.${applied}`, {
-        defaultValue: applied === 'none' ? 'Arrow: none' : `Arrow: ${applied}`,
-      }),
-      { duration: 900 }
-    );
-  }, [collab, edgeContextMenu, pushUndoSnapshot, setEdges, t]);
+  const handleEdgeCycleArrow = useCallback(
+    (edgeIdArg?: string) => {
+      const edgeId = edgeIdArg ?? edgeContextMenu?.edgeId;
+      if (!edgeId) return;
+      pushUndoSnapshot();
+      let updated: Edge | undefined;
+      let applied: EdgeArrowDirection = 'none';
+      setEdges((prev) =>
+        prev.map((ed) => {
+          if (ed.id !== edgeId) return ed;
+          applied = nextArrowDirection(resolveArrowDirection(ed.data?.arrowDirection, 'none'));
+          updated = { ...ed, data: { ...(ed.data || {}), arrowDirection: applied } };
+          return updated;
+        })
+      );
+      if (updated) collab.broadcastGraphPatch([{ op: 'update_edge', data: updated as any }]);
+      toast.success(
+        t(`mindmap.edgeArrow.${applied}`, {
+          defaultValue: applied === 'none' ? 'Arrow: none' : `Arrow: ${applied}`,
+        }),
+        { duration: 900 }
+      );
+    },
+    [collab, edgeContextMenu, pushUndoSnapshot, setEdges, t]
+  );
 
   // edge.reverse — zamiana source/target (i uchwytów), kierunek strzałki podąża.
-  const handleEdgeReverse = useCallback(() => {
-    if (!edgeContextMenu) return;
-    pushUndoSnapshot();
-    let updated: Edge | undefined;
-    setEdges((prev) =>
-      prev.map((ed) => {
-        if (ed.id !== edgeContextMenu.edgeId) return ed;
-        updated = {
-          ...ed,
-          source: ed.target,
-          target: ed.source,
-          sourceHandle: ed.targetHandle ?? null,
-          targetHandle: ed.sourceHandle ?? null,
-        };
-        return updated;
-      })
-    );
-    if (updated) collab.broadcastGraphPatch([{ op: 'update_edge', data: updated as any }]);
-  }, [collab, edgeContextMenu, pushUndoSnapshot, setEdges]);
+  const handleEdgeReverse = useCallback(
+    (edgeIdArg?: string) => {
+      const edgeId = edgeIdArg ?? edgeContextMenu?.edgeId;
+      if (!edgeId) return;
+      pushUndoSnapshot();
+      let updated: Edge | undefined;
+      setEdges((prev) =>
+        prev.map((ed) => {
+          if (ed.id !== edgeId) return ed;
+          updated = {
+            ...ed,
+            source: ed.target,
+            target: ed.source,
+            sourceHandle: ed.targetHandle ?? null,
+            targetHandle: ed.sourceHandle ?? null,
+          };
+          return updated;
+        })
+      );
+      if (updated) collab.broadcastGraphPatch([{ op: 'update_edge', data: updated as any }]);
+    },
+    [collab, edgeContextMenu, pushUndoSnapshot, setEdges]
+  );
 
   // edge.delete — routujemy przez onEdgesChange, żeby dostać undo + collab
   // broadcast (remove_edge) + persist tą samą ścieżką co reszta zmian krawędzi.
-  const handleEdgeDelete = useCallback(() => {
-    if (!edgeContextMenu) return;
-    onEdgesChange([{ id: edgeContextMenu.edgeId, type: 'remove' }]);
-  }, [edgeContextMenu, onEdgesChange]);
+  const handleEdgeDelete = useCallback(
+    (edgeIdArg?: string) => {
+      const edgeId = edgeIdArg ?? edgeContextMenu?.edgeId;
+      if (!edgeId) return;
+      onEdgesChange([{ id: edgeId, type: 'remove' }]);
+    },
+    [edgeContextMenu, onEdgesChange]
+  );
+
+  // Bridge for the refs declared near the `useWhiteboardQuickActions` call
+  // above (needed there for a real `wb_edge_*` bus receiver before these
+  // callbacks exist in render order) — same pattern as `runAIActionRef`.
+  editEdgeLabelRef.current = handleEdgeEditLabel;
+  reverseEdgeRef.current = handleEdgeReverse;
+  cycleEdgeArrowRef.current = handleEdgeCycleArrow;
+  cycleEdgeStyleRef.current = handleEdgeCycleStyle;
+  deleteEdgeRef.current = handleEdgeDelete;
 
   const handleSlashCommand = useCallback(
     (action: string) => {
@@ -3271,6 +3666,11 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       pushUndoSnapshot();
       const idMap = new Map<string, string>();
       const created: Node[] = [];
+      // WB-P1-02: same batch-rect accumulation as handleExternalInsert — an
+      // accepted proposal can add several nodes at once, and without this
+      // they'd only be collision-checked against the pre-existing canvas,
+      // not against each other.
+      const batchRects: WhiteboardRect[] = [];
       addNodes.forEach((an, index) => {
         const node = createNode(
           toWbNodeKind(an.type),
@@ -3279,8 +3679,16 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
             ...(an.position && { position: an.position }),
             ...(an.data || {}),
           },
-          nodes.length + index
+          nodes.length + index,
+          batchRects
         );
+        const style = node.style as { width?: number; height?: number } | undefined;
+        batchRects.push({
+          x: node.position.x,
+          y: node.position.y,
+          width: style?.width ?? DEFAULT_WHITEBOARD_NODE_SIZE.width,
+          height: style?.height ?? DEFAULT_WHITEBOARD_NODE_SIZE.height,
+        });
         if (an.id) idMap.set(String(an.id), node.id);
         created.push(node);
       });
@@ -3444,6 +3852,40 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
         toast.error(t('myWork.whiteboard.ai.needsElements'));
         return;
       }
+      // WB-P2-02: "Find themes" groups by LABEL SEMANTICS — if every object
+      // in scope is still an unrenamed default ("New note", "Text", …), the
+      // model has nothing real to cluster and would either fabricate themes
+      // from nothing or return generic noise presented as insight. Coach the
+      // missing input instead of running the generator (chapter 09 grounding
+      // rule: say what's missing rather than let AI improvise specificity it
+      // doesn't have).
+      //
+      // SYS-P3-01 correction (this comment previously claimed the generator
+      // call below scopes to "the active selection when there is one,
+      // otherwise the whole board" — verified FALSE): `context.existingNodes`
+      // a few lines down is always `nodes.map(...)`, i.e. ALL board nodes,
+      // regardless of `selectedNodeIds`. `context.selection` is attached as
+      // metadata only; the server's `getScopedGeneratorContext`
+      // (`ideaAIGeneratorService.ts`) filters by it ONLY for
+      // `sticky_summarize`, not for `wb_find_themes`/`wb_name_clusters`/
+      // `wb_extract_actions`. `scopeNodes` right below is used ONLY for this
+      // generic-label gate, not for what actually reaches the model — the
+      // real target is always the whole board (see the "Document" scope chip
+      // on this action's context-menu entry, `IdeaCanvasContextMenu.tsx`).
+      if (generatorType === 'wb_find_themes') {
+        const scopeNodes =
+          selectedNodeIds.length > 0
+            ? nodes.filter((n) => selectedNodeIds.includes(n.id))
+            : nodes;
+        const generic = collectGenericWhiteboardLabels(t);
+        const hasRealLabel = scopeNodes.some(
+          (n) => !isGenericWhiteboardLabel(n.data?.label, generic)
+        );
+        if (!hasRealLabel) {
+          toast.error(t('myWork.whiteboard.ai.needsRealLabels'), { duration: 5000 });
+          return;
+        }
+      }
       aiActionPendingRef.current = true;
       const toastId = toast.loading(t('myWork.whiteboard.ai.generating'));
       try {
@@ -3504,18 +3946,71 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
 
   // ── Keyboard shortcuts ────────────────────────────────────────────────────
 
+  // Reconciliacja z Rejestrem Akcji (2026-08-10, E02 DoD) — patrz analogiczny
+  // komentarz w `IdeaMapWorkspace.tsx` przy `runMindmapKeyboardAction`: każdy
+  // callback z wpisem w `ideaActionRegistry.ts` idzie przez `runIdeaAction`
+  // z `ctx.params.run` = DOKŁADNIE ta sama funkcja, którą wołał przed tym
+  // wpisem — zachowanie klawisza bajtowo identyczne, zyskuje tylko wpis w
+  // rejestrze i drugie wejście dla Teresy (tam, gdzie już istnieje odbiornik
+  // na szynie). `onFitView` ŚWIADOMIE NIE przechodzi przez rejestr — czysta
+  // nawigacja kamery, zero mutacji, bez menu/przycisku gdziekolwiek w kodzie
+  // Tablicy (ta sama kategoria co Mapy myśli `onFocusSelection`).
+  const runWbKeyboardAction = useCallback(
+    (actionId: string, run: () => void) => {
+      const ctx: ActionContext = {
+        ideaId,
+        tool: 'whiteboard',
+        selection: EMPTY_SELECTION,
+        surface: 'context',
+        source: 'ui',
+        language: isPl ? 'pl' : 'en',
+        params: { run },
+      };
+      void runIdeaAction(actionId, ctx);
+    },
+    [ideaId, isPl]
+  );
+
   // P3: shared grammar (Delete/Ctrl+Z/S/D/0/A/Shift+Z)
+  // F-K1 fix (G4-KBD-P0, 2026-08-11): `containerRef` scopes the grammar to
+  // genuine focus within the canvas (see useIdeasToolKeyboard.ts) — this
+  // call site never passed it before, so Tab was hijacked globally while
+  // Whiteboard was merely `open`, breaking keyboard navigation anywhere else
+  // on the page.
+  //
+  // Reuses `wbKeyboardMenuContainerRef` (declared above in THIS component,
+  // `IdeaWhiteboardTool`) — the same ref the Shift+F10 context-menu
+  // invocation already relies on. NOT the `containerRef` declared inside
+  // the separate `WhiteboardCanvas` sub-component (React.forwardRef,
+  // defined earlier in this file) — that one is a different function's
+  // local variable, out of scope here (confirmed the hard way: a
+  // `ReferenceError` at render, caught by
+  // tests/components/MyWork/IdeaWhiteboardTool.drawUndo.test.tsx and
+  // .../IdeaWhiteboardTool.observer-readonly.test.tsx, not by
+  // `esbuild --outfile=/dev/null`, which only checks syntax, not scope).
+  // `wbKeyboardMenuContainerRef`'s DOM subtree still contains
+  // `WhiteboardCanvas`'s own inner container (tabIndex={0}) as a
+  // descendant, so a click on any non-focusable node still resolves real
+  // DOM focus somewhere inside this outer ref's containment.
   useCanvasKeyboard({
     toolType: 'whiteboard',
     enabled: open,
     locked: locked || false,
+    containerRef: wbKeyboardMenuContainerRef as React.RefObject<HTMLElement | null>,
     callbacks: {
-      onSave: handleSave,
-      onUndo: undoWhiteboard,
-      onRedo: redoWhiteboard,
-      onSelectAll: () => setNodes((nds) => nds.map((n) => ({ ...n, selected: true }))),
-      onDeleteSelected: deleteSelected,
-      onDuplicate: duplicateSelected,
+      onSave: () => runWbKeyboardAction('idea.canvas.save', handleSave),
+      onUndo: () => runWbKeyboardAction('idea.canvas.undo', undoWhiteboard),
+      onRedo: () => runWbKeyboardAction('idea.canvas.redo', redoWhiteboard),
+      onSelectAll: () =>
+        runWbKeyboardAction('idea.canvas.wb_select_all', () =>
+          setNodes((nds) => nds.map((n) => ({ ...n, selected: true })))
+        ),
+      onDeleteSelected: () => runWbKeyboardAction('idea.node.delete', deleteSelected),
+      onDuplicate: () => runWbKeyboardAction('idea.node.duplicate', duplicateSelected),
+      // WB-CLIPBOARD-01 fix: Ctrl+C/Ctrl+V now drive the same real object
+      // clipboard as the context menu's Copy/Paste (see useWhiteboardNodes).
+      onCopy: () => runWbKeyboardAction('idea.node.copy', copySelected),
+      onPaste: () => runWbKeyboardAction('idea.canvas.paste', () => pasteClipboard()),
       onFitView: () => {
         // Dispatch viewport event to fit-to-view (fitView is not available outside ReactFlowProvider)
         const rfContainer = document.querySelector('.react-flow');
@@ -3805,6 +4300,22 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
           ),
         },
         {
+          // WB-P2-03: "Tidy board" / "Auto arrange selection" — same command,
+          // label reflects what it will do given the current selection
+          // (>=2 unlocked selected → arranges just the selection; otherwise
+          // the whole board). See useWhiteboardNodes.tidyBoard for the
+          // collision-free layout + frame/group-preserving logic.
+          kind: 'button',
+          id: 'tidy',
+          icon: Wand2,
+          label:
+            selectedCount >= 2
+              ? t('myWork.whiteboard.selection.tidySelection')
+              : t('myWork.whiteboard.selection.tidyBoard'),
+          disabled: locked,
+          onClick: tidyBoard,
+        },
+        {
           kind: 'button',
           id: 'group',
           icon: Group,
@@ -3899,6 +4410,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     handleSelectionStyleChange,
     alignNodes,
     distributeNodes,
+    tidyBoard,
     groupSelected,
     ungroupSelected,
     duplicateSelected,
@@ -3964,6 +4476,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
         onSave={handleSave}
         onUndo={undoWhiteboard}
         onRedo={redoWhiteboard}
+        onTidyBoard={tidyBoard}
       />
 
       {/* Canvas */}
@@ -4084,6 +4597,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
 
           <ReactFlowProvider>
             <WhiteboardCanvas
+              ref={canvasApiRef}
               nodes={canvasNodes}
               edges={displayEdges}
               locked={locked || whiteboardMode === 'draw'}
@@ -4102,6 +4616,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
               onEdgeContextMenu={handleEdgeContextMenu}
               onNodeStyleChange={handleNodeStyleChange}
               suppressFloatingStyleBar={wbEditBarDocked}
+              onNodeDragStopReconcile={reparentNodeOnDrag}
             />
           </ReactFlowProvider>
 
@@ -4148,6 +4663,14 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
             onLockNode={lockSelected}
             onBringToFront={bringSelectedToFront}
             onSendToBack={sendSelectedToBack}
+            onCopySelected={copySelected}
+            onPaste={() => pasteClipboard()}
+            pasteDisabled={clipboardCount() === 0}
+            onSelectFrameContents={selectFrameContents}
+            onAddSelectionToFrame={addSelectionToFrame}
+            onResizeFrameToFit={resizeFrameToFit}
+            onRemoveFromFrame={removeFromFrame}
+            onDeleteFrame={deleteFrame}
           />
 
           {commentsPanelNodeId &&
@@ -4231,7 +4754,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
                   value={outlineImportValue}
                   onChange={(event) => setOutlineImportValue(event.target.value)}
                   rows={8}
-                  className="mt-3 w-full rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-sm text-c-text outline-none focus:border-c-border-strong"
+                  className="mt-3 w-full rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-sm text-c-text outline-none focus:border-c-focus"
                   placeholder={t('myWork.whiteboard.outlineImport.placeholder')}
                 />
                 <div className="mt-3 flex items-center justify-end gap-2">
@@ -4262,7 +4785,11 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
             active={whiteboardMode === 'draw'}
             onClose={() => setBoardMode('board')}
             paths={drawingPaths}
-            onPathsChange={setDrawingPaths}
+            onPathsChange={handleDrawingPathsChange}
+            onUndo={undoWhiteboard}
+            onRedo={redoWhiteboard}
+            canUndo={undoStackRef.current.length > 0}
+            canRedo={redoStackRef.current.length > 0}
             viewportTransform={viewportTransform}
           />
 

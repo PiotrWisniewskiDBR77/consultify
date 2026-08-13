@@ -16,6 +16,7 @@
  */
 import { Sparkles, UserCheck } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { AiClassificationFieldOptions } from '@/types/tablePlatform';
 
@@ -47,6 +48,7 @@ export const AiClassificationCell: React.FC<AiClassificationCellProps> = ({
   fieldOptions,
   manualOverride,
 }) => {
+  const { t } = useTranslation();
   const classes = Array.isArray(fieldOptions?.classes)
     ? (fieldOptions?.classes as string[]).filter((c): c is string => typeof c === 'string')
     : [];
@@ -58,7 +60,7 @@ export const AiClassificationCell: React.FC<AiClassificationCellProps> = ({
         data-testid="ai-classification-pending"
       >
         <Sparkles size={10} className="flex-shrink-0" />
-        <span>AI pending…</span>
+        <span>{t('myWorkTable.aiCell.pending', 'AI pending…')}</span>
       </span>
     );
   }

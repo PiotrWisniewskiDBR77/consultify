@@ -63,12 +63,30 @@ const baseProps = {
   graphEdges: [],
 };
 
-/** Section headers are rendered as <button> with an uppercase title span. */
+/**
+ * TOP-LEVEL inspector sections, identified by the marker the `Section` component
+ * stamps on its own header — not by CSS shape.
+ *
+ * The previous implementation matched `button > span.uppercase` with
+ * `tracking-wide` in the class list. That is a visual shape, and shapes are shared:
+ * E08's maturity gate renders five NESTED collapsible stage rows (Spark, Growing,
+ * Shaping, Ready, Promoted) INSIDE the Status section using exactly the same shape.
+ * The count went 5 -> 10 and this guard reported a density regression that did not
+ * exist — the panel still has five top-level sections (Problem, Status, Convert,
+ * Map inspector, Map health); one of them simply grew an accordion inside it.
+ *
+ * Verified before changing this: the maturity gate is mounted at
+ * IdeaWorkspaceTools.tsx:1110, between the Status section (opens ~L1004) and the
+ * Statistics section (~L1260) — i.e. genuinely nested, not a sibling.
+ *
+ * A shape-based selector cannot express "top-level", so it was replaced rather
+ * than loosened. Raising the limit to 10 would have been the wrong fix: it would
+ * have retired a real density rule to accommodate a measurement bug.
+ */
 function sectionHeaderTitles(): string[] {
-  return Array.from(document.querySelectorAll('button'))
-    .map((b) => b.querySelector('span.uppercase'))
-    .filter((s): s is HTMLElement => !!s && /tracking-wide/.test(s.className))
-    .map((s) => (s.textContent || '').trim());
+  return Array.from(document.querySelectorAll('[data-idea-section-header]')).map((s) =>
+    (s.textContent || '').trim()
+  );
 }
 
 describe('IdeaWorkspaceTools — STREFA PRAWA inspector (UI-L16)', () => {

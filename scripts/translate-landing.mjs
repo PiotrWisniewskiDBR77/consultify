@@ -10,7 +10,7 @@ const BASE = 'public/locales';
 const TARGETS = {
   de: { deepl: 'DE', formality: 'prefer_more' },
   es: { deepl: 'ES', formality: 'prefer_more' },
-  jp: { deepl: 'JA', formality: 'prefer_more' },
+  ja: { deepl: 'JA', formality: 'prefer_more' },
   ar: { deepl: 'AR', formality: null },
 };
 

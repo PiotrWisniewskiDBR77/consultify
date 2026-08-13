@@ -1,5 +1,4 @@
 import {
-  Archive,
   Bot,
   CheckCircle2,
   ChevronDown,
@@ -50,6 +49,7 @@ import {
 import { type RowActionSection, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { LoadingState as SharedLoadingState } from '@/components/shared/states';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
+import { normalizeRowActionSections } from '@/components/standard/StandardTable';
 import { ErrorState } from '@/components/ui/primitives';
 import { MetaChip, ToolChip } from '@/components/ui/primitives/chips';
 import { CHIP_TONE_VAR, ChipBase, ChipDot } from '@/components/ui/primitives/chips/chipBase';
@@ -1287,14 +1287,8 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     }
     const actionRows: ActionRow[] = [
       {
-        columns: 3,
+        columns: 2,
         buttons: [
-          {
-            label: t('myWork.ideasList.label2', 'Convert'),
-            icon: Sparkles,
-            onClick: () => setConvertIdea(idea),
-            colorScheme: 'primary',
-          },
           {
             label: t('myWork.ideasList.label3', 'Open Flow'),
             icon: Workflow,
@@ -1303,34 +1297,29 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             // przyciskiem w IdeasTableContent.tsx. Bylo 'emerald', rozjechane.
             colorScheme: 'neutral',
           },
-          {
-            label: t('myWork.ideasList.label4', 'Delete'),
-            icon: Trash2,
-            onClick: () => handleDeleteSingleIdea(idea),
-            colorScheme: 'red',
-          },
         ],
       },
     ];
     return (
-      <div className="space-y-0">
+      <div className="space-y-2.5">
         <PreviewAIHintStrip hints={aiHints} />
-        <div className="border-t border-c-border-subtle my-3" />
         <PreviewRelations
           items={relationItems}
           emptyLabel={t('myWork.ideasList.emptyLabel', 'No linked documents')}
         />
-        <div className="border-t border-c-border-subtle my-3" />
-        <PreviewActionBar rows={actionRows} />
-        <div className="mt-2">
+        <div>
+          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
+            {isPolish ? 'Co dalej' : "What's next"}
+          </div>
           <ConvertToOutputMenu
             sourceType="idea"
             sourceId={idea.id}
             sourceTitle={idea.title || ''}
             onConvertComplete={() => fetchIdeas()}
-            variant="dropdown"
+            variant="inline"
           />
         </div>
+        <PreviewActionBar rows={actionRows} />
       </div>
     );
   };
@@ -1471,14 +1460,6 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
           icon: Edit2,
           onClick: () => openIdea(idea.id, idea),
         },
-        {
-          id: 'archive',
-          label: t('myWork.ideasList.label14', 'Archive'),
-          icon: Archive,
-          disabled: true,
-          description: t('myWork.ideasList.description', 'Coming soon (backend)'),
-          onClick: () => {},
-        },
       ],
     },
     {
@@ -1503,18 +1484,6 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
           label: t('myWork.ideasList.label16', 'Report'),
           icon: GitBranch,
           onClick: () => handleConvert('report', idea),
-        },
-        {
-          // Z3 audit (2026-07-24): 'table' is NOT a convert target anywhere in the
-          // system — absent from IdeaConvertTarget (SSOT) and from
-          // LIVE_CONVERT_TARGETS on the server; a real request would 400. Stays
-          // disabled — this one is genuinely "soon", not a placeholder removed on faith.
-          id: 'output_table',
-          label: t('myWork.ideasList.label17', 'Table'),
-          icon: Table2,
-          disabled: true,
-          rightLabel: t('myWork.ideasList.rightLabel3', 'soon'),
-          onClick: () => undefined,
         },
       ],
     },
@@ -1969,7 +1938,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                           </button>
                           {/* Kebab — same RowActionsMenu/sections as the table row (§8.0) */}
                           <div onClick={(e) => e.stopPropagation()}>
-                            <RowActionsMenu sections={buildIdeaCardSections(idea)} />
+                            <RowActionsMenu
+                              sections={normalizeRowActionSections(buildIdeaCardSections(idea))}
+                            />
                           </div>
                         </div>
                       </div>

@@ -18,8 +18,10 @@ import {
   Sigma,
   X,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 
 import type { TableEdge, TableNode } from './tableTypes';
 import { ROW_ACCENT_COLORS } from './tableTypes';
@@ -203,6 +205,9 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
       )
     : externalNodes;
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  useDialogA11y({ open, onClose, containerRef });
+
   if (!open) return null;
 
   return (
@@ -211,13 +216,18 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-[600px] max-w-[95vw] max-h-[85vh] rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl overflow-hidden flex flex-col"
+        ref={containerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="cross-table-relations-heading"
+        tabIndex={-1}
+        className="w-[600px] max-w-[95vw] max-h-[85vh] rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl overflow-hidden flex flex-col outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center gap-2 px-5 py-3.5 border-b border-c-border-subtle">
           <Network size={16} className="text-c-text-secondary" />
-          <span className="text-sm font-bold text-c-text">
+          <span id="cross-table-relations-heading" className="text-sm font-bold text-c-text">
             {t('myWorkTable.crossTableRelations.crossTableRelations')}
           </span>
           <div className="flex-1" />

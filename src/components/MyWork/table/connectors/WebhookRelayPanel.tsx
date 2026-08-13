@@ -15,6 +15,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { type ActionContext, runIdeaAction } from '@/actions/ideaActionRegistry';
+import { EMPTY_SELECTION } from '@/components/MyWork/ideaSelectionTypes';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 
 interface WebhookRelay {
@@ -78,14 +80,31 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
     fetchRelays();
   }, [fetchRelays]);
 
-  const handleDelete = async (relayId: string) => {
-    try {
-      await TablePlatformApi.deleteWebhookRelay(relayId);
-      setRelays((prev) => prev.filter((r) => r.id !== relayId));
-      toast.success(t('myWorkTable.webhookRelayPanel.webhookDeleted'));
-    } catch {
-      toast.error(t('myWorkTable.webhookRelayPanel.failedToDelete'));
-    }
+  // Program B (E02) — klik człowieka = `ctx.params.run` (rejestr wykonuje
+  // ORYGINALNY callback wprost); Teresa = ta sama funkcja rejestru woła REST
+  // bezpośrednio (`runTableWebhookRelayDeleteCallback` w `ideaActionRegistry.ts`).
+  const handleDelete = (relayId: string) => {
+    const ctx: ActionContext = {
+      ideaId: baseId ?? workspaceId,
+      tool: 'table',
+      selection: EMPTY_SELECTION,
+      surface: 'panel',
+      source: 'ui',
+      language: isPl ? 'pl' : 'en',
+      params: {
+        relayId,
+        run: async () => {
+          try {
+            await TablePlatformApi.deleteWebhookRelay(relayId);
+            setRelays((prev) => prev.filter((r) => r.id !== relayId));
+            toast.success(t('myWorkTable.webhookRelayPanel.webhookDeleted'));
+          } catch {
+            toast.error(t('myWorkTable.webhookRelayPanel.failedToDelete'));
+          }
+        },
+      },
+    };
+    void runIdeaAction('table.webhook_relay.delete', ctx);
   };
 
   const handleToggle = async (relay: WebhookRelay) => {

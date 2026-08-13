@@ -34,7 +34,9 @@ import {
   MoveRight,
   Palette,
   Plus,
+  GitBranch,
   Repeat,
+  Tag,
   Trash2,
   X,
 } from 'lucide-react';
@@ -58,6 +60,8 @@ import ReactFlow, {
   useUpdateNodeInternals,
 } from 'reactflow';
 
+import { type ActionContext, runIdeaAction } from '@/actions/ideaActionRegistry';
+import type { LaneOpOutcome } from '@/actions/quickActionAck';
 import { ErrorState, SkeletonState } from '@/components/shared/states';
 import { Api } from '@/services/api';
 import {
@@ -98,6 +102,7 @@ import {
   ArrowDirectionPopover,
   ColorPalettePopover,
   MenuListPopover,
+  TextInputPopover,
 } from './canvas/ObjectEditBarPopovers';
 import { publishProcessFlowGridState } from './canvas/processFlowGridState';
 import { useCanvasSnappingRef } from './canvas/useCanvasSnapping';
@@ -148,6 +153,11 @@ import {
   type ProcessFlowNodeComment,
   removeComment,
 } from './processflow/nodeComments';
+import {
+  checkProcessFlowNodeCap,
+  PROCESS_FLOW_NODE_LIMIT,
+  PROCESS_FLOW_NODE_WARN_THRESHOLD,
+} from './processflow/nodeCap';
 import { ActivityNode } from './processflow/nodes/ActivityNode';
 import { BPMNEndNode } from './processflow/nodes/BPMNEndNode';
 import { BPMNStartNode } from './processflow/nodes/BPMNStartNode';
@@ -156,6 +166,7 @@ import { GatewayNode } from './processflow/nodes/GatewayNode';
 import { PoolNode } from './processflow/nodes/PoolNode';
 import { SubprocessNode } from './processflow/nodes/SubprocessNode';
 import {
+  EDGE_CONDITIONS,
   getCanvasContextActions,
   getEdgeContextActions,
   getNodeContextActions,
@@ -188,6 +199,7 @@ import { useProcessFlowValidation } from './processflow/useProcessFlowValidation
 import { validateFlowWarnings, type ValidationWarning } from './processflow/validateFlow';
 import { ValidationResultsPanel } from './processflow/ValidationResultsPanel';
 import {
+  computeLaneAwareFitBounds,
   normalizeProcessFlowViewState,
   processFlowViewportStorageKey,
   resolveHydrationViewport,
@@ -287,8 +299,27 @@ const EdgeRehydrateFix: React.FC<{ nodeIdsKey: string; nodeIds: string[] }> = ({
     // Re-measure after the nodes are actually laid out in the DOM. A single rAF
     // fires too early (dimensions not yet recorded → edges stay hidden), so retry
     // across a few frames/timeouts until ReactFlow has measured them.
+    //
+    // G4-PF-GUARDRAIL perf fix: `updateNodeInternals` accepts an array
+    // (`useUpdateNodeInternals` in @reactflow/core does
+    // `Array.isArray(id) ? id : [id]`), so pass the WHOLE id set in one call
+    // instead of calling it once per id. This is not cosmetic: each
+    // invocation schedules its own `requestAnimationFrame` → one
+    // `store.updateNodeDimensions(updates)` → one
+    // `updateAbsoluteNodePositions(nodeInternals, …)` sweep over the ENTIRE
+    // nodeInternals map (@reactflow/core index.mjs, `updateNodeDimensions`
+    // calling `updateAbsoluteNodePositions`, itself a `nodeInternals.forEach`
+    // over every node regardless of how many were actually updated) plus a
+    // fresh `new Map(nodeInternals)` copy and a store `set()`. Calling this
+    // once per node turned a mount with N nodes into N separate O(N) sweeps
+    // (O(N²)) at each of the 4 timer ticks below; batching into one call per
+    // tick makes it O(N) per tick (measured — see
+    // docs/qa/ideas-complete-transformation-2026-08-09/17_PERFORMANCE_MEASUREMENT.md
+    // for the before numbers and the G4 stream's benchmark rerun for after).
     const timers = [60, 250, 600, 1200].map((ms) =>
-      window.setTimeout(() => idsRef.current.forEach((id) => updateNodeInternals(id)), ms)
+      window.setTimeout(() => {
+        if (idsRef.current.length) updateNodeInternals(idsRef.current);
+      }, ms)
     );
     return () => timers.forEach((t) => window.clearTimeout(t));
     // Keyed on the node-id set so it fires on hydrate / structural changes, not every render.
@@ -406,8 +437,58 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [lanes, setLanes] = useState<Lane[]>(DEFAULT_LANES);
+  // PF-P2-02: id of the lane just created via `addLane` — LaneSystem uses this
+  // to auto-enter inline naming (focus + select) for exactly one lane, then
+  // clears it via `onAutoEditConsumed` once the edit session starts. Cleared
+  // eagerly (not on commit/cancel) because it only gates the initial
+  // auto-focus trigger; the lane's own local `editing` state carries the rest
+  // of the session (Enter commits, Escape cancels — unchanged LaneSystem.tsx
+  // behavior).
+  const [newLaneId, setNewLaneId] = useState<string | null>(null);
   const [extensions, setExtensions] = useState<Record<string, unknown>>({});
   const [warnings, setWarnings] = useState<ValidationWarning[]>([]);
+
+  // ── G4-PF-GUARDRAIL: node-count cap ──────────────────────────────────────
+  // Process Flow had NO node cap of any kind (unlike Mind Map's soft 500-node
+  // banner and Whiteboard's hard block at `nodes.length >= 500`), while its
+  // mount cost is the worst of the four canvas tools (see nodeCap.ts header
+  // + docs/qa/ideas-complete-transformation-2026-08-09/17_PERFORMANCE_MEASUREMENT.md
+  // §4.3/§6). This checks the RESULTING count (current + addCount) so a bulk
+  // add (AI-proposal accept, paste, cross-tool conversion/import) can't jump
+  // straight past the ceiling in one step — every node-adding call site in
+  // this file (manual add, insert-between, split-path, ghost-accept, AI
+  // apply, and the cross-tool `idea-workspace-insert` bulk handler) calls
+  // this before mutating `nodes`. Defined early (before `nodes` has any other
+  // consumers below) so every later callback can list it as a dependency
+  // without a temporal-dead-zone hazard. Returns `false` (and toasts) when
+  // the add must be refused entirely — no silent refusal, no silent
+  // truncation.
+  const guardAddNodes = useCallback(
+    (addCount: number): boolean => {
+      const cap = checkProcessFlowNodeCap(nodes.length, addCount);
+      if (!cap.allowed) {
+        toast.error(
+          t('myWorkIdeas.processFlowTool.nodeLimitReached', {
+            defaultValue: `Step limit reached (${PROCESS_FLOW_NODE_LIMIT} maximum). Please delete some steps or split the process into multiple flows.`,
+            limit: PROCESS_FLOW_NODE_LIMIT,
+          }),
+          { duration: 3000 }
+        );
+        return false;
+      }
+      if (cap.shouldWarn) {
+        toast(
+          t('myWorkIdeas.processFlowTool.nodeLimitWarning', {
+            defaultValue: `You are approaching the step limit (${PROCESS_FLOW_NODE_WARN_THRESHOLD} steps). Consider splitting into multiple flows.`,
+            warn: PROCESS_FLOW_NODE_WARN_THRESHOLD,
+          }),
+          { icon: '⚠️', duration: 3000 }
+        );
+      }
+      return true;
+    },
+    [nodes, t]
+  );
 
   useEffect(() => {
     onGraphChange?.({
@@ -736,8 +817,16 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   // step, then persists via the autosave effect (scheduleSave fires from the
   // nodes/edges/lanes → buildPersistPayload → scheduleSave effect below).
   const handleApplyAIProposal = useCallback(
-    (result: ApplyPatchResult) => {
-      if (locked) return;
+    (result: ApplyPatchResult): boolean => {
+      if (locked) return false;
+      // G4-PF-GUARDRAIL: AI generate/expand is a bulk add — check the WHOLE
+      // batch before applying anything, not per-node (a per-node check here
+      // would read a stale `nodes.length` across the batch and never catch
+      // it). Blocked → the whole acceptance is refused (toast explains why);
+      // `resolveProposal` (useProcessFlowAIProposal.ts) keeps the proposal
+      // open on `false` so the user can reject/regenerate instead of it
+      // silently vanishing.
+      if (!guardAddNodes(result.addedNodeIds.length)) return false;
       pushUndo();
       const added = new Set(result.addedNodeIds);
       setNodes(
@@ -773,8 +862,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       toast.success(t('myWorkIdeas.processFlowTool.aiProposalApplied'), {
         duration: 1200,
       });
+      return true;
     },
-    [collab, isPl, locked, onNodeDetail, pushUndo, setEdges, setNodes]
+    [collab, guardAddNodes, isPl, locked, onNodeDetail, pushUndo, setEdges, setNodes]
   );
 
   const {
@@ -1533,6 +1623,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       }
     ) => {
       if (locked) return;
+      if (!guardAddNodes(1)) return;
       pushUndo();
 
       // ── B1 (2026-07-27): „dodalem krok i nic sie nie stalo" ─────────────
@@ -1755,6 +1846,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       edges,
       flowMode,
       focusObjectId,
+      guardAddNodes,
       handleSelectionUpdate,
       i18n.language,
       ideaId,
@@ -1808,6 +1900,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       toast.error(t('myWorkIdeas.processFlowTool.selectEdgeFirst'));
       return;
     }
+    if (!guardAddNodes(1)) return;
     pushUndo();
     const sourceNode = (nodes as Node[]).find((n) => n.id === selectedEdge.source);
     const targetNode = (nodes as Node[]).find((n) => n.id === selectedEdge.target);
@@ -1867,6 +1960,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     collab,
     edges,
     flowMode,
+    guardAddNodes,
     isPl,
     lanes,
     locked,
@@ -1887,6 +1981,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       toast.error(t('myWorkIdeas.processFlowTool.selectDecisionNode'));
       return;
     }
+    if (!guardAddNodes(1)) return;
     pushUndo();
     const newId = `pf-split-${Date.now()}`;
     const lane = lanes.find((l) => l.id === selected.data?.laneId) || lanes[0] || DEFAULT_LANES[0];
@@ -1930,7 +2025,19 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       { op: 'add_edge', data: splitEdge },
     ]);
     toast.success(t('myWorkIdeas.processFlowTool.pathSplit'), { duration: 800 });
-  }, [collab, flowMode, isPl, lanes, locked, nodes, onNodeDetail, pushUndo, setEdges, setNodes]);
+  }, [
+    collab,
+    flowMode,
+    guardAddNodes,
+    isPl,
+    lanes,
+    locked,
+    nodes,
+    onNodeDetail,
+    pushUndo,
+    setEdges,
+    setNodes,
+  ]);
 
   // ── Add lane ───────────────────────────────────────────────────────────
 
@@ -1950,6 +2057,8 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       collab.broadcastLanes(nextLanes); // F3: full Lane[] replacement
       return nextLanes;
     });
+    // PF-P2-02: hand focus straight to inline naming for the lane just created.
+    setNewLaneId(newLane.id);
   }, [collab, lanes.length, locked, pushUndo, t]);
 
   const insertAutomationTrigger = useCallback(() => {
@@ -2098,20 +2207,32 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         cancelLabel: t('myWorkIdeas.processFlowTool.cancel'),
         variant: 'danger',
       }),
+    // G4-LANE-DELETE: `handleLaneDelete` refuses (instead of silently doing
+    // nothing) when asked to delete the only remaining lane. Surface that
+    // refusal — same toast.error pattern as selectEdgeFirst/selectDecisionNode
+    // above.
+    onLaneDeleteBlocked: () =>
+      toast.error(t('myWorkIdeas.processFlowTool.cannotDeleteLastLane')),
   });
 
   // ── F5a A3: lane collapse / resize (state in lanes[].{collapsed,height}) ──
+  // RISK-30 (S5-TERESA, 2026-08-12): szósty handler toru — jedyny mieszkający
+  // tutaj, a nie w `useProcessFlowNodes.ts`. Zwraca `LaneOpOutcome` z tego
+  // samego powodu co pozostałe pięć: bez tego rejestr akcji meldował Teresie
+  // sukces zwinięcia toru, którego nie było (blokada / nieznany `laneId`).
   const handleLaneToggleCollapse = useCallback(
-    (laneId: string) => {
-      if (locked) return;
+    (laneId: string): LaneOpOutcome => {
+      if (locked) return { ok: false, reason: 'locked' };
+      if (!lanes.some((l) => l.id === laneId)) return { ok: false, reason: 'unknown_lane' };
       pushUndo();
       setLanes((prev) => {
         const next = toggleLaneCollapsed(prev, laneId);
         collab.broadcastLanes?.(next);
         return next;
       });
+      return { ok: true };
     },
-    [collab, locked, pushUndo, setLanes]
+    [collab, lanes, locked, pushUndo, setLanes]
   );
 
   const handleLaneResize = useCallback(
@@ -2242,6 +2363,11 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       runSavingsAnalysis,
       createFromPrompt,
       runProcessCoach: handleAICoach,
+      // Action Registry — N6.4 (2026-08-10): „Podsumowanie" z menu „Więcej"
+      // paska Przepływu (`idea.ai.pf_process_summary`, runtime `pf_summary`).
+      // TA SAMA funkcja, którą dostaje prop `generateSummary` toolbaru niżej —
+      // zero nowej ścieżki wykonania, tylko drugie (Teresy) wejście do niej.
+      generateSummary: handleProcessSummary,
       // P1-1: „Auto-układ" z Menu 3 → realny układ Przepływu (wcześniej Menu 3
       // wysyłało zdarzenie Mapy myśli, więc w Przepływie klik nie robił nic).
       autoLayout: handleAutoLayout,
@@ -2253,6 +2379,39 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       // zasłaniającej pstryczek toru.
       toggleGrid: () => setShowGrid((prev) => !prev),
       toggleSnap: () => setSnapToGridEnabled((prev) => !prev),
+      // Action Registry — Process Flow edge menu (2026-08-09): bus path for
+      // Teresa/non-UI callers of `idea.edge.pf_edit_props`/`idea.edge.reverse`/
+      // `idea.edge.pf_condition_*` (see ideaActionRegistry.ts). The UI
+      // right-click path (getEdgeContextActions call site below) is
+      // untouched — it keeps calling these exact same functions directly.
+      openEdgeStylePopover: (edgeId: string) => setEdgeStylePopover({ edgeId, x: 240, y: 240 }),
+      reverseEdge: (edgeId: string) => handleEdgeReverse(edgeId),
+      setEdgeCondition: (edgeId: string, condition: string) =>
+        handleEdgeConditionChange(edgeId, condition),
+      // Action Registry — Process Flow node menu (2026-08-09): bus path for
+      // Teresa's `idea.node.pf_ai_rewrite_step`. UI click (`onAIRewriteStep`
+      // in the getNodeContextActions call site below) still calls
+      // `openStepRewrite(rewriteNodeId)` alone — untouched. Teresa supplies
+      // the instruction up front, so this does both steps: open panel +
+      // generate immediately.
+      startAIRewriteStep: (nodeId: string, instruction: string) => {
+        if (locked || !nodeId || !instruction.trim()) return;
+        setRewriteStepId(nodeId);
+        setShowAIPanel(true);
+        createStepRewriteProposal({ nodeId, instruction });
+      },
+      // Action Registry — Process Flow LANE controls (2026-08-10): bus path
+      // for Teresa's `idea.lane.pf_*` (see ideaActionRegistry.ts). The UI
+      // path — `LaneSystem.tsx` header buttons via the `onRename`/`onMoveUp`/
+      // `onMoveDown`/`onColorChange`/`onToggleCollapse`/`onDelete` props below
+      // (`<LaneSystemViewportLayer>`) — is untouched, calling these exact
+      // same functions directly.
+      renameLane: handleLaneRename,
+      moveLaneUp: handleLaneMoveUp,
+      moveLaneDown: handleLaneMoveDown,
+      setLaneColor: handleLaneColorChange,
+      toggleLaneCollapse: handleLaneToggleCollapse,
+      deleteLane: handleLaneDelete,
     },
     setters: {
       setFlowMode,
@@ -2281,6 +2440,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     (ghostId: string) => {
       const ghost = ghostNodes.find((g) => g.id === ghostId);
       if (!ghost) return;
+      if (!guardAddNodes(1)) return;
       pushUndo();
       const realId = `pf-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
       const realNode: Node = {
@@ -2306,7 +2466,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       collab.broadcastNodeAdd(realNode); // F3: accepted ghost → real add
       toast.success(t('myWorkIdeas.processFlowTool.stepAccepted'), { duration: 800 });
     },
-    [collab, ghostNodes, isPl, locked, onNodeDetail, pushUndo, setNodes]
+    [collab, ghostNodes, guardAddNodes, isPl, locked, onNodeDetail, pushUndo, setNodes]
   );
 
   // ── Save ───────────────────────────────────────────────────────────────
@@ -2350,10 +2510,21 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   // ── Chat integration ───────────────────────────────────────────────────
 
   const handleConvert = useCallback(
-    (action: string) => {
+    // E02-N6-NODE fix: accepts an optional explicit node-id list so a
+    // right-clicked node (which PF does NOT auto-select — see onCopy's
+    // "prawy klik go nie zaznacza" handling below) can be targeted precisely
+    // instead of falling back to whatever happens to be selected elsewhere
+    // in the workspace. The event field is `nodeIds` — matching the receiver
+    // (IdeaMapWorkspace's CONVERT_PREFIX_MAP branch reads eventDetail.nodeIds)
+    // and the same contract Whiteboard's wb_convert_* dispatches already use
+    // (WhiteboardSelectionBar's `selectedNodeIds` → `nodeIds`). The previous
+    // `selectedIds` key was never read by the receiver and was silently dead.
+    (action: string, explicitNodeIds?: string[]) => {
       if (onQuickAction) {
-        const selectedIds = nodes.filter((n) => n.selected).map((n) => n.id);
-        onQuickAction(action, { selectedIds, activeTool: 'process_flow' });
+        const nodeIds = explicitNodeIds?.length
+          ? explicitNodeIds
+          : nodes.filter((n) => n.selected).map((n) => n.id);
+        onQuickAction(action, { nodeIds, activeTool: 'process_flow' });
       }
     },
     [nodes, onQuickAction]
@@ -2405,20 +2576,97 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     addNode(shape);
   }, [addNode, flowMode]);
 
+  // Reconciliacja z Rejestrem Akcji (2026-08-10, E02 DoD) — patrz analogiczny
+  // komentarz w `IdeaMapWorkspace.tsx`/`IdeaWhiteboardTool.tsx`. `onDeselect`
+  // i `onFitView` ŚWIADOMIE NIE przechodzą przez rejestr (stan
+  // zaznaczenia/kamery, zero mutacji treści, ta sama kategoria co Mapy myśli
+  // `onFocusSelection`). `onAddChild`/`onAddSibling` (Tab/Enter →
+  // `addDefaultStep`) TEŻ ŚWIADOMIE NIE są routowane mimo że
+  // `idea.element.add` istnieje z runtime `pf_add_step` dla Przepływu —
+  // SPRAWDZONE w kodzie: `addDefaultStep` dobiera KSZTAŁT węzła wg
+  // `flowMode` (auto_trigger/vsm_process/action), a odbiornik `pf_add_step`
+  // (`useProcessFlowQuickActions.ts:158`) ZAWSZE tworzy `'action'` —
+  // realna różnica zachowania w trybach automation/vsm, nie genuine reuse
+  // (ta sama ostrożność co przy `idea.edge.insert_node`/`.delete`
+  // nie-reużytych między Mapą myśli a Przepływem).
+  const runPfKeyboardAction = useCallback(
+    (actionId: string, run: () => void) => {
+      const ctx: ActionContext = {
+        ideaId,
+        tool: 'process_flow',
+        selection: EMPTY_SELECTION,
+        surface: 'context',
+        source: 'ui',
+        language: isPl ? 'pl' : 'en',
+        params: { run },
+      };
+      void runIdeaAction(actionId, ctx);
+    },
+    [ideaId, isPl]
+  );
+
+  /**
+   * N-inventory-c4 (2026-08-10): empty-canvas CTA "Dodaj pierwszy krok" now
+   * routes through the registry (`idea.view.pf_add_start`, NEW id — see
+   * `RUNTIME_PF_ADD_START` comment in ideaActionRegistry.ts for why this is
+   * NOT a reuse of `idea.element.add`: shape mismatch, same trap as
+   * `addDefaultStep` above). `ctx.params.vsm` carries the mode branch the
+   * handler needs (start vs vsm_process) since the registry has no notion of
+   * Process Flow sub-modes.
+   */
+  const runPfAddStartAction = useCallback(() => {
+    const ctx: ActionContext = {
+      ideaId,
+      tool: 'process_flow',
+      selection: EMPTY_SELECTION,
+      surface: 'inline',
+      source: 'ui',
+      language: isPl ? 'pl' : 'en',
+      params: { vsm: flowMode === 'vsm' },
+    };
+    void runIdeaAction('idea.view.pf_add_start', ctx);
+  }, [ideaId, isPl, flowMode]);
+
+  /**
+   * PF-P3-01: lane-aware "Fit view" — a plain `fitView()` only bounds actual
+   * ReactFlow nodes, but Process Flow's swimlanes are painted OUTSIDE the
+   * node graph (see `LaneSystem.tsx`), so it silently crops an empty or
+   * over-tall lane. `computeLaneAwareFitBounds` unions the node bounds with
+   * the FULL lane stack height so "Fit view" actually fits every lane and
+   * node, not just the nodes. Shared by BOTH entry points — the corner
+   * button (`CanvasZoomControls onFitView`) and the `Shift+1` keyboard
+   * shortcut — so they agree instead of drifting apart again.
+   */
+  const handleFitAllLanesAndNodes = useCallback(() => {
+    // Prefer the live instance's measured nodes (real rendered width/height
+    // via ResizeObserver) over the raw `nodes` state, which does not carry
+    // those dimensions — falls back to `nodes` before the instance mounts.
+    const measuredNodes = reactFlowInstanceRef.current?.getNodes?.() ?? nodes;
+    const bounds = computeLaneAwareFitBounds(measuredNodes, lanes, LANE_HEIGHT);
+    reactFlowInstanceRef.current?.fitBounds(bounds, { padding: 0.2, duration: 300 });
+  }, [nodes, lanes]);
+
   // P3: shared grammar (Tab/Enter/F2/Delete/Escape/Ctrl+Z/S/D/L/0)
+  // F-K1 fix (G4-KBD-P0, 2026-08-11): `containerRef` scopes the grammar to
+  // genuine focus within the canvas (see useIdeasToolKeyboard.ts) — this
+  // call site never passed it before, so Tab was hijacked globally while
+  // Process Flow was merely `open`, breaking keyboard navigation anywhere
+  // else on the page.
   useCanvasKeyboard({
     toolType: 'processflow',
     enabled: open,
     locked: locked || false,
+    containerRef: flowContainerRef as React.RefObject<HTMLElement | null>,
     callbacks: {
-      onSave: handleSave,
-      onUndo: undo,
-      onRedo: redo,
-      onDuplicate: duplicateSelected,
-      onAutoLayout: handleAutoLayout,
-      onFitView: () => reactFlowInstanceRef.current?.fitView({ padding: 0.15, duration: 300 }),
-      onEditSelected: () => setShowPropertiesPanel(true),
-      onDeleteSelected: deleteSelected,
+      onSave: () => runPfKeyboardAction('idea.canvas.pf_save', handleSave),
+      onUndo: () => runPfKeyboardAction('idea.canvas.undo', undo),
+      onRedo: () => runPfKeyboardAction('idea.canvas.redo', redo),
+      onDuplicate: () => runPfKeyboardAction('idea.node.duplicate', duplicateSelected),
+      onAutoLayout: () => runPfKeyboardAction('idea.view.auto_layout', handleAutoLayout),
+      onFitView: handleFitAllLanesAndNodes,
+      onEditSelected: () =>
+        runPfKeyboardAction('idea.node.pf_properties', () => setShowPropertiesPanel(true)),
+      onDeleteSelected: () => runPfKeyboardAction('idea.node.delete', deleteSelected),
       onDeselect: () => {
         setNodes((nds) => nds.map((n) => ({ ...n, selected: false })));
         setEdges((eds) => eds.map((e) => ({ ...e, selected: false })));
@@ -2485,10 +2733,17 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
       if (isInput) return;
 
-      // A6: Shift+1 = zoom to fit (layout-independent via e.code)
+      // A6: Shift+1 = zoom to fit (layout-independent via e.code).
+      // PF-P3-01: was calling the RAW `fitView()` here — the exact plain,
+      // non-lane-aware call the corner button and Ctrl/Cmd+0 (both routed
+      // through `handleFitAllLanesAndNodes`, see its own doc comment above)
+      // were fixed to stop calling, because it crops an empty/over-tall
+      // trailing lane. This third entry point had silently drifted back to
+      // the buggy behavior — call the same lane-aware handler so all three
+      // (button, Ctrl/Cmd+0, Shift+1) agree.
       if (e.shiftKey && !e.metaKey && !e.ctrlKey && !e.altKey && e.code === 'Digit1') {
         e.preventDefault();
-        reactFlowInstanceRef.current?.fitView({ padding: 0.15, duration: 300 });
+        handleFitAllLanesAndNodes();
         return;
       }
 
@@ -2507,7 +2762,17 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [addNode, duplicateSelected, flowMode, handleSave, open, redo, runBackendValidation, undo]);
+  }, [
+    addNode,
+    duplicateSelected,
+    flowMode,
+    handleFitAllLanesAndNodes,
+    handleSave,
+    open,
+    redo,
+    runBackendValidation,
+    undo,
+  ]);
 
   // ── Graph update listener (from workspace proposals) ───────────────────
   useEffect(() => {
@@ -2545,6 +2810,15 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       if (detail.ideaId && detail.ideaId !== ideaId) return;
 
       if (Array.isArray(detail.items) && detail.items.length > 0) {
+        // G4-PF-GUARDRAIL: cross-tool conversion/import is a bulk add — check
+        // the WHOLE batch up front. `addNode`'s own per-call guard below
+        // reads `nodes.length` from a closure that this synchronous forEach
+        // never lets React re-render, so it would see the SAME stale count
+        // on every iteration and never catch a batch that blows past the
+        // cap. Blocked → refuse the whole insert (toast explains why),
+        // matching Whiteboard's all-or-nothing convention rather than a
+        // partial/truncated insert.
+        if (!guardAddNodes(detail.items.length)) return;
         detail.items.forEach((item) => {
           const shape = resolveSemanticInsertShape(
             item.type || item.label || item.text,
@@ -2586,7 +2860,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
     window.addEventListener(IDEA_WORKSPACE_INSERT_EVENT, handler);
     return () => window.removeEventListener(IDEA_WORKSPACE_INSERT_EVENT, handler);
-  }, [addNode, flowMode, ideaId, open, semanticKit]);
+  }, [addNode, flowMode, guardAddNodes, ideaId, open, semanticKit]);
 
   useEffect(() => {
     if (!open) return;
@@ -2653,13 +2927,67 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   const pfEditBarModel = useMemo(() => {
     if (!pfEditBarDocked) return null;
 
-    // ── KRAWĘDŹ: kolor linii · styl · strzałki · kierunek przepływu ──────────
+    // ── KRAWĘDŹ: etykieta · typ · kolor linii · styl · strzałki · kierunek ───
     if (pfEditBarTarget === 'edge' && selectedEdge) {
       const edgeId = selectedEdge.id;
       const edgeData = (selectedEdge.data || {}) as Record<string, any>;
+      // PF-P2-03: any selected edge must expose its CURRENT semantic label and
+      // condition type here, not only inside the click-positioned
+      // `EdgeStylePopover` (which only appears the instant you click — a
+      // Teresa-driven or keyboard selection never triggers it). Same
+      // underlying handlers as the right-click menu (`getEdgeContextActions`)
+      // and `EdgeStylePopover` — one mutation path, three surfaces.
+      const currentLabel = String(selectedEdge.label ?? edgeData.label ?? '');
+      const currentCondition = String(edgeData.conditionType ?? '');
+      const currentConditionEntry =
+        EDGE_CONDITIONS.find((c) => c.id === currentCondition) ?? EDGE_CONDITIONS[0];
+      const truncate = (s: string, max: number) =>
+        s.length > max ? `${s.slice(0, max - 1)}…` : s;
       return {
         title: t('canvasEditBar.titleEdge', 'Połączenie'),
         groups: [
+          {
+            id: 'edge-semantics',
+            controls: [
+              {
+                kind: 'popover' as const,
+                id: 'edge-label',
+                icon: Tag,
+                label: t('canvasEditBar.edgeLabel', 'Etykieta'),
+                text: currentLabel ? truncate(currentLabel, 14) : undefined,
+                align: 'center' as const,
+                render: (close: () => void) => (
+                  <TextInputPopover
+                    title={t('canvasEditBar.edgeLabel', 'Etykieta')}
+                    value={currentLabel}
+                    placeholder={t('processFlow.edgeStylePopover.label', 'Label')}
+                    onCommit={(next) => handleEdgeLabelChange(edgeId, next)}
+                    close={close}
+                  />
+                ),
+              },
+              {
+                kind: 'popover' as const,
+                id: 'edge-condition',
+                icon: GitBranch,
+                label: t('canvasEditBar.edgeCondition', 'Typ połączenia'),
+                text: isPl ? currentConditionEntry.pl : currentConditionEntry.en,
+                align: 'center' as const,
+                render: (close: () => void) => (
+                  <MenuListPopover
+                    title={t('canvasEditBar.edgeCondition', 'Typ połączenia')}
+                    close={close}
+                    items={EDGE_CONDITIONS.map((c) => ({
+                      id: c.id || 'none',
+                      label: isPl ? c.pl : c.en,
+                      active: (currentCondition ?? '') === c.id,
+                      onClick: () => handleEdgeConditionChange(edgeId, c.id),
+                    }))}
+                  />
+                ),
+              },
+            ],
+          },
           {
             id: 'edge-look',
             controls: [
@@ -2733,6 +3061,18 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 label: t('canvasEditBar.reverseFlow', 'Odwróć kierunek przepływu'),
                 onClick: () => handleEdgeReverse(edgeId),
               },
+              {
+                // PF-P2-03: safe delete for the selected edge, same
+                // `deleteSelected()` the right-click menu's "Delete
+                // connection" and Delete/Backspace already use — the edge is
+                // the live selection (`selectedEdge`), so no id needs passing.
+                kind: 'button' as const,
+                id: 'delete',
+                icon: Trash2,
+                label: t('processFlow.contextMenu.edgeDelete', 'Delete connection'),
+                tone: 'danger' as const,
+                onClick: () => deleteSelected(),
+              },
             ],
           },
         ],
@@ -2805,6 +3145,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     selectedNode,
     locked,
     t,
+    isPl,
+    handleEdgeLabelChange,
+    handleEdgeConditionChange,
     handleEdgeColorChange,
     handleEdgeStyleOverrideChange,
     handleEdgeArrowChange,
@@ -2816,6 +3159,18 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   ]);
 
   if (!open) return null;
+
+  // Perf measurement (docs/qa/ideas-complete-transformation-2026-08-09/
+  // 17_PERFORMANCE_MEASUREMENT.md): Process Flow mounted every node's DOM
+  // unconditionally (no `onlyRenderVisibleElements`) AND — unlike Whiteboard
+  // (500-node hard block in `addElement`) or Mind Map (500-node warning
+  // banner) — has no product-level node-count ceiling at all. Threshold
+  // matches Mind Map's (M06 Fala 3.3, mindmap/virtualization.ts) for
+  // consistency. Deliberately NOT behind a new feature flag (kept inside
+  // this file per the fix's scope) — per CLAUDE.md rule #7/#9 this still
+  // needs a screenshot-acceptance pass before it ships to demo, since it
+  // changes what's mounted in the DOM.
+  const onlyRenderVisibleElements = nodes.length >= 300;
 
   return (
     <div
@@ -3192,7 +3547,22 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           </div>
         )
       ) : (
-        <div ref={flowContainerRef} className="flex-1 relative">
+        <div
+          ref={flowContainerRef}
+          className="flex-1 relative"
+          // F-K1 fix (G4-KBD-P0, 2026-08-11): ReactFlow nodes are not
+          // natively focusable, so without this the browser's click-to-focus
+          // ancestor walk had nothing to land on inside the canvas — a click
+          // on a node left `document.activeElement` outside this container,
+          // and `useCanvasKeyboard`'s new focus-containment check (see
+          // `containerRef` above) would then wrongly treat the canvas as
+          // unfocused right after the user clicked a node. tabIndex=-1
+          // (focusable programmatically/via click, excluded from the
+          // page's normal Tab order) mirrors the same pattern already used
+          // by Mind Map's canvas root (IdeaRecommendationMap.tsx) and
+          // Whiteboard's (`containerRef` there already carries tabIndex=0).
+          tabIndex={-1}
+        >
           {/* B2 2026-07-27: the provider now opens BEFORE the lane layer (DOM
               order and paint order are unchanged — ReactFlowProvider renders no
               element) so the swimlane bands can read the live viewport and
@@ -3213,7 +3583,19 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 onMoveDown={handleLaneMoveDown}
                 onToggleCollapse={handleLaneToggleCollapse}
                 onResize={handleLaneResize}
+                // N6.3 (2026-08-10): real bug found while wiring lane
+                // controls to the Action Registry — `handleLaneResize` never
+                // called `pushUndo()`, so Ctrl+Z could not undo a lane
+                // resize. Fixed here (not just documented): one snapshot at
+                // drag start (`LaneSystem.tsx`'s `startResize`, on
+                // `pointerdown`), not one per `onResize` call (which fires
+                // on every pointer move and would flood the undo stack).
+                onResizeStart={() => pushUndo()}
                 dragOverLaneId={dragOverLaneId}
+                // PF-P2-02: the lane created by `addLane` above auto-enters
+                // inline naming once, then this clears itself.
+                autoEditLaneId={newLaneId}
+                onAutoEditConsumed={() => setNewLaneId(null)}
               />
             </div>
 
@@ -3243,7 +3625,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   </div>
                   {!locked && (
                     <button
-                      onClick={() => addNode(flowMode === 'vsm' ? 'vsm_process' : 'start')}
+                      onClick={runPfAddStartAction}
                       className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-c-info hover:brightness-110 transition-all ${FOCUS_RING}`}
                       style={{
                         backgroundColor: 'color-mix(in srgb, var(--c-info) 12%, transparent)',
@@ -3295,6 +3677,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               // Z14 (Fala 3): snapping + alignment guides during node drag.
               onNodeDrag={locked ? undefined : onSnapNodeDrag}
               onNodeDragStop={locked ? undefined : onSnapNodeDragStop}
+              {...(onlyRenderVisibleElements ? { onlyRenderVisibleElements: true } : {})}
               nodeTypes={nodeTypes}
               edgeTypes={edgeTypes}
               // react-flow v11 prop names (v12 renamed these to edgesReconnectable/onReconnect).
@@ -3419,6 +3802,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 onToggleMiniMap={() => setShowMiniMap((prev) => !prev)}
                 onFullscreenToggle={onFullscreenToggle}
                 isFullscreen={isFullscreen}
+                onFitView={handleFitAllLanesAndNodes}
               />
               {!locked && <CanvasSnapGuides threshold={6} />}
             </ReactFlow>
@@ -3788,7 +4172,18 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   onAutoLayout: () => handleAutoLayout(),
                   onAIRewriteStep: () => openStepRewrite(contextMenu.nodeId!),
                   onConvertInitiative: onQuickAction
-                    ? () => handleConvert('pf_convert_initiative')
+                    ? () => {
+                        // Same "prawy klik go nie zaznacza" reasoning as onCopy
+                        // above: convert the right-clicked node, or the whole
+                        // multi-selection only if the clicked node is part of it.
+                        const zazn = nodes.filter((n) => n.selected);
+                        const klikniety = contextMenu.nodeId!;
+                        const idsToConvert =
+                          zazn.length > 1 && zazn.some((n) => n.id === klikniety)
+                            ? zazn.map((n) => n.id)
+                            : [klikniety];
+                        handleConvert('pf_convert_initiative', idsToConvert);
+                      }
                     : undefined,
                 })
               : contextMenu.edgeId
@@ -3898,7 +4293,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   onChange={(e) =>
                     setMetricsDraft((prev) => ({ ...prev, duration: e.target.value }))
                   }
-                  className="w-full rounded-xl border border-slate-200 bg-c-surface-raised px-3 py-2 text-xs outline-none dark:border-navy-700"
+                  className="w-full rounded-xl border border-slate-200 bg-c-surface-raised px-3 py-2 text-xs outline-none focus:border-c-focus dark:border-navy-700"
                 />
               </label>
               <label className="text-[11px] text-slate-600 dark:text-slate-300">
@@ -3908,7 +4303,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   onChange={(e) =>
                     setMetricsDraft((prev) => ({ ...prev, durationUnit: e.target.value }))
                   }
-                  className="w-full rounded-xl border border-slate-200 bg-c-surface-raised px-3 py-2 text-xs outline-none dark:border-navy-700"
+                  className="w-full rounded-xl border border-slate-200 bg-c-surface-raised px-3 py-2 text-xs outline-none focus:border-c-focus dark:border-navy-700"
                 />
               </label>
               <label className="text-[11px] text-slate-600 dark:text-slate-300">
@@ -3916,17 +4311,17 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 <input
                   value={metricsDraft.cost || ''}
                   onChange={(e) => setMetricsDraft((prev) => ({ ...prev, cost: e.target.value }))}
-                  className="w-full rounded-xl border border-slate-200 bg-c-surface-raised px-3 py-2 text-xs outline-none dark:border-navy-700"
+                  className="w-full rounded-xl border border-slate-200 bg-c-surface-raised px-3 py-2 text-xs outline-none focus:border-c-focus dark:border-navy-700"
                 />
               </label>
               <label className="text-[11px] text-slate-600 dark:text-slate-300">
-                <div className="mb-1">FTE</div>
+                <div className="mb-1">{t('processFlow.propertiesPanel.fteField', 'FTE count')}</div>
                 <input
                   value={metricsDraft.fteCount || ''}
                   onChange={(e) =>
                     setMetricsDraft((prev) => ({ ...prev, fteCount: e.target.value }))
                   }
-                  className="w-full rounded-xl border border-slate-200 bg-c-surface-raised px-3 py-2 text-xs outline-none dark:border-navy-700"
+                  className="w-full rounded-xl border border-slate-200 bg-c-surface-raised px-3 py-2 text-xs outline-none focus:border-c-focus dark:border-navy-700"
                 />
               </label>
               <label className="text-[11px] text-slate-600 dark:text-slate-300">
@@ -3936,7 +4331,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   onChange={(e) =>
                     setMetricsDraft((prev) => ({ ...prev, automationPotential: e.target.value }))
                   }
-                  className="w-full rounded-xl border border-slate-200 bg-c-surface-raised px-3 py-2 text-xs outline-none dark:border-navy-700"
+                  className="w-full rounded-xl border border-slate-200 bg-c-surface-raised px-3 py-2 text-xs outline-none focus:border-c-focus dark:border-navy-700"
                 >
                   <option value="low">{t('myWorkIdeas.processFlowTool.low')}</option>
                   <option value="medium">{t('myWorkIdeas.processFlowTool.medium')}</option>
@@ -3950,7 +4345,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   onChange={(e) =>
                     setMetricsDraft((prev) => ({ ...prev, savingsEstimate: e.target.value }))
                   }
-                  className="w-full rounded-xl border border-slate-200 bg-c-surface-raised px-3 py-2 text-xs outline-none dark:border-navy-700"
+                  className="w-full rounded-xl border border-slate-200 bg-c-surface-raised px-3 py-2 text-xs outline-none focus:border-c-focus dark:border-navy-700"
                 />
               </label>
             </div>

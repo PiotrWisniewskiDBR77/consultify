@@ -75,10 +75,28 @@ interface LaneBackgroundProps {
   onToggleCollapse?: (id: string) => void;
   /** F5a A3: commit a new band height (px) after a resize drag. */
   onResize?: (id: string, height: number) => void;
+  /**
+   * N6.3 (2026-08-10): fired ONCE per drag, on `pointerdown`, BEFORE the
+   * first `onResize` call — real bug found while wiring lane controls to the
+   * Action Registry: `handleLaneResize` (IdeaProcessFlowTool.tsx) never
+   * called `pushUndo()`, so Ctrl+Z could not undo a lane resize. Snapshotting
+   * once per drag (not per `onResize` call, which fires on every pointer
+   * move) avoids flooding the undo stack with near-identical frames.
+   */
+  onResizeStart?: (id: string) => void;
   isFirst?: boolean;
   isLast?: boolean;
   laneCount: number;
   isPl?: boolean;
+  /**
+   * PF-P2-02 (2026-08-10): true for exactly the lane that was just created via
+   * `addLane` — makes the header enter inline naming immediately instead of
+   * waiting for a double-click, so a fresh lane never sits under its
+   * placeholder default name un-noticed. Fires once per creation.
+   */
+  autoEdit?: boolean;
+  /** Called once the auto-edit trigger above has been consumed (editing started). */
+  onAutoEditConsumed?: (id: string) => void;
 }
 
 const LaneBackground: React.FC<LaneBackgroundProps> = ({
@@ -95,9 +113,12 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
   onMoveDown,
   onToggleCollapse,
   onResize,
+  onResizeStart,
   isFirst,
   isLast,
   laneCount,
+  autoEdit,
+  onAutoEditConsumed,
 }) => {
   const { t } = useTranslation();
   const [editing, setEditing] = useState(false);
@@ -106,8 +127,28 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (editing) inputRef.current?.focus();
+    if (editing) {
+      inputRef.current?.focus();
+      // PF-P2-02: select the default label so typing replaces it outright —
+      // matches the "name it now" intent of auto-entering edit mode, and is
+      // harmless for the manual double-click path too.
+      inputRef.current?.select();
+    }
   }, [editing]);
+
+  // PF-P2-02: the lane just created by `addLane` (IdeaProcessFlowTool.tsx)
+  // arrives with `autoEdit=true` on its FIRST render (new lane id ⇒ fresh
+  // `key`, fresh mount) — enter naming immediately instead of waiting for a
+  // double-click, then tell the parent the trigger was consumed so it clears
+  // `newLaneId` and doesn't re-arm on unrelated re-renders.
+  useEffect(() => {
+    if (autoEdit) {
+      setValue(lane.label);
+      setEditing(true);
+      onAutoEditConsumed?.(lane.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoEdit]);
 
   const commit = () => {
     setEditing(false);
@@ -125,6 +166,9 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
     if (locked || collapsed || !onResize) return;
     ev.preventDefault();
     ev.stopPropagation();
+    // N6.3: one undo snapshot for the WHOLE drag, taken before the first
+    // height mutation — see `onResizeStart` doc above.
+    onResizeStart?.(lane.id);
     const startY = ev.clientY;
     const startH = flowHeight;
     const safeZoom = zoom > 0 ? zoom : 1;
@@ -189,7 +233,15 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
             />
           ) : (
             <div
-              className="text-[10px] font-semibold text-c-text-muted select-none cursor-pointer hover:text-c-text-secondary"
+              // RISK-35 (S1-CONTRAST, 2026-08-12): text-c-text-muted measured 4.43:1
+              // against the 4.5:1 WCAG 1.4.3 text bar in light theme (a hairline miss
+              // on the lane's `${lane.color}15` tinted background). text-c-text-secondary
+              // clears it (7.24:1+ — see
+              // docs/qa/ideas-complete-transformation-2026-08-09/21_FOCUS_AND_CONTRAST.md
+              // §8); dark theme already passed (5.67:1) and gains headroom. Hover now
+              // steps up to full-strength text-c-text to keep a visible hover cue since
+              // resting and previous hover token converge.
+              className="text-[10px] font-semibold text-c-text-secondary select-none cursor-pointer hover:text-c-text"
               onDoubleClick={() => {
                 if (!locked) {
                   setValue(lane.label);
@@ -216,7 +268,8 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
                 <button
                   onClick={() => onMoveUp?.(lane.id)}
                   className="p-0.5 rounded hover:bg-c-surface"
-                  title="Move up"
+                  title={t('processFlow.laneSystem.moveUp', 'Move lane up')}
+                  aria-label={t('processFlow.laneSystem.moveUp', 'Move lane up')}
                 >
                   <ArrowDownUp size={9} className="text-c-text-secondary rotate-180" />
                 </button>
@@ -225,7 +278,8 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
                 <button
                   onClick={() => onMoveDown?.(lane.id)}
                   className="p-0.5 rounded hover:bg-c-surface"
-                  title="Move down"
+                  title={t('processFlow.laneSystem.moveDown', 'Move lane down')}
+                  aria-label={t('processFlow.laneSystem.moveDown', 'Move lane down')}
                 >
                   <ArrowDownUp size={9} className="text-c-text-secondary" />
                 </button>
@@ -233,7 +287,8 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
               <button
                 onClick={() => setShowColorPicker(!showColorPicker)}
                 className="p-0.5 rounded hover:bg-c-surface"
-                title="Change color"
+                title={t('processFlow.laneSystem.changeColor', 'Change lane color')}
+                aria-label={t('processFlow.laneSystem.changeColor', 'Change lane color')}
               >
                 <Palette size={9} className="text-c-text-secondary" />
               </button>
@@ -241,7 +296,8 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
                 <button
                   onClick={() => onDelete?.(lane.id)}
                   className="p-0.5 rounded hover:bg-danger-50 dark:hover:bg-danger-900/20"
-                  title="Delete lane"
+                  title={t('processFlow.laneSystem.deleteLane', 'Delete lane')}
+                  aria-label={t('processFlow.laneSystem.deleteLane', 'Delete lane')}
                 >
                   <X size={9} className="text-danger-400" />
                 </button>
@@ -297,7 +353,18 @@ export interface LaneSystemProps {
   onToggleCollapse?: (laneId: string) => void;
   /** F5a A3: commit a resized lane height (px). */
   onResize?: (laneId: string, height: number) => void;
+  /** N6.3: fired once per resize drag, before the first `onResize` call. */
+  onResizeStart?: (laneId: string) => void;
   dragOverLaneId: string | null;
+  /**
+   * PF-P2-02 (2026-08-10): id of the lane that should auto-enter inline
+   * naming right now (set by `addLane` in `IdeaProcessFlowTool.tsx` when a
+   * lane is created; `null`/absent the rest of the time — existing
+   * double-click-to-rename behavior is untouched).
+   */
+  autoEditLaneId?: string | null;
+  /** Fired once the matching lane has entered edit mode, so the caller can clear `autoEditLaneId`. */
+  onAutoEditConsumed?: (laneId: string) => void;
   /**
    * B2 2026-07-27: current ReactFlow viewport. Lane bands are laid out in FLOW
    * coordinates (same space as `node.position.y`, see `laneBandLayout` /
@@ -320,7 +387,10 @@ export const LaneSystem: React.FC<LaneSystemProps> = ({
   onMoveDown,
   onToggleCollapse,
   onResize,
+  onResizeStart,
   dragOverLaneId,
+  autoEditLaneId,
+  onAutoEditConsumed,
   viewport,
 }) => {
   const layout = laneBandLayout(lanes, LANE_HEIGHT);
@@ -354,9 +424,12 @@ export const LaneSystem: React.FC<LaneSystemProps> = ({
             onMoveDown={onMoveDown}
             onToggleCollapse={onToggleCollapse}
             onResize={onResize}
+            onResizeStart={onResizeStart}
             isFirst={idx === 0}
             isLast={idx === lanes.length - 1}
             laneCount={lanes.length}
+            autoEdit={autoEditLaneId != null && autoEditLaneId === lane.id}
+            onAutoEditConsumed={onAutoEditConsumed}
           />
         );
       })}

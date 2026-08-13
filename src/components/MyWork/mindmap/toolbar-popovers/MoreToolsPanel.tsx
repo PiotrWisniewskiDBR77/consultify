@@ -3,7 +3,6 @@ import {
   Camera,
   ChevronsDownUp,
   ChevronsUpDown,
-  Eye,
   Globe,
   History,
   Layout,
@@ -59,13 +58,14 @@ const ALL_TOOLS: ToolItem[] = [
     labelEn: 'Fit view',
     category: 'visual',
   },
-  {
-    action: 'mm_presentation',
-    tkey: 'myWorkMindmap.moreTools.presentationMode',
-    iconEl: Eye,
-    labelEn: 'Presentation mode',
-    category: 'visual',
-  },
+  // MM-P2-01 (2026-08-10, `08_P1_P3_EXECUTION_PLAN_FOR_CLAUDE.md` §6 Wave 2):
+  // "Presentation mode" used to be listed HERE too, dispatching the exact
+  // same `mm_presentation` action as the rail's dedicated Play-icon "Present"
+  // button (`CanvasLeftToolbar.tsx`'s `MM_CONTEXT_SLOTS`) — an unlabeled,
+  // undiscoverable duplicate of the same command. Removed rather than
+  // re-labeled: the rail button is a single click, always visible while the
+  // Mind Map tool is active, so this entry added a second, more-buried path
+  // to identical behavior with no distinct purpose of its own.
   {
     action: 'mm_fold_0',
     tkey: 'myWorkMindmap.moreTools.collapseToRoot',

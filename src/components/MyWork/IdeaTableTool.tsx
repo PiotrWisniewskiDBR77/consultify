@@ -13,11 +13,13 @@ import {
   ArrowUp,
   ArrowUpDown,
   Brain,
+  Calculator,
   Calendar,
   Camera,
   ChevronDown,
   ClipboardCopy,
   Columns3,
+  Copy,
   Download,
   Eye,
   EyeOff,
@@ -47,6 +49,7 @@ import {
   Redo2,
   Rocket,
   Save,
+  Scale,
   Send,
   Sparkles,
   StickyNote,
@@ -64,12 +67,16 @@ import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { type ActionContext, runIdeaAction } from '@/actions/ideaActionRegistry';
+import { CanvasContextMenu } from '@/components/shared/CanvasContextMenu';
 import { usePortalSlot } from '@/hooks/usePortalSlot';
 import { useV8FeatureFlag } from '@/hooks/useV8FeatureFlag';
 import { Api } from '@/services/api';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
+import { isIdeaDecisionLogEnabled } from '@/utils/ideaDecisionLogFlag';
+import { isIdeaFinancialCaseEnabled } from '@/utils/ideaFinancialCaseFlag';
 import {
   IDEA_MENU1_TOOL_SLOT_ID,
   isIdeaTableGuidedBarEnabled,
@@ -131,11 +138,21 @@ import {
 } from './table/csvUtils';
 import { DistributionManager } from './table/distribution/DistributionManager';
 import { DistributionBuilder } from './table/DistributionBuilder';
+import {
+  applyCsvImportCap,
+  applyRowAddCap,
+  computeRowRenderCap,
+  MAX_TABLE_ROWS,
+} from './table/tableRowLimits';
 import { computeHeatmapStyles, HeatmapControls } from './table/EmbeddedAnalytics';
 import { ExportToPresentation } from './table/ExportToPresentation';
 import { FilterBuilder } from './table/FilterBuilder';
 import { FilterPanel } from './table/FilterPanel';
+import { FinancialCaseDialog } from './table/financial/FinancialCaseDialog';
+import type { FinancialCaseStatus } from './table/financial/financialTypes';
 import FormBuilder from './table/FormBuilder';
+import { IdeaDecisionLogPanel } from './table/IdeaDecisionLogPanel';
+import type { FinancialFreshnessResult } from './table/ideaDecisionGovernance';
 import { FormsIndex } from './table/forms/FormsIndex';
 import { batchEvaluateFormulas } from './table/FormulaEngineV2';
 import { FrameworkGenerator } from './table/FrameworkGenerator';
@@ -153,6 +170,7 @@ import { MatrixView } from './table/MatrixView';
 import { MobileToolbarMenu } from './table/MobileToolbarMenu';
 import { PresenceIndicators } from './table/PresenceIndicators';
 import { RecordExpandModal } from './table/RecordExpandModal';
+import { RecordTemplateManager } from './table/RecordTemplateManager';
 import { RowDetailPanel } from './table/RowDetailPanel';
 import { type RowTemplate, RowTemplatePicker } from './table/RowTemplatePicker';
 import { SharingManager } from './table/sharing/SharingManager';
@@ -484,6 +502,26 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     onTableContextChange,
   ]);
 
+  // TB-P1-02: the AddColumnDialog mounted below (legacy-mode "Add field")
+  // must call the SAME schema-mutation command every other creation path
+  // uses (Columns → New column, AI proposals, view-setup blockers) — the
+  // usePlatform switch, not a raw local handler that would silently miss
+  // platform persistence.
+  const effectiveAddColumn = usePlatform ? platformIntegration.handleAddColumn : handleAddColumn;
+  const effectiveDeleteColumn = usePlatform ? platformIntegration.deleteColumn : deleteColumn;
+  // Defect fix (2026-08-10, see ideaActionRegistry.ts N8.2 column-menu block):
+  // the column context menu's Hide/Delete/inline-rename called the LEGACY
+  // toggleColumn/deleteColumn/renameColumn unconditionally, breaking this
+  // file's own `usePlatform ? platformIntegration.X : X` convention that the
+  // rendered headers (`_visCols` above) already follow. In platform mode
+  // that mutated dead legacy state — Hide/Rename did nothing visible, and
+  // Delete additionally fired a lying "Column deleted" success toast.
+  // `effectiveDeleteColumn` above was already correct (reused by
+  // AddColumnDialog's onUndo); these two complete the same pattern for the
+  // other two mutations so all three follow the file-wide convention.
+  const effectiveToggleColumn = usePlatform ? platformIntegration.toggleColumn : toggleColumn;
+  const effectiveRenameColumn = usePlatform ? platformIntegration.renameColumn : renameColumn;
+
   // Platform override: rows
   const effectiveNodes = (usePlatform ? platformIntegration.nodes : nodes) ?? [];
   // RB-018: Edges view showed raw node ids for Source/Target — resolve to the
@@ -594,6 +632,20 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     edges
   );
 
+  // ── Row render cap (default plain-table view only — see MAX_TABLE_ROWS) ────
+  // Aggregations/selection/"select all" still operate on the FULL row set —
+  // only what gets mounted into real <tr> DOM nodes is capped. Grouped view
+  // spends the same global budget across groups, in group order, so the
+  // banner's "first N" claim stays literally true.
+  const tableRenderCap = useMemo(
+    () => computeRowRenderCap(processedRowsWithRollups, effectiveGroupedRows),
+    [effectiveGroupedRows, processedRowsWithRollups]
+  );
+  const tableRenderCapHiddenCount = Math.max(
+    0,
+    tableRenderCap.totalCount - tableRenderCap.shownCount
+  );
+
   // ── Persistence hook ────────────────────────────────────────────────────────
   const { loading, saving, saveStatusLabel, handleSave, loadError, refresh } = useTablePersistence({
     open,
@@ -674,6 +726,60 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   // w trakcie sesji (localStorage) i tak wymaga przeładowania, żeby wszystkie
   // powierzchnie (pasek, pusty stan, slot Menu 1) były spójne.
   const guidedBar = useMemo(() => isIdeaTableGuidedBarEnabled(), []);
+  /** Karta finansowa (Program E / epic E09) — domyślnie OFF (CLAUDE.md #7). */
+  const financialCaseEnabled = useMemo(() => isIdeaFinancialCaseEnabled(), []);
+  /** Log decyzji — realny model (Program D / epic E08 §6.4) — domyślnie OFF
+   *  (CLAUDE.md #7). NIE dotyczy istniejącej zakładki „Log decyzji"
+   *  (kolumna `decision`), ktora zostaje wlaczona jak dotychczas. */
+  const decisionLogEnabled = useMemo(() => isIdeaDecisionLogEnabled(), []);
+  // ── B4: financial freshness → decision log approval gate ─────────────────
+  // One Financial Case per Idea Table tool instance (mounted once via
+  // `FinancialCaseDialog`, not per row) — `financialCaseFreshness` is that
+  // ONE status, reported by `FinancialCaseView.onStatusChange`. The decision
+  // log's `evaluateApprovalGate` reads this for every row's approval
+  // (there is exactly one financial case to be stale/fresh about). `null`
+  // (dialog never opened this session) maps to the same honest 'unknown' the
+  // module's own `UNWIRED_FINANCIAL_FRESHNESS_PROVIDER` would report — this
+  // is a REAL status once the dialog has been opened and computed at least
+  // once, not a hardcoded default.
+  const [financialCaseStatus, setFinancialCaseStatus] = useState<{
+    status: FinancialCaseStatus;
+    lastComputedAt: string | null;
+  } | null>(null);
+  const handleFinancialStatusChange = useCallback(
+    (status: FinancialCaseStatus, lastComputedAt: string | null) => {
+      setFinancialCaseStatus({ status, lastComputedAt });
+    },
+    []
+  );
+  const financialFreshnessProvider = useCallback((): FinancialFreshnessResult => {
+    if (!financialCaseStatus) {
+      return {
+        status: 'unknown',
+        reason: isPl
+          ? 'Karta finansowa nie była jeszcze otwarta w tej sesji.'
+          : 'The financial case has not been opened yet this session.',
+      };
+    }
+    if (financialCaseStatus.status === 'fresh') {
+      return { status: 'fresh', asOf: financialCaseStatus.lastComputedAt ?? undefined };
+    }
+    if (financialCaseStatus.status === 'blocked') {
+      return {
+        status: 'unknown',
+        reason: isPl
+          ? 'Silnik obliczeniowy karty finansowej nie jest podłączony.'
+          : 'The financial case calculation engine is not connected.',
+      };
+    }
+    return {
+      status: 'stale',
+      asOf: financialCaseStatus.lastComputedAt ?? undefined,
+      reason: isPl
+        ? `Karta finansowa ma status „${financialCaseStatus.status}" — przelicz przed zatwierdzeniem.`
+        : `The financial case is "${financialCaseStatus.status}" — recompute before approving.`,
+    };
+  }, [financialCaseStatus, isPl]);
   /** Cel portalu „Zapisz" w Menu 1 (obok Teresy). `null` → zostajemy w pasku. */
   const menu1ToolSlot = usePortalSlot(guidedBar ? IDEA_MENU1_TOOL_SLOT_ID : null);
 
@@ -705,6 +811,8 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   const [showScoringModel, setShowScoringModel] = useState(false);
   const [showExportPresentation, setShowExportPresentation] = useState(false);
   const [showPipeline, setShowPipeline] = useState(false);
+  const [showFinancialCase, setShowFinancialCase] = useState(false);
+  const [showDecisionLog, setShowDecisionLog] = useState(false);
   const [showCopilot, setShowCopilot] = useState(false);
   const [showVoiceInput, setShowVoiceInput] = useState(false);
   const [showCrossRelations, setShowCrossRelations] = useState(false);
@@ -736,6 +844,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   const [showDistributionBuilder, setShowDistributionBuilder] = useState(false);
   const [showAutomationsManager, setShowAutomationsManager] = useState(false);
   const [showSyncManager, setShowSyncManager] = useState(false);
+  // RISK-06 — RecordTemplateManager mount: reachable from the kebab's
+  // "Platforma" section (usePlatform only — it needs real TablePlatformField
+  // schema and a real tableId, see RecordTemplateManager's own props).
+  const [showRecordTemplateManager, setShowRecordTemplateManager] = useState(false);
   const [showSharingManager, setShowSharingManager] = useState(false);
   const [showDistributionManager, setShowDistributionManager] = useState(false);
   const [showConsultifyLink, setShowConsultifyLink] = useState(false);
@@ -968,6 +1080,34 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     [isPl]
   );
 
+  // N8.2 (2026-08-10) — Row context menu "Edit"/"Add note" bodies, extracted
+  // out of the JSX onSelect so both the human right-click path AND the new
+  // Teresa bus receiver (useTableQuickActions.ts, tbl_row_edit/tbl_row_note)
+  // call the EXACT same code — not duplicated, not paraphrased. Extraction
+  // only; the logic itself is byte-identical to what was inline before.
+  const openRowEditPanel = useCallback(
+    (rowId: string) => {
+      setDetailInitialTab('properties');
+      if (usePlatform) {
+        setExpandedRecordId(rowId);
+      } else {
+        setDetailNodeId(rowId);
+        setDetailMode('full');
+      }
+    },
+    [usePlatform]
+  );
+  const openRowNotePanel = useCallback((rowId: string) => {
+    // "Add note" opens the record's Comments tab specifically. RecordExpandModal
+    // (the usePlatform "Edit" target) has no comment thread — RowDetailPanel does
+    // (TablePlatformApi.listRecordComments/addRecordComment, tab "comments" for both
+    // platform and legacy records) — so always route through it here, even when the
+    // table is in platform mode.
+    setDetailInitialTab('comments');
+    setDetailNodeId(rowId);
+    setDetailMode('full');
+  }, []);
+
   // ── Quick action listener (extracted to hook) ────────────────────────────────
   useTableQuickActions({
     ideaId,
@@ -976,6 +1116,24 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     nodes,
     nodesUndo,
     selectedRowIds,
+    // N8 (2026-08-10) — te cztery to dokładnie te same wartości, które
+    // `viewContextMenu`'s "Update" item (poniżej w tym pliku) czyta z domknięcia
+    // komponentu; przekazane też do hooka, żeby `tbl_view_update` (Teresa) budował
+    // IDENTYCZNY payload co klik człowieka.
+    savedViews,
+    sort,
+    filters,
+    groupBy,
+    viewLayout,
+    // N9 (2026-08-10) — `tbl_cell_clear` guard (menu komórki) czyta ten sam
+    // `locked`, który `cellContextMenu`'s "Clear cell" onSelect już sprawdza
+    // (~L4157) — patrz `useTableQuickActions.ts`'s `UseTableQuickActionsOpts.locked`.
+    locked,
+    // N10 (2026-08-10) — `TableToolbar.tsx`'s widok zapisany, ścieżka PLATFORM
+    // (`idea.view.table_platform_saved_view_rename`/`_delete`). Osobne od
+    // `savedViews` wyżej (legacy) — patrz komentarz przy
+    // `UseTableQuickActionsOpts.platformSavedViews`.
+    platformSavedViews: platformIntegration.savedViews,
     handlers: {
       handleAddRow,
       setShowRowTemplatePicker,
@@ -999,6 +1157,52 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
       onUndo: () => platformUndoRef.current(),
       onRedo: () => nodesUndo.redo(),
       onFieldFillProposal: setFieldFillProposal,
+      updateSavedView,
+      deleteSavedView,
+      // N10 (2026-08-10) — PLATFORM widok zapisany (patrz komentarz przy
+      // `UseTableQuickActionsOpts.platformSavedViews`/`QuickActionHandlers.platformUpdateSavedView`
+      // w `useTableQuickActions.ts`). Realne, asynchroniczne funkcje serwera —
+      // DOKŁADNIE te, które `TableToolbar.tsx`'s `viewContextMenu` już woła
+      // przez `useTableData()` (`ctx.updateSavedView`/`.deleteSavedView`).
+      platformUpdateSavedView: platformIntegration.updateSavedView,
+      platformDeleteSavedView: platformIntegration.deleteSavedView,
+      // N8.2 (2026-08-10) — menu kolumny. DOKŁADNIE te same referencje, które
+      // woła klik człowieka niżej w tym pliku (`colContextMenu`, `_visCols`
+      // headers inline-rename). Defect fix (2026-08-10): the human click's
+      // Hide/Delete/Rename were LEGACY-only (dead in platform mode; Delete
+      // additionally lied with a success toast) while Teresa got the same
+      // legacy fns "for parity" — a deliberate stopgap documented in
+      // ideaActionRegistry.ts pending this exact fix. Now that the human
+      // click itself is dual-path (`effectiveToggleColumn`/
+      // `effectiveDeleteColumn`/`effectiveRenameColumn`, defined above,
+      // `usePlatform ? platformIntegration.X : X` like every other mutation
+      // in this file), Teresa is handed the SAME dual-path functions so the
+      // two dispatchers keep calling one real mechanism instead of
+      // re-diverging (Teresa legacy-only, click platform-aware).
+      // `effectiveCycleSort` was already dual-path.
+      cycleSort: effectiveCycleSort,
+      toggleColumn: effectiveToggleColumn,
+      deleteColumn: effectiveDeleteColumn,
+      renameColumn: effectiveRenameColumn,
+      // N8.2 (2026-08-10) — row context menu ("Edit"/"Add note"/"Duplicate row"/
+      // "Delete row"). `openRowEditPanel`/`openRowNotePanel` are the exact same
+      // closures the JSX onSelect below calls (see comment above their
+      // declaration). `effectiveHandleDuplicateRow`/`effectiveHandleDeleteRow`
+      // are the SAME dual legacy/platform-aware functions the row menu's
+      // "Duplicate row"/"Delete row" already call (declared ~line 511-516) —
+      // not new functions, just handed to the hook so Teresa reaches the same
+      // dispatch as a human right-click.
+      openRowEditPanel,
+      openRowNotePanel,
+      duplicateRow: effectiveHandleDuplicateRow,
+      deleteRow: (rowId: string) => {
+        effectiveHandleDeleteRow(rowId);
+        toast.success(t('ideas.table.rowDeleted', 'Row deleted'));
+      },
+      // N9 (2026-08-10) — `idea.cell.clear` (registry). DOKŁADNIE `_fieldChange`
+      // (dual-path selector zdefiniowany wyżej, ~L665) — ta sama funkcja, którą
+      // woła klik człowieka w cellContextMenu "Clear cell" (~L4169).
+      fieldChange: _fieldChange,
     },
   });
 
@@ -1040,6 +1244,11 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   );
 
   // ── Framework apply ────────────────────────────────────────────────────────
+  // RISK-36: framework apply is a multi-row entry path exactly like CSV
+  // import — it must obey the same MAX_TABLE_ROWS ceiling (checked against
+  // the RESULTING count, `applyRowAddCap`'s convention) and never truncate
+  // silently. Columns still land even when every row is capped/blocked: the
+  // framework's schema is useful on its own, rows can be added manually.
   const handleFrameworkApply = useCallback(
     (fwColumns: ColumnDef[], fwRows: TableNode[]) => {
       setColumns((prev) => {
@@ -1047,18 +1256,115 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         const newCols = fwColumns.filter((c) => !existingKeys.has(c.key));
         return [...prev, ...newCols];
       });
-      nodesUndo.push([...nodes, ...fwRows]);
-      trackFunnelEvent('ideas_table_framework_applied', { ideaId, rowCount: fwRows.length });
+      const capDecision = applyRowAddCap(nodes.length, fwRows);
+      if (capDecision.blocked) {
+        toast.error(
+          t(
+            'ideas.table.frameworkApplyBlockedAtCap',
+            'Table has reached the {{max}}-row limit — remove rows before applying this framework.',
+            { max: MAX_TABLE_ROWS }
+          )
+        );
+        return;
+      }
+      const { rowsToAdd, truncatedCount } = capDecision;
+      nodesUndo.push([...nodes, ...rowsToAdd]);
+      if (truncatedCount > 0) {
+        toast.error(
+          t(
+            'ideas.table.frameworkApplyTruncatedAtCap',
+            'Added {{added}} of {{total}} framework rows — table limit is {{max}} rows. {{skipped}} rows were not added.',
+            {
+              added: rowsToAdd.length,
+              total: fwRows.length,
+              max: MAX_TABLE_ROWS,
+              skipped: truncatedCount,
+            }
+          )
+        );
+      }
+      trackFunnelEvent('ideas_table_framework_applied', {
+        ideaId,
+        rowCount: rowsToAdd.length,
+        truncated: truncatedCount > 0,
+      });
     },
-    [ideaId, nodes, nodesUndo]
+    [ideaId, nodes, nodesUndo, t]
   );
 
   // ── AI add rows ────────────────────────────────────────────────────────────
+  // RISK-36: fan-in point for every AI-driven multi-row add (AITableAssistant,
+  // AITableProposal, AICopilotMode, VoiceImageInput all call this one
+  // callback) — guarding it here covers all four entry points at once.
   const handleAIAddRows = useCallback(
     (newRows: TableNode[]) => {
-      nodesUndo.push([...nodes, ...newRows]);
+      const capDecision = applyRowAddCap(nodes.length, newRows);
+      if (capDecision.blocked) {
+        toast.error(
+          t(
+            'ideas.table.aiAddRowsBlockedAtCap',
+            'Table has reached the {{max}}-row limit — remove rows before adding more with AI.',
+            { max: MAX_TABLE_ROWS }
+          )
+        );
+        return;
+      }
+      const { rowsToAdd, truncatedCount } = capDecision;
+      nodesUndo.push([...nodes, ...rowsToAdd]);
+      if (truncatedCount > 0) {
+        toast.error(
+          t(
+            'ideas.table.aiAddRowsTruncatedAtCap',
+            'Added {{added}} of {{total}} AI-generated rows — table limit is {{max}} rows. {{skipped}} rows were not added.',
+            {
+              added: rowsToAdd.length,
+              total: newRows.length,
+              max: MAX_TABLE_ROWS,
+              skipped: truncatedCount,
+            }
+          )
+        );
+      }
+      trackFunnelEvent('ideas_table_row_added', {
+        ideaId,
+        source: 'ai_add_rows',
+        rowCount: rowsToAdd.length,
+        truncated: truncatedCount > 0,
+      });
     },
-    [nodes, nodesUndo]
+    [ideaId, nodes, nodesUndo, t]
+  );
+
+  // ── Record template use (RISK-06 wiring) ────────────────────────────────────
+  // `RecordTemplateManager.handleUse` already strips `_is_template`/
+  // `_template_name` before calling this — `data` is plain pre-filled field
+  // values. Single-row add, same client-side nodesUndo.push pattern already
+  // used by `handleAddRow`/`handleTemplateSelect`/the kanban·calendar·grid
+  // "add record" path (LegacyViewRouter onAddRecord below) — not a RISK-36
+  // multi-row path, so no cap check (matches those siblings' convention).
+  const handleUseRecordTemplate = useCallback(
+    (data: Record<string, unknown>) => {
+      if (locked) return;
+      const id = `node-${Date.now()}`;
+      const now = new Date().toISOString();
+      const newNode: TableNode = {
+        id,
+        type: 'idea',
+        data: {
+          label: '',
+          status: 'todo',
+          ...data,
+          created_time: now,
+          created_by: currentUserId,
+          last_edited_time: now,
+          last_edited_by: currentUserId,
+        },
+        position: { x: 0, y: 0 },
+      };
+      nodesUndo.push([...nodes, newNode]);
+      trackFunnelEvent('ideas_table_row_added', { ideaId, source: 'record_template' });
+    },
+    [currentUserId, ideaId, locked, nodes, nodesUndo]
   );
 
   // ── Color palette auto-assign ─────────────────────────────────────────────
@@ -1116,18 +1422,60 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   );
 
   // ── Scoring model handler ──────────────────────────────────────────────────
+  // `canonHistoryEvent`/`canonModelVersion` are set only when IdeaScoringModel
+  // is in "9 dimensions" canon mode (ideaScoringGovernance, epic E08 §6.3) —
+  // appended to the row's own append-only `data.scoreHistory` here, since this
+  // is the one place with access to each row's EXISTING history to append to.
   const handleApplyScores = useCallback(
-    (scores: { nodeId: string; score: number; rank: number }[]) => {
+    (
+      scores: {
+        nodeId: string;
+        score: number;
+        rank: number;
+        canonHistoryEvent?: import('./table/ideaScoringGovernance').ScoreHistory[number];
+        canonModelVersion?: number;
+      }[]
+    ) => {
       const scoreMap = new Map(scores.map((s) => [s.nodeId, s]));
       const next = nodes.map((n) => {
         const s = scoreMap.get(n.id);
         if (!s) return n;
-        return { ...n, data: { ...(n.data || {}), score: s.score, rank: s.rank } };
+        const prevHistory = Array.isArray(n.data?.scoreHistory) ? n.data!.scoreHistory : [];
+        const nextHistory = s.canonHistoryEvent
+          ? [...prevHistory, s.canonHistoryEvent]
+          : prevHistory;
+        return {
+          ...n,
+          data: {
+            ...(n.data || {}),
+            score: s.score,
+            rank: s.rank,
+            ...(s.canonHistoryEvent
+              ? { scoreHistory: nextHistory, scoreModelVersion: s.canonModelVersion }
+              : {}),
+          },
+        };
       });
       nodesUndo.push(next);
       toast.success(t('ideas.table.rankingApplied', 'Ranking applied'));
     },
     [isPl, nodes, nodesUndo]
+  );
+
+  // ── Decision log handler (ideaDecisionGovernance, epic E08 §6.4) ──────────
+  // Writes the FULL next `decisionLog` array for one row — same persistence
+  // pattern as `handleApplyScores`/every other tool dialog in this file
+  // (`nodesUndo`-backed realtime sync). Does NOT touch `data.decision`
+  // (the older single-select "Log decyzji" saved-view column) — see
+  // `IdeaDecisionLogPanel.tsx` header for why these are deliberately separate.
+  const handleApplyDecisionLog = useCallback(
+    (nodeId: string, nextLog: import('./table/ideaDecisionGovernance').DecisionLogEntry[]) => {
+      const next = nodes.map((n) =>
+        n.id === nodeId ? { ...n, data: { ...(n.data || {}), decisionLog: nextLog } } : n
+      );
+      nodesUndo.push(next);
+    },
+    [nodes, nodesUndo]
   );
 
   // ── Formula V2 evaluation ──────────────────────────────────────────────────
@@ -1202,15 +1550,50 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           toast.error(t('ideas.table.emptyCsvFile', 'Empty CSV file'));
           return;
         }
-        const { nodes: newNodes, newColumns } = csvToNodes(headers, rows, columns);
+        // G4-TABLE-SCALE: never silently drop rows. If the table is already
+        // at MAX_TABLE_ROWS, refuse the import outright; if the import would
+        // cross the cap, truncate to the remaining budget and say so — the
+        // success toast only fires on an untruncated import.
+        const capDecision = applyCsvImportCap(nodes.length, rows);
+        if (capDecision.blocked) {
+          toast.error(
+            t(
+              'ideas.table.csvImportBlockedAtCap',
+              'Table has reached the {{max}}-row limit — remove rows before importing more.',
+              { max: MAX_TABLE_ROWS }
+            )
+          );
+          return;
+        }
+        const { rowsToImport, truncatedCount } = capDecision;
+        const { nodes: newNodes, newColumns } = csvToNodes(headers, rowsToImport, columns);
         if (newColumns.length > 0) {
           setColumns((prev) => [...prev, ...newColumns]);
         }
         nodesUndo.push([...nodes, ...newNodes]);
-        toast.success(
-          t('ideas.table.importedRowsCsv', 'Imported {{count}} rows', { count: newNodes.length })
-        );
-        trackFunnelEvent('ideas_table_csv_imported', { ideaId, rowCount: newNodes.length });
+        if (truncatedCount > 0) {
+          toast.error(
+            t(
+              'ideas.table.csvImportTruncatedAtCap',
+              'Imported {{imported}} of {{total}} rows — table limit is {{max}} rows. {{skipped}} rows were not imported.',
+              {
+                imported: newNodes.length,
+                total: rows.length,
+                max: MAX_TABLE_ROWS,
+                skipped: truncatedCount,
+              }
+            )
+          );
+        } else {
+          toast.success(
+            t('ideas.table.importedRowsCsv', 'Imported {{count}} rows', { count: newNodes.length })
+          );
+        }
+        trackFunnelEvent('ideas_table_csv_imported', {
+          ideaId,
+          rowCount: newNodes.length,
+          truncated: truncatedCount > 0,
+        });
       };
       reader.readAsText(file);
       if (csvInputRef.current) csvInputRef.current.value = '';
@@ -1620,20 +2003,72 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   }, [open, usePlatform, nodesUndo.canUndo, nodesUndo.canRedo]);
 
   // ── Keyboard ───────────────────────────────────────────────────────────────
+  //
+  // Reconciliacja z Rejestrem Akcji (2026-08-10, E02 DoD) — patrz analogiczny
+  // komentarz w `IdeaMapWorkspace.tsx`/`IdeaWhiteboardTool.tsx`. `onEscape`/
+  // `onOpenAI`/`onShowShortcuts`/`onSwitchView`/`onToggleFilters`/
+  // `onToggleSummary` ŚWIADOMIE NIE przechodzą przez rejestr — czysta
+  // nawigacja/stan panelu UI, zero mutacji treści Tabeli (ta sama kategoria
+  // co Mapy myśli `onFocusSelection`).
+  const runTblKeyboardAction = useCallback(
+    (actionId: string, run: () => void) => {
+      const ctx: ActionContext = {
+        ideaId,
+        tool: 'table',
+        selection: EMPTY_SELECTION,
+        surface: 'context',
+        source: 'ui',
+        language: isPl ? 'pl' : 'en',
+        params: { run },
+      };
+      void runIdeaAction(actionId, ctx);
+    },
+    [ideaId, isPl]
+  );
+
+  /**
+   * N-inventory-c1/c2/c3 (2026-08-10): the LEGACY non-platform toolbar
+   * (`!usePlatform` branch below, ~L2440+) renders its own view tabs / save-view
+   * dialog / bulk-convert menu that call `applyView`/`saveCurrentView`/
+   * `handleBulkConvert` DIRECTLY — the exact same functions (same `views` hook
+   * instance, same `handleBulkConvert` passed to `TableToolbar` as
+   * `onBulkConvert`) that `TableToolbar.tsx`'s platform-mode toolbar already
+   * routes through `idea.view.table_apply_view` / `idea.view.table_save_view` /
+   * `idea.workspace.table_bulk_convert` (confirmed genuine match, not just
+   * label similarity — verified against `TableToolbar.tsx`'s `runAction` call
+   * sites before wiring). Same run-callback shape as `runTblKeyboardAction`
+   * above, `surface: 'toolbar'` to match the registered `surfaces: ['toolbar']`.
+   */
+  const runTblLegacyToolbarAction = useCallback(
+    (actionId: string, run: () => void) => {
+      const ctx: ActionContext = {
+        ideaId,
+        tool: 'table',
+        selection: EMPTY_SELECTION,
+        surface: 'toolbar',
+        source: 'ui',
+        language: isPl ? 'pl' : 'en',
+        params: { run },
+      };
+      void runIdeaAction(actionId, ctx);
+    },
+    [ideaId, isPl]
+  );
+
   useTableKeyboard({
     rowCount: processedRowsWithRollups.length,
     colCount: _visCols.length,
-    onUndo: handlePlatformUndo,
-    onRedo: nodesUndo.redo,
-    onDelete: _bulkDel,
+    onUndo: () => runTblKeyboardAction('idea.canvas.undo', handlePlatformUndo),
+    onRedo: () => runTblKeyboardAction('idea.canvas.redo', nodesUndo.redo),
+    onDelete: () => runTblKeyboardAction('table.rows.bulk_delete', _bulkDel),
     onEscape: () => {
       setDetailNodeId(null);
       (usePlatform ? effectiveSetSelectedRowIds : setSelectedRowIds)(new Set());
       onSelectionChange?.(EMPTY_SELECTION);
       setShowKeyboardShortcuts(false);
     },
-    onSave: _save,
-    onAddRow: _addRow,
+    onSave: () => runTblKeyboardAction('idea.canvas.tbl_save', _save),
+    onAddRow: () => runTblKeyboardAction('table.rows.add_row', _addRow),
     onOpenAI: () => setShowAIAssistant(true),
     onShowShortcuts: () => setShowKeyboardShortcuts(true),
     onSwitchView: (v) => (usePlatform ? effectiveSetViewLayout : setViewLayout)(v as any),
@@ -1928,6 +2363,20 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         heading: t('ideas.table.overflow.sectionMore', 'Więcej'),
         items: [
           {
+            id: 'financial-case',
+            label: t('ideas.financial.dialogTitle', 'Financial case'),
+            icon: Calculator,
+            onClick: () => setShowFinancialCase(true),
+            show: financialCaseEnabled,
+          },
+          {
+            id: 'decision-log',
+            label: isPl ? 'Log decyzji' : 'Decision log',
+            icon: Scale,
+            onClick: () => setShowDecisionLog(true),
+            show: decisionLogEnabled,
+          },
+          {
             id: 'export-presentation',
             label: t('ideas.table.exportToPresentation', 'Export to Presentation'),
             icon: Presentation,
@@ -2043,6 +2492,20 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             show: usePlatform && !locked,
           },
           {
+            // RISK-06 — was a dead mount (component + its two
+            // `table.record_template.*` registry actions, zero UI imports).
+            // Wired here: same "Platforma" section as Automations/Data Sync/
+            // Sharing (also usePlatform-only, also schema/table-management
+            // dialogs) — where a user managing this table would look for
+            // saved field-value templates.
+            id: 'record-templates',
+            label: t('ideas.table.recordTemplates.recordTemplatesTitle', 'Record Templates'),
+            icon: Copy,
+            onClick: () => setShowRecordTemplateManager(true),
+            show: usePlatform,
+            testId: 'idea-table-overflow-record-templates',
+          },
+          {
             id: 'automations',
             label: t('ideas.table.automations', 'Automations'),
             icon: Rocket,
@@ -2151,6 +2614,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               onShowSharingManager={() => setShowSharingManager(true)}
               onShowDistributionManager={() => setShowDistributionManager(true)}
               onShowConsultifyLink={() => setShowConsultifyLink(true)}
+              onShowRecordTemplateManager={() => setShowRecordTemplateManager(true)}
               heatmapColumns={heatmapColumns}
               showHeatmap={showHeatmap}
               onToggleHeatmap={() => setShowHeatmap((p) => !p)}
@@ -2238,11 +2702,15 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                             setRenamingViewId(null);
                           }
                         }}
-                        className="px-2 py-1 rounded-lg text-[10px] font-bold bg-c-surface border border-c-border-strong outline-none w-20"
+                        className="px-2 py-1 rounded-lg text-[10px] font-bold bg-c-surface border border-c-border-strong outline-none focus:border-c-focus w-20"
                       />
                     ) : (
                       <button
-                        onClick={() => applyView(v)}
+                        onClick={() =>
+                          runTblLegacyToolbarAction('idea.view.table_apply_view', () =>
+                            applyView(v)
+                          )
+                        }
                         onContextMenu={(e) => {
                           e.preventDefault();
                           if (v.id !== 'default')
@@ -2308,10 +2776,12 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                       </button>
                       <button
                         disabled={!saveViewName.trim()}
-                        onClick={() => {
-                          saveCurrentView(saveViewName.trim(), columns);
-                          setShowSaveViewDialog(false);
-                        }}
+                        onClick={() =>
+                          runTblLegacyToolbarAction('idea.view.table_save_view', () => {
+                            saveCurrentView(saveViewName.trim(), columns);
+                            setShowSaveViewDialog(false);
+                          })
+                        }
                         className="px-3 py-1.5 text-xs rounded-lg bg-c-text text-c-surface hover:brightness-95 disabled:opacity-40"
                       >
                         {t('ideas.table.save', 'Save')}
@@ -2323,28 +2793,28 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
 
               {/* View context menu */}
               {viewContextMenu && (
-                <div className="fixed inset-0 z-[60]" onClick={() => setViewContextMenu(null)}>
-                  <div
-                    className="absolute bg-c-surface rounded-lg shadow-xl border border-slate-200/60 dark:border-white/[0.03] py-1 min-w-[140px]"
-                    style={{ left: viewContextMenu.x, top: viewContextMenu.y }}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <button
-                      className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
-                      onClick={() => {
+                <CanvasContextMenu
+                  x={viewContextMenu.x}
+                  y={viewContextMenu.y}
+                  ariaLabel={t('ideas.table.savedViewActions', 'Saved view actions')}
+                  testId="table-saved-view-context-menu"
+                  onClose={() => setViewContextMenu(null)}
+                  items={[
+                    {
+                      id: 'saved_view_rename',
+                      label: t('ideas.table.rename', 'Rename'),
+                      onSelect: () => {
                         const v = savedViews.find((sv) => sv.id === viewContextMenu.viewId);
                         if (v) {
                           setRenamingViewId(v.id);
                           setRenamingViewName(v.name);
                         }
-                        setViewContextMenu(null);
-                      }}
-                    >
-                      {t('ideas.table.rename', 'Rename')}
-                    </button>
-                    <button
-                      className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
-                      onClick={() => {
+                      },
+                    },
+                    {
+                      id: 'saved_view_update',
+                      label: t('ideas.table.update', 'Update'),
+                      onSelect: () => {
                         updateSavedView(viewContextMenu.viewId, {
                           sort: sort ? [sort] : undefined,
                           filters,
@@ -2357,29 +2827,32 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           })),
                         });
                         toast.success(t('ideas.table.viewUpdated', 'View updated'));
-                        setViewContextMenu(null);
-                      }}
-                    >
-                      {t('ideas.table.update', 'Update')}
-                    </button>
-                    <button
-                      className="w-full px-3 py-1.5 text-xs text-left hover:bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] text-c-danger"
-                      onClick={() => {
+                      },
+                    },
+                    {
+                      id: 'saved_view_delete',
+                      label: t('ideas.table.delete', 'Delete'),
+                      danger: true,
+                      separatorBefore: true,
+                      onSelect: () => {
                         deleteSavedView(viewContextMenu.viewId);
                         toast.success(t('ideas.table.viewDeleted', 'View deleted'));
-                        setViewContextMenu(null);
-                      }}
-                    >
-                      {t('ideas.table.delete', 'Delete')}
-                    </button>
-                  </div>
-                </div>
+                      },
+                    },
+                  ]}
+                />
               )}
 
               <div className="w-px h-5 bg-c-surface-raised" />
 
-              {/* Quick filter */}
-              <div className="relative flex-1 max-w-[200px]">
+              {/* Quick filter.
+                  2026-08-10 (E13 visual audit, HARD VISUAL FAIL "clipped
+                  essential control"): `flex-1` with no `min-width` let this
+                  input shrink to ~47px in the crowded view-tabs row (only
+                  "Fi" of "Filtruj…" legible). `min-w-[120px]` keeps it
+                  usable — the shared flex-wrap row now wraps this control to
+                  its own line instead of crushing it. */}
+              <div className="relative flex-1 min-w-[120px] max-w-[200px]">
                 <Filter
                   size={12}
                   className="absolute left-2 top-1/2 -translate-y-1/2 text-c-text-muted"
@@ -2554,6 +3027,28 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     >
                       <Trophy size={12} />
                     </button>
+
+                    {/* Financial Case (Program E / epic E09) — flag-gated, default OFF */}
+                    {financialCaseEnabled && (
+                      <button
+                        onClick={() => setShowFinancialCase(true)}
+                        className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
+                        title={t('ideas.financial.dialogTitle', 'Financial case')}
+                      >
+                        <Calculator size={12} />
+                      </button>
+                    )}
+
+                    {/* Decision Log (Program D / epic E08 §6.4) — flag-gated, default OFF */}
+                    {decisionLogEnabled && (
+                      <button
+                        onClick={() => setShowDecisionLog(true)}
+                        className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
+                        title={isPl ? 'Log decyzji' : 'Decision log'}
+                      >
+                        <Scale size={12} />
+                      </button>
+                    )}
 
                     {/* Export to Presentation */}
                     <button
@@ -2973,7 +3468,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   onClick={() => setShowCopilot(true)}
                   className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text-secondary hover:bg-c-surface-raised min-h-[44px]"
                 >
-                  <Brain size={14} /> AI Copilot
+                  <Brain size={14} /> {t('ideas.table.aiCopilot.label', 'AI Copilot')}
                 </button>
                 <button
                   onClick={() => setShowVoiceInput(true)}
@@ -3016,7 +3511,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     onClick={() => setShowFrameworkGen(true)}
                     className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-c-text-secondary hover:bg-c-surface-raised min-h-[44px]"
                   >
-                    <LayoutGrid size={14} /> Framework
+                    <LayoutGrid size={14} /> {t('ideas.table.framework', 'Framework')}
                   </button>
                 )}
                 {!locked && (
@@ -3089,20 +3584,24 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {!guidedBar && (
                   <>
                     <button
-                      onClick={() => {
-                        const csv = exportToCSV(_cols, effectiveNodes);
-                        downloadCSV(csv, `idea-${ideaId}.csv`);
-                      }}
+                      onClick={() =>
+                        runTblLegacyToolbarAction('idea.export.table_csv', () => {
+                          const csv = exportToCSV(_cols, effectiveNodes);
+                          downloadCSV(csv, `idea-${ideaId}.csv`);
+                        })
+                      }
                       className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
                       title={t('ideas.table.exportCsv', 'Export CSV')}
                     >
                       <Download size={12} />
                     </button>
                     <button
-                      onClick={() => {
-                        copyTableToClipboard(_cols, effectiveNodes);
-                        toast.success(t('ideas.table.copied', 'Copied'));
-                      }}
+                      onClick={() =>
+                        runTblLegacyToolbarAction('idea.table.copy_clipboard', () => {
+                          copyTableToClipboard(_cols, effectiveNodes);
+                          toast.success(t('ideas.table.copied', 'Copied'));
+                        })
+                      }
                       className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
                       title={t('ideas.table.copyToClipboard', 'Copy to clipboard')}
                     >
@@ -3153,10 +3652,11 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           setShowColumnConfig(false);
                           setShowAddColumn(true);
                         }}
+                        data-testid="table-columns-add-field"
                         className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-semibold text-c-text-muted hover:bg-c-surface-raised transition-colors"
                       >
                         <Plus size={12} />
-                        {t('ideas.table.newColumn', 'New column')}
+                        {t('ideas.table.newColumn', 'Add field')}
                       </button>
                     </div>
                   </div>
@@ -3207,7 +3707,12 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                             {(['initiative', 'task', 'decision'] as const).map((bulkTarget) => (
                               <button
                                 key={bulkTarget}
-                                onClick={() => handleBulkConvert(bulkTarget)}
+                                onClick={() =>
+                                  runTblLegacyToolbarAction(
+                                    'idea.workspace.table_bulk_convert',
+                                    () => handleBulkConvert(bulkTarget)
+                                  )
+                                }
                                 className="w-full text-left px-3 py-1.5 rounded-lg text-[11px] font-medium text-c-text-secondary hover:bg-c-surface-raised transition-colors capitalize"
                               >
                                 →{' '}
@@ -3661,272 +4166,299 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   onStartWithAI={() => setShowAIAssistant(true)}
                   onStartBlank={handleStartBlankTable}
                   onImportCSV={locked ? undefined : () => csvInputRef.current?.click()}
+                  onAddField={locked ? undefined : () => setShowAddColumn(true)}
                 />
               ) : (
-                <div
-                  ref={tableContainerRef}
-                  className="flex-1 overflow-x-auto overflow-y-auto relative -webkit-overflow-scrolling-touch"
-                >
-                  <ConnectionLines
-                    selectedNodeId={selectedNodeForLines}
-                    edges={edges}
-                    allNodes={effectiveNodes}
-                    containerRef={tableContainerRef}
-                  />
-                  <table /* §27-exempt: archetyp D Platforma-tabel (kolumny/kolejność/agregacje user-defined, jak GridView) — decyzja Piotra 07-13 w _ROZLICZENIE_1-88 ("zły archetyp do StandardTable, ZOSTAW"); przetagowane z §27-todo 07-14 */
-                    className="w-full text-left"
-                    style={{ width: tableWidth, minWidth: tableWidth, tableLayout: 'fixed' }}
-                  >
-                    <thead className="sticky top-0 bg-c-surface-raised backdrop-blur-sm border-b border-c-border-subtle z-10">
-                      <tr>
-                        <th className="w-8 px-2 py-2">
-                          <input
-                            type="checkbox"
-                            checked={
-                              _selIds.size === processedRowsWithRollups.length &&
-                              processedRowsWithRollups.length > 0
-                            }
-                            onChange={() => {
-                              const setSelFn = usePlatform
-                                ? effectiveSetSelectedRowIds
-                                : setSelectedRowIds;
-                              if (_selIds.size === processedRowsWithRollups.length) {
-                                setSelFn(new Set());
-                                onSelectionChange?.(EMPTY_SELECTION);
-                              } else {
-                                const all = new Set(processedRowsWithRollups.map((r) => r.id));
-                                setSelFn(all);
-                                onSelectionChange?.({
-                                  type: 'row',
-                                  count: all.size,
-                                  ids: Array.from(all),
-                                });
-                              }
-                            }}
-                            aria-label={t('ideas.table.a11y.selectAllRows', 'Select all rows')}
-                            className="w-3.5 h-3.5 rounded border-c-border-subtle text-c-text-muted focus:ring-c-focus"
-                          />
-                        </th>
-                        <th className="w-10 px-1 py-2 text-[10px] font-normal text-c-text-muted text-right select-none">
-                          #
-                        </th>
-                        {stretchedVisibleCols.map((col) => (
-                          <th
-                            key={col.key}
-                            style={{ width: col.width, minWidth: col.width, maxWidth: col.width }}
-                            className="relative px-2 py-2 text-[10px] font-bold uppercase tracking-wider text-c-text-muted select-none group"
-                            draggable={editingHeaderKey !== col.key}
-                            onDragStart={() => handleColDragStart(col.key)}
-                            onDragOver={(e) => handleColDragOver(e, col.key)}
-                            onDragEnd={handleColDragEnd}
-                          >
-                            {editingHeaderKey === col.key ? (
-                              <input
-                                autoFocus
-                                defaultValue={col.header}
-                                aria-label={t(
-                                  'ideas.table.a11y.renameColumnFor',
-                                  'New column name: {{column}}',
-                                  {
-                                    column: col.header,
-                                  }
-                                )}
-                                className="w-full bg-c-surface border border-c-border-subtle rounded px-1 py-0.5 text-[10px] font-bold uppercase tracking-wider text-c-text-secondary outline-none"
-                                onBlur={(e) => {
-                                  renameColumn(col.key, e.target.value);
-                                  setEditingHeaderKey(null);
-                                }}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    renameColumn(col.key, (e.target as HTMLInputElement).value);
-                                    setEditingHeaderKey(null);
-                                  }
-                                  if (e.key === 'Escape') setEditingHeaderKey(null);
-                                }}
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                            ) : (
-                              <div
-                                className="flex items-center gap-1 cursor-pointer hover:text-c-text-secondary"
-                                onClick={() => effectiveCycleSort(col.key)}
-                                onDoubleClick={(e) => {
-                                  e.stopPropagation();
-                                  if (!locked) setEditingHeaderKey(col.key);
-                                }}
-                                onContextMenu={(e) => {
-                                  e.preventDefault();
-                                  if (!locked)
-                                    setColContextMenu({
-                                      colKey: col.key,
-                                      x: e.clientX,
-                                      y: e.clientY,
-                                    });
-                                }}
-                              >
-                                <GripVertical
-                                  size={10}
-                                  className="opacity-0 group-hover:opacity-40 cursor-grab"
-                                />
-                                {col.header}
-                                {_sort?.key === col.key ? (
-                                  _sort.direction === 'asc' ? (
-                                    <ArrowUp size={10} />
-                                  ) : (
-                                    <ArrowDown size={10} />
-                                  )
-                                ) : (
-                                  <ArrowUpDown size={10} className="opacity-30" />
-                                )}
-                              </div>
-                            )}
-                            {/* Resize handle */}
-                            <div
-                              className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-c-surface-raised transition-colors"
-                              onMouseDown={(e) => handleResizeStart(col.key, e)}
-                            />
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {effectiveGroupedRows ? (
-                        Object.entries(effectiveGroupedRows).map(([groupKey, rows]) => (
-                          <React.Fragment key={groupKey}>
-                            <tr className="bg-c-surface-raised">
-                              <td
-                                colSpan={_visCols.length + 2}
-                                className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-c-text-muted"
-                              >
-                                {groupKey || t('ideas.table.empty', '(empty)')}{' '}
-                                <span className="text-c-text-muted font-normal ml-1">
-                                  ({rows.length})
-                                </span>
-                              </td>
-                            </tr>
-                            {rows.map((row, idx) => renderRow(row, idx))}
-                          </React.Fragment>
-                        ))
-                      ) : processedRowsWithRollups.length === 0 ? (
-                        <tr>
-                          <td colSpan={_visCols.length + 2} className="px-4 py-12 text-center">
-                            <div className="mx-auto max-w-xl text-c-text-muted">
-                              <div className="text-sm font-semibold mb-1">
-                                {t(
-                                  'ideas.table.thisTableIsStillEmpty',
-                                  'This table is still empty'
-                                )}
-                              </div>
-                              <div className="text-[11px] leading-relaxed">
-                                {t(
-                                  'ideas.table.startWithStructureChooseAFrameworkAddTheFirstRowOrUseATempla',
-                                  'Start with structure: choose a framework, add the first row, or use a template. Save AI for the moment when the table model is already trustworthy.'
-                                )}
-                              </div>
-                              {!locked && (
-                                <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-                                  <button
-                                    onClick={() => _addRow()}
-                                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-c-surface-raised text-c-text-secondary hover:bg-c-surface transition-colors"
-                                  >
-                                    <Plus size={14} />
-                                    {t('ideas.table.addBlankRow', 'Add blank row')}
-                                  </button>
-                                  <button
-                                    onClick={handleAddRowWithTemplate}
-                                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised transition-colors"
-                                  >
-                                    <Layers size={14} />
-                                    {t('ideas.table.useRowTemplate', 'Use row template')}
-                                  </button>
-                                  <button
-                                    onClick={() => setShowFrameworkGen(true)}
-                                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-[color-mix(in_srgb,var(--c-warning)_12%,transparent)] text-c-warning hover:bg-[color-mix(in_srgb,var(--c-warning)_20%,transparent)] transition-colors"
-                                  >
-                                    <LayoutGrid size={14} />
-                                    {t('ideas.table.buildFramework', 'Build framework')}
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ) : (
-                        processedRowsWithRollups.map((row, idx) => renderRow(row, idx))
+                <>
+                  {tableRenderCapHiddenCount > 0 && (
+                    <div
+                      data-testid="idea-table-row-cap-banner"
+                      role="status"
+                      className="shrink-0 px-4 py-1.5 text-[11px] font-medium text-c-text-secondary bg-[color-mix(in_srgb,var(--c-warning)_12%,transparent)] border-b border-c-border-subtle"
+                    >
+                      {t(
+                        'ideas.table.rowRenderCapBanner',
+                        'Showing first {{shown}} of {{total}} rows — {{hidden}} more are not rendered to keep the table responsive. Export or filter to see the rest.',
+                        {
+                          shown: tableRenderCap.shownCount,
+                          total: tableRenderCap.totalCount,
+                          hidden: tableRenderCapHiddenCount,
+                        }
                       )}
-                    </tbody>
-                    {/* Footer aggregations */}
-                    {processedRowsWithRollups.length > 0 &&
-                      _visCols.some((c) => c.aggregation && c.aggregation !== 'none') && (
-                        <tfoot className="border-t-2 border-c-border-subtle">
-                          <tr className="bg-c-surface-raised">
-                            <td className="px-2 py-1.5" />
-                            <td className="w-10 px-1 py-1.5" />
-                            {stretchedVisibleCols.map((col) => {
-                              const agg = col.aggregation;
-                              if (!agg || agg === 'none')
-                                return <td key={col.key} className="px-2 py-1.5" />;
-                              const values = processedRowsWithRollups.map((r) => r.data?.[col.key]);
-                              return (
-                                <td
-                                  key={col.key}
-                                  className="px-2 py-1.5 text-[10px] font-bold text-c-text-muted tabular-nums"
-                                >
-                                  <span className="text-[8px] text-c-text-muted uppercase mr-1">
-                                    {agg}
-                                  </span>
-                                  {computeAggregation(agg, values)}
-                                </td>
-                              );
-                            })}
-                          </tr>
-                        </tfoot>
-                      )}
-                  </table>
-
-                  {/* Edges table */}
-                  {edges.length > 0 && (
-                    <div className="border-t border-c-border-subtle mt-4">
-                      <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-c-text-muted">
-                        {t('ideas.table.edges', 'Edges')} ({edges.length})
-                      </div>
-                      <table
-                        /* §27-exempt: akcesoryjny podgląd krawędzi grafu wewnątrz tego samego narzędzia platformowego (patrz tabela wyżej), nie osobny ekran listowy */ className="w-full text-left"
-                      >
-                        <thead>
-                          <tr className="border-b border-c-border-subtle">
-                            <th className="px-3 py-1.5 text-[10px] font-bold uppercase text-c-text-muted">
-                              {t('ideas.table.source', 'Source')}
-                            </th>
-                            <th className="px-3 py-1.5 text-[10px] font-bold uppercase text-c-text-muted">
-                              {t('ideas.table.target', 'Target')}
-                            </th>
-                            <th className="px-3 py-1.5 text-[10px] font-bold uppercase text-c-text-muted w-28">
-                              {t('ideas.table.edgeKind', 'Kind')}
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {edges.map((e) => (
-                            <tr key={e.id} className="border-b border-c-border-subtle">
-                              <td className="px-3 py-1.5 text-[11px] text-c-text-muted">
-                                {edgeNodeLabelById.get(e.source) ?? e.source}
-                              </td>
-                              <td className="px-3 py-1.5 text-[11px] text-c-text-muted">
-                                {edgeNodeLabelById.get(e.target) ?? e.target}
-                              </td>
-                              <td className="px-3 py-1.5 text-[11px] text-c-text-muted">
-                                {getCanvasEdgeKindLabel(
-                                  e?.data?.kind ? String(e.data.kind) : e.type,
-                                  isPl
-                                )}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
                     </div>
                   )}
-                </div>
+                  <div
+                    ref={tableContainerRef}
+                    className="flex-1 overflow-x-auto overflow-y-auto relative -webkit-overflow-scrolling-touch"
+                  >
+                    <ConnectionLines
+                      selectedNodeId={selectedNodeForLines}
+                      edges={edges}
+                      allNodes={effectiveNodes}
+                      containerRef={tableContainerRef}
+                    />
+                    <table /* §27-exempt: archetyp D Platforma-tabel (kolumny/kolejność/agregacje user-defined, jak GridView) — decyzja Piotra 07-13 w _ROZLICZENIE_1-88 ("zły archetyp do StandardTable, ZOSTAW"); przetagowane z §27-todo 07-14 */
+                      className="w-full text-left"
+                      style={{ width: tableWidth, minWidth: tableWidth, tableLayout: 'fixed' }}
+                    >
+                      <thead className="sticky top-0 bg-c-surface-raised backdrop-blur-sm border-b border-c-border-subtle z-10">
+                        <tr>
+                          <th className="w-8 px-2 py-2">
+                            <input
+                              type="checkbox"
+                              checked={
+                                _selIds.size === processedRowsWithRollups.length &&
+                                processedRowsWithRollups.length > 0
+                              }
+                              onChange={() => {
+                                const setSelFn = usePlatform
+                                  ? effectiveSetSelectedRowIds
+                                  : setSelectedRowIds;
+                                if (_selIds.size === processedRowsWithRollups.length) {
+                                  setSelFn(new Set());
+                                  onSelectionChange?.(EMPTY_SELECTION);
+                                } else {
+                                  const all = new Set(processedRowsWithRollups.map((r) => r.id));
+                                  setSelFn(all);
+                                  onSelectionChange?.({
+                                    type: 'row',
+                                    count: all.size,
+                                    ids: Array.from(all),
+                                  });
+                                }
+                              }}
+                              aria-label={t('ideas.table.a11y.selectAllRows', 'Select all rows')}
+                              className="w-3.5 h-3.5 rounded border-c-border-subtle text-c-text-muted focus:ring-c-focus"
+                            />
+                          </th>
+                          <th className="w-10 px-1 py-2 text-[10px] font-normal text-c-text-muted text-right select-none">
+                            #
+                          </th>
+                          {stretchedVisibleCols.map((col) => (
+                            <th
+                              key={col.key}
+                              style={{ width: col.width, minWidth: col.width, maxWidth: col.width }}
+                              className="relative px-2 py-2 text-[10px] font-bold uppercase tracking-wider text-c-text-muted select-none group"
+                              draggable={editingHeaderKey !== col.key}
+                              onDragStart={() => handleColDragStart(col.key)}
+                              onDragOver={(e) => handleColDragOver(e, col.key)}
+                              onDragEnd={handleColDragEnd}
+                            >
+                              {editingHeaderKey === col.key ? (
+                                <input
+                                  autoFocus
+                                  defaultValue={col.header}
+                                  aria-label={t(
+                                    'ideas.table.a11y.renameColumnFor',
+                                    'New column name: {{column}}',
+                                    {
+                                      column: col.header,
+                                    }
+                                  )}
+                                  className="w-full bg-c-surface border border-c-border-subtle rounded px-1 py-0.5 text-[10px] font-bold uppercase tracking-wider text-c-text-secondary outline-none focus:border-c-focus"
+                                  onBlur={(e) => {
+                                    effectiveRenameColumn(col.key, e.target.value);
+                                    setEditingHeaderKey(null);
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      effectiveRenameColumn(
+                                        col.key,
+                                        (e.target as HTMLInputElement).value
+                                      );
+                                      setEditingHeaderKey(null);
+                                    }
+                                    if (e.key === 'Escape') setEditingHeaderKey(null);
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                              ) : (
+                                <div
+                                  className="flex items-center gap-1 cursor-pointer hover:text-c-text-secondary"
+                                  onClick={() => effectiveCycleSort(col.key)}
+                                  onDoubleClick={(e) => {
+                                    e.stopPropagation();
+                                    if (!locked) setEditingHeaderKey(col.key);
+                                  }}
+                                  onContextMenu={(e) => {
+                                    e.preventDefault();
+                                    if (!locked)
+                                      setColContextMenu({
+                                        colKey: col.key,
+                                        x: e.clientX,
+                                        y: e.clientY,
+                                      });
+                                  }}
+                                >
+                                  <GripVertical
+                                    size={10}
+                                    className="opacity-0 group-hover:opacity-40 cursor-grab"
+                                  />
+                                  {col.header}
+                                  {_sort?.key === col.key ? (
+                                    _sort.direction === 'asc' ? (
+                                      <ArrowUp size={10} />
+                                    ) : (
+                                      <ArrowDown size={10} />
+                                    )
+                                  ) : (
+                                    <ArrowUpDown size={10} className="opacity-30" />
+                                  )}
+                                </div>
+                              )}
+                              {/* Resize handle */}
+                              <div
+                                className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-c-surface-raised transition-colors"
+                                onMouseDown={(e) => handleResizeStart(col.key, e)}
+                              />
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {tableRenderCap.groups ? (
+                          tableRenderCap.groups.map(([groupKey, cappedRows]) => (
+                            <React.Fragment key={groupKey}>
+                              <tr className="bg-c-surface-raised">
+                                <td
+                                  colSpan={_visCols.length + 2}
+                                  className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-c-text-muted"
+                                >
+                                  {groupKey || t('ideas.table.empty', '(empty)')}{' '}
+                                  <span className="text-c-text-muted font-normal ml-1">
+                                    ({(effectiveGroupedRows?.[groupKey] ?? cappedRows).length})
+                                  </span>
+                                </td>
+                              </tr>
+                              {cappedRows.map((row, idx) => renderRow(row, idx))}
+                            </React.Fragment>
+                          ))
+                        ) : processedRowsWithRollups.length === 0 ? (
+                          <tr>
+                            <td colSpan={_visCols.length + 2} className="px-4 py-12 text-center">
+                              <div className="mx-auto max-w-xl text-c-text-muted">
+                                <div className="text-sm font-semibold mb-1">
+                                  {t(
+                                    'ideas.table.thisTableIsStillEmpty',
+                                    'This table is still empty'
+                                  )}
+                                </div>
+                                <div className="text-[11px] leading-relaxed">
+                                  {t(
+                                    'ideas.table.startWithStructureChooseAFrameworkAddTheFirstRowOrUseATempla',
+                                    'Start with structure: choose a framework, add the first row, or use a template. Save AI for the moment when the table model is already trustworthy.'
+                                  )}
+                                </div>
+                                {!locked && (
+                                  <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                                    <button
+                                      onClick={() => _addRow()}
+                                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-c-surface-raised text-c-text-secondary hover:bg-c-surface transition-colors"
+                                    >
+                                      <Plus size={14} />
+                                      {t('ideas.table.addBlankRow', 'Add blank row')}
+                                    </button>
+                                    <button
+                                      onClick={handleAddRowWithTemplate}
+                                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised transition-colors"
+                                    >
+                                      <Layers size={14} />
+                                      {t('ideas.table.useRowTemplate', 'Use row template')}
+                                    </button>
+                                    <button
+                                      onClick={() => setShowFrameworkGen(true)}
+                                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-[color-mix(in_srgb,var(--c-warning)_12%,transparent)] text-amber-900 dark:text-amber-200 hover:bg-[color-mix(in_srgb,var(--c-warning)_20%,transparent)] transition-colors"
+                                    >
+                                      <LayoutGrid size={14} />
+                                      {t('ideas.table.buildFramework', 'Build framework')}
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ) : (
+                          (tableRenderCap.rows ?? processedRowsWithRollups).map((row, idx) =>
+                            renderRow(row, idx)
+                          )
+                        )}
+                      </tbody>
+                      {/* Footer aggregations */}
+                      {processedRowsWithRollups.length > 0 &&
+                        _visCols.some((c) => c.aggregation && c.aggregation !== 'none') && (
+                          <tfoot className="border-t-2 border-c-border-subtle">
+                            <tr className="bg-c-surface-raised">
+                              <td className="px-2 py-1.5" />
+                              <td className="w-10 px-1 py-1.5" />
+                              {stretchedVisibleCols.map((col) => {
+                                const agg = col.aggregation;
+                                if (!agg || agg === 'none')
+                                  return <td key={col.key} className="px-2 py-1.5" />;
+                                const values = processedRowsWithRollups.map(
+                                  (r) => r.data?.[col.key]
+                                );
+                                return (
+                                  <td
+                                    key={col.key}
+                                    className="px-2 py-1.5 text-[10px] font-bold text-c-text-muted tabular-nums"
+                                  >
+                                    <span className="text-[8px] text-c-text-muted uppercase mr-1">
+                                      {agg}
+                                    </span>
+                                    {computeAggregation(agg, values)}
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          </tfoot>
+                        )}
+                    </table>
+
+                    {/* Edges table */}
+                    {edges.length > 0 && (
+                      <div className="border-t border-c-border-subtle mt-4">
+                        <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-c-text-muted">
+                          {t('ideas.table.edges', 'Edges')} ({edges.length})
+                        </div>
+                        <table
+                          /* §27-exempt: akcesoryjny podgląd krawędzi grafu wewnątrz tego samego narzędzia platformowego (patrz tabela wyżej), nie osobny ekran listowy */ className="w-full text-left"
+                        >
+                          <thead>
+                            <tr className="border-b border-c-border-subtle">
+                              <th className="px-3 py-1.5 text-[10px] font-bold uppercase text-c-text-muted">
+                                {t('ideas.table.source', 'Source')}
+                              </th>
+                              <th className="px-3 py-1.5 text-[10px] font-bold uppercase text-c-text-muted">
+                                {t('ideas.table.target', 'Target')}
+                              </th>
+                              <th className="px-3 py-1.5 text-[10px] font-bold uppercase text-c-text-muted w-28">
+                                {t('ideas.table.edgeKind', 'Kind')}
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {edges.map((e) => (
+                              <tr key={e.id} className="border-b border-c-border-subtle">
+                                <td className="px-3 py-1.5 text-[11px] text-c-text-muted">
+                                  {edgeNodeLabelById.get(e.source) ?? e.source}
+                                </td>
+                                <td className="px-3 py-1.5 text-[11px] text-c-text-muted">
+                                  {edgeNodeLabelById.get(e.target) ?? e.target}
+                                </td>
+                                <td className="px-3 py-1.5 text-[11px] text-c-text-muted">
+                                  {getCanvasEdgeKindLabel(
+                                    e?.data?.kind ? String(e.data.kind) : e.type,
+                                    isPl
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                </>
               )}
 
               {/* Status Bar — record count + aggregates */}
@@ -3972,121 +4504,107 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
 
           {/* Column context menu */}
           {colContextMenu && (
-            <div className="fixed inset-0 z-[60]" onClick={() => setColContextMenu(null)}>
-              <div
-                className="absolute bg-c-surface rounded-lg shadow-xl border border-slate-200/60 dark:border-white/[0.03] py-1 min-w-[160px]"
-                style={{ left: colContextMenu.x, top: colContextMenu.y }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <button
-                  className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
-                  onClick={() => {
+            <CanvasContextMenu
+              x={colContextMenu.x}
+              y={colContextMenu.y}
+              onClose={() => setColContextMenu(null)}
+              ariaLabel={t('ideas.table.columnActions', 'Column actions')}
+              testId="idea-table-column-context-menu"
+              items={[
+                {
+                  id: 'table.column.rename',
+                  label: t('ideas.table.rename', 'Rename'),
+                  onSelect: () => {
                     setEditingHeaderKey(colContextMenu.colKey);
-                    setColContextMenu(null);
-                  }}
-                >
-                  {t('ideas.table.rename', 'Rename')}
-                </button>
-                <button
-                  className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
-                  onClick={() => {
+                  },
+                },
+                {
+                  id: 'table.column.sort',
+                  label: t('ideas.table.sort', 'Sort'),
+                  onSelect: () => {
                     effectiveCycleSort(colContextMenu.colKey);
-                    setColContextMenu(null);
-                  }}
-                >
-                  {t('ideas.table.sort', 'Sort')}
-                </button>
-                <button
-                  className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
-                  onClick={() => {
-                    toggleColumn(colContextMenu.colKey);
-                    setColContextMenu(null);
-                  }}
-                >
-                  {t('ideas.table.hideColumn', 'Hide column')}
-                </button>
-                <div className="h-px bg-c-surface-raised my-1" />
-                <button
-                  className="w-full px-3 py-1.5 text-xs text-left hover:bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] text-c-danger"
-                  onClick={() => {
-                    deleteColumn(colContextMenu.colKey);
+                  },
+                },
+                {
+                  id: 'table.column.hide',
+                  label: t('ideas.table.hideColumn', 'Hide column'),
+                  onSelect: () => {
+                    effectiveToggleColumn(colContextMenu.colKey);
+                  },
+                },
+                {
+                  id: 'table.column.delete',
+                  label: t('ideas.table.deleteColumn', 'Delete column'),
+                  danger: true,
+                  separatorBefore: true,
+                  onSelect: () => {
+                    // Destructive in both modes (column definition is gone,
+                    // no undo stack covers it — see registry undo.evidence),
+                    // and genuinely server-side in platform mode
+                    // (TablePlatformApi.deleteField via effectiveDeleteColumn)
+                    // rather than the previous no-op-with-a-lying-toast.
+                    if (
+                      !window.confirm(
+                        t(
+                          'ideas.table.areYouSureYouWantToDeleteThisColumn',
+                          'Are you sure you want to delete this column? This cannot be undone.'
+                        )
+                      )
+                    ) {
+                      return;
+                    }
+                    effectiveDeleteColumn(colContextMenu.colKey);
                     toast.success(t('ideas.table.columnDeleted', 'Column deleted'));
-                    setColContextMenu(null);
-                  }}
-                >
-                  {t('ideas.table.deleteColumn', 'Delete column')}
-                </button>
-              </div>
-            </div>
+                  },
+                },
+              ]}
+            />
           )}
 
           {/* Row context menu (right-click on a data row) */}
           {rowContextMenu && (
-            <div className="fixed inset-0 z-[60]" onClick={() => setRowContextMenu(null)}>
-              <div
-                className="absolute bg-c-surface rounded-lg shadow-xl border border-c-border-subtle py-1 min-w-[160px]"
-                style={{ left: rowContextMenu.x, top: rowContextMenu.y }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <button
-                  className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
-                  onClick={() => {
-                    const rowId = rowContextMenu.rowId;
-                    setDetailInitialTab('properties');
-                    if (usePlatform) {
-                      setExpandedRecordId(rowId);
-                    } else {
-                      setDetailNodeId(rowId);
-                      setDetailMode('full');
-                    }
-                    setRowContextMenu(null);
-                  }}
-                >
-                  {t('ideas.table.edit', 'Edit')}
-                </button>
-                <button
-                  className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
-                  onClick={() => {
-                    const rowId = rowContextMenu.rowId;
-                    // "Add note" opens the record's Comments tab specifically. RecordExpandModal
-                    // (the usePlatform "Edit" target) has no comment thread — RowDetailPanel does
-                    // (TablePlatformApi.listRecordComments/addRecordComment, tab "comments" for both
-                    // platform and legacy records) — so always route through it here, even when the
-                    // table is in platform mode.
-                    setDetailInitialTab('comments');
-                    setDetailNodeId(rowId);
-                    setDetailMode('full');
-                    setRowContextMenu(null);
-                  }}
-                >
-                  {t('ideas.table.addNote', 'Add note')}
-                </button>
-                {!locked && (
-                  <>
-                    <div className="h-px bg-c-surface-raised my-1" />
-                    <button
-                      className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
-                      onClick={() => {
-                        effectiveHandleDuplicateRow(rowContextMenu.rowId);
-                        setRowContextMenu(null);
-                      }}
-                    >
-                      {t('ideas.table.duplicateRow', 'Duplicate row')}
-                    </button>
-                    <button
-                      className="w-full px-3 py-1.5 text-xs text-left hover:bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] text-c-danger"
-                      onClick={() => {
-                        effectiveHandleDeleteRow(rowContextMenu.rowId);
-                        toast.success(t('ideas.table.rowDeleted', 'Row deleted'));
-                        setRowContextMenu(null);
-                      }}
-                    >
-                      {t('ideas.table.deleteRow', 'Delete row')}
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
+            <CanvasContextMenu
+              x={rowContextMenu.x}
+              y={rowContextMenu.y}
+              onClose={() => setRowContextMenu(null)}
+              ariaLabel={t('ideas.table.rowActions', 'Row actions')}
+              testId="idea-table-row-context-menu"
+              items={[
+                {
+                  id: 'table.row.edit',
+                  label: t('ideas.table.edit', 'Edit'),
+                  onSelect: () => openRowEditPanel(rowContextMenu.rowId),
+                },
+                {
+                  id: 'table.row.note',
+                  label: t('ideas.table.addNote', 'Add note'),
+                  onSelect: () => openRowNotePanel(rowContextMenu.rowId),
+                },
+                {
+                  id: 'table.row.duplicate',
+                  label: t('ideas.table.duplicateRow', 'Duplicate row'),
+                  separatorBefore: true,
+                  disabled: locked,
+                  disabledReason: locked
+                    ? t('ideas.table.lockedReason', 'Table is locked')
+                    : undefined,
+                  onSelect: () => effectiveHandleDuplicateRow(rowContextMenu.rowId),
+                },
+                {
+                  id: 'table.row.delete',
+                  label: t('ideas.table.deleteRow', 'Delete row'),
+                  danger: true,
+                  disabled: locked,
+                  disabledReason: locked
+                    ? t('ideas.table.lockedReason', 'Table is locked')
+                    : undefined,
+                  onSelect: () => {
+                    effectiveHandleDeleteRow(rowContextMenu.rowId);
+                    toast.success(t('ideas.table.rowDeleted', 'Row deleted'));
+                  },
+                },
+              ]}
+            />
           )}
 
           {/* P2-6 (rozdz. 08 §7b): menu komorki. Kazda pozycja ma realny handler
@@ -4096,15 +4614,17 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               propozycji/parsera formatu, ktorych ta komorka jeszcze nie ma; nie
               dokladam pozycji-atrapy. */}
           {cellContextMenu && (
-            <div className="fixed inset-0 z-[60]" onClick={() => setCellContextMenu(null)}>
-              <div
-                className="absolute bg-c-surface rounded-lg shadow-xl border border-c-border-subtle py-1 min-w-[160px]"
-                style={{ left: cellContextMenu.x, top: cellContextMenu.y }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <button
-                  className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
-                  onClick={() => {
+            <CanvasContextMenu
+              x={cellContextMenu.x}
+              y={cellContextMenu.y}
+              onClose={() => setCellContextMenu(null)}
+              ariaLabel={t('ideas.table.cellActions', 'Cell actions')}
+              testId="idea-table-cell-context-menu"
+              items={[
+                {
+                  id: 'table.cell.copy',
+                  label: t('ideas.table.copyValue', 'Copy value'),
+                  onSelect: () => {
                     const v = cellContextMenu.value;
                     const text =
                       v == null ? '' : typeof v === 'object' ? JSON.stringify(v) : String(v);
@@ -4112,63 +4632,69 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                       ?.writeText(text)
                       .then(() => toast.success(t('ideas.table.copied', 'Copied')))
                       .catch(() => toast.error(t('ideas.table.copyFailed', 'Copy failed')));
-                    setCellContextMenu(null);
-                  }}
-                >
-                  {t('ideas.table.copyValue', 'Copy value')}
-                </button>
-                {cellContextMenu.editable && !locked && (
-                  <button
-                    className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
-                    onClick={() => {
-                      const { rowId, colKey } = cellContextMenu;
-                      void (async () => {
-                        try {
-                          const text = await navigator.clipboard?.readText();
-                          if (text != null) _fieldChange(rowId, colKey, text);
-                        } catch {
-                          toast.error(t('ideas.table.pasteFailed', 'Could not read clipboard'));
-                        }
-                      })();
-                      setCellContextMenu(null);
-                    }}
-                  >
-                    {t('ideas.table.paste', 'Paste')}
-                  </button>
-                )}
-                {cellContextMenu.colKey !== 'type' && (
-                  <button
-                    className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
-                    onClick={() => {
-                      handleCellExpand(
-                        cellContextMenu.rowId,
-                        cellContextMenu.colKey,
-                        cellContextMenu.rect
-                      );
-                      setCellContextMenu(null);
-                    }}
-                  >
-                    {t('ideas.table.expandCell', 'Expand cell')}
-                  </button>
-                )}
-                {cellContextMenu.editable && !locked && (
-                  <>
-                    <div className="h-px bg-c-surface-raised my-1" />
-                    <button
-                      className="w-full px-3 py-1.5 text-xs text-left hover:bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] text-c-danger disabled:opacity-40"
-                      disabled={cellContextMenu.value == null || cellContextMenu.value === ''}
-                      onClick={() => {
-                        _fieldChange(cellContextMenu.rowId, cellContextMenu.colKey, '');
-                        toast.success(t('ideas.table.cellCleared', 'Cell cleared'));
-                        setCellContextMenu(null);
-                      }}
-                    >
-                      {t('ideas.table.clearCell', 'Clear cell')}
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
+                  },
+                },
+                {
+                  id: 'table.cell.paste',
+                  label: t('ideas.table.paste', 'Paste'),
+                  disabled: !cellContextMenu.editable || locked,
+                  disabledReason: locked
+                    ? t('ideas.table.lockedReason', 'Table is locked')
+                    : !cellContextMenu.editable
+                      ? t('ideas.table.readOnlyCell', 'Cell is read-only')
+                      : undefined,
+                  onSelect: () => {
+                    const { rowId, colKey } = cellContextMenu;
+                    void (async () => {
+                      try {
+                        const text = await navigator.clipboard?.readText();
+                        if (text != null) _fieldChange(rowId, colKey, text);
+                      } catch {
+                        toast.error(t('ideas.table.pasteFailed', 'Could not read clipboard'));
+                      }
+                    })();
+                  },
+                },
+                {
+                  id: 'table.cell.expand',
+                  label: t('ideas.table.expandCell', 'Expand cell'),
+                  disabled: cellContextMenu.colKey === 'type',
+                  disabledReason:
+                    cellContextMenu.colKey === 'type'
+                      ? t('ideas.table.typeCannotExpand', 'Type cell cannot be expanded')
+                      : undefined,
+                  onSelect: () => {
+                    handleCellExpand(
+                      cellContextMenu.rowId,
+                      cellContextMenu.colKey,
+                      cellContextMenu.rect
+                    );
+                  },
+                },
+                {
+                  id: 'table.cell.clear',
+                  label: t('ideas.table.clearCell', 'Clear cell'),
+                  danger: true,
+                  separatorBefore: true,
+                  disabled:
+                    !cellContextMenu.editable ||
+                    locked ||
+                    cellContextMenu.value == null ||
+                    cellContextMenu.value === '',
+                  disabledReason: locked
+                    ? t('ideas.table.lockedReason', 'Table is locked')
+                    : !cellContextMenu.editable
+                      ? t('ideas.table.readOnlyCell', 'Cell is read-only')
+                      : cellContextMenu.value == null || cellContextMenu.value === ''
+                        ? t('ideas.table.alreadyEmpty', 'Cell is already empty')
+                        : undefined,
+                  onSelect: () => {
+                    _fieldChange(cellContextMenu.rowId, cellContextMenu.colKey, '');
+                    toast.success(t('ideas.table.cellCleared', 'Cell cleared'));
+                  },
+                },
+              ]}
+            />
           )}
         </TableDataProvider>
       </div>
@@ -4233,11 +4759,15 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         platformTableId={usePlatform ? (platformTableId ?? ideaId) : undefined}
       />
 
-      {/* Add Column Dialog */}
+      {/* Add Column Dialog — legacy-mode mount. Platform mode has its own
+          mount inside `TableToolbar`, wired to the same `ui.showAddColumn`
+          context flag; this one only opens from the legacy inline toolbar's
+          "Add field" trigger and TableStartEmptyState below. */}
       <AddColumnDialog
         open={showAddColumn}
         onClose={() => setShowAddColumn(false)}
-        onAdd={handleAddColumn}
+        onAdd={effectiveAddColumn}
+        onUndo={effectiveDeleteColumn}
         existingKeys={_cols.map((c) => c.key)}
       />
 
@@ -4309,6 +4839,18 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         anchorRect={addRowBtnRect}
       />
 
+      {/* Record Template Manager (RISK-06 — reached from kebab "Platforma" › Record Templates) */}
+      {usePlatform && (
+        <RecordTemplateManager
+          open={showRecordTemplateManager}
+          onClose={() => setShowRecordTemplateManager(false)}
+          tableId={platformTableId ?? ideaId}
+          fields={platformIntegration.platformFields}
+          onUseTemplate={handleUseRecordTemplate}
+          locked={locked}
+        />
+      )}
+
       {/* AI Categorize Tool */}
       <AICategorizeTool
         open={showAICategorize}
@@ -4329,6 +4871,34 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         ideaId={ideaId}
         onApplyScores={handleApplyScores}
       />
+
+      {/* Financial Case (Program E / epic E09) — flag-gated, default OFF */}
+      {financialCaseEnabled && (
+        <FinancialCaseDialog
+          open={showFinancialCase}
+          onClose={() => setShowFinancialCase(false)}
+          readOnly={locked}
+          onStatusChange={handleFinancialStatusChange}
+          // S6-E09 (RISK-12): the ONE prop that turns the dialog from a
+          // scratchpad that silently discarded the user's work into a
+          // persisted artifact. Load/save/conflict all live inside the
+          // dialog, so this file gains exactly one line. Same convention as
+          // `IdeaDecisionLogPanel` below.
+          ideaId={ideaId}
+        />
+      )}
+
+      {/* Decision Log (Program D / epic E08 §6.4) — flag-gated, default OFF */}
+      {decisionLogEnabled && (
+        <IdeaDecisionLogPanel
+          open={showDecisionLog}
+          onClose={() => setShowDecisionLog(false)}
+          nodes={processedRowsWithRollups}
+          ideaId={ideaId}
+          onApplyDecisionLog={handleApplyDecisionLog}
+          financialFreshnessProvider={financialCaseEnabled ? financialFreshnessProvider : undefined}
+        />
+      )}
 
       {/* Export to Presentation */}
       <ExportToPresentation

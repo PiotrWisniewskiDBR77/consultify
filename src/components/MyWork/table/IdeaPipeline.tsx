@@ -19,8 +19,10 @@ import {
   X,
   Zap,
 } from 'lucide-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 
 import type { TableNode } from './tableTypes';
 import { ROW_ACCENT_COLORS } from './tableTypes';
@@ -180,6 +182,9 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
     [onConvertToInitiative, onStageChange, stages]
   );
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  useDialogA11y({ open, onClose, containerRef });
+
   if (!open) return null;
 
   return (
@@ -188,13 +193,18 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-[680px] max-w-[95vw] max-h-[85vh] rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl overflow-hidden flex flex-col"
+        ref={containerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="idea-pipeline-heading"
+        tabIndex={-1}
+        className="w-[680px] max-w-[95vw] max-h-[85vh] rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl overflow-hidden flex flex-col outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center gap-2 px-5 py-3.5 border-b border-c-border-subtle">
           <Rocket size={16} className="text-c-text-secondary" />
-          <span className="text-sm font-bold text-c-text">
+          <span id="idea-pipeline-heading" className="text-sm font-bold text-c-text">
             {t('myWorkTable.ideaPipeline.title')}
           </span>
           <div className="flex-1" />

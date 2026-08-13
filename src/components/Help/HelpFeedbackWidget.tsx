@@ -30,7 +30,7 @@ export const HelpFeedbackWidget: React.FC<HelpFeedbackWidgetProps> = ({
   onFeedbackSubmit,
 }) => {
   const { t, i18n } = useTranslation();
-  const HELP_LANGS = ['en', 'pl', 'de', 'ar', 'jp', 'es'];
+  const HELP_LANGS = ['en', 'pl', 'de', 'ar', 'ja', 'es'];
   const baseLang = (i18n.language || 'en').split('-')[0].toLowerCase();
   const lang = HELP_LANGS.includes(baseLang) ? baseLang : 'en';
 
