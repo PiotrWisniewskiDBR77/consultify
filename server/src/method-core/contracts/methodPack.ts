@@ -14,9 +14,9 @@
  * chosen tradeoff over changing rootDir (bigger blast radius) or emitting
  * broken production builds.
  *
- * KEEP IN SYNC: if the corresponding file under src/method-core/contracts/ changes, mirror
- * the change here in the same commit. `diff` the body below the closing
- * `*/` of this header against the source file to verify no drift.
+ * KEEP IN SYNC: if the corresponding file under src/method-core/contracts/
+ * changes, mirror the change here in the same commit. Diff the body below
+ * this header comment against the source file to verify no drift.
  * Flagged to Codex as COORD-05 in
  * docs/program/METHOD_ASSESSMENT_CORE_2026-08-13/COORDINATION.md.
  */
