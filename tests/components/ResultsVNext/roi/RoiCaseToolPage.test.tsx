@@ -162,7 +162,10 @@ describe('RoiCaseToolPage — /results/roi/cases/:roiCaseId (klasa L full tool, 
     const backCrumb = await screen.findByText('Rejestr ROI');
     await user.click(backCrumb);
 
-    expect(navigateMock).toHaveBeenCalledWith(ROUTES.RESULTS_ROI.ROOT);
+    expect(navigateMock).toHaveBeenCalledWith({
+      pathname: ROUTES.RESULTS_ROI.ROOT,
+      search: '',
+    });
   });
 
   it('shows an honest error state with Retry when the case fetch fails (non-404), and Retry re-fetches', async () => {

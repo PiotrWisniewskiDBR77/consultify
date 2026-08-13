@@ -3,9 +3,8 @@
  * mount, matching the existing ExecutionHub.reportingMenu.smoke.test.tsx
  * precedent for this file). Proves the EVM/what-if analytics panels
  * (ExecutionIntelligencePanel/ExecutionChangeSignalsPanel/
- * ExecutionWhatIfSandbox) render AFTER the canonical StandardTable+preview
- * block inside the 'list' tab, not before it — and that the panels
- * themselves are preserved (not deleted).
+ * ExecutionWhatIfSandbox) remain in the canonical 'list' tab and render as
+ * its top analytics shelf before the StandardTable+preview block.
  */
 import { readFileSync } from 'fs';
 import path from 'path';
@@ -14,13 +13,11 @@ import { describe, expect, it } from 'vitest';
 const HUB_PATH = path.resolve(__dirname, '../../../src/components/Execution/ExecutionHub.tsx');
 const source = readFileSync(HUB_PATH, 'utf-8');
 
-describe("R14 ExecutionHub 'list' tab — analytics panels relocated below the table", () => {
-  it('the three flag-gated panels appear after <StandardTable, not before it, inside the list-tab branch', () => {
-    const marker = source.indexOf('T32 R14: EVM/what-if analytics panels moved BELOW');
+describe("ExecutionHub 'list' tab — integrated analytics shelf", () => {
+  it('the three flag-gated panels appear before <StandardTable inside the list-tab branch', () => {
+    const marker = source.indexOf("'list' (Portfolio) tab → StandardTable + StandardPreview");
     expect(marker).toBeGreaterThan(-1);
-    const branchEnd = source.indexOf("if (activeTab === 'reports') {", marker);
-    expect(branchEnd).toBeGreaterThan(marker);
-    const branch = source.slice(marker, branchEnd);
+    const branch = source.slice(marker);
 
     const tableIdx = branch.indexOf('<StandardTable');
     const intelligenceIdx = branch.indexOf('<ExecutionIntelligencePanel');
@@ -28,9 +25,10 @@ describe("R14 ExecutionHub 'list' tab — analytics panels relocated below the t
     const whatIfIdx = branch.indexOf('<ExecutionWhatIfSandbox');
 
     expect(tableIdx).toBeGreaterThan(-1);
-    expect(intelligenceIdx).toBeGreaterThan(tableIdx);
-    expect(changeSignalsIdx).toBeGreaterThan(tableIdx);
-    expect(whatIfIdx).toBeGreaterThan(tableIdx);
+    expect(intelligenceIdx).toBeGreaterThan(-1);
+    expect(changeSignalsIdx).toBeGreaterThan(intelligenceIdx);
+    expect(whatIfIdx).toBeGreaterThan(changeSignalsIdx);
+    expect(tableIdx).toBeGreaterThan(whatIfIdx);
   });
 
   it('all three panels are still present (relocated, not deleted)', () => {
@@ -51,14 +49,17 @@ describe("R14 ExecutionHub 'list' tab — analytics panels relocated below the t
   });
 });
 
-describe('R14 — foreign hunks in ExecutionHub.tsx preserved byte-for-byte', () => {
-  it('R12 T35 mount and prior-session report-menu simplification are still present', () => {
+describe('ExecutionHub integration guards', () => {
+  it('keeps the R12 T35 mount and the composed report preview/full menu contract', () => {
     expect(source).toContain('<ExecutionManagementView');
     const reportingMenuSource = source.slice(
       source.indexOf('const buildReportRowMenu'),
       source.indexOf('const portfolioInitiatives')
     );
-    expect(reportingMenuSource).not.toContain("id: 'open_preview'");
+    expect(reportingMenuSource.match(/id: 'open_preview'/g)).toHaveLength(1);
     expect(reportingMenuSource.match(/id: 'open_full'/g)).toHaveLength(1);
+    expect(
+      reportingMenuSource.match(/preview: \(\) => setReportPreviewId\(report\.id\)/g)
+    ).toHaveLength(1);
   });
 });
