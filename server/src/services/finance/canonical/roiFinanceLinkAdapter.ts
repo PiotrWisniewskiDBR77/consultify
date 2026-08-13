@@ -42,6 +42,7 @@ import type { PoolClient } from 'pg';
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
 import { createRoiFinanceLink } from '../../resultsVnext/roi/roiFinanceLinkCommands.js';
 import { listRoiFinanceLinks } from '../../resultsVnext/roi/roiFinanceLinkRepository.js';
+import type { CommandAccessContext } from '../../resultsVnext/platform/commandCapabilityGuard.js';
 import {
   toRoiFinanceLink,
   type RoiFinanceLink,
@@ -132,6 +133,8 @@ export interface LinkFinanceArtifactToRoiCaseParams {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  /** Real request/system access resolved by the caller; never fabricated by the adapter. */
+  access: CommandAccessContext;
 }
 
 /** Default `actorEffectiveRole` for system/adapter-initiated links (e.g. a
@@ -179,6 +182,7 @@ export async function linkFinanceArtifactToRoiCase(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = params;
 
   // (a) Finance-side sanity check — runs BEFORE the canonical command, so a
@@ -214,6 +218,7 @@ export async function linkFinanceArtifactToRoiCase(
     correlationId,
     causationId,
     reason,
+    access,
   });
 
   return outcome.result;

@@ -58,6 +58,7 @@ import {
   openRoiFinanceReconciliation,
   updateRoiFinanceReconciliationStatus,
 } from '../../resultsVnext/roi/roiFinanceReconciliationCommands.js';
+import type { CommandAccessContext } from '../../resultsVnext/platform/commandCapabilityGuard.js';
 import {
   type RoiFinanceLink,
   type RoiFinanceReconciliation,
@@ -191,6 +192,7 @@ export interface DetectAndReconcileParams {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  access: CommandAccessContext;
 }
 
 export interface DetectAndReconcileResult extends MaterialityVerdict {
@@ -229,6 +231,7 @@ export async function detectAndReconcile(
     correlationId,
     causationId = null,
     reason = null,
+    access,
   } = params;
 
   const verdict = assessMateriality(roiValue, financeValue, thresholdPercent);
@@ -260,6 +263,7 @@ export async function detectAndReconcile(
     correlationId,
     causationId,
     reason,
+    access,
   });
 
   return {
@@ -284,6 +288,7 @@ function buildDefaultDivergenceReason(verdict: MaterialityVerdict): string {
 // ==========================================
 
 export interface ResolveReconciliationOptions {
+  access: CommandAccessContext;
   /**
    * Tenant assertion. Strongly recommended: when supplied it is ENFORCED
    * (a reconciliation belonging to another organization reads as not found).
@@ -324,7 +329,7 @@ export async function resolveReconciliationDecision(
   resolvedBy: string,
   notes: string | null,
   resolution: RoiFinanceReconciliationResolution,
-  options: ResolveReconciliationOptions = {}
+  options: ResolveReconciliationOptions
 ): Promise<RoiFinanceReconciliation> {
   if (resolution !== 'resolved' && resolution !== 'accepted_divergence') {
     throw new RoiFinanceReconciliationAdapterError(
@@ -354,6 +359,7 @@ export async function resolveReconciliationDecision(
     correlationId: options.correlationId,
     causationId: options.causationId ?? null,
     reason: options.reason ?? null,
+    access: options.access,
   });
 
   return outcome.result;

@@ -180,6 +180,52 @@ export const apiRequestsByOrg = new Counter({
   registers: [register],
 });
 
+/**
+ * KPI-E007 — Legacy Archive read-only adapter hit counter.
+ * Labels: source_table (kpis | kpi_definitions | v8_kpi_definitions | tp_kpi_definitions)
+ *
+ * Design: docs/product/results-vnext/KPI_E007_DESIGN.md §9. Minimal
+ * monitoring scope — one counter, incremented once per successful response
+ * in `kpiLegacyArchive.routes.ts`. No dashboard, no alerting rule.
+ */
+export const resultsVnextLegacyArchiveHitsTotal = new Counter({
+  name: 'results_vnext_legacy_archive_hits_total',
+  help: 'Requests served by the KPI legacy archive read-only adapter, by source table',
+  labelNames: ['source_table'],
+  registers: [register],
+});
+
+/**
+ * ROI-E008 — Legacy Archive read-only adapter hit counter.
+ * Labels: source_table (analysis_financials | digitization_analyses |
+ *   initiative_benefits | roi_assumptions | roi_realized_values |
+ *   benefits_register | v8_roi_realization_entries)
+ *
+ * Design: docs/product/results-vnext/ROI_E008_DESIGN.md §3/B4. Minimal
+ * monitoring scope — one counter, incremented once per successful response
+ * in `roiLegacyArchive.routes.ts`. No dashboard, no alerting rule (mirrors
+ * KPI-E007's own minimal-monitoring precedent above).
+ */
+export const resultsVnextRoiLegacyArchiveHitsTotal = new Counter({
+  name: 'results_vnext_roi_legacy_archive_hits_total',
+  help: 'Requests served by the ROI legacy archive read-only adapter, by source table',
+  labelNames: ['source_table'],
+  registers: [register],
+});
+
+/**
+ * OKR-E008 Half C — Legacy Archive minimal monitoring (design §5.6). Same
+ * shape/scope as the KPI/ROI counters above — one counter, incremented once
+ * per successful response in `okrLegacyArchive.routes.ts`. No dashboard, no
+ * alerting rule.
+ */
+export const resultsVnextOkrLegacyArchiveHitsTotal = new Counter({
+  name: 'results_vnext_okr_legacy_archive_hits_total',
+  help: 'Requests served by the OKR legacy archive read-only adapter, by source table',
+  labelNames: ['source_table'],
+  registers: [register],
+});
+
 // ==========================================
 // THROUGHPUT METRICS
 // ==========================================

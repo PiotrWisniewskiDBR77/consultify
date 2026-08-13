@@ -8,6 +8,8 @@
 
 // CRITICAL (ESM): load env via a side-effect module that is imported FIRST.
 import './config/loadEnv.js';
+import { BUILD_SHA_UNKNOWN, resolveBuildSha } from './config/buildSha.js';
+import type { SqlMigrationStatus } from './startup/databaseReadiness.js';
 
 import fs from 'fs';
 import path from 'path';
@@ -208,6 +210,21 @@ export function getTpMigrationStatus(): typeof tpMigrationStatus {
 }
 
 /**
+ * SQL-chain (schema_migrations) receipt, computed ONCE during startup readiness and served by
+ * /api/ready and /api/health/migrations. Never recomputed per request.
+ */
+let sqlMigrationStatus: SqlMigrationStatus = {
+  state: 'error',
+  failed: 0,
+  skipped: 0,
+  pending: 0,
+  unexplainedDrift: 0,
+  approvedVariants: 0,
+  attestedLegacyVariants: 0,
+  detail: 'not evaluated yet',
+};
+
+/**
  * Single state source for the extracted readiness probes/gate.
  *
  * A function DECLARATION on purpose: `/api/health/migrations` is registered
@@ -216,7 +233,13 @@ export function getTpMigrationStatus(): typeof tpMigrationStatus {
  * request time, long after initialisation.
  */
 function getReadinessState() {
-  return { dbReady, dbInitError, migrations: tpMigrationStatus };
+  return {
+    dbReady,
+    dbInitError,
+    migrations: tpMigrationStatus,
+    sqlMigrations: sqlMigrationStatus,
+    buildSha: resolveBuildSha(),
+  };
 }
 
 // Readiness probe for load balancers / orchestration.
@@ -330,6 +353,15 @@ const databaseInitPromise: Promise<void> =
               const { runMigrations } = await import('./services/tablePlatform/migrationRunner.js');
               return runMigrations();
             },
+            evaluateSqlChain: async () => {
+              const { evaluateSqlChain } = await import('./services/releaseGate/sqlChainEvaluator.js');
+              const { getDatabase } = await import('./database/Database.js');
+              const path = await import('path');
+              return evaluateSqlChain({
+                db: getDatabase() as any,
+                migrationsDir: path.resolve(process.cwd(), 'server/migrations'),
+              });
+            },
             seedTemplates: async () => {
               const { default: templateService } =
                 await import('./services/tablePlatform/TemplateService.js');
@@ -357,6 +389,7 @@ const databaseInitPromise: Promise<void> =
           });
 
           tpMigrationStatus = outcome.migrations;
+          sqlMigrationStatus = outcome.sqlMigrations;
 
           if (!outcome.ready) {
             dbReady = false;
@@ -1698,11 +1731,10 @@ function startHttpListener(): void {
 async function detectCrashLoop(): Promise<void> {
   if (isTest) return;
   try {
-    const gitSha =
-      process.env.APP_BUILD_SHA ||
-      process.env.RAILWAY_GIT_COMMIT_SHA ||
-      process.env.GITHUB_SHA ||
-      process.env.GIT_SHA;
+    // Shared resolver (server/src/config/buildSha.ts) — same precedence as /api/health,
+    // /api/ready and the release receipt, so every surface reports the same commit.
+    const resolvedSha = resolveBuildSha();
+    const gitSha = resolvedSha === BUILD_SHA_UNKNOWN ? undefined : resolvedSha;
     if (!gitSha) return; // local dev / unconfigured
     const shortSha = gitSha.slice(0, 10);
     const env = process.env.APP_ENV || process.env.NODE_ENV || 'development';
@@ -1764,18 +1796,21 @@ async function detectCrashLoop(): Promise<void> {
  * Slack Command Center — announce a completed deploy on #cf-progress ("🚀
  * Wdrożenie"). Gives the real-time "what shipped, when" visibility that was
  * missing (deploys previously had no Slack signal at all). Dedup'd by
- * env+gitSha (router's 30-min window) so a crash-loop restart on the SAME
- * commit doesn't spam; a genuinely new deploy always gets a fresh sha. No-op
- * fail-soft when gitSha/Slack env aren't configured (e.g. local dev).
+ * env+gitSha over a 12h DURABLE window (survives process restarts — a
+ * crash-loop or a rolling redeploy restarts the process, and the router's
+ * dedupe is DB-backed precisely so re-announcing the SAME commit doesn't
+ * spam; previously it was in-memory only and reset on every restart, which
+ * produced bursts of duplicate posts). A genuinely new deploy always gets a
+ * fresh sha and announces immediately. No-op fail-soft when gitSha/Slack env
+ * aren't configured (e.g. local dev).
  */
 async function announceDeploy(): Promise<void> {
   if (isTest) return;
   try {
-    const gitSha =
-      process.env.APP_BUILD_SHA ||
-      process.env.RAILWAY_GIT_COMMIT_SHA ||
-      process.env.GITHUB_SHA ||
-      process.env.GIT_SHA;
+    // Shared resolver (server/src/config/buildSha.ts) — same precedence as /api/health,
+    // /api/ready and the release receipt, so every surface reports the same commit.
+    const resolvedSha = resolveBuildSha();
+    const gitSha = resolvedSha === BUILD_SHA_UNKNOWN ? undefined : resolvedSha;
     if (!gitSha) return; // local dev / unconfigured — nothing to announce
     const shortSha = gitSha.slice(0, 10);
     const env = process.env.APP_ENV || process.env.NODE_ENV || 'development';
@@ -1799,6 +1834,7 @@ async function announceDeploy(): Promise<void> {
       title: `${env}${branch ? ` (${branch})` : ''} — ${shortSha}`,
       text: commitMsg || 'Nowa wersja wdrożona.',
       dedupeKey: `deploy:${env}:${shortSha}`,
+      dedupeWindowMs: 12 * 60 * 60 * 1000, // 12h — covers restart storms, not just one process's lifetime
     });
   } catch (err) {
     logger.warn('[Server] announceDeploy failed (non-fatal):', {
@@ -1854,11 +1890,8 @@ if (startServer && shouldStartHttpServer) {
       logger.warn('[Server] Notification outbox drain not started:', err?.message);
     }
 
-    // RN-G3: rvn_platform_outbox drain — closes the gap where all three
-    // Results vNext domains (KPI/ROI/OKR) wrote events + outbox rows
-    // atomically but nothing ever consumed them (EXECUTION_LEDGER.md,
-    // docs/product/results-vnext/RN_G3_OUTBOX_DISPATCHER_DESIGN.md). Opt-OUT
-    // (on by default), same posture as the notification_outbox drain above.
+    // Results vNext events are written atomically with their outbox rows. Drain them by
+    // default so KPI/ROI/OKR projections cannot remain permanently pending after a restart.
     try {
       const { startPlatformOutboxDrainCron } =
         await import('./services/resultsVnext/platform/platformOutboxDrainCron.js');

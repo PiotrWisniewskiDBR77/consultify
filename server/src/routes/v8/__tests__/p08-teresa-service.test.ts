@@ -195,6 +195,74 @@ function buildIdeasPayload() {
   };
 }
 
+// KPI-E006: added when 'kpi' joined P08_HANDOFF_TARGET_MODULES — otherwise
+// the §11 `for (const target of P08_HANDOFF_TARGET_MODULES)` loop below hits
+// `payloadMap['kpi']()` with no entry (same pre-existing gap 'documents'/
+// 'presentations' already have — this fixture closes it for 'kpi' only,
+// fixing those two is a separate, unrelated pre-existing debt out of this
+// package's scope).
+function buildKpiPayload() {
+  return {
+    kpi_handoff_context: {
+      advisor_mode: 'draft_quality_review',
+      target_resource: { resource_type: 'kpi', resource_id: null },
+      expected_version: null,
+      draft_quality_review: {
+        proposed: {
+          kpiCode: 'REV-001',
+          name: 'Revenue growth',
+          description: null,
+          unit: '%',
+          targetGeometry: 'threshold_min',
+          targetValue: null,
+          targetMin: 10,
+          targetMax: null,
+          warningLow: null,
+          warningHigh: null,
+          criticalLow: null,
+          criticalHigh: null,
+          binarySuccessValue: null,
+          formulaText: null,
+          ownerUserId: null,
+        },
+        quality_review: {
+          purpose_question: 'Why does this KPI matter?',
+          actionability_question: 'What will change if it moves?',
+          owner_load_note: null,
+          target_evidence_note: null,
+          duplicate_risk: { candidate_kpi_ids: [], note: null },
+        },
+        evidence_breakdown: { facts: [], inference: [], missing_evidence: [], recommendation: 'draft as proposed' },
+      },
+    },
+    evidence_pointers: ['note:kpi-draft'],
+  };
+}
+
+// ROI-E008 — keeps the §11 dynamic `for (const target of
+// P08_HANDOFF_TARGET_MODULES)` loop below green for the new 'roi' target,
+// same convention buildKpiPayload above follows for 'kpi'.
+function buildRoiPayload() {
+  return {
+    roi_handoff_context: {
+      advisor_mode: 'pir_lessons_draft',
+      target_resource: { resource_type: 'roi_pir', resource_id: 'pir-1' },
+      case_id: 'case-1',
+      expected_version: 3,
+      pir_lessons_draft: {
+        draft_lessons_text: 'Automate the manual reconciliation step earlier in the rollout.',
+        evidence_breakdown: {
+          facts: [],
+          inference: [],
+          missing_evidence: [],
+          recommendation: 'automate reconciliation',
+        },
+      },
+    },
+    evidence_pointers: ['roi_pir:pir-1'],
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -845,6 +913,8 @@ describe('P08-B §11 — Handoff context validation', () => {
         interview: buildInterviewPayload,
         excele: buildExcelePayload,
         ideas: buildIdeasPayload,
+        kpi: buildKpiPayload,
+        roi: buildRoiPayload,
       };
       const result = validateTargetPayload(target, payloadMap[target]());
       expect(result.valid).toBe(true);

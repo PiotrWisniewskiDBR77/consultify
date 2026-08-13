@@ -262,6 +262,79 @@ import resultsDriverTreeRoutes from './routes/resultsDriverTree.routes.js';
 import resultsExtendedRoutes from './routes/resultsExtended.routes.js';
 import resultsStrategicRoutes from './routes/resultsStrategic.routes.js';
 import resultsValueIntelligenceRoutes from './routes/resultsValueIntelligence.routes.js';
+// Results vNext (KPI-E001/E002) — separate namespace from every legacy
+// /api/results* surface above (see kpi.routes.ts's own header comment:
+// "not aliases for new commands", plan §7).
+import resultsVnextKpiRoutes from './routes/resultsVnext/kpi.routes.js';
+// KPI-E003 Deviation Closed Loop — mounted at the MORE SPECIFIC
+// `/api/vnext/results/kpi/deviation-cases` prefix and registered BEFORE
+// resultsVnextKpiRoutes below (see kpiDeviation.routes.ts's own "MOUNT-ORDER
+// NOTE": resultsVnextKpiRoutes owns `GET /:kpiId` on the shorter
+// `/api/vnext/results/kpi` prefix, which would otherwise shadow this
+// router's `GET /` for the literal path segment "deviation-cases").
+import resultsVnextKpiDeviationRoutes from './routes/resultsVnext/kpiDeviation.routes.js';
+// KPI-E004 Scorecards — same MORE-SPECIFIC-prefix-registered-first rule as
+// resultsVnextKpiDeviationRoutes above (see kpiScorecard.routes.ts's own
+// "MOUNT-ORDER NOTE": resultsVnextKpiRoutes' `GET /:kpiId` would otherwise
+// shadow this router's `GET /` for the literal path segment "scorecards").
+import resultsVnextKpiScorecardRoutes from './routes/resultsVnext/kpiScorecard.routes.js';
+// KPI-E005 Perspectives & Links — `router` (default export) owns
+// `/my`/`/attention`/`/initiative-impacts/*`/`/:kpiId/initiative-impacts` as
+// DIRECT children of the SAME generic `/api/vnext/results/kpi` prefix
+// resultsVnextKpiRoutes owns (unlike the two routers above, which each
+// carved out their own more-specific sub-prefix) — it MUST be registered
+// BEFORE resultsVnextKpiRoutes below, or `GET /api/vnext/results/kpi/my`
+// would hit that router's `GET /:kpiId` first (`kpiId="my"`) and 400 on the
+// UUID check instead of falling through (see kpiPerspectives.routes.ts's own
+// "MOUNT-ORDER NOTE"). `initiativesKpiImpactsRouter` (named export) is a
+// brand-new prefix (`/api/vnext/results/initiatives`) with no ordering risk.
+import resultsVnextKpiPerspectivesRoutes, {
+  initiativesKpiImpactsRouter as resultsVnextInitiativesKpiImpactsRoutes,
+} from './routes/resultsVnext/kpiPerspectives.routes.js';
+// KPI-E007 Legacy Archive / Ops Exclusion — mounted at the MORE SPECIFIC
+// `/api/vnext/results/kpi/legacy` prefix, registered BEFORE the generic
+// `/api/vnext/results/kpi` mount below for consistency with every other
+// sub-router in this domain (same "more-specific-prefix-first" rule as
+// resultsVnextKpiDeviationRoutes/resultsVnextKpiScorecardRoutes above — see
+// KPI_E007_DESIGN.md §8). `/legacy` is a literal path segment, not a param,
+// so Express would match it correctly regardless of order in this specific
+// case, but mounting order-independent behaviour is not a reason to skip
+// the repo's established convention.
+import resultsVnextKpiLegacyArchiveRoutes from './routes/resultsVnext/kpiLegacyArchive.routes.js';
+// ROI-E001 Case & Baseline — first ROI vNext router, own prefix
+// `/api/vnext/results/roi` (no ordering interaction with the KPI mounts
+// above — separate path namespace entirely). See roi.routes.ts's own
+// "MOUNT-ORDER NOTE" for the rule the NEXT ROI router must follow.
+import resultsVnextRoiRoutes from './routes/resultsVnext/roi.routes.js';
+// ROI-E005 Benefits Realization — Organization perspective. SAME prefix as
+// resultsVnextRoiRoutes (`/api/vnext/results/roi`), owning `/org/
+// benefits-realization` as a direct child of it. Verified (roiPerspectives
+// .routes.ts's own header): roi.routes.ts owns zero bare top-level dynamic
+// segments (every one of its routes starts with the literal `/cases`
+// segment), so `/org/...` cannot collide with it regardless of registration
+// order — mounted before resultsVnextRoiRoutes anyway, for consistency with
+// the KPI-E005 precedent's ordering convention above, not because
+// correctness depends on it here.
+import resultsVnextRoiPerspectivesRoutes from './routes/resultsVnext/roiPerspectives.routes.js';
+// ROI-E008 Legacy Archive / Ops Exclusion — mounted at the MORE SPECIFIC
+// `/api/vnext/results/roi/legacy` prefix, registered BEFORE the generic
+// `/api/vnext/results/roi` mounts below, same "more-specific-prefix-first"
+// convention as resultsVnextKpiLegacyArchiveRoutes above (see
+// ROI_E008_DESIGN.md §3/B1 and roiLegacyArchive.routes.ts's own header).
+import resultsVnextRoiLegacyArchiveRoutes from './routes/resultsVnext/roiLegacyArchive.routes.js';
+// OKR-E001 Program & Cycle — first OKR vNext router, own prefix
+// `/api/vnext/results/okr` (no ordering interaction with the KPI/ROI mounts
+// above — separate path namespace entirely). See okr.routes.ts's own
+// "MOUNT-ORDER NOTE" for the rule the NEXT OKR router (OKR-E002's
+// `/sets/*`) must follow.
+import resultsVnextOkrRoutes from './routes/resultsVnext/okr.routes.js';
+// OKR-E008 Half C Legacy Archive / Ops Exclusion — mounted at the MORE
+// SPECIFIC `/api/vnext/results/okr/legacy` prefix, registered BEFORE the
+// generic `/api/vnext/results/okr` mount below, same "more-specific-prefix-
+// first" convention as resultsVnextKpiLegacyArchiveRoutes /
+// resultsVnextRoiLegacyArchiveRoutes above (see OKR_E008_DESIGN.md §5.7 and
+// okrLegacyArchive.routes.ts's own header).
+import resultsVnextOkrLegacyArchiveRoutes from './routes/resultsVnext/okrLegacyArchive.routes.js';
 import revenueRoutes from './routes/revenue.routes.js';
 import rolloutRoutes from './routes/rollout.routes.js';
 // M14 wiring — service route surfaces (mounted below)
@@ -1086,6 +1159,56 @@ export class ApiGateway {
       app.use('/api/results-strategic', resultsStrategicRoutes);
       app.use('/api/results-driver-tree', resultsDriverTreeRoutes);
       app.use('/api/results-extended', resultsExtendedRoutes);
+      // Results vNext (KPI-E001/E002) — own auth (verifyToken +
+      // requireOrgAccess) applied inside the router.
+      // KPI-E003 deviation-cases router MUST be registered BEFORE the
+      // shorter `/api/vnext/results/kpi` mount below — see
+      // kpiDeviation.routes.ts's "MOUNT-ORDER NOTE" (Express matches
+      // app-level middleware in registration order, not by prefix
+      // specificity; the definition/measurement router's `GET /:kpiId`
+      // would otherwise shadow this router's `GET /`).
+      app.use('/api/vnext/results/kpi/deviation-cases', resultsVnextKpiDeviationRoutes);
+      // KPI-E004 scorecards router — also a MORE SPECIFIC prefix than the
+      // generic `/api/vnext/results/kpi` mount below, registered before it
+      // for the same reason (see kpiScorecard.routes.ts's "MOUNT-ORDER NOTE").
+      app.use('/api/vnext/results/kpi/scorecards', resultsVnextKpiScorecardRoutes);
+      // KPI-E007 Legacy Archive — also a MORE SPECIFIC prefix than the
+      // generic `/api/vnext/results/kpi` mount below, registered before it
+      // for the same reason (see kpiLegacyArchive.routes.ts's own header
+      // comment and KPI_E007_DESIGN.md §8).
+      app.use('/api/vnext/results/kpi/legacy', resultsVnextKpiLegacyArchiveRoutes);
+      // KPI-E005 Perspectives & Links — SAME prefix as resultsVnextKpiRoutes
+      // below (not a more-specific sub-prefix like the two routers above),
+      // so it MUST be registered BEFORE it — see the import comment above
+      // and kpiPerspectives.routes.ts's own "MOUNT-ORDER NOTE".
+      app.use('/api/vnext/results/kpi', resultsVnextKpiPerspectivesRoutes);
+      app.use('/api/vnext/results/kpi', resultsVnextKpiRoutes);
+      app.use('/api/vnext/results/initiatives', resultsVnextInitiativesKpiImpactsRoutes);
+      // ROI-E005 Perspectives — SAME prefix as resultsVnextRoiRoutes below
+      // (not a more-specific sub-prefix), registered BEFORE it for
+      // consistency with the KPI-E005 mount-order convention above (see the
+      // import comment; correctness does not depend on this order here —
+      // see roiPerspectives.routes.ts's own "MOUNT-ORDER CHECK").
+      app.use('/api/vnext/results/roi', resultsVnextRoiPerspectivesRoutes);
+      // ROI-E008 Legacy Archive — also a MORE SPECIFIC prefix than the
+      // generic `/api/vnext/results/roi` mounts below, registered before
+      // them for the same reason (see roiLegacyArchive.routes.ts's own
+      // header comment and ROI_E008_DESIGN.md §3/B1).
+      app.use('/api/vnext/results/roi/legacy', resultsVnextRoiLegacyArchiveRoutes);
+      // ROI-E001 (Case & Baseline) — own auth (verifyToken +
+      // requireOrgAccess) applied inside the router, same convention as
+      // resultsVnextKpiRoutes above.
+      app.use('/api/vnext/results/roi', resultsVnextRoiRoutes);
+      // OKR-E008 Half C Legacy Archive — also a MORE SPECIFIC prefix than
+      // the generic `/api/vnext/results/okr` mount below, registered before
+      // it for the same reason (see okrLegacyArchive.routes.ts's own header
+      // comment and OKR_E008_DESIGN.md §5.7).
+      app.use('/api/vnext/results/okr/legacy', resultsVnextOkrLegacyArchiveRoutes);
+      // OKR-E001 (Program & Cycle) — own auth (verifyToken +
+      // requireOrgAccess, PLUS requireOrgRole on every write route —
+      // design §7/Decision P2/P4) applied inside the router, same mounting
+      // convention as resultsVnextKpiRoutes/resultsVnextRoiRoutes above.
+      app.use('/api/vnext/results/okr', resultsVnextOkrRoutes);
       app.use('/api/realtime-v4', realtimePlatformRoutes);
       app.use('/api/inbox-v4', inboxEnterpriseRoutes);
       app.use('/api/assessments-v4', assessmentEnterpriseRoutes);
@@ -1200,14 +1323,17 @@ export class ApiGateway {
       // valuation-recommendation}/...
       app.use(
         '/api/finance/candidate-handoff/investment-case',
+        gatewayVerifyToken,
         financeCandidateHandoffInvestmentCaseRoutes
       );
       app.use(
         '/api/finance/candidate-handoff/statement-pack',
+        gatewayVerifyToken,
         financeCandidateHandoffStatementPackRoutes
       );
       app.use(
         '/api/finance/candidate-handoff/valuation-recommendation',
+        gatewayVerifyToken,
         financeCandidateHandoffValuationRecommendationRoutes
       );
       app.use('/api/finance-v4', deprecationHeader('/api/v8/finance'), financeEnterpriseRoutes);

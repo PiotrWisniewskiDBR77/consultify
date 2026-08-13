@@ -28,6 +28,7 @@ import {
   findReconciliationTargetForInitiative,
 } from '../services/finance/canonical/roiFinanceReconciliationAdapter.js';
 import { FinanceCandidateHandoffError } from '../services/finance/financeCandidateHandoffCore.js';
+import { resolveEffectiveAccess } from '../services/effectiveAccessService.js';
 import * as finAnalysisSvc from '../services/financialAnalysisService.js';
 import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
 import { resolveInitiativeProjectId } from '../services/initiativeProjectPolicyService.js';
@@ -1676,6 +1677,11 @@ router.put(
       }
 
       try {
+        const access = await resolveEffectiveAccess({
+          userId: userId || '',
+          organizationId: orgId,
+          applicationRole: req.user?.role,
+        });
         reconciliation = await detectAndReconcile({
           organizationId: orgId,
           caseId: target.target.caseId,
@@ -1686,6 +1692,7 @@ router.put(
           divergenceReason:
             `PUT /api/economics/analyses/${id}/benefits attempted to change ` +
             `benefit_tracking.actual_cost_savings for tracking_period ${trackingPeriod}`,
+          access,
         });
       } catch (error) {
         logger.error('[economics] opening ROI/Finance reconciliation failed', {

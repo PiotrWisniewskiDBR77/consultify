@@ -1,0 +1,448 @@
+/**
+ * ROI-E007 — Finance Reconciliation commands (AC-03: a reconciliation record
+ * instead of silent sync; Decision D1: PATCH resolution path with CAS on the
+ * reconciliation's own row_version; event fan-out differs by terminal vs.
+ * non-terminal status transition), against a REAL Postgres.
+ *
+ * Design: docs/product/results-vnext/ROI_E007_DESIGN.md §4, Decision D1.
+ *
+ * Proves: `openRoiFinanceReconciliation` creates a durable record (never a
+ * value overwrite anywhere) and validates `financeLinkId` belongs to the
+ * case; `listRoiFinanceReconciliations`'s `::text` visibility join;
+ * `updateRoiFinanceReconciliationStatus`'s CAS on the reconciliation's OWN
+ * row_version (stale `expectedVersion` rejected); `resolvedBy`/`resolvedAt`
+ * set ONLY on a transition into a terminal status; and — the literal
+ * Decision D1 fact — the event fan-out DIFFERS: a transition into
+ * 'investigating' fans ONLY to 'mywork_projection', while a transition into
+ * 'resolved'/'accepted_divergence' additionally fans to 'finance_projection'.
+ *
+ * SKIP POLICY: same convention as every other `*.realdb.test.ts` in this
+ * program — silent no-op without a configured database, `beforeAll` throws
+ * if configured-but-unreachable.
+ */
+import { randomUUID } from 'node:crypto';
+
+import { Client, type ClientConfig } from 'pg';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+
+function buildClientConfig(): ClientConfig | null {
+  const raw = process.env.DATABASE_URL;
+  const url = typeof raw === 'string' && raw.trim() && !raw.includes('${{') ? raw.trim() : null;
+  if (url) {
+    return { connectionString: url, connectionTimeoutMillis: 5_000, statement_timeout: 30_000 };
+  }
+  const host = process.env.PGHOST || process.env.DB_HOST;
+  if (!host) return null;
+  return {
+    host,
+    port: Number(process.env.PGPORT || process.env.DB_PORT || 5432),
+    database: process.env.PGDATABASE || process.env.DB_NAME || 'postgres',
+    user: process.env.PGUSER || process.env.DB_USER || 'postgres',
+    password: process.env.PGPASSWORD || process.env.DB_PASSWORD || '',
+    connectionTimeoutMillis: 5_000,
+    statement_timeout: 30_000,
+  };
+}
+
+const DB_CONFIGURED = buildClientConfig() !== null;
+
+const tag = `${Date.now().toString(36)}_${randomUUID().slice(0, 8)}`;
+const ORG_ID = `roi-e007-fin-recon-org-${tag}`;
+const USER_MAKER = `roi-e007-fin-recon-maker-${tag}`;
+const INITIATIVE_ID = `roi-e007-fin-recon-init-${tag}`;
+
+let client: Client;
+let reachable = false;
+
+type CaseCommandsModule = typeof import('../../../server/src/services/resultsVnext/roi/roiCaseCommands.js');
+type FinanceLinkCommandsModule = typeof import('../../../server/src/services/resultsVnext/roi/roiFinanceLinkCommands.js');
+type FinanceReconciliationCommandsModule =
+  typeof import('../../../server/src/services/resultsVnext/roi/roiFinanceReconciliationCommands.js');
+type FinanceLinkRepositoryModule = typeof import('../../../server/src/services/resultsVnext/roi/roiFinanceLinkRepository.js');
+type PgModule = typeof import('../../../server/src/database/PostgresDatabase.js');
+
+let createRoiCase: CaseCommandsModule['createRoiCase'];
+let createRoiFinanceLink: FinanceLinkCommandsModule['createRoiFinanceLink'];
+let openRoiFinanceReconciliation: FinanceReconciliationCommandsModule['openRoiFinanceReconciliation'];
+let updateRoiFinanceReconciliationStatus: FinanceReconciliationCommandsModule['updateRoiFinanceReconciliationStatus'];
+let RoiFinanceLinkNotFoundError: FinanceReconciliationCommandsModule['RoiFinanceLinkNotFoundError'];
+let listRoiFinanceReconciliations: FinanceLinkRepositoryModule['listRoiFinanceReconciliations'];
+let closePgPool: (() => Promise<void>) | undefined;
+
+async function insertVisibilityPolicy(domain: string, mode: string, createdBy: string): Promise<void> {
+  await client.query(
+    `INSERT INTO rvn_platform_visibility_policies
+       (organization_id, domain, policy_version, visibility_mode, is_active, created_by)
+     VALUES ($1, $2, 1, $3, true, $4)`,
+    [ORG_ID, domain, mode, createdBy]
+  );
+}
+
+async function insertOrganization(): Promise<void> {
+  await client.query(
+    `INSERT INTO organizations (id, name, plan, status) VALUES ($1, $2, 'enterprise', 'active')
+     ON CONFLICT (id) DO NOTHING`,
+    [ORG_ID, 'Finance-reconciliation fixture org']
+  );
+}
+
+interface CaseWithLinkFixture {
+  caseId: string;
+  linkId: string;
+  linkRowVersion: number;
+}
+
+async function buildCaseWithFinanceLink(suffix: string): Promise<CaseWithLinkFixture> {
+  const initiativeId = `${INITIATIVE_ID}-${suffix}`;
+  await client.query(`INSERT INTO initiatives (id, organization_id, name) VALUES ($1, $2, $3)`, [
+    initiativeId,
+    ORG_ID,
+    'Finance-reconciliation fixture initiative',
+  ]);
+  const createOutcome = await createRoiCase({
+    organizationId: ORG_ID,
+    initiativeId,
+    title: 'Finance-reconciliation fixture case',
+    ownerUserId: USER_MAKER,
+    currency: 'USD',
+    analysisStart: '2026-01-01',
+    analysisEnd: '2026-12-31',
+    createdBy: USER_MAKER,
+    actorEffectiveRole: 'consultant',
+    idempotencyKey: `create-${randomUUID()}`,
+  });
+  const caseId = createOutcome.result.case.caseId;
+
+  const linkOutcome = await createRoiFinanceLink({
+    caseId,
+    organizationId: ORG_ID,
+    financeArtifactType: 'financial_roi_link',
+    financeArtifactId: `fin-artifact-${suffix}`,
+    financeVersionId: `fin-version-${suffix}`,
+    source: 'finance_enterprise_service',
+    asOf: '2026-06-01T00:00:00.000Z',
+    linkPurpose: 'npv_reference',
+    actorUserId: USER_MAKER,
+    actorEffectiveRole: 'consultant',
+    idempotencyKey: `fin-link-${suffix}-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
+});
+
+  return { caseId, linkId: linkOutcome.result.linkId, linkRowVersion: linkOutcome.result.rowVersion };
+}
+
+async function outboxConsumerGroups(eventType: string, aggregateId: string): Promise<string[]> {
+  const result = await client.query<{ consumer_group: string }>(
+    `SELECT o.consumer_group
+       FROM rvn_platform_outbox o
+       JOIN rvn_platform_events e ON e.event_id = o.event_id
+      WHERE e.event_type = $1 AND e.aggregate_id = $2 AND e.organization_id = $3
+      ORDER BY o.consumer_group`,
+    [eventType, aggregateId, ORG_ID]
+  );
+  return result.rows.map((r) => r.consumer_group);
+}
+
+describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
+  beforeAll(async () => {
+    if (!DB_CONFIGURED) {
+      // eslint-disable-next-line no-console
+      console.error(
+        '[skip] No Postgres configured — ROI-E007 finance-reconciliation realdb tests did NOT run. This run is not evidence.'
+      );
+      return;
+    }
+
+    client = new Client(buildClientConfig() as ClientConfig);
+    try {
+      await client.connect();
+      await client.query('SELECT 1');
+      await client.query('SELECT 1 FROM rvn_roi_finance_reconciliations LIMIT 0');
+      await client.query(
+        `CREATE TABLE IF NOT EXISTS team_members (
+           team_id TEXT NOT NULL, user_id TEXT NOT NULL, role TEXT DEFAULT 'member',
+           PRIMARY KEY (team_id, user_id))`
+      );
+      await client.query(
+        `CREATE TABLE IF NOT EXISTS initiatives (
+           id TEXT PRIMARY KEY, organization_id TEXT NOT NULL, name TEXT NOT NULL)`
+      );
+    } catch (error) {
+      throw new Error(
+        'A database is configured but is not reachable (or missing the ROI-E007 finance-seam schema); refusing to report a green run. ' +
+          String(error)
+      );
+    }
+    reachable = true;
+
+    const caseCommands: CaseCommandsModule = await import('../../../server/src/services/resultsVnext/roi/roiCaseCommands.js');
+    createRoiCase = caseCommands.createRoiCase;
+    const financeLinkCommands: FinanceLinkCommandsModule = await import(
+      '../../../server/src/services/resultsVnext/roi/roiFinanceLinkCommands.js'
+    );
+    createRoiFinanceLink = financeLinkCommands.createRoiFinanceLink;
+    const financeReconciliationCommands: FinanceReconciliationCommandsModule = await import(
+      '../../../server/src/services/resultsVnext/roi/roiFinanceReconciliationCommands.js'
+    );
+    openRoiFinanceReconciliation = financeReconciliationCommands.openRoiFinanceReconciliation;
+    updateRoiFinanceReconciliationStatus = financeReconciliationCommands.updateRoiFinanceReconciliationStatus;
+    RoiFinanceLinkNotFoundError = financeReconciliationCommands.RoiFinanceLinkNotFoundError;
+    const financeLinkRepo: FinanceLinkRepositoryModule = await import(
+      '../../../server/src/services/resultsVnext/roi/roiFinanceLinkRepository.js'
+    );
+    listRoiFinanceReconciliations = financeLinkRepo.listRoiFinanceReconciliations;
+
+    const pgModule: PgModule = await import('../../../server/src/database/PostgresDatabase.js');
+    closePgPool = (pgModule as unknown as { closePool?: () => Promise<void> }).closePool;
+
+    await insertOrganization();
+    await insertVisibilityPolicy('roi', 'OPEN_ORG', USER_MAKER);
+  }, 30_000);
+
+  afterAll(async () => {
+    if (!reachable) return;
+    await client.query(`DELETE FROM rvn_roi_finance_reconciliations WHERE organization_id = $1`, [ORG_ID]);
+    await client.query(`DELETE FROM rvn_roi_finance_links WHERE organization_id = $1`, [ORG_ID]);
+    await client.query(
+      `DELETE FROM rvn_platform_resource_acl
+        WHERE resource_type = 'roi_case'
+          AND resource_id IN (SELECT case_id::text FROM rvn_roi_cases WHERE organization_id = $1)`,
+      [ORG_ID]
+    );
+    await client.query(`DELETE FROM rvn_platform_obligations WHERE organization_id = $1`, [ORG_ID]);
+    await client.query(
+      `DELETE FROM rvn_platform_outbox WHERE event_id IN (SELECT event_id FROM rvn_platform_events WHERE organization_id = $1)`,
+      [ORG_ID]
+    );
+    await client.query(`DELETE FROM rvn_platform_events WHERE organization_id = $1`, [ORG_ID]);
+    await client.query(`DELETE FROM rvn_roi_baselines WHERE organization_id = $1`, [ORG_ID]);
+    await client.query(`DELETE FROM rvn_roi_calculation_policy WHERE organization_id = $1`, [ORG_ID]);
+    await client.query(`DELETE FROM rvn_roi_cases WHERE organization_id = $1`, [ORG_ID]);
+    await client.query(`DELETE FROM rvn_platform_resource_visibility WHERE organization_id = $1`, [ORG_ID]);
+    await client.query(`DELETE FROM rvn_platform_visibility_policies WHERE organization_id = $1`, [ORG_ID]);
+    await client.query(`DELETE FROM initiatives WHERE organization_id = $1`, [ORG_ID]);
+    await client.query(`DELETE FROM organizations WHERE id = $1`, [ORG_ID]);
+    await client.end();
+    if (closePgPool) await closePgPool();
+  }, 30_000);
+
+  const itDB = (name: string, fn: () => Promise<void>, timeoutMs = 30_000) =>
+    it(
+      name,
+      async () => {
+        if (!reachable) return;
+        await fn();
+      },
+      timeoutMs
+    );
+
+  itDB('AC-03: openRoiFinanceReconciliation creates a durable record with status=open', async () => {
+    const fixture = await buildCaseWithFinanceLink('1');
+    const outcome = await openRoiFinanceReconciliation({
+      caseId: fixture.caseId,
+      organizationId: ORG_ID,
+      financeLinkId: fixture.linkId,
+      roiValue: 15000,
+      financeValue: 14200,
+      divergenceReason: 'Finance excludes one-time onboarding fee',
+      actorUserId: USER_MAKER,
+      actorEffectiveRole: 'consultant',
+      idempotencyKey: `recon-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
+});
+    expect(outcome.outcome).toBe('applied');
+    const reconciliation = outcome.result;
+    expect(reconciliation.caseId).toBe(fixture.caseId);
+    expect(reconciliation.financeLinkId).toBe(fixture.linkId);
+    expect(reconciliation.roiValue).toBe(15000);
+    expect(reconciliation.financeValue).toBe(14200);
+    expect(reconciliation.status).toBe('open');
+    expect(reconciliation.openedBy).toBe(USER_MAKER);
+    expect(reconciliation.resolvedBy).toBeNull();
+    expect(reconciliation.resolvedAt).toBeNull();
+    expect(reconciliation.rowVersion).toBe(1);
+  });
+
+  itDB('openRoiFinanceReconciliation validates financeLinkId belongs to the case', async () => {
+    const fixture = await buildCaseWithFinanceLink('2');
+    await expect(
+      openRoiFinanceReconciliation({
+        caseId: fixture.caseId,
+        organizationId: ORG_ID,
+        financeLinkId: randomUUID(), // fabricated — does not belong to this case
+        roiValue: 100,
+        financeValue: 90,
+        actorUserId: USER_MAKER,
+        actorEffectiveRole: 'consultant',
+        idempotencyKey: `recon-bad-link-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
+})
+    ).rejects.toThrow(RoiFinanceLinkNotFoundError);
+  });
+
+  itDB('listRoiFinanceReconciliations: `::text` visibility join executes against real rows', async () => {
+    const fixture = await buildCaseWithFinanceLink('3');
+    await openRoiFinanceReconciliation({
+      caseId: fixture.caseId,
+      organizationId: ORG_ID,
+      financeLinkId: fixture.linkId,
+      roiValue: 500,
+      financeValue: 480,
+      actorUserId: USER_MAKER,
+      actorEffectiveRole: 'consultant',
+      idempotencyKey: `recon-list-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
+});
+    const reconciliations = await listRoiFinanceReconciliations({
+      userId: USER_MAKER,
+      organizationId: ORG_ID,
+      caseId: fixture.caseId,
+    });
+    expect(reconciliations).toHaveLength(1);
+    expect(reconciliations[0]!.financeLinkId).toBe(fixture.linkId);
+  });
+
+  itDB('updateRoiFinanceReconciliationStatus: CAS on the reconciliation\'s OWN row_version; stale expectedVersion rejected', async () => {
+    const fixture = await buildCaseWithFinanceLink('4');
+    const openOutcome = await openRoiFinanceReconciliation({
+      caseId: fixture.caseId,
+      organizationId: ORG_ID,
+      financeLinkId: fixture.linkId,
+      roiValue: 1000,
+      financeValue: 900,
+      actorUserId: USER_MAKER,
+      actorEffectiveRole: 'consultant',
+      idempotencyKey: `recon-cas-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
+});
+    const reconciliationId = openOutcome.result.reconciliationId;
+
+    const updateOutcome = await updateRoiFinanceReconciliationStatus({
+      reconciliationId,
+      caseId: fixture.caseId,
+      organizationId: ORG_ID,
+      expectedVersion: openOutcome.result.rowVersion,
+      status: 'investigating',
+      actorUserId: USER_MAKER,
+      actorEffectiveRole: 'consultant',
+      idempotencyKey: `recon-cas-update-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
+});
+    expect(updateOutcome.result.status).toBe('investigating');
+    // Not terminal — resolvedBy/resolvedAt stay unset.
+    expect(updateOutcome.result.resolvedBy).toBeNull();
+    expect(updateOutcome.result.resolvedAt).toBeNull();
+    // Facts unchanged by the status update.
+    expect(updateOutcome.result.roiValue).toBe(1000);
+    expect(updateOutcome.result.financeValue).toBe(900);
+
+    const { AtomicWriteConflictError } = await import('../../../server/src/services/resultsVnext/platform/atomicWrite.js');
+    await expect(
+      updateRoiFinanceReconciliationStatus({
+        reconciliationId,
+        caseId: fixture.caseId,
+        organizationId: ORG_ID,
+        expectedVersion: openOutcome.result.rowVersion, // stale — already moved to updateOutcome.resultingVersion
+        status: 'resolved',
+        actorUserId: USER_MAKER,
+        actorEffectiveRole: 'consultant',
+        idempotencyKey: `recon-cas-stale-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
+})
+    ).rejects.toThrow(AtomicWriteConflictError);
+  });
+
+  itDB('Decision D1: transitioning to a TERMINAL status sets resolvedBy/resolvedAt', async () => {
+    const fixture = await buildCaseWithFinanceLink('5');
+    const openOutcome = await openRoiFinanceReconciliation({
+      caseId: fixture.caseId,
+      organizationId: ORG_ID,
+      financeLinkId: fixture.linkId,
+      roiValue: 2000,
+      financeValue: 1800,
+      actorUserId: USER_MAKER,
+      actorEffectiveRole: 'consultant',
+      idempotencyKey: `recon-terminal-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
+});
+
+    const resolvedOutcome = await updateRoiFinanceReconciliationStatus({
+      reconciliationId: openOutcome.result.reconciliationId,
+      caseId: fixture.caseId,
+      organizationId: ORG_ID,
+      expectedVersion: openOutcome.result.rowVersion,
+      status: 'resolved',
+      resolutionNotes: 'Confirmed timing difference, both figures correct',
+      actorUserId: USER_MAKER,
+      actorEffectiveRole: 'consultant',
+      idempotencyKey: `recon-resolve-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
+});
+    expect(resolvedOutcome.result.status).toBe('resolved');
+    expect(resolvedOutcome.result.resolvedBy).toBe(USER_MAKER);
+    expect(resolvedOutcome.result.resolvedAt).not.toBeNull();
+    expect(resolvedOutcome.result.resolutionNotes).toBe('Confirmed timing difference, both figures correct');
+  });
+
+  itDB(
+    'Decision D1 — event fan-out DIFFERS by terminal vs. non-terminal transition: ' +
+      "'investigating' fans ONLY to mywork_projection; 'resolved' ALSO fans to finance_projection",
+    async () => {
+      const fixture = await buildCaseWithFinanceLink('6');
+
+      // roi.finance_reconciliation_opened — always dual-fans (design §4).
+      const openOutcome = await openRoiFinanceReconciliation({
+        caseId: fixture.caseId,
+        organizationId: ORG_ID,
+        financeLinkId: fixture.linkId,
+        roiValue: 300,
+        financeValue: 250,
+        actorUserId: USER_MAKER,
+        actorEffectiveRole: 'consultant',
+        idempotencyKey: `recon-fanout-open-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
+});
+      const openedGroups = await outboxConsumerGroups('roi.finance_reconciliation_opened', fixture.caseId);
+      expect(openedGroups).toEqual(['finance_projection', 'mywork_projection']);
+
+      // Non-terminal transition -> lighter event, mywork_projection ONLY.
+      const investigatingOutcome = await updateRoiFinanceReconciliationStatus({
+        reconciliationId: openOutcome.result.reconciliationId,
+        caseId: fixture.caseId,
+        organizationId: ORG_ID,
+        expectedVersion: openOutcome.result.rowVersion,
+        status: 'investigating',
+        actorUserId: USER_MAKER,
+        actorEffectiveRole: 'consultant',
+        idempotencyKey: `recon-fanout-investigating-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
+});
+      const investigatingGroups = await outboxConsumerGroups(
+        'roi.finance_reconciliation_status_updated',
+        fixture.caseId
+      );
+      expect(investigatingGroups).toEqual(['mywork_projection']);
+      const investigatingResolvedGroups = await outboxConsumerGroups(
+        'roi.finance_reconciliation_resolved',
+        fixture.caseId
+      );
+      expect(investigatingResolvedGroups).toEqual([]);
+
+      // Terminal transition -> heavier event, dual-fans.
+      await updateRoiFinanceReconciliationStatus({
+        reconciliationId: openOutcome.result.reconciliationId,
+        caseId: fixture.caseId,
+        organizationId: ORG_ID,
+        expectedVersion: investigatingOutcome.resultingVersion,
+        status: 'accepted_divergence',
+        resolutionNotes: 'Client accepted residual variance',
+        actorUserId: USER_MAKER,
+        actorEffectiveRole: 'consultant',
+        idempotencyKey: `recon-fanout-accepted-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
+});
+      const resolvedGroups = await outboxConsumerGroups('roi.finance_reconciliation_resolved', fixture.caseId);
+      expect(resolvedGroups).toEqual(['finance_projection', 'mywork_projection']);
+    }
+  );
+});
