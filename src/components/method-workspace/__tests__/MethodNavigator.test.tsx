@@ -136,4 +136,32 @@ describe('MethodNavigator', () => {
     render(<MethodNavigator nodes={[]} activeUnitId={null} onSelect={vi.fn()} />);
     expect(screen.getByTestId('method-navigator-empty')).toBeInTheDocument();
   });
+
+  // Regression (2026-08-13, focus-ring audit fix): the row's focus ring used
+  // to be driven by a Tailwind NAMED GROUP (`group/treeitem` on the <li> +
+  // `group-focus-visible/treeitem:ring-*` on its row <div>). That compiles
+  // to a plain CSS DESCENDANT selector, and because a parent's `<ul
+  // role="group">` of children is nested INSIDE its own <li> (required by
+  // the ARIA treeitem/group pattern this component uses), every descendant
+  // row also carried the `group/treeitem` class — so focusing a PARENT node
+  // lit up the ring on every descendant row too (confirmed live via a real
+  // Tab + getComputedStyle check in a browser: box-shadow was identical on
+  // the focused li and its unfocused children). Visually indistinguishable
+  // from "which row has focus?" — jsdom doesn't compute box-shadow from
+  // Tailwind's CSS variables, so this pins the DOM/className shape instead:
+  // no named group anywhere, and the ring lives on the <li> itself scoped to
+  // its own row via a direct-child selector, which can never reach a nested
+  // treeitem several DOM levels down inside the sibling <ul>.
+  it('the focus ring is scoped to this row only — no Tailwind named-group class that could leak onto nested descendant rows', () => {
+    render(<MethodNavigator nodes={NODES} activeUnitId={null} onSelect={vi.fn()} />);
+    const items = screen.getAllByRole('treeitem');
+    expect(items.length).toBeGreaterThan(0);
+    for (const li of items) {
+      expect(li.className).not.toMatch(/group\/treeitem/);
+      expect(li.className).not.toMatch(/group-focus-visible/);
+      // Direct-child arbitrary variant: only ever matches THIS li's own row
+      // div, never a descendant li's row (which sits behind an extra <ul>).
+      expect(li.className).toMatch(/\[&:focus-visible>div\]:ring/);
+    }
+  });
 });
