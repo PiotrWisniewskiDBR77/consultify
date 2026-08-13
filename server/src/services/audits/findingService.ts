@@ -828,14 +828,26 @@ export async function closeFinding(
   const note = String(input?.note || '').trim();
   if (!note) throw new AuditStateError('Zamknięcie ustalenia wymaga notatki');
 
-  // TWARDA REGUŁA ZAMKNIĘCIA: każde nierozjęte działanie korygujące (nie
-  // odrzucone/anulowane) musi mieć weryfikację skuteczności z result='effective'.
-  // Deklaracja wykonawcy ani sam status zadania NIE wystarczają.
-  const missing = await auditAll<{ id: string; title: string; action_kind: string; status: string }>(
-    `SELECT a.id, a.title, a.action_kind, a.status
+  // TWARDA REGUŁA ZAMKNIĘCIA — dwa różne dowody dla dwóch różnych rodzajów
+  // działania. Rozróżnienie jest merytoryczne, nie kosmetyczne:
+  //
+  //   • `corrective_action` / `preventive_action` usuwają PRZYCZYNĘ, więc
+  //     wymagają weryfikacji SKUTECZNOŚCI (`effectiveness` = `effective`).
+  //     Sama deklaracja wykonawcy ani status zadania nie wystarczają.
+  //   • `correction` / `containment` usuwają SKUTEK w konkretnym przypadku.
+  //     Nie mają skuteczności systemowej do zmierzenia — wymagają dowodu
+  //     WDROŻENIA (zgłoszona implementacja albo weryfikacja `implementation`).
+  //
+  // Wymaganie weryfikacji skuteczności od korekcji brzmi surowiej, ale w
+  // praktyce blokowałoby zamknięcie każdego ustalenia, przy którym ktoś
+  // uczciwie odnotował doraźną korektę obok działania systemowego — czyli
+  // karałoby za dokładniejszy zapis planu naprawczego.
+  const missingEffectiveness = await auditAll<{ id: string; title: string; action_kind: string }>(
+    `SELECT a.id, a.title, a.action_kind
        FROM audit_corrective_actions a
       WHERE a.organization_id = $1 AND a.finding_id = $2
         AND a.status NOT IN ('rejected', 'cancelled')
+        AND a.action_kind IN ('corrective_action', 'preventive_action')
         AND NOT EXISTS (
           SELECT 1 FROM audit_verifications v
            WHERE v.organization_id = $1 AND v.corrective_action_id = a.id
@@ -845,11 +857,58 @@ export async function closeFinding(
     [organizationId, id],
   );
 
-  if (missing.length > 0) {
-    const names = missing.map((m) => `„${m.title}" (${m.action_kind})`).join('; ');
+  if (missingEffectiveness.length > 0) {
+    const names = missingEffectiveness.map((m) => `„${m.title}" (${m.action_kind})`).join('; ');
     throw new AuditStateError(
       `Nie można zamknąć ustalenia — brakuje weryfikacji skuteczności dla działań: ${names}`,
     );
+  }
+
+  const missingImplementation = await auditAll<{ id: string; title: string; action_kind: string }>(
+    `SELECT a.id, a.title, a.action_kind
+       FROM audit_corrective_actions a
+      WHERE a.organization_id = $1 AND a.finding_id = $2
+        AND a.status NOT IN ('rejected', 'cancelled')
+        AND a.action_kind IN ('correction', 'containment')
+        AND a.implemented_at IS NULL
+        AND NOT EXISTS (
+          SELECT 1 FROM audit_verifications v
+           WHERE v.organization_id = $1 AND v.corrective_action_id = a.id
+             AND v.verification_kind = 'implementation'
+             AND v.result IN ('effective', 'partially_effective')
+        )
+      ORDER BY a.created_at ASC`,
+    [organizationId, id],
+  );
+
+  if (missingImplementation.length > 0) {
+    const names = missingImplementation.map((m) => `„${m.title}" (${m.action_kind})`).join('; ');
+    throw new AuditStateError(
+      `Nie można zamknąć ustalenia — brakuje dowodu wdrożenia dla działań: ${names}`,
+    );
+  }
+
+  // Ustalenie oznaczające niezgodność nie może zostać zamknięte, jeżeli nie ma
+  // ANI JEDNEGO działania usuwającego przyczynę. Bez tego „zamknięte" znaczyłoby
+  // tylko tyle, że ktoś posprzątał skutek.
+  const closingNonconformity = await isNonconformingClassification(
+    organizationId,
+    String(row.program_id),
+    String(row.classification || ''),
+  );
+  if (closingNonconformity) {
+    const systemic = await auditAll<{ id: string }>(
+      `SELECT a.id FROM audit_corrective_actions a
+        WHERE a.organization_id = $1 AND a.finding_id = $2
+          AND a.status NOT IN ('rejected', 'cancelled')
+          AND a.action_kind IN ('corrective_action', 'preventive_action')`,
+      [organizationId, id],
+    );
+    if (systemic.length === 0) {
+      throw new AuditStateError(
+        'Nie można zamknąć niezgodności bez działania usuwającego przyczynę — sama korekcja skutku nie zamyka ustalenia',
+      );
+    }
   }
 
   await auditRun(
