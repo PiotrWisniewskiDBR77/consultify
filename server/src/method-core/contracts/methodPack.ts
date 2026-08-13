@@ -32,7 +32,7 @@
  *        METHOD_LIBRARY_FIRST_STANDARD.md §3.
  */
 
-import type { EvidenceStrength } from './events';
+import type { EvidenceStrength } from './events.js';
 
 /**
  * Readiness ladder from ASSESSMENT_METHOD_PACK_CONTRACT.md §6.

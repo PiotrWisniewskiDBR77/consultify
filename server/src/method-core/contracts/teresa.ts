@@ -32,7 +32,7 @@
  * This module makes skipping a step a type error, not a code-review opinion.
  */
 
-import type { MethodProcessRole } from './session';
+import type { MethodProcessRole } from './session.js';
 
 /**
  * Capability catalogue. Closed set, taken verbatim from
