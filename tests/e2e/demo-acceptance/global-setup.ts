@@ -3,16 +3,16 @@ import path from 'node:path';
 
 import { chromium, type FullConfig } from '@playwright/test';
 
-const EXPECTED_EMAIL = 'piotr.wisniewski@dbr77.com';
+const PIOTR_EMAIL = 'piotr.wisniewski@dbr77.com';
 const EXPECTED_ORGANIZATION_ID = 'a3e05d4a-5397-419d-b486-8e44366c0063';
 
 export default async function globalSetup(config: FullConfig) {
-  const email = String(process.env.E2E_OWNER_EMAIL || '').trim();
-  const password = String(process.env.E2E_OWNER_PASSWORD || '');
-  if (email.toLowerCase() !== EXPECTED_EMAIL || !password) {
+  const email = String(process.env.E2E_ACCEPTANCE_OWNER_EMAIL || process.env.ACCEPTANCE_TEST_OWNER_EMAIL || 'acceptance.owner@consultify.local').trim().toLowerCase();
+  const password = String(process.env.E2E_ACCEPTANCE_OWNER_PASSWORD || process.env.ACCEPTANCE_TEST_OWNER_PASSWORD || '');
+  if (!email || !password) {
     throw new Error(
-      `REAL_OWNER_CREDENTIALS_REQUIRED: set E2E_OWNER_EMAIL=${EXPECTED_EMAIL} and E2E_OWNER_PASSWORD. ` +
-        'This gate does not use test-support, demo-login, register-demo, synthetic tokens or saved browser sessions.'
+      'ACCEPTANCE_OWNER_CREDENTIALS_REQUIRED: set E2E_ACCEPTANCE_OWNER_EMAIL and E2E_ACCEPTANCE_OWNER_PASSWORD. ' +
+      'This gate does not use test-support, demo-login, register-demo, synthetic tokens or saved browser sessions.'
     );
   }
 
@@ -38,7 +38,7 @@ export default async function globalSetup(config: FullConfig) {
     const serverIdentity = loginPayload?.user || null;
     const serverRole = String(serverIdentity?.role || serverIdentity?.userRole || '').toUpperCase();
     if (
-      String(serverIdentity?.email || '').toLowerCase() !== EXPECTED_EMAIL ||
+      String(serverIdentity?.email || '').toLowerCase() !== email ||
       serverRole !== 'OWNER' ||
       String(serverIdentity?.organizationId || '') !== EXPECTED_ORGANIZATION_ID
     ) {
@@ -50,6 +50,30 @@ export default async function globalSetup(config: FullConfig) {
         })}`
       );
     }
+    const token = String(loginPayload?.token || loginPayload?.accessToken || '');
+    if (!token) throw new Error('REAL_OWNER_LOGIN_FAILED: response did not contain an access token');
+    const membersResponse = await page.request.get(
+      `${baseURL.replace(/\/$/, '')}/api/organizations/${EXPECTED_ORGANIZATION_ID}/members`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (!membersResponse.ok()) {
+      throw new Error(`PIOTR_OWNER_READBACK_FAILED: HTTP ${membersResponse.status()}`);
+    }
+    const members = await membersResponse.json().catch(() => null);
+    const piotr = Array.isArray(members)
+      ? members.filter((member: any) => String(member?.email || '').toLowerCase() === PIOTR_EMAIL)
+      : [];
+    if (
+      piotr.length !== 1 ||
+      String(piotr[0]?.role || '').toUpperCase() !== 'OWNER' ||
+      String(piotr[0]?.status || '').toUpperCase() !== 'ACTIVE'
+    ) {
+      throw new Error(
+        `PIOTR_OWNER_READBACK_FAILED: ${JSON.stringify(
+          piotr.map((member: any) => ({ email: member?.email, role: member?.role, status: member?.status }))
+        )}`
+      );
+    }
     await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 60_000 });
 
     const identity = await page.evaluate(() => {
@@ -57,7 +81,7 @@ export default async function globalSetup(config: FullConfig) {
       return raw ? JSON.parse(raw) : null;
     });
     const role = String(identity?.role || identity?.userRole || '').toUpperCase();
-    if (String(identity?.email || '').toLowerCase() !== EXPECTED_EMAIL || role !== 'OWNER') {
+    if (String(identity?.email || '').toLowerCase() !== email || role !== 'OWNER') {
       throw new Error(`OWNER_IDENTITY_MISMATCH: ${JSON.stringify({ email: identity?.email, role })}`);
     }
     if (String(identity?.organizationId || '') !== EXPECTED_ORGANIZATION_ID) {
