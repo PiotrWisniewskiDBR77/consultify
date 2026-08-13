@@ -85,9 +85,20 @@ export interface ToolOutput {
   conclusions: OutputConclusion[];
 
   createdAt: string;
+  createdBy?: string;
   approvedBy?: string;
   approvedAt?: string;
   contentHash: string;
+
+  /**
+   * `tool_sessions.version` w chwili budowy tego Outputu — PRZYPIĘTA na zawsze.
+   * Późniejsza edycja sesji nie zmienia snapshotu, bo snapshot nie czyta
+   * sesji ponownie; ten numer jest jedynym dowodem, z KTÓREJ wersji sesji
+   * powstał. Celowo POZA `computeOutputHash` — to metadane lineage, nie treść.
+   */
+  sourceRevision?: number;
+  /** Wersja silnika/metody, który policzył items/tensions/conclusions (np. buildSwotOutput). */
+  engineVersion?: string;
 }
 
 // --- model dokumentu (wejście renderera, nie obrazek) ----------------------
