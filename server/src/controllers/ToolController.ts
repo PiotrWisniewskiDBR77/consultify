@@ -9,6 +9,8 @@ import type { Response } from 'express';
 import type { PoolClient } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
 
+import type { SwotAcceptGateItem } from '../../../src/config/swot/swotAcceptGate';
+import { evaluateSwotAcceptGate, stampAcceptedSwotItem } from '../../../src/config/swot/swotAcceptGate';
 import { generateSwotProposals } from '../services/ai/swotProposalService.js';
 import auditEventsService from '../services/AuditEventsService.js';
 import { safePersistToolSessionConclusion } from '../services/conclusions/toolConclusionBridge.js';
@@ -3419,6 +3421,7 @@ export class ToolController {
       type AcceptOutcome =
         | { kind: 'not_found' }
         | { kind: 'already_decided'; status: string }
+        | { kind: 'blocked'; reasonCode: string; message: { pl: string; en: string } }
         | { kind: 'accepted'; proposal: SwotProposalRow; sessionVersion: number };
 
       let outcome: AcceptOutcome;
@@ -3443,14 +3446,26 @@ export class ToolController {
           // proposal is decided, and the UPDATE's own `WHERE status =
           // 'pending'` still resolves concurrent accepts to exactly one
           // winner regardless of when this SELECT ran.
+          //
+          // STREAM G1: the base row is now always read (not only when
+          // `editedAfter` is provided) so the ONE canonical accept gate
+          // (src/config/swot/swotAcceptGate.ts — the SAME module
+          // `useToolStore.ts`'s `acceptCard` and `SWOTBuildPhase.tsx`'s
+          // `acceptProposal` use) can run BEFORE any write happens.
+          const baseRes = await client.query(
+            `SELECT operation, proposed_after_json FROM swot_proposals WHERE id = $1 AND tool_session_id = $2 AND organization_id = $3`,
+            [proposalId, toolId, user.organizationId]
+          );
+          const baseRow = baseRes.rows[0] as
+            | { operation: 'add' | 'update' | 'remove'; proposed_after_json: string | null }
+            | undefined;
+          if (!baseRow) {
+            return { kind: 'not_found' };
+          }
+
           let finalAfterJsonParam: string | null = null;
-          if (editedAfter !== undefined) {
-            const baseRes = await client.query(
-              `SELECT proposed_after_json FROM swot_proposals WHERE id = $1 AND tool_session_id = $2 AND organization_id = $3`,
-              [proposalId, toolId, user.organizationId]
-            );
-            const baseJson = (baseRes.rows[0] as { proposed_after_json: string | null } | undefined)
-              ?.proposed_after_json;
+          if (baseRow.operation !== 'remove') {
+            const baseJson = baseRow.proposed_after_json;
             let base: Record<string, unknown> = {};
             if (baseJson) {
               try {
@@ -3459,11 +3474,24 @@ export class ToolController {
                 base = {};
               }
             }
-            const editedText = (editedAfter as { text?: unknown }).text;
-            finalAfterJsonParam = JSON.stringify({
-              ...base,
-              text: typeof editedText === 'string' ? editedText : base.text,
-            });
+            if (editedAfter !== undefined) {
+              const editedText = (editedAfter as { text?: unknown }).text;
+              base = { ...base, text: typeof editedText === 'string' ? editedText : base.text };
+            }
+
+            // Never write partially: the gate runs BEFORE any UPDATE. A
+            // blocked item leaves the proposal untouched ('pending'), safe
+            // to retry once the user adds evidence or fixes the item.
+            const candidateItem = base as unknown as SwotAcceptGateItem;
+            const gate = evaluateSwotAcceptGate(candidateItem);
+            if (!gate.ok) {
+              return { kind: 'blocked', reasonCode: gate.reasonCode, message: gate.message };
+            }
+            // `evidenceStatus` is ALWAYS recomputed here from the item's real
+            // linked evidence — never trusted verbatim from `proposed_after_json`
+            // (which, for other AI proposal shapes than this one, could in
+            // principle carry a model-authored evidenceStatus).
+            finalAfterJsonParam = JSON.stringify(stampAcceptedSwotItem(candidateItem, gate));
           }
 
           // 1) Single atomic conditional UPDATE — not read-then-write. Under a
@@ -3604,6 +3632,19 @@ export class ToolController {
           error: 'Proposal already decided',
           code: 'ALREADY_DECIDED',
           status: outcome.status,
+        });
+        return;
+      }
+      if (outcome.kind === 'blocked') {
+        // STREAM G1: the ONE canonical accept gate (src/config/swot/swotAcceptGate.ts)
+        // blocked this item BEFORE any write — the proposal stays 'pending', safe to
+        // retry once the user adds evidence or fixes the item. Same reasonCode/message
+        // shape the client-side gate returns, so UI/Teresa/voice show one consistent,
+        // actionable message regardless of which caller hit the block.
+        res.status(422).json({
+          error: outcome.message.en,
+          code: outcome.reasonCode,
+          message: outcome.message,
         });
         return;
       }

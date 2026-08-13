@@ -162,6 +162,28 @@ describe('buildSwotOutput — most sesja → Output', () => {
     expect(output.items.find((i) => i.id === 'i4')!.evidenceKind).toBe('observation');
   });
 
+  // STREAM G1 (2026-08-13): `evidenceType` (user-chosen via EvidenceEditor.tsx,
+  // Build Phase UI) is now the same union as `EvidenceKind` and wins outright
+  // over the legacy evidenceStatus-derived heuristic — the Deliverable-A
+  // requirement that a chosen evidence type is "carried into the immutable
+  // Output" (STREAM G1 brief).
+  it('preferuje jawnie wybrany evidenceType nad wyprowadzonym evidenceStatus', () => {
+    const items = [
+      // User explicitly chose "hypothesis" even though evidenceStatus says
+      // confirmed (e.g. a linked signal exists, but the CLAIM itself is
+      // still speculative) — the explicit choice must win.
+      item({ id: 'i1', quadrant: 'strengths', evidenceStatus: 'confirmed', evidenceType: 'hypothesis' }),
+      // User explicitly chose "fact" with no evidenceStatus stamp at all.
+      item({ id: 'i2', quadrant: 'opportunities', evidenceStatus: undefined, evidenceType: 'fact' }),
+      // No evidenceType at all -> legacy fallback still applies.
+      item({ id: 'i3', quadrant: 'threats', evidenceStatus: 'declared' }),
+    ];
+    const { output } = buildSwotOutput({ ...BASE, items, tensions: [], moves: [] });
+    expect(output.items.find((i) => i.id === 'i1')!.evidenceKind).toBe('hypothesis');
+    expect(output.items.find((i) => i.id === 'i2')!.evidenceKind).toBe('fact');
+    expect(output.items.find((i) => i.id === 'i3')!.evidenceKind).toBe('hypothesis');
+  });
+
   it('jest deterministyczny — ten sam stan sesji daje ten sam hash', () => {
     const run = () => buildSwotOutput({ ...BASE, items, tensions, moves: [validMove()] }).output.contentHash;
     expect(new Set([run(), run(), run(), run(), run()]).size).toBe(1);
