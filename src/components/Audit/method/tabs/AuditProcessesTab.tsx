@@ -16,7 +16,13 @@
 import { ArrowRight, ClipboardList } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import { type StandardRowMenu, StandardPreview, StandardTable, type TableColumn } from '@/components/standard';
+import {
+  type StandardRowMenu,
+  StandardPreview,
+  StandardTable,
+  type TableColumn,
+  type TableRow,
+} from '@/components/standard';
 import type { ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
 import { ErrorState } from '@/components/shared/states';
 import { StatusChip } from '@/components/ui/primitives/chips';
@@ -183,9 +189,11 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
     },
   ];
 
-  const rowMenu = (row: AuditProgramSummary): StandardRowMenu => ({
+  // Jak w Library: StandardTable podaje ogólny `TableRow`, a dane pochodzą z
+  // `programs` — zawężenie w jednym miejscu zamiast rzutowania w każdej akcji.
+  const rowMenu = (rawRow: TableRow): StandardRowMenu => ({
     universalHandlers: {
-      preview: () => setSelectedId(row.id),
+      preview: () => setSelectedId(String(rawRow.id)),
     },
   });
 

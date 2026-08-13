@@ -15,7 +15,13 @@
 import { Library as LibraryIcon, PlayCircle } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import { type StandardRowMenu, StandardPreview, StandardTable, type TableColumn } from '@/components/standard';
+import {
+  type StandardRowMenu,
+  StandardPreview,
+  StandardTable,
+  type TableColumn,
+  type TableRow,
+} from '@/components/standard';
 import type { ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
 import { ErrorState } from '@/components/shared/states';
 import { StatusChip } from '@/components/ui/primitives/chips';
@@ -158,7 +164,10 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
     },
   ];
 
-  const rowMenu = (row: AuditPackSummary): StandardRowMenu => {
+  // StandardTable woła `rowMenu` z ogólnym `TableRow`; wiersze pochodzą z
+  // `packs`, więc zawężenie jest bezpieczne i trzymane w jednym miejscu.
+  const rowMenu = (rawRow: TableRow): StandardRowMenu => {
+    const row = rawRow as unknown as AuditPackSummary;
     const canStart = row.publicationStatus === 'published';
     return {
       primary: [
@@ -289,7 +298,10 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
               resolutions: [
                 {
                   id: 'start',
-                  variant: 'primary',
+                  // Kanon dopuszcza cztery warianty; `primary` nie istnieje, a
+                  // crimson nie może być CTA. `positive` jest właściwym tonem
+                  // dla akcji rozpoczynającej pracę.
+                  variant: 'positive',
                   label: isPolish ? 'Rozpocznij audyt' : 'Start audit',
                   icon: PlayCircle,
                   onClick: () => onStartAudit(selectedPack),
