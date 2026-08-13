@@ -106,6 +106,28 @@ describe('FinanceLegacyBridgeGate — RESOLVED (list row -> real workspace with 
 });
 
 describe('FinanceLegacyBridgeGate — UNRESOLVED (anti-silent-emptiness for the bridge itself)', () => {
+  it('keeps a legacy record usable when the host supplies its functional classic workspace', async () => {
+    apiMocks.resolveLegacyFinanceArtifact.mockResolvedValue({ status: 'NOT_MIGRATED' });
+
+    render(
+      <FinanceLegacyBridgeGate
+        legacyTable="financial_models"
+        legacyId="legacy-model-usable"
+        onBackToList={() => {}}
+        unresolvedFallback={<div data-testid="classic-workspace">Model data</div>}
+      >
+        {() => <div data-testid="canonical-workspace" />}
+      </FinanceLegacyBridgeGate>
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId('finance-bridge-legacy-fallback')).toBeInTheDocument()
+    );
+    expect(screen.getByTestId('classic-workspace')).toHaveTextContent('Model data');
+    expect(screen.queryByTestId('canonical-workspace')).not.toBeInTheDocument();
+    expect(screen.getByText(/sprawdzony widok klasyczny/i)).toBeInTheDocument();
+  });
+
   it('★ NOT_MIGRATED: a legacy id the bridge cannot resolve renders an honest message, children NEVER called', async () => {
     apiMocks.resolveLegacyFinanceArtifact.mockResolvedValue({ status: 'NOT_MIGRATED' });
     const childRenderSpy = vi.fn().mockReturnValue(<div data-testid="mounted-workspace" />);

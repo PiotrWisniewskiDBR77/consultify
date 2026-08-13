@@ -2904,6 +2904,14 @@ export const FinanceHub: React.FC = () => {
                   legacyTable="financial_statement_packs"
                   legacyId={activeDocument.id}
                   onBackToList={handleShowList}
+                  unresolvedFallback={
+                    <FinancialStatementPackWorkspace
+                      statementPackId={activeDocument.id}
+                      onStatementChanged={handleStatementChanged}
+                      onCreateModelFromPack={handleCreateModelFromStatement}
+                      onCreateAnalysisFromPack={handleCreateAnalysisFromStatements}
+                    />
+                  }
                 >
                   {(resolved) => (
                     <CanonicalFinanceWorkspaceMount
@@ -2948,6 +2956,13 @@ export const FinanceHub: React.FC = () => {
                   legacyTable="financial_models"
                   legacyId={activeDocument.id}
                   onBackToList={handleShowList}
+                  unresolvedFallback={
+                    <FinancialModelWorkspace
+                      initialModelId={activeDocument.id}
+                      hideSidebar
+                      onModelChanged={handleModelChanged}
+                    />
+                  }
                 >
                   {(resolved) => (
                     <CanonicalFinanceWorkspaceMount
@@ -2984,6 +2999,13 @@ export const FinanceHub: React.FC = () => {
                   legacyTable="financial_models"
                   legacyId={activeDocument.id}
                   onBackToList={handleShowList}
+                  unresolvedFallback={
+                    <FinancialModelWorkspace
+                      initialModelId={activeDocument.id}
+                      hideSidebar
+                      onModelChanged={handleModelChanged}
+                    />
+                  }
                 >
                   {(resolved) => (
                     <CanonicalFinanceWorkspaceMount
@@ -3020,6 +3042,13 @@ export const FinanceHub: React.FC = () => {
                   legacyTable="financial_analyses"
                   legacyId={activeDocument.id}
                   onBackToList={handleShowList}
+                  unresolvedFallback={
+                    <FinancialAnalysisWorkspace
+                      initialAnalysisId={activeDocument.id}
+                      hideSidebar
+                      onAnalysisChanged={handleAnalysisChanged}
+                    />
+                  }
                 >
                   {(resolved) => (
                     <CanonicalFinanceWorkspaceMount
@@ -3050,6 +3079,13 @@ export const FinanceHub: React.FC = () => {
                   legacyTable="valuations"
                   legacyId={activeDocument.id}
                   onBackToList={handleShowList}
+                  unresolvedFallback={
+                    <ValuationWorkspace
+                      initialValuationId={activeDocument.id}
+                      hideSidebar
+                      onValuationChanged={handleValuationChanged}
+                    />
+                  }
                 >
                   {(resolved) => (
                     <CanonicalFinanceWorkspaceMount

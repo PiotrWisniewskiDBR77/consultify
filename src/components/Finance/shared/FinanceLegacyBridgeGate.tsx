@@ -33,6 +33,8 @@ export interface FinanceLegacyBridgeGateProps {
   legacyTable: LegacyFinanceTable;
   legacyId: string;
   onBackToList: () => void;
+  /** Functional legacy workspace shown when this exact row has not been migrated yet. */
+  unresolvedFallback?: React.ReactNode;
   children: (resolved: FinanceLegacyBridgeResolved) => React.ReactNode;
 }
 
@@ -40,6 +42,7 @@ export const FinanceLegacyBridgeGate: React.FC<FinanceLegacyBridgeGateProps> = (
   legacyTable,
   legacyId,
   onBackToList,
+  unresolvedFallback,
   children,
 }) => {
   const { state, retry } = useFinanceLegacyBridge(legacyTable, legacyId);
@@ -86,6 +89,20 @@ export const FinanceLegacyBridgeGate: React.FC<FinanceLegacyBridgeGateProps> = (
       state.code === 'QUARANTINED'
         ? `Ten rekord został celowo pominięty przy przenoszeniu do nowego systemu. ${financeLegacyBridgeQuarantineReasonLabel(state.reason)}`
         : 'Ten rekord jeszcze nie ma odpowiednika w nowym systemie (nie został jeszcze przeniesiony).';
+    if (unresolvedFallback) {
+      return (
+        <div data-testid="finance-bridge-legacy-fallback">
+          <div className="mx-4 mt-4 rounded-lg border border-amber-500/25 bg-amber-500/5 px-4 py-3 text-sm text-c-text-secondary">
+            <div className="font-medium text-c-text">Otwierasz sprawdzony widok klasyczny</div>
+            <div className="mt-1">
+              Nowy workspace nie ma jeszcze powiązania z tym rekordem. Możesz normalnie pracować
+              na danych w dotychczasowym widoku; nic nie jest ukrywane ani symulowane.
+            </div>
+          </div>
+          {unresolvedFallback}
+        </div>
+      );
+    }
     return (
       <div className="p-4" data-testid="finance-bridge-unresolved">
         <EmptyStateInline
