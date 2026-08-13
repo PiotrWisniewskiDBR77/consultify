@@ -30,7 +30,12 @@ export const DATED_RE = /^(\d{4})-?(\d{2})-?(\d{2})[_-]/;
 // would otherwise place it too early relative to other dated migrations it
 // actually depends on. See STRICT_SCHEMA_REPAIR_REPORT.md ETAP 1 for the
 // per-file dependency trace that justifies each entry.
-export const LATE_PHASE_MANIFEST: string[] = [];
+export const LATE_PHASE_MANIFEST: string[] = [
+  // Consumer of tool_initiative_links, whose canonical producer is the
+  // phase-1 migration 20260719_baseline_gap.sql. Keep this numeric migration
+  // in phase 2 so it cannot run before its producer on a fresh database.
+  '948_tool_promotion_tenant_idempotency.sql',
+];
 export const LATE_PHASE_SET = new Set(LATE_PHASE_MANIFEST);
 
 // `isSqliteOnlyMigration()` blanket-excludes every numbered migration with
