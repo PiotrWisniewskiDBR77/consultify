@@ -86,11 +86,30 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
     >
       {/* Breadcrumb + progress — compact, no visual overload */}
       <div className="flex items-center justify-between gap-3 text-xs text-c-text-muted">
-        <nav aria-label="Ścieżka pytania" className="flex items-center gap-1 min-w-0 truncate">
+        {/*
+         * `truncate` (overflow:hidden + white-space:nowrap + ellipsis) does
+         * NOT work on a `flex` container with several child elements — the
+         * ellipsis mark only ever renders for a single text node, so a long
+         * axis/unit/level name would get hard-clipped mid-character with no
+         * "…" affordance. Each crumb SPAN truncates individually instead
+         * (min-w-0 lets a flex child shrink below its content width; the
+         * last crumb gets more room via flex-shrink weighting since earlier,
+         * usually-short crumbs rarely need to shrink at all).
+         */}
+        <nav aria-label="Ścieżka pytania" className="flex items-center gap-1 min-w-0 flex-1">
           {breadcrumb.map((crumb, i) => (
             <React.Fragment key={crumb}>
-              {i > 0 && <span aria-hidden="true">/</span>}
-              <span className={i === breadcrumb.length - 1 ? 'text-c-text font-medium' : ''}>{crumb}</span>
+              {i > 0 && (
+                <span aria-hidden="true" className="shrink-0">
+                  /
+                </span>
+              )}
+              <span
+                className={`min-w-0 truncate ${i === breadcrumb.length - 1 ? 'text-c-text font-medium' : 'shrink'}`}
+                title={crumb}
+              >
+                {crumb}
+              </span>
             </React.Fragment>
           ))}
         </nav>

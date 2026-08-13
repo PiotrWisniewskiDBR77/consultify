@@ -13,6 +13,7 @@ import { ChevronDown, MessageCircleQuestion, Sparkles } from 'lucide-react';
 import React, { useState } from 'react';
 
 import type { MethodQuestion } from '@/method-core/contracts';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 import type { QuestionHelpContent } from './types';
 
@@ -31,6 +32,8 @@ export const QuestionHelpDisclosure: React.FC<QuestionHelpDisclosureProps> = ({
 }) => {
   const [examplesOpen, setExamplesOpen] = useState(false);
   const [compareOpen, setCompareOpen] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
+  const rotateTransitionClass = prefersReducedMotion ? '' : 'transition-transform';
 
   const hasContent = Boolean(
     question.plainLanguageExplanation || question.whyItMatters || question.positiveAnswerExample
@@ -74,7 +77,7 @@ export const QuestionHelpDisclosure: React.FC<QuestionHelpDisclosureProps> = ({
           className="flex w-full items-center justify-between px-3 py-2 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus rounded-lg"
         >
           Przykład i dowody
-          <ChevronDown size={14} className={examplesOpen ? 'rotate-180 transition-transform' : 'transition-transform'} />
+          <ChevronDown size={14} className={`${examplesOpen ? 'rotate-180' : ''} ${rotateTransitionClass}`} />
         </button>
         {examplesOpen && (
           <div className="px-3 pb-3 space-y-1.5 text-xs text-c-text-secondary">
@@ -126,7 +129,7 @@ export const QuestionHelpDisclosure: React.FC<QuestionHelpDisclosureProps> = ({
             className="flex w-full items-center justify-between px-3 py-2 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus rounded-lg"
           >
             Porównaj poziomy
-            <ChevronDown size={14} className={compareOpen ? 'rotate-180 transition-transform' : 'transition-transform'} />
+            <ChevronDown size={14} className={`${compareOpen ? 'rotate-180' : ''} ${rotateTransitionClass}`} />
           </button>
           {compareOpen && (
             <div className="px-3 pb-3 grid grid-cols-1 sm:grid-cols-3 gap-2">

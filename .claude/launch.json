@@ -302,6 +302,18 @@
         "--strictPort"
       ],
       "port": 41930
+    },
+    {
+      "name": "s6-dark-a11y-method-workspace",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "dev-render",
+        "--port",
+        "42400",
+        "--strictPort"
+      ],
+      "port": 42400
     }
   ]
 }

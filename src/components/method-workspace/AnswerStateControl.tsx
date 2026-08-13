@@ -36,12 +36,23 @@ const OPTIONS: Array<{
   { id: 'not_applicable', label: 'Nie dotyczy', icon: <AlertCircle size={14} />, tone: 'muted' },
 ];
 
-const TONE_CLASSES: Record<string, string> = {
-  success: 'data-[selected=true]:border-c-success data-[selected=true]:bg-c-success/10 data-[selected=true]:text-c-success',
-  warning: 'data-[selected=true]:border-c-warning data-[selected=true]:bg-c-warning/10 data-[selected=true]:text-c-warning',
-  neutral: 'data-[selected=true]:border-c-border data-[selected=true]:bg-c-surface-raised data-[selected=true]:text-c-text',
-  info: 'data-[selected=true]:border-c-info data-[selected=true]:bg-c-info/10 data-[selected=true]:text-c-info',
-  muted: 'data-[selected=true]:border-c-border data-[selected=true]:bg-c-surface-raised data-[selected=true]:text-c-text-secondary',
+// NOTE: this used to be expressed as `data-[selected=true]:border-c-*` Tailwind
+// arbitrary-variant classes, applied unconditionally + gated by a `data-selected`
+// DOM attribute in CSS. Confirmed via rendered-CSS inspection (dev-render,
+// 2026-08-13) that this repo's Tailwind build does NOT emit ANY `data-[...]:`
+// arbitrary-variant utility — not just here (Switch.tsx's `data-[state=on]:` and
+// StandardGridCard.tsx's `data-[open=true]:` are equally silent in the compiled
+// CSS). Root cause is outside this file's scope (tailwind.config.js /
+// content-scanning), so the selected answer-state button rendered IDENTICAL to
+// unselected in both light and dark — a real defect, not a color-contrast nuance.
+// Fixed locally by computing the selected classes in JS from the already-known
+// `selected` boolean instead of depending on that (broken) CSS variant.
+const TONE_SELECTED_CLASSES: Record<string, string> = {
+  success: 'border-c-success bg-c-success/10 text-c-success',
+  warning: 'border-c-warning bg-c-warning/10 text-c-warning',
+  neutral: 'border-c-border bg-c-surface-raised text-c-text',
+  info: 'border-c-info bg-c-info/10 text-c-info',
+  muted: 'border-c-border bg-c-surface-raised text-c-text-secondary',
 };
 
 export const AnswerStateControl: React.FC<AnswerStateControlProps> = ({
@@ -83,7 +94,9 @@ export const AnswerStateControl: React.FC<AnswerStateControlProps> = ({
               data-selected={selected}
               disabled={disabled}
               onClick={() => handleSelect(option.id)}
-              className={`inline-flex items-center gap-1.5 rounded-lg border border-c-border bg-c-surface px-2.5 py-2 text-xs font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${TONE_CLASSES[option.tone]}`}
+              className={`inline-flex items-center gap-1.5 rounded-lg border border-c-border bg-c-surface px-2.5 py-2 text-xs font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
+                selected ? TONE_SELECTED_CLASSES[option.tone] : ''
+              }`}
             >
               {option.icon}
               <span className="truncate">{option.label}</span>
@@ -109,7 +122,7 @@ export const AnswerStateControl: React.FC<AnswerStateControlProps> = ({
             <button
               type="button"
               onClick={() => setPendingNa(false)}
-              className="rounded px-2 py-1 text-xs text-c-text-secondary hover:bg-c-surface"
+              className="rounded px-2 py-1 text-xs text-c-text-secondary hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
               Anuluj
             </button>

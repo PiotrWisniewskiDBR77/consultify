@@ -1,0 +1,569 @@
+{
+  "interview-light": {
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "nodes": 5,
+        "targets": [
+          [
+            ".border-c-warning > .truncate"
+          ],
+          [
+            ".py-0\\.5"
+          ],
+          [
+            "li:nth-child(2) > .text-c-warning.font-medium"
+          ],
+          [
+            ".text-teal-600.dark\\:text-teal-400.font-medium"
+          ],
+          [
+            ".gap-1.text-c-warning"
+          ]
+        ]
+      },
+      {
+        "id": "landmark-one-main",
+        "impact": "moderate",
+        "description": "Ensure the document has a main landmark",
+        "nodes": 1,
+        "targets": [
+          [
+            "html"
+          ]
+        ]
+      },
+      {
+        "id": "page-has-heading-one",
+        "impact": "moderate",
+        "description": "Ensure that the page, or at least one of its frames contains a level-one heading",
+        "nodes": 1,
+        "targets": [
+          [
+            "html"
+          ]
+        ]
+      },
+      {
+        "id": "region",
+        "impact": "moderate",
+        "description": "Ensure all page content is contained by landmarks",
+        "nodes": 5,
+        "targets": [
+          [
+            ".border-b.px-4.justify-between"
+          ],
+          [
+            ".gap-x-4 > span:nth-child(2)"
+          ],
+          [
+            ".gap-x-4 > span:nth-child(3)"
+          ],
+          [
+            ".gap-x-4 > span:nth-child(4)"
+          ],
+          [
+            ".gap-x-4 > .text-c-success:nth-child(5)"
+          ]
+        ]
+      }
+    ],
+    "passes": 37
+  },
+  "interview-dark": {
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "nodes": 12,
+        "targets": [
+          [
+            ".text-teal-700"
+          ],
+          [
+            "li:nth-child(1) > .text-c-info.font-medium"
+          ],
+          [
+            ".space-y-1 > li:nth-child(1) > .text-c-text-secondary"
+          ],
+          [
+            "li:nth-child(2) > .text-c-warning.font-medium"
+          ],
+          [
+            ".space-y-1 > li:nth-child(2) > .text-c-text-secondary"
+          ]
+        ]
+      },
+      {
+        "id": "landmark-one-main",
+        "impact": "moderate",
+        "description": "Ensure the document has a main landmark",
+        "nodes": 1,
+        "targets": [
+          [
+            "html"
+          ]
+        ]
+      },
+      {
+        "id": "page-has-heading-one",
+        "impact": "moderate",
+        "description": "Ensure that the page, or at least one of its frames contains a level-one heading",
+        "nodes": 1,
+        "targets": [
+          [
+            "html"
+          ]
+        ]
+      },
+      {
+        "id": "region",
+        "impact": "moderate",
+        "description": "Ensure all page content is contained by landmarks",
+        "nodes": 5,
+        "targets": [
+          [
+            ".border-b.px-4.justify-between"
+          ],
+          [
+            ".gap-x-4 > span:nth-child(2)"
+          ],
+          [
+            ".gap-x-4 > span:nth-child(3)"
+          ],
+          [
+            ".gap-x-4 > span:nth-child(4)"
+          ],
+          [
+            ".gap-x-4 > .text-c-success:nth-child(5)"
+          ]
+        ]
+      }
+    ],
+    "passes": 37
+  },
+  "matrix-light": {
+    "violations": [
+      {
+        "id": "region",
+        "impact": "moderate",
+        "description": "Ensure all page content is contained by landmarks",
+        "nodes": 11,
+        "targets": [
+          [
+            ".border-c-border-subtle"
+          ],
+          [
+            ".gap-2 > .justify-between"
+          ],
+          [
+            "thead"
+          ],
+          [
+            "tr:nth-child(1) > .max-w-\\[160px\\].sticky[scope=\"row\"]"
+          ],
+          [
+            "tr:nth-child(2) > .max-w-\\[160px\\].sticky[scope=\"row\"]"
+          ]
+        ]
+      }
+    ],
+    "passes": 35
+  },
+  "matrix-dark": {
+    "violations": [
+      {
+        "id": "region",
+        "impact": "moderate",
+        "description": "Ensure all page content is contained by landmarks",
+        "nodes": 11,
+        "targets": [
+          [
+            ".border-c-border-subtle"
+          ],
+          [
+            ".gap-2 > .justify-between"
+          ],
+          [
+            "thead"
+          ],
+          [
+            "tr:nth-child(1) > .max-w-\\[160px\\].sticky[scope=\"row\"]"
+          ],
+          [
+            "tr:nth-child(2) > .max-w-\\[160px\\].sticky[scope=\"row\"]"
+          ]
+        ]
+      }
+    ],
+    "passes": 35
+  },
+  "split-light": {
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "nodes": 5,
+        "targets": [
+          [
+            "button[data-selected=\"true\"] > .truncate"
+          ],
+          [
+            ".py-0\\.5"
+          ],
+          [
+            "li:nth-child(2) > .text-c-warning.font-medium"
+          ],
+          [
+            ".text-teal-600.dark\\:text-teal-400.font-medium"
+          ],
+          [
+            ".gap-1.text-c-warning"
+          ]
+        ]
+      },
+      {
+        "id": "landmark-one-main",
+        "impact": "moderate",
+        "description": "Ensure the document has a main landmark",
+        "nodes": 1,
+        "targets": [
+          [
+            "html"
+          ]
+        ]
+      },
+      {
+        "id": "page-has-heading-one",
+        "impact": "moderate",
+        "description": "Ensure that the page, or at least one of its frames contains a level-one heading",
+        "nodes": 1,
+        "targets": [
+          [
+            "html"
+          ]
+        ]
+      },
+      {
+        "id": "region",
+        "impact": "moderate",
+        "description": "Ensure all page content is contained by landmarks",
+        "nodes": 11,
+        "targets": [
+          [
+            ".border-b.px-4.justify-between"
+          ],
+          [
+            "div[data-testid=\"live-matrix\"] > .justify-between.flex"
+          ],
+          [
+            "thead"
+          ],
+          [
+            "tr:nth-child(1) > .max-w-\\[160px\\].sticky[scope=\"row\"]"
+          ],
+          [
+            "tr:nth-child(2) > .max-w-\\[160px\\].sticky[scope=\"row\"]"
+          ]
+        ]
+      }
+    ],
+    "passes": 43
+  },
+  "split-dark": {
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "nodes": 12,
+        "targets": [
+          [
+            ".text-teal-700"
+          ],
+          [
+            "li:nth-child(1) > .text-c-info.font-medium"
+          ],
+          [
+            ".space-y-1 > li:nth-child(1) > .text-c-text-secondary"
+          ],
+          [
+            "li:nth-child(2) > .text-c-warning.font-medium"
+          ],
+          [
+            ".space-y-1 > li:nth-child(2) > .text-c-text-secondary"
+          ]
+        ]
+      },
+      {
+        "id": "landmark-one-main",
+        "impact": "moderate",
+        "description": "Ensure the document has a main landmark",
+        "nodes": 1,
+        "targets": [
+          [
+            "html"
+          ]
+        ]
+      },
+      {
+        "id": "page-has-heading-one",
+        "impact": "moderate",
+        "description": "Ensure that the page, or at least one of its frames contains a level-one heading",
+        "nodes": 1,
+        "targets": [
+          [
+            "html"
+          ]
+        ]
+      },
+      {
+        "id": "region",
+        "impact": "moderate",
+        "description": "Ensure all page content is contained by landmarks",
+        "nodes": 11,
+        "targets": [
+          [
+            ".border-b.px-4.justify-between"
+          ],
+          [
+            "div[data-testid=\"live-matrix\"] > .justify-between.flex"
+          ],
+          [
+            "thead"
+          ],
+          [
+            "tr:nth-child(1) > .max-w-\\[160px\\].sticky[scope=\"row\"]"
+          ],
+          [
+            "tr:nth-child(2) > .max-w-\\[160px\\].sticky[scope=\"row\"]"
+          ]
+        ]
+      }
+    ],
+    "passes": 43
+  },
+  "resolution-card-dark": {
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "nodes": 12,
+        "targets": [
+          [
+            ".text-teal-700"
+          ],
+          [
+            "li:nth-child(1) > .text-c-info.font-medium"
+          ],
+          [
+            ".space-y-1 > li:nth-child(1) > .text-c-text-secondary"
+          ],
+          [
+            "li:nth-child(2) > .text-c-warning.font-medium"
+          ],
+          [
+            ".space-y-1 > li:nth-child(2) > .text-c-text-secondary"
+          ]
+        ]
+      },
+      {
+        "id": "landmark-one-main",
+        "impact": "moderate",
+        "description": "Ensure the document has a main landmark",
+        "nodes": 1,
+        "targets": [
+          [
+            "html"
+          ]
+        ]
+      },
+      {
+        "id": "page-has-heading-one",
+        "impact": "moderate",
+        "description": "Ensure that the page, or at least one of its frames contains a level-one heading",
+        "nodes": 1,
+        "targets": [
+          [
+            "html"
+          ]
+        ]
+      },
+      {
+        "id": "region",
+        "impact": "moderate",
+        "description": "Ensure all page content is contained by landmarks",
+        "nodes": 5,
+        "targets": [
+          [
+            ".border-b.px-4.justify-between"
+          ],
+          [
+            ".gap-y-1 > span:nth-child(2)"
+          ],
+          [
+            ".gap-y-1 > span:nth-child(3)"
+          ],
+          [
+            ".gap-y-1 > span:nth-child(4)"
+          ],
+          [
+            ".gap-y-1 > .text-c-success:nth-child(5)"
+          ]
+        ]
+      }
+    ],
+    "passes": 38
+  },
+  "save-failed-dark": {
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "nodes": 12,
+        "targets": [
+          [
+            ".text-teal-700"
+          ],
+          [
+            "li:nth-child(1) > .text-c-info.font-medium"
+          ],
+          [
+            ".space-y-1 > li:nth-child(1) > .text-c-text-secondary"
+          ],
+          [
+            "li:nth-child(2) > .text-c-warning.font-medium"
+          ],
+          [
+            ".space-y-1 > li:nth-child(2) > .text-c-text-secondary"
+          ]
+        ]
+      },
+      {
+        "id": "landmark-one-main",
+        "impact": "moderate",
+        "description": "Ensure the document has a main landmark",
+        "nodes": 1,
+        "targets": [
+          [
+            "html"
+          ]
+        ]
+      },
+      {
+        "id": "page-has-heading-one",
+        "impact": "moderate",
+        "description": "Ensure that the page, or at least one of its frames contains a level-one heading",
+        "nodes": 1,
+        "targets": [
+          [
+            "html"
+          ]
+        ]
+      },
+      {
+        "id": "region",
+        "impact": "moderate",
+        "description": "Ensure all page content is contained by landmarks",
+        "nodes": 5,
+        "targets": [
+          [
+            ".border-b.px-4.justify-between"
+          ],
+          [
+            ".gap-x-4 > span:nth-child(2)"
+          ],
+          [
+            ".gap-x-4 > span:nth-child(3)"
+          ],
+          [
+            ".gap-x-4 > span:nth-child(4)"
+          ],
+          [
+            ".gap-x-4 > .gap-1.text-c-warning.flex"
+          ]
+        ]
+      }
+    ],
+    "passes": 37
+  },
+  "help-disclosure-dark": {
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "nodes": 12,
+        "targets": [
+          [
+            ".text-teal-700"
+          ],
+          [
+            "li:nth-child(1) > .text-c-info.font-medium"
+          ],
+          [
+            ".space-y-1 > li:nth-child(1) > .text-c-text-secondary"
+          ],
+          [
+            "li:nth-child(2) > .text-c-warning.font-medium"
+          ],
+          [
+            ".space-y-1 > li:nth-child(2) > .text-c-text-secondary"
+          ]
+        ]
+      },
+      {
+        "id": "landmark-one-main",
+        "impact": "moderate",
+        "description": "Ensure the document has a main landmark",
+        "nodes": 1,
+        "targets": [
+          [
+            "html"
+          ]
+        ]
+      },
+      {
+        "id": "page-has-heading-one",
+        "impact": "moderate",
+        "description": "Ensure that the page, or at least one of its frames contains a level-one heading",
+        "nodes": 1,
+        "targets": [
+          [
+            "html"
+          ]
+        ]
+      },
+      {
+        "id": "region",
+        "impact": "moderate",
+        "description": "Ensure all page content is contained by landmarks",
+        "nodes": 5,
+        "targets": [
+          [
+            ".border-b.px-4.justify-between"
+          ],
+          [
+            ".gap-x-4 > span:nth-child(2)"
+          ],
+          [
+            ".gap-x-4 > span:nth-child(3)"
+          ],
+          [
+            ".gap-x-4 > span:nth-child(4)"
+          ],
+          [
+            ".gap-x-4 > .text-c-success:nth-child(5)"
+          ]
+        ]
+      }
+    ],
+    "passes": 38
+  }
+}

@@ -32,7 +32,7 @@ import {
   MoreHorizontal,
   Rows3,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { MethodReadiness, MethodSaveState, MethodSession } from '@/method-core/contracts';
 
@@ -133,6 +133,33 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
   const [mirrorExpanded, setMirrorExpanded] = useState(false);
   const [menu3Open, setMenu3Open] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const menu3ContainerRef = useRef<HTMLDivElement | null>(null);
+  const menu3TriggerRef = useRef<HTMLButtonElement | null>(null);
+
+  // Menu3 (kebab): Escape closes + returns focus to the trigger; clicking
+  // outside also closes it — a dropdown that only opens/closes by re-clicking
+  // the trigger is a soft focus trap for keyboard users (no Escape route out).
+  useEffect(() => {
+    if (!menu3Open) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setMenu3Open(false);
+        menu3TriggerRef.current?.focus();
+      }
+    };
+    const handlePointerDown = (e: MouseEvent) => {
+      if (menu3ContainerRef.current && !menu3ContainerRef.current.contains(e.target as Node)) {
+        setMenu3Open(false);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('mousedown', handlePointerDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('mousedown', handlePointerDown);
+    };
+  }, [menu3Open]);
 
   useEffect(() => {
     const mq = window.matchMedia?.('(prefers-reduced-motion: reduce)');
@@ -227,7 +254,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
             type="button"
             onClick={() => onModeChange('guided_manual')}
             aria-pressed={mode === 'guided_manual'}
-            className={`rounded-md px-2 py-1 font-medium transition-colors ${
+            className={`rounded-md px-2 py-1 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
               mode === 'guided_manual' ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:text-c-text'
             }`}
           >
@@ -237,7 +264,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
             type="button"
             onClick={() => onModeChange('teresa_led')}
             aria-pressed={mode === 'teresa_led'}
-            className={`rounded-md px-2 py-1 font-medium transition-colors ${
+            className={`rounded-md px-2 py-1 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
               mode === 'teresa_led' ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:text-c-text'
             }`}
           >
@@ -247,6 +274,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
 
         <SaveStateIndicator
           compact
+          announce={false}
           state={saveState}
           lastSavedAt={saveLastSavedAt}
           errorMessage={saveErrorMessage}
@@ -263,9 +291,10 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
           Zapisz teraz
         </button>
 
-        <div className="relative shrink-0">
+        <div className="relative shrink-0" ref={menu3ContainerRef}>
           <button
             type="button"
+            ref={menu3TriggerRef}
             onClick={() => setMenu3Open((v) => !v)}
             aria-haspopup="menu"
             aria-expanded={menu3Open}
@@ -282,28 +311,28 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
               <button
                 type="button"
                 role="menuitem"
-                className="block w-full px-3 py-1.5 text-left text-xs text-c-text-secondary hover:bg-c-surface"
+                className="block w-full px-3 py-1.5 text-left text-xs text-c-text-secondary hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
                 Duplikuj jako nową
               </button>
               <button
                 type="button"
                 role="menuitem"
-                className="block w-full px-3 py-1.5 text-left text-xs text-c-text-secondary hover:bg-c-surface"
+                className="block w-full px-3 py-1.5 text-left text-xs text-c-text-secondary hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
                 Historia wersji
               </button>
               <button
                 type="button"
                 role="menuitem"
-                className="block w-full px-3 py-1.5 text-left text-xs text-c-text-secondary hover:bg-c-surface"
+                className="block w-full px-3 py-1.5 text-left text-xs text-c-text-secondary hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
                 Udostępnij / kopiuj link
               </button>
               <button
                 type="button"
                 role="menuitem"
-                className="block w-full px-3 py-1.5 text-left text-xs text-c-text-secondary hover:bg-c-surface"
+                className="block w-full px-3 py-1.5 text-left text-xs text-c-text-secondary hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
                 Archiwizuj
               </button>
@@ -338,7 +367,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
               aria-selected={viewMode === opt.id}
               data-testid={`view-mode-${opt.id}`}
               onClick={() => setViewMode(opt.id)}
-              className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium ${transitionClass} ${
+              className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${transitionClass} ${
                 viewMode === opt.id ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:text-c-text'
               }`}
             >
