@@ -44,7 +44,7 @@ rozwiązane **ograniczeniem współbieżności, nie retry**.
 | --- | --- | --- |
 | **CEL 2** — artefakty po restarcie | **DOWIEZIONE** | 9 endpointów GET (outputs, revisions, reports, presentations, drafts, lineage), paginacja, deterministyczne sortowanie, tenant isolation. Weryfikacja Opusa: wszystkie **200**, dwa identyczne zapytania → identyczna odpowiedź (G16) |
 | **CEL 3** — role i approval | **DOWIEZIONE** | pełny łańcuch **bez ani jednego ręcznego SQL**; samonadanie `approver` → **403** (zadziałało także przeciw Opusowi); approval związany z **dokładną rewizją** — trail starej rewizji `[APPROVED, SENT_BACK]`, nowej pusty (G16) |
-| **CEL 4** — offline/recovery | **DOWIEZIONE (8 stanów)** | `SERVER·SAVING·SAVED·OFFLINE·RECOVERY_DRAFT·CONFLICT·RECONNECTING·RECOVERED`, 8 zrzutów. `CONFLICT` pokazuje diff i **nie nadpisuje** |
+| **CEL 4** — offline/recovery | **DOWIEZIONE po korekcie** | 8 stanów: `SERVER·SAVING·SAVED·OFFLINE·RECOVERY_DRAFT·CONFLICT·RECONNECTING·RECOVERED`. Offline wywołany **realnie** (`page.context().setOffline`), nie `debugForceState`. Dwie karty + CAS: karta B dostaje `CONFLICT` z wersjami 3 vs 4, SQL potwierdza `version=4`, **zero duplikatu wiersza**. ★ Patrz korekta poniżej — `RECOVERED` był **nieosiągalny** |
 | **CEL 5** — Teresa | **DOWIEZIONE** | cykl Intent→Preview→Commit **na żywym serwerze 8/8**; 5 zakazów dowiedzionych jako **nieistnienie ścieżki** (5 niezależnych warstw); provenance `actorKind='teresa'` + `actorUserId` człowieka |
 | **CEL 6** — voice | **CZĘŚCIOWO** | ścieżka transcript→draft→preview→commit działa, ten sam callback co ręczne pisanie, provenance `{source:'voice'}`. **Realne audio: NOT VERIFIED** (headless, brak mikrofonu) |
 | **CEL 9** — SIRI | **DOWIEZIONE technicznie** | 16D×Bands 0–5, no-leapfrog z komunikatem, **80:20 jawnie widoczne** z cytatem `Module 5 §3.7`, rationale wymagane, assessor proponuje / uczestnik zatwierdza, TIER na osobnym ekranie. **0/16 wymiarów ma treść** — `EVIDENCE_MISSING`, licencja nietknięta |
@@ -65,6 +65,23 @@ rozwiązane **ograniczeniem współbieżności, nie retry**.
 | **P1** | `{ id: h.id, ...h }` → `TS2783` | **blokuje realny build**; `vitest`/`esbuild` nie sprawdzają typów |
 | **P1** | przycisk „Zamroź (tylko approver)" sprawdzał tylko `session.state`, **nigdy roli** | UI oferuje akcję, która zawsze kończy się odmową |
 
+### ★ Korekta wcześniejszego raportu — zielona bramka zatwierdzała brak funkcji
+
+W poprzednim przekazaniu napisałem, że **CEL 4 jest dowieziony w komplecie (8 stanów)**.
+To było **przeszacowane** i prostuję to tutaj, zanim ktokolwiek się na tym oprze.
+
+| | |
+| --- | --- |
+| **Co było nie tak** | Stan `RECOVERED` był **nieosiągalny w realnym runtime**. `retryPending()` ustawiał `status:'recovered'`, a **następna linia** — `await this.refresh()` — nadpisywała go `'loading'` synchronicznie, w tym samym ticku JS, zanim React cokolwiek wyrenderował. Potem sukces ustawiał `'ready'`. |
+| **Skutek dla użytkownika** | Nigdy nie zobaczył potwierdzenia, że jego zaległe zmiany zostały pogodzone z serwerem — **dokładnie w chwili, w której potrzebuje tego najbardziej**. `RecoveredBanner` i `acknowledgeRecovered()` były napisane i podłączone, ale **martwe**. |
+| **★ Dlaczego bramka tego nie łapała** | Test o nazwie `CEL 4 scenario 3 — reconnect: RECONNECTING → explicit reconciliation → RECOVERED` kończył się asercją `expect(status).toBe('ready')`. **Test zatwierdzał brak stanu, który obiecywał w nazwie.** Drugi test miał ten sam błąd. Oba zielone. |
+| **Jak to wyszło** | Dopiero **realny** offline (`page.context().setOffline`) + sonda `MutationObserver` z sygnaturami czasowymi: **zero wystąpień** badge'a w ponad 5 przebiegach. Osiem zrzutów, na których opierało się „dowiezione", pochodziło z `debugForceState` — **wymuszony stan nie dowodzi osiągalności**. |
+| **Naprawione** | `refresh({ preserveStatus })`; oba testy poprawione tak, by asercja odpowiadała nazwie. SIRI nie ma stanu `recovered`, więc defekt jest wyłącznie DRD. |
+
+**Wniosek do zapamiętania:** żądanie koordynatora „rzeczywisty offline, nie wyłącznie
+`debugForceState`" nie było formalnością — samo w sobie wykryło brakującą funkcję,
+której nie widziało 305 zielonych testów.
+
 ### Znalezione przez Opusa przy integracji
 
 | Defekt | Dlaczego agent nie mógł go zobaczyć |
@@ -79,12 +96,40 @@ rozwiązane **ograniczeniem współbieżności, nie retry**.
 
 | Pozycja | Status | Powód |
 | --- | --- | --- |
-| **Work View MPQ** | **FAIL 22/30** | `LiveMatrix`: „jeszcze nieodpowiedziane" wygląda jak „brak dowodu"; goła siatka L1–L7 czyta się jak arkusz |
+| **Work View MPQ** | **naprawione, ocena w toku** | obie przyczyny usunięte (patrz §7); niezależna re-ocena Light/Dark trwa — **wynik wpiszę dopiero po zrzutach, nie z góry** |
 | **realne audio (voice)** | NOT VERIFIED | środowisko headless, brak mikrofonu; ścieżka transcript **działa** |
 | **treść metodyczna DRD** | **BLOCKED** | `misScoringTraps` 0/233, pola pomocy pytania 0/699 — **brak źródła w repo**; uzupełnia właściciel metodyki, nie AI (COORD-07) |
 | **treść metodyczna SIRI** | **BLOCKED licencyjnie** | Module 2 str. 32–69 — „no part may be reproduced"; 0/16 wymiarów, `readiness` = `draft` |
 | **prawdziwy ekran Library** | NOT VERIFIED | istniejący `screen=library` to jawny harness zrzutowy, nie produkcyjny ekran |
 | **D2/D3/D4 z A10** | zgłoszone (P2) | hydratacja `LiveMatrix`; `onResolutionAction` pusty stub; „Gotowe do zamrożenia" przy 1/39 dowodów |
+
+---
+
+## 4b. ★ Semantyka dowodu — defekt, którego nie widział żaden test
+
+Przy naprawie MPQ Work View wyszło coś większego niż zgłoszone dwie usterki:
+**te same cztery stany dowodu znaczyły co innego w trzech komponentach jednego ekranu.**
+
+| stan | MethodNavigator | InterviewFocusPanel | LiveMatrix |
+| --- | --- | --- | --- |
+| `weak` | warning | warning | **neutralny** |
+| `missing` | **neutralny** | warning | **warning** |
+| `conflicting` | danger | danger | **warning** |
+
+Konsultant przechodzący między lewą nawigacją, panelem wywiadu i macierzą widział
+**bursztyn oznaczający trzy różne rzeczy**. Reguła kanonu „kolor nigdy sam nie niesie
+informacji" była spełniona (teksty były poprawne wszędzie) — problem był gorszy:
+**ten sam kolor ZNACZYŁ co innego**.
+
+Żaden test tego nie łapał, bo każdy komponent był testowany osobno i każdy był
+**wewnętrznie spójny**. Defekt istniał wyłącznie *pomiędzy* nimi.
+
+Rozstrzygnięcie (`evidenceSemantics.ts` — jedno źródło prawdy + strażnik rozjazdu):
+`complete` → success · `weak` → warning · `missing` → **neutralny** · `conflicting` → danger.
+
+★ `missing` **musi** być neutralne: na starcie oceny **każdy** obszar ma `missing`.
+Bursztyn dawał ścianę ostrzeżeń w sesji, w której nikt jeszcze nic nie zrobił źle —
+i wypalał uwagę na ostrzeżenia, które coś znaczą.
 
 ---
 
