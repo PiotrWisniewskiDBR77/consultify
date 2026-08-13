@@ -394,6 +394,13 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
     [runtime, actorUserId, activeArea.id, refresh]
   );
 
+  // A10/D1 — czy AKTOR ma role 'approver'. Zrodlem prawdy jest runtime
+  // (te same role, ktore egzekwuje TRANSITION_AUTHORITY), nie zgadywanie po nazwie.
+  const actorIsApprover = React.useMemo(
+    () => runtime.getRoles(actorUserId).includes('approver'),
+    [runtime, actorUserId, events]
+  );
+
   const handleFreezeTransition = useCallback(
     (to: 'prepared' | 'active' | 'in_review' | 'frozen') => {
       const result = runtime.transition(to, actorUserId);
@@ -606,11 +613,25 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
         >
           Wyślij do przeglądu
         </button>
+        {/*
+          A10/D1 — przycisk MUSI sprawdzać rolę aktora, nie tylko stan sesji.
+          Wcześniej `disabled` patrzyło wyłącznie na `session.state`, więc etykieta
+          obiecywała „tylko approver", a przycisk był aktywny także dla ownera —
+          runtime odrzucał dopiero PO kliknięciu. UI nie może oferować akcji,
+          która zawsze zakończy się odmową (`TRANSITION_AUTHORITY.frozen = ['approver']`).
+        */}
         <button
           type="button"
           onClick={() => handleFreezeTransition('frozen')}
-          disabled={session.state !== 'in_review'}
+          disabled={session.state !== 'in_review' || !actorIsApprover}
           data-testid="freeze-button"
+          title={
+            !actorIsApprover
+              ? `Zamrożenie wymaga roli „approver" — aktor ${actorUserId} jej nie ma.`
+              : session.state !== 'in_review'
+                ? 'Sesja musi być w stanie „in_review".'
+                : undefined
+          }
           className="inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface-raised px-2.5 py-1 font-semibold text-c-text disabled:opacity-40 hover:bg-c-border-subtle"
         >
           <Lock size={12} />
