@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/method-core/**/*",
+    "src/utils/DbPromise.ts",
+    "src/database/Database.ts"
+  ]
+}

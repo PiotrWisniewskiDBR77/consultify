@@ -17,6 +17,7 @@ export type {
   CreateSessionInput,
   CreateSessionRefusal,
   CreateSessionResult,
+  MethodOutputBridge,
   PackReadinessLookup,
 } from './MethodSessionService.js';
 

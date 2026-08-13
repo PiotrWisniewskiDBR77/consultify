@@ -37,6 +37,8 @@ import { DRDForm } from '@/components/assessment/tools/DRDForm';
 import { LeanForm } from '@/components/assessment/tools/LeanForm';
 import { InitiativeSuggestionBadge } from '@/components/Initiatives/InitiativeSuggestionBadge';
 import { ArtifactPermalinkButton } from '@/components/shared/ArtifactPermalinkButton';
+import { DrdMethodWorkspaceScreen } from '@/components/assessment/drd/DrdMethodWorkspaceScreen';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import { ADMA_DIMENSIONS } from '@/services/admaStructure';
 import { Api } from '@/services/api';
 import { V8AssessmentApi } from '@/services/api/v8';
@@ -344,6 +346,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
   // NOTE (React 19 + useSyncExternalStore):
   // Avoid selectors returning new objects/arrays each call (even with shallow),
   // because it can trigger "getSnapshot should be cached" warnings/loops.
+  const { isEnabled } = useFeatureFlags();
   const setCurrentViewState = useAppStore((s) => s.setCurrentViewState);
   const currentUser = useAppStore((s) => s.currentUser);
   const isChatCollapsed = useAppStore((s) => s.isChatCollapsed);
@@ -1739,6 +1742,20 @@ export const AssessmentSessionEditorView: React.FC = () => {
           </button>
         </div>
       </div>
+    );
+  }
+
+  // ★ A6 (2026-08-13): flag-gated DRD vertical slice. OFF (default) leaves
+  // every line below completely untouched — this is a top-level early
+  // return BEFORE renderEditor()/DRDForm/DRDAssessmentEditor/DRDMatrixSession
+  // are ever reached, not a branch woven into the legacy DRD rendering path.
+  // See src/hooks/useFeatureFlags.tsx `drdMethodWorkspaceSliceV1` for scope.
+  if (framework === 'drd' && isEnabled('drdMethodWorkspaceSliceV1')) {
+    return (
+      <DrdMethodWorkspaceScreen
+        demoSessionId={assessmentId}
+        onExit={() => navigate('/assessment/overview')}
+      />
     );
   }
 

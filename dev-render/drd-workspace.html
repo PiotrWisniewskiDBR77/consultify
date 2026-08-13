@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A6 DRD Method Workspace — Isolated Harness</title>
+  </head>
+  <body>
+    <!--
+      A6 ISOLATED TEST HARNESS — same rationale as method-workspace.html: the
+      shared dev-render/main.tsx registry statically imports an unrelated
+      missing screen at this worktree's base. This entry mounts ONLY the DRD
+      vertical slice (drd-workspace-main.tsx) directly.
+
+      URL params:
+        &screen=library|interview|matrix|teresa|approval|output|report|initiative|reopen
+        &theme=light|dark
+    -->
+    <div id="dev-render-root" style="height: 100vh; width: 100vw"></div>
+    <script type="module" src="/drd-workspace-main.tsx"></script>
+  </body>
+</html>

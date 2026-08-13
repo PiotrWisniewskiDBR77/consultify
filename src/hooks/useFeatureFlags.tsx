@@ -215,6 +215,28 @@ export const DEFAULT_FLAGS: FeatureFlag[] = [
     allowLocalOverride: true,
   },
   {
+    id: 'drdMethodWorkspaceSliceV1',
+    name: 'DRD vertical slice — Library→Session→Output→Report→Initiative (A6)',
+    description:
+      'A6 (2026-08-13): opens a DRD assessment session (`/assessment/drd/:id`) in the shared ' +
+      '`MethodWorkspaceShell` (methodWorkspaceShellV1, A5) instead of the legacy ' +
+      'DRDForm/DRDAssessmentEditor/DRDMatrixSession editor. Wires compileDrdPack() into the ' +
+      'Navigator/Matrix, real event-store-backed answer/evidence recording, Teresa Intent→' +
+      'Preview→Commit, freeze→AssessmentOutput bridge, Report Snapshot and Initiative Proposal ' +
+      'Draft generation, and reopen→new-revision. Runs against `DrdSessionRuntime` ' +
+      '(src/method-core/methods/drd/drdSessionRuntime.ts) — a browser-local mirror of the real ' +
+      'kernel rules (contracts + Outputs factories), NOT yet wired over HTTP to ' +
+      'server/src/method-core/*Service (that server mechanism is proven independently by ' +
+      'server/src/method-core/outputs/__tests__/EventDerivedOutputBridge.test.ts). Also bypasses ' +
+      "the DRD pack's `methodology_review` readiness gate for DEMO sessions only (never changes " +
+      'the pack manifest itself) — the UI always shows this as an explicit banner, never silently. ' +
+      'OFF by default until owner acceptance on dev-render screenshots (CLAUDE.md #7); OFF = the ' +
+      "legacy DRD editor is completely untouched by this flag's code path.",
+    defaultValue: false,
+    category: 'experimental',
+    allowLocalOverride: true,
+  },
+  {
     id: 'mindmapHeuristicAiOverlays',
     name: 'Mind Map: Heuristic AI Overlays (DP-5)',
     description:
