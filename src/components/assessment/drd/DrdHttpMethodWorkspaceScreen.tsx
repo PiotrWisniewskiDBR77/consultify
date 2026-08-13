@@ -1,0 +1,911 @@
+/**
+ * DrdHttpMethodWorkspaceScreen — HTTP-source-of-truth path for the DRD
+ * workspace (P0C, 2026-08-13).
+ *
+ * Rendered by `DrdMethodWorkspaceScreen.tsx` ONLY when `drdHttpSourceOfTruthV1`
+ * is ON (default OFF). Mirrors `DrdMethodWorkspaceScreenLegacy`'s use of
+ * `MethodWorkspaceShell`, reusing the SAME pure event->view-model derivation
+ * (`drdWorkspaceViewModel.ts`) — the only thing that changes is where the
+ * session/events/Output come from: `DrdHttpSessionRuntime`
+ * (src/method-core/methods/drd/drdHttpSessionRuntime.ts) over
+ * `/api/method/...`, never `localStorage` as an answer to "what is the
+ * current state".
+ *
+ * ★ localStorage's role here is EXACTLY the two things
+ * `DrdHttpSessionRuntime`'s header promises — a read cache and an offline
+ * write-recovery queue — never the source of truth. See
+ * `DrdSourceIndicator` for the visible proof of which one backed the last
+ * paint.
+ *
+ * ★ Known gaps (server routes are P0A/P0B territory, out of this file's
+ * reach — see the `drdHttpSourceOfTruthV1` flag description for the full
+ * rationale):
+ *  - no HTTP endpoint assigns extra process roles after session creation
+ *    (only `owner`, auto-granted to the creator) — so `in_review -> frozen`
+ *    (approver-only) will 403 for a lone demo user unless roles were seeded
+ *    directly in the database out-of-band (dev/test only, never this file's
+ *    job to fake).
+ *  - no HTTP endpoint reopens a frozen session into a new revision — the
+ *    Reopen action is disabled with an explicit message instead of faked.
+ *  - no HTTP endpoint lists Reports/Initiative Drafts by session — this
+ *    screen only knows about ones created in the CURRENT browser session
+ *    (see `DrdHttpRuntimeState.reports`/`.initiatives`'s own comment).
+ */
+import { AlertTriangle, ArrowLeft, CloudOff, FileText, Lightbulb, Lock, RefreshCw, RotateCcw } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import { MethodWorkspaceShell } from '@/components/method-workspace/MethodWorkspaceShell';
+import { StandardTable } from '@/components/standard/StandardTable';
+import type { InterviewFocusQuestion, MethodWorkspaceViewMode } from '@/components/method-workspace/types';
+import { useMethodWorkspaceSave } from '@/components/method-workspace/useMethodWorkspaceSave';
+import { DRD_METHOD_PACK_ID } from '@/method-core/methods/drd/compileDrdPack';
+import {
+  DrdHttpSessionRuntime,
+  type DrdHttpRuntimeState,
+} from '@/method-core/methods/drd/drdHttpSessionRuntime';
+import type { MethodReadiness, TeresaCommitRequest } from '@/method-core/contracts';
+import { DRD_STRUCTURE } from '@/services/drdStructure';
+
+import {
+  buildMatrixRowsForAxis,
+  buildNavigatorNodes,
+  evidenceEventsFor,
+  OUTPUT_UNIT_COLUMNS,
+  pack,
+  questionAnswerState,
+} from './drdWorkspaceViewModel';
+import { DrdSourceIndicator } from './DrdSourceIndicator';
+import type { DrdMethodWorkspaceScreenProps } from './DrdMethodWorkspaceScreen';
+
+type HttpScreenProps = Omit<DrdMethodWorkspaceScreenProps, 'forceHttpSourceOfTruth' | 'initialActorUserId'>;
+
+// ---------------------------------------------------------------------------
+// Dev-render / test only — reach offline/conflict/recovery deterministically
+// without depending on a genuinely flaky network. See this component's own
+// `forceState` prop and `DrdHttpSessionRuntime`'s (absence of a) production
+// code path that would ever call this — only the harness/tests do.
+// ---------------------------------------------------------------------------
+export type DrdHttpDebugForcedState = 'offline' | 'conflict' | 'recovery' | 'loading';
+
+async function seedHttpSession(
+  runtime: DrdHttpSessionRuntime,
+  seedTo: HttpScreenProps['seedTo']
+): Promise<void> {
+  await runtime.transition('prepared');
+  await runtime.transition('active');
+  if (!seedTo) return;
+
+  const area1A = DRD_STRUCTURE[0].areas[0];
+  await runtime.recordAnswer({
+    unitId: area1A.id,
+    level: 1,
+    questionId: `${area1A.id}-L1-Q1`,
+    answerState: 'confirmed',
+    text: 'Mamy podstawowy, spisany proces sprzedaży współdzielony w zespole.',
+  });
+  await runtime.recordEvidence({
+    unitId: area1A.id,
+    level: 1,
+    evidenceId: 'demo-ev-1a-l1',
+    evidenceType: 'document',
+    strength: 'E2',
+  });
+  await runtime.recordAnswer({
+    unitId: area1A.id,
+    level: 2,
+    questionId: `${area1A.id}-L2-Q1`,
+    answerState: 'confirmed',
+    text: 'Proces jest częściowo zautomatyzowany w CRM.',
+  });
+  await runtime.recordEvidence({
+    unitId: area1A.id,
+    level: 2,
+    evidenceId: 'demo-ev-1a-l2',
+    evidenceType: 'system_record',
+    strength: 'E3',
+  });
+  await runtime.recordTargetDecision({ unitId: area1A.id, level: 4, rationale: 'Cel ustalony z zarządem na ten rok.' });
+
+  if (seedTo === 'interview') return;
+
+  const area1B = DRD_STRUCTURE[0].areas[1];
+  await runtime.recordAnswer({
+    unitId: area1B.id,
+    level: 4,
+    questionId: `${area1B.id}-L4-Q1`,
+    answerState: 'confirmed',
+    text: 'Zaawansowana praktyka zaobserwowana punktowo (poza kolejnością).',
+  });
+  await runtime.recordEvidence({ unitId: area1B.id, level: 4, evidenceId: 'demo-ev-1b-l4', evidenceType: 'observation', strength: 'E1' });
+
+  if (seedTo === 'matrix') return;
+
+  if (seedTo === 'teresa' || seedTo === 'approval' || seedTo === 'frozen' || seedTo === 'reopened') {
+    await runtime.createTeresaPreview({
+      capabilityId: 'draft_score_proposal',
+      unitId: area1A.id,
+      level: 3,
+      invokedBy: 'local_action',
+      statements: [
+        { kind: 'respondent_declaration', text: 'Proces w CRM istnieje i jest używany przez cały zespół handlowy.', sourceRefs: [] },
+        { kind: 'missing_evidence', text: 'Brak dowodu na regularny przegląd wskaźników procesu (poziom 3).', sourceRefs: [] },
+        { kind: 'proposal', text: 'Proponowany poziom: 3 (zdefiniowany, mierzony proces).', sourceRefs: [] },
+      ],
+      proposedChanges: [{ target: 'score_proposal', targetId: area1A.id, before: 2, after: 3 }],
+      quality: { verdict: 'needs_human_review', failedChecks: ['lists_missing_evidence'] },
+    });
+  }
+
+  if (seedTo === 'approval' || seedTo === 'frozen' || seedTo === 'reopened') {
+    await runtime.transition('in_review');
+  }
+
+  if (seedTo === 'frozen' || seedTo === 'reopened') {
+    // Requires the 'approver' role — see this file's header on the known
+    // role-assignment gap. In a browser where that role was NOT seeded
+    // out-of-band this throws (403 missing_permission) and the screen
+    // honestly shows the resulting error state rather than a faked freeze.
+    await runtime.freeze();
+    await runtime.generateReport({
+      title: 'Raport demonstracyjny DRD',
+      content: {
+        executiveSummary: 'Sesja demonstracyjna DRD — wynik cząstkowy dla osi 1 (Procesy Cyfrowe).',
+        participants: ['Piotr (Owner)', 'Anna (Approver)'],
+        strengths: ['Proces sprzedaży ma podstawową dokumentację i częściową automatyzację w CRM.'],
+      },
+    });
+    await runtime.generateInitiativeDraft({
+      title: 'Domknij automatyzację procesu sprzedaży w CRM',
+      summary: 'Initiative draft wygenerowany z findingów Outputu.',
+      findingIds: (runtime.getState().output?.findings ?? []).map((f) => f.id),
+      rationale: 'Znaleziska Outputu wskazują lukę między current a target dla jednostki 1A.',
+      expectedOutcome: 'Podniesienie poziomu dojrzałości procesu sprzedaży do targetu.',
+      confidence: 'medium',
+    });
+  }
+  // 'reopened' has no HTTP path (see header) — intentionally stops at frozen.
+}
+
+// ---------------------------------------------------------------------------
+// Small state-specific views
+// ---------------------------------------------------------------------------
+
+const BootstrapLoadingView: React.FC<{ label: string }> = ({ label }) => (
+  <div data-testid="drd-http-bootstrap-loading" className="flex h-full flex-col items-center justify-center gap-3 text-sm text-c-text-muted">
+    <DrdSourceIndicator source="RECOVERY_DRAFT" title="Jeszcze bez potwierdzonej odpowiedzi serwera." />
+    {label}
+  </div>
+);
+
+const ConflictView: React.FC<{
+  state: DrdHttpRuntimeState;
+  onLoadServerVersion: () => void;
+  onExit: () => void;
+}> = ({ state, onLoadServerVersion, onExit }) => (
+  <div data-testid="drd-http-conflict-view" role="alert" className="flex h-full flex-col items-center justify-center gap-4 p-6 text-center">
+    <DrdSourceIndicator source="RECOVERY_DRAFT" title="Konflikt wersji — lokalny widok jest nieaktualny." />
+    <AlertTriangle size={28} className="text-c-danger" />
+    <h2 className="text-sm font-semibold text-c-text">Sesja zmieniła się na serwerze</h2>
+    <p className="max-w-md text-xs text-c-text-secondary">
+      Twoja przeglądarka miała wersję {state.session?.version ?? '—'}, serwer ma już wersję {state.serverVersion ?? '—'}.
+      Nic nie zostało nadpisane automatycznie — wybierz, jak kontynuować.
+    </p>
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        data-testid="conflict-load-server"
+        onClick={onLoadServerVersion}
+        className="inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-semibold text-c-text hover:bg-c-border-subtle"
+      >
+        <RefreshCw size={13} /> Wczytaj wersję serwera
+      </button>
+      <button type="button" onClick={onExit} className="rounded-md border border-c-border px-3 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised">
+        Wyjdź bez zmian
+      </button>
+    </div>
+  </div>
+);
+
+const RecoveryQueueView: React.FC<{
+  state: DrdHttpRuntimeState;
+  onApplyPending: () => void;
+  onDiscardPending: () => void;
+}> = ({ state, onApplyPending, onDiscardPending }) => (
+  <div data-testid="drd-http-recovery-view" role="alert" className="flex h-full flex-col items-center justify-center gap-4 p-6 text-center">
+    <DrdSourceIndicator source="RECOVERY_DRAFT" title="Zmiany zapisane lokalnie, jeszcze nie potwierdzone przez serwer." />
+    <CloudOff size={28} className="text-c-warning" />
+    <h2 className="text-sm font-semibold text-c-text">Połączenie wróciło — {state.pendingWriteCount} zaległych zmian czeka</h2>
+    <p className="max-w-md text-xs text-c-text-secondary">
+      Te zmiany zostały zapisane lokalnie, kiedy nie było połączenia z serwerem. Wybierz jawnie: zastosować je na serwerze, czy je odrzucić
+      i wczytać bieżący stan serwera. Nic nie dzieje się automatycznie.
+    </p>
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        data-testid="recovery-apply-pending"
+        onClick={onApplyPending}
+        className="inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-semibold text-c-text hover:bg-c-border-subtle"
+      >
+        <RefreshCw size={13} /> Zastosuj zaległe zmiany ({state.pendingWriteCount})
+      </button>
+      <button
+        type="button"
+        data-testid="recovery-discard-pending"
+        onClick={onDiscardPending}
+        className="rounded-md border border-c-border px-3 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised"
+      >
+        Odrzuć lokalne, wgraj serwer
+      </button>
+    </div>
+  </div>
+);
+
+const OfflineBanner: React.FC<{ onRetry: () => void }> = ({ onRetry }) => (
+  <div data-testid="drd-http-offline-banner" role="alert" className="flex items-center gap-3 border-b border-c-warning/30 bg-c-warning/10 px-4 py-1.5 text-[11px] text-c-warning">
+    <CloudOff size={13} className="shrink-0" />
+    <span>Brak połączenia z serwerem — zapisy są kolejkowane lokalnie i nigdy nie znikają, ale to NIE jest potwierdzony stan serwera.</span>
+    <button type="button" onClick={onRetry} className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-md border border-c-warning/40 px-2 py-0.5 font-semibold hover:bg-c-warning/20">
+      <RefreshCw size={11} /> Spróbuj połączyć ponownie
+    </button>
+  </div>
+);
+
+const ErrorRetryView: React.FC<{ message: string; onRetry: () => void; onExit: () => void }> = ({ message, onRetry, onExit }) => (
+  <div data-testid="drd-http-error-view" role="alert" className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
+    <DrdSourceIndicator source="RECOVERY_DRAFT" />
+    <AlertTriangle size={24} className="text-c-danger" />
+    <p className="max-w-md text-xs text-c-danger">{message}</p>
+    <div className="flex items-center gap-2">
+      <button type="button" data-testid="error-retry" onClick={onRetry} className="inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-semibold text-c-text hover:bg-c-border-subtle">
+        <RefreshCw size={13} /> Spróbuj ponownie
+      </button>
+      <button type="button" onClick={onExit} className="rounded-md border border-c-border px-3 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised">
+        Wyjdź
+      </button>
+    </div>
+  </div>
+);
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
+export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceState?: DrdHttpDebugForcedState }> = ({
+  storage: storageProp,
+  demoSessionId,
+  onExit,
+  seedTo,
+  initialViewMode,
+  forceState,
+}) => {
+  const storage = storageProp ?? window.localStorage;
+  const runtimeRef = useRef<DrdHttpSessionRuntime | null>(null);
+  const [state, setState] = useState<DrdHttpRuntimeState | null>(null);
+  const [bootError, setBootError] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<MethodWorkspaceViewMode>(initialViewMode ?? 'interview');
+  const [mode, setMode] = useState<'guided_manual' | 'teresa_led'>('guided_manual');
+  const [activeAxisId, setActiveAxisId] = useState<number>(DRD_STRUCTURE[0].id);
+  const [activeUnitId, setActiveUnitId] = useState<string>(DRD_STRUCTURE[0].areas[0].id);
+  const [matrixSelection, setMatrixSelection] = useState<{ unitId: string; level: number } | null>(null);
+  const [draftAnswerText, setDraftAnswerText] = useState<Record<string, string>>({});
+
+  // -- bootstrap: resume (demoSessionId) or create --------------------------
+  useEffect(() => {
+    let cancelled = false;
+    let unsubscribe: (() => void) | null = null;
+
+    async function boot() {
+      let runtime: DrdHttpSessionRuntime;
+      if (demoSessionId) {
+        runtime = new DrdHttpSessionRuntime(demoSessionId, storage);
+      } else {
+        try {
+          runtime = await DrdHttpSessionRuntime.create(
+            {
+              module: 'assessment',
+              methodPackId: DRD_METHOD_PACK_ID,
+              methodPackVersion: pack.manifest.version,
+              mode: 'guided_manual',
+              demoBypass: true,
+            },
+            storage
+          );
+        } catch (err) {
+          if (!cancelled) setBootError(err instanceof Error ? err.message : 'Nie udało się utworzyć sesji.');
+          return;
+        }
+      }
+      if (cancelled) return;
+      runtimeRef.current = runtime;
+      unsubscribe = runtime.onChange((next) => {
+        if (!cancelled) setState(next);
+      });
+      setState(runtime.getState());
+
+      if (demoSessionId) await runtime.refresh();
+      if (seedTo) {
+        try {
+          await seedHttpSession(runtime, seedTo);
+        } catch {
+          // Honest stop: seeding hit a real server refusal (e.g. missing
+          // approver role — see this file's header). The screen shows
+          // whatever state the runtime landed in, never a faked one.
+        }
+      }
+      if (forceState && runtimeRef.current) {
+        const debugPatch: Partial<DrdHttpRuntimeState> =
+          forceState === 'offline'
+            ? { status: 'offline', error: 'Brak połączenia z serwerem.' }
+            : forceState === 'conflict'
+              ? { status: 'conflict', serverVersion: (runtimeRef.current.getState().session?.version ?? 1) + 1, error: 'Sesja zmieniła się na serwerze.' }
+              : forceState === 'recovery'
+                ? { status: 'recovery', pendingWriteCount: 2 }
+                : { status: 'loading' };
+        runtimeRef.current.debugForceState(debugPatch);
+      }
+    }
+    void boot();
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const runtime = runtimeRef.current;
+
+  const events = state?.events ?? [];
+  const pendingPreviews = state?.previews ?? [];
+  const pendingPreviewUnitLevels = useMemo(() => {
+    const set = new Set<string>();
+    for (const p of pendingPreviews) {
+      if (p.intent.unitId && typeof p.intent.level === 'number') set.add(`${p.intent.unitId}#${p.intent.level}`);
+    }
+    return set;
+  }, [pendingPreviews]);
+
+  const navigatorNodes = useMemo(() => buildNavigatorNodes(events), [events]);
+  const activeAxis = DRD_STRUCTURE.find((a) => a.id === activeAxisId) ?? DRD_STRUCTURE[0];
+  const matrixRows = useMemo(() => buildMatrixRowsForAxis(events, activeAxis, pendingPreviewUnitLevels), [events, activeAxis, pendingPreviewUnitLevels]);
+  const matrixLevels = useMemo(() => {
+    const first = activeAxis.areas[0];
+    return first ? first.levels.map((l) => l.level).sort((a, b) => a - b) : [];
+  }, [activeAxis]);
+
+  const activeArea = activeAxis.areas.find((a) => a.id === activeUnitId) ?? activeAxis.areas[0];
+  const focusLevelFallback = Math.min(...activeArea.levels.map((l) => l.level));
+  const focusQuestions = pack.questions.filter((q) => q.unitId === activeArea.id && q.level === focusLevelFallback);
+  const evidenceCountForUnit = evidenceEventsFor(events, activeArea.id).length;
+
+  const interviewQuestions: InterviewFocusQuestion[] = focusQuestions.map((q) => {
+    const { state: answerState, text } = questionAnswerState(events, q.questionId);
+    return {
+      question: q,
+      answerState,
+      answerText: text,
+      evidenceState: 'missing',
+      evidenceCount: evidenceCountForUnit,
+    };
+  });
+
+  const isOnline = state?.status !== 'offline' && state?.status !== 'recovery';
+
+  const { state: saveState, lastSavedAt, errorMessage: saveErrorMessage, markDirty, saveNow } = useMethodWorkspaceSave({
+    isOnline,
+    debounceMs: 800,
+    save: async () => {
+      if (!runtime) return { ok: false, error: 'Sesja jeszcze nie gotowa.' };
+      const entry = Object.entries(draftAnswerText).find(([qid]) => focusQuestions.some((q) => q.questionId === qid));
+      if (!entry) return { ok: true };
+      const [questionId, text] = entry;
+      try {
+        await runtime.recordAnswer({ unitId: activeArea.id, level: focusLevelFallback, questionId, answerState: 'partial', text, draft: true });
+        return { ok: true };
+      } catch (err) {
+        return { ok: false, error: err instanceof Error ? err.message : 'Zapis nieudany.' };
+      }
+    },
+  });
+
+  const handleAnswerChange = useCallback((questionId: string, text: string) => {
+    setDraftAnswerText((prev) => ({ ...prev, [questionId]: text }));
+    markDirty();
+  }, [markDirty]);
+
+  const handleAnswerStateChange = useCallback(
+    async (questionId: string, answerState: InterviewFocusQuestion['answerState'], justification?: string) => {
+      if (!answerState || !runtime) return;
+      await runtime.recordAnswer({
+        unitId: activeArea.id,
+        level: focusLevelFallback,
+        questionId,
+        answerState,
+        text: draftAnswerText[questionId],
+        justification,
+      });
+    },
+    [runtime, activeArea.id, focusLevelFallback, draftAnswerText]
+  );
+
+  const handleEvidenceDrop = useCallback(
+    async (questionId: string, files: FileList) => {
+      const file = files[0];
+      if (!file || !runtime) return;
+      await runtime.recordEvidence({
+        unitId: activeArea.id,
+        level: focusLevelFallback,
+        evidenceId: `${questionId}:${file.name}:${Date.now()}`,
+        evidenceType: 'document',
+        strength: 'E2',
+        linkedQuestionIds: [questionId],
+      });
+    },
+    [runtime, activeArea.id, focusLevelFallback]
+  );
+
+  const handleAskTeresa = useCallback(
+    async (questionId: string) => {
+      if (!runtime) return;
+      const evidence = evidenceEventsFor(events, activeArea.id);
+      await runtime.createTeresaPreview({
+        capabilityId: 'draft_score_proposal',
+        unitId: activeArea.id,
+        level: focusLevelFallback,
+        questionId,
+        invokedBy: 'local_action',
+        statements: [
+          evidence.length > 0
+            ? { kind: 'confirmed_fact' as const, text: `Zebrano ${evidence.length} dowód/-ody dla tej jednostki.`, sourceRefs: evidence.map((e) => e.id) }
+            : { kind: 'missing_evidence' as const, text: 'Brak dowodu dla tej jednostki na tym poziomie.', sourceRefs: [] },
+          { kind: 'proposal' as const, text: `Proponowany poziom: ${focusLevelFallback} na podstawie odpowiedzi respondenta.`, sourceRefs: [] },
+        ],
+        proposedChanges: [{ target: 'score_proposal', targetId: activeArea.id, before: null, after: focusLevelFallback }],
+        quality: { verdict: evidence.length > 0 ? 'valid' : 'needs_human_review', failedChecks: evidence.length > 0 ? [] : ['lists_supporting_evidence'] },
+      });
+    },
+    [runtime, events, activeArea.id, focusLevelFallback]
+  );
+
+  const handleCommit = useCallback(
+    async (request: TeresaCommitRequest) => {
+      if (!runtime) return;
+      const outcome = await runtime.commitTeresaPreview({ previewId: request.previewId, decision: request.decision, editedChanges: request.editedChanges });
+      if (outcome.ok && (request.decision === 'accept' || request.decision === 'accept_with_edits')) {
+        const preview = pendingPreviews.find((p) => p.previewId === request.previewId);
+        const change = preview?.proposedChanges.find((c) => c.target === 'score_proposal');
+        if (preview && change && typeof change.after === 'number') {
+          await runtime.recordAnswer({
+            unitId: preview.intent.unitId ?? activeArea.id,
+            level: change.after,
+            questionId: preview.intent.questionId ?? `${activeArea.id}-L${change.after}-Q1`,
+            answerState: 'confirmed',
+            text: 'Potwierdzone po akceptacji propozycji Teresy (decyzja człowieka).',
+          });
+        }
+      }
+    },
+    [runtime, pendingPreviews, activeArea.id]
+  );
+
+  const readiness: MethodReadiness = useMemo(() => {
+    const totalUnits = pack.units.length;
+    let answeredUnits = 0;
+    let unitsMissingEvidence = 0;
+    let answeredUnitsMissingEvidence = 0;
+    for (const unit of pack.units) {
+      const confirmed = events.filter((e) => e.type === 'ANSWER_CONFIRMED' && e.unitId === unit.unitId);
+      const hasEvidence = evidenceEventsFor(events, unit.unitId).length > 0;
+      if (confirmed.length > 0) answeredUnits++;
+      if (!hasEvidence) unitsMissingEvidence++;
+      if (confirmed.length > 0 && !hasEvidence) answeredUnitsMissingEvidence++;
+    }
+    const freezeBlockers: string[] = [];
+    if (answeredUnits === 0) freezeBlockers.push('Brak potwierdzonych jednostek — wywiad nie został jeszcze rozpoczęty.');
+    if (answeredUnitsMissingEvidence > 0) freezeBlockers.push(`${answeredUnitsMissingEvidence} odpowiedzianych jednostek bez dowodu`);
+    if (pendingPreviews.length > 0) freezeBlockers.push(`${pendingPreviews.length} propozycji Teresy oczekuje decyzji`);
+    const frozenAlready = state?.session?.state === 'frozen' || state?.session?.state === 'closed';
+    return {
+      answeredUnits,
+      totalUnits,
+      unitsMissingEvidence,
+      openDiscrepancies: 0,
+      pendingProposals: pendingPreviews.length,
+      freezeBlockers: frozenAlready ? [] : freezeBlockers,
+    };
+  }, [events, pendingPreviews.length, state?.session?.state]);
+
+  const teresaSixQuestions = {
+    whereAreWe: `Sesja DRD, jednostka ${activeArea.namePL || activeArea.name}, poziom ${focusLevelFallback}. ${readiness.answeredUnits}/${readiness.totalUnits} jednostek dotkniętych.`,
+    whatMattersNow: focusQuestions[0]?.canonicalWording ?? 'Brak pytań na tym poziomie.',
+    why: activeAxis.namePL ? `Oś „${activeAxis.namePL}" wymaga potwierdzenia tej jednostki, by odblokować dalsze poziomy.` : '',
+    whatIsMissing: evidenceCountForUnit === 0 ? 'Brak dowodu dla tej jednostki.' : `${evidenceCountForUnit} dowód/-ody zebrane.`,
+    nextSafeAction: pendingPreviews.length > 0 ? 'Zdecyduj o oczekujących propozycjach Teresy.' : 'Odpowiedz na bieżące pytanie lub dołącz dowód.',
+  };
+
+  // -- render: bootstrap phases (no runtime state yet, or a hard boot error) --
+  if (bootError) {
+    return (
+      <ErrorRetryView
+        message={`Nie udało się utworzyć sesji: ${bootError}`}
+        onRetry={() => window.location.reload()}
+        onExit={onExit ?? (() => {})}
+      />
+    );
+  }
+  if (!state) {
+    return <BootstrapLoadingView label="Tworzenie sesji…" />;
+  }
+
+  // -- render: runtime-level states that pre-empt the shell -------------------
+  if (state.status === 'loading' && !state.session) {
+    return <BootstrapLoadingView label="Wczytywanie sesji z serwera…" />;
+  }
+  if (state.status === 'conflict') {
+    return (
+      <ConflictView
+        state={state}
+        onExit={onExit ?? (() => {})}
+        onLoadServerVersion={() => void runtime?.refresh()}
+      />
+    );
+  }
+  if (state.status === 'recovery') {
+    return (
+      <RecoveryQueueView
+        state={state}
+        onApplyPending={() => void runtime?.retryPending()}
+        onDiscardPending={() => void runtime?.discardPendingAndReloadServer()}
+      />
+    );
+  }
+  if (state.status === 'error' && !state.session) {
+    return <ErrorRetryView message={state.error ?? 'Nieznany błąd.'} onRetry={() => void runtime?.refresh()} onExit={onExit ?? (() => {})} />;
+  }
+
+  const session = state.session;
+  if (!session) {
+    return <BootstrapLoadingView label="Wczytywanie sesji…" />;
+  }
+
+  // status is 'ready' (with a possibly-error-decorated retry still showing
+  // the last known session), 'offline' (queued writes, still show the last
+  // known session so work is never blocked), or a transient 'loading' with a
+  // session already known (handled by the shell's own `loading` prop below).
+  const sourceKind = state.status === 'ready' ? 'SERVER' : 'RECOVERY_DRAFT';
+
+  if (session.state === 'frozen' || session.state === 'closed') {
+    return (
+      <FrozenOutputHttpView
+        state={state}
+        sourceKind={sourceKind}
+        onGenerateReport={() =>
+          runtime?.generateReport({
+            title: 'Raport DRD',
+            content: {
+              executiveSummary: 'Sesja DRD — wynik cząstkowy.',
+              participants: ['Piotr (Owner)', 'Anna (Approver)'],
+              strengths: ['Proces sprzedaży ma podstawową dokumentację.'],
+            },
+          })
+        }
+        onGenerateInitiative={() =>
+          runtime?.generateInitiativeDraft({
+            title: 'Domknij automatyzację procesu sprzedaży w CRM',
+            findingIds: (state.output?.findings ?? []).map((f) => f.id),
+            rationale: 'Znaleziska Outputu wskazują lukę między current a target.',
+            expectedOutcome: 'Podniesienie poziomu dojrzałości.',
+            confidence: 'medium',
+          })
+        }
+        onExit={onExit ?? (() => {})}
+      />
+    );
+  }
+
+  const canSendToReview = session.state === 'active';
+  const canSendBack = session.state === 'in_review';
+  const canFreeze = session.state === 'in_review';
+
+  return (
+    <div className="flex h-full flex-col">
+      {state.status === 'offline' && <OfflineBanner onRetry={() => void runtime?.refresh()} />}
+      <div className="flex items-center gap-3 border-b border-c-border-subtle bg-c-warning/5 px-4 py-1.5 text-[11px] text-c-text-secondary">
+        <AlertTriangle size={12} className="shrink-0 text-c-warning" />
+        <span>Sesja DRD przez HTTP — {DRD_METHOD_PACK_ID} — demo bypass gotowości packa (methodology_review), jak w legacy runtime.</span>
+        <DrdSourceIndicator
+          source={sourceKind}
+          title={sourceKind === 'SERVER' ? 'Świeżo potwierdzone przez serwer.' : 'Nie w pełni zsynchronizowane z serwerem.'}
+        />
+      </div>
+      {state.status === 'error' && state.error && (
+        <div role="alert" className="flex items-center gap-2 border-b border-c-danger/30 bg-c-danger/10 px-4 py-1.5 text-xs text-c-danger">
+          <AlertTriangle size={12} />
+          {state.error}
+          <button type="button" onClick={() => void runtime?.refresh()} className="ml-auto rounded border border-c-danger/40 px-2 py-0.5 font-semibold hover:bg-c-danger/20">
+            Spróbuj ponownie
+          </button>
+        </div>
+      )}
+      <div className="flex items-center gap-2 border-b border-c-border-subtle px-4 py-1.5 text-[11px]">
+        <span className="font-medium text-c-text-secondary">Oś:</span>
+        {DRD_STRUCTURE.map((axis) => (
+          <button
+            key={axis.id}
+            type="button"
+            data-testid={`axis-tab-${axis.id}`}
+            onClick={() => {
+              setActiveAxisId(axis.id);
+              setActiveUnitId(axis.areas[0].id);
+            }}
+            className={`rounded-md px-2 py-1 font-medium ${axis.id === activeAxisId ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:text-c-text'}`}
+          >
+            {axis.id}. {axis.namePL || axis.name} ({axis.levelCount}L)
+          </button>
+        ))}
+      </div>
+      <div className="min-h-0 flex-1">
+        <MethodWorkspaceShell
+          session={session}
+          methodName={pack.manifest.name}
+          packVersionLabel={pack.manifest.version}
+          readiness={readiness}
+          mode={mode}
+          onModeChange={setMode}
+          onExit={onExit ?? (() => {})}
+          saveState={saveState}
+          saveLastSavedAt={lastSavedAt}
+          saveErrorMessage={saveErrorMessage}
+          onSaveNow={() => void saveNow()}
+          onSaveRetry={() => void saveNow()}
+          onSaveStay={() => {}}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          loading={state.status === 'loading' && Boolean(state.session)}
+          degradedMessage={
+            state.status === 'offline'
+              ? 'Offline — praca kolejkowana lokalnie, nie potwierdzona przez serwer.'
+              : session.state === 'active'
+                ? null
+                : `Status: ${session.state}`
+          }
+          navigatorProps={{
+            nodes: navigatorNodes,
+            activeUnitId: activeArea.id,
+            onSelect: (unitId) => {
+              const axis = DRD_STRUCTURE.find((a) => a.areas.some((ar) => ar.id === unitId));
+              if (axis) setActiveAxisId(axis.id);
+              setActiveUnitId(unitId);
+            },
+          }}
+          interviewProps={{
+            breadcrumb: [activeAxis.namePL || activeAxis.name, activeArea.namePL || activeArea.name, `Poziom ${focusLevelFallback}`],
+            questions: interviewQuestions,
+            questionIndex: focusLevelFallback - 1,
+            questionTotal: activeArea.levels.length,
+            resolutionData: {
+              questionId: focusQuestions[0]?.questionId ?? '',
+              whatIsUnknown: `Czy jednostka ${activeArea.id} spełnia kryteria poziomu ${focusLevelFallback}.`,
+              likelyOwnerLabel: 'Właściciel procesu',
+              resolvingArtifactHint: 'Dokument procedury lub zrzut z systemu.',
+              dueDate: null,
+              blocksFreeze: true,
+            },
+            onAnswerChange: handleAnswerChange,
+            onAnswerStateChange: (qid, s, j) => void handleAnswerStateChange(qid, s, j),
+            onResolutionAction: () => {},
+            onEvidenceDrop: (qid, files) => void handleEvidenceDrop(qid, files),
+            onBack: () => {},
+            onSave: () => void saveNow(),
+            onNext: () => {
+              const idx = activeAxis.areas.findIndex((a) => a.id === activeArea.id);
+              const next = activeAxis.areas[idx + 1];
+              if (next) setActiveUnitId(next.id);
+            },
+            onSkip: () => {},
+            onAskTeresa: (questionId) => void handleAskTeresa(questionId),
+            canGoBack: true,
+            canGoNext: true,
+          }}
+          teresaProps={{
+            sixQuestions: teresaSixQuestions,
+            proposalQueue: pendingPreviews,
+            onCommit: (r) => void handleCommit(r),
+            onTakeLead: () => setMode('teresa_led'),
+            onLetMeWorkManually: () => setMode('guided_manual'),
+            mode,
+          }}
+          matrixProps={{
+            rows: matrixRows,
+            levels: matrixLevels,
+            selection: matrixSelection,
+            onSelect: (sel) => {
+              setMatrixSelection(sel);
+              setActiveUnitId(sel.unitId);
+            },
+            onCloseSideSheet: () => setMatrixSelection(null),
+            renderSideSheet: (selection, cell) => (
+              <div className="text-xs text-c-text-secondary">
+                <p>
+                  {selection.unitId} · poziom {selection.level} —{' '}
+                  {cell?.blocker ? 'BLOKER (pierwszy niespełniony poziom)' : cell?.reviewRequired ? 'above-gap: wymaga przeglądu' : cell?.achieved ? 'osiągnięty' : 'nieosiągnięty'}
+                </p>
+              </div>
+            ),
+          }}
+        />
+      </div>
+      <div className="flex shrink-0 items-center gap-2 border-t border-c-border-subtle px-4 py-2 text-xs">
+        <button
+          type="button"
+          onClick={() => void runtime?.transition('in_review')}
+          disabled={!canSendToReview}
+          className="rounded-md border border-c-border px-2.5 py-1 font-medium text-c-text-secondary disabled:opacity-40 hover:bg-c-surface-raised"
+        >
+          Wyślij do przeglądu
+        </button>
+        <button
+          type="button"
+          onClick={() => void runtime?.transition('active')}
+          disabled={!canSendBack}
+          className="rounded-md border border-c-border px-2.5 py-1 font-medium text-c-text-secondary disabled:opacity-40 hover:bg-c-surface-raised"
+        >
+          Odeślij do pracy (send back)
+        </button>
+        <button
+          type="button"
+          onClick={() => void runtime?.freeze()}
+          disabled={!canFreeze}
+          data-testid="freeze-button"
+          className="inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface-raised px-2.5 py-1 font-semibold text-c-text disabled:opacity-40 hover:bg-c-border-subtle"
+        >
+          <Lock size={12} />
+          Zamroź (tylko approver)
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Post-freeze view: Output / Report / Initiative — HTTP-shaped records
+// ---------------------------------------------------------------------------
+
+const FrozenOutputHttpView: React.FC<{
+  state: DrdHttpRuntimeState;
+  sourceKind: 'SERVER' | 'RECOVERY_DRAFT';
+  onGenerateReport: () => void;
+  onGenerateInitiative: () => void;
+  onExit: () => void;
+}> = ({ state, sourceKind, onGenerateReport, onGenerateInitiative, onExit }) => {
+  const session = state.session!;
+  const output = state.output;
+
+  return (
+    <div className="flex h-full flex-col overflow-y-auto bg-c-bg p-6" data-testid="drd-http-frozen-output-view">
+      <div className="mb-4 flex items-center gap-3">
+        <button type="button" onClick={onExit} className="inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised">
+          <ArrowLeft size={13} /> Wyjdź
+        </button>
+        <h1 className="text-sm font-semibold text-c-text">
+          Sesja {session.id.slice(0, 8)} — {session.state === 'closed' ? 'Zamknięta' : 'Zamrożona'}
+        </h1>
+        {/* ★ Frozen Output must NEVER be labeled SERVER unless `output` is a
+            confirmed server response for THIS session's current freeze —
+            `state.output` is only ever set from `freeze()`'s own response or
+            a `getOutput()` re-fetch (see drdHttpSessionRuntime.ts refresh()). */}
+        <DrdSourceIndicator source={output ? sourceKind : 'RECOVERY_DRAFT'} title="Frozen Output pochodzi wyłącznie z odpowiedzi serwera, nigdy z localStorage." />
+      </div>
+
+      {/* Output */}
+      <section data-testid="output-panel" className="mb-6 rounded-xl border border-c-border bg-c-surface p-4">
+        <div className="mb-2 flex items-center gap-2">
+          <Lock size={14} className="text-c-text-secondary" />
+          <h2 className="text-sm font-semibold text-c-text">AssessmentOutput (immutable, v{output?.outputVersion ?? '—'})</h2>
+        </div>
+        {!output ? (
+          <p className="text-xs text-c-text-muted">
+            Sesja jest zamrożona na serwerze, ale ten przeglądarka nie ma lokalnego wskaźnika do jej Outputu (żaden `freeze()`
+            nie wykonał się w tej karcie) — serwer nie udostępnia listy Outputów po sesji. Znany, udokumentowany brak (P0A/P0B).
+          </p>
+        ) : (
+          <div className="space-y-2 text-xs text-c-text-secondary">
+            <p>contentHash: <code className="text-c-text-muted">{output.contentHash.slice(0, 16)}…</code></p>
+            <p>scope: {output.scope}</p>
+            <p>limitations: {output.limitations.join(' · ')}</p>
+            <div className="rounded-lg border border-c-border-subtle">
+              <StandardTable
+                columns={OUTPUT_UNIT_COLUMNS}
+                data={Object.keys(output.current).map((unitId) => ({
+                  id: unitId,
+                  unitId,
+                  current: output.current[unitId] ?? '—',
+                  target: output.target[unitId] ?? '—',
+                  gap: output.gap[unitId] ?? '—',
+                }))}
+              />
+            </div>
+            <p className="pt-1 font-medium text-c-text">Findings ({output.findings.length})</p>
+            {output.findings.map((f) => (
+              <div key={f.id} className="rounded-lg border border-c-border-subtle p-2">
+                <p className="text-c-text">{f.businessMeaning}</p>
+                <p className="text-c-text-muted">Rekomendacja: {f.recommendation}</p>
+                <p className="text-c-text-muted">Jednostka: {f.unitName} · current {f.currentLevel ?? '—'} · target {f.targetLevel ?? '—'} · gap {f.gap ?? '—'}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Report */}
+      <section data-testid="report-panel" className="mb-6 rounded-xl border border-c-border bg-c-surface p-4">
+        <div className="mb-2 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <FileText size={14} className="text-c-text-secondary" />
+            <h2 className="text-sm font-semibold text-c-text">Report Snapshot</h2>
+          </div>
+          <button type="button" onClick={onGenerateReport} disabled={!output} className="rounded-md border border-c-border px-2 py-1 text-[11px] font-medium text-c-text-secondary disabled:opacity-40 hover:bg-c-surface-raised">
+            Generuj raport z Outputu
+          </button>
+        </div>
+        {state.reports.length === 0 ? (
+          <p className="text-xs text-c-text-muted">Brak wygenerowanego raportu w tej sesji przeglądarki.</p>
+        ) : (
+          state.reports.map((r, i) => {
+            const rec = r as { id?: string; title?: string; content?: { executiveSummary?: string } };
+            return (
+              <div key={rec.id ?? i} className="mb-2 rounded-lg border border-c-border-subtle p-2 text-xs text-c-text-secondary">
+                <p className="text-c-text">{rec.title}</p>
+                <p>{rec.content?.executiveSummary}</p>
+              </div>
+            );
+          })
+        )}
+      </section>
+
+      {/* Initiative Draft */}
+      <section data-testid="initiative-panel" className="mb-6 rounded-xl border border-c-border bg-c-surface p-4">
+        <div className="mb-2 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Lightbulb size={14} className="text-c-text-secondary" />
+            <h2 className="text-sm font-semibold text-c-text">Initiative Proposal Draft (lokalny, NIE Registered Initiative)</h2>
+          </div>
+          <button type="button" onClick={onGenerateInitiative} disabled={!output} className="rounded-md border border-c-border px-2 py-1 text-[11px] font-medium text-c-text-secondary disabled:opacity-40 hover:bg-c-surface-raised">
+            Wygeneruj z findingów
+          </button>
+        </div>
+        {state.initiatives.length === 0 ? (
+          <p className="text-xs text-c-text-muted">Brak draftów w tej sesji przeglądarki.</p>
+        ) : (
+          state.initiatives.map((d, i) => {
+            const rec = d as { id?: string; title?: string; summary?: string | null; confidence?: string };
+            return (
+              <div key={rec.id ?? i} className="mb-2 rounded-lg border border-c-border-subtle p-2 text-xs">
+                <p className="font-medium text-c-text">{rec.title}</p>
+                <p className="text-c-text-secondary">{rec.summary}</p>
+                <p className="text-c-text-muted">confidence: {rec.confidence}</p>
+                <p className="mt-1 text-[10px] uppercase tracking-wide text-c-warning">Draft — decyzja „Register as Initiative" należy do człowieka, poza tym modułem.</p>
+              </div>
+            );
+          })
+        )}
+      </section>
+
+      {/* Reopen — no HTTP path yet */}
+      <section data-testid="reopen-panel" className="rounded-xl border border-c-border bg-c-surface p-4">
+        <div className="mb-2 flex items-center gap-2">
+          <RotateCcw size={14} className="text-c-text-secondary" />
+          <h2 className="text-sm font-semibold text-c-text">Reopen — nowa rewizja</h2>
+        </div>
+        <p className="mb-2 text-xs text-c-text-muted">
+          Brak endpointu HTTP do reopen (poza zakresem tego pliku — server/src/method-core/*, server/src/routes/method-core.routes.ts).
+          Akcja wyłączona jawnie, nie udawana.
+        </p>
+        <button type="button" disabled data-testid="reopen-button" className="rounded-md border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary opacity-40">
+          Reopen sesji (niedostępne przez HTTP)
+        </button>
+      </section>
+    </div>
+  );
+};
+
+export default DrdHttpMethodWorkspaceScreen;

@@ -34,10 +34,13 @@ import type {
   MethodProcessRole,
   MethodSession,
   MethodSessionState,
+  TeresaPreview,
 } from '@/method-core/contracts';
 
 import {
   appendEvent,
+  createInitiativeDraft,
+  createReport,
   createSession as apiCreateSession,
   freeze as apiFreeze,
   getOutput,
@@ -50,6 +53,8 @@ import {
   teresaCommit,
   teresaPreview,
   transition as apiTransition,
+  type CreateInitiativeDraftRequest,
+  type CreateReportRequest,
   type CreateSessionRequest,
   type FreezeResponse,
   type MethodOutputSummary,
@@ -79,6 +84,22 @@ export interface DrdHttpRuntimeState {
   /** Present only when status === 'recovery' — writes that failed to reach
    * the server and are queued in localStorage for retry, never discarded. */
   readonly pendingWriteCount: number;
+  /** Teresa previews awaiting a human decision. Kept in memory only (no
+   * GET-list endpoint exists server-side) — populated by `createTeresaPreview`
+   * responses, drained by `commitTeresaPreview`. Never persisted to
+   * localStorage: an ephemeral decision queue, not session state. */
+  readonly previews: readonly TeresaPreview[];
+  /** The session's frozen Output — set only from a server response (either
+   * this browser's own `freeze()` call, or a `getOutput()` re-fetch keyed
+   * off a locally cached output id — see `outputIdCacheKey`). Never
+   * reconstructed from any other localStorage content. */
+  readonly output: MethodOutputSummary | null;
+  /** Report Snapshots / Initiative Proposal Drafts created THIS session
+   * (in-memory only — no GET-list endpoint exists server-side; a page
+   * reload loses this list even though the records exist on the server,
+   * a known gap tracked in the P0C report, not a silent fabrication). */
+  readonly reports: readonly unknown[];
+  readonly initiatives: readonly unknown[];
 }
 
 interface PendingWrite {
@@ -93,6 +114,16 @@ function cacheKey(sessionId: string): string {
 }
 function pendingKey(sessionId: string): string {
   return `method-core:pending-writes:${sessionId}`;
+}
+/** Caches ONLY the Output's server-assigned id (a pointer), never its
+ * content — `refresh()` always re-fetches the actual Output via
+ * `getOutput(id)` before anything renders it. Exists because the server has
+ * no "list outputs by session" endpoint the browser can call; without this
+ * pointer a page reload on an already-frozen session cannot rediscover
+ * which Output belongs to it (documented gap — see this file's class-level
+ * comment on `reports`/`initiatives` for the same limitation). */
+function outputIdCacheKey(sessionId: string): string {
+  return `method-core:http-cache:${sessionId}:output-id`;
 }
 
 function readPending(storage: Storage, sessionId: string): PendingWrite[] {
@@ -123,6 +154,10 @@ export class DrdHttpSessionRuntime {
     error: null,
     serverVersion: null,
     pendingWriteCount: 0,
+    previews: [],
+    output: null,
+    reports: [],
+    initiatives: [],
   };
 
   constructor(
@@ -176,9 +211,36 @@ export class DrdHttpSessionRuntime {
         getSession(this.sessionId),
         listEvents(this.sessionId),
       ]);
-      this.setState({ status: 'ready', session, roles, events, error: null, serverVersion: null });
+      let output = this.state.output;
+      if (session.state === 'frozen' || session.state === 'closed') {
+        const cachedOutputId = output?.id ?? this.readCachedOutputId();
+        if (cachedOutputId && cachedOutputId !== output?.id) {
+          try {
+            const res = await getOutput(cachedOutputId);
+            output = res.output;
+          } catch {
+            // Pointer stale/unreadable — leave whatever we had (possibly
+            // null). The UI must show that gap honestly, never fabricate
+            // Output content from anything else.
+          }
+        }
+      } else {
+        // Session left frozen/closed (e.g. after a future reopen path) — an
+        // Output from a PRIOR state must never linger and be mistaken for
+        // the current one.
+        output = null;
+      }
+      this.setState({ status: 'ready', session, roles, events, error: null, serverVersion: null, output });
     } catch (err) {
       this.handleFailure(err);
+    }
+  }
+
+  private readCachedOutputId(): string | null {
+    try {
+      return this.storage.getItem(outputIdCacheKey(this.sessionId));
+    } catch {
+      return null;
     }
   }
 
@@ -198,9 +260,12 @@ export class DrdHttpSessionRuntime {
 
   // -- creation (static, mirrors createDrdDemoSession) -----------------------
 
-  static async create(input: CreateSessionRequest): Promise<DrdHttpSessionRuntime> {
+  static async create(
+    input: CreateSessionRequest,
+    storage: Storage = window.localStorage
+  ): Promise<DrdHttpSessionRuntime> {
     const res = await apiCreateSession(input, newIdempotencyKey());
-    const runtime = new DrdHttpSessionRuntime(res.session.id);
+    const runtime = new DrdHttpSessionRuntime(res.session.id, storage);
     runtime.setState({
       status: 'ready',
       session: res.session,
@@ -311,7 +376,15 @@ export class DrdHttpSessionRuntime {
     const idemKey = `freeze:${newIdempotencyKey()}`;
     try {
       const res = await apiFreeze(this.sessionId, idemKey, expectedVersion);
-      this.setState({ status: 'ready', session: res.session, error: null, serverVersion: null });
+      // Pointer only — see `outputIdCacheKey`'s header comment. The Output
+      // CONTENT below comes straight from this response, never from cache.
+      try {
+        this.storage.setItem(outputIdCacheKey(this.sessionId), res.output.id);
+      } catch {
+        // Best-effort — a reload losing the pointer is a documented gap,
+        // not a correctness bug (never fabricates content either way).
+      }
+      this.setState({ status: 'ready', session: res.session, error: null, serverVersion: null, output: res.output });
       return res;
     } catch (err) {
       this.handleFailure(err);
@@ -324,14 +397,37 @@ export class DrdHttpSessionRuntime {
     return res.output;
   }
 
+  // -- Report / Initiative Draft (require a loaded Output) ------------------
+
+  async generateReport(input: CreateReportRequest): Promise<unknown> {
+    if (!this.state.output) {
+      throw new Error('drd-http-runtime: cannot generate a Report Snapshot without a loaded Output');
+    }
+    const report = await createReport(this.state.output.id, input);
+    this.setState({ reports: [...this.state.reports, report] });
+    return report;
+  }
+
+  async generateInitiativeDraft(input: CreateInitiativeDraftRequest): Promise<unknown> {
+    if (!this.state.output) {
+      throw new Error('drd-http-runtime: cannot generate an Initiative Proposal Draft without a loaded Output');
+    }
+    const draft = await createInitiativeDraft(this.state.output.id, input);
+    this.setState({ initiatives: [...this.state.initiatives, draft] });
+    return draft;
+  }
+
   // -- Teresa --------------------------------------------------------------
 
-  async createTeresaPreview(input: TeresaPreviewRequest) {
-    return teresaPreview(this.sessionId, input);
+  async createTeresaPreview(input: TeresaPreviewRequest): Promise<TeresaPreview> {
+    const preview = await teresaPreview(this.sessionId, input);
+    this.setState({ previews: [...this.state.previews, preview] });
+    return preview;
   }
 
   async commitTeresaPreview(input: TeresaCommitRequestInput): Promise<TeresaCommitOutcome> {
     const outcome = await teresaCommit(this.sessionId, input, newIdempotencyKey());
+    this.setState({ previews: this.state.previews.filter((p) => p.previewId !== input.previewId) });
     await this.refresh();
     return outcome;
   }
@@ -377,5 +473,31 @@ export class DrdHttpSessionRuntime {
     });
     if (remaining.length === 0) await this.refresh();
     return { succeeded, stillPending: remaining.length };
+  }
+
+  /**
+   * Explicit reconciliation choice: "discard my queued local writes, the
+   * server wins". The OPPOSITE of `retryPending()` — never called
+   * automatically; only a direct user action (see the ReconciliationPanel
+   * in `DrdHttpMethodWorkspaceScreen.tsx`) may drop queued writes without
+   * attempting them first.
+   */
+  async discardPendingAndReloadServer(): Promise<void> {
+    writePending(this.storage, this.sessionId, []);
+    this.setState({ pendingWriteCount: 0 });
+    await this.refresh();
+  }
+
+  /**
+   * TEST/HARNESS ONLY — synthetically overlays a state patch so the
+   * dev-render screenshot harness and unit tests can reach offline/
+   * conflict/recovery deterministically without a genuinely flaky network.
+   * No production code path calls this (grep confirms: only
+   * `DrdHttpMethodWorkspaceScreen`'s `forceState` prop and this file's own
+   * tests reference it) — mirrors the existing `seedTo`/`initialViewMode`
+   * dev-render-only escape hatches on `DrdMethodWorkspaceScreenProps`.
+   */
+  debugForceState(patch: Partial<DrdHttpRuntimeState>): void {
+    this.setState(patch);
   }
 }

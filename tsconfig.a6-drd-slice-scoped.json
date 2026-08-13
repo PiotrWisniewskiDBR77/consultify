@@ -3,7 +3,7 @@
   "include": [
     "src/method-core/**/*",
     "src/components/method-workspace/**/*",
-    "src/components/assessment/drd/DrdMethodWorkspaceScreen.tsx",
+    "src/components/assessment/drd/**/*",
     "src/hooks/useFeatureFlags.tsx",
     "src/views/AssessmentSessionEditorView.tsx",
     "dev-render/drd-workspace-main.tsx",
