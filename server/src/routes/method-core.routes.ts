@@ -51,6 +51,7 @@ import {
   isMethodEventType,
   METHOD_EVENT_TYPES,
   METHOD_PROCESS_ROLES,
+  METHOD_SESSION_STATES,
   TERESA_CAPABILITIES,
   type MethodActorKind,
   type MethodEventType,
@@ -139,6 +140,51 @@ function requireIdempotencyKey(req: Request, res: Response): string | null {
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0;
+}
+
+// ---------------------------------------------------------------------------
+// Pagination — every list endpoint below goes through this. Default AND max
+// are both enforced (an unbounded `?limit=999999999` is refused, not
+// silently clamped-and-served) so "brak nielimitowanego zwrotu" is a real
+// property of the route, not just a convention callers are expected to
+// follow.
+// ---------------------------------------------------------------------------
+
+const DEFAULT_PAGE_LIMIT = 20;
+const MAX_PAGE_LIMIT = 100;
+
+interface Pagination {
+  readonly limit: number;
+  readonly offset: number;
+}
+
+function parsePagination(req: Request, res: Response): Pagination | null {
+  const rawLimit = req.query.limit;
+  const rawOffset = req.query.offset;
+  let limit = DEFAULT_PAGE_LIMIT;
+  let offset = 0;
+
+  if (rawLimit !== undefined) {
+    const n = Number(rawLimit);
+    if (!Number.isInteger(n) || n < 1) {
+      res.status(400).json({ error: 'limit must be a positive integer' });
+      return null;
+    }
+    if (n > MAX_PAGE_LIMIT) {
+      res.status(400).json({ error: `limit must not exceed ${MAX_PAGE_LIMIT}` });
+      return null;
+    }
+    limit = n;
+  }
+  if (rawOffset !== undefined) {
+    const n = Number(rawOffset);
+    if (!Number.isInteger(n) || n < 0) {
+      res.status(400).json({ error: 'offset must be a non-negative integer' });
+      return null;
+    }
+    offset = n;
+  }
+  return { limit, offset };
 }
 
 /**
@@ -317,6 +363,65 @@ router.post(
       idempotentReplay: false,
       ...(bypassActive ? { demoBypassActive: true, demoBypassNotice: DEMO_BYPASS_NOTICE } : {}),
     });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// GET /api/method/sessions — list (filter: methodPackId, state, projectId,
+// ownerUserId; paginated, deterministic order). Closes the P0 gap where the
+// only way back into a session after a restart was `GET /sessions/:id`
+// (resume by KNOWN id) — this is the "pokaż moje sesje" entry point: every
+// item is read straight from `method_sessions`, never reconstructed from
+// event replay (see MethodSessionService.listForOrganization's doc comment).
+// Mounted BEFORE `/sessions/:id` in this file only for reading order — Express
+// does not actually need the ordering here: `/sessions` (no path segment
+// after it) and `/sessions/:id` (one) are distinct patterns, so a bare
+// `GET /sessions` can never be captured by the `:id` route.
+// ---------------------------------------------------------------------------
+
+router.get(
+  '/sessions',
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
+    const organizationId = requireOrg(req, res);
+    if (!organizationId) return;
+    const pagination = parsePagination(req, res);
+    if (!pagination) return;
+
+    const methodPackId = isNonEmptyString(req.query.methodPackId) ? req.query.methodPackId : undefined;
+    const projectId = isNonEmptyString(req.query.projectId) ? req.query.projectId : undefined;
+    const ownerUserId = isNonEmptyString(req.query.ownerUserId) ? req.query.ownerUserId : undefined;
+    const stateParam = isNonEmptyString(req.query.state) ? req.query.state : undefined;
+    if (stateParam !== undefined && !(METHOD_SESSION_STATES as readonly string[]).includes(stateParam)) {
+      res.status(400).json({
+        error: 'state must be one of the closed METHOD_SESSION_STATES set',
+        allowed: METHOD_SESSION_STATES,
+      });
+      return;
+    }
+
+    const { items, total } = await sessionService.listForOrganization({
+      organizationId,
+      methodPackId,
+      state: stateParam as MethodSessionState | undefined,
+      projectId,
+      ownerUserId,
+      limit: pagination.limit,
+      offset: pagination.offset,
+    });
+
+    // ★ `hasFrozenOutput` — computed per page item (bounded by page size,
+    // never per the whole org), mirroring the sibling list endpoints'
+    // per-page enrichment (see e.g. MethodOutputService.listForOrganization's
+    // per-row `listFindings` call). An Output only ever exists after a
+    // freeze (EventDerivedOutputBridge), so "has an Output" and "has a
+    // frozen Output" are the same question for this kernel.
+    const sessions = [];
+    for (const session of items) {
+      const outputs = await methodOutputService.listOutputsBySession(organizationId, session.id);
+      sessions.push({ ...session, hasFrozenOutput: outputs.length > 0 });
+    }
+
+    res.status(200).json({ sessions, total, limit: pagination.limit, offset: pagination.offset });
   })
 );
 
