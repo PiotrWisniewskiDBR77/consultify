@@ -548,7 +548,7 @@ const OPEN_DOCUMENT_TABS: ModuleTab[] = ['tasks', 'ideas', 'decisions', 'inbox']
 
 function getInitialMyWorkTab(
   searchParams: URLSearchParams,
-  _canViewManager: boolean,
+  canViewManager: boolean,
   allowIdeas = true
 ): ModuleTab {
   if (allowIdeas && (searchParams.get('ideaId') || searchParams.get('idea'))) return 'ideas';
@@ -560,6 +560,13 @@ function getInitialMyWorkTab(
   // the default tab if the surface's flag is off, so a stale link never lands on a
   // hidden/empty tab.
   const tabParam = searchParams.get('tab');
+  if (tabParam === 'ideas' && allowIdeas) return 'ideas';
+  if (tabParam === 'notebook') return 'notebook';
+  if (tabParam === 'inbox') return 'inbox';
+  if (tabParam === 'calendar') return 'calendar';
+  if (tabParam === 'tasks') return 'tasks';
+  if (tabParam === 'decisions') return 'decisions';
+  if (tabParam === 'manager' && canViewManager) return 'manager';
   if (tabParam === 'vault' && isClientVaultEnabled()) return 'vault';
   if (tabParam === 'agent' && isAgentPlanEnabled()) return 'agent';
 
