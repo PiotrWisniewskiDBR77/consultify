@@ -317,6 +317,19 @@
         "--strictPort"
       ],
       "port": 58040
+    },
+    {
+      "name": "asm-ic-presentation",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "5302",
+        "--strictPort"
+      ],
+      "port": 5302
     }
   ]
 }
