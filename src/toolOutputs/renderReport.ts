@@ -42,12 +42,19 @@ export interface RenderOptions {
 }
 
 /**
- * Buduje action title sekcji. Jeśli Output ma wniosek, tytułem jest jego K1
- * (fakt z silnika) — bo action title ma być WNIOSKIEM, nie etykietą.
+ * Action title sekcji = WNIOSEK, nie etykieta i nie statystyka silnika.
+ *
+ * Świadomie NIE używamy tu K1: K1 jest policzalną podstawą („Podstawa: 2
+ * napięcia o wadze 6"), a nagłówek ma nieść to, co czytelnik ma zrozumieć.
+ * Pierwsza rekomendacja K3 jest najbliższa wnioskowi, bo zaczyna się od
+ * czasownika i niesie decyzję. Powtórzenie K1 w nagłówku i w bloku konkluzji
+ * było dublem wykrytym na zrzucie przed odbiorem właściciela.
  */
 function buildActionTitle(output: ToolOutput): string {
   const first = output.conclusions[0];
-  if (first?.k1Fact) return first.k1Fact;
+  const leadAction = first?.k3Actions?.[0];
+  if (leadAction) return leadAction;
+  if (first?.k2Meaning) return first.k2Meaning;
   return output.title;
 }
 

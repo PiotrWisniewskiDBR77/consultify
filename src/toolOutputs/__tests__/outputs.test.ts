@@ -200,9 +200,26 @@ describe('deterministyczny renderer Report/Presentation', () => {
     expect(doc.sections.map((s) => s.sourceOutputId)).toEqual(['out-1', 'out-9']);
   });
 
-  it('action title jest wnioskiem (K1), nie etykietą', () => {
+  /*
+   * Action title = WNIOSEK, nie statystyka silnika i nie powtórzenie K1.
+   * Pierwotnie tytuł brał K1, przez co nagłówek brzmiał „Podstawa: 2 napięcia
+   * o wadze 6" i dublował treść bloku konkluzji. Wykryte na zrzucie przed
+   * odbiorem właściciela.
+   */
+  it('action title jest rekomendacją, nie powtórzeniem K1', () => {
     const doc = renderToolReport([approvedOutput()], opts);
-    expect(doc.sections[0].actionTitle).toContain('Popyt w DACH rośnie');
+    const title = doc.sections[0].actionTitle;
+    expect(title).toBe('Uruchomić pilota w DACH');
+    // nagłówek nie może być tym samym tekstem co K1
+    const k1 = conclusionBlocks(doc)[0].k1Fact;
+    expect(title).not.toBe(k1);
+  });
+
+  it('action title spada na K2, gdy brak akcji K3', () => {
+    const out = approvedOutput();
+    const noActions = { ...out, conclusions: [{ ...out.conclusions[0], k3Actions: [] }] };
+    const doc = renderToolReport([noActions], { ...opts, id: 'rep-2' });
+    expect(doc.sections[0].actionTitle).toContain('Przewaga wdrożeniowa');
   });
 
   it('prezentacja skraca treść, ale NIE zmienia znaczenia', () => {

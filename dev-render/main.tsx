@@ -248,7 +248,14 @@ const Mw007CalendarNarrowViewportScreen = React.lazy(
   () => import('./screens/mw-007-calendar-narrow-viewport')
 );
 
+const ToolsSwotReportScreen = React.lazy(() => import('./screens/tools-swot-report'));
+
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'tools-swot-report': {
+    label:
+      'Tools — Dynamic SWOT: Output -> Report/Presentation (deterministyczny renderer, Executive Paper/Night)',
+    render: () => <ToolsSwotReportScreen />,
+  },
   'mw-007-calendar-narrow-viewport': {
     label:
       'MW-07 Codex FINAL UX FIX_REQUIRED — REALNY <CalendarView>: sidebar nie nachodzi na grid poniżej breakpointu mobile (useIsMobile + Drawer)',
