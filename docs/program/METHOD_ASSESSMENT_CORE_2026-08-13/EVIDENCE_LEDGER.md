@@ -679,3 +679,40 @@ Opusa — teraz zielony runner migracji przy niekompletnym schemacie.
 
 A9 kroki 3–16 pozostają **NOT VERIFIED** — nie zostały wykonane, bo blokada
 występowała przed nimi. Blokada jest **zdjęta**; A9 może zostać wznowione.
+
+---
+
+## G14 — Kanoniczna bramka serwera: stabilna i **dowiedziona co do zakresu**
+
+Po scaleniu S1+S2+S3 bramka serwerowa zaczęła migotać: 2 testy padały
+z `socket hang up` / `ECONNRESET`. **To nie była regresja logiki** — 13
+równoległych plików testowych, każdy podnoszący aplikację Express z własną pulą
+`pg`, wyczerpywało połączenia jednego Postgresa.
+
+**Nie ukryto tego przez retry.** Ograniczono współbieżność, zgodnie z zasadą,
+że jest to poprawne rozwiązanie dla testów realnej bazy dzielących ograniczoną
+pulę połączeń.
+
+### Dowód, że przebieg nadal obejmuje **pełny** zakres
+
+| Pomiar | Wynik |
+| --- | ---: |
+| plików testowych na dysku w `server/src/method-core` (skan rekurencyjny) | **13** |
+| plików raportowanych przez przebieg szeregowy | **13 passed** |
+| pominiętych / skipped | **0** |
+
+Lista wszystkich 13 plików wyliczona i porównana jeden do jednego — brak
+cichego wykluczenia. `Tests 161 passed (161)`.
+
+### Kanoniczne komendy (zapisane jako skrypty w `package.json`)
+
+```
+npm run test:method-core:server   # --no-file-parallelism, RUN_DB_TESTS=1, MOCK_DB=false
+npm run test:method-core:front    # --exclude 'server/**'
+```
+
+`--exclude 'server/**'` jest konieczny, bo **filtr ścieżki w vitest jest
+dopasowaniem po podciągu** — `src/method-core` łapie także
+`server/src/method-core` i zawyża wynik frontu o testy serwera.
+
+Zweryfikowane oboma skryptami: **serwer 161/161**, **front 246/246**, oba `exit 0`.
