@@ -44,6 +44,18 @@ export function buildFixturePlan(ctx: FixtureContext): FixtureStatement[] {
   const deck = stableTextId(ctx, 'artifact-presentation');
   const idea = stableTextId(ctx, 'idea');
   const presentationSource = { source_type:'acceptance_fixture', source_id:initiative, label:'Zweryfikowany plan realizacji korzyści', captured_at:'2026-08-13T00:00:00.000Z' };
+  const financeAssumptions = {
+    acceptanceFixture: ACCEPTANCE_NAMESPACE,
+    initialCash: 200000,
+    initialEquity: 600000,
+    initialDebt: 300000,
+    initialPPE: 550000,
+    initialAR: 150000,
+    initialInventory: 100000,
+    initialAP: 100000,
+    baseline: { revenue:1200000, cogs:720000, opex:240000, depreciation:60000, interest:24000, tax:37440, capex:120000 },
+    seedStatus: { mode:'acceptance_fixture', missingBaselineLines:[] },
+  };
   const presentationSlides = [
     { intent:'cover', key_message:'Decyzja o przyspieszeniu realizacji korzyści', source_refs:[presentationSource], content:{ type:'cover', title:'Realizacja korzyści transformacji', subtitle:'Materiał dla komitetu sterującego' } },
     { intent:'performance_overview', key_message:'Zweryfikowana realizacja wynosi 76% wobec celu 90%', source_refs:[presentationSource], content:{ type:'performance_overview', kpis:[{label:'Realizacja',value:'76%'},{label:'Cel',value:'90%'},{label:'Jakość danych',value:'Zweryfikowana'}], context:'Największa luka dotyczy adopcji nowego sposobu pracy.' } },
@@ -73,7 +85,7 @@ export function buildFixturePlan(ctx: FixtureContext): FixtureStatement[] {
     row('kpi', `INSERT INTO rvn_kpi_definitions (kpi_id,organization_id,kpi_code,status,owner_user_id,created_by) VALUES ($1,$2,'BENEFIT-REALIZATION','draft',$3,$3) ON CONFLICT (kpi_id) DO UPDATE SET kpi_code=EXCLUDED.kpi_code WHERE rvn_kpi_definitions.organization_id=EXCLUDED.organization_id`, [kpi,ctx.organizationId,ctx.userId], 'rvn_kpi_definitions','kpi_id',kpi,ctx.organizationId),
     row('roi', `INSERT INTO rvn_roi_cases (case_id,organization_id,initiative_id,title,owner_user_id,status,currency,analysis_start,analysis_end,created_by) VALUES ($1,$2,$3,$4,$5,'draft','PLN',CURRENT_DATE,CURRENT_DATE + 365,$5) ON CONFLICT (case_id) DO UPDATE SET title=EXCLUDED.title WHERE rvn_roi_cases.organization_id=EXCLUDED.organization_id`, [roi,ctx.organizationId,initiative,'Program poprawy realizacji korzyści',ctx.userId], 'rvn_roi_cases','case_id',roi,ctx.organizationId),
     row('okr', `INSERT INTO okr_vnext_programs (program_id,organization_id,name,status,created_by) VALUES ($1,$2,$3,'draft',$4) ON CONFLICT (program_id) DO UPDATE SET name=EXCLUDED.name WHERE okr_vnext_programs.organization_id=EXCLUDED.organization_id`, [okr,ctx.organizationId,'Rezultaty transformacji 2026',ctx.userId], 'okr_vnext_programs','program_id',okr,ctx.organizationId),
-    row('finance', `INSERT INTO financial_models (id,organization_id,initiative_id,name,description,start_date,status,assumptions_json,created_by) VALUES ($1,$2,$3,$4,$5,CURRENT_DATE,'draft',$6,$7) ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name`, [finance,ctx.organizationId,initiative,'Zintegrowany model transformacji','Model finansowy programu poprawy realizacji korzyści.',JSON.stringify({acceptanceFixture:ACCEPTANCE_NAMESPACE}),ctx.userId], 'financial_models','id',finance,ctx.organizationId),
+    row('finance', `INSERT INTO financial_models (id,organization_id,initiative_id,name,description,start_date,status,assumptions_json,created_by) VALUES ($1,$2,$3,$4,$5,CURRENT_DATE,'draft',$6,$7) ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name,description=EXCLUDED.description,assumptions_json=EXCLUDED.assumptions_json`, [finance,ctx.organizationId,initiative,'Zintegrowany model transformacji','Model finansowy programu poprawy realizacji korzyści.',JSON.stringify(financeAssumptions),ctx.userId], 'financial_models','id',finance,ctx.organizationId),
     row('artifact', `INSERT INTO presentation_decks (id,organization_id,project_id,title,description,status,generated_by,slide_count,outline_json,unified_json,deck_json) VALUES ($1,$2,$3,$4,$5,'ready',$6,6,$7,$8,NULL) ON CONFLICT (id) DO UPDATE SET title=EXCLUDED.title,status='ready',slide_count=6,outline_json=EXCLUDED.outline_json,unified_json=EXCLUDED.unified_json,deck_json=NULL`, [deck,ctx.organizationId,project,'Przegląd korzyści transformacji','Materiał decyzyjny dla komitetu sterującego.',ctx.userId,JSON.stringify(presentationSlides.map(slide=>({title:slide.key_message}))),JSON.stringify({meta:{project:'Program poprawy realizacji korzyści',client:'Komitet sterujący',template:'corporate',language:'pl',confidentiality:'internal'},slides:presentationSlides,marker:ACCEPTANCE_NAMESPACE})], 'presentation_decks','id',deck,ctx.organizationId),
     row('ideas', `INSERT INTO my_ideas (id,user_id,organization_id,title,body,tags,source_type) VALUES ($1,$2,$3,$4,$5,$6,'acceptance_fixture') ON CONFLICT (id) DO UPDATE SET title=EXCLUDED.title,body=EXCLUDED.body,tags=EXCLUDED.tags`, [idea,ctx.userId,ctx.organizationId,'Automatyczne monitorowanie realizacji korzyści','Pomysł na połączenie KPI, sygnałów wykonania i miesięcznego przeglądu zarządczego.',JSON.stringify(['benefits','automation','decision-log','financial-case','business-case'])], 'my_ideas','id',idea,ctx.organizationId),
     ...financeFlags,

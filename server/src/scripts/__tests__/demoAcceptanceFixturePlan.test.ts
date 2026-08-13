@@ -47,6 +47,14 @@ describe('demo acceptance fixtures safety contract',()=>{
     expect(unified.slides.every((slide:any)=>slide.source_refs?.length>0)).toBe(true);
     expect(presentation!.sql).toContain('deck_json=NULL');
   });
+  it('seeds a non-zero integrated Finance baseline for full-workspace rehearsal',()=>{
+    const finance=buildFixturePlan(ctx).find(item=>item.domain==='finance');
+    const assumptions=JSON.parse(String(finance!.params[5]));
+    expect(assumptions.baseline.revenue).toBeGreaterThan(0);
+    expect(assumptions.initialCash+assumptions.initialAR+assumptions.initialInventory+assumptions.initialPPE)
+      .toBe(assumptions.initialDebt+assumptions.initialAP+assumptions.initialEquity);
+    expect(finance!.sql).toContain('assumptions_json=EXCLUDED.assumptions_json');
+  });
   it('documents the dedicated acceptance owner and Piotr readback without exposing a password',()=>{
     const source=readFileSync(resolve(process.cwd(),'server/scripts/acceptance-fixtures/run.ts'),'utf8');
     expect(source).toContain('acceptance.owner@consultify.local');
