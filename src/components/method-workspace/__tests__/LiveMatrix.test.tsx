@@ -44,14 +44,122 @@ describe('LiveMatrix', () => {
       />
     );
     const cell = screen.getByLabelText(
-      'DRD, Strategia i governance, poziom 2, osiągnięty, odpowiedź potwierdzone, evidence complete'
+      'DRD, Strategia i governance, poziom 2, osiągnięty, odpowiedź potwierdzone, dowód kompletny'
     );
     expect(cell).toBeInTheDocument();
 
-    const missingCell = screen.getByLabelText(
-      'DRD, Strategia i governance, poziom 4, nieosiągnięty, odpowiedź nierozstrzygnięte, evidence missing'
+    // ★ Komórka jeszcze nieoceniona mówi „jeszcze nieoceniony", a NIE „brak
+    // dowodu" — to dwie różne rzeczy i czytnik ekranu musi je rozróżniać
+    // tak samo jak wzrok.
+    const notAssessedCell = screen.getByLabelText(
+      'DRD, Strategia i governance, poziom 4, nieosiągnięty, odpowiedź nierozstrzygnięte, jeszcze nieoceniony'
     );
-    expect(missingCell).toBeInTheDocument();
+    expect(notAssessedCell).toBeInTheDocument();
+  });
+
+  it('nie maluje komórki nieocenionej tak samo jak komórki z luką dowodową', () => {
+    render(
+      <LiveMatrix
+        rows={[
+          makeMatrixRow({
+            levels: [
+              // oceniona, dowód słaby → realna luka (bursztyn, przerywana)
+              {
+                unitId: 'unit-1',
+                level: 1,
+                achieved: true,
+                proposed: false,
+                target: false,
+                answerState: 'confirmed',
+                evidenceState: 'weak',
+                aiProposalPending: false,
+                reviewRequired: false,
+                blocker: false,
+              },
+              // jeszcze nieoceniona → neutralna, NIE alarm
+              {
+                unitId: 'unit-1',
+                level: 2,
+                achieved: false,
+                proposed: false,
+                target: false,
+                answerState: 'unresolved',
+                evidenceState: 'missing',
+                aiProposalPending: false,
+                reviewRequired: false,
+                blocker: false,
+              },
+            ],
+          }),
+        ]}
+        levels={[1, 2]}
+        selection={null}
+        onSelect={vi.fn()}
+        onCloseSideSheet={vi.fn()}
+        renderSideSheet={() => null}
+        methodName="DRD"
+      />
+    );
+
+    const weak = screen.getByLabelText(/poziom 1,.*dowód słaby/);
+    const notAssessed = screen.getByLabelText(/poziom 2,.*jeszcze nieoceniony/);
+
+    expect(weak.className).toContain('border-c-warning');
+    expect(notAssessed.className).not.toContain('border-c-warning');
+    expect(notAssessed.className).toContain('border-c-border-subtle');
+    // najtwardsza asercja: klasy ramki NIE MOGĄ być identyczne
+    expect(weak.className).not.toEqual(notAssessed.className);
+  });
+
+  it('każdy wiersz niesie odczyt doradczy stan→cel→luka, a nie samą siatkę', () => {
+    render(
+      <LiveMatrix
+        rows={[makeMatrixRow()]}
+        levels={[1, 2, 3, 4]}
+        selection={null}
+        onSelect={vi.fn()}
+        onCloseSideSheet={vi.fn()}
+        renderSideSheet={() => null}
+        methodName="DRD"
+      />
+    );
+    // fixture: osiągnięte L1-L2, cel L4 → bieżący L2, luka 2
+    const readout = screen.getByTestId('matrix-row-readout');
+    expect(readout).toHaveTextContent('L2');
+    expect(readout).toHaveTextContent('L4');
+    expect(readout).toHaveTextContent('luka 2');
+  });
+
+  it('wiersz bez ani jednej odpowiedzi mówi „Nieocenione", a nie „luka"', () => {
+    render(
+      <LiveMatrix
+        rows={[
+          makeMatrixRow({
+            levels: [1, 2].map((level) => ({
+              unitId: 'unit-1',
+              level,
+              achieved: false,
+              proposed: false,
+              target: level === 2,
+              answerState: 'unresolved' as const,
+              evidenceState: 'missing' as const,
+              aiProposalPending: false,
+              reviewRequired: false,
+              blocker: false,
+            })),
+          }),
+        ]}
+        levels={[1, 2]}
+        selection={null}
+        onSelect={vi.fn()}
+        onCloseSideSheet={vi.fn()}
+        renderSideSheet={() => null}
+        methodName="DRD"
+      />
+    );
+    const readout = screen.getByTestId('matrix-row-readout');
+    expect(readout).toHaveTextContent('Nieocenione');
+    expect(readout).not.toHaveTextContent('luka');
   });
 
   it('clicking a cell opens the side sheet scoped to that cell', () => {

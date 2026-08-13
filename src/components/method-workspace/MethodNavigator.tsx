@@ -12,6 +12,7 @@ import React, { useMemo, useState } from 'react';
 
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 
+import { EVIDENCE_DOT_CLASS, EVIDENCE_TONE } from './evidenceSemantics';
 import type { MethodEvidenceState, MethodNavigatorNode } from './types';
 
 export interface MethodNavigatorProps {
@@ -21,11 +22,16 @@ export interface MethodNavigatorProps {
   className?: string;
 }
 
+/**
+ * Semantyka pochodzi z evidenceSemantics.ts — ten komponent miał ją poprawnie
+ * od początku, ale trzymał własną kopię mapy, więc dwa inne komponenty zdążyły
+ * się od niej rozjechać. Teraz rozjazd jest niemożliwy.
+ */
 const EVIDENCE_DOT: Record<MethodEvidenceState, string> = {
-  complete: 'bg-c-success',
-  weak: 'bg-c-warning',
-  missing: 'bg-c-text-muted',
-  conflicting: 'bg-c-danger',
+  complete: EVIDENCE_DOT_CLASS[EVIDENCE_TONE.complete],
+  weak: EVIDENCE_DOT_CLASS[EVIDENCE_TONE.weak],
+  missing: EVIDENCE_DOT_CLASS[EVIDENCE_TONE.missing],
+  conflicting: EVIDENCE_DOT_CLASS[EVIDENCE_TONE.conflicting],
 };
 
 interface TreeNode extends MethodNavigatorNode {

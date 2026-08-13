@@ -36,17 +36,21 @@ const OPTIONS: Array<{
   { id: 'not_applicable', label: 'Nie dotyczy', icon: <AlertCircle size={14} />, tone: 'muted' },
 ];
 
-// NOTE: this used to be expressed as `data-[selected=true]:border-c-*` Tailwind
-// arbitrary-variant classes, applied unconditionally + gated by a `data-selected`
-// DOM attribute in CSS. Confirmed via rendered-CSS inspection (dev-render,
-// 2026-08-13) that this repo's Tailwind build does NOT emit ANY `data-[...]:`
-// arbitrary-variant utility — not just here (Switch.tsx's `data-[state=on]:` and
-// StandardGridCard.tsx's `data-[open=true]:` are equally silent in the compiled
-// CSS). Root cause is outside this file's scope (tailwind.config.js /
-// content-scanning), so the selected answer-state button rendered IDENTICAL to
-// unselected in both light and dark — a real defect, not a color-contrast nuance.
-// Fixed locally by computing the selected classes in JS from the already-known
-// `selected` boolean instead of depending on that (broken) CSS variant.
+// Zaznaczony stan liczymy w JS z booleana `selected`, a nie wariantem
+// `data-[selected=true]:` w CSS.
+//
+// ★ SPROSTOWANIE (Opus, 2026-08-13). Pierwotny komentarz twierdzil, ze ten
+// build Tailwinda "nie emituje ZADNEGO wariantu data-[...]" i ze to systemowa
+// dziura repo. To NIEPRAWDA — sprawdzone kompilacja `npx tailwindcss` na stanie
+// SPRZED tej zmiany: klasy `.data-\[selected\=true\]\:border-c-success` (i cala
+// reszta rodziny) SA w wyjsciowym CSS, podobnie jak `data-[state=on]:` ze
+// Switch.tsx. Tailwind 3.4 obsluguje warianty atrybutowe natywnie.
+// Nie sciagaj wiec konfiguracji Tailwinda — nie ma tam czego naprawiac.
+//
+// Wybor formy zostaje, bo jest odporniejszy: klasa zalezy od tego samego
+// booleana, ktory steruje `aria-checked`, wiec stan wizualny i stan dla
+// czytnika ekranu nie moga sie rozjechac. Wariant CSS wiazal wyglad z
+// atrybutem DOM, ktory mozna zmienic niezaleznie od ARIA.
 const TONE_SELECTED_CLASSES: Record<string, string> = {
   success: 'border-c-success bg-c-success/10 text-c-success',
   warning: 'border-c-warning bg-c-warning/10 text-c-warning',

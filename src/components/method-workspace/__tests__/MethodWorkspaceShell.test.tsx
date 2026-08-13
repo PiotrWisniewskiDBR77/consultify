@@ -103,7 +103,7 @@ describe('MethodWorkspaceShell — view modes share one state', () => {
     // Same cell semantics as asserted directly on LiveMatrix — proves the shell
     // passes the identical rows/levels through, not a second copy.
     expect(
-      screen.getByLabelText('DRD, Strategia i governance, poziom 2, osiągnięty, odpowiedź potwierdzone, evidence complete')
+      screen.getByLabelText('DRD, Strategia i governance, poziom 2, osiągnięty, odpowiedź potwierdzone, dowód kompletny')
     ).toBeInTheDocument();
   });
 

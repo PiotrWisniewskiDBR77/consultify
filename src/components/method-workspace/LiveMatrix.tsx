@@ -18,6 +18,7 @@
 import { AlertTriangle, Eye, Sparkles, X } from 'lucide-react';
 import React from 'react';
 
+import { EVIDENCE_LABEL_PL, EVIDENCE_TONE } from './evidenceSemantics';
 import type { MatrixCellState, MatrixRow, MatrixSelection } from './types';
 
 export interface LiveMatrixProps {
@@ -42,6 +43,31 @@ const ANSWER_STATE_LABEL: Record<string, string> = {
   unresolved: 'nierozstrzygnięte',
 };
 
+/**
+ * Odczyt doradczy wiersza: gdzie jesteśmy, dokąd celujemy, ile brakuje.
+ *
+ * ★ Bez tego macierz jest gołą siatką L1..L7 — czyta się jak arkusz, nie jak
+ * materiał doradczy (przyczyna oceny MPQ 22/30 dla Work View, 2026-08-13).
+ * Konsultant potrzebuje wniosku na poziomie wiersza, nie tylko pikseli.
+ *
+ * `achieved` jest kumulatywne (1..currentLevel), więc poziom bieżący to
+ * NAJWYŻSZY osiągnięty — nie liczba osiągniętych komórek.
+ */
+export function rowReadout(row: MatrixRow): {
+  current: number | null;
+  target: number | null;
+  gap: number | null;
+  assessed: boolean;
+} {
+  const achieved = row.levels.filter((c) => c.achieved).map((c) => c.level);
+  const current = achieved.length > 0 ? Math.max(...achieved) : null;
+  const targetCell = row.levels.find((c) => c.target);
+  const target = targetCell ? targetCell.level : null;
+  const assessed = row.levels.some((c) => c.answerState !== 'unresolved');
+  const gap = current != null && target != null ? Math.max(0, target - current) : null;
+  return { current, target, gap, assessed };
+}
+
 function cellLevelTint(level: number, maxLevel: number): React.CSSProperties {
   const ratio = maxLevel > 0 ? level / maxLevel : 0;
   const pct = Math.round(10 + ratio * 30); // 10%..40% neutral tint — level magnitude only
@@ -56,19 +82,31 @@ const Cell: React.FC<{
   maxLevel: number;
   onSelect: () => void;
 }> = ({ cell, unitName, methodName, selected, maxLevel, onSelect }) => {
+  // ★ „jeszcze nie oceniono" to NIE to samo, co „oceniono i brak dowodu".
+  // Pierwsze jest stanem wyjściowym każdej sesji, drugie jest luką do
+  // domknięcia. Do 2026-08-13 obie sytuacje malowały identyczną bursztynową
+  // przerywaną ramkę, więc świeża macierz wyglądała jak lista 39 problemów.
+  const notAssessed = cell.answerState === 'unresolved';
+
   const accessibleName = `${methodName}, ${unitName}, poziom ${cell.level}, ${
     cell.achieved ? 'osiągnięty' : 'nieosiągnięty'
-  }, odpowiedź ${ANSWER_STATE_LABEL[cell.answerState] || cell.answerState}, evidence ${cell.evidenceState}${
-    cell.blocker ? ', blocker' : ''
-  }`;
+  }, odpowiedź ${ANSWER_STATE_LABEL[cell.answerState] || cell.answerState}, ${
+    notAssessed ? 'jeszcze nieoceniony' : EVIDENCE_LABEL_PL[cell.evidenceState]
+  }${cell.blocker ? ', blocker' : ''}`;
 
+  // Czerwień WYŁĄCZNIE dla blockera i sprzeczności — patrz evidenceSemantics.ts.
+  const tone = EVIDENCE_TONE[cell.evidenceState];
   const borderClass = cell.blocker
     ? 'border-2 border-c-danger'
-    : cell.evidenceState === 'missing' || cell.evidenceState === 'conflicting'
-      ? 'border border-dashed border-c-warning'
-      : cell.evidenceState === 'weak'
-        ? 'border border-dashed border-c-border'
-        : 'border border-c-border';
+    : notAssessed
+      ? 'border border-dotted border-c-border-subtle'
+      : tone === 'danger'
+        ? 'border-2 border-c-danger'
+        : tone === 'warning'
+          ? 'border border-dashed border-c-warning'
+          : tone === 'success'
+            ? 'border border-c-border'
+            : 'border border-dotted border-c-border-subtle';
 
   return (
     <button
@@ -134,7 +172,11 @@ export const LiveMatrix: React.FC<LiveMatrixProps> = ({
               <AlertTriangle size={9} className="text-c-danger" /> Blocker
             </span>
             <span className="flex items-center gap-1">
-              <span className="inline-block h-2 w-2 rounded-sm border border-dashed border-c-warning" /> Evidence luka
+              <span className="inline-block h-2 w-2 rounded-sm border border-dashed border-c-warning" /> Dowód słaby
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="inline-block h-2 w-2 rounded-sm border border-dotted border-c-border-subtle" />{' '}
+              Nieocenione
             </span>
           </div>
         )}
@@ -154,10 +196,15 @@ export const LiveMatrix: React.FC<LiveMatrixProps> = ({
                   L{level}
                 </th>
               ))}
+              <th className="pl-3 text-left text-[10px] font-medium text-c-text-muted whitespace-nowrap">
+                Stan → cel
+              </th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
+            {rows.map((row) => {
+              const readout = rowReadout(row);
+              return (
               <tr key={row.unitId}>
                 <th
                   scope="row"
@@ -177,8 +224,34 @@ export const LiveMatrix: React.FC<LiveMatrixProps> = ({
                     />
                   </td>
                 ))}
+                <td className="pl-3 align-middle whitespace-nowrap" data-testid="matrix-row-readout">
+                  {!readout.assessed ? (
+                    <span className="text-[11px] text-c-text-muted">Nieocenione</span>
+                  ) : (
+                    <span className="inline-flex items-baseline gap-1 text-[11px]">
+                      <span className="font-semibold text-c-text">
+                        {readout.current != null ? `L${readout.current}` : '—'}
+                      </span>
+                      <span className="text-c-text-muted">→</span>
+                      <span className="text-c-text-secondary">
+                        {readout.target != null ? `L${readout.target}` : 'brak celu'}
+                      </span>
+                      {readout.gap != null && readout.gap > 0 && (
+                        <span className="rounded px-1 font-medium bg-c-warning/10 text-c-warning">
+                          luka {readout.gap}
+                        </span>
+                      )}
+                      {readout.gap === 0 && (
+                        <span className="rounded px-1 font-medium bg-c-success/10 text-c-success">
+                          cel
+                        </span>
+                      )}
+                    </span>
+                  )}
+                </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>
