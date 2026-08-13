@@ -17,6 +17,7 @@ import type {
   ConsultingSummarySnapshot,
 } from '@/config/consultingToolsStandard';
 import { createConsultingMissionContext } from '@/config/consultingToolsStandard';
+import { evaluateSwotAcceptGate, stampAcceptedSwotItem } from '@/config/swot/swotAcceptGate';
 
 // ==================== TYPES ====================
 
@@ -151,10 +152,24 @@ export interface SWOTItem {
   staircase?: SWOTInsightStaircase;
   /** Umbrella claims (e.g. "lack of agility") decomposed into actionable roots. */
   decomposition?: SWOTDecomposition[];
-  /** Stamped on accept by the evidence gate (confirmed vs declared-unconfirmed). */
+  /** Stamped on accept by the evidence gate (confirmed vs declared-unconfirmed). Always
+   *  RECOMPUTED at accept time by swotAcceptGate.ts — never trusted verbatim from an
+   *  AI-authored proposal (see config/swot/swotAcceptGate.ts docstring). */
   evidenceStatus?: SWOTItemEvidenceStatus;
-  /** Free-text evidence note when no signal is linked. */
+  /** Free-text evidence description when no signal is linked. */
   evidenceNote?: string;
+  /** STREAM G1 (2026-08-13): what KIND of evidence backs this item — reuses the
+   *  existing `SWOTEvidenceType` (already defined for signals) so an item can carry
+   *  the same fact/observation/hypothesis distinction the Output builder renders
+   *  (`toolOutputs/buildSwotOutput.ts`'s `toEvidenceKind`). Previously items had no
+   *  way to express this directly (only `evidenceStatus`, confirmed/declared, which
+   *  is a DIFFERENT axis — honesty about proof, not the nature of the claim). */
+  evidenceType?: SWOTEvidenceType;
+  /** STREAM G1 (2026-08-13): where the evidence comes from (a person, a document, a
+   *  benchmark, a URL) — distinct from `evidenceNote`'s free-text description. No
+   *  existing SWOTItem field carried source attribution separately (SWOTSignal has
+   *  `sourceLabel`, but a user-entered item is not always backed by a linked signal). */
+  evidenceSource?: string;
   /** Strengths only — outcome of the laddered q-bank (niche vs core competency). */
   classification?: SWOTStrengthClassification;
   /** Answers captured while walking the laddered question bank. */
@@ -4517,23 +4532,19 @@ export const useToolStore = create<ToolStoreState>()(
         const updated: Partial<SWOTData> = {};
         if (cardType === 'signal') updated.signals = update(swotData.signals);
         else if (cardType === 'item') {
-          // Evidence gate (OXFORD O3): accepting an item stamps its evidence status —
-          // linked signals / evidence note / staircase factRefs => confirmed, otherwise
-          // explicitly 'declared' ("Deklaracja — niepotwierdzone"). Honest, never blocking.
-          updated.items = swotData.items.map((item) =>
-            item.id === cardId
-              ? {
-                  ...item,
-                  proposalStatus: 'accepted' as ProposalStatus,
-                  evidenceStatus:
-                    (item.linkedSignalIds && item.linkedSignalIds.length > 0) ||
-                    (item.evidenceNote && item.evidenceNote.trim().length > 0) ||
-                    (item.staircase?.factRefs && item.staircase.factRefs.length > 0)
-                      ? ('confirmed' as SWOTItemEvidenceStatus)
-                      : ('declared' as SWOTItemEvidenceStatus),
-                }
-              : item
-          );
+          // STREAM G1: routed through the ONE canonical accept gate
+          // (config/swot/swotAcceptGate.ts) — same function the Build Phase
+          // UI and the server's swot-proposals accept endpoint use. Blocks
+          // (no mutation) on structural defects or an unvalidated
+          // externally-claimed classification; otherwise stamps
+          // evidenceStatus honestly (confirmed/declared), never blocking on
+          // that axis alone.
+          updated.items = swotData.items.map((item) => {
+            if (item.id !== cardId) return item;
+            const gate = evaluateSwotAcceptGate(item);
+            if (!gate.ok) return item;
+            return stampAcceptedSwotItem(item, gate);
+          });
         } else if (cardType === 'tension') updated.tensions = update(swotData.tensions);
         else if (cardType === 'move') updated.recommendedMoves = update(swotData.recommendedMoves);
         else if (cardType === 'correlation') updated.correlations = update(swotData.correlations);
