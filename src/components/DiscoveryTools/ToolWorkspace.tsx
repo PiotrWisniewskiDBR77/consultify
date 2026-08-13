@@ -20,6 +20,7 @@ import { AppView } from '@/types';
 
 import { countAiCardStatuses, getAiReviewTotal, scrollToAiCards } from './aiCardGovernance';
 import { GenerateInitiativesModal } from './GenerateInitiativesModal';
+import ToolOutputsPanel from './report/ToolOutputsPanel';
 import { ToolActionBar } from './ToolActionBar';
 import { ToolCanvas } from './ToolCanvas';
 import { ToolHeader } from './ToolHeader';
@@ -798,6 +799,18 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
           />
         )}
       </div>
+
+      {/* Outputs — approved snapshot(s) promoted from this session, their
+          Reports/Presentations and Initiative proposals, plus reopen for
+          correction. Only meaningful once the session has been approved
+          (promoteToOutput's own eligibility gate — server/src/controllers/
+          ToolController.ts). Read-only surface: server/src/routes/
+          toolOutputs.routes.ts. */}
+      {toolStatus === 'APPROVED' && toolSessionId && (
+        <div className="border-t border-c-border-subtle bg-c-bg px-6 py-4">
+          <ToolOutputsPanel toolSessionId={toolSessionId} />
+        </div>
+      )}
 
       {/* Action Bar */}
       {toolStatus !== 'REVIEW' && (

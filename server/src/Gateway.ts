@@ -300,6 +300,7 @@ import testSupportRoutes from './routes/testSupport.routes.js';
 import toolEnterpriseRoutes from './routes/tool-enterprise.routes.js';
 import toolAssetsRoutes from './routes/toolAssets.routes.js';
 import toolsRoutes from './routes/tools.routes.js';
+import toolOutputsRoutes from './routes/toolOutputs.routes.js';
 import transactionReadinessRoutes from './routes/transactionReadiness.routes.js';
 import trialRoutes from './routes/trial.routes.js';
 import loginHistoryRoutes from './routes/user/loginHistory.routes.js';
@@ -492,6 +493,11 @@ export class ApiGateway {
       app.use('/api/ai/performance', performanceRoutes);
       logger.info('[ApiGateway] Mounting /api/tools');
       app.use('/api/tools', toolsRoutes);
+      // S4 (Outputs/Reports/Presentation/Initiatives gap-close): READ/LIST/
+      // REOPEN surface for the canonical tool_outputs snapshot (946/947/948) —
+      // additive, own path, does not touch /api/tools's promote/write path.
+      logger.info('[ApiGateway] Mounting /api/tool-outputs');
+      app.use('/api/tool-outputs', toolOutputsRoutes);
       logger.info('[ApiGateway] Mounting /api/workbook');
       app.use('/api/workbook', workbookRoutes);
       // MAT-010 — canonical artifact lineage receipts (Documents / Workbooks /
