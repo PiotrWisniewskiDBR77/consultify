@@ -2,14 +2,12 @@ import { describe, it, expect } from 'vitest';
 import { drdAdapter } from '@/method-core/methods/drd/drdAdapter';
 import { DRD_AGGREGATION_VERSION } from '@/method-core/methods/drd/compileDrdPack';
 
-describe('OPUS — aggregate: byGroup natywne, byGroupNorm porownywalne', () => {
+describe('aggregate: byGroup natywne, byGroupNorm porownywalne', () => {
   it('★ ta sama LICZBA na osi 1 (1-7) i osi 2 (1-5) daje ROZNE wartosci znormalizowane', () => {
     const r = drdAdapter.aggregate({
       unitLevels: { '1A': 5, '2A': 5 },
       mappingVersion: DRD_AGGREGATION_VERSION,
     });
-    console.log('PROBE byGroup     =', JSON.stringify(r.byGroup));
-    console.log('PROBE byGroupNorm =', JSON.stringify(r.byGroupNorm));
     const axis1 = Object.keys(r.byGroup).find((k) => k.includes('1'))!;
     const axis2 = Object.keys(r.byGroup).find((k) => k.includes('2'))!;
     // natywne: obie 5 — nierozroznialne

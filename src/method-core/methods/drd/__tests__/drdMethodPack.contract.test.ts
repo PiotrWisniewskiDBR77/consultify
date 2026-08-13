@@ -3,7 +3,7 @@ import { drdAdapter } from '@/method-core/methods/drd/drdAdapter';
 import { compileDrdPack } from '@/method-core/methods/drd/compileDrdPack';
 import { canStartSession } from '@/method-core/contracts';
 
-describe('OPUS PROBE — DRD', () => {
+describe('DRD', () => {
   it('aboveGap NIE podnosi currentLevel', () => {
     const r = drdAdapter.resolveOpenLevels({
       unitId: '1A', confirmedLevels: [1, 2, 4, 5],
@@ -27,7 +27,6 @@ describe('OPUS PROBE — DRD', () => {
 
   it('readiness jest uczciwy — pack NIE startuje sesji', () => {
     const { pack } = compileDrdPack();
-    console.log('PROBE readiness =', pack.manifest.readiness);
     expect(canStartSession(pack.manifest.readiness)).toBe(false);
   });
 
@@ -38,7 +37,6 @@ describe('OPUS PROBE — DRD', () => {
     vi.resetModules();
     const m2 = await import('@/method-core/methods/drd/compileDrdPack');
     const b = JSON.stringify(m2.compileDrdPack().pack);
-    console.log('PROBE dlugosci:', a.length, b.length, '| rowne:', a === b);
     expect(b).toBe(a);
   });
 });

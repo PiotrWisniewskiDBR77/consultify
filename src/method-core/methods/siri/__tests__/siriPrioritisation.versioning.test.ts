@@ -8,17 +8,15 @@ const frozen = { vertical_integration: 2, horizontal_integration: 1, integrated_
   shop_floor_intelligence: 1, enterprise_intelligence: 2, facility_intelligence: 1,
   workforce_learning: 3, leadership_competency: 2, strategy_governance: 2, inter_intra_collaboration: 1 };
 
-describe('OPUS PROBE — COORD-08 zero cichej zmiany', () => {
+describe('COORD-08 zero cichej zmiany', () => {
   it('★ BEZ FLAGI domyslna sciezka to legacy_v1', () => {
     const r = siriAdapter.prioritise!({ frozenUnitLevels: frozen, parameters: { sessionState: 'frozen', frozenSnapshotId: 'snap-1', planningHorizon: 'strategic' } });
-    console.log('PROBE domyslna wersja =', (r as any).calculationVersion);
     expect((r as any).calculationVersion).toBe('legacy_v1');
   });
 
   it('v2 wchodzi TYLKO przez jawny parametr', () => {
     const r = siriAdapter.prioritise!({ frozenUnitLevels: frozen,
       parameters: { sessionState: 'frozen', frozenSnapshotId: 'snap-1', calculationVersion: 'siri_pm_v2', planningHorizon: 'strategic' } });
-    console.log('PROBE jawna wersja =', (r as any).calculationVersion);
     expect((r as any).calculationVersion).toBe('siri_pm_v2');
   });
 
@@ -39,12 +37,10 @@ describe('OPUS PROBE — COORD-08 zero cichej zmiany', () => {
     const r = rankByImpactValueV2(
       [{ areaId: 'vertical_integration', costRelevance: 0, costProfile: 0,
          kpiRelevance: 0, kpiImportance: 0, bic: 1, ams: 5 }], 'strategic');
-    console.log('PROBE v2 przy BIC-AMS=-4 :', r[0].impactValue);
     expect(r[0].impactValue).toBeGreaterThanOrEqual(0);
     // a legacy nadal daje ujemny — dowod, ze legacy NIE zostal cicho poprawiony
     const legacy = calculateImpactValue({ areaId: 'x', costRelevance: 0, costProfile: 0,
       kpiRelevance: 0, kpiImportance: 0, bic: 1, ams: 5 });
-    console.log('PROBE legacy przy BIC-AMS=-4 :', legacy);
     expect(legacy).toBeLessThan(0);
   });
 });

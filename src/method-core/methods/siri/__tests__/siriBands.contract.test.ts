@@ -4,7 +4,7 @@ import { siriAdapter } from '@/method-core/methods/siri/siriAdapter';
 import { canStartSession } from '@/method-core/contracts';
 import { calculateImpactValue } from '@/services/siriPrioritisation';
 
-describe('OPUS PROBE — SIRI', () => {
+describe('SIRI', () => {
   it('16 wymiarow jako jednostki oceny, Bands 0-5, mapowanie na 8 filarow i 3 bloki', () => {
     const { pack } = compileSiriPack();
     expect(pack.units).toHaveLength(16);
@@ -14,12 +14,10 @@ describe('OPUS PROBE — SIRI', () => {
     }
     const pillars = new Set(pack.units.map(u => u.parentId));
     expect(pillars.size).toBe(8);
-    console.log('PROBE pillars =', [...pillars].sort().join(','));
   });
 
   it('readiness uczciwy — pack NIE startuje sesji', () => {
     const { pack } = compileSiriPack();
-    console.log('PROBE readiness =', pack.manifest.readiness);
     expect(canStartSession(pack.manifest.readiness)).toBe(false);
   });
 
@@ -29,7 +27,6 @@ describe('OPUS PROBE — SIRI', () => {
       confirmedLevels: [0, 1, 4],
       evidenceByLevel: { 0: 'E3', 1: 'E3', 4: 'E3' },
     });
-    console.log('PROBE no-leapfrog =', JSON.stringify(r));
     expect(r.currentLevel).toBe(1);
     expect(r.blockedAtLevel).toBe(2);
     expect(r.aboveGapLevels).toContain(4);
@@ -43,7 +40,6 @@ describe('OPUS PROBE — SIRI', () => {
     const base = { areaId: 'vertical_integration', costRelevance: 1, kpiRelevance: 1, kpiImportance: 1, bic: 4, ams: 1 };
     const small = calculateImpactValue({ ...base, costProfile: 1 });
     const big = calculateImpactValue({ ...base, costProfile: 100 });
-    console.log('PROBE IV(costProfile=1) =', small, '| IV(costProfile=100) =', big);
     // Gdyby normalizacja byla wykonana, skala surowa nie przenosilaby sie 1:1.
     expect(big).toBeGreaterThan(small * 2); // surowa skala dominuje wynik
   });
@@ -55,7 +51,6 @@ describe('OPUS PROBE — SIRI', () => {
       areaId: 'vertical_integration', costRelevance: 0, costProfile: 0,
       kpiRelevance: 0, kpiImportance: 0, bic: 1, ams: 5,   // firma LEPSZA niz BIC
     });
-    console.log('PROBE IV przy BIC-AMS = -4 :', iv);
     expect(iv).toBeLessThan(0);   // dowod defektu: wynik ujemny zamiast 0
   });
 });
