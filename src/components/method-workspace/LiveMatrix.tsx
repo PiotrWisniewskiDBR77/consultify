@@ -16,7 +16,7 @@
  * state itself.
  */
 import { AlertTriangle, Eye, Sparkles, X } from 'lucide-react';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import type { MatrixCellState, MatrixRow, MatrixSelection } from './types';
 
@@ -42,6 +42,36 @@ const ANSWER_STATE_LABEL: Record<string, string> = {
   unresolved: 'nierozstrzygnięte',
 };
 
+/**
+ * A cell only carries evidence MEANING once someone has actually engaged with
+ * it: it's part of the confirmed ramp (`achieved`), it IS the current blocker
+ * (the next thing to work on), or it was confirmed out of order and needs
+ * review (`reviewRequired`). Every other cell is simply not reached yet —
+ * "nieoceniony", a normal working state, never a data-quality problem.
+ *
+ * This gate is what stops "brak dowodu" (evidenceState 'missing', which the
+ * view-model returns for ANY untouched unit) from painting the entire
+ * not-yet-worked part of the matrix with the same dashed/amber treatment
+ * meant for a real evidence gap on a cell that's actually in play.
+ */
+function isCellEngaged(cell: MatrixCellState): boolean {
+  return cell.achieved || cell.blocker || cell.reviewRequired;
+}
+
+/**
+ * Current/Target/Gap read at a glance, per row — derived from the same cell
+ * data the grid already renders (no separate source of truth). `current` is
+ * the top of the confirmed ramp; `target` is whichever level carries the
+ * `target` flag; `gap` is only ever shown when both are known.
+ */
+function rowSummary(row: MatrixRow): { current: number | null; target: number | null; gap: number | null } {
+  const achievedLevels = row.levels.filter((c) => c.achieved).map((c) => c.level);
+  const current = achievedLevels.length > 0 ? Math.max(...achievedLevels) : null;
+  const targetLevel = row.levels.find((c) => c.target)?.level ?? null;
+  const gap = current !== null && targetLevel !== null ? targetLevel - current : null;
+  return { current, target: targetLevel, gap };
+}
+
 function cellLevelTint(level: number, maxLevel: number): React.CSSProperties {
   const ratio = maxLevel > 0 ? level / maxLevel : 0;
   const pct = Math.round(10 + ratio * 30); // 10%..40% neutral tint — level magnitude only
@@ -56,19 +86,32 @@ const Cell: React.FC<{
   maxLevel: number;
   onSelect: () => void;
 }> = ({ cell, unitName, methodName, selected, maxLevel, onSelect }) => {
+  const engaged = isCellEngaged(cell);
+
+  // Not-yet-reached cells never mention evidence at all — there is nothing to
+  // report yet, and saying "evidence missing" here would read as a defect.
+  const evidencePhrase = engaged ? `evidence ${cell.evidenceState}` : 'jeszcze nieoceniony';
   const accessibleName = `${methodName}, ${unitName}, poziom ${cell.level}, ${
     cell.achieved ? 'osiągnięty' : 'nieosiągnięty'
-  }, odpowiedź ${ANSWER_STATE_LABEL[cell.answerState] || cell.answerState}, evidence ${cell.evidenceState}${
+  }, odpowiedź ${ANSWER_STATE_LABEL[cell.answerState] || cell.answerState}, ${evidencePhrase}${
     cell.blocker ? ', blocker' : ''
   }`;
 
+  // Kanon: nieoceniony obszar (jeszcze nie dotknięty) NIE jest blokerem ani
+  // luką dowodową — dostaje spokojną, neutralną obwódkę niezależnie od
+  // wyliczonego (per-unit) evidenceState. Dashed/amber jest zarezerwowany dla
+  // komórek, które są faktycznie w grze: osiągniętych, blokera, above-gap.
   const borderClass = cell.blocker
     ? 'border-2 border-c-danger'
-    : cell.evidenceState === 'missing' || cell.evidenceState === 'conflicting'
-      ? 'border border-dashed border-c-warning'
-      : cell.evidenceState === 'weak'
-        ? 'border border-dashed border-c-border'
-        : 'border border-c-border';
+    : !engaged
+      ? 'border border-c-border-subtle'
+      : cell.evidenceState === 'conflicting'
+        ? 'border-2 border-c-danger'
+        : cell.evidenceState === 'missing'
+          ? 'border border-dashed border-c-warning'
+          : cell.evidenceState === 'weak'
+            ? 'border border-dashed border-c-border'
+            : 'border border-c-border';
 
   return (
     <button
@@ -118,6 +161,17 @@ export const LiveMatrix: React.FC<LiveMatrixProps> = ({
           ?.levels.find((c) => c.level === selection.level) ?? null
       : null;
 
+  // Esc closes the side sheet — the most local layer open on this screen.
+  // Only wired while a selection exists, so it never intercepts Esc elsewhere.
+  useEffect(() => {
+    if (!selection) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onCloseSideSheet();
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [selection, onCloseSideSheet]);
+
   return (
     <div data-testid="live-matrix" className={`flex flex-col gap-2 ${className}`}>
       <div className="flex items-center justify-between">
@@ -135,6 +189,9 @@ export const LiveMatrix: React.FC<LiveMatrixProps> = ({
             </span>
             <span className="flex items-center gap-1">
               <span className="inline-block h-2 w-2 rounded-sm border border-dashed border-c-warning" /> Evidence luka
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="inline-block h-2 w-2 rounded-sm border border-c-border-subtle" /> Nieoceniony
             </span>
           </div>
         )}
@@ -154,31 +211,57 @@ export const LiveMatrix: React.FC<LiveMatrixProps> = ({
                   L{level}
                 </th>
               ))}
+              <th className="pl-3 text-left text-[10px] font-medium text-c-text-muted whitespace-nowrap">
+                Current · Target · Gap
+              </th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
-              <tr key={row.unitId}>
-                <th
-                  scope="row"
-                  className="sticky left-0 bg-c-bg text-left text-xs font-medium text-c-text pr-2 max-w-[160px] truncate"
-                >
-                  {row.unitName}
-                </th>
-                {row.levels.map((cell) => (
-                  <td key={cell.level}>
-                    <Cell
-                      cell={cell}
-                      unitName={row.unitName}
-                      methodName={methodName}
-                      maxLevel={maxLevel}
-                      selected={selection?.unitId === row.unitId && selection?.level === cell.level}
-                      onSelect={() => onSelect({ unitId: row.unitId, level: cell.level })}
-                    />
+            {rows.map((row) => {
+              const summary = rowSummary(row);
+              return (
+                <tr key={row.unitId}>
+                  <th
+                    scope="row"
+                    className="sticky left-0 bg-c-bg text-left text-xs font-medium text-c-text pr-2 max-w-[160px] truncate"
+                  >
+                    {row.unitName}
+                  </th>
+                  {row.levels.map((cell) => (
+                    <td key={cell.level}>
+                      <Cell
+                        cell={cell}
+                        unitName={row.unitName}
+                        methodName={methodName}
+                        maxLevel={maxLevel}
+                        selected={selection?.unitId === row.unitId && selection?.level === cell.level}
+                        onSelect={() => onSelect({ unitId: row.unitId, level: cell.level })}
+                      />
+                    </td>
+                  ))}
+                  <td
+                    data-testid="matrix-row-summary"
+                    data-unit-id={row.unitId}
+                    className="pl-3 text-[10px] tabular-nums text-c-text-secondary whitespace-nowrap"
+                  >
+                    <span title="Obecny poziom">C {summary.current ?? '—'}</span>
+                    <span className="mx-1 text-c-text-muted" aria-hidden="true">
+                      ·
+                    </span>
+                    <span title="Poziom docelowy">T {summary.target ?? '—'}</span>
+                    <span className="mx-1 text-c-text-muted" aria-hidden="true">
+                      ·
+                    </span>
+                    <span
+                      title="Luka (target − current)"
+                      className={summary.gap !== null && summary.gap > 0 ? 'font-medium text-c-text' : 'text-c-text-muted'}
+                    >
+                      Δ {summary.gap ?? '—'}
+                    </span>
                   </td>
-                ))}
-              </tr>
-            ))}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

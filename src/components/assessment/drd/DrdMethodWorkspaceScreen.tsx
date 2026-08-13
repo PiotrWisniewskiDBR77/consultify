@@ -39,6 +39,7 @@ import {
   confirmedLevelsFor,
   evidenceEventsFor,
   evidenceStateFor,
+  evidenceStrengthFor,
   OUTPUT_UNIT_COLUMNS,
   pack,
   questionAnswerState,
@@ -249,6 +250,7 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
   const focusLevel = activeProgression.blockedAtLevel ?? Math.min(...activeArea.levels.map((l) => l.level));
   const focusQuestions = pack.questions.filter((q) => q.unitId === activeArea.id && q.level === focusLevel);
   const evidenceCountForUnit = evidenceEventsFor(events, activeArea.id).length;
+  const evidenceStrengthForUnit = evidenceStrengthFor(events, activeArea.id);
 
   const interviewQuestions: InterviewFocusQuestion[] = focusQuestions.map((q) => {
     const { state, text } = questionAnswerState(events, q.questionId);
@@ -258,6 +260,7 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
       answerText: text,
       evidenceState: evidenceStateFor(events, activeArea.id, activeProgression.blockedAtLevel),
       evidenceCount: evidenceCountForUnit,
+      evidenceStrength: evidenceStrengthForUnit,
     };
   });
 

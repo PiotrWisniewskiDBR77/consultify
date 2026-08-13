@@ -203,6 +203,42 @@ describe('requirement 5 — recovery queue requires an explicit choice, never au
   });
 });
 
+describe('Interview Focus advances with real progress — regression for the focus-level bug', () => {
+  it('after confirming levels 1 and 2, the focus level follows the real blocker (3), not always level 1', async () => {
+    const storage = makeMemoryStorage();
+    const events: Array<Record<string, unknown>> = [];
+    let evtSeq = 0;
+
+    hoisted.createSession.mockResolvedValue({ session: makeSession(), idempotentReplay: false });
+    hoisted.transition.mockResolvedValue(makeSession({ state: 'active' }));
+    hoisted.getSession.mockResolvedValue({ session: makeSession({ state: 'active' }), roles: ['owner', 'lead_assessor', 'assessor', 'approver'] });
+    hoisted.appendEvent.mockImplementation((_sessionId: string, evt: Record<string, unknown>) => {
+      evtSeq += 1;
+      events.push({
+        id: `evt-${evtSeq}`,
+        organizationId: 'org-1',
+        sessionId: 'sess-http-1',
+        actorKind: 'human',
+        actorUserId: 'user-1',
+        methodPackVersion: DRD_METHOD_PACK_VERSION,
+        occurredAt: '2026-08-13T00:00:00.000Z',
+        ...evt,
+      });
+      return Promise.resolve({ id: `evt-${evtSeq}`, type: evt.type });
+    });
+    hoisted.listEvents.mockImplementation(() => Promise.resolve([...events]));
+
+    render(<DrdHttpMethodWorkspaceScreen storage={storage} seedTo="interview" />);
+
+    await screen.findByTestId('method-workspace-shell');
+
+    // The fixture area (1A) has levels 1..7 — seedTo="interview" confirms 1
+    // and 2, so the real blocker (first unconfirmed level) is 3. Before the
+    // fix this screen ignored progression entirely and always showed level 1.
+    await waitFor(() => expect(screen.getByTestId('question-progress')).toHaveTextContent('Pytanie 3 z 7'));
+  });
+});
+
 describe('sanity — MethodCoreApiError is the real class (mock did not replace error semantics)', () => {
   it('constructs with status/body/isNetworkError intact', () => {
     const err = new MethodCoreApiError('nope', 409, { error: 'version_conflict', currentVersion: 4 });
