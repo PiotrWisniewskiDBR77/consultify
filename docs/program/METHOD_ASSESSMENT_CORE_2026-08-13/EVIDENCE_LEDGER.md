@@ -254,3 +254,58 @@ frontu" byłoby zawyżeniem — dlatego rozbicie jest tutaj jawne.
 2. Cytowanie w `zsh` rozbiło pętlę `grep` → 11× fałszywe „BRAK", powtórzone w `node`.
 3. `zsh` nie word-splituje `$FILES` → `tsc` dostał jedną nazwę pliku, TS6054.
 4. Alias `@/` nie działa z gołych flag CLI → wymagany scoped `tsconfig`.
+
+---
+
+## G8 — Fala 2: A5 · A8 · A11 · A12 · A7 (weryfikacja własna Opusa)
+
+### G8.A — Wyniki potwierdzone własnymi przebiegami
+
+| Agent | Zakres | Twierdzenie | Pomiar Opusa | Werdykt |
+| --- | --- | --- | --- | --- |
+| A5 | powłoka Workspace | 27/27, 8 zrzutów | własny przebieg **EXIT=0, 27/27**; zrzuty istnieją, **obejrzane** | POTWIERDZONE |
+| A8 | Outputs/Reports/Initiatives | 59 front + 96 serwer | własny przebieg **EXIT=0**, 59/59 i 96/96 | POTWIERDZONE |
+| A11 | COORD-08 silnik wersjonowany | 28/28, legacy bit w bit | własny przebieg **EXIT=0, 28/28** | POTWIERDZONE |
+| A12 | rejestry COORD-06/07 | 233/233, 699/699, 96/96 | liczby zgodne z `report` kompilatorów | POTWIERDZONE |
+| A7 | SIRI vertical slice | 254/254, 6 zrzutów | własny przebieg **EXIT=0, 254/254**; zrzuty obejrzane | POTWIERDZONE |
+
+### G8.B — Defekty znalezione przez Opusa w pracy agentów
+
+| # | Gdzie | Defekt | Dowód | Status |
+| --- | --- | --- | --- | --- |
+| G8.1 | A5 `InterviewFocusPanel.tsx` | `weak` **i** `conflicting` → `c-danger`. Kanon §7: czerwień **wyłącznie** dla blockera. Dodatkowo **niespójność wewnętrzna**: `missing` (stan gorszy) miał `c-warning`, `weak` (lepszy) `c-danger`; komponent siostrzany `MethodNavigator` miał już mapowanie **poprawne** | odbiór wizualny zrzutu `interview-light.png` | **NAPRAWIONE** — `conflicting`→danger, reszta→warning; 8 zrzutów zregenerowanych i obejrzane ponownie |
+| G8.2 | A11 legacy `rankByImpactValue` | twierdzenie „bit w bit" wymagało dowodu | porównanie **ciał funkcji** wobec `3faac01e98`: `calculateImpactValue` IDENTYCZNE, `buildDefaultInputs` IDENTYCZNE, `rankByImpactValue` różni się **wyłącznie 2 polami traceability**, **zero usuniętych linii** | POTWIERDZONE |
+| G8.3 | A7 `factory_observation` | zgłoszony jako otwarta zależność od kontraktu | A7 **nie tknął** zamkniętego zbioru kernela (`git diff` na `contracts/` = pusty) — postąpił prawidłowo | **ROZSTRZYGNIĘTE** przez Opusa: podtyp kernelowego `observation`, dodane `toKernelEvidenceType()` |
+
+### G8.C — Weryfikacja gwarancji COORD-08 „zero cichej zmiany" (sonda Opusa, 5/5)
+
+| Sprawdzenie | Wynik |
+| --- | --- |
+| bez flagi domyślna ścieżka | **`legacy_v1`** ✅ |
+| `siri_pm_v2` wchodzi tylko jawnym parametrem | ✅ |
+| `prioritise()` odrzuca dane niezamrożone | ✅ — guard **mocniejszy** niż w briefie: wymaga `sessionState==='frozen'` **oraz** `frozenSnapshotId` |
+| `planningHorizon` obowiązkowy | ✅ — brak cichego presetu domyślnego |
+| presety = Figure 12 | ✅ `30/40/30 · 45/30/25 · 60/20/20` |
+| v2 obcina ujemny Proximity | ✅ `IV = 0` |
+| legacy **nadal** daje ujemny | ✅ `IV = −1,6` — dowód, że legacy nie został po cichu poprawiony |
+
+### G8.D — ★ Rozgraniczenie bramki: co jest moje, a co zastane
+
+Przebieg z filtrem `src/services/__tests__` dał **3 pliki FAIL / 15 testów**:
+`server/src/services/__tests__/artifactRegistryPresentationTemplatePosture.test.ts`,
+`artifactRegistryService.retry.test.ts`, `mapOutlineBlueprintToDeckSlides.test.ts`.
+
+**To NIE jest regresja tej pracy.** Dowody:
+1. `git log f3e7df565e..HEAD` dla każdego z tych plików → **0 commitów** (nietknięte).
+2. Te same testy uruchomione w worktree `mac-a2-kernel` (stan `e3b8be6cd7` = `origin/demo` + same pliki kontraktu, zero zmian w `server/src/services/`) → **FAIL, EXIT=1, 13 testów**.
+
+Czyli defekt jest **dziedziczony z `origin/demo`**, obszar Artifact Studio, poza zakresem tego zespołu.
+
+**Pułapka pomiarowa do zapamiętania:** filtr ścieżki w vitest jest dopasowaniem po **podciągu** — `src/services/__tests__` złapało także `server/src/services/__tests__`, a `src/method-core` łapie `server/src/method-core`. Bramkę trzeba podawać **rozłącznie**, inaczej raportuje się cudze defekty jako swoje albo zawyża liczbę testów.
+
+**Bramka zespołu (rozłącznie, bez cudzych obszarów):**
+
+| Zakres | Polecenie | Exit | Wynik |
+| --- | --- | ---: | --- |
+| metodyki + workspace (front) | `npx vitest run src/method-core src/components/method-workspace --config vitest.config.ts` | **0** | **254/254** |
+| runtime kernela (serwer) | `npx vitest run server/src/method-core` | **0** | **96/96** |
