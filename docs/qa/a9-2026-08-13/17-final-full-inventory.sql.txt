@@ -1,0 +1,14 @@
+                 t                 | count 
+-----------------------------------+-------
+ organizations                     |     3
+ users                             |     3
+ method_packs                      |     1
+ method_sessions                   |     4
+ method_session_roles              |    10
+ method_events                     |    22
+ method_outputs                    |     3
+ method_report_snapshots           |     3
+ method_initiative_drafts          |     1
+ method_session_create_idempotency |     3
+(10 rows)
+

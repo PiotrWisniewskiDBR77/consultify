@@ -1,0 +1,48 @@
+=== GET /sessions/3601eb4f-3777-4f7e-9273-562e03fce4f4 (po restarcie) ===
+HTTP/1.1 200 OK
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Resource-Policy: same-site
+Origin-Agent-Cluster: ?1
+Referrer-Policy: strict-origin-when-cross-origin
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+X-Content-Type-Options: nosniff
+X-DNS-Prefetch-Control: off
+X-Download-Options: noopen
+X-Frame-Options: DENY
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 0
+Vary: Origin, Accept-Encoding
+Access-Control-Allow-Credentials: true
+X-Correlation-ID: 20542148-2cff-4277-8696-2b36a092c880
+Content-Type: application/json; charset=utf-8
+Content-Length: 487
+ETag: W/"1e7-FZOm4M8Pap8hn4Cqd2ipdgkNtt4"
+Date: Thu, 13 Aug 2026 13:09:56 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"session":{"id":"3601eb4f-3777-4f7e-9273-562e03fce4f4","organizationId":"a9-org","projectId":null,"module":"assessment","methodPackId":"drd","methodPackVersion":"2.0.0-methodpack.1","state":"frozen","domainStage":null,"mode":"guided_manual","ownerUserId":"a9-user","createdAt":"2026-08-13T13:01:13.201Z","updatedAt":"2026-08-13T13:03:31.924Z","version":5,"frozenSnapshotId":"80960e8c-c805-42e2-99f6-1762d1b4beb3","revisionOfSessionId":null},"roles":["owner","lead_assessor","approver"]}
+=== GET /outputs/8056c205-6b80-465a-96bc-b98c9382b436 (po restarcie) ===
+HTTP/1.1 200 OK
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Resource-Policy: same-site
+Origin-Agent-Cluster: ?1
+Referrer-Policy: strict-origin-when-cross-origin
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+X-Content-Type-Options: nosniff
+X-DNS-Prefetch-Control: off
+X-Download-Options: noopen
+X-Frame-Options: DENY
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 0
+Vary: Origin, Accept-Encoding
+Access-Control-Allow-Credentials: true
+X-Correlation-ID: a51f31fe-ac65-43d9-9de5-226de7d600fe
+Content-Type: application/json; charset=utf-8
+Content-Length: 3245
+ETag: W/"cad-OaWTL1NnrqqxPRHTnfFgW8Pkf6g"
+Date: Thu, 13 Aug 2026 13:09:56 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"output":{"id":"8056c205-6b80-465a-96bc-b98c9382b436","organizationId":"a9-org","sessionId":"3601eb4f-3777-4f7e-9273-562e03fce4f4","snapshotId":"80960e8c-c805-42e2-99f6-1762d1b4beb3","module":"assessment","methodPackId":"drd","methodPackVersion":"2.0.0-methodpack.1","outputVersion":1,"revisionOfOutputId":null,"scope":"Sesja 3601eb4f-3777-4f7e-9273-562e03fce4f4 — drd@2.0.0-methodpack.1, zamrożona z event-store.","current":{"1A":2},"target":{"1A":4},"gap":{"1A":2},"aggregation":{"rule":"EventDerivedOutputBridge nie liczy agregacji per-oś/pillar (metoda-specyficzna reguła) — to zostaje po stronie klienta (np. drdAdapter.aggregate) przed wyświetleniem.","byGroup":{},"excluded":{},"mappingVersion":"event-derived-v1"},"visualModel":{"kind":"matrix","dataRef":{"1A":2}},"evidenceCompleteness":{"totalUnits":1,"completenessRatio":1,"unitsMissingEvidence":0,"unitsWithAcceptedEvidence":1},"limitations":["Output wygenerowany automatycznie z event-store (EventDerivedOutputBridge, vertical-slice demo) — businessMeaning/recommendation to deterministyczne szablony z realnych danych (unit/level/evidence), NIE analiza LLM ani recenzja metodyka.","aggregation.byGroup jest pusta — agregacja per-oś jest regułą metody i liczona jest client-side.","Sesja utworzona z pominięciem bramki gotowości packa (demo bypass) — pack NIE jest released/pilot. To jest ŚCIEŻKA DEMONSTRACYJNA, wyłączona strukturalnie na produkcji i domyślnie wyłączona wszędzie indziej. Gotowość packa (method_packs.readiness) nie została i nie może zostać przez ten mechanizm zmieniona. Ten Output pochodzi z sesji utworzonej przez demo bypass — NIE jest wynikiem produkcyjnym i nie może zostać zatwierdzony jako released/pilot przez ten mechanizm."],"findings":[{"id":"23850fce-210c-4b72-bb8e-57dc334aa24e","outputId":"8056c205-6b80-465a-96bc-b98c9382b436","unitId":"1A","unitName":"1A","currentLevel":"2","targetLevel":"4","gap":"2","supportingEvidence":[{"locator":"method-event://cd1a1730-02e2-4320-944e-191dd53b7fbb","strength":"E2","evidenceId":"demo-ev-1a-l1","evidenceType":"document"},{"locator":"method-event://62b4ef81-13ff-46bd-a1c5-a5b2d90943a8","strength":"E3","evidenceId":"demo-ev-1a-l2","evidenceType":"system_record"}],"contradictingEvidence":[],"businessMeaning":"Jednostka 1A potwierdzona na poziomie 2 (2 dowód/-ody w event-store).","rootCauseHypothesis":null,"riskOrOpportunity":"Luka 2 poziomu/-ów do celu na jednostce 1A.","recommendation":"Zaplanuj działania podnoszące jednostkę 1A z poziomu 2 do 4.","prerequisite":null,"expectedOutcome":"Zamknięcie luki na jednostce 1A.","kpiProposal":null,"confidence":"medium","priorityRationale":"Sortowanie wg wielkości luki (2).","sourceLocators":["b6def060-351c-4b56-98bc-0f42ab288355","418be73f-a87e-4150-b6fd-29dd745acce0","method-event://cd1a1730-02e2-4320-944e-191dd53b7fbb","method-event://62b4ef81-13ff-46bd-a1c5-a5b2d90943a8"],"createdAt":"2026-08-13T13:03:31.931Z"}],"prioritisationResult":null,"sourceRevisionOfSessionId":null,"contentHash":"c876c9a984bc5711f3c41cb8d8a60dfa232d29e68949a5ee3b7da250d9bb3111","createdAt":"2026-08-13T13:03:31.931Z","frozenAt":"2026-08-13T13:03:31.931Z","demoBypassActive":true},"superseded":false,"supersededByOutputId":null}

@@ -1,0 +1,4 @@
+2026-08-13T13:15:12Z
+API zatrzymane (port wolny)
+=== curl proba do niedostepnego API ===
+curl exit code: 7

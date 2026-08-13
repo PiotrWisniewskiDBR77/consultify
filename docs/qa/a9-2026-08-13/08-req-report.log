@@ -1,0 +1,24 @@
+=== POST /outputs/8056c205-6b80-465a-96bc-b98c9382b436/report ===
+HTTP/1.1 201 Created
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Resource-Policy: same-site
+Origin-Agent-Cluster: ?1
+Referrer-Policy: strict-origin-when-cross-origin
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+X-Content-Type-Options: nosniff
+X-DNS-Prefetch-Control: off
+X-Download-Options: noopen
+X-Frame-Options: DENY
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 0
+Vary: Origin, Accept-Encoding
+Access-Control-Allow-Credentials: true
+X-Correlation-ID: bdfc5e41-618e-493d-a71e-7ef46991a5c1
+Content-Type: application/json; charset=utf-8
+Content-Length: 895
+ETag: W/"37f-PH0xDFhHKWh54/XqpfJQbjS/rng"
+Date: Thu, 13 Aug 2026 13:03:44 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"report":{"id":"7d7f5a79-24c5-4250-9a35-c8e2587170b5","organizationId":"a9-org","outputId":"8056c205-6b80-465a-96bc-b98c9382b436","sessionId":"3601eb4f-3777-4f7e-9273-562e03fce4f4","title":"A9 Proof — DRD Assessment Report","content":{"summary":"A9 end-to-end proof report","findings":["1A"]},"contentHash":"ffcd8ab8ac79f9101b7673364230e9a79dbb90aa1c526d6518ce54ad26434f49","status":"current","supersededByOutputId":null,"supersededAt":null,"createdAt":"2026-08-13T13:03:44.313Z","kind":"report","demoBypassActive":true},"demoBypassActive":true,"demoBypassNotice":"Sesja utworzona z pominięciem bramki gotowości packa (demo bypass) — pack NIE jest released/pilot. To jest ŚCIEŻKA DEMONSTRACYJNA, wyłączona strukturalnie na produkcji i domyślnie wyłączona wszędzie indziej. Gotowość packa (method_packs.readiness) nie została i nie może zostać przez ten mechanizm zmieniona."}

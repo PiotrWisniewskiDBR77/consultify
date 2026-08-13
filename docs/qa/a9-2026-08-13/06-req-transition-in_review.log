@@ -1,0 +1,26 @@
+=== POST /sessions/3601eb4f-3777-4f7e-9273-562e03fce4f4/transition to=in_review ===
+Request headers: Authorization: Bearer ***MASKED*** | Content-Type: application/json
+Request body: {"to":"in_review"}
+HTTP/1.1 200 OK
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Resource-Policy: same-site
+Origin-Agent-Cluster: ?1
+Referrer-Policy: strict-origin-when-cross-origin
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+X-Content-Type-Options: nosniff
+X-DNS-Prefetch-Control: off
+X-Download-Options: noopen
+X-Frame-Options: DENY
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 0
+Vary: Origin, Accept-Encoding
+Access-Control-Allow-Credentials: true
+X-Correlation-ID: e5a940ea-0ff4-490d-b2ea-54f20cf5745c
+Content-Type: application/json; charset=utf-8
+Content-Length: 411
+ETag: W/"19b-0lnRJJjAM+LzpBD48eBXCcDzogA"
+Date: Thu, 13 Aug 2026 13:03:22 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"session":{"id":"3601eb4f-3777-4f7e-9273-562e03fce4f4","organizationId":"a9-org","projectId":null,"module":"assessment","methodPackId":"drd","methodPackVersion":"2.0.0-methodpack.1","state":"in_review","domainStage":null,"mode":"guided_manual","ownerUserId":"a9-user","createdAt":"2026-08-13T13:01:13.201Z","updatedAt":"2026-08-13T13:03:22.483Z","version":4,"frozenSnapshotId":null,"revisionOfSessionId":null}}

@@ -1,0 +1,42 @@
+            table_name             
+-----------------------------------
+ method_events
+ method_evidence
+ method_findings
+ method_initiative_drafts
+ method_outputs
+ method_packs
+ method_report_snapshots
+ method_session_create_idempotency
+ method_session_roles
+ method_sessions
+ method_snapshots
+ method_teresa_previews
+(12 rows)
+
+=== count ===
+ method_tables 
+---------------
+            12
+(1 row)
+
+=== demo_bypass_active column ===
+       table_name        |    column_name     | data_type 
+-------------------------+--------------------+-----------
+ method_sessions         | demo_bypass_active | boolean
+ method_outputs          | demo_bypass_active | boolean
+ method_report_snapshots | demo_bypass_active | boolean
+(3 rows)
+
+=== kind column in method_report_snapshots ===
+       table_name        | column_name | data_type 
+-------------------------+-------------+-----------
+ method_report_snapshots | kind        | text
+(1 row)
+
+=== method_sessions exists + columns ===
+   to_regclass   |            to_regclass            
+-----------------+-----------------------------------
+ method_sessions | method_session_create_idempotency
+(1 row)
+

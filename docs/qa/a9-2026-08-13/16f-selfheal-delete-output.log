@@ -1,0 +1,11 @@
+DELETE 1
+ state  |          frozen_snapshot_id          
+--------+--------------------------------------
+ frozen | b74c0086-b06e-4525-b7f8-bed3a703b788
+(1 row)
+
+ outputs_left 
+--------------
+            0
+(1 row)
+

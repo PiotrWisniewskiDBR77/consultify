@@ -1,0 +1,48 @@
+=== POST /sessions/e7dec513-8c68-4d5d-9f5d-bbbde312bd3a/transition to=in_review ===
+HTTP/1.1 200 OK
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Resource-Policy: same-site
+Origin-Agent-Cluster: ?1
+Referrer-Policy: strict-origin-when-cross-origin
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+X-Content-Type-Options: nosniff
+X-DNS-Prefetch-Control: off
+X-Download-Options: noopen
+X-Frame-Options: DENY
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 0
+Vary: Origin, Accept-Encoding
+Access-Control-Allow-Credentials: true
+X-Correlation-ID: e550ad7c-3f8a-4bde-9e35-5867ea8cf440
+Content-Type: application/json; charset=utf-8
+Content-Length: 445
+ETag: W/"1bd-v3yRhduEiOHmyLWYHAZQaDA/1eg"
+Date: Thu, 13 Aug 2026 13:12:05 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"session":{"id":"e7dec513-8c68-4d5d-9f5d-bbbde312bd3a","organizationId":"a9-org","projectId":null,"module":"assessment","methodPackId":"drd","methodPackVersion":"2.0.0-methodpack.1","state":"in_review","domainStage":null,"mode":"guided_manual","ownerUserId":"a9-user","createdAt":"2026-08-13T13:11:33.394Z","updatedAt":"2026-08-13T13:12:05.066Z","version":2,"frozenSnapshotId":null,"revisionOfSessionId":"3601eb4f-3777-4f7e-9273-562e03fce4f4"}}
+=== POST /sessions/e7dec513-8c68-4d5d-9f5d-bbbde312bd3a/freeze ===
+HTTP/1.1 200 OK
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Resource-Policy: same-site
+Origin-Agent-Cluster: ?1
+Referrer-Policy: strict-origin-when-cross-origin
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+X-Content-Type-Options: nosniff
+X-DNS-Prefetch-Control: off
+X-Download-Options: noopen
+X-Frame-Options: DENY
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 0
+Vary: Origin, Accept-Encoding
+Access-Control-Allow-Credentials: true
+X-Correlation-ID: 9896b1be-667a-472d-b44a-d5c7d63cea14
+Content-Type: application/json; charset=utf-8
+Content-Length: 2551
+ETag: W/"9f7-3pTjc4ohM313n2OFL2mAEU3BMP4"
+Date: Thu, 13 Aug 2026 13:12:05 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"session":{"id":"e7dec513-8c68-4d5d-9f5d-bbbde312bd3a","organizationId":"a9-org","projectId":null,"module":"assessment","methodPackId":"drd","methodPackVersion":"2.0.0-methodpack.1","state":"frozen","domainStage":null,"mode":"guided_manual","ownerUserId":"a9-user","createdAt":"2026-08-13T13:11:33.394Z","updatedAt":"2026-08-13T13:12:05.082Z","version":3,"frozenSnapshotId":"63339d8b-fd8b-4535-93af-4b009c67231b","revisionOfSessionId":"3601eb4f-3777-4f7e-9273-562e03fce4f4"},"output":{"id":"feb577d6-4446-45fe-90af-fa9b4ec74436","organizationId":"a9-org","sessionId":"e7dec513-8c68-4d5d-9f5d-bbbde312bd3a","snapshotId":"63339d8b-fd8b-4535-93af-4b009c67231b","module":"assessment","methodPackId":"drd","methodPackVersion":"2.0.0-methodpack.1","outputVersion":2,"revisionOfOutputId":"8056c205-6b80-465a-96bc-b98c9382b436","scope":"Sesja e7dec513-8c68-4d5d-9f5d-bbbde312bd3a — drd@2.0.0-methodpack.1, zamrożona z event-store.","current":{},"target":{},"gap":{},"aggregation":{"rule":"EventDerivedOutputBridge nie liczy agregacji per-oś/pillar (metoda-specyficzna reguła) — to zostaje po stronie klienta (np. drdAdapter.aggregate) przed wyświetleniem.","byGroup":{},"excluded":{},"mappingVersion":"event-derived-v1"},"visualModel":{"kind":"matrix","dataRef":{}},"evidenceCompleteness":{"totalUnits":0,"completenessRatio":0,"unitsMissingEvidence":0,"unitsWithAcceptedEvidence":0},"limitations":["Output wygenerowany automatycznie z event-store (EventDerivedOutputBridge, vertical-slice demo) — businessMeaning/recommendation to deterministyczne szablony z realnych danych (unit/level/evidence), NIE analiza LLM ani recenzja metodyka.","aggregation.byGroup jest pusta — agregacja per-oś jest regułą metody i liczona jest client-side.","Sesja utworzona z pominięciem bramki gotowości packa (demo bypass) — pack NIE jest released/pilot. To jest ŚCIEŻKA DEMONSTRACYJNA, wyłączona strukturalnie na produkcji i domyślnie wyłączona wszędzie indziej. Gotowość packa (method_packs.readiness) nie została i nie może zostać przez ten mechanizm zmieniona. Ten Output pochodzi z sesji utworzonej przez demo bypass — NIE jest wynikiem produkcyjnym i nie może zostać zatwierdzony jako released/pilot przez ten mechanizm."],"findings":[],"prioritisationResult":null,"sourceRevisionOfSessionId":"3601eb4f-3777-4f7e-9273-562e03fce4f4","contentHash":"ae1b5728762e6ede637ce396ee76a6369c8c948df978a3ba8b2180881fd86c5a","createdAt":"2026-08-13T13:12:05.089Z","frozenAt":"2026-08-13T13:12:05.089Z","demoBypassActive":true},"selfHealed":false}

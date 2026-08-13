@@ -1,0 +1,39 @@
+=== Network requests z przegladarki (Browser pane, tab dev-render http-server) ===
+Zrodlo: mcp__Claude_Browser__read_network_requests (lista metoda+URL+status; narzedzie nie
+udostepnia eksportu .har ani cial odpowiedzi po requestId w tej wersji — pelne cialo
+request/response dla KLUCZOWYCH krokow zebrane rownolegle przez curl na TYM SAMYM serwerze/porcie
+41560, z Authorization zamaskowanym — patrz 06-req-transition-in_review.log, 07-req-freeze.log,
+08-req-report.log, 09-req-presentation-initiative.log.
+
+[44298.119] GET  /@fs/.../methodCoreApi.ts -> 200
+[44298.192] POST /api/method/sessions -> 401 Unauthorized   (przed ustawieniem tokenu w localStorage)
+[44298.303] GET  /@fs/.../methodCoreApi.ts -> 200            (po reload z tokenem)
+[44298.376] POST /api/method/sessions -> 201 Created          (utworzenie sesji DRD, demo bypass)
+[44298.377] GET  /api/feature-flags/runtime -> 200
+[44298.378] GET  /api/feature-flags/runtime -> 200
+[44298.379] POST /api/method/sessions/3601eb4f.../transition -> 200  (draft->prepared lub prepared->active, auto)
+[44298.380] GET  /api/method/sessions/3601eb4f... -> 200
+[44298.381] GET  /api/method/sessions/3601eb4f.../events -> 200
+[44298.382] POST /api/method/sessions/3601eb4f.../transition -> 200
+[44298.383] GET  /api/method/sessions/3601eb4f... -> 200
+[44298.384] GET  /api/method/sessions/3601eb4f.../events -> 200
+[44298.385] POST /api/method/sessions/3601eb4f.../events -> 201 Created  (demo-evidence seed event #1)
+[44298.386] GET  /api/method/sessions/3601eb4f... -> 200
+[44298.387] GET  /api/method/sessions/3601eb4f.../events -> 200
+[44298.388] POST /api/method/sessions/3601eb4f.../events -> 201 Created  (seed event #2)
+[44298.389] GET  /api/method/sessions/3601eb4f... -> 200
+[44298.390] GET  /api/method/sessions/3601eb4f.../events -> 200
+[44298.391] POST /api/method/sessions/3601eb4f.../events -> 201 Created  (seed event #3)
+[44298.392] GET  /api/method/sessions/3601eb4f... -> 200
+[44298.393] GET  /api/method/sessions/3601eb4f.../events -> 200
+[44298.394] POST /api/method/sessions/3601eb4f.../events -> 201 Created  (seed event #4)
+[44298.395] GET  /api/method/sessions/3601eb4f... -> 200
+[44298.396] GET  /api/method/sessions/3601eb4f.../events -> 200
+[44298.397] POST /api/method/sessions/3601eb4f.../events -> 201 Created  (seed event #5)
+[44298.398] GET  /api/method/sessions/3601eb4f... -> 200
+[44298.399] GET  /api/method/sessions/3601eb4f.../events -> 200
+
+Wniosek: 401 -> 201 na tym samym endpoincie (POST /api/method/sessions) po ustawieniu tokenu
+dowodzi realnej autoryzacji HTTP (nie atrapy). Zadna z tych odpowiedzi nie pochodzi z localStorage —
+kazdy zapis idzie POST-em, kazdy odczyt GET-em, co widac po parach POST(events)->GET(session)->GET(events)
+powtarzajacych sie po kazdej mutacji (wzorzec "refresh po zapisie").

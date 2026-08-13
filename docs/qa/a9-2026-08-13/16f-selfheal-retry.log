@@ -1,0 +1,24 @@
+=== TEST 16f: freeze ponowione (bez Output) — musi selfHeal:true ===
+HTTP/1.1 200 OK
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Resource-Policy: same-site
+Origin-Agent-Cluster: ?1
+Referrer-Policy: strict-origin-when-cross-origin
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+X-Content-Type-Options: nosniff
+X-DNS-Prefetch-Control: off
+X-Download-Options: noopen
+X-Frame-Options: DENY
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 0
+Vary: Origin, Accept-Encoding
+Access-Control-Allow-Credentials: true
+X-Correlation-ID: 787d75b1-1589-49c0-b5a4-3dc4485341ea
+Content-Type: application/json; charset=utf-8
+Content-Length: 1955
+ETag: W/"7a3-qPhC2ovvWKrbCUGkG/agMgRerhY"
+Date: Thu, 13 Aug 2026 13:14:59 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"session":{"id":"4a903468-ba62-4bb2-8fe1-d11446feac71","organizationId":"a9-org","projectId":null,"module":"assessment","methodPackId":"drd","methodPackVersion":"2.0.0-methodpack.1","state":"frozen","domainStage":null,"mode":"guided_manual","ownerUserId":"a9-user","createdAt":"2026-08-13T13:13:14.084Z","updatedAt":"2026-08-13T13:14:38.762Z","version":5,"frozenSnapshotId":"b74c0086-b06e-4525-b7f8-bed3a703b788","revisionOfSessionId":null},"output":{"id":"fdf07cce-af11-4e1f-b69a-ffbfa5d6d784","organizationId":"a9-org","sessionId":"4a903468-ba62-4bb2-8fe1-d11446feac71","snapshotId":"b74c0086-b06e-4525-b7f8-bed3a703b788","module":"assessment","methodPackId":"drd","methodPackVersion":"2.0.0-methodpack.1","outputVersion":1,"revisionOfOutputId":null,"scope":"Sesja 4a903468-ba62-4bb2-8fe1-d11446feac71 — drd@2.0.0-methodpack.1, zamrożona z event-store.","current":{},"target":{},"gap":{},"aggregation":{"rule":"EventDerivedOutputBridge nie liczy agregacji per-oś/pillar (metoda-specyficzna reguła) — to zostaje po stronie klienta (np. drdAdapter.aggregate) przed wyświetleniem.","byGroup":{},"excluded":{},"mappingVersion":"event-derived-v1"},"visualModel":{"kind":"matrix","dataRef":{}},"evidenceCompleteness":{"totalUnits":0,"completenessRatio":0,"unitsMissingEvidence":0,"unitsWithAcceptedEvidence":0},"limitations":["Output wygenerowany automatycznie z event-store (EventDerivedOutputBridge, vertical-slice demo) — businessMeaning/recommendation to deterministyczne szablony z realnych danych (unit/level/evidence), NIE analiza LLM ani recenzja metodyka.","aggregation.byGroup jest pusta — agregacja per-oś jest regułą metody i liczona jest client-side."],"findings":[],"prioritisationResult":null,"sourceRevisionOfSessionId":null,"contentHash":"a1858dbb9f58eebe082096a6cd7ac05331082129b8b0abc6f5061354cdede310","createdAt":"2026-08-13T13:14:59.033Z","frozenAt":"2026-08-13T13:14:59.033Z","demoBypassActive":false},"selfHealed":true}

@@ -1,0 +1,399 @@
+2026-08-13 15:09:06:96 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-13 15:09:06:96 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-13 15:09:06:96 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-13 15:09:06:96 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-13 15:09:06:96 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+2026-08-13 15:09:07:97 [32minfo[39m: [32m[Redis] Initializing client...[39m
+2026-08-13 15:09:07:97 [32minfo[39m: [32m[Redis] Connecting to: redis://localhost:6379[39m
+2026-08-13 15:09:07:97 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+2026-08-13 15:09:07:97 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+2026-08-13 15:09:07:97 [32minfo[39m: [32m[Sentry] Disabled (no SENTRY_DSN or not in production/staging)[39m
+2026-08-13 15:09:07:97 [32minfo[39m: [32m[Server] Starting HTTP listener eagerly (routes may still be warming up)...[39m
+2026-08-13 15:09:07:97 [32minfo[39m: [32m[Server] Initializing database...[39m
+2026-08-13 15:09:07:97 [32minfo[39m: [32m[RateLimit] startup posture: posture=single-replica (inferred, not declared) store=local (default) failMode=closed (default) disableRateLimit=false allowProdDisable=false redisUrl=absent mockRedis=false[39m
+2026-08-13 15:09:07:97 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-08-13 15:09:07:97 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-08-13 15:09:07:97 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-08-13 15:09:07:97 [32minfo[39m: [32m[Server] Database instance created:[39m
+2026-08-13 15:09:15:915 [32minfo[39m: [32m[DatabaseInitializer] Starting database initialization...[39m
+2026-08-13 15:09:15:915 [32minfo[39m: [32m[DatabaseInitializer] Database type: postgres[39m
+2026-08-13 15:09:15:915 [32minfo[39m: [32m[AuthRoutes] login handler is type:[39m
+2026-08-13 15:09:16:916 [32minfo[39m: [32m[Economics Routes] Module loaded - TypeScript version[39m
+2026-08-13 15:09:16:916 [32minfo[39m: [32m[Economics Routes] Router type:[39m
+2026-08-13 15:09:16:916 [32minfo[39m: [32m[Economics Routes] Router created. Stack length:[39m
+2026-08-13 15:09:16:916 [32minfo[39m: [32m[Economics Routes] After /analyses route. Stack length:[39m
+2026-08-13 15:09:16:916 [32minfo[39m: [32m[RatioAnalysisService] Loaded[39m
+2026-08-13 15:09:16:916 [33mwarn[39m: [33m[Encryption] No ENCRYPTION_KEY set. Using development fallback key.[39m
+2026-08-13 15:09:16:916 [33mwarn[39m: [33m[Encryption] SET ENCRYPTION_KEY in production![39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[SuperAdminRoutes] SuperAdminController keys:[39m {"0":"setDependencies","1":"getOrganizations","2":"getActivities","3":"getDashboardStats","4":"updateOrganization","5":"deleteOrganization","6":"getOrgBilling","7":"getUsers","8":"updateUser","9":"createUser","10":"deleteUser","11":"inviteUser","12":"resetUserPassword","13":"getAccessRequests","14":"approveAccessRequest","15":"rejectAccessRequest","16":"getAccessCodes","17":"createAccessCode","18":"deactivateAccessCode","19":"impersonateUser","20":"getDatabaseTables","21":"getDatabaseRows","22":"getStorageUsage","23":"getStorageFiles","24":"deleteStorageFile","25":"getAllLegalDocs","26":"publishLegalDoc","27":"toggleLegalDocActive","28":"getLegalDocById","29":"getLegalEvents","30":"getLegalEventStats","31":"getOrgAttribution","32":"exportAttribution","33":"getPartnerSummary","34":"getUsageByOrganization","35":"getInvoices","36":"getInvoiceStats","37":"getSystemHealth","38":"getSystemAnalytics","39":"remindInvoice","40":"markInvoicePaid","41":"getInvoicePdf","42":"uploadBrandingLogo","43":"getApiKeys","44":"createApiKey","45":"deleteApiKey","46":"getApiKeyUsage","47":"getComplianceFrameworks","48":"getComplianceStatus","49":"getComplianceSummary","50":"getDsarRequests","51":"getComplianceAudits","52":"updateComplianceControl","53":"createDsarRequest","54":"getDsarRequestById","55":"createComplianceAudit","56":"createProcessingRecord","57":"getProcessingRecords","58":"exportComplianceReport","59":"refreshToken","60":"getOrganizationMetadata","61":"updateOrganizationMetadata","62":"getOrganizationTags","63":"addOrganizationTag","64":"removeOrganizationTag","65":"getOrganizationHealth","66":"getOrganizationRelationships","67":"getOrganizationAnalytics","68":"getUserProfileExtended","69":"updateUserProfileExtended","70":"getUserActivity","71":"getUserSessions","72":"revokeUserSession","73":"getUserGroups","74":"getUserOnboardingProgress","75":"updateUserOnboardingProgress","76":"getUserLicense","77":"assignUserLicense","78":"getIPWhitelist","79":"addIPWhitelist","80":"removeIPWhitelist","81":"getUserDevices","82":"blockDevice","83":"getMFAMethods","84":"setupTOTP","85":"verifyTOTP","86":"getPasswordPolicy","87":"updatePasswordPolicy","88":"getSecurityEvents","89":"getSecurityEventStats","90":"resolveSecurityEvent","91":"getIPAccessRules","92":"updateIPRule","93":"getSecurityPolicies","94":"updateSecurityPolicy","95":"getSupportTickets","96":"createSupportTicket","97":"updateSupportTicket","98":"getTicketComments","99":"addTicketComment","100":"getCustomerSuccessNotes","101":"createCustomerSuccessNote","102":"getCustomerHealthCheck","103":"getFeedbackItems","104":"createFeedbackItem","105":"voteFeedback","106":"addFeedbackComment","107":"getFeatureRoadmap","108":"updateFeatureRoadmap","109":"getUserAdoptionMetrics","110":"getChurnPrediction","111":"getDataRetentionPolicies","112":"createDataRetentionPolicy","113":"getGDPRRequests","114":"createGDPRRequest","115":"getUserConsents","116":"updateUserConsent","117":"getAutomationRules","118":"createAutomationRule","119":"updateAutomationRule","120":"getWebhookSubscriptions","121":"createWebhookSubscription","122":"getEmailTemplates","123":"createEmailTemplate","124":"getEmailCampaigns","125":"createEmailCampaign","126":"getNotificationPreferences","127":"updateNotificationPreferences","128":"getAdminSessions","129":"createAdminSession","130":"revokeAdminSession","131":"revokeAllAdminSessions","132":"getAdminSessionStats","133":"getAdminAuditLogs","134":"getAdminAuditStats","135":"resolveAdminAuditLog","136":"exportAuditLogs","137":"getRecentHighRiskActions","138":"getAdminPermissions","139":"createAdminPermission","140":"updateAdminPermission","141":"deleteAdminPermission","142":"getPermissionsMatrix","143":"updateRolePermissions","144":"toggleRolePermission","145":"copyRolePermissions","146":"compareRoles","147":"getPermissionsStats","148":"getApprovalWorkflows","149":"createApprovalWorkflow","150":"updateApprovalWorkflow","151":"deleteApprovalWorkflow","152":"getApprovalRequests","153":"approveRequest","154":"rejectRequest","155":"getAnalyticsDashboards","156":"createAnalyticsDashboard","157":"updateAnalyticsDashboard","158":"deleteAnalyticsDashboard","159":"getAnalyticsDashboardData","160":"shareAnalyticsDashboard","161":"getAnalyticsReports","162":"createAnalyticsReport","163":"updateAnalyticsReport","164":"deleteAnalyticsReport","165":"executeAnalyticsReport","166":"scheduleAnalyticsReport","167":"getReportExecutions","168":"getBusinessMetrics","169":"createBusinessMetric","170":"updateBusinessMetric","171":"deleteBusinessMetric","172":"calculateBusinessMetric","173":"getMetricHistory","174":"getMetricsStats","175":"getPredictiveModels","176":"createPredictiveModel","177":"updatePredictiveModel","178":"deletePredictiveModel","179":"trainPredictiveModel","180":"makePrediction","181":"getModelPredictions","182":"evaluatePredictiveModel","183":"createSecurityIncident","184":"deleteSecurityIncident","185":"getSecurityIncidentById","186":"getSecurityIncidentStats","187":"getSecurityIncidents","188":"resolveSecurityIncident","189":"updateSecurityIncident","190":"addThreat","191":"blockThreat","192":"bulkImportThreats","193":"checkDomainReputation","194":"checkIPReputation","195":"createDLPPolicy","196":"deleteDLPPolicy","197":"deleteThreat","198":"getBlockedDomains","199":"getBlockedIPs","200":"getDLPPolicies","201":"getDLPPolicyById","202":"getDLPStats","203":"getDLPViolationById","204":"getDLPViolations","205":"getThreatById","206":"getThreatStats","207":"getThreats","208":"resolveDLPViolation","209":"scanResourceDLP","210":"toggleDLPPolicy","211":"unblockThreat","212":"updateDLPPolicy","213":"updateThreat","214":"connectIntegration","215":"createWebhook","216":"deleteWebhook","217":"disconnectIntegration","218":"getIntegrations","219":"getWebhookDeliveries","220":"getWebhooks","221":"refreshIntegration","222":"testIntegration","223":"testWebhook","224":"updateIntegrationConfig","225":"updateWebhook","226":"addDashboardWidget","227":"cloneDashboard","228":"createDashboard","229":"deleteDashboard","230":"getDashboardBuilderStats","231":"getDashboardById","232":"getDashboardWidgetData","233":"getDashboards","234":"removeDashboardWidget","235":"reorderDashboardWidgets","236":"toggleDashboardShare","237":"updateDashboard","238":"updateDashboardWidget","239":"addPaymentMethod","240":"addPlanFeature","241":"approveSubscriptionChange","242":"calculateProration","243":"comparePricingPlans","244":"createPricingPlan","245":"createRevenueForecast","246":"createRevenueRecognition","247":"createSubscriptionChange","248":"deletePaymentMethod","249":"deletePricingPlan","250":"deleteRevenueForecast","251":"generateRevenueForecast","252":"getPaymentFailureStats","253":"getPaymentFailures","254":"getPaymentMethods","255":"getPlanFeatures","256":"getPricingPlans","257":"getRecognitionSchedule","258":"getRevenueForecastStats","259":"getRevenueForecasts","260":"getRevenueRecognitionStats","261":"getRevenueRecognitions","262":"getSubscriptionChangeStats","263":"getSubscriptionChanges","264":"recognizeRevenue","265":"rejectSubscriptionChange","266":"removePlanFeature","267":"retryPayment","268":"updatePaymentMethod","269":"updatePricingPlan","270":"updateRevenueForecast","271":"updateRevenueRecognition","272":"createContractAmendment","273":"createCustomerContract","274":"createLifecycleStage","275":"createSuccessPlaybook","276":"deleteCustomerContract","277":"deleteLifecycleStage","278":"deleteSuccessPlaybook","279":"executeSuccessPlaybook","280":"getContractAmendments","281":"getContractStats","282":"getCustomerContracts","283":"getLifecycleStages","284":"getLifecycleStats","285":"getLifecycleTransitions","286":"getPlaybookStats","287":"getSuccessActions","288":"getSuccessPlaybooks","289":"getUpcomingRenewals","290":"transitionOrganization","291":"updateCustomerContract","292":"updateLifecycleStage","293":"updateSuccessPlaybook"}
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[AI Settings Routes] AISettingsService loaded successfully[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[AI Settings Routes] AIProactivityEngine loaded successfully[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[ApiGateway] Initializing gateway routes...[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[ApiGateway] Mounting /api/auth[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[ApiGateway] Mounting /api/billing[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[ApiGateway] Mounting /api/ai[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[ApiGateway] Mounting /api/tools[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[ApiGateway] Mounting /api/workbook[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[ApiGateway] Mounting /api/artifact-lineage[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[ApiGateway] Mounting /api/known-tools[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[ApiGateway] Mounting /api/tool-assets[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[ApiGateway] Mounting /api/assessment-evidence[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[ApiGateway] Mounting /api/consulting-templates[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[ApiGateway] Mounting /api/portfolio-optimization[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[ApiGateway] Mounting /api/assessment-workflow[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[ApiGateway] Mounting /api/assessment-workflow-v2[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[ApiGateway] Mounting /api/admin-data[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[ApiGateway] Mounting /api/users[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[ApiGateway] Mounting /api/revenue[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[ApiGateway] Mounting /api/superadmin/analytics[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[ApiGateway] Mounting /api/admin/prompts[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[Gateway] economicsRoutes type:[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[PresentationStudio] Layout-capacity persistence: no_persisted_file (path=/Users/piotrwisniewski/.codex/worktrees/mac-p0d-a9/server/.runtime-config/presentation-studio-layout-capacity-overrides.json)[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[ApiGateway] Mounting /api/v8[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[ApiGateway] Mounting /api/v10/teresa[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[Server] ==========================================[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[Server] Setting up frontend static file serving...[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[Server] NODE_ENV: test[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[Server] __dirname: /Users/piotrwisniewski/.codex/worktrees/mac-p0d-a9/server/src[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[Server] Frontend dist path (dev): /Users/piotrwisniewski/.codex/worktrees/mac-p0d-a9/dist[39m
+2026-08-13 15:09:17:917 [31merror[39m: [31m[Server] Frontend index.html not found at: /Users/piotrwisniewski/.codex/worktrees/mac-p0d-a9/dist/index.html[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[Server] ✓ Stored frontend dist path globally: /Users/piotrwisniewski/.codex/worktrees/mac-p0d-a9/dist[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[Server] Final frontend dist path: /Users/piotrwisniewski/.codex/worktrees/mac-p0d-a9/dist[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[Server] Final frontend dist path: /Users/piotrwisniewski/.codex/worktrees/mac-p0d-a9/dist[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[Server] Registering root route handler with frontendDistPath: /Users/piotrwisniewski/.codex/worktrees/mac-p0d-a9/dist[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[Server] Starting HTTP server after route registration...[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[Server] Feedback artifact pruner started (retention: 30 days).[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[IdeaCollabWs] Native WebSocket /ws/collab/:ideaId attached (auth+session)[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[Server] Idea collab WebSocket /ws/collab/:ideaId initialized[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[PresentationCollabWs] Native WebSocket /ws/presentations/:deckId attached[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[Server] Presentation collab WebSocket /ws/presentations/:deckId initialized[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[NotebookCollabWs] Native WebSocket /ws/notebook/:noteId attached[39m
+2026-08-13 15:09:17:917 [32minfo[39m: [32m[Server] Notebook collab WebSocket /ws/notebook/:noteId initialized[39m
+2026-08-13 15:09:18:918 [32minfo[39m: [32m[TablePlatformRealtime] Initialized on /table-platform namespace[39m
+2026-08-13 15:09:18:918 [32minfo[39m: [32m[Server] Table Platform Realtime (Socket.IO /table-platform) initialized[39m
+2026-08-13 15:09:18:918 [32minfo[39m: [32m[OrgContextRealtime] Initialized on /org-context namespace[39m
+2026-08-13 15:09:18:918 [32minfo[39m: [32m[Server] Org Context Realtime (Socket.IO /org-context) initialized[39m
+2026-08-13 15:09:18:918 [32minfo[39m: [32m[ChatProjectsRealtime] Initialized on /chat-projects namespace[39m
+2026-08-13 15:09:18:918 [32minfo[39m: [32m[Server] Chat Projects Realtime (Socket.IO /chat-projects) initialized[39m
+2026-08-13 15:09:18:918 [32minfo[39m: [32m[FacilitationRealtime] Initialized on /facilitation namespace[39m
+2026-08-13 15:09:18:918 [32minfo[39m: [32m[Server] Facilitation Realtime (Socket.IO /facilitation) initialized[39m
+2026-08-13 15:09:18:918 [32minfo[39m: [32m[Server] Frontend will be served from: /Users/piotrwisniewski/.codex/worktrees/mac-p0d-a9/dist[39m
+2026-08-13 15:09:18:918 [32minfo[39m: [32m[PurgeScheduler] Starting — grace=30d, interval=3600000ms, batch=100[39m
+2026-08-13 15:09:18:918 [32minfo[39m: [32m✅ Server running on http://0.0.0.0:41560[39m
+2026-08-13 15:09:18:918 [32minfo[39m: [32m✅ WebSocket available at ws://0.0.0.0:41560/ws[39m
+2026-08-13 15:09:18:918 [32minfo[39m: [32m[Server] ✅ Server started on port 41560[39m
+2026-08-13 15:09:18:918 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-08-13 15:09:18:918 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"localhost","database":"a9_test","max":10}
+2026-08-13 15:09:18:918 [32minfo[39m: [32m[Postgres] Checking/Initializing Schema...[39m
+2026-08-13 15:09:18:918 [32minfo[39m: [32m[Postgres] Testing connection (attempt 1/3)...[39m
+2026-08-13 15:09:18:918 [32minfo[39m: [32m[Redis] Connecting...[39m
+2026-08-13 15:09:18:918 [32minfo[39m: [32m[Redis] Connected and ready[39m
+2026-08-13 15:09:18:918 [32minfo[39m: [32m[Redis] Successfully connected[39m
+2026-08-13 15:09:18:918 [37mdebug[39m: [37m[Postgres] Client connected[39m
+2026-08-13 15:09:18:918 [32minfo[39m: [32m[Postgres] Connection test successful (PostgreSQL verified):[39m {"current_time":"2026-08-13T13:09:18.076Z"}
+2026-08-13 15:09:18:918 [32minfo[39m: [32m[Postgres] Verifying/Creating Indexes...[39m
+2026-08-13 15:09:18:918 [37mdebug[39m: [37m[Postgres] Client connected[39m
+2026-08-13 15:09:18:918 [37mdebug[39m: [37m[Postgres] Skipping created_by index on webhooks: column "created_by" does not exist[39m
+2026-08-13 15:09:18:918 [32minfo[39m: [32m[Postgres] Schema Check Complete.[39m
+2026-08-13 15:09:18:918 [32minfo[39m: [32m[Postgres] Verified table exists: organizations[39m
+2026-08-13 15:09:18:918 [32minfo[39m: [32m[Postgres] Verified table exists: users[39m
+2026-08-13 15:09:18:918 [32minfo[39m: [32m[Postgres] Verified table exists: sessions[39m
+2026-08-13 15:09:18:918 [32minfo[39m: [32m[Postgres] Verified table exists: projects[39m
+2026-08-13 15:09:18:918 [32minfo[39m: [32m[Postgres] Verified table exists: tasks[39m
+2026-08-13 15:09:18:918 [32minfo[39m: [32m[Postgres] Verified table exists: teams[39m
+2026-08-13 15:09:18:918 [32minfo[39m: [32m[Postgres] Verified table exists: invitations[39m
+2026-08-13 15:09:18:918 [32minfo[39m: [32m[Postgres] Verified table exists: notifications[39m
+2026-08-13 15:09:18:918 [32minfo[39m: [32m[Postgres] Verified table exists: settings[39m
+2026-08-13 15:09:18:918 [32minfo[39m: [32m[Postgres] Schema initialization completed successfully[39m
+2026-08-13 15:09:18:918 [32minfo[39m: [32m[2026-08-13T13:09:18.868Z] [INFO] [AI:CircuitBreaker] LLM circuit breakers initialized[39m
+2026-08-13 15:09:18:918 [37mdebug[39m: [37m[Postgres] Client connected[39m
+2026-08-13 15:09:18:918 [37mdebug[39m: [37m[Postgres] Client connected[39m
+2026-08-13 15:09:20:920 [32minfo[39m: [32m[TP-Migrations] Found 449 table platform migration files[39m
+2026-08-13 15:09:20:920 [32minfo[39m: [32m[TP-Migrations] All 449 migrations already applied[39m
+2026-08-13 15:09:20:920 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-init-reg","template_id":"6ded2abf-9e61-4b13-8739-270b9b319a56"}
+2026-08-13 15:09:20:920 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-risk-reg-ops","template_id":"5a27b1b9-a308-412d-ab0c-92a586c32703"}
+2026-08-13 15:09:20:920 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-action-plan","template_id":"c32e9da6-900f-4b30-9d31-441ce19b11b4"}
+2026-08-13 15:09:20:920 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-stake-map","template_id":"31be085a-bb04-4e28-9ce6-6e6df0fac5df"}
+2026-08-13 15:09:20:920 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-decision-log","template_id":"2dd9295c-f942-489c-b6ab-10cfef41f486"}
+2026-08-13 15:09:20:920 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-issue-log","template_id":"ea569af5-94c3-420f-86c6-8b417c9580bf"}
+2026-08-13 15:09:20:920 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-meddpicc","template_id":"b77aa04d-ef0e-4bd6-80a8-681293fbfa46"}
+2026-08-13 15:09:20:920 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-icp-fit","template_id":"7ec80340-837c-4a30-a64e-dcd2ff179792"}
+2026-08-13 15:09:20:920 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-map","template_id":"b9dc2d77-b0fd-4a6a-b735-561503cb6e27"}
+2026-08-13 15:09:20:920 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-sales-pipe","template_id":"fcaf28ad-3991-4ef9-8a8f-46fd9131cea4"}
+2026-08-13 15:09:20:920 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-kpi-matrix","template_id":"35f02eeb-0026-44e2-831b-f172e5844eb3"}
+2026-08-13 15:09:20:920 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-impl-tracker","template_id":"8b1d0686-a0b4-4cb4-8611-2cd11937abd0"}
+2026-08-13 15:09:20:920 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-proj-backlog","template_id":"d50fecc1-a8df-472b-90cf-b844a21f37d8"}
+2026-08-13 15:09:20:920 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-interview-tracker","template_id":"c60bad2b-5d46-490d-a4d1-a3a94eecf788"}
+2026-08-13 15:09:20:920 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-workshop-output","template_id":"606eeb4b-1c25-4f10-ac44-189e8d47563b"}
+2026-08-13 15:09:20:920 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-dt-roadmap","template_id":"2833e1ea-10c3-42b9-b5f7-a13eb2291a33"}
+2026-08-13 15:09:20:920 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-ai-uc-reg","template_id":"41fa9e9a-e5bc-4032-ba93-d122b03e81e2"}
+2026-08-13 15:09:20:920 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-auto-opp-reg","template_id":"1b6426ea-dbbc-4936-955a-fd197932d0c3"}
+2026-08-13 15:09:20:920 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-bizcase","template_id":"df9505a3-f44e-4d11-b142-05de9f424c5a"}
+2026-08-13 15:09:20:920 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-vendor-comp","template_id":"79422962-e37c-44a0-af3e-2c09885c8c77"}
+2026-08-13 15:09:20:920 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-research-source","template_id":"8726ac4a-8670-40b8-ac00-4a35def81534"}
+2026-08-13 15:09:20:920 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-sop-reg","template_id":"b82434c7-d352-440b-8d49-3ebb10fdbb22"}
+2026-08-13 15:09:20:920 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-change-tracker","template_id":"1d325ef6-8bfc-4dd3-afe9-71385a3cf991"}
+2026-08-13 15:09:20:920 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-train-plan","template_id":"ec421ad0-2a4d-48ce-b25e-bda39f48e3f2"}
+2026-08-13 15:09:20:920 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-gov-reg","template_id":"30a3e577-f4e6-48c4-b864-2bb0ba42ea91"}
+2026-08-13 15:09:20:920 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-audit-find","template_id":"1e5bff76-d6b2-40bc-bff3-f5f168ebbb48"}
+2026-08-13 15:09:20:920 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-req-table","template_id":"8352de94-9d7b-4ad3-8fed-27bdd30a501f"}
+2026-08-13 15:09:20:920 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-feat-prio","template_id":"d4c71570-db4a-4d1e-a04f-0c5bd604c5c5"}
+2026-08-13 15:09:20:920 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-roi-calc","template_id":"893dea40-609d-437c-9391-3f19945c63ca"}
+2026-08-13 15:09:20:920 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-client-disc","template_id":"057adf98-a94c-4de7-9a2a-ac2965cb3f06"}
+2026-08-13 15:09:20:920 [32minfo[39m: [32m[TabeleSeeder] seed complete[39m {"inserted":0,"updated":30,"skipped":0,"total":30}
+2026-08-13 15:09:21:921 [32minfo[39m: [32m[DatabaseInitializer] Database schema verified successfully[39m
+2026-08-13 15:09:21:921 [32minfo[39m: [32m[Server] Database schema initialized: Database initialized and verified successfully[39m
+2026-08-13 15:09:21:921 [32minfo[39m: [32m[Database] Initializing connection pool...[39m
+2026-08-13 15:09:21:921 [32minfo[39m: [32m[ConnectionPool] Initialized with config:[39m {"minConnections":2,"maxConnections":10,"connectionTimeout":30000,"queryTimeout":60000,"healthCheckInterval":30000,"maxRetries":5,"retryDelayMs":100}
+2026-08-13 15:09:21:921 [32minfo[39m: [32m[ConnectionPool] Initializing pool...[39m
+2026-08-13 15:09:21:921 [32minfo[39m: [32m[ConnectionPool] Initialized with 2 connections[39m
+2026-08-13 15:09:21:921 [32minfo[39m: [32m[DatabaseMetrics] Initialized[39m
+2026-08-13 15:09:21:921 [32minfo[39m: [32m[SlowQueryLogger] Initialized with 100ms threshold[39m
+2026-08-13 15:09:21:921 [32minfo[39m: [32m[HealthMonitor] Starting with 30000ms interval[39m
+2026-08-13 15:09:21:921 [37mdebug[39m: [37m[ConnectionPool] Acquired connection conn-1786626561846-2004w67pv[39m
+2026-08-13 15:09:21:921 [32minfo[39m: [32m[Database] Connection pool initialized successfully[39m
+2026-08-13 15:09:21:921 [32minfo[39m: [32m[Server] ✅ Connection pool initialized[39m
+2026-08-13 15:09:21:921 [32minfo[39m: [32m[Readiness] Schema initialized: verified above[39m
+2026-08-13 15:09:21:921 [37mdebug[39m: [37m[ConnectionPool] Released connection conn-1786626561846-2004w67pv[39m
+2026-08-13 15:09:21:921 [37mdebug[39m: [37m[HealthMonitor] Health check passed (19ms)[39m
+2026-08-13 15:09:21:921 [32minfo[39m: [32m[TP Migrations] Found 462 migration files in /Users/piotrwisniewski/.codex/worktrees/mac-p0d-a9/server/migrations[39m
+2026-08-13 15:09:21:921 [33mwarn[39m: [33m[TP Migrations] 449 applied migration(s) have no recorded checksum and could not be verified[39m
+2026-08-13 15:09:21:921 [32minfo[39m: [32m[TP Migrations] Complete: 0 applied, 462 already up to date (462 total)[39m
+2026-08-13 15:09:21:921 [32minfo[39m: [32m[Readiness] Table Platform migrations: 0 applied, 462 already up to date[39m
+2026-08-13 15:09:21:921 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-init-reg","template_id":"6ded2abf-9e61-4b13-8739-270b9b319a56"}
+2026-08-13 15:09:21:921 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-risk-reg-ops","template_id":"5a27b1b9-a308-412d-ab0c-92a586c32703"}
+2026-08-13 15:09:21:921 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-action-plan","template_id":"c32e9da6-900f-4b30-9d31-441ce19b11b4"}
+2026-08-13 15:09:21:921 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-stake-map","template_id":"31be085a-bb04-4e28-9ce6-6e6df0fac5df"}
+2026-08-13 15:09:21:921 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-decision-log","template_id":"2dd9295c-f942-489c-b6ab-10cfef41f486"}
+2026-08-13 15:09:21:921 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-issue-log","template_id":"ea569af5-94c3-420f-86c6-8b417c9580bf"}
+2026-08-13 15:09:21:921 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-meddpicc","template_id":"b77aa04d-ef0e-4bd6-80a8-681293fbfa46"}
+2026-08-13 15:09:21:921 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-icp-fit","template_id":"7ec80340-837c-4a30-a64e-dcd2ff179792"}
+2026-08-13 15:09:21:921 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-map","template_id":"b9dc2d77-b0fd-4a6a-b735-561503cb6e27"}
+2026-08-13 15:09:21:921 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-sales-pipe","template_id":"fcaf28ad-3991-4ef9-8a8f-46fd9131cea4"}
+2026-08-13 15:09:21:921 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-kpi-matrix","template_id":"35f02eeb-0026-44e2-831b-f172e5844eb3"}
+2026-08-13 15:09:21:921 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-impl-tracker","template_id":"8b1d0686-a0b4-4cb4-8611-2cd11937abd0"}
+2026-08-13 15:09:21:921 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-proj-backlog","template_id":"d50fecc1-a8df-472b-90cf-b844a21f37d8"}
+2026-08-13 15:09:21:921 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-interview-tracker","template_id":"c60bad2b-5d46-490d-a4d1-a3a94eecf788"}
+2026-08-13 15:09:21:921 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-workshop-output","template_id":"606eeb4b-1c25-4f10-ac44-189e8d47563b"}
+2026-08-13 15:09:21:921 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-dt-roadmap","template_id":"2833e1ea-10c3-42b9-b5f7-a13eb2291a33"}
+2026-08-13 15:09:21:921 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-ai-uc-reg","template_id":"41fa9e9a-e5bc-4032-ba93-d122b03e81e2"}
+2026-08-13 15:09:21:921 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-auto-opp-reg","template_id":"1b6426ea-dbbc-4936-955a-fd197932d0c3"}
+2026-08-13 15:09:21:921 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-bizcase","template_id":"df9505a3-f44e-4d11-b142-05de9f424c5a"}
+2026-08-13 15:09:21:921 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-vendor-comp","template_id":"79422962-e37c-44a0-af3e-2c09885c8c77"}
+2026-08-13 15:09:21:921 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-research-source","template_id":"8726ac4a-8670-40b8-ac00-4a35def81534"}
+2026-08-13 15:09:21:921 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-sop-reg","template_id":"b82434c7-d352-440b-8d49-3ebb10fdbb22"}
+2026-08-13 15:09:21:921 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-change-tracker","template_id":"1d325ef6-8bfc-4dd3-afe9-71385a3cf991"}
+2026-08-13 15:09:22:922 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-train-plan","template_id":"ec421ad0-2a4d-48ce-b25e-bda39f48e3f2"}
+2026-08-13 15:09:22:922 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-gov-reg","template_id":"30a3e577-f4e6-48c4-b864-2bb0ba42ea91"}
+2026-08-13 15:09:22:922 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-audit-find","template_id":"1e5bff76-d6b2-40bc-bff3-f5f168ebbb48"}
+2026-08-13 15:09:22:922 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-req-table","template_id":"8352de94-9d7b-4ad3-8fed-27bdd30a501f"}
+2026-08-13 15:09:22:922 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-feat-prio","template_id":"d4c71570-db4a-4d1e-a04f-0c5bd604c5c5"}
+2026-08-13 15:09:22:922 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-roi-calc","template_id":"893dea40-609d-437c-9391-3f19945c63ca"}
+2026-08-13 15:09:22:922 [32minfo[39m: [32m[TabeleSeeder] updated template[39m {"seed_id":"tab-client-disc","template_id":"057adf98-a94c-4de7-9a2a-ac2965cb3f06"}
+2026-08-13 15:09:22:922 [32minfo[39m: [32m[TabeleSeeder] seed complete[39m {"inserted":0,"updated":30,"skipped":0,"total":30}
+2026-08-13 15:09:22:922 [32minfo[39m: [32m[Server] ✅ Database ready — serving traffic[39m
+2026-08-13 15:09:51:951 [37mdebug[39m: [37m[ConnectionPool] Performing health checks...[39m
+2026-08-13 15:09:51:951 [37mdebug[39m: [37m[ConnectionPool] Acquired connection conn-1786626561846-2004w67pv[39m
+2026-08-13 15:09:51:951 [37mdebug[39m: [37m[ConnectionPool] Health check complete. Stats:[39m {"total":2,"active":1,"idle":1,"waiting":0,"healthy":2,"unhealthy":0}
+2026-08-13 15:09:51:951 [37mdebug[39m: [37m[Postgres] Client connected[39m
+2026-08-13 15:09:51:951 [37mdebug[39m: [37m[ConnectionPool] Released connection conn-1786626561846-2004w67pv[39m
+2026-08-13 15:09:51:951 [37mdebug[39m: [37m[HealthMonitor] Health check passed (10ms)[39m
+2026-08-13 15:09:56:956 [35mhttp[39m: [35mGET /api/method/sessions/3601eb4f-3777-4f7e-9273-562e03fce4f4[39m
+2026-08-13 15:09:56:956 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/3601eb4f-3777-4f7e-9273-562e03fce4f4[39m
+2026-08-13 15:09:56:956 [35mhttp[39m: [35mGET /api/method/outputs/8056c205-6b80-465a-96bc-b98c9382b436[39m
+2026-08-13 15:09:56:956 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/outputs/8056c205-6b80-465a-96bc-b98c9382b436[39m
+2026-08-13 15:10:17:1017 [35mhttp[39m: [35mGET /api/feature-flags/runtime[39m
+2026-08-13 15:10:17:1017 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/feature-flags/runtime[39m
+2026-08-13 15:10:17:1017 [35mhttp[39m: [35mGET /api/method/sessions/3601eb4f-3777-4f7e-9273-562e03fce4f4[39m
+2026-08-13 15:10:17:1017 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/3601eb4f-3777-4f7e-9273-562e03fce4f4[39m
+2026-08-13 15:10:17:1017 [35mhttp[39m: [35mGET /api/method/sessions/3601eb4f-3777-4f7e-9273-562e03fce4f4/events[39m
+2026-08-13 15:10:17:1017 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/3601eb4f-3777-4f7e-9273-562e03fce4f4/events[39m
+2026-08-13 15:10:17:1017 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/method/sessions/3601eb4f-3777-4f7e-9273-562e03fce4f4/events","dbQueryCount":14,"dbQueryTime":14}
+2026-08-13 15:10:17:1017 [37mdebug[39m: [37m[Postgres] Client connected[39m
+2026-08-13 15:10:17:1017 [37mdebug[39m: [37m[Postgres] Client connected[39m
+2026-08-13 15:10:17:1017 [37mdebug[39m: [37m[Postgres] Client connected[39m
+2026-08-13 15:10:17:1017 [35mhttp[39m: [35mGET /api/feature-flags/runtime[39m
+2026-08-13 15:10:17:1017 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/feature-flags/runtime[39m
+2026-08-13 15:10:17:1017 [35mhttp[39m: [35mPOST /api/method/sessions/3601eb4f-3777-4f7e-9273-562e03fce4f4/transition[39m
+2026-08-13 15:10:17:1017 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions/3601eb4f-3777-4f7e-9273-562e03fce4f4/transition[39m
+2026-08-13 15:10:17:1017 [33mwarn[39m: [33mPerformance metric[39m {"method":"POST","path":"/api/method/sessions/3601eb4f-3777-4f7e-9273-562e03fce4f4/transition","statusCode":409,"responseTime":6,"dbQueryCount":10,"dbQueryTime":10,"memoryDelta":{"heapUsed":324568,"external":10747,"rss":16384},"userId":"a9-user","organizationId":"a9-org","route":"/api/method/sessions/:id/transition","isSlow":false,"isError":true}
+2026-08-13 15:10:21:1021 [37mdebug[39m: [37m[ConnectionPool] Performing health checks...[39m
+2026-08-13 15:10:21:1021 [37mdebug[39m: [37m[ConnectionPool] Health check complete. Stats:[39m {"total":2,"active":0,"idle":2,"waiting":0,"healthy":2,"unhealthy":0}
+2026-08-13 15:10:21:1021 [37mdebug[39m: [37m[ConnectionPool] Acquired connection conn-1786626561846-2004w67pv[39m
+2026-08-13 15:10:21:1021 [37mdebug[39m: [37m[ConnectionPool] Released connection conn-1786626561846-2004w67pv[39m
+2026-08-13 15:10:21:1021 [37mdebug[39m: [37m[HealthMonitor] Health check passed (1ms)[39m
+2026-08-13 15:10:36:1036 [35mhttp[39m: [35mGET /api/feature-flags/runtime[39m
+2026-08-13 15:10:36:1036 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/feature-flags/runtime[39m
+2026-08-13 15:10:36:1036 [35mhttp[39m: [35mGET /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620[39m
+2026-08-13 15:10:36:1036 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620[39m
+2026-08-13 15:10:36:1036 [35mhttp[39m: [35mGET /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events[39m
+2026-08-13 15:10:36:1036 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events[39m
+2026-08-13 15:10:36:1036 [35mhttp[39m: [35mGET /api/feature-flags/runtime[39m
+2026-08-13 15:10:36:1036 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/feature-flags/runtime[39m
+2026-08-13 15:10:36:1036 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/feature-flags/runtime","dbQueryCount":14,"dbQueryTime":22}
+2026-08-13 15:10:36:1036 [35mhttp[39m: [35mPOST /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/transition[39m
+2026-08-13 15:10:36:1036 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/transition[39m
+2026-08-13 15:10:36:1036 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/transition","dbQueryCount":14,"dbQueryTime":11}
+2026-08-13 15:10:36:1036 [35mhttp[39m: [35mGET /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620[39m
+2026-08-13 15:10:36:1036 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620[39m
+2026-08-13 15:10:36:1036 [35mhttp[39m: [35mGET /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events[39m
+2026-08-13 15:10:36:1036 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events[39m
+2026-08-13 15:10:36:1036 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events","dbQueryCount":12,"dbQueryTime":6}
+2026-08-13 15:10:36:1036 [35mhttp[39m: [35mPOST /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/transition[39m
+2026-08-13 15:10:36:1036 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/transition[39m
+2026-08-13 15:10:36:1036 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/transition","dbQueryCount":14,"dbQueryTime":5}
+2026-08-13 15:10:36:1036 [35mhttp[39m: [35mGET /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620[39m
+2026-08-13 15:10:36:1036 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620[39m
+2026-08-13 15:10:36:1036 [35mhttp[39m: [35mGET /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events[39m
+2026-08-13 15:10:36:1036 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events[39m
+2026-08-13 15:10:36:1036 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events","dbQueryCount":14,"dbQueryTime":8}
+2026-08-13 15:10:36:1036 [35mhttp[39m: [35mPOST /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events[39m
+2026-08-13 15:10:36:1036 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events[39m
+2026-08-13 15:10:36:1036 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events","dbQueryCount":12,"dbQueryTime":12}
+2026-08-13 15:10:36:1036 [35mhttp[39m: [35mGET /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620[39m
+2026-08-13 15:10:36:1036 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620[39m
+2026-08-13 15:10:36:1036 [35mhttp[39m: [35mGET /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events[39m
+2026-08-13 15:10:36:1036 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events[39m
+2026-08-13 15:10:36:1036 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events","dbQueryCount":14,"dbQueryTime":12}
+2026-08-13 15:10:36:1036 [35mhttp[39m: [35mPOST /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events[39m
+2026-08-13 15:10:36:1036 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events[39m
+2026-08-13 15:10:36:1036 [35mhttp[39m: [35mGET /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events[39m
+2026-08-13 15:10:36:1036 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events[39m
+2026-08-13 15:10:36:1036 [35mhttp[39m: [35mGET /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620[39m
+2026-08-13 15:10:36:1036 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620[39m
+2026-08-13 15:10:36:1036 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620","dbQueryCount":16,"dbQueryTime":10}
+2026-08-13 15:10:36:1036 [35mhttp[39m: [35mPOST /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events[39m
+2026-08-13 15:10:36:1036 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events[39m
+2026-08-13 15:10:36:1036 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events","dbQueryCount":12,"dbQueryTime":8}
+2026-08-13 15:10:36:1036 [35mhttp[39m: [35mGET /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620[39m
+2026-08-13 15:10:36:1036 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620[39m
+2026-08-13 15:10:36:1036 [35mhttp[39m: [35mGET /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events[39m
+2026-08-13 15:10:36:1036 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events[39m
+2026-08-13 15:10:36:1036 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events","dbQueryCount":16,"dbQueryTime":14}
+2026-08-13 15:10:36:1036 [35mhttp[39m: [35mPOST /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events[39m
+2026-08-13 15:10:36:1036 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events[39m
+2026-08-13 15:10:36:1036 [35mhttp[39m: [35mGET /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620[39m
+2026-08-13 15:10:36:1036 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620[39m
+2026-08-13 15:10:36:1036 [35mhttp[39m: [35mGET /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events[39m
+2026-08-13 15:10:36:1036 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events[39m
+2026-08-13 15:10:36:1036 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events","dbQueryCount":14,"dbQueryTime":9}
+2026-08-13 15:10:36:1036 [35mhttp[39m: [35mPOST /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events[39m
+2026-08-13 15:10:36:1036 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events[39m
+2026-08-13 15:10:36:1036 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events","dbQueryCount":12,"dbQueryTime":11}
+2026-08-13 15:10:36:1036 [35mhttp[39m: [35mGET /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620[39m
+2026-08-13 15:10:36:1036 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620[39m
+2026-08-13 15:10:36:1036 [35mhttp[39m: [35mGET /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events[39m
+2026-08-13 15:10:36:1036 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events[39m
+2026-08-13 15:10:36:1036 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events","dbQueryCount":16,"dbQueryTime":11}
+2026-08-13 15:10:51:1051 [37mdebug[39m: [37m[ConnectionPool] Performing health checks...[39m
+2026-08-13 15:10:51:1051 [37mdebug[39m: [37m[ConnectionPool] Health check complete. Stats:[39m {"total":2,"active":0,"idle":2,"waiting":0,"healthy":2,"unhealthy":0}
+2026-08-13 15:10:51:1051 [37mdebug[39m: [37m[ConnectionPool] Acquired connection conn-1786626561846-2004w67pv[39m
+2026-08-13 15:10:51:1051 [37mdebug[39m: [37m[ConnectionPool] Released connection conn-1786626561846-2004w67pv[39m
+2026-08-13 15:10:51:1051 [37mdebug[39m: [37m[HealthMonitor] Health check passed (1ms)[39m
+2026-08-13 15:11:21:1121 [37mdebug[39m: [37m[ConnectionPool] Performing health checks...[39m
+2026-08-13 15:11:21:1121 [37mdebug[39m: [37m[ConnectionPool] Acquired connection conn-1786626561846-2004w67pv[39m
+2026-08-13 15:11:21:1121 [37mdebug[39m: [37m[ConnectionPool] Health check complete. Stats:[39m {"total":2,"active":1,"idle":1,"waiting":0,"healthy":2,"unhealthy":0}
+2026-08-13 15:11:21:1121 [37mdebug[39m: [37m[Postgres] Client connected[39m
+2026-08-13 15:11:21:1121 [37mdebug[39m: [37m[ConnectionPool] Released connection conn-1786626561846-2004w67pv[39m
+2026-08-13 15:11:21:1121 [37mdebug[39m: [37m[HealthMonitor] Health check passed (7ms)[39m
+2026-08-13 15:11:33:1133 [35mhttp[39m: [35mPOST /api/method/sessions/3601eb4f-3777-4f7e-9273-562e03fce4f4/transition[39m
+2026-08-13 15:11:33:1133 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions/3601eb4f-3777-4f7e-9273-562e03fce4f4/transition[39m
+2026-08-13 15:11:33:1133 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/method/sessions/3601eb4f-3777-4f7e-9273-562e03fce4f4/transition","dbQueryCount":14,"dbQueryTime":12}
+2026-08-13 15:11:51:1151 [37mdebug[39m: [37m[ConnectionPool] Performing health checks...[39m
+2026-08-13 15:11:51:1151 [37mdebug[39m: [37m[ConnectionPool] Acquired connection conn-1786626561846-2004w67pv[39m
+2026-08-13 15:11:51:1151 [37mdebug[39m: [37m[ConnectionPool] Released connection conn-1786626561846-2004w67pv[39m
+2026-08-13 15:11:51:1151 [37mdebug[39m: [37m[HealthMonitor] Health check passed (1ms)[39m
+2026-08-13 15:11:51:1151 [37mdebug[39m: [37m[ConnectionPool] Health check complete. Stats:[39m {"total":2,"active":0,"idle":2,"waiting":0,"healthy":2,"unhealthy":0}
+2026-08-13 15:12:05:125 [35mhttp[39m: [35mPOST /api/method/sessions/e7dec513-8c68-4d5d-9f5d-bbbde312bd3a/transition[39m
+2026-08-13 15:12:05:125 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions/e7dec513-8c68-4d5d-9f5d-bbbde312bd3a/transition[39m
+2026-08-13 15:12:05:125 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/method/sessions/e7dec513-8c68-4d5d-9f5d-bbbde312bd3a/transition","dbQueryCount":14,"dbQueryTime":10}
+2026-08-13 15:12:05:125 [35mhttp[39m: [35mPOST /api/method/sessions/e7dec513-8c68-4d5d-9f5d-bbbde312bd3a/freeze[39m
+2026-08-13 15:12:05:125 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions/e7dec513-8c68-4d5d-9f5d-bbbde312bd3a/freeze[39m
+2026-08-13 15:12:05:125 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/method/sessions/e7dec513-8c68-4d5d-9f5d-bbbde312bd3a/freeze","dbQueryCount":44,"dbQueryTime":32}
+2026-08-13 15:12:18:1218 [35mhttp[39m: [35mPOST /api/method/outputs/feb577d6-4446-45fe-90af-fa9b4ec74436/report[39m
+2026-08-13 15:12:18:1218 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/outputs/feb577d6-4446-45fe-90af-fa9b4ec74436/report[39m
+2026-08-13 15:12:18:1218 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/method/outputs/feb577d6-4446-45fe-90af-fa9b4ec74436/report","dbQueryCount":28,"dbQueryTime":22}
+2026-08-13 15:12:21:1221 [37mdebug[39m: [37m[ConnectionPool] Performing health checks...[39m
+2026-08-13 15:12:21:1221 [37mdebug[39m: [37m[ConnectionPool] Acquired connection conn-1786626561846-2004w67pv[39m
+2026-08-13 15:12:21:1221 [37mdebug[39m: [37m[ConnectionPool] Health check complete. Stats:[39m {"total":2,"active":1,"idle":1,"waiting":0,"healthy":2,"unhealthy":0}
+2026-08-13 15:12:21:1221 [37mdebug[39m: [37m[ConnectionPool] Released connection conn-1786626561846-2004w67pv[39m
+2026-08-13 15:12:21:1221 [37mdebug[39m: [37m[HealthMonitor] Health check passed (2ms)[39m
+2026-08-13 15:12:51:1251 [37mdebug[39m: [37m[ConnectionPool] Performing health checks...[39m
+2026-08-13 15:12:51:1251 [37mdebug[39m: [37m[ConnectionPool] Health check complete. Stats:[39m {"total":2,"active":0,"idle":2,"waiting":0,"healthy":2,"unhealthy":0}
+2026-08-13 15:12:51:1251 [37mdebug[39m: [37m[ConnectionPool] Acquired connection conn-1786626561846-2004w67pv[39m
+2026-08-13 15:12:51:1251 [37mdebug[39m: [37m[ConnectionPool] Released connection conn-1786626561846-2004w67pv[39m
+2026-08-13 15:12:51:1251 [37mdebug[39m: [37m[HealthMonitor] Health check passed (2ms)[39m
+2026-08-13 15:13:14:1314 [35mhttp[39m: [35mPOST /api/method/sessions[39m
+2026-08-13 15:13:14:1314 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions[39m
+2026-08-13 15:13:14:1314 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/method/sessions","dbQueryCount":12,"dbQueryTime":9}
+2026-08-13 15:13:14:1314 [35mhttp[39m: [35mPOST /api/method/sessions[39m
+2026-08-13 15:13:14:1314 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions[39m
+2026-08-13 15:13:21:1321 [37mdebug[39m: [37m[ConnectionPool] Performing health checks...[39m
+2026-08-13 15:13:21:1321 [37mdebug[39m: [37m[ConnectionPool] Health check complete. Stats:[39m {"total":2,"active":0,"idle":2,"waiting":0,"healthy":2,"unhealthy":0}
+2026-08-13 15:13:21:1321 [37mdebug[39m: [37m[ConnectionPool] Acquired connection conn-1786626561846-2004w67pv[39m
+2026-08-13 15:13:21:1321 [37mdebug[39m: [37m[ConnectionPool] Released connection conn-1786626561846-2004w67pv[39m
+2026-08-13 15:13:21:1321 [37mdebug[39m: [37m[HealthMonitor] Health check passed (1ms)[39m
+2026-08-13 15:13:26:1326 [35mhttp[39m: [35mPOST /api/method/sessions/4a903468-ba62-4bb2-8fe1-d11446feac71/transition[39m
+2026-08-13 15:13:26:1326 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions/4a903468-ba62-4bb2-8fe1-d11446feac71/transition[39m
+2026-08-13 15:13:26:1326 [33mwarn[39m: [33mPerformance metric[39m {"method":"POST","path":"/api/method/sessions/4a903468-ba62-4bb2-8fe1-d11446feac71/transition","statusCode":409,"responseTime":3,"dbQueryCount":6,"dbQueryTime":6,"memoryDelta":{"heapUsed":-492824,"external":-1668,"rss":49152},"userId":"a9-user","organizationId":"a9-org","route":"/api/method/sessions/:id/transition","isSlow":false,"isError":true}
+2026-08-13 15:13:34:1334 [35mhttp[39m: [35mPOST /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/transition[39m
+2026-08-13 15:13:34:1334 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/transition[39m
+2026-08-13 15:13:34:1334 [33mwarn[39m: [33mPerformance metric[39m {"method":"POST","path":"/api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/transition","statusCode":403,"responseTime":5,"dbQueryCount":10,"dbQueryTime":8,"memoryDelta":{"heapUsed":267536,"external":3072,"rss":0},"userId":"a9-user","organizationId":"a9-org","route":"/api/method/sessions/:id/transition","isSlow":false,"isError":true}
+2026-08-13 15:13:51:1351 [37mdebug[39m: [37m[ConnectionPool] Performing health checks...[39m
+2026-08-13 15:13:51:1351 [37mdebug[39m: [37m[ConnectionPool] Health check complete. Stats:[39m {"total":2,"active":0,"idle":2,"waiting":0,"healthy":2,"unhealthy":0}
+2026-08-13 15:13:51:1351 [37mdebug[39m: [37m[ConnectionPool] Acquired connection conn-1786626561846-2004w67pv[39m
+2026-08-13 15:13:51:1351 [37mdebug[39m: [37m[ConnectionPool] Released connection conn-1786626561846-2004w67pv[39m
+2026-08-13 15:13:51:1351 [37mdebug[39m: [37m[HealthMonitor] Health check passed (1ms)[39m
+2026-08-13 15:13:54:1354 [35mhttp[39m: [35mGET /api/method/sessions/3601eb4f-3777-4f7e-9273-562e03fce4f4[39m
+2026-08-13 15:13:54:1354 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/sessions/3601eb4f-3777-4f7e-9273-562e03fce4f4[39m
+2026-08-13 15:13:54:1354 [33mwarn[39m: [33mPerformance metric[39m {"method":"GET","path":"/api/method/sessions/3601eb4f-3777-4f7e-9273-562e03fce4f4","statusCode":403,"responseTime":4,"dbQueryCount":6,"dbQueryTime":8,"memoryDelta":{"heapUsed":224192,"external":9118,"rss":0},"userId":"a9-user-2","organizationId":"a9-org-2","route":"/api/method/sessions/:id","isSlow":false,"isError":true}
+2026-08-13 15:13:54:1354 [35mhttp[39m: [35mGET /api/method/outputs/8056c205-6b80-465a-96bc-b98c9382b436[39m
+2026-08-13 15:13:54:1354 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/outputs/8056c205-6b80-465a-96bc-b98c9382b436[39m
+2026-08-13 15:13:54:1354 [33mwarn[39m: [33mPerformance metric[39m {"method":"GET","path":"/api/method/outputs/8056c205-6b80-465a-96bc-b98c9382b436","statusCode":404,"responseTime":3,"dbQueryCount":6,"dbQueryTime":6,"memoryDelta":{"heapUsed":214712,"external":2756,"rss":0},"userId":"a9-user-2","organizationId":"a9-org-2","route":"/api/method/outputs/:id","isSlow":false,"isError":true}
+2026-08-13 15:13:54:1354 [35mhttp[39m: [35mGET /api/method/packs[39m
+2026-08-13 15:13:54:1354 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/method/packs[39m
+2026-08-13 15:14:08:148 [35mhttp[39m: [35mPOST /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events[39m
+2026-08-13 15:14:08:148 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events[39m
+2026-08-13 15:14:08:148 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events","dbQueryCount":12,"dbQueryTime":10}
+2026-08-13 15:14:08:148 [35mhttp[39m: [35mPOST /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events[39m
+2026-08-13 15:14:08:148 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions/baff6fbc-6346-4dd6-b9f7-3909ed32d620/events[39m
+2026-08-13 15:14:21:1421 [37mdebug[39m: [37m[ConnectionPool] Performing health checks...[39m
+2026-08-13 15:14:21:1421 [37mdebug[39m: [37m[ConnectionPool] Acquired connection conn-1786626561846-2004w67pv[39m
+2026-08-13 15:14:21:1421 [37mdebug[39m: [37m[ConnectionPool] Health check complete. Stats:[39m {"total":2,"active":1,"idle":1,"waiting":0,"healthy":2,"unhealthy":0}
+2026-08-13 15:14:21:1421 [37mdebug[39m: [37m[Postgres] Client connected[39m
+2026-08-13 15:14:21:1421 [37mdebug[39m: [37m[ConnectionPool] Released connection conn-1786626561846-2004w67pv[39m
+2026-08-13 15:14:21:1421 [37mdebug[39m: [37m[HealthMonitor] Health check passed (6ms)[39m
+2026-08-13 15:14:38:1438 [35mhttp[39m: [35mPOST /api/method/sessions/4a903468-ba62-4bb2-8fe1-d11446feac71/transition[39m
+2026-08-13 15:14:38:1438 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions/4a903468-ba62-4bb2-8fe1-d11446feac71/transition[39m
+2026-08-13 15:14:38:1438 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/method/sessions/4a903468-ba62-4bb2-8fe1-d11446feac71/transition","dbQueryCount":14,"dbQueryTime":11}
+2026-08-13 15:14:38:1438 [35mhttp[39m: [35mPOST /api/method/sessions/4a903468-ba62-4bb2-8fe1-d11446feac71/transition[39m
+2026-08-13 15:14:38:1438 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions/4a903468-ba62-4bb2-8fe1-d11446feac71/transition[39m
+2026-08-13 15:14:38:1438 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/method/sessions/4a903468-ba62-4bb2-8fe1-d11446feac71/transition","dbQueryCount":14,"dbQueryTime":9}
+2026-08-13 15:14:38:1438 [35mhttp[39m: [35mPOST /api/method/sessions/4a903468-ba62-4bb2-8fe1-d11446feac71/transition[39m
+2026-08-13 15:14:38:1438 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions/4a903468-ba62-4bb2-8fe1-d11446feac71/transition[39m
+2026-08-13 15:14:38:1438 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/method/sessions/4a903468-ba62-4bb2-8fe1-d11446feac71/transition","dbQueryCount":14,"dbQueryTime":8}
+2026-08-13 15:14:38:1438 [35mhttp[39m: [35mPOST /api/method/sessions/4a903468-ba62-4bb2-8fe1-d11446feac71/freeze[39m
+2026-08-13 15:14:38:1438 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions/4a903468-ba62-4bb2-8fe1-d11446feac71/freeze[39m
+2026-08-13 15:14:38:1438 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/method/sessions/4a903468-ba62-4bb2-8fe1-d11446feac71/freeze","dbQueryCount":38,"dbQueryTime":27}
+2026-08-13 15:14:51:1451 [37mdebug[39m: [37m[ConnectionPool] Performing health checks...[39m
+2026-08-13 15:14:51:1451 [37mdebug[39m: [37m[ConnectionPool] Health check complete. Stats:[39m {"total":2,"active":0,"idle":2,"waiting":0,"healthy":2,"unhealthy":0}
+2026-08-13 15:14:51:1451 [37mdebug[39m: [37m[ConnectionPool] Acquired connection conn-1786626561846-2004w67pv[39m
+2026-08-13 15:14:51:1451 [37mdebug[39m: [37m[ConnectionPool] Released connection conn-1786626561846-2004w67pv[39m
+2026-08-13 15:14:51:1451 [37mdebug[39m: [37m[HealthMonitor] Health check passed (0ms)[39m
+2026-08-13 15:14:59:1459 [35mhttp[39m: [35mPOST /api/method/sessions/4a903468-ba62-4bb2-8fe1-d11446feac71/freeze[39m
+2026-08-13 15:14:59:1459 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/method/sessions/4a903468-ba62-4bb2-8fe1-d11446feac71/freeze[39m
+2026-08-13 15:14:59:1459 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/method/sessions/4a903468-ba62-4bb2-8fe1-d11446feac71/freeze","dbQueryCount":26,"dbQueryTime":19}
+2026-08-13 15:15:12:1512 [32minfo[39m: [32m[Shutdown] Received SIGTERM, initiating graceful shutdown...[39m
+2026-08-13 15:15:12:1512 [32minfo[39m: [32m[Shutdown] Process context:[39m {"pid":58324,"ppid":58323,"platform":"darwin","node":"v24.12.0","cwd":"/Users/piotrwisniewski/.codex/worktrees/mac-p0d-a9/server","uptimeSeconds":368,"argv":["/usr/local/bin/node","/Users/piotrwisniewski/.codex/worktrees/mac-p0d-a9/server/src/index.ts"],"env":{"NODE_ENV":"test","PORT":"41560","DB_TYPE":"postgres"},"memory":{"rss":559562752,"heapTotal":344113152,"heapUsed":334576960,"external":7432991}}
+2026-08-13 15:15:12:1512 [32minfo[39m: [32m[Shutdown] HTTP server closed[39m
+2026-08-13 15:15:12:1512 [32minfo[39m: [32m[Shutdown] Health check interval cleared[39m
+2026-08-13 15:15:12:1512 [32minfo[39m: [32m[Shutdown] BullMQ queue closed[39m
+2026-08-13 15:15:12:1512 [32minfo[39m: [32m[HealthMonitor] Stopping[39m
+2026-08-13 15:15:12:1512 [32minfo[39m: [32m[ConnectionPool] Shutting down...[39m
+2026-08-13 15:15:12:1512 [32minfo[39m: [32m[Postgres] Closing connection pool...[39m
+2026-08-13 15:15:12:1512 [32minfo[39m: [32m[ConnectionPool] Shutdown complete[39m
+2026-08-13 15:15:12:1512 [32minfo[39m: [32m[Database] Connection pool shutdown complete[39m
+2026-08-13 15:15:12:1512 [32minfo[39m: [32m[Shutdown] Database connection pool closed[39m
+2026-08-13 15:15:12:1512 [32minfo[39m: [32m[Shutdown] Graceful shutdown initiated by SIGTERM with 10000ms timeout[39m
+2026-08-13 15:15:12:1512 [32minfo[39m: [32m[Shutdown] Graceful shutdown complete[39m
+2026-08-13 15:15:12:1512 [32minfo[39m: [32m[Process] exit[39m {"code":0,"pid":58324,"uptimeSeconds":368}

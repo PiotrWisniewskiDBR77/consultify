@@ -1,0 +1,9 @@
+
+  VITE v6.4.3  ready in 251 ms
+
+  ➜  Local:   http://localhost:41570/
+  ➜  Network: http://192.168.68.59:41570/
+Browserslist: browsers data (caniuse-lite) is 8 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+[BABEL] Note: The code generator has deoptimised the styling of /Users/piotrwisniewski/.codex/worktrees/mac-p0d-a9/dev-render/.vite-cache/deps/react-dom_client.js?v=2ed87e60 as it exceeds the max of 500KB.

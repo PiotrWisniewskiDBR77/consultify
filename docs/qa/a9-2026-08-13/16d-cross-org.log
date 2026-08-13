@@ -1,0 +1,72 @@
+=== TEST 16d: cross-organization — a9-user-2 (org a9-org-2) probuje odczytac sesje org a9-org ===
+HTTP/1.1 403 Forbidden
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Resource-Policy: same-site
+Origin-Agent-Cluster: ?1
+Referrer-Policy: strict-origin-when-cross-origin
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+X-Content-Type-Options: nosniff
+X-DNS-Prefetch-Control: off
+X-Download-Options: noopen
+X-Frame-Options: DENY
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 0
+Vary: Origin, Accept-Encoding
+Access-Control-Allow-Credentials: true
+X-Correlation-ID: 74d46b39-f1d8-4b6c-aee5-9ddeed886ecf
+Content-Type: application/json; charset=utf-8
+Content-Length: 56
+ETag: W/"38-z/J9eqUypCQ8Ry2iwQRyfUxsnRQ"
+Date: Thu, 13 Aug 2026 13:13:54 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"error":"Session does not belong to this organization"}
+=== TEST 16d.2: cross-org GET Output ===
+HTTP/1.1 404 Not Found
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Resource-Policy: same-site
+Origin-Agent-Cluster: ?1
+Referrer-Policy: strict-origin-when-cross-origin
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+X-Content-Type-Options: nosniff
+X-DNS-Prefetch-Control: off
+X-Download-Options: noopen
+X-Frame-Options: DENY
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 0
+Vary: Origin, Accept-Encoding
+Access-Control-Allow-Credentials: true
+X-Correlation-ID: 7e4eab27-6eae-4d63-a7ed-0d14fd050edc
+Content-Type: application/json; charset=utf-8
+Content-Length: 28
+ETag: W/"1c-50qk4FZf5kXzGSSI5E3tzIDQM2E"
+Date: Thu, 13 Aug 2026 13:13:54 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"error":"Output not found"}
+=== TEST 16d.3: cross-org GET packs (musi zwrocic PUSTA liste, nie packi org a9-org) ===
+HTTP/1.1 200 OK
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Resource-Policy: same-site
+Origin-Agent-Cluster: ?1
+Referrer-Policy: strict-origin-when-cross-origin
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+X-Content-Type-Options: nosniff
+X-DNS-Prefetch-Control: off
+X-Download-Options: noopen
+X-Frame-Options: DENY
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 0
+Vary: Origin, Accept-Encoding
+Access-Control-Allow-Credentials: true
+X-Correlation-ID: 3653c2cd-81ca-4a57-9d3e-89ecf4b8c7f3
+Content-Type: application/json; charset=utf-8
+Content-Length: 12
+ETag: W/"c-lTJL1ko/d8QAUmG07A11nGiQ4bk"
+Date: Thu, 13 Aug 2026 13:13:54 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"packs":[]}
