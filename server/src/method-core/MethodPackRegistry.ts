@@ -61,6 +61,31 @@ function toRecord(row: MethodPackRow): MethodPackRecord {
   };
 }
 
+/**
+ * ★ Bezpieczne sortowanie po dacie — malejąco, tiebreak po id.
+ *
+ * `pg` zwraca kolumnę `timestamp` jako natywny `Date`, MIMO że typ w TS mówi
+ * `string`. Wywołanie `.localeCompare()` na takiej wartości rzuca
+ * `TypeError: b.createdAt.localeCompare is not a function` — i to nie na
+ * mocku, tylko dopiero na realnym Postgresie.
+ *
+ * Ten defekt wywracał `GET /api/method/packs` (Library) z HTTP 500. Znalazł go
+ * agent S2 przy okazji zupełnie innej pracy; identyczna pułapka wystąpiła
+ * niezależnie w `method-core.routes.ts` (tam naprawiona jako
+ * `compareByCreatedAt`). Reszta repo omija problem sortując po `id`.
+ *
+ * Dlatego: normalizuj przez `new Date(...)`, nigdy nie zakładaj stringa.
+ */
+function compareByCreatedAtDesc(
+  a: { readonly createdAt: unknown; readonly id: string },
+  b: { readonly createdAt: unknown; readonly id: string }
+): number {
+  const aTime = new Date(a.createdAt as string | Date).getTime();
+  const bTime = new Date(b.createdAt as string | Date).getTime();
+  if (aTime !== bTime) return bTime - aTime;
+  return a.id.localeCompare(b.id);
+}
+
 export class MethodPackRegistry {
   /**
    * Registers a pack/version. Re-registering the SAME (organizationId,
@@ -139,9 +164,7 @@ export class MethodPackRegistry {
       `SELECT * FROM method_packs WHERE organization_id = ?`,
       [organizationId]
     );
-    return rows
-      .map(toRecord)
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || a.id.localeCompare(b.id));
+    return rows.map(toRecord).sort(compareByCreatedAtDesc);
   }
 
   /** Only `released` and `pilot` packs may start a new production session. */
