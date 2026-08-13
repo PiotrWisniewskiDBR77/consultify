@@ -20,8 +20,9 @@
  * cannot proceed.
  */
 import { spawnSync } from 'child_process';
+import nodeFs from 'fs';
 import path from 'path';
-import { pathToFileURL } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 
 import { Pool } from 'pg';
 
@@ -37,6 +38,28 @@ import {
   assertNoForbiddenFlags,
 } from '../src/services/releaseGate/gateContract.js';
 import { resolveBuildSha } from '../src/config/buildSha.js';
+
+function firstExistingDir(candidates: string[]): string | null {
+  for (const c of candidates) {
+    try {
+      if (nodeFs.existsSync(c) && nodeFs.statSync(c).isDirectory()) return c;
+    } catch {
+      /* keep looking */
+    }
+  }
+  return null;
+}
+
+function firstExistingFile(candidates: string[]): string | null {
+  for (const c of candidates) {
+    try {
+      if (nodeFs.existsSync(c) && nodeFs.statSync(c).isFile()) return c;
+    } catch {
+      /* keep looking */
+    }
+  }
+  return null;
+}
 
 export interface GateFinding {
   check: string;
@@ -124,8 +147,22 @@ async function main() {
   const argv = process.argv.slice(2);
   assertNoForbiddenFlags(argv);
 
-  const repoRoot = process.cwd();
-  const migrationsDir = path.resolve(repoRoot, 'server/migrations');
+  // Resolve everything relative to THIS FILE, not to process.cwd().
+  //
+  // The production image sets `WORKDIR /app/server` (Dockerfile.api) while migrations live at
+  // /app/server/migrations, so a cwd-relative `server/migrations` would resolve to
+  // /app/server/server/migrations — a path that does not exist. Locating from __dirname works
+  // in both layouts: repo (server/scripts/ -> ../migrations) and image (dist/scripts/ -> ../../migrations).
+  const selfDir = path.dirname(fileURLToPath(import.meta.url));
+  const migrationsDir = firstExistingDir([
+    path.resolve(selfDir, '../migrations'), // repo: server/scripts -> server/migrations
+    path.resolve(selfDir, '../../migrations'), // image: dist/scripts -> /app/server/migrations
+    path.resolve(process.cwd(), 'server/migrations'), // repo root invocation
+    path.resolve(process.cwd(), 'migrations'),
+  ]);
+  if (!migrationsDir) {
+    throw new Error('Could not locate the migrations directory from the release gate.');
+  }
 
   process.env.DB_TYPE = 'postgres';
   const resolved = resolveReachableDatabaseUrl({
@@ -142,11 +179,24 @@ async function main() {
   console.log(`[release-gate] build sha: ${resolveBuildSha()}`);
 
   // ---- 1. run the FULL chain, strict, no forbidden flags -------------------------------------
-  const runner = process.env.RELEASE_GATE_MIGRATOR
-    ? process.env.RELEASE_GATE_MIGRATOR
-    : path.resolve(repoRoot, 'server/scripts/migrate.postgres.ts');
+  // Default to the migrator that actually SHIPS in this layout. The production image copies only
+  // compiled dist/ — no raw .ts — so defaulting to the .ts runner would fail with "file not found"
+  // even once the gate itself is built. Prefer the compiled sibling, fall back to the source.
+  const runner =
+    process.env.RELEASE_GATE_MIGRATOR ||
+    firstExistingFile([
+      path.resolve(selfDir, 'migrate.postgres.js'), // image: dist/scripts/migrate.postgres.js
+      path.resolve(selfDir, 'migrate.postgres.ts'), // repo: server/scripts/migrate.postgres.ts
+    ]) ||
+    path.resolve(selfDir, 'migrate.postgres.ts');
   const useTsx = runner.endsWith('.ts');
-  const cmd = useTsx ? path.resolve(repoRoot, 'node_modules/.bin/tsx') : process.execPath;
+  // tsx only exists in the repo (dev); the image runs the compiled .js with plain node.
+  const cmd = useTsx
+    ? firstExistingFile([
+        path.resolve(selfDir, '../../node_modules/.bin/tsx'),
+        path.resolve(process.cwd(), 'node_modules/.bin/tsx'),
+      ]) || 'tsx'
+    : process.execPath;
   const args = useTsx ? [runner] : [runner];
 
   // eslint-disable-next-line no-console

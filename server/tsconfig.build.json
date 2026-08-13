@@ -43,5 +43,5 @@
     "src/scripts/**",
     "**/*.js"
   ],
-  "include": ["src/**/*", "types/**/*", "scripts/migrate.postgres.ts"]
+  "include": ["src/**/*", "types/**/*", "scripts/migrate.postgres.ts", "scripts/release-migration-gate.ts"]
 }
