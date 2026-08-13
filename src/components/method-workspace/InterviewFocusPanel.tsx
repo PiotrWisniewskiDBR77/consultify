@@ -184,12 +184,17 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
               </label>
             </span>
             <span
+              // Kanon TOOL_SESSION_WORKSPACE_STANDARD §7: czerwień WYŁĄCZNIE dla
+              // blockera. `weak` i `missing` to ostrzeżenia (amber) — brak dowodu
+              // nie jest błędem użytkownika. Czerwień zostaje tylko dla
+              // `conflicting`, bo sprzeczne dowody blokują freeze do rozstrzygnięcia
+              // (ASSESSMENT_EVIDENCE_AND_SCORING_CONTRACT.md §6, rozbieżność).
               className={`shrink-0 rounded-full px-2 py-0.5 font-medium ${
                 q.evidenceState === 'complete'
                   ? 'bg-c-success/10 text-c-success'
-                  : q.evidenceState === 'missing'
-                    ? 'bg-c-warning/10 text-c-warning'
-                    : 'bg-c-danger/10 text-c-danger'
+                  : q.evidenceState === 'conflicting'
+                    ? 'bg-c-danger/10 text-c-danger'
+                    : 'bg-c-warning/10 text-c-warning'
               }`}
             >
               {EVIDENCE_LABEL[q.evidenceState]}
