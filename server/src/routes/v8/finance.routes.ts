@@ -131,7 +131,6 @@ import { getFinanceDashboard } from '../../services/v8/financeIntegrationService
 import { listValuations } from '../../services/valuationService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
-import logger from '../../utils/Logger.js';
 
 const router = Router();
 
@@ -392,7 +391,6 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const models = await listModels(organizationId);
-    logger.info('[finance:models] runtime readback', { organizationId, count: models.length });
     return res.json({
       data: { models, count: models.length },
       meta: financeMeta(),

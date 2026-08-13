@@ -731,7 +731,7 @@ const attachUser = async (
       : isDemoHeader && (validatedDemoSessionOrgId || fallbackDemoSessionOrgId)
         ? validatedDemoSessionOrgId || fallbackDemoSessionOrgId
         : isDemoHeader
-          ? DEMO_ORG_ID
+          ? tokenOrganizationId || DEMO_ORG_ID
           : tokenOrganizationId;
   let resolvedUserRole =
     readOptionalStringClaim(decodedClaims, 'role') ||

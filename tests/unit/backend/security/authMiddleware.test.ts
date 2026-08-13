@@ -600,6 +600,42 @@ describe('verifyToken (L1)', () => {
     expect(req.userId).toBe('nobearer-user');
   });
 
+  it('keeps an authenticated internal user in the token organization on the demo host', async () => {
+    const dbGet = vi.fn().mockImplementation(async (sql: string, params: unknown[]) => {
+      if (sql.includes('FROM organization_members')) {
+        return { status: 'ACTIVE', role: 'OWNER', organization_id: params[1] };
+      }
+      return undefined;
+    });
+    setDependencies({
+      jwt: jwt.default || jwt,
+      config: { JWT_SECRET: jwtSecret },
+      PermissionService: { can: () => true },
+      dbGet,
+    });
+    const token = (jwt.default || (jwt as any)).sign(
+      {
+        id: 'internal-owner',
+        email: 'owner@example.com',
+        role: 'OWNER',
+        organizationId: 'canonical-org-uuid',
+      },
+      jwtSecret,
+      { expiresIn: '1h' }
+    );
+    const req = mockReq({
+      headers: { authorization: `Bearer ${token}` },
+      get: (name: string) => (name.toLowerCase() === 'x-demo-mode' ? 'true' : undefined),
+    });
+    const res = mockRes();
+    const next = vi.fn();
+
+    await verifyToken(req, res, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(req.organizationId).toBe('canonical-org-uuid');
+  });
+
   it('rejects token issued before a revoke-all marker', async () => {
     const iatSec = Math.floor(Date.now() / 1000) - 10; // issued 10s ago
     const tokenIssuedAt = iatSec * 1000;

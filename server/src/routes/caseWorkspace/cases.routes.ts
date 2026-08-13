@@ -20,7 +20,6 @@ import { Router } from 'express';
 import { z } from 'zod';
 
 import * as svc from '../../services/caseWorkspace/caseCoreService.js';
-import logger from '../../utils/Logger.js';
 import { requireCaseAccessForActor, requireOrgMemberForActor } from './_shared/access.js';
 import { caseWorkspaceHandler } from './_shared/handler.js';
 import { parseBody, parseParams, parseQuery } from './_shared/validate.js';
@@ -92,11 +91,6 @@ router.get(
     const query = parseQuery(listCasesQuery, req.query);
     await requireOrgMemberForActor(actor);
     const items = await svc.listCasesForOrganization(actor.organizationId, query, actor.actorUserId);
-    logger.info('[case-workspace:list] runtime readback', {
-      organizationId: actor.organizationId,
-      actorUserId: actor.actorUserId,
-      count: items.length,
-    });
     res.status(200).json({ data: items });
   })
 );
