@@ -59,6 +59,7 @@ describe.skipIf(!REAL_DB)('Method Kernel — roles/approvals HTTP surface (S2) �
   let ownerToken = '';
   let approverToken = '';
   let otherOrgToken = '';
+  let respondentToken = '';
 
   beforeAll(async () => {
     if (!REAL_DB) {
@@ -98,6 +99,7 @@ describe.skipIf(!REAL_DB)('Method Kernel — roles/approvals HTTP surface (S2) �
     ownerToken = sign(OWNER, ORG);
     approverToken = sign(APPROVER, ORG);
     otherOrgToken = sign(OTHER_ORG_USER, OTHER_ORG);
+    respondentToken = sign(RESPONDENT, ORG);
 
     const { methodPackRegistry } = await import('../MethodPackRegistry.js');
     await methodPackRegistry.register({
@@ -530,6 +532,96 @@ describe.skipIf(!REAL_DB)('Method Kernel — roles/approvals HTTP surface (S2) �
       [sessionId, RESPONDENT]
     );
     expect(historyRows.rows).toHaveLength(1);
+  });
+
+  // ===========================================================================
+  // Hard rule #8 — roster management is owner/lead_assessor only, EXCEPT
+  // self-declaring into a non-power role (S2 gap closed 2026-08-13; see
+  // method-core.routes.ts's comment on this gate for the HTTP-500 postmortem)
+  // ===========================================================================
+
+  it('R8a. [DENY] an org member with no role on this session cannot grant a role to someone else', async () => {
+    const sessionId = await createSession(ownerToken);
+    // APPROVER exists in this org (has a valid token) but holds no role on
+    // THIS particular session — a stranger to this session's roster.
+    const res = await assignRoleHttp(sessionId, approverToken, RESPONDENT, 'respondent');
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBe('role_management_forbidden');
+
+    const row = await pool.query(
+      `SELECT 1 FROM method_session_roles WHERE session_id = $1 AND user_id = $2`,
+      [sessionId, RESPONDENT]
+    );
+    expect(row.rows).toHaveLength(0);
+  });
+
+  it('R8b. [DENY] a respondent cannot grant a role to another user', async () => {
+    const sessionId = await createSession(ownerToken);
+    await assignRoleHttp(sessionId, ownerToken, RESPONDENT, 'respondent');
+
+    const res = await assignRoleHttp(sessionId, respondentToken, APPROVER, 'evidence_owner');
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBe('role_management_forbidden');
+
+    const row = await pool.query(
+      `SELECT 1 FROM method_session_roles WHERE session_id = $1 AND user_id = $2`,
+      [sessionId, APPROVER]
+    );
+    expect(row.rows).toHaveLength(0);
+  });
+
+  it('R8c. [ALLOW] owner and a delegated lead_assessor can both manage the roster', async () => {
+    const sessionId = await createSession(ownerToken);
+
+    // owner grants a role to someone else (not self) — plain roster mgmt.
+    const ownerGrant = await assignRoleHttp(sessionId, ownerToken, RESPONDENT, 'respondent');
+    expect(ownerGrant.status).toBe(201);
+
+    // owner delegates lead_assessor to APPROVER (not a self-assignment, and
+    // lead_assessor is not in POWER_ROLES, so this is unconditionally legal).
+    const delegate = await assignRoleHttp(sessionId, ownerToken, APPROVER, 'lead_assessor');
+    expect(delegate.status).toBe(201);
+
+    // APPROVER now holds lead_assessor on this session — the gate must
+    // recognize that standing too, not just 'owner'. Grant a role to a
+    // THIRD party (OWNER) — neither the actor nor a self-assignment, so
+    // this only passes if APPROVER's lead_assessor standing is honored.
+    const res = await assignRoleHttp(sessionId, approverToken, OWNER, 'evidence_owner');
+    expect(res.status).toBe(201);
+    expect(res.body.inserted).toBe(true);
+  });
+
+  it('R8d. [ALLOW] self-declaring into a non-power role succeeds even without owner/lead_assessor standing', async () => {
+    const sessionId = await createSession(ownerToken);
+    // RESPONDENT holds no role at all on this session yet — proves the
+    // exception is unconditional participation, not "owner self-assigning
+    // more roles on top of what they already hold".
+    const res = await assignRoleHttp(sessionId, respondentToken, RESPONDENT, 'observer');
+    expect(res.status).toBe(201);
+    expect(res.body.inserted).toBe(true);
+
+    const row = await pool.query(
+      `SELECT 1 FROM method_session_roles WHERE session_id = $1 AND user_id = $2 AND role = 'observer'`,
+      [sessionId, RESPONDENT]
+    );
+    expect(row.rows).toHaveLength(1);
+  });
+
+  it('R8e. [DENY] self-promotion to approver is refused even for an actor with no owner/lead_assessor standing', async () => {
+    const sessionId = await createSession(ownerToken);
+    await assignRoleHttp(sessionId, ownerToken, RESPONDENT, 'respondent');
+
+    // Self-elevation (hard rule #1) must fire BEFORE the roster-management
+    // gate even considers this actor's standing — same refusal shape as R1a.
+    const res = await assignRoleHttp(sessionId, respondentToken, RESPONDENT, 'approver');
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBe('self_elevation_forbidden');
+
+    const row = await pool.query(
+      `SELECT 1 FROM method_session_roles WHERE session_id = $1 AND user_id = $2 AND role = 'approver'`,
+      [sessionId, RESPONDENT]
+    );
+    expect(row.rows).toHaveLength(0);
   });
 
   // ===========================================================================
