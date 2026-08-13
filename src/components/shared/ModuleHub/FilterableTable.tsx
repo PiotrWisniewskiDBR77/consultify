@@ -899,6 +899,32 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                 sortedData.map((row) => (
                   <tr
                     key={row.id}
+                    // DOSTĘPNOŚĆ KLAWIATURY — wiersz jest interaktywny, więc musi
+                    // być osiągalny Tabem i obsługiwać Enter/Spację.
+                    //
+                    // Do tej pory `<tr>` miał wyłącznie `onClick`: otwarcie
+                    // podglądu było możliwe TYLKO myszą, w każdym module tej
+                    // aplikacji naraz. Kanon TRIADA (część B, punkty 41-43)
+                    // wymaga pełnego cyklu Tab przez wszystkie interaktywne
+                    // elementy — to nie jest rozszerzenie standardu, tylko
+                    // doprowadzenie kodu do niego.
+                    //
+                    // `tabIndex` dostają wyłącznie wiersze, które faktycznie coś
+                    // robią. Wiersz bez handlera zostaje nieinteraktywny, żeby
+                    // nie zaśmiecać kolejności fokusa pustymi przystankami.
+                    tabIndex={onRowClick || onRowDoubleClick ? 0 : undefined}
+                    role={onRowClick ? 'button' : undefined}
+                    onKeyDown={(event) => {
+                      if (!onRowClick && !onRowDoubleClick) return;
+                      // Spacja przewija stronę, jeśli jej nie zatrzymać.
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        // Klawisz na kontrolce wewnątrz wiersza (przycisk,
+                        // checkbox, kebab) należy do niej, nie do wiersza.
+                        if (event.target !== event.currentTarget) return;
+                        event.preventDefault();
+                        onRowClick?.(row);
+                      }
+                    }}
                     onClick={() => onRowClick?.(row)}
                     onDoubleClick={() => onRowDoubleClick?.(row)}
                     onContextMenu={

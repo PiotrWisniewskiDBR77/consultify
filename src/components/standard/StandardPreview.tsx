@@ -279,6 +279,27 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
   const { t, i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
 
+  // ESCAPE ZAMYKA PODGLĄD — kanon TRIADA (część B, punkt 42): „Esc zamyka
+  // aktywny element warstwowy, najbardziej lokalny wygrywa".
+  //
+  // Do tej pory podglądu nie dało się zamknąć klawiaturą w ŻADNYM module —
+  // jedyną drogą był klik w „×". Razem z brakiem fokusowalnych wierszy
+  // oznaczało to, że cała ścieżka „otwórz podgląd → zamknij" była niedostępna
+  // dla osoby pracującej klawiaturą.
+  //
+  // Nasłuch jest w fazie bąbelkowania i sprawdza `defaultPrevented`, więc
+  // warstwa bardziej lokalna (modal, popover, menu kebaba) ma pierwszeństwo:
+  // jeśli już obsłużyła Escape, podgląd go nie przechwytuje.
+  React.useEffect(() => {
+    if (!onClose) return undefined;
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || event.defaultPrevented) return;
+      onClose();
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [onClose]);
+
   // Blok 3 — kebab Details: Copy / Export / Pobierz (żelazny zestaw).
   const detailsActions: DetailsAction[] | undefined = details
     ? [
