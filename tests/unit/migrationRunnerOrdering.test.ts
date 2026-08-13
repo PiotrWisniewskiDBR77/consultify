@@ -3,7 +3,12 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { __runnerOrderingInternalsForTests as R } from '../../server/scripts/migrate.postgres.js';
+import {
+  LATE_PHASE_MANIFEST,
+  compareMigrationOrder,
+  phaseAndKeyFor,
+  sortMigrationsDeterministically,
+} from '../../server/scripts/migrationOrdering.js';
 
 /**
  * GATE I1 — test porządkowania migracji.
@@ -30,14 +35,23 @@ const CONSOLIDATED_CONSUMER = '948_tool_promotion_tenant_idempotency.sql';
 
 type Migration = { filename: string; version: string };
 
-/** Buduje listę migracji tak, jak robi to runner. */
+/**
+ * Listuje migracje dokładnie tak, jak robi to runner w `getAllMigrations()`:
+ * te same rozszerzenia i to samo wstępne `.sort()`. Sama funkcja runnera
+ * została w pliku wykonywalnym, bo robi I/O i liczy sumy kontrolne — tutaj
+ * testujemy KOLEJNOŚĆ, a ta pochodzi z wydzielonego, czystego modułu.
+ */
 function allMigrations(): Migration[] {
-  return R.getAllMigrations(MIGRATIONS_DIR) as Migration[];
+  return fs
+    .readdirSync(MIGRATIONS_DIR)
+    .filter((f) => f.endsWith('.sql') || f.endsWith('.js') || f.endsWith('.ts'))
+    .sort()
+    .map((filename) => ({ filename, version: (filename.match(/^(\d{3})/) ?? [, ''])[1] ?? '' }));
 }
 
 function orderedFilenames(extra: Migration[] = [], omit: string[] = []): string[] {
   const base = allMigrations().filter((m) => !omit.includes(m.filename));
-  return R.sortMigrationsDeterministically([...base, ...extra]).map(
+  return sortMigrationsDeterministically([...base, ...extra]).map(
     (m: Migration) => m.filename
   );
 }
@@ -47,7 +61,7 @@ function indexOf(list: string[], name: string): number {
 }
 
 describe('GATE I1 — LATE_PHASE_MANIFEST', () => {
-  const manifest: string[] = R.LATE_PHASE_MANIFEST;
+  const manifest: string[] = LATE_PHASE_MANIFEST;
 
   // 1 + 3: każdy wpis istnieje na dysku (brak fantomu)
   it('każdy wpis manifestu wskazuje istniejący plik', () => {
@@ -77,7 +91,7 @@ describe('GATE I1 — LATE_PHASE_MANIFEST', () => {
 
   it('wpis manifestu faktycznie ląduje w fazie 2', () => {
     manifest.forEach((f) => {
-      const { phase } = R.phaseAndKeyFor({ filename: f, version: '' });
+      const { phase } = phaseAndKeyFor({ filename: f, version: '' });
       expect(phase, `${f} powinien być w fazie 2, jest w ${phase}`).toBe(2);
     });
   });
@@ -178,7 +192,7 @@ describe('GATE I1 — kontrole negatywne', () => {
     const fake = '948_tool_promotion_tenant_idempotenc.sql'; // literówka
     expect(fs.existsSync(path.join(MIGRATIONS_DIR, fake))).toBe(false);
     // Runner nie zgłosiłby błędu — plik po prostu nie trafiłby do fazy 2.
-    const { phase } = R.phaseAndKeyFor({ filename: fake, version: '948' });
+    const { phase } = phaseAndKeyFor({ filename: fake, version: '948' });
     expect(phase, 'fantomowa nazwa nie jest w manifeście, więc ląduje w fazie 0').toBe(0);
   });
 
@@ -187,10 +201,10 @@ describe('GATE I1 — kontrole negatywne', () => {
     // Symulujemy brak wpisu, pytając o plik o tym samym numerze, którego
     // w manifeście nie ma — numer sam w sobie daje fazę 0.
     const notInManifest = '948_probe_not_in_manifest.sql';
-    const probe = R.phaseAndKeyFor({ filename: notInManifest, version: '948' });
+    const probe = phaseAndKeyFor({ filename: notInManifest, version: '948' });
     expect(probe.phase).toBe(0);
 
-    const producer = R.phaseAndKeyFor({ filename: CANONICAL_PRODUCER, version: '' });
+    const producer = phaseAndKeyFor({ filename: CANONICAL_PRODUCER, version: '' });
     expect(producer.phase).toBe(1);
 
     // Faza 0 < faza 1 → konsument wyprzedziłby producenta. To jest dokładnie
@@ -199,9 +213,9 @@ describe('GATE I1 — kontrole negatywne', () => {
   });
 
   it('to obecność DOKŁADNEJ nazwy w manifeście przesuwa plik do fazy 2', () => {
-    const manifest: string[] = R.LATE_PHASE_MANIFEST;
+    const manifest: string[] = LATE_PHASE_MANIFEST;
     if (manifest.includes(CONSOLIDATED_CONSUMER)) {
-      expect(R.phaseAndKeyFor({ filename: CONSOLIDATED_CONSUMER, version: '948' }).phase).toBe(2);
+      expect(phaseAndKeyFor({ filename: CONSOLIDATED_CONSUMER, version: '948' }).phase).toBe(2);
     } else {
       expect(
         false,
