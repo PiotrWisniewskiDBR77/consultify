@@ -207,6 +207,23 @@ const PROMOTED_LEGACY_PRODUCERS: string[] = [
 ];
 const PROMOTED_LEGACY_SET = new Set(PROMOTED_LEGACY_PRODUCERS);
 
+// Same-day Case Workspace migrations have real FK dependencies that their
+// filenames do not encode. Keep this explicit topological order inside the
+// dated phase; unlisted files retain their normal filename tie-breaker.
+const DATED_SAME_DAY_ORDER: Record<string, number> = {
+  '20260809_case_workspace_case_core.sql': 0,
+  '20260809_case_workspace_capability_registry.sql': 1,
+  '20260809_case_workspace_case_plan_version.sql': 2,
+  '20260809_case_workspace_run_binding.sql': 3,
+  '20260809_case_workspace_proposals_approvals.sql': 4,
+  '20260809_case_workspace_wait_subscription.sql': 5,
+  '20260809_case_workspace_history_value.sql': 6,
+  '20260809_case_workspace_plays.sql': 7,
+  '20260809_case_workspace_artifact_links.sql': 8,
+  '20260809_case_workspace_execution_graph.sql': 9,
+  '20260809_case_workspace_migration_readiness.sql': 10,
+};
+
 // Two kinds of producer/consumer inversion that phase + numeric/date sort
 // alone cannot fix, because they invert relative to their OWN phase's sort
 // key (not just the numbered-vs-dated phase boundary already handled above):
@@ -304,7 +321,10 @@ function phaseAndKeyFor(m: Migration): { phase: number; key: string } {
   const dated = f.match(DATED_RE);
   if (dated) {
     const [, y, mo, d] = dated;
-    return { phase: 1, key: `${y}${mo}${d}_${f}` };
+    const tiebreaker = Object.prototype.hasOwnProperty.call(DATED_SAME_DAY_ORDER, f)
+      ? String(DATED_SAME_DAY_ORDER[f]).padStart(6, '0')
+      : f;
+    return { phase: 1, key: `${y}${mo}${d}_${tiebreaker}` };
   }
   return { phase: 3, key: f };
 }
