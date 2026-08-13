@@ -6558,7 +6558,10 @@
   "assessment": {
     "hub": {
       "errors": {
-        "load": "Nie udało się załadować ocen"
+        "load": "Nie udało się załadować ocen",
+        "forbidden": "Brak dostępu do tych danych ocen.",
+        "notFound": "Nie znaleziono danych ocen.",
+        "server": "Serwer miał problem z wczytaniem ocen. Spróbuj ponownie."
       },
       "createFailed": "Nie udało się utworzyć assessmentu",
       "missingId": "Brak identyfikatora assessmentu",
