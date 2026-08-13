@@ -15,6 +15,7 @@
  */
 
 import type { ToolType } from '@/store/useToolStore';
+import type { RuntimeReadinessManifest } from './runtimeReadiness';
 
 /** Stan TREŚCI — czy narzędzie ma kompletny, zweryfikowany opis i Pack. */
 export type PackContentStatus =
@@ -160,6 +161,52 @@ export interface PackLibraryContent {
   license: Evidenced<string>;
 }
 
+/**
+ * Wiązanie packa z realnym kodem metody.
+ *
+ * Pytania w packu są INDEKSEM STERUJĄCYM fazami, a nie kopią banku pytań.
+ * Realny bank (np. drabinka 4 ćwiartki × 4 poziomy w Dynamic SWOT) żyje
+ * w `src/config/<tool>/`. Ta relacja musi być zakodowana i testowalna,
+ * inaczej „pack kompletny" znaczyłoby „ma pięć pytań".
+ */
+export interface PackEngineBinding {
+  /** Katalog silnika, np. `src/config/swot`. */
+  engineDir: string;
+  /** Moduł banku pytań będącego źródłem drabinki. */
+  questionBankModule: string;
+  /** Ile węzłów bank musi mieć — weryfikowane testem wobec realnego modułu. */
+  expectedQuestionNodeCount: number;
+  /** Które fazy packa są obsługiwane przez bank (reszta to sterowanie). */
+  bankBackedPhaseIds: string[];
+  /** Komponent renderujący geometrię sygnaturową; brak = renderer generyczny. */
+  rendererComponent: Evidenced<string>;
+}
+
+/**
+ * Rejestr praw i atrybucji. Flaga `license='free'` w bazie jest wyłącznie
+ * flagą produktową i NIE jest dowodem prawnym.
+ */
+export interface PackRightsEntry {
+  methodologyName: string;
+  /** Powszechnie przypisywany autor/organizacja — stwierdzenie o atrybucji. */
+  commonlyAttributedTo: Evidenced<string>;
+  sourceUsed: Evidenced<string>;
+  sourceType:
+    | 'REPO_CANON'
+    | 'ENGINE_DERIVED'
+    | 'AUTHORITATIVE_EXTERNAL_SOURCE'
+    | 'EDITORIAL_DRAFT'
+    | 'EVIDENCE_MISSING';
+  /** Czy w repo reprodukowano cudzą treść. */
+  copiedContent: 'yes' | 'no' | 'UNKNOWN';
+  trademarkNote: Evidenced<string>;
+  /** Nigdy nie wpisujemy automatycznie „Free". */
+  commercialUseStatus: 'LEGAL_REVIEW_REQUIRED' | string;
+  legalReviewStatus: 'LEGAL_REVIEW_REQUIRED' | 'CLEARED';
+  publicationStatus: 'LEGAL_REVIEW_REQUIRED' | 'APPROVED';
+  uncertainty: string;
+}
+
 /** Kompletny Tool Pack. */
 export interface ToolPack {
   // --- identity + wersja + provenance ---
@@ -201,6 +248,20 @@ export interface ToolPack {
   mapping: PackMapping;
   /** Kontrakt konkluzji W2 (CONCLUSION_LAYER_STANDARD). */
   conclusion: PackConclusionContract;
+
+  /**
+   * Wiązanie z realnym silnikiem, bankiem pytań i rendererem.
+   * Opcjonalne w typie, ale WYMAGANE przez walidator dla PACK_COMPLETE —
+   * pack bez wiązania nie udowadnia, że pokrywa realną metodę.
+   */
+  engine?: PackEngineBinding;
+  /** Rejestr praw i atrybucji — WYMAGANY przez walidator dla PACK_COMPLETE. */
+  rights?: PackRightsEntry;
+  /**
+   * Dowód gotowości runtime. Wymagany, by narzędzie mogło być RUNTIME_ACTIVE.
+   * Brak manifestu = brak publikacji, niezależnie od kompletności treści.
+   */
+  runtimeReadiness?: RuntimeReadinessManifest;
 }
 
 /** Minimalny pack — narzędzie bez potwierdzonej merytoryki. */

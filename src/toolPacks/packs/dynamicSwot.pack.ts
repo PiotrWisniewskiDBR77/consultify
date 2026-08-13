@@ -245,6 +245,46 @@ export const dynamicSwotPack: ToolPack = {
       '(attack → wzrost, repair → zdolność, defend → obrona pozycji, protect → ograniczenie ryzyka).',
   },
 
+  /**
+   * Wiązanie z realnym silnikiem.
+   *
+   * WAŻNE ROZRÓŻNIENIE (po review Codexa): pięć pytań w polu `questions` to
+   * NIE jest bank pytań. To indeks sterujący fazami — po jednym pytaniu
+   * ramującym na fazę. Realny bank to DRABINKA POGŁĘBIANIA w
+   * `dynamicSwotQuestionBank.ts`: **17 węzłów**, nie 16. Drabinka nie jest
+   * równa 4×4 — ćwiartka `strengths` ma pięć węzłów, bo poziom s2 rozgałęzia
+   * się na `s2-commercial-proof` i `s2-external-proof` (dwie ścieżki dowodu).
+   * Pozostałe ćwiartki mają po cztery. Drabinka pracuje wewnątrz fazy `swot`.
+   * Liczba jest weryfikowana testem wobec realnego modułu — pierwotnie
+   * zadeklarowano tu 16 i test to wychwycił.
+   */
+  engine: {
+    engineDir: 'src/config/swot',
+    questionBankModule: 'src/config/swot/dynamicSwotQuestionBank.ts',
+    expectedQuestionNodeCount: 17,
+    bankBackedPhaseIds: ['swot'],
+    rendererComponent: 'src/components/DiscoveryTools/tools/DynamicSWOT',
+  },
+
+  rights: {
+    methodologyName: 'SWOT / TOWS',
+    commonlyAttributedTo:
+      'SWOT — powszechnie wiązany ze Stanford Research Institute (lata 60.); ' +
+      'macierz TOWS — Heinz Weihrich (1982). Atrybucja rozproszona, brak jednego właściciela.',
+    sourceUsed: 'knowledge/tool-kb/dynamic-swot/methodology/v1/dynamic-swot-methodology.pl.md',
+    sourceType: 'REPO_CANON',
+    copiedContent: 'no',
+    trademarkNote:
+      'Nie znaleziono znaku towarowego. Źródła metody cytowane w packu leżą w ' +
+      'knowledge/Strategie /*.zip, wykluczonych przez .gitignore:173 — nieweryfikowalne z repo.',
+    commercialUseStatus: 'LEGAL_REVIEW_REQUIRED',
+    legalReviewStatus: 'LEGAL_REVIEW_REQUIRED',
+    publicationStatus: 'LEGAL_REVIEW_REQUIRED',
+    uncertainty:
+      'Flaga bazy license=free jest flagą produktową, nie dowodem prawnym. ' +
+      'Brak noty licencyjnej w repo dla metody bazowej.',
+  },
+
   conclusion: {
     k1FactSource:
       'swotTensionEngine.computeTensions — napięcia, ich liczba i waga liczone deterministycznie ' +

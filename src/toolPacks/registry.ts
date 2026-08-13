@@ -16,8 +16,51 @@
  */
 
 import { evidenceMissingPack, type Bilingual, type SignatureArchetype, type ToolPack } from './contract';
-import { dynamicSwotPack } from './packs/dynamicSwot.pack';
 import type { ToolType } from '@/store/useToolStore';
+
+// --- 19 packów spisanych (Dynamic SWOT + 18 z fali treści) ------------------
+import { dynamicSwotPack } from './packs/dynamicSwot.pack';
+import { marketForcesPack } from './packs/marketForces.pack';
+import { growthPathsPack } from './packs/growthPaths.pack';
+import { valueChainPack } from './packs/valueChain.pack';
+import { portfolioPriorityPack } from './packs/portfolioPriority.pack';
+import { riskUncertaintyPack } from './packs/riskUncertainty.pack';
+import { capabilityMapperPack } from './packs/capabilityMapper.pack';
+import { ambitionDecomposerPack } from './packs/ambitionDecomposer.pack';
+import { focusTradeoffPack } from './packs/focusTradeoff.pack';
+import { narrativeEnginePack } from './packs/narrativeEngine.pack';
+import { a3ProblemSolvingPack } from './packs/a3ProblemSolving.pack';
+import { sopBuilderPack } from './packs/sopBuilder.pack';
+import { smedPlannerPack } from './packs/smedPlanner.pack';
+import { dmsBuilderPack } from './packs/dmsBuilder.pack';
+import { inventoryAutopilotPack } from './packs/inventoryAutopilot.pack';
+import { rpaScannerPack } from './packs/rpaScanner.pack';
+import { aiDiscoveryPack } from './packs/aiDiscovery.pack';
+import { painExplorerPack } from './packs/painExplorer.pack';
+import { processAutomationPack } from './packs/processAutomation.pack';
+
+/** Packi spisane z realnych silników. */
+const AUTHORED_PACKS: ToolPack[] = [
+  dynamicSwotPack,
+  marketForcesPack,
+  growthPathsPack,
+  valueChainPack,
+  portfolioPriorityPack,
+  riskUncertaintyPack,
+  capabilityMapperPack,
+  ambitionDecomposerPack,
+  focusTradeoffPack,
+  narrativeEnginePack,
+  a3ProblemSolvingPack,
+  sopBuilderPack,
+  smedPlannerPack,
+  dmsBuilderPack,
+  inventoryAutopilotPack,
+  rpaScannerPack,
+  aiDiscoveryPack,
+  painExplorerPack,
+  processAutomationPack,
+];
 
 const bi = (pl: string, en: string): Bilingual => ({ pl, en });
 
@@ -95,9 +138,12 @@ function notAuthoredPack(entry: (typeof ENGINE_BACKED)[number]): ToolPack {
   };
 }
 
+const authoredTypes = new Set<string>(AUTHORED_PACKS.map((p) => String(p.toolType)));
+
 export const TOOL_PACKS: ToolPack[] = [
-  dynamicSwotPack,
-  ...ENGINE_BACKED.map(notAuthoredPack),
+  ...AUTHORED_PACKS,
+  // Zaślepki tylko dla tych, których pack nie został jeszcze spisany.
+  ...ENGINE_BACKED.filter((e) => !authoredTypes.has(e.toolType)).map(notAuthoredPack),
   ...NO_EVIDENCE.map((e) =>
     evidenceMissingPack(e.toolType, e.name, e.category, e.archetype, 'COMING_SOON')
   ),

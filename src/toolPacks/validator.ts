@@ -16,6 +16,7 @@ import {
   type Bilingual,
   type ToolPack,
 } from './contract';
+import { evaluateRuntimeReadiness } from './runtimeReadiness';
 
 export type ValidationSeverity = 'error' | 'warning';
 
@@ -77,7 +78,11 @@ const METHOD_FIELDS: Array<keyof ToolPack> = [
   'signatureRationale',
 ];
 
-export function validateToolPack(pack: ToolPack): ValidationResult {
+/**
+ * @param candidateSha SHA, wobec którego weryfikujemy świeżość dowodów runtime.
+ *   Wymagane, by uznać narzędzie za RUNTIME_ACTIVE.
+ */
+export function validateToolPack(pack: ToolPack, candidateSha = ''): ValidationResult {
   const issues: ValidationIssue[] = [];
   const err = (field: string, message: string) =>
     issues.push({ severity: 'error', field, message });
@@ -126,6 +131,86 @@ export function validateToolPack(pack: ToolPack): ValidationResult {
     warn('library.estimatedEffort', 'Czas trwania nieustalony (EVIDENCE_MISSING).');
   }
 
+  // Zbiór id faz — deklarowany PRZED użyciem w walidacji silnika i pytań.
+  const phaseIds = new Set((pack.phases ?? []).map((p) => p.id));
+
+  // --- cel, zastosowania, przeciwwskazania (P1) ---
+  if (looksLikePlaceholder(pack.purpose)) {
+    if (!declaredMissing) err('purpose', 'purpose zawiera EVIDENCE_MISSING w kompletnym packu.');
+  } else if (isBlankBilingual(pack.purpose)) {
+    if (!declaredMissing) err('purpose', 'purpose wymaga treści PL i EN.');
+  }
+  if (!declaredMissing) {
+    if (!Array.isArray(pack.useCases) || pack.useCases.length === 0) {
+      err('useCases', 'Pack musi wymieniać co najmniej jedno zastosowanie.');
+    }
+    if (!Array.isArray(pack.contraindications) || pack.contraindications.length === 0) {
+      err('contraindications', 'Pack musi wymieniać przeciwwskazania — kiedy NIE używać.');
+    }
+  }
+
+  // --- pola każdej fazy (P1) ---
+  (pack.phases ?? []).forEach((phase, i) => {
+    if (!phase.id) err(`phases[${i}].id`, 'Faza bez id.');
+    if (isBlankBilingual(phase.title, 1)) err(`phases[${i}].title`, 'Faza wymaga tytułu PL i EN.');
+    if (isBlankBilingual(phase.goal)) err(`phases[${i}].goal`, 'Faza wymaga celu PL i EN.');
+    (['whatGoodLooksLike', 'evidenceToAskFor', 'completionCriterion'] as const).forEach((f) => {
+      if (isEvidenceMissing(phase[f]) && !declaredMissing) {
+        err(`phases[${i}].${f}`, 'Brak treści fazy w kompletnym packu.');
+      }
+    });
+  });
+
+  // --- pytania: prompt PL/EN + challengeRule (P1) ---
+  (pack.questions ?? []).forEach((q, i) => {
+    if (isBlankBilingual(q.prompt)) {
+      err(`questions[${i}].prompt`, 'Pytanie wymaga treści PL i EN.');
+    }
+    if (isEvidenceMissing(q.challengeRule) && !declaredMissing) {
+      err(`questions[${i}].challengeRule`, 'Pytanie bez reguły challenge nie pogłębia rozmowy.');
+    }
+  });
+
+  // --- wiązanie z silnikiem, bankiem pytań i rendererem (P1) ---
+  if (!declaredMissing) {
+    const engine = pack.engine;
+    if (!engine) {
+      err('engine', 'PACK_COMPLETE wymaga wiązania z silnikiem i bankiem pytań.');
+    } else {
+      if (!engine.engineDir) err('engine.engineDir', 'Brak katalogu silnika.');
+      if (!engine.questionBankModule) {
+        err('engine.questionBankModule', 'Brak modułu banku pytań.');
+      }
+      if (!(engine.expectedQuestionNodeCount > 0)) {
+        err(
+          'engine.expectedQuestionNodeCount',
+          'Pack musi deklarować rozmiar banku pytań — inaczej „kompletny" znaczy „ma pięć pytań".'
+        );
+      }
+      // Fazy obsługiwane przez bank muszą istnieć wśród faz packa.
+      const unknown = (engine.bankBackedPhaseIds ?? []).filter((id) => !phaseIds.has(id));
+      if (unknown.length) {
+        err('engine.bankBackedPhaseIds', `Nieznane fazy: ${unknown.join(', ')}.`);
+      }
+      if (isEvidenceMissing(engine.rendererComponent)) {
+        warn('engine.rendererComponent', 'Brak dedykowanego renderera — geometria generyczna.');
+      }
+    }
+
+    // --- rejestr praw (P1) ---
+    if (!pack.rights) {
+      err('rights', 'PACK_COMPLETE wymaga wpisu Rights/Attribution.');
+    } else {
+      if (!pack.rights.methodologyName) err('rights.methodologyName', 'Brak nazwy metodyki.');
+      if (/^free$/i.test(String(pack.rights.commercialUseStatus ?? ''))) {
+        err(
+          'rights.commercialUseStatus',
+          'Zakaz wpisywania „Free" jako wniosku prawnego — flaga produktowa nie jest dowodem.'
+        );
+      }
+    }
+  }
+
   // --- mechanika ---
   if (!Array.isArray(pack.phases) || pack.phases.length === 0) {
     if (!declaredMissing) err('phases', 'Pack musi definiować co najmniej jedną fazę.');
@@ -135,7 +220,6 @@ export function validateToolPack(pack: ToolPack): ValidationResult {
   }
 
   // Każde pytanie musi wskazywać istniejącą fazę — inaczej sesja się rozjedzie.
-  const phaseIds = new Set((pack.phases ?? []).map((p) => p.id));
   (pack.questions ?? []).forEach((q, i) => {
     if (!phaseIds.has(q.phaseId)) {
       err(`questions[${i}].phaseId`, `Pytanie wskazuje nieistniejącą fazę "${q.phaseId}".`);
@@ -187,14 +271,34 @@ export function validateToolPack(pack: ToolPack): ValidationResult {
   const errors = issues.filter((i) => i.severity === 'error');
   const contentComplete = errors.length === 0 && pack.contentStatus === 'PACK_COMPLETE';
 
-  // BRAMKA: RUNTIME_ACTIVE wymaga kompletnej treści.
-  let publishableAsActive = pack.runtimeStatus === 'RUNTIME_ACTIVE' && contentComplete;
-  if (pack.runtimeStatus === 'RUNTIME_ACTIVE' && !contentComplete) {
-    err(
-      'runtimeStatus',
-      'RUNTIME_ACTIVE bez kompletnego Packa jest zabronione (bramka publikacji).'
-    );
-    publishableAsActive = false;
+  /*
+   * BRAMKA PUBLIKACJI (wzmocniona po review Codexa, P0).
+   *
+   * Kompletna treść to WARUNEK KONIECZNY, nie wystarczający. RUNTIME_ACTIVE
+   * wymaga dodatkowo manifestu gotowości z bramkami PASS, odniesionego do
+   * bieżącego candidate SHA. Poprzednia wersja przepuszczała narzędzie
+   * z zerowym runtime, o ile treść była kompletna.
+   */
+  let publishableAsActive = false;
+  if (pack.runtimeStatus === 'RUNTIME_ACTIVE') {
+    if (!contentComplete) {
+      err('runtimeStatus', 'RUNTIME_ACTIVE bez kompletnego Packa jest zabronione.');
+    }
+    const verdict = evaluateRuntimeReadiness(pack.runtimeReadiness, candidateSha);
+    if (!verdict.publishable) {
+      verdict.failures.forEach((f) => err('runtimeReadiness', f));
+    }
+    publishableAsActive = contentComplete && verdict.publishable;
+  } else if (pack.runtimeReadiness) {
+    // Manifest bez roszczenia do RUNTIME_ACTIVE jest dozwolony (postęp prac),
+    // ale nie wolno mu twierdzić, że wszystko przeszło.
+    const verdict = evaluateRuntimeReadiness(pack.runtimeReadiness, candidateSha);
+    if (verdict.publishable) {
+      warn(
+        'runtimeReadiness',
+        'Wszystkie bramki PASS, ale runtimeStatus nie jest RUNTIME_ACTIVE — do podniesienia po odbiorze.'
+      );
+    }
   }
 
   return {
@@ -216,8 +320,12 @@ function findDuplicates(values: string[]): string[] {
   return [...dup];
 }
 
-/** Waliduje wiele packów i zwraca zbiorcze podsumowanie. */
-export function validateAll(packs: ToolPack[]): {
+/**
+ * Waliduje wiele packów i zwraca zbiorcze podsumowanie.
+ * `candidateSha` przekazujemy jawnie — `packs.map(validateToolPack)` wstawiłoby
+ * indeks tablicy jako SHA i po cichu unieważniło bramkę świeżości dowodów.
+ */
+export function validateAll(packs: ToolPack[], candidateSha = ''): {
   results: ValidationResult[];
   summary: {
     total: number;
@@ -228,7 +336,7 @@ export function validateAll(packs: ToolPack[]): {
     invalid: number;
   };
 } {
-  const results = packs.map(validateToolPack);
+  const results = packs.map((pack) => validateToolPack(pack, candidateSha));
   return {
     results,
     summary: {
