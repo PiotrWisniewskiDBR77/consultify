@@ -141,6 +141,19 @@ API, a sortowanie idzie po `display_name` (`:845`). Kolumna `name` pełni rolę
 wewnętrznego klucza unikalnego (`ON CONFLICT (name)`, `:734`). UI dostaje
 poprawne nazwy prezentacyjne. **Defektu nie ma.**
 
+**L7 — FANTOM: katalog metodyk strategii jest pusty.**
+`src/toolCatalog/strategy/catalog.ts` (25 linii) deklaruje
+`const STRATEGY_TOOL_DOCS: Record<string, string> = {};` — **zero wpisów**.
+Skutki w realnym runtime:
+- `GenericToolDocumentView.tsx:62` — `if (!toolSlug || !hasStrategyToolDoc(...))`
+  zawsze robi wczesny return → widok dokumentu metodyki dla narzędzi na
+  rendererze generycznym **nigdy nie ładuje treści**;
+- `DiscoveryToolsHub.tsx:4835` — gałąź `strategyCatalogSlugs.length > 0`
+  nigdy nie odpala → kategoria „strategia" w menu Dodaj jest martwa.
+
+To pogłębia L4: 15 narzędzi na rendererze generycznym nie ma ani sygnaturowej
+geometrii, ani dokumentacji metodyki.
+
 ## 4. Granice zakresu
 
 **Moje (Tools):** 31 narzędzi powyżej, ich Tool Packi, renderery, mechanika
