@@ -112,9 +112,35 @@ Nie pobrano ani nie skopiowano treści żadnej normy ISO/IATF/VDA.
 Testy DB biegną przeciw realnemu Postgresowi (`RUN_DB_TESTS=1 MOCK_DB=false`);
 bez tych zmiennych suita cicho mockuje bazę i „przechodzi" nic nie sprawdzając.
 
-**Regresja repo:** `npm run test:unit` uruchomiona, **nie zakończyła się przed
-zamknięciem tej sesji** — wynik niepotwierdzony. To otwarta pozycja, nie
-zielone światło.
+### Regresja repo — zmierzona, nie założona
+
+`npm run test:unit` na kandydacie: **242 porażki / 16 117 przejść** (16 555
+testów, 1573 pliki), exit 1.
+
+Sama ta liczba nic nie znaczy, dopóki nie wiadomo, czy dług jest zastany.
+Porównanie jeden do jednego na dwunastu najczęściej padających plikach
+(100 z 242 porażek, 41% całości), identyczna komenda i te same warunki:
+
+| | Test Files | Tests |
+| --- | --- | --- |
+| baseline `origin/demo` @ `f3e7df565e` | 12 failed | **100 failed / 33 passed** |
+| kandydat `acf666ee46` | 12 failed | **100 failed / 33 passed** |
+
+Porównanie nazw padających testów: **198 unikalnych pozycji po obu stronach,
+zero różnic** (`diff` pusty). Padają `queryHelpers`, `useTableViews`,
+`useTableSchema`, `InitiativeController`, `mindmap`, widoki superadmina — nic,
+czego ta praca dotyka. Trafienia na słowo „audit" w porażkach dotyczą
+`AuditEventsViewer`/`AdminAuditLogsView`, czyli platformowego dziennika zdarzeń,
+a nie modułu Audits.
+
+**Wniosek: regresja nie została pogorszona.** Pozostałe 142 porażki poza
+zbadanym podzbiorem nie zostały porównane z baseline — to jedyna niedomknięta
+część tej bramki.
+
+Uwaga metodyczna: pierwsza próba tego pomiaru dała `exit 1` przy **zerze
+uruchomionych testów**, bo `--reporter=basic` nie istnieje w tej wersji vitest.
+Druga próba (dwa ciężkie przebiegi równolegle) została zabita przez system
+(`exit 144`). Dopiero trzecia, sekwencyjna, dała wynik.
 
 ---
 
