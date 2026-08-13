@@ -201,6 +201,30 @@ export const DEFAULT_FLAGS: FeatureFlag[] = [
     allowLocalOverride: true,
   },
   {
+    id: 'auditsFiveSurfacesV1',
+    name: 'Audits: Five-surface Method Hub (Library/Processes/Outputs/Reports/Initiatives)',
+    description:
+      'U7: adds a second, parallel Audits hub — AuditsMethodHub (route ' +
+      '`/audit-programs/method`) — with 5 stable, URL-synced tab ids: library ' +
+      '(audit packs, StandardTable, classification chip — VERIFIED_NORMATIVE/' +
+      'INTERNAL_FRAMEWORK/DEMONSTRATION/LEGACY/EVIDENCE_MISSING), processes ' +
+      '(audit programs — lifecycle, coverage, findings), outputs (finalized, ' +
+      'immutable audit outputs — honest EmptyState until a program is closed), ' +
+      'reports (audit_report/remediation_progress documents), initiatives ' +
+      '(local Proposal Drafts — explicitly NOT registered Initiatives yet). ' +
+      'Library is the default tab; `?tab=` is the source of truth (survives ' +
+      'refresh/back/forward, deep-linkable); unknown `?tab=` resolves to ' +
+      'processes. Does NOT touch the existing single-list AuditsHub.tsx at ' +
+      '`/audit-programs` — that route stays byte-identical regardless of this ' +
+      "flag. defaultValue is FALSE: per project canon (\"Piotr nigdy nie jest " +
+      'pierwszym testerem wizualnym\") new visual surfaces stay OFF until a ' +
+      'clean dev-render screenshot is accepted — do not flip this true without ' +
+      'that acceptance step (Harvard/wdrozenie-100/_RUNBOOK_COFANIA.md).',
+    defaultValue: false,
+    category: 'experimental',
+    allowLocalOverride: true,
+  },
+  {
     id: 'mindmapHeuristicAiOverlays',
     name: 'Mind Map: Heuristic AI Overlays (DP-5)',
     description:
