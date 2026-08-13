@@ -128,6 +128,22 @@ export class MethodPackRegistry {
     return rows.map(toRecord);
   }
 
+  /**
+   * Library screen backing query — every pack/version registered for the
+   * org, newest first. Deliberately does NOT filter by readiness: the
+   * Library must show the true value (draft/methodology_review/... included),
+   * never hide an unfinished pack — ASSESSMENT_METHOD_PACK_CONTRACT.md §6.
+   */
+  async listAll(organizationId: string): Promise<MethodPackRecord[]> {
+    const rows = await DbPromise.all<MethodPackRow>(
+      `SELECT * FROM method_packs WHERE organization_id = ?`,
+      [organizationId]
+    );
+    return rows
+      .map(toRecord)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || a.id.localeCompare(b.id));
+  }
+
   /** Only `released` and `pilot` packs may start a new production session. */
   canStartSession(readiness: MethodPackReadiness): boolean {
     return isReadinessStartable(readiness);
