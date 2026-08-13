@@ -3748,7 +3748,7 @@ export interface User {
   accessLevel: 'free' | 'full';
   preferredLanguage?: Language;
   /**
-   * P0.3 (2026-07-26): account-level UI interface language (en/pl/de/ar/jp/es
+   * P0.3 (2026-07-26): account-level UI interface language (en/pl/de/ar/ja/es
    * from src/i18n.ts SUPPORTED_LANGUAGES). Distinct from `preferredLanguage`
    * (AI content-generation language). SSOT priority for a logged-in session
    * is account (`language`) > localStorage > navigator — see

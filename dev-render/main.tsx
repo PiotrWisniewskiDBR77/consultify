@@ -20,6 +20,9 @@ import { createRoot } from 'react-dom/client';
 import { Toaster } from 'react-hot-toast';
 
 import PanelUwag from './PanelUwag';
+const IdeaFinancialCasePersistenceScreen = React.lazy(
+  () => import('./screens/idea-financial-case-persistence')
+);
 const MaterialyLauncherScreen = React.lazy(() => import('./screens/materialy-launcher'));
 const MaterialyTemplateLibrarySliceScreen = React.lazy(
   () => import('./screens/materialy-template-library-slice')
@@ -56,7 +59,6 @@ const DocumentStudioSaveAsTemplateScreen = React.lazy(
   () => import('./screens/document-studio-save-as-template')
 );
 const MenuCanonSidebarCheckScreen = React.lazy(() => import('./screens/menu-canon-sidebar-check'));
-const ToolsSesjaWyjscieScreen = React.lazy(() => import('./screens/tools-sesja-wyjscie'));
 const AssessmentQualityReviewPanelScreen = React.lazy(
   () => import('./screens/assessment-quality-review-panel')
 );
@@ -153,6 +155,9 @@ const GenWordContentHintsScreen = React.lazy(() => import('./screens/gen-word-co
 const DeckQualityBadgeScreen = React.lazy(() => import('./screens/deck-quality-badge'));
 const WordQualityBadgeScreen = React.lazy(() => import('./screens/word-quality-badge'));
 const I18nFala1SmokeScreen = React.lazy(() => import('./screens/i18n-fala1-smoke'));
+const IdeaConfidentialityControlScreen = React.lazy(
+  () => import('./screens/idea-confidentiality-control')
+);
 const IdeaTemplatesCatalogScreen = React.lazy(() => import('./screens/idea-templates-catalog'));
 const IdeasTeresaPanelScreen = React.lazy(() => import('./screens/ideas-teresa-panel'));
 const MelsCanvasWorkspaceScreen = React.lazy(() => import('./screens/melscanvas-workspace'));
@@ -164,6 +169,7 @@ const IdeaTableTimelineStuckScreen = React.lazy(
 const WhiteboardWorkshopScreen = React.lazy(() => import('./screens/whiteboard-workshop'));
 const B2TemplateGalleryScreen = React.lazy(() => import('./screens/b2-template-gallery'));
 const MindmapI18nSmokeScreen = React.lazy(() => import('./screens/mindmap-i18n-smoke'));
+const MmPpmMeasureScreen = React.lazy(() => import('./screens/mm-ppm-measure'));
 const ModelCatalogTableScreen = React.lazy(() => import('./screens/model-catalog-table'));
 const NavDeclutterSidebarScreen = React.lazy(() => import('./screens/navdeclutter-sidebar'));
 const NotatnikCentrumMysliScreen = React.lazy(() => import('./screens/notatnik-centrum-mysli'));
@@ -202,6 +208,9 @@ const KartaNotificationScreen = React.lazy(() => import('./screens/karta-notific
 const KartaTaskScreen = React.lazy(() => import('./screens/karta-task'));
 const PreviewZakladkiScreen = React.lazy(() => import('./screens/preview-4-zakladki'));
 const IdeaTableToolKebabScreen = React.lazy(() => import('./screens/idea-table-tool-kebab'));
+const IdeaTableRecordTemplatesScreen = React.lazy(
+  () => import('./screens/idea-table-record-templates')
+);
 const IdeaTableToolEmptyFilterScreen = React.lazy(
   () => import('./screens/idea-table-tool-empty-filter')
 );
@@ -211,6 +220,7 @@ const IdeaTableToolSortFilterScreen = React.lazy(
 );
 const IdeaTableToolGroupingScreen = React.lazy(() => import('./screens/idea-table-tool-grouping'));
 const IdeaTableScreen = React.lazy(() => import('./screens/idea-table'));
+const IdeaTableProductionScreen = React.lazy(() => import('./screens/idea-table-production'));
 const MindmapCanvasScreen = React.lazy(() => import('./screens/mindmap-canvas'));
 const MyWorkIdeaTopBarScreen = React.lazy(() => import('./screens/mywork-idea-topbar'));
 const TeresaConfirmChipScreen = React.lazy(() => import('./screens/teresa-confirm-chip'));
@@ -394,6 +404,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'RN-G3 tor PLATFORMY §1 — DEMONSTRACJA przepisu powłoki klasy L (archetyp Rekord): ArtifactBreadcrumb + NModeShell + ArtifactRightPanel/ArtifactPropertiesTable, zero nowego standardu. &save=idle|saving|saved|error|conflict &teresa=1',
     render: () => <RnG3ClassLRecordShellScreen />,
+  'idea-financial-case-persistence': {
+    label:
+      'E09 RISK-12 — REALNY <FinancialCaseDialog> z REALNYM zapisem: ?state=empty|loading|dirty|saving|saved|error|conflict|reopened (stanowy mock transportu)',
+    render: () => <IdeaFinancialCasePersistenceScreen />,
   },
   'mw-007-calendar-narrow-viewport': {
     label:
@@ -472,11 +486,6 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'AUDYTY — zakładka „Raporty DRD" (ff_drd_report) + DRDAuditReportView. ?variant=list|report',
     render: () => <AudytyDrdReportScreen />,
-  },
-  'tools-sesja-wyjscie': {
-    label:
-      'NARZĘDZIA — otwarta sesja narzędzia: wyjście z sesji (Menu 3 „List" + chip z ×, akcje cyklu życia, Menu 2 wyprowadza z karty)',
-    render: () => <ToolsSesjaWyjscieScreen />,
   },
   'assessment-quality-review-panel': {
     label:
@@ -561,6 +570,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'idea-table-tool-kebab': {
     label: 'IDEE Table — K1 kebab wiersza (PlatformGridView, prawy-klik) — audyt-idee 2026-07-22',
     render: () => <IdeaTableToolKebabScreen />,
+  },
+  'idea-table-record-templates': {
+    label: 'IDEE Table — RecordTemplateManager (RISK-06 dead-mount wiring) — 2026-08-12',
+    render: () => <IdeaTableRecordTemplatesScreen />,
   },
   'idea-table-tool-paste': {
     label: 'IDEE Table — Ctrl/Cmd+V wklejanie (PlatformGridView, Z16b domknięcie) — 2026-07-22',
@@ -858,6 +871,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label: 'Smoke i18n fala 2 — M06 Mind Map modale (ideas.mindmap.*)',
     render: () => <MindmapI18nSmokeScreen />,
   },
+  'mm-ppm-measure': {
+    label: 'MM-P2 (2026-08-10) — pomiar wysokości PPM węzła Mind Map (1280×800, do-usuniecia po odbiorze)',
+    render: () => <MmPpmMeasureScreen />,
+  },
   'navdeclutter-sidebar': {
     label: 'ODB O5 — REALNY <Sidebar> (navDeclutterFlag, default OFF); &ff_navDeclutter=1 dla ON',
     render: () => <NavDeclutterSidebarScreen />,
@@ -904,6 +921,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label: 'D16/D17 JEDEN prawy panel idei = dok Teresy (IdeaRightPanel)',
     render: () => <IdeasTeresaPanelScreen />,
   },
+  'idea-confidentiality-control': {
+    label:
+      'RISK-22 Poufność Idei — REALNY IdeaWorkspaceTools w IdeaRightPanel (?lang=pl|en, ?level=, ?fail=1)',
+    render: () => <IdeaConfidentialityControlScreen />,
+  },
   'idea-templates-catalog': {
     label: '#10-AB Baza ~40 startowych szablonów konsultingowych (7 kategorii)',
     render: () => <IdeaTemplatesCatalogScreen />,
@@ -948,6 +970,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'idea-table': {
     label: 'IDEE — Idea jako tabela (pełny obiekt: lista + podgląd + prawy panel)',
     render: () => <IdeaTableScreen />,
+  },
+  'idea-table-production': {
+    label:
+      'IDEE — Idea jako tabela, KSZTAŁT PRODUKCYJNY (MyIdeasListContent.tsx:1785-1791, bez ArtifactRightPanel — S9-GATE4EVIDENCE TASK 1)',
+    render: () => <IdeaTableProductionScreen />,
   },
   'mindmap-canvas': {
     label: 'IDEE — Idea jako mapa myśli (pełny obiekt, archetyp Canvas)',
