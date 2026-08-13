@@ -163,3 +163,49 @@ Po sprzątaniu: `find src -name 'zz-opus*'` → **0**.
 | `src/method-core/methods/drd/__tests__/drdAdapter.aggregateNorm.test.ts` | 3 |
 
 **RAZEM: 47 nowych plików, 384 testów.**
+
+---
+
+## 7. Pełna regresja frontu — klasyfikacja końcowa
+
+Identyczna komenda, ta sama maszyna, **porównywalne obciążenie**:
+
+```
+npx vitest run --config vitest.config.ts --exclude 'server/**' src --retry=0
+```
+
+| | HEAD (finalny) | baseline `f3e7df565e` |
+| --- | ---: | ---: |
+| plików czerwonych | **33** | **33** |
+| testów czerwonych | **90** | **90** |
+| testów zielonych | **4 526** | 4 147 |
+| testów łącznie | **4 625** | 4 238 |
+
+**Zbiór czerwonych plików IDENTYCZNY po obu stronach** (`comm`: „tylko na HEAD" = **pusty**, „tylko na baseline" = **pusty**, wspólnych **33**).
+
+| Kategoria | Liczba |
+| --- | ---: |
+| **introduced** | **0** |
+| **pre-existing** | **33 pliki / 90 testów** |
+| fixed | 0 |
+| flaky (timeout pod obciążeniem, po obu stronach tak samo) | zawarte w powyższych |
+
+### ★ Pułapka, w którą prawie wpadłem
+
+Pierwszy pomiar HEAD dał **33/90** wobec zapamiętanych **32/88** z baseline — czyli
+wyglądało to na **jedną wprowadzoną regresję**
+(`InitiativesHub.newModalA11y.test.tsx`). Kuszące było odpisać to na „flaky".
+
+Zamiast tego sprawdziłem trzy rzeczy:
+1. plik jest **nietknięty** przez tę falę (`git diff --name-only` na tym katalogu → pusty),
+2. w izolacji przechodzi **7/7**,
+3. w pełnym przebiegu pada z `Test timed out in 60000ms` przy czasie **60 036 ms**.
+
+A potem — zamiast poprzestać na tłumaczeniu — **przemierzyłem baseline tą samą
+komendą przy porównywalnym obciążeniu**: baseline dał dokładnie **33/90** i ten sam
+plik na liście. Różnica 32→33 wynikała z tego, że pierwszy pomiar baseline zrobiłem
+przy **niższym** load average.
+
+**Wniosek: liczba czerwonych testów tego repo zależy od obciążenia maszyny.**
+Porównanie ma sens wyłącznie wtedy, gdy obie strony mierzone są w zbliżonych
+warunkach — inaczej „regresja" jest artefaktem pomiaru.
