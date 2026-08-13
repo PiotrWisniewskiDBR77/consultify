@@ -149,7 +149,19 @@ const DATED_RE = /^(\d{4})-?(\d{2})-?(\d{2})[_-]/;
 // would otherwise place it too early relative to other dated migrations it
 // actually depends on. See STRICT_SCHEMA_REPAIR_REPORT.md ETAP 1 for the
 // per-file dependency trace that justifies each entry.
-const LATE_PHASE_MANIFEST: string[] = [];
+const LATE_PHASE_MANIFEST: string[] = [
+  // 948_tool_promotion_tenant_idempotency.sql is a CONSUMER of
+  // `tool_initiative_links`, whose canonical producer is
+  // `20260719_baseline_gap.sql:9533` — a phase-1 (dated) migration. Its own
+  // numeric filename prefix ("948") would otherwise place it in phase 0
+  // (numbered), which runs strictly BEFORE phase 1, i.e. before its own
+  // canonical producer's CREATE TABLE has even run. Listing it here forces
+  // it into phase 2 (late), which runs after both phase 0 and phase 1, so
+  // it is guaranteed to see the table it consumes. See the migration
+  // file's own header for the full producer/consumer trace and the
+  // coordinator decision this is bound by.
+  '948_tool_promotion_tenant_idempotency.sql',
+];
 const LATE_PHASE_SET = new Set(LATE_PHASE_MANIFEST);
 
 // `isSqliteOnlyMigration()` blanket-excludes every numbered migration with
