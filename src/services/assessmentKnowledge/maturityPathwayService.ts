@@ -1,6 +1,8 @@
 /**
  * ═══════════════════════════════════════════════════════════════════════
- * STATUS (DRD path only): INCOMPATIBLE_LEGACY_MODEL / NOT_MAPPED
+ * STATUS (tylko sciezka DRD): NOT_WIRED / NORMALISATION_MISSING
+ * (skorygowane 2026-08-13 — model D1..D8 to KANONICZNA warstwa komunikacji
+ *  z DRD_CANON.md §1/§3.2, nie obcy model legacy; brakuje wiringu i §6.1)
  * (A12 · COORD-06 · 2026-08-13)
  * ═══════════════════════════════════════════════════════════════════════
  * This flag applies ONLY to the DRD branch of this service

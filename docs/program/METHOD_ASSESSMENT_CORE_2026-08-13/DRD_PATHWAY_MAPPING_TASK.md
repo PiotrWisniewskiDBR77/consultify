@@ -1,3 +1,27 @@
+> ## ★ SPROSTOWANIE (Opus, 2026-08-13, po weryfikacji `DRD_CANON.md`)
+>
+> Ten dokument powstał na podstawie briefu, w którym **ja** opisałem model
+> `D1..D8` jako `INCOMPATIBLE_LEGACY_MODEL`. **To było nieprecyzyjne i wymaga
+> sprostowania przed dalszą pracą.**
+>
+> `DRD_CANON.md` §1 definiuje DRD jako **dwie warstwy o różnych rolach**:
+> **POMIAR** (7 osi → 39 obszarów, skale 5/6/7) i **KOMUNIKACJA**
+> (**8 wymiarów raportowych `D1..D8`**). §3.2 podaje kanoniczne mapowanie
+> **MAP-1.0**, MECE, sumujące się do 39:
+> `D1←1A–1I(9) · D2←2A–2E(5) · D3←3A–3E(5) · D4←4A,4B,4D(3) · D5←4C,4E(2) ·
+> D6←5A–5E(5) · D7←6A–6E(5) · D8←7A–7E(5)`.
+>
+> Czyli `D1..D8` **jest warstwą kanoniczną**, nie obcym modelem legacy.
+> Poprawny status to **`NOT_WIRED / NORMALISATION_MISSING`**.
+>
+> Decyzja koordynatora „nie podłączać, nie mapować heurystycznie" **pozostaje
+> w mocy i jest słuszna** — ale z innego powodu, niż podałem: nie dlatego, że
+> modele są niezgodne, tylko dlatego, że **brakuje kroku normalizacji §6.1**,
+> bez którego przeliczenie 39 obszarów na `D_x`/I–V byłoby niewiarygodne.
+> Zakaz mapowania heurystycznego/AI obowiązuje bez zmian.
+
+---
+
 # DRD Pathway Mapping — stan faktyczny i warunki domknięcia (COORD-06)
 
 > Agent: A12. Zakres: **wyłącznie pomiar i opis**. Zero mapowania, zero treści

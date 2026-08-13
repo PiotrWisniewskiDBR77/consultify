@@ -1,6 +1,13 @@
 /**
  * ═══════════════════════════════════════════════════════════════════════
- * STATUS: INCOMPATIBLE_LEGACY_MODEL / NOT_MAPPED  (A12 · COORD-06 · 2026-08-13)
+ * STATUS: NOT_WIRED / NORMALISATION_MISSING  (COORD-06, skorygowane 2026-08-13)
+ * ─────────────────────────────────────────────────────────────────────
+ * KOREKTA: pierwotnie oznaczone jako INCOMPATIBLE_LEGACY_MODEL. To bylo
+ * NIEDOKLADNE. Model D1..D8 NIE jest obcym modelem legacy — jest
+ * KANONICZNA WARSTWA KOMUNIKACJI zdefiniowana w DRD_CANON.md §1
+ * (dwie warstwy: POMIAR 39 obszarow / KOMUNIKACJA 8 wymiarow) oraz §3.2
+ * (mapowanie MAP-1.0, MECE, suma 39). Realny brak to WIRING i krok
+ * normalizacji §6.1, nie niezgodnosc modeli.
  * ═══════════════════════════════════════════════════════════════════════
  * Full analysis: `docs/program/METHOD_ASSESSMENT_CORE_2026-08-13/
  * DRD_PATHWAY_MAPPING_TASK.md`. Coordinator decision record: COORD-06 in

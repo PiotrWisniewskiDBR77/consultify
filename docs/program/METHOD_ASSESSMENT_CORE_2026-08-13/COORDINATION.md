@@ -495,3 +495,97 @@ ustawić `readiness`, a to jest wymóg kanonu, nie ozdoba. Dodać do kontraktu t
 własne packi — dlatego trafia do koordynatora, a nie jest zmieniane po cichu.
 
 **czy praca niezależna może być kontynuowana:** **TAK.**
+
+---
+
+## COORD-06/KOREKTA — sprostowanie przesłanki decyzji
+
+**Do koordynatora: decyzja COORD-06 została podjęta na przesłance, którą
+podałem nieprecyzyjnie. Zgłaszam to, zamiast realizować po cichu.**
+
+**Co napisałem:** `maturityPathwayDrdData.ts` niesie model `D1..D8` / `I..V`
+**niezgodny** z kanonem 7 osi / 39 obszarów.
+
+**Jak jest naprawdę** (`docs/product/DRD_CANON.md`, odczyt własny):
+
+§1 definiuje DRD jako **dwie warstwy o różnych rolach**:
+
+| Warstwa | Jednostka | Ile | Rola |
+| --- | --- | ---: | --- |
+| **POMIAR** | 7 osi → 39 obszarów, skale 5/6/7 | 39 | tu odbywa się ocena |
+| **KOMUNIKACJA** | **8 wymiarów raportowych `D1..D8`** | 8 | tu odbywa się raportowanie |
+
+Cytat z §1: *„klient widzi 8 wymiarów; konsultant ocenia 39 obszarów"*.
+
+§3.2 podaje kanoniczne mapowanie **MAP-1.0**, MECE, sumujące się do 39:
+`D1←1A–1I(9) · D2←2A–2E(5) · D3←3A–3E(5) · D4←4A,4B,4D(3) · D5←4C,4E(2) ·
+D6←5A–5E(5) · D7←6A–6E(5) · D8←7A–7E(5)`.
+
+**Czyli `D1..D8` NIE jest obcym modelem legacy — jest kanoniczną warstwą
+komunikacji.** Poprawny status: **`NOT_WIRED / NORMALISATION_MISSING`**.
+
+**Twoja decyzja pozostaje słuszna, ale z innego powodu.** Nie podłączamy
+pathway nie dlatego, że modele są niezgodne, tylko dlatego, że **brakuje kroku
+normalizacji z §6.1**, bez którego przeliczenie 39 obszarów na `D_x`/I–V byłoby
+niewiarygodne. Zakaz mapowania heurystycznego i AI obowiązuje bez zmian.
+
+Etykiety w kodzie i w `DRD_PATHWAY_MAPPING_TASK.md` zostały skorygowane.
+
+---
+
+## COORD-11 — ★ DRD: dwa defekty agregacji, wprost sprzeczne z kanonem §6
+
+**Waga: P1.** Dotyczy kodu liczącego wynik pokazywany klientowi.
+**Trzeci przypadek tej samej klasy** co COORD-08 (SIRI PM) i `aggregate16Dto8D`.
+
+`src/services/drdStructure.ts` — `calculateOverallScore()` / `calculateAxisScore()`.
+
+### Defekt 1 — brak normalizacji min-max
+
+Kanon §6.1 wymaga **przed** agregacją:
+`score_norm(a) = (achieved_level(a) − 1) / (Lmax(a) − 1)`
+— *„Dzięki temu osie o różnych drabinach są porównywalne na radarze bez
+przycinania treści."*
+
+Kod **uśrednia surowe poziomy**, bez `Lmax` osi.
+
+**Dowód (sonda Opusa, test w suicie):**
+poziom 5 na osi 2 (skala 1–5, czyli **maksimum**, norm. `1.0`) i poziom 5 na osi 1
+(skala 1–7, norm. `0.667`) dają **identyczne `actual: 5`**.
+Firma, która osiągnęła szczyt drabiny, jest liczona tak samo jak firma w 2/3 drogi.
+
+### Defekt 2 — zero liczone jako poziom
+
+Kanon §6.2, zasada twarda: *„Obszary nieocenione (score_raw = 0) **nie wchodzą
+do średniej** — zamiast tego obniżają `completeness` i są jawnie listowane.
+**Zakaz liczenia zera jako poziomu.**"*
+
+Kod filtruje wyłącznie `undefined`; wartość `0` przechodzi i jest sumowana.
+
+**Dowód:** oś z dwoma obszarami po `4` daje `4.0`. Dodanie **jednego
+nieocenionego** obszaru daje **`2.7`** — brak oceny obniża wynik jak realna
+ocena zero.
+
+### Kontekst
+
+**Sam kanon to flaguje** w §6.2 („Uwaga wdrożeniowa"): dzisiejsza implementacja
+uśrednia surowe poziomy — *„do wyrównania z powyższym wzorem"*. Defekt jest
+znany i nienaprawiony.
+
+### Trzecia rozbieżność powiązana (znaleziona przy pomiarze)
+
+`src/components/assessment/reports/templates/DRDReportTemplate.tsx:40`
+mapuje **oś → wymiar** (7→7) zamiast **obszar → wymiar** wg MAP-1.0, przez co
+**pomija `D5` (Technologia i infrastruktura)** i wrzuca całą oś 4 do `D4`.
+Komentarz w kodzie sam to przyznaje. **Skutek: raport DRD pokazuje dziś
+7 wymiarów zamiast kanonicznych 8**, po cichu gubiąc jeden.
+
+### Rekomendacja
+
+Naprawić razem, **za flagą**, wersjonując tak jak COORD-08: `legacy_v1` dla
+odtworzenia historycznych wyników, `drd_scoring_v2` zgodne z §6.1/§6.2, jawne
+`calculationVersion`, porównanie before/after, **zero cichego przeliczenia
+zatwierdzonych Outputów**. Naprawa `DRDReportTemplate` (D5) idzie w tym samym kroku.
+
+**czy praca niezależna może być kontynuowana:** **TAK** — defekty są
+udowodnione i otestowane; naprawa jest osobnym, świadomym krokiem.
