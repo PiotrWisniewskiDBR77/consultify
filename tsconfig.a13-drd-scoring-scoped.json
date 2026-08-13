@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/services/drdStructure.ts",
+    "src/services/report/drdReportModel.ts",
+    "src/services/report/drdReportGenerator.ts",
+    "src/services/report/drdReportClient.ts",
+    "src/services/report/drdReportHtml.ts",
+    "src/services/drdVizAdapter.ts",
+    "src/utils/drdScoringV2Flag.ts",
+    "src/utils/siriPmV2Flag.ts",
+    "src/services/__tests__/drdScoringV2.test.ts",
+    "src/services/report/__tests__/drdReportModel.calculationVersion.test.ts",
+    "src/method-core/__tests__/zz-opus-drd-agg-probe.test.ts"
+  ]
+}
