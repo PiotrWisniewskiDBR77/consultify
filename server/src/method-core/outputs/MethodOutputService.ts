@@ -118,6 +118,35 @@ export interface MethodFindingRecord {
   readonly createdAt: string;
 }
 
+/**
+ * List filter for `listForOrganization` — org-scoped by construction
+ * (`organizationId` is required, never optional, so a caller cannot forget
+ * to scope a list read). `sessionIds` is how a `projectId` filter reaches
+ * this service: the route resolves `projectId -> session ids` via
+ * `MethodSessionService.listSessionIdsByProject` first (this service has no
+ * `project_id` column of its own — every Output's project lives on its
+ * session), then passes the resolved set down here.
+ */
+export interface ListOutputsFilter {
+  readonly organizationId: string;
+  readonly sessionId?: string;
+  readonly sessionIds?: readonly string[];
+  /** Computed in-memory from `revision_of_output_id` links — see below. */
+  readonly status?: 'current' | 'superseded';
+  readonly limit: number;
+  readonly offset: number;
+}
+
+export interface MethodOutputListItem extends MethodOutputRecord {
+  readonly status: 'current' | 'superseded';
+  readonly supersededByOutputId: string | null;
+}
+
+export interface ListResult<T> {
+  readonly items: readonly T[];
+  readonly total: number;
+}
+
 export interface MethodOutputRecord {
   readonly id: string;
   readonly organizationId: string;
@@ -537,6 +566,134 @@ export class MethodOutputService {
       superseded: !!successor,
       supersededByOutputId: successor?.id ?? null,
     };
+  }
+
+  /**
+   * Org-wide, paginated Output listing — powers `GET /api/method/outputs`
+   * ("po restarcie użytkownik odnajduje... historię pracy"). Loads the full
+   * `method_outputs` table for the org (matches the kernel-wide convention
+   * of filter/sort in memory — see MethodEventStore.listBySession and this
+   * class's own `listFindings`/`listOutputsBySession` — rather than trusting
+   * SQL ORDER BY, the documented root cause of a prior hashing defect), then
+   * filters, computes current/superseded status from the SAME in-memory rows
+   * (no extra query per row), sorts DETERMINISTICALLY
+   * (`frozen_at DESC, id DESC` — the `id` tie-breaker is what keeps two
+   * calls with identical timestamps in the same order), and only THEN
+   * slices `[offset, offset+limit)` — so `total` reflects the full filtered
+   * set, not just the returned page.
+   */
+  async listForOrganization(filter: ListOutputsFilter): Promise<ListResult<MethodOutputListItem>> {
+    const rows = await DbPromise.all<MethodOutputRow>(
+      `SELECT * FROM method_outputs WHERE organization_id = ?`,
+      [filter.organizationId]
+    );
+    // organizationId is already the SQL predicate above; this re-check is a
+    // defensive backstop against the test-mock's narrow WHERE-column
+    // allow-list (see MethodEventStore's header comment on the same pattern).
+    const orgRows = rows.filter((r) => r.organization_id === filter.organizationId);
+
+    const successorByParent = new Map<string, string>();
+    for (const r of orgRows) {
+      if (r.revision_of_output_id) successorByParent.set(r.revision_of_output_id, r.id);
+    }
+
+    let matching = orgRows;
+    if (filter.sessionId) matching = matching.filter((r) => r.session_id === filter.sessionId);
+    if (filter.sessionIds) {
+      const allow = new Set(filter.sessionIds);
+      matching = matching.filter((r) => allow.has(r.session_id));
+    }
+
+    let withStatus = matching.map((row) => {
+      const supersededByOutputId = successorByParent.get(row.id) ?? null;
+      return {
+        row,
+        status: (supersededByOutputId ? 'superseded' : 'current') as 'current' | 'superseded',
+        supersededByOutputId,
+      };
+    });
+    if (filter.status) {
+      withStatus = withStatus.filter((entry) => entry.status === filter.status);
+    }
+
+    withStatus.sort((a, b) => {
+      const byTime = new Date(b.row.frozen_at).getTime() - new Date(a.row.frozen_at).getTime();
+      return byTime !== 0 ? byTime : b.row.id.localeCompare(a.row.id);
+    });
+
+    const total = withStatus.length;
+    const page = withStatus.slice(filter.offset, filter.offset + filter.limit);
+
+    const items: MethodOutputListItem[] = [];
+    for (const entry of page) {
+      const findings = await this.listFindings(filter.organizationId, entry.row.id);
+      items.push({
+        ...toOutputRecord(entry.row, findings),
+        status: entry.status,
+        supersededByOutputId: entry.supersededByOutputId,
+      });
+    }
+    return { items, total };
+  }
+
+  /**
+   * Full revision chain for the lineage `outputId` belongs to (oldest first,
+   * i.e. ascending `output_version`) — powers
+   * `GET /api/method/outputs/:id/revisions` ("rewizje Output +
+   * rozróżnienie current / superseded"). `outputId` may be ANY output in the
+   * chain, not just the root or the latest — this walks back to the root via
+   * `revision_of_output_id`, then forward again collecting every successor,
+   * so the caller always gets the SAME full chain regardless of which
+   * member they asked about. Returns `null` when `outputId` does not exist
+   * in this organization (tenant-scoped — a real id from another org is
+   * indistinguishable from a made-up one).
+   */
+  async listRevisionChain(
+    organizationId: string,
+    outputId: string
+  ): Promise<ListResult<MethodOutputListItem> | null> {
+    const rows = await DbPromise.all<MethodOutputRow>(
+      `SELECT * FROM method_outputs WHERE organization_id = ?`,
+      [organizationId]
+    );
+    const orgRows = rows.filter((r) => r.organization_id === organizationId);
+    const byId = new Map(orgRows.map((r) => [r.id, r]));
+    const anchor = byId.get(outputId);
+    if (!anchor) return null;
+
+    // Walk back to the root — bounded so a corrupt/cyclic pointer chain
+    // cannot hang the request (mirrors collectLineageSessionIds's hop cap in
+    // server/src/routes/method-core.routes.ts).
+    let root = anchor;
+    let backHops = 0;
+    while (root.revision_of_output_id && byId.has(root.revision_of_output_id) && backHops < 25) {
+      root = byId.get(root.revision_of_output_id)!;
+      backHops += 1;
+    }
+
+    // Walk forward from the root collecting every successor in the chain.
+    const chain: MethodOutputRow[] = [];
+    const visited = new Set<string>();
+    let cursor: MethodOutputRow | undefined = root;
+    let forwardHops = 0;
+    while (cursor && !visited.has(cursor.id) && forwardHops < 25) {
+      visited.add(cursor.id);
+      chain.push(cursor);
+      cursor = orgRows.find((r) => r.revision_of_output_id === cursor!.id);
+      forwardHops += 1;
+    }
+
+    const items: MethodOutputListItem[] = [];
+    for (const row of chain) {
+      const findings = await this.listFindings(organizationId, row.id);
+      const successor = orgRows.find((r) => r.revision_of_output_id === row.id);
+      items.push({
+        ...toOutputRecord(row, findings),
+        status: successor ? 'superseded' : 'current',
+        supersededByOutputId: successor?.id ?? null,
+      });
+    }
+    return { items, total: items.length };
   }
 
   private async mustGetRow(outputId: string): Promise<MethodOutputRow> {

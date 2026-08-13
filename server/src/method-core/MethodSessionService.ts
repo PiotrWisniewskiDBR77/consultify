@@ -264,6 +264,23 @@ export class MethodSessionService {
       .map(toMethodSession);
   }
 
+  /**
+   * Every session id under `projectId` in this org — the mechanism a
+   * `projectId` filter on the Outputs/Reports/Presentations/Initiative-Draft
+   * list endpoints resolves through (none of those tables carry
+   * `project_id` themselves; only `method_sessions` does, see
+   * server/src/routes/method-core.routes.ts's list handlers).
+   */
+  async listSessionIdsByProject(organizationId: string, projectId: string): Promise<string[]> {
+    const rows = await DbPromise.all<{ id: string; organization_id: string; project_id: string | null }>(
+      `SELECT id, organization_id, project_id FROM method_sessions WHERE organization_id = ? AND project_id = ?`,
+      [organizationId, projectId]
+    );
+    return rows
+      .filter((row) => row.organization_id === organizationId && row.project_id === projectId)
+      .map((row) => row.id);
+  }
+
   async assignRole(
     organizationId: string,
     sessionId: string,

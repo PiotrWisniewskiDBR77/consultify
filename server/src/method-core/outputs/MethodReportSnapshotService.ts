@@ -41,6 +41,28 @@ export interface CreateReportSnapshotInput {
   readonly demoBypassActive?: boolean;
 }
 
+/**
+ * List filter for `listForOrganization` — org-scoped by construction, same
+ * `sessionIds`-carries-the-projectId-filter shape as
+ * `MethodOutputService.ListOutputsFilter` (this table has no `project_id`
+ * column either — see that type's doc comment).
+ */
+export interface ListReportSnapshotsFilter {
+  readonly organizationId: string;
+  readonly sessionId?: string;
+  readonly sessionIds?: readonly string[];
+  readonly outputId?: string;
+  readonly kind: MethodArtefactKind;
+  readonly status?: ReportSupersedenceStatus;
+  readonly limit: number;
+  readonly offset: number;
+}
+
+export interface ListResult<T> {
+  readonly items: readonly T[];
+  readonly total: number;
+}
+
 export interface MethodReportSnapshotRecord {
   readonly id: string;
   readonly organizationId: string;
@@ -146,6 +168,52 @@ export class MethodReportSnapshotService {
       .filter((r) => r.session_id === sessionId)
       .sort((a, b) => a.id.localeCompare(b.id))
       .map(toRecord);
+  }
+
+  /** Tenant-scoped single read — `null` on not-found OR wrong org (never
+   * distinguishable, same discipline as MethodOutputService.getOutput). */
+  async getById(organizationId: string, id: string): Promise<MethodReportSnapshotRecord | null> {
+    const row = await DbPromise.get<MethodReportSnapshotRow>(
+      `SELECT * FROM method_report_snapshots WHERE id = ?`,
+      [id]
+    );
+    if (!row || row.organization_id !== organizationId) return null;
+    return toRecord(row);
+  }
+
+  /**
+   * Org-wide, paginated listing — powers `GET /api/method/reports` and
+   * `GET /api/method/presentations` (same table, `kind` selects which).
+   * Same in-memory filter/sort/paginate discipline as
+   * `MethodOutputService.listForOrganization` — see that method's doc
+   * comment for why (matches the kernel-wide convention, avoids trusting SQL
+   * ORDER BY). Deterministic order: `created_at DESC, id DESC`.
+   */
+  async listForOrganization(
+    filter: ListReportSnapshotsFilter
+  ): Promise<ListResult<MethodReportSnapshotRecord>> {
+    const rows = await DbPromise.all<MethodReportSnapshotRow>(
+      `SELECT * FROM method_report_snapshots WHERE organization_id = ?`,
+      [filter.organizationId]
+    );
+    let matching = rows.filter((r) => r.organization_id === filter.organizationId);
+    matching = matching.filter((r) => (r.kind ?? 'report') === filter.kind);
+    if (filter.sessionId) matching = matching.filter((r) => r.session_id === filter.sessionId);
+    if (filter.outputId) matching = matching.filter((r) => r.output_id === filter.outputId);
+    if (filter.sessionIds) {
+      const allow = new Set(filter.sessionIds);
+      matching = matching.filter((r) => allow.has(r.session_id));
+    }
+    if (filter.status) matching = matching.filter((r) => r.status === filter.status);
+
+    matching.sort((a, b) => {
+      const byTime = new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      return byTime !== 0 ? byTime : b.id.localeCompare(a.id);
+    });
+
+    const total = matching.length;
+    const page = matching.slice(filter.offset, filter.offset + filter.limit);
+    return { items: page.map(toRecord), total };
   }
 
   /**
