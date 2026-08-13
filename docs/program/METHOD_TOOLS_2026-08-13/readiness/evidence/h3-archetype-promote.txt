@@ -1,0 +1,738 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/.codex/worktrees/h3-manifest
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/.codex/worktrees/h3-manifest
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts
+2026-08-13 22:32:59:3259 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-13 22:32:59:3259 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-13 22:32:59:3259 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-13 22:32:59:3259 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-13 22:32:59:3259 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts
+2026-08-13 22:32:59:3259 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-13 22:32:59:3259 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-13 22:32:59:3259 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-13 22:32:59:3259 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-13 22:32:59:3259 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:00:330 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-08-13 22:33:00:330 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-08-13 22:33:00:330 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-08-13 22:33:00:330 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-08-13 22:33:00:330 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"localhost","database":"consultinity","max":10}
+2026-08-13 22:33:00:330 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:00:330 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-08-13 22:33:00:330 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-08-13 22:33:00:330 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-08-13 22:33:00:330 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-08-13 22:33:00:330 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"localhost","database":"consultinity","max":10}
+2026-08-13 22:33:00:330 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:00:330 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:00:330 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:01:331 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:01:331 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:01:331 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:01:331 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:01:331 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:01:331 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:01:331 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:01:331 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:01:331 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:01:331 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:01:331 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:01:331 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:01:331 [32minfo[39m: [32m[toolOutputSnapshotService] skipping tool_output_initiative_proposals for output 64293d2e-5ff6-4b32-8506-f1b74801cd71: no conclusions in snapshot[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths)
+2026-08-13 22:33:01:331 [32minfo[39m: [32m[toolOutputSnapshotService] skipping tool_output_initiative_proposals for output 64293d2e-5ff6-4b32-8506-f1b74801cd71: no conclusions in snapshot[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'force-radial' ('market-forces') > drives a real session to promotion and persists it on real Postgres (market-forces)
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'force-radial' ('market-forces') > drives a real session to promotion and persists it on real Postgres (market-forces)
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'force-radial' ('market-forces') > drives a real session to promotion and persists it on real Postgres (market-forces)
+2026-08-13 22:33:01:331 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:01:331 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'force-radial' ('market-forces') > drives a real session to promotion and persists it on real Postgres (market-forces)
+2026-08-13 22:33:01:331 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:01:331 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'force-radial' ('market-forces') > drives a real session to promotion and persists it on real Postgres (market-forces)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'force-radial' ('market-forces') > drives a real session to promotion and persists it on real Postgres (market-forces)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'force-radial' ('market-forces') > drives a real session to promotion and persists it on real Postgres (market-forces)
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'force-radial' ('market-forces') > drives a real session to promotion and persists it on real Postgres (market-forces)
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'force-radial' ('market-forces') > drives a real session to promotion and persists it on real Postgres (market-forces)
+2026-08-13 22:33:01:331 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:01:331 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'force-radial' ('market-forces') > drives a real session to promotion and persists it on real Postgres (market-forces)
+2026-08-13 22:33:01:331 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:01:331 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'force-radial' ('market-forces') > drives a real session to promotion and persists it on real Postgres (market-forces)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'force-radial' ('market-forces') > drives a real session to promotion and persists it on real Postgres (market-forces)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+ ✓ tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'quadrant-strategic-field' ('growth-paths') > drives a real session to promotion and persists it on real Postgres (growth-paths) 484ms
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'force-radial' ('market-forces') > drives a real session to promotion and persists it on real Postgres (market-forces)
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'force-radial' ('market-forces') > drives a real session to promotion and persists it on real Postgres (market-forces)
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'force-radial' ('market-forces') > drives a real session to promotion and persists it on real Postgres (market-forces)
+2026-08-13 22:33:01:331 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:01:331 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'force-radial' ('market-forces') > drives a real session to promotion and persists it on real Postgres (market-forces)
+2026-08-13 22:33:01:331 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:01:331 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'force-radial' ('market-forces') > drives a real session to promotion and persists it on real Postgres (market-forces)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'force-radial' ('market-forces') > drives a real session to promotion and persists it on real Postgres (market-forces)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'force-radial' ('market-forces') > drives a real session to promotion and persists it on real Postgres (market-forces)
+2026-08-13 22:33:01:331 [32minfo[39m: [32m[toolOutputSnapshotService] skipping tool_output_initiative_proposals for output d683d8ea-0918-4438-bb69-51ef09b71915: no conclusions in snapshot[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'force-radial' ('market-forces') > drives a real session to promotion and persists it on real Postgres (market-forces)
+2026-08-13 22:33:01:331 [32minfo[39m: [32m[toolOutputSnapshotService] skipping tool_output_initiative_proposals for output d683d8ea-0918-4438-bb69-51ef09b71915: no conclusions in snapshot[39m
+
+ ✓ tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'force-radial' ('market-forces') > drives a real session to promotion and persists it on real Postgres (market-forces) 200ms
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'decision-matrix-portfolio' ('portfolio-priority') > drives a real session to promotion and persists it on real Postgres (portfolio-priority)
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'decision-matrix-portfolio' ('portfolio-priority') > drives a real session to promotion and persists it on real Postgres (portfolio-priority)
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'decision-matrix-portfolio' ('portfolio-priority') > drives a real session to promotion and persists it on real Postgres (portfolio-priority)
+2026-08-13 22:33:01:331 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:01:331 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'decision-matrix-portfolio' ('portfolio-priority') > drives a real session to promotion and persists it on real Postgres (portfolio-priority)
+2026-08-13 22:33:01:331 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:01:331 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'decision-matrix-portfolio' ('portfolio-priority') > drives a real session to promotion and persists it on real Postgres (portfolio-priority)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'decision-matrix-portfolio' ('portfolio-priority') > drives a real session to promotion and persists it on real Postgres (portfolio-priority)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'decision-matrix-portfolio' ('portfolio-priority') > drives a real session to promotion and persists it on real Postgres (portfolio-priority)
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'decision-matrix-portfolio' ('portfolio-priority') > drives a real session to promotion and persists it on real Postgres (portfolio-priority)
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'decision-matrix-portfolio' ('portfolio-priority') > drives a real session to promotion and persists it on real Postgres (portfolio-priority)
+2026-08-13 22:33:01:331 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:01:331 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'decision-matrix-portfolio' ('portfolio-priority') > drives a real session to promotion and persists it on real Postgres (portfolio-priority)
+2026-08-13 22:33:01:331 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:01:331 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'decision-matrix-portfolio' ('portfolio-priority') > drives a real session to promotion and persists it on real Postgres (portfolio-priority)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'decision-matrix-portfolio' ('portfolio-priority') > drives a real session to promotion and persists it on real Postgres (portfolio-priority)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'decision-matrix-portfolio' ('portfolio-priority') > drives a real session to promotion and persists it on real Postgres (portfolio-priority)
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'decision-matrix-portfolio' ('portfolio-priority') > drives a real session to promotion and persists it on real Postgres (portfolio-priority)
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'decision-matrix-portfolio' ('portfolio-priority') > drives a real session to promotion and persists it on real Postgres (portfolio-priority)
+2026-08-13 22:33:01:331 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:01:331 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'decision-matrix-portfolio' ('portfolio-priority') > drives a real session to promotion and persists it on real Postgres (portfolio-priority)
+2026-08-13 22:33:01:331 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:01:331 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'decision-matrix-portfolio' ('portfolio-priority') > drives a real session to promotion and persists it on real Postgres (portfolio-priority)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'decision-matrix-portfolio' ('portfolio-priority') > drives a real session to promotion and persists it on real Postgres (portfolio-priority)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'decision-matrix-portfolio' ('portfolio-priority') > drives a real session to promotion and persists it on real Postgres (portfolio-priority)
+2026-08-13 22:33:01:331 [32minfo[39m: [32m[toolOutputSnapshotService] skipping tool_output_initiative_proposals for output 01bf4167-0a4e-427f-98a9-791c35eefdd3: no conclusions in snapshot[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'decision-matrix-portfolio' ('portfolio-priority') > drives a real session to promotion and persists it on real Postgres (portfolio-priority)
+2026-08-13 22:33:01:331 [32minfo[39m: [32m[toolOutputSnapshotService] skipping tool_output_initiative_proposals for output 01bf4167-0a4e-427f-98a9-791c35eefdd3: no conclusions in snapshot[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'flow-value-stream' ('value-chain') > drives a real session to promotion and persists it on real Postgres (value-chain)
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'flow-value-stream' ('value-chain') > drives a real session to promotion and persists it on real Postgres (value-chain)
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'flow-value-stream' ('value-chain') > drives a real session to promotion and persists it on real Postgres (value-chain)
+2026-08-13 22:33:01:331 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:01:331 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'flow-value-stream' ('value-chain') > drives a real session to promotion and persists it on real Postgres (value-chain)
+2026-08-13 22:33:01:331 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:01:331 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'flow-value-stream' ('value-chain') > drives a real session to promotion and persists it on real Postgres (value-chain)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'flow-value-stream' ('value-chain') > drives a real session to promotion and persists it on real Postgres (value-chain)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'flow-value-stream' ('value-chain') > drives a real session to promotion and persists it on real Postgres (value-chain)
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'flow-value-stream' ('value-chain') > drives a real session to promotion and persists it on real Postgres (value-chain)
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'flow-value-stream' ('value-chain') > drives a real session to promotion and persists it on real Postgres (value-chain)
+2026-08-13 22:33:01:331 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:01:331 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'flow-value-stream' ('value-chain') > drives a real session to promotion and persists it on real Postgres (value-chain)
+2026-08-13 22:33:01:331 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:01:331 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'flow-value-stream' ('value-chain') > drives a real session to promotion and persists it on real Postgres (value-chain)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'flow-value-stream' ('value-chain') > drives a real session to promotion and persists it on real Postgres (value-chain)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'flow-value-stream' ('value-chain') > drives a real session to promotion and persists it on real Postgres (value-chain)
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'flow-value-stream' ('value-chain') > drives a real session to promotion and persists it on real Postgres (value-chain)
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:01:331 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'flow-value-stream' ('value-chain') > drives a real session to promotion and persists it on real Postgres (value-chain)
+2026-08-13 22:33:01:331 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:01:331 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'flow-value-stream' ('value-chain') > drives a real session to promotion and persists it on real Postgres (value-chain)
+2026-08-13 22:33:01:331 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:01:331 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'flow-value-stream' ('value-chain') > drives a real session to promotion and persists it on real Postgres (value-chain)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'flow-value-stream' ('value-chain') > drives a real session to promotion and persists it on real Postgres (value-chain)
+2026-08-13 22:33:01:331 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'flow-value-stream' ('value-chain') > drives a real session to promotion and persists it on real Postgres (value-chain)
+2026-08-13 22:33:02:332 [32minfo[39m: [32m[toolOutputSnapshotService] skipping tool_output_initiative_proposals for output 85315c21-b094-4e6c-a2bd-798e8c9910d4: no conclusions in snapshot[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'flow-value-stream' ('value-chain') > drives a real session to promotion and persists it on real Postgres (value-chain)
+2026-08-13 22:33:02:332 [32minfo[39m: [32m[toolOutputSnapshotService] skipping tool_output_initiative_proposals for output 85315c21-b094-4e6c-a2bd-798e8c9910d4: no conclusions in snapshot[39m
+
+ ✓ tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'decision-matrix-portfolio' ('portfolio-priority') > drives a real session to promotion and persists it on real Postgres (portfolio-priority) 234ms
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'causal-problem-solving' ('a3-problem-solving') > drives a real session to promotion and persists it on real Postgres (a3-problem-solving)
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'causal-problem-solving' ('a3-problem-solving') > drives a real session to promotion and persists it on real Postgres (a3-problem-solving)
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'causal-problem-solving' ('a3-problem-solving') > drives a real session to promotion and persists it on real Postgres (a3-problem-solving)
+2026-08-13 22:33:02:332 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:02:332 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'causal-problem-solving' ('a3-problem-solving') > drives a real session to promotion and persists it on real Postgres (a3-problem-solving)
+2026-08-13 22:33:02:332 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:02:332 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'causal-problem-solving' ('a3-problem-solving') > drives a real session to promotion and persists it on real Postgres (a3-problem-solving)
+2026-08-13 22:33:02:332 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'causal-problem-solving' ('a3-problem-solving') > drives a real session to promotion and persists it on real Postgres (a3-problem-solving)
+2026-08-13 22:33:02:332 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'causal-problem-solving' ('a3-problem-solving') > drives a real session to promotion and persists it on real Postgres (a3-problem-solving)
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'causal-problem-solving' ('a3-problem-solving') > drives a real session to promotion and persists it on real Postgres (a3-problem-solving)
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'causal-problem-solving' ('a3-problem-solving') > drives a real session to promotion and persists it on real Postgres (a3-problem-solving)
+2026-08-13 22:33:02:332 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:02:332 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'causal-problem-solving' ('a3-problem-solving') > drives a real session to promotion and persists it on real Postgres (a3-problem-solving)
+2026-08-13 22:33:02:332 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:02:332 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'causal-problem-solving' ('a3-problem-solving') > drives a real session to promotion and persists it on real Postgres (a3-problem-solving)
+2026-08-13 22:33:02:332 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'causal-problem-solving' ('a3-problem-solving') > drives a real session to promotion and persists it on real Postgres (a3-problem-solving)
+2026-08-13 22:33:02:332 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'causal-problem-solving' ('a3-problem-solving') > drives a real session to promotion and persists it on real Postgres (a3-problem-solving)
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'causal-problem-solving' ('a3-problem-solving') > drives a real session to promotion and persists it on real Postgres (a3-problem-solving)
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'causal-problem-solving' ('a3-problem-solving') > drives a real session to promotion and persists it on real Postgres (a3-problem-solving)
+2026-08-13 22:33:02:332 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:02:332 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'causal-problem-solving' ('a3-problem-solving') > drives a real session to promotion and persists it on real Postgres (a3-problem-solving)
+2026-08-13 22:33:02:332 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:02:332 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'causal-problem-solving' ('a3-problem-solving') > drives a real session to promotion and persists it on real Postgres (a3-problem-solving)
+2026-08-13 22:33:02:332 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'causal-problem-solving' ('a3-problem-solving') > drives a real session to promotion and persists it on real Postgres (a3-problem-solving)
+2026-08-13 22:33:02:332 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'causal-problem-solving' ('a3-problem-solving') > drives a real session to promotion and persists it on real Postgres (a3-problem-solving)
+2026-08-13 22:33:02:332 [32minfo[39m: [32m[toolOutputSnapshotService] skipping tool_output_initiative_proposals for output c4a6d0cf-afdf-446c-82b8-39712fd7243b: no conclusions in snapshot[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'causal-problem-solving' ('a3-problem-solving') > drives a real session to promotion and persists it on real Postgres (a3-problem-solving)
+2026-08-13 22:33:02:332 [32minfo[39m: [32m[toolOutputSnapshotService] skipping tool_output_initiative_proposals for output c4a6d0cf-afdf-446c-82b8-39712fd7243b: no conclusions in snapshot[39m
+
+ ✓ tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'flow-value-stream' ('value-chain') > drives a real session to promotion and persists it on real Postgres (value-chain) 170ms
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'architecture-capability' ('capability-mapper') > drives a real session to promotion and persists it on real Postgres (capability-mapper)
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'architecture-capability' ('capability-mapper') > drives a real session to promotion and persists it on real Postgres (capability-mapper)
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'architecture-capability' ('capability-mapper') > drives a real session to promotion and persists it on real Postgres (capability-mapper)
+2026-08-13 22:33:02:332 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:02:332 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'architecture-capability' ('capability-mapper') > drives a real session to promotion and persists it on real Postgres (capability-mapper)
+2026-08-13 22:33:02:332 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:02:332 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'architecture-capability' ('capability-mapper') > drives a real session to promotion and persists it on real Postgres (capability-mapper)
+2026-08-13 22:33:02:332 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'architecture-capability' ('capability-mapper') > drives a real session to promotion and persists it on real Postgres (capability-mapper)
+2026-08-13 22:33:02:332 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'architecture-capability' ('capability-mapper') > drives a real session to promotion and persists it on real Postgres (capability-mapper)
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'architecture-capability' ('capability-mapper') > drives a real session to promotion and persists it on real Postgres (capability-mapper)
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'architecture-capability' ('capability-mapper') > drives a real session to promotion and persists it on real Postgres (capability-mapper)
+2026-08-13 22:33:02:332 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:02:332 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'architecture-capability' ('capability-mapper') > drives a real session to promotion and persists it on real Postgres (capability-mapper)
+2026-08-13 22:33:02:332 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:02:332 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'architecture-capability' ('capability-mapper') > drives a real session to promotion and persists it on real Postgres (capability-mapper)
+2026-08-13 22:33:02:332 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'architecture-capability' ('capability-mapper') > drives a real session to promotion and persists it on real Postgres (capability-mapper)
+2026-08-13 22:33:02:332 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'architecture-capability' ('capability-mapper') > drives a real session to promotion and persists it on real Postgres (capability-mapper)
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'architecture-capability' ('capability-mapper') > drives a real session to promotion and persists it on real Postgres (capability-mapper)
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'architecture-capability' ('capability-mapper') > drives a real session to promotion and persists it on real Postgres (capability-mapper)
+2026-08-13 22:33:02:332 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:02:332 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'architecture-capability' ('capability-mapper') > drives a real session to promotion and persists it on real Postgres (capability-mapper)
+2026-08-13 22:33:02:332 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:02:332 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'architecture-capability' ('capability-mapper') > drives a real session to promotion and persists it on real Postgres (capability-mapper)
+2026-08-13 22:33:02:332 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'architecture-capability' ('capability-mapper') > drives a real session to promotion and persists it on real Postgres (capability-mapper)
+2026-08-13 22:33:02:332 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'architecture-capability' ('capability-mapper') > drives a real session to promotion and persists it on real Postgres (capability-mapper)
+2026-08-13 22:33:02:332 [32minfo[39m: [32m[toolOutputSnapshotService] skipping tool_output_initiative_proposals for output a0d3abbb-d710-4862-894a-85acb95ada9e: no conclusions in snapshot[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'architecture-capability' ('capability-mapper') > drives a real session to promotion and persists it on real Postgres (capability-mapper)
+2026-08-13 22:33:02:332 [32minfo[39m: [32m[toolOutputSnapshotService] skipping tool_output_initiative_proposals for output a0d3abbb-d710-4862-894a-85acb95ada9e: no conclusions in snapshot[39m
+
+ ✓ tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'causal-problem-solving' ('a3-problem-solving') > drives a real session to promotion and persists it on real Postgres (a3-problem-solving) 159ms
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'operating-model-standard' ('sop-builder') > drives a real session to promotion and persists it on real Postgres (sop-builder)
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'operating-model-standard' ('sop-builder') > drives a real session to promotion and persists it on real Postgres (sop-builder)
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'operating-model-standard' ('sop-builder') > drives a real session to promotion and persists it on real Postgres (sop-builder)
+2026-08-13 22:33:02:332 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:02:332 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'operating-model-standard' ('sop-builder') > drives a real session to promotion and persists it on real Postgres (sop-builder)
+2026-08-13 22:33:02:332 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:02:332 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'operating-model-standard' ('sop-builder') > drives a real session to promotion and persists it on real Postgres (sop-builder)
+2026-08-13 22:33:02:332 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'operating-model-standard' ('sop-builder') > drives a real session to promotion and persists it on real Postgres (sop-builder)
+2026-08-13 22:33:02:332 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'operating-model-standard' ('sop-builder') > drives a real session to promotion and persists it on real Postgres (sop-builder)
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'operating-model-standard' ('sop-builder') > drives a real session to promotion and persists it on real Postgres (sop-builder)
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'operating-model-standard' ('sop-builder') > drives a real session to promotion and persists it on real Postgres (sop-builder)
+2026-08-13 22:33:02:332 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:02:332 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'operating-model-standard' ('sop-builder') > drives a real session to promotion and persists it on real Postgres (sop-builder)
+2026-08-13 22:33:02:332 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:02:332 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'operating-model-standard' ('sop-builder') > drives a real session to promotion and persists it on real Postgres (sop-builder)
+2026-08-13 22:33:02:332 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'operating-model-standard' ('sop-builder') > drives a real session to promotion and persists it on real Postgres (sop-builder)
+2026-08-13 22:33:02:332 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'operating-model-standard' ('sop-builder') > drives a real session to promotion and persists it on real Postgres (sop-builder)
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'operating-model-standard' ('sop-builder') > drives a real session to promotion and persists it on real Postgres (sop-builder)
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'operating-model-standard' ('sop-builder') > drives a real session to promotion and persists it on real Postgres (sop-builder)
+2026-08-13 22:33:02:332 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:02:332 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'operating-model-standard' ('sop-builder') > drives a real session to promotion and persists it on real Postgres (sop-builder)
+2026-08-13 22:33:02:332 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:02:332 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'operating-model-standard' ('sop-builder') > drives a real session to promotion and persists it on real Postgres (sop-builder)
+2026-08-13 22:33:02:332 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'operating-model-standard' ('sop-builder') > drives a real session to promotion and persists it on real Postgres (sop-builder)
+2026-08-13 22:33:02:332 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'operating-model-standard' ('sop-builder') > drives a real session to promotion and persists it on real Postgres (sop-builder)
+2026-08-13 22:33:02:332 [32minfo[39m: [32m[toolOutputSnapshotService] skipping tool_output_initiative_proposals for output 2e9862b0-94f0-4487-b457-56b31f27e929: no conclusions in snapshot[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'operating-model-standard' ('sop-builder') > drives a real session to promotion and persists it on real Postgres (sop-builder)
+2026-08-13 22:33:02:332 [32minfo[39m: [32m[toolOutputSnapshotService] skipping tool_output_initiative_proposals for output 2e9862b0-94f0-4487-b457-56b31f27e929: no conclusions in snapshot[39m
+
+ ✓ tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'architecture-capability' ('capability-mapper') > drives a real session to promotion and persists it on real Postgres (capability-mapper) 166ms
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'discovery-candidate-funnel' ('ai-discovery') > drives a real session to promotion and persists it on real Postgres (ai-discovery)
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'discovery-candidate-funnel' ('ai-discovery') > drives a real session to promotion and persists it on real Postgres (ai-discovery)
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'discovery-candidate-funnel' ('ai-discovery') > drives a real session to promotion and persists it on real Postgres (ai-discovery)
+2026-08-13 22:33:02:332 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:02:332 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'discovery-candidate-funnel' ('ai-discovery') > drives a real session to promotion and persists it on real Postgres (ai-discovery)
+2026-08-13 22:33:02:332 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:02:332 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'discovery-candidate-funnel' ('ai-discovery') > drives a real session to promotion and persists it on real Postgres (ai-discovery)
+2026-08-13 22:33:02:332 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'discovery-candidate-funnel' ('ai-discovery') > drives a real session to promotion and persists it on real Postgres (ai-discovery)
+2026-08-13 22:33:02:332 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'discovery-candidate-funnel' ('ai-discovery') > drives a real session to promotion and persists it on real Postgres (ai-discovery)
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'discovery-candidate-funnel' ('ai-discovery') > drives a real session to promotion and persists it on real Postgres (ai-discovery)
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'discovery-candidate-funnel' ('ai-discovery') > drives a real session to promotion and persists it on real Postgres (ai-discovery)
+2026-08-13 22:33:02:332 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:02:332 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'discovery-candidate-funnel' ('ai-discovery') > drives a real session to promotion and persists it on real Postgres (ai-discovery)
+2026-08-13 22:33:02:332 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:02:332 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'discovery-candidate-funnel' ('ai-discovery') > drives a real session to promotion and persists it on real Postgres (ai-discovery)
+2026-08-13 22:33:02:332 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'discovery-candidate-funnel' ('ai-discovery') > drives a real session to promotion and persists it on real Postgres (ai-discovery)
+2026-08-13 22:33:02:332 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+ ✓ tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'operating-model-standard' ('sop-builder') > drives a real session to promotion and persists it on real Postgres (sop-builder) 186ms
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'discovery-candidate-funnel' ('ai-discovery') > drives a real session to promotion and persists it on real Postgres (ai-discovery)
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'discovery-candidate-funnel' ('ai-discovery') > drives a real session to promotion and persists it on real Postgres (ai-discovery)
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:02:332 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'discovery-candidate-funnel' ('ai-discovery') > drives a real session to promotion and persists it on real Postgres (ai-discovery)
+2026-08-13 22:33:02:332 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:02:332 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'discovery-candidate-funnel' ('ai-discovery') > drives a real session to promotion and persists it on real Postgres (ai-discovery)
+2026-08-13 22:33:02:332 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["g4-arch-1786653179562-org"]}
+2026-08-13 22:33:02:332 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["g4-arch-1786653179562-org"]}
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'discovery-candidate-funnel' ('ai-discovery') > drives a real session to promotion and persists it on real Postgres (ai-discovery)
+2026-08-13 22:33:02:332 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'discovery-candidate-funnel' ('ai-discovery') > drives a real session to promotion and persists it on real Postgres (ai-discovery)
+2026-08-13 22:33:02:332 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'discovery-candidate-funnel' ('ai-discovery') > drives a real session to promotion and persists it on real Postgres (ai-discovery)
+2026-08-13 22:33:02:332 [32minfo[39m: [32m[toolOutputSnapshotService] skipping tool_output_initiative_proposals for output 09440f80-2fef-4948-a139-6b2888dc9cba: no conclusions in snapshot[39m
+
+stdout | tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'discovery-candidate-funnel' ('ai-discovery') > drives a real session to promotion and persists it on real Postgres (ai-discovery)
+2026-08-13 22:33:02:332 [32minfo[39m: [32m[toolOutputSnapshotService] skipping tool_output_initiative_proposals for output 09440f80-2fef-4948-a139-6b2888dc9cba: no conclusions in snapshot[39m
+
+ ✓ tests/integration/tools-archetype-promote-characterization.realdb.test.ts > G4 archetype characterization — 'discovery-candidate-funnel' ('ai-discovery') > drives a real session to promotion and persists it on real Postgres (ai-discovery) 195ms
+ ✓ tests/integration/tools-archetype-promote-characterization.realdb.test.ts (8 tests) 3360ms
+     ✓ drives a real session to promotion and persists it on real Postgres (growth-paths)  484ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  22:32:58
+   Duration  3.97s (transform 1.09s, setup 112ms, import 101ms, tests 3.36s, environment 295ms)
+
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  22:32:58
+   Duration  3.97s (transform 1.09s, setup 112ms, import 101ms, tests 3.36s, environment 295ms)
+
+JSON report written to /Users/piotrwisniewski/.codex/worktrees/h3-manifest/junit.xml
+JUNIT report written to /Users/piotrwisniewski/.codex/worktrees/h3-manifest/junit.xml

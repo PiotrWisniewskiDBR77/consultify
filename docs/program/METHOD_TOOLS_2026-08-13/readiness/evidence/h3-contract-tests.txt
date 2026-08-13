@@ -1,0 +1,211 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/.codex/worktrees/h3-manifest
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/.codex/worktrees/h3-manifest
+
+ ✓ src/toolPacks/__tests__/questionBankCoverage.test.ts > pokrycie banku pytań — Dynamic SWOT > realny bank ma dokładnie tyle węzłów, ile deklaruje pack 116ms
+ ✓ src/toolPacks/__tests__/questionBankCoverage.test.ts > pokrycie banku pytań — Dynamic SWOT > bank pokrywa wszystkie cztery ćwiartki SWOT 1ms
+ ✓ src/toolPacks/__tests__/questionBankCoverage.test.ts > pokrycie banku pytań — Dynamic SWOT > każda ćwiartka ma pełną drabinkę pogłębiania 5ms
+ ✓ src/toolPacks/__tests__/questionBankCoverage.test.ts > pokrycie banku pytań — Dynamic SWOT > ćwiartka strengths ma rozgałęzienie na poziomie s2 1ms
+ ✓ src/toolPacks/__tests__/questionBankCoverage.test.ts > pokrycie banku pytań — Dynamic SWOT > bank przechodzi własny walidator spójności 1ms
+ ✓ src/toolPacks/__tests__/questionBankCoverage.test.ts > pokrycie banku pytań — Dynamic SWOT > węzły banku mają unikalne identyfikatory 0ms
+ ✓ src/toolPacks/__tests__/questionBankCoverage.test.ts > pokrycie banku pytań — Dynamic SWOT > pack deklaruje fazę obsługiwaną przez bank i faza ta istnieje 0ms
+ ✓ src/toolPacks/__tests__/questionBankCoverage.test.ts > pokrycie banku pytań — Dynamic SWOT > pytania packa są indeksem faz — po jednym na fazę, bez duplikatów 0ms
+ ✓ src/toolPacks/__tests__/questionBankCoverage.test.ts > pokrycie banku pytań — Dynamic SWOT > pack wskazuje istniejący moduł banku pytań 0ms
+ ✓ src/toolPacks/__tests__/questionBankCoverage.test.ts > pokrycie banku pytań — Dynamic SWOT > rozjazd pack ↔ bank jest wykrywalny 0ms
+ ✓ src/toolPacks/__tests__/questionBankCoverage.test.ts (10 tests) 129ms
+ ✓ src/toolPacks/__tests__/validator.test.ts > validateToolPack > przepuszcza kompletny pack 129ms
+ ✓ src/toolPacks/__tests__/validator.test.ts > validateToolPack > BLOKUJE RUNTIME_ACTIVE, gdy pack nie jest kompletny 1ms
+ ✓ src/toolPacks/__tests__/validator.test.ts > validateToolPack > BLOKUJE RUNTIME_ACTIVE dla packa EVIDENCE_MISSING 0ms
+ ✓ src/toolPacks/__tests__/validator.test.ts > validateToolPack > dopuszcza pack EVIDENCE_MISSING, gdy runtime nie twierdzi, że działa 0ms
+ ✓ src/toolPacks/__tests__/validator.test.ts > validateToolPack > wykrywa EVIDENCE_MISSING przemycone do treści kompletnego packa 0ms
+ ✓ src/toolPacks/__tests__/validator.test.ts > validateToolPack > wymaga tłumaczenia PL i EN 0ms
+ ✓ src/toolPacks/__tests__/validator.test.ts > validateToolPack > wykrywa pytanie wskazujące nieistniejącą fazę 0ms
+ ✓ src/toolPacks/__tests__/validator.test.ts > validateToolPack > wykrywa zduplikowane id faz 0ms
+ ✓ src/toolPacks/__tests__/validator.test.ts > validateToolPack > wymaga mapowania Output/Report/Initiative 0ms
+ ✓ src/toolPacks/__tests__/validator.test.ts > validateToolPack > wymaga kontraktu konkluzji W2 (K1-K4 + trade-off) 0ms
+ ✓ src/toolPacks/__tests__/validator.test.ts > validateToolPack > wymaga reguły trade-off wymaganej przez W2 0ms
+ ✓ src/toolPacks/__tests__/validator.test.ts > validateToolPack > wymaga źródeł dla kompletnego packa 1ms
+ ✓ src/toolPacks/__tests__/validator.test.ts > validateToolPack > ostrzega o źródłach niewryfikowalnych w repo, ale nie blokuje 1ms
+ ✓ src/toolPacks/__tests__/validator.test.ts > validateToolPack > odrzuca wersję spoza semver 0ms
+ ✓ src/toolPacks/__tests__/validator.test.ts > bramka RUNTIME_ACTIVE — wymaga dowodów, nie deklaracji > ODRZUCA RUNTIME_ACTIVE bez manifestu (dawna dziura) 1ms
+ ✓ src/toolPacks/__tests__/validator.test.ts > bramka RUNTIME_ACTIVE — wymaga dowodów, nie deklaracji > ODRZUCA, gdy choć jedna bramka nie jest PASS 1ms
+ ✓ src/toolPacks/__tests__/validator.test.ts > bramka RUNTIME_ACTIVE — wymaga dowodów, nie deklaracji > ODRZUCA dowody z innego SHA (zestarzały manifest) 0ms
+ ✓ src/toolPacks/__tests__/validator.test.ts > bramka RUNTIME_ACTIVE — wymaga dowodów, nie deklaracji > ODRZUCA MPQ poniżej progu dla powierzchni sygnaturowej 1ms
+ ✓ src/toolPacks/__tests__/validator.test.ts > bramka RUNTIME_ACTIVE — wymaga dowodów, nie deklaracji > ODRZUCA brak trwałych dowodów 0ms
+ ✓ src/toolPacks/__tests__/validator.test.ts > bramka RUNTIME_ACTIVE — wymaga dowodów, nie deklaracji > PRZEPUSZCZA dopiero przy komplecie dowodów wobec bieżącego SHA 1ms
+ ✓ src/toolPacks/__tests__/validator.test.ts > walidacja treści PACK_COMPLETE (P1) > wymaga wiązania z silnikiem i bankiem pytań 0ms
+ ✓ src/toolPacks/__tests__/validator.test.ts > walidacja treści PACK_COMPLETE (P1) > wymaga rejestru praw 0ms
+ ✓ src/toolPacks/__tests__/validator.test.ts > walidacja treści PACK_COMPLETE (P1) > ZABRANIA wpisania „Free" jako wniosku prawnego 0ms
+ ✓ src/toolPacks/__tests__/validator.test.ts > walidacja treści PACK_COMPLETE (P1) > wymaga zadeklarowania rozmiaru banku pytań 0ms
+ ✓ src/toolPacks/__tests__/validator.test.ts > walidacja treści PACK_COMPLETE (P1) > wykrywa fazę banku, która nie istnieje w packu 3ms
+ ✓ src/toolPacks/__tests__/validator.test.ts > walidacja treści PACK_COMPLETE (P1) > wymaga zastosowań i przeciwwskazań 0ms
+ ✓ src/toolPacks/__tests__/validator.test.ts > walidacja treści PACK_COMPLETE (P1) > wymaga reguły challenge w każdym pytaniu 0ms
+ ✓ src/toolPacks/__tests__/validator.test.ts > walidacja treści PACK_COMPLETE (P1) > wymaga kompletu pól każdej fazy 0ms
+ ✓ src/toolPacks/__tests__/validator.test.ts > validateAll > liczy stany treści i runtime rozdzielnie 1ms
+ ✓ src/toolPacks/__tests__/validator.test.ts (29 tests) 148ms
+ ✓ src/toolPacks/__tests__/registry.test.ts > rejestr Tool Packów > pokrywa dokładnie 31 kanonicznych narzędzi 102ms
+ ✓ src/toolPacks/__tests__/registry.test.ts > rejestr Tool Packów > pokrywa się 1:1 z ToolType (bez dodawania i usuwania narzędzi) 1ms
+ ✓ src/toolPacks/__tests__/registry.test.ts > rejestr Tool Packów > nie zawiera duplikatów toolType 1ms
+ ✓ src/toolPacks/__tests__/registry.test.ts > rejestr Tool Packów > każdy pack przechodzi walidację 4ms
+ ✓ src/toolPacks/__tests__/registry.test.ts > rejestr Tool Packów > żadne narzędzie nie jest jeszcze RUNTIME_ACTIVE 0ms
+ ✓ src/toolPacks/__tests__/registry.test.ts > rejestr Tool Packów > rozdziela stan treści od stanu runtime 1ms
+ ✓ src/toolPacks/__tests__/registry.test.ts > rejestr Tool Packów > 19 spisanych packów pokrywa dokładnie narzędzia z silnikiem 1ms
+ ✓ src/toolPacks/__tests__/registry.test.ts > rejestr Tool Packów > żaden pack nie deklaruje „Free" jako statusu prawnego 1ms
+ ✓ src/toolPacks/__tests__/registry.test.ts > rejestr Tool Packów > 12 narzędzi bez dowodów jest oznaczonych COMING_SOON, nie PENDING 0ms
+ ✓ src/toolPacks/__tests__/registry.test.ts > rejestr Tool Packów > Dynamic SWOT jest kompletnym wzorcem pionowym 0ms
+ ✓ src/toolPacks/__tests__/registry.test.ts > rejestr Tool Packów > fazy Dynamic SWOT zgadzają się z id kroków runtime 0ms
+ ✓ src/toolPacks/__tests__/registry.test.ts > rejestr Tool Packów > każdy pack deklaruje archetyp geometrii sygnaturowej 5ms
+ ✓ src/toolPacks/__tests__/registry.test.ts (12 tests) 121ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > lista 19 pokrywa się z packami PACK_COMPLETE w rejestrze 171ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > dynamic-swot > ma pack zdefiniowany w rejestrze 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > dynamic-swot > engine.engineDir istnieje na dysku 1ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > dynamic-swot > engine.questionBankModule istnieje na dysku 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > dynamic-swot > engine.expectedQuestionNodeCount zgadza się z REALNYM bankiem pytań 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > dynamic-swot > fazy packa zgadzają się DOKŁADNIE z realnym TOOL_STEP_DEFINITIONS (kolejność + zbiór) 1ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > dynamic-swot > deklaruje archetyp geometrii sygnaturowej z kanonicznego zbioru 8 1ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > dynamic-swot > bankBackedPhaseIds wskazują fazy, które faktycznie istnieją w packu 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > market-forces > ma pack zdefiniowany w rejestrze 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > market-forces > engine.engineDir istnieje na dysku 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > market-forces > engine.questionBankModule istnieje na dysku 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > market-forces > engine.expectedQuestionNodeCount zgadza się z REALNYM bankiem pytań 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > market-forces > fazy packa zgadzają się DOKŁADNIE z realnym TOOL_STEP_DEFINITIONS (kolejność + zbiór) 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > market-forces > deklaruje archetyp geometrii sygnaturowej z kanonicznego zbioru 8 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > market-forces > bankBackedPhaseIds wskazują fazy, które faktycznie istnieją w packu 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > growth-paths > ma pack zdefiniowany w rejestrze 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > growth-paths > engine.engineDir istnieje na dysku 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > growth-paths > engine.questionBankModule istnieje na dysku 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > growth-paths > engine.expectedQuestionNodeCount zgadza się z REALNYM bankiem pytań 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > growth-paths > fazy packa zgadzają się DOKŁADNIE z realnym TOOL_STEP_DEFINITIONS (kolejność + zbiór) 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > growth-paths > deklaruje archetyp geometrii sygnaturowej z kanonicznego zbioru 8 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > growth-paths > bankBackedPhaseIds wskazują fazy, które faktycznie istnieją w packu 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > value-chain > ma pack zdefiniowany w rejestrze 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > value-chain > engine.engineDir istnieje na dysku 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > value-chain > engine.questionBankModule istnieje na dysku 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > value-chain > engine.expectedQuestionNodeCount zgadza się z REALNYM bankiem pytań 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > value-chain > fazy packa zgadzają się DOKŁADNIE z realnym TOOL_STEP_DEFINITIONS (kolejność + zbiór) 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > value-chain > deklaruje archetyp geometrii sygnaturowej z kanonicznego zbioru 8 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > value-chain > bankBackedPhaseIds wskazują fazy, które faktycznie istnieją w packu 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > portfolio-priority > ma pack zdefiniowany w rejestrze 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > portfolio-priority > engine.engineDir istnieje na dysku 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > portfolio-priority > engine.questionBankModule istnieje na dysku 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > portfolio-priority > engine.expectedQuestionNodeCount zgadza się z REALNYM bankiem pytań 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > portfolio-priority > fazy packa zgadzają się DOKŁADNIE z realnym TOOL_STEP_DEFINITIONS (kolejność + zbiór) 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > portfolio-priority > deklaruje archetyp geometrii sygnaturowej z kanonicznego zbioru 8 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > portfolio-priority > bankBackedPhaseIds wskazują fazy, które faktycznie istnieją w packu 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > risk-uncertainty > ma pack zdefiniowany w rejestrze 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > risk-uncertainty > engine.engineDir istnieje na dysku 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > risk-uncertainty > engine.questionBankModule istnieje na dysku 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > risk-uncertainty > engine.expectedQuestionNodeCount zgadza się z REALNYM bankiem pytań 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > risk-uncertainty > fazy packa zgadzają się DOKŁADNIE z realnym TOOL_STEP_DEFINITIONS (kolejność + zbiór) 3ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > risk-uncertainty > deklaruje archetyp geometrii sygnaturowej z kanonicznego zbioru 8 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > risk-uncertainty > bankBackedPhaseIds wskazują fazy, które faktycznie istnieją w packu 2ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > capability-mapper > ma pack zdefiniowany w rejestrze 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > capability-mapper > engine.engineDir istnieje na dysku 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > capability-mapper > engine.questionBankModule istnieje na dysku 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > capability-mapper > engine.expectedQuestionNodeCount zgadza się z REALNYM bankiem pytań 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > capability-mapper > fazy packa zgadzają się DOKŁADNIE z realnym TOOL_STEP_DEFINITIONS (kolejność + zbiór) 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > capability-mapper > deklaruje archetyp geometrii sygnaturowej z kanonicznego zbioru 8 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > capability-mapper > bankBackedPhaseIds wskazują fazy, które faktycznie istnieją w packu 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > ambition-decomposer > ma pack zdefiniowany w rejestrze 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > ambition-decomposer > engine.engineDir istnieje na dysku 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > ambition-decomposer > engine.questionBankModule istnieje na dysku 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > ambition-decomposer > engine.expectedQuestionNodeCount zgadza się z REALNYM bankiem pytań 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > ambition-decomposer > fazy packa zgadzają się DOKŁADNIE z realnym TOOL_STEP_DEFINITIONS (kolejność + zbiór) 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > ambition-decomposer > deklaruje archetyp geometrii sygnaturowej z kanonicznego zbioru 8 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > ambition-decomposer > bankBackedPhaseIds wskazują fazy, które faktycznie istnieją w packu 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > focus-tradeoff > ma pack zdefiniowany w rejestrze 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > focus-tradeoff > engine.engineDir istnieje na dysku 1ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > focus-tradeoff > engine.questionBankModule istnieje na dysku 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > focus-tradeoff > engine.expectedQuestionNodeCount zgadza się z REALNYM bankiem pytań 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > focus-tradeoff > fazy packa zgadzają się DOKŁADNIE z realnym TOOL_STEP_DEFINITIONS (kolejność + zbiór) 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > focus-tradeoff > deklaruje archetyp geometrii sygnaturowej z kanonicznego zbioru 8 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > focus-tradeoff > bankBackedPhaseIds wskazują fazy, które faktycznie istnieją w packu 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > narrative-engine > ma pack zdefiniowany w rejestrze 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > narrative-engine > engine.engineDir istnieje na dysku 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > narrative-engine > engine.questionBankModule istnieje na dysku 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > narrative-engine > engine.expectedQuestionNodeCount zgadza się z REALNYM bankiem pytań 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > narrative-engine > fazy packa zgadzają się DOKŁADNIE z realnym TOOL_STEP_DEFINITIONS (kolejność + zbiór) 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > narrative-engine > deklaruje archetyp geometrii sygnaturowej z kanonicznego zbioru 8 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > narrative-engine > bankBackedPhaseIds wskazują fazy, które faktycznie istnieją w packu 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > a3-problem-solving > ma pack zdefiniowany w rejestrze 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > a3-problem-solving > engine.engineDir istnieje na dysku 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > a3-problem-solving > engine.questionBankModule istnieje na dysku 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > a3-problem-solving > engine.expectedQuestionNodeCount zgadza się z REALNYM bankiem pytań 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > a3-problem-solving > fazy packa zgadzają się DOKŁADNIE z realnym TOOL_STEP_DEFINITIONS (kolejność + zbiór) 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > a3-problem-solving > deklaruje archetyp geometrii sygnaturowej z kanonicznego zbioru 8 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > a3-problem-solving > bankBackedPhaseIds wskazują fazy, które faktycznie istnieją w packu 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > sop-builder > ma pack zdefiniowany w rejestrze 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > sop-builder > engine.engineDir istnieje na dysku 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > sop-builder > engine.questionBankModule istnieje na dysku 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > sop-builder > engine.expectedQuestionNodeCount zgadza się z REALNYM bankiem pytań 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > sop-builder > fazy packa zgadzają się DOKŁADNIE z realnym TOOL_STEP_DEFINITIONS (kolejność + zbiór) 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > sop-builder > deklaruje archetyp geometrii sygnaturowej z kanonicznego zbioru 8 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > sop-builder > bankBackedPhaseIds wskazują fazy, które faktycznie istnieją w packu 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > smed-planner > ma pack zdefiniowany w rejestrze 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > smed-planner > engine.engineDir istnieje na dysku 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > smed-planner > engine.questionBankModule istnieje na dysku 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > smed-planner > engine.expectedQuestionNodeCount zgadza się z REALNYM bankiem pytań 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > smed-planner > fazy packa zgadzają się DOKŁADNIE z realnym TOOL_STEP_DEFINITIONS (kolejność + zbiór) 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > smed-planner > deklaruje archetyp geometrii sygnaturowej z kanonicznego zbioru 8 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > smed-planner > bankBackedPhaseIds wskazują fazy, które faktycznie istnieją w packu 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > dms-builder > ma pack zdefiniowany w rejestrze 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > dms-builder > engine.engineDir istnieje na dysku 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > dms-builder > engine.questionBankModule istnieje na dysku 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > dms-builder > engine.expectedQuestionNodeCount zgadza się z REALNYM bankiem pytań 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > dms-builder > fazy packa zgadzają się DOKŁADNIE z realnym TOOL_STEP_DEFINITIONS (kolejność + zbiór) 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > dms-builder > deklaruje archetyp geometrii sygnaturowej z kanonicznego zbioru 8 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > dms-builder > bankBackedPhaseIds wskazują fazy, które faktycznie istnieją w packu 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > inventory-autopilot > ma pack zdefiniowany w rejestrze 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > inventory-autopilot > engine.engineDir istnieje na dysku 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > inventory-autopilot > engine.questionBankModule istnieje na dysku 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > inventory-autopilot > engine.expectedQuestionNodeCount zgadza się z REALNYM bankiem pytań 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > inventory-autopilot > fazy packa zgadzają się DOKŁADNIE z realnym TOOL_STEP_DEFINITIONS (kolejność + zbiór) 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > inventory-autopilot > deklaruje archetyp geometrii sygnaturowej z kanonicznego zbioru 8 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > inventory-autopilot > bankBackedPhaseIds wskazują fazy, które faktycznie istnieją w packu 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > rpa-scanner > ma pack zdefiniowany w rejestrze 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > rpa-scanner > engine.engineDir istnieje na dysku 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > rpa-scanner > engine.questionBankModule istnieje na dysku 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > rpa-scanner > engine.expectedQuestionNodeCount zgadza się z REALNYM bankiem pytań 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > rpa-scanner > fazy packa zgadzają się DOKŁADNIE z realnym TOOL_STEP_DEFINITIONS (kolejność + zbiór) 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > rpa-scanner > deklaruje archetyp geometrii sygnaturowej z kanonicznego zbioru 8 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > rpa-scanner > bankBackedPhaseIds wskazują fazy, które faktycznie istnieją w packu 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > ai-discovery > ma pack zdefiniowany w rejestrze 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > ai-discovery > engine.engineDir istnieje na dysku 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > ai-discovery > engine.questionBankModule istnieje na dysku 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > ai-discovery > engine.expectedQuestionNodeCount zgadza się z REALNYM bankiem pytań 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > ai-discovery > fazy packa zgadzają się DOKŁADNIE z realnym TOOL_STEP_DEFINITIONS (kolejność + zbiór) 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > ai-discovery > deklaruje archetyp geometrii sygnaturowej z kanonicznego zbioru 8 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > ai-discovery > bankBackedPhaseIds wskazują fazy, które faktycznie istnieją w packu 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > pain-explorer > ma pack zdefiniowany w rejestrze 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > pain-explorer > engine.engineDir istnieje na dysku 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > pain-explorer > engine.questionBankModule istnieje na dysku 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > pain-explorer > engine.expectedQuestionNodeCount zgadza się z REALNYM bankiem pytań 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > pain-explorer > fazy packa zgadzają się DOKŁADNIE z realnym TOOL_STEP_DEFINITIONS (kolejność + zbiór) 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > pain-explorer > deklaruje archetyp geometrii sygnaturowej z kanonicznego zbioru 8 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > pain-explorer > bankBackedPhaseIds wskazują fazy, które faktycznie istnieją w packu 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > process-automation > ma pack zdefiniowany w rejestrze 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > process-automation > engine.engineDir istnieje na dysku 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > process-automation > engine.questionBankModule istnieje na dysku 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > process-automation > engine.expectedQuestionNodeCount zgadza się z REALNYM bankiem pytań 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > process-automation > fazy packa zgadzają się DOKŁADNIE z realnym TOOL_STEP_DEFINITIONS (kolejność + zbiór) 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > process-automation > deklaruje archetyp geometrii sygnaturowej z kanonicznego zbioru 8 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > process-automation > bankBackedPhaseIds wskazują fazy, które faktycznie istnieją w packu 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > 19 narzędzi z silnikiem pokrywa WSZYSTKIE 8 archetypów co najmniej raz 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts > pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem > rozjazd wykrywalny: gdyby ktoś podmienił toolType w mapie liczników, test node-count złapie to (sanity check własnej mapy) 0ms
+ ✓ src/toolPacks/__tests__/engineBindingCoverage.test.ts (136 tests) 206ms
+
+ Test Files  4 passed (4)
+      Tests  187 passed (187)
+   Start at  22:46:05
+   Duration  4.54s (transform 2.29s, setup 1.33s, import 2.53s, tests 603ms, environment 8.84s)
+
+
+ Test Files  4 passed (4)
+      Tests  187 passed (187)
+   Start at  22:46:05
+   Duration  4.55s (transform 2.29s, setup 1.33s, import 2.53s, tests 603ms, environment 8.84s)
+
+JSON report written to /Users/piotrwisniewski/.codex/worktrees/h3-manifest/junit.xml
+JUNIT report written to /Users/piotrwisniewski/.codex/worktrees/h3-manifest/junit.xml

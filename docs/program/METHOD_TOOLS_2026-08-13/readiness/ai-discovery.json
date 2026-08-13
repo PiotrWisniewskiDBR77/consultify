@@ -1,0 +1,110 @@
+{
+  "toolType": "ai-discovery",
+  "displayName": "AI Discovery",
+  "signatureArchetype": "discovery-candidate-funnel",
+  "tier": 2,
+  "candidateSha": "91b562ea66",
+  "verifiedAt": "2026-08-13T20:40:00Z",
+  "criteria": {
+    "pack": {
+      "status": "PASS",
+      "evidence": "src/toolPacks/registry.ts (AUTHORED_PACKS) + src/toolPacks/__tests__/registry.test.ts + validator.test.ts — re-run ten stream: `CI=true npx vitest run src/toolPacks/__tests__/` → 4 pliki / 187 testów PASS na 91b562ea66 (nie skopiowane z ROSTER_MATRIX.md, uruchomione ponownie)."
+    },
+    "engine": {
+      "status": "PASS",
+      "evidence": "src/toolPacks/__tests__/engineBindingCoverage.test.ts (136 testów) — engine.engineDir i engine.questionBankModule istnieją na dysku; re-run ten stream, zielone na 91b562ea66."
+    },
+    "questionWorkflowMapping": {
+      "status": "PASS",
+      "evidence": "engineBindingCoverage.test.ts: \"fazy packa zgadzają się DOKŁADNIE z realnym TOOL_STEP_DEFINITIONS\" — pack.phases id == src/store/useToolStore.ts TOOL_STEP_DEFINITIONS[toolType], w tej samej kolejności. Re-run ten stream, PASS."
+    },
+    "persistence": {
+      "status": "PASS",
+      "evidence": "tests/acceptance/h32-19tools.e2e.test.ts — re-run ten stream przeciwko REALNEMU Postgresowi (cfy-h3-manifest, port 56800, świeża migracja) na 91b562ea66: 19/19 PASS. RELOAD (GET po PUT) zwraca answers.summary.verdict bajt-w-bajt."
+    },
+    "renderer": {
+      "status": "FAIL",
+      "evidence": "src/components/DiscoveryTools/ToolCanvas.tsx — to narzędzie jest is_coming_soon=0 (Library pokazuje je jako w pełni dostępne) i ma pełny silnik RICH w src/config/, ale NIE jest wśród 16 dedykowanych gałęzi ToolCanvas.tsx (re-policzone ten stream) — spada do renderera generycznego. FAIL, nie \"uzasadniony generic\" (treść istnieje, tylko nieobsłużona)."
+    },
+    "validationEvidence": {
+      "status": "PASS",
+      "evidence": "src/toolPacks/__tests__/validator.test.ts — re-run ten stream (w ramach tych samych 4 plików/187 testów): pack.rights wypełnione, commercialUseStatus nigdy \"Free\", provenance niepuste, validateToolPack() zero błędów."
+    },
+    "output": {
+      "status": "FAIL",
+      "evidence": "tests/integration/tools-archetype-promote-characterization.realdb.test.ts — re-run ten stream (8/8 PASS na 91b562ea66, port 56800): wiersz tool_outputs UTWORZONY, ale payload_json.items=[] i payload_json.engineVersion='generic-fallback-1.0.0' — DOWIEDZIONE puste-ale-uczciwe. Nie spełnia DoD dla realnej treści klienckiej mimo że mechanizm działa."
+    },
+    "report": {
+      "status": "FAIL",
+      "evidence": "src/config/consultingToolsStandard.ts:35 CONSULTING_TOOL_STANDARD_OUTPUTS = ['initiative'] — re-potwierdzone ten stream (grep na 91b562ea66) — żaden frontendowy CTA nie oferuje \"report\" dla ŻADNEGO z 19 narzędzi. Backend (ToolController.promoteToOutput, outputType==='report') first-party sprawdzony TYM streamem tylko dla sop-builder: HTTP 200, wiersz report_builder_reports utworzony (scratch test, uruchomiony i usunięty, log w readiness/evidence/h3-scratch-report-presentation.txt). Nie sprawdzone dla pozostałych 18. DoD na poziomie użytecznym dla klienta = FAIL dla wszystkich 19, bo brak ścieżki UI."
+    },
+    "presentation": {
+      "status": "FAIL",
+      "evidence": "src/config/consultingToolsStandard.ts:35 — jak wyżej, ten sam brak CTA. Backend (outputType==='presentation') first-party sprawdzony tym streamem tylko dla capability-mapper: HTTP 200 (log jw.). Nie sprawdzone dla pozostałych 18. FAIL dla wszystkich 19 na poziomie użytecznym dla klienta."
+    },
+    "initiative": {
+      "status": "PASS",
+      "evidence": "tests/integration/tools-archetype-promote-characterization.realdb.test.ts (8/8, re-run ten stream) + dynamic-swot: tests/acceptance/tls04-swot-proposal-lifecycle.e2e.test.ts (33/33, re-run ten stream) — wiersz tool_initiative_links (batch_id='promote-initiative') + realny wiersz initiatives utworzony. Frontend CTA też oferuje 'initiative' (jedyny wystawiony outputType — CONSULTING_TOOL_STANDARD_OUTPUTS)."
+    },
+    "approval": {
+      "status": "PASS",
+      "evidence": "tests/integration/tools-archetype-promote-characterization.realdb.test.ts (8/8, re-run ten stream) — kroki SUBMIT FOR REVIEW + APPROVE, przejścia statusu IN_PROGRESS→REVIEW→APPROVED dowiedzione na realnym Postgresie. Dla dynamic-swot dodatkowo tls04-swot-proposal-lifecycle.e2e.test.ts (33/33, re-run ten stream) — pełny cykl propozycji."
+    },
+    "browserE2E": {
+      "status": "FAIL",
+      "evidence": "Zero plików w tests/e2e/ odwołuje się do tego toolType z faktyczną nawigacją przeglądarki (re-policzone ten stream: `grep -rn \"<toolType>\" tests/e2e/`) — zweryfikowany, ostateczny brak, nie \"nieodpalone, może istnieje\"."
+    },
+    "restartReopen": {
+      "status": "PASS",
+      "evidence": "tests/acceptance/h32-19tools.e2e.test.ts — re-run ten stream przeciwko REALNEMU Postgresowi (cfy-h3-manifest, port 56800, świeża migracja) na 91b562ea66: 19/19 PASS. RELOAD (GET po PUT) zwraca answers.summary.verdict bajt-w-bajt. UWAGA: to dowód na poziomie HTTP (GET po PUT na realnym Postgresie), NIE przejechany test zamknięcia/otwarcia karty w realnej przeglądarce — patrz browserE2E."
+    },
+    "lightMpq": {
+      "status": "NOT_VERIFIED",
+      "evidence": "Brak wpisu w docs/qa/screens/ dla tego workspace narzędzia — re-policzone ten stream: `find docs/qa/screens -iname \"*<toolType>*\"` → 0 trafień dla wszystkich 19. Żaden pack nie ustawia lightMpq. Nigdy nie oceniane — nie \"niski wynik\", dosłownie brak oceny."
+    },
+    "darkMpq": {
+      "status": "NOT_VERIFIED",
+      "evidence": "Brak wpisu w docs/qa/screens/ dla tego workspace narzędzia — re-policzone ten stream: `find docs/qa/screens -iname \"*<toolType>*\"` → 0 trafień dla wszystkich 19. Żaden pack nie ustawia darkMpq. Nigdy nie oceniane — nie \"niski wynik\", dosłownie brak oceny."
+    },
+    "evidenceLedger": {
+      "status": "PASS",
+      "evidence": "Ten manifest sam niesie evidenceLedgerRefs — wskaźniki na realne, istniejące w repo pliki (testy + logi tego streamu + ROSTER_MATRIX.md), zweryfikowane ten stream. Patrz pole runtimeReadiness.evidenceLedgerRefs poniżej."
+    }
+  },
+  "runtimeReadiness": {
+    "manifestVersion": "1.0.0",
+    "toolType": "ai-discovery",
+    "gates": {
+      "sessionImplemented": "PASS",
+      "persistenceVerified": "PASS",
+      "reopenVerified": "PASS",
+      "rendererImplemented": "FAIL",
+      "outputImplemented": "FAIL",
+      "reportImplemented": "FAIL",
+      "approvalVerified": "PASS",
+      "initiativeHandoffVerified": "PASS",
+      "automatedTestsPassed": "PASS",
+      "manualAcceptancePassed": "NOT_RUN"
+    },
+    "lightMpq": null,
+    "darkMpq": null,
+    "hasSignatureSurface": false,
+    "evidenceLedgerRefs": [
+      "docs/program/METHOD_TOOLS_2026-08-13/ROSTER_MATRIX.md",
+      "src/toolPacks/__tests__/engineBindingCoverage.test.ts",
+      "src/toolPacks/__tests__/registry.test.ts",
+      "src/toolPacks/__tests__/validator.test.ts",
+      "tests/acceptance/h32-19tools.e2e.test.ts",
+      "docs/program/METHOD_TOOLS_2026-08-13/readiness/evidence/h3-h32.txt",
+      "docs/program/METHOD_TOOLS_2026-08-13/readiness/evidence/h3-contract-tests.txt",
+      "tests/integration/tools-archetype-promote-characterization.realdb.test.ts",
+      "docs/program/METHOD_TOOLS_2026-08-13/readiness/evidence/h3-archetype-promote.txt"
+    ],
+    "verifiedAt": "2026-08-13T20:40:00Z",
+    "verifiedAgainstSha": "91b562ea66"
+  },
+  "recordedVerdict": {
+    "publishable": false,
+    "failureCount": 6
+  }
+}
