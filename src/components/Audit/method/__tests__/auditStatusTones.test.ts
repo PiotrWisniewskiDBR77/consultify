@@ -2,19 +2,24 @@
  * auditStatusTones — jednostkowe testy mapowania statusów domeny Audits na
  * `StatusTone`.
  *
- * Wymóg prawny (brief U7 §D): pakiet NIEZWERYFIKOWANY nie może wyglądać jak
- * norma. Test 2 jest tego bezpośrednią egzekucją — pętla po WSZYSTKICH
- * klasyfikacjach innych niż `VERIFIED_NORMATIVE` upewnia się, że żadna nie
- * dostanie tonu `success`, niezależnie od tego, jak w przyszłości zmieni się
- * lista `PACK_CLASSIFICATIONS`.
+ * Wymóg prawny (P0 2026-08-13, patrz `server/src/services/audits/types.ts`):
+ * DWIE NIEZALEŻNE OSIE — `sourceType` (czym jest źródło) i `verificationStatus`
+ * (czy je sprawdzono) NIGDY nie mieszają się. Procedura QMS klienta
+ * zweryfikowana przez eksperta to `INTERNAL_PROCEDURE` + `VERIFIED` — NIE
+ * „zweryfikowana norma". Testy poniżej egzekwują to wprost po renderowanym
+ * TEKŚCIE etykiety (nie po kluczu), bo błąd kategorii z pierwszej wersji
+ * modelu był dokładnie taki: klucz nazywał się poprawnie, ale etykieta
+ * mieszała dwa pytania w jedno.
  */
 import { describe, expect, it } from 'vitest';
 
 import {
-  packClassificationLabel,
-  packClassificationTone,
   packPublicationLabel,
   packPublicationTone,
+  packSourceTypeLabel,
+  packSourceTypeTone,
+  packVerificationLabel,
+  packVerificationTone,
   programLifecycleLabel,
   programLifecycleTone,
   proposalStatusLabel,
@@ -26,41 +31,102 @@ import {
   AUDIT_LIFECYCLE_STATES,
   AUDIT_PROPOSAL_STATUSES,
   AUDIT_REPORT_STATUSES,
-  PACK_CLASSIFICATIONS,
+  AUDIT_SOURCE_TYPES,
+  AUDIT_VERIFICATION_STATES,
+  isComplianceGrade,
+  isNormativeSourceType,
   PACK_PUBLICATION_STATUSES,
 } from '../auditsMethodApi';
 
-describe('packClassificationTone', () => {
-  it('gives VERIFIED_NORMATIVE the only success tone', () => {
-    expect(packClassificationTone('VERIFIED_NORMATIVE')).toBe('success');
-  });
-
-  it('NEVER gives a non-verified classification the success tone (legal requirement)', () => {
-    const nonVerified = PACK_CLASSIFICATIONS.filter((c) => c !== 'VERIFIED_NORMATIVE');
-    expect(nonVerified).toEqual(
-      expect.arrayContaining(['INTERNAL_FRAMEWORK', 'DEMONSTRATION', 'LEGACY', 'EVIDENCE_MISSING'])
+describe('packSourceTypeLabel — oś 1 (CZYM jest źródło)', () => {
+  it('never lets a non-normative source type render a label containing "norm" — checked on rendered TEXT, not the key', () => {
+    const nonNormative = AUDIT_SOURCE_TYPES.filter((t) => !isNormativeSourceType(t));
+    expect(nonNormative).toEqual(
+      expect.arrayContaining(['INTERNAL_PROCEDURE', 'INTERNAL_FRAMEWORK', 'DEMONSTRATION', 'LEGACY'])
     );
-    for (const classification of nonVerified) {
-      expect(packClassificationTone(classification)).not.toBe('success');
+    for (const sourceType of nonNormative) {
+      expect(packSourceTypeLabel(sourceType, true).toLowerCase()).not.toMatch(/norm/);
+      expect(packSourceTypeLabel(sourceType, false).toLowerCase()).not.toMatch(/norm/);
     }
   });
 
-  it('DEMONSTRATION / LEGACY / EVIDENCE_MISSING resolve to a distinct, non-neutral-looking-as-norm tone', () => {
-    // Each of the three "handle with care" classifications must be visually
-    // distinguishable from a plain neutral chip AND from success.
-    expect(packClassificationTone('DEMONSTRATION')).toBe('warning');
-    expect(packClassificationTone('LEGACY')).toBe('neutral');
-    expect(packClassificationTone('EVIDENCE_MISSING')).toBe('danger');
+  it('reserves the word "norma"/"normative" for LICENSED_STANDARD only (REGULATION may also use it, but does not have to)', () => {
+    expect(packSourceTypeLabel('LICENSED_STANDARD', true).toLowerCase()).toMatch(/norm/);
   });
 
-  it('every classification has a non-empty PL and EN label, and they differ', () => {
-    for (const classification of PACK_CLASSIFICATIONS) {
-      const pl = packClassificationLabel(classification, true);
-      const en = packClassificationLabel(classification, false);
+  it('gives every source type a non-empty, differing PL/EN label', () => {
+    for (const sourceType of AUDIT_SOURCE_TYPES) {
+      const pl = packSourceTypeLabel(sourceType, true);
+      const en = packSourceTypeLabel(sourceType, false);
       expect(pl.length).toBeGreaterThan(0);
       expect(en.length).toBeGreaterThan(0);
       expect(pl).not.toBe(en);
     }
+  });
+
+  it('NEVER gives the source-type axis a success tone — type is neither good nor bad (verification carries the judgement)', () => {
+    for (const sourceType of AUDIT_SOURCE_TYPES) {
+      expect(packSourceTypeTone(sourceType)).not.toBe('success');
+    }
+  });
+
+  it('DEMONSTRATION gets a distinct, cautionary tone (never looks like a compliance audit)', () => {
+    expect(packSourceTypeTone('DEMONSTRATION')).toBe('warning');
+  });
+
+  it('LEGACY never reads as current — neutral tone (no vivid fill) and a label that says so', () => {
+    expect(packSourceTypeTone('LEGACY')).toBe('neutral');
+    expect(packSourceTypeLabel('LEGACY', true).toLowerCase()).toMatch(/wycofan/);
+    expect(packSourceTypeLabel('LEGACY', false).toLowerCase()).toMatch(/legacy|retired/);
+  });
+
+  it('changing verificationStatus never changes the source-type label — same pack, four verification states, identical type label', () => {
+    for (const sourceType of AUDIT_SOURCE_TYPES) {
+      const labelsAcrossVerification = AUDIT_VERIFICATION_STATES.map(() => packSourceTypeLabel(sourceType, true));
+      expect(new Set(labelsAcrossVerification).size).toBe(1);
+    }
+  });
+});
+
+describe('packVerificationLabel — oś 2 (CZY sprawdzono)', () => {
+  it('gives success ONLY to VERIFIED — the only success-toned value across BOTH axes', () => {
+    expect(packVerificationTone('VERIFIED')).toBe('success');
+    const rest = AUDIT_VERIFICATION_STATES.filter((v) => v !== 'VERIFIED');
+    for (const status of rest) {
+      expect(packVerificationTone(status)).not.toBe('success');
+    }
+  });
+
+  it('resolves every verification state to a tone and a bilingual label without throwing', () => {
+    for (const status of AUDIT_VERIFICATION_STATES) {
+      expect(() => packVerificationTone(status)).not.toThrow();
+      const pl = packVerificationLabel(status, true);
+      const en = packVerificationLabel(status, false);
+      expect(pl.length).toBeGreaterThan(0);
+      expect(en.length).toBeGreaterThan(0);
+      expect(pl).not.toBe(en);
+    }
+  });
+});
+
+describe('isNormativeSourceType / isComplianceGrade', () => {
+  it('only LICENSED_STANDARD and REGULATION are normative', () => {
+    expect(isNormativeSourceType('LICENSED_STANDARD')).toBe(true);
+    expect(isNormativeSourceType('REGULATION')).toBe(true);
+    expect(isNormativeSourceType('INTERNAL_PROCEDURE')).toBe(false);
+    expect(isNormativeSourceType('INTERNAL_FRAMEWORK')).toBe(false);
+    expect(isNormativeSourceType('DEMONSTRATION')).toBe(false);
+    expect(isNormativeSourceType('LEGACY')).toBe(false);
+  });
+
+  it('requires BOTH a normative source type AND VERIFIED — a verified internal procedure is still not compliance-grade', () => {
+    expect(isComplianceGrade('LICENSED_STANDARD', 'VERIFIED')).toBe(true);
+    expect(isComplianceGrade('INTERNAL_PROCEDURE', 'VERIFIED')).toBe(false);
+    expect(isComplianceGrade('LICENSED_STANDARD', 'PENDING_REVIEW')).toBe(false);
+  });
+
+  it('DEMONSTRATION is never compliance-grade, even if (hypothetically) marked VERIFIED', () => {
+    expect(isComplianceGrade('DEMONSTRATION', 'VERIFIED')).toBe(false);
   });
 });
 
