@@ -1,0 +1,308 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/.codex/worktrees/h3-manifest
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/.codex/worktrees/h3-manifest
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts
+2026-08-13 22:35:23:3523 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-13 22:35:23:3523 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-13 22:35:23:3523 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-13 22:35:23:3523 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-13 22:35:23:3523 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts
+2026-08-13 22:35:23:3523 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-13 22:35:23:3523 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-13 22:35:23:3523 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-13 22:35:23:3523 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-13 22:35:23:3523 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P1: promotion creates exactly one tool_outputs row with the expected shape
+2026-08-13 22:35:24:3524 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-08-13 22:35:24:3524 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-08-13 22:35:24:3524 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-08-13 22:35:24:3524 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-08-13 22:35:24:3524 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"localhost","database":"consultinity","max":10}
+2026-08-13 22:35:24:3524 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P1: promotion creates exactly one tool_outputs row with the expected shape
+2026-08-13 22:35:24:3524 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-08-13 22:35:24:3524 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-08-13 22:35:24:3524 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-08-13 22:35:24:3524 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-08-13 22:35:24:3524 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"localhost","database":"consultinity","max":10}
+2026-08-13 22:35:24:3524 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P1: promotion creates exactly one tool_outputs row with the expected shape
+2026-08-13 22:35:24:3524 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P1: promotion creates exactly one tool_outputs row with the expected shape
+2026-08-13 22:35:24:3524 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P1: promotion creates exactly one tool_outputs row with the expected shape
+2026-08-13 22:35:24:3524 [32minfo[39m: [32m[createInitiativeService] §B3 quality (advisory) — initiative 09d2c1a4-947a-43c5-8830-007f94277bbb: 10/10 failed [kpi_baseline_target, raid_mix, scope_out_mece, scope_in_count, deliverables_count, success_count, kill_count, milestones_count, roi_sizing, owner_assigned][39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P1: promotion creates exactly one tool_outputs row with the expected shape
+2026-08-13 22:35:24:3524 [32minfo[39m: [32m[createInitiativeService] §B3 quality (advisory) — initiative 09d2c1a4-947a-43c5-8830-007f94277bbb: 10/10 failed [kpi_baseline_target, raid_mix, scope_out_mece, scope_in_count, deliverables_count, success_count, kill_count, milestones_count, roi_sizing, owner_assigned][39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P2: source revision and pack/engine version are recorded on the snapshot
+2026-08-13 22:35:24:3524 [32minfo[39m: [32m[createInitiativeService] §B3 quality (advisory) — initiative fecc5115-2622-48bc-a5f7-fc7960a50438: 10/10 failed [kpi_baseline_target, raid_mix, scope_out_mece, scope_in_count, deliverables_count, success_count, kill_count, milestones_count, roi_sizing, owner_assigned][39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P2: source revision and pack/engine version are recorded on the snapshot
+2026-08-13 22:35:24:3524 [32minfo[39m: [32m[createInitiativeService] §B3 quality (advisory) — initiative fecc5115-2622-48bc-a5f7-fc7960a50438: 10/10 failed [kpi_baseline_target, raid_mix, scope_out_mece, scope_in_count, deliverables_count, success_count, kill_count, milestones_count, roi_sizing, owner_assigned][39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P3: editing the SESSION after promotion does NOT change the snapshot
+2026-08-13 22:35:24:3524 [32minfo[39m: [32m[createInitiativeService] §B3 quality (advisory) — initiative 365d5c99-f0fe-47fa-a5c5-b54dcfd28e60: 10/10 failed [kpi_baseline_target, raid_mix, scope_out_mece, scope_in_count, deliverables_count, success_count, kill_count, milestones_count, roi_sizing, owner_assigned][39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P3: editing the SESSION after promotion does NOT change the snapshot
+2026-08-13 22:35:24:3524 [32minfo[39m: [32m[createInitiativeService] §B3 quality (advisory) — initiative 365d5c99-f0fe-47fa-a5c5-b54dcfd28e60: 10/10 failed [kpi_baseline_target, raid_mix, scope_out_mece, scope_in_count, deliverables_count, success_count, kill_count, milestones_count, roi_sizing, owner_assigned][39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P4: re-promoting after a session mutation does not recompute — dedup returns the SAME snapshot untouched
+2026-08-13 22:35:24:3524 [32minfo[39m: [32m[createInitiativeService] §B3 quality (advisory) — initiative 80a0e2b2-404f-4140-ab57-2890efa9e616: 10/10 failed [kpi_baseline_target, raid_mix, scope_out_mece, scope_in_count, deliverables_count, success_count, kill_count, milestones_count, roi_sizing, owner_assigned][39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P4: re-promoting after a session mutation does not recompute — dedup returns the SAME snapshot untouched
+2026-08-13 22:35:24:3524 [32minfo[39m: [32m[createInitiativeService] §B3 quality (advisory) — initiative 80a0e2b2-404f-4140-ab57-2890efa9e616: 10/10 failed [kpi_baseline_target, raid_mix, scope_out_mece, scope_in_count, deliverables_count, success_count, kill_count, milestones_count, roi_sizing, owner_assigned][39m
+
+ ✓ tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P1: promotion creates exactly one tool_outputs row with the expected shape 109ms
+ ✓ tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P2: source revision and pack/engine version are recorded on the snapshot 32ms
+ ✓ tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P3: editing the SESSION after promotion does NOT change the snapshot 37ms
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P5: reopening (re-reading) the Output returns identical content AND identical hash
+2026-08-13 22:35:24:3524 [32minfo[39m: [32m[createInitiativeService] §B3 quality (advisory) — initiative be21d359-67b0-44f8-95d9-065b03c1b217: 10/10 failed [kpi_baseline_target, raid_mix, scope_out_mece, scope_in_count, deliverables_count, success_count, kill_count, milestones_count, roi_sizing, owner_assigned][39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P5: reopening (re-reading) the Output returns identical content AND identical hash
+2026-08-13 22:35:24:3524 [32minfo[39m: [32m[createInitiativeService] §B3 quality (advisory) — initiative be21d359-67b0-44f8-95d9-065b03c1b217: 10/10 failed [kpi_baseline_target, raid_mix, scope_out_mece, scope_in_count, deliverables_count, success_count, kill_count, milestones_count, roi_sizing, owner_assigned][39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P6: duplicate promotion (sequential retries) does not create a second snapshot
+2026-08-13 22:35:24:3524 [32minfo[39m: [32m[createInitiativeService] §B3 quality (advisory) — initiative ad450449-791c-4d29-a458-eda277151a48: 10/10 failed [kpi_baseline_target, raid_mix, scope_out_mece, scope_in_count, deliverables_count, success_count, kill_count, milestones_count, roi_sizing, owner_assigned][39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P6: duplicate promotion (sequential retries) does not create a second snapshot
+2026-08-13 22:35:24:3524 [32minfo[39m: [32m[createInitiativeService] §B3 quality (advisory) — initiative ad450449-791c-4d29-a458-eda277151a48: 10/10 failed [kpi_baseline_target, raid_mix, scope_out_mece, scope_in_count, deliverables_count, success_count, kill_count, milestones_count, roi_sizing, owner_assigned][39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P7: concurrent promote requests converge on exactly one snapshot (DB-enforced, not just app logic)
+2026-08-13 22:35:24:3524 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P7: concurrent promote requests converge on exactly one snapshot (DB-enforced, not just app logic)
+2026-08-13 22:35:24:3524 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P7: concurrent promote requests converge on exactly one snapshot (DB-enforced, not just app logic)
+2026-08-13 22:35:24:3524 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P7: concurrent promote requests converge on exactly one snapshot (DB-enforced, not just app logic)
+2026-08-13 22:35:24:3524 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P7: concurrent promote requests converge on exactly one snapshot (DB-enforced, not just app logic)
+2026-08-13 22:35:24:3524 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P7: concurrent promote requests converge on exactly one snapshot (DB-enforced, not just app logic)
+2026-08-13 22:35:24:3524 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P7: concurrent promote requests converge on exactly one snapshot (DB-enforced, not just app logic)
+2026-08-13 22:35:24:3524 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P7: concurrent promote requests converge on exactly one snapshot (DB-enforced, not just app logic)
+2026-08-13 22:35:24:3524 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P7: concurrent promote requests converge on exactly one snapshot (DB-enforced, not just app logic)
+2026-08-13 22:35:24:3524 [32minfo[39m: [32m[createInitiativeService] §B3 quality (advisory) — initiative 7a86fda3-c0f5-4f29-9f8f-2ad72e685a86: 10/10 failed [kpi_baseline_target, raid_mix, scope_out_mece, scope_in_count, deliverables_count, success_count, kill_count, milestones_count, roi_sizing, owner_assigned][39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P7: concurrent promote requests converge on exactly one snapshot (DB-enforced, not just app logic)
+2026-08-13 22:35:24:3524 [32minfo[39m: [32m[createInitiativeService] §B3 quality (advisory) — initiative 7a86fda3-c0f5-4f29-9f8f-2ad72e685a86: 10/10 failed [kpi_baseline_target, raid_mix, scope_out_mece, scope_in_count, deliverables_count, success_count, kill_count, milestones_count, roi_sizing, owner_assigned][39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P7: concurrent promote requests converge on exactly one snapshot (DB-enforced, not just app logic)
+2026-08-13 22:35:24:3524 [32minfo[39m: [32m[createInitiativeService] §B3 quality (advisory) — initiative fc2041cf-cbb7-43bc-946c-9cff7c521acc: 10/10 failed [kpi_baseline_target, raid_mix, scope_out_mece, scope_in_count, deliverables_count, success_count, kill_count, milestones_count, roi_sizing, owner_assigned][39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P7: concurrent promote requests converge on exactly one snapshot (DB-enforced, not just app logic)
+2026-08-13 22:35:24:3524 [32minfo[39m: [32m[createInitiativeService] §B3 quality (advisory) — initiative fc2041cf-cbb7-43bc-946c-9cff7c521acc: 10/10 failed [kpi_baseline_target, raid_mix, scope_out_mece, scope_in_count, deliverables_count, success_count, kill_count, milestones_count, roi_sizing, owner_assigned][39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P7: concurrent promote requests converge on exactly one snapshot (DB-enforced, not just app logic)
+2026-08-13 22:35:24:3524 [32minfo[39m: [32m[createInitiativeService] §B3 quality (advisory) — initiative c07c67b5-3e63-487a-9be3-2c744f359a78: 10/10 failed [kpi_baseline_target, raid_mix, scope_out_mece, scope_in_count, deliverables_count, success_count, kill_count, milestones_count, roi_sizing, owner_assigned][39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P7: concurrent promote requests converge on exactly one snapshot (DB-enforced, not just app logic)
+2026-08-13 22:35:24:3524 [32minfo[39m: [32m[createInitiativeService] §B3 quality (advisory) — initiative c07c67b5-3e63-487a-9be3-2c744f359a78: 10/10 failed [kpi_baseline_target, raid_mix, scope_out_mece, scope_in_count, deliverables_count, success_count, kill_count, milestones_count, roi_sizing, owner_assigned][39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P7: concurrent promote requests converge on exactly one snapshot (DB-enforced, not just app logic)
+2026-08-13 22:35:24:3524 [31merror[39m: [31m[Postgres] Query Error [RUN]:[39m
+2026-08-13 22:35:24:3524 [31merror[39m: [31m[Postgres] Failed SQL: INSERT INTO tool_initiative_links ([39m
+[31m             id, tool_session_id, batch_id, initiative_id, organization_id,[39m
+[31m             source_revision, output_type, idempotency_key, payload_hash, created_at[39m
+[31m           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)[39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P7: concurrent promote requests converge on exactly one snapshot (DB-enforced, not just app logic)
+2026-08-13 22:35:24:3524 [31merror[39m: [31m[Postgres] Query Error [RUN]:[39m
+2026-08-13 22:35:24:3524 [31merror[39m: [31m[Postgres] Failed SQL: INSERT INTO tool_initiative_links ([39m
+[31m             id, tool_session_id, batch_id, initiative_id, organization_id,[39m
+[31m             source_revision, output_type, idempotency_key, payload_hash, created_at[39m
+[31m           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)[39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P7: concurrent promote requests converge on exactly one snapshot (DB-enforced, not just app logic)
+2026-08-13 22:35:24:3524 [31merror[39m: [31m[Postgres] Run Error:[39m
+2026-08-13 22:35:24:3524 [31merror[39m: [31m[QueryHelper] Error in queryRun: duplicate key value violates unique constraint "uq_tool_initiative_links_promotion"[39m {"length":398,"name":"error","severity":"ERROR","code":"23505","detail":"Key (organization_id, tool_session_id, source_revision, output_type, idempotency_key)=(imm-1786653323203-org, imm-1786653323203-s7, 1, initiative, promote-initiative) already exists.","schema":"public","table":"tool_initiative_links","constraint":"uq_tool_initiative_links_promotion","file":"nbtinsert.c","line":"664","routine":"_bt_check_unique","stack":"error: duplicate key value violates unique constraint \"uq_tool_initiative_links_promotion\"\n    at /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/pg-pool/index.js:45:11\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at executeWithLogging (/Users/piotrwisniewski/.codex/worktrees/h3-manifest/server/src/database/PostgresDatabase.ts:664:17)"}
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P7: concurrent promote requests converge on exactly one snapshot (DB-enforced, not just app logic)
+2026-08-13 22:35:24:3524 [31merror[39m: [31m[Postgres] Run Error:[39m
+2026-08-13 22:35:24:3524 [31merror[39m: [31m[QueryHelper] Error in queryRun: duplicate key value violates unique constraint "uq_tool_initiative_links_promotion"[39m {"length":398,"name":"error","severity":"ERROR","code":"23505","detail":"Key (organization_id, tool_session_id, source_revision, output_type, idempotency_key)=(imm-1786653323203-org, imm-1786653323203-s7, 1, initiative, promote-initiative) already exists.","schema":"public","table":"tool_initiative_links","constraint":"uq_tool_initiative_links_promotion","file":"nbtinsert.c","line":"664","routine":"_bt_check_unique","stack":"error: duplicate key value violates unique constraint \"uq_tool_initiative_links_promotion\"\n    at /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/pg-pool/index.js:45:11\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at executeWithLogging (/Users/piotrwisniewski/.codex/worktrees/h3-manifest/server/src/database/PostgresDatabase.ts:664:17)"}
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P7: concurrent promote requests converge on exactly one snapshot (DB-enforced, not just app logic)
+2026-08-13 22:35:24:3524 [31merror[39m: [31m[Postgres] Query Error [RUN]:[39m
+2026-08-13 22:35:24:3524 [31merror[39m: [31m[Postgres] Failed SQL: INSERT INTO tool_initiative_links ([39m
+[31m             id, tool_session_id, batch_id, initiative_id, organization_id,[39m
+[31m             source_revision, output_type, idempotency_key, payload_hash, created_at[39m
+[31m           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)[39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P7: concurrent promote requests converge on exactly one snapshot (DB-enforced, not just app logic)
+2026-08-13 22:35:24:3524 [31merror[39m: [31m[Postgres] Query Error [RUN]:[39m
+2026-08-13 22:35:24:3524 [31merror[39m: [31m[Postgres] Failed SQL: INSERT INTO tool_initiative_links ([39m
+[31m             id, tool_session_id, batch_id, initiative_id, organization_id,[39m
+[31m             source_revision, output_type, idempotency_key, payload_hash, created_at[39m
+[31m           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)[39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P7: concurrent promote requests converge on exactly one snapshot (DB-enforced, not just app logic)
+2026-08-13 22:35:24:3524 [31merror[39m: [31m[Postgres] Run Error:[39m
+2026-08-13 22:35:24:3524 [31merror[39m: [31m[QueryHelper] Error in queryRun: duplicate key value violates unique constraint "uq_tool_initiative_links_promotion"[39m {"length":398,"name":"error","severity":"ERROR","code":"23505","detail":"Key (organization_id, tool_session_id, source_revision, output_type, idempotency_key)=(imm-1786653323203-org, imm-1786653323203-s7, 1, initiative, promote-initiative) already exists.","schema":"public","table":"tool_initiative_links","constraint":"uq_tool_initiative_links_promotion","file":"nbtinsert.c","line":"664","routine":"_bt_check_unique","stack":"error: duplicate key value violates unique constraint \"uq_tool_initiative_links_promotion\"\n    at /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/pg-pool/index.js:45:11\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at executeWithLogging (/Users/piotrwisniewski/.codex/worktrees/h3-manifest/server/src/database/PostgresDatabase.ts:664:17)"}
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P7: concurrent promote requests converge on exactly one snapshot (DB-enforced, not just app logic)
+2026-08-13 22:35:24:3524 [31merror[39m: [31m[Postgres] Run Error:[39m
+2026-08-13 22:35:24:3524 [31merror[39m: [31m[QueryHelper] Error in queryRun: duplicate key value violates unique constraint "uq_tool_initiative_links_promotion"[39m {"length":398,"name":"error","severity":"ERROR","code":"23505","detail":"Key (organization_id, tool_session_id, source_revision, output_type, idempotency_key)=(imm-1786653323203-org, imm-1786653323203-s7, 1, initiative, promote-initiative) already exists.","schema":"public","table":"tool_initiative_links","constraint":"uq_tool_initiative_links_promotion","file":"nbtinsert.c","line":"664","routine":"_bt_check_unique","stack":"error: duplicate key value violates unique constraint \"uq_tool_initiative_links_promotion\"\n    at /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/pg-pool/index.js:45:11\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at executeWithLogging (/Users/piotrwisniewski/.codex/worktrees/h3-manifest/server/src/database/PostgresDatabase.ts:664:17)"}
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P7: concurrent promote requests converge on exactly one snapshot (DB-enforced, not just app logic)
+2026-08-13 22:35:24:3524 [32minfo[39m: [32m[createInitiativeService] §B3 quality (advisory) — initiative aae6a65e-6b43-4153-a0c2-808a56709cf3: 10/10 failed [kpi_baseline_target, raid_mix, scope_out_mece, scope_in_count, deliverables_count, success_count, kill_count, milestones_count, roi_sizing, owner_assigned][39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P7: concurrent promote requests converge on exactly one snapshot (DB-enforced, not just app logic)
+2026-08-13 22:35:24:3524 [32minfo[39m: [32m[createInitiativeService] §B3 quality (advisory) — initiative aae6a65e-6b43-4153-a0c2-808a56709cf3: 10/10 failed [kpi_baseline_target, raid_mix, scope_out_mece, scope_in_count, deliverables_count, success_count, kill_count, milestones_count, roi_sizing, owner_assigned][39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P7: concurrent promote requests converge on exactly one snapshot (DB-enforced, not just app logic)
+2026-08-13 22:35:24:3524 [32minfo[39m: [32m[createInitiativeService] §B3 quality (advisory) — initiative 5b4cabaf-8e34-428d-811f-fdeaa741a7af: 10/10 failed [kpi_baseline_target, raid_mix, scope_out_mece, scope_in_count, deliverables_count, success_count, kill_count, milestones_count, roi_sizing, owner_assigned][39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P7: concurrent promote requests converge on exactly one snapshot (DB-enforced, not just app logic)
+2026-08-13 22:35:24:3524 [32minfo[39m: [32m[createInitiativeService] §B3 quality (advisory) — initiative 5b4cabaf-8e34-428d-811f-fdeaa741a7af: 10/10 failed [kpi_baseline_target, raid_mix, scope_out_mece, scope_in_count, deliverables_count, success_count, kill_count, milestones_count, roi_sizing, owner_assigned][39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P7: concurrent promote requests converge on exactly one snapshot (DB-enforced, not just app logic)
+2026-08-13 22:35:24:3524 [31merror[39m: [31m[Postgres] Query Error [RUN]:[39m
+2026-08-13 22:35:24:3524 [31merror[39m: [31m[Postgres] Failed SQL: INSERT INTO tool_initiative_links ([39m
+[31m             id, tool_session_id, batch_id, initiative_id, organization_id,[39m
+[31m             source_revision, output_type, idempotency_key, payload_hash, created_at[39m
+[31m           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)[39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P7: concurrent promote requests converge on exactly one snapshot (DB-enforced, not just app logic)
+2026-08-13 22:35:24:3524 [31merror[39m: [31m[Postgres] Query Error [RUN]:[39m
+2026-08-13 22:35:24:3524 [31merror[39m: [31m[Postgres] Failed SQL: INSERT INTO tool_initiative_links ([39m
+[31m             id, tool_session_id, batch_id, initiative_id, organization_id,[39m
+[31m             source_revision, output_type, idempotency_key, payload_hash, created_at[39m
+[31m           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)[39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P7: concurrent promote requests converge on exactly one snapshot (DB-enforced, not just app logic)
+2026-08-13 22:35:24:3524 [31merror[39m: [31m[Postgres] Run Error:[39m
+2026-08-13 22:35:24:3524 [31merror[39m: [31m[QueryHelper] Error in queryRun: duplicate key value violates unique constraint "uq_tool_initiative_links_promotion"[39m {"length":398,"name":"error","severity":"ERROR","code":"23505","detail":"Key (organization_id, tool_session_id, source_revision, output_type, idempotency_key)=(imm-1786653323203-org, imm-1786653323203-s7, 1, initiative, promote-initiative) already exists.","schema":"public","table":"tool_initiative_links","constraint":"uq_tool_initiative_links_promotion","file":"nbtinsert.c","line":"664","routine":"_bt_check_unique","stack":"error: duplicate key value violates unique constraint \"uq_tool_initiative_links_promotion\"\n    at /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/pg-pool/index.js:45:11\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at executeWithLogging (/Users/piotrwisniewski/.codex/worktrees/h3-manifest/server/src/database/PostgresDatabase.ts:664:17)"}
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P7: concurrent promote requests converge on exactly one snapshot (DB-enforced, not just app logic)
+2026-08-13 22:35:24:3524 [31merror[39m: [31m[Postgres] Run Error:[39m
+2026-08-13 22:35:24:3524 [31merror[39m: [31m[QueryHelper] Error in queryRun: duplicate key value violates unique constraint "uq_tool_initiative_links_promotion"[39m {"length":398,"name":"error","severity":"ERROR","code":"23505","detail":"Key (organization_id, tool_session_id, source_revision, output_type, idempotency_key)=(imm-1786653323203-org, imm-1786653323203-s7, 1, initiative, promote-initiative) already exists.","schema":"public","table":"tool_initiative_links","constraint":"uq_tool_initiative_links_promotion","file":"nbtinsert.c","line":"664","routine":"_bt_check_unique","stack":"error: duplicate key value violates unique constraint \"uq_tool_initiative_links_promotion\"\n    at /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/pg-pool/index.js:45:11\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at executeWithLogging (/Users/piotrwisniewski/.codex/worktrees/h3-manifest/server/src/database/PostgresDatabase.ts:664:17)"}
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P7: concurrent promote requests converge on exactly one snapshot (DB-enforced, not just app logic)
+2026-08-13 22:35:24:3524 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P7: concurrent promote requests converge on exactly one snapshot (DB-enforced, not just app logic)
+2026-08-13 22:35:24:3524 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P7: concurrent promote requests converge on exactly one snapshot (DB-enforced, not just app logic)
+2026-08-13 22:35:24:3524 [31merror[39m: [31m[Postgres] Query Error [RUN]:[39m
+2026-08-13 22:35:24:3524 [31merror[39m: [31m[Postgres] Failed SQL: INSERT INTO tool_initiative_links ([39m
+[31m             id, tool_session_id, batch_id, initiative_id, organization_id,[39m
+[31m             source_revision, output_type, idempotency_key, payload_hash, created_at[39m
+[31m           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)[39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P7: concurrent promote requests converge on exactly one snapshot (DB-enforced, not just app logic)
+2026-08-13 22:35:24:3524 [31merror[39m: [31m[Postgres] Query Error [RUN]:[39m
+2026-08-13 22:35:24:3524 [31merror[39m: [31m[Postgres] Failed SQL: INSERT INTO tool_initiative_links ([39m
+[31m             id, tool_session_id, batch_id, initiative_id, organization_id,[39m
+[31m             source_revision, output_type, idempotency_key, payload_hash, created_at[39m
+[31m           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)[39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P7: concurrent promote requests converge on exactly one snapshot (DB-enforced, not just app logic)
+2026-08-13 22:35:24:3524 [31merror[39m: [31m[Postgres] Run Error:[39m
+2026-08-13 22:35:24:3524 [31merror[39m: [31m[QueryHelper] Error in queryRun: duplicate key value violates unique constraint "uq_tool_initiative_links_promotion"[39m {"length":398,"name":"error","severity":"ERROR","code":"23505","detail":"Key (organization_id, tool_session_id, source_revision, output_type, idempotency_key)=(imm-1786653323203-org, imm-1786653323203-s7, 1, initiative, promote-initiative) already exists.","schema":"public","table":"tool_initiative_links","constraint":"uq_tool_initiative_links_promotion","file":"nbtinsert.c","line":"664","routine":"_bt_check_unique","stack":"error: duplicate key value violates unique constraint \"uq_tool_initiative_links_promotion\"\n    at /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/pg-pool/index.js:45:11\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at executeWithLogging (/Users/piotrwisniewski/.codex/worktrees/h3-manifest/server/src/database/PostgresDatabase.ts:664:17)"}
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P7: concurrent promote requests converge on exactly one snapshot (DB-enforced, not just app logic)
+2026-08-13 22:35:24:3524 [31merror[39m: [31m[Postgres] Run Error:[39m
+2026-08-13 22:35:24:3524 [31merror[39m: [31m[QueryHelper] Error in queryRun: duplicate key value violates unique constraint "uq_tool_initiative_links_promotion"[39m {"length":398,"name":"error","severity":"ERROR","code":"23505","detail":"Key (organization_id, tool_session_id, source_revision, output_type, idempotency_key)=(imm-1786653323203-org, imm-1786653323203-s7, 1, initiative, promote-initiative) already exists.","schema":"public","table":"tool_initiative_links","constraint":"uq_tool_initiative_links_promotion","file":"nbtinsert.c","line":"664","routine":"_bt_check_unique","stack":"error: duplicate key value violates unique constraint \"uq_tool_initiative_links_promotion\"\n    at /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/node_modules/pg-pool/index.js:45:11\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at executeWithLogging (/Users/piotrwisniewski/.codex/worktrees/h3-manifest/server/src/database/PostgresDatabase.ts:664:17)"}
+
+ ✓ tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P4: re-promoting after a session mutation does not recompute — dedup returns the SAME snapshot untouched 36ms
+ ✓ tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P5: reopening (re-reading) the Output returns identical content AND identical hash 36ms
+ ✓ tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P6: duplicate promotion (sequential retries) does not create a second snapshot 44ms
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P8: report promotion is fed FROM the snapshot, not from a fresh session read
+2026-08-13 22:35:24:3524 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report:419947d1-61cc-415d-926b-7f7595e53e93 as artifact 29095c9b-f893-4df9-b846-71a417fe6ea2[39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P8: report promotion is fed FROM the snapshot, not from a fresh session read
+2026-08-13 22:35:24:3524 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report:419947d1-61cc-415d-926b-7f7595e53e93 as artifact 29095c9b-f893-4df9-b846-71a417fe6ea2[39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P8: report promotion is fed FROM the snapshot, not from a fresh session read
+2026-08-13 22:35:24:3524 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"imm-1786653323203-org","module":"outputs"}
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P8: report promotion is fed FROM the snapshot, not from a fresh session read
+2026-08-13 22:35:24:3524 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"imm-1786653323203-org","module":"outputs"}
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P9: initiative promotion records a traceable proposal from the snapshot conclusion
+2026-08-13 22:35:24:3524 [32minfo[39m: [32m[createInitiativeService] §B3 quality (advisory) — initiative 9ddcd664-1442-4e88-947b-fe369174c2b0: 10/10 failed [kpi_baseline_target, raid_mix, scope_out_mece, scope_in_count, deliverables_count, success_count, kill_count, milestones_count, roi_sizing, owner_assigned][39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P9: initiative promotion records a traceable proposal from the snapshot conclusion
+2026-08-13 22:35:24:3524 [32minfo[39m: [32m[createInitiativeService] §B3 quality (advisory) — initiative 9ddcd664-1442-4e88-947b-fe369174c2b0: 10/10 failed [kpi_baseline_target, raid_mix, scope_out_mece, scope_in_count, deliverables_count, success_count, kill_count, milestones_count, roi_sizing, owner_assigned][39m
+
+ ✓ tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P7: concurrent promote requests converge on exactly one snapshot (DB-enforced, not just app logic) 54ms
+ ✓ tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P8: report promotion is fed FROM the snapshot, not from a fresh session read 59ms
+ ✓ tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > P9: initiative promotion records a traceable proposal from the snapshot conclusion 34ms
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > correction flow (service-level — no HTTP route exists yet, see gap notes) > P10: a correction creates a NEW revision that supersedes the original, never mutating it
+2026-08-13 22:35:24:3524 [32minfo[39m: [32m[createInitiativeService] §B3 quality (advisory) — initiative 50ce36a2-d6fc-4c71-8bb6-85c068afbaec: 10/10 failed [kpi_baseline_target, raid_mix, scope_out_mece, scope_in_count, deliverables_count, success_count, kill_count, milestones_count, roi_sizing, owner_assigned][39m
+
+stdout | tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > correction flow (service-level — no HTTP route exists yet, see gap notes) > P10: a correction creates a NEW revision that supersedes the original, never mutating it
+2026-08-13 22:35:24:3524 [32minfo[39m: [32m[createInitiativeService] §B3 quality (advisory) — initiative 50ce36a2-d6fc-4c71-8bb6-85c068afbaec: 10/10 failed [kpi_baseline_target, raid_mix, scope_out_mece, scope_in_count, deliverables_count, success_count, kill_count, milestones_count, roi_sizing, owner_assigned][39m
+
+ ✓ tests/integration/tools-outputs-immutable.realdb.test.ts > tool_outputs — canonical immutable snapshot (real Postgres) > correction flow (service-level — no HTTP route exists yet, see gap notes) > P10: a correction creates a NEW revision that supersedes the original, never mutating it 51ms
+ ✓ tests/integration/tools-outputs-immutable.realdb.test.ts (10 tests) 1582ms
+stdout | tests/integration/tls-007-swot-candidate-handoff.realdb.test.ts
+2026-08-13 22:35:25:3525 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-13 22:35:25:3525 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-13 22:35:25:3525 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-13 22:35:25:3525 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-13 22:35:25:3525 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/integration/tls-007-swot-candidate-handoff.realdb.test.ts
+2026-08-13 22:35:25:3525 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-13 22:35:25:3525 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-13 22:35:25:3525 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-13 22:35:25:3525 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-13 22:35:25:3525 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/integration/tls-007-swot-candidate-handoff.realdb.test.ts > TLS-07 — SWOT recommendation to canonical Candidate > creates one pending Candidate and durable lineage receipt
+2026-08-13 22:35:25:3525 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-08-13 22:35:25:3525 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-08-13 22:35:25:3525 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+
+stdout | tests/integration/tls-007-swot-candidate-handoff.realdb.test.ts > TLS-07 — SWOT recommendation to canonical Candidate > creates one pending Candidate and durable lineage receipt
+2026-08-13 22:35:25:3525 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-08-13 22:35:25:3525 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-08-13 22:35:25:3525 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+
+ ✓ tests/integration/tls-007-swot-candidate-handoff.realdb.test.ts > TLS-07 — SWOT recommendation to canonical Candidate > creates one pending Candidate and durable lineage receipt 81ms
+ ✓ tests/integration/tls-007-swot-candidate-handoff.realdb.test.ts > TLS-07 — SWOT recommendation to canonical Candidate > retry returns the same Candidate and does not overwrite its accepted snapshot 17ms
+ ✓ tests/integration/tls-007-swot-candidate-handoff.realdb.test.ts > TLS-07 — SWOT recommendation to canonical Candidate > serializes concurrent retries to exactly one Candidate and one receipt 40ms
+ ✓ tests/integration/tls-007-swot-candidate-handoff.realdb.test.ts > TLS-07 — SWOT recommendation to canonical Candidate > does not reveal or write through a foreign tenant 9ms
+ ✓ tests/integration/tls-007-swot-candidate-handoff.realdb.test.ts > TLS-07 — SWOT recommendation to canonical Candidate > rejects a non-SWOT tool session 12ms
+ ✓ tests/integration/tls-007-swot-candidate-handoff.realdb.test.ts > TLS-07 — SWOT recommendation to canonical Candidate > HTTP endpoint returns 201 then idempotent 200 with the same receipt 38ms
+ ✓ tests/integration/tls-007-swot-candidate-handoff.realdb.test.ts > TLS-07 — SWOT recommendation to canonical Candidate > HTTP endpoint maps a foreign-tenant lookup to indistinguishable 404 11ms
+ ✓ tests/integration/tls-007-swot-candidate-handoff.realdb.test.ts > TLS-07 — SWOT recommendation to canonical Candidate > rolls Candidate back when receipt creation fails after the insert 20ms
+ ✓ tests/integration/tls-007-swot-candidate-handoff.realdb.test.ts (8 tests) 507ms
+
+ Test Files  2 passed (2)
+      Tests  18 passed (18)
+   Start at  22:35:22
+   Duration  3.12s (transform 794ms, setup 147ms, import 163ms, tests 2.09s, environment 547ms)
+
+
+ Test Files  2 passed (2)
+      Tests  18 passed (18)
+   Start at  22:35:22
+   Duration  3.12s (transform 794ms, setup 147ms, import 163ms, tests 2.09s, environment 547ms)
+
+JSON report written to /Users/piotrwisniewski/.codex/worktrees/h3-manifest/junit.xml
+JUNIT report written to /Users/piotrwisniewski/.codex/worktrees/h3-manifest/junit.xml
