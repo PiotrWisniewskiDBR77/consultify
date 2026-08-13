@@ -1,4 +1,65 @@
 /**
+ * ═══════════════════════════════════════════════════════════════════════
+ * STATUS: INCOMPATIBLE_LEGACY_MODEL / NOT_MAPPED  (A12 · COORD-06 · 2026-08-13)
+ * ═══════════════════════════════════════════════════════════════════════
+ * Full analysis: `docs/program/METHOD_ASSESSMENT_CORE_2026-08-13/
+ * DRD_PATHWAY_MAPPING_TASK.md`. Coordinator decision record: COORD-06 in
+ * `docs/program/METHOD_ASSESSMENT_CORE_2026-08-13/COORDINATION.md`.
+ *
+ * MODEL CARRIED IN THIS FILE (measured, not estimated):
+ *   - 8 dimensions, ids `D1`..`D8` (see `DRD_DIMENSION_ORDER` below).
+ *   - ONE uniform 5-rung scale for every dimension: levels 1..5, labelled
+ *     I..V (`DRD_PATHWAY_LEVEL_ROMAN`).
+ *   - 32 transition steps total = 8 dimensions × 4 transitions
+ *     (I→II, II→III, III→IV, IV→V) — `CANON_TRANSITIONS` has exactly 32
+ *     entries; `buildPathways()` throws if any is missing.
+ *
+ * CANONICAL DRD MEASUREMENT MODEL (`docs/product/DRD_CANON.md` §2.3, frozen
+ * v1.0; implemented in `src/services/drdStructure.ts` → `DRD_STRUCTURE`):
+ *   - 7 axes (id 1..7).
+ *   - 39 areas total, unevenly distributed: axis 1 = 9 areas, axes 2–7 =
+ *     5 areas each (9+5+5+5+5+5+5 = 39).
+ *   - MIXED native scales per axis, NOT a uniform 1..5:
+ *       axis1 = 1..7, axis2 = 1..5, axis3 = 1..5, axis4 = 1..7,
+ *       axis5 = 1..6, axis6 = 1..6, axis7 = 1..5.
+ *
+ * THE TWO MODELS ARE NOT 1:1: 8 dimensions vs. 39 areas; one uniform 1..5
+ * scale here vs. mixed 5/6/7-rung native scales in the canon. Canon §3.2
+ * ("MAP-1.0") DOES define an official aggregation of the 39 areas into the
+ * same `D1`..`D8` ids used here (e.g. D1 ← areas 1A–1I, D5 ← areas 4C+4E),
+ * each keeping ITS OWN native scale — but turning a real assessment's
+ * 39 area-level scores into the single I..V level this file expects as
+ * `currentLevel` requires the canon §6 normalisation step, and that step is
+ * NOT implemented in `calculateOverallScore()` / `calculateAxisScore()`
+ * (`src/services/drdStructure.ts`) today — those currently average raw,
+ * un-normalised levels across axes of different scale length (see the
+ * implementation note in `DRD_CANON.md` near §6).
+ *
+ * CONSEQUENCE: no code path exists that takes real 39-area assessment
+ * results and produces a trustworthy `D1`..`D8` / I..V input for this file.
+ * `src/method-core/methods/drd/compileDrdPack.ts` (the actual DRD Method
+ * Pack compiler) knows this and deliberately does NOT wire this pathway
+ * data into the compiled pack — it only reports the discrepancy.
+ *
+ * DO NOT, without an explicit decision from the DRD methodology owner AND
+ * full traceability (each `D_x#level` action mapped to its source area(s),
+ * the formula step used, and who approved it — see the mapping task doc):
+ *   - wire `getDRDPathway()` / `getMaturityPathway()` to real assessment
+ *     scores;
+ *   - invent a shortcut mapping between the 39 areas and `D1`..`D8` by
+ *     name-matching, heuristics, or any other approximation — the canon
+ *     already defines the mapping (§3.2); anything else creates a second,
+ *     conflicting truth about DRD maturity;
+ *   - let an LLM infer, complete, or "clean up" the mapping or the
+ *     normalisation step.
+ *
+ * The prescriptive TEXT below (`CANON_TRANSITIONS`) is itself a verbatim,
+ * canon-sourced transcription of `docs/product/DRD_CANON.md` §5 ("Ścieżka
+ * przejścia N→N+1 per wymiar") — that part is not in question. What is
+ * unresolved is exclusively the wiring between this D1–D8/I–V shape and the
+ * 7-axis/39-area shape that real assessments actually score against.
+ * ═══════════════════════════════════════════════════════════════════════
+ *
  * DRD Maturity Pathway Data (N → N+1, per reporting dimension D1–D8)
  *
  * SOURCE OF TRUTH: `docs/product/DRD_CANON.md` §5 ("Ścieżka przejścia N→N+1 per
