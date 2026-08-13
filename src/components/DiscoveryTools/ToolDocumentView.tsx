@@ -19,6 +19,10 @@ import { LoadingState } from '@/components/ui/primitives';
 import { CONSULTING_TOOL_STANDARD_OUTPUTS } from '@/config/consultingToolsStandard';
 import { useToolAI } from '@/hooks/discovery/useToolAI';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
+import {
+  mapToolSessionSyncStatusToLegacySaveState,
+  useToolSessionSync,
+} from '@/hooks/useToolSessionSync';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
@@ -179,8 +183,6 @@ const getConsultingJourneyStage = (stepId?: string) => {
 // Status codes are identical in both languages, no translation needed.
 const statusLabel = (status: 'DRAFT' | 'REVIEW' | 'APPROVED' | 'GENERATED' | 'COMPLETED') => status;
 
-type ToolSaveState = 'saved' | 'saving' | 'dirty' | 'error';
-
 const getPriorityDotClass = (priority: CommentPriority) =>
   priority === 'high' ? 'bg-danger-500' : priority === 'low' ? 'bg-emerald-500' : 'bg-blue-500';
 
@@ -228,8 +230,6 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     currentSession,
     currentStep,
     createSession,
-    loadSession,
-    saveSession,
     setCurrentStep,
     nextStep,
     prevStep,
@@ -276,7 +276,6 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   const [lastModified, setLastModified] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [saveState, setSaveState] = useState<ToolSaveState>('saved');
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [activeSection, setActiveSection] = useState<string>(
     isStrategicPhaseTool ? 'mission' : 'work'
@@ -378,6 +377,88 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     [currentStepDef?.id, missingItemsPayload, sessionId, toolSessionId, toolStatus, toolType]
   );
 
+  // RB-HTTP-01: server (tool_sessions in PostgreSQL) is the source of truth
+  // for this session's working state. This hook owns load/create/autosave
+  // over HTTP, offline detection + retry, 409/conflict handling, and a
+  // localStorage recovery draft that is NEVER treated as authoritative —
+  // see src/hooks/useToolSessionSync.ts and
+  // docs/program/METHOD_TOOLS_2026-08-13/SESSION_HTTP_INVENTORY.md. The
+  // zustand store (`currentSession.inputData`) stays the editable/derived
+  // UI state; a dedicated effect below forwards it into this hook.
+  const toolSync = useToolSessionSync<Record<string, unknown>>({
+    toolId: toolSessionId,
+    getExtraPayload: () => ({
+      completionPercent: completionReady ? 100 : progress,
+      confidenceAvg,
+      missingItems: missingItemsPayload,
+      wizardState: wizardStatePayload,
+    }),
+    onRecoveryDiscarded: () => {
+      toast(
+        t(
+          'discoveryToolsMain.toolDocumentView.recoveryDraftDiscarded',
+          'A local unsynced draft was discarded — the server already had newer data.'
+        )
+      );
+    },
+    // toolSyncRef (declared right below) is populated on every render
+    // before this can ever fire -- it only runs from inside load(), which
+    // this component triggers itself (fetchAll -> toolSync.load()) no
+    // earlier than its own first effect pass.
+    onRecoveryAvailable: (_draftData, draftSavedAt) => {
+      toast.custom(
+        (tst) => (
+          <div
+            className={`${
+              tst.visible ? 'animate-enter' : 'animate-leave'
+            } max-w-md w-full bg-c-surface-raised shadow-xl rounded-xl pointer-events-auto ring-1 ring-c-border overflow-hidden`}
+          >
+            <div className="p-4">
+              <p className="text-sm font-medium text-c-text">
+                {t(
+                  'discoveryToolsMain.toolDocumentView.recoveryDraftAvailable',
+                  'Unsynced local changes from a previous session were found.'
+                )}
+              </p>
+              <p className="text-xs text-c-text-secondary mt-0.5">
+                {t(
+                  'discoveryToolsMain.toolDocumentView.recoveryDraftSavedAt',
+                  'Saved locally at {{time}}',
+                  {
+                    time: new Date(draftSavedAt).toLocaleString(),
+                  }
+                )}
+              </p>
+              <div className="flex items-center gap-4 mt-2">
+                <button
+                  onClick={() => {
+                    toast.dismiss(tst.id);
+                    toolSyncRef.current?.applyRecoveryDraft();
+                  }}
+                  className="text-xs font-medium text-c-text underline underline-offset-2 hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+                >
+                  {t('discoveryToolsMain.toolDocumentView.recoveryDraftRecover', 'Recover')}
+                </button>
+                <button
+                  onClick={() => {
+                    toast.dismiss(tst.id);
+                    toolSyncRef.current?.discardRecoveryDraft();
+                  }}
+                  className="text-xs text-c-text-secondary hover:text-c-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+                >
+                  {t('discoveryToolsMain.toolDocumentView.recoveryDraftDiscardAction', 'Discard')}
+                </button>
+              </div>
+            </div>
+          </div>
+        ),
+        { duration: 15000 }
+      );
+    },
+  });
+  const toolSyncRef = useRef(toolSync);
+  toolSyncRef.current = toolSync;
+
   const swotData = useMemo(
     () =>
       toolType === 'dynamic-swot' ? (currentSession?.inputData as SWOTData | undefined) : undefined,
@@ -455,14 +536,23 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
 
     setLoading(true);
     try {
-      const sessionData = await Api.getToolSession(toolSessionId);
+      // Server (via toolSync.load) is the single fetch of record truth --
+      // it also evaluates any localStorage recovery draft against it (see
+      // useToolSessionSync.ts). `sessionData` here is that SAME response;
+      // nothing below issues a second GET.
+      const sessionData = await toolSync.load();
+      if (!sessionData) {
+        // toolSync already recorded 'offline' or 'error' status/error --
+        // still surface the same toast the old direct-fetch path showed.
+        toast.error(t('discoveryToolsMain.toolDocumentView.failedToLoadSession'));
+        return;
+      }
       setToolStatus((sessionData.status || 'DRAFT').toUpperCase() as any);
       setSessionName(sessionData.name || '');
       setCreatedAt(sessionData.createdAt || '');
       setLastModified(sessionData.updatedAt || '');
-      setSaveState('saved');
       setGeneratedInitiatives(sessionData.generatedInitiatives || []);
-      setToolDecisions(sessionData.decisions || []);
+      setToolDecisions((sessionData.decisions as unknown as Decision[]) || []);
       setToolPermissions(sessionData.permissions || {});
 
       hydrateSessionFromApi({
@@ -474,7 +564,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         status: sessionData.status,
         answers: sessionData.answers || {},
         completionPercent: sessionData.completion_percent ?? sessionData.completionPercent,
-        wizardState: sessionData.wizardState ?? null,
+        wizardState: (sessionData.wizardState as { currentStep?: string } | null) ?? null,
       });
       hydratedSessionObjectRef.current = useToolStore.getState().currentSession;
 
@@ -500,7 +590,13 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [hydrateSessionFromApi, isPolish, toolSessionId, toolType]);
+    // NOTE: depends on `toolSync.load` (a stable useCallback), not the
+    // `toolSync` object itself -- that object literal is recreated on
+    // every render, and including it here would re-trigger this callback
+    // (and the effect below that calls it) on every render, not just
+    // when toolSessionId actually changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrateSessionFromApi, isPolish, toolSessionId, toolSync.load, toolType]);
 
   useEffect(() => {
     if (!toolSessionId) return;
@@ -525,8 +621,16 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   useEffect(() => {
     const initSession = async () => {
       if (sessionId) {
+        // Server truth arrives via fetchAll()/toolSync.load() below --
+        // deliberately NOT seeded from the zustand-persisted local
+        // `savedSessions` cache (RB-HTTP-01): that cache can hold a STALE
+        // session from a previous browser session under the same id, and
+        // this view has no way to tell "genuinely fresh local edit" apart
+        // from "stale leftover" without the server round-trip anyway. The
+        // real recovery path for genuinely unsynced edits is the
+        // toolId-scoped recovery draft in useToolSessionSync, which IS
+        // evaluated against the server response.
         setToolSessionId(sessionId);
-        loadSession(sessionId);
         return;
       }
 
@@ -536,16 +640,15 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         createSession(toolType);
         const name = `${toolMeta.name} — Session`;
         try {
-          const created = await Api.createToolSession({
+          const createdId = await toolSync.create({
             toolType,
             name,
             projectId: currentProjectId || null,
           });
-          setToolSessionId(created.id);
+          setToolSessionId(createdId);
           setSessionName(name);
           setToolStatus('DRAFT');
           setLastModified(new Date().toISOString());
-          setSaveState('saved');
         } catch (error) {
           console.error('Failed to create tool session:', error);
           toast.error(t('discoveryToolsMain.toolDocumentView.failedToCreateSession'));
@@ -558,14 +661,17 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     };
 
     void initSession();
+    // `toolSync.create` (stable useCallback), not `toolSync` itself -- see
+    // the note on fetchAll's deps above.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     createSession,
     currentProjectId,
     currentSession,
     isPolish,
-    loadSession,
     sessionId,
     toolMeta.name,
+    toolSync.create,
     toolType,
   ]);
 
@@ -583,66 +689,75 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     currentSession && toolSessionId && currentSession.id === toolSessionId
   );
 
-  const pendingAutoSaveFlushRef = useRef<null | (() => Promise<void>)>(null);
+  // RB-HTTP-01: forward every genuine local edit into toolSync, which owns
+  // debounce/autosave/offline-retry/409-conflict/recovery-draft from here
+  // on (src/hooks/useToolSessionSync.ts). `hydratedSessionObjectRef` keeps
+  // the same job it always had: a hydration-only store update (not a real
+  // user edit) must not arm autosave.
   useEffect(() => {
     if (!currentSession || !toolSessionId) return;
     if (!isSessionHydrated) return;
     if (currentSession === hydratedSessionObjectRef.current) return;
-    setSaveState('dirty');
+    toolSync.setData(currentSession.inputData as Record<string, unknown>);
+    // `toolSync.setData` (stable useCallback), not `toolSync` itself.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentSession, isSessionHydrated, toolSessionId, toolSync.setData]);
 
-    const flush = async () => {
-      setSaveState('saving');
-      try {
-        await Api.updateToolSession(toolSessionId, {
-          answers: currentSession.inputData as Record<string, unknown>,
-          completionPercent: completionReady ? 100 : progress,
-          confidenceAvg,
-          missingItems: missingItemsPayload,
-          wizardState: wizardStatePayload,
-        });
-        const savedAt = new Date().toISOString();
-        setLastModified(savedAt);
-        setSaveState('saved');
-      } catch (error) {
-        console.error('Auto-save failed:', error);
-        setSaveState('error');
-      } finally {
-        pendingAutoSaveFlushRef.current = null;
-      }
-    };
-
-    pendingAutoSaveFlushRef.current = flush;
-    const timeout = setTimeout(() => {
-      void flush();
-    }, 2000);
-
-    return () => clearTimeout(timeout);
-  }, [
-    completionReady,
-    confidenceAvg,
-    currentSession,
-    isSessionHydrated,
-    missingItemsPayload,
-    progress,
-    toolSessionId,
-    wizardStatePayload,
-  ]);
-
-  // TLS-03: flush any still-pending (debounced-but-not-yet-fired) autosave
-  // when this document is truly unmounted (closed / navigated away from),
-  // so an edit made in the last <2s before leaving is not silently
-  // discarded. Deliberately a SEPARATE effect with an EMPTY dependency
-  // array — its cleanup must run only on real unmount, not on every
-  // keystroke re-run of the debounce effect above (which already clears
-  // its own stale timer via its own cleanup; flushing there too would
-  // defeat debouncing and fire a save on every edit).
+  // Keep the header's "last saved" timestamp in step with a successful
+  // autosave without waiting for a full reload.
   useEffect(() => {
-    return () => {
-      if (pendingAutoSaveFlushRef.current) {
-        void pendingAutoSaveFlushRef.current();
-      }
-    };
-  }, []);
+    if (toolSync.session?.updatedAt) setLastModified(toolSync.session.updatedAt);
+  }, [toolSync.session]);
+
+  // toolSync owns the unmount-flush itself (mirrors the old TLS-03 effect,
+  // now inside the hook so it is covered by the hook's own unit tests).
+
+  const saveState = mapToolSessionSyncStatusToLegacySaveState(toolSync.status);
+
+  // Conflict-recovery action: discard local/unsynced state and refetch
+  // from the server (see useToolSessionSync.ts's `reconcile`), then
+  // re-run the same fetchAll() the initial load used so every other piece
+  // of document state (comments/history/decisions/...) comes back in
+  // step with the reconciled session, not just the answers blob.
+  const handleReconcileConflict = useCallback(async () => {
+    await toolSync.reconcile();
+    if (toolSessionId) void fetchAll();
+    // `toolSync.reconcile` (stable useCallback), not `toolSync` itself.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchAll, toolSessionId, toolSync.reconcile]);
+
+  const showConflictToast = useCallback(() => {
+    toast.custom(
+      (tst) => (
+        <div
+          className={`${
+            tst.visible ? 'animate-enter' : 'animate-leave'
+          } max-w-md w-full bg-c-surface-raised shadow-xl rounded-xl pointer-events-auto ring-1 ring-c-border overflow-hidden`}
+        >
+          <div className="p-4 flex items-start gap-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-c-text">
+                {t(
+                  'discoveryToolsMain.toolDocumentView.saveConflict',
+                  'Could not save — this session changed on the server.'
+                )}
+              </p>
+              <button
+                onClick={() => {
+                  toast.dismiss(tst.id);
+                  void handleReconcileConflict();
+                }}
+                className="mt-2 text-xs font-medium text-c-text underline underline-offset-2 hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+              >
+                {t('discoveryToolsMain.toolDocumentView.saveConflictReload', 'Reload from server')}
+              </button>
+            </div>
+          </div>
+        </div>
+      ),
+      { duration: 8000 }
+    );
+  }, [handleReconcileConflict, t]);
 
   const handleSave = async () => {
     if (!toolSessionId || !currentSession) return;
@@ -653,23 +768,22 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
       return;
     }
     setSaving(true);
-    setSaveState('saving');
     try {
-      await Api.updateToolSession(toolSessionId, {
-        answers: currentSession.inputData as Record<string, unknown>,
-        completionPercent: completionReady ? 100 : progress,
-        confidenceAvg,
-        missingItems: missingItemsPayload,
-        wizardState: wizardStatePayload,
-      });
-      await saveSession();
-      const savedAt = new Date().toISOString();
-      setLastModified(savedAt);
-      setSaveState('saved');
-      toast.success(t('discoveryToolsMain.toolDocumentView.saved'));
-    } catch {
-      setSaveState('error');
-      toast.error(t('discoveryToolsMain.toolDocumentView.saveFailed'));
+      const outcome = await toolSync.flush();
+      if (outcome === 'saved') {
+        toast.success(t('discoveryToolsMain.toolDocumentView.saved'));
+      } else if (outcome === 'conflict') {
+        showConflictToast();
+      } else if (outcome === 'offline') {
+        toast.error(
+          t(
+            'discoveryToolsMain.toolDocumentView.saveOffline',
+            'You are offline — this change is saved locally and will sync automatically.'
+          )
+        );
+      } else {
+        toast.error(t('discoveryToolsMain.toolDocumentView.saveFailed'));
+      }
     } finally {
       setSaving(false);
     }
