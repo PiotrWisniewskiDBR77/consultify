@@ -540,3 +540,68 @@ optimistic concurrency 409 · odczyt po zapisie z bazy · bramka packa i demo by
 restart **przeglądarki** i odczyt z bazy przez UI · `DrdHttpSessionRuntime`
 **nie jest podłączony** do ekranu — wymaganie „UI nie może utrzymywać drugiej
 prawdy" **wciąż niespełnione** · A10 (odbiór ręczny) · MPQ.
+
+---
+
+## G12 — P0A i P0B: bootstrap zabezpieczony, freeze→Output przez HTTP dowiedziony
+
+### G12.A — P0A: macierz konfiguracji (własny przebieg + własna sonda)
+
+| Sprawdzenie | Wynik |
+| --- | --- |
+| Testy `server/src/startup` | **EXIT=0**, początkowo 38/38, po mojej poprawce **42/42** |
+| `prod` vs `prod + RUN_DB_TESTS=1` | **IDENTYCZNE** we wszystkich czterech bramkach — kluczowa gwarancja trzyma |
+| `demoBypass` w prod z włączoną flagą operatora | **false** — strukturalnie niemożliwe |
+| Semantyka timeoutu | **uczciwie udokumentowana**: *„There is no cancellation token threaded"* — nie udaje anulowania |
+
+**★ Luka znaleziona przez Opusa przy odbiorze:** `shouldUseMockDatabase` **nie miał
+bramki produkcyjnej**. `NODE_ENV=production` + `MOCK_DB=true` → **`true`**.
+Ścieżka mocka jest **jedyną**, która ustawia `dbReady = true` z pominięciem
+weryfikacji schematu i migracji — więc produkcyjny serwer mógł ogłosić gotowość
+na atrapie bazy. Gwarancja koordynatora („w produkcji nie wolno ustawić `dbReady`
+przed sukcesem migracji") **nie jest ograniczona do `RUN_DB_TESTS`**.
+Naprawione: twarda bramka `NODE_ENV==='production' → false`, + 4 testy G7
+(w tym regresja odwrotna).
+
+**Drugi defekt znaleziony przez P0A:** `tpMigrationStatus` zostawał na
+`{state:'pending'}` **na zawsze** po porażce schema-init albo po timeoucie —
+ta sama klasa błędu co incydent A14, tylko dla `/api/health/migrations`.
+Naprawione: obie ścieżki ustawiają `failed`.
+
+**Obserwacja do koordynatora (nie zmieniona jednostronnie):**
+`shouldMountTestGatewayRoutes` zwraca **`true` na produkcji**, bo znaczy
+„montuj pełny gateway", nie „montuj trasy testowe". Zachowanie poprawne,
+**nazwa myląca**. Nazwę podał koordynator — proponuję `shouldMountFullApiGateway`.
+
+### G12.B — P0B: 16 kroków freeze→Output (własny przebieg na żywym serwerze)
+
+Testy P0B: **EXIT=0, 139/139** (11 plików) — przebieg własny.
+
+Realny obieg przez żywy serwer, **mój skrypt**, po korekcie ról:
+
+| # | Krok | HTTP | Dowód |
+| --- | --- | ---: | --- |
+| 1 | sesja doprowadzona do `in_review` | 200 | `state=in_review` w bazie |
+| 2 | freeze jako `lead_assessor` (nie `approver`) | **403** | `missing_permission` |
+| 3 | freeze jako `approver` | **200** | Output utworzony |
+| 4 | **retry** freeze tym samym kluczem | **200** | **ten sam Output**, **1 wiersz** w bazie |
+| 5 | **`content_hash` przed/po zmianie sesji** | — | `b6d4cb1382e332508a5a…` = `b6d4cb1382e332508a5a…` — **IDENTYCZNY i NIEPUSTY** |
+| 6 | Report + Presentation z tego samego Output | **201 / 201** | `kind` = `report,presentation`, ten sam `output_id` |
+| 7 | demo status | — | `demo_bypass_active = t` w Output **i** w Report |
+| 8 | `readiness` packa po całej ścieżce | — | **`methodology_review`** — bypass go **nie podniósł** |
+| 9 | Registered Initiative | — | `method_initiative_drafts` **nie ma kolumny `initiative_id`** → strukturalnie niemożliwe |
+
+**Luka naprawiona przez P0B:** `revisionOfOutputId` był **zawsze `null`** —
+rewizja Outputu nie miała lineage. Teraz wiąże się z poprzednim Outputem sesji
+rodzica (`outputVersion = poprzedni + 1`).
+
+### G12.C — Dwa błędy mojej własnej sondy (odnotowane, nie ukryte)
+
+1. Pierwsza sonda nie nadała ról → `in_review` odrzucone z `missing_permission`,
+   freeze → 409. **System zachował się poprawnie**, egzekwując
+   `TRANSITION_AUTHORITY` z kontraktu. Błąd był mój.
+2. W tej samej sondzie krok „hash przed/po" porównywał **dwa puste stringi**
+   i przechodził trywialnie — **dokładnie ta sama klasa pustego testu**, którą
+   złapałem u A3. Po korekcie hash jest niepusty i porównanie realne.
+
+Dane sondy usunięte z bazy po weryfikacji (`DELETE FROM organizations WHERE id LIKE 'opus-%'`).
