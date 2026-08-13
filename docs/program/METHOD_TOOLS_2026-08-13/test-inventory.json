@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-08-13T17:27:27.498Z",
+  "generatedAt": "2026-08-13T18:16:38.999Z",
   "generatedBy": "scripts/testing/generate-test-inventory.ts",
-  "totalDiscovered": 4235,
+  "totalDiscovered": 4239,
   "counts": {
-    "ACTIVE": 3943,
+    "ACTIVE": 3947,
     "INTENTIONALLY_EXCLUDED": 7,
     "LEGACY": 1,
     "PLAYWRIGHT": 283,
@@ -5412,6 +5412,12 @@
     },
     {
       "path": "src/toolOutputs/__tests__/outputs.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "src/toolPacks/__tests__/engineBindingCoverage.test.ts",
       "classification": "ACTIVE",
       "reason": "Collected by default vitest.config.ts.",
       "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
@@ -15652,7 +15658,19 @@
       "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
     },
     {
+      "path": "tests/integration/tools-archetype-promote-characterization.realdb.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
       "path": "tests/integration/tools-clean-bootstrap.realdb.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "tests/integration/tools-idea-persistence.realdb.test.ts",
       "classification": "ACTIVE",
       "reason": "Collected by default vitest.config.ts.",
       "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
@@ -22162,6 +22180,12 @@
     },
     {
       "path": "tests/unit/discovery/riskQuestionBank.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "tests/unit/discovery/swotAcceptGate.test.ts",
       "classification": "ACTIVE",
       "reason": "Collected by default vitest.config.ts.",
       "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
