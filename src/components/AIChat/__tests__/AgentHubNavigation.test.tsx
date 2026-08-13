@@ -106,6 +106,13 @@ describe('canonical Agent workspace navigation', () => {
     listPlansMock.mockReset().mockResolvedValue({ plans: [] });
   });
 
+  it('opens the governed Agent V8 workspace by default', () => {
+    renderHub('/my-work?tab=agent');
+
+    expect(screen.getByTestId('transformations')).toBeInTheDocument();
+    expect(screen.queryByText('New consulting process')).not.toBeInTheDocument();
+  });
+
   it('persists Case selection and hands the canonical run to Operations', async () => {
     renderHub(
       '/my-work?tab=agent&agentView=transformations&transformationCaseId=case-old&canonicalRunId=stale&keep=1'
@@ -193,7 +200,7 @@ describe('canonical Agent workspace navigation', () => {
     expect(summary).toHaveTextContent('Przebieg: nie wybrano');
     const areaStatus = summary.querySelector('[role="status"]');
     expect(areaStatus).toHaveAttribute('aria-live', 'polite');
-    expect(areaStatus).toHaveTextContent('Bieżący obszar Agent Hub: Przebiegi i historia');
+    expect(areaStatus).toHaveTextContent('Bieżący obszar Agent Hub: Archiwum procesów');
     expect(await screen.findByText('Brak procesów')).toBeInTheDocument();
     expect(screen.getByRole('main', { name: 'Centrum Agenta' })).toHaveAttribute(
       'aria-busy',

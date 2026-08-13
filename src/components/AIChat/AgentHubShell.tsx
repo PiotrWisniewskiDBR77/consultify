@@ -167,11 +167,15 @@ import { AgentProcessTemplatesPanel } from './AgentProcessTemplatesPanel';
 import { TransformationCasesPanel } from './TransformationCasesPanel';
 
 type AgentHubTab =
-  'processes' | 'templates' | 'governed_templates' | 'transformations' | 'operations';
+  | 'processes'
+  | 'templates'
+  | 'governed_templates'
+  | 'transformations'
+  | 'operations';
 
 function agentHubTabLabel(tab: AgentHubTab, isPolish: boolean): string {
   const labels: Record<AgentHubTab, [string, string]> = {
-    processes: ['Przebiegi i historia', 'Runs and history'],
+    processes: ['Archiwum procesów', 'Process archive'],
     templates: ['Start i szablony', 'Start and templates'],
     governed_templates: ['Governance szablonów', 'Template governance'],
     transformations: ['Sprawy, akceptacje i wyniki', 'Cases, approvals and outputs'],
@@ -392,11 +396,7 @@ export const AgentHubShell: React.FC = () => {
       ? requestedView
       : null;
 
-  const [tab, setTab] = useState<AgentHubTab>(
-    () =>
-      validRequestedView ??
-      (searchParams.has('transformationCaseId') ? 'transformations' : 'processes')
-  );
+  const [tab, setTab] = useState<AgentHubTab>(() => validRequestedView ?? 'transformations');
   const [plans, setPlans] = useState<AgentPlan[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [previewPlanId, setPreviewPlanId] = useState<string | null>(null);
@@ -407,9 +407,7 @@ export const AgentHubShell: React.FC = () => {
   const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(null);
 
   useEffect(() => {
-    const next =
-      validRequestedView ??
-      (searchParams.has('transformationCaseId') ? 'transformations' : 'processes');
+    const next = validRequestedView ?? 'transformations';
     setTab(next);
   }, [searchParams, validRequestedView]);
 
@@ -1477,6 +1475,10 @@ export const AgentHubShell: React.FC = () => {
           value={tab}
           options={[
             {
+              value: 'transformations',
+              label: agentHubTabLabel('transformations', isPolish),
+            },
+            {
               value: 'processes',
               label: agentHubTabLabel('processes', isPolish),
             },
@@ -1487,10 +1489,6 @@ export const AgentHubShell: React.FC = () => {
             {
               value: 'governed_templates',
               label: agentHubTabLabel('governed_templates', isPolish),
-            },
-            {
-              value: 'transformations',
-              label: agentHubTabLabel('transformations', isPolish),
             },
             ...(isOperator
               ? [
