@@ -19,7 +19,7 @@ import type {
 import { compileDrdPack } from '@/method-core/methods/drd/compileDrdPack';
 import { drdAdapter } from '@/method-core/methods/drd/drdAdapter';
 import { DRD_STRUCTURE, type DRDAxis } from '@/services/drdStructure';
-import type { MethodEvent } from '@/method-core/contracts';
+import { EVIDENCE_STRENGTHS, type EvidenceStrength, type MethodEvent } from '@/method-core/contracts';
 
 export const { pack } = compileDrdPack();
 
@@ -36,7 +36,16 @@ export const OUTPUT_UNIT_COLUMNS: TableColumn[] = [
 export function confirmedLevelsFor(events: readonly MethodEvent[], unitId: string): number[] {
   const levels = new Set<number>();
   for (const e of events) {
-    if (e.type === 'ANSWER_CONFIRMED' && e.unitId === unitId && typeof e.level === 'number') {
+    // ★ The event TYPE `ANSWER_CONFIRMED` only means "not a draft" — both
+    // runtimes (`drdSessionRuntime.ts`, `drdHttpSessionRuntime.ts`) emit it
+    // for EVERY non-draft answer, including an honest "Nie wiem" (dont_know)
+    // or "Nie" (no). Without checking `payload.answerState` here, selecting
+    // "Nie wiem" would silently advance the confirmed ramp as if the level
+    // were satisfied — the opposite of canon ("nie wiem" nie jest liczone
+    // jako zero — ani jako sukces). Only a genuinely `confirmed` answer
+    // state may ever mark a level as achieved.
+    const answerState = (e.payload as { answerState?: string } | undefined)?.answerState;
+    if (e.type === 'ANSWER_CONFIRMED' && e.unitId === unitId && typeof e.level === 'number' && answerState === 'confirmed') {
       levels.add(e.level);
     }
   }
@@ -60,6 +69,25 @@ export function targetLevelFor(events: readonly MethodEvent[], unitId: string): 
 
 export function evidenceEventsFor(events: readonly MethodEvent[], unitId: string): MethodEvent[] {
   return events.filter((e) => e.type === 'EVIDENCE_ATTACHED' && e.unitId === unitId);
+}
+
+/**
+ * Strongest evidence strength (E0-E4) recorded for a unit — deliberately a
+ * SEPARATE axis from `evidenceStateFor`'s complete/weak/missing rollup and
+ * from the level/band being discussed. Canon: strength is independent of
+ * level fulfilment and of assessor confidence (ASSESSMENT_EVIDENCE_AND_
+ * SCORING_CONTRACT.md §5) — never blend it into the same badge as the other
+ * two.
+ */
+export function evidenceStrengthFor(events: readonly MethodEvent[], unitId: string): EvidenceStrength | null {
+  let best: EvidenceStrength | null = null;
+  for (const e of evidenceEventsFor(events, unitId)) {
+    const strength = (e.payload as { strength?: EvidenceStrength })?.strength;
+    if (strength && (!best || EVIDENCE_STRENGTHS.indexOf(strength) > EVIDENCE_STRENGTHS.indexOf(best))) {
+      best = strength;
+    }
+  }
+  return best;
 }
 
 export function evidenceStateFor(

@@ -75,6 +75,15 @@ export interface InterviewFocusQuestion {
   readonly answerText: string;
   readonly evidenceState: MethodEvidenceState;
   readonly evidenceCount: number;
+  /**
+   * Strongest evidence strength (E0-E4) recorded for this unit — a THIRD,
+   * independent axis from the answer/approval state and from the level/band
+   * being discussed. `null`/omitted means no evidence recorded yet (not the
+   * same thing as `evidenceState: 'missing'` on an engaged cell — see
+   * LiveMatrix's `isCellEngaged`). Optional so callers that don't yet surface
+   * it (e.g. SIRI) are unaffected.
+   */
+  readonly evidenceStrength?: EvidenceStrength | null;
 }
 
 export interface ResolutionCardData {

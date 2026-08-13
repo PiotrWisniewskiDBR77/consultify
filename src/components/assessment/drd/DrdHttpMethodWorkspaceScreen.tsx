@@ -40,6 +40,7 @@ import type { InterviewFocusQuestion, MethodWorkspaceViewMode } from '@/componen
 import { useMethodWorkspaceSave } from '@/components/method-workspace/useMethodWorkspaceSave';
 import { useAssessmentSaveIndicator } from '@/hooks/useAssessmentSaveIndicator';
 import { DRD_METHOD_PACK_ID } from '@/method-core/methods/drd/compileDrdPack';
+import { drdAdapter } from '@/method-core/methods/drd/drdAdapter';
 import {
   DrdHttpSessionRuntime,
   type DrdHttpRuntimeState,
@@ -50,7 +51,10 @@ import { DRD_STRUCTURE } from '@/services/drdStructure';
 import {
   buildMatrixRowsForAxis,
   buildNavigatorNodes,
+  confirmedLevelsFor,
   evidenceEventsFor,
+  evidenceStateFor,
+  evidenceStrengthFor,
   OUTPUT_UNIT_COLUMNS,
   pack,
   questionAnswerState,
@@ -417,9 +421,23 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
   }, [activeAxis]);
 
   const activeArea = activeAxis.areas.find((a) => a.id === activeUnitId) ?? activeAxis.areas[0];
-  const focusLevelFallback = Math.min(...activeArea.levels.map((l) => l.level));
+  // Same rule as the legacy runtime: focus the first UNRESOLVED level (the
+  // blocker), not always level 1 — otherwise the Interview Focus panel would
+  // never advance past level 1 once it's confirmed, while the Matrix (which
+  // reads the same events) correctly shows the real blocker level.
+  const activeProgression = useMemo(
+    () =>
+      drdAdapter.resolveOpenLevels({
+        unitId: activeArea.id,
+        confirmedLevels: confirmedLevelsFor(events, activeArea.id),
+        evidenceByLevel: {},
+      }),
+    [events, activeArea.id]
+  );
+  const focusLevelFallback = activeProgression.blockedAtLevel ?? Math.min(...activeArea.levels.map((l) => l.level));
   const focusQuestions = pack.questions.filter((q) => q.unitId === activeArea.id && q.level === focusLevelFallback);
   const evidenceCountForUnit = evidenceEventsFor(events, activeArea.id).length;
+  const evidenceStrengthForUnit = evidenceStrengthFor(events, activeArea.id);
 
   const interviewQuestions: InterviewFocusQuestion[] = focusQuestions.map((q) => {
     const { state: answerState, text } = questionAnswerState(events, q.questionId);
@@ -427,8 +445,9 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
       question: q,
       answerState,
       answerText: text,
-      evidenceState: 'missing',
+      evidenceState: evidenceStateFor(events, activeArea.id, activeProgression.blockedAtLevel),
       evidenceCount: evidenceCountForUnit,
+      evidenceStrength: evidenceStrengthForUnit,
     };
   });
 

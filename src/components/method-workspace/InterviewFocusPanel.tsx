@@ -183,22 +183,37 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
                 />
               </label>
             </span>
-            <span
-              // Kanon TOOL_SESSION_WORKSPACE_STANDARD §7: czerwień WYŁĄCZNIE dla
-              // blockera. `weak` i `missing` to ostrzeżenia (amber) — brak dowodu
-              // nie jest błędem użytkownika. Czerwień zostaje tylko dla
-              // `conflicting`, bo sprzeczne dowody blokują freeze do rozstrzygnięcia
-              // (ASSESSMENT_EVIDENCE_AND_SCORING_CONTRACT.md §6, rozbieżność).
-              className={`shrink-0 rounded-full px-2 py-0.5 font-medium ${
-                q.evidenceState === 'complete'
-                  ? 'bg-c-success/10 text-c-success'
-                  : q.evidenceState === 'conflicting'
-                    ? 'bg-c-danger/10 text-c-danger'
-                    : 'bg-c-warning/10 text-c-warning'
-              }`}
-            >
-              {EVIDENCE_LABEL[q.evidenceState]}
-              {q.evidenceCount > 0 ? ` (${q.evidenceCount})` : ''}
+            <span className="flex flex-wrap items-center gap-1.5">
+              <span
+                // Kanon TOOL_SESSION_WORKSPACE_STANDARD §7: czerwień WYŁĄCZNIE dla
+                // blockera. `weak` i `missing` to ostrzeżenia (amber) — brak dowodu
+                // nie jest błędem użytkownika. Czerwień zostaje tylko dla
+                // `conflicting`, bo sprzeczne dowody blokują freeze do rozstrzygnięcia
+                // (ASSESSMENT_EVIDENCE_AND_SCORING_CONTRACT.md §6, rozbieżność).
+                className={`shrink-0 rounded-full px-2 py-0.5 font-medium ${
+                  q.evidenceState === 'complete'
+                    ? 'bg-c-success/10 text-c-success'
+                    : q.evidenceState === 'conflicting'
+                      ? 'bg-c-danger/10 text-c-danger'
+                      : 'bg-c-warning/10 text-c-warning'
+                }`}
+              >
+                {EVIDENCE_LABEL[q.evidenceState]}
+                {q.evidenceCount > 0 ? ` (${q.evidenceCount})` : ''}
+              </span>
+              {/* Siła dowodu (E0-E4) jest TRZECIĄ, niezależną osią — nie ta sama
+                  rzeczy co rollup evidenceState powyżej ani poziom/zatwierdzenie.
+                  Neutralny token: siła dowodu opisuje jakość źródła, nie jest
+                  sama w sobie ostrzeżeniem. */}
+              {q.evidenceStrength && (
+                <span
+                  data-testid="evidence-strength-badge"
+                  title="Siła dowodu E0–E4 (E0 deklaracja … E4 wynik potwierdzony) — niezależna od poziomu i od statusu zatwierdzenia."
+                  className="shrink-0 rounded-full border border-c-border px-2 py-0.5 font-medium text-c-text-secondary"
+                >
+                  Siła dowodu: {q.evidenceStrength}
+                </span>
+              )}
             </span>
           </div>
         </div>

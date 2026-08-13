@@ -81,6 +81,20 @@ describe('AnswerStateControl', () => {
     expect(onChange).toHaveBeenCalledWith('not_applicable', 'Proces nie istnieje w tej organizacji.');
   });
 
+  it('"Nie wiem" is styled as info/neutral, never as a negative/danger tone — an honest "don\'t know" is not a mistake', () => {
+    render(
+      <AnswerStateControl
+        value="dont_know"
+        onChange={vi.fn()}
+        resolutionData={makeResolutionData()}
+        onResolutionAction={vi.fn()}
+      />
+    );
+    const option = screen.getByText('Nie wiem / potrzebuję pomocy').closest('button')!;
+    expect(option.className).toMatch(/c-info/);
+    expect(option.className).not.toMatch(/c-danger/);
+  });
+
   it('ResolutionCard actions forward to onResolutionAction', () => {
     const onResolutionAction = vi.fn();
     render(

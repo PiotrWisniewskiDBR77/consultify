@@ -48,10 +48,13 @@ describe('LiveMatrix', () => {
     );
     expect(cell).toBeInTheDocument();
 
-    const missingCell = screen.getByLabelText(
-      'DRD, Strategia i governance, poziom 4, nieosiągnięty, odpowiedź nierozstrzygnięte, evidence missing'
+    // Level 4 in the fixture is the TARGET, not yet reached (not achieved, not
+    // blocker, not review-required) — an unassessed cell, not a data-quality
+    // problem, so its accessible name says so instead of "evidence missing".
+    const unassessedCell = screen.getByLabelText(
+      'DRD, Strategia i governance, poziom 4, nieosiągnięty, odpowiedź nierozstrzygnięte, jeszcze nieoceniony'
     );
-    expect(missingCell).toBeInTheDocument();
+    expect(unassessedCell).toBeInTheDocument();
   });
 
   it('clicking a cell opens the side sheet scoped to that cell', () => {
@@ -75,5 +78,127 @@ describe('LiveMatrix', () => {
     // Re-selecting the same cell reproduces exactly the same sheet/position.
     fireEvent.click(screen.getByLabelText(/poziom 2,/));
     expect(screen.getByTestId('matrix-side-sheet')).toHaveTextContent('poziom 2');
+  });
+
+  it('closing the side sheet with Escape works, same as the explicit close button', () => {
+    render(<ControlledMatrix />);
+    fireEvent.click(screen.getByLabelText(/poziom 2,/));
+    expect(screen.getByTestId('matrix-side-sheet')).toBeInTheDocument();
+
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(screen.queryByTestId('matrix-side-sheet')).not.toBeInTheDocument();
+  });
+
+  it('shows a Current/Target/Gap summary per row, readable without counting cells', () => {
+    render(
+      <LiveMatrix
+        rows={[makeMatrixRow()]}
+        levels={[1, 2, 3, 4]}
+        selection={null}
+        onSelect={vi.fn()}
+        onCloseSideSheet={vi.fn()}
+        renderSideSheet={() => null}
+        methodName="DRD"
+      />
+    );
+    // Fixture: achieved through level 2 (current), target flagged at level 4.
+    const summary = screen.getByTestId('matrix-row-summary');
+    expect(summary).toHaveTextContent('C 2');
+    expect(summary).toHaveTextContent('T 4');
+    expect(summary).toHaveTextContent('Δ 2');
+  });
+});
+
+describe('LiveMatrix — an unassessed area never looks like a blocker or an evidence gap', () => {
+  function rowWith(levels: Array<Record<string, unknown>>) {
+    return makeMatrixRow({ levels: levels as never });
+  }
+
+  const cellBase = {
+    unitId: 'unit-1',
+    proposed: false,
+    aiProposalPending: false,
+  };
+
+  it('an untouched, not-yet-reached cell gets a calm neutral border — no dashed/amber, no danger, regardless of the unit-level evidenceState', () => {
+    const row = rowWith([
+      { ...cellBase, level: 1, achieved: false, target: false, answerState: 'unresolved', evidenceState: 'missing', reviewRequired: false, blocker: false },
+    ]);
+    render(
+      <LiveMatrix
+        rows={[row]}
+        levels={[1]}
+        selection={null}
+        onSelect={vi.fn()}
+        onCloseSideSheet={vi.fn()}
+        renderSideSheet={() => null}
+        methodName="DRD"
+      />
+    );
+    const cell = screen.getByTestId('matrix-cell');
+    expect(cell.className).not.toMatch(/border-dashed/);
+    expect(cell.className).not.toMatch(/border-c-warning/);
+    expect(cell.className).not.toMatch(/border-c-danger/);
+    expect(cell.className).toMatch(/border-c-border-subtle/);
+  });
+
+  it('a REAL blocker (the current frontier, work has started) is visually distinct from an untouched cell — border-c-danger', () => {
+    const row = rowWith([
+      { ...cellBase, level: 1, achieved: false, target: false, answerState: 'unresolved', evidenceState: 'missing', reviewRequired: false, blocker: true },
+    ]);
+    render(
+      <LiveMatrix
+        rows={[row]}
+        levels={[1]}
+        selection={null}
+        onSelect={vi.fn()}
+        onCloseSideSheet={vi.fn()}
+        renderSideSheet={() => null}
+        methodName="DRD"
+      />
+    );
+    const cell = screen.getByTestId('matrix-cell');
+    expect(cell.className).toMatch(/border-c-danger/);
+  });
+
+  it('a genuinely engaged evidence gap (achieved level, no evidence attached) is distinct from both the untouched cell and the blocker — dashed amber', () => {
+    const row = rowWith([
+      { ...cellBase, level: 1, achieved: true, target: false, answerState: 'confirmed', evidenceState: 'missing', reviewRequired: false, blocker: false },
+    ]);
+    render(
+      <LiveMatrix
+        rows={[row]}
+        levels={[1]}
+        selection={null}
+        onSelect={vi.fn()}
+        onCloseSideSheet={vi.fn()}
+        renderSideSheet={() => null}
+        methodName="DRD"
+      />
+    );
+    const cell = screen.getByTestId('matrix-cell');
+    expect(cell.className).toMatch(/border-dashed/);
+    expect(cell.className).toMatch(/border-c-warning/);
+    expect(cell.className).not.toMatch(/border-c-danger/);
+  });
+
+  it('the accessible name of an untouched cell never claims "brak dowodu" — it says it is simply not assessed yet', () => {
+    const row = rowWith([
+      { ...cellBase, level: 3, achieved: false, target: false, answerState: 'unresolved', evidenceState: 'missing', reviewRequired: false, blocker: false },
+    ]);
+    render(
+      <LiveMatrix
+        rows={[row]}
+        levels={[3]}
+        selection={null}
+        onSelect={vi.fn()}
+        onCloseSideSheet={vi.fn()}
+        renderSideSheet={() => null}
+        methodName="DRD"
+      />
+    );
+    const cell = screen.getByTestId('matrix-cell');
+    expect(cell.getAttribute('aria-label')).toMatch(/jeszcze nieoceniony/);
+    expect(cell.getAttribute('aria-label')).not.toMatch(/evidence missing/);
   });
 });

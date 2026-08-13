@@ -143,6 +143,17 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
     return () => mq.removeEventListener?.('change', handler);
   }, []);
 
+  // Esc closes the most local open layer — here, Menu3 (kebab). Only wired
+  // while it's open, so it never swallows Esc meant for something else.
+  useEffect(() => {
+    if (!menu3Open) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenu3Open(false);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [menu3Open]);
+
   const setViewMode = useCallback(
     (next: MethodWorkspaceViewMode) => {
       if (onViewModeChange) onViewModeChange(next);
