@@ -30,6 +30,7 @@ const mockApproveAnalysis = vi.fn();
 const mockCreateAnalysis = vi.fn();
 const mockComputeRatios = vi.fn();
 const mockBuildStatementAnalytics = vi.fn();
+const mockBackfillStatementValueSourcePages = vi.fn();
 const mockSearchStatementDocumentIntelligence = vi.fn();
 const mockClassifyStatementDocument = vi.fn();
 const mockConfirmStatement = vi.fn();
@@ -143,6 +144,8 @@ vi.mock('../../../services/financeStatementAnalyticsService.js', () => ({
 }));
 
 vi.mock('../../../services/financialStatementService.js', () => ({
+  backfillStatementValueSourcePages: (...args: unknown[]) =>
+    mockBackfillStatementValueSourcePages(...args),
   autoMapLines: (...args: unknown[]) => mockAutoMapLines(...args),
   classifyStatementDocument: (...args: unknown[]) => mockClassifyStatementDocument(...args),
   confirmStatement: (...args: unknown[]) => mockConfirmStatement(...args),
@@ -1763,34 +1766,18 @@ describe('V8 finance read-only routes', () => {
     expect(mockGetAnalysisInsights).toHaveBeenCalledWith('analysis-1');
   });
 
-  it('POST /api/v8/finance/analyses/:id/initiatives creates initiatives from accepted proposals', async () => {
-    mockDbGet.mockResolvedValue({
-      id: 'analysis-1',
-      organization_id: ORG,
-      project_id: 'project-1',
-      title: 'Working capital analysis',
-    });
-    mockDbAll.mockResolvedValue([
-      {
-        id: 'proposal-1',
-        insight_type: 'action',
-        title: 'Reduce overdue receivables',
-        description: 'Shorten DSO with collections sprint',
-      },
-    ]);
-
+  it('POST /api/v8/finance/analyses/:id/initiatives rejects retired direct creation', async () => {
     const app = createApp();
     const res = await request(app)
       .post('/api/v8/finance/analyses/analysis-1/initiatives')
       .send({ acceptedProposalIds: ['proposal-1'] });
 
-    expect(res.status).toBe(201);
-    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
-    expect(res.body.data?.success).toBe(true);
-    expect(res.body.data?.initiativeIds).toHaveLength(1);
-    expect(mockDbGet).toHaveBeenCalled();
-    expect(mockDbAll).toHaveBeenCalled();
-    expect(mockDbRun).toHaveBeenCalledTimes(1);
+    expect(res.status).toBe(410);
+    expect(res.body.code).toBe('DIRECT_INITIATIVE_CREATION_DISABLED');
+    expect(res.body.error).toContain('Candidate handoff endpoints');
+    expect(mockDbGet).not.toHaveBeenCalled();
+    expect(mockDbAll).not.toHaveBeenCalled();
+    expect(mockDbRun).not.toHaveBeenCalled();
   });
 
   it('POST /api/v8/finance/analyses/:id/run delegates to runFullAnalysis', async () => {

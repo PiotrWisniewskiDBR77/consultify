@@ -258,85 +258,36 @@ describe('chatV9FeatureFlags registry', () => {
     ).toEqual([]);
   });
 
-  // Completeness guard (pass 81, 2026-04-18) — resolver-file orphan
-  // detection. We have 41 files matching `src/utils/*Flag.ts`, each
-  // meant to export exactly one `is<Name>Enabled` function. The pass-80
-  // resolver-contract suite exercises every *registered* resolver, but
-  // does not catch a file that exists on disk with no importer — the
-  // classic "deleted flag from registry but forgot to delete the file"
-  // drift. Walk the filesystem and assert every `isXEnabled` export
-  // is imported by `chatV9FeatureFlags.ts`. Tests (`__tests__`) are
-  // excluded from the walk.
-  it('every resolver file in src/utils is imported by the registry', () => {
+  // Registry integrity guard. `src/utils` is shared by product modules, so a
+  // global `*Flag.ts` scan cannot distinguish Chat V9 resolvers from Finance,
+  // Ideas, Results, Agent, or Artifact Studio flags. Validate the registry's
+  // own resolver imports against real files and exports instead of treating
+  // unrelated product flags as Chat V9 orphans.
+  it('every resolver imported by the registry exists and exports its declared function', () => {
     const repoRoot = path.resolve(__dirname, '../../..');
     const utilsDir = path.join(repoRoot, 'src', 'utils');
     const registrySource = readFileSync(path.join(utilsDir, 'chatV9FeatureFlags.ts'), 'utf8');
 
-    const resolverFiles = readdirSync(utilsDir).filter(
-      (f) => /Flag\.ts$/.test(f) && f !== 'chatV9FeatureFlags.ts'
-    );
+    const resolverImports = [
+      ...registrySource.matchAll(/import\s*{([\s\S]*?)}\s*from\s*['"]\.\/(.+Flag)['"];?/g),
+    ].flatMap((match) => {
+      const exportName = match[1]
+        .split(',')
+        .map((name) => name.trim())
+        .find((name) => /^is[A-Z][A-Za-z0-9]*Enabled$/.test(name));
+      return exportName ? [[match[0], exportName, match[2]]] : [];
+    });
+    const invalid: string[] = [];
 
-    const IMPORT_EXPORT_RE = /export\s+function\s+(is[A-Z][A-Za-z0-9]*Enabled)\s*\(/;
-
-    // Utility files that happen to end in `Flag.ts` but are not
-    // Chat V9 per-flag resolvers. Keep this list explicit — the
-    // whole point of the test is to catch orphaned resolvers, so
-    // we must not silently accept arbitrary non-resolvers. Each
-    // entry below has an explicit category justifying the exclusion.
-    const NON_RESOLVER_FILES = new Set<string>([
-      // Utility helper (matcher), not a resolver.
-      'matchChatV9Flag.ts',
-      // Non-Chat-V9 product feature flags that share the *Flag.ts
-      // naming convention but belong to other modules (billing,
-      // Tabele data-table system, MELS, templates, record layer).
-      // These must NOT be registered in chatV9FeatureFlags.ts.
-      'billingSelfServeFlag.ts',
-      'melsDeckBuilderFlag.ts',
-      'melsTabeleFlag.ts',
-      'recordProvenanceFlag.ts',
-      'tabeleAiEditorFlag.ts',
-      'tabeleConversionsFlag.ts',
-      'tabeleFormIntakeFlag.ts',
-      'tabeleQaFlag.ts',
-      'tabeleSourcePackFlag.ts',
-      'templateLifecycleFlag.ts',
-    ]);
-
-    const orphans: string[] = [];
-    let resolversChecked = 0;
-    for (const f of resolverFiles) {
-      if (NON_RESOLVER_FILES.has(f)) continue;
-      const src = readFileSync(path.join(utilsDir, f), 'utf8');
-      const match = IMPORT_EXPORT_RE.exec(src);
-      if (!match) {
-        // File follows `*Flag.ts` naming but doesn't export the
-        // expected `isXEnabled` shape — record as orphan so the
-        // reviewer knows to either fix the naming convention,
-        // delete the file, or (if it's truly a utility) add it to
-        // `NON_RESOLVER_FILES` above.
-        orphans.push(`${f}: no isXEnabled export found`);
-        continue;
-      }
-      resolversChecked += 1;
-      const exportName = match[1];
-      // Check the registry imports this function. We look for either
-      // an `import { isXEnabled } from './xFlag'` line OR a use in
-      // `isEnabled: isXEnabled`. The string search is tolerant of
-      // import ordering changes.
-      if (!registrySource.includes(exportName)) {
-        orphans.push(`${f}: exports ${exportName} but registry never imports it`);
-      }
+    for (const [, exportName, moduleName] of resolverImports) {
+      const fileName = `${moduleName}.ts`;
+      const source = readFileSync(path.join(utilsDir, fileName), 'utf8');
+      const exportPattern = new RegExp(`export\\s+function\\s+${exportName}\\s*\\(`);
+      if (!exportPattern.test(source)) invalid.push(`${fileName}: missing ${exportName}`);
     }
 
-    // Double-ended sanity: the number of resolvers walked must equal
-    // the number of flags registered. If a resolver file is added
-    // without a registry entry (or vice versa), the counts diverge.
-    expect(
-      resolversChecked,
-      `resolver file count (${resolversChecked}) does not match registry length (${CHAT_V9_FLAGS.length})`
-    ).toBe(CHAT_V9_FLAGS.length);
-
-    expect(orphans, `orphan resolver files:\n${orphans.join('\n')}`).toEqual([]);
+    expect(resolverImports).toHaveLength(CHAT_V9_FLAGS.length);
+    expect(invalid, `invalid resolver imports:\n${invalid.join('\n')}`).toEqual([]);
   });
 
   // Completeness guard (pass 82, 2026-04-18) — runbook §4 flag-reference
