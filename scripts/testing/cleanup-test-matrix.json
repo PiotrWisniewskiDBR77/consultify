@@ -87,7 +87,9 @@
       "server/src/routes/v8/__tests__/assessment.routes.test.ts",
       "tests/integration/routes/wordy-p22.pipeline.test.ts",
       "server/src/routes/__tests__/cross-org-idor-m17.test.ts",
-      "server/src/routes/v8/__tests__/res10-ownership-separation.routes.test.ts"
+      "server/src/routes/v8/__tests__/res10-ownership-separation.routes.test.ts",
+      "tests/unit/backend/routes/h64-failsoft-batch2.test.ts",
+      "server/src/routes/__tests__/m11-tools-cross-org-idor.test.ts"
     ]
   },
   "gates": {
@@ -127,7 +129,9 @@
       "server/src/routes/v8/__tests__/assessment.routes.test.ts",
       "tests/integration/routes/wordy-p22.pipeline.test.ts",
       "server/src/routes/__tests__/cross-org-idor-m17.test.ts",
-      "server/src/routes/v8/__tests__/res10-ownership-separation.routes.test.ts"
+      "server/src/routes/v8/__tests__/res10-ownership-separation.routes.test.ts",
+      "tests/unit/backend/routes/h64-failsoft-batch2.test.ts",
+      "server/src/routes/__tests__/m11-tools-cross-org-idor.test.ts"
       ]
     },
     "realdb": {
