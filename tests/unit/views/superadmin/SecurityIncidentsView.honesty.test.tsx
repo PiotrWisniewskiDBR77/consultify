@@ -45,9 +45,21 @@ const incident = {
 };
 
 describe('SecurityIncidentsView honest UI', () => {
+  const openRowActions = () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Row actions' }));
+  };
+
+  const chooseRowAction = (name: string) => {
+    openRowActions();
+    fireEvent.click(screen.getByRole('menuitem', { name }));
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.stubGlobal('confirm', vi.fn(() => true));
+    vi.stubGlobal(
+      'confirm',
+      vi.fn(() => true)
+    );
     vi.mocked(Api.getSecurityIncidents).mockRejectedValue(new Error('Incidents backend down'));
     vi.mocked(Api.getSecurityIncidentStats).mockResolvedValue(incidentStats);
     vi.mocked(Api.createSecurityIncident).mockResolvedValue({ id: 'incident-1' });
@@ -143,9 +155,10 @@ describe('SecurityIncidentsView honest UI', () => {
     render(<SecurityIncidentsView />);
 
     expect(await screen.findByText('Suspicious login')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /View incident incident-1/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Resolve incident incident-1/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Delete incident incident-1/i })).toBeInTheDocument();
+    openRowActions();
+    expect(screen.getByRole('menuitem', { name: 'View Details' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Resolve' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Delete' })).toBeInTheDocument();
   });
 
   it('normalizes staging incident rows before rendering details', async () => {
@@ -170,7 +183,7 @@ describe('SecurityIncidentsView honest UI', () => {
     render(<SecurityIncidentsView />);
 
     expect(await screen.findByText('Privileged session anomaly')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /View incident incident-snake-case/i }));
+    chooseRowAction('View Details');
 
     expect(screen.getAllByText('Privilege Escalation').length).toBeGreaterThan(0);
     expect(screen.getByText('admin-session-1')).toBeInTheDocument();
@@ -203,7 +216,7 @@ describe('SecurityIncidentsView honest UI', () => {
 
     await screen.findByText('Suspicious login');
     expect(screen.getByText('Unknown date')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /Resolve incident incident-1/i }));
+    chooseRowAction('Resolve');
     fireEvent.change(screen.getByPlaceholderText('Resolution notes...'), {
       target: { value: 'Reviewed' },
     });
@@ -215,7 +228,7 @@ describe('SecurityIncidentsView honest UI', () => {
       );
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /Delete incident incident-1/i }));
+    chooseRowAction('Delete');
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(
@@ -233,7 +246,7 @@ describe('SecurityIncidentsView honest UI', () => {
     render(<SecurityIncidentsView />);
 
     await screen.findByText('Suspicious login');
-    fireEvent.click(screen.getByRole('button', { name: /Delete incident incident-1/i }));
+    chooseRowAction('Delete');
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(
@@ -248,7 +261,7 @@ describe('SecurityIncidentsView honest UI', () => {
     render(<SecurityIncidentsView />);
 
     await screen.findByText('Suspicious login');
-    fireEvent.click(screen.getByRole('button', { name: /Resolve incident incident-1/i }));
+    chooseRowAction('Resolve');
     fireEvent.change(screen.getByPlaceholderText('Resolution notes...'), {
       target: { value: 'Reviewed' },
     });
@@ -289,7 +302,9 @@ describe('SecurityIncidentsView honest UI', () => {
     await waitFor(() => {
       expect(screen.getByText('Security incidents unavailable')).toBeInTheDocument();
     });
-    expect(screen.getAllByText('Security incidents response was not a list').length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText('Security incidents response was not a list').length
+    ).toBeGreaterThan(0);
     expect(screen.queryByText('No security incidents found')).not.toBeInTheDocument();
   });
 });
