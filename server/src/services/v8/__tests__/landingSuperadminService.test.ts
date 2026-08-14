@@ -361,7 +361,8 @@ describe('setAnnaLPConfig', () => {
 
     expect(mockDbRun).toHaveBeenCalledOnce();
     const sql = mockDbRun.mock.calls[0][0] as string;
-    expect(sql).toContain('INSERT OR REPLACE INTO v8_anna_lp_configs');
+    expect(sql).toContain('INSERT INTO v8_anna_lp_configs');
+    expect(sql).toContain('ON CONFLICT (organization_id, identity_role) DO UPDATE');
   });
 
   it('creates an onboarding_assistant config', async () => {
@@ -451,7 +452,8 @@ describe('setDemoTrialConfig', () => {
 
     expect(mockDbRun).toHaveBeenCalledOnce();
     const sql = mockDbRun.mock.calls[0][0] as string;
-    expect(sql).toContain('INSERT OR REPLACE INTO v8_demo_trial_configs');
+    expect(sql).toContain('INSERT INTO v8_demo_trial_configs');
+    expect(sql).toContain('ON CONFLICT (organization_id) DO UPDATE');
   });
 
   it('creates a V3 config for legacy compatibility', async () => {

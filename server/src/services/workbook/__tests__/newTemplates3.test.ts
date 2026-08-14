@@ -319,7 +319,7 @@ function makeEvaluator(wb: ExcelJS.Workbook) {
 // ---------------------------------------------------------------------------
 
 describe('registry — unitEconomics + loanAmortization are registered', () => {
-  it('listWorkbookTemplates() contains both new templates alongside the earlier five', () => {
+  it('listWorkbookTemplates() contains the complete built-in catalog', () => {
     const ids = listWorkbookTemplates().map((t) => t.id);
     expect(ids).toContain('unitEconomics');
     expect(ids).toContain('loanAmortization');
@@ -329,7 +329,8 @@ describe('registry — unitEconomics + loanAmortization are registered', () => {
     expect(ids).toContain('breakEven');
     expect(ids).toContain('cashflow12m');
     expect(ids).toContain('projectViability');
-    expect(ids).toHaveLength(8);
+    expect(ids).toContain('benefitsRealization');
+    expect(ids).toHaveLength(9);
   });
 
   it('WORKBOOK_TEMPLATES exposes both entries with id/build wired correctly', () => {
