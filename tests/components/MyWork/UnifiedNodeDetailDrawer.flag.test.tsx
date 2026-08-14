@@ -1,9 +1,8 @@
 /**
- * M06 Fala 4.1b — flag-OFF contract.
+ * M06 Fala 4.1b — accepted flag-ON contract.
  *
- * `mindmapDrawerUnified` must default to OFF so that, until Piotr accepts the
- * unified drawer on screenshots, both consumers keep rendering their legacy
- * drawers (NodeDetailDrawer / IdeaNodeDetailDrawer) — zero behaviour change.
+ * `mindmapDrawerUnified` defaults to ON after owner acceptance. The flag stays
+ * available as an explicit rollback switch for the legacy drawers.
  */
 import { describe, expect, it } from 'vitest';
 
@@ -16,8 +15,8 @@ describe('mindmapDrawerUnified flag (Fala 4.1b)', () => {
     expect(flag).toBeDefined();
   });
 
-  it('defaults to OFF (legacy drawers stay live)', () => {
-    expect(flag?.defaultValue).toBe(false);
+  it('defaults to ON after owner acceptance', () => {
+    expect(flag?.defaultValue).toBe(true);
   });
 
   it('allows local override for QA/preview toggling', () => {

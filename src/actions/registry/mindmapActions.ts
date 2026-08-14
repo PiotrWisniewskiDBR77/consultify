@@ -1495,8 +1495,8 @@ export const MINDMAP_ACTIONS: ActionDef[] = [
   {
     // Closure (2026-08-10) 04_ACTION_COVERAGE_INVENTORY.csv class-d:
     // `handleApplyAISuggestion` — NodeDetailDrawer.tsx:754 AND
-    // UnifiedNodeDetailDrawer.tsx:1824 (flag `mindmapDrawerUnified`, default
-    // OFF, gates which of the two DRAWERS renders — IdeaRecommendationMap.tsx
+    // UnifiedNodeDetailDrawer.tsx:1824 (flag `mindmapDrawerUnified`, accepted
+    // default ON, gates which of the two DRAWERS renders — IdeaRecommendationMap.tsx
     // ~L4103; the two are mutually exclusive per node-panel open, never both
     // mounted-and-visible for the same click, and their `handleApplyAISuggestion`
     // bodies are byte-identical). ONE id for both, not two — same real effect,

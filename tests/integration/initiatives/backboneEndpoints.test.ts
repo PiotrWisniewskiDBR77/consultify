@@ -247,7 +247,10 @@ describe('L2 — initiativeCandidateService', () => {
       title: 'Inicjatywa: Skalowanie', rationale: 'AI: szansa wzrostu', fit_score: 0.6, status: 'pending',
     });
     mockQueryRun.mockResolvedValue({ changes: 1 });
-    const payload = await acceptCandidate(db, 'c1', 'org-1');
+    // This backbone test covers the durable accept/receipt handoff, not the F1
+    // generation pipeline. Keep generation explicitly off so no real generator
+    // dependency can leak into the mock-DB contract.
+    const payload = await acceptCandidate(db, 'c1', { orgId: 'org-1', fill: false });
     expect(payload).toMatchObject({ candidateId: 'c1', organizationId: 'org-1', sourceType: 'assessment' });
     expect(payload!.brief).toContain('Inicjatywa: Skalowanie');
     const upd = mockQueryRun.mock.calls.find(

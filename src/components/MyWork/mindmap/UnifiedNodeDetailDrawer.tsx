@@ -15,8 +15,8 @@
  * The shared core (status, semantic type, notes/context/goal/rationale/risk depth
  * fields, tags, evidence links) renders in both.
  *
- * Rendered behind feature flag `mindmapDrawerUnified` (OFF by default). OFF path
- * keeps the two legacy drawers untouched.
+ * Rendered behind feature flag `mindmapDrawerUnified` (ON after owner acceptance).
+ * OFF remains an explicit rollback path to the two legacy drawers.
  *
  * TRIADA: uses c-* tokens only. `primary` (crimson) is NOT used for CTA / active
  * states; focus rings use c-focus. No `/alpha` on c-* hex tokens.
