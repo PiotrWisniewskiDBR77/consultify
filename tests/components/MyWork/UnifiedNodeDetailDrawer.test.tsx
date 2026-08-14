@@ -58,7 +58,13 @@ vi.mock('react-hot-toast', () => ({
 
 const i18nState = vi.hoisted(() => ({ language: 'en' }));
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ i18n: i18nState, t: (k: string) => k }),
+  useTranslation: () => ({
+    i18n: i18nState,
+    t: (key: string, fallback?: string | { defaultValue?: string }) => {
+      if (!key.startsWith('myWorkMindmap.nodeStatus.')) return key;
+      return typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? key);
+    },
+  }),
 }));
 
 // Lightweight NModeBlocks stubs — render children so section content is queryable.
