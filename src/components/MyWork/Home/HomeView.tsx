@@ -1291,8 +1291,8 @@ function TeresaBriefing({
         <ShimmerLines />
       ) : (
         <div className="space-y-2">
-          {items.map((item) => (
-            <Section key={item.title} title={item.title} body={item.body} />
+          {items.map((item, index) => (
+            <Section key={`${index}:${item.title}`} title={item.title} body={item.body} />
           ))}
         </div>
       )}

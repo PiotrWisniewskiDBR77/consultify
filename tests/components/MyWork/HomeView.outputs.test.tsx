@@ -4,6 +4,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { HomeView } from '../../../src/components/MyWork/Home/HomeView';
 
+vi.mock('i18next', () => ({
+  default: {
+    t: (_key: string, fallback?: string) => fallback || _key,
+  },
+}));
+
 const { toastErrorMock } = vi.hoisted(() => ({
   toastErrorMock: vi.fn(),
 }));

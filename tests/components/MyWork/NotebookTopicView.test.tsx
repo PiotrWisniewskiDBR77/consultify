@@ -7,9 +7,25 @@ vi.mock('@/services/api/v8/client', () => ({
   v8Get: (...a: any[]) => v8Get(...a),
 }));
 
-const i18nState = vi.hoisted(() => ({ language: 'en' }));
+const i18nState = vi.hoisted(() => ({
+  language: 'en',
+  t: (key: string) =>
+    ({
+      'myWorkNotebook.topicView.close': 'Close',
+      'myWorkNotebook.topicView.retry': 'Retry',
+      'myWorkNotebook.topicView.notesSection': 'Notes',
+      'myWorkNotebook.topicView.linkedOutputs': 'Linked outputs',
+      'myWorkNotebook.topicView.linkedInitiatives': 'Linked initiatives',
+      'myWorkNotebook.topicView.noPinnedNotes': 'No pinned notes',
+      'myWorkNotebook.topicView.noLinkedOutputs': 'No linked outputs',
+      'myWorkNotebook.topicView.noLinkedInitiatives': 'No linked initiatives',
+    })[key] || key,
+}));
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ i18n: i18nState, t: (k: string) => k }),
+  useTranslation: () => ({
+    i18n: i18nState,
+    t: i18nState.t,
+  }),
 }));
 
 import { NotebookTopicView } from '@/components/MyWork/notebook/NotebookTopicView';
@@ -27,7 +43,7 @@ const aggregate = {
 
 describe('NotebookTopicView', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    v8Get.mockReset();
     i18nState.language = 'en';
     v8Get.mockResolvedValue(aggregate);
   });
