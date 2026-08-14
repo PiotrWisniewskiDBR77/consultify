@@ -138,6 +138,11 @@ const supportRoots = allAnalysisFiles.filter((file) => {
   return isTestLike(relative) || relative.startsWith('scripts/') || relative.includes('/scripts/');
 });
 const supportReachable = reachableFrom(supportRoots.map(rel));
+const reverseGraph = new Map();
+for (const [importer, dependencies] of graph) for (const dependency of dependencies) {
+  if (!reverseGraph.has(dependency)) reverseGraph.set(dependency, []);
+  reverseGraph.get(dependency).push(importer);
+}
 
 const records = productionFiles.map((file) => {
   const relative = rel(file);
@@ -146,7 +151,12 @@ const records = productionFiles.map((file) => {
   if (relative.endsWith('.d.ts')) classification = 'BUILD_SUPPORT';
   else if (runtimeReachable.has(file)) classification = 'RUNTIME_REACHABLE';
   else if (supportReachable.has(file)) classification = 'SUPPORT_ONLY';
-  return { file: relative, classification, reachedBy };
+  return {
+    file: relative,
+    classification,
+    reachedBy,
+    importedBy: (reverseGraph.get(file) ?? []).map(rel).sort(),
+  };
 }).sort((a, b) => a.file.localeCompare(b.file));
 
 const counts = records.reduce((acc, record) => {

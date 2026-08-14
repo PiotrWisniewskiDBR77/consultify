@@ -24,6 +24,7 @@ for (const record of reachability.records) {
   allByHash.get(digest).push(record);
 }
 const allFiles = new Set(reachability.records.map((record) => record.file));
+const orphanFiles = new Set(reachability.records.filter((record) => record.classification === 'ORPHAN_CANDIDATE').map((record) => record.file));
 const prefixDecisions = Object.entries(manualDecisions.prefixDecisions ?? {}).sort((a, b) => b[0].length - a[0].length);
 const manualDecisionFor = (file) => manualDecisions.decisions[file]
   ?? prefixDecisions.find(([prefix]) => file.startsWith(prefix))?.[1]
@@ -85,6 +86,8 @@ const candidates = reachability.records
     file: record.file,
     module: moduleByFile.get(record.file) ?? 'cross-cutting-or-unclassified',
     deletionAuthorized: false,
+    orphanImporters: (record.importedBy ?? []).filter((file) => orphanFiles.has(file)),
+    reviewUnit: (record.importedBy ?? []).some((file) => orphanFiles.has(file)) ? 'SUBGRAPH_MEMBER' : 'ORPHAN_ROOT',
     manualDecision: manualDecisionFor(record.file),
     ...classify(record),
   }))
@@ -94,6 +97,7 @@ const byTriage = {};
 const byPriority = {};
 const byModule = {};
 const byManualDecision = {};
+const byReviewUnit = {};
 for (const candidate of candidates) {
   byTriage[candidate.triage] = (byTriage[candidate.triage] ?? 0) + 1;
   byPriority[candidate.priority] = (byPriority[candidate.priority] ?? 0) + 1;
@@ -101,6 +105,7 @@ for (const candidate of candidates) {
   if (candidate.manualDecision) {
     byManualDecision[candidate.manualDecision.status] = (byManualDecision[candidate.manualDecision.status] ?? 0) + 1;
   }
+  byReviewUnit[candidate.reviewUnit] = (byReviewUnit[candidate.reviewUnit] ?? 0) + 1;
 }
 for (const file of Object.keys(manualDecisions.decisions)) {
   if (!candidates.some((candidate) => candidate.file === file)) throw new Error(`manual decision is not an orphan candidate: ${file}`);
@@ -124,6 +129,7 @@ const report = {
     exactManualDecisions: Object.keys(manualDecisions.decisions).length,
     prefixManualDecisions: prefixDecisions.length,
     byManualDecision,
+    byReviewUnit,
     byPriority,
     byTriage,
     byModule,
@@ -139,6 +145,8 @@ const markdown = [
   ...Object.entries(byPriority).sort().map(([name, count]) => `- ${name}: ${count}`),
   '', '## Triage classes', '',
   ...Object.entries(byTriage).sort().map(([name, count]) => `- ${name}: ${count}`),
+  '', '## Review units', '',
+  ...Object.entries(byReviewUnit).sort().map(([name, count]) => `- ${name}: ${count}`),
   '', '## Modules', '',
   ...Object.entries(byModule).sort().map(([name, count]) => `- ${name}: ${count}`),
   '', '## Manual decisions', '',
