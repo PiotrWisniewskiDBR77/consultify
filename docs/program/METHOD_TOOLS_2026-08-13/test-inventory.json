@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-08-13T18:50:04.672Z",
+  "generatedAt": "2026-08-13T20:57:20.659Z",
   "generatedBy": "scripts/testing/generate-test-inventory.ts",
-  "totalDiscovered": 4239,
+  "totalDiscovered": 4242,
   "counts": {
-    "ACTIVE": 3947,
+    "ACTIVE": 3950,
     "INTENTIONALLY_EXCLUDED": 7,
     "LEGACY": 1,
     "PLAYWRIGHT": 283,
@@ -4301,6 +4301,12 @@
       "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
     },
     {
+      "path": "src/components/DiscoveryTools/report/__tests__/SlideDeckView.test.tsx",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
       "path": "src/components/DiscoveryTools/tools/DynamicSWOT/__tests__/SWOTBuildPhase.interaction.test.tsx",
       "classification": "ACTIVE",
       "reason": "Collected by default vitest.config.ts.",
@@ -5417,6 +5423,12 @@
       "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
     },
     {
+      "path": "src/toolOutputs/__tests__/slides.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
       "path": "src/toolPacks/__tests__/engineBindingCoverage.test.ts",
       "classification": "ACTIVE",
       "reason": "Collected by default vitest.config.ts.",
@@ -5424,6 +5436,12 @@
     },
     {
       "path": "src/toolPacks/__tests__/questionBankCoverage.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "src/toolPacks/__tests__/readinessManifests.test.ts",
       "classification": "ACTIVE",
       "reason": "Collected by default vitest.config.ts.",
       "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
