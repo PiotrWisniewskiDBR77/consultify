@@ -128,7 +128,11 @@ describe('AgentPlanPanel.blocksToSteps (AGT-008 — klocek niesie wybrane narzę
   });
 
   it('USUNIĘCIE klocka ze środka nie wpływa na toolInput pozostałych dopasowanych kroków', () => {
-    const step1 = makeStep({ id: 's1', toolName: 'search_knowledge_base', toolInput: { query: 'a' } });
+    const step1 = makeStep({
+      id: 's1',
+      toolName: 'search_knowledge_base',
+      toolInput: { query: 'a' },
+    });
     const step2 = makeStep({ id: 's2', toolName: 'get_assessment_data', toolInput: { axis: 'x' } });
     const step3 = makeStep({
       id: 's3',
@@ -204,7 +208,9 @@ describe('AgentPlanPanel.blocksToSteps (AGT-008 — klocek niesie wybrane narzę
 
     const [block] = stepsToBlocks([step]);
 
-    expect(block.name).toBe('Szukaj w wiedzy');
+    // Nazwa zostaje zapisana jako stabilna angielska etykieta biznesowa;
+    // lokalizacja palety podczas renderowania jest osobnym kontraktem UI.
+    expect(block.name).toBe('Search knowledge');
     expect(block.toolName).toBe('search_knowledge_base');
   });
 
@@ -247,7 +253,11 @@ describe('AgentPlanPanel — klocek "informacja" (notatka) i bramka akceptu (war
       makeStep({
         id: 's1',
         toolName: 'get_assessment_data',
-        toolInput: { phase: 'Diagnoza', notesBefore: ['Zebrać dane'], notesAfter: ['Zamknąć etap'] },
+        toolInput: {
+          phase: 'Diagnoza',
+          notesBefore: ['Zebrać dane'],
+          notesAfter: ['Zamknąć etap'],
+        },
       }),
     ]);
 
