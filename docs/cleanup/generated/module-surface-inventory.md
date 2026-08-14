@@ -1,6 +1,6 @@
 # Module surface inventory
 
-Generated from `bb8bfbb673bdebf3440cfbfd9ada27488ae50cdd` at 2026-08-14T17:30:50.442Z.
+Generated from `working-tree` at 2026-08-14T17:54:56.769Z.
 
 > This is a coverage ledger, not a readiness verdict. Module attribution is heuristic and must be reviewed.
 
@@ -21,6 +21,6 @@ Generated from `bb8bfbb673bdebf3440cfbfd9ada27488ae50cdd` at 2026-08-14T17:30:50
 | results | 232 | 0 | 7 | 3 | 2 | 10 | 4 | 2 | 0 | 172 |
 | tools | 100 | 0 | 32 | 23 | 6 | 1 | 2 | 2 | 0 | 25 |
 | admin-platform | 303 | 0 | 35 | 201 | 8 | 24 | 6 | 48 | 5 | 342 |
-| cross-cutting-or-unclassified | 2348 | 12 | 257 | 686 | 126 | 266 | 126 | 691 | 36 | 2351 |
+| cross-cutting-or-unclassified | 2348 | 12 | 257 | 686 | 126 | 266 | 126 | 692 | 36 | 2352 |
 
 The machine-readable file `module-surface-inventory.json` contains the exact file lists and source locations.

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-14T17:30:50.924Z",
-  "sourceInventoryGitSha": "bb8bfbb673bdebf3440cfbfd9ada27488ae50cdd",
+  "generatedAt": "2026-08-14T17:54:57.146Z",
+  "sourceInventoryGitSha": null,
   "deletionAuthorized": false,
   "warnings": [
     "No triage category authorizes deletion.",

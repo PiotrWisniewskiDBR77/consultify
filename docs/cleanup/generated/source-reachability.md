@@ -1,6 +1,6 @@
 # Source reachability inventory
 
-Generated from `bb8bfbb673bdebf3440cfbfd9ada27488ae50cdd` at 2026-08-14T17:30:49.691Z.
+Generated from `working-tree` at 2026-08-14T17:54:56.115Z.
 
 This is a conservative inventory. `ORPHAN_CANDIDATE` means manual review is required; it never authorizes deletion.
 

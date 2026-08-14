@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-14T17:30:50.442Z",
-  "gitSha": "bb8bfbb673bdebf3440cfbfd9ada27488ae50cdd",
+  "generatedAt": "2026-08-14T17:54:56.769Z",
+  "gitSha": null,
   "classification": "HEURISTIC_MODULE_ATTRIBUTION_REQUIRES_REVIEW",
   "warnings": [
     "Module attribution is path/name based and may place cross-module adapters in the wrong card.",
@@ -14727,6 +14727,7 @@
         "server/migrations/951_report_builder_reports_source_refs_json_gap.sql",
         "server/migrations/952_transformation_runtime_capability_registry.sql",
         "server/migrations/953_transformation_collaboration_and_plan_suggestions.sql",
+        "server/migrations/954_core_task_membership_runtime_schema.sql",
         "server/migrations/add_chat_projects.js",
         "server/migrations/add_chat_projects.sql",
         "server/migrations/add_response_feedback.sql",
@@ -16902,6 +16903,7 @@
         "tests/unit/contracts/artifactContentEnvelopeV1.test.ts",
         "tests/unit/contracts/artifactContractParity.test.ts",
         "tests/unit/contracts/validation-middleware.contract.test.ts",
+        "tests/unit/coreRuntimeSchemaMigration.test.ts",
         "tests/unit/creationConfirmation.test.ts",
         "tests/unit/deckBriefContentPack.test.ts",
         "tests/unit/deckBriefEnrichment.test.ts",

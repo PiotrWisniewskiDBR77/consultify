@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-14T17:30:49.691Z",
-  "gitSha": "bb8bfbb673bdebf3440cfbfd9ada27488ae50cdd",
+  "generatedAt": "2026-08-14T17:54:56.115Z",
+  "gitSha": null,
   "limitations": [
     "ORPHAN_CANDIDATE is never deletion authority; dynamic registries, filesystem loading and runtime strings require manual review.",
     "SUPPORT_ONLY means reachable from tests or scripts but not from a configured runtime entrypoint.",
