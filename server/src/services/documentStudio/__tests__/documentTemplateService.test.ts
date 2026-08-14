@@ -282,6 +282,20 @@ describe('documentTemplateService — registry CRUD', () => {
     expect(listTemplates('org-B')).toHaveLength(1);
     expect(getTemplate(a.template.templateId, 'org-B')).toBeNull();
     expect(getTemplate(a.template.templateId, 'org-A')).not.toBeNull();
+    expect(() =>
+      approveTemplate({
+        templateId: a.template.templateId,
+        organizationId: 'org-B',
+        userId: 'attacker',
+      })
+    ).toThrow('template_not_found');
+    expect(() =>
+      deprecateTemplate({
+        templateId: a.template.templateId,
+        organizationId: 'org-B',
+        userId: 'attacker',
+      })
+    ).toThrow('template_not_found');
   });
 
   it('isTemplateUsableForGeneration only returns true for approved & matching tenant', () => {

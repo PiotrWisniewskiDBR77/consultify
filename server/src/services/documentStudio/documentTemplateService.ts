@@ -672,6 +672,11 @@ export interface ApproveTemplateParams {
 export function approveTemplate(params: ApproveTemplateParams): DocumentTemplate {
   const template = getTemplate(params.templateId, params.organizationId);
   if (!template) throw new Error('template_not_found');
+  // getTemplate intentionally falls back to the shared system catalogue for
+  // reads. Governance mutations must never inherit that fallback: only an
+  // exact tenant-owned registry entry is mutable.
+  const ownedByTenant = registryStore.has(templateKey(params.organizationId, params.templateId));
+  if (!ownedByTenant) throw new Error('template_not_found');
   if (template.status === 'deprecated') throw new Error('template_deprecated');
   if (template.status === 'approved') return template;
   const now = nowIso();
@@ -712,6 +717,8 @@ export interface DeprecateTemplateParams {
 export function deprecateTemplate(params: DeprecateTemplateParams): DocumentTemplate {
   const template = getTemplate(params.templateId, params.organizationId);
   if (!template) throw new Error('template_not_found');
+  const ownedByTenant = registryStore.has(templateKey(params.organizationId, params.templateId));
+  if (!ownedByTenant) throw new Error('template_not_found');
   if (template.status === 'deprecated') return template;
   const now = nowIso();
   const next: DocumentTemplate = {
