@@ -84,6 +84,7 @@ import { buildDeckDiffSummary } from '../services/presentationDeckDiffSummarySer
 import {
   deckDocumentToRenderableUnifiedJson,
   normalizeDeckDocument,
+  resolveDeckContentCoherence,
 } from '../services/presentationDeckDocumentService.js';
 import {
   evaluateRevertEligibility,
@@ -717,10 +718,14 @@ function isSchemaMissingError(error: unknown): boolean {
 }
 
 function normalizeDeckRow(row: any) {
-  const canonicalDeck = normalizeDeckDocument(row);
+  const coherence = resolveDeckContentCoherence(row);
+  const canonicalDeck = coherence.document;
   return {
     ...row,
     deck_json: canonicalDeck ? JSON.stringify(canonicalDeck) : row.deck_json,
+    slide_count: coherence.cardCount,
+    declared_slide_count: coherence.declaredSlideCount,
+    content_state: coherence.hasCanonicalContent ? 'canonical' : 'missing',
     source_artifacts: JSON.parse(row.source_artifacts || '[]'),
     source_refs: JSON.parse(row.source_refs_json || '[]'),
     outline_json: JSON.parse(row.outline_json || '[]'),
@@ -736,6 +741,7 @@ const PUBLIC_DECK_DENY_FIELDS = new Set([
   'share_created_by',
   'created_by',
   'updated_by',
+  'declared_slide_count',
 ]);
 
 function toPublicDeckRow(row: any) {
@@ -2217,15 +2223,57 @@ router.get(
     const orgId = getOrgId(req);
     try {
       await ensureDeckLineageSchema();
-      const rows = await dbAll(
+      const rows = (await dbAll(
         `SELECT pd.id, pd.title, pd.description, pd.deck_type, pd.audience, pd.goal, pd.language, pd.theme, pd.presentation_mode, pd.slide_count, pd.status, pd.export_format, pd.exported_at, pd.created_at, pd.updated_at, pd.source_id, pd.thumbnail_url, pd.source_refs_json, pd.created_by,
-                (u.first_name || ' ' || u.last_name) AS created_by_name
+                (u.first_name || ' ' || u.last_name) AS created_by_name,
+                pd.deck_json,
+                (CASE WHEN COALESCE(pd.unified_json, '') <> '' THEN 1 ELSE 0 END) AS has_unified_json
          FROM presentation_decks pd
          LEFT JOIN users u ON u.id = pd.created_by
          WHERE pd.organization_id = ? ORDER BY pd.updated_at DESC`,
         [orgId]
-      );
-      res.json({ success: true, data: rows || [] });
+      )) as any[];
+
+      const deckRows = rows || [];
+      const coherences = deckRows.map((row) => resolveDeckContentCoherence(row));
+      const needsUnifiedJson = deckRows
+        .filter(
+          (row, index) =>
+            coherences[index].cardCount === 0 && Number(row?.has_unified_json) === 1
+        )
+        .map((row) => String(row?.id));
+
+      if (needsUnifiedJson.length > 0) {
+        const placeholders = needsUnifiedJson.map(() => '?').join(', ');
+        const unifiedRows = (await dbAll(
+          `SELECT id, unified_json FROM presentation_decks
+           WHERE organization_id = ? AND id IN (${placeholders})`,
+          [orgId, ...needsUnifiedJson]
+        )) as any[];
+        const unifiedById = new Map(
+          (unifiedRows || []).map((row) => [String(row?.id), row?.unified_json])
+        );
+        deckRows.forEach((row, index) => {
+          if (!unifiedById.has(String(row?.id))) return;
+          coherences[index] = resolveDeckContentCoherence({
+            ...row,
+            unified_json: unifiedById.get(String(row?.id)),
+          });
+        });
+      }
+
+      const data = deckRows.map((row, index) => {
+        const { deck_json: _deckJson, has_unified_json: _hasUnifiedJson, ...listRow } = row;
+        const coherence = coherences[index];
+        return {
+          ...listRow,
+          has_canonical_content: coherence.hasCanonicalContent,
+          declared_slide_count: coherence.declaredSlideCount,
+          slide_count: coherence.cardCount,
+          content_state: coherence.hasCanonicalContent ? 'canonical' : 'missing',
+        };
+      });
+      res.json({ success: true, data });
     } catch (error) {
       if (isSchemaMissingError(error)) {
         logger.warn('[Presentations] Deck listing unavailable: schema not ready');

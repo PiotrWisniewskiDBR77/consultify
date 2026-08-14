@@ -46,11 +46,13 @@ vi.mock('../../services/wave5ArtifactRuntimeService.js', () => ({
           artifact_id: artifactId,
           organization_id: organizationId,
           title: 'Shareable document',
+          confidentiality: 'public',
           metadata_json: {
             documentStudioSchema: {
               artifactId,
               documentId: artifactId,
               title: 'Shareable document',
+              confidentiality: 'public',
               sections: [],
               createdAt: '2026-08-01T20:00:00.000Z',
               updatedAt: '2026-08-01T20:00:00.000Z',
