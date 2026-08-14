@@ -195,6 +195,33 @@ function buildIdeasPayload() {
   };
 }
 
+function buildDocumentsPayload() {
+  return {
+    artifact_id: 'document-1',
+    instruction: 'Update the executive summary with the approved findings.',
+    document_context: { version_id: 'version-1', scope: 'global' },
+  };
+}
+
+function buildPresentationsPayload() {
+  return {
+    deck_id: 'deck-1',
+    instruction: 'Update the conclusion slide with the approved findings.',
+    presentation_context: { version_id: 'version-1', slide_id: 'slide-10' },
+  };
+}
+
+function buildOkrPayload() {
+  return {
+    okr_handoff_context: {
+      advisor_mode: 'objective_draft',
+      target_resource: { resource_type: 'okr_set', resource_id: 'set-1' },
+      expected_version: 1,
+    },
+    evidence_pointers: ['note:okr-draft'],
+  };
+}
+
 // KPI-E006: added when 'kpi' joined P08_HANDOFF_TARGET_MODULES — otherwise
 // the §11 `for (const target of P08_HANDOFF_TARGET_MODULES)` loop below hits
 // `payloadMap['kpi']()` with no entry (same pre-existing gap 'documents'/
@@ -913,8 +940,11 @@ describe('P08-B §11 — Handoff context validation', () => {
         interview: buildInterviewPayload,
         excele: buildExcelePayload,
         ideas: buildIdeasPayload,
+        documents: buildDocumentsPayload,
+        presentations: buildPresentationsPayload,
         kpi: buildKpiPayload,
         roi: buildRoiPayload,
+        okr: buildOkrPayload,
       };
       const result = validateTargetPayload(target, payloadMap[target]());
       expect(result.valid).toBe(true);

@@ -50,7 +50,10 @@ describe('Resource Quota Middleware', () => {
   });
 
   afterEach(() => {
-    vi.clearAllMocks();
+    // The suite is intentionally randomized. Clear call history and queued
+    // mockResolvedValueOnce implementations so quota branches cannot inherit
+    // another case's missing-plan or missing-limit response.
+    vi.resetAllMocks();
   });
 
   describe('checkMemoryQuota', () => {
