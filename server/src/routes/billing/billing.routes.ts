@@ -2750,6 +2750,14 @@ router.post(
       return respondSchemaUnavailable(res, 'Stripe');
     }
 
+    if (process.env.MOCK_BILLING === 'true') {
+      return res.json({
+        clientSecret: 'seti_mock_secret',
+        id: 'seti_mock',
+        mode: 'mock',
+      });
+    }
+
     try {
       const stripeMod = await import('stripe');
       const Stripe = (stripeMod as any).default || (stripeMod as any);

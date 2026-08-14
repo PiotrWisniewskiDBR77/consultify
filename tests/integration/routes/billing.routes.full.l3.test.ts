@@ -295,6 +295,19 @@ describe('Billing routes integration (L3) - full', () => {
         updated_at TEXT DEFAULT (datetime('now'))
       )`
     );
+    await ensureSqliteColumn('organization_billing', 'billing_rail', 'TEXT');
+    await ensureSqliteColumn('organization_billing', 'contract_status', 'TEXT');
+    await ensureSqliteColumn('organization_billing', 'contract_type', 'TEXT');
+    await ensureSqliteColumn('organization_billing', 'renewal_at', 'TEXT');
+    await ensureSqliteColumn('organization_billing', 'grace_until', 'TEXT');
+    await ensureSqliteColumn('organization_billing', 'access_expires_at', 'TEXT');
+    await ensureSqliteColumn('organization_billing', 'external_invoice_ref', 'TEXT');
+    await ensureSqliteColumn('organization_billing', 'notes', 'TEXT');
+    await ensureSqliteColumn('organization_billing', 'managed_by_user_id', 'TEXT');
+    await ensureSqliteColumn('organization_billing', 'is_manual_override', 'INTEGER DEFAULT 0');
+    await ensureSqliteColumn('organization_billing', 'billing_address', 'TEXT');
+    await ensureSqliteColumn('organization_billing', 'payment_method_last4', 'TEXT');
+    await ensureSqliteColumn('organization_billing', 'payment_method_brand', 'TEXT');
 
     await dbRun(
       `CREATE TABLE IF NOT EXISTS invoices (

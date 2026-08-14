@@ -453,6 +453,7 @@ export class BillingCommandService {
       await this.upsertOrgBilling(orgId, {
         subscription_plan_id: planId,
         billing_rail: 'stripe_subscription',
+        stripe_subscription_id: `mock_sub_${orgId}`,
         status: 'active',
         contract_status: undefined,
         is_manual_override: false,
