@@ -3,16 +3,23 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
+  evaluateSwotAcceptGate,
+  stampAcceptedSwotItem,
+} from '@/config/swot/swotAcceptGate';
+import {
   ProposalCardType,
   SWOTData,
+  SWOTEvidenceType,
   SWOTItem,
   SWOTSignal,
+  SWOTStrengthClassification,
   ToolSession,
   useToolStore,
 } from '@/store/useToolStore';
 
 import { InlineAssist } from '../../InlineAssist';
 import { SwotMatrixVisual } from '../../shared/StrategicCanvasVisuals';
+import { EvidenceEditor } from './EvidenceEditor';
 import { TeresaSwotProposals } from './TeresaSwotProposals';
 
 type QuadrantId = SWOTItem['quadrant'];
@@ -81,6 +88,7 @@ function QuadrantCard({
   setReplaceTargetByProposalId,
   onAcceptProposal,
   onRejectProposal,
+  acceptErrorByProposalId,
   isPolish,
 }: {
   quadrant: QuadrantId;
@@ -90,6 +98,7 @@ function QuadrantCard({
   setReplaceTargetByProposalId: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   onAcceptProposal: (proposalId: string) => void;
   onRejectProposal: (proposalId: string) => void;
+  acceptErrorByProposalId: Record<string, string>;
   isPolish: boolean;
 }) {
   const { t } = useTranslation();
@@ -97,17 +106,22 @@ function QuadrantCard({
   const [draft, setDraft] = useState('');
   const meta = QUADRANT_META[quadrant];
 
+  // STREAM G1: a user directly typing a new item is also routed through the
+  // canonical gate — it always passes structurally here (non-empty text,
+  // valid quadrant, no classification yet), but now consistently stamps
+  // `evidenceStatus: 'declared'` instead of leaving it undefined forever, so
+  // the Output/Live Artifact never have to guess what an un-stamped item means.
   const addItem = () => {
-    if (!draft.trim()) return;
-    addSWOTItem({
+    const candidate: Omit<SWOTItem, 'id'> = {
       text: draft.trim(),
       quadrant,
       impact: 'medium',
       source: 'user',
       confidence: 4,
-      status: 'accepted',
-      proposalStatus: 'accepted',
-    });
+    };
+    const gate = evaluateSwotAcceptGate(candidate);
+    if (!gate.ok) return;
+    addSWOTItem(stampAcceptedSwotItem(candidate, gate));
     setDraft('');
   };
 
@@ -165,19 +179,49 @@ function QuadrantCard({
                 <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600">
                   {t('discoveryToolsTools.dynamicSwot.buildPhase.swotPoint')}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => removeSWOTItem(item.id)}
-                  className="rounded-lg p-1.5 text-slate-600 transition hover:bg-danger-50 hover:text-danger-600 dark:hover:bg-danger-900/30"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+                <div className="flex items-center gap-1">
+                  <label className="sr-only" htmlFor={`impact-${item.id}`}>
+                    {t('discoveryToolsTools.dynamicSwot.quadrantStep.highImpact')}
+                  </label>
+                  <select
+                    id={`impact-${item.id}`}
+                    value={item.impact}
+                    onChange={(e) =>
+                      updateSWOTItem(item.id, {
+                        impact: e.target.value as 'high' | 'medium' | 'low',
+                      })
+                    }
+                    className="h-7 rounded-lg border border-slate-200 bg-white px-1.5 text-[11px] text-slate-700 focus:outline-none focus:ring-1 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-900 dark:text-slate-200"
+                  >
+                    <option value="high">
+                      {t('discoveryToolsTools.dynamicSwot.quadrantStep.highImpact')}
+                    </option>
+                    <option value="medium">
+                      {t('discoveryToolsTools.dynamicSwot.quadrantStep.mediumImpact')}
+                    </option>
+                    <option value="low">
+                      {t('discoveryToolsTools.dynamicSwot.quadrantStep.lowImpact')}
+                    </option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => removeSWOTItem(item.id)}
+                    className="rounded-lg p-1.5 text-slate-600 transition hover:bg-danger-50 hover:text-danger-600 dark:hover:bg-danger-900/30"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
               <textarea
                 value={item.text}
                 onChange={(e) => updateSWOTItem(item.id, { text: e.target.value })}
                 rows={3}
                 className="w-full resize-none rounded-xl border border-transparent bg-transparent px-0 py-0 text-sm font-medium leading-relaxed text-slate-900 outline-none dark:text-slate-100"
+              />
+              <EvidenceEditor
+                item={item}
+                isPolish={isPolish}
+                onChange={(patch) => updateSWOTItem(item.id, patch)}
               />
             </div>
           ))
@@ -226,6 +270,19 @@ function QuadrantCard({
                   ))}
                 </select>
               </div>
+              <EvidenceEditor
+                item={proposal}
+                isPolish={isPolish}
+                onChange={(patch) => updateSWOTItem(proposal.id, patch)}
+              />
+              {acceptErrorByProposalId[proposal.id] ? (
+                <div
+                  role="alert"
+                  className="mt-2 rounded-lg bg-danger-50 px-2 py-1.5 text-[11px] text-danger-700 dark:bg-danger-900/20 dark:text-danger-300"
+                >
+                  {acceptErrorByProposalId[proposal.id]}
+                </div>
+              ) : null}
               <div className="mt-2 flex gap-2">
                 <button
                   type="button"
@@ -261,6 +318,11 @@ export function SWOTBuildPhase({ session, isPolish, isGeneratingAI = false }: Bu
   const [replaceTargetByProposalId, setReplaceTargetByProposalId] = useState<
     Record<string, string>
   >({});
+  // STREAM G1: inline, actionable rejection message from the canonical
+  // accept gate (config/swot/swotAcceptGate.ts), keyed by proposal id.
+  const [acceptErrorByProposalId, setAcceptErrorByProposalId] = useState<Record<string, string>>(
+    {}
+  );
 
   const groupedItems = useMemo(
     () =>
@@ -350,6 +412,17 @@ export function SWOTBuildPhase({ session, isPolish, isGeneratingAI = false }: Bu
     importSignalsIntoMatrix(acceptedSignals);
   }, [items.length, groupedAcceptedSignals]);
 
+  // STREAM G1 (2026-08-13): previously this called `updateSWOTItem(...,
+  // {status:'accepted', proposalStatus:'accepted'})` directly — bypassing the
+  // store's evidence gate entirely. Whatever `evidenceStatus`/`classification`
+  // an AI proposal carried (hooks/discovery/toolAi/dynamicSwot.ts's
+  // `normalizeItemConclusionFields` copies these straight from the model's
+  // JSON) sailed through to `accepted` completely unverified. Now routed
+  // through the ONE canonical gate (config/swot/swotAcceptGate.ts) — the same
+  // function `useToolStore.ts`'s `acceptCard` and the server's
+  // `acceptSwotProposal` use — which ALWAYS recomputes evidenceStatus from
+  // real linked evidence and blocks an externally-claimed classification
+  // (core-competency/niche-strength) that carries none.
   const acceptProposal = (proposalId: string) => {
     const targetId = replaceTargetByProposalId[proposalId];
     const proposal = items.find((item) => item.id === proposalId);
@@ -358,7 +431,8 @@ export function SWOTBuildPhase({ session, isPolish, isGeneratingAI = false }: Bu
     if (targetId) {
       const target = items.find((item) => item.id === targetId);
       if (!target) return;
-      updateSWOTItem(target.id, {
+      const merged: SWOTItem = {
+        ...target,
         text: proposal.text,
         impact: proposal.impact,
         confidence: proposal.confidence,
@@ -367,11 +441,33 @@ export function SWOTBuildPhase({ session, isPolish, isGeneratingAI = false }: Bu
         linkedSignalIds: Array.from(
           new Set([...(target.linkedSignalIds || []), ...(proposal.linkedSignalIds || [])])
         ),
-        status: 'accepted',
-        proposalStatus: 'accepted',
-      });
+        // Carry the AI's conclusion-layer fields into the merge instead of
+        // silently discarding them (the pre-fix code dropped classification/
+        // staircase/decomposition/evidence entirely on merge).
+        evidenceNote: proposal.evidenceNote || target.evidenceNote,
+        evidenceType: proposal.evidenceType || target.evidenceType,
+        evidenceSource: proposal.evidenceSource || target.evidenceSource,
+        classification: proposal.classification || target.classification,
+        staircase: proposal.staircase || target.staircase,
+        decomposition: proposal.decomposition || target.decomposition,
+        ladderAnswers: proposal.ladderAnswers || target.ladderAnswers,
+      };
+      const gate = evaluateSwotAcceptGate(merged);
+      if (!gate.ok) {
+        setAcceptErrorByProposalId((current) => ({
+          ...current,
+          [proposalId]: isPolish ? gate.message.pl : gate.message.en,
+        }));
+        return;
+      }
+      updateSWOTItem(target.id, stampAcceptedSwotItem(merged, gate));
       removeSWOTItem(proposal.id);
       setReplaceTargetByProposalId((current) => {
+        const next = { ...current };
+        delete next[proposalId];
+        return next;
+      });
+      setAcceptErrorByProposalId((current) => {
         const next = { ...current };
         delete next[proposalId];
         return next;
@@ -379,15 +475,30 @@ export function SWOTBuildPhase({ session, isPolish, isGeneratingAI = false }: Bu
       return;
     }
 
-    updateSWOTItem(proposal.id, {
-      status: 'accepted',
-      proposalStatus: 'accepted',
+    const gate = evaluateSwotAcceptGate(proposal);
+    if (!gate.ok) {
+      setAcceptErrorByProposalId((current) => ({
+        ...current,
+        [proposalId]: isPolish ? gate.message.pl : gate.message.en,
+      }));
+      return;
+    }
+    updateSWOTItem(proposal.id, stampAcceptedSwotItem(proposal, gate));
+    setAcceptErrorByProposalId((current) => {
+      const next = { ...current };
+      delete next[proposalId];
+      return next;
     });
   };
 
   const rejectProposal = (proposalId: string) => {
     removeSWOTItem(proposalId);
     setReplaceTargetByProposalId((current) => {
+      const next = { ...current };
+      delete next[proposalId];
+      return next;
+    });
+    setAcceptErrorByProposalId((current) => {
       const next = { ...current };
       delete next[proposalId];
       return next;
@@ -434,6 +545,7 @@ export function SWOTBuildPhase({ session, isPolish, isGeneratingAI = false }: Bu
             setReplaceTargetByProposalId={setReplaceTargetByProposalId}
             onAcceptProposal={acceptProposal}
             onRejectProposal={rejectProposal}
+            acceptErrorByProposalId={acceptErrorByProposalId}
             isPolish={isPolish}
           />
         ))}

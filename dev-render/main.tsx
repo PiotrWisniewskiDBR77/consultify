@@ -318,6 +318,7 @@ const ResultsVNextTeresaKpiDeviationScreen = React.lazy(
 const ResultsVNextTeresaOkrReflectionScreen = React.lazy(
   () => import('./screens/results-vnext-teresa-okr-reflection')
 );
+const ToolsSwotReportScreen = React.lazy(() => import('./screens/tools-swot-report'));
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
   'results-vnext-registry-shell': {
@@ -404,6 +405,12 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'RN-G3 tor PLATFORMY §1 — DEMONSTRACJA przepisu powłoki klasy L (archetyp Rekord): ArtifactBreadcrumb + NModeShell + ArtifactRightPanel/ArtifactPropertiesTable, zero nowego standardu. &save=idle|saving|saved|error|conflict &teresa=1',
     render: () => <RnG3ClassLRecordShellScreen />,
+  },
+  'tools-swot-report': {
+    label:
+      'Tools — Dynamic SWOT: Output -> Report/Presentation (deterministyczny renderer, Executive Paper/Night)',
+    render: () => <ToolsSwotReportScreen />,
+  },
   'idea-financial-case-persistence': {
     label:
       'E09 RISK-12 — REALNY <FinancialCaseDialog> z REALNYM zapisem: ?state=empty|loading|dirty|saving|saved|error|conflict|reopened (stanowy mock transportu)',

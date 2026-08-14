@@ -1,0 +1,10 @@
+light: total slides = 4
+light: counter after keyboard nav = "4 / 4"
+light: native fullscreen engaged = true, data-fullscreen=true
+light: slide-page elements in DOM while printing = 4
+light: default Presentation chrome hidden (no counter/nav in DOM) = true
+dark: total slides = 4
+dark: counter after keyboard nav = "4 / 4"
+dark: native fullscreen engaged = true, data-fullscreen=true
+dark: slide-page elements in DOM while printing = 4
+dark: default Presentation chrome hidden (no counter/nav in DOM) = true

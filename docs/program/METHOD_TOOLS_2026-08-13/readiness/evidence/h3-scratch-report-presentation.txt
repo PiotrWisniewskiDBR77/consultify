@@ -1,0 +1,324 @@
+
+ RUN  v4.1.8 /Users/piotrwisniewski/.codex/worktrees/h3-manifest
+
+
+ RUN  v4.1.8 /Users/piotrwisniewski/.codex/worktrees/h3-manifest
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts
+2026-08-13 22:33:52:3352 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-13 22:33:52:3352 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-13 22:33:52:3352 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-13 22:33:52:3352 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-13 22:33:52:3352 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts
+2026-08-13 22:33:52:3352 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-08-13 22:33:52:3352 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-08-13 22:33:52:3352 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-08-13 22:33:52:3352 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-08-13 22:33:52:3352 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-08-13 22:33:53:3353 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-08-13 22:33:53:3353 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-08-13 22:33:53:3353 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-08-13 22:33:53:3353 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"localhost","database":"consultinity","max":10}
+2026-08-13 22:33:53:3353 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-08-13 22:33:53:3353 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-08-13 22:33:53:3353 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-08-13 22:33:53:3353 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-08-13 22:33:53:3353 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"localhost","database":"consultinity","max":10}
+2026-08-13 22:33:53:3353 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:53:3353 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:53:3353 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["h3-scratch-1786653232126-org"]}
+2026-08-13 22:33:53:3353 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["h3-scratch-1786653232126-org"]}
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["h3-scratch-1786653232126-org"]}
+2026-08-13 22:33:53:3353 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["h3-scratch-1786653232126-org"]}
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:53:3353 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:53:3353 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["h3-scratch-1786653232126-org"]}
+2026-08-13 22:33:53:3353 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["h3-scratch-1786653232126-org"]}
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["h3-scratch-1786653232126-org"]}
+2026-08-13 22:33:53:3353 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["h3-scratch-1786653232126-org"]}
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [33mwarn[39m: [33m[ToolConclusionBridge] Tool conclusion rejected by quality gate — not persisted[39m {"sessionId":"61a3ef7d-0da8-4884-b4f8-9e9cda560e0d","toolType":"sop-builder","failures":["k_complete"]}
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [33mwarn[39m: [33m[ToolConclusionBridge] Tool conclusion rejected by quality gate — not persisted[39m {"sessionId":"61a3ef7d-0da8-4884-b4f8-9e9cda560e0d","toolType":"sop-builder","failures":["k_complete"]}
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:53:3353 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:53:3353 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["h3-scratch-1786653232126-org"]}
+2026-08-13 22:33:53:3353 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["h3-scratch-1786653232126-org"]}
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["h3-scratch-1786653232126-org"]}
+2026-08-13 22:33:53:3353 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["h3-scratch-1786653232126-org"]}
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [33mwarn[39m: [33m[ToolConclusionBridge] Tool conclusion rejected by quality gate — not persisted[39m {"sessionId":"61a3ef7d-0da8-4884-b4f8-9e9cda560e0d","toolType":"sop-builder","failures":["k_complete"]}
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [33mwarn[39m: [33m[ToolConclusionBridge] Tool conclusion rejected by quality gate — not persisted[39m {"sessionId":"61a3ef7d-0da8-4884-b4f8-9e9cda560e0d","toolType":"sop-builder","failures":["k_complete"]}
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [33mwarn[39m: [33m[ToolConclusionBridge] Tool conclusion rejected by quality gate — not persisted[39m {"sessionId":"61a3ef7d-0da8-4884-b4f8-9e9cda560e0d","toolType":"sop-builder","failures":["k_complete"]}
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [33mwarn[39m: [33m[ToolConclusionBridge] Tool conclusion rejected by quality gate — not persisted[39m {"sessionId":"61a3ef7d-0da8-4884-b4f8-9e9cda560e0d","toolType":"sop-builder","failures":["k_complete"]}
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report:9c193746-e2f8-4c9a-b2f1-0fbf9c6011c9 as artifact 82d2883c-e48c-49b1-bbbc-d395b9eddf2b[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered report:9c193746-e2f8-4c9a-b2f1-0fbf9c6011c9 as artifact 82d2883c-e48c-49b1-bbbc-d395b9eddf2b[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"h3-scratch-1786653232126-org","module":"outputs"}
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+2026-08-13 22:33:53:3353 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"h3-scratch-1786653232126-org","module":"outputs"}
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+[h3-scratch] report promote status 200 {"id":"9c193746-e2f8-4c9a-b2f1-0fbf9c6011c9","outputType":"report","title":"H3 scratch report","sourceSessionId":"61a3ef7d-0da8-4884-b4f8-9e9cda560e0d","sourceToolType":"sop-builder","sourceVersion":3,"toolTrace":{"source_type":"tool","source_id":"61a3ef7d-0da8-4884-b4f8-9e9cda560e0d","source_versio
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row
+[h3-scratch] report promote status 200 {"id":"9c193746-e2f8-4c9a-b2f1-0fbf9c6011c9","outputType":"report","title":"H3 scratch report","sourceSessionId":"61a3ef7d-0da8-4884-b4f8-9e9cda560e0d","sourceToolType":"sop-builder","sourceVersion":3,"toolTrace":{"source_type":"tool","source_id":"61a3ef7d-0da8-4884-b4f8-9e9cda560e0d","source_versio
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > capability-mapper -> outputType presentation reaches HTTP 200 and creates a presentation row
+2026-08-13 22:33:53:3353 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:53:3353 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > capability-mapper -> outputType presentation reaches HTTP 200 and creates a presentation row
+2026-08-13 22:33:53:3353 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:53:3353 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > capability-mapper -> outputType presentation reaches HTTP 200 and creates a presentation row
+2026-08-13 22:33:53:3353 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["h3-scratch-1786653232126-org"]}
+2026-08-13 22:33:53:3353 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["h3-scratch-1786653232126-org"]}
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > capability-mapper -> outputType presentation reaches HTTP 200 and creates a presentation row
+2026-08-13 22:33:53:3353 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["h3-scratch-1786653232126-org"]}
+2026-08-13 22:33:53:3353 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["h3-scratch-1786653232126-org"]}
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > capability-mapper -> outputType presentation reaches HTTP 200 and creates a presentation row
+2026-08-13 22:33:53:3353 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > capability-mapper -> outputType presentation reaches HTTP 200 and creates a presentation row
+2026-08-13 22:33:53:3353 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > capability-mapper -> outputType presentation reaches HTTP 200 and creates a presentation row
+2026-08-13 22:33:53:3353 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:53:3353 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > capability-mapper -> outputType presentation reaches HTTP 200 and creates a presentation row
+2026-08-13 22:33:53:3353 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:53:3353 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > capability-mapper -> outputType presentation reaches HTTP 200 and creates a presentation row
+2026-08-13 22:33:53:3353 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["h3-scratch-1786653232126-org"]}
+2026-08-13 22:33:53:3353 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["h3-scratch-1786653232126-org"]}
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > capability-mapper -> outputType presentation reaches HTTP 200 and creates a presentation row
+2026-08-13 22:33:53:3353 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["h3-scratch-1786653232126-org"]}
+2026-08-13 22:33:53:3353 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["h3-scratch-1786653232126-org"]}
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > capability-mapper -> outputType presentation reaches HTTP 200 and creates a presentation row
+2026-08-13 22:33:53:3353 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > capability-mapper -> outputType presentation reaches HTTP 200 and creates a presentation row
+2026-08-13 22:33:53:3353 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > capability-mapper -> outputType presentation reaches HTTP 200 and creates a presentation row
+2026-08-13 22:33:53:3353 [33mwarn[39m: [33m[ToolConclusionBridge] Tool conclusion rejected by quality gate — not persisted[39m {"sessionId":"30c8d84f-8f81-4a09-8334-2926377c362a","toolType":"capability-mapper","failures":["k_complete"]}
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > capability-mapper -> outputType presentation reaches HTTP 200 and creates a presentation row
+2026-08-13 22:33:53:3353 [33mwarn[39m: [33m[ToolConclusionBridge] Tool conclusion rejected by quality gate — not persisted[39m {"sessionId":"30c8d84f-8f81-4a09-8334-2926377c362a","toolType":"capability-mapper","failures":["k_complete"]}
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > capability-mapper -> outputType presentation reaches HTTP 200 and creates a presentation row
+2026-08-13 22:33:53:3353 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:53:3353 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > capability-mapper -> outputType presentation reaches HTTP 200 and creates a presentation row
+2026-08-13 22:33:53:3353 [31merror[39m: [31m[Postgres] Query Error [GET]:[39m
+2026-08-13 22:33:53:3353 [31merror[39m: [31m[Postgres] Failed SQL: SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days[39m
+[31m         FROM organizations WHERE id = $1[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > capability-mapper -> outputType presentation reaches HTTP 200 and creates a presentation row
+2026-08-13 22:33:53:3353 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["h3-scratch-1786653232126-org"]}
+2026-08-13 22:33:53:3353 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["h3-scratch-1786653232126-org"]}
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > capability-mapper -> outputType presentation reaches HTTP 200 and creates a presentation row
+2026-08-13 22:33:53:3353 [33mwarn[39m: [33m[DB:Promise] Query error[39m {"error":"column \"default_language\" does not exist","sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FR","params":["h3-scratch-1786653232126-org"]}
+2026-08-13 22:33:53:3353 [31merror[39m: [31m[DB:Promise] Error: column "default_language" does not exist[39m {"sql":"SELECT id, name, default_language, default_timezone, mfa_required, mfa_grace_period_days\n         FROM organizations WHERE id = $1","params":["h3-scratch-1786653232126-org"]}
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > capability-mapper -> outputType presentation reaches HTTP 200 and creates a presentation row
+2026-08-13 22:33:53:3353 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > capability-mapper -> outputType presentation reaches HTTP 200 and creates a presentation row
+2026-08-13 22:33:53:3353 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > capability-mapper -> outputType presentation reaches HTTP 200 and creates a presentation row
+2026-08-13 22:33:53:3353 [33mwarn[39m: [33m[ToolConclusionBridge] Tool conclusion rejected by quality gate — not persisted[39m {"sessionId":"30c8d84f-8f81-4a09-8334-2926377c362a","toolType":"capability-mapper","failures":["k_complete"]}
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > capability-mapper -> outputType presentation reaches HTTP 200 and creates a presentation row
+2026-08-13 22:33:53:3353 [33mwarn[39m: [33m[ToolConclusionBridge] Tool conclusion rejected by quality gate — not persisted[39m {"sessionId":"30c8d84f-8f81-4a09-8334-2926377c362a","toolType":"capability-mapper","failures":["k_complete"]}
+
+ ✓ tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > sop-builder -> outputType report reaches HTTP 200 and creates a report row 308ms
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > capability-mapper -> outputType presentation reaches HTTP 200 and creates a presentation row
+2026-08-13 22:33:53:3353 [33mwarn[39m: [33m[ToolConclusionBridge] Tool conclusion rejected by quality gate — not persisted[39m {"sessionId":"30c8d84f-8f81-4a09-8334-2926377c362a","toolType":"capability-mapper","failures":["k_complete"]}
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > capability-mapper -> outputType presentation reaches HTTP 200 and creates a presentation row
+2026-08-13 22:33:53:3353 [33mwarn[39m: [33m[ToolConclusionBridge] Tool conclusion rejected by quality gate — not persisted[39m {"sessionId":"30c8d84f-8f81-4a09-8334-2926377c362a","toolType":"capability-mapper","failures":["k_complete"]}
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > capability-mapper -> outputType presentation reaches HTTP 200 and creates a presentation row
+2026-08-13 22:33:53:3353 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered presentation:6ece9ed7-971e-4bf4-828e-443bdbba9feb as artifact 4cf3f352-97dc-413b-b8d8-57e00bf4c30d[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > capability-mapper -> outputType presentation reaches HTTP 200 and creates a presentation row
+2026-08-13 22:33:53:3353 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered presentation:6ece9ed7-971e-4bf4-828e-443bdbba9feb as artifact 4cf3f352-97dc-413b-b8d8-57e00bf4c30d[39m
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > capability-mapper -> outputType presentation reaches HTTP 200 and creates a presentation row
+2026-08-13 22:33:53:3353 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"h3-scratch-1786653232126-org","module":"outputs"}
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > capability-mapper -> outputType presentation reaches HTTP 200 and creates a presentation row
+2026-08-13 22:33:53:3353 [33mwarn[39m: [33m[v8:featureFlags] V8 disabled by global flag[39m {"organizationId":"h3-scratch-1786653232126-org","module":"outputs"}
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > capability-mapper -> outputType presentation reaches HTTP 200 and creates a presentation row
+[h3-scratch] presentation promote status 200 {"id":"6ece9ed7-971e-4bf4-828e-443bdbba9feb","outputType":"presentation","title":"H3 scratch presentation","sourceSessionId":"30c8d84f-8f81-4a09-8334-2926377c362a","sourceToolType":"capability-mapper","sourceVersion":3,"toolTrace":{"source_type":"tool","source_id":"30c8d84f-8f81-4a09-8334-2926377c36
+
+stdout | tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > capability-mapper -> outputType presentation reaches HTTP 200 and creates a presentation row
+[h3-scratch] presentation promote status 200 {"id":"6ece9ed7-971e-4bf4-828e-443bdbba9feb","outputType":"presentation","title":"H3 scratch presentation","sourceSessionId":"30c8d84f-8f81-4a09-8334-2926377c362a","sourceToolType":"capability-mapper","sourceVersion":3,"toolTrace":{"source_type":"tool","source_id":"30c8d84f-8f81-4a09-8334-2926377c36
+
+ ✓ tests/integration/_h3-scratch-report-presentation.realdb.test.ts > H3 scratch — report/presentation promote branches, first-party probe > capability-mapper -> outputType presentation reaches HTTP 200 and creates a presentation row 131ms
+ ✓ tests/integration/_h3-scratch-report-presentation.realdb.test.ts (2 tests) 1599ms
+     ✓ sop-builder -> outputType report reaches HTTP 200 and creates a report row  308ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  22:33:51
+   Duration  2.20s (transform 821ms, setup 108ms, import 101ms, tests 1.60s, environment 300ms)
+
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  22:33:51
+   Duration  2.20s (transform 821ms, setup 108ms, import 101ms, tests 1.60s, environment 300ms)
+
+JSON report written to /Users/piotrwisniewski/.codex/worktrees/h3-manifest/junit.xml
+JUNIT report written to /Users/piotrwisniewski/.codex/worktrees/h3-manifest/junit.xml

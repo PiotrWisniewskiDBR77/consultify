@@ -206,13 +206,19 @@ describe('H3 tool session round-trip (create → save → resume → output)', (
   });
 
   it('saves answers + context + DoD metrics (full save)', async () => {
+    // CAS (Sprint S1): a freshly created session starts at version 1 (see
+    // createToolSession's response / tool_sessions.version's DB default) —
+    // every PUT below threads expectedVersion through and bumps it by
+    // exactly 1 on success, matching the sequence of successful writes.
     const res = await request(app).put(`/api/tools/${sessionId}`).send({
       answers: SWOT_ANSWERS,
       contextSnapshot: CONTEXT_SNAPSHOT,
       completionPercent: 40,
       confidenceAvg: 2,
+      expectedVersion: 1,
     });
     expect(res.status).toBe(200);
+    expect(res.body.version).toBe(2);
   });
 
   it('a wizard-style PARTIAL save must NOT wipe answers/context/DoD metrics', async () => {
@@ -226,8 +232,10 @@ describe('H3 tool session round-trip (create → save → resume → output)', (
         missingItems: [
           { id: 'gap-1', label: 'Missing recommended moves', severity: 'blocker', resolved: false },
         ],
+        expectedVersion: 2,
       });
     expect(res.status).toBe(200);
+    expect(res.body.version).toBe(3);
 
     // Resume: a fresh GET must return the previously saved state.
     const resumed = await request(app).get(`/api/tools/${sessionId}`);
@@ -239,6 +247,9 @@ describe('H3 tool session round-trip (create → save → resume → output)', (
     expect(resumed.body.confidenceAvg).toBe(2);
     expect(resumed.body.wizardState).toMatchObject({ currentStep: 'work' });
     expect(resumed.body.missingItems).toHaveLength(1);
+    // CAS: GET now returns the real server version too (previously never
+    // returned at all).
+    expect(resumed.body.version).toBe(3);
   });
 
   it('resume is fail-soft on a corrupt answers blob (no 500 / white screen)', async () => {
@@ -263,14 +274,19 @@ describe('H3 tool session round-trip (create → save → resume → output)', (
   });
 
   it('completes DoD, passes review and approval', async () => {
+    // Version is still 3 here — the corrupt-blob test above wrote directly
+    // via raw SQL (bypassing the controller, and with it the version bump),
+    // so it never advanced the counter.
     const save = await request(app).put(`/api/tools/${sessionId}`).send({
       answers: SWOT_ANSWERS,
       contextSnapshot: CONTEXT_SNAPSHOT,
       completionPercent: 100,
       confidenceAvg: 4,
       missingItems: [],
+      expectedVersion: 3,
     });
     expect(save.status).toBe(200);
+    expect(save.body.version).toBe(4);
 
     const review = await request(app).post(`/api/tools/${sessionId}/request-review`).send({});
     expect(review.status).toBe(200);

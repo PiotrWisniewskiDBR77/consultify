@@ -32,6 +32,7 @@ import {
 // `NModeMenu2` pokazuje go tylko gdy dostanie `onReadModeChange`; karta
 // biblioteczna go NIE podaje, bo nie ma czym przelaczac (patrz `renderActionBar`).
 import { useHelpSidePanel } from '@/contexts/HelpContext';
+import { resolveToolStatus } from '@/domain/toolStatus';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { Api } from '@/services/api';
 // ETAP 3 standardu n-Type — „Analizuj z AI" (silnik + panel wyników).
@@ -414,9 +415,17 @@ export function KnownToolDetailView(props: {
         'Sesje ukończone',
         sessionStats.available
           ? `${
-              (Array.isArray(sessionStats.items) ? sessionStats.items : []).filter(
-                (s) => s.status === 'completed'
-              ).length
+              // tool_sessions.status is written UPPERCASE canonical
+              // (DRAFT/IN_PROGRESS/REVIEW/APPROVED/GENERATED/FINALIZED/
+              // FAILED — see server/src/controllers/ToolController.ts) with a
+              // legacy `COMPLETED` alias; comparing against the lowercase
+              // literal 'completed' here never matched anything, so this
+              // counter was silently always "0 / N". Routes through the
+              // canonical mapper (src/domain/toolStatus.ts) instead.
+              (Array.isArray(sessionStats.items) ? sessionStats.items : []).filter((s) => {
+                const domain = resolveToolStatus(s.status).domain;
+                return domain === 'finalized' || domain === 'generated' || domain === 'approved';
+              }).length
             } / ${sessionStats.count}`
           : dash
       ),
@@ -602,9 +611,13 @@ export function KnownToolDetailView(props: {
           <div className="text-[11px] uppercase tracking-[0.18em] text-c-text-muted">
             {t('discoveryToolsMain.knownToolDetailView.toolPositioning')}
           </div>
-          <div className="mt-3 text-lg font-semibold leading-tight text-c-text">
+          {/* CANON FIX (stream G5, 2026-08-13): was a plain <div> — the
+              default "Goal" tab had zero semantic headings (h1-h3) reachable
+              by assistive tech, unlike every other tab in this view (Process/
+              Outcomes/etc. already use <h2>). */}
+          <h2 className="mt-3 text-lg font-semibold leading-tight text-c-text">
             {t('discoveryToolsMain.knownToolDetail.dynamicSwot.goal.positioningHeadline')}
-          </div>
+          </h2>
           <div className="mt-3 text-sm leading-relaxed max-w-prose text-c-text-secondary">
             {t('discoveryToolsMain.knownToolDetail.dynamicSwot.goal.positioningBody')}
           </div>

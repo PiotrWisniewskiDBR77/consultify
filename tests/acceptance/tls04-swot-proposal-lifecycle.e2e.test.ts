@@ -36,6 +36,8 @@
  *   5. T8a "malformed model response → 502 INVALID_MODEL_RESPONSE, zero rows"
  *   6. T1  "generate → reject → no change" (reject-never-touches-SWOT half)
  */
+import { randomUUID } from 'crypto';
+
 import express, { type Express } from 'express';
 import jwt from 'jsonwebtoken';
 import pg from 'pg';
@@ -213,10 +215,26 @@ async function createSwotSession(
   const sessionId: string = createRes.body.id;
   createdToolSessionIds.push(sessionId);
 
+  // STREAM G1 (2026-08-13): `expectedVersion` is REQUIRED on every PUT (CAS —
+  // see `server/src/validators/tool.validators.ts`'s `UpdateToolSessionSchema`
+  // comment and `ToolController.updateToolSession`'s 428 guard). This helper
+  // was missing it entirely -- verified that BEFORE this fix, every single
+  // test in this file failed this first PUT with 428, and that this had been
+  // silently masked (all 33 tests reporting "skipped", never "failed") by the
+  // unrelated `@` alias collection-time crash fixed in
+  // `vitest.acceptance.config.ts` -- two independent, stacked breakages that
+  // together meant this entire acceptance file asserted nothing for some time.
+  // `createToolSession` (above) always returns version 1 for a fresh session.
   const putRes = await request(app)
     .put(`/api/tools/${sessionId}`)
     .set('Authorization', `Bearer ${token}`)
-    .send({ status: 'IN_PROGRESS', completionPercent: 40, confidenceAvg: 3, answers: { items } });
+    .send({
+      status: 'IN_PROGRESS',
+      completionPercent: 40,
+      confidenceAvg: 3,
+      answers: { items },
+      expectedVersion: 1,
+    });
   expect(putRes.status).toBe(200);
 
   return sessionId;
@@ -892,7 +910,7 @@ describe('TLS-04 fix packet — BLOCKER 1: ordinary PUT/autosave bumps version, 
     const manualPut = await request(app)
       .put(`/api/tools/${sessionId}`)
       .set('Authorization', `Bearer ${tokenA}`)
-      .send({ answers: { items: manuallyEditedItems } });
+      .send({ answers: { items: manuallyEditedItems }, expectedVersion: generatedAgainstVersion });
     expect(manualPut.status).toBe(200);
 
     const bumped = await pgc.query(`SELECT version FROM tool_sessions WHERE id = $1`, [sessionId]);
@@ -953,7 +971,7 @@ describe('TLS-04 fix packet — BLOCKER 2: malicious/confused currentVersion can
     const bumpPut = await request(app)
       .put(`/api/tools/${sessionId}`)
       .set('Authorization', `Bearer ${tokenA}`)
-      .send({ answers: { items } });
+      .send({ answers: { items }, expectedVersion: proposalOwnVersion });
     expect(bumpPut.status).toBe(200);
     const liveVersionRow = await pgc.query(`SELECT version FROM tool_sessions WHERE id = $1`, [
       sessionId,
@@ -1241,5 +1259,238 @@ describe('TLS-04 fix packet — BLOCKER 4: semantic validation of the model resp
     expect(proposal.modelMetadata.model).toBe('unknown');
     expect(proposal.modelMetadata.requestedPolicy).toBe('premium');
     expect(JSON.stringify(proposal.modelMetadata).toLowerCase()).not.toContain('anthropic');
+  });
+});
+
+// ===========================================================================
+// STREAM G1 (2026-08-13) — the ONE canonical accept gate
+// (src/config/swot/swotAcceptGate.ts) now runs INSIDE acceptSwotProposal,
+// before any write. Today's real `swotProposalService.ts` generation shape
+// (`GeneratedProposal` -> `proposedAfter` in `createSwotProposals`) never
+// carries a `classification` field, so the generate-then-accept flow above
+// can never itself produce a proposal the gate would block — that is a
+// genuinely reassuring finding, not a gap in this suite. To prove the gate
+// is real defense-in-depth (not dead code that merely happens to never
+// fire), these tests insert a `swot_proposals` row directly via SQL with a
+// `proposed_after_json` shaped like a future/alternate generation path that
+// DOES carry `classification` — exactly the shape the client-side chat
+// mentor (`hooks/discovery/toolAi/dynamicSwot.ts`) already produces today
+// for items proposed inline in the Build Phase (a different, client-only
+// code path fixed separately in `SWOTBuildPhase.tsx`'s `acceptProposal`).
+// ===========================================================================
+async function insertRawSwotProposal(
+  sessionId: string,
+  organizationId: string,
+  expectedVersion: number,
+  proposedAfter: Record<string, unknown>
+): Promise<string> {
+  const id = randomUUID();
+  const now = new Date().toISOString();
+  await pgc.query(
+    `INSERT INTO swot_proposals (
+       id, tool_session_id, organization_id, quadrant, operation, target_item_id,
+       before_json, proposed_after_json, final_after_json, rationale, source_refs_json,
+       is_assumption, confidence, model_metadata_json, status, expected_version,
+       created_by, created_at
+     ) VALUES ($1,$2,$3,$4,'add',NULL,NULL,$5,NULL,$6,NULL,false,0.9,$7,'pending',$8,$9,$10)`,
+    [
+      id,
+      sessionId,
+      organizationId,
+      proposedAfter.quadrant,
+      JSON.stringify(proposedAfter),
+      'STREAM G1 defense-in-depth test fixture',
+      JSON.stringify({ provider: 'unknown', model: 'unknown', requestedPolicy: 'premium' }),
+      expectedVersion,
+      USER_A,
+      now,
+    ]
+  );
+  return id;
+}
+
+describe('STREAM G1 — canonical accept gate blocks an unvalidated externally-claimed classification', () => {
+  it('accepting a strengths proposal claiming core-competency with ZERO evidence -> 422, proposal stays pending, session untouched', async () => {
+    const items = baseItems();
+    const sessionId = await createSwotSession(tokenA, items, `${P}g1-blocked-classification-session`);
+
+    const sessionBefore = await request(app)
+      .get(`/api/tools/${sessionId}`)
+      .set('Authorization', `Bearer ${tokenA}`);
+    const versionBefore: number = sessionBefore.body.version;
+    const itemsBefore = sessionBefore.body.answers.items;
+
+    const proposalId = await insertRawSwotProposal(sessionId, ORG_A, versionBefore, {
+      id: randomUUID(),
+      text: 'We are unmatched in the market — no one can replicate this',
+      quadrant: 'strengths',
+      impact: 'high',
+      source: 'ai',
+      confidence: 0.9,
+      proposalStatus: 'ai-proposed',
+      classification: 'core-competency',
+      // Deliberately NO linkedSignalIds and NO evidenceNote.
+    });
+
+    const acceptRes = await request(app)
+      .post(`/api/tools/${sessionId}/swot-proposals/${proposalId}/accept`)
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({ expectedVersion: versionBefore });
+
+    expect(acceptRes.status).toBe(422);
+    expect(acceptRes.body.code).toBe('UNVALIDATED_CLASSIFICATION');
+    expect(acceptRes.body.message.pl).toBeTruthy();
+    expect(acceptRes.body.message.en).toBeTruthy();
+
+    // Never write partially: the proposal is still 'pending', not flipped to
+    // 'accepted' and not left in any half-applied state.
+    const proposalRow = await pgc.query(`SELECT status, final_after_json FROM swot_proposals WHERE id = $1`, [
+      proposalId,
+    ]);
+    expect(proposalRow.rows[0].status).toBe('pending');
+    expect(proposalRow.rows[0].final_after_json).toBeNull();
+
+    // Session completely untouched — same version, same items.
+    const sessionAfter = await request(app)
+      .get(`/api/tools/${sessionId}`)
+      .set('Authorization', `Bearer ${tokenA}`);
+    expect(sessionAfter.body.version).toBe(versionBefore);
+    expect(sessionAfter.body.answers.items).toEqual(itemsBefore);
+
+    evidence(
+      `[g1-block] 422 UNVALIDATED_CLASSIFICATION; proposal stayed pending; session version stayed at ${versionBefore}`
+    );
+  });
+
+  it('the SAME proposal succeeds once a linked signal is added, and the applied item is stamped evidenceStatus: "confirmed"', async () => {
+    const items = baseItems();
+    const sessionId = await createSwotSession(tokenA, items, `${P}g1-allowed-classification-session`);
+
+    const sessionBefore = await request(app)
+      .get(`/api/tools/${sessionId}`)
+      .set('Authorization', `Bearer ${tokenA}`);
+    const versionBefore: number = sessionBefore.body.version;
+
+    const proposalId = await insertRawSwotProposal(sessionId, ORG_A, versionBefore, {
+      id: randomUUID(),
+      text: 'Client-confirmed pricing power in enterprise deals',
+      quadrant: 'strengths',
+      impact: 'high',
+      source: 'ai',
+      confidence: 0.9,
+      proposalStatus: 'ai-proposed',
+      classification: 'core-competency',
+      linkedSignalIds: ['strengths-1'],
+    });
+
+    const acceptRes = await request(app)
+      .post(`/api/tools/${sessionId}/swot-proposals/${proposalId}/accept`)
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({ expectedVersion: versionBefore });
+
+    expect(acceptRes.status).toBe(200);
+
+    const proposalRow = await pgc.query(`SELECT status, final_after_json FROM swot_proposals WHERE id = $1`, [
+      proposalId,
+    ]);
+    expect(proposalRow.rows[0].status).toBe('accepted');
+    const finalItem = JSON.parse(proposalRow.rows[0].final_after_json);
+    // The engine recomputed this — never trusted from the inserted row.
+    expect(finalItem.evidenceStatus).toBe('confirmed');
+    expect(finalItem.status).toBe('accepted');
+    expect(finalItem.proposalStatus).toBe('accepted');
+
+    const sessionAfter = await request(app)
+      .get(`/api/tools/${sessionId}`)
+      .set('Authorization', `Bearer ${tokenA}`);
+    const applied = (sessionAfter.body.answers.items as any[]).find(
+      (i) => i.text === 'Client-confirmed pricing power in enterprise deals'
+    );
+    expect(applied).toBeTruthy();
+    expect(applied.evidenceStatus).toBe('confirmed');
+    expect(applied.status).toBe('accepted');
+    expect(applied.proposalStatus).toBe('accepted');
+
+    evidence('[g1-allow] 200; applied item carries engine-recomputed evidenceStatus: confirmed');
+  });
+
+  it('a proposal with NO classification claim is stamped evidenceStatus: "declared" honestly on accept (never blocked)', async () => {
+    const items = baseItems();
+    const sessionId = await createSwotSession(tokenA, items, `${P}g1-declared-honesty-session`);
+
+    const sessionBefore = await request(app)
+      .get(`/api/tools/${sessionId}`)
+      .set('Authorization', `Bearer ${tokenA}`);
+    const versionBefore: number = sessionBefore.body.version;
+
+    const proposalId = await insertRawSwotProposal(sessionId, ORG_A, versionBefore, {
+      id: randomUUID(),
+      text: 'Emerging regulatory tailwind in the EU market',
+      quadrant: 'opportunities',
+      impact: 'medium',
+      source: 'ai',
+      confidence: 0.6,
+      proposalStatus: 'ai-proposed',
+      // No classification, no linked evidence, no evidence note.
+    });
+
+    const acceptRes = await request(app)
+      .post(`/api/tools/${sessionId}/swot-proposals/${proposalId}/accept`)
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({ expectedVersion: versionBefore });
+
+    expect(acceptRes.status).toBe(200);
+    const proposalRow = await pgc.query(`SELECT final_after_json FROM swot_proposals WHERE id = $1`, [
+      proposalId,
+    ]);
+    const finalItem = JSON.parse(proposalRow.rows[0].final_after_json);
+    expect(finalItem.evidenceStatus).toBe('declared');
+
+    evidence('[g1-honest] 200; no-evidence item honestly stamped evidenceStatus: declared (not blocked)');
+  });
+
+  it('duplicate accept of the SAME (now-blocked-then-fixed) proposal id is idempotent: second call never double-applies', async () => {
+    const items = baseItems();
+    const sessionId = await createSwotSession(tokenA, items, `${P}g1-idempotent-blocked-session`);
+
+    const sessionBefore = await request(app)
+      .get(`/api/tools/${sessionId}`)
+      .set('Authorization', `Bearer ${tokenA}`);
+    const versionBefore: number = sessionBefore.body.version;
+
+    const proposalId = await insertRawSwotProposal(sessionId, ORG_A, versionBefore, {
+      id: randomUUID(),
+      text: 'Repeat-purchase loyalty across the top accounts',
+      quadrant: 'strengths',
+      impact: 'medium',
+      source: 'ai',
+      confidence: 0.8,
+      proposalStatus: 'ai-proposed',
+      evidenceNote: 'Renewal data for the last 4 quarters shows >90% repeat rate.',
+    });
+
+    const first = await request(app)
+      .post(`/api/tools/${sessionId}/swot-proposals/${proposalId}/accept`)
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({ expectedVersion: versionBefore });
+    expect(first.status).toBe(200);
+
+    const second = await request(app)
+      .post(`/api/tools/${sessionId}/swot-proposals/${proposalId}/accept`)
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({ expectedVersion: versionBefore });
+    expect(second.status).toBe(409);
+    expect(second.body.code).toBe('ALREADY_DECIDED');
+
+    const finalGet = await request(app)
+      .get(`/api/tools/${sessionId}`)
+      .set('Authorization', `Bearer ${tokenA}`);
+    const matches = (finalGet.body.answers.items as any[]).filter(
+      (i) => i.text === 'Repeat-purchase loyalty across the top accounts'
+    );
+    expect(matches).toHaveLength(1); // exactly one — never double-applied
+    expect(finalGet.body.version).toBe(versionBefore + 1); // not +2
+
+    evidence('[g1-idempotent] duplicate accept -> 409 ALREADY_DECIDED; item applied exactly once');
   });
 });

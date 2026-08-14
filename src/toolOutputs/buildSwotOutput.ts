@@ -1,0 +1,246 @@
+/**
+ * Most sesja Dynamic SWOT → niezmienny Output.
+ *
+ * To jest miejsce, w którym vertical slice przestaje być atrapą: czytamy
+ * REALNE struktury sesji (`SWOTItem`, `SWOTTension`, `SWOTMove`) i REALNE
+ * reguły silnika (`isAcceptedSwotItem`, `TENSION_TYPE_TO_POSTURE`,
+ * `validateRecommendedMove`), a nie własną, równoległą interpretację metody.
+ *
+ * Twarde reguły przeniesione z kanonu:
+ *  - do Outputu wchodzą WYŁĄCZNIE pozycje zaakceptowane;
+ *  - K1 pochodzi z silnika, nigdy z modelu językowego;
+ *  - ruch bez trade-offu i odrzuconej alternatywy nie przechodzi bramki W2.
+ */
+
+import {
+  isAcceptedSwotItem,
+  validateRecommendedMove,
+} from '@/config/swot/swotTensionEngine';
+import type { SWOTItem, SWOTMove, SWOTTension } from '@/store/useToolStore';
+
+import { computeOutputHash } from './outputLifecycle';
+import type {
+  EvidenceKind,
+  OutputConclusion,
+  OutputEvidenceItem,
+  OutputTension,
+  ToolOutput,
+} from './types';
+
+/**
+ * Wersja silnika Dynamic SWOT (isAcceptedSwotItem/validateRecommendedMove).
+ * Podbijana wyłącznie, gdy zmienia się REGUŁA klasyfikacji/bramki W2 — nie przy
+ * kosmetyce. Zapisywana w snapshotcie, żeby historia Outputów była odtwarzalna
+ * po zmianie reguł silnika (ta sama sesja pod inną wersją silnika może dać inny wynik).
+ */
+export const SWOT_ENGINE_VERSION = '1.0.0';
+
+/** Waga wpływu — ta sama skala, której używa silnik napięć. */
+const IMPACT_WEIGHT: Record<SWOTItem['impact'], number> = { high: 3, medium: 2, low: 1 };
+
+/**
+ * Mapuje dowód pozycji na wspólny język evidence (`EvidenceKind`).
+ *
+ * STREAM G1 (2026-08-13): `item.evidenceType` (fact/observation/hypothesis —
+ * `SWOTEvidenceType` in useToolStore.ts) is now settable by the user via the
+ * Build Phase UI (`EvidenceEditor.tsx`) and is EXACTLY the same union as
+ * `EvidenceKind` — a deliberate user choice about what KIND of claim this is.
+ * When present, it wins outright: it is more specific than the
+ * confirmed/declared axis below, which answers a different question (how
+ * HONEST are we about having proof, not what NATURE the claim has).
+ *
+ * Legacy fallback (items with no `evidenceType`, e.g. from before this
+ * stream, or accepted via a path that never set one): derive from
+ * `evidenceStatus` as before — `confirmed` → fakt; `declared` → hipoteza; no
+ * stamp at all → obserwacja (never fakt, bo brak pomiaru to nie pomiar).
+ */
+export function toEvidenceKind(item: SWOTItem): EvidenceKind {
+  if (item.evidenceType === 'fact' || item.evidenceType === 'observation' || item.evidenceType === 'hypothesis') {
+    return item.evidenceType;
+  }
+  const status = String(item.evidenceStatus ?? '');
+  if (status === 'confirmed') return 'fact';
+  if (status.startsWith('declared')) return 'hypothesis';
+  return 'observation';
+}
+
+export interface BuildSwotOutputInput {
+  id: string;
+  organizationId: string;
+  toolSessionId: string;
+  methodPackVersion: string;
+  title: string;
+  createdAt: string;
+  items: SWOTItem[];
+  tensions: SWOTTension[];
+  moves: SWOTMove[];
+  /** `tool_sessions.version` w chwili budowy — lineage, patrz types.ts. */
+  sourceRevision?: number;
+  createdBy?: string;
+}
+
+export interface BuildSwotOutputResult {
+  output: ToolOutput;
+  /** Ruchy odrzucone przez bramkę W2 wraz z powodem — nie trafiają do Outputu. */
+  rejectedMoves: Array<{ moveId: string; reasons: string[] }>;
+  /** Napięcia pominięte, bo wskazywały pozycje niezaakceptowane. */
+  droppedTensionIds: string[];
+}
+
+/**
+ * Buduje Output z bieżącego stanu sesji.
+ * Wynik jest zawsze w statusie `draft` — zatwierdza człowiek, osobnym krokiem.
+ */
+export function buildSwotOutput(input: BuildSwotOutputInput): BuildSwotOutputResult {
+  // 1. Tylko pozycje zaakceptowane. To jest reguła silnika, nie nasza.
+  const accepted = input.items.filter((i) => isAcceptedSwotItem(i));
+  const acceptedIds = new Set(accepted.map((i) => i.id));
+
+  const items: OutputEvidenceItem[] = accepted.map((i) => ({
+    id: i.id,
+    label: i.text,
+    bucket: i.quadrant,
+    evidenceKind: toEvidenceKind(i),
+    impact: i.impact,
+  }));
+
+  // 2. Napięcia muszą opierać się na pozycjach, które przetrwały akceptację.
+  const droppedTensionIds: string[] = [];
+  const tensions: OutputTension[] = [];
+
+  input.tensions.forEach((t) => {
+    const linked = (t.linkedItemIds ?? []).filter((id) => acceptedIds.has(id));
+    if (linked.length < 2) {
+      droppedTensionIds.push(t.id);
+      return;
+    }
+    const [a, b] = linked;
+    const weightOf = (id: string) =>
+      IMPACT_WEIGHT[accepted.find((i) => i.id === id)?.impact ?? 'medium'];
+
+    tensions.push({
+      id: t.id,
+      posture: t.type,
+      title: t.title,
+      sourceItemIds: [a, b],
+      // Waga liczona deterministycznie z wpływu obu pozycji — to jest K1.
+      priority: weightOf(a) + weightOf(b),
+    });
+  });
+
+  const tensionIds = new Set(tensions.map((t) => t.id));
+
+  // 3. Ruchy przechodzą bramkę W2 silnika. Odrzucone NIE wchodzą do Outputu.
+  const rejectedMoves: BuildSwotOutputResult['rejectedMoves'] = [];
+  const conclusions: OutputConclusion[] = [];
+
+  // Bramka W2 silnika potrzebuje zbiorów id sesji, żeby wykryć wiszące linki.
+  const sessionRefs = { itemIds: acceptedIds, tensionIds };
+
+  input.moves.forEach((move) => {
+    const issues = validateRecommendedMove(move, sessionRefs);
+    if (issues.length > 0) {
+      // Komunikaty po polsku — to jest język odbioru u właściciela.
+      rejectedMoves.push({ moveId: move.id, reasons: issues.map((i) => i.messagePl) });
+      return;
+    }
+
+    const sourceTensionIds = (move.linkedTensionIds ?? []).filter((id) => tensionIds.has(id));
+    const tradeoff = move.tradeoff;
+    const rejected = move.rejectedAlternative;
+
+    conclusions.push({
+      id: move.id,
+      // K1 — fakt zbudowany z policzalnych własności sesji, nie z narracji.
+      k1Fact: buildK1(move, sourceTensionIds, tensions),
+      k2Meaning: move.rationale,
+      k3Actions: [move.firstStep, move.title].filter((x): x is string => Boolean(x)).slice(0, 3),
+      // Brak pola expectedEffect na SWOTMove — efekt składamy z wpływu
+      // i roli odpowiedzialnej. K4 musi mieć adresata, nie „organizację".
+      k4Effect: move.ownerRole
+        ? `Oczekiwany wpływ: ${IMPACT_PL[move.expectedImpact] ?? move.expectedImpact}. Odpowiedzialna rola: ${move.ownerRole}.`
+        : `Oczekiwany wpływ: ${IMPACT_PL[move.expectedImpact] ?? move.expectedImpact}.`,
+      tradeoff: {
+        chosen: tradeoff?.chosen ?? move.title,
+        // W2 rozróżnia „co odroczone" (tradeoff.deferred) od „co odrzucone"
+        // (rejectedAlternative.option). Do Outputu bierzemy odrzuconą opcję.
+        rejected: rejected?.option ?? tradeoff?.deferred ?? '',
+        why: rejected?.reason ?? tradeoff?.cost ?? '',
+      },
+      sourceTensionIds,
+    });
+  });
+
+  const draft = {
+    id: input.id,
+    organizationId: input.organizationId,
+    toolSessionId: input.toolSessionId,
+    toolType: 'dynamic-swot',
+    methodPackVersion: input.methodPackVersion,
+    version: 1,
+    title: input.title,
+    status: 'draft' as const,
+    items,
+    tensions,
+    conclusions,
+    createdAt: input.createdAt,
+    createdBy: input.createdBy,
+    sourceRevision: input.sourceRevision,
+    engineVersion: SWOT_ENGINE_VERSION,
+  };
+
+  return {
+    output: { ...draft, contentHash: computeOutputHash(draft) },
+    rejectedMoves,
+    droppedTensionIds,
+  };
+}
+
+/**
+ * Polska odmiana po liczebniku: 1 napięcie · 2-4 napięcia · 5+ napięć,
+ * z wyjątkiem nastek (12-14 → napięć).
+ */
+export function odmienNapiecia(n: number): string {
+  if (n === 1) return 'napięcie';
+  const ostatnie = n % 10;
+  const dwieOstatnie = n % 100;
+  const nastki = dwieOstatnie >= 12 && dwieOstatnie <= 14;
+  if (ostatnie >= 2 && ostatnie <= 4 && !nastki) return 'napięcia';
+  return 'napięć';
+}
+
+/** Postawa napięcia po polsku — enum silnika nie wychodzi do klienta. */
+const POSTURE_PL: Record<string, string> = {
+  attack: 'atak',
+  repair: 'naprawa',
+  defend: 'obrona',
+  protect: 'ochrona ekspozycji',
+};
+
+/** Wpływ po polsku — surowy enum na powierzchni klienckiej to defekt. */
+export const IMPACT_PL: Record<string, string> = {
+  high: 'wysoki',
+  medium: 'średni',
+  low: 'niski',
+};
+
+/**
+ * K1: FAKT policzony z sesji, nigdy z modelu językowego.
+ *
+ * Fakt opisuje materiał dowodowy stojący za ruchem — liczbę napięć, ich wagę
+ * i postawę. Świadomie NIE jest to tytuł rekomendacji: tytuł sekcji niesie
+ * wniosek biznesowy, a K1 niesie policzalną podstawę.
+ */
+function buildK1(
+  move: SWOTMove,
+  sourceTensionIds: string[],
+  tensions: OutputTension[]
+): string {
+  const linked = tensions.filter((t) => sourceTensionIds.includes(t.id));
+  if (linked.length === 0) {
+    return `Ruch „${move.title}" nie ma napięcia źródłowego w zaakceptowanym materiale.`;
+  }
+  const weight = linked.reduce((n, t) => n + t.priority, 0);
+  const postures = [...new Set(linked.map((t) => POSTURE_PL[t.posture] ?? t.posture))].join(', ');
+  return `Podstawa: ${linked.length} ${odmienNapiecia(linked.length)} o łącznej wadze ${weight} (postawa: ${postures}).`;
+}

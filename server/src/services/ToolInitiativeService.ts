@@ -282,13 +282,21 @@ export class ToolInitiativeService {
         );
         effectiveInitiativeId = __r.id;
         // Extra column not set by the funnel — post-create UPDATE (best-effort).
+        // SWEEP (docs/program/METHOD_TOOLS_2026-08-13/SWALLOWED_ERRORS_AUDIT.md):
+        // legitimately optional — same rationale as ToolController.ts's
+        // matching `priority_order` backfill: a display sort hint, not
+        // required content; the initiative itself already exists. Log it
+        // (previously silent) so a real, ongoing failure is observable.
         try {
           await queryHelpers.queryRun(
             `UPDATE initiatives SET priority_order = ? WHERE id = ? AND organization_id = ?`,
             [priorityOrder, effectiveInitiativeId, toolSession.organization_id]
           );
-        } catch {
-          // priority_order column may be absent on legacy schemas
+        } catch (err) {
+          logger.warn('[ToolInitiativeService] priority_order backfill failed (non-blocking)', {
+            initiativeId: effectiveInitiativeId,
+            error: err instanceof Error ? err.message : String(err),
+          });
         }
       } else {
         await queryHelpers.queryRun(
@@ -313,17 +321,44 @@ export class ToolInitiativeService {
         );
       }
 
+      // C15 close-out (docs/program/METHOD_TOOLS_2026-08-13/IDP_SEMANTICS.md §1/§11):
+      // this bulk-generate path intentionally inserts MANY rows sharing one
+      // `batchId` (one per generated initiative) — the opposite shape from
+      // ToolController.promoteToOutput's one-row-per-promotion. The new
+      // uq_tool_initiative_links_promotion index therefore cannot use
+      // `batch_id` as (part of) its differentiator for this path; each row
+      // gets its own unique `idempotency_key` derived from the batch + the
+      // initiative it links, so the constraint never collides here. This
+      // path already has its own dedup guard one level up, against
+      // `tool_initiative_batches` (ToolController.ts generateInitiatives).
+      const linkId = uuidv4();
       await queryHelpers.queryRun(
         `INSERT INTO tool_initiative_links (
-          id, tool_session_id, batch_id, initiative_id, created_at
-        ) VALUES (?, ?, ?, ?, ?)`,
-        [uuidv4(), toolSession.id, batchId, effectiveInitiativeId, now]
+          id, tool_session_id, batch_id, initiative_id, organization_id,
+          source_revision, output_type, idempotency_key, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          linkId,
+          toolSession.id,
+          batchId,
+          effectiveInitiativeId,
+          toolSession.organization_id,
+          1,
+          'initiative',
+          `bulk:${batchId}:${effectiveInitiativeId}`,
+          now,
+        ]
       );
 
       created.push({ id: effectiveInitiativeId, title: initiative.title, status: 'DRAFT' });
     }
 
     // Audit log (simple insert into audit_log if exists)
+    // SWEEP (docs/program/METHOD_TOOLS_2026-08-13/SWALLOWED_ERRORS_AUDIT.md):
+    // legitimately optional — same rationale as ToolController.ts's
+    // `logAudit`: supplementary trail, not the initiatives themselves
+    // (already created and pushed above). Log it (previously silent) so a
+    // genuinely broken audit table is observable.
     try {
       await queryHelpers.queryRun(
         `INSERT INTO audit_log (id, organization_id, user_id, action, resource_type, resource_id, details, created_at)
@@ -339,8 +374,11 @@ export class ToolInitiativeService {
           now,
         ]
       );
-    } catch {
-      // audit_log table may not exist in all environments
+    } catch (err) {
+      logger.warn('[ToolInitiativeService] audit_log insert failed (non-blocking)', {
+        batchId,
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
 
     return created;
