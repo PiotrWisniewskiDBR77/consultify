@@ -6,6 +6,29 @@ import request from 'supertest';
 
 import { makeTestApp } from '../_helpers/testApp';
 
+const authState = vi.hoisted(() => ({
+  user: {
+    id: 'u-docs-1',
+    organizationId: 'o-docs-1',
+    role: 'admin',
+  } as Record<string, unknown>,
+}));
+
+vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
+  verifyToken: (req: any, _res: any, next: () => void) => {
+    req.user = authState.user;
+    req.userId = authState.user.id;
+    req.organizationId = authState.user.organizationId;
+    req.userRole = authState.user.role;
+    next();
+  },
+}));
+
+// The global unit-test multer double only extracts the file and deliberately
+// ignores multipart text fields. This integration contract exercises project
+// scope/projectId, so use multer's real memory parser in this file.
+vi.mock('multer', async () => await vi.importActual<typeof import('multer')>('multer'));
+
 const usageMocks = vi.hoisted(() => ({
   checkQuota: vi.fn(),
   checkProjectQuota: vi.fn(),
@@ -23,16 +46,14 @@ vi.mock('../../../server/src/services/usageService.js', () => ({
 describe('Documents routes (context document service)', () => {
   const prevEnv = { ...process.env };
   const workerId = process.env.VITEST_WORKER_ID || '0';
-  const sqlitePath = path.join(os.tmpdir(), `consultify-documents-${workerId}.db`);
+  const sqlitePath = path.join(
+    os.tmpdir(),
+    `consultify-documents-${process.pid}-${workerId}-${Date.now()}.db`
+  );
   const basePath = '/api/documents';
 
   let resetConnection: (() => Promise<void>) | null = null;
   let router: any;
-  let authUser: Record<string, unknown> = {
-    id: 'u-docs-1',
-    organizationId: 'o-docs-1',
-    role: 'admin',
-  };
   const readDocumentsArray = (body: any): unknown[] | null => {
     if (Array.isArray(body)) return body;
     if (Array.isArray(body?.documents)) return body.documents;
@@ -40,21 +61,7 @@ describe('Documents routes (context document service)', () => {
     return null;
   };
 
-  const mount = () =>
-    makeTestApp({
-      mountPath: basePath,
-      router,
-      beforeMount: (app) => {
-        // Provide a deterministic auth context without mocking verifyToken.
-        app.use((req, _res, next) => {
-          (req as any).user = authUser;
-          (req as any).userId = authUser.id;
-          (req as any).organizationId = authUser.organizationId;
-          (req as any).userRole = authUser.role;
-          next();
-        });
-      },
-    });
+  const mount = () => makeTestApp({ mountPath: basePath, router });
 
   beforeAll(async () => {
     process.env.NODE_ENV = 'test';
@@ -97,12 +104,18 @@ describe('Documents routes (context document service)', () => {
     try {
       await resetConnection?.();
     } finally {
+      try {
+        const fs = await import('node:fs');
+        fs.rmSync(sqlitePath, { force: true });
+      } catch {
+        // Best-effort cleanup; the unique run path prevents cross-run reuse.
+      }
       process.env = prevEnv;
     }
   });
 
   beforeEach(() => {
-    authUser = {
+    authState.user = {
       id: 'u-docs-1',
       organizationId: 'o-docs-1',
       role: 'admin',
@@ -155,7 +168,15 @@ describe('Documents routes (context document service)', () => {
   it('POST /api/documents/upload returns 400 when file missing', async () => {
     const res = await request(mount()).post(`${basePath}/upload`);
     expect(res.status).toBe(400);
-    expect(res.body).toEqual(expect.objectContaining({ error: expect.any(String) }));
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        status: 'fail',
+        error: expect.objectContaining({
+          code: 'DOCUMENTS_UPLOAD_FILE_REQUIRED',
+          message: expect.any(String),
+        }),
+      })
+    );
   });
 
   it('POST /api/documents/upload never returns fake 503 fallback', async () => {
@@ -198,8 +219,8 @@ describe('Documents routes (context document service)', () => {
     expect(jobs).toHaveLength(1);
     expect(jobs[0]).toEqual(
       expect.objectContaining({
-        organization_id: 'test-org-id',
-        user_id: 'test-user-id',
+        organization_id: 'o-docs-1',
+        user_id: 'u-docs-1',
         document_id: documentId,
         pipeline_type: 'document_text_extraction',
         processor_version: 'context-document-pipeline-v1',
@@ -257,16 +278,16 @@ describe('Documents routes (context document service)', () => {
   });
 
   it('POST /api/documents/upload blocks project scope when user is not a project member', async () => {
-    authUser = {
+    authState.user = {
       id: 'u-docs-outsider',
       organizationId: 'o-docs-1',
       role: 'team_member',
     };
     const res = await request(mount())
       .post(`${basePath}/upload`)
+      .attach('file', Buffer.from('hello'), { filename: 'hello.txt', contentType: 'text/plain' })
       .field('scope', 'project')
-      .field('projectId', 'p-allowed')
-      .attach('file', Buffer.from('hello'), { filename: 'hello.txt', contentType: 'text/plain' });
+      .field('projectId', 'p-allowed');
 
     expect(res.status).toBe(403);
     expect(res.body).toEqual(
@@ -288,8 +309,8 @@ describe('Documents routes (context document service)', () => {
         'ready.txt',
         '/tmp/ready.txt',
         'ready',
-        'test-org-id',
-        'test-user-id',
+        'o-docs-1',
+        'u-docs-1',
         'user',
         12,
         'ready.txt',
@@ -311,8 +332,8 @@ describe('Documents routes (context document service)', () => {
         'deleted.txt',
         '/tmp/deleted.txt',
         'ready',
-        'test-org-id',
-        'test-user-id',
+        'o-docs-1',
+        'u-docs-1',
         'user',
         12,
         'deleted.txt',
@@ -334,8 +355,8 @@ describe('Documents routes (context document service)', () => {
         'scan.pdf',
         '/tmp/scan.pdf',
         'ocr_required',
-        'test-org-id',
-        'test-user-id',
+        'o-docs-1',
+        'u-docs-1',
         'user',
         12,
         'scan.pdf',
@@ -403,8 +424,8 @@ describe('Documents routes (context document service)', () => {
         'stale-processing.txt',
         '/tmp/stale-processing.txt',
         'processing',
-        'test-org-id',
-        'test-user-id',
+        'o-docs-1',
+        'u-docs-1',
         'user',
         12,
         'stale-processing.txt',
@@ -424,8 +445,8 @@ describe('Documents routes (context document service)', () => {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         'job-stale-processing-visible',
-        'test-org-id',
-        'test-user-id',
+        'o-docs-1',
+        'u-docs-1',
         'doc-stale-processing-visible',
         'user',
         'document_text_extraction',
@@ -443,8 +464,8 @@ describe('Documents routes (context document service)', () => {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         'audit-stale-processing-recovery',
-        'test-org-id',
-        'test-user-id',
+        'o-docs-1',
+        'u-docs-1',
         'organization_context.worker_run_requested',
         'organization_context_processing_jobs',
         'run-stale-processing',
@@ -467,8 +488,8 @@ describe('Documents routes (context document service)', () => {
         'queued-processing.txt',
         '/tmp/queued-processing.txt',
         'processing',
-        'test-org-id',
-        'test-user-id',
+        'o-docs-1',
+        'u-docs-1',
         'user',
         12,
         'queued-processing.txt',
@@ -488,8 +509,8 @@ describe('Documents routes (context document service)', () => {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         'job-queued-processing-visible',
-        'test-org-id',
-        'test-user-id',
+        'o-docs-1',
+        'u-docs-1',
         'doc-queued-processing-visible',
         'user',
         'document_text_extraction',
