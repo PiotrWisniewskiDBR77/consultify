@@ -74,7 +74,7 @@ describe('WorkbookBuilder CF support (X2)', () => {
       ],
     };
 
-    const buf = await buildWorkbookBuffer(schema);
+    const buf = await buildWorkbookBuffer(schema, { applyConsultantStyling: false });
     const xml = await extractSheetXml(buf);
 
     expect(xml).toContain('conditionalFormatting');
@@ -107,7 +107,7 @@ describe('WorkbookBuilder CF support (X2)', () => {
       ],
     };
 
-    const buf = await buildWorkbookBuffer(schema);
+    const buf = await buildWorkbookBuffer(schema, { applyConsultantStyling: false });
     const xml = await extractSheetXml(buf);
 
     expect(xml).toContain('colorScale');
@@ -133,7 +133,7 @@ describe('WorkbookBuilder CF support (X2)', () => {
       ],
     };
 
-    const buf = await buildWorkbookBuffer(schema);
+    const buf = await buildWorkbookBuffer(schema, { applyConsultantStyling: false });
     const xml = await extractSheetXml(buf);
 
     expect(xml).toContain('colorScale');
@@ -161,7 +161,7 @@ describe('WorkbookBuilder CF support (X2)', () => {
       ],
     };
 
-    const buf = await buildWorkbookBuffer(schema);
+    const buf = await buildWorkbookBuffer(schema, { applyConsultantStyling: false });
     const xml = await extractSheetXml(buf);
 
     // ExcelJS może serializować iconSet w extLst extension namespace; szukamy po keyword.
@@ -196,7 +196,7 @@ describe('WorkbookBuilder CF support (X2)', () => {
       ],
     };
 
-    const buf = await buildWorkbookBuffer(schema);
+    const buf = await buildWorkbookBuffer(schema, { applyConsultantStyling: false });
     const xml = await extractSheetXml(buf);
 
     expect(xml).toContain('cellIs');
@@ -231,7 +231,7 @@ describe('WorkbookBuilder CF support (X2)', () => {
       ],
     };
 
-    const buf = await buildWorkbookBuffer(schema);
+    const buf = await buildWorkbookBuffer(schema, { applyConsultantStyling: false });
     const stylesXml = await extractStylesXml(buf);
 
     // SheetJS dropuje kolory; ExcelJS je zachowuje. Sprawdzamy hex.
@@ -244,7 +244,7 @@ describe('WorkbookBuilder CF support (X2)', () => {
   // ──────────────────────────────────────────────────────────────
 
   it('FT-8/7: workbook bez conditionalFormatting → builduje się normalnie', async () => {
-    const buf = await buildWorkbookBuffer(BASE_SCHEMA);
+    const buf = await buildWorkbookBuffer(BASE_SCHEMA, { applyConsultantStyling: false });
     expect(buf).toBeInstanceOf(Buffer);
     expect(buf.length).toBeGreaterThan(1000); // realistic .xlsx size
 
