@@ -28,6 +28,32 @@ export function stableUuid(ctx: FixtureContext, entity: string): string {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-a${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
 }
 
+function canonicalizeForDigest(value: unknown): unknown {
+  if (value === null || value === undefined) return undefined;
+  if (Array.isArray(value)) {
+    const identityKey = ['nodeId', 'edgeId', 'name'].find(key =>
+      value.length > 0 && value.every(item => item && typeof item === 'object' && key in item)
+    );
+    const ordered = identityKey
+      ? [...value].sort((a, b) => String(a[identityKey]).localeCompare(String(b[identityKey])))
+      : value;
+    return ordered.map(canonicalizeForDigest);
+  }
+  if (typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .map(([key, item]) => [key, canonicalizeForDigest(item)] as const)
+        .filter(([, item]) => item !== undefined)
+        .sort(([a], [b]) => a.localeCompare(b))
+    );
+  }
+  return value;
+}
+
+function graphDigest(graph: unknown): string {
+  return `sha256:${crypto.createHash('sha256').update(JSON.stringify(canonicalizeForDigest(graph))).digest('hex')}`;
+}
+
 function row(domain: string, sql: string, params: unknown[], table: string, key: string, id: string, organizationId: string): FixtureStatement {
   return { domain, sql, params, verifySql: `SELECT count(*)::int AS count FROM ${table} WHERE ${key} = $1 AND organization_id = $2`, verifyParams: [id, organizationId] };
 }
@@ -37,6 +63,7 @@ export function buildFixturePlan(ctx: FixtureContext): FixtureStatement[] {
   const project = stableTextId(ctx, 'case-project');
   const initiative = stableTextId(ctx, 'initiative');
   const caseId = stableTextId(ctx, 'case');
+  const casePlanVersion = stableTextId(ctx, 'case-plan-v1');
   const kpi = stableUuid(ctx, 'kpi');
   const roi = stableUuid(ctx, 'roi');
   const okr = stableUuid(ctx, 'okr-program');
@@ -44,6 +71,27 @@ export function buildFixturePlan(ctx: FixtureContext): FixtureStatement[] {
   const deck = stableTextId(ctx, 'artifact-presentation');
   const idea = stableTextId(ctx, 'idea');
   const presentationSource = { source_type:'acceptance_fixture', source_id:initiative, label:'Zweryfikowany plan realizacji korzyści', captured_at:'2026-08-13T00:00:00.000Z' };
+  const casePlanGraph = {
+    schemaVersion:'1.0.0',
+    graphId:stableTextId(ctx,'case-plan-graph-v1'),
+    entryNodeIds:['verify-baseline'],
+    terminalNodeIds:['confirm-benefits'],
+    nodes:[
+      {nodeId:'verify-baseline',type:'HUMAN_TASK',metadata:{label:'Zweryfikować bazę korzyści',owner:'Piotr Wiśniewski',outcome:'Uzgodniona baza KPI i Finance'}},
+      {nodeId:'diagnose-gap',type:'CAPABILITY',effectClass:'SAFE_ADDITIVE',metadata:{label:'Zdiagnozować lukę realizacji',owner:'Teresa',outcome:'Potwierdzone źródła odchylenia'}},
+      {nodeId:'approve-recovery',type:'DECISION_GATEWAY',metadata:{label:'Zatwierdzić plan naprawczy',owner:'Komitet sterujący',outcome:'Jednoznaczna decyzja i zakres'}},
+      {nodeId:'execute-recovery',type:'HUMAN_TASK',metadata:{label:'Zrealizować działania naprawcze',owner:'Właściciele inicjatyw',outcome:'Luka wykonania zamknięta'}},
+      {nodeId:'confirm-benefits',type:'HUMAN_TASK',metadata:{label:'Niezależnie potwierdzić korzyści',owner:'Finance + Results',outcome:'Co najmniej 90% zweryfikowanej realizacji'}},
+    ],
+    edges:[
+      {edgeId:'baseline-to-diagnosis',sourceNodeId:'verify-baseline',targetNodeId:'diagnose-gap',edgeType:'SEQUENCE'},
+      {edgeId:'diagnosis-to-decision',sourceNodeId:'diagnose-gap',targetNodeId:'approve-recovery',edgeType:'SEQUENCE'},
+      {edgeId:'decision-to-execution',sourceNodeId:'approve-recovery',targetNodeId:'execute-recovery',edgeType:'SEQUENCE'},
+      {edgeId:'execution-to-confirmation',sourceNodeId:'execute-recovery',targetNodeId:'confirm-benefits',edgeType:'SEQUENCE'},
+    ],
+    variables:[],
+    metadata:{acceptanceFixture:ACCEPTANCE_NAMESPACE,objective:'Osiągnąć co najmniej 90% zweryfikowanej realizacji korzyści w ciągu 90 dni.'},
+  };
   const financeAssumptions = {
     acceptanceFixture: ACCEPTANCE_NAMESPACE,
     initialCash: 200000,
@@ -81,6 +129,8 @@ export function buildFixturePlan(ctx: FixtureContext): FixtureStatement[] {
   return [
     row('case', `INSERT INTO projects (id, organization_id, name, description, status) VALUES ($1,$2,$3,$4,'active') ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name,description=EXCLUDED.description`, [project,ctx.organizationId,'Program poprawy realizacji korzyści','Osiągnąć co najmniej 90% zweryfikowanej realizacji korzyści w ciągu 90 dni.'], 'projects','id',project,ctx.organizationId),
     row('case', `INSERT INTO case_core (case_id,project_id,organization_id,case_name,case_profile,governance_tier,case_status,contracted_closure_type,delivery_status,decision_status,implementation_status,outcome_status,sponsor_user_id,acceptance_criteria_ref,created_by_actor_id) VALUES ($1,$2,$3,$4,'TRANSFORMATION','CONTROLLED','ACTIVE','OUTCOME_VALIDATED','PENDING','PENDING','PENDING','PENDING',$5,$6,$5) ON CONFLICT (case_id) DO UPDATE SET case_name=EXCLUDED.case_name,case_status='ACTIVE' WHERE case_core.organization_id=EXCLUDED.organization_id`, [caseId,project,ctx.organizationId,'Program poprawy realizacji korzyści',ctx.userId,`${ACCEPTANCE_NAMESPACE}:case`], 'case_core','case_id',caseId,ctx.organizationId),
+    {domain:'case',sql:`INSERT INTO case_plan_versions (case_plan_version_id,case_id,plan_number,status,semantic_graph,graph_digest,change_reason,review_history,proposed_at,proposed_by_actor_id,published_at,published_by_actor_id,created_by_actor_id) VALUES ($1,$2,1,'PUBLISHED',$3,$4,$5,$6,now(),$7,now(),$7,$7) ON CONFLICT (case_plan_version_id) DO NOTHING`,params:[casePlanVersion,caseId,JSON.stringify(casePlanGraph),graphDigest(casePlanGraph),'Plan odbiorowy programu realizacji korzyści.',JSON.stringify([{event:'PROPOSED',actorId:ctx.userId,at:'2026-08-13T00:00:00.000Z',reason:'Plan przygotowany do odbioru'},{event:'PUBLISHED',actorId:ctx.userId,at:'2026-08-13T00:05:00.000Z',reason:'Plan zatwierdzony do realizacji'}]),ctx.userId],verifySql:`SELECT count(*)::int AS count FROM case_plan_versions cpv JOIN case_core cc ON cc.case_id=cpv.case_id WHERE cpv.case_plan_version_id=$1 AND cc.organization_id=$2 AND cpv.status='PUBLISHED'`,verifyParams:[casePlanVersion,ctx.organizationId]},
+    row('case', `INSERT INTO case_core (case_id,project_id,organization_id,case_name,case_profile,governance_tier,case_status,contracted_closure_type,delivery_status,decision_status,implementation_status,outcome_status,sponsor_user_id,acceptance_criteria_ref,created_by_actor_id,current_plan_version_id) VALUES ($1,$2,$3,$4,'TRANSFORMATION','CONTROLLED','ACTIVE','OUTCOME_VALIDATED','PENDING','PENDING','PENDING','PENDING',$5,$6,$5,$7) ON CONFLICT (case_id) DO UPDATE SET current_plan_version_id=EXCLUDED.current_plan_version_id WHERE case_core.organization_id=EXCLUDED.organization_id`, [caseId,project,ctx.organizationId,'Program poprawy realizacji korzyści',ctx.userId,`${ACCEPTANCE_NAMESPACE}:case`,casePlanVersion], 'case_core','case_id',caseId,ctx.organizationId),
     row('shared', `INSERT INTO initiatives (id,organization_id,name,status) VALUES ($1,$2,$3,'EXECUTING') ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name`, [initiative,ctx.organizationId,'Poprawa realizacji korzyści programu'], 'initiatives','id',initiative,ctx.organizationId),
     row('kpi', `INSERT INTO rvn_kpi_definitions (kpi_id,organization_id,kpi_code,status,owner_user_id,created_by) VALUES ($1,$2,'Realizacja zweryfikowanych korzyści','draft',$3,$3) ON CONFLICT (kpi_id) DO UPDATE SET kpi_code=EXCLUDED.kpi_code WHERE rvn_kpi_definitions.organization_id=EXCLUDED.organization_id`, [kpi,ctx.organizationId,ctx.userId], 'rvn_kpi_definitions','kpi_id',kpi,ctx.organizationId),
     row('roi', `INSERT INTO rvn_roi_cases (case_id,organization_id,initiative_id,title,owner_user_id,status,currency,analysis_start,analysis_end,created_by) VALUES ($1,$2,$3,$4,$5,'draft','PLN',CURRENT_DATE,CURRENT_DATE + 365,$5) ON CONFLICT (case_id) DO UPDATE SET title=EXCLUDED.title WHERE rvn_roi_cases.organization_id=EXCLUDED.organization_id`, [roi,ctx.organizationId,initiative,'Program poprawy realizacji korzyści',ctx.userId], 'rvn_roi_cases','case_id',roi,ctx.organizationId),
