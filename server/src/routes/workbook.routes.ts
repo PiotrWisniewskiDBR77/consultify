@@ -810,7 +810,8 @@ function draftFileName(fileName: string): string {
  * register/adopt the Outputs Library artifact — then return the JSON response
  * payload. Factored out so the template path reuses the EXACT same persistence,
  * caching and artifact-registration code as `/generate` (no duplication, one
- * card per workbook). Fail-soft on persist/registration (logs, never throws).
+ * card per workbook). Durable metadata persistence is fail-closed: without the
+ * canonical row, neither an artifact nor a success response may be emitted.
  */
 async function finalizeGeneratedWorkbook(params: {
   result: {
@@ -856,9 +857,10 @@ async function finalizeGeneratedWorkbook(params: {
   });
   pruneCache();
 
-  // Persist metadata
+  // Persist metadata. This is the canonical identity of the workbook, so a
+  // zero-row write or database failure must not degrade into a cache-only 200.
   try {
-    await queryHelpers.queryRun(
+    const persisted = await queryHelpers.queryRun(
       `INSERT INTO generated_workbooks (id, organization_id, title, description, prompt, schema_json, sheet_count, file_name, file_size, validation_errors, quality_score, pipeline_log, action_contract_json, source_pack_json, evidence_refs_json, quality_report_json, created_by, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
@@ -888,8 +890,13 @@ async function finalizeGeneratedWorkbook(params: {
         result.generatedAt,
       ]
     );
+    if (!persisted || persisted.changes !== 1) {
+      throw new Error(`Workbook persistence affected ${persisted?.changes ?? 0} rows`);
+    }
   } catch (err) {
-    logger.warn('[WorkbookRoutes] Failed to persist workbook metadata:', err);
+    workbookCache.delete(result.id);
+    logger.error('[WorkbookRoutes] Failed to persist workbook metadata:', err);
+    throw err;
   }
 
   // Register in V8 artifact registry (P19 Outputs Library integration)
@@ -1184,10 +1191,79 @@ router.post(
       await import('../services/workbook/templates/index.js');
     const entry = getWorkbookTemplate(id);
     if (!entry) {
-      res.status(404).json({
-        error: `Unknown workbook template: "${id}"`,
-        classified: createP23Error('validation_failed', `No registered template with id "${id}"`),
-      });
+      await ensureWorkbookSchema();
+      const {
+        CustomWorkbookTemplateInvalidError,
+        materializeCustomWorkbookSchema,
+        resolveCustomWorkbookTemplate,
+      } = await import('../services/workbook/customWorkbookTemplateService.js');
+
+      try {
+        const customTemplate = await resolveCustomWorkbookTemplate(
+          id,
+          user.organizationId,
+          user.id
+        );
+        if (!customTemplate) {
+          res.status(404).json({
+            error: `Unknown workbook template: "${id}"`,
+            classified: createP23Error(
+              'validation_failed',
+              `No registered or accessible custom template with id "${id}"`
+            ),
+          });
+          return;
+        }
+
+        const customParams =
+          rawParams && typeof rawParams === 'object' && !Array.isArray(rawParams)
+            ? (rawParams as Record<string, unknown>)
+            : {};
+        const schema = materializeCustomWorkbookSchema(customTemplate, customParams);
+        const { buildWorkbookBuffer } = await import('../services/workbook/WorkbookBuilder.js');
+        const buffer = await buildWorkbookBuffer(schema);
+        const workbookId = uuidv4();
+        const generatedAt = new Date().toISOString();
+        const safeTitle = schema.title.replace(/[^a-zA-Z0-9._-]+/g, '_').replace(/^_+|_+$/g, '');
+        const result = {
+          id: workbookId,
+          schema,
+          buffer,
+          fileName: `${safeTitle || 'workbook'}.xlsx`,
+          validationErrors: [],
+          classifiedErrors: [],
+          qualityScore: null,
+          qualityReport: null,
+          pipelineLog: [],
+          generatedAt,
+        };
+        const payload = await finalizeGeneratedWorkbook({
+          result,
+          user,
+          promptText: `[custom-template:${id}] ${schema.title}`,
+          source: 'workbook_custom_template',
+          projectId: projectId || null,
+          sourceInitiativeId: sourceInitiativeId || null,
+          conversationId: conversationId || null,
+        });
+        res.json(payload);
+      } catch (err) {
+        if (err instanceof CustomWorkbookTemplateInvalidError) {
+          res.status(400).json({
+            error: err.message,
+            classified: createP23Error('validation_failed', err.message),
+          });
+          return;
+        }
+        logger.error('[WorkbookRoutes] Custom template build failed:', err);
+        res.status(500).json({
+          error: 'Failed to build workbook from custom template',
+          classified: createP23Error(
+            'export_failed',
+            err instanceof Error ? err.message : String(err)
+          ),
+        });
+      }
       return;
     }
 

@@ -164,7 +164,7 @@ describe('workbook.routes — C3 parametric templates', () => {
   it('builds an org-owned custom template snapshot and preserves workbook features', async () => {
     queryOneMock.mockImplementation(async (sql: string, params: unknown[]) => {
       if (sql.includes('FROM tp_base_templates')) {
-        expect(params).toEqual(['custom-portfolio', 'org-1']);
+        expect(params).toEqual(['custom-portfolio', 'org-1', 'user-1']);
         return {
           id: 'custom-portfolio',
           name: 'Portfolio Transformation Control',
