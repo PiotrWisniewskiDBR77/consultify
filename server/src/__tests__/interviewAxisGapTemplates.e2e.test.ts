@@ -146,9 +146,13 @@ describe('O5.6 — interview axis-gap templates migration (real SQL, in-memory s
     expect(fs.existsSync(MIGRATION_PATH)).toBe(true);
     const sql = fs.readFileSync(MIGRATION_PATH, 'utf-8');
     expect(sql.length).toBeGreaterThan(500);
-    // The two tables this migration writes to.
-    expect(sql).toMatch(/INSERT OR IGNORE INTO interview_library_templates/);
-    expect(sql).toMatch(/INSERT OR IGNORE INTO interview_library_template_questions/);
+    // The migration is stored in PostgreSQL-native form. The SQLite harness
+    // adapts ON CONFLICT at execution time, so the source contract must not
+    // regress to SQLite-only INSERT OR IGNORE syntax.
+    expect(sql).toMatch(/INSERT INTO interview_library_templates/);
+    expect(sql).toMatch(/INSERT INTO interview_library_template_questions/);
+    expect(sql).toMatch(/ON CONFLICT \(id\) DO NOTHING/);
+    expect(sql).not.toMatch(/INSERT OR IGNORE/);
   });
 
   it('executes without error against the real interview-library schema', async () => {

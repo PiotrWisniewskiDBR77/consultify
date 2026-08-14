@@ -93,7 +93,10 @@
       "tests/integration/routes/audit-log.l3.test.ts",
       "tests/integration/routes/knowledge-base.p26.test.ts",
       "tests/integration/routes/status.l3.test.ts",
+      "tests/integration/routes/stabilization.l3.test.ts",
       "server/src/routes/v8/__tests__/public-anna.routes.test.ts",
+      "tests/integration/routes/health.l3.test.ts",
+      "tests/unit/backend/routes/workbook.routes.templates-c3.test.ts",
       "tests/integration/routes/p21b-reports-template-artifactrun-e2e.sqlite.integration.test.ts",
       "server/src/routes/__tests__/document-studio-client-reader.routes.test.ts",
       "server/src/services/__tests__/nativeOwnerPinnedClient.test.ts"
@@ -139,7 +142,9 @@
       "server/src/routes/v8/__tests__/res10-ownership-separation.routes.test.ts",
       "tests/unit/backend/routes/h64-failsoft-batch2.test.ts",
       "server/src/routes/__tests__/m11-tools-cross-org-idor.test.ts",
-      "server/src/routes/v8/__tests__/public-anna.routes.test.ts"
+        "server/src/routes/v8/__tests__/public-anna.routes.test.ts",
+        "tests/integration/routes/health.l3.test.ts",
+        "tests/unit/backend/routes/workbook.routes.templates-c3.test.ts"
       ]
     },
     "realdb": {
@@ -194,7 +199,8 @@
         "tests/integration/routes/budget.l3.test.ts",
         "tests/integration/routes/db-metrics.l3.test.ts",
         "tests/integration/routes/system-health.l3.test.ts",
-        "tests/integration/routes/login-history.l3.test.ts"
+        "tests/integration/routes/login-history.l3.test.ts",
+        "tests/integration/routes/stabilization.l3.test.ts"
       ]
     },
     "externalRuntime": {
