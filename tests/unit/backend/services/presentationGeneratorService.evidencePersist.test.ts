@@ -85,6 +85,7 @@ vi.mock('../../../../server/src/services/presentationDeckDocumentService.js', ()
   deckDocumentFromUnifiedJson: vi.fn().mockReturnValue({
     generation: { warnings: [] },
     lifecycle: {},
+    meta: {},
   }),
 }));
 
@@ -102,9 +103,12 @@ vi.mock('../../../../server/src/services/presentationSourcePackService.js', () =
     .mockReturnValue({ ok: true, sourcePack: {}, missingInputs: [], warnings: [] }),
 }));
 
-vi.mock('../../../../server/src/services/presentationStudioIntentDensityDefaultsService.js', () => ({
-  applyIntentDensityDefaults: vi.fn(),
-}));
+vi.mock(
+  '../../../../server/src/services/presentationStudioIntentDensityDefaultsService.js',
+  () => ({
+    applyIntentDensityDefaults: vi.fn(),
+  })
+);
 
 vi.mock('../../../../server/src/services/presentationStudioLayoutAuditService.js', () => ({
   auditPresentationStudioOutlineLayout: vi.fn().mockReturnValue({}),
@@ -172,9 +176,8 @@ describe('presentationGeneratorService.generateDeck — HP-17 evidence persist',
   });
 
   it('persists the deck EvidenceContract as an EvidenceEnvelope (artifactType=deck)', async () => {
-    const { generateDeck } = await import(
-      '../../../../server/src/services/presentationGeneratorService.js'
-    );
+    const { generateDeck } =
+      await import('../../../../server/src/services/presentationGeneratorService.js');
 
     const outline = [
       {
