@@ -195,10 +195,25 @@ describe('MyWork Roof Package — Type System', () => {
     expect(MyWorkSurfaceValues.length).toBe(4);
   });
 
-  it('T02: CanonicalObjectType has 8 values', () => {
-    expect(CanonicalObjectTypeValues.length).toBe(8);
-    expect(CanonicalObjectTypeValues).toContain('task');
-    expect(CanonicalObjectTypeValues).toContain('ai_proposal');
+  it('T02: CanonicalObjectType preserves the roof types and append-only Results VNext types', () => {
+    expect(CanonicalObjectTypeValues).toEqual([
+      'task',
+      'decision',
+      'initiative',
+      'milestone',
+      'approval',
+      'ai_proposal',
+      'notification',
+      'signal',
+      'kpi',
+      'roi_case',
+      'okr_set',
+      'deviation_case',
+      'kpi_scorecard',
+      'okr_program',
+      'okr_cycle',
+      'okr_alignment',
+    ]);
   });
 
   it('T03: MaturityLevel has exactly 3 levels per Decision W7-2', () => {
