@@ -45,7 +45,10 @@ vi.mock('../../../../server/src/utils/DbPromise.js', () => ({
 }));
 
 vi.mock('../../../../server/src/services/evidence/evidenceEnvelopeService.js', () => ({
-  default: { upsertEnvelope: vi.fn().mockResolvedValue({ id: 'envelope-1' }), getEnvelope: vi.fn() },
+  default: {
+    upsertEnvelope: vi.fn().mockResolvedValue({ id: 'envelope-1' }),
+    getEnvelope: vi.fn(),
+  },
   upsertEnvelope: vi.fn().mockResolvedValue({ id: 'envelope-1' }),
   getEnvelope: vi.fn().mockResolvedValue(null),
 }));
@@ -65,7 +68,9 @@ const MOCK_CONTEXT_PACK = {
       period: '2026-01-01',
     },
   ],
-  sources: [{ artifact_id: 'src-1', artifact_type: 'initiative_portfolio', artifact_name: 'Initiatives' }],
+  sources: [
+    { artifact_id: 'src-1', artifact_type: 'initiative_portfolio', artifact_name: 'Initiatives' },
+  ],
   metadata: { confidence_score: 0.9 },
 };
 
@@ -108,6 +113,7 @@ vi.mock('../../../../server/src/services/presentationBrandLayoutService.js', () 
 
 vi.mock('../../../../server/src/services/presentationDeckDocumentService.js', () => ({
   deckDocumentFromUnifiedJson: vi.fn().mockReturnValue({
+    meta: {},
     generation: { warnings: [] },
     lifecycle: {},
   }),
@@ -127,9 +133,12 @@ vi.mock('../../../../server/src/services/presentationSourcePackService.js', () =
     .mockReturnValue({ ok: true, sourcePack: {}, missingInputs: [], warnings: [] }),
 }));
 
-vi.mock('../../../../server/src/services/presentationStudioIntentDensityDefaultsService.js', () => ({
-  applyIntentDensityDefaults: vi.fn(),
-}));
+vi.mock(
+  '../../../../server/src/services/presentationStudioIntentDensityDefaultsService.js',
+  () => ({
+    applyIntentDensityDefaults: vi.fn(),
+  })
+);
 
 vi.mock('../../../../server/src/services/presentationStudioLayoutAuditService.js', () => ({
   auditPresentationStudioOutlineLayout: vi.fn().mockReturnValue({}),
@@ -214,9 +223,12 @@ function makeOutline() {
 }
 
 /** Extracts the persisted unified_json from the `UPDATE presentation_decks ... unified_json = ?` call. */
-function readPersistedUnifiedJson(): { slides: Array<{ intent: string; _narrative_enrichment?: unknown }> } {
+function readPersistedUnifiedJson(): {
+  slides: Array<{ intent: string; _narrative_enrichment?: unknown }>;
+} {
   const call = dbRun.mock.calls.find(
-    (c) => typeof c[0] === 'string' && c[0].includes('unified_json') && c[0].includes("status = 'ready'")
+    (c) =>
+      typeof c[0] === 'string' && c[0].includes('unified_json') && c[0].includes("status = 'ready'")
   );
   if (!call) throw new Error('No unified_json persist call found in dbRun.mock.calls');
   const params = call[1] as unknown[];
@@ -237,7 +249,13 @@ describe('generateDeck — FALA D narrative-extended intent gate + template brie
       content: '## Root Cause\n\nProcurement is the bottleneck [Fact: fact_src-1_0].',
       facts_used: ['fact_src-1_0'],
       observations_used: [],
-      discourse_plan: { section_key: 'root_cause', section_title: 'x', segments: [], communication_register: 'x', density: 'x' },
+      discourse_plan: {
+        section_key: 'root_cause',
+        section_title: 'x',
+        segments: [],
+        communication_register: 'x',
+        density: 'x',
+      },
       post_check: { passed: true, warnings: [], errors: [] },
     });
     delete process.env.ENABLE_DECK_NARRATIVE_EXTENDED;
@@ -249,9 +267,8 @@ describe('generateDeck — FALA D narrative-extended intent gate + template brie
   });
 
   it('default (flag unset = ON): root_cause slide reaches generateNarrative and gets _narrative_enrichment', async () => {
-    const { generateDeck } = await import(
-      '../../../../server/src/services/presentationGeneratorService.js'
-    );
+    const { generateDeck } =
+      await import('../../../../server/src/services/presentationGeneratorService.js');
 
     await generateDeck(TEST_DECK_ID, makeOutline() as never, makeSetup() as never, TEST_ORG_ID);
 
@@ -268,9 +285,8 @@ describe('generateDeck — FALA D narrative-extended intent gate + template brie
   });
 
   it('folds the outline item keyMessage + dataNeeded into user_instruction for generateNarrative', async () => {
-    const { generateDeck } = await import(
-      '../../../../server/src/services/presentationGeneratorService.js'
-    );
+    const { generateDeck } =
+      await import('../../../../server/src/services/presentationGeneratorService.js');
 
     await generateDeck(TEST_DECK_ID, makeOutline() as never, makeSetup() as never, TEST_ORG_ID);
 
@@ -285,9 +301,8 @@ describe('generateDeck — FALA D narrative-extended intent gate + template brie
 
   it("ENABLE_DECK_NARRATIVE_EXTENDED='false' reverts to legacy gate: root_cause is skipped", async () => {
     process.env.ENABLE_DECK_NARRATIVE_EXTENDED = 'false';
-    const { generateDeck } = await import(
-      '../../../../server/src/services/presentationGeneratorService.js'
-    );
+    const { generateDeck } =
+      await import('../../../../server/src/services/presentationGeneratorService.js');
 
     await generateDeck(TEST_DECK_ID, makeOutline() as never, makeSetup() as never, TEST_ORG_ID);
 
