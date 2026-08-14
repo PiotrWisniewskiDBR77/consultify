@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import express from 'express';
+import type { Server } from 'node:http';
 import request from 'supertest';
 
 import { TestDatabaseFactory } from '../../utils/TestDatabaseFactory.js';
@@ -50,6 +51,8 @@ describe('Billing routes integration (L3) - full', () => {
   let db: any;
   let resetConnection: (() => Promise<void>) | null = null;
   let initializeDatabase: (() => Promise<any>) | null = null;
+  let sharedApp: express.Express | null = null;
+  let sharedServer: Server | null = null;
 
   const dbRun = (sql: string, params: any[] = []) =>
     new Promise<void>((resolve, reject) => {
@@ -78,6 +81,7 @@ describe('Billing routes integration (L3) - full', () => {
   };
 
   const makeApp = async () => {
+    if (sharedApp) return sharedApp;
     const router = (await import('../../../server/src/routes/billing/billing.routes.ts')).default;
     const app = express();
     app.use(express.json());
@@ -120,7 +124,8 @@ describe('Billing routes integration (L3) - full', () => {
     app.use((err: any, _req: any, res: any, _next: any) => {
       res.status(500).json({ success: false, error: err?.message || 'Internal error' });
     });
-    return app;
+    sharedApp = app;
+    return sharedApp;
   };
 
   const dispatch = async (
@@ -141,7 +146,8 @@ describe('Billing routes integration (L3) - full', () => {
       query?: Record<string, any>;
     }
   ) => {
-    let httpRequest = request(app)[method.toLowerCase() as 'get' | 'post' | 'put' | 'delete' | 'patch'](
+    if (!sharedServer) throw new Error('Billing test server is not initialized');
+    let httpRequest = request(sharedServer)[method.toLowerCase() as 'get' | 'post' | 'put' | 'delete' | 'patch'](
       url
     );
 
@@ -861,9 +867,22 @@ describe('Billing routes integration (L3) - full', () => {
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [uuid(141), uuid(101), 'invoice.paid', JSON.stringify({ ok: true }), 'failed', 'https://example.com', 1]
     );
+
+    const app = await makeApp();
+    sharedServer = await new Promise<Server>((resolve, reject) => {
+      const server = app.listen(0, '127.0.0.1', () => resolve(server));
+      server.once('error', reject);
+    });
   });
 
   afterAll(async () => {
+    if (sharedServer) {
+      await new Promise<void>((resolve, reject) =>
+        sharedServer!.close((error) => (error ? reject(error) : resolve()))
+      );
+      sharedServer = null;
+      sharedApp = null;
+    }
     await resetConnection?.();
     delete (global as any).__TEST_DB_MOCK__;
     delete (process as any).__CONSULTIFY_GLOBAL_DB_INSTANCE__;
