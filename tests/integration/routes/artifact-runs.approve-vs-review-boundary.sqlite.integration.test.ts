@@ -17,6 +17,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 import {
   applyArtifactSubstrateDdl,
   clearArtifactSubstrateTables,
+  seedGovernedTable,
 } from '../helpers/artifactSubstrateSqliteContext.js';
 
 const sqliteCtx = vi.hoisted(() => {
@@ -227,6 +228,10 @@ describe('P17 contract: approve(run) ≠ review(artifact) boundary', () => {
 
     await request(app).post(`/api/artifact-runs/${runId}/accept-plan`).send({});
     spineMocks.getRun.mockResolvedValue({ state: 'approved_for_apply' });
+    await seedGovernedTable(sqliteCtx.db, {
+      tableId: 'tbl-boundary-1',
+      organizationId: TEST_ORG_ID,
+    });
 
     const materializeRes = await request(app).post(`/api/artifact-runs/${runId}/materialize`).send({
       title: 'Boundary test sheet',
@@ -300,6 +305,10 @@ describe('P17 contract: approve(run) ≠ review(artifact) boundary', () => {
 
     await request(app).post(`/api/artifact-runs/${runId}/accept-plan`).send({});
     spineMocks.getRun.mockResolvedValue({ state: 'approved_for_apply' });
+    await seedGovernedTable(sqliteCtx.db, {
+      tableId: 'tbl-boundary-4',
+      organizationId: TEST_ORG_ID,
+    });
 
     const materializeRes = await request(app).post(`/api/artifact-runs/${runId}/materialize`).send({
       title: 'Review boundary sheet',
@@ -357,6 +366,10 @@ describe('P17 contract: approve(run) ≠ review(artifact) boundary', () => {
 
     await request(app).post(`/api/artifact-runs/${runId}/accept-plan`).send({});
     spineMocks.getRun.mockResolvedValue({ state: 'approved_for_apply' });
+    await seedGovernedTable(sqliteCtx.db, {
+      tableId: 'tbl-audit-1',
+      organizationId: TEST_ORG_ID,
+    });
 
     await request(app).post(`/api/artifact-runs/${runId}/materialize`).send({
       title: 'Audit trail test sheet',

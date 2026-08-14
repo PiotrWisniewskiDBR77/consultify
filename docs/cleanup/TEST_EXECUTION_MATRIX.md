@@ -46,3 +46,8 @@ The `realdb` and `externalRuntime` gates are intentionally not auto-started by
 this script. Their runners must first create and attest a disposable database
 or a dedicated HTTP runtime. Pointing them at an arbitrary existing developer
 database is not accepted as proof.
+
+`voice-stt-save.test.ts` and `api-keys.l3.test.ts` explicitly construct legacy
+SQLite fixtures while the production database factory is PostgreSQL-only.
+They therefore remain visible under `legacyPostgresPort`; silently running
+them against an ambient developer PostgreSQL database is forbidden.

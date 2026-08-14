@@ -57,7 +57,10 @@
       "server/src/routes/v8/__tests__/p05-finance-lane.test.ts",
       "server/src/routes/v8/__tests__/financeValueRoutes.demoGuard.test.ts",
       "server/src/routes/v8/__tests__/interview.routes.test.ts",
-      "server/src/routes/__tests__/cross-org-idor.test.ts"
+      "server/src/routes/__tests__/cross-org-idor.test.ts",
+      "tests/integration/interview/voice-stt-save.test.ts",
+      "tests/integration/routes/api-keys.l3.test.ts",
+      "server/src/routes/resultsVnext/__tests__/okr.routes.test.ts"
     ]
   },
   "gates": {
@@ -80,7 +83,8 @@
         "server/src/routes/resultsVnext/__tests__/roiCaseApproval.routes.test.ts",
         "tests/integration/routes/billing.routes.full.l3.test.ts",
         "server/src/routes/v8/__tests__/financeValueRoutes.demoGuard.test.ts",
-        "src/components/Finance/Prediction/__tests__/PredictionWorkspace.test.tsx"
+        "src/components/Finance/Prediction/__tests__/PredictionWorkspace.test.tsx",
+        "server/src/routes/resultsVnext/__tests__/okr.routes.test.ts"
       ]
     },
     "realdb": {
@@ -121,7 +125,9 @@
         "tests/integration/flows/notification-flow-integration.test.ts",
         "tests/integration/flows/billing-payment-integration.test.ts",
         "tests/integration/resource-management.integration.test.ts",
-        "tests/integration/transactions/transaction-integrity-integration.test.ts"
+        "tests/integration/transactions/transaction-integrity-integration.test.ts",
+        "tests/integration/interview/voice-stt-save.test.ts",
+        "tests/integration/routes/api-keys.l3.test.ts"
       ]
     },
     "externalRuntime": {
