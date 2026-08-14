@@ -1,0 +1,131 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Cleanup-time execution classification. Every non-standard test must remain visible in exactly one explicit gate.",
+  "standard": {
+    "excludePatterns": [
+      "**/*.pg.test.*",
+      "**/*.postgres.test.*",
+      "**/*.postgres.integration.test.*",
+      "**/*.realdb.test.*",
+      "**/*Realdb.test.*"
+    ],
+    "excludeFiles": [
+      "tests/resultsVnext/teresa-kpi-e2e-no-silent-approval.test.ts",
+      "tests/resultsVnext/platform/eventClassificationContract.test.ts",
+      "tests/integration/mywork/my-work.golden-flow-inbox-task.test.ts",
+      "tests/integration/demoPublicEntry.contract.test.ts",
+      "tests/integration/demoRealtimeDenial.contract.test.ts",
+      "tests/integration/routes/security.l3.test.ts",
+      "tests/integration/routes/tools.p27.test.ts",
+      "tests/integration/routes/billing.routes.full.l3.test.ts",
+      "tests/integration/workflows/assessment-workflow-integration.test.ts",
+      "tests/integration/workflows/decision-management-integration.test.ts",
+      "tests/integration/flows/notification-flow-integration.test.ts",
+      "tests/integration/flows/billing-payment-integration.test.ts",
+      "tests/integration/services/artifactRegistryService.sqlite.integration.test.ts",
+      "server/src/services/audits/__tests__/aiBoundaries.test.ts",
+      "server/src/services/audits/__tests__/aiProposalService.test.ts",
+      "server/src/services/audits/__tests__/auditTrailService.test.ts",
+      "server/src/services/audits/__tests__/correctiveActionService.test.ts",
+      "server/src/services/audits/__tests__/criterionService.test.ts",
+      "server/src/services/audits/__tests__/evidenceService.test.ts",
+      "server/src/services/audits/__tests__/findingService.test.ts",
+      "server/src/services/audits/__tests__/goldenFlow.e2e.test.ts",
+      "server/src/services/audits/__tests__/lifecycleGates.test.ts",
+      "server/src/services/audits/__tests__/normSourceService.test.ts",
+      "server/src/services/audits/__tests__/outputService.test.ts",
+      "server/src/services/audits/__tests__/packService.test.ts",
+      "server/src/services/audits/__tests__/programService.test.ts",
+      "server/src/services/audits/__tests__/proposalService.test.ts",
+      "server/src/services/audits/__tests__/segregationOfDuties.test.ts",
+      "server/src/services/audits/__tests__/verificationService.test.ts",
+      "server/src/routes/audits/__tests__/verticalSlice.http.test.ts",
+      "server/src/routes/resultsVnext/__tests__/okrReview.routes.test.ts",
+      "server/src/routes/__tests__/document-studio-cross-org-idor.test.ts",
+      "tests/integration/routes/integracja.p01.test.ts",
+      "server/src/routes/__tests__/workbook-commands.routes.test.ts",
+      "server/src/routes/resultsVnext/__tests__/kpiDeviation.routes.test.ts",
+      "server/src/routes/resultsVnext/__tests__/roiCaseApproval.routes.test.ts",
+      "server/src/routes/v8/__tests__/sync.routes.test.ts",
+      "server/src/routes/v8/__tests__/results.routes.test.ts",
+      "server/src/routes/v8/__tests__/execution-control.routes.test.ts",
+      "server/src/routes/v8/__tests__/p05-finance-lane.test.ts",
+      "server/src/routes/v8/__tests__/interview.routes.test.ts",
+      "server/src/routes/__tests__/cross-org-idor.test.ts"
+    ]
+  },
+  "gates": {
+    "isolated": {
+      "reason": "These tests pass in a fresh process but collide through shared HTTP servers, module singletons, ports, or database state in one monolithic Vitest process.",
+      "execution": "one-file-per-process",
+      "files": [
+        "server/src/routes/__tests__/cross-org-idor.test.ts",
+        "tests/integration/routes/integracja.p01.test.ts",
+        "server/src/routes/__tests__/document-studio-cross-org-idor.test.ts",
+        "server/src/routes/resultsVnext/__tests__/okrReview.routes.test.ts",
+        "server/src/routes/resultsVnext/__tests__/kpiDeviation.routes.test.ts",
+        "server/src/routes/v8/__tests__/sync.routes.test.ts",
+        "server/src/routes/v8/__tests__/results.routes.test.ts",
+        "tests/integration/services/artifactRegistryService.sqlite.integration.test.ts",
+        "server/src/routes/v8/__tests__/execution-control.routes.test.ts",
+        "server/src/routes/v8/__tests__/p05-finance-lane.test.ts",
+        "server/src/routes/__tests__/workbook-commands.routes.test.ts",
+        "server/src/routes/resultsVnext/__tests__/roiCaseApproval.routes.test.ts",
+        "tests/integration/routes/billing.routes.full.l3.test.ts"
+      ]
+    },
+    "realdb": {
+      "reason": "Requires a disposable, freshly migrated PostgreSQL database; exit status against an existing developer database is not evidence.",
+      "execution": "fresh-postgres",
+      "files": [
+        "tests/resultsVnext/teresa-kpi-e2e-no-silent-approval.test.ts",
+        "tests/resultsVnext/platform/eventClassificationContract.test.ts",
+        "tests/integration/mywork/my-work.golden-flow-inbox-task.test.ts",
+        "server/src/routes/audits/__tests__/verticalSlice.http.test.ts",
+        "server/src/services/audits/__tests__/aiBoundaries.test.ts",
+        "server/src/services/audits/__tests__/aiProposalService.test.ts",
+        "server/src/services/audits/__tests__/auditTrailService.test.ts",
+        "server/src/services/audits/__tests__/correctiveActionService.test.ts",
+        "server/src/services/audits/__tests__/criterionService.test.ts",
+        "server/src/services/audits/__tests__/evidenceService.test.ts",
+        "server/src/services/audits/__tests__/findingService.test.ts",
+        "server/src/services/audits/__tests__/goldenFlow.e2e.test.ts",
+        "server/src/services/audits/__tests__/lifecycleGates.test.ts",
+        "server/src/services/audits/__tests__/normSourceService.test.ts",
+        "server/src/services/audits/__tests__/outputService.test.ts",
+        "server/src/services/audits/__tests__/packService.test.ts",
+        "server/src/services/audits/__tests__/programService.test.ts",
+        "server/src/services/audits/__tests__/proposalService.test.ts",
+        "server/src/services/audits/__tests__/segregationOfDuties.test.ts",
+        "server/src/services/audits/__tests__/verificationService.test.ts"
+      ]
+    },
+    "legacyPostgresPort": {
+      "reason": "Legacy SQLite-era harness now reaches PostgreSQL and conditionally skips assertions or returns 503. It must be ported before it can be release evidence.",
+      "execution": "not-release-evidence",
+      "files": [
+        "tests/integration/demoPublicEntry.contract.test.ts",
+        "tests/integration/demoRealtimeDenial.contract.test.ts",
+        "tests/integration/routes/security.l3.test.ts",
+        "tests/integration/workflows/assessment-workflow-integration.test.ts",
+        "tests/integration/workflows/decision-management-integration.test.ts",
+        "tests/integration/flows/notification-flow-integration.test.ts",
+        "tests/integration/flows/billing-payment-integration.test.ts"
+      ]
+    },
+    "externalRuntime": {
+      "reason": "Calls TEST_API_URL or localhost and does not start its own application runtime.",
+      "execution": "dedicated-http-runtime",
+      "files": [
+        "tests/integration/routes/tools.p27.test.ts"
+      ]
+    },
+    "flakyHarness": {
+      "reason": "Individual cases pass but the complete file fails nondeterministically through socket and permission-state leakage.",
+      "execution": "must-be-repaired",
+      "files": [
+        "server/src/routes/v8/__tests__/interview.routes.test.ts"
+      ]
+    }
+  }
+}

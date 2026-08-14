@@ -221,7 +221,7 @@ describe('MFASetup Component', () => {
         expect(writeTextSpy).toHaveBeenCalledWith('JBSWY3DPEHPK3PXP');
         await waitFor(() => {
           expect(copyButton.querySelector('svg')?.getAttribute('class') || '').toContain(
-            'text-green-500'
+            'text-c-success'
           );
         });
 
@@ -230,7 +230,7 @@ describe('MFASetup Component', () => {
 
         await waitFor(() => {
           expect(copyButton.querySelector('svg')?.getAttribute('class') || '').not.toContain(
-            'text-green-500'
+            'text-c-success'
           );
         });
       } finally {

@@ -11,6 +11,7 @@ It does **not** define product behavior. For product truth use `docs/product/DOC
 3. `PARALLEL_DOC_TREES_CLASSIFICATION.md`
 4. `SOFTS_REFERENCE_HANDLING.md`
 5. `MAINTAINER_HYGIENE_CHECKLIST.md`
+6. `TEST_EXECUTION_MATRIX.md`
 
 ## Scope
 
