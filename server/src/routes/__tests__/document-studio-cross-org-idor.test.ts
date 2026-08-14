@@ -32,9 +32,10 @@
  *   - Assets                  GET/archive/audit
  */
 
-import express, { type Express } from 'express';
+import express from 'express';
+import type { Server } from 'node:http';
 import request from 'supertest';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockDbAll = vi.fn();
 const mockDbRun = vi.fn();
@@ -133,12 +134,25 @@ vi.mock('../../middleware/rbac.middleware.js', () => ({
 
 import documentStudioRoutes from '../document-studio.routes.js';
 
-function createApp(): Express {
+let sharedServer: Server | null = null;
+
+function createApp(): Server {
+  if (sharedServer) return sharedServer;
   const app = express();
   app.use(express.json());
   app.use('/api/document-studio', documentStudioRoutes);
-  return app;
+  sharedServer = app.listen(0, '127.0.0.1');
+  return sharedServer;
 }
+
+beforeAll(async () => {
+  const server = createApp();
+  if (server.listening) return;
+  await new Promise<void>((resolve, reject) => {
+    server.once('listening', resolve);
+    server.once('error', reject);
+  });
+});
 
 const UID_B = 'user-B';
 const ORG_A = 'org-attacker-A';
@@ -169,11 +183,21 @@ beforeEach(() => {
   void __resetShareLinkRegistryForTests();
 });
 
+afterAll(async () => {
+  if (!sharedServer) return;
+  if (sharedServer.listening) {
+    await new Promise<void>((resolve, reject) =>
+      sharedServer!.close((error) => (error ? reject(error) : resolve()))
+    );
+  }
+  sharedServer = null;
+});
+
 // =============================================================================
 // Source packs
 // =============================================================================
 describe('Source packs — cross-org IDOR', () => {
-  async function createPackAsVictim(app: Express): Promise<string> {
+  async function createPackAsVictim(app: Server): Promise<string> {
     asVictim();
     const res = await request(app)
       .post('/api/document-studio/source-packs')
@@ -233,7 +257,7 @@ describe('Source packs — cross-org IDOR', () => {
 // Brand-voice profiles
 // =============================================================================
 describe('Brand-voice profiles — cross-org IDOR', () => {
-  async function createProfileAsVictim(app: Express): Promise<string> {
+  async function createProfileAsVictim(app: Server): Promise<string> {
     asVictim();
     const res = await request(app)
       .post('/api/document-studio/brand-voice/profiles')
@@ -295,7 +319,7 @@ describe('Brand-voice profiles — cross-org IDOR', () => {
 // Audience profiles
 // =============================================================================
 describe('Audience profiles — cross-org IDOR', () => {
-  async function createProfileAsVictim(app: Express): Promise<string> {
+  async function createProfileAsVictim(app: Server): Promise<string> {
     asVictim();
     const res = await request(app)
       .post('/api/document-studio/audience-profiles')
@@ -338,7 +362,7 @@ describe('Audience profiles — cross-org IDOR', () => {
 // Content blocks
 // =============================================================================
 describe('Content blocks — cross-org IDOR', () => {
-  async function createBlockAsVictim(app: Express): Promise<string> {
+  async function createBlockAsVictim(app: Server): Promise<string> {
     asVictim();
     const res = await request(app)
       .post('/api/document-studio/content-blocks')
@@ -390,7 +414,7 @@ describe('Content blocks — cross-org IDOR', () => {
 // Approvals
 // =============================================================================
 describe('Approvals — cross-org IDOR', () => {
-  async function createApprovalAsVictim(app: Express): Promise<string> {
+  async function createApprovalAsVictim(app: Server): Promise<string> {
     asVictim();
     const res = await request(app)
       .post(`/api/document-studio/${ARTIFACT_B}/approvals`)
@@ -442,7 +466,7 @@ describe('Approvals — cross-org IDOR', () => {
 // Comments
 // =============================================================================
 describe('Comments — cross-org IDOR', () => {
-  async function createCommentAsVictim(app: Express): Promise<string> {
+  async function createCommentAsVictim(app: Server): Promise<string> {
     asVictim();
     const res = await request(app)
       .post(`/api/document-studio/${ARTIFACT_B}/comments`)
@@ -501,7 +525,7 @@ describe('Comments — cross-org IDOR', () => {
 // Templates
 // =============================================================================
 describe('Templates — cross-org IDOR', () => {
-  async function createTemplateAsVictim(app: Express): Promise<string> {
+  async function createTemplateAsVictim(app: Server): Promise<string> {
     asVictim();
     const res = await request(app)
       .post('/api/document-studio/templates/plan')
@@ -558,7 +582,7 @@ describe('Templates — cross-org IDOR', () => {
 
   describe('restore-as-draft', () => {
     async function approveAsVictimAndGetAuditId(
-      app: Express,
+      app: Server,
       templateId: string
     ): Promise<string> {
       asVictim();
@@ -628,7 +652,7 @@ describe('Assets — cross-org IDOR', () => {
   const PNG_BASE64 =
     'iVBORw0KGgoBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==';
 
-  async function createLogoAsVictim(app: Express): Promise<string> {
+  async function createLogoAsVictim(app: Server): Promise<string> {
     asVictim();
     const res = await request(app)
       .post('/api/document-studio/assets/logo')
