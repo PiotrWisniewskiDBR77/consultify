@@ -11,8 +11,8 @@
  *
  * kanon TRIADA §27 (harvard/m03m04-canon): this screen now renders via
  * StandardTable/FilterableTable (was a bespoke `<table>`). The row highlight
- * is FilterableTable's own canonical selected-row class
- * (`bg-slate-50 dark:bg-white/[0.06]`, src/components/shared/ModuleHub/
+ * is FilterableTable's own canonical selected-row token
+ * (`bg-state-selected`, src/components/shared/ModuleHub/
  * FilterableTable.tsx) — a shared, neutral style, not this screen's old
  * bespoke `PREVIEW_SELECTED_ROW_CLASS` (`--c-info` inset bar). Still neutral,
  * still never crimson/primary — just the shared kanon token instead of a
@@ -151,12 +151,12 @@ describe('DecisionsPanelContent — Vegas re-skin anatomy', () => {
 
     // Before click: no selection/preview surface (FilterableTable's neutral
     // selected-row class — kanon TRIADA §27).
-    expect(row.className).not.toContain('bg-slate-50 dark:bg-white/[0.06]');
+    expect(row.className).not.toContain('bg-state-selected');
 
     fireEvent.click(row);
 
     await waitFor(() => {
-      expect(row.className).toContain('bg-slate-50 dark:bg-white/[0.06]');
+      expect(row.className).toContain('bg-state-selected');
     });
   });
 
@@ -168,9 +168,9 @@ describe('DecisionsPanelContent — Vegas re-skin anatomy', () => {
     fireEvent.click(first);
 
     await waitFor(() => {
-      expect(first.className).toContain('bg-slate-50 dark:bg-white/[0.06]');
+      expect(first.className).toContain('bg-state-selected');
     });
-    expect(second.className).not.toContain('bg-slate-50 dark:bg-white/[0.06]');
+    expect(second.className).not.toContain('bg-state-selected');
   });
 
   it('renders a neutral-shell status chip (dot carries the only color)', async () => {

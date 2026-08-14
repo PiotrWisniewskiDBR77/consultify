@@ -9,7 +9,24 @@ vi.mock('@/services/api/v8/client', () => ({
 
 const i18nState = vi.hoisted(() => ({ language: 'en' }));
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ i18n: i18nState, t: (k: string) => k }),
+  useTranslation: () => ({
+    i18n: i18nState,
+    t: (k: string) =>
+      ({
+        'myWorkNotebook.todayView.today': i18nState.language === 'pl' ? 'Dziś' : 'Today',
+        'myWorkNotebook.todayView.loadingToday': 'Loading Today…',
+        'myWorkNotebook.todayView.refresh': 'Refresh',
+        'myWorkNotebook.todayView.pinned': 'Pinned',
+        'myWorkNotebook.todayView.recent': 'Recent',
+        'myWorkNotebook.todayView.toReview': 'To review',
+        'myWorkNotebook.todayView.freshCaptures': 'Fresh captures',
+        'myWorkNotebook.todayView.pinnedEmpty': 'No pinned notes yet.',
+        'myWorkNotebook.todayView.recentEmpty': 'No recent notes.',
+        'myWorkNotebook.todayView.toReviewEmpty': 'Nothing waiting for review.',
+        'myWorkNotebook.todayView.freshCapturesEmpty': 'No fresh captures.',
+        'myWorkNotebook.todayView.loadFailedHint': 'Could not load the Today cockpit.',
+      })[k] ?? k,
+  }),
 }));
 
 import { NotebookTodayView } from '@/components/MyWork/notebook/NotebookTodayView';
@@ -66,9 +83,7 @@ describe('NotebookTodayView', () => {
   });
 
   it('renders the capture slot above the sections', async () => {
-    render(
-      <NotebookTodayView onOpenNote={vi.fn()} captureSlot={<div>CAPTURE-SLOT</div>} />
-    );
+    render(<NotebookTodayView onOpenNote={vi.fn()} captureSlot={<div>CAPTURE-SLOT</div>} />);
     expect(await screen.findByText('CAPTURE-SLOT')).toBeInTheDocument();
   });
 
