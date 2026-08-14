@@ -55,10 +55,7 @@ describe('load()', () => {
     get.mockResolvedValueOnce(record());
     const { result } = renderHook(() => useToolSessionSync({ toolId: 'tool-1' }));
 
-    let loaded: Awaited<ReturnType<typeof result.current.load>> = null;
-    await act(async () => {
-      loaded = await result.current.load();
-    });
+    const loaded = await act(() => result.current.load());
 
     expect(loaded?.id).toBe('tool-1');
     expect(result.current.data).toEqual({ mission: 'grow' });

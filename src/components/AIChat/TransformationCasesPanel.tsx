@@ -978,7 +978,7 @@ export const TransformationCasesPanel: React.FC<{
               tone={
                 item.status === 'cancelled'
                   ? 'neutral'
-                  : item.status === 'active' || item.status === 'completed'
+                  : item.status === 'active'
                     ? 'success'
                     : 'warning'
               }
