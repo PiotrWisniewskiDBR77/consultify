@@ -12,6 +12,8 @@ export type TransformationCaseStatus = (typeof TransformationCaseStatusValues)[n
 export const TransformationCapabilityStatusValues = [
   'REAL',
   'PARTIAL',
+  'BLOCKED',
+  'EVIDENCE_MISSING',
   'PROPOSAL_ONLY',
   'NOT_CONNECTED',
   'NOT_IMPLEMENTED',
