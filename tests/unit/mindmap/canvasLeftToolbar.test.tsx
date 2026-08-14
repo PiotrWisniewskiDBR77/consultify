@@ -7,7 +7,7 @@ import { describe, expect, it, vi } from 'vitest';
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     i18n: { language: 'en' },
-    t: (key: string) => key,
+    t: (key: string, fallback?: string) => fallback ?? key,
   }),
   initReactI18next: { type: '3rdParty', init: () => undefined },
 }));
@@ -66,17 +66,11 @@ describe('CanvasLeftToolbar', () => {
 
   it('toggles connect back to select when already in connect mode', () => {
     const onAction = vi.fn();
-    render(
-      <CanvasLeftToolbar
-        {...baseProps}
-        interactionMode="connect"
-        onAction={onAction}
-      />
-    );
+    render(<CanvasLeftToolbar {...baseProps} interactionMode="connect" onAction={onAction} />);
 
     const connectBtn = screen
       .getAllByRole('button')
-      .find((b) => b.getAttribute('title') === 'ideas.mindmap.finishConnectingReturnSelect');
+      .find((b) => b.getAttribute('title') === 'Finish connecting and return to select');
 
     if (connectBtn) fireEvent.click(connectBtn);
     expect(onAction).toHaveBeenCalledWith('mm_select_mode');
@@ -96,7 +90,7 @@ describe('CanvasLeftToolbar', () => {
     const aiBtn = screen.getAllByRole('button').find((b) => b.getAttribute('title') === 'AI');
     expect(aiBtn).toBeTruthy();
     if (aiBtn) fireEvent.click(aiBtn);
-    expect(screen.getByText('ideas.mindmap.newAiConversation')).toBeTruthy();
+    expect(screen.getByText('New AI conversation')).toBeTruthy();
   });
 
   it('renders undo/redo buttons', () => {
