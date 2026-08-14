@@ -77,6 +77,39 @@ const METHODOLOGY_CATALOG: MethodologyRow[] = [
   },
 ];
 
+/**
+ * MPQ audit #2: `loadDrdDefinition` used to fall back to `e?.message`,
+ * surfacing raw exception text (e.g. "MPQ audit: simulated network
+ * failure") directly in the `ErrorState` shown to the user. This maps
+ * whatever we can identify (HTTP status / network failure) to a plain,
+ * human message while the real error still reaches the console for
+ * diagnosis. This file has no i18n wiring elsewhere (all strings are
+ * hardcoded English, see METHODOLOGY_CATALOG above) — kept consistent
+ * rather than introducing translation for a single string.
+ */
+function friendlyLibraryLoadError(e: any): string {
+  const status = Number(e?.status ?? e?.data?.status);
+  const rawMsg = String(e?.message || '').toLowerCase();
+  const isNetworkError =
+    !status ||
+    rawMsg.includes('failed to fetch') ||
+    rawMsg.includes('networkerror') ||
+    rawMsg.includes('load failed');
+  if (status === 403) {
+    return 'You do not have permission to view the methodology catalog.';
+  }
+  if (status === 404) {
+    return 'The methodology catalog could not be found.';
+  }
+  if (status >= 500) {
+    return 'The server had a problem loading the methodology catalog. Please try again.';
+  }
+  if (isNetworkError) {
+    return 'Could not connect to load the methodology catalog. Check your connection and try again.';
+  }
+  return 'Could not load the assessment definition catalog.';
+}
+
 function pickLatestPublished(
   versions: V8AssessmentDefinitionRecord[]
 ): V8AssessmentDefinitionRecord | null {
@@ -110,7 +143,9 @@ export const AssessmentLibraryTab: React.FC = () => {
         );
       }
     } catch (e: any) {
-      setFetchError(e?.message || 'Could not load the assessment definition catalog.');
+      // eslint-disable-next-line no-console
+      console.error('[AssessmentLibraryTab] Failed to load DRD definition:', e);
+      setFetchError(friendlyLibraryLoadError(e));
       setDrdDefinition(null);
     } finally {
       setIsLoading(false);

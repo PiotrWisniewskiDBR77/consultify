@@ -158,6 +158,23 @@ export class HealthCheckController {
   /**
    * Deep readiness check (Kubernetes Readiness Probe)
    * Verifies if application is ready to serve traffic
+   *
+   * A14 note (2026-08-13): this is DELIBERATELY a different signal than
+   * `GET /api/ready` (server/src/startup/readinessRoutes.ts):
+   *   - `/api/health/ready` (this handler) answers "can I reach the database
+   *     RIGHT NOW" via a raw `SELECT 1`. It says nothing about whether Table
+   *     Platform migrations ran or the schema is complete, and it is mounted
+   *     BEFORE the readiness gate in index.ts, so it always answers even
+   *     while the app is still starting.
+   *   - `/api/ready` answers "has the full startup sequence — schema
+   *     verification, migrations, seeding — settled successfully", and it is
+   *     the ONLY signal `createReadinessGate` uses to decide whether business
+   *     routes get a 503.
+   * A schema-incomplete boot can legitimately show `/api/health/ready`
+   * `database: true` (the connection works) while `/api/ready` reports
+   * `not_ready` (the schema is unverified) — that is not a bug, it is two
+   * different questions. Load balancers / orchestrators that want "safe to
+   * receive traffic" must use `/api/ready`, not this endpoint.
    */
   static async checkReadiness(_req: Request, res: Response): Promise<void> {
     const checks: {

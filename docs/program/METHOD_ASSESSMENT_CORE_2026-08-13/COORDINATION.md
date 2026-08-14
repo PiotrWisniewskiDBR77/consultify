@@ -142,6 +142,50 @@ programu pokazuje, że to produkuje fantomowe defekty.
 **pliki/kontrakty:** sekcja „pliki wyłącznej własności" w
 `SHARED_CONTRACT_MANIFEST.md`.
 
+**★ POMIAR ROZSTRZYGAJĄCY (Opus, baseline `f3e7df565e`):** grep konsumentów
+`drdStructure` / `siriStructure` / `admaStructure` w `src` + `server/src`
+z filtrem po „audit" daje **ZERO trafień**. Wszystkich 14 konsumentów
+`siriStructure` leży wewnątrz Assessment (`components/assessment/*`,
+`services/assessmentKnowledge/*`, `services/report/*`, `views/AssessmentSessionEditorView.tsx`,
+`store/useMultiFrameworkStore.ts`, `services/frameworkRegistry.ts`,
+`services/siriPrioritisation.ts`).
+
+Czyli **kolizja z Audits dziś NIE ISTNIEJE** — obawa z kanonu
+(`10_ASSESSMENT_REVIEW.md` §17/§18.8) dotyczy warstwy raportów i routingu, nie
+tych plików. COORD-03 spada z „ryzyko kolizji" do **„tania formalizacja
+istniejącego stanu"**.
+
+**czy praca niezależna może być kontynuowana:** **TAK.**
+
+---
+
+## COORD-05 — SIRI: formuła TIER **już istnieje** w repo (znalezisko)
+
+**decyzja:** nie jest potrzebna decyzja koordynatora — punkt **informacyjny**,
+istotny dla zespołów Tools i Audits oraz dla planowania SIRI.
+
+**stan faktyczny:** `src/services/siriPrioritisation.ts` (222 linie) **już
+implementuje** formułę SIRI-PM Impact Value:
+
+```
+Impact Value(dim_i) = Wc·[DOR_c · Cost_i] + Wk·[DOR_k · KPI_i] + Wp·[… BIC …]
+```
+
+z jawnym mapowaniem członów na TIER („Impact to bottom line → Cost",
+„Essential objectives → KPI", „References → BIC"), wagami `Wc+Wk+Wp = 1`,
+benchmarkiem `BIC` 0–5 i współczynnikami `DOR` 0–1.
+Eksporty: `calculateImpactValue()`, `rankByImpactValue()`, `buildDefaultInputs()`,
+`DEFAULT_SIRI_PM_WEIGHTS`.
+
+**Znaczenie:** wcześniejszy wniosek „TIER nie istnieje, do zbudowania od zera"
+był **błędny** — pochodził z grepu ograniczonego do `siriStructure.ts`.
+Adapter SIRI ma ten kod **opakować, nie przepisać**; druga implementacja tej
+samej formuły oznaczałaby dwie prawdy, czego kanon zakazuje wprost.
+
+**otwarte do potwierdzenia:** czy formuła w kodzie zgadza się z
+`knowledge/SIRI/SIRI-PM Whitepaper.pdf` i czy `DEFAULT_SIRI_PM_WEIGHTS` mają
+pokrycie w źródle — **NOT VERIFIED**, w toku.
+
 **czy praca niezależna może być kontynuowana:** **TAK.**
 
 ---
@@ -172,11 +216,376 @@ bazowały na **tym samym** SHA.
 
 ---
 
+## COORD-10 — Kontrakt kernela nie da się zaimportować przez granicę `server/tsconfig` (rootDir)
+
+**decyzja:** czy backend (`server/src/method-core/`) ma prawo trzymać osobną,
+zwierciadlaną kopię `src/method-core/contracts/*`, zamiast importować frozen
+kontrakt bezpośrednio przez relatywny import poza `server/`.
+
+**stan faktyczny — zweryfikowany bezpośrednio (agent A2, runtime kernela):**
+`server/tsconfig.json` ma `"rootDir": "."` (czyli `server/`), a produkcyjny
+start to `cd server && npm run build && node dist/src/index.js`
+(`tsc --build tsconfig.build.json`). Import z `server/src/...` sięgający
+poza `server/` (np. `../../../src/method-core/contracts`) łamie ten build
+błędem TS6059 („File is not under rootDir"). Sprawdzone: w całym
+`server/src/` **nie ma ani jednego** precedensu importu przekraczającego tę
+granicę (grep `from '../../../..'` itd. — same trafienia zostają wewnątrz
+`server/`). `tsx` (dev) i `vitest` (testy) tolerują import poza granicą
+(brak sztywnego rootDir), więc defekt jest **niewidoczny** dopóki ktoś nie
+uruchomi realnego `npm run build` w `server/`.
+
+**wariant przyjęty (nieblokujący, zrobione):** `server/src/method-core/contracts/`
+to bajt-w-bajt kopia treści z `src/method-core/contracts/` (identyczna od
+pierwszej linii kodu — różni się tylko nagłówek-komentarz w każdym pliku,
+opisujący dlaczego kopia istnieje). Zweryfikowane:
+`diff <(tail -n +23 server/src/method-core/contracts/X.ts) src/method-core/contracts/X.ts`
+= brak różnic, dla wszystkich 5 plików.
+
+**ryzyko pozostawione otwarte:** dryf. Jeśli ktoś zmieni frozen kontrakt w
+`src/method-core/contracts/` i nie zsynchronizuje ręcznie kopii w
+`server/src/method-core/contracts/`, backend zacznie działać na starej
+wersji kontraktu bez błędu kompilacji (dwie kopie to dwa źródła prawdy,
+tymczasowo). Żaden mechanizm nie pilnuje tego automatycznie dzisiaj.
+
+**alternatywy:**
+1. Rozszerzyć `server/tsconfig.json`/`tsconfig.build.json` o `rootDir`
+   obejmujący cały monorepo (lub usunąć `rootDir`) — większy promień
+   wybuchu, zmienia strukturę `dist/`, nie zrobione w tej sesji.
+   Podnieść: właściciel build/release.
+2. Wydzielić kontrakt jako osobny workspace-package (np. `packages/method-core-contracts`)
+   importowany przez oba drzewa przez `node_modules`/workspaces — czyste,
+   ale wymaga zmiany w `package.json` workspaces i osobnej decyzji.
+3. Zostawić dwie kopie (przyjęte tu) — najniższe ryzyko regresji **teraz**,
+   najwyższy dług synchronizacji later.
+
+**wpływ na Assessment:** żaden na model/scoring; dotyczy tylko
+mechaniki importu backendu.
+**wpływ na Tools/Audits:** te same konsekwencje, gdy ich runtime zacznie
+importować kontrakt po stronie `server/`.
+
+**pliki/kontrakty:** `server/src/method-core/contracts/*.ts` (kopia),
+`src/method-core/contracts/*.ts` (źródło prawdy, bez zmian),
+`server/tsconfig.json`, `server/tsconfig.build.json`.
+
+**czy praca niezależna może być kontynuowana:** **TAK** — runtime kernela
+(`MethodEventStore`, `MethodSessionService`, `MethodPackRegistry`,
+`TeresaProposalService`) jest zaimplementowany przeciwko kopii lokalnej i
+przechodzi testy jednostkowe niezależnie od rozstrzygnięcia tego punktu.
+
+---
+
 ## Status
 
 | ID | Temat | Blokuje pracę? | Status |
 | --- | --- | --- | --- |
-| COORD-01 | Nazwy pięciu powierzchni | NIE | OTWARTY |
-| COORD-02 | SIRI 8D → 16D + TIER | NIE | OTWARTY |
-| COORD-03 | Właścicielstwo plików struktur | NIE | OTWARTY |
+| COORD-01 | Nazwy pięciu powierzchni | NIE | OTWARTY — koszt zmiany zmierzony: **1 etykieta**, nie 5 |
+| COORD-02 | SIRI 8D → 16D + TIER | NIE | OTWARTY — zakres **zmalał**: dane 16D już są w repo |
+| COORD-03 | Właścicielstwo plików struktur | NIE | OTWARTY — ryzyko **zmierzone jako zerowe** (0 konsumentów w Audits) |
 | COORD-04 | Baza: demo vs gałąź integracyjna | NIE | OTWARTY |
+| COORD-05 | TIER już istnieje (`siriPrioritisation.ts`) | NIE | INFORMACYJNY |
+| COORD-06 | DRD: dwa niezgodne modele wymiarów | NIE | OTWARTY |
+| COORD-07 | DRD: brak źródeł dla pól Method Packa | NIE | OTWARTY — blokuje `readiness` > `methodology_review` |
+| COORD-08 | ★ SIRI: 3 defekty silnika PM | NIE | **OTWARTY, P1** — dowiedzione liczbami i źródłem |
+| COORD-09 | Niespójne sygnatury kompilatorów | NIE | OTWARTY |
+| COORD-10 | Kontrakt przez granicę `server/tsconfig` | NIE | ROZWIĄZANY TECHNICZNIE — kopia + **strażnik rozjazdu w testach** |
+
+---
+
+## COORD-06 — DRD: dwa niezgodne modele wymiarów w repo
+
+**decyzja:** który model DRD jest kanonem docelowym dla Workbencha i ścieżek
+dojrzałości.
+
+**stan faktyczny (zgłoszone przez A3, potwierdzone lokalizacją plików):**
+
+| Warstwa | Model | Plik |
+| --- | --- | --- |
+| Struktura oceny | **7 osi × 39 obszarów**, skale 1–5/1–6/1–7 per oś | `src/services/drdStructure.ts` |
+| Ścieżki dojrzałości | **`D1..D8`, poziomy `I..V`**, „Canon §3.2 MAP-1.0" | `src/services/assessmentKnowledge/maturityPathwayDrdData.ts` |
+
+Modele są **niezgodne co do liczby i nazewnictwa wymiarów oraz skali**.
+Kanon `ASSESSMENT_KB_DRD.md` §1 rozstrzyga na korzyść 7 osi / 39 obszarów
+i wprost odrzuca starszy komentarz o 34 obszarach — ale **nie odnosi się**
+do modelu `D1..D8` w warstwie pathway.
+
+A3 **nie podłączył** pathway do adaptera i zgłosił rozbieżność, zamiast wybrać
+po cichu — postąpił prawidłowo. Skutek: Method Pack DRD nie dostarcza dziś
+ścieżek rozwoju.
+
+**wariant rekomendowany:** kanonem jest **7 osi / 39 obszarów**;
+`maturityPathwayDrdData.ts` wymaga przemapowania na ten model w osobnym kroku.
+Do czasu przemapowania pathway pozostaje **odłączony i jawnie pusty** w packu,
+nie zasilany niezgodnymi danymi.
+
+**alternatywy:**
+1. Utrzymać oba modele z jawnym, wersjonowanym mapowaniem `D1..D8 ↔ 39 obszarów`
+   — możliwe, ale mapowanie 8 → 39 jest stratne i wymaga zatwierdzenia
+   właściciela metodyki.
+2. Uznać `D1..D8` za kanon pathway i zostawić jako równoległą warstwę
+   — odrzucone: produkuje drugą prawdę o dojrzałości DRD.
+
+**wpływ na Assessment:** brak ścieżek rozwoju w Output do czasu decyzji.
+**wpływ na Tools / Audits:** brak.
+
+**pliki/kontrakty:** `src/services/assessmentKnowledge/maturityPathwayDrdData.ts`,
+`maturityPathwayService.ts`, `src/method-core/methods/drd/compileDrdPack.ts`.
+
+**czy praca niezależna może być kontynuowana:** **TAK.**
+
+---
+
+## COORD-07 — DRD: brak źródeł dla wymaganych pól Method Packa
+
+**decyzja:** czy uzupełnić brakującą treść metodyczną DRD, a jeśli tak — kto ją
+autoryzuje.
+
+**stan faktyczny (zmierzone, nie oszacowane):**
+
+| Pole wymagane przez kanon | Pokrycie w repo |
+| --- | ---: |
+| `expectedEvidence` per poziom | **233 / 233** ✅ |
+| pytania walidacyjne | **699 / 699** ✅ |
+| `misScoringTraps` | **0 / 233** ❌ |
+| `distinctionFromPrevious` / `distinctionFromNext` | **0 / 233** ❌ |
+| `negativeEvidence`, `examples` | **0 / 233** ❌ |
+| `plainLanguageExplanation` + 10 pól pytania | **0 / 699** ❌ |
+
+Pola te są wymagane przez `ASSESSMENT_METHOD_PACK_CONTRACT.md` §4 oraz
+`ASSESSMENT_QUESTION_HELP_AND_CONVERSATION_STANDARD.md` §5. **Nie ma ich
+w żadnym źródle w repo** — ani w `drdStructure.ts`, ani w QBank v2, ani
+w `knowledge/DRD/`.
+
+Konsekwencja jest już wyegzekwowana w kodzie: `readiness = 'methodology_review'`,
+`canStartSession()` = **false**. Pack nie udaje gotowego.
+
+**wariant rekomendowany:** treść uzupełnia **właściciel metodyki DRD**, nie AI.
+DRD jest metodyką licencjonowaną; wygenerowanie brakujących „pułapek
+scoringowych" i „różnic między poziomami" przez model byłoby fabrykowaniem
+metodyki. Do tego czasu UI pokazuje jawne `Help content unavailable`, zgodnie
+z kanonem.
+
+**alternatywy:**
+1. Wygenerować treść modelem i oznaczyć jako `draft` do przeglądu — ryzykowne
+   przy metodyce licencjonowanej, ale przyspiesza; wymaga świadomej zgody.
+2. Obniżyć wymagania kontraktu Method Packa — odrzucone: to kanon UX pomocy,
+   a nie formalność.
+
+**wpływ na Assessment:** DRD nie może wejść w sesję produkcyjną do uzupełnienia.
+**wpływ na Tools / Audits:** precedens — ten sam próg dotyczy ich packów.
+
+**czy praca niezależna może być kontynuowana:** **TAK** — mechanika, workspace,
+Outputs i testy nie zależą od tej treści.
+
+---
+
+## COORD-08 — ★ SIRI: trzy defekty w istniejącym silniku Prioritisation Matrix
+
+**Waga: P1.** Dotyczy kodu, który **jest już w repo** i liczy ranking priorytetów.
+
+**decyzja:** czy naprawić `src/services/siriPrioritisation.ts` — naprawa **zmienia
+kolejność rankingu** na istniejących danych, więc nie jest zmianą neutralną.
+
+**stan faktyczny — zweryfikowany przez Opusa WPROST z licencjonowanego źródła**
+(`knowledge/SIRI/SIRI-PM Whitepaper.pdf`, odczyt własny, nie z drugiej ręki):
+
+### Defekt 1 — brak kroku normalizacji (Step 6)
+
+Whitepaper, str. 36, **Step 6 „Normalise the values for all 3 factors"**:
+> „the Cost, KPI, and Proximity Factors differ in the magnitude of their ranges.
+> To allow for a more equitable comparison, the factors are normalised" —
+> każdy czynnik dzieli się przez wartość w kolumnie `Total`, **zanim** Step 7
+> przyłoży wagi.
+
+Kod (`calculateImpactValue`, linia 113) mnoży wagi przez **surowe** termy.
+Kroku normalizacji **nie ma**.
+
+**Dowód liczbowy (sonda Opusa, test w suicie):**
+dwa wymiary o identycznym profilu, różniące się tylko skalą `costProfile`:
+`IV(costProfile=1) = 1,8` vs `IV(costProfile=100) = 31,5`.
+Surowa skala dominuje wynik — czyli ranking jest przechylony przez jednostkę
+miary, a nie przez istotność. To jest dokładnie to, czemu Step 6 zapobiega.
+
+### Defekt 2 — ujemny Proximity nie jest obcinany do zera (Step 4)
+
+Whitepaper, str. 36, **Step 4**:
+> „If the difference has a negative value, indicate »0« into the Proximity
+> Factor row."
+
+Kod liczy `input.bic - input.ams` **bez obcięcia**.
+
+**Dowód liczbowy:** przy `BIC=1`, `AMS=5` (firma **lepsza** niż best-in-class)
+wynik `IV = −1,6`. Zamiast neutralnego zera powstaje wartość ujemna, która
+odejmuje się od członów kosztowego i KPI.
+
+*(Ten defekt znalazł Opus samodzielnie — agent A4 go nie zgłosił.)*
+
+### Defekt 3 — domyślne wagi nie odpowiadają żadnemu oficjalnemu presetowi
+
+Whitepaper, str. 29, **Figure 12 „Weightage Distribution according to Planning
+Horizon"** — trzy oficjalne zestawy:
+
+| Horyzont | Wc | Wk | Wp |
+| --- | ---: | ---: | ---: |
+| Strategic (3–5 lat) | 30% | 40% | 30% |
+| Tactical (1–2 lata) | 45% | 30% | 25% |
+| Operational (3–6 mies.) | 60% | 20% | 20% |
+
+Kod: `DEFAULT_SIRI_PM_WEIGHTS = { cost: 0.3, kpi: 0.3, proximity: 0.4 }` —
+**nie odpowiada żadnemu** z trzech. Przykład rachunkowy w whitepaperze (str. 37)
+używa `0.30 / 0.40 / 0.30`, czyli presetu **Strategic**.
+
+Whitepaper dopuszcza, by firma dostosowała wagi do swoich okoliczności — ale
+wartość **domyślna**, która nie odpowiada żadnemu presetowi i nie jest nigdzie
+udokumentowana jako świadomy wybór, jest defektem, nie konfiguracją.
+
+### Czego NIE zrobiono i dlaczego
+
+Silnika **nie naprawiono** w tej rundzie. Naprawa któregokolwiek z trzech
+punktów **zmienia kolejność priorytetów** wyliczoną dla istniejących danych.
+To jest zmiana semantyczna widoczna dla klienta, nie refaktor — wymaga decyzji
+i ponownego przeliczenia istniejących wyników.
+
+Adapter A4 **nie duplikuje** formuły (potwierdzone: woła `buildDefaultInputs`
+i `rankByImpactValue`), dokłada jedynie wagi per horyzont ze źródła oraz regułę
+wyboru fokusów z whitepaper str. 37 Step 8.
+
+**wariant rekomendowany:** naprawić wszystkie trzy w jednym kroku, za flagą,
+z testem porównującym ranking przed/po na danych demo, i z jawną informacją
+dla użytkownika, że ranking został przeliczony wg poprawionej formuły.
+Dodatkowo: wagi domyślne → wybór presetu wg horyzontu, bez wartości „własnej".
+
+**alternatywy:**
+1. Naprawić tylko Defekt 2 (obcięcie ujemnego) — najmniejsza zmiana, ale
+   zostawia największy defekt (brak normalizacji) nietknięty.
+2. Nie naprawiać, udokumentować jako znane ograniczenie — odrzucone: to wynik
+   pokazywany klientowi jako priorytet inwestycyjny.
+
+**wpływ na Assessment:** ranking TIER, raport SIRI, Initiative Drafts z SIRI.
+**wpływ na Tools / Audits:** brak.
+
+**pliki:** `src/services/siriPrioritisation.ts`,
+`src/method-core/methods/siri/siriAdapter.ts`.
+
+**czy praca niezależna może być kontynuowana:** **TAK** — defekty są
+udowodnione, otestowane i udokumentowane; naprawa jest osobnym krokiem.
+
+---
+
+## COORD-09 — Niespójność sygnatur kompilatorów Method Packa
+
+**decyzja:** ujednolicić kształt zwracany przez kompilatory packów.
+
+**stan faktyczny:**
+
+| Kompilator | Sygnatura |
+| --- | --- |
+| `compileDrdPack()` | `DrdCompileResult` = `{ pack: MethodPack, report: DrdCompileReport }` |
+| `compileSiriPack()` | `MethodPack` (wprost) |
+
+Oba są poprawne wobec `MethodAdapter.loadPack()`, ale **różnią się punktem
+wejścia**, co już raz wywróciło sondę weryfikacyjną. Przy trzeciej i czwartej
+metodzie (ADMA, CMMI) rozjazd się utrwali.
+
+**wariant rekomendowany:** ujednolicić do kształtu z raportem —
+`{ pack, report }` — bo raport pokrycia jest tym, co pozwala **uczciwie**
+ustawić `readiness`, a to jest wymóg kanonu, nie ozdoba. Dodać do kontraktu typ
+`MethodCompileResult<TReport>`.
+
+**wpływ:** Assessment (2 pliki), oraz **Tools i Audits**, gdy będą kompilować
+własne packi — dlatego trafia do koordynatora, a nie jest zmieniane po cichu.
+
+**czy praca niezależna może być kontynuowana:** **TAK.**
+
+---
+
+## COORD-06/KOREKTA — sprostowanie przesłanki decyzji
+
+**Do koordynatora: decyzja COORD-06 została podjęta na przesłance, którą
+podałem nieprecyzyjnie. Zgłaszam to, zamiast realizować po cichu.**
+
+**Co napisałem:** `maturityPathwayDrdData.ts` niesie model `D1..D8` / `I..V`
+**niezgodny** z kanonem 7 osi / 39 obszarów.
+
+**Jak jest naprawdę** (`docs/product/DRD_CANON.md`, odczyt własny):
+
+§1 definiuje DRD jako **dwie warstwy o różnych rolach**:
+
+| Warstwa | Jednostka | Ile | Rola |
+| --- | --- | ---: | --- |
+| **POMIAR** | 7 osi → 39 obszarów, skale 5/6/7 | 39 | tu odbywa się ocena |
+| **KOMUNIKACJA** | **8 wymiarów raportowych `D1..D8`** | 8 | tu odbywa się raportowanie |
+
+Cytat z §1: *„klient widzi 8 wymiarów; konsultant ocenia 39 obszarów"*.
+
+§3.2 podaje kanoniczne mapowanie **MAP-1.0**, MECE, sumujące się do 39:
+`D1←1A–1I(9) · D2←2A–2E(5) · D3←3A–3E(5) · D4←4A,4B,4D(3) · D5←4C,4E(2) ·
+D6←5A–5E(5) · D7←6A–6E(5) · D8←7A–7E(5)`.
+
+**Czyli `D1..D8` NIE jest obcym modelem legacy — jest kanoniczną warstwą
+komunikacji.** Poprawny status: **`NOT_WIRED / NORMALISATION_MISSING`**.
+
+**Twoja decyzja pozostaje słuszna, ale z innego powodu.** Nie podłączamy
+pathway nie dlatego, że modele są niezgodne, tylko dlatego, że **brakuje kroku
+normalizacji z §6.1**, bez którego przeliczenie 39 obszarów na `D_x`/I–V byłoby
+niewiarygodne. Zakaz mapowania heurystycznego i AI obowiązuje bez zmian.
+
+Etykiety w kodzie i w `DRD_PATHWAY_MAPPING_TASK.md` zostały skorygowane.
+
+---
+
+## COORD-11 — ★ DRD: dwa defekty agregacji, wprost sprzeczne z kanonem §6
+
+**Waga: P1.** Dotyczy kodu liczącego wynik pokazywany klientowi.
+**Trzeci przypadek tej samej klasy** co COORD-08 (SIRI PM) i `aggregate16Dto8D`.
+
+`src/services/drdStructure.ts` — `calculateOverallScore()` / `calculateAxisScore()`.
+
+### Defekt 1 — brak normalizacji min-max
+
+Kanon §6.1 wymaga **przed** agregacją:
+`score_norm(a) = (achieved_level(a) − 1) / (Lmax(a) − 1)`
+— *„Dzięki temu osie o różnych drabinach są porównywalne na radarze bez
+przycinania treści."*
+
+Kod **uśrednia surowe poziomy**, bez `Lmax` osi.
+
+**Dowód (sonda Opusa, test w suicie):**
+poziom 5 na osi 2 (skala 1–5, czyli **maksimum**, norm. `1.0`) i poziom 5 na osi 1
+(skala 1–7, norm. `0.667`) dają **identyczne `actual: 5`**.
+Firma, która osiągnęła szczyt drabiny, jest liczona tak samo jak firma w 2/3 drogi.
+
+### Defekt 2 — zero liczone jako poziom
+
+Kanon §6.2, zasada twarda: *„Obszary nieocenione (score_raw = 0) **nie wchodzą
+do średniej** — zamiast tego obniżają `completeness` i są jawnie listowane.
+**Zakaz liczenia zera jako poziomu.**"*
+
+Kod filtruje wyłącznie `undefined`; wartość `0` przechodzi i jest sumowana.
+
+**Dowód:** oś z dwoma obszarami po `4` daje `4.0`. Dodanie **jednego
+nieocenionego** obszaru daje **`2.7`** — brak oceny obniża wynik jak realna
+ocena zero.
+
+### Kontekst
+
+**Sam kanon to flaguje** w §6.2 („Uwaga wdrożeniowa"): dzisiejsza implementacja
+uśrednia surowe poziomy — *„do wyrównania z powyższym wzorem"*. Defekt jest
+znany i nienaprawiony.
+
+### Trzecia rozbieżność powiązana (znaleziona przy pomiarze)
+
+`src/components/assessment/reports/templates/DRDReportTemplate.tsx:40`
+mapuje **oś → wymiar** (7→7) zamiast **obszar → wymiar** wg MAP-1.0, przez co
+**pomija `D5` (Technologia i infrastruktura)** i wrzuca całą oś 4 do `D4`.
+Komentarz w kodzie sam to przyznaje. **Skutek: raport DRD pokazuje dziś
+7 wymiarów zamiast kanonicznych 8**, po cichu gubiąc jeden.
+
+### Rekomendacja
+
+Naprawić razem, **za flagą**, wersjonując tak jak COORD-08: `legacy_v1` dla
+odtworzenia historycznych wyników, `drd_scoring_v2` zgodne z §6.1/§6.2, jawne
+`calculationVersion`, porównanie before/after, **zero cichego przeliczenia
+zatwierdzonych Outputów**. Naprawa `DRDReportTemplate` (D5) idzie w tym samym kroku.
+
+**czy praca niezależna może być kontynuowana:** **TAK** — defekty są
+udowodnione i otestowane; naprawa jest osobnym, świadomym krokiem.

@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/method-core/**/*",
+    "src/components/method-workspace/**/*",
+    "src/components/assessment/drd/**/*",
+    "src/hooks/useFeatureFlags.tsx",
+    "src/views/AssessmentSessionEditorView.tsx",
+    "dev-render/drd-workspace-main.tsx",
+    "dev-render/screens/drd-library-entry.tsx",
+    "src/components/assessment/drd/__tests__/**/*"
+  ]
+}

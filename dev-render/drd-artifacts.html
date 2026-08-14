@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>S2 CEL 1 — DRD Roles/Artifacts E2E Harness</title>
+  </head>
+  <body>
+    <!--
+      S2 CEL 1 (2026-08-13) — real-backend browser E2E harness. Mounts
+      DrdRolesPanel (S2) and DrdArtifactsPanel (S1) against a REAL running
+      server (see tests/e2e/fixtures/methodCoreE2E.ts) — no mock fetch, no
+      login form. Auth is via `localStorage.token` (a JWT the fixture
+      writes before navigation) or the server's ENABLE_TEST_AUTH_BYPASS.
+
+      URL params:
+        &view=library|session|roles|artifacts|lineage
+        &sessionId=<id>          (required for session/roles/artifacts/lineage)
+        &currentUserId=<id>      (default: test-user-id)
+        &theme=light|dark
+        &token=<jwt>             (optional — written to localStorage.token
+                                   before mount, so the panels authenticate
+                                   as a SPECIFIC actor instead of the bypass
+                                   identity; see drd-artifacts-main.tsx)
+    -->
+    <div id="dev-render-root" style="height: 100vh; width: 100vw"></div>
+    <script type="module" src="/drd-artifacts-main.tsx"></script>
+  </body>
+</html>

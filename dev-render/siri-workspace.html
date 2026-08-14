@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>S5 SIRI Method Workspace — Isolated Harness</title>
+  </head>
+  <body>
+    <!--
+      S5 ISOLATED TEST HARNESS — mirrors drd-workspace.html. Mounts ONLY the
+      SIRI vertical slice (siri-workspace-main.tsx) directly, avoiding the
+      shared dev-render/main.tsx registry (which statically imports unrelated
+      screens that may be missing in this worktree).
+
+      URL params:
+        &screen=matrix|leapfrog|evidence|frozen|tier
+        &theme=light|dark
+        &demoSessionId=<id>  (resume a session created earlier this run)
+    -->
+    <div id="dev-render-root" style="height: 100vh; width: 100vw"></div>
+    <script type="module" src="/siri-workspace-main.tsx"></script>
+  </body>
+</html>

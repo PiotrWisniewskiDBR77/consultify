@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>S4 Teresa Panel / Voice — Isolated Harness</title>
+  </head>
+  <body>
+    <!--
+      S4 ISOLATED TEST HARNESS — separate entry point from the shared
+      `dev-render/index.html` → `main.tsx` registry on purpose (same reason
+      as `method-workspace.html`/`mw010-vault.html`: the shared registry
+      statically imports an unrelated, currently-missing screen file at this
+      worktree's base commit).
+
+      Mounts ONLY `s4-teresa-panel` (`s4-teresa-panel-main.tsx`) — the
+      `TeresaPreviewPanel`/`VoiceAnswerChannel` states not already covered by
+      the A5 `method-workspace.html` harness (quality-invalid preview,
+      voice draft-preview, voice degraded).
+    -->
+    <div id="dev-render-root" style="min-height: 100vh; width: 100vw"></div>
+    <script type="module" src="/s4-teresa-panel-main.tsx"></script>
+  </body>
+</html>

@@ -18,8 +18,8 @@ export type {
   EvidenceStrength,
   DecisionEventPayload,
   TeresaProposalEventPayload,
-} from './events';
-export { METHOD_EVENT_TYPES, EVIDENCE_STRENGTHS, isMethodEventType } from './events';
+} from './events.js';
+export { METHOD_EVENT_TYPES, EVIDENCE_STRENGTHS, isMethodEventType } from './events.js';
 
 export type {
   MethodSession,
@@ -30,14 +30,14 @@ export type {
   MethodTransitionRequest,
   TransitionRefusal,
   TransitionResult,
-} from './session';
+} from './session.js';
 export {
   METHOD_SESSION_STATES,
   METHOD_SESSION_TRANSITIONS,
   METHOD_PROCESS_ROLES,
   TRANSITION_AUTHORITY,
   canTransition,
-} from './session';
+} from './session.js';
 
 export type {
   MethodPack,
@@ -50,6 +50,8 @@ export type {
   ScoringFixture,
   MethodAdapter,
   AdapterCapability,
+  MethodCompileReport,
+  MethodCompileResult,
   ProgressionInput,
   ProgressionResult,
   ScoringInput,
@@ -58,8 +60,8 @@ export type {
   AggregationResult,
   PrioritisationInput,
   PrioritisationResult,
-} from './methodPack';
-export { METHOD_PACK_READINESS, canStartSession } from './methodPack';
+} from './methodPack.js';
+export { METHOD_PACK_READINESS, canStartSession } from './methodPack.js';
 
 export type {
   TeresaCapabilityId,
@@ -75,9 +77,9 @@ export type {
   TeresaCommitRequest,
   TeresaCommitResult,
   TeresaCommitRefusal,
-} from './teresa';
+} from './teresa.js';
 export {
   TERESA_CAPABILITIES,
   TERESA_FORBIDDEN_EFFECTS,
   TERESA_QUALITY_CHECKS,
-} from './teresa';
+} from './teresa.js';

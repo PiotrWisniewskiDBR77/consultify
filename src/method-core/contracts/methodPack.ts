@@ -10,7 +10,7 @@
  *        METHOD_LIBRARY_FIRST_STANDARD.md §3.
  */
 
-import type { EvidenceStrength } from './events';
+import type { EvidenceStrength } from './events.js';
 
 /**
  * Readiness ladder from ASSESSMENT_METHOD_PACK_CONTRACT.md §6.
@@ -147,6 +147,41 @@ export interface MethodSourceRef {
   readonly usageRight: 'quotable' | 'internal_reference' | 'restricted';
 }
 
+// ---------------------------------------------------------------------------
+// Compiler result — uniform across every method (COORD-09)
+// ---------------------------------------------------------------------------
+
+/**
+ * Every Method Pack compiler returns the pack AND a report about how complete
+ * it actually is. The report is not decoration: `readiness` in the manifest may
+ * only be set honestly, and the report is the evidence behind that call
+ * (ASSESSMENT_METHOD_PACK_CONTRACT.md §6 — „Pack bez pytań, scoring fixtures
+ * lub licencji nie może wyglądać jak gotowa metoda").
+ *
+ * Methods extend this with their own coverage counters; the two fields below
+ * are the minimum every method must answer.
+ */
+export interface MethodCompileReport {
+  /** Why the manifest carries the readiness it carries. Plain language. */
+  readonly readinessRationale: string;
+  /**
+   * Conflicts found while compiling — e.g. two sources disagreeing. Reported,
+   * never silently resolved by picking one.
+   */
+  readonly discrepancies: readonly string[];
+}
+
+/**
+ * Uniform compiler signature. DRD, SIRI and every future method return this.
+ * Consumers destructure `{ pack }`; tooling and DoD checks read `report`.
+ */
+export interface MethodCompileResult<
+  TReport extends MethodCompileReport = MethodCompileReport,
+> {
+  readonly pack: MethodPack;
+  readonly report: TReport;
+}
+
 /** Deterministic golden case. Scoring that cannot reproduce these is rejected. */
 export interface ScoringFixture {
   readonly fixtureId: string;
@@ -237,7 +272,28 @@ export interface AggregationInput {
 }
 
 export interface AggregationResult {
+  /**
+   * Group scores in the group's own NATIVE scale.
+   *
+   * ⚠️ Values here are NOT comparable across groups whose ladders differ in
+   * length. DRD is the proof: `4.0` on an axis with a 1–7 ladder and `4.0` on
+   * an axis with a 1–5 ladder describe different maturity. Averaging within one
+   * group is sound (one scale); comparing two groups is not.
+   *
+   * Use `byGroupNorm` for anything cross-group — radar, overall, benchmark.
+   */
   readonly byGroup: Readonly<Record<string, number | null>>;
+  /**
+   * Same groups, min–max normalised to [0,1] against each group's own ladder,
+   * so cross-group comparison is valid.
+   *
+   * Canon `DRD_CANON.md` §6.1: `score_norm = (level − 1) / (Lmax − 1)` —
+   * *„Dzięki temu osie o różnych drabinach są porównywalne na radarze bez
+   * przycinania treści."*
+   *
+   * Optional so adapters whose method has one uniform scale need not compute it.
+   */
+  readonly byGroupNorm?: Readonly<Record<string, number | null>>;
   readonly mappingVersion: string;
   readonly rule: string;
   /** Units excluded from aggregation and why (N/A, unknown, missing). */
@@ -254,6 +310,12 @@ export interface PrioritisationResult {
   readonly rankedUnitIds: readonly string[];
   readonly rationaleByUnitId: Readonly<Record<string, string>>;
   readonly parametersVersion: string;
+  /**
+   * Traceability for adapters whose engine has more than one calculation
+   * formula (e.g. SIRI TIER's `legacy_v1` vs `siri_pm_v2` — COORD-08).
+   * Optional so adapters without versioned engines are unaffected.
+   */
+  readonly calculationVersion?: string;
 }
 
 /** Honest refusal, used by adapters whose method content is not yet licensed. */

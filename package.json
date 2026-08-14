@@ -267,7 +267,10 @@
     "lint:motion": "tsx server/scripts/check-motion-compliance.ts --top 15",
     "lint:motion:ci": "tsx server/scripts/check-motion-compliance.ts --budget docs/ui-standards/.motion-baseline.json",
     "lint:focus": "bash scripts/check-focus-canon.sh",
-    "lint:focus:ci": "bash scripts/check-focus-canon.sh --ci"
+    "lint:focus:ci": "bash scripts/check-focus-canon.sh --ci",
+    "test:method-core:server": "NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false vitest run server/src/method-core --no-file-parallelism --retry=0",
+    "test:method-core:front": "vitest run --config vitest.config.ts --exclude 'server/**' src/method-core src/components/method-workspace src/components/assessment --retry=0",
+    "test:method-core:front:live": "RUN_TERESA_LIVE_TESTS=1 vitest run --config vitest.config.ts --exclude 'server/**' src/method-core src/components/method-workspace src/components/assessment --retry=0"
   },
   "overrides": {
     "react-is": "^19.0.0"

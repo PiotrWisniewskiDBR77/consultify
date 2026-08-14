@@ -7344,7 +7344,10 @@
   "assessment": {
     "hub": {
       "errors": {
-        "load": "Failed to load assessments"
+        "load": "Failed to load assessments",
+        "forbidden": "You don't have access to this assessment data.",
+        "notFound": "Assessment data could not be found.",
+        "server": "The server had a problem loading assessments. Please try again."
       },
       "createFailed": "Failed to create assessment",
       "missingId": "Missing assessment id",

@@ -289,5 +289,19 @@ export default defineConfig({
       // Allow importing files from the repo root (src/, node_modules/, public/).
       allow: [repoRoot],
     },
+    // P0C (2026-08-13): the `http-*` DRD screens (drd-workspace-main.tsx)
+    // make REAL fetch calls to `/api/method/...` — this harness otherwise
+    // serves nothing at `/api` itself, so without a proxy those requests
+    // 404 against vite's own dev server instead of reaching a real backend.
+    // Opt-in via DEV_RENDER_API_PROXY_TARGET so every OTHER dev-render
+    // session (mock-only, no backend running) is unaffected by default.
+    proxy: process.env.DEV_RENDER_API_PROXY_TARGET
+      ? {
+          '/api': {
+            target: process.env.DEV_RENDER_API_PROXY_TARGET,
+            changeOrigin: true,
+          },
+        }
+      : undefined,
   },
 });

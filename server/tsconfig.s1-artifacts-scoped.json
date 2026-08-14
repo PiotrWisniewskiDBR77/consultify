@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/routes/method-core.routes.ts",
+    "src/method-core/outputs/**/*",
+    "src/method-core/db.ts",
+    "src/method-core/MethodSessionService.ts",
+    "src/method-core/MethodEventStore.ts",
+    "src/method-core/MethodPackRegistry.ts",
+    "src/method-core/TeresaProposalService.ts",
+    "src/method-core/demoBypass.ts",
+    "src/method-core/contracts/**/*",
+    "src/middleware/auth.middleware.ts",
+    "src/utils/asyncHandler.ts",
+    "src/utils/DbPromise.ts"
+  ]
+}

@@ -201,6 +201,66 @@ export const DEFAULT_FLAGS: FeatureFlag[] = [
     allowLocalOverride: true,
   },
   {
+    id: 'methodWorkspaceShellV1',
+    name: 'Method Workspace — shared shell (A5)',
+    description:
+      'A5: common Method Workspace UI shell (MethodWorkspaceShell + Interview Focus + Live ' +
+      'Matrix + Teresa panel + save-state machine) under src/components/method-workspace/, ' +
+      'shared by DRD (A6) and SIRI (A7) vertical slices. Presentational only — reads/writes ' +
+      'MethodSession/MethodReadiness/Teresa contracts from src/method-core/contracts, no ' +
+      'DRD/SIRI-specific rule inside. OFF by default until owner acceptance on the ' +
+      'dev-render screenshots (CLAUDE.md #7); A6/A7 mount it behind this same flag.',
+    defaultValue: false,
+    category: 'experimental',
+    allowLocalOverride: true,
+  },
+  {
+    id: 'drdMethodWorkspaceSliceV1',
+    name: 'DRD vertical slice — Library→Session→Output→Report→Initiative (A6)',
+    description:
+      'A6 (2026-08-13): opens a DRD assessment session (`/assessment/drd/:id`) in the shared ' +
+      '`MethodWorkspaceShell` (methodWorkspaceShellV1, A5) instead of the legacy ' +
+      'DRDForm/DRDAssessmentEditor/DRDMatrixSession editor. Wires compileDrdPack() into the ' +
+      'Navigator/Matrix, real event-store-backed answer/evidence recording, Teresa Intent→' +
+      'Preview→Commit, freeze→AssessmentOutput bridge, Report Snapshot and Initiative Proposal ' +
+      'Draft generation, and reopen→new-revision. Runs against `DrdSessionRuntime` ' +
+      '(src/method-core/methods/drd/drdSessionRuntime.ts) — a browser-local mirror of the real ' +
+      'kernel rules (contracts + Outputs factories), NOT yet wired over HTTP to ' +
+      'server/src/method-core/*Service (that server mechanism is proven independently by ' +
+      'server/src/method-core/outputs/__tests__/EventDerivedOutputBridge.test.ts). Also bypasses ' +
+      "the DRD pack's `methodology_review` readiness gate for DEMO sessions only (never changes " +
+      'the pack manifest itself) — the UI always shows this as an explicit banner, never silently. ' +
+      'OFF by default until owner acceptance on dev-render screenshots (CLAUDE.md #7); OFF = the ' +
+      "legacy DRD editor is completely untouched by this flag's code path.",
+    defaultValue: false,
+    category: 'experimental',
+    allowLocalOverride: true,
+  },
+  {
+    id: 'drdHttpSourceOfTruthV1',
+    name: 'DRD workspace — HTTP source of truth (P0C)',
+    description:
+      'P0C (2026-08-13): swaps `DrdSessionRuntime` (localStorage-only, still the default) for ' +
+      '`DrdHttpSessionRuntime` (src/method-core/methods/drd/drdHttpSessionRuntime.ts) inside ' +
+      'DrdMethodWorkspaceScreen — the server (`/api/method/...` via methodCoreApi.ts) becomes ' +
+      "the ONLY source of truth for session/events/Output when ON. localStorage is reduced to " +
+      'two roles only: a technical read cache (repaint-before-network-resolves) and an offline ' +
+      'write-recovery queue — it is never treated as authoritative, never silently overwrites a ' +
+      'newer server state (a 409 shows an explicit conflict, never an auto-merge), and a frozen ' +
+      'Output/Report/Initiative Draft is only ever rendered from a confirmed server response. A ' +
+      'visible SERVER/RECOVERY_DRAFT/DEMO_LOCAL indicator (DrdSourceIndicator) reports which one ' +
+      'backed the current paint. Known gap while server routes stay out of this ' +
+      "flag's scope (server/src/method-core/*, server/src/routes/method-core.routes.ts are " +
+      "P0A/P0B territory): there is no HTTP endpoint to assign extra process roles after create " +
+      '(only `owner` is auto-granted) or to reopen a frozen session, so those two actions are ' +
+      'disabled with an explicit message rather than faked. OFF by default until owner ' +
+      "acceptance on dev-render screenshots (CLAUDE.md #7); OFF = today's exact legacy behavior, " +
+      'zero HTTP calls from this screen.',
+    defaultValue: false,
+    category: 'experimental',
+    allowLocalOverride: true,
+  },
+  {
     id: 'mindmapHeuristicAiOverlays',
     name: 'Mind Map: Heuristic AI Overlays (DP-5)',
     description:
