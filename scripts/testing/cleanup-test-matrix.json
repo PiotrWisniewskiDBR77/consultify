@@ -78,7 +78,9 @@
       "tests/integration/publicSystemSurface.contract.test.ts",
       "tests/integration/routes/login-history.l3.test.ts",
       "tests/integration/presentations/deck-version-roundtrip.contract.test.ts",
-      "tests/unit/backend/routes/h64-failsoft-batch6.test.ts"
+      "tests/unit/backend/routes/h64-failsoft-batch6.test.ts",
+      "tests/unit/backend/routes/h64-failsoft-batch5.test.ts",
+      "server/src/routes/v8/__tests__/assessment.routes.test.ts"
     ]
   },
   "gates": {
@@ -111,7 +113,9 @@
       "tests/integration/routes/v8.finance-valuation.test.ts",
       "server/src/routes/v8/__tests__/finance.routes.test.ts",
       "tests/integration/presentations/deck-version-roundtrip.contract.test.ts",
-      "tests/unit/backend/routes/h64-failsoft-batch6.test.ts"
+      "tests/unit/backend/routes/h64-failsoft-batch6.test.ts",
+      "tests/unit/backend/routes/h64-failsoft-batch5.test.ts",
+      "server/src/routes/v8/__tests__/assessment.routes.test.ts"
       ]
     },
     "realdb": {

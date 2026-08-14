@@ -156,11 +156,11 @@ beforeEach(() => {
 
 // ── FT-1.A — pure gate ─────────────────────────────────────────────
 describe('R4 shouldRunNarrativeRewrite (pure gate)', () => {
-  it('without instruction, only narrative intents are rewritten', () => {
+  it('without instruction, the default extended narrative intents are rewritten', () => {
     expect(shouldRunNarrativeRewrite('key_messages')).toBe(true);
     expect(shouldRunNarrativeRewrite('executive_summary')).toBe(true);
     expect(shouldRunNarrativeRewrite('cover')).toBe(false);
-    expect(shouldRunNarrativeRewrite('performance_overview')).toBe(false);
+    expect(shouldRunNarrativeRewrite('performance_overview')).toBe(true);
   });
 
   it('a free-text instruction unlocks ANY slide intent', () => {
@@ -199,12 +199,12 @@ describe('R4 regenerateSlide (server)', () => {
     expect((card as any).card_id).toBe('card-0');
   });
 
-  it('without instruction, a non-narrative slide keeps the OLD behaviour (no AI call)', async () => {
-    await regenerateSlide('deck-1', 2, 'org-1'); // performance_overview, no instruction
+  it('without instruction, an extended narrative slide is rewritten by default', async () => {
+    await regenerateSlide('deck-1', 2, 'org-1'); // performance_overview, default extension ON
 
-    expect(generateNarrativeMock).not.toHaveBeenCalled();
+    expect(generateNarrativeMock).toHaveBeenCalledTimes(1);
     const persistedUnified = JSON.parse(dbState.lastUpdate[0]);
-    expect(persistedUnified.slides[2]._narrative_enrichment).toBeUndefined();
+    expect(persistedUnified.slides[2]._narrative_enrichment.content).toBe('REWRITTEN CONTENT');
   });
 
   it('without instruction, a narrative slide still rewrites (legacy path preserved)', async () => {
