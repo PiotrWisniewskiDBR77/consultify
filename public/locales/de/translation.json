@@ -46,6 +46,11 @@
     "closeMenu": "Menü schließen",
     "openMenu": "Menü öffnen",
     "optional": "optional",
+    "pin": "Anheften",
+    "unpin": "Lösen",
+    "pinForComparison": "Zum Vergleich anheften",
+    "selectedCount": "{{count}} ausgewählt",
+    "artifactDetailsPanel": "Artefaktdetails",
     "videoUnsupported": "Ihr Browser unterstützt das Video-Tag nicht."
   },
   "contextBadge": {
@@ -68,6 +73,11 @@
     "openSidebar": "Open sidebar",
     "newChat": "New conversation",
     "dailyBrief": "Daily brief",
+    "teresaAction": {
+      "unconfirmed": "Ich habe keine Bestätigung, dass die Aktion „{{action}}“ tatsächlich ausgeführt wurde. Prüfen Sie dies manuell, bevor Sie sie als erledigt betrachten.",
+      "error": "Die Aktion „{{action}}“ ist fehlgeschlagen. Es wurde nichts als erledigt bestätigt.",
+      "refusedNoReason": "Ich habe die Aktion „{{action}}“ nicht ausgeführt, da die Registrierung sie ohne Begründung abgelehnt hat."
+    },
     "suggestions": {
       "title": "Suggested for you",
       "startAssessment": "Start your digital maturity assessment"
@@ -655,6 +665,13 @@
   "assessment": {
     "title": "Bewertung",
     "overview": "Übersicht",
+    "hub": {
+      "errors": {
+        "forbidden": "Sie haben keinen Zugriff auf diese Bewertungsdaten.",
+        "notFound": "Die Bewertungsdaten wurden nicht gefunden.",
+        "server": "Beim Laden der Bewertungen ist ein Serverfehler aufgetreten. Bitte versuchen Sie es erneut."
+      }
+    },
     "drd": "DRD-Bewertung",
     "siri": "SIRI-Framework",
     "adma": "ADMA-Framework",
@@ -3675,6 +3692,12 @@
     },
     "voiceImageInput": {
       "previewAlt": "Vorschau"
+    }
+  },
+  "state": {
+    "teresa": {
+      "unavailableTitle": "Teresa ist nicht verfügbar",
+      "unavailableDescription": "KI-Vorschläge sind pausiert. Sie können manuell weiterarbeiten."
     }
   },
   "myWorkMindmap": {

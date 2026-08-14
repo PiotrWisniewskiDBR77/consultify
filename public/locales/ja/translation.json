@@ -46,6 +46,11 @@
         "closeMenu": "メニューを閉じる",
         "openMenu": "メニューを開く",
         "optional": "任意",
+        "pin": "ピン留め",
+        "unpin": "ピン留めを解除",
+        "pinForComparison": "比較用にピン留め",
+        "selectedCount": "{{count}}件選択中",
+        "artifactDetailsPanel": "成果物の詳細",
         "videoUnsupported": "お使いのブラウザは、videoタグに対応していません。"
     },
     "contextBadge": {
@@ -68,6 +73,11 @@
         "openSidebar": "Open sidebar",
         "newChat": "New conversation",
         "dailyBrief": "Daily brief",
+        "teresaAction": {
+            "unconfirmed": "「{{action}}」が実際に実行されたという確認がありません。完了と判断する前に手動で確認してください。",
+            "error": "「{{action}}」の実行中にエラーが発生しました。完了は確認されていません。",
+            "refusedNoReason": "登録処理が理由を示さず拒否したため、「{{action}}」は実行しませんでした。"
+        },
         "suggestions": {
             "title": "Suggested for you",
             "startAssessment": "Start your digital maturity assessment"
@@ -654,6 +664,13 @@
     "assessment": {
         "title": "アセスメント",
         "overview": "概要",
+        "hub": {
+            "errors": {
+                "forbidden": "このアセスメントデータへのアクセス権がありません。",
+                "notFound": "アセスメントデータが見つかりませんでした。",
+                "server": "アセスメントの読み込み中にサーバーで問題が発生しました。もう一度お試しください。"
+            }
+        },
         "drd": "DRDアセスメント",
         "siri": "SIRIフレームワーク",
         "adma": "ADMAフレームワーク",
@@ -3562,6 +3579,12 @@
         },
         "voiceImageInput": {
             "previewAlt": "プレビュー"
+        }
+    },
+    "state": {
+        "teresa": {
+            "unavailableTitle": "Teresaは利用できません",
+            "unavailableDescription": "AIによる提案は一時停止しています。手動で作業を続けることができます。"
         }
     },
     "myWorkMindmap": {

@@ -46,6 +46,11 @@
     "closeMenu": "Cerrar menú",
     "openMenu": "Abrir menú",
     "optional": "opcional",
+    "pin": "Fijar",
+    "unpin": "Desfijar",
+    "pinForComparison": "Fijar para comparar",
+    "selectedCount": "{{count}} seleccionados",
+    "artifactDetailsPanel": "Detalles del artefacto",
     "videoUnsupported": "Su navegador no admite la etiqueta «video»."
   },
   "contextBadge": {
@@ -68,6 +73,11 @@
     "openSidebar": "Open sidebar",
     "newChat": "New conversation",
     "dailyBrief": "Daily brief",
+    "teresaAction": {
+      "unconfirmed": "No tengo confirmación de que la acción «{{action}}» se haya realizado. Compruébelo manualmente antes de darla por terminada.",
+      "error": "La acción «{{action}}» falló. No se confirmó nada como realizado.",
+      "refusedNoReason": "No realicé la acción «{{action}}»: el registro la rechazó sin indicar el motivo."
+    },
     "suggestions": {
       "title": "Suggested for you",
       "startAssessment": "Start your digital maturity assessment"
@@ -656,6 +666,13 @@
   "assessment": {
     "title": "Evaluación",
     "overview": "Resumen",
+    "hub": {
+      "errors": {
+        "forbidden": "No tiene acceso a estos datos de evaluación.",
+        "notFound": "No se encontraron los datos de evaluación.",
+        "server": "El servidor tuvo un problema al cargar las evaluaciones. Inténtelo de nuevo."
+      }
+    },
     "drd": "Evaluación DRD",
     "siri": "Marco SIRI",
     "adma": "Marco ADMA",
@@ -3578,6 +3595,12 @@
     },
     "voiceImageInput": {
       "previewAlt": "Vista previa"
+    }
+  },
+  "state": {
+    "teresa": {
+      "unavailableTitle": "Teresa no está disponible",
+      "unavailableDescription": "Las sugerencias de IA están en pausa. Puede seguir trabajando manualmente."
     }
   },
   "myWorkMindmap": {

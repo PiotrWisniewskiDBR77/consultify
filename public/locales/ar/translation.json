@@ -46,6 +46,11 @@
     "closeMenu": "إغلاق القائمة",
     "openMenu": "فتح القائمة",
     "optional": "اختياري",
+    "pin": "تثبيت",
+    "unpin": "إلغاء التثبيت",
+    "pinForComparison": "تثبيت للمقارنة",
+    "selectedCount": "تم تحديد {{count}}",
+    "artifactDetailsPanel": "تفاصيل العنصر",
     "videoUnsupported": "متصفحك لا يدعم علامة الفيديو."
   },
   "contextBadge": {
@@ -68,6 +73,11 @@
     "openSidebar": "Open sidebar",
     "newChat": "New conversation",
     "dailyBrief": "Daily brief",
+    "teresaAction": {
+      "unconfirmed": "ليس لدي تأكيد بأن الإجراء «{{action}}» قد تم فعلاً. تحقّق منه يدويًا قبل اعتباره منجزًا.",
+      "error": "فشل الإجراء «{{action}}». لم يتم تأكيد إنجاز أي شيء.",
+      "refusedNoReason": "لم أنفّذ الإجراء «{{action}}» لأن السجل رفضه من دون توضيح السبب."
+    },
     "suggestions": {
       "title": "Suggested for you",
       "startAssessment": "Start your digital maturity assessment"
@@ -659,6 +669,13 @@
   "assessment": {
     "title": "التقييم",
     "overview": "نظرة عامة",
+    "hub": {
+      "errors": {
+        "forbidden": "ليس لديك حق الوصول إلى بيانات التقييم هذه.",
+        "notFound": "تعذر العثور على بيانات التقييم.",
+        "server": "واجه الخادم مشكلة أثناء تحميل التقييمات. يرجى المحاولة مرة أخرى."
+      }
+    },
     "drd": "تقييم DRD",
     "siri": "إطار SIRI",
     "adma": "إطار ADMA",
@@ -3602,6 +3619,12 @@
     },
     "voiceImageInput": {
       "previewAlt": "معاينة"
+    }
+  },
+  "state": {
+    "teresa": {
+      "unavailableTitle": "تيريزا غير متاحة",
+      "unavailableDescription": "اقتراحات الذكاء الاصطناعي متوقفة مؤقتًا. يمكنك متابعة العمل يدويًا."
     }
   },
   "myWorkMindmap": {
