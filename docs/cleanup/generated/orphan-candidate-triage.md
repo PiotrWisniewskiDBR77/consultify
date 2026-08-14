@@ -1,6 +1,6 @@
 # Orphan candidate triage
 
-Generated from source inventory `5e3b54264a6d31e33ef67d8a4a028223ecae9bf0` at 2026-08-14T17:23:29.379Z.
+Generated from source inventory `5e3b54264a6d31e33ef67d8a4a028223ecae9bf0` at 2026-08-14T17:25:09.326Z.
 
 > No item in this report is authorized for deletion.
 
@@ -44,5 +44,14 @@ Generated from source inventory `5e3b54264a6d31e33ef67d8a4a028223ecae9bf0` at 20
 - my-work: 85
 - results: 3
 - tools: 23
+
+## Manual decisions
+
+- PRESERVE_CONTRACT_REVIEW: 1
+- PRESERVE_REPAIR_AND_WIRE_REQUIRED: 1
+- PRESERVE_SUPPORT_HARNESS: 2
+- PRESERVE_WIRING_REQUIRED: 1
+- SUPERSEDED_REMOVAL_CANDIDATE: 2
+- UNUSED_BARREL_REMOVAL_CANDIDATE: 1
 
 The exact review queue and duplicate evidence are stored in `orphan-candidate-triage.json`.
