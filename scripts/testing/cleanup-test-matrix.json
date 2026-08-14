@@ -110,6 +110,9 @@
       "tests/integration/routes/audit.l3.test.ts",
       "tests/integration/routes/notification-settings.l3.test.ts",
       "server/src/services/audits/__tests__/sourceClassificationAxes.test.ts",
+      "tests/integration/mywork/my-work.map-shared-write.contract.test.ts",
+      "tests/integration/mywork/my-work.shared-map-routes.contract.test.ts",
+      "tests/integration/routes/executionAnalytics.routes.test.ts",
       "tests/integration/routes/p21b-reports-template-artifactrun-e2e.sqlite.integration.test.ts",
       "server/src/routes/__tests__/document-studio-client-reader.routes.test.ts",
       "server/src/services/__tests__/nativeOwnerPinnedClient.test.ts"
@@ -164,7 +167,10 @@
         "tests/unit/backend/routes/workbook.routes.templates-c3.test.ts",
         "tests/unit/backend/controllers/authController.test.js",
         "server/src/routes/__tests__/m13-cross-org-idor.test.ts",
-        "server/src/routes/__tests__/rollout.routes.test.ts"
+        "server/src/routes/__tests__/rollout.routes.test.ts",
+        "tests/integration/mywork/my-work.map-shared-write.contract.test.ts",
+        "tests/integration/mywork/my-work.shared-map-routes.contract.test.ts",
+        "tests/integration/routes/executionAnalytics.routes.test.ts"
       ]
     },
     "realdb": {
