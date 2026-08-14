@@ -14,6 +14,11 @@ vi.mock('@/services/api', () => ({
 }));
 
 describe('AdminAuditLogsView honest UI', () => {
+  const openResolveAction = () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Row actions' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Resolve' }));
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(Api.getAdminAuditLogs).mockRejectedValue(new Error('Admin audit backend down'));
@@ -89,7 +94,7 @@ describe('AdminAuditLogsView honest UI', () => {
     expect(screen.getByText('Unknown date')).toBeInTheDocument();
     expect(screen.queryByText(/Invalid Date/i)).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /Resolve audit log log-1/i }));
+    openResolveAction();
     fireEvent.change(screen.getByPlaceholderText('Resolution notes...'), {
       target: { value: 'Reviewed and remediated' },
     });
@@ -128,7 +133,7 @@ describe('AdminAuditLogsView honest UI', () => {
     render(<AdminAuditLogsView />);
 
     await screen.findByText('delete');
-    fireEvent.click(screen.getByRole('button', { name: /Resolve audit log log-1/i }));
+    openResolveAction();
     fireEvent.change(screen.getByPlaceholderText('Resolution notes...'), {
       target: { value: 'Reviewed' },
     });
@@ -367,6 +372,6 @@ describe('AdminAuditLogsView honest UI', () => {
     expect(screen.getAllByText('Unknown').length).toBeGreaterThan(0);
     expect(screen.getByText('Resolved')).toBeInTheDocument();
     expect(screen.queryByText('[object Object]')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Resolve audit log log-1/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Row actions' })).not.toBeInTheDocument();
   });
 });
