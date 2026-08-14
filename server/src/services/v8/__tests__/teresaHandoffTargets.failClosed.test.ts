@@ -466,7 +466,7 @@ describe('M01-005 — excele handoff has no owner object and must fail closed', 
     const result: any = await runExecute('excele');
 
     expectFailedClosed(result);
-    expect(result.error).toMatch(/not implemented/i);
+    expect(result.error).toMatch(/not implemented|unavailable without a real, versioned workbook/i);
   });
 
   it('leaves the proposal proposal-only with an execution_failed audit', async () => {

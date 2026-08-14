@@ -1737,6 +1737,21 @@ export async function executeProposal(params: {
   }
 
   const currentState = row.state as ActionEnvelopeState;
+  // A completed proposal is idempotent. A client may retry after losing the
+  // HTTP response; that must not call the owner module or write another receipt.
+  if (currentState === 'completed') {
+    const auditRows = await loadAuditEntries(proposalId);
+    const completedAudit = [...auditRows]
+      .reverse()
+      .find((entry) => entry.action === 'execution_completed');
+    return {
+      success: true,
+      proposal_id: proposalId,
+      target_module: row.target_module as HandoffTargetModule,
+      state: 'completed',
+      audit_entry_id: completedAudit?.id ?? '',
+    };
+  }
   if (currentState !== 'approved') {
     throw new TeresaCopilotError(
       `Cannot execute proposal in state: ${currentState}. Must be approved first.`,
@@ -2182,7 +2197,13 @@ async function performHandoff(params: {
         userId
       );
     case 'notebook':
-      return handleNotebookHandoff(proposalId, organizationId, handoffContext, targetPayload);
+      return handleNotebookHandoff(
+        proposalId,
+        organizationId,
+        handoffContext,
+        targetPayload,
+        userId
+      );
     case 'interview':
       return handleInterviewHandoff(proposalId, organizationId, handoffContext, targetPayload);
     case 'excele':
@@ -2230,38 +2251,93 @@ async function handleRadarHandoff(
   context: TeresaHandoffContext,
   payload: Record<string, unknown>
 ): Promise<Record<string, unknown>> {
-  const fallbackRef = randomUUID();
+  // FIX M01-005 (fabricated owner receipt): this used to mint
+  // `fallbackRef = randomUUID()` and write it as the receipt whenever the
+  // radar service was absent, threw, or returned no id — the proposal still
+  // reached `completed` with a durable receipt and deep link pointing at a
+  // signal that was never created. Fail closed instead: no confirmed owner
+  // object means no receipt and no completion. executeProposal's existing
+  // catch turns this throw into a `rejected` proposal with an
+  // `execution_failed` audit entry, so the caller is told the truth.
   let realSignalId: string | null = null;
+  let failureReason = 'radar service is unavailable';
 
   const radarMod = await tryImport('./radarTriageService.js');
   if (radarMod) {
     try {
       const fn = radarMod.createSignal ?? radarMod.default?.createSignal;
-      const result = await fn?.({
-        organizationId,
-        why_now: payload.why_now,
-        evidence_pointers: payload.evidence_pointers,
-        user_intent: context.user_intent,
-        source: 'teresa',
-        proposalId,
-      });
-      realSignalId = result?.id || result?.signalId || null;
-    } catch {
-      logger.warn(`${LOG_PREFIX} Radar service call failed, using fallback ref`);
+      if (typeof fn !== 'function') {
+        failureReason = 'radar service exposes no create';
+      } else {
+        const result = await fn({
+          organizationId,
+          why_now: payload.why_now,
+          evidence_pointers: payload.evidence_pointers,
+          user_intent: context.user_intent,
+          source: 'teresa',
+          proposalId,
+        });
+        realSignalId = result?.id || result?.signalId || null;
+        if (!realSignalId) {
+          failureReason = 'radar service returned no signal id';
+        }
+      }
+    } catch (err) {
+      failureReason = `radar service call failed: ${err instanceof Error ? err.message : String(err)}`;
     }
   }
 
-  const ref = realSignalId || fallbackRef;
+  if (!realSignalId) {
+    logger.warn(`${LOG_PREFIX} Radar handoff created no owner object — ${failureReason}`);
+    throw new TeresaCopilotError(
+      `Radar handoff did not create a signal: ${failureReason}`,
+      'P08_HANDOFF_NO_OWNER_OBJECT',
+      502
+    );
+  }
+
+  // An id handed back by the writer is a claim, not evidence. Confirm the row
+  // through the owner module's own tenant-scoped read before anything durable
+  // is written: an id for a row that is absent, or that belongs to another
+  // tenant, must never produce a receipt.
+  let ownerConfirmed = false;
+  try {
+    const readBack = radarMod?.getTriageSignal ?? radarMod?.default?.getTriageSignal;
+    if (typeof readBack !== 'function') {
+      failureReason = 'radar service exposes no read-back';
+    } else {
+      const signal = await readBack(realSignalId, organizationId);
+      ownerConfirmed = Boolean(signal);
+      if (!ownerConfirmed) {
+        failureReason = `radar signal ${realSignalId} is not readable in this organization`;
+      }
+    }
+  } catch (err) {
+    failureReason = `radar read-back failed: ${err instanceof Error ? err.message : String(err)}`;
+  }
+
+  if (!ownerConfirmed) {
+    logger.warn(`${LOG_PREFIX} Radar owner read-back failed — ${failureReason}`);
+    throw new TeresaCopilotError(
+      `Radar handoff could not confirm the created signal: ${failureReason}`,
+      'P08_HANDOFF_NO_OWNER_OBJECT',
+      502
+    );
+  }
+
+  // fallback:false — DbPromise's fallback swallows a failed INSERT and
+  // resolves, which would leave the proposal completed with no receipt row
+  // behind it — the same lie one layer down.
   await dbRun(
     `INSERT INTO teresa_handoff_results (id, proposal_id, organization_id, target_module, result_ref, created_at)
      VALUES (?, ?, ?, 'radar', ?, ?)`,
-    [randomUUID(), proposalId, organizationId, ref, new Date().toISOString()],
-    { fallback: true }
+    [randomUUID(), proposalId, organizationId, realSignalId, new Date().toISOString()],
+    { fallback: false }
   );
   return {
     handoff: 'radar',
-    signal_id: ref,
-    real_entity: Boolean(realSignalId),
+    signal_id: realSignalId,
+    real_entity: true,
     why_now: payload.why_now,
     user_intent: context.user_intent,
   };
@@ -2273,40 +2349,85 @@ async function handleInitiativesHandoff(
   context: TeresaHandoffContext,
   payload: Record<string, unknown>
 ): Promise<Record<string, unknown>> {
-  const fallbackRef = randomUUID();
+  // FIX M01-005 — see handleRadarHandoff for the full rationale.
   let realInitRef: string | null = null;
+  let failureReason = 'initiatives service is unavailable';
 
   const initMod = await tryImport('../initiativeGenerationService.js');
   if (initMod) {
     try {
       const create =
         initMod.createInitiative ?? initMod.default?.createInitiative ?? initMod.default?.create;
-      const seed = (payload.initiative_seed || {}) as Record<string, unknown>;
-      const result = await create?.({
-        organizationId,
-        title: seed.problem_statement || context.user_intent,
-        description: seed.proposed_outcome || '',
-        source: 'teresa',
-        proposalId,
-      });
-      realInitRef = result?.id || result?.initiativeId || null;
-    } catch {
-      logger.warn(`${LOG_PREFIX} Initiatives service call failed, using fallback ref`);
+      if (typeof create !== 'function') {
+        failureReason = 'initiatives service exposes no create';
+      } else {
+        const seed = (payload.initiative_seed || {}) as Record<string, unknown>;
+        const result = await create({
+          organizationId,
+          title: seed.problem_statement || context.user_intent,
+          description: seed.proposed_outcome || '',
+          source: 'teresa',
+          proposalId,
+        });
+        realInitRef = result?.id || result?.initiativeId || null;
+        if (!realInitRef) {
+          failureReason = 'initiatives service returned no initiative id';
+        }
+      }
+    } catch (err) {
+      failureReason = `initiatives service call failed: ${err instanceof Error ? err.message : String(err)}`;
     }
   }
 
-  const ref = realInitRef || fallbackRef;
+  if (!realInitRef) {
+    logger.warn(`${LOG_PREFIX} Initiatives handoff created no owner object — ${failureReason}`);
+    throw new TeresaCopilotError(
+      `Initiatives handoff did not create an initiative: ${failureReason}`,
+      'P08_HANDOFF_NO_OWNER_OBJECT',
+      502
+    );
+  }
+
+  // Confirm through the initiatives module's own tenant-scoped read
+  // (planningPortfolioReadService is the canonical v8 read lane for
+  // `initiatives`; initiativeGenerationService is write-only).
+  let ownerConfirmed = false;
+  try {
+    const readMod = await tryImport('./planningPortfolioReadService.js');
+    const readBack = readMod?.getInitiativeDetailRead ?? readMod?.default?.getInitiativeDetailRead;
+    if (typeof readBack !== 'function') {
+      failureReason = 'initiatives module exposes no read-back';
+    } else {
+      const initiative = await readBack(realInitRef, organizationId);
+      ownerConfirmed = Boolean(initiative);
+      if (!ownerConfirmed) {
+        failureReason = `initiative ${realInitRef} is not readable in this organization`;
+      }
+    }
+  } catch (err) {
+    failureReason = `initiatives read-back failed: ${err instanceof Error ? err.message : String(err)}`;
+  }
+
+  if (!ownerConfirmed) {
+    logger.warn(`${LOG_PREFIX} Initiatives owner read-back failed — ${failureReason}`);
+    throw new TeresaCopilotError(
+      `Initiatives handoff could not confirm the created initiative: ${failureReason}`,
+      'P08_HANDOFF_NO_OWNER_OBJECT',
+      502
+    );
+  }
+
   await dbRun(
     `INSERT INTO teresa_handoff_results (id, proposal_id, organization_id, target_module, result_ref, created_at)
      VALUES (?, ?, ?, 'initiatives', ?, ?)`,
-    [randomUUID(), proposalId, organizationId, ref, new Date().toISOString()],
-    { fallback: true }
+    [randomUUID(), proposalId, organizationId, realInitRef, new Date().toISOString()],
+    { fallback: false }
   );
   return {
     handoff: 'initiatives',
-    initiative_ref: ref,
-    real_entity: Boolean(realInitRef),
-    proposal_only: !realInitRef,
+    initiative_ref: realInitRef,
+    real_entity: true,
+    proposal_only: false,
     user_intent: context.user_intent,
   };
 }
@@ -2318,8 +2439,9 @@ async function handleCalendarHandoff(
   payload: Record<string, unknown>,
   userId?: string
 ): Promise<Record<string, unknown>> {
-  const fallbackRef = randomUUID();
+  // FIX M01-005 — see handleRadarHandoff for the full rationale.
   let realCalRef: string | null = null;
+  let failureReason = 'calendar/meeting service is unavailable';
 
   // Teresa last-mile (backlog #4): wire directly to the real meetings write path
   // (`meetingService.createMeeting`) instead of a non-existent `calendarInteropService.createEvent`.
@@ -2327,37 +2449,78 @@ async function handleCalendarHandoff(
   if (calMod) {
     try {
       const create = calMod.createMeeting ?? calMod.default?.createMeeting;
-      const intent = (payload.calendar_intent || {}) as Record<string, unknown>;
-      const whenRaw = intent.when ? String(intent.when) : '';
-      const parsed = new Date(whenRaw);
-      const startAt = isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
-      const result = await create?.({
-        organizationId,
-        createdBy: userId || 'teresa',
-        title: String(intent.what || context.user_intent || 'Teresa meeting').slice(0, 300),
-        startAt,
-        endAt: startAt,
-        attendees: [],
-        agenda: [],
-        decisions: [],
-      });
-      realCalRef = result?.id || result?.eventId || null;
-    } catch {
-      logger.warn(`${LOG_PREFIX} Calendar/meeting service call failed, using fallback ref`);
+      if (typeof create !== 'function') {
+        failureReason = 'calendar/meeting service exposes no create';
+      } else {
+        const intent = (payload.calendar_intent || {}) as Record<string, unknown>;
+        const whenRaw = intent.when ? String(intent.when) : '';
+        const parsed = new Date(whenRaw);
+        const startAt = isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
+        const result = await create({
+          organizationId,
+          createdBy: userId || 'teresa',
+          title: String(intent.what || context.user_intent || 'Teresa meeting').slice(0, 300),
+          startAt,
+          endAt: startAt,
+          attendees: [],
+          agenda: [],
+          decisions: [],
+        });
+        realCalRef = result?.id || result?.eventId || null;
+        if (!realCalRef) {
+          failureReason = 'calendar/meeting service returned no meeting id';
+        }
+      }
+    } catch (err) {
+      failureReason = `calendar/meeting service call failed: ${err instanceof Error ? err.message : String(err)}`;
     }
   }
 
-  const ref = realCalRef || fallbackRef;
+  if (!realCalRef) {
+    logger.warn(`${LOG_PREFIX} Calendar handoff created no owner object — ${failureReason}`);
+    throw new TeresaCopilotError(
+      `Calendar handoff did not create a meeting: ${failureReason}`,
+      'P08_HANDOFF_NO_OWNER_OBJECT',
+      502
+    );
+  }
+
+  // Confirm through the meetings module's own tenant-scoped read.
+  let ownerConfirmed = false;
+  try {
+    const readBack = calMod?.getMeeting ?? calMod?.default?.getMeeting;
+    if (typeof readBack !== 'function') {
+      failureReason = 'calendar/meeting service exposes no read-back';
+    } else {
+      const meeting = await readBack({ organizationId, meetingId: realCalRef });
+      ownerConfirmed = Boolean(meeting);
+      if (!ownerConfirmed) {
+        failureReason = `meeting ${realCalRef} is not readable in this organization`;
+      }
+    }
+  } catch (err) {
+    failureReason = `calendar read-back failed: ${err instanceof Error ? err.message : String(err)}`;
+  }
+
+  if (!ownerConfirmed) {
+    logger.warn(`${LOG_PREFIX} Calendar owner read-back failed — ${failureReason}`);
+    throw new TeresaCopilotError(
+      `Calendar handoff could not confirm the created meeting: ${failureReason}`,
+      'P08_HANDOFF_NO_OWNER_OBJECT',
+      502
+    );
+  }
+
   await dbRun(
     `INSERT INTO teresa_handoff_results (id, proposal_id, organization_id, target_module, result_ref, created_at)
      VALUES (?, ?, ?, 'calendar', ?, ?)`,
-    [randomUUID(), proposalId, organizationId, ref, new Date().toISOString()],
-    { fallback: true }
+    [randomUUID(), proposalId, organizationId, realCalRef, new Date().toISOString()],
+    { fallback: false }
   );
   return {
     handoff: 'calendar',
-    calendar_ref: ref,
-    real_entity: Boolean(realCalRef),
+    calendar_ref: realCalRef,
+    real_entity: true,
     calendar_intent: payload.calendar_intent,
     user_intent: context.user_intent,
   };
@@ -2367,43 +2530,107 @@ async function handleNotebookHandoff(
   proposalId: string,
   organizationId: string,
   context: TeresaHandoffContext,
-  payload: Record<string, unknown>
+  payload: Record<string, unknown>,
+  userId?: string
 ): Promise<Record<string, unknown>> {
-  const fallbackRef = randomUUID();
+  // FIX M01-005 — see handleRadarHandoff for the full rationale.
   let realNoteId: string | null = null;
+  let failureReason = 'notebook service is unavailable';
 
   const noteMod = await tryImport('../notebookService.js');
   if (noteMod) {
     try {
       const create = noteMod.createNote ?? noteMod.default?.createNote ?? noteMod.default?.create;
-      const nbCtx = (payload.notebook_handoff_context || {}) as Record<string, unknown>;
-      const reminder = (nbCtx.reminder || null) as { dueAt?: string; term?: string } | null;
-      const result = await create?.({
-        organizationId,
-        title: nbCtx.title || 'Teresa handoff note',
-        body: nbCtx.body_preview || '',
-        source: 'teresa',
-        proposalId,
-        // #21: termin przypomnienia ląduje w capture_metadata.reminder (bez migracji).
-        ...(reminder && (reminder.dueAt || reminder.term) ? { reminder } : {}),
-      });
-      realNoteId = result?.id || result?.noteId || null;
-    } catch {
-      logger.warn(`${LOG_PREFIX} Notebook service call failed, using fallback ref`);
+      if (typeof create !== 'function') {
+        failureReason = 'notebook service exposes no create';
+      } else {
+        const nbCtx = (payload.notebook_handoff_context || {}) as Record<string, unknown>;
+        const reminder = (nbCtx.reminder || null) as { dueAt?: string; term?: string } | null;
+        const result = await create({
+          organizationId,
+          title: nbCtx.title || 'Teresa handoff note',
+          body: nbCtx.body_preview || '',
+          source: 'teresa',
+          proposalId,
+          // FIX (Notebook owner_user_id='system', flagged in M01-P07A review
+          // and this packet's §6): `createNote` defaults `userId` to
+          // `'system'` when the caller omits it, and `notebookService.ingest`
+          // always writes `visibility: 'private'` scoped by `owner_user_id`.
+          // A note owned by `'system'` is permanently invisible to the actor
+          // who approved the handoff (every read path filters
+          // `owner_user_id = <requesting user>`). `performHandoff` already
+          // carries the real acting `userId` end-to-end — this handler just
+          // never forwarded it. This is the ENTIRE fix: no notebookService.ts
+          // change, no schema change, no cross-module contract change.
+          userId: userId || undefined,
+          // #21: termin przypomnienia ląduje w capture_metadata.reminder (bez migracji).
+          ...(reminder && (reminder.dueAt || reminder.term) ? { reminder } : {}),
+        });
+        realNoteId = result?.id || result?.noteId || null;
+        if (!realNoteId) {
+          failureReason = 'notebook service returned no note id';
+        }
+      }
+    } catch (err) {
+      failureReason = `notebook service call failed: ${err instanceof Error ? err.message : String(err)}`;
     }
   }
 
-  const ref = realNoteId || fallbackRef;
+  if (!realNoteId) {
+    logger.warn(`${LOG_PREFIX} Notebook handoff created no owner object — ${failureReason}`);
+    throw new TeresaCopilotError(
+      `Notebook handoff did not create a note: ${failureReason}`,
+      'P08_HANDOFF_NO_OWNER_OBJECT',
+      502
+    );
+  }
+
+  // Confirm through the notebook module's own tenant-scoped read
+  // (`resolveEmbedChip` selects `notebook_pages` WHERE id = ? AND
+  // organization_id = ? and reports `permissionOk:false` for anything it
+  // cannot see — an existing, already-shipped read-back, not new surface).
+  let ownerConfirmed = false;
+  try {
+    const svc = noteMod?.default ?? noteMod?.notebookService;
+    const readBack = svc?.resolveEmbedChip;
+    if (typeof readBack !== 'function') {
+      failureReason = 'notebook service exposes no read-back';
+    } else {
+      const chip = await readBack.call(
+        svc,
+        organizationId,
+        userId || 'teresa',
+        'notebook_page',
+        realNoteId
+      );
+      ownerConfirmed = Boolean(chip?.permissionOk);
+      if (!ownerConfirmed) {
+        failureReason = `note ${realNoteId} is not readable in this organization`;
+      }
+    }
+  } catch (err) {
+    failureReason = `notebook read-back failed: ${err instanceof Error ? err.message : String(err)}`;
+  }
+
+  if (!ownerConfirmed) {
+    logger.warn(`${LOG_PREFIX} Notebook owner read-back failed — ${failureReason}`);
+    throw new TeresaCopilotError(
+      `Notebook handoff could not confirm the created note: ${failureReason}`,
+      'P08_HANDOFF_NO_OWNER_OBJECT',
+      502
+    );
+  }
+
   await dbRun(
     `INSERT INTO teresa_handoff_results (id, proposal_id, organization_id, target_module, result_ref, created_at)
      VALUES (?, ?, ?, 'notebook', ?, ?)`,
-    [randomUUID(), proposalId, organizationId, ref, new Date().toISOString()],
-    { fallback: true }
+    [randomUUID(), proposalId, organizationId, realNoteId, new Date().toISOString()],
+    { fallback: false }
   );
   return {
     handoff: 'notebook',
-    note_ref: ref,
-    real_entity: Boolean(realNoteId),
+    note_ref: realNoteId,
+    real_entity: true,
     notebook_context: payload.notebook_handoff_context,
     user_intent: context.user_intent,
   };
@@ -2415,8 +2642,9 @@ async function handleInterviewHandoff(
   context: TeresaHandoffContext,
   payload: Record<string, unknown>
 ): Promise<Record<string, unknown>> {
-  const fallbackRef = randomUUID();
+  // FIX M01-005 — see handleRadarHandoff for the full rationale.
   let realInsightRef: string | null = null;
+  let failureReason = 'interview service is unavailable';
 
   const interviewMod = await tryImport('./interviewInsightService.js');
   if (interviewMod) {
@@ -2426,37 +2654,94 @@ async function handleInterviewHandoff(
         interviewMod.default?.generateInsight ??
         interviewMod.createInsight ??
         interviewMod.default?.createInsight;
-      const interviewCtx = (payload.interview_handoff_context || {}) as Record<string, unknown>;
-      const result = await fn?.({
-        organizationId,
-        action: interviewCtx.action || 'generate_insight',
-        session_ids: interviewCtx.session_ids,
-        title: interviewCtx.title || context.user_intent,
-        source: 'teresa',
-        proposalId,
-      });
-      realInsightRef = result?.id || result?.insightId || null;
-    } catch {
-      logger.warn(`${LOG_PREFIX} Interview service call failed, using fallback ref`);
+      if (typeof fn !== 'function') {
+        failureReason = 'interview service exposes no create';
+      } else {
+        const interviewCtx = (payload.interview_handoff_context || {}) as Record<string, unknown>;
+        const result = await fn({
+          organizationId,
+          action: interviewCtx.action || 'generate_insight',
+          session_ids: interviewCtx.session_ids,
+          title: interviewCtx.title || context.user_intent,
+          source: 'teresa',
+          proposalId,
+        });
+        realInsightRef = result?.id || result?.insightId || null;
+        if (!realInsightRef) {
+          failureReason = 'interview service returned no insight id';
+        }
+      }
+    } catch (err) {
+      failureReason = `interview service call failed: ${err instanceof Error ? err.message : String(err)}`;
     }
   }
 
-  const ref = realInsightRef || fallbackRef;
+  if (!realInsightRef) {
+    logger.warn(`${LOG_PREFIX} Interview handoff created no owner object — ${failureReason}`);
+    throw new TeresaCopilotError(
+      `Interview handoff did not create an insight: ${failureReason}`,
+      'P08_HANDOFF_NO_OWNER_OBJECT',
+      502
+    );
+  }
+
+  // Confirm through the interview module's own read. `getById` is keyed by id
+  // only, so the tenant check is asserted here against the row it returns — a
+  // foreign-tenant insight must never produce a receipt in this organization.
+  let ownerConfirmed = false;
+  try {
+    const readBack = interviewMod?.getById ?? interviewMod?.default?.getById;
+    if (typeof readBack !== 'function') {
+      failureReason = 'interview service exposes no read-back';
+    } else {
+      const insight = await readBack(realInsightRef);
+      const insightOrg = insight?.organizationId ?? insight?.organization_id ?? null;
+      ownerConfirmed = Boolean(insight) && String(insightOrg || '') === String(organizationId);
+      if (!ownerConfirmed) {
+        failureReason = `interview insight ${realInsightRef} is not readable in this organization`;
+      }
+    }
+  } catch (err) {
+    failureReason = `interview read-back failed: ${err instanceof Error ? err.message : String(err)}`;
+  }
+
+  if (!ownerConfirmed) {
+    logger.warn(`${LOG_PREFIX} Interview owner read-back failed — ${failureReason}`);
+    throw new TeresaCopilotError(
+      `Interview handoff could not confirm the created insight: ${failureReason}`,
+      'P08_HANDOFF_NO_OWNER_OBJECT',
+      502
+    );
+  }
+
   await dbRun(
     `INSERT INTO teresa_handoff_results (id, proposal_id, organization_id, target_module, result_ref, created_at)
      VALUES (?, ?, ?, 'interview', ?, ?)`,
-    [randomUUID(), proposalId, organizationId, ref, new Date().toISOString()],
-    { fallback: true }
+    [randomUUID(), proposalId, organizationId, realInsightRef, new Date().toISOString()],
+    { fallback: false }
   );
   return {
     handoff: 'interview',
-    insight_ref: ref,
-    real_entity: Boolean(realInsightRef),
+    insight_ref: realInsightRef,
+    real_entity: true,
     interview_context: payload.interview_handoff_context,
     user_intent: context.user_intent,
   };
 }
 
+/**
+ * Excele has NO owner write path.
+ *
+ * FIX M01-005: this handler never called any service — it minted
+ * `const ref = randomUUID()` unconditionally, wrote it as
+ * `teresa_handoff_results.result_ref` and returned `completed`, so EVERY
+ * excele handoff fabricated a durable receipt and a `/excele` deep link for
+ * a workbook that was never created. It fails closed instead: no result_ref,
+ * no receipt, no `completed`. `executeProposal`'s existing catch turns this
+ * throw into a `rejected` proposal with an `execution_failed` audit entry —
+ * capability-honest (`P0.8`), matching the `P08_HANDOFF_NOT_IMPLEMENTED`
+ * pattern already established for this exact gap.
+ */
 async function handleExceleHandoff(
   proposalId: string,
   organizationId: string,
