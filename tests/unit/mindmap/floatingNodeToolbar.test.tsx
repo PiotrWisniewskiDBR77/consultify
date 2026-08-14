@@ -13,7 +13,7 @@ import { describe, expect, it, vi } from 'vitest';
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     i18n: { language: 'en' },
-    t: (key: string) => key,
+    t: (key: string, fallback?: string) => fallback ?? key,
   }),
   initReactI18next: {
     type: '3rdParty',
@@ -52,7 +52,9 @@ describe('FloatingNodeToolbar', () => {
   it('toggles auto-layout on click', () => {
     const onUpdate = vi.fn();
     render(<FloatingNodeToolbar {...baseProps} onUpdate={onUpdate} />);
-    const autoBtn = screen.getAllByRole('button').find((b) => b.getAttribute('title') === 'ideas.mindmap.autoLayoutBranch');
+    const autoBtn = screen
+      .getAllByRole('button')
+      .find((b) => b.getAttribute('title') === 'Auto-layout branch');
     expect(autoBtn).toBeTruthy();
     if (autoBtn) fireEvent.click(autoBtn);
     expect(onUpdate).toHaveBeenCalledWith({ autoLayout: true });
@@ -60,7 +62,9 @@ describe('FloatingNodeToolbar', () => {
 
   it('opens semantic type dropdown on click', () => {
     render(<FloatingNodeToolbar {...baseProps} />);
-    const typeBtn = screen.getAllByRole('button').find((b) => b.getAttribute('title') === 'ideas.mindmap.nodeType');
+    const typeBtn = screen
+      .getAllByRole('button')
+      .find((b) => b.getAttribute('title') === 'Node type');
     expect(typeBtn).toBeTruthy();
     if (typeBtn) fireEvent.click(typeBtn);
     expect(screen.getByText('Topic')).toBeTruthy();
@@ -70,7 +74,7 @@ describe('FloatingNodeToolbar', () => {
   it('toggles bold on click', () => {
     const onUpdate = vi.fn();
     render(<FloatingNodeToolbar {...baseProps} onUpdate={onUpdate} />);
-    const boldBtn = screen.getAllByRole('button').find((b) => b.getAttribute('title') === 'ideas.mindmap.bold');
+    const boldBtn = screen.getAllByRole('button').find((b) => b.getAttribute('title') === 'Bold');
     expect(boldBtn).toBeTruthy();
     if (boldBtn) fireEvent.click(boldBtn);
     expect(onUpdate).toHaveBeenCalledWith({ bold: true });
@@ -81,24 +85,28 @@ describe('FloatingNodeToolbar', () => {
     render(<FloatingNodeToolbar {...baseProps} onOpenArtifactModal={onOpenArtifactModal} />);
     const linkBtn = screen
       .getAllByRole('button')
-      .find((b) => b.getAttribute('title') === 'ideas.mindmap.linkedArtifacts');
+      .find((b) => b.getAttribute('title') === 'Linked artifacts');
     expect(linkBtn).toBeTruthy();
     if (linkBtn) fireEvent.click(linkBtn);
-    fireEvent.click(screen.getByRole('button', { name: 'ideas.mindmap.attach' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Attach' }));
     expect(onOpenArtifactModal).toHaveBeenCalled();
   });
 
   it('calls onOpenContextMenu on more click', () => {
     const onOpenContextMenu = vi.fn();
     render(<FloatingNodeToolbar {...baseProps} onOpenContextMenu={onOpenContextMenu} />);
-    const moreBtn = screen.getAllByRole('button').find((b) => b.getAttribute('title') === 'ideas.mindmap.moreOptions');
+    const moreBtn = screen
+      .getAllByRole('button')
+      .find((b) => b.getAttribute('title') === 'More options');
     if (moreBtn) fireEvent.click(moreBtn);
     expect(onOpenContextMenu).toHaveBeenCalled();
   });
 
   it('resets dropdown when nodeId changes', () => {
     const { rerender } = render(<FloatingNodeToolbar {...baseProps} />);
-    const typeBtn = screen.getAllByRole('button').find((b) => b.getAttribute('title') === 'ideas.mindmap.nodeType');
+    const typeBtn = screen
+      .getAllByRole('button')
+      .find((b) => b.getAttribute('title') === 'Node type');
     if (typeBtn) fireEvent.click(typeBtn);
     expect(screen.getByText('Topic')).toBeTruthy();
 
