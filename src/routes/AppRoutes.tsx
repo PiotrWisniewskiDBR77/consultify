@@ -21,6 +21,7 @@ import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import { AnimationWrapper } from '@/components/shared/AnimationWrapper';
 import { V8UnavailableBanner } from '@/components/shared/V8UnavailableBanner';
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
+import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { useBreadcrumbs } from '@/hooks/useBreadcrumbs';
 import { AuthLayout } from '@/layouts/AuthLayout';
 import { MainLayout } from '@/layouts/MainLayout';
@@ -527,6 +528,19 @@ const PublicBookingView = lazyWithRetry(() =>
 );
 // Audit Orchestrator hub (audit #19 family) — authenticated module route.
 const AuditProgramsHub = lazyWithRetry(() => import('@/components/Audit/AuditsHub'));
+// U7 — Audits methodical-kernel hub (Library/Processes/Outputs/Reports/
+// Initiatives, 5-surface Triada pattern, /api/audits). Parallel, separate
+// screen from AuditProgramsHub above (/api/audit orchestrator) — does NOT
+// replace it. Flag-gated (auditsFiveSurfacesV1, default OFF) — see
+// AuditsMethodHubRoute below for the OFF→redirect behavior.
+const AuditsMethodHub = lazyWithRetry(() => import('@/components/Audit/method/AuditsMethodHub'));
+// Criterion Workspace (W1, 2026-08) — the screen where an auditor actually
+// works one criterion through the full evidence→finding→remediation chain.
+// Same flag as AuditsMethodHub above (auditsFiveSurfacesV1); OFF→redirect
+// mirrors CriterionWorkspaceRoute below.
+const CriterionWorkspace = lazyWithRetry(
+  () => import('@/components/Audit/method/workspace/CriterionWorkspace')
+);
 // DRD Audit Report engine — full editor (AI chat, per-section AI actions, PDF
 // export, publishing-grade "Raport DRD" client report) wired to a live backend
 // but previously reachable by ZERO routes (audyt 2026-07-26). Flag-gated entry
@@ -724,6 +738,38 @@ const DRDAuditReportRoute: React.FC = () => {
     return <Navigate to="/audit-programs" replace />;
   }
   return <DRDAuditReportView reportId={params.reportId} />;
+};
+
+/**
+ * U7 — Audits methodical-kernel hub entry (`AuditsMethodHub`, five surfaces:
+ * Library/Processes/Outputs/Reports/Initiatives over `/api/audits`). Flag-gated
+ * (`auditsFiveSurfacesV1`, default OFF, see src/hooks/useFeatureFlags.tsx):
+ * OFF → redirects to /audit-programs, mirroring how `DRDAuditReportRoute`
+ * above gates its own flag. Kept as a separate route/component rather than
+ * folded into `AuditProgramsHub` — the two hubs read different backends
+ * (`/api/audit` orchestrator vs. `/api/audits` methodical kernel) and neither
+ * replaces the other yet.
+ */
+const AuditsMethodHubRoute: React.FC = () => {
+  const { isEnabled } = useFeatureFlagsContext();
+  if (!isEnabled('auditsFiveSurfacesV1')) {
+    return <Navigate to="/audit-programs" replace />;
+  }
+  return <AuditsMethodHub />;
+};
+
+/**
+ * Criterion Workspace entry (W1, 2026-08) — one criterion's full audit chain
+ * (evidence → finding → remediation). Same flag/OFF-redirect pattern as
+ * `AuditsMethodHubRoute` above; `CriterionWorkspace` itself reads
+ * `:programId`/`:criterionId` via `useParams`.
+ */
+const CriterionWorkspaceRoute: React.FC = () => {
+  const { isEnabled } = useFeatureFlagsContext();
+  if (!isEnabled('auditsFiveSurfacesV1')) {
+    return <Navigate to="/audit-programs" replace />;
+  }
+  return <CriterionWorkspace />;
 };
 
 /** Redirects /auth?action=trial to /trial/start */
@@ -1553,6 +1599,48 @@ export const AppRoutes: React.FC = () => {
                   <AnimationWrapper variant="slideUp">
                     <Suspense fallback={<LoadingScreen message="Loading DRD report..." />}>
                       <DRDAuditReportRoute />
+                    </Suspense>
+                  </AnimationWrapper>
+                </RouteErrorBoundary>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+
+        {/* U7 — Audits methodical-kernel hub (Library/Processes/Outputs/
+            Reports/Initiatives over /api/audits). Flag-gated
+            (auditsFiveSurfacesV1, default OFF) — see AuditsMethodHubRoute
+            above for the OFF→redirect behavior. Parallel to /audit-programs,
+            does not replace it. */}
+        <Route
+          path="/audit-programs/method"
+          element={
+            <BetaGate moduleId="MODULE_AUDITS">
+              <MainLayout breadcrumbs={breadcrumbs || ['Audits']}>
+                <RouteErrorBoundary>
+                  <AnimationWrapper variant="slideUp">
+                    <Suspense fallback={<LoadingScreen message="Loading audits..." />}>
+                      <AuditsMethodHubRoute />
+                    </Suspense>
+                  </AnimationWrapper>
+                </RouteErrorBoundary>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+
+        {/* Criterion Workspace (W1, 2026-08) — the screen where an auditor
+            works one criterion through the full chain (criterion/source →
+            ... → closure). Same flag/gate as /audit-programs/method above. */}
+        <Route
+          path="/audit-programs/method/:programId/criteria/:criterionId"
+          element={
+            <BetaGate moduleId="MODULE_AUDITS">
+              <MainLayout breadcrumbs={breadcrumbs || ['Audits']}>
+                <RouteErrorBoundary>
+                  <AnimationWrapper variant="slideUp">
+                    <Suspense fallback={<LoadingScreen message="Loading audits..." />}>
+                      <CriterionWorkspaceRoute />
                     </Suspense>
                   </AnimationWrapper>
                 </RouteErrorBoundary>

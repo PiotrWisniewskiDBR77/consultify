@@ -332,8 +332,22 @@ const ResultsVNextTeresaOkrReflectionScreen = React.lazy(
 );
 const ToolsSwotReportScreen = React.lazy(() => import('./screens/tools-swot-report'));
 const MethodWorkspaceScreen = React.lazy(() => import('./screens/method-workspace'));
+const AudytyPiecPowierzchniScreen = React.lazy(() => import('./screens/audyty-piec-powierzchni'));
+const AudytyWarsztatKryteriumScreen = React.lazy(
+  () => import('./screens/audyty-warsztat-kryterium')
+);
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'audyty-piec-powierzchni': {
+    label:
+      'U8 — REALNY <AuditsMethodHub> (Library·Processes·Outputs·Reports·Initiatives), auditsFiveSurfacesV1. &tab=library|processes|outputs|reports|initiatives, &state=default|empty|loading|error',
+    render: () => <AudytyPiecPowierzchniScreen />,
+  },
+  'audyty-warsztat-kryterium': {
+    label:
+      'W4 — REALNY <CriterionWorkspace> (EvidencePanel·FindingPanel·RemediationPanel·TeresaProposalCard). &role=auditee|auditor|lead_auditor|reviewer|action_owner, &stage=fresh|evidence|tested|finding|remediation|closed, &state=loading|error|forbidden, &teresa=1',
+    render: () => <AudytyWarsztatKryteriumScreen />,
+  },
   'method-workspace': {
     label:
       'A5 — Method Workspace shell (interview/split/matrix), ff methodWorkspaceShellV1. &view=interview|split|matrix &state=default|resolution|savefailed|teresaRich',

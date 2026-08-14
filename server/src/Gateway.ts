@@ -68,6 +68,7 @@ import assessmentEvidenceRoutes from './routes/assessmentEvidence.routes.js';
 import auditRoutes from './routes/audit.routes.js';
 import auditEventsRoutes from './routes/audit-events.routes.js';
 import auditProgramsRouter from './routes/audit-programs.routes.js';
+import auditsMethodRouter from './routes/audits/index.js';
 import auditLogRoutes from './routes/auditLog.routes.js';
 // Route Imports
 import authRoutes from './routes/auth.routes.js';
@@ -1318,6 +1319,11 @@ export class ApiGateway {
       // Audit Orchestrator — org-scoped CRUD for audit programs (owner flagged
       // direction ⭐⭐⭐, audit #19/#19d/#19e). Paths are /api/audit/programs[...].
       app.use('/api/audit', auditProgramsRouter);
+      // Audits — kernel metodyczny (Library/Processes/Outputs/Deliverables/
+      // Initiatives, evidence chain, findings, corrective actions, weryfikacja
+      // skuteczności). Osobny prefiks /api/audits, żeby nie zmieniać kontraktu
+      // działającego huba w tym samym kroku, w którym powstaje nowy model.
+      app.use('/api/audits', auditsMethodRouter);
       // Discovery revive — the Discovery Consultant canvas now has a real
       // backend (persistence + convert-to-project + SPIN extraction).
       app.use('/api/discovery', discoveryRoutes);
