@@ -357,7 +357,12 @@ function cycleCreateBody(overrides: Record<string, unknown> = {}) {
 }
 
 beforeEach(() => {
-  vi.clearAllMocks();
+  // The suite runs in randomized order. Clearing call history alone leaves
+  // mockResolvedValue/mockRejectedValue implementations behind, so a later
+  // route can inherit another test's "not found" or error behavior. Reset the
+  // implementations as well; every test declares the repository/command result
+  // it needs.
+  vi.resetAllMocks();
 });
 
 // ==========================================
