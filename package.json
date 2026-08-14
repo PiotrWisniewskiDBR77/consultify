@@ -137,6 +137,7 @@
     "test:cleanup-matrix:validate": "node scripts/testing/cleanup-test-matrix.mjs validate",
     "test:cleanup-matrix:standard": "node scripts/testing/cleanup-test-matrix.mjs run-standard",
     "test:cleanup-matrix:isolated": "node scripts/testing/cleanup-test-matrix.mjs run-isolated",
+    "audit:source-reachability": "GIT_SHA=$(git rev-parse HEAD) node scripts/cleanup/source-reachability-inventory.mjs",
     "test:audit": "npx tsx scripts/testing/run-audit.ts --quick",
     "test:audit:full": "npx tsx scripts/testing/run-audit.ts --full --report --update-registry",
     "test:quality-check": "tsx scripts/testing/quality-check.ts",
