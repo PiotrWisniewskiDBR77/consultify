@@ -4,6 +4,15 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    i18n: { language: 'en' },
+    t: (key: string, fallback?: unknown) =>
+      typeof fallback === 'string' ? fallback : key,
+  }),
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
+}));
 import { ValidationResultsPanel } from '../../../src/components/MyWork/processflow/ValidationResultsPanel';
 import { AIProposalPanel } from '../../../src/components/MyWork/processflow/AIProposalPanel';
 import { ReadbackPanel } from '../../../src/components/MyWork/processflow/ReadbackPanel';
@@ -480,12 +489,18 @@ describe('ProcessFlowToolbar — AI panel triggers', () => {
   it('renders AI Proposal + Readback buttons and fires callbacks on click', () => {
     const onAIProposal = vi.fn();
     const onReadback = vi.fn();
-    render(<ProcessFlowToolbar {...baseToolbarProps()} onAIProposal={onAIProposal} onReadback={onReadback} />);
+    render(
+      <ProcessFlowToolbar
+        {...baseToolbarProps()}
+        onOpenAIProposal={onAIProposal}
+        onOpenReadback={onReadback}
+      />
+    );
 
-    const aiBtn = screen.getByTitle(/AI Proposal — flow edits/i);
-    const readbackBtn = screen.getByTitle(/Semantic readback/i);
-    fireEvent.click(aiBtn);
-    fireEvent.click(readbackBtn);
+    fireEvent.click(screen.getByRole('button', { name: 'More actions' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'AI Proposal' }));
+    fireEvent.click(screen.getByRole('button', { name: 'More actions' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Readback' }));
 
     expect(onAIProposal).toHaveBeenCalledTimes(1);
     expect(onReadback).toHaveBeenCalledTimes(1);
@@ -493,7 +508,8 @@ describe('ProcessFlowToolbar — AI panel triggers', () => {
 
   it('hides both buttons when callbacks are not supplied (back-compat)', () => {
     render(<ProcessFlowToolbar {...baseToolbarProps()} />);
-    expect(screen.queryByTitle(/AI Proposal — flow edits/i)).toBeNull();
-    expect(screen.queryByTitle(/Semantic readback/i)).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'More actions' }));
+    expect(screen.queryByRole('menuitem', { name: 'AI Proposal' })).toBeNull();
+    expect(screen.queryByRole('menuitem', { name: 'Readback' })).toBeNull();
   });
 });

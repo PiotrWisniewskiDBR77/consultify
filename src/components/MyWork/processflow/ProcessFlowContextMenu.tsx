@@ -26,7 +26,28 @@ import i18n from '@/i18n';
  * behavior stays identical to the old inline ternaries.
  */
 function tr(isPl: boolean, key: string, defaultValue: string): string {
-  return i18n.t(`processFlow.contextMenu.${key}`, defaultValue, { lng: isPl ? 'pl' : 'en' });
+  const polishFallbacks: Record<string, string> = {
+    openProperties: 'Otwórz właściwości',
+    editLabel: 'Edytuj etykietę',
+    duplicate: 'Duplikuj',
+    copy: 'Kopiuj',
+    autoLayout: 'Auto-układ',
+    aiRewriteStep: 'AI: przepisz krok',
+    convertToInitiative: 'Konwertuj na inicjatywę',
+    delete: 'Usuń',
+    edgeProps: 'Etykieta i styl',
+    edgeInsertNode: 'Wstaw węzeł na połączeniu',
+    edgeReverse: 'Odwróć kierunek',
+    edgeCondition: 'Warunek',
+    edgeDelete: 'Usuń połączenie',
+    addAction: 'Dodaj akcję',
+    addDecision: 'Dodaj decyzję',
+    paste: 'Wklej',
+  };
+  return i18n.t(`processFlow.contextMenu.${key}`, {
+    defaultValue: isPl ? (polishFallbacks[key] ?? defaultValue) : defaultValue,
+    lng: isPl ? 'pl' : 'en',
+  });
 }
 
 interface ContextMenuAction {

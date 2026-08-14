@@ -4,7 +4,24 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const i18nState = vi.hoisted(() => ({ language: 'en' }));
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ i18n: i18nState, t: (k: string) => k }),
+  useTranslation: () => ({
+    i18n: i18nState,
+    t: (key: string) => {
+      const en: Record<string, string> = {
+        'myWorkNotebook.toolbar.undo': 'Undo',
+        'myWorkNotebook.toolbar.bold': 'Bold (Ctrl+B)',
+        'myWorkNotebook.toolbar.italic': 'Italic (Ctrl+I)',
+        'myWorkNotebook.toolbar.heading1': 'Heading 1',
+        'myWorkNotebook.toolbar.bulletList': 'Bullet list',
+        'myWorkNotebook.toolbar.alignCenter': 'Align center',
+        'myWorkNotebook.toolbar.link': 'Link (Ctrl+K)',
+      };
+      const pl: Record<string, string> = {
+        'myWorkNotebook.toolbar.bold': 'Pogrubienie (Ctrl+B)',
+      };
+      return (i18nState.language === 'pl' ? pl[key] : en[key]) ?? key;
+    },
+  }),
 }));
 
 import { NotebookToolbar } from '@/components/MyWork/notebook/NotebookToolbar';
