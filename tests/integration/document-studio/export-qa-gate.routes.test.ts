@@ -71,6 +71,16 @@ vi.mock('../../../server/src/utils/Logger.js', () => ({
   default: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
 
+// Successful exports now require durable MAT-010 lineage. That contract has
+// dedicated real-Postgres coverage; this suite isolates the QA gate while
+// representing a successful durable lineage write.
+vi.mock('../../../server/src/services/lineage/artifactLineageService.js', () => ({
+  deriveCreatedEventIdempotencyKey: () => 'qa-gate-created-key',
+  deriveRequestBoundIdempotencyKey: () => 'qa-gate-request-key',
+  recordLineageEventSafe: async () => true,
+  recordLineageEventTracked: async () => ({ durable: true, status: 'RECORDED' }),
+}));
+
 // ---------------------------------------------------------------------------
 // Wave5 artifact seam — an approval-gated artifact carrying a DocumentSchema.
 // `getDocumentArtifact` reads `metadata_json.documentStudioSchema`.
