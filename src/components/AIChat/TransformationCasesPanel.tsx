@@ -1,4 +1,16 @@
-import { Ban, GitBranch, ListChecks, PlayCircle, Plus, RefreshCw, Sparkles } from 'lucide-react';
+import {
+  Ban,
+  CheckCircle2,
+  FileCheck2,
+  GitBranch,
+  History,
+  ListChecks,
+  MessageSquareText,
+  PlayCircle,
+  Plus,
+  RefreshCw,
+  Sparkles,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
@@ -302,6 +314,40 @@ function capabilityTone(status: TransformationPlanStepDto['capabilityStatus']) {
   return 'neutral' as const;
 }
 
+type CaseWorkspaceView = 'plan' | 'execution' | 'results' | 'decisions' | 'team' | 'history';
+
+function businessCaseStatus(item: TransformationCaseDto, isPolish: boolean): string {
+  const labels: Record<string, [string, string]> = {
+    draft: ['Szkic', 'Draft'],
+    plan_proposed: ['Plan do przeglądu', 'Plan needs review'],
+    plan_approved: ['Plan zatwierdzony', 'Plan approved'],
+    active: ['W realizacji', 'In progress'],
+    requires_decision: ['Wymaga decyzji', 'Decision required'],
+    completed: ['Zakończone', 'Completed'],
+    cancelled: ['Anulowane', 'Cancelled'],
+  };
+  return (labels[item.status] ?? [item.status, item.status])[isPolish ? 0 : 1];
+}
+
+function businessLifecycleLabel(item: TransformationCaseDto, isPolish: boolean): string {
+  const labels: Record<string, [string, string]> = {
+    mandate: ['Ustalenie kierunku', 'Framing'],
+    discovery: ['Diagnoza', 'Diagnosis'],
+    assessment: ['Diagnoza', 'Diagnosis'],
+    opportunity: ['Wybór rozwiązania', 'Solution decision'],
+    finance: ['Ocena opłacalności', 'Business case'],
+    portfolio: ['Decyzja portfelowa', 'Portfolio decision'],
+    mobilization: ['Mobilizacja', 'Mobilization'],
+    execution: ['Realizacja', 'Delivery'],
+    benefits: ['Pomiar rezultatów', 'Outcome measurement'],
+    sustainability: ['Utrwalenie zmiany', 'Sustainability'],
+    final_outputs: ['Podsumowanie', 'Final summary'],
+  };
+  return (labels[item.lifecycleStage] ?? [item.lifecycleStage, item.lifecycleStage])[
+    isPolish ? 0 : 1
+  ];
+}
+
 export const TransformationQualityTrustSection: React.FC<{
   transformationCase: TransformationCaseDto;
   isPolish: boolean;
@@ -415,20 +461,18 @@ const TransformationCaseExecutiveOverview: React.FC<{
     ).length;
     return { ...phase, total: phaseSteps.length, real, partial };
   });
-  const executable = steps.filter((step) => step.capabilityStatus === 'REAL').length;
-  const needsAttention = Math.max(0, steps.length - executable);
   const nextAction =
     transformationCase.status === 'plan_proposed'
       ? isPolish
         ? 'Przejrzyj plan i zdecyduj, czy można go zatwierdzić.'
         : 'Review the plan and decide whether it can be approved.'
-      : needsAttention > 0
+      : transformationCase.status === 'plan_approved'
         ? isPolish
-          ? 'Uzupełnij brakujące połączenia albo przypisz niewykonalne etapy człowiekowi.'
-          : 'Complete missing connections or assign unavailable stages to a person.'
+          ? 'Kontynuuj przygotowanie pierwszego etapu razem z Teresą.'
+          : 'Continue preparing the first stage with Teresa.'
         : isPolish
-          ? 'Plan jest gotowy do rozpoczęcia.'
-          : 'The plan is ready to start.';
+          ? 'Przejrzyj bieżącą pracę i podejmij następną decyzję.'
+          : 'Review current work and take the next decision.';
 
   return (
     <section className="space-y-4" data-testid="transformation-case-executive-overview">
@@ -450,31 +494,21 @@ const TransformationCaseExecutiveOverview: React.FC<{
         <div className="rounded-lg border border-c-border bg-c-surface p-3">
           <p className="text-[11px] text-c-text-muted">{isPolish ? 'Stan' : 'Status'}</p>
           <p className="mt-1 text-sm font-semibold text-c-text">
-            {transformationCase.status === 'plan_proposed'
-              ? isPolish
-                ? 'Plan wymaga przeglądu'
-                : 'Plan needs review'
-              : transformationCase.status === 'plan_approved'
-                ? isPolish
-                  ? 'Plan zatwierdzony'
-                  : 'Plan approved'
-                : transformationCase.status}
+            {businessCaseStatus(transformationCase, isPolish)}
           </p>
         </div>
         <div className="rounded-lg border border-c-border bg-c-surface p-3">
           <p className="text-[11px] text-c-text-muted">
-            {isPolish ? 'Gotowe do automatycznego wykonania' : 'Ready for automated execution'}
+            {isPolish ? 'Bieżący etap' : 'Current stage'}
           </p>
           <p className="mt-1 text-sm font-semibold text-c-text">
-            {executable}/{steps.length} {isPolish ? 'etapów' : 'stages'}
+            {businessLifecycleLabel(transformationCase, isPolish)}
           </p>
         </div>
         <div className="rounded-lg border border-c-border bg-c-surface p-3">
-          <p className="text-[11px] text-c-text-muted">
-            {isPolish ? 'Wymaga przygotowania' : 'Needs preparation'}
-          </p>
+          <p className="text-[11px] text-c-text-muted">{isPolish ? 'Właściciel' : 'Owner'}</p>
           <p className="mt-1 text-sm font-semibold text-c-text">
-            {needsAttention} {isPolish ? 'etapów' : 'stages'}
+            {isPolish ? 'Właściciel transformacji' : 'Transformation owner'}
           </p>
         </div>
       </div>
@@ -488,8 +522,6 @@ const TransformationCaseExecutiveOverview: React.FC<{
         </div>
         <ol className="mt-4 grid gap-2 lg:grid-cols-5">
           {phases.map((phase, index) => {
-            const ready = phase.total > 0 && phase.real === phase.total;
-            const started = phase.real > 0 || phase.partial > 0;
             return (
               <li key={phase.label} className="rounded-lg border border-c-border bg-c-card p-3">
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
@@ -497,17 +529,11 @@ const TransformationCaseExecutiveOverview: React.FC<{
                 </p>
                 <p className="mt-2 text-xs font-semibold text-c-text">{phase.label}</p>
                 <p className="mt-2 text-[11px] text-c-text-secondary">
-                  {ready
-                    ? isPolish
-                      ? 'Gotowe'
-                      : 'Ready'
-                    : started
-                      ? isPolish
-                        ? 'Częściowo przygotowane'
-                        : 'Partly prepared'
-                      : isPolish
-                        ? 'Wymaga konfiguracji'
-                        : 'Configuration required'}
+                  {phase.total > 0
+                    ? `${phase.total} ${isPolish ? 'kroków' : 'steps'}`
+                    : isPolish
+                      ? 'Do zaplanowania'
+                      : 'To be planned'}
                 </p>
               </li>
             );
@@ -545,6 +571,10 @@ export const TransformationCasesPanel: React.FC<{
   const isPolish = i18n.language?.startsWith('pl');
   const [searchParams] = useSearchParams();
   const currentUserId = useAppStore((state) => state.currentUser?.id ?? null);
+  const currentUserRole = useAppStore((state) =>
+    String(state.currentUser?.role || '').toUpperCase()
+  );
+  const isOperator = ['ADMIN', 'OWNER', 'SUPERADMIN'].includes(currentUserRole);
   const linkedCaseId = workspaceCaseId ?? searchParams.get('transformationCaseId');
   const [cases, setCases] = useState<TransformationCaseDto[] | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(linkedCaseId);
@@ -618,6 +648,7 @@ export const TransformationCasesPanel: React.FC<{
   const [newMandate, setNewMandate] = useState('');
   const [newOutcome, setNewOutcome] = useState('');
   const [creatingCase, setCreatingCase] = useState(false);
+  const [workspaceView, setWorkspaceView] = useState<CaseWorkspaceView>('plan');
 
   const loadCases = useCallback(async () => {
     setError(null);
@@ -943,43 +974,69 @@ export const TransformationCasesPanel: React.FC<{
           const item = (raw as TransformationCaseRow).transformationCase;
           return (
             <StatusChip
-              label={
+              label={businessCaseStatus(item, isPolish)}
+              tone={
                 item.status === 'cancelled'
-                  ? isPolish
-                    ? 'Anulowany'
-                    : 'Cancelled'
-                  : isPolish
-                    ? 'Do przeglądu'
-                    : 'Review required'
+                  ? 'neutral'
+                  : item.status === 'active' || item.status === 'completed'
+                    ? 'success'
+                    : 'warning'
               }
-              tone={item.status === 'cancelled' ? 'neutral' : 'warning'}
             />
           );
         },
       },
       {
-        id: 'version',
-        label: isPolish ? 'Wersja' : 'Version',
-        width: '110px',
-        render: (raw) => (
-          <MetaChip
-            icon={GitBranch}
-            label={`v${(raw as TransformationCaseRow).transformationCase.version}`}
-          />
-        ),
+        id: 'stage',
+        label: isPolish ? 'Bieżący etap' : 'Current stage',
+        width: '170px',
+        render: (raw) => {
+          const item = (raw as TransformationCaseRow).transformationCase;
+          return (
+            <span className="text-xs text-c-text-secondary">
+              {businessLifecycleLabel(item, isPolish)}
+            </span>
+          );
+        },
       },
       {
-        id: 'steps',
-        label: isPolish ? 'Etapy' : 'Stages',
-        width: '110px',
-        render: (raw) => (
-          <MetaChip
-            icon={ListChecks}
-            label={String(
-              (raw as TransformationCaseRow).transformationCase.activePlan?.steps.length ?? 0
-            )}
-          />
-        ),
+        id: 'nextAction',
+        label: isPolish ? 'Następna czynność' : 'Next action',
+        width: '190px',
+        render: (raw) => {
+          const item = (raw as TransformationCaseRow).transformationCase;
+          return (
+            <span className="text-xs font-medium text-c-text">
+              {item.status === 'plan_proposed'
+                ? isPolish
+                  ? 'Przejrzyj plan'
+                  : 'Review Plan'
+                : item.status === 'plan_approved'
+                  ? isPolish
+                    ? 'Kontynuuj z Teresą'
+                    : 'Continue with Teresa'
+                  : isPolish
+                    ? 'Otwórz zlecenie'
+                    : 'Open Case'}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'updatedAt',
+        label: isPolish ? 'Ostatnia aktywność' : 'Last activity',
+        width: '150px',
+        render: (raw) => {
+          const item = (raw as TransformationCaseRow).transformationCase;
+          const date = new Date(item.updatedAt);
+          return (
+            <span className="text-xs text-c-text-muted">
+              {Number.isNaN(date.getTime())
+                ? '—'
+                : date.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US')}
+            </span>
+          );
+        },
       },
     ],
     [isPolish]
@@ -2493,982 +2550,1263 @@ export const TransformationCasesPanel: React.FC<{
           }
           return (
             <div className="space-y-4" data-testid="transformation-case-preview">
-              <TransformationCaseExecutiveOverview transformationCase={item} isPolish={isPolish} />
-              <details className="rounded-xl border border-c-border bg-c-surface">
-                <summary className="cursor-pointer list-none px-4 py-3 text-xs font-semibold text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-c-focus">
-                  {isPolish
-                    ? 'Plan szczegółowy, zespół i diagnostyka'
-                    : 'Detailed plan, team and diagnostics'}
-                  <span className="ml-2 font-normal text-c-text-muted">
-                    {isPolish ? 'Widok zaawansowany' : 'Advanced view'}
-                  </span>
-                </summary>
-                <div className="space-y-4 border-t border-c-border p-4">
-                  <PreviewMetaCard
-                    pills={[
-                      { label: isPolish ? 'Wersja' : 'Version', value: `v${item.version}` },
-                      {
-                        label: isPolish ? 'Autonomia' : 'Autonomy',
-                        value: item.autonomyLevel,
-                        tone: 'warning',
-                      },
-                      { label: isPolish ? 'Etapy' : 'Stages', value: steps.length },
-                    ]}
-                  />
-                  <TransformationQualityTrustSection
+              <header className="rounded-xl border border-c-border bg-c-surface p-4 sm:p-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
+                      {isPolish ? 'Zlecenie transformacyjne' : 'Transformation case'}
+                    </p>
+                    <h2 className="mt-1 text-lg font-semibold leading-7 text-c-text">
+                      {deriveTransformationCaseTitle(item)}
+                    </h2>
+                    <p className="mt-1 text-xs text-c-text-secondary">
+                      {businessCaseStatus(item, isPolish)} ·{' '}
+                      {businessLifecycleLabel(item, isPolish)}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setWorkspaceView('plan')}
+                    className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-c-primary px-4 py-2 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                  >
+                    <MessageSquareText size={16} aria-hidden />
+                    {isPolish ? 'Kontynuuj z Teresą' : 'Continue with Teresa'}
+                  </button>
+                </div>
+              </header>
+
+              <nav
+                className="overflow-x-auto rounded-xl border border-c-border bg-c-surface p-1"
+                aria-label={isPolish ? 'Widoki zlecenia' : 'Case views'}
+              >
+                <div className="flex min-w-max gap-1">
+                  {(
+                    [
+                      ['plan', isPolish ? 'Plan' : 'Plan'],
+                      ['execution', isPolish ? 'Realizacja' : 'Execution'],
+                      ['results', isPolish ? 'Rezultaty' : 'Results'],
+                      ['decisions', isPolish ? 'Decyzje' : 'Decisions'],
+                      ['team', isPolish ? 'Zespół' : 'Team'],
+                      ['history', isPolish ? 'Historia' : 'History'],
+                    ] as Array<[CaseWorkspaceView, string]>
+                  ).map(([view, label]) => (
+                    <button
+                      key={view}
+                      type="button"
+                      aria-current={workspaceView === view ? 'page' : undefined}
+                      onClick={() => setWorkspaceView(view)}
+                      className={`min-h-9 rounded-lg px-3 py-2 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
+                        workspaceView === view
+                          ? 'bg-c-primary/10 text-c-primary'
+                          : 'text-c-text-secondary hover:bg-c-bg hover:text-c-text'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </nav>
+
+              {workspaceView === 'plan' ? (
+                <div className="grid gap-4 xl:grid-cols-[minmax(280px,0.8fr)_minmax(0,1.5fr)]">
+                  <section
+                    className="rounded-xl border border-c-border bg-c-surface p-4"
+                    aria-labelledby="teresa-workshop-title"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-c-primary/10 text-c-primary">
+                        <Sparkles size={18} aria-hidden />
+                      </span>
+                      <div>
+                        <h3
+                          id="teresa-workshop-title"
+                          className="text-sm font-semibold text-c-text"
+                        >
+                          {isPolish ? 'Warsztat z Teresą' : 'Workshop with Teresa'}
+                        </h3>
+                        <p className="text-[11px] text-c-text-muted">
+                          {isPolish
+                            ? 'Rozmowa i plan pozostają zsynchronizowane'
+                            : 'Conversation and Plan stay synchronized'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-4 rounded-lg bg-c-bg p-3 text-xs leading-5 text-c-text-secondary">
+                      {item.status === 'plan_proposed'
+                        ? isPolish
+                          ? 'Przygotowałam plan do przeglądu. Możesz poprawić kroki ręcznie albo zatwierdzić całość. Nie zmienię zatwierdzonej wersji bez Twojej decyzji.'
+                          : 'I prepared a Plan for review. You can edit the steps or approve it. I will not change an approved version without your decision.'
+                        : isPolish
+                          ? 'Plan jest zatwierdzony. Przygotujmy teraz pierwszy pakiet pracy i decyzji.'
+                          : 'The Plan is approved. Let us prepare the first package of work and decisions.'}
+                    </div>
+                    <div className="mt-4 space-y-2">
+                      {item.status === 'plan_proposed' ? (
+                        <button
+                          type="button"
+                          onClick={() => void handleApprovePlan()}
+                          disabled={Boolean(stageAction)}
+                          className="flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-c-primary px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
+                        >
+                          <CheckCircle2 size={15} aria-hidden />
+                          {isPolish ? 'Zatwierdź plan' : 'Approve Plan'}
+                        </button>
+                      ) : item.status === 'plan_approved' && !ideasProposal ? (
+                        <button
+                          type="button"
+                          onClick={() => void handleProposeIdeas()}
+                          disabled={Boolean(stageAction)}
+                          className="flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-c-primary px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
+                        >
+                          <PlayCircle size={15} aria-hidden />
+                          {isPolish
+                            ? 'Przygotuj pierwszy pakiet pracy'
+                            : 'Prepare first work package'}
+                        </button>
+                      ) : (
+                        <p className="text-xs text-c-text-muted">
+                          {isPolish
+                            ? 'Bieżąca propozycja jest gotowa do przeglądu w planie.'
+                            : 'The current suggestion is ready for review in the Plan.'}
+                        </p>
+                      )}
+                    </div>
+                  </section>
+                  <TransformationCaseExecutiveOverview
                     transformationCase={item}
                     isPolish={isPolish}
                   />
-                  <ProjectTeamCard
-                    caseId={item.transformationCaseId}
-                    caseVersion={item.version}
-                    projectId={item.projectId}
-                    currentUserId={currentUserId}
-                    isPolish={isPolish}
-                    onProjectBound={async () => {
-                      await loadCases();
-                    }}
-                  />
-                  {canonicalRuntime ? (
-                    <div
-                      className={`rounded-lg border p-3 ${
-                        canonicalRuntime.stateDrift
-                          ? 'border-amber-300/50 bg-amber-50/60 dark:border-amber-500/30 dark:bg-amber-500/5'
-                          : 'border-c-border bg-c-surface'
-                      }`}
-                      data-testid="canonical-runtime"
-                      role="status"
-                      aria-live="polite"
-                    >
-                      <p className="text-xs font-semibold text-c-text">
-                        {isPolish ? 'Kanoniczny przebieg agenta' : 'Canonical agent run'}
-                      </p>
-                      <p className="mt-1 break-all text-[11px] text-c-text-secondary">
-                        Run ID: {canonicalRuntime.canonicalRunId}
-                      </p>
-                      <p className="mt-1 text-[11px] text-c-text-muted">
-                        {isPolish ? 'Stan zapisany' : 'Persisted state'}:{' '}
-                        {canonicalRuntime.actualState}
-                        {' · '}
-                        {isPolish ? 'Stan wynikający z procesu' : 'Projected state'}:{' '}
-                        {canonicalRuntime.projectedState}
-                      </p>
-                      {onOpenOperations ? (
-                        <button
-                          type="button"
-                          className="mt-2 rounded-md border border-c-border px-2 py-1 text-xs font-semibold text-c-text"
-                          onClick={() =>
-                            onOpenOperations({
-                              transformationCaseId: item.transformationCaseId,
-                              canonicalRunId: canonicalRuntime.canonicalRunId,
-                            })
-                          }
-                        >
-                          {isPolish ? 'Otwórz diagnostykę przebiegu' : 'Open run diagnostics'}
-                        </button>
-                      ) : null}
-                      <p className="mt-1 text-[11px] text-c-text-muted">
-                        Lineage: {canonicalRuntime.lineageId} · Identity:{' '}
-                        {canonicalRuntime.identityRegistered ? 'registered' : 'missing'}
-                      </p>
-                      {canonicalRuntime.stateDrift ? (
-                        <div className="mt-2 flex items-center justify-between gap-3">
-                          <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
-                            {isPolish
-                              ? 'Wykryto rozbieżność stanu. Automatyczna spójność nie jest jeszcze dowiedziona.'
-                              : 'State drift detected. Automatic consistency is not yet proven.'}
-                          </p>
+                </div>
+              ) : workspaceView === 'execution' ? (
+                <section className="rounded-xl border border-c-border bg-c-surface p-5">
+                  <h3 className="text-base font-semibold text-c-text">
+                    {isPolish ? 'Realizacja zlecenia' : 'Case execution'}
+                  </h3>
+                  <p className="mt-1 text-sm text-c-text-secondary">
+                    {executionCheckpoint?.executionStarted
+                      ? isPolish
+                        ? 'Realizacja trwa. Poniżej znajduje się bieżący stan pracy i następna decyzja.'
+                        : 'Execution is in progress. Current work and the next decision are shown below.'
+                      : isPolish
+                        ? 'Realizacja rozpocznie się po przygotowaniu i zaakceptowaniu wymaganych decyzji.'
+                        : 'Execution starts after the required work and decisions are prepared and approved.'}
+                  </p>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                    <PreviewMetaCard
+                      pills={[
+                        {
+                          label: isPolish ? 'Etap' : 'Stage',
+                          value: businessLifecycleLabel(item, isPolish),
+                        },
+                      ]}
+                    />
+                    <PreviewMetaCard
+                      pills={[
+                        {
+                          label: isPolish ? 'Stan' : 'Status',
+                          value: businessCaseStatus(item, isPolish),
+                        },
+                      ]}
+                    />
+                    <PreviewMetaCard
+                      pills={[
+                        {
+                          label: isPolish ? 'Następna decyzja' : 'Next decision',
+                          value:
+                            item.status === 'plan_approved'
+                              ? isPolish
+                                ? 'Przygotuj pracę'
+                                : 'Prepare work'
+                              : isPolish
+                                ? 'Przejrzyj postęp'
+                                : 'Review progress',
+                        },
+                      ]}
+                    />
+                  </div>
+                </section>
+              ) : workspaceView === 'results' ? (
+                <section className="rounded-xl border border-c-border bg-c-surface p-5">
+                  <div className="flex items-center gap-2">
+                    <FileCheck2 size={18} className="text-c-primary" aria-hidden />
+                    <h3 className="text-base font-semibold text-c-text">
+                      {isPolish ? 'Rezultaty i dowody' : 'Results and evidence'}
+                    </h3>
+                  </div>
+                  {item.desiredOutcomes.length ? (
+                    <ul className="mt-4 space-y-2 text-sm text-c-text-secondary">
+                      {item.desiredOutcomes.map((outcome) => (
+                        <li key={outcome}>• {outcome}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-4 text-sm text-c-text-muted">
+                      {isPolish
+                        ? 'Rezultaty nie zostały jeszcze zdefiniowane.'
+                        : 'No outcomes have been defined yet.'}
+                    </p>
+                  )}
+                  {finalOutputRun ? (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <a
+                        className="rounded-lg border border-c-border px-3 py-2 text-xs font-semibold text-c-text"
+                        href={`/api/v8/transformation-cases/${encodeURIComponent(item.transformationCaseId)}/final-outputs/docx/download`}
+                      >
+                        Word
+                      </a>
+                      <a
+                        className="rounded-lg border border-c-border px-3 py-2 text-xs font-semibold text-c-text"
+                        href={`/api/v8/transformation-cases/${encodeURIComponent(item.transformationCaseId)}/final-outputs/pptx/download`}
+                      >
+                        PowerPoint
+                      </a>
+                    </div>
+                  ) : null}
+                </section>
+              ) : workspaceView === 'team' ? (
+                <ProjectTeamCard
+                  caseId={item.transformationCaseId}
+                  caseVersion={item.version}
+                  projectId={item.projectId}
+                  currentUserId={currentUserId}
+                  isPolish={isPolish}
+                  onProjectBound={loadCases}
+                />
+              ) : workspaceView === 'decisions' ? (
+                <section className="rounded-xl border border-c-border bg-c-surface p-5">
+                  <h3 className="text-base font-semibold text-c-text">
+                    {isPolish ? 'Decyzje i akceptacje' : 'Decisions and approvals'}
+                  </h3>
+                  <p className="mt-2 text-sm text-c-text-secondary">
+                    {isPolish
+                      ? 'Propozycje Teresy wymagające decyzji są przeglądane tutaj, bez automatycznego rozszerzania zakresu.'
+                      : 'Teresa suggestions that require a decision are reviewed here without automatically expanding scope.'}
+                  </p>
+                  <p className="mt-4 text-sm font-medium text-c-text">
+                    {activeStageProposal
+                      ? isPolish
+                        ? 'Jedna propozycja oczekuje na przegląd.'
+                        : 'One suggestion is waiting for review.'
+                      : isPolish
+                        ? 'Brak decyzji oczekujących na przegląd.'
+                        : 'No decisions are waiting for review.'}
+                  </p>
+                </section>
+              ) : (
+                <section className="rounded-xl border border-c-border bg-c-surface p-5">
+                  <div className="flex items-center gap-2">
+                    <History size={18} className="text-c-primary" aria-hidden />
+                    <h3 className="text-base font-semibold text-c-text">
+                      {isPolish ? 'Historia zlecenia' : 'Case history'}
+                    </h3>
+                  </div>
+                  <p className="mt-3 text-sm text-c-text-secondary">
+                    {isPolish
+                      ? `Utworzono ${new Date(item.createdAt).toLocaleDateString('pl-PL')}. Ostatnia zmiana ${new Date(item.updatedAt).toLocaleDateString('pl-PL')}.`
+                      : `Created ${new Date(item.createdAt).toLocaleDateString('en-US')}. Last changed ${new Date(item.updatedAt).toLocaleDateString('en-US')}.`}
+                  </p>
+                  <p className="mt-2 text-xs text-c-text-muted">
+                    {isPolish
+                      ? `Bieżąca wersja planu: ${item.version}.`
+                      : `Current Plan version: ${item.version}.`}
+                  </p>
+                </section>
+              )}
+
+              {isOperator ? (
+                <details className="rounded-xl border border-c-border bg-c-surface">
+                  <summary className="cursor-pointer list-none px-4 py-3 text-xs font-semibold text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-c-focus">
+                    {isPolish ? 'Diagnostyka operatorska' : 'Operator diagnostics'}
+                    <span className="ml-2 font-normal text-c-text-muted">
+                      {isPolish ? 'Widok zaawansowany' : 'Advanced view'}
+                    </span>
+                  </summary>
+                  <div className="space-y-4 border-t border-c-border p-4">
+                    <PreviewMetaCard
+                      pills={[
+                        { label: isPolish ? 'Wersja' : 'Version', value: `v${item.version}` },
+                        {
+                          label: isPolish ? 'Autonomia' : 'Autonomy',
+                          value: item.autonomyLevel,
+                          tone: 'warning',
+                        },
+                        { label: isPolish ? 'Etapy' : 'Stages', value: steps.length },
+                      ]}
+                    />
+                    <TransformationQualityTrustSection
+                      transformationCase={item}
+                      isPolish={isPolish}
+                    />
+                    <ProjectTeamCard
+                      caseId={item.transformationCaseId}
+                      caseVersion={item.version}
+                      projectId={item.projectId}
+                      currentUserId={currentUserId}
+                      isPolish={isPolish}
+                      onProjectBound={async () => {
+                        await loadCases();
+                      }}
+                    />
+                    {canonicalRuntime ? (
+                      <div
+                        className={`rounded-lg border p-3 ${
+                          canonicalRuntime.stateDrift
+                            ? 'border-amber-300/50 bg-amber-50/60 dark:border-amber-500/30 dark:bg-amber-500/5'
+                            : 'border-c-border bg-c-surface'
+                        }`}
+                        data-testid="canonical-runtime"
+                        role="status"
+                        aria-live="polite"
+                      >
+                        <p className="text-xs font-semibold text-c-text">
+                          {isPolish ? 'Kanoniczny przebieg agenta' : 'Canonical agent run'}
+                        </p>
+                        <p className="mt-1 break-all text-[11px] text-c-text-secondary">
+                          Run ID: {canonicalRuntime.canonicalRunId}
+                        </p>
+                        <p className="mt-1 text-[11px] text-c-text-muted">
+                          {isPolish ? 'Stan zapisany' : 'Persisted state'}:{' '}
+                          {canonicalRuntime.actualState}
+                          {' · '}
+                          {isPolish ? 'Stan wynikający z procesu' : 'Projected state'}:{' '}
+                          {canonicalRuntime.projectedState}
+                        </p>
+                        {onOpenOperations ? (
                           <button
                             type="button"
-                            onClick={() => void reconcileRuntime()}
-                            disabled={reconcilingRuntime}
-                            className="rounded-md border border-amber-400/50 px-2 py-1 text-xs font-semibold text-c-text disabled:opacity-50"
+                            className="mt-2 rounded-md border border-c-border px-2 py-1 text-xs font-semibold text-c-text"
+                            onClick={() =>
+                              onOpenOperations({
+                                transformationCaseId: item.transformationCaseId,
+                                canonicalRunId: canonicalRuntime.canonicalRunId,
+                              })
+                            }
                           >
-                            {reconcilingRuntime
-                              ? isPolish
-                                ? 'Uzgadnianie…'
-                                : 'Reconciling…'
-                              : isPolish
-                                ? 'Uzgodnij stan'
-                                : 'Reconcile state'}
+                            {isPolish ? 'Otwórz diagnostykę przebiegu' : 'Open run diagnostics'}
                           </button>
-                        </div>
-                      ) : null}
-                    </div>
-                  ) : null}
-                  {finalOutputRun ? (
-                    <div className="rounded-lg border border-c-border bg-c-surface p-3">
-                      <p className="text-xs font-semibold text-c-text">
-                        {isPolish ? 'Końcowy Word + PowerPoint' : 'Final Word + PowerPoint'}
-                      </p>
-                      <p className="mt-1 break-all text-[11px] text-c-text-secondary">
-                        {isPolish ? 'Digest faktów' : 'Facts digest'}: {finalOutputRun.factsDigest}
-                      </p>
-                      <p className="mt-1 text-[11px] text-c-text-muted">
-                        DOCX {finalOutputRun.docxSha256.slice(0, 12)}… · PPTX{' '}
-                        {finalOutputRun.pptxSha256.slice(0, 12)}…
-                      </p>
-                      <div className="mt-2 flex gap-3 text-xs font-semibold text-c-info">
-                        <a
-                          href={`/api/v8/transformation-cases/${encodeURIComponent(item.transformationCaseId)}/final-outputs/docx/download`}
-                        >
-                          Word
-                        </a>
-                        <a
-                          href={`/api/v8/transformation-cases/${encodeURIComponent(item.transformationCaseId)}/final-outputs/pptx/download`}
-                        >
-                          PowerPoint
-                        </a>
+                        ) : null}
+                        <p className="mt-1 text-[11px] text-c-text-muted">
+                          Lineage: {canonicalRuntime.lineageId} · Identity:{' '}
+                          {canonicalRuntime.identityRegistered ? 'registered' : 'missing'}
+                        </p>
+                        {canonicalRuntime.stateDrift ? (
+                          <div className="mt-2 flex items-center justify-between gap-3">
+                            <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
+                              {isPolish
+                                ? 'Wykryto rozbieżność stanu. Automatyczna spójność nie jest jeszcze dowiedziona.'
+                                : 'State drift detected. Automatic consistency is not yet proven.'}
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => void reconcileRuntime()}
+                              disabled={reconcilingRuntime}
+                              className="rounded-md border border-amber-400/50 px-2 py-1 text-xs font-semibold text-c-text disabled:opacity-50"
+                            >
+                              {reconcilingRuntime
+                                ? isPolish
+                                  ? 'Uzgadnianie…'
+                                  : 'Reconciling…'
+                                : isPolish
+                                  ? 'Uzgodnij stan'
+                                  : 'Reconcile state'}
+                            </button>
+                          </div>
+                        ) : null}
                       </div>
-                    </div>
-                  ) : null}
-                  {finalOutputPublication ? (
-                    <section
-                      className="rounded-lg border border-c-border bg-c-surface p-3"
-                      aria-labelledby={`final-publication-${item.transformationCaseId}`}
-                      data-testid="final-output-publication"
-                    >
-                      <h3
-                        id={`final-publication-${item.transformationCaseId}`}
-                        className="text-xs font-semibold text-c-text"
+                    ) : null}
+                    {finalOutputRun ? (
+                      <div className="rounded-lg border border-c-border bg-c-surface p-3">
+                        <p className="text-xs font-semibold text-c-text">
+                          {isPolish ? 'Końcowy Word + PowerPoint' : 'Final Word + PowerPoint'}
+                        </p>
+                        <p className="mt-1 break-all text-[11px] text-c-text-secondary">
+                          {isPolish ? 'Digest faktów' : 'Facts digest'}:{' '}
+                          {finalOutputRun.factsDigest}
+                        </p>
+                        <p className="mt-1 text-[11px] text-c-text-muted">
+                          DOCX {finalOutputRun.docxSha256.slice(0, 12)}… · PPTX{' '}
+                          {finalOutputRun.pptxSha256.slice(0, 12)}…
+                        </p>
+                        <div className="mt-2 flex gap-3 text-xs font-semibold text-c-info">
+                          <a
+                            href={`/api/v8/transformation-cases/${encodeURIComponent(item.transformationCaseId)}/final-outputs/docx/download`}
+                          >
+                            Word
+                          </a>
+                          <a
+                            href={`/api/v8/transformation-cases/${encodeURIComponent(item.transformationCaseId)}/final-outputs/pptx/download`}
+                          >
+                            PowerPoint
+                          </a>
+                        </div>
+                      </div>
+                    ) : null}
+                    {finalOutputPublication ? (
+                      <section
+                        className="rounded-lg border border-c-border bg-c-surface p-3"
+                        aria-labelledby={`final-publication-${item.transformationCaseId}`}
+                        data-testid="final-output-publication"
                       >
-                        {isPolish ? 'Zgoda na publikację końcową' : 'Final publication approval'}
-                      </h3>
-                      <p className="mt-1 break-all text-[11px] text-c-text-secondary">
-                        {isPolish ? 'Dokładny digest faktów' : 'Exact facts digest'}:{' '}
-                        {finalOutputPublication.factsDigest}
-                      </p>
+                        <h3
+                          id={`final-publication-${item.transformationCaseId}`}
+                          className="text-xs font-semibold text-c-text"
+                        >
+                          {isPolish ? 'Zgoda na publikację końcową' : 'Final publication approval'}
+                        </h3>
+                        <p className="mt-1 break-all text-[11px] text-c-text-secondary">
+                          {isPolish ? 'Dokładny digest faktów' : 'Exact facts digest'}:{' '}
+                          {finalOutputPublication.factsDigest}
+                        </p>
+                        <p
+                          id={`final-publication-state-${item.transformationCaseId}`}
+                          className="mt-1 break-words text-[11px] text-c-text-muted"
+                          role="status"
+                          aria-live="polite"
+                          aria-atomic="true"
+                        >
+                          {isPolish ? 'Wersja Case' : 'Case version'}: v
+                          {finalOutputPublication.caseVersion} · {isPolish ? 'Zakres' : 'Scope'}:{' '}
+                          {finalOutputPublication.scopeKey} · {finalPublicationStateReason}
+                        </p>
+                      </section>
+                    ) : item.lifecycleStage === 'final_outputs' ? (
                       <p
                         id={`final-publication-state-${item.transformationCaseId}`}
-                        className="mt-1 break-words text-[11px] text-c-text-muted"
+                        className="sr-only"
                         role="status"
                         aria-live="polite"
                         aria-atomic="true"
                       >
-                        {isPolish ? 'Wersja Case' : 'Case version'}: v
-                        {finalOutputPublication.caseVersion} · {isPolish ? 'Zakres' : 'Scope'}:{' '}
-                        {finalOutputPublication.scopeKey} · {finalPublicationStateReason}
+                        {finalPublicationStateReason}
                       </p>
-                    </section>
-                  ) : item.lifecycleStage === 'final_outputs' ? (
-                    <p
-                      id={`final-publication-state-${item.transformationCaseId}`}
-                      className="sr-only"
-                      role="status"
-                      aria-live="polite"
-                      aria-atomic="true"
-                    >
-                      {finalPublicationStateReason}
-                    </p>
-                  ) : null}
-                  {item.missingInputs.length > 0 ? (
-                    <div className="rounded-lg border border-amber-300/40 bg-amber-50/60 p-3 dark:border-amber-500/20 dark:bg-amber-500/5">
-                      <p className="text-xs font-semibold text-c-text">
-                        {isPolish ? 'Brakujące dane' : 'Missing inputs'}
-                      </p>
-                      <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-c-text-secondary">
-                        {item.missingInputs.map((input) => (
-                          <li key={input}>{input}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  ) : null}
-                  <GovernedProposalReview
-                    proposal={activeStageProposal}
-                    isLoading={proposalsLoading && !activeStageProposal}
-                    isPolish={isPolish}
-                    busy={Boolean(stageAction)}
-                    onScopeDecision={(scopeKey, decision) =>
-                      void handleScopeGovernanceDecision(scopeKey, decision)
-                    }
-                    onRevise={() => void handleReviseGovernedProposal()}
-                    onRebaseline={() => void handleRebaselineGovernedProposal()}
-                  />
-                  {ideasProposal ? (
-                    <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
-                      <div className="flex items-center justify-between gap-2">
+                    ) : null}
+                    {item.missingInputs.length > 0 ? (
+                      <div className="rounded-lg border border-amber-300/40 bg-amber-50/60 p-3 dark:border-amber-500/20 dark:bg-amber-500/5">
                         <p className="text-xs font-semibold text-c-text">
-                          {isPolish ? 'Propozycja początkowych idei' : 'Initial Ideas proposal'}
+                          {isPolish ? 'Brakujące dane' : 'Missing inputs'}
                         </p>
-                        <StatusChip
-                          label={ideasProposal.status}
-                          tone={ideasProposal.status === 'applied' ? 'success' : 'warning'}
-                          size="sm"
-                        />
+                        <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-c-text-secondary">
+                          {item.missingInputs.map((input) => (
+                            <li key={input}>{input}</li>
+                          ))}
+                        </ul>
                       </div>
-                      {ideasProposal.candidates.map((candidate) => (
-                        <div
-                          key={candidate.candidateId}
-                          className="rounded-md border border-c-border bg-c-card p-2.5"
-                        >
-                          <p className="text-xs font-semibold text-c-text">{candidate.title}</p>
-                          <p className="mt-1 text-[11px] text-c-text-secondary">
-                            {candidate.hypothesis}
-                          </p>
-                        </div>
-                      ))}
-                      {ideasProposal.artifactIds?.length ? (
-                        <p className="text-[11px] text-c-text-muted">
-                          {isPolish
-                            ? `Utworzono w My Ideas: ${ideasProposal.artifactIds.length}`
-                            : `Created in My Ideas: ${ideasProposal.artifactIds.length}`}
-                        </p>
-                      ) : null}
-                    </div>
-                  ) : null}
-                  {ideasProposal?.status === 'applied' && interviewsProposal === null ? (
-                    <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
-                      <p className="text-xs font-semibold text-c-text">
-                        {isPolish ? 'Przygotuj plan Interview' : 'Prepare Interview plan'}
-                      </p>
-                      <input
-                        aria-label={
-                          isPolish ? 'ID użytkownika interesariusza' : 'Stakeholder user ID'
-                        }
-                        value={stakeholderUserId}
-                        onChange={(event) => setStakeholderUserId(event.target.value)}
-                        placeholder={isPolish ? 'ID użytkownika' : 'User ID'}
-                        className="w-full rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
-                      />
-                      <input
-                        aria-label={isPolish ? 'Rola interesariusza' : 'Stakeholder role'}
-                        value={stakeholderRole}
-                        onChange={(event) => setStakeholderRole(event.target.value)}
-                        placeholder={
-                          isPolish
-                            ? 'Rola, np. Dyrektor Operacyjny'
-                            : 'Role, e.g. Operations Director'
-                        }
-                        className="w-full rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
-                      />
-                      <input
-                        aria-label={isPolish ? 'Obszary rozmowy' : 'Interview focus areas'}
-                        value={stakeholderFocus}
-                        onChange={(event) => setStakeholderFocus(event.target.value)}
-                        placeholder={
-                          isPolish
-                            ? 'Obszary oddzielone przecinkami'
-                            : 'Comma-separated focus areas'
-                        }
-                        className="w-full rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
-                      />
-                    </div>
-                  ) : null}
-                  {interviewsProposal ? (
-                    <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-xs font-semibold text-c-text">
-                          {isPolish ? 'Plan Interview' : 'Interview plan'}
-                        </p>
-                        <StatusChip
-                          label={interviewsProposal.status}
-                          tone={interviewsProposal.status === 'applied' ? 'success' : 'warning'}
-                          size="sm"
-                        />
-                      </div>
-                      {interviewsProposal.candidates.map((candidate) => (
-                        <div
-                          key={candidate.candidateId}
-                          className="rounded-md border border-c-border bg-c-card p-2.5"
-                        >
+                    ) : null}
+                    <GovernedProposalReview
+                      proposal={activeStageProposal}
+                      isLoading={proposalsLoading && !activeStageProposal}
+                      isPolish={isPolish}
+                      busy={Boolean(stageAction)}
+                      onScopeDecision={(scopeKey, decision) =>
+                        void handleScopeGovernanceDecision(scopeKey, decision)
+                      }
+                      onRevise={() => void handleReviseGovernedProposal()}
+                      onRebaseline={() => void handleRebaselineGovernedProposal()}
+                    />
+                    {ideasProposal ? (
+                      <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
+                        <div className="flex items-center justify-between gap-2">
                           <p className="text-xs font-semibold text-c-text">
-                            {candidate.stakeholderRole} · {candidate.assigneeUserId}
+                            {isPolish ? 'Propozycja początkowych idei' : 'Initial Ideas proposal'}
                           </p>
-                          <p className="mt-1 text-[11px] text-c-text-secondary">
-                            {candidate.objective}
-                          </p>
-                          <p className="mt-1 text-[11px] text-c-text-muted">
-                            {isPolish ? 'Pytania' : 'Questions'}: {candidate.questions.length}
-                          </p>
+                          <StatusChip
+                            label={ideasProposal.status}
+                            tone={ideasProposal.status === 'applied' ? 'success' : 'warning'}
+                            size="sm"
+                          />
                         </div>
-                      ))}
-                      {interviewsProposal.artifactIds?.length ? (
-                        <p className="text-[11px] text-c-text-muted">
-                          {isPolish
-                            ? `Utworzone assignmenty: ${interviewsProposal.artifactIds.length}`
-                            : `Created assignments: ${interviewsProposal.artifactIds.length}`}
-                        </p>
-                      ) : null}
-                    </div>
-                  ) : null}
-                  {interviewsProposal?.status === 'applied' &&
-                  item.lifecycleStage === 'interviews' ? (
-                    <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
-                      <p className="text-xs font-semibold text-c-text">
-                        {isPolish ? 'Zamknij Interview po review' : 'Close Interview after review'}
-                      </p>
-                      <p className="text-[11px] text-c-text-secondary">
-                        {isPolish
-                          ? 'Wymagane są ukończone sesje, zaakceptowane assignmenty i insighty po governance review.'
-                          : 'Completed sessions, approved assignments and governance-reviewed insights are required.'}
-                      </p>
-                      <input
-                        aria-label={
-                          isPolish ? 'ID zaakceptowanych insightów' : 'Approved insight IDs'
-                        }
-                        value={acceptedInsightIds}
-                        onChange={(event) => setAcceptedInsightIds(event.target.value)}
-                        placeholder={
-                          isPolish
-                            ? 'ID insightów oddzielone przecinkami'
-                            : 'Comma-separated insight IDs'
-                        }
-                        className="w-full rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
-                      />
-                    </div>
-                  ) : null}
-                  {item.lifecycleStage === 'drd' && drdProposal === null ? (
-                    <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
-                      <p className="text-xs font-semibold text-c-text">
-                        {isPolish ? 'Przygotuj diagnozę DRD' : 'Prepare DRD diagnosis'}
-                      </p>
-                      <p className="text-[11px] text-c-text-secondary">
-                        {isPolish
-                          ? 'Agent utworzy propozycję opartą na zaakceptowanych insightach Interview. Assessment powstanie dopiero po akceptacji.'
-                          : 'The Agent will prepare a proposal from accepted Interview Insights. The assessment is created only after approval.'}
-                      </p>
-                      <input
-                        aria-label={isPolish ? 'Nazwa assessmentu DRD' : 'DRD assessment name'}
-                        value={drdName}
-                        onChange={(event) => setDrdName(event.target.value)}
-                        placeholder={isPolish ? 'Nazwa diagnozy DRD' : 'DRD diagnosis name'}
-                        className="w-full rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
-                      />
-                    </div>
-                  ) : null}
-                  {drdProposal ? (
-                    <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
-                      <div className="flex items-center justify-between gap-2">
+                        {ideasProposal.candidates.map((candidate) => (
+                          <div
+                            key={candidate.candidateId}
+                            className="rounded-md border border-c-border bg-c-card p-2.5"
+                          >
+                            <p className="text-xs font-semibold text-c-text">{candidate.title}</p>
+                            <p className="mt-1 text-[11px] text-c-text-secondary">
+                              {candidate.hypothesis}
+                            </p>
+                          </div>
+                        ))}
+                        {ideasProposal.artifactIds?.length ? (
+                          <p className="text-[11px] text-c-text-muted">
+                            {isPolish
+                              ? `Utworzono w My Ideas: ${ideasProposal.artifactIds.length}`
+                              : `Created in My Ideas: ${ideasProposal.artifactIds.length}`}
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    {ideasProposal?.status === 'applied' && interviewsProposal === null ? (
+                      <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
                         <p className="text-xs font-semibold text-c-text">
-                          {drdProposal.assessmentName}
+                          {isPolish ? 'Przygotuj plan Interview' : 'Prepare Interview plan'}
                         </p>
-                        <StatusChip
-                          label={drdProposal.status}
-                          tone={drdProposal.status === 'applied' ? 'success' : 'warning'}
-                          size="sm"
+                        <input
+                          aria-label={
+                            isPolish ? 'ID użytkownika interesariusza' : 'Stakeholder user ID'
+                          }
+                          value={stakeholderUserId}
+                          onChange={(event) => setStakeholderUserId(event.target.value)}
+                          placeholder={isPolish ? 'ID użytkownika' : 'User ID'}
+                          className="w-full rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
+                        />
+                        <input
+                          aria-label={isPolish ? 'Rola interesariusza' : 'Stakeholder role'}
+                          value={stakeholderRole}
+                          onChange={(event) => setStakeholderRole(event.target.value)}
+                          placeholder={
+                            isPolish
+                              ? 'Rola, np. Dyrektor Operacyjny'
+                              : 'Role, e.g. Operations Director'
+                          }
+                          className="w-full rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
+                        />
+                        <input
+                          aria-label={isPolish ? 'Obszary rozmowy' : 'Interview focus areas'}
+                          value={stakeholderFocus}
+                          onChange={(event) => setStakeholderFocus(event.target.value)}
+                          placeholder={
+                            isPolish
+                              ? 'Obszary oddzielone przecinkami'
+                              : 'Comma-separated focus areas'
+                          }
+                          className="w-full rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
                         />
                       </div>
-                      <p className="text-[11px] text-c-text-secondary">
-                        {isPolish ? 'Źródłowe insighty Interview' : 'Source Interview Insights'}:{' '}
-                        {drdProposal.sourceInsightIds.length}
-                      </p>
-                      {drdProposal.assessmentId ? (
-                        <a
-                          href={`/assessment/drd/${encodeURIComponent(drdProposal.assessmentId)}`}
-                          className="inline-flex text-xs font-semibold text-c-info hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                        >
-                          {isPolish ? 'Otwórz assessment DRD' : 'Open DRD assessment'}
-                        </a>
-                      ) : null}
-                    </div>
-                  ) : null}
-                  {item.lifecycleStage === 'opportunity_synthesis' && synthesisProposal === null ? (
-                    <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
-                      <p className="text-xs font-semibold text-c-text">
-                        {isPolish ? 'Synteza szans' : 'Opportunity synthesis'}
-                      </p>
-                      <p className="text-[11px] text-c-text-secondary">
-                        {isPolish
-                          ? 'Agent połączy lineage Ideas, zaakceptowanych Interview Insights i immutable wyniku DRD. Candidate powstanie dopiero po akceptacji.'
-                          : 'The Agent will join Ideas, accepted Interview Insights and immutable DRD lineage. The Candidate is created only after approval.'}
-                      </p>
-                    </div>
-                  ) : null}
-                  {synthesisProposal ? (
-                    <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
-                      <div className="flex items-center justify-between gap-2">
+                    ) : null}
+                    {interviewsProposal ? (
+                      <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-xs font-semibold text-c-text">
+                            {isPolish ? 'Plan Interview' : 'Interview plan'}
+                          </p>
+                          <StatusChip
+                            label={interviewsProposal.status}
+                            tone={interviewsProposal.status === 'applied' ? 'success' : 'warning'}
+                            size="sm"
+                          />
+                        </div>
+                        {interviewsProposal.candidates.map((candidate) => (
+                          <div
+                            key={candidate.candidateId}
+                            className="rounded-md border border-c-border bg-c-card p-2.5"
+                          >
+                            <p className="text-xs font-semibold text-c-text">
+                              {candidate.stakeholderRole} · {candidate.assigneeUserId}
+                            </p>
+                            <p className="mt-1 text-[11px] text-c-text-secondary">
+                              {candidate.objective}
+                            </p>
+                            <p className="mt-1 text-[11px] text-c-text-muted">
+                              {isPolish ? 'Pytania' : 'Questions'}: {candidate.questions.length}
+                            </p>
+                          </div>
+                        ))}
+                        {interviewsProposal.artifactIds?.length ? (
+                          <p className="text-[11px] text-c-text-muted">
+                            {isPolish
+                              ? `Utworzone assignmenty: ${interviewsProposal.artifactIds.length}`
+                              : `Created assignments: ${interviewsProposal.artifactIds.length}`}
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    {interviewsProposal?.status === 'applied' &&
+                    item.lifecycleStage === 'interviews' ? (
+                      <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
+                        <p className="text-xs font-semibold text-c-text">
+                          {isPolish
+                            ? 'Zamknij Interview po review'
+                            : 'Close Interview after review'}
+                        </p>
+                        <p className="text-[11px] text-c-text-secondary">
+                          {isPolish
+                            ? 'Wymagane są ukończone sesje, zaakceptowane assignmenty i insighty po governance review.'
+                            : 'Completed sessions, approved assignments and governance-reviewed insights are required.'}
+                        </p>
+                        <input
+                          aria-label={
+                            isPolish ? 'ID zaakceptowanych insightów' : 'Approved insight IDs'
+                          }
+                          value={acceptedInsightIds}
+                          onChange={(event) => setAcceptedInsightIds(event.target.value)}
+                          placeholder={
+                            isPolish
+                              ? 'ID insightów oddzielone przecinkami'
+                              : 'Comma-separated insight IDs'
+                          }
+                          className="w-full rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
+                        />
+                      </div>
+                    ) : null}
+                    {item.lifecycleStage === 'drd' && drdProposal === null ? (
+                      <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
+                        <p className="text-xs font-semibold text-c-text">
+                          {isPolish ? 'Przygotuj diagnozę DRD' : 'Prepare DRD diagnosis'}
+                        </p>
+                        <p className="text-[11px] text-c-text-secondary">
+                          {isPolish
+                            ? 'Agent utworzy propozycję opartą na zaakceptowanych insightach Interview. Assessment powstanie dopiero po akceptacji.'
+                            : 'The Agent will prepare a proposal from accepted Interview Insights. The assessment is created only after approval.'}
+                        </p>
+                        <input
+                          aria-label={isPolish ? 'Nazwa assessmentu DRD' : 'DRD assessment name'}
+                          value={drdName}
+                          onChange={(event) => setDrdName(event.target.value)}
+                          placeholder={isPolish ? 'Nazwa diagnozy DRD' : 'DRD diagnosis name'}
+                          className="w-full rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
+                        />
+                      </div>
+                    ) : null}
+                    {drdProposal ? (
+                      <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-xs font-semibold text-c-text">
+                            {drdProposal.assessmentName}
+                          </p>
+                          <StatusChip
+                            label={drdProposal.status}
+                            tone={drdProposal.status === 'applied' ? 'success' : 'warning'}
+                            size="sm"
+                          />
+                        </div>
+                        <p className="text-[11px] text-c-text-secondary">
+                          {isPolish ? 'Źródłowe insighty Interview' : 'Source Interview Insights'}:{' '}
+                          {drdProposal.sourceInsightIds.length}
+                        </p>
+                        {drdProposal.assessmentId ? (
+                          <a
+                            href={`/assessment/drd/${encodeURIComponent(drdProposal.assessmentId)}`}
+                            className="inline-flex text-xs font-semibold text-c-info hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                          >
+                            {isPolish ? 'Otwórz assessment DRD' : 'Open DRD assessment'}
+                          </a>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    {item.lifecycleStage === 'opportunity_synthesis' &&
+                    synthesisProposal === null ? (
+                      <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
                         <p className="text-xs font-semibold text-c-text">
                           {isPolish ? 'Synteza szans' : 'Opportunity synthesis'}
                         </p>
-                        <StatusChip
-                          label={synthesisProposal.status}
-                          tone={synthesisProposal.status === 'applied' ? 'success' : 'warning'}
-                          size="sm"
-                        />
-                      </div>
-                      <p className="text-[11px] text-c-text-secondary">
-                        {synthesisProposal.synthesisSummary}
-                      </p>
-                      <p className="text-[11px] text-c-text-muted">
-                        Ideas: {synthesisProposal.sourceIdeaIds.length} · Interview Insights:{' '}
-                        {synthesisProposal.sourceInsightIds.length}
-                      </p>
-                      {synthesisProposal.candidateId ? (
-                        <p className="text-[11px] font-semibold text-c-text">
-                          Candidate: {synthesisProposal.candidateId}
+                        <p className="text-[11px] text-c-text-secondary">
+                          {isPolish
+                            ? 'Agent połączy lineage Ideas, zaakceptowanych Interview Insights i immutable wyniku DRD. Candidate powstanie dopiero po akceptacji.'
+                            : 'The Agent will join Ideas, accepted Interview Insights and immutable DRD lineage. The Candidate is created only after approval.'}
                         </p>
-                      ) : null}
-                    </div>
-                  ) : null}
-                  {item.lifecycleStage === 'finance_kpi' && financeProposal === null ? (
-                    <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
-                      <p className="text-xs font-semibold text-c-text">
-                        {isPolish ? 'Business case i karta KPI' : 'Business case and KPI card'}
-                      </p>
-                      <div className="grid grid-cols-2 gap-2">
-                        {(
-                          [
-                            ['capex', 'CAPEX'],
-                            ['opexAnnual', 'OPEX / rok'],
-                            ['benefitAnnual', 'Korzyść / rok'],
-                            ['horizonYears', 'Horyzont (lata)'],
-                            ['waccPct', 'WACC %'],
-                            ['baselineValue', 'KPI baseline'],
-                            ['targetValue', 'KPI target'],
-                          ] as const
-                        ).map(([key, label]) => (
+                      </div>
+                    ) : null}
+                    {synthesisProposal ? (
+                      <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-xs font-semibold text-c-text">
+                            {isPolish ? 'Synteza szans' : 'Opportunity synthesis'}
+                          </p>
+                          <StatusChip
+                            label={synthesisProposal.status}
+                            tone={synthesisProposal.status === 'applied' ? 'success' : 'warning'}
+                            size="sm"
+                          />
+                        </div>
+                        <p className="text-[11px] text-c-text-secondary">
+                          {synthesisProposal.synthesisSummary}
+                        </p>
+                        <p className="text-[11px] text-c-text-muted">
+                          Ideas: {synthesisProposal.sourceIdeaIds.length} · Interview Insights:{' '}
+                          {synthesisProposal.sourceInsightIds.length}
+                        </p>
+                        {synthesisProposal.candidateId ? (
+                          <p className="text-[11px] font-semibold text-c-text">
+                            Candidate: {synthesisProposal.candidateId}
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    {item.lifecycleStage === 'finance_kpi' && financeProposal === null ? (
+                      <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
+                        <p className="text-xs font-semibold text-c-text">
+                          {isPolish ? 'Business case i karta KPI' : 'Business case and KPI card'}
+                        </p>
+                        <div className="grid grid-cols-2 gap-2">
+                          {(
+                            [
+                              ['capex', 'CAPEX'],
+                              ['opexAnnual', 'OPEX / rok'],
+                              ['benefitAnnual', 'Korzyść / rok'],
+                              ['horizonYears', 'Horyzont (lata)'],
+                              ['waccPct', 'WACC %'],
+                              ['baselineValue', 'KPI baseline'],
+                              ['targetValue', 'KPI target'],
+                            ] as const
+                          ).map(([key, label]) => (
+                            <input
+                              key={key}
+                              aria-label={label}
+                              value={financeInputs[key]}
+                              onChange={(event) =>
+                                setFinanceInputs((current) => ({
+                                  ...current,
+                                  [key]: event.target.value,
+                                }))
+                              }
+                              placeholder={label}
+                              className="rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
+                            />
+                          ))}
                           <input
-                            key={key}
-                            aria-label={label}
-                            value={financeInputs[key]}
+                            aria-label="KPI name"
+                            value={financeInputs.kpiName}
                             onChange={(event) =>
                               setFinanceInputs((current) => ({
+                                ...current,
+                                kpiName: event.target.value,
+                              }))
+                            }
+                            className="rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
+                          />
+                          <input
+                            aria-label="KPI unit"
+                            value={financeInputs.kpiUnit}
+                            onChange={(event) =>
+                              setFinanceInputs((current) => ({
+                                ...current,
+                                kpiUnit: event.target.value,
+                              }))
+                            }
+                            className="rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
+                          />
+                        </div>
+                      </div>
+                    ) : null}
+                    {financeProposal ? (
+                      <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-semibold text-c-text">
+                            Finance/KPI · {financeProposal.businessCase.verdict.toUpperCase()}
+                          </p>
+                          <StatusChip
+                            label={financeProposal.status}
+                            tone={financeProposal.status === 'applied' ? 'success' : 'warning'}
+                            size="sm"
+                          />
+                        </div>
+                        <p className="text-[11px] text-c-text-secondary">
+                          {financeProposal.businessCase.summary}
+                        </p>
+                        <p className="text-[11px] text-c-text-muted">
+                          KPI: {financeProposal.kpi.name} · {financeProposal.kpi.baselineValue} →{' '}
+                          {financeProposal.kpi.targetValue} {financeProposal.kpi.unit}
+                        </p>
+                        {financeProposal.financialAnalysisId ? (
+                          <p className="text-[11px] font-semibold text-c-text">
+                            Analysis: {financeProposal.financialAnalysisId} · KPI:{' '}
+                            {financeProposal.kpiId}
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    {item.lifecycleStage === 'portfolio_decision' && portfolioProposal === null ? (
+                      <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
+                        <p className="text-xs font-semibold text-c-text">
+                          {isPolish ? 'Decyzja portfelowa GO/NO-GO' : 'Portfolio GO/NO-GO decision'}
+                        </p>
+                        <p className="text-[11px] text-c-text-secondary">
+                          {isPolish
+                            ? 'Agent przygotuje pakiet z zatwierdzonej analizy, KPI i pełnego lineage. Sama decyzja powstanie po akceptacji.'
+                            : 'The Agent prepares a packet from approved Finance, KPI and full lineage. The decision is created only after approval.'}
+                        </p>
+                        <input
+                          aria-label={isPolish ? 'ID właściciela decyzji' : 'Decision owner ID'}
+                          value={decisionMakerId}
+                          onChange={(event) => setDecisionMakerId(event.target.value)}
+                          placeholder={
+                            isPolish
+                              ? 'ID sponsora / decision makera'
+                              : 'Sponsor / decision maker ID'
+                          }
+                          className="w-full rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
+                        />
+                      </div>
+                    ) : null}
+                    {portfolioProposal ? (
+                      <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-semibold text-c-text">
+                            {portfolioProposal.title}
+                          </p>
+                          <StatusChip
+                            label={portfolioProposal.status}
+                            tone={portfolioProposal.status === 'applied' ? 'success' : 'warning'}
+                            size="sm"
+                          />
+                        </div>
+                        <p className="text-[11px] text-c-text-secondary">
+                          {portfolioProposal.description}
+                        </p>
+                        <p className="text-[11px] text-c-text-muted">
+                          Decision maker: {portfolioProposal.decisionMakerId}
+                        </p>
+                        {portfolioProposal.decisionId ? (
+                          <a
+                            href={`/decisions/${encodeURIComponent(portfolioProposal.decisionId)}`}
+                            className="text-xs font-semibold text-c-info hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                          >
+                            {isPolish ? 'Otwórz decyzję GO/NO-GO' : 'Open GO/NO-GO decision'}
+                          </a>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    {item.lifecycleStage === 'mobilization' && mobilizationProposal === null ? (
+                      <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
+                        <p className="text-xs font-semibold text-c-text">
+                          {isPolish ? 'Mobilizacja Initiative' : 'Initiative mobilization'}
+                        </p>
+                        <p className="text-[11px] text-c-text-secondary">
+                          {isPolish
+                            ? 'Agent przygotuje WBS, zależności, kamienie milowe i obsadę. Rekordy powstaną dopiero po akceptacji.'
+                            : 'The Agent prepares WBS, dependencies, milestones and staffing. Records are created only after approval.'}
+                        </p>
+                        {(['ownerUserId', 'startDate', 'endDate'] as const).map((key) => (
+                          <input
+                            key={key}
+                            aria-label={key}
+                            type={key === 'ownerUserId' ? 'text' : 'date'}
+                            value={mobilizationInputs[key]}
+                            onChange={(event) =>
+                              setMobilizationInputs((current) => ({
                                 ...current,
                                 [key]: event.target.value,
                               }))
                             }
-                            placeholder={label}
-                            className="rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
+                            className="w-full rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
                           />
                         ))}
-                        <input
-                          aria-label="KPI name"
-                          value={financeInputs.kpiName}
-                          onChange={(event) =>
-                            setFinanceInputs((current) => ({
-                              ...current,
-                              kpiName: event.target.value,
-                            }))
-                          }
-                          className="rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
-                        />
-                        <input
-                          aria-label="KPI unit"
-                          value={financeInputs.kpiUnit}
-                          onChange={(event) =>
-                            setFinanceInputs((current) => ({
-                              ...current,
-                              kpiUnit: event.target.value,
-                            }))
-                          }
-                          className="rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
-                        />
                       </div>
-                    </div>
-                  ) : null}
-                  {financeProposal ? (
-                    <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs font-semibold text-c-text">
-                          Finance/KPI · {financeProposal.businessCase.verdict.toUpperCase()}
-                        </p>
-                        <StatusChip
-                          label={financeProposal.status}
-                          tone={financeProposal.status === 'applied' ? 'success' : 'warning'}
-                          size="sm"
-                        />
-                      </div>
-                      <p className="text-[11px] text-c-text-secondary">
-                        {financeProposal.businessCase.summary}
-                      </p>
-                      <p className="text-[11px] text-c-text-muted">
-                        KPI: {financeProposal.kpi.name} · {financeProposal.kpi.baselineValue} →{' '}
-                        {financeProposal.kpi.targetValue} {financeProposal.kpi.unit}
-                      </p>
-                      {financeProposal.financialAnalysisId ? (
-                        <p className="text-[11px] font-semibold text-c-text">
-                          Analysis: {financeProposal.financialAnalysisId} · KPI:{' '}
-                          {financeProposal.kpiId}
-                        </p>
-                      ) : null}
-                    </div>
-                  ) : null}
-                  {item.lifecycleStage === 'portfolio_decision' && portfolioProposal === null ? (
-                    <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
-                      <p className="text-xs font-semibold text-c-text">
-                        {isPolish ? 'Decyzja portfelowa GO/NO-GO' : 'Portfolio GO/NO-GO decision'}
-                      </p>
-                      <p className="text-[11px] text-c-text-secondary">
-                        {isPolish
-                          ? 'Agent przygotuje pakiet z zatwierdzonej analizy, KPI i pełnego lineage. Sama decyzja powstanie po akceptacji.'
-                          : 'The Agent prepares a packet from approved Finance, KPI and full lineage. The decision is created only after approval.'}
-                      </p>
-                      <input
-                        aria-label={isPolish ? 'ID właściciela decyzji' : 'Decision owner ID'}
-                        value={decisionMakerId}
-                        onChange={(event) => setDecisionMakerId(event.target.value)}
-                        placeholder={
-                          isPolish ? 'ID sponsora / decision makera' : 'Sponsor / decision maker ID'
-                        }
-                        className="w-full rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
-                      />
-                    </div>
-                  ) : null}
-                  {portfolioProposal ? (
-                    <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs font-semibold text-c-text">
-                          {portfolioProposal.title}
-                        </p>
-                        <StatusChip
-                          label={portfolioProposal.status}
-                          tone={portfolioProposal.status === 'applied' ? 'success' : 'warning'}
-                          size="sm"
-                        />
-                      </div>
-                      <p className="text-[11px] text-c-text-secondary">
-                        {portfolioProposal.description}
-                      </p>
-                      <p className="text-[11px] text-c-text-muted">
-                        Decision maker: {portfolioProposal.decisionMakerId}
-                      </p>
-                      {portfolioProposal.decisionId ? (
-                        <a
-                          href={`/decisions/${encodeURIComponent(portfolioProposal.decisionId)}`}
-                          className="text-xs font-semibold text-c-info hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                        >
-                          {isPolish ? 'Otwórz decyzję GO/NO-GO' : 'Open GO/NO-GO decision'}
-                        </a>
-                      ) : null}
-                    </div>
-                  ) : null}
-                  {item.lifecycleStage === 'mobilization' && mobilizationProposal === null ? (
-                    <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
-                      <p className="text-xs font-semibold text-c-text">
-                        {isPolish ? 'Mobilizacja Initiative' : 'Initiative mobilization'}
-                      </p>
-                      <p className="text-[11px] text-c-text-secondary">
-                        {isPolish
-                          ? 'Agent przygotuje WBS, zależności, kamienie milowe i obsadę. Rekordy powstaną dopiero po akceptacji.'
-                          : 'The Agent prepares WBS, dependencies, milestones and staffing. Records are created only after approval.'}
-                      </p>
-                      {(['ownerUserId', 'startDate', 'endDate'] as const).map((key) => (
-                        <input
-                          key={key}
-                          aria-label={key}
-                          type={key === 'ownerUserId' ? 'text' : 'date'}
-                          value={mobilizationInputs[key]}
-                          onChange={(event) =>
-                            setMobilizationInputs((current) => ({
-                              ...current,
-                              [key]: event.target.value,
-                            }))
-                          }
-                          className="w-full rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
-                        />
-                      ))}
-                    </div>
-                  ) : null}
-                  {mobilizationProposal ? (
-                    <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs font-semibold text-c-text">
-                          {isPolish ? 'Blueprint mobilizacji' : 'Mobilization blueprint'}
-                        </p>
-                        <StatusChip
-                          label={mobilizationProposal.status}
-                          tone={mobilizationProposal.status === 'applied' ? 'success' : 'warning'}
-                          size="sm"
-                        />
-                      </div>
-                      <p className="text-[11px] text-c-text-secondary">
-                        WBS: {mobilizationProposal.wbs.length} · Milestones:{' '}
-                        {mobilizationProposal.milestones.length} · Dependencies:{' '}
-                        {mobilizationProposal.dependencies.length} · Resources:{' '}
-                        {mobilizationProposal.resources.length}
-                      </p>
-                      {mobilizationProposal.blueprintId ? (
-                        <p className="text-[11px] font-semibold text-c-text">
-                          Blueprint: {mobilizationProposal.blueprintId} · Tasks:{' '}
-                          {mobilizationProposal.taskIds?.length ?? 0}
-                        </p>
-                      ) : null}
-                    </div>
-                  ) : null}
-                  {item.lifecycleStage === 'execution' ? (
-                    <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-xs font-semibold text-c-text">
-                          {isPolish ? 'Kontrola wykonania' : 'Execution checkpoint'}
-                        </p>
-                        {executionCheckpoint ? (
+                    ) : null}
+                    {mobilizationProposal ? (
+                      <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-semibold text-c-text">
+                            {isPolish ? 'Blueprint mobilizacji' : 'Mobilization blueprint'}
+                          </p>
                           <StatusChip
-                            label={executionCheckpoint.initiativeStatus}
-                            tone={
-                              executionCheckpoint.initiativeStatus === 'DONE'
-                                ? 'success'
-                                : 'warning'
-                            }
-                            size="sm"
-                          />
-                        ) : null}
-                      </div>
-                      {executionCheckpoint ? (
-                        <>
-                          <p className="text-[11px] text-c-text-secondary">
-                            Tasks: {executionCheckpoint.tasks.completed}/
-                            {executionCheckpoint.tasks.total}
-                            {' · '}Blocked: {executionCheckpoint.tasks.blocked}
-                          </p>
-                          <p className="text-[11px] text-c-text-secondary">
-                            Milestones: {executionCheckpoint.milestones.completed}/
-                            {executionCheckpoint.milestones.total}
-                            {' · '}Delayed: {executionCheckpoint.milestones.delayed}
-                          </p>
-                          <p className="text-[11px] text-c-text-secondary">
-                            KPI on target: {executionCheckpoint.kpis.onTarget}/
-                            {executionCheckpoint.kpis.total}
-                            {' · '}
-                            {executionCheckpoint.executionStarted
-                              ? isPolish
-                                ? 'Start wykonania przyjęty'
-                                : 'Execution start accepted'
-                              : isPolish
-                                ? 'Start wykonania oczekuje na przyjęcie'
-                                : 'Execution start awaits acceptance'}
-                          </p>
-                        </>
-                      ) : (
-                        <p className="text-[11px] text-c-text-secondary">
-                          {isPolish
-                            ? 'Ustaw Initiative w kanonicznym workspace na EXECUTING, a po zakończeniu na DONE. Agent weryfikuje stan, nie omija workflow.'
-                            : 'Move the Initiative to EXECUTING, then DONE, in the canonical workspace. The Agent verifies state without bypassing the workflow.'}
-                        </p>
-                      )}
-                    </div>
-                  ) : null}
-                  {item.lifecycleStage === 'delivery' ? (
-                    <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
-                      <p className="text-xs font-semibold text-c-text">
-                        {isPolish ? 'Odbiór korzyści' : 'Benefits handoff'}
-                      </p>
-                      {benefitsCheckpoint ? (
-                        <>
-                          <p className="text-[11px] text-c-text-secondary">
-                            Benefits measured: {benefitsCheckpoint.benefits.measured}/
-                            {benefitsCheckpoint.benefits.total}
-                            {' · '}Owned: {benefitsCheckpoint.benefits.owned}/
-                            {benefitsCheckpoint.benefits.total}
-                          </p>
-                          <p className="text-[11px] text-c-text-secondary">
-                            Achieved: {benefitsCheckpoint.benefits.achieved}
-                            {' · '}At risk: {benefitsCheckpoint.benefits.atRisk}
-                            {' · '}Finance actuals: {benefitsCheckpoint.financeActuals.verified}/
-                            {benefitsCheckpoint.financeActuals.total}
-                          </p>
-                          <select
-                            aria-label={
-                              isPolish ? 'Klasyfikacja efektu' : 'Effectiveness classification'
-                            }
-                            value={effectiveness}
-                            onChange={(event) =>
-                              setEffectiveness(
-                                event.target.value as 'confirmed' | 'partial' | 'not_achieved'
-                              )
-                            }
-                            className="w-full rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
-                          >
-                            <option value="confirmed">confirmed</option>
-                            <option value="partial">partial</option>
-                            <option value="not_achieved">not_achieved</option>
-                          </select>
-                        </>
-                      ) : (
-                        <p className="text-[11px] text-c-text-secondary">
-                          {isPolish
-                            ? 'Delivery nie jest dowodem wartości. Uzupełnij właścicieli, pomiary KPI i finansowe wartości rzeczywiste w Results.'
-                            : 'Delivery is not proof of value. Complete owners, KPI measurements and finance actuals in Results.'}
-                        </p>
-                      )}
-                    </div>
-                  ) : null}
-                  {item.lifecycleStage === 'benefits' ? (
-                    <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
-                      <p className="text-xs font-semibold text-c-text">
-                        {isPolish ? 'Weryfikacja efektu' : 'Effectiveness verification'}
-                      </p>
-                      <p className="text-[11px] text-c-text-secondary">
-                        {isPolish
-                          ? 'Każda korzyść musi mieć status achieved/exceeded oraz zweryfikowany pomiar. Dopiero wtedy rozpoczyna się niezależne okno trwałości.'
-                          : 'Every benefit must be achieved/exceeded with a verified measurement before the independent sustainability window begins.'}
-                      </p>
-                    </div>
-                  ) : null}
-                  {item.lifecycleStage === 'sustainability' ? (
-                    <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
-                      <p className="text-xs font-semibold text-c-text">
-                        {isPolish ? 'Przegląd trwałości' : 'Sustainability review'}
-                      </p>
-                      {sustainabilityCheckpoint ? (
-                        <p className="text-[11px] text-c-text-secondary">
-                          Two verified measurements:{' '}
-                          {sustainabilityCheckpoint.benefits.withTwoVerifiedMeasurements}/
-                          {sustainabilityCheckpoint.benefits.total}
-                          {' · '}Sustained ≥30 days:{' '}
-                          {sustainabilityCheckpoint.benefits.sustainedAcrossWindow}/
-                          {sustainabilityCheckpoint.benefits.total}
-                          {' · '}Minimum window:{' '}
-                          {sustainabilityCheckpoint.benefits.minimumWindowDays ?? '—'} days
-                        </p>
-                      ) : null}
-                    </div>
-                  ) : null}
-                  <div className="space-y-2">
-                    {(editableSteps ?? steps).map((step, stepIndex, renderedSteps) => (
-                      <div
-                        key={step.stepId}
-                        className="rounded-lg border border-c-border bg-c-card p-3"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="text-xs font-semibold text-c-text">
-                              {step.stepIndex + 1}. {step.businessPurpose}
-                            </p>
-                            <p className="mt-1 text-[11px] text-c-text-secondary">
-                              {step.moduleTarget}
-                            </p>
-                          </div>
-                          <StatusChip
-                            label={step.capabilityStatus}
-                            tone={capabilityTone(step.capabilityStatus)}
+                            label={mobilizationProposal.status}
+                            tone={mobilizationProposal.status === 'applied' ? 'success' : 'warning'}
                             size="sm"
                           />
                         </div>
-                        {step.blockerReason ? (
-                          <p className="mt-2 text-[11px] text-c-text-muted">{step.blockerReason}</p>
-                        ) : null}
-                        {editableSteps ? (
-                          <div className="mt-2 space-y-2 border-t border-c-border pt-2">
-                            <div className="grid gap-2 sm:grid-cols-2">
-                              <label className="text-[11px] text-c-text-secondary">
-                                {isPolish ? 'Cel biznesowy' : 'Business purpose'}
-                                <textarea
-                                  aria-label={`${isPolish ? 'Cel biznesowy' : 'Business purpose'} ${step.lifecycleStage}`}
-                                  value={step.businessPurpose}
-                                  onChange={(event) =>
-                                    updatePlanStep(stepIndex, 'businessPurpose', event.target.value)
-                                  }
-                                  className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
-                                />
-                              </label>
-                              <label className="text-[11px] text-c-text-secondary">
-                                {isPolish ? 'Moduł docelowy' : 'Target module'}
-                                <input
-                                  aria-label={`${isPolish ? 'Moduł docelowy' : 'Target module'} ${step.lifecycleStage}`}
-                                  value={step.moduleTarget}
-                                  onChange={(event) =>
-                                    updatePlanStep(stepIndex, 'moduleTarget', event.target.value)
-                                  }
-                                  className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
-                                />
-                              </label>
-                              <label className="text-[11px] text-c-text-secondary">
-                                {isPolish ? 'Wejścia (po przecinku)' : 'Inputs (comma-separated)'}
-                                <input
-                                  aria-label={`${isPolish ? 'Wejścia' : 'Inputs'} ${step.lifecycleStage}`}
-                                  value={step.inputs.join(', ')}
-                                  onChange={(event) =>
-                                    updatePlanStep(
-                                      stepIndex,
-                                      'inputs',
-                                      event.target.value
-                                        .split(',')
-                                        .map((value) => value.trim())
-                                        .filter(Boolean)
-                                    )
-                                  }
-                                  className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
-                                />
-                              </label>
-                              <label className="text-[11px] text-c-text-secondary">
-                                {isPolish ? 'Wyjścia (po przecinku)' : 'Outputs (comma-separated)'}
-                                <input
-                                  aria-label={`${isPolish ? 'Wyjścia' : 'Outputs'} ${step.lifecycleStage}`}
-                                  value={step.outputs.join(', ')}
-                                  onChange={(event) =>
-                                    updatePlanStep(
-                                      stepIndex,
-                                      'outputs',
-                                      event.target.value
-                                        .split(',')
-                                        .map((value) => value.trim())
-                                        .filter(Boolean)
-                                    )
-                                  }
-                                  className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
-                                />
-                              </label>
-                              <label className="text-[11px] text-c-text-secondary">
-                                {isPolish ? 'Właściciel' : 'Owner'}
-                                <input
-                                  aria-label={`${isPolish ? 'Właściciel' : 'Owner'} ${step.lifecycleStage}`}
-                                  value={step.ownerRole}
-                                  onChange={(event) =>
-                                    updatePlanStep(stepIndex, 'ownerRole', event.target.value)
-                                  }
-                                  className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
-                                />
-                              </label>
-                              <label className="text-[11px] text-c-text-secondary">
-                                {isPolish ? 'Szacowany wysiłek' : 'Estimated effort'}
-                                <input
-                                  aria-label={`${isPolish ? 'Szacowany wysiłek' : 'Estimated effort'} ${step.lifecycleStage}`}
-                                  value={step.estimatedEffort}
-                                  onChange={(event) =>
-                                    updatePlanStep(stepIndex, 'estimatedEffort', event.target.value)
-                                  }
-                                  className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
-                                />
-                              </label>
-                              <label className="text-[11px] text-c-text-secondary">
-                                {isPolish ? 'Klasa akceptacji' : 'Approval class'}
-                                <select
-                                  aria-label={`${isPolish ? 'Klasa akceptacji' : 'Approval class'} ${step.lifecycleStage}`}
-                                  value={step.approvalClass}
-                                  onChange={(event) =>
-                                    updatePlanStep(
-                                      stepIndex,
-                                      'approvalClass',
-                                      event.target
-                                        .value as TransformationPlanStepDto['approvalClass']
-                                    )
-                                  }
-                                  className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
-                                >
-                                  <option value="none">none</option>
-                                  <option value="policy_approvable">policy_approvable</option>
-                                  <option value="requires_human_approval">
-                                    requires_human_approval
-                                  </option>
-                                </select>
-                              </label>
-                              <label className="text-[11px] text-c-text-secondary">
-                                {isPolish ? 'Klasa ryzyka' : 'Risk class'}
-                                <select
-                                  aria-label={`${isPolish ? 'Klasa ryzyka' : 'Risk class'} ${step.lifecycleStage}`}
-                                  value={step.riskClass}
-                                  onChange={(event) =>
-                                    updatePlanStep(
-                                      stepIndex,
-                                      'riskClass',
-                                      event.target.value as TransformationPlanStepDto['riskClass']
-                                    )
-                                  }
-                                  className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
-                                >
-                                  <option value="read_only">read_only</option>
-                                  <option value="safe_additive">safe_additive</option>
-                                  <option value="safe_update">safe_update</option>
-                                  <option value="sensitive_update">sensitive_update</option>
-                                  <option value="governance_transition">
-                                    governance_transition
-                                  </option>
-                                </select>
-                              </label>
-                              <label className="text-[11px] text-c-text-secondary">
-                                {isPolish ? 'Tryb wykonania' : 'Execution mode'}
-                                <select
-                                  aria-label={`${isPolish ? 'Tryb wykonania' : 'Execution mode'} ${step.lifecycleStage}`}
-                                  value={step.executionMode}
-                                  onChange={(event) =>
-                                    updatePlanStep(
-                                      stepIndex,
-                                      'executionMode',
-                                      event.target
-                                        .value as TransformationPlanStepDto['executionMode']
-                                    )
-                                  }
-                                  className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
-                                >
-                                  <option value="foreground">foreground</option>
-                                  <option value="background">background</option>
-                                  <option value="scheduled">scheduled</option>
-                                  <option value="human_activity">human_activity</option>
-                                </select>
-                              </label>
-                            </div>
-                            <p className="text-[11px] text-c-text-muted">
-                              {step.lifecycleStage} · {step.capabilityStatus} · {step.blockerReason}
-                            </p>
-                            <label className="block text-[11px] text-c-text-secondary">
-                              {isPolish
-                                ? 'Zależności (etapy, po przecinku)'
-                                : 'Dependencies (stages, comma-separated)'}
-                              <input
-                                aria-label={`${isPolish ? 'Zależności' : 'Dependencies'} ${step.lifecycleStage}`}
-                                value={step.dependsOn.join(', ')}
-                                onChange={(event) =>
-                                  updatePlanDependencies(stepIndex, event.target.value)
-                                }
-                                className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
-                              />
-                            </label>
-                            <div className="flex gap-2">
-                              <button
-                                type="button"
-                                aria-label={`${isPolish ? 'Przesuń w górę' : 'Move up'} ${step.lifecycleStage}`}
-                                disabled={stepIndex === 0}
-                                onClick={() => movePlanStep(stepIndex, -1)}
-                                className="rounded border border-c-border px-2 py-1 text-xs disabled:opacity-40"
-                              >
-                                ↑
-                              </button>
-                              <button
-                                type="button"
-                                aria-label={`${isPolish ? 'Przesuń w dół' : 'Move down'} ${step.lifecycleStage}`}
-                                disabled={stepIndex === renderedSteps.length - 1}
-                                onClick={() => movePlanStep(stepIndex, 1)}
-                                className="rounded border border-c-border px-2 py-1 text-xs disabled:opacity-40"
-                              >
-                                ↓
-                              </button>
-                              <button
-                                type="button"
-                                aria-label={`${isPolish ? 'Usuń krok' : 'Remove step'} ${step.lifecycleStage}`}
-                                onClick={() => removePlanStep(stepIndex)}
-                                className="rounded border border-c-danger/40 px-2 py-1 text-xs text-c-danger"
-                              >
-                                {isPolish ? 'Usuń' : 'Remove'}
-                              </button>
-                            </div>
-                          </div>
+                        <p className="text-[11px] text-c-text-secondary">
+                          WBS: {mobilizationProposal.wbs.length} · Milestones:{' '}
+                          {mobilizationProposal.milestones.length} · Dependencies:{' '}
+                          {mobilizationProposal.dependencies.length} · Resources:{' '}
+                          {mobilizationProposal.resources.length}
+                        </p>
+                        {mobilizationProposal.blueprintId ? (
+                          <p className="text-[11px] font-semibold text-c-text">
+                            Blueprint: {mobilizationProposal.blueprintId} · Tasks:{' '}
+                            {mobilizationProposal.taskIds?.length ?? 0}
+                          </p>
                         ) : null}
                       </div>
-                    ))}
-                  </div>
-                  {editableSteps ? (
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      <button
-                        type="button"
-                        onClick={addPlanStep}
-                        disabled={Boolean(stageAction)}
-                        className="w-full rounded-lg border border-c-border px-3 py-2 text-xs font-semibold text-c-text disabled:opacity-50"
-                      >
-                        {isPolish ? 'Dodaj krok' : 'Add step'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void savePlanWorkshop()}
-                        disabled={Boolean(stageAction)}
-                        className="w-full rounded-lg border border-c-border-strong bg-c-surface-raised px-3 py-2 text-xs font-semibold text-c-text hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:opacity-50"
-                      >
-                        {stageAction === 'save-plan-workshop'
-                          ? isPolish
-                            ? 'Zapisywanie nowej wersji…'
-                            : 'Saving new version…'
-                          : isPolish
-                            ? 'Zapisz nową wersję planu'
-                            : 'Save new plan version'}
-                      </button>
+                    ) : null}
+                    {item.lifecycleStage === 'execution' ? (
+                      <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-xs font-semibold text-c-text">
+                            {isPolish ? 'Kontrola wykonania' : 'Execution checkpoint'}
+                          </p>
+                          {executionCheckpoint ? (
+                            <StatusChip
+                              label={executionCheckpoint.initiativeStatus}
+                              tone={
+                                executionCheckpoint.initiativeStatus === 'DONE'
+                                  ? 'success'
+                                  : 'warning'
+                              }
+                              size="sm"
+                            />
+                          ) : null}
+                        </div>
+                        {executionCheckpoint ? (
+                          <>
+                            <p className="text-[11px] text-c-text-secondary">
+                              Tasks: {executionCheckpoint.tasks.completed}/
+                              {executionCheckpoint.tasks.total}
+                              {' · '}Blocked: {executionCheckpoint.tasks.blocked}
+                            </p>
+                            <p className="text-[11px] text-c-text-secondary">
+                              Milestones: {executionCheckpoint.milestones.completed}/
+                              {executionCheckpoint.milestones.total}
+                              {' · '}Delayed: {executionCheckpoint.milestones.delayed}
+                            </p>
+                            <p className="text-[11px] text-c-text-secondary">
+                              KPI on target: {executionCheckpoint.kpis.onTarget}/
+                              {executionCheckpoint.kpis.total}
+                              {' · '}
+                              {executionCheckpoint.executionStarted
+                                ? isPolish
+                                  ? 'Start wykonania przyjęty'
+                                  : 'Execution start accepted'
+                                : isPolish
+                                  ? 'Start wykonania oczekuje na przyjęcie'
+                                  : 'Execution start awaits acceptance'}
+                            </p>
+                          </>
+                        ) : (
+                          <p className="text-[11px] text-c-text-secondary">
+                            {isPolish
+                              ? 'Ustaw Initiative w kanonicznym workspace na EXECUTING, a po zakończeniu na DONE. Agent weryfikuje stan, nie omija workflow.'
+                              : 'Move the Initiative to EXECUTING, then DONE, in the canonical workspace. The Agent verifies state without bypassing the workflow.'}
+                          </p>
+                        )}
+                      </div>
+                    ) : null}
+                    {item.lifecycleStage === 'delivery' ? (
+                      <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
+                        <p className="text-xs font-semibold text-c-text">
+                          {isPolish ? 'Odbiór korzyści' : 'Benefits handoff'}
+                        </p>
+                        {benefitsCheckpoint ? (
+                          <>
+                            <p className="text-[11px] text-c-text-secondary">
+                              Benefits measured: {benefitsCheckpoint.benefits.measured}/
+                              {benefitsCheckpoint.benefits.total}
+                              {' · '}Owned: {benefitsCheckpoint.benefits.owned}/
+                              {benefitsCheckpoint.benefits.total}
+                            </p>
+                            <p className="text-[11px] text-c-text-secondary">
+                              Achieved: {benefitsCheckpoint.benefits.achieved}
+                              {' · '}At risk: {benefitsCheckpoint.benefits.atRisk}
+                              {' · '}Finance actuals: {benefitsCheckpoint.financeActuals.verified}/
+                              {benefitsCheckpoint.financeActuals.total}
+                            </p>
+                            <select
+                              aria-label={
+                                isPolish ? 'Klasyfikacja efektu' : 'Effectiveness classification'
+                              }
+                              value={effectiveness}
+                              onChange={(event) =>
+                                setEffectiveness(
+                                  event.target.value as 'confirmed' | 'partial' | 'not_achieved'
+                                )
+                              }
+                              className="w-full rounded-md border border-c-border bg-c-card px-2.5 py-2 text-xs text-c-text"
+                            >
+                              <option value="confirmed">confirmed</option>
+                              <option value="partial">partial</option>
+                              <option value="not_achieved">not_achieved</option>
+                            </select>
+                          </>
+                        ) : (
+                          <p className="text-[11px] text-c-text-secondary">
+                            {isPolish
+                              ? 'Delivery nie jest dowodem wartości. Uzupełnij właścicieli, pomiary KPI i finansowe wartości rzeczywiste w Results.'
+                              : 'Delivery is not proof of value. Complete owners, KPI measurements and finance actuals in Results.'}
+                          </p>
+                        )}
+                      </div>
+                    ) : null}
+                    {item.lifecycleStage === 'benefits' ? (
+                      <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
+                        <p className="text-xs font-semibold text-c-text">
+                          {isPolish ? 'Weryfikacja efektu' : 'Effectiveness verification'}
+                        </p>
+                        <p className="text-[11px] text-c-text-secondary">
+                          {isPolish
+                            ? 'Każda korzyść musi mieć status achieved/exceeded oraz zweryfikowany pomiar. Dopiero wtedy rozpoczyna się niezależne okno trwałości.'
+                            : 'Every benefit must be achieved/exceeded with a verified measurement before the independent sustainability window begins.'}
+                        </p>
+                      </div>
+                    ) : null}
+                    {item.lifecycleStage === 'sustainability' ? (
+                      <div className="space-y-2 rounded-lg border border-c-border bg-c-surface p-3">
+                        <p className="text-xs font-semibold text-c-text">
+                          {isPolish ? 'Przegląd trwałości' : 'Sustainability review'}
+                        </p>
+                        {sustainabilityCheckpoint ? (
+                          <p className="text-[11px] text-c-text-secondary">
+                            Two verified measurements:{' '}
+                            {sustainabilityCheckpoint.benefits.withTwoVerifiedMeasurements}/
+                            {sustainabilityCheckpoint.benefits.total}
+                            {' · '}Sustained ≥30 days:{' '}
+                            {sustainabilityCheckpoint.benefits.sustainedAcrossWindow}/
+                            {sustainabilityCheckpoint.benefits.total}
+                            {' · '}Minimum window:{' '}
+                            {sustainabilityCheckpoint.benefits.minimumWindowDays ?? '—'} days
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    <div className="space-y-2">
+                      {(editableSteps ?? steps).map((step, stepIndex, renderedSteps) => (
+                        <div
+                          key={step.stepId}
+                          className="rounded-lg border border-c-border bg-c-card p-3"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="text-xs font-semibold text-c-text">
+                                {step.stepIndex + 1}. {step.businessPurpose}
+                              </p>
+                              <p className="mt-1 text-[11px] text-c-text-secondary">
+                                {step.moduleTarget}
+                              </p>
+                            </div>
+                            <StatusChip
+                              label={step.capabilityStatus}
+                              tone={capabilityTone(step.capabilityStatus)}
+                              size="sm"
+                            />
+                          </div>
+                          {step.blockerReason ? (
+                            <p className="mt-2 text-[11px] text-c-text-muted">
+                              {step.blockerReason}
+                            </p>
+                          ) : null}
+                          {editableSteps ? (
+                            <div className="mt-2 space-y-2 border-t border-c-border pt-2">
+                              <div className="grid gap-2 sm:grid-cols-2">
+                                <label className="text-[11px] text-c-text-secondary">
+                                  {isPolish ? 'Cel biznesowy' : 'Business purpose'}
+                                  <textarea
+                                    aria-label={`${isPolish ? 'Cel biznesowy' : 'Business purpose'} ${step.lifecycleStage}`}
+                                    value={step.businessPurpose}
+                                    onChange={(event) =>
+                                      updatePlanStep(
+                                        stepIndex,
+                                        'businessPurpose',
+                                        event.target.value
+                                      )
+                                    }
+                                    className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
+                                  />
+                                </label>
+                                <label className="text-[11px] text-c-text-secondary">
+                                  {isPolish ? 'Moduł docelowy' : 'Target module'}
+                                  <input
+                                    aria-label={`${isPolish ? 'Moduł docelowy' : 'Target module'} ${step.lifecycleStage}`}
+                                    value={step.moduleTarget}
+                                    onChange={(event) =>
+                                      updatePlanStep(stepIndex, 'moduleTarget', event.target.value)
+                                    }
+                                    className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
+                                  />
+                                </label>
+                                <label className="text-[11px] text-c-text-secondary">
+                                  {isPolish ? 'Wejścia (po przecinku)' : 'Inputs (comma-separated)'}
+                                  <input
+                                    aria-label={`${isPolish ? 'Wejścia' : 'Inputs'} ${step.lifecycleStage}`}
+                                    value={step.inputs.join(', ')}
+                                    onChange={(event) =>
+                                      updatePlanStep(
+                                        stepIndex,
+                                        'inputs',
+                                        event.target.value
+                                          .split(',')
+                                          .map((value) => value.trim())
+                                          .filter(Boolean)
+                                      )
+                                    }
+                                    className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
+                                  />
+                                </label>
+                                <label className="text-[11px] text-c-text-secondary">
+                                  {isPolish
+                                    ? 'Wyjścia (po przecinku)'
+                                    : 'Outputs (comma-separated)'}
+                                  <input
+                                    aria-label={`${isPolish ? 'Wyjścia' : 'Outputs'} ${step.lifecycleStage}`}
+                                    value={step.outputs.join(', ')}
+                                    onChange={(event) =>
+                                      updatePlanStep(
+                                        stepIndex,
+                                        'outputs',
+                                        event.target.value
+                                          .split(',')
+                                          .map((value) => value.trim())
+                                          .filter(Boolean)
+                                      )
+                                    }
+                                    className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
+                                  />
+                                </label>
+                                <label className="text-[11px] text-c-text-secondary">
+                                  {isPolish ? 'Właściciel' : 'Owner'}
+                                  <input
+                                    aria-label={`${isPolish ? 'Właściciel' : 'Owner'} ${step.lifecycleStage}`}
+                                    value={step.ownerRole}
+                                    onChange={(event) =>
+                                      updatePlanStep(stepIndex, 'ownerRole', event.target.value)
+                                    }
+                                    className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
+                                  />
+                                </label>
+                                <label className="text-[11px] text-c-text-secondary">
+                                  {isPolish ? 'Szacowany wysiłek' : 'Estimated effort'}
+                                  <input
+                                    aria-label={`${isPolish ? 'Szacowany wysiłek' : 'Estimated effort'} ${step.lifecycleStage}`}
+                                    value={step.estimatedEffort}
+                                    onChange={(event) =>
+                                      updatePlanStep(
+                                        stepIndex,
+                                        'estimatedEffort',
+                                        event.target.value
+                                      )
+                                    }
+                                    className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
+                                  />
+                                </label>
+                                <label className="text-[11px] text-c-text-secondary">
+                                  {isPolish ? 'Klasa akceptacji' : 'Approval class'}
+                                  <select
+                                    aria-label={`${isPolish ? 'Klasa akceptacji' : 'Approval class'} ${step.lifecycleStage}`}
+                                    value={step.approvalClass}
+                                    onChange={(event) =>
+                                      updatePlanStep(
+                                        stepIndex,
+                                        'approvalClass',
+                                        event.target
+                                          .value as TransformationPlanStepDto['approvalClass']
+                                      )
+                                    }
+                                    className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
+                                  >
+                                    <option value="none">none</option>
+                                    <option value="policy_approvable">policy_approvable</option>
+                                    <option value="requires_human_approval">
+                                      requires_human_approval
+                                    </option>
+                                  </select>
+                                </label>
+                                <label className="text-[11px] text-c-text-secondary">
+                                  {isPolish ? 'Klasa ryzyka' : 'Risk class'}
+                                  <select
+                                    aria-label={`${isPolish ? 'Klasa ryzyka' : 'Risk class'} ${step.lifecycleStage}`}
+                                    value={step.riskClass}
+                                    onChange={(event) =>
+                                      updatePlanStep(
+                                        stepIndex,
+                                        'riskClass',
+                                        event.target.value as TransformationPlanStepDto['riskClass']
+                                      )
+                                    }
+                                    className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
+                                  >
+                                    <option value="read_only">read_only</option>
+                                    <option value="safe_additive">safe_additive</option>
+                                    <option value="safe_update">safe_update</option>
+                                    <option value="sensitive_update">sensitive_update</option>
+                                    <option value="governance_transition">
+                                      governance_transition
+                                    </option>
+                                  </select>
+                                </label>
+                                <label className="text-[11px] text-c-text-secondary">
+                                  {isPolish ? 'Tryb wykonania' : 'Execution mode'}
+                                  <select
+                                    aria-label={`${isPolish ? 'Tryb wykonania' : 'Execution mode'} ${step.lifecycleStage}`}
+                                    value={step.executionMode}
+                                    onChange={(event) =>
+                                      updatePlanStep(
+                                        stepIndex,
+                                        'executionMode',
+                                        event.target
+                                          .value as TransformationPlanStepDto['executionMode']
+                                      )
+                                    }
+                                    className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
+                                  >
+                                    <option value="foreground">foreground</option>
+                                    <option value="background">background</option>
+                                    <option value="scheduled">scheduled</option>
+                                    <option value="human_activity">human_activity</option>
+                                  </select>
+                                </label>
+                              </div>
+                              <p className="text-[11px] text-c-text-muted">
+                                {step.lifecycleStage} · {step.capabilityStatus} ·{' '}
+                                {step.blockerReason}
+                              </p>
+                              <label className="block text-[11px] text-c-text-secondary">
+                                {isPolish
+                                  ? 'Zależności (etapy, po przecinku)'
+                                  : 'Dependencies (stages, comma-separated)'}
+                                <input
+                                  aria-label={`${isPolish ? 'Zależności' : 'Dependencies'} ${step.lifecycleStage}`}
+                                  value={step.dependsOn.join(', ')}
+                                  onChange={(event) =>
+                                    updatePlanDependencies(stepIndex, event.target.value)
+                                  }
+                                  className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
+                                />
+                              </label>
+                              <div className="flex gap-2">
+                                <button
+                                  type="button"
+                                  aria-label={`${isPolish ? 'Przesuń w górę' : 'Move up'} ${step.lifecycleStage}`}
+                                  disabled={stepIndex === 0}
+                                  onClick={() => movePlanStep(stepIndex, -1)}
+                                  className="rounded border border-c-border px-2 py-1 text-xs disabled:opacity-40"
+                                >
+                                  ↑
+                                </button>
+                                <button
+                                  type="button"
+                                  aria-label={`${isPolish ? 'Przesuń w dół' : 'Move down'} ${step.lifecycleStage}`}
+                                  disabled={stepIndex === renderedSteps.length - 1}
+                                  onClick={() => movePlanStep(stepIndex, 1)}
+                                  className="rounded border border-c-border px-2 py-1 text-xs disabled:opacity-40"
+                                >
+                                  ↓
+                                </button>
+                                <button
+                                  type="button"
+                                  aria-label={`${isPolish ? 'Usuń krok' : 'Remove step'} ${step.lifecycleStage}`}
+                                  onClick={() => removePlanStep(stepIndex)}
+                                  className="rounded border border-c-danger/40 px-2 py-1 text-xs text-c-danger"
+                                >
+                                  {isPolish ? 'Usuń' : 'Remove'}
+                                </button>
+                              </div>
+                            </div>
+                          ) : null}
+                        </div>
+                      ))}
                     </div>
-                  ) : null}
-                  <div className="rounded-lg border border-c-border bg-c-surface p-3 text-xs text-c-text-secondary">
-                    {isPolish
-                      ? 'Nie można jeszcze rozpocząć całego planu. Część etapów wymaga konfiguracji technicznej albo przypisania człowiekowi.'
-                      : 'The complete plan cannot start yet. Some stages require technical configuration or assignment to a person.'}
+                    {editableSteps ? (
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        <button
+                          type="button"
+                          onClick={addPlanStep}
+                          disabled={Boolean(stageAction)}
+                          className="w-full rounded-lg border border-c-border px-3 py-2 text-xs font-semibold text-c-text disabled:opacity-50"
+                        >
+                          {isPolish ? 'Dodaj krok' : 'Add step'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void savePlanWorkshop()}
+                          disabled={Boolean(stageAction)}
+                          className="w-full rounded-lg border border-c-border-strong bg-c-surface-raised px-3 py-2 text-xs font-semibold text-c-text hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:opacity-50"
+                        >
+                          {stageAction === 'save-plan-workshop'
+                            ? isPolish
+                              ? 'Zapisywanie nowej wersji…'
+                              : 'Saving new version…'
+                            : isPolish
+                              ? 'Zapisz nową wersję planu'
+                              : 'Save new plan version'}
+                        </button>
+                      </div>
+                    ) : null}
+                    <div className="rounded-lg border border-c-border bg-c-surface p-3 text-xs text-c-text-secondary">
+                      {isPolish
+                        ? 'Nie można jeszcze rozpocząć całego planu. Część etapów wymaga konfiguracji technicznej albo przypisania człowiekowi.'
+                        : 'The complete plan cannot start yet. Some stages require technical configuration or assignment to a person.'}
+                    </div>
                   </div>
-                </div>
-              </details>
+                </details>
+              ) : null}
             </div>
           );
         }}

@@ -12,6 +12,7 @@ import * as transformationCaseService from '../../services/v8/transformationCase
 import * as transformationFinalOutputService from '../../services/v8/transformationFinalOutputService.js';
 import * as planningIntakeService from '../../services/v8/transformationPlanningIntakeService.js';
 import * as projectTeamService from '../../services/v8/transformationProjectTeamService.js';
+import * as runtimeCapabilityService from '../../services/v8/transformationRuntimeCapabilityService.js';
 import {
   AcceptBenefitsReviewSchema,
   AcceptDeliveryHandoffSchema,
@@ -34,6 +35,7 @@ import {
   ProposeMobilizationBlueprintSchema,
   ProposeOpportunitySynthesisSchema,
   ProposePortfolioDecisionSchema,
+  ResolvePortfolioDecisionSchema,
   ReviewDrdAssessmentProposalSchema,
   ReviewFinanceKpiPackSchema,
   ReviewInitialIdeasProposalSchema,
@@ -41,13 +43,34 @@ import {
   ReviewMobilizationBlueprintSchema,
   ReviewOpportunitySynthesisSchema,
   ReviewPortfolioDecisionSchema,
-  ResolvePortfolioDecisionSchema,
   ReviseTransformationCaseSchema,
 } from '../../types/transformationCase.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { queryOne } from '../../utils/queryHelpers.js';
 
 const router = Router();
+
+const runtimeCapabilityRegistrationSchema = z.object({
+  lifecycleStage: z.string().trim().min(1).max(100),
+  capabilityKey: z.string().trim().min(1).max(200),
+  ownerModule: z.string().trim().min(1).max(200),
+  evidenceContract: z.object({
+    requiredChecks: z.array(z.string().trim().min(1).max(100)).min(1).max(30),
+  }),
+});
+
+const runtimeEvidenceSchema = z.object({
+  lifecycleStage: z.string().trim().min(1).max(100),
+  evidence: z.record(
+    z.string().trim().min(1).max(100),
+    z.object({
+      passed: z.boolean(),
+      evidenceRef: z.string().trim().min(1).max(1000).nullable().optional(),
+      observedAt: z.string().datetime().nullable().optional(),
+      detail: z.string().trim().max(2000).nullable().optional(),
+    })
+  ),
+});
 
 function isPrivileged(context: { userRole: string; isSuperAdmin: boolean }): boolean {
   if (context.isSuperAdmin) return true;
@@ -1731,6 +1754,75 @@ router.get(
   })
 );
 
+router.put(
+  '/runtime-capabilities/registration',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const context = getV8Context(req);
+    if (!isPrivileged(context))
+      return res.status(403).json({ code: 'TRANSFORMATION_CAPABILITY_ADMIN_REQUIRED' });
+    const body = runtimeCapabilityRegistrationSchema.parse(req.body ?? {});
+    const data = await runtimeCapabilityService.registerRuntimeCapability({
+      organizationId: context.organizationId,
+      actorUserId: context.userId,
+      ...body,
+    });
+    return res.json({ data, meta: { version: 'v8' } });
+  })
+);
+
+router.post(
+  '/runtime-capabilities/evidence',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const context = getV8Context(req);
+    if (!isPrivileged(context))
+      return res.status(403).json({ code: 'TRANSFORMATION_CAPABILITY_ADMIN_REQUIRED' });
+    const body = runtimeEvidenceSchema.parse(req.body ?? {});
+    const data = await runtimeCapabilityService.reportRuntimeEvidence({
+      organizationId: context.organizationId,
+      actorUserId: context.userId,
+      ...body,
+    });
+    return res.json({ data, meta: { version: 'v8' } });
+  })
+);
+
+router.get(
+  '/:transformationCaseId/runtime-capabilities',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const context = getV8Context(req);
+    const transformationCaseId = String(req.params.transformationCaseId || '').trim();
+    const current = await transformationCaseService.getTransformationCase(
+      transformationCaseId,
+      context.organizationId
+    );
+    if (!current || !(await canSeeCase(current, context)))
+      return res.status(404).json({ code: 'TRANSFORMATION_CASE_NOT_FOUND' });
+    const data = await runtimeCapabilityService.listRuntimeCapabilities(context.organizationId);
+    return res.json({ data, meta: { version: 'v8', count: data.length } });
+  })
+);
+
+router.post(
+  '/:transformationCaseId/runtime-capabilities/reconcile',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const context = getV8Context(req);
+    if (!isPrivileged(context))
+      return res.status(403).json({ code: 'TRANSFORMATION_CAPABILITY_ADMIN_REQUIRED' });
+    const transformationCaseId = String(req.params.transformationCaseId || '').trim();
+    const current = await transformationCaseService.getTransformationCase(
+      transformationCaseId,
+      context.organizationId
+    );
+    if (!current) return res.status(404).json({ code: 'TRANSFORMATION_CASE_NOT_FOUND' });
+    const data = await runtimeCapabilityService.reconcileTransformationPlan({
+      organizationId: context.organizationId,
+      transformationCaseId,
+      actorUserId: context.userId,
+    });
+    return res.json({ data, meta: { version: 'v8', idempotentReplay: data.idempotentReplay } });
+  })
+);
+
 router.get(
   '/:transformationCaseId',
   asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -1946,7 +2038,10 @@ router.post(
           // Zod v4 + strictNullChecks:false toolchain — same inference quirk as
           // `blockerReason` in transformationCaseService.ts. Normalize to the
           // service's `Blueprint.raci[].accountable: string | null` DTO shape.
-          raci: blueprint.raci.map((entry) => ({ ...entry, accountable: entry.accountable ?? null })),
+          raci: blueprint.raci.map((entry) => ({
+            ...entry,
+            accountable: entry.accountable ?? null,
+          })),
           // Same Zod v4 + strictNullChecks:false `.nullable()`-without-`.optional()`
           // inference quirk as `raci[].accountable` above — normalize to the
           // service's `Blueprint.agentLimits[].budgetLimit: number | null` DTO shape.
