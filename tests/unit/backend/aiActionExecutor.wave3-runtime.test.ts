@@ -218,9 +218,11 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
       return { changes: 1 };
     }
     if (normalized.startsWith('INSERT INTO tasks')) {
-      const [id, projectId, title, description, assigneeId, dueDate, createdBy] = params;
+      const [id, organizationId, projectId, title, description, assigneeId, dueDate, createdBy] =
+        params;
       db.tasks.push({
         id,
+        organization_id: organizationId,
         project_id: projectId,
         title,
         description,
@@ -282,7 +284,8 @@ describe('AIActionExecutor Wave 3 runtime lifecycle', () => {
   });
 
   it('creates an AIRun proposal and does not mutate before explicit approve and execute', async () => {
-    const { default: AIActionExecutor } = await import('../../../server/src/services/aiActionExecutor.js');
+    const { default: AIActionExecutor } =
+      await import('../../../server/src/services/aiActionExecutor.js');
 
     const created = await AIActionExecutor.createDraft(
       'task',
@@ -341,7 +344,8 @@ describe('AIActionExecutor Wave 3 runtime lifecycle', () => {
       pattern: { id: 'pattern-1', decision_count: 12 },
     });
 
-    const { default: AIActionExecutor } = await import('../../../server/src/services/aiActionExecutor.js');
+    const { default: AIActionExecutor } =
+      await import('../../../server/src/services/aiActionExecutor.js');
 
     const created = await AIActionExecutor.createDraft(
       'task',
@@ -374,7 +378,8 @@ describe('AIActionExecutor Wave 3 runtime lifecycle', () => {
       currentLevel: 'AUTOPILOT',
     });
 
-    const { default: AIActionExecutor } = await import('../../../server/src/services/aiActionExecutor.js');
+    const { default: AIActionExecutor } =
+      await import('../../../server/src/services/aiActionExecutor.js');
 
     const created = await AIActionExecutor.requestAction(
       'CREATE_DRAFT_TASK',
@@ -406,7 +411,8 @@ describe('AIActionExecutor Wave 3 runtime lifecycle', () => {
       currentLevel: 'AUTOPILOT',
     });
 
-    const { default: AIActionExecutor } = await import('../../../server/src/services/aiActionExecutor.js');
+    const { default: AIActionExecutor } =
+      await import('../../../server/src/services/aiActionExecutor.js');
 
     const created = await AIActionExecutor.requestAction(
       'DELETE_TASK',
@@ -423,7 +429,8 @@ describe('AIActionExecutor Wave 3 runtime lifecycle', () => {
   });
 
   it('never executes a rejected proposal', async () => {
-    const { default: AIActionExecutor } = await import('../../../server/src/services/aiActionExecutor.js');
+    const { default: AIActionExecutor } =
+      await import('../../../server/src/services/aiActionExecutor.js');
 
     const created = await AIActionExecutor.createDraft(
       'task',
@@ -432,7 +439,11 @@ describe('AIActionExecutor Wave 3 runtime lifecycle', () => {
       'org-1',
       'project-1'
     );
-    const rejected = await AIActionExecutor.rejectAction(created.actionId, 'user-owner', 'Not needed');
+    const rejected = await AIActionExecutor.rejectAction(
+      created.actionId,
+      'user-owner',
+      'Not needed'
+    );
     const executed = await AIActionExecutor.executeAction(created.actionId, 'user-owner');
 
     expect(rejected.success).toBe(true);
