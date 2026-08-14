@@ -51,9 +51,9 @@ vi.mock('../../../server/src/services/notebookService.js', () => ({
 // LLM generators to the null (fail-soft) branch so the skeleton fallback + raw
 // intent body run deterministically, without any network call.
 vi.mock('../../../server/src/services/ai/canvasGraphLlm.js', async () => {
-  const actual = await vi.importActual<typeof import('../../../server/src/services/ai/canvasGraphLlm.js')>(
-    '../../../server/src/services/ai/canvasGraphLlm.js'
-  );
+  const actual = await vi.importActual<
+    typeof import('../../../server/src/services/ai/canvasGraphLlm.js')
+  >('../../../server/src/services/ai/canvasGraphLlm.js');
   return {
     generateMindmapGraph: vi.fn().mockResolvedValue(null),
     generateProcessFlowGraph: vi.fn().mockResolvedValue(null),
@@ -64,6 +64,7 @@ vi.mock('../../../server/src/services/ai/canvasGraphLlm.js', async () => {
     // zero I/O, safe to run for real in tests (mirrors how the other 6 wired
     // tools' builders are exercised directly, not stubbed).
     buildMindmapEvidenceContract: actual.buildMindmapEvidenceContract,
+    buildNoteEvidenceContract: actual.buildNoteEvidenceContract,
     buildProcessFlowEvidenceContract: actual.buildProcessFlowEvidenceContract,
   };
 });
@@ -139,10 +140,7 @@ describe.each([
   });
 
   it('refuses for VIEWER role (shared capability gate)', async () => {
-    const res = await generateDeliverable(
-      { type, intent: 'x' },
-      { ...baseCtx, role: 'VIEWER' }
-    );
+    const res = await generateDeliverable({ type, intent: 'x' }, { ...baseCtx, role: 'VIEWER' });
     expect(res.ok).toBe(false);
     expect(res.error).toBe('permission_denied');
   });
