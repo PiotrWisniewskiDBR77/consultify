@@ -26,6 +26,12 @@ and every explicitly classified file must be excluded from `standard`. The
 validator fails on missing files, duplicates, silent exclusions, and
 unexcluded classified files.
 
+The executable runner strips ambient PostgreSQL and database-selection
+variables from `standard` and `isolated`. This prevents a signed-in shell,
+Railway session, or developer `DATABASE_URL` from silently turning mock tests
+into writes against an unrelated database. Only a dedicated realDB runner may
+inject database credentials.
+
 ## Commands
 
 ```bash

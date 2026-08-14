@@ -39,10 +39,32 @@ for (const file of classified.keys()) {
 
 if (process.exitCode) process.exit(process.exitCode);
 
+const AMBIENT_DATABASE_KEYS = [
+  'DATABASE_URL',
+  'DATABASE_PUBLIC_URL',
+  'DB_TYPE',
+  'MOCK_DB',
+  'RUN_DB_TESTS',
+  'PGHOST',
+  'PGPORT',
+  'PGDATABASE',
+  'PGUSER',
+  'PGPASSWORD',
+];
+
+const sanitizedTestEnv = () => {
+  const env = { ...process.env };
+  for (const key of AMBIENT_DATABASE_KEYS) delete env[key];
+  return env;
+};
+
 const run = (args) => {
   const result = spawnSync('npx', ['vitest', 'run', ...args], {
     cwd: root,
-    env: process.env,
+    // Standard and isolated gates must never inherit a developer or hosted
+    // database target. Tests that need a database belong in the explicit
+    // realDB gate, whose runner supplies a freshly migrated disposable URL.
+    env: sanitizedTestEnv(),
     stdio: 'inherit'
   });
   if (result.error) throw result.error;
