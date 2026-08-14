@@ -276,6 +276,14 @@ function normalizeArrayOfStrings(value: unknown): string[] {
   return uniqStrings(value.map((entry) => (typeof entry === 'string' ? entry : null)));
 }
 
+function normalizeObjectRecords(value: unknown): Array<Record<string, unknown>> {
+  const entries = Array.isArray(value) ? value : value && typeof value === 'object' ? [value] : [];
+  return entries.filter(
+    (entry): entry is Record<string, unknown> =>
+      Boolean(entry) && typeof entry === 'object' && !Array.isArray(entry)
+  );
+}
+
 function valueToJson(value: unknown): string {
   return JSON.stringify(value ?? null);
 }
@@ -390,12 +398,12 @@ function buildTimelineSummary(
 }
 
 function mergeUniqueObjects(
-  current: Array<Record<string, unknown>>,
-  next: Array<Record<string, unknown>>
+  current: unknown,
+  next: unknown
 ): Array<Record<string, unknown>> {
   const seen = new Set<string>();
   const merged: Array<Record<string, unknown>> = [];
-  for (const entry of [...current, ...next]) {
+  for (const entry of [...normalizeObjectRecords(current), ...normalizeObjectRecords(next)]) {
     const key = JSON.stringify(entry || {});
     if (seen.has(key)) continue;
     seen.add(key);
@@ -1036,23 +1044,24 @@ export class OrganizationContextService {
       .flatMap((entry) => (Array.isArray(entry) ? entry : [entry]))
       .map((entry) => (typeof entry === 'string' ? entry : null));
 
-    const legacyKeyMetrics = safeParseJson<Array<Record<string, unknown>>>(
+    const legacyKeyMetrics = safeParseJson<unknown>(
       interviewContext?.key_metrics,
       []
     );
-    const legacyStakeholders = safeParseJson<Array<Record<string, unknown>>>(
+    const legacyStakeholders = safeParseJson<unknown>(
       interviewContext?.stakeholders,
       []
     );
-    const legacyGaps = safeParseJson<Array<Record<string, unknown>>>(
+    const legacyGaps = safeParseJson<unknown>(
       interviewContext?.open_gaps,
       []
     );
-    const legacyStrategicPriorities = safeParseJson<string[]>(
-      organizationProfile?.strategic_priorities,
-      []
+    const legacyStrategicPriorities = normalizeArrayOfStrings(
+      safeParseJson<unknown>(organizationProfile?.strategic_priorities, [])
     );
-    const legacyTechStack = safeParseJson<string[]>(organizationProfile?.technology_stack, []);
+    const legacyTechStack = normalizeArrayOfStrings(
+      safeParseJson<unknown>(organizationProfile?.technology_stack, [])
+    );
 
     const evidenceFromRows = interviewEvidence.map((row) => ({
       evidenceId: asString(row.id),

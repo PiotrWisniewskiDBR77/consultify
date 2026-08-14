@@ -83,6 +83,52 @@ describe('InterviewController assignments', () => {
     mockNext = vi.fn();
   });
 
+  it('getAssignment: direct respondent can read own assignment without manager permission', async () => {
+    mockReq.params.id = 'a-own';
+    mockQueryOne.mockResolvedValueOnce({
+      id: 'a-own',
+      organization_id: 'org-1',
+      assignee_user_id: 'user-1',
+      template_id: 'tpl-1',
+      template_name: 'CEPD interview',
+      status: 'in_progress',
+      answered_questions: 0,
+      total_questions: 24,
+      is_team_assignment: 0,
+      created_by: 'admin-1',
+    });
+
+    const { InterviewController } = await import('../../../../server/src/controllers/InterviewController.js');
+    await InterviewController.getAssignment(mockReq, mockRes, mockNext);
+
+    expect(mockRes.status).not.toHaveBeenCalledWith(403);
+    expect(mockRes.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'a-own',
+        assignee: expect.objectContaining({ id: 'user-1' }),
+      })
+    );
+  });
+
+  it('getAssignment: unrelated respondent is denied', async () => {
+    mockReq.params.id = 'a-other';
+    mockQueryOne.mockResolvedValueOnce({
+      id: 'a-other',
+      organization_id: 'org-1',
+      assignee_user_id: 'user-2',
+      status: 'assigned',
+      is_team_assignment: 0,
+      created_by: 'admin-1',
+    });
+    mockGetTableColumns.mockResolvedValueOnce(new Set());
+
+    const { InterviewController } = await import('../../../../server/src/controllers/InterviewController.js');
+    await InterviewController.getAssignment(mockReq, mockRes, mockNext);
+
+    expect(mockRes.status).toHaveBeenCalledWith(403);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Forbidden' });
+  });
+
   it('submitAssignment: <50% stays submitted and remains reviewable', async () => {
     mockReq.params.id = 'a1';
     mockQueryAll.mockResolvedValue([]);
@@ -455,4 +501,3 @@ describe('InterviewController assignments', () => {
     );
   });
 });
-

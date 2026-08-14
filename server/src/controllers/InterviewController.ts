@@ -4406,6 +4406,34 @@ export const InterviewController = {
     }
 
     const r = row as any;
+    const isDirectAssignee = String(r.assignee_user_id || '') === String(user.id || '');
+    let isTeamMember = false;
+    if (!isDirectAssignee && r.is_team_assignment === 1) {
+      const membership = await queryHelpers.queryOne(
+        `SELECT 1 as allowed FROM interview_assignment_members WHERE assignment_id = ? AND user_id = ? LIMIT 1`,
+        [id, user.id]
+      );
+      isTeamMember = Boolean(membership);
+    }
+
+    let isManagerInScope = false;
+    if (!isDirectAssignee && !isTeamMember) {
+      const scope = await resolveInterviewManagerScope({
+        organizationId: user.organizationId,
+        userId: user.id,
+        role: user.role,
+      });
+      isManagerInScope =
+        scope.kind === 'organization' ||
+        (scope.kind === 'creator' && String(r.created_by || '') === String(scope.creatorId)) ||
+        (scope.kind === 'projects' && scope.projectIds.includes(String(r.project_id || '')));
+    }
+
+    if (!isDirectAssignee && !isTeamMember && !isManagerInScope) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
     const answered = Number(r.answered_questions || 0);
     const total = Number(r.total_questions || 0);
 
