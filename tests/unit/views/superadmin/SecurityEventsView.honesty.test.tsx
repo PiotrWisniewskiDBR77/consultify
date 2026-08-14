@@ -29,6 +29,11 @@ vi.mock('@/components/Admin/AdminState', () => ({
 }));
 
 describe('SecurityEventsView honest UI', () => {
+  const openResolveAction = () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Row actions' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Resolve event' }));
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -61,7 +66,7 @@ describe('SecurityEventsView honest UI', () => {
     render(<SecurityEventsView />);
 
     expect(await screen.findByText('Unknown date')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /Resolve security event event-1/i }));
+    openResolveAction();
 
     await waitFor(() => {
       expect(
@@ -89,7 +94,7 @@ describe('SecurityEventsView honest UI', () => {
     render(<SecurityEventsView />);
 
     await screen.findByText('LOGIN_FAILED');
-    fireEvent.click(screen.getByRole('button', { name: /Resolve security event event-1/i }));
+    openResolveAction();
 
     await waitFor(() => {
       expect(
@@ -142,7 +147,7 @@ describe('SecurityEventsView honest UI', () => {
     render(<SecurityEventsView />);
 
     expect(await screen.findByText('LOGIN_FAILED')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Resolve security event event-1/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Row actions' })).toBeInTheDocument();
   });
 
   it('does not treat string false resolved values as resolved', async () => {
@@ -162,6 +167,6 @@ describe('SecurityEventsView honest UI', () => {
     const row = screen.getByText('LOGIN_FAILED').closest('tr');
     expect(row).not.toBeNull();
     expect(within(row as HTMLElement).queryByText('Resolved')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Resolve security event event-1/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Row actions' })).toBeInTheDocument();
   });
 });

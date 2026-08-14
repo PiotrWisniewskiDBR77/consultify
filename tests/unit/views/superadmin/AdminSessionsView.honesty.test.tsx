@@ -39,9 +39,17 @@ const session = {
 };
 
 describe('AdminSessionsView honest UI', () => {
+  const revokeSession = () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Row actions' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Revoke Session' }));
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.stubGlobal('confirm', vi.fn(() => true));
+    vi.stubGlobal(
+      'confirm',
+      vi.fn(() => true)
+    );
     vi.mocked(Api.getAdminSessions).mockRejectedValue(new Error('Admin sessions backend down'));
     vi.mocked(Api.getAdminSessionStats).mockResolvedValue(stats);
     vi.mocked(Api.revokeAdminSession).mockResolvedValue({ success: true });
@@ -71,7 +79,7 @@ describe('AdminSessionsView honest UI', () => {
 
     await screen.findByText('admin@example.com');
     expect(screen.getAllByText('Unknown date').length).toBeGreaterThan(0);
-    fireEvent.click(screen.getByRole('button', { name: /Revoke admin session session-1/i }));
+    revokeSession();
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(
@@ -89,7 +97,7 @@ describe('AdminSessionsView honest UI', () => {
     render(<AdminSessionsView />);
 
     await screen.findByText('admin@example.com');
-    fireEvent.click(screen.getByRole('button', { name: /Revoke admin session session-1/i }));
+    revokeSession();
 
     await waitFor(() => {
       expect(screen.queryByText('admin@example.com')).not.toBeInTheDocument();
@@ -150,9 +158,7 @@ describe('AdminSessionsView honest UI', () => {
     render(<AdminSessionsView />);
 
     expect(await screen.findByText('admin@example.com')).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: /Revoke admin session session-1/i })
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Row actions' })).toBeInTheDocument();
     expect(screen.queryByText('Admin sessions unavailable')).not.toBeInTheDocument();
   });
 

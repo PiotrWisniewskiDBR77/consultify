@@ -47,9 +47,21 @@ const threat = {
 };
 
 describe('ThreatIntelligenceView honest UI', () => {
+  const openRowActions = () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Row actions' }));
+  };
+
+  const chooseRowAction = (name: string) => {
+    openRowActions();
+    fireEvent.click(screen.getByRole('menuitem', { name }));
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.stubGlobal('confirm', vi.fn(() => true));
+    vi.stubGlobal(
+      'confirm',
+      vi.fn(() => true)
+    );
     vi.mocked(Api.getThreats).mockRejectedValue(new Error('Threat feed backend down'));
     vi.mocked(Api.getThreatStats).mockResolvedValue(threatStats);
     vi.mocked(Api.addThreat).mockResolvedValue({ id: 'threat-1' });
@@ -113,7 +125,9 @@ describe('ThreatIntelligenceView honest UI', () => {
     fireEvent.click(screen.getAllByRole('button', { name: /Add Threat/i }).at(-1)!);
 
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent('Threat creation response was incomplete');
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'Threat creation response was incomplete'
+      );
     });
     expect(screen.getByPlaceholderText('192.168.1.1')).toBeInTheDocument();
   });
@@ -149,8 +163,9 @@ describe('ThreatIntelligenceView honest UI', () => {
     render(<ThreatIntelligenceView />);
 
     expect(await screen.findByText('10.0.0.1')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Block threat threat-1/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Delete threat threat-1/i })).toBeInTheDocument();
+    openRowActions();
+    expect(screen.getByRole('menuitem', { name: 'Block' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Delete' })).toBeInTheDocument();
   });
 
   it('closes create modal only after threat is confirmed by read-back', async () => {
@@ -178,25 +193,31 @@ describe('ThreatIntelligenceView honest UI', () => {
 
     await screen.findByText('10.0.0.1');
     expect(screen.getByText('Unknown date')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /Block threat threat-1/i }));
+    chooseRowAction('Block');
 
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent('Threat block was not confirmed by the server');
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'Threat block was not confirmed by the server'
+      );
     });
 
     vi.mocked(Api.getThreats).mockResolvedValue([{ ...threat, isBlocked: true }]);
     fireEvent.click(screen.getByRole('button', { name: /Refresh/i }));
-    await screen.findByRole('button', { name: /Unblock threat threat-1/i });
-    fireEvent.click(screen.getByRole('button', { name: /Unblock threat threat-1/i }));
+    await screen.findByText('10.0.0.1');
+    chooseRowAction('Unblock');
 
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent('Threat unblock was not confirmed by the server');
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'Threat unblock was not confirmed by the server'
+      );
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /Delete threat threat-1/i }));
+    chooseRowAction('Delete');
 
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent('Threat deletion was not confirmed by the server');
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'Threat deletion was not confirmed by the server'
+      );
     });
   });
 
@@ -208,7 +229,7 @@ describe('ThreatIntelligenceView honest UI', () => {
     render(<ThreatIntelligenceView />);
 
     await screen.findByText('10.0.0.1');
-    fireEvent.click(screen.getByRole('button', { name: /Delete threat threat-1/i }));
+    chooseRowAction('Delete');
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(
@@ -246,7 +267,9 @@ describe('ThreatIntelligenceView honest UI', () => {
     await waitFor(() => {
       expect(screen.getByText('Threat intelligence unavailable')).toBeInTheDocument();
     });
-    expect(screen.getAllByText('Threat intelligence response was not a list').length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText('Threat intelligence response was not a list').length
+    ).toBeGreaterThan(0);
     expect(screen.queryByText('No threats found')).not.toBeInTheDocument();
   });
 });
