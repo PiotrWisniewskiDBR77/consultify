@@ -1,7 +1,7 @@
 /**
  * Permission Service Unit Tests
  * Tests database-backed PBAC (Permission-Based Access Control) and legacy role-based checks
- * 
+ *
  * Coverage Target: 95%+
  * Critical Path: Security & Multi-Tenant Isolation
  */
@@ -150,7 +150,9 @@ describe('PermissionService', () => {
     describe('hasPermission()', () => {
       it('should return false for null/undefined userId', async () => {
         expect(await hasPermission('', 'org-test-123', 'PERMISSION_KEY', ROLES.ADMIN)).toBe(false);
-        expect(await hasPermission(null as any, 'org-test-123', 'PERMISSION_KEY', ROLES.ADMIN)).toBe(false);
+        expect(
+          await hasPermission(null as any, 'org-test-123', 'PERMISSION_KEY', ROLES.ADMIN)
+        ).toBe(false);
       });
 
       it('should return false for empty permissionKey', async () => {
@@ -181,7 +183,8 @@ describe('PermissionService', () => {
         expect(DbPromise.get).toHaveBeenCalledWith(
           mockDb,
           expect.stringContaining('org_user_permissions'),
-          expect.arrayContaining([testUsers.user.id, testOrganizations.org1.id, 'PERMISSION_KEY'])
+          expect.arrayContaining([testUsers.user.id, testOrganizations.org1.id, 'PERMISSION_KEY']),
+          { fallback: false }
         );
       });
 
@@ -238,10 +241,7 @@ describe('PermissionService', () => {
     describe('getUserPermissions()', () => {
       it('should return role permissions and overrides', async () => {
         (DbPromise.all as any)
-          .mockResolvedValueOnce([
-            { permission_key: 'PERM_1' },
-            { permission_key: 'PERM_2' },
-          ]) // Role permissions
+          .mockResolvedValueOnce([{ permission_key: 'PERM_1' }, { permission_key: 'PERM_2' }]) // Role permissions
           .mockResolvedValueOnce([
             { permission_key: 'PERM_1', grant_type: 'REVOKE' },
             { permission_key: 'PERM_3', grant_type: 'GRANT' },
@@ -262,9 +262,7 @@ describe('PermissionService', () => {
       it('should handle empty role permissions', async () => {
         (DbPromise.all as any)
           .mockResolvedValueOnce([]) // No role permissions
-          .mockResolvedValueOnce([
-            { permission_key: 'PERM_1', grant_type: 'GRANT' },
-          ]); // One override
+          .mockResolvedValueOnce([{ permission_key: 'PERM_1', grant_type: 'GRANT' }]); // One override
 
         const result = await getUserPermissions(
           testUsers.user.id,
@@ -277,9 +275,7 @@ describe('PermissionService', () => {
       });
 
       it('should handle null database results', async () => {
-        (DbPromise.all as any)
-          .mockResolvedValueOnce(null)
-          .mockResolvedValueOnce(null);
+        (DbPromise.all as any).mockResolvedValueOnce(null).mockResolvedValueOnce(null);
 
         const result = await getUserPermissions(
           testUsers.user.id,
@@ -416,9 +412,7 @@ describe('PermissionService', () => {
 
     describe('getPermissionsByCategory()', () => {
       it('should return permissions filtered by category', async () => {
-        const mockPermissions = [
-          { key: 'PERM_1', description: 'Permission 1', category: 'ai' },
-        ];
+        const mockPermissions = [{ key: 'PERM_1', description: 'Permission 1', category: 'ai' }];
         (DbPromise.all as any).mockResolvedValueOnce(mockPermissions);
 
         const result = await getPermissionsByCategory('ai');
@@ -426,7 +420,7 @@ describe('PermissionService', () => {
         expect(result).toEqual(mockPermissions);
         expect(DbPromise.all).toHaveBeenCalledWith(
           mockDb,
-          expect.stringContaining("WHERE category = ?"),
+          expect.stringContaining('WHERE category = ?'),
           ['ai']
         );
       });
@@ -529,9 +523,7 @@ describe('PermissionService', () => {
         (DbPromise.get as any).mockRejectedValueOnce(new Error('DB Error'));
 
         // Should fall back to general permission check
-        (DbPromise.get as any)
-          .mockResolvedValueOnce(null)
-          .mockResolvedValueOnce(null);
+        (DbPromise.get as any).mockResolvedValueOnce(null).mockResolvedValueOnce(null);
 
         const result = await hasContentPermission(
           testUsers.user.id,
@@ -566,12 +558,12 @@ describe('PermissionService', () => {
       it('should throw error for missing required fields', async () => {
         await expect(
           grantContentPermission({
-          contentId: '',
-          contentType: 'EMAIL_TEMPLATE',
-          userId: testUsers.user.id,
-          permissionKey: CONTENT_PERMISSIONS.EMAIL_TEMPLATE_VIEW,
-          grantedBy: testUsers.admin.id,
-        } as any)
+            contentId: '',
+            contentType: 'EMAIL_TEMPLATE',
+            userId: testUsers.user.id,
+            permissionKey: CONTENT_PERMISSIONS.EMAIL_TEMPLATE_VIEW,
+            grantedBy: testUsers.admin.id,
+          } as any)
         ).rejects.toThrow('contentId, contentType, userId, and permissionKey are required');
       });
 
@@ -776,10 +768,12 @@ describe('PermissionService', () => {
 
       expect(result).toBe(false);
       // Verify query includes correct organization ID
-      expect(DbPromise.get).toHaveBeenCalledWith(
+      expect(DbPromise.get).toHaveBeenNthCalledWith(
+        1,
         mockDb,
         expect.anything(),
-        expect.arrayContaining([testUsers.user.id, testOrganizations.org2.id, 'PERMISSION_KEY'])
+        expect.arrayContaining([testUsers.user.id, testOrganizations.org2.id, 'PERMISSION_KEY']),
+        { fallback: false }
       );
     });
 

@@ -59,7 +59,13 @@ describe('rateLimiting.middleware (L1)', () => {
       const mod = await import('../../../../server/src/middleware/rateLimiting.middleware.ts');
       const res = makeRes();
       const next = vi.fn();
-      const req: any = { method: 'GET', ip: '1.1.1.1', headers: {}, socket: {}, user: { id: 'u1' } };
+      const req: any = {
+        method: 'GET',
+        ip: '1.1.1.1',
+        headers: {},
+        socket: {},
+        user: { id: 'u1' },
+      };
 
       mod.defaultRateLimiter(req, res as any, next as any);
       expect(next).toHaveBeenCalledTimes(1);
@@ -79,7 +85,13 @@ describe('rateLimiting.middleware (L1)', () => {
       const mod = await import('../../../../server/src/middleware/rateLimiting.middleware.ts');
       const res = makeRes();
       const next = vi.fn();
-      const req: any = { method: 'GET', ip: '1.1.1.1', headers: {}, socket: {}, user: { id: 'u1' } };
+      const req: any = {
+        method: 'GET',
+        ip: '1.1.1.1',
+        headers: {},
+        socket: {},
+        user: { id: 'u1' },
+      };
 
       mod.defaultRateLimiter(req, res as any, next as any);
       expect(next).toHaveBeenCalledTimes(1);
@@ -99,7 +111,13 @@ describe('rateLimiting.middleware (L1)', () => {
       const mod = await import('../../../../server/src/middleware/rateLimiting.middleware.ts');
       const res = makeRes();
       const next = vi.fn();
-      const req: any = { method: 'GET', ip: '1.1.1.1', headers: {}, socket: {}, user: { id: 'u1' } };
+      const req: any = {
+        method: 'GET',
+        ip: '1.1.1.1',
+        headers: {},
+        socket: {},
+        user: { id: 'u1' },
+      };
 
       mod.defaultRateLimiter(req, res as any, next as any);
       expect(next).toHaveBeenCalledTimes(1);
@@ -169,13 +187,16 @@ describe('rateLimiting.middleware (L1)', () => {
 
   it('fails open to next when Date.now throws during limiter evaluation', async () => {
     const prev = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+    vi.resetModules();
+    // Import before replacing the global clock. Logger transports initialize
+    // during module loading and legitimately read Date.now themselves; the
+    // fault injection is intended for limiter evaluation only.
+    const mod = await import('../../../../server/src/middleware/rateLimiting.middleware.ts');
     const nowSpy = vi.spyOn(Date, 'now').mockImplementation(() => {
       throw new Error('clock failure');
     });
     try {
-      process.env.NODE_ENV = 'production';
-      vi.resetModules();
-      const mod = await import('../../../../server/src/middleware/rateLimiting.middleware.ts');
       const res = makeRes();
       const next = vi.fn();
       const req: any = { method: 'GET', ip: '6.6.6.6', headers: {}, socket: {} };
@@ -939,7 +960,9 @@ describe('rateLimiting.middleware (L1)', () => {
     const unrefSpy = vi.fn();
     const handle = { unref: unrefSpy } as unknown as NodeJS.Timeout;
     const setIntervalSpy = vi.spyOn(globalThis, 'setInterval').mockReturnValue(handle);
-    const clearIntervalSpy = vi.spyOn(globalThis, 'clearInterval').mockImplementation(() => undefined);
+    const clearIntervalSpy = vi
+      .spyOn(globalThis, 'clearInterval')
+      .mockImplementation(() => undefined);
 
     try {
       process.env.NODE_ENV = 'production';
@@ -1049,4 +1072,3 @@ describe('rateLimiting.middleware (L1)', () => {
     }
   });
 });
-

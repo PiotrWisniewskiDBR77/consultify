@@ -11,11 +11,34 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const queryAllMock = vi.fn();
 const queryOneMock = vi.fn();
 const queryRunMock = vi.fn();
+const registerArtifactOriginMock = vi.fn();
+const persistDocStudioTemplateMock = vi.fn();
+const draftDocStudioTemplateMock = vi.fn();
+const approveDocStudioTemplateMock = vi.fn();
 
 vi.mock('../../../server/src/utils/queryHelpers.js', () => ({
   queryAll: (...args: any[]) => queryAllMock(...args),
   queryOne: (...args: any[]) => queryOneMock(...args),
   queryRun: (...args: any[]) => queryRunMock(...args),
+}));
+
+vi.mock('../../../server/src/services/v8/artifactRegistryService.js', () => ({
+  registerArtifactOrigin: (...args: any[]) => registerArtifactOriginMock(...args),
+  removeTemplateArtifactByOrigin: vi.fn(),
+}));
+
+vi.mock('../../../server/src/services/documentStudio/documentTemplateRegistryDao.js', () => ({
+  persistTemplate: (...args: any[]) => persistDocStudioTemplateMock(...args),
+}));
+
+vi.mock('../../../server/src/services/documentStudio/documentTemplateService.js', () => ({
+  draftTemplate: (...args: any[]) => draftDocStudioTemplateMock(...args),
+  reviseTemplateStructure: vi.fn(),
+  approveTemplate: (...args: any[]) => approveDocStudioTemplateMock(...args),
+  deprecateTemplate: vi.fn(),
+  ensureTemplateRegistryHydrated: vi.fn(),
+  getTemplate: vi.fn(),
+  updateTemplateContent: vi.fn(),
 }));
 
 describe('deliverableTemplateService — CRUD (T3)', () => {
@@ -28,6 +51,30 @@ describe('deliverableTemplateService — CRUD (T3)', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    registerArtifactOriginMock.mockResolvedValue({ id: 'artifact-1' });
+    persistDocStudioTemplateMock.mockResolvedValue({ ok: true });
+    draftDocStudioTemplateMock.mockReturnValue({
+      template: {
+        templateId: 'new-doc-id',
+        organizationId: 'org-A',
+        name: 'My Doc',
+        purpose: 'Szablon: My Doc',
+        notes: undefined,
+        documentType: 'custom',
+        sectionBlueprint: [],
+        status: 'draft',
+      },
+    });
+    approveDocStudioTemplateMock.mockReturnValue({
+      templateId: 'new-doc-id',
+      organizationId: 'org-A',
+      name: 'My Doc',
+      purpose: 'Szablon: My Doc',
+      notes: undefined,
+      documentType: 'custom',
+      sectionBlueprint: [],
+      status: 'approved',
+    });
     vi.resetModules();
     const mod = await import('../../../server/src/services/deliverableTemplateService.js');
     createDeliverableTemplate = mod.createDeliverableTemplate;
@@ -42,34 +89,23 @@ describe('deliverableTemplateService — CRUD (T3)', () => {
     vi.restoreAllMocks();
   });
 
-  // FT-1.U1 — createDeliverableTemplate(type='doc') wywołuje INSERT z is_system=false
-  it('createDeliverableTemplate(doc) inserts with is_system=false', async () => {
-    // Pierwsza queryOne = RETURNING id po INSERT
-    queryOneMock
-      .mockResolvedValueOnce({ id: 'new-doc-id' }) // INSERT RETURNING
-      .mockResolvedValueOnce(null)                  // deck lookup (getDeliverableTemplate)
-      .mockResolvedValueOnce({                      // doc lookup
-        id: 'new-doc-id',
-        name: 'My Doc',
-        description: null,
-        is_system: false,
-        is_public: false,
-        report_type: 'custom',
-        sections_json: '[]',
-        organization_id: 'org-A',
-      })
-      .mockResolvedValueOnce(null);                 // table lookup (nie trafia)
-
-    const result = await createDeliverableTemplate('doc', 'My Doc', undefined, undefined, 'org-A', 'user-1');
-
-    // Sprawdź INSERT SQL
-    expect(queryOneMock).toHaveBeenCalledWith(
-      expect.stringContaining('INSERT INTO report_builder_templates'),
-      expect.arrayContaining(['My Doc', 'org-A', 'user-1'])
+  // FT-1.U1 — doc uses the canonical Document Studio lifecycle, not legacy SQL.
+  it('createDeliverableTemplate(doc) uses canonical Document Studio lifecycle', async () => {
+    const result = await createDeliverableTemplate(
+      'doc',
+      'My Doc',
+      undefined,
+      undefined,
+      'org-A',
+      'user-1'
     );
-    // Sprawdź że is_system=false wbudowane w SQL
-    const insertSql: string = queryOneMock.mock.calls[0][0];
-    expect(insertSql).toContain('false');
+
+    expect(draftDocStudioTemplateMock).toHaveBeenCalledWith(
+      expect.objectContaining({ organizationId: 'org-A', userId: 'user-1' })
+    );
+    expect(approveDocStudioTemplateMock).toHaveBeenCalledOnce();
+    expect(persistDocStudioTemplateMock).toHaveBeenCalledOnce();
+    expect(queryOneMock).not.toHaveBeenCalled();
     expect(result.id).toBe('new-doc-id');
     expect(result.type).toBe('doc');
     expect(result.isSystem).toBe(false);
@@ -79,7 +115,8 @@ describe('deliverableTemplateService — CRUD (T3)', () => {
   it('createDeliverableTemplate(deck) targets presentation_templates', async () => {
     queryOneMock
       .mockResolvedValueOnce({ id: 'new-deck-id' }) // INSERT RETURNING
-      .mockResolvedValueOnce({                       // deck lookup (getDeliverableTemplate)
+      .mockResolvedValueOnce({
+        // deck lookup (getDeliverableTemplate)
         id: 'new-deck-id',
         name: 'My Deck',
         description: null,
@@ -89,7 +126,14 @@ describe('deliverableTemplateService — CRUD (T3)', () => {
         outline_json: '[]',
       });
 
-    const result = await createDeliverableTemplate('deck', 'My Deck', undefined, undefined, 'org-A', 'user-1');
+    const result = await createDeliverableTemplate(
+      'deck',
+      'My Deck',
+      undefined,
+      undefined,
+      'org-A',
+      'user-1'
+    );
 
     const insertSql: string = queryOneMock.mock.calls[0][0];
     expect(insertSql).toContain('INSERT INTO presentation_templates');
@@ -110,17 +154,18 @@ describe('deliverableTemplateService — CRUD (T3)', () => {
       outline_json: '[]',
     });
 
-    await expect(
-      deleteDeliverableTemplate('sys-deck', 'org-A')
-    ).rejects.toThrow(TemplateForbiddenError);
+    await expect(deleteDeliverableTemplate('sys-deck', 'org-A')).rejects.toThrow(
+      TemplateForbiddenError
+    );
   });
 
   // FT-1.U4 — updateDeliverableTemplate z system template → rzuca TemplateForbiddenError
   it('updateDeliverableTemplate throws TemplateForbiddenError for system templates', async () => {
     // getDeliverableTemplate: doc is_system=true
     queryOneMock
-      .mockResolvedValueOnce(null)     // deck lookup
-      .mockResolvedValueOnce({         // doc lookup
+      .mockResolvedValueOnce(null) // deck lookup
+      .mockResolvedValueOnce({
+        // doc lookup
         id: 'sys-doc',
         name: 'System Doc',
         description: null,
@@ -148,10 +193,11 @@ describe('deliverableTemplateService — CRUD (T3)', () => {
   // FT-1.U6 — createDeliverableTemplate(type='table') trafia w tp_base_templates z org_scope
   it('createDeliverableTemplate(table) inserts with organization_id', async () => {
     queryOneMock
-      .mockResolvedValueOnce({ id: 'uuid-table-1' })  // INSERT RETURNING
-      .mockResolvedValueOnce(null)                      // deck lookup
-      .mockResolvedValueOnce(null)                      // doc lookup
-      .mockResolvedValueOnce({                          // table lookup
+      .mockResolvedValueOnce({ id: 'uuid-table-1' }) // INSERT RETURNING
+      .mockResolvedValueOnce(null) // deck lookup
+      .mockResolvedValueOnce(null) // doc lookup
+      .mockResolvedValueOnce({
+        // table lookup
         id: 'uuid-table-1',
         name: 'My Table',
         description: null,
@@ -162,7 +208,14 @@ describe('deliverableTemplateService — CRUD (T3)', () => {
         organization_id: 'org-A',
       });
 
-    const result = await createDeliverableTemplate('table', 'My Table', undefined, undefined, 'org-A', 'user-1');
+    const result = await createDeliverableTemplate(
+      'table',
+      'My Table',
+      undefined,
+      undefined,
+      'org-A',
+      'user-1'
+    );
 
     const insertSql: string = queryOneMock.mock.calls[0][0];
     expect(insertSql).toContain('INSERT INTO tp_base_templates');

@@ -19,9 +19,29 @@ vi.mock('../../../server/src/utils/queryHelpers.js', () => ({
 
 // --- Mock artifact registry (split-brain fix under test) ---
 const registerArtifactOriginMock = vi.fn();
+const removeTemplateArtifactByOriginMock = vi.fn();
+const persistDocStudioTemplateMock = vi.fn();
+const draftDocStudioTemplateMock = vi.fn();
+const reviseDocStudioTemplateStructureMock = vi.fn();
+const approveDocStudioTemplateMock = vi.fn();
 
 vi.mock('../../../server/src/services/v8/artifactRegistryService.js', () => ({
   registerArtifactOrigin: (...args: any[]) => registerArtifactOriginMock(...args),
+  removeTemplateArtifactByOrigin: (...args: any[]) => removeTemplateArtifactByOriginMock(...args),
+}));
+
+vi.mock('../../../server/src/services/documentStudio/documentTemplateRegistryDao.js', () => ({
+  persistTemplate: (...args: any[]) => persistDocStudioTemplateMock(...args),
+}));
+
+vi.mock('../../../server/src/services/documentStudio/documentTemplateService.js', () => ({
+  draftTemplate: (...args: any[]) => draftDocStudioTemplateMock(...args),
+  reviseTemplateStructure: (...args: any[]) => reviseDocStudioTemplateStructureMock(...args),
+  approveTemplate: (...args: any[]) => approveDocStudioTemplateMock(...args),
+  deprecateTemplate: vi.fn(),
+  ensureTemplateRegistryHydrated: vi.fn(),
+  getTemplate: vi.fn(),
+  updateTemplateContent: vi.fn(),
 }));
 
 describe('deliverableTemplateService', () => {
@@ -42,7 +62,15 @@ describe('deliverableTemplateService', () => {
   // FT-1.1 — deck wywołuje właściwy SQL
   it('queries presentation_templates for type=deck', async () => {
     queryAllMock.mockResolvedValue([
-      { id: 'd1', name: 'Corporate', description: null, is_system: true, theme: 'corporate', organization_id: null, outline_json: '[]' },
+      {
+        id: 'd1',
+        name: 'Corporate',
+        description: null,
+        is_system: true,
+        theme: 'corporate',
+        organization_id: null,
+        outline_json: '[]',
+      },
     ]);
     const result = await listDeliverableTemplates('deck', 'org-x');
     expect(queryAllMock).toHaveBeenCalledOnce();
@@ -59,7 +87,16 @@ describe('deliverableTemplateService', () => {
   it('queries report_builder_templates for type=doc', async () => {
     queryAllMock
       .mockResolvedValueOnce([
-        { id: 'r1', name: 'Audit Report', description: 'Full audit', is_system: true, is_public: false, report_type: 'ASSESSMENT_DRD', sections_json: '[{"id":1}]', organization_id: null },
+        {
+          id: 'r1',
+          name: 'Audit Report',
+          description: 'Full audit',
+          is_system: true,
+          is_public: false,
+          report_type: 'ASSESSMENT_DRD',
+          sections_json: '[{"id":1}]',
+          organization_id: null,
+        },
       ])
       .mockResolvedValueOnce([]); // document_studio_templates — empty for this test
     const result = await listDeliverableTemplates('doc', 'org-x');
@@ -81,7 +118,15 @@ describe('deliverableTemplateService', () => {
   // FT-1.4 — isBlank = true gdy name zawiera 'blank'
   it('sets isBlank=true when name contains "blank"', async () => {
     queryAllMock.mockResolvedValue([
-      { id: 'b1', name: 'Blank Deck', description: null, is_system: true, theme: null, organization_id: null, outline_json: null },
+      {
+        id: 'b1',
+        name: 'Blank Deck',
+        description: null,
+        is_system: true,
+        theme: null,
+        organization_id: null,
+        outline_json: null,
+      },
     ]);
     const result = await listDeliverableTemplates('deck', 'org-x');
     expect(result[0].isBlank).toBe(true);
@@ -91,7 +136,16 @@ describe('deliverableTemplateService', () => {
   it('sets isBlank=true when name contains "pusty"', async () => {
     queryAllMock
       .mockResolvedValueOnce([
-        { id: 'b2', name: 'Pusty raport', description: null, is_system: false, is_public: false, report_type: null, sections_json: '[]', organization_id: null },
+        {
+          id: 'b2',
+          name: 'Pusty raport',
+          description: null,
+          is_system: false,
+          is_public: false,
+          report_type: null,
+          sections_json: '[]',
+          organization_id: null,
+        },
       ])
       .mockResolvedValueOnce([]); // document_studio_templates
     const result = await listDeliverableTemplates('doc', 'org-x');
@@ -101,7 +155,15 @@ describe('deliverableTemplateService', () => {
   // FT-1.6 — table: isSystem=true gdy created_by IS NULL
   it('sets isSystem=true for table templates with created_by=null', async () => {
     queryAllMock.mockResolvedValue([
-      { id: 'tpl-uuid', name: 'Risk Register', description: null, is_featured: true, category: 'risk', schema_snapshot: {}, created_by: null },
+      {
+        id: 'tpl-uuid',
+        name: 'Risk Register',
+        description: null,
+        is_featured: true,
+        category: 'risk',
+        schema_snapshot: {},
+        created_by: null,
+      },
     ]);
     const result = await listDeliverableTemplates('table', 'org-x');
     expect(result[0].isSystem).toBe(true);
@@ -128,11 +190,7 @@ describe('deliverableTemplateService', () => {
 // DB throws "column visibility does not exist" — this is the backward
 // compatibility guarantee under test here.
 describe('deliverableTemplateService — 3-level visibility (System/Organization/Private)', () => {
-  let listDeliverableTemplates: (
-    type: any,
-    orgId: string,
-    userId?: string
-  ) => Promise<any[]>;
+  let listDeliverableTemplates: (type: any, orgId: string, userId?: string) => Promise<any[]>;
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -317,6 +375,20 @@ describe('deliverableTemplateService — createDeliverableTemplate registry regi
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    const template = {
+      templateId: 'tpl-doc-1',
+      organizationId: 'org-x',
+      name: 'My Doc Template',
+      purpose: 'desc',
+      notes: 'desc',
+      documentType: 'custom',
+      sectionBlueprint: [],
+      status: 'approved',
+    };
+    draftDocStudioTemplateMock.mockReturnValue({ template: { ...template, status: 'draft' } });
+    reviseDocStudioTemplateStructureMock.mockReturnValue({ ...template, status: 'draft' });
+    approveDocStudioTemplateMock.mockReturnValue(template);
+    persistDocStudioTemplateMock.mockResolvedValue({ ok: true });
     vi.resetModules();
     const mod = await import('../../../server/src/services/deliverableTemplateService.js');
     createDeliverableTemplate = mod.createDeliverableTemplate;
@@ -326,25 +398,8 @@ describe('deliverableTemplateService — createDeliverableTemplate registry regi
     vi.restoreAllMocks();
   });
 
-  // FT-2.1 — doc: INSERT into report_builder_templates then registerArtifactOrigin
-  // is called with artifactFamily='template', originRuntime='report_template'.
-  it('registers a doc template in the artifact registry after insert', async () => {
-    queryOneMock
-      .mockResolvedValueOnce({ id: 'tpl-doc-1' }) // INSERT ... RETURNING id
-      .mockResolvedValueOnce(null) // getDeliverableTemplate: deck lookup miss
-      .mockResolvedValueOnce({
-        // getDeliverableTemplate: doc lookup hit
-        id: 'tpl-doc-1',
-        name: 'My Doc Template',
-        description: 'desc',
-        is_system: false,
-        is_public: false,
-        report_type: 'custom',
-        sections_json: '[]',
-        organization_id: 'org-x',
-      });
-    registerArtifactOriginMock.mockResolvedValue({ artifactId: 'artifact-1' });
-
+  // FT-2.1 — doc uses the canonical document_studio_templates lifecycle.
+  it('persists a doc template through the canonical Document Studio lifecycle', async () => {
     const result = await createDeliverableTemplate(
       'doc',
       'My Doc Template',
@@ -355,19 +410,10 @@ describe('deliverableTemplateService — createDeliverableTemplate registry regi
     );
 
     expect(result.id).toBe('tpl-doc-1');
-    expect(registerArtifactOriginMock).toHaveBeenCalledOnce();
-    const call = registerArtifactOriginMock.mock.calls[0][0];
-    expect(call).toMatchObject({
-      organizationId: 'org-x',
-      outputType: 'report',
-      artifactFamily: 'template',
-      originRuntime: 'report_template',
-      originRecordId: 'tpl-doc-1',
-      titleSnapshot: 'My Doc Template',
-      ownerUserId: 'user-1',
-      createdBy: 'user-1',
-      visibilityScope: 'organization',
-    });
+    expect(draftDocStudioTemplateMock).toHaveBeenCalledOnce();
+    expect(approveDocStudioTemplateMock).toHaveBeenCalledOnce();
+    expect(persistDocStudioTemplateMock).toHaveBeenCalledOnce();
+    expect(registerArtifactOriginMock).not.toHaveBeenCalled();
   });
 
   // FT-2.2 — deck: INSERT into presentation_templates then registerArtifactOrigin
@@ -409,9 +455,8 @@ describe('deliverableTemplateService — createDeliverableTemplate registry regi
     });
   });
 
-  // FT-2.3 — table: no ArtifactOriginRuntime mapping exists yet → registry is
-  // skipped (not called), but the template row is still created successfully.
-  it('does not call registerArtifactOrigin for table templates (no mapping)', async () => {
+  // FT-2.3 — table templates are registered as canonical sheet templates.
+  it('registers table templates with the sheet_template origin', async () => {
     queryOneMock
       .mockResolvedValueOnce({ id: 'tpl-table-1' }) // INSERT ... RETURNING id
       .mockResolvedValueOnce(null) // getDeliverableTemplate: deck miss
@@ -438,36 +483,38 @@ describe('deliverableTemplateService — createDeliverableTemplate registry regi
     );
 
     expect(result.id).toBe('tpl-table-1');
-    expect(registerArtifactOriginMock).not.toHaveBeenCalled();
+    expect(registerArtifactOriginMock).toHaveBeenCalledOnce();
+    expect(registerArtifactOriginMock.mock.calls[0][0]).toMatchObject({
+      outputType: 'sheet',
+      artifactFamily: 'template',
+      originRuntime: 'sheet_template',
+      originRecordId: 'tpl-table-1',
+    });
   });
 
-  // FT-2.4 — fail-soft: registry throwing must NOT break template creation.
-  it('still returns the created template when registerArtifactOrigin throws', async () => {
-    queryOneMock
-      .mockResolvedValueOnce({ id: 'tpl-doc-2' }) // INSERT ... RETURNING id
-      .mockResolvedValueOnce(null) // deck lookup miss
-      .mockResolvedValueOnce({
-        id: 'tpl-doc-2',
-        name: 'Resilient Doc',
-        description: null,
-        is_system: false,
-        is_public: false,
-        report_type: 'custom',
-        sections_json: '[]',
-        organization_id: 'org-x',
-      });
+  // FT-2.4 — fail-soft: registry throwing must NOT break legacy deck creation.
+  it('still returns the created deck template when registerArtifactOrigin throws', async () => {
+    queryOneMock.mockResolvedValueOnce({ id: 'tpl-deck-2' }).mockResolvedValueOnce({
+      id: 'tpl-deck-2',
+      name: 'Resilient Deck',
+      description: null,
+      is_system: false,
+      theme: null,
+      organization_id: 'org-x',
+      outline_json: '[]',
+    });
     registerArtifactOriginMock.mockRejectedValue(new Error('registry unavailable'));
 
     const result = await createDeliverableTemplate(
-      'doc',
-      'Resilient Doc',
+      'deck',
+      'Resilient Deck',
       undefined,
       {},
       'org-x',
       'user-1'
     );
 
-    expect(result.id).toBe('tpl-doc-2');
+    expect(result.id).toBe('tpl-deck-2');
     expect(registerArtifactOriginMock).toHaveBeenCalledOnce();
   });
 });
@@ -480,11 +527,7 @@ describe('deliverableTemplateService — createDeliverableTemplate registry regi
 // (GET /api/deliverables/templates?type=doc → listDeliverableTemplates('doc', …)),
 // alongside — not instead of — legacy report_builder_templates rows.
 describe('deliverableTemplateService — document_studio_templates federation (doc library bridge)', () => {
-  let listDeliverableTemplates: (
-    type: any,
-    orgId: string,
-    userId?: string
-  ) => Promise<any[]>;
+  let listDeliverableTemplates: (type: any, orgId: string, userId?: string) => Promise<any[]>;
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -522,7 +565,15 @@ describe('deliverableTemplateService — document_studio_templates federation (d
           notes: null,
           is_system: false,
           organization_id: 'org-x',
-          section_blueprint: [{ title: 'Executive Summary', level: 1, purpose: 'p', required: true, expectedLengthHint: 'medium' }],
+          section_blueprint: [
+            {
+              title: 'Executive Summary',
+              level: 1,
+              purpose: 'p',
+              required: true,
+              expectedLengthHint: 'medium',
+            },
+          ],
           document_type: 'steering_committee_report',
         },
       ]);
