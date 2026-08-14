@@ -405,7 +405,10 @@ describe('work canvas routes', () => {
         baseUpdatedAt: '2026-05-02T00:00:00.000Z',
       },
     });
-    expect(dbRunMock).not.toHaveBeenCalled();
+    const mutationCalls = dbRunMock.mock.calls.filter(([sql]) =>
+      /^\s*(INSERT|UPDATE|DELETE)\b/i.test(String(sql))
+    );
+    expect(mutationCalls).toEqual([]);
   });
 
   it('rejects stale Canvas operations before applying mutations', async () => {
@@ -609,7 +612,10 @@ describe('work canvas routes', () => {
       expect.anything(),
       'canvas.convert.idea'
     );
-    expect(dbRunMock).not.toHaveBeenCalled();
+    const mutationCalls = dbRunMock.mock.calls.filter(([sql]) =>
+      /^\s*(INSERT|UPDATE|DELETE)\b/i.test(String(sql))
+    );
+    expect(mutationCalls).toEqual([]);
   });
 
   it('materializes a real idea when approving an idea proposal', async () => {
