@@ -39,6 +39,14 @@ vi.mock('../../../server/src/config/Config.js', () => ({
   config: { JWT_SECRET: 'test-secret' },
 }));
 
+// Public-demo realtime eligibility is a separate boundary with its own tests.
+// This suite exercises the organization and idea-membership boundary after an
+// authenticated principal has already passed that eligibility gate.
+vi.mock('../../../server/src/realtime/demoRealtimeGuard.js', () => ({
+  evaluateRealtimeAccess: async () => ({ allowed: true, reason: 'eligible_test_principal' }),
+  trackRealtimeConnection: () => () => undefined,
+}));
+
 // ── Import after mocks ────────────────────────────────────────────────────────
 
 import { attachIdeaCollabWs } from '../../../server/src/gateways/ideaCollabWs.gateway.js';
