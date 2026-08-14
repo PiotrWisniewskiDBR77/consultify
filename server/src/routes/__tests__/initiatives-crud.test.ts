@@ -206,7 +206,12 @@ describe('initiatives CRUD routes', () => {
 
     const res = await request(app)
       .post('/api/initiatives')
-      .send({ title: 'Reduce cycle time', description: 'Lean kaizen', priority: 'HIGH' });
+      .send({
+        projectId: 'project-crud-1',
+        title: 'Reduce cycle time',
+        description: 'Lean kaizen',
+        priority: 'HIGH',
+      });
 
     expect([200, 201]).toContain(res.status);
     expect(res.body.id).toBeTruthy();
@@ -230,7 +235,11 @@ describe('initiatives CRUD routes', () => {
 
     const res = await request(app)
       .post('/api/initiatives')
-      .send({ title: 'PM creates an initiative', priority: 'HIGH' });
+      .send({
+        projectId: 'project-crud-1',
+        title: 'PM creates an initiative',
+        priority: 'HIGH',
+      });
 
     expect([200, 201]).toContain(res.status);
     expect(res.body.id).toBeTruthy();

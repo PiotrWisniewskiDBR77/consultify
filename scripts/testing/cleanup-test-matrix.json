@@ -61,6 +61,8 @@
       "tests/integration/interview/voice-stt-save.test.ts",
       "tests/integration/routes/api-keys.l3.test.ts",
       "tests/integration/routes/billing.test.js",
+      "server/src/routes/__tests__/finance-statements.routes.f5wiring.test.ts",
+      "server/src/routes/__tests__/initiatives-crud.test.ts",
       "server/src/routes/resultsVnext/__tests__/okr.routes.test.ts"
     ]
   },
@@ -85,6 +87,8 @@
         "tests/integration/routes/billing.routes.full.l3.test.ts",
         "server/src/routes/v8/__tests__/financeValueRoutes.demoGuard.test.ts",
         "src/components/Finance/Prediction/__tests__/PredictionWorkspace.test.tsx",
+        "server/src/routes/__tests__/finance-statements.routes.f5wiring.test.ts",
+        "server/src/routes/__tests__/initiatives-crud.test.ts",
         "server/src/routes/resultsVnext/__tests__/okr.routes.test.ts"
       ]
     },
