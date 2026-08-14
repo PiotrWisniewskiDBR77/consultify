@@ -22,6 +22,7 @@
  * Both gates now also open on `runsRealDbInTestMode(env)`.
  */
 export interface TestModeGateEnv {
+  [key: string]: string | undefined;
   NODE_ENV?: string;
   VITEST?: string;
   E2E_MODE?: string;

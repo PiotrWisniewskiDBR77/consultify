@@ -86,10 +86,7 @@ export const METHOD_SESSION_TRANSITIONS: Readonly<
   archived: [],
 } as const;
 
-export function canTransition(
-  from: MethodSessionState,
-  to: MethodSessionState
-): boolean {
+export function canTransition(from: MethodSessionState, to: MethodSessionState): boolean {
   return METHOD_SESSION_TRANSITIONS[from].includes(to);
 }
 
@@ -103,9 +100,7 @@ export type TransitionRefusal =
   | { kind: 'readiness_blocked'; blockers: readonly string[] }
   | { kind: 'pack_not_released'; methodPackId: string };
 
-export type TransitionResult =
-  | { ok: true }
-  | { ok: false; refusal: TransitionRefusal };
+export type TransitionResult = { ok: true } | { ok: false; refusal: TransitionRefusal };
 
 /**
  * Process roles, layered ON TOP of app roles and project roles — the kernel
@@ -187,6 +182,8 @@ export interface MethodSession {
   readonly frozenSnapshotId: string | null;
   /** Set when this session is a revision produced by reopening a frozen one. */
   readonly revisionOfSessionId: string | null;
+  /** True only for an explicitly marked, non-production pack-readiness bypass. */
+  readonly demoBypassActive?: boolean;
 }
 
 /** Readiness is advisory for navigation and blocking only for freeze. */

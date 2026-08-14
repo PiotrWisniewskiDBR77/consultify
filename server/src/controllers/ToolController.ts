@@ -9,8 +9,11 @@ import type { Response } from 'express';
 import type { PoolClient } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
 
-import type { SwotAcceptGateItem } from '../../../src/config/swot/swotAcceptGate';
-import { evaluateSwotAcceptGate, stampAcceptedSwotItem } from '../../../src/config/swot/swotAcceptGate';
+import type { SwotAcceptGateItem } from '../services/tools/domain/swotAcceptGate.js';
+import {
+  evaluateSwotAcceptGate,
+  stampAcceptedSwotItem,
+} from '../services/tools/domain/swotAcceptGate.js';
 import { generateSwotProposals } from '../services/ai/swotProposalService.js';
 import auditEventsService from '../services/AuditEventsService.js';
 import { safePersistToolSessionConclusion } from '../services/conclusions/toolConclusionBridge.js';
@@ -1410,7 +1413,12 @@ export class ToolController {
       // toolSessionsAnswersVersionInventory.test.ts only asserts answers_json
       // writes bump version — it does not assert the inverse — so widening
       // the bump to all writes cannot regress it).
-      const setClauses = ['status = ?', 'updated_by = ?', 'updated_at = ?', 'version = version + 1'];
+      const setClauses = [
+        'status = ?',
+        'updated_by = ?',
+        'updated_at = ?',
+        'version = version + 1',
+      ];
       const params: unknown[] = [newStatus, user.id, now];
 
       if (answers !== undefined) {
@@ -2307,9 +2315,8 @@ export class ToolController {
       // session — read it for real so a promotion after an edit doesn't collide
       // with a stale earlier promotion.
       const rawSessionVersion = Number((session as any).version);
-      const sourceRevision = Number.isFinite(rawSessionVersion) && rawSessionVersion > 0
-        ? rawSessionVersion
-        : 1;
+      const sourceRevision =
+        Number.isFinite(rawSessionVersion) && rawSessionVersion > 0 ? rawSessionVersion : 1;
       // No caller sends an Idempotency-Key today (src/services/api.ts's
       // promoteToolOutput() only sends outputType/title/description/
       // selectedSections) — default to the same deterministic value `batch_id`
@@ -2411,7 +2418,9 @@ export class ToolController {
             [existingOutputId, user.organizationId]
           );
           if (!existingDeck) {
-            res.status(409).json({ error: 'Existing presentation promotion is no longer available' });
+            res
+              .status(409)
+              .json({ error: 'Existing presentation promotion is no longer available' });
             return;
           }
         }
@@ -2428,10 +2437,10 @@ export class ToolController {
           // INSERT hasn't committed yet — without treating it the same as a
           // genuine, permanent failure.
           const existingIdea = await waitForRow(() =>
-            queryHelpers.queryOne(
-              `SELECT id FROM my_ideas WHERE id = ? AND organization_id = ?`,
-              [existingOutputId, user.organizationId]
-            )
+            queryHelpers.queryOne(`SELECT id FROM my_ideas WHERE id = ? AND organization_id = ?`, [
+              existingOutputId,
+              user.organizationId,
+            ])
           );
           if (!existingIdea) {
             res.status(409).json({ error: 'Existing idea promotion is no longer available' });
@@ -2918,7 +2927,14 @@ export class ToolController {
              SET initiative_id = ?
              WHERE organization_id = ? AND tool_session_id = ? AND source_revision = ?
                AND output_type = ? AND idempotency_key = ?`,
-            [effectiveOutputId, user.organizationId, toolId, sourceRevision, outputType, rawIdempotencyKey]
+            [
+              effectiveOutputId,
+              user.organizationId,
+              toolId,
+              sourceRevision,
+              outputType,
+              rawIdempotencyKey,
+            ]
           );
         }
       } else {
@@ -3336,9 +3352,12 @@ export class ToolController {
             metadata: { code: generation.code },
           });
         } catch (auditErr) {
-          logger.warn('[ToolController] failed to log SWOT_PROPOSAL_GENERATION_FAILED audit event', {
-            auditErr,
-          });
+          logger.warn(
+            '[ToolController] failed to log SWOT_PROPOSAL_GENERATION_FAILED audit event',
+            {
+              auditErr,
+            }
+          );
         }
 
         if (generation.code === 'PROVIDER_ERROR') {
@@ -3451,7 +3470,9 @@ export class ToolController {
           metadata: { count: rows.length, toolSessionId: toolId },
         });
       } catch (auditErr) {
-        logger.warn('[ToolController] failed to log SWOT_PROPOSAL_CREATED audit event', { auditErr });
+        logger.warn('[ToolController] failed to log SWOT_PROPOSAL_CREATED audit event', {
+          auditErr,
+        });
       }
 
       res.status(201).json({ proposals: rows.map(mapSwotProposalRow) });
@@ -3633,7 +3654,10 @@ export class ToolController {
             if (check.rows.length === 0) {
               return { kind: 'not_found' };
             }
-            return { kind: 'already_decided', status: (check.rows[0] as { status: string }).status };
+            return {
+              kind: 'already_decided',
+              status: (check.rows[0] as { status: string }).status,
+            };
           }
 
           const acceptedProposal = acceptRes.rows[0] as SwotProposalRow;
@@ -3784,7 +3808,9 @@ export class ToolController {
           },
         });
       } catch (auditErr) {
-        logger.warn('[ToolController] failed to log SWOT_PROPOSAL_ACCEPTED audit event', { auditErr });
+        logger.warn('[ToolController] failed to log SWOT_PROPOSAL_ACCEPTED audit event', {
+          auditErr,
+        });
       }
 
       res.json({
@@ -3864,7 +3890,9 @@ export class ToolController {
           organizationId: user.organizationId,
         });
       } catch (auditErr) {
-        logger.warn('[ToolController] failed to log SWOT_PROPOSAL_REJECTED audit event', { auditErr });
+        logger.warn('[ToolController] failed to log SWOT_PROPOSAL_REJECTED audit event', {
+          auditErr,
+        });
       }
 
       res.json({ proposal: mapSwotProposalRow(outcome.proposal) });

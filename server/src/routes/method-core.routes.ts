@@ -65,13 +65,16 @@ import {
 } from '../method-core/contracts/index.js';
 import { methodEventStore } from '../method-core/MethodEventStore.js';
 import { methodPackRegistry } from '../method-core/MethodPackRegistry.js';
-import { MethodSessionService, type PackReadinessLookup } from '../method-core/MethodSessionService.js';
-import { teresaProposalService } from '../method-core/TeresaProposalService.js';
 import {
-  DEMO_BYPASS_NOTICE,
-  isDemoBypassAllowed,
-} from '../method-core/demoBypass.js';
-import type { MethodArtefactKind, MethodReportSnapshotRecord } from '../method-core/outputs/MethodReportSnapshotService.js';
+  MethodSessionService,
+  type PackReadinessLookup,
+} from '../method-core/MethodSessionService.js';
+import { teresaProposalService } from '../method-core/TeresaProposalService.js';
+import { DEMO_BYPASS_NOTICE, isDemoBypassAllowed } from '../method-core/demoBypass.js';
+import type {
+  MethodArtefactKind,
+  MethodReportSnapshotRecord,
+} from '../method-core/outputs/MethodReportSnapshotService.js';
 import type { MethodInitiativeDraftRecord } from '../method-core/outputs/MethodInitiativeDraftService.js';
 import type { MethodOutputRecord } from '../method-core/outputs/MethodOutputService.js';
 import {
@@ -183,7 +186,11 @@ async function loadOwnedSession(
  */
 async function collectLineageSessionIds(
   organizationId: string,
-  output: { readonly id: string; readonly sessionId: string; readonly revisionOfOutputId: string | null }
+  output: {
+    readonly id: string;
+    readonly sessionId: string;
+    readonly revisionOfOutputId: string | null;
+  }
 ): Promise<string[]> {
   const sessionIds = new Set<string>([output.sessionId]);
   let cursor = output.revisionOfOutputId;
@@ -205,15 +212,32 @@ async function collectLineageSessionIds(
  * against a NEW Output. Never touches content columns (see each service's
  * class-level doc comment on column-scoped UPDATEs only).
  */
-async function supersedeLineageResultsFor(organizationId: string, output: MethodOutputRecordLike): Promise<void> {
+async function supersedeLineageResultsFor(
+  organizationId: string,
+  output: MethodOutputRecordLike
+): Promise<void> {
   const lineageSessionIds = await collectLineageSessionIds(organizationId, output);
   for (const sessionId of lineageSessionIds) {
-    await methodReportSnapshotService.supersedeCurrentForSession(organizationId, sessionId, output.id, 'superseded');
-    await methodInitiativeDraftService.supersedeCurrentForSession(organizationId, sessionId, output.id, 'superseded');
+    await methodReportSnapshotService.supersedeCurrentForSession(
+      organizationId,
+      sessionId,
+      output.id,
+      'superseded'
+    );
+    await methodInitiativeDraftService.supersedeCurrentForSession(
+      organizationId,
+      sessionId,
+      output.id,
+      'superseded'
+    );
   }
 }
 
-type MethodOutputRecordLike = { readonly id: string; readonly sessionId: string; readonly revisionOfOutputId: string | null };
+type MethodOutputRecordLike = {
+  readonly id: string;
+  readonly sessionId: string;
+  readonly revisionOfOutputId: string | null;
+};
 
 // ---------------------------------------------------------------------------
 // S1 — recovery/lineage read surface (CEL 2, 2026-08-13).
@@ -245,7 +269,10 @@ type MethodOutputRecordLike = { readonly id: string; readonly sessionId: string;
  * instance or an ISO string, so this comparator is safe regardless of which
  * one the driver actually handed back.
  */
-function compareByCreatedAt(a: { readonly createdAt: unknown; readonly id: string }, b: { readonly createdAt: unknown; readonly id: string }): number {
+function compareByCreatedAt(
+  a: { readonly createdAt: unknown; readonly id: string },
+  b: { readonly createdAt: unknown; readonly id: string }
+): number {
   const aTime = new Date(a.createdAt as string | Date).getTime();
   const bTime = new Date(b.createdAt as string | Date).getTime();
   if (aTime !== bTime) return aTime - bTime;
@@ -261,7 +288,9 @@ function parsePagination(req: Request): { limit: number; offset: number } {
   const limitRaw = Number(req.query.limit);
   const offsetRaw = Number(req.query.offset);
   const limit =
-    Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(Math.floor(limitRaw), MAX_LIMIT) : DEFAULT_LIMIT;
+    Number.isFinite(limitRaw) && limitRaw > 0
+      ? Math.min(Math.floor(limitRaw), MAX_LIMIT)
+      : DEFAULT_LIMIT;
   const offset = Number.isFinite(offsetRaw) && offsetRaw >= 0 ? Math.floor(offsetRaw) : 0;
   return { limit, offset };
 }
@@ -299,7 +328,10 @@ async function loadSessionForArtifactsOr404(
  * session in the family, deterministically sorted (createdAt asc, id asc as
  * tiebreak) — never relies on Set/Map iteration order reaching the response.
  */
-async function collectSessionLineage(organizationId: string, rootSessionId: string): Promise<MethodSession[]> {
+async function collectSessionLineage(
+  organizationId: string,
+  rootSessionId: string
+): Promise<MethodSession[]> {
   const visited = new Map<string, MethodSession>();
   const queue: string[] = [rootSessionId];
   let hops = 0;
@@ -318,9 +350,7 @@ async function collectSessionLineage(organizationId: string, rootSessionId: stri
       if (!visited.has(child.id)) queue.push(child.id);
     }
   }
-  return [...visited.values()].sort((a, b) =>
-    compareByCreatedAt(a, b)
-  );
+  return [...visited.values()].sort((a, b) => compareByCreatedAt(a, b));
 }
 
 type OutputWithStatus = MethodOutputRecord & {
@@ -366,7 +396,9 @@ async function collectLineageOutputs(
     };
   });
   return withStatus.sort((a, b) =>
-    a.outputVersion === b.outputVersion ? a.id.localeCompare(b.id) : a.outputVersion - b.outputVersion
+    a.outputVersion === b.outputVersion
+      ? a.id.localeCompare(b.id)
+      : a.outputVersion - b.outputVersion
   );
 }
 
@@ -383,9 +415,7 @@ async function collectLineageArtefacts(
     const rows = await methodReportSnapshotService.listBySession(organizationId, session.id);
     all.push(...rows.filter((r) => r.kind === kind));
   }
-  return all.sort((a, b) =>
-    compareByCreatedAt(a, b)
-  );
+  return all.sort((a, b) => compareByCreatedAt(a, b));
 }
 
 /** Initiative Proposal Drafts across every session in a lineage family.
@@ -399,9 +429,7 @@ async function collectLineageDrafts(
     const rows = await methodInitiativeDraftService.listBySession(organizationId, session.id);
     all.push(...rows);
   }
-  return all.sort((a, b) =>
-    compareByCreatedAt(a, b)
-  );
+  return all.sort((a, b) => compareByCreatedAt(a, b));
 }
 
 // ---------------------------------------------------------------------------
@@ -501,7 +529,9 @@ router.post(
       { fallback: false }
     );
     if (!idemInsert.success) {
-      throw new Error(`method-core-http: idempotency anchor insert failed: ${idemInsert.error ?? 'unknown'}`);
+      throw new Error(
+        `method-core-http: idempotency anchor insert failed: ${idemInsert.error ?? 'unknown'}`
+      );
     }
 
     res.status(201).json({
@@ -573,7 +603,11 @@ router.post(
     // A caller-authenticated HTTP request can never honestly claim to BE the
     // system — 'system' events are reserved for kernel-internal writes
     // (e.g. EventDerivedOutputBridge's own OUTPUT_CREATED append).
-    if (requestedActorKind !== undefined && requestedActorKind !== 'human' && requestedActorKind !== 'teresa') {
+    if (
+      requestedActorKind !== undefined &&
+      requestedActorKind !== 'human' &&
+      requestedActorKind !== 'teresa'
+    ) {
       res.status(400).json({ error: "actorKind must be 'human' or 'teresa' over this endpoint" });
       return;
     }
@@ -687,12 +721,21 @@ router.post(
     const body = (req.body ?? {}) as Record<string, unknown>;
     const capabilityId = body.capabilityId as TeresaCapabilityId | undefined;
     if (!capabilityId || !(TERESA_CAPABILITIES as readonly string[]).includes(capabilityId)) {
-      res.status(400).json({ error: 'capabilityId must be one of the closed TERESA_CAPABILITIES set' });
+      res
+        .status(400)
+        .json({ error: 'capabilityId must be one of the closed TERESA_CAPABILITIES set' });
       return;
     }
     const quality = body.quality as TeresaQualityVerdict | undefined;
-    if (!quality || (quality.verdict !== 'valid' && quality.verdict !== 'needs_human_review' && quality.verdict !== 'invalid')) {
-      res.status(400).json({ error: 'quality.verdict is required and must be a valid TeresaQualityVerdict' });
+    if (
+      !quality ||
+      (quality.verdict !== 'valid' &&
+        quality.verdict !== 'needs_human_review' &&
+        quality.verdict !== 'invalid')
+    ) {
+      res
+        .status(400)
+        .json({ error: 'quality.verdict is required and must be a valid TeresaQualityVerdict' });
       return;
     }
     const statements = Array.isArray(body.statements) ? (body.statements as TeresaStatement[]) : [];
@@ -759,7 +802,9 @@ router.post(
     const body = (req.body ?? {}) as Record<string, unknown>;
     const previewId = body.previewId;
     if (!isNonEmptyString(previewId)) {
-      res.status(400).json({ error: 'previewId is required — a commit without a preview is unrepresentable' });
+      res
+        .status(400)
+        .json({ error: 'previewId is required — a commit without a preview is unrepresentable' });
       return;
     }
     const decision = body.decision;
@@ -778,7 +823,9 @@ router.post(
     const commitRequest: TeresaCommitRequest = {
       previewId,
       decision,
-      editedChanges: Array.isArray(body.editedChanges) ? (body.editedChanges as TeresaProposedChange[]) : undefined,
+      editedChanges: Array.isArray(body.editedChanges)
+        ? (body.editedChanges as TeresaProposedChange[])
+        : undefined,
       actorUserId, // provenance: never client-supplied
       idempotencyKey,
     };
@@ -789,11 +836,7 @@ router.post(
     if (!result.ok) {
       const refusal = result.refusal;
       const status =
-        refusal.kind === 'preview_not_found'
-          ? 404
-          : refusal.kind === 'quality_invalid'
-            ? 422
-            : 409; // preview_already_consumed | preview_expired | session_frozen | forbidden_effect | missing_permission
+        refusal.kind === 'preview_not_found' ? 404 : refusal.kind === 'quality_invalid' ? 422 : 409; // preview_already_consumed | preview_expired | session_frozen | forbidden_effect | missing_permission
       res.status(status).json({ error: refusal.kind, refusal });
       return;
     }
@@ -802,7 +845,8 @@ router.post(
     // the domain event (TERESA_PROPOSAL_ACCEPTED/REJECTED) is this route's
     // job, mirroring the browser mirror. idempotencyKey-keyed so a retry of
     // this exact request never appends a second event.
-    const eventType = decision === 'reject' ? 'TERESA_PROPOSAL_REJECTED' : 'TERESA_PROPOSAL_ACCEPTED';
+    const eventType =
+      decision === 'reject' ? 'TERESA_PROPOSAL_REJECTED' : 'TERESA_PROPOSAL_ACCEPTED';
     const event = await methodEventStore.append({
       organizationId,
       sessionId: session.id,
@@ -842,7 +886,11 @@ router.post(
     if (!session) return;
 
     const body = (req.body ?? {}) as Record<string, unknown>;
-    if (typeof body.expectedVersion === 'number' && body.expectedVersion !== session.version && session.state !== 'frozen') {
+    if (
+      typeof body.expectedVersion === 'number' &&
+      body.expectedVersion !== session.version &&
+      session.state !== 'frozen'
+    ) {
       res.status(409).json({ error: 'version_conflict', currentVersion: session.version, session });
       return;
     }
@@ -895,12 +943,16 @@ router.post(
         module: session.module,
         methodPackId: session.methodPackId,
         methodPackVersion: session.methodPackVersion,
+        demoBypassActive: session.demoBypassActive === true,
+        revisionOfSessionId: session.revisionOfSessionId,
       });
       outputs = await methodOutputService.listOutputsBySession(organizationId, session.id);
       output = outputs[0] ?? null;
       selfHealed = true;
       if (!output) {
-        throw new Error(`method-core-http: self-heal did not produce an Output for session ${session.id}`);
+        throw new Error(
+          `method-core-http: self-heal did not produce an Output for session ${session.id}`
+        );
       }
     }
 
@@ -1029,7 +1081,9 @@ router.post(
       { fallback: false }
     );
     if (!idemInsert.success) {
-      throw new Error(`method-core-http: reopen idempotency anchor insert failed: ${idemInsert.error ?? 'unknown'}`);
+      throw new Error(
+        `method-core-http: reopen idempotency anchor insert failed: ${idemInsert.error ?? 'unknown'}`
+      );
     }
 
     res.status(201).json({ session: revision, idempotentReplay: false });
@@ -1108,7 +1162,9 @@ async function createArtefactSnapshot(
 
   res.status(201).json({
     report: snapshot,
-    ...(output.demoBypassActive ? { demoBypassActive: true, demoBypassNotice: DEMO_BYPASS_NOTICE } : {}),
+    ...(output.demoBypassActive
+      ? { demoBypassActive: true, demoBypassNotice: DEMO_BYPASS_NOTICE }
+      : {}),
   });
 }
 
@@ -1159,7 +1215,9 @@ router.post(
     const realFindingIds = new Set(output.findings.map((f) => f.id));
     const unknownIds = findingIds.filter((id) => !realFindingIds.has(id));
     if (unknownIds.length > 0) {
-      res.status(400).json({ error: 'findingIds contains ids not present on this Output', unknownIds });
+      res
+        .status(400)
+        .json({ error: 'findingIds contains ids not present on this Output', unknownIds });
       return;
     }
     if (!isNonEmptyString(body.title)) {
@@ -1222,7 +1280,14 @@ router.get(
     const lineage = await collectSessionLineage(organizationId, session.id);
     const outputs = await collectLineageOutputs(organizationId, lineage);
     const { limit, offset } = parsePagination(req);
-    res.status(200).json({ outputs: outputs.slice(offset, offset + limit), total: outputs.length, limit, offset });
+    res
+      .status(200)
+      .json({
+        outputs: outputs.slice(offset, offset + limit),
+        total: outputs.length,
+        limit,
+        offset,
+      });
   })
 );
 
@@ -1245,7 +1310,12 @@ router.get(
     const { limit, offset } = parsePagination(req);
     res
       .status(200)
-      .json({ revisions: revisions.slice(offset, offset + limit), total: revisions.length, limit, offset });
+      .json({
+        revisions: revisions.slice(offset, offset + limit),
+        total: revisions.length,
+        limit,
+        offset,
+      });
   })
 );
 
@@ -1264,7 +1334,14 @@ router.get(
     const lineage = await collectSessionLineage(organizationId, session.id);
     const reports = await collectLineageArtefacts(organizationId, lineage, 'report');
     const { limit, offset } = parsePagination(req);
-    res.status(200).json({ reports: reports.slice(offset, offset + limit), total: reports.length, limit, offset });
+    res
+      .status(200)
+      .json({
+        reports: reports.slice(offset, offset + limit),
+        total: reports.length,
+        limit,
+        offset,
+      });
   })
 );
 
@@ -1307,7 +1384,9 @@ router.get(
     const lineage = await collectSessionLineage(organizationId, session.id);
     const drafts = await collectLineageDrafts(organizationId, lineage);
     const { limit, offset } = parsePagination(req);
-    res.status(200).json({ drafts: drafts.slice(offset, offset + limit), total: drafts.length, limit, offset });
+    res
+      .status(200)
+      .json({ drafts: drafts.slice(offset, offset + limit), total: drafts.length, limit, offset });
   })
 );
 

@@ -19,7 +19,7 @@
  * Handlers may reference tension ids for grounding but never fabricate or
  * override one.
  */
-import type { SWOTItem } from '../../../../src/store/useToolStore';
+import type { SWOTItem } from '../tools/domain/swotTypes.js';
 import {
   TERESA_CAPABILITIES,
   TERESA_FORBIDDEN_EFFECTS,
@@ -31,7 +31,7 @@ import {
   type TeresaQualityCheck,
   type TeresaQualityVerdict,
   type TeresaStatement,
-} from '../../../../src/method-core/contracts/teresa';
+} from '../../method-core/contracts/teresa.js';
 
 export interface TeresaSwotSessionSnapshot {
   sessionId: string;
@@ -73,7 +73,9 @@ function verdict(failedChecks: TeresaQualityCheck[]): TeresaQualityVerdict {
   // A capability whose grounding is entirely missing (no evidence AND an
   // unsupported claim) cannot be salvaged by human edits to wording alone —
   // invalid. A single soft gap is reviewable.
-  const hard = failedChecks.filter((c) => c === 'no_unsupported_claim' || c === 'no_invented_number');
+  const hard = failedChecks.filter(
+    (c) => c === 'no_unsupported_claim' || c === 'no_invented_number'
+  );
   if (hard.length > 0 && failedChecks.length >= 2) {
     return { verdict: 'invalid', failedChecks };
   }
@@ -99,7 +101,11 @@ const explainQuestionPlainly: TeresaCapabilityHandler = ({ intent }) => {
     : `To pytanie dotyczy ćwiartki ${quadrant}: wskaż konkretną, weryfikowalną pozycję (fakt lub obserwację), nie ogólnik.`;
   return {
     statements: [
-      { kind: 'interpretation', text: explanation, sourceRefs: intent.unitId ? [`quadrant:${quadrant}`] : [] },
+      {
+        kind: 'interpretation',
+        text: explanation,
+        sourceRefs: intent.unitId ? [`quadrant:${quadrant}`] : [],
+      },
     ],
     proposedChanges: [],
     quality: verdict(failed),
@@ -217,7 +223,8 @@ const draftFinding: TeresaCapabilityHandler = ({ intent, session }) => {
 // ---------------------------------------------------------------------------
 const challengeCoverageAndScale: TeresaCapabilityHandler = ({ session }) => {
   const unevidenced = acceptedItems(session).filter(
-    (i) => !i.evidenceStatus && !i.evidenceNote && !(i.linkedSignalIds && i.linkedSignalIds.length > 0)
+    (i) =>
+      !i.evidenceStatus && !i.evidenceNote && !(i.linkedSignalIds && i.linkedSignalIds.length > 0)
   );
   if (unevidenced.length === 0) {
     return {
@@ -326,9 +333,14 @@ function def(
 }
 
 export const TERESA_CAPABILITY_REGISTRY: Record<TeresaCapabilityId, TeresaCapabilityEntry> = {
-  explain_method_unit: { definition: def('explain_method_unit', false, ['consistent_with_method_pack']) },
+  explain_method_unit: {
+    definition: def('explain_method_unit', false, ['consistent_with_method_pack']),
+  },
   diagnose_candidate_level: {
-    definition: def('diagnose_candidate_level', true, ['names_unit_and_level', 'lists_supporting_evidence']),
+    definition: def('diagnose_candidate_level', true, [
+      'names_unit_and_level',
+      'lists_supporting_evidence',
+    ]),
   },
   ask_next_best_question: {
     definition: def('ask_next_best_question', false, []),
@@ -349,11 +361,17 @@ export const TERESA_CAPABILITY_REGISTRY: Record<TeresaCapabilityId, TeresaCapabi
     definition: def('map_response_to_attributes', true, ['names_attributes']),
   },
   detect_contradiction: {
-    definition: def('detect_contradiction', true, ['lists_supporting_evidence', 'states_next_decision']),
+    definition: def('detect_contradiction', true, [
+      'lists_supporting_evidence',
+      'states_next_decision',
+    ]),
     handler: detectContradiction,
   },
   challenge_coverage_and_scale: {
-    definition: def('challenge_coverage_and_scale', true, ['lists_missing_evidence', 'states_next_decision']),
+    definition: def('challenge_coverage_and_scale', true, [
+      'lists_missing_evidence',
+      'states_next_decision',
+    ]),
     handler: challengeCoverageAndScale,
   },
   draft_score_proposal: {
@@ -378,16 +396,25 @@ export const TERESA_CAPABILITY_REGISTRY: Record<TeresaCapabilityId, TeresaCapabi
   draft_initiative_proposals: {
     definition: def('draft_initiative_proposals', true, ['states_next_decision']),
   },
-  prepare_output_outline: { definition: def('prepare_output_outline', true, ['states_limitations']) },
+  prepare_output_outline: {
+    definition: def('prepare_output_outline', true, ['states_limitations']),
+  },
   explain_question_plainly: {
-    definition: def('explain_question_plainly', false, ['names_unit_and_level', 'consistent_with_method_pack']),
+    definition: def('explain_question_plainly', false, [
+      'names_unit_and_level',
+      'consistent_with_method_pack',
+    ]),
     handler: explainQuestionPlainly,
   },
   explain_why_question_matters: {
     definition: def('explain_why_question_matters', false, ['consistent_with_method_pack']),
   },
-  compare_adjacent_levels: { definition: def('compare_adjacent_levels', false, ['names_unit_and_level']) },
-  show_answer_examples: { definition: def('show_answer_examples', false, ['consistent_with_method_pack']) },
+  compare_adjacent_levels: {
+    definition: def('compare_adjacent_levels', false, ['names_unit_and_level']),
+  },
+  show_answer_examples: {
+    definition: def('show_answer_examples', false, ['consistent_with_method_pack']),
+  },
   identify_likely_respondent_role: {
     definition: def('identify_likely_respondent_role', false, []),
   },
@@ -395,7 +422,9 @@ export const TERESA_CAPABILITY_REGISTRY: Record<TeresaCapabilityId, TeresaCapabi
     definition: def('suggest_evidence_to_request', true, ['lists_missing_evidence']),
   },
   rephrase_question_without_changing_intent: {
-    definition: def('rephrase_question_without_changing_intent', false, ['consistent_with_method_pack']),
+    definition: def('rephrase_question_without_changing_intent', false, [
+      'consistent_with_method_pack',
+    ]),
   },
   resolve_i_dont_know: { definition: def('resolve_i_dont_know', true, ['states_next_decision']) },
 };

@@ -116,7 +116,10 @@ export interface CreateSessionInput {
  * `transition()` only) — `createSession` is this service's own entry point
  * for the "pack draft -> canStartSession false -> start refused" rule.
  */
-export type CreateSessionRefusal = { readonly kind: 'pack_not_released'; readonly methodPackId: string };
+export type CreateSessionRefusal = {
+  readonly kind: 'pack_not_released';
+  readonly methodPackId: string;
+};
 export type CreateSessionResult =
   | { readonly ok: true; readonly session: MethodSession }
   | { readonly ok: false; readonly refusal: CreateSessionRefusal };
@@ -168,6 +171,7 @@ function toMethodSession(row: MethodSessionRow): MethodSession {
     version: row.version,
     frozenSnapshotId: row.frozen_snapshot_id,
     revisionOfSessionId: row.revision_of_session_id,
+    demoBypassActive: row.demo_bypass_active,
   };
 }
 
@@ -195,7 +199,10 @@ export class MethodSessionService {
       input.methodPackVersion
     );
     if (!readiness || !readiness.canStart) {
-      return { ok: false, refusal: { kind: 'pack_not_released', methodPackId: input.methodPackId } };
+      return {
+        ok: false,
+        refusal: { kind: 'pack_not_released', methodPackId: input.methodPackId },
+      };
     }
 
     const now = nowIso();
@@ -259,9 +266,7 @@ export class MethodSessionService {
       `SELECT * FROM method_sessions WHERE organization_id = ?`,
       [organizationId]
     );
-    return rows
-      .filter((row) => row.revision_of_session_id === rootSessionId)
-      .map(toMethodSession);
+    return rows.filter((row) => row.revision_of_session_id === rootSessionId).map(toMethodSession);
   }
 
   async assignRole(
@@ -278,7 +283,11 @@ export class MethodSessionService {
     );
   }
 
-  async getRoles(organizationId: string, sessionId: string, userId: string): Promise<MethodProcessRole[]> {
+  async getRoles(
+    organizationId: string,
+    sessionId: string,
+    userId: string
+  ): Promise<MethodProcessRole[]> {
     const rows = await DbPromise.all<MethodSessionRoleRow>(
       `SELECT * FROM method_session_roles WHERE organization_id = ? AND user_id = ?`,
       [organizationId, userId]
@@ -303,10 +312,17 @@ export class MethodSessionService {
 
     const requiredRoles = TRANSITION_AUTHORITY[to];
     if (requiredRoles && requiredRoles.length > 0) {
-      const actorRoles = await this.getRoles(session.organization_id, session.id, request.actorUserId);
+      const actorRoles = await this.getRoles(
+        session.organization_id,
+        session.id,
+        request.actorUserId
+      );
       const authorized = requiredRoles.some((role: MethodProcessRole) => actorRoles.includes(role));
       if (!authorized) {
-        return { ok: false, refusal: { kind: 'missing_permission', requiredRole: requiredRoles[0] } };
+        return {
+          ok: false,
+          refusal: { kind: 'missing_permission', requiredRole: requiredRoles[0] },
+        };
       }
     }
 
@@ -400,7 +416,15 @@ export class MethodSessionService {
       `INSERT INTO method_snapshots
          (id, organization_id, session_id, method_pack_version, payload_json, content_hash, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [snapshotId, organizationId, sessionId, methodPackVersion, JSON.stringify(payload), contentHash, nowIso()]
+      [
+        snapshotId,
+        organizationId,
+        sessionId,
+        methodPackVersion,
+        JSON.stringify(payload),
+        contentHash,
+        nowIso(),
+      ]
     );
     await runOrThrow(`UPDATE method_sessions SET frozen_snapshot_id = ? WHERE id = ?`, [
       snapshotId,

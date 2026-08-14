@@ -50,21 +50,21 @@ import * as queryHelpers from '../../utils/queryHelpers.js';
 // server/src/*, not the repo-root src/*; tsx resolves each file's aliases
 // against the tsconfig nearest to THAT file, so buildSwotOutput.ts's own
 // `@/config/...` imports still resolve correctly against the root tsconfig.
-import { buildSwotOutput, SWOT_ENGINE_VERSION } from '../../../../src/toolOutputs/buildSwotOutput';
-import { computeOutputHash } from '../../../../src/toolOutputs/outputLifecycle';
+import { buildSwotOutput, SWOT_ENGINE_VERSION } from './domain/buildSwotOutput.js';
+import { computeOutputHash } from './domain/outputLifecycle.js';
 import {
   approve as approveOutput,
   reopen as reopenOutput,
   submitForReview,
-} from '../../../../src/toolOutputs/outputLifecycle';
-import { renderToolReport, REPORT_RENDERER_VERSION } from '../../../../src/toolOutputs/renderReport';
+} from './domain/outputLifecycle.js';
+import { renderToolReport, REPORT_RENDERER_VERSION } from './domain/renderReport.js';
 import type {
   OutputConclusion,
   OutputEvidenceItem,
   OutputTension,
   ToolOutput,
   ToolReportKind,
-} from '../../../../src/toolOutputs/types';
+} from './domain/types.js';
 import type { StructuredSlideInput } from '../presentationDeckDocumentService.js';
 
 /** Minimal shape this module needs from a `tool_sessions` row. */
@@ -82,7 +82,7 @@ export interface Actor {
   id: string;
 }
 
-const safeParse = <T,>(value: string | null | undefined, fallback: T): T => {
+const safeParse = <T>(value: string | null | undefined, fallback: T): T => {
   if (!value) return fallback;
   try {
     return JSON.parse(value) as T;
@@ -121,10 +121,9 @@ interface OutputPayload {
 }
 
 function rowToOutput(row: ToolOutputRow): ToolOutput {
-  const payload =
-    (typeof row.payload_json === 'string'
-      ? safeParse<OutputPayload>(row.payload_json, { items: [], tensions: [], conclusions: [] })
-      : (row.payload_json as OutputPayload)) ?? { items: [], tensions: [], conclusions: [] };
+  const payload = (typeof row.payload_json === 'string'
+    ? safeParse<OutputPayload>(row.payload_json, { items: [], tensions: [], conclusions: [] })
+    : (row.payload_json as OutputPayload)) ?? { items: [], tensions: [], conclusions: [] };
 
   return {
     id: row.id,
@@ -179,7 +178,9 @@ function buildOutputForSession(
   if (session.tool_type === 'dynamic-swot') {
     const items = Array.isArray(answers.items) ? (answers.items as never[]) : [];
     const tensions = Array.isArray(answers.tensions) ? (answers.tensions as never[]) : [];
-    const moves = Array.isArray(answers.recommendedMoves) ? (answers.recommendedMoves as never[]) : [];
+    const moves = Array.isArray(answers.recommendedMoves)
+      ? (answers.recommendedMoves as never[])
+      : [];
 
     const { output } = buildSwotOutput({
       id: outputId,
@@ -517,9 +518,7 @@ export function renderToolReportSectionFromOutput(
   sessionName: string,
   output: ToolOutput
 ): string {
-  const itemLines = output.items
-    .slice(0, 20)
-    .map((i) => `- **${i.bucket}:** ${i.label}`);
+  const itemLines = output.items.slice(0, 20).map((i) => `- **${i.bucket}:** ${i.label}`);
   const moveLines = output.conclusions
     .slice(0, 12)
     .map((c) => `- **${c.k3Actions[0] ?? c.k1Fact}** — ${c.k2Meaning}`);
@@ -536,9 +535,13 @@ export function renderToolReportSectionFromOutput(
   ];
 
   if (sectionKey === 'cover') {
-    return [`# ${sessionName}`, '', 'Tool Evaluation Report', '', `Zatwierdzony Output: ${output.id}`].join(
-      '\n'
-    );
+    return [
+      `# ${sessionName}`,
+      '',
+      'Tool Evaluation Report',
+      '',
+      `Zatwierdzony Output: ${output.id}`,
+    ].join('\n');
   }
   if (sectionKey.includes('recommend') || sectionKey.includes('next')) {
     return [
@@ -548,12 +551,18 @@ export function renderToolReportSectionFromOutput(
       ...(moveLines.length ? moveLines : ['- No explicit actions were recorded in the snapshot.']),
     ].join('\n');
   }
-  if (sectionKey.includes('finding') || sectionKey.includes('gap') || sectionKey.includes('overview')) {
+  if (
+    sectionKey.includes('finding') ||
+    sectionKey.includes('gap') ||
+    sectionKey.includes('overview')
+  ) {
     return [
       ...base,
       '',
       '## Approved findings',
-      ...(itemLines.length ? itemLines : ['- No structured findings were recorded in the snapshot.']),
+      ...(itemLines.length
+        ? itemLines
+        : ['- No structured findings were recorded in the snapshot.']),
     ].join('\n');
   }
   return [
@@ -761,7 +770,8 @@ export async function correctToolOutput(args: {
 }): Promise<{ superseded: ToolOutput; revision: ToolOutput }> {
   const { approvedOutputId, organizationId, actor, now, nextConclusions } = args;
   const current = await getToolOutputById(approvedOutputId, organizationId);
-  if (!current) throw new Error(`tool_outputs ${approvedOutputId} not found for org ${organizationId}`);
+  if (!current)
+    throw new Error(`tool_outputs ${approvedOutputId} not found for org ${organizationId}`);
   const currentRow = await queryHelpers.queryOne<{ project_id: string | null }>(
     `SELECT project_id FROM tool_outputs WHERE id = ? AND organization_id = ?`,
     [approvedOutputId, organizationId]
@@ -773,10 +783,10 @@ export async function correctToolOutput(args: {
   const approvedRevision = approveOutput(submitForReview(editedRevision), actor.id, now);
 
   return queryHelpers.withRawPgTransaction(async (client) => {
-    await client.query(`UPDATE tool_outputs SET status = 'superseded' WHERE id = $1 AND organization_id = $2`, [
-      superseded.id,
-      organizationId,
-    ]);
+    await client.query(
+      `UPDATE tool_outputs SET status = 'superseded' WHERE id = $1 AND organization_id = $2`,
+      [superseded.id, organizationId]
+    );
 
     // Explicit 1:1 column/value pairing on purpose — this table's INSERT has
     // 17 columns and a prior draft of this function silently dropped

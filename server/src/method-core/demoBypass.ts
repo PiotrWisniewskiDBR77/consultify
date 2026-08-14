@@ -46,6 +46,7 @@
  */
 
 export interface DemoBypassEnv {
+  readonly [key: string]: string | undefined;
   readonly NODE_ENV?: string;
   readonly METHOD_CORE_DEMO_BYPASS_PACK_READINESS?: string;
 }
