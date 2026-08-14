@@ -8,7 +8,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback?: any) => (typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key)),
+    t: (_key: string, fallback?: any) =>
+      typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key),
     i18n: { language: 'en' },
   }),
   initReactI18next: {
@@ -23,6 +24,7 @@ vi.mock('../../../src/services/api', () => ({
     post: vi.fn(),
     put: vi.fn(),
     delete: vi.fn(),
+    organizationContextGet: vi.fn().mockResolvedValue(null),
   },
 }));
 
@@ -203,7 +205,10 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     fireEvent.change(screen.getByDisplayValue(/\d{4}-\d{2}-\d{2}/), {
       target: { value: '2026-03-01' },
     });
-    fireEvent.change(screen.getByPlaceholderText('Notes, source, or audit comment (optional)'), {
+    fireEvent.change(screen.getByPlaceholderText('Source / evidence (e.g. system, report, link)'), {
+      target: { value: 'ERP monthly close' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Notes (optional)'), {
       target: { value: 'March value' },
     });
     fireEvent.click(screen.getByText('Record'));
@@ -212,6 +217,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
       expect(V8ResultsApi.createKpiTimeSeriesValue).toHaveBeenCalledWith('kpi-1', {
         value: 24,
         periodStart: '2026-03-01',
+        source: 'ERP monthly close',
         notes: 'March value',
       });
     });
@@ -255,7 +261,10 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     fireEvent.change(screen.getByDisplayValue(/\d{4}-\d{2}-\d{2}/), {
       target: { value: '2026-03-01' },
     });
-    fireEvent.change(screen.getByPlaceholderText('Notes, source, or audit comment (optional)'), {
+    fireEvent.change(screen.getByPlaceholderText('Source / evidence (e.g. system, report, link)'), {
+      target: { value: 'ERP monthly close' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Notes (optional)'), {
       target: { value: 'March value' },
     });
     fireEvent.click(screen.getByText('Record'));
@@ -264,6 +273,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
       expect(Api.post).toHaveBeenCalledWith('/benefits/kpis/kpi-1/time-series', {
         value: 24,
         periodStart: '2026-03-01',
+        source: 'ERP monthly close',
         notes: 'March value',
       });
     });
