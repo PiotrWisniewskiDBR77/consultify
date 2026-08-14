@@ -1833,7 +1833,7 @@ async function normalizeAnswerEvidence(
         mapping.evidenceRole,
         `${mapping.titlePrefix} – Q ${questionId.slice(0, 8)}`,
         mapping.evidenceType === 'text' ? null : content,
-        true,
+        1,
         userId,
         now,
       ]
