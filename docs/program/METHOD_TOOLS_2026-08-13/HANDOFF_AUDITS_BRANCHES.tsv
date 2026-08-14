@@ -1,0 +1,13 @@
+branch	sha	merge_base_with_candidate	commits_ahead_of_candidate	merged_into_candidate	worktree	scope
+codex/method-audits-20260813	6a43c9a16473d0896bc5d11841b2461a47b9b366	6a43c9a16473d0896bc5d11841b2461a47b9b366	0	YES	/Users/piotrwisniewski/consultify-wt/method-audits-20260813	dev-render/main.tsx;dev-render/screens/audyty-warsztat-kryterium.tsx;docs/functional/11_audits;
+codex/method-audits-u2	8dd49c0631b3891a10c83295e460bbe99ff8d818	8dd49c0631b3891a10c83295e460bbe99ff8d818	0	YES	/Users/piotrwisniewski/consultify-wt/u2	server/src/services;
+codex/method-audits-u3	50e1316cc73402dbd6134d4bc548fbc0bf81796e	50e1316cc73402dbd6134d4bc548fbc0bf81796e	0	YES	/Users/piotrwisniewski/consultify-wt/u3	server/src/services;
+codex/method-audits-u4	1a051c1a9235d7eff8fb64c4b17f1dd34a567728	1a051c1a9235d7eff8fb64c4b17f1dd34a567728	0	YES	/Users/piotrwisniewski/consultify-wt/u4	server/src/routes;server/src/services;
+codex/method-audits-u5	a7c5bfb27258653da54c895aa062c1f256330819	a7c5bfb27258653da54c895aa062c1f256330819	0	YES	/Users/piotrwisniewski/consultify-wt/u5	server/src/services;
+codex/method-audits-u6	d9a27ee6f30217200489b7088812e88b658e1b09	d9a27ee6f30217200489b7088812e88b658e1b09	0	YES	/Users/piotrwisniewski/consultify-wt/u6	server/src/routes;server/src/services;
+codex/method-audits-u7	ee63d9772aebc84c1d9c6220e4d7015b7934ff49	ee63d9772aebc84c1d9c6220e4d7015b7934ff49	0	YES	/Users/piotrwisniewski/consultify-wt/u7	src/components/Audit;src/routes/AppRoutes.tsx;
+codex/method-audits-u8	5a4c297d2ecfbfdb34dae9d23917016d71caf424	5a4c297d2ecfbfdb34dae9d23917016d71caf424	0	YES	/Users/piotrwisniewski/consultify-wt/u8	dev-render/main.tsx;dev-render/screens/audyty-piec-powierzchni.tsx;dev-render/screens/tools-sesja-wyjscie.tsx;
+codex/method-audits-w1	4e06f03151c04471bcbaf31f25e08115d23d6a8e	4e06f03151c04471bcbaf31f25e08115d23d6a8e	0	YES	/Users/piotrwisniewski/consultify-wt/w1	src/components/Audit;
+codex/method-audits-w2	d8d7c4edcfe83a9f665379f05a8b12fdf2d53e62	d8d7c4edcfe83a9f665379f05a8b12fdf2d53e62	0	YES	/Users/piotrwisniewski/consultify-wt/w2	src/components/Audit;
+codex/method-audits-w3	96609b5ecb19d1755ecef8936d4a2283033e5f83	96609b5ecb19d1755ecef8936d4a2283033e5f83	0	YES	/Users/piotrwisniewski/consultify-wt/w3	server/migrations/20260813b_audits_source_classification_split.sql;server/src/services;
+codex/method-audits-w4	6a43c9a16473d0896bc5d11841b2461a47b9b366	6a43c9a16473d0896bc5d11841b2461a47b9b366	0	YES	/Users/piotrwisniewski/consultify-wt/w4	dev-render/main.tsx;dev-render/screens/audyty-warsztat-kryterium.tsx;docs/functional/11_audits;
