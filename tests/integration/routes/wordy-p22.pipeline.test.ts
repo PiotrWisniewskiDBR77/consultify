@@ -47,7 +47,7 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
   get: <T = unknown>(
     sql: string,
     params?: unknown[],
-    opts?: { fallback?: boolean },
+    opts?: { fallback?: boolean }
   ): Promise<T | null> =>
     new Promise((resolve, reject) => {
       const fallback = opts?.fallback !== false;
@@ -60,7 +60,11 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
         resolve((row || null) as T | null);
       });
     }),
-  all: <T = unknown>(sql: string, params?: unknown[], opts?: { fallback?: boolean }): Promise<T[]> =>
+  all: <T = unknown>(
+    sql: string,
+    params?: unknown[],
+    opts?: { fallback?: boolean }
+  ): Promise<T[]> =>
     new Promise((resolve, reject) => {
       const fallback = opts?.fallback !== false;
       sqliteCtx.db.all(sql, params || [], (err: Error | null, rows: unknown[]) => {
@@ -75,7 +79,7 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
   run: (
     sql: string,
     params?: unknown[],
-    opts?: { fallback?: boolean },
+    opts?: { fallback?: boolean }
   ): Promise<{ success: boolean; changes?: number; lastID?: number; error?: string }> =>
     new Promise((resolve, reject) => {
       const fallback = opts?.fallback !== false;
@@ -89,7 +93,7 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
             return;
           }
           resolve({ success: true, changes: this.changes, lastID: this.lastID });
-        },
+        }
       );
     }),
   default: {},
@@ -131,14 +135,18 @@ vi.mock('../../../server/src/middleware/v8FeatureGate.middleware.js', () => ({
 }));
 
 import artifactRunsRouter from '../../../server/src/routes/artifact-runs.routes.js';
+import * as reportBuilderService from '../../../server/src/services/reportBuilderService.js';
+import { errorHandlerMiddleware } from '../../../server/src/utils/ErrorHandler.js';
 
 describe('P22 Wordy — document artifact pipeline (sqlite integration)', () => {
   const app = express();
   app.use(express.json());
   app.use('/api/artifact-runs', artifactRunsRouter);
+  app.use(errorHandlerMiddleware);
 
   beforeAll(async () => {
     await applyArtifactSubstrateDdl(sqliteCtx.db);
+    reportBuilderService.setDependencies({ db: sqliteCtx.db as any });
   });
 
   beforeEach(async () => {
@@ -150,13 +158,32 @@ describe('P22 Wordy — document artifact pipeline (sqlite integration)', () => 
     spineMocks.approveRun.mockResolvedValue({});
     spineMocks.applyRun.mockResolvedValue({});
     spineMocks.completeRun.mockResolvedValue({});
+    await new Promise<void>((resolve, reject) => {
+      sqliteCtx.db.run(
+        `INSERT INTO report_builder_templates (
+          id, organization_id, source_type, report_type, sections_json, is_default, is_public
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          'tpl-wordy-tool',
+          'org-a',
+          'TOOL',
+          'TOOL',
+          JSON.stringify([
+            { key: 'summary', type: 'summary', title: 'Summary', required: true, order: 1 },
+          ]),
+          1,
+          0,
+        ],
+        (err) => (err ? reject(err) : resolve())
+      );
+    });
   });
 
   afterAll(
     () =>
       new Promise<void>((resolve, reject) => {
         sqliteCtx.db.close((err) => (err ? reject(err) : resolve()));
-      }),
+      })
   );
 
   it('creates a document artifact run via from-chat (report / document family)', async () => {
@@ -176,7 +203,7 @@ describe('P22 Wordy — document artifact pipeline (sqlite integration)', () => 
       expect.objectContaining({
         artifactFamily: 'document',
         outputType: 'report',
-      }),
+      })
     );
   });
 
@@ -200,7 +227,7 @@ describe('P22 Wordy — document artifact pipeline (sqlite integration)', () => 
         state: expect.any(String),
         computedAt: expect.any(String),
         checks: expect.any(Array),
-      }),
+      })
     );
   });
 
@@ -227,14 +254,16 @@ describe('P22 Wordy — document artifact pipeline (sqlite integration)', () => 
       .post(`/api/artifact-runs/${runId}/materialize`)
       .send({
         title: 'Strategic Assessment Q2',
+        sourceType: 'TOOL',
+        sourceId: 'tool-run-strat-1',
         config: { reportId: 'rpt-strat-1' },
       });
-    expect(materializeRes.status).toBe(200);
+    expect(materializeRes.status, JSON.stringify(materializeRes.body)).toBe(200);
     expect(materializeRes.body.data.runStatus).toBe('completed');
     expect(materializeRes.body.data.artifactId).toBeTruthy();
   });
 
-  it('cleans up ghost artifacts on materialization failure and allows retry', async () => {
+  it('records a governed materialization failure and allows retry', async () => {
     spineMocks.initiateHandoff.mockResolvedValueOnce({ executionRunId: 'exec-doc-4a' });
     spineMocks.initiateHandoff.mockResolvedValueOnce({ executionRunId: 'exec-doc-4b' });
     spineMocks.createProposal.mockResolvedValue({ proposalId: 'proposal-doc-2' });
@@ -252,10 +281,13 @@ describe('P22 Wordy — document artifact pipeline (sqlite integration)', () => 
     await request(app).post(`/api/artifact-runs/${runId}/accept-plan`).send({});
     spineMocks.getRun.mockResolvedValue({ state: 'approved_for_apply' });
 
-    const badMaterialize = await request(app)
-      .post(`/api/artifact-runs/${runId}/materialize`)
-      .send({ title: 'Failing doc', config: {} });
-    expect(badMaterialize.status).toBe(500);
+    const badMaterialize = await request(app).post(`/api/artifact-runs/${runId}/materialize`).send({
+      title: 'Failing doc',
+      sourceType: 'NOT_A_REPORT_SOURCE',
+      sourceId: 'tool-run-failing-1',
+      config: {},
+    });
+    expect(badMaterialize.status, JSON.stringify(badMaterialize.body)).toBe(409);
 
     const afterFailure = await request(app).get(`/api/artifact-runs/${runId}`);
     expect(afterFailure.status).toBe(200);
@@ -264,7 +296,7 @@ describe('P22 Wordy — document artifact pipeline (sqlite integration)', () => 
       expect.objectContaining({
         stage: 'materialize',
         occurredAt: expect.any(String),
-      }),
+      })
     );
 
     const artifactCountAfterFailure = await new Promise<number>((resolve, reject) => {
@@ -274,7 +306,7 @@ describe('P22 Wordy — document artifact pipeline (sqlite integration)', () => 
         (err: Error | null, row: any) => {
           if (err) return reject(err);
           resolve(Number(row?.cnt || 0));
-        },
+        }
       );
     });
     expect(artifactCountAfterFailure).toBe(0);
@@ -292,6 +324,8 @@ describe('P22 Wordy — document artifact pipeline (sqlite integration)', () => 
       .post(`/api/artifact-runs/${retryRunId}/materialize`)
       .send({
         title: 'Recovered doc',
+        sourceType: 'TOOL',
+        sourceId: 'tool-run-recovered-1',
         config: { reportId: 'rpt-recovered-1' },
       });
     expect(okMaterialize.status).toBe(200);
@@ -305,7 +339,7 @@ describe('P22 Wordy — document artifact pipeline (sqlite integration)', () => 
         (err: Error | null, row: any) => {
           if (err) return reject(err);
           resolve(Number(row?.cnt || 0));
-        },
+        }
       );
     });
     expect(artifactCountAfterSuccess).toBe(1);
@@ -328,15 +362,18 @@ describe('P22 Wordy — document artifact pipeline (sqlite integration)', () => 
     await request(app).post(`/api/artifact-runs/${runId}/accept-plan`).send({});
     spineMocks.getRun.mockResolvedValue({ state: 'approved_for_apply' });
 
-    await request(app)
-      .post(`/api/artifact-runs/${runId}/materialize`)
-      .send({ title: 'Fail', config: {} });
+    await request(app).post(`/api/artifact-runs/${runId}/materialize`).send({
+      title: 'Fail',
+      sourceType: 'NOT_A_REPORT_SOURCE',
+      sourceId: 'tool-run-history-1',
+      config: {},
+    });
 
     const retryRes = await request(app).post(`/api/artifact-runs/${runId}/retry`).send({});
     expect(retryRes.status).toBe(201);
 
     const historyRes = await request(app).get(
-      `/api/artifact-runs/${encodeURIComponent(retryRes.body.data.runId)}/history`,
+      `/api/artifact-runs/${encodeURIComponent(retryRes.body.data.runId)}/history`
     );
     expect(historyRes.status).toBe(200);
     expect(historyRes.body.data.map((item: any) => item.runId)).toEqual([

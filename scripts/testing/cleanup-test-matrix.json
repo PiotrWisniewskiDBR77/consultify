@@ -61,6 +61,8 @@
       "tests/integration/interview/voice-stt-save.test.ts",
       "tests/integration/routes/api-keys.l3.test.ts",
       "tests/integration/routes/billing.test.js",
+      "tests/integration/mywork/my-work.v2.routes.test.ts",
+      "tests/integration/routes/budget.l3.test.ts",
       "server/src/routes/__tests__/finance-statements.routes.f5wiring.test.ts",
       "server/src/routes/__tests__/initiatives-crud.test.ts",
       "server/src/routes/resultsVnext/__tests__/okr.routes.test.ts"
@@ -133,15 +135,15 @@
         "tests/integration/transactions/transaction-integrity-integration.test.ts",
         "tests/integration/interview/voice-stt-save.test.ts",
         "tests/integration/routes/api-keys.l3.test.ts",
-        "tests/integration/routes/billing.test.js"
+        "tests/integration/routes/billing.test.js",
+        "tests/integration/mywork/my-work.v2.routes.test.ts",
+        "tests/integration/routes/budget.l3.test.ts"
       ]
     },
     "externalRuntime": {
       "reason": "Calls TEST_API_URL or localhost and does not start its own application runtime.",
       "execution": "dedicated-http-runtime",
-      "files": [
-        "tests/integration/routes/tools.p27.test.ts"
-      ]
+      "files": ["tests/integration/routes/tools.p27.test.ts"]
     },
     "flakyHarness": {
       "reason": "Individual cases pass but the complete file fails nondeterministically through socket and permission-state leakage.",

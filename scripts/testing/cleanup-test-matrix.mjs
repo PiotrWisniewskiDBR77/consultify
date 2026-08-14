@@ -55,6 +55,20 @@ const AMBIENT_DATABASE_KEYS = [
 const sanitizedTestEnv = () => {
   const env = { ...process.env };
   for (const key of AMBIENT_DATABASE_KEYS) delete env[key];
+  // Vite and server entrypoints both load `.env` during test discovery. Use a
+  // non-empty, deliberately unreachable sentinel so neither loader can restore
+  // a developer or hosted DATABASE_URL. Database tests are excluded into the
+  // explicit fresh-postgres gate; any accidental standard-gate connection must
+  // fail closed against port 1 instead of touching shared state.
+  env.DATABASE_URL = 'postgresql://cleanup_disabled:cleanup_disabled@127.0.0.1:1/cleanup_disabled';
+  env.DATABASE_PUBLIC_URL = env.DATABASE_URL;
+  env.DB_TYPE = 'postgres';
+  env.PGHOST = '127.0.0.1';
+  env.PGPORT = '1';
+  env.PGDATABASE = 'cleanup_disabled';
+  env.PGUSER = 'cleanup_disabled';
+  env.PGPASSWORD = 'cleanup_disabled';
+  env.DOTENV_IGNORE_LOCAL = '1';
   return env;
 };
 
@@ -65,7 +79,7 @@ const run = (args) => {
     // database target. Tests that need a database belong in the explicit
     // realDB gate, whose runner supplies a freshly migrated disposable URL.
     env: sanitizedTestEnv(),
-    stdio: 'inherit'
+    stdio: 'inherit',
   });
   if (result.error) throw result.error;
   return result.status ?? 1;
@@ -78,16 +92,20 @@ if (command === 'validate') {
   }
 } else if (command === 'standard-args') {
   const args = [
-    '--no-file-parallelism', '--retry=0', '--bail=5',
+    '--no-file-parallelism',
+    '--retry=0',
+    '--bail=5',
     ...matrix.standard.excludePatterns.flatMap((pattern) => ['--exclude', pattern]),
-    ...matrix.standard.excludeFiles.flatMap((file) => ['--exclude', file])
+    ...matrix.standard.excludeFiles.flatMap((file) => ['--exclude', file]),
   ];
   console.log(args.map((value) => JSON.stringify(value)).join(' '));
 } else if (command === 'run-standard') {
   const args = [
-    '--no-file-parallelism', '--retry=0', '--bail=5',
+    '--no-file-parallelism',
+    '--retry=0',
+    '--bail=5',
     ...matrix.standard.excludePatterns.flatMap((pattern) => ['--exclude', pattern]),
-    ...matrix.standard.excludeFiles.flatMap((file) => ['--exclude', file])
+    ...matrix.standard.excludeFiles.flatMap((file) => ['--exclude', file]),
   ];
   process.exit(run(args));
 } else if (command === 'run-isolated') {
