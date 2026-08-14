@@ -24,6 +24,10 @@ for (const record of reachability.records) {
   allByHash.get(digest).push(record);
 }
 const allFiles = new Set(reachability.records.map((record) => record.file));
+const prefixDecisions = Object.entries(manualDecisions.prefixDecisions ?? {}).sort((a, b) => b[0].length - a[0].length);
+const manualDecisionFor = (file) => manualDecisions.decisions[file]
+  ?? prefixDecisions.find(([prefix]) => file.startsWith(prefix))?.[1]
+  ?? null;
 
 function shadowCounterparts(file) {
   const stem = file.replace(/\.(tsx?|jsx?)$/, '');
@@ -81,7 +85,7 @@ const candidates = reachability.records
     file: record.file,
     module: moduleByFile.get(record.file) ?? 'cross-cutting-or-unclassified',
     deletionAuthorized: false,
-    manualDecision: manualDecisions.decisions[record.file] ?? null,
+    manualDecision: manualDecisionFor(record.file),
     ...classify(record),
   }))
   .sort((a, b) => `${a.priority}:${a.module}:${a.file}`.localeCompare(`${b.priority}:${b.module}:${b.file}`));
@@ -101,6 +105,9 @@ for (const candidate of candidates) {
 for (const file of Object.keys(manualDecisions.decisions)) {
   if (!candidates.some((candidate) => candidate.file === file)) throw new Error(`manual decision is not an orphan candidate: ${file}`);
 }
+for (const [prefix] of prefixDecisions) {
+  if (!candidates.some((candidate) => candidate.file.startsWith(prefix))) throw new Error(`manual prefix decision matches no orphan candidate: ${prefix}`);
+}
 const report = {
   schemaVersion: 1,
   generatedAt: new Date().toISOString(),
@@ -111,7 +118,16 @@ const report = {
     'Static non-reachability must still be checked against Git history, runtime registries and product intent.',
     'Exact duplicates may encode intentionally separate ownership and require a canonical-owner decision.',
   ],
-  counts: { total: candidates.length, manualDecisions: Object.keys(manualDecisions.decisions).length, byManualDecision, byPriority, byTriage, byModule },
+  counts: {
+    total: candidates.length,
+    manualDecisions: candidates.filter((candidate) => candidate.manualDecision).length,
+    exactManualDecisions: Object.keys(manualDecisions.decisions).length,
+    prefixManualDecisions: prefixDecisions.length,
+    byManualDecision,
+    byPriority,
+    byTriage,
+    byModule,
+  },
   candidates,
 };
 fs.writeFileSync(path.join(generatedDir, 'orphan-candidate-triage.json'), JSON.stringify(report, null, 2) + '\n');

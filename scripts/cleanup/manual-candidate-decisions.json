@@ -1,6 +1,13 @@
 {
   "schemaVersion": 1,
   "deletionAuthorized": false,
+  "prefixDecisions": {
+    "packages/shared/src/": {
+      "status": "PRESERVE_ARCHITECTURE_RECONCILIATION",
+      "reason": "The workspace package is built and documented as the target shared-code SSOT, but no application runtime imports it; reconcile ownership before deleting either copy.",
+      "evidence": ["package.json:97", "docs/FORK_STRATEGY.md:27", "docs/SOURCE_OF_TRUTH.md:73"]
+    }
+  },
   "decisions": {
     "src/views/AgentPlanView.tsx": {
       "status": "SUPERSEDED_REMOVAL_CANDIDATE",
@@ -41,6 +48,31 @@
       "status": "PRESERVE_CONTRACT_REVIEW",
       "reason": "A unique cursor-pagination helper exists but no Case Workspace route imports it; determine whether routes already implement equivalent contracts before removal.",
       "evidence": ["server/src/routes/caseWorkspace/_shared/pagination.ts:1", "server/src/routes/caseWorkspace/play.routes.ts:125"]
+    },
+    "server/src/Gateway.js": {
+      "status": "GENERATED_OR_LEGACY_SHADOW_REMOVAL_CANDIDATE",
+      "reason": "Production and build entrypoints use Gateway.ts; backend build explicitly excludes source JavaScript shadows.",
+      "evidence": ["server/src/index.ts:1280", "server/tsconfig.build.json:34"]
+    },
+    "server/src/index.js": {
+      "status": "GENERATED_OR_LEGACY_SHADOW_REMOVAL_CANDIDATE",
+      "reason": "Production is compiled from index.ts to dist/src/index.js; source index.js is excluded from the backend build.",
+      "evidence": ["server/package.json", "server/tsconfig.build.json:34"]
+    },
+    "server/src/cron/InvoiceReminderCron.js": {
+      "status": "GENERATED_OR_LEGACY_SHADOW_REMOVAL_CANDIDATE",
+      "reason": "A TypeScript counterpart exists and source JavaScript is excluded from the backend build.",
+      "evidence": ["server/src/cron/InvoiceReminderCron.ts", "server/tsconfig.build.json:34"]
+    },
+    "server/src/cron/MemoryCleanupJob.js": {
+      "status": "GENERATED_OR_LEGACY_SHADOW_REMOVAL_CANDIDATE",
+      "reason": "A TypeScript counterpart exists and source JavaScript is excluded from the backend build.",
+      "evidence": ["server/src/cron/MemoryCleanupJob.ts", "server/tsconfig.build.json:34"]
+    },
+    "server/src/routes/tasks.routes.ts": {
+      "status": "PHANTOM_STUB_REMOVAL_CANDIDATE",
+      "reason": "Unmounted CRUD-success stub is byte-identical to projects.routes.ts and contains no domain behavior.",
+      "evidence": ["server/src/routes/tasks.routes.ts", "server/src/routes/projects.routes.ts"]
     }
   }
 }
