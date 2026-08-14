@@ -94,6 +94,14 @@ vi.mock('../../../utils/Logger.js', () => ({
   default: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
 
+// Route-boundary tests mock domain commands and repositories. Keep the access
+// seam deterministic as the sibling KPI/ROI route suites do; otherwise write
+// tests accidentally reach the process-wide access cache/DB and become order
+// dependent under the intentionally shuffled Vitest sequence.
+vi.mock('../../../services/effectiveAccessService.js', () => ({
+  resolveEffectiveAccess: vi.fn(async () => ({ capabilities: ['*'], platformRole: null })),
+}));
+
 vi.mock('../../../services/resultsVnext/okr/okrProgramCommands.js', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('../../../services/resultsVnext/okr/okrProgramCommands.js')>();
