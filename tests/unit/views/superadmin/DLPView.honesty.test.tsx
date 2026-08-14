@@ -63,9 +63,21 @@ const violation = {
 };
 
 describe('DLPView honest UI', () => {
+  const openRowActions = () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Row actions' }));
+  };
+
+  const chooseRowAction = (name: string) => {
+    openRowActions();
+    fireEvent.click(screen.getByRole('menuitem', { name }));
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.stubGlobal('confirm', vi.fn(() => true));
+    vi.stubGlobal(
+      'confirm',
+      vi.fn(() => true)
+    );
     vi.mocked(Api.getDLPPolicies).mockRejectedValue(new Error('DLP backend down'));
     vi.mocked(Api.getDLPViolations).mockResolvedValue([]);
     vi.mocked(Api.getDLPStats).mockResolvedValue(dlpStats);
@@ -176,7 +188,8 @@ describe('DLPView honest UI', () => {
     expect(await screen.findByText('PII Guard')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Violations/i }));
     expect(await screen.findByText('email')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Resolve DLP violation violation-1/i })).toBeInTheDocument();
+    openRowActions();
+    expect(screen.getByRole('menuitem', { name: 'Resolve' })).toBeInTheDocument();
   });
 
   it('closes create policy modal only after read-back confirms the policy', async () => {
@@ -203,7 +216,7 @@ describe('DLPView honest UI', () => {
     render(<DLPView />);
 
     await screen.findByText('PII Guard');
-    fireEvent.click(screen.getByRole('button', { name: /Deactivate DLP policy policy-1/i }));
+    chooseRowAction('Deactivate');
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(
@@ -211,7 +224,7 @@ describe('DLPView honest UI', () => {
       );
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /Delete DLP policy policy-1/i }));
+    chooseRowAction('Delete');
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(
@@ -229,7 +242,7 @@ describe('DLPView honest UI', () => {
     render(<DLPView />);
 
     await screen.findByText('PII Guard');
-    fireEvent.click(screen.getByRole('button', { name: /Delete DLP policy policy-1/i }));
+    chooseRowAction('Delete');
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(
@@ -246,7 +259,7 @@ describe('DLPView honest UI', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: /Violations/i }));
     expect(await screen.findByText('Unknown date')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /Resolve DLP violation violation-1/i }));
+    chooseRowAction('Resolve');
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(
@@ -266,7 +279,7 @@ describe('DLPView honest UI', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: /Violations/i }));
     expect(await screen.findByText('PII Guard')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /Resolve DLP violation violation-1/i }));
+    chooseRowAction('Resolve');
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(
