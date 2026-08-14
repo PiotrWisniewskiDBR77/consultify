@@ -15,9 +15,10 @@
  * itself owns.
  */
 
-import express, { type Express } from 'express';
+import express from 'express';
+import type { Server } from 'node:http';
 import request from 'supertest';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockCreateProgram = vi.fn();
 const mockEditProgramDraft = vi.fn();
@@ -268,12 +269,35 @@ const {
 
 const okrRoutes = (await import('../okr.routes.js')).default;
 
-function createApp(): Express {
+let sharedServer: Server | null = null;
+
+function createApp(): Server {
+  if (sharedServer) return sharedServer;
   const app = express();
   app.use(express.json());
   app.use('/api/vnext/results/okr', okrRoutes);
-  return app;
+  sharedServer = app.listen(0, '127.0.0.1');
+  return sharedServer;
 }
+
+beforeAll(async () => {
+  const server = createApp();
+  if (server.listening) return;
+  await new Promise<void>((resolve, reject) => {
+    server.once('listening', resolve);
+    server.once('error', reject);
+  });
+});
+
+afterAll(async () => {
+  if (!sharedServer) return;
+  if (sharedServer.listening) {
+    await new Promise<void>((resolve, reject) =>
+      sharedServer!.close((error) => (error ? reject(error) : resolve()))
+    );
+  }
+  sharedServer = null;
+});
 
 // ==========================================
 // FIXTURES
