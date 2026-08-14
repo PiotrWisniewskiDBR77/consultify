@@ -8,6 +8,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 import {
   applyArtifactSubstrateDdl,
   clearArtifactSubstrateTables,
+  seedGovernedTable,
 } from '../helpers/artifactSubstrateSqliteContext.js';
 
 const sqliteCtx = vi.hoisted(() => {
@@ -369,6 +370,10 @@ describe('artifactRegistryService (sqlite-backed integration)', () => {
   });
 
   it('materializeArtifactRun completes a sheet run into the canonical registry when config.tableId is provided', async () => {
+    await seedGovernedTable(sqliteCtx.db, {
+      tableId: 'tbl-governed-1',
+      organizationId: 'org-a',
+    });
     spineMocks.initiateHandoff.mockResolvedValue({ executionRunId: 'exec-run-sheet-1' });
     spineMocks.createProposal.mockResolvedValue({ proposalId: 'proposal-sheet-1' });
 
@@ -733,6 +738,14 @@ describe('artifactRegistryService (sqlite-backed integration)', () => {
       requestedOutputType: 'presentation',
     });
 
+    await new Promise<void>((resolve, reject) => {
+      sqliteCtx.db.run(
+        `UPDATE v8_artifact_runs SET run_status = 'failed' WHERE run_id = ? AND organization_id = ?`,
+        [created.artifactRunId, 'org-a'],
+        (err) => (err ? reject(err) : resolve()),
+      );
+    });
+
     const retried = await artifactRegistryService.retryArtifactRun({
       runId: created.artifactRunId,
       organizationId: 'org-a',
@@ -771,6 +784,15 @@ describe('artifactRegistryService (sqlite-backed integration)', () => {
     const awaitingReview = await artifactRegistryService.getArtifactRun(created.artifactRunId, 'org-a');
     expect(awaitingReview?.runStatus).toBe('awaiting_review');
 
+    await new Promise<void>((resolve, reject) => {
+      sqliteCtx.db.run(
+        `UPDATE v8_artifact_runs SET run_status = 'failed' WHERE run_id = ? AND organization_id = ?`,
+        [created.artifactRunId, 'org-a'],
+        (err) => (err ? reject(err) : resolve()),
+      );
+    });
+    spineMocks.getRun.mockResolvedValue({ state: 'failed' });
+
     const retried = await artifactRegistryService.retryArtifactRun({
       runId: created.artifactRunId,
       organizationId: 'org-a',
@@ -789,7 +811,9 @@ describe('artifactRegistryService (sqlite-backed integration)', () => {
     });
 
     expect(history.map((item) => item.runId)).toEqual([created.artifactRunId, retried.runId]);
-    expect(history[0]?.runStatus).toBe('retry_requested');
+    // Retry lineage is append-only: the failed parent remains failed and the
+    // fresh planned child carries retry_of_run_id. Do not rewrite history.
+    expect(history[0]?.runStatus).toBe('failed');
     expect(history[1]).toMatchObject({
       runId: retried.runId,
       retryOfRunId: created.artifactRunId,

@@ -8,6 +8,12 @@ import type sqlite3 from 'sqlite3';
 export async function applyArtifactSubstrateDdl(db: sqlite3.Database): Promise<void> {
   const exec = promisify(db.exec.bind(db));
   await exec(`
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      first_name TEXT,
+      last_name TEXT
+    );
+
     CREATE TABLE IF NOT EXISTS projects (
       id TEXT PRIMARY KEY,
       organization_id TEXT NOT NULL
@@ -96,7 +102,9 @@ export async function applyArtifactSubstrateDdl(db: sqlite3.Database): Promise<v
       period_from TEXT,
       period_to TEXT,
       confidentiality TEXT,
-      source_refs_json TEXT
+      source_refs_json TEXT,
+      pdf_path TEXT,
+      pptx_path TEXT
     );
 
     CREATE TABLE IF NOT EXISTS report_builder_sections (
@@ -158,6 +166,7 @@ export async function applyArtifactSubstrateDdl(db: sqlite3.Database): Promise<v
       source_artifacts TEXT,
       outline_json TEXT,
       deck_json TEXT,
+      unified_json TEXT,
       content_json_native TEXT,
       version INTEGER NOT NULL DEFAULT 1,
       generated_by TEXT,
@@ -171,6 +180,16 @@ export async function applyArtifactSubstrateDdl(db: sqlite3.Database): Promise<v
       updated_at TEXT,
       source_id TEXT,
       source_refs_json TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS v8_output_exports (
+      export_id TEXT PRIMARY KEY,
+      artifact_id TEXT NOT NULL,
+      organization_id TEXT NOT NULL,
+      format TEXT NOT NULL,
+      status TEXT NOT NULL,
+      created_at TEXT,
+      completed_at TEXT
     );
 
     CREATE TABLE IF NOT EXISTS v8_output_artifacts (
@@ -293,6 +312,7 @@ export async function applyArtifactSubstrateDdl(db: sqlite3.Database): Promise<v
 export async function clearArtifactSubstrateTables(db: sqlite3.Database): Promise<void> {
   const run = promisify(db.run.bind(db));
   await run('DELETE FROM v8_artifact_run_audit_log');
+  await run('DELETE FROM v8_output_exports');
   await run('DELETE FROM v8_artifact_access_grants');
   await run('DELETE FROM v8_artifact_origin_links');
   await run('DELETE FROM v8_review_gates');
@@ -305,6 +325,7 @@ export async function clearArtifactSubstrateTables(db: sqlite3.Database): Promis
   await run('DELETE FROM report_builder_reports');
   await run('DELETE FROM project_members');
   await run('DELETE FROM projects');
+  await run('DELETE FROM users');
   await run('DELETE FROM tp_records');
   await run('DELETE FROM tp_views');
   await run('DELETE FROM tp_fields');
