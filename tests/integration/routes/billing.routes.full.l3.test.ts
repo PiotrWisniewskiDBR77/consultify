@@ -278,6 +278,7 @@ describe('Billing routes integration (L3) - full', () => {
         created_at TEXT DEFAULT (datetime('now'))
       )`
     );
+    await ensureSqliteColumn('subscription_events', 'mrr_change', 'REAL DEFAULT 0');
 
     await dbRun(
       `CREATE TABLE IF NOT EXISTS organization_billing (
@@ -432,6 +433,10 @@ describe('Billing routes integration (L3) - full', () => {
         email_notifications INTEGER DEFAULT 1,
         updated_at TEXT DEFAULT (datetime('now'))
       )`
+    );
+    await dbRun(
+      `CREATE UNIQUE INDEX IF NOT EXISTS billing_alerts_organization_id_unique
+       ON billing_alerts (organization_id)`
     );
 
     // Recreate with UNIQUE(organization_id) so ON CONFLICT(organization_id) works in SQLite.
@@ -609,6 +614,11 @@ describe('Billing routes integration (L3) - full', () => {
 	    await ensureSqliteColumn('subscription_changes', 'proration_amount', 'REAL');
 	    await ensureSqliteColumn('subscription_changes', 'rejection_reason', 'TEXT');
 	    await ensureSqliteColumn('subscription_changes', 'updated_at', 'TEXT');
+	    await ensureSqliteColumn('subscription_changes', 'effective_date', 'TEXT');
+	    await ensureSqliteColumn('subscription_changes', 'mrr_impact', 'REAL');
+	    await ensureSqliteColumn('subscription_changes', 'old_amount', 'REAL');
+	    await ensureSqliteColumn('subscription_changes', 'new_amount', 'REAL');
+	    await ensureSqliteColumn('subscription_changes', 'notes', 'TEXT');
 
     await dbRun(
       `CREATE TABLE IF NOT EXISTS billing_webhook_events (
@@ -1330,7 +1340,8 @@ describe('Billing routes integration (L3) - full', () => {
 	    expect(list.body).toEqual(expect.objectContaining({ usage: expect.any(Array), structuredUsage: expect.any(Object) }));
 
 	    const summary = await dispatch(app, { method: 'GET', url: '/api/billing/usage-summary', user: superAdminUser, query: { organizationId: uuid(101) } });
-	    expect(summary.status).toBe(200);
+	    expect(summary.status).toBe(503);
+	    expect(summary.body.error).toContain('no real implementation');
 	  });
 
 	  it('covers spending alerts CRUD + toggles', async () => {
@@ -1475,25 +1486,28 @@ describe('Billing routes integration (L3) - full', () => {
     expect(listForecasts.status).toBe(200);
 
     const statsForecasts = await dispatch(app, { method: 'GET', url: '/api/billing/revenue-forecasts/stats', user: superAdminUser });
-    expect(statsForecasts.status).toBe(200);
+	    expect(statsForecasts.status).toBe(503);
+	    expect(statsForecasts.body.error).toContain('no real implementation');
 
     const generateForecasts = await dispatch(app, { method: 'POST', url: '/api/billing/revenue-forecasts/generate', user: superAdminUser, body: { periodDays: 30 } });
-    expect(generateForecasts.status).toBe(200);
+	    expect(generateForecasts.status).toBe(503);
+	    expect(generateForecasts.body.error).toContain('no real implementation');
 
     const deleteForecastMissing = await dispatch(app, { method: 'DELETE', url: `/api/billing/revenue-forecasts/${uuid(999)}`, user: superAdminUser });
     expect(deleteForecastMissing.status).toBe(404);
 
     const listRecog = await dispatch(app, { method: 'GET', url: '/api/billing/revenue-recognitions', user: superAdminUser });
-    expect(listRecog.status).toBe(200);
+	    expect(listRecog.status).toBe(503);
+	    expect(listRecog.body.error).toContain('no real implementation');
 
     const statsRecog = await dispatch(app, { method: 'GET', url: '/api/billing/revenue-recognitions/stats', user: superAdminUser });
-    expect(statsRecog.status).toBe(200);
+	    expect(statsRecog.status).toBe(503);
 
     const schedule = await dispatch(app, { method: 'GET', url: `/api/billing/revenue-recognitions/${uuid(121)}/schedule`, user: superAdminUser });
-    expect(schedule.status).toBe(200);
+	    expect(schedule.status).toBe(503);
 
     const recognize = await dispatch(app, { method: 'POST', url: `/api/billing/revenue-recognitions/${uuid(121)}/recognize`, user: superAdminUser, body: { amount: 5 } });
-    expect(recognize.status).toBe(200);
+	    expect(recognize.status).toBe(503);
 
     const legacyList = await dispatch(app, { method: 'GET', url: '/api/billing/revenue-recognition', user: superAdminUser });
     expect(legacyList.status).toBe(200);

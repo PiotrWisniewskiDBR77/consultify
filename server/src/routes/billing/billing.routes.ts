@@ -3223,8 +3223,13 @@ router.put(
       await dbRun(
         `
             UPDATE spending_alerts SET
-                type = ?, threshold = ?, threshold_type = ?, action = ?, 
-                notify_emails = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP
+                type = COALESCE(?, type),
+                threshold = COALESCE(?, threshold),
+                threshold_type = COALESCE(?, threshold_type),
+                action = COALESCE(?, action),
+                notify_emails = COALESCE(?, notify_emails),
+                is_active = COALESCE(?, is_active),
+                updated_at = CURRENT_TIMESTAMP
             WHERE id = ? AND organization_id = ?
         `,
         [
@@ -3232,8 +3237,8 @@ router.put(
           threshold,
           thresholdType,
           action,
-          JSON.stringify(notifyEmails || []),
-          isActive ? 1 : 0,
+          notifyEmails === undefined ? null : JSON.stringify(notifyEmails),
+          isActive === undefined ? null : isActive ? 1 : 0,
           id,
           orgId,
         ]
@@ -4638,7 +4643,7 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
-      const { notes } = req.body;
+      const { notes } = req.body || {};
 
       await dbRun(
         `
