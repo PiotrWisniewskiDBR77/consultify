@@ -17,9 +17,17 @@ vi.mock('react-hot-toast', () => ({
   default: { success: (...a: any[]) => toastSuccess(...a), error: (...a: any[]) => toastError(...a) },
 }));
 
-const i18nState = vi.hoisted(() => ({ language: 'en' }));
+const i18nState = vi.hoisted(() => ({
+  language: 'en',
+  t: (key: string) =>
+    ({
+      'myWorkNotebook.topicChips.topic': 'Topic',
+      'myWorkNotebook.topicChips.newTopicPlaceholder': 'New topic…',
+      'myWorkNotebook.topicChips.unpin': 'Unpin',
+    })[key] || key,
+}));
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ i18n: i18nState, t: (k: string) => k }),
+  useTranslation: () => ({ i18n: i18nState, t: i18nState.t }),
 }));
 
 import { NotebookTopicChips } from '@/components/MyWork/notebook/NotebookTopicChips';
@@ -31,7 +39,11 @@ const topics = [
 
 describe('NotebookTopicChips', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    v8Get.mockReset();
+    v8Post.mockReset();
+    v8Delete.mockReset();
+    toastSuccess.mockReset();
+    toastError.mockReset();
     i18nState.language = 'en';
     v8Get.mockResolvedValue(topics);
   });

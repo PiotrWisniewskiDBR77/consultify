@@ -5,7 +5,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     i18n: { language: 'en' },
-    t: (_key: string, fallback?: any) => (typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key)),
+    t: (key: string) =>
+      ({
+        'myWorkTable.collaborationPresence.workspaceLocks': 'Workspace locks',
+        'myWorkTable.collaborationPresence.workspaceLocksUnavailable': 'Workspace locks unavailable',
+        'myWorkTable.collaborationPresence.locked': 'locked',
+        'myWorkTable.collaborationPresence.lockTypeRow': 'Row',
+        'myWorkTable.collaborationPresence.lockTypeSection': 'Section',
+        'myWorkTable.collaborationPresence.lockTypeSchema': 'Schema',
+        'myWorkTable.collaborationPresence.lockTypeDocument': 'Document',
+        'myWorkTable.collaborationPresence.lockTypePhase': 'Phase',
+        'myWorkTable.collaborationPresence.lockTypeObject': 'Object',
+      })[key] || key,
   }),
   initReactI18next: { type: '3rdParty', init: vi.fn() },
 }));
