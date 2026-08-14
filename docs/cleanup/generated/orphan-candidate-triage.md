@@ -1,6 +1,6 @@
 # Orphan candidate triage
 
-Generated from source inventory `5e3b54264a6d31e33ef67d8a4a028223ecae9bf0` at 2026-08-14T17:28:47.254Z.
+Generated from source inventory `bb8bfbb673bdebf3440cfbfd9ada27488ae50cdd` at 2026-08-14T17:30:50.924Z.
 
 > No item in this report is authorized for deletion.
 
@@ -25,6 +25,11 @@ Generated from source inventory `5e3b54264a6d31e33ef67d8a4a028223ecae9bf0` at 20
 - UNUSED_BARREL: 131
 - UNUSED_CONTRACT_OR_VALIDATOR: 189
 - UNWIRED_RUNTIME_LOGIC_CANDIDATE: 135
+
+## Review units
+
+- ORPHAN_ROOT: 842
+- SUBGRAPH_MEMBER: 404
 
 ## Modules
 

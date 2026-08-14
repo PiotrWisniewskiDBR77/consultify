@@ -1,6 +1,6 @@
 # Module surface inventory
 
-Generated from `5e3b54264a6d31e33ef67d8a4a028223ecae9bf0` at 2026-08-14T17:16:52.119Z.
+Generated from `bb8bfbb673bdebf3440cfbfd9ada27488ae50cdd` at 2026-08-14T17:30:50.442Z.
 
 > This is a coverage ledger, not a readiness verdict. Module attribution is heuristic and must be reviewed.
 
