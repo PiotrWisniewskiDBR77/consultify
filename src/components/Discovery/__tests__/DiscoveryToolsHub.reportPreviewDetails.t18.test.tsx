@@ -247,9 +247,13 @@ describe('T18 Discovery reports preview Details', () => {
       join(process.cwd(), 'src/components/Discovery/DiscoveryToolsHub.tsx'),
       'utf8'
     );
-    const occurrences = source.match(/activeTab === 'outputs' \|\| activeTab === 'reports'/g) ?? [];
-    expect(occurrences.length).toBeGreaterThanOrEqual(2);
-    expect(source).toContain('const isReportsAndPresentationsTab =');
+    const declaration =
+      "const isReportsAndPresentationsTab = activeTab === 'outputs' || activeTab === 'reports';";
+    expect(
+      source.match(/activeTab === 'outputs' \|\| activeTab === 'reports'/g) ?? []
+    ).toHaveLength(1);
+    expect(source).toContain(declaration);
+    expect(source.match(/isReportsAndPresentationsTab/g)?.length ?? 0).toBeGreaterThanOrEqual(7);
   });
 
   /**

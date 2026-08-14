@@ -313,68 +313,65 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
 
   const actionRows = orderPreviewActionRows(actions);
 
-  const footer =
-    ai || relations || actionRows.length > 0 || whatsNext ? (
-      // canon §7.3 — footer cards stacked space-y-2.5, bez dividerów między kartami.
-      <div className="space-y-2.5">
-        {/* Blok 4 — ramka AI */}
-        {ai ? (
-          <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5">
-            <PreviewAIHintStrip {...ai} />
-          </div>
-        ) : null}
+  const footer = (
+    // canon §7.3 — footer cards stacked space-y-2.5, bez dividerów między kartami.
+    <div className="space-y-2.5">
+      {/* Blok 4 — ramka AI */}
+      {ai ? (
+        <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5">
+          <PreviewAIHintStrip {...ai} />
+        </div>
+      ) : null}
 
-        {/* Blok 5 — Relations */}
-        {relations ? (
-          <PreviewRelations
-            items={relations}
-            emptyLabel={
-              relationsEmptyLabel ??
-              t('common.noRelations', isPolish ? 'Brak powiązań' : 'No relations')
-            }
-          />
-        ) : null}
+      {/* Blok 5 — Relations */}
+      <PreviewRelations
+        items={relations ?? []}
+        emptyLabel={
+          relationsEmptyLabel ??
+          t('common.noRelations', isPolish ? 'Brak powiązań' : 'No relations')
+        }
+      />
 
-        {/* Blok 6 — pełny blok akcji na dole */}
-        {actionRows.length > 0 ? (
-          <div className="space-y-2.5 py-1">
-            {actionRows.map((row, idx) => (
-              <ActionGridRow key={idx} actions={row} />
-            ))}
-          </div>
-        ) : null}
+      {/* Blok 6 — pełny blok akcji na dole */}
+      {actionRows.length > 0 ? (
+        <div className="space-y-2.5 py-1">
+          {actionRows.map((row, idx) => (
+            <ActionGridRow key={idx} actions={row} />
+          ))}
+        </div>
+      ) : null}
 
-        {/* Blok opcjonalny — WHAT'S NEXT (ANEKS #4). Chipy zamiast ściśniętej
+      {/* Blok opcjonalny — WHAT'S NEXT (ANEKS #4). Chipy zamiast ściśniętej
             tabelki; JEDEN dopisek dla całej grupy pod chipami, nie per-pozycja. */}
-        {whatsNext ? (
-          <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5">
-            <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
-              {whatsNext.label ?? t('common.whatsNext', isPolish ? 'Co dalej' : "What's next")}
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {whatsNext.items.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={item.onClick}
-                    disabled={item.disabled}
-                    className="inline-flex h-7 items-center gap-1.5 rounded-full border border-c-border bg-c-surface px-2.5 text-xs font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                  >
-                    {Icon ? <Icon size={12} /> : null}
-                    {item.label}
-                  </button>
-                );
-              })}
-            </div>
-            {whatsNext.note ? (
-              <div className="mt-1.5 text-[10px] text-c-text-muted">{whatsNext.note}</div>
-            ) : null}
+      {whatsNext ? (
+        <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5">
+          <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
+            {whatsNext.label ?? t('common.whatsNext', isPolish ? 'Co dalej' : "What's next")}
           </div>
-        ) : null}
-      </div>
-    ) : undefined;
+          <div className="flex flex-wrap gap-1.5">
+            {whatsNext.items.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={item.onClick}
+                  disabled={item.disabled}
+                  className="inline-flex h-7 items-center gap-1.5 rounded-full border border-c-border bg-c-surface px-2.5 text-xs font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                >
+                  {Icon ? <Icon size={12} /> : null}
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
+          {whatsNext.note ? (
+            <div className="mt-1.5 text-[10px] text-c-text-muted">{whatsNext.note}</div>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
 
   return (
     <PreviewPaneShell
@@ -397,7 +394,10 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
               title={
                 pinned
                   ? t('common.unpin', isPolish ? 'Odepnij' : 'Unpin')
-                  : t('common.pinForComparison', isPolish ? 'Przypnij do porównania' : 'Pin for comparison')
+                  : t(
+                      'common.pinForComparison',
+                      isPolish ? 'Przypnij do porównania' : 'Pin for comparison'
+                    )
               }
             >
               {pinned ? <PinOff size={13} /> : <Pin size={13} />}

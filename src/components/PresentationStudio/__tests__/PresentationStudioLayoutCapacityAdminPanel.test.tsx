@@ -277,7 +277,7 @@ describe('PresentationStudioLayoutCapacityAdminPanel — loadWarning', () => {
       />
     );
     const banner = await screen.findByTestId('studio-layout-capacity-admin-load-warning');
-    expect(banner.className).toContain('rose');
+    expect(banner.className).toContain('danger');
     expect(banner.textContent).toContain('signature is missing or invalid');
     expect(banner.textContent).toContain('signature does not match');
   });

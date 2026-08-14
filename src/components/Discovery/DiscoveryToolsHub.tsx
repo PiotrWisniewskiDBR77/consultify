@@ -126,11 +126,14 @@ import {
   MENU_3_LEFT_CLASS,
 } from '../shared/ModuleMenu3';
 import { type RowActionSection, RowActionsMenu } from '../shared/RowActionsMenu';
+import { PreviewDetailsSection } from '../shared/PreviewPane';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { ChipBase } from '../ui/primitives/chips/chipBase';
 import { PriorityChip, type PriorityLevel } from '../ui/primitives/chips/PriorityChip';
 import { useSurfaceUrlSync } from './hooks/useSurfaceUrlSync';
+import { buildOutputPreviewDetails } from './outputPreviewDetails';
+import { buildReportPreviewDetails } from './reportPreviewDetails';
 import { renderToolStatusCell, TOOL_STATUS_DOMAIN_TO_ITEM_STATUS } from './toolStatusCell';
 
 // Tool category types (V3: includes licensed assessments)
@@ -4287,6 +4290,14 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           renderPreview={(item) => {
             if (isReportsAndPresentationsTab) {
               const kind = String((item as any)?.outputKind || '');
+              const isReportLikeOutputKind =
+                kind === 'assessment_report' || kind === 'report_builder';
+              const outputDetailsText =
+                activeTab === 'outputs'
+                  ? isReportLikeOutputKind
+                    ? buildReportPreviewDetails(item as any, isPolish ? 'pl' : 'en')
+                    : buildOutputPreviewDetails(item as any, isPolish ? 'pl' : 'en')
+                  : buildOutputPreviewDetails(item as any, isPolish ? 'pl' : 'en');
               const label =
                 kind === 'assessment_report'
                   ? t('tools.hub.outputs.type.assessmentReport', 'Assessment report')
@@ -4327,6 +4338,10 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                       </div>
                     </div>
                   </div>
+                  <PreviewDetailsSection
+                    text={outputDetailsText}
+                    onCopy={() => void navigator.clipboard?.writeText(outputDetailsText)}
+                  />
                 </div>
               );
             }
