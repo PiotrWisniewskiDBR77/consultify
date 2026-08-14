@@ -695,7 +695,7 @@ function blocksForTemplateIntent(
   const heading = { type: 'heading', content: { text: title, level: 1 } };
   const visualLead = {
     type: 'callout',
-    content: { variant: 'info', text: compactSlideText(headline, 48) },
+    content: { variant: 'info', text: compactSlideText(headline, 80) },
   };
 
   switch (intent) {
@@ -751,7 +751,7 @@ function blocksForTemplateIntent(
             metrics: (evidenceLabels.length
               ? evidenceLabels
               : ['Investment', 'Run-rate benefit', 'Payback']
-            ).slice(0, 3).map((label) => ({
+            ).slice(0, 4).map((label) => ({
               label,
               value: compactSlideText(groundedValueForLabel(label, sourceLines), 38),
               trend: 'stable',

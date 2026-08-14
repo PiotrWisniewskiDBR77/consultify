@@ -77,6 +77,7 @@
       "server/src/routes/v8/__tests__/finance.routes.test.ts",
       "server/src/routes/resultsVnext/__tests__/roiEconomicModel.routes.test.ts",
       "tests/integration/routes/conversations.p35-history.test.ts",
+      "tests/integration/routes/verify.l3.test.ts",
       "tests/integration/authMeDemoTtl.contract.test.ts",
       "tests/integration/publicSystemSurface.contract.test.ts",
       "tests/integration/routes/login-history.l3.test.ts",
@@ -149,7 +150,8 @@
         "server/src/services/audits/__tests__/verificationService.test.ts",
         "tests/integration/authMeDemoTtl.contract.test.ts",
         "tests/integration/publicSystemSurface.contract.test.ts",
-        "tests/integration/routes/conversations.p35-history.test.ts"
+        "tests/integration/routes/conversations.p35-history.test.ts",
+        "tests/integration/routes/verify.l3.test.ts"
       ]
     },
     "legacyPostgresPort": {

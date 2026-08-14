@@ -69,10 +69,11 @@ describe('mapOutlineBlueprintToDeckSlides', () => {
     });
   });
 
-  it('omits the text block when there is no keyMessage (heading-only slide)', () => {
+  it('keeps a cover visual even when there is no keyMessage', () => {
     const slides = mapOutlineBlueprintToDeckSlides([{ intent: 'cover', title: 'Cover' }]);
-    expect(slides[0].content.blocks).toEqual([
-      { type: 'heading', content: { text: 'Cover', level: 1 } },
+    expect(slides[0].content.blocks.map((block) => block.type)).toEqual([
+      'heading',
+      'smart_layout',
     ]);
   });
 
@@ -124,10 +125,10 @@ describe('mapOutlineBlueprintToDeckSlides', () => {
 
     expect(slides.map((slide) => slide.content.blocks.map((block) => block.type))).toEqual([
       ['heading', 'callout', 'smart_layout'],
-      ['heading', 'paragraph', 'metric_strip'],
-      ['heading', 'paragraph', 'smart_layout'],
-      ['heading', 'paragraph', 'timeline_block'],
-      ['heading', 'paragraph', 'table'],
+      ['heading', 'callout', 'metric_strip'],
+      ['heading', 'callout', 'smart_layout'],
+      ['heading', 'callout', 'timeline_block'],
+      ['heading', 'callout', 'table'],
       ['heading', 'callout', 'bullet_list'],
       ['heading', 'callout', 'numbered_list'],
     ]);
