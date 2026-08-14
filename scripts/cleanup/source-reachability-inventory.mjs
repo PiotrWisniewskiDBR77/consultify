@@ -58,6 +58,7 @@ const compilerOptions = {
 const host = ts.createCompilerHost(compilerOptions, true);
 
 function localFallback(specifier, importer) {
+  specifier = specifier.split('?')[0].split('#')[0];
   let base;
   if (specifier.startsWith('@/')) base = absolute(path.join('src', specifier.slice(2)));
   else if (specifier.startsWith('.')) base = path.resolve(path.dirname(importer), specifier);
@@ -74,11 +75,18 @@ function localFallback(specifier, importer) {
 }
 
 function resolveImport(specifier, importer) {
-  const resolved = ts.resolveModuleName(specifier, importer, compilerOptions, host).resolvedModule?.resolvedFileName;
+  const cleanSpecifier = specifier.split('?')[0].split('#')[0];
+  const resolved = ts.resolveModuleName(cleanSpecifier, importer, compilerOptions, host).resolvedModule?.resolvedFileName;
   if (resolved && !resolved.includes('/node_modules/') && knownFiles.has(path.normalize(resolved))) {
     return path.normalize(resolved);
   }
-  return localFallback(specifier, importer);
+  return localFallback(cleanSpecifier, importer);
+}
+
+function isCodeSpecifier(specifier) {
+  const clean = specifier.split('?')[0].split('#')[0];
+  const extension = path.extname(clean);
+  return extension === '' || extensions.has(extension);
 }
 
 const graph = new Map();
@@ -99,7 +107,7 @@ for (const file of allAnalysisFiles) {
     if (specifier) {
       const target = resolveImport(specifier, file);
       if (target) imports.push(target);
-      else if (specifier.startsWith('.') || specifier.startsWith('@/')) {
+      else if ((specifier.startsWith('.') || specifier.startsWith('@/')) && isCodeSpecifier(specifier)) {
         unresolvedLocal.push({ importer: rel(file), specifier });
       }
     }
@@ -141,6 +149,14 @@ const counts = records.reduce((acc, record) => {
   acc[record.classification] = (acc[record.classification] ?? 0) + 1;
   return acc;
 }, {});
+const areaCounts = records.reduce((acc, record) => {
+  const parts = record.file.split('/');
+  const depth = parts[0] === 'server' || parts[0] === 'packages' || parts[0] === 'apps' ? 3 : 2;
+  const area = parts.slice(0, depth).join('/');
+  acc[area] ??= {};
+  acc[area][record.classification] = (acc[area][record.classification] ?? 0) + 1;
+  return acc;
+}, {});
 const report = {
   schemaVersion: 1,
   generatedAt: new Date().toISOString(),
@@ -152,6 +168,7 @@ const report = {
   ],
   runtimeEntries,
   counts,
+  areaCounts,
   unresolvedLocalImports: [...new Map(unresolvedLocal.map((item) => [`${item.importer}\0${item.specifier}`, item])).values()],
   records,
 };
