@@ -303,7 +303,11 @@ async function persistProposalWriteThrough(
   proposal: DocumentEditorProposal
 ): Promise<DocumentEditorProposal> {
   proposalStore.set(proposalKey(proposal.artifactId, proposal.proposalId), proposal);
-  const outcome = await daoPersistProposal(proposal);
+  const outcome = await daoPersistProposal(proposal).catch((error: unknown) => ({
+    ok: false,
+    degraded: 'db_error' as const,
+    reason: error instanceof Error ? error.message : String(error),
+  }));
   proposal.persistence = {
     persisted: outcome.ok,
     degraded: outcome.degraded,

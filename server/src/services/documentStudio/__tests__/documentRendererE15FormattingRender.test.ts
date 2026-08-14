@@ -231,20 +231,21 @@ describe('Slice E15.5.formatting.render — DOCX renderer honors header / footer
     expect(headerFooter).toContain('Internal use only');
   });
 
-  it('uses default TOC range 1-3 when tocConfig absent', async () => {
+  it('uses default TOC depth 1-3 when tocConfig is absent', async () => {
     const schema = makeSchema(baseFormatting());
     const buf = await renderDocumentSchemaToDocxBuffer(schema);
     const { document } = await extractDocxXml(buf);
-    expect(document).toMatch(/1-3/);
+    expect(document.match(/3\. A deep nested heading/g)).toHaveLength(2);
   });
 
-  it('honors tocConfig.maxDepth=2 → headingStyleRange 1-2', async () => {
+  it('honors tocConfig.maxDepth=2 by omitting level-3 entries from the static TOC', async () => {
     const formatting = baseFormatting();
     formatting.tocConfig = { enabled: true, maxDepth: 2 };
     const schema = makeSchema(formatting);
     const buf = await renderDocumentSchemaToDocxBuffer(schema);
     const { document } = await extractDocxXml(buf);
-    expect(document).toMatch(/1-2/);
+    expect(document.match(/2\. A subsection/g)).toHaveLength(2);
+    expect(document.match(/3\. A deep nested heading/g)).toHaveLength(1);
   });
 
   it('renders full subtitle (density + confidentiality) by default on cover', async () => {
