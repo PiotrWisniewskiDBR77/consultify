@@ -6,7 +6,9 @@ import SCIMProvisioningView from '@/views/superadmin/SCIMProvisioningView';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback?: any) => (typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key)),
+    t: (_key: string, fallback?: any) =>
+      typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key),
+    i18n: { language: 'en' },
   }),
 }));
 
@@ -78,7 +80,10 @@ describe('SCIMProvisioningView honest UI', () => {
     vi.mocked(api.get).mockRejectedValue(new Error('SCIM admin backend down'));
     vi.mocked(api.post).mockResolvedValue({ data: { data: mapping } });
     vi.mocked(api.delete).mockResolvedValue({ data: { data: { success: true } } });
-    vi.stubGlobal('confirm', vi.fn(() => true));
+    vi.stubGlobal(
+      'confirm',
+      vi.fn(() => true)
+    );
   });
 
   afterEach(() => {
@@ -216,7 +221,8 @@ describe('SCIMProvisioningView honest UI', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: /Group Mappings/i }));
     expect(await screen.findByText('Consultify Admins')).toBeInTheDocument();
-    fireEvent.click(screen.getByTitle('Delete mapping Consultify Admins'));
+    fireEvent.click(screen.getByRole('button', { name: 'Row actions' }));
+    fireEvent.click(await screen.findByText('Delete mapping'));
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(
