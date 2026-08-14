@@ -844,12 +844,16 @@ export const FinanceHub: React.FC = () => {
       // surface (for example the Prediction breadcrumb above an Analysis
       // workspace). Open-document history may remain available, but the
       // incompatible active workspace must be cleared before rendering the
-      // destination registry.
+      // destination registry. The legacy document strip does not encode the
+      // lane that owns each entry, so retaining it here would keep rendering
+      // a stale Analysis title above the Prediction registry. Clear that
+      // presentation history together with the active workspace.
+      setOpenDocuments([]);
       setActiveDocumentId(null);
       setActiveDocument(null);
       setActiveTab(tab);
     },
-    [activeTab, setActiveDocumentId]
+    [activeTab, setActiveDocumentId, setOpenDocuments]
   );
 
   const handleRemoveFilter = useCallback(
