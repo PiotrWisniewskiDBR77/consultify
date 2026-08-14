@@ -17,11 +17,9 @@
  * Per the rdzeń SSOT (`_KONCEPT_RDZEN_2026-07-10.md` §6.1): kanon =
  * `initiative_benefits`. `listBenefits` / `createBenefit` — the two functions
  * actually exercised by the M14 UI — now read/write `initiative_benefits`
- * directly (M14 CZYTA initiative_benefits). `handoffFromClosure` and
- * `promoteBenefitToKpi` below still target the legacy `benefits_register`
- * table; they have ZERO callers in the frontend today (audit 2026-07-10) so
- * they are left as-is (frozen) rather than migrated speculatively — retarget
- * or retire them in a follow-up if a real caller appears.
+ * directly (M14 CZYTA initiative_benefits). `handoffFromClosure` now
+ * deduplicates against that same canonical table; `promoteBenefitToKpi`
+ * remains an explicitly deprecated legacy surface.
  *
  * node-pg, snake_case columns, org-scoped throughout. `?` placeholders are
  * translated to positional params by DbPromise.
@@ -243,14 +241,22 @@ export async function handoffFromClosure(
   const kpiName = (kpiDelta?.kpiName || '').trim() || null;
   const name =
     (kpiDelta?.name || '').trim() || (kpiName ? `Benefit: ${kpiName}` : 'Initiative benefit');
+  const persistedName = kpiName ? `${name} (${kpiName})` : name;
 
   // Dedupe against an existing handoff row for the same KPI on this initiative.
   const existing = await dbGet<BenefitRecord>(
-    `SELECT * FROM benefits_register
-     WHERE organization_id = ? AND initiative_id = ? AND source = ?
-       AND ((kpi_name IS NULL AND ? IS NULL) OR kpi_name = ?)
+    `SELECT
+       id, organization_id, initiative_id, name, owner_id,
+       NULL AS kpi_name,
+       baseline_value, target_value, current_value,
+       measurement_frequency AS cadence,
+       status,
+       source_tag AS source,
+       created_at, updated_at
+     FROM initiative_benefits
+     WHERE organization_id = ? AND initiative_id = ? AND source_tag = ? AND name = ?
      ORDER BY created_at DESC LIMIT 1`,
-    [organizationId, initiativeId, BENEFIT_HANDOFF_SOURCE, kpiName, kpiName]
+    [organizationId, initiativeId, BENEFIT_HANDOFF_SOURCE, persistedName]
   );
 
   if (existing) {

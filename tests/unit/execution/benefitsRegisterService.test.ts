@@ -28,20 +28,20 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
     ) {
       return { changes: 0 };
     }
-    if (normalized.startsWith('INSERT INTO benefits_register')) {
+    if (normalized.startsWith('INSERT INTO initiative_benefits')) {
       const [
         id,
         organizationId,
         initiativeId,
         name,
         ownerId,
-        kpiName,
         baselineValue,
         targetValue,
         currentValue,
         cadence,
         status,
         source,
+        _createdBy,
         createdAt,
         updatedAt,
       ] = params;
@@ -51,7 +51,7 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
         initiative_id: initiativeId,
         name,
         owner_id: ownerId,
-        kpi_name: kpiName,
+        kpi_name: null,
         baseline_value: baselineValue,
         target_value: targetValue,
         current_value: currentValue,
@@ -67,15 +67,15 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
   },
   get: async (sql: string, params: any[] = []) => {
     const normalized = sql.replace(/\s+/g, ' ').trim();
-    if (normalized.includes('FROM benefits_register')) {
-      // handoff dedupe lookup: org + initiative + source + kpi_name
-      const [organizationId, initiativeId, source, , kpiName] = params;
+    if (normalized.includes('FROM initiative_benefits')) {
+      // handoff dedupe lookup: org + initiative + source_tag + persisted name
+      const [organizationId, initiativeId, source, name] = params;
       const match = Array.from(db.benefits.values()).find(
         (row) =>
           row.organization_id === organizationId &&
           row.initiative_id === initiativeId &&
           row.source === source &&
-          ((row.kpi_name == null && kpiName == null) || row.kpi_name === kpiName)
+          row.name === name
       );
       return match || null;
     }
@@ -83,7 +83,7 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
   },
   all: async (sql: string, params: any[] = []) => {
     const normalized = sql.replace(/\s+/g, ' ').trim();
-    if (normalized.includes('FROM benefits_register')) {
+    if (normalized.includes('FROM initiative_benefits')) {
       const organizationId = params[0];
       const initiativeId = params.length > 1 ? params[1] : undefined;
       return Array.from(db.benefits.values()).filter(
@@ -107,9 +107,8 @@ describe('benefitsRegisterService (M14/F6 6.1)', () => {
   });
 
   it('createBenefit persists an org-scoped row with defaults', async () => {
-    const { createBenefit, listBenefits } = await import(
-      '../../../server/src/services/benefitsRegisterService.js'
-    );
+    const { createBenefit, listBenefits } =
+      await import('../../../server/src/services/benefitsRegisterService.js');
 
     const created = await createBenefit(ORG_A, {
       name: 'Cycle time reduction',
@@ -134,9 +133,8 @@ describe('benefitsRegisterService (M14/F6 6.1)', () => {
   });
 
   it('createBenefit is org-scoped: list does not leak across orgs', async () => {
-    const { createBenefit, listBenefits } = await import(
-      '../../../server/src/services/benefitsRegisterService.js'
-    );
+    const { createBenefit, listBenefits } =
+      await import('../../../server/src/services/benefitsRegisterService.js');
 
     await createBenefit(ORG_A, { name: 'A benefit', initiativeId: 'init-a' });
     await createBenefit(ORG_B, { name: 'B benefit', initiativeId: 'init-b' });
@@ -157,18 +155,16 @@ describe('benefitsRegisterService (M14/F6 6.1)', () => {
   });
 
   it('createBenefit requires org and name', async () => {
-    const { createBenefit } = await import(
-      '../../../server/src/services/benefitsRegisterService.js'
-    );
+    const { createBenefit } =
+      await import('../../../server/src/services/benefitsRegisterService.js');
 
     await expect(createBenefit('', { name: 'x' })).rejects.toThrow(/organizationId/);
     await expect(createBenefit(ORG_A, { name: '   ' })).rejects.toThrow(/name/);
   });
 
   it('handoffFromClosure creates a tracked benefit from KPI delta with handoff source', async () => {
-    const { handoffFromClosure, listBenefits, BENEFIT_HANDOFF_SOURCE } = await import(
-      '../../../server/src/services/benefitsRegisterService.js'
-    );
+    const { handoffFromClosure, listBenefits, BENEFIT_HANDOFF_SOURCE } =
+      await import('../../../server/src/services/benefitsRegisterService.js');
 
     const benefit = await handoffFromClosure(ORG_A, 'init-42', {
       kpiName: 'On-time delivery',
@@ -199,9 +195,8 @@ describe('benefitsRegisterService (M14/F6 6.1)', () => {
   });
 
   it('handoffFromClosure dedupes a repeated handoff for the same KPI', async () => {
-    const { handoffFromClosure, listBenefits } = await import(
-      '../../../server/src/services/benefitsRegisterService.js'
-    );
+    const { handoffFromClosure, listBenefits } =
+      await import('../../../server/src/services/benefitsRegisterService.js');
 
     const first = await handoffFromClosure(ORG_A, 'init-9', {
       kpiName: 'Defect rate',
@@ -220,9 +215,8 @@ describe('benefitsRegisterService (M14/F6 6.1)', () => {
   });
 
   it('handoffFromClosure requires org and initiative', async () => {
-    const { handoffFromClosure } = await import(
-      '../../../server/src/services/benefitsRegisterService.js'
-    );
+    const { handoffFromClosure } =
+      await import('../../../server/src/services/benefitsRegisterService.js');
 
     await expect(handoffFromClosure('', 'init-1', {})).rejects.toThrow(/organizationId/);
     await expect(handoffFromClosure(ORG_A, '', {})).rejects.toThrow(/initiativeId/);
