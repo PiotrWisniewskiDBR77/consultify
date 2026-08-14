@@ -124,34 +124,28 @@ describe('resultsFinanceReconciliationService — DB round-trip', () => {
 
   it('pulls actuals, applies the unit multiplier, computes deviation, and upserts', async () => {
     // KPI catalog for the initiative: one money KPI, one hours KPI.
-    mockDbAll.mockResolvedValueOnce([
-      {
-        kpi_id: KPI_MONEY,
-        name: 'Roczne oszczędności',
-        metric_type: 'currency',
-        target_value: 100000,
-        current_value: null,
-      },
-      {
-        kpi_id: KPI_HOURS,
-        name: 'Godziny zaoszczędzone',
-        metric_type: 'duration',
-        target_value: 2000, // hours target
-        current_value: 1200, // hours realized (no ROI entries → falls back here)
-      },
-    ]);
+    mockDbAll
+      .mockResolvedValueOnce([
+        {
+          kpi_id: KPI_MONEY,
+          name: 'Roczne oszczędności',
+          metric_type: 'currency',
+          target_value: 100000,
+          current_value: null,
+        },
+        {
+          kpi_id: KPI_HOURS,
+          name: 'Godziny zaoszczędzone',
+          metric_type: 'duration',
+          target_value: 2000, // hours target
+          current_value: 1200, // hours realized (no ROI entries → falls back here)
+        },
+      ])
+      // H5.3 batches realized sums for every mapped KPI in one query.
+      .mockResolvedValueOnce([{ kpi_id: KPI_MONEY, realized_sum: 80000 }]);
 
-    // Sequence the per-KPI realized-sum + existing-row lookups (dbGet is called
-    // twice per KPI: SUM(realized_value) then the existing-reconciliation probe).
-    mockDbGet
-      // money KPI realized sum
-      .mockResolvedValueOnce({ realized_sum: 80000 })
-      // money KPI existing reconciliation row? no
-      .mockResolvedValueOnce(null)
-      // hours KPI realized sum → none (falls back to current_value)
-      .mockResolvedValueOnce({ realized_sum: null })
-      // hours KPI existing reconciliation row? no
-      .mockResolvedValueOnce(null);
+    // Existing-reconciliation probes remain one dbGet per KPI.
+    mockDbGet.mockResolvedValueOnce(null).mockResolvedValueOnce(null);
 
     const res = await pullAndReconcileInitiative(ORG, INIT, [
       // money KPI: identity multiplier; projected €100k vs realized €80k → -20% off_track.
@@ -198,18 +192,18 @@ describe('resultsFinanceReconciliationService — DB round-trip', () => {
   });
 
   it('UPDATEs an existing reconciliation row instead of inserting a duplicate', async () => {
-    mockDbAll.mockResolvedValueOnce([
-      {
-        kpi_id: KPI_MONEY,
-        name: 'Roczne oszczędności',
-        metric_type: 'currency',
-        target_value: 100000,
-        current_value: null,
-      },
-    ]);
-    mockDbGet
-      .mockResolvedValueOnce({ realized_sum: 95000 }) // realized sum
-      .mockResolvedValueOnce({ reconciliation_id: 'rec-existing' }); // existing row found
+    mockDbAll
+      .mockResolvedValueOnce([
+        {
+          kpi_id: KPI_MONEY,
+          name: 'Roczne oszczędności',
+          metric_type: 'currency',
+          target_value: 100000,
+          current_value: null,
+        },
+      ])
+      .mockResolvedValueOnce([{ kpi_id: KPI_MONEY, realized_sum: 95000 }]);
+    mockDbGet.mockResolvedValueOnce({ reconciliation_id: 'rec-existing' });
 
     const res = await pullAndReconcileInitiative(ORG, INIT, [
       { kpiId: KPI_MONEY, driverKey: 'opex_savings', unitMultiplier: 1 },

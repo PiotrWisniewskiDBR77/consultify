@@ -48,18 +48,18 @@ describe('resultsFinanceReconciliationService — O4.7 post-mortem wiring', () =
   });
 
   it('real off-plan gap, no market-shift feed → postMortem.verdict = undetermined (not a guessed execution failure)', async () => {
-    mockDbAll.mockResolvedValueOnce([
-      {
-        kpi_id: KPI,
-        name: 'Przychód z inicjatywy',
-        metric_type: 'currency',
-        target_value: 100000,
-        current_value: null,
-      },
-    ]);
-    mockDbGet
-      .mockResolvedValueOnce({ realized_sum: 70000 }) // realized sum
-      .mockResolvedValueOnce(null); // no existing row
+    mockDbAll
+      .mockResolvedValueOnce([
+        {
+          kpi_id: KPI,
+          name: 'Przychód z inicjatywy',
+          metric_type: 'currency',
+          target_value: 100000,
+          current_value: null,
+        },
+      ])
+      .mockResolvedValueOnce([{ kpi_id: KPI, realized_sum: 70000 }]);
+    mockDbGet.mockResolvedValueOnce(null); // no existing row
 
     const res = await pullAndReconcileInitiative(ORG, INIT, [
       { kpiId: KPI, driverKey: 'revenue_uplift', unitMultiplier: 1 },
@@ -81,16 +81,18 @@ describe('resultsFinanceReconciliationService — O4.7 post-mortem wiring', () =
   });
 
   it('within ±5% of plan → postMortem.verdict = on-plan (not undetermined)', async () => {
-    mockDbAll.mockResolvedValueOnce([
-      {
-        kpi_id: KPI,
-        name: 'Przychód z inicjatywy',
-        metric_type: 'currency',
-        target_value: 100000,
-        current_value: null,
-      },
-    ]);
-    mockDbGet.mockResolvedValueOnce({ realized_sum: 102000 }).mockResolvedValueOnce(null);
+    mockDbAll
+      .mockResolvedValueOnce([
+        {
+          kpi_id: KPI,
+          name: 'Przychód z inicjatywy',
+          metric_type: 'currency',
+          target_value: 100000,
+          current_value: null,
+        },
+      ])
+      .mockResolvedValueOnce([{ kpi_id: KPI, realized_sum: 102000 }]);
+    mockDbGet.mockResolvedValueOnce(null);
 
     const res = await pullAndReconcileInitiative(ORG, INIT, [
       { kpiId: KPI, driverKey: 'revenue_uplift', unitMultiplier: 1 },
@@ -100,17 +102,19 @@ describe('resultsFinanceReconciliationService — O4.7 post-mortem wiring', () =
   });
 
   it('missing realized value → postMortem stays null (no fabricated 0 baseline)', async () => {
-    mockDbAll.mockResolvedValueOnce([
-      {
-        kpi_id: KPI,
-        name: 'KPI bez aktuali',
-        metric_type: 'currency',
-        target_value: 100000,
-        current_value: null,
-      },
-    ]);
+    mockDbAll
+      .mockResolvedValueOnce([
+        {
+          kpi_id: KPI,
+          name: 'KPI bez aktuali',
+          metric_type: 'currency',
+          target_value: 100000,
+          current_value: null,
+        },
+      ])
+      .mockResolvedValueOnce([]);
     // No realized ROI entries AND no current_value → kpiActual stays null → realizedValue null.
-    mockDbGet.mockResolvedValueOnce({ realized_sum: null }).mockResolvedValueOnce(null);
+    mockDbGet.mockResolvedValueOnce(null);
 
     const res = await pullAndReconcileInitiative(ORG, INIT, [
       { kpiId: KPI, driverKey: 'revenue_uplift', unitMultiplier: 1 },
@@ -123,16 +127,18 @@ describe('resultsFinanceReconciliationService — O4.7 post-mortem wiring', () =
   });
 
   it('persists postMortem as a sibling key inside conclusion_json (additive, no migration)', async () => {
-    mockDbAll.mockResolvedValueOnce([
-      {
-        kpi_id: KPI,
-        name: 'Przychód z inicjatywy',
-        metric_type: 'currency',
-        target_value: 100000,
-        current_value: null,
-      },
-    ]);
-    mockDbGet.mockResolvedValueOnce({ realized_sum: 70000 }).mockResolvedValueOnce(null);
+    mockDbAll
+      .mockResolvedValueOnce([
+        {
+          kpi_id: KPI,
+          name: 'Przychód z inicjatywy',
+          metric_type: 'currency',
+          target_value: 100000,
+          current_value: null,
+        },
+      ])
+      .mockResolvedValueOnce([{ kpi_id: KPI, realized_sum: 70000 }]);
+    mockDbGet.mockResolvedValueOnce(null);
 
     await pullAndReconcileInitiative(ORG, INIT, [
       { kpiId: KPI, driverKey: 'revenue_uplift', unitMultiplier: 1 },
