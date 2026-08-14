@@ -78,12 +78,12 @@ export function isTemplateOriginRuntime(value: unknown): value is TemplateOrigin
 }
 
 /**
- * `report_template` and `sheet_template` are pre-canonical registries kept for
- * backwards compatibility. `document_template` (Document Studio) and
- * `presentation_template` are the canonical ones.
+ * `report_template` is the pre-canonical registry kept for backwards
+ * compatibility. Document, presentation and workbook/sheet Studio templates
+ * are canonical artifact-native registries.
  */
 export function templateSourceForRuntime(runtime: TemplateOriginRuntime): TemplateSource {
-  return runtime === 'report_template' || runtime === 'sheet_template' ? 'legacy' : 'canonical';
+  return runtime === 'report_template' ? 'legacy' : 'canonical';
 }
 
 /**

@@ -42,10 +42,7 @@ import {
   P10_EVIDENCE_POINTER_TYPES,
   P10_HANDOFF_TO_INITIATIVES,
 } from '../../../interviewInsightCanon.js';
-import type {
-  P10EvidencePointer,
-  P10EvidencePointerType,
-} from '../../../interviewInsightCanon.js';
+import type { P10EvidencePointer, P10EvidencePointerType } from '../../../interviewInsightCanon.js';
 import { P07_HANDOFF_COMMON_FIELDS, P07_HANDOFF_TARGETS } from '../../../notebookCanon.js';
 import {
   buildP09HandoffPayloadSkeleton,
@@ -107,7 +104,6 @@ beforeEach(() => {
 // ═══════════════════════════════════════════════════════════════════════════
 // C1: P09 → P10 → P11  (Survey → Insight → Initiative)
 // ═══════════════════════════════════════════════════════════════════════════
-
 
 /**
  * The frozen P10 evidence pointer is
@@ -385,7 +381,7 @@ describe('C2 — Radar → Initiative / Execution handoff', () => {
 
 describe('C3 — Teresa copilot → handoff targets', () => {
   it('all P0 handoff targets are defined with required fields', () => {
-    expect(P08_HANDOFF_TARGET_MODULES).toHaveLength(7);
+    expect(P08_HANDOFF_TARGET_MODULES).toHaveLength(12);
     expect(P08_HANDOFF_TARGET_MODULES).toEqual(
       expect.arrayContaining([
         'radar',
@@ -395,6 +391,11 @@ describe('C3 — Teresa copilot → handoff targets', () => {
         'interview',
         'excele',
         'ideas',
+        'documents',
+        'presentations',
+        'kpi',
+        'roi',
+        'okr',
       ])
     );
 

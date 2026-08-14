@@ -458,9 +458,24 @@ interface PresentationTemplateBackfillRow {
   outline_json: string | null;
   is_system: number | null;
   is_active: number | null;
+  lifecycle_state: string | null;
   created_by: string | null;
   created_at: string | null;
   updated_at: string | null;
+}
+
+interface SheetTemplateBackfillRow {
+  id: string;
+  organization_id: string | null;
+  name: string | null;
+  description: string | null;
+  category: string | null;
+  schema_snapshot: unknown;
+  status: string | null;
+  version: string | null;
+  visibility: string | null;
+  created_by: string | null;
+  created_at: string | null;
 }
 
 /**
@@ -1087,22 +1102,26 @@ async function getArtifactRow(
   artifactId: string,
   organizationId: string
 ): Promise<ArtifactRow | null> {
-  return (await dbGet<ArtifactRow>(
-    `SELECT * FROM v8_output_artifacts WHERE artifact_id = ? AND organization_id = ?`,
-    [artifactId, organizationId],
-    { fallback: true }
-  )) ?? null;
+  return (
+    (await dbGet<ArtifactRow>(
+      `SELECT * FROM v8_output_artifacts WHERE artifact_id = ? AND organization_id = ?`,
+      [artifactId, organizationId],
+      { fallback: true }
+    )) ?? null
+  );
 }
 
 async function getArtifactRunRow(
   runId: string,
   organizationId: string
 ): Promise<ArtifactRunRow | null> {
-  return (await dbGet<ArtifactRunRow>(
-    `SELECT * FROM v8_artifact_runs WHERE run_id = ? AND organization_id = ?`,
-    [runId, organizationId],
-    { fallback: true }
-  )) ?? null;
+  return (
+    (await dbGet<ArtifactRunRow>(
+      `SELECT * FROM v8_artifact_runs WHERE run_id = ? AND organization_id = ?`,
+      [runId, organizationId],
+      { fallback: true }
+    )) ?? null
+  );
 }
 
 async function getArtifactRunChildRows(
@@ -1186,7 +1205,11 @@ async function cleanupGhostOutputsByOrigin(params: {
  */
 export async function removeTemplateArtifactByOrigin(params: {
   organizationId: string;
-  originRuntime: 'report_template' | 'presentation_template' | 'sheet_template' | 'document_template';
+  originRuntime:
+    | 'report_template'
+    | 'presentation_template'
+    | 'sheet_template'
+    | 'document_template';
   originRecordId: string;
 }): Promise<boolean> {
   const result = await cleanupGhostOutputsByOrigin(params);
@@ -2026,7 +2049,7 @@ async function backfillReportTemplatesForOrg(organizationId: string): Promise<nu
 async function backfillPresentationTemplatesForOrg(organizationId: string): Promise<number> {
   const rows = await dbAll<PresentationTemplateBackfillRow>(
     `SELECT t.id, t.organization_id, t.name, t.description, t.deck_type, t.outline_json,
-            t.is_system, t.is_active, t.created_by, t.created_at, t.updated_at
+            t.is_system, t.is_active, t.lifecycle_state, t.created_by, t.created_at, t.updated_at
      FROM presentation_templates t
      LEFT JOIN v8_artifact_origin_links l
        ON l.organization_id = ?
@@ -2063,7 +2086,10 @@ async function backfillPresentationTemplatesForOrg(organizationId: string): Prom
               originRuntime: 'presentation_template',
               orphaned: false,
               scope: deriveTemplateScope(row),
-              status: toBool(row.is_active) === false ? 'deprecated' : 'published',
+              status:
+                normalizeTemplateStatus(row.lifecycle_state) === 'approved'
+                  ? 'published'
+                  : normalizeTemplateStatus(row.lifecycle_state),
             }),
             description: row.description || '',
             deckType: row.deck_type || 'custom',
@@ -2084,6 +2110,79 @@ async function backfillPresentationTemplatesForOrg(organizationId: string): Prom
       logger.warn(
         `${LOG_PREFIX} Failed to backfill presentation template ${row.id}: ${err?.message}`
       );
+    }
+  }
+  return inserted;
+}
+
+async function backfillSheetTemplatesForOrg(organizationId: string): Promise<number> {
+  const rows = await dbAll<SheetTemplateBackfillRow>(
+    `SELECT t.id, t.organization_id, t.name, t.description, t.category, t.schema_snapshot,
+            t.status, t.version, t.visibility, t.created_by, t.created_at
+       FROM tp_base_templates t
+       LEFT JOIN v8_artifact_origin_links l
+         ON l.organization_id = ?
+        AND l.origin_runtime = 'sheet_template'
+        AND l.origin_record_id = t.id
+      WHERE (
+              t.visibility IS NULL
+           OR t.visibility = 'system'
+           OR (t.visibility = 'organization' AND (t.organization_id IS NULL OR t.organization_id = ?))
+           OR (t.visibility = 'private' AND t.organization_id = ?)
+            )
+        AND l.link_id IS NULL`,
+    [organizationId, organizationId, organizationId],
+    { fallback: true }
+  );
+
+  let inserted = 0;
+  for (const row of rows || []) {
+    try {
+      const snapshot =
+        typeof row.schema_snapshot === 'string'
+          ? safeJsonParse<Record<string, unknown>>(row.schema_snapshot, {})
+          : ((row.schema_snapshot as Record<string, unknown> | null) ?? {});
+      const fields = Array.isArray(snapshot.fields) ? snapshot.fields : [];
+      const result = await registerArtifactOrigin({
+        organizationId,
+        outputType: 'sheet',
+        artifactFamily: 'template',
+        originRuntime: 'sheet_template',
+        originRecordId: row.id,
+        titleSnapshot: row.name || 'Untitled workbook template',
+        ownerUserId: null,
+        createdBy: row.created_by || FALLBACK_ACTOR,
+        deliveryState: 'ready',
+        visibilityScope: 'organization',
+        originSummary: {
+          template: {
+            ...buildTemplateOriginSummaryFields({
+              canonicalTemplateId: row.id,
+              originRuntime: 'sheet_template',
+              orphaned: false,
+              scope: deriveTemplateScope(row),
+              status: normalizeTemplateStatus(row.status),
+            }),
+            description: row.description || '',
+            category: row.category || '',
+            structureBlueprint: {
+              columns: fields.map((field: any) => ({
+                key: String(field?.name || field?.key || ''),
+                header: String(field?.name || field?.header || field?.key || ''),
+                type: String(field?.type || 'text'),
+              })),
+            },
+            metadata: {
+              createdBy: row.created_by || FALLBACK_ACTOR,
+              createdAt: row.created_at,
+              version: row.version,
+            },
+          },
+        },
+      });
+      if (result) inserted++;
+    } catch (err: any) {
+      logger.warn(`${LOG_PREFIX} Failed to backfill workbook template ${row.id}: ${err?.message}`);
     }
   }
   return inserted;
@@ -2238,6 +2337,8 @@ const TEMPLATE_CANONICAL_REGISTRY: Record<
     idColumn: string;
     statusColumn: string | null;
     activeColumn: string | null;
+    systemColumn: string | null;
+    visibilityColumn: string | null;
   } | null
 > = {
   document_template: {
@@ -2245,20 +2346,33 @@ const TEMPLATE_CANONICAL_REGISTRY: Record<
     idColumn: 'template_id',
     statusColumn: 'status',
     activeColumn: null,
+    systemColumn: 'is_system',
+    visibilityColumn: null,
   },
   report_template: {
     table: 'report_builder_templates',
     idColumn: 'id',
     statusColumn: null,
     activeColumn: 'is_active',
+    systemColumn: 'is_system',
+    visibilityColumn: null,
   },
   presentation_template: {
     table: 'presentation_templates',
     idColumn: 'id',
-    statusColumn: null,
+    statusColumn: 'lifecycle_state',
     activeColumn: 'is_active',
+    systemColumn: 'is_system',
+    visibilityColumn: null,
   },
-  sheet_template: null,
+  sheet_template: {
+    table: 'tp_base_templates',
+    idColumn: 'id',
+    statusColumn: 'status',
+    activeColumn: null,
+    systemColumn: null,
+    visibilityColumn: 'visibility',
+  },
 };
 
 interface CanonicalTemplateRow {
@@ -2267,6 +2381,7 @@ interface CanonicalTemplateRow {
   is_system: unknown;
   status_value: string | null;
   active_value: unknown;
+  visibility: unknown;
 }
 
 /**
@@ -2286,13 +2401,16 @@ async function loadCanonicalTemplateRows(
   const placeholders = unique.map(() => '?').join(', ');
   const statusSelect = registry.statusColumn ? `t.${registry.statusColumn}` : 'NULL';
   const activeSelect = registry.activeColumn ? `t.${registry.activeColumn}` : 'NULL';
+  const systemSelect = registry.systemColumn ? `t.${registry.systemColumn}` : 'NULL';
+  const visibilitySelect = registry.visibilityColumn ? `t.${registry.visibilityColumn}` : 'NULL';
 
   const rows = await dbAll<CanonicalTemplateRow>(
     `SELECT t.${registry.idColumn} AS canonical_id,
             t.organization_id AS organization_id,
-            t.is_system AS is_system,
+            ${systemSelect} AS is_system,
             ${statusSelect} AS status_value,
-            ${activeSelect} AS active_value
+            ${activeSelect} AS active_value,
+            ${visibilitySelect} AS visibility
      FROM ${registry.table} t
      WHERE t.${registry.idColumn} IN (${placeholders})`,
     unique,
@@ -2312,7 +2430,12 @@ function statusFromCanonicalRow(
   row: CanonicalTemplateRow
 ): TemplateStatus {
   const registry = TEMPLATE_CANONICAL_REGISTRY[originRuntime];
-  if (registry?.statusColumn) return normalizeTemplateStatus(row.status_value);
+  if (registry?.statusColumn) {
+    const status = normalizeTemplateStatus(row.status_value);
+    return originRuntime === 'presentation_template' && status === 'approved'
+      ? 'published'
+      : status;
+  }
   if (registry?.activeColumn) {
     const active = toBool(row.active_value);
     if (active === false) return 'deprecated';
@@ -2367,8 +2490,7 @@ export async function enrichTemplateOriginSummaries(
 
     const canonicalRows = loaded.get(item.originRuntime);
     const canonicalRow = canonicalRows ? canonicalRows.get(item.originRecordId) : undefined;
-    // No registry to check against (sheet_template) or the probe failed →
-    // orphan state is unknown, so we do NOT flag it.
+    // A failed registry probe leaves orphan state unknown, so we do not flag it.
     const orphaned = canonicalRows ? !canonicalRow : false;
 
     const snapshot = (item.originSummary?.template ?? {}) as Record<string, unknown>;
@@ -2538,6 +2660,7 @@ export async function ensureBackfilledOutputsForOrg(organizationId: string): Pro
     nativeArtifactsInserted,
     reportTemplatesInserted,
     presentationTemplatesInserted,
+    sheetTemplatesInserted,
     docStudioTemplatesInserted,
   ] = await Promise.all([
     backfillReportsForOrg(organizationId),
@@ -2545,6 +2668,7 @@ export async function ensureBackfilledOutputsForOrg(organizationId: string): Pro
     backfillNativeArtifactsForOrg(organizationId),
     backfillReportTemplatesForOrg(organizationId),
     backfillPresentationTemplatesForOrg(organizationId),
+    backfillSheetTemplatesForOrg(organizationId),
     backfillDocStudioTemplatesForOrg(organizationId),
   ]);
 
@@ -2555,12 +2679,14 @@ export async function ensureBackfilledOutputsForOrg(organizationId: string): Pro
     nativeArtifactsInserted ||
     reportTemplatesInserted ||
     presentationTemplatesInserted ||
+    sheetTemplatesInserted ||
     docStudioTemplatesInserted
   ) {
     logger.info(
       `${LOG_PREFIX} Backfilled ${reportsInserted} reports, ${presentationsInserted} presentations, ` +
         `${nativeArtifactsInserted} native documents, ${reportTemplatesInserted} report templates, ` +
-        `${presentationTemplatesInserted} presentation templates, and ${docStudioTemplatesInserted} document templates ` +
+        `${presentationTemplatesInserted} presentation templates, ${sheetTemplatesInserted} workbook templates, ` +
+        `and ${docStudioTemplatesInserted} document templates ` +
         `for org ${organizationId}`
     );
   }
@@ -2898,8 +3024,9 @@ async function getArtifactListItemRow(
   artifactId: string,
   organizationId: string
 ): Promise<ArtifactListRow | null> {
-  return (await dbGet<ArtifactListRow>(
-    `SELECT a.*,
+  return (
+    (await dbGet<ArtifactListRow>(
+      `SELECT a.*,
             l.origin_runtime,
             l.origin_record_id,
             r.title AS report_title,
@@ -2949,9 +3076,10 @@ async function getArtifactListItemRow(
       AND p.organization_id = a.organization_id
      WHERE a.organization_id = ?
        AND a.artifact_id = ?`,
-    [organizationId, artifactId],
-    { fallback: true }
-  )) ?? null;
+      [organizationId, artifactId],
+      { fallback: true }
+    )) ?? null
+  );
 }
 
 /**
