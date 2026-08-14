@@ -84,7 +84,10 @@
       "tests/integration/presentations/deck-version-roundtrip.contract.test.ts",
       "tests/unit/backend/routes/h64-failsoft-batch6.test.ts",
       "tests/unit/backend/routes/h64-failsoft-batch5.test.ts",
-      "server/src/routes/v8/__tests__/assessment.routes.test.ts"
+      "server/src/routes/v8/__tests__/assessment.routes.test.ts",
+      "tests/integration/routes/wordy-p22.pipeline.test.ts",
+      "server/src/routes/__tests__/cross-org-idor-m17.test.ts",
+      "server/src/routes/v8/__tests__/res10-ownership-separation.routes.test.ts"
     ]
   },
   "gates": {
@@ -121,7 +124,10 @@
       "tests/integration/presentations/deck-version-roundtrip.contract.test.ts",
       "tests/unit/backend/routes/h64-failsoft-batch6.test.ts",
       "tests/unit/backend/routes/h64-failsoft-batch5.test.ts",
-      "server/src/routes/v8/__tests__/assessment.routes.test.ts"
+      "server/src/routes/v8/__tests__/assessment.routes.test.ts",
+      "tests/integration/routes/wordy-p22.pipeline.test.ts",
+      "server/src/routes/__tests__/cross-org-idor-m17.test.ts",
+      "server/src/routes/v8/__tests__/res10-ownership-separation.routes.test.ts"
       ]
     },
     "realdb": {
