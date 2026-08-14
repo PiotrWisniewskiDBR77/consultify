@@ -232,9 +232,17 @@ async function cleanupFixtures(): Promise<void> {
   await client
     .query(`DELETE FROM project_role_templates WHERE organization_id LIKE $1`, [`${P}-%`])
     .catch(() => undefined);
-  // users cascade project_members + organization_members; SET NULL on tasks' user FKs.
+  // Fresh-schema projects_organization_id_fkey is intentionally restrictive,
+  // not ON DELETE CASCADE. Remove this suite's exact dependency chain rather
+  // than relying on a cascade that does not exist.
+  await client.query(`DELETE FROM task_history WHERE task_id LIKE $1`, [`${P}-%`]);
+  await client.query(`DELETE FROM tasks WHERE id LIKE $1`, [`${P}-%`]);
+  await client.query(`DELETE FROM project_members WHERE project_id LIKE $1 OR user_id LIKE $1`, [
+    `${P}-%`,
+  ]);
+  await client.query(`DELETE FROM projects WHERE id LIKE $1`, [`${P}-%`]);
+  // Remaining user-scoped fixtures cascade through organization_members.
   await client.query(`DELETE FROM users WHERE id LIKE $1`, [`${P}-%`]);
-  // organizations cascade projects + tasks.
   await client.query(`DELETE FROM organizations WHERE id LIKE $1`, [`${P}-%`]);
 }
 
