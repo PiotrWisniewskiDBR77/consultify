@@ -13,6 +13,7 @@ const mockGetTableColumns = vi.fn();
 const mockResolveInitiativeAccessContext = vi.fn();
 const mockGetBlockingReadinessItems = vi.fn();
 const mockHandoffFromClosure = vi.fn();
+const mockExecuteInitiativeTransition = vi.fn();
 
 vi.mock('../../../../server/src/utils/queryHelpers.js', () => ({
   queryAll: (...args: unknown[]) => mockQueryAll(...args),
@@ -51,6 +52,20 @@ vi.mock('../../../../server/src/services/executionResultsBridge.js', () => ({
   CLOSURE_HANDOFF_SOURCE: 'M14_CLOSURE_HANDOFF',
 }));
 
+vi.mock(
+  '../../../../server/src/services/initiative/initiativeTransitionService.js',
+  async (importOriginal) => {
+    const actual =
+      await importOriginal<
+        typeof import('../../../../server/src/services/initiative/initiativeTransitionService.js')
+      >();
+    return {
+      ...actual,
+      executeInitiativeTransition: (...args: unknown[]) => mockExecuteInitiativeTransition(...args),
+    };
+  }
+);
+
 describe('InitiativeController', () => {
   let mockReq: any;
   let mockRes: any;
@@ -58,11 +73,25 @@ describe('InitiativeController', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.INITIATIVE_FUNNEL_ENABLED = 'false';
     mockResolveInitiativeAccessContext.mockReset();
     mockGetTableColumns.mockReset();
     mockGetBlockingReadinessItems.mockReset();
     mockHandoffFromClosure.mockReset();
     mockHandoffFromClosure.mockResolvedValue({ created: 0, skipped: 0, considered: 0 });
+    mockResolveInitiativeAccessContext.mockResolvedValue({
+      effectiveRoles: ['ADMIN'],
+      steeringBoard: { enabled: false, memberType: null },
+      roleAssignments: [],
+      projectId: null,
+    });
+    mockExecuteInitiativeTransition.mockResolvedValue({
+      ok: true,
+      id: 'i1',
+      status: 'PENDING_REVIEW',
+      previousStatus: 'DRAFT',
+      gate: null,
+    });
     mockGetTableColumns.mockResolvedValue([
       { name: 'status' },
       { name: 'updated_at' },
@@ -238,19 +267,22 @@ describe('InitiativeController', () => {
       expect(mockRes.status).toHaveBeenCalledWith(401);
     });
 
-    it('should return 400 when title missing', async () => {
+    it('should return 422 when title is rejected by the card content gate', async () => {
       mockReq.body = { projectId: 'proj-123' };
 
       const { InitiativeController } =
         await import('../../../../server/src/controllers/InitiativeController.js');
       await InitiativeController.createInitiative(mockReq, mockRes, mockNext);
 
-      expect(mockRes.status).toHaveBeenCalledWith(400);
-      expect(mockRes.json).toHaveBeenCalledWith({ error: 'Title is required' });
+      expect(mockRes.status).toHaveBeenCalledWith(422);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({ code: 'CARD_CONTENT_FORMULA_VIOLATION' })
+      );
     });
 
     it('should store JSON arrays for deliverables and risks', async () => {
       mockReq.body = {
+        projectId: 'proj-123',
         title: 'Initiative with arrays',
         deliverables: ['D1', 'D2'],
         successCriteria: ['SC1'],
@@ -313,50 +345,43 @@ describe('InitiativeController', () => {
   });
 
   describe('updateInitiativeStatus', () => {
-    it('should update initiative status', async () => {
+    it('delegates the transition and maps a successful service result', async () => {
       mockReq.params.id = 'i1';
       mockReq.body = { status: 'PENDING_REVIEW', reason: 'Ready for review' };
-      // Controller queries existing initiative first
-      mockQueryOne.mockResolvedValue({
-        status: 'DRAFT',
-        name: 'Test Initiative',
-        created_by: 'user-123',
-      });
-      mockQueryRun.mockResolvedValue({ changes: 1 });
-      mockResolveInitiativeAccessContext.mockResolvedValue({
-        effectiveRoles: ['CONSULTANT'],
-        steeringBoard: { enabled: false, memberType: null },
-        roleAssignments: [],
-        projectId: null,
-      });
 
       const { InitiativeController } =
         await import('../../../../server/src/controllers/InitiativeController.js');
       await InitiativeController.updateInitiativeStatus(mockReq, mockRes, mockNext);
 
-      // Should either succeed with json or fail with status code (depends on transition rules)
-      const jsonCalled = mockRes.json.mock.calls.length > 0;
-      const statusCalled = mockRes.status.mock.calls.length > 0;
-      expect(jsonCalled || statusCalled).toBe(true);
+      expect(mockExecuteInitiativeTransition).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orgId: 'org-123',
+          initiativeId: 'i1',
+          actorId: 'user-123',
+          actorRole: 'ADMIN',
+          nextStatusInput: 'PENDING_REVIEW',
+          reason: 'Ready for review',
+        })
+      );
+      expect(mockRes.json).toHaveBeenCalledWith({
+        id: 'i1',
+        status: 'PENDING_REVIEW',
+        previousStatus: 'DRAFT',
+        gate: null,
+        message: 'Status updated',
+      });
     });
 
-    it('should block DONE -> TRACKING when Benefits KPIs are missing', async () => {
+    it('maps a transition-service rejection without performing controller SQL', async () => {
       mockReq.params.id = 'i1';
       mockReq.body = { status: 'TRACKING' };
-      mockQueryOne
-        .mockResolvedValueOnce({
-          status: 'DONE',
-          name: 'Test Initiative',
-          created_by: 'user-123',
-        })
-        .mockResolvedValueOnce({ ownerBusinessId: 'bo-1' })
-        .mockResolvedValueOnce({ c: 0 });
-
-      mockResolveInitiativeAccessContext.mockResolvedValue({
-        effectiveRoles: ['BUSINESS_OWNER'],
-        steeringBoard: { enabled: false, memberType: null },
-        roleAssignments: [],
-        projectId: null,
+      mockExecuteInitiativeTransition.mockResolvedValueOnce({
+        ok: false,
+        statusCode: 400,
+        body: {
+          error: 'Benefits KPIs are required',
+          rule: 'BENEFITS_KPI_REQUIRED',
+        },
       });
 
       const { InitiativeController } =
@@ -372,46 +397,6 @@ describe('InitiativeController', () => {
       expect(mockQueryRun).not.toHaveBeenCalled();
     });
 
-    it('skips missing lifecycle columns when submitting for review on partial schemas', async () => {
-      mockReq.params.id = 'i1';
-      mockReq.body = { status: 'PENDING_REVIEW', reason: 'Ready for review' };
-      mockGetTableColumns.mockResolvedValueOnce([
-        { name: 'status' },
-        { name: 'updated_at' },
-      ]);
-      mockQueryOne.mockResolvedValue({
-        status: 'DRAFT',
-        name: 'Test Initiative',
-        owner_business_id: 'bo-1',
-        created_by: 'user-123',
-      });
-      mockQueryRun.mockResolvedValue({ changes: 1 });
-      mockResolveInitiativeAccessContext.mockResolvedValue({
-        effectiveRoles: ['ADMIN'],
-        steeringBoard: { enabled: false, memberType: null },
-        roleAssignments: [],
-        projectId: null,
-      });
-
-      const { InitiativeController } =
-        await import('../../../../server/src/controllers/InitiativeController.js');
-      await InitiativeController.updateInitiativeStatus(mockReq, mockRes, mockNext);
-
-      const statusUpdateCall = mockQueryRun.mock.calls.find((call) =>
-        String(call[0] || '').includes('UPDATE initiatives SET')
-      );
-
-      expect(statusUpdateCall).toBeTruthy();
-      expect(String(statusUpdateCall?.[0] || '')).not.toContain('review_requested_at');
-      expect(String(statusUpdateCall?.[0] || '')).not.toContain('review_requested_by');
-      expect(mockRes.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message: 'Status updated',
-          status: 'PENDING_REVIEW',
-        })
-      );
-    });
-
     it('should return 401 when user not authenticated', async () => {
       mockReq.user = { id: 'user-123' };
       mockReq.params.id = 'i1';
@@ -422,98 +407,7 @@ describe('InitiativeController', () => {
       await InitiativeController.updateInitiativeStatus(mockReq, mockRes, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(401);
-    });
-
-    // ---- M14 → M15 closure handoff wiring (Decision B1b) --------------------
-    // Drives a real EXECUTING → DONE close through the controller and asserts
-    // the closure handoff is invoked, and that a handoff failure never blocks
-    // the status change (fail-safe try/catch).
-    const setupCloseToDone = () => {
-      mockReq.params.id = 'i1';
-      mockReq.body = { status: 'DONE' };
-      // decisions table absent → no pending execution-gate decisions block.
-      mockGetTableColumns.mockImplementation(async (table: string) => {
-        if (table === 'decisions') return [];
-        return [
-          { name: 'status' },
-          { name: 'updated_at' },
-          { name: 'done_at' },
-          { name: 'done_by' },
-          { name: 'completed_at' },
-          { name: 'updated_by' },
-        ];
-      });
-      mockQueryOne.mockResolvedValue({
-        status: 'EXECUTING',
-        name: 'Closing Initiative',
-        created_by: 'user-123',
-      });
-      mockQueryAll.mockResolvedValue([]);
-      mockQueryRun.mockResolvedValue({ changes: 1 });
-      mockResolveInitiativeAccessContext.mockResolvedValue({
-        effectiveRoles: ['ADMIN'],
-        steeringBoard: { enabled: false, memberType: null },
-        roleAssignments: [],
-        projectId: null,
-      });
-    };
-
-    it('invokes closure handoff (M14→M15) on EXECUTING → DONE', async () => {
-      setupCloseToDone();
-      mockHandoffFromClosure.mockResolvedValue({ created: 2, skipped: 0, considered: 2 });
-
-      const { InitiativeController } =
-        await import('../../../../server/src/controllers/InitiativeController.js');
-      await InitiativeController.updateInitiativeStatus(mockReq, mockRes, mockNext);
-
-      expect(mockHandoffFromClosure).toHaveBeenCalledWith('org-123', 'i1', 'user-123');
-      expect(mockRes.json).toHaveBeenCalledWith(
-        expect.objectContaining({ status: 'DONE', message: 'Status updated' })
-      );
-    });
-
-    it('(4) handoff failure does NOT block the status change (fail-safe)', async () => {
-      setupCloseToDone();
-      mockHandoffFromClosure.mockRejectedValue(new Error('benefits service down'));
-
-      const { InitiativeController } =
-        await import('../../../../server/src/controllers/InitiativeController.js');
-      await InitiativeController.updateInitiativeStatus(mockReq, mockRes, mockNext);
-
-      // Status UPDATE still ran…
-      const statusUpdateCall = mockQueryRun.mock.calls.find((call) =>
-        String(call[0] || '').includes('UPDATE initiatives SET')
-      );
-      expect(statusUpdateCall).toBeTruthy();
-      // …and the response is the successful status change, not an error.
-      expect(mockRes.json).toHaveBeenCalledWith(
-        expect.objectContaining({ status: 'DONE', message: 'Status updated' })
-      );
-      expect(mockRes.status).not.toHaveBeenCalledWith(500);
-    });
-
-    it('does NOT invoke closure handoff for non-DONE transitions', async () => {
-      mockReq.params.id = 'i1';
-      mockReq.body = { status: 'PENDING_REVIEW', reason: 'Ready' };
-      mockQueryOne.mockResolvedValue({
-        status: 'DRAFT',
-        name: 'Test',
-        created_by: 'user-123',
-      });
-      mockQueryRun.mockResolvedValue({ changes: 1 });
-      mockQueryAll.mockResolvedValue([]);
-      mockResolveInitiativeAccessContext.mockResolvedValue({
-        effectiveRoles: ['ADMIN'],
-        steeringBoard: { enabled: false, memberType: null },
-        roleAssignments: [],
-        projectId: null,
-      });
-
-      const { InitiativeController } =
-        await import('../../../../server/src/controllers/InitiativeController.js');
-      await InitiativeController.updateInitiativeStatus(mockReq, mockRes, mockNext);
-
-      expect(mockHandoffFromClosure).not.toHaveBeenCalled();
+      expect(mockExecuteInitiativeTransition).not.toHaveBeenCalled();
     });
   });
 
@@ -552,7 +446,7 @@ describe('InitiativeController', () => {
           }),
           cards: expect.objectContaining({ canEditCards: true }),
           ctaBar: expect.objectContaining({
-            contextCreateActions: expect.arrayContaining(['decision', 'raid']),
+            contextCreateActions: expect.arrayContaining(['task', 'decision', 'raid']),
             canUseAi: true,
           }),
         })

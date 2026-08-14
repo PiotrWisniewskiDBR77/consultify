@@ -44,7 +44,7 @@ candidate SHA and the intended environment.
 | Acceptance fixture write/replay     | `PASS`                  | first write 70/70; replay 70/70; Piotr and dedicated OWNER readback                                                                                                                              |
 | Finance acceptance flags            | `PASS` in disposable DB | 11/11 enabled for the exact synthetic tenant and `production` environment                                                                                                                        |
 | Full lint                           | `BLOCKED`               | 36,124 errors; predominantly formatting/import order, including non-runtime `dev-render`                                                                                                         |
-| Full unit suite                     | `BLOCKED`               | stale harnesses repaired for Deliverables, Assessment, rate limiting and permissions; next blocker is the legacy `InitiativeController` harness (9 tests still target pre-transaction ownership) |
+| Full unit suite                     | `IN_PROGRESS`           | stale harnesses repaired for Deliverables, Assessment, rate limiting, permissions and InitiativeController; full `tests/unit --bail=1` recovery continues |
 | Demo deploy and browser acceptance  | `NOT_VERIFIED`          | no deployment from this candidate has occurred                                                                                                                                                   |
 
 ## Module acceptance register
@@ -106,7 +106,7 @@ before later output is trusted.
 | Assessment initiative generation | dynamic AI import entered a real 30-second provider timeout                                                | focused 20/20 `PASS` with current AI boundary mocked                                                        |
 | Rate limiting                    | global clock fault was injected during logger module initialization, outside the intended limiter boundary | focused 36/36 `PASS`                                                                                        |
 | Permission service               | assertions omitted the new fail-closed query option                                                        | focused 56/56 `PASS`                                                                                        |
-| Initiative controller            | test still owns status-transition internals that moved to `initiativeTransitionService`                    | `BLOCKED`: rewrite controller assertions around delegation and retain transaction behavior in service tests |
+| Initiative controller            | controller boundary aligned with `initiativeTransitionService`; obsolete controller-owned SQL/handoff assertions removed | `PASS`: focused 18/18; transaction behavior remains owned by service tests |
 
 This ledger separates product defects from obsolete tests. Neither category is
 silently skipped: product defects are fixed in runtime code; obsolete tests are
