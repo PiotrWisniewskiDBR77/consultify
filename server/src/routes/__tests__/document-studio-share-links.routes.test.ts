@@ -39,6 +39,22 @@ vi.mock('../../utils/DbPromise.js', () => ({
   get: (...args: unknown[]) => mockDbGet(...args),
 }));
 
+// Share mint/revoke now requires a durable lineage outcome before reporting
+// success. This route harness owns the share-link HTTP contract, not the
+// lineage persistence integration (covered by its dedicated suites), so bind
+// the hook to an explicit durable receipt instead of accidentally opening the
+// real PostgreSQL pool.
+vi.mock('../../services/lineage/artifactLineageService.js', async (importOriginal) => {
+  const actual = await importOriginal<
+    typeof import('../../services/lineage/artifactLineageService.js')
+  >();
+  return {
+    ...actual,
+    recordLineageEventSafe: vi.fn(async () => undefined),
+    recordLineageEventTracked: vi.fn(async () => ({ durable: true, status: 'RECORDED' })),
+  };
+});
+
 vi.mock('../../services/wave5ArtifactRuntimeService.js', () => ({
   getWave5Artifact: vi.fn(async (artifactId: string, organizationId: string) =>
     artifactId === 'art-share-test-1' && organizationId === 'org-share-A'
