@@ -23,6 +23,8 @@
       "tests/integration/flows/notification-flow-integration.test.ts",
       "tests/integration/flows/billing-payment-integration.test.ts",
       "tests/integration/services/artifactRegistryService.sqlite.integration.test.ts",
+      "tests/integration/resource-management.integration.test.ts",
+      "tests/integration/presentations/atelier-deck-canonical-roundtrip.contract.test.ts",
       "server/src/services/audits/__tests__/aiBoundaries.test.ts",
       "server/src/services/audits/__tests__/aiProposalService.test.ts",
       "server/src/services/audits/__tests__/auditTrailService.test.ts",
@@ -50,6 +52,7 @@
       "server/src/routes/v8/__tests__/results.routes.test.ts",
       "server/src/routes/v8/__tests__/execution-control.routes.test.ts",
       "server/src/routes/v8/__tests__/p05-finance-lane.test.ts",
+      "server/src/routes/v8/__tests__/financeValueRoutes.demoGuard.test.ts",
       "server/src/routes/v8/__tests__/interview.routes.test.ts",
       "server/src/routes/__tests__/cross-org-idor.test.ts"
     ]
@@ -71,7 +74,8 @@
         "server/src/routes/v8/__tests__/p05-finance-lane.test.ts",
         "server/src/routes/__tests__/workbook-commands.routes.test.ts",
         "server/src/routes/resultsVnext/__tests__/roiCaseApproval.routes.test.ts",
-        "tests/integration/routes/billing.routes.full.l3.test.ts"
+        "tests/integration/routes/billing.routes.full.l3.test.ts",
+        "server/src/routes/v8/__tests__/financeValueRoutes.demoGuard.test.ts"
       ]
     },
     "realdb": {
@@ -110,7 +114,8 @@
         "tests/integration/workflows/assessment-workflow-integration.test.ts",
         "tests/integration/workflows/decision-management-integration.test.ts",
         "tests/integration/flows/notification-flow-integration.test.ts",
-        "tests/integration/flows/billing-payment-integration.test.ts"
+        "tests/integration/flows/billing-payment-integration.test.ts",
+        "tests/integration/resource-management.integration.test.ts"
       ]
     },
     "externalRuntime": {
@@ -124,7 +129,8 @@
       "reason": "Individual cases pass but the complete file fails nondeterministically through socket and permission-state leakage.",
       "execution": "must-be-repaired",
       "files": [
-        "server/src/routes/v8/__tests__/interview.routes.test.ts"
+        "server/src/routes/v8/__tests__/interview.routes.test.ts",
+        "tests/integration/presentations/atelier-deck-canonical-roundtrip.contract.test.ts"
       ]
     }
   }
