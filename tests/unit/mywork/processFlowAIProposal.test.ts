@@ -18,6 +18,21 @@ vi.mock('@/services/ideaAIGenerator', () => ({
   generateAIProposal: (...args: unknown[]) => generateAIProposalMock(...args),
 }));
 
+vi.mock('@/i18n', () => ({
+  default: {
+    t: (key: string, defaultValue: string, options?: Record<string, unknown>) => {
+      const template =
+        key === 'processFlow.aiProposal.errorGenerate' && options?.lng === 'pl'
+          ? 'Nie udało się wygenerować propozycji AI. Spróbuj ponownie.'
+          : defaultValue;
+      return Object.entries(options ?? {}).reduce(
+        (text, [name, value]) => text.replaceAll(`{{${name}}}`, String(value)),
+        template
+      );
+    },
+  },
+}));
+
 const lanes: Lane[] = [{ id: 'lane-1', label: 'Main Process', color: '#e0e7ff' }];
 
 const nodes: Node[] = [
