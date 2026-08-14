@@ -252,9 +252,20 @@ async function createSchema(): Promise<void> {
     project_id TEXT,
     source_id TEXT,
     source_refs_json TEXT,
+    pdf_path TEXT,
+    pptx_path TEXT,
     created_by TEXT,
     created_at TEXT,
     updated_at TEXT
+  )`);
+  await exec(`CREATE TABLE v8_output_exports (
+    export_id TEXT PRIMARY KEY,
+    artifact_id TEXT,
+    organization_id TEXT,
+    format TEXT,
+    status TEXT,
+    created_at TEXT,
+    completed_at TEXT
   )`);
   await exec(`CREATE TABLE v8_publish_records (
     artifact_id TEXT,
