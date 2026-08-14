@@ -13,9 +13,10 @@
  *   W2 — competency.routes POST mutations require auth → 401 / 403
  */
 
-import express, { type Express } from 'express';
+import express from 'express';
+import type { Server } from 'node:http';
 import request from 'supertest';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ── Top-level mock fns (must be declared before vi.mock factories) ──────────
 
@@ -231,44 +232,80 @@ vi.mock('../../services/competencyTaxonomyService.js', () => ({
 
 // ── App builders ─────────────────────────────────────────────────────────────
 
-async function buildV8App(): Promise<Express> {
+const testServers = new Map<string, Server>();
+
+async function startTestServer(key: string, app: express.Express): Promise<Server> {
+  const existing = testServers.get(key);
+  if (existing) return existing;
+  const server = app.listen(0, '127.0.0.1');
+  await new Promise<void>((resolve, reject) => {
+    server.once('listening', resolve);
+    server.once('error', reject);
+  });
+  testServers.set(key, server);
+  return server;
+}
+
+afterAll(async () => {
+  await Promise.all(
+    [...testServers.values()].map(
+      (server) =>
+        new Promise<void>((resolve, reject) =>
+          server.close((error) => (error ? reject(error) : resolve()))
+        )
+    )
+  );
+  testServers.clear();
+});
+
+async function buildV8App(): Promise<Server> {
+  const existing = testServers.get('v8');
+  if (existing) return existing;
   const { default: v8Router } = await import('../v8/index.js');
   const app = express();
   app.use(express.json());
   app.use('/api/v8', v8Router);
-  return app;
+  return startTestServer('v8', app);
 }
 
-async function buildAdminDataApp(): Promise<Express> {
+async function buildAdminDataApp(): Promise<Server> {
+  const existing = testServers.get('admin-data');
+  if (existing) return existing;
   const mod = await import('../admin-data.routes.js');
   const app = express();
   app.use(express.json());
   app.use('/api/admin-data', mod.default);
-  return app;
+  return startTestServer('admin-data', app);
 }
 
-async function buildCompetencyApp(): Promise<Express> {
+async function buildCompetencyApp(): Promise<Server> {
+  const existing = testServers.get('competency');
+  if (existing) return existing;
   const mod = await import('../competency.routes.js');
   const app = express();
   app.use(express.json());
   app.use('/api/competency', mod.default);
-  return app;
+  return startTestServer('competency', app);
 }
 
-async function buildBenefitsApp(): Promise<Express> {
+async function buildBenefitsApp(): Promise<Server> {
+  const existing = testServers.get('benefits');
+  if (existing) return existing;
   const mod = await import('../benefits.routes.js');
   const app = express();
   app.use(express.json());
   app.use('/api/benefits', mod.default);
-  return app;
+  return startTestServer('benefits', app);
 }
 
-async function buildResultsEnterpriseApp(): Promise<Express> {
+async function buildResultsEnterpriseApp(): Promise<Server> {
+  const existing = testServers.get('results-enterprise');
+  if (existing) return existing;
   const mod = await import('../results-enterprise.routes.js');
   const app = express();
   app.use(express.json());
   app.use('/api/results-v4', mod.default);
-  return app;
+  return startTestServer('results-enterprise', app);
 }
 
 // This file exercises several routers against the same hoisted DB doubles.
@@ -1259,12 +1296,14 @@ describe('W1 — initiativeGovernanceService cross-org isolation', () => {
 // ═══════════════════════════════════════════════════════════════════════════
 
 describe('W1 — DecisionController.decide cross-org decision → 404', () => {
-  async function buildDecisionsApp(): Promise<Express> {
+  async function buildDecisionsApp(): Promise<Server> {
+    const existing = testServers.get('decisions');
+    if (existing) return existing;
     const mod = await import('../pmo/decisions.routes.js');
     const app = express();
     app.use(express.json());
     app.use('/api/decisions', mod.default);
-    return app;
+    return startTestServer('decisions', app);
   }
 
   beforeEach(() => {
@@ -1768,7 +1807,7 @@ const RES003A_BENEFITS_ROUTES: BenefitsPermissionRoute[] = [
 ];
 
 function sendBenefitsRequest(
-  app: Express,
+  app: Server,
   route: Pick<BenefitsPermissionRoute, 'method' | 'path' | 'body'>
 ) {
   const agent = request(app) as unknown as Record<
