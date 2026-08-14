@@ -1,0 +1,20 @@
+test_file	scope	discovered	executed	result	environment	note
+server/src/services/audits/__tests__/aiBoundaries.test.ts	AUDITS_SERVICE	YES	YES	PASS	postgres17:5439/consultify_audits_ho RUN_DB_TESTS=1 MOCK_DB=false --retry=0	
+server/src/services/audits/__tests__/aiProposalService.test.ts	AUDITS_SERVICE	YES	YES	PASS	postgres17:5439/consultify_audits_ho RUN_DB_TESTS=1 MOCK_DB=false --retry=0	
+server/src/services/audits/__tests__/auditTrailService.test.ts	AUDITS_SERVICE	YES	YES	PASS	postgres17:5439/consultify_audits_ho RUN_DB_TESTS=1 MOCK_DB=false --retry=0	
+server/src/services/audits/__tests__/correctiveActionService.test.ts	AUDITS_SERVICE	YES	YES	PASS	postgres17:5439/consultify_audits_ho RUN_DB_TESTS=1 MOCK_DB=false --retry=0	
+server/src/services/audits/__tests__/criterionService.test.ts	AUDITS_SERVICE	YES	YES	PASS	postgres17:5439/consultify_audits_ho RUN_DB_TESTS=1 MOCK_DB=false --retry=0	
+server/src/services/audits/__tests__/evidenceService.test.ts	AUDITS_SERVICE	YES	YES	PASS	postgres17:5439/consultify_audits_ho RUN_DB_TESTS=1 MOCK_DB=false --retry=0	
+server/src/services/audits/__tests__/findingService.test.ts	AUDITS_SERVICE	YES	YES	PASS	postgres17:5439/consultify_audits_ho RUN_DB_TESTS=1 MOCK_DB=false --retry=0	
+server/src/services/audits/__tests__/goldenFlow.e2e.test.ts	AUDITS_SERVICE	YES	YES	PASS	postgres17:5439/consultify_audits_ho RUN_DB_TESTS=1 MOCK_DB=false --retry=0	
+server/src/services/audits/__tests__/lifecycleGates.test.ts	AUDITS_SERVICE	YES	YES	PASS	postgres17:5439/consultify_audits_ho RUN_DB_TESTS=1 MOCK_DB=false --retry=0	
+server/src/services/audits/__tests__/normSourceService.test.ts	AUDITS_SERVICE	YES	YES	PASS	postgres17:5439/consultify_audits_ho RUN_DB_TESTS=1 MOCK_DB=false --retry=0	
+server/src/services/audits/__tests__/outputService.test.ts	AUDITS_SERVICE	YES	YES	PASS	postgres17:5439/consultify_audits_ho RUN_DB_TESTS=1 MOCK_DB=false --retry=0	
+server/src/services/audits/__tests__/packService.test.ts	AUDITS_SERVICE	YES	YES	PASS	postgres17:5439/consultify_audits_ho RUN_DB_TESTS=1 MOCK_DB=false --retry=0	
+server/src/services/audits/__tests__/packValidator.test.ts	AUDITS_SERVICE	YES	YES	PASS	postgres17:5439/consultify_audits_ho RUN_DB_TESTS=1 MOCK_DB=false --retry=0	
+server/src/services/audits/__tests__/programService.test.ts	AUDITS_SERVICE	YES	YES	PASS	postgres17:5439/consultify_audits_ho RUN_DB_TESTS=1 MOCK_DB=false --retry=0	
+server/src/services/audits/__tests__/proposalService.test.ts	AUDITS_SERVICE	YES	YES	PASS	postgres17:5439/consultify_audits_ho RUN_DB_TESTS=1 MOCK_DB=false --retry=0	
+server/src/services/audits/__tests__/reportRenderer.test.ts	AUDITS_SERVICE	YES	YES	PASS	postgres17:5439/consultify_audits_ho RUN_DB_TESTS=1 MOCK_DB=false --retry=0	
+server/src/services/audits/__tests__/segregationOfDuties.test.ts	AUDITS_SERVICE	YES	YES	PASS	postgres17:5439/consultify_audits_ho RUN_DB_TESTS=1 MOCK_DB=false --retry=0	
+server/src/services/audits/__tests__/sourceClassificationAxes.test.ts	AUDITS_SERVICE	YES	YES	PASS	postgres17:5439/consultify_audits_ho RUN_DB_TESTS=1 MOCK_DB=false --retry=0	
+server/src/services/audits/__tests__/verificationService.test.ts	AUDITS_SERVICE	YES	YES	PASS	postgres17:5439/consultify_audits_ho RUN_DB_TESTS=1 MOCK_DB=false --retry=0	
