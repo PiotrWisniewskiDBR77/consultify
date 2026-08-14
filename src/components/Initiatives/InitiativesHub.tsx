@@ -49,6 +49,7 @@ import {
   type TableColumn as StandardTableColumn,
 } from '@/components/standard';
 import { statusChipTone } from '@/components/ui/primitives/chips';
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api, shouldAllowDemoData } from '@/services/api';
@@ -293,6 +294,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [isV8InitiativeSnapshotLoading, setIsV8InitiativeSnapshotLoading] = useState(false);
   const v8SnapshotRequestRef = useRef(0);
   const [showNewModal, setShowNewModal] = useState(false);
+  const newInitiativeDialogRef = useRef<HTMLDivElement>(null);
+  const newInitiativeTitleInputRef = useRef<HTMLInputElement>(null);
   const [showInitiativeWizard, setShowInitiativeWizard] = useState(false);
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -310,6 +313,15 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [newLevel, setNewLevel] = useState<InitiativeLevel>('standard');
   const [newSummary, setNewSummary] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+
+  useDialogA11y({
+    open: showNewModal,
+    onClose: () => setShowNewModal(false),
+    containerRef: newInitiativeDialogRef,
+    initialFocusRef: newInitiativeTitleInputRef,
+    getFallbackFocusTarget: () =>
+      document.querySelector<HTMLElement>('[data-testid="initiatives-new-modal-empty-cta"]'),
+  });
 
   // Preview pane state (V3 Table+Preview)
   const [previewInitiativeId, setPreviewInitiativeId] = useState<string | null>(null);
@@ -1617,6 +1629,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                   label: t('initiatives.form.newInitiative'),
                   onClick: () => setShowNewModal(true),
                   icon: Plus,
+                  testId: 'initiatives-new-modal-empty-cta',
                 }
           }
         />
@@ -2296,17 +2309,32 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       {/* New Initiative Modal — D1.1: includes type/level selector */}
       {showNewModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <h2 className="text-lg font-semibold text-c-text mb-4">
+          <div
+            ref={newInitiativeDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="initiatives-new-modal-title"
+            tabIndex={-1}
+            className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto"
+          >
+            <h2
+              id="initiatives-new-modal-title"
+              className="text-lg font-semibold text-c-text mb-4"
+            >
               {t('initiatives.form.createNew')}
             </h2>
             <div className="space-y-4">
               {/* Title */}
               <div>
-                <label className="block text-xs text-c-text-muted mb-1">
+                <label
+                  htmlFor="initiatives-new-modal-title-input"
+                  className="block text-xs text-c-text-muted mb-1"
+                >
                   {t('initiatives.form.titleRequired')}
                 </label>
                 <input
+                  ref={newInitiativeTitleInputRef}
+                  id="initiatives-new-modal-title-input"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   className="w-full px-3 py-2 bg-c-bg border border-c-border-subtle rounded-lg text-sm text-c-text"
