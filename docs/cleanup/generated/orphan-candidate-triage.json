@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-14T17:25:09.326Z",
+  "generatedAt": "2026-08-14T17:28:47.254Z",
   "sourceInventoryGitSha": "5e3b54264a6d31e33ef67d8a4a028223ecae9bf0",
   "deletionAuthorized": false,
   "warnings": [
@@ -10,13 +10,18 @@
   ],
   "counts": {
     "total": 1246,
-    "manualDecisions": 8,
+    "manualDecisions": 44,
+    "exactManualDecisions": 13,
+    "prefixManualDecisions": 1,
     "byManualDecision": {
       "SUPERSEDED_REMOVAL_CANDIDATE": 2,
       "PRESERVE_CONTRACT_REVIEW": 1,
       "PRESERVE_SUPPORT_HARNESS": 2,
+      "PRESERVE_ARCHITECTURE_RECONCILIATION": 31,
       "PRESERVE_REPAIR_AND_WIRE_REQUIRED": 1,
       "PRESERVE_WIRING_REQUIRED": 1,
+      "GENERATED_OR_LEGACY_SHADOW_REMOVAL_CANDIDATE": 4,
+      "PHANTOM_STUB_REMOVAL_CANDIDATE": 1,
       "UNUSED_BARREL_REMOVAL_CANDIDATE": 1
     },
     "byPriority": {
@@ -2641,7 +2646,15 @@
       "file": "packages/shared/src/ui/components/Button.tsx",
       "module": "cross-cutting-or-unclassified",
       "deletionAuthorized": false,
-      "manualDecision": null,
+      "manualDecision": {
+        "status": "PRESERVE_ARCHITECTURE_RECONCILIATION",
+        "reason": "The workspace package is built and documented as the target shared-code SSOT, but no application runtime imports it; reconcile ownership before deleting either copy.",
+        "evidence": [
+          "package.json:97",
+          "docs/FORK_STRATEGY.md:27",
+          "docs/SOURCE_OF_TRUTH.md:73"
+        ]
+      },
       "triage": "UNMOUNTED_UI_CANDIDATE",
       "priority": "P0_RECOVERY_REVIEW",
       "evidence": []
@@ -2650,7 +2663,15 @@
       "file": "packages/shared/src/ui/components/Card.tsx",
       "module": "cross-cutting-or-unclassified",
       "deletionAuthorized": false,
-      "manualDecision": null,
+      "manualDecision": {
+        "status": "PRESERVE_ARCHITECTURE_RECONCILIATION",
+        "reason": "The workspace package is built and documented as the target shared-code SSOT, but no application runtime imports it; reconcile ownership before deleting either copy.",
+        "evidence": [
+          "package.json:97",
+          "docs/FORK_STRATEGY.md:27",
+          "docs/SOURCE_OF_TRUTH.md:73"
+        ]
+      },
       "triage": "UNMOUNTED_UI_CANDIDATE",
       "priority": "P0_RECOVERY_REVIEW",
       "evidence": []
@@ -2659,7 +2680,15 @@
       "file": "packages/shared/src/ui/components/Input.tsx",
       "module": "cross-cutting-or-unclassified",
       "deletionAuthorized": false,
-      "manualDecision": null,
+      "manualDecision": {
+        "status": "PRESERVE_ARCHITECTURE_RECONCILIATION",
+        "reason": "The workspace package is built and documented as the target shared-code SSOT, but no application runtime imports it; reconcile ownership before deleting either copy.",
+        "evidence": [
+          "package.json:97",
+          "docs/FORK_STRATEGY.md:27",
+          "docs/SOURCE_OF_TRUTH.md:73"
+        ]
+      },
       "triage": "UNMOUNTED_UI_CANDIDATE",
       "priority": "P0_RECOVERY_REVIEW",
       "evidence": []
@@ -7408,7 +7437,15 @@
       "file": "packages/shared/src/types/AIContract.ts",
       "module": "cross-cutting-or-unclassified",
       "deletionAuthorized": false,
-      "manualDecision": null,
+      "manualDecision": {
+        "status": "PRESERVE_ARCHITECTURE_RECONCILIATION",
+        "reason": "The workspace package is built and documented as the target shared-code SSOT, but no application runtime imports it; reconcile ownership before deleting either copy.",
+        "evidence": [
+          "package.json:97",
+          "docs/FORK_STRATEGY.md:27",
+          "docs/SOURCE_OF_TRUTH.md:73"
+        ]
+      },
       "triage": "EXACT_DUPLICATE_OF_RUNTIME",
       "priority": "P1_DUPLICATE_REVIEW",
       "evidence": [
@@ -7419,7 +7456,15 @@
       "file": "packages/shared/src/types/api/index.ts",
       "module": "cross-cutting-or-unclassified",
       "deletionAuthorized": false,
-      "manualDecision": null,
+      "manualDecision": {
+        "status": "PRESERVE_ARCHITECTURE_RECONCILIATION",
+        "reason": "The workspace package is built and documented as the target shared-code SSOT, but no application runtime imports it; reconcile ownership before deleting either copy.",
+        "evidence": [
+          "package.json:97",
+          "docs/FORK_STRATEGY.md:27",
+          "docs/SOURCE_OF_TRUTH.md:73"
+        ]
+      },
       "triage": "EXACT_NONRUNTIME_DUPLICATE",
       "priority": "P1_DUPLICATE_REVIEW",
       "evidence": [
@@ -7430,7 +7475,15 @@
       "file": "packages/shared/src/types/ui/components.ts",
       "module": "cross-cutting-or-unclassified",
       "deletionAuthorized": false,
-      "manualDecision": null,
+      "manualDecision": {
+        "status": "PRESERVE_ARCHITECTURE_RECONCILIATION",
+        "reason": "The workspace package is built and documented as the target shared-code SSOT, but no application runtime imports it; reconcile ownership before deleting either copy.",
+        "evidence": [
+          "package.json:97",
+          "docs/FORK_STRATEGY.md:27",
+          "docs/SOURCE_OF_TRUTH.md:73"
+        ]
+      },
       "triage": "EXACT_DUPLICATE_OF_RUNTIME",
       "priority": "P1_DUPLICATE_REVIEW",
       "evidence": [
@@ -7441,7 +7494,15 @@
       "file": "packages/shared/src/types/ui/index.ts",
       "module": "cross-cutting-or-unclassified",
       "deletionAuthorized": false,
-      "manualDecision": null,
+      "manualDecision": {
+        "status": "PRESERVE_ARCHITECTURE_RECONCILIATION",
+        "reason": "The workspace package is built and documented as the target shared-code SSOT, but no application runtime imports it; reconcile ownership before deleting either copy.",
+        "evidence": [
+          "package.json:97",
+          "docs/FORK_STRATEGY.md:27",
+          "docs/SOURCE_OF_TRUTH.md:73"
+        ]
+      },
       "triage": "EXACT_DUPLICATE_OF_RUNTIME",
       "priority": "P1_DUPLICATE_REVIEW",
       "evidence": [
@@ -7452,7 +7513,15 @@
       "file": "packages/shared/src/utils/animations.ts",
       "module": "cross-cutting-or-unclassified",
       "deletionAuthorized": false,
-      "manualDecision": null,
+      "manualDecision": {
+        "status": "PRESERVE_ARCHITECTURE_RECONCILIATION",
+        "reason": "The workspace package is built and documented as the target shared-code SSOT, but no application runtime imports it; reconcile ownership before deleting either copy.",
+        "evidence": [
+          "package.json:97",
+          "docs/FORK_STRATEGY.md:27",
+          "docs/SOURCE_OF_TRUTH.md:73"
+        ]
+      },
       "triage": "EXACT_NONRUNTIME_DUPLICATE",
       "priority": "P1_DUPLICATE_REVIEW",
       "evidence": [
@@ -7463,7 +7532,15 @@
       "file": "packages/shared/src/utils/cn.ts",
       "module": "cross-cutting-or-unclassified",
       "deletionAuthorized": false,
-      "manualDecision": null,
+      "manualDecision": {
+        "status": "PRESERVE_ARCHITECTURE_RECONCILIATION",
+        "reason": "The workspace package is built and documented as the target shared-code SSOT, but no application runtime imports it; reconcile ownership before deleting either copy.",
+        "evidence": [
+          "package.json:97",
+          "docs/FORK_STRATEGY.md:27",
+          "docs/SOURCE_OF_TRUTH.md:73"
+        ]
+      },
       "triage": "EXACT_DUPLICATE_OF_RUNTIME",
       "priority": "P1_DUPLICATE_REVIEW",
       "evidence": [
@@ -7474,7 +7551,15 @@
       "file": "packages/shared/src/utils/frontendMetrics.ts",
       "module": "cross-cutting-or-unclassified",
       "deletionAuthorized": false,
-      "manualDecision": null,
+      "manualDecision": {
+        "status": "PRESERVE_ARCHITECTURE_RECONCILIATION",
+        "reason": "The workspace package is built and documented as the target shared-code SSOT, but no application runtime imports it; reconcile ownership before deleting either copy.",
+        "evidence": [
+          "package.json:97",
+          "docs/FORK_STRATEGY.md:27",
+          "docs/SOURCE_OF_TRUTH.md:73"
+        ]
+      },
       "triage": "EXACT_NONRUNTIME_DUPLICATE",
       "priority": "P1_DUPLICATE_REVIEW",
       "evidence": [
@@ -7485,7 +7570,15 @@
       "file": "packages/shared/src/utils/imageUtils.ts",
       "module": "cross-cutting-or-unclassified",
       "deletionAuthorized": false,
-      "manualDecision": null,
+      "manualDecision": {
+        "status": "PRESERVE_ARCHITECTURE_RECONCILIATION",
+        "reason": "The workspace package is built and documented as the target shared-code SSOT, but no application runtime imports it; reconcile ownership before deleting either copy.",
+        "evidence": [
+          "package.json:97",
+          "docs/FORK_STRATEGY.md:27",
+          "docs/SOURCE_OF_TRUTH.md:73"
+        ]
+      },
       "triage": "EXACT_NONRUNTIME_DUPLICATE",
       "priority": "P1_DUPLICATE_REVIEW",
       "evidence": [
@@ -7496,7 +7589,14 @@
       "file": "server/src/cron/InvoiceReminderCron.js",
       "module": "cross-cutting-or-unclassified",
       "deletionAuthorized": false,
-      "manualDecision": null,
+      "manualDecision": {
+        "status": "GENERATED_OR_LEGACY_SHADOW_REMOVAL_CANDIDATE",
+        "reason": "A TypeScript counterpart exists and source JavaScript is excluded from the backend build.",
+        "evidence": [
+          "server/src/cron/InvoiceReminderCron.ts",
+          "server/tsconfig.build.json:34"
+        ]
+      },
       "triage": "SOURCE_SHADOW_OR_VARIANT",
       "priority": "P1_DUPLICATE_REVIEW",
       "evidence": [
@@ -7507,7 +7607,14 @@
       "file": "server/src/cron/MemoryCleanupJob.js",
       "module": "cross-cutting-or-unclassified",
       "deletionAuthorized": false,
-      "manualDecision": null,
+      "manualDecision": {
+        "status": "GENERATED_OR_LEGACY_SHADOW_REMOVAL_CANDIDATE",
+        "reason": "A TypeScript counterpart exists and source JavaScript is excluded from the backend build.",
+        "evidence": [
+          "server/src/cron/MemoryCleanupJob.ts",
+          "server/tsconfig.build.json:34"
+        ]
+      },
       "triage": "SOURCE_SHADOW_OR_VARIANT",
       "priority": "P1_DUPLICATE_REVIEW",
       "evidence": [
@@ -7518,7 +7625,14 @@
       "file": "server/src/Gateway.js",
       "module": "cross-cutting-or-unclassified",
       "deletionAuthorized": false,
-      "manualDecision": null,
+      "manualDecision": {
+        "status": "GENERATED_OR_LEGACY_SHADOW_REMOVAL_CANDIDATE",
+        "reason": "Production and build entrypoints use Gateway.ts; backend build explicitly excludes source JavaScript shadows.",
+        "evidence": [
+          "server/src/index.ts:1280",
+          "server/tsconfig.build.json:34"
+        ]
+      },
       "triage": "SOURCE_SHADOW_OR_VARIANT",
       "priority": "P1_DUPLICATE_REVIEW",
       "evidence": [
@@ -7529,7 +7643,14 @@
       "file": "server/src/index.js",
       "module": "cross-cutting-or-unclassified",
       "deletionAuthorized": false,
-      "manualDecision": null,
+      "manualDecision": {
+        "status": "GENERATED_OR_LEGACY_SHADOW_REMOVAL_CANDIDATE",
+        "reason": "Production is compiled from index.ts to dist/src/index.js; source index.js is excluded from the backend build.",
+        "evidence": [
+          "server/package.json",
+          "server/tsconfig.build.json:34"
+        ]
+      },
       "triage": "SOURCE_SHADOW_OR_VARIANT",
       "priority": "P1_DUPLICATE_REVIEW",
       "evidence": [
@@ -7540,7 +7661,14 @@
       "file": "server/src/routes/tasks.routes.ts",
       "module": "cross-cutting-or-unclassified",
       "deletionAuthorized": false,
-      "manualDecision": null,
+      "manualDecision": {
+        "status": "PHANTOM_STUB_REMOVAL_CANDIDATE",
+        "reason": "Unmounted CRUD-success stub is byte-identical to projects.routes.ts and contains no domain behavior.",
+        "evidence": [
+          "server/src/routes/tasks.routes.ts",
+          "server/src/routes/projects.routes.ts"
+        ]
+      },
       "triage": "EXACT_NONRUNTIME_DUPLICATE",
       "priority": "P1_DUPLICATE_REVIEW",
       "evidence": [
@@ -7649,7 +7777,15 @@
       "file": "packages/shared/src/utils/assessmentColors.ts",
       "module": "assessment",
       "deletionAuthorized": false,
-      "manualDecision": null,
+      "manualDecision": {
+        "status": "PRESERVE_ARCHITECTURE_RECONCILIATION",
+        "reason": "The workspace package is built and documented as the target shared-code SSOT, but no application runtime imports it; reconcile ownership before deleting either copy.",
+        "evidence": [
+          "package.json:97",
+          "docs/FORK_STRATEGY.md:27",
+          "docs/SOURCE_OF_TRUTH.md:73"
+        ]
+      },
       "triage": "UNIQUE_SOURCE_REVIEW",
       "priority": "P1_SEMANTIC_REVIEW",
       "evidence": []
@@ -7718,7 +7854,15 @@
       "file": "packages/shared/src/ui/theme.ts",
       "module": "cross-cutting-or-unclassified",
       "deletionAuthorized": false,
-      "manualDecision": null,
+      "manualDecision": {
+        "status": "PRESERVE_ARCHITECTURE_RECONCILIATION",
+        "reason": "The workspace package is built and documented as the target shared-code SSOT, but no application runtime imports it; reconcile ownership before deleting either copy.",
+        "evidence": [
+          "package.json:97",
+          "docs/FORK_STRATEGY.md:27",
+          "docs/SOURCE_OF_TRUTH.md:73"
+        ]
+      },
       "triage": "UNIQUE_SOURCE_REVIEW",
       "priority": "P1_SEMANTIC_REVIEW",
       "evidence": []
@@ -7727,7 +7871,15 @@
       "file": "packages/shared/src/utils/pdfExport.ts",
       "module": "cross-cutting-or-unclassified",
       "deletionAuthorized": false,
-      "manualDecision": null,
+      "manualDecision": {
+        "status": "PRESERVE_ARCHITECTURE_RECONCILIATION",
+        "reason": "The workspace package is built and documented as the target shared-code SSOT, but no application runtime imports it; reconcile ownership before deleting either copy.",
+        "evidence": [
+          "package.json:97",
+          "docs/FORK_STRATEGY.md:27",
+          "docs/SOURCE_OF_TRUTH.md:73"
+        ]
+      },
       "triage": "UNIQUE_SOURCE_REVIEW",
       "priority": "P1_SEMANTIC_REVIEW",
       "evidence": []
@@ -9104,7 +9256,15 @@
       "file": "packages/shared/src/constants/index.ts",
       "module": "cross-cutting-or-unclassified",
       "deletionAuthorized": false,
-      "manualDecision": null,
+      "manualDecision": {
+        "status": "PRESERVE_ARCHITECTURE_RECONCILIATION",
+        "reason": "The workspace package is built and documented as the target shared-code SSOT, but no application runtime imports it; reconcile ownership before deleting either copy.",
+        "evidence": [
+          "package.json:97",
+          "docs/FORK_STRATEGY.md:27",
+          "docs/SOURCE_OF_TRUTH.md:73"
+        ]
+      },
       "triage": "UNUSED_BARREL",
       "priority": "P2_STRUCTURE_REVIEW",
       "evidence": []
@@ -9113,7 +9273,15 @@
       "file": "packages/shared/src/constants/portfolioColors.ts",
       "module": "cross-cutting-or-unclassified",
       "deletionAuthorized": false,
-      "manualDecision": null,
+      "manualDecision": {
+        "status": "PRESERVE_ARCHITECTURE_RECONCILIATION",
+        "reason": "The workspace package is built and documented as the target shared-code SSOT, but no application runtime imports it; reconcile ownership before deleting either copy.",
+        "evidence": [
+          "package.json:97",
+          "docs/FORK_STRATEGY.md:27",
+          "docs/SOURCE_OF_TRUTH.md:73"
+        ]
+      },
       "triage": "UNUSED_CONTRACT_OR_VALIDATOR",
       "priority": "P2_STRUCTURE_REVIEW",
       "evidence": []
@@ -9122,7 +9290,15 @@
       "file": "packages/shared/src/index.ts",
       "module": "cross-cutting-or-unclassified",
       "deletionAuthorized": false,
-      "manualDecision": null,
+      "manualDecision": {
+        "status": "PRESERVE_ARCHITECTURE_RECONCILIATION",
+        "reason": "The workspace package is built and documented as the target shared-code SSOT, but no application runtime imports it; reconcile ownership before deleting either copy.",
+        "evidence": [
+          "package.json:97",
+          "docs/FORK_STRATEGY.md:27",
+          "docs/SOURCE_OF_TRUTH.md:73"
+        ]
+      },
       "triage": "UNUSED_BARREL",
       "priority": "P2_STRUCTURE_REVIEW",
       "evidence": []
@@ -9131,7 +9307,15 @@
       "file": "packages/shared/src/types/api/requests.ts",
       "module": "cross-cutting-or-unclassified",
       "deletionAuthorized": false,
-      "manualDecision": null,
+      "manualDecision": {
+        "status": "PRESERVE_ARCHITECTURE_RECONCILIATION",
+        "reason": "The workspace package is built and documented as the target shared-code SSOT, but no application runtime imports it; reconcile ownership before deleting either copy.",
+        "evidence": [
+          "package.json:97",
+          "docs/FORK_STRATEGY.md:27",
+          "docs/SOURCE_OF_TRUTH.md:73"
+        ]
+      },
       "triage": "UNUSED_CONTRACT_OR_VALIDATOR",
       "priority": "P2_STRUCTURE_REVIEW",
       "evidence": []
@@ -9140,7 +9324,15 @@
       "file": "packages/shared/src/types/api/responses.ts",
       "module": "cross-cutting-or-unclassified",
       "deletionAuthorized": false,
-      "manualDecision": null,
+      "manualDecision": {
+        "status": "PRESERVE_ARCHITECTURE_RECONCILIATION",
+        "reason": "The workspace package is built and documented as the target shared-code SSOT, but no application runtime imports it; reconcile ownership before deleting either copy.",
+        "evidence": [
+          "package.json:97",
+          "docs/FORK_STRATEGY.md:27",
+          "docs/SOURCE_OF_TRUTH.md:73"
+        ]
+      },
       "triage": "UNUSED_CONTRACT_OR_VALIDATOR",
       "priority": "P2_STRUCTURE_REVIEW",
       "evidence": []
@@ -9149,7 +9341,15 @@
       "file": "packages/shared/src/types/app-view.ts",
       "module": "cross-cutting-or-unclassified",
       "deletionAuthorized": false,
-      "manualDecision": null,
+      "manualDecision": {
+        "status": "PRESERVE_ARCHITECTURE_RECONCILIATION",
+        "reason": "The workspace package is built and documented as the target shared-code SSOT, but no application runtime imports it; reconcile ownership before deleting either copy.",
+        "evidence": [
+          "package.json:97",
+          "docs/FORK_STRATEGY.md:27",
+          "docs/SOURCE_OF_TRUTH.md:73"
+        ]
+      },
       "triage": "UNUSED_CONTRACT_OR_VALIDATOR",
       "priority": "P2_STRUCTURE_REVIEW",
       "evidence": []
@@ -9158,7 +9358,15 @@
       "file": "packages/shared/src/types/domain/ai.ts",
       "module": "cross-cutting-or-unclassified",
       "deletionAuthorized": false,
-      "manualDecision": null,
+      "manualDecision": {
+        "status": "PRESERVE_ARCHITECTURE_RECONCILIATION",
+        "reason": "The workspace package is built and documented as the target shared-code SSOT, but no application runtime imports it; reconcile ownership before deleting either copy.",
+        "evidence": [
+          "package.json:97",
+          "docs/FORK_STRATEGY.md:27",
+          "docs/SOURCE_OF_TRUTH.md:73"
+        ]
+      },
       "triage": "UNUSED_CONTRACT_OR_VALIDATOR",
       "priority": "P2_STRUCTURE_REVIEW",
       "evidence": []
@@ -9167,7 +9375,15 @@
       "file": "packages/shared/src/types/domain/billing.ts",
       "module": "cross-cutting-or-unclassified",
       "deletionAuthorized": false,
-      "manualDecision": null,
+      "manualDecision": {
+        "status": "PRESERVE_ARCHITECTURE_RECONCILIATION",
+        "reason": "The workspace package is built and documented as the target shared-code SSOT, but no application runtime imports it; reconcile ownership before deleting either copy.",
+        "evidence": [
+          "package.json:97",
+          "docs/FORK_STRATEGY.md:27",
+          "docs/SOURCE_OF_TRUTH.md:73"
+        ]
+      },
       "triage": "UNUSED_CONTRACT_OR_VALIDATOR",
       "priority": "P2_STRUCTURE_REVIEW",
       "evidence": []
@@ -9176,7 +9392,15 @@
       "file": "packages/shared/src/types/domain/index.ts",
       "module": "cross-cutting-or-unclassified",
       "deletionAuthorized": false,
-      "manualDecision": null,
+      "manualDecision": {
+        "status": "PRESERVE_ARCHITECTURE_RECONCILIATION",
+        "reason": "The workspace package is built and documented as the target shared-code SSOT, but no application runtime imports it; reconcile ownership before deleting either copy.",
+        "evidence": [
+          "package.json:97",
+          "docs/FORK_STRATEGY.md:27",
+          "docs/SOURCE_OF_TRUTH.md:73"
+        ]
+      },
       "triage": "UNUSED_BARREL",
       "priority": "P2_STRUCTURE_REVIEW",
       "evidence": []
@@ -9185,7 +9409,15 @@
       "file": "packages/shared/src/types/domain/pmo.ts",
       "module": "cross-cutting-or-unclassified",
       "deletionAuthorized": false,
-      "manualDecision": null,
+      "manualDecision": {
+        "status": "PRESERVE_ARCHITECTURE_RECONCILIATION",
+        "reason": "The workspace package is built and documented as the target shared-code SSOT, but no application runtime imports it; reconcile ownership before deleting either copy.",
+        "evidence": [
+          "package.json:97",
+          "docs/FORK_STRATEGY.md:27",
+          "docs/SOURCE_OF_TRUTH.md:73"
+        ]
+      },
       "triage": "UNUSED_CONTRACT_OR_VALIDATOR",
       "priority": "P2_STRUCTURE_REVIEW",
       "evidence": []
@@ -9194,7 +9426,15 @@
       "file": "packages/shared/src/types/domain/project.ts",
       "module": "cross-cutting-or-unclassified",
       "deletionAuthorized": false,
-      "manualDecision": null,
+      "manualDecision": {
+        "status": "PRESERVE_ARCHITECTURE_RECONCILIATION",
+        "reason": "The workspace package is built and documented as the target shared-code SSOT, but no application runtime imports it; reconcile ownership before deleting either copy.",
+        "evidence": [
+          "package.json:97",
+          "docs/FORK_STRATEGY.md:27",
+          "docs/SOURCE_OF_TRUTH.md:73"
+        ]
+      },
       "triage": "UNUSED_CONTRACT_OR_VALIDATOR",
       "priority": "P2_STRUCTURE_REVIEW",
       "evidence": []
@@ -9203,7 +9443,15 @@
       "file": "packages/shared/src/types/domain/user.ts",
       "module": "cross-cutting-or-unclassified",
       "deletionAuthorized": false,
-      "manualDecision": null,
+      "manualDecision": {
+        "status": "PRESERVE_ARCHITECTURE_RECONCILIATION",
+        "reason": "The workspace package is built and documented as the target shared-code SSOT, but no application runtime imports it; reconcile ownership before deleting either copy.",
+        "evidence": [
+          "package.json:97",
+          "docs/FORK_STRATEGY.md:27",
+          "docs/SOURCE_OF_TRUTH.md:73"
+        ]
+      },
       "triage": "UNUSED_CONTRACT_OR_VALIDATOR",
       "priority": "P2_STRUCTURE_REVIEW",
       "evidence": []
@@ -9212,7 +9460,15 @@
       "file": "packages/shared/src/types/index.ts",
       "module": "cross-cutting-or-unclassified",
       "deletionAuthorized": false,
-      "manualDecision": null,
+      "manualDecision": {
+        "status": "PRESERVE_ARCHITECTURE_RECONCILIATION",
+        "reason": "The workspace package is built and documented as the target shared-code SSOT, but no application runtime imports it; reconcile ownership before deleting either copy.",
+        "evidence": [
+          "package.json:97",
+          "docs/FORK_STRATEGY.md:27",
+          "docs/SOURCE_OF_TRUTH.md:73"
+        ]
+      },
       "triage": "UNUSED_BARREL",
       "priority": "P2_STRUCTURE_REVIEW",
       "evidence": []
@@ -9221,7 +9477,15 @@
       "file": "packages/shared/src/types/workspace.ts",
       "module": "cross-cutting-or-unclassified",
       "deletionAuthorized": false,
-      "manualDecision": null,
+      "manualDecision": {
+        "status": "PRESERVE_ARCHITECTURE_RECONCILIATION",
+        "reason": "The workspace package is built and documented as the target shared-code SSOT, but no application runtime imports it; reconcile ownership before deleting either copy.",
+        "evidence": [
+          "package.json:97",
+          "docs/FORK_STRATEGY.md:27",
+          "docs/SOURCE_OF_TRUTH.md:73"
+        ]
+      },
       "triage": "UNUSED_CONTRACT_OR_VALIDATOR",
       "priority": "P2_STRUCTURE_REVIEW",
       "evidence": []
@@ -9230,7 +9494,15 @@
       "file": "packages/shared/src/ui/index.ts",
       "module": "cross-cutting-or-unclassified",
       "deletionAuthorized": false,
-      "manualDecision": null,
+      "manualDecision": {
+        "status": "PRESERVE_ARCHITECTURE_RECONCILIATION",
+        "reason": "The workspace package is built and documented as the target shared-code SSOT, but no application runtime imports it; reconcile ownership before deleting either copy.",
+        "evidence": [
+          "package.json:97",
+          "docs/FORK_STRATEGY.md:27",
+          "docs/SOURCE_OF_TRUTH.md:73"
+        ]
+      },
       "triage": "UNUSED_BARREL",
       "priority": "P2_STRUCTURE_REVIEW",
       "evidence": []
@@ -9239,7 +9511,15 @@
       "file": "packages/shared/src/utils/index.ts",
       "module": "cross-cutting-or-unclassified",
       "deletionAuthorized": false,
-      "manualDecision": null,
+      "manualDecision": {
+        "status": "PRESERVE_ARCHITECTURE_RECONCILIATION",
+        "reason": "The workspace package is built and documented as the target shared-code SSOT, but no application runtime imports it; reconcile ownership before deleting either copy.",
+        "evidence": [
+          "package.json:97",
+          "docs/FORK_STRATEGY.md:27",
+          "docs/SOURCE_OF_TRUTH.md:73"
+        ]
+      },
       "triage": "UNUSED_BARREL",
       "priority": "P2_STRUCTURE_REVIEW",
       "evidence": []
@@ -11147,7 +11427,15 @@
       "file": "packages/shared/src/types/myWork.ts",
       "module": "my-work",
       "deletionAuthorized": false,
-      "manualDecision": null,
+      "manualDecision": {
+        "status": "PRESERVE_ARCHITECTURE_RECONCILIATION",
+        "reason": "The workspace package is built and documented as the target shared-code SSOT, but no application runtime imports it; reconcile ownership before deleting either copy.",
+        "evidence": [
+          "package.json:97",
+          "docs/FORK_STRATEGY.md:27",
+          "docs/SOURCE_OF_TRUTH.md:73"
+        ]
+      },
       "triage": "UNUSED_CONTRACT_OR_VALIDATOR",
       "priority": "P2_STRUCTURE_REVIEW",
       "evidence": []

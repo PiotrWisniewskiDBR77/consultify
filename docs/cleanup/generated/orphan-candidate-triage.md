@@ -1,6 +1,6 @@
 # Orphan candidate triage
 
-Generated from source inventory `5e3b54264a6d31e33ef67d8a4a028223ecae9bf0` at 2026-08-14T17:25:09.326Z.
+Generated from source inventory `5e3b54264a6d31e33ef67d8a4a028223ecae9bf0` at 2026-08-14T17:28:47.254Z.
 
 > No item in this report is authorized for deletion.
 
@@ -47,6 +47,9 @@ Generated from source inventory `5e3b54264a6d31e33ef67d8a4a028223ecae9bf0` at 20
 
 ## Manual decisions
 
+- GENERATED_OR_LEGACY_SHADOW_REMOVAL_CANDIDATE: 4
+- PHANTOM_STUB_REMOVAL_CANDIDATE: 1
+- PRESERVE_ARCHITECTURE_RECONCILIATION: 31
 - PRESERVE_CONTRACT_REVIEW: 1
 - PRESERVE_REPAIR_AND_WIRE_REQUIRED: 1
 - PRESERVE_SUPPORT_HARNESS: 2
