@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-14T17:10:54.797Z",
-  "gitSha": "a297c38b869aa47563f304a8013d2290e7233deb",
+  "generatedAt": "2026-08-14T17:16:51.328Z",
+  "gitSha": "5e3b54264a6d31e33ef67d8a4a028223ecae9bf0",
   "limitations": [
     "ORPHAN_CANDIDATE is never deletion authority; dynamic registries, filesystem loading and runtime strings require manual review.",
     "SUPPORT_ONLY means reachable from tests or scripts but not from a configured runtime entrypoint.",
@@ -23,8 +23,9 @@
   },
   "counts": {
     "RUNTIME_REACHABLE": 5045,
-    "ORPHAN_CANDIDATE": 1298,
-    "SUPPORT_ONLY": 486
+    "ORPHAN_CANDIDATE": 1246,
+    "SUPPORT_ONLY": 526,
+    "BUILD_SUPPORT": 12
   },
   "areaCounts": {
     "apps/new-app/backend": {
@@ -129,19 +130,20 @@
       "SUPPORT_ONLY": 14
     },
     "server/src/scripts": {
-      "ORPHAN_CANDIDATE": 39
+      "SUPPORT_ONLY": 39
     },
     "server/src/services": {
-      "SUPPORT_ONLY": 94,
+      "SUPPORT_ONLY": 95,
       "RUNTIME_REACHABLE": 1395,
-      "ORPHAN_CANDIDATE": 99
+      "ORPHAN_CANDIDATE": 98
     },
     "server/src/startup": {
       "RUNTIME_REACHABLE": 4
     },
     "server/src/types": {
       "RUNTIME_REACHABLE": 40,
-      "ORPHAN_CANDIDATE": 12,
+      "ORPHAN_CANDIDATE": 3,
+      "BUILD_SUPPORT": 9,
       "SUPPORT_ONLY": 6
     },
     "server/src/utils": {
@@ -258,8 +260,9 @@
     },
     "src/types": {
       "RUNTIME_REACHABLE": 27,
-      "ORPHAN_CANDIDATE": 3,
-      "SUPPORT_ONLY": 1
+      "ORPHAN_CANDIDATE": 1,
+      "SUPPORT_ONLY": 1,
+      "BUILD_SUPPORT": 2
     },
     "src/utils": {
       "RUNTIME_REACHABLE": 169,
@@ -272,7 +275,7 @@
       "SUPPORT_ONLY": 15
     },
     "src/vite-env.d.ts": {
-      "ORPHAN_CANDIDATE": 1
+      "BUILD_SUPPORT": 1
     }
   },
   "unresolvedLocalImports": [
@@ -6614,197 +6617,197 @@
     },
     {
       "file": "server/src/scripts/a01A02CanonicalRunRealDbProof.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
       "file": "server/src/scripts/a02CanonicalProjectionRestartWorker.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
       "file": "server/src/scripts/a03PlanningClarificationRealDbProof.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
       "file": "server/src/scripts/a03PlanningWorkshopRealDbProof.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
       "file": "server/src/scripts/a03TemplateIntakeRealDbProof.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
       "file": "server/src/scripts/a04ContextGroundingRealDbProof.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
       "file": "server/src/scripts/a04ProductionRetrievalRealDbProof.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
       "file": "server/src/scripts/a04WorkerClaimContextRealDbProof.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
       "file": "server/src/scripts/a04WorkerClaimRestartWorker.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
       "file": "server/src/scripts/a05ProposalGovernanceRealDbProof.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
       "file": "server/src/scripts/a06AdapterOrchestrationRealDbProof.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
       "file": "server/src/scripts/a06TenantActivationRealDbProof.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
       "file": "server/src/scripts/a07ScheduleRealDbProof.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
       "file": "server/src/scripts/a07Wave8ForwardMigrationRealDbProof.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
       "file": "server/src/scripts/a08MultiAgentRealDbProof.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
       "file": "server/src/scripts/a09AgentToolGovernanceRealDbProof.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
       "file": "server/src/scripts/a09CrossPathResourceRealDbProof.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
       "file": "server/src/scripts/a09LegacyNoncanonicalIsolationRealDbProof.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
       "file": "server/src/scripts/a09ReleasedReservationReclaimRealDbProof.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
       "file": "server/src/scripts/a09ResourceGovernanceRealDbProof.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
       "file": "server/src/scripts/a09ResourceGovernanceRestartWorker.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
       "file": "server/src/scripts/a09WorkGraphResourceRealDbProof.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
       "file": "server/src/scripts/a09WorkGraphRestartWorker.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
       "file": "server/src/scripts/a10AgentQualityEvalRealDbProof.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
       "file": "server/src/scripts/a10TransformationCaseLiveReadbackRealDbProof.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
       "file": "server/src/scripts/a11OperatorConsoleRealDbProof.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
       "file": "server/src/scripts/a12TemplateGovernanceRealDbProof.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
       "file": "server/src/scripts/agentMigrationsIdempotencyRealDbProof.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
       "file": "server/src/scripts/buildT01FinalDeck.mjs",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
       "file": "server/src/scripts/i04DrdQualityReviewRealDbProof.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
       "file": "server/src/scripts/invalidate_ai_cache.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
       "file": "server/src/scripts/t01BrowserFixtureServer.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
       "file": "server/src/scripts/t01DecisionPackRealDbProof.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
       "file": "server/src/scripts/t01FinalOutputRealDbProof.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
       "file": "server/src/scripts/t01InitiativeGateDecisionRealDbProof.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
       "file": "server/src/scripts/t01InterviewRealDbProof.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
       "file": "server/src/scripts/t01ProjectTeamRealDbProof.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
       "file": "server/src/scripts/u02MigrationSafetyRealDbProof.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
       "file": "server/src/scripts/u03OwnerBackedExecutionRealDbProof.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
@@ -17112,7 +17115,7 @@
     },
     {
       "file": "server/src/services/v8/transformationInitiativeTransitionAdapterService.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "SUPPORT_ONLY",
       "reachedBy": []
     },
     {
@@ -17621,7 +17624,7 @@
     },
     {
       "file": "server/src/types/custom.d.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "BUILD_SUPPORT",
       "reachedBy": []
     },
     {
@@ -17722,7 +17725,7 @@
     },
     {
       "file": "server/src/types/jsdom.d.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "BUILD_SUPPORT",
       "reachedBy": []
     },
     {
@@ -17774,7 +17777,7 @@
     },
     {
       "file": "server/src/types/pdf-parse.d.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "BUILD_SUPPORT",
       "reachedBy": []
     },
     {
@@ -17800,12 +17803,12 @@
     },
     {
       "file": "server/src/types/pptxgenjs.d.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "BUILD_SUPPORT",
       "reachedBy": []
     },
     {
       "file": "server/src/types/prom-client.d.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "BUILD_SUPPORT",
       "reachedBy": []
     },
     {
@@ -17824,7 +17827,7 @@
     },
     {
       "file": "server/src/types/redis.d.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "BUILD_SUPPORT",
       "reachedBy": []
     },
     {
@@ -17853,7 +17856,7 @@
     },
     {
       "file": "server/src/types/sharp.d.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "BUILD_SUPPORT",
       "reachedBy": []
     },
     {
@@ -17865,12 +17868,12 @@
     },
     {
       "file": "server/src/types/stripe.d.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "BUILD_SUPPORT",
       "reachedBy": []
     },
     {
       "file": "server/src/types/swagger-jsdoc.d.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "BUILD_SUPPORT",
       "reachedBy": []
     },
     {
@@ -41709,12 +41712,12 @@
     },
     {
       "file": "src/types/vendor/reactflow.d.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "BUILD_SUPPORT",
       "reachedBy": []
     },
     {
       "file": "src/types/vendor/turndown-plugin-gfm.d.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "BUILD_SUPPORT",
       "reachedBy": []
     },
     {
@@ -45111,7 +45114,7 @@
     },
     {
       "file": "src/vite-env.d.ts",
-      "classification": "ORPHAN_CANDIDATE",
+      "classification": "BUILD_SUPPORT",
       "reachedBy": []
     }
   ]

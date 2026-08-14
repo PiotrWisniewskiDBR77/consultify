@@ -1,6 +1,6 @@
 # Source reachability inventory
 
-Generated from `a297c38b869aa47563f304a8013d2290e7233deb` at 2026-08-14T17:10:54.797Z.
+Generated from `5e3b54264a6d31e33ef67d8a4a028223ecae9bf0` at 2026-08-14T17:16:51.328Z.
 
 This is a conservative inventory. `ORPHAN_CANDIDATE` means manual review is required; it never authorizes deletion.
 
@@ -8,9 +8,10 @@ This is a conservative inventory. `ORPHAN_CANDIDATE` means manual review is requ
 
 | Classification | Files |
 |---|---:|
-| ORPHAN_CANDIDATE | 1298 |
+| BUILD_SUPPORT | 12 |
+| ORPHAN_CANDIDATE | 1246 |
 | RUNTIME_REACHABLE | 5045 |
-| SUPPORT_ONLY | 486 |
+| SUPPORT_ONLY | 526 |
 | Unresolved local imports (all analyzed sources) | 120 |
 | Unresolved local imports (runtime reachable) | 0 |
 

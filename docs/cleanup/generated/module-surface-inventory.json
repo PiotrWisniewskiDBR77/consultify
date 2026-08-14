@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-14T17:15:37.732Z",
-  "gitSha": "dd2ff0fadda6e934ee8e41f097ea943ecf1fdbe6",
+  "generatedAt": "2026-08-14T17:16:52.119Z",
+  "gitSha": "5e3b54264a6d31e33ef67d8a4a028223ecae9bf0",
   "classification": "HEURISTIC_MODULE_ATTRIBUTION_REQUIRES_REVIEW",
   "warnings": [
     "Module attribution is path/name based and may place cross-module adapters in the wrong card.",
@@ -29,9 +29,11 @@
           "src/services/api/v8/transformation-cases.ts",
           "src/utils/agentPlanFlag.ts"
         ],
-        "SUPPORT_ONLY": [],
+        "BUILD_SUPPORT": [],
+        "SUPPORT_ONLY": [
+          "server/src/scripts/a10TransformationCaseLiveReadbackRealDbProof.ts"
+        ],
         "ORPHAN_CANDIDATE": [
-          "server/src/scripts/a10TransformationCaseLiveReadbackRealDbProof.ts",
           "src/views/AgentPlanView.tsx"
         ]
       },
@@ -402,6 +404,7 @@
           "src/views/superadmin/PresentationOperationsHealthView.tsx",
           "src/views/superadmin/PresentationTemplateGovernanceView.tsx"
         ],
+        "BUILD_SUPPORT": [],
         "SUPPORT_ONLY": [
           "server/src/services/presentationBenchmarkJudgeService.ts",
           "server/src/services/presentationDeckAutosaveCanonicalizer.ts",
@@ -1122,6 +1125,7 @@
           "src/views/AssessmentSessionEditorView.tsx",
           "src/views/PublicMiniAssessmentView.tsx"
         ],
+        "BUILD_SUPPORT": [],
         "SUPPORT_ONLY": [
           "server/src/middleware/assessmentRBAC.ts",
           "server/src/routes/assessment/assessments.routes.ts",
@@ -1536,6 +1540,7 @@
           "src/views/superadmin/iam/AdminAuditLogsView.tsx",
           "src/views/superadmin/iam/AuditEventsViewer.tsx"
         ],
+        "BUILD_SUPPORT": [],
         "SUPPORT_ONLY": [
           "src/components/MyWork/Decision/DecisionAuditTrail.tsx",
           "src/components/PMO/AuditTrailViewer.tsx",
@@ -1799,6 +1804,7 @@
           "src/components/CaseWorkspace/types.ts",
           "src/components/CaseWorkspace/ui.tsx"
         ],
+        "BUILD_SUPPORT": [],
         "SUPPORT_ONLY": [],
         "ORPHAN_CANDIDATE": [
           "server/src/routes/caseWorkspace/_shared/pagination.ts",
@@ -2155,6 +2161,7 @@
           "src/views/SharedConversationView.tsx",
           "src/views/superadmin/VirtualWorkersModule/ConversationBrowser.tsx"
         ],
+        "BUILD_SUPPORT": [],
         "SUPPORT_ONLY": [
           "server/src/services/ai/conversationCollaborationService.ts",
           "src/components/AIChat/AIRoleBadge.tsx",
@@ -2584,8 +2591,10 @@
           "src/services/initiatives-execution/runtimeApi.ts",
           "src/views/reports/InitiativeExecutionReport.tsx"
         ],
+        "BUILD_SUPPORT": [],
         "SUPPORT_ONLY": [
           "server/src/ai/actionExecutionAdapter.ts",
+          "server/src/scripts/u03OwnerBackedExecutionRealDbProof.ts",
           "src/components/Execution/AcceptanceRequesterPanel.tsx",
           "src/components/Execution/CorrectiveActions.tsx",
           "src/components/Execution/ExecutionInitiativeStatusControl.tsx",
@@ -2600,7 +2609,6 @@
         ],
         "ORPHAN_CANDIDATE": [
           "server/src/routes/execution.routes.ts",
-          "server/src/scripts/u03OwnerBackedExecutionRealDbProof.ts",
           "server/src/services/report/ReportExecutionService.ts",
           "server/src/validators/execution.validators.ts",
           "src/components/Execution/KPIDashboard.tsx",
@@ -3175,6 +3183,7 @@
           "src/utils/ideaFinancialCaseFlag.ts",
           "src/views/EconomicsView.tsx"
         ],
+        "BUILD_SUPPORT": [],
         "SUPPORT_ONLY": [
           "server/src/services/demo/financeDemoCoherencePolicy.ts",
           "server/src/services/demo/financeDemoManifestSignature.ts",
@@ -4083,6 +4092,7 @@
           "src/utils/mywork/ideaTablePresenceErrorMessage.ts",
           "src/utils/whiteboardSessionInPanelFlag.ts"
         ],
+        "BUILD_SUPPORT": [],
         "SUPPORT_ONLY": [
           "server/src/services/v8/whiteboardCanon.ts"
         ],
@@ -4564,8 +4574,11 @@
           "src/utils/initiativesBulkStubFlag.ts",
           "src/views/FullInitiativesView.tsx"
         ],
+        "BUILD_SUPPORT": [],
         "SUPPORT_ONLY": [
+          "server/src/scripts/t01InitiativeGateDecisionRealDbProof.ts",
           "server/src/services/initiativeToleranceService.ts",
+          "server/src/services/v8/transformationInitiativeTransitionAdapterService.ts",
           "src/components/Discovery/toolInitiativePreviewDetails.ts",
           "src/components/InitiativeCard.tsx",
           "src/components/Initiatives/Analysis/AnalysisWorkspacePanel.tsx",
@@ -4597,8 +4610,6 @@
         ],
         "ORPHAN_CANDIDATE": [
           "server/src/routes/initiatives.routes.ts",
-          "server/src/scripts/t01InitiativeGateDecisionRealDbProof.ts",
-          "server/src/services/v8/transformationInitiativeTransitionAdapterService.ts",
           "server/src/validators/initiative-generator.validators.ts",
           "server/src/validators/initiatives.validators.ts",
           "src/components/Decisions/DecisionsByInitiative.tsx",
@@ -5089,7 +5100,9 @@
           "src/utils/interviewPendingReviewTabFlag.ts",
           "src/utils/interviewPipelineStepperFlag.ts"
         ],
+        "BUILD_SUPPORT": [],
         "SUPPORT_ONLY": [
+          "server/src/scripts/t01InterviewRealDbProof.ts",
           "src/components/Interview/InterviewContextBanner.tsx",
           "src/components/Interview/InterviewSummary.tsx",
           "src/components/Interview/SufficiencyIndicator.tsx",
@@ -5097,7 +5110,6 @@
           "src/hooks/useInterviewContext.ts"
         ],
         "ORPHAN_CANDIDATE": [
-          "server/src/scripts/t01InterviewRealDbProof.ts",
           "server/src/services/interviewModalityGuide.ts",
           "server/src/services/v8/interviewInsightService.ts",
           "src/components/AIInterviewModal.tsx",
@@ -5629,8 +5641,10 @@
           "src/views/MyWorkView.tsx",
           "src/views/superadmin/AIPlatformModule/Operations/MarketInboxTab.tsx"
         ],
+        "BUILD_SUPPORT": [],
         "SUPPORT_ONLY": [
           "server/src/ai/actionDecisionService.ts",
+          "server/src/scripts/t01DecisionPackRealDbProof.ts",
           "server/src/services/decisionCopilotService.ts",
           "server/src/services/resultsVnext/okr/okrDecisionResolutionScanner.ts",
           "src/components/MyWork/AIAnalysisProposalReviewQueue.tsx",
@@ -5684,7 +5698,6 @@
           "server/src/routes/actionDecisions.routes.ts",
           "server/src/routes/calendarIntegrations.routes.ts",
           "server/src/routes/my-work/index.ts",
-          "server/src/scripts/t01DecisionPackRealDbProof.ts",
           "server/src/services/decisionDelegationService.ts",
           "server/src/services/myWorkService.ts",
           "server/src/validators/actionDecisions.validators.ts",
@@ -6401,6 +6414,7 @@
           "src/components/ResultsVNext/teresa/teresaProposalApi.ts",
           "src/components/ResultsVNext/types.ts"
         ],
+        "BUILD_SUPPORT": [],
         "SUPPORT_ONLY": [
           "server/src/services/resultsVnext/okr/okrCheckInScheduler.ts",
           "server/src/services/resultsVnext/okr/okrCycleScheduler.ts",
@@ -6792,6 +6806,7 @@
           "src/toolOutputs/slides.ts",
           "src/toolOutputs/types.ts"
         ],
+        "BUILD_SUPPORT": [],
         "SUPPORT_ONLY": [
           "src/components/DiscoveryTools/live/SwotLiveArtifact.tsx",
           "src/config/agentManifests/discoveryToolsRegistry.ts",
@@ -7242,6 +7257,7 @@
           "src/views/superadmin/support/SupportModuleView.tsx",
           "src/views/superadmin/support/SupportTicketsView.tsx"
         ],
+        "BUILD_SUPPORT": [],
         "SUPPORT_ONLY": [
           "server/src/routes/aiSettingsFallback.ts",
           "server/src/routes/organization-data.routes.ts",
@@ -10451,6 +10467,20 @@
           "src/views/vault/VaultSafesTable.tsx",
           "src/views/vault/vaultDocuments.ts"
         ],
+        "BUILD_SUPPORT": [
+          "server/src/types/custom.d.ts",
+          "server/src/types/jsdom.d.ts",
+          "server/src/types/pdf-parse.d.ts",
+          "server/src/types/pptxgenjs.d.ts",
+          "server/src/types/prom-client.d.ts",
+          "server/src/types/redis.d.ts",
+          "server/src/types/sharp.d.ts",
+          "server/src/types/stripe.d.ts",
+          "server/src/types/swagger-jsdoc.d.ts",
+          "src/types/vendor/reactflow.d.ts",
+          "src/types/vendor/turndown-plugin-gfm.d.ts",
+          "src/vite-env.d.ts"
+        ],
         "SUPPORT_ONLY": [
           "server/src/ai/actionExecutors/meetingExecutor.ts",
           "server/src/ai/actionExecutors/playbookExecutor.ts",
@@ -10478,6 +10508,40 @@
           "server/src/routes/sessions.routes.ts",
           "server/src/routes/users.routes.ts",
           "server/src/routes/v10/runtimeRouteUtils.ts",
+          "server/src/scripts/a01A02CanonicalRunRealDbProof.ts",
+          "server/src/scripts/a02CanonicalProjectionRestartWorker.ts",
+          "server/src/scripts/a03PlanningClarificationRealDbProof.ts",
+          "server/src/scripts/a03PlanningWorkshopRealDbProof.ts",
+          "server/src/scripts/a03TemplateIntakeRealDbProof.ts",
+          "server/src/scripts/a04ContextGroundingRealDbProof.ts",
+          "server/src/scripts/a04ProductionRetrievalRealDbProof.ts",
+          "server/src/scripts/a04WorkerClaimContextRealDbProof.ts",
+          "server/src/scripts/a04WorkerClaimRestartWorker.ts",
+          "server/src/scripts/a05ProposalGovernanceRealDbProof.ts",
+          "server/src/scripts/a06AdapterOrchestrationRealDbProof.ts",
+          "server/src/scripts/a06TenantActivationRealDbProof.ts",
+          "server/src/scripts/a07ScheduleRealDbProof.ts",
+          "server/src/scripts/a07Wave8ForwardMigrationRealDbProof.ts",
+          "server/src/scripts/a08MultiAgentRealDbProof.ts",
+          "server/src/scripts/a09AgentToolGovernanceRealDbProof.ts",
+          "server/src/scripts/a09CrossPathResourceRealDbProof.ts",
+          "server/src/scripts/a09LegacyNoncanonicalIsolationRealDbProof.ts",
+          "server/src/scripts/a09ReleasedReservationReclaimRealDbProof.ts",
+          "server/src/scripts/a09ResourceGovernanceRealDbProof.ts",
+          "server/src/scripts/a09ResourceGovernanceRestartWorker.ts",
+          "server/src/scripts/a09WorkGraphResourceRealDbProof.ts",
+          "server/src/scripts/a09WorkGraphRestartWorker.ts",
+          "server/src/scripts/a10AgentQualityEvalRealDbProof.ts",
+          "server/src/scripts/a11OperatorConsoleRealDbProof.ts",
+          "server/src/scripts/a12TemplateGovernanceRealDbProof.ts",
+          "server/src/scripts/agentMigrationsIdempotencyRealDbProof.ts",
+          "server/src/scripts/buildT01FinalDeck.mjs",
+          "server/src/scripts/i04DrdQualityReviewRealDbProof.ts",
+          "server/src/scripts/invalidate_ai_cache.ts",
+          "server/src/scripts/t01BrowserFixtureServer.ts",
+          "server/src/scripts/t01FinalOutputRealDbProof.ts",
+          "server/src/scripts/t01ProjectTeamRealDbProof.ts",
+          "server/src/scripts/u02MigrationSafetyRealDbProof.ts",
           "server/src/services/__harness__/reconcileCalibration.ts",
           "server/src/services/ai/industryTemplateService.ts",
           "server/src/services/ai/summarizationService.ts",
@@ -10793,40 +10857,6 @@
           "server/src/routes/webhookSubscriptions.routes.ts",
           "server/src/routes/webhooks.routes.ts",
           "server/src/routes/workstreams.routes.ts",
-          "server/src/scripts/a01A02CanonicalRunRealDbProof.ts",
-          "server/src/scripts/a02CanonicalProjectionRestartWorker.ts",
-          "server/src/scripts/a03PlanningClarificationRealDbProof.ts",
-          "server/src/scripts/a03PlanningWorkshopRealDbProof.ts",
-          "server/src/scripts/a03TemplateIntakeRealDbProof.ts",
-          "server/src/scripts/a04ContextGroundingRealDbProof.ts",
-          "server/src/scripts/a04ProductionRetrievalRealDbProof.ts",
-          "server/src/scripts/a04WorkerClaimContextRealDbProof.ts",
-          "server/src/scripts/a04WorkerClaimRestartWorker.ts",
-          "server/src/scripts/a05ProposalGovernanceRealDbProof.ts",
-          "server/src/scripts/a06AdapterOrchestrationRealDbProof.ts",
-          "server/src/scripts/a06TenantActivationRealDbProof.ts",
-          "server/src/scripts/a07ScheduleRealDbProof.ts",
-          "server/src/scripts/a07Wave8ForwardMigrationRealDbProof.ts",
-          "server/src/scripts/a08MultiAgentRealDbProof.ts",
-          "server/src/scripts/a09AgentToolGovernanceRealDbProof.ts",
-          "server/src/scripts/a09CrossPathResourceRealDbProof.ts",
-          "server/src/scripts/a09LegacyNoncanonicalIsolationRealDbProof.ts",
-          "server/src/scripts/a09ReleasedReservationReclaimRealDbProof.ts",
-          "server/src/scripts/a09ResourceGovernanceRealDbProof.ts",
-          "server/src/scripts/a09ResourceGovernanceRestartWorker.ts",
-          "server/src/scripts/a09WorkGraphResourceRealDbProof.ts",
-          "server/src/scripts/a09WorkGraphRestartWorker.ts",
-          "server/src/scripts/a10AgentQualityEvalRealDbProof.ts",
-          "server/src/scripts/a11OperatorConsoleRealDbProof.ts",
-          "server/src/scripts/a12TemplateGovernanceRealDbProof.ts",
-          "server/src/scripts/agentMigrationsIdempotencyRealDbProof.ts",
-          "server/src/scripts/buildT01FinalDeck.mjs",
-          "server/src/scripts/i04DrdQualityReviewRealDbProof.ts",
-          "server/src/scripts/invalidate_ai_cache.ts",
-          "server/src/scripts/t01BrowserFixtureServer.ts",
-          "server/src/scripts/t01FinalOutputRealDbProof.ts",
-          "server/src/scripts/t01ProjectTeamRealDbProof.ts",
-          "server/src/scripts/u02MigrationSafetyRealDbProof.ts",
           "server/src/services/ApiKeyService.js",
           "server/src/services/BaseService.ts",
           "server/src/services/DunningService.js",
@@ -10907,17 +10937,8 @@
           "server/src/services/userSessionService.ts",
           "server/src/services/workqueueService.ts",
           "server/src/types/common.ts",
-          "server/src/types/custom.d.ts",
           "server/src/types/database.types.ts",
-          "server/src/types/jsdom.d.ts",
-          "server/src/types/pdf-parse.d.ts",
-          "server/src/types/pptxgenjs.d.ts",
-          "server/src/types/prom-client.d.ts",
-          "server/src/types/redis.d.ts",
           "server/src/types/shared.ts",
-          "server/src/types/sharp.d.ts",
-          "server/src/types/stripe.d.ts",
-          "server/src/types/swagger-jsdoc.d.ts",
           "server/src/utils/RedisStore.ts",
           "server/src/utils/index.ts",
           "server/src/utils/lazyRouteLoader.ts",
@@ -11378,8 +11399,6 @@
           "src/services/transformationEngine.ts",
           "src/store/useMultiFrameworkStore.ts",
           "src/types/api/index.ts",
-          "src/types/vendor/reactflow.d.ts",
-          "src/types/vendor/turndown-plugin-gfm.d.ts",
           "src/utils/animations.tsx",
           "src/utils/businessCaseAdvisoryFlag.ts",
           "src/utils/canvas/canvasMutationRisk.ts",
@@ -11407,8 +11426,7 @@
           "src/views/auth/VerifyEmail.tsx",
           "src/views/legal/CookiePolicyView.tsx",
           "src/views/legal/PrivacyPolicyView.tsx",
-          "src/views/legal/TermsOfServiceView.tsx",
-          "src/vite-env.d.ts"
+          "src/views/legal/TermsOfServiceView.tsx"
         ]
       },
       "frontendRoutes": [
