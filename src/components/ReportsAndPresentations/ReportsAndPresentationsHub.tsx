@@ -210,7 +210,13 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   // odpowiednim `templatesView` zamiast na osobnej zakładce.
   type TemplatesLibraryView = 'library' | 'deckArchitect' | 'workbookTemplates';
 
-  const { initialTab, initialArtifactId, initialTemplatesView, initialWorkbookTemplateId } =
+  const {
+    initialTab,
+    initialArtifactId,
+    initialTemplatesView,
+    initialWorkbookTemplateId,
+    initialWorkbookId,
+  } =
     useMemo(() => {
       const params = new URLSearchParams(location.search || '');
       const fromQuery = parseRapTabFromQuery(params.get('tab'));
@@ -237,6 +243,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         initialArtifactId: params.get('artifactId') || params.get('deck') || null,
         initialTemplatesView: templatesView,
         initialWorkbookTemplateId: params.get('workbookTemplateId') || null,
+        initialWorkbookId: params.get('workbookId') || null,
       };
     }, [location.pathname, location.search]);
 
@@ -1450,6 +1457,16 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                 <ExceleParametricTemplates
                   isPolish={isPolish}
                   initialTemplateId={workbookTemplateId}
+                  initialWorkbookId={initialWorkbookId}
+                  onBuilt={(result) => {
+                    const params = new URLSearchParams(location.search || '');
+                    params.set('tab', 'workbook_templates');
+                    if (workbookTemplateId) {
+                      params.set('workbookTemplateId', workbookTemplateId);
+                    }
+                    params.set('workbookId', result.id);
+                    navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+                  }}
                 />
               </div>
             </div>

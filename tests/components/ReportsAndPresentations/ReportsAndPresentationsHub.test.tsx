@@ -39,13 +39,12 @@ vi.mock('react-i18next', async () => {
   };
 });
 
-vi.mock('../../../src/components/shared/ModuleHub', () => ({
-  ModuleHub: ({ tabs, activeTab, title, commandRowContent, onTabChange, children }: any) => {
+vi.mock('../../../src/components/standard/StandardModuleBar', () => ({
+  StandardModuleBar: ({ tabs, activeTab, commandRowContent, onTabChange, children, primaryCtaContent, onNewItem, newItemLabel }: any) => {
     lastOnTabChange = onTabChange;
     lastTabs = tabs;
     return (
       <div>
-        <h1>{title}</h1>
         <div data-testid="active-tab">{activeTab}</div>
         <div>
           {tabs.map((tab: any) => (
@@ -53,6 +52,7 @@ vi.mock('../../../src/components/shared/ModuleHub', () => ({
           ))}
         </div>
         <div data-testid="command-row">{commandRowContent}</div>
+        {primaryCtaContent || (onNewItem ? <button title={newItemLabel} onClick={onNewItem}>{newItemLabel}</button> : null)}
         <button
           data-testid="switch-to-templates"
           onClick={() => onTabChange?.('templates')}
@@ -250,8 +250,6 @@ describe('ReportsAndPresentationsHub', () => {
     );
 
     expect(screen.getAllByText('All').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Mine').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Needs review').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Documents').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Presentations').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Sheets').length).toBeGreaterThan(0);
@@ -371,19 +369,19 @@ describe('ReportsAndPresentationsHub', () => {
   // jest jedynym słusznym trybem (wcześniej brak ?entry= zostawiał zachowanie
   // zależne od stanu triModeFlag, co mogło pokazać TriModeChooser zamiast
   // wejść wprost do AI).
-  it('navigates to Document Studio with entry=ai from the "New AI document" command-row button', () => {
+  it('opens the governed creation launcher from the Documents CTA', () => {
     render(
-      <MemoryRouter initialEntries={['/presentations']}>
+      <MemoryRouter initialEntries={['/presentations?tab=documents']}>
         <ReportsAndPresentationsHub />
       </MemoryRouter>
     );
 
-    const button = screen.getByTitle('New AI document (Document Studio)');
+    const button = screen.getByTitle('New report');
     act(() => {
       button.click();
     });
 
-    expect(navigateMock).toHaveBeenCalledWith('/document-studio?entry=ai');
+    expect(screen.getByTestId('materials-create-launcher')).toBeInTheDocument();
   });
 
   it('"← Szablony" returns from the embedded deck architect view to the Template Library table', () => {
