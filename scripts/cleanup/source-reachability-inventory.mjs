@@ -133,14 +133,18 @@ const reachability = Object.fromEntries(
   Object.entries(runtimeEntries).map(([name, entries]) => [name, reachableFrom(entries)])
 );
 const runtimeReachable = new Set(Object.values(reachability).flatMap((set) => [...set]));
-const supportRoots = allAnalysisFiles.filter((file) => isTestLike(rel(file)) || rel(file).startsWith('scripts/'));
+const supportRoots = allAnalysisFiles.filter((file) => {
+  const relative = rel(file);
+  return isTestLike(relative) || relative.startsWith('scripts/') || relative.includes('/scripts/');
+});
 const supportReachable = reachableFrom(supportRoots.map(rel));
 
 const records = productionFiles.map((file) => {
   const relative = rel(file);
   const reachedBy = Object.entries(reachability).filter(([, files]) => files.has(file)).map(([name]) => name);
   let classification = 'ORPHAN_CANDIDATE';
-  if (runtimeReachable.has(file)) classification = 'RUNTIME_REACHABLE';
+  if (relative.endsWith('.d.ts')) classification = 'BUILD_SUPPORT';
+  else if (runtimeReachable.has(file)) classification = 'RUNTIME_REACHABLE';
   else if (supportReachable.has(file)) classification = 'SUPPORT_ONLY';
   return { file: relative, classification, reachedBy };
 }).sort((a, b) => a.file.localeCompare(b.file));

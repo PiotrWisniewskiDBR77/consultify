@@ -44,7 +44,7 @@ function walk(directory, result = []) {
 }
 
 const cards = Object.fromEntries([...modules.map(([name]) => name), 'cross-cutting-or-unclassified'].map((name) => [name, {
-  source: { RUNTIME_REACHABLE: [], SUPPORT_ONLY: [], ORPHAN_CANDIDATE: [] },
+  source: { RUNTIME_REACHABLE: [], BUILD_SUPPORT: [], SUPPORT_ONLY: [], ORPHAN_CANDIDATE: [] },
   frontendRoutes: [],
   backendMounts: [],
   featureFlags: [],
@@ -152,14 +152,14 @@ fs.mkdirSync(generatedDir, { recursive: true });
 fs.writeFileSync(path.join(generatedDir, 'module-surface-inventory.json'), JSON.stringify(report, null, 2) + '\n');
 const rows = Object.entries(cards).map(([name, card]) => {
   const s = card.source;
-  return `| ${name} | ${s.RUNTIME_REACHABLE.length} | ${s.SUPPORT_ONLY.length} | ${s.ORPHAN_CANDIDATE.length} | ${card.frontendRoutes.length} | ${card.backendMounts.length} | ${card.featureFlags.length} | ${card.migrations.length} | ${card.seeds.length} | ${card.tests.length} |`;
+  return `| ${name} | ${s.RUNTIME_REACHABLE.length} | ${s.BUILD_SUPPORT.length} | ${s.SUPPORT_ONLY.length} | ${s.ORPHAN_CANDIDATE.length} | ${card.frontendRoutes.length} | ${card.backendMounts.length} | ${card.featureFlags.length} | ${card.migrations.length} | ${card.seeds.length} | ${card.tests.length} |`;
 });
 const markdown = [
   '# Module surface inventory', '',
   `Generated from \`${report.gitSha ?? 'working-tree'}\` at ${report.generatedAt}.`, '',
   '> This is a coverage ledger, not a readiness verdict. Module attribution is heuristic and must be reviewed.', '',
-  '| Module | Runtime | Support only | Orphan candidates | FE routes | BE mounts | Flag refs | Migrations | Seeds | Tests |',
-  '|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|',
+  '| Module | Runtime | Build support | Support only | Orphan candidates | FE routes | BE mounts | Flag refs | Migrations | Seeds | Tests |',
+  '|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|',
   ...rows, '',
   'The machine-readable file `module-surface-inventory.json` contains the exact file lists and source locations.', '',
 ];
