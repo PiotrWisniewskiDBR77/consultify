@@ -86,6 +86,14 @@ vi.mock('../../middleware/demoGuard.middleware.js', () => ({
   demoContextMiddleware: (_req: any, _res: any, next: () => void) => next(),
 }));
 
+vi.mock('../../middleware/effectiveCapability.middleware.js', () => ({
+  requireInitiativeCapability: () => (_req: any, _res: any, next: () => void) => next(),
+}));
+
+vi.mock('../../services/initiative/initiativeGovernanceGuard.js', () => ({
+  requireInitiativeWriteAccess: () => (_req: any, _res: any, next: () => void) => next(),
+}));
+
 vi.mock('../../utils/requestOrganization.js', () => ({
   requireRequestOrganizationId: (req: any, res: any) => {
     const orgId = req.user?.organizationId;
@@ -132,6 +140,21 @@ vi.mock('../../services/initiative/initiativeAccessResolver.js', () => ({
 vi.mock('../../services/initiative/initiativeGateReadinessService.js', () => ({
   getBlockingReadinessItems: vi.fn().mockResolvedValue([]),
 }));
+
+vi.mock('../../services/initiative/initiativeTransitionService.js', async (importOriginal) => {
+  const actual =
+    await importOriginal<
+      typeof import('../../services/initiative/initiativeTransitionService.js')
+    >();
+  return {
+    ...actual,
+    executeInitiativeTransition: vi.fn().mockResolvedValue({
+      ok: false,
+      statusCode: 400,
+      body: { error: 'Invalid transition', code: 'INITIATIVE_TRANSITION_INVALID' },
+    }),
+  };
+});
 
 vi.mock('../../services/initiative/initiativeKpiAssignmentService.js', () => ({
   upsertInitiativeKpiAssignment: vi.fn().mockResolvedValue(undefined),
@@ -254,7 +277,7 @@ describe('M13 mass-assignment — V-1: generic update cannot jump status', () =>
       .send({ status: 'APPROVED' });
 
     expect(res.status).not.toBe(200);
-    expect([400, 403]).toContain(res.status);
+    expect([400, 403], JSON.stringify(res.body)).toContain(res.status);
   });
 
   it('PUT /:id with a same-value status echo is tolerated and never emits status = ?', async () => {
