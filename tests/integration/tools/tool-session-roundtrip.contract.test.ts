@@ -183,6 +183,16 @@ describe('H3 tool session round-trip (create → save → resume → output)', (
         priority_order INTEGER, created_at TEXT, updated_at TEXT
       )`
     );
+    // Promotion to an Idea is fail-closed and writes the real My Work record.
+    // Keep the characterization store aligned with that production contract;
+    // older versions of the controller silently swallowed a missing table.
+    await sqlRun(
+      `CREATE TABLE my_ideas (
+        id TEXT PRIMARY KEY, user_id TEXT, organization_id TEXT, title TEXT,
+        body TEXT, tags TEXT, source_type TEXT, source_pack_json TEXT,
+        created_at TEXT, updated_at TEXT
+      )`
+    );
 
     const { default: toolsRoutes } = await import('../../../server/src/routes/tools.routes.js');
     app = express();
@@ -321,7 +331,7 @@ describe('H3 tool session round-trip (create → save → resume → output)', (
       title: 'SWOT output — EU expansion focus',
       description: 'Prioritize EU expansion while modernizing order-to-cash.',
     });
-    expect(res.status).toBe(200);
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(res.body.id).toBeTruthy();
     expect(res.body.sourceSessionId).toBe(sessionId);
     expect(res.body.sourceToolType).toBe('dynamic-swot');
@@ -342,7 +352,7 @@ describe('H3 tool session round-trip (create → save → resume → output)', (
       outputType: 'idea',
       title: 'SWOT output — EU expansion focus',
     });
-    expect(res.status).toBe(200);
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(res.body.deduplicated).toBe(true);
     expect(res.body.id).toBe(first?.initiative_id);
   });

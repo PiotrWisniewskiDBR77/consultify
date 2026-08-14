@@ -80,7 +80,11 @@ async function dbGet(sql: string, params: unknown[] = []): Promise<unknown> {
     return store.ideaOrg.get(ideaId) === org ? { id: ideaId } : null;
   }
   // organization_members ACTIVE check
-  if (/organization_members WHERE organization_id = \? AND user_id = \? AND status = 'ACTIVE'/.test(s)) {
+  if (
+    /organization_members WHERE organization_id = \? AND user_id = \? AND (?:UPPER\(status\)|status) = 'ACTIVE'/.test(
+      s
+    )
+  ) {
     const [org, user] = params as [string, string];
     return store.members.has(`${org}:${user}`) ? { id: `${org}:${user}` } : null;
   }
@@ -153,6 +157,15 @@ vi.mock('../../../server/src/config/Config.js', () => ({
 }));
 
 // ── Import after mocks ────────────────────────────────────────────────────────
+
+// The production gateway now fails closed through the shared demo realtime
+// admission guard before it evaluates idea membership. This characterization
+// test owns an isolated in-memory tenant, so admit its synthetic users while
+// keeping the membership and persistence checks below real.
+vi.mock('../../../server/src/realtime/demoRealtimeGuard.js', () => ({
+  evaluateRealtimeAccess: vi.fn().mockResolvedValue({ allowed: true }),
+  trackRealtimeConnection: vi.fn(() => () => undefined),
+}));
 
 import { attachIdeaCollabWs } from '../../../server/src/gateways/ideaCollabWs.gateway.js';
 
