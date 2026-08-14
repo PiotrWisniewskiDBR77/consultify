@@ -14,6 +14,7 @@ const { toastErrorMock, apiMock, editorMock } = vi.hoisted(() => ({
   apiMock: {
     getNotebookPages: vi.fn(),
     getNotebookPage: vi.fn(),
+    getOrphanedNotebookPageIds: vi.fn(async () => []),
     notebookGetAIProposals: vi.fn(),
     updateNotebookPage: vi.fn(),
   },

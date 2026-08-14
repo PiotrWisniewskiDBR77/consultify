@@ -70,7 +70,7 @@ describe('NotebookLibraryContent (App Table)', () => {
     expect(await screen.findByText('Strategy 2026')).toBeInTheDocument();
     expect(screen.getByText('Client Insights')).toBeInTheDocument();
     expect(screen.getByText('Personal')).toBeInTheDocument();
-    expect(screen.getByText('Team')).toBeInTheDocument();
+    expect(screen.getByText('Organization')).toBeInTheDocument();
     expect(screen.getByText('Org context')).toBeInTheDocument();
   });
 
