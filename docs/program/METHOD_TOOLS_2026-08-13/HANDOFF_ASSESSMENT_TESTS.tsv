@@ -1,0 +1,12 @@
+bramka	komenda	sha	pliki_na_dysku	pliki_raportowane	pominiete	wynik	exit	retry	workers	srodowisko	baza	status
+serwer	npm run test:method-core:server	22815cd950	14	14	0	170/170	0	--retry=0	--no-file-parallelism	NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false	mac-pg-fresh8 pgvector/pg15 :55530	PASS
+front-bez-serwera	npm run test:method-core:front	22815cd950	45	45	8	336 passed + 8 skipped	0	--retry=0	domyslny	jsdom	brak	PARTIAL
+front-live	npm run test:method-core:front:live	22815cd950	45	45	0	344/344	0	--retry=0	domyslny	RUN_TERESA_LIVE_TESTS=1	zywy serwer :42210 + mac-pg-team :55495	PASS
+zakres-szerszy	vitest src/services src/actions src/hooks src/method-core src/components/method-workspace src/components/assessment	22815cd950	-	-	0	547/547	0	--retry=0	domyslny	RUN_TERESA_LIVE_TESTS=1	zywy serwer :42210	PASS
+tsc-scoped	npx tsc -p tsconfig.mpq-scoped.json	22815cd950	-	-	-	0 bledow w zakresie	2	-	-	-	-	PASS (exit 2 = pre-existing turndown-plugin-gfm poza zakresem)
+regresja-front-HEAD	vitest --exclude server/** src --retry=0	22815cd950	329	329	9	33 plikow / 90 testow czerwonych	1	--retry=0	domyslny	jsdom	brak	identical_pre_existing
+regresja-front-BASELINE	vitest --exclude server/** src --retry=0	f3e7df565e	282	282	1	33 plikow / 90 testow czerwonych	1	--retry=0	domyslny	jsdom	brak	identical_pre_existing
+fresh-bootstrap	npx tsx server/scripts/migrate.postgres.ts	22815cd950	6	6	0	14 tabel method_* w information_schema	0	-	-	NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false	mac-pg-fresh8 :55530	PASS
+e2e-true-browser	tests/e2e/*-true.spec.ts	6d90112005	-	-	-	13/14 scenariuszy	-	-	-	Playwright/Chromium	mac-pg-e2etrue :55540	PASS-13 FAIL-1-naprawiony
+e2e-offline-suite	scripts/dev/e2etrue-run-offline-suite.sh	22815cd950	-	-	-	nie przepuszczone po ostatnich merge	-	-	-	-	-	NOT_VERIFIED
+upgrade-path-migracji	brak	22815cd950	-	-	-	brak przebiegu	-	-	-	-	-	NOT_VERIFIED
