@@ -96,6 +96,8 @@
       "tests/integration/routes/stabilization.l3.test.ts",
       "tests/integration/routes/raidGovernance.routes.test.ts",
       "tests/integration/routes/v8.finance-planning.test.ts",
+      "tests/integration/admin/adminP32-cross-org-idor.test.ts",
+      "tests/integration/routes/auditLog.organizationContext.test.ts",
       "server/src/routes/v8/__tests__/public-anna.routes.test.ts",
       "tests/integration/routes/health.l3.test.ts",
       "tests/unit/backend/routes/workbook.routes.templates-c3.test.ts",
@@ -146,6 +148,8 @@
         "server/src/routes/__tests__/m11-tools-cross-org-idor.test.ts",
         "tests/integration/routes/raidGovernance.routes.test.ts",
         "tests/integration/routes/v8.finance-planning.test.ts",
+        "tests/integration/admin/adminP32-cross-org-idor.test.ts",
+        "tests/integration/routes/auditLog.organizationContext.test.ts",
         "server/src/routes/v8/__tests__/public-anna.routes.test.ts",
         "tests/integration/routes/health.l3.test.ts",
         "tests/unit/backend/routes/workbook.routes.templates-c3.test.ts"
