@@ -107,8 +107,10 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 
+let userRole = 'OWNER';
 vi.mock('@/store/useAppStore', () => ({
-  useAppStore: (selector: (state: any) => unknown) => selector({ currentUser: { id: 'user-1' } }),
+  useAppStore: (selector: (state: any) => unknown) =>
+    selector({ currentUser: { id: 'user-1', role: userRole } }),
 }));
 
 vi.mock('@/components/shared/TableWithPreviewLayout', () => ({
@@ -217,6 +219,7 @@ describe('TransformationCasesPanel', () => {
   });
   beforeEach(() => {
     language = 'pl';
+    userRole = 'OWNER';
     listMock.mockReset().mockResolvedValue([]);
     getMock.mockReset().mockResolvedValue(makeCase());
     finalOutputMock.mockReset().mockRejectedValue(new Error('not found'));
@@ -247,6 +250,27 @@ describe('TransformationCasesPanel', () => {
     generateFinalOutputsMock.mockReset();
   });
 
+  it('shows a business workspace to a normal user without raw runtime diagnostics', async () => {
+    userRole = 'MEMBER';
+    const item = makeCase();
+    item.desiredOutcomes = ['Skrócić czas od decyzji do rezultatu o 30%.'];
+    listMock.mockResolvedValue([item]);
+
+    render(
+      <MemoryRouter initialEntries={['/my-work?tab=agent&transformationCaseId=case-linked']}>
+        <TransformationCasesPanel fullView />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText('Zlecenie transformacyjne')).toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: 'Widoki zlecenia' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Kontynuuj z Teresą' })).toBeInTheDocument();
+    expect(screen.getByText('Warsztat z Teresą')).toBeInTheDocument();
+    expect(screen.queryByText('Kanoniczny przebieg agenta')).not.toBeInTheDocument();
+    expect(screen.queryByText('NOT_CONNECTED')).not.toBeInTheDocument();
+    expect(screen.queryByText('case-linked')).not.toBeInTheDocument();
+  });
+
   it('resolves a Teresa deep-link and renders complete capability truth with blocked run', async () => {
     const contextChange = vi.fn();
     const openOperations = vi.fn();
@@ -261,7 +285,9 @@ describe('TransformationCasesPanel', () => {
     );
 
     await waitFor(() => expect(getMock).toHaveBeenCalledWith('case-linked'));
-    expect(await screen.findByText('Przygotuj plan transformacji operacyjnej')).toBeInTheDocument();
+    expect(
+      (await screen.findAllByText('Przygotuj plan transformacji operacyjnej')).length
+    ).toBeGreaterThan(0);
     expect(screen.getAllByText('NOT_CONNECTED')).toHaveLength(14);
     expect(screen.getByRole('button', { name: 'Uruchom (zablokowane)' })).toBeDisabled();
     expect(
