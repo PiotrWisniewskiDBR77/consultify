@@ -65,7 +65,10 @@
       "tests/integration/routes/budget.l3.test.ts",
       "server/src/routes/__tests__/finance-statements.routes.f5wiring.test.ts",
       "server/src/routes/__tests__/initiatives-crud.test.ts",
-      "server/src/routes/resultsVnext/__tests__/okr.routes.test.ts"
+      "server/src/routes/resultsVnext/__tests__/okr.routes.test.ts",
+      "tests/integration/routes/work-canvas.routes.test.ts",
+      "tests/integration/tools/tool-session-roundtrip.contract.test.ts",
+      "server/src/routes/__tests__/document-studio-share-links.routes.test.ts"
     ]
   },
   "gates": {
@@ -91,7 +94,10 @@
         "src/components/Finance/Prediction/__tests__/PredictionWorkspace.test.tsx",
         "server/src/routes/__tests__/finance-statements.routes.f5wiring.test.ts",
         "server/src/routes/__tests__/initiatives-crud.test.ts",
-        "server/src/routes/resultsVnext/__tests__/okr.routes.test.ts"
+        "server/src/routes/resultsVnext/__tests__/okr.routes.test.ts",
+        "tests/integration/routes/work-canvas.routes.test.ts",
+        "tests/integration/tools/tool-session-roundtrip.contract.test.ts",
+        "server/src/routes/__tests__/document-studio-share-links.routes.test.ts"
       ]
     },
     "realdb": {
