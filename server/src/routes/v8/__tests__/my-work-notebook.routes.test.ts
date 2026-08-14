@@ -5,6 +5,11 @@ import path from 'path';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+// Multipart behavior is part of this route contract. The global test setup's
+// lightweight multer stand-in deliberately leaves `.array()` empty, so use
+// the real parser for upload coverage in this suite.
+vi.unmock('multer');
+
 const mockGetTableColumns = vi.fn();
 const mockQueryAll = vi.fn();
 const mockQueryOne = vi.fn();
@@ -110,8 +115,30 @@ function createApp(): Express {
 
 describe('V8 My Work notebook routes', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    // `clearAllMocks` keeps queued `mockResolvedValueOnce` implementations.
+    // This route suite relies on ordered DB reads, so a short-circuited request
+    // must not leak its unused queue into the next test.
+    [
+      mockGetTableColumns,
+      mockQueryAll,
+      mockQueryOne,
+      mockQueryRun,
+      mockCreateAIProposal,
+      mockGetProposalsForPage,
+      mockResolveAIProposal,
+      mockConvertNotebookPage,
+      mockNotebookCapture,
+      mockResolveStoredNotebookSourceFile,
+      mockPersistNotebookAttachment,
+      mockAddNotebookAttachmentsToPage,
+      mockResolveNotebookAttachmentFile,
+      mockDeleteNotebookAttachmentFile,
+      mockRemoveNotebookAttachmentFromPage,
+    ].forEach((mock) => mock.mockReset());
     mockGetTableColumns.mockResolvedValue(new Map([['id', { name: 'id' }]]));
+    mockQueryAll.mockResolvedValue([]);
+    mockQueryOne.mockResolvedValue(null);
+    mockQueryRun.mockResolvedValue({});
   });
 
   it('lists notebook pages through the V8 envelope', async () => {
@@ -301,7 +328,7 @@ describe('V8 My Work notebook routes', () => {
         contentType: 'text/plain',
       });
 
-    expect(res.status).toBe(201);
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
     expect(res.body.meta).toEqual({ version: 'v8', contract: 'my_work_notebook_v1' });
     expect(res.body.data).toEqual({
       pageId: 'captured-v8-note-1',
@@ -414,7 +441,7 @@ describe('V8 My Work notebook routes', () => {
         contentType: 'application/pdf',
       });
 
-    expect(res.status).toBe(201);
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
     expect(mockAddNotebookAttachmentsToPage).toHaveBeenCalledWith(
       expect.objectContaining({
         organizationId: ORG,

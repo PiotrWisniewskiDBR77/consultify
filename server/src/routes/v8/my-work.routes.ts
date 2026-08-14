@@ -1045,7 +1045,7 @@ router.post(
       });
     }
 
-    const tags = req.body.tags
+    const tags = req.body?.tags
       ? Array.isArray(req.body.tags)
         ? req.body.tags
         : [req.body.tags]
@@ -1053,12 +1053,12 @@ router.post(
 
     const data = await notebookService.capture(organizationId, userId, {
       source: 'upload',
-      title: req.body.title,
+      title: req.body?.title,
       fileBuffer: file.buffer,
       fileMimetype: file.mimetype,
       fileOriginalname: file.originalname,
       tags,
-      projectId: req.body.projectId || undefined,
+      projectId: req.body?.projectId || undefined,
     });
 
     return res.status(201).json({

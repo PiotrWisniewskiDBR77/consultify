@@ -117,7 +117,15 @@ describe('System health routes integration (L3)', () => {
     return await new Promise<typeof response>((resolve, reject) => {
       res.on('finish', () => resolve(response));
       app.handle(req as any, res as any, (err: any) => {
-        if (err) reject(err);
+        if (err) {
+          reject(err);
+          return;
+        }
+        // Express calls the final callback without an error when no route
+        // matched. The bespoke dispatcher must resolve that as a 404 instead
+        // of waiting forever for a `finish` event that will never be emitted.
+        response.status = 404;
+        resolve(response);
       });
     });
   };
@@ -162,77 +170,21 @@ describe('System health routes integration (L3)', () => {
     await resetConnection();
   });
 
-  it('GET / returns 503 when SystemHealthService is missing getDetailedHealth', async () => {
+  it('GET / is not exposed; detailed diagnostics live only on guarded routes', async () => {
     vi.resetModules();
     vi.doMock('../../../server/src/middleware/rateLimiting.middleware.js', () => ({
       defaultRateLimiter: (_req: any, _res: any, next: any) => next(),
     }));
-    vi.doMock('../../../server/src/services/systemHealthService.js', () => ({
-      default: {},
-    }));
 
     const app = await makeAppWithRouter();
     const res = await dispatch(app, { method: 'GET', url: '/api/system-health' });
-    expect(res.status).toBe(503);
-    expect(res.body).toEqual(
-      expect.objectContaining({
-        error: 'System health service not available',
-        code: 'SYSTEM_HEALTH_SERVICE_NOT_CONFIGURED',
-      })
-    );
+    expect(res.status).toBe(404);
+    expect(res.body).toBeUndefined();
 
-    vi.doUnmock('../../../server/src/services/systemHealthService.js');
     vi.doUnmock('../../../server/src/middleware/rateLimiting.middleware.js');
   });
 
-  it('GET / returns 200 with health payload when service responds', async () => {
-    vi.resetModules();
-    vi.doMock('../../../server/src/middleware/rateLimiting.middleware.js', () => ({
-      defaultRateLimiter: (_req: any, _res: any, next: any) => next(),
-    }));
-    vi.doMock('../../../server/src/services/systemHealthService.js', () => ({
-      default: {
-        getDetailedHealth: async () => ({ status: 'ok', checks: [] }),
-      },
-    }));
-
-    const app = await makeAppWithRouter();
-    const res = await dispatch(app, { method: 'GET', url: '/api/system-health' });
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual({ status: 'ok', checks: [] });
-
-    vi.doUnmock('../../../server/src/services/systemHealthService.js');
-    vi.doUnmock('../../../server/src/middleware/rateLimiting.middleware.js');
-  });
-
-  it('GET / returns 500 when service throws', async () => {
-    vi.resetModules();
-    vi.doMock('../../../server/src/middleware/rateLimiting.middleware.js', () => ({
-      defaultRateLimiter: (_req: any, _res: any, next: any) => next(),
-    }));
-    vi.doMock('../../../server/src/services/systemHealthService.js', () => ({
-      default: {
-        getDetailedHealth: async () => {
-          throw new Error('boom');
-        },
-      },
-    }));
-
-    const app = await makeAppWithRouter();
-    const res = await dispatch(app, { method: 'GET', url: '/api/system-health' });
-    expect(res.status).toBe(503);
-    expect(res.body).toEqual(
-      expect.objectContaining({
-        error: 'Health check failed',
-        code: 'SYSTEM_HEALTH_SUMMARY_READ_FAILED',
-      })
-    );
-
-    vi.doUnmock('../../../server/src/services/systemHealthService.js');
-    vi.doUnmock('../../../server/src/middleware/rateLimiting.middleware.js');
-  });
-
-  it('GET /detailed returns 403 when no token provided', async () => {
+  it('GET /detailed returns 401 when no token is provided', async () => {
     vi.resetModules();
     vi.doMock('../../../server/src/middleware/rateLimiting.middleware.js', () => ({
       defaultRateLimiter: (_req: any, _res: any, next: any) => next(),
@@ -243,8 +195,13 @@ describe('System health routes integration (L3)', () => {
 
     const app = await makeAppWithRouter();
     const res = await dispatch(app, { method: 'GET', url: '/api/system-health/detailed' });
-    expect(res.status).toBe(403);
-    expect(res.body).toEqual(expect.objectContaining({ error: 'No token provided' }));
+    expect(res.status).toBe(401);
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        error: 'Authorization token required',
+        code: 'UNAUTHORIZED',
+      })
+    );
 
     vi.doUnmock('../../../server/src/services/systemHealthService.js');
     vi.doUnmock('../../../server/src/middleware/rateLimiting.middleware.js');
