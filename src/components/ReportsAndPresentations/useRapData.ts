@@ -1291,19 +1291,29 @@ export function useTemplates() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchTemplates = useCallback(async () => {
+  const fetchTemplates = useCallback(async (includeDrafts = false) => {
     setLoading(true);
     try {
+      const draftParam = includeDrafts ? '&include=drafts' : '';
       const [rptRes, presRes, sheetRes] = await Promise.all([
-        fetch(`${API_URL}/artifacts?limit=200&artifactFamily=template&outputType=report`, {
-          headers: getHeaders(),
-        }),
-        fetch(`${API_URL}/artifacts?limit=200&artifactFamily=template&outputType=presentation`, {
-          headers: getHeaders(),
-        }),
-        fetch(`${API_URL}/artifacts?limit=200&artifactFamily=template&outputType=sheet`, {
-          headers: getHeaders(),
-        }),
+        fetch(
+          `${API_URL}/artifacts?limit=200&artifactFamily=template&outputType=report${draftParam}`,
+          {
+            headers: getHeaders(),
+          }
+        ),
+        fetch(
+          `${API_URL}/artifacts?limit=200&artifactFamily=template&outputType=presentation${draftParam}`,
+          {
+            headers: getHeaders(),
+          }
+        ),
+        fetch(
+          `${API_URL}/artifacts?limit=200&artifactFamily=template&outputType=sheet${draftParam}`,
+          {
+            headers: getHeaders(),
+          }
+        ),
       ]);
 
       const merged: TemplateItem[] = [];
