@@ -12,7 +12,7 @@ type MockDb = {
 };
 
 let mockDb: MockDb;
-const logger = { error: vi.fn(), warn: vi.fn() };
+const logger = { debug: vi.fn(), error: vi.fn(), info: vi.fn(), warn: vi.fn() };
 
 vi.mock('../../../../server/src/database/Database.js', () => ({
   getDatabase: () => mockDb,
@@ -25,6 +25,7 @@ vi.mock('../../../../server/src/utils/Logger.js', () => ({
 async function importFresh() {
   vi.resetModules();
   logger.error.mockClear();
+  logger.info.mockClear();
   logger.warn.mockClear();
   return await import('../../../../server/src/utils/queryHelpers.js');
 }

@@ -11,7 +11,7 @@ import { describe, expect, it, vi } from 'vitest';
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     i18n: { language: 'en' },
-    t: (key: string) => key,
+    t: (key: string, fallback?: string) => fallback ?? key,
   }),
   initReactI18next: {
     type: '3rdParty',
@@ -40,13 +40,13 @@ describe('SemanticTypeDropdown', () => {
     expect(screen.getByText('Subtopic')).toBeTruthy();
   });
 
-  it('renders Polish labels when isPl is true', () => {
+  it('uses translated labels instead of the deprecated isPl prop', () => {
     render(
       <SemanticTypeDropdown isPl={true} current={undefined} onSelect={vi.fn()} onClose={vi.fn()} />
     );
-    expect(screen.getByText('Temat')).toBeTruthy();
-    expect(screen.getByText('Hipoteza')).toBeTruthy();
-    expect(screen.getByText('Ryzyko')).toBeTruthy();
+    expect(screen.getByText('Topic')).toBeTruthy();
+    expect(screen.getByText('Hypothesis')).toBeTruthy();
+    expect(screen.getByText('Risk')).toBeTruthy();
   });
 
   it('highlights current type', () => {
