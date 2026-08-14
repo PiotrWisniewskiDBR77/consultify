@@ -486,12 +486,14 @@ describe('P32 Admin — cockpit IA alignment (§2.3.1)', () => {
     expect(content).not.toContain('Organization Ops');
   });
 
-  it('AdminSettingsModule exposes 5 first-class sections and maps legacy aliases', async () => {
+  it('AdminSettingsModule exposes all first-class sections and maps legacy aliases', async () => {
     const fs = await import('fs');
     const content = fs.readFileSync('src/views/admin/AdminSettingsModule.tsx', 'utf-8');
     // M24 IA: billing/ai/security/audit are first-class admin panels (not collapsed into team).
     expect(content).toContain("PRIMARY_SECTIONS");
-    expect(content).toContain("'people', 'billing', 'ai', 'security', 'audit'");
+    for (const section of ['people', 'billing', 'ai', 'security', 'audit', 'command', 'health']) {
+      expect(content).toContain(`'${section}'`);
+    }
     // Legacy aliases redirect to their canonical first-class section.
     expect(content).toContain("overview: 'people'");
     expect(content).toContain("billing: 'billing'");

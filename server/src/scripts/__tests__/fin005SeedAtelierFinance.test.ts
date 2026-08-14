@@ -390,7 +390,7 @@ describe('FIN-005 seed — target authority', () => {
           'railway',
         ])
       )
-    ).rejects.toThrow(/matches a forbidden production/);
+    ).rejects.toThrow(/production database host/);
   });
 
   it('4c. the CLI cannot substitute an allowlist — main() never forwards one', () => {
