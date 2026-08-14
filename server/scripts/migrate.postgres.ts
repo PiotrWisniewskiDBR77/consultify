@@ -30,6 +30,7 @@ import {
   assertNoPrivateRailwayDbHostOutsideRailway,
   resolveReachableDatabaseUrl,
 } from '../src/config/databaseTargetResolver.js';
+import { LATE_PHASE_MANIFEST as SHARED_LATE_PHASE_MANIFEST } from './migrationOrdering.js';
 
 type Args = {
   dir?: string;
@@ -163,7 +164,15 @@ const DATED_RE = /^(\d{4})-?(\d{2})-?(\d{2})[_-]/;
 // `finance_comments`/`finance_comment_assignments`/`finance_review_checklists`
 // are self-contained otherwise (no other migration in this repo references
 // them), so "run after everything" is safe, not just "run after b01".
-const LATE_PHASE_MANIFEST: string[] = ['20260809_finance_v3_ap06_comments_01_tables.sql'];
+// Keep the executable runner anchored to the tested ordering contract.  A
+// previous copy of this manifest drifted from migrationOrdering.ts, so the
+// unit gate passed while a fresh PostgreSQL run still executed migration 948
+// before its dated producer.  Runner-only entries may be appended here, but
+// shared dependency exceptions must come from the tested module.
+const LATE_PHASE_MANIFEST: string[] = [
+  ...SHARED_LATE_PHASE_MANIFEST,
+  '20260809_finance_v3_ap06_comments_01_tables.sql',
+];
 const LATE_PHASE_SET = new Set(LATE_PHASE_MANIFEST);
 
 // `isSqliteOnlyMigration()` blanket-excludes every numbered migration with

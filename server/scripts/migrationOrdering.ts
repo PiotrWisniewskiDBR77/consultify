@@ -44,6 +44,13 @@ export const LATE_PHASE_MANIFEST: string[] = [
   // wróci do fazy 0 i cicho pobiegnie za wcześnie. Strzeże tego
   // `tests/unit/migrationRunnerOrdering.test.ts`.
   '948_tool_promotion_tenant_idempotency.sql',
+  // Agent Hub capability and collaboration migrations consume the
+  // transformation case/plan tables produced by the dated
+  // 20260807_agent_t01_transformation_case.sql migration.  Their numeric
+  // prefixes would otherwise place them in phase 0, before that producer.
+  // Keep both in phase 2 and preserve their natural 952 -> 953 order.
+  '952_transformation_runtime_capability_registry.sql',
+  '953_transformation_collaboration_and_plan_suggestions.sql',
 ];
 export const LATE_PHASE_SET = new Set(LATE_PHASE_MANIFEST);
 

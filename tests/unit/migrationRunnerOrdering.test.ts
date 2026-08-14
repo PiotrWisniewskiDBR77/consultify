@@ -187,6 +187,16 @@ describe('GATE I1 — kolejność producent → konsument', () => {
       expect(i946, '946 musi istnieć na kandydacie integracyjnym').toBeGreaterThanOrEqual(0);
     }
   });
+
+  it('Agent Hub 952 i 953 biegną po datowanym producencie Transformation Case', () => {
+    const order = orderedFilenames();
+    const producer = indexOf(order, '20260807_agent_t01_transformation_case.sql');
+    const capability = indexOf(order, '952_transformation_runtime_capability_registry.sql');
+    const collaboration = indexOf(order, '953_transformation_collaboration_and_plan_suggestions.sql');
+    expect(producer).toBeGreaterThanOrEqual(0);
+    expect(capability).toBeGreaterThan(producer);
+    expect(collaboration).toBeGreaterThan(capability);
+  });
 });
 
 /**
