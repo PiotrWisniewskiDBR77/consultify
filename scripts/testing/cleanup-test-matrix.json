@@ -93,7 +93,10 @@
       "tests/integration/routes/audit-log.l3.test.ts",
       "tests/integration/routes/knowledge-base.p26.test.ts",
       "tests/integration/routes/status.l3.test.ts",
-      "server/src/routes/v8/__tests__/public-anna.routes.test.ts"
+      "server/src/routes/v8/__tests__/public-anna.routes.test.ts",
+      "tests/integration/routes/p21b-reports-template-artifactrun-e2e.sqlite.integration.test.ts",
+      "server/src/routes/__tests__/document-studio-client-reader.routes.test.ts",
+      "server/src/services/__tests__/nativeOwnerPinnedClient.test.ts"
     ]
   },
   "gates": {
@@ -213,7 +216,12 @@
     "staleHarness": {
       "reason": "The harness boots a legacy mock application/auth stack and asserts obsolete authentication or routing behavior. It must be rewritten against the current contract before it can be release evidence.",
       "execution": "must-be-repaired",
-      "files": ["tests/integration/pmo-project-members.integration.test.ts"]
+      "files": [
+        "tests/integration/pmo-project-members.integration.test.ts",
+        "tests/integration/routes/p21b-reports-template-artifactrun-e2e.sqlite.integration.test.ts",
+        "server/src/routes/__tests__/document-studio-client-reader.routes.test.ts",
+        "server/src/services/__tests__/nativeOwnerPinnedClient.test.ts"
+      ]
     }
   }
 }
