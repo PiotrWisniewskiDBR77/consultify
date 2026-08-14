@@ -150,7 +150,16 @@ describe('PredictionWorkspace — smoke render (real businessVersionId confirmed
     // odrzuca wywołanie, bo nie ma zapisanej treści scenariusza po stronie serwera — więc to REALNY
     // request, który realnie kończy się błędem, nie klient-side guard na brakującym id.
     apiMocks.runFinancePredictionPreflight.mockRejectedValue(apiError(404, 'NOT_FOUND'));
-    render(<PredictionWorkspace artifactId="artifact-1" businessVersionId="bv-prediction-1" />);
+    render(
+      <PredictionWorkspace
+        artifactId="artifact-1"
+        businessVersionId="bv-prediction-1"
+        initialDraft={{
+          ...createEmptyScenarioDraft({ name: 'Nowy scenariusz' }),
+          businessVersionId: 'bv-prediction-1',
+        }}
+      />
+    );
     await waitFor(() => expect(screen.getByTestId('finance-workspace-bar')).toBeInTheDocument());
     const preflightButton = screen.getByRole('button', { name: /Uruchom preflight/i });
     fireEvent.click(preflightButton);
