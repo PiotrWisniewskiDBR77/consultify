@@ -149,6 +149,16 @@ const counts = records.reduce((acc, record) => {
   acc[record.classification] = (acc[record.classification] ?? 0) + 1;
   return acc;
 }, {});
+const uniqueUnresolved = [...new Map(unresolvedLocal.map((item) => [`${item.importer}\0${item.specifier}`, item])).values()]
+  .map((item) => {
+    const importer = absolute(item.importer);
+    const importerClassification = runtimeReachable.has(importer)
+      ? 'RUNTIME_REACHABLE'
+      : supportReachable.has(importer)
+        ? 'SUPPORT_ONLY'
+        : 'ORPHAN_CANDIDATE';
+    return { ...item, importerClassification };
+  });
 const areaCounts = records.reduce((acc, record) => {
   const parts = record.file.split('/');
   const depth = parts[0] === 'server' || parts[0] === 'packages' || parts[0] === 'apps' ? 3 : 2;
@@ -169,7 +179,8 @@ const report = {
   runtimeEntries,
   counts,
   areaCounts,
-  unresolvedLocalImports: [...new Map(unresolvedLocal.map((item) => [`${item.importer}\0${item.specifier}`, item])).values()],
+  unresolvedLocalImports: uniqueUnresolved,
+  runtimeUnresolvedLocalImports: uniqueUnresolved.filter((item) => item.importerClassification === 'RUNTIME_REACHABLE'),
   records,
 };
 
@@ -187,7 +198,8 @@ const markdown = [
   '| Classification | Files |',
   '|---|---:|',
   ...Object.entries(counts).sort().map(([name, count]) => `| ${name} | ${count} |`),
-  `| Unresolved local imports | ${report.unresolvedLocalImports.length} |`,
+  `| Unresolved local imports (all analyzed sources) | ${report.unresolvedLocalImports.length} |`,
+  `| Unresolved local imports (runtime reachable) | ${report.runtimeUnresolvedLocalImports.length} |`,
   '',
   '## Runtime roots',
   '',
@@ -201,4 +213,9 @@ const markdown = [
   '',
 ];
 fs.writeFileSync(path.join(outputDir, 'source-reachability.md'), markdown.join('\n'));
-console.log(JSON.stringify({ counts, unresolvedLocalImports: report.unresolvedLocalImports.length, outputDir: rel(outputDir) }, null, 2));
+console.log(JSON.stringify({
+  counts,
+  unresolvedLocalImports: report.unresolvedLocalImports.length,
+  runtimeUnresolvedLocalImports: report.runtimeUnresolvedLocalImports.length,
+  outputDir: rel(outputDir),
+}, null, 2));
