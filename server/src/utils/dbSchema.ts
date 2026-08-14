@@ -8,6 +8,22 @@ import * as queryHelpers from './queryHelpers.js';
 
 const cache = new Map<string, Promise<Set<string>>>();
 const MOCK_TABLE_FALLBACK_COLUMNS: Record<string, string[]> = {
+  notebook_pages: [
+    'id',
+    'owner_user_id',
+    'organization_id',
+    'project_id',
+    'visibility',
+    'title',
+    'content_json',
+    'content_text',
+    'tags_json',
+    'status',
+    'capture_source',
+    'capture_metadata',
+    'created_at',
+    'updated_at',
+  ],
   canonical_inbox_items: [
     'id',
     'user_id',
