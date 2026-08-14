@@ -87,7 +87,18 @@ function body(overrides: Record<string, unknown> = {}) {
 }
 
 beforeEach(() => {
-  vi.clearAllMocks();
+  // Ordered query queues are part of each request's fixture. Reset their
+  // implementations as well as call history so an early return cannot leak an
+  // unused `mockResolvedValueOnce` into the next workbook contract.
+  [
+    mockQueryOne,
+    mockQueryRun,
+    mockQueryAll,
+    mockGetArtifactApprovalStatus,
+    mockSubmitForReview,
+    mockApproveArtifact,
+    mockRejectArtifact,
+  ].forEach((mock) => mock.mockReset());
   mockQueryRun.mockResolvedValue({ changes: 1 });
   mockQueryAll.mockResolvedValue([]);
   mockGetArtifactApprovalStatus.mockResolvedValue({ state: 'draft', assignment: null });
