@@ -6,7 +6,9 @@ import { SuperAdminLegalView } from '@/views/superadmin/SuperAdminLegalView';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback?: any) => (typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key)),
+    t: (_key: string, fallback?: any) =>
+      typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key),
+    i18n: { language: 'en' },
   }),
 }));
 
@@ -20,6 +22,10 @@ vi.mock('@/services/api', () => ({
 }));
 
 describe('SuperAdminLegalView honest workflows', () => {
+  const openFirstRowActions = () => {
+    fireEvent.click(screen.getAllByRole('button', { name: 'Row actions' })[0]);
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(Api.getSuperAdminLegalDocs).mockResolvedValue([]);
@@ -58,7 +64,9 @@ describe('SuperAdminLegalView honest workflows', () => {
     fireEvent.click(screen.getByRole('button', { name: /^Publish$/i }));
 
     await waitFor(() => {
-      expect(screen.getByText('Legal document publish was not confirmed by the server')).toBeInTheDocument();
+      expect(
+        screen.getByText('Legal document publish was not confirmed by the server')
+      ).toBeInTheDocument();
     });
 
     expect(screen.getByText('Publish New Document Version')).toBeInTheDocument();
@@ -80,7 +88,9 @@ describe('SuperAdminLegalView honest workflows', () => {
     fireEvent.click(screen.getByRole('button', { name: /^Publish$/i }));
 
     await waitFor(() => {
-      expect(screen.getByText('Legal document publish response was incomplete')).toBeInTheDocument();
+      expect(
+        screen.getByText('Legal document publish response was incomplete')
+      ).toBeInTheDocument();
     });
     expect(screen.getByText('Publish New Document Version')).toBeInTheDocument();
   });
@@ -101,7 +111,8 @@ describe('SuperAdminLegalView honest workflows', () => {
 
     expect(await screen.findByText('PRIVACY')).toBeInTheDocument();
     expect(screen.getByText('Active')).toBeInTheDocument();
-    expect(screen.getByTitle('Deactivate')).toBeInTheDocument();
+    openFirstRowActions();
+    expect(screen.getByRole('menuitem', { name: 'Deactivate' })).toBeInTheDocument();
   });
 
   it('does not treat string false active values as active documents', async () => {
@@ -120,8 +131,9 @@ describe('SuperAdminLegalView honest workflows', () => {
 
     expect(await screen.findByText('Terms of Service')).toBeInTheDocument();
     expect(screen.getByText('Inactive')).toBeInTheDocument();
-    expect(screen.getByTitle('Activate')).toBeInTheDocument();
-    expect(screen.queryByTitle('Deactivate')).not.toBeInTheDocument();
+    openFirstRowActions();
+    expect(screen.getByRole('menuitem', { name: 'Activate' })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Deactivate' })).not.toBeInTheDocument();
   });
 
   it('does not render malformed legal document payloads as an empty document list', async () => {
@@ -202,10 +214,13 @@ describe('SuperAdminLegalView honest workflows', () => {
     render(<SuperAdminLegalView />);
 
     expect(await screen.findByText('Unknown date')).toBeInTheDocument();
-    fireEvent.click(screen.getByTitle('Deactivate'));
+    openFirstRowActions();
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Deactivate' }));
 
     await waitFor(() => {
-      expect(screen.getByText('Legal document status was not confirmed by the server')).toBeInTheDocument();
+      expect(
+        screen.getByText('Legal document status was not confirmed by the server')
+      ).toBeInTheDocument();
     });
   });
 
