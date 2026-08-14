@@ -1,0 +1,16 @@
+suite	files	tests	result	command	db	candidate_sha
+toolPacks+toolOutputs	8	419	PASS	vitest run src/toolPacks src/toolOutputs --no-coverage	none	11ea86bbf350ef4cfa40fc5c441219aa31512611
+migrationRunnerOrdering (Gate I1)	1	13	PASS	vitest run tests/unit/migrationRunnerOrdering.test.ts	none	11ea86bbf350ef4cfa40fc5c441219aa31512611
+devRenderRegistry	1	6	PASS	vitest run tests/unit/devRenderRegistry.test.ts	none	11ea86bbf350ef4cfa40fc5c441219aa31512611
+testDiscoveryGate	1	5	PASS	vitest run tests/unit/testing/testDiscoveryGate.test.ts	none	11ea86bbf350ef4cfa40fc5c441219aa31512611
+readinessManifests	1	180	PASS	vitest run src/toolPacks/__tests__/readinessManifests.test.ts	none	11ea86bbf350ef4cfa40fc5c441219aa31512611
+engineBindingCoverage (19 tools)	1	136	PASS	vitest run src/toolPacks/__tests__/engineBindingCoverage.test.ts	none	11ea86bbf350ef4cfa40fc5c441219aa31512611
+slides + SlideDeckView	4	64	PASS	vitest run src/toolOutputs/__tests__/ src/components/DiscoveryTools/report/__tests__/	none	11ea86bbf350ef4cfa40fc5c441219aa31512611
+tools-*.realdb (9 suites)	9	88	PASS	RUN_DB_TESTS=1 MOCK_DB=false vitest run tests/integration/tools-*.realdb.test.ts	pgvector:pg15 disposable	11ea86bbf350ef4cfa40fc5c441219aa31512611
+swotAcceptGate	1	14	PASS	vitest run tests/unit/discovery/swotAcceptGate.test.ts	none	11ea86bbf350ef4cfa40fc5c441219aa31512611
+toolStatus + toolStatusCell	2	83	PASS	vitest run src/domain/__tests__/toolStatus.test.ts src/components/Discovery/__tests__/toolStatusCell.test.tsx	none	11ea86bbf350ef4cfa40fc5c441219aa31512611
+discovery-gate	-	4239/4239	PASS	npm run test:discovery-gate	none	11ea86bbf350ef4cfa40fc5c441219aa31512611
+memory-leak	1	-	NOT_VERIFIED	MEMORY_TEST_DURATION=30000 vitest run tests/performance/memory-leak.test.ts --retry=0	none	11ea86bbf350ef4cfa40fc5c441219aa31512611
+unit-backend	-	-	PARTIAL	scripts/testing/run-regression-batches-h4.sh	pgvector:pg15	11ea86bbf350ef4cfa40fc5c441219aa31512611
+unit-rest	-	-	NOT_VERIFIED	scripts/testing/run-regression-batches-h4.sh	pgvector:pg15	11ea86bbf350ef4cfa40fc5c441219aa31512611
+browser E2E Tools	-	-	MISSING	-	-	11ea86bbf350ef4cfa40fc5c441219aa31512611

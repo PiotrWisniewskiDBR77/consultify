@@ -1,0 +1,6 @@
+artifact	declared_by	path	exists_on_disk	count
+h1-speca	H1	docs/program/METHOD_TOOLS_2026-08-13/evidence/h1-speca	NO	0
+h2-slide	H2	docs/program/METHOD_TOOLS_2026-08-13/evidence/h2-slide	YES	25
+h5-e2e	H5	docs/program/METHOD_TOOLS_2026-08-13/evidence/h5-e2e	NO	0
+g5-mpq	G5	docs/program/METHOD_TOOLS_2026-08-13/evidence/g5-mpq	YES	71
+readiness-manifests	H3	docs/program/METHOD_TOOLS_2026-08-13/readiness/*.json	YES	19
