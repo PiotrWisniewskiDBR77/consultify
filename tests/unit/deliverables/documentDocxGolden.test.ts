@@ -8,7 +8,7 @@
  * `.docx` buffer, unzips the OOXML package, and asserts STRUCTURE
  * (named styles present + referenced, section ordering, table row
  * counts, appendix page-break, cover page break, header/footer wiring,
- * TOC field) rather than pixel/visual output.
+ * static TOC) rather than pixel/visual output.
  *
  * Deliberately NOT a pixel-diff / whole-buffer snapshot: the `docx`
  * package embeds a fresh `docProps/core.xml` `w:created` timestamp on
@@ -131,11 +131,14 @@ describe('Document Studio golden DOCX export (C4)', () => {
     expect(document).toContain('w:type="page"'); // cover → body hard break
   });
 
-  it('embeds a Word TOC field (formattingSchema.toc = true in the golden fixture)', async () => {
+  it('renders a deterministic static TOC (formattingSchema.toc = true in the golden fixture)', async () => {
     const buffer = await renderDocumentSchemaToDocxBuffer(makeGoldenDocumentSchema());
     const { document } = await unzipDocx(buffer);
-    expect(document).toContain('TOC ');
+    expect(document).toContain('Table of Contents');
     expect(document).toContain(`w:val="${DOCX_STYLE_IDS.TOC_HEADING}"`);
+    expect(document).toContain('1. Executive Summary');
+    expect(document).toContain('2. Findings &amp; Data');
+    expect(document).toContain('Appendix A — Glossary');
   });
 
   it('orders sections body-first, appendix-last, with Arabic body numbering and a lettered appendix', async () => {
