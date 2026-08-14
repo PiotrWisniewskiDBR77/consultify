@@ -5,7 +5,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     i18n: { language: 'en' },
-    t: (_key: string, fallback?: any) => (typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key)),
+    t: (key: string, fallback?: any) => {
+      const translations: Record<string, string> = {
+        'myWorkTable.collaborationPresence.online': 'online',
+        'myWorkTable.collaborationPresence.typing': 'typing…',
+      };
+      return translations[key]
+        ?? (typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? key));
+    },
   }),
   initReactI18next: { type: '3rdParty', init: vi.fn() },
 }));

@@ -4,7 +4,7 @@
  * Locks the primary / secondary / overflow structure for the M09 Whiteboard
  * command row:
  *   - primary (visible): Create · Draw · Save
- *   - secondary (visible): Undo · Redo
+ *   - Undo / Redo live in the canonical left canvas rail (and shortcuts)
  *   - overflow "…": voting / role / follow / export / shortcuts / background
  *
  * Guards against regressing back to the old flat ~10-button row and asserts the
@@ -54,10 +54,10 @@ describe('WhiteboardToolbar — command-row hierarchy', () => {
     expect(screen.getByRole('button', { name: /myWork\.whiteboard\.toolbar\.save/i })).toBeInTheDocument();
   });
 
-  it('keeps Undo/Redo as visible secondary actions', () => {
+  it('does not duplicate the canonical left-rail Undo/Redo actions', () => {
     render(<WhiteboardToolbar {...makeProps()} />);
-    expect(screen.getByRole('button', { name: /myWork\.whiteboard\.toolbar\.undo/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /myWork\.whiteboard\.toolbar\.redo/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /myWork\.whiteboard\.toolbar\.undo/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /myWork\.whiteboard\.toolbar\.redo/i })).toBeNull();
   });
 
   it('collapses secondary tools behind a single overflow "…" (no flat row)', () => {
