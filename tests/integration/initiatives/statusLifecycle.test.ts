@@ -20,12 +20,64 @@ vi.mock('../../../server/src/utils/queryHelpers.js', () => ({
   queryOne: (...a: unknown[]) => mockQueryOne(...a),
   queryRun: (...a: unknown[]) => mockQueryRun(...a),
   getTableColumns: (...a: unknown[]) => mockGetTableColumns(...a),
+  // The production transition is now one row-locked PostgreSQL transaction.
+  // Adapt this controller characterization harness to the same call shape
+  // while preserving its existing deterministic DB expectations.
+  withPgTransaction: async (work: (client: { query: Function }) => unknown) =>
+    work({
+      query: async (sql: string, params: unknown[] = []) => {
+        if (/^\s*SELECT \* FROM initiatives\b/i.test(sql)) {
+          const row = await mockQueryOne(sql, params);
+          return { rows: row ? [row] : [], rowCount: row ? 1 : 0 };
+        }
+        if (/^\s*SELECT\b/i.test(sql)) {
+          const rows = await mockQueryAll(sql, params);
+          return { rows: rows || [], rowCount: (rows || []).length };
+        }
+        const result = await mockQueryRun(sql, params);
+        return { rows: [], rowCount: result?.changes || 0 };
+      },
+    }),
 }));
 vi.mock('../../../server/src/services/initiative/initiativeAccessResolver.js', () => ({
   resolveInitiativeAccessContext: (...a: unknown[]) => mockResolveAccess(...a),
 }));
+vi.mock(
+  '../../../server/src/services/initiative/initiativeCapabilityMatrix.js',
+  async (importOriginal) => {
+    const actual = await importOriginal<
+      typeof import('../../../server/src/services/initiative/initiativeCapabilityMatrix.js')
+    >();
+    return {
+      ...actual,
+      resolveInitiativeCapabilityContext: async (...a: unknown[]) => {
+        const legacyShape = await mockResolveAccess(...a);
+        return {
+          effectiveRoles: legacyShape?.effectiveRoles || [],
+          steeringBoardEnabled: Boolean(legacyShape?.steeringBoard?.enabled),
+        };
+      },
+    };
+  }
+);
+vi.mock('../../../server/src/services/initiative/initiativeGateAiConfig.js', () => ({
+  isInitiativeGateAiEnabled: vi.fn().mockResolvedValue(false),
+}));
 vi.mock('../../../server/src/services/initiative/initiativeGateReadinessService.js', () => ({
   getBlockingReadinessItems: (...a: unknown[]) => mockGetBlockingReadinessItems(...a),
+}));
+vi.mock('../../../server/src/services/initiative/stageHandoffService.js', () => ({
+  recordHandoff: vi.fn().mockResolvedValue(undefined),
+}));
+vi.mock('../../../server/src/services/notificationService.js', () => ({
+  default: { send: vi.fn().mockResolvedValue(undefined) },
+}));
+vi.mock('../../../server/src/services/AuditEventsService.js', () => ({
+  default: { log: vi.fn().mockResolvedValue(undefined) },
+}));
+vi.mock('../../../server/src/services/closureDeliveryReceiptService.js', () => ({
+  createReceiptOnClosure: vi.fn().mockResolvedValue(undefined),
+  triggerImmediateDeliveryBestEffort: vi.fn(),
 }));
 vi.mock('../../../server/src/utils/asyncHandler.js', () => ({ asyncHandler: (fn: Function) => fn }));
 vi.mock('../../../server/src/utils/Logger.js', () => ({
@@ -141,11 +193,14 @@ describe('L2 — updateInitiativeStatus (realny handler, mock-DB)', () => {
     await handler();
     expect(updateRan()).toBe(true);
   });
-  it('L2-06: BLOCKED → EXECUTING (unblock, steering+board) → update', async () => {
+  it('L2-06: BLOCKED → EXECUTING requires a current Go/No-Go decision', async () => {
     req.params.id = 'i1'; req.body = { status: 'EXECUTING' };
     existing('BLOCKED'); roles(['STEERING_COMMITTEE'], true);
     await handler();
-    expect(updateRan()).toBe(true);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ rule: 'GATE_DECISION_REQUIRED' })
+    );
   });
   it('L2-07: → CANCELLED z aktywnego (PMO, bypass bramek) → update', async () => {
     req.params.id = 'i1'; req.body = { status: 'CANCELLED', reason: 'rezygnacja' };
@@ -230,7 +285,7 @@ describe('L2 — updateInitiativeStatus (realny handler, mock-DB)', () => {
   });
 
   // ── O6/O7 reguły treści + governance + side-effecty (8) ──
-  it('L2-23: DONE z otwartymi decyzjami bramki wykonawczej → 400 EXECUTION_GATE_DECISION_REQUIRED', async () => {
+  it('L2-23: EXECUTING → DONE first requires the canonical Closure decision', async () => {
     req.params.id = 'i1'; req.body = { status: 'DONE' };
     existing('EXECUTING'); roles(['PMO']);
     // tabela decisions musi mieć initiative_id, by scopeConditions nie były puste
@@ -239,13 +294,19 @@ describe('L2 — updateInitiativeStatus (realny handler, mock-DB)', () => {
     mockQueryAll.mockResolvedValue([{ id: 'd1' }]); // hasPendingExecutionGateDecisions → true
     await handler();
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ rule: 'EXECUTION_GATE_DECISION_REQUIRED' }));
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ rule: 'CLOSURE_GATE_DECISION_REQUIRED' })
+    );
   });
   it('L2-24: DONE → TRACKING bez KPI korzyści → 400 BENEFITS_KPI_REQUIRED', async () => {
     req.params.id = 'i1'; req.body = { status: 'TRACKING' };
     mockQueryOne
-      .mockResolvedValueOnce({ status: 'DONE', name: 'Init', created_by: 'user-123' })
-      .mockResolvedValueOnce({ ownerBusinessId: 'bo-1' })
+      .mockResolvedValueOnce({
+        status: 'DONE',
+        name: 'Init',
+        created_by: 'user-123',
+        owner_business_id: 'bo-1',
+      })
       .mockResolvedValueOnce({ c: 0 });
     roles(['BUSINESS_OWNER']);
     await handler();

@@ -51,6 +51,18 @@ vi.mock('../../../server/src/config/Config.js', () => ({
   config: { JWT_SECRET: 'test-secret' },
 }));
 
+// This suite owns the demo-tenant switching contract, not the separate shared
+// maps membership contract. Keep that lane off and explicitly admit the
+// synthetic principals through the newer fail-closed realtime guard.
+vi.mock('../../../server/src/config/FeatureFlags.js', () => ({
+  featureFlags: { ENABLE_SHARED_IDEA_MAPS: false },
+  default: { ENABLE_SHARED_IDEA_MAPS: false },
+}));
+vi.mock('../../../server/src/realtime/demoRealtimeGuard.js', () => ({
+  evaluateRealtimeAccess: vi.fn().mockResolvedValue({ allowed: true }),
+  trackRealtimeConnection: vi.fn(() => () => undefined),
+}));
+
 // Short org-context TTL so the mid-connection switch test is fast.
 process.env.WS_ORG_CONTEXT_TTL_MS = '80';
 
