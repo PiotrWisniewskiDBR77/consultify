@@ -49,6 +49,15 @@ vi.mock('../../utils/DbPromise.js', () => ({
   get: (...args: unknown[]) => mockDbGet(...args),
 }));
 
+// Source-pack lifecycle writes now use the atomic persistence path, which
+// selects the sequential DbPromise seam only when Database reports a mock.
+// Without this explicit adapter the route-only IDOR harness accidentally opens
+// the real PostgreSQL pool and draft creation fails before tenant isolation is
+// exercised.
+vi.mock('../../database/Database.js', () => ({
+  getDatabaseAsync: vi.fn(async () => ({ isMock: true })),
+}));
+
 // Approval creation is intentionally fail-closed unless the requested document
 // exists in the caller's tenant. Provide one real-shaped victim document while
 // keeping every other artifact/org lookup absent, so this suite exercises IDOR
