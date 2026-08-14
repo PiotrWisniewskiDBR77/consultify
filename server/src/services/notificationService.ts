@@ -781,17 +781,31 @@ class NotificationService {
   async getPreferences(userId: string): Promise<NotificationPreferences | null> {
     const db = await this.getDb();
 
-    const row = await db.get<{
-      user_id: string;
-      global_enabled: number;
-      quiet_hours_enabled: number;
-      quiet_hours_start: string;
-      quiet_hours_end: string;
-      email_enabled: number;
-      email_digest_enabled: number;
-      email_digest_frequency: string;
-      type_settings: string;
-    }>(`SELECT * FROM notification_preferences WHERE user_id = ?`, [userId]);
+    let row:
+      | {
+          user_id: string;
+          global_enabled: number;
+          quiet_hours_enabled: number;
+          quiet_hours_start: string;
+          quiet_hours_end: string;
+          email_enabled: number;
+          email_digest_enabled: number;
+          email_digest_frequency: string;
+          type_settings: string;
+        }
+      | undefined;
+
+    try {
+      row = await db.get(`SELECT * FROM notification_preferences WHERE user_id = ?`, [userId]);
+    } catch (error: any) {
+      // Some production databases predate the optional notification preference
+      // table. Missing preferences must not prevent delivery of the notification
+      // itself; use the same defaults as a user without a preference row.
+      if (error?.code !== '42P01') throw error;
+      logger.warn(
+        '[NotificationService] notification_preferences table missing; using defaults'
+      );
+    }
 
     if (!row) {
       // Return defaults
