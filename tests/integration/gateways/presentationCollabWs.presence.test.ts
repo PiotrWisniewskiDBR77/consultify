@@ -40,6 +40,14 @@ vi.mock('../../../server/src/config/Config.js', () => ({
   config: { JWT_SECRET: 'test-secret' },
 }));
 
+// Public-demo realtime eligibility is covered independently. This suite starts
+// after an authenticated principal passed that boundary and focuses on deck
+// organization access plus presence semantics.
+vi.mock('../../../server/src/realtime/demoRealtimeGuard.js', () => ({
+  evaluateRealtimeAccess: async () => ({ allowed: true, reason: 'eligible_test_principal' }),
+  trackRealtimeConnection: () => () => undefined,
+}));
+
 // resolveWsOrgContext: deterministic non-demo context bound to the JWT org.
 vi.mock('../../../server/src/realtime/wsOrgContext.js', () => ({
   resolveWsOrgContext: vi.fn(async (_db: unknown, _userId: string, jwtOrg: string) => ({

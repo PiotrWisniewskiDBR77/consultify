@@ -17,7 +17,7 @@
  */
 import path from 'path';
 import request from 'supertest';
-import { beforeAll, afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import fs from 'fs';
 
@@ -104,17 +104,25 @@ describe('SEC-PUB-002 SPA catch-all does not disclose the deployment layout', ()
   });
 
   describe('branch A — index.html missing on disk', () => {
-    // This is the branch that fires naturally in this harness: no frontend bundle
-    // is built for the test run, so fs.existsSync(indexPath) is false for real.
-    // (Verified below rather than assumed.)
-    it('the harness really is on the missing-index branch', () => {
+    let realExistsSync: typeof fs.existsSync;
+
+    beforeEach(() => {
+      realExistsSync = fs.existsSync;
+      (fs as unknown as { existsSync: unknown }).existsSync = ((p: fs.PathLike, ...rest: []) =>
+        String(p).endsWith(`${path.sep}index.html`)
+          ? false
+          : (realExistsSync as (...a: unknown[]) => boolean)(p, ...rest)) as typeof fs.existsSync;
+    });
+
+    afterEach(() => {
+      (fs as unknown as { existsSync: unknown }).existsSync = realExistsSync;
+    });
+
+    // A prior frontend build may leave dist/index.html in the worktree. The
+    // branch contract must remain deterministic regardless of that artifact.
+    it('the harness explicitly exercises the missing-index branch', () => {
       const indexPath = path.resolve(FRONTEND_DIST_DEV, 'index.html');
-      expect(
-        fs.existsSync(indexPath),
-        'if a frontend bundle appears at ' +
-          indexPath +
-          ', this branch stops being exercised naturally and these cases need an fs stub'
-      ).toBe(false);
+      expect(fs.existsSync(indexPath)).toBe(false);
     });
 
     for (const target of CATCH_ALL_PATHS) {
