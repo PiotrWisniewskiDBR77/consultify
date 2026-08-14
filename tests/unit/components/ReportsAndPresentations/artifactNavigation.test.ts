@@ -156,7 +156,7 @@ describe('resolveTemplateUsePath', () => {
       originRuntime: 'sheet_template',
     });
     expect(path).toBe(
-      `/reports?tab=workbook_templates&workbookTemplateId=${encodeURIComponent('canonical sheet/template 1')}`
+      `/presentations?tab=workbook_templates&workbookTemplateId=${encodeURIComponent('canonical sheet/template 1')}`
     );
     expect(path).not.toContain('templateArtifactId');
   });
