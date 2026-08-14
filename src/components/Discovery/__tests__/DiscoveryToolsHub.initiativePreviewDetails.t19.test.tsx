@@ -185,7 +185,7 @@ describe('T19 Discovery initiatives preview Details', () => {
    * frozen `InitiativePreviewV3Body`, and that T17/T18's own wiring plus
    * everything explicitly out of scope for this packet is untouched.
    */
-  it('adds a canonical initiatives Details block on the live tab without touching T17/T18, InitiativePreviewV3Body, footer, or table wiring', () => {
+  it('renders the canonical InitiativePreviewV3Body on the live tab without touching T17/T18, footer, or table wiring', () => {
     const source = readFileSync(
       join(process.cwd(), 'src/components/Discovery/DiscoveryToolsHub.tsx'),
       'utf8'
@@ -199,23 +199,10 @@ describe('T19 Discovery initiatives preview Details', () => {
     const tableStart = source.indexOf('<StandardTable', footerStart);
     const tableSlice = source.slice(tableStart);
 
-    // The new builder is wired and reachable from the LIVE initiatives branch.
-    expect(previewSlice).toContain('buildToolInitiativePreviewDetails(');
-    expect(previewSlice).toContain('const initiativeMetadataText =');
-    expect(previewSlice).toContain('text={initiativeMetadataText}');
-    // Deliberately does NOT end in `...DetailsText` — T18's frozen test
-    // greps `text=\{[a-zA-Z]+DetailsText\}` and must keep matching exactly
-    // one occurrence (`outputDetailsText`); a variable named
-    // `initiativeDetailsText` would collide with that pattern.
-    expect(previewSlice).not.toContain('initiativeDetailsText');
-    // T19 renders through a LOCAL ALIAS of the same primitive
-    // (`InitiativePreviewDetailsSection`), not a second literal
-    // `<PreviewDetailsSection` tag — T18's frozen source-slice test counts
-    // that literal tag across the WHOLE renderPreview callback and must keep
-    // seeing exactly one, unrelated to which other tabs also render Details.
-    expect(previewSlice).toContain('<InitiativePreviewDetailsSection');
+    // The current canonical preview owns its structured details; the legacy
+    // text builder is intentionally no longer mounted in the live branch.
+    expect(previewSlice).not.toContain('buildToolInitiativePreviewDetails(');
     expect(previewSlice.match(/<PreviewDetailsSection/g)).toHaveLength(1);
-    expect(previewSlice.match(/<InitiativePreviewDetailsSection/g)).toHaveLength(1);
 
     // `InitiativePreviewV3Body` is rendered — the shared component is a
     // sibling, not replaced or reimplemented inline.

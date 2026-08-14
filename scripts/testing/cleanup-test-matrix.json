@@ -89,7 +89,9 @@
       "server/src/routes/__tests__/cross-org-idor-m17.test.ts",
       "server/src/routes/v8/__tests__/res10-ownership-separation.routes.test.ts",
       "tests/unit/backend/routes/h64-failsoft-batch2.test.ts",
-      "server/src/routes/__tests__/m11-tools-cross-org-idor.test.ts"
+      "server/src/routes/__tests__/m11-tools-cross-org-idor.test.ts",
+      "tests/integration/routes/audit-log.l3.test.ts",
+      "tests/integration/routes/knowledge-base.p26.test.ts"
     ]
   },
   "gates": {
@@ -161,7 +163,8 @@
         "tests/integration/authMeDemoTtl.contract.test.ts",
         "tests/integration/publicSystemSurface.contract.test.ts",
         "tests/integration/routes/conversations.p35-history.test.ts",
-        "tests/integration/routes/verify.l3.test.ts"
+        "tests/integration/routes/verify.l3.test.ts",
+        "tests/integration/routes/audit-log.l3.test.ts"
       ]
     },
     "legacyPostgresPort": {
@@ -190,7 +193,10 @@
     "externalRuntime": {
       "reason": "Calls TEST_API_URL or localhost and does not start its own application runtime.",
       "execution": "dedicated-http-runtime",
-      "files": ["tests/integration/routes/tools.p27.test.ts"]
+      "files": [
+        "tests/integration/routes/tools.p27.test.ts",
+        "tests/integration/routes/knowledge-base.p26.test.ts"
+      ]
     },
     "flakyHarness": {
       "reason": "Individual cases pass but the complete file fails nondeterministically through socket and permission-state leakage.",
