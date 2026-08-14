@@ -47,26 +47,23 @@ describe('Agent production build boundary', () => {
     expect(dockerfile).not.toMatch(/npm install[^\n]*\|\|\s*true/);
   });
 
-  it('runs the packaged strict Postgres migrator before the Railway API starts', () => {
-    const proofSource = fs.readFileSync(
-      path.join(root, 'server/src/scripts/agentMigrationsIdempotencyRealDbProof.ts'),
-      'utf8'
-    );
-    const releaseMigrations = [
-      ...proofSource.matchAll(/'(202608\d{2}_[^']+\.sql)'/g),
-    ].map((match) => match[1]);
-    expect(releaseMigrations).toHaveLength(22);
-
-    const expectedCommand =
-      'DATABASE_URL=$DATABASE_PUBLIC_URL DB_TYPE=postgres node dist/scripts/migrate.postgres.js --dir migrations --only ' +
-      releaseMigrations.join(',');
-
+  it('runs the packaged fail-closed full-chain migration gate before the Railway API starts', () => {
+    const expectedCommand = 'node dist/scripts/release-migration-gate.js';
     for (const filename of ['railway.json', 'railway.api.json']) {
       const config = JSON.parse(fs.readFileSync(path.join(root, filename), 'utf8')) as {
         deploy?: { preDeployCommand?: string };
       };
       expect(config.deploy?.preDeployCommand).toBe(expectedCommand);
+      expect(config.deploy?.preDeployCommand).not.toContain('--only');
       expect(config.deploy?.preDeployCommand).not.toContain('--safe');
+      expect(config.deploy?.preDeployCommand).not.toContain('--allow-checksum-drift');
     }
+
+    const gateSource = fs.readFileSync(
+      path.join(root, 'server/scripts/release-migration-gate.ts'),
+      'utf8'
+    );
+    expect(gateSource).toContain("const args = [runner, '--dir', migrationsDir]");
+    expect(gateSource).toContain('assertNoForbiddenFlags(argv)');
   });
 });
