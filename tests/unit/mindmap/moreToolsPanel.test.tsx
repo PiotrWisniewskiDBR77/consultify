@@ -10,7 +10,7 @@ import { describe, expect, it, vi } from 'vitest';
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     i18n: { language: 'en' },
-    t: (key: string) => key,
+    t: (key: string, fallback?: string) => fallback || key,
   }),
   initReactI18next: {
     type: '3rdParty',
@@ -39,7 +39,7 @@ describe('MoreToolsPanel', () => {
 
   it('filters tools by search query', () => {
     render(<MoreToolsPanel {...baseProps} />);
-    const input = screen.getByPlaceholderText('ideas.mindmap.searchTools');
+    const input = screen.getByPlaceholderText('Search tools…');
     fireEvent.change(input, { target: { value: 'minimap' } });
     expect(screen.getByText('Minimap')).toBeTruthy();
     expect(screen.queryByText('Webhooks/Integrations')).toBeNull();
@@ -47,9 +47,9 @@ describe('MoreToolsPanel', () => {
 
   it('shows no results for unmatched search', () => {
     render(<MoreToolsPanel {...baseProps} />);
-    const input = screen.getByPlaceholderText('ideas.mindmap.searchTools');
+    const input = screen.getByPlaceholderText('Search tools…');
     fireEvent.change(input, { target: { value: 'xyznonexistent' } });
-    expect(screen.getByText('ideas.mindmap.noResults')).toBeTruthy();
+    expect(screen.getByText('No results')).toBeTruthy();
   });
 
   it('dispatches action and closes on tool click', () => {

@@ -79,11 +79,11 @@ describe('mind-map hydration regression (3-node payload → 3 canvas nodes)', ()
     }
   });
 
-  it('all four M06 Fala 3/4 flags default OFF (no behavior change out of the box)', () => {
+  it('keeps experimental layout flags OFF while the accepted unified drawer defaults ON', () => {
     expect(flagDefault('mindmapMultiToolbar')).toBe(false);
     expect(flagDefault('mindmapAlignSnap')).toBe(false);
     expect(flagDefault('mindmapVirtualization')).toBe(false);
-    expect(flagDefault('mindmapDrawerUnified')).toBe(false);
+    expect(flagDefault('mindmapDrawerUnified')).toBe(true);
   });
 });
 
