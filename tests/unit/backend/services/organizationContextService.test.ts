@@ -212,4 +212,39 @@ describe('OrganizationContextService', () => {
     expect(context.snapshotUpdatedAt).toBe('2026-03-12T10:00:00.000Z');
     expect(context.counts).toEqual({ items: 2, claims: 3, conflicts: 0 });
   });
+
+  it('normalizes legacy object-shaped context fields instead of throwing', async () => {
+    mockDbGet.mockImplementation(async (sql: string) => {
+      if (sql.includes('FROM organizations')) return { id: 'org-1', name: 'CEPD' };
+      if (sql.includes('FROM organization_profiles')) {
+        return {
+          strategic_priorities: JSON.stringify({ primary: 'AI adoption' }),
+          technology_stack: JSON.stringify({ backend: 'Node.js' }),
+        };
+      }
+      if (sql.includes('FROM organization_context WHERE organization_id')) {
+        return {
+          key_metrics: JSON.stringify({ name: 'Delivery lead time', value: 12 }),
+          stakeholders: JSON.stringify({ name: 'CTO' }),
+          open_gaps: JSON.stringify({ description: 'Manual handoffs' }),
+        };
+      }
+      return null;
+    });
+
+    const mod = await import(
+      '../../../../server/src/services/organizationContext/OrganizationContextService.js'
+    );
+    const context = await mod.organizationContextService.buildResolvedContext('org-1');
+
+    expect(context.operations.keyMetrics).toEqual([
+      expect.objectContaining({ name: 'Delivery lead time', value: 12 }),
+    ]);
+    expect(context.operations.gaps).toEqual([
+      expect.objectContaining({ description: 'Manual handoffs' }),
+    ]);
+    expect(context.stakeholders).toEqual([expect.objectContaining({ name: 'CTO' })]);
+    expect(context.strategic.priorities).toEqual([]);
+    expect(context.systems.stack).toEqual([]);
+  });
 });

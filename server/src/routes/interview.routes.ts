@@ -152,7 +152,6 @@ router.get(
 /** GET /interview/assignments/:id - Get single assignment with details */
 router.get(
   '/assignments/:id',
-  requireAnyPermission(['INTERVIEW_ASSIGN_VIEW', 'INTERVIEW_ASSIGN_MANAGE']),
   InterviewController.getAssignment
 );
 
