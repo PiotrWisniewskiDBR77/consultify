@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "deletionAuthorized": false,
+  "decisions": {
+    "src/views/AgentPlanView.tsx": {
+      "status": "SUPERSEDED_REMOVAL_CANDIDATE",
+      "reason": "The standalone view was intentionally relocated into MyWork AgentHubShell; /agent-plan is redirect-only.",
+      "evidence": ["src/routes/AppRoutes.tsx:56", "src/routes/AppRoutes.tsx:1558", "src/components/MyWork/MyWorkHub.tsx:4061"]
+    },
+    "src/components/ResultsVNext/ResultsVNextRegistryRouteBase.tsx": {
+      "status": "SUPERSEDED_REMOVAL_CANDIDATE",
+      "reason": "The empty P0 placeholder was replaced by real KPI, ROI and OKR registry pages and is now referenced only by the unused barrel.",
+      "evidence": ["src/components/ResultsVNext/ResultsKpiRegistryPage.tsx:5", "src/components/ResultsVNext/ResultsRoiRegistryPage.tsx:8", "src/components/ResultsVNext/ResultsOkrRegistryPage.tsx:10"]
+    },
+    "src/components/ResultsVNext/index.ts": {
+      "status": "UNUSED_BARREL_REMOVAL_CANDIDATE",
+      "reason": "No runtime, test or script imports this barrel; direct module imports are canonical.",
+      "evidence": ["docs/cleanup/generated/source-reachability.json"]
+    },
+    "server/src/services/resultsVnext/platform/managementChainMaintenance.ts": {
+      "status": "PRESERVE_WIRING_REQUIRED",
+      "reason": "Unique implemented management-chain closure algorithm is explicitly not wired; KPI and OKR services document it as a prerequisite.",
+      "evidence": ["server/src/services/resultsVnext/platform/managementChainMaintenance.ts:1", "server/src/services/resultsVnext/kpi/kpiTypes.ts:12", "server/src/services/resultsVnext/okr/okrAttentionRepository.ts:22"]
+    },
+    "src/components/CaseWorkspace/podglad/main.tsx": {
+      "status": "PRESERVE_SUPPORT_HARNESS",
+      "reason": "Standalone visual screenshot harness, explicitly excluded from the production bundle.",
+      "evidence": ["src/components/CaseWorkspace/podglad/main.tsx:225", "src/components/CaseWorkspace/podglad/daneProbne.ts:1"]
+    },
+    "src/components/CaseWorkspace/podglad/daneProbne.ts": {
+      "status": "PRESERVE_SUPPORT_HARNESS",
+      "reason": "Fixture data belongs only to the Case Workspace visual harness and is not production data.",
+      "evidence": ["src/components/CaseWorkspace/podglad/daneProbne.ts:1"]
+    },
+    "server/src/workers/aiWorker.ts": {
+      "status": "PRESERVE_REPAIR_AND_WIRE_REQUIRED",
+      "reason": "Agent-plan routes enqueue AGENT_BACKGROUND_TASK, but no production entrypoint starts this worker; legacy task handlers also call missing AiService methods and the file is ts-nocheck.",
+      "evidence": ["server/src/routes/ai/agent-plan.routes.ts:52", "server/src/workers/aiWorker.ts:1", "server/tsc_errors.txt:786"]
+    },
+    "server/src/routes/caseWorkspace/_shared/pagination.ts": {
+      "status": "PRESERVE_CONTRACT_REVIEW",
+      "reason": "A unique cursor-pagination helper exists but no Case Workspace route imports it; determine whether routes already implement equivalent contracts before removal.",
+      "evidence": ["server/src/routes/caseWorkspace/_shared/pagination.ts:1", "server/src/routes/caseWorkspace/play.routes.ts:125"]
+    }
+  }
+}

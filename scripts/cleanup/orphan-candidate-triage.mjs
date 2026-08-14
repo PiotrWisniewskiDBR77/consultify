@@ -8,6 +8,7 @@ const root = path.resolve(import.meta.dirname, '../..');
 const generatedDir = path.join(root, 'docs/cleanup/generated');
 const reachability = JSON.parse(fs.readFileSync(path.join(generatedDir, 'source-reachability.json'), 'utf8'));
 const moduleInventory = JSON.parse(fs.readFileSync(path.join(generatedDir, 'module-surface-inventory.json'), 'utf8'));
+const manualDecisions = JSON.parse(fs.readFileSync(path.join(import.meta.dirname, 'manual-candidate-decisions.json'), 'utf8'));
 const absolute = (file) => path.join(root, file);
 const hash = (file) => crypto.createHash('sha256').update(fs.readFileSync(absolute(file))).digest('hex');
 
@@ -80,6 +81,7 @@ const candidates = reachability.records
     file: record.file,
     module: moduleByFile.get(record.file) ?? 'cross-cutting-or-unclassified',
     deletionAuthorized: false,
+    manualDecision: manualDecisions.decisions[record.file] ?? null,
     ...classify(record),
   }))
   .sort((a, b) => `${a.priority}:${a.module}:${a.file}`.localeCompare(`${b.priority}:${b.module}:${b.file}`));
@@ -87,10 +89,17 @@ const candidates = reachability.records
 const byTriage = {};
 const byPriority = {};
 const byModule = {};
+const byManualDecision = {};
 for (const candidate of candidates) {
   byTriage[candidate.triage] = (byTriage[candidate.triage] ?? 0) + 1;
   byPriority[candidate.priority] = (byPriority[candidate.priority] ?? 0) + 1;
   byModule[candidate.module] = (byModule[candidate.module] ?? 0) + 1;
+  if (candidate.manualDecision) {
+    byManualDecision[candidate.manualDecision.status] = (byManualDecision[candidate.manualDecision.status] ?? 0) + 1;
+  }
+}
+for (const file of Object.keys(manualDecisions.decisions)) {
+  if (!candidates.some((candidate) => candidate.file === file)) throw new Error(`manual decision is not an orphan candidate: ${file}`);
 }
 const report = {
   schemaVersion: 1,
@@ -102,7 +111,7 @@ const report = {
     'Static non-reachability must still be checked against Git history, runtime registries and product intent.',
     'Exact duplicates may encode intentionally separate ownership and require a canonical-owner decision.',
   ],
-  counts: { total: candidates.length, byPriority, byTriage, byModule },
+  counts: { total: candidates.length, manualDecisions: Object.keys(manualDecisions.decisions).length, byManualDecision, byPriority, byTriage, byModule },
   candidates,
 };
 fs.writeFileSync(path.join(generatedDir, 'orphan-candidate-triage.json'), JSON.stringify(report, null, 2) + '\n');
@@ -116,6 +125,8 @@ const markdown = [
   ...Object.entries(byTriage).sort().map(([name, count]) => `- ${name}: ${count}`),
   '', '## Modules', '',
   ...Object.entries(byModule).sort().map(([name, count]) => `- ${name}: ${count}`),
+  '', '## Manual decisions', '',
+  ...Object.entries(byManualDecision).sort().map(([name, count]) => `- ${name}: ${count}`),
   '', 'The exact review queue and duplicate evidence are stored in `orphan-candidate-triage.json`.', '',
 ];
 fs.writeFileSync(path.join(generatedDir, 'orphan-candidate-triage.md'), markdown.join('\n'));
