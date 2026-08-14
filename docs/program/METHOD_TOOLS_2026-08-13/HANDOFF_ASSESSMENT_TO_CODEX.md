@@ -12,10 +12,11 @@
 | --- | --- | --- |
 | Moduł | **ASSESSMENT** (+ współdzielony Method Core kernel) | — |
 | Integration branch | `codex/method-assessment-clean-20260813` | `git rev-parse --abbrev-ref HEAD` |
-| **Candidate SHA** | **`22815cd950`** (`22815cd950…`) | `git cat-file -t` → `commit` |
+| **Candidate SHA (kod)** | **`22815cd950`** | `git cat-file -t` → `commit` |
+| **HEAD gałęzi (kod + ten handoff)** | **`b57f661760`** | docs-only na wierzchu `22815cd950`; **zero zmian w kodzie produktu** |
 | **Baseline SHA** | **`f3e7df565e0da826ba110d85aad3c3c81a1087f1`** | `git cat-file -t` → `commit` |
 | **Merge-base** | `f3e7df565e0da826ba110d85aad3c3c81a1087f1` | `git merge-base HEAD f3e7df565e` — **równy baseline**, historia liniowa od demo |
-| Commitów od baseline | **154** (w tym **32** merge-commity) | `git rev-list --count` |
+| Commitów od baseline | **155** (w tym **32** merge-commity) | `git rev-list --count` |
 | `git status --porcelain` | **0** (czysto) | — |
 | **Pushnięty?** | **NIE** | `git branch -r --contains HEAD` → **0** |
 
@@ -23,7 +24,7 @@
 
 ```
 git rev-list --left-right --count origin/demo...HEAD
-47    154
+47    155
 ```
 
 | | |
@@ -35,13 +36,14 @@ git rev-list --left-right --count origin/demo...HEAD
 
 **Kandydat jest o 47 commitów za aktualnym demo.** Integrator **musi** wykonać rebase
 lub merge `origin/demo` przed jakąkolwiek promocją i **ponownie przepuścić bramki** —
-liczby w tym dokumencie dotyczą wyłącznie SHA `22815cd950` na baseline `f3e7df565e`.
+liczby w tym dokumencie dotyczą wyłącznie SHA **`22815cd950`** (kod) na baseline `f3e7df565e`.
+Handoff `b57f661760` dokłada wyłącznie dokumentację — bramki mierzone na `22815cd950` pozostają ważne.
 
 ### Worktree modułu (33 sztuki, wszystkie zachowane — żadnego nie usunąłem)
 
 | Worktree | SHA | Rola |
 | --- | --- | --- |
-| `~/.codex/worktrees/mac-clean-integ` | `22815cd950` | **integracyjny (kandydat)** |
+| `~/.codex/worktrees/mac-clean-integ` | `b57f661760` | **integracyjny (kandydat)** — kod na `22815cd950` |
 | `~/.codex/worktrees/method-assessment-core` | `eb3e2b5c85` | poprzedni kandydat **przed** czyszczeniem historii |
 | `~/.codex/worktrees/mac-clean-history` | — | izolowany klon użyty do `filter-repo` (zawiera `commit-map`) |
 | `~/.codex/worktrees/mac-base6` | `f3e7df565e` | baseline do porównań regresji |
@@ -597,7 +599,7 @@ hasha **v1 przed i po** cyklu reopen.
 
 ```bash
 git checkout codex/method-assessment-clean-20260813   # 22815cd950
-git rev-parse HEAD                                     # musi dać 22815cd950…
+git rev-parse HEAD                                     # b57f661760 (kod: 22815cd950)
 git rev-list --objects f3e7df565e..HEAD | \
   git cat-file --batch-check='%(objecttype) %(objectname) %(objectsize) %(rest)' | \
   awk '$1=="blob" && $3>5000000'                       # MUSI być PUSTE
