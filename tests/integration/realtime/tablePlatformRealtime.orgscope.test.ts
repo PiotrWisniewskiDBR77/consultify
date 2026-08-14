@@ -51,6 +51,15 @@ vi.mock('../../../server/src/utils/Logger.js', () => ({
   default: { info: vi.fn(), warn: loggerWarn, error: vi.fn(), debug: vi.fn() },
 }));
 
+// This suite characterizes table tenant resolution after a verified socket
+// principal exists. Public-demo admission is covered by the dedicated realtime
+// guard tests, so explicitly admit these synthetic users and keep the table/org
+// authorization path below real.
+vi.mock('../../../server/src/realtime/demoRealtimeGuard.js', () => ({
+  evaluateRealtimeAccess: vi.fn().mockResolvedValue({ allowed: true }),
+  trackRealtimeConnection: vi.fn(() => () => undefined),
+}));
+
 // ── Import after mocks ────────────────────────────────────────────────────────
 
 import { TablePlatformRealtimeService } from '../../../server/src/services/tablePlatform/RealtimeService.js';
@@ -92,7 +101,11 @@ type Handler = (...args: unknown[]) => void | Promise<void>;
 
 class FakeSocket {
   id = `s-${Math.random().toString(36).slice(2, 8)}`;
-  handshake: { auth: Record<string, unknown>; query?: Record<string, unknown>; headers?: Record<string, unknown> };
+  handshake: {
+    auth: Record<string, unknown>;
+    query?: Record<string, unknown>;
+    headers?: Record<string, unknown>;
+  };
   data: Record<string, unknown> = {};
   rooms = new Set<string>();
   received: Array<{ event: string; payload: unknown }> = [];
@@ -169,7 +182,9 @@ class FakeNamespace {
   }
 
   /** Run middleware chain then the connection handler — like a real handshake. */
-  async connect(auth: Record<string, unknown>): Promise<{ socket: FakeSocket; error: Error | null }> {
+  async connect(
+    auth: Record<string, unknown>
+  ): Promise<{ socket: FakeSocket; error: Error | null }> {
     const socket = new FakeSocket(this, auth);
     for (const mw of this.middlewares) {
       const err = await new Promise<Error | undefined>((resolve) => mw(socket, resolve));
