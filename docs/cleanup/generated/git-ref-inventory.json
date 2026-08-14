@@ -1,0 +1,3729 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-08-14T17:22:15.420Z",
+  "canonicalHead": "90bf8d151fd72447f4392556f246fb89c87d461e",
+  "warnings": [
+    "PATCH_PRESENT proves textual patch equivalence only; it does not prove semantic equivalence.",
+    "DIVERGED_REVIEW may already be represented by later rewritten code and requires module-level comparison.",
+    "Branches with more than 25 ahead commits are not patch-applied commit-by-commit to avoid false confidence and excessive destructive-looking operations."
+  ],
+  "counts": {
+    "totalRemoteRefs": 187,
+    "integratedRemoteRefs": 113,
+    "notIntegratedRemoteRefs": 74,
+    "notIntegratedCommitsUnion": 1939
+  },
+  "auditedPatchStates": {
+    "PATCH_APPLICABLE": 23,
+    "LARGE_PATCH_REVIEW": 30,
+    "DIVERGED_REVIEW": 188,
+    "EMPTY": 3,
+    "PATCH_PRESENT": 36
+  },
+  "records": [
+    {
+      "ref": "refs/remotes/origin/agent/87a-canvas-newdoc",
+      "tip": "cbfa30058f1712e69d56a079f8af0742635cbbaf",
+      "date": "2026-07-13T10:59:10+02:00",
+      "subject": "chore(dev-render): #87a story canvas-new-doc — 3 opcje '+' menu, light+dark",
+      "integrated": true,
+      "mergeBase": "cbfa30058f1712e69d56a079f8af0742635cbbaf",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/agent83-materialy",
+      "tip": "bd35b3e001182b3bd9376fa4b9daefcd0eb3204d",
+      "date": "2026-07-13T08:06:30+02:00",
+      "subject": "fix(#83 Materiały): Menu 2 = 5 typów (All/Documents/Presentations/Sheets/Template Library)",
+      "integrated": true,
+      "mergeBase": "bd35b3e001182b3bd9376fa4b9daefcd0eb3204d",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/agent86-canvas-toolbar",
+      "tip": "f31f724efe3718c4ed6cd5637acc31f69f042957",
+      "date": "2026-07-13T08:33:54+02:00",
+      "subject": "fix(#87): aktywny stan toolbara crimson→neutral (pułapka nr 1)",
+      "integrated": true,
+      "mergeBase": "f31f724efe3718c4ed6cd5637acc31f69f042957",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/archive/londyn-legacy-2026-02-21",
+      "tip": "23c30c6948e9ff7949e2496a8342df089c23ef18",
+      "date": "2026-02-13T05:52:08+01:00",
+      "subject": "feat(mywork): implement Kanban views, notification enhancements, and NMode UI standards",
+      "integrated": true,
+      "mergeBase": "23c30c6948e9ff7949e2496a8342df089c23ef18",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/assessment/hub-fixes-20260712",
+      "tip": "2a442906508413474711ede77c41cb15d9c929fa",
+      "date": "2026-07-12T22:04:34+02:00",
+      "subject": "fix(assessment): #73 — Reports/Initiatives do kanonu StandardTable+StandardPreview",
+      "integrated": true,
+      "mergeBase": "2a442906508413474711ede77c41cb15d9c929fa",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/audit/finance-m16",
+      "tip": "769efd86b2db135d72874983e8d7b6d76b642bf5",
+      "date": "2026-07-12T18:07:51+02:00",
+      "subject": "feat(finance): multi-column list filters (#82) — currency/analysisType/method/source/subtype",
+      "integrated": true,
+      "mergeBase": "769efd86b2db135d72874983e8d7b6d76b642bf5",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/b3-word-e2e",
+      "tip": "4fdc3ca9fa1a400be2de426473c20db8554bd685",
+      "date": "2026-07-09T00:08:25+03:00",
+      "subject": "test(e2e): DOCX export binary-render coverage for DocumentStudio (B3)",
+      "integrated": false,
+      "mergeBase": "58a03a733fa59e1d4159d1464161371dbaa65a75",
+      "aheadCommits": 1,
+      "category": "TEST_OR_EVIDENCE",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "4fdc3ca9fa1a400be2de426473c20db8554bd685",
+          "subject": "test(e2e): DOCX export binary-render coverage for DocumentStudio (B3)",
+          "patchState": "PATCH_APPLICABLE"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/backup/amsterdam-from-main-20260119",
+      "tip": "7e61d0a0d7925cf7b002cd2bfb90ff5c7e67a785",
+      "date": "2026-01-19T22:47:26+01:00",
+      "subject": "backup: Amsterdam branch state - complete AI platform features",
+      "integrated": false,
+      "mergeBase": "3a0bc3f1775507faed967f16ba670ab5c23c7c13",
+      "aheadCommits": 1,
+      "category": "HISTORICAL_BACKUP",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "7e61d0a0d7925cf7b002cd2bfb90ff5c7e67a785",
+          "subject": "backup: Amsterdam branch state - complete AI platform features",
+          "patchState": "LARGE_PATCH_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/backup/demo-journey-storyrail-unpushed-2026-07-04",
+      "tip": "3ba04c04f9c4e743a8c207fda5925d41744cb0b0",
+      "date": "2026-07-04T12:04:45+03:00",
+      "subject": "chore(demo): delete dead persona/tour components so they cannot resurface",
+      "integrated": false,
+      "mergeBase": "0e0208b9b16d20110c88e77a9bb7a59773897a99",
+      "aheadCommits": 3,
+      "category": "HISTORICAL_BACKUP",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "72417e05e12b5c1a47a168bec83c0e24fe4dbcd8",
+          "subject": "docs(demo): demo journey redesign spec — showroom not onboarding",
+          "patchState": "PATCH_APPLICABLE"
+        },
+        {
+          "sha": "a5a4eaa02723fa5166d08c22ca3530f485658a05",
+          "subject": "feat(demo): lightweight sales-first demo journey — kill blocking tour, add StoryRail",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "3ba04c04f9c4e743a8c207fda5925d41744cb0b0",
+          "subject": "chore(demo): delete dead persona/tour components so they cannot resurface",
+          "patchState": "PATCH_APPLICABLE"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/backup/londyn-pre-closeout-2026-02-21",
+      "tip": "605985a9c1b6d5294134eef00c5a292642aa8641",
+      "date": "2026-02-21T20:19:22+01:00",
+      "subject": "chore(audit): record L1 security boundary integration evidence",
+      "integrated": true,
+      "mergeBase": "605985a9c1b6d5294134eef00c5a292642aa8641",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/backup/londyn-pre-whiteboard-20260705",
+      "tip": "a2b8b8b06aa103e3c10838450ae81523839e3f95",
+      "date": "2026-06-20T21:44:44-05:00",
+      "subject": "docs(harvard): M04 Notatnik ✅ ZAMKNIĘTY 8/8 — Piotr odebrał →F + →UI",
+      "integrated": true,
+      "mergeBase": "a2b8b8b06aa103e3c10838450ae81523839e3f95",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/backup/main-local-2026-06-11",
+      "tip": "893fea3d1b9dc371331d7f28614886dc79bd0f99",
+      "date": "2026-05-16T19:33:33+02:00",
+      "subject": "Merge branch 'cto/demo-integration-2026-05-15' into main",
+      "integrated": false,
+      "mergeBase": "e581eff39034525da5dc2c3f56191b581afae7b5",
+      "aheadCommits": 1,
+      "category": "HISTORICAL_BACKUP",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "893fea3d1b9dc371331d7f28614886dc79bd0f99",
+          "subject": "Merge branch 'cto/demo-integration-2026-05-15' into main",
+          "patchState": "LARGE_PATCH_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/backup/stash-design-system-batch1",
+      "tip": "291b16998c66bb69a8c21a5a26dda984fa026c9a",
+      "date": "2026-06-04T00:53:34+02:00",
+      "subject": "WIP on feat/wave1-foundations: 6c7ecaa620 refactor(design-system): roll out canonical states+chips — batch 1 (MyWork, Interview, Decisions, Execution, Results)",
+      "integrated": false,
+      "mergeBase": "6c7ecaa6207f676bdd82001d87be5a515c26d1f8",
+      "aheadCommits": 2,
+      "category": "HISTORICAL_BACKUP",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "d333a62ee2b85f84304d68a56a0d21584966bc1b",
+          "subject": "index on feat/wave1-foundations: 6c7ecaa620 refactor(design-system): roll out canonical states+chips — batch 1 (MyWork, Interview, Decisions, Execution, Results)",
+          "patchState": "EMPTY"
+        },
+        {
+          "sha": "291b16998c66bb69a8c21a5a26dda984fa026c9a",
+          "subject": "WIP on feat/wave1-foundations: 6c7ecaa620 refactor(design-system): roll out canonical states+chips — batch 1 (MyWork, Interview, Decisions, Execution, Results)",
+          "patchState": "DIVERGED_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/backup/stash-modulenavbar-cta",
+      "tip": "0e86673b7d8bca634f7a8e54e8b6c3d6b7904df9",
+      "date": "2026-06-03T21:31:02+02:00",
+      "subject": "WIP on feat/wave1-foundations: 5aacaf9db6 style(shell): canonical ModuleNavBar default CTA — remove leading '+' and gradient (fixes Menu 2 CTA for ALL onNewItem hubs)",
+      "integrated": false,
+      "mergeBase": "5aacaf9db6d7b11ce508f173a10eeb94022b391f",
+      "aheadCommits": 2,
+      "category": "HISTORICAL_BACKUP",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "9b250cb1ecccbc4c69cc93f286f1c94bf09c6717",
+          "subject": "index on feat/wave1-foundations: 5aacaf9db6 style(shell): canonical ModuleNavBar default CTA — remove leading '+' and gradient (fixes Menu 2 CTA for ALL onNewItem hubs)",
+          "patchState": "EMPTY"
+        },
+        {
+          "sha": "0e86673b7d8bca634f7a8e54e8b6c3d6b7904df9",
+          "subject": "WIP on feat/wave1-foundations: 5aacaf9db6 style(shell): canonical ModuleNavBar default CTA — remove leading '+' and gradient (fixes Menu 2 CTA for ALL onNewItem hubs)",
+          "patchState": "DIVERGED_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/backup/stash-qa-initiatives-interview",
+      "tip": "fd2bc704928a052e883db6f97964e1be381e21db",
+      "date": "2026-06-10T07:46:50+02:00",
+      "subject": "On qa/remediation-2026-06-08: qa/remediation-2026-06-08 WIP: InitiativesHub + InterviewHub",
+      "integrated": false,
+      "mergeBase": "7d14a186333bab762b2f17a5cbce85df6f37a314",
+      "aheadCommits": 2,
+      "category": "HISTORICAL_BACKUP",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "e32b6c96417cd253adc0cf2555db722e24d826de",
+          "subject": "index on qa/remediation-2026-06-08: 7d14a18633 fix(ai): actually capture token usage on streamed chats (ai_usage_logs 0/0)",
+          "patchState": "EMPTY"
+        },
+        {
+          "sha": "fd2bc704928a052e883db6f97964e1be381e21db",
+          "subject": "On qa/remediation-2026-06-08: qa/remediation-2026-06-08 WIP: InitiativesHub + InterviewHub",
+          "patchState": "DIVERGED_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/backup/worktree-preAIchatV9-20260418",
+      "tip": "338a1f60131b2c9b5f9946acce694b2571d71468",
+      "date": "2026-04-19T07:34:08+02:00",
+      "subject": "backup: preserve full WIP before feat/ai-chat-v9 rebase",
+      "integrated": false,
+      "mergeBase": "8893c42aadb074fa8d5ed01f383373e8e5a075fb",
+      "aheadCommits": 1,
+      "category": "HISTORICAL_BACKUP",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "338a1f60131b2c9b5f9946acce694b2571d71468",
+          "subject": "backup: preserve full WIP before feat/ai-chat-v9 rebase",
+          "patchState": "LARGE_PATCH_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/claude/case-workspace-v1-20260809",
+      "tip": "adf77cb833ec8b79e138d2ece96e7f5aafbe2ec0",
+      "date": "2026-08-13T05:21:41+02:00",
+      "subject": "docs(case-workspace): final checkpoint manifest",
+      "integrated": false,
+      "mergeBase": "9d17cac11484a82f729a51044e30453e39fbcb02",
+      "aheadCommits": 120,
+      "category": "DOCUMENTATION_OR_RECOVERY",
+      "patchAuditScope": "SKIPPED_OVER_25_REQUIRES_MODULE_DIFF",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/codex/agent-documents-final-20260808",
+      "tip": "22b0358f823a3d1895b11fc796800abea1a7e673",
+      "date": "2026-08-08T18:07:17+02:00",
+      "subject": "fix(agent): resume without duplicate approval prompt",
+      "integrated": false,
+      "mergeBase": "3b0c337ee472d07122033d5339cdf3bdb2f254ee",
+      "aheadCommits": 210,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "SKIPPED_OVER_25_REQUIRES_MODULE_DIFF",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/codex/agent-v8-rc-20260808",
+      "tip": "d569f70d5bca63754f99b70fc370d17e968f8418",
+      "date": "2026-08-08T11:13:49+02:00",
+      "subject": "fix(agent): use reachable staging database for predeploy",
+      "integrated": false,
+      "mergeBase": "3b0c337ee472d07122033d5339cdf3bdb2f254ee",
+      "aheadCommits": 5,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "fec04bc5e3fbf96ab1f3063845f4b360373f82d5",
+          "subject": "Consultify Agent RC candidate snapshot",
+          "patchState": "LARGE_PATCH_REVIEW"
+        },
+        {
+          "sha": "182cc44bff9fd45e2c0c1e1bccb06ff4e2008085",
+          "subject": "fix(agent-rc): scope staging migrations to verified release set",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "68bbe02d03a51b7572b89a563ec190d7a41dd9b2",
+          "subject": "fix(agent): add forward template-version prerequisite",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "12a95c221ece1aa60c5be33c55f8f5c58f873cff",
+          "subject": "fix(agent): include canonical recovery prerequisite",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "d569f70d5bca63754f99b70fc370d17e968f8418",
+          "subject": "fix(agent): use reachable staging database for predeploy",
+          "patchState": "DIVERGED_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/codex/artifact-studio-program-final",
+      "tip": "64715cdd37515b865e68d969eab71cdd7e2b60b3",
+      "date": "2026-08-12T22:00:23+02:00",
+      "subject": "test(artifact-studio): enable axe browser acceptance",
+      "integrated": false,
+      "mergeBase": "9d17cac11484a82f729a51044e30453e39fbcb02",
+      "aheadCommits": 5,
+      "category": "TEST_OR_EVIDENCE",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "fb1f12bfe414d8d34a3e3efe90cf15e445c695a3",
+          "subject": "feat(artifact-studio): integrate DOC PPT XLSX P0 remediation",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "56dd84a51b9b71a516344475887bf41a67926913",
+          "subject": "docs(artifact-studio): pin recovered candidate evidence",
+          "patchState": "PATCH_PRESENT"
+        },
+        {
+          "sha": "613f6869defc2c86d4a6add005b4515d64914ce5",
+          "subject": "chore(artifact-studio): close scoped lint gate",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "67998138f95e484671bf04e75a120b9341541b86",
+          "subject": "test(artifact-studio): pin strict runtime identity",
+          "patchState": "PATCH_PRESENT"
+        },
+        {
+          "sha": "64715cdd37515b865e68d969eab71cdd7e2b60b3",
+          "subject": "test(artifact-studio): enable axe browser acceptance",
+          "patchState": "PATCH_PRESENT"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/codex/artifact-studio-recovery-20260812",
+      "tip": "a16f5af6c1cf0d2d8453275b179b26e5405adb5c",
+      "date": "2026-08-13T05:20:05+02:00",
+      "subject": "docs(artifact-studio): Package 1 preservation checkpoint manifest",
+      "integrated": false,
+      "mergeBase": "fca72583ea83acf728a7807c5e119318dc206416",
+      "aheadCommits": 20,
+      "category": "DOCUMENTATION_OR_RECOVERY",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "7797a3b354c85dbd2664b7ea825f7ec62ee334cb",
+          "subject": "docs(mvp): checkpoint tariff-plan handoff status",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "396395949848ab32849c4a82d0157f6404cc18b5",
+          "subject": "docs(ui): korpus standardu UI/UX + remediation po czwartym audycie i panelu adwersaryjnym",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "c3a89eac7c99af83fea53110f021fc0ca00b26f4",
+          "subject": "fix(ui): standardize interactive focus states",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "c99bd14b87ba386e510217e5e8e28446c1937e5c",
+          "subject": "test(ui): preserve focus validation harness",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "d8b3979e651d2e6d5591bff128f5abb23d10772e",
+          "subject": "feat(results): expose KPI ROI and OKR table navigation",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "4610ddb7de335071921435d265bb499ac2ac51e2",
+          "subject": "fix(excel): avoid Teresa budget proxy timeout",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "9c23e3d80ecec9b8e77f8cfdeb65e6838e61d611",
+          "subject": "fix(finance): keep hub tabs list-only",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "6654cde039112dead7911e1fcab1b618ffed4ac1",
+          "subject": "feat(artifact-studio): add governed document presentation and spreadsheet shell",
+          "patchState": "LARGE_PATCH_REVIEW"
+        },
+        {
+          "sha": "5758d3b92f8e869ecde9481bdc9902cfdb1eabcf",
+          "subject": "docs(artifact-studio): record rollback rehearsal evidence",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "51988c36333f72b59df8c8e70cfd51ebed13229d",
+          "subject": "test(artifact-studio): add fail-closed release evidence gate",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "1af5a8bd1af3825389fdfc92b0ee4a45433f0d9f",
+          "subject": "test(artifact-studio): harden release evidence gate",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "8d6c5fb4c4019be48b83e8fa546ff9d0152401da",
+          "subject": "docs(artifact-studio): operationalize external evidence collection",
+          "patchState": "PATCH_PRESENT"
+        },
+        {
+          "sha": "4d432bd4148623343ee82c61f7de73c5ac131fc9",
+          "subject": "docs(artifact-studio): finalize bounded package handoff",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "c33d4320cfae9356900bc0fc0e7d661afdb80188",
+          "subject": "test(artifact-studio): assert stable workbook sheet ids",
+          "patchState": "PATCH_PRESENT"
+        },
+        {
+          "sha": "d989c76c6eeba746b72cad5b74201241abae58f2",
+          "subject": "feat(artifact-studio): bridge global Teresa to documents",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "9c3edebb773315128fa1855b85d4483ed972870b",
+          "subject": "feat(artifact-studio): bridge global Teresa to presentations",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "2fb925160bd357477c937ab142bb4ff97424cefe",
+          "subject": "test(artifact-studio): close spreadsheet runtime gates",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "635fd2d48d5a396c45bcb43b7f363535403ecf93",
+          "subject": "docs(artifact-studio): refresh bounded release evidence",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "62c97bca264d3fb6e00913e3f4795e5edf020c4a",
+          "subject": "fix(artifact-studio): Package 1 — governance four-eyes approval (preservation checkpoint)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "a16f5af6c1cf0d2d8453275b179b26e5405adb5c",
+          "subject": "docs(artifact-studio): Package 1 preservation checkpoint manifest",
+          "patchState": "PATCH_APPLICABLE"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/codex/audit-ready-integration-20260806",
+      "tip": "671592710ee4977c4cf1497fad6d1c86eaef1880",
+      "date": "2026-08-06T15:07:12+02:00",
+      "subject": "fix(documents): enforce Polish final schema",
+      "integrated": true,
+      "mergeBase": "671592710ee4977c4cf1497fad6d1c86eaef1880",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/codex/cepd-interview-prod-fix-20260814",
+      "tip": "99b1fcf7d67fe30bb15e089cfbf5650ce54a9ea1",
+      "date": "2026-08-14T12:06:55+02:00",
+      "subject": "fix(notifications): default preferences when legacy table is absent",
+      "integrated": false,
+      "mergeBase": "d753ea2e69157bc3969d2e2f3c8a9edcbe04ce64",
+      "aheadCommits": 8,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "943f5286989810908f2636013b10567df606b1be",
+          "subject": "promote: staging → main (2026-06-10) — Elkomtech data-truth + structured charter + CVE/skip gate clearance",
+          "patchState": "LARGE_PATCH_REVIEW"
+        },
+        {
+          "sha": "dd90ec7b17402a4c82f1ef3dce4c41122c293931",
+          "subject": "fix(demo,ui): canonical initiative status on seed + guard forwardRef icons (#112)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "1200f8627b0cdf382ea4b884761a5933794b9583",
+          "subject": "fix(my-work): open/edit non-personal tasks in detail view (#113)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "5359e4feb8bcca83ccc0609a6c9967f566e9288c",
+          "subject": "fix(interview): allow org owners/admins to read their org's sessions (#114)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "627b7d93ae59769f35d2867202ceb7113039b850",
+          "subject": "fix(interview): AI eval fixType must be nullable, not optional (evaluate-answers 500) (#115)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "7b04707bac20b01b20503aa4c983beda05f78820",
+          "subject": "fix(interview): unblock assigned respondent runtime",
+          "patchState": "PATCH_PRESENT"
+        },
+        {
+          "sha": "732e460ed27fd3dc70d99623625e08b5f47a1548",
+          "subject": "Harden interview answer save and submission",
+          "patchState": "PATCH_PRESENT"
+        },
+        {
+          "sha": "99b1fcf7d67fe30bb15e089cfbf5650ce54a9ea1",
+          "subject": "fix(notifications): default preferences when legacy table is absent",
+          "patchState": "DIVERGED_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/codex/consultify-final-integration-20260813",
+      "tip": "e45904dc7940f259b9cf017c283264d5c166c9ab",
+      "date": "2026-08-13T14:01:34+02:00",
+      "subject": "fix(demo): prevent status polling rate-limit",
+      "integrated": true,
+      "mergeBase": "e45904dc7940f259b9cf017c283264d5c166c9ab",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/codex/consultify-mvp-integration-v2-20260805",
+      "tip": "9446a69724b7f8b058be1b12abc15f2982d4be2b",
+      "date": "2026-08-05T23:22:08+02:00",
+      "subject": "fix(release): reconcile migration history and fresh schema",
+      "integrated": true,
+      "mergeBase": "9446a69724b7f8b058be1b12abc15f2982d4be2b",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/codex/documents-suite-integration-20260806",
+      "tip": "d7ea63c3882465a59936d040460f4207b58e4742",
+      "date": "2026-08-06T14:53:38+02:00",
+      "subject": "fix(presentations): require current pptx export",
+      "integrated": false,
+      "mergeBase": "6afe2004ba95eb1a57b4648e0ecb699323606e8f",
+      "aheadCommits": 1,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "d7ea63c3882465a59936d040460f4207b58e4742",
+          "subject": "fix(presentations): require current pptx export",
+          "patchState": "DIVERGED_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/codex/documents-suite-v2-20260806",
+      "tip": "c4046b711b3f0104f6e02824e70566eecfffd558",
+      "date": "2026-08-07T06:27:24+02:00",
+      "subject": "feat(document-studio): add manual quote and chart authoring",
+      "integrated": false,
+      "mergeBase": "3b0c337ee472d07122033d5339cdf3bdb2f254ee",
+      "aheadCommits": 123,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "SKIPPED_OVER_25_REQUIRES_MODULE_DIFF",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/codex/documents-suite-v2-resume-20260807",
+      "tip": "f27188572804e0c7862b897d1eb495325737f15a",
+      "date": "2026-08-08T18:02:45+02:00",
+      "subject": "fix(presentations): normalize persisted media tags",
+      "integrated": false,
+      "mergeBase": "3b0c337ee472d07122033d5339cdf3bdb2f254ee",
+      "aheadCommits": 186,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "SKIPPED_OVER_25_REQUIRES_MODULE_DIFF",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/codex/finance-demo-readiness-20260808",
+      "tip": "37f835ccfd5e49462986ed95f8285ef1b04dc59d",
+      "date": "2026-08-09T00:45:07+02:00",
+      "subject": "fix(finance): bind packages to source checksums",
+      "integrated": true,
+      "mergeBase": "37f835ccfd5e49462986ed95f8285ef1b04dc59d",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/codex/finance-v3-complete-product-integration",
+      "tip": "c78086057d38f57c5351c6254d41f02fd50246b6",
+      "date": "2026-08-13T05:21:00+02:00",
+      "subject": "chore(gate-e): przytnij koncowe puste linie w logach ostatniej baterii",
+      "integrated": false,
+      "mergeBase": "9d17cac11484a82f729a51044e30453e39fbcb02",
+      "aheadCommits": 590,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "SKIPPED_OVER_25_REQUIRES_MODULE_DIFF",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/codex/ideas-transformation-20260809",
+      "tip": "4b634dc21ee476eab97f09b8a41ec2c8c10111dd",
+      "date": "2026-08-13T05:20:52+02:00",
+      "subject": "docs(ideas): checkpoint manifest for preservation handoff",
+      "integrated": false,
+      "mergeBase": "9d17cac11484a82f729a51044e30453e39fbcb02",
+      "aheadCommits": 86,
+      "category": "DOCUMENTATION_OR_RECOVERY",
+      "patchAuditScope": "SKIPPED_OVER_25_REQUIRES_MODULE_DIFF",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/codex/initiatives-execution-final-candidate",
+      "tip": "599f50932dfd8de63db96b4557fcad08ffb02a2f",
+      "date": "2026-08-12T19:52:49+02:00",
+      "subject": "test(initiatives-execution): preserve final browser acceptance evidence",
+      "integrated": false,
+      "mergeBase": "9d17cac11484a82f729a51044e30453e39fbcb02",
+      "aheadCommits": 25,
+      "category": "TEST_OR_EVIDENCE",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "97202c04075a1616e0d9d10536d4fc8285a747fc",
+          "subject": "feat(initiatives-execution): finalize governed nine-function runtime",
+          "patchState": "LARGE_PATCH_REVIEW"
+        },
+        {
+          "sha": "cd5f5f858390d82694926e130ea77faa97f855ad",
+          "subject": "fix(initiatives-execution): pass strict server release build",
+          "patchState": "LARGE_PATCH_REVIEW"
+        },
+        {
+          "sha": "abfb79911b94a7f3766d0c1a4c43ec791bbfebe3",
+          "subject": "docs(initiatives-execution): record final demo deployment",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "dce51e6e960aa9fba31baeb1fd93e89f38359f00",
+          "subject": "docs(initiatives-execution): reconcile acceptance and rollback evidence",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "856586f579e5a61b09586731ddce3971b843cf5d",
+          "subject": "fix(initiatives-execution): close demo acceptance gaps",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "bbe5e8d2eca0eb5e25cda052670a270cc482ed0b",
+          "subject": "fix(initiatives-execution): finalize canonical acceptance UX",
+          "patchState": "LARGE_PATCH_REVIEW"
+        },
+        {
+          "sha": "bda1293c1e1e8bf02719c4e76ce300f3841f9cf8",
+          "subject": "fix(initiatives-execution): polish canonical register acceptance",
+          "patchState": "LARGE_PATCH_REVIEW"
+        },
+        {
+          "sha": "b788968a14fd8acd5c0efe5da872ba8dc1b663a2",
+          "subject": "docs(initiatives-execution): record final demo acceptance",
+          "patchState": "LARGE_PATCH_REVIEW"
+        },
+        {
+          "sha": "ab8721041ed5aa4e384560db3b9a63770a90138c",
+          "subject": "test(initiatives-execution): add NordWerk acceptance proof",
+          "patchState": "PATCH_PRESENT"
+        },
+        {
+          "sha": "2854e29c2c3fe6529d771397286f1ecbb6a94e18",
+          "subject": "fix(health): prefer explicit release SHA",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "b5964655392f5d8ad0962beed2cdaa48cd75d627",
+          "subject": "fix(migrations): make demo upgrade forward-compatible",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "7e72e540c28e6e8c974b63faaab5b4397d43b0dd",
+          "subject": "fix(deploy): verify compiled migration identity",
+          "patchState": "PATCH_PRESENT"
+        },
+        {
+          "sha": "178471b0523421d619b549df1f286f08544aca0d",
+          "subject": "fix(deploy): force exact demo Dockerfile lineage",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "fb0e648ce0ac2ed714b9b96f63f7eac01fea8d60",
+          "subject": "docs(initiatives-execution): record exact candidate acceptance evidence",
+          "patchState": "LARGE_PATCH_REVIEW"
+        },
+        {
+          "sha": "b0c38d826ef70a8523970c778a2f346b39ebc3b3",
+          "subject": "docs(initiatives-execution): reconcile deployed evidence SHA",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "a45151cdc5f694b091b2d191c2dc26f6f28c4755",
+          "subject": "docs(initiatives-execution): make exact SHA receipt non-self-referential",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "e66a48ffddf83fddd5816d128ba1a481cce674f9",
+          "subject": "fix(initiatives-execution): localize canonical workflow states",
+          "patchState": "LARGE_PATCH_REVIEW"
+        },
+        {
+          "sha": "731d5a53c56a36e31daf7e1061f3bf3ab33208e6",
+          "subject": "fix(initiatives-execution): address demo acceptance defects",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "e320ab345670950d015fd6915743760717ecb4c7",
+          "subject": "test(initiatives-execution): align golden browser acceptance",
+          "patchState": "LARGE_PATCH_REVIEW"
+        },
+        {
+          "sha": "1ff5d454b7e733b606c52af7099f66b864d8fdbe",
+          "subject": "docs(initiatives-execution): reconcile final acceptance evidence",
+          "patchState": "PATCH_PRESENT"
+        },
+        {
+          "sha": "cdd0dbaf2f967bb11c17ae8b5f1a22b86b1ae99e",
+          "subject": "test(initiatives-execution): refresh exact-sha browser evidence",
+          "patchState": "LARGE_PATCH_REVIEW"
+        },
+        {
+          "sha": "cdbdcb1f70c96f2581b55c948f87c342b5b347bd",
+          "subject": "fix(release): bind backend image cache to exact SHA",
+          "patchState": "PATCH_PRESENT"
+        },
+        {
+          "sha": "70c12037e3d810bc9ff8e34b07767cd2b6068d83",
+          "subject": "test(initiatives-execution): scope task open to selected preview",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "eb379ce3b013f812128f9a6c200ded69655906fc",
+          "subject": "test(initiatives-execution): bind delivery task action to preview workspace",
+          "patchState": "PATCH_PRESENT"
+        },
+        {
+          "sha": "599f50932dfd8de63db96b4557fcad08ffb02a2f",
+          "subject": "test(initiatives-execution): preserve final browser acceptance evidence",
+          "patchState": "LARGE_PATCH_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/codex/integrate-mvp-final-20260803",
+      "tip": "ad41701753206b1da50266522c248dcba6b119ac",
+      "date": "2026-08-03T17:30:52+02:00",
+      "subject": "docs(release): reconcile final tree and placeholder audit",
+      "integrated": true,
+      "mergeBase": "ad41701753206b1da50266522c248dcba6b119ac",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/codex/m11-membership-status-runtime-fix-20260806",
+      "tip": "94264784f9255e3cc7fc1534b61feb3cee20af59",
+      "date": "2026-08-06T06:25:52+02:00",
+      "subject": "fix(m11): normalize active membership status",
+      "integrated": true,
+      "mergeBase": "94264784f9255e3cc7fc1534b61feb3cee20af59",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/codex/postdeploy-m09-m13-fix-20260805",
+      "tip": "a192e9458e6a56482b6840d9cb86c703b0605d92",
+      "date": "2026-08-06T00:28:25+02:00",
+      "subject": "docs: record verified demo repair deployment",
+      "integrated": true,
+      "mergeBase": "a192e9458e6a56482b6840d9cb86c703b0605d92",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/codex/pptx-current-export-integration-20260806",
+      "tip": "31924b31b1d9b8b563d71644488a73b9fb718c05",
+      "date": "2026-08-06T14:48:50+02:00",
+      "subject": "fix(presentations): require current pptx export",
+      "integrated": false,
+      "mergeBase": "644152f6b81db6ce450acd6a0f22626265439dbc",
+      "aheadCommits": 1,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "31924b31b1d9b8b563d71644488a73b9fb718c05",
+          "subject": "fix(presentations): require current pptx export",
+          "patchState": "DIVERGED_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/codex/pre-rebuild-v8-ui-integration-20260809",
+      "tip": "9d17cac11484a82f729a51044e30453e39fbcb02",
+      "date": "2026-08-09T16:58:01+02:00",
+      "subject": "fix(release): reconcile demo migration preflight",
+      "integrated": true,
+      "mergeBase": "9d17cac11484a82f729a51044e30453e39fbcb02",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/codex/recovery-agent-v8-20260808",
+      "tip": "fb0146253b465be699079372721fc437edeab066",
+      "date": "2026-08-08T18:56:55+02:00",
+      "subject": "chore(governance): restore check-focus-canon.sh + honest baseline from origin/demo",
+      "integrated": true,
+      "mergeBase": "fb0146253b465be699079372721fc437edeab066",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/codex/recovery-catalog-20260803",
+      "tip": "bd3d696995e65a314e3d29fa79a47d47e448777e",
+      "date": "2026-08-03T17:43:33+02:00",
+      "subject": "docs(program): add historical work recovery guide",
+      "integrated": false,
+      "mergeBase": "ad41701753206b1da50266522c248dcba6b119ac",
+      "aheadCommits": 1,
+      "category": "DOCUMENTATION_OR_RECOVERY",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "bd3d696995e65a314e3d29fa79a47d47e448777e",
+          "subject": "docs(program): add historical work recovery guide",
+          "patchState": "PATCH_APPLICABLE"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/codex/recovery-control-20260808",
+      "tip": "7dd8db2454931463ab15d15078b5d535422f46a8",
+      "date": "2026-08-08T18:51:46+02:00",
+      "subject": "chore(governance): restore check-focus-canon.sh + honest baseline from origin/demo",
+      "integrated": true,
+      "mergeBase": "7dd8db2454931463ab15d15078b5d535422f46a8",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/codex/recovery-documents-20260808",
+      "tip": "0f9f98cfc39fda402345ae7154abdd28ea60bbea",
+      "date": "2026-08-08T18:58:16+02:00",
+      "subject": "fix(documents): reconstruct document and presentation completion",
+      "integrated": true,
+      "mergeBase": "0f9f98cfc39fda402345ae7154abdd28ea60bbea",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/codex/recovery-finance-20260808",
+      "tip": "93e7d66cc94ccb97332b03bd55311dca2ef42d69",
+      "date": "2026-08-08T18:55:36+02:00",
+      "subject": "fix(finance): reconstruct finance completion",
+      "integrated": true,
+      "mergeBase": "93e7d66cc94ccb97332b03bd55311dca2ef42d69",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/codex/recovery-integration-20260808",
+      "tip": "a6d89c6d1d56baea2f4db23dadedd4c260765c78",
+      "date": "2026-08-08T19:16:29+02:00",
+      "subject": "docs(recovery): publish five-agent integration handoff",
+      "integrated": true,
+      "mergeBase": "a6d89c6d1d56baea2f4db23dadedd4c260765c78",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/codex/recovery-report-b-ui-20260808",
+      "tip": "a8c9b1c4c981637f6181a185dda0404ad5b623c3",
+      "date": "2026-08-08T14:33:01+02:00",
+      "subject": "chore(recovery): enforce agent checkpoint and handoff gate",
+      "integrated": true,
+      "mergeBase": "a8c9b1c4c981637f6181a185dda0404ad5b623c3",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/codex/recovery-ux-table-20260808",
+      "tip": "0e17735b3f80ce19b27b25fe532953f38d31fd50",
+      "date": "2026-08-08T19:03:15+02:00",
+      "subject": "fix(ux-table): reconstruct governed table experience",
+      "integrated": true,
+      "mergeBase": "0e17735b3f80ce19b27b25fe532953f38d31fd50",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/codex/recovery-ux-tools-20260808",
+      "tip": "c6878103b4d43563bc1adbf6f885990340dc52e4",
+      "date": "2026-08-08T19:11:55+02:00",
+      "subject": "fix(ux-tools): reconstruct assessment tool surfaces",
+      "integrated": true,
+      "mergeBase": "c6878103b4d43563bc1adbf6f885990340dc52e4",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/codex/sync-demo-20260729",
+      "tip": "9c23e3d80ecec9b8e77f8cfdeb65e6838e61d611",
+      "date": "2026-08-09T08:27:07+02:00",
+      "subject": "fix(finance): keep hub tabs list-only",
+      "integrated": false,
+      "mergeBase": "fca72583ea83acf728a7807c5e119318dc206416",
+      "aheadCommits": 7,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "7797a3b354c85dbd2664b7ea825f7ec62ee334cb",
+          "subject": "docs(mvp): checkpoint tariff-plan handoff status",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "396395949848ab32849c4a82d0157f6404cc18b5",
+          "subject": "docs(ui): korpus standardu UI/UX + remediation po czwartym audycie i panelu adwersaryjnym",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "c3a89eac7c99af83fea53110f021fc0ca00b26f4",
+          "subject": "fix(ui): standardize interactive focus states",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "c99bd14b87ba386e510217e5e8e28446c1937e5c",
+          "subject": "test(ui): preserve focus validation harness",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "d8b3979e651d2e6d5591bff128f5abb23d10772e",
+          "subject": "feat(results): expose KPI ROI and OKR table navigation",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "4610ddb7de335071921435d265bb499ac2ac51e2",
+          "subject": "fix(excel): avoid Teresa budget proxy timeout",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "9c23e3d80ecec9b8e77f8cfdeb65e6838e61d611",
+          "subject": "fix(finance): keep hub tabs list-only",
+          "patchState": "DIVERGED_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/codex/ui45-candidate-2026-08-08",
+      "tip": "64856e790afd0a66547d993fba13769878669c62",
+      "date": "2026-08-08T13:06:31+02:00",
+      "subject": "feat(ui): integrate accepted 45-table repair candidate",
+      "integrated": false,
+      "mergeBase": "fca72583ea83acf728a7807c5e119318dc206416",
+      "aheadCommits": 7,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "7797a3b354c85dbd2664b7ea825f7ec62ee334cb",
+          "subject": "docs(mvp): checkpoint tariff-plan handoff status",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "396395949848ab32849c4a82d0157f6404cc18b5",
+          "subject": "docs(ui): korpus standardu UI/UX + remediation po czwartym audycie i panelu adwersaryjnym",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "c3a89eac7c99af83fea53110f021fc0ca00b26f4",
+          "subject": "fix(ui): standardize interactive focus states",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "c99bd14b87ba386e510217e5e8e28446c1937e5c",
+          "subject": "test(ui): preserve focus validation harness",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "d8b3979e651d2e6d5591bff128f5abb23d10772e",
+          "subject": "feat(results): expose KPI ROI and OKR table navigation",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "4610ddb7de335071921435d265bb499ac2ac51e2",
+          "subject": "fix(excel): avoid Teresa budget proxy timeout",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "64856e790afd0a66547d993fba13769878669c62",
+          "subject": "feat(ui): integrate accepted 45-table repair candidate",
+          "patchState": "DIVERGED_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/codex/ui45-demo-staging-rc-20260808",
+      "tip": "4b1e10511135bd42742622fd2c1d075412d4477c",
+      "date": "2026-08-08T22:58:33+02:00",
+      "subject": "merge: sync finance demo readiness into UI45 RC",
+      "integrated": false,
+      "mergeBase": "e8c0fa8148dab4656a84d40edda8e9d502e90079",
+      "aheadCommits": 7,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "f25bc1088d00df3406832d88862a3b047ff303c6",
+          "subject": "feat(ui45): port accepted UI45 closeout commits onto finance/recovery RC",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "aa75aa05df9deb22d4c4d001b01230de360c59b2",
+          "subject": "Merge remote-tracking branch 'origin/codex/finance-demo-readiness-20260808' into codex/ui45-demo-staging-rc-20260808",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "d8dc188e86b7974537d323884f8f0db6eddd3709",
+          "subject": "fix(ui45): remove non-runtime evidence artifacts, revert cosmetic diff",
+          "patchState": "PATCH_PRESENT"
+        },
+        {
+          "sha": "39276216356bd23e980a1c880c9a4cc7b93faf6d",
+          "subject": "Merge remote-tracking branch 'origin/codex/finance-demo-readiness-20260808' into codex/ui45-demo-staging-rc-20260808",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "30779f20cc1e68873b8d9ab4e88452c0f65a39f0",
+          "subject": "Merge remote-tracking branch 'origin/codex/finance-demo-readiness-20260808' into codex/ui45-demo-staging-rc-20260808",
+          "patchState": "PATCH_PRESENT"
+        },
+        {
+          "sha": "58847411950fe1cf712c4c3b5600a0a1be65da7f",
+          "subject": "fix(ui45): give FilterableTable's Settings2 popover truthful i18n fallbacks",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "4b1e10511135bd42742622fd2c1d075412d4477c",
+          "subject": "merge: sync finance demo readiness into UI45 RC",
+          "patchState": "PATCH_PRESENT"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/codex/ui45-dev-render-followup-2026-08-08",
+      "tip": "d9596d14cf0731c8e1062e3111decfb587992611",
+      "date": "2026-08-08T19:45:14+02:00",
+      "subject": "fix(ui45): complete non-production closeout gates",
+      "integrated": false,
+      "mergeBase": "fca72583ea83acf728a7807c5e119318dc206416",
+      "aheadCommits": 12,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "7797a3b354c85dbd2664b7ea825f7ec62ee334cb",
+          "subject": "docs(mvp): checkpoint tariff-plan handoff status",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "396395949848ab32849c4a82d0157f6404cc18b5",
+          "subject": "docs(ui): korpus standardu UI/UX + remediation po czwartym audycie i panelu adwersaryjnym",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "c3a89eac7c99af83fea53110f021fc0ca00b26f4",
+          "subject": "fix(ui): standardize interactive focus states",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "c99bd14b87ba386e510217e5e8e28446c1937e5c",
+          "subject": "test(ui): preserve focus validation harness",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "d8b3979e651d2e6d5591bff128f5abb23d10772e",
+          "subject": "feat(results): expose KPI ROI and OKR table navigation",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "4610ddb7de335071921435d265bb499ac2ac51e2",
+          "subject": "fix(excel): avoid Teresa budget proxy timeout",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "64856e790afd0a66547d993fba13769878669c62",
+          "subject": "feat(ui): integrate accepted 45-table repair candidate",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "16d972a2423fa7bf422c4a888c61638dadb9bbcb",
+          "subject": "test(ui): register assessment five-surface QA screen",
+          "patchState": "PATCH_PRESENT"
+        },
+        {
+          "sha": "859abe098073fbae8c06be5ce40324f6cdc3921d",
+          "subject": "test(ui): complete assessment five-surface QA mocks",
+          "patchState": "PATCH_PRESENT"
+        },
+        {
+          "sha": "da6e409e2b262dddf1b5d347a5bdde593d86cb7a",
+          "subject": "fix(ui): reconcile assessment outputs count",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "179ae2f5cf6702216a782ba10b59934e1ed6cf29",
+          "subject": "docs(ui45): reconcile 322-atom tracker and residual-scope disposition",
+          "patchState": "PATCH_APPLICABLE"
+        },
+        {
+          "sha": "d9596d14cf0731c8e1062e3111decfb587992611",
+          "subject": "fix(ui45): complete non-production closeout gates",
+          "patchState": "DIVERGED_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/codex/visual-capture-program-20260803",
+      "tip": "e796b46253542c1522afc2593aba431479a3c56b",
+      "date": "2026-08-03T22:55:05+02:00",
+      "subject": "docs(ui): make capture handoff readable from release baseline",
+      "integrated": false,
+      "mergeBase": "ad41701753206b1da50266522c248dcba6b119ac",
+      "aheadCommits": 2,
+      "category": "DOCUMENTATION_OR_RECOVERY",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "ac51d32ba4e7ac553413c1f9da5a93df513d7827",
+          "subject": "docs(ui): define 16-module visual capture program",
+          "patchState": "PATCH_APPLICABLE"
+        },
+        {
+          "sha": "e796b46253542c1522afc2593aba431479a3c56b",
+          "subject": "docs(ui): make capture handoff readable from release baseline",
+          "patchState": "DIVERGED_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/content/report-templates-mck",
+      "tip": "970a1acd4e04300a2ef357c02b5b8cd155de5300",
+      "date": "2026-07-13T18:20:45+02:00",
+      "subject": "fix(#10-AB seed): hartowanie 930 — created_by system, arkusze org atelier, usunięto updated_at/sheet_template (runnable+portable)",
+      "integrated": false,
+      "mergeBase": "ddc85bb8e39f30cdf07da84fb930bb8a262ddeb8",
+      "aheadCommits": 2,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "d6674860a4dfa33475e7b03ffa49b12c00d8be85",
+          "subject": "content(templates): 15 szablonów raportów/prezentacji/arkuszy McKinsey-grade (seed 930, NIEODPALONY)",
+          "patchState": "PATCH_APPLICABLE"
+        },
+        {
+          "sha": "970a1acd4e04300a2ef357c02b5b8cd155de5300",
+          "subject": "fix(#10-AB seed): hartowanie 930 — created_by system, arkusze org atelier, usunięto updated_at/sheet_template (runnable+portable)",
+          "patchState": "DIVERGED_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/deliver/content-57-insight",
+      "tip": "8161fdc1dc7ae2c44ec7d9b90885d4bd5c32f77c",
+      "date": "2026-07-13T08:35:36+02:00",
+      "subject": "Merge commit 'a6cfb8f9d6638cfbc85b480efdd670438d9d035c' into integ/content-57",
+      "integrated": true,
+      "mergeBase": "8161fdc1dc7ae2c44ec7d9b90885d4bd5c32f77c",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/deliver/finance-engines-front",
+      "tip": "3f6c23f68e4d6e0dd0e21788fae7a9f636f029b5",
+      "date": "2026-07-12T14:44:39+02:00",
+      "subject": "test(finance): integration + unit coverage for #82f assumptions-status wiring",
+      "integrated": true,
+      "mergeBase": "3f6c23f68e4d6e0dd0e21788fae7a9f636f029b5",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/deliver/func-47a2-59",
+      "tip": "9829e39a033a29a227bfcff62a33459c10745a29",
+      "date": "2026-07-13T09:09:10+02:00",
+      "subject": "Merge commit 'f7333f4f8d4b4d18ee085826f4ce2d3ed758ad17' into integ/func-47-59",
+      "integrated": true,
+      "mergeBase": "9829e39a033a29a227bfcff62a33459c10745a29",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/deliver/insight-v6-content",
+      "tip": "bbd39aa32cabcedfd55faad8bd103f701871e31f",
+      "date": "2026-07-12T15:16:36+02:00",
+      "subject": "fix(insight): wire light-shell Insighty card click-through to real InsightViewer (#57)",
+      "integrated": true,
+      "mergeBase": "bbd39aa32cabcedfd55faad8bd103f701871e31f",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/deliver/kanban-75b",
+      "tip": "3db5aa204bd97932fe82f2c881fdc3cb52ddafcc",
+      "date": "2026-07-13T10:06:47+02:00",
+      "subject": "Merge commit '212679af1de3fb7da41d0d52b618926fe42a04f5' into integ/kanban-75b",
+      "integrated": true,
+      "mergeBase": "3db5aa204bd97932fe82f2c881fdc3cb52ddafcc",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/deliver/lightshells-func2",
+      "tip": "28276f203e52257bbc22d5c871b19c2388720394",
+      "date": "2026-07-12T15:38:00+02:00",
+      "subject": "fix(interview-light): wire onOpenChat/onOpenSession/onContinueAssignment in hub",
+      "integrated": true,
+      "mergeBase": "28276f203e52257bbc22d5c871b19c2388720394",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/deliver/tools-assessment-runtime",
+      "tip": "0e59e42df2b04a697983f4a73e1f97546f1a71c9",
+      "date": "2026-07-12T15:57:00+02:00",
+      "subject": "fix(reports): stop 500 on report template list (boolean vs integer on Postgres)",
+      "integrated": false,
+      "mergeBase": "21655a30ee3c7b96ea966eaa7cec020d3e90b122",
+      "aheadCommits": 2,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "19302961d30515a6410243dabf957ea8df94d5e5",
+          "subject": "fix(tools): render mission ContextStep for risk-uncertainty & portfolio-priority",
+          "patchState": "PATCH_PRESENT"
+        },
+        {
+          "sha": "0e59e42df2b04a697983f4a73e1f97546f1a71c9",
+          "subject": "fix(reports): stop 500 on report template list (boolean vs integer on Postgres)",
+          "patchState": "PATCH_PRESENT"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/deliver/tools-history-kebab-20260712",
+      "tip": "9129ae54506f07c0b448a2372e66d8f4da3fda7c",
+      "date": "2026-07-12T18:08:01+02:00",
+      "subject": "fix(tools): kebab canon #61 — disabled row actions were being silently hidden",
+      "integrated": true,
+      "mergeBase": "9129ae54506f07c0b448a2372e66d8f4da3fda7c",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/demo",
+      "tip": "e45904dc7940f259b9cf017c283264d5c166c9ab",
+      "date": "2026-08-13T14:01:34+02:00",
+      "subject": "fix(demo): prevent status polling rate-limit",
+      "integrated": true,
+      "mergeBase": "e45904dc7940f259b9cf017c283264d5c166c9ab",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/demo-workspace-support",
+      "tip": "02d31b67705b66d5123ed2f05bd04a3e3fc41c20",
+      "date": "2026-04-15T08:54:51+02:00",
+      "subject": "refactor: turn menu demo into workspace guidance",
+      "integrated": false,
+      "mergeBase": "dfac9dc07a14dd620f7c0bf9da9ef1ea181a91ec",
+      "aheadCommits": 1,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "02d31b67705b66d5123ed2f05bd04a3e3fc41c20",
+          "subject": "refactor: turn menu demo into workspace guidance",
+          "patchState": "DIVERGED_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/dependabot/docker/node-25-alpine",
+      "tip": "2e3edbaa23066d6f36ee55d700584d8fa2aef354",
+      "date": "2026-01-05T04:54:30Z",
+      "subject": "chore(docker): bump node from 20-alpine to 25-alpine",
+      "integrated": false,
+      "mergeBase": "a895c2cadeb4e12a83809c1513287a150628a1f9",
+      "aheadCommits": 1,
+      "category": "DEPENDENCY_UPDATE",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "2e3edbaa23066d6f36ee55d700584d8fa2aef354",
+          "subject": "chore(docker): bump node from 20-alpine to 25-alpine",
+          "patchState": "DIVERGED_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/dependabot/github_actions/actions/checkout-7",
+      "tip": "8f678185dd0dc06b8c3b83fe9a732a2caf7bae01",
+      "date": "2026-07-06T09:11:09Z",
+      "subject": "chore(deps): bump actions/checkout from 4 to 7",
+      "integrated": false,
+      "mergeBase": "6c1aaa434e0db3ff969b779b8047bb3d74fe9d15",
+      "aheadCommits": 1,
+      "category": "DEPENDENCY_UPDATE",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "8f678185dd0dc06b8c3b83fe9a732a2caf7bae01",
+          "subject": "chore(deps): bump actions/checkout from 4 to 7",
+          "patchState": "DIVERGED_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/dependabot/github_actions/actions/download-artifact-8",
+      "tip": "d680958bebacdf1eb57475743f05f7e5413a28e9",
+      "date": "2026-07-06T09:10:51Z",
+      "subject": "chore(deps): bump actions/download-artifact from 4 to 8",
+      "integrated": false,
+      "mergeBase": "6c1aaa434e0db3ff969b779b8047bb3d74fe9d15",
+      "aheadCommits": 1,
+      "category": "DEPENDENCY_UPDATE",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "d680958bebacdf1eb57475743f05f7e5413a28e9",
+          "subject": "chore(deps): bump actions/download-artifact from 4 to 8",
+          "patchState": "PATCH_APPLICABLE"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/dependabot/github_actions/actions/upload-artifact-7",
+      "tip": "39c09d1101de2e845766fe1f5b0b7e3e4bd5af17",
+      "date": "2026-07-06T09:10:47Z",
+      "subject": "chore(deps): bump actions/upload-artifact from 4 to 7",
+      "integrated": false,
+      "mergeBase": "6c1aaa434e0db3ff969b779b8047bb3d74fe9d15",
+      "aheadCommits": 1,
+      "category": "DEPENDENCY_UPDATE",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "39c09d1101de2e845766fe1f5b0b7e3e4bd5af17",
+          "subject": "chore(deps): bump actions/upload-artifact from 4 to 7",
+          "patchState": "DIVERGED_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/dependabot/github_actions/peter-evans/create-pull-request-8",
+      "tip": "1367c84abfce691d9b98dab57ae7c473476e9a69",
+      "date": "2026-02-27T14:14:41Z",
+      "subject": "Bump peter-evans/create-pull-request from 5 to 8",
+      "integrated": false,
+      "mergeBase": "292a166eb105f4d1e4e0a51cdfe7afebbe794d98",
+      "aheadCommits": 1,
+      "category": "DEPENDENCY_UPDATE",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "1367c84abfce691d9b98dab57ae7c473476e9a69",
+          "subject": "Bump peter-evans/create-pull-request from 5 to 8",
+          "patchState": "PATCH_APPLICABLE"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/dependabot/github_actions/zaproxy/action-full-scan-0.13.0",
+      "tip": "fb69f6b5dd81d3a0f4442517b132bd149aaaa6c4",
+      "date": "2026-02-27T14:14:40Z",
+      "subject": "chore(deps): bump zaproxy/action-full-scan from 0.10.0 to 0.13.0",
+      "integrated": false,
+      "mergeBase": "292a166eb105f4d1e4e0a51cdfe7afebbe794d98",
+      "aheadCommits": 1,
+      "category": "DEPENDENCY_UPDATE",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "fb69f6b5dd81d3a0f4442517b132bd149aaaa6c4",
+          "subject": "chore(deps): bump zaproxy/action-full-scan from 0.10.0 to 0.13.0",
+          "patchState": "PATCH_APPLICABLE"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/dependabot/npm_and_yarn/development-dependencies-7eba79609e",
+      "tip": "dca10f432c3111d15926cdf513e4f1fd1095ae14",
+      "date": "2026-08-10T09:23:06Z",
+      "subject": "chore(deps-dev): bump the development-dependencies group across 1 directory with 35 updates",
+      "integrated": false,
+      "mergeBase": "f3a45b0c9084c90ac20a77759e8e64375e3a3b3f",
+      "aheadCommits": 1,
+      "category": "DEPENDENCY_UPDATE",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "dca10f432c3111d15926cdf513e4f1fd1095ae14",
+          "subject": "chore(deps-dev): bump the development-dependencies group across 1 directory with 35 updates",
+          "patchState": "DIVERGED_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/dependabot/npm_and_yarn/production-dependencies-2399aeeee0",
+      "tip": "38ffde203299226a4eb47e6c608147bbc5f9c0f8",
+      "date": "2026-07-27T09:39:12Z",
+      "subject": "chore(deps): bump the production-dependencies group across 1 directory with 87 updates",
+      "integrated": false,
+      "mergeBase": "f3a45b0c9084c90ac20a77759e8e64375e3a3b3f",
+      "aheadCommits": 1,
+      "category": "DEPENDENCY_UPDATE",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "38ffde203299226a4eb47e6c608147bbc5f9c0f8",
+          "subject": "chore(deps): bump the production-dependencies group across 1 directory with 87 updates",
+          "patchState": "DIVERGED_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/dev",
+      "tip": "943f5286989810908f2636013b10567df606b1be",
+      "date": "2026-06-10T06:13:03+02:00",
+      "subject": "promote: staging → main (2026-06-10) — Elkomtech data-truth + structured charter + CVE/skip gate clearance",
+      "integrated": false,
+      "mergeBase": "d753ea2e69157bc3969d2e2f3c8a9edcbe04ce64",
+      "aheadCommits": 1,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "943f5286989810908f2636013b10567df606b1be",
+          "subject": "promote: staging → main (2026-06-10) — Elkomtech data-truth + structured charter + CVE/skip gate clearance",
+          "patchState": "LARGE_PATCH_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/develop",
+      "tip": "d675885189caff7eb9650cfcc08599a1141f0485",
+      "date": "2026-06-02T18:53:25+02:00",
+      "subject": "Integrate feat/ee-deliverables-unification → develop (consolidate parallel work) (#101)",
+      "integrated": false,
+      "mergeBase": "f3f219a5a430c4d493120704f02fba08ca72f592",
+      "aheadCommits": 16,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "4869791247c522696c643a91fbf36f4636723bd6",
+          "subject": "fix(deploy): align develop Railway workflow with production pipeline",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "23f2f2ff0a08b35482f9bb6250fcd250e0837715",
+          "subject": "fix(deploy): wait for Railway rollout before verifying staging",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "cac0db1f27276d67b22ffecba3b66193475c9186",
+          "subject": "fix(v8): stabilize develop build type contracts",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "b5af9a285bc13eb12beaef62db2763a72e34c2a8",
+          "subject": "fix(deploy): poll Railway rollout status before marking staging green",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "8d5f43c18197e3a8f33c394d5862339b369a7606",
+          "subject": "fix(deploy): make Railway rollout polling whitespace-tolerant",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "4615618288af1b2ead277dc5afc01fbe5b1cf049",
+          "subject": "fix(v8): tighten develop type boundaries for staging build",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "a8c82e091611806e3acb6b27531db56f2de35fe9",
+          "subject": "fix(chat): restore missing message renderer panels on develop",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "6317b387637021fa59b9e9a18c53fd594756bc0e",
+          "subject": "fix(deploy): upgrade checkout action to native Node 24 runtime",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "7f0b72e6b1006afd2f8a5e6a71ebfda6ff74ea67",
+          "subject": "chore(deploy): harden staging→production guardrails",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "20c68b25a83436881bdf9c3484fa14e0b76a3cca",
+          "subject": "chore(ui): add env/build badge and normalize stage host behavior",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "86deabfabf6a1f84d7af5946e732eee1850a17ae",
+          "subject": "fix(deploy): install bash in Railway CLI workflow container (#78)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "5a669664c793ee53c97c0515d525aa14fb9bd231",
+          "subject": "fix(build): add public production host util (#79)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "a28acf21d0a040b2f30818e4eda31e0bbc536cfb",
+          "subject": "fix(ci): run git tag from workspace (#80)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "dd343f3748a1969f417af5d82ac9527c6f7804cc",
+          "subject": "fix(ci): install git before checkout (#81)",
+          "patchState": "PATCH_PRESENT"
+        },
+        {
+          "sha": "39029b66fd2abdf6247707b9f22a9a8818cab853",
+          "subject": "ci: add PR Gate required check (#83)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "d675885189caff7eb9650cfcc08599a1141f0485",
+          "subject": "Integrate feat/ee-deliverables-unification → develop (consolidate parallel work) (#101)",
+          "patchState": "LARGE_PATCH_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/docs/author-contract-baseline-2026-05-09",
+      "tip": "7e716f97bd90c630ec83a9eae9fa196ed56f4b3d",
+      "date": "2026-05-15T06:39:38+02:00",
+      "subject": "chore(repo): ignore local var artifacts after cleanup",
+      "integrated": false,
+      "mergeBase": "9b5a347400fbc6c6ed22e4afab08603513c1b85d",
+      "aheadCommits": 33,
+      "category": "DOCUMENTATION_OR_RECOVERY",
+      "patchAuditScope": "SKIPPED_OVER_25_REQUIRES_MODULE_DIFF",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/feat/63-tools-triada-standardtable",
+      "tip": "9cd7c2be31352886891d3f676ce576c48f2a1d18",
+      "date": "2026-07-13T08:08:25+02:00",
+      "subject": "feat(#63): Tools listy → kanoniczny StandardTable (Triada)",
+      "integrated": true,
+      "mergeBase": "9cd7c2be31352886891d3f676ce576c48f2a1d18",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/feat/ai-chat-v9",
+      "tip": "b6de25ea5587b30171fa7243a5ac361a982ddeaa",
+      "date": "2026-05-01T17:24:22+02:00",
+      "subject": "fix(interview): normalize template flags before creating session questions",
+      "integrated": false,
+      "mergeBase": "41fb1f327cd413c24d8c38b45b3c8024fee42ad9",
+      "aheadCommits": 3,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "2d4955c8d8166cdc08297e0998f045535a85a6ec",
+          "subject": "fix(interview): align review submit button with working flow",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "8743686539e41f5cd48986db7d143a95e7a806d4",
+          "subject": "fix(interview): unblock submit flow and close wizard document",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "b6de25ea5587b30171fa7243a5ac361a982ddeaa",
+          "subject": "fix(interview): normalize template flags before creating session questions",
+          "patchState": "DIVERGED_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/feat/assessment-triada-72-73",
+      "tip": "34f7408bf314c7df1e0121a0549066717b684701",
+      "date": "2026-07-13T08:16:57+02:00",
+      "subject": "fix(assessment): #72/#73 — GlossaryPanel (DRD runtime) crimson→neutral/c-focus",
+      "integrated": true,
+      "mergeBase": "34f7408bf314c7df1e0121a0549066717b684701",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/feat/deliverables-light",
+      "tip": "a8c697840b884b9f846c4c58eab0036405c45e12",
+      "date": "2026-06-12T16:11:49-04:00",
+      "subject": "docs(harvard): log exhaustive PG bigint/jsonb sweep — 54 bugs fixed, 7 unresolved→prod",
+      "integrated": true,
+      "mergeBase": "a8c697840b884b9f846c4c58eab0036405c45e12",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/feat/deliverables-w1",
+      "tip": "79dfcf0e9d5ddf05fb12a12b5190ac9077775183",
+      "date": "2026-07-05T21:48:14+03:00",
+      "subject": "feat(feedback): reportable route crashes + SLA-aware triage controls (F3)",
+      "integrated": false,
+      "mergeBase": "1b024c194535fa37b0317dfb70e6ce25bc1ad0fd",
+      "aheadCommits": 62,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "SKIPPED_OVER_25_REQUIRES_MODULE_DIFF",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/feat/idea-templates-40",
+      "tip": "d505665f7c9bb7cc4d4c3999e3534b8bc5fb8064",
+      "date": "2026-07-13T10:28:14+02:00",
+      "subject": "chore(#10-AB): dev-render katalog-akcept 40 szablonów (?screen=idea-templates-catalog)",
+      "integrated": true,
+      "mergeBase": "d505665f7c9bb7cc4d4c3999e3534b8bc5fb8064",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/feat/initiative-wizard-staging-clean",
+      "tip": "23246a2cc448d770e516f084ca7093c3daddfa6b",
+      "date": "2026-05-04T06:54:54+02:00",
+      "subject": "feat(initiative-wizard): add staging-ready wizard backend",
+      "integrated": false,
+      "mergeBase": "f3f219a5a430c4d493120704f02fba08ca72f592",
+      "aheadCommits": 16,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "4869791247c522696c643a91fbf36f4636723bd6",
+          "subject": "fix(deploy): align develop Railway workflow with production pipeline",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "23f2f2ff0a08b35482f9bb6250fcd250e0837715",
+          "subject": "fix(deploy): wait for Railway rollout before verifying staging",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "cac0db1f27276d67b22ffecba3b66193475c9186",
+          "subject": "fix(v8): stabilize develop build type contracts",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "b5af9a285bc13eb12beaef62db2763a72e34c2a8",
+          "subject": "fix(deploy): poll Railway rollout status before marking staging green",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "8d5f43c18197e3a8f33c394d5862339b369a7606",
+          "subject": "fix(deploy): make Railway rollout polling whitespace-tolerant",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "4615618288af1b2ead277dc5afc01fbe5b1cf049",
+          "subject": "fix(v8): tighten develop type boundaries for staging build",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "a8c82e091611806e3acb6b27531db56f2de35fe9",
+          "subject": "fix(chat): restore missing message renderer panels on develop",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "6317b387637021fa59b9e9a18c53fd594756bc0e",
+          "subject": "fix(deploy): upgrade checkout action to native Node 24 runtime",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "7f0b72e6b1006afd2f8a5e6a71ebfda6ff74ea67",
+          "subject": "chore(deploy): harden staging→production guardrails",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "20c68b25a83436881bdf9c3484fa14e0b76a3cca",
+          "subject": "chore(ui): add env/build badge and normalize stage host behavior",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "86deabfabf6a1f84d7af5946e732eee1850a17ae",
+          "subject": "fix(deploy): install bash in Railway CLI workflow container (#78)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "5a669664c793ee53c97c0515d525aa14fb9bd231",
+          "subject": "fix(build): add public production host util (#79)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "a28acf21d0a040b2f30818e4eda31e0bbc536cfb",
+          "subject": "fix(ci): run git tag from workspace (#80)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "dd343f3748a1969f417af5d82ac9527c6f7804cc",
+          "subject": "fix(ci): install git before checkout (#81)",
+          "patchState": "PATCH_PRESENT"
+        },
+        {
+          "sha": "39029b66fd2abdf6247707b9f22a9a8818cab853",
+          "subject": "ci: add PR Gate required check (#83)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "23246a2cc448d770e516f084ca7093c3daddfa6b",
+          "subject": "feat(initiative-wizard): add staging-ready wizard backend",
+          "patchState": "DIVERGED_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/feat/interview-anonymity-wall",
+      "tip": "4e511cbadc1807613b1a08131e62344deb388a88",
+      "date": "2026-07-12T22:39:58+02:00",
+      "subject": "fix(interview-anonymity): domknij lukę tożsamości — getCompletedSessions/getAcceptedSessions/getManagedSessions ujawniały respondentName/assigneeName dla anonimowych sesji",
+      "integrated": true,
+      "mergeBase": "4e511cbadc1807613b1a08131e62344deb388a88",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/feat/light-shells-default-on",
+      "tip": "46609ae6802464950a9bda2e2116771b29c709c7",
+      "date": "2026-07-12T22:30:13+02:00",
+      "subject": "flip(canvasToolbarV2Flag): default ON na demo — odbiór Piotra na żywo; rollback: revert tego commita albo ?ff_canvasToolbarV2=0",
+      "integrated": true,
+      "mergeBase": "46609ae6802464950a9bda2e2116771b29c709c7",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/feat/m13-depth-fala1",
+      "tip": "c9b851bf5eaf1e0cf73f3dd61173a07dcf728e70",
+      "date": "2026-06-21T18:15:32-05:00",
+      "subject": "fix(M13): hub falls back to legacy initiatives when V8 portfolio is empty",
+      "integrated": false,
+      "mergeBase": "b2a9ad8b41f0af7fd13657525d51aff1242702c7",
+      "aheadCommits": 3,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "f9a7c76add470177e992edb3ae898c2af262970f",
+          "subject": "test(M13): demo-targeted spec + honest manual-test status (no feature evidence yet)",
+          "patchState": "LARGE_PATCH_REVIEW"
+        },
+        {
+          "sha": "2190c4cccd646211ec718200145abc3109524b2e",
+          "subject": "test(M13): trolley-DB harness — real hub screenshot; honest blocker (snapshot/status routing)",
+          "patchState": "LARGE_PATCH_REVIEW"
+        },
+        {
+          "sha": "c9b851bf5eaf1e0cf73f3dd61173a07dcf728e70",
+          "subject": "fix(M13): hub falls back to legacy initiatives when V8 portfolio is empty",
+          "patchState": "LARGE_PATCH_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/feat/notebook-audit-1712",
+      "tip": "5b5df713e9c04dd8e7135344244fd49d25b37b3f",
+      "date": "2026-07-12T18:05:58+02:00",
+      "subject": "feat(notebook): wire Share/Sources/Verification into ⋯ menu (rewizja #19)",
+      "integrated": true,
+      "mergeBase": "5b5df713e9c04dd8e7135344244fd49d25b37b3f",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/feat/pm-cockpit-kokpit",
+      "tip": "8364dd7b3270950350ed4142fac727ee9f45cd03",
+      "date": "2026-07-12T18:16:44+02:00",
+      "subject": "feat(pm-cockpit): wire cycle-time + ready-to-launch into Observability/Portfolio Health tabs",
+      "integrated": true,
+      "mergeBase": "8364dd7b3270950350ed4142fac727ee9f45cd03",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/feat/pm-cockpit-summary-z94",
+      "tip": "61266907cf52e509c3077b9416d935ee4d50af51",
+      "date": "2026-07-13T19:37:24+02:00",
+      "subject": "feat(#77/Z94): kokpit menedzera Summary one-look (McKinsey) za flaga OFF",
+      "integrated": true,
+      "mergeBase": "61266907cf52e509c3077b9416d935ee4d50af51",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/feat/prezentacje-finisz",
+      "tip": "7e304e86a71dc35a8364ed32b7a5c6d651b295c8",
+      "date": "2026-07-05T15:05:33+03:00",
+      "subject": "chore(prezentacje): document VITE_ENABLE_DECK_COLLABORATE=true for staging (P3.3 collab)",
+      "integrated": true,
+      "mergeBase": "7e304e86a71dc35a8364ed32b7a5c6d651b295c8",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/feat/results-roinet-okr-crud",
+      "tip": "1c961af95f801cb6d4333789adabddf4af406615",
+      "date": "2026-07-12T18:12:23+02:00",
+      "subject": "feat(results/okr): minimal functional CRUD in StrategicLayerPanel (D7 FE)",
+      "integrated": true,
+      "mergeBase": "1c961af95f801cb6d4333789adabddf4af406615",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/feat/spec-q-drd-axis5",
+      "tip": "730df0ff12ddd4192fcf9206bdac36942a9bd585",
+      "date": "2026-07-12T12:06:16+02:00",
+      "subject": "feat(spec-q): DRD Oś 5 „Kultura Transformacji\" (5A–5E) jako SPEC-Q content",
+      "integrated": false,
+      "mergeBase": "0077d3425c2e3fa6db9137078983ee51ee17e11a",
+      "aheadCommits": 5,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "f994fa3a8046b7f65f4e18efcb0211275127b8c9",
+          "subject": "feat(spec-q): flaga standardQuestionFlag (OFF domyślnie, wzór executionLightFlag)",
+          "patchState": "PATCH_APPLICABLE"
+        },
+        {
+          "sha": "f1ae676e922bf55c4457ab472f42d6d6fbffedb9",
+          "subject": "feat(spec-q): StandardQuestion — 4. format artefaktu (5 warstw, presentational, c-* tokeny)",
+          "patchState": "PATCH_APPLICABLE"
+        },
+        {
+          "sha": "47f05271c303a0c60a8b1b26cf5a22e98f4b5c53",
+          "subject": "chore(spec-q): bezpiecznik check-question-canon.sh (własna karta pytania bez StandardQuestion=FAIL)",
+          "patchState": "PATCH_APPLICABLE"
+        },
+        {
+          "sha": "7521baa3dd9c67405bc2b29482c7ed23972e7d88",
+          "subject": "feat(spec-q): harness story standard-question (Q-Text + Q-Level 6-szczeblowa drabinka DRD)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "730df0ff12ddd4192fcf9206bdac36942a9bd585",
+          "subject": "feat(spec-q): DRD Oś 5 „Kultura Transformacji\" (5A–5E) jako SPEC-Q content",
+          "patchState": "DIVERGED_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/feat/spec-q-standardquestion",
+      "tip": "7521baa3dd9c67405bc2b29482c7ed23972e7d88",
+      "date": "2026-07-12T10:39:20+02:00",
+      "subject": "feat(spec-q): harness story standard-question (Q-Text + Q-Level 6-szczeblowa drabinka DRD)",
+      "integrated": false,
+      "mergeBase": "0077d3425c2e3fa6db9137078983ee51ee17e11a",
+      "aheadCommits": 4,
+      "category": "TEST_OR_EVIDENCE",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "f994fa3a8046b7f65f4e18efcb0211275127b8c9",
+          "subject": "feat(spec-q): flaga standardQuestionFlag (OFF domyślnie, wzór executionLightFlag)",
+          "patchState": "PATCH_APPLICABLE"
+        },
+        {
+          "sha": "f1ae676e922bf55c4457ab472f42d6d6fbffedb9",
+          "subject": "feat(spec-q): StandardQuestion — 4. format artefaktu (5 warstw, presentational, c-* tokeny)",
+          "patchState": "PATCH_APPLICABLE"
+        },
+        {
+          "sha": "47f05271c303a0c60a8b1b26cf5a22e98f4b5c53",
+          "subject": "chore(spec-q): bezpiecznik check-question-canon.sh (własna karta pytania bez StandardQuestion=FAIL)",
+          "patchState": "PATCH_APPLICABLE"
+        },
+        {
+          "sha": "7521baa3dd9c67405bc2b29482c7ed23972e7d88",
+          "subject": "feat(spec-q): harness story standard-question (Q-Text + Q-Level 6-szczeblowa drabinka DRD)",
+          "patchState": "DIVERGED_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/feat/teresa-unify-panel-d17",
+      "tip": "3868a29ce11a7412a5c7305cca544fe4e8d1aa5a",
+      "date": "2026-07-12T22:45:21+02:00",
+      "subject": "feat(teresa-D17 #56): scal AIConsultantPanel z JEDNYM panelem Teresy (Insight)",
+      "integrated": true,
+      "mergeBase": "3868a29ce11a7412a5c7305cca544fe4e8d1aa5a",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/feat/tools-19-validation-panel",
+      "tip": "73e4ab059c550ca84fad59dfffa43a1fb2ea4745",
+      "date": "2026-07-08T16:55:04+03:00",
+      "subject": "docs(handoff): brief dla drugiego agenta — walidacja 19 narzędzi panel 3-specjalistów próg 5.5",
+      "integrated": false,
+      "mergeBase": "f3a45b0c9084c90ac20a77759e8e64375e3a3b3f",
+      "aheadCommits": 1,
+      "category": "DOCUMENTATION_OR_RECOVERY",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "73e4ab059c550ca84fad59dfffa43a1fb2ea4745",
+          "subject": "docs(handoff): brief dla drugiego agenta — walidacja 19 narzędzi panel 3-specjalistów próg 5.5",
+          "patchState": "PATCH_APPLICABLE"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/feat/tools-assessment-dbr77",
+      "tip": "39e8b3d6698c17642d784ecf5bbe922b6067c53f",
+      "date": "2026-07-08T18:28:45+03:00",
+      "subject": "docs(panel): raport końcowy — 11/11 DONE, harness 12/12 PASS",
+      "integrated": false,
+      "mergeBase": "f3a45b0c9084c90ac20a77759e8e64375e3a3b3f",
+      "aheadCommits": 98,
+      "category": "DOCUMENTATION_OR_RECOVERY",
+      "patchAuditScope": "SKIPPED_OVER_25_REQUIRES_MODULE_DIFF",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/feat/tp-ent-fala1",
+      "tip": "ed4c3b370d69d33b7ecb31bfe6aeda68d800ee42",
+      "date": "2026-07-05T15:19:41+03:00",
+      "subject": "Merge branch 'feat/tp-ent-mount-sa-panel' into feat/tp-ent-fala1",
+      "integrated": false,
+      "mergeBase": "1b024c194535fa37b0317dfb70e6ce25bc1ad0fd",
+      "aheadCommits": 125,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "SKIPPED_OVER_25_REQUIRES_MODULE_DIFF",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/feat/tp-forms-polish",
+      "tip": "e4e68298d32baa3fe2370b845ec7774b09728480",
+      "date": "2026-07-05T22:46:45+03:00",
+      "subject": "docs(editor-shell): plan wzorca Mind Map — 6 faz + odkrycie 3 paneli",
+      "integrated": false,
+      "mergeBase": "1b024c194535fa37b0317dfb70e6ce25bc1ad0fd",
+      "aheadCommits": 105,
+      "category": "DOCUMENTATION_OR_RECOVERY",
+      "patchAuditScope": "SKIPPED_OVER_25_REQUIRES_MODULE_DIFF",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/feat/whiteboard-finish",
+      "tip": "8929be9f8c2f0499fc2a6c1cf5ff9101f08c3498",
+      "date": "2026-07-05T15:12:58+03:00",
+      "subject": "style(whiteboard): eslint --fix formatting + import sort on tor files",
+      "integrated": true,
+      "mergeBase": "8929be9f8c2f0499fc2a6c1cf5ff9101f08c3498",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/feat/wire-execution-3axis",
+      "tip": "4f94fb819e84d308e57ea5306da7791833945600",
+      "date": "2026-07-12T12:04:40+02:00",
+      "subject": "feat(execution): wire live 3-axis endpoint into ExecutionLightShell (behind executionLight flag, OFF)",
+      "integrated": false,
+      "mergeBase": "1e92c11f9ac6764279f9f6858a353b1bc0914172",
+      "aheadCommits": 1,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "4f94fb819e84d308e57ea5306da7791833945600",
+          "subject": "feat(execution): wire live 3-axis endpoint into ExecutionLightShell (behind executionLight flag, OFF)",
+          "patchState": "DIVERGED_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/feat/wire-initiatives-raci",
+      "tip": "f25b5668eefde037fd19691f90902ade1d6f2c46",
+      "date": "2026-07-12T12:06:01+02:00",
+      "subject": "feat(initiatives): wire RACI+results batch summary into light-shell list",
+      "integrated": false,
+      "mergeBase": "1e92c11f9ac6764279f9f6858a353b1bc0914172",
+      "aheadCommits": 1,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "f25b5668eefde037fd19691f90902ade1d6f2c46",
+          "subject": "feat(initiatives): wire RACI+results batch summary into light-shell list",
+          "patchState": "DIVERGED_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/feat/wire-results-roinet",
+      "tip": "f9e04f1f60b75a784a7fddb4b95c1b87075e9322",
+      "date": "2026-07-12T12:03:48+02:00",
+      "subject": "feat(results-light): wire ROI netto (server net fields) into RoiTab StandardTable",
+      "integrated": false,
+      "mergeBase": "1e92c11f9ac6764279f9f6858a353b1bc0914172",
+      "aheadCommits": 1,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "f9e04f1f60b75a784a7fddb4b95c1b87075e9322",
+          "subject": "feat(results-light): wire ROI netto (server net fields) into RoiTab StandardTable",
+          "patchState": "DIVERGED_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/feat/word-dok-D1-e2e",
+      "tip": "e2801b450b72888bc024c6e4ec630de6a3afa7a8",
+      "date": "2026-07-08T08:51:46+03:00",
+      "subject": "test(M18/D1): e2e document screens fixtures",
+      "integrated": false,
+      "mergeBase": "1b024c194535fa37b0317dfb70e6ce25bc1ad0fd",
+      "aheadCommits": 11,
+      "category": "TEST_OR_EVIDENCE",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "39b5c035b15a2aa62c9877e74d5e7958d648e581",
+          "subject": "test(M18): prove BetaGate enforces access on /document-studio (L-06)",
+          "patchState": "PATCH_PRESENT"
+        },
+        {
+          "sha": "da8d01bc097e50688da64296de934dd74868bb21",
+          "subject": "fix(deliverables): unifikacja typow blokow B3<->docScoring + normalizacja na granicy",
+          "patchState": "PATCH_PRESENT"
+        },
+        {
+          "sha": "a4fd80548b5bb98ec4b07acfbe19d9e76a23d35c",
+          "subject": "feat(M18): kanal generationWarnings — jawne ostrzezenia zamiast cichych fallbackow",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "8a7bfdcb26a0e7297072f3b6756bd1cc41ed82c4",
+          "subject": "test(M18): B2 content blocks — werdykt NO-OP (UI istnieje) + CI-visible test panelu wstawiania",
+          "patchState": "PATCH_PRESENT"
+        },
+        {
+          "sha": "5abd30292f8985de68494417a82f5473d82da703",
+          "subject": "feat(M18): jawne potwierdzenie transformative scope (B1)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "b2062168b389cec8d19c1e0e713a3adc9570e0c2",
+          "subject": "feat(M18): UX eksportu — progres, ostrzezenia, skrot share (B4)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "2b2fadd1524abde7b749437d052542ccc772cd6e",
+          "subject": "feat(M18): wizualny diff propozycji i wersji (B3)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "50c76624fa6afe0b2f299ae4ca9c551fac762102",
+          "subject": "feat(M18): domkniecie UI watkow komentarzy (B5)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "44fa4cbdac0a5ad681b9c3afd33bc37162f3f409",
+          "subject": "test(M18): pokrycie DocumentCommentsPanel (uzupelnienie B5)",
+          "patchState": "PATCH_PRESENT"
+        },
+        {
+          "sha": "d693bcd324b8fa9fa5c62fd64af547e3f379028c",
+          "subject": "feat(M18): E2E Playwright Mode1/Mode3/export-QA/komentarze + fix 404 getDocumentArtifact (content_json→contentJson) (D1)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "e2801b450b72888bc024c6e4ec630de6a3afa7a8",
+          "subject": "test(M18/D1): e2e document screens fixtures",
+          "patchState": "LARGE_PATCH_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/feat/word-dokumenty-finisz",
+      "tip": "aeeb003782171261959a767d4f2ab9ad6487e5f9",
+      "date": "2026-07-05T08:54:05+03:00",
+      "subject": "docs(M18): G7 fix verified — Karta odbioru D2 GRAFIKA 13→15/16, werdykt ODEBRANY",
+      "integrated": false,
+      "mergeBase": "1b024c194535fa37b0317dfb70e6ce25bc1ad0fd",
+      "aheadCommits": 25,
+      "category": "DOCUMENTATION_OR_RECOVERY",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "39b5c035b15a2aa62c9877e74d5e7958d648e581",
+          "subject": "test(M18): prove BetaGate enforces access on /document-studio (L-06)",
+          "patchState": "PATCH_PRESENT"
+        },
+        {
+          "sha": "da8d01bc097e50688da64296de934dd74868bb21",
+          "subject": "fix(deliverables): unifikacja typow blokow B3<->docScoring + normalizacja na granicy",
+          "patchState": "PATCH_PRESENT"
+        },
+        {
+          "sha": "a4fd80548b5bb98ec4b07acfbe19d9e76a23d35c",
+          "subject": "feat(M18): kanal generationWarnings — jawne ostrzezenia zamiast cichych fallbackow",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "8a7bfdcb26a0e7297072f3b6756bd1cc41ed82c4",
+          "subject": "test(M18): B2 content blocks — werdykt NO-OP (UI istnieje) + CI-visible test panelu wstawiania",
+          "patchState": "PATCH_PRESENT"
+        },
+        {
+          "sha": "5abd30292f8985de68494417a82f5473d82da703",
+          "subject": "feat(M18): jawne potwierdzenie transformative scope (B1)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "b2062168b389cec8d19c1e0e713a3adc9570e0c2",
+          "subject": "feat(M18): UX eksportu — progres, ostrzezenia, skrot share (B4)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "2b2fadd1524abde7b749437d052542ccc772cd6e",
+          "subject": "feat(M18): wizualny diff propozycji i wersji (B3)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "50c76624fa6afe0b2f299ae4ca9c551fac762102",
+          "subject": "feat(M18): domkniecie UI watkow komentarzy (B5)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "44fa4cbdac0a5ad681b9c3afd33bc37162f3f409",
+          "subject": "test(M18): pokrycie DocumentCommentsPanel (uzupelnienie B5)",
+          "patchState": "PATCH_PRESENT"
+        },
+        {
+          "sha": "f6ac08b801df7afb5320245fb90b33d4e3b124d8",
+          "subject": "test(M18): golden testy wiernosci eksportu DOCX/PDF (C4)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "8484d1805de09dcb2f43527629b130fbbbcec890",
+          "subject": "feat(M18): scalenie toru doc czat→Studio (jeden pipeline premium) (C3)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "7bd2c78583b6c62c1b3ab3f48ecfb6d030589da5",
+          "subject": "fix(M18): twarda persystencja propozycji edytora — await + jawna degradacja (C2)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "61e6beb2fcaac879171f2059c0b8bbde7d21c464",
+          "subject": "feat(M18): strumieniowa generacja dokumentu SSE + progresywny render (C1)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "4fc13848774bfea530ea0ec1879c720f4775abdd",
+          "subject": "fix(M18): koryguje kolor amber w golden teście DOCX (C4 wave-C merge)",
+          "patchState": "PATCH_PRESENT"
+        },
+        {
+          "sha": "91eb0ed4138c2919665a9b86b54937ebb9680d1f",
+          "subject": "feat(M18): wykresy w eksporcie — wektorowa sciezka deploy-bezpieczna (C5)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "d87a5dd203cc609b76f28cf0c999578c769b47ac",
+          "subject": "feat(M18): E2E Playwright Mode1/Mode3/export-QA/komentarze + fix 404 getDocumentArtifact (content_json→contentJson) (D1)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "15385ebdbe5a12b2eaedfe752a7797ce93c23982",
+          "subject": "fix(M18): D3 zwraca fokus do triggera po zamknięciu TransformativeConfirmDialog",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "b2455aeefa0f17eed5ec2c8dfb430e9833075999",
+          "subject": "test(M18): D3 dowodzi przywracania fokusu do triggera (Cancel/Escape/Continue)",
+          "patchState": "PATCH_PRESENT"
+        },
+        {
+          "sha": "d0c1a50738089d4fa945e63e2252a290514727a4",
+          "subject": "test(M18): D3 a11y smoke dla DocumentStudioGeneratingPanel (streaming)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "63d2a1b22ab1c65d5202a25380fbe749e09ec582",
+          "subject": "test(M18): D3 a11y smoke dla CommentThreadItem (B5 Epic E6)",
+          "patchState": "PATCH_PRESENT"
+        },
+        {
+          "sha": "0c3954428f17159c9e4697c307f1c748dea28f94",
+          "subject": "fix(M18): prune data-less table/chart blocks at render time (G4/K4/K5/K6)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "ebbd531fcc3dd7a5e8894ec0a4bb4cd705d4b8fc",
+          "subject": "docs(M18): D2 head-to-head premium report artifacts + Karta odbioru (Apator ICT/AI audit)",
+          "patchState": "LARGE_PATCH_REVIEW"
+        },
+        {
+          "sha": "fab9b8e6f61097750740a595b2e8c9ffd0db4ae2",
+          "subject": "fix(M18): G7 real Word list outline via docx numbering API (DOCX)",
+          "patchState": "PATCH_PRESENT"
+        },
+        {
+          "sha": "989eca85d70665acbb75bd67b887a19ed6725144",
+          "subject": "test(M18): G7 structural proof — assert <w:numPr> + numbering.xml in golden DOCX",
+          "patchState": "PATCH_PRESENT"
+        },
+        {
+          "sha": "aeeb003782171261959a767d4f2ab9ad6487e5f9",
+          "subject": "docs(M18): G7 fix verified — Karta odbioru D2 GRAFIKA 13→15/16, werdykt ODEBRANY",
+          "patchState": "LARGE_PATCH_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/feat/zwornik-team-roles-tasks",
+      "tip": "df74ab68402b01e94ad696d0678c6d4e54f240e1",
+      "date": "2026-07-13T11:13:21+02:00",
+      "subject": "chore(dev-render/#78): story zwornik-projects (real MyProjects + fetch mock)",
+      "integrated": true,
+      "mergeBase": "df74ab68402b01e94ad696d0678c6d4e54f240e1",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/fix/create-table-label-sheet",
+      "tip": "151767084a703823863619a9f77bed11fc0d1f64",
+      "date": "2026-07-12T21:40:40+02:00",
+      "subject": "fix(canvas): #86b — 'Create table' button actually creates a spreadsheet",
+      "integrated": true,
+      "mergeBase": "151767084a703823863619a9f77bed11fc0d1f64",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/fix/drd-groundtruth-gaps",
+      "tip": "386771fde768efad73eb313b3d72460b883b5b10",
+      "date": "2026-07-12T19:31:08+02:00",
+      "subject": "fix(reports): split gap_analysis/roadmap DRD grounding query, tune to book vocabulary",
+      "integrated": true,
+      "mergeBase": "386771fde768efad73eb313b3d72460b883b5b10",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/fix/e2e-interview-sandbox-isolation",
+      "tip": "ad6850e45a74c9f0920a03af153adf23dce45693",
+      "date": "2026-07-13T08:11:23+02:00",
+      "subject": "fix(e2e): stop interview.spec.ts writing real sessions into DBR77 org",
+      "integrated": true,
+      "mergeBase": "ad6850e45a74c9f0920a03af153adf23dce45693",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/fix/excel-sheet-splitbrain",
+      "tip": "fe9a2edcfa267f78f697af2e9e1625e2192f5eaa",
+      "date": "2026-07-07T16:16:24+03:00",
+      "subject": "fix(excel): consume server-materialized workbook, kill 2nd artifact (D1a)",
+      "integrated": false,
+      "mergeBase": "f3a45b0c9084c90ac20a77759e8e64375e3a3b3f",
+      "aheadCommits": 4,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "53a7cea26a1dbf924ab049bc65239fa4bb9b6660",
+          "subject": "feat(excel): shared workbook artifact helper (generate + persist)",
+          "patchState": "PATCH_APPLICABLE"
+        },
+        {
+          "sha": "01f7f7384a3d0e40b87c02cb52f7a38a1a81c61e",
+          "subject": "refactor(excel): workbook route uses shared generate+persist helper",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "d6aba24025806a7edbbb51652b131de3e4b379c8",
+          "subject": "fix(excel): materialize workbook server-side for excele lane (D1a P0-1)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "fe9a2edcfa267f78f697af2e9e1625e2192f5eaa",
+          "subject": "fix(excel): consume server-materialized workbook, kill 2nd artifact (D1a)",
+          "patchState": "DIVERGED_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/fix/f15-escape-titles-sweep",
+      "tip": "dc82379a00e832621aa4197f9236ca705d0f5706",
+      "date": "2026-07-12T19:30:45+02:00",
+      "subject": "chore(F15): add generalized dry-run backfill for task/initiative/decision/report/interview_session titles",
+      "integrated": true,
+      "mergeBase": "dc82379a00e832621aa4197f9236ca705d0f5706",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/fix/finance-empty-screen-demo",
+      "tip": "47223e0de17538d7cb76ac486adda79cfc1f569a",
+      "date": "2026-07-13T06:42:07+02:00",
+      "subject": "fix(finance): stop blanking Finance when V8 rollout flag is off (Z82 pattern)",
+      "integrated": true,
+      "mergeBase": "47223e0de17538d7cb76ac486adda79cfc1f569a",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/fix/idea-map-minimap-config",
+      "tip": "6c635f6391a762a59cac425a4098ea2592dde1f6",
+      "date": "2026-07-12T21:35:49+02:00",
+      "subject": "fix(idea-map): configure MiniMap nodeColor/maskColor per node type (#6n)",
+      "integrated": true,
+      "mergeBase": "6c635f6391a762a59cac425a4098ea2592dde1f6",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/fix/ideas-canvas-orders",
+      "tip": "f8e160c60e46cd699fd26dd57b421af24e7db2de",
+      "date": "2026-07-12T14:15:57+02:00",
+      "subject": "fix(ideas): #6i — Present na pustej mapie pokazuje uczciwy empty-state",
+      "integrated": true,
+      "mergeBase": "f8e160c60e46cd699fd26dd57b421af24e7db2de",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/fix/initiative-status-and-icon-crash",
+      "tip": "7982d3c21813953997dae75473965c9ed1d8b9f0",
+      "date": "2026-07-16T16:51:17+02:00",
+      "subject": "fix(demo,ui): canonical initiative status on seed + guard forwardRef icons",
+      "integrated": false,
+      "mergeBase": "d753ea2e69157bc3969d2e2f3c8a9edcbe04ce64",
+      "aheadCommits": 2,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "943f5286989810908f2636013b10567df606b1be",
+          "subject": "promote: staging → main (2026-06-10) — Elkomtech data-truth + structured charter + CVE/skip gate clearance",
+          "patchState": "LARGE_PATCH_REVIEW"
+        },
+        {
+          "sha": "7982d3c21813953997dae75473965c9ed1d8b9f0",
+          "subject": "fix(demo,ui): canonical initiative status on seed + guard forwardRef icons",
+          "patchState": "DIVERGED_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/fix/lint-autofix",
+      "tip": "1be3f80de0bc87f02d12e801f9072a4455e19a9c",
+      "date": "2026-04-24T13:54:29+02:00",
+      "subject": "chore(lint): auto-fix formatting and hook order",
+      "integrated": false,
+      "mergeBase": "f3f219a5a430c4d493120704f02fba08ca72f592",
+      "aheadCommits": 16,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "4869791247c522696c643a91fbf36f4636723bd6",
+          "subject": "fix(deploy): align develop Railway workflow with production pipeline",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "23f2f2ff0a08b35482f9bb6250fcd250e0837715",
+          "subject": "fix(deploy): wait for Railway rollout before verifying staging",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "cac0db1f27276d67b22ffecba3b66193475c9186",
+          "subject": "fix(v8): stabilize develop build type contracts",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "b5af9a285bc13eb12beaef62db2763a72e34c2a8",
+          "subject": "fix(deploy): poll Railway rollout status before marking staging green",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "8d5f43c18197e3a8f33c394d5862339b369a7606",
+          "subject": "fix(deploy): make Railway rollout polling whitespace-tolerant",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "4615618288af1b2ead277dc5afc01fbe5b1cf049",
+          "subject": "fix(v8): tighten develop type boundaries for staging build",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "a8c82e091611806e3acb6b27531db56f2de35fe9",
+          "subject": "fix(chat): restore missing message renderer panels on develop",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "6317b387637021fa59b9e9a18c53fd594756bc0e",
+          "subject": "fix(deploy): upgrade checkout action to native Node 24 runtime",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "7f0b72e6b1006afd2f8a5e6a71ebfda6ff74ea67",
+          "subject": "chore(deploy): harden staging→production guardrails",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "20c68b25a83436881bdf9c3484fa14e0b76a3cca",
+          "subject": "chore(ui): add env/build badge and normalize stage host behavior",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "86deabfabf6a1f84d7af5946e732eee1850a17ae",
+          "subject": "fix(deploy): install bash in Railway CLI workflow container (#78)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "5a669664c793ee53c97c0515d525aa14fb9bd231",
+          "subject": "fix(build): add public production host util (#79)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "a28acf21d0a040b2f30818e4eda31e0bbc536cfb",
+          "subject": "fix(ci): run git tag from workspace (#80)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "dd343f3748a1969f417af5d82ac9527c6f7804cc",
+          "subject": "fix(ci): install git before checkout (#81)",
+          "patchState": "PATCH_PRESENT"
+        },
+        {
+          "sha": "39029b66fd2abdf6247707b9f22a9a8818cab853",
+          "subject": "ci: add PR Gate required check (#83)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "1be3f80de0bc87f02d12e801f9072a4455e19a9c",
+          "subject": "chore(lint): auto-fix formatting and hook order",
+          "patchState": "LARGE_PATCH_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/fix/materials-light-shell-wire-deck-topbar-kebab",
+      "tip": "c22c2828cd81bacfd71133b71b2f423454ec6faf",
+      "date": "2026-07-12T22:46:50+02:00",
+      "subject": "fix(deck/#84,Z124): fold History/QA/Governance/Analytics/Audit under the top bar's ⋯ menu",
+      "integrated": true,
+      "mergeBase": "c22c2828cd81bacfd71133b71b2f423454ec6faf",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/fix/my-work-open-nonpersonal-tasks",
+      "tip": "4063d448b254b8c9725241c79f13b3ad3ac772ac",
+      "date": "2026-07-16T17:12:07+02:00",
+      "subject": "fix(my-work): open/edit non-personal tasks in detail view",
+      "integrated": false,
+      "mergeBase": "d753ea2e69157bc3969d2e2f3c8a9edcbe04ce64",
+      "aheadCommits": 3,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "943f5286989810908f2636013b10567df606b1be",
+          "subject": "promote: staging → main (2026-06-10) — Elkomtech data-truth + structured charter + CVE/skip gate clearance",
+          "patchState": "LARGE_PATCH_REVIEW"
+        },
+        {
+          "sha": "dd90ec7b17402a4c82f1ef3dce4c41122c293931",
+          "subject": "fix(demo,ui): canonical initiative status on seed + guard forwardRef icons (#112)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "4063d448b254b8c9725241c79f13b3ad3ac772ac",
+          "subject": "fix(my-work): open/edit non-personal tasks in detail view",
+          "patchState": "DIVERGED_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/fix/mywork-priority-viewtoggle-row",
+      "tip": "8754918bbc25cfe1b9500daa1f7b2eedbf9473b2",
+      "date": "2026-07-12T21:44:20+02:00",
+      "subject": "fix(#39): Priority-chip Decyzji na lewo od przełącznika widoku (table/kanban)",
+      "integrated": true,
+      "mergeBase": "8754918bbc25cfe1b9500daa1f7b2eedbf9473b2",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/fix/okr-manual-only-d7",
+      "tip": "0ce5488184c6b357d87a978a7a4eac339071af4f",
+      "date": "2026-07-12T22:21:31+02:00",
+      "subject": "docs(okr/D7): annotate migration 914 — KR<->KPI link is superseded to informational-only",
+      "integrated": true,
+      "mergeBase": "0ce5488184c6b357d87a978a7a4eac339071af4f",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/fix/przeglad-2026-07-28",
+      "tip": "11f454b67aa54d1fd49856906db7a754417476e3",
+      "date": "2026-07-30T07:53:07+02:00",
+      "subject": "docs(handoff): przekazanie pracy nad tabelami — przeglad 2, 74 zrzuty",
+      "integrated": false,
+      "mergeBase": "e299a33b30618c6d19f1267239f5483745370250",
+      "aheadCommits": 2,
+      "category": "DOCUMENTATION_OR_RECOVERY",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "c124313e650d134136530e4b2691973144499f61",
+          "subject": "fix(przeglad-2): daty w My Work, atrapy 'soon', duplikat zrodla i kebab w podgladzie Idei",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "11f454b67aa54d1fd49856906db7a754417476e3",
+          "subject": "docs(handoff): przekazanie pracy nad tabelami — przeglad 2, 74 zrzuty",
+          "patchState": "PATCH_APPLICABLE"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/fix/results-finance-tabs",
+      "tip": "4c352cd5e8113b1f6bdd314cf68484bbca2074bb",
+      "date": "2026-07-12T14:10:01+02:00",
+      "subject": "fix(#82d): Finance — kolejność zakładek: Statements→Analysis→Models→Prediction→Valuation",
+      "integrated": true,
+      "mergeBase": "4c352cd5e8113b1f6bdd314cf68484bbca2074bb",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/fix/sidebar-misc-orders",
+      "tip": "20659f320966e7f39dda67523a8c83d66299af4d",
+      "date": "2026-07-12T14:18:14+02:00",
+      "subject": "fix(i18n): #11-extend sweep Team/Zespół→Organization dla wzorca scope",
+      "integrated": true,
+      "mergeBase": "20659f320966e7f39dda67523a8c83d66299af4d",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/fix/standardtable-27todo-batch2",
+      "tip": "fa7012d88c675cc7776893fa8b54309e5428aceb",
+      "date": "2026-07-13T13:50:28+02:00",
+      "subject": "chore(dev-render): harness dla InitiativesTable/ReportsTable + fix width kolumny name",
+      "integrated": true,
+      "mergeBase": "fa7012d88c675cc7776893fa8b54309e5428aceb",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/fix/standardtable-27todo-migration",
+      "tip": "65b9655f4d4018c505b62cfc04b83c6574da64c9",
+      "date": "2026-07-13T12:55:45+02:00",
+      "subject": "chore(dev-render): dodaj harness dla InitiativesManagementPanel + ReportsManagementPanel",
+      "integrated": true,
+      "mergeBase": "65b9655f4d4018c505b62cfc04b83c6574da64c9",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/fix/tabele-fala2-2026-07-28",
+      "tip": "506ab83b6fc36b6d99e596d829ea752b81d764d9",
+      "date": "2026-07-28T13:10:23+02:00",
+      "subject": "rejestr(odbior): TAB-FALA2 — ciag dalszy Fali 3 + pozycje wymagajace decyzji",
+      "integrated": true,
+      "mergeBase": "506ab83b6fc36b6d99e596d829ea752b81d764d9",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/fix/task-card-orders",
+      "tip": "e21da44fe141a4c4beb7d5563d4f19f3480f44c1",
+      "date": "2026-07-12T14:13:36+02:00",
+      "subject": "fix(#31): karta Taska/Decyzji otwiera się domyślnie na READ, nie EDIT",
+      "integrated": true,
+      "mergeBase": "e21da44fe141a4c4beb7d5563d4f19f3480f44c1",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/fix/task-decision-ai-header",
+      "tip": "d1a4822ad732561f69e99955cb93fa627eb7a5b0",
+      "date": "2026-07-12T21:41:09+02:00",
+      "subject": "fix(#27): przenieś przycisk AI do nagłówka Task/Decision (parytet #37)",
+      "integrated": true,
+      "mergeBase": "d1a4822ad732561f69e99955cb93fa627eb7a5b0",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/fix/task-decision-read-default",
+      "tip": "a552c868d9fbc73dccf7d73249c24eb870a3c7d0",
+      "date": "2026-07-12T21:36:02+02:00",
+      "subject": "fix(#31): karta Task/Decision domyślnie READ dla istniejących rekordów",
+      "integrated": true,
+      "mergeBase": "a552c868d9fbc73dccf7d73249c24eb870a3c7d0",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/fix/toolbar-saved-label-removal",
+      "tip": "f5bb326bd4f6198a9e19606ba9cbd38045ea152a",
+      "date": "2026-07-12T21:37:38+02:00",
+      "subject": "fix(canvas): #6c — dokończ usuwanie 'Saved Xs ago' z pozostałych narzędzi",
+      "integrated": true,
+      "mergeBase": "f5bb326bd4f6198a9e19606ba9cbd38045ea152a",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/fix/tools-kebab-canon",
+      "tip": "8f241b4e91c517c99f7a9351e6a215c3a2b3d63c",
+      "date": "2026-07-12T14:19:45+02:00",
+      "subject": "fix(interview): Fork z toolbara Insight do kebaba wiersza (#55a)",
+      "integrated": true,
+      "mergeBase": "8f241b4e91c517c99f7a9351e6a215c3a2b3d63c",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/fix/triada-preview-overlay-kebab",
+      "tip": "49d40d0f9b305d600868fd23e1f4a928b596ef44",
+      "date": "2026-07-13T07:07:16+02:00",
+      "subject": "fix(triada #40): kebab jeden standard — flat actions→sekcyjny kontrakt",
+      "integrated": false,
+      "mergeBase": "753803626d03170ab423936c477345ec589d54a4",
+      "aheadCommits": 2,
+      "category": "DOCUMENTATION_OR_RECOVERY",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "70bd26bcdcd2326b7c76b1f15997766526b1ceee",
+          "subject": "fix(triada #4b): desktop preview = overlay NAD tabelą, zero reflow",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "49d40d0f9b305d600868fd23e1f4a928b596ef44",
+          "subject": "fix(triada #40): kebab jeden standard — flat actions→sekcyjny kontrakt",
+          "patchState": "DIVERGED_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/handoff-2026-07-15",
+      "tip": "03f14ce1bbf01b5f6d2fe20d6b5f69ac544318a7",
+      "date": "2026-07-15T07:23:30+02:00",
+      "subject": "docs(handoff): przejęcie wątku Oxford/Harvey/Harvard wiring 2026-07-15 — dla agenta w nowym planie",
+      "integrated": false,
+      "mergeBase": "3fbef633c49f8cede31d76b724f3a221ec9e2586",
+      "aheadCommits": 1,
+      "category": "DOCUMENTATION_OR_RECOVERY",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "03f14ce1bbf01b5f6d2fe20d6b5f69ac544318a7",
+          "subject": "docs(handoff): przejęcie wątku Oxford/Harvey/Harvard wiring 2026-07-15 — dla agenta w nowym planie",
+          "patchState": "PATCH_APPLICABLE"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/hotfix/sc18-sc17-main",
+      "tip": "e7e1cf8a1bf7a7b930149a7a5fcb26f038c59922",
+      "date": "2026-05-16T19:41:33+02:00",
+      "subject": "fix(settings): stabilize profile persistence and module gate timeout",
+      "integrated": false,
+      "mergeBase": "9b5a347400fbc6c6ed22e4afab08603513c1b85d",
+      "aheadCommits": 1,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "e7e1cf8a1bf7a7b930149a7a5fcb26f038c59922",
+          "subject": "fix(settings): stabilize profile persistence and module gate timeout",
+          "patchState": "DIVERGED_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/ideas-teresa-panel",
+      "tip": "9f7e7730b586daaf8c0035cc79d7f9a89863bf7d",
+      "date": "2026-07-13T10:25:38+02:00",
+      "subject": "chore(dev-render): story ideas-teresa-panel (odbiór D16/D17)",
+      "integrated": true,
+      "mergeBase": "9f7e7730b586daaf8c0035cc79d7f9a89863bf7d",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/integration/harvard-noc",
+      "tip": "110fb8875b9613d1d01640dfc26098ac63a909f8",
+      "date": "2026-07-05T14:30:46+03:00",
+      "subject": "feat(workbook-templates): register dcfValuation in template registry",
+      "integrated": false,
+      "mergeBase": "1b024c194535fa37b0317dfb70e6ce25bc1ad0fd",
+      "aheadCommits": 76,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "SKIPPED_OVER_25_REQUIRES_MODULE_DIFF",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/integration/interview-to-develop",
+      "tip": "e1bbfa606accc73b1606e2244f19462b75d0962d",
+      "date": "2026-06-06T07:00:20+02:00",
+      "subject": "merge(integration): Interview module 84-point rebuild + Audit Orchestrator → develop",
+      "integrated": false,
+      "mergeBase": "35f52c62276f0e6ecba6d27a497e8222012a0fe2",
+      "aheadCommits": 17,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "4869791247c522696c643a91fbf36f4636723bd6",
+          "subject": "fix(deploy): align develop Railway workflow with production pipeline",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "23f2f2ff0a08b35482f9bb6250fcd250e0837715",
+          "subject": "fix(deploy): wait for Railway rollout before verifying staging",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "cac0db1f27276d67b22ffecba3b66193475c9186",
+          "subject": "fix(v8): stabilize develop build type contracts",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "b5af9a285bc13eb12beaef62db2763a72e34c2a8",
+          "subject": "fix(deploy): poll Railway rollout status before marking staging green",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "8d5f43c18197e3a8f33c394d5862339b369a7606",
+          "subject": "fix(deploy): make Railway rollout polling whitespace-tolerant",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "4615618288af1b2ead277dc5afc01fbe5b1cf049",
+          "subject": "fix(v8): tighten develop type boundaries for staging build",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "a8c82e091611806e3acb6b27531db56f2de35fe9",
+          "subject": "fix(chat): restore missing message renderer panels on develop",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "6317b387637021fa59b9e9a18c53fd594756bc0e",
+          "subject": "fix(deploy): upgrade checkout action to native Node 24 runtime",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "7f0b72e6b1006afd2f8a5e6a71ebfda6ff74ea67",
+          "subject": "chore(deploy): harden staging→production guardrails",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "20c68b25a83436881bdf9c3484fa14e0b76a3cca",
+          "subject": "chore(ui): add env/build badge and normalize stage host behavior",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "86deabfabf6a1f84d7af5946e732eee1850a17ae",
+          "subject": "fix(deploy): install bash in Railway CLI workflow container (#78)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "5a669664c793ee53c97c0515d525aa14fb9bd231",
+          "subject": "fix(build): add public production host util (#79)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "a28acf21d0a040b2f30818e4eda31e0bbc536cfb",
+          "subject": "fix(ci): run git tag from workspace (#80)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "dd343f3748a1969f417af5d82ac9527c6f7804cc",
+          "subject": "fix(ci): install git before checkout (#81)",
+          "patchState": "PATCH_PRESENT"
+        },
+        {
+          "sha": "39029b66fd2abdf6247707b9f22a9a8818cab853",
+          "subject": "ci: add PR Gate required check (#83)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "d675885189caff7eb9650cfcc08599a1141f0485",
+          "subject": "Integrate feat/ee-deliverables-unification → develop (consolidate parallel work) (#101)",
+          "patchState": "LARGE_PATCH_REVIEW"
+        },
+        {
+          "sha": "e1bbfa606accc73b1606e2244f19462b75d0962d",
+          "subject": "merge(integration): Interview module 84-point rebuild + Audit Orchestrator → develop",
+          "patchState": "DIVERGED_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/integration/tools-finish-20260706",
+      "tip": "36f47ec5d5bfaa73330ebca72e0c310e1908647b",
+      "date": "2026-07-07T05:50:00+03:00",
+      "subject": "fix(dp3-migrate): getDatabaseType nie istnieje na tej bazie — detekcja postgres wg konwencji migrate.ts (DB_TYPE/DATABASE_URL)",
+      "integrated": false,
+      "mergeBase": "f3a45b0c9084c90ac20a77759e8e64375e3a3b3f",
+      "aheadCommits": 1,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "36f47ec5d5bfaa73330ebca72e0c310e1908647b",
+          "subject": "fix(dp3-migrate): getDatabaseType nie istnieje na tej bazie — detekcja postgres wg konwencji migrate.ts (DB_TYPE/DATABASE_URL)",
+          "patchState": "PATCH_APPLICABLE"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/Londyn",
+      "tip": "f3a45b0c9084c90ac20a77759e8e64375e3a3b3f",
+      "date": "2026-07-07T00:15:46+03:00",
+      "subject": "Merge branch 'test/e2e-idea-tools-v2' into integration/tools-finish-20260706",
+      "integrated": true,
+      "mergeBase": "f3a45b0c9084c90ac20a77759e8e64375e3a3b3f",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/main",
+      "tip": "627b7d93ae59769f35d2867202ceb7113039b850",
+      "date": "2026-07-16T17:58:15+02:00",
+      "subject": "fix(interview): AI eval fixType must be nullable, not optional (evaluate-answers 500) (#115)",
+      "integrated": false,
+      "mergeBase": "d753ea2e69157bc3969d2e2f3c8a9edcbe04ce64",
+      "aheadCommits": 5,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "943f5286989810908f2636013b10567df606b1be",
+          "subject": "promote: staging → main (2026-06-10) — Elkomtech data-truth + structured charter + CVE/skip gate clearance",
+          "patchState": "LARGE_PATCH_REVIEW"
+        },
+        {
+          "sha": "dd90ec7b17402a4c82f1ef3dce4c41122c293931",
+          "subject": "fix(demo,ui): canonical initiative status on seed + guard forwardRef icons (#112)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "1200f8627b0cdf382ea4b884761a5933794b9583",
+          "subject": "fix(my-work): open/edit non-personal tasks in detail view (#113)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "5359e4feb8bcca83ccc0609a6c9967f566e9288c",
+          "subject": "fix(interview): allow org owners/admins to read their org's sessions (#114)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "627b7d93ae59769f35d2867202ceb7113039b850",
+          "subject": "fix(interview): AI eval fixType must be nullable, not optional (evaluate-answers 500) (#115)",
+          "patchState": "DIVERGED_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/notatnik-centrum-16-21-23",
+      "tip": "1932c59b209ee316ebee2f7164379a7d81f44306",
+      "date": "2026-07-13T17:56:47+02:00",
+      "subject": "Merge commit '502ad40438c900a1ce9d09f9582f5fb6402803e2' into integ/notatnik-1621",
+      "integrated": true,
+      "mergeBase": "1932c59b209ee316ebee2f7164379a7d81f44306",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/oc/chat-teresa-right",
+      "tip": "df126d1bf6f5cc5862fa0162aaab9d8b9010947a",
+      "date": "2026-07-13T13:16:59+02:00",
+      "subject": "Merge commit '42c9b13c3a9baad00993f53d5f12442b122dd4af' into integ/teresa-right",
+      "integrated": true,
+      "mergeBase": "df126d1bf6f5cc5862fa0162aaab9d8b9010947a",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/oc71/assessment-tools-parity",
+      "tip": "c3f830c0ad44e62bf21918cdddc6987bd5c5c555",
+      "date": "2026-07-13T11:41:00+02:00",
+      "subject": "feat(#71): Assessment Menu 3 status filter chips (Tools parity) — ff OFF",
+      "integrated": false,
+      "mergeBase": "ddc85bb8e39f30cdf07da84fb930bb8a262ddeb8",
+      "aheadCommits": 1,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "c3f830c0ad44e62bf21918cdddc6987bd5c5c555",
+          "subject": "feat(#71): Assessment Menu 3 status filter chips (Tools parity) — ff OFF",
+          "patchState": "DIVERGED_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/odbior/hub-2026-07-23",
+      "tip": "092791efb431997b29475536333832f4abb32f35",
+      "date": "2026-07-24T18:42:42+02:00",
+      "subject": "docs(handoff): rozszerzony status (Piotr wraca w niedziele) + pelny, opisowy prompt dla nastepcy",
+      "integrated": false,
+      "mergeBase": "04644ec36de35bdc8bb36a667d54403b33af2169",
+      "aheadCommits": 2,
+      "category": "DOCUMENTATION_OR_RECOVERY",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "7afee643e824b2dd4221863843dfd60131d7ce6c",
+          "subject": "docs(handoff): pelny kontekst dnia + prompt dla nastepcy — przekazanie sesji przed limitem tokenow",
+          "patchState": "PATCH_APPLICABLE"
+        },
+        {
+          "sha": "092791efb431997b29475536333832f4abb32f35",
+          "subject": "docs(handoff): rozszerzony status (Piotr wraca w niedziele) + pelny, opisowy prompt dla nastepcy",
+          "patchState": "DIVERGED_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/odbior/lokalny-2026-07-23",
+      "tip": "119918ef79c4575e2c3c1d793436a80224f7c105",
+      "date": "2026-07-24T06:54:53+02:00",
+      "subject": "chore(qa): zrzuty dowodowe fal P2/P3 (D2, panel, data-rail)",
+      "integrated": false,
+      "mergeBase": "48ffbdc22746347013fde156a042913916cf017c",
+      "aheadCommits": 58,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "SKIPPED_OVER_25_REQUIRES_MODULE_DIFF",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/oxford/24-calendar-sync",
+      "tip": "418f93a0cf8ae6228569155ffdc9e066c071e914",
+      "date": "2026-07-13T20:35:15+02:00",
+      "subject": "Merge commit 'b30ccb6f04cce97d322623475bceddd7da1c4d7e' into integ/calendar-24",
+      "integrated": true,
+      "mergeBase": "418f93a0cf8ae6228569155ffdc9e066c071e914",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/oxford/3ab4-kebab-ppm-whatsnext",
+      "tip": "1414c7916a080be1f88e721bb56f20c592b3e3dc",
+      "date": "2026-07-12T22:43:38+02:00",
+      "subject": "feat(preview): blok WHAT'S NEXT w kontrakcie StandardPreview + de-dup nota (ANEKS #4)",
+      "integrated": true,
+      "mergeBase": "1414c7916a080be1f88e721bb56f20c592b3e3dc",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/oxford/43a-preview-canon-skill",
+      "tip": "62fe3864ac7f9bb109b81d9ecbcfef5c9568755d",
+      "date": "2026-07-13T07:19:36+02:00",
+      "subject": "docs(#43a): kanon preview jako SKILL + SSOT — skrót 6 bloków w TABLE_AND_PREVIEW_CANON §7.0",
+      "integrated": true,
+      "mergeBase": "62fe3864ac7f9bb109b81d9ecbcfef5c9568755d",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/oxford/74-gate-edges",
+      "tip": "4b935210010d169e74f789b81253d6d68af82819",
+      "date": "2026-07-13T07:14:56+02:00",
+      "subject": "fix(#74): domknij krawędzie bramek faz — pokaż CZEMU nie można przejść",
+      "integrated": true,
+      "mergeBase": "4b935210010d169e74f789b81253d6d68af82819",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/oxford/76a-grid-card",
+      "tip": "ac959d2274ebd4f809245e2472d5304cbd5a36f7",
+      "date": "2026-07-13T19:35:54+02:00",
+      "subject": "chore(#76a): dev-render story dla StandardGridCard (?screen=standard-grid-card)",
+      "integrated": true,
+      "mergeBase": "ac959d2274ebd4f809245e2472d5304cbd5a36f7",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/oxford/81-results-3pary",
+      "tip": "55414f0e0b38d9659714eba0c153ee08de5af0d3",
+      "date": "2026-07-13T16:29:09+02:00",
+      "subject": "feat(#81): Results 3-pary (KPI/ROI/OKR) redesign + dev-render story (StandardTable, tokeny c-*, zero crimson)",
+      "integrated": true,
+      "mergeBase": "55414f0e0b38d9659714eba0c153ee08de5af0d3",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/oxford/81-results-3pary-live",
+      "tip": "e1db77496c868410709e477a3491f8c02ece8501",
+      "date": "2026-07-13T17:36:45+02:00",
+      "subject": "feat(#81): flaga threePairs default ON na demo (zaakceptowany redesign Results 3-pary)",
+      "integrated": true,
+      "mergeBase": "e1db77496c868410709e477a3491f8c02ece8501",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/oxford/83cd-template-builders-live",
+      "tip": "b044e85a7c7eb524b1885f283ea864aa4e9e55e1",
+      "date": "2026-07-13T19:12:26+02:00",
+      "subject": "Merge commit '433a9274ff543687bb07decee0e00e6da81ccafa' into integ/template-builders",
+      "integrated": true,
+      "mergeBase": "b044e85a7c7eb524b1885f283ea864aa4e9e55e1",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/oxford/canvas-zones-edge-editor",
+      "tip": "03ab086cf4e5077fa50a5d8f661ebe7452033be1",
+      "date": "2026-07-12T23:12:23+02:00",
+      "subject": "test(canvas): update coverage for #6a tool-switcher relocation",
+      "integrated": true,
+      "mergeBase": "03ab086cf4e5077fa50a5d8f661ebe7452033be1",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/oxford/d1-d11-initiative-project",
+      "tip": "f443e19370e858f907dcfb7d4f8d15dc6179c28e",
+      "date": "2026-07-12T22:34:07+02:00",
+      "subject": "fix(zwornik/D11): redact confidential assessment fields on stakeholder write responses too",
+      "integrated": true,
+      "mergeBase": "f443e19370e858f907dcfb7d4f8d15dc6179c28e",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/oxford/d21-preview-pill-buttons",
+      "tip": "f3b80a56809e1aad65f0348d5477217e2b85e3d9",
+      "date": "2026-07-12T22:19:23+02:00",
+      "subject": "docs(triada): D21 — adnotacja rounded-full na przyciskach akcji preview",
+      "integrated": true,
+      "mergeBase": "f3b80a56809e1aad65f0348d5477217e2b85e3d9",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/oxford/d23a-usun-martwe-featury",
+      "tip": "85b612ffea2cd34f731bb05d090e56934c59e17e",
+      "date": "2026-07-12T22:20:29+02:00",
+      "subject": "chore(D23-A): usuń 4/6 martwych komponentów (ChatMenu, NotificationSettingsAdmin, ADKARWorkspace, useInbox)",
+      "integrated": true,
+      "mergeBase": "85b612ffea2cd34f731bb05d090e56934c59e17e",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/oxford/finance-menu3-chips-pl",
+      "tip": "339a05c059984452c696349fef9c6199b547bf26",
+      "date": "2026-07-13T07:29:08+02:00",
+      "subject": "fix(finance): odchudź i przetłumacz pasek chipów Menu 3 (TRIADA §A3/§15.3)",
+      "integrated": true,
+      "mergeBase": "339a05c059984452c696349fef9c6199b547bf26",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/oxford/ideas-preview-overlay-4b",
+      "tip": "b58c71251948c3f7a61151a158cb8a6fef56c248",
+      "date": "2026-07-13T21:11:41+02:00",
+      "subject": "chore(mywork/ideas): kolejnosc importu flagi (simple-import-sort)",
+      "integrated": true,
+      "mergeBase": "b58c71251948c3f7a61151a158cb8a6fef56c248",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/oxford/insight-properties-phase-glitch-20260712",
+      "tip": "7281805d54c007f40608f115afc8b9fb67cf8401",
+      "date": "2026-07-12T21:36:54+02:00",
+      "subject": "fix(insight): usuń pas properties z centrum edytora (#54)",
+      "integrated": true,
+      "mergeBase": "7281805d54c007f40608f115afc8b9fb67cf8401",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/oxford/notatnik-badge-presence-16-23",
+      "tip": "e6054b9defceab0df854fbf7cc394653a8b74f4e",
+      "date": "2026-07-13T18:23:10+02:00",
+      "subject": "story(notatnik): dev-render używa ŻYWYCH NotebookReminderChip + NotebookPresenceStack",
+      "integrated": true,
+      "mergeBase": "e6054b9defceab0df854fbf7cc394653a8b74f4e",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/oxford/notebook-orphan-graph-18",
+      "tip": "da2e6ae3246d5b87212262e65b3b5834dd293a4e",
+      "date": "2026-07-13T19:44:00+02:00",
+      "subject": "story(notatnik#18): dev-render — graf połączeń naprawiony + osierocone",
+      "integrated": true,
+      "mergeBase": "da2e6ae3246d5b87212262e65b3b5834dd293a4e",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/oxford/oc-canvas-kebab-restr",
+      "tip": "5111c7009c5d8578e61f485e5fc15b1e64b5ce3b",
+      "date": "2026-07-13T21:08:48+02:00",
+      "subject": "dev-render(#87d): story canvas-kebab-restructure — PRZED (ściana 14) / PO (8 grup)",
+      "integrated": true,
+      "mergeBase": "5111c7009c5d8578e61f485e5fc15b1e64b5ce3b",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/oxford/oc-canvas-md-history",
+      "tip": "df4783508b91d09884e49fe318c223872ee069f2",
+      "date": "2026-07-13T20:45:42+02:00",
+      "subject": "dev-render(#87c): story pokazujący toolbar PO — bez ikony Historia, kebab z Import MD + Historia wersji",
+      "integrated": true,
+      "mergeBase": "df4783508b91d09884e49fe318c223872ee069f2",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/oxford/oc2-42-33-dashboard-cta",
+      "tip": "6c36a4d6432d6c8387e58e89ed0be5963f822b2e",
+      "date": "2026-07-12T23:14:51+02:00",
+      "subject": "feat(#33): propagate contextual AI-CTA to Decision + Initiative cards",
+      "integrated": true,
+      "mergeBase": "6c36a4d6432d6c8387e58e89ed0be5963f822b2e",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/oxford/oc2-47a2-48a",
+      "tip": "6ffe3ad00d95e97a97a79842c7edee05d62f68c1",
+      "date": "2026-07-13T07:00:07+02:00",
+      "subject": "feat(#47a2): AI generuje przykładową odpowiedź razem z pytaniami",
+      "integrated": true,
+      "mergeBase": "6ffe3ad00d95e97a97a79842c7edee05d62f68c1",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/oxford/oc2-47b-evidence-in-insight-prompt",
+      "tip": "f31b33f4e1587e9f53e30e08ae95625298d9ec40",
+      "date": "2026-07-12T22:44:19+02:00",
+      "subject": "feat(#47b): dołącz evidence (Link/Artifact) do promptu Insight",
+      "integrated": true,
+      "mergeBase": "f31b33f4e1587e9f53e30e08ae95625298d9ec40",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/oxford/oc2-48b-answer-history",
+      "tip": "d12f3a45b1430b39da46f579a0adc12ba1e4a0a7",
+      "date": "2026-07-12T22:52:48+02:00",
+      "subject": "feat(#48B): wersjonowanie odpowiedzi wywiadu po send-back",
+      "integrated": true,
+      "mergeBase": "d12f3a45b1430b39da46f579a0adc12ba1e4a0a7",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/oxford/oc2-52-sections-task-decision",
+      "tip": "997b7e86707cbde112fdd9a875a17ffd82e22a2f",
+      "date": "2026-07-12T22:39:05+02:00",
+      "subject": "feat(#52): propaguj mechanizm Sections (useCardLayout) do Task/Decision",
+      "integrated": true,
+      "mergeBase": "997b7e86707cbde112fdd9a875a17ffd82e22a2f",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/oxford/oc2-75-menu3-wizard-dedup",
+      "tip": "bd30243680b633dcec65011d6faa557e0a9277a6",
+      "date": "2026-07-12T21:40:21+02:00",
+      "subject": "fix(initiatives): #75 usuń duplikat „AI Initiative Wizard\" z Menu 3",
+      "integrated": true,
+      "mergeBase": "bd30243680b633dcec65011d6faa557e0a9277a6",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/oxford/oc2-75a-kanban-drag-gate",
+      "tip": "d6d677ea9170902756d9cc9b9030ba28c99285d1",
+      "date": "2026-07-12T21:44:13+02:00",
+      "subject": "fix(initiatives): #75a bramkuj drag kanbanu uprawnieniami do zmiany statusu",
+      "integrated": true,
+      "mergeBase": "d6d677ea9170902756d9cc9b9030ba28c99285d1",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/oxford/oc2-75c-remove-make-material",
+      "tip": "01825dba631c2f0a6ccf771672ddce86e8e9151b",
+      "date": "2026-07-12T21:38:59+02:00",
+      "subject": "fix(initiatives): #75c usuń „Make material\" z InitiativeDocumentView + kompaktowy dropdown",
+      "integrated": true,
+      "mergeBase": "01825dba631c2f0a6ccf771672ddce86e8e9151b",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/oxford/oc2-aicta-kebab-propagate",
+      "tip": "0240d4f9dbaf3d140877c34072e0b903f12cd5bf",
+      "date": "2026-07-13T11:01:05+02:00",
+      "subject": "feat(#33): propagate AI-CTA to Note card (last missing type)",
+      "integrated": true,
+      "mergeBase": "0240d4f9dbaf3d140877c34072e0b903f12cd5bf",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/oxford/oc2-b-programs-ui",
+      "tip": "426f272c76143c267e0177c5417c4548cb524bc5",
+      "date": "2026-07-12T22:44:16+02:00",
+      "subject": "style(programs): prettier formatting fix on projects.routes.ts",
+      "integrated": true,
+      "mergeBase": "426f272c76143c267e0177c5417c4548cb524bc5",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/oxford/oc2-cpm-timeline-wire",
+      "tip": "e983ae8fd735be6879c9fae6d77a9f36b1885730",
+      "date": "2026-07-12T23:08:24+02:00",
+      "subject": "feat(#76): wire real task-level CPM into Initiatives timeline",
+      "integrated": true,
+      "mergeBase": "e983ae8fd735be6879c9fae6d77a9f36b1885730",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/oxford/oc2-execution-ia-reorg",
+      "tip": "dd861aca88e5ce2adc6313051293351265cabf39",
+      "date": "2026-07-12T23:12:13+02:00",
+      "subject": "chore(dev-render): mock tasks/blockedTasks dla execution-light harness",
+      "integrated": true,
+      "mergeBase": "dd861aca88e5ce2adc6313051293351265cabf39",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/oxford/oc2-finance-widget-wire",
+      "tip": "b59b62b937f19368d26c139b9d89ab873d718096",
+      "date": "2026-07-12T22:42:57+02:00",
+      "subject": "fix(finance): keep model version-history parity after Workspace swap",
+      "integrated": true,
+      "mergeBase": "b59b62b937f19368d26c139b9d89ab873d718096",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/oxford/oc4-tools-ai-picker",
+      "tip": "84372ed555e5d2c73ec9b056848880efd0a12af6",
+      "date": "2026-07-12T23:06:54+02:00",
+      "subject": "feat(tools): AI picker UI in the Add-tool dropdown (#64)",
+      "integrated": true,
+      "mergeBase": "84372ed555e5d2c73ec9b056848880efd0a12af6",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/oxford/pm-report-templates",
+      "tip": "8b20af390e56ca97217c56997f3eaa0a5527faff",
+      "date": "2026-07-12T23:13:48+02:00",
+      "subject": "feat(pm-reports): 3 szablony raportów PM — Sponsor One-Pager/Steering/PMO Weekly (D12+D13, migracja 924)",
+      "integrated": true,
+      "mergeBase": "8b20af390e56ca97217c56997f3eaa0a5527faff",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/oxford/remove-light-shells",
+      "tip": "e5ade82b6662d8af627335da13feb0a87ea1d004",
+      "date": "2026-07-13T06:43:00+02:00",
+      "subject": "usuń(light-shells): CanvasToolbarV2 — komponent + flaga + gate + dev-render",
+      "integrated": true,
+      "mergeBase": "e5ade82b6662d8af627335da13feb0a87ea1d004",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/oxford/tor-83b-84b-82e",
+      "tip": "b0a1a6b435c46239f95e1ed05567a38fa33d449c",
+      "date": "2026-07-13T08:15:54+02:00",
+      "subject": "fix(#84b): Document Studio ignored ?artifactId= query — dead \"Open\"",
+      "integrated": true,
+      "mergeBase": "b0a1a6b435c46239f95e1ed05567a38fa33d449c",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/port/excel-workbook",
+      "tip": "beb80fff5abb2411dc5ad164d0d8929d36e163bb",
+      "date": "2026-07-05T22:39:04+03:00",
+      "subject": "feat(workbook): harden Excel critic — WQ-07/08/09 catch the LLM's easiest formula bugs + builder = sanitizer",
+      "integrated": false,
+      "mergeBase": "6c1aaa434e0db3ff969b779b8047bb3d74fe9d15",
+      "aheadCommits": 6,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "c9af87306a9eb3973bdf7b44ec7b96fd5bb2f98f",
+          "subject": "feat(excel): deterministyczny workbookQualityGate (krytyk arkusza, analog deckDesignCritic)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "f51fa8cabb39ae6e4632ef3e5d2ecba0c2ce810f",
+          "subject": "feat(excel): szlif buildera — fullCalcOnLoad, accounting format, named ranges, data validation",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "24804126a55f05852d76c9163830ddfa5299fae4",
+          "subject": "feat(workbook): parametric 3-scenario/3-year P&L model template + registry",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "767144af7159c19395d94b3995d56dcbdf8b415a",
+          "subject": "feat(workbook): raise Excel generator autonomy — clean-formula prompt + critic repair loop",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "a1af2f71fc9ada72509ba6c61ef23effc1a109c1",
+          "subject": "feat(excel): equity-research primitives — scenario switch + sensitivity table (+ chart-image mount)",
+          "patchState": "DIVERGED_REVIEW"
+        },
+        {
+          "sha": "beb80fff5abb2411dc5ad164d0d8929d36e163bb",
+          "subject": "feat(workbook): harden Excel critic — WQ-07/08/09 catch the LLM's easiest formula bugs + builder = sanitizer",
+          "patchState": "DIVERGED_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/qa/remediation-2026-06-08",
+      "tip": "7d14a186333bab762b2f17a5cbce85df6f37a314",
+      "date": "2026-06-10T07:33:34+02:00",
+      "subject": "fix(ai): actually capture token usage on streamed chats (ai_usage_logs 0/0)",
+      "integrated": true,
+      "mergeBase": "7d14a186333bab762b2f17a5cbce85df6f37a314",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/rn-g5-integration",
+      "tip": "5afefe8bb82fc1791c7f72c8c64a8205abd87f00",
+      "date": "2026-08-13T05:19:36+02:00",
+      "subject": "chore(rn-g6): usun biale znaki na koncu linii w RN_G6_UICX_MATRIX.md",
+      "integrated": false,
+      "mergeBase": "9d17cac11484a82f729a51044e30453e39fbcb02",
+      "aheadCommits": 532,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "SKIPPED_OVER_25_REQUIRES_MODULE_DIFF",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/staging",
+      "tip": "aa0032bb7279433de29d611fe0dd217601d51084",
+      "date": "2026-06-17T03:03:25-05:00",
+      "subject": "test(M07/L-02): WS org-scope gate regression — 401/403 on cross-org (6/6 PASS)",
+      "integrated": true,
+      "mergeBase": "aa0032bb7279433de29d611fe0dd217601d51084",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/task/50a-interview-archived-cascade",
+      "tip": "f69b06c3755fb9f96449527bc067d50e0bcd886c",
+      "date": "2026-07-12T21:53:31+02:00",
+      "subject": "fix(interview/#50a): cascade session archive/restore to its assignments",
+      "integrated": true,
+      "mergeBase": "f69b06c3755fb9f96449527bc067d50e0bcd886c",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/task/83a-data-to-sheets",
+      "tip": "d148f5251e16227952f107e95aca86b36dbbc36e",
+      "date": "2026-07-12T21:39:43+02:00",
+      "subject": "fix(materials/#83a): move Data Sources under Sheets, retire Menu 2 tab",
+      "integrated": true,
+      "mergeBase": "d148f5251e16227952f107e95aca86b36dbbc36e",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/task/83e-canvas-wizard",
+      "tip": "787f3cde846d786cc1895008a6b456721532fa21",
+      "date": "2026-07-12T21:49:49+02:00",
+      "subject": "feat(materials/#83e): wizard 3rd option \"From canvas\" in OutputsLauncherModal",
+      "integrated": true,
+      "mergeBase": "787f3cde846d786cc1895008a6b456721532fa21",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/tomek",
+      "tip": "508c2bca48f8c2722703f2f8d7cf0af6a2896608",
+      "date": "2026-06-18T09:23:49+02:00",
+      "subject": "feat(superadmin): add ZIP export button to feedback error card",
+      "integrated": false,
+      "mergeBase": "d753ea2e69157bc3969d2e2f3c8a9edcbe04ce64",
+      "aheadCommits": 2,
+      "category": "FEATURE_OR_HISTORICAL_REVIEW",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": [
+        {
+          "sha": "943f5286989810908f2636013b10567df606b1be",
+          "subject": "promote: staging → main (2026-06-10) — Elkomtech data-truth + structured charter + CVE/skip gate clearance",
+          "patchState": "LARGE_PATCH_REVIEW"
+        },
+        {
+          "sha": "508c2bca48f8c2722703f2f8d7cf0af6a2896608",
+          "subject": "feat(superadmin): add ZIP export button to feedback error card",
+          "patchState": "DIVERGED_REVIEW"
+        }
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/tools-narrative-65-67",
+      "tip": "67f6a45bb831477a98e42655a9f99ade67b3d971",
+      "date": "2026-07-13T16:25:06+02:00",
+      "subject": "fix(tools #65-67): framework-neutralna persona STRATEGIC dla 5 narzędzi (nie Porter)",
+      "integrated": true,
+      "mergeBase": "67f6a45bb831477a98e42655a9f99ade67b3d971",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    },
+    {
+      "ref": "refs/remotes/origin/zwornik-front-01",
+      "tip": "c8de7f5c4b1690207fc34c8e50abf13190ffa0ee",
+      "date": "2026-07-12T17:42:58+02:00",
+      "subject": "feat(zwornik): mount Projects screen at /projects + sidebar entry",
+      "integrated": true,
+      "mergeBase": "c8de7f5c4b1690207fc34c8e50abf13190ffa0ee",
+      "aheadCommits": 0,
+      "category": "INTEGRATED",
+      "patchAuditScope": "ALL_AHEAD_COMMITS",
+      "commitAudit": []
+    }
+  ]
+}
