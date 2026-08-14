@@ -544,6 +544,9 @@ describe('work canvas routes', () => {
   });
 
   it('creates a presentation output from a Canvas draft', async () => {
+    // Keep this positive path self-contained under Vitest's shuffled order:
+    // adjacent negative capability tests deliberately replace this mock.
+    hasEffectiveCapabilityMock.mockReturnValue(true);
     const response = await request(app)
       .post('/api/work-canvas/drafts/draft-1/create-output')
       .send({ outputType: 'presentation' })
