@@ -62,11 +62,13 @@ const hasListShape = (value: unknown, keys: string[]) => {
   if (Array.isArray(value)) return true;
   if (!isRecord(value)) return false;
   const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
 
   return (
-    'data' in value ||
+    Array.isArray(value.data) ||
     keys.some((key) => key in value) ||
-    Boolean(data && keys.some((key) => key in data))
+    Boolean(data && (Array.isArray(data.data) || keys.some((key) => key in data))) ||
+    Boolean(nestedData && keys.some((key) => key in nestedData))
   );
 };
 

@@ -153,7 +153,8 @@ describe('SupportTicketsView honest UI', () => {
     render(<SupportTicketsView />);
 
     expect(await screen.findByText('Wrapped ticket')).toBeInTheDocument();
-    fireEvent.click(screen.getByTitle('View ticket details'));
+    fireEvent.click(screen.getByRole('button', { name: 'Row actions' }));
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'View ticket details' }));
     expect(await screen.findByText('Wrapped comment')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /Create Ticket/i }));
