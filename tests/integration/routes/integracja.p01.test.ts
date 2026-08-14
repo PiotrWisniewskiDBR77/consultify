@@ -638,7 +638,7 @@ describe('P01-B — Reauth wiring', () => {
     const content = fs.readFileSync(
       'server/src/routes/syncHub.routes.ts', 'utf-8'
     );
-    expect(content).toContain('connected_healthy');
+    expect(content).toContain("targetState: 'healthy'");
     expect(content).toContain('token_refresh_success');
   });
 

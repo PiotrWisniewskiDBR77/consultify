@@ -40,10 +40,55 @@ const mockDbAll = vi.fn();
 const mockDbRun = vi.fn();
 const mockDbGet = vi.fn();
 
+const ARTIFACT_B = 'artifact-owned-by-B';
+const ORG_B = 'org-victim-B';
+
 vi.mock('../../utils/DbPromise.js', () => ({
   all: (...args: unknown[]) => mockDbAll(...args),
   run: (...args: unknown[]) => mockDbRun(...args),
   get: (...args: unknown[]) => mockDbGet(...args),
+}));
+
+// Approval creation is intentionally fail-closed unless the requested document
+// exists in the caller's tenant. Provide one real-shaped victim document while
+// keeping every other artifact/org lookup absent, so this suite exercises IDOR
+// isolation instead of bypassing the document-existence invariant.
+vi.mock('../../services/wave5ArtifactRuntimeService.js', () => ({
+  getWave5Artifact: vi.fn((artifactId: string, organizationId: string) =>
+    Promise.resolve(
+      artifactId === ARTIFACT_B && organizationId === ORG_B
+        ? {
+            artifact_id: ARTIFACT_B,
+            organization_id: ORG_B,
+            title: 'Victim document',
+            content: 'Victim-owned content',
+            metadata_json: {
+              documentStudioSchema: {
+                documentId: `doc-${ARTIFACT_B}`,
+                artifactId: ARTIFACT_B,
+                title: 'Victim document',
+                documentType: 'report',
+                language: 'en',
+                audience: ['internal'],
+                goal: 'inform',
+                communicationRegister: 'formal',
+                density: 'standard',
+                languageStyle: 'plain',
+                confidentiality: 'internal',
+                formattingSchema: {},
+                sections: [],
+                sourceRefs: [],
+                createdAt: '2026-08-14T00:00:00.000Z',
+                updatedAt: '2026-08-14T00:00:00.000Z',
+              },
+            },
+          }
+        : null
+    )
+  ),
+  buildWave5ExportManifest: vi.fn(() => Promise.resolve({})),
+  createWave5Artifact: vi.fn(),
+  markWave5ArtifactExported: vi.fn(),
 }));
 
 import { __resetApprovalServiceForTests } from '../../services/documentStudio/documentApprovalService.js';
@@ -86,11 +131,9 @@ function createApp(): Express {
   return app;
 }
 
-const ORG_B = 'org-victim-B';
 const UID_B = 'user-B';
 const ORG_A = 'org-attacker-A';
 const UID_A = 'user-A';
-const ARTIFACT_B = 'artifact-owned-by-B';
 
 /** Authenticate the next request as the victim tenant (creator). */
 function asVictim(role = 'OWNER'): void {
@@ -381,8 +424,8 @@ describe('Approvals — cross-org IDOR', () => {
     await createApprovalAsVictim(app);
     asAttacker();
     const res = await request(app).get(`/api/document-studio/${ARTIFACT_B}/approvals`);
-    expect(res.status).toBe(200);
-    expect(res.body.approvals).toHaveLength(0);
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe('document_not_found');
   });
 });
 
