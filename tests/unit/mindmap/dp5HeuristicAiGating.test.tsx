@@ -16,7 +16,7 @@ import { describe, expect, it, vi } from 'vitest';
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     i18n: { language: 'en' },
-    t: (key: string) => key,
+    t: (key: string, fallback?: string) => fallback ?? key,
   }),
   initReactI18next: { type: '3rdParty', init: () => undefined },
 }));
@@ -57,7 +57,7 @@ describe('DP-5: AIActionsPopover heuristic action gating', () => {
     const btn = screen.getByText('Auto-clustering').closest('button');
     expect(btn).toBeTruthy();
     expect(btn).toBeDisabled();
-    expect(screen.getByText('ideas.mindmap.comingSoon')).toBeTruthy();
+    expect(screen.getByText('Coming soon')).toBeTruthy();
     if (btn) fireEvent.click(btn);
     expect(onAction).not.toHaveBeenCalledWith('mm_ai_cluster');
   });
@@ -68,7 +68,7 @@ describe('DP-5: AIActionsPopover heuristic action gating', () => {
     const btn = screen.getByText('Auto-clustering').closest('button');
     expect(btn).toBeTruthy();
     expect(btn).not.toBeDisabled();
-    expect(screen.queryByText('ideas.mindmap.comingSoon')).toBeNull();
+    expect(screen.queryByText('Coming soon')).toBeNull();
     if (btn) fireEvent.click(btn);
     expect(onAction).toHaveBeenCalledWith('mm_ai_cluster');
   });
@@ -84,7 +84,7 @@ describe('DP-5: AIActionsPopover heuristic action gating', () => {
 
   it('renders the comingSoon badge key when isPl (badge text now flows through t(), not the isPl prop)', () => {
     render(<AIActionsPopover {...baseProps} isPl />);
-    expect(screen.getByText('ideas.mindmap.comingSoon')).toBeTruthy();
+    expect(screen.getByText('Coming soon')).toBeTruthy();
   });
 });
 
@@ -124,18 +124,16 @@ describe('DP-5: NodeContextMenu comingSoonIds gating', () => {
     render(<NodeContextMenu {...baseProps} comingSoonIds={[]} />);
     openAiSubmenu();
     const expectedScopeByCommandId: Record<string, string> = {
-      ctx_ai_rewrite_node: 'myWorkMindmap.ctxMenu.scopeSelection',
-      ctx_ai_expand: 'myWorkMindmap.ctxMenu.scopeBranch',
-      ctx_what_if: 'myWorkMindmap.ctxMenu.scopeSelection',
-      ctx_summarize_branch: 'myWorkMindmap.ctxMenu.scopeBranch',
-      ai_suggest_links: 'myWorkMindmap.ctxMenu.scopeSelection',
+      ctx_ai_rewrite_node: 'Selection',
+      ctx_ai_expand: 'Branch',
+      ctx_what_if: 'Selection',
+      ctx_summarize_branch: 'Branch',
+      ai_suggest_links: 'Selection',
     };
     for (const [commandId, expectedKey] of Object.entries(expectedScopeByCommandId)) {
       const btn = document.querySelector<HTMLButtonElement>(`[data-command-id="${commandId}"]`);
       expect(btn, commandId).toBeTruthy();
-      // The i18n mock in this file returns the raw key, so the rendered
-      // `<kbd>` text IS the translation key — asserting on it still proves
-      // each row asked for the right scope label, not just SOME label.
+      // Assert the rendered scope label, not an internal translation key.
       expect(btn?.querySelector('kbd')?.textContent, commandId).toBe(expectedKey);
     }
   });
@@ -179,7 +177,7 @@ describe('DP-5/E10: PaneContextMenu comingSoonIds gating (canvas-background AI)'
     const btn = document.querySelector<HTMLButtonElement>('[data-command-id="pane_dependencies"]');
     expect(btn).toBeTruthy();
     expect(btn).toBeDisabled();
-    expect(screen.getByText('ideas.mindmap.comingSoon')).toBeTruthy();
+    expect(screen.getByText('Coming soon')).toBeTruthy();
     if (btn) fireEvent.click(btn);
     expect(onAction).not.toHaveBeenCalledWith('pane_dependencies');
   });
@@ -190,7 +188,7 @@ describe('DP-5/E10: PaneContextMenu comingSoonIds gating (canvas-background AI)'
     const btn = document.querySelector<HTMLButtonElement>('[data-command-id="pane_dependencies"]');
     expect(btn).toBeTruthy();
     expect(btn).not.toBeDisabled();
-    expect(screen.queryByText('ideas.mindmap.comingSoon')).toBeNull();
+    expect(screen.queryByText('Coming soon')).toBeNull();
     if (btn) fireEvent.click(btn);
     expect(onAction).toHaveBeenCalledWith('pane_dependencies');
   });
