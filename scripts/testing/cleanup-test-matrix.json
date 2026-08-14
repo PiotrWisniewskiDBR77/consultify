@@ -91,7 +91,9 @@
       "tests/unit/backend/routes/h64-failsoft-batch2.test.ts",
       "server/src/routes/__tests__/m11-tools-cross-org-idor.test.ts",
       "tests/integration/routes/audit-log.l3.test.ts",
-      "tests/integration/routes/knowledge-base.p26.test.ts"
+      "tests/integration/routes/knowledge-base.p26.test.ts",
+      "tests/integration/routes/status.l3.test.ts",
+      "server/src/routes/v8/__tests__/public-anna.routes.test.ts"
     ]
   },
   "gates": {
@@ -133,7 +135,8 @@
       "server/src/routes/__tests__/cross-org-idor-m17.test.ts",
       "server/src/routes/v8/__tests__/res10-ownership-separation.routes.test.ts",
       "tests/unit/backend/routes/h64-failsoft-batch2.test.ts",
-      "server/src/routes/__tests__/m11-tools-cross-org-idor.test.ts"
+      "server/src/routes/__tests__/m11-tools-cross-org-idor.test.ts",
+      "server/src/routes/v8/__tests__/public-anna.routes.test.ts"
       ]
     },
     "realdb": {
@@ -164,7 +167,8 @@
         "tests/integration/publicSystemSurface.contract.test.ts",
         "tests/integration/routes/conversations.p35-history.test.ts",
         "tests/integration/routes/verify.l3.test.ts",
-        "tests/integration/routes/audit-log.l3.test.ts"
+        "tests/integration/routes/audit-log.l3.test.ts",
+        "tests/integration/routes/status.l3.test.ts"
       ]
     },
     "legacyPostgresPort": {

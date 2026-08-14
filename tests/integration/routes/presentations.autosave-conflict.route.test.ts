@@ -121,19 +121,20 @@ const mockDbRun = vi.fn(async (sql: string, params: unknown[] = []) => {
     // actually executes -- i.e. after any interleave-gate release, so a
     // second writer whose expected version was overtaken by the first
     // writer's commit sees changes: 0, just like a real DB's rowCount.
-    const [newDeckJson, newSlideCount, newVersion, , , expectedVersion] = params as [
+    const [, newDeckJson, newVersion, , , expectedVersion] = params as [
       string,
-      number,
+      string,
       number,
       string,
       string,
       number,
     ];
     if (deckState.version === expectedVersion) {
+      const parsed = JSON.parse(newDeckJson);
       deckState = {
         version: newVersion,
         deck_json: newDeckJson,
-        slide_count: newSlideCount,
+        slide_count: Array.isArray(parsed?.cards) ? parsed.cards.length : 0,
       };
       return { success: true, changes: 1 };
     }
