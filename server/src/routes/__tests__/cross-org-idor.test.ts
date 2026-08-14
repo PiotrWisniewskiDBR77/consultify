@@ -271,6 +271,21 @@ async function buildResultsEnterpriseApp(): Promise<Express> {
   return app;
 }
 
+// This file exercises several routers against the same hoisted DB doubles.
+// `vi.clearAllMocks()` only clears call history: unused `mockResolvedValueOnce`
+// entries survive and used to leak into the next test, producing inverted
+// ownership decisions and occasional socket resets. Reset the shared DB seam
+// before every case; nested beforeEach hooks can then install their explicit
+// scenario values on a deterministic baseline.
+beforeEach(() => {
+  mockQueryFirst.mockReset().mockResolvedValue(null);
+  mockQueryAll.mockReset().mockResolvedValue([]);
+  mockQueryRun.mockReset().mockResolvedValue({ rowCount: 0, changes: 0 });
+  mockDbAll.mockReset().mockResolvedValue([]);
+  mockDbGet.mockReset().mockResolvedValue(null);
+  mockDbRun.mockReset().mockResolvedValue({ changes: 0, lastID: 'x' });
+});
+
 // ═══════════════════════════════════════════════════════════════════════════
 // W3 — x-kpi-role header self-escalation blocked
 // ═══════════════════════════════════════════════════════════════════════════
