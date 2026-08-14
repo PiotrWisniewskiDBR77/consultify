@@ -9,7 +9,24 @@ vi.mock('@/services/api', () => ({
 
 const i18nState = vi.hoisted(() => ({ language: 'en' }));
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ i18n: i18nState, t: (k: string) => k }),
+  useTranslation: () => ({
+    i18n: i18nState,
+    t: (key: string, fallback?: string) => {
+      const en: Record<string, string> = {
+        'myWorkNotebook.newPageModal.title': 'New Note',
+        'myWorkNotebook.newPageModal.uploadFile': 'Upload file (PDF, XLSX, TXT)',
+        'myWorkNotebook.newPageModal.tmpl_blank_label': 'Blank page',
+        'myWorkNotebook.newPageModal.tmpl_strategic_label': 'Strategic Observation',
+        'myWorkNotebook.newPageModal.tmpl_risk_label': 'Risk Analysis',
+        'myWorkNotebook.newPageModal.tmpl_meeting_label': 'Meeting Notes',
+      };
+      const pl: Record<string, string> = {
+        'myWorkNotebook.newPageModal.title': 'Nowa notatka',
+        'myWorkNotebook.newPageModal.tmpl_blank_label': 'Pusta strona',
+      };
+      return (i18nState.language === 'pl' ? pl[key] : en[key]) ?? fallback ?? key;
+    },
+  }),
 }));
 
 import { NewPageModal } from '@/components/MyWork/notebook/NewPageModal';
