@@ -5,6 +5,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AdminApi } from '@/services/api/admin.api';
 import { OrgAISettingsView } from '@/views/admin/OrgAISettingsView';
 
+const translate = (_key: string, fallback?: string) => fallback || _key;
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({ t: translate }),
+}));
+
 vi.mock('@/components/shared/InfoButton', () => ({
   InfoButton: () => null,
 }));
