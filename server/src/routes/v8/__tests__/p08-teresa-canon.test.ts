@@ -43,8 +43,13 @@ describe('P08 §2.3.1 — Handoff targets', () => {
       'interview',
       'excele',
       'ideas',
+      'documents',
+      'presentations',
+      'kpi',
+      'roi',
+      'okr',
     ]);
-    expect(Object.keys(P08_HANDOFF_TARGETS)).toHaveLength(7);
+    expect(Object.keys(P08_HANDOFF_TARGETS)).toHaveLength(12);
   });
 
   it('radar target references P06 and requires correct extra fields', () => {
@@ -159,13 +164,14 @@ describe('P08 §2.3.1 — Payload validation', () => {
 // ────────────────────────────────────────────────────────────────
 
 describe('P08 §2.3.2 — Action governance envelope', () => {
-  it('has 6 envelope states', () => {
-    expect(P08_ACTION_ENVELOPE_STATES).toHaveLength(6);
+  it('has 7 envelope states, including the audited undo result', () => {
+    expect(P08_ACTION_ENVELOPE_STATES).toHaveLength(7);
     expect(P08_ACTION_ENVELOPE_STATES).toContain('proposal');
     expect(P08_ACTION_ENVELOPE_STATES).toContain('pending_approval');
     expect(P08_ACTION_ENVELOPE_STATES).toContain('approved');
     expect(P08_ACTION_ENVELOPE_STATES).toContain('executing');
     expect(P08_ACTION_ENVELOPE_STATES).toContain('completed');
+    expect(P08_ACTION_ENVELOPE_STATES).toContain('undone');
     expect(P08_ACTION_ENVELOPE_STATES).toContain('rejected');
   });
 
@@ -204,8 +210,9 @@ describe('P08 §2.3.2 — Action governance envelope', () => {
     expect(isValidEnvelopeTransition('completed', 'proposal')).toBe(false);
   });
 
-  it('completed and rejected are terminal states', () => {
-    expect(P08_ACTION_ENVELOPE_TRANSITIONS.completed).toHaveLength(0);
+  it('completed can only be undone; undone and rejected are terminal states', () => {
+    expect(P08_ACTION_ENVELOPE_TRANSITIONS.completed).toEqual(['undone']);
+    expect(P08_ACTION_ENVELOPE_TRANSITIONS.undone).toHaveLength(0);
     expect(P08_ACTION_ENVELOPE_TRANSITIONS.rejected).toHaveLength(0);
   });
 });
