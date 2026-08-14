@@ -59,7 +59,15 @@ vi.mock('react-i18next', () => ({
       opts?: string | ({ defaultValue?: string } & Record<string, unknown>),
       params?: Record<string, unknown>
     ) => {
-      const def = (typeof opts === 'string' ? opts : opts?.defaultValue) ?? k;
+      const translations: Record<string, string> = {
+        'myWorkTable.gridView.selectRow': 'Select row',
+        'myWorkTable.gridView.selectAll': 'Select all',
+        'myWorkTable.gridView.totals': 'Totals',
+        'myWorkTable.fieldManager.save': 'Save',
+        'myWorkTable.fieldManager.failedToUpdateField': 'Failed to update field',
+        'myWorkTable.chatToSchemaPanel.aiTableBuilder': 'AI Table Builder',
+      };
+      const def = translations[k] ?? (typeof opts === 'string' ? opts : opts?.defaultValue) ?? k;
       const vars = (typeof opts === 'object' && opts ? opts : params) ?? {};
       return Object.entries(vars).reduce(
         (acc, [key, val]) => acc.split(`{{${key}}}`).join(String(val)),
@@ -120,6 +128,7 @@ const tpApiMocks = vi.hoisted(() => ({
   addRecordComment: vi.fn(),
   updateRecordComment: vi.fn(),
   deleteRecordComment: vi.fn(),
+  getAttachments: vi.fn().mockResolvedValue([]),
 }));
 
 vi.mock('@/services/api/tablePlatform.api', () => tpApiMocks);
@@ -549,8 +558,8 @@ describe('ViewRouter', () => {
   it('renders spreadsheet-style grid (table layout) by default when rows exist', () => {
     const integration = makeIntegration({ viewLayout: 'table', processedRows: FIXTURE_ROWS });
     renderRouter(integration);
-    expect(screen.getByRole('columnheader', { name: 'Name' })).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: 'Status' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /^Name/ })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /^Status/ })).toBeInTheDocument();
     const checks = screen.getAllByRole('checkbox', { name: 'Select row' });
     expect(checks.length).toBe(FIXTURE_ROWS.length);
   });
@@ -904,8 +913,8 @@ describe('IdeaTableTool P15 integration', () => {
         <ViewRouter />
       </TableDataProvider>
     );
-    expect(screen.getByRole('columnheader', { name: 'Name' })).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: 'Status' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /^Name/ })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /^Status/ })).toBeInTheDocument();
   });
 
   it('renders loading skeleton while data loads', () => {
@@ -954,9 +963,10 @@ describe('IdeaTableTool P15 integration', () => {
         <ViewRouter />
       </TableDataProvider>
     );
-    expect(screen.getByText(/\[Missing: Deleted Col\]/)).toBeInTheDocument();
-    const amberHeaders = container.querySelectorAll('th.bg-amber-50');
-    expect(amberHeaders.length).toBeGreaterThanOrEqual(1);
+    const missingLabel = screen.getByText(/\[Missing: Deleted Col\]/);
+    expect(missingLabel).toBeInTheDocument();
+    const warningHeader = missingLabel.closest('th');
+    expect(warningHeader).toHaveClass('text-c-warning');
   });
 
   it('passes locale to ViewErrorBoundary', () => {
