@@ -834,6 +834,24 @@ export const FinanceHub: React.FC = () => {
     if (kind === 'valuation') loadValuations().catch(() => {});
   }, [activeTab, loadStatements, loadAnalyses, loadModels, loadBudgets, loadValuations]);
 
+  const handleModuleTabChange = useCallback(
+    (nextTab: string) => {
+      const tab = nextTab as ModuleTab;
+      if (tab === activeTab) return;
+
+      // A Finance document belongs to exactly one registry lane. Keeping the
+      // previous row mounted after the user changes lanes produces a lying
+      // surface (for example the Prediction breadcrumb above an Analysis
+      // workspace). Open-document history may remain available, but the
+      // incompatible active workspace must be cleared before rendering the
+      // destination registry.
+      setActiveDocumentId(null);
+      setActiveDocument(null);
+      setActiveTab(tab);
+    },
+    [activeTab, setActiveDocumentId]
+  );
+
   const handleRemoveFilter = useCallback(
     (id: string) => setActiveFilters((prev) => prev.filter((f) => f.id !== id)),
     []
@@ -3462,7 +3480,7 @@ export const FinanceHub: React.FC = () => {
       <StandardModuleBar
         tabs={tabs}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleModuleTabChange}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onSearch={setSearchQuery}
