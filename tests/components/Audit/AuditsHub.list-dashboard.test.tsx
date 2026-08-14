@@ -5,14 +5,9 @@
  * Weryfikuje: loading state, empty state, lista z kartami, wybór programu,
  * obsługa błędu ładowania, otwieranie kreatora, kasowanie programu.
  *
- * i18n NOTE: this suite renders with the app's real i18n instance, which uses
- * i18next-http-backend (loadPath /locales/{lng}/{ns}.json). Under jsdom there is
- * no HTTP backend to fetch those JSON bundles, so t('audit.foo') renders the RAW
- * KEY ('audit.foo'), not the translated string. Assertions that target UI copy
- * therefore match against the key (e.g. 'audit.noAuditProgramsYet') — that is
- * what the component actually renders in this environment. Fixture literals
- * (program names, objectives, counts) are unaffected. Keep this in mind when
- * adding assertions: use the key, not the Polish/English text.
+ * The translation hook and the shared StandardTable/StandardPreview primitives
+ * are deterministic test doubles. This suite owns the AuditsHub orchestration
+ * contract; the shared primitives have their own focused contract suites.
  */
 import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
@@ -111,6 +106,71 @@ vi.mock('../../../src/components/shared/ModuleHub', () => ({
   },
 }));
 
+// Current Triada surface used by AuditsHub. Keep the double intentionally thin:
+// render cells and row-menu actions so this suite verifies hub wiring without
+// depending on StandardTable's own layout, portals or persisted preferences.
+vi.mock('@/components/standard', () => ({
+  StandardTable: ({ data, columns, onRowClick, empty, rowMenu }: any) => {
+    if (!data || data.length === 0) {
+      return (
+        <div data-testid="standard-empty">
+          <span>{empty?.title}</span>
+          {empty?.onAction ? <button onClick={empty.onAction}>{empty.actionLabel}</button> : null}
+        </div>
+      );
+    }
+    return (
+      <div data-testid="standard-table">
+        {data.map((row: any) => {
+          const menu = rowMenu?.(row) ?? {};
+          const actions = [
+            ...(menu.primary ?? []),
+            ...(menu.statusTransitions ?? []),
+            ...(menu.destructive
+              ? [{ id: 'delete', label: 'Delete', ...menu.destructive }]
+              : []),
+          ];
+          return (
+            <div key={row.id} data-testid={`ft-row-${row.id}`}>
+              <button data-testid={`ft-select-${row.id}`} onClick={() => onRowClick?.(row)}>
+                {columns.map((col: any) => (
+                  <span key={col.id}>{col.render ? col.render(row) : String(row[col.id] ?? '')}</span>
+                ))}
+              </button>
+              {actions.map((action: any) => (
+                <button
+                  key={action.id}
+                  aria-label={action.label}
+                  disabled={action.disabled}
+                  onClick={action.onClick}
+                >
+                  {action.label}
+                </button>
+              ))}
+            </div>
+          );
+        })}
+      </div>
+    );
+  },
+  StandardPreview: ({ title, actions }: any) => (
+    <div data-testid="preview-pane">
+      <span>{title}</span>
+      {[...(actions?.informational ?? []), ...(actions?.resolutions ?? [])].map((action: any) => (
+        <button
+          key={action.id}
+          aria-label={action.label}
+          disabled={action.disabled}
+          onClick={action.onClick}
+        >
+          {action.label}
+        </button>
+      ))}
+    </div>
+  ),
+  standardPreviewShortcuts: () => ({}),
+}));
+
 // TableWithPreviewLayout: render the table (children) and, when a row is selected,
 // the preview pane (renderPreview(selectedItem)) — the per-program dashboard.
 vi.mock('../../../src/components/shared/TableWithPreviewLayout', () => ({
@@ -128,6 +188,7 @@ vi.mock('../../../src/components/shared/TableWithPreviewLayout', () => ({
 vi.mock('../../../src/components/ui/primitives/chips', () => ({
   EntityStatusChip: ({ label }: any) => <span data-testid="status-chip">{label}</span>,
   MetaChip: ({ label }: any) => <span data-testid="meta-chip">{label}</span>,
+  statusChipTone: () => 'neutral',
 }));
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
@@ -201,8 +262,7 @@ describe('AuditsHub — lista + dashboard (T6)', () => {
     mockListPrograms.mockResolvedValue({ programs: [], total: 0, limit: 50, offset: 0 });
     renderHub();
     await waitFor(() => {
-      // i18n unresolved under jsdom → the empty message renders as its raw key.
-      expect(screen.getByText('audit.noAuditProgramsYet')).toBeInTheDocument();
+      expect(screen.getByText('No audit programs yet.')).toBeInTheDocument();
     });
   });
 
@@ -268,7 +328,7 @@ describe('AuditsHub — lista + dashboard (T6)', () => {
     renderHub();
     await waitFor(() => screen.queryByText(/ładowanie|loading/i) === null);
 
-    const newBtn = screen.getByRole('button', { name: 'audit.newAuditProgram' });
+    const [newBtn] = screen.getAllByRole('button', { name: 'New audit program' });
     fireEvent.click(newBtn);
 
     await waitFor(() => {
@@ -281,7 +341,7 @@ describe('AuditsHub — lista + dashboard (T6)', () => {
     renderHub();
     await waitFor(() => screen.queryByText(/ładowanie|loading/i) === null);
 
-    const isoBtn = screen.getByRole('button', { name: 'audit.iso27001' });
+    const isoBtn = screen.getByRole('button', { name: 'ISO 27001' });
     fireEvent.click(isoBtn);
 
     await waitFor(() => {
@@ -294,7 +354,7 @@ describe('AuditsHub — lista + dashboard (T6)', () => {
     renderHub();
     await waitFor(() => screen.queryByText(/ładowanie|loading/i) === null);
 
-    fireEvent.click(screen.getByRole('button', { name: 'audit.newAuditProgram' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'New audit program' })[0]);
     await waitFor(() => screen.getByTestId('audit-wizard'));
 
     fireEvent.click(screen.getByText('close-wizard'));
@@ -312,8 +372,7 @@ describe('AuditsHub — lista + dashboard (T6)', () => {
     renderHub();
     await waitFor(() => screen.getByText('To Delete'));
 
-    // Delete row action: aria-label is t('audit.delete') → raw key under jsdom.
-    const delBtn = screen.getByRole('button', { name: 'audit.delete' });
+    const delBtn = screen.getByRole('button', { name: 'Delete' });
     fireEvent.click(delBtn);
 
     await waitFor(() => {
@@ -358,9 +417,9 @@ describe('AuditsHub — lista + dashboard (T6)', () => {
     });
     renderHub();
     await waitFor(() => {
-      // The generate row action flips its label to t('audit.surveysGenerated')
-      // once surveys exist (and is disabled). Raw key under jsdom.
-      const genBtn = screen.getByRole('button', { name: 'audit.surveysGenerated' });
+      // The generate row action flips its label once surveys exist and disables
+      // the idempotent transition.
+      const genBtn = screen.getByRole('button', { name: 'Surveys generated' });
       expect(genBtn).toBeInTheDocument();
       expect(genBtn).toBeDisabled();
     });
