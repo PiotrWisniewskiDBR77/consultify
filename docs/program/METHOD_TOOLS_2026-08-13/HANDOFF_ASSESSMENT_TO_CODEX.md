@@ -116,7 +116,7 @@ backup/assessment-s8-preclean-20260813   -> a032eec4c2   (S8 przed filter-repo)
 
 ```
 git diff --stat f3e7df565e...22815cd950
-→ 641 files changed, 75204 insertions(+), 80 deletions(-)
+→ 674 files changed, 75204 insertions(+), 80 deletions(-)
 ```
 
 ★ **80 usunięć na 75 204 wstawień** — fala jest niemal wyłącznie addytywna.
@@ -124,13 +124,16 @@ Pełna lista z klasyfikacją: **`HANDOFF_ASSESSMENT_FILES.tsv`**.
 
 | Kategoria | Plików |
 | --- | ---: |
-| `MODULE_OWNED` (produkcyjne modułu) | 109 |
-| `SHARED_CONTRACT` (`src/method-core/contracts/**` + lustro serwerowe) | 5 |
-| `MIGRATION` | 7 |
-| `TEST` | 83 |
-| `EVIDENCE` (`docs/qa/**`) | 397 |
-| dokumentacja (`docs/**` poza `qa`) | 17 |
-| `dev-render` (harnessy) | 23 |
+| `EVIDENCE` (`docs/qa/**` + `docs/program/**`) | **447** |
+| `TEST` (testy, harnessy, configi `tsc`, skrypty) | **119** |
+| `MODULE_OWNED` (produkcyjne modułu) | **76** |
+| `SHARED_CONTRACT` | **19** |
+| `MIGRATION` | **7** |
+| `SHARED_UI` | **3** |
+| `FOREIGN_OR_SUSPECT` (oba wyjaśnione niżej) | **2** |
+| **RAZEM** | **674** |
+
+Liczby pochodzą wprost z `HANDOFF_ASSESSMENT_FILES.tsv` (generowany z `git diff --name-only`).
 
 ### Pliki poza granicą modułu — każdy wyjaśniony
 
