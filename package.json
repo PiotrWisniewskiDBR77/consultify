@@ -140,6 +140,7 @@
     "audit:source-reachability": "GIT_SHA=$(git rev-parse HEAD) node scripts/cleanup/source-reachability-inventory.mjs",
     "audit:module-surfaces": "GIT_SHA=$(git rev-parse HEAD) node scripts/cleanup/module-surface-inventory.mjs",
     "audit:git-refs": "node scripts/cleanup/git-ref-inventory.mjs",
+    "audit:orphan-triage": "node scripts/cleanup/orphan-candidate-triage.mjs",
     "test:audit": "npx tsx scripts/testing/run-audit.ts --quick",
     "test:audit:full": "npx tsx scripts/testing/run-audit.ts --full --report --update-registry",
     "test:quality-check": "tsx scripts/testing/quality-check.ts",
