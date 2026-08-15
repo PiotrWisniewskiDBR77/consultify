@@ -12,13 +12,13 @@
   "summary": {
     "total": 224,
     "referenceHarnessOnly": 18,
-    "representedSuperseded": 85,
-    "representedCanonical": 59,
+    "representedSuperseded": 86,
+    "representedCanonical": 66,
     "rejectedDestructiveSnapshot": 4,
     "integratedCanonical": 20,
     "candidateIntegration": 10,
     "ownerDecisionRequired": 0,
-    "semanticReviewRequired": 28,
+    "semanticReviewRequired": 20,
     "deletionAuthorized": 0
   },
   "rows": [
@@ -1885,12 +1885,12 @@
         "server/migrations/20260810_idea_conversion_mapping_version.sql",
         "server/migrations/20260812_idea_financial_case.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-I18N-001",
       "recoveryRef": "refs/recovery/unknown-20260815/5fe7e7bffa952381253792d3b2a0e2c0818bc029",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "This locale top-up still targets the invalid jp namespace and is superseded by the later canonical ja migration and expanded multilingual key coverage.",
+      "nextAction": "Do not restore jp resources; validate current ja, de, es and ar fallback and plural behavior."
     },
     {
       "tip": "600c9c719ccd1e3311db7f476f5af7b2bdbadca4",
@@ -2150,12 +2150,12 @@
         "server/migrations/20260810_idea_confidentiality.sql",
         "server/migrations/20260810_idea_conversion_mapping_version.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-IDE-013",
       "recoveryRef": "refs/recovery/unknown-20260815/6dd88ae0d925dc7cfbe51169047f7cf084443988",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "Current IdeaTableTool and TableToolbar contain the recovered record-template reachability guard, and the focused toolbar contract remains exact; only historical dev-render wiring evolved.",
+      "nextAction": "Keep current implementation and verify record-template reachability in the signed-in Ideas table."
     },
     {
       "tip": "6dda90c7ff34338d49b1cf2e5b44f8266a0e7d77",
@@ -2902,12 +2902,12 @@
         "server/migrations/20260810_idea_conversion_mapping_version.sql",
         "server/migrations/20260812_idea_financial_case.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-I18N-002",
       "recoveryRef": "refs/recovery/unknown-20260815/86a5adedf1ea9f4c5c608520eeda89ee9a2d44ef",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "Canon contains the BCP47 ja migration, removed jp resources, locale-aware validators, language persistence and RTL/plural tests; most recovered blobs are exact and the rest are later-evolved.",
+      "nextAction": "Keep current locale authority and run multilingual browser and unit gates."
     },
     {
       "tip": "8731fe95b2f8e07e63a749331a32d262edce89b2",
@@ -2970,12 +2970,12 @@
         "server/migrations/20260810_idea_confidentiality.sql",
         "server/migrations/20260810_idea_conversion_mapping_version.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-IDE-014",
       "recoveryRef": "refs/recovery/unknown-20260815/8afa1ea12105daa7e93905a515288a78a94e2982",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "Current Idea workspace mounts the confidentiality pill, capability gate, downgrade confirmation, fail-closed save/revert behavior and focused hook/component tests; absent files are old screenshots/dev-render artifacts.",
+      "nextAction": "Run confidentiality role, downgrade, failure and reload acceptance at the final SHA."
     },
     {
       "tip": "8b254dd57dcc144da02236278d8c3a6d66ff9dcc",
@@ -3350,12 +3350,12 @@
         "server/migrations/20260810_idea_conversion_mapping_version.sql",
         "server/migrations/20260812_idea_financial_case.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-IDE-015",
       "recoveryRef": "refs/recovery/unknown-20260815/a8b208cba1baab8b12d1e0405cd1582ef99f07da",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The honest confirmed/reply-layer runtime behavior and its AI Chat/action tests are present in current evolved files.",
+      "nextAction": "Keep current behavior and exercise confirmed, timeout and negative acknowledgement paths."
     },
     {
       "tip": "acc606640fbb491f3e290ba5c60e156236371adb",
@@ -3384,12 +3384,12 @@
         "server/migrations/20260810_idea_confidentiality.sql",
         "server/migrations/20260810_idea_conversion_mapping_version.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-IDE-016",
       "recoveryRef": "refs/recovery/unknown-20260815/acc606640fbb491f3e290ba5c60e156236371adb",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "Canonical quickActionAck, lane-frame runtime helpers, Process Flow hooks and correlated acknowledgement tests contain the recovered six-action behavior and later evolution.",
+      "nextAction": "Run current lane-frame action and acknowledgement contracts."
     },
     {
       "tip": "ade7eeea0b11749089c41d640f739a06e62e2a4c",
@@ -4237,12 +4237,12 @@
         "server/migrations/20260810_idea_conversion_mapping_version.sql",
         "server/migrations/20260812_idea_financial_case.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-IDE-017",
       "recoveryRef": "refs/recovery/unknown-20260815/d51a1fd0ffed17793f403725b7eff2f02a0f3adb",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "Current IdeasTableContent retains the sticky right-edge actions column and the recovered focused contract while adding later no-overlap handling.",
+      "nextAction": "Verify sticky actions under horizontal scroll and viewport/theme matrix."
     },
     {
       "tip": "d576cf2bf89e30f190ef058222140207b80e14fa",
@@ -4917,12 +4917,12 @@
         "server/migrations/20260810_idea_conversion_mapping_version.sql",
         "server/migrations/20260812_idea_financial_case.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-IDE-018",
       "recoveryRef": "refs/recovery/unknown-20260815/f11644e00f45f194dbcb435f0cc42e786a962763",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The updated/actions overlap contract is present in canonical form and the component has later sticky-edge fixes; the old dev-render measurement is not required runtime code.",
+      "nextAction": "Run the current overlap contract and signed-in geometry check."
     },
     {
       "tip": "f1d8ed4ea962f72cc7dfe1310e72760776451ed1",

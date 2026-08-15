@@ -1246,6 +1246,62 @@
       "taskId": "CLEAN-002-FIN-012",
       "evidenceRule": "The tip consists of stale Finance V3 handoffs explicitly reporting fifteen red tests on a frozen base; current runtime, migrations and later corrections supersede those reports.",
       "nextAction": "Retain the ref for provenance and use current Finance gates and exact-SHA evidence."
+    },
+    {
+      "tip": "5fe7e7bffa952381253792d3b2a0e2c0818bc029",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-I18N-001",
+      "evidenceRule": "This locale top-up still targets the invalid jp namespace and is superseded by the later canonical ja migration and expanded multilingual key coverage.",
+      "nextAction": "Do not restore jp resources; validate current ja, de, es and ar fallback and plural behavior."
+    },
+    {
+      "tip": "86a5adedf1ea9f4c5c608520eeda89ee9a2d44ef",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-I18N-002",
+      "evidenceRule": "Canon contains the BCP47 ja migration, removed jp resources, locale-aware validators, language persistence and RTL/plural tests; most recovered blobs are exact and the rest are later-evolved.",
+      "nextAction": "Keep current locale authority and run multilingual browser and unit gates."
+    },
+    {
+      "tip": "6dd88ae0d925dc7cfbe51169047f7cf084443988",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-IDE-013",
+      "evidenceRule": "Current IdeaTableTool and TableToolbar contain the recovered record-template reachability guard, and the focused toolbar contract remains exact; only historical dev-render wiring evolved.",
+      "nextAction": "Keep current implementation and verify record-template reachability in the signed-in Ideas table."
+    },
+    {
+      "tip": "8afa1ea12105daa7e93905a515288a78a94e2982",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-IDE-014",
+      "evidenceRule": "Current Idea workspace mounts the confidentiality pill, capability gate, downgrade confirmation, fail-closed save/revert behavior and focused hook/component tests; absent files are old screenshots/dev-render artifacts.",
+      "nextAction": "Run confidentiality role, downgrade, failure and reload acceptance at the final SHA."
+    },
+    {
+      "tip": "a8b208cba1baab8b12d1e0405cd1582ef99f07da",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-IDE-015",
+      "evidenceRule": "The honest confirmed/reply-layer runtime behavior and its AI Chat/action tests are present in current evolved files.",
+      "nextAction": "Keep current behavior and exercise confirmed, timeout and negative acknowledgement paths."
+    },
+    {
+      "tip": "acc606640fbb491f3e290ba5c60e156236371adb",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-IDE-016",
+      "evidenceRule": "Canonical quickActionAck, lane-frame runtime helpers, Process Flow hooks and correlated acknowledgement tests contain the recovered six-action behavior and later evolution.",
+      "nextAction": "Run current lane-frame action and acknowledgement contracts."
+    },
+    {
+      "tip": "d51a1fd0ffed17793f403725b7eff2f02a0f3adb",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-IDE-017",
+      "evidenceRule": "Current IdeasTableContent retains the sticky right-edge actions column and the recovered focused contract while adding later no-overlap handling.",
+      "nextAction": "Verify sticky actions under horizontal scroll and viewport/theme matrix."
+    },
+    {
+      "tip": "f11644e00f45f194dbcb435f0cc42e786a962763",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-IDE-018",
+      "evidenceRule": "The updated/actions overlap contract is present in canonical form and the component has later sticky-edge fixes; the old dev-render measurement is not required runtime code.",
+      "nextAction": "Run the current overlap contract and signed-in geometry check."
     }
   ]
 }
