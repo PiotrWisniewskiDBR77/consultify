@@ -310,6 +310,37 @@ export interface TeamWorkload {
   underutilizedCount: number;
 }
 
+export type WorkloadAiStatus = 'overloaded' | 'optimal' | 'underutilized';
+
+export interface UserWorkloadAiAssessment {
+  userId: string;
+  status: WorkloadAiStatus;
+  assessment: string;
+  recommendation: string;
+  meetingHours?: number;
+  meetingCount?: number;
+  meetingLoadPercent?: number;
+  taskUtilizationPercent?: number;
+}
+
+export interface TeamWorkloadAiAssessment {
+  weekStart: string;
+  weekEnd: string;
+  users: Array<
+    UserWorkloadAiAssessment & {
+      name: string;
+      capacityHours: number;
+      taskLoadHours: number;
+      backlogHours: number;
+      combinedLoadPercent: number;
+    }
+  >;
+  generatedAt: string;
+  cached: boolean;
+  /** false means the deterministic heuristic fallback was used. */
+  aiUsed: boolean;
+}
+
 // ============================================================================
 // NOTIFICATION PREFERENCES
 // ============================================================================

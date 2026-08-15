@@ -10,7 +10,15 @@
  */
 
 import { motion } from 'framer-motion';
-import { AlertTriangle, BarChart3, CheckCircle2, RefreshCw, User, Users } from 'lucide-react';
+import {
+  AlertTriangle,
+  BarChart3,
+  CheckCircle2,
+  RefreshCw,
+  Sparkles,
+  User,
+  Users,
+} from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -18,6 +26,11 @@ import { LoadingState } from '@/components/ui/primitives';
 
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
+import type {
+  TeamWorkloadAiAssessment,
+  UserWorkloadAiAssessment,
+  WorkloadAiStatus,
+} from '../../types/myWork';
 
 interface TeamMember {
   id: string;
@@ -28,7 +41,14 @@ interface TeamMember {
   tasksAssigned: number;
   tasksCompleted: number;
   avatarUrl?: string;
+  aiAssessment?: UserWorkloadAiAssessment;
 }
+
+const AI_STATUS_STYLES: Record<WorkloadAiStatus, string> = {
+  overloaded: 'bg-danger-50 text-danger-700 dark:bg-danger-500/15 dark:text-danger-300',
+  optimal: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300',
+  underutilized: 'bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300',
+};
 
 /**
  * Capacity Bar Component
@@ -95,58 +115,84 @@ const StatusBadge: React.FC<{ capacity: number }> = ({ capacity }) => {
  * Team Member Row Component
  */
 const TeamMemberRow: React.FC<{ member: TeamMember }> = ({ member }) => {
+  const { t } = useTranslation();
   return (
     <motion.div
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
-      className="flex items-center gap-4 p-3 bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700 hover:shadow-sm transition-shadow"
+      className="p-3 bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700 hover:shadow-sm transition-shadow"
     >
-      {/* Avatar */}
-      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-crimson-500 flex items-center justify-center text-white font-semibold text-sm shrink-0">
-        {member.avatarUrl ? (
-          <img
-            src={member.avatarUrl}
-            alt={member.name}
-            className="w-full h-full rounded-full object-cover"
-          />
-        ) : (
-          member.initials
-        )}
+      <div className="flex items-center gap-4">
+        {/* Avatar */}
+        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-crimson-500 flex items-center justify-center text-white font-semibold text-sm shrink-0">
+          {member.avatarUrl ? (
+            <img
+              src={member.avatarUrl}
+              alt={member.name}
+              className="w-full h-full rounded-full object-cover"
+            />
+          ) : (
+            member.initials
+          )}
+        </div>
+
+        {/* Name & Role */}
+        <div className="w-32 min-w-0 shrink-0">
+          <p className="text-sm font-medium text-navy-900 dark:text-white truncate">{member.name}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{member.role}</p>
+        </div>
+
+        {/* Capacity Bar */}
+        <CapacityBar capacity={member.capacity} />
+
+        {/* Percentage */}
+        <span
+          className={`w-14 text-sm font-bold text-right shrink-0 ${
+            member.capacity > 100
+              ? 'text-rose-500'
+              : member.capacity > 80
+                ? 'text-amber-500'
+                : 'text-navy-900 dark:text-white'
+          }`}
+        >
+          {member.capacity}%
+        </span>
+
+        {/* Status */}
+        <div className="w-24 shrink-0">
+          <StatusBadge capacity={member.capacity} />
+        </div>
+
+        {/* Tasks */}
+        <div className="text-right shrink-0">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            {member.tasksCompleted}/{member.tasksAssigned}
+          </p>
+        </div>
       </div>
 
-      {/* Name & Role */}
-      <div className="w-32 min-w-0 shrink-0">
-        <p className="text-sm font-medium text-navy-900 dark:text-white truncate">{member.name}</p>
-        <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{member.role}</p>
-      </div>
-
-      {/* Capacity Bar */}
-      <CapacityBar capacity={member.capacity} />
-
-      {/* Percentage */}
-      <span
-        className={`w-14 text-sm font-bold text-right shrink-0 ${
-          member.capacity > 100
-            ? 'text-rose-500'
-            : member.capacity > 80
-              ? 'text-amber-500'
-              : 'text-navy-900 dark:text-white'
-        }`}
-      >
-        {member.capacity}%
-      </span>
-
-      {/* Status */}
-      <div className="w-24 shrink-0">
-        <StatusBadge capacity={member.capacity} />
-      </div>
-
-      {/* Tasks */}
-      <div className="text-right shrink-0">
-        <p className="text-xs text-slate-500 dark:text-slate-400">
-          {member.tasksCompleted}/{member.tasksAssigned}
-        </p>
-      </div>
+      {member.aiAssessment && (
+        <div className="mt-3 ml-14 rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${AI_STATUS_STYLES[member.aiAssessment.status]}`}
+            >
+              <Sparkles size={10} />
+              {t(`workload.aiStatus.${member.aiAssessment.status}`, member.aiAssessment.status)}
+            </span>
+            {typeof member.aiAssessment.meetingHours === 'number' && (
+              <span className="text-[10px] text-c-text-muted">
+                {member.aiAssessment.meetingHours}h {t('workload.meetings', 'meetings')}
+              </span>
+            )}
+          </div>
+          <p className="mt-1 text-xs text-c-text">{member.aiAssessment.assessment}</p>
+          <p className="mt-0.5 text-[11px] text-c-text-muted">
+            <span className="font-medium">{t('workload.recommendation', 'Recommendation')}: </span>
+            {member.aiAssessment.recommendation}
+          </p>
+        </div>
+      )}
     </motion.div>
   );
 };
@@ -159,6 +205,7 @@ export const WorkloadView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [aiUsed, setAiUsed] = useState<boolean | null>(null);
 
   const currentProjectId = useAppStore((state) => state.currentProjectId);
 
@@ -178,9 +225,27 @@ export const WorkloadView: React.FC = () => {
         ? `/my-work/team-workload?projectId=${currentProjectId}`
         : `/my-work/team-workload`;
 
-      const response = await Api.get(url);
-      if (response && Array.isArray(response)) {
-        setTeamMembers(response);
+      const [workloadResult, assessmentResult] = await Promise.allSettled([
+        Api.get(url),
+        Api.get(`/my-work/team-workload/ai-assessment${isRefresh ? '?refresh=1' : ''}`),
+      ]);
+      const response = workloadResult.status === 'fulfilled' ? workloadResult.value : null;
+      const assessment =
+        assessmentResult.status === 'fulfilled'
+          ? (assessmentResult.value as TeamWorkloadAiAssessment)
+          : null;
+      const byUser = new Map((assessment?.users || []).map((item) => [item.userId, item]));
+      if (Array.isArray(response)) {
+        setTeamMembers(
+          response.map((member: TeamMember) => ({
+            ...member,
+            aiAssessment: byUser.get(member.id),
+          }))
+        );
+        setAiUsed(typeof assessment?.aiUsed === 'boolean' ? assessment.aiUsed : null);
+      } else {
+        setTeamMembers([]);
+        setAiUsed(null);
       }
     } catch (error) {
       console.error('Failed to fetch workload:', error);
@@ -223,6 +288,14 @@ export const WorkloadView: React.FC = () => {
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 {teamMembers.length} {t('workload.members', 'team members')}
               </p>
+              {aiUsed !== null && (
+                <p className="mt-1 inline-flex items-center gap-1 text-[10px] text-c-text-muted">
+                  <Sparkles size={10} />
+                  {aiUsed
+                    ? t('workload.aiAssessment', 'AI assessment')
+                    : t('workload.heuristicAssessment', 'Deterministic assessment')}
+                </p>
+              )}
             </div>
           </div>
           <button

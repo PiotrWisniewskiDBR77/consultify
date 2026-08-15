@@ -8,6 +8,7 @@ import { Router } from 'express';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { requireRole } from '../../middleware/rbac.middleware.js';
+import { getWorkloadAssessment } from '../../services/aiWorkloadAssessment.js';
 import { getCapacityOverview } from '../../services/workloadCapacityService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { getTableColumns } from '../../utils/dbSchema.js';
@@ -186,6 +187,27 @@ router.get(
         overloaded: user.overloaded,
       }))
     );
+  })
+);
+
+/**
+ * GET /api/my-work/team-workload/ai-assessment?refresh=1
+ * (#24d) AI-ocena REALNEGO obciążenia: łączy czas w kalendarzu (v8_calendar_items)
+ * z obciążeniem zadaniami (estymaty×alokacja) i syntetyzuje ocenę per osoba.
+ * Read-only. Wynik cache'owany per (org, tydzień) — jedno wywołanie AI / tydzień.
+ *
+ * RBAC: identyczny jak /team-workload — org-wide roll-up = powierzchnia managera.
+ */
+router.get(
+  '/team-workload/ai-assessment',
+  requireRole('manager', 'admin'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { orgId } = identity;
+    const refresh = String(req.query.refresh || '') === '1';
+    const assessment = await getWorkloadAssessment(orgId, { refresh });
+    res.json(assessment);
   })
 );
 
