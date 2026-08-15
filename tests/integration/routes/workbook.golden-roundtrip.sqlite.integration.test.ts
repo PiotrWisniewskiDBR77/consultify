@@ -91,6 +91,8 @@ describe('MAT-003A workbook golden round-trip (SQLite + real XLSX)', () => {
         schema_snapshot TEXT NOT NULL,
         organization_id TEXT NOT NULL,
         created_by TEXT,
+        visibility TEXT DEFAULT 'organization',
+        status TEXT DEFAULT 'approved',
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -219,14 +221,18 @@ describe('MAT-003A workbook golden round-trip (SQLite + real XLSX)', () => {
     app.use(express.json());
     app.use('/api/workbook', workbookRoutes);
 
-    // ensureWorkbookSchema has already completed in the preceding golden test,
-    // so removing the durable store simulates a runtime persistence outage.
-    await runSql('DROP TABLE generated_workbooks');
+    // The route intentionally self-heals a missing table, so use a database
+    // write failure that cannot be repaired by schema bootstrap. This proves
+    // the endpoint never answers 201 with a memory-only workbook.
+    await runSql(`CREATE TRIGGER reject_workbook_insert
+      BEFORE INSERT ON generated_workbooks
+      BEGIN SELECT RAISE(ABORT, 'simulated persistence outage'); END`);
 
     const response = await request(app)
       .post('/api/workbook/blank')
       .send({ title: 'Must not become memory-only' })
       .expect(500);
     expect(response.body.id).toBeUndefined();
+    await runSql('DROP TRIGGER reject_workbook_insert');
   });
 });

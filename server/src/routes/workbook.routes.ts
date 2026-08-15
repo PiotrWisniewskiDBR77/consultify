@@ -1414,9 +1414,11 @@ router.post(
     });
     pruneCache();
 
-    // Persist metadata (best-effort — pobranie i tak działa z cache/rebuild).
+    // Persist the canonical workbook identity before returning success. A
+    // cache-only workbook is a ghost output: it disappears on restart and
+    // cannot be reopened or governed.
     try {
-      await queryHelpers.queryRun(
+      const persisted = await queryHelpers.queryRun(
         `INSERT INTO generated_workbooks (id, organization_id, title, description, prompt, schema_json, sheet_count, file_name, file_size, validation_errors, quality_score, pipeline_log, action_contract_json, source_pack_json, evidence_refs_json, quality_report_json, created_by, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
@@ -1440,8 +1442,14 @@ router.post(
           generatedAt,
         ]
       );
+      if (!persisted || persisted.changes !== 1) {
+        throw new Error(`Workbook persistence affected ${persisted?.changes ?? 0} rows`);
+      }
     } catch (err) {
-      logger.warn('[WorkbookRoutes] Failed to persist blank workbook metadata:', err);
+      workbookCache.delete(id);
+      logger.error('[WorkbookRoutes] Failed to persist blank workbook metadata:', err);
+      res.status(500).json({ error: 'Failed to persist blank workbook' });
+      return;
     }
 
     // Register in V8 artifact registry (Outputs Library), jak w `/generate`.
