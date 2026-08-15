@@ -12,13 +12,13 @@
   "summary": {
     "total": 224,
     "referenceHarnessOnly": 18,
-    "representedSuperseded": 46,
-    "representedCanonical": 18,
-    "rejectedDestructiveSnapshot": 2,
-    "integratedCanonical": 13,
+    "representedSuperseded": 48,
+    "representedCanonical": 19,
+    "rejectedDestructiveSnapshot": 3,
+    "integratedCanonical": 14,
     "candidateIntegration": 0,
     "ownerDecisionRequired": 0,
-    "semanticReviewRequired": 127,
+    "semanticReviewRequired": 122,
     "deletionAuthorized": 0
   },
   "rows": [
@@ -240,12 +240,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 2,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REJECTED_DESTRUCTIVE_SNAPSHOT",
+      "taskId": "CLEAN-002-DATA-005",
       "recoveryRef": "refs/recovery/unknown-20260815/0b7a7ed73f83c4a36735160fdf96d497fdf030dd",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered scripts embed obsolete TROLLEY observations and direct destructive paths for Piotr's DBR77 interviews and demo-session organizations. Although dry-run is the default and confirmations exist, writes delete live rows without a single pinned transaction, recovery manifest, exact immutable candidate checksum, post-write rollback protocol or current authorized production target contract.",
+      "nextAction": "Never execute or restore these scripts. If data hygiene is still required, create a new read-only audit against the current authorized target and a separately reviewed transactional recovery packet; retain the recovery ref as rejected evidence until CLEAN-003."
     },
     {
       "tip": "0bf743d00ddbec89093e82c6fa40f621f30e9fbd",
@@ -1530,12 +1530,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 2,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "INTEGRATED_CANONICAL",
+      "taskId": "CLEAN-002-EXE-011",
       "recoveryRef": "refs/recovery/unknown-20260815/48ac49f492e4b655222e1afe0f85c442e8c91e75",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered WIP exposed a real semantic defect: initiative required FTE was copied from allocated FTE instead of being read from staffing demand. Commit 2d489e3c9874779225d61f390b30d2692036d9a5 ports the correction onto the newer canonical workload service, retains the no-resource demand case and adds three focused regression tests; frontend and backend typechecks pass.",
+      "nextAction": "Keep commit 2d489e3c9 in the canonical ancestry. Exercise staffing-plan demand versus allocation in the Initiatives/Execution signed-in golden flow and retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "495cec41aabdac440f1b50962ac6c8aa0f33a6a7",
@@ -2218,12 +2218,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 2,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-UI-005",
       "recoveryRef": "refs/recovery/unknown-20260815/6eff23d621ad00904dd0304fd52d89affbeca77d",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered Dialog change added the first role, aria-modal and title linkage. The current shared Dialog primitive contains those semantics plus description linkage, Escape handling, focus trap, focus restoration, merged refs, modal layering tokens and dedicated accessibility coverage across production consumers, so restoring the older primitive or its narrow test would regress the current contract.",
+      "nextAction": "Keep the current shared Dialog primitive. Include keyboard focus, Escape and restore-focus checks in the cross-module accessibility gate; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "7056497324e477b29c34021dbaa55fdc56f859af",
@@ -4057,12 +4057,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 2,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-UI-006",
       "recoveryRef": "refs/recovery/unknown-20260815/c67726e98bcde5a9b129d09885bfb5104896bbf4",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "This recovery head only reverted two files because they were outside a temporary UX Tools allowlist. Both the focus baseline and check-focus-canon.sh are intentionally present in the later canonical quality system; replaying the scope revert would remove active governance rather than recover product work.",
+      "nextAction": "Do not apply the deletion commit. Keep the current focus canon and validate it as part of the final UI gate; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "cdb3bf84be7ebc8132ed8ccf4712a169c3cc8296",
@@ -4270,12 +4270,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 2,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-CHAT-009",
       "recoveryRef": "refs/recovery/unknown-20260815/d5ec70d5cab0680cd814decb214600c064624f8c",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered two-file Chat surface register is an August 4 point-in-time reconciliation artifact. The current Chat SSOT, module completion registry and executable CHAT task packet are later authorities and preserve the relevant surface, route, proposal and evidence obligations without treating the old CSV as current runtime proof.",
+      "nextAction": "Do not restore a second surface register. Complete Chat through the current module card and exact-SHA signed-in acceptance packet; retain this ref as historical evidence until CLEAN-003."
     },
     {
       "tip": "d6a91999233547797b8ce7d049fda18b49f152e6",

@@ -4,13 +4,13 @@
 - Canonical evidence SHA: `257a1393f8f2340efe045677a74f7d9f452e8b64`
 - Independent heads: **224**
 - `REFERENCE_HARNESS_ONLY`: **18**
-- `REPRESENTED_SUPERSEDED`: **46**
-- `REPRESENTED_CANONICAL`: **18**
-- `REJECTED_DESTRUCTIVE_SNAPSHOT`: **2**
-- `INTEGRATED_CANONICAL`: **13**
+- `REPRESENTED_SUPERSEDED`: **48**
+- `REPRESENTED_CANONICAL`: **19**
+- `REJECTED_DESTRUCTIVE_SNAPSHOT`: **3**
+- `INTEGRATED_CANONICAL`: **14**
 - `CANDIDATE_INTEGRATION`: **0**
 - `OWNER_DECISION_REQUIRED`: **0**
-- `SEMANTIC_REVIEW_REQUIRED`: **127**
+- `SEMANTIC_REVIEW_REQUIRED`: **122**
 - Deletion authorized: **0**
 
 The first closed semantic rule is deliberately narrow: a head receives
