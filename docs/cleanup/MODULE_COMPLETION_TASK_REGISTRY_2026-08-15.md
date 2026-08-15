@@ -450,7 +450,10 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
   zostały zastąpione ostrzejszą kanoniczną naprawą `9779b8ddd`: prawidłowy
   fallback nadawcy, prawdziwy wynik dostarczenia oraz audit `SENT/FAILED/MOCK`
   mają focused 4/4 PASS i server typecheck PASS. Starszy Notebook Share jest
-  już obecny na aktualnej montowanej powierzchni. Pozostałe 191 nadal wymaga
+  już obecny na aktualnej montowanej powierzchni. Odzyskana normalizacja
+  wieloliniowych tagów tabel została dopasowana do aktualnego ratchetu w
+  `3cdcce6fc`; pełny skan 174 plików ma 273/273 i zero nowych naruszeń, zamiast
+  135 fałszywych alarmów. Pozostałe 190 nadal wymaga
   review. Te 18 pozostaje zachowanym materiałem
   UX/prototypowym, ale nie
   jest kodem produkcyjnym do merge. Generator mechanicznie egzekwuje warunek

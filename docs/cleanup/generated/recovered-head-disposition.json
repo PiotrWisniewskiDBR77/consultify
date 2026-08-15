@@ -15,8 +15,8 @@
     "representedSuperseded": 8,
     "representedCanonical": 1,
     "rejectedDestructiveSnapshot": 1,
-    "integratedCanonical": 5,
-    "semanticReviewRequired": 191,
+    "integratedCanonical": 6,
+    "semanticReviewRequired": 190,
     "deletionAuthorized": 0
   },
   "rows": [
@@ -1790,12 +1790,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 1,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "INTEGRATED_CANONICAL",
+      "taskId": "CLEAN-002-UI-GUARD-001",
       "recoveryRef": "refs/recovery/unknown-20260815/5a9591f3d452c5298d778e81a7f21ba30ab59a4e",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered multiline-table normalization was adapted to the current ratcheted list-canon guard in canonical commit 3cdcce6fc. Multiline §27 exemptions no longer create false child-table debt, unmarked tables still fail, the misplaced LiveMatrix exemption was corrected, and the full 174-file scan reports 273/273 with no new violations. Shell syntax and TSX formatting checks PASS.",
+      "nextAction": "Use the corrected 273-violation ratchet as the UI cleanup baseline; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "5ba0f152d984d5caba81fa08a89bc9bee4f78fe7",
