@@ -120,6 +120,49 @@ interface AssumptionStatusRow {
   provenance?: { source_type?: string; rationale?: string; source_ref?: string };
 }
 
+export const INITIAL_BALANCE_FIELDS = [
+  { key: 'initialCash', i18nKey: 'finance.model.initialFields.cash', fallback: 'Cash' },
+  { key: 'initialEquity', i18nKey: 'finance.model.initialFields.equity', fallback: 'Equity' },
+  { key: 'initialDebt', i18nKey: 'finance.model.initialFields.debt', fallback: 'Debt' },
+  { key: 'initialPPE', i18nKey: 'finance.model.initialFields.ppe', fallback: 'PPE (Net)' },
+  {
+    key: 'initialAR',
+    i18nKey: 'finance.model.initialFields.accountsReceivable',
+    fallback: 'Accounts Receivable',
+  },
+  {
+    key: 'initialInventory',
+    i18nKey: 'finance.model.initialFields.inventory',
+    fallback: 'Inventory',
+  },
+  {
+    key: 'initialAP',
+    i18nKey: 'finance.model.initialFields.accountsPayable',
+    fallback: 'Accounts Payable',
+  },
+] as const;
+
+export type InitialBalanceValueStatus = 'PRESENT_ZERO' | 'PRESENT_NONZERO' | 'MISSING';
+
+export function initialBalanceValueStatus(raw: unknown): InitialBalanceValueStatus {
+  if (raw === null || raw === undefined || raw === '') return 'MISSING';
+  const value = typeof raw === 'number' ? raw : Number(raw);
+  if (!Number.isFinite(value)) return 'MISSING';
+  return value === 0 ? 'PRESENT_ZERO' : 'PRESENT_NONZERO';
+}
+
+export function computeSeededInputKeys(
+  assumptions: Record<string, unknown> | null | undefined,
+  isGrounded: boolean
+): Set<string> {
+  if (!isGrounded) return new Set();
+  return new Set(
+    INITIAL_BALANCE_FIELDS.map(({ key }) => key).filter(
+      (key) => initialBalanceValueStatus(assumptions?.[key]) !== 'MISSING'
+    )
+  );
+}
+
 type Tab = 'inputs' | 'events' | 'outputs' | 'validation';
 
 interface Props {
@@ -847,19 +890,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
     seedSource?.periodLabel ||
     (seedSource?.sourceFileName ? String(seedSource.sourceFileName) : '') ||
     '';
-  const seededInputKeys = new Set(
-    isGrounded
-      ? [
-          'initialCash',
-          'initialEquity',
-          'initialDebt',
-          'initialPPE',
-          'initialAR',
-          'initialInventory',
-          'initialAP',
-        ]
-      : []
-  );
+  const seededInputKeys = computeSeededInputKeys(assumptions, isGrounded);
 
   const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
     {
@@ -1281,69 +1312,61 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                     <h3 className="font-semibold text-slate-900 dark:text-white">
                       {t('finance.model.initialBalances', 'Initial Balance Sheet')}
                     </h3>
-                    {[
-                      {
-                        key: 'initialCash',
-                        i18nKey: 'finance.model.initialFields.cash',
-                        fallback: 'Cash',
-                      },
-                      {
-                        key: 'initialEquity',
-                        i18nKey: 'finance.model.initialFields.equity',
-                        fallback: 'Equity',
-                      },
-                      {
-                        key: 'initialDebt',
-                        i18nKey: 'finance.model.initialFields.debt',
-                        fallback: 'Debt',
-                      },
-                      {
-                        key: 'initialPPE',
-                        i18nKey: 'finance.model.initialFields.ppe',
-                        fallback: 'PPE (Net)',
-                      },
-                      {
-                        key: 'initialAR',
-                        i18nKey: 'finance.model.initialFields.accountsReceivable',
-                        fallback: 'Accounts Receivable',
-                      },
-                      {
-                        key: 'initialInventory',
-                        i18nKey: 'finance.model.initialFields.inventory',
-                        fallback: 'Inventory',
-                      },
-                      {
-                        key: 'initialAP',
-                        i18nKey: 'finance.model.initialFields.accountsPayable',
-                        fallback: 'Accounts Payable',
-                      },
-                    ].map(({ key, i18nKey, fallback }) => (
-                      <div key={key} className="flex items-center justify-between gap-4">
-                        <div className="w-48">
-                          <label className="text-sm text-slate-700 dark:text-slate-300">
-                            {t(i18nKey, fallback)}
-                          </label>
-                          {seededInputKeys.has(key) ? (
-                            <div className="mt-1 text-[10px] uppercase tracking-wide text-blue-600 dark:text-blue-300">
-                              {t('finance.model.importedFromStatement', 'Imported from statement')}
-                            </div>
-                          ) : (
-                            assumptionStatusLabel(key)
-                          )}
+                    {INITIAL_BALANCE_FIELDS.map(({ key, i18nKey, fallback }) => {
+                      const valueStatus = initialBalanceValueStatus(assumptions[key]);
+                      const isMissing = valueStatus === 'MISSING';
+                      return (
+                        <div key={key} className="flex items-center justify-between gap-4">
+                          <div className="w-48">
+                            <label className="text-sm text-slate-700 dark:text-slate-300">
+                              {t(i18nKey, fallback)}
+                            </label>
+                            {isMissing ? (
+                              <div
+                                data-testid={`initial-balance-status-${key}`}
+                                data-value-status="MISSING"
+                                className="mt-1 text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-500"
+                              >
+                                {t('finance.modelWorkspace.assumptionStatus.missing', 'Missing')}
+                              </div>
+                            ) : seededInputKeys.has(key) ? (
+                              <div
+                                data-testid={`initial-balance-status-${key}`}
+                                data-value-status={valueStatus}
+                                className="mt-1 text-[10px] uppercase tracking-wide text-blue-600 dark:text-blue-300"
+                              >
+                                {t(
+                                  'finance.model.importedFromStatement',
+                                  'Imported from statement'
+                                )}
+                              </div>
+                            ) : (
+                              assumptionStatusLabel(key)
+                            )}
+                          </div>
+                          <input
+                            type="number"
+                            data-testid={`initial-balance-input-${key}`}
+                            data-value-status={valueStatus}
+                            value={isMissing ? '' : Number(assumptions[key])}
+                            placeholder={t('finance.model.initialFields.noData', '—')}
+                            onChange={(e) => {
+                              const next = e.target.value;
+                              setAssumptions((prev) => {
+                                if (next.trim() === '') {
+                                  const rest = { ...prev };
+                                  delete rest[key];
+                                  return rest;
+                                }
+                                const parsed = Number.parseFloat(next);
+                                return Number.isFinite(parsed) ? { ...prev, [key]: parsed } : prev;
+                              });
+                            }}
+                            className="w-48 px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-sm text-right font-mono"
+                          />
                         </div>
-                        <input
-                          type="number"
-                          value={assumptions[key] ?? 0}
-                          onChange={(e) =>
-                            setAssumptions((prev) => ({
-                              ...prev,
-                              [key]: parseFloat(e.target.value) || 0,
-                            }))
-                          }
-                          className="w-48 px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-sm text-right font-mono"
-                        />
-                      </div>
-                    ))}
+                      );
+                    })}
                     <div className="mt-2 flex items-center gap-3">
                       <button
                         onClick={handleSaveAssumptions}
