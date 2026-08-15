@@ -2,7 +2,7 @@
  * Plan Limits Integration Tests
  */
 
-import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, afterAll, vi } from 'vitest';
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
@@ -106,72 +106,51 @@ describe('Plan Limits Integration', () => {
     }
   });
 
-  it('fails closed without a resolvable access policy and writes no project', async () => {
-    // Free plan limit is 1
+  beforeEach(async () => {
+    await DbPromise.run(db, 'DELETE FROM projects WHERE organization_id = ?', [orgId]);
+    await DbPromise.run(db, `UPDATE organizations SET plan = 'free' WHERE id = ?`, [orgId]);
+  });
 
-    // 1. Create first project - Should Succeed
-    const res1 = await request(app)
+  const createProject = async (name) =>
+    request(app)
       .post('/api/projects')
       .set('Authorization', `Bearer ${authToken}`)
-      .send({ name: 'Project 1', description: 'Desc 1' });
+      .send({ name, description: `${name} description` });
 
-    if (res1.status !== 201) {
-      console.error(
-        '[Test Error] Project 1 creation failed. Status:',
-        res1.status,
-        'Body:',
-        res1.body
-      );
-    }
-    expect(res1.status).toBe(429);
-    expect(res1.body.errorCode).toBe('ACCESS_POLICY_UNAVAILABLE');
-
-    // DEBUG: Check if project exists in DB
-    const checkCount = await DbPromise.get(
+  const readProjectCount = async () => {
+    const row = await DbPromise.get(
       db,
       'SELECT COUNT(*) as count FROM projects WHERE organization_id = ?',
       [orgId]
     );
-    console.log('[Test Debug] Project count in DB after res1:', checkCount);
-    expect(Number(checkCount.count)).toBe(0);
+    return Number(row.count);
+  };
 
-    // 2. Create second project - Should Fail
-    const res2 = await request(app)
-      .post('/api/projects')
-      .set('Authorization', `Bearer ${authToken}`)
-      .send({ name: 'Project 2', description: 'Desc 2' });
-
-    if (res2.status !== 403) {
-      console.error(
-        '[Test Error] Project 2 should have failed with 403. Status:',
-        res2.status,
-        'Body:',
-        res2.body
-      );
+  it('allows the canonical trial quota and rejects the next project without writing it', async () => {
+    for (let index = 1; index <= 3; index += 1) {
+      const response = await createProject(`Trial Project ${index}`);
+      expect(response.status).toBe(201);
     }
-    expect(res2.status).toBe(429);
-    expect(res2.body.errorCode).toBe('ACCESS_POLICY_UNAVAILABLE');
+
+    expect(await readProjectCount()).toBe(3);
+
+    const denied = await createProject('Trial Project 4');
+    expect(denied.status).toBe(429);
+    expect(denied.body.errorCode).toBe('PROJECT_LIMIT_REACHED');
+    expect(await readProjectCount()).toBe(3);
   });
 
-  it('does not infer access from a legacy plan column after upgrade', async () => {
-    // Upgrade to Pro
+  it('does not infer paid access from the legacy plan column', async () => {
     await DbPromise.run(db, `UPDATE organizations SET plan = 'pro' WHERE id = ?`, [orgId]);
 
-    // 3. Create second project - Should Succeed now
-    const res3 = await request(app)
-      .post('/api/projects')
-      .set('Authorization', `Bearer ${authToken}`)
-      .send({ name: 'Project 2 (Pro)', description: 'Desc 2 Pro' });
-
-    if (res3.status !== 201) {
-      console.error(
-        '[Test Error] Project 2 Pro creation failed. Status:',
-        res3.status,
-        'Body:',
-        res3.body
-      );
+    for (let index = 1; index <= 3; index += 1) {
+      const response = await createProject(`Legacy Plan Project ${index}`);
+      expect(response.status).toBe(201);
     }
-    expect(res3.status).toBe(429);
-    expect(res3.body.errorCode).toBe('ACCESS_POLICY_UNAVAILABLE');
+
+    const denied = await createProject('Legacy Plan Project 4');
+    expect(denied.status).toBe(429);
+    expect(denied.body.errorCode).toBe('PROJECT_LIMIT_REACHED');
+    expect(await readProjectCount()).toBe(3);
   });
 });
