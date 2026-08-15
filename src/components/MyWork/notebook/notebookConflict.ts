@@ -1,7 +1,6 @@
 export interface NotebookConflictPageLike {
   id?: string;
   updatedAt?: string;
-  [key: string]: unknown;
 }
 
 /**
