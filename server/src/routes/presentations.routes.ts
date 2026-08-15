@@ -921,6 +921,30 @@ async function getTemplateForOrgOrSystem(templateId: string, organizationId: str
   )) as any;
 }
 
+async function readBackOrgTemplate(templateId: string, organizationId: string) {
+  return (await dbGet(`SELECT * FROM presentation_templates WHERE id = ? AND organization_id = ?`, [
+    templateId,
+    organizationId,
+  ])) as any;
+}
+
+async function settleTemplateWrite(
+  operation: string,
+  templateId: string,
+  organizationId: string,
+  ack: { success?: boolean; error?: string } | null | undefined
+): Promise<{ ok: true; row: any } | { ok: false; reason: string }> {
+  const row = await readBackOrgTemplate(templateId, organizationId);
+  if (!row) return { ok: false, reason: ack?.error || 'row_not_persisted' };
+  if (!ack?.success) {
+    logger.warn(
+      `[Presentations] ${operation}: driver reported failure but the row is durably present`,
+      { templateId, organizationId, driverError: ack?.error }
+    );
+  }
+  return { ok: true, row };
+}
+
 async function enforceNoLegalHold(res: Response, organizationId: string, operation: string) {
   try {
     await requireNoLegalHold(organizationId, operation);
@@ -1275,7 +1299,7 @@ router.post(
     // keeps working on installs where migration 767 (lifecycle + lineage)
     // has not run yet. `lifecycle_state` defaults to `draft` either way
     // (567 has no such column; 767 adds it with `DEFAULT 'draft'`).
-    await dbRun(
+    const insertAck = await dbRun(
       `INSERT INTO presentation_templates (id, organization_id, name, description, deck_type, audience, goal, language_default, confidentiality_default, theme, outline_json, max_slides, min_slides, must_have_intents, recommended_visuals, is_system, is_active, cloned_from, created_by)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, FALSE, TRUE, NULL, ?)`,
       [
@@ -1297,6 +1321,21 @@ router.post(
         userId,
       ]
     );
+
+    const planSettled = await settleTemplateWrite('template plan', id, orgId, insertAck);
+    if (!planSettled.ok) {
+      logger.error('[Presentations] Template plan insert did not persist', {
+        templateId: id,
+        organizationId: orgId,
+        reason: planSettled.reason,
+      });
+      res.status(500).json({
+        success: false,
+        error: 'template_persist_failed',
+        message: 'Template was not saved. Nothing was created.',
+      });
+      return;
+    }
 
     // Epic C2 parity with /clone: a freshly drafted template is the root
     // of its own lineage chain. Best-effort — never breaks creation when
@@ -1334,9 +1373,8 @@ router.post(
       );
     }
 
-    const row = await getTemplateForOrgOrSystem(id, orgId);
-    const normalized = row ? normalizeTemplatePayload(row) : { id, ...template };
-    res.json({ success: true, data: { template: normalized, llmRefined } });
+    const row = (await readBackOrgTemplate(id, orgId)) || planSettled.row;
+    res.json({ success: true, data: { template: normalizeTemplatePayload(row), llmRefined } });
   })
 );
 
@@ -1362,7 +1400,7 @@ router.post(
 
     const id = uuidv4().replace(/-/g, '');
     const { name } = req.body;
-    await dbRun(
+    const cloneAck = await dbRun(
       `INSERT INTO presentation_templates (id, organization_id, name, description, deck_type, audience, goal, language_default, confidentiality_default, theme, outline_json, max_slides, min_slides, must_have_intents, recommended_visuals, is_system, cloned_from, created_by)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, FALSE, ?, ?)`,
       [
@@ -1385,6 +1423,21 @@ router.post(
         (req as any).user?.id,
       ]
     );
+
+    const cloneSettled = await settleTemplateWrite('template clone', id, orgId, cloneAck);
+    if (!cloneSettled.ok) {
+      logger.error('[Presentations] Template clone insert did not persist', {
+        templateId: id,
+        sourceTemplateId: String(req.params.id),
+        organizationId: orgId,
+        reason: cloneSettled.reason,
+      });
+      return res.status(500).json({
+        success: false,
+        error: 'template_clone_failed',
+        message: 'Template was not cloned. Nothing was created.',
+      });
+    }
 
     // Epic C2: extend the clone with a lineage chain + governance
     // event so the registry surface can render the version history.
@@ -1481,7 +1534,7 @@ router.put(
       });
     }
 
-    await dbRun(
+    const updateAck = await dbRun(
       `UPDATE presentation_templates SET name = COALESCE(?, name), description = COALESCE(?, description), audience = COALESCE(?, audience), goal = COALESCE(?, goal), theme = COALESCE(?, theme), outline_json = COALESCE(?, outline_json), max_slides = COALESCE(?, max_slides), layout_policy_json = COALESCE(?, layout_policy_json), updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ? AND is_system = FALSE`,
       [
         name,
@@ -1496,6 +1549,30 @@ router.put(
         orgId,
       ]
     );
+
+    if (updateAck?.success && updateAck.changes === 0) {
+      res.status(404).json({
+        success: false,
+        error: 'template_not_found_for_org',
+        message: 'No editable template with this id belongs to your organization.',
+      });
+      return;
+    }
+
+    const updateSettled = await settleTemplateWrite(
+      'template update',
+      String(req.params.id),
+      orgId,
+      updateAck
+    );
+    if (!updateSettled.ok) {
+      res.status(500).json({
+        success: false,
+        error: 'template_update_failed',
+        message: 'Template was not updated. No changes were saved.',
+      });
+      return;
+    }
     res.json({ success: true });
   })
 );
@@ -2241,8 +2318,7 @@ router.get(
       const coherences = deckRows.map((row) => resolveDeckContentCoherence(row));
       const needsUnifiedJson = deckRows
         .filter(
-          (row, index) =>
-            coherences[index].cardCount === 0 && Number(row?.has_unified_json) === 1
+          (row, index) => coherences[index].cardCount === 0 && Number(row?.has_unified_json) === 1
         )
         .map((row) => String(row?.id));
 
@@ -7832,5 +7908,7 @@ router.get(
     });
   })
 );
+
+export const __testables = { settleTemplateWrite, readBackOrgTemplate };
 
 export default router;
