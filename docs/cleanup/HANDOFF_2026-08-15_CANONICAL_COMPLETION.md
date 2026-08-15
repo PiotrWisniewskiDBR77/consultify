@@ -1,5 +1,11 @@
 # Consultify canonical completion handoff — 2026-08-15
 
+Current authority SHA: `032ca27f7`
+Current status: `16/16 INVENTORIED / PRODUCT CODE INTEGRATED / RELEASE ACCEPTANCE PENDING`
+
+> Ten checkpoint zastępuje starsze SHA i kolejki wykonawcze, ale nie usuwa
+> historii. Recovery ledger jest zamknięty i nie jest edytowany.
+
 ## Objective
 
 Doprowadzić Consultify do jednego zabezpieczonego, czystego i zrozumiałego
@@ -300,3 +306,24 @@ Cel jest ukończony dopiero wtedy, gdy jednocześnie:
 - demo odpowiada temu samemu SHA;
 - browser/realDB/visual evidence potwierdza zakres MVP;
 - raport cleanup i plan integracji są aktualne.
+
+## CURRENT successor command — `032ca27f7`
+
+Nie uruchamiaj ponownie starych pakietów produktowych. Kod 16/16 został
+zintegrowany w ancestry od `6d2b6d05f`; aktualne evidence/statusy są w
+`FINAL_16_MODULE_READINESS_AND_EXECUTION_PLAN_2026-08-15.md` sekcja 8 i
+`MODULE_COMPLETION_TASK_REGISTRY_2026-08-15.md` sekcja CURRENT.
+
+Następna kolejność jest jedyna:
+
+1. `SYS-001`: pełny test discovery, typecheck, build, performance i realDB na
+   jednym nowym candidate SHA; każdy fail sklasyfikować, nie ukrywać.
+2. `REL-001`: deploy dokładnie candidate SHA, potwierdź client/server SHA,
+   migration ledger, flags i tenant fixtures; zachowaj rollback.
+3. `UX-001` oraz 16 `*-BVP-001`: signed-in desktop/mobile, loading/empty/error,
+   network/console, visual/a11y i zgodność Consultify; zapisz dowody repo-owned.
+4. Owner rozstrzyga `MAT-POL-001`, `MTG-POL-001`, `PRT-POL-001`; scope
+   `AUD-002`, `SET-002` i pozostałe POST_MVP nie blokuje uczciwego MVP.
+
+Do czasu zakończenia 1–3 system pozostaje `NOT_RELEASE_READY`; C/F/D nie może
+być raportowane jako DONE bez S/B/V/P.

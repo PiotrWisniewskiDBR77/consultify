@@ -1,9 +1,13 @@
 # Consultify — finalny raport gotowości 16 modułów i plan wykonawczy
 
 Data: 2026-08-15
-Authority integrated candidate SHA: `5bd7cece0`
+Authority integrated candidate SHA: `032ca27f7`
 Cleanup/report baseline SHA: `8210bc170`
 Status całego systemu: `NOT_RELEASE_READY / CLEAN_CODE_INVENTORY_COMPLETE`
+
+> CURRENT EVIDENCE CHECKPOINT — 2026-08-15, authority `032ca27f7`.
+> Sekcje historyczne niżej pozostają śladem decyzji. Aktualny werdykt i jedyna
+> pozostała kolejka wykonawcza znajdują się w sekcji 8.
 
 ## 1. Co ten raport rozstrzyga
 
@@ -368,13 +372,12 @@ by the integrator at the end of a wave.
 
 ### MVP_REMAINING_WORK
 
-1. `CHAT-001-T01`, `CHAT-001..003`, `MYW-001..002`, `AGT-001-T01..003`;
-2. `INT-001..002` oraz jeden serialny packet `CLEAN-002-INT-005/006`;
-3. `TLS-001..002` + `CLEAN-002-TEST-003`, `ASM-001..003` (DRD);
-4. `INI-001..002`, `EXE-001..002`;
-5. `MAT-001`, `MAT-002-T01`, `MAT-003..004`, `ORG-001..002`;
-6. `ADM-001`, `SET-001`, `MTG-001`;
-7. `RES-001..004` dopiero po zielonym D/S i kontrolowanym cutoverze.
+1. `SYS-001` — jeden full system/typecheck/build/performance gate;
+2. `REL-001` — exact-SHA deploy, migration/flag/data parity i rollback;
+3. `UX-001` oraz 16 atomowych `*-BVP-001` — signed-in desktop/mobile,
+   visual/a11y i demo acceptance;
+4. `MAT-POL-001`, `MTG-POL-001`, `PRT-POL-001` tylko jeśli ich moduły mają
+   wejść do deklarowanego release scope.
 
 ### POST_MVP_BACKLOG
 
@@ -423,3 +426,35 @@ System jest gotowy do uruchomienia dopiero, gdy:
 Aktualny werdykt: inwentaryzacja kodu jest kompletna; produkt i release nie są
 jeszcze gotowe. Pozostała praca jest jawna, skończona zakresowo i przypisana do
 tasków powyżej.
+
+## 8. CURRENT 16/16 evidence checkpoint — `032ca27f7`
+
+Commity od `6d2b6d05f` do authority SHA domknęły realne delty produktu dla Chat,
+My Work, Agent, Interview, Dynamic SWOT, DRD, Initiatives, Execution, Materials,
+Results, Finance, Meeting, Audits beta, Organization, Admin/Settings i Partner
+V8. Nie zmienia to bramy dowodowej: na `032ca27f7` nie wykonano jednego pełnego
+system gate ani signed-in desktop/mobile + visual + demo-parity.
+
+| # | Moduł | Aktualny dowód | Werdykt current | Jedyna pozostała praca |
+|---:|---|---|---|---|
+| 1 | Chat | C/F; D dla governed handoff | ACCEPTANCE_PENDING | `CHAT-BVP-001` |
+| 2 | My Work + Agent | C/F; D częściowe dla Case/artefaktu | ACCEPTANCE_PENDING | `MYW-AGT-BVP-001` |
+| 3 | Interview | C/F/D assignment+invitation | ACCEPTANCE_PENDING | `INT-BVP-001` |
+| 4 | Tools | C/F/D Dynamic SWOT | MVP_SCOPE_ACCEPTANCE_PENDING | `TLS-BVP-001`; reszta katalogu POST_MVP |
+| 5 | Assessment | C/F/D DRD, HTTP cutover | MVP_SCOPE_ACCEPTANCE_PENDING | `ASM-BVP-001`; inne metody POST_MVP |
+| 6 | Initiatives | C/F/D exactly-once handoff | ACCEPTANCE_PENDING | `INI-BVP-001` |
+| 7 | Execution | C/F/D case, health, evidence | ACCEPTANCE_PENDING | `EXE-BVP-001` |
+| 8 | Results | C/F/D, KPI/ROI/OKR cutover w kodzie | RELEASE_ACCEPTANCE_PENDING | `RES-BVP-001` |
+| 9 | Finance | C/F/D, inventory unresolved=0 i workspaces realPG | POST_MVP_ACCEPTANCE_PENDING | `FIN-BVP-001` |
+| 10 | Materials | C/F; D dla workbook/presentation persistence | ACCEPTANCE_PENDING | `MAT-BVP-001`; provider export policy `MAT-POL-001` |
+| 11 | Audits | C/F, base beta CRUD podłączony | BETA_ACCEPTANCE_PENDING | `AUD-BVP-001`; full lifecycle POST_MVP |
+| 12 | Meeting | C/F/D acceptance packet | POST_MVP_ACCEPTANCE_PENDING | `MTG-BVP-001`; consent/retention owner sign-off `MTG-POL-001` |
+| 13 | Organization | C/F/D immutable snapshots i surface ownership | ACCEPTANCE_PENDING | `ORG-BVP-001` |
+| 14 | Admin | C/F/D IAM, last-owner, audit | SECURITY_ACCEPTANCE_PENDING | `ADM-BVP-001` |
+| 15 | Settings | C/F/D preferences; secret redaction | ACCEPTANCE_PENDING | `SET-BVP-001`; sensitive `SET-002` POST_MVP |
+| 16 | Partner Portal | C/F, canonical V8 boundary | POST_MVP_POLICY_BLOCKED | `PRT-BVP-001`; payout policy `PRT-POL-001` |
+
+Wspólne taski: `SYS-001` = pełny test/typecheck/build/performance gate na jednym
+SHA; `REL-001` = deploy tego SHA, fresh/upgrade ledger, flag/env/data readback;
+`UX-001` = signed-in desktop/mobile, loading/empty/error, visual/a11y i brak
+technicznych enumów/UUID. Dopiero `SYS-001 + REL-001 + UX-001` może dodać S/B/V/P.

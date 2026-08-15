@@ -1,7 +1,7 @@
 # Consultify — wykonawczy rejestr dokończenia modułów
 
 Data: 2026-08-15  
-Authority integrated candidate SHA: `5bd7cece0`
+Authority integrated candidate SHA: `032ca27f7`
 Cleanup/report baseline SHA: `8210bc170`
 Status: `EXECUTION_REGISTRY / NOT_RELEASE_READY`
 
@@ -1017,10 +1017,41 @@ deployment config. Te pliki ma integrator fali.
 
 ## Kolejność uruchomienia agentów
 
-1. CLEAN-001 i CLEAN-002; integrator nie zmienia funkcji produktu.
-2. CHAT-001, ORG-001, MYW-001, AGT-001, INT-001, TLS-001, ASM-001, INI-001 i
-   EXE-001 w rozłącznych worktree.
-3. Następcy dopiero po dowodzie poprzednika, nie po deklaracji agenta.
-4. Materials/control plane, potem Results cutover.
-5. Finance/Audits/Meeting/Partner zgodnie z falą 3.
-6. REL-001, pełne gates oraz demo/browser/visual na jednym finalnym SHA.
+1. `SYS-001` na jednym candidate SHA.
+2. `REL-001` dopiero po zielonym i sklasyfikowanym `SYS-001`.
+3. `UX-001` i rozłączne `*-BVP-001` na dokładnie wdrożonym SHA.
+4. Policy tasks do właściciela; deferred scope nie wraca do aktywnej kolejki.
+
+## CURRENT atomic reconciliation — authority `032ca27f7`
+
+Historyczne opisy pakietów pozostają niezmienione. `INTEGRATED` oznacza kod w
+ancestry, nie `DONE` modułu.
+
+| Task | Current status | Integrated evidence |
+|---|---|---|
+| `CHAT-001-T01`, `CHAT-001..003` | INTEGRATED_CODE_FOCUSED | `669757e93`, `1dba265cf`, `6f049f36d` |
+| `MYW-001..002` | INTEGRATED_CODE_FOCUSED | `59e3ad6ce`, `123c5564a` |
+| `AGT-001..003` | INTEGRATED_CODE_FOCUSED | `6ad5dd296`, `fe5a16b8f`, `fd9e38322`, `a124de8cb` |
+| `INT-001..002` | INTEGRATED_CODE_FOCUSED_REALDB | `326cd39b8`, `3e8a26c2d` |
+| `TLS-001..002` | INTEGRATED_CODE_FOCUSED_REALDB | `7457c3d77` |
+| `ASM-001..003` | INTEGRATED_CODE_FOCUSED_REALDB | `05ab85485`, `464c46663`, `d62a05f99`, `e79978f9c` |
+| `INI-001..002` | INTEGRATED_CODE_FOCUSED_REALDB | `ce9875421` |
+| `EXE-001..002` | INTEGRATED_CODE_FOCUSED_REALDB | `3e2b7c8f5` |
+| `MAT-001..004` | INTEGRATED_BOUNDED | `cf54b7731`, `1e4527ac5`; provider/visual remains |
+| `RES-001..004` | INTEGRATED_CODE_FOCUSED_REALDB | `e64c2504b` |
+| `FIN-001..003` | INTEGRATED_CODE_FOCUSED_REALDB | `46bf2cd41`, `b9fa3bbfd`; POST_MVP |
+| `AUD-001` / `AUD-002` | INTEGRATED_BETA / POST_MVP | `3bb358302`, `ebe3019e5`; full lifecycle deferred |
+| `MTG-001` | INTEGRATED_ACCEPTANCE_PACKET | `a3592b44a`; browser/policy remains |
+| `ORG-001..002` | INTEGRATED_CODE_FOCUSED_REALDB | `c47883772`, `032ca27f7` |
+| `ADM-001`, `SET-001` / `SET-002` | INTEGRATED / POST_MVP | `7a378372c`, `abd93a0d6`; sensitive flows deferred |
+| `PRT-001..003` | BOUNDED_INTEGRATED / POLICY_BLOCKED | `8b9acb9e3`; payout policy unresolved |
+
+Pozostają wyłącznie: `CHAT-BVP-001`, `MYW-AGT-BVP-001`, `INT-BVP-001`,
+`TLS-BVP-001`, `ASM-BVP-001`, `INI-BVP-001`, `EXE-BVP-001`, `RES-BVP-001`,
+`FIN-BVP-001`, `MAT-BVP-001`, `AUD-BVP-001`, `MTG-BVP-001`, `ORG-BVP-001`,
+`ADM-BVP-001`, `SET-BVP-001`, `PRT-BVP-001`; wspólne `SYS-001`, `REL-001`,
+`UX-001`; policy `MAT-POL-001`, `MTG-POL-001`, `PRT-POL-001`; deferred
+`AUD-002`, `SET-002`, non-DRD Assessment, non-SWOT Tools i full Partner payout.
+
+Nie uruchamiać ponownie zintegrowanych tasków bez reprodukowalnego FAIL na
+`032ca27f7`; odkryty defekt otrzymuje nowe atomowe ID.

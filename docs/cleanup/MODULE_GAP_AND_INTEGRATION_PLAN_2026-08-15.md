@@ -1,8 +1,12 @@
 # Consultify — modułowy gap plan i plan integracji
 
 Data: 2026-08-15  
-Authority integrated candidate SHA: `6fa460d51`
+Authority integrated candidate SHA: `032ca27f7`
 Status: `CANONICAL_CLEANUP_ANALYSIS / RUNTIME_ACCEPTANCE_PENDING`
+
+> CURRENT checkpoint: produktowe luki opisane historycznie niżej zostały
+> zredukowane przez ancestry `6d2b6d05f..032ca27f7`. Aktualna lista luk jest
+> zamrożona w sekcji `Current gap delta` na końcu dokumentu.
 
 ## Cel i granica dowodu
 
@@ -323,3 +327,16 @@ pozostaje `PARTIAL`, dopóki bramy powyżej nie zostaną wykonane.
 
 Wykonawcze task ID, zależności, allowlisty i dowody odbioru są w
 `docs/cleanup/MODULE_COMPLETION_TASK_REGISTRY_2026-08-15.md`.
+
+## Current gap delta — authority `032ca27f7`
+
+Nie pozostał niesklasyfikowany brak implementacyjny w poniedziałkowym zakresie.
+Pozostałe luki: `*-BVP-001` dla 16 signed-in browser/visual/demo kart;
+`SYS-001` full test/typecheck/build/performance; `REL-001` exact-SHA deploy,
+migration/flag/data readback i rollback; policy `MAT-POL-001`, `MTG-POL-001`,
+`PRT-POL-001`; deferred `AUD-002`, `SET-002`, non-DRD Assessment, non-SWOT
+Tools i full Partner payout.
+
+Stare wpisy o default-OFF Results/DRD, niepodłączonym Organization snapshot,
+braku IAM registry i base Audits CRUD są `SUPERSEDED_BY_INTEGRATED_CODE`.
+Nie budować ich ponownie; weryfikować na `032ca27f7`.
