@@ -428,8 +428,12 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
 - Ledger niezależnych historii
   `docs/cleanup/generated/recovered-head-disposition.json` zamyka pierwszy
   semantyczny podzbiór 224 heads: 18 ma verdict `REFERENCE_HARNESS_ONLY`, bo
-  wszystkie ich unikalne ścieżki są ograniczone do `dev-render/`; 206 nadal
-  wymaga review. Te 18 pozostaje zachowanym materiałem UX/prototypowym, ale nie
+  wszystkie ich unikalne ścieżki są ograniczone do `dev-render/`. Cztery
+  kolejne heads otrzymały reviewed verdict: trzy `REPRESENTED_SUPERSEDED`, a
+  luka izolacji projektów Vault została selektywnie zintegrowana w
+  `14d65703a` i potwierdzona przez 5 plików / 37 testów oraz server typecheck.
+  Pozostałe 202 nadal wymagają review. Te 18 pozostaje zachowanym materiałem
+  UX/prototypowym, ale nie
   jest kodem produkcyjnym do merge. Generator mechanicznie egzekwuje warunek
   ścieżek, unikalność, sumy i deterministyczny output; nadal
   `deletionAuthorized=0`.

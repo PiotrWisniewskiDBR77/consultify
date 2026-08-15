@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "rows": [
+    {
+      "tip": "1eb9289377c3b1e6e33aae3465f43b19d63e4421",
+      "verdict": "INTEGRATED_CANONICAL",
+      "taskId": "CLEAN-002-SEC-001",
+      "evidenceRule": "The recovered fail-closed Vault project membership behavior was reviewed, adapted to the current Knowledge/Vault implementation, and integrated in canonical commit 14d65703afd2a66d08e9f646b373b1f9fc54513b. Focused isolation tests: 5 files and 37 tests PASS; server typecheck PASS.",
+      "nextAction": "Retain the recovery ref until CLEAN-003; no branch merge is required."
+    },
+    {
+      "tip": "def7ab3e6ad2c8a28b9c8e89b48924ca1ebb0c0d",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-SEC-002",
+      "evidenceRule": "Current permissionService uses explicit fallback:false for permission checks, preserving and superseding the recovered fail-closed behavior.",
+      "nextAction": "Retain the recovery ref until CLEAN-003; no product integration is required."
+    },
+    {
+      "tip": "e4c053f4e85ba638ff4ab68f18eb9a363184fb3c",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-SEC-003",
+      "evidenceRule": "Current inboxEnterpriseService resolves sort fields through the SORTABLE_COLUMNS allowlist and falls back to created_at, superseding the recovered sortBy allowlist patch.",
+      "nextAction": "Retain the recovery ref until CLEAN-003; no product integration is required."
+    },
+    {
+      "tip": "e664f6d113d9f010f25e83e626f2da24ce4b1faf",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-SEC-004",
+      "evidenceRule": "Current realtime-platform routes call ensureFacilitatorControl for timer, phase, end, and control mutations, and the canonical authorization test is present.",
+      "nextAction": "Retain the recovery ref until CLEAN-003; no product integration is required."
+    }
+  ]
+}
