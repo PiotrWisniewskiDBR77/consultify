@@ -12,13 +12,13 @@
   "summary": {
     "total": 224,
     "referenceHarnessOnly": 18,
-    "representedSuperseded": 33,
-    "representedCanonical": 15,
+    "representedSuperseded": 37,
+    "representedCanonical": 16,
     "rejectedDestructiveSnapshot": 1,
     "integratedCanonical": 12,
     "candidateIntegration": 1,
     "ownerDecisionRequired": 0,
-    "semanticReviewRequired": 144,
+    "semanticReviewRequired": 139,
     "deletionAuthorized": 0
   },
   "rows": [
@@ -446,12 +446,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 5,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-UI-002",
       "recoveryRef": "refs/recovery/unknown-20260815/1349d6200b468fd1ee8f7b42b424f5fe44623f55",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The canonical tailwind.config.js contains the recovered cTok sentinel handling for bare Tailwind opacity variables and includes dev-render content. Later token commits preserve the fix and document the baked alpha behavior for --c-accent-soft.",
+      "nextAction": "Keep the canonical token resolver. Do not restore the older standalone swatch files; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "148d886944bb98e802418562b862ecdeb5cbd3c0",
@@ -1481,12 +1481,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 2,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-IDE-003",
       "recoveryRef": "refs/recovery/unknown-20260815/457f2753fb351f109e2826eaeb4298e038be5421",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered Whiteboard K1 operations are present in the later canonical IdeaCanvasContextMenu and IdeaWhiteboardTool, including edit, duplicate, copy, lock, layer, delete and the existing node-update event. The current implementation additionally uses the shared accessible CanvasContextMenu registry and separates destructive actions. Focused menu evidence: 5 UI files plus Decision unit suite, 41/41 tests PASS.",
+      "nextAction": "Do not restore the earlier local menu implementation. Verify the shared menu visually in the signed-in Ideas golden flow; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "46711faaab4668df9ad0ca4efc52a12e1180bf03",
@@ -1902,12 +1902,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 3,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-INI-007",
       "recoveryRef": "refs/recovery/unknown-20260815/600c9c719ccd1e3311db7f476f5af7b2bdbadca4",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The current DecisionController contains a later, stronger version of the recovered canonical auto-unblock: rejected decisions short-circuit, the initiative must still be BLOCKED, the canonical transition engine rechecks the gate and writes audit history, and causal decision/user details are persisted in the reason. The focused DecisionController and menu batch passes 41/41 tests.",
+      "nextAction": "Do not restore the earlier transition patch. Execute the dedicated decision/initiative concurrency realDB packet before release; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "6071b257d7c590db84e7e8cb18af4ed96f9a0944",
@@ -2816,12 +2816,12 @@
       "uniqueCommitCount": 2,
       "pathCount": 3,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-IDE-004",
       "recoveryRef": "refs/recovery/unknown-20260815/8097779eaaa8593950779894ea512d5c662e2ba3",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered per-screen tinted-icon styling predates the canonical shared CanvasContextMenu. Current menu consumers pass semantic icons into one accessible surface with keyboard focus, portal, destructive-order and AI-action contracts; the focused matrix passes 22/22 menu tests within the 41-test batch.",
+      "nextAction": "Keep visual styling owned by the shared menu instead of restoring a private Whiteboard variant; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "80c02c5cda9f0c19860bff2c068f689416f9a3ef",
@@ -4290,12 +4290,12 @@
         "server/migrations/932_normalize_decision_impacts_is_blocker_postgres.sql",
         "server/migrations/933_normalize_decision_stakeholders_notify_columns_postgres.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-MIG-004",
       "recoveryRef": "refs/recovery/unknown-20260815/d6a91999233547797b8ce7d049fda18b49f152e6",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered decision boolean normalization is represented by the later canonical migration server/migrations/20260803_decision_boolean_schema_normalization.sql, while the deleted legacy server/src/routes/decisions.routes.ts remains absent. Restoring migrations 932/933 would duplicate the same schema conversion under obsolete numbering.",
+      "nextAction": "Retain the canonical dated migration and prove it in the next fresh-and-upgrade PostgreSQL ledger; do not restore duplicate 932/933 files."
     },
     {
       "tip": "d8f64c5ac0baa4efb8659f4efaf88665a92120e9",

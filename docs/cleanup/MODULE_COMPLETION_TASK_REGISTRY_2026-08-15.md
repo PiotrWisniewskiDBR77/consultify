@@ -508,7 +508,12 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
   uzupełniono dla sześciu języków w `f971213d7` (13/13 locale gate), a dwa
   starsze mock-DB testy Document Studio zastąpiono istniejącymi mocniejszymi
   kontraktami trwałości propozycji i realDB eksportu DOCX/PDF. Aktualny ledger
-  ma 144 pozycje `SEMANTIC_REVIEW_REQUIRED`. Te 18 pozostaje zachowanym materiałem
+  Następny pakiet pięciu historii potwierdził, że późniejszy kanon zachowuje
+  poprawkę alpha dla `c-accent-soft`, pełny zestaw operacji kontekstowych
+  Whiteboard na współdzielonej dostępnej powierzchni, normalizację booleanów
+  Decisions w datowanej migracji oraz ostrzejszy canonical auto-unblock przez
+  transition engine. Focused menu + Decision matrix ma 41/41 PASS. Aktualny
+  ledger ma 139 pozycji `SEMANTIC_REVIEW_REQUIRED`. Te 18 pozostaje zachowanym materiałem
   UX/prototypowym, ale nie
   jest kodem produkcyjnym do merge. Generator mechanicznie egzekwuje warunek
   ścieżek, unikalność, sumy i deterministyczny output; nadal
