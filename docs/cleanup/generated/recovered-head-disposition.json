@@ -12,13 +12,13 @@
   "summary": {
     "total": 224,
     "referenceHarnessOnly": 18,
-    "representedSuperseded": 29,
+    "representedSuperseded": 32,
     "representedCanonical": 15,
     "rejectedDestructiveSnapshot": 1,
     "integratedCanonical": 10,
     "candidateIntegration": 1,
     "ownerDecisionRequired": 0,
-    "semanticReviewRequired": 150,
+    "semanticReviewRequired": 147,
     "deletionAuthorized": 0
   },
   "rows": [
@@ -493,12 +493,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 2,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-UI-001",
       "recoveryRef": "refs/recovery/unknown-20260815/166104fc8c935d9c7918547a811ce7d71047a619",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered local .claude Triada hook is represented by a later, repository-versioned scripts/check-triada.sh plus scripts/triada-allowlist.txt. The canonical guard covers every primary shade and c-accent, supports staged/explicit/full-ratchet modes and refuses to report a clean result when zero files were inspected. Its full ratchet exposed four current routine-navigation violations; canonical commit 34441854b removes them. Focused UI contracts pass 8/8, frontend typecheck passes and the post-fix full ratchet exits 0.",
+      "nextAction": "Keep the stronger repository guard and do not restore the ignored .claude copy. Run scripts/check-triada.sh --all in the system gate and preserve its per-file baseline; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "1773414123a3983db57763a2ce104fecc80ee7f8",
@@ -1413,12 +1413,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 2,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-DOC-008",
       "recoveryRef": "refs/recovery/unknown-20260815/429c88e76faa41fb90be8ab96f56dc8f66341a01",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered SSOT pre-commit wiring is present in later canonical form: .husky/pre-commit calls scripts/check-ssot-paths.sh and package.json check:ssot runs both the path guard and registry validator. The current command passes, proving all declared SSOT paths, the 16 menu entries, 10/10 SSOT catalog and 14/14 command-center records.",
+      "nextAction": "Keep the later combined SSOT gate; do not restore the older package/pre-commit fragment. Include npm run check:ssot in CLEAN-004 and release preflight; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "43f575c4a65347fbfca11f6f553be47b247a09e9",
@@ -2636,12 +2636,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 2,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-MIG-003",
       "recoveryRef": "refs/recovery/unknown-20260815/7baaf6b39c9174744b46cd722ef2379459ca77bb",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered baseline special-case embedded a SQL splitter and best-effort statement skipping inside DatabaseInitializer. The current canon instead extracts splitSqlStatements into database/migrations/sqlUtils, uses shared deterministic ordering contracts across runtime runners and keeps normal migration failures loud; parser tests pass 8/8 and ordering contracts pass 22 tests with three realDB-only cases intentionally skipped. This review also found migrate.postgres.ts had lost its import guard; canonical commit 1df2181fe restores an exported comparator and direct-CLI-only main, and backend build passes.",
+      "nextAction": "Do not restore statement-by-statement baseline skipping, which could record partially applied schema as success. Keep the current deterministic runners; execute the three --safe semantics cases on a disposable PostgreSQL instance in the consolidated migration gate. Retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "7c5c4a928cfc85a54b9539fc35ecf857818f3f45",

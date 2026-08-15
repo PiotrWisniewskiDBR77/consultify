@@ -495,7 +495,14 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
   ówczesny odbiór. Starsza naprawa reconciliation `k.unit` jest reprezentowana
   przez późniejszy kanon O4.7: odczyt używa `metric_type`, nie ukrywa błędów
   schematu fallbackiem i zachowuje klasyfikację `duration` jako niemonetarną.
-  Aktualny ledger ma 150 pozycji
+  Następne trzy odzyskane historie strażników są zastąpione przez mocniejszy
+  kanon: repozytoryjny Triada ratchet wykrył cztery rzeczywiste naruszenia UI,
+  usunięte w `34441854b` (8/8, frontend typecheck, pełny ratchet exit 0), SSOT
+  gate przechodzi komplet 16 menu / 10 SSOT / 14 command-center, a parser i
+  kolejność migracji mają 8/8 oraz 22 PASS. Audyt migratora wykrył dodatkowo
+  utracony import guard; `1df2181fe` przywraca eksport komparatora i uruchamia
+  `main()` wyłącznie dla bezpośredniego CLI, z zielonym backend buildem.
+  Aktualny ledger ma 147 pozycji
   `SEMANTIC_REVIEW_REQUIRED`. Te 18 pozostaje zachowanym materiałem
   UX/prototypowym, ale nie
   jest kodem produkcyjnym do merge. Generator mechanicznie egzekwuje warunek
