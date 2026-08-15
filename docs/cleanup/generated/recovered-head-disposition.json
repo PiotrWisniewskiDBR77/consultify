@@ -12,11 +12,11 @@
   "summary": {
     "total": 224,
     "referenceHarnessOnly": 18,
-    "representedSuperseded": 15,
+    "representedSuperseded": 18,
     "representedCanonical": 3,
     "rejectedDestructiveSnapshot": 1,
-    "integratedCanonical": 7,
-    "semanticReviewRequired": 180,
+    "integratedCanonical": 9,
+    "semanticReviewRequired": 175,
     "deletionAuthorized": 0
   },
   "rows": [
@@ -528,12 +528,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 1,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-EXE-004",
       "recoveryRef": "refs/recovery/unknown-20260815/1856956c4b43755d744bc9a4a605779b98be64e0",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered patch targeted the retired, flag-gated ExecutionLightShell. The current canonical ExecutionHub no longer imports or mounts ExecutionLightShell after the Initiatives/Execution fan-in, so restoring its callbacks would create dead code rather than reconnect the active Execution experience.",
+      "nextAction": "Do not cherry-pick the retired shell patch. Verify publish/report/decision actions through the current canonical Execution surfaces under EXE-001/EXE-002; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "18e924e3162ee685ee99c967758a177f4f36e6f7",
@@ -614,12 +614,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 1,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-FIN-002",
       "recoveryRef": "refs/recovery/unknown-20260815/1c78e138c5022891a111f6a6a91f1d2f6d154f20",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered Oxford O4.2-O4.7 real-runtime test is present in the canonical tree with later, stronger assertions: conclusion hard-gate coverage and the repaired reconciliation readback replace the recovered expected-empty finding. The current file is 65 additions and 15 removals beyond the recovered version.",
+      "nextAction": "Keep the stronger canonical test and execute it in the Finance realDB gate; do not restore the stale expected-empty assertion. Retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "1e58bbcb5b206956a903af5ba98275b79e510c1a",
@@ -2916,12 +2916,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 1,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "INTEGRATED_CANONICAL",
+      "taskId": "CLEAN-002-FIN-001",
       "recoveryRef": "refs/recovery/unknown-20260815/8731fe95b2f8e07e63a749331a32d262edce89b2",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered M16 backend acceptance suite exercises real authenticated Finance valuation, planning, intelligence, value-tracking and value-office routers, including persisted ledger and gate readback. It was restored in canonical commit 2b6f2784e and passes 16/16 against the freshly migrated PostgreSQL 15 database. This proves the covered legacy/cockpit backend contracts only, not Finance V3 UI completion.",
+      "nextAction": "Use the restored suite as a backend gate for FIN-001; separately prove Finance V3 bridges, flags and browser flows before any module DONE claim. Retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "87ef729c2639d181e8926a39a45d4a6a21975823",
@@ -4071,12 +4071,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 1,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-MAT-006",
       "recoveryRef": "refs/recovery/unknown-20260815/cdb3bf84be7ebc8132ed8ccf4712a169c3cc8296",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered Document Studio BetaGate test is already present with the same product contract and a later closed-module fixture updated from Audits to Meeting as module posture changed. The current five assertions PASS and the production route remains wrapped by MODULE_DOCUMENT_STUDIO.",
+      "nextAction": "Keep the canonical test and verify actual demo flag posture separately in MAT-001/REL-001; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "cfa4051dd521f53951cdb1396523f375ca103828",
@@ -4765,12 +4765,12 @@
       "migrationPaths": [
         "server/migrations/20260719_red_scope_change_log.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "INTEGRATED_CANONICAL",
+      "taskId": "CLEAN-002-EXE-003",
       "recoveryRef": "refs/recovery/unknown-20260815/ebf1f32e1533be40f06025d3cc8ebd5f0f5663df",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered scope_change_log migration closes a live schema gap: aiRiskChangeControl writes and reads the table and steering reports consume its summary, while the canonical migration tree previously only documented its absence. Canonical commit ba5bbb92d adds the additive table and a strict-migration contract. Empty PostgreSQL 15 applied all 706 migrations; information_schema shape, transactional write/readback and 2/2 realDB assertions PASS; service unit contract 5/5 PASS.",
+      "nextAction": "Include the scope-change path in EXE-001/EXE-002 signed-in acceptance and retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "ecc92ae06a0a8c39552040fb5de6e28223bfc6db",
