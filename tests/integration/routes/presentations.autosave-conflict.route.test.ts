@@ -121,9 +121,10 @@ const mockDbRun = vi.fn(async (sql: string, params: unknown[] = []) => {
     // actually executes -- i.e. after any interleave-gate release, so a
     // second writer whose expected version was overtaken by the first
     // writer's commit sees changes: 0, just like a real DB's rowCount.
-    const [, newDeckJson, newVersion, , , expectedVersion] = params as [
+    const [, newDeckJson, , newVersion, , , expectedVersion] = params as [
       string,
       string,
+      number,
       number,
       string,
       string,
