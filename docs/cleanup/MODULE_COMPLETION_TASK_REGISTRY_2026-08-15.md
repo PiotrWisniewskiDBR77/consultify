@@ -117,6 +117,99 @@ każdy task post-MVP ma co najmniej precyzyjny bounded-discovery packet albo
 pełny packet; macierz pokrycia nie ma pustych rekordów krytycznych; właściciel
 może uruchomić agentów bez ponownej interpretacji dokumentacji.
 
+### 12. Chirurgiczny rejestr wykonania i kolejka startowa
+
+Etap 12 zamienia każdy opis modułu w atomowe zadania, które można wykonać bez
+ponownego audytu całego repozytorium. Nie wolno łączyć w jednym tasku zmian o
+różnych właścicielach danych ani zadań wymagających równoległej edycji plików
+współdzielonych.
+
+Każdy rekord luki otrzymuje obowiązkowo:
+
+- stabilny `gap_id` oraz dokładnie jeden `task_id`;
+- requirement i źródło kontraktu z konkretną sekcją dokumentu;
+- stan AS-IS z route, komponentem, requestem, service i tabelą;
+- jednozdaniową różnicę TO-BE minus AS-IS, bez ogólnego „dokończyć moduł”;
+- klasyfikację `MISSING_CODE`, `MISWIRED`, `DISABLED`, `DUPLICATE_OWNER`,
+  `MISSING_DATA`, `MISSING_MIGRATION`, `STALE_TEST`, `RUNTIME_UNPROVEN` albo
+  `VISUAL_GAP`;
+- właściciela danych i jedyne dozwolone miejsce trwałego zapisu;
+- dokładne pliki do zmiany oraz pliki tylko do odczytu;
+- fixture wejściowe, oczekiwany readback i regułę idempotentnego replay;
+- positive flow oraz obowiązkowe failure, stale-version, role i tenant cases;
+- testy, które muszą przejść, oraz test, który powinien upaść przed naprawą;
+- zależności tasków, kolejność integracji i pliki współdzielone zarezerwowane
+  dla integratora;
+- wymagane dowody: commit, focused, realDB, system, demo, desktop/mobile,
+  visual/a11y oraz rollback;
+- końcowy status `DISCOVERY_REQUIRED`, `READY`, `IN_PROGRESS`, `VERIFYING`,
+  `DONE`, `BLOCKED` albo `POST_MVP`.
+
+Task może uzyskać `READY` tylko wtedy, gdy wszystkie powyższe pola są
+wypełnione i nie zawierają `TBD`, „sprawdzić”, nieokreślonego globu całego
+modułu ani decyzji pozostawionej wykonawcy. Jeśli pliku lub kontraktu nie da się
+jeszcze wskazać, powstaje osobny, read-only task `DISCOVERY_REQUIRED` z
+konkretnym pytaniem i formatem odpowiedzi.
+
+Kolejka startowa ma trzy koszyki:
+
+1. `READY_PARALLEL` — rozłączne allowlisty i brak niezakończonych zależności;
+2. `READY_SERIAL_INTEGRATOR` — routing, menu, flagi, migrator, shared API,
+   deployment i inne pliki współdzielone;
+3. `NOT_READY` — brak dowodu, nierozstrzygnięty owner lub zależność.
+
+DoD etapu 12: zero tasków MVP opisanych wyłącznie na poziomie modułu; każdy
+task w `READY_PARALLEL` ma kopiowalny prompt i rozłączny allowlist; każdy task
+w `NOT_READY` ma jednoznaczny blocker oraz następne działanie, a nie ogólną
+prośbę o dalszą analizę.
+
+### 13. Niezależna kontrola pakietów przed uruchomieniem agentów
+
+Przed startem wykonawcy integrator wykonuje mechaniczny preflight pakietu:
+
+- baseline SHA istnieje, jest osiągalny i worktree jest czysty;
+- wymagane pliki i symbole istnieją na baseline;
+- zależności mają dowód `DONE`, nie tylko commit autora;
+- allowlist nie przecina aktywnego tasku innego agenta;
+- komendy testowe odkrywają oczekiwane pliki i nie korzystają z mock DB jako
+  dowodu realDB;
+- fixture jest deterministyczne, tenant-scoped i bezpieczne przy replay;
+- golden flow używa zwykłej trasy i normalnej autoryzacji;
+- rollback nie usuwa obcych danych i wskazuje recovery SHA/manifest;
+- prompt zawiera zakaz szerokiego merge, silent fallback, query/localStorage
+  activation i samooceny `DONE`.
+
+Wynik preflightu to podpisany wpis `PACKET_ACCEPTED` albo `PACKET_REJECTED` z
+listą brakujących pól. Dopiero `PACKET_ACCEPTED` pozwala uruchomić agenta.
+
+DoD etapu 13: wszystkie uruchamiane pakiety mają zaakceptowany preflight,
+zamrożony baseline oraz właściciela integracji; żaden agent nie rozpoczyna pracy
+od pytania „gdzie jest aktualna wersja?” albo „co właściwie mam dokończyć?”.
+
+### 14. Rejestr zamknięcia modułów i plan finalnego montażu
+
+Po integracji tasku aktualizowane są jednocześnie cztery poziomy prawdy:
+`gap -> task -> commit -> evidence`. Moduł nie jest zamknięty przez samą sumę
+commitów. Otrzymuje kartę końcową zawierającą:
+
+- listę wymagań `DONE`, `POST_MVP` i `BLOCKED`;
+- listę zachowanego, podłączonego, odłączonego i usuniętego kodu;
+- canonical route/API/service/schema oraz jawne adaptery przejściowe;
+- wymagane dane demo i ich tenant-scoped readback;
+- wyniki focused, realDB, full-system, deploy parity, browser, visual i a11y;
+- znane ograniczenia produktu i zakres niewchodzący do MVP;
+- rollback i właściciela dalszego utrzymania.
+
+Finalny montaż przebiega wyłącznie według grafu zależności tasków: najpierw
+właściciele danych i migracje, potem service/API, następnie UI, routing/flags,
+fixtures, system gate, deployment i odbiór. Wspólne pliki integruje jedna osoba
+na końcu fali. Każda fala kończy się immutable candidate SHA.
+
+DoD etapu 14: dla wszystkich 16 modułów istnieje karta końcowa; nie ma wymagań
+bez statusu, tasków bez evidence, commitów bez przypisanego tasku ani funkcji
+bez właściciela danych. Na tej podstawie powstaje jedna lista MVP, jedna lista
+post-MVP oraz jedna acykliczna kolejność finalnego montażu.
+
 ### Aktualny stan przygotowania pakietów
 
 - Etap 8: `PARTIAL` — 16 kart modułów i task IDs istnieją; trwa przypisywanie
@@ -128,6 +221,13 @@ może uruchomić agentów bez ponownej interpretacji dokumentacji.
   CLEAN-001/CLEAN-002 oraz gotowości pakietów pierwszej fali.
 - Etap 11: `IN_PROGRESS` — kontrola pokrycia będzie aktualizowana razem z
   werdyktami CLEAN-001 i CLEAN-002.
+- Etap 12: `IN_PROGRESS` — istnieją task IDs i zależności, ale wszystkie taski
+  MVP muszą jeszcze otrzymać atomowe gap IDs, pełne allowlisty, fixtures,
+  komendy oraz dowody wymagane do nadania `READY`.
+- Etap 13: `NOT_STARTED` — preflight rusza po przygotowaniu pierwszych pełnych
+  pakietów i zamrożeniu ich baseline.
+- Etap 14: `NOT_STARTED` — karty końcowe będą zamykane falami po integracji i
+  runtime acceptance, nie na podstawie samego audytu kodu.
 
 ## Cel i reguła statusu
 

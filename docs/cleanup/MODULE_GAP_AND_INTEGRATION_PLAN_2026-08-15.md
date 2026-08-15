@@ -248,8 +248,17 @@ AS-IS evidence, TO-BE contract, data/migrations, fixtures/readback, golden flow,
 negative cases, exact commands, demo/visual proof, rollback i handoff format.
 
 Brak któregokolwiek elementu oznacza `DISCOVERY_REQUIRED`, nie zgodę na szeroką
-budowę. Kompletność planu potwierdza etap 11: zero luk bez tasku, zero tasków MVP
-bez pakietu i zero odzyskanych fragmentów bez disposition.
+budowę. Kompletność planu potwierdzają etapy 11–14: zero luk bez tasku, zero
+tasków MVP bez atomowego pakietu i zaakceptowanego preflightu, zero odzyskanych
+fragmentów bez disposition oraz zero wymagań bez końcowego evidence record.
+
+Każdy task dopuszczony do pracy musi być opisany jako różnica `TO-BE minus
+AS-IS`, a nie jako „dokończyć moduł”. Musi wskazać jednego właściciela danych,
+konkretne pliki, fixture/readback, test czerwony przed zmianą, wymagane negative
+cases, kolejność integracji i dowody runtime. Taski współdzielące routing, menu,
+flagi, migrator, shared API lub deployment trafiają do kolejki integratora, nie
+do równoległych agentów. Szczegółowa reguła `READY`, preflight i karta zamknięcia
+znajdują się w etapach 12–14 rejestru wykonawczego.
 
 ## Kolejność finalnego montażu
 
