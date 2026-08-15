@@ -30,10 +30,10 @@ describe('NotebookQuickCapture', () => {
   it('creates a page with capture_source=quick from free text', async () => {
     const onCreated = vi.fn();
     render(<NotebookQuickCapture onCreated={onCreated} />);
-    fireEvent.change(screen.getByPlaceholderText('Drop a thought or a link…'), {
+    fireEvent.change(screen.getByPlaceholderText('myWorkNotebook.quickCapture.placeholder'), {
       target: { value: 'Call the supplier about Q2 pricing' },
     });
-    fireEvent.click(screen.getByText('Capture'));
+    fireEvent.click(screen.getByText('myWorkNotebook.quickCapture.capture'));
 
     await waitFor(() =>
       expect(createNotebookPage).toHaveBeenCalledWith(
@@ -50,10 +50,10 @@ describe('NotebookQuickCapture', () => {
 
   it('derives a hostname-based title from a URL', async () => {
     render(<NotebookQuickCapture />);
-    fireEvent.change(screen.getByPlaceholderText('Drop a thought or a link…'), {
+    fireEvent.change(screen.getByPlaceholderText('myWorkNotebook.quickCapture.placeholder'), {
       target: { value: 'https://www.example.com/article/' },
     });
-    fireEvent.click(screen.getByText('Capture'));
+    fireEvent.click(screen.getByText('myWorkNotebook.quickCapture.capture'));
     await waitFor(() =>
       expect(createNotebookPage).toHaveBeenCalledWith(
         expect.objectContaining({ title: 'example.com/article' })
@@ -63,7 +63,7 @@ describe('NotebookQuickCapture', () => {
 
   it('submits on Enter (without shift)', async () => {
     render(<NotebookQuickCapture />);
-    const input = screen.getByPlaceholderText('Drop a thought or a link…');
+    const input = screen.getByPlaceholderText('myWorkNotebook.quickCapture.placeholder');
     fireEvent.change(input, { target: { value: 'quick thought' } });
     fireEvent.keyDown(input, { key: 'Enter' });
     await waitFor(() => expect(createNotebookPage).toHaveBeenCalled());
@@ -71,16 +71,16 @@ describe('NotebookQuickCapture', () => {
 
   it('does nothing for empty input', () => {
     render(<NotebookQuickCapture />);
-    fireEvent.click(screen.getByText('Capture'));
+    fireEvent.click(screen.getByText('myWorkNotebook.quickCapture.capture'));
     expect(createNotebookPage).not.toHaveBeenCalled();
   });
 
   it('passes a notebookId through when provided', async () => {
     render(<NotebookQuickCapture notebookId="nb-7" />);
-    fireEvent.change(screen.getByPlaceholderText('Drop a thought or a link…'), {
+    fireEvent.change(screen.getByPlaceholderText('myWorkNotebook.quickCapture.placeholder'), {
       target: { value: 'into nb-7' },
     });
-    fireEvent.click(screen.getByText('Capture'));
+    fireEvent.click(screen.getByText('myWorkNotebook.quickCapture.capture'));
     await waitFor(() =>
       expect(createNotebookPage).toHaveBeenCalledWith(expect.objectContaining({ notebookId: 'nb-7' }))
     );
@@ -89,10 +89,10 @@ describe('NotebookQuickCapture', () => {
   it('toasts an error when the create fails', async () => {
     createNotebookPage.mockRejectedValueOnce(new Error('nope'));
     render(<NotebookQuickCapture />);
-    fireEvent.change(screen.getByPlaceholderText('Drop a thought or a link…'), {
+    fireEvent.change(screen.getByPlaceholderText('myWorkNotebook.quickCapture.placeholder'), {
       target: { value: 'will fail' },
     });
-    fireEvent.click(screen.getByText('Capture'));
+    fireEvent.click(screen.getByText('myWorkNotebook.quickCapture.capture'));
     await waitFor(() => expect(toastError).toHaveBeenCalled());
   });
 });

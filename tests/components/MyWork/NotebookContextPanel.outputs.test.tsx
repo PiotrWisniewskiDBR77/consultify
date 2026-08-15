@@ -30,6 +30,7 @@ const {
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     i18n: { language: 'en' },
+    t: (k: string) => k,
   }),
 }));
 
@@ -130,10 +131,10 @@ describe('NotebookContextPanel linked outputs', () => {
     );
 
     await waitFor(() => expect(apiMock.getLinkGraphBacklinks).toHaveBeenCalled());
-    expect(screen.getByText('Linked outputs')).toBeInTheDocument();
+    expect(screen.getByText('myWorkNotebook.contextPanel.linkedOutputs')).toBeInTheDocument();
     expect(screen.getByText('Board deck')).toBeInTheDocument();
 
-    fireEvent.click(screen.getAllByText('Open').at(-1)!);
+    fireEvent.click(screen.getAllByText('myWorkNotebook.contextPanel.open').at(-1)!);
 
     expect((dispatchSpy.mock.calls.at(-1)?.[0] as CustomEvent).detail).toEqual({
       type: 'presentation',
@@ -188,7 +189,7 @@ describe('NotebookContextPanel linked outputs', () => {
       expect(screen.getByText('Notebook source report')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('Open'));
+    fireEvent.click(screen.getByText('myWorkNotebook.contextPanel.open'));
 
     expect((dispatchSpy.mock.calls.at(-1)?.[0] as CustomEvent).detail).toEqual({
       type: 'report',
@@ -247,7 +248,7 @@ describe('NotebookContextPanel linked outputs', () => {
       expect(screen.getByText('Digital readiness assessment')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('Open'));
+    fireEvent.click(screen.getByText('myWorkNotebook.contextPanel.open'));
 
     expect((dispatchSpy.mock.calls.at(-1)?.[0] as CustomEvent).detail).toEqual({
       type: 'assessment',

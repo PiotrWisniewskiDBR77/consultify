@@ -44,14 +44,14 @@ describe('AICommandPrompt', () => {
 
   it('renders the command input with the English placeholder', () => {
     render(<AICommandPrompt {...baseProps} />);
-    expect(screen.getByPlaceholderText(/write a 5-step plan/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('myWorkNotebook.aiCommandPrompt.placeholder')).toBeInTheDocument();
   });
 
   it('disables the send button until a command is typed', () => {
     render(<AICommandPrompt {...baseProps} />);
-    const send = screen.getByTitle('Execute command');
+    const send = screen.getByTitle('myWorkNotebook.aiCommandPrompt.executeCommand');
     expect(send).toBeDisabled();
-    fireEvent.change(screen.getByPlaceholderText(/write a 5-step plan/i), {
+    fireEvent.change(screen.getByPlaceholderText('myWorkNotebook.aiCommandPrompt.placeholder'), {
       target: { value: 'summarize this' },
     });
     expect(send).not.toBeDisabled();
@@ -64,10 +64,10 @@ describe('AICommandPrompt', () => {
     });
     const onProposalCreated = vi.fn();
     render(<AICommandPrompt {...baseProps} onProposalCreated={onProposalCreated} />);
-    fireEvent.change(screen.getByPlaceholderText(/write a 5-step plan/i), {
+    fireEvent.change(screen.getByPlaceholderText('myWorkNotebook.aiCommandPrompt.placeholder'), {
       target: { value: 'draft a plan' },
     });
-    fireEvent.click(screen.getByTitle('Execute command'));
+    fireEvent.click(screen.getByTitle('myWorkNotebook.aiCommandPrompt.executeCommand'));
 
     await waitFor(() => expect(chatWithAIStream).toHaveBeenCalled());
     await waitFor(() =>
@@ -82,7 +82,7 @@ describe('AICommandPrompt', () => {
   it('submits on Enter', async () => {
     chatWithAIStream.mockImplementation(async (_m: any, _h: any, _c: any, onComplete: any) => onComplete());
     render(<AICommandPrompt {...baseProps} />);
-    const input = screen.getByPlaceholderText(/write a 5-step plan/i);
+    const input = screen.getByPlaceholderText('myWorkNotebook.aiCommandPrompt.placeholder');
     fireEvent.change(input, { target: { value: 'do it' } });
     fireEvent.keyDown(input, { key: 'Enter' });
     await waitFor(() => expect(chatWithAIStream).toHaveBeenCalled());
@@ -90,10 +90,10 @@ describe('AICommandPrompt', () => {
 
   it('does nothing when the editor is null', () => {
     render(<AICommandPrompt {...baseProps} editor={null} />);
-    fireEvent.change(screen.getByPlaceholderText(/write a 5-step plan/i), {
+    fireEvent.change(screen.getByPlaceholderText('myWorkNotebook.aiCommandPrompt.placeholder'), {
       target: { value: 'no editor' },
     });
-    fireEvent.click(screen.getByTitle('Execute command'));
+    fireEvent.click(screen.getByTitle('myWorkNotebook.aiCommandPrompt.executeCommand'));
     expect(chatWithAIStream).not.toHaveBeenCalled();
   });
 });

@@ -38,7 +38,7 @@ describe('getNotebookUploadSourceSummary', () => {
       )
     ).toEqual({
       label: 'Canvas',
-      title: 'Źródło: Canvas (rozmowa)',
+      title: 'Source: Canvas (conversation)',
     });
     expect(
       getNotebookUploadSourceSummary('api_import', { sourceType: 'work_canvas' }, false)

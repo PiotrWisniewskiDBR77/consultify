@@ -20,7 +20,7 @@ const { apiMock, trackFunnelEventMock } = vi.hoisted(() => ({
 }));
 
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ i18n: { language: 'en' } }),
+  useTranslation: () => ({ i18n: { language: 'en' }, t: (k: string) => k }),
 }));
 
 vi.mock('react-hot-toast', () => ({
@@ -66,7 +66,7 @@ describe('ActionItemsPanel bulk-create provenance', () => {
     // wait for extracted items to render
     await waitFor(() => expect(screen.getByText('Email the client')).toBeInTheDocument());
 
-    const createAllBtn = screen.getByRole('button', { name: /Create all/i });
+    const createAllBtn = screen.getByText('myWorkNotebook.actionItemsPanel.createAll');
     fireEvent.click(createAllBtn);
 
     await waitFor(() =>
