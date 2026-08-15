@@ -31,9 +31,17 @@ The following commands completed with exit code `0` from the canonical tree:
 | Frontend production build | `npm run build` | PASS |
 | Backend TypeScript build | `npm run build:backend` | PASS |
 | Cleanup matrix integrity | `npm run test:cleanup-matrix:validate` | PASS |
+| Repository lint | `npm run lint` | FAIL — 37,748 findings |
 
 The frontend build reports large-chunk warnings. These are a performance and
 maintainability risk, not a compilation failure.
+
+The lint baseline spans 1,316 files. Of 37,748 findings, 36,995 are Prettier
+formatting and 734 are import/export sorting; ESLint marks 37,742 findings as
+auto-fixable. A repository-wide `--fix` is deliberately deferred because it
+would rewrite thousands of files and obscure functional integration. Remaining
+non-format rules must be tracked separately; three runtime expression/hook-name
+violations were repaired in the canonical cleanup branch.
 
 ## Source inventory evidence
 
