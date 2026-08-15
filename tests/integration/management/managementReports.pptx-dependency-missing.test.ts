@@ -6,7 +6,7 @@ import request from 'supertest';
 
 import { makeTestApp } from '../_helpers/testApp';
 
-describe('Management reports export (dependency missing is explicit)', () => {
+describe('Management reports export missing-resource contract', () => {
   const workerId = process.env.VITEST_WORKER_ID || '0';
   const sqlitePath = path.join(os.tmpdir(), `consultify-mgmt-reports-${workerId}.db`);
   const basePath = '/api/management-reports';
@@ -35,11 +35,9 @@ describe('Management reports export (dependency missing is explicit)', () => {
     await resetConnection?.();
   });
 
-  it('GET /api/management-reports/:id/pptx returns 503 when schema is missing (no 500 HTML)', async () => {
+  it('GET /api/management-reports/:id/pptx returns 404 for an unknown report', async () => {
     const res = await request(makeApp()).get(`${basePath}/any-report-id/pptx`);
-    expect(res.status).toBe(503);
-    expect(res.body).toEqual(
-      expect.objectContaining({ statusCode: 503, status: false, type: 'not_configured' })
-    );
+    expect(res.status).toBe(404);
+    expect(JSON.stringify(res.body)).not.toContain('stack');
   });
 });

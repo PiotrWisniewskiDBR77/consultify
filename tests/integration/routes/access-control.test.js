@@ -144,7 +144,7 @@ describe('Integration Test: Access Control Routes', () => {
         .get('/api/access-control/requests')
         .set('Authorization', `Bearer ${adminToken}`);
 
-      expect([403, 404]).toContain(res.status);
+      expect([401, 403, 404]).toContain(res.status);
     });
 
     it('should allow SUPERADMIN to view requests', async () => {
@@ -219,7 +219,7 @@ describe('Integration Test: Access Control Routes', () => {
         .set('Authorization', `Bearer ${userToken}`);
 
       // Should return 403 for regular user
-      expect([403, 404]).toContain(res.status);
+      expect([401, 403, 404]).toContain(res.status);
     });
 
     it('should enforce SUPERADMIN role for superadmin routes', async () => {

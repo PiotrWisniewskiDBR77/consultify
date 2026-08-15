@@ -3,9 +3,14 @@
 // Provides data access for Megatrend Scanner module
 // Uses the existing SQLite/Postgres db abstraction (db.get, db.all, db.run)
 
-import { getDatabase } from '../database/index.js';
+import { v4 as uuidv4 } from 'uuid';
+
+import { getDatabase } from '../database/Database.js';
 import { AppError } from '../utils/ErrorHandler.js';
-const db = getDatabase();
+// Resolve lazily: the route module is imported before the test/runtime database
+// finishes initialization. Capturing the handle at module evaluation pinned a
+// stale adapter and made newly persisted baseline rows invisible.
+const db = () => getDatabase();
 
 // TypeScript interfaces
 interface Megatrend {
@@ -67,7 +72,7 @@ function getBaselineTrends(industry) {
       sql += ` WHERE industry = ?`;
       params.push(industry);
     }
-    db.all(sql, params, (err, rows) => {
+    db().all(sql, params, (err, rows) => {
       if (err) {
         return reject(
           new AppError(MEGATREND_UNAVAILABLE_MESSAGE, 503, FEATURE_UNAVAILABLE_CODE, {
@@ -101,7 +106,7 @@ function getRadarData(industry) {
       sql += ` WHERE industry = ?`;
       params.push(industry);
     }
-    db.all(sql, params, (err, rows) => {
+    db().all(sql, params, (err, rows) => {
       if (err) {
         return reject(
           new AppError(MEGATREND_UNAVAILABLE_MESSAGE, 503, FEATURE_UNAVAILABLE_CODE, {
@@ -134,7 +139,7 @@ function getRadarData(industry) {
 function getTrendDetail(id) {
   return new Promise((resolve, reject) => {
     const sql = `SELECT * FROM megatrends WHERE id = ?`;
-    db.get(sql, [id], (err, row) => {
+    db().get(sql, [id], (err, row) => {
       if (err) {
         return reject(
           new AppError(MEGATREND_UNAVAILABLE_MESSAGE, 503, FEATURE_UNAVAILABLE_CODE, {
@@ -155,10 +160,10 @@ function getTrendDetail(id) {
 function createCustomTrend(payload, companyId) {
   return new Promise((resolve, reject) => {
     const { industry, type, label, description, ring } = payload;
-    const id = require('uuid').v4();
+    const id = uuidv4();
     const sql = `INSERT INTO custom_trends (id, company_id, industry, type, label, description, ring)
                  VALUES (?, ?, ?, ?, ?, ?, ?)`;
-    db.run(sql, [id, companyId, industry, type, label, description, ring], function (err) {
+    db().run(sql, [id, companyId, industry, type, label, description, ring], function (err) {
       if (err) return reject(err);
       resolve({ id, ...payload, ring });
     });
@@ -195,7 +200,7 @@ function updateCustomTrend(id, payload, companyId) {
     if (fields.length === 0) return resolve(null);
     const sql = `UPDATE custom_trends SET ${fields.join(', ')} WHERE id = ? AND company_id = ?`;
     params.push(id, companyId);
-    db.run(sql, params, function (err) {
+    db().run(sql, params, function (err) {
       if (err) return reject(err);
       resolve({ id, ...payload });
     });

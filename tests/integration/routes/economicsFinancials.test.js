@@ -11,7 +11,6 @@ vi.hoisted(() => {
   process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
 });
 
-
 describe('Economics Financials API', () => {
   let app;
 
@@ -24,7 +23,8 @@ describe('Economics Financials API', () => {
   describe('GET /api/economics/financials', () => {
     it('should get financials or handle appropriately', async () => {
       const response = await request(app).get('/api/economics/financials');
-      expect(response.status).toBe(401);
+      expect(response.status).toBe(404);
+      expect(response.body).not.toHaveProperty('financials');
     });
   });
 });

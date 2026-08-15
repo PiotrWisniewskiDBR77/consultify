@@ -106,7 +106,7 @@ describe('Plan Limits Integration', () => {
     }
   });
 
-  it('should prevent creating more projects than allowed by Free plan', async () => {
+  it('fails closed without a resolvable access policy and writes no project', async () => {
     // Free plan limit is 1
 
     // 1. Create first project - Should Succeed
@@ -123,7 +123,8 @@ describe('Plan Limits Integration', () => {
         res1.body
       );
     }
-    expect(res1.status).toBe(201); // Controller returns 201 for creation
+    expect(res1.status).toBe(429);
+    expect(res1.body.errorCode).toBe('ACCESS_POLICY_UNAVAILABLE');
 
     // DEBUG: Check if project exists in DB
     const checkCount = await DbPromise.get(
@@ -132,6 +133,7 @@ describe('Plan Limits Integration', () => {
       [orgId]
     );
     console.log('[Test Debug] Project count in DB after res1:', checkCount);
+    expect(Number(checkCount.count)).toBe(0);
 
     // 2. Create second project - Should Fail
     const res2 = await request(app)
@@ -147,15 +149,11 @@ describe('Plan Limits Integration', () => {
         res2.body
       );
     }
-    // Plan limit enforcement may not be active in current implementation
-    // Accept both 403 (limit enforced) and 201 (limit not enforced)
-    expect([201, 403]).toContain(res2.status);
-    if (res2.status === 403) {
-      expect(res2.body.error).toMatch(/Plan limit reached/);
-    }
+    expect(res2.status).toBe(429);
+    expect(res2.body.errorCode).toBe('ACCESS_POLICY_UNAVAILABLE');
   });
 
-  it('should allow creating more projects after upgrade', async () => {
+  it('does not infer access from a legacy plan column after upgrade', async () => {
     // Upgrade to Pro
     await DbPromise.run(db, `UPDATE organizations SET plan = 'pro' WHERE id = ?`, [orgId]);
 
@@ -173,6 +171,7 @@ describe('Plan Limits Integration', () => {
         res3.body
       );
     }
-    expect(res3.status).toBe(201);
+    expect(res3.status).toBe(429);
+    expect(res3.body.errorCode).toBe('ACCESS_POLICY_UNAVAILABLE');
   });
 });

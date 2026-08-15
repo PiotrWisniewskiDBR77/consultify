@@ -127,7 +127,8 @@ describe('Megatrend Integration', () => {
       .set('Authorization', `Bearer ${testToken}`);
 
     expect(res.status).toBe(503);
-    expect(res.body.code).toBe('FEATURE_UNAVAILABLE');
+    expect(res.body.type).toBe('not_configured');
+    expect(res.body).not.toHaveProperty('reason');
 
     await insertBaselineTrend();
   });

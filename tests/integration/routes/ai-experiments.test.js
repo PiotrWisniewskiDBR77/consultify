@@ -12,7 +12,6 @@ vi.hoisted(() => {
   process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
 });
 
-
 describe('AI Experiments API', () => {
   let app;
 
@@ -25,7 +24,8 @@ describe('AI Experiments API', () => {
   describe('GET /api/ai/experiments', () => {
     it('should list experiments or handle appropriately', async () => {
       const response = await request(app).get('/api/ai/experiments');
-      expect(response.status).toBe(401);
+      expect(response.status).toBe(404);
+      expect(response.body).not.toHaveProperty('experiments');
     });
   });
 
@@ -34,7 +34,8 @@ describe('AI Experiments API', () => {
       const response = await request(app)
         .post('/api/ai/experiments')
         .send({ name: 'Test Experiment' });
-      expect(response.status).toBe(401);
+      expect(response.status).toBe(404);
+      expect(response.body).not.toHaveProperty('experiment');
     });
   });
 });

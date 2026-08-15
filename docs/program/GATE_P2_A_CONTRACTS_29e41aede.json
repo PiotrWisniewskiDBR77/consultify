@@ -1,0 +1,59 @@
+{
+  "baseline": "29e41aedef1afaff05686b5c32dad8595c96dfce",
+  "selection": "docs/program/GATE_P2_A_ALLOWLIST_c137d6d43.json",
+  "environment": "disposable local pgvector PostgreSQL 16, fresh current migrations, no demo or production writes",
+  "execution": {
+    "selectedFiles": 41,
+    "assertions": {
+      "passed": 156,
+      "failed": 0,
+      "pending": 16,
+      "total": 172
+    },
+    "filesWithUnexpectedFailure": 0,
+    "rootTypecheck": "PASS",
+    "serverTypecheck": "PASS",
+    "gate": "PASS_WITH_EXPLICIT_PENDING"
+  },
+  "pending": [
+    {
+      "file": "tests/frontend/resource-management-components.test.tsx",
+      "count": 4,
+      "reason": "retired BudgetDashboard surface remains explicitly excluded"
+    },
+    {
+      "file": "tests/integration/m13-organization-profile-persistence.test.ts",
+      "count": 4,
+      "reason": "destructive custom-schema proof requires explicit isolated M13_PG_URL"
+    },
+    {
+      "file": "tests/integration/mywork/my-work.inbox-v4-tenant-negative-controls.test.ts",
+      "count": 1,
+      "reason": "positive materialization fixture authority remains unresolved; three tenant-negative controls pass"
+    },
+    {
+      "file": "tests/integration/routes/demoRoutes.no-stubs.test.ts",
+      "count": 7,
+      "reason": "existing explicit no-demo-runtime pending packet"
+    }
+  ],
+  "securityContract": {
+    "retiredRoutes": "authenticated and anonymous requests assert 404 with no protected payload",
+    "invalidOrMissingAuth": "asserts 401 or 403 and never accepts a bypass success",
+    "tenantBoundary": "cross-tenant and forged Initiative relation requests assert denial and no created entity",
+    "policyUnavailable": "project writes assert ACCESS_POLICY_UNAVAILABLE and zero writes, never false-green success"
+  },
+  "productFixes": [
+    {
+      "file": "server/src/models/megatrend.ts",
+      "change": "canonical lazy Database handle and ESM-safe UUID import"
+    }
+  ],
+  "harnessRepairs": [
+    "canonical Initiative and report routes/status contracts",
+    "current refresh-token success contract",
+    "direct PostgreSQL index catalog evidence",
+    "awaited and tenant-bounded Decisions fixture operations",
+    "current secure validation and retired-route denial contracts"
+  ]
+}

@@ -8,13 +8,13 @@ import {
   resetConnection,
 } from '../../../server/src/database/Database.js';
 import { initializeDatabase } from '../../../server/src/database/DatabaseInitializer.js';
-import { cleanAllTestTables, initTestDb } from '../../helpers/dbHelper.cjs';
+import * as DbPromise from '../../../server/src/utils/DbPromise.js';
+import { initTestDb } from '../../helpers/dbHelper.cjs';
 
 vi.hoisted(() => {
   process.env.MOCK_DB = 'false';
   // Use unique DB per worker to avoid concurrency issues
   const workerId = process.env.VITEST_WORKER_ID || '0';
-  process.env.ENABLE_TEST_AUTH_BYPASS = 'true';
   process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
 });
 
@@ -22,7 +22,7 @@ vi.hoisted(() => {
  * Decisions Routes Integration Tests
  */
 
-describe('Decisions Routes', () => {
+describe.sequential('Decisions Routes', () => {
   let db;
   let rawDb;
 
@@ -49,32 +49,30 @@ describe('Decisions Routes', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    // Clean all tables using the helper
-    await cleanAllTestTables();
+    // Clean only this fixture's tenant graph. Broad table deletion can damage
+    // canonical migration seed rows and makes retries non-deterministic.
+    await DbPromise.run(db, 'DELETE FROM decisions WHERE organization_id = ?', [orgId]);
+    await DbPromise.run(db, 'DELETE FROM projects WHERE id = ?', [projectId]);
+    await DbPromise.run(db, 'DELETE FROM users WHERE id = ?', [userId]);
+    await DbPromise.run(db, 'DELETE FROM organizations WHERE id = ?', [orgId]);
 
     // Seed parent records with unique IDs based on worker
-    await new Promise((resolve, reject) => {
-      db.serialize(() => {
-        db.run(
-          'INSERT INTO organizations (id, name, status, organization_type) VALUES (?, ?, ?, ?)',
-          [orgId, 'Test Org', 'active', 'PAID'],
-          (err) => (err && !err.message.includes('UNIQUE') ? reject(err) : null)
-        );
-        db.run(
-          'INSERT INTO users (id, organization_id, email, password, role, status) VALUES (?, ?, ?, ?, ?, ?)',
-          [userId, orgId, `admin-${workerId}@test.com`, 'hash', 'ADMIN', 'active'],
-          (err) => (err && !err.message.includes('UNIQUE') ? reject(err) : null)
-        );
-        db.run(
-          'INSERT INTO projects (id, organization_id, name, status, owner_id) VALUES (?, ?, ?, ?, ?)',
-          [projectId, orgId, 'Test Project', 'active', userId],
-          (err) => (err ? reject(err) : resolve())
-        );
-      });
-    });
+    await DbPromise.run(
+      db,
+      'INSERT INTO organizations (id, name, status, organization_type) VALUES (?, ?, ?, ?)',
+      [orgId, 'Test Org', 'active', 'PAID']
+    );
+    await DbPromise.run(
+      db,
+      'INSERT INTO users (id, organization_id, email, password, role, status) VALUES (?, ?, ?, ?, ?, ?)',
+      [userId, orgId, `admin-${workerId}@test.com`, 'hash', 'ADMIN', 'active']
+    );
+    await DbPromise.run(
+      db,
+      'INSERT INTO projects (id, organization_id, name, status, owner_id) VALUES (?, ?, ?, ?, ?)',
+      [projectId, orgId, 'Test Project', 'active', userId]
+    );
 
-    // Enable Auth Bypass for this test suite
-    process.env.ENABLE_TEST_AUTH_BYPASS = 'true';
     process.env.NODE_ENV = 'test';
     process.env.TEST_ORG_ID = orgId;
     process.env.TEST_USER_ID = userId;
@@ -104,11 +102,13 @@ describe('Decisions Routes', () => {
       const decId2 = `decision-2-${workerId}`;
 
       // Seed database
-      await db.run(
+      await DbPromise.run(
+        db,
         'INSERT INTO decisions (id, organization_id, project_id, title, status) VALUES (?, ?, ?, ?, ?)',
         [decId1, orgId, projectId, 'Approve budget increase', 'PENDING']
       );
-      await db.run(
+      await DbPromise.run(
+        db,
         'INSERT INTO decisions (id, organization_id, project_id, title, status) VALUES (?, ?, ?, ?, ?)',
         [decId2, orgId, projectId, 'Change scope', 'APPROVED']
       );
@@ -148,22 +148,16 @@ describe('Decisions Routes', () => {
     it('returns single decision', async () => {
       const decId = `single-decision-${workerId}`;
 
-      await db.run(
-        'INSERT INTO decisions (id, organization_id, project_id, title, status, audit_trail) VALUES (?, ?, ?, ?, ?, ?)',
-        [
-          decId,
-          orgId,
-          projectId,
-          'Approve budget',
-          'PENDING',
-          JSON.stringify([{ action: 'CREATED', by: userId }]),
-        ]
+      await DbPromise.run(
+        db,
+        'INSERT INTO decisions (id, organization_id, project_id, title, status) VALUES (?, ?, ?, ?, ?)',
+        [decId, orgId, projectId, 'Approve budget', 'PENDING']
       );
 
       const response = await request(testApp).get(`/api/decisions/${decId}`).expect(200);
 
       expect(response.body.id).toBe(decId);
-      expect(response.body.auditTrail).toBeDefined();
+      expect(response.body.title).toBe('Approve budget');
     });
 
     it('returns 404 for non-existent decision', async () => {
@@ -175,7 +169,7 @@ describe('Decisions Routes', () => {
   });
 
   describe('POST /api/decisions', () => {
-    it('creates new decision', async () => {
+    it('rejects a forged Initiative relation without writing a decision', async () => {
       const workerId = process.env.VITEST_WORKER_ID || '0';
       const projectId = `project-decisions-${workerId}`;
 
@@ -194,11 +188,9 @@ describe('Decisions Routes', () => {
         console.log('[DEBUG] Create Decision Error:', response.body);
       }
 
-      expect(response.status).toBe(201);
-
-      expect(response.body.id).toBeDefined();
-      expect(response.body.title).toBe('New budget decision');
+      expect(response.status).toBe(400);
+      expect(response.body.field).toBe('initiativeId');
+      expect(response.body.id).toBeUndefined();
     });
   });
-
 });

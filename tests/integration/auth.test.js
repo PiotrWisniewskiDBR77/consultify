@@ -132,12 +132,9 @@ describe('Auth Integration', () => {
         refreshToken: testRefreshToken,
       });
 
-      expect(res.status).toBe(401);
-
-      if (res.status === 200) {
-        expect(res.body.token).toBeDefined();
-        testToken = res.body.token;
-      }
+      expect(res.status).toBe(200);
+      expect(res.body.token).toBeDefined();
+      testToken = res.body.token;
     });
 
     it('should revoke token on logout', async () => {

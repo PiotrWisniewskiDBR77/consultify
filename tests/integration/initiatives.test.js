@@ -100,7 +100,7 @@ describe('Initiatives Integration', () => {
     if (!testToken) return;
 
     const res = await request(app)
-      .get(`/api/projects/${testProjectId}/initiatives`)
+      .get('/api/initiatives')
       .set('Authorization', `Bearer ${testToken}`);
 
     expect(res.status).toBe(200);
@@ -114,13 +114,14 @@ describe('Initiatives Integration', () => {
     if (!testToken) return;
 
     const res = await request(app)
-      .post(`/api/projects/${testProjectId}/initiatives`)
+      .post('/api/initiatives')
       .set('Authorization', `Bearer ${testToken}`)
       .send({
+        projectId: testProjectId,
         title: 'Test Initiative',
         description: 'Created by integration test',
         priority: 'high',
-        status: 'proposed',
+        status: 'DRAFT',
       });
 
     expect([200, 201]).toContain(res.status);
@@ -138,7 +139,6 @@ describe('Initiatives Integration', () => {
       .set('Authorization', `Bearer ${testToken}`)
       .send({
         title: 'Updated Initiative',
-        status: 'in_progress',
       });
 
     expect(res.status).toBe(200);
@@ -169,6 +169,8 @@ describe('Initiatives Integration', () => {
         criteria: 'impact',
       });
 
-    expect(res.status).toBe(200);
+    // Prioritization belonged to the retired project-nested API. The removed
+    // route must stay fail-closed rather than silently mutating canonical data.
+    expect(res.status).toBe(404);
   });
 });

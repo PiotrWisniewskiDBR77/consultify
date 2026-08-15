@@ -65,12 +65,13 @@ describe('AI Playbooks API', () => {
       expect([401, 403, 404]).toContain(res.status);
     });
 
-    it('should get playbooks with auth', async () => {
+    it('does not expose the retired playbooks route with auth', async () => {
       if (!authToken) return;
       const res = await request(app)
         .get('/api/ai/playbooks')
         .set('Authorization', `Bearer ${authToken}`);
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(404);
+      expect(res.body).not.toHaveProperty('playbooks');
     });
   });
 });

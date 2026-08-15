@@ -57,7 +57,9 @@ afterAll(async () => {
   await client.end();
 });
 
-describe('M13 — organization profile persistence on real PostgreSQL', () => {
+const describeWithDisposableM13Pg = process.env.M13_PG_URL ? describe : describe.skip;
+
+describeWithDisposableM13Pg('M13 — organization profile persistence on real PostgreSQL', () => {
   it("translates the SQLite-style datetime('now') expression used by the route", async () => {
     const sql = `UPDATE organizations SET
                     default_timezone = COALESCE(?, default_timezone),

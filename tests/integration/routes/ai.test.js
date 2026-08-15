@@ -110,7 +110,8 @@ describe('AI Routes Integration Tests', () => {
         .get('/api/ai/context/non-existent-project-id')
         .set('Authorization', `Bearer ${testToken}`);
 
-      expect(res.status).toBe(404);
+      expect(res.status).toBe(400);
+      expect(JSON.stringify(res.body)).not.toContain(testOrgId);
     });
   });
 

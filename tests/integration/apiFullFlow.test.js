@@ -89,12 +89,9 @@ describe('API Full Flow Integration', () => {
         password: testPassword,
       });
 
-      expect(loginRes.status).toBe(401);
-
-      if (loginRes.status === 200) {
-        expect(loginRes.body.token).toBeDefined();
-        testToken = loginRes.body.token;
-      }
+      expect(loginRes.status).toBe(200);
+      expect(loginRes.body.token).toBeDefined();
+      testToken = loginRes.body.token;
     });
   });
 
@@ -141,7 +138,7 @@ describe('API Full Flow Integration', () => {
           status: 'active',
         });
 
-      expect(createRes.status).toBe(200);
+      expect(createRes.status).toBe(201);
 
       if (createRes.status === 200 || createRes.status === 201) {
         testProjectId = createRes.body.project?.id || createRes.body.id;
@@ -178,7 +175,9 @@ describe('API Full Flow Integration', () => {
         .set('Authorization', `Bearer ${testToken}`);
 
       // Accept various status codes
-      expect(reportsRes.status).toBe(200);
+      // The retired project-nested reports route must remain fail-closed.
+      expect(reportsRes.status).toBe(404);
+      expect(reportsRes.body).not.toHaveProperty('reports');
 
       if (reportsRes.status === 200) {
         expect(Array.isArray(reportsRes.body) || reportsRes.body.reports).toBeTruthy();

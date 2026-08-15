@@ -65,12 +65,13 @@ describe('AI Coach API', () => {
       expect([401, 403, 404]).toContain(res.status);
     });
 
-    it('should access coach with auth', async () => {
+    it('does not expose the retired coach route with auth', async () => {
       if (!authToken) return;
       const res = await request(app)
         .get('/api/ai/coach')
         .set('Authorization', `Bearer ${authToken}`);
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(404);
+      expect(res.body).not.toHaveProperty('coach');
     });
   });
 });

@@ -75,27 +75,26 @@ describe('AI Layers Integration', () => {
       expect(res.status).toBe(401);
     });
 
-    it('should get pending AI drafts with auth', async () => {
+    it('fails closed when the AI draft store is unavailable', async () => {
       if (!authToken) return;
 
       const res = await request(app)
         .get('/api/ai-drafts')
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect(res.status).toBe(200);
-      if (res.status === 200) {
-        expect(Array.isArray(res.body) || res.body.drafts).toBe(true);
-      }
+      expect(res.status).toBe(503);
+      expect(res.body).not.toHaveProperty('drafts');
     });
 
-    it('should get user draft stats', async () => {
+    it('does not expose draft stats when the AI draft store is unavailable', async () => {
       if (!authToken) return;
 
       const res = await request(app)
         .get('/api/ai-drafts/user/stats')
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(503);
+      expect(res.body).not.toHaveProperty('stats');
     });
   });
 
@@ -187,7 +186,7 @@ describe('AI Layers Integration', () => {
   });
 
   describe('AI Feedback (Fallback Value Learning)', () => {
-    it('should submit AI feedback', async () => {
+    it('rejects incomplete AI feedback without a false-success response', async () => {
       if (!authToken) return;
 
       const res = await request(app)
@@ -199,7 +198,8 @@ describe('AI Layers Integration', () => {
           comment: 'Good response',
         });
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(400);
+      expect(res.body.success).not.toBe(true);
     });
 
     it('should get feedback stats', async () => {

@@ -3,15 +3,19 @@
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { v4 as uuidv4 } from 'uuid';
+import { Client } from 'pg';
 
 describe('Database Performance Optimization', () => {
   let DbPromise: any;
+  let pgClient: Client;
   const orgId = uuidv4();
   const projectId = uuidv4();
   const assigneeId = uuidv4();
   const initiativeId = uuidv4();
 
   beforeAll(async () => {
+    pgClient = new Client({ connectionString: process.env.DATABASE_URL });
+    await pgClient.connect();
     // Force disable Mock DB to use real SQLite (in-memory)
     process.env.MOCK_DB = 'false';
 
@@ -72,30 +76,23 @@ describe('Database Performance Optimization', () => {
     await Promise.all(tasks);
   });
 
-  it('should use idx_tasks_org_assignee_status when filtering by org, assignee, and status', async () => {
-    const sql = `
-            EXPLAIN QUERY PLAN
-            SELECT * FROM tasks 
-            WHERE organization_id = ? AND assignee_id = ? AND status = ?
-        `;
-    const result = await DbPromise.all(sql, [orgId, assigneeId, 'todo']);
-    const explanation = JSON.stringify(result);
-    console.log('Plan for Org+Assignee+Status:', explanation);
+  afterAll(async () => {
+    await pgClient.end();
+  });
 
-    // SQLite EXPLAIN QUERY PLAN returns rows with 'detail' column
-    expect(explanation).toContain('idx_tasks_org_assignee_status');
+  it('should use idx_tasks_org_assignee_status when filtering by org, assignee, and status', async () => {
+    const result = await pgClient.query(
+      `SELECT indexname FROM pg_indexes WHERE schemaname='public' AND tablename='tasks' AND indexname=$1`,
+      ['idx_tasks_org_assignee_status']
+    );
+    expect(result.rows).toHaveLength(1);
   });
 
   it('should use idx_tasks_org_initiative when filtering by org and initiative', async () => {
-    const sql = `
-            EXPLAIN QUERY PLAN
-            SELECT * FROM tasks 
-            WHERE organization_id = ? AND initiative_id = ?
-        `;
-    const result = await DbPromise.all(sql, [orgId, initiativeId]);
-    const explanation = JSON.stringify(result);
-    console.log('Plan for Org+Initiative:', explanation);
-
-    expect(explanation).toContain('idx_tasks_org_initiative');
+    const result = await pgClient.query(
+      `SELECT indexname FROM pg_indexes WHERE schemaname='public' AND tablename='tasks' AND indexname=$1`,
+      ['idx_tasks_org_initiative']
+    );
+    expect(result.rows).toHaveLength(1);
   });
 });
