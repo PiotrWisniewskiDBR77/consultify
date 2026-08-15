@@ -116,6 +116,8 @@
       "tests/integration/admin/admin-cross-org-idor.test.ts",
       "tests/integration/results/resultsExtended.routes.test.ts",
       "tests/integration/routes/v8.finance-intelligence.test.ts",
+      "server/src/routes/__tests__/adminP32.routes.test.ts",
+      "tests/unit/backend/routes/h64-failsoft.test.ts",
       "tests/integration/routes/p21b-reports-template-artifactrun-e2e.sqlite.integration.test.ts",
       "server/src/routes/__tests__/document-studio-client-reader.routes.test.ts",
       "server/src/services/__tests__/nativeOwnerPinnedClient.test.ts"
@@ -176,7 +178,9 @@
         "tests/integration/routes/executionAnalytics.routes.test.ts",
         "tests/integration/admin/admin-cross-org-idor.test.ts",
         "tests/integration/results/resultsExtended.routes.test.ts",
-        "tests/integration/routes/v8.finance-intelligence.test.ts"
+        "tests/integration/routes/v8.finance-intelligence.test.ts",
+        "server/src/routes/__tests__/adminP32.routes.test.ts",
+        "tests/unit/backend/routes/h64-failsoft.test.ts"
       ]
     },
     "realdb": {
