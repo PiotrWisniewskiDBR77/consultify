@@ -60,7 +60,7 @@ describe('RowGutterIndicator', () => {
       <RowGutterIndicator confidenceScore={0.95} validationStatus="flagged" />
     );
     const el = getByTestId('provenance-row-gutter');
-    expect(el.style.backgroundColor).toBe('rgb(217, 119, 6)');
+    expect(el.style.backgroundColor).toBe('var(--c-warning)');
   });
 
   it('renders the emerald indicator when verified regardless of score', () => {
@@ -68,7 +68,7 @@ describe('RowGutterIndicator', () => {
       <RowGutterIndicator confidenceScore={0.05} validationStatus="verified" />
     );
     const el = getByTestId('provenance-row-gutter');
-    expect(el.style.backgroundColor).toBe('rgb(5, 150, 105)');
+    expect(el.style.backgroundColor).toBe('var(--c-success)');
   });
 
   it('uses red for low scores when status is unverified', () => {
@@ -76,7 +76,7 @@ describe('RowGutterIndicator', () => {
       <RowGutterIndicator confidenceScore={0.2} validationStatus="unverified" />
     );
     const el = getByTestId('provenance-row-gutter');
-    expect(el.style.backgroundColor).toBe('rgb(220, 38, 38)');
+    expect(el.style.backgroundColor).toBe('var(--c-danger)');
   });
 
   it('uses emerald for high scores when status is unverified', () => {
@@ -84,7 +84,7 @@ describe('RowGutterIndicator', () => {
       <RowGutterIndicator confidenceScore={0.85} validationStatus="unverified" />
     );
     const el = getByTestId('provenance-row-gutter');
-    expect(el.style.backgroundColor).toBe('rgb(5, 150, 105)');
+    expect(el.style.backgroundColor).toBe('var(--c-success)');
   });
 
   it('exposes a tooltip + aria-label including the percentage and status', () => {
