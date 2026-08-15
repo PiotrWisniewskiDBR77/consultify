@@ -14,6 +14,17 @@ vi.mock('../../../utils/queryHelpers.js', () => ({
   queryAll: vi.fn(),
 }));
 
+vi.mock('../../../utils/dbSchema.js', () => ({
+  // This suite verifies the workbench state machine with mocked persistence.
+  // Returning an unknown Initiatives schema keeps the separate automatic
+  // assessment-to-initiative integration fail-soft and out of this unit gate.
+  getTableColumns: vi.fn(async () => new Set<string>()),
+}));
+
+vi.mock('../../v8/artifactRegistryService.js', () => ({
+  registerArtifactOrigin: vi.fn(async () => ({ id: 'artifact-origin-1' })),
+}));
+
 describe('AssessmentWorkbenchService — P28-B E2E (mocked persistence)', () => {
   const orgId = 'org-p28b';
   const assessmentId = 'asmt-p28b';
