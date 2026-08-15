@@ -460,8 +460,19 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
   bajtowo obecny, presentation composition merge jest w pełni reprezentowany
   (3 pliki / 19 testów PASS), a brakujący realDB test Assessment CRUD został
   przywrócony w `0885f3490`; świeży PostgreSQL 15 i 9/9 testów PASS po naprawie
-  runnera wymuszającej `RUN_DB_TESTS=1` oraz `MOCK_DB=false`. Pozostałe 185 nadal wymaga
-  review. Te 18 pozostaje zachowanym materiałem
+  runnera wymuszającej `RUN_DB_TESTS=1` oraz `MOCK_DB=false`. Kolejne dziewięć
+  głów zamknęło dwa realne braki produktu i siedem
+  historii już reprezentowanych: `scope_change_log` został zintegrowany w
+  `ba5bbb92d` (pełny replay 706 migracji PostgreSQL 15, 2/2 realDB write/readback,
+  5/5 unit), a odzyskany backendowy Finance M16 gate w `2b6f2784e` przechodzi
+  16/16 na tej samej świeżej bazie. Historyczne checkpointy Harvard/Ideas,
+  starszy Oxford O4, Document Studio BetaGate, wycofany ExecutionLightShell,
+  Ideas Financial Case i polskie cytaty Interview są reprezentowane przez
+  późniejszy kanon. Dodatkowo odzyskany, niezweryfikowany finding szablonów
+  prezentacji odtworzył na realnym PostgreSQL regresję 5/7; naprawa
+  `1ec123c82` wymusza trwały, tenant-scoped readback dla plan/clone/update i
+  odwraca gate do 7/7 PASS. Aktualny ledger ma 171 pozycji
+  `SEMANTIC_REVIEW_REQUIRED`. Te 18 pozostaje zachowanym materiałem
   UX/prototypowym, ale nie
   jest kodem produkcyjnym do merge. Generator mechanicznie egzekwuje warunek
   ścieżek, unikalność, sumy i deterministyczny output; nadal
