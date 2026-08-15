@@ -238,6 +238,19 @@ pierwszym cutem.
 4. **Audits/Meeting:** Audits poza MVP lub base CRUD beta; Meeting dopiero jako
    wąski beta po approval/handoff/consent E2E.
 
+## Warunek uruchomienia równoległych agentów
+
+Ta analiza nie jest jeszcze automatycznie zbiorem promptów implementacyjnych.
+Agent może dostać zadanie dopiero wtedy, gdy odpowiadający mu wpis w
+`MODULE_COMPLETION_TASK_REGISTRY_2026-08-15.md` ma pełny execution packet:
+baseline SHA, zależności, in/out of scope, allowlist, zastrzeżone shared files,
+AS-IS evidence, TO-BE contract, data/migrations, fixtures/readback, golden flow,
+negative cases, exact commands, demo/visual proof, rollback i handoff format.
+
+Brak któregokolwiek elementu oznacza `DISCOVERY_REQUIRED`, nie zgodę na szeroką
+budowę. Kompletność planu potwierdza etap 11: zero luk bez tasku, zero tasków MVP
+bez pakietu i zero odzyskanych fragmentów bez disposition.
+
 ## Kolejność finalnego montażu
 
 ### Faza A — authority

@@ -81,6 +81,54 @@ DoD etapu 10: jeden release SHA, jedna lista modułów MVP, komplet evidence lin
 rollback, brak nieprzypisanego WIP oraz końcowy raport `implemented / missing /
 deferred / rejected` dla każdego modułu.
 
+### 11. Audyt kompletności i zamrożenie planu dokończenia
+
+Przed uruchomieniem wielu agentów integrator wykonuje mechaniczną kontrolę
+pokrycia planu. Celem nie jest kolejna analiza produktu, lecz udowodnienie, że
+każdy brak można wykonać bez ponownego odkrywania architektury i bez domyślania
+się intencji.
+
+Powstają cztery powiązane rejestry:
+
+1. `MODULE_GAP_LEDGER` — jedna pozycja dla każdej luki wykrytej w route, UI,
+   API, service, schema, danych, flagach, testach, demo i UX;
+2. `EXECUTION_PACKET_INDEX` — jeden kompletny pakiet z sekcji 9 dla każdego
+   tasku dopuszczonego do startu;
+3. `CODE_DISPOSITION_LEDGER` — każdy odzyskany lub nieużywany fragment otrzymuje
+   `KEEP_CONNECTED`, `INTEGRATE_AS_TASK`, `SUPERSEDED`, `REJECTED`,
+   `DEAD_CANDIDATE` albo `EVIDENCE_MISSING` wraz z recovery path;
+4. `RELEASE_COVERAGE_MATRIX` — mapowanie requirement -> task -> commit -> test ->
+   realDB -> demo -> owner acceptance.
+
+Każda luka ma dokładnie jednego właściciela, jeden task ID i jeden warunek
+zamknięcia. Jeden task może zamykać kilka luk tylko wtedy, gdy mają wspólną
+granicę danych i wspólny allowlist. Zadanie bez konkretnego baseline SHA,
+allowlistu, komend i fixtures ma status `DISCOVERY_REQUIRED`, a nie `READY`.
+
+Plan zostaje zamrożony dopiero po dwóch niezależnych kontrolach:
+
+- **coverage check:** liczba luk bez tasku, kodu bez disposition i tasków bez
+  pakietu wynosi zero;
+- **dependency check:** graf zadań jest acykliczny, shared files mają jednego
+  integratora, a każda fala ma jawny wejściowy i wyjściowy SHA.
+
+DoD etapu 11: wszystkie taski MVP mają kompletne, kopiowalne prompty wykonawcze;
+każdy task post-MVP ma co najmniej precyzyjny bounded-discovery packet albo
+pełny packet; macierz pokrycia nie ma pustych rekordów krytycznych; właściciel
+może uruchomić agentów bez ponownej interpretacji dokumentacji.
+
+### Aktualny stan przygotowania pakietów
+
+- Etap 8: `PARTIAL` — 16 kart modułów i task IDs istnieją; trwa przypisywanie
+  wszystkich wyników test/recovery do luk i disposition.
+- Etap 9: `PARTIAL` — istnieje kontrakt pakietu, lecz nie każdy task ma jeszcze
+  wypełniony allowlist, fixtures, komendy i negative cases. Takiego tasku nie
+  wolno przekazać agentowi jako implementacyjnego.
+- Etap 10: `NOT_STARTED` — integracja funkcjonalna rusza dopiero po zamknięciu
+  CLEAN-001/CLEAN-002 oraz gotowości pakietów pierwszej fali.
+- Etap 11: `IN_PROGRESS` — kontrola pokrycia będzie aktualizowana razem z
+  werdyktami CLEAN-001 i CLEAN-002.
+
 ## Cel i reguła statusu
 
 Ten dokument przekłada audyt modułowy na rozłączne paczki wykonawcze. Każdy
