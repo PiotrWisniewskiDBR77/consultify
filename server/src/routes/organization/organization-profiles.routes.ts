@@ -204,11 +204,8 @@ router.get(
       const org = await dbGet<{
         id: string;
         name: string;
-        default_timezone: string;
-        default_language: string;
       }>(
-        `SELECT id, name, default_timezone, default_language 
-                 FROM organizations WHERE id = ?`,
+        `SELECT id, name FROM organizations WHERE id = ?`,
         [orgId]
       );
 
@@ -298,12 +295,10 @@ router.get(
           // Regional
           defaultTimezone:
             resolvedContext?.profile.defaultTimezone ||
-            org.default_timezone ||
             brandingSettings.defaultTimezone ||
             'Europe/Warsaw',
           defaultLanguage:
             resolvedContext?.profile.defaultLanguage ||
-            org.default_language ||
             profile?.preferred_language ||
             'en',
           dateFormat: brandingSettings.dateFormat || 'DD/MM/YYYY',
