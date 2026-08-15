@@ -21,6 +21,20 @@ No module may be accepted from another checkout without first recording its
 unique commits in the recovery inventory and integrating the selected commit
 into this tree.
 
+## Recovery evidence
+
+- Annotated tag: `cleanup-checkpoint-20260815-pre-acceptance`
+- Protected commit: `cef8e2370653a1733fc12277b297a0a3a67e2787`
+- Verified bundle:
+  `/Users/piotrwisniewski/Developer/consultify-cleanup-recovery-20260815/consultify-pre-acceptance.bundle`
+- SHA-256:
+  `1ca6829a1d7787258a62493ffd1643fca65581e57398cb699a874c45c4ef43f9`
+- `git bundle verify`: PASS; complete history with branch and annotated tag.
+
+This bundle protects the canonical checkpoint. The separate Git/worktree
+inventory remains responsible for unique work that is not yet reachable from
+the canonical branch.
+
 ## Verified build gates
 
 The following commands completed with exit code `0` from the canonical tree:
