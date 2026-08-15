@@ -6,6 +6,20 @@ import request from 'supertest';
 
 import { makeTestApp } from '../_helpers/testApp';
 
+const { missingPremiumReports } = vi.hoisted(() => ({
+  missingPremiumReports: vi
+    .fn()
+    .mockRejectedValue(
+      Object.assign(new Error('relation "premium_reports" does not exist'), { code: '42P01' })
+    ),
+}));
+
+vi.mock('../../../server/src/utils/DbPromise.js', () => ({
+  all: missingPremiumReports,
+  get: missingPremiumReports,
+  run: vi.fn(),
+}));
+
 describe('Premium reports routes (no silent fallbacks)', () => {
   const workerId = process.env.VITEST_WORKER_ID || '0';
   const sqlitePath = path.join(os.tmpdir(), `consultify-premium-reports-${workerId}.db`);
@@ -75,4 +89,3 @@ describe('Premium reports routes (no silent fallbacks)', () => {
     );
   });
 });
-

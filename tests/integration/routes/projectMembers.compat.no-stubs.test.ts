@@ -3,6 +3,20 @@ import request from 'supertest';
 
 import { makeTestApp } from '../_helpers/testApp';
 
+const { missingProjectMembers } = vi.hoisted(() => ({
+  missingProjectMembers: vi
+    .fn()
+    .mockRejectedValue(
+      Object.assign(new Error('relation "project_members" does not exist'), { code: '42P01' })
+    ),
+}));
+
+vi.mock('../../../server/src/utils/DbPromise.js', () => ({
+  all: missingProjectMembers,
+  get: missingProjectMembers,
+  run: missingProjectMembers,
+}));
+
 describe('Project members compat routes (no stub responses)', () => {
   const basePath = '/api/project-members';
   let router: any;

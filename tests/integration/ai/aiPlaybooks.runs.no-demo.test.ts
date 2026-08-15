@@ -3,6 +3,20 @@ import request from 'supertest';
 
 import { makeTestApp } from '../_helpers/testApp';
 
+const { missingSchemaAll } = vi.hoisted(() => ({
+  missingSchemaAll: vi
+    .fn()
+    .mockRejectedValue(
+      Object.assign(new Error('relation "ai_playbook_runs" does not exist'), { code: '42P01' })
+    ),
+}));
+
+vi.mock('../../../server/src/utils/DbPromise.js', () => ({
+  all: missingSchemaAll,
+  get: vi.fn(),
+  run: vi.fn(),
+}));
+
 describe('AI playbooks runs (no demo placeholders)', () => {
   const basePath = '/api/ai/playbooks';
   let router: any;
@@ -38,4 +52,3 @@ describe('AI playbooks runs (no demo placeholders)', () => {
     expect(JSON.stringify(res.body)).not.toContain('test_template');
   });
 });
-

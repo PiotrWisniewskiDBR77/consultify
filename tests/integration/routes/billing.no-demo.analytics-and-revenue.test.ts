@@ -3,6 +3,31 @@ import request from 'supertest';
 
 import { makeTestApp } from '../_helpers/testApp';
 
+const { missingBillingAll, missingBillingGet, missingBillingRun } = vi.hoisted(() => {
+  const schemaError = () =>
+    Object.assign(new Error('relation "billing_schema_fixture" does not exist'), {
+      code: '42P01',
+    });
+  return {
+    missingBillingAll: vi.fn(async (sql: string) => {
+      if (/starting_count|expansion_mrr/i.test(sql)) return [];
+      throw schemaError();
+    }),
+    missingBillingGet: vi.fn(async () => {
+      throw schemaError();
+    }),
+    missingBillingRun: vi.fn(async () => {
+      throw schemaError();
+    }),
+  };
+});
+
+vi.mock('../../../server/src/utils/DbPromise.js', () => ({
+  all: missingBillingAll,
+  get: missingBillingGet,
+  run: missingBillingRun,
+}));
+
 describe('Billing routes (no demo placeholders in analytics/revenue)', () => {
   const basePath = '/api/billing';
   let router: any;

@@ -3,6 +3,32 @@ import request from 'supertest';
 
 import { makeTestApp } from '../_helpers/testApp';
 
+const { missingPartnerGet, missingPartnerAll, missingPartnerRun } = vi.hoisted(() => {
+  const schemaError = () =>
+    Object.assign(new Error('relation "partner_organizations" does not exist'), {
+      code: '42P01',
+    });
+  return {
+    missingPartnerGet: vi.fn(async (_db: unknown, sql: string) => {
+      if (/JOIN\s+partner_organizations/i.test(sql)) throw schemaError();
+      return null;
+    }),
+    missingPartnerAll: vi.fn().mockResolvedValue([]),
+    missingPartnerRun: vi.fn().mockResolvedValue({ changes: 0 }),
+  };
+});
+
+vi.mock('../../../server/src/utils/DbPromise.js', () => ({
+  get: missingPartnerGet,
+  all: missingPartnerAll,
+  run: missingPartnerRun,
+  tableExists: vi.fn().mockResolvedValue(false),
+}));
+
+vi.mock('../../../server/src/database/Database.js', () => ({
+  getDatabase: vi.fn(() => ({})),
+}));
+
 describe('Partners routes (no demo placeholders)', () => {
   const basePath = '/api/partners';
   let router: any;
@@ -50,4 +76,3 @@ describe('Partners routes (no demo placeholders)', () => {
     expect(JSON.stringify(res.body)).not.toContain('Consultinity Foundations');
   });
 });
-

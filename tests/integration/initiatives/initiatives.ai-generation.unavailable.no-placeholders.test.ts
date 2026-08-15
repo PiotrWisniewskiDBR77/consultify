@@ -3,6 +3,24 @@ import request from 'supertest';
 
 import { makeInitiativesApp } from './_helpers/makeInitiativesApp';
 
+const { unavailableGeneration } = vi.hoisted(() => ({
+  unavailableGeneration: vi.fn(() =>
+    Promise.reject(
+      Object.assign(new Error('Initiative AI provider is not configured'), {
+        code: 'FEATURE_UNAVAILABLE',
+        statusCode: 503,
+      })
+    )
+  ),
+}));
+
+vi.mock('../../../server/src/services/initiativeGenerationService.js', () => ({
+  default: {
+    generateSectionContent: unavailableGeneration,
+    suggestSections: unavailableGeneration,
+  },
+}));
+
 describe('Initiatives AI generation (honest 503; no placeholder content)', () => {
   beforeAll(async () => {
     process.env.NODE_ENV = 'test';
@@ -15,11 +33,6 @@ describe('Initiatives AI generation (honest 503; no placeholder content)', () =>
     process.env.ANTHROPIC_API_KEY = '';
 
     vi.resetModules();
-
-    const mod = await import('../../../server/src/database/DatabaseInitializer.ts');
-    if (typeof (mod as any).initializeDatabase === 'function') {
-      await (mod as any).initializeDatabase();
-    }
   });
 
   it('POST /api/initiatives/generate-section returns 503 FEATURE_UNAVAILABLE when LLM is not usable', async () => {
