@@ -887,7 +887,8 @@
       "failedToLoad": "Failed to load initiatives",
       "retry": "Retry",
       "dismiss": "Dismiss",
-      "noInitiativesFound": "No initiatives found"
+      "noInitiativesFound": "No initiatives found",
+      "noInitiativesFoundDesc": "لا توجد مبادرات تطابق عوامل التصفية الحالية. وسّع البحث أو امسح عوامل التصفية."
     },
     "levelDesc": {
       "quick_win": "Minimal governance. Can be self-approved.",
@@ -932,6 +933,27 @@
     },
     "targetStateSection": {
       "english": "English"
+    },
+    "analysis": {
+      "resources": { "aiProposals": "مقترحات الذكاء الاصطناعي لإعادة توزيع الأحمال", "aiNoCapacity": "لا يوجد عضو متاح في الفريق — فكّر في التوظيف أو التأجيل", "aiBalanced": "عبء العمل متوازن — لا حاجة إلى تغييرات" },
+      "feasibility": { "aiProposals": "مقترحات الذكاء الاصطناعي للتحسين" }
+    },
+    "suggestionBadge": { "label": "يقترح الذكاء الاصطناعي مبادرة", "aria": "قبول المبادرة المقترحة من هذا العنصر" },
+    "pilotAccessBlocked": "غير متاح في الوضع التجريبي",
+    "materialize": { "cta": "إنشاء مادة", "working": "جارٍ إنشاء المادة من المحفظة…", "done": "المادة جاهزة", "failed": "تعذر إنشاء المادة" },
+    "makeMaterial": "إنشاء مادة",
+    "materialDeck": "عرض تقديمي",
+    "materialReport": "تقرير",
+    "materialTable": "جدول",
+    "portfolioHealth": {
+      "title": "صحة المحفظة", "empty": "لا توجد بيانات عن صحة المحفظة.",
+      "total": "{{count}} مبادرات", "total_zero": "لا توجد مبادرات", "total_one": "مبادرة واحدة", "total_two": "مبادرتان", "total_few": "{{count}} مبادرات", "total_many": "{{count}} مبادرة", "total_other": "{{count}} مبادرة",
+      "quickWins": "مكاسب سريعة", "bigBets": "رهانات كبيرة", "moneyPits": "مصادر استنزاف", "gapsCount": "فجوات التغطية",
+      "coverageTitle": "خريطة التغطية (MECE)", "noCoverage": "لا توجد بيانات تغطية.", "gapsTitle": "فجوات التغطية",
+      "balanceTitle": "الجهد × الأثر", "balanceHint": "الصفوف = الجهد، الأعمدة = الأثر.", "effort": "الجهد", "impact": "الأثر", "byStatus": "حسب الحالة",
+      "duplicatesTitle": "مجموعات التكرار", "noDuplicates": "لم يتم اكتشاف تكرارات.", "cluster": "المجموعة {{n}}", "untitled": "(بلا عنوان)",
+      "area": { "data": "بيانات", "process": "عمليات", "product": "منتج", "people": "أشخاص", "governance": "حوكمة", "technology": "تقنية", "customer": "عميل", "finance": "مالية", "other": "أخرى" },
+      "level": { "low": "منخفض", "medium": "متوسط", "high": "مرتفع" }
     },
     "tasksMilestonesSection": {
       "english": "English"

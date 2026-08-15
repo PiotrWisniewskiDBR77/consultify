@@ -884,7 +884,8 @@
       "failedToLoad": "Failed to load initiatives",
       "retry": "Retry",
       "dismiss": "Dismiss",
-      "noInitiativesFound": "No initiatives found"
+      "noInitiativesFound": "No initiatives found",
+      "noInitiativesFoundDesc": "Ninguna iniciativa coincide con los filtros actuales. Amplía la búsqueda o borra los filtros."
     },
     "levelDesc": {
       "quick_win": "Minimal governance. Can be self-approved.",
@@ -929,6 +930,27 @@
     },
     "targetStateSection": {
       "english": "English"
+    },
+    "analysis": {
+      "resources": { "aiProposals": "Propuestas de reequilibrio de IA", "aiNoCapacity": "No hay ningún miembro del equipo disponible — considera contratar o posponer", "aiBalanced": "La carga de trabajo está equilibrada — no se requieren cambios" },
+      "feasibility": { "aiProposals": "Propuestas de optimización de IA" }
+    },
+    "suggestionBadge": { "label": "La IA sugiere una iniciativa", "aria": "Aceptar la iniciativa sugerida a partir de este artefacto" },
+    "pilotAccessBlocked": "No disponible en modo piloto",
+    "materialize": { "cta": "Crear material", "working": "Generando material a partir de la cartera…", "done": "Material listo", "failed": "No se pudo generar el material" },
+    "makeMaterial": "Crear material",
+    "materialDeck": "Presentación",
+    "materialReport": "Informe",
+    "materialTable": "Tabla",
+    "portfolioHealth": {
+      "title": "Salud de la cartera", "empty": "No hay datos de salud de la cartera.",
+      "total": "{{count}} iniciativas", "total_one": "{{count}} iniciativa", "total_many": "{{count}} iniciativas", "total_other": "{{count}} iniciativas",
+      "quickWins": "Resultados rápidos", "bigBets": "Grandes apuestas", "moneyPits": "Pozos de pérdidas", "gapsCount": "Brechas de cobertura",
+      "coverageTitle": "Mapa de cobertura (MECE)", "noCoverage": "No hay datos de cobertura.", "gapsTitle": "Brechas de cobertura",
+      "balanceTitle": "Esfuerzo × impacto", "balanceHint": "Filas = esfuerzo, columnas = impacto.", "effort": "Esfuerzo", "impact": "Impacto", "byStatus": "Por estado",
+      "duplicatesTitle": "Grupos duplicados", "noDuplicates": "No se detectaron duplicados.", "cluster": "Grupo {{n}}", "untitled": "(sin título)",
+      "area": { "data": "Datos", "process": "Procesos", "product": "Producto", "people": "Personas", "governance": "Gobernanza", "technology": "Tecnología", "customer": "Cliente", "finance": "Finanzas", "other": "Otros" },
+      "level": { "low": "Bajo", "medium": "Medio", "high": "Alto" }
     },
     "tasksMilestonesSection": {
       "english": "English"

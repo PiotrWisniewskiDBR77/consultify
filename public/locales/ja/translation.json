@@ -882,7 +882,8 @@
             "failedToLoad": "Failed to load initiatives",
             "retry": "Retry",
             "dismiss": "Dismiss",
-            "noInitiativesFound": "No initiatives found"
+            "noInitiativesFound": "No initiatives found",
+            "noInitiativesFoundDesc": "現在のフィルターに一致するイニシアチブはありません。検索条件を広げるか、フィルターを解除してください。"
         },
         "levelDesc": {
             "quick_win": "Minimal governance. Can be self-approved.",
@@ -927,6 +928,24 @@
         },
         "targetStateSection": {
             "english": "English"
+        },
+        "analysis": {
+            "resources": { "aiProposals": "AIによる負荷再配分の提案", "aiNoCapacity": "対応可能なチームメンバーがいません。採用または延期を検討してください", "aiBalanced": "作業負荷は均衡しています。変更は不要です" },
+            "feasibility": { "aiProposals": "AIによる最適化提案" }
+        },
+        "suggestionBadge": { "label": "AIがイニシアチブを提案しています", "aria": "この成果物から提案されたイニシアチブを承認" },
+        "pilotAccessBlocked": "パイロットモードでは利用できません",
+        "materialize": { "cta": "資料を作成", "working": "ポートフォリオから資料を作成しています…", "done": "資料の準備ができました", "failed": "資料を作成できませんでした" },
+        "makeMaterial": "資料を作成",
+        "materialDeck": "プレゼンテーション",
+        "materialReport": "レポート",
+        "materialTable": "表",
+        "portfolioHealth": {
+            "title": "ポートフォリオの健全性", "empty": "ポートフォリオの健全性データがありません。", "total": "{{count}}件のイニシアチブ", "total_other": "{{count}}件のイニシアチブ",
+            "quickWins": "クイックウィン", "bigBets": "大型投資", "moneyPits": "損失案件", "gapsCount": "カバレッジギャップ", "coverageTitle": "カバレッジマップ (MECE)", "noCoverage": "カバレッジデータがありません。", "gapsTitle": "カバレッジギャップ",
+            "balanceTitle": "工数 × インパクト", "balanceHint": "行 = 工数、列 = インパクト。", "effort": "工数", "impact": "インパクト", "byStatus": "ステータス別", "duplicatesTitle": "重複グループ", "noDuplicates": "重複は検出されませんでした。", "cluster": "グループ {{n}}", "untitled": "(無題)",
+            "area": { "data": "データ", "process": "プロセス", "product": "製品", "people": "人材", "governance": "ガバナンス", "technology": "テクノロジー", "customer": "顧客", "finance": "財務", "other": "その他" },
+            "level": { "low": "低", "medium": "中", "high": "高" }
         },
         "tasksMilestonesSection": {
             "english": "English"

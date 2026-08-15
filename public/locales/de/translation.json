@@ -883,7 +883,8 @@
       "failedToLoad": "Failed to load initiatives",
       "retry": "Retry",
       "dismiss": "Dismiss",
-      "noInitiativesFound": "No initiatives found"
+      "noInitiativesFound": "No initiatives found",
+      "noInitiativesFoundDesc": "Keine Initiativen entsprechen den aktuellen Filtern. Erweitern Sie die Suche oder löschen Sie die Filter."
     },
     "levelDesc": {
       "quick_win": "Minimal governance. Can be self-approved.",
@@ -928,6 +929,54 @@
     },
     "targetStateSection": {
       "english": "English"
+    },
+    "analysis": {
+      "resources": {
+        "aiProposals": "KI-Vorschläge zur Lastverteilung",
+        "aiNoCapacity": "Kein verfügbares Teammitglied — erwägen Sie eine Neueinstellung oder Verschiebung",
+        "aiBalanced": "Die Arbeitslast ist ausgeglichen — keine Änderungen erforderlich"
+      },
+      "feasibility": { "aiProposals": "KI-Optimierungsvorschläge" }
+    },
+    "suggestionBadge": {
+      "label": "KI schlägt eine Initiative vor",
+      "aria": "Vorgeschlagene Initiative aus diesem Artefakt übernehmen"
+    },
+    "pilotAccessBlocked": "Im Pilotmodus nicht verfügbar",
+    "materialize": {
+      "cta": "Material erstellen",
+      "working": "Material aus dem Portfolio wird erstellt…",
+      "done": "Material ist fertig",
+      "failed": "Material konnte nicht erstellt werden"
+    },
+    "makeMaterial": "Material erstellen",
+    "materialDeck": "Präsentation",
+    "materialReport": "Bericht",
+    "materialTable": "Tabelle",
+    "portfolioHealth": {
+      "title": "Portfoliozustand",
+      "empty": "Keine Daten zum Portfoliozustand.",
+      "total": "{{count}} Initiativen",
+      "total_one": "{{count}} Initiative",
+      "total_other": "{{count}} Initiativen",
+      "quickWins": "Schnelle Erfolge",
+      "bigBets": "Große Wetten",
+      "moneyPits": "Verlustbringer",
+      "gapsCount": "Abdeckungslücken",
+      "coverageTitle": "Abdeckungskarte (MECE)",
+      "noCoverage": "Keine Abdeckungsdaten.",
+      "gapsTitle": "Abdeckungslücken",
+      "balanceTitle": "Aufwand × Wirkung",
+      "balanceHint": "Zeilen = Aufwand, Spalten = Wirkung.",
+      "effort": "Aufwand",
+      "impact": "Wirkung",
+      "byStatus": "Nach Status",
+      "duplicatesTitle": "Duplikatgruppen",
+      "noDuplicates": "Keine Duplikate erkannt.",
+      "cluster": "Gruppe {{n}}",
+      "untitled": "(ohne Titel)",
+      "area": { "data": "Daten", "process": "Prozesse", "product": "Produkt", "people": "Menschen", "governance": "Governance", "technology": "Technologie", "customer": "Kunde", "finance": "Finanzen", "other": "Sonstiges" },
+      "level": { "low": "Niedrig", "medium": "Mittel", "high": "Hoch" }
     },
     "tasksMilestonesSection": {
       "english": "English"
