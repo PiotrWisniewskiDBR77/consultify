@@ -1029,6 +1029,27 @@
       "taskId": "CLEAN-002-M16-001",
       "evidenceRule": "The head adds only a historical M16 final repair report. Current module code, task packets and test evidence are later authorities and the absent report contains no unique executable behavior.",
       "nextAction": "Retain the recovery ref but derive M16 status from current code and exact-SHA acceptance rather than importing the old report."
+    },
+    {
+      "tip": "3533fe080eea837a78518434d0f39bcc50f48124",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MIG-004",
+      "evidenceRule": "The canonical runtime DDL, both baseline SQL declarations and the complete real-PostgreSQL regression suite contain the recovered DRAFT default repair and later-expanded guards; the bad step3 default no longer exists in live bootstrap sources.",
+      "nextAction": "Keep the canonical repair and run its PostgreSQL gate during final migration acceptance. Track explicit step3/step3_list values in legacy demo seed scripts as a separate data cleanup, not as a replay of this head."
+    },
+    {
+      "tip": "0f4fd2ec31290ead9b0e1228de79e860541787de",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MIG-005",
+      "evidenceRule": "The recovered preflight script is byte-identical in canon, while migrationPreflight and its realDB checksum suite have later migration-history reconciliation and fresh-schema hardening.",
+      "nextAction": "Keep the evolved migration preflight and execute its realDB checksum/drift controls in the final migration gate."
+    },
+    {
+      "tip": "dbde8fc4431eaef87d3d874afc138cc02be094da",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-MYW-016",
+      "evidenceRule": "The recovered i18n test interpolation was immediately superseded by later setup-contract fixes and broader N-mode/store mock hardening; current tests/setup.ts is an evolved descendant and the dated residual report is no longer authoritative.",
+      "nextAction": "Keep the current shared test setup and run the My Work/i18n shards; do not restore the intermediate residual report."
     }
   ]
 }
