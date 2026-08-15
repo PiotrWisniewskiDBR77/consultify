@@ -168,7 +168,7 @@ export function getMenuStructure(t: TranslationFn, _journeyState?: string): Menu
       label: t('sidebar.audits', 'Audits'),
       icon: React.createElement(ClipboardCheck, { size: 20 }),
       viewId: AppView.ASSESSMENT_AUDITS,
-      badge: 'soon',
+      badge: 'beta',
     },
     {
       id: 'MODULE_MEETING',
