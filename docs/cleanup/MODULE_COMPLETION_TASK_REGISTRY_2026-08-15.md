@@ -445,6 +445,26 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
   duplikuje; normalny route; zero cross-conversation leak.
 - Dowód: UI/API, realDB readback, tenant negative, desktop/mobile trace.
 
+#### CHAT-001-G01 — otwarty artefakt ma pierwszeństwo przed klasyfikatorem nowego outputu
+
+- Status: `DISCOVERY_REQUIRED`, P0; task `CHAT-001-T01`; klasyfikacja:
+  `MISWIRED`; owner zapisu: moduł aktualnie otwartego artefaktu.
+- AS-IS: bieżący `UnifiedChatPanel.tsx` nie rozpoznaje
+  `workspaceContext.entityData.artifactKind` przed ogólnymi classifierami.
+  Prompt o NPV/scenariuszach w otwartym Deck Builderze może zostać przejęty
+  przez ścieżkę workbook i stworzyć Sheet zamiast edytować deck.
+- Recovery evidence: niekanoniczny commit `3977b36b4` zawiera pure resolver
+  `resolveWorkspaceArtifactKind` i branch `onModuleIntent` przed output routing;
+  powiązana asercja w `UnifiedChatPanel.helpers.test.ts` jest obecnie czerwona.
+- TO-BE minus AS-IS: jeśli host podaje `onModuleIntent` i jawny artifact kind,
+  wolna wypowiedź trafia najpierw do istniejącego writera tego artefaktu; jego
+  jawne `handled=false` pozwala dopiero przejść dalej. Załączniki i nieznany
+  context zachowują dotychczasowy Chat flow.
+- Następny krok discovery: wskazać wszystkie hosty `UnifiedChatPanel` podające
+  `onModuleIntent`, ich artifactKind i kontrakt odpowiedzi; potwierdzić, że
+  recovered branch nie omija proposal/approval. Wynikiem ma być rozłączny
+  allowlist i macierz deck/document/sheet positive oraz false-positive cases.
+
 ### CHAT-002 — attachment, URL i citation provenance
 
 - Status: `PARTIAL`, P0; zależność: CHAT-001.
@@ -520,6 +540,8 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
 - Wymagany proof po implementacji: intent positive/negative; incomplete intake;
   Unicode/query encoding; stale/replay; tenant denial; create -> readback ->
   cold reload w Chat i Agent; normalny desktop/mobile browser bez query flag.
+- Pakiet: `docs/cleanup/execution-packets/AGT-001-T01.md`; status
+  `READY_SERIAL_INTEGRATOR / PREFLIGHT_REQUIRED` na baseline `756d904c4`.
 
 ### AGT-002 — Teresa i człowiek edytują jeden Plan
 
