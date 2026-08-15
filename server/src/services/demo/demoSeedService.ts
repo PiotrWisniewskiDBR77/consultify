@@ -4,6 +4,10 @@ import logger from '../../utils/Logger.js';
 import { fireClosureHandoff } from '../executionResultsBridge.js';
 import { organizationContextService } from '../organizationContext/OrganizationContextService.js';
 import {
+  seedAtelierPresentationDecks,
+  type SeedAtelierPresentationDecksResult,
+} from './atelierPresentationDeckSeed.js';
+import {
   ATELIER_CANONICAL_DISCOUNT_RATE_PCT,
   ATELIER_CANONICAL_MODEL_NAME_EN,
   ATELIER_CANONICAL_MODEL_NAME_PL,
@@ -38,6 +42,44 @@ export interface SeedDemoDatasetInput {
   source?: 'canonical' | 'session';
   viewerUserId?: string | null;
   locale?: DemoLocale | string | null;
+}
+
+export interface MaterializeAtelierPresentationCapabilityInput {
+  /** Exact canonical tenant; this capability never accepts an arbitrary org. */
+  organizationId: 'atelier';
+  anchorDate?: Date | string | null;
+  /** Explicit opt-in. Omitted/false is a read-only plan. */
+  write?: boolean;
+  userMap?: Record<string, { id: string }>;
+  initiativeMap?: Record<string, string>;
+  /** Operator-authorized overwrite; never enabled by the normal dataset seed. */
+  force?: boolean;
+  persistRecoveryAnchor?: (postState: import('./atelierPresentationDeckSeed.js').AtelierDeckPostState[]) => Promise<void>;
+}
+
+/**
+ * Callable bridge from the authorized demo-dataset service to the governed
+ * presentation materializer. It is deliberately NOT called by
+ * `seedAtelierToysDemoDataset`: ordinary/demo-session provisioning must never
+ * acquire presentation write authority implicitly. The operator capability is
+ * dry-run by default and the CLI remains responsible for exact environment,
+ * target fingerprint, confirmation and signed recovery-manifest gates.
+ */
+export async function materializeAtelierPresentationCapability(
+  input: MaterializeAtelierPresentationCapabilityInput
+): Promise<SeedAtelierPresentationDecksResult> {
+  if (input.organizationId !== 'atelier') {
+    throw new Error('Atelier presentation capability is restricted to organization_id=atelier');
+  }
+  return seedAtelierPresentationDecks({
+    organizationId: input.organizationId,
+    anchorDate: input.anchorDate,
+    userMap: input.userMap,
+    initiativeMap: input.initiativeMap,
+    force: input.force,
+    dryRun: input.write !== true,
+    persistRecoveryAnchor: input.persistRecoveryAnchor,
+  });
 }
 
 export interface SeedDemoDatasetResult {
