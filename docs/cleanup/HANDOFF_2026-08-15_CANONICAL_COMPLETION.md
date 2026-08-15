@@ -14,9 +14,12 @@ podzbiorów jako gotowości całej aplikacji.
 
 - Checkout: `/Users/piotrwisniewski/Developer/consultify-canonical-full-20260814`
 - Branch: `codex/consultify-canonical-cleanup-20260814`
-- HEAD przy utworzeniu handoffu:
-  `3c5f8e2d739e4da2bb9f5a7e809d8327a70652fc`
-- Worktree przy utworzeniu handoffu: `CLEAN`
+- Authority product SHA po integracji recovery:
+  `c0ca3f26d0ac8e525ed2d807ff5e197d0ce0a282`
+- Cleanup baseline SHA przed końcowym raportem:
+  `b4b02deedbf18bc4e61ef9ed3493e125b6505d89`
+- Aktualny raport wykonawczy:
+  `docs/cleanup/FINAL_16_MODULE_READINESS_AND_EXECUTION_PLAN_2026-08-15.md`
 - Repozytorium iCloud
   `/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify` jest wyłącznie
   kwarantanną/evidence. Nie używać go jako integration base i niczego tam nie
@@ -50,7 +53,9 @@ Otwarte ryzyko recovery:
 - [CLOSED — object recovery] 460 unikalnych tip SHA odzyskano ze starego repo,
   przypięto jako `refs/recovery/unknown-20260815/<sha>` i zabezpieczono
   zweryfikowanym bundle. 39 jest przodkami kanonu, 421 pozostaje rozbieżnymi
-  kandydatami do modułowego review;
+  kandydatami do modułowego review. Review recovery jest obecnie domknięte:
+  224/224 heads w finalnym generatorze ma dyspozycję, zero semantic/owner
+  unknowns, osiem jawnych kandydatów integracyjnych;
 - najważniejsze nieprzeniesione clean/local oraz dirty/WIP są zapisane w
   istniejących manifestach cleanup. Nie scalać całych branchy; tylko modułowy
   diff lub pojedynczy zweryfikowany commit.

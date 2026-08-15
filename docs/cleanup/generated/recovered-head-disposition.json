@@ -4328,7 +4328,7 @@
       "taskId": "CLEAN-002-CHAT-013",
       "recoveryRef": "refs/recovery/unknown-20260815/d92737a1408086c478ec74348075854808b3e2fb",
       "deletionAuthorized": false,
-      "evidenceRule": "Canonical commit e176a2cb9 adds the Ideas target, switch and pinned transaction for idea, canonical map and receipt with tenant/owner readback, advisory locking, rollback and idempotent retry. Unit contracts pass 5/5 and server typecheck passes; two prepared realPG tests remain explicitly skipped without M01_PG_URL.",
+      "evidenceRule": "Canonical commit e176a2cb9 adds the Ideas target, switch and pinned transaction for idea, canonical map and receipt with tenant/owner readback, advisory locking, rollback and idempotent retry. Unit contracts pass 5/5 and server typecheck passes. The two prepared realPG cases were then executed against disposable PostgreSQL 15 and pass 2/2: rollback after receipt failure and concurrent retries produce exactly one idea, map and receipt.",
       "nextAction": "Run the two realPG rollback/concurrency cases on disposable migrated PostgreSQL and then prove signed-in Teresa approval before runtime acceptance."
     },
     {

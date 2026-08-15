@@ -1,7 +1,8 @@
 # Consultify — wykonawczy rejestr dokończenia modułów
 
 Data: 2026-08-15  
-Authority SHA dla bazowego full gate: `aeb28eb6abeb0af9f16750c66d6de0e8bb359702`  
+Authority product SHA: `c0ca3f26d0ac8e525ed2d807ff5e197d0ce0a282`
+Cleanup baseline SHA: `b4b02deedbf18bc4e61ef9ed3493e125b6505d89`
 Status: `EXECUTION_REGISTRY / NOT_RELEASE_READY`
 
 ## Rozszerzenie siedmiopunktowego planu sprzątania
@@ -301,15 +302,17 @@ query/localStorage ani wymagania zamkniętego wyłącznie deklaracją.
 
 ### Aktualny stan przygotowania pakietów
 
-- Etap 8: `PARTIAL` — 16 kart modułów i task IDs istnieją; trwa przypisywanie
-  wszystkich wyników test/recovery do luk i disposition.
+- Etap 8: `COMPLETE_CODE_INVENTORY` — 16/16 kart i task IDs znajduje się w
+  `FINAL_16_MODULE_READINESS_AND_EXECUTION_PLAN_2026-08-15.md`; 224/224
+  recovered heads ma werdykt, semantic unknowns = 0.
 - Etap 9: `PARTIAL` — istnieje kontrakt pakietu, lecz nie każdy task ma jeszcze
   wypełniony allowlist, fixtures, komendy i negative cases. Takiego tasku nie
   wolno przekazać agentowi jako implementacyjnego.
-- Etap 10: `NOT_STARTED` — integracja funkcjonalna rusza dopiero po zamknięciu
-  CLEAN-001/CLEAN-002 oraz gotowości pakietów pierwszej fali.
-- Etap 11: `IN_PROGRESS` — kontrola pokrycia będzie aktualizowana razem z
-  werdyktami CLEAN-001 i CLEAN-002.
+- Etap 10: `IN_PROGRESS` — zintegrowano 23 recovered candidates, w tym ostatnio
+  Chat Ideas handoff, Finance missing-vs-zero i Document transformative edit;
+  pozostaje 8 jawnych kandydatów, integracja tylko pakietami.
+- Etap 11: `COMPLETE_FOR_RECOVERY` — każdy recovered head ma disposition oraz
+  przypisany task albo dowód represented/superseded/rejected.
 - Etap 12: `IN_PROGRESS` — istnieją task IDs i zależności, ale wszystkie taski
   MVP muszą jeszcze otrzymać atomowe gap IDs, pełne allowlisty, fixtures,
   komendy oraz dowody wymagane do nadania `READY`.
@@ -317,10 +320,11 @@ query/localStorage ani wymagania zamkniętego wyłącznie deklaracją.
   pakietów i zamrożeniu ich baseline.
 - Etap 14: `NOT_STARTED` — karty końcowe będą zamykane falami po integracji i
   runtime acceptance, nie na podstawie samego audytu kodu.
-- Etap 15: `IN_PROGRESS` — istnieją karty i mapy łańcuchów; trwa mechaniczne
-  przypisanie każdego odzyskanego fragmentu i każdego wymagania do gap/verdictu.
-- Etap 16: `NOT_STARTED` — launch manifest zostanie zamrożony dopiero po
-  ukończeniu atomowych pakietów i ich niezależnym preflighcie.
+- Etap 15: `COMPLETE_CODE_LEVEL` — 16 kart mapuje route/UI/API/service/schema,
+  duplikaty, ownera i brakujące dowody; runtime/demo pozostają osobną bramką.
+- Etap 16: `IN_PROGRESS` — finalny raport zawiera kolejność, MVP remaining work,
+  post-MVP backlog i standard pakietu; pełne allowlisty/komendy trzeba zamrozić
+  bezpośrednio przed uruchomieniem każdego packetu na aktualnym baseline.
 - Etap 17: `NOT_STARTED` — reconciliation ruszy po pierwszej zintegrowanej fali;
   status release pozostaje `NOT_RELEASE_READY` do wyzerowania pracy MVP.
 
@@ -965,12 +969,23 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
 - DoD: create -> agenda/materials -> notes -> proposed summary -> approve ->
   one decision + task + material -> cold reopen; consent/retention/tenant proof.
 
-### PAR-001 — jeden V8 partner contract
+### PRT-001-CANONICAL-API — jeden V8 partner contract
 
 - Status: `PARTIAL`, P2; owner: Partner lane.
-- DoD: legacy/V8 adapter, participant_type, individual ledger, versioned
-  commission rules; register -> certificate -> code -> sale -> commission ->
-  payout z expiry/currency/correction/isolation negatives.
+- DoD: wszystkie acceptance reads/writes używają partner scope; zero legacy
+  fallbacku i demo seed-on-read; cross-partner/tenant denial.
+
+### PRT-002-INDIVIDUAL-LEDGER — osoba, attribution i commission truth
+
+- Status: `POST_MVP`, P2; zależność: PRT-001.
+- DoD: `participant_type`, osobny individual ledger, versioned commission rule,
+  retry/concurrency cardinality, correction/reversal audit i brak kolizji org.
+
+### PRT-003-GOLDEN-FLOW — referral-to-payout
+
+- Status: `POST_MVP`, P2; zależności: PRT-001/002.
+- DoD: register -> certificate -> code -> attributed sale -> commission ->
+  payout, cold reopen, expiry/currency/correction/isolation negatives.
 
 ## Macierz współbieżności
 
