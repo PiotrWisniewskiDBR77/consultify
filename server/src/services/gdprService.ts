@@ -314,16 +314,25 @@ export async function collectUserData(userId: string): Promise<UserDataExport> {
     securityEvents: [],
   };
 
-  data.user = await dbGet(
-    `SELECT id, email, first_name, last_name, phone, role, created_at, last_login_at
-     FROM users WHERE id = ?`,
-    [userId]
-  );
+  const userColumns = await getTableColumns('users');
+  const userSelect = buildSelect('users', userColumns, [
+    'id',
+    'email',
+    'first_name',
+    'last_name',
+    'phone',
+    'role',
+    'created_at',
+    'last_login_at',
+  ]);
+  data.user = await dbGet(`SELECT ${userSelect} FROM users WHERE id = ?`, [userId]);
 
-  const prefsRow = await dbGet<{ extended_preferences?: string }>(
-    `SELECT extended_preferences FROM users WHERE id = ?`,
-    [userId]
-  );
+  const prefsRow = userColumns.has('extended_preferences')
+    ? await dbGet<{ extended_preferences?: string }>(
+        `SELECT extended_preferences FROM users WHERE id = ?`,
+        [userId]
+      )
+    : null;
   data.preferences = prefsRow?.extended_preferences
     ? JSON.parse(prefsRow.extended_preferences)
     : null;

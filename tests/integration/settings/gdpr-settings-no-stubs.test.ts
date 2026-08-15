@@ -1,26 +1,22 @@
-import os from 'node:os';
-import path from 'node:path';
-
 import bcrypt from 'bcryptjs';
 import express from 'express';
 import jwt from 'jsonwebtoken';
+import { Pool } from 'pg';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
 
+import { assertRealPostgresTestEnvironment } from '../_helpers/assertRealPostgres';
+
 describe('Settings/GDPR routes (no stub responses)', () => {
   const prevEnv = { ...process.env };
-  const workerId = process.env.VITEST_WORKER_ID || '0';
-  const sqlitePath = path.join(os.tmpdir(), `consultify-gdpr-settings-${workerId}.db`);
-
-  let resetConnection: (() => Promise<void>) | null = null;
+  let pool: Pool;
   let db: any;
   let settingsRouter: any;
   let gdprRouter: any;
   let userControlsRouter: any;
-  let canRunIsolatedSqlite = true;
 
   const userId = 'u-gdpr-1';
-  const orgId = null;
+  const orgId = 'org-gdpr-settings-1';
   const userPassword = 'Sup3rSecret!';
   const passwordHash = bcrypt.hashSync(userPassword, 4);
   const jwtSecret = 'test-secret-min-32-chars-1234567890-abcdef';
@@ -44,51 +40,21 @@ describe('Settings/GDPR routes (no stub responses)', () => {
   beforeAll(async () => {
     process.env.NODE_ENV = 'test';
     process.env.MOCK_DB = 'false';
-    process.env.DB_TYPE = 'sqlite';
-    delete process.env.DATABASE_URL;
-    process.env.SQLITE_PATH = sqlitePath;
+    process.env.DB_TYPE = 'postgres';
     process.env.JWT_SECRET = jwtSecret;
 
     vi.resetModules();
-    const dbMod = await import('../../../server/src/database/Database.js');
-    canRunIsolatedSqlite = !process.env.DATABASE_URL;
-    if (!canRunIsolatedSqlite) {
-      return;
-    }
-    resetConnection = dbMod.resetConnection;
-    await resetConnection();
-    db = dbMod.getDatabase();
-
-    await db.exec(`
-      CREATE TABLE IF NOT EXISTS users (
-        id TEXT PRIMARY KEY,
-        organization_id TEXT,
-        email TEXT,
-        first_name TEXT,
-        last_name TEXT,
-        phone TEXT,
-        password TEXT,
-        role TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        last_login_at DATETIME
-      );
-      CREATE TABLE IF NOT EXISTS data_export_requests (
-        id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL,
-        status TEXT NOT NULL,
-        requested_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        expires_at DATETIME,
-        download_url TEXT
-      );
-      CREATE TABLE IF NOT EXISTS account_deletion_requests (
-        id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL,
-        status TEXT NOT NULL,
-        requested_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        scheduled_for DATETIME,
-        completed_at DATETIME
-      );
-    `);
+    await assertRealPostgresTestEnvironment();
+    pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    const bind = (sql: string) => {
+      let i = 0;
+      return sql.replace(/\?/g, () => `$${++i}`);
+    };
+    db = {
+      get: async (sql: string, params: unknown[] = []) =>
+        (await pool.query(bind(sql), params)).rows[0] ?? null,
+      run: async (sql: string, params: unknown[] = []) => pool.query(bind(sql), params),
+    };
 
     settingsRouter = (await import('../../../server/src/routes/settings.routes.ts')).default;
     gdprRouter = (await import('../../../server/src/routes/gdpr.routes.ts')).default;
@@ -99,20 +65,24 @@ describe('Settings/GDPR routes (no stub responses)', () => {
 
   afterAll(async () => {
     try {
-      await resetConnection?.();
+      await pool?.query(`DELETE FROM gdpr_requests WHERE user_id = $1`, [userId]);
+      await pool?.query(`DELETE FROM data_export_requests WHERE user_id = $1`, [userId]);
+      await pool?.query(`DELETE FROM users WHERE id = $1`, [userId]);
+      await pool?.query(`DELETE FROM organizations WHERE id = $1`, [orgId]);
+      await pool?.end();
     } finally {
       process.env = prevEnv;
     }
   });
 
   beforeEach(async () => {
-    if (!canRunIsolatedSqlite) return;
-
-    await db.exec(`
-      DELETE FROM account_deletion_requests WHERE user_id = '${userId}';
-      DELETE FROM data_export_requests WHERE user_id = '${userId}';
-      DELETE FROM users WHERE id = '${userId}';
-    `);
+    await pool.query(`DELETE FROM gdpr_requests WHERE user_id = $1`, [userId]);
+    await pool.query(`DELETE FROM data_export_requests WHERE user_id = $1`, [userId]);
+    await pool.query(`DELETE FROM users WHERE id = $1`, [userId]);
+    await pool.query(
+      `INSERT INTO organizations (id, name, plan, status) VALUES ($1, $2, 'enterprise', 'active') ON CONFLICT (id) DO NOTHING`,
+      [orgId, 'GDPR Settings Org']
+    );
     await db.run(
       `INSERT INTO users (id, organization_id, email, first_name, last_name, password, role) VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [userId, orgId, 'u1@test.local', 'U', 'One', passwordHash, 'ADMIN']
@@ -120,8 +90,6 @@ describe('Settings/GDPR routes (no stub responses)', () => {
   });
 
   it('POST /api/settings/export-data creates a real request (no fake eta)', async () => {
-    if (!canRunIsolatedSqlite) return;
-
     const res = await request(makeApp())
       .post('/api/settings/export-data')
       .set('Authorization', `Bearer ${makeToken()}`)
@@ -146,15 +114,13 @@ describe('Settings/GDPR routes (no stub responses)', () => {
   });
 
   it('POST /api/settings/gdpr/deletion-request creates a real request', async () => {
-    if (!canRunIsolatedSqlite) return;
-
     // The passwordless duplicate POST /api/settings/request-deletion was removed
     // (M25 L-02). The canonical bcrypt-gated endpoint writes to gdpr_requests.
     const res = await request(makeApp())
       .post('/api/settings/gdpr/deletion-request')
       .set('Authorization', `Bearer ${makeToken()}`)
       .send({ reason: 'test', password: userPassword });
-    expect(res.status).toBe(200);
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(res.body).toEqual(
       expect.objectContaining({
         success: true,
@@ -175,12 +141,10 @@ describe('Settings/GDPR routes (no stub responses)', () => {
   });
 
   it('GET /api/user/data-export returns JSON payload', async () => {
-    if (!canRunIsolatedSqlite) return;
-
     const res = await request(makeApp())
       .get('/api/user/data-export')
       .set('Authorization', `Bearer ${makeToken()}`);
-    expect(res.status).toBe(200);
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(res.body).toEqual(expect.objectContaining({ exportDate: expect.any(String) }));
     expect(res.body.user).toEqual(expect.objectContaining({ id: userId }));
   });

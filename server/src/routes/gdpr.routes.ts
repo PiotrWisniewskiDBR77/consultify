@@ -568,7 +568,7 @@ router.post(
       await dbRun(
         `INSERT INTO account_deletion_requests (
                 id, user_id, status, requested_at, scheduled_for
-            ) VALUES (?, ?, 'scheduled', datetime('now'), ?)`,
+            ) VALUES (?, ?, 'scheduled', CURRENT_TIMESTAMP, ?)`,
         [requestId, userId, scheduledFor.toISOString()]
       );
 
