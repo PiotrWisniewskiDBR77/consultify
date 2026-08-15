@@ -23,6 +23,34 @@
       "nextAction": "Do not restore the local allowlist. Retain the recovery ref until CLEAN-003."
     },
     {
+      "tip": "1f7f73623b7e05b084fb3a7880e29f6308a5039b",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-CHAT-001",
+      "evidenceRule": "This time-bound schema sweep targeted an older demo SHA. Its three actionable findings are represented by the current canonical migrations and code: proposal idempotency migration 800, self-contained attachment migration 942, and TEXT timestamp parity in work-canvas ensureStorage plus migration 943. Current demo parity still requires REL-001 evidence and must not reuse this old report.",
+      "nextAction": "Use fresh/upgrade PostgreSQL and exact-SHA demo readback in REL-001; retain this recovery ref as historical evidence until CLEAN-003."
+    },
+    {
+      "tip": "30774f1f462c9aab430ad861c50781da2a50f6cd",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-DOC-001",
+      "evidenceRule": "The recovered eight-card N-shell inventory blob is byte-identical to Harvard/wdrozenie-100/_ANALIZA_A1_INWENTARZ_KART_N.md in the current canonical tree (blob d03a1f76ce5ccc7c7b060f7cd972abc5a80ac546).",
+      "nextAction": "Keep the canonical document; retain the recovery ref until CLEAN-003."
+    },
+    {
+      "tip": "3859703e8ad15c71c5997e92b6101e18f35e1951",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-MAT-001",
+      "evidenceRule": "The recovered July 4 presentation audit is time-bound and superseded by repository-owned W7, step1b, and grow-content proof runs under docs/qa/deliverables/runs, while current remaining Materials gaps are tracked separately in the module registry and execution packets.",
+      "nextAction": "Do not restore the old status report; preserve its recovery ref until CLEAN-003."
+    },
+    {
+      "tip": "80c02c5cda9f0c19860bff2c068f689416f9a3ef",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-TEST-001",
+      "evidenceRule": "The recovered July 14 coverage burndown is superseded by CLEAN-001 discovery and isolated triage: the canonical runner reports 4052/4052 files exactly once with no missing/unexpected files, current dependencies include socket.io and cheerio, and open failures are classified in the current registry.",
+      "nextAction": "Use CLEAN-001 as the active test ledger; retain the historical recovery ref until CLEAN-003."
+    },
+    {
       "tip": "1eb9289377c3b1e6e33aae3465f43b19d63e4421",
       "verdict": "INTEGRATED_CANONICAL",
       "taskId": "CLEAN-002-SEC-001",

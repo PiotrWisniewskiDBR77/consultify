@@ -440,7 +440,11 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
   typecheck jest zielony. Lokalny allowlist trzech strategicznych narzędzi z
   kolejnego odzyskanego head został zastąpiony przez współdzielony
   `DEDICATED_TOOL_TYPES`; routing i registry mają 2 pliki / 16 testów PASS.
-  Pozostałe 199 nadal wymaga review. Te 18 pozostaje zachowanym materiałem
+  Cztery małe historie dokumentacyjne zostały zweryfikowane: inwentarz ośmiu
+  kart jest bajtowo obecny w kanonie (`REPRESENTED_CANONICAL`), a stare raporty
+  Chat schema, Presentation W7 i Coverage są zastąpione przez aktualne
+  migracje/kod oraz repozytoryjne evidence CLEAN-001/Materials. Pozostałe 195
+  nadal wymaga review. Te 18 pozostaje zachowanym materiałem
   UX/prototypowym, ale nie
   jest kodem produkcyjnym do merge. Generator mechanicznie egzekwuje warunek
   ścieżek, unikalność, sumy i deterministyczny output; nadal

@@ -79,9 +79,14 @@ const rows = source.rows
 const referenceHarnessOnly = rows.filter((row) => row.verdict === 'REFERENCE_HARNESS_ONLY').length;
 const reviewRequired = rows.filter((row) => row.verdict === 'SEMANTIC_REVIEW_REQUIRED').length;
 const representedSuperseded = rows.filter((row) => row.verdict === 'REPRESENTED_SUPERSEDED').length;
+const representedCanonical = rows.filter((row) => row.verdict === 'REPRESENTED_CANONICAL').length;
 const integratedCanonical = rows.filter((row) => row.verdict === 'INTEGRATED_CANONICAL').length;
 if (
-  referenceHarnessOnly + reviewRequired + representedSuperseded + integratedCanonical !==
+  referenceHarnessOnly +
+    reviewRequired +
+    representedSuperseded +
+    representedCanonical +
+    integratedCanonical !==
   source.independentHeadCount
 ) {
   throw new Error('Disposition count does not match independent head count');
@@ -109,6 +114,7 @@ const output = {
     total: rows.length,
     referenceHarnessOnly,
     representedSuperseded,
+    representedCanonical,
     integratedCanonical,
     semanticReviewRequired: reviewRequired,
     deletionAuthorized: 0,
@@ -123,6 +129,7 @@ const md = `# Recovered independent-head disposition ledger
 - Independent heads: **${rows.length}**
 - \`REFERENCE_HARNESS_ONLY\`: **${referenceHarnessOnly}**
 - \`REPRESENTED_SUPERSEDED\`: **${representedSuperseded}**
+- \`REPRESENTED_CANONICAL\`: **${representedCanonical}**
 - \`INTEGRATED_CANONICAL\`: **${integratedCanonical}**
 - \`SEMANTIC_REVIEW_REQUIRED\`: **${reviewRequired}**
 - Deletion authorized: **0**
