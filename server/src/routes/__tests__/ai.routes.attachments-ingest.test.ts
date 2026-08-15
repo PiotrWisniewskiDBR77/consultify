@@ -22,6 +22,11 @@ import express, { type Express } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+// Multipart parsing is the contract under test. The global lightweight multer
+// stand-in exposes the raw multipart envelope as file.buffer, so use the real
+// parser here.
+vi.unmock('multer');
+
 const dbRun = vi.fn().mockResolvedValue({ success: true });
 const dbAll = vi.fn().mockResolvedValue([]);
 const dbGet = vi.fn().mockResolvedValue(undefined);
@@ -119,9 +124,11 @@ describe('POST /ai/attachments/ingest (file ingest)', () => {
     const app = await createApp();
     const res = await request(app)
       .post('/api/ai/attachments/ingest')
-      .attach('file', Buffer.from(''), { filename: 'empty.txt', contentType: 'text/plain' });
+      // A zero-byte multipart part may be omitted by the client encoder. Use
+      // whitespace to send a real file while still producing no readable text.
+      .attach('file', Buffer.from('   '), { filename: 'empty.txt', contentType: 'text/plain' });
 
-    expect(res.status).toBe(400);
+    expect(res.status, JSON.stringify(res.body)).toBe(400);
     expect(res.body.code).toBe('TEXT_EXTRACTION_FAILED');
   });
 });
