@@ -65,10 +65,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { withPinnedPostgresTransaction } from '../../database/PostgresDatabase.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import {
-  createCandidateFromSource,
   type CandidateDb,
+  createCandidateFromSource,
 } from '../initiative/initiativeCandidateService.js';
-
 import { canonicalStatusToken } from './interviewStatusNormalization.js';
 
 export type InterviewCandidateSourceType = 'interview_submission' | 'interview_insight_finding';
@@ -139,6 +138,8 @@ interface AssignmentRow {
   status: string | null;
   session_id: string | null;
   template_id: string | null;
+  assignee_user_id: string | null;
+  project_id: string | null;
 }
 
 interface SubmissionSnapshotRow {
@@ -153,6 +154,7 @@ interface FindingRow {
   review_status: string | null;
   readback_status: string | null;
   updated_at: string | Date;
+  created_by: string | null;
 }
 
 interface HandoffRow {
@@ -178,6 +180,30 @@ interface CandidateRow {
 
 function toIsoString(value: string | Date): string {
   return value instanceof Date ? value.toISOString() : String(value);
+}
+
+async function resolveUserDisplay(
+  db: Pick<CandidateDb, 'queryOne'>,
+  userId: string | null | undefined
+): Promise<{ name: string | null; email: string | null }> {
+  if (!userId) return { name: null, email: null };
+  const user = await db.queryOne<{
+    first_name: string | null;
+    last_name: string | null;
+    email: string | null;
+  }>(`SELECT first_name, last_name, email FROM users WHERE id = ?`, [userId]);
+  if (!user) return { name: null, email: null };
+  const name = [user.first_name, user.last_name]
+    .filter((part) => part && part.trim())
+    .join(' ')
+    .trim();
+  return { name: name || user.email || null, email: user.email ?? null };
+}
+
+function truncateSnippet(value: string | null | undefined, max = 200): string | null {
+  const text = String(value ?? '').trim();
+  if (!text) return null;
+  return text.length > max ? `${text.slice(0, max - 1)}…` : text;
 }
 
 function toHandoffRecord(row: HandoffRow): InterviewHandoffRecord {
@@ -220,12 +246,17 @@ async function resolveEligibleSource(
   acceptedSnapshotId: string;
   title: string;
   rationale: string;
+  projectId: string | null;
+  projectName: string | null;
+  authorName: string | null;
+  authorEmail: string | null;
+  evidenceSnippet: string | null;
 }> {
   const lockClause = opts.forUpdate ? ' FOR UPDATE' : '';
 
   if (source.kind === 'submission') {
     const assignment = await db.queryOne<AssignmentRow>(
-      `SELECT id, organization_id, status, session_id, template_id
+      `SELECT id, organization_id, status, session_id, template_id, assignee_user_id, project_id
        FROM interview_assignments
        WHERE id = ? AND organization_id = ?${lockClause}`,
       [source.assignmentId, organizationId]
@@ -281,6 +312,29 @@ async function resolveEligibleSource(
     const acceptedSnapshotId = `${assignment.id}:${toIsoString(latestSubmission!.saved_at)}`;
     const label = (template?.name && template.name.trim()) || assignment.id;
 
+    let projectId = assignment.project_id ?? null;
+    if (!projectId && assignment.session_id) {
+      const session = await db.queryOne<{ project_id: string | null }>(
+        `SELECT project_id FROM interview_sessions WHERE id = ? AND organization_id = ?`,
+        [assignment.session_id, organizationId]
+      );
+      projectId = session?.project_id ?? null;
+    }
+    const project = projectId
+      ? await db.queryOne<{ name: string | null }>(
+          `SELECT name FROM projects WHERE id = ? AND organization_id = ?`,
+          [projectId, organizationId]
+        )
+      : null;
+    const author = await resolveUserDisplay(db, assignment.assignee_user_id);
+    const evidence = await db.queryOne<{ answer_text: string | null }>(
+      `SELECT answer_text FROM interview_answer_history
+       WHERE organization_id = ? AND assignment_id = ? AND reason = 'submission' AND saved_at = ?
+         AND answer_text IS NOT NULL AND answer_text <> ''
+       ORDER BY question_id LIMIT 1`,
+      [organizationId, assignment.id, latestSubmission!.saved_at]
+    );
+
     return {
       sourceType: 'interview_submission',
       sourceId: assignment.id,
@@ -290,12 +344,17 @@ async function resolveEligibleSource(
       acceptedSnapshotId,
       title: `Interview submission: ${label}`,
       rationale: `Promoted from an approved interview submission (assignment ${assignment.id}).`,
+      projectId,
+      projectName: project?.name ?? null,
+      authorName: author.name,
+      authorEmail: author.email,
+      evidenceSnippet: truncateSnippet(evidence?.answer_text),
     };
   }
 
   // source.kind === 'insight_finding'
   const finding = await db.queryOne<FindingRow>(
-    `SELECT id, organization_id, insight_id, finding_statement, review_status, readback_status, updated_at
+    `SELECT id, organization_id, insight_id, finding_statement, review_status, readback_status, updated_at, created_by
      FROM interview_insight_findings
      WHERE id = ? AND organization_id = ?${lockClause}`,
     [source.findingId, organizationId]
@@ -319,6 +378,46 @@ async function resolveEligibleSource(
   const statement = (finding.finding_statement || '').trim();
   const summary = statement.length > 160 ? `${statement.slice(0, 157)}...` : statement;
 
+  const insight = await db.queryOne<{
+    session_id: string | null;
+    source_session_ids: string | null;
+  }>(
+    `SELECT session_id, source_session_ids FROM interview_insights WHERE id = ? AND organization_id = ?`,
+    [finding.insight_id, organizationId]
+  );
+  let firstSessionId = insight?.session_id?.trim() || null;
+  if (!firstSessionId && insight?.source_session_ids) {
+    try {
+      const parsed = JSON.parse(insight.source_session_ids);
+      firstSessionId = Array.isArray(parsed)
+        ? (parsed.find((value) => typeof value === 'string' && value.trim()) ?? null)
+        : null;
+    } catch {
+      firstSessionId = null;
+    }
+  }
+  const session = firstSessionId
+    ? await db.queryOne<{ project_id: string | null }>(
+        `SELECT project_id FROM interview_sessions WHERE id = ? AND organization_id = ?`,
+        [firstSessionId, organizationId]
+      )
+    : null;
+  const projectId = session?.project_id ?? null;
+  const project = projectId
+    ? await db.queryOne<{ name: string | null }>(
+        `SELECT name FROM projects WHERE id = ? AND organization_id = ?`,
+        [projectId, organizationId]
+      )
+    : null;
+  const author = await resolveUserDisplay(db, finding.created_by);
+  const evidence = await db.queryOne<{ captured_excerpt: string | null }>(
+    `SELECT captured_excerpt FROM interview_insight_evidence_pointers
+     WHERE organization_id = ? AND finding_id = ? AND pointer_state = 'active'
+       AND captured_excerpt IS NOT NULL AND captured_excerpt <> ''
+     ORDER BY captured_at ASC LIMIT 1`,
+    [organizationId, finding.id]
+  );
+
   return {
     sourceType: 'interview_insight_finding',
     sourceId: finding.id,
@@ -328,6 +427,11 @@ async function resolveEligibleSource(
     acceptedSnapshotId,
     title: summary ? `Interview insight: ${summary}` : `Interview insight finding ${finding.id}`,
     rationale: `Promoted from a published, client-confirmed interview insight finding (${finding.id}).`,
+    projectId,
+    projectName: project?.name ?? null,
+    authorName: author.name,
+    authorEmail: author.email,
+    evidenceSnippet: truncateSnippet(evidence?.captured_excerpt ?? finding.finding_statement),
   };
 }
 
@@ -350,6 +454,12 @@ export async function previewInterviewCandidate(params: {
   rationale: string;
   alreadyHandedOff: boolean;
   existingCandidateId: string | null;
+  projectId: string | null;
+  projectName: string | null;
+  authorName: string | null;
+  authorEmail: string | null;
+  evidenceSnippet: string | null;
+  candidateStatus: string | null;
 }> {
   const resolved = await resolveEligibleSource(queryHelpers, params.organizationId, params.source, {
     forUpdate: false,
@@ -359,6 +469,12 @@ export async function previewInterviewCandidate(params: {
     `SELECT * FROM interview_candidate_handoffs WHERE organization_id = ? AND source_type = ? AND accepted_snapshot_id = ?`,
     [params.organizationId, resolved.sourceType, resolved.acceptedSnapshotId]
   );
+  const existingCandidate = existing
+    ? await queryHelpers.queryOne<{ status: string | null }>(
+        `SELECT status FROM initiative_candidates WHERE id = ? AND organization_id = ?`,
+        [existing.candidate_id, params.organizationId]
+      )
+    : null;
 
   return {
     sourceType: resolved.sourceType,
@@ -368,6 +484,12 @@ export async function previewInterviewCandidate(params: {
     rationale: resolved.rationale,
     alreadyHandedOff: Boolean(existing),
     existingCandidateId: existing?.candidate_id ?? null,
+    projectId: resolved.projectId,
+    projectName: resolved.projectName,
+    authorName: resolved.authorName,
+    authorEmail: resolved.authorEmail,
+    evidenceSnippet: resolved.evidenceSnippet,
+    candidateStatus: existingCandidate?.status ?? null,
   };
 }
 

@@ -42,6 +42,8 @@ vi.mock('../../server/src/services/ai/llmService.js', () => ({
 const PREFIX = 'odbior--int008--';
 const RESPONDENT_ID = `${PREFIX}respondent`;
 const RESPONDENT_EMAIL = `${PREFIX}respondent@acceptance.local`;
+const PROJECT_ID = `${PREFIX}project`;
+const FINDING_SESSION_ID = `${PREFIX}finding-session`;
 
 // Submission-path fixtures (session/assignment/question ids per scenario).
 const SUB = {
@@ -104,22 +106,41 @@ let setInterviewCandidateHandoffFaultInjectorForTests: (
 
 async function insertAssignmentFixture(
   client: ReturnType<typeof pgClient>,
-  fixture: { session: string; assignment: string; question: string; template: string }
+  fixture: { session: string; assignment: string; question: string; template: string },
+  projectId: string | null = null
 ) {
   const now = new Date().toISOString();
   await client.query(
     `INSERT INTO interview_sessions
-       (id, organization_id, name, owner_id, status, total_questions, answered_questions,
+       (id, organization_id, project_id, name, owner_id, status, total_questions, answered_questions,
         template_id, assignment_id, started_at, last_activity_at, created_at, updated_at)
-     VALUES ($1, $2, $3, $4, 'active', 1, 1, $5, $6, $7, $7, $7, $7)`,
-    [fixture.session, SEED.ORG_ID, `${PREFIX}session`, RESPONDENT_ID, fixture.template, fixture.assignment, now]
+     VALUES ($1, $2, $3, $4, $5, 'active', 1, 1, $6, $7, $8, $8, $8, $8)`,
+    [
+      fixture.session,
+      SEED.ORG_ID,
+      projectId,
+      `${PREFIX}session`,
+      RESPONDENT_ID,
+      fixture.template,
+      fixture.assignment,
+      now,
+    ]
   );
   await client.query(
     `INSERT INTO interview_assignments
        (id, organization_id, assignee_user_id, template_id, template_version, status,
-        session_id, created_by, created_at, updated_at)
-     VALUES ($1, $2, $3, $4, 1, 'in_progress', $5, $6, $7, $7)`,
-    [fixture.assignment, SEED.ORG_ID, RESPONDENT_ID, fixture.template, fixture.session, SEED.USER_ID, now]
+        session_id, project_id, created_by, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, 1, 'in_progress', $5, $6, $7, $8, $8)`,
+    [
+      fixture.assignment,
+      SEED.ORG_ID,
+      RESPONDENT_ID,
+      fixture.template,
+      fixture.session,
+      projectId,
+      SEED.USER_ID,
+      now,
+    ]
   );
   await client.query(
     `INSERT INTO interview_questions
@@ -183,16 +204,56 @@ beforeAll(async () => {
       [`${PREFIX}respondent-membership`, SEED.ORG_ID, RESPONDENT_ID, now]
     );
 
-    // Submission-path fixtures (all 5 scenarios' session/assignment/question rows).
-    for (const fixture of Object.values(SUB)) {
+    await client.query(
+      `INSERT INTO projects (id, organization_id, name, status, created_at)
+       VALUES ($1, $2, $3, 'active', $4) ON CONFLICT (id) DO NOTHING`,
+      [PROJECT_ID, SEED.ORG_ID, 'INT-008 source project', now]
+    );
+
+    await insertAssignmentFixture(client, SUB.golden, PROJECT_ID);
+    for (const fixture of [SUB.submittedOnly, SUB.sentBack, SUB.concurrency, SUB.fault]) {
       await insertAssignmentFixture(client, fixture);
     }
 
+    await client.query(
+      `INSERT INTO interview_sessions
+         (id, organization_id, project_id, name, owner_id, status, started_at, last_activity_at, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, 'active', $6, $6, $6, $6)`,
+      [FINDING_SESSION_ID, SEED.ORG_ID, PROJECT_ID, 'INT-008 finding session', SEED.USER_ID, now]
+    );
+
     // Insight-finding-path fixtures.
     await client.query(
-      `INSERT INTO interview_insights (id, organization_id, title, created_by, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $5)`,
-      [FINDING.golden.insight, SEED.ORG_ID, `${PREFIX}insight golden`, SEED.USER_ID, now]
+      `INSERT INTO interview_insights
+         (id, session_id, organization_id, category, title, source_session_ids, created_by, created_at, updated_at)
+       VALUES ($1, $2, $3, 'strategy', $4, $5, $6, $7, $7)`,
+      [
+        FINDING.golden.insight,
+        FINDING_SESSION_ID,
+        SEED.ORG_ID,
+        `${PREFIX}insight golden`,
+        JSON.stringify([FINDING_SESSION_ID]),
+        SEED.USER_ID,
+        now,
+      ]
+    );
+
+    await client.query(
+      `INSERT INTO interview_insight_evidence_pointers
+         (id, organization_id, insight_id, finding_id, pointer_type, source_ref, source_fingerprint,
+          captured_excerpt, captured_at, pointer_state, created_by, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, 'quote', $5, $6, $7, $8, 'active', $9, $8, $8)`,
+      [
+        `${PREFIX}evidence`,
+        SEED.ORG_ID,
+        FINDING.golden.insight,
+        FINDING.golden.finding,
+        `${PREFIX}source`,
+        `${PREFIX}fingerprint`,
+        RAW_RESPONDENT_QUOTE,
+        now,
+        SEED.USER_ID,
+      ]
     );
     await client.query(
       `INSERT INTO interview_insight_findings
@@ -242,9 +303,11 @@ beforeAll(async () => {
   const candidateHandoffRouter = (
     await import('../../server/src/routes/interviewCandidateHandoff.routes.js')
   ).default;
-  ({ setInterviewCandidateHandoffFaultInjectorForTests } = await import(
-    '../../server/src/services/interview/interviewCandidateHandoff.js'
-  ));
+  const initiativeCandidatesRouter = (
+    await import('../../server/src/routes/initiativeCandidates.routes.js')
+  ).default;
+  ({ setInterviewCandidateHandoffFaultInjectorForTests } =
+    await import('../../server/src/services/interview/interviewCandidateHandoff.js'));
 
   app = express();
   app.use(express.json());
@@ -253,6 +316,7 @@ beforeAll(async () => {
   // through unmatched routes in the first router to the second.
   app.use('/api/interview', interviewRouter);
   app.use('/api/interview/candidate-handoff', candidateHandoffRouter);
+  app.use('/api/initiatives', initiativeCandidatesRouter);
 
   respondentToken = mintToken({ id: RESPONDENT_ID, email: RESPONDENT_EMAIL, role: 'USER' });
   managerToken = mintToken({ role: 'ADMIN' });
@@ -284,7 +348,9 @@ beforeAll(async () => {
       .set('Authorization', `Bearer ${managerToken}`)
       .send({ reason: 'Proszę o więcej szczegółów.' });
     if (res.status !== 200) {
-      throw new Error(`sendBack(${assignmentId}) failed: ${res.status} ${JSON.stringify(res.body)}`);
+      throw new Error(
+        `sendBack(${assignmentId}) failed: ${res.status} ${JSON.stringify(res.body)}`
+      );
     }
   }
 
@@ -308,6 +374,12 @@ afterAll(async () => {
   const client = pgClient();
   await client.connect();
   try {
+    await client.query(
+      `DELETE FROM initiatives WHERE source_candidate_id IN (
+      SELECT id FROM initiative_candidates WHERE source_id LIKE $1
+    )`,
+      [`${PREFIX}%`]
+    );
     await client.query(`DELETE FROM interview_candidate_handoffs WHERE source_id LIKE $1`, [
       `${PREFIX}%`,
     ]);
@@ -320,8 +392,13 @@ afterAll(async () => {
       await client.query('DELETE FROM interview_assignments WHERE id = $1', [fixture.assignment]);
       await client.query('DELETE FROM interview_sessions WHERE id = $1', [fixture.session]);
     }
+    await client.query('DELETE FROM interview_insight_evidence_pointers WHERE id LIKE $1', [
+      `${PREFIX}%`,
+    ]);
     await client.query('DELETE FROM interview_insight_findings WHERE id LIKE $1', [`${PREFIX}%`]);
     await client.query('DELETE FROM interview_insights WHERE id LIKE $1', [`${PREFIX}%`]);
+    await client.query('DELETE FROM interview_sessions WHERE id = $1', [FINDING_SESSION_ID]);
+    await client.query('DELETE FROM projects WHERE id = $1', [PROJECT_ID]);
     await client.query('DELETE FROM organization_members WHERE id LIKE $1', [`${PREFIX}%`]);
     await client.query('DELETE FROM users WHERE id = $1', [RESPONDENT_ID]);
   } finally {
@@ -338,6 +415,12 @@ describe('INT-08 — interview candidate handoff (golden flow, idempotency, conc
       .set('Authorization', `Bearer ${managerToken}`);
     expect(preview.status, JSON.stringify(preview.body)).toBe(200);
     expect(preview.body.data.alreadyHandedOff).toBe(false);
+    expect(preview.body.data.projectId).toBe(PROJECT_ID);
+    expect(preview.body.data.projectName).toBe('INT-008 source project');
+    expect(preview.body.data.authorName).toBe('Respondent INT008');
+    expect(preview.body.data.authorEmail).toBe(RESPONDENT_EMAIL);
+    expect(preview.body.data.evidenceSnippet).toBe(ANSWER_TEXT);
+    expect(preview.body.data.candidateStatus).toBeNull();
 
     const approve1 = await request(app)
       .post(`/api/interview/candidate-handoff/submission/${assignment}/approve`)
@@ -352,13 +435,16 @@ describe('INT-08 — interview candidate handoff (golden flow, idempotency, conc
     await client.connect();
     try {
       const candidateRow = await client.query(
-        `SELECT source_type, source_id FROM initiative_candidates WHERE id = $1`,
+        `SELECT source_type, source_id, title, rationale, created_by FROM initiative_candidates WHERE id = $1`,
         [candidateId]
       );
       expect(candidateRow.rows).toHaveLength(1);
       expect(candidateRow.rows[0].source_type).toBe('interview_submission');
       expect(candidateRow.rows[0].source_type).not.toBe('interview_insight');
       expect(candidateRow.rows[0].source_id).toBe(assignment);
+      expect(candidateRow.rows[0].title).toBe(preview.body.data.title);
+      expect(candidateRow.rows[0].rationale).toBe(preview.body.data.rationale);
+      expect(candidateRow.rows[0].created_by).toBe(SEED.USER_ID);
     } finally {
       await client.end();
     }
@@ -395,6 +481,35 @@ describe('INT-08 — interview candidate handoff (golden flow, idempotency, conc
     expect(lineage.body.data.sourceId).toBe(assignment);
     expect(lineage.body.data.candidateId).toBe(candidateId);
     expect(lineage.body.data.initiativeId).toBeNull();
+    expect(lineage.body.data.acceptedSnapshotId).toBe(preview.body.data.acceptedSnapshotId);
+    expect(lineage.body.data.createdBy).toBe(SEED.USER_ID);
+
+    const accept = await request(app)
+      .post(`/api/initiatives/candidates/${candidateId}/accept`)
+      .set('Authorization', `Bearer ${managerToken}`)
+      .send({ fill: false });
+    expect(accept.status, JSON.stringify(accept.body)).toBe(200);
+    const initiativeId = accept.body.initiativeId;
+    expect(initiativeId).toBeTruthy();
+
+    const finalDb = pgClient();
+    await finalDb.connect();
+    try {
+      const final = await finalDb.query(
+        `SELECT id, title, problem_statement, source_type, source_id, source_candidate_id
+           FROM initiatives WHERE id = $1`,
+        [initiativeId]
+      );
+      expect(final.rows[0]).toMatchObject({
+        title: preview.body.data.title,
+        problem_statement: preview.body.data.rationale,
+        source_type: 'interview_submission',
+        source_id: assignment,
+        source_candidate_id: candidateId,
+      });
+    } finally {
+      await finalDb.end();
+    }
   });
 
   it('insight-finding path: preview -> approve (created) -> retry (idempotent), curated content only', async () => {
@@ -405,6 +520,10 @@ describe('INT-08 — interview candidate handoff (golden flow, idempotency, conc
       .set('Authorization', `Bearer ${managerToken}`);
     expect(preview.status, JSON.stringify(preview.body)).toBe(200);
     expect(preview.body.data.alreadyHandedOff).toBe(false);
+    expect(preview.body.data.projectId).toBe(PROJECT_ID);
+    expect(preview.body.data.authorName).toBe('Odbior Harness');
+    expect(preview.body.data.authorEmail).toBe(SEED.EMAIL);
+    expect(preview.body.data.evidenceSnippet).toBe(RAW_RESPONDENT_QUOTE);
 
     const approve1 = await request(app)
       .post(`/api/interview/candidate-handoff/insight-finding/${finding}/approve`)
