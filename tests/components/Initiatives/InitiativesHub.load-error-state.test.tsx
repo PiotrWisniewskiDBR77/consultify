@@ -8,12 +8,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockGetPortfolio = vi.fn();
 const mockGetInitiatives = vi.fn();
-
+const mockListRegisteredInitiatives = vi.fn();
+const mockCurrentUser = { id: 'u-1', role: 'ADMIN', firstName: 'A', lastName: 'B' };
 
 vi.mock('../../../src/store/useAppStore', () => ({
   useAppStore: () => ({
     currentProjectId: null,
-    currentUser: { id: 'u-1', role: 'ADMIN', firstName: 'A', lastName: 'B' },
+    currentUser: mockCurrentUser,
   }),
 }));
 
@@ -39,6 +40,10 @@ vi.mock('../../../src/services/api/v8/planning', () => ({
     getPendingDecisions: vi.fn().mockResolvedValue({ pendingDecisionChains: [] }),
     getInitiativeSnapshot: vi.fn().mockResolvedValue(null),
   },
+}));
+
+vi.mock('../../../src/services/initiatives-execution/runtimeApi', () => ({
+  listRegisteredInitiatives: (...args: unknown[]) => mockListRegisteredInitiatives(...args),
 }));
 
 vi.mock('../../../src/services/initiativeLifecycle', () => ({
@@ -133,6 +138,11 @@ describe('InitiativesHub load error quality', () => {
   });
 
   it('shows error code on load failure and clears on dismiss', async () => {
+    mockListRegisteredInitiatives.mockRejectedValue({
+      status: 500,
+      message: 'canonical runtime failed',
+      data: { error: 'Forbidden', code: 'INITIATIVE_NOT_FOUND' },
+    });
     mockGetPortfolio.mockRejectedValue({
       status: 500,
       message: 'v8 failed',

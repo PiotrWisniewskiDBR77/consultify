@@ -39,22 +39,24 @@ describe('R13 PortfolioAnalysisView wiring — source anchors', () => {
   it('does not touch TableWithPreviewLayout/dependency POST-DELETE logic (still present, unmodified call sites)', () => {
     expect(source).toContain('<TableWithPreviewLayout<PreviewItem>');
     expect(source).toContain("Api.post('/initiatives/portfolio/dependencies'");
-    expect(source).toContain("Api.delete(`/initiatives/portfolio/dependencies/${dependencyId}`)");
+    expect(source).toContain('Api.delete(`/initiatives/portfolio/dependencies/${dependencyId}`)');
   });
 });
 
-describe('R13 — InitiativesHub.tsx and R11 wiring untouched by this package', () => {
-  it('InitiativesHub.tsx analysis mount site is unmodified; R11 T27/T28/T29 wiring intact', () => {
-    const HUB_PATH = path.resolve(__dirname, '../../../src/components/Initiatives/InitiativesHub.tsx');
+describe('R13 — canonical hub ownership', () => {
+  it('keeps the legacy analysis workspace unmounted from the canonical portfolio surface', () => {
+    const HUB_PATH = path.resolve(
+      __dirname,
+      '../../../src/components/Initiatives/InitiativesHub.tsx'
+    );
     const hubSource = readFileSync(HUB_PATH, 'utf-8');
-    expect(hubSource).toContain("if (activeTab === 'analysis') {");
-    expect(hubSource).toContain('<PortfolioAnalysisView');
+    expect(hubSource).toContain("if (activeTab === 'portfolio') {");
+    expect(hubSource).toContain('<PortfolioScenarioSurface');
+    expect(hubSource).not.toContain("if (activeTab === 'analysis') {");
+    expect(hubSource).not.toContain('<PortfolioAnalysisView');
     expect(hubSource).not.toContain('PortfolioAnalysisTable');
-    // R11 regressions (byte-preserved anchors from the prior accepted package)
-    expect(hubSource).toContain('<InitiativeObservabilityTable');
-    expect(hubSource).toContain('<CandidatesTable onAccept={handleAcceptCandidate} />');
-    expect(hubSource).toContain('<PortfolioHealthTable onOpenInitiative={openInitiative} />');
-    // T25 (byte-preserved anchor from the prior accepted package)
-    expect(hubSource).toContain('const tablePreviewDetailsText = buildInitiativePreviewDetails(');
+    expect(hubSource).not.toContain('<InitiativeObservabilityTable');
+    expect(hubSource).not.toContain('<CandidatesTable');
+    expect(hubSource).not.toContain('<PortfolioHealthTable');
   });
 });

@@ -78,7 +78,7 @@ describe('InitiativeObservabilityPanel (E1/E2)', () => {
 
     render(<InitiativeObservabilityPanel initialInitiativeId="i-1" />);
 
-    expect(await screen.findByText('Łańcuch pochodzenia inicjatywy')).toBeTruthy();
+    expect(await screen.findByText('Initiative lineage chain')).toBeTruthy();
     await waitFor(() => expect(getLineage).toHaveBeenCalledWith('i-1'));
     // chain nodes — 'Inicjatywa A' appears in both the picker <option> and the
     // lineage node, so assert ≥1 match.

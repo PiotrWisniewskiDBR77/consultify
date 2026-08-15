@@ -72,7 +72,7 @@ describe('InitiativeGantt — V1 features', () => {
     expect(paths.length).toBeGreaterThanOrEqual(1);
   });
 
-  it('highlights critical-path bars with a ring + title marker', () => {
+  it('highlights critical-path bars with the semantic danger ring + title marker', () => {
     render(
       <InitiativeGantt
         items={items}
@@ -81,7 +81,7 @@ describe('InitiativeGantt — V1 features', () => {
       />
     );
     const critical = screen.getByTitle(/Analiza.*critical path/);
-    expect(critical.className).toMatch(/ring-rose-400/);
+    expect(critical.className).toMatch(/ring-c-danger/);
   });
 
   it('shows no status filter when items carry no status', () => {

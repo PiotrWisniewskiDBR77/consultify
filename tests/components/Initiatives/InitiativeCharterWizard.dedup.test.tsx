@@ -46,13 +46,13 @@ vi.mock('@/components/shared/WizardModal', () => ({
 
 import { InitiativeCharterWizard } from '@/components/Initiatives/Wizard/InitiativeCharterWizard';
 
-const TITLE_PLACEHOLDER = /Standaryzacja procesu przekazań|Standardize handoff process/;
-const SIMILAR_HEADING = /Podobne inicjatywy już istnieją|Similar initiatives already exist/;
+// This suite stubs i18n with `t(key) => key`, so select the controls by the
+// stable translation contracts rather than by locale-specific copy.
+const TITLE_PLACEHOLDER = 'initiatives.initiativeCharterWizard.titlePlaceholder';
+const SIMILAR_HEADING = 'initiatives.initiativeCharterWizard.similarWarning';
 
 function renderWizard() {
-  return render(
-    <InitiativeCharterWizard isOpen onClose={vi.fn()} onCreated={vi.fn()} />
-  );
+  return render(<InitiativeCharterWizard isOpen onClose={vi.fn()} onCreated={vi.fn()} />);
 }
 
 async function flush() {
