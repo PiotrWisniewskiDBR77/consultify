@@ -187,18 +187,58 @@ const runStandardSharded = async () => {
     files: [],
     sourceBytes: 0,
   }));
-  const bySize = discovered
-    .map((file) => ({ file, bytes: statSync(resolve(root, file)).size }))
-    .sort((a, b) => b.bytes - a.bytes || a.file.localeCompare(b.file));
-  for (const entry of bySize) {
+  const entries = discovered.map((file) => ({
+    file,
+    bytes: statSync(resolve(root, file)).size,
+  }));
+  const parent = new Map(discovered.map((file) => [file, file]));
+  const findRoot = (file) => {
+    const current = parent.get(file);
+    if (current === file) return file;
+    const rootFile = findRoot(current);
+    parent.set(file, rootFile);
+    return rootFile;
+  };
+  const joinFiles = (left, right) => {
+    const leftRoot = findRoot(left);
+    const rightRoot = findRoot(right);
+    if (leftRoot !== rightRoot) parent.set(rightRoot, leftRoot);
+  };
+  // Vitest CLI filters are substrings even when absolute. Co-locate the rare
+  // prefix collision (for example foo.test.ts + foo.test.tsx), so selecting
+  // the shorter path cannot execute a file owned by a different shard.
+  for (let left = 0; left < discovered.length; left += 1) {
+    for (
+      let right = left + 1;
+      right < discovered.length && discovered[right].startsWith(discovered[left]);
+      right += 1
+    ) {
+      joinFiles(discovered[left], discovered[right]);
+    }
+  }
+  const groupsByRoot = new Map();
+  for (const entry of entries) {
+    const groupRoot = findRoot(entry.file);
+    const group = groupsByRoot.get(groupRoot) ?? { files: [], bytes: 0 };
+    group.files.push(entry.file);
+    group.bytes += entry.bytes;
+    groupsByRoot.set(groupRoot, group);
+  }
+  const groups = [...groupsByRoot.values()]
+    .map((group) => ({
+      ...group,
+      files: group.files.sort((a, b) => a.localeCompare(b)),
+    }))
+    .sort((a, b) => b.bytes - a.bytes || a.files[0].localeCompare(b.files[0]));
+  for (const group of groups) {
     const target = shards.reduce((best, candidate) =>
       candidate.sourceBytes < best.sourceBytes ||
       (candidate.sourceBytes === best.sourceBytes && candidate.index < best.index)
         ? candidate
         : best,
     );
-    target.files.push(entry.file);
-    target.sourceBytes += entry.bytes;
+    target.files.push(...group.files);
+    target.sourceBytes += group.bytes;
   }
   for (const shard of shards) shard.files.sort((a, b) => a.localeCompare(b));
 
@@ -216,6 +256,7 @@ const runStandardSharded = async () => {
     shardCount,
     concurrency,
     exclusions: matrix.standard,
+    filterCollisionGroups: groups.filter((group) => group.files.length > 1),
     shards,
   };
   writeFileSync(join(reportDir, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`, {
