@@ -19,6 +19,7 @@ import { getMemoryMonitor } from '../../server/src/services/MemoryMonitor.js';
 
 const TEST_DURATION_MS = parseInt(process.env.MEMORY_TEST_DURATION || '60', 10) * 60 * 1000; // Default 60 minutes
 const LEAK_THRESHOLD = parseInt(process.env.MEMORY_LEAK_THRESHOLD || '20', 10); // Default 20%
+const SAMPLE_INTERVAL_MS = parseInt(process.env.MEMORY_SAMPLE_INTERVAL_MS || '30000', 10);
 
 describe('Memory Leak Detection', () => {
     let memoryMonitor;
@@ -33,6 +34,9 @@ describe('Memory Leak Detection', () => {
             leakThresholdPercent: LEAK_THRESHOLD,
             timeWindowMs: 3600000, // 1 hour window
         });
+        // Dedicated harness owns sampling; background samples would make the
+        // thresholds depend on scheduler timing and duplicate observations.
+        memoryMonitor.stopMonitoring();
 
         testStartTime = Date.now();
         initialMemory = process.memoryUsage();
@@ -45,16 +49,26 @@ describe('Memory Leak Detection', () => {
     });
 
     it('should monitor memory usage over extended period', async () => {
+        // Do not use Vitest's transform/import peak as the baseline. Warm the
+        // workload, collect garbage when the dedicated runtime exposes it,
+        // and start a fresh monitor window.
+        for (let i = 0; i < 5; i++) simulateWorkload();
+        // Prime metricsService lazy state before capturing the baseline.
+        memoryMonitor.recordSample();
+        await new Promise((resolve) => setTimeout(resolve, SAMPLE_INTERVAL_MS));
+        global.gc?.();
+        memoryMonitor.recordSample();
+        memoryMonitor.resetBaseline();
+
         const startMemory = process.memoryUsage();
+        testStartTime = Date.now();
         const samples = [];
-        const checkInterval = 30000; // Sample every 30 seconds
         const endTime = Date.now() + TEST_DURATION_MS;
 
         console.log(`Starting memory leak test for ${TEST_DURATION_MS / 1000 / 60} minutes...`);
         console.log(`Initial memory: ${(startMemory.heapUsed / 1024 / 1024).toFixed(2)} MB`);
 
-        // Simulate application workload
-        const simulateWorkload = () => {
+        function simulateWorkload() {
             // Create some objects to simulate memory usage
             const data = [];
             for (let i = 0; i < 1000; i++) {
@@ -69,7 +83,7 @@ describe('Memory Leak Detection', () => {
                 });
             }
             return data;
-        };
+        }
 
         // Periodic workload simulation
         const workloadInterval = setInterval(() => {
@@ -78,7 +92,10 @@ describe('Memory Leak Detection', () => {
 
         // Monitor memory
         while (Date.now() < endTime) {
-            await new Promise((resolve) => setTimeout(resolve, checkInterval));
+            await new Promise((resolve) => setTimeout(resolve, SAMPLE_INTERVAL_MS));
+
+            global.gc?.();
+            memoryMonitor.recordSample();
 
             const currentMemory = process.memoryUsage();
             const elapsed = Date.now() - testStartTime;
@@ -140,6 +157,10 @@ describe('Memory Leak Detection', () => {
         const leakyArray = [];
         let counter = 0;
 
+        global.gc?.();
+        memoryMonitor.recordSample();
+        memoryMonitor.resetBaseline();
+
         // Create a memory leak by keeping references
         const createLeak = () => {
             const data = {
@@ -151,22 +172,20 @@ describe('Memory Leak Detection', () => {
         };
 
         // Create leaks rapidly
-        for (let i = 0; i < 100; i++) {
+        for (let i = 0; i < 300; i++) {
             createLeak();
         }
 
-        // Force garbage collection if available
-        if (global.gc) {
-            global.gc();
-        }
-
-        // Check if monitor detects the leak
+        // The retained references must be sampled after allocation; the old
+        // harness only asserted that an unrelated baseline sample existed.
+        memoryMonitor.recordSample();
+        const leakAlert = memoryMonitor.checkForLeaks();
         const stats = memoryMonitor.getStats();
-        expect(stats.samples).toBeGreaterThan(0);
+        expect(stats.samples).toBe(2);
+        expect(stats.growthSinceBaseline).toBeGreaterThan(LEAK_THRESHOLD);
+        expect(leakAlert).toMatchObject({ detected: true });
+        expect(leakyArray).toHaveLength(300);
     });
 });
-
-
-
 
 

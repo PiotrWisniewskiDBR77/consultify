@@ -213,7 +213,12 @@ class MemoryMonitor {
    */
   resetBaseline(): void {
     if (this.samples.length > 0) {
-      this.baseline = this.samples[this.samples.length - 1];
+      const current = this.samples[this.samples.length - 1];
+      this.baseline = current;
+      // A reset starts a new observation window. Keeping samples from the
+      // previous window made checkForLeaks() compare against stale history,
+      // even though getStats() reported the new baseline.
+      this.samples = [current];
     }
   }
 

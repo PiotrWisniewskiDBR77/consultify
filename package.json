@@ -128,7 +128,7 @@
     "test:load": "k6 run tests/performance/load-test.js",
     "test:performance": "vitest run --config vitest.perf.config.ts",
     "test:performance:real": "RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=postgresql://iris:iris_test@localhost:5432/iris_test npm run test:performance",
-    "test:memory-leak": "vitest run tests/performance/memory-leak.test.ts --reporter=verbose",
+    "test:memory-leak": "node --expose-gc node_modules/vitest/vitest.mjs run tests/performance/memory-leak.test.ts --reporter=verbose --pool=forks --fileParallelism=false",
     "test:all": "npm run test:unit && npm run test:component && npm run test:integration",
     "test:deliverables:tracked": "node scripts/deliverables/check-test-tracking.cjs",
     "test:security": "tsx scripts/security/npm-audit-gate.ts && vitest run --config vitest.security.config.ts",

@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "record": "performanceMemoryLeak",
+  "triageSource": "docs/program/CONSOLIDATED_GATE_1_032ca27f7.json",
+  "baselineSha": "3be83d285ed0ec3e87ae83b03219cb78b90fdfa5",
+  "execution": "dedicated-performance-runtime",
+  "classification": "HARNESS_AND_MONITOR_WINDOW_DEFECT_FIXED",
+  "verdict": "PASS_FOCUSED_5_MINUTE",
+  "limits": {
+    "durationMinutes": 5,
+    "sampleIntervalMs": 10000,
+    "leakThresholdPercent": 20,
+    "nodeGarbageCollectorExposed": true
+  },
+  "stableWorkload": {
+    "initialHeapMb": 37.68,
+    "finalHeapMb": 38.30,
+    "totalGrowthPercent": 1.65,
+    "monitorGrowthPercent": 1.64,
+    "recentTenSampleGrowthPercent": 0.25,
+    "samples": 30,
+    "thresholdResult": "PASS"
+  },
+  "positiveControl": {
+    "retainedObjects": 300,
+    "observedGrowthPercent": 54.17,
+    "alertDetected": true,
+    "thresholdResult": "PASS"
+  },
+  "command": "MEMORY_TEST_DURATION=5 MEMORY_SAMPLE_INTERVAL_MS=10000 MEMORY_LEAK_THRESHOLD=20 node --expose-gc node_modules/vitest/vitest.mjs run tests/performance/memory-leak.test.ts --reporter=verbose --pool=forks --fileParallelism=false",
+  "result": {
+    "testFilesPassed": 1,
+    "testsPassed": 2,
+    "testsFailed": 0,
+    "durationSeconds": 310.57
+  },
+  "scope": [
+    "server/src/services/MemoryMonitor.ts",
+    "tests/performance/memory-leak.test.ts",
+    "package.json"
+  ],
+  "nonClaims": [
+    "This is focused Node service/harness evidence, not browser evidence.",
+    "This is not demo, deployed-runtime, production-load, or release evidence.",
+    "A five-minute run closes the triaged dedicated record at its measured threshold; it does not simulate weeks of production traffic."
+  ]
+}
