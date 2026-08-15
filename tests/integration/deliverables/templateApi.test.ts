@@ -43,13 +43,40 @@ describe('GET /api/deliverables/templates', () => {
   let router: any;
 
   const SAMPLE_DECK = [
-    { id: 'd1', type: 'deck', name: 'Corporate Deck', description: null, isSystem: true, isBlank: false, organizationId: null, meta: {} },
+    {
+      id: 'd1',
+      type: 'deck',
+      name: 'Corporate Deck',
+      description: null,
+      isSystem: true,
+      isBlank: false,
+      organizationId: null,
+      meta: {},
+    },
   ];
   const SAMPLE_DOC = [
-    { id: 'doc1', type: 'doc', name: 'Audit Report', description: 'Full audit', isSystem: true, isBlank: false, organizationId: null, meta: {} },
+    {
+      id: 'doc1',
+      type: 'doc',
+      name: 'Audit Report',
+      description: 'Full audit',
+      isSystem: true,
+      isBlank: false,
+      organizationId: null,
+      meta: {},
+    },
   ];
   const SAMPLE_TABLE = [
-    { id: 't1', type: 'table', name: 'Risk Register', description: null, isSystem: true, isBlank: false, organizationId: null, meta: {} },
+    {
+      id: 't1',
+      type: 'table',
+      name: 'Risk Register',
+      description: null,
+      isSystem: true,
+      isBlank: false,
+      organizationId: null,
+      meta: {},
+    },
   ];
 
   beforeAll(async () => {
@@ -76,7 +103,7 @@ describe('GET /api/deliverables/templates', () => {
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty('templates');
     expect(res.body.templates).toEqual(SAMPLE_DECK);
-    expect(listDeliverableTemplatesMock).toHaveBeenCalledWith('deck', 'org-1');
+    expect(listDeliverableTemplatesMock).toHaveBeenCalledWith('deck', 'org-1', 'user-1');
   });
 
   // FT-2.2 — doc
@@ -86,7 +113,7 @@ describe('GET /api/deliverables/templates', () => {
     const res = await authed(request(makeApp()).get('/api/deliverables/templates?type=doc'));
     expect(res.status).toBe(200);
     expect(res.body.templates).toEqual(SAMPLE_DOC);
-    expect(listDeliverableTemplatesMock).toHaveBeenCalledWith('doc', 'org-1');
+    expect(listDeliverableTemplatesMock).toHaveBeenCalledWith('doc', 'org-1', 'user-1');
   });
 
   // FT-2.3 — table
@@ -96,7 +123,7 @@ describe('GET /api/deliverables/templates', () => {
     const res = await authed(request(makeApp()).get('/api/deliverables/templates?type=table'));
     expect(res.status).toBe(200);
     expect(res.body.templates).toEqual(SAMPLE_TABLE);
-    expect(listDeliverableTemplatesMock).toHaveBeenCalledWith('table', 'org-1');
+    expect(listDeliverableTemplatesMock).toHaveBeenCalledWith('table', 'org-1', 'user-1');
   });
 
   // FT-2.4 — invalid type → 400
@@ -136,6 +163,6 @@ describe('GET /api/deliverables/templates', () => {
     if (!canListen) return;
     listDeliverableTemplatesMock.mockResolvedValue([]);
     await authed(request(makeApp()).get('/api/deliverables/templates?type=doc'));
-    expect(listDeliverableTemplatesMock).toHaveBeenCalledWith('doc', 'org-1');
+    expect(listDeliverableTemplatesMock).toHaveBeenCalledWith('doc', 'org-1', 'user-1');
   });
 });

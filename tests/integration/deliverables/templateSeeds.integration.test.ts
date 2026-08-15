@@ -116,7 +116,7 @@ describe('GET /api/deliverables/templates — DBR77 seed integration (FT-2)', ()
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty('templates');
     expect(res.body.templates.length).toBeGreaterThanOrEqual(1);
-    expect(listDeliverableTemplatesMock).toHaveBeenCalledWith('doc', 'org-1');
+    expect(listDeliverableTemplatesMock).toHaveBeenCalledWith('doc', 'org-1', 'user-1');
   });
 
   // FT-2.2 — type=deck zwraca ≥1 systemowy szablon DBR77
@@ -130,7 +130,7 @@ describe('GET /api/deliverables/templates — DBR77 seed integration (FT-2)', ()
 
     expect(res.status).toBe(200);
     expect(res.body.templates.length).toBeGreaterThanOrEqual(1);
-    expect(listDeliverableTemplatesMock).toHaveBeenCalledWith('deck', 'org-1');
+    expect(listDeliverableTemplatesMock).toHaveBeenCalledWith('deck', 'org-1', 'user-1');
   });
 
   // FT-2.3 — szablony systemowe mają isSystem=true
