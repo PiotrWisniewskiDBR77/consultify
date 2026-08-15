@@ -12,13 +12,13 @@
   "summary": {
     "total": 224,
     "referenceHarnessOnly": 18,
-    "representedSuperseded": 38,
-    "representedCanonical": 17,
+    "representedSuperseded": 40,
+    "representedCanonical": 18,
     "rejectedDestructiveSnapshot": 1,
     "integratedCanonical": 12,
     "candidateIntegration": 1,
     "ownerDecisionRequired": 0,
-    "semanticReviewRequired": 137,
+    "semanticReviewRequired": 134,
     "deletionAuthorized": 0
   },
   "rows": [
@@ -1514,12 +1514,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 3,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MYW-003",
       "recoveryRef": "refs/recovery/unknown-20260815/4728bd69ed3abe974379f6e8afd9f8716a08b986",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The current Decision and Inbox preview implementations contain the recovered relation navigation callbacks: linked decisions route through onOpenLinkedDecision, while Inbox linked task/decision pills call the supplied open handlers and expose human labels with identifiers only in tooltips.",
+      "nextAction": "Keep the current relation handlers. Add the two relation-click paths to the My Work signed-in browser packet; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "48ac49f492e4b655222e1afe0f85c442e8c91e75",
@@ -3216,12 +3216,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 3,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-MAT-003",
       "recoveryRef": "refs/recovery/unknown-20260815/a0675fd859a132d6d9dda96bc8f0fd209da2b222",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered deterministic workbook critic is present in a later expanded canonical workbookQualityGate and remains imported by WorkbookGeneratorService. Its current focused suite covers clean, critical, major, boundary and helper cases and passes 21/21 tests.",
+      "nextAction": "Keep the expanded critic. Prove its report is persisted and visible during the spreadsheet realDB/export acceptance packet; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "a0741afbef96f9821e6db6f8b52579e8a3b71474",
@@ -4610,12 +4610,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 5,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-IDE-005",
       "recoveryRef": "refs/recovery/unknown-20260815/e30de810937cfe258a88ab82ee28e36e856850a4",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered Ideas Table row-context operations remain represented in the later ViewRouter/Table platform integration. Current Table frontend plus tenant-safe relations route coverage passes 46/46 tests within the 67-test focused batch and includes degraded-state scenarios absent from the recovered patch.",
+      "nextAction": "Do not restore the older table platform snapshot. Verify row-menu mutations and replay against real persisted Ideas data; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "e4c053f4e85ba638ff4ab68f18eb9a363184fb3c",

@@ -502,22 +502,16 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
   kolejność migracji mają 8/8 oraz 22 PASS. Audyt migratora wykrył dodatkowo
   utracony import guard; `1df2181fe` przywraca eksport komparatora i uruchamia
   `main()` wyłącznie dla bezpośredniego CLI, z zielonym backend buildem.
-  Trzy kolejne odzyskane historie zostały rozstrzygnięte chirurgicznie:
-  kanoniczne aliasy routingu Execution przywrócono w `babee1735` (37 testów
-  Playwright poprawnie odkrytych), brakujące teksty Inicjatyw zintegrowano i
-  uzupełniono dla sześciu języków w `f971213d7` (13/13 locale gate), a dwa
-  starsze mock-DB testy Document Studio zastąpiono istniejącymi mocniejszymi
-  kontraktami trwałości propozycji i realDB eksportu DOCX/PDF. Aktualny ledger
-  Następny pakiet pięciu historii potwierdził, że późniejszy kanon zachowuje
-  poprawkę alpha dla `c-accent-soft`, pełny zestaw operacji kontekstowych
-  Whiteboard na współdzielonej dostępnej powierzchni, normalizację booleanów
-  Decisions w datowanej migracji oraz ostrzejszy canonical auto-unblock przez
-  transition engine. Focused menu + Decision matrix ma 41/41 PASS. Aktualny
-  W Tools obecny hub zachowuje naprawiony kontrakt wyjścia z otwartej sesji i
-  prawidłowe propsy Menu 3; w Interview późniejszy kanon świadomie zastępuje
-  bezpośredni przycisk tytułu wzorcem single-click preview / double-click lub
-  jawne `Open` do pełnego widoku. Focused Tools + Interview ma 61/61 PASS, przy
-  zachowaniu obowiązku browser proof. Ledger ma 137 pozycji
+  Następne odzyskane historie zostały rozstrzygnięte chirurgicznie. Alias
+  routingu Execution przywrócono w `babee1735`; tłumaczenia Inicjatyw dla
+  sześciu języków w `f971213d7`; starsze testy Document Studio zastępują
+  mocniejsze kontrakty trwałości i realDB eksportu. Późniejszy kanon zachowuje
+  też poprawkę alpha `c-accent-soft`, pełne menu Whiteboard, normalizację
+  booleanów Decisions i canonical auto-unblock (focused 41/41). Tools zachowuje
+  prawidłowe wyjście z sesji, a Interview używa kanonicznego preview/Open
+  (focused 61/61). Rozszerzony `workbookQualityGate`, Table row-context i
+  klikalne relacje Inbox/Decisions również są obecne (focused 67/67). Browser i
+  realDB pozostają osobnymi bramkami. Ledger ma 134 pozycje
   `SEMANTIC_REVIEW_REQUIRED`. Te 18 pozostaje zachowanym materiałem
   UX/prototypowym, ale nie
   jest kodem produkcyjnym do merge. Generator mechanicznie egzekwuje warunek
