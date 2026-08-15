@@ -12,13 +12,13 @@
   "summary": {
     "total": 224,
     "referenceHarnessOnly": 18,
-    "representedSuperseded": 37,
-    "representedCanonical": 16,
+    "representedSuperseded": 38,
+    "representedCanonical": 17,
     "rejectedDestructiveSnapshot": 1,
     "integratedCanonical": 12,
     "candidateIntegration": 1,
     "ownerDecisionRequired": 0,
-    "semanticReviewRequired": 139,
+    "semanticReviewRequired": 137,
     "deletionAuthorized": 0
   },
   "rows": [
@@ -3706,12 +3706,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 4,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-TLS-003",
       "recoveryRef": "refs/recovery/unknown-20260815/bd102b668c0de91c1e120368db24e99a9c30c1d7",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "DiscoveryToolsHub preserves the recovered session-exit contract in its later implementation: handleTabChange leaves the active document, StandardModuleBar receives openItems/activeItemId/onSelectItem/onCloseItem, and current viewModes/filterControls names are used. The Tools/Interview focused batch passes 61/61 tests; a signed-in click proof remains required because the recovered dev-render was not an automated runtime gate.",
+      "nextAction": "Keep the current hub. Add the exact List/tab/close click path to the Tools browser acceptance packet rather than restoring the old mock harness; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "bd9bb884b497deea4f8e25c8609177045e4148b9",
@@ -4576,12 +4576,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 4,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-INT-002",
       "recoveryRef": "refs/recovery/unknown-20260815/e0f3872feb096f344ce8e4586496caee74ed8dcf",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered Interview title-button and single-card simplification predates the canonical Triada interaction: current assignment tables use single-click preview, double-click full open, explicit Open/Continue preview actions and row menus; the immersive runtime intentionally retains progress and question navigation. Interview hub focused coverage passes 15/15 tests within the 61-test batch.",
+      "nextAction": "Do not restore a second direct-title interaction or remove canonical question navigation. Verify preview-to-full-open and assignment deep-link behavior in the Interview browser packet; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "e13b4cf90c8a4a2725fab98f6cdb7e0336111415",

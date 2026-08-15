@@ -469,6 +469,20 @@
       "taskId": "CLEAN-002-INI-007",
       "evidenceRule": "The current DecisionController contains a later, stronger version of the recovered canonical auto-unblock: rejected decisions short-circuit, the initiative must still be BLOCKED, the canonical transition engine rechecks the gate and writes audit history, and causal decision/user details are persisted in the reason. The focused DecisionController and menu batch passes 41/41 tests.",
       "nextAction": "Do not restore the earlier transition patch. Execute the dedicated decision/initiative concurrency realDB packet before release; retain the recovery ref until CLEAN-003."
+    },
+    {
+      "tip": "bd102b668c0de91c1e120368db24e99a9c30c1d7",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-TLS-003",
+      "evidenceRule": "DiscoveryToolsHub preserves the recovered session-exit contract in its later implementation: handleTabChange leaves the active document, StandardModuleBar receives openItems/activeItemId/onSelectItem/onCloseItem, and current viewModes/filterControls names are used. The Tools/Interview focused batch passes 61/61 tests; a signed-in click proof remains required because the recovered dev-render was not an automated runtime gate.",
+      "nextAction": "Keep the current hub. Add the exact List/tab/close click path to the Tools browser acceptance packet rather than restoring the old mock harness; retain the recovery ref until CLEAN-003."
+    },
+    {
+      "tip": "e0f3872feb096f344ce8e4586496caee74ed8dcf",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-INT-002",
+      "evidenceRule": "The recovered Interview title-button and single-card simplification predates the canonical Triada interaction: current assignment tables use single-click preview, double-click full open, explicit Open/Continue preview actions and row menus; the immersive runtime intentionally retains progress and question navigation. Interview hub focused coverage passes 15/15 tests within the 61-test batch.",
+      "nextAction": "Do not restore a second direct-title interaction or remove canonical question navigation. Verify preview-to-full-open and assignment deep-link behavior in the Interview browser packet; retain the recovery ref until CLEAN-003."
     }
   ]
 }

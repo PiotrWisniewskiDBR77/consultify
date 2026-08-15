@@ -513,7 +513,12 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
   Whiteboard na współdzielonej dostępnej powierzchni, normalizację booleanów
   Decisions w datowanej migracji oraz ostrzejszy canonical auto-unblock przez
   transition engine. Focused menu + Decision matrix ma 41/41 PASS. Aktualny
-  ledger ma 139 pozycji `SEMANTIC_REVIEW_REQUIRED`. Te 18 pozostaje zachowanym materiałem
+  W Tools obecny hub zachowuje naprawiony kontrakt wyjścia z otwartej sesji i
+  prawidłowe propsy Menu 3; w Interview późniejszy kanon świadomie zastępuje
+  bezpośredni przycisk tytułu wzorcem single-click preview / double-click lub
+  jawne `Open` do pełnego widoku. Focused Tools + Interview ma 61/61 PASS, przy
+  zachowaniu obowiązku browser proof. Ledger ma 137 pozycji
+  `SEMANTIC_REVIEW_REQUIRED`. Te 18 pozostaje zachowanym materiałem
   UX/prototypowym, ale nie
   jest kodem produkcyjnym do merge. Generator mechanicznie egzekwuje warunek
   ścieżek, unikalność, sumy i deterministyczny output; nadal
