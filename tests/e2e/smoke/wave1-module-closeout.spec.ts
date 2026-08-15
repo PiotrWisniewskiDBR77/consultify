@@ -114,7 +114,9 @@ test.describe('Wave 1 module closeout smoke', () => {
       page.getByText(/Guided product entry assistant|Asystentka wejścia produktowego/i)
     ).toBeVisible();
     await expect(
-      page.getByText(/do not have access to client or project data|Nie mam dostepu do danych klienta/i)
+      page.getByText(
+        /do not have access to client or project data|Nie mam dostepu do danych klienta/i
+      )
     ).toBeVisible();
 
     const widgetTrial = page.getByRole('button', { name: /Start trial|Rozpocznij trial/i }).last();
@@ -143,6 +145,8 @@ test.describe('Wave 1 module closeout smoke', () => {
     { path: '/assessment/overview' },
     { path: '/initiatives' },
     { path: '/execution' },
+    { path: '/implementation', expectedUrl: '/execution' },
+    { path: '/rollout', expectedUrl: '/execution' },
     { path: '/kpi-okr', expectedUrl: '/results' },
     { path: '/benefits', expectedUrl: '/results' },
     { path: '/finance' },
@@ -160,7 +164,9 @@ test.describe('Wave 1 module closeout smoke', () => {
     });
   }
 
-  test('legacy Results aliases preserve query and hash on the canonical route', async ({ page }) => {
+  test('legacy Results aliases preserve query and hash on the canonical route', async ({
+    page,
+  }) => {
     await seedAuth(page);
     await page.goto('/benefits?tab=results_kpi&mode=scorecards&initiativeId=i-1#owner', {
       waitUntil: 'domcontentloaded',
@@ -169,6 +175,20 @@ test.describe('Wave 1 module closeout smoke', () => {
     await expect(page).toHaveURL(
       /\/results\?tab=results_kpi&mode=scorecards&initiativeId=i-1#owner$/
     );
+    await expect(page.getByText(/Coś poszło nie tak|Something went wrong/i)).toHaveCount(0);
+  });
+
+  test('legacy Execution aliases preserve the initiative and rollout state', async ({ page }) => {
+    await seedAuth(page);
+    await page.goto('/implementation?initiativeId=ini-42&view=table#owner', {
+      waitUntil: 'domcontentloaded',
+    });
+    await expect(page).toHaveURL(/\/execution\?initiativeId=ini-42&view=table#owner$/);
+
+    await page.goto('/rollout?initiativeId=ini-42&view=kanban&tab=old#risk', {
+      waitUntil: 'domcontentloaded',
+    });
+    await expect(page).toHaveURL(/\/execution\?initiativeId=ini-42&view=kanban&tab=rollout#risk$/);
     await expect(page.getByText(/Coś poszło nie tak|Something went wrong/i)).toHaveCount(0);
   });
 });

@@ -63,8 +63,9 @@ test.describe('L4 Smoke — routes render [@module:routing]', () => {
     await expectRouteMounted(page);
   });
 
-  test('renders Execution (implementation)', async ({ page }) => {
+  test('redirects legacy Implementation and renders canonical Execution', async ({ page }) => {
     await page.goto('/implementation');
+    await expect(page).toHaveURL(/\/execution/);
     await expectRouteMounted(page);
   });
 
