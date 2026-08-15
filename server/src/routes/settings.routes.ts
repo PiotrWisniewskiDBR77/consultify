@@ -701,6 +701,14 @@ const normalizeUserAIProviders = (value: unknown) => {
     .filter((provider) => provider.name.trim().length > 0);
 };
 
+export const redactUserAIProviderSecrets = (
+  providers: ReturnType<typeof normalizeUserAIProviders>
+) =>
+  providers.map(({ apiKey, ...provider }) => ({
+    ...provider,
+    hasApiKey: Boolean(apiKey),
+  }));
+
 /**
  * GET /api/settings/preferences/inbox-ai
  * Get user's inbox AI automation preferences.
@@ -812,7 +820,9 @@ router.get(
 
       if (prefs?.preferences_data) {
         const parsed = JSON.parse(prefs.preferences_data) as { providers?: unknown };
-        return res.json({ providers: normalizeUserAIProviders(parsed.providers) });
+        return res.json({
+          providers: redactUserAIProviderSecrets(normalizeUserAIProviders(parsed.providers)),
+        });
       }
 
       return res.json({ providers: [] });
@@ -850,7 +860,7 @@ router.put(
       );
       if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
-      return res.json({ success: true, providers });
+      return res.json({ success: true, providers: redactUserAIProviderSecrets(providers) });
     } catch (err: any) {
       logger.error('[settings] Error updating personal AI providers:', {
         err,
@@ -5428,7 +5438,7 @@ router.post(
     );
 
     logger.info(`[settings] Webhook created for user ${userId}`);
-    return res.json({ success: true, webhook: { id, name, url, events, secret } });
+    return res.json({ success: true, webhook: { id, name, url, events, hasSecret: true } });
   })
 );
 

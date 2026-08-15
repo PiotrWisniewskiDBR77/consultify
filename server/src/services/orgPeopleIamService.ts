@@ -10,6 +10,8 @@
  *  - Audit everything: successful mutations emit a role_change_audit_event.
  */
 
+import { randomUUID } from 'crypto';
+
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import { hasEffectiveCapability, resolveEffectiveAccess } from './effectiveAccessService.js';
@@ -75,10 +77,12 @@ async function emitAuditEvent(params: {
 }): Promise<void> {
   try {
     await dbRun(
-      `INSERT OR IGNORE INTO role_change_audit_events
+      `INSERT INTO role_change_audit_events
         (id, organization_id, actor_id, action, resource_type, resource_id, before_json, after_json, created_at)
-       VALUES (lower(hex(randomblob(16))), ?, ?, ?, 'organization_member', ?, ?, ?, datetime('now'))`,
+       VALUES (?, ?, ?, ?, 'organization_member', ?, ?, ?, CURRENT_TIMESTAMP)
+       ON CONFLICT (id) DO NOTHING`,
       [
+        randomUUID(),
         params.organizationId,
         params.actorId,
         params.action,

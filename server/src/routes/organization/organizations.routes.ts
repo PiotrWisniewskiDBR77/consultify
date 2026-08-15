@@ -82,7 +82,6 @@ router.get(
  */
 router.post(
   '/:orgId/members',
-  requireRole('ADMIN', 'OWNER', 'SUPERADMIN'),
   validateBody(AddMemberSchema),
   async (req, res, next) => {
     const originalJson = res.json.bind(res);
@@ -108,7 +107,6 @@ router.post(
  */
 router.patch(
   '/:orgId/members/:memberId/role',
-  requireRole('ADMIN', 'OWNER', 'SUPERADMIN'),
   validateBody(UpdateMemberRoleSchema),
   async (req, res, next) => {
     const originalJson = res.json.bind(res);
@@ -139,7 +137,6 @@ router.patch(
  */
 router.delete(
   '/:orgId/members/:memberId',
-  requireRole('ADMIN', 'OWNER', 'SUPERADMIN'),
   async (req, res, next) => {
     const originalJson = res.json.bind(res);
     res.json = function (body: any) {

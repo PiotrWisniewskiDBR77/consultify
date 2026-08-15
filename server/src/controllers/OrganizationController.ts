@@ -10,6 +10,12 @@ import type { Response } from 'express';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { get as dbGet } from '../utils/DbPromise.js';
+import {
+  addOrganizationMemberViaIam,
+  changeOrganizationMemberRoleViaIam,
+  removeOrganizationMemberViaIam,
+  type IamResult,
+} from '../services/orgPeopleIamService.js';
 import type {
   AddMemberRequest,
   CreateOrganizationRequest,
@@ -17,8 +23,6 @@ import type {
   UpdateMemberRoleRequest,
   UpdateOrganizationRequest,
 } from '../validators/organization.validators.js';
-
-const ADMIN_MEMBERSHIP_ROLES = new Set(['OWNER', 'ADMIN']);
 
 function getDeniedGuidance(role?: string): string {
   const normalized = String(role || '')
@@ -36,6 +40,17 @@ function forbidden(res: Response, error: string, code: string, guidance: string)
 
 function conflict(res: Response, error: string, code: string, guidance: string): void {
   res.status(409).json({ error, code, guidance });
+}
+
+function sendIamDenial(res: Response, result: IamResult): boolean {
+  if (!result.denied) return false;
+  const status = ['LAST_OWNER_PROTECTED', 'SELF_LOCKOUT_REJECTED'].includes(result.code)
+    ? 409
+    : result.code === 'USER_NOT_FOUND' || result.code === 'MEMBER_NOT_FOUND'
+      ? 404
+      : 403;
+  res.status(status).json({ error: result.message, code: result.code });
+  return true;
 }
 
 // ==========================================
@@ -233,17 +248,15 @@ export class OrganizationController {
         return;
       }
 
-      if (!isSuperAdmin && !ADMIN_MEMBERSHIP_ROLES.has(actorRole)) {
-        forbidden(
-          res,
-          'Admin access required',
-          'ADMIN_ACCESS_REQUIRED',
-          getDeniedGuidance(actorRole)
-        );
-        return;
-      }
-
       const desiredRole = normalizeOrganizationRole(role);
+      const iam = await addOrganizationMemberViaIam({
+        actorId: userId,
+        actorRole,
+        organizationId: orgId,
+        targetEmail: targetEmail || String(targetUserId || ''),
+        role: desiredRole,
+      });
+      if (sendIamDenial(res, iam)) return;
       if (desiredRole === 'OWNER' && actorRole !== 'OWNER' && !isSuperAdmin) {
         forbidden(
           res,
@@ -335,6 +348,17 @@ export class OrganizationController {
       const nextRole = normalizeOrganizationRole(role);
       const isSuperAdmin = req.user?.role === 'SUPERADMIN' || req.user?.role === 'SUPER_ADMIN';
 
+      if (!isSuperAdmin) {
+        const iam = await changeOrganizationMemberRoleViaIam({
+          actorId: userId,
+          actorRole,
+          organizationId: orgId,
+          targetMemberId: target?.user_id || memberId,
+          newRole: nextRole,
+        });
+        if (sendIamDenial(res, iam)) return;
+      }
+
       if (!target?.user_id) {
         res.status(404).json({
           error: 'Member not found',
@@ -350,16 +374,6 @@ export class OrganizationController {
           'Admin access required',
           'ADMIN_ACCESS_REQUIRED',
           getDeniedGuidance(req.user?.role)
-        );
-        return;
-      }
-
-      if (!isSuperAdmin && !ADMIN_MEMBERSHIP_ROLES.has(actorRole)) {
-        forbidden(
-          res,
-          'Admin access required',
-          'ADMIN_ACCESS_REQUIRED',
-          getDeniedGuidance(actorRole)
         );
         return;
       }
@@ -455,6 +469,16 @@ export class OrganizationController {
       const targetRole = normalizeOrganizationRole(target?.role);
       const isSuperAdmin = req.user?.role === 'SUPERADMIN' || req.user?.role === 'SUPER_ADMIN';
 
+      if (!isSuperAdmin) {
+        const iam = await removeOrganizationMemberViaIam({
+          actorId: userId,
+          actorRole,
+          organizationId: orgId,
+          targetMemberId: target?.user_id || memberId,
+        });
+        if (sendIamDenial(res, iam)) return;
+      }
+
       if (!target?.user_id) {
         res.status(404).json({
           error: 'Member not found',
@@ -470,16 +494,6 @@ export class OrganizationController {
           'Admin access required',
           'ADMIN_ACCESS_REQUIRED',
           getDeniedGuidance(req.user?.role)
-        );
-        return;
-      }
-
-      if (!isSuperAdmin && !ADMIN_MEMBERSHIP_ROLES.has(actorRole)) {
-        forbidden(
-          res,
-          'Admin access required',
-          'ADMIN_ACCESS_REQUIRED',
-          getDeniedGuidance(actorRole)
         );
         return;
       }

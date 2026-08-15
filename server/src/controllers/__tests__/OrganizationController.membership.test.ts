@@ -8,6 +8,15 @@ const addMember = vi.fn();
 const updateMemberRole = vi.fn();
 const removeMember = vi.fn();
 const logAction = vi.fn();
+const addViaIam = vi.fn();
+const changeViaIam = vi.fn();
+const removeViaIam = vi.fn();
+
+vi.mock('../../services/orgPeopleIamService.js', () => ({
+  addOrganizationMemberViaIam: (...args: any[]) => addViaIam(...args),
+  changeOrganizationMemberRoleViaIam: (...args: any[]) => changeViaIam(...args),
+  removeOrganizationMemberViaIam: (...args: any[]) => removeViaIam(...args),
+}));
 
 vi.mock('../../utils/DbPromise.js', () => ({
   get: (...args: any[]) => dbGet(...args),
@@ -59,9 +68,17 @@ describe('OrganizationController membership safeguards', () => {
     removeMember.mockReset();
     logAction.mockReset();
     logAction.mockResolvedValue({ id: 'audit-1' });
+    addViaIam.mockReset().mockResolvedValue({ denied: false });
+    changeViaIam.mockReset().mockResolvedValue({ denied: false });
+    removeViaIam.mockReset().mockResolvedValue({ denied: false });
   });
 
   it('rejects addMember for non-admin actors with explicit denial guidance', async () => {
+    addViaIam.mockResolvedValue({
+      denied: true,
+      code: 'CAPABILITY_REQUIRED',
+      message: 'Capability users.invite or admin.people.manage required',
+    });
     getMembers.mockResolvedValue([{ user_id: 'actor-1', role: 'MEMBER' }]);
     const req: any = {
       params: { orgId: 'org-1' },
@@ -73,8 +90,7 @@ describe('OrganizationController membership safeguards', () => {
     await OrganizationController.addMember(req, res, vi.fn());
 
     expect(res.status).toHaveBeenCalledWith(403);
-    expect(res.body.code).toBe('ADMIN_ACCESS_REQUIRED');
-    expect(res.body.guidance).toContain('admin access');
+    expect(res.body.code).toBe('CAPABILITY_REQUIRED');
     expect(addMember).not.toHaveBeenCalled();
   });
 
