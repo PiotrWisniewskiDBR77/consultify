@@ -21,7 +21,14 @@ describe('Admin session service (enterprise verification path) - REAL_CODE', () 
   it('getActiveSessions queries all active sessions (optionally filtered by adminId)', async () => {
     db.all.mockResolvedValueOnce([{ id: 'x' }]);
     const rows = await adminSessionService.getActiveSessions('admin-1');
-    expect(rows).toEqual([{ id: 'x' }]);
+    expect(rows).toEqual([
+      expect.objectContaining({
+        id: 'x',
+        sessionType: 'standard',
+        mfaVerified: false,
+        isActive: false,
+      }),
+    ]);
     expect(db.all).toHaveBeenCalledWith(expect.stringContaining('WHERE s.is_active = 1'), [
       'admin-1',
     ]);
@@ -58,8 +65,15 @@ describe('Admin session service (enterprise verification path) - REAL_CODE', () 
   });
 
   it('getSessionStats returns scalar row', async () => {
-    db.get.mockResolvedValueOnce({ active_sessions: 2 });
+    db.get.mockResolvedValueOnce({ total: 3, active: 2, mfaVerified: 1, uniqueAdmins: 2 });
     const s = await adminSessionService.getSessionStats();
-    expect(s).toEqual({ active_sessions: 2 });
+    expect(s).toEqual({
+      total: 3,
+      active: 2,
+      mfaVerified: 1,
+      jitActive: 0,
+      breakGlassActive: 0,
+      uniqueAdmins: 2,
+    });
   });
 });

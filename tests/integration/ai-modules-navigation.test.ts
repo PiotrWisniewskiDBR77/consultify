@@ -10,11 +10,11 @@ import { appViewToSection, sectionToAppView } from '../../src/components/layout/
 import { AppView } from '../../src/types';
 
 describe('SuperAdminSidebar AI mappings', () => {
-  it('legacy AI sections map to unified AI Platform view', () => {
+  it('the canonical AI section maps to the unified AI Platform view', () => {
     expect(sectionToAppView['ai-platform']).toBe(AppView.SUPERADMIN_AI_PLATFORM);
-    expect(sectionToAppView['ai-infrastructure']).toBe(AppView.SUPERADMIN_AI_PLATFORM);
-    expect(sectionToAppView['ai-development']).toBe(AppView.SUPERADMIN_AI_PLATFORM);
-    expect(sectionToAppView['ai-operations']).toBe(AppView.SUPERADMIN_AI_PLATFORM);
+    expect(appViewToSection[AppView.SUPERADMIN_AI_INFRASTRUCTURE]).toBe('ai-platform');
+    expect(appViewToSection[AppView.SUPERADMIN_AI_DEVELOPMENT]).toBe('ai-platform');
+    expect(appViewToSection[AppView.SUPERADMIN_AI_OPERATIONS]).toBe('ai-platform');
   });
 
   it('legacy AppView routes redirect to ai-platform section', () => {

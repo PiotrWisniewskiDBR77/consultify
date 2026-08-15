@@ -2,6 +2,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 
+// The repository-wide lightweight multer stand-in intentionally bypasses
+// fileFilter. This suite verifies the real MIME boundary, so it must use the
+// production package (same convention as the route-level ingest suite).
+vi.unmock('multer');
+
 /**
  * M01 / L-03 (S3 ingest) — multer fileFilter accept/reject gate.
  *
