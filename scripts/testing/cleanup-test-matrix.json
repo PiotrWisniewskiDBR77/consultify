@@ -125,6 +125,9 @@
       "tests/integration/routes/superadmin-overview.test.js",
       "tests/integration/routes/rolloutExtensions.routes.test.ts",
       "server/src/routes/v8/__tests__/p04-kpi-workflow.test.ts",
+      "tests/unit/backend/agentPlan.routes.test.ts",
+      "server/src/services/v8/__tests__/v8-smoke-offline-validation.test.ts",
+      "server/src/services/v8/__tests__/v8-smoke-suite.test.ts",
       "tests/integration/routes/p21b-reports-template-artifactrun-e2e.sqlite.integration.test.ts",
       "server/src/routes/__tests__/document-studio-client-reader.routes.test.ts",
       "server/src/services/__tests__/nativeOwnerPinnedClient.test.ts"
@@ -190,7 +193,10 @@
         "tests/unit/backend/routes/h64-failsoft.test.ts",
         "server/src/routes/__tests__/financial-modeling.routes.validation.test.ts",
         "tests/unit/backend/routes/h64-failsoft-batch4.test.ts",
-        "tests/integration/routes/rolloutExtensions.routes.test.ts"
+        "tests/integration/routes/rolloutExtensions.routes.test.ts",
+        "tests/unit/backend/agentPlan.routes.test.ts",
+        "server/src/services/v8/__tests__/v8-smoke-offline-validation.test.ts",
+        "server/src/services/v8/__tests__/v8-smoke-suite.test.ts"
       ]
     },
     "realdb": {
