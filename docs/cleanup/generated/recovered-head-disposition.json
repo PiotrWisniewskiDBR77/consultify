@@ -12,13 +12,13 @@
   "summary": {
     "total": 224,
     "referenceHarnessOnly": 18,
-    "representedSuperseded": 50,
-    "representedCanonical": 26,
+    "representedSuperseded": 51,
+    "representedCanonical": 29,
     "rejectedDestructiveSnapshot": 3,
     "integratedCanonical": 15,
     "candidateIntegration": 0,
     "ownerDecisionRequired": 0,
-    "semanticReviewRequired": 112,
+    "semanticReviewRequired": 108,
     "deletionAuthorized": 0
   },
   "rows": [
@@ -2501,12 +2501,12 @@
       "uniqueCommitCount": 4,
       "pathCount": 4,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-EXE-012",
       "recoveryRef": "refs/recovery/unknown-20260815/760ee7a1849dae592f242c511cbc6e82577ba8cb",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered tip only sorted imports in StageGateService.test.ts. The canonical test is hundreds of lines beyond that snapshot and is already formatted under the current import/lint conventions; no production behavior or missing assertion is unique to the recovery head.",
+      "nextAction": "Keep the current Stage Gate test suite and run it in the Execution shard at the final candidate SHA; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "762d84d3bfccaccde939dd1cae3f18e15d3435e3",
@@ -2865,12 +2865,12 @@
       "uniqueCommitCount": 2,
       "pathCount": 4,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-DATA-006",
       "recoveryRef": "refs/recovery/unknown-20260815/84b82523fe9991fa1d85b8e7f01d24229c47c7b4",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered Complete MVP fixture proposal predates the implemented governed acceptance-fixtures package. The canonical runner now has deterministic root and golden-child plans, dry-run default, exact organization/user guards, transactional UPSERT/readback behavior and fresh PostgreSQL 15/16 write-plus-replay evidence; restoring the proposal as a second authority would regress the executable contract to a draft.",
+      "nextAction": "Keep the executable acceptance fixture package and current rehearsal runbook as authority. Close remaining module child-graph gaps through DATA task IDs; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "86a5adedf1ea9f4c5c608520eeda89ee9a2d44ef",
@@ -4253,12 +4253,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 4,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MAT-014",
       "recoveryRef": "refs/recovery/unknown-20260815/d576cf2bf89e30f190ef058222140207b80e14fa",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered Oxford slice added explicit table grounding and anti-fabrication guidance. The newer canonical generator contains the same section 0.3 integrity contract, recognizes embedded organization facts, forces illustrative rows when facts are absent, and current document/bundle callers embed their real datasets in the intent. The current service has substantial later schema-fidelity work not present in the recovered snapshot.",
+      "nextAction": "Keep the newer generator. Add current regression coverage for grounded and ungrounded premium table prompts to MAT acceptance rather than restoring the older test verbatim; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "d5ec70d5cab0680cd814decb214600c064624f8c",
@@ -5234,12 +5234,12 @@
       "uniqueCommitCount": 3,
       "pathCount": 4,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-IDE-007",
       "recoveryRef": "refs/recovery/unknown-20260815/f8b19ab025b6ff33dc551e7819c20655b7d167ab",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered tip changed the Idea Pipeline title from a local isPl ternary to the translation key. The current canonical component already uses t('myWorkTable.ideaPipeline.title') and includes later accessibility and dialog behavior, while the other files in the recovered ancestry are represented by subsequent Ideas i18n work.",
+      "nextAction": "Keep the current component and finish the remaining bilingual stage and criteria labels through the Ideas i18n task rather than replaying the one-line predecessor; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "fbf506da65c3940364e94f7b56d79f2b407b9e4e",
