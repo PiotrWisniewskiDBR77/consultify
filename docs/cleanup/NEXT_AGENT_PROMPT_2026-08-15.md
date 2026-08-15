@@ -66,8 +66,10 @@ Repozytorium iCloud
   finalnym candidate SHA.
 - 373 checkouty zostały zinwentaryzowane; 144 dirty zabezpieczono w
   `/Users/piotrwisniewski/Developer/consultify-cleanup-evidence-20260814`.
-- Nadal istnieje delta co najmniej 3 untracked w iCloud po snapshotcie oraz
-  460 `UNKNOWN_OBJECT` tip SHA.
+- Delta trzech untracked po snapshotcie jest zabezpieczona i zweryfikowana.
+- Wszystkie 460 dawnych `UNKNOWN_OBJECT` tip SHA odzyskano, przypięto recovery
+  refs i zabezpieczono osobnym bundle; 421 divergent tips nadal wymaga
+  modułowego review, nie whole-branch merge.
 - Dokumentacja modułów z 31 lipca, commit `20a03461e...`, jest już przodkiem
   kanonu.
 
@@ -75,8 +77,8 @@ Repozytorium iCloud
 
 ### 1. Domknij recovery authority
 
-- dosnapshotuj tylko przyrost po poprzednim snapshotcie;
-- utrwal ledger unikalnych clean-local SHA i `UNKNOWN_OBJECT` refs;
+- utrzymuj zweryfikowany przyrost iCloud oraz recovery bundle;
+- użyj ledgeru 460 odzyskanych tipów do modułowego review 421 divergent tips;
 - nie usuwaj i nie integruj brudnych branchy w całości;
 - każdą wartościową zmianę przenoś jako pojedynczy commit lub modułowy diff z
   testem i provenance.

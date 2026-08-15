@@ -243,7 +243,8 @@ pierwszym cutem.
 ### Faza A — authority
 
 1. Jeden candidate SHA i czysty worktree.
-2. Dosnapshotować przyrost iCloud oraz utrwalić 460 `UNKNOWN_OBJECT` refs.
+2. [DONE] Przyrost iCloud jest w zweryfikowanym snapshotcie; 460 tipów
+   odzyskano, przypięto refs i zapisano w osobnym bundle.
 3. Żadnych whole-dirty-branch merges; tylko commit/modułowy diff.
 4. Zamrozić shared routes i migracje podczas exact-SHA acceptance.
 

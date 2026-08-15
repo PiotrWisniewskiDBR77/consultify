@@ -44,10 +44,13 @@ ancestry. Jeśli HEAD różni się od powyższego, najpierw wyjaśnić zmianę.
 
 Otwarte ryzyko recovery:
 
-- snapshot iCloud obejmował 3200 untracked, późniejszy odczyt pokazał 3203;
-  trzeba dosnapshotować deltę bez usuwania czegokolwiek;
-- rejestr ma 460 unikalnych tip SHA bez obiektów w centralnym cache. Status:
-  `UNKNOWN_OBJECT / RECOVERY_REQUIRED`, nie `LOST`;
+- [CLOSED] delta trzech post-snapshot untracked oraz aktualny tracked diff są
+  zabezpieczone w `preservation/001-635fd2d48d5a-delta-20260815`; gzip, tar i
+  SHA-256 zostały ponownie zweryfikowane;
+- [CLOSED — object recovery] 460 unikalnych tip SHA odzyskano ze starego repo,
+  przypięto jako `refs/recovery/unknown-20260815/<sha>` i zabezpieczono
+  zweryfikowanym bundle. 39 jest przodkami kanonu, 421 pozostaje rozbieżnymi
+  kandydatami do modułowego review;
 - najważniejsze nieprzeniesione clean/local oraz dirty/WIP są zapisane w
   istniejących manifestach cleanup. Nie scalać całych branchy; tylko modułowy
   diff lub pojedynczy zweryfikowany commit.
@@ -193,9 +196,11 @@ Najbardziej realistyczny zakres do odbioru:
 ### P0 — zabezpieczenie i authority
 
 1. Ponownie potwierdzić clean HEAD/branch/upstream kanonu.
-2. Dosnapshotować tylko deltę iCloud po poprzednim snapshotcie, szczególnie
-   dodatkowe untracked; bez delete/reset/stash.
-3. Zapisać jawny ledger clean-local SHA i 460 `UNKNOWN_OBJECT` refs.
+2. [DONE] Delta iCloud po poprzednim snapshotcie jest zabezpieczona i
+   zweryfikowana; bez delete/reset/stash.
+3. [DONE — object recovery] Ledger 460 refs istnieje; wszystkie obiekty są w
+   cache, refs i osobnym bundle. Semantyczny review 421 divergent tips pozostaje
+   pracą modułową, bez whole-branch merge.
 4. Nie integrować żadnego brudnego brancha jako całości.
 
 ### P0 — pełny audyt 16 modułów

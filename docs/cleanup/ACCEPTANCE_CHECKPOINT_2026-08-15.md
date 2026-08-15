@@ -135,7 +135,8 @@ agent statement cannot independently upgrade a module to `LIVE_CONNECTED`.
 - Semantic module inventory: `PASS` — 16/16 menu modules have a code-level
   AS-IS/TO-BE/GAP card in
   `docs/cleanup/MODULE_GAP_AND_INTEGRATION_PLAN_2026-08-15.md`.
-- Git/worktree recovery inventory: `IN_PROGRESS`
+- Git/worktree recovery inventory: `PASS` for capture and object recovery;
+  semantic review of divergent candidates remains module-scoped.
 - Deterministic standard test gate: `PARTIAL`
 - Isolated/realDB/external-runtime gates: `PENDING`
 - Demo parity with the checkpoint SHA: `NOT_VERIFIED`

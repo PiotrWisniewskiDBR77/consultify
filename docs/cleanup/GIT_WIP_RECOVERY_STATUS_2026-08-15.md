@@ -44,11 +44,27 @@ The large IE recovery checkout is classified `BROKEN_WIP`. A dehydrated central-
 
 Finance commits `19b4b06934` and `4489fdcab` remain on `origin/codex/finance-v3-complete-product-integration`; they require a reviewed module comparison and are not approved for wholesale merge.
 
-## Unresolved recovery set
+## Recovered Git object set
 
-- 460 unique referenced tip SHAs are not present in the canonical object cache.
-- 516 reference records were inventoried; 511 occurrences remain unresolved.
-- These entries are `UNKNOWN_OBJECT / RECOVERY_REQUIRED`, not proof of data loss and not deletion candidates.
+- The 460 unique referenced tip SHAs were found in the quarantined iCloud Git
+  object store and imported into the canonical object cache.
+- All `460/460` resolve as commits and are protected by refs under
+  `refs/recovery/unknown-20260815/<sha>`.
+- A dedicated bundle containing all 460 refs was created and verified:
+  `/Users/piotrwisniewski/Developer/consultify-cleanup-recovery-20260815/consultify-recovered-460-tips.bundle`.
+- Bundle SHA-256:
+  `5bb23bea9d794b038a2710942a5bdf693417f6034ce7581f4c78480b034f5ade`.
+- Relation to canonical `ec1127f12...`: 39 tips are ancestors of canon and 421
+  are divergent; none is a descendant of canon. The exact ledger is
+  `/Users/piotrwisniewski/Developer/consultify-cleanup-evidence-20260814/recovered-tip-relation-canonical-ec1127f12.tsv`
+  with SHA-256
+  `dc5b52d633669144268830395bbef7aa66ad0820fd4ad5fcf6e0f8f11087a69a`.
+- The 516 historical reference records remain the provenance map. The object
+  recovery gate is now `PASS`; semantic review/integration of 421 divergent
+  tips remains module-scoped work, not a reason to merge them wholesale.
+
+## Remaining recovery set
+
 - Old iCloud metadata, inaccessible compressed `.git` worktrees, and the UX Tools checkout with six conflicts remain preserved until object recovery is closed.
 - Clean local-only demo, Ideas, Tools, and Assessment commits remain named preservation points even where they are not on remote.
 
@@ -63,4 +79,6 @@ Before accepting a module:
 5. Re-run the module gate on the new exact SHA.
 6. Do not delete the source checkout until its classification is closed and the recovery evidence is independently restorable.
 
-This inventory materially lowers the risk of rebuilding forgotten functionality, but it does not claim that all 460 missing Git objects have been recovered or semantically reviewed.
+All previously missing tip objects are now recovered and independently
+bundle-protected. This does not claim that the 421 divergent tips are
+semantically integrated; they remain reviewable, recoverable candidates.
