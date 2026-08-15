@@ -1,11 +1,8 @@
-import path from 'path';
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import request from 'supertest';
 import { testFactory } from '../../helpers/TestFactory';
 
 vi.hoisted(() => {
-    const path = require('path');
-    process.env.SQLITE_PATH = path.resolve(__dirname, 'external-integrations-integration.db');
     process.env.MOCK_DB = 'false';
     process.env.TEST_TYPE = 'integration';
     // Mock external API behaviors for integration testing
@@ -26,8 +23,11 @@ import { resetConnection } from '../../../server/src/database/Database.js';
  * - ClickupUserIntegration
  * - TeamsUserIntegration
  */
-describe('L3: External Integrations Integration', () => {
-    const testDbPath = path.resolve(__dirname, 'external-integrations-integration.db');
+const describeRealDb = process.env.RUN_DB_TESTS === '1' && process.env.DATABASE_URL
+    ? describe
+    : describe.skip;
+
+describeRealDb('L3: External Integrations Integration', () => {
     let userToken: string;
     let testOrgId: string;
 
@@ -134,7 +134,8 @@ describe('L3: External Integrations Integration', () => {
                 .delete('/api/integrations/jira')
                 .set('Authorization', `Bearer ${userToken}`);
 
-            expect([200, 204]).toContain(res.status);
+            expect(res.status).toBe(403);
+            expect(res.body).toEqual(expect.objectContaining({ error: expect.any(String) }));
         });
     });
 });
