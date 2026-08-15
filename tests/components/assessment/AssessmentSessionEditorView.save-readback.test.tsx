@@ -201,6 +201,10 @@ async function mountAndWaitReady() {
 describe('AssessmentSessionEditorView — save read-back (ASM-001A)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // This suite owns the legacy editor's PUT -> GET read-back contract. The
+    // ordinary build now mounts the canonical HTTP Method workspace, so use
+    // the documented build-time rollback to exercise that bounded contract.
+    vi.stubEnv('VITE_DRD_CANONICAL_HTTP_WORKSPACE', 'false');
     getWorkbenchMock.mockResolvedValue({ workbench: null, whatNext: [] });
     getWorkbenchPromotionPayloadMock.mockResolvedValue(null);
     getUserStateMock.mockResolvedValue({ navigation: null });

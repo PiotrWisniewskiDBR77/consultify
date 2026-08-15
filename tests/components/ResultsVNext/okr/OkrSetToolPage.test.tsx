@@ -23,9 +23,18 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+const { flagEnabled } = vi.hoisted(() => ({ flagEnabled: { value: true } }));
+vi.mock('@/components/ResultsVNext/resultsVNextFeatureFlags', async () => {
+  const actual = await vi.importActual<
+    typeof import('@/components/ResultsVNext/resultsVNextFeatureFlags')
+  >('@/components/ResultsVNext/resultsVNextFeatureFlags');
+  return { ...actual, isResultsVNextFlagEnabled: () => flagEnabled.value };
+});
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback?: any) => (typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key)),
+    t: (_key: string, fallback?: any) =>
+      typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key),
     i18n: { language: 'pl' },
   }),
   initReactI18next: { type: '3rdParty', init: () => {} },
@@ -73,13 +82,21 @@ const OKR_SET_ROW = {
 };
 
 function jsonResponse(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
 }
 
 function mockFetch(overrides: { setStatus?: number; setBody?: unknown } = {}) {
   const setUrl = `${API_URL}/vnext/results/okr/sets/${SET_ID}`;
   global.fetch = vi.fn(async (input: RequestInfo | URL) => {
-    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+    const url =
+      typeof input === 'string'
+        ? input
+        : input instanceof URL
+          ? input.href
+          : (input as Request).url;
     if (url === setUrl) {
       if (overrides.setStatus && overrides.setStatus >= 400) {
         return jsonResponse({ error: 'not found', code: 'NOT_FOUND' }, overrides.setStatus);
@@ -103,6 +120,7 @@ function renderAt(path: string) {
 describe('OkrSetToolPage — /results/okr/sets/:okrSetId (klasa L full workspace, deep link)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    flagEnabled.value = true;
     window.localStorage.clear();
   });
 
@@ -110,7 +128,8 @@ describe('OkrSetToolPage — /results/okr/sets/:okrSetId (klasa L full workspace
     window.localStorage.clear();
   });
 
-  it('renders the honest disabled-flag empty state when okrRegistry flag is OFF (default)', async () => {
+  it('renders the honest disabled-flag empty state for the explicit build rollback', async () => {
+    flagEnabled.value = false;
     mockFetch();
     renderAt(`/results/okr/sets/${SET_ID}`);
     expect(await screen.findByTestId('results-vnext-okr-tool-disabled')).toBeInTheDocument();
@@ -123,18 +142,24 @@ describe('OkrSetToolPage — /results/okr/sets/:okrSetId (klasa L full workspace
 
     renderAt(`/results/okr/sets/${SET_ID}`);
 
-    await waitFor(() => expect(screen.getByTestId('results-vnext-okr-tool-page')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('results-vnext-okr-tool-page')).toBeInTheDocument()
+    );
     await waitFor(() =>
       expect(global.fetch).toHaveBeenCalledWith(
         `${API_URL}/vnext/results/okr/sets/${SET_ID}`,
         expect.anything()
       )
     );
-    await waitFor(() => expect(screen.getByTestId('results-vnext-okr-set-workspace')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('results-vnext-okr-set-workspace')).toBeInTheDocument()
+    );
     // The set title only reaches the screen via `OkrSetWorkspace`'s own
     // `rootCrumbs` — concrete proof `getOkrSet` fed the real loaded record
     // into the workspace, not a stub/empty object.
-    await waitFor(() => expect(screen.getAllByText('OKR Zespołu Operacji Q3').length).toBeGreaterThan(0));
+    await waitFor(() =>
+      expect(screen.getAllByText('OKR Zespołu Operacji Q3').length).toBeGreaterThan(0)
+    );
   });
 
   it('breadcrumb "back to registry" requests navigation to ROUTES.RESULTS_OKR.ROOT', async () => {
@@ -142,7 +167,9 @@ describe('OkrSetToolPage — /results/okr/sets/:okrSetId (klasa L full workspace
     mockFetch();
 
     renderAt(`/results/okr/sets/${SET_ID}`);
-    await waitFor(() => expect(screen.getByTestId('results-vnext-okr-set-workspace')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('results-vnext-okr-set-workspace')).toBeInTheDocument()
+    );
 
     const user = userEvent.setup();
     const backCrumb = await screen.findByText('Zestawy OKR');
@@ -156,10 +183,16 @@ describe('OkrSetToolPage — /results/okr/sets/:okrSetId (klasa L full workspace
     const setUrl = `${API_URL}/vnext/results/okr/sets/${SET_ID}`;
     let callCount = 0;
     global.fetch = vi.fn(async (input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const url =
+        typeof input === 'string'
+          ? input
+          : input instanceof URL
+            ? input.href
+            : (input as Request).url;
       if (url === setUrl) {
         callCount += 1;
-        if (callCount === 1) return jsonResponse({ error: 'Service unavailable', code: 'OKR_UNAVAILABLE' }, 503);
+        if (callCount === 1)
+          return jsonResponse({ error: 'Service unavailable', code: 'OKR_UNAVAILABLE' }, 503);
         return jsonResponse({ set: OKR_SET_ROW });
       }
       return jsonResponse({});
@@ -169,11 +202,15 @@ describe('OkrSetToolPage — /results/okr/sets/:okrSetId (klasa L full workspace
 
     expect(await screen.findByTestId('results-vnext-okr-tool-error')).toBeInTheDocument();
 
-    const retryButton = within(screen.getByTestId('results-vnext-okr-tool-error')).getByRole('button');
+    const retryButton = within(screen.getByTestId('results-vnext-okr-tool-error')).getByRole(
+      'button'
+    );
     const user = userEvent.setup();
     await user.click(retryButton);
 
-    await waitFor(() => expect(screen.getByTestId('results-vnext-okr-tool-page')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('results-vnext-okr-tool-page')).toBeInTheDocument()
+    );
   });
 
   it('deep link to a nonexistent (or cross-org — same 404, D06/D07) set id renders the forbidden state, never a blank screen', async () => {
@@ -182,6 +219,8 @@ describe('OkrSetToolPage — /results/okr/sets/:okrSetId (klasa L full workspace
 
     renderAt(`/results/okr/sets/${SET_ID}`);
 
-    await waitFor(() => expect(screen.getByText(/nie masz dostępu|no visibility/i)).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText(/nie masz dostępu|no visibility/i)).toBeInTheDocument()
+    );
   });
 });

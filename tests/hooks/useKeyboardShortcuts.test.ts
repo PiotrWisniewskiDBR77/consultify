@@ -11,13 +11,14 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 // Mock Api service
 vi.mock('@/services/api', () => ({
   Api: {
-    getKeyboardShortcuts: vi.fn().mockResolvedValue({
-      enabled: true,
-      preset: 'default',
-      customMappings: {},
-      disabledActions: [],
+    getShortcuts: vi.fn().mockResolvedValue({
+      preferences: {
+        enabled: true,
+        preset: 'default',
+        customShortcuts: {},
+        disabledShortcuts: [],
+      },
     }),
-    updateKeyboardShortcuts: vi.fn().mockResolvedValue({}),
   },
 }));
 
@@ -31,15 +32,15 @@ describe('useKeyboardShortcuts Hook', () => {
   });
 
   describe('Initialization', () => {
-    it('returns allShortcuts array', async () => {
+    it('returns activeShortcuts array', async () => {
       const { result } = renderHook(() => useKeyboardShortcuts());
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
       });
 
-      expect(Array.isArray(result.current.allShortcuts)).toBe(true);
-      expect(result.current.allShortcuts.length).toBeGreaterThan(0);
+      expect(Array.isArray(result.current.activeShortcuts)).toBe(true);
+      expect(result.current.activeShortcuts.length).toBeGreaterThan(0);
     });
 
     it('returns loading state', () => {
@@ -66,7 +67,9 @@ describe('useKeyboardShortcuts Hook', () => {
         expect(result.current.loading).toBe(false);
       });
 
-      const navShortcuts = result.current.allShortcuts.filter((s) => s.category === 'navigation');
+      const navShortcuts = result.current.activeShortcuts.filter(
+        (s) => s.category === 'navigation'
+      );
 
       expect(navShortcuts.length).toBeGreaterThan(0);
     });
@@ -78,7 +81,7 @@ describe('useKeyboardShortcuts Hook', () => {
         expect(result.current.loading).toBe(false);
       });
 
-      const taskShortcuts = result.current.allShortcuts.filter(
+      const taskShortcuts = result.current.activeShortcuts.filter(
         (s) => s.category === 'task_management'
       );
 
@@ -92,7 +95,7 @@ describe('useKeyboardShortcuts Hook', () => {
         expect(result.current.loading).toBe(false);
       });
 
-      const helpShortcut = result.current.allShortcuts.find((s) => s.id === 'help');
+      const helpShortcut = result.current.activeShortcuts.find((s) => s.id === 'help');
       expect(helpShortcut).toBeDefined();
     });
   });
@@ -105,7 +108,7 @@ describe('useKeyboardShortcuts Hook', () => {
         expect(result.current.loading).toBe(false);
       });
 
-      result.current.allShortcuts.forEach((shortcut) => {
+      result.current.activeShortcuts.forEach((shortcut) => {
         expect(shortcut.name).toBeDefined();
         expect(shortcut.name.length).toBeGreaterThan(0);
       });
@@ -118,7 +121,7 @@ describe('useKeyboardShortcuts Hook', () => {
         expect(result.current.loading).toBe(false);
       });
 
-      result.current.allShortcuts.forEach((shortcut) => {
+      result.current.activeShortcuts.forEach((shortcut) => {
         expect(shortcut.description).toBeDefined();
       });
     });
@@ -130,7 +133,7 @@ describe('useKeyboardShortcuts Hook', () => {
         expect(result.current.loading).toBe(false);
       });
 
-      result.current.allShortcuts.forEach((shortcut) => {
+      result.current.activeShortcuts.forEach((shortcut) => {
         expect(shortcut.category).toBeDefined();
       });
     });
@@ -142,35 +145,40 @@ describe('useKeyboardShortcuts Hook', () => {
         expect(result.current.loading).toBe(false);
       });
 
-      result.current.allShortcuts.forEach((shortcut) => {
+      result.current.activeShortcuts.forEach((shortcut) => {
         expect(shortcut.defaultKey).toBeDefined();
       });
     });
   });
 
   describe('API Methods', () => {
-    it('exposes setEnabled method', async () => {
+    it('exposes reload method', async () => {
       const { result } = renderHook(() => useKeyboardShortcuts());
 
-      expect(typeof result.current.setEnabled).toBe('function');
+      expect(typeof result.current.reload).toBe('function');
     });
 
-    it('exposes setPreset method', async () => {
+    it('exposes the persisted enabled state', async () => {
       const { result } = renderHook(() => useKeyboardShortcuts());
 
-      expect(typeof result.current.setPreset).toBe('function');
+      await waitFor(() => expect(result.current.loading).toBe(false));
+      expect(result.current.enabled).toBe(true);
     });
 
-    it('exposes setCustomShortcut method', async () => {
+    it('exposes active bindings with currentKey', async () => {
       const { result } = renderHook(() => useKeyboardShortcuts());
 
-      expect(typeof result.current.setCustomShortcut).toBe('function');
+      await waitFor(() => expect(result.current.loading).toBe(false));
+      expect(
+        result.current.activeShortcuts.every((shortcut) => shortcut.currentKey.length > 0)
+      ).toBe(true);
     });
 
-    it('exposes resetAll method', async () => {
+    it('exposes the canonical shortcut preferences', async () => {
       const { result } = renderHook(() => useKeyboardShortcuts());
 
-      expect(typeof result.current.resetAll).toBe('function');
+      await waitFor(() => expect(result.current.loading).toBe(false));
+      expect(result.current.shortcuts.preset).toBe('default');
     });
 
     it('exposes getShortcutKey method', async () => {

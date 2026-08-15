@@ -37,7 +37,14 @@ describe('DRD structure — per-axis level scale is genuinely non-uniform (preco
 describe('DrdMethodWorkspaceScreen — Matrix: per-axis scale, not a global one', () => {
   it('axis 1 renders 7 level columns (L1..L7); switching to axis 7 renders 5 (L1..L5)', () => {
     const storage = makeMemoryStorage();
-    render(<DrdMethodWorkspaceScreen storage={storage} seedTo="matrix" initialViewMode="matrix" />);
+    render(
+      <DrdMethodWorkspaceScreen
+        storage={storage}
+        seedTo="matrix"
+        initialViewMode="matrix"
+        forceHttpSourceOfTruth={false}
+      />
+    );
 
     expect(screen.getByText('L7')).toBeInTheDocument();
     expect(screen.queryByText('L8')).not.toBeInTheDocument();
@@ -51,14 +58,25 @@ describe('DrdMethodWorkspaceScreen — Matrix: per-axis scale, not a global one'
 
   it('selecting a matrix cell, switching to Interview, then back to Matrix preserves the selected cell (no forked/reset state)', () => {
     const storage = makeMemoryStorage();
-    render(<DrdMethodWorkspaceScreen storage={storage} seedTo="matrix" initialViewMode="matrix" />);
+    render(
+      <DrdMethodWorkspaceScreen
+        storage={storage}
+        seedTo="matrix"
+        initialViewMode="matrix"
+        forceHttpSourceOfTruth={false}
+      />
+    );
 
     // Select level 2 of the first row (Procesy Sprzedaży / 1A).
-    const cells = screen.getAllByTestId('matrix-cell').filter((el) => el.getAttribute('data-unit-id') === '1A');
+    const cells = screen
+      .getAllByTestId('matrix-cell')
+      .filter((el) => el.getAttribute('data-unit-id') === '1A');
     const level2Cell = cells.find((el) => el.getAttribute('data-level') === '2')!;
     fireEvent.click(level2Cell);
 
-    expect(within(screen.getByTestId('matrix-side-sheet')).getAllByText(/poziom 2/i).length).toBeGreaterThan(0);
+    expect(
+      within(screen.getByTestId('matrix-side-sheet')).getAllByText(/poziom 2/i).length
+    ).toBeGreaterThan(0);
 
     // Switch to Interview view.
     fireEvent.click(screen.getByTestId('view-mode-interview'));
@@ -67,6 +85,8 @@ describe('DrdMethodWorkspaceScreen — Matrix: per-axis scale, not a global one'
     // Back to Matrix — same selection, same side sheet content, no reset.
     fireEvent.click(screen.getByTestId('view-mode-matrix'));
     expect(screen.getByTestId('matrix-side-sheet')).toBeInTheDocument();
-    expect(within(screen.getByTestId('matrix-side-sheet')).getAllByText(/1A · poziom 2/).length).toBeGreaterThan(0);
+    expect(
+      within(screen.getByTestId('matrix-side-sheet')).getAllByText(/1A · poziom 2/).length
+    ).toBeGreaterThan(0);
   });
 });

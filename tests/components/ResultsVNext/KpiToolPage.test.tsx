@@ -22,9 +22,18 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+const { flagEnabled } = vi.hoisted(() => ({ flagEnabled: { value: true } }));
+vi.mock('@/components/ResultsVNext/resultsVNextFeatureFlags', async () => {
+  const actual = await vi.importActual<
+    typeof import('@/components/ResultsVNext/resultsVNextFeatureFlags')
+  >('@/components/ResultsVNext/resultsVNextFeatureFlags');
+  return { ...actual, isResultsVNextFlagEnabled: () => flagEnabled.value };
+});
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback?: any) => (typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key)),
+    t: (_key: string, fallback?: any) =>
+      typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key),
     i18n: { language: 'pl' },
   }),
   initReactI18next: { type: '3rdParty', init: () => {} },
@@ -84,15 +93,37 @@ const KPI_ROW = {
 };
 
 const APPROVED_VERSION = {
-  definitionVersionId: 'dv-1', kpiId: KPI_ID, organizationId: 'org-1', versionNumber: 1,
-  name: 'Realizacja korzyści', description: null, unit: '%', targetGeometry: 'threshold_min',
-  targetValue: 90, targetMin: null, targetMax: null, warningLow: 80, warningHigh: null,
-  criticalLow: 70, criticalHigh: null, binarySuccessValue: null, formulaText: null,
-  approvalStatus: 'approved', effectiveFrom: null, effectiveTo: null, createdBy: 'user-owner',
-  createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z',
-  submittedBy: 'reviewer', submittedAt: '2026-01-01T00:00:00.000Z',
-  approvedBy: 'reviewer', approvedAt: '2026-01-01T00:00:00.000Z',
-  rejectedBy: null, rejectedAt: null, rejectionReason: null, rowVersion: 1,
+  definitionVersionId: 'dv-1',
+  kpiId: KPI_ID,
+  organizationId: 'org-1',
+  versionNumber: 1,
+  name: 'Realizacja korzyści',
+  description: null,
+  unit: '%',
+  targetGeometry: 'threshold_min',
+  targetValue: 90,
+  targetMin: null,
+  targetMax: null,
+  warningLow: 80,
+  warningHigh: null,
+  criticalLow: 70,
+  criticalHigh: null,
+  binarySuccessValue: null,
+  formulaText: null,
+  approvalStatus: 'approved',
+  effectiveFrom: null,
+  effectiveTo: null,
+  createdBy: 'user-owner',
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
+  submittedBy: 'reviewer',
+  submittedAt: '2026-01-01T00:00:00.000Z',
+  approvedBy: 'reviewer',
+  approvedAt: '2026-01-01T00:00:00.000Z',
+  rejectedBy: null,
+  rejectedAt: null,
+  rejectionReason: null,
+  rowVersion: 1,
 };
 
 const MEASUREMENT_ROW = {
@@ -185,6 +216,7 @@ function renderAt(path: string) {
 describe('KpiToolPage — /results/kpi/:kpiId (klasa L full tool)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    flagEnabled.value = true;
     window.localStorage.clear();
   });
 
@@ -192,7 +224,8 @@ describe('KpiToolPage — /results/kpi/:kpiId (klasa L full tool)', () => {
     window.localStorage.clear();
   });
 
-  it('renders the honest disabled-flag empty state when kpiRegistry flag is OFF (default)', async () => {
+  it('renders the honest disabled-flag empty state for the explicit build rollback', async () => {
+    flagEnabled.value = false;
     renderAt(`/results/kpi/${KPI_ID}`);
     expect(await screen.findByTestId('results-vnext-kpi-tool-disabled')).toBeInTheDocument();
     expect(Api.get).not.toHaveBeenCalled();
@@ -204,7 +237,9 @@ describe('KpiToolPage — /results/kpi/:kpiId (klasa L full tool)', () => {
 
     renderAt(`/results/kpi/${KPI_ID}`);
 
-    await waitFor(() => expect(screen.getByTestId('results-vnext-kpi-tool-page')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('results-vnext-kpi-tool-page')).toBeInTheDocument()
+    );
     await waitFor(() => expect(Api.get).toHaveBeenCalledWith(`/vnext/results/kpi/${KPI_ID}`));
 
     // KPI identity + lifecycle
@@ -235,7 +270,9 @@ describe('KpiToolPage — /results/kpi/:kpiId (klasa L full tool)', () => {
 
     renderAt(`/results/kpi/${KPI_ID}`);
 
-    await waitFor(() => expect(screen.getByTestId('results-vnext-kpi-tool-page')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('results-vnext-kpi-tool-page')).toBeInTheDocument()
+    );
 
     const user = userEvent.setup();
     // Navigate to the Deviations section via the left nav.
@@ -270,16 +307,23 @@ describe('KpiToolPage — /results/kpi/:kpiId (klasa L full tool)', () => {
 
     // Retry succeeds once the backend is healthy again.
     mockApiGet();
-    const retryButton = within(screen.getByTestId('results-vnext-kpi-tool-error')).getByRole('button');
+    const retryButton = within(screen.getByTestId('results-vnext-kpi-tool-error')).getByRole(
+      'button'
+    );
     const user = userEvent.setup();
     await user.click(retryButton);
 
-    await waitFor(() => expect(screen.getByTestId('results-vnext-kpi-tool-page')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('results-vnext-kpi-tool-page')).toBeInTheDocument()
+    );
   });
 
   it('deep link to a KPI the caller cannot see (404) renders the forbidden state, never a blank screen', async () => {
     window.localStorage.setItem('ff.results_vnext_kpi_registry', '1');
-    const notFound = Object.assign(new Error('Not found'), { status: 404, data: { code: 'NOT_FOUND' } });
+    const notFound = Object.assign(new Error('Not found'), {
+      status: 404,
+      data: { code: 'NOT_FOUND' },
+    });
     vi.mocked(Api.get).mockImplementation(async (url: string) => {
       if (url === `/vnext/results/kpi/${KPI_ID}`) throw notFound;
       return { measurements: [] };
@@ -287,6 +331,8 @@ describe('KpiToolPage — /results/kpi/:kpiId (klasa L full tool)', () => {
 
     renderAt(`/results/kpi/${KPI_ID}`);
 
-    await waitFor(() => expect(screen.getByText(/nie masz dostępu|no visibility/i)).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText(/nie masz dostępu|no visibility/i)).toBeInTheDocument()
+    );
   });
 });

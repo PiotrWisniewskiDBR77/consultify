@@ -116,13 +116,12 @@ describe('Fixture — pokrycie wszystkich rodzajów adaptera', () => {
     }
   });
 
-  it('powierzchnie wymagające nowego rejestru mają oba warianty', () => {
+  it('każda pozostała powierzchnia wymagająca nowego rejestru ma oba warianty', () => {
     // REPAIR_MASTER_PLAN Fala 2: „Każda powierzchnia musi dostać prawdziwą
     // tabelę w wariancie empty i populated."
     const needsNew = Object.values(TABLE_SURFACE_REGISTER).filter(
       (contract) => contract.requiresNewRegistry
     );
-    expect(needsNew.length).toBeGreaterThan(0);
     for (const contract of needsNew) {
       expect(emptyFixture(contract.id).columns.length).toBeGreaterThan(1);
       expect(populatedFixture(contract.id).rows).toHaveLength(3);

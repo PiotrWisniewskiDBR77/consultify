@@ -23,9 +23,18 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+const { flagEnabled } = vi.hoisted(() => ({ flagEnabled: { value: true } }));
+vi.mock('@/components/ResultsVNext/resultsVNextFeatureFlags', async () => {
+  const actual = await vi.importActual<
+    typeof import('@/components/ResultsVNext/resultsVNextFeatureFlags')
+  >('@/components/ResultsVNext/resultsVNextFeatureFlags');
+  return { ...actual, isResultsVNextFlagEnabled: () => flagEnabled.value };
+});
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback?: any) => (typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key)),
+    t: (_key: string, fallback?: any) =>
+      typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key),
     i18n: { language: 'pl' },
   }),
   initReactI18next: { type: '3rdParty', init: () => {} },
@@ -125,10 +134,12 @@ function renderAt(path: string) {
 describe('KpiDeviationCaseSubview — /results/kpi/:kpiId/deviation-cases/:caseId (D05 subview)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    flagEnabled.value = true;
     window.localStorage.clear();
   });
 
-  it('renders the honest disabled-flag empty state when kpiRegistry flag is OFF (default)', async () => {
+  it('renders the honest disabled-flag empty state for the explicit build rollback', async () => {
+    flagEnabled.value = false;
     renderAt(`/results/kpi/${KPI_ID}/deviation-cases/${CASE_ID}`);
     expect(await screen.findByTestId('kpi-deviation-case-disabled')).toBeInTheDocument();
     expect(Api.get).not.toHaveBeenCalled();
@@ -136,7 +147,10 @@ describe('KpiDeviationCaseSubview — /results/kpi/:kpiId/deviation-cases/:caseI
 
   it('deep link to a case the caller cannot see (404) renders the forbidden state', async () => {
     window.localStorage.setItem('ff.results_vnext_kpi_registry', '1');
-    const notFound = Object.assign(new Error('Not found'), { status: 404, data: { code: 'NOT_FOUND' } });
+    const notFound = Object.assign(new Error('Not found'), {
+      status: 404,
+      data: { code: 'NOT_FOUND' },
+    });
     vi.mocked(Api.get).mockImplementation(async () => {
       throw notFound;
     });
@@ -153,7 +167,9 @@ describe('KpiDeviationCaseSubview — /results/kpi/:kpiId/deviation-cases/:caseI
     vi.mocked(Api.get).mockImplementation(async (url: string) => {
       if (url === `/vnext/results/kpi/deviation-cases/${CASE_ID}`) return { case: currentCase };
       if (url.startsWith(`/vnext/results/kpi/${KPI_ID}/measurements`)) {
-        return { measurements: [{ measurementId: 'm-1', periodEnd: '2026-07-31', actualValue: 42 }] };
+        return {
+          measurements: [{ measurementId: 'm-1', periodEnd: '2026-07-31', actualValue: 42 }],
+        };
       }
       throw new Error(`Unexpected GET ${url}`);
     });
@@ -165,7 +181,9 @@ describe('KpiDeviationCaseSubview — /results/kpi/:kpiId/deviation-cases/:caseI
     await screen.findByTestId('kpi-deviation-phase-1');
 
     // Honest gap banner always visible (no GET for corrective actions).
-    expect(screen.getByText(/brak endpointu odczytu listy działań korygujących/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/brak endpointu odczytu listy działań korygujących/i)
+    ).toBeInTheDocument();
 
     // ── Step 1: acknowledge (open -> analysis_required) ──
     vi.mocked(Api.post).mockImplementationOnce(async (url: string, body: any) => {
@@ -175,7 +193,9 @@ describe('KpiDeviationCaseSubview — /results/kpi/:kpiId/deviation-cases/:caseI
       return { outcome: 'applied', eventId: 'evt-1', resultingVersion: 2, case: currentCase };
     });
     await user.click(screen.getByText('Potwierdź'));
-    await waitFor(() => expect(screen.getByTestId('kpi-deviation-root-cause-summary')).not.toBeDisabled());
+    await waitFor(() =>
+      expect(screen.getByTestId('kpi-deviation-root-cause-summary')).not.toBeDisabled()
+    );
 
     // ── Step 2: submit root cause (analysis_required -> plan_required) ──
     fireEvent.change(screen.getByTestId('kpi-deviation-root-cause-summary'), {
@@ -201,11 +221,17 @@ describe('KpiDeviationCaseSubview — /results/kpi/:kpiId/deviation-cases/:caseI
       return { outcome: 'applied', eventId: 'evt-2', resultingVersion: 3, case: currentCase };
     });
     await user.click(screen.getByTestId('kpi-deviation-submit-root-cause'));
-    await waitFor(() => expect(screen.getByTestId('kpi-deviation-action-title')).not.toBeDisabled());
+    await waitFor(() =>
+      expect(screen.getByTestId('kpi-deviation-action-title')).not.toBeDisabled()
+    );
 
     // ── Step 3: add a corrective action (session-local list) ──
-    fireEvent.change(screen.getByTestId('kpi-deviation-action-title'), { target: { value: 'Switch supplier' } });
-    fireEvent.change(screen.getByTestId('kpi-deviation-action-owner'), { target: { value: 'user-owner' } });
+    fireEvent.change(screen.getByTestId('kpi-deviation-action-title'), {
+      target: { value: 'Switch supplier' },
+    });
+    fireEvent.change(screen.getByTestId('kpi-deviation-action-owner'), {
+      target: { value: 'user-owner' },
+    });
     vi.mocked(Api.post).mockImplementationOnce(async (url: string, body: any) => {
       expect(url).toBe(`/vnext/results/kpi/deviation-cases/${CASE_ID}/corrective-actions`);
       expect(body).toMatchObject({ title: 'Switch supplier', ownerUserId: 'user-owner' });
@@ -238,11 +264,18 @@ describe('KpiDeviationCaseSubview — /results/kpi/:kpiId/deviation-cases/:caseI
     vi.mocked(Api.post).mockImplementationOnce(async (url: string, body: any) => {
       expect(url).toBe(`/vnext/results/kpi/deviation-cases/${CASE_ID}/plan/submit`);
       expect(body).toEqual({ expectedVersion: 3 });
-      currentCase = { ...currentCase, status: 'plan_submitted', rowVersion: 4, planSubmittedBy: 'user-a' };
+      currentCase = {
+        ...currentCase,
+        status: 'plan_submitted',
+        rowVersion: 4,
+        planSubmittedBy: 'user-a',
+      };
       return { outcome: 'applied', eventId: 'evt-4', resultingVersion: 4, case: currentCase };
     });
     await user.click(screen.getByTestId('kpi-deviation-submit-plan'));
-    await waitFor(() => expect(screen.getByTestId('kpi-deviation-approve-plan')).not.toBeDisabled());
+    await waitFor(() =>
+      expect(screen.getByTestId('kpi-deviation-approve-plan')).not.toBeDisabled()
+    );
 
     // ── Step 4b: approve plan REJECTED by self-approval (maker-checker, D06 —
     // not a security-existence denial, the exact server message is shown) ──
@@ -255,7 +288,9 @@ describe('KpiDeviationCaseSubview — /results/kpi/:kpiId/deviation-cases/:caseI
     });
     await user.click(screen.getByTestId('kpi-deviation-approve-plan'));
     await screen.findByTestId('kpi-deviation-error');
-    expect(screen.getByTestId('kpi-deviation-error')).toHaveTextContent('Cannot approve your own plan');
+    expect(screen.getByTestId('kpi-deviation-error')).toHaveTextContent(
+      'Cannot approve your own plan'
+    );
 
     // ── Step 5: approve plan succeeds (second, authorized attempt) ──
     vi.mocked(Api.post).mockImplementationOnce(async (url: string, body: any) => {
@@ -274,7 +309,9 @@ describe('KpiDeviationCaseSubview — /results/kpi/:kpiId/deviation-cases/:caseI
 
     // ── Step 6: move the corrective action to 'active' -> case auto-transitions to 'executing' ──
     vi.mocked(Api.patch).mockImplementationOnce(async (url: string, body: any) => {
-      expect(url).toBe(`/vnext/results/kpi/deviation-cases/${CASE_ID}/corrective-actions/${ACTION_ID}`);
+      expect(url).toBe(
+        `/vnext/results/kpi/deviation-cases/${CASE_ID}/corrective-actions/${ACTION_ID}`
+      );
       expect(body).toMatchObject({ expectedVersion: 1, status: 'active' });
       return {
         outcome: 'applied',
@@ -294,8 +331,12 @@ describe('KpiDeviationCaseSubview — /results/kpi/:kpiId/deviation-cases/:caseI
     await waitFor(() => expect(Api.patch).toHaveBeenCalled());
 
     // ── Step 7: record recovery observation (executing -> recovery_observed) ──
-    await waitFor(() => expect(screen.getByTestId('kpi-deviation-recovery-measurement')).not.toBeDisabled());
-    fireEvent.change(screen.getByTestId('kpi-deviation-recovery-measurement'), { target: { value: 'm-1' } });
+    await waitFor(() =>
+      expect(screen.getByTestId('kpi-deviation-recovery-measurement')).not.toBeDisabled()
+    );
+    fireEvent.change(screen.getByTestId('kpi-deviation-recovery-measurement'), {
+      target: { value: 'm-1' },
+    });
     vi.mocked(Api.post).mockImplementationOnce(async (url: string, body: any) => {
       expect(url).toBe(`/vnext/results/kpi/deviation-cases/${CASE_ID}/recovery-observation`);
       expect(body).toEqual({ expectedVersion: 6, recoveryObservationMeasurementId: 'm-1' });
@@ -303,18 +344,26 @@ describe('KpiDeviationCaseSubview — /results/kpi/:kpiId/deviation-cases/:caseI
       return { outcome: 'applied', eventId: 'evt-7', resultingVersion: 7, case: currentCase };
     });
     await user.click(screen.getByText('Zapisz obserwację odbudowy'));
-    await waitFor(() => expect(Api.post).toHaveBeenCalledWith(
-      `/vnext/results/kpi/deviation-cases/${CASE_ID}/recovery-observation`,
-      expect.anything()
-    ));
+    await waitFor(() =>
+      expect(Api.post).toHaveBeenCalledWith(
+        `/vnext/results/kpi/deviation-cases/${CASE_ID}/recovery-observation`,
+        expect.anything()
+      )
+    );
 
     // ── Step 8: submit effectiveness verification (-> verification) ──
     // Window start/end date inputs — identify by proximity to the outcome select.
-    const startInput = screen.getByTestId('kpi-deviation-verification-outcome').parentElement!.querySelectorAll('input[type="date"]')[0] as HTMLInputElement;
-    const endInput = screen.getByTestId('kpi-deviation-verification-outcome').parentElement!.querySelectorAll('input[type="date"]')[1] as HTMLInputElement;
+    const startInput = screen
+      .getByTestId('kpi-deviation-verification-outcome')
+      .parentElement!.querySelectorAll('input[type="date"]')[0] as HTMLInputElement;
+    const endInput = screen
+      .getByTestId('kpi-deviation-verification-outcome')
+      .parentElement!.querySelectorAll('input[type="date"]')[1] as HTMLInputElement;
     fireEvent.change(startInput, { target: { value: '2026-08-05' } });
     fireEvent.change(endInput, { target: { value: '2026-08-10' } });
-    fireEvent.change(screen.getByTestId('kpi-deviation-verification-outcome'), { target: { value: 'effective' } });
+    fireEvent.change(screen.getByTestId('kpi-deviation-verification-outcome'), {
+      target: { value: 'effective' },
+    });
     vi.mocked(Api.post).mockImplementationOnce(async (url: string, body: any) => {
       expect(url).toBe(`/vnext/results/kpi/deviation-cases/${CASE_ID}/effectiveness-verifications`);
       expect(body).toMatchObject({
@@ -348,7 +397,13 @@ describe('KpiDeviationCaseSubview — /results/kpi/:kpiId/deviation-cases/:caseI
     vi.mocked(Api.post).mockImplementationOnce(async (url: string, body: any) => {
       expect(url).toBe(`/vnext/results/kpi/deviation-cases/${CASE_ID}/close`);
       expect(body).toEqual({ expectedVersion: 8 });
-      currentCase = { ...currentCase, status: 'closed', rowVersion: 9, closedAt: '2026-08-11T00:00:00.000Z', closedBy: 'user-a' };
+      currentCase = {
+        ...currentCase,
+        status: 'closed',
+        rowVersion: 9,
+        closedAt: '2026-08-11T00:00:00.000Z',
+        closedBy: 'user-a',
+      };
       return { outcome: 'applied', eventId: 'evt-9', resultingVersion: 9, case: currentCase };
     });
     await user.click(screen.getByTestId('kpi-deviation-close-case'));

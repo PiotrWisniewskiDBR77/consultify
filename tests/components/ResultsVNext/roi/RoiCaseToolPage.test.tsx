@@ -25,9 +25,18 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+const { flagEnabled } = vi.hoisted(() => ({ flagEnabled: { value: true } }));
+vi.mock('@/components/ResultsVNext/resultsVNextFeatureFlags', async () => {
+  const actual = await vi.importActual<
+    typeof import('@/components/ResultsVNext/resultsVNextFeatureFlags')
+  >('@/components/ResultsVNext/resultsVNextFeatureFlags');
+  return { ...actual, isResultsVNextFlagEnabled: () => flagEnabled.value };
+});
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback?: any) => (typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key)),
+    t: (_key: string, fallback?: any) =>
+      typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key),
     i18n: { language: 'pl' },
   }),
   initReactI18next: { type: '3rdParty', init: () => {} },
@@ -78,16 +87,27 @@ const ROI_CASE_ROW = {
 };
 
 function jsonResponse(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
 }
 
 function mockFetch(overrides: { caseStatus?: number; caseBody?: unknown } = {}) {
   const caseUrl = `${API_URL}/vnext/results/roi/cases/${CASE_ID}`;
   global.fetch = vi.fn(async (input: RequestInfo | URL) => {
-    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+    const url =
+      typeof input === 'string'
+        ? input
+        : input instanceof URL
+          ? input.href
+          : (input as Request).url;
     if (url === caseUrl) {
       if (overrides.caseStatus && overrides.caseStatus >= 400) {
-        return jsonResponse({ error: 'ROI case not found', code: 'NOT_FOUND' }, overrides.caseStatus);
+        return jsonResponse(
+          { error: 'ROI case not found', code: 'NOT_FOUND' },
+          overrides.caseStatus
+        );
       }
       return jsonResponse({ case: overrides.caseBody ?? ROI_CASE_ROW });
     }
@@ -117,6 +137,7 @@ function renderAt(path: string) {
 describe('RoiCaseToolPage — /results/roi/cases/:roiCaseId (klasa L full tool, deep link)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    flagEnabled.value = true;
     window.localStorage.clear();
   });
 
@@ -124,7 +145,8 @@ describe('RoiCaseToolPage — /results/roi/cases/:roiCaseId (klasa L full tool, 
     window.localStorage.clear();
   });
 
-  it('renders the honest disabled-flag empty state when roiRegistry flag is OFF (default)', async () => {
+  it('renders the honest disabled-flag empty state for the explicit build rollback', async () => {
+    flagEnabled.value = false;
     mockFetch();
     renderAt(`/results/roi/cases/${CASE_ID}`);
     expect(await screen.findByTestId('results-vnext-roi-tool-disabled')).toBeInTheDocument();
@@ -137,7 +159,9 @@ describe('RoiCaseToolPage — /results/roi/cases/:roiCaseId (klasa L full tool, 
 
     renderAt(`/results/roi/cases/${CASE_ID}`);
 
-    await waitFor(() => expect(screen.getByTestId('results-vnext-roi-tool-page')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('results-vnext-roi-tool-page')).toBeInTheDocument()
+    );
     await waitFor(() =>
       expect(global.fetch).toHaveBeenCalledWith(
         `${API_URL}/vnext/results/roi/cases/${CASE_ID}`,
@@ -148,7 +172,9 @@ describe('RoiCaseToolPage — /results/roi/cases/:roiCaseId (klasa L full tool, 
     // breadcrumb (`RoiCaseModelWorkspace.tsx`'s `breadcrumbs` array) — this
     // is the concrete proof `getRoiCase` actually fed the real loaded
     // record into the tool, not a stub/empty object.
-    await waitFor(() => expect(screen.getAllByText('Automatyzacja linii pakowania').length).toBeGreaterThan(0));
+    await waitFor(() =>
+      expect(screen.getAllByText('Automatyzacja linii pakowania').length).toBeGreaterThan(0)
+    );
   });
 
   it('breadcrumb "back to registry" requests navigation to ROUTES.RESULTS_ROI.ROOT', async () => {
@@ -156,7 +182,9 @@ describe('RoiCaseToolPage — /results/roi/cases/:roiCaseId (klasa L full tool, 
     mockFetch();
 
     renderAt(`/results/roi/cases/${CASE_ID}`);
-    await waitFor(() => expect(screen.getByTestId('results-vnext-roi-tool-page')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('results-vnext-roi-tool-page')).toBeInTheDocument()
+    );
 
     const user = userEvent.setup();
     const backCrumb = await screen.findByText('Rejestr ROI');
@@ -173,10 +201,16 @@ describe('RoiCaseToolPage — /results/roi/cases/:roiCaseId (klasa L full tool, 
     const caseUrl = `${API_URL}/vnext/results/roi/cases/${CASE_ID}`;
     let callCount = 0;
     global.fetch = vi.fn(async (input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      const url =
+        typeof input === 'string'
+          ? input
+          : input instanceof URL
+            ? input.href
+            : (input as Request).url;
       if (url === caseUrl) {
         callCount += 1;
-        if (callCount === 1) return jsonResponse({ error: 'Upstream ROI service returned a 503.' }, 503);
+        if (callCount === 1)
+          return jsonResponse({ error: 'Upstream ROI service returned a 503.' }, 503);
         return jsonResponse({ case: ROI_CASE_ROW });
       }
       return jsonResponse({});
@@ -186,11 +220,15 @@ describe('RoiCaseToolPage — /results/roi/cases/:roiCaseId (klasa L full tool, 
 
     expect(await screen.findByTestId('results-vnext-roi-tool-error')).toBeInTheDocument();
 
-    const retryButton = within(screen.getByTestId('results-vnext-roi-tool-error')).getByRole('button');
+    const retryButton = within(screen.getByTestId('results-vnext-roi-tool-error')).getByRole(
+      'button'
+    );
     const user = userEvent.setup();
     await user.click(retryButton);
 
-    await waitFor(() => expect(screen.getByTestId('results-vnext-roi-tool-page')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('results-vnext-roi-tool-page')).toBeInTheDocument()
+    );
   });
 
   it('deep link to a nonexistent (or cross-org — same 404, D06/D07) case id renders the forbidden state, never a blank screen', async () => {
@@ -199,6 +237,8 @@ describe('RoiCaseToolPage — /results/roi/cases/:roiCaseId (klasa L full tool, 
 
     renderAt(`/results/roi/cases/${CASE_ID}`);
 
-    await waitFor(() => expect(screen.getByText(/nie masz dostępu|no visibility/i)).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText(/nie masz dostępu|no visibility/i)).toBeInTheDocument()
+    );
   });
 });
