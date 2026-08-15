@@ -504,6 +504,55 @@
       "taskId": "CLEAN-002-MYW-003",
       "evidenceRule": "The current Decision and Inbox preview implementations contain the recovered relation navigation callbacks: linked decisions route through onOpenLinkedDecision, while Inbox linked task/decision pills call the supplied open handlers and expose human labels with identifiers only in tooltips.",
       "nextAction": "Keep the current relation handlers. Add the two relation-click paths to the My Work signed-in browser packet; retain the recovery ref until CLEAN-003."
+    },
+    {
+      "tip": "c21ae9bc5ce09cb30dd16ca67e0c7214515147d0",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-MYW-008",
+      "evidenceRule": "This one-file June/July market comparison is a historical notebook product-analysis snapshot under Harvard/wdrozenie-100. The current My Work contract, module completion registry and Notebook implementation inventory are later authoritative sources and already separate Monday MVP from deferred knowledge-management breadth.",
+      "nextAction": "Do not restore a parallel historical analysis into the canonical documentation tree. Preserve the recovery ref and route any still-open Notebook requirement through MYW task IDs before CLEAN-003."
+    },
+    {
+      "tip": "eeb68c522e861dff8174ef9176dd3f54dfcb1596",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-IDE-006",
+      "evidenceRule": "This one-file diagnosis predates the current My Work Ideas surfaces, explicit workspace deep links and the current module gap ledger. Its core finding that multiple creation modes incorrectly converged on one mind-map entry is now represented by the canonical Ideas navigation and acceptance tasks rather than by this frozen Harvard note.",
+      "nextAction": "Do not restore the old diagnosis as a second SSOT. Verify each current creation mode and deep link in the Ideas signed-in browser packet; preserve the recovery ref until CLEAN-003."
+    },
+    {
+      "tip": "f1d8ed4ea962f72cc7dfe1310e72760776451ed1",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-MAT-010",
+      "evidenceRule": "The recovered 34-line June market-readiness note is an early point-in-time comparison. Current Materials subsystem SSOT, dedicated Document/Presentation/Spreadsheet packets and the module completion registry provide later, executable quality, export, lineage and visual acceptance gates.",
+      "nextAction": "Keep the current executable MAT-001/002/003/004 packets; do not reintroduce the old readiness score as current evidence. Preserve its recovery ref until CLEAN-003."
+    },
+    {
+      "tip": "f75de0d63fbc2bc09153bb647eeb93a7c99947a5",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-UI-004",
+      "evidenceRule": "The recovered editor-channel audit is a historical eight-tool snapshot. Current UI standards, module cards and per-surface acceptance packets now own AI mutation honesty, proposal-first behavior and visual evidence; restoring this file would create another standards authority without proving current behavior.",
+      "nextAction": "Retain as recovery evidence only. Enforce AI edit/mutation behavior through current module packets and signed-in tests; do not restore the historical audit before CLEAN-003."
+    },
+    {
+      "tip": "fde96a930b6ed1e0a4c4c906c8478183910fd375",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-FLG-003",
+      "evidenceRule": "This one-file phantom ENABLE_* sweep is a July snapshot. The current cleanup flag inventory and module registry trace active consumers, defaults, demo profile and orphan candidates across frontend and server; the recovered matrix is not current deployment evidence.",
+      "nextAction": "Do not restore the stale flag matrix. Complete orphan-flag disposition against current source and deployment variables, then preserve the recovery ref until CLEAN-003."
+    },
+    {
+      "tip": "f54d5bd7205f2437b36cc5d5a926ccf48ef0c5f7",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-INI-008",
+      "evidenceRule": "The recovered edit only stamped CODE_GO_LOCAL onto an August 1 integration packet while explicitly leaving a decision-block concurrency race and browser proof open. The current canonical packet intentionally retains AWAITING_CODEX_REVIEW, and later INI/EXE tasks and test evidence supersede that premature local-go annotation.",
+      "nextAction": "Do not restore the CODE_GO_LOCAL label. Close the decision/initiative race and signed-in cross-module browser flow through INI-001/002 and EXE-001/002 before any release verdict; retain the recovery ref until CLEAN-003."
+    },
+    {
+      "tip": "d4a46c0ec7e579c212a7264f4c8bfabc5a8be485",
+      "verdict": "REJECTED_DESTRUCTIVE_SNAPSHOT",
+      "taskId": "CLEAN-002-INT-004",
+      "evidenceRule": "The recovered script is a demo-specific mutator that selects every empty interview_insights row, invokes fire-and-forget LLM regeneration, polls for up to 150 seconds and hard-codes obsolete trolley/centerbeam host fingerprints. It has no dry-run default, tenant allowlist, transaction, exact target identity or recovery manifest, so it cannot be integrated into the governed canonical toolchain.",
+      "nextAction": "Never execute or restore this script. If insight repair is still required, create a new tenant-scoped dry-run-first packet using the current database target resolver, deterministic candidate list, explicit confirmation and post-write readback; retain the ref as rejected evidence until CLEAN-003."
     }
   ]
 }
