@@ -21,8 +21,37 @@ it('materializes typed template values and emits explicit Data required', () => 
   expect(materializeTemplateVariableBrief(variables, { budget: 1400000 })).toEqual({
     lines: ['Budget: 1400000', 'Data required: Owner', 'Approved: false'],
     missingRequired: [],
+    invalid: [],
+    normalized: { budget: 1400000, approved: false },
   });
   expect(materializeTemplateVariableBrief(variables, {}).missingRequired).toEqual(['budget']);
+});
+
+it('rejects unknown and mistyped values while preserving boolean false', () => {
+  const variables = [
+    { key: 'amount', label: 'Amount', type: 'number' as const, required: true },
+    {
+      key: 'scenario',
+      label: 'Scenario',
+      type: 'enum' as const,
+      required: true,
+      options: ['Base', 'Upside'],
+    },
+    { key: 'approved', label: 'Approved', type: 'boolean' as const, required: true },
+  ];
+  const result = materializeTemplateVariableBrief(variables, {
+    amount: 'not-a-number',
+    scenario: 'Secret case',
+    approved: false,
+    injected: 'never accepted',
+  });
+  expect(result.missingRequired).toEqual([]);
+  expect(result.invalid).toEqual([
+    'injected:unknown_key',
+    'amount:invalid_number',
+    'scenario:invalid_enum',
+  ]);
+  expect(result.normalized.approved).toBe(false);
 });
 
 /**

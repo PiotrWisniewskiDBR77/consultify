@@ -3,6 +3,8 @@
  * Deck generation, templates, brand kits, export.
  */
 
+import { createHash } from 'node:crypto';
+
 import { type NextFunction, type Request, type Response, Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import fs from 'fs';
@@ -82,9 +84,11 @@ import {
 } from '../services/presentationDeckCollaboratorService.js';
 import { buildDeckDiffSummary } from '../services/presentationDeckDiffSummaryService.js';
 import {
+  buildDeckDocumentFromStructuredSlides,
   deckDocumentToRenderableUnifiedJson,
   normalizeDeckDocument,
   resolveDeckContentCoherence,
+  type StructuredSlideInput,
 } from '../services/presentationDeckDocumentService.js';
 import {
   evaluateRevertEligibility,
@@ -159,7 +163,10 @@ import {
   recordGovernanceEvent,
   type TemplateLifecycleState,
 } from '../services/presentationTemplateGovernanceService.js';
-import { mapOutlineBlueprintToDeckSlides } from '../services/presentationTemplateRuntimeService.js';
+import {
+  materializeTemplateVariableBrief,
+  mapOutlineBlueprintToDeckSlides,
+} from '../services/presentationTemplateRuntimeService.js';
 import {
   comparePresetsByName,
   normalizePresetFilters,
@@ -1223,7 +1230,6 @@ router.post(
       res.status(400).json({ error: 'templateArtifactId_required' });
       return;
     }
-
     try {
       const resolved = await resolvePresentationTemplateForCreation(
         { kind: 'library', templateArtifactId },
@@ -1240,6 +1246,9 @@ router.post(
           source: resolved.source,
           legacy: resolved.legacy,
           slideCount: resolved.outlineBlueprint.length,
+          variables: Array.isArray((resolved.customTemplate as any)?.variables)
+            ? (resolved.customTemplate as any).variables
+            : [],
         },
       });
     } catch (err) {
@@ -2180,7 +2189,7 @@ router.post(
  * HERE via `resolvePresentationTemplateForCreation` — never trusted from a
  * prior `/templates/resolve` response.
  *
- * Body: { templateArtifactId: string, title?: string }
+ * Body: { templateArtifactId: string, title?: string, brief?: string }
  * Returns 201: { success: true, data: { id, title, slideCount } } — same
  * shape as `POST /decks` so the client can reuse its existing deck-created
  * handling.
@@ -2201,7 +2210,17 @@ router.post(
       res.status(400).json({ success: false, error: 'templateArtifactId_required' });
       return;
     }
+    const clientRequestId = String(req.body?.clientRequestId || '').trim();
+    if (!/^[A-Za-z0-9:_-]{8,128}$/.test(clientRequestId)) {
+      res.status(400).json({ success: false, error: 'clientRequestId_required' });
+      return;
+    }
     const requestedTitle = typeof req.body?.title === 'string' ? req.body.title.trim() : '';
+    const brief = typeof req.body?.brief === 'string' ? req.body.brief.trim() : '';
+    const variableValues =
+      req.body?.variableValues && typeof req.body.variableValues === 'object'
+        ? req.body.variableValues
+        : {};
 
     let resolved;
     try {
@@ -2224,25 +2243,116 @@ router.post(
     // Deterministic outline→slide copy (no AI) — see mapOutlineBlueprintToDeckSlides
     // doc comment for why this is a named, independently-tested export rather
     // than inline mapping.
-    const slides = mapOutlineBlueprintToDeckSlides(resolved.outlineBlueprint);
+    const templateVariables = Array.isArray((resolved.customTemplate as any)?.variables)
+      ? (resolved.customTemplate as any).variables
+      : [];
+    const variableMaterialization = materializeTemplateVariableBrief(
+      templateVariables,
+      variableValues
+    );
+    if (variableMaterialization.missingRequired.length > 0) {
+      res.status(422).json({
+        success: false,
+        error: 'TEMPLATE_VARIABLES_REQUIRED',
+        details: variableMaterialization.missingRequired,
+      });
+      return;
+    }
+    if (variableMaterialization.invalid.length > 0) {
+      res.status(422).json({
+        success: false,
+        error: 'TEMPLATE_VARIABLES_INVALID',
+        details: variableMaterialization.invalid,
+      });
+      return;
+    }
+    const materializedBrief = [brief, ...variableMaterialization.lines].filter(Boolean).join('\n');
+    const slides = mapOutlineBlueprintToDeckSlides(resolved.outlineBlueprint, materializedBrief);
     const slideCount = slides.length;
 
-    const deckId = uuidv4().replace(/-/g, '');
+    const factsPayload = JSON.stringify({
+      brief,
+      variables: Object.fromEntries(
+        Object.entries(variableMaterialization.normalized).sort(([left], [right]) =>
+          left.localeCompare(right)
+        )
+      ),
+    });
+    const factsHash = createHash('sha256').update(factsPayload).digest('hex');
+    const requestFingerprint = createHash('sha256')
+      .update(JSON.stringify({ templateArtifactId, title, factsHash }))
+      .digest('hex');
+    const deckId = createHash('sha256')
+      .update(`template-deck:${orgId}:${clientRequestId}`)
+      .digest('hex')
+      .slice(0, 32);
+    const sourceRefs = {
+      source: 'template_library',
+      templateArtifactId,
+      canonicalTemplateId: resolved.canonicalTemplateId,
+      briefFactsHash: factsHash,
+      variableKeys: Object.keys(variableMaterialization.normalized).sort(),
+      clientRequestId,
+      requestFingerprint,
+    };
+    const replayRow = (await dbGet(
+      `SELECT id, title, slide_count, source_refs_json
+         FROM presentation_decks WHERE id = ? AND organization_id = ?`,
+      [deckId, orgId]
+    )) as any;
+    if (replayRow) {
+      let stored: Record<string, unknown> = {};
+      try {
+        stored = JSON.parse(String(replayRow.source_refs_json || '{}'));
+      } catch {
+        stored = {};
+      }
+      if (stored.requestFingerprint !== requestFingerprint) {
+        res.status(409).json({ success: false, error: 'IDEMPOTENCY_KEY_REUSED' });
+        return;
+      }
+      res.status(200).json({
+        success: true,
+        replayed: true,
+        data: { id: replayRow.id, title: replayRow.title, slideCount: replayRow.slide_count },
+      });
+      return;
+    }
+    const canonicalDeck = buildDeckDocumentFromStructuredSlides({
+      deckId,
+      organizationId: orgId,
+      title,
+      theme: 'modern',
+      slides: slides as StructuredSlideInput[],
+      status: 'draft',
+      createdBy: userId,
+    });
+    canonicalDeck.source_refs = [
+      {
+        artifact_id: templateArtifactId,
+        artifact_type: 'presentation_template',
+        artifact_name: resolved.name,
+        readiness: 'approved_template',
+        confidence: 1,
+        lineage: {
+          canonicalTemplateId: resolved.canonicalTemplateId,
+          briefFactsHash: factsHash,
+          variableKeys: sourceRefs.variableKeys,
+        },
+      },
+    ];
     try {
       await ensureDeckLineageSchema();
       await dbRun(
-        `INSERT INTO presentation_decks (id, organization_id, title, deck_type, theme, slide_count, status, source_refs_json, version, created_at, updated_at)
-         VALUES (?, ?, ?, 'custom', 'modern', ?, 'draft', ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        `INSERT INTO presentation_decks (id, organization_id, title, deck_type, theme, slide_count, status, source_refs_json, deck_json, version, created_at, updated_at)
+         VALUES (?, ?, ?, 'custom', 'modern', ?, 'draft', ?, ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
         [
           deckId,
           orgId,
           title,
           slideCount,
-          JSON.stringify({
-            source: 'template_library',
-            templateArtifactId,
-            canonicalTemplateId: resolved.canonicalTemplateId,
-          }),
+          JSON.stringify(sourceRefs),
+          JSON.stringify(canonicalDeck),
         ]
       );
 

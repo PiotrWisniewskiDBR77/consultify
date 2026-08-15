@@ -79,6 +79,7 @@ describe('PrezentacjeView template intake', () => {
     await waitFor(() =>
       expect(state.post).toHaveBeenCalledWith('/presentations/decks/from-template', {
         templateArtifactId: 'tpl-nova',
+        clientRequestId: expect.any(String),
         brief: 'NPV: EUR 3.2m; Payback: 11 months',
         variableValues: {},
         title: 'Nova decision',

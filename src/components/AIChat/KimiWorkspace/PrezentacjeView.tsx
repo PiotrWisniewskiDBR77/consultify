@@ -41,6 +41,16 @@ When the user describes a presentation they want:
 Always be transparent about each step. Show your work process clearly.
 Structure each slide with: title, key points/bullets, speaker notes suggestion, and recommended layout intent.`;
 
+type TemplateVariable = {
+  key: string;
+  label: string;
+  type: 'text' | 'number' | 'date' | 'boolean' | 'enum';
+  required: boolean;
+  defaultValue?: string | number | boolean;
+  description?: string;
+  options?: string[];
+};
+
 function parseDeckSlides(deckData: any): {
   slides: Array<{ slideId: string; intent: string; title: string; bulletPoints?: string[] }>;
   status: string;
@@ -308,6 +318,42 @@ export const PrezentacjeView: React.FC = () => {
     'idle'
   );
   const [templateCreateErrorCode, setTemplateCreateErrorCode] = useState<string | null>(null);
+  const [templateBrief, setTemplateBrief] = useState('');
+  const [templateDeckTitle, setTemplateDeckTitle] = useState('');
+  const templateCreationRequestId = useRef(
+    globalThis.crypto?.randomUUID?.() ??
+      `template-${Date.now()}-${Math.random().toString(36).slice(2)}`
+  );
+  const [templateVariables, setTemplateVariables] = useState<TemplateVariable[]>([]);
+  const [templateVariableValues, setTemplateVariableValues] = useState<
+    Record<string, string | boolean>
+  >({});
+  const missingTemplateVariables = templateVariables.filter(
+    (variable) =>
+      variable.required &&
+      (templateVariableValues[variable.key] === undefined ||
+        templateVariableValues[variable.key] === '')
+  );
+
+  useEffect(() => {
+    if (!templateArtifactId) return;
+    void Api.post('/presentations/templates/resolve', { templateArtifactId })
+      .then((response) => {
+        const template = unwrapApiData<{ template?: { variables?: TemplateVariable[] } }>(
+          response
+        )?.template;
+        const variables = Array.isArray(template?.variables) ? template.variables : [];
+        setTemplateVariables(variables);
+        setTemplateVariableValues(
+          Object.fromEntries(
+            variables
+              .filter((variable) => variable.defaultValue !== undefined)
+              .map((variable) => [variable.key, variable.defaultValue as string | boolean])
+          )
+        );
+      })
+      .catch(() => setTemplateVariables([]));
+  }, [templateArtifactId]);
 
   useEffect(() => {
     if (!artifactId || reopenLoaded.current) return;
@@ -451,36 +497,49 @@ export const PrezentacjeView: React.FC = () => {
   // `POST /presentations/decks/from-template`, świeżo, bez zaufania do
   // czegokolwiek z URL-a. Brak AI: struktura szablonu jest już znana, więc
   // (jak przy trybie „Czysto") nowy deck ląduje wprost w Deck Builderze.
-  useEffect(() => {
+  const handleCreateFromTemplate = useCallback(async () => {
     if (
       !templateArtifactId ||
       templateTriggered.current ||
-      pipeline.currentRun ||
-      pipeline.isGenerating
+      missingTemplateVariables.length > 0 ||
+      (!templateBrief.trim() && templateVariables.length === 0)
     )
       return;
     templateTriggered.current = true;
     autoTriggered.current = true;
     setTemplateCreateState('loading');
     setTemplateCreateErrorCode(null);
-    void (async () => {
-      try {
-        const res = await Api.post('/presentations/decks/from-template', { templateArtifactId });
-        const deckId = unwrapApiData<{ id?: string }>(res)?.id;
-        if (!deckId) throw new Error('missing deckId in from-template response');
-        setTemplateCreateState('idle');
-        openInDeckBuilder(deckId);
-      } catch (err: any) {
-        // ★ Żaden fallback do promptu AI ani do pickera — wzorzec, którego nie
-        // da się rozwiązać, musi zatrzymać przepływ z uczciwym komunikatem
-        // (wzorowane na DocumentStudioView.tsx templateResolveMessage).
-        const code =
-          typeof err?.data?.error === 'string' ? err.data.error : 'TEMPLATE_RESOLVE_FAILED';
-        setTemplateCreateErrorCode(code);
-        setTemplateCreateState('error');
-      }
-    })();
-  }, [templateArtifactId, pipeline.currentRun, pipeline.isGenerating, openInDeckBuilder]);
+    try {
+      const res = await Api.post('/presentations/decks/from-template', {
+        templateArtifactId,
+        clientRequestId: templateCreationRequestId.current,
+        brief: templateBrief.trim(),
+        variableValues: templateVariableValues,
+        ...(templateDeckTitle.trim() ? { title: templateDeckTitle.trim() } : {}),
+      });
+      const deckId = unwrapApiData<{ id?: string }>(res)?.id;
+      if (!deckId) throw new Error('missing deckId in from-template response');
+      setTemplateCreateState('idle');
+      openInDeckBuilder(deckId);
+    } catch (err: any) {
+      // ★ Żaden fallback do promptu AI ani do pickera — wzorzec, którego nie
+      // da się rozwiązać, musi zatrzymać przepływ z uczciwym komunikatem
+      // (wzorowane na DocumentStudioView.tsx templateResolveMessage).
+      const code =
+        typeof err?.data?.error === 'string' ? err.data.error : 'TEMPLATE_RESOLVE_FAILED';
+      setTemplateCreateErrorCode(code);
+      setTemplateCreateState('error');
+      templateTriggered.current = false;
+    }
+  }, [
+    templateArtifactId,
+    templateBrief,
+    templateDeckTitle,
+    templateVariableValues,
+    templateVariables.length,
+    missingTemplateVariables.length,
+    openInDeckBuilder,
+  ]);
 
   // Uczciwy komunikat po polsku per kod odrzucenia — patrz
   // DocumentStudioView.tsx `templateResolveMessage` (ten sam wzorzec).
@@ -754,11 +813,7 @@ export const PrezentacjeView: React.FC = () => {
     );
   }
 
-  // R11 deck slice — "Użyj wzorca": stan ładowania podczas materializacji
-  // decka z szablonu (`POST /presentations/decks/from-template`). Sukces
-  // nawiguje od razu do Deck Buildera (patrz efekt wyżej) — ten branch nigdy
-  // nie zostaje wyrenderowany po sukcesie.
-  if (templateArtifactId && templateCreateState !== 'error') {
+  if (templateArtifactId && templateCreateState === 'loading') {
     return (
       <div className="flex h-full flex-1 items-center justify-center gap-2 text-c-text-secondary">
         <Loader2 size={18} className="animate-spin" />
@@ -766,6 +821,164 @@ export const PrezentacjeView: React.FC = () => {
           {t('prezentacje.template.creating', 'Tworzenie prezentacji z szablonu…')}
         </span>
       </div>
+    );
+  }
+
+  if (templateArtifactId && templateCreateState === 'idle') {
+    return (
+      <main
+        className="flex h-full flex-1 items-center justify-center px-6"
+        aria-labelledby="template-brief-heading"
+      >
+        <form
+          className="w-full max-w-2xl space-y-5 rounded-xl border border-c-border bg-c-surface p-6 shadow-sm"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void handleCreateFromTemplate();
+          }}
+        >
+          <div>
+            <h1 id="template-brief-heading" className="text-xl font-semibold text-c-text-primary">
+              {t('prezentacje.template.briefHeading', 'Uzupełnij brief prezentacji')}
+            </h1>
+            <p className="mt-1 text-sm text-c-text-secondary">
+              {t(
+                'prezentacje.template.briefHelp',
+                'Podaj fakty i wartości, które mają wypełnić opublikowany szablon. Struktura i pochodzenie template’u zostaną zachowane.'
+              )}
+            </p>
+            <p
+              className="mt-2 text-xs text-c-text-tertiary"
+              data-testid="presentation-template-lineage"
+            >
+              {t('prezentacje.template.lineage', 'Template lineage')}: {templateArtifactId}
+            </p>
+          </div>
+          {templateVariables.length > 0 ? (
+            <fieldset className="space-y-3 rounded-lg border border-c-border p-3">
+              <legend className="px-1 text-sm font-medium text-c-text-primary">
+                Template data
+              </legend>
+              {templateVariables.map((variable) => (
+                <label key={variable.key} className="block text-sm text-c-text-primary">
+                  <span>
+                    {variable.label}
+                    {variable.required ? ' *' : ''}
+                  </span>
+                  {variable.type === 'enum' ? (
+                    <select
+                      value={String(templateVariableValues[variable.key] ?? '')}
+                      required={variable.required}
+                      onChange={(event) =>
+                        setTemplateVariableValues((current) => ({
+                          ...current,
+                          [variable.key]: event.target.value,
+                        }))
+                      }
+                      className="mt-1 w-full rounded-md border border-c-border bg-c-background px-3 py-2"
+                    >
+                      <option value="">Select…</option>
+                      {(variable.options ?? []).map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  ) : variable.type === 'boolean' ? (
+                    <input
+                      type="checkbox"
+                      checked={Boolean(templateVariableValues[variable.key])}
+                      onChange={(event) =>
+                        setTemplateVariableValues((current) => ({
+                          ...current,
+                          [variable.key]: event.target.checked,
+                        }))
+                      }
+                      className="ml-2"
+                    />
+                  ) : (
+                    <input
+                      type={variable.type}
+                      value={String(templateVariableValues[variable.key] ?? '')}
+                      required={variable.required}
+                      onChange={(event) =>
+                        setTemplateVariableValues((current) => ({
+                          ...current,
+                          [variable.key]: event.target.value,
+                        }))
+                      }
+                      className="mt-1 w-full rounded-md border border-c-border bg-c-background px-3 py-2"
+                    />
+                  )}
+                  {variable.description ? (
+                    <span className="mt-1 block text-xs text-c-text-secondary">
+                      {variable.description}
+                    </span>
+                  ) : null}
+                </label>
+              ))}
+              {missingTemplateVariables.length > 0 ? (
+                <p role="alert" className="text-xs text-danger-600">
+                  Complete required fields:{' '}
+                  {missingTemplateVariables.map((variable) => variable.label).join(', ')}
+                </p>
+              ) : null}
+            </fieldset>
+          ) : null}
+          <div>
+            <label
+              htmlFor="presentation-template-title"
+              className="mb-1 block text-sm font-medium text-c-text-primary"
+            >
+              {t('prezentacje.template.titleLabel', 'Tytuł prezentacji')}
+            </label>
+            <input
+              id="presentation-template-title"
+              value={templateDeckTitle}
+              onChange={(event) => setTemplateDeckTitle(event.target.value)}
+              className="w-full rounded-md border border-c-border bg-c-background px-3 py-2 text-sm text-c-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="presentation-template-brief"
+              className="mb-1 block text-sm font-medium text-c-text-primary"
+            >
+              {t('prezentacje.template.briefLabel', 'Brief i dane do slajdów')}
+            </label>
+            <textarea
+              id="presentation-template-brief"
+              rows={10}
+              value={templateBrief}
+              onChange={(event) => setTemplateBrief(event.target.value)}
+              placeholder={t(
+                'prezentacje.template.briefPlaceholder',
+                'Np. Recommended scenario: Gated Scale; Investment envelope: EUR 1.4m; Annual benefit: EUR 2.2m…'
+              )}
+              className="w-full resize-y rounded-md border border-c-border bg-c-background px-3 py-2 text-sm text-c-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+            />
+          </div>
+          <div className="flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={handleAllFiles}
+              className="rounded-md border border-c-border px-4 py-2 text-sm text-c-text-primary hover:bg-c-surface-hover"
+            >
+              {t('common.cancel', 'Anuluj')}
+            </button>
+            <button
+              type="submit"
+              disabled={
+                missingTemplateVariables.length > 0 ||
+                (!templateBrief.trim() && templateVariables.length === 0)
+              }
+              className="rounded-md bg-c-primary px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {t('prezentacje.template.generate', 'Generuj prezentację')}
+            </button>
+          </div>
+        </form>
+      </main>
     );
   }
 
