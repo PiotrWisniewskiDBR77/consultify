@@ -217,8 +217,12 @@ describe('EQ-B — sensitivity table (N×M formula grid + color-scale)', () => {
   it('applies a color-scale over the interior grid (raw XML)', async () => {
     const buf = await buildWorkbookBuffer(EQ_SEED, { applyConsultantStyling: true });
     const zip = await JSZip.loadAsync(buf as any);
-    const sheet1Xml = await zip.file('xl/worksheets/sheet1.xml')!.async('string');
-    expect(sheet1Xml).toContain('colorScale');
+    const worksheetXml = await Promise.all(
+      Object.keys(zip.files)
+        .filter((name) => /^xl\/worksheets\/sheet\d+\.xml$/.test(name))
+        .map((name) => zip.file(name)!.async('string'))
+    );
+    expect(worksheetXml.some((xml) => xml.includes('colorScale'))).toBe(true);
   });
 });
 

@@ -118,6 +118,7 @@
       "tests/integration/routes/v8.finance-intelligence.test.ts",
       "server/src/routes/__tests__/adminP32.routes.test.ts",
       "tests/unit/backend/routes/h64-failsoft.test.ts",
+      "tests/integration/routes/billing.routes.l3.test.ts",
       "tests/integration/routes/p21b-reports-template-artifactrun-e2e.sqlite.integration.test.ts",
       "server/src/routes/__tests__/document-studio-client-reader.routes.test.ts",
       "server/src/services/__tests__/nativeOwnerPinnedClient.test.ts"
@@ -242,7 +243,8 @@
         "tests/integration/routes/system-health.l3.test.ts",
         "tests/integration/routes/login-history.l3.test.ts",
         "tests/integration/routes/stabilization.l3.test.ts",
-        "tests/integration/ai/l6-database-tables.test.ts"
+        "tests/integration/ai/l6-database-tables.test.ts",
+        "tests/integration/routes/billing.routes.l3.test.ts"
       ]
     },
     "externalRuntime": {

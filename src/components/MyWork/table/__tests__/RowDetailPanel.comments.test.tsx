@@ -37,6 +37,9 @@ vi.mock('react-hot-toast', () => ({
 const tpApiMocks = vi.hoisted(() => ({
   getRecordWatchers: vi.fn().mockResolvedValue([]),
   toggleRecordWatch: vi.fn().mockResolvedValue({ watching: false }),
+  getAttachments: vi.fn().mockResolvedValue([]),
+  uploadAttachment: vi.fn(),
+  deleteAttachment: vi.fn(),
   listRecordComments: vi.fn().mockResolvedValue({ comments: [], total: 0 }),
   addRecordComment: vi.fn(),
   updateRecordComment: vi.fn(),
@@ -140,6 +143,7 @@ describe('RowDetailPanel — Comments', () => {
     vi.clearAllMocks();
     tpApiMocks.getRecordWatchers.mockResolvedValue([]);
     tpApiMocks.toggleRecordWatch.mockResolvedValue({ watching: false });
+    tpApiMocks.getAttachments.mockResolvedValue([]);
     tpApiMocks.listRecordComments.mockResolvedValue({ comments: [], total: 0 });
   });
 
