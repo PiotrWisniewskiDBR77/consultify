@@ -64,8 +64,9 @@ import {
   pack,
   questionAnswerState,
 } from './drdWorkspaceViewModel';
-import { DrdSourceIndicator } from './DrdSourceIndicator';
+import { drdLegacyAssessmentCreateKey } from './drdCanonicalCutover';
 import type { DrdMethodWorkspaceScreenProps } from './DrdMethodWorkspaceScreen';
+import { DrdSourceIndicator } from './DrdSourceIndicator';
 
 type HttpScreenProps = Omit<DrdMethodWorkspaceScreenProps, 'forceHttpSourceOfTruth' | 'initialActorUserId' | 'forceState'>;
 
@@ -444,6 +445,7 @@ const UtilityDrawer: React.FC<{
 export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceState?: DrdHttpDebugForcedState }> = ({
   storage: storageProp,
   demoSessionId,
+  legacyAssessmentId,
   onExit,
   seedTo,
   initialViewMode,
@@ -490,9 +492,11 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
                 methodPackId: DRD_METHOD_PACK_ID,
                 methodPackVersion: pack.manifest.version,
                 mode: 'guided_manual',
-                demoBypass: true,
               },
-              storage
+              storage,
+              legacyAssessmentId
+                ? drdLegacyAssessmentCreateKey(legacyAssessmentId)
+                : newIdempotencyKey()
             );
       }
       let runtime: DrdHttpSessionRuntime;

@@ -491,9 +491,10 @@ export class DrdHttpSessionRuntime {
 
   static async create(
     input: CreateSessionRequest,
-    storage: Storage = window.localStorage
+    storage: Storage = window.localStorage,
+    idempotencyKey: string = newIdempotencyKey()
   ): Promise<DrdHttpSessionRuntime> {
-    const res = await apiCreateSession(input, newIdempotencyKey());
+    const res = await apiCreateSession(input, idempotencyKey);
     const runtime = new DrdHttpSessionRuntime(res.session.id, storage);
     runtime.setState({
       status: 'ready',

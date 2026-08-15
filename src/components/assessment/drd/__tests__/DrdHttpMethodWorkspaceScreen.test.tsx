@@ -120,10 +120,10 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe('requirement 1 — flag OFF: legacy runtime, zero HTTP calls', () => {
-  it('mounts without forceHttpSourceOfTruth and never touches methodCoreApi', async () => {
+describe('explicit rollback: legacy runtime, zero HTTP calls', () => {
+  it('mounts with forceHttpSourceOfTruth=false and never touches methodCoreApi', async () => {
     const storage = makeMemoryStorage();
-    render(<DrdMethodWorkspaceScreen storage={storage} seedTo="interview" />);
+    render(<DrdMethodWorkspaceScreen storage={storage} seedTo="interview" forceHttpSourceOfTruth={false} />);
 
     expect(await screen.findByTestId('method-workspace-shell')).toBeInTheDocument();
     expect(hoisted.createSession).not.toHaveBeenCalled();
@@ -150,6 +150,25 @@ describe('requirement 2 — flag ON: DrdHttpSessionRuntime, indicator shows SERV
 
     const indicator = await screen.findByTestId('drd-source-indicator');
     expect(indicator).toHaveAttribute('data-source', 'SERVER');
+  });
+
+  it('anchors a legacy assessment route to one canonical session without demo bypass', async () => {
+    const storage = makeMemoryStorage();
+    hoisted.createSession.mockResolvedValue({ session: makeSession(), idempotentReplay: true });
+
+    render(
+      <DrdMethodWorkspaceScreen
+        storage={storage}
+        legacyAssessmentId="assessment-123"
+        forceHttpSourceOfTruth
+      />
+    );
+
+    expect(await screen.findByTestId('method-workspace-shell')).toBeInTheDocument();
+    expect(hoisted.createSession).toHaveBeenCalledWith(
+      expect.not.objectContaining({ demoBypass: true }),
+      'drd-ui-cutover:assessment-123'
+    );
   });
 });
 

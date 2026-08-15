@@ -1,14 +1,13 @@
 /**
  * @vitest-environment jsdom
  *
- * A6 vertical slice — checkpoint test requirement 1: "flaga OFF -> stara
- * ścieżka bez zmian; flaga ON -> MethodWorkspaceShell".
+ * Canonical cutover gate and explicit rollback coverage.
  *
  * `AssessmentSessionEditorView` is a 2700+ line view wired to a live store
  * and several API modules — mounting it in a unit test would require
  * mocking most of that surface and would mostly test the mocks. Instead:
  *
- *  1. `shouldMountDrdMethodWorkspace` is the EXACT boolean the view's real
+ *  1. `shouldMountDrdCanonicalWorkspace` is the EXACT boolean the view's real
  *     early-return branches on (see AssessmentSessionEditorView.tsx) —
  *     tested directly, exhaustively.
  *  2. `DrdMethodWorkspaceScreen` (what that branch renders when true) is
@@ -25,7 +24,10 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it } from 'vitest';
 
-import { shouldMountDrdMethodWorkspace } from '@/views/AssessmentSessionEditorView';
+import {
+  isDrdCanonicalHttpWorkspaceBuildEnabled,
+  shouldMountDrdCanonicalWorkspace,
+} from '../drdCanonicalCutover';
 import { DrdMethodWorkspaceScreen } from '../DrdMethodWorkspaceScreen';
 
 function makeMemoryStorage(): Storage {
@@ -42,34 +44,36 @@ function makeMemoryStorage(): Storage {
   } as Storage;
 }
 
-describe('shouldMountDrdMethodWorkspace — the exact gate the view branches on', () => {
-  it('true only for framework === "drd" AND the flag enabled', () => {
-    expect(shouldMountDrdMethodWorkspace('drd', true)).toBe(true);
+describe('shouldMountDrdCanonicalWorkspace — build cutover gate', () => {
+  it('mounts canonical DRD by default', () => {
+    expect(shouldMountDrdCanonicalWorkspace('drd')).toBe(true);
   });
 
-  it('false when the flag is OFF, even for drd — legacy editor stays reachable', () => {
-    expect(shouldMountDrdMethodWorkspace('drd', false)).toBe(false);
+  it('false when the build rollback is explicit, even for drd', () => {
+    expect(shouldMountDrdCanonicalWorkspace('drd', false)).toBe(false);
+    expect(isDrdCanonicalHttpWorkspaceBuildEnabled('false')).toBe(false);
+    expect(isDrdCanonicalHttpWorkspaceBuildEnabled(undefined)).toBe(true);
   });
 
-  it('false for every other framework, flag ON or OFF — this slice is DRD-only', () => {
-    expect(shouldMountDrdMethodWorkspace('siri', true)).toBe(false);
-    expect(shouldMountDrdMethodWorkspace('adma', true)).toBe(false);
-    expect(shouldMountDrdMethodWorkspace('cmmi', true)).toBe(false);
-    expect(shouldMountDrdMethodWorkspace('lean', true)).toBe(false);
-    expect(shouldMountDrdMethodWorkspace(undefined, true)).toBe(false);
+  it('false for every other framework — this slice is DRD-only', () => {
+    expect(shouldMountDrdCanonicalWorkspace('siri', true)).toBe(false);
+    expect(shouldMountDrdCanonicalWorkspace('adma', true)).toBe(false);
+    expect(shouldMountDrdCanonicalWorkspace('cmmi', true)).toBe(false);
+    expect(shouldMountDrdCanonicalWorkspace('lean', true)).toBe(false);
+    expect(shouldMountDrdCanonicalWorkspace(undefined, true)).toBe(false);
   });
 });
 
 describe('DrdMethodWorkspaceScreen (the ON-path render target) mounts the REAL MethodWorkspaceShell', () => {
   it('renders data-testid="method-workspace-shell" — not a stand-in, the actual A5 component', () => {
     const storage = makeMemoryStorage();
-    render(<DrdMethodWorkspaceScreen storage={storage} seedTo="interview" />);
+    render(<DrdMethodWorkspaceScreen storage={storage} seedTo="interview" forceHttpSourceOfTruth={false} />);
     expect(screen.getByTestId('method-workspace-shell')).toBeInTheDocument();
   });
 
   it('shows the explicit demo-bypass banner (never a silent override of pack readiness)', () => {
     const storage = makeMemoryStorage();
-    render(<DrdMethodWorkspaceScreen storage={storage} seedTo="interview" />);
+    render(<DrdMethodWorkspaceScreen storage={storage} seedTo="interview" forceHttpSourceOfTruth={false} />);
     expect(screen.getByText(/SESJA DEMONSTRACYJNA/i)).toBeInTheDocument();
   });
 });

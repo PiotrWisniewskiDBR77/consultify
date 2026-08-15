@@ -36,7 +36,7 @@ import type {
 } from '@/method-core/outputs';
 import { DRD_STRUCTURE } from '@/services/drdStructure';
 
-import { useFeatureFlags } from '@/hooks/useFeatureFlags';
+import { isDrdCanonicalHttpWorkspaceBuildEnabled } from './drdCanonicalCutover';
 import {
   buildMatrixRowsForAxis,
   buildNavigatorNodes,
@@ -70,6 +70,8 @@ export interface DrdMethodWorkspaceScreenProps {
   storage?: Storage;
   /** Resume an existing demo session; omit to create a fresh one. */
   demoSessionId?: string;
+  /** Legacy route identity used to idempotently anchor one canonical HTTP session. */
+  legacyAssessmentId?: string;
   onExit?: () => void;
   /** Seed data straight to a given lifecycle stage — dev-render harness only. */
   seedTo?: 'interview' | 'matrix' | 'teresa' | 'approval' | 'frozen' | 'reopened';
@@ -875,23 +877,18 @@ const FrozenOutputView: React.FC<{
 };
 
 // ---------------------------------------------------------------------------
-// Flag gate — `drdHttpSourceOfTruthV1` (P0C, 2026-08-13)
+// Canonical HTTP cutover with explicit build-time rollback
 // ---------------------------------------------------------------------------
 //
-// OFF (default): renders `DrdMethodWorkspaceScreenLegacy` unchanged — zero
-// change to today's behavior, zero HTTP calls made by this screen.
-// ON: renders `DrdHttpMethodWorkspaceScreen` — `DrdHttpSessionRuntime` (HTTP)
-// becomes the ONLY source of truth; localStorage is cache/recovery-draft
-// only (see that file's header and CLAUDE.md rule #7/#9 — visual surfaces
-// only change behind a default-OFF flag, one at a time, after an accepted
-// dev-render screenshot).
+// Default build: `DrdHttpSessionRuntime` (HTTP) is the ONLY source of truth;
+// localStorage is cache/recovery-draft only. Explicit
+// VITE_DRD_CANONICAL_HTTP_WORKSPACE=false restores the legacy implementation.
 export const DrdMethodWorkspaceScreen: React.FC<DrdMethodWorkspaceScreenProps> = ({
   forceHttpSourceOfTruth,
   forceState,
   ...props
 }) => {
-  const { isEnabled } = useFeatureFlags();
-  const httpSourceOfTruth = forceHttpSourceOfTruth ?? isEnabled('drdHttpSourceOfTruthV1');
+  const httpSourceOfTruth = forceHttpSourceOfTruth ?? isDrdCanonicalHttpWorkspaceBuildEnabled();
   if (httpSourceOfTruth) {
     return <DrdHttpMethodWorkspaceScreen {...props} forceState={forceState} />;
   }

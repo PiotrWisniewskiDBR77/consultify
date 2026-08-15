@@ -38,7 +38,7 @@ import { LeanForm } from '@/components/assessment/tools/LeanForm';
 import { InitiativeSuggestionBadge } from '@/components/Initiatives/InitiativeSuggestionBadge';
 import { ArtifactPermalinkButton } from '@/components/shared/ArtifactPermalinkButton';
 import { DrdMethodWorkspaceScreen } from '@/components/assessment/drd/DrdMethodWorkspaceScreen';
-import { useFeatureFlags } from '@/hooks/useFeatureFlags';
+import { shouldMountDrdCanonicalWorkspace } from '@/components/assessment/drd/drdCanonicalCutover';
 import { ADMA_DIMENSIONS } from '@/services/admaStructure';
 import { Api } from '@/services/api';
 import { V8AssessmentApi } from '@/services/api/v8';
@@ -103,19 +103,6 @@ export function isAssessmentReadOnly(opts: {
   if (accepted) return true;
   if (!opts.canEdit) return true;
   return opts.manuallyLocked;
-}
-
-/**
- * A6 (2026-08-13): pure gate for the DRD vertical slice early-return above.
- * Exported/extracted so the OFF-by-default / DRD-only scope is directly
- * testable without mounting this 2700+ line view (which needs a live store +
- * API mocks). OFF or non-DRD framework -> false -> legacy editor untouched.
- */
-export function shouldMountDrdMethodWorkspace(
-  framework: string | undefined,
-  flagEnabled: boolean
-): boolean {
-  return framework === 'drd' && flagEnabled;
 }
 
 function calcConfidenceAvgFromCompletion(completionPercent: number): number {
@@ -359,7 +346,6 @@ export const AssessmentSessionEditorView: React.FC = () => {
   // NOTE (React 19 + useSyncExternalStore):
   // Avoid selectors returning new objects/arrays each call (even with shallow),
   // because it can trigger "getSnapshot should be cached" warnings/loops.
-  const { isEnabled } = useFeatureFlags();
   const setCurrentViewState = useAppStore((s) => s.setCurrentViewState);
   const currentUser = useAppStore((s) => s.currentUser);
   const isChatCollapsed = useAppStore((s) => s.isChatCollapsed);
@@ -1736,15 +1722,13 @@ export const AssessmentSessionEditorView: React.FC = () => {
     );
   }
 
-  // ★ A6 (2026-08-13): flag-gated DRD vertical slice. OFF (default) leaves
-  // every line below completely untouched — this is a top-level early
-  // return BEFORE renderEditor()/DRDForm/DRDAssessmentEditor/DRDMatrixSession
-  // are ever reached, not a branch woven into the legacy DRD rendering path.
-  // See src/hooks/useFeatureFlags.tsx `drdMethodWorkspaceSliceV1` for scope.
-  if (shouldMountDrdMethodWorkspace(framework, isEnabled('drdMethodWorkspaceSliceV1'))) {
+  // Canonical cutover: ordinary DRD navigation reaches the HTTP Method
+  // workspace without query parameters or runtime/localStorage flag state.
+  // An explicit build-time false remains the rollback to the legacy editor.
+  if (shouldMountDrdCanonicalWorkspace(framework)) {
     return (
       <DrdMethodWorkspaceScreen
-        demoSessionId={assessmentId}
+        legacyAssessmentId={assessmentId}
         onExit={() => navigate('/assessment/overview')}
       />
     );
