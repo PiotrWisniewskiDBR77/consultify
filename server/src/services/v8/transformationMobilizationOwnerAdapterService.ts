@@ -4,7 +4,7 @@ import { withPgTransaction } from '../../utils/queryHelpers.js';
 type RaidItem = { type: 'risk'|'assumption'|'issue'|'dependency'; title:string; description:string; probability:'low'|'medium'|'high'; impact:'low'|'medium'|'high'|'critical'; ownerUserId:string; dueDate:string; response:string };
 type Monitoring = { cadence:'daily'|'weekly'|'monthly'; timezone:string; firstRunAt:string; ownerUserId:string };
 const stableId = (prefix:string, value:string) => `${prefix}-${createHash('sha256').update(value).digest('hex').slice(0,32)}`;
-const nextRun = (value:string, cadence:Monitoring['cadence']) => { const d=new Date(value); cadence==='daily'?d.setUTCDate(d.getUTCDate()+1):cadence==='weekly'?d.setUTCDate(d.getUTCDate()+7):d.setUTCMonth(d.getUTCMonth()+1); return d.toISOString(); };
+const nextRun = (value:string, cadence:Monitoring['cadence']) => { const d=new Date(value); if(cadence==='daily') d.setUTCDate(d.getUTCDate()+1); else if(cadence==='weekly') d.setUTCDate(d.getUTCDate()+7); else d.setUTCMonth(d.getUTCMonth()+1); return d.toISOString(); };
 
 export async function materializeMobilizationOwners(input:{ organizationId:string; transformationCaseId:string; initiativeId:string; proposalId:string; payloadDigest:string; actorUserId:string; raidItems:RaidItem[]; monitoring:Monitoring }) {
   return withPgTransaction(async client => {

@@ -75,7 +75,8 @@ const NodeRow: React.FC<{
     // this, a click/Enter on a DEEP child would bubble to every ancestor
     // <li>'s own handler and re-toggle/re-select them too.
     e.stopPropagation();
-    isLeaf ? onSelect(node.unitId) : setExpanded((v) => !v);
+    if (isLeaf) onSelect(node.unitId);
+    else setExpanded((value) => !value);
   };
 
   // `role="treeitem"` MUST live on the <li> itself (the ARIA treeview pattern

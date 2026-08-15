@@ -136,7 +136,7 @@ export const AgentProcessTemplatesPanel: React.FC = () => {
     }
   };
 
-  const useForTransformation = async (template: GovernedTemplate) => {
+  const startTransformationFromTemplate = async (template: GovernedTemplate) => {
     setBusyId(template.id);
     try {
       const keys = { start: crypto.randomUUID(), convert: crypto.randomUUID() };
@@ -410,7 +410,7 @@ export const AgentProcessTemplatesPanel: React.FC = () => {
                           type="button"
                           disabled={busyId === template.id}
                           className="inline-flex items-center gap-1 rounded-lg bg-c-text px-3 py-2 text-sm text-c-bg hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:opacity-50"
-                          onClick={() => void useForTransformation(template)}
+                          onClick={() => void startTransformationFromTemplate(template)}
                         >
                           <Play size={14} />{' '}
                           {isPolish ? 'Użyj do transformacji' : 'Use for transformation'}
