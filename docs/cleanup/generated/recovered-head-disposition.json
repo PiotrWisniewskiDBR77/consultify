@@ -12,11 +12,11 @@
   "summary": {
     "total": 224,
     "referenceHarnessOnly": 18,
-    "representedSuperseded": 7,
+    "representedSuperseded": 8,
     "representedCanonical": 1,
     "rejectedDestructiveSnapshot": 1,
-    "integratedCanonical": 3,
-    "semanticReviewRequired": 194,
+    "integratedCanonical": 5,
+    "semanticReviewRequired": 191,
     "deletionAuthorized": 0
   },
   "rows": [
@@ -880,12 +880,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 1,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "INTEGRATED_CANONICAL",
+      "taskId": "CLEAN-002-EMAIL-001",
       "recoveryRef": "refs/recovery/unknown-20260815/2dae208ac6222c437f18f60ca01c242917123d80",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered SMTP sender and delivery-honesty behavior was reviewed and strengthened in canonical commit 9779b8ddd: EMAIL_FROM and authenticated-user fallbacks are honored, send returns true only after SMTP acceptance, SENT/FAILED/MOCK attempts are recorded best-effort, and invitation logging no longer claims dispatch after false delivery. Focused contract: 4/4 PASS; server typecheck PASS.",
+      "nextAction": "Verify SENT and FAILED readback against the authorized demo SMTP during REL-001; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "2ea8040050102e89ec35775d0567ee4236e523c9",
@@ -1916,12 +1916,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 1,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-MYW-002",
       "recoveryRef": "refs/recovery/unknown-20260815/6071b257d7c590db84e7e8cb18af4ed96f9a0944",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The current canonical NotebookContent already implements handleShareEmail, emits notebook_share_email, and passes the handler to NotebookHamburgerMenu. The recovered behavior is fully represented at the active mounted surface with later surrounding changes.",
+      "nextAction": "Do not cherry-pick the older NotebookContent patch; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "649f9b2e654fc210d47320d22dcb00ef0a40ca98",
@@ -3154,12 +3154,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 1,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "INTEGRATED_CANONICAL",
+      "taskId": "CLEAN-002-EMAIL-001",
       "recoveryRef": "refs/recovery/unknown-20260815/9f71294f13b8fb528c9fbb28a886c157889e090c",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "This head carries the same recovered SMTP sender and silent-failure correction as 2dae208ac. The behavior was reviewed and strengthened in canonical commit 9779b8ddd: EMAIL_FROM and authenticated-user fallbacks are honored, send returns true only after SMTP acceptance, SENT/FAILED/MOCK attempts are recorded best-effort, and invitation logging no longer claims dispatch after false delivery. Focused contract: 4/4 PASS; server typecheck PASS.",
+      "nextAction": "Verify SENT and FAILED readback against the authorized demo SMTP during REL-001; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "9ffb2254bad34e93cab8a5703b46dc8edc02bb67",

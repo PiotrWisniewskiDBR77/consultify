@@ -2,6 +2,27 @@
   "schemaVersion": 1,
   "rows": [
     {
+      "tip": "2dae208ac6222c437f18f60ca01c242917123d80",
+      "verdict": "INTEGRATED_CANONICAL",
+      "taskId": "CLEAN-002-EMAIL-001",
+      "evidenceRule": "The recovered SMTP sender and delivery-honesty behavior was reviewed and strengthened in canonical commit 9779b8ddd: EMAIL_FROM and authenticated-user fallbacks are honored, send returns true only after SMTP acceptance, SENT/FAILED/MOCK attempts are recorded best-effort, and invitation logging no longer claims dispatch after false delivery. Focused contract: 4/4 PASS; server typecheck PASS.",
+      "nextAction": "Verify SENT and FAILED readback against the authorized demo SMTP during REL-001; retain the recovery ref until CLEAN-003."
+    },
+    {
+      "tip": "6071b257d7c590db84e7e8cb18af4ed96f9a0944",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-MYW-002",
+      "evidenceRule": "The current canonical NotebookContent already implements handleShareEmail, emits notebook_share_email, and passes the handler to NotebookHamburgerMenu. The recovered behavior is fully represented at the active mounted surface with later surrounding changes.",
+      "nextAction": "Do not cherry-pick the older NotebookContent patch; retain the recovery ref until CLEAN-003."
+    },
+    {
+      "tip": "9f71294f13b8fb528c9fbb28a886c157889e090c",
+      "verdict": "INTEGRATED_CANONICAL",
+      "taskId": "CLEAN-002-EMAIL-001",
+      "evidenceRule": "This head carries the same recovered SMTP sender and silent-failure correction as 2dae208ac. The behavior was reviewed and strengthened in canonical commit 9779b8ddd: EMAIL_FROM and authenticated-user fallbacks are honored, send returns true only after SMTP acceptance, SENT/FAILED/MOCK attempts are recorded best-effort, and invitation logging no longer claims dispatch after false delivery. Focused contract: 4/4 PASS; server typecheck PASS.",
+      "nextAction": "Verify SENT and FAILED readback against the authorized demo SMTP during REL-001; retain the recovery ref until CLEAN-003."
+    },
+    {
       "tip": "1f546ff718f3f6c308ae110b85a083e68bf7e8fd",
       "verdict": "INTEGRATED_CANONICAL",
       "taskId": "CLEAN-002-MYW-001",

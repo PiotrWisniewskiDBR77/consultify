@@ -446,7 +446,11 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
   migracje/kod oraz repozytoryjne evidence CLEAN-001/Materials. Backupowy merge
   masowych usunięć otrzymał `REJECTED_DESTRUCTIVE_SNAPSHOT`: względem obu
   rodziców usuwa dokładnie 334 pliki / 15 791 linii i niczego nie dodaje ani nie
-  modyfikuje; ref i rodzice pozostają chronione. Pozostałe 194 nadal wymaga
+  modyfikuje; ref i rodzice pozostają chronione. Dwa równoważne heady SMTP
+  zostały zastąpione ostrzejszą kanoniczną naprawą `9779b8ddd`: prawidłowy
+  fallback nadawcy, prawdziwy wynik dostarczenia oraz audit `SENT/FAILED/MOCK`
+  mają focused 4/4 PASS i server typecheck PASS. Starszy Notebook Share jest
+  już obecny na aktualnej montowanej powierzchni. Pozostałe 191 nadal wymaga
   review. Te 18 pozostaje zachowanym materiałem
   UX/prototypowym, ale nie
   jest kodem produkcyjnym do merge. Generator mechanicznie egzekwuje warunek
