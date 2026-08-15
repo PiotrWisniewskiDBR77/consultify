@@ -22,6 +22,7 @@ import {
   readExecutionMilestones,
   readExecutionWork,
   requestExecutionDecision,
+  submitDeliveryEvidence,
   updateExecutionTask,
 } from '@/services/initiatives-execution/runtimeApi';
 import { useAppStore } from '@/store/useAppStore';
@@ -169,6 +170,7 @@ export const ExecutionWorkSurface = ({ activePreset, onCountsChange }: Execution
       milestoneIds: '',
       rationale: '',
       conditions: '',
+      reviewerId: '',
     }),
     [state, setState] = useState<'READY' | 'LOADING' | 'ERROR'>('LOADING');
   const loadCases = useCallback(async () => {
@@ -293,6 +295,7 @@ export const ExecutionWorkSurface = ({ activePreset, onCountsChange }: Execution
       milestoneIds: (source.milestoneIds ?? []).join('\n'),
       rationale: source.rationale ?? '',
       conditions: (source.conditions ?? []).join('\n'),
+      reviewerId: '',
     };
   };
   const openWorkspace = async (row: Row) => {
@@ -444,6 +447,27 @@ export const ExecutionWorkSurface = ({ activePreset, onCountsChange }: Execution
     }
     await load(caseId);
   };
+  const submitEvidence = async () => {
+    if (!selected || selected.kind !== 'TASK' || !form.reviewerId.trim()) return;
+    const evidenceRefs = lines(form.evidenceRefs).map((ref) => ({ ref, version: 1 }));
+    if (!evidenceRefs.length) return;
+    const fingerprint = JSON.stringify({
+      taskId: selected.id,
+      evidenceRefs,
+      reviewerId: form.reviewerId,
+    });
+    const evidenceId = `delivery-evidence-${persistentCommandId('delivery-evidence-entity', `${caseId}:${fingerprint}`)}`;
+    await submitDeliveryEvidence(evidenceId, {
+      expectedVersion: 0,
+      clientRequestId: persistentCommandId('delivery-evidence-submit', fingerprint),
+      initiativeId,
+      executionCaseId: caseId,
+      taskId: selected.id,
+      reviewerId: form.reviewerId.trim(),
+      evidenceRefs,
+    });
+    await load(caseId);
+  };
   const createMilestone = async () => {
     if (!caseId || !baselineRef.ref || baselineRef.version < 1) return;
     await createExecutionMilestone(caseId, milestoneForm.id, {
@@ -492,6 +516,7 @@ export const ExecutionWorkSurface = ({ activePreset, onCountsChange }: Execution
     milestoneIds: 'Powiązane kamienie milowe',
     rationale: 'Uzasadnienie',
     conditions: 'Warunki decyzji',
+    reviewerId: 'Niezależny recenzent dowodu',
   };
   const visibleFields =
     toolMode === 'TASK'
@@ -506,6 +531,7 @@ export const ExecutionWorkSurface = ({ activePreset, onCountsChange }: Execution
           'blockers',
           'dependencies',
           'milestoneIds',
+          'reviewerId',
         ]
       : [
           'title',
@@ -864,6 +890,9 @@ export const ExecutionWorkSurface = ({ activePreset, onCountsChange }: Execution
                     </button>
                     <button className="btn-secondary" onClick={() => void act('complete')}>
                       Oznacz jako wykonane
+                    </button>
+                    <button className="btn-primary" onClick={() => void submitEvidence()}>
+                      Przekaż dowód do akceptacji
                     </button>
                   </>
                 )}

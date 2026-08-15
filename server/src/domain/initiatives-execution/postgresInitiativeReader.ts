@@ -2,6 +2,7 @@ import type { Pool } from 'pg';
 
 import type { CapacityScenario } from './capacityScenario.js';
 import type { InitiativeCardSelectionItem } from './configureInitiativeCards.js';
+import { deriveExecutionHealth } from './executionHealth.js';
 import { gateRule, type GovernanceGate } from './organizationGovernance.js';
 import type { PlanScenario } from './planScenario.js';
 import type { PortfolioScenario } from './portfolioScenario.js';
@@ -239,7 +240,10 @@ export class PostgresInitiativeReader {
       ? {
           version: result.rows[0].version,
           executionCaseId,
-          detail: result.rows[0].payload_json,
+          detail: {
+            ...result.rows[0].payload_json,
+            health: deriveExecutionHealth(result.rows[0].payload_json),
+          },
           updatedAt:
             result.rows[0].updated_at instanceof Date
               ? result.rows[0].updated_at.toISOString()
@@ -271,6 +275,7 @@ export class PostgresInitiativeReader {
       state: String(r.payload_json.state),
       executionManagerId: String(r.payload_json.executionManagerId),
       handoffPackageId: String(r.payload_json.handoffPackageId),
+      health: deriveExecutionHealth(r.payload_json),
       updatedAt: r.updated_at instanceof Date ? r.updated_at.toISOString() : String(r.updated_at),
     }));
   }
@@ -495,6 +500,28 @@ export class PostgresInitiativeReader {
       ...x.payload_json,
     }));
   }
+  async findDeliveryEvidence(organizationId: string, evidenceId: string) {
+    const r = await this.pool.query<{ version: number; payload_json: Record<string, unknown> }>(
+      `SELECT version,payload_json FROM ie_aggregate_state WHERE organization_id=$1 AND aggregate_type='delivery_evidence' AND aggregate_id=$2`,
+      [organizationId, evidenceId]
+    );
+    return r.rows[0] ? { version: r.rows[0].version, evidenceId, ...r.rows[0].payload_json } : null;
+  }
+  async listDeliveryEvidence(organizationId: string) {
+    const r = await this.pool.query<{
+      version: number;
+      aggregate_id: string;
+      payload_json: Record<string, unknown>;
+    }>(
+      `SELECT version,aggregate_id,payload_json FROM ie_aggregate_state WHERE organization_id=$1 AND aggregate_type='delivery_evidence' ORDER BY updated_at DESC`,
+      [organizationId]
+    );
+    return r.rows.map((x) => ({
+      version: x.version,
+      evidenceId: x.aggregate_id,
+      ...x.payload_json,
+    }));
+  }
   async listResultsAcceptances(organizationId: string) {
     const r = await this.pool.query<{
       version: number;
@@ -511,7 +538,15 @@ export class PostgresInitiativeReader {
     }));
   }
   async listMyAcceptanceWork(organizationId: string, actorId: string) {
-    const delivery = await this.pool.query<{
+    const evidence = await this.pool.query<{
+        version: number;
+        aggregate_id: string;
+        payload_json: Record<string, unknown>;
+      }>(
+        `SELECT version,aggregate_id,payload_json FROM ie_aggregate_state WHERE organization_id=$1 AND aggregate_type='delivery_evidence' AND payload_json->>'status'='SUBMITTED' AND payload_json->>'reviewerId'=$2`,
+        [organizationId, actorId]
+      ),
+      delivery = await this.pool.query<{
         version: number;
         aggregate_id: string;
         payload_json: Record<string, unknown>;
@@ -528,6 +563,11 @@ export class PostgresInitiativeReader {
         [organizationId, actorId]
       );
     return {
+      evidence: evidence.rows.map((x) => ({
+        version: x.version,
+        evidenceId: x.aggregate_id,
+        ...x.payload_json,
+      })),
       delivery: delivery.rows.map((x) => ({
         version: x.version,
         decisionId: x.aggregate_id,

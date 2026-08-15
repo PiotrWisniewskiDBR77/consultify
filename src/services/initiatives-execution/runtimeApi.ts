@@ -1374,6 +1374,15 @@ export function requestDeliveryAcceptance(id: string, command: unknown) {
     command
   );
 }
+export function submitDeliveryEvidence(id: string, command: unknown) {
+  return allocationRequest(`/delivery-evidence/${encodeURIComponent(id)}/submit`, 'POST', command);
+}
+export function decideDeliveryEvidence(id: string, command: unknown) {
+  return allocationRequest(`/delivery-evidence/${encodeURIComponent(id)}/decide`, 'POST', command);
+}
+export function getDeliveryEvidence(id: string) {
+  return allocationRequest(`/delivery-evidence/${encodeURIComponent(id)}`, 'GET');
+}
 export function decideDeliveryAcceptance(id: string, command: unknown) {
   return allocationRequest(
     `/delivery-acceptances/${encodeURIComponent(id)}/decide`,

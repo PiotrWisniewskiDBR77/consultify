@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DeliveryResultsAcceptanceQueue } from '../../../src/components/MyWork/DeliveryResultsAcceptanceQueue';
 import {
   decideDeliveryAcceptance,
+  decideDeliveryEvidence,
   decideResultsAcceptance,
   getBenefitsHandoffPack,
   listMyAcceptanceWork,
@@ -13,6 +14,7 @@ vi.mock('../../../src/services/initiatives-execution/runtimeApi', () => ({
     status = 409;
   },
   decideDeliveryAcceptance: vi.fn(),
+  decideDeliveryEvidence: vi.fn(),
   decideResultsAcceptance: vi.fn(),
   getBenefitsHandoffPack: vi.fn(),
   listMyAcceptanceWork: vi.fn(),
@@ -45,10 +47,25 @@ const results = {
   initiativeId: 'init-2',
   status: 'PENDING',
 };
+const evidence = {
+  version: 1,
+  evidenceId: 'evidence-1',
+  initiativeId: 'init-1',
+  executionCaseId: 'case-1',
+  taskId: 'task-open',
+  evidenceRefs: [{ ref: 'artifact:sha256', version: 1 }],
+  submitterId: 'delivery-owner',
+  status: 'SUBMITTED',
+};
 beforeEach(() => {
   vi.resetAllMocks();
-  vi.mocked(listMyAcceptanceWork).mockResolvedValue({ delivery: [delivery], results: [results] });
+  vi.mocked(listMyAcceptanceWork).mockResolvedValue({
+    evidence: [evidence],
+    delivery: [delivery],
+    results: [results],
+  });
   vi.mocked(decideDeliveryAcceptance).mockResolvedValue({});
+  vi.mocked(decideDeliveryEvidence).mockResolvedValue({});
   vi.mocked(decideResultsAcceptance).mockResolvedValue({});
   vi.mocked(getBenefitsHandoffPack).mockResolvedValue({
     packId: 'benefits-delivery-1',
@@ -57,6 +74,29 @@ beforeEach(() => {
   });
 });
 describe('DeliveryResultsAcceptanceQueue', () => {
+  it('reviews delivery evidence independently and exposes the one Results signal receipt', async () => {
+    render(<DeliveryResultsAcceptanceQueue />);
+    fireEvent.click((await screen.findByText('Evidence Review')).closest('tr')!);
+    expect(screen.getByText(/Task task-open/)).toBeInTheDocument();
+    expect(screen.getByText(/Evidence: artifact:sha256 v1/)).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Acceptance rationale'), {
+      target: { value: 'Artifact verified independently' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Approve and append Results signal' }));
+    await waitFor(() =>
+      expect(decideDeliveryEvidence).toHaveBeenCalledWith(
+        'evidence-1',
+        expect.objectContaining({
+          expectedVersion: 1,
+          outcome: 'APPROVE',
+          resultsSignalId: 'delivery-results-evidence-1',
+        })
+      )
+    );
+    expect(
+      await screen.findByText(/EVIDENCE receipt · RESULTS_SIGNAL_APPENDED/)
+    ).toBeInTheDocument();
+  });
   it('decides exact Delivery Acceptance and reads immutable handoff pack', async () => {
     render(<DeliveryResultsAcceptanceQueue />);
     const row = (await screen.findByText('Delivery Acceptance')).closest('tr')!;

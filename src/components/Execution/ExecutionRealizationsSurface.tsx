@@ -153,7 +153,7 @@ export const ExecutionRealizationsSurface = ({
   }, [load]);
 
   const matches = useCallback((row: ExecutionRow, preset: string) => {
-    const health = String(row.detail.health ?? row.detail.severity ?? '').toUpperCase();
+    const health = String(row.detail.health?.status ?? row.detail.severity ?? '').toUpperCase();
     if (preset === 'active') return row.lifecycle === 'Aktywna';
     if (preset === 'at-risk') return health === 'AT_RISK';
     if (preset === 'critical') return health === 'CRITICAL';

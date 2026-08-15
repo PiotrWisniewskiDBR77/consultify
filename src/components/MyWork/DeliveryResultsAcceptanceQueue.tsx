@@ -8,6 +8,7 @@ import {
 } from '@/components/standard/StandardTable';
 import {
   decideDeliveryAcceptance,
+  decideDeliveryEvidence,
   decideResultsAcceptance,
   getBenefitsHandoffPack,
   listMyAcceptanceWork,
@@ -60,7 +61,17 @@ type Results = {
   initiativeId: string;
   status: 'PENDING';
 };
-type Queue = { delivery?: Delivery[]; results?: Results[] };
+type Evidence = {
+  version: number;
+  evidenceId: string;
+  initiativeId: string;
+  executionCaseId: string;
+  taskId: string | null;
+  evidenceRefs: Ref[];
+  submitterId: string;
+  status: 'SUBMITTED';
+};
+type Queue = { evidence?: Evidence[]; delivery?: Delivery[]; results?: Results[] };
 interface AcceptanceRow extends TableRow {
   id: string;
   title: string;
@@ -68,7 +79,7 @@ interface AcceptanceRow extends TableRow {
   initiative: string;
   exactSource: string;
   status: string;
-  source: Delivery | Results;
+  source: Evidence | Delivery | Results;
 }
 
 const columns: TableColumn[] = [
@@ -107,6 +118,15 @@ export const DeliveryResultsAcceptanceQueue = () => {
   }, [load]);
   const rows = useMemo<AcceptanceRow[]>(
     () => [
+      ...(queue.evidence ?? []).map((x) => ({
+        id: `evidence:${x.evidenceId}`,
+        title: 'Delivery Evidence Review',
+        gate: 'Evidence Review',
+        initiative: x.initiativeId,
+        exactSource: `${x.executionCaseId}${x.taskId ? ` · ${x.taskId}` : ''}`,
+        status: x.status,
+        source: x,
+      })),
       ...(queue.delivery ?? []).map((x) => ({
         id: `delivery:${x.decisionId}`,
         title: 'Delivery Acceptance',
@@ -155,6 +175,32 @@ export const DeliveryResultsAcceptanceQueue = () => {
         const pack = (await getBenefitsHandoffPack(packId)) as Record<string, unknown>;
         setReceipt({ type: 'DELIVERY', lifecycle: 'DELIVERED', ...pack });
       } else setReceipt({ type: 'DELIVERY', decisionId: d.decisionId, outcome });
+      setRationale('');
+      await load();
+      setWrite('IDLE');
+    } catch (e) {
+      setWrite(e instanceof RuntimeApiError && e.status === 409 ? 'CONFLICT' : 'FAILED');
+    }
+  };
+  const decideEvidence = async (outcome: 'APPROVE' | 'RETURN') => {
+    if (!selected || !selected.id.startsWith('evidence:') || !rationale.trim()) return;
+    const evidence = selected.source as Evidence;
+    setWrite('SAVING');
+    try {
+      const resultsSignalId = `delivery-results-${evidence.evidenceId}`;
+      await decideDeliveryEvidence(evidence.evidenceId, {
+        expectedVersion: evidence.version,
+        clientRequestId: commandId(`${evidence.evidenceId}:${evidence.version}:${outcome}`),
+        outcome,
+        rationale: rationale.trim(),
+        resultsSignalId,
+      });
+      setReceipt({
+        type: 'EVIDENCE',
+        lifecycle: outcome === 'APPROVE' ? 'RESULTS_SIGNAL_APPENDED' : 'RETURNED',
+        evidenceId: evidence.evidenceId,
+        ...(outcome === 'APPROVE' ? { resultsSignalId } : {}),
+      });
       setRationale('');
       await load();
       setWrite('IDLE');
@@ -246,13 +292,24 @@ export const DeliveryResultsAcceptanceQueue = () => {
           itemIds={rows.map((x) => x.id)}
           getItemById={(id) => rows.find((x) => x.id === id) ?? null}
           renderPreview={(row) => {
+            const evidence = row.id.startsWith('evidence:') ? (row.source as Evidence) : null;
             const delivery = row.id.startsWith('delivery:') ? (row.source as Delivery) : null;
             const results = row.id.startsWith('results:') ? (row.source as Results) : null;
             return (
               <div className="space-y-3 p-4 text-sm" aria-label={`${row.gate} Workbench`}>
                 <div>
-                  <strong>Canonical ID</strong> {delivery?.decisionId ?? results?.resultsCaseId}
+                  <strong>Canonical ID</strong>{' '}
+                  {evidence?.evidenceId ?? delivery?.decisionId ?? results?.resultsCaseId}
                 </div>
+                {evidence && (
+                  <div className="grid gap-2 md:grid-cols-2">
+                    <p>Initiative {evidence.initiativeId}</p>
+                    <p>Execution Case {evidence.executionCaseId}</p>
+                    <p>Task {evidence.taskId ?? 'Independent of Task'}</p>
+                    <p>Submitted by {evidence.submitterId}</p>
+                    <p>Evidence: {refs(evidence.evidenceRefs)}</p>
+                  </div>
+                )}
                 {delivery && (
                   <div className="grid gap-2 md:grid-cols-2">
                     <p>
@@ -342,7 +399,16 @@ export const DeliveryResultsAcceptanceQueue = () => {
             );
           }}
           renderPreviewFooter={(row) =>
-            row.id.startsWith('delivery:') ? (
+            row.id.startsWith('evidence:') ? (
+              <div className="flex flex-wrap gap-2 p-3">
+                <button className="btn-secondary" onClick={() => void decideEvidence('RETURN')}>
+                  Return evidence
+                </button>
+                <button className="btn-primary" onClick={() => void decideEvidence('APPROVE')}>
+                  Approve and append Results signal
+                </button>
+              </div>
+            ) : row.id.startsWith('delivery:') ? (
               <div className="flex flex-wrap gap-2 p-3">
                 <button className="btn-secondary" onClick={() => void decideDelivery('STOP')}>
                   Stop

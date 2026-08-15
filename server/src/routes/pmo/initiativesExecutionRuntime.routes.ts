@@ -37,6 +37,10 @@ import {
   requestResultsAcceptance,
 } from '../../domain/initiatives-execution/deliveryAcceptance.js';
 import {
+  decideDeliveryEvidence,
+  submitDeliveryEvidence,
+} from '../../domain/initiatives-execution/deliveryEvidence.js';
+import {
   archiveClosedInitiative,
   closeEffectiveInitiative,
   createEffectivenessCase,
@@ -963,6 +967,24 @@ const ReportTransitionSchema = z.discriminatedUnion('action', [
 const AcceptanceCommandSchema = z
   .object({ expectedVersion: z.number().int().min(0), clientRequestId: z.string().min(1) })
   .passthrough();
+const DeliveryEvidenceSubmitSchema = z.object({
+  expectedVersion: z.literal(0),
+  clientRequestId: z.string().min(1),
+  initiativeId: z.string().min(1),
+  executionCaseId: z.string().min(1),
+  taskId: z.string().min(1).nullable(),
+  reviewerId: z.string().min(1),
+  evidenceRefs: z
+    .array(z.object({ ref: z.string().min(1), version: z.number().int().min(1) }))
+    .min(1),
+});
+const DeliveryEvidenceDecisionSchema = z.object({
+  expectedVersion: z.number().int().min(1),
+  clientRequestId: z.string().min(1),
+  outcome: z.enum(['APPROVE', 'RETURN']),
+  rationale: z.string().min(1),
+  resultsSignalId: z.string().min(1),
+});
 const EffectivenessCommandSchema = AcceptanceCommandSchema;
 const MaterialChangeCommandSchema = AcceptanceCommandSchema;
 const AIAnalysisCommandSchema = AcceptanceCommandSchema;
@@ -4332,6 +4354,98 @@ export function createInitiativesExecutionRuntimeRouter(
           (item: any) => item.reportRunId
         ),
       });
+    })
+  );
+  router.post(
+    '/delivery-evidence/:id/submit',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req),
+        parsed = DeliveryEvidenceSubmitSchema.safeParse(req.body);
+      if (!actor) {
+        res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+        return;
+      }
+      if (!parsed.success) {
+        res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+        return;
+      }
+      const initiative = await deps.reader.findById(actor.organizationId, parsed.data.initiativeId);
+      if (
+        !initiative ||
+        !(await deps.authorize(actor, initiative.initiative.projectId, 'initiative.update'))
+      ) {
+        res.status(404).json({ error: { code: 'NOT_FOUND' } });
+        return;
+      }
+      const { expectedVersion, clientRequestId, ...payload } = parsed.data;
+      const result = await submitDeliveryEvidence(deps.unitOfWork, {
+        organizationId: actor.organizationId,
+        actorId: actor.userId,
+        aggregateType: 'delivery_evidence',
+        aggregateId: req.params.id,
+        expectedVersion,
+        clientRequestId,
+        correlationId: `delivery-evidence-submit-${clientRequestId}`,
+        policyId: 'delivery-evidence',
+        policyVersion: 1,
+        commandType: 'delivery-evidence.submit',
+        createIfMissing: true,
+        payload,
+      });
+      res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
+    })
+  );
+  router.post(
+    '/delivery-evidence/:id/decide',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req),
+        parsed = DeliveryEvidenceDecisionSchema.safeParse(req.body);
+      if (!actor) {
+        res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+        return;
+      }
+      if (!parsed.success) {
+        res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+        return;
+      }
+      const { expectedVersion, clientRequestId, ...payload } = parsed.data;
+      const result = await decideDeliveryEvidence(deps.unitOfWork, {
+        organizationId: actor.organizationId,
+        actorId: actor.userId,
+        aggregateType: 'delivery_evidence',
+        aggregateId: req.params.id,
+        expectedVersion,
+        clientRequestId,
+        correlationId: `delivery-evidence-decide-${clientRequestId}`,
+        policyId: 'delivery-evidence',
+        policyVersion: 1,
+        commandType: 'delivery-evidence.decide',
+        payload,
+      });
+      res.json(result);
+    })
+  );
+  router.get(
+    '/delivery-evidence/:id',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      if (!actor) {
+        res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+        return;
+      }
+      const found = await deps.reader.findDeliveryEvidence(actor.organizationId, req.params.id);
+      const initiative = found
+        ? await deps.reader.findById(actor.organizationId, String((found as any).initiativeId))
+        : null;
+      if (
+        !found ||
+        !initiative ||
+        !(await deps.authorize(actor, initiative.initiative.projectId, 'initiative.view'))
+      ) {
+        res.status(404).json({ error: { code: 'NOT_FOUND' } });
+        return;
+      }
+      res.json(found);
     })
   );
   router.post(
