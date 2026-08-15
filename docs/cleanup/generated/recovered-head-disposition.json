@@ -12,11 +12,11 @@
   "summary": {
     "total": 224,
     "referenceHarnessOnly": 18,
-    "representedSuperseded": 10,
+    "representedSuperseded": 15,
     "representedCanonical": 3,
     "rejectedDestructiveSnapshot": 1,
     "integratedCanonical": 7,
-    "semanticReviewRequired": 185,
+    "semanticReviewRequired": 180,
     "deletionAuthorized": 0
   },
   "rows": [
@@ -841,12 +841,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 1,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-DOC-002",
       "recoveryRef": "refs/recovery/unknown-20260815/2cd4c674b88b6ef051b163bf82a9bb899458a89d",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "This July 19 HP-16/HP-2 register update is a time-bound intermediate checkpoint. The current canonical register contains the later evidence progression, corrections and final 304/304 reconciliation, including the explicit distinction between code evidence and the adversarial-panel process claim.",
+      "nextAction": "Do not restore the intermediate register snapshot or reuse its runtime claims as current acceptance evidence; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "2d0e6d8dab54e351c9e948f9dc98493282aac5ee",
@@ -1129,12 +1129,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 1,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-DOC-003",
       "recoveryRef": "refs/recovery/unknown-20260815/352ac10dac2e560b17d084ccf524a3249b41e15b",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered 19-versus-15 question-bank correction is already represented in the later canonical register: it records 19 total systems as 15 files plus 4 QuestionBank branching systems and preserves the related deepeningLadder caveat.",
+      "nextAction": "Keep the later canonical reconciliation and retain the older recovery ref until CLEAN-003."
     },
     {
       "tip": "3533fe080eea837a78518434d0f39bcc50f48124",
@@ -1664,12 +1664,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 1,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-DOC-004",
       "recoveryRef": "refs/recovery/unknown-20260815/541d42105effe9f13d3bcd19c9240718b8bc6c9d",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered HP-20 1-of-3 checkpoint is present in the current canonical register together with later status text showing all-pass 0/3 and the remaining graded-run work. The older row is not a stronger or current completion claim.",
+      "nextAction": "Use the current register as historical source and require a new exact-SHA graded run for any completion claim; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "57369f42276fda316b03db63a2a4054fa18cfdb8",
@@ -2114,12 +2114,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 1,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-IDEA-001",
       "recoveryRef": "refs/recovery/unknown-20260815/6dcce6f3dc06ba39b393e68548d71d9400014c5a",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "This Ideas handoff is an intermediate July 22 demo checkpoint. The same canonical handoff has many later revisions and currently preserves the critical fail-closed tablePlatformMetadataFirst warning; the recovered deployment statement cannot prove present demo parity.",
+      "nextAction": "Keep the latest handoff, preserve the metadata-first warning in the module gap plan, and require fresh exact-SHA demo evidence before enabling the surface; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "6dd88ae0d925dc7cfbe51169047f7cf084443988",
@@ -3636,12 +3636,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 1,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-DOC-005",
       "recoveryRef": "refs/recovery/unknown-20260815/b9cb98c6ba6817f48b51b32783590390f3a7aa5a",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered O6.1 industry-profile update is explicitly represented in the later canonical register, including the expert-hypothesis-v1 qualification, runtime reference and owner publication decision.",
+      "nextAction": "Do not merge the older register edit; validate the current product surface independently during module acceptance and retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "bba792eabc133696ecdc4adcaf810e3642f0337c",
