@@ -80,6 +80,7 @@ if (REAL_PG_REQUESTED) {
 const REAL_PG = REAL_PG_REQUESTED;
 
 const TEST_ROLE = `fv3_rls_pilot_${randomUUID().replace(/-/g, '').slice(0, 16)}`;
+const TEST_ROLE_PASSWORD = `fv3-${randomUUID()}`;
 const PILOT_TABLES = [
   'compute_jobs',
   'finance_valuation_sensitivity_grids',
@@ -115,7 +116,7 @@ describe.skipIf(!REAL_PG)('W2 RLS pilot — three-state negative control (real P
     // this file only, never touches any role used outside this test run.
     await superuserPool.query(`DROP ROLE IF EXISTS "${TEST_ROLE}"`);
     await superuserPool.query(
-      `CREATE ROLE "${TEST_ROLE}" LOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE NOREPLICATION`
+      `CREATE ROLE "${TEST_ROLE}" LOGIN PASSWORD '${TEST_ROLE_PASSWORD}' NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE NOREPLICATION`
     );
     await superuserPool.query(`GRANT USAGE ON SCHEMA public TO "${TEST_ROLE}"`);
     await superuserPool.query(
@@ -124,7 +125,7 @@ describe.skipIf(!REAL_PG)('W2 RLS pilot — three-state negative control (real P
 
     const lowPrivUrl = new URL(CONNECTION_STRING);
     lowPrivUrl.username = TEST_ROLE;
-    lowPrivUrl.password = '';
+    lowPrivUrl.password = TEST_ROLE_PASSWORD;
     lowPrivPool = new Pool({ connectionString: lowPrivUrl.toString() });
 
     // --- Seed two real tenants through the ACTUAL service layer (not synthetic
