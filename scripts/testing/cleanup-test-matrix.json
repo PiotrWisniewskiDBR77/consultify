@@ -123,6 +123,8 @@
       "tests/integration/routes/billing.routes.l3.test.ts",
       "tests/integration/flows/content-management-integration.test.ts",
       "tests/integration/routes/superadmin-overview.test.js",
+      "tests/integration/routes/rolloutExtensions.routes.test.ts",
+      "server/src/routes/v8/__tests__/p04-kpi-workflow.test.ts",
       "tests/integration/routes/p21b-reports-template-artifactrun-e2e.sqlite.integration.test.ts",
       "server/src/routes/__tests__/document-studio-client-reader.routes.test.ts",
       "server/src/services/__tests__/nativeOwnerPinnedClient.test.ts"
@@ -187,7 +189,8 @@
         "server/src/routes/__tests__/adminP32.routes.test.ts",
         "tests/unit/backend/routes/h64-failsoft.test.ts",
         "server/src/routes/__tests__/financial-modeling.routes.validation.test.ts",
-        "tests/unit/backend/routes/h64-failsoft-batch4.test.ts"
+        "tests/unit/backend/routes/h64-failsoft-batch4.test.ts",
+        "tests/integration/routes/rolloutExtensions.routes.test.ts"
       ]
     },
     "realdb": {
@@ -268,7 +271,8 @@
       "execution": "must-be-repaired",
       "files": [
         "server/src/routes/v8/__tests__/interview.routes.test.ts",
-        "tests/integration/presentations/atelier-deck-canonical-roundtrip.contract.test.ts"
+        "tests/integration/presentations/atelier-deck-canonical-roundtrip.contract.test.ts",
+        "server/src/routes/v8/__tests__/p04-kpi-workflow.test.ts"
       ]
     },
     "staleHarness": {
