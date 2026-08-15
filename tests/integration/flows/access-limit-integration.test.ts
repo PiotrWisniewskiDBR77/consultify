@@ -105,26 +105,23 @@ describeRealDb('L3: Access & Usage Limit Integration', () => {
     });
 
     describe('Trial Lifecycle Flow', () => {
-        it('should activate a trial for an organization', async () => {
+        it('does not expose the retired ad-hoc trial activation endpoint', async () => {
             const res = await request(app)
                 .post(`/api/access/trial/activate`)
                 .set('Authorization', `Bearer ${adminToken}`)
                 .send({ plan: 'enterprise', durationDays: 14 });
 
-            if (res.status === 200 || res.status === 201) {
-                expect(res.body.isTrial).toBe(true);
-                expect(res.body.plan).toBe('enterprise');
-            }
+            expect(res.status).toBe(404);
         });
 
-        it('should respect upgraded trial limits', async () => {
-            // After trial upgrade, more actions should be allowed
+        it('does not grant upgraded limits when no governed upgrade occurred', async () => {
             const res = await request(app)
                 .post('/api/projects')
                 .set('Authorization', `Bearer ${adminToken}`)
                 .send({ name: 'Trial-Allowed Project', organizationId: testOrgId });
 
-            expect([200, 201]).toContain(res.status);
+            expect(res.status).toBe(429);
+            expect(res.body).toEqual(expect.objectContaining({ code: 'PROJECT_LIMIT_REACHED' }));
         });
     });
 
