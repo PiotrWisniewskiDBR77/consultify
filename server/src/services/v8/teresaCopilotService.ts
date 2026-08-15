@@ -15,6 +15,7 @@
 
 import { randomUUID } from 'node:crypto';
 
+import { getPoolClientForPinnedTransaction } from '../../database/PostgresDatabase.js';
 import type { OperationContract } from '../../types/operationContract.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -73,6 +74,12 @@ import {
 import { extractReminder } from './teresaReminderExtraction.js';
 
 const LOG_PREFIX = '[P08-TeresaCopilot]';
+
+/** Minimal pinned-client contract; keeps this service independent of pg types. */
+interface PoolClientLike {
+  query: (sql: string, params?: unknown[]) => Promise<{ rows?: any[] }>;
+  release: () => void;
+}
 
 // ---------------------------------------------------------------------------
 // Types
@@ -225,6 +232,7 @@ const TARGET_LABELS: Partial<Record<HandoffTargetModule, string>> = {
   notebook: 'Notebook',
   interview: 'Interview Insights',
   excele: 'Excele Workbooks',
+  ideas: 'My Ideas',
   documents: 'Document Studio',
   presentations: 'Presentation Studio',
 };
@@ -2208,6 +2216,8 @@ async function performHandoff(params: {
       return handleInterviewHandoff(proposalId, organizationId, handoffContext, targetPayload);
     case 'excele':
       return handleExceleHandoff(proposalId, organizationId, userId, handoffContext, targetPayload);
+    case 'ideas':
+      return handleIdeasHandoff(proposalId, organizationId, userId, handoffContext, targetPayload);
     case 'documents':
       return handleDocumentsHandoff(
         proposalId,
@@ -2232,6 +2242,130 @@ async function performHandoff(params: {
       return handleResultsOkrHandoff(proposalId, organizationId, userId, handoffContext, targetPayload);
     default:
       throw new TeresaCopilotError(`Unknown target module: ${targetModule}`, 'P08_UNKNOWN_TARGET');
+  }
+}
+
+/**
+ * Writes the Ideas owner object, canonical map and durable Teresa receipt as
+ * one tenant-scoped transaction. The transaction advisory lock serializes
+ * concurrent executions even before a receipt row exists (FOR UPDATE on an
+ * absent row cannot do that).
+ */
+async function handleIdeasHandoff(
+  proposalId: string,
+  organizationId: string,
+  userId: string,
+  context: TeresaHandoffContext,
+  payload: Record<string, unknown>
+): Promise<Record<string, unknown>> {
+  const ideasContext = (payload.ideas_context ?? {}) as Record<string, unknown>;
+  const canvasType = payload.canvas_type ? String(payload.canvas_type) : null;
+  const title = String(ideasContext.title ?? context.user_intent ?? 'Idea from Teresa').slice(0, 200);
+  const body = String(ideasContext.body ?? ideasContext.summary ?? '');
+  const deepLink = (id: string) => `/my-work?ideaId=${encodeURIComponent(id)}`;
+
+  let client: PoolClientLike;
+  try {
+    client = (await getPoolClientForPinnedTransaction()) as PoolClientLike;
+  } catch (error) {
+    throw new TeresaCopilotError(
+      `Ideas handoff could not open a transaction: ${error instanceof Error ? error.message : String(error)}`,
+      'P08_HANDOFF_NO_OWNER_OBJECT',
+      502
+    );
+  }
+
+  try {
+    await client.query('BEGIN');
+    await client.query(
+      `SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`,
+      [`teresa:ideas:${organizationId}:${proposalId}`]
+    );
+
+    const prior = await client.query(
+      `SELECT result_ref FROM teresa_handoff_results
+       WHERE proposal_id = $1 AND organization_id = $2 AND target_module = 'ideas'
+       ORDER BY created_at ASC LIMIT 1`,
+      [proposalId, organizationId]
+    );
+    const priorRef = prior.rows?.[0]?.result_ref as string | undefined;
+    if (priorRef) {
+      const resumed = await client.query(
+        `SELECT i.id
+           FROM my_ideas i
+           JOIN my_idea_maps m ON m.idea_id = i.id AND m.organization_id = i.organization_id
+          WHERE i.id = $1 AND i.organization_id = $2 AND i.user_id = $3`,
+        [priorRef, organizationId, userId]
+      );
+      if (!resumed.rows?.length) {
+        throw new TeresaCopilotError(
+          `Ideas receipt ${priorRef} has no tenant-owned object`,
+          'P08_HANDOFF_NO_OWNER_OBJECT',
+          502
+        );
+      }
+      await client.query('COMMIT');
+      return {
+        handoff: 'ideas', idea_ref: priorRef, real_entity: true,
+        reused_existing: true, deep_link: deepLink(priorRef), user_intent: context.user_intent,
+      };
+    }
+
+    const ideaId = `idea-${randomUUID()}`;
+    const mapId = `map-${randomUUID()}`;
+    const now = new Date().toISOString();
+    await client.query(
+      `INSERT INTO my_ideas
+         (id, user_id, organization_id, title, body, source_type,
+          source_conversation_id, source_message_id, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, 'teresa', NULL, NULL, $6, $7)`,
+      [ideaId, userId, organizationId, title, body, now, now]
+    );
+    await client.query(
+      `INSERT INTO my_idea_maps
+         (id, idea_id, user_id, organization_id, nodes_json, edges_json,
+          preferred_tool, is_canonical, last_editor_user_id, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, '[]', '[]', $5, TRUE, $3, $6, $7)`,
+      [mapId, ideaId, userId, organizationId, canvasType, now, now]
+    );
+
+    const confirmed = await client.query(
+      `SELECT i.id AS idea_id, m.id AS map_id
+         FROM my_ideas i
+         JOIN my_idea_maps m ON m.idea_id = i.id
+          AND m.organization_id = i.organization_id AND m.is_canonical = TRUE
+        WHERE i.id = $1 AND m.id = $2 AND i.organization_id = $3 AND i.user_id = $4
+          AND m.user_id = $4`,
+      [ideaId, mapId, organizationId, userId]
+    );
+    if (!confirmed.rows?.length) {
+      throw new TeresaCopilotError(
+        'Ideas handoff could not read back the tenant-owned idea and canonical map',
+        'P08_HANDOFF_NO_OWNER_OBJECT',
+        502
+      );
+    }
+    await client.query(
+      `INSERT INTO teresa_handoff_results
+         (id, proposal_id, organization_id, target_module, result_ref, created_at)
+       VALUES ($1, $2, $3, 'ideas', $4, $5)`,
+      [randomUUID(), proposalId, organizationId, ideaId, now]
+    );
+    await client.query('COMMIT');
+    return {
+      handoff: 'ideas', idea_ref: ideaId, map_ref: mapId, real_entity: true,
+      reused_existing: false, deep_link: deepLink(ideaId), title, user_intent: context.user_intent,
+    };
+  } catch (error) {
+    try { await client.query('ROLLBACK'); } catch { /* broken connection cannot commit */ }
+    if (error instanceof TeresaCopilotError) throw error;
+    throw new TeresaCopilotError(
+      `Ideas handoff failed: ${error instanceof Error ? error.message : String(error)}`,
+      'P08_HANDOFF_NO_OWNER_OBJECT',
+      502
+    );
+  } finally {
+    client.release();
   }
 }
 
