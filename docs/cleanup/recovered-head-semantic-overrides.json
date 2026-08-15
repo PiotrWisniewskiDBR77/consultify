@@ -686,6 +686,251 @@
       "taskId": "CLEAN-002-EXE-012",
       "evidenceRule": "The recovered tip only sorted imports in StageGateService.test.ts. The canonical test is hundreds of lines beyond that snapshot and is already formatted under the current import/lint conventions; no production behavior or missing assertion is unique to the recovery head.",
       "nextAction": "Keep the current Stage Gate test suite and run it in the Execution shard at the final candidate SHA; retain the recovery ref until CLEAN-003."
+    },
+    {
+      "tip": "d9dae50beae5c24916cf0bf4e3cbca6582521f5d",
+      "verdict": "INTEGRATED_CANONICAL",
+      "taskId": "CLEAN-002-MYW-014",
+      "evidenceRule": "Canonical commit 9f4785846 surgically integrates the recovered workload assessment into the live manager WorkloadView and canonical team-workload route with one batch AI synthesis, deterministic fallback, cache, joined capacity/calendar evidence and focused tests; frontend and backend typechecks pass.",
+      "nextAction": "Keep the recovery ref until CLEAN-003 and prove the signed-in manager flow with real team data at the final candidate SHA."
+    },
+    {
+      "tip": "649f9b2e654fc210d47320d22dcb00ef0a40ca98",
+      "verdict": "INTEGRATED_CANONICAL",
+      "taskId": "CLEAN-002-TLS-004",
+      "evidenceRule": "Canonical commit dd35014a3 replaces the fake presentation success toggle with canonical promoteToolOutput persistence and Presentation Studio navigation, propagates AI stream failures into visible tool errors and omits invalid explicit nulls from the stream request. Frontend typecheck, focused stream recovery tests and diff-check pass.",
+      "nextAction": "Execute Dynamic SWOT to persisted presentation in the signed-in browser and verify artifact readback at the final candidate SHA."
+    },
+    {
+      "tip": "76952a279080ae8b3e2c63e99589b4f8275376dc",
+      "verdict": "CANDIDATE_INTEGRATION",
+      "taskId": "CLEAN-002-INI-009",
+      "evidenceRule": "The canonical project resolver exists, but nine live raw initiative insertion paths still persist a null or source project without calling it, leaving an orphan-project risk when the funnel is disabled.",
+      "nextAction": "Port resolveInitiativeProjectId per current callsite in My Work, Tools, AI actions, Artifact conversion, Assessment, Initiative definitions, Notebook, Report import and Valuation; test null project, tenant system portfolio and funnel ON/OFF."
+    },
+    {
+      "tip": "6a0b010f145118997ae4e4565a47cb9d4b5bf63c",
+      "verdict": "CANDIDATE_INTEGRATION",
+      "taskId": "CLEAN-002-SEC-008",
+      "evidenceRule": "Ten current AI or heuristic initiative producers can still persist HTML-escaped titles on raw fallback paths; central funnel decoding does not protect those writes when the funnel is disabled.",
+      "nextAction": "Decode once before funnel/raw branching in the audited producers and reuse the decoded title for persistence, notifications and returned entities; add entity-integrity tests."
+    },
+    {
+      "tip": "689a3b86dc595493159ebe37c34f87aa637fdafa",
+      "verdict": "CANDIDATE_INTEGRATION",
+      "taskId": "CLEAN-002-QA-005",
+      "evidenceRule": "Eleven evolved E2E counterparts do not retain the recovered test-support tenant-isolation semantics, creating a test safety gap rather than a runtime product gap.",
+      "nextAction": "Port isolation semantics to the current shared fixture API, run affected shards twice and prove no demo or production mutation."
+    },
+    {
+      "tip": "2bc65b803770fd55095b434cd0192afe1654492c",
+      "verdict": "CANDIDATE_INTEGRATION",
+      "taskId": "CLEAN-002-INT-005",
+      "evidenceRule": "Current candidate acceptance can create an initiative before receipt claim and explicitly tolerates orphan reconciliation; strict atomic no-orphan acceptance is therefore not proven.",
+      "nextAction": "Design and port the transaction/lease invariant surgically onto the current service, then prove fault injection, retry and PostgreSQL concurrency; do not merge the 31-file WIP range."
+    },
+    {
+      "tip": "ecc92ae06a0a8c39552040fb5de6e28223bfc6db",
+      "verdict": "CANDIDATE_INTEGRATION",
+      "taskId": "CLEAN-002-FIN-004",
+      "evidenceRule": "Current Finance writes assumption status/note markers but has no assumptionCaveats read-side or equivalent response/completeness surfacing.",
+      "nextAction": "Port the focused assumptionCaveats service and test, then reapply route and Atelier seed completeness wiring to current files."
+    },
+    {
+      "tip": "8b254dd57dcc144da02236278d8c3a6d66ff9dcc",
+      "verdict": "CANDIDATE_INTEGRATION",
+      "taskId": "CLEAN-002-FIN-005",
+      "evidenceRule": "Finance, Meeting and Organization retain incomplete translation coverage; the recovered slice is partial and its standalone namespace files do not match the current namespace policy.",
+      "nextAction": "Reconcile semantic keys into the canonical translation namespace and supported-language fallback policy, port remaining hardcoded labels and add locale tests."
+    },
+    {
+      "tip": "a14467cdda16a19c436b729b14c3cbcf72e5487a",
+      "verdict": "CANDIDATE_INTEGRATION",
+      "taskId": "CLEAN-002-FIN-006",
+      "evidenceRule": "Canonical Finance still lacks the recovered effective-tax policy, zero-versus-missing line presence rules, REQUIRED_LINES_PRESENT tie-out and persisted three-scenario workbook export.",
+      "nextAction": "Surgically port the tax policy and scenario behavior into current modeling, tie-out and export services/UI with focused tests and fresh PostgreSQL proof."
+    },
+    {
+      "tip": "06e1fb75394654a4910f7aa89721178c513cb949",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-SEC-007",
+      "evidenceRule": "Patch-equivalent disclosure repairs are in canonical ancestry and every unique evolved admin, demo, feedback, help, management, PMO, presentation and report-builder response is sanitized in current routes.",
+      "nextAction": "Run the final security leak shard; do not replay the recovered branch."
+    },
+    {
+      "tip": "3aa902cca880c712f1a76680f6ba6464b9ebf0c4",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-AIOS-005",
+      "evidenceRule": "Current LLM service has later Anthropic normalization and tool-call/result handling; the recovered structuredOutputs argument is incompatible with the installed SDK.",
+      "nextAction": "Keep current providers and add a current-SDK strict JSON/schema fallback test instead of replaying the obsolete call."
+    },
+    {
+      "tip": "729a35a8ee6a7c5f01443aac0bbfe2def8e4f52a",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-UI-008",
+      "evidenceRule": "The July table review is an intermediate predecessor of substantially later Agent Hub, Finance, My Work and row-action implementations.",
+      "nextAction": "Do not restore old files; exercise current dates, preview sources, kebab actions and placeholder policy in browser acceptance."
+    },
+    {
+      "tip": "bc1db2a10ce7f0cfe3ab80b61d13406c0df2a2a7",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-QA-004",
+      "evidenceRule": "The standalone clickable stack uses custom ports, stubs and a private temporary path; canonical Playwright and acceptance suites now own the evolved flows.",
+      "nextAction": "Translate any useful residual assertions into the signed-in canonical matrix; never restore the parallel runner."
+    },
+    {
+      "tip": "c4469a6c00085e64bb106f354bdcbcf7943c4cf2",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-CHAT-010",
+      "evidenceRule": "The branch self-identifies as an unreviewed alternative frontend; current Chat contains later governed handoff, receipt/idempotency migrations and realDB tests.",
+      "nextAction": "Keep current CHAT authority and obtain deployed browser/readback proof."
+    },
+    {
+      "tip": "db4837742057df0abe9052605b5c64823b53a5e2",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MYW-011",
+      "evidenceRule": "Current Notebook preserves the recovered autosave, responsive, conflict, offline and reload behavior and retains byte-identical deep acceptance coverage.",
+      "nextAction": "Run the responsive signed-in Notebook matrix."
+    },
+    {
+      "tip": "8ede72e0bc4eb92fed3aee7d9b7a783ab4930f1f",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MYW-012",
+      "evidenceRule": "Current Notebook route and UI retain tenant CAS conflict, reload and retry semantics plus evolved acceptance coverage.",
+      "nextAction": "Run the realDB CAS and tenant suite at the final candidate SHA."
+    },
+    {
+      "tip": "7056497324e477b29c34021dbaa55fdc56f859af",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-CHAT-011",
+      "evidenceRule": "Canonical Chat contains the recovered proposal idempotency, readback and deep-link behavior plus later governed handoff coverage.",
+      "nextAction": "Run Chat realDB and signed-in Table handoff acceptance."
+    },
+    {
+      "tip": "a0741afbef96f9821e6db6f8b52579e8a3b71474",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-MYW-013",
+      "evidenceRule": "Current code retains task idempotency and inbox reopen lifecycle but intentionally hard-disables the memory-heavy unfinished Radar that the recovered head enabled.",
+      "nextAction": "Keep Radar outside MVP and validate task retry and inbox reopen."
+    },
+    {
+      "tip": "fcb98b772f8839d9b64887502a136bb31b5ef318",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-CTL-005",
+      "evidenceRule": "The composite CTO branch mixes already represented Chat, Notebook and lease work with obsolete acceptance labels; current module packets are later authorities.",
+      "nextAction": "Do not merge the aggregate; validate each capability through current module cards."
+    },
+    {
+      "tip": "4256348c963ac2cde9b3ecb40a5df852d03a5ec7",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-EXE-013",
+      "evidenceRule": "Historical Execution screenshots and dev renderer predate later intelligence, what-if and rollout code and are not current evidence.",
+      "nextAction": "Do not restore artifacts; run current viewport/theme acceptance and separately remove residual legacy RolloutTab color classes."
+    },
+    {
+      "tip": "eb157a26a9d3e8c0ac61c1222b7e8c35c117f180",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-FIN-003",
+      "evidenceRule": "All recovered FIN-006 product paths exist in canonical form; exact blobs or later-expanded implementations retain candidate lineage, adapters, modal/API and acceptance coverage.",
+      "nextAction": "Validate the candidate handoff in current Finance acceptance and browser shards."
+    },
+    {
+      "tip": "ee1676c40f959d5cde13b138cae1e3376d5c0d8b",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-RES-011",
+      "evidenceRule": "The historical branch rewired readers to legacy tables; current VNext ownership, visibility and tenant-aware consumers supersede that architecture.",
+      "nextAction": "Keep current Results and add a seeded non-zero realDB dashboard readback."
+    },
+    {
+      "tip": "0dfbc60e781b4bd998ab6f3bb7de9fdd86364f67",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-RES-012",
+      "evidenceRule": "Recovered Results services and tests are present or later-expanded; the canonical measurement writer additionally pins definition versions.",
+      "nextAction": "Run the current real PostgreSQL Results shard with tenant, idempotency, threshold and OKR coverage."
+    },
+    {
+      "tip": "46711faaab4668df9ad0ca4efc52a12e1180bf03",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-RES-013",
+      "evidenceRule": "Historical mock/dev-render Results screenshots are superseded by substantially later production code and cannot evidence current runtime.",
+      "nextAction": "Regenerate signed-in browser evidence at the final candidate SHA."
+    },
+    {
+      "tip": "b7dbe9a0f7d871e311e6d8b3b31380f000001b3e",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-FIN-007",
+      "evidenceRule": "Recovered ROI-Finance bridge files target an obsolete schema replaced by current Results VNext commands, repositories, adapters and projections.",
+      "nextAction": "Keep the current seam and verify create, remove and freshness; do not restore incompatible migrations."
+    },
+    {
+      "tip": "65fd46f60a27b9e7e306d6e473fa65ee94875d23",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-FIN-008",
+      "evidenceRule": "Recovered reconciliation uses an obsolete schema and provisional owner-unapproved threshold; canonical commands, adapter and migrations are later authorities.",
+      "nextAction": "Verify current materiality and append-only Actual invariants in PostgreSQL tests."
+    },
+    {
+      "tip": "18e924e3162ee685ee99c967758a177f4f36e6f7",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-IDE-008",
+      "evidenceRule": "Current Ideas tool E2E coverage contains the recovered helper, mind map, notebook and whiteboard flows plus later collaboration and autosave scenarios.",
+      "nextAction": "Execute the evolved suite at the final candidate SHA."
+    },
+    {
+      "tip": "0a5565fedcb0750874d6d64a9755b8d079d153c6",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MYW-015",
+      "evidenceRule": "The Harvey acceptance flow and shared harness are in canonical form with later completion and ownership hardening.",
+      "nextAction": "Rerun Harvey with the governed realDB candidate."
+    },
+    {
+      "tip": "0f7180f2eac08d5859fdef2eab97f77f2270a945",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-IDE-009",
+      "evidenceRule": "The real-runtime Ideas harness and four workspace tool flows are represented by current acceptance and expanded E2E suites.",
+      "nextAction": "Obtain fresh signed-in browser proof."
+    },
+    {
+      "tip": "87ef729c2639d181e8926a39a45d4a6a21975823",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-IDE-010",
+      "evidenceRule": "Current consolidated Ideas right panel, canonical action registry and token/focus fixes supersede the recovered seven-step Mind Map shell.",
+      "nextAction": "Do not replay old UI; visually validate the current shell against the Ideas canon."
+    },
+    {
+      "tip": "8b416d8c74e2a29c689a099296034cc584ffe840",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-TLS-005",
+      "evidenceRule": "Oxford acceptance exists in canon with later server conclusion-gate hardening.",
+      "nextAction": "Rerun Oxford at the final candidate with realDB."
+    },
+    {
+      "tip": "be940a60682d1802b58f59262d4e6e075bf91c5a",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MAT-015",
+      "evidenceRule": "The Teresa documents acceptance flow and harness are in canon and later expanded across document, deck and sheet outputs.",
+      "nextAction": "Execute it in the final acceptance batch."
+    },
+    {
+      "tip": "5d5646b3e393e546ff3bb2e280beeaabe97db5b3",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-TLS-006",
+      "evidenceRule": "Bootstrap documentation, canonical migrations and both realDB suites are present; older migration semantics were folded into the later promotion migration.",
+      "nextAction": "Verify the full migration chain on fresh PostgreSQL."
+    },
+    {
+      "tip": "b1692a29fa234eeeec781d457443c0f6b1d99ea3",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-TLS-007",
+      "evidenceRule": "Canonical output migration, snapshot service, controller wiring and immutable promotion tests contain the recovered behavior plus later fixes.",
+      "nextAction": "Rerun the realDB promotion suite."
+    },
+    {
+      "tip": "9e80bc02a9a690ab5a6d50ab7ea0a55c055aaf15",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-UI-009",
+      "evidenceRule": "The recovered color sweep is an intermediate styling pass; current components use later semantic design tokens and contain no unique business behavior from that ancestry.",
+      "nextAction": "Do not replay; enforce current token scans and signed-in visual review."
     }
   ]
 }
