@@ -1,39 +1,38 @@
 /**
  * M14 ExecutionHub cockpit — manual E2E (Playwright).
  *
- * Drives the LIVE v8 cockpit (org a3e05d4a on staging) against the already-running
- * frontend (:3000 → backend :3001). Mints a real token via the login API, seeds it
- * per-page (seedPageAuth), then verifies:
- *   1. cockpit loads with the 4 tabs + real initiatives,
+ * Drives the v8 cockpit against the already-running frontend (:3000 → backend
+ * :3001). Uses the ISOLATED E2E test-support tenant token (seedPageAuth), then
+ * verifies:
+ *   1. cockpit loads with the 4 tabs + initiatives,
  *   2. the Execution Intelligence panel binds to GET /:projectId/intelligence and
  *      renders predictions when the `intelligence` flag is on (?ff_execIntel=1),
  *   3. the panel is absent by default (flag OFF = live-safe).
  *
+ * SAFETY (2026-07-13): This spec used to mint a token by logging in as the REAL
+ * account (piotr.wisniewski@dbr77.com / 123456) and drove the LIVE DBR77 org
+ * (a3e05d4a-...) directly. It now reads the isolated test-support tenant token
+ * from the global-setup state file (tests/e2e/_helpers/testSupportState.ts), so
+ * it never authenticates as — or touches — a real organization. Running without
+ * the gated harness now fails fast (missing state file). NOTE: the content
+ * assertions below (e.g. the "DevOps Transformation" initiative, ROI/rollout
+ * data) require that fixture data to be seeded into the isolated tenant; seeding
+ * those cockpit fixtures is tracked as follow-up work, not part of this safety fix.
+ *
  * Run (servers already up): npx playwright test tests/e2e/m14-execution-cockpit.spec.ts
  */
-import { test, expect, type APIRequestContext } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
+import { readTestSupportState } from './_helpers/testSupportState';
 import { seedPageAuth } from './cases/_m07-helpers';
-
-const BACKEND = process.env.M14_BACKEND || 'http://localhost:3001';
-const CREDS = {
-  email: process.env.M14_EMAIL || 'piotr.wisniewski@dbr77.com',
-  password: process.env.M14_PASSWORD || '123456',
-};
-
-async function mintToken(request: APIRequestContext): Promise<string> {
-  const res = await request.post(`${BACKEND}/api/auth/login`, { data: CREDS });
-  expect(res.ok(), `login failed: ${res.status()}`).toBeTruthy();
-  const body = await res.json();
-  expect(body.token, 'no token in login response').toBeTruthy();
-  return body.token as string;
-}
 
 test.describe('M14 ExecutionHub cockpit', () => {
   let token: string;
 
-  test.beforeAll(async ({ request }) => {
-    token = await mintToken(request);
+  test.beforeAll(() => {
+    // Isolated E2E tenant (test-support bootstrap) — never a real login.
+    token = readTestSupportState().token;
+    expect(token, 'test-support state must provide a token').toBeTruthy();
   });
 
   test.beforeEach(async ({ page }) => {

@@ -1,13 +1,17 @@
 import { test, expect } from '@playwright/test';
 
+import { seedE2EAuthWithBootstrap } from './smoke/runtime-gate-helpers';
+
+// SAFETY (2026-07-13): This spec used to log in through the UI with a hard-coded
+// REAL account (piotr.wisniewski@dbr77.com / 123456), so the "create project"
+// flow wrote real projects into the real DBR77 org. It now seeds the isolated
+// E2E test-support tenant (seedE2EAuthWithBootstrap) — an ADMIN token minted for
+// a throwaway org — so it never authenticates as, or writes into, a real account.
 test.describe('Project Management', () => {
   test.beforeEach(async ({ page }) => {
-    // Login via UI
+    // Isolated E2E tenant (test-support bootstrap) — never the real DBR77 account.
+    await seedE2EAuthWithBootstrap(page);
     await page.goto('/');
-    await page.click('text=Log In');
-    await page.fill('input[type="email"]', 'piotr.wisniewski@dbr77.com');
-    await page.fill('input[type="password"]', '123456');
-    await page.click('button[type="submit"]');
     await expect(page.locator('h1:has-text("Admin Panel")')).toBeVisible();
   });
 

@@ -1,29 +1,26 @@
 /**
  * M15 ResultsHub cockpit — manual E2E (Playwright).
  *
- * Drives the LIVE Results cockpit (org a3e05d4a on staging) against the running
- * frontend (:3000 → backend :3001). Verifies M15/W1 (G1): the M14→M15 handoff
- * inbox renders and a handoff benefit can be promoted into a tracked KPI.
+ * Drives the Results cockpit against the running frontend (:3000 → backend
+ * :3001). Verifies M15/W1 (G1): the M14→M15 handoff inbox renders and a handoff
+ * benefit can be promoted into a tracked KPI.
+ *
+ * SAFETY (2026-07-13): This spec used to mint a token by logging in as the REAL
+ * account (piotr.wisniewski@dbr77.com / 123456) and drove the LIVE DBR77 org
+ * (a3e05d4a-...) directly — the beforeAll benefit seed wrote into that real org.
+ * It now reads the isolated test-support tenant token from the global-setup
+ * state file (tests/e2e/_helpers/testSupportState.ts), so the seed + promote
+ * flow run entirely inside a throwaway org and never touch real data. Running
+ * without the gated harness now fails fast (missing state file).
  *
  * Run (servers up): npx playwright test tests/e2e/m15-results-cockpit.spec.ts
  */
-import { test, expect, type APIRequestContext } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
+import { readTestSupportState } from './_helpers/testSupportState';
 import { seedPageAuth } from './cases/_m07-helpers';
 
 const BACKEND = process.env.M15_BACKEND || 'http://localhost:3001';
-const CREDS = {
-  email: process.env.M15_EMAIL || 'piotr.wisniewski@dbr77.com',
-  password: process.env.M15_PASSWORD || '123456',
-};
-
-async function mintToken(request: APIRequestContext): Promise<string> {
-  const res = await request.post(`${BACKEND}/api/auth/login`, { data: CREDS });
-  expect(res.ok(), `login failed: ${res.status()}`).toBeTruthy();
-  const body = await res.json();
-  expect(body.token, 'no token in login response').toBeTruthy();
-  return body.token as string;
-}
 
 test.describe('M15 ResultsHub cockpit — M14 handoff (G1)', () => {
   // ResultsHub loads heavy data (KPIs/initiatives/ROI) on a shared staging DB.
@@ -31,8 +28,10 @@ test.describe('M15 ResultsHub cockpit — M14 handoff (G1)', () => {
   let token: string;
 
   test.beforeAll(async ({ request }) => {
-    token = await mintToken(request);
-    // Seed a fresh handoff benefit so the inbox has something to promote.
+    // Isolated E2E tenant (test-support bootstrap) — never a real login.
+    token = readTestSupportState().token;
+    expect(token, 'test-support state must provide a token').toBeTruthy();
+    // Seed a fresh handoff benefit (into the isolated org) so the inbox has something to promote.
     const res = await request.post(`${BACKEND}/api/benefits-register/benefits`, {
       headers: { Authorization: `Bearer ${token}` },
       data: {

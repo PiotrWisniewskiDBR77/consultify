@@ -8,14 +8,20 @@
  * - Hub filters: status-filtered endpoints work correctly
  *
  * Run: npx playwright test tests/e2e/uspojnienie/f4-fe-state.spec.ts
+ *
+ * SAFETY (2026-07-13): This spec used to authenticate with a hard-coded REAL
+ * account (piotr.wisniewski@dbr77.com / 123456), so every run created/deleted
+ * initiatives directly in the real DBR77 org. It now runs exclusively against
+ * the isolated E2E test-support tenant — the token/org come from the global-setup
+ * state file (tests/e2e/_helpers/testSupportState.ts). All writes are scoped by
+ * that token, so they never touch any real organization. Running without the
+ * gated harness now fails fast (missing state file).
  */
 import { test, expect, type APIRequestContext } from '@playwright/test';
 
+import { readTestSupportState } from '../_helpers/testSupportState';
+
 const BACKEND = process.env.USPOJNIENIE_BACKEND || 'http://localhost:3001';
-const CREDS = {
-  email: process.env.USPOJNIENIE_EMAIL || 'piotr.wisniewski@dbr77.com',
-  password: process.env.USPOJNIENIE_PASSWORD || '123456',
-};
 
 let token = '';
 let orgId = '';
@@ -39,11 +45,11 @@ async function api(
 test.describe('F4 — FE Shared State', () => {
   test.setTimeout(30_000);
 
-  test.beforeAll(async ({ request }) => {
-    const res = await request.post(`${BACKEND}/api/auth/login`, { data: CREDS });
-    const body = await res.json();
-    token = body.token;
-    orgId = body.user?.organizationId;
+  test.beforeAll(() => {
+    // Isolated E2E tenant (test-support bootstrap) — never the real DBR77 account.
+    const state = readTestSupportState();
+    token = state.token;
+    orgId = state.organizationId;
     expect(token).toBeTruthy();
   });
 

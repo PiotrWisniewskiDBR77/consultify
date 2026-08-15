@@ -1,25 +1,29 @@
 /**
  * M16 Finanse — wspólny harness E2E (kubełek B: testy wymagające przeglądarki).
  *
- * Most: lokalny vite FE (:3010) → demo BE (VITE_API_TARGET=https://demo.consultify.ai).
- * Logowanie przez UI (piotr/123456) — wypełnia zustand auth-store poprawnie,
- * unika zgadywania kształtu localStorage. Dane = seed z scripts/seed-m16-demo.py.
+ * Most: lokalny vite FE (:3010) → backend (VITE_API_TARGET).
+ * Autoryzacja: ISOLATED E2E test-support tenant — token z pliku stanu global-setup
+ * (tests/e2e/_helpers/testSupportState.ts), seedowany do strony przez seedPageAuth.
  *
- * Uruchom:
- *   1) VITE_API_TARGET=https://demo.consultify.ai node node_modules/vite/bin/vite.js --port 3010 --strictPort
- *   2) python3 scripts/seed-m16-demo.py   (raz, dane na demo)
- *   3) E2E_BASE_URL=http://localhost:3010 npx playwright test tests/e2e/m16 --config playwright.config.ts --workers 1
+ * Uruchom (w bramkowanym harnessie z test-support, np. E2E_REQUIRE_TEST_SUPPORT=true):
+ *   1) node node_modules/vite/bin/vite.js --port 3010 --strictPort
+ *   2) E2E_BASE_URL=http://localhost:3010 npx playwright test tests/e2e/m16 --config playwright.config.ts --workers 1
  *
- * Bezpieczeństwo: czyta/pisze TYLKO demo. PROD nietknięty.
+ * BEZPIECZEŃSTWO (2026-07-13): wcześniej logowało się realnym kontem
+ * (piotr.wisniewski@dbr77.com / 123456) i pisało do prawdziwej organizacji DBR77.
+ * Teraz używa wyłącznie izolowanego, jednorazowego tenanta E2E — żadne realne
+ * konto nie jest używane ani dotykane. Bez bramkowanego harnessu (brak pliku
+ * stanu) test kończy się natychmiast (fail-fast) zamiast wpaść na realny login.
  */
 import fs from 'node:fs';
 import path from 'node:path';
 
 import { type Page, expect } from '@playwright/test';
 
+import { readTestSupportState } from '../_helpers/testSupportState';
+import { seedPageAuth } from '../cases/_m07-helpers';
+
 export const FE = process.env.E2E_BASE_URL || 'http://localhost:3010';
-export const EMAIL = 'piotr.wisniewski@dbr77.com';
-export const PASSWORD = '123456';
 export const SHOT_DIR = path.resolve(process.cwd(), 'tests/e2e/screenshots/m16');
 fs.mkdirSync(SHOT_DIR, { recursive: true });
 
@@ -44,35 +48,26 @@ export const TAB_LABEL: Record<keyof typeof TABS, RegExp> = {
 
 let cachedToken = '';
 
-/** Zaloguj przez UI (idempotentne — pomija jeśli już zalogowany). */
+/** Izolowany token E2E test-support (z pliku stanu global-setup). */
+function isolatedToken(): string {
+  if (cachedToken) return cachedToken;
+  cachedToken = readTestSupportState().token;
+  expect(cachedToken, 'test-support state must provide a token').toBeTruthy();
+  return cachedToken;
+}
+
+/**
+ * "Zaloguj" — seeduje izolowany token test-support do strony (localStorage/zustand)
+ * przez seedPageAuth. NIE loguje realnym kontem. Wywołuj przed nawigacją
+ * (openFinanceTab), bo seedPageAuth używa addInitScript.
+ */
 export async function login(page: Page): Promise<void> {
-  await page.goto(`${FE}/login`, { waitUntil: 'domcontentloaded' });
-  await page.waitForTimeout(1500);
-  // już zalogowany? (login redirectuje na /chat)
-  if (!/\/login/.test(page.url())) return;
-  const email = page.locator('input[type="email"], input[name="email"]').first();
-  await email.waitFor({ timeout: 20000 });
-  await email.fill(EMAIL);
-  await page.locator('input[type="password"]').first().fill(PASSWORD);
-  await page
-    .locator(
-      'button[type="submit"], button:has-text("Zaloguj"), button:has-text("Sign in"), button:has-text("Log in")'
-    )
-    .first()
-    .click();
-  await page.waitForTimeout(4000);
-  await expect(page).not.toHaveURL(/\/login/, { timeout: 15000 });
+  await seedPageAuth(page, isolatedToken());
 }
 
 /** Pobierz token API (do bezpośrednich wywołań / seedu w teście). */
-export async function apiToken(page: Page): Promise<string> {
-  if (cachedToken) return cachedToken;
-  const resp = await page.request.post(`${FE}/api/auth/login`, {
-    data: { email: EMAIL, password: PASSWORD },
-  });
-  const j = (await resp.json()) as any;
-  cachedToken = j.token || j.data?.token || '';
-  return cachedToken;
+export async function apiToken(_page: Page): Promise<string> {
+  return isolatedToken();
 }
 
 /**

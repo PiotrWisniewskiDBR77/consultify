@@ -1,43 +1,43 @@
 /**
  * M15 Seria D panels — E2E + graphical sign-off capture (light + dark).
  *
- * Drives the LIVE Results cockpit (org a3e05d4a on staging) against the running
- * frontend (:3000 → backend :3001). Asserts the Strategic + AI/Portfolio panels
- * render their Seria-D sections on real seeded data and captures screenshots:
+ * Drives the Results cockpit against the running frontend (:3000 → backend
+ * :3001). Asserts the Strategic + AI/Portfolio panels render their Seria-D
+ * sections and captures screenshots:
  *   docs/qa/screens/m15-2026-06-26/{light,dark}-{strategic,ai}.png
+ *
+ * SAFETY (2026-07-13): This spec used to mint a token by logging in as the REAL
+ * account (piotr.wisniewski@dbr77.com / 123456) and drove the LIVE DBR77 org
+ * (a3e05d4a-...) directly. It now reads the isolated test-support tenant token
+ * from the global-setup state file (tests/e2e/_helpers/testSupportState.ts), so
+ * it never authenticates as — or touches — a real organization. Running without
+ * the gated harness now fails fast (missing state file). NOTE: the panel content
+ * assertions (BSC/OKR/benefit-profiles/funnel) require that Seria-D fixture data
+ * to be seeded into the isolated tenant; seeding those fixtures is tracked as
+ * follow-up work, not part of this safety fix.
  *
  * Run (servers up + seed applied): npx playwright test tests/e2e/m15/m15-results-panels.spec.ts
  */
 import path from 'node:path';
 
-import { test, expect, type APIRequestContext } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
+import { readTestSupportState } from '../_helpers/testSupportState';
 import { seedPageAuth } from '../cases/_m07-helpers';
 
-const BACKEND = process.env.M15_BACKEND || 'http://localhost:3001';
-const CREDS = {
-  email: process.env.M15_EMAIL || 'piotr.wisniewski@dbr77.com',
-  password: process.env.M15_PASSWORD || '123456',
-};
 const SHOTS = path.resolve('docs/qa/screens/m15-2026-06-26');
 
 const STRATEGIC = '/benefits?tab=results_strategic&ff_strategicLayer=1&ff_valueTree=1';
 const AI = '/benefits?tab=results_ai&ff_aiInsights=1&ff_portfolioInsights=1';
 
-async function mintToken(request: APIRequestContext): Promise<string> {
-  const res = await request.post(`${BACKEND}/api/auth/login`, { data: CREDS, timeout: 60000 });
-  expect(res.ok(), `login failed: ${res.status()}`).toBeTruthy();
-  const body = await res.json();
-  expect(body.token, 'no token').toBeTruthy();
-  return body.token as string;
-}
-
 test.describe('M15 Seria D panels', () => {
   test.describe.configure({ timeout: 120_000 });
   let token: string;
 
-  test.beforeAll(async ({ request }) => {
-    token = await mintToken(request);
+  test.beforeAll(() => {
+    // Isolated E2E tenant (test-support bootstrap) — never a real login.
+    token = readTestSupportState().token;
+    expect(token, 'test-support state must provide a token').toBeTruthy();
   });
 
   for (const theme of ['light', 'dark'] as const) {

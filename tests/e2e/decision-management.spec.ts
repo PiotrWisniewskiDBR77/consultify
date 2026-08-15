@@ -6,32 +6,16 @@
 
 import { expect, Page, test } from '@playwright/test';
 
-async function login(page: Page) {
-  for (let attempt = 0; attempt < 10; attempt += 1) {
-    const health = await page.request
-      .get('http://localhost:3005/api/health', { timeout: 5000 })
-      .catch(() => null);
-    if (health && health.ok()) break;
-    await page.waitForTimeout(2000);
-  }
+import { seedE2EAuthWithBootstrap } from './smoke/runtime-gate-helpers';
 
-  const response = await page.request.post('http://localhost:3005/api/auth/login', {
-    data: {
-      email: 'piotr.wisniewski@dbr77.com',
-      password: '123456',
-    },
-    timeout: 30000,
-  });
-  const data = await response.json();
-  await page.addInitScript(
-    ([token, refreshToken]) => {
-      localStorage.setItem('token', token);
-      if (refreshToken) {
-        localStorage.setItem('refreshToken', refreshToken);
-      }
-    },
-    [data.token, data.refreshToken]
-  );
+// SAFETY (2026-07-13): This spec used to log in with a hard-coded REAL account
+// (piotr.wisniewski@dbr77.com / 123456) and open My Work in the real DBR77 org.
+// It now seeds the isolated E2E test-support tenant (seedE2EAuthWithBootstrap),
+// so it never authenticates as a real account. Without the gated harness the
+// bootstrap fails and the strict path throws instead of hitting a real login.
+async function login(page: Page) {
+  // Isolated E2E tenant (test-support bootstrap) — never the real DBR77 account.
+  await seedE2EAuthWithBootstrap(page);
   await page.goto('/my-work', { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('[data-testid="mywork-view"]', { timeout: 60000 });
 }
