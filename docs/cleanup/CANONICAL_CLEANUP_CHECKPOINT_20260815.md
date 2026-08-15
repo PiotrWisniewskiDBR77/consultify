@@ -6,9 +6,9 @@
 ## 0) Stan wejścia
  - aktywny HEAD: `635fd2d48d`
  - gałąź robocza: `codex/sync-demo-20260729`
-- liczba wpisów `git status --short`: 364 (aktualnie aktywny roboczy kanał zawiera zmiany wielu obszarów)
-- liczba plików tracked (M/D/A): 175
-- liczba plików untracked: 189
+- liczba wpisów `git status --short`: 354 (aktualnie aktywny roboczy kanał zawiera zmiany wielu obszarów)
+- liczba plików tracked (M/D/A): 167
+- liczba plików untracked: 187
 
 ## 1) Freeze / bezpieczeństwo
 ### Akcje wykonane / zachowane
@@ -43,7 +43,7 @@
 3. Kanał `consultify-canonical-full-20260814` jako wzorzec referencyjny (clean candidate SHA `0be009202`, branch `codex/consultify-canonical-cleanup-20260814`)
 
 ## 5) Natychmiastowe ryzyka (blokery planu)
-- W repo nadal obecne są nieprzyporządkowane artefakty i aktywność robocza (189 untracked) oraz 175 zmienionych plików tracked; bez klasyfikacji nie można uznać drzewa za „jeden canonical sha”.
+- W repo nadal obecne są nieprzyporządkowane artefakty i aktywność robocza (187 untracked) oraz 167 zmienionych plików tracked; bez klasyfikacji nie można uznać drzewa za „jeden canonical sha”.
 - 581 failów testowych, 485 pending, 19 TODO i 283 non-green files na pełnym standard run. To są twarde bloker, nie kosmetyka.
 - `tests/performance/memory-leak.test.ts` został wyodrębniony jako gate `performance` (PENDING), czyli jawny, świadomy wyłączenie z main.
 - duże ryzyko spójności pozostaje głównie w obszarach `PARTIAL` i duplikatach legacy-vs-v8.

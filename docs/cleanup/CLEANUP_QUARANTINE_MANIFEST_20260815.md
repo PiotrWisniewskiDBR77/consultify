@@ -8,9 +8,9 @@
 ## Autoritative base snapshot
 - HEAD: 635fd2d48d
 - Branch: codex/sync-demo-20260729
-- Pliki w statusie: 364
-- Tracked modified: 175
-- Untracked: 189
+- Pliki w statusie: 354
+- Tracked modified: 167
+- Untracked: 187
 
 ## Koszyki klasyfikacji
 

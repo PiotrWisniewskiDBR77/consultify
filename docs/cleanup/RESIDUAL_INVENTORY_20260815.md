@@ -4,14 +4,14 @@ Generated: 2026-08-15T05:45:40Z
 ## Canonical repo state
 HEAD: 635fd2d48d
 Branch: codex/sync-demo-20260729
-Status lines: 364
-Tracked modified: 175
-Untracked: 189
+Status lines: 354
+Tracked modified: 167
+Untracked: 187
 
 ### Top-level diff counts
 #### tracked by first-level path
   75 src
-  63 docs
+  55 docs
   19 tests
   10 server
    1 package.json
@@ -24,7 +24,7 @@ Untracked: 189
    1 .claude
 
 #### untracked by first-level path
-  67 docs
+  70 docs
   33 src
   29 tests
   22 Harvard

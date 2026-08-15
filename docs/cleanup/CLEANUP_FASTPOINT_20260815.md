@@ -14,9 +14,9 @@
 
 ## 2) Status drzewa Git (na wejściu do dalszej rekonstrukcji)
 
-- W pracy: `364` pozycji `git status --short`
-- Tracked modified: `175`
-- Untracked: `189`
+- W pracy: `354` pozycji `git status --short`
+- Tracked modified: `167`
+- Untracked: `187`
 - Wrażliwe obszary: `src`, `server`, `tests`, `docs`
 
 ## 3) Dowody routingu (krytyczne dla sprzątania kanonu)

@@ -1,13 +1,13 @@
 # CLEANUP STATUS SNAPSHOT 2026-08-15
 
-- total status rows: 364
-- tracked modifications by top dir: 175
-- untracked: 189
+- total status rows: 354
+- tracked modifications by top dir: 167
+- untracked: 187
 
 ## Tracked modified top directories
 
 - src: 75
-- docs: 63
+- docs: 55
 - tests: 19
 - server: 10
 - .claude: 1
