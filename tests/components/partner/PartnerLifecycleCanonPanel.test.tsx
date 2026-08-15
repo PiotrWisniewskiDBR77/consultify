@@ -21,7 +21,11 @@ const tMock = (
     return ['Mock item A', 'Mock item B'];
   }
 
-  return fallback || key;
+  if (key === 'partner.onboarding.pricingBonus' && options?.tier) {
+    return `Current tier: ${String(options.tier)}`;
+  }
+
+  return fallback || (options?.defaultValue as string | undefined) || key;
 };
 
 vi.mock('react-i18next', () => ({
@@ -109,6 +113,6 @@ describe('Partner lifecycle canon surface', () => {
     });
 
     // The active commercial tier is reflected back in the lifecycle.
-    expect(screen.getByText(/Aktualny poziom: professional/i)).toBeInTheDocument();
+    expect(screen.getByText(/Current tier: professional/i)).toBeInTheDocument();
   });
 });

@@ -7,6 +7,17 @@ import { describe, expect, it, vi } from 'vitest';
 
 import ArtifactAttachPopover from '../../../../src/components/shared/NModeBlocks/ArtifactAttachPopover';
 
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    i18n: {
+      getFixedT: () => (key: string, fallback?: string) =>
+        key === 'sharedComponents.artifactAttachPopover.searchPlaceholder'
+          ? 'Search or paste ref (e.g. task:abc123)...'
+          : fallback || key,
+    },
+  }),
+}));
+
 function pasteInto(input: HTMLInputElement, value: string) {
   fireEvent.paste(input, {
     clipboardData: {
@@ -70,4 +81,3 @@ describe('ArtifactAttachPopover paste contract', () => {
     expect(screen.queryByRole('status')).toBeNull();
   });
 });
-

@@ -351,8 +351,15 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
   prezentacji, a kanoniczny preview prezentacji nie montował wspólnego
   `TrustStatePreviewSection`. Oba zachowania przywrócono na aktualnym
   `PresentationsTabContent`; starych preview components nie odtworzono.
-- Stan cząstkowy CLEAN-001B: 27/58 plików sklasyfikowanych i zielonych,
-  225/225 testów w zakończonych partiach. Otwarte product gaps i testy
+- Czwarta partia: kolejnych 10 plików i 36/36 testów jest zielone razem.
+  Wszystkie verdicts to `STALE_CONTRACT` albo `HARNESS_BUG`: niepełne mocki
+  i18n (`initReactI18next`, `getFixedT`, interpolacja), historyczne mocki
+  `FilterableTable`/`TableWithPreviewLayout`, stare kolory i copy oraz smoke
+  anchors sprzed przejścia hubów na `StandardModuleBar`, Results VNext i
+  kanoniczny root Outputs. Nie znaleziono regresji produktu; focused gate,
+  frontend typecheck i `git diff --check` są zielone.
+- Stan cząstkowy CLEAN-001B: 37/58 plików sklasyfikowanych i zielonych,
+  261/261 testów w zakończonych partiach. Otwarte product gaps i testy
   komponentów oczekujących na disposition nie są wliczane jako PASS.
 - Otwarty verdict z drugiej partii: test
   `PrezentacjeView.templateBrief.test.tsx` opisuje realną brakującą funkcję, nie

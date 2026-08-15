@@ -7,11 +7,16 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { SheetsTabContent } from '../../../src/components/ReportsAndPresentations/SheetsTabContent';
 
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (_k: string, fallback?: string) => fallback || _k,
-  }),
-}));
+vi.mock('react-i18next', async () => {
+  const actual = await vi.importActual<typeof import('react-i18next')>('react-i18next');
+  return {
+    ...actual,
+    useTranslation: () => ({
+      t: (_k: string, fallback?: string) => fallback || _k,
+      i18n: { language: 'en' },
+    }),
+  };
+});
 
 vi.mock('../../../src/components/ReportsAndPresentations/OutputsAggregateTabContent', () => ({
   OutputsAggregateTabContent: ({ initialArtifactId }: any) => (

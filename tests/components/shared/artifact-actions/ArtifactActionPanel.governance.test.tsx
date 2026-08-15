@@ -19,6 +19,30 @@ vi.mock('react-hot-toast', () => ({
   },
 }));
 
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, fallback?: string | { defaultValue?: string; targetLabel?: string }) => {
+      const labels: Record<string, string> = {
+        'sharedComponents.artifactActionPanel.targetMeta.idea.label': 'Create idea',
+        'sharedComponents.artifactActionPanel.targetMeta.report.label': 'Create report',
+        'sharedComponents.artifactActionPanel.actionConfirmation': 'Action confirmation',
+        'sharedComponents.artifactActionPanel.confirmAndCreate': 'Confirm and create',
+        'sharedComponents.artifactActionPanel.documentGenerator': 'Document generator',
+        'sharedComponents.artifactActionPanel.downstreamLimits': 'Downstream limits',
+        'sharedComponents.artifactActionPanel.runGenerator': 'Run generator',
+      };
+      if (
+        key === 'sharedComponents.artifactActionPanel.readBackText' &&
+        typeof fallback === 'object'
+      ) {
+        return `I confirm creating "${fallback.targetLabel}" from this insight.`;
+      }
+      return labels[key] || (typeof fallback === 'string' ? fallback : fallback?.defaultValue) || key;
+    },
+    i18n: { language: 'en' },
+  }),
+}));
+
 vi.mock('@/services/api', () => ({
   Api: {
     post: (...args: any[]) => apiPostMock(...args),

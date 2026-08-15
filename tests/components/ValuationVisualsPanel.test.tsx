@@ -56,8 +56,8 @@ describe('ValuationVisualsPanel', () => {
     const { getAllByTestId } = render(<ValuationVisualsPanel valuation={fullValuation} />);
     const labels = getAllByTestId('ff-range').map((el) => el.getAttribute('data-label'));
     expect(labels).toContain('DCF');
-    expect(labels).toContain('Porównawcza');
-    expect(labels).toContain('Majątkowa (NAV)');
+    expect(labels).toContain('Comparables');
+    expect(labels).toContain('Asset-based (NAV)');
   });
 
   it('renders heatmap cells from sensitivity.matrix mapped to {x,y,value}', () => {
@@ -75,7 +75,7 @@ describe('ValuationVisualsPanel', () => {
     const { getByTestId, queryByTestId } = render(<ValuationVisualsPanel valuation={{}} />);
     const root = getByTestId('valuation-visuals-panel');
     expect(root).toHaveAttribute('data-empty', 'true');
-    expect(root.textContent).toContain('Uruchom wycenę');
+    expect(root.textContent).toContain('Run the valuation');
     expect(queryByTestId('valuation-football')).toBeNull();
     expect(queryByTestId('valuation-heatmap')).toBeNull();
     expect(queryByTestId('valuation-tornado')).toBeNull();
@@ -93,8 +93,8 @@ describe('ValuationVisualsPanel', () => {
     const { getByTestId, queryByTestId } = render(<ValuationVisualsPanel valuation={partial} />);
     // panel renderuje wszystkie sekcje (additive), ale football/heatmap mają sekcyjny pusty stan
     expect(getByTestId('valuation-tornado')).toBeInTheDocument();
-    expect(getByTestId('valuation-football').textContent).toContain('Brak');
-    expect(getByTestId('valuation-heatmap').textContent).toContain('Brak');
+    expect(getByTestId('valuation-football').textContent).toContain('No valuation');
+    expect(getByTestId('valuation-heatmap').textContent).toContain('No sensitivity');
     expect(queryByTestId('tornado-chart')).toBeInTheDocument();
   });
 });

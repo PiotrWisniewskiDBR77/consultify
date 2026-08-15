@@ -41,11 +41,11 @@ describe('VEGAS V7.8 — hub smoke suite', () => {
     });
   });
 
-  it('Initiatives (InitiativesHub) renders with the Portfolio tab', async () => {
+  it('Initiatives (InitiativesHub) renders with the canonical portfolio tab', async () => {
     const { InitiativesHub } = await import('@/components/Initiatives/InitiativesHub');
     renderHub(<InitiativesHub />, '/initiatives');
     await waitFor(() => {
-      expect(screen.getByText('Portfolio')).toBeInTheDocument();
+      expect(screen.getByText('Portfel')).toBeInTheDocument();
     });
   });
 
@@ -55,7 +55,7 @@ describe('VEGAS V7.8 — hub smoke suite', () => {
     );
     renderHub(<ReportsAndPresentationsHub />, '/outputs');
     await waitFor(() => {
-      expect(screen.getByTestId('module-hub')).toBeInTheDocument();
+      expect(screen.getByTestId('reports-presentations-hub')).toBeInTheDocument();
     });
   });
 
@@ -67,11 +67,11 @@ describe('VEGAS V7.8 — hub smoke suite', () => {
     });
   });
 
-  it('Results (ResultsHub) renders with the Initiatives tab', async () => {
+  it('Results (ResultsHub) renders with the canonical KPI tab', async () => {
     const { ResultsHub } = await import('@/components/Results/ResultsHub');
     renderHub(<ResultsHub />, '/results');
     await waitFor(() => {
-      expect(screen.getByTestId('module-hub')).toBeInTheDocument();
+      expect(screen.getByTestId('results-pair-tab-kpi')).toBeInTheDocument();
     });
   });
 
@@ -79,7 +79,7 @@ describe('VEGAS V7.8 — hub smoke suite', () => {
     const { AssessmentHub } = await import('@/components/assessment/AssessmentHub');
     renderHub(<AssessmentHub />, '/assessment');
     await waitFor(() => {
-      expect(screen.getByTestId('module-hub')).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: 'Assessment', selected: true })).toBeInTheDocument();
     });
   });
 
