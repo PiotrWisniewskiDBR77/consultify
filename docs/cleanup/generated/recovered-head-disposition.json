@@ -12,13 +12,13 @@
   "summary": {
     "total": 224,
     "referenceHarnessOnly": 18,
-    "representedSuperseded": 76,
-    "representedCanonical": 47,
-    "rejectedDestructiveSnapshot": 3,
+    "representedSuperseded": 84,
+    "representedCanonical": 58,
+    "rejectedDestructiveSnapshot": 4,
     "integratedCanonical": 20,
-    "candidateIntegration": 4,
+    "candidateIntegration": 7,
     "ownerDecisionRequired": 0,
-    "semanticReviewRequired": 56,
+    "semanticReviewRequired": 33,
     "deletionAuthorized": 0
   },
   "rows": [
@@ -73,12 +73,12 @@
       "uniqueCommitCount": 10,
       "pathCount": 39,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MAT-025",
       "recoveryRef": "refs/recovery/unknown-20260815/00bf2d3a0552516f32f6463c19c058404f8a8a68",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The later canonical M18 integration contains the unified Chat-to-Studio generation pipeline plus comments, diff, export, warnings and persistence components.",
+      "nextAction": "Prove a chat-generated document opens the same Studio artifact and persists after reload."
     },
     {
       "tip": "0202e5f10ff8138f133129220faa35bd54be3543",
@@ -463,12 +463,12 @@
       "uniqueCommitCount": 4,
       "pathCount": 28,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MAT-022",
       "recoveryRef": "refs/recovery/unknown-20260815/148d886944bb98e802418562b862ecdeb5cbd3c0",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "Current DocumentSchemaDiffView, text/schema diff models and backend service/tests are present and materially expanded; the mounted document panel consumes the diff response.",
+      "nextAction": "Retain the current diff engine and verify proposal/version comparisons with representative structural edits."
     },
     {
       "tip": "14ffab4bdf72727bd22a856f2ef4a67997cd78a3",
@@ -635,12 +635,12 @@
       "uniqueCommitCount": 9,
       "pathCount": 129,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MYW-019",
       "recoveryRef": "refs/recovery/unknown-20260815/1e58bbcb5b206956a903af5ba98275b79e510c1a",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "Current canon has manager routes, contract, snapshot, scope bar, navigation and save-state behavior plus materially later tests; recovered screenshots cannot prove current runtime.",
+      "nextAction": "Run manager snapshot realDB and signed-in desktop, tablet and mobile acceptance."
     },
     {
       "tip": "1eb9289377c3b1e6e33aae3465f43b19d63e4421",
@@ -669,12 +669,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 12,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-TLS-008",
       "recoveryRef": "refs/recovery/unknown-20260815/1f04000c1d87fc78bf189465d3d10c796f1b1923",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "Current canon reaches a later SPEC-A shell; ToolOutputsView, ToolReportViewerShell and ToolArtifactShell are present and current Tool Workspace and Report surfaces evolved beyond recovered dev-render snapshots.",
+      "nextAction": "Retain the current shell and verify signed-in navigation and output opening on the final SHA."
     },
     {
       "tip": "1f546ff718f3f6c308ae110b85a083e68bf7e8fd",
@@ -1430,12 +1430,12 @@
       "uniqueCommitCount": 10,
       "pathCount": 39,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MAT-026",
       "recoveryRef": "refs/recovery/unknown-20260815/43f575c4a65347fbfca11f6f553be47b247a09e9",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "Current route exposes streaming generation SSE, service emits progressive outline/sections, DocumentStudioView consumes it with honest fallback and Stop, and the generating panel is mounted with later fallback/source-chip hardening.",
+      "nextAction": "Run streaming, cancel and fallback browser flows."
     },
     {
       "tip": "441154f38ac43597b08184651729ca0c8c9f5a41",
@@ -1448,12 +1448,12 @@
       "uniqueCommitCount": 3,
       "pathCount": 15,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-MYW-018",
       "recoveryRef": "refs/recovery/unknown-20260815/441154f38ac43597b08184651729ca0c8c9f5a41",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "This alternate MW-008 line has an older conflict/error implementation; canon contains later reconciled lifecycle, CAS, cursor, mobile and wrong-page fixes plus all acceptance surfaces.",
+      "nextAction": "Do not replay the alternate WIP; rerun the current MW-008 packet."
     },
     {
       "tip": "4485dc7152a1cca989dd02c8f6bb6028f2cfeae5",
@@ -2100,12 +2100,12 @@
       "uniqueCommitCount": 4,
       "pathCount": 23,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MAT-019",
       "recoveryRef": "refs/recovery/unknown-20260815/6d89655f03115fb6f4f5afdf20ec7652cc47f9a0",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "DocumentExportSuccessNote is mounted in the current document panel; export warnings/progress and persisted generation warnings are present in API, service and types.",
+      "nextAction": "Verify DOCX/PDF export progress, warnings and share/open affordance in browser."
     },
     {
       "tip": "6dcce6f3dc06ba39b393e68548d71d9400014c5a",
@@ -2167,12 +2167,12 @@
       "uniqueCommitCount": 3,
       "pathCount": 14,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-QA-006",
       "recoveryRef": "refs/recovery/unknown-20260815/6dda90c7ff34338d49b1cf2e5b44f8266a0e7d77",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The consolidated readiness harness has valuable five-state and no-false-green semantics but is frozen to obsolete bases, SHAs and test lists, so it cannot prove the current candidate.",
+      "nextAction": "Do not restore it verbatim; implement a current candidate-SHA-aware orchestrator preserving PASS, FAIL, EXPECTED_SKIP, BLOCKED_SKIP and NOT_RUN plus zero-test, unexpected-skip and pin enforcement."
     },
     {
       "tip": "6ec5370ce32befffad3d0cf3bbbb65718d7abc97",
@@ -2484,12 +2484,12 @@
       "uniqueCommitCount": 10,
       "pathCount": 39,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MAT-027",
       "recoveryRef": "refs/recovery/unknown-20260815/75b3953b98d6a6fefff072c3523b6948c667cd27",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "Current documentStudioService awaits proposal persistence at every creation path, stamps persisted/degraded outcome, surfaces live DB failures and retains DAO durability tests.",
+      "nextAction": "Retain the write-through contract and rerun proposal persistence and degradation tests."
     },
     {
       "tip": "760ee7a1849dae592f242c511cbc6e82577ba8cb",
@@ -2654,12 +2654,12 @@
       "uniqueCommitCount": 6,
       "pathCount": 13,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-MYW-017",
       "recoveryRef": "refs/recovery/unknown-20260815/7c5c4a928cfc85a54b9539fc35ecf857818f3f45",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "Current Notebook contains the recovered lifecycle, CAS and mobile reopen work through later ports plus wrong-row and CAS parsing repairs; recovered screenshots are stale branch-local evidence.",
+      "nextAction": "Retain current code/tests and recapture browser evidence on the final SHA."
     },
     {
       "tip": "7d9de0b6e87f6787ce8dbffe7531327679d2e816",
@@ -2849,12 +2849,12 @@
       "uniqueCommitCount": 4,
       "pathCount": 23,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MAT-020",
       "recoveryRef": "refs/recovery/unknown-20260815/84a8e61de14fc95eb3bb484712cb2e844f31618f",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "CommentThreadItem and DocumentCommentsPanel exist and are mounted in the current document panel; the public reader deliberately uses a separate read-only comments surface.",
+      "nextAction": "Retain the split and execute author, reply, resolve and public-reader acceptance."
     },
     {
       "tip": "84b82523fe9991fa1d85b8e7f01d24229c47c7b4",
@@ -3081,12 +3081,12 @@
         "server/migrations/20260802d_mat010_operation_claims_table.sql",
         "server/migrations/20260802c_mat010_operation_claims_table.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MAT-023",
       "recoveryRef": "refs/recovery/unknown-20260815/994933797274b8059ef699f401ff169545435ffa",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "Canon contains MAT-010 migrations, lineage and operation-claim services, route hooks, reconciler and PostgreSQL coverage including heartbeat renewal, lease expiry and stale-owner fencing.",
+      "nextAction": "Rerun the fresh-PostgreSQL multi-instance and heartbeat suite at candidate SHA."
     },
     {
       "tip": "9c59034f1fc2ea026049e96bd546d4780542763c",
@@ -3200,12 +3200,12 @@
       "uniqueCommitCount": 33,
       "pathCount": 53,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-UI-010",
       "recoveryRef": "refs/recovery/unknown-20260815/a0036bb27c39c100f81e53d85360e2c122e0990b",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The old broad focus/color baseline is overtaken by current focus and Triada ratchets and later components; whole restoration would regress newer UI.",
+      "nextAction": "Run current focus/Triada gates and visual themes; fix only violations reported by the current ratchet."
     },
     {
       "tip": "a0675fd859a132d6d9dda96bc8f0fd209da2b222",
@@ -3276,12 +3276,12 @@
       "uniqueCommitCount": 9,
       "pathCount": 18,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REJECTED_DESTRUCTIVE_SNAPSHOT",
+      "taskId": "CLEAN-002-DATA-008",
       "recoveryRef": "refs/recovery/unknown-20260815/a3f5e4734a408fda64bb5d0de8852265b83ea622",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "Valuable migration identity and preflight code is already canonical. The unique remainder is a historical cleanup kit that deletes tasks/decisions and bulk-resolves inbox rows without current immutable target identity, exact row allowlist, signed recovery verification or authorization.",
+      "nextAction": "Keep the recovery ref only and never restore or run its mutators. If cleanup is reauthorized, generate a new governed plan from current exact-ID readback."
     },
     {
       "tip": "a44bdfd101f011a37dff849b1d763f7adfdee1ce",
@@ -3741,12 +3741,12 @@
       "uniqueCommitCount": 4,
       "pathCount": 7,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-MAT-028",
       "recoveryRef": "refs/recovery/unknown-20260815/bdb27188d233780e04357d93ab8da976a869e7bd",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "Recovered Excele MELS is a presentational shell with empty right rail and a query/localStorage-only flag; current ExceleView is a materially richer real artifact, Studio and governed-reopen implementation.",
+      "nextAction": "Do not restore the parallel shell or phantom flag; browser-accept current Spreadsheet Artifact Studio."
     },
     {
       "tip": "be940a60682d1802b58f59262d4e6e075bf91c5a",
@@ -3974,12 +3974,12 @@
       "uniqueCommitCount": 18,
       "pathCount": 31,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "CANDIDATE_INTEGRATION",
+      "taskId": "CLEAN-002-MAT-024",
       "recoveryRef": "refs/recovery/unknown-20260815/c3949cfeb5e8f3020bc629ae6ac0a7c60996bedb",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "Presentation read/coherence and autosave repairs are canonical, but the governed Atelier presentation fixture, target authority, dry-run materializer and commit-outcome reconciliation adapter are absent.",
+      "nextAction": "Port current-schema seed/template and an authorized dry-run-first deck materializer with exact target authority, row allowlist, pinned transaction, full before-image rollback, lost-COMMIT reconciliation and tests; do not execute against demo during integration."
     },
     {
       "tip": "c3b8f6d16b21c1e1970870e7ebcceb189b33a6f2",
@@ -4158,12 +4158,12 @@
       "migrationPaths": [
         "server/migrations/20260802_swot_proposals.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-TLS-009",
       "recoveryRef": "refs/recovery/unknown-20260815/d383ac7106a8f094b744b3120b0000530a26c6bc",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "Current canon contains later equivalents of the proposal backend/UI and blocker fixes; migration, URL synchronization, Teresa proposal component and lifecycle tests are present.",
+      "nextAction": "Retain current implementation and execute realDB and browser proposal acceptance."
     },
     {
       "tip": "d3e70665ce5ea88bbf58f9b4741d2b7d6cab81bc",
@@ -4324,12 +4324,12 @@
       "uniqueCommitCount": 17,
       "pathCount": 51,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "CANDIDATE_INTEGRATION",
+      "taskId": "CLEAN-002-CHAT-013",
       "recoveryRef": "refs/recovery/unknown-20260815/d92737a1408086c478ec74348075854808b3e2fb",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "Current HandoffTargetModule and P08 target list advertise ideas, but TARGET_LABELS has no ideas entry, performHandoff has no ideas case and no handler/test exists; an approved Ideas handoff therefore has no execution implementation.",
+      "nextAction": "Add the Ideas target label and switch case plus a pinned transactional, tenant-verified, idempotent handler that inserts my_ideas, owner mapping and receipt/result atomically; prove unit, realPG concurrency/tenant and signed-in approval."
     },
     {
       "tip": "d97a6564a582c4c9f64d7a5f65d68d51801c5b00",
@@ -4433,12 +4433,12 @@
       "uniqueCommitCount": 4,
       "pathCount": 22,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MAT-018",
       "recoveryRef": "refs/recovery/unknown-20260815/d9ccddf08ccda27af7178e4d7759a1452d0913eb",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "Current Document Studio contains content-block insertion UI/tests, generation warning persistence/rendering, normalized block scoring and BetaGate coverage through the later M18 integration.",
+      "nextAction": "Retain current M18 and rerun focused component and integration gates."
     },
     {
       "tip": "d9dae50beae5c24916cf0bf4e3cbca6582521f5d",
@@ -4644,12 +4644,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 10,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-DATA-009",
       "recoveryRef": "refs/recovery/unknown-20260815/e638f0560fe7b1f727bf513eca6908ce76a64133",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The ten files are point-in-time database audit documents and CSVs, not code; current cleanup registry, migration preflight, task registry and newer PostgreSQL evidence supersede them.",
+      "nextAction": "Retain via recovery ref only and use fresh inventories; production/demo database audit remains separately NOT VERIFIED."
     },
     {
       "tip": "e664f6d113d9f010f25e83e626f2da24ce4b1faf",
@@ -4882,12 +4882,12 @@
       "uniqueCommitCount": 4,
       "pathCount": 24,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "CANDIDATE_INTEGRATION",
+      "taskId": "CLEAN-002-MAT-021",
       "recoveryRef": "refs/recovery/unknown-20260815/f0b8fa50c958dc091a2727222e6f2ce207447459",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "Backend, types and API implement transformative proposal scope, but current production UI has no consumer of createDocumentStudioTransformativeProposal and the recovered confirmation host is absent.",
+      "nextAction": "Port an accessible explicit confirmation dialog into the current editor, call the API only on confirm, render the before/after proposal in governed review, and test cancel zero requests, confirm once, duplicate prevention and unchanged document on error."
     },
     {
       "tip": "f11644e00f45f194dbcb435f0cc42e786a962763",
@@ -4958,12 +4958,12 @@
         "server/migrations/20260802_initiative_candidates_initiative_id.sql",
         "server/migrations/20260802_int008_accept_claim_lease.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-INT-006",
       "recoveryRef": "refs/recovery/unknown-20260815/f28ec3c7376bcdbebae306f145a546c567056326",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "This completion report is a predecessor of the later reviewed INT-008 candidate; replaying it would duplicate and obscure the unresolved atomicity invariant.",
+      "nextAction": "Close strict no-orphan claim-to-receipt atomicity under existing CLEAN-002-INT-005 only."
     },
     {
       "tip": "f3be96108633176a3e6f989f46df10c2e520ee34",
@@ -5251,12 +5251,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 7,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-TLS-010",
       "recoveryRef": "refs/recovery/unknown-20260815/fbf506da65c3940364e94f7b56d79f2b407b9e4e",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "Expected-version, CAS and idempotency acceptance semantics exist in materially later current Tools suites, including stale, race, malicious-edit and real-source cases.",
+      "nextAction": "Do not restore the predecessor; run the current Tools realDB gate."
     },
     {
       "tip": "fc2e1d849116f13baba6d5bdd75309229008e93e",

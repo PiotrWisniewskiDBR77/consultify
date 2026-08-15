@@ -1050,6 +1050,167 @@
       "taskId": "CLEAN-002-MYW-016",
       "evidenceRule": "The recovered i18n test interpolation was immediately superseded by later setup-contract fixes and broader N-mode/store mock hardening; current tests/setup.ts is an evolved descendant and the dated residual report is no longer authoritative.",
       "nextAction": "Keep the current shared test setup and run the My Work/i18n shards; do not restore the intermediate residual report."
+    },
+    {
+      "tip": "1f04000c1d87fc78bf189465d3d10c796f1b1923",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-TLS-008",
+      "evidenceRule": "Current canon reaches a later SPEC-A shell; ToolOutputsView, ToolReportViewerShell and ToolArtifactShell are present and current Tool Workspace and Report surfaces evolved beyond recovered dev-render snapshots.",
+      "nextAction": "Retain the current shell and verify signed-in navigation and output opening on the final SHA."
+    },
+    {
+      "tip": "7c5c4a928cfc85a54b9539fc35ecf857818f3f45",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-MYW-017",
+      "evidenceRule": "Current Notebook contains the recovered lifecycle, CAS and mobile reopen work through later ports plus wrong-row and CAS parsing repairs; recovered screenshots are stale branch-local evidence.",
+      "nextAction": "Retain current code/tests and recapture browser evidence on the final SHA."
+    },
+    {
+      "tip": "441154f38ac43597b08184651729ca0c8c9f5a41",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-MYW-018",
+      "evidenceRule": "This alternate MW-008 line has an older conflict/error implementation; canon contains later reconciled lifecycle, CAS, cursor, mobile and wrong-page fixes plus all acceptance surfaces.",
+      "nextAction": "Do not replay the alternate WIP; rerun the current MW-008 packet."
+    },
+    {
+      "tip": "d383ac7106a8f094b744b3120b0000530a26c6bc",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-TLS-009",
+      "evidenceRule": "Current canon contains later equivalents of the proposal backend/UI and blocker fixes; migration, URL synchronization, Teresa proposal component and lifecycle tests are present.",
+      "nextAction": "Retain current implementation and execute realDB and browser proposal acceptance."
+    },
+    {
+      "tip": "a3f5e4734a408fda64bb5d0de8852265b83ea622",
+      "verdict": "REJECTED_DESTRUCTIVE_SNAPSHOT",
+      "taskId": "CLEAN-002-DATA-008",
+      "evidenceRule": "Valuable migration identity and preflight code is already canonical. The unique remainder is a historical cleanup kit that deletes tasks/decisions and bulk-resolves inbox rows without current immutable target identity, exact row allowlist, signed recovery verification or authorization.",
+      "nextAction": "Keep the recovery ref only and never restore or run its mutators. If cleanup is reauthorized, generate a new governed plan from current exact-ID readback."
+    },
+    {
+      "tip": "d9ccddf08ccda27af7178e4d7759a1452d0913eb",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MAT-018",
+      "evidenceRule": "Current Document Studio contains content-block insertion UI/tests, generation warning persistence/rendering, normalized block scoring and BetaGate coverage through the later M18 integration.",
+      "nextAction": "Retain current M18 and rerun focused component and integration gates."
+    },
+    {
+      "tip": "6d89655f03115fb6f4f5afdf20ec7652cc47f9a0",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MAT-019",
+      "evidenceRule": "DocumentExportSuccessNote is mounted in the current document panel; export warnings/progress and persisted generation warnings are present in API, service and types.",
+      "nextAction": "Verify DOCX/PDF export progress, warnings and share/open affordance in browser."
+    },
+    {
+      "tip": "84a8e61de14fc95eb3bb484712cb2e844f31618f",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MAT-020",
+      "evidenceRule": "CommentThreadItem and DocumentCommentsPanel exist and are mounted in the current document panel; the public reader deliberately uses a separate read-only comments surface.",
+      "nextAction": "Retain the split and execute author, reply, resolve and public-reader acceptance."
+    },
+    {
+      "tip": "f0b8fa50c958dc091a2727222e6f2ce207447459",
+      "verdict": "CANDIDATE_INTEGRATION",
+      "taskId": "CLEAN-002-MAT-021",
+      "evidenceRule": "Backend, types and API implement transformative proposal scope, but current production UI has no consumer of createDocumentStudioTransformativeProposal and the recovered confirmation host is absent.",
+      "nextAction": "Port an accessible explicit confirmation dialog into the current editor, call the API only on confirm, render the before/after proposal in governed review, and test cancel zero requests, confirm once, duplicate prevention and unchanged document on error."
+    },
+    {
+      "tip": "148d886944bb98e802418562b862ecdeb5cbd3c0",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MAT-022",
+      "evidenceRule": "Current DocumentSchemaDiffView, text/schema diff models and backend service/tests are present and materially expanded; the mounted document panel consumes the diff response.",
+      "nextAction": "Retain the current diff engine and verify proposal/version comparisons with representative structural edits."
+    },
+    {
+      "tip": "994933797274b8059ef699f401ff169545435ffa",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MAT-023",
+      "evidenceRule": "Canon contains MAT-010 migrations, lineage and operation-claim services, route hooks, reconciler and PostgreSQL coverage including heartbeat renewal, lease expiry and stale-owner fencing.",
+      "nextAction": "Rerun the fresh-PostgreSQL multi-instance and heartbeat suite at candidate SHA."
+    },
+    {
+      "tip": "c3949cfeb5e8f3020bc629ae6ac0a7c60996bedb",
+      "verdict": "CANDIDATE_INTEGRATION",
+      "taskId": "CLEAN-002-MAT-024",
+      "evidenceRule": "Presentation read/coherence and autosave repairs are canonical, but the governed Atelier presentation fixture, target authority, dry-run materializer and commit-outcome reconciliation adapter are absent.",
+      "nextAction": "Port current-schema seed/template and an authorized dry-run-first deck materializer with exact target authority, row allowlist, pinned transaction, full before-image rollback, lost-COMMIT reconciliation and tests; do not execute against demo during integration."
+    },
+    {
+      "tip": "00bf2d3a0552516f32f6463c19c058404f8a8a68",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MAT-025",
+      "evidenceRule": "The later canonical M18 integration contains the unified Chat-to-Studio generation pipeline plus comments, diff, export, warnings and persistence components.",
+      "nextAction": "Prove a chat-generated document opens the same Studio artifact and persists after reload."
+    },
+    {
+      "tip": "43f575c4a65347fbfca11f6f553be47b247a09e9",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MAT-026",
+      "evidenceRule": "Current route exposes streaming generation SSE, service emits progressive outline/sections, DocumentStudioView consumes it with honest fallback and Stop, and the generating panel is mounted with later fallback/source-chip hardening.",
+      "nextAction": "Run streaming, cancel and fallback browser flows."
+    },
+    {
+      "tip": "75b3953b98d6a6fefff072c3523b6948c667cd27",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MAT-027",
+      "evidenceRule": "Current documentStudioService awaits proposal persistence at every creation path, stamps persisted/degraded outcome, surfaces live DB failures and retains DAO durability tests.",
+      "nextAction": "Retain the write-through contract and rerun proposal persistence and degradation tests."
+    },
+    {
+      "tip": "bdb27188d233780e04357d93ab8da976a869e7bd",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-MAT-028",
+      "evidenceRule": "Recovered Excele MELS is a presentational shell with empty right rail and a query/localStorage-only flag; current ExceleView is a materially richer real artifact, Studio and governed-reopen implementation.",
+      "nextAction": "Do not restore the parallel shell or phantom flag; browser-accept current Spreadsheet Artifact Studio."
+    },
+    {
+      "tip": "fbf506da65c3940364e94f7b56d79f2b407b9e4e",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-TLS-010",
+      "evidenceRule": "Expected-version, CAS and idempotency acceptance semantics exist in materially later current Tools suites, including stale, race, malicious-edit and real-source cases.",
+      "nextAction": "Do not restore the predecessor; run the current Tools realDB gate."
+    },
+    {
+      "tip": "e638f0560fe7b1f727bf513eca6908ce76a64133",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-DATA-009",
+      "evidenceRule": "The ten files are point-in-time database audit documents and CSVs, not code; current cleanup registry, migration preflight, task registry and newer PostgreSQL evidence supersede them.",
+      "nextAction": "Retain via recovery ref only and use fresh inventories; production/demo database audit remains separately NOT VERIFIED."
+    },
+    {
+      "tip": "6dda90c7ff34338d49b1cf2e5b44f8266a0e7d77",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-QA-006",
+      "evidenceRule": "The consolidated readiness harness has valuable five-state and no-false-green semantics but is frozen to obsolete bases, SHAs and test lists, so it cannot prove the current candidate.",
+      "nextAction": "Do not restore it verbatim; implement a current candidate-SHA-aware orchestrator preserving PASS, FAIL, EXPECTED_SKIP, BLOCKED_SKIP and NOT_RUN plus zero-test, unexpected-skip and pin enforcement."
+    },
+    {
+      "tip": "f28ec3c7376bcdbebae306f145a546c567056326",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-INT-006",
+      "evidenceRule": "This completion report is a predecessor of the later reviewed INT-008 candidate; replaying it would duplicate and obscure the unresolved atomicity invariant.",
+      "nextAction": "Close strict no-orphan claim-to-receipt atomicity under existing CLEAN-002-INT-005 only."
+    },
+    {
+      "tip": "d92737a1408086c478ec74348075854808b3e2fb",
+      "verdict": "CANDIDATE_INTEGRATION",
+      "taskId": "CLEAN-002-CHAT-013",
+      "evidenceRule": "Current HandoffTargetModule and P08 target list advertise ideas, but TARGET_LABELS has no ideas entry, performHandoff has no ideas case and no handler/test exists; an approved Ideas handoff therefore has no execution implementation.",
+      "nextAction": "Add the Ideas target label and switch case plus a pinned transactional, tenant-verified, idempotent handler that inserts my_ideas, owner mapping and receipt/result atomically; prove unit, realPG concurrency/tenant and signed-in approval."
+    },
+    {
+      "tip": "a0036bb27c39c100f81e53d85360e2c122e0990b",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-UI-010",
+      "evidenceRule": "The old broad focus/color baseline is overtaken by current focus and Triada ratchets and later components; whole restoration would regress newer UI.",
+      "nextAction": "Run current focus/Triada gates and visual themes; fix only violations reported by the current ratchet."
+    },
+    {
+      "tip": "1e58bbcb5b206956a903af5ba98275b79e510c1a",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MYW-019",
+      "evidenceRule": "Current canon has manager routes, contract, snapshot, scope bar, navigation and save-state behavior plus materially later tests; recovered screenshots cannot prove current runtime.",
+      "nextAction": "Run manager snapshot realDB and signed-in desktop, tablet and mobile acceptance."
     }
   ]
 }
