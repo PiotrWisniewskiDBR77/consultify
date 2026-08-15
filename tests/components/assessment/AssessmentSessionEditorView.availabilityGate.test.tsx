@@ -29,6 +29,8 @@ vi.mock('react-router-dom', async () => {
 });
 
 vi.mock('@/services/api', () => ({
+  API_URL: '',
+  getHeaders: () => ({}),
   Api: {
     get: vi.fn().mockResolvedValue({}),
     put: vi.fn(),

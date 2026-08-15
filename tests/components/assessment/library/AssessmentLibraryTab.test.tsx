@@ -159,7 +159,12 @@ describe('AssessmentLibraryTab', () => {
     render(<AssessmentLibraryTab />);
 
     expect(await screen.findByText('DRD definition catalog')).toBeInTheDocument();
-    expect(screen.getByText('network down')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Could not connect to load the methodology catalog. Check your connection and try again.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.queryByText('network down')).not.toBeInTheDocument();
 
     getDefinitionsMock.mockResolvedValueOnce({
       methodologyId: 'DRD',
