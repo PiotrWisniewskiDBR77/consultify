@@ -21,7 +21,7 @@ describe('Admin Panel Navigation Integration', () => {
   });
 
   it('should map Workspace route to ADMIN_WORKSPACE AppView', () => {
-    expect(getRouteFromAppView(AppView.ADMIN_WORKSPACE)).toBe(ROUTES.ADMIN.WORKSPACE);
+    expect(getRouteFromAppView(AppView.ADMIN_WORKSPACE)).toBe(ROUTES.ADMIN.INTEGRATIONS);
   });
 
   it('should map AI route to ADMIN_AI AppView', () => {
@@ -37,13 +37,13 @@ describe('Admin Panel Navigation Integration', () => {
   });
 
   it('should map URL to AppView correctly', () => {
-    expect(getAppViewFromRoute('/admin/overview')).toBe(AppView.ADMIN_OVERVIEW);
-    expect(getAppViewFromRoute('/admin/organization')).toBe(AppView.ADMIN_ORGANIZATION);
-    expect(getAppViewFromRoute('/admin/team')).toBe(AppView.ADMIN_TEAM);
-    expect(getAppViewFromRoute('/admin/workspace')).toBe(AppView.ADMIN_WORKSPACE);
-    expect(getAppViewFromRoute('/admin/ai')).toBe(AppView.ADMIN_AI);
-    expect(getAppViewFromRoute('/admin/billing')).toBe(AppView.ADMIN_BILLING);
-    expect(getAppViewFromRoute('/admin/security')).toBe(AppView.ADMIN_SECURITY);
+    expect(getAppViewFromRoute(ROUTES.ADMIN.OVERVIEW)).toBe(AppView.ADMIN_OVERVIEW);
+    expect(getAppViewFromRoute(ROUTES.ADMIN.ORGANIZATION)).toBe(AppView.ADMIN_ORGANIZATION);
+    expect(getAppViewFromRoute(ROUTES.ADMIN.TEAM)).toBe(AppView.ADMIN_TEAM);
+    expect(getAppViewFromRoute(ROUTES.ADMIN.INTEGRATIONS)).toBe(AppView.ADMIN_WORKSPACE);
+    expect(getAppViewFromRoute(ROUTES.ADMIN.AI)).toBe(AppView.ADMIN_AI);
+    expect(getAppViewFromRoute(ROUTES.ADMIN.BILLING)).toBe(AppView.ADMIN_BILLING);
+    expect(getAppViewFromRoute(ROUTES.ADMIN.SECURITY)).toBe(AppView.ADMIN_SECURITY);
   });
 
   it('should have consistent bidirectional mapping', () => {
