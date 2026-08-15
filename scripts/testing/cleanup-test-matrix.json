@@ -136,7 +136,9 @@
       "server/src/services/v8/__tests__/integration/t2-flows/kpiReconciliationFlow.test.ts",
       "tests/integration/routes/p21b-reports-template-artifactrun-e2e.sqlite.integration.test.ts",
       "server/src/routes/__tests__/document-studio-client-reader.routes.test.ts",
-      "server/src/services/__tests__/nativeOwnerPinnedClient.test.ts"
+      "server/src/services/__tests__/nativeOwnerPinnedClient.test.ts",
+      "tests/integration/idempotency.test.js",
+      "tests/integration/systemHealthRepairRemoved.contract.test.ts"
     ]
   },
   "gates": {
@@ -241,7 +243,8 @@
         "tests/integration/routes/audit.l3.test.ts",
         "tests/integration/routes/notification-settings.l3.test.ts",
         "server/src/services/audits/__tests__/sourceClassificationAxes.test.ts",
-        "server/src/services/v8/__tests__/integration/t2-flows/kpiReconciliationFlow.test.ts"
+        "server/src/services/v8/__tests__/integration/t2-flows/kpiReconciliationFlow.test.ts",
+        "tests/integration/systemHealthRepairRemoved.contract.test.ts"
       ]
     },
     "legacyPostgresPort": {
@@ -271,7 +274,8 @@
         "tests/integration/flows/content-management-integration.test.ts",
         "tests/integration/routes/superadmin-overview.test.js",
         "tests/integration/transactions.test.js",
-        "tests/integration/routes/workbook.golden-roundtrip.sqlite.integration.test.ts"
+        "tests/integration/routes/workbook.golden-roundtrip.sqlite.integration.test.ts",
+        "tests/integration/idempotency.test.js"
       ]
     },
     "externalRuntime": {
