@@ -2,6 +2,27 @@
   "schemaVersion": 1,
   "rows": [
     {
+      "tip": "064f03242e87beeef1caa2002349fdc1e491f32c",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-TEST-002",
+      "evidenceRule": "The recovered smoke-500 acceptance file is byte-identical to tests/acceptance/smoke-500.e2e.test.ts in the current canonical tree (blob 9e53344262a406934c096949b057a2bd1f12cb8b). It remains an exploratory external realDB sweep and is not evidence of a current PASS by itself.",
+      "nextAction": "Keep the canonical test and execute it only in its explicit local PostgreSQL gate; retain the recovery ref until CLEAN-003."
+    },
+    {
+      "tip": "0e33eb10d73582b096095a4cabe15d5d4d0525ad",
+      "verdict": "INTEGRATED_CANONICAL",
+      "taskId": "CLEAN-002-ASM-001",
+      "evidenceRule": "The recovered Multi-Framework Assessment CRUD acceptance test covers production routes already consumed by useMultiFrameworkStore and was restored in canonical commit 0885f3490. The common acceptance runner was corrected to force RUN_DB_TESTS=1 and MOCK_DB=false. Fresh PostgreSQL 15 full migrations PASS and the route/auth/DB test is 9/9 PASS through the npm acceptance command.",
+      "nextAction": "Include this test in ASM-001 fresh/upgrade PostgreSQL evidence and retain the recovery ref until CLEAN-003."
+    },
+    {
+      "tip": "c3b8f6d16b21c1e1970870e7ebcceb189b33a6f2",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MAT-005",
+      "evidenceRule": "Although this backup merge has no unique inventory paths, its merge-result composition behavior is fully present in the canonical presentation path: planDeckVisualsTiered persists LLM composition, UnifiedSlide types it, DeckBuilder normalizes and applies it, and deckData shares the normalizer. Three focused files / 19 tests PASS.",
+      "nextAction": "Do not merge the backup tip; continue Materials visual/runtime acceptance from the current implementation and retain the recovery ref until CLEAN-003."
+    },
+    {
       "tip": "c44e5c90b6cfa8381dea7a0b4206aa94594e9cd3",
       "verdict": "REPRESENTED_SUPERSEDED",
       "taskId": "CLEAN-002-MYW-003",

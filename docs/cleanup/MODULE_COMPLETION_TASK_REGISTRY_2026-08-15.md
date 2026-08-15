@@ -456,7 +456,11 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
   135 fałszywych alarmów. Dwa historyczne uproszczenia My Work zostały
   odrzucone jako superseded: `New Decision` pozostaje potrzebny, ponieważ
   globalny `UnifiedCreateLauncher` nie ma produkcyjnego hosta, a mini-outline
-  jest wymagany przez późniejszy kontrakt Notebook V3. Pozostałe 188 nadal wymaga
+  jest wymagany przez późniejszy kontrakt Notebook V3. Odzyskany smoke-500 jest
+  bajtowo obecny, presentation composition merge jest w pełni reprezentowany
+  (3 pliki / 19 testów PASS), a brakujący realDB test Assessment CRUD został
+  przywrócony w `0885f3490`; świeży PostgreSQL 15 i 9/9 testów PASS po naprawie
+  runnera wymuszającej `RUN_DB_TESTS=1` oraz `MOCK_DB=false`. Pozostałe 185 nadal wymaga
   review. Te 18 pozostaje zachowanym materiałem
   UX/prototypowym, ale nie
   jest kodem produkcyjnym do merge. Generator mechanicznie egzekwuje warunek
