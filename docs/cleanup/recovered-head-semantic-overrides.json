@@ -1109,10 +1109,10 @@
     },
     {
       "tip": "f0b8fa50c958dc091a2727222e6f2ce207447459",
-      "verdict": "CANDIDATE_INTEGRATION",
+      "verdict": "INTEGRATED_CANONICAL",
       "taskId": "CLEAN-002-MAT-021",
-      "evidenceRule": "Backend, types and API implement transformative proposal scope, but current production UI has no consumer of createDocumentStudioTransformativeProposal and the recovered confirmation host is absent.",
-      "nextAction": "Port an accessible explicit confirmation dialog into the current editor, call the API only on confirm, render the before/after proposal in governed review, and test cancel zero requests, confirm once, duplicate prevention and unchanged document on error."
+      "evidenceRule": "Canonical commit c0ca3f26d integrates an accessible transformative-edit confirmation into the mounted Teresa drawer. API runs only after confirm, a synchronous fence blocks double requests, before/proposed review is separate from approval and errors leave the document unchanged.",
+      "nextAction": "Keep the governed panel and complete signed-in browser proof for cancel, confirm, diff, approve/reject, failure and focus return."
     },
     {
       "tip": "148d886944bb98e802418562b862ecdeb5cbd3c0",
@@ -1340,10 +1340,10 @@
     },
     {
       "tip": "bfb78f8e51988cbaaaa3a2a555fe22f1e1a7d908",
-      "verdict": "CANDIDATE_INTEGRATION",
+      "verdict": "INTEGRATED_CANONICAL",
       "taskId": "CLEAN-002-FIN-016",
-      "evidenceRule": "Current FinancialModelWorkspace regressed per-field missing-versus-zero semantics: it uses assumptions[key] ?? 0 and model-level imported labeling instead of MISSING, PRESENT_ZERO, PRESENT_NONZERO and per-key provenance.",
-      "nextAction": "Surgically restore the field-status helpers and blank MISSING/per-key Imported rendering in current FinancialModelWorkspace and restore its focused initial-balances regression test."
+      "evidenceRule": "Canonical commit 4f7d3d857 restores centralized per-field MISSING, PRESENT_ZERO and PRESENT_NONZERO semantics, per-key import provenance, blank missing inputs and deletion-on-clear. Focused regression tests pass 7/7 and frontend typecheck passes.",
+      "nextAction": "Verify missing, imported zero and nonzero balances in signed-in Finance model UI and persisted reopen."
     },
     {
       "tip": "f5a7f23c843e6c0e3c85905e7209968da778c746",
@@ -1386,6 +1386,62 @@
       "taskId": "CLEAN-002-ORG-001",
       "evidenceRule": "Organization persistence coverage exists with later content and OrganizationView, role gate and locales are later canonical variants.",
       "nextAction": "Keep current code and run organization persistence and role tests."
+    },
+    {
+      "tip": "b0cbeca6ed16dd03d7b238b55a64c219aa5981e2",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-IDE-020",
+      "evidenceRule": "This 63-commit Ideas line is a predecessor of the later closure line and current integrated production fixes; it ends in documentation reconciliation before sticky-edge overlap closure, so restoring its broad tree would regress current code.",
+      "nextAction": "Retain the recovery ref only and validate the current Ideas golden flow, action registry, confidentiality and business/financial cases."
+    },
+    {
+      "tip": "b79fc79554a5780614823f1d860d0f6301a67efe",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-CASE-001",
+      "evidenceRule": "Current Case Workspace migration, service, route and test family is a strict functional superset; all twelve recovered accessibility paths are exact or later-evolved and four-eyes approval migration remains present.",
+      "nextAction": "Run current Case fresh-PostgreSQL golden cases and Artifact Studio signed-in keyboard/screen-reader acceptance."
+    },
+    {
+      "tip": "c26ff9752b90c276961f1c492bcf971a5a4ecea5",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-SLACK-001",
+      "evidenceRule": "All recovered Slack files exist currently; router test is exact and database, feedback, notifier and tests have later hardening including thread anchoring, SLA, metadata concurrency and durable dedupe.",
+      "nextAction": "Run Slack router/notifier tests and an authorized non-production feedback/thread/dedupe flow; live credentials and channel delivery remain NOT VERIFIED."
+    },
+    {
+      "tip": "d9c9a8ca02adc05b9187515c4b8bf11f46177980",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-I18N-003",
+      "evidenceRule": "This locale closure is an early Ideas predecessor; its locale test was integrated and expanded, while current catalogs materially postdate it and use the canonical ja locale.",
+      "nextAction": "Do not restore old catalogs; run current locale parity, missing-key and RTL visual gates."
+    },
+    {
+      "tip": "e025491513c724f48b2cfa56e767bbde77b547d7",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-IDE-021",
+      "evidenceRule": "The production-shape kebab measurement is a mid-line predecessor; its unique dev-render harness is exact current, while historical screenshots and conclusions were superseded by later overlap fixes.",
+      "nextAction": "Keep the current harness and rerun measurement against the final candidate."
+    },
+    {
+      "tip": "e788cff0109c51f46118a9377de96d89785e1f48",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-IDE-022",
+      "evidenceRule": "This documentation-only closure table directly precedes the later complete Ideas line; current product integration and cleanup SSOT are the authority.",
+      "nextAction": "Retain via recovery ref and use the current module registry and acceptance report."
+    },
+    {
+      "tip": "f785eeaf9c4aff40342d401ac0499f1def635913",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-IDE-023",
+      "evidenceRule": "This early risk verification precedes the final Ideas line; its only code artifact, the toolbar locale test, is exact current while risk-ledger statuses were later corrected.",
+      "nextAction": "Retain the current test and rerun locale and Ideas gates; do not restore stale risk statuses."
+    },
+    {
+      "tip": "feae0276a2a1915c5a468ea1741e7615b3580aee",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-IDE-024",
+      "evidenceRule": "This latest Ideas closure line includes sticky actions, viewport overlap contract, production measurement, financial case, action registry, locale and contrast work; product/test/harness changes are represented in current canon with later cross-module fixes.",
+      "nextAction": "Run exact-SHA Ideas realDB/browser matrix covering create/reopen, four canvases, actions, financial case conflict, confidentiality, overlap viewports and locale/RTL."
     }
   ]
 }

@@ -12,13 +12,13 @@
   "summary": {
     "total": 224,
     "referenceHarnessOnly": 18,
-    "representedSuperseded": 90,
-    "representedCanonical": 73,
+    "representedSuperseded": 95,
+    "representedCanonical": 76,
     "rejectedDestructiveSnapshot": 4,
-    "integratedCanonical": 21,
-    "candidateIntegration": 10,
+    "integratedCanonical": 23,
+    "candidateIntegration": 8,
     "ownerDecisionRequired": 0,
-    "semanticReviewRequired": 8,
+    "semanticReviewRequired": 0,
     "deletionAuthorized": 0
   },
   "rows": [
@@ -3436,12 +3436,12 @@
         "server/migrations/20260810_idea_conversion_mapping_version.sql",
         "server/migrations/20260812_idea_financial_case.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-IDE-020",
       "recoveryRef": "refs/recovery/unknown-20260815/b0cbeca6ed16dd03d7b238b55a64c219aa5981e2",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "This 63-commit Ideas line is a predecessor of the later closure line and current integrated production fixes; it ends in documentation reconciliation before sticky-edge overlap closure, so restoring its broad tree would regress current code.",
+      "nextAction": "Retain the recovery ref only and validate the current Ideas golden flow, action registry, confidentiality and business/financial cases."
     },
     {
       "tip": "b1692a29fa234eeeec781d457443c0f6b1d99ea3",
@@ -3551,12 +3551,12 @@
         "server/migrations/000_initdb_core_tables.sql",
         "server/migrations/20260812_artifact_approval_four_eyes.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-CASE-001",
       "recoveryRef": "refs/recovery/unknown-20260815/b79fc79554a5780614823f1d860d0f6301a67efe",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "Current Case Workspace migration, service, route and test family is a strict functional superset; all twelve recovered accessibility paths are exact or later-evolved and four-eyes approval migration remains present.",
+      "nextAction": "Run current Case fresh-PostgreSQL golden cases and Artifact Studio signed-in keyboard/screen-reader acceptance."
     },
     {
       "tip": "b7dbe9a0f7d871e311e6d8b3b31380f000001b3e",
@@ -3868,12 +3868,12 @@
         "server/migrations/20260826_finance_v3_w2_selfclaim_child_tenant_fk.sql",
         "server/migrations/20260827_finance_v3_w3_backfill_artifacts_unique.sql"
       ],
-      "verdict": "CANDIDATE_INTEGRATION",
+      "verdict": "INTEGRATED_CANONICAL",
       "taskId": "CLEAN-002-FIN-016",
       "recoveryRef": "refs/recovery/unknown-20260815/bfb78f8e51988cbaaaa3a2a555fe22f1e1a7d908",
       "deletionAuthorized": false,
-      "evidenceRule": "Current FinancialModelWorkspace regressed per-field missing-versus-zero semantics: it uses assumptions[key] ?? 0 and model-level imported labeling instead of MISSING, PRESENT_ZERO, PRESENT_NONZERO and per-key provenance.",
-      "nextAction": "Surgically restore the field-status helpers and blank MISSING/per-key Imported rendering in current FinancialModelWorkspace and restore its focused initial-balances regression test."
+      "evidenceRule": "Canonical commit 4f7d3d857 restores centralized per-field MISSING, PRESENT_ZERO and PRESENT_NONZERO semantics, per-key import provenance, blank missing inputs and deletion-on-clear. Focused regression tests pass 7/7 and frontend typecheck passes.",
+      "nextAction": "Verify missing, imported zero and nonzero balances in signed-in Finance model UI and persisted reopen."
     },
     {
       "tip": "c21ae9bc5ce09cb30dd16ca67e0c7214515147d0",
@@ -3937,12 +3937,12 @@
         "server/migrations/774_project_knowledge.sql",
         "server/migrations/775_chat_project_nesting.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-SLACK-001",
       "recoveryRef": "refs/recovery/unknown-20260815/c26ff9752b90c276961f1c492bcf971a5a4ecea5",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "All recovered Slack files exist currently; router test is exact and database, feedback, notifier and tests have later hardening including thread anchoring, SLA, metadata concurrency and durable dedupe.",
+      "nextAction": "Run Slack router/notifier tests and an authorized non-production feedback/thread/dedupe flow; live credentials and channel delivery remain NOT VERIFIED."
     },
     {
       "tip": "c37123e6b56b1ac0c689f79b5d3d2cc928258fb5",
@@ -4416,12 +4416,12 @@
         "server/migrations/20260810_idea_confidentiality.sql",
         "server/migrations/20260810_idea_conversion_mapping_version.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-I18N-003",
       "recoveryRef": "refs/recovery/unknown-20260815/d9c9a8ca02adc05b9187515c4b8bf11f46177980",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "This locale closure is an early Ideas predecessor; its locale test was integrated and expanded, while current catalogs materially postdate it and use the canonical ja locale.",
+      "nextAction": "Do not restore old catalogs; run current locale parity, missing-key and RTL visual gates."
     },
     {
       "tip": "d9ccddf08ccda27af7178e4d7759a1452d0913eb",
@@ -4540,12 +4540,12 @@
         "server/migrations/20260810_idea_confidentiality.sql",
         "server/migrations/20260810_idea_conversion_mapping_version.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-IDE-021",
       "recoveryRef": "refs/recovery/unknown-20260815/e025491513c724f48b2cfa56e767bbde77b547d7",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The production-shape kebab measurement is a mid-line predecessor; its unique dev-render harness is exact current, while historical screenshots and conclusions were superseded by later overlap fixes.",
+      "nextAction": "Keep the current harness and rerun measurement against the final candidate."
     },
     {
       "tip": "e0a7ceb94ebf03e0578158ec5ca4a2d0a70435e6",
@@ -4696,12 +4696,12 @@
         "server/migrations/20260810_idea_conversion_mapping_version.sql",
         "server/migrations/20260812_idea_financial_case.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-IDE-022",
       "recoveryRef": "refs/recovery/unknown-20260815/e788cff0109c51f46118a9377de96d89785e1f48",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "This documentation-only closure table directly precedes the later complete Ideas line; current product integration and cleanup SSOT are the authority.",
+      "nextAction": "Retain via recovery ref and use the current module registry and acceptance report."
     },
     {
       "tip": "eb037c38eea7e7c8f3c2944413080c8009871ef9",
@@ -4882,12 +4882,12 @@
       "uniqueCommitCount": 4,
       "pathCount": 24,
       "migrationPaths": [],
-      "verdict": "CANDIDATE_INTEGRATION",
+      "verdict": "INTEGRATED_CANONICAL",
       "taskId": "CLEAN-002-MAT-021",
       "recoveryRef": "refs/recovery/unknown-20260815/f0b8fa50c958dc091a2727222e6f2ce207447459",
       "deletionAuthorized": false,
-      "evidenceRule": "Backend, types and API implement transformative proposal scope, but current production UI has no consumer of createDocumentStudioTransformativeProposal and the recovered confirmation host is absent.",
-      "nextAction": "Port an accessible explicit confirmation dialog into the current editor, call the API only on confirm, render the before/after proposal in governed review, and test cancel zero requests, confirm once, duplicate prevention and unchanged document on error."
+      "evidenceRule": "Canonical commit c0ca3f26d integrates an accessible transformative-edit confirmation into the mounted Teresa drawer. API runs only after confirm, a synchronous fence blocks double requests, before/proposed review is separate from approval and errors leave the document unchanged.",
+      "nextAction": "Keep the governed panel and complete signed-in browser proof for cancel, confirm, diff, approve/reject, failure and focus return."
     },
     {
       "tip": "f11644e00f45f194dbcb435f0cc42e786a962763",
@@ -5218,12 +5218,12 @@
         "server/migrations/20260810_idea_confidentiality.sql",
         "server/migrations/20260810_idea_conversion_mapping_version.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-IDE-023",
       "recoveryRef": "refs/recovery/unknown-20260815/f785eeaf9c4aff40342d401ac0499f1def635913",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "This early risk verification precedes the final Ideas line; its only code artifact, the toolbar locale test, is exact current while risk-ledger statuses were later corrected.",
+      "nextAction": "Retain the current test and rerun locale and Ideas gates; do not restore stale risk statuses."
     },
     {
       "tip": "f8b19ab025b6ff33dc551e7819c20655b7d167ab",
@@ -5353,12 +5353,12 @@
         "server/migrations/20260810_idea_conversion_mapping_version.sql",
         "server/migrations/20260812_idea_financial_case.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-IDE-024",
       "recoveryRef": "refs/recovery/unknown-20260815/feae0276a2a1915c5a468ea1741e7615b3580aee",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "This latest Ideas closure line includes sticky actions, viewport overlap contract, production measurement, financial case, action registry, locale and contrast work; product/test/harness changes are represented in current canon with later cross-module fixes.",
+      "nextAction": "Run exact-SHA Ideas realDB/browser matrix covering create/reopen, four canvases, actions, financial case conflict, confidentiality, overlap viewports and locale/RTL."
     }
   ]
 }
