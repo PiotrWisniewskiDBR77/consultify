@@ -38,11 +38,8 @@ vi.mock('@/contexts/HelpContext', () => ({
   }),
 }));
 
-vi.mock('../../../src/components/shared/ModuleHub', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../../src/components/shared/ModuleHub')>();
-  return {
-    ...actual,
-    ModuleHub: ({ tabs, activeTab, commandRowContent, children }: any) => (
+vi.mock('../../../src/components/standard/StandardModuleBar', () => ({
+    StandardModuleBar: ({ tabs, activeTab, commandRowContent, children }: any) => (
       <div data-testid="module-hub-stub">
         <div data-testid="active-tab">{activeTab}</div>
         <div>
@@ -54,8 +51,7 @@ vi.mock('../../../src/components/shared/ModuleHub', async (importOriginal) => {
         <div>{children}</div>
       </div>
     ),
-  };
-});
+}));
 
 vi.mock('../../../src/components/shared/ModuleHub/useModuleOpenDocuments', () => ({
   useModuleOpenDocuments: () => ({

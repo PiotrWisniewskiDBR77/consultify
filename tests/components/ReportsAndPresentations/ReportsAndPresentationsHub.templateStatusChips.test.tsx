@@ -33,8 +33,8 @@ vi.mock('react-i18next', async () => {
   };
 });
 
-vi.mock('../../../src/components/shared/ModuleHub', () => ({
-  ModuleHub: ({ tabs, activeTab, title, commandRowContent, children }: any) => (
+vi.mock('../../../src/components/standard/StandardModuleBar', () => ({
+  StandardModuleBar: ({ tabs, activeTab, title, commandRowContent, children }: any) => (
     <div>
       <h1>{title}</h1>
       <div data-testid="active-tab">{activeTab}</div>

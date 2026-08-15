@@ -36,16 +36,17 @@ vi.mock('../../../src/components/ReportsAndPresentations/useTrustState', () => (
   useTrustState: (_artifactId?: string, governance?: any) => governance,
 }));
 
-// Real FilterableTable rendering logic is irrelevant here; what matters is
+// Real StandardTable rendering logic is irrelevant here; what matters is
 // that each column's `render(row)` executes so we can assert on the actual
 // cell content (including the new "quality" column). Keep everything else
 // from the real module (useTableSelection, BulkActionBar, etc.) via
 // importOriginal so the component's other hooks keep working.
-vi.mock('../../../src/components/shared/ModuleHub', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../../src/components/shared/ModuleHub')>();
-  return {
-    ...actual,
-    FilterableTable: ({ data, columns }: any) => (
+vi.mock('../../../src/components/shared/ModuleHub', () => ({
+  GridView: () => <div data-testid="grid-view" />,
+}));
+
+vi.mock('../../../src/components/standard', () => ({
+    StandardTable: ({ data, columns }: any) => (
       <div data-testid="filterable-table">
         {data.map((row: any) => (
           <div key={row.id} data-testid={`row-${row.id}`}>
@@ -58,14 +59,7 @@ vi.mock('../../../src/components/shared/ModuleHub', async (importOriginal) => {
         ))}
       </div>
     ),
-    GridView: () => <div data-testid="grid-view" />,
-  };
-});
-
-vi.mock('../../../src/components/shared/TableWithPreviewLayout', () => ({
-  TableWithPreviewLayout: ({ children }: any) => (
-    <div data-testid="table-layout">{children}</div>
-  ),
+    StandardPreview: ({ children }: any) => <div>{children}</div>,
 }));
 
 const actions = {

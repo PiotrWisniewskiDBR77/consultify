@@ -27,26 +27,15 @@ vi.mock('../../../src/components/ReportsAndPresentations/useTrustState', () => (
 }));
 
 vi.mock('../../../src/components/shared/ModuleHub', () => ({
-  FilterableTable: ({ data, selectedRowId, onRowClick }: any) => (
-    <div data-testid="filterable-table">
-      {data.map((row: any) => (
-        <button key={row.id} onClick={() => onRowClick(row)} data-testid={`row-${row.id}`}>
-          {row.title}
-        </button>
-      ))}
-      <div data-testid="selected-row">{selectedRowId || 'none'}</div>
-    </div>
-  ),
   GridView: () => <div data-testid="grid-view" />,
 }));
 
-vi.mock('../../../src/components/shared/TableWithPreviewLayout', () => ({
-  TableWithPreviewLayout: ({ children, selectedId }: any) => (
-    <div data-testid="table-layout">
-      <div data-testid="selected-id">{selectedId || 'none'}</div>
-      {children}
-    </div>
+vi.mock('../../../src/components/standard', () => ({
+  StandardTable: ({ selectedRowId }: any) => (
+    <div data-testid="selected-id">{selectedRowId || 'none'}</div>
   ),
+  StandardPreview: ({ children }: any) => <div>{children}</div>,
+  standardPreviewShortcuts: () => ({}),
 }));
 
 const actions = {

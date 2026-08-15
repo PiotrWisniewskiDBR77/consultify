@@ -26,8 +26,13 @@ import {
   type TableColumn as StandardTableColumn,
 } from '../standard';
 import { appendArtifactOpenAction, resolveArtifactOpenPath } from './artifactNavigation';
-import { displayLabel } from './TrustStatePreviewSection';
-import { PRESENTATION_STATUS_META, type PresentationItem, SOURCE_TYPE_META } from './types';
+import { displayLabel, TrustStatePreviewSection } from './TrustStatePreviewSection';
+import {
+  type DeckListScorecard,
+  PRESENTATION_STATUS_META,
+  type PresentationItem,
+  SOURCE_TYPE_META,
+} from './types';
 import type { useRapActions } from './useRapData';
 import { useTrustState } from './useTrustState';
 
@@ -42,6 +47,17 @@ interface PresentationsTabContentProps {
   onRefresh: () => void;
   actions: ReturnType<typeof useRapActions>;
   initialArtifactId?: string | null;
+}
+
+function deckScorecardTitle(scorecard: DeckListScorecard, isPolish: boolean): string {
+  const head = isPolish
+    ? `Jakość decka: ${scorecard.score}/100 (${scorecard.grade}) — ${scorecard.result}`
+    : `Deck quality: ${scorecard.score}/100 (${scorecard.grade}) — ${scorecard.result}`;
+  if (!scorecard.topIssues.length) {
+    return isPolish ? `${head}\nBrak zgłoszonych problemów.` : `${head}\nNo issues flagged.`;
+  }
+  const lead = isPolish ? 'Najważniejsze problemy:' : 'Top issues:';
+  return `${head}\n${lead}\n• ${scorecard.topIssues.slice(0, 3).join('\n• ')}`;
 }
 
 export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = ({
@@ -170,6 +186,29 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
             <span className="text-xs font-medium text-c-text-secondary capitalize">
               {item.presentationMode || 'briefing'}
             </span>
+          );
+        },
+      },
+      {
+        id: 'quality',
+        label: t('rap.columns.quality', 'Jakość'),
+        width: '110px',
+        render: (row: Record<string, unknown>) => {
+          const item = row as unknown as PresentationItem;
+          const scorecard = item.governance?.deckScorecard;
+          if (scorecard) {
+            return (
+              <EntityStatusChip
+                status={scorecard.result}
+                label={`${scorecard.grade} · ${scorecard.score}`}
+                title={deckScorecardTitle(scorecard, isPolish)}
+              />
+            );
+          }
+          const validationState = item.governance?.validationState;
+          if (!validationState) return null;
+          return (
+            <EntityStatusChip status={validationState} label={displayLabel(validationState)} />
           );
         },
       },
@@ -511,7 +550,13 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
                   },
                 ],
               }}
-            />
+            >
+              <TrustStatePreviewSection
+                governance={previewItem.governance}
+                artifactId={previewItem.artifactId}
+                exportFormats={previewItem.exportFormats}
+              />
+            </StandardPreview>
           </aside>
         ) : null}
       </div>

@@ -61,7 +61,7 @@ describe('DocChartBlock', () => {
     expect(container.querySelectorAll('.recharts-line').length).toBeGreaterThan(0);
   });
 
-  it('renders a pie chart and aggregates >5 slices into "Inne"', () => {
+  it('renders a pie chart and aggregates >5 slices into the localized "Other" label', () => {
     const content: DocumentChartBlockContent = {
       kind: 'pie',
       title: 'Share',
@@ -69,9 +69,9 @@ describe('DocChartBlock', () => {
       series: [{ label: 'pct', values: [1, 1, 1, 1, 1, 1, 1] }],
     };
     render(<DocChartBlock content={content} />);
-    // 7 input slices → capped to 5 (4 head + 1 aggregated "Inne"); the
+    // 7 input slices → capped to 5 (4 head + 1 aggregated "Other"); the
     // surplus slice is labelled and carries the summed value (3 here).
-    expect(screen.getByText(/Inne/)).toBeTruthy();
+    expect(screen.getByText(/Other/)).toBeTruthy();
     // Only 5 legend entries (one per kept slice).
     const legendItems = document.querySelectorAll('.recharts-legend-item');
     expect(legendItems.length).toBe(5);

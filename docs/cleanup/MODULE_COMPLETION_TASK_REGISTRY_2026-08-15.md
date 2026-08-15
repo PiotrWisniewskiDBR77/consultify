@@ -342,6 +342,18 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
   nieaktualny canonical initiatives API shape. Jeden plik ujawnił
   `PRODUCT_REGRESSION`: `DocumentStudioQaPanel` utracił dostępną akcję przejścia
   do dokładnego finding; callback przywrócono w `c9b262b04`.
+- Trzecia partia: kolejnych 8 plików i 22/22 testy są zielone. Sześć verdictów
+  to `STALE_CONTRACT`/`HARNESS_BUG`: stare mocki `FilterableTable`,
+  `TableWithPreviewLayout` i `ModuleHub` po przejściu na `StandardTable`,
+  `StandardPreview` i `StandardModuleBar`, niepełny FeatureFlags/i18n mock oraz
+  angielski fallback etykiety agregowanej wykresu. Dwa kontrakty wykazały
+  `PRODUCT_REGRESSION`: migracja `02adb834e` zgubiła istniejącą kolumnę jakości
+  prezentacji, a kanoniczny preview prezentacji nie montował wspólnego
+  `TrustStatePreviewSection`. Oba zachowania przywrócono na aktualnym
+  `PresentationsTabContent`; starych preview components nie odtworzono.
+- Stan cząstkowy CLEAN-001B: 27/58 plików sklasyfikowanych i zielonych,
+  225/225 testów w zakończonych partiach. Otwarte product gaps i testy
+  komponentów oczekujących na disposition nie są wliczane jako PASS.
 - Otwarty verdict z drugiej partii: test
   `PrezentacjeView.templateBrief.test.tsx` opisuje realną brakującą funkcję, nie
   stale assertion. UI automatycznie wywołuje `from-template` bez briefu i
@@ -562,8 +574,21 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
 ### MAT-001 — Document Studio real flow
 
 - Status: `PARTIAL`, P0; owner: Materials DOC lane.
+- Gap `MAT-001-G01` (`MISWIRED`): backend, route, client i typy nadal realizują
+  sześć scope'ów AI edit, w tym `transformative`, a obowiązujący plan produktu
+  wymaga dla niego explicit confirmation. Historyczny host
+  `DocumentStudioEditorPanel` i `TransformativeConfirmDialog` usunięto w
+  `d1d4f4d0e` jako zero-import, ale nie wskazano nowego hosta. Testów
+  `TransformativeConfirmDialog*.test.tsx` nie wolno ani usuwać jako stale, ani
+  zazielenić przez odtworzenie martwego panelu. Task ma podłączyć sześć scope'ów
+  do aktualnego kanonicznego edytora, zachować proposal-first, blast-radius
+  confirmation, focus return, diff i approval; dopiero potem historyczne testy
+  zostaną przeniesione na nowy host i stare pliki otrzymają `SUPERSEDED` z
+  recovery commit `d1d4f4d0e`.
 - DoD: create/edit/version/reopen/export editable DOCX; provenance, stable link,
-  four-eyes, real provider i visual desktop/mobile.
+  four-eyes, real provider i visual desktop/mobile; wszystkie sześć scope'ów
+  osiągalne z aktualnego UI, a `transformative` wymaga jawnego potwierdzenia i
+  zwraca fokus do triggera po Cancel/Escape/Continue.
 
 ### MAT-002 — Presentation real flow
 
