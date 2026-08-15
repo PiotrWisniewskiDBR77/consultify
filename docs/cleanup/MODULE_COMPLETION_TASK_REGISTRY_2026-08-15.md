@@ -476,8 +476,11 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
   onboarding, Ideas table/mindmap, My Work Calendar, Agent final outputs,
   deliverable normalization oraz trzy dokumenty są dokładnie obecne w kanonie.
   Wykonany focused podzbiór daje 7 plików / 35 testów PASS; testy browser/realDB
-  pozostają jawnie do wykonania w ich właściwych gate'ach. Aktualny ledger ma
-  159 pozycji `SEMANTIC_REVIEW_REQUIRED`. Te 18 pozostaje zachowanym materiałem
+  pozostają jawnie do wykonania w ich właściwych gate'ach. Trzy dalsze historie
+  są zastąpione przez późniejszy kanon: XLSX ma jeden adoptowany artefakt
+  (3/3), komentarze Deck pozostają świadomie poza wspólnym MELS order (18/18),
+  a Process Flow ma nowszy toolbar z progressive disclosure (13/13). Aktualny
+  ledger ma 156 pozycji `SEMANTIC_REVIEW_REQUIRED`. Te 18 pozostaje zachowanym materiałem
   UX/prototypowym, ale nie
   jest kodem produkcyjnym do merge. Generator mechanicznie egzekwuje warunek
   ścieżek, unikalność, sumy i deterministyczny output; nadal

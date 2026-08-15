@@ -2,6 +2,27 @@
   "schemaVersion": 1,
   "rows": [
     {
+      "tip": "18ffc4346035acd39d46f8cb32e41f2ab22ab776",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-MAT-009",
+      "evidenceRule": "The recovered workbook service is superseded by the later canonical P-2 implementation: workbook.routes persists the real XLSX identity and adopts the artifact-run card through artifactRegistryService.adoptRunArtifactForWorkbook instead of creating a second card. The focused adoption contract passes 3/3, including idempotent replay.",
+      "nextAction": "Do not restore the older service generation. Prove one click / one artifact / editable XLSX in MAT-003 browser and realDB acceptance; retain the recovery ref until CLEAN-003."
+    },
+    {
+      "tip": "2bb421898f5a9b50841ef8e148fe680c67f796ef",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-MAT-010",
+      "evidenceRule": "The recovered shared MELS comments-order addition was intentionally superseded: the canonical Deck contract documents comments and presenter as deck-specific chips beyond the shared order, while Tabele has no comments rail. Current Deck and Tabele chip contracts pass 2 files / 18 tests.",
+      "nextAction": "Keep comments deck-specific unless the shared MELS SSOT is explicitly changed across all consumers; retain the recovery ref until CLEAN-003."
+    },
+    {
+      "tip": "d3303857d5afe81ea501dafb899c216d92b1e4d8",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-IDEA-005",
+      "evidenceRule": "The recovered Process Flow progressive-disclosure toolbar is represented by a substantially later canonical toolbar. Current contracts prove one mode control, descriptive tooltips, overflow actions and removal of rail-owned duplicate shapes; 2 files / 13 tests PASS.",
+      "nextAction": "Do not replace the later toolbar with the July snapshot; validate density and overflow visually in the Ideas acceptance matrix. Retain the recovery ref until CLEAN-003."
+    },
+    {
       "tip": "6ec5370ce32befffad3d0cf3bbbb65718d7abc97",
       "verdict": "REPRESENTED_CANONICAL",
       "taskId": "CLEAN-002-IDEA-003",
