@@ -137,6 +137,7 @@ async function pgReachable(): Promise<boolean> {
 const REQUIRED_TABLES = [
   'status_reports',
   'meetings',
+  'scope_change_log',
   'tasks',
   'organizations',
   'users',
@@ -187,7 +188,7 @@ describe('Schema migration completeness — db:migrate:strict from empty Postgre
   });
 
   it(
-    'every MVP-critical table exists in information_schema.tables (status_reports, meetings, tasks, organizations, users, projects)',
+    'every MVP-critical table exists in information_schema.tables (including the scope-change ledger)',
     async () => {
       if (!reachable || !client) {
         // Vacuous pass — no database configured for this run at all. This is
@@ -207,9 +208,53 @@ describe('Schema migration completeness — db:migrate:strict from empty Postgre
           `[${missing.join(', ')}]. If this is status_reports, see ` +
           'server/migrations/20260623_distribution_delivery.sql (FRESH-DB GUARD). ' +
           'If this is meetings, see server/migrations/20260623_meetings_baseline.sql ' +
-          '(FRESH-DB GUARD) — the fixes this test guards.'
+          '(FRESH-DB GUARD). If this is scope_change_log, see ' +
+          'server/migrations/20260719_red_scope_change_log.sql — the fixes this test guards.'
       ).toEqual([]);
     },
     20_000
   );
+
+  it('scope_change_log accepts and reads the contract used by AI risk/change control', async () => {
+    if (!reachable || !client) {
+      expect(true).toBe(true);
+      return;
+    }
+
+    await client.query('BEGIN');
+    try {
+      await client.query(
+        `INSERT INTO scope_change_log
+          (id, project_id, organization_id, entity_type, entity_id, change_type,
+           change_summary, is_controlled, changed_by)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        [
+          'scope-migration-contract',
+          'project-migration-contract',
+          'org-migration-contract',
+          'initiative',
+          'initiative-migration-contract',
+          'scope',
+          'Fresh migration contract readback',
+          0,
+          'user-migration-contract',
+        ]
+      );
+
+      const result = await client.query<{
+        total: string;
+        uncontrolled: string;
+      }>(
+        `SELECT COUNT(*)::text AS total,
+                SUM(CASE WHEN is_controlled = 0 THEN 1 ELSE 0 END)::text AS uncontrolled
+           FROM scope_change_log
+          WHERE project_id = $1 AND organization_id = $2`,
+        ['project-migration-contract', 'org-migration-contract']
+      );
+
+      expect(result.rows).toEqual([{ total: '1', uncontrolled: '1' }]);
+    } finally {
+      await client.query('ROLLBACK');
+    }
+  });
 });
