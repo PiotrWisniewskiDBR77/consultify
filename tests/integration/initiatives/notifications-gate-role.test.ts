@@ -50,6 +50,25 @@ vi.mock('../../../server/src/utils/queryHelpers.js', () => ({
   buildInPlaceholders: (values: unknown[]) => values.map(() => '?').join(', '),
   buildOrgFilter: () => '',
   buildUserFilter: () => '',
+  // The canonical transition executes under one row-locked PostgreSQL
+  // transaction. Keep this notification characterization test on the same
+  // call shape while routing SQL through its deterministic leaf mocks.
+  withPgTransaction: async (work: (client: any) => Promise<unknown>) =>
+    work({
+      query: async (sql: string, params: unknown[] = []) => {
+        const statement = String(sql);
+        if (/^\s*select\s+\*\s+from\s+initiatives/i.test(statement)) {
+          const row = await mockQueryOne(statement, params);
+          return { rows: row ? [row] : [], rowCount: row ? 1 : 0 };
+        }
+        if (/^\s*select/i.test(statement)) {
+          const rows = await mockQueryAll(statement, params);
+          return { rows: rows ?? [], rowCount: rows?.length ?? 0 };
+        }
+        const result = await mockQueryRun(statement, params);
+        return { rows: [], rowCount: result?.changes ?? 0 };
+      },
+    }),
 }));
 
 vi.mock('../../../server/src/services/initiative/initiativeGateReadinessService.js', () => ({
@@ -65,6 +84,15 @@ vi.mock('../../../server/src/services/initiative/initiativeAccessResolver.js', (
 
 vi.mock('../../../server/src/services/initiative/initiativeGateAiConfig.js', () => ({
   isInitiativeGateAiEnabled: vi.fn(async () => false),
+}));
+
+// START is now governed by a current GO/NO-GO lifecycle decision. The test is
+// about downstream recipient selection, so provide that prerequisite rather
+// than exercising the independent decision-currency failure path.
+vi.mock('../../../server/src/services/initiative/initiativeLifecycleGateDecisionService.js', () => ({
+  assertCurrentApprovedInitiativeLifecycleGateDecision: vi.fn(async () => ({
+    decisionId: 'decision-current-go',
+  })),
 }));
 
 import { InitiativeController } from '../../../server/src/controllers/InitiativeController.js';
@@ -93,7 +121,7 @@ async function callStatusUpdate(opts: {
   mockQueryOne.mockImplementation(async (sql: string) => {
     const s = String(sql);
     // Initial lookup in updateInitiativeStatus.
-    if (s.includes('SELECT status, name, created_by')) {
+    if (s.includes('SELECT status, name, created_by') || /^\s*SELECT \* FROM initiatives/i.test(s)) {
       return { status: opts.currentStatus, name: 'Test Initiative', created_by: ACTOR_ID };
     }
     // Recipients lookup AND gate-2 auto-derive lookup both select owner columns.

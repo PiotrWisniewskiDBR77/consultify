@@ -144,7 +144,9 @@
       "tests/integration/routes/artifact-runs.approve-vs-review-boundary.sqlite.integration.test.ts",
       "tests/integration/system/health.noChildProcess.contract.test.ts",
       "server/src/routes/resultsVnext/__tests__/roiPir.routes.test.ts",
-      "tests/integration/assessment/drd-assessment-roundtrip.contract.test.ts"
+      "tests/integration/assessment/drd-assessment-roundtrip.contract.test.ts",
+      "tests/integration/buildSurfaceRemoved.contract.test.ts",
+      "tests/integration/superadmin-provisioning.e2e.test.ts"
     ]
   },
   "gates": {
@@ -256,7 +258,9 @@
         "tests/integration/routes/notification-settings.l3.test.ts",
         "server/src/services/audits/__tests__/sourceClassificationAxes.test.ts",
         "server/src/services/v8/__tests__/integration/t2-flows/kpiReconciliationFlow.test.ts",
-        "tests/integration/systemHealthRepairRemoved.contract.test.ts"
+        "tests/integration/systemHealthRepairRemoved.contract.test.ts",
+        "tests/integration/buildSurfaceRemoved.contract.test.ts",
+        "tests/integration/superadmin-provisioning.e2e.test.ts"
       ]
     },
     "legacyPostgresPort": {
