@@ -2,8 +2,8 @@
  * @vitest-environment jsdom
  *
  * ASM-001A — Task 2/3 coverage: AssessmentLibraryTab renders the published
- * DRD definition, disables the unsupported methodologies with an explicit
- * status, Start creates an assessment bound to definitionId/definitionVersion
+ * DRD definition, keeps the accepted MVP scope free of unsupported promises,
+ * Start creates an assessment bound to definitionId/definitionVersion
  * and navigates to the editor, and a 422 DEFINITION_NOT_PUBLISHED response is
  * surfaced (not swallowed into a false success).
  */
@@ -57,7 +57,7 @@ describe('AssessmentLibraryTab', () => {
     vi.clearAllMocks();
   });
 
-  it('renders the DRD card with the published version, and the other 4 as disabled/Coming soon', async () => {
+  it('renders only the accepted DRD scope with its published version', async () => {
     getDefinitionsMock.mockResolvedValue({
       methodologyId: 'DRD',
       versions: [
@@ -77,20 +77,15 @@ describe('AssessmentLibraryTab', () => {
     expect(await screen.findByText('Digital Readiness Diagnosis')).toBeInTheDocument();
     expect(await screen.findByText('Published v2.0')).toBeInTheDocument();
 
-    // The 4 unsupported methodologies are visible with an explicit status,
-    // never hidden (TRIADA_KANON.md C3).
-    expect(screen.getByText('Smart Industry Readiness Index')).toBeInTheDocument();
-    expect(screen.getByText('Advanced Digital Maturity Assessment')).toBeInTheDocument();
-    expect(screen.getByText('Capability Maturity Model Integration')).toBeInTheDocument();
-    expect(screen.getByText('Lean 4.0')).toBeInTheDocument();
-    expect(screen.getAllByText('Coming soon')).toHaveLength(4);
+    expect(screen.queryByText('Smart Industry Readiness Index')).not.toBeInTheDocument();
+    expect(screen.queryByText('Coming soon')).not.toBeInTheDocument();
 
     const startButtons = screen.getAllByRole('button', { name: /Start/i });
-    // DRD's Start is enabled; the other 4 are disabled.
+    // DRD is the only advertised framework and is actionable.
     const enabled = startButtons.filter((b) => !(b as HTMLButtonElement).disabled);
     const disabled = startButtons.filter((b) => (b as HTMLButtonElement).disabled);
     expect(enabled).toHaveLength(1);
-    expect(disabled).toHaveLength(4);
+    expect(disabled).toHaveLength(0);
   });
 
   it('Start on DRD calls create with definitionId/definitionVersion and navigates to the new editor', async () => {

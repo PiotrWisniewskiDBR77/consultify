@@ -2574,6 +2574,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
 
   return (
     <>
+      <h1 className="sr-only">Assessment</h1>
       <StandardModuleBar
         tabs={tabs}
         activeTab={activeTab}

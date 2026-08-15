@@ -70,6 +70,7 @@ export function buildFixturePlan(ctx: FixtureContext): FixtureStatement[] {
   const finance = stableTextId(ctx, 'finance-model');
   const deck = stableTextId(ctx, 'artifact-presentation');
   const idea = stableTextId(ctx, 'idea');
+  const drdDefinition = stableTextId(ctx, 'assessment-definition-drd');
   const presentationSource = { source_type:'acceptance_fixture', source_id:initiative, label:'Zweryfikowany plan realizacji korzyści', captured_at:'2026-08-13T00:00:00.000Z' };
   const casePlanGraph = {
     schemaVersion:'1.0.0',
@@ -150,6 +151,25 @@ export function buildFixturePlan(ctx: FixtureContext): FixtureStatement[] {
     row('finance', `INSERT INTO financial_models (id,organization_id,initiative_id,name,description,start_date,status,assumptions_json,created_by) VALUES ($1,$2,$3,$4,$5,CURRENT_DATE,'draft',$6,$7) ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name,description=EXCLUDED.description,assumptions_json=EXCLUDED.assumptions_json`, [finance,ctx.organizationId,initiative,'Zintegrowany model transformacji','Model finansowy programu poprawy realizacji korzyści.',JSON.stringify(financeAssumptions),ctx.userId], 'financial_models','id',finance,ctx.organizationId),
     row('artifact', `INSERT INTO presentation_decks (id,organization_id,project_id,title,description,status,generated_by,slide_count,outline_json,unified_json,deck_json) VALUES ($1,$2,$3,$4,$5,'ready',$6,6,$7,$8,NULL) ON CONFLICT (id) DO UPDATE SET title=EXCLUDED.title,status='ready',slide_count=6,outline_json=EXCLUDED.outline_json,unified_json=EXCLUDED.unified_json,deck_json=NULL`, [deck,ctx.organizationId,project,'Przegląd korzyści transformacji','Materiał decyzyjny dla komitetu sterującego.',ctx.userId,JSON.stringify(presentationSlides.map(slide=>({title:slide.key_message}))),JSON.stringify({meta:{project:'Program poprawy realizacji korzyści',client:'Komitet sterujący',template:'corporate',language:'pl',confidentiality:'internal'},slides:presentationSlides,marker:ACCEPTANCE_NAMESPACE})], 'presentation_decks','id',deck,ctx.organizationId),
     row('ideas', `INSERT INTO my_ideas (id,user_id,organization_id,title,body,tags,source_type) VALUES ($1,$2,$3,$4,$5,$6,'acceptance_fixture') ON CONFLICT (id) DO UPDATE SET title=EXCLUDED.title,body=EXCLUDED.body,tags=EXCLUDED.tags`, [idea,ctx.userId,ctx.organizationId,'Automatyczne monitorowanie realizacji korzyści','Pomysł na połączenie KPI, sygnałów wykonania i miesięcznego przeglądu zarządczego.',JSON.stringify(['benefits','automation','decision-log','financial-case','business-case'])], 'my_ideas','id',idea,ctx.organizationId),
+    {
+      domain: 'assessment-definition:DRD',
+      sql: `INSERT INTO assessment_definitions
+        (id,methodology_id,version,title,status,is_read_only,definition_json,created_by,created_at,updated_at,published_at)
+        VALUES ($1,'DRD',$2,'Digital Readiness Diagnosis','published',1,$3,$4,$5,$5,$5)
+        ON CONFLICT (id) DO UPDATE SET
+          status='published',is_read_only=1,definition_json=EXCLUDED.definition_json,
+          updated_at=EXCLUDED.updated_at,published_at=EXCLUDED.published_at`,
+      params: [
+        drdDefinition,
+        `acceptance-${ctx.organizationId.slice(0, 8)}`,
+        JSON.stringify({ methodologyId: 'DRD', builtIn: true, acceptanceFixture: ACCEPTANCE_NAMESPACE }),
+        ctx.userId,
+        '2026-08-13T00:00:00.000Z',
+      ],
+      verifySql: `SELECT count(*)::int AS count FROM assessment_definitions
+        WHERE id=$1 AND methodology_id='DRD' AND status='published' AND is_read_only=1`,
+      verifyParams: [drdDefinition],
+    },
     v8RuntimeFlag,
     ...financeFlags,
   ];

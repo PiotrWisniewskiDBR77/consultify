@@ -3,11 +3,8 @@
  *
  * Thin adapter, NOT a new store: reads published DRD assessment definitions
  * from the existing V8 definitions endpoint and starts a new assessment
- * bound to the newest published version. SIRI/ADMA/CMMI/Lean are shown as
- * disabled catalog rows (no engine yet) — per ASM-001 audit, "cards not
- * supported in MVP can be disabled with an explicit status" rather than
- * hidden (TRIADA_KANON.md C3: a disabled row explains WHY, it never lies by
- * omission).
+ * bound to the newest published version. The accepted MVP scope is DRD only;
+ * unsupported methodologies do not appear as disabled product promises.
  *
  * List UI is StandardTable ONLY (docs/ui-standards/TRIADA_KANON.md — list
  * screens use StandardModuleBar/StandardTable/StandardPreview exclusively,
@@ -41,39 +38,12 @@ interface MethodologyRow {
   supported: boolean;
 }
 
-// Static catalog — only DRD has a real published-definition-backed engine
-// today. The other four are declared (not hidden) so the Library reads as a
-// complete map of what Consultify assesses, not just what's finished.
 const METHODOLOGY_CATALOG: MethodologyRow[] = [
   {
     id: 'DRD',
     name: 'Digital Readiness Diagnosis',
     description: 'Assess digital maturity across 5 axes, area by area.',
     supported: true,
-  },
-  {
-    id: 'SIRI',
-    name: 'Smart Industry Readiness Index',
-    description: 'Singapore SIRI Industry 4.0 maturity framework.',
-    supported: false,
-  },
-  {
-    id: 'ADMA',
-    name: 'Advanced Digital Maturity Assessment',
-    description: 'Extended digital maturity model across process dimensions.',
-    supported: false,
-  },
-  {
-    id: 'CMMI',
-    name: 'Capability Maturity Model Integration',
-    description: 'Process capability and maturity model.',
-    supported: false,
-  },
-  {
-    id: 'LEAN',
-    name: 'Lean 4.0',
-    description: 'Lean manufacturing maturity assessment.',
-    supported: false,
   },
 ];
 
@@ -209,9 +179,6 @@ export const AssessmentLibraryTab: React.FC = () => {
         label: 'Status',
         width: '220px',
         render: (row: MethodologyRow) => {
-          if (row.id !== 'DRD') {
-            return <StatusChip label="Coming soon" tone="neutral" />;
-          }
           if (isLoading) {
             return <StatusChip label="Checking…" tone="neutral" />;
           }
