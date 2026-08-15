@@ -59,6 +59,42 @@ shared API, flag resolvers, migrator i global styles ma wyłącznie integrator.
   zapisaniu JSON i został zakończony sygnałem TERM. Evidence:
   `/Users/piotrwisniewski/Developer/consultify-cleanup-evidence-20260814/test-gates/isolated-triage-94d94e797`.
 
+#### CLEAN-001A — 132 server-runtime/DB harnesses
+
+- Owner: DB-gate lane; allowlist: wyłącznie wskazane testy, matrix i test runner.
+- Fakt: źródła importują server runtime/database lub `supertest`; standard gate
+  celowo podaje niedostępny DB sentinel. Przykładowy test Settings otrzymuje 503
+  zamiast oczekiwanego 401 oraz unhandled PostgreSQL rejection przed auth.
+- Praca: dla każdego pliku wybrać `fresh-postgres`, `legacy-sqlite` albo
+  `external-runtime`; zbudować wymagane fixtures i usunąć runtime DDL/open handles.
+- DoD: 132/132 ma jawny gate i przechodzi w nim; standard nie uruchamia testów
+  wymagających DB; auth negatives są wykonywane przy zdrowym runtime.
+
+#### CLEAN-001B — 58 UI component contracts
+
+- Owner: UI-harness lane; allowlist: 58 testów i ich bezpośrednie component
+  fixtures/mocks; produkt tylko po udowodnionym regression verdict.
+- Praca: porównać oczekiwanie z aktualnym kanonem UI/i18n/design tokens; nadać
+  `STALE_CONTRACT`, `HARNESS_BUG` lub `PRODUCT_REGRESSION`.
+- DoD: focused 58/58 PASS, brak act/unhandled warnings i brak snapshotów
+  akceptujących techniczne UUID/enums.
+
+#### CLEAN-001C — 16 unit tests z mockami
+
+- Owner: mock-contract lane; allowlist: 16 testów i współdzielone test fixtures.
+- Praca: uzupełnić aktualne eksporty, hoisted factories, i18n i API contract;
+  nie maskować brakującej funkcji produktu przez mock.
+- DoD: 16/16 PASS pojedynczo i razem; zero missing export/unhandled rejection.
+
+#### CLEAN-001D — 36 pure/source contracts
+
+- Owner: contract-review lane; allowlist: 36 testów, docs/SSOT i bezpośredni
+  kod produktu tylko dla potwierdzonej regresji.
+- Praca: rozdzielić świadome supersession od realnej utraty kontraktu; usunąć
+  kruche source-anchor checks na rzecz zachowania lub jawnego structural proof.
+- DoD: każdy verdict ma wskazany commit/SSOT; 36/36 PASS; brak osłabienia
+  security, provenance, idempotency i honesty assertions.
+
 ### CLEAN-002 — semantyczny ledger 421 rozbieżnych tipów
 
 - Status: `READY`, P0; owner: recovery-integrator.
