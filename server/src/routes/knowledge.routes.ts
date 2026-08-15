@@ -1077,6 +1077,7 @@ router.get(
           ? req.query.project_id.trim()
           : null;
 
+      let projectAccessVerified = false;
       if (requestedScope === 'project' && requestedProjectId && userId) {
         const canAccess = await contextDocumentService.canAccessProject({
           organizationId: orgId,
@@ -1087,6 +1088,7 @@ router.get(
         if (!canAccess) {
           return res.status(403).json({ error: 'Brak dostępu do projektu' });
         }
+        projectAccessVerified = true;
       }
 
       let docs: any[];
@@ -1100,6 +1102,7 @@ router.get(
           scope: requestedScope,
           projectId: requestedProjectId,
           memberProjectIds,
+          projectAccessVerified,
         });
       }
 
@@ -1352,6 +1355,7 @@ router.get(
         ? req.query.project_id.trim()
         : null;
 
+    let projectAccessVerified = false;
     if (requestedScope === 'project' && requestedProjectId && userId) {
       const canAccess = await contextDocumentService.canAccessProject({
         organizationId: orgId,
@@ -1360,6 +1364,7 @@ router.get(
         userRole: req.user?.role || 'USER',
       });
       if (!canAccess) return res.status(403).json({ error: 'Brak dostępu do projektu' });
+      projectAccessVerified = true;
     }
 
     try {
@@ -1368,6 +1373,7 @@ router.get(
         scope: requestedScope,
         projectId: requestedProjectId,
         memberProjectIds,
+        projectAccessVerified,
       });
       return res.json(
         folders.map((f: any) => ({

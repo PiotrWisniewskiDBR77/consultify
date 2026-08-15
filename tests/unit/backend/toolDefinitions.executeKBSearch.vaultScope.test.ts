@@ -166,6 +166,7 @@ vi.mock('../../../server/src/services/KnowledgeService.js', () => ({
         projectId?: string | null;
         memberProjectIds?: string[];
         folderId?: string | null;
+        projectAccessVerified?: boolean;
       }
     ) => {
       const scope = access?.scope || null;
@@ -181,7 +182,10 @@ vi.mock('../../../server/src/services/KnowledgeService.js', () => ({
         if (scope === 'organization') return d.scope === 'organization';
         if (scope === 'project') {
           if (d.scope !== 'project') return false;
-          if (projectId) return d.project_id === projectId;
+          if (projectId) {
+            if (!access?.projectAccessVerified && !memberIds.includes(projectId)) return false;
+            return d.project_id === projectId;
+          }
           return memberIds.includes(d.project_id || '');
         }
         // AGT-008-bis — widok domyślny (brak jawnego `scope`, patrz
@@ -209,6 +213,7 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
     const s = sql.replace(/\s+/g, ' ').trim();
     if (s.startsWith('SELECT project_id FROM project_members WHERE user_id = ?')) {
       if (params[0] === 'user-piotr') return [{ project_id: 'proj-42' }];
+      if (params[0] === 'user-solo') return [{ project_id: 'proj-empty' }];
       return [];
     }
     throw new Error(`Unmocked SQL in vaultScope test: ${s}`);
@@ -264,6 +269,18 @@ describe('executeKBSearch — Vault-kontekst scope isolation (AGT-008)', () => {
 
     expect(titles).toContain('doc-proj-42-a');
     expect(titles).not.toContain('doc-proj-99-a'); // ★ izolacja: inny projekt nie wchodzi
+  });
+
+  it('fail-closed: jawne vault_project_id spoza członkostw nie uruchamia wyszukiwania', async () => {
+    const raw = await executeToolCall(
+      'search_knowledge_base',
+      { query: 'diagnoza', vault_scope: 'project', vault_project_id: 'proj-99' },
+      ctxFor('user-piotr')
+    );
+    const result = JSON.parse(raw);
+
+    expect(result.results).toEqual([]);
+    expect(hybridSearchCalls.calls).toHaveLength(0);
   });
 
   it('vault_scope="project" BEZ jawnego project_id dociąga memberProjectIds z DbPromise', async () => {
@@ -357,8 +374,8 @@ describe('executeKBSearch — Vault-kontekst scope isolation (AGT-008)', () => {
   it('sejf pusty w wybranym poziomie: zero wyników, hybridSearch NIE jest wołane (brak przecieku do pełnego indeksu)', async () => {
     const raw = await executeToolCall(
       'search_knowledge_base',
-      { query: 'cokolwiek', vault_scope: 'project', vault_project_id: 'proj-does-not-exist' },
-      ctxFor('user-piotr')
+      { query: 'cokolwiek', vault_scope: 'project', vault_project_id: 'proj-empty' },
+      ctxFor('user-solo')
     );
     const result = JSON.parse(raw);
 

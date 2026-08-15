@@ -962,7 +962,9 @@ async function executeKBSearch(args: any, ctx: ToolExecutionContext): Promise<st
       typeof args.vault_folder_id === 'string' && args.vault_folder_id.trim()
         ? args.vault_folder_id.trim()
         : undefined;
-    if ((vaultScope === 'project' && !explicitProjectId) || !vaultScope || requestedFolderId) {
+    // `vault_project_id` is model-controlled input, so every project-scoped
+    // retrieval must load the caller's memberships, including explicit IDs.
+    if (vaultScope === 'project' || !vaultScope || requestedFolderId) {
       const { all: dbAll } = await import('../../utils/DbPromise.js');
       const rows = await dbAll<{ project_id: string }>(
         `SELECT project_id FROM project_members WHERE user_id = ?`,
@@ -1008,6 +1010,23 @@ async function executeKBSearch(args: any, ctx: ToolExecutionContext): Promise<st
       folderName = folder.name;
       effectiveVaultScope = folder.scope;
       effectiveProjectId = folder.scope === 'project' ? folder.project_id || null : null;
+    }
+
+    if (
+      effectiveVaultScope === 'project' &&
+      effectiveProjectId &&
+      !memberProjectIds.includes(String(effectiveProjectId))
+    ) {
+      logger.warn(
+        `[executeKBSearch] Rejected vault_project_id outside caller memberships: user=${ctx.userId} project=${effectiveProjectId}`
+      );
+      return JSON.stringify({
+        source: 'knowledge_base',
+        query: args.query,
+        vaultScope: 'project',
+        results: [],
+        note: 'Brak dostępu do wskazanego sejfu projektowego',
+      });
     }
 
     if (effectiveVaultScope) {

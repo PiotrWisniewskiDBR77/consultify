@@ -781,6 +781,13 @@ const KnowledgeService = {
        * regułą co karta „Folder" w `VaultDocumentsView.tsx`.
        */
       folderId?: string | null;
+      /**
+       * Set only by a caller that already verified access to `projectId` using
+       * the complete authorization rule (for example a REST route calling
+       * `contextDocumentService.canAccessProject`). Without this marker an
+       * explicit project must also occur in `memberProjectIds`.
+       */
+      projectAccessVerified?: boolean;
     }
   ): Promise<any[]> {
     await ensureKnowledgeSchema();
@@ -800,6 +807,9 @@ const KnowledgeService = {
       if (projectId) {
         where.push(`project_id = ?`);
         params.push(projectId);
+        if (!access?.projectAccessVerified && !memberIds.includes(String(projectId))) {
+          where.push(`1 = 0`);
+        }
       } else if (memberIds.length > 0) {
         where.push(`project_id IN (${memberIds.map(() => '?').join(',')})`);
         params.push(...memberIds);
@@ -1011,6 +1021,8 @@ const KnowledgeService = {
       scope?: VaultDocumentScope | null;
       projectId?: string | null;
       memberProjectIds?: string[];
+      /** Same fail-closed authorization marker as `getDocuments`. */
+      projectAccessVerified?: boolean;
     }
   ): Promise<any[]> {
     await ensureKnowledgeSchema();
@@ -1030,6 +1042,9 @@ const KnowledgeService = {
       if (projectId) {
         where.push(`project_id = ?`);
         params.push(projectId);
+        if (!access?.projectAccessVerified && !memberIds.includes(String(projectId))) {
+          where.push(`1 = 0`);
+        }
       } else if (memberIds.length > 0) {
         where.push(`project_id IN (${memberIds.map(() => '?').join(',')})`);
         params.push(...memberIds);
