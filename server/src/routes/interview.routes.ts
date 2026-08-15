@@ -15,6 +15,15 @@ import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { requireAnyPermission, requirePermission } from '../middleware/permission.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
+import {
+  authorizeInterviewAssignmentInvitation,
+  consumeInterviewAssignmentInvitation,
+  InterviewInvitationError,
+  issueInterviewAssignmentInvitation,
+  revokeInterviewAssignmentInvitation,
+} from '../services/interviewAssignmentInvitationService.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
+import * as queryHelpers from '../utils/queryHelpers.js';
 
 const router = Router();
 const templateSourceUpload = multer({
@@ -30,7 +39,236 @@ const templateSourceUpload = multer({
   },
 });
 
-// Middleware
+const invitationError = (res: any, error: unknown) => {
+  if (error instanceof InterviewInvitationError) {
+    // Deliberately generic: a public caller must not distinguish tenant,
+    // assignment or respondent existence from an invalid bearer token.
+    res.status(error.status).json({ error: 'Invitation is not available', code: error.code });
+    return true;
+  }
+  return false;
+};
+
+const invitationBearer = (req: any): string => {
+  const authorization = String(req.headers?.authorization || '');
+  return authorization.toLowerCase().startsWith('bearer ')
+    ? authorization.slice(7).trim()
+    : String(req.headers?.['x-interview-invitation'] || '').trim();
+};
+
+/** Public bearer-token resume surface. No tenant/user identifiers are returned. */
+router.get(
+  '/public/assignments/resume',
+  apiAuthRateLimiter,
+  asyncHandler(async (req, res) => {
+    try {
+      const authority = await authorizeInterviewAssignmentInvitation(invitationBearer(req));
+      const questions = authority.sessionId
+        ? await queryHelpers.queryAll(
+            `SELECT id, question_text, answer_type, is_required, status, answer_text, sort_order
+               FROM interview_questions
+              WHERE session_id = ? AND organization_id = ?
+              ORDER BY sort_order`,
+            [authority.sessionId, authority.organizationId]
+          )
+        : [];
+      res.json({
+        status: authority.status,
+        templateName: authority.templateName,
+        templateVersion: authority.templateVersion,
+        hasSession: Boolean(authority.sessionId),
+        rowVersion: authority.rowVersion,
+        questions: (questions || []).map((question: any) => ({
+          id: question.id,
+          text: question.question_text,
+          answerType: question.answer_type,
+          required: Boolean(question.is_required),
+          status: question.status,
+          answer: question.answer_text ?? null,
+        })),
+      });
+    } catch (error) {
+      if (!invitationError(res, error)) throw error;
+    }
+  })
+);
+
+router.post(
+  '/public/assignments/start',
+  apiAuthRateLimiter,
+  asyncHandler(async (req: any, res: any, next: any) => {
+    try {
+      const authority = await authorizeInterviewAssignmentInvitation(invitationBearer(req));
+      req.params.id = authority.assignmentId;
+      req.body = { ...(req.body || {}), expectedVersion: authority.rowVersion };
+      req.user = {
+        id: authority.assigneeUserId,
+        organizationId: authority.organizationId,
+        role: 'USER',
+      };
+      req.userId = authority.assigneeUserId;
+      req.organizationId = authority.organizationId;
+
+      let capturedStatus = 200;
+      let capturedBody: any;
+      let capturedError: unknown;
+      const capture = Object.create(res);
+      capture.status = (status: number) => {
+        capturedStatus = status;
+        return capture;
+      };
+      capture.json = (body: any) => {
+        capturedBody = body;
+        return capture;
+      };
+      await InterviewController.startAssignment(req, capture, (error: unknown) => {
+        capturedError = error;
+      });
+      if (capturedError) throw capturedError;
+      if (capturedStatus >= 400) {
+        res.status(capturedStatus).json(capturedBody);
+        return;
+      }
+      res.status(capturedStatus).json({
+        status: 'in_progress',
+        hasSession: Boolean(capturedBody?.session?.id),
+        rowVersion: authority.rowVersion + (authority.sessionId ? 0 : 1),
+      });
+    } catch (error) {
+      if (!invitationError(res, error)) next(error);
+    }
+  })
+);
+
+/** Token-scoped draft save; the invitation cannot address another session's question. */
+router.patch(
+  '/public/assignments/questions/:questionId',
+  apiAuthRateLimiter,
+  asyncHandler(async (req: any, res: any, next: any) => {
+    try {
+      const authority = await authorizeInterviewAssignmentInvitation(invitationBearer(req));
+      if (!authority.sessionId) {
+        res
+          .status(409)
+          .json({ error: 'Assignment has not been started', code: 'ASSIGNMENT_NOT_STARTED' });
+        return;
+      }
+      const scopedQuestion = await queryHelpers.queryOne(
+        `SELECT q.id
+           FROM interview_questions q
+           JOIN interview_sessions s ON s.id = q.session_id
+          WHERE q.id = ? AND q.organization_id = ?
+            AND s.id = ? AND s.assignment_id = ?`,
+        [
+          req.params.questionId,
+          authority.organizationId,
+          authority.sessionId,
+          authority.assignmentId,
+        ]
+      );
+      if (!scopedQuestion) {
+        res
+          .status(404)
+          .json({ error: 'Question is not available', code: 'QUESTION_NOT_AVAILABLE' });
+        return;
+      }
+      req.user = {
+        id: authority.assigneeUserId,
+        organizationId: authority.organizationId,
+        role: 'USER',
+      };
+      req.userId = authority.assigneeUserId;
+      req.organizationId = authority.organizationId;
+
+      let capturedStatus = 200;
+      let capturedBody: any;
+      let capturedError: unknown;
+      const capture = Object.create(res);
+      capture.status = (status: number) => {
+        capturedStatus = status;
+        return capture;
+      };
+      capture.json = (body: any) => {
+        capturedBody = body;
+        return capture;
+      };
+      await InterviewController.updateQuestion(req, capture, (error: unknown) => {
+        capturedError = error;
+      });
+      if (capturedError) throw capturedError;
+      if (capturedStatus >= 400) {
+        res.status(capturedStatus).json(capturedBody);
+        return;
+      }
+      res.json({
+        saved: true,
+        questionId: req.params.questionId,
+        rowVersion: authority.rowVersion,
+      });
+    } catch (error) {
+      if (!invitationError(res, error)) next(error);
+    }
+  })
+);
+
+/**
+ * Public submit delegates to the canonical controller under the token's
+ * narrowly scoped respondent authority. The token is consumed only after the
+ * controller's CAS-protected submit succeeds.
+ */
+router.post(
+  '/public/assignments/submit',
+  apiAuthRateLimiter,
+  asyncHandler(async (req: any, res: any, next: any) => {
+    try {
+      const authority = await authorizeInterviewAssignmentInvitation(invitationBearer(req));
+      req.params.id = authority.assignmentId;
+      req.body = { ...(req.body || {}), expectedVersion: authority.rowVersion };
+      req.user = {
+        id: authority.assigneeUserId,
+        organizationId: authority.organizationId,
+        role: 'USER',
+      };
+      req.userId = authority.assigneeUserId;
+      req.organizationId = authority.organizationId;
+
+      let capturedStatus = 200;
+      let capturedBody: any;
+      let capturedError: unknown;
+      const capture = Object.create(res);
+      capture.status = (status: number) => {
+        capturedStatus = status;
+        return capture;
+      };
+      capture.json = (body: any) => {
+        capturedBody = body;
+        return capture;
+      };
+      await InterviewController.submitAssignment(req, capture, (error: unknown) => {
+        capturedError = error;
+      });
+      if (capturedError) throw capturedError;
+      if (capturedStatus >= 400) {
+        res.status(capturedStatus).json(capturedBody);
+        return;
+      }
+      await consumeInterviewAssignmentInvitation({
+        invitationId: authority.invitationId,
+        assignmentId: authority.assignmentId,
+        expectedVersion: authority.rowVersion + 1,
+      });
+      res.status(capturedStatus).json({
+        status: capturedBody?.assignment?.status || 'submitted',
+        completenessPercent: capturedBody?.completenessPercent,
+        entersContext: capturedBody?.entersContext === true,
+      });
+    } catch (error) {
+      if (!invitationError(res, error)) next(error);
+    }
+  })
+);
+
+// Authenticated middleware
 router.use(apiAuthRateLimiter);
 router.use(verifyToken);
 router.use(requireOrgAccess());
@@ -142,6 +380,46 @@ router.post(
   InterviewController.createAssignment
 );
 
+router.post(
+  '/assignments/:id/invitations',
+  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
+  asyncHandler(async (req: any, res: any) => {
+    const user = req.user;
+    try {
+      const result = await issueInterviewAssignmentInvitation({
+        organizationId: user.organizationId,
+        assignmentId: req.params.id,
+        createdBy: user.id,
+        expectedVersion: Number(req.body?.expectedVersion),
+        expiresAt: req.body?.expiresAt,
+      });
+      // This is the only raw-token readback, once, to the authorized issuer.
+      res.status(201).json(result);
+    } catch (error) {
+      if (!invitationError(res, error)) throw error;
+    }
+  })
+);
+
+router.post(
+  '/assignments/:id/invitations/revoke',
+  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
+  asyncHandler(async (req: any, res: any) => {
+    const user = req.user;
+    try {
+      const result = await revokeInterviewAssignmentInvitation({
+        organizationId: user.organizationId,
+        assignmentId: req.params.id,
+        revokedBy: user.id,
+        expectedVersion: Number(req.body?.expectedVersion),
+      });
+      res.json(result);
+    } catch (error) {
+      if (!invitationError(res, error)) throw error;
+    }
+  })
+);
+
 /** GET /interview/assignments - Admin list assignments */
 router.get(
   '/assignments',
@@ -150,10 +428,7 @@ router.get(
 );
 
 /** GET /interview/assignments/:id - Get single assignment with details */
-router.get(
-  '/assignments/:id',
-  InterviewController.getAssignment
-);
+router.get('/assignments/:id', InterviewController.getAssignment);
 
 /** PATCH /interview/assignments/:id - Update assignment (deadline, priority, etc) */
 router.patch(

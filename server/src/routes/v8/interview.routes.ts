@@ -26,6 +26,11 @@ import {
   getOverdueAssignments,
 } from '../../services/InterviewAssignmentService.js';
 import {
+  InterviewInvitationError,
+  issueInterviewAssignmentInvitation,
+  revokeInterviewAssignmentInvitation,
+} from '../../services/interviewAssignmentInvitationService.js';
+import {
   buildInterviewReportPackExportManifest,
   buildInterviewReportPackMarkdownExport,
   createInterviewReportPackDraft,
@@ -387,10 +392,7 @@ router.post(
   v8Wrap(InterviewController.createAssignment, interviewMeta)
 );
 
-router.get(
-  '/assignments/:id',
-  v8Wrap(InterviewController.getAssignment, interviewMeta)
-);
+router.get('/assignments/:id', v8Wrap(InterviewController.getAssignment, interviewMeta));
 
 router.patch(
   '/assignments/:id',
@@ -414,6 +416,53 @@ router.post(
   '/assignments/:id/restore',
   requirePermission('INTERVIEW_ASSIGN_MANAGE'),
   v8Wrap(InterviewController.restoreAssignment, interviewMeta)
+);
+
+router.post(
+  '/assignments/:id/invitations',
+  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    try {
+      const result = await issueInterviewAssignmentInvitation({
+        organizationId,
+        assignmentId: req.params.id,
+        createdBy: userId,
+        expectedVersion: Number(req.body?.expectedVersion),
+        expiresAt: req.body?.expiresAt,
+      });
+      res.status(201).json({ data: result, meta: interviewMeta() });
+    } catch (error) {
+      if (error instanceof InterviewInvitationError) {
+        res.status(error.status).json({ error: 'Invitation is not available', code: error.code });
+        return;
+      }
+      throw error;
+    }
+  })
+);
+
+router.post(
+  '/assignments/:id/invitations/revoke',
+  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    try {
+      const result = await revokeInterviewAssignmentInvitation({
+        organizationId,
+        assignmentId: req.params.id,
+        revokedBy: userId,
+        expectedVersion: Number(req.body?.expectedVersion),
+      });
+      res.json({ data: result, meta: interviewMeta() });
+    } catch (error) {
+      if (error instanceof InterviewInvitationError) {
+        res.status(error.status).json({ error: 'Invitation is not available', code: error.code });
+        return;
+      }
+      throw error;
+    }
+  })
 );
 
 // V-A S1 — restore the function-level authorization the legacy /api/interview

@@ -2857,7 +2857,8 @@ async function evaluateInterviewSessionAnswers(params: {
   // at all (there is nothing to judge), they are scored 0/unanswered in code.
   // Only answered questions are sent for rubric evaluation.
   const answeredQuestions = (questions as any[]).filter(
-    (q) => canonicalStatusToken(q.status) === 'answered' && String(q.answer_text || '').trim().length > 0
+    (q) =>
+      canonicalStatusToken(q.status) === 'answered' && String(q.answer_text || '').trim().length > 0
   );
 
   const criterionKeys = INTERVIEW_RUBRIC_CRITERIA.map((c) => c.key) as [string, ...string[]];
@@ -4043,6 +4044,12 @@ export const InterviewController = {
     const user = requireUser(req);
     const { id } = req.params;
     const { projectId, name } = req.body || {};
+    const expectedVersionRaw = (req.body || {}).expectedVersion;
+    const expectedVersion = expectedVersionRaw === undefined ? null : Number(expectedVersionRaw);
+    if (expectedVersion !== null && (!Number.isInteger(expectedVersion) || expectedVersion < 1)) {
+      res.status(400).json({ error: 'expectedVersion must be a positive integer' });
+      return;
+    }
 
     // Allow team members to start the assignment too (team assignment support).
     let assignment: any = null;
@@ -4081,6 +4088,21 @@ export const InterviewController = {
       return;
     }
 
+    // Claim session creation before building its rows. Two public-link requests
+    // with the same observed version cannot create two sessions.
+    if (expectedVersion !== null) {
+      const claim = await queryHelpers.queryRun(
+        `UPDATE interview_assignments
+            SET row_version = COALESCE(row_version, 1) + 1, updated_at = ?
+          WHERE id = ? AND organization_id = ? AND session_id IS NULL AND row_version = ?`,
+        [new Date().toISOString(), id, user.organizationId, expectedVersion]
+      );
+      if (claim.changes !== 1) {
+        res.status(409).json({ error: 'Assignment version is stale', code: 'ASSIGNMENT_STALE' });
+        return;
+      }
+    }
+
     const resolvedProjectId = await resolveValidProjectId({
       organizationId: user.organizationId,
       projectId: (assignment as any).project_id || projectId,
@@ -4102,6 +4124,7 @@ export const InterviewController = {
     await queryHelpers.queryRun(
       `UPDATE interview_assignments
        SET session_id = ?, status = 'in_progress', started_at = ?, updated_at = ?, project_id = COALESCE(project_id, ?)
+           ${expectedVersion === null ? ', row_version = COALESCE(row_version, 1) + 1' : ''}
        WHERE id = ?`,
       [(session as any).id, now, now, resolvedProjectId, id]
     );
@@ -4131,6 +4154,12 @@ export const InterviewController = {
   submitAssignment: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const { id } = req.params;
+    const expectedVersionRaw = (req.body || {}).expectedVersion;
+    const expectedVersion = expectedVersionRaw === undefined ? null : Number(expectedVersionRaw);
+    if (expectedVersion !== null && (!Number.isInteger(expectedVersion) || expectedVersion < 1)) {
+      res.status(400).json({ error: 'expectedVersion must be a positive integer' });
+      return;
+    }
     await ensureInterviewAssignmentAiReviewColumns();
     await ensureInterviewQuestionV6Columns();
 
@@ -4331,20 +4360,32 @@ export const InterviewController = {
       return;
     }
 
+    let assignmentUpdate: { changes: number };
     try {
-      await queryHelpers.queryRun(
+      assignmentUpdate = await queryHelpers.queryRun(
         `UPDATE interview_assignments
-         SET status = ?, submitted_at = ?, sent_back_at = NULL, sent_back_reason = NULL, missing_items_json = NULL, ai_review_snapshot_json = NULL, ai_reviewed_at = NULL, updated_at = ?
-         WHERE id = ?`,
-        [newAssignmentStatus, now, now, id]
+         SET status = ?, submitted_at = ?, sent_back_at = NULL, sent_back_reason = NULL, missing_items_json = NULL, ai_review_snapshot_json = NULL, ai_reviewed_at = NULL, updated_at = ?, row_version = COALESCE(row_version, 1) + 1
+         WHERE id = ?${expectedVersion === null ? '' : ' AND row_version = ?'}`,
+        expectedVersion === null
+          ? [newAssignmentStatus, now, now, id]
+          : [newAssignmentStatus, now, now, id, expectedVersion]
       );
-    } catch {
-      await queryHelpers.queryRun(
+    } catch (error) {
+      // Back-compat only for the optional missing_items_json column. Never let
+      // the fallback erase the optimistic concurrency predicate.
+      assignmentUpdate = await queryHelpers.queryRun(
         `UPDATE interview_assignments
-         SET status = ?, submitted_at = ?, sent_back_at = NULL, sent_back_reason = NULL, ai_review_snapshot_json = NULL, ai_reviewed_at = NULL, updated_at = ?
-         WHERE id = ?`,
-        [newAssignmentStatus, now, now, id]
+         SET status = ?, submitted_at = ?, sent_back_at = NULL, sent_back_reason = NULL, ai_review_snapshot_json = NULL, ai_reviewed_at = NULL, updated_at = ?, row_version = COALESCE(row_version, 1) + 1
+         WHERE id = ?${expectedVersion === null ? '' : ' AND row_version = ?'}`,
+        expectedVersion === null
+          ? [newAssignmentStatus, now, now, id]
+          : [newAssignmentStatus, now, now, id, expectedVersion]
       );
+      logger.debug('[InterviewController] submit missing_items_json fallback', error);
+    }
+    if (assignmentUpdate.changes !== 1) {
+      res.status(409).json({ error: 'Assignment version is stale', code: 'ASSIGNMENT_STALE' });
+      return;
     }
 
     await queryHelpers.queryRun(
@@ -4442,7 +4483,12 @@ export const InterviewController = {
   sendBackAssignment: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const admin = requireUser(req);
     const { id } = req.params;
-    const { reason, missingItems } = req.body || {};
+    const { reason, missingItems, expectedVersion: expectedVersionRaw } = req.body || {};
+    const expectedVersion = expectedVersionRaw === undefined ? null : Number(expectedVersionRaw);
+    if (expectedVersion !== null && (!Number.isInteger(expectedVersion) || expectedVersion < 1)) {
+      res.status(400).json({ error: 'expectedVersion must be a positive integer' });
+      return;
+    }
     await ensureInterviewAssignmentAiReviewColumns();
 
     const normalizedReason = typeof reason === 'string' ? reason.trim() : '';
@@ -4568,20 +4614,40 @@ export const InterviewController = {
     });
     const reviewDecisionMemoryJson = JSON.stringify(reviewDecisionMemory);
     try {
-      await queryHelpers.queryRun(
+      const update = await queryHelpers.queryRun(
         `UPDATE interview_assignments
-         SET status = 'in_progress', sent_back_at = ?, sent_back_reason = ?, missing_items_json = ?, review_decision_memory_json = ?, updated_at = ?
-         WHERE id = ?`,
-        [now, normalizedReason, missingItemsJson, reviewDecisionMemoryJson, now, id]
+         SET status = 'in_progress', sent_back_at = ?, sent_back_reason = ?, missing_items_json = ?, review_decision_memory_json = ?, updated_at = ?, row_version = COALESCE(row_version, 1) + 1
+         WHERE id = ?${expectedVersion === null ? '' : ' AND row_version = ?'}`,
+        expectedVersion === null
+          ? [now, normalizedReason, missingItemsJson, reviewDecisionMemoryJson, now, id]
+          : [
+              now,
+              normalizedReason,
+              missingItemsJson,
+              reviewDecisionMemoryJson,
+              now,
+              id,
+              expectedVersion,
+            ]
       );
+      if (update.changes !== 1) {
+        res.status(409).json({ error: 'Assignment version is stale', code: 'ASSIGNMENT_STALE' });
+        return;
+      }
     } catch (error) {
       // Back-compat for environments without missing_items_json column.
-      await queryHelpers.queryRun(
+      const update = await queryHelpers.queryRun(
         `UPDATE interview_assignments
-         SET status = 'in_progress', sent_back_at = ?, sent_back_reason = ?, review_decision_memory_json = ?, updated_at = ?
-         WHERE id = ?`,
-        [now, normalizedReason, reviewDecisionMemoryJson, now, id]
+         SET status = 'in_progress', sent_back_at = ?, sent_back_reason = ?, review_decision_memory_json = ?, updated_at = ?, row_version = COALESCE(row_version, 1) + 1
+         WHERE id = ?${expectedVersion === null ? '' : ' AND row_version = ?'}`,
+        expectedVersion === null
+          ? [now, normalizedReason, reviewDecisionMemoryJson, now, id]
+          : [now, normalizedReason, reviewDecisionMemoryJson, now, id, expectedVersion]
       );
+      if (update.changes !== 1) {
+        res.status(409).json({ error: 'Assignment version is stale', code: 'ASSIGNMENT_STALE' });
+        return;
+      }
       logger.warn(
         '[InterviewController] sendBackAssignment: missing_items_json column unavailable, using reason-only fallback'
       );
@@ -4745,6 +4811,12 @@ export const InterviewController = {
   approveAssignment: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const reviewer = requireUser(req);
     const { id } = req.params;
+    const expectedVersionRaw = (req.body || {}).expectedVersion;
+    const expectedVersion = expectedVersionRaw === undefined ? null : Number(expectedVersionRaw);
+    if (expectedVersion !== null && (!Number.isInteger(expectedVersion) || expectedVersion < 1)) {
+      res.status(400).json({ error: 'expectedVersion must be a positive integer' });
+      return;
+    }
     await ensureInterviewAssignmentAiReviewColumns();
 
     const assignment = await queryHelpers.queryOne(
@@ -4808,12 +4880,18 @@ export const InterviewController = {
       aiReview,
       createdAt: now,
     });
-    await queryHelpers.queryRun(
+    const approvalUpdate = await queryHelpers.queryRun(
       `UPDATE interview_assignments
-       SET status = 'approved', review_decision_memory_json = ?, updated_at = ?
-       WHERE id = ?`,
-      [JSON.stringify(reviewDecisionMemory), now, id]
+       SET status = 'approved', review_decision_memory_json = ?, updated_at = ?, row_version = COALESCE(row_version, 1) + 1
+       WHERE id = ?${expectedVersion === null ? '' : ' AND row_version = ?'}`,
+      expectedVersion === null
+        ? [JSON.stringify(reviewDecisionMemory), now, id]
+        : [JSON.stringify(reviewDecisionMemory), now, id, expectedVersion]
     );
+    if (approvalUpdate.changes !== 1) {
+      res.status(409).json({ error: 'Assignment version is stale', code: 'ASSIGNMENT_STALE' });
+      return;
+    }
     await queryHelpers.queryRun(
       `UPDATE interview_sessions SET status = 'completed', completed_at = ?, updated_at = ? WHERE id = ?`,
       [now, now, (assignment as any).session_id]
@@ -5471,7 +5549,18 @@ export const InterviewController = {
   updateAssignment: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const { id } = req.params;
-    const { dueAt, priority, notes, assigneeUserId } = req.body || {};
+    const {
+      dueAt,
+      priority,
+      notes,
+      assigneeUserId,
+      expectedVersion: expectedVersionRaw,
+    } = req.body || {};
+    const expectedVersion = expectedVersionRaw === undefined ? null : Number(expectedVersionRaw);
+    if (expectedVersion !== null && (!Number.isInteger(expectedVersion) || expectedVersion < 1)) {
+      res.status(400).json({ error: 'expectedVersion must be a positive integer' });
+      return;
+    }
 
     const existing = await queryHelpers.queryOne(
       `SELECT * FROM interview_assignments WHERE id = ? AND organization_id = ?`,
@@ -5531,12 +5620,18 @@ export const InterviewController = {
 
     updates.push('updated_at = ?');
     params.push(now);
+    updates.push('row_version = COALESCE(row_version, 1) + 1');
     params.push(id);
+    if (expectedVersion !== null) params.push(expectedVersion);
 
-    await queryHelpers.queryRun(
-      `UPDATE interview_assignments SET ${updates.join(', ')} WHERE id = ?`,
+    const updateResult = await queryHelpers.queryRun(
+      `UPDATE interview_assignments SET ${updates.join(', ')} WHERE id = ?${expectedVersion === null ? '' : ' AND row_version = ?'}`,
       params
     );
+    if (updateResult.changes !== 1) {
+      res.status(409).json({ error: 'Assignment version is stale', code: 'ASSIGNMENT_STALE' });
+      return;
+    }
 
     // Update mirror task if deadline changed
     if (dueAt !== undefined && (existing as any).task_id) {

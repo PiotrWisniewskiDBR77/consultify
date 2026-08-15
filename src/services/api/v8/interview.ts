@@ -105,6 +105,8 @@ export interface V8InterviewAssignment {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  rowVersion?: number;
+  row_version?: number;
   template?: {
     id: string;
     name: string;
@@ -160,6 +162,13 @@ export interface V8InterviewUpdateAssignmentPayload {
   priority?: 'low' | 'medium' | 'high' | 'urgent';
   notes?: string | null;
   assigneeUserId?: string;
+  expectedVersion?: number;
+}
+
+export interface V8InterviewAssignmentInvitationResult {
+  token: string;
+  expiresAt: string;
+  rowVersion: number;
 }
 
 export interface V8InterviewInsight {
@@ -646,24 +655,30 @@ export const V8InterviewApi = {
     v8Get<V8InterviewAssignment>(`/interview/assignments/${encodeURIComponent(id)}`),
 
   updateAssignment: (id: string, payload: V8InterviewUpdateAssignmentPayload) =>
-    v8Patch<V8InterviewAssignment>(
-      `/interview/assignments/${encodeURIComponent(id)}`,
-      payload
-    ),
+    v8Patch<V8InterviewAssignment>(`/interview/assignments/${encodeURIComponent(id)}`, payload),
 
   revokeAssignment: (id: string) =>
     v8Delete<{ success?: boolean }>(`/interview/assignments/${encodeURIComponent(id)}`),
 
   archiveAssignment: (id: string) =>
-    v8Post<V8InterviewAssignment>(
-      `/interview/assignments/${encodeURIComponent(id)}/archive`,
-      {}
-    ),
+    v8Post<V8InterviewAssignment>(`/interview/assignments/${encodeURIComponent(id)}/archive`, {}),
 
   restoreAssignment: (id: string) =>
-    v8Post<V8InterviewAssignment>(
-      `/interview/assignments/${encodeURIComponent(id)}/restore`,
-      {}
+    v8Post<V8InterviewAssignment>(`/interview/assignments/${encodeURIComponent(id)}/restore`, {}),
+
+  issueAssignmentInvitation: (
+    id: string,
+    payload: { expectedVersion: number; expiresAt?: string }
+  ) =>
+    v8Post<V8InterviewAssignmentInvitationResult>(
+      `/interview/assignments/${encodeURIComponent(id)}/invitations`,
+      payload
+    ),
+
+  revokeAssignmentInvitation: (id: string, expectedVersion: number) =>
+    v8Post<{ rowVersion: number }>(
+      `/interview/assignments/${encodeURIComponent(id)}/invitations/revoke`,
+      { expectedVersion }
     ),
 
   manageAssignment: (id: string, payload: V8InterviewManageAssignmentPayload) =>
@@ -692,17 +707,24 @@ export const V8InterviewApi = {
 
   sendBackAssignment: (
     id: string,
-    payload: { reason: string; missingItems?: Array<string | Record<string, unknown>> }
+    payload: {
+      reason: string;
+      missingItems?: Array<string | Record<string, unknown>>;
+      expectedVersion?: number;
+    }
   ) => v8Post(`/interview/assignments/${encodeURIComponent(id)}/send-back`, payload),
 
-  approveAssignment: (id: string) =>
+  approveAssignment: (id: string, expectedVersion?: number) =>
     v8Post<{
       assignment: V8InterviewAssignment;
       session: V8InterviewSession;
       completenessPercent: number;
       entersContext: boolean;
       aiReview?: V8InterviewSessionEvaluation | null;
-    }>(`/interview/assignments/${encodeURIComponent(id)}/approve`, {}),
+    }>(
+      `/interview/assignments/${encodeURIComponent(id)}/approve`,
+      expectedVersion === undefined ? {} : { expectedVersion }
+    ),
 
   // --- Insights ---
 
