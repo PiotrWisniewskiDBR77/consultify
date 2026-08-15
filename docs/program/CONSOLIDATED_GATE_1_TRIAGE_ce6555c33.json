@@ -1,0 +1,1834 @@
+{
+  "schemaVersion": 1,
+  "sourceGateSha": "032ca27f71a06256710cb5c7124df73ea11fb8de",
+  "triageCandidateSha": "ce6555c33bf38c806ccbe4219a4cc4e14b2ab6eb",
+  "generatedFrom": "consolidated-gate-1-standard",
+  "classificationPolicy": "Deterministic first-pass allowlist; PRODUCT_REGRESSION items require owner reproduction on triageCandidateSha.",
+  "categories": {
+    "PRODUCT_REGRESSION": 116,
+    "STALE_CONTRACT": 51,
+    "HARNESS_ENV": 2,
+    "EXPECTED_PENDING": 29
+  },
+  "priorities": {
+    "P0": 12,
+    "P1": 104,
+    "P2": 82
+  },
+  "currentTypechecks": {
+    "root": {
+      "status": "FAIL",
+      "errors": 3,
+      "allowlist": [
+        "src/components/AIChat/__tests__/TransformationCasesPanel.test.tsx",
+        "src/components/AIChat/__tests__/TransformationQualityTrustSection.test.tsx",
+        "src/components/MyWork/NotebookContent.tsx"
+      ]
+    },
+    "server": {
+      "status": "FAIL",
+      "errors": 21,
+      "allowlist": [
+        "server/src/routes/v8/partner.routes.ts"
+      ]
+    }
+  },
+  "agentAllowlists": {
+    "p0SecurityAndPersistence": [
+      "server/src/routes/__tests__/interview-update-assignment-reassign-idor.test.ts",
+      "server/src/routes/__tests__/presentationAutosaveTitlePersistence.test.ts",
+      "tests/integration/auth.test.ts",
+      "tests/integration/auth/auth-endpoints.test.ts",
+      "tests/integration/auth/auth-refresh-e2e-mode.test.ts",
+      "tests/integration/auth/auth-routes-validation.test.ts",
+      "tests/integration/auth/oauthRoutes.status.test.ts",
+      "tests/integration/organizations/member-role-id-resolution.test.ts",
+      "tests/integration/routes/pmo/projects.aiRole-and-regulatory.real.test.ts",
+      "tests/integration/routes/skills-gap.auth.routes.test.ts",
+      "tests/unit/auth/auth.middleware.private.test.ts",
+      "tests/unit/backend/routes/accessRoleBuilder.security.test.ts"
+    ],
+    "p1ServerAndBackend": [
+      "server/src/routes/__tests__/presentationCustomTemplateContract.test.ts",
+      "server/src/routes/__tests__/presentationTemplateApprovalLibraryRoundTrip.test.ts",
+      "server/src/routes/audits/__tests__/mounting.integration.test.ts",
+      "server/src/routes/resultsVnext/__tests__/roiBenefitsRealization.routes.test.ts",
+      "server/src/routes/v8/__tests__/my-work-calendar.routes.test.ts",
+      "server/src/services/__tests__/artifactRegistryPresentationTemplatePosture.test.ts",
+      "server/src/services/initiative/__tests__/initiativeLifecycleCanon.test.ts",
+      "server/src/services/v8/__tests__/v8-migration-runner.test.ts",
+      "tests/unit/backend/controllers/adminAudit.emission.test.ts",
+      "tests/unit/backend/controllers/InterviewAssignmentsController.test.ts",
+      "tests/unit/backend/controllers/OrganizationController.audit.test.ts",
+      "tests/unit/backend/harvardCrossModuleFlows.test.ts",
+      "tests/unit/backend/harvardModuleContract.test.ts",
+      "tests/unit/backend/helpChat.routes.test.ts",
+      "tests/unit/backend/routes/document-studio.routes.leak-guard.test.ts",
+      "tests/unit/backend/routes/metricsOrgRoutes.test.ts",
+      "tests/unit/backend/routes/pmo-decisions.routes.org-guard.test.ts",
+      "tests/unit/backend/routes/tools.routes.org-guard.test.ts",
+      "tests/unit/backend/routes/workbook.routes.grounding-hydration.test.ts",
+      "tests/unit/backend/routes/workbook.routes.schema-endpoint.test.ts",
+      "tests/unit/backend/scripts/verifySchemaParser.test.ts",
+      "tests/unit/backend/services/adminSessionService.test.ts",
+      "tests/unit/backend/services/artifactRegistryService.test.ts"
+    ],
+    "p1MountedUi": [
+      "src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.matrix.test.tsx",
+      "src/contracts/tableSurface/__tests__/fixtures.test.ts",
+      "tests/components/assessment/AssessmentSessionEditorView.save-readback.test.tsx",
+      "tests/components/ResultsVNext/KpiDeviationCaseSubview.test.tsx",
+      "tests/components/ResultsVNext/KpiToolPage.test.tsx",
+      "tests/components/ResultsVNext/okr/OkrSetToolPage.test.tsx",
+      "tests/components/ResultsVNext/roi/RoiCaseToolPage.test.tsx",
+      "tests/hooks/useKeyboardShortcuts.test.ts"
+    ],
+    "p1Integration": [
+      "tests/integration/admin/admin-navigation.test.ts",
+      "tests/integration/ai-enterprise-verification.test.ts",
+      "tests/integration/ai-modules-navigation.test.ts",
+      "tests/integration/ai/ai-attachments-ingest-typegate.test.ts",
+      "tests/integration/ai/ai-attachments-ingest.test.ts",
+      "tests/integration/ai/aiPlaybooks.runs.no-demo.test.ts",
+      "tests/integration/api.test.ts",
+      "tests/integration/assessment-reports.routes.test.ts",
+      "tests/integration/assessment/assessment-routes.test.ts",
+      "tests/integration/chat-projects/chat-projects.conversations.move-remove.test.ts",
+      "tests/integration/comments/comment-endpoints.test.ts",
+      "tests/integration/deliverables/templateApi.test.ts",
+      "tests/integration/deliverables/templateSeeds.integration.test.ts",
+      "tests/integration/flows/access-limit-integration.test.ts",
+      "tests/integration/flows/external-integrations-integration.test.ts",
+      "tests/integration/help/help-analytics.routes.test.ts",
+      "tests/integration/help/help-chat.routes.test.ts",
+      "tests/integration/helpApi.test.ts",
+      "tests/integration/initiatives/initiatives.ai-generation.unavailable.no-placeholders.test.ts",
+      "tests/integration/interview/interview-routes.test.ts",
+      "tests/integration/legal.test.ts",
+      "tests/integration/middleware/demoWriteProtection.test.ts",
+      "tests/integration/partners/partners.no-demo-organization-referral-dashboard.test.ts",
+      "tests/integration/resource-management-api.test.ts",
+      "tests/integration/routes/billing.no-demo.analytics-and-revenue.test.ts",
+      "tests/integration/routes/decisions.remind.routes.test.ts",
+      "tests/integration/routes/deliverablesGenerations.bundle.test.ts",
+      "tests/integration/routes/document-studio.export-trace.routes.test.ts",
+      "tests/integration/routes/health-data-context.test.ts",
+      "tests/integration/routes/health-faults.l3.test.ts",
+      "tests/integration/routes/helpRoutes.test.ts",
+      "tests/integration/routes/lazyRouteLoader-mount.test.ts",
+      "tests/integration/routes/mediaIngestion.no-stubs.test.ts",
+      "tests/integration/routes/my-work-presence.contract.test.ts",
+      "tests/integration/routes/organizationData.no-stubs.test.ts",
+      "tests/integration/routes/performanceMetricsRoutes.test.ts",
+      "tests/integration/routes/premiumReports.no-stubs.test.ts",
+      "tests/integration/routes/projectMembers.compat.no-stubs.test.ts",
+      "tests/integration/routes/stubbed-legacy-routes.no-501.test.ts",
+      "tests/integration/routes/v8.execution.routes.test.ts",
+      "tests/integration/superadmin-operator-plane.test.ts",
+      "tests/integration/system/healthRoutes.ping-health-live.test.ts",
+      "tests/integration/user/user-stubbed-routes.no-501.test.ts",
+      "tests/integration/voice/voice.tts-unavailable.test.ts",
+      "tests/integration/workflow_scenarios.test.ts"
+    ],
+    "p1OtherContracts": [
+      "tests/navigation/routeMapping.test.ts",
+      "tests/unit/components/Admin/AdminCollaborationControlsPanel.test.tsx",
+      "tests/unit/components/Admin/AdminRiskSummaryPanel.test.tsx",
+      "tests/unit/components/Admin/AIMissionControl.honesty.test.tsx",
+      "tests/unit/components/Organization/KnowledgeGraphExplorer.smoke.test.tsx",
+      "tests/unit/components/ProposalCard.test.tsx",
+      "tests/unit/components/SuperAdmin/ModelRegistry/ModelCatalogTable.honesty.test.tsx",
+      "tests/unit/finance/financeFallbackGating.test.ts",
+      "tests/unit/helpTranslations.test.ts",
+      "tests/unit/initiativeDocumentView.section-ai-noop.test.ts",
+      "tests/unit/mywork/colorPickerPaletteUnique.test.ts",
+      "tests/unit/scripts/testing/coverage-thresholds.gate.contract.test.ts",
+      "tests/unit/scripts/testing/patch-coverage-gate.gate.contract.test.ts",
+      "tests/unit/services/partner-trust-runtime.test.ts",
+      "tests/unit/services/valuationService.defaultAssumptions.test.ts",
+      "tests/unit/table/AITableProposal.test.tsx",
+      "tests/unit/table/useTableSchema.test.ts",
+      "tests/unit/table/useTableViews.test.ts",
+      "tests/unit/testing/testDiscoveryGate.test.ts",
+      "tests/unit/utils/betaAccessGating.test.ts",
+      "tests/unit/utils/myWorkNotebookRbacGates.test.ts",
+      "tests/unit/utils/publicProduction.test.ts",
+      "tests/unit/views/superadmin/AuditEventsViewer.honesty.test.tsx",
+      "tests/unit/views/superadmin/components/BulkOperationsView.honesty.test.tsx",
+      "tests/unit/views/superadmin/DeviceManagementView.honesty.test.tsx",
+      "tests/unit/views/superadmin/DocumentsRAGTab.honesty.test.tsx",
+      "tests/unit/views/superadmin/IPWhitelistView.honesty.test.tsx",
+      "tests/unit/views/superadmin/SuperAdminStorageDetailModal.honesty.test.tsx"
+    ],
+    "p2ContractAndEnvironment": [
+      "tests/frontend/resource-management-components.test.tsx",
+      "tests/integration/apiFullFlow.test.js",
+      "tests/integration/auth.test.js",
+      "tests/integration/chat/streaming.test.ts",
+      "tests/integration/initiatives.test.js",
+      "tests/integration/m13-organization-profile-persistence.test.ts",
+      "tests/integration/megatrend.test.js",
+      "tests/integration/mywork/my-work.inbox-v4-tenant-negative-controls.test.ts",
+      "tests/integration/organization-management.workflow.test.js",
+      "tests/integration/projects.test.js",
+      "tests/integration/routes/ai.test.js",
+      "tests/integration/routes/auth.test.js",
+      "tests/integration/routes/demoRoutes.no-stubs.test.ts",
+      "tests/integration/routes/genericReports.no-stubs.test.ts",
+      "tests/integration/routes/managementReports.test.js",
+      "tests/integration/routes/notifications.escalations.authz.test.ts",
+      "tests/integration/routes/pmoContext.test.js",
+      "tests/integration/routes/roadmap.test.js",
+      "tests/integration/routes/stage-gates.test.js",
+      "tests/integration/settings/account-deletion-routes-guard.test.ts",
+      "tests/integration/settings/gdpr-settings-no-stubs.test.ts",
+      "tests/integration/storage_security.test.js",
+      "tests/integration/system/db-health.contract-codes.test.ts",
+      "tests/integration/system/health.database.correlation-header.contract.test.ts",
+      "tests/integration/test-support/testSupportRoutes.test.ts",
+      "tests/unit/components/Execution/executionInitiativesKanban.dnd.test.tsx",
+      "tests/unit/components/settings/ConnectedAppsSettings.honesty.test.tsx",
+      "tests/unit/components/settings/MappingDriftPanel.honesty.test.tsx",
+      "tests/views/FullRoadmapView.test.tsx",
+      "tests/integration/management/managementReports.pptx-dependency-missing.test.ts",
+      "tests/integration/performance/dbOptimization.test.ts",
+      "tests/backend/trial_limits.test.js",
+      "tests/integration/aiLayersIntegration.test.js",
+      "tests/integration/assessment-reports.routes.test.js",
+      "tests/integration/backend/planLimits.test.js",
+      "tests/integration/llmHealth.test.js",
+      "tests/integration/metricsFullFlow.test.js",
+      "tests/integration/routes/access-control.test.js",
+      "tests/integration/routes/ai-experiments.test.js",
+      "tests/integration/routes/ai-memory.test.js",
+      "tests/integration/routes/ai-performance.test.js",
+      "tests/integration/routes/ai-prompts.test.js",
+      "tests/integration/routes/ai-training.test.js",
+      "tests/integration/routes/aiAsync.test.js",
+      "tests/integration/routes/aiCoach.test.js",
+      "tests/integration/routes/aiExplain.test.js",
+      "tests/integration/routes/aiPlaybooks.test.js",
+      "tests/integration/routes/analytics.test.js",
+      "tests/integration/routes/assessment.test.js",
+      "tests/integration/routes/conversations.test.js",
+      "tests/integration/routes/customers-module.test.js",
+      "tests/integration/routes/daily-brief.test.js",
+      "tests/integration/routes/decisions.test.js",
+      "tests/integration/routes/documents.test.js",
+      "tests/integration/routes/economicsFinancials.test.js",
+      "tests/integration/routes/economicsFlow.test.js",
+      "tests/integration/routes/feedback.test.js",
+      "tests/integration/routes/initiative-generator.test.js",
+      "tests/integration/routes/initiatives.test.js",
+      "tests/integration/routes/invitations.test.js",
+      "tests/integration/routes/legal.test.js",
+      "tests/integration/routes/media-ingestion.test.js",
+      "tests/integration/routes/metrics.conversion-intelligence.no-stub.test.js",
+      "tests/integration/routes/my-work.test.js",
+      "tests/integration/routes/notifications.test.js",
+      "tests/integration/routes/pinned-prompts.test.js",
+      "tests/integration/routes/rapidlean-routes.test.js",
+      "tests/integration/routes/sessions.test.js",
+      "tests/integration/routes/settings.test.js",
+      "tests/integration/routes/superadmin-ai-platform.test.js",
+      "tests/integration/routes/superadmin-analytics.test.js",
+      "tests/integration/routes/superadmin-configuration.test.js",
+      "tests/integration/routes/superadmin-customers.test.js",
+      "tests/integration/routes/superadmin-iam.test.js",
+      "tests/integration/routes/superadmin-organizations-extended.test.js",
+      "tests/integration/routes/superadmin-revenue.test.js",
+      "tests/integration/routes/superadmin-security.test.js",
+      "tests/integration/routes/superadmin-support.test.js",
+      "tests/integration/routes/superadmin-system.test.js",
+      "tests/integration/routes/teams.test.js",
+      "tests/integration/routes/tokenBilling.test.js",
+      "tests/integration/routes/users.test.js"
+    ]
+  },
+  "records": [
+    {
+      "file": "server/src/routes/__tests__/interview-update-assignment-reassign-idor.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P0",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "server/src/routes/__tests__/presentationAutosaveTitlePersistence.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P0",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/auth.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P0",
+      "failedAssertions": 7,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/auth/auth-endpoints.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P0",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/auth/auth-refresh-e2e-mode.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P0",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/auth/auth-routes-validation.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P0",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/auth/oauthRoutes.status.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P0",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/organizations/member-role-id-resolution.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P0",
+      "failedAssertions": 3,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/routes/pmo/projects.aiRole-and-regulatory.real.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P0",
+      "failedAssertions": 2,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/routes/skills-gap.auth.routes.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P0",
+      "failedAssertions": 4,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/auth/auth.middleware.private.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P0",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/backend/routes/accessRoleBuilder.security.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P0",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "server/src/routes/__tests__/presentationCustomTemplateContract.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 4,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "server/src/routes/__tests__/presentationTemplateApprovalLibraryRoundTrip.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 2,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "server/src/routes/audits/__tests__/mounting.integration.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 13,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "server/src/routes/resultsVnext/__tests__/roiBenefitsRealization.routes.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "server/src/routes/v8/__tests__/my-work-calendar.routes.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "server/src/services/__tests__/artifactRegistryPresentationTemplatePosture.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 2,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "server/src/services/initiative/__tests__/initiativeLifecycleCanon.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "server/src/services/v8/__tests__/v8-migration-runner.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.matrix.test.tsx",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 2,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "src/contracts/tableSurface/__tests__/fixtures.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/components/assessment/AssessmentSessionEditorView.save-readback.test.tsx",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 3,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/components/ResultsVNext/KpiDeviationCaseSubview.test.tsx",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/components/ResultsVNext/KpiToolPage.test.tsx",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/components/ResultsVNext/okr/OkrSetToolPage.test.tsx",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/components/ResultsVNext/roi/RoiCaseToolPage.test.tsx",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/hooks/useKeyboardShortcuts.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 12,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/admin/admin-navigation.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 2,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/ai-enterprise-verification.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 2,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/ai-modules-navigation.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/ai/ai-attachments-ingest-typegate.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 3,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/ai/ai-attachments-ingest.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 2,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/ai/aiPlaybooks.runs.no-demo.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/api.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/assessment-reports.routes.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 3,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/assessment/assessment-routes.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 5,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/chat-projects/chat-projects.conversations.move-remove.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/comments/comment-endpoints.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/deliverables/templateApi.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 4,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/deliverables/templateSeeds.integration.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 2,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/flows/access-limit-integration.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 2,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/flows/external-integrations-integration.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/help/help-analytics.routes.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/help/help-chat.routes.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/helpApi.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 2,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/initiatives/initiatives.ai-generation.unavailable.no-placeholders.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 2,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/interview/interview-routes.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 6,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/legal.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/middleware/demoWriteProtection.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/partners/partners.no-demo-organization-referral-dashboard.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/resource-management-api.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 5,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/routes/billing.no-demo.analytics-and-revenue.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 9,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/routes/decisions.remind.routes.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 2,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/routes/deliverablesGenerations.bundle.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 2,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/routes/document-studio.export-trace.routes.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/routes/health-data-context.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 2,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/routes/health-faults.l3.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 2,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/routes/helpRoutes.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 2,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/routes/lazyRouteLoader-mount.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/routes/mediaIngestion.no-stubs.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 6,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/routes/my-work-presence.contract.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 2,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/routes/organizationData.no-stubs.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 3,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/routes/performanceMetricsRoutes.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/routes/premiumReports.no-stubs.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 2,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/routes/projectMembers.compat.no-stubs.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/routes/stubbed-legacy-routes.no-501.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 3,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/routes/v8.execution.routes.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/superadmin-operator-plane.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/system/healthRoutes.ping-health-live.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/user/user-stubbed-routes.no-501.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/voice/voice.tts-unavailable.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/integration/workflow_scenarios.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/navigation/routeMapping.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/backend/controllers/adminAudit.emission.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 3,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/backend/controllers/InterviewAssignmentsController.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 8,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/backend/controllers/OrganizationController.audit.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 2,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/backend/harvardCrossModuleFlows.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 2,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/backend/harvardModuleContract.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/backend/helpChat.routes.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/backend/routes/document-studio.routes.leak-guard.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/backend/routes/metricsOrgRoutes.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/backend/routes/pmo-decisions.routes.org-guard.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/backend/routes/tools.routes.org-guard.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/backend/routes/workbook.routes.grounding-hydration.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 4,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/backend/routes/workbook.routes.schema-endpoint.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 4,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/backend/scripts/verifySchemaParser.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/backend/services/adminSessionService.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/backend/services/artifactRegistryService.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/components/Admin/AdminCollaborationControlsPanel.test.tsx",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/components/Admin/AdminRiskSummaryPanel.test.tsx",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/components/Admin/AIMissionControl.honesty.test.tsx",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 3,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/components/Organization/KnowledgeGraphExplorer.smoke.test.tsx",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 3,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/components/ProposalCard.test.tsx",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 2,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/components/SuperAdmin/ModelRegistry/ModelCatalogTable.honesty.test.tsx",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 2,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/finance/financeFallbackGating.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 2,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/helpTranslations.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/initiativeDocumentView.section-ai-noop.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/mywork/colorPickerPaletteUnique.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/scripts/testing/coverage-thresholds.gate.contract.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 3,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/scripts/testing/patch-coverage-gate.gate.contract.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/services/partner-trust-runtime.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/services/valuationService.defaultAssumptions.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/table/AITableProposal.test.tsx",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 4,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/table/useTableSchema.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 10,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/table/useTableViews.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 11,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/testing/testDiscoveryGate.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/utils/betaAccessGating.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 2,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/utils/myWorkNotebookRbacGates.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/utils/publicProduction.test.ts",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/views/superadmin/AuditEventsViewer.honesty.test.tsx",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 2,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/views/superadmin/components/BulkOperationsView.honesty.test.tsx",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/views/superadmin/DeviceManagementView.honesty.test.tsx",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/views/superadmin/DocumentsRAGTab.honesty.test.tsx",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 3,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/views/superadmin/IPWhitelistView.honesty.test.tsx",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 3,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/unit/views/superadmin/SuperAdminStorageDetailModal.honesty.test.tsx",
+      "category": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "failedAssertions": 2,
+      "pendingAssertions": 0,
+      "reason": "Current TypeScript contract failed without a recognized environment-only signature."
+    },
+    {
+      "file": "tests/frontend/resource-management-components.test.tsx",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 0,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/integration/apiFullFlow.test.js",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 4,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/integration/auth.test.js",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 6,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/integration/chat/streaming.test.ts",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 5,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/integration/initiatives.test.js",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 5,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/integration/m13-organization-profile-persistence.test.ts",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 4,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/integration/megatrend.test.js",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 6,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/integration/mywork/my-work.inbox-v4-tenant-negative-controls.test.ts",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 4,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/integration/organization-management.workflow.test.js",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 4,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/integration/projects.test.js",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 4,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/integration/routes/ai.test.js",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 9,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/integration/routes/auth.test.js",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 6,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/integration/routes/demoRoutes.no-stubs.test.ts",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 7,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/integration/routes/genericReports.no-stubs.test.ts",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 0,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/integration/routes/managementReports.test.js",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 5,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/integration/routes/notifications.escalations.authz.test.ts",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 3,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/integration/routes/pmoContext.test.js",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 5,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/integration/routes/roadmap.test.js",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 6,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/integration/routes/stage-gates.test.js",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 3,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/integration/settings/account-deletion-routes-guard.test.ts",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 6,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/integration/settings/gdpr-settings-no-stubs.test.ts",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 3,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/integration/storage_security.test.js",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 4,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/integration/system/db-health.contract-codes.test.ts",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 3,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/integration/system/health.database.correlation-header.contract.test.ts",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 2,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/integration/test-support/testSupportRoutes.test.ts",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 4,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/unit/components/Execution/executionInitiativesKanban.dnd.test.tsx",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 0,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/unit/components/settings/ConnectedAppsSettings.honesty.test.tsx",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 0,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/unit/components/settings/MappingDriftPanel.honesty.test.tsx",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 0,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/views/FullRoadmapView.test.tsx",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 0,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/integration/management/managementReports.pptx-dependency-missing.test.ts",
+      "category": "HARNESS_ENV",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Failure text or file contract depends on unavailable runtime, database, dependency, or process environment."
+    },
+    {
+      "file": "tests/integration/performance/dbOptimization.test.ts",
+      "category": "HARNESS_ENV",
+      "priority": "P2",
+      "failedAssertions": 2,
+      "pendingAssertions": 0,
+      "reason": "Failure text or file contract depends on unavailable runtime, database, dependency, or process environment."
+    },
+    {
+      "file": "tests/backend/trial_limits.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/aiLayersIntegration.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 2,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/assessment-reports.routes.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 3,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/backend/planLimits.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 2,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/llmHealth.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 6,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/metricsFullFlow.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 3,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/access-control.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 6,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/ai-experiments.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 2,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/ai-memory.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 2,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/ai-performance.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 2,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/ai-prompts.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 2,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/ai-training.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 2,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/aiAsync.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/aiCoach.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/aiExplain.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/aiPlaybooks.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/analytics.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/assessment.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/conversations.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/customers-module.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 3,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/daily-brief.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/decisions.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/documents.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 3,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/economicsFinancials.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/economicsFlow.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 4,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/feedback.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/initiative-generator.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/initiatives.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 5,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/invitations.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 6,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/legal.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/media-ingestion.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/metrics.conversion-intelligence.no-stub.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/my-work.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/notifications.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 4,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/pinned-prompts.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/rapidlean-routes.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/sessions.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 2,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/settings.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/superadmin-ai-platform.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 13,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/superadmin-analytics.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 8,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/superadmin-configuration.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 7,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/superadmin-customers.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 3,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/superadmin-iam.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 3,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/superadmin-organizations-extended.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/superadmin-revenue.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 4,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/superadmin-security.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 2,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/superadmin-support.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/superadmin-system.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 12,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/teams.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/tokenBilling.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/users.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    }
+  ]
+}
