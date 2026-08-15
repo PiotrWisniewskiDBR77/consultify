@@ -464,22 +464,9 @@ export const AssessmentSessionEditorView: React.FC = () => {
 
   const loadCoreAssessmentSession = useCallback(async (): Promise<AssessmentSession> => {
     if (!assessmentId) throw new Error('Missing assessment id');
-
-    try {
-      const data = await V8AssessmentApi.getAssessment(assessmentId);
-      setIsDegradedLegacyMode(false);
-      return mapV8AssessmentToSession(data.assessment);
-    } catch (error) {
-      if (!shouldFallbackToLegacyAssessmentLane(error)) {
-        throw error;
-      }
-
-      // ASM-001A: V8 endpoint rejected/unavailable — running on the legacy
-      // assessment-workflow-v2 route. Surface this in the header (V8 vs
-      // "Legacy (degraded)" badge) instead of silently swapping data sources.
-      setIsDegradedLegacyMode(true);
-      return (await Api.get(`/assessment-workflow-v2/${assessmentId}`)) as AssessmentSession;
-    }
+    const data = await V8AssessmentApi.getAssessment(assessmentId);
+    setIsDegradedLegacyMode(false);
+    return mapV8AssessmentToSession(data.assessment);
   }, [assessmentId]);
 
   const updateCoreAssessmentSession = useCallback(
@@ -488,20 +475,9 @@ export const AssessmentSessionEditorView: React.FC = () => {
     ): Promise<{ updatedAt?: string; completionPercent?: number }> => {
       if (!assessmentId) throw new Error('Missing assessment id');
 
-      try {
-        const result = await V8AssessmentApi.updateAssessment(assessmentId, payload);
-        setIsDegradedLegacyMode(false);
-        return result;
-      } catch (error) {
-        if (!shouldFallbackToLegacyAssessmentLane(error)) {
-          throw error;
-        }
-
-        setIsDegradedLegacyMode(true);
-        return (await Api.put(`/assessment-workflow-v2/${assessmentId}`, payload)) as {
-          updatedAt?: string;
-        };
-      }
+      const result = await V8AssessmentApi.updateAssessment(assessmentId, payload);
+      setIsDegradedLegacyMode(false);
+      return result;
     },
     [assessmentId]
   );
@@ -891,7 +867,8 @@ export const AssessmentSessionEditorView: React.FC = () => {
             };
           }
           const resp = (await updateCoreAssessmentSession(payload)) as
-            { updatedAt?: string } | undefined;
+            | { updatedAt?: string }
+            | undefined;
           if (!isMountedRef.current) return;
           const ts = resp?.updatedAt ? new Date(resp.updatedAt) : new Date();
           setLastSavedAt(ts);
@@ -984,7 +961,8 @@ export const AssessmentSessionEditorView: React.FC = () => {
         payload.navigation = { axisId: currentAxisId, areaId: currentAreaId, level: currentLevel };
       }
       const resp = (await updateCoreAssessmentSession(payload)) as
-        { updatedAt?: string } | undefined;
+        | { updatedAt?: string }
+        | undefined;
       const ts = resp?.updatedAt ? new Date(resp.updatedAt) : new Date();
       setLastSavedAt(ts);
       setServerUpdatedAt(ts);

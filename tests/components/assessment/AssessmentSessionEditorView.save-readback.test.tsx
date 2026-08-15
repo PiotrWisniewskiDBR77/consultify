@@ -76,6 +76,10 @@ vi.mock('@/services/api/v8', () => ({
   },
 }));
 
+vi.mock('@/hooks/useFeatureFlags', () => ({
+  useFeatureFlags: () => ({ isEnabled: () => false }),
+}));
+
 vi.mock('@/store/useAppStore', () => ({
   useAppStore: (selector?: any) => {
     const state = {
@@ -262,32 +266,14 @@ describe('AssessmentSessionEditorView — save read-back (ASM-001A)', () => {
     expect(screen.getByTestId('assessment-editor-autosave-failed')).toBeInTheDocument();
   });
 
-  it('degraded legacy fallback: V8 GET rejects with a fallback-eligible status → shows "Legacy (degraded)" badge', async () => {
+  it('fails closed when the canonical V8 assessment cannot be loaded', async () => {
     const fallbackError = Object.assign(new Error('Not found'), { status: 404 });
     getAssessmentMock.mockRejectedValueOnce(fallbackError);
-    apiGetMock.mockImplementation((url: string) => {
-      if (String(url) === '/assessment-workflow-v2/asm_1') {
-        return Promise.resolve({
-          id: 'asm_1',
-          name: 'Test DRD Assessment',
-          status: 'DRAFT',
-          type: 'DRD',
-          completion_percent: 10,
-          confidence_avg: 1,
-          updated_by: 'user-123',
-          answers: { drd: { areas: {} } },
-        });
-      }
-      return Promise.resolve({});
-    });
 
-    await mountAndWaitReady();
-
+    render(<AssessmentSessionEditorView />);
     await waitFor(() => {
-      expect(screen.getByTestId('assessment-editor-provenance-badge')).toHaveTextContent(
-        'Legacy (degraded)'
-      );
+      expect(screen.getByText('Not found')).toBeInTheDocument();
     });
-    expect(apiGetMock).toHaveBeenCalledWith('/assessment-workflow-v2/asm_1');
+    expect(apiGetMock).not.toHaveBeenCalledWith('/assessment-workflow-v2/asm_1');
   });
 });
