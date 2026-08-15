@@ -415,8 +415,10 @@ function enforceSinglePalette(plans: SlideLayoutPlan[]): SlideLayoutPlan[] {
  * Enforces `minDistinct` distinct layout intents across the deck. For decks
  * shorter than `minDistinct`, the target is capped at the deck length.
  *
- * Strategy: scan middle slides (skip cover/last); replace any that use an
- * intent already used by another slide with an unused intent from DIVERSE_INTENT_POOL.
+ * Strategy: scan middle slides (skip cover/last); replace only an intent used
+ * at least three times with an unused intent from DIVERSE_INTENT_POOL. Keeping
+ * two occurrences matters for comparison-heavy and other deliberately repeated
+ * narrative patterns; graphic diversity must never erase that semantics.
  * Stop once the target is reached. Never touches first/last slide.
  */
 function enforceMinDistinctLayouts(
@@ -442,7 +444,7 @@ function enforceMinDistinctLayouts(
 
     const current = out[i].layoutIntent;
     const count = out.filter((p) => p.layoutIntent === current).length;
-    if (count > 1) {
+    if (count > 2) {
       const newIntent = available[avIdx++];
       out[i] = {
         ...out[i],

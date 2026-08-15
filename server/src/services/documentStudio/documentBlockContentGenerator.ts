@@ -207,16 +207,33 @@ export function normalizeTableContent(raw: unknown): Record<string, unknown> {
   }
   const columns = rawColumns.length > 0 ? rawColumns : inferredKeys;
   const rows = keyedRows.map((row: any) => {
-    if (Array.isArray(row)) return row.map((value: unknown) => String(value ?? ''));
-    const cells = row.cells && typeof row.cells === 'object' ? row.cells : row;
-    return columns.map((key: string) => {
-      const value = (cells as Record<string, unknown>)[key];
-      return String(
-        value && typeof value === 'object' && 'value' in value
-          ? ((value as any).value ?? '')
-          : (value ?? '')
+    if (Array.isArray(row)) {
+      const cells = Object.fromEntries(
+        columns.map((key: string, index: number) => [key, { value: String(row[index] ?? '') }])
       );
-    });
+      return { cells };
+    }
+    const cells = row.cells && typeof row.cells === 'object' ? row.cells : row;
+    return {
+      cells: Object.fromEntries(
+        columns.map((key: string) => {
+          const value = (cells as Record<string, unknown>)[key];
+          if (value && typeof value === 'object' && 'value' in value) {
+            const cell = value as { value?: unknown; style?: { bgColor?: unknown } };
+            const bgColor =
+              typeof cell.style?.bgColor === 'string' ? cell.style.bgColor.trim() : '';
+            return [
+              key,
+              {
+                value: String(cell.value ?? ''),
+                ...(bgColor ? { style: { bgColor } } : {}),
+              },
+            ];
+          }
+          return [key, { value: String(value ?? '') }];
+        })
+      ),
+    };
   });
   return { columns, rows };
 }
@@ -386,6 +403,8 @@ function normalizeBlockContent(
 const QUANT_TOKEN_RE = /\d+(?:[.,]\d+)?/g;
 const SAFE_BUSINESS_ACRONYMS = new Set([
   'AI',
+  'GDPR',
+  'RODO',
   'CEO',
   'CFO',
   'EUR',

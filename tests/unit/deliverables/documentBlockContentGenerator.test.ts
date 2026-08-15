@@ -101,8 +101,8 @@ describe('documentBlockContentGenerator — normalizery', () => {
     expect(r.rows as any[]).toHaveLength(2);
     expect(r.columns).toEqual(['a', 'b']);
     expect(r.rows).toEqual([
-      ['1', '2'],
-      ['3', ''],
+      { cells: { a: { value: '1' }, b: { value: '2' } } },
+      { cells: { a: { value: '3' }, b: { value: '' } } },
     ]);
   });
 
@@ -121,8 +121,25 @@ describe('documentBlockContentGenerator — normalizery', () => {
     });
     expect(r).toEqual({
       columns: ['Ryzyko', 'Wpływ', 'Mitygacja'],
-      rows: [['Brak danych', 'Wysoki', 'Walidacja']],
+      rows: [
+        {
+          cells: {
+            Ryzyko: { value: 'Brak danych' },
+            Wpływ: { value: 'Wysoki' },
+            Mitygacja: { value: 'Walidacja' },
+          },
+        },
+      ],
     });
+  });
+
+  it('Table: preserves semantic cell background colors in the canonical keyed shape', () => {
+    const r = mod.normalizeTableContent({
+      rows: [{ cells: { status: { value: 'High', style: { bgColor: '#DC2626' } } } }],
+    });
+    expect(r.rows).toEqual([
+      { cells: { status: { value: 'High', style: { bgColor: '#DC2626' } } } },
+    ]);
   });
 
   it('BETA: deterministycznie usuwa dokładny zestaw niepopartych liczb i named claim', () => {
