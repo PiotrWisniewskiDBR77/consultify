@@ -588,6 +588,41 @@
       "taskId": "CLEAN-002-DATA-005",
       "evidenceRule": "The recovered scripts embed obsolete TROLLEY observations and direct destructive paths for Piotr's DBR77 interviews and demo-session organizations. Although dry-run is the default and confirmations exist, writes delete live rows without a single pinned transaction, recovery manifest, exact immutable candidate checksum, post-write rollback protocol or current authorized production target contract.",
       "nextAction": "Never execute or restore these scripts. If data hygiene is still required, create a new read-only audit against the current authorized target and a separately reviewed transactional recovery packet; retain the recovery ref as rejected evidence until CLEAN-003."
+    },
+    {
+      "tip": "0b62aca03cc06466e622862c7f7a171a446380d4",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MAT-011",
+      "evidenceRule": "Both recovered PPTX proof scripts are byte-equivalent to the current canonical files. The accompanying July 14 proof note recorded an obsolete 7/10 run with eight render errors and is not valid evidence for the current substantially newer presentation runtime.",
+      "nextAction": "Keep the canonical proof scripts and generate a new exact-SHA presentation evidence packet; do not restore the stale point-in-time scorecard. Retain the recovery ref until CLEAN-003."
+    },
+    {
+      "tip": "2c6e6a0e6aadd661a327abc2b2c2707109f052b2",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MYW-009",
+      "evidenceRule": "The recovered dev-render story proved relation pills in Inbox and Decisions. The later canonical My Work implementations preserve the same open-linked-task and open-linked-decision callbacks with human labels, while the current acceptance packet owns real signed-in click proof instead of a dev-only renderer.",
+      "nextAction": "Do not restore a parallel dev-render fixture. Execute both relation navigation paths in the My Work signed-in packet and retain the recovery ref until CLEAN-003."
+    },
+    {
+      "tip": "311554e1c81ed9512a475f034968bdad4af010b2",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MAT-012",
+      "evidenceRule": "All three recovered DOCX/PDF golden-test paths exist in the canonical tree and have subsequently expanded to cover the newer renderer contract, list semantics, chart provisioning and export fidelity. Replaying the older snapshots would reduce coverage.",
+      "nextAction": "Keep the newer golden suites and include them in the Materials shard and exact-SHA export packet; retain the recovery ref until CLEAN-003."
+    },
+    {
+      "tip": "326ca36fb9c2d19e88bc0971f1e6d750dbcb17a9",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-UI-007",
+      "evidenceRule": "The recovered density hook was installed under the ignored .claude tree. The current canonical implementation deliberately moved it to tracked scripts/check-gestosc.sh, wires it through package.json check:gestosc/check:ui and documents the zero-file false-green caveat, making the repository-owned gate portable across agents and CI.",
+      "nextAction": "Keep the tracked repository gate and require explicit changed-file inputs in final acceptance. Do not restore ignored local Claude settings as product infrastructure; retain the recovery ref until CLEAN-003."
+    },
+    {
+      "tip": "4dd597de012746c51e7e7711273f443d6dfffe2b",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MAT-013",
+      "evidenceRule": "The recovered themed bundle PPTX runtime and export wiring are present in the canonical tree. The current renderer is over six hundred lines beyond the recovered snapshot and is consumed by bundle export, initiatives materialization and dedicated chart/style tests, so the recovered slice is a strict predecessor rather than missing work.",
+      "nextAction": "Keep the current renderer and validate generated PPTX visually and structurally at the final candidate SHA; retain the recovery ref until CLEAN-003."
     }
   ]
 }

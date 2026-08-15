@@ -13,12 +13,12 @@
     "total": 224,
     "referenceHarnessOnly": 18,
     "representedSuperseded": 48,
-    "representedCanonical": 19,
+    "representedCanonical": 24,
     "rejectedDestructiveSnapshot": 3,
     "integratedCanonical": 14,
     "candidateIntegration": 0,
     "ownerDecisionRequired": 0,
-    "semanticReviewRequired": 122,
+    "semanticReviewRequired": 117,
     "deletionAuthorized": 0
   },
   "rows": [
@@ -222,12 +222,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 3,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MAT-011",
       "recoveryRef": "refs/recovery/unknown-20260815/0b62aca03cc06466e622862c7f7a171a446380d4",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "Both recovered PPTX proof scripts are byte-equivalent to the current canonical files. The accompanying July 14 proof note recorded an obsolete 7/10 run with eight render errors and is not valid evidence for the current substantially newer presentation runtime.",
+      "nextAction": "Keep the canonical proof scripts and generate a new exact-SHA presentation evidence packet; do not restore the stale point-in-time scorecard. Retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "0b7a7ed73f83c4a36735160fdf96d497fdf030dd",
@@ -827,12 +827,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 3,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MYW-009",
       "recoveryRef": "refs/recovery/unknown-20260815/2c6e6a0e6aadd661a327abc2b2c2707109f052b2",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered dev-render story proved relation pills in Inbox and Decisions. The later canonical My Work implementations preserve the same open-linked-task and open-linked-decision callbacks with human labels, while the current acceptance packet owns real signed-in click proof instead of a dev-only renderer.",
+      "nextAction": "Do not restore a parallel dev-render fixture. Execute both relation navigation paths in the My Work signed-in packet and retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "2cd4c674b88b6ef051b163bf82a9bb899458a89d",
@@ -948,12 +948,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 3,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MAT-012",
       "recoveryRef": "refs/recovery/unknown-20260815/311554e1c81ed9512a475f034968bdad4af010b2",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "All three recovered DOCX/PDF golden-test paths exist in the canonical tree and have subsequently expanded to cover the newer renderer contract, list semantics, chart provisioning and export fidelity. Replaying the older snapshots would reduce coverage.",
+      "nextAction": "Keep the newer golden suites and include them in the Materials shard and exact-SHA export packet; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "31218a1a81c4375ab05f56ae5ad157858af0f4f4",
@@ -981,12 +981,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 3,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-UI-007",
       "recoveryRef": "refs/recovery/unknown-20260815/326ca36fb9c2d19e88bc0971f1e6d750dbcb17a9",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered density hook was installed under the ignored .claude tree. The current canonical implementation deliberately moved it to tracked scripts/check-gestosc.sh, wires it through package.json check:gestosc/check:ui and documents the zero-file false-green caveat, making the repository-owned gate portable across agents and CI.",
+      "nextAction": "Keep the tracked repository gate and require explicit changed-file inputs in final acceptance. Do not restore ignored local Claude settings as product infrastructure; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "32ac8e2a186322dfc6e0d8db6159d9bb6725f6d2",
@@ -1628,12 +1628,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 3,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MAT-013",
       "recoveryRef": "refs/recovery/unknown-20260815/4dd597de012746c51e7e7711273f443d6dfffe2b",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered themed bundle PPTX runtime and export wiring are present in the canonical tree. The current renderer is over six hundred lines beyond the recovered snapshot and is consumed by bundle export, initiatives materialization and dedicated chart/style tests, so the recovered slice is a strict predecessor rather than missing work.",
+      "nextAction": "Keep the current renderer and validate generated PPTX visually and structurally at the final candidate SHA; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "4ebb0330a37d9b773f0ceff65b7c7800707384f6",
