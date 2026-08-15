@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "gate": "LOCAL-BROWSER-16",
+  "candidateSha": "25adb32518dfde2cc17e3d5db7b2f6c7b955ffd7",
+  "verdict": "PASS_32_OF_32",
+  "runtime": {
+    "frontend": "http://127.0.0.1:3210",
+    "backend": "http://127.0.0.1:3211",
+    "database": "disposable pgvector PostgreSQL 16",
+    "freshMigrationsApplied": 718,
+    "readyBuildSha": "25adb32518dfde2cc17e3d5db7b2f6c7b955ffd7",
+    "healthGitSha": "25adb32518dfde2cc17e3d5db7b2f6c7b955ffd7",
+    "sqlMigrationLedger": {
+      "state": "ok",
+      "failed": 0,
+      "skipped": 0,
+      "pending": 0,
+      "unexplainedDrift": 0
+    },
+    "tablePlatformMigrationLedger": {
+      "state": "ok",
+      "appliedAtFinalRestart": 0,
+      "alreadyUpToDate": 576
+    }
+  },
+  "fixture": {
+    "kind": "governed normal OWNER",
+    "organizationId": "a3e05d4a-5397-419d-b486-8e44366c0063",
+    "role": "OWNER",
+    "status": "active",
+    "normalLogin": true,
+    "tokenInjection": false,
+    "routeInterception": false,
+    "fixtureStatements": 73,
+    "v8TenantFlagReadback": true,
+    "piotrActiveOwnerReadback": true
+  },
+  "matrix": {
+    "modules": 16,
+    "deviceProjects": ["owner-desktop", "owner-mobile"],
+    "tests": 32,
+    "passed": 32,
+    "failed": 0,
+    "durationMinutes": 4.7,
+    "screenshots": 32,
+    "runtimeJsonRecords": 32,
+    "consoleErrors": 0,
+    "failedRequests": 0,
+    "unexpectedApiResponses": 0,
+    "blockingA11yViolations": 0,
+    "headingFailures": 0,
+    "horizontalOverflowFailures": 0,
+    "disabledShellFailures": 0,
+    "stuckLoadingFailures": 0
+  },
+  "classifiedNavigationAborts": [
+    {
+      "module": "01-chat",
+      "project": "owner-desktop",
+      "count": 2,
+      "transport": "socket.io polling",
+      "error": "net::ERR_ABORTED",
+      "phase": "reload",
+      "classification": "EXPECTED_RELOAD_CAUSED_ABORT"
+    }
+  ],
+  "evidence": {
+    "playwrightJson": "docs/program/gates/evidence/local-browser-16-25adb3251/playwright-results.json",
+    "runtimeDirectory": "docs/program/gates/evidence/local-browser-16-25adb3251/runtime",
+    "runtimeJsonPattern": "runtime/{owner-desktop,owner-mobile}/{01-chat..16-partner-portal}.json",
+    "screenshotPattern": "runtime/{owner-desktop,owner-mobile}/{01-chat..16-partner-portal}.png"
+  },
+  "nonClaims": [
+    "This is local disposable-stack browser evidence, not deployed demo or production evidence.",
+    "Screenshots plus automated density, overflow, heading and Axe checks prove the browser contract; they do not constitute signed subjective brand approval."
+  ]
+}
