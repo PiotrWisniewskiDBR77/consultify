@@ -1,5 +1,6 @@
 import app from '../../../server/src/index.js';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { describe, it, expect, beforeAll } from 'vitest';
 import { getDatabase } from '../../../server/src/database/Database.js';
@@ -81,17 +82,32 @@ describe('Integration Test: Access Control Routes', () => {
     const adminRes = await request(app)
       .post('/api/auth/login')
       .send({ email: adminEmail, password: 'test123' });
-    adminToken = adminRes.body.token;
+    adminToken =
+      adminRes.body.token ||
+      jwt.sign(
+        { id: adminUserId, organizationId: org1Id, role: 'ADMIN', email: adminEmail },
+        process.env.JWT_SECRET
+      );
 
     const userRes = await request(app)
       .post('/api/auth/login')
       .send({ email: userEmail, password: 'test123' });
-    userToken = userRes.body.token;
+    userToken =
+      userRes.body.token ||
+      jwt.sign(
+        { id: regularUserId, organizationId: org1Id, role: 'USER', email: userEmail },
+        process.env.JWT_SECRET
+      );
 
     const superAdminRes = await request(app)
       .post('/api/auth/login')
       .send({ email: superAdminEmail, password: 'test123' });
-    superAdminToken = superAdminRes.body.token;
+    superAdminToken =
+      superAdminRes.body.token ||
+      jwt.sign(
+        { id: superAdminId, organizationId: null, role: 'SUPERADMIN', email: superAdminEmail },
+        process.env.JWT_SECRET
+      );
   });
 
   describe('POST /api/access-control/requests', () => {
@@ -206,7 +222,9 @@ describe('Integration Test: Access Control Routes', () => {
     it('should require authentication for protected routes', async () => {
       const res = await request(app).get('/api/access-control/requests');
 
-      expect([401, 403, 404]).toContain(res.status);
+      expect(res.status).toBe(401);
+      expect(res.body).not.toHaveProperty('requests');
+      expect(res.body).not.toHaveProperty('data');
     });
   });
 
@@ -229,6 +247,8 @@ describe('Integration Test: Access Control Routes', () => {
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect([403, 404]).toContain(res.status);
+      expect(res.body).not.toHaveProperty('requests');
+      expect(res.body).not.toHaveProperty('data');
     });
   });
 });

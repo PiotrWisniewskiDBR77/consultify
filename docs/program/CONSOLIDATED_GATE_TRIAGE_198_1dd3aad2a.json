@@ -1,0 +1,77 @@
+{
+  "gate": "CONSOLIDATED_GATE_TRIAGE_198",
+  "candidateSha": "1dd3aad2aca9570799632c305e8d4eae8e8a2639",
+  "triageSource": "docs/program/CONSOLIDATED_GATE_1_TRIAGE_ce6555c33.json",
+  "generatedAt": "2026-08-16T00:39:00+02:00",
+  "discovery": {
+    "expectedFiles": 198,
+    "discoveredFiles": 198,
+    "missingFiles": 0,
+    "unexpectedFiles": 0,
+    "priorityFiles": { "P0": 12, "P1": 104, "P2": 82 }
+  },
+  "result": {
+    "unexpectedFailures": 0,
+    "executedPassFiles": 145,
+    "explicitPendingFiles": 53,
+    "executedPassAssertions": 1363,
+    "explicitPendingAssertions": 254,
+    "priorities": {
+      "P0": {
+        "files": 12,
+        "executedPassFiles": 12,
+        "explicitPendingFiles": 0,
+        "executedPassAssertions": 45,
+        "explicitPendingAssertions": 0,
+        "realDbReplacementFiles": 3
+      },
+      "P1": {
+        "files": 104,
+        "executedPassFiles": 102,
+        "explicitPendingFiles": 2,
+        "executedPassAssertions": 1177,
+        "explicitPendingAssertions": 13,
+        "realDbReplacementFiles": 0
+      },
+      "P2": {
+        "files": 82,
+        "executedPassFiles": 31,
+        "explicitPendingFiles": 51,
+        "executedPassAssertions": 141,
+        "explicitPendingAssertions": 241,
+        "realDbReplacementFiles": 25
+      }
+    }
+  },
+  "execution": {
+    "standard": {
+      "command": "npx vitest run --config vitest.config.ts --no-file-parallelism --retry=0 --bail=0 <priority allowlist>",
+      "environment": "DATABASE_URL, DATABASE_PUBLIC_URL, DB_TYPE, RUN_DB_TESTS and MOCK_DB unset; DOTENV_IGNORE_LOCAL=1",
+      "P0": { "files": 12, "passedAssertions": 32, "databaseRoutedAssertions": 13, "pendingAssertions": 0 },
+      "P1": { "files": 104, "passedAssertions": 1177, "failedAssertions": 0, "pendingAssertions": 13 },
+      "P2": { "files": 82, "passedAssertions": 57, "realDbRoutedAssertions": 53, "pendingAssertions": 241 }
+    },
+    "realDb": {
+      "engine": "pgvector/pgvector:pg16",
+      "database": "fresh disposable PostgreSQL",
+      "migrations": { "expected": 718, "applied": 718, "status": "PASS" },
+      "replacementFiles": 28,
+      "P0": { "files": 3, "passedAssertions": 13, "failedAssertions": 0 },
+      "P2": { "files": 25, "passedAssertions": 84, "failedAssertions": 0 }
+    }
+  },
+  "contractAlignments": [
+    {
+      "file": "tests/integration/chat-projects/chat-projects.conversations.move-remove.test.ts",
+      "change": "Positive team-project move names the creator and resolves contributor permission; negative proves an organization peer without manage_thread receives 403 and performs no write.",
+      "focused": { "tests": 6, "passed": 6, "failed": 0 }
+    },
+    {
+      "file": "tests/integration/routes/access-control.test.js",
+      "change": "Tokens are deterministic when login is unavailable; unauthenticated access proves 401 with no data leak, while authenticated ADMIN proves 403/404 with no data leak.",
+      "focusedRealDb": { "tests": 9, "passed": 9, "failed": 0 }
+    }
+  ],
+  "verdict": "PASS_WITH_EXPLICIT_PENDING",
+  "scopeNote": "This is the consolidated rerun of the 198 triaged records only; the full 4093-file gate and dedicated performance-memory gate were not run."
+}
