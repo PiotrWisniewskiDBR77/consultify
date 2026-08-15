@@ -434,8 +434,11 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
   `14d65703a` i potwierdzona przez 5 plików / 37 testów oraz server typecheck.
   Następnie odzyskana naprawa PostgreSQL dla bottlenecków decyzji została
   zintegrowana w `d3be120e1`; unit contract 19/19 i server typecheck są zielone,
-  a realDB test wymaga teraz jawnego HTTP 200. Pozostałe 201 nadal wymagają
-  review. Te 18 pozostaje zachowanym materiałem
+  a realDB test wymaga teraz jawnego HTTP 200. Odzyskana widoczność
+  zatwierdzonych sesji Tools została zintegrowana w `9be10e6eb`; kontrakt
+  widoczności oraz istniejący hub gate dają 2 pliki / 44 testy, a frontend
+  typecheck jest zielony. Pozostałe 200 nadal wymaga review. Te 18 pozostaje
+  zachowanym materiałem
   UX/prototypowym, ale nie
   jest kodem produkcyjnym do merge. Generator mechanicznie egzekwuje warunek
   ścieżek, unikalność, sumy i deterministyczny output; nadal

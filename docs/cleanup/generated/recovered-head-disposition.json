@@ -13,8 +13,8 @@
     "total": 224,
     "referenceHarnessOnly": 18,
     "representedSuperseded": 3,
-    "integratedCanonical": 2,
-    "semanticReviewRequired": 201,
+    "integratedCanonical": 3,
+    "semanticReviewRequired": 200,
     "deletionAuthorized": 0
   },
   "rows": [
@@ -751,12 +751,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 1,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "INTEGRATED_CANONICAL",
+      "taskId": "CLEAN-002-TLS-001",
       "recoveryRef": "refs/recovery/unknown-20260815/273583ca914aec104e3a42da61cd27676b315d4f",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The active Tools Sessions contract requires the combined session dataset. The recovered approved-session visibility and page-size fix was adapted to the current canonical hub in commit 9be10e6eb770e3fe3396018d538df5aae69a5457. A deterministic visibility helper proves status is a filter rather than a data gate; 2 files and 44 tests PASS, frontend typecheck PASS.",
+      "nextAction": "Verify the approved-session row against seeded demo data during the signed-in Tools golden flow; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "281db9bed128889dde40b0f62777c5812e77fd06",
