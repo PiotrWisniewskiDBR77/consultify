@@ -41,8 +41,8 @@ describe('Workflow Scenarios (gatePolicy) - REAL_CODE', () => {
     expect(decision).toEqual(expect.objectContaining({ allow: false, code: 'FORBIDDEN' }));
   });
 
-  it('denies SUBMIT_INTERVIEW from submitted state (invalid state)', () => {
+  it('allows idempotent SUBMIT_INTERVIEW replay from submitted state', () => {
     const decision = evaluateGatePolicy({ ...base, action: 'SUBMIT_INTERVIEW' });
-    expect(decision).toEqual(expect.objectContaining({ allow: false, code: 'INVALID_STATE' }));
+    expect(decision).toEqual({ allow: true });
   });
 });
