@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "gate": "CONSOLIDATED-GATE-1",
+  "candidateSha": "032ca27f71a06256710cb5c7124df73ea11fb8de",
+  "status": "FAIL",
+  "productEditedDuringRun": false,
+  "targeted": {
+    "status": "PASS",
+    "files": 56,
+    "tests": 158,
+    "passed": 158,
+    "failed": 0,
+    "pending": 0
+  },
+  "standard": {
+    "status": "FAIL",
+    "matrixSha256": "6208e26ddb55d5a1839f4499197c5e328cab03157a8a2348e09b93668110c8ca",
+    "files": 4093,
+    "shards": 12,
+    "concurrency": 3,
+    "tests": 40329,
+    "passed": 39419,
+    "failed": 404,
+    "pending": 487,
+    "todo": 19,
+    "nonGreenFiles": 198,
+    "missingFiles": 0,
+    "unexpectedFiles": 0
+  },
+  "failureBuckets": {
+    "legacyJavaScriptRouteAndIntegrationHarnesses": 64,
+    "typescriptIntegrationContracts": 66,
+    "backendUnitAndSecurityContracts": 16,
+    "currentServerRouteAndServiceSuites": 10,
+    "mountedUiAndComponentContracts": 8,
+    "testToolingAndNavigationContracts": 4,
+    "otherUnitHooksAndContracts": 30
+  },
+  "rootTypecheck": {
+    "status": "FAIL",
+    "errors": 3
+  },
+  "serverTypecheck": {
+    "status": "FAIL",
+    "errors": 21,
+    "primaryFile": "server/src/routes/v8/partner.routes.ts"
+  },
+  "productionBuild": {
+    "status": "PASS",
+    "durationSeconds": 73
+  },
+  "performanceMemoryLeak": {
+    "status": "PENDING",
+    "execution": "dedicated-performance-runtime"
+  }
+}
