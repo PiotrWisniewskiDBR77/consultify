@@ -6,6 +6,7 @@ import path from 'node:path';
 import { Pool } from 'pg';
 
 import { adaptQuery } from '../database/PostgresDatabase.js';
+import { seedT01FinalOutputFixture } from './fixtures/t01FinalOutputFixture.js';
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) throw new Error('DATABASE_URL is required');
@@ -216,11 +217,16 @@ async function bootstrapU02OwnerSchema() {
 }
 
 async function main() {
+  await seedT01FinalOutputFixture(pool);
   await bootstrapU02OwnerSchema();
   (globalThis as Record<string, unknown>).__CONSULTIFY_GLOBAL_DB_INSTANCE__ = proofDb;
   (process as unknown as Record<string, unknown>).__CONSULTIFY_GLOBAL_DB_INSTANCE__ = proofDb;
-  const { coldReopenNativeFinalReport, generateFinalOutputs, getLatestFinalOutputRun, prepareFinalOutputPublication } =
-    await import('../services/v8/transformationFinalOutputService.js');
+  const {
+    coldReopenNativeFinalReport,
+    generateFinalOutputs,
+    getLatestFinalOutputRun,
+    prepareFinalOutputPublication,
+  } = await import('../services/v8/transformationFinalOutputService.js');
   const { registerRuntimeCapability, reportRuntimeEvidence } =
     await import('../services/v8/transformationRuntimeCapabilityService.js');
   const { reviewProposalScope, requestProposalRevision } =
@@ -249,7 +255,9 @@ async function main() {
     preApprovalCounts.links !== 0 ||
     preApprovalCounts.audits !== 0
   )
-    throw new Error(`Pre-approval publication was not fail-closed: ${JSON.stringify({ preApprovalCode, preApprovalCounts })}`);
+    throw new Error(
+      `Pre-approval publication was not fail-closed: ${JSON.stringify({ preApprovalCode, preApprovalCounts })}`
+    );
   const publication = await prepareFinalOutputPublication(params);
   let unauthorizedCode = '';
   try {
@@ -347,7 +355,8 @@ async function main() {
     !parsedDocx.value.includes(coldReport.report.title) ||
     !parsedDocx.value.includes('Skrócić') ||
     !ownerNarrative.includes('Skrócić')
-  ) throw new Error('AGT-003 generated DOCX does not reopen with owner narrative content');
+  )
+    throw new Error('AGT-003 generated DOCX does not reopen with owner narrative content');
   // U02-A links: run + native report + report version + deck + deck version + both export hashes.
   if (counts.manifests !== 1 || counts.links !== 7 || counts.audits !== 1)
     throw new Error(`Final output persistence proof failed: ${JSON.stringify(counts)}`);
@@ -355,7 +364,8 @@ async function main() {
   // ── U02-A: native owner artifacts, immutable versions and registry receipts ──
   const native = first.native;
   const replayNative = replay.native;
-  if (!native || !replayNative) throw new Error('U02 native artifact references missing from manifest');
+  if (!native || !replayNative)
+    throw new Error('U02 native artifact references missing from manifest');
   if (canonicalNative(native) !== canonicalNative(replayNative))
     throw new Error(
       `U02 replay returned different native versions: ${JSON.stringify({ native, replayNative })}`
@@ -495,9 +505,10 @@ async function main() {
     await pool.query(`SELECT deck_json FROM presentation_decks WHERE id=$1`, [native.deckId])
   ).rows[0].deck_json;
   const factsBeforeEdit = (
-    await pool.query(`SELECT facts_digest,facts_json FROM transformation_final_output_runs WHERE run_id=$1`, [
-      first.runId,
-    ])
+    await pool.query(
+      `SELECT facts_digest,facts_json FROM transformation_final_output_runs WHERE run_id=$1`,
+      [first.runId]
+    )
   ).rows[0];
   await pool.query(
     `UPDATE report_builder_sections SET edited_content=$2,updated_at=NOW()
@@ -518,7 +529,9 @@ async function main() {
     afterEdit.facts_digest !== factsBeforeEdit.facts_digest ||
     String(afterEdit.version_snapshot).includes('Zredagowane podsumowanie zarządcze.')
   )
-    throw new Error('U02 native edit leaked into canonical facts, the immutable version or the deck');
+    throw new Error(
+      'U02 native edit leaked into canonical facts, the immutable version or the deck'
+    );
   await pool.query(
     `UPDATE report_builder_sections SET edited_content=NULL WHERE report_id=$1 AND order_index=0`,
     [native.reportId]
@@ -641,7 +654,11 @@ async function main() {
       (SELECT COUNT(*)::int FROM transformation_case_artifact_links WHERE lifecycle_stage='final_outputs') links,
       (SELECT COUNT(*)::int FROM transformation_case_audit_events WHERE event_type='transformation_final_outputs.generated') audits`)
   ).rows[0];
-  if (postNegativeCounts.manifests !== 1 || postNegativeCounts.links !== 7 || postNegativeCounts.audits !== 1)
+  if (
+    postNegativeCounts.manifests !== 1 ||
+    postNegativeCounts.links !== 7 ||
+    postNegativeCounts.audits !== 1
+  )
     throw new Error(`Blocked digest produced side effects: ${JSON.stringify(postNegativeCounts)}`);
 
   // A blocked or changed digest must also leave the native owner artifacts alone.
@@ -687,7 +704,9 @@ async function main() {
     },
   });
   if (capability.derivedStatus !== 'REAL' || capability.ownerModule !== 'report_builder')
-    throw new Error(`AGT-003 bounded capability registry readback failed: ${JSON.stringify(capability)}`);
+    throw new Error(
+      `AGT-003 bounded capability registry readback failed: ${JSON.stringify(capability)}`
+    );
 
   console.log(
     JSON.stringify({
