@@ -106,7 +106,7 @@ export const projectCanonicalInitiativeRegisterRow = (record: RegisteredInitiati
     impactConfidence: 'UNKNOWN',
     plannedWindow: null,
     healthState: lifecycle === 'IN_EXECUTION' ? 'UNKNOWN' : 'N/A',
-    sourceFreshness: record.initiative.source.freshness || 'UNKNOWN',
+    sourceFreshness: record.initiative.source?.freshness || 'UNKNOWN',
     updatedAt: record.updatedAt,
   } as const;
 };
@@ -153,8 +153,8 @@ export const toCanonicalInitiativeRegisterItem = (
     progress: undefined as unknown as number,
     budget: undefined as unknown as number,
     projectId: initiative.projectId,
-    sourceId: initiative.source.sourceId,
-    sourceType: initiative.source.sourceType,
+    sourceId: initiative.source?.sourceId,
+    sourceType: initiative.source?.sourceType,
     ownerBusiness: ownerId
       ? {
           id: ownerId,

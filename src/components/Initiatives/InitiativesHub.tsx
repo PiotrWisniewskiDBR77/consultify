@@ -2210,6 +2210,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
   return (
     <div className="h-full" data-testid="initiatives-hub">
+      <h1 className="sr-only">{t('initiatives.title', 'Initiatives')}</h1>
       <StandardModuleBar
         tabs={tabs}
         activeTab={activeTab}

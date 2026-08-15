@@ -70,6 +70,14 @@ describe('canonical Initiative register projection', () => {
     expect(row.nextAction).toBe('Monitoruj realizację');
   });
 
+  it('keeps freshness UNKNOWN when a legacy read model has no source lineage object', () => {
+    const row = projectCanonicalInitiativeRegisterRow(record({ source: undefined }) as any);
+    expect(row.sourceFreshness).toBe('UNKNOWN');
+    const item = toCanonicalInitiativeRegisterItem(record({ source: undefined }) as any);
+    expect(item.sourceId).toBeUndefined();
+    expect(item.sourceType).toBeUndefined();
+  });
+
   it('renders a recognizable owner label instead of exposing a raw principal identifier', () => {
     const currentOwner = toCanonicalInitiativeRegisterItem(
       record({ initiativeOwnerId: 'd2b6a316-08c5-47cf-9bf7-4ba50311d5a2' }) as any,
