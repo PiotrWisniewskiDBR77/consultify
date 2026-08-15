@@ -82,12 +82,12 @@ describe('beta gating — MODULE_MEETING (Meeting) is closed (src/utils/betaAcce
   });
 });
 
-describe('beta gating — MODULE_ECONOMICS (Finance) is GA / open (M16 per D-A GA-set)', () => {
-  it('MODULE_ECONOMICS is registered as an open beta (badge only, not locked)', () => {
-    expect(BETA_MENU_STATUS.MODULE_ECONOMICS).toBe('open');
-    expect(getBetaStatus('MODULE_ECONOMICS')).toBe('open');
+describe('beta gating — MODULE_ECONOMICS (Finance) remains closed outside MVP', () => {
+  it('MODULE_ECONOMICS is registered as a closed beta', () => {
+    expect(BETA_MENU_STATUS.MODULE_ECONOMICS).toBe('closed');
+    expect(getBetaStatus('MODULE_ECONOMICS')).toBe('closed');
     expect(isBetaModule('MODULE_ECONOMICS')).toBe(true);
-    expect(isBetaClosed('MODULE_ECONOMICS')).toBe(false);
+    expect(isBetaClosed('MODULE_ECONOMICS')).toBe(true);
   });
 });
 
@@ -135,9 +135,9 @@ describe('lockClosedBetaModules — decorates Meeting menu item with the locked 
     expect(meeting.lockedCode).toBe(BETA_LOCKED_CODE);
     expect(meeting.lockedMessage).toBe('Access restricted');
 
-    // GA (open) modules are left fully accessible
+    // Closed modules remain locked; open document surfaces stay accessible.
     const finance = locked.find((m: any) => m.id === 'MODULE_ECONOMICS');
-    expect(finance.isLocked).toBeUndefined();
+    expect(finance.isLocked).toBe(true);
     const docs = locked.find((m: any) => m.id === 'MODULE_PRESENTATIONS');
     expect(docs.isLocked).toBeUndefined();
 

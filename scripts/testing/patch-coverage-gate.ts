@@ -151,6 +151,10 @@ function main() {
   console.log(`${COLORS.cyan}╚══════════════════════════════════════════════════════╝${COLORS.reset}\n`);
   console.log(`Threshold: ${threshold}% | Base: ${baseBranch}\n`);
 
+  // Validate the explicitly supplied evidence before any diff-based early exit.
+  // A missing coverage artifact is a configuration failure even when the patch
+  // happens to contain no source files.
+  const coverageMap = loadCoverageMap(coverageJson);
   const changedFiles = getChangedSourceFiles(baseBranch);
 
   if (changedFiles.length === 0) {
@@ -164,7 +168,6 @@ function main() {
   }
   console.log();
 
-  const coverageMap = loadCoverageMap(coverageJson);
   const results: PatchResult[] = [];
   const uncovered: string[] = [];
 

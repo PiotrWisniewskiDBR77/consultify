@@ -2,6 +2,9 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Api } from '@/services/api';
+
+const t = (_key: string, fallback?: string | { defaultValue?: string }) => (typeof fallback === 'string' ? fallback : fallback?.defaultValue) || _key;
+vi.mock('react-i18next', () => ({ useTranslation: () => ({ t, i18n: { language: 'en' } }) }));
 import { SuperAdminStorageDetailModal } from '@/views/superadmin/SuperAdminStorageDetailModal';
 
 vi.mock('@/services/api', () => ({
@@ -79,7 +82,8 @@ describe('SuperAdminStorageDetailModal honest UI', () => {
     );
 
     await screen.findByText('report.pdf');
-    fireEvent.click(screen.getByRole('button', { name: /Delete file reports\/report\.pdf/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /Permanently Delete/i }));
 
     await waitFor(() => {
       expect(screen.getByText('File deletion was not confirmed by the server')).toBeInTheDocument();
@@ -140,9 +144,8 @@ describe('SuperAdminStorageDetailModal honest UI', () => {
     expect(screen.queryByText('[object Object]')).not.toBeInTheDocument();
     expect(screen.getByText('0 B')).toBeInTheDocument();
     expect(screen.getByText('Unknown date')).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: /Delete file reports\/wrapped\.pdf/i })
-    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    expect(screen.getByRole('menuitem', { name: /Permanently Delete/i })).toBeInTheDocument();
     expect(screen.queryByText('Organization files unavailable')).not.toBeInTheDocument();
   });
 

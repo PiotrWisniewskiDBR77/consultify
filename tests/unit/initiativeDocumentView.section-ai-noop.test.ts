@@ -33,12 +33,12 @@ const SOURCE_PATH = path.resolve(
 /** Extract the string literals inside the `new Set<string>([ ... ])` passed to the
  *  SECTION_AI_NOOP useMemo. Returns a Set of those literal values. */
 function parseSectionAiNoop(source: string): Set<string> {
-  const anchor = source.indexOf('SECTION_AI_NOOP');
+  const anchor = source.indexOf('const SECTION_AI_NOOP_IDS');
   expect(anchor, 'SECTION_AI_NOOP declaration must exist').toBeGreaterThan(-1);
 
   // Find the `new Set<string>([` that follows the declaration, then its closing `])`.
-  const setOpen = source.indexOf('new Set<string>([', anchor);
-  expect(setOpen, 'SECTION_AI_NOOP must initialize a new Set<string>([...])').toBeGreaterThan(-1);
+  const setOpen = source.indexOf('new Set([', anchor);
+  expect(setOpen, 'SECTION_AI_NOOP must initialize a new Set([...])').toBeGreaterThan(-1);
   const arrStart = source.indexOf('[', setOpen);
   const arrEnd = source.indexOf('])', arrStart);
   expect(arrEnd, 'SECTION_AI_NOOP set literal must be closed').toBeGreaterThan(arrStart);

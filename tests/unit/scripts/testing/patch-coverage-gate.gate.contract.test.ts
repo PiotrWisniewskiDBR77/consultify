@@ -37,7 +37,11 @@ describe('patch-coverage-gate contract', () => {
 
   it('fails closed with exit code 2 and absolute missing coverage path evidence', () => {
     const missingPath = 'test-results/_gate-contract-patch-coverage/__missing_coverage__.json';
-    const run = runPatchCoverageGate(['--coverage-json', missingPath]);
+    const rootCommit = execFileSync('git', ['rev-list', '--max-parents=0', 'HEAD'], {
+      cwd: repoRoot,
+      encoding: 'utf-8',
+    }).trim();
+    const run = runPatchCoverageGate(['--coverage-json', missingPath, '--base', rootCommit]);
     const output = `${run.stdout}\n${run.stderr}`;
     const resolved = path.resolve(repoRoot, missingPath);
 

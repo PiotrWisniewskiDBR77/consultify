@@ -3,6 +3,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ModelCatalogTable } from '@/components/SuperAdmin/ModelRegistry/ModelCatalogTable';
 
+const t = (_key: string, fallback?: string | { defaultValue?: string }) => (typeof fallback === 'string' ? fallback : fallback?.defaultValue) || _key;
+vi.mock('react-i18next', () => ({ useTranslation: () => ({ t, i18n: { language: 'en' } }) }));
+
 vi.mock('@/services/funnelAnalytics', () => ({
   trackFunnelEvent: vi.fn(),
 }));
@@ -62,7 +65,7 @@ describe('ModelCatalogTable honest workflows', () => {
     expect(screen.getByText('Providers down')).toBeInTheDocument();
     expect(screen.queryByText('No models match your filters')).not.toBeInTheDocument();
     expect(screen.queryByText('Total')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Add Model/i })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: /Add Model/i })).not.toBeInTheDocument();
   });
 
   it('refetches providers after activation changes instead of optimistic local state', async () => {
@@ -72,8 +75,8 @@ describe('ModelCatalogTable honest workflows', () => {
       expect(screen.getByText('OpenRouter GPT-4o')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /Actions for OpenRouter GPT-4o/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Deactivate/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /Deactivate/i }));
 
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledWith(

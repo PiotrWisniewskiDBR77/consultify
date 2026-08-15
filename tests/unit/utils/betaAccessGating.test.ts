@@ -16,9 +16,8 @@ import {
 } from '../../../src/utils/betaAccess';
 
 describe('M03 L-01 — beta gating', () => {
-  it('MYWORK_IDEAS current config is open → sub-area not closed', () => {
-    // Product decision lives in betaAccess SSOT; today it is 'open'.
-    expect(isBetaSubareaClosed('MYWORK_IDEAS')).toBe(false);
+  it('MYWORK_IDEAS current config is closed', () => {
+    expect(isBetaSubareaClosed('MYWORK_IDEAS')).toBe(true);
   });
 
   it('unknown sub-area ids are treated as not-closed', () => {
@@ -45,11 +44,9 @@ describe('M03 L-01 — beta gating', () => {
   });
 
   it('effective lock requires BOTH closed sub-area AND non-exempt role', () => {
-    // MYWORK_IDEAS is open today → effective lock is false for every role,
-    // mirroring MyWorkHub: isBetaSubareaClosed(...) && isBetaLockedForRole(...).
     const effective = (role: string | null) =>
       isBetaSubareaClosed('MYWORK_IDEAS') && isBetaLockedForRole(role);
-    expect(effective('member')).toBe(false);
+    expect(effective('member')).toBe(true);
     expect(effective('admin')).toBe(false);
   });
 });

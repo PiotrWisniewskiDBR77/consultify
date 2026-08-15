@@ -9,6 +9,15 @@ import { ProposalCard } from '../../../src/components/DiscoveryTools/shared/Prop
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
+    t: (key: string) =>
+      ({
+        'discoveryToolsSteps.proposalCard.accept': 'Accept',
+        'discoveryToolsSteps.proposalCard.commentAndRethink': 'Comment & rethink',
+        'discoveryToolsSteps.proposalCard.rethink': 'Rethink',
+        'discoveryToolsSteps.proposalCard.reject': 'Reject',
+        'discoveryToolsSteps.proposalCard.feedbackPlaceholder': 'Your feedback for AI',
+        'discoveryToolsSteps.proposalCard.rethinkShort': 'Send',
+      })[key] || key,
     i18n: { language: 'en' },
   }),
 }));
@@ -69,10 +78,10 @@ describe('ProposalCard', () => {
     fireEvent.click(screen.getByLabelText('Row actions'));
     fireEvent.click(screen.getByRole('menuitem', { name: 'Comment & rethink' }));
 
-    fireEvent.change(screen.getByPlaceholderText('Your feedback for AI...'), {
+    fireEvent.change(screen.getByPlaceholderText('Your feedback for AI'), {
       target: { value: 'Make it more concrete' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Rethink' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
 
     await waitFor(() => {
       expect(onRethink).toHaveBeenCalledWith('move', 'card-2', 'Make it more concrete');

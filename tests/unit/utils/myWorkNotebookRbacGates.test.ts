@@ -89,10 +89,9 @@ describe('M03/M04 RBAC gates — explicit allow/deny', () => {
       expect(isIdeasTabLocked('VIEWER')).toBe(true);
     });
 
-    it('does not lock Ideas for staff/admins under the current open-beta config', () => {
-      // Current SSOT: MYWORK_IDEAS='open' → no beta lock; non-pilot staff pass.
-      expect(isBetaSubareaClosed('MYWORK_IDEAS')).toBe(false);
-      expect(isIdeasTabLocked('CONSULTANT')).toBe(false);
+    it('locks Ideas for staff but preserves the closed-beta admin exemption', () => {
+      expect(isBetaSubareaClosed('MYWORK_IDEAS')).toBe(true);
+      expect(isIdeasTabLocked('CONSULTANT')).toBe(true);
       expect(isIdeasTabLocked('ADMIN')).toBe(false);
     });
 

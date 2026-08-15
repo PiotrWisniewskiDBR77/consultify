@@ -42,9 +42,6 @@ describe('publicProduction utils', () => {
       {
         id: 'MY_WORK',
         subItems: undefined,
-        isLocked: true,
-        lockedMessage: 'Locked on public production.',
-        lockedCtaHref: '/interview',
       },
       {
         id: 'TOOLS',

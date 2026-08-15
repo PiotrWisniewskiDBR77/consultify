@@ -5,6 +5,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { IPWhitelistView } from '@/views/superadmin/security/IPWhitelistView';
 import { Api } from '@/services/api';
 
+const t = (_key: string, fallback?: string | { defaultValue?: string }) => (typeof fallback === 'string' ? fallback : fallback?.defaultValue) || _key;
+vi.mock('react-i18next', () => ({ useTranslation: () => ({ t, i18n: { language: 'en' } }) }));
+
 vi.mock('@/services/api', () => ({
   Api: {
     addIPWhitelist: vi.fn(),
@@ -115,7 +118,8 @@ describe('IPWhitelistView honest UI', () => {
     render(<IPWhitelistView />);
 
     await screen.findByText('10.0.0.1');
-    fireEvent.click(screen.getByRole('button', { name: /Remove IP 10\.0\.0\.1/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /Delete/i }));
 
     await waitFor(() => {
       expect(
@@ -150,7 +154,8 @@ describe('IPWhitelistView honest UI', () => {
 
     expect(await screen.findByText('10.0.0.1')).toBeInTheDocument();
     expect(screen.getByText('Org One')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Remove IP 10\.0\.0\.1/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    expect(screen.getByRole('menuitem', { name: /Delete/i })).toBeInTheDocument();
   });
 
   it('does not claim remove success when read-back still contains the IP', async () => {
@@ -169,7 +174,8 @@ describe('IPWhitelistView honest UI', () => {
     render(<IPWhitelistView />);
 
     await screen.findByText('10.0.0.1');
-    fireEvent.click(screen.getByRole('button', { name: /Remove IP 10\.0\.0\.1/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /Delete/i }));
 
     await waitFor(() => {
       expect(

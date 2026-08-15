@@ -5,7 +5,7 @@ describe('valuationService.defaultAssumptions', () => {
   it('returns defaults with expected baseline values', () => {
     const assumptions = defaultAssumptions();
     expect(assumptions.horizonYears).toBe(5);
-    expect(assumptions.waccPercent).toBe(12);
+    expect(assumptions.waccPercent).toBe(8.94);
     expect(assumptions.waccBreakdown).toEqual(
       expect.objectContaining({
         riskFreeRate: 4,

@@ -4,6 +4,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AdminCollaborationControlsPanel } from '@/components/Admin/AdminCollaborationControlsPanel';
 import { Api } from '@/services/api';
 
+const t = (_key: string, fallback?: string | { defaultValue?: string }) =>
+  (typeof fallback === 'string' ? fallback : fallback?.defaultValue) || _key;
+vi.mock('react-i18next', () => ({ useTranslation: () => ({ t, i18n: { language: 'en' } }) }));
+
 vi.mock('@/services/api', () => ({
   Api: {
     getAdminCollaborationControls: vi.fn(),

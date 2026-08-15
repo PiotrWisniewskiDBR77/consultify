@@ -1,4 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -6,7 +8,41 @@ import { fileURLToPath } from 'node:url';
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(currentDir, '../../../../');
 const scriptPath = path.resolve(repoRoot, 'scripts/testing/coverage-thresholds.ts');
-const fixturesDir = path.resolve(repoRoot, 'tests/fixtures/coverage');
+let fixturesDir = '';
+
+const l1Files = [
+  'server/src/middleware/auth.middleware.ts',
+  'server/src/middleware/csrf.middleware.ts',
+  'server/src/middleware/permission.middleware.ts',
+  'server/src/middleware/inputSanitization.middleware.ts',
+  'server/src/middleware/rateLimitUserId.middleware.ts',
+  'server/src/middleware/resourceQuota.middleware.ts',
+  'server/src/services/accessPolicyService.ts',
+  'server/src/utils/security.utils.ts',
+];
+
+function coverageMap(covered: boolean) {
+  return Object.fromEntries(
+    l1Files.map((file) => [path.resolve(repoRoot, file), {
+      path: path.resolve(repoRoot, file),
+      statementMap: { '0': { start: { line: 1, column: 0 }, end: { line: 1, column: 1 } } },
+      fnMap: { '0': { name: 'f', decl: { start: { line: 1, column: 0 }, end: { line: 1, column: 1 } }, loc: { start: { line: 1, column: 0 }, end: { line: 1, column: 1 } }, line: 1 } },
+      branchMap: { '0': { type: 'if', line: 1, locations: [{ start: { line: 1, column: 0 }, end: { line: 1, column: 1 } }, { start: { line: 1, column: 0 }, end: { line: 1, column: 1 } }] } },
+      s: { '0': covered ? 1 : 0 },
+      f: { '0': covered ? 1 : 0 },
+      b: { '0': covered ? [1, 1] : [0, 0] },
+    }])
+  );
+}
+
+beforeAll(() => {
+  fixturesDir = fs.mkdtempSync(path.join(os.tmpdir(), 'coverage-gate-contract-'));
+  fs.writeFileSync(path.join(fixturesDir, 'missing-coverage-map.vitest.json'), '{}');
+  fs.writeFileSync(path.join(fixturesDir, 'l1-pass-minimal.vitest.json'), JSON.stringify({ coverageMap: coverageMap(true) }));
+  fs.writeFileSync(path.join(fixturesDir, 'l1-fail-under-threshold.vitest.json'), JSON.stringify({ coverageMap: coverageMap(false) }));
+});
+
+afterAll(() => fs.rmSync(fixturesDir, { recursive: true, force: true }));
 
 function runCoverageThresholds(args: string[]): {
   status: number;
@@ -69,4 +105,3 @@ describe('coverage-thresholds gate contract', () => {
     );
   });
 });
-

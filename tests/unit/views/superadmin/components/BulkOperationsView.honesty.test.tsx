@@ -2,6 +2,9 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Api } from '@/services/api';
+
+const t = (_key: string, fallback?: string | { defaultValue?: string }) => (typeof fallback === 'string' ? fallback : fallback?.defaultValue) || _key;
+vi.mock('react-i18next', () => ({ useTranslation: () => ({ t, i18n: { language: 'en' } }) }));
 import BulkOperationsView from '@/views/superadmin/components/BulkOperationsView';
 
 vi.mock('@/services/api', () => ({
@@ -36,7 +39,7 @@ describe('BulkOperationsView honest UI', () => {
     fireEvent.click(screen.getByRole('button', { name: /Load users/i }));
 
     await waitFor(() => {
-      expect(screen.getByText('Users unavailable')).toBeInTheDocument();
+      expect(screen.getByText('Users API down')).toBeInTheDocument();
     });
 
     expect(screen.queryByText('No users found')).not.toBeInTheDocument();

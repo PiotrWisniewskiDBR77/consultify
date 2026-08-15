@@ -8,6 +8,7 @@ vi.mock('@/services/api', () => ({
 
 vi.mock('@/services/api/v8', () => ({
   V8PartnerApi: {
+    getConnection: vi.fn(),
     getOnboardingStatus: vi.fn(),
     getClients: vi.fn(),
   },
@@ -83,20 +84,8 @@ describe('partner trust runtime', () => {
     expect(snapshot.trustProgression[4].completed).toBe(false);
   });
 
-  it('loads trust snapshot from governed seams with bounded fallbacks', async () => {
+  it('loads trust snapshot from the canonical v8 seam', async () => {
     vi.mocked(Api.get).mockImplementation(async (url: string) => {
-      if (url === '/api/partners/connection') {
-        return {
-          success: true,
-          data: {
-            connected: true,
-            organization: {
-              partnerSince: '2026-01-01T00:00:00.000Z',
-            },
-          },
-        } as any;
-      }
-
       if (url === '/onboarding/status') {
         return {
           terms_accepted: true,
@@ -117,8 +106,15 @@ describe('partner trust runtime', () => {
       throw new Error(`Unexpected GET ${url}`);
     });
 
-    vi.mocked(V8PartnerApi.getOnboardingStatus).mockRejectedValue({ status: 404 });
-    vi.mocked(V8PartnerApi.getClients).mockRejectedValue({ status: 404 });
+    vi.mocked(V8PartnerApi.getConnection).mockResolvedValue({
+      connected: true,
+      selfConnectEnabled: false,
+      organization: { id: 'partner-1', name: 'Partner', partnerSince: '2026-01-01T00:00:00.000Z' },
+    });
+    vi.mocked(V8PartnerApi.getOnboardingStatus).mockResolvedValue({
+      status: { termsAccepted: true, privacyAccepted: true, pricingTier: 'professional', paymentSetup: true, completed: true },
+    });
+    vi.mocked(V8PartnerApi.getClients).mockResolvedValue({ clients: [{ id: 'client-1' }, { id: 'client-2' }] } as any);
     vi.mocked(loadPartnerRuntimeSummary).mockResolvedValue({
       analytics: {
         totalClicks: 8,
@@ -145,9 +141,7 @@ describe('partner trust runtime', () => {
 
     const snapshot = await loadPartnerTrustSnapshot();
 
-    expect(Api.get).toHaveBeenCalledWith('/api/partners/connection');
-    expect(Api.get).toHaveBeenCalledWith('/onboarding/status');
-    expect(Api.get).toHaveBeenCalledWith('/api/partners/clients');
+    expect(Api.get).not.toHaveBeenCalled();
     expect(snapshot.currentTrustPhase).toBe('G5_ECOSYSTEM');
   });
 });

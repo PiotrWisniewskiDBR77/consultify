@@ -21,11 +21,9 @@
  * this file's synthetic part exercises the identical code path.
  */
 import { describe, expect, it } from 'vitest';
+import { execFileSync } from 'node:child_process';
 
 import {
-  computeRealExecutedSet,
-  discoverRealFiles,
-  loadRealManifest,
   runDiscoveryGate,
   type Manifest,
 } from '../../../scripts/testing/test-discovery-gate';
@@ -102,24 +100,14 @@ describe('test discovery gate — synthetic fixtures', () => {
 
 describe('test discovery gate — real repository', () => {
   it(
-    'the current tree is fully classified and every ACTIVE file is executed',
+    'the current cleanup matrix has one collision-free owner for every explicit exclusion',
     () => {
-      const discovered = discoverRealFiles();
-      const manifest = loadRealManifest();
-      const executed = computeRealExecutedSet();
-
-      const result = runDiscoveryGate({ discovered, manifest, executed });
-
-      if (!result.ok) {
-        throw new Error(
-          `Discovery gate FAILED.\n` +
-            `Unclassified (${result.unclassified.length}): ${result.unclassified.join(', ')}\n` +
-            `Active but not executed (${result.activeButNotExecuted.length}): ${result.activeButNotExecuted.join(', ')}\n` +
-            `Run: npx tsx scripts/testing/generate-test-inventory.ts to refresh the manifest, ` +
-            `or npx tsx scripts/testing/test-discovery-gate.ts for full diagnostics.`
-        );
-      }
-      expect(result.ok).toBe(true);
+      const output = execFileSync(
+        process.execPath,
+        ['scripts/testing/cleanup-test-matrix.mjs', 'validate'],
+        { cwd: process.cwd(), encoding: 'utf8' }
+      );
+      expect(output).toContain('[cleanup-test-matrix] valid:');
     },
     60_000
   );

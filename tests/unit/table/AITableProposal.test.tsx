@@ -10,7 +10,11 @@ import { AITableProposal, type TableProposal } from '@/components/MyWork/table/A
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     i18n: { language: 'en' },
-    t: (key: string) => key,
+    t: (key: string) =>
+      ({
+        'myWorkTable.aiTableProposal.applySelected': 'Apply selected',
+        'myWorkTable.aiTableProposal.reject': 'Reject',
+      })[key] || key,
   }),
 }));
 

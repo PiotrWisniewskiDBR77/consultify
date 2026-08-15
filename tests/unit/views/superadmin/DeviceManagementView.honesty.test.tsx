@@ -1,7 +1,10 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Api } from '@/services/api';
+
+const t = (_key: string, fallback?: string | { defaultValue?: string }) => (typeof fallback === 'string' ? fallback : fallback?.defaultValue) || _key;
+vi.mock('react-i18next', () => ({ useTranslation: () => ({ t, i18n: { language: 'en' } }) }));
 import { DeviceManagementView } from '@/views/superadmin/security/DeviceManagementView';
 
 vi.mock('@/services/api', () => ({
@@ -83,7 +86,8 @@ describe('DeviceManagementView honest UI', () => {
 
     expect(await screen.findByText('Unknown device')).toBeInTheDocument();
     expect(screen.getByText('Unknown date')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Block device device-1/i })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    expect(screen.getByRole('menuitem', { name: /Block device/i })).toBeDisabled();
     expect(screen.queryByText(/Invalid Date/i)).not.toBeInTheDocument();
   });
 

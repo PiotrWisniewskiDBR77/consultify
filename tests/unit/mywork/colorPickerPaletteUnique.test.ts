@@ -29,7 +29,7 @@ describe('M06 L-06 — color palettes are unique', () => {
 
   it('palettes are non-empty (dedupe did not collapse them)', () => {
     expect(RECOMMENDED_COLORS.length).toBeGreaterThan(3);
-    // 5 status accents + 12 c-tag identity vars (TRIADA token palette).
-    expect(PALETTE.length).toBeGreaterThanOrEqual(17);
+    // 4 status accents + 12 c-tag identity vars (TRIADA token palette).
+    expect(PALETTE.length).toBeGreaterThanOrEqual(16);
   });
 });

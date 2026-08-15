@@ -2,6 +2,9 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Api } from '@/services/api';
+
+const t = (_key: string, fallback?: string | { defaultValue?: string }) => (typeof fallback === 'string' ? fallback : fallback?.defaultValue) || _key;
+vi.mock('react-i18next', () => ({ useTranslation: () => ({ t, i18n: { language: 'en' } }) }));
 import AuditEventsViewer from '@/views/superadmin/iam/AuditEventsViewer';
 
 vi.mock('@/services/api', () => ({
@@ -20,7 +23,7 @@ describe('AuditEventsViewer honest UI', () => {
     render(<AuditEventsViewer />);
 
     await waitFor(() => {
-      expect(screen.getByText('Audit events unavailable')).toBeInTheDocument();
+      expect(screen.getByText('Audit events backend down')).toBeInTheDocument();
     });
 
     expect(screen.getByText('Audit events backend down')).toBeInTheDocument();
@@ -64,7 +67,7 @@ describe('AuditEventsViewer honest UI', () => {
 
     render(<AuditEventsViewer />);
 
-    expect(await screen.findByText('Audit events unavailable')).toBeInTheDocument();
+    expect(await screen.findByText('Audit events response was not a list')).toBeInTheDocument();
     expect(screen.getByText('Audit events response was not a list')).toBeInTheDocument();
     expect(screen.queryByText('No audit events found')).not.toBeInTheDocument();
     expect(screen.queryByText(/NaN|bad-total/i)).not.toBeInTheDocument();

@@ -3,6 +3,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DocumentsRAGTab } from '@/views/superadmin/AIPlatformModule/Knowledge/DocumentsRAGTab';
 import { Api } from '@/services/api';
+
+const t = (_key: string, fallback?: string | { defaultValue?: string }) => (typeof fallback === 'string' ? fallback : fallback?.defaultValue) || _key;
+vi.mock('react-i18next', () => ({ useTranslation: () => ({ t, i18n: { language: 'en' } }) }));
 import { toast } from 'react-hot-toast';
 
 vi.mock('react-hot-toast', () => ({
@@ -14,6 +17,7 @@ vi.mock('react-hot-toast', () => ({
 
 vi.mock('@/services/api', () => ({
   Api: {
+    getMyProjectMemberships: vi.fn(),
     getKnowledgeDocuments: vi.fn(),
     uploadKnowledgeDocument: vi.fn(),
     updateKnowledgeDocument: vi.fn(),
@@ -37,6 +41,7 @@ const documentRow = {
 describe('DocumentsRAGTab honest UI', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(Api.getMyProjectMemberships).mockResolvedValue([]);
     vi.mocked(Api.getKnowledgeDocuments).mockResolvedValue([documentRow]);
     vi.mocked(Api.uploadKnowledgeDocument).mockResolvedValue({
       data: { data: { document: { id: 'doc-2' }, chunkCount: 4 } },
