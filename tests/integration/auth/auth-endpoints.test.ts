@@ -37,13 +37,13 @@ describe('Auth Endpoints Integration', () => {
       });
     });
 
-    it('returns deterministic token in E2E_MODE', async function () {
+    it('does not bypass refresh-token verification in E2E_MODE', async function () {
       if (!canListen) this.skip();
       const response = await request(app)
         .post('/api/auth/refresh')
         .send({ refreshToken: 'e2e-refresh' });
-      expect(response.status).toBe(200);
-      expect(response.body.token).toBeDefined();
+      expect(response.status).toBe(401);
+      expect(response.body).not.toHaveProperty('token');
     });
 
     it('rejects when refreshToken is missing', async function () {

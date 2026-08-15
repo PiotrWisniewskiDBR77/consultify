@@ -28,20 +28,13 @@ describe('Auth routes: /refresh (E2E_MODE)', () => {
 
   const makeApp = () => makeTestApp({ mountPath: '/api/auth', router });
 
-  it('POST /api/auth/refresh returns deterministic token', async function () {
+  it('POST /api/auth/refresh rejects a synthetic E2E token', async function () {
     if (!canListen) this.skip();
     const res = await request(makeApp())
       .post('/api/auth/refresh')
       .send({ refreshToken: 'e2e-refresh' });
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual(
-      expect.objectContaining({
-        token: expect.any(String),
-        refreshToken: 'e2e-refresh',
-        expiresIn: expect.any(Number),
-      })
-    );
-    expect(res.body.token.split('.').length).toBeGreaterThanOrEqual(3);
+    expect(res.status).toBe(401);
+    expect(res.body).not.toHaveProperty('token');
   });
 
   it('POST /api/auth/refresh validates refresh token', async function () {

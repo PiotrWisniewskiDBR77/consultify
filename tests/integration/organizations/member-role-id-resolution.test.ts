@@ -27,6 +27,12 @@ vi.mock('../../../server/src/services/adminAuditService.js', () => ({
   default: { logAction: vi.fn(async () => undefined) },
 }));
 
+vi.mock('../../../server/src/services/orgPeopleIamService.js', () => ({
+  changeOrganizationMemberRoleViaIam: vi.fn(async () => ({ denied: false })),
+  addOrganizationMemberViaIam: vi.fn(),
+  removeOrganizationMemberViaIam: vi.fn(),
+}));
+
 // The controller pulls in the shared Database module transitively; stub it so
 // importing the controller never touches a real connection.
 vi.mock('../../../server/src/database/Database.js', () => ({

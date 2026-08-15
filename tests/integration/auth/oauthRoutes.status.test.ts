@@ -23,10 +23,9 @@ describe('OAuth routes status (admin UI contract)', () => {
     const res = await request(makeApp()).get(`${basePath}/oauth/status`);
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty('google');
-    expect(res.body).toHaveProperty('microsoft');
     expect(res.body).toHaveProperty('linkedin');
+    expect(Object.keys(res.body).sort()).toEqual(['google', 'linkedin']);
     expect(typeof res.body.google.configured).toBe('boolean');
     expect(typeof res.body.google.loginUrl).toBe('string');
   });
 });
-

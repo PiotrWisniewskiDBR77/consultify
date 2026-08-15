@@ -92,7 +92,7 @@ describe('M10 — updateAssignment cross-org reassign IDOR guard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockQueryAll.mockResolvedValue([]);
-    mockQueryRun.mockResolvedValue({ rowCount: 1 });
+    mockQueryRun.mockResolvedValue({ success: true, changes: 1 });
   });
 
   it('rejects reassigning to a FOREIGN-ORG user id → 404, no reassign UPDATE', async () => {

@@ -36,6 +36,9 @@ vi.mock('../../../../server/src/services/effectiveAccessService.js', async (impo
 describe('access role builder guardrails', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Clear queued one-shot rows from guardrail tests that deliberately return
+    // before querying. Otherwise a factory-clone test can consume a stale row.
+    mockQueryOne.mockReset();
     mockResolveEffectiveAccess.mockResolvedValue({
       capabilities: ['admin.project_roles.manage'],
       platformRole: null,

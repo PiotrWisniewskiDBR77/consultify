@@ -135,7 +135,7 @@ describe('Auth routes (REAL integration)', () => {
     });
   });
 
-  describe('POST /api/auth/refresh (E2E_MODE deterministic)', () => {
+  describe('POST /api/auth/refresh (E2E_MODE remains fail-closed)', () => {
     it('returns 400 when refreshToken is missing (no body, no cookie)', async function () {
       if (!canListen) this.skip();
       const app = makeApp();
@@ -144,7 +144,7 @@ describe('Auth routes (REAL integration)', () => {
       expect(res.body).toEqual(expect.objectContaining({ error: 'Refresh token is required' }));
     });
 
-    it('accepts refresh token from cookie when body is absent', async function () {
+    it('reads a cookie token but rejects it when it is not a persisted refresh token', async function () {
       if (!canListen) this.skip();
       const app = makeApp();
       const res = await request(app)
@@ -152,14 +152,8 @@ describe('Auth routes (REAL integration)', () => {
         .set('Cookie', ['refresh_token=e2e-cookie-refresh'])
         .send({});
 
-      expect(res.status).toBe(200);
-      expect(res.body).toEqual(
-        expect.objectContaining({
-          token: expect.any(String),
-          refreshToken: 'e2e-cookie-refresh',
-          expiresIn: expect.any(Number),
-        })
-      );
+      expect(res.status).toBe(401);
+      expect(res.body).not.toHaveProperty('token');
     });
   });
 });
