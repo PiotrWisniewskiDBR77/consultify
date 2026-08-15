@@ -108,6 +108,13 @@ vi.mock('../../../server/src/services/v8/reportsPresModelService.js', () => ({
   recordFailedExport: (...args: any[]) => recordFailedExportMock(...args),
 }));
 
+vi.mock('../../../server/src/services/lineage/artifactLineageService.js', () => ({
+  deriveCreatedEventIdempotencyKey: vi.fn(() => 'created-key'),
+  deriveRequestBoundIdempotencyKey: vi.fn(() => 'request-key'),
+  recordLineageEventSafe: vi.fn().mockResolvedValue({ durable: true }),
+  recordLineageEventTracked: vi.fn().mockResolvedValue({ durable: true }),
+}));
+
 vi.mock('../../../server/src/services/documentStudio/documentQaService.js', () => ({
   runDocumentQa: vi.fn(),
 }));

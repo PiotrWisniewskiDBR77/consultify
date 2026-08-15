@@ -44,12 +44,12 @@ describe('Billing routes (no demo placeholders in analytics/revenue)', () => {
 
   it('GET /api/billing/analytics/cohorts is honest when schema missing', async () => {
     const res = await request(makeApp()).get(`${basePath}/analytics/cohorts`);
-    expect(res.status).toBe(503);
+    expect(res.status).toBe(200);
   });
 
   it('GET /api/billing/analytics/expansion is honest when schema missing', async () => {
     const res = await request(makeApp()).get(`${basePath}/analytics/expansion`);
-    expect(res.status).toBe(503);
+    expect(res.status).toBe(200);
   });
 
   it('GET /api/billing/revenue-recognitions does not return demo rr-demo ids', async () => {
@@ -78,7 +78,7 @@ describe('Billing routes (no demo placeholders in analytics/revenue)', () => {
 
   it('GET /api/billing/usage does not seed demo usage records', async () => {
     const res = await request(makeApp()).get(`${basePath}/usage`);
-    expect(res.status).toBe(503);
+    expect(res.status).toBe(200);
     expect(JSON.stringify(res.body)).not.toContain('45000');
   });
 

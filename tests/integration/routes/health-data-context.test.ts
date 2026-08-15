@@ -12,6 +12,7 @@ vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
     };
     next();
   },
+  requireSuperAdmin: (_req: any, _res: any, next: any) => next(),
 }));
 
 const ORIGINAL_ENV = { ...process.env };

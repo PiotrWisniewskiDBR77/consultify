@@ -129,14 +129,14 @@ describe('Health routes fault injection (L3)', () => {
       expect.objectContaining({
         status: 'error',
         message: 'Health check failed',
-        error: expect.stringContaining('boom'),
+        code: 'HEALTH_DATABASE_PROBE_FAILED',
       })
     );
 
     vi.doUnmock('../../../server/src/database/index.js');
   });
 
-  it('db health /connections returns 500 with error payload when database module throws', async () => {
+  it('db health /connections returns 503 with a sanitized error payload when database module throws', async () => {
     vi.resetModules();
     vi.doMock('../../../server/src/database/index.js', () => ({
       getConnectionPool: () => {
@@ -151,12 +151,12 @@ describe('Health routes fault injection (L3)', () => {
     const dispatch = dispatchFactory(app);
 
     const res = await dispatch({ method: 'GET', url: '/api/health/connections' });
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(503);
     expect(res.body).toEqual(
       expect.objectContaining({
         status: 'error',
         message: 'Connection status check failed',
-        error: expect.stringContaining('boom'),
+        code: 'HEALTH_CONNECTION_POOL_STATUS_FAILED',
       })
     );
 
