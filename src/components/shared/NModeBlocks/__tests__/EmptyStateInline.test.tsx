@@ -27,14 +27,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { EmptyStateInline } from '../EmptyStateInline';
 
 describe('EmptyStateInline — honest neutral color + optional "+" prefix (Gate E FIXA, defekt 3)', () => {
-  // ★ ZMIANA PROJEKTU (orkiestrator, checkpoint gate-e): kolor jest BRAMKOWANY, nie bezwarunkowy.
-  // Pierwotna wersja tego testu wymuszała neutralny token ZAWSZE, co zmieniało wygląd ośmiu ekranów
-  // POZA Finance (KpisSection, InsightCreatorModal, InsightViewer, CalendarView, HomeView,
-  // IdeaProcessFlowTool, IdeaTableTool) — czego wykryła niezależna weryfikacja FIX-A. Naprawa jest
-  // słuszna wszędzie (crimson na nawigacji łamie kanon), ale sesja jest w trybie kontrolowanego
-  // zamrożenia, więc Finance włącza ją jawnie, a rozszerzenie na resztę produktu wymaga decyzji
-  // właściciela. Test sprawdza teraz OBA zachowania, żeby żadne nie mogło zniknąć niepostrzeżenie.
-  it('domyślnie (bez `neutralAccent`) zachowuje dotychczasowy token — ZERO zmiany wizualnej poza Finance', () => {
+  it('domyślnie używa neutralnego tokenu na wszystkich powierzchniach', () => {
     render(
       <EmptyStateInline
         message="Brak danych."
@@ -42,11 +35,11 @@ describe('EmptyStateInline — honest neutral color + optional "+" prefix (Gate 
       />
     );
     const button = screen.getByRole('button', { name: /Wróć do listy/i });
-    expect(button.className).toMatch(/text-primary-\d/);
-    expect(button.className).not.toMatch(/text-c-focus-solid/);
+    expect(button.className).not.toMatch(/text-primary-\d/);
+    expect(button.className).toMatch(/text-c-focus-solid/);
   });
 
-  it('`neutralAccent: true` używa neutralnego tokenu i NIE używa crimsona — tak wchodzi Finance', () => {
+  it('zachowuje zgodność wywołań z `neutralAccent: true` bez zmiany koloru', () => {
     render(
       <EmptyStateInline
         message="Brak danych."

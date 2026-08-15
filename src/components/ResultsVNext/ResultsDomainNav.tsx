@@ -10,7 +10,10 @@ const domains = [
 ] as const;
 
 export const ResultsDomainNav: React.FC = () => (
-  <nav aria-label="Sekcje Results" className="flex items-center gap-2 border-b border-c-border bg-c-bg px-4 py-3">
+  <nav
+    aria-label="Sekcje Results"
+    className="flex items-center gap-2 border-b border-c-border bg-c-bg px-4 py-3"
+  >
     {domains.map((domain) => (
       <NavLink
         key={domain.label}
@@ -18,7 +21,7 @@ export const ResultsDomainNav: React.FC = () => (
         className={({ isActive }) =>
           `inline-flex h-9 items-center rounded-full border px-4 text-sm font-semibold transition ${
             isActive
-              ? 'border-primary-500/50 bg-primary-500/15 text-primary-300'
+              ? 'border-c-focus bg-c-focus/10 text-c-focus-solid'
               : 'border-c-border bg-c-surface text-c-text-muted hover:text-c-text'
           }`
         }

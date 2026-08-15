@@ -40,17 +40,10 @@ export interface EmptyStateInlineProps {
      */
     showPrefix?: boolean;
     /**
-     * Neutralny token akcentowy zamiast domyślnego `text-primary-500`.
+     * @deprecated Akcje pustego stanu zawsze używają neutralnego tokenu fokusu.
      *
-     * ★ DLACZEGO OPCJONALNE, A NIE BEZWARUNKOWE: `text-primary-500` to w tym repo crimson
-     * `#85182F`, zarezerwowany kanonem (CLAUDE.md #3) dla semantyki krytycznej — użycie go na
-     * linku nawigacyjnym rozmywa sygnał. Naprawa jest więc słuszna WSZĘDZIE, nie tylko w Finance.
-     * Ale zmiana bezwarunkowa dotyka wyglądu ośmiu ekranów poza Finance (KpisSection,
-     * InsightCreatorModal, InsightViewer, CalendarView, HomeView, IdeaProcessFlowTool,
-     * IdeaTableTool), których właściciele o tym nie wiedzą — a sesja jest w trybie kontrolowanego
-     * zamrożenia, gdzie zmiany poza własnym zakresem są zabronione.
-     * Dlatego Finance włącza to jawnie, a rozszerzenie na resztę produktu wymaga osobnej decyzji
-     * właściciela. Patrz zadanie „--c-focus jako kolor tekstu poza Finance".
+     * Pole pozostaje w kontrakcie dla zgodności istniejących wywołań, ale nie
+     * przełącza już komponentu na zakazany kolor marki.
      */
     neutralAccent?: boolean;
   };
@@ -83,14 +76,7 @@ export const EmptyStateInline: React.FC<EmptyStateInlineProps> = ({
         <button
           onClick={action.onClick}
           disabled={action.disabled}
-          // ★ NAPRAWA (crimson jako nawigacja — patrz nagłówek pliku): poprzednia
-          // klasa koloru tego linku była tokenem `primary` (odcień 500), czyli
-          // `#85182F` (crimson) — w tym repo zarezerwowanym WYŁĄCZNIE dla semantyki
-          // krytycznej (CLAUDE.md — "primary w tailwind = crimson — zakazany jako kolor UI").
-          // `text-c-focus-solid` to ten sam neutralny-akcentowy niebieski token używany dla
-          // równoważnych linków-akcji gdzie indziej w tym repo (np. Finance panels:
-          // "Zastosuj"/"Otwórz ponownie"/"Kopiuj link").
-          className={`mt-2 text-xs font-medium hover:underline transition-colors disabled:opacity-40 ${action.neutralAccent ? 'text-c-focus-solid' : 'text-primary-500'}`}
+          className="mt-2 text-xs font-medium text-c-focus-solid transition-colors hover:underline disabled:opacity-40"
         >
           {action.showPrefix === false ? action.label : `+ ${action.label}`}
         </button>

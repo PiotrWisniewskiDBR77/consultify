@@ -211,7 +211,7 @@ export const ExecutionRealizationsSurface = ({
             <a
               key={initiative.id}
               href={buildInitiativeDeepLink(initiative.initiativeId, { mode: 'doc' })}
-              className="group flex min-h-64 flex-col rounded-2xl border border-c-border bg-c-surface p-5 transition hover:-translate-y-0.5 hover:border-primary-500/50 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+              className="group flex min-h-64 flex-col rounded-2xl border border-c-border bg-c-surface p-5 transition hover:-translate-y-0.5 hover:border-c-focus hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
               <div className="flex items-start justify-between gap-3">
                 <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-300">
@@ -229,7 +229,7 @@ export const ExecutionRealizationsSurface = ({
                     : 'Bez otwartych luk'}
                 </span>
               </div>
-              <h3 className="mt-5 text-lg font-semibold leading-6 text-c-text group-hover:text-primary-300">
+              <h3 className="mt-5 text-lg font-semibold leading-6 text-c-text group-hover:text-c-focus-solid">
                 {initiative.title}
               </h3>
               <p className="mt-2 line-clamp-3 text-sm leading-5 text-c-text-muted">
@@ -245,7 +245,7 @@ export const ExecutionRealizationsSurface = ({
                   <dd className="mt-1 font-medium text-c-text">{initiative.nextMilestone}</dd>
                 </div>
               </dl>
-              <div className="mt-auto flex items-center justify-between pt-5 text-sm font-medium text-primary-300">
+              <div className="mt-auto flex items-center justify-between pt-5 text-sm font-medium text-c-focus-solid">
                 <span>{initiative.nextAction}</span>
                 <span aria-hidden="true">→</span>
               </div>
