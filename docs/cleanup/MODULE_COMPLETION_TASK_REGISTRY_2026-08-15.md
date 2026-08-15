@@ -4,6 +4,83 @@ Data: 2026-08-15
 Authority SHA dla bazowego full gate: `aeb28eb6abeb0af9f16750c66d6de0e8bb359702`  
 Status: `EXECUTION_REGISTRY / NOT_RELEASE_READY`
 
+## Rozszerzenie siedmiopunktowego planu sprzątania
+
+Pierwotne punkty 1–7 pozostają obowiązujące. Po nich wykonywane są trzy
+dodatkowe etapy, które zamieniają inwentaryzację w jednoznaczny plan domknięcia
+produktu.
+
+### 8. Rejestr braków do finalnego wdrożenia
+
+Każdy moduł otrzymuje jeden kanoniczny rekord obejmujący cały łańcuch
+`SSOT -> route -> UI -> API -> service -> schema -> data -> tests -> demo`.
+Rekord nie może opierać się na opinii. Każde twierdzenie wskazuje plik, endpoint,
+tabelę, flagę albo wynik wykonanej bramki. Brak dowodu ma literalny status
+`EVIDENCE_MISSING`, a sprzeczne implementacje status `OWNER_DECISION`.
+
+Minimalne pola rekordu:
+
+- `module_id`, cel, wejścia, wyjścia i właściciel danych;
+- aktualny route i faktycznie montowany komponent;
+- canonical API/service/schema oraz wykryte warianty legacy;
+- wymagane migracje, fixture i deployment flags;
+- elementy `CONNECTED`, `UNMOUNTED`, `DUPLICATE`, `DEAD_CANDIDATE` i `MISSING`;
+- dokładne task IDs zamykające każdą lukę;
+- testy pozytywne, replay, stale-version, role i tenant negatives;
+- status realDB, demo, desktop, mobile, visual i accessibility;
+- finalny verdict `MVP_READY`, `POST_MVP`, `BLOCKED` albo `DONE`.
+
+DoD etapu 8: wszystkie 16 modułów ma rekord bez pustych pól krytycznych; każda
+luka ma dokładnie jeden task ID; żadna funkcja znaleziona w recovery ledger nie
+pozostaje bez verdictu lub przypisanego zadania.
+
+### 9. Wykonawcze pakiety dla agentów
+
+Każdy task ID z tego dokumentu staje się samodzielnym pakietem wykonawczym.
+Pakiet jest gotowy do uruchomienia dopiero po uzupełnieniu wszystkich pól:
+
+- objective i jednoznaczna granica `in scope / out of scope`;
+- exact baseline SHA i zależności, które muszą być `DONE`;
+- dozwolone pliki oraz pliki współdzielone zastrzeżone dla integratora;
+- kontrakt AS-IS i oczekiwany TO-BE, wraz z zachowywanymi zachowaniami;
+- wymagane zmiany UI, API, danych, migracji, flag i dokumentacji;
+- deterministyczne fixtures oraz komendy focused/realDB/browser;
+- scenariusz golden flow i obowiązkowe negative cases;
+- dowody końcowe, rollback i jawne pozostałe ryzyka;
+- format handoffu: final SHA, changed files, wyniki bramek i literalny status.
+
+Agent nie może rozszerzyć tasku, scalić całej starej gałęzi, aktywować funkcji
+parametrem URL ani nadać sobie statusu `DONE`. Odkrycie pracy spoza zakresu
+tworzy wpis w rejestrze, nie ukrytą dodatkową implementację.
+
+DoD etapu 9: każdy task przeznaczony do startu ma kompletny pakiet; zakresy
+równoległych agentów są rozłączne; shared-file ownership i kolejność integracji
+są zapisane przed rozpoczęciem kodowania.
+
+### 10. Integracja, odbiór i kwalifikacja MVP
+
+Integrator przyjmuje wyłącznie małe, opisane commity z pakietów etapu 9.
+Integracja przebiega falami zależności z macierzy poniżej. Po każdej fali
+powstaje jeden immutable candidate SHA oraz aktualizacja rejestru.
+
+Kolejne poziomy dowodu są niezamienne:
+
+1. `CODE_CONNECTED` — route, UI, API i persistence są faktycznie połączone;
+2. `FOCUSED_GREEN` — pakiet przechodzi własne testy;
+3. `REALDB_GREEN` — fresh i upgrade PostgreSQL oraz readback są zielone;
+4. `SYSTEM_GREEN` — pełna brama na jednym SHA nie ma niesklasyfikowanych faili;
+5. `DEMO_PARITY` — demo raportuje ten sam SHA, migracje i flag profile;
+6. `OWNER_ACCEPTED` — podpisany flow desktop/mobile i ocena wizualna są PASS.
+
+Moduł trafia do poniedziałkowego MVP tylko wtedy, gdy osiąga wszystkie wymagane
+poziomy bez silent fallbacku, mocków, query/localStorage flags i danych
+technicznych widocznych użytkownikowi. Pozostałe moduły są jawnie `POST_MVP` lub
+`BLOCKED`; nie obniżają prawdziwości statusu MVP.
+
+DoD etapu 10: jeden release SHA, jedna lista modułów MVP, komplet evidence links,
+rollback, brak nieprzypisanego WIP oraz końcowy raport `implemented / missing /
+deferred / rejected` dla każdego modułu.
+
 ## Cel i reguła statusu
 
 Ten dokument przekłada audyt modułowy na rozłączne paczki wykonawcze. Każdy
@@ -37,6 +114,38 @@ Agent otrzymuje jeden task ID lub rozłączny zestaw z jednej sekcji. Handoff mu
 zawierać baseline/final SHA, listę plików, focused gate, realDB/readback,
 ryzyka, status demo i literalny verdict. Wspólne `AppRoutes`, menu/navigation,
 shared API, flag resolvers, migrator i global styles ma wyłącznie integrator.
+
+### Szablon pojedynczego zadania
+
+Każde zadanie uruchamiane przez agenta musi zostać skopiowane z rejestru w tym
+formacie; brak któregokolwiek pola oznacza `NOT_READY_TO_START`:
+
+```text
+TASK_ID:
+MODULE / OWNER:
+OBJECTIVE:
+BASELINE_SHA:
+DEPENDS_ON:
+IN_SCOPE:
+OUT_OF_SCOPE:
+ALLOWLIST:
+SHARED_FILES_RESERVED_FOR_INTEGRATOR:
+AS_IS_EVIDENCE:
+TO_BE_CONTRACT:
+DATA_AND_MIGRATION_REQUIREMENTS:
+FIXTURE_AND_READBACK:
+GOLDEN_FLOW:
+NEGATIVE_CASES:
+COMMANDS_TO_RUN:
+DEMO_AND_VISUAL_PROOF:
+ROLLBACK:
+DONE_EVIDENCE:
+HANDOFF_FORMAT:
+```
+
+Jeżeli analiza tasku nie pozwala wpisać konkretnego pliku, kontraktu lub
+komendy, pierwszym rezultatem agenta jest bounded discovery report. Agent nie
+przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakresu.
 
 ## Fala 0 — authority, recovery i test truth
 
