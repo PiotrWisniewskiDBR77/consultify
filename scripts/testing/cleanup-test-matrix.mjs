@@ -204,16 +204,17 @@ const runStandardSharded = async () => {
     const rightRoot = findRoot(right);
     if (leftRoot !== rightRoot) parent.set(rightRoot, leftRoot);
   };
-  // Vitest CLI filters are substrings even when absolute. Co-locate the rare
-  // prefix collision (for example foo.test.ts + foo.test.tsx), so selecting
-  // the shorter path cannot execute a file owned by a different shard.
+  // Vitest CLI filters are substrings even when absolute. Co-locate every rare
+  // substring collision (for example foo.test.ts + foo.test.tsx, or src/x +
+  // server/src/x), so a filter cannot execute a file owned by another shard.
   for (let left = 0; left < discovered.length; left += 1) {
-    for (
-      let right = left + 1;
-      right < discovered.length && discovered[right].startsWith(discovered[left]);
-      right += 1
-    ) {
-      joinFiles(discovered[left], discovered[right]);
+    for (let right = left + 1; right < discovered.length; right += 1) {
+      if (
+        discovered[left].includes(discovered[right]) ||
+        discovered[right].includes(discovered[left])
+      ) {
+        joinFiles(discovered[left], discovered[right]);
+      }
     }
   }
   const groupsByRoot = new Map();
