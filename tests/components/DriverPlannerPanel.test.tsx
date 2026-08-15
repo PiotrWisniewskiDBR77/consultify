@@ -45,11 +45,20 @@ describe('DriverPlannerPanel — pure helpers', () => {
 });
 
 describe('DriverPlannerPanel — render', () => {
-  it('renders header, driver tree and what-if result with the default SaaS example', () => {
-    render(<DriverPlannerPanel />);
+  it('renders header, driver tree and what-if result for a selected real model', () => {
+    const tree: DriverNode = {
+      id: 'revenue',
+      label: 'Przychód',
+      op: 'multiply',
+      children: [
+        { id: 'customers', label: 'Klienci', value: 1200 },
+        { id: 'arpu', label: 'ARPU', value: 240 },
+      ],
+    };
+    render(<DriverPlannerPanel driverTree={tree} />);
 
     expect(screen.getByTestId('driver-planner-panel')).toBeTruthy();
-    expect(screen.getByText('Planowanie driver-based + what-if')).toBeTruthy();
+    expect(screen.getByText('Driver-based planning + what-if')).toBeTruthy();
     expect(screen.getByTestId('driver-tree-viz')).toBeTruthy();
 
     // default example: 1200 × 240 = 288 000
@@ -87,7 +96,7 @@ describe('DriverPlannerPanel — render', () => {
     const empty: DriverNode = { id: 'r', label: 'R' }; // leaf with no value → eval null
     render(<DriverPlannerPanel driverTree={empty} />);
 
-    expect(screen.getByTestId('driver-planner-empty')).toBeTruthy();
+    expect(screen.getByTestId('driver-planner-empty-leaves')).toBeTruthy();
     expect(screen.queryByTestId('driver-tree-viz')).toBeNull();
   });
 });

@@ -68,8 +68,8 @@ describe('InitiativeGantt — render (V1)', () => {
 
     const bar = barFor('Build feature', container);
     expect(bar).not.toBeNull();
-    // task bars carry the bg-primary-500 colour token.
-    expect(bar!.className).toContain('bg-primary-500');
+    // task bars carry the canonical semantic task colour token.
+    expect(bar!.className).toContain('bg-c-tag-1');
     // title is also painted inside the bar.
     expect(bar!.textContent).toContain('Build feature');
   });
@@ -87,8 +87,8 @@ describe('InitiativeGantt — render (V1)', () => {
     };
     const { container } = render(<InitiativeGantt items={[task]} />);
 
-    // The marker is the only aria-hidden vertical rule carrying bg-primary-500/60.
-    const marker = container.querySelector('[aria-hidden].bg-primary-500\\/60');
+    // The marker is the only aria-hidden vertical rule carrying the semantic text token.
+    const marker = container.querySelector('[aria-hidden].bg-c-text');
     expect(marker).not.toBeNull();
   });
 
@@ -105,7 +105,7 @@ describe('InitiativeGantt — render (V1)', () => {
     };
     const { container } = render(<InitiativeGantt items={[task]} />);
 
-    const marker = container.querySelector('[aria-hidden].bg-primary-500\\/60');
+    const marker = container.querySelector('[aria-hidden].bg-c-text');
     expect(marker).toBeNull();
     // Sanity: the bar itself still renders.
     expect(barFor('Old work', container)).not.toBeNull();

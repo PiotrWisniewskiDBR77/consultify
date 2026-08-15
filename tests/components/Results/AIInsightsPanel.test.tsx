@@ -72,7 +72,7 @@ describe('AIInsightsPanel', () => {
     mockEndpoints({ '/narrative': NARRATIVE, '/counterfactual': COUNTERFACTUAL });
     render(<AIInsightsPanel projectId="all" />);
     await waitFor(() => expect(screen.getByTestId('ai-insights-panel')).toBeInTheDocument());
-    expect(screen.getByText('Narracja wartości')).toBeInTheDocument();
+    expect(screen.getByText('Value narrative')).toBeInTheDocument();
     expect(screen.getByText('Wartość pod kontrolą')).toBeInTheDocument();
     expect(screen.getByText('Trzy inicjatywy przekroczyły cel.')).toBeInTheDocument();
   });
@@ -81,19 +81,19 @@ describe('AIInsightsPanel', () => {
     mockEndpoints({ '/narrative': NARRATIVE, '/counterfactual': COUNTERFACTUAL });
     render(<AIInsightsPanel projectId="all" />);
     await waitFor(() => expect(screen.getByTestId('ai-insights-panel')).toBeInTheDocument());
-    expect(screen.getByText('Atrybucja — co bez inicjatywy?')).toBeInTheDocument();
-    expect(screen.getByText('Atrybucja do inicjatywy')).toBeInTheDocument();
-    // 1.8M PLN formatted
-    expect(screen.getByText('1.8 M PLN')).toBeInTheDocument();
+    expect(screen.getByText('Attribution — what happens without the initiative?')).toBeInTheDocument();
+    expect(screen.getByText('Attributable to the initiative')).toBeInTheDocument();
+    // The canonical Results formatter uses the product currency contract.
+    expect(screen.getByText('€1.8M')).toBeInTheDocument();
   });
 
   it('always renders the static premium sections (anomaly / forecast / RCA)', async () => {
     mockEndpoints({ '/narrative': NARRATIVE, '/counterfactual': COUNTERFACTUAL });
     render(<AIInsightsPanel projectId="all" />);
     await waitFor(() => expect(screen.getByTestId('ai-insights-panel')).toBeInTheDocument());
-    expect(screen.getByText('Wykrywanie anomalii KPI')).toBeInTheDocument();
-    expect(screen.getByText('Prognoza trajektorii KPI')).toBeInTheDocument();
-    expect(screen.getByText('Sugestia RCA / akcji naprawczej')).toBeInTheDocument();
+    expect(screen.getByText('KPI anomaly detection')).toBeInTheDocument();
+    expect(screen.getByText('KPI trajectory forecast')).toBeInTheDocument();
+    expect(screen.getByText('RCA / corrective action suggestion')).toBeInTheDocument();
     // premium badge appears (3 sections)
     expect(screen.getAllByText('AI premium').length).toBeGreaterThanOrEqual(3);
   });
@@ -102,14 +102,14 @@ describe('AIInsightsPanel', () => {
     mockEndpoints({ '/narrative': {}, '/counterfactual': null });
     render(<AIInsightsPanel projectId="all" />);
     await waitFor(() => expect(screen.getByTestId('ai-insights-panel')).toBeInTheDocument());
-    expect(screen.getByText(/Brak danych do narracji/)).toBeInTheDocument();
-    expect(screen.getByText(/Brak historycznych pomiarów/)).toBeInTheDocument();
+    expect(screen.getByText(/No data for the narrative/)).toBeInTheDocument();
+    expect(screen.getByText(/No historical measurements/)).toBeInTheDocument();
   });
 
   it('survives both endpoints rejecting without crashing (still shows premium sections)', async () => {
     vi.mocked(Api.get).mockRejectedValue(new Error('boom'));
     render(<AIInsightsPanel projectId="all" />);
     await waitFor(() => expect(screen.getByTestId('ai-insights-panel')).toBeInTheDocument());
-    expect(screen.getByText('Wykrywanie anomalii KPI')).toBeInTheDocument();
+    expect(screen.getByText('KPI anomaly detection')).toBeInTheDocument();
   });
 });

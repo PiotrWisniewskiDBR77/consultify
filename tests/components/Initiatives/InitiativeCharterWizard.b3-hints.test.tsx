@@ -44,7 +44,7 @@ vi.mock('@/components/shared/WizardModal', () => ({
 
 import { InitiativeCharterWizard } from '@/components/Initiatives/Wizard/InitiativeCharterWizard';
 
-const THESIS_PLACEHOLDER = /Jeśli zrobimy X|If we do X/;
+const THESIS_PLACEHOLDER = 'initiatives.initiativeCharterWizard.thesisPlaceholder';
 
 function renderWizard() {
   return render(

@@ -27,15 +27,22 @@ import {
 } from '../../../src/components/Economics/panels/DriverPlannerPanel';
 
 describe('DriverPlannerPanel — epic F5 (Driver Planner + What-If)', () => {
-  it('renders default SaaS tree (Przychód / Klienci / ARPU labels) when no prop given', () => {
+  const realModelTree: DriverNode = {
+    id: 'revenue',
+    label: 'Przychód',
+    op: 'multiply',
+    children: [
+      { id: 'customers', label: 'Klienci', value: 1200, min: 0, max: 2400 },
+      { id: 'arpu', label: 'ARPU', value: 240, min: 0, max: 480 },
+    ],
+  };
+
+  it('requires a selected financial model instead of rendering synthetic data', () => {
     render(<DriverPlannerPanel />);
 
     expect(screen.getByTestId('driver-planner-panel')).toBeInTheDocument();
-    // Root node label — appears once in the tree node, may appear multiple times elsewhere
-    expect(screen.getAllByText('Przychód').length).toBeGreaterThanOrEqual(1);
-    // Leaf node labels — appear both in tree nodes and slider labels
-    expect(screen.getAllByText(/Klienci/).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText(/ARPU/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByTestId('driver-planner-empty')).toBeInTheDocument();
+    expect(screen.queryByTestId('driver-tree-viz')).not.toBeInTheDocument();
   });
 
   it('renders custom root label when custom driverTree provided', () => {
@@ -83,7 +90,7 @@ describe('DriverPlannerPanel — epic F5 (Driver Planner + What-If)', () => {
 
   it('shows computed root value in the whatif result output area', () => {
     // Default SaaS tree: Klienci=1200 × ARPU=240 = 288 000 → displayed as "288,0 tys."
-    render(<DriverPlannerPanel />);
+    render(<DriverPlannerPanel driverTree={realModelTree} />);
 
     const whatifResult = screen.getByTestId('whatif-result');
     expect(whatifResult).toBeInTheDocument();
@@ -96,7 +103,7 @@ describe('DriverPlannerPanel — epic F5 (Driver Planner + What-If)', () => {
   });
 
   it('renders at least one range input (slider) for leaf drivers', () => {
-    render(<DriverPlannerPanel />);
+    render(<DriverPlannerPanel driverTree={realModelTree} />);
 
     // The default tree has min/max defined on both leaves → sliders rendered.
     // role="slider" matches <input type="range"> in jsdom.

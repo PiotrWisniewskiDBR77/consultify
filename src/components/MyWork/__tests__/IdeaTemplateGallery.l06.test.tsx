@@ -28,6 +28,19 @@ vi.mock('react-hot-toast', () => ({
   default: { success: vi.fn(), error: vi.fn() },
 }));
 
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) =>
+      ({
+        'myWorkIdeas.templateGallery.useTemplate': 'Use template',
+        'myWorkIdeas.templateGallery.replaceExistingElements': 'Replace existing elements?',
+        'myWorkIdeas.templateGallery.replace': 'Replace',
+        'myWorkIdeas.templateGallery.cancel': 'Cancel',
+      })[key] ?? key,
+    i18n: { language: 'en' },
+  }),
+}));
+
 import { IdeaTemplateGallery } from '../IdeaTemplateGallery';
 
 const baseProps = {
