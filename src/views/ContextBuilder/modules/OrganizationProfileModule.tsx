@@ -1048,8 +1048,9 @@ export const OrganizationProfileModule: React.FC = () => {
             <div className="p-5 border-t border-c-border-subtle space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className={labelCls}>Industry *</label>
+                  <label htmlFor="organization-industry" className={labelCls}>Industry *</label>
                   <select
+                    id="organization-industry"
                     value={profile.industry}
                     onChange={(e) => update('industry', e.target.value)}
                     className={inputCls}
@@ -1083,8 +1084,9 @@ export const OrganizationProfileModule: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className={labelCls}>Company Size *</label>
+                  <label htmlFor="organization-company-size" className={labelCls}>Company Size *</label>
                   <select
+                    id="organization-company-size"
                     value={profile.companySize}
                     onChange={(e) => update('companySize', e.target.value)}
                     className={inputCls}
