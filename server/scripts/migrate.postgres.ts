@@ -338,7 +338,7 @@ function phaseAndKeyFor(m: Migration): { phase: number; key: string } {
   return { phase: 3, key: f };
 }
 
-function compareMigrationOrder(a: Migration, b: Migration): number {
+export function compareMigrationOrder(a: Migration, b: Migration): number {
   const pa = phaseAndKeyFor(a);
   const pb = phaseAndKeyFor(b);
   if (pa.phase !== pb.phase) return pa.phase - pb.phase;
@@ -612,8 +612,14 @@ async function main() {
   }
 }
 
-main().catch((e) => {
-  // eslint-disable-next-line no-console
-  console.error('❌ Postgres migrate failed:', e?.message || e);
-  process.exit(1);
-});
+const isDirectCliInvocation =
+  typeof process.argv[1] === 'string' &&
+  import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href;
+
+if (isDirectCliInvocation) {
+  main().catch((e) => {
+    // eslint-disable-next-line no-console
+    console.error('❌ Postgres migrate failed:', e?.message || e);
+    process.exit(1);
+  });
+}
