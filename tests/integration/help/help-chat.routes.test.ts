@@ -8,6 +8,7 @@ vi.mock('../../../server/src/services/ai/helpDocsContext.js', () => ({
     systemInstructionAddon: '\nKB: Use these docs.',
     citations: [{ id: 'kb-1', title: 'How to use Dashboard', link: '/kb/dashboard' }],
   })),
+  isProductOrHowToQuery: vi.fn(() => true),
 }));
 
 const pipelineProcess = vi.fn(async () => ({ text: 'Hello from help AI.' }));

@@ -8,7 +8,9 @@ vi.mock('../../server/src/middleware/auth.middleware.js', () => ({
 }));
 
 vi.mock('../../server/src/utils/DbPromise.js', () => ({
-  all: vi.fn(),
+  all: vi.fn().mockResolvedValue([]),
+  get: vi.fn().mockResolvedValue(null),
+  run: vi.fn().mockResolvedValue(undefined),
 }));
 
 async function loadHelpRouter() {
