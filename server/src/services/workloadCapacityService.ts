@@ -374,6 +374,23 @@ export interface InitiativeCapacity {
   alerts: { userId: string; type: 'overloaded' | 'underutilized' | 'skill_gap'; message: string }[];
 }
 
+async function getRequiredFte(orgId: string, initiativeId: string): Promise<number> {
+  try {
+    const row = await DbPromise.get<{ total_req: number }>(
+      `SELECT COALESCE(SUM(spr.fte_required), 0) AS total_req
+       FROM staffing_plan_roles spr
+       JOIN staffing_plans sp ON sp.id = spr.staffing_plan_id
+       WHERE sp.initiative_id = ? AND sp.organization_id = ?`,
+      [initiativeId, orgId]
+    );
+    return Number(row?.total_req) || 0;
+  } catch {
+    // Older installations may not have staffing plans yet. Capacity remains
+    // available, but required demand must never be inferred from allocation.
+    return 0;
+  }
+}
+
 export async function getInitiativeCapacity(
   orgId: string,
   initiativeId: string
@@ -399,7 +416,11 @@ export async function getInitiativeCapacity(
     return {
       initiativeId,
       resources: [],
-      summary: { totalFteRequired: 0, totalFteAllocated: 0, avgUtilization: 0 },
+      summary: {
+        totalFteRequired: round1(await getRequiredFte(orgId, initiativeId)),
+        totalFteAllocated: 0,
+        avgUtilization: 0,
+      },
       alerts: [],
     };
   }
@@ -478,7 +499,7 @@ export async function getInitiativeCapacity(
   }
 
   const totalFteAllocated = round1(totalAllocPercent / 100);
-  const totalFteRequired = totalFteAllocated;
+  const totalFteRequired = round1(await getRequiredFte(orgId, initiativeId));
   const avgUtilization =
     resources.length > 0
       ? Math.round(resources.reduce((s, r) => s + r.allocationPercent, 0) / resources.length)
