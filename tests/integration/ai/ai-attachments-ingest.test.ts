@@ -2,6 +2,10 @@ import { describe, expect, it, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 
+// Exercise the real multipart parser; the repository-wide lightweight multer
+// stand-in is not a valid integration harness for streamed attachments.
+vi.unmock('multer');
+
 vi.mock('../../../server/src/middleware/auth.middleware.js', async () => {
   const actual = (await vi.importActual(
     '../../../server/src/middleware/auth.middleware.js'
