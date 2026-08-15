@@ -36,6 +36,7 @@ import { createIdeaMapSnapshot } from '../services/ideaMapSnapshotService.js';
 import { InboxAiAssistItemSchema, runInboxAiAssist } from '../services/inboxAiAssistService.js';
 import inboxService from '../services/inboxService.js';
 import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
+import { resolveInitiativeProjectId } from '../services/initiativeProjectPolicyService.js';
 import NotificationService from '../services/notificationService.js';
 import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import projectionService from '../services/tablePlatform/ProjectionService.js';
@@ -7211,6 +7212,9 @@ router.post(
         }
       } else {
         initiativeId = uuidv4();
+        const anchoredProjectId = await resolveInitiativeProjectId(orgId, null, {
+          createdBy: userId ?? null,
+        });
         const insertCols: string[] = ['id'];
         const insertVals: string[] = ['?'];
         const insertParams: any[] = [initiativeId];
@@ -7223,6 +7227,7 @@ router.post(
         };
 
         add('organization_id', orgId);
+        add('project_id', anchoredProjectId);
         add('name', safeTitle.slice(0, 255));
         add('summary', initSummary);
         add('area', initArea);

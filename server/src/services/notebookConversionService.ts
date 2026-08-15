@@ -4,6 +4,7 @@ import { getTableColumns } from '../utils/dbSchema.js';
 import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import { createInitiative as funnelCreateInitiative } from './initiative/createInitiativeService.js';
+import { resolveInitiativeProjectId } from './initiativeProjectPolicyService.js';
 import { generateOutline } from './presentationGeneratorService.js';
 import { createReport } from './reportBuilderService.js';
 
@@ -312,6 +313,9 @@ export async function convertNotebookPage(params: {
         );
       }
     } else {
+      const anchoredProjectId = await resolveInitiativeProjectId(orgId, null, {
+        createdBy: userId ?? null,
+      });
       const insertCols: string[] = ['id'];
       const insertVals: string[] = ['?'];
       const insertParams: any[] = [newId];
@@ -323,6 +327,7 @@ export async function convertNotebookPage(params: {
       };
 
       add('organization_id', orgId);
+      add('project_id', anchoredProjectId);
       add('name', entityTitle.slice(0, 255));
       add('title', entityTitle.slice(0, 255));
       add('summary', entityDesc.slice(0, 5000));

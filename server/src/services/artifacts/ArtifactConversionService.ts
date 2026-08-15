@@ -4,6 +4,7 @@ import { InitiativeStatus } from '../../constants/initiativeStatuses.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import { type Conclusion, conclusionService } from '../conclusions/ConclusionService.js';
 import { createInitiative as funnelCreateInitiative } from '../initiative/createInitiativeService.js';
+import { resolveInitiativeProjectId } from '../initiativeProjectPolicyService.js';
 
 export type ConversionStatus =
   | 'draft'
@@ -443,6 +444,11 @@ export class ArtifactConversionService {
       initiativeId = __r.id;
     } else {
       initiativeId = uuidv4();
+      const anchoredProjectId = await resolveInitiativeProjectId(
+        params.organizationId,
+        conversion.projectId,
+        { createdBy: params.actorUserId ?? null }
+      );
       try {
         await queryHelpers.queryRun(
           `INSERT INTO initiatives (
@@ -453,7 +459,7 @@ export class ArtifactConversionService {
           [
             initiativeId,
             params.organizationId,
-            conversion.projectId ?? null,
+            anchoredProjectId,
             String(payload.title || conversion.sourceArtifactTitle),
             String(payload.title || conversion.sourceArtifactTitle),
             String(payload.summary || ''),
@@ -485,7 +491,7 @@ export class ArtifactConversionService {
           [
             initiativeId,
             params.organizationId,
-            conversion.projectId ?? null,
+            anchoredProjectId,
             fallbackTitle,
             fallbackTitle,
             String(payload.summary || ''),

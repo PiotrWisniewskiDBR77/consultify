@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../../database/Database.js';
 import { IDatabase } from '../../database/IDatabase.js';
 import { createInitiative as funnelCreateInitiative } from './createInitiativeService.js';
+import { resolveInitiativeProjectId } from '../initiativeProjectPolicyService.js';
 
 export interface Initiative {
   id: string;
@@ -132,6 +133,9 @@ LIMIT ? OFFSET ? `,
     const id = this.deps.uuidv4();
     const now = new Date().toISOString();
     const ownerId = data.owner_business_id || data.owner_id || null;
+    const anchoredProjectId = await resolveInitiativeProjectId(orgId, data.project_id, {
+      createdBy: ownerId,
+    });
 
     // Build the INSERT column-by-column and include the legacy alias columns
     // (`org_id`, `owner_id`) ONLY when they actually exist in the table. The
@@ -156,7 +160,7 @@ LIMIT ? OFFSET ? `,
     push('id', id);
     push('organization_id', orgId);
     push('org_id', orgId); // legacy alias — skipped if column absent
-    push('project_id', data.project_id || null);
+    push('project_id', anchoredProjectId);
     push('title', data.title);
     // `name` is a NOT-NULL legacy column that mirrors `title` in the canonical
     // schema; populate it (skipped automatically if the column is absent).

@@ -6,6 +6,7 @@ import DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import { baseStorageDir } from '../utils/storagePaths.js';
 import { createInitiative as funnelCreateInitiative } from './initiative/createInitiativeService.js';
+import { resolveInitiativeProjectId } from './initiativeProjectPolicyService.js';
 import PDFParserService from './pdfParserService.js';
 
 /**
@@ -1556,6 +1557,11 @@ Respond in JSON format:
           initiativeIds.push(__r.id);
         } else {
           const initiativeId = uuidv4();
+          const anchoredProjectId = await resolveInitiativeProjectId(
+            organizationId,
+            projectId || importRecord.projectId,
+            { createdBy: userId ?? null }
+          );
           const sql = `
         INSERT INTO initiatives (
           id, organization_id, project_id,
@@ -1569,7 +1575,7 @@ Respond in JSON format:
           await DbPromise.run(sql, [
             initiativeId,
             organizationId,
-            projectId || importRecord.projectId || null,
+            anchoredProjectId,
             init.title,
             init.title,
             init.description || '',

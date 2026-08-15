@@ -50,6 +50,7 @@ CARD_CONTENT_FORMULA §A3 — Każda wygenerowana inicjatywa musi spełniać:
 `;
 import * as queryHelpers from '../utils/queryHelpers.js';
 import { createInitiative as funnelCreateInitiative } from './initiative/createInitiativeService.js';
+import { resolveInitiativeProjectId } from './initiativeProjectPolicyService.js';
 
 // Types
 type AssessmentType = 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
@@ -1005,6 +1006,11 @@ Return a JSON array with exactly ${count} initiatives in this format:
         }
       } else {
         id = uuidv4();
+        const anchoredProjectId = await resolveInitiativeProjectId(
+          String(assessment.organization_id),
+          assessment.project_id,
+          { createdBy: userId ?? null }
+        );
 
         // Insert into initiatives table (schema-variant safe)
         const cols: string[] = [];
@@ -1018,7 +1024,7 @@ Return a JSON array with exactly ${count} initiatives in this format:
 
         push('id', id);
         push('organization_id', assessment.organization_id);
-        push('project_id', assessment.project_id || null);
+        push('project_id', anchoredProjectId);
         push('name', initiative.title);
         push('title', initiative.title);
         push('description', initiative.description);

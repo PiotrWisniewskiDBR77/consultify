@@ -10,6 +10,7 @@ import * as queryHelpers from '../utils/queryHelpers.js';
 import { AIPipeline } from './ai/AIPipeline.js';
 import { CARD_CONTENT_FORMULA_A3_LITE } from './initiative/cardContentFormulaPrompt.js';
 import { createInitiative as funnelCreateInitiative } from './initiative/createInitiativeService.js';
+import { resolveInitiativeProjectId } from './initiativeProjectPolicyService.js';
 
 type ToolSessionRow = {
   id: string;
@@ -299,6 +300,11 @@ export class ToolInitiativeService {
           });
         }
       } else {
+        const anchoredProjectId = await resolveInitiativeProjectId(
+          toolSession.organization_id,
+          toolSession.project_id,
+          { createdBy: userId ?? null }
+        );
         await queryHelpers.queryRun(
           `INSERT INTO initiatives (
             id, organization_id, project_id, name, summary, status, axis, source_type, source_id,
@@ -307,7 +313,7 @@ export class ToolInitiativeService {
           [
             initiativeId,
             toolSession.organization_id,
-            toolSession.project_id || null,
+            anchoredProjectId,
             initiative.title,
             initiative.description,
             'DRAFT',

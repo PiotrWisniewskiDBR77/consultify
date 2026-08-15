@@ -24,6 +24,7 @@ import {
   recordLegacyAuditSafely,
 } from './aiRunLedgerService.js';
 import { createInitiative as funnelCreateInitiative } from './initiative/createInitiativeService.js';
+import { resolveInitiativeProjectId } from './initiativeProjectPolicyService.js';
 
 // Enums and Constants
 export const ACTION_TYPES = {
@@ -1173,11 +1174,14 @@ const AIActionExecutor = {
       initiativeId = __r.id;
     } else {
       initiativeId = uuidv4();
+      const anchoredProjectId = await resolveInitiativeProjectId(orgId, action.project_id, {
+        createdBy: action.user_id ?? null,
+      });
       // Bug-fix F1.10: dodane organization_id także w starej ścieżce.
       await dbRun(
         `INSERT INTO initiatives (id, organization_id, project_id, name, description, owner_business_id, priority, status)
                 VALUES (?, ?, ?, ?, ?, ?, ?, 'DRAFT')`,
-        [initiativeId, orgId, action.project_id, name, description, ownerId, priority || 'MEDIUM']
+        [initiativeId, orgId, anchoredProjectId, name, description, ownerId, priority || 'MEDIUM']
       );
     }
 
