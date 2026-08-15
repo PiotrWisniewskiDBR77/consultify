@@ -228,17 +228,18 @@ router.post(
         code: 'PARTNER_ORG_REQUIRED',
       });
     }
+    const authorizedPartnerOrgId: string = partnerOrgId;
     return payoutPolicyNotConfigured(res);
     /* c8 ignore start -- re-enabled only after a versioned policy authority is published */
     try {
-      const payoutSettings = await getPartnerPayoutSettings(partnerOrgId);
+      const payoutSettings = await getPartnerPayoutSettings(authorizedPartnerOrgId);
       if (!isPartnerPayoutDestinationComplete(payoutSettings)) {
         let whatNext: string[] = [
           'Uzupełnij dane wypłaty: PUT /api/v8/partner/payout-settings (konto i metoda), potem ponów request fazy payout.',
         ];
         try {
           const d = await PartnerProgramLedgerService.getProgramStatusDetail(
-            partnerOrgId,
+            authorizedPartnerOrgId,
             'partner'
           );
           whatNext = [...whatNext, ...d.whatNext];
@@ -249,11 +250,11 @@ router.post(
           error: 'Complete payout settings before requesting payout phase',
           code: 'P29_PAYOUT_SETTINGS_INCOMPLETE',
           whatNext,
-          meta: partnerProgramMeta(req, partnerOrgId),
+          meta: partnerProgramMeta(req, authorizedPartnerOrgId),
         });
       }
       const result = await PartnerProgramLedgerService.transitionLifecycle({
-        partnerOrgId,
+        partnerOrgId: authorizedPartnerOrgId,
         toPhase: 'payout',
         actor: 'partner',
         actorId: userId,
@@ -261,7 +262,7 @@ router.post(
       });
       return res.json({
         data: result,
-        meta: partnerProgramMeta(req, partnerOrgId),
+        meta: partnerProgramMeta(req, authorizedPartnerOrgId),
       });
     } catch (e: any) {
       const code = e?.code || 'P29_LIFECYCLE_ERROR';
@@ -269,7 +270,7 @@ router.post(
       if (code === 'P29_LIFECYCLE_INVALID' || code === 'P29_LIFECYCLE_FORBIDDEN') {
         try {
           const d = await PartnerProgramLedgerService.getProgramStatusDetail(
-            partnerOrgId,
+            authorizedPartnerOrgId,
             'partner'
           );
           whatNext = d.whatNext;
@@ -856,29 +857,30 @@ router.post(
         code: 'PARTNER_ORG_REQUIRED',
       });
     }
+    const authorizedPartnerOrgId: string = partnerOrgId;
     return payoutPolicyNotConfigured(res);
     /* c8 ignore start -- re-enabled only after a versioned policy authority is published */
-    const payoutSettings = await getPartnerPayoutSettings(partnerOrgId);
+    const payoutSettings = await getPartnerPayoutSettings(authorizedPartnerOrgId);
     if (!isPartnerPayoutDestinationComplete(payoutSettings)) {
       const detail = await PartnerProgramLedgerService.getProgramStatusDetail(
-        partnerOrgId,
+        authorizedPartnerOrgId,
         'partner'
       );
       return res.status(409).json({
         error: 'Complete payout settings before requesting payout',
         code: 'P29_PAYOUT_SETTINGS_INCOMPLETE',
         whatNext: ['Uzupełnij payout settings i ponów żądanie payout.', ...detail.whatNext],
-        meta: partnerProgramMeta(req, partnerOrgId),
+        meta: partnerProgramMeta(req, authorizedPartnerOrgId),
       });
     }
 
     const detail = await PartnerProgramLedgerService.getProgramStatusDetail(
-      partnerOrgId,
+      authorizedPartnerOrgId,
       'partner'
     );
     if (detail.runtime.lifecycle_phase === 'earn') {
       await PartnerProgramLedgerService.transitionLifecycle({
-        partnerOrgId,
+        partnerOrgId: authorizedPartnerOrgId,
         toPhase: 'payout',
         actor: 'partner',
         actorId: userId,
@@ -889,12 +891,12 @@ router.post(
         error: `Cannot request payout while lifecycle phase is ${detail.runtime.lifecycle_phase}`,
         code: 'P29_LIFECYCLE_INVALID',
         whatNext: detail.whatNext,
-        meta: partnerProgramMeta(req, partnerOrgId),
+        meta: partnerProgramMeta(req, authorizedPartnerOrgId),
       });
     }
 
     const payout = await PartnerCommissionService.requestPayout({
-      partnerOrgId,
+      partnerOrgId: authorizedPartnerOrgId,
       payoutAccountId: req.body?.payoutAccountId,
       requestedBy: userId,
       notes: req.body?.notes,
@@ -905,20 +907,21 @@ router.post(
         code: 'PAYOUT_NOT_AVAILABLE',
       });
     }
+    const requestedPayout = payout!;
 
     await PartnerProgramLedgerService.appendEntry({
-      partnerOrgId,
+      partnerOrgId: authorizedPartnerOrgId,
       entryType: 'payout.requested',
-      amount: Number(payout.netAmount || payout.grossAmount || 0),
-      currency: payout.currency || 'EUR',
+      amount: Number(requestedPayout.netAmount || requestedPayout.grossAmount || 0),
+      currency: requestedPayout.currency || 'EUR',
       actor: 'partner',
       actorId: userId,
       idempotencyKey:
         typeof req.body?.idempotencyKey === 'string' && req.body.idempotencyKey.trim()
           ? req.body.idempotencyKey.trim()
-          : `partner-payout-request:${payout.id}`,
+          : `partner-payout-request:${requestedPayout.id}`,
       sourceRef: {
-        payoutId: payout.id,
+        payoutId: requestedPayout.id,
         payoutAccountId: req.body?.payoutAccountId || null,
         bridge: 'partner_commission_service',
       },
@@ -926,18 +929,18 @@ router.post(
     });
 
     const updatedDetail = await PartnerProgramLedgerService.getProgramStatusDetail(
-      partnerOrgId,
+      authorizedPartnerOrgId,
       'partner'
     );
     return res.status(201).json({
       data: {
-        payout,
+        payout: requestedPayout,
         lifecyclePhase: updatedDetail.runtime.lifecycle_phase,
         balances: updatedDetail.balances,
         whatNext: updatedDetail.whatNext,
         hold: updatedDetail.hold,
       },
-      meta: partnerProgramMeta(req, partnerOrgId),
+      meta: partnerProgramMeta(req, authorizedPartnerOrgId),
     });
     /* c8 ignore stop */
   })
