@@ -914,27 +914,27 @@ export class DecisionController {
         `;
       const agingParams = projectId ? [orgId, projectId] : [orgId];
 
-      const aging = await DbPromise.all(agingSql, agingParams);
+      const aging = await DbPromise.all(agingSql, agingParams, { fallback: false });
 
       // Blocking decisions
       const blockingSql = `
-            SELECT d.*, 
+            SELECT d.*,
                 u.first_name || ' ' || u.last_name as owner_name,
                 COUNT(di.id) as blocked_count
             FROM decisions d
             LEFT JOIN users u ON d.decision_maker_id = u.id
-            LEFT JOIN decision_impacts di ON d.id = di.decision_id AND di.is_blocker = TRUE
+            LEFT JOIN decision_impacts di ON d.id = di.decision_id AND di.is_blocker::text IN ('1','true')
             WHERE d.organization_id = ?
             AND d.status IN ('pending', 'escalated')
             ${projectId ? 'AND d.project_id = ?' : ''}
-            GROUP BY d.id
-            HAVING blocked_count > 0
+            GROUP BY d.id, u.first_name, u.last_name
+            HAVING COUNT(di.id) > 0
             ORDER BY blocked_count DESC
             LIMIT 20
         `;
       const blockingParams = projectId ? [orgId, projectId] : [orgId];
 
-      const blocking = await DbPromise.all(blockingSql, blockingParams);
+      const blocking = await DbPromise.all(blockingSql, blockingParams, { fallback: false });
 
       // Owner overload (too many pending decisions)
       const overloadSql = `
@@ -947,13 +947,13 @@ export class DecisionController {
         WHERE d.organization_id = ?
         AND d.status IN ('pending', 'escalated')
         ${projectId ? 'AND d.project_id = ?' : ''}
-        GROUP BY d.decision_maker_id
-        HAVING pending_count >= 5
+        GROUP BY d.decision_maker_id, u.first_name, u.last_name, u.email
+        HAVING COUNT(*) >= 5
         ORDER BY pending_count DESC
         LIMIT 10
       `;
       const overloadParams = projectId ? [orgId, projectId] : [orgId];
-      const ownerOverload = await DbPromise.all(overloadSql, overloadParams);
+      const ownerOverload = await DbPromise.all(overloadSql, overloadParams, { fallback: false });
 
       res.json({
         aging: (aging || []).map((row: any) => ({

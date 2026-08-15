@@ -165,6 +165,7 @@ describe('ZZ-FALSIFY — independent adversarial probes on MW-DEC-001', () => {
 
   it('T1c: GET /api/decisions/bottlenecks as org B does not include org A decisions', async () => {
     const res = await request(app).get('/api/decisions/bottlenecks').set('Authorization', `Bearer ${tokenB}`);
+    expect(res.status).toBe(200);
     const raw = JSON.stringify(res.body);
     expect(raw).not.toContain('ZZ FALSIFY A1');
   });

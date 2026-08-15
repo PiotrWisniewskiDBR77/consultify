@@ -11,6 +11,7 @@ const mockQueryOne = vi.fn();
 const mockQueryRun = vi.fn();
 const mockTransformRow = vi.fn((row) => row);
 const mockFinalizeDecisionTransition = vi.fn();
+const mockDbAll = vi.fn().mockResolvedValue([]);
 
 vi.mock('../../../../server/src/utils/queryHelpers.js', () => ({
   queryAll: (...args: unknown[]) => mockQueryAll(...args),
@@ -36,7 +37,7 @@ vi.mock(
 );
 
 vi.mock('../../../../server/src/utils/DbPromise.js', () => ({
-  all: vi.fn().mockResolvedValue([]),
+  all: (...args: unknown[]) => mockDbAll(...args),
 }));
 
 vi.mock('../../../../server/src/utils/dbSchema.js', () => ({
@@ -351,6 +352,14 @@ describe('DecisionController', () => {
           blocking: expect.any(Array),
         })
       );
+      expect(mockDbAll).toHaveBeenCalledTimes(3);
+      for (const call of mockDbAll.mock.calls) {
+        expect(call[2]).toEqual({ fallback: false });
+      }
+      expect(String(mockDbAll.mock.calls[1][0])).toContain(
+        "di.is_blocker::text IN ('1','true')"
+      );
+      expect(String(mockDbAll.mock.calls[1][0])).toContain('HAVING COUNT(di.id) > 0');
     });
   });
 
