@@ -1,6 +1,8 @@
 /**
- * W11 — per-org context store (Goals / Challenges / Strategy / Company Profile).
+ * W11 — per-org context store (Goals / Challenges / Strategy).
  * Replaces the localStorage-backed useContextBuilderStore on the frontend.
+ * Profile reads retain the legacy column for compatibility, but this route
+ * never writes it. /api/organization-profiles/:orgId is the sole profile writer.
  *
  * GET  /api/organization-context-store   → returns stored blob (200) or empty defaults (200)
  * PUT  /api/organization-context-store   → upserts the blob (200)
@@ -66,18 +68,17 @@ router.put('/', async (req: AuthRequest, res: Response): Promise<void> => {
     return;
   }
 
-  const { goals, challenges, synthesis, companyProfile } = req.body ?? {};
+  const { goals, challenges, synthesis } = req.body ?? {};
 
   try {
     await dbRun(
       `INSERT INTO organization_context_store
            (organization_id, goals_json, challenges_json, synthesis_json, company_profile_json, updated_at, updated_by)
-         VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, $6)
+         VALUES ($1, $2, $3, $4, '{}', CURRENT_TIMESTAMP, $5)
          ON CONFLICT (organization_id) DO UPDATE SET
            goals_json           = EXCLUDED.goals_json,
            challenges_json      = EXCLUDED.challenges_json,
            synthesis_json       = EXCLUDED.synthesis_json,
-           company_profile_json = EXCLUDED.company_profile_json,
            updated_at           = EXCLUDED.updated_at,
            updated_by           = EXCLUDED.updated_by`,
       [
@@ -85,7 +86,6 @@ router.put('/', async (req: AuthRequest, res: Response): Promise<void> => {
         JSON.stringify(goals ?? {}),
         JSON.stringify(challenges ?? {}),
         JSON.stringify(synthesis ?? {}),
-        JSON.stringify(companyProfile ?? {}),
         userId ?? null,
       ],
       { fallback: true }

@@ -15,6 +15,11 @@ import OrganizationSidebar, {
   type OrganizationSection,
 } from '../components/Organization/OrganizationSidebar';
 import { OrgContextSummaryBanner } from '../components/Organization/OrgContextSummaryBanner';
+import {
+  ORGANIZATION_ADMIN_HANDOFFS,
+  type OrganizationSurface,
+  organizationSectionRoute,
+} from '../domain/organization/organizationOwnerRegistry';
 import { useOrgContextSync } from '../hooks/useOrgContextSync';
 import { ROUTES } from '../routes/routeConfig';
 import { trackFunnelEvent } from '../services/funnelAnalytics';
@@ -34,14 +39,8 @@ const ADMIN_SECTIONS: OrganizationSection[] = [
   'branding',
 ];
 
-const ADMIN_REDIRECTS: Partial<Record<OrganizationSection, string>> = {
-  members: ROUTES.ADMIN.PEOPLE,
-  competencies: ROUTES.ADMIN.OPERATIONS,
-  billing: ROUTES.ADMIN.BILLING,
-  limits: ROUTES.ADMIN.BILLING,
-  domains: ROUTES.ADMIN.OPERATIONS,
-  branding: ROUTES.ADMIN.OPERATIONS,
-};
+const ADMIN_REDIRECTS: Partial<Record<OrganizationSection, string>> =
+  ORGANIZATION_ADMIN_HANDOFFS;
 
 const sectionMeta: Record<
   OrganizationSection,
@@ -169,7 +168,7 @@ export const OrganizationView: React.FC = () => {
         trackFunnelEvent('org_workspace_admin_handoff', { section, target: adminRedirect });
         return;
       }
-      navigate(`${ROUTES.ORGANIZATION.ROOT}/${section}`);
+      navigate(organizationSectionRoute(section as OrganizationSurface));
       setSidebarOpen(false);
       trackFunnelEvent('org_workspace_opened', { section });
     },

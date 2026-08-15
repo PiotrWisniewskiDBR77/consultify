@@ -1,10 +1,12 @@
 /**
- * W11 — two-way sync between useContextBuilderStore (localStorage) and
+ * W11 — two-way sync between context drafts and
  * the per-org backend store at /api/organization-context-store.
  *
  * Call once from OrganizationView. On mount it loads the server state and
  * hydrates the zustand store. On every store change it debounce-saves back.
- * localStorage remains as an offline/fast-read cache.
+ * localStorage remains an offline/fast-read cache for context drafts only.
+ * Organization profile is deliberately excluded: its sole writer is
+ * /api/organization-profiles/:orgId.
  */
 import { useEffect, useRef } from 'react';
 
@@ -33,13 +35,11 @@ export function useOrgContextSync(isAuthenticated: boolean): SyncResult {
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (!data) return;
-        const { goals, challenges, synthesis, companyProfile } = data;
+        const { goals, challenges, synthesis } = data;
         const store = useContextBuilderStore.getState();
         if (goals && Object.keys(goals).length) store.setGoals(goals);
         if (challenges && Object.keys(challenges).length) store.setChallenges(challenges);
         if (synthesis && Object.keys(synthesis).length) store.setSynthesis(synthesis);
-        if (companyProfile && Object.keys(companyProfile).length)
-          store.setCompanyProfile(companyProfile);
       })
       .catch(() => {
         // Server unreachable — localStorage state is the fallback, no action needed
@@ -56,12 +56,12 @@ export function useOrgContextSync(isAuthenticated: boolean): SyncResult {
 
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
       debounceTimer.current = setTimeout(() => {
-        const { goals, challenges, synthesis, companyProfile } = useContextBuilderStore.getState();
+        const { goals, challenges, synthesis } = useContextBuilderStore.getState();
         isSyncing.current = true;
         fetch(API_URL, {
           method: 'PUT',
           headers: { ...getHeaders(), 'Content-Type': 'application/json' },
-          body: JSON.stringify({ goals, challenges, synthesis, companyProfile }),
+          body: JSON.stringify({ goals, challenges, synthesis }),
         })
           .catch(() => {
             // Best-effort — localStorage is still the source of truth for offline
