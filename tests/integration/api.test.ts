@@ -98,12 +98,21 @@ describe('API Integration', () => {
     expect(res.text).toBe('pong');
   });
 
-  it('GET /health should return 200 OK', async () => {
+  it('GET /health reports the honest migration posture of the mock harness', async () => {
     console.log('Testing /api/health...');
     const res = await request(app).get('/api/health');
     console.log('Health result:', res.status);
     expect(res.status).toBe(200);
-    expect(res.body.status).toBe('ok');
+    // The canonical health route is mounted before the test gateway. This
+    // harness deliberately skips migrations, so a 200/degraded probe is the
+    // truthful result; it must not be rewritten to the gateway's fake `ok`.
+    expect(res.body.status).toBe('degraded');
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        database: 'connected',
+        redis: 'mocked-unavailable',
+      })
+    );
   });
 
   // 404 test removed due to inconsistent behavior with mocks

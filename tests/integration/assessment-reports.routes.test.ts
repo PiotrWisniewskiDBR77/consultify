@@ -6,22 +6,26 @@
  */
 import request from 'supertest';
 import { describe, it, expect, beforeAll, vi } from 'vitest';
-import { initializeDatabase } from '../../server/src/database/DatabaseInitializer.js';
+
+// The global unit-test setup injects an authenticated user. This integration
+// suite owns the real unauthenticated route boundary.
+vi.unmock('../../server/src/middleware/auth.middleware.js');
 
 vi.hoisted(() => {
-  process.env.MOCK_DB = 'false';
-  const workerId = process.env.VITEST_WORKER_ID || '0';
-  process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
+  process.env.MOCK_DB = 'true';
+  process.env.ENABLE_TEST_GATEWAY = 'true';
 });
-
 
 describe('Assessment Reports Routes (TS)', () => {
   let app: any;
 
   beforeAll(async () => {
-    await initializeDatabase();
     const serverModule = await import('../../server/src/index.js');
     app = serverModule.default;
+    for (let attempt = 0; attempt < 50; attempt += 1) {
+      if ((await request(app).get('/api/ready')).status === 200) break;
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
   });
 
   it('GET /api/assessment-reports returns valid response', async () => {
@@ -38,9 +42,7 @@ describe('Assessment Reports Routes (TS)', () => {
   });
 
   it('POST /api/assessment-reports requires assessmentId', async () => {
-    const response = await request(app)
-      .post('/api/assessment-reports')
-      .send({});
+    const response = await request(app).post('/api/assessment-reports').send({});
     expect(response.status).toBe(401);
   });
 });
