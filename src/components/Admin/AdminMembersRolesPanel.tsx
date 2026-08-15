@@ -294,6 +294,8 @@ export const AdminMembersRolesPanel: React.FC = () => {
         return (
           <div onClick={(e) => e.stopPropagation()} className="max-w-[160px]">
             <SelectField
+              label={t('admin.membersRoles.columns.role', 'Role')}
+              wrapperClassName="[&>label]:sr-only"
               value={row.role}
               disabled={isBusy || ownerProtected}
               onChange={(value) => void handleRoleChange(row.memberId, value as RoleOption)}
@@ -375,6 +377,8 @@ export const AdminMembersRolesPanel: React.FC = () => {
               aria-label={t('admin.membersRoles.invite.emailLabel', 'Member email')}
             />
             <SelectField
+              label={t('admin.membersRoles.invite.roleLabel', 'Invitation role')}
+              wrapperClassName="[&>label]:sr-only"
               value={inviteRole}
               onChange={(value) => setInviteRole(value as RoleOption)}
               placeholder=""
@@ -436,12 +440,7 @@ export const AdminMembersRolesPanel: React.FC = () => {
                 reason: loadError,
               })}
             </p>
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-4"
-              onClick={() => void loadMembers()}
-            >
+            <Button variant="outline" size="sm" className="mt-4" onClick={() => void loadMembers()}>
               {t('admin.membersRoles.loadErrorRetry', 'Spróbuj ponownie')}
             </Button>
           </div>
@@ -507,6 +506,8 @@ export const AdminMembersRolesPanel: React.FC = () => {
           </div>
           <div className="grid gap-3 sm:grid-cols-[160px,120px,auto] sm:items-end">
             <SelectField
+              label={t('admin.membersRoles.code.roleLabel', 'Invite code role')}
+              wrapperClassName="[&>label]:sr-only"
               value={generatedInviteRole}
               onChange={(value) => setGeneratedInviteRole(value as RoleOption)}
               placeholder=""

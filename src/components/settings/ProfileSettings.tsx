@@ -601,7 +601,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
             {formState.pronouns && (
               <p className="text-[var(--c-text-muted)] text-xs">({formState.pronouns})</p>
             )}
-            <p className="text-sm font-medium text-[var(--c-accent)]">{currentUser.companyName}</p>
+            <p className="text-sm font-medium text-[var(--c-text-secondary)]">{currentUser.companyName}</p>
 
             {/* Status Badge */}
             {(formState.statusMessage || formState.isOutOfOffice) && (
@@ -666,6 +666,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                     className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--c-text-muted)]"
                   />
                   <input
+                    aria-label={t('settings.profile.displayName', 'Display Name')}
                     value={formState.displayName}
                     onChange={(e) => updateFormField('displayName', e.target.value)}
                     placeholder={`${formState.firstName} ${formState.lastName}`}
@@ -683,6 +684,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                 <label className={labelClass}>{t('settings.profile.pronouns', 'Pronouns')}</label>
                 <div className="relative">
                   <select
+                    aria-label={t('settings.profile.pronouns', 'Pronouns')}
                     value={formState.pronouns}
                     onChange={(e) => updateFormField('pronouns', e.target.value)}
                     className={inputClass + ' appearance-none cursor-pointer pr-8'}
@@ -720,6 +722,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                     className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--c-text-muted)] pointer-events-none"
                   />
                   <select
+                    aria-label={t('settings.profile.department', 'Department')}
                     value={formState.department}
                     onChange={(e) => updateFormField('department', e.target.value)}
                     className={selectClass}
@@ -761,6 +764,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                   {t('settings.profile.firstName', 'First Name')}
                 </label>
                 <input
+                  aria-label={t('settings.profile.firstName', 'First Name')}
                   value={formState.firstName}
                   aria-invalid={firstNameValidationError ? 'true' : undefined}
                   aria-describedby={
@@ -781,6 +785,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
               <div className="space-y-1.5">
                 <label className={labelClass}>{t('settings.profile.lastName', 'Last Name')}</label>
                 <input
+                  aria-label={t('settings.profile.lastName', 'Last Name')}
                   value={formState.lastName}
                   onChange={(e) => updateFormField('lastName', e.target.value)}
                   className={inputClass}
@@ -794,6 +799,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                     className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--c-text-muted)]"
                   />
                   <input
+                    aria-label={t('auth.phone', 'Phone')}
                     value={formState.phone}
                     onChange={(e) => updateFormField('phone', e.target.value)}
                     className={inputWithIconClass}
@@ -808,6 +814,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                     className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--c-text-muted)]"
                   />
                   <input
+                    aria-label={t('settings.profile.company', 'Company')}
                     value={formState.companyName}
                     onChange={(e) => updateFormField('companyName', e.target.value)}
                     className={inputWithIconClass}
@@ -944,6 +951,10 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                     </div>
                   </div>
                   <button
+                    type="button"
+                    role="switch"
+                    aria-checked={formState.isOutOfOffice}
+                    aria-label={t('settings.profile.outOfOffice', 'Out of Office')}
                     onClick={() => updateFormField('isOutOfOffice', !formState.isOutOfOffice)}
                     className={`relative h-6 w-12 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)] ${
                       formState.isOutOfOffice
@@ -1009,6 +1020,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                     className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--c-text-muted)] pointer-events-none"
                   />
                   <select
+                    aria-label={t('settings.profile.timezone', 'Timezone')}
                     value={formState.timezone}
                     onChange={(e) => updateFormField('timezone', e.target.value)}
                     className={selectClass}
@@ -1056,6 +1068,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                     className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--c-text-muted)] pointer-events-none"
                   />
                   <select
+                    aria-label={t('settings.profile.dateFormat', 'Date Format')}
                     value={formState.dateFormat}
                     onChange={(e) => updateFormField('dateFormat', e.target.value)}
                     className={selectClass}

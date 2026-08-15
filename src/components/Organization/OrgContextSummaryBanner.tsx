@@ -103,10 +103,16 @@ export const OrgContextSummaryBanner: React.FC<OrgContextSummaryBannerProps> = (
     // Chat P0-1 — JWT in handshake; the namespace now rejects anonymous
     // connections. Without `auth.token` we won't even connect.
     const token = typeof window !== 'undefined' ? window.localStorage.getItem('token') || '' : '';
-    const socket = io('/org-context', {
-      transports: ['websocket'],
-      auth: { token },
-    });
+    const configuredTarget = String(import.meta.env.VITE_API_TARGET || '').replace(/\/+$/, '');
+    const socket = configuredTarget
+      ? io(`${configuredTarget}/org-context`, {
+          transports: ['websocket'],
+          auth: { token },
+        })
+      : io('/org-context', {
+          transports: ['websocket'],
+          auth: { token },
+        });
     socketRef.current = socket;
 
     socket.on('connect', () => {

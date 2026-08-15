@@ -377,7 +377,7 @@ export const PartnerSidebar: React.FC<PartnerSidebarProps> = ({
         <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-wide">
           {t('partner.sidebar.title', 'Partner')}
         </h1>
-        <p className="text-sm text-slate-600 dark:text-slate-500 mt-0.5">
+        <p className="text-sm text-slate-600 dark:text-slate-300 mt-0.5">
           {t('partner.sidebar.subtitle', 'Grow with Consultify')}
         </p>
       </div>
@@ -393,7 +393,7 @@ export const PartnerSidebar: React.FC<PartnerSidebarProps> = ({
                 {/* Group Header - Clickable */}
                 <button
                   onClick={() => toggleGroup(group.id)}
-                  className="w-full flex items-center justify-between px-2 py-2.5 text-[11px] font-semibold tracking-wider text-slate-600 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
+                  className="w-full flex items-center justify-between px-2 py-2.5 text-[11px] font-semibold tracking-wider text-slate-600 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white transition-colors"
                 >
                   <span>{group.label}</span>
                   <ChevronDown
@@ -424,7 +424,7 @@ export const PartnerSidebar: React.FC<PartnerSidebarProps> = ({
                             'relative w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150',
                             isActive
                               ? 'bg-slate-100 dark:bg-white/[0.08] text-slate-900 dark:text-white font-medium before:absolute before:left-0 before:top-1/2 before:h-5 before:w-0.5 before:-translate-y-1/2 before:rounded-full before:bg-[var(--c-info)]'
-                              : 'text-slate-600 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800/20 hover:text-slate-900 dark:hover:text-white'
+                              : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800/20 hover:text-slate-900 dark:hover:text-white'
                           )}
                         >
                           <Icon
@@ -453,7 +453,7 @@ export const PartnerSidebar: React.FC<PartnerSidebarProps> = ({
       <div className="p-3 border-t border-slate-200 dark:border-white/5">
         <button
           onClick={onBack || (() => window.history.back())}
-          className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-slate-600 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/20 rounded-lg transition-colors"
+          className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/20 rounded-lg transition-colors"
         >
           <LogOut className="w-4 h-4 rotate-180" />
           {t('partner.sidebar.backToApp', 'Back to App')}

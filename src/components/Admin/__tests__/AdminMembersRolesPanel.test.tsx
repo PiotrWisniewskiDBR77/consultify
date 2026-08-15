@@ -80,6 +80,17 @@ describe('AdminMembersRolesPanel', () => {
     expect(await screen.findByText('member@acme.test')).toBeInTheDocument();
   });
 
+  it('gives every rendered role selector an accessible name', async () => {
+    render(<AdminMembersRolesPanel />);
+    await screen.findByText('member@acme.test');
+
+    const selects = screen.getAllByRole('combobox');
+    expect(selects.length).toBeGreaterThan(0);
+    for (const select of selects) {
+      expect(select).toHaveAccessibleName();
+    }
+  });
+
   it('renders the role guidance matrix for all roles', async () => {
     render(<AdminMembersRolesPanel />);
     await screen.findByText('member@acme.test');

@@ -1281,6 +1281,7 @@ export const ResultsKpiRegistryPage: React.FC = () => {
 
     return (
       <div className="h-full" data-testid="results-vnext-kpi-registry-page">
+        <h1 className="sr-only">{isPolish ? 'Wyniki KPI' : 'KPI Results'}</h1>
         <ResultsVNextRegistryShell
           domain="kpi"
           moduleBar={{

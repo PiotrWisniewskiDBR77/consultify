@@ -1572,6 +1572,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
 
   return (
     <div className="h-full" data-testid="reports-presentations-hub">
+      <h1 className="sr-only">{t('rap.accessibleTitle', 'Materials')}</h1>
       <StandardModuleBar
         tabs={tabs}
         activeTab={activeTab as ModuleTab}

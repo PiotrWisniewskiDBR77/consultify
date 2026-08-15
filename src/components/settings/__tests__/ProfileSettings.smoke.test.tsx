@@ -57,6 +57,21 @@ afterEach(() => {
 });
 
 describe('ProfileSettings smoke — save flow', () => {
+  it('gives the profile controls accessible names', () => {
+    render(<ProfileSettings currentUser={baseUser} onUpdateUser={vi.fn()} />);
+
+    expect(screen.getByRole('textbox', { name: 'First Name' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Last Name' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Pronouns' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Department' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Timezone' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Date Format' })).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: 'Out of Office' })).toHaveAttribute(
+      'aria-checked',
+      'false'
+    );
+  });
+
   it('persists an edited first name via Api.updateUser', async () => {
     const onUpdateUser = vi.fn();
     render(<ProfileSettings currentUser={baseUser} onUpdateUser={onUpdateUser} />);
