@@ -2,6 +2,20 @@
   "schemaVersion": 1,
   "rows": [
     {
+      "tip": "c44e5c90b6cfa8381dea7a0b4206aa94594e9cd3",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-MYW-003",
+      "evidenceRule": "The recovered removal of the contextual New Decision CTA depended on a mounted global UnifiedCreateLauncher. In the current canonical tree UnifiedCreateLauncher has no production importer or host, while MyWorkHub's contextual action remains the visible decision-create path. Restoring the old removal would make creation less reachable, not remove a live duplicate.",
+      "nextAction": "Keep the contextual CTA until a canonical create launcher is mounted and accepted; treat launcher consolidation as a separate My Work gap, not a cherry-pick. Retain the recovery ref until CLEAN-003."
+    },
+    {
+      "tip": "d1f14e865643c64d23b6147d19df9cad62fbccbb",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-MYW-004",
+      "evidenceRule": "The recovered owner-requested removal predates the later canonical Notebook V3 contract. docs/product/V3_ACTION_PLAN.md explicitly requires long-note mini outline navigation in V3-C07, and the current NotebookContent implements that requirement while retaining headingOutline for conversion readiness.",
+      "nextAction": "Keep the current mini outline and validate its density in My Work visual acceptance; retain the older recovery ref as historical decision evidence until CLEAN-003."
+    },
+    {
       "tip": "5a9591f3d452c5298d778e81a7f21ba30ab59a4e",
       "verdict": "INTEGRATED_CANONICAL",
       "taskId": "CLEAN-002-UI-GUARD-001",

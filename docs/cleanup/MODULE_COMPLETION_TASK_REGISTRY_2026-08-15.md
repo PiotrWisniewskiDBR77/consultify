@@ -453,7 +453,10 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
   już obecny na aktualnej montowanej powierzchni. Odzyskana normalizacja
   wieloliniowych tagów tabel została dopasowana do aktualnego ratchetu w
   `3cdcce6fc`; pełny skan 174 plików ma 273/273 i zero nowych naruszeń, zamiast
-  135 fałszywych alarmów. Pozostałe 190 nadal wymaga
+  135 fałszywych alarmów. Dwa historyczne uproszczenia My Work zostały
+  odrzucone jako superseded: `New Decision` pozostaje potrzebny, ponieważ
+  globalny `UnifiedCreateLauncher` nie ma produkcyjnego hosta, a mini-outline
+  jest wymagany przez późniejszy kontrakt Notebook V3. Pozostałe 188 nadal wymaga
   review. Te 18 pozostaje zachowanym materiałem
   UX/prototypowym, ale nie
   jest kodem produkcyjnym do merge. Generator mechanicznie egzekwuje warunek
