@@ -68,6 +68,7 @@ import {
   freeze as apiFreeze,
   getOutput,
   getSession,
+  getSessionLineage,
   isOfflineError,
   isVersionConflict,
   listEvents,
@@ -165,14 +166,13 @@ export interface DrdHttpRuntimeState {
    * localStorage: an ephemeral decision queue, not session state. */
   readonly previews: readonly TeresaPreview[];
   /** The session's frozen Output — set only from a server response (either
-   * this browser's own `freeze()` call, or a `getOutput()` re-fetch keyed
-   * off a locally cached output id — see `outputIdCacheKey`). Never
+   * this browser's own `freeze()` call, the canonical session lineage, or a
+   * `getOutput()` re-fetch keyed off a locally cached output id). Never
    * reconstructed from any other localStorage content. */
   readonly output: MethodOutputSummary | null;
-  /** Report Snapshots / Initiative Proposal Drafts created THIS session
-   * (in-memory only — no GET-list endpoint exists server-side; a page
-   * reload loses this list even though the records exist on the server,
-   * a known gap tracked in the P0C report, not a silent fabrication). */
+  /** Report Snapshots / Initiative Proposal Drafts persisted for this
+   * frozen Output. Hydrated from canonical lineage on refresh, then extended
+   * by successful create responses in this browser. */
   readonly reports: readonly unknown[];
   readonly initiatives: readonly unknown[];
 }
@@ -402,9 +402,35 @@ export class DrdHttpSessionRuntime {
         listEvents(this.sessionId),
       ]);
       let output = this.state.output;
+      let reports = this.state.reports;
+      let initiatives = this.state.initiatives;
       if (session.state === 'frozen' || session.state === 'closed') {
+        try {
+          const lineage = await getSessionLineage(this.sessionId);
+          const sessionOutputs = lineage.outputs
+            .filter((candidate) => candidate.sessionId === this.sessionId)
+            .sort((a, b) => b.outputVersion - a.outputVersion);
+          output = sessionOutputs[0] ?? null;
+          if (output) {
+            const outputId = output.id;
+            reports = lineage.reports.filter((report) => report.outputId === outputId);
+            initiatives = lineage.initiativeDrafts.filter((draft) => draft.outputId === outputId);
+            try {
+              this.storage.setItem(outputIdCacheKey(this.sessionId), output.id);
+            } catch {
+              // Best-effort pointer only; lineage remains authoritative.
+            }
+          } else {
+            reports = [];
+            initiatives = [];
+          }
+        } catch {
+          // Compatibility fallback for deployments where lineage is
+          // temporarily unavailable: a known server-issued id may still be
+          // re-fetched, but content is never reconstructed from storage.
+        }
         const cachedOutputId = output?.id ?? this.readCachedOutputId();
-        if (cachedOutputId && cachedOutputId !== output?.id) {
+        if (!output && cachedOutputId) {
           try {
             const res = await getOutput(cachedOutputId);
             output = res.output;
@@ -419,8 +445,10 @@ export class DrdHttpSessionRuntime {
         // Output from a PRIOR state must never linger and be mistaken for
         // the current one.
         output = null;
+        reports = [];
+        initiatives = [];
       }
-      this.setState({ status: held ?? 'ready', session, roles, events, error: null, serverVersion: null, conflictDetail: null, output });
+      this.setState({ status: held ?? 'ready', session, roles, events, error: null, serverVersion: null, conflictDetail: null, output, reports, initiatives });
     } catch (err) {
       this.handleFailure(err);
     }

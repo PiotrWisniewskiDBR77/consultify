@@ -29,6 +29,7 @@ const hoisted = vi.hoisted(() => ({
   transition: vi.fn(),
   freeze: vi.fn(),
   getOutput: vi.fn(),
+  getSessionLineage: vi.fn(),
   teresaPreview: vi.fn(),
   teresaCommit: vi.fn(),
   createReport: vi.fn(),
@@ -48,6 +49,7 @@ vi.mock('@/method-core/api/methodCoreApi', async () => {
     transition: hoisted.transition,
     freeze: hoisted.freeze,
     getOutput: hoisted.getOutput,
+    getSessionLineage: hoisted.getSessionLineage,
     teresaPreview: hoisted.teresaPreview,
     teresaCommit: hoisted.teresaCommit,
     createReport: hoisted.createReport,
@@ -98,6 +100,7 @@ const networkError = () => new MethodCoreApiError('Network request failed', 0, {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  hoisted.getSessionLineage.mockRejectedValue(new Error('lineage unavailable'));
 });
 
 describe('requirement 6 — an OLDER cached revision never survives refresh()', () => {
@@ -200,6 +203,36 @@ describe('requirement 8 — frozen Output only ever comes from a server response
 
     expect(hoisted.getOutput).toHaveBeenCalledWith('out-1');
     expect(runtime.getState().output?.contentHash).toBe('freshFromServer');
+  });
+
+  it('cold reopen hydrates the exact session Output and its persisted downstream artefacts from lineage', async () => {
+    const storage = makeMemoryStorage();
+    hoisted.getSession.mockResolvedValue({ session: makeSession({ state: 'frozen' }), roles: ['owner'] });
+    hoisted.listEvents.mockResolvedValue([]);
+    const output = {
+      id: 'out-current', organizationId: 'org-1', sessionId: 'sess-1', module: 'assessment' as const,
+      methodPackId: 'drd', methodPackVersion: '2.0.0-methodpack.1', outputVersion: 2,
+      scope: 'full', current: {}, target: {}, gap: {}, limitations: [], findings: [],
+      contentHash: 'lineage-server-hash', frozenAt: '2026-08-13T00:00:00.000Z',
+      status: 'current' as const, supersededByOutputId: null,
+    };
+    const report = { id: 'report-1', outputId: output.id, title: 'DRD report' };
+    const draft = { id: 'draft-1', outputId: output.id, title: 'Initiative draft' };
+    hoisted.getSessionLineage.mockResolvedValue({
+      rootSessionId: 'sess-1', sessions: [makeSession({ state: 'frozen' })],
+      outputs: [{ ...output, id: 'out-other', sessionId: 'sess-other', outputVersion: 99 }, output],
+      reports: [report, { id: 'report-other', outputId: 'out-other' }], presentations: [],
+      initiativeDrafts: [draft, { id: 'draft-other', outputId: 'out-other' }],
+    });
+
+    const runtime = new DrdHttpSessionRuntime('sess-1', storage);
+    await runtime.refresh();
+
+    expect(runtime.getState().output).toEqual(output);
+    expect(runtime.getState().reports).toEqual([report]);
+    expect(runtime.getState().initiatives).toEqual([draft]);
+    expect(storage.getItem('method-core:http-cache:sess-1:output-id')).toBe('out-current');
+    expect(hoisted.getOutput).not.toHaveBeenCalled();
   });
 });
 

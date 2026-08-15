@@ -1122,8 +1122,8 @@ const FrozenOutputHttpView: React.FC<{
         </div>
         {!output ? (
           <p className="text-xs text-c-text-muted">
-            Sesja jest zamrożona na serwerze, ale ten przeglądarka nie ma lokalnego wskaźnika do jej Outputu (żaden `freeze()`
-            nie wykonał się w tej karcie) — serwer nie udostępnia listy Outputów po sesji. Znany, udokumentowany brak (P0A/P0B).
+            Sesja jest zamrożona na serwerze, ale nie udało się pobrać jej Outputu. Otwórz Artefakty albo ponów odświeżenie;
+            ekran nie odtworzy treści z lokalnego cache.
           </p>
         ) : (
           <div className="space-y-2 text-xs text-c-text-secondary">
@@ -1166,7 +1166,7 @@ const FrozenOutputHttpView: React.FC<{
           </button>
         </div>
         {state.reports.length === 0 ? (
-          <p className="text-xs text-c-text-muted">Brak wygenerowanego raportu w tej sesji przeglądarki.</p>
+          <p className="text-xs text-c-text-muted">Brak raportu zapisanego dla tego Outputu.</p>
         ) : (
           state.reports.map((r, i) => {
             const rec = r as { id?: string; title?: string; content?: { executiveSummary?: string } };
