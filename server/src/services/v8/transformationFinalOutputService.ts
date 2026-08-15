@@ -151,6 +151,20 @@ export interface TransformationFinalOutputRun {
   native: TransformationFinalOutputNativeArtifacts | null;
 }
 
+export interface ColdReopenedTransformationReport {
+  run: TransformationFinalOutputRun;
+  report: {
+    reportId: string;
+    reportVersionId: string;
+    reportVersionNumber: number;
+    registryArtifactId: string;
+    title: string;
+    status: string;
+    sections: Array<{ sectionKey: string; title: string; content: string; orderIndex: number }>;
+  };
+  binary: { path: string; sha256: string; verified: true };
+}
+
 export interface FinalOutputPublicationProposal {
   publicationMappingId: string;
   proposalVersionId: string;
@@ -1467,4 +1481,76 @@ export async function getLatestFinalOutputRun(
     [caseId, organizationId]
   );
   return row ? mapRun(row, true) : null;
+}
+
+/**
+ * AGT-003 — cold reopen of the representative DOC owner adapter.
+ *
+ * A manifest alone is not success. A fresh process must be able to reopen the
+ * tenant-scoped native Report Builder owner, its immutable version and registry
+ * receipt, then verify the exported DOCX bytes. Missing/drifted evidence fails
+ * closed as `null`; callers must never render a false-green download card.
+ */
+export async function coldReopenNativeFinalReport(
+  caseId: string,
+  organizationId: string,
+  readBinary: (path: string) => Promise<Buffer> = (filePath) => readFile(filePath)
+): Promise<ColdReopenedTransformationReport | null> {
+  const row = await queryOne<Record<string, unknown>>(
+    `SELECT r.*,rb.title report_title,rb.status report_status,
+            rv.id verified_report_version_id,rv.version_number verified_report_version_number,
+            oa.artifact_id verified_registry_artifact_id,
+            COALESCE((SELECT jsonb_agg(jsonb_build_object(
+              'sectionKey',s.section_key,'title',s.title,'content',COALESCE(s.generated_content,''),
+              'orderIndex',s.order_index) ORDER BY s.order_index)
+              FROM report_builder_sections s WHERE s.report_id=rb.id),'[]'::jsonb) report_sections
+       FROM transformation_final_output_runs r
+       JOIN report_builder_reports rb
+         ON rb.id=r.native_report_id AND rb.organization_id=r.organization_id
+        AND rb.source_type='TRANSFORMATION_CASE' AND rb.source_id=r.transformation_case_id
+       JOIN report_builder_versions rv
+         ON rv.id=r.native_report_version_id AND rv.report_id=rb.id
+        AND rv.version_number=r.native_report_version_number
+       JOIN v8_output_artifacts oa
+         ON oa.artifact_id=r.report_registry_artifact_id AND oa.organization_id=r.organization_id
+      WHERE r.transformation_case_id=? AND r.organization_id=?
+      ORDER BY r.generated_at DESC LIMIT 1`,
+    [caseId, organizationId]
+  );
+  if (!row) return null;
+  const run = mapRun(row, true);
+  if (
+    !run.native ||
+    String(row.verified_report_version_id) !== run.native.reportVersionId ||
+    Number(row.verified_report_version_number) !== run.native.reportVersionNumber ||
+    String(row.verified_registry_artifact_id) !== run.native.reportRegistryArtifactId
+  ) return null;
+  try {
+    const bytes = await readBinary(run.docxPath);
+    if (digest(bytes) !== run.docxSha256) return null;
+  } catch {
+    return null;
+  }
+  const sections = Array.isArray(row.report_sections)
+    ? row.report_sections
+    : typeof row.report_sections === 'string'
+      ? JSON.parse(row.report_sections)
+      : [];
+  if (!Array.isArray(sections) || sections.length === 0) return null;
+  return {
+    run,
+    report: {
+      reportId: run.native.reportId,
+      reportVersionId: run.native.reportVersionId,
+      reportVersionNumber: run.native.reportVersionNumber,
+      registryArtifactId: run.native.reportRegistryArtifactId,
+      title: String(row.report_title),
+      status: String(row.report_status),
+      sections: sections.map((section: any) => ({
+        sectionKey: String(section.sectionKey), title: String(section.title),
+        content: String(section.content), orderIndex: Number(section.orderIndex),
+      })),
+    },
+    binary: { path: run.docxPath, sha256: run.docxSha256, verified: true },
+  };
 }
