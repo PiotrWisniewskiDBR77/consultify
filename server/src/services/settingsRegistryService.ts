@@ -29,6 +29,26 @@ export interface SettingsKeyMetadata {
   tenantEnforced?: boolean;
   readOnlyInSettings?: boolean;
   moduleId?: 'interview' | 'tools' | 'outputs' | 'assessment' | 'copilot';
+  endpoint?: string;
+  storage?: string;
+  observableEffect?: string;
+  secretRule?: 'NOT_SECRET' | 'WRITE_ONLY_NEVER_RETURN';
+}
+
+function operationalMetadata(meta: SettingsKeyMetadata): SettingsKeyMetadata {
+  const endpoint = meta.endpoint ?? `/api/settings/registry/${meta.key}`;
+  const storage = meta.storage ?? (meta.scope === 'personal'
+    ? `user_preferences(settings:${meta.key})`
+    : meta.scope === 'module'
+      ? `settings(module:{orgId}:${meta.moduleId ?? 'module'}:${meta.key})`
+      : `settings(tenant:{orgId}:${meta.key})`);
+  return {
+    ...meta,
+    endpoint,
+    storage,
+    observableEffect: meta.observableEffect ?? meta.impactedSurface,
+    secretRule: meta.secretRule ?? 'NOT_SECRET',
+  };
 }
 
 const SETTINGS_REGISTRY: SettingsKeyMetadata[] = [
@@ -542,19 +562,20 @@ class SettingsRegistryServiceClass {
   }
 
   getRegistry(): SettingsKeyMetadata[] {
-    return [...SETTINGS_REGISTRY];
+    return SETTINGS_REGISTRY.map(operationalMetadata);
   }
 
   getKeyMetadata(key: string): SettingsKeyMetadata | undefined {
-    return REGISTRY_INDEX.get(key);
+    const meta = REGISTRY_INDEX.get(key);
+    return meta ? operationalMetadata(meta) : undefined;
   }
 
   getKeysByScope(scope: SettingsScope): SettingsKeyMetadata[] {
-    return SETTINGS_REGISTRY.filter((entry) => entry.scope === scope);
+    return SETTINGS_REGISTRY.filter((entry) => entry.scope === scope).map(operationalMetadata);
   }
 
   getKeysByOwner(owner: string): SettingsKeyMetadata[] {
-    return SETTINGS_REGISTRY.filter((entry) => entry.ownerContract === owner);
+    return SETTINGS_REGISTRY.filter((entry) => entry.ownerContract === owner).map(operationalMetadata);
   }
 
   getWriteTarget(

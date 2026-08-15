@@ -7,6 +7,7 @@ import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js'
 import { getRequestAccessRole, isRequestSuperAdmin } from '../middleware/requestAccess.js';
 import AccessCodeService from '../services/accessCodeService.js';
 import adminAuditService from '../services/adminAuditService.js';
+import { getTenantAdminCapabilityMatrix } from '../services/adminCapabilityMatrix.js';
 import { normalizeOrganizationRole } from '../services/organizationService.js';
 import {
   insertScimGroupMapping,
@@ -2237,6 +2238,20 @@ async function handleUpdateSecurityPolicy(req: AuthRequest, res: Response) {
 }
 
 router.use(verifyToken);
+
+router.get(
+  '/capabilities/matrix',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const actor = await getAdminActor(req, res, ['people:read']);
+    if (!actor) return;
+    return res.json({
+      schemaVersion: 1,
+      owner: 'TENANT_ADMIN',
+      organizationId: actor.orgId,
+      entries: getTenantAdminCapabilityMatrix(),
+    });
+  })
+);
 
 router.get(
   '/people',
