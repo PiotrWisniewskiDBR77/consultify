@@ -219,8 +219,10 @@ async function main() {
   await bootstrapU02OwnerSchema();
   (globalThis as Record<string, unknown>).__CONSULTIFY_GLOBAL_DB_INSTANCE__ = proofDb;
   (process as unknown as Record<string, unknown>).__CONSULTIFY_GLOBAL_DB_INSTANCE__ = proofDb;
-  const { generateFinalOutputs, getLatestFinalOutputRun, prepareFinalOutputPublication } =
+  const { coldReopenNativeFinalReport, generateFinalOutputs, getLatestFinalOutputRun, prepareFinalOutputPublication } =
     await import('../services/v8/transformationFinalOutputService.js');
+  const { registerRuntimeCapability, reportRuntimeEvidence } =
+    await import('../services/v8/transformationRuntimeCapabilityService.js');
   const { reviewProposalScope, requestProposalRevision } =
     await import('../services/v8/agentProposalGovernanceService.js');
   const params = {
@@ -332,6 +334,20 @@ async function main() {
   const sha256 = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex');
   if (sha256(docxBytes) !== first.docxSha256 || sha256(pptxBytes) !== first.pptxSha256)
     throw new Error('Final output file hash readback failed');
+  const coldReport = await coldReopenNativeFinalReport(
+    params.transformationCaseId,
+    params.organizationId
+  );
+  if (!coldReport || coldReport.run.runId !== first.runId || !coldReport.binary.verified)
+    throw new Error('AGT-003 cold native report reopen failed');
+  const mammoth = await import('mammoth');
+  const parsedDocx = await mammoth.extractRawText({ buffer: docxBytes });
+  const ownerNarrative = coldReport.report.sections.map((section) => section.content).join('\n');
+  if (
+    !parsedDocx.value.includes(coldReport.report.title) ||
+    !parsedDocx.value.includes('Skrócić') ||
+    !ownerNarrative.includes('Skrócić')
+  ) throw new Error('AGT-003 generated DOCX does not reopen with owner narrative content');
   // U02-A links: run + native report + report version + deck + deck version + both export hashes.
   if (counts.manifests !== 1 || counts.links !== 7 || counts.audits !== 1)
     throw new Error(`Final output persistence proof failed: ${JSON.stringify(counts)}`);
@@ -648,6 +664,31 @@ async function main() {
       `U02 blocked digest created native artifacts: ${JSON.stringify(postNegativeNative)}`
     );
 
+  const observedAt = new Date().toISOString();
+  await registerRuntimeCapability({
+    organizationId: params.organizationId,
+    actorUserId: params.actorUserId,
+    lifecycleStage: 'final_outputs.native_doc',
+    capabilityKey: 'transformation.final_outputs.native_doc',
+    ownerModule: 'report_builder',
+    evidenceContract: {
+      requiredChecks: ['approved_owner_write', 'idempotent_retry', 'cold_reopen', 'binary_parse'],
+    },
+  });
+  const capability = await reportRuntimeEvidence({
+    organizationId: params.organizationId,
+    actorUserId: params.actorUserId,
+    lifecycleStage: 'final_outputs.native_doc',
+    evidence: {
+      approved_owner_write: { passed: true, evidenceRef: first.runId, observedAt },
+      idempotent_retry: { passed: true, evidenceRef: replay.runId, observedAt },
+      cold_reopen: { passed: true, evidenceRef: coldReport.report.reportVersionId, observedAt },
+      binary_parse: { passed: true, evidenceRef: coldReport.binary.sha256, observedAt },
+    },
+  });
+  if (capability.derivedStatus !== 'REAL' || capability.ownerModule !== 'report_builder')
+    throw new Error(`AGT-003 bounded capability registry readback failed: ${JSON.stringify(capability)}`);
+
   console.log(
     JSON.stringify({
       proof: 'U02_NATIVE_REPORT_PRESENTATION_REALDB_GREEN',
@@ -678,6 +719,20 @@ async function main() {
       pptxSha256: first.pptxSha256,
       fileHashesVerified: true,
       nativeEditIsolated: true,
+      coldReopen: {
+        reportId: coldReport.report.reportId,
+        reportVersionId: coldReport.report.reportVersionId,
+        registryArtifactId: coldReport.report.registryArtifactId,
+        parsedCharacters: parsedDocx.value.length,
+        docxSha256: coldReport.binary.sha256,
+      },
+      boundedCapability: {
+        lifecycleStage: capability.lifecycleStage,
+        capabilityKey: capability.capabilityKey,
+        ownerModule: capability.ownerModule,
+        derivedStatus: capability.derivedStatus,
+        evidenceDigest: capability.evidenceDigest,
+      },
       links: postNegativeCounts.links,
     })
   );
