@@ -11,7 +11,6 @@ import PptxGenJS from 'pptxgenjs';
 import { v4 as uuidv4 } from 'uuid';
 import * as xlsx from 'xlsx';
 
-import { getDatabaseType } from '../config/DatabaseConfig.js';
 import { getAxisById } from '../data/drdStructure.js';
 import { getDatabase } from '../database/index.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
@@ -135,148 +134,28 @@ const ensureAssessmentReportsSchema = async (): Promise<void> => {
   }
 
   ensureAssessmentReportsSchemaPromise = (async () => {
-    await run(
-      `CREATE TABLE IF NOT EXISTS assessment_reports (
-      id TEXT PRIMARY KEY,
-      assessment_id TEXT NOT NULL,
-      organization_id TEXT NOT NULL,
-      project_id TEXT,
-      name TEXT,
-      status TEXT DEFAULT 'DRAFT',
-      template_id TEXT,
-      builder_report_id TEXT,
-      -- axis_data: JSON of per-axis {actual,target} MATURITY LEVELS (DRD: 0..5/7
-      -- depending on axis; SIRI/ADMA: 0..5). NEVER 0-100 percentages — the report
-      -- renderer computes pct(level,maxLevel) and a percentage stored here blows
-      -- past 100% in the client report (finding O1 W7). See clampAxisDataEntries()
-      -- in this file and areaScoresFromAxisData() in drdReportService.ts.
-      axis_data TEXT,
-      executive_summary TEXT,
-      detailed_analysis TEXT,
-      recommendations TEXT,
-      generated_by TEXT,
-      generation_params TEXT,
-      created_by TEXT,
-      updated_by TEXT,
-      approved_by TEXT,
-      approved_at TIMESTAMP,
-      rejected_by TEXT,
-      rejected_at TIMESTAMP,
-      rejection_reason TEXT,
-      utilized_by TEXT,
-      utilized_at TIMESTAMP,
-      utilization_notes TEXT,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`
+    // ASM-002: migrations are the only schema writer. These zero-row reads
+    // validate the exact runtime contract and fail closed on drift while still
+    // allowing the application role to run with no DDL privileges.
+    await all(
+      `SELECT id, assessment_id, organization_id, project_id, name, status,
+              template_id, builder_report_id, axis_data, executive_summary,
+              detailed_analysis, recommendations, generated_by,
+              generation_params, created_by, updated_by, approved_by,
+              approved_at, rejected_by, rejected_at, rejection_reason,
+              utilized_by, utilized_at, utilization_notes, created_at, updated_at
+         FROM assessment_reports WHERE 1 = 0`
     );
-
-    // SQLite migrations in this repo vary; patch missing columns (best-effort).
-    try {
-      const dbType = getDatabaseType();
-      const tableInfoQuery =
-        dbType === 'postgres'
-          ? `SELECT column_name as name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'assessment_reports'`
-          : `PRAGMA table_info(assessment_reports)`;
-      const cols = await all<any>(tableInfoQuery, []);
-      const existing = new Set((cols || []).map((c: any) => String(c.name)));
-      const add = async (name: string, type: string) => {
-        if (existing.has(name)) return;
-        await run(`ALTER TABLE assessment_reports ADD COLUMN ${name} ${type}`);
-        existing.add(name);
-      };
-      await add('project_id', 'TEXT');
-      await add('name', 'TEXT');
-      await add('status', "TEXT DEFAULT 'DRAFT'");
-      await add('template_id', 'TEXT');
-      await add('builder_report_id', 'TEXT');
-      await add('axis_data', 'TEXT');
-      await add('executive_summary', 'TEXT');
-      await add('detailed_analysis', 'TEXT');
-      await add('recommendations', 'TEXT');
-      await add('generated_by', 'TEXT');
-      await add('generation_params', 'TEXT');
-      await add('created_by', 'TEXT');
-      await add('updated_by', 'TEXT');
-      await add('approved_by', 'TEXT');
-      await add('approved_at', 'TIMESTAMP');
-      await add('rejected_by', 'TEXT');
-      await add('rejected_at', 'TIMESTAMP');
-      await add('rejection_reason', 'TEXT');
-      await add('utilized_by', 'TEXT');
-      await add('utilized_at', 'TIMESTAMP');
-      await add('utilization_notes', 'TEXT');
-    } catch (e) {
-      // ignore; table might be locked or pragma not available in some environments
-    }
-
-    await run(
-      `CREATE TABLE IF NOT EXISTS assessment_report_sections (
-      id TEXT PRIMARY KEY,
-      report_id TEXT NOT NULL,
-      section_type TEXT NOT NULL,
-      axis_id TEXT,
-      area_id TEXT,
-      title TEXT NOT NULL,
-      content TEXT,
-      data_snapshot TEXT,
-      order_index INTEGER DEFAULT 0,
-      is_ai_generated INTEGER DEFAULT 0,
-      version INTEGER DEFAULT 1,
-      created_by TEXT,
-      updated_by TEXT,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`
+    await all(
+      `SELECT id, report_id, section_type, axis_id, area_id, title, content,
+              data_snapshot, order_index, is_ai_generated, version, created_by,
+              updated_by, created_at, updated_at
+         FROM assessment_report_sections WHERE 1 = 0`
     );
-    await run(`CREATE INDEX IF NOT EXISTS idx_ars_report ON assessment_report_sections(report_id)`);
-    await run(
-      `CREATE INDEX IF NOT EXISTS idx_ars_report_order ON assessment_report_sections(report_id, order_index)`
+    await all(
+      `SELECT id, report_id, section_id, version, title, content, created_by, created_at
+         FROM assessment_report_section_history WHERE 1 = 0`
     );
-
-    try {
-      const dbType = getDatabaseType();
-      const tableInfoQuery =
-        dbType === 'postgres'
-          ? `SELECT column_name as name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'assessment_report_sections'`
-          : `PRAGMA table_info(assessment_report_sections)`;
-      const cols = await all<any>(tableInfoQuery, []);
-      const existing = new Set((cols || []).map((c: any) => String(c.name)));
-      const add = async (name: string, type: string) => {
-        if (existing.has(name)) return;
-        await run(`ALTER TABLE assessment_report_sections ADD COLUMN ${name} ${type}`);
-        existing.add(name);
-      };
-      await add('section_type', 'TEXT');
-      await add('axis_id', 'TEXT');
-      await add('area_id', 'TEXT');
-      await add('content', 'TEXT');
-      await add('data_snapshot', 'TEXT');
-      await add('order_index', 'INTEGER DEFAULT 0');
-      await add('is_ai_generated', 'INTEGER DEFAULT 0');
-      await add('version', 'INTEGER DEFAULT 1');
-      await add('created_by', 'TEXT');
-      await add('updated_by', 'TEXT');
-    } catch {
-      // ignore
-    }
-
-    await run(
-      `CREATE TABLE IF NOT EXISTS assessment_report_section_history (
-      id TEXT PRIMARY KEY,
-      report_id TEXT NOT NULL,
-      section_id TEXT NOT NULL,
-      version INTEGER NOT NULL,
-      title TEXT,
-      content TEXT,
-      created_by TEXT,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`
-    );
-    await run(
-      `CREATE INDEX IF NOT EXISTS idx_arsh_section ON assessment_report_section_history(report_id, section_id, version)`
-    );
-
     assessmentReportsSchemaReady = true;
   })();
 
@@ -834,6 +713,7 @@ router.post('/:reportId/generate-initiatives', async (req: AuthRequest, res: Res
       reportId: String(reportId),
       templateId: templateId ? String(templateId) : null,
       consultantBrief: consultantBrief ? String(consultantBrief) : null,
+      idempotencyKey: req.get('Idempotency-Key') || null,
     } as any);
 
     return res.status(202).json({ runId: run.runId, assessmentId });

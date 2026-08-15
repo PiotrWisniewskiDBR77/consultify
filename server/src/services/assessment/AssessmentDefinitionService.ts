@@ -53,31 +53,15 @@ function buildBuiltinDefinition(methodologyId: string): Record<string, unknown> 
 
 async function ensureSchema(): Promise<void> {
   if (schemaEnsured) return;
+  // ASM-002: schema ownership belongs exclusively to ordered migrations.
+  // This read assertion intentionally fails closed when a deployment skipped
+  // migrations and works for runtime roles without CREATE/ALTER privileges.
+  await queryHelpers.queryOne(
+    `SELECT id, methodology_id, version, status
+       FROM assessment_definitions
+      WHERE 1 = 0`
+  );
   schemaEnsured = true;
-
-  await queryHelpers.queryRun(
-    `CREATE TABLE IF NOT EXISTS assessment_definitions (
-      id TEXT PRIMARY KEY,
-      methodology_id TEXT NOT NULL,
-      version TEXT NOT NULL,
-      title TEXT NOT NULL,
-      status TEXT NOT NULL DEFAULT 'draft',
-      is_read_only INTEGER NOT NULL DEFAULT 0,
-      definition_json TEXT NOT NULL DEFAULT '{}',
-      created_by TEXT NOT NULL,
-      created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL,
-      published_at TEXT
-    )`
-  );
-  await queryHelpers.queryRun(
-    `CREATE UNIQUE INDEX IF NOT EXISTS idx_assessment_definitions_methodology_version
-     ON assessment_definitions(methodology_id, version)`
-  );
-  await queryHelpers.queryRun(
-    `CREATE INDEX IF NOT EXISTS idx_assessment_definitions_status
-     ON assessment_definitions(status, methodology_id)`
-  );
 }
 
 function mapRow(row: any): AssessmentDefinitionRecord {
