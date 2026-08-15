@@ -2,6 +2,34 @@
   "schemaVersion": 1,
   "rows": [
     {
+      "tip": "1244d038bec6dd4862a2723a354fcd77c9068e1e",
+      "verdict": "INTEGRATED_CANONICAL",
+      "taskId": "CLEAN-002-MAT-007",
+      "evidenceRule": "The recovered unreviewed patch identified real false-success behavior in presentation_templates writes. The current canonical realDB suite reproduced the defect on PostgreSQL 15 (5 failures, 2 success controls), and canonical commit 1ec123c82 integrated the stronger durable-state settlement contract for plan, clone and update. The same suite then passes 7/7; backend typecheck PASS.",
+      "nextAction": "Keep the fail-closed readback contract in MAT-002 and include template create/clone/update in browser acceptance; retain the recovery ref until CLEAN-003."
+    },
+    {
+      "tip": "07dd59a654c3eaf2164dc2037e69d2e91a3cced5",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-IDEA-002",
+      "evidenceRule": "The recovered Ideas financial-case persistence path is represented in the active canonical surface: tableActions, FinancialCaseDialog and useIdeaFinancialCasePersistence are byte-identical, while the shared registries have later changes. Focused persistence and accessibility contracts pass 2 files / 13 tests.",
+      "nextAction": "Do not cherry-pick the older shared-registry versions; retain the recovery ref and execute the existing E09 realDB flow in the Ideas module gate."
+    },
+    {
+      "tip": "1773414123a3983db57763a2ce104fecc80ee7f8",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-INT-003",
+      "evidenceRule": "The recovered Polish quotation parser and its nine-test contract are byte-identical in the canonical tree; InsightViewer has later surrounding changes. The focused quotation contract passes 9/9.",
+      "nextAction": "Keep the later InsightViewer composition and retain the recovery ref until CLEAN-003."
+    },
+    {
+      "tip": "cfa4051dd521f53951cdb1396523f375ca103828",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-INI-003",
+      "evidenceRule": "This July 11 ADR is explicitly a recommendation awaiting owner choice, not an accepted architecture decision. Its useful facts about separate Tools and Initiative-generator pipelines are represented by the current code and the cleanup plan's TLS/INI handoff tasks, while its proposed permanent separation conflicts with the current one-receipt integration DoD unless re-approved.",
+      "nextAction": "Do not promote the draft ADR to canonical policy. Resolve the actual handoff through TLS-001, INI-001 and INI-002 with one receipt and realDB evidence; retain the recovery ref until CLEAN-003."
+    },
+    {
       "tip": "ebf1f32e1533be40f06025d3cc8ebd5f0f5663df",
       "verdict": "INTEGRATED_CANONICAL",
       "taskId": "CLEAN-002-EXE-003",

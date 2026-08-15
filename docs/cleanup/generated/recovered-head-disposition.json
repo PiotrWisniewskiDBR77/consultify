@@ -12,11 +12,11 @@
   "summary": {
     "total": 224,
     "referenceHarnessOnly": 18,
-    "representedSuperseded": 18,
+    "representedSuperseded": 21,
     "representedCanonical": 3,
     "rejectedDestructiveSnapshot": 1,
-    "integratedCanonical": 9,
-    "semanticReviewRequired": 175,
+    "integratedCanonical": 10,
+    "semanticReviewRequired": 171,
     "deletionAuthorized": 0
   },
   "rows": [
@@ -186,12 +186,12 @@
         "server/migrations/20260810_idea_conversion_mapping_version.sql",
         "server/migrations/20260812_idea_financial_case.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-IDEA-002",
       "recoveryRef": "refs/recovery/unknown-20260815/07dd59a654c3eaf2164dc2037e69d2e91a3cced5",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered Ideas financial-case persistence path is represented in the active canonical surface: tableActions, FinancialCaseDialog and useIdeaFinancialCasePersistence are byte-identical, while the shared registries have later changes. Focused persistence and accessibility contracts pass 2 files / 13 tests.",
+      "nextAction": "Do not cherry-pick the older shared-registry versions; retain the recovery ref and execute the existing E09 realDB flow in the Ideas module gate."
     },
     {
       "tip": "0a5565fedcb0750874d6d64a9755b8d079d153c6",
@@ -427,12 +427,12 @@
         "server/migrations/20260802_mat010_artifact_lineage.sql",
         "server/migrations/20260802_mat010_lineage_pending_events.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "INTEGRATED_CANONICAL",
+      "taskId": "CLEAN-002-MAT-007",
       "recoveryRef": "refs/recovery/unknown-20260815/1244d038bec6dd4862a2723a354fcd77c9068e1e",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered unreviewed patch identified real false-success behavior in presentation_templates writes. The current canonical realDB suite reproduced the defect on PostgreSQL 15 (5 failures, 2 success controls), and canonical commit 1ec123c82 integrated the stronger durable-state settlement contract for plan, clone and update. The same suite then passes 7/7; backend typecheck PASS.",
+      "nextAction": "Keep the fail-closed readback contract in MAT-002 and include template create/clone/update in browser acceptance; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "1349d6200b468fd1ee8f7b42b424f5fe44623f55",
@@ -512,12 +512,12 @@
       "migrationPaths": [
         "server/migrations/never-ran/20260807_m03r004_interview_status_casing.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-INT-003",
       "recoveryRef": "refs/recovery/unknown-20260815/1773414123a3983db57763a2ce104fecc80ee7f8",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered Polish quotation parser and its nine-test contract are byte-identical in the canonical tree; InsightViewer has later surrounding changes. The focused quotation contract passes 9/9.",
+      "nextAction": "Keep the later InsightViewer composition and retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "1856956c4b43755d744bc9a4a605779b98be64e0",
@@ -4088,12 +4088,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 1,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-INI-003",
       "recoveryRef": "refs/recovery/unknown-20260815/cfa4051dd521f53951cdb1396523f375ca103828",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "This July 11 ADR is explicitly a recommendation awaiting owner choice, not an accepted architecture decision. Its useful facts about separate Tools and Initiative-generator pipelines are represented by the current code and the cleanup plan's TLS/INI handoff tasks, while its proposed permanent separation conflicts with the current one-receipt integration DoD unless re-approved.",
+      "nextAction": "Do not promote the draft ADR to canonical policy. Resolve the actual handoff through TLS-001, INI-001 and INI-002 with one receipt and realDB evidence; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "d1f14e865643c64d23b6147d19df9cad62fbccbb",
