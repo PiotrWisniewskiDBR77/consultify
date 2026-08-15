@@ -46,9 +46,9 @@ async function main() {
     if (piotr.rows.length !== 1 || piotr.rows[0].role !== 'OWNER' || piotr.rows[0].status !== 'active' || piotr.rows[0].membership_role !== 'OWNER' || piotr.rows[0].membership_status !== 'ACTIVE') throw new Error('Piotr readback must be exactly one active OWNER in the target organization');
     const ownerPasswordHash = bcrypt.hashSync(ownerPassword, 10);
     const acceptanceOwner = await client.query(
-      `INSERT INTO users (id,organization_id,email,password,first_name,last_name,role,status,created_at)
-       VALUES ($1,$2,$3,$4,'Acceptance','Owner','OWNER','active',NOW())
-       ON CONFLICT (email) DO UPDATE SET password=EXCLUDED.password,first_name=EXCLUDED.first_name,last_name=EXCLUDED.last_name,role='OWNER',status='active'
+      `INSERT INTO users (id,organization_id,email,password,first_name,last_name,role,status,onboarding_completed,created_at)
+       VALUES ($1,$2,$3,$4,'Acceptance','Owner','OWNER','active',TRUE,NOW())
+       ON CONFLICT (email) DO UPDATE SET password=EXCLUDED.password,first_name=EXCLUDED.first_name,last_name=EXCLUDED.last_name,role='OWNER',status='active',onboarding_completed=TRUE
        WHERE users.id=EXCLUDED.id AND users.organization_id=EXCLUDED.organization_id
        RETURNING id,organization_id,lower(email) email,upper(role) role,lower(status) status`, [ownerId,organizationId,ownerEmail,ownerPasswordHash]);
     const seededOwner = acceptanceOwner.rows[0];
