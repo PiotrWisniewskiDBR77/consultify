@@ -210,6 +210,95 @@ bez statusu, tasków bez evidence, commitów bez przypisanego tasku ani funkcji
 bez właściciela danych. Na tej podstawie powstaje jedna lista MVP, jedna lista
 post-MVP oraz jedna acykliczna kolejność finalnego montażu.
 
+### 15. Zamrożona specyfikacja braków moduł po module
+
+Przed rozpoczęciem masowego wykonania każdy moduł otrzymuje wersjonowaną
+specyfikację dokończenia. Jest ona różnicą pomiędzy wymaganiem SSOT a stanem
+udowodnionym na konkretnym SHA, a nie listą pomysłów lub deklaracji autora.
+
+Każda specyfikacja zawiera obowiązkowo:
+
+- cel biznesowy, wejścia, wyjścia, role i ownera danych wskazane przez SSOT;
+- tabelę wymagań z dokładną sekcją źródłową i verdict `SATISFIED`, `PARTIAL`,
+  `MISSING`, `CONFLICTING_IMPLEMENTATION`, `POST_MVP` albo `EVIDENCE_MISSING`;
+- faktyczny łańcuch AS-IS: route -> mounted UI -> client -> endpoint -> service ->
+  tabela/migracja -> readback, wraz z nazwami symboli i ścieżkami plików;
+- każdy odnaleziony wariant legacy, niepodłączony komponent, osieroconą flagę,
+  fallback, mock i alternatywnego writera danych wraz z disposition;
+- minimalną różnicę kodową niezbędną do spełnienia kontraktu, bez przebudowy
+  elementów już poprawnie działających;
+- dane referencyjne i fixtures wymagane do pracy użytkownika, wraz z
+  tenant-scoped UPSERT, replay i post-write readback;
+- listę atomowych `gap_id`, z których każdy ma jeden `task_id`, ownera,
+  zależności, allowlist, test czerwony przed zmianą i warunek zamknięcia;
+- osobną granicę poniedziałkowego MVP i post-MVP, bez ukrywania odroczeń w
+  ogólnym statusie modułu.
+
+Specyfikacja jest kompletna tylko wtedy, gdy reverse trace również się zgadza:
+każdy route, endpoint, tabela, flaga, komponent i odzyskany fragment należący do
+modułu jest przypisany do requirementu albo ma jawny disposition. W ten sposób
+wykrywamy zarówno brakujący kod, jak i kod istniejący, lecz niewykorzystywany.
+
+DoD etapu 15: wszystkie moduły mają zamrożone specyfikacje na jednym SHA; zero
+wymagań bez gap/verdictu; zero elementów kodu domenowego bez requirementu lub
+disposition; suma otwartych gapów równa się sumie gapów przypisanych do tasków.
+
+### 16. Wykonalny plan uruchomienia wielu agentów
+
+Na podstawie etapu 15 powstaje jeden launch manifest. Nie jest to lista tematów,
+lecz dokładny harmonogram commitów i bramek. Każdy wiersz określa:
+
+- `task_id`, moduł, priorytet MVP, baseline SHA i oczekiwany output commit;
+- wymagane taski poprzedzające i kryterium, które udowadnia ich zakończenie;
+- izolowany worktree, branch, właściciela wykonania i właściciela integracji;
+- zamknięty allowlist plików oraz listę shared files, których agent nie edytuje;
+- maksymalny zakres migracji i tabel, jedynego writera oraz regułę rollbacku;
+- dokładne komendy focused, typecheck, realDB, replay, tenant/role negative,
+  browser desktop/mobile, visual i accessibility;
+- artefakty dowodowe i miejsce ich trwałego zapisania w repo;
+- timeout eskalacyjny i literalny rezultat `DONE`, `FIX_REQUIRED`, `BLOCKED`.
+
+Równoległość jest wyliczana z przecięcia allowlistów i grafu zależności. Taski
+dotykające `AppRoutes`, menu, wspólnych klientów API, migratora, flag profilu,
+globalnych typów lub deploymentu trafiają do kolejki integratora. Pozostałe
+mogą ruszyć równolegle wyłącznie z tego samego immutable baseline. Agent nie
+może samodzielnie zmienić ownera danych, trasy kanonicznej, zakresu MVP ani
+zastąpić testu realDB mockiem.
+
+DoD etapu 16: launch manifest jest acykliczny; każdy uruchamiany task ma
+`PACKET_ACCEPTED`; allowlisty równoległych tasków są rozłączne; każda fala ma
+wejściowy SHA, integratora, kolejność cherry-picków i pełną bramkę wyjściową.
+
+### 17. Brama „bez zgadywania” i rejestr pozostałej pracy
+
+Po każdej fali wykonywany jest automatyczny i ręczny reconciliation. Rejestr
+nie może zostać zamknięty przez samo przejście testów. Kontrola porównuje:
+
+1. wymagania SSOT z `MODULE_GAP_LEDGER`;
+2. luki z taskami i zaakceptowanymi pakietami;
+3. taski z rzeczywistymi commitami i zakresem diffu;
+4. commity z testami, migracjami, fixture i readback;
+5. candidate SHA z wdrożonym SHA, flagami i ledgerem migracji;
+6. dane demo z wymaganymi scenariuszami pracy użytkownika;
+7. UI desktop/mobile z kanonem Consultify, a11y i signed-off visual evidence;
+8. wszystkie aktywne route/API/schema z kartami końcowymi modułów.
+
+Każda różnica tworzy nowy stabilny `gap_id` albo przywraca istniejący task do
+`FIX_REQUIRED`. Zabronione jest zamykanie różnicy opisem „działa lokalnie”,
+„jest na innej gałęzi”, „wystarczy włączyć flagę” lub „test dopiszemy później”.
+
+Końcowy rejestr ma trzy jednoznaczne widoki:
+
+- `MVP_REMAINING_WORK` — wyłącznie zadania konieczne do startu MVP, w kolejności;
+- `POST_MVP_BACKLOG` — świadomie odroczone wymagania z uzasadnieniem i ownerem;
+- `REJECTED_OR_RETIRED` — kod nieużywany/duplikaty z recovery path i dowodem,
+  że nie jest wymagany przez aktywny produkt.
+
+DoD etapu 17: `MVP_REMAINING_WORK=0`; candidate i demo mają ten sam SHA;
+wszystkie moduły MVP mają komplet code/realDB/system/browser/visual evidence;
+nie ma nieprzypisanego WIP, nieznanego writera, silent fallbacku, aktywacji
+query/localStorage ani wymagania zamkniętego wyłącznie deklaracją.
+
 ### Aktualny stan przygotowania pakietów
 
 - Etap 8: `PARTIAL` — 16 kart modułów i task IDs istnieją; trwa przypisywanie
@@ -228,6 +317,12 @@ post-MVP oraz jedna acykliczna kolejność finalnego montażu.
   pakietów i zamrożeniu ich baseline.
 - Etap 14: `NOT_STARTED` — karty końcowe będą zamykane falami po integracji i
   runtime acceptance, nie na podstawie samego audytu kodu.
+- Etap 15: `IN_PROGRESS` — istnieją karty i mapy łańcuchów; trwa mechaniczne
+  przypisanie każdego odzyskanego fragmentu i każdego wymagania do gap/verdictu.
+- Etap 16: `NOT_STARTED` — launch manifest zostanie zamrożony dopiero po
+  ukończeniu atomowych pakietów i ich niezależnym preflighcie.
+- Etap 17: `NOT_STARTED` — reconciliation ruszy po pierwszej zintegrowanej fali;
+  status release pozostaje `NOT_RELEASE_READY` do wyzerowania pracy MVP.
 
 ## Cel i reguła statusu
 
