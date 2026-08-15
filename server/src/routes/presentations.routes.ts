@@ -74,6 +74,7 @@ import {
   evaluateBulkRevertEligibility,
   planBulkRevert,
 } from '../services/presentationDeckBulkRevertService.js';
+import { canonicalizePresentationAutosaveDeck } from '../services/presentationDeckAutosaveCanonicalizer.js';
 import {
   type CollaboratorRole,
   isValidRole,
@@ -3836,7 +3837,8 @@ router.put(
       });
     }
 
-    const bodyStr = JSON.stringify(req.body);
+    const canonicalBody = canonicalizePresentationAutosaveDeck(req.body);
+    const bodyStr = JSON.stringify(canonicalBody);
     if (bodyStr.length > 10_000_000) {
       return res.status(413).json({ success: false, error: 'Payload too large' });
     }
@@ -3847,10 +3849,11 @@ router.put(
     const persistedVersion = Number(deck.version);
     const normalizedVersion = Number.isFinite(persistedVersion) ? persistedVersion : 1;
     const newVersion = normalizedVersion + 1;
-    const nextTitle =
-      typeof req.body?.title === 'string' && req.body.title.trim()
-        ? req.body.title.trim()
+    const canonicalTitle =
+      typeof canonicalBody.title === 'string' && canonicalBody.title.trim()
+        ? canonicalBody.title.trim()
         : String(deck.title || 'Untitled');
+    const canonicalSlideCount = Array.isArray(canonicalBody.cards) ? canonicalBody.cards.length : 0;
 
     if (deck.deck_json) {
       try {
@@ -3882,8 +3885,8 @@ router.put(
     // need to distinguish the two cases.
     const expectedVersion = clientVersion !== null ? clientVersion : normalizedVersion;
     const updateResult = (await dbRun(
-      `UPDATE presentation_decks SET title = ?, deck_json = ?, version = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ? AND version = ?`,
-      [nextTitle, bodyStr, newVersion, deckId, orgId, expectedVersion]
+      `UPDATE presentation_decks SET title = ?, deck_json = ?, slide_count = ?, version = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ? AND version = ?`,
+      [canonicalTitle, bodyStr, canonicalSlideCount, newVersion, deckId, orgId, expectedVersion]
     )) as { success?: boolean; changes?: number } | undefined;
 
     if ((updateResult?.changes ?? 0) === 0) {
