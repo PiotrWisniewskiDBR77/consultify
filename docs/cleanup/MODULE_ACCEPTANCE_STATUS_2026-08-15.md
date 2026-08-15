@@ -124,6 +124,9 @@ without:
 - Non-green files: `242`
 - Concentration: `tests/integration` (`133`), `tests/unit` (`47`), `tests/components` (`27`), `src` (`16`), `server` (`13`), other (`6`)
 - Evidence: `/Users/piotrwisniewski/Developer/consultify-cleanup-evidence-20260814/test-gates/standard-aeb28eb6a`
+- Isolated reproduction: `242/242` non-green files rerun in fresh processes;
+  `0` passed and `242` remained non-green. Evidence:
+  `/Users/piotrwisniewski/Developer/consultify-cleanup-evidence-20260814/test-gates/isolated-triage-94d94e797`.
 
 The exact executable completion tasks, dependencies and evidence requirements
 are in `docs/cleanup/MODULE_COMPLETION_TASK_REGISTRY_2026-08-15.md`.

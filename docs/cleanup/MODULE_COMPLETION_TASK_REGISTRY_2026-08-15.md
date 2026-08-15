@@ -42,7 +42,7 @@ shared API, flag resolvers, migrator i global styles ma wyłącznie integrator.
 
 ### CLEAN-001 — klasyfikacja pełnego standard gate
 
-- Status: `READY`, P0; owner: test-integrator.
+- Status: `IN_PROGRESS`, P0; owner: test-integrator.
 - Wejście: `test-gates/standard-aeb28eb6a/summary.json` i 24 shard JSON/log.
 - Zakres: 242 niezielone pliki / 476 testów. Każdy otrzymuje jeden verdict:
   `PRODUCT_REGRESSION`, `STALE_CONTRACT`, `HARNESS_BUG`, `WRONG_GATE`,
@@ -53,6 +53,11 @@ shared API, flag resolvers, migrator i global styles ma wyłącznie integrator.
 - DoD: 242/242 ma verdict, ownera i komendę reprodukcji; full gate ma
   4052/4052 oraz 0 missing/unexpected.
 - Zakaz: nie zmieniać produktu tylko po to, aby zachować starą asercję.
+- Reprodukcja izolowana: 242/242 pliki wykonano ponownie, każdy w świeżym
+  procesie na SHA `94d94e797e94020d22f47484c1f97e88e78f544c`; 0 przeszło,
+  242 nadal niezielone. Jeden test workbook pozostawiał otwarty proces po
+  zapisaniu JSON i został zakończony sygnałem TERM. Evidence:
+  `/Users/piotrwisniewski/Developer/consultify-cleanup-evidence-20260814/test-gates/isolated-triage-94d94e797`.
 
 ### CLEAN-002 — semantyczny ledger 421 rozbieżnych tipów
 
