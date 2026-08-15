@@ -12,13 +12,13 @@
   "summary": {
     "total": 224,
     "referenceHarnessOnly": 18,
-    "representedSuperseded": 64,
-    "representedCanonical": 42,
+    "representedSuperseded": 75,
+    "representedCanonical": 45,
     "rejectedDestructiveSnapshot": 3,
     "integratedCanonical": 17,
     "candidateIntegration": 7,
     "ownerDecisionRequired": 0,
-    "semanticReviewRequired": 73,
+    "semanticReviewRequired": 59,
     "deletionAuthorized": 0
   },
   "rows": [
@@ -39,12 +39,12 @@
       "uniqueCommitCount": 91,
       "pathCount": 228,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-AGT-010",
       "recoveryRef": "refs/recovery/unknown-20260815/001cc5796a72828abe0fe24dfce2448dcbc04224",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The July Agent and Vault handoff describes three then-unpushed branches and a pre-Transformation-Case architecture. Current Agent Hub, Vault/My Work contracts and cleanup history are later authorities, and prior inventory proved the evolved Agent completion commits are already in canonical ancestry.",
+      "nextAction": "Do not restore the old handoff or branch instructions; validate current Agent and Vault through their module cards and final signed-in flows."
     },
     {
       "tip": "0049d5371d43644937cca1db1b03e71829df0e44",
@@ -408,12 +408,12 @@
         "server/migrations/20260829_rvn_platform_outbox_parked_status.sql",
         "server/migrations/20260830_rvn_roi_finance_projections.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-RES-014",
       "recoveryRef": "refs/recovery/unknown-20260815/1241b8620ce5ad7e3d57658d945db1de5011fda2",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered RN-G6 runtime runbook exists in canonical form and has been substantially expanded with later role, dataset, restart and route findings; the recovered version is a strict predecessor.",
+      "nextAction": "Keep the evolved runbook as historical runtime evidence, but rerun Results on the final candidate rather than treating its old local ports or query flags as current proof."
     },
     {
       "tip": "1244d038bec6dd4862a2723a354fcd77c9068e1e",
@@ -600,12 +600,12 @@
         "server/migrations/20260810_idea_conversion_mapping_version.sql",
         "server/migrations/20260812_idea_financial_case.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-IDE-011",
       "recoveryRef": "refs/recovery/unknown-20260815/1b315f4af72cecef77b01d7e270afa8f8cbfb588",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered row-actions matrix is a dated 1280x800 screenshot packet; current Ideas table and action contracts are substantially later and one source matrix file is retained while the old images are absent.",
+      "nextAction": "Do not restore stale screenshots; recapture the current signed-in viewport/theme/locale matrix at the final candidate SHA."
     },
     {
       "tip": "1c78e138c5022891a111f6a6a91f1d2f6d154f20",
@@ -739,12 +739,12 @@
       "migrationPaths": [
         "server/migrations/942_chat_m01p04a_attachment_status.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-CHAT-012",
       "recoveryRef": "refs/recovery/unknown-20260815/272f96d5a4ba8101c1ec64263b6de4b3485dcc58",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The head adds only a dated Chat runner and migration reconciliation report; current Chat runtime, migrations and acceptance coverage have evolved beyond its captured SHA.",
+      "nextAction": "Retain the recovery ref for provenance and execute the current Chat migration and browser gates."
     },
     {
       "tip": "273583ca914aec104e3a42da61cd27676b315d4f",
@@ -899,12 +899,12 @@
       "uniqueCommitCount": 5,
       "pathCount": 38,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-DATA-007",
       "recoveryRef": "refs/recovery/unknown-20260815/2ea8040050102e89ec35775d0567ee4236e523c9",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The head preserves a stalled database-audit recovery note but adds no schema or runtime implementation. The current cleanup evidence, migration inventory and fresh PostgreSQL gates supersede that recovery procedure.",
+      "nextAction": "Do not restore the stale recovery note as authority; retain the ref and use the current migration ledger and recovery manifest."
     },
     {
       "tip": "3002d8106532df9f1a93ac1ec202d6aa6be42bf0",
@@ -1266,12 +1266,12 @@
         "server/migrations/000_z_core_baseline.sql",
         "server/migrations/20260810_finance_v3_co9_statement_money_numeric.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-FIN-009",
       "recoveryRef": "refs/recovery/unknown-20260815/36ae9b366552b6bf435ce22e91915e5700f20a29",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The head adds only a dated ROI-E007 final verification report; current ROI-Finance commands, repositories and adapters supersede the implementation state described by that report.",
+      "nextAction": "Retain the ref for provenance but prove the current seam through final PostgreSQL and browser acceptance."
     },
     {
       "tip": "3859703e8ad15c71c5997e92b6101e18f35e1951",
@@ -1612,12 +1612,12 @@
         "server/migrations/20260823_finance_v3_bv_terminal_immutability.sql",
         "server/migrations/20260824_finance_v3_bv_superseded_immutability.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-FIN-010",
       "recoveryRef": "refs/recovery/unknown-20260815/495cec41aabdac440f1b50962ac6c8aa0f33a6a7",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The head contains only a dated Gate-D routes report; current Finance routes and workspace generations have evolved beyond its frozen observations.",
+      "nextAction": "Do not restore the generated report; verify terminal transitions and escape context against the final candidate."
     },
     {
       "tip": "4dd597de012746c51e7e7711273f443d6dfffe2b",
@@ -1650,12 +1650,12 @@
       "migrationPaths": [
         "server/migrations/20260801_individual_referral_applications.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-PAR-001",
       "recoveryRef": "refs/recovery/unknown-20260815/4ebb0330a37d9b773f0ceff65b7c7800707384f6",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered parking decision says Partner Portal must not become a seventh implementation and defers new construction to MVP priorities. Current Partner Portal SSOT preserves the same existing-runtime, access-controlled ownership and explicitly marks the dual-program redesign as TO-BE/gap.",
+      "nextAction": "Keep Partner Portal outside the immediate MVP rebuild; audit and reconcile its existing generations before any new implementation."
     },
     {
       "tip": "541d42105effe9f13d3bcd19c9240718b8bc6c9d",
@@ -1683,12 +1683,12 @@
       "uniqueCommitCount": 3,
       "pathCount": 16,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-M16-001",
       "recoveryRef": "refs/recovery/unknown-20260815/57369f42276fda316b03db63a2a4054fa18cfdb8",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The head adds only a historical M16 final repair report. Current module code, task packets and test evidence are later authorities and the absent report contains no unique executable behavior.",
+      "nextAction": "Retain the recovery ref but derive M16 status from current code and exact-SHA acceptance rather than importing the old report."
     },
     {
       "tip": "5740bce893a4548b2de5e0212360633a96b36794",
@@ -1705,12 +1705,12 @@
       "migrationPaths": [
         "server/migrations/788_presentation_deck_collaborators.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-MAT-016",
       "recoveryRef": "refs/recovery/unknown-20260815/5740bce893a4548b2de5e0212360633a96b36794",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "This head contains only July 5 presentation render screenshots and a dated demo-base note; none can prove the current Presentation Studio implementation or deployed SHA.",
+      "nextAction": "Preserve the recovery ref as historical evidence and regenerate repository-owned presentation render proof at the final candidate."
     },
     {
       "tip": "58a7b3f6f865da25b61d89114762f17210f1fedf",
@@ -1760,12 +1760,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 22,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-MAT-017",
       "recoveryRef": "refs/recovery/unknown-20260815/58f79b941f2b0587e026455aaee4bef2ad68b5f2",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The head self-identifies as a partial stalled audit and contains only old presentation screenshots, not unique runtime code or an executable acceptance contract.",
+      "nextAction": "Do not import the partial image bundle; rerun the current Materials visual audit at the final candidate."
     },
     {
       "tip": "591fba28d2646c90bec4a54c2243ef5bc9a036cb",
@@ -2043,12 +2043,12 @@
         "server/migrations/20260829_rvn_platform_outbox_parked_status.sql",
         "server/migrations/20260830_rvn_roi_finance_projections.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-RES-015",
       "recoveryRef": "refs/recovery/unknown-20260815/65fd96d6125ffa090f6a10ac0e5bbbbda33e0f77",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "All five recovered RN-G4 cross-domain acceptance specs exist in evolved canonical form; later commits explicitly granted access context and verified the suite against real PostgreSQL.",
+      "nextAction": "Keep the evolved tests and rerun them against the final candidate schema; do not restore the UNVERIFIED WIP snapshots."
     },
     {
       "tip": "689a3b86dc595493159ebe37c34f87aa637fdafa",
@@ -2272,12 +2272,12 @@
         "server/migrations/20260810_idea_confidentiality.sql",
         "server/migrations/20260810_idea_conversion_mapping_version.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-IDE-012",
       "recoveryRef": "refs/recovery/unknown-20260815/705c06618094b962f7c49f1fca3e7a78053abb0a",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered head only records dated contrast screenshots and QA notes; current Ideas token and focus implementations are later, and old screenshots are not runtime evidence.",
+      "nextAction": "Do not restore the old evidence images; validate contrast and focus on the final signed-in build."
     },
     {
       "tip": "729a35a8ee6a7c5f01443aac0bbfe2def8e4f52a",
@@ -2385,12 +2385,12 @@
         "server/migrations/20260826_finance_v3_w2_selfclaim_child_tenant_fk.sql",
         "server/migrations/20260827_finance_v3_w3_backfill_artifacts_unique.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-FIN-011",
       "recoveryRef": "refs/recovery/unknown-20260815/7321f7cfb0050a0b8b4494ebd76f4a4dc7c4bddf",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The GoldCo oracle head contains only a generated historical report and no unique product implementation; current Finance modeling requires new exact-SHA evidence.",
+      "nextAction": "Keep the recovery ref but regenerate the independent oracle against the final canonical Finance implementation."
     },
     {
       "tip": "742312e1d77af65001a4f75c01a09cd2180c9bd0",

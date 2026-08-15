@@ -931,6 +931,104 @@
       "taskId": "CLEAN-002-UI-009",
       "evidenceRule": "The recovered color sweep is an intermediate styling pass; current components use later semantic design tokens and contain no unique business behavior from that ancestry.",
       "nextAction": "Do not replay; enforce current token scans and signed-in visual review."
+    },
+    {
+      "tip": "1241b8620ce5ad7e3d57658d945db1de5011fda2",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-RES-014",
+      "evidenceRule": "The recovered RN-G6 runtime runbook exists in canonical form and has been substantially expanded with later role, dataset, restart and route findings; the recovered version is a strict predecessor.",
+      "nextAction": "Keep the evolved runbook as historical runtime evidence, but rerun Results on the final candidate rather than treating its old local ports or query flags as current proof."
+    },
+    {
+      "tip": "65fd96d6125ffa090f6a10ac0e5bbbbda33e0f77",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-RES-015",
+      "evidenceRule": "All five recovered RN-G4 cross-domain acceptance specs exist in evolved canonical form; later commits explicitly granted access context and verified the suite against real PostgreSQL.",
+      "nextAction": "Keep the evolved tests and rerun them against the final candidate schema; do not restore the UNVERIFIED WIP snapshots."
+    },
+    {
+      "tip": "1b315f4af72cecef77b01d7e270afa8f8cbfb588",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-IDE-011",
+      "evidenceRule": "The recovered row-actions matrix is a dated 1280x800 screenshot packet; current Ideas table and action contracts are substantially later and one source matrix file is retained while the old images are absent.",
+      "nextAction": "Do not restore stale screenshots; recapture the current signed-in viewport/theme/locale matrix at the final candidate SHA."
+    },
+    {
+      "tip": "5740bce893a4548b2de5e0212360633a96b36794",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-MAT-016",
+      "evidenceRule": "This head contains only July 5 presentation render screenshots and a dated demo-base note; none can prove the current Presentation Studio implementation or deployed SHA.",
+      "nextAction": "Preserve the recovery ref as historical evidence and regenerate repository-owned presentation render proof at the final candidate."
+    },
+    {
+      "tip": "58f79b941f2b0587e026455aaee4bef2ad68b5f2",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-MAT-017",
+      "evidenceRule": "The head self-identifies as a partial stalled audit and contains only old presentation screenshots, not unique runtime code or an executable acceptance contract.",
+      "nextAction": "Do not import the partial image bundle; rerun the current Materials visual audit at the final candidate."
+    },
+    {
+      "tip": "705c06618094b962f7c49f1fca3e7a78053abb0a",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-IDE-012",
+      "evidenceRule": "The recovered head only records dated contrast screenshots and QA notes; current Ideas token and focus implementations are later, and old screenshots are not runtime evidence.",
+      "nextAction": "Do not restore the old evidence images; validate contrast and focus on the final signed-in build."
+    },
+    {
+      "tip": "36ae9b366552b6bf435ce22e91915e5700f20a29",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-FIN-009",
+      "evidenceRule": "The head adds only a dated ROI-E007 final verification report; current ROI-Finance commands, repositories and adapters supersede the implementation state described by that report.",
+      "nextAction": "Retain the ref for provenance but prove the current seam through final PostgreSQL and browser acceptance."
+    },
+    {
+      "tip": "495cec41aabdac440f1b50962ac6c8aa0f33a6a7",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-FIN-010",
+      "evidenceRule": "The head contains only a dated Gate-D routes report; current Finance routes and workspace generations have evolved beyond its frozen observations.",
+      "nextAction": "Do not restore the generated report; verify terminal transitions and escape context against the final candidate."
+    },
+    {
+      "tip": "7321f7cfb0050a0b8b4494ebd76f4a4dc7c4bddf",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-FIN-011",
+      "evidenceRule": "The GoldCo oracle head contains only a generated historical report and no unique product implementation; current Finance modeling requires new exact-SHA evidence.",
+      "nextAction": "Keep the recovery ref but regenerate the independent oracle against the final canonical Finance implementation."
+    },
+    {
+      "tip": "001cc5796a72828abe0fe24dfce2448dcbc04224",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-AGT-010",
+      "evidenceRule": "The July Agent and Vault handoff describes three then-unpushed branches and a pre-Transformation-Case architecture. Current Agent Hub, Vault/My Work contracts and cleanup history are later authorities, and prior inventory proved the evolved Agent completion commits are already in canonical ancestry.",
+      "nextAction": "Do not restore the old handoff or branch instructions; validate current Agent and Vault through their module cards and final signed-in flows."
+    },
+    {
+      "tip": "272f96d5a4ba8101c1ec64263b6de4b3485dcc58",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-CHAT-012",
+      "evidenceRule": "The head adds only a dated Chat runner and migration reconciliation report; current Chat runtime, migrations and acceptance coverage have evolved beyond its captured SHA.",
+      "nextAction": "Retain the recovery ref for provenance and execute the current Chat migration and browser gates."
+    },
+    {
+      "tip": "2ea8040050102e89ec35775d0567ee4236e523c9",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-DATA-007",
+      "evidenceRule": "The head preserves a stalled database-audit recovery note but adds no schema or runtime implementation. The current cleanup evidence, migration inventory and fresh PostgreSQL gates supersede that recovery procedure.",
+      "nextAction": "Do not restore the stale recovery note as authority; retain the ref and use the current migration ledger and recovery manifest."
+    },
+    {
+      "tip": "4ebb0330a37d9b773f0ceff65b7c7800707384f6",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-PAR-001",
+      "evidenceRule": "The recovered parking decision says Partner Portal must not become a seventh implementation and defers new construction to MVP priorities. Current Partner Portal SSOT preserves the same existing-runtime, access-controlled ownership and explicitly marks the dual-program redesign as TO-BE/gap.",
+      "nextAction": "Keep Partner Portal outside the immediate MVP rebuild; audit and reconcile its existing generations before any new implementation."
+    },
+    {
+      "tip": "57369f42276fda316b03db63a2a4054fa18cfdb8",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-M16-001",
+      "evidenceRule": "The head adds only a historical M16 final repair report. Current module code, task packets and test evidence are later authorities and the absent report contains no unique executable behavior.",
+      "nextAction": "Retain the recovery ref but derive M16 status from current code and exact-SHA acceptance rather than importing the old report."
     }
   ]
 }
