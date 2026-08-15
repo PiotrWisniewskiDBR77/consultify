@@ -12,13 +12,13 @@
   "summary": {
     "total": 224,
     "referenceHarnessOnly": 18,
-    "representedSuperseded": 28,
+    "representedSuperseded": 29,
     "representedCanonical": 15,
     "rejectedDestructiveSnapshot": 1,
     "integratedCanonical": 10,
     "candidateIntegration": 1,
     "ownerDecisionRequired": 0,
-    "semanticReviewRequired": 151,
+    "semanticReviewRequired": 150,
     "deletionAuthorized": 0
   },
   "rows": [
@@ -5302,12 +5302,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 2,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-RES-004",
       "recoveryRef": "refs/recovery/unknown-20260815/fd53626507d74c7cd5df00f034054d3f4e11e74e",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered reconciliation fix is represented by the later canonical O4.7 repair and subsequent Results work: getReconciliationOverview selects v8_kpi_definitions.metric_type rather than the nonexistent k.unit, treats duration as non-monetary and uses fallback:false so schema errors cannot silently become an empty list. The current ReconciliationPanel also retains duration in its non-monetary classifier. The canonical Oxford acceptance source asserts non-empty reconciliation readback with the persisted post-mortem.",
+      "nextAction": "Do not restore the earlier duplicate implementation. Execute the canonical Oxford/Results realDB packet and reconcile its expected display unit with the current metric_type contract before RES-001 can be DONE; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "fde96a930b6ed1e0a4c4c906c8478183910fd375",

@@ -492,7 +492,10 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
   dawny finding o braku RCA Suggest jest nieaktualny, a obecny route ma 9/9
   focused PASS. Jednoliniowy checkpoint sweepu Ideas jest z kolei zastąpiony
   późniejszymi sekcjami tego samego handoffu opisującymi integrację, render i
-  ówczesny odbiór. Aktualny ledger ma 151 pozycji
+  ówczesny odbiór. Starsza naprawa reconciliation `k.unit` jest reprezentowana
+  przez późniejszy kanon O4.7: odczyt używa `metric_type`, nie ukrywa błędów
+  schematu fallbackiem i zachowuje klasyfikację `duration` jako niemonetarną.
+  Aktualny ledger ma 150 pozycji
   `SEMANTIC_REVIEW_REQUIRED`. Te 18 pozostaje zachowanym materiałem
   UX/prototypowym, ale nie
   jest kodem produkcyjnym do merge. Generator mechanicznie egzekwuje warunek
