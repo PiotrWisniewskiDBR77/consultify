@@ -1,7 +1,7 @@
 # Consultify — modułowy gap plan i plan integracji
 
 Data: 2026-08-15  
-Authority SHA: `5792f250564b28bafc77b39fa1c9083e4756570d`  
+Authority SHA dla bazowego full gate: `aeb28eb6abeb0af9f16750c66d6de0e8bb359702`
 Status: `CANONICAL_CLEANUP_ANALYSIS / RUNTIME_ACCEPTANCE_PENDING`
 
 ## Cel i granica dowodu
@@ -292,3 +292,6 @@ zatwierdzonym delete.
 
 Na authority SHA raport modułowy jest kompletny 16/16. Runtime/release readiness
 pozostaje `PARTIAL`, dopóki bramy powyżej nie zostaną wykonane.
+
+Wykonawcze task ID, zależności, allowlisty i dowody odbioru są w
+`docs/cleanup/MODULE_COMPLETION_TASK_REGISTRY_2026-08-15.md`.

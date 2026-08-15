@@ -2,9 +2,8 @@
 
 ## Evidence boundary
 
-This semantic inventory was reviewed against product-code SHA
-`f6a00552802d3a5d0f2bbd2c72316c05b55b8f82` (runner canonical SHA). The current cleanup checkpoint is
-its documentation-only descendant. Classifications below prove code wiring, not
+This semantic inventory is tracked against the latest complete standard-gate SHA
+`aeb28eb6abeb0af9f16750c66d6de0e8bb359702`. Classifications below prove code wiring, not
 deployed-demo parity, provider health or a production migration ledger.
 
 ## Status matrix
@@ -120,10 +119,14 @@ without:
 ## Current test-gate snapshot
 
 - Standard gate: `4052/4052` files
-- Totals: `38798 PASS`, `581 FAIL`, `485 PENDING`, `19 TODO`
+- Totals: `38900 PASS`, `476 FAIL`, `490 PENDING`, `19 TODO`
 - Missing/Unexpected: `0`
-- Non-green files: `283`
-- Concentration: `tests/integration` (`136`), `tests/unit` (`49`), `server/src` (`13`), `src/components` (`23`)
+- Non-green files: `242`
+- Concentration: `tests/integration` (`133`), `tests/unit` (`47`), `tests/components` (`27`), `src` (`16`), `server` (`13`), other (`6`)
+- Evidence: `/Users/piotrwisniewski/Developer/consultify-cleanup-evidence-20260814/test-gates/standard-aeb28eb6a`
+
+The exact executable completion tasks, dependencies and evidence requirements
+are in `docs/cleanup/MODULE_COMPLETION_TASK_REGISTRY_2026-08-15.md`.
 
 ### 5-hour execution plan for completion
 
