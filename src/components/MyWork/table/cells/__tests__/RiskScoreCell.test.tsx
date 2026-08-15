@@ -84,12 +84,15 @@ describe('RiskScoreCell', () => {
     expect(screen.getByTestId('risk-score-chip')).toHaveAttribute('data-scale', '25');
   });
 
-  it('does NOT use raw hex literals — uses semantic Tailwind classes only', () => {
+  it('does NOT use raw hex literals — uses canonical semantic CSS variables', () => {
     const { container } = render(<RiskScoreCell value={20} fieldOptions={{ scale: 25 }} />);
     const html = container.innerHTML;
+    const chip = screen.getByTestId('risk-score-chip');
     expect(html).not.toMatch(/#[0-9a-fA-F]{6}/);
-    // High severity uses the semantic `danger` token (migrated from rose by the
-    // Visual Quality program); medium=amber, low=emerald.
-    expect(html).toMatch(/(bg|text|border)-(danger|amber|emerald)/);
+    // The canonical Artifact Anatomy reskin exposes high severity through the
+    // shared danger token and derives its tint from that same token.
+    expect(chip.style.color).toBe('var(--c-danger)');
+    expect(chip.style.borderColor).toContain('var(--c-danger)');
+    expect(chip.style.backgroundColor).toContain('var(--c-danger)');
   });
 });

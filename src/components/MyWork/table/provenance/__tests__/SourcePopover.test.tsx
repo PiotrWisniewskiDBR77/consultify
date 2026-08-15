@@ -18,7 +18,16 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_k: string, def?: string) => def ?? _k,
+    t: (key: string, options?: { defaultValue?: string; value?: number }) => {
+      const messages: Record<string, string> = {
+        'myWorkTable.sourcePopover.loading': 'Loading…',
+        'myWorkTable.sourcePopover.reachedCap': 'Reached cap of {{value}} active sources.',
+      };
+      return (messages[key] ?? options?.defaultValue ?? key).replace(
+        '{{value}}',
+        String(options?.value ?? '')
+      );
+    },
     i18n: { language: 'en' },
   }),
 }));

@@ -23,7 +23,14 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_k: string, def?: string) => def ?? _k,
+    t: (key: string, options?: { defaultValue?: string }) => {
+      const messages: Record<string, string> = {
+        'myWorkTable.addSourceDialog.confidenceMustBeNumber':
+          'Confidence contribution must be a number between 0 and 1.',
+        'myWorkTable.addSourceDialog.uriTooLong': 'URI must be ≤ 2048 characters.',
+      };
+      return messages[key] ?? options?.defaultValue ?? key;
+    },
     i18n: { language: 'en' },
   }),
 }));
@@ -150,9 +157,7 @@ describe('AddSourceDialog', () => {
   it('returns focus to the trigger after Escape', async () => {
     render(
       <Trigger>
-        {(open, close) =>
-          open && <AddSourceDialog open onClose={close} onSubmit={vi.fn()} />
-        }
+        {(open, close) => open && <AddSourceDialog open onClose={close} onSubmit={vi.fn()} />}
       </Trigger>
     );
     const trigger = screen.getByRole('button', { name: 'Open trigger' });

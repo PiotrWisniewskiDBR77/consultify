@@ -47,17 +47,24 @@ describe('PriorityCell', () => {
     expect(screen.getByTestId('priority-chip')).toHaveAttribute('data-preset', 'P0_P1_P2_P3');
   });
 
-  it('renders different DOM tone classes for first vs last preset entry', () => {
+  it('renders canonical semantic token tones for first vs last preset entry', () => {
     const { container: cFirst } = render(
       <PriorityCell value="P0" fieldOptions={{ levels: 'P0_P1_P2_P3' }} />
     );
     const { container: cLast } = render(
       <PriorityCell value="P3" fieldOptions={{ levels: 'P0_P1_P2_P3' }} />
     );
-    // Highest priority uses the semantic `danger` token (migrated from rose by the
-    // Visual Quality program); lowest stays neutral slate.
-    expect(cFirst.innerHTML).toMatch(/danger/);
-    expect(cLast.innerHTML).toMatch(/slate/);
+    const first = cFirst.querySelector<HTMLElement>('[data-testid="priority-chip"]');
+    const last = cLast.querySelector<HTMLElement>('[data-testid="priority-chip"]');
+
+    // The canonical Artifact Anatomy reskin exposes tones through semantic CSS
+    // variables rather than legacy Tailwind colour-name classes.
+    expect(first?.style.color).toBe('var(--c-danger)');
+    expect(first?.style.borderColor).toContain('var(--c-danger)');
+    expect(first?.style.backgroundColor).toContain('var(--c-danger)');
+    expect(last?.style.color).toBe('var(--c-text-muted)');
+    expect(last?.style.borderColor).toBe('var(--c-border)');
+    expect(last?.style.backgroundColor).toBe('var(--c-surface-raised)');
   });
 
   it('does NOT use raw hex literals', () => {
