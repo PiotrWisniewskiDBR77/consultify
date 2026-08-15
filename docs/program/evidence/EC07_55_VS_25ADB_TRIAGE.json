@@ -1,0 +1,457 @@
+{
+  "schemaVersion": 1,
+  "sourceSha": "ec07d5c392fc7862e30897779c96716f6003d016",
+  "comparisonSha": "25adb32518dfde2cc17e3d5db7b2f6c7b955ffd7",
+  "testEvidenceHead": "51ed9147c771b1cfa75103f7d3ab9c07cf4ada58",
+  "counts": {
+    "STALE_CONTRACT_NOW_GREEN": 1,
+    "ENVIRONMENT_FAILURE_ALREADY_GREEN_TARGETED": 10,
+    "STALE_LEGACY_CONTRACT": 24,
+    "EXPECTED_PENDING_DEDICATED_ENV": 17,
+    "HARNESS_ENV": 2,
+    "STALE_TEST_HARNESS_FIXED": 1
+  },
+  "realProductRegressionCount": 0,
+  "records": [
+    {
+      "file": "server/src/scripts/__tests__/demoAcceptanceFixturePlan.test.ts",
+      "ec07PriorCategory": "NEW",
+      "priority": null,
+      "bucket25adb": "STALE_CONTRACT_NOW_GREEN",
+      "productVerdict": "NO_PRODUCT_BUG",
+      "recommendedExactAction": "No fix. Keep current expanded fixture-plan expectation; focused 25adb rerun is 10/10 PASS."
+    },
+    {
+      "file": "tests/integration/ai/aiPlaybooks.runs.no-demo.test.ts",
+      "ec07PriorCategory": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "bucket25adb": "ENVIRONMENT_FAILURE_ALREADY_GREEN_TARGETED",
+      "productVerdict": "NO_CURRENT_PRODUCT_BUG_CONFIRMED",
+      "recommendedExactAction": "No product edit. Prior P0/P1 targeted/current realDB gate is green; rerun focused with required auth/role/tenant/DB/provider fixture, not disconnected standard DB."
+    },
+    {
+      "file": "tests/integration/aiLayersIntegration.test.js",
+      "ec07PriorCategory": "STALE_CONTRACT",
+      "priority": "P2",
+      "bucket25adb": "STALE_LEGACY_CONTRACT",
+      "productVerdict": "NO_CURRENT_PRODUCT_BUG_CONFIRMED",
+      "recommendedExactAction": "Retain current secure API contract; align/remove only legacy assertion or mock if focused current-SHA reproduction fails. Do not restore legacy statuses/routes."
+    },
+    {
+      "file": "tests/integration/apiFullFlow.test.js",
+      "ec07PriorCategory": "EXPECTED_PENDING",
+      "priority": "P2",
+      "bucket25adb": "EXPECTED_PENDING_DEDICATED_ENV",
+      "productVerdict": "NO_STANDARD_GATE_PRODUCT_SIGNAL",
+      "recommendedExactAction": "Do not fake-green. Execute only in its declared DB/external/test-support environment; preserve explicit pending in standard gate."
+    },
+    {
+      "file": "tests/integration/assessment-reports.routes.test.js",
+      "ec07PriorCategory": "STALE_CONTRACT",
+      "priority": "P2",
+      "bucket25adb": "STALE_LEGACY_CONTRACT",
+      "productVerdict": "NO_CURRENT_PRODUCT_BUG_CONFIRMED",
+      "recommendedExactAction": "Retain current secure API contract; align/remove only legacy assertion or mock if focused current-SHA reproduction fails. Do not restore legacy statuses/routes."
+    },
+    {
+      "file": "tests/integration/auth.test.js",
+      "ec07PriorCategory": "EXPECTED_PENDING",
+      "priority": "P2",
+      "bucket25adb": "EXPECTED_PENDING_DEDICATED_ENV",
+      "productVerdict": "NO_STANDARD_GATE_PRODUCT_SIGNAL",
+      "recommendedExactAction": "Do not fake-green. Execute only in its declared DB/external/test-support environment; preserve explicit pending in standard gate."
+    },
+    {
+      "file": "tests/integration/auth.test.ts",
+      "ec07PriorCategory": "PRODUCT_REGRESSION",
+      "priority": "P0",
+      "bucket25adb": "ENVIRONMENT_FAILURE_ALREADY_GREEN_TARGETED",
+      "productVerdict": "NO_CURRENT_PRODUCT_BUG_CONFIRMED",
+      "recommendedExactAction": "No product edit. Prior P0/P1 targeted/current realDB gate is green; rerun focused with required auth/role/tenant/DB/provider fixture, not disconnected standard DB."
+    },
+    {
+      "file": "tests/integration/backend/planLimits.test.js",
+      "ec07PriorCategory": "STALE_CONTRACT",
+      "priority": "P2",
+      "bucket25adb": "STALE_LEGACY_CONTRACT",
+      "productVerdict": "NO_CURRENT_PRODUCT_BUG_CONFIRMED",
+      "recommendedExactAction": "Retain current secure API contract; align/remove only legacy assertion or mock if focused current-SHA reproduction fails. Do not restore legacy statuses/routes."
+    },
+    {
+      "file": "tests/integration/chat/streaming.test.ts",
+      "ec07PriorCategory": "EXPECTED_PENDING",
+      "priority": "P2",
+      "bucket25adb": "EXPECTED_PENDING_DEDICATED_ENV",
+      "productVerdict": "NO_STANDARD_GATE_PRODUCT_SIGNAL",
+      "recommendedExactAction": "Do not fake-green. Execute only in its declared DB/external/test-support environment; preserve explicit pending in standard gate."
+    },
+    {
+      "file": "tests/integration/initiatives.test.js",
+      "ec07PriorCategory": "EXPECTED_PENDING",
+      "priority": "P2",
+      "bucket25adb": "EXPECTED_PENDING_DEDICATED_ENV",
+      "productVerdict": "NO_STANDARD_GATE_PRODUCT_SIGNAL",
+      "recommendedExactAction": "Do not fake-green. Execute only in its declared DB/external/test-support environment; preserve explicit pending in standard gate."
+    },
+    {
+      "file": "tests/integration/initiatives/initiatives.ai-generation.unavailable.no-placeholders.test.ts",
+      "ec07PriorCategory": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "bucket25adb": "ENVIRONMENT_FAILURE_ALREADY_GREEN_TARGETED",
+      "productVerdict": "NO_CURRENT_PRODUCT_BUG_CONFIRMED",
+      "recommendedExactAction": "No product edit. Prior P0/P1 targeted/current realDB gate is green; rerun focused with required auth/role/tenant/DB/provider fixture, not disconnected standard DB."
+    },
+    {
+      "file": "tests/integration/llmHealth.test.js",
+      "ec07PriorCategory": "STALE_CONTRACT",
+      "priority": "P2",
+      "bucket25adb": "STALE_LEGACY_CONTRACT",
+      "productVerdict": "NO_CURRENT_PRODUCT_BUG_CONFIRMED",
+      "recommendedExactAction": "Retain current secure API contract; align/remove only legacy assertion or mock if focused current-SHA reproduction fails. Do not restore legacy statuses/routes."
+    },
+    {
+      "file": "tests/integration/management/managementReports.pptx-dependency-missing.test.ts",
+      "ec07PriorCategory": "HARNESS_ENV",
+      "priority": "P2",
+      "bucket25adb": "HARNESS_ENV",
+      "productVerdict": "NO_PRODUCT_BUG_CONFIRMED",
+      "recommendedExactAction": "No product edit. Run with declared dependency: disposable realPG for DB optimization, PPTX dependency-isolation harness for report export."
+    },
+    {
+      "file": "tests/integration/megatrend.test.js",
+      "ec07PriorCategory": "EXPECTED_PENDING",
+      "priority": "P2",
+      "bucket25adb": "EXPECTED_PENDING_DEDICATED_ENV",
+      "productVerdict": "NO_STANDARD_GATE_PRODUCT_SIGNAL",
+      "recommendedExactAction": "Do not fake-green. Execute only in its declared DB/external/test-support environment; preserve explicit pending in standard gate."
+    },
+    {
+      "file": "tests/integration/metricsFullFlow.test.js",
+      "ec07PriorCategory": "STALE_CONTRACT",
+      "priority": "P2",
+      "bucket25adb": "STALE_LEGACY_CONTRACT",
+      "productVerdict": "NO_CURRENT_PRODUCT_BUG_CONFIRMED",
+      "recommendedExactAction": "Retain current secure API contract; align/remove only legacy assertion or mock if focused current-SHA reproduction fails. Do not restore legacy statuses/routes."
+    },
+    {
+      "file": "tests/integration/mywork/my-work.inbox-v4-tenant-negative-controls.test.ts",
+      "ec07PriorCategory": "EXPECTED_PENDING",
+      "priority": "P2",
+      "bucket25adb": "EXPECTED_PENDING_DEDICATED_ENV",
+      "productVerdict": "NO_STANDARD_GATE_PRODUCT_SIGNAL",
+      "recommendedExactAction": "Do not fake-green. Execute only in its declared DB/external/test-support environment; preserve explicit pending in standard gate."
+    },
+    {
+      "file": "tests/integration/organization-management.workflow.test.js",
+      "ec07PriorCategory": "EXPECTED_PENDING",
+      "priority": "P2",
+      "bucket25adb": "EXPECTED_PENDING_DEDICATED_ENV",
+      "productVerdict": "NO_STANDARD_GATE_PRODUCT_SIGNAL",
+      "recommendedExactAction": "Do not fake-green. Execute only in its declared DB/external/test-support environment; preserve explicit pending in standard gate."
+    },
+    {
+      "file": "tests/integration/partners/partners.no-demo-organization-referral-dashboard.test.ts",
+      "ec07PriorCategory": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "bucket25adb": "ENVIRONMENT_FAILURE_ALREADY_GREEN_TARGETED",
+      "productVerdict": "NO_CURRENT_PRODUCT_BUG_CONFIRMED",
+      "recommendedExactAction": "No product edit. Prior P0/P1 targeted/current realDB gate is green; rerun focused with required auth/role/tenant/DB/provider fixture, not disconnected standard DB."
+    },
+    {
+      "file": "tests/integration/performance/dbOptimization.test.ts",
+      "ec07PriorCategory": "HARNESS_ENV",
+      "priority": "P2",
+      "bucket25adb": "HARNESS_ENV",
+      "productVerdict": "NO_PRODUCT_BUG_CONFIRMED",
+      "recommendedExactAction": "No product edit. Run with declared dependency: disposable realPG for DB optimization, PPTX dependency-isolation harness for report export."
+    },
+    {
+      "file": "tests/integration/projects.test.js",
+      "ec07PriorCategory": "EXPECTED_PENDING",
+      "priority": "P2",
+      "bucket25adb": "EXPECTED_PENDING_DEDICATED_ENV",
+      "productVerdict": "NO_STANDARD_GATE_PRODUCT_SIGNAL",
+      "recommendedExactAction": "Do not fake-green. Execute only in its declared DB/external/test-support environment; preserve explicit pending in standard gate."
+    },
+    {
+      "file": "tests/integration/routes/access-control.test.js",
+      "ec07PriorCategory": "STALE_CONTRACT",
+      "priority": "P2",
+      "bucket25adb": "STALE_LEGACY_CONTRACT",
+      "productVerdict": "NO_CURRENT_PRODUCT_BUG_CONFIRMED",
+      "recommendedExactAction": "Retain current secure API contract; align/remove only legacy assertion or mock if focused current-SHA reproduction fails. Do not restore legacy statuses/routes."
+    },
+    {
+      "file": "tests/integration/routes/ai-experiments.test.js",
+      "ec07PriorCategory": "STALE_CONTRACT",
+      "priority": "P2",
+      "bucket25adb": "STALE_LEGACY_CONTRACT",
+      "productVerdict": "NO_CURRENT_PRODUCT_BUG_CONFIRMED",
+      "recommendedExactAction": "Retain current secure API contract; align/remove only legacy assertion or mock if focused current-SHA reproduction fails. Do not restore legacy statuses/routes."
+    },
+    {
+      "file": "tests/integration/routes/ai-memory.test.js",
+      "ec07PriorCategory": "STALE_CONTRACT",
+      "priority": "P2",
+      "bucket25adb": "STALE_LEGACY_CONTRACT",
+      "productVerdict": "NO_CURRENT_PRODUCT_BUG_CONFIRMED",
+      "recommendedExactAction": "Retain current secure API contract; align/remove only legacy assertion or mock if focused current-SHA reproduction fails. Do not restore legacy statuses/routes."
+    },
+    {
+      "file": "tests/integration/routes/ai-performance.test.js",
+      "ec07PriorCategory": "STALE_CONTRACT",
+      "priority": "P2",
+      "bucket25adb": "STALE_LEGACY_CONTRACT",
+      "productVerdict": "NO_CURRENT_PRODUCT_BUG_CONFIRMED",
+      "recommendedExactAction": "Retain current secure API contract; align/remove only legacy assertion or mock if focused current-SHA reproduction fails. Do not restore legacy statuses/routes."
+    },
+    {
+      "file": "tests/integration/routes/ai-prompts.test.js",
+      "ec07PriorCategory": "STALE_CONTRACT",
+      "priority": "P2",
+      "bucket25adb": "STALE_LEGACY_CONTRACT",
+      "productVerdict": "NO_CURRENT_PRODUCT_BUG_CONFIRMED",
+      "recommendedExactAction": "Retain current secure API contract; align/remove only legacy assertion or mock if focused current-SHA reproduction fails. Do not restore legacy statuses/routes."
+    },
+    {
+      "file": "tests/integration/routes/ai-training.test.js",
+      "ec07PriorCategory": "STALE_CONTRACT",
+      "priority": "P2",
+      "bucket25adb": "STALE_LEGACY_CONTRACT",
+      "productVerdict": "NO_CURRENT_PRODUCT_BUG_CONFIRMED",
+      "recommendedExactAction": "Retain current secure API contract; align/remove only legacy assertion or mock if focused current-SHA reproduction fails. Do not restore legacy statuses/routes."
+    },
+    {
+      "file": "tests/integration/routes/ai.test.js",
+      "ec07PriorCategory": "EXPECTED_PENDING",
+      "priority": "P2",
+      "bucket25adb": "EXPECTED_PENDING_DEDICATED_ENV",
+      "productVerdict": "NO_STANDARD_GATE_PRODUCT_SIGNAL",
+      "recommendedExactAction": "Do not fake-green. Execute only in its declared DB/external/test-support environment; preserve explicit pending in standard gate."
+    },
+    {
+      "file": "tests/integration/routes/aiAsync.test.js",
+      "ec07PriorCategory": "STALE_CONTRACT",
+      "priority": "P2",
+      "bucket25adb": "STALE_LEGACY_CONTRACT",
+      "productVerdict": "NO_CURRENT_PRODUCT_BUG_CONFIRMED",
+      "recommendedExactAction": "Retain current secure API contract; align/remove only legacy assertion or mock if focused current-SHA reproduction fails. Do not restore legacy statuses/routes."
+    },
+    {
+      "file": "tests/integration/routes/aiCoach.test.js",
+      "ec07PriorCategory": "STALE_CONTRACT",
+      "priority": "P2",
+      "bucket25adb": "STALE_LEGACY_CONTRACT",
+      "productVerdict": "NO_CURRENT_PRODUCT_BUG_CONFIRMED",
+      "recommendedExactAction": "Retain current secure API contract; align/remove only legacy assertion or mock if focused current-SHA reproduction fails. Do not restore legacy statuses/routes."
+    },
+    {
+      "file": "tests/integration/routes/aiExplain.test.js",
+      "ec07PriorCategory": "STALE_CONTRACT",
+      "priority": "P2",
+      "bucket25adb": "STALE_LEGACY_CONTRACT",
+      "productVerdict": "NO_CURRENT_PRODUCT_BUG_CONFIRMED",
+      "recommendedExactAction": "Retain current secure API contract; align/remove only legacy assertion or mock if focused current-SHA reproduction fails. Do not restore legacy statuses/routes."
+    },
+    {
+      "file": "tests/integration/routes/aiPlaybooks.test.js",
+      "ec07PriorCategory": "STALE_CONTRACT",
+      "priority": "P2",
+      "bucket25adb": "STALE_LEGACY_CONTRACT",
+      "productVerdict": "NO_CURRENT_PRODUCT_BUG_CONFIRMED",
+      "recommendedExactAction": "Retain current secure API contract; align/remove only legacy assertion or mock if focused current-SHA reproduction fails. Do not restore legacy statuses/routes."
+    },
+    {
+      "file": "tests/integration/routes/analytics.test.js",
+      "ec07PriorCategory": "STALE_CONTRACT",
+      "priority": "P2",
+      "bucket25adb": "STALE_LEGACY_CONTRACT",
+      "productVerdict": "NO_CURRENT_PRODUCT_BUG_CONFIRMED",
+      "recommendedExactAction": "Retain current secure API contract; align/remove only legacy assertion or mock if focused current-SHA reproduction fails. Do not restore legacy statuses/routes."
+    },
+    {
+      "file": "tests/integration/routes/assessment.test.js",
+      "ec07PriorCategory": "STALE_CONTRACT",
+      "priority": "P2",
+      "bucket25adb": "STALE_LEGACY_CONTRACT",
+      "productVerdict": "NO_CURRENT_PRODUCT_BUG_CONFIRMED",
+      "recommendedExactAction": "Retain current secure API contract; align/remove only legacy assertion or mock if focused current-SHA reproduction fails. Do not restore legacy statuses/routes."
+    },
+    {
+      "file": "tests/integration/routes/auth.test.js",
+      "ec07PriorCategory": "EXPECTED_PENDING",
+      "priority": "P2",
+      "bucket25adb": "EXPECTED_PENDING_DEDICATED_ENV",
+      "productVerdict": "NO_STANDARD_GATE_PRODUCT_SIGNAL",
+      "recommendedExactAction": "Do not fake-green. Execute only in its declared DB/external/test-support environment; preserve explicit pending in standard gate."
+    },
+    {
+      "file": "tests/integration/routes/billing.no-demo.analytics-and-revenue.test.ts",
+      "ec07PriorCategory": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "bucket25adb": "ENVIRONMENT_FAILURE_ALREADY_GREEN_TARGETED",
+      "productVerdict": "NO_CURRENT_PRODUCT_BUG_CONFIRMED",
+      "recommendedExactAction": "No product edit. Prior P0/P1 targeted/current realDB gate is green; rerun focused with required auth/role/tenant/DB/provider fixture, not disconnected standard DB."
+    },
+    {
+      "file": "tests/integration/routes/conversations.test.js",
+      "ec07PriorCategory": "STALE_CONTRACT",
+      "priority": "P2",
+      "bucket25adb": "STALE_LEGACY_CONTRACT",
+      "productVerdict": "NO_CURRENT_PRODUCT_BUG_CONFIRMED",
+      "recommendedExactAction": "Retain current secure API contract; align/remove only legacy assertion or mock if focused current-SHA reproduction fails. Do not restore legacy statuses/routes."
+    },
+    {
+      "file": "tests/integration/routes/customers-module.test.js",
+      "ec07PriorCategory": "STALE_CONTRACT",
+      "priority": "P2",
+      "bucket25adb": "STALE_LEGACY_CONTRACT",
+      "productVerdict": "NO_CURRENT_PRODUCT_BUG_CONFIRMED",
+      "recommendedExactAction": "Retain current secure API contract; align/remove only legacy assertion or mock if focused current-SHA reproduction fails. Do not restore legacy statuses/routes."
+    },
+    {
+      "file": "tests/integration/routes/daily-brief.test.js",
+      "ec07PriorCategory": "STALE_CONTRACT",
+      "priority": "P2",
+      "bucket25adb": "STALE_LEGACY_CONTRACT",
+      "productVerdict": "NO_CURRENT_PRODUCT_BUG_CONFIRMED",
+      "recommendedExactAction": "Retain current secure API contract; align/remove only legacy assertion or mock if focused current-SHA reproduction fails. Do not restore legacy statuses/routes."
+    },
+    {
+      "file": "tests/integration/routes/demoRoutes.no-stubs.test.ts",
+      "ec07PriorCategory": "EXPECTED_PENDING",
+      "priority": "P2",
+      "bucket25adb": "EXPECTED_PENDING_DEDICATED_ENV",
+      "productVerdict": "NO_STANDARD_GATE_PRODUCT_SIGNAL",
+      "recommendedExactAction": "Do not fake-green. Execute only in its declared DB/external/test-support environment; preserve explicit pending in standard gate."
+    },
+    {
+      "file": "tests/integration/routes/documents.test.js",
+      "ec07PriorCategory": "STALE_CONTRACT",
+      "priority": "P2",
+      "bucket25adb": "STALE_LEGACY_CONTRACT",
+      "productVerdict": "NO_CURRENT_PRODUCT_BUG_CONFIRMED",
+      "recommendedExactAction": "Retain current secure API contract; align/remove only legacy assertion or mock if focused current-SHA reproduction fails. Do not restore legacy statuses/routes."
+    },
+    {
+      "file": "tests/integration/routes/economicsFinancials.test.js",
+      "ec07PriorCategory": "STALE_CONTRACT",
+      "priority": "P2",
+      "bucket25adb": "STALE_LEGACY_CONTRACT",
+      "productVerdict": "NO_CURRENT_PRODUCT_BUG_CONFIRMED",
+      "recommendedExactAction": "Retain current secure API contract; align/remove only legacy assertion or mock if focused current-SHA reproduction fails. Do not restore legacy statuses/routes."
+    },
+    {
+      "file": "tests/integration/routes/economicsFlow.test.js",
+      "ec07PriorCategory": "STALE_CONTRACT",
+      "priority": "P2",
+      "bucket25adb": "STALE_LEGACY_CONTRACT",
+      "productVerdict": "NO_CURRENT_PRODUCT_BUG_CONFIRMED",
+      "recommendedExactAction": "Retain current secure API contract; align/remove only legacy assertion or mock if focused current-SHA reproduction fails. Do not restore legacy statuses/routes."
+    },
+    {
+      "file": "tests/integration/routes/feedback.test.js",
+      "ec07PriorCategory": "STALE_CONTRACT",
+      "priority": "P2",
+      "bucket25adb": "STALE_LEGACY_CONTRACT",
+      "productVerdict": "NO_CURRENT_PRODUCT_BUG_CONFIRMED",
+      "recommendedExactAction": "Retain current secure API contract; align/remove only legacy assertion or mock if focused current-SHA reproduction fails. Do not restore legacy statuses/routes."
+    },
+    {
+      "file": "tests/integration/routes/notifications.escalations.authz.test.ts",
+      "ec07PriorCategory": "EXPECTED_PENDING",
+      "priority": "P2",
+      "bucket25adb": "EXPECTED_PENDING_DEDICATED_ENV",
+      "productVerdict": "NO_STANDARD_GATE_PRODUCT_SIGNAL",
+      "recommendedExactAction": "Do not fake-green. Execute only in its declared DB/external/test-support environment; preserve explicit pending in standard gate."
+    },
+    {
+      "file": "tests/integration/routes/pmo/projects.aiRole-and-regulatory.real.test.ts",
+      "ec07PriorCategory": "PRODUCT_REGRESSION",
+      "priority": "P0",
+      "bucket25adb": "ENVIRONMENT_FAILURE_ALREADY_GREEN_TARGETED",
+      "productVerdict": "NO_CURRENT_PRODUCT_BUG_CONFIRMED",
+      "recommendedExactAction": "No product edit. Prior P0/P1 targeted/current realDB gate is green; rerun focused with required auth/role/tenant/DB/provider fixture, not disconnected standard DB."
+    },
+    {
+      "file": "tests/integration/routes/premiumReports.no-stubs.test.ts",
+      "ec07PriorCategory": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "bucket25adb": "ENVIRONMENT_FAILURE_ALREADY_GREEN_TARGETED",
+      "productVerdict": "NO_CURRENT_PRODUCT_BUG_CONFIRMED",
+      "recommendedExactAction": "No product edit. Prior P0/P1 targeted/current realDB gate is green; rerun focused with required auth/role/tenant/DB/provider fixture, not disconnected standard DB."
+    },
+    {
+      "file": "tests/integration/routes/presentations.autosave-conflict.route.test.ts",
+      "ec07PriorCategory": "NEW",
+      "priority": null,
+      "bucket25adb": "STALE_TEST_HARNESS_FIXED",
+      "productVerdict": "NO_PRODUCT_BUG",
+      "recommendedExactAction": "Use CAS mock expectedVersion from UPDATE params[6] after title/slide_count expansion; integrated as test-only 51ed9147c; focused route + title persistence 6/6 PASS."
+    },
+    {
+      "file": "tests/integration/routes/projectMembers.compat.no-stubs.test.ts",
+      "ec07PriorCategory": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "bucket25adb": "ENVIRONMENT_FAILURE_ALREADY_GREEN_TARGETED",
+      "productVerdict": "NO_CURRENT_PRODUCT_BUG_CONFIRMED",
+      "recommendedExactAction": "No product edit. Prior P0/P1 targeted/current realDB gate is green; rerun focused with required auth/role/tenant/DB/provider fixture, not disconnected standard DB."
+    },
+    {
+      "file": "tests/integration/routes/skills-gap.auth.routes.test.ts",
+      "ec07PriorCategory": "PRODUCT_REGRESSION",
+      "priority": "P0",
+      "bucket25adb": "ENVIRONMENT_FAILURE_ALREADY_GREEN_TARGETED",
+      "productVerdict": "NO_CURRENT_PRODUCT_BUG_CONFIRMED",
+      "recommendedExactAction": "No product edit. Prior P0/P1 targeted/current realDB gate is green; rerun focused with required auth/role/tenant/DB/provider fixture, not disconnected standard DB."
+    },
+    {
+      "file": "tests/integration/settings/account-deletion-routes-guard.test.ts",
+      "ec07PriorCategory": "EXPECTED_PENDING",
+      "priority": "P2",
+      "bucket25adb": "EXPECTED_PENDING_DEDICATED_ENV",
+      "productVerdict": "NO_STANDARD_GATE_PRODUCT_SIGNAL",
+      "recommendedExactAction": "Do not fake-green. Execute only in its declared DB/external/test-support environment; preserve explicit pending in standard gate."
+    },
+    {
+      "file": "tests/integration/settings/gdpr-settings-no-stubs.test.ts",
+      "ec07PriorCategory": "EXPECTED_PENDING",
+      "priority": "P2",
+      "bucket25adb": "EXPECTED_PENDING_DEDICATED_ENV",
+      "productVerdict": "NO_STANDARD_GATE_PRODUCT_SIGNAL",
+      "recommendedExactAction": "Do not fake-green. Execute only in its declared DB/external/test-support environment; preserve explicit pending in standard gate."
+    },
+    {
+      "file": "tests/integration/system/db-health.contract-codes.test.ts",
+      "ec07PriorCategory": "EXPECTED_PENDING",
+      "priority": "P2",
+      "bucket25adb": "EXPECTED_PENDING_DEDICATED_ENV",
+      "productVerdict": "NO_STANDARD_GATE_PRODUCT_SIGNAL",
+      "recommendedExactAction": "Do not fake-green. Execute only in its declared DB/external/test-support environment; preserve explicit pending in standard gate."
+    },
+    {
+      "file": "tests/integration/system/health.database.correlation-header.contract.test.ts",
+      "ec07PriorCategory": "EXPECTED_PENDING",
+      "priority": "P2",
+      "bucket25adb": "EXPECTED_PENDING_DEDICATED_ENV",
+      "productVerdict": "NO_STANDARD_GATE_PRODUCT_SIGNAL",
+      "recommendedExactAction": "Do not fake-green. Execute only in its declared DB/external/test-support environment; preserve explicit pending in standard gate."
+    },
+    {
+      "file": "tests/integration/test-support/testSupportRoutes.test.ts",
+      "ec07PriorCategory": "EXPECTED_PENDING",
+      "priority": "P2",
+      "bucket25adb": "EXPECTED_PENDING_DEDICATED_ENV",
+      "productVerdict": "NO_STANDARD_GATE_PRODUCT_SIGNAL",
+      "recommendedExactAction": "Do not fake-green. Execute only in its declared DB/external/test-support environment; preserve explicit pending in standard gate."
+    },
+    {
+      "file": "tests/integration/voice/voice.tts-unavailable.test.ts",
+      "ec07PriorCategory": "PRODUCT_REGRESSION",
+      "priority": "P1",
+      "bucket25adb": "ENVIRONMENT_FAILURE_ALREADY_GREEN_TARGETED",
+      "productVerdict": "NO_CURRENT_PRODUCT_BUG_CONFIRMED",
+      "recommendedExactAction": "No product edit. Prior P0/P1 targeted/current realDB gate is green; rerun focused with required auth/role/tenant/DB/provider fixture, not disconnected standard DB."
+    }
+  ]
+}

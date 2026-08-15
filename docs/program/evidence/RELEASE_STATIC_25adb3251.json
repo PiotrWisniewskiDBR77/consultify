@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "productSha": "25adb32518dfde2cc17e3d5db7b2f6c7b955ffd7",
+  "evidenceHeadParent": "25adb32518dfde2cc17e3d5db7b2f6c7b955ffd7",
+  "executedAt": "2026-08-16T01:00:00+02:00",
+  "gates": {
+    "rootTypecheck": {"command": "npm run type-check", "status": "PASS", "exitCode": 0},
+    "serverTypecheck": {"command": "npm run typecheck", "cwd": "server", "status": "PASS", "exitCode": 0},
+    "productionBuild": {
+      "command": "NODE_OPTIONS=--max-old-space-size=8192 npm run build",
+      "status": "PASS",
+      "exitCode": 0,
+      "viteDurationSeconds": 43.87,
+      "sampledProcessTreePeakRssKiB": 6439680,
+      "warnings": ["non-blocking chunks larger than 500 kB"]
+    },
+    "migrations": {
+      "executable": 718,
+      "ordered": 718,
+      "uniqueFilenames": 718,
+      "duplicateIdentities": 0,
+      "orderCollisionGroups": 0,
+      "orderCollisionFiles": 0
+    },
+    "migrationOrderingUnit": {
+      "file": "tests/unit/migrationRunnerOrdering.test.ts",
+      "status": "PASS",
+      "passed": 14,
+      "failed": 0
+    }
+  },
+  "productFilesChangedByEvidence": false,
+  "browserDemoClaim": "NOT_INCLUDED_IN_STATIC_GATE"
+}
