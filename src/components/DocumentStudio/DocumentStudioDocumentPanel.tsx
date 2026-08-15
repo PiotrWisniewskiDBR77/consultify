@@ -96,6 +96,7 @@ import { DocumentExportSuccessNote } from './DocumentExportSuccessNote';
 import { DocumentSchemaDiffView } from './DocumentSchemaDiffView';
 import { DocumentStudioFileMenu } from './DocumentStudioFileMenu';
 import { DocumentStudioQaPanel } from './DocumentStudioQaPanel';
+import { DocumentTransformativeEditPanel } from './DocumentTransformativeEditPanel';
 import { DocumentUndoRedoControls } from './DocumentUndoRedoControls';
 import { type DocumentAutosaveStatus, DocumentTipTapEditor } from './editor';
 import { useManualPrompt } from './editor/useManualPrompt';
@@ -1990,6 +1991,12 @@ function TeresaDrawerPanel({
       <p className="text-xs text-c-text-secondary">
         Zaznacz tekst w dokumencie, aby poprawić go z pomocą Teresy.
       </p>
+      <div className="mt-3">
+        <DocumentTransformativeEditPanel
+          artifactId={artifactId}
+          onSchemaUpdated={onSchemaUpdated}
+        />
+      </div>
     </div>
   );
 }

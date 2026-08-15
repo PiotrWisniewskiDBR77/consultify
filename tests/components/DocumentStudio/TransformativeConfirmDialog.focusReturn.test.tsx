@@ -1,66 +1,73 @@
-/**
- * D3 — focus-return-to-trigger fix for TransformativeConfirmDialog.
- *
- * The dialog already moved initial focus INTO the dialog on open and closed
- * on Escape/Cancel/Continue, but did not return focus to whatever triggered
- * it (the "Create proposal" button) on close — a keyboard/screen-reader user
- * would lose their place. This proves the fix: focus is captured on open and
- * restored on close, for all three close paths (Cancel, Escape, Continue).
- */
-import { fireEvent, render, screen } from '@testing-library/react';
-import React, { useState } from 'react';
-import { describe, expect, it } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { TransformativeConfirmDialog } from '../../../src/components/DocumentStudio/TransformativeConfirmDialog';
+vi.mock('react-i18next', () => ({
+  initReactI18next: { type: '3rdParty', init: () => undefined },
+  useTranslation: () => ({
+    t: (key: string, fallback?: string | { defaultValue?: string }) =>
+      typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? key),
+  }),
+}));
 
-function Harness(): React.ReactElement {
-  const [open, setOpen] = useState(false);
-  return (
-    <div>
-      <button type="button" onClick={() => setOpen(true)}>
-        Create proposal
-      </button>
-      <TransformativeConfirmDialog
-        open={open}
-        onCancel={() => setOpen(false)}
-        onConfirm={() => setOpen(false)}
-      />
-    </div>
+const apiMocks = vi.hoisted(() => ({
+  createDocumentStudioTransformativeProposal: vi.fn(),
+  approveDocumentStudioProposal: vi.fn(),
+  rejectDocumentStudioProposal: vi.fn(),
+}));
+
+vi.mock('../../../src/components/DocumentStudio/api', () => apiMocks);
+
+import { DocumentTransformativeEditPanel } from '../../../src/components/DocumentStudio/DocumentTransformativeEditPanel';
+
+function openDialog(): HTMLButtonElement {
+  render(
+    <DocumentTransformativeEditPanel artifactId="artifact-1" onSchemaUpdated={() => undefined} />
   );
+  fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Rebuild this document' } });
+  const trigger = screen.getByTestId('document-transformative-request');
+  trigger.focus();
+  fireEvent.click(trigger);
+  expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+  return trigger;
 }
 
-describe('TransformativeConfirmDialog — focus return (D3)', () => {
-  it('returns focus to the trigger button after Cancel', () => {
-    render(<Harness />);
-    const trigger = screen.getByRole('button', { name: 'Create proposal' });
-    trigger.focus();
-    fireEvent.click(trigger);
-    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 
+describe('transformative confirmation focus restoration', () => {
+  it('returns focus to the trigger after Cancel', async () => {
+    const trigger = openDialog();
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
     expect(document.activeElement).toBe(trigger);
   });
 
-  it('returns focus to the trigger button after Escape', () => {
-    render(<Harness />);
-    const trigger = screen.getByRole('button', { name: 'Create proposal' });
-    trigger.focus();
-    fireEvent.click(trigger);
-
+  it('returns focus to the trigger after Escape', async () => {
+    const trigger = openDialog();
     fireEvent.keyDown(document, { key: 'Escape' });
-    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
     expect(document.activeElement).toBe(trigger);
   });
 
-  it('returns focus to the trigger button after Continue', () => {
-    render(<Harness />);
-    const trigger = screen.getByRole('button', { name: 'Create proposal' });
-    trigger.focus();
-    fireEvent.click(trigger);
+  it('returns focus after the confirmed proposal request finishes', async () => {
+    apiMocks.createDocumentStudioTransformativeProposal.mockResolvedValue({
+      proposalId: 'proposal-1',
+      artifactId: 'artifact-1',
+      scope: 'transformative',
+      instruction: 'Rebuild this document',
+      affectedSectionIds: [],
+      status: 'proposed',
+      diff: { before: 'Before', after: 'After' },
+      createdBy: 'user-1',
+      createdAt: '2026-08-15T00:00:00.000Z',
+    });
+    const trigger = openDialog();
+    fireEvent.click(screen.getByTestId('document-transformative-confirm'));
 
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
     expect(document.activeElement).toBe(trigger);
   });
 });
