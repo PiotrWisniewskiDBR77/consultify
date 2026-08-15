@@ -85,7 +85,10 @@ describe('generateBlockProse + generation warnings', () => {
     expect(list).toHaveLength(1);
     expect(list[0].code).toBe('llm_prose_fallback');
     expect(list[0].scope).toBe('document');
-    expect(list[0].message).toContain('provider down');
+    expect(list[0].message).toBe(
+      'LLM prose generation partially failed; some sections retained deterministic placeholders.'
+    );
+    expect(list[0].message).not.toContain('provider down');
   });
 
   it('records llm_prose_fallback when the response is empty / unparseable', async () => {

@@ -34,13 +34,13 @@ describe('executionSpineService initiative scope SQL guard', () => {
 
     expect(mockDbAll).toHaveBeenCalledTimes(1);
     const [scopedSql, scopedParams] = mockDbAll.mock.calls[0] as [string, unknown[]];
-    expect(scopedSql).toContain(`json_extract(metadata, '$.initiativeId') = ?`);
+    expect(scopedSql).toContain(`metadata::jsonb->>'initiativeId' = ?`);
     expect(scopedParams).toEqual([ORG_ID, 'drafting', INITIATIVE_ID, 25]);
 
     vi.clearAllMocks();
     await getRunsByOrg(ORG_ID, 'drafting', 25);
     const [unscopedSql, unscopedParams] = mockDbAll.mock.calls[0] as [string, unknown[]];
-    expect(unscopedSql).not.toContain(`json_extract(metadata, '$.initiativeId') = ?`);
+    expect(unscopedSql).not.toContain(`metadata::jsonb->>'initiativeId' = ?`);
     expect(unscopedParams).toEqual([ORG_ID, 'drafting', 25]);
   });
 
@@ -49,13 +49,13 @@ describe('executionSpineService initiative scope SQL guard', () => {
 
     expect(mockDbAll).toHaveBeenCalledTimes(1);
     const [scopedSql, scopedParams] = mockDbAll.mock.calls[0] as [string, unknown[]];
-    expect(scopedSql).toContain(`json_extract(metadata, '$.initiativeId') = ?`);
+    expect(scopedSql).toContain(`metadata::jsonb->>'initiativeId' = ?`);
     expect(scopedParams).toEqual([ORG_ID, INITIATIVE_ID]);
 
     vi.clearAllMocks();
     await getActiveRuns(ORG_ID);
     const [unscopedSql, unscopedParams] = mockDbAll.mock.calls[0] as [string, unknown[]];
-    expect(unscopedSql).not.toContain(`json_extract(metadata, '$.initiativeId') = ?`);
+    expect(unscopedSql).not.toContain(`metadata::jsonb->>'initiativeId' = ?`);
     expect(unscopedParams).toEqual([ORG_ID]);
   });
 });

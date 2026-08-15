@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { 
-  recordGlobalTransportFailure, 
-  clearGlobalTransportFailure, 
+import {
+  recordGlobalTransportFailure,
+  clearGlobalTransportFailure,
   maybeGetGlobalBlockedTransportResponse,
   shouldBypassGlobalCircuit,
-  normalizeTransportPath
+  normalizeTransportPath,
 } from '../../src/services/api';
 
 // The global test setup (tests/setup.ts) auto-mocks `@/services/api` and the
@@ -28,6 +28,7 @@ describe('Frontend API Circuit Breaker (Transport Safeguard)', () => {
   beforeEach(() => {
     clearGlobalTransportFailure();
     vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-15T12:00:00.000Z'));
   });
 
   afterEach(() => {
@@ -44,7 +45,7 @@ describe('Frontend API Circuit Breaker (Transport Safeguard)', () => {
   });
 
   it('should trigger circuit on 502 or Network Error', () => {
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 6; i++) {
       recordGlobalTransportFailure('/api/some-endpoint', 502);
     }
     const blocked = maybeGetGlobalBlockedTransportResponse('/api/some-endpoint');
@@ -53,11 +54,11 @@ describe('Frontend API Circuit Breaker (Transport Safeguard)', () => {
   });
 
   it('should clear circuit on clearGlobalTransportFailure', () => {
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 6; i++) {
       recordGlobalTransportFailure('/api/some-endpoint', 502);
     }
     expect(maybeGetGlobalBlockedTransportResponse('/api/some-endpoint')).not.toBeNull();
-    
+
     clearGlobalTransportFailure('/api/some-endpoint');
     expect(maybeGetGlobalBlockedTransportResponse('/api/some-endpoint')).toBeNull();
   });
@@ -73,14 +74,16 @@ describe('Frontend API Circuit Breaker (Transport Safeguard)', () => {
   });
 
   it('should not block bypassed endpoints even if circuit is open', () => {
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 6; i++) {
       recordGlobalTransportFailure('/api/some-endpoint', 502);
     }
     expect(maybeGetGlobalBlockedTransportResponse('/api/interview/sessions')).toBeNull();
   });
 
   it('normalizes absolute URLs and query strings before bypass matching', () => {
-    expect(normalizeTransportPath('https://demo.consultify.ai/api/interview/sessions?x=1#top')).toBe('/api/interview/sessions');
+    expect(
+      normalizeTransportPath('https://demo.consultify.ai/api/interview/sessions?x=1#top')
+    ).toBe('/api/interview/sessions');
     expect(shouldBypassGlobalCircuit('https://demo.consultify.ai/api/tools/list?x=1')).toBe(true);
   });
 });

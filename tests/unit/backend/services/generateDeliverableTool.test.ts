@@ -18,13 +18,10 @@ const { planMock, startMock, flags } = vi.hoisted(() => ({
   flags: { ENABLE_DELIVERABLES_LIGHT: true },
 }));
 
-vi.mock(
-  '../../../../server/src/services/deliverables/deliverablesGenerationService.js',
-  () => ({
-    plan: (...args: unknown[]) => planMock(...args),
-    start: (...args: unknown[]) => startMock(...args),
-  })
-);
+vi.mock('../../../../server/src/services/deliverables/deliverablesGenerationService.js', () => ({
+  plan: (...args: unknown[]) => planMock(...args),
+  start: (...args: unknown[]) => startMock(...args),
+}));
 
 vi.mock('../../../../server/src/config/FeatureFlags.js', () => ({
   featureFlags: flags,
@@ -88,10 +85,7 @@ describe('generate_deliverable tool (SPEC_01 Tryb A)', () => {
 
   it('maps sheet → sheet and presentation → deck with a default deck setup', async () => {
     planMock.mockResolvedValue({ generationId: 'gen-s', format: 'sheet', state: 'plan_ready' });
-    const sheet = await generateDeliverable(
-      { type: 'sheet', intent: 'Tabela kosztów' },
-      baseCtx
-    );
+    const sheet = await generateDeliverable({ type: 'sheet', intent: 'Tabela kosztów' }, baseCtx);
     expect(sheet.ok).toBe(true);
     expect(planMock.mock.calls[0][0].format).toBe('sheet');
 
@@ -106,7 +100,7 @@ describe('generate_deliverable tool (SPEC_01 Tryb A)', () => {
     // DeckSetup wymaga enumów — domyślne muszą być obecne
     expect(deckSetup.title).toBeTruthy();
     expect(deckSetup.language).toBe('pl');
-    expect(deckSetup.audience).toBe('internal');
+    expect(deckSetup.audience).toBe('executive');
     expect(deckSetup.goal).toBe('inform');
   });
 

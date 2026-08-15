@@ -133,6 +133,7 @@ describe('InitiativeController', () => {
     it('should create a new initiative', async () => {
       mockReq.body = {
         title: 'New Initiative',
+        projectId: 'project-123',
         axis: 'Growth',
         area: 'Marketing',
       };
@@ -150,13 +151,21 @@ describe('InitiativeController', () => {
       expect(queryHelpers.queryRun).toHaveBeenCalled();
     });
 
-    it('should return 400 if title is missing', async () => {
-      mockReq.body = {};
+    it('should return the card-formula violation if title is missing', async () => {
+      mockReq.body = { projectId: 'project-123' };
 
       await InitiativeController.createInitiative(mockReq, mockRes);
 
-      expect(mockRes.status).toHaveBeenCalledWith(400);
-      expect(mockRes.json).toHaveBeenCalledWith({ error: 'Title is required' });
+      expect(mockRes.status).toHaveBeenCalledWith(422);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: 'CARD_CONTENT_FORMULA_VIOLATION',
+          kind: 'initiative',
+          violations: [
+            expect.objectContaining({ code: 'initiative.title_present', severity: 'hard' }),
+          ],
+        })
+      );
     });
   });
 });

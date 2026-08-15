@@ -1,12 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const sendSlackAlert = vi.fn().mockResolvedValue(undefined);
+const routeToSlack = vi.fn().mockResolvedValue({ delivered: true });
 const sendWhatsAppAlert = vi.fn().mockResolvedValue(undefined);
 
-vi.mock('../../../../server/src/services/slackService.js', () => ({
-  default: {
-    sendSystemAlert: (...args: any[]) => sendSlackAlert(...args),
-  },
+vi.mock('../../../../server/src/services/slack/slackRouter.js', () => ({
+  routeToSlack: (...args: any[]) => routeToSlack(...args),
 }));
 
 vi.mock('../../../../server/src/services/WhatsAppService.js', () => ({
@@ -26,9 +24,8 @@ describe('systemAlertNotifier', () => {
   });
 
   it('dispatches a system alert to Slack and WhatsApp', async () => {
-    const { sendSystemAlert } = await import(
-      '../../../../server/src/services/systemAlertNotifier.js'
-    );
+    const { sendSystemAlert } =
+      await import('../../../../server/src/services/systemAlertNotifier.js');
 
     await sendSystemAlert({
       title: 'Database unreachable',
@@ -37,11 +34,14 @@ describe('systemAlertNotifier', () => {
       source: 'Database',
     });
 
-    expect(sendSlackAlert).toHaveBeenCalledWith(
-      'Database: Database unreachable',
-      'Timed out while connecting to postgres',
-      'CRITICAL'
-    );
+    expect(routeToSlack).toHaveBeenCalledWith({
+      channel: 'alerts',
+      category: 'Awaria',
+      severity: 'CRITICAL',
+      title: 'Database: Database unreachable',
+      text: 'Timed out while connecting to postgres',
+      dedupeKey: 'CRITICAL:Database:Database unreachable',
+    });
     expect(sendWhatsAppAlert).toHaveBeenCalledWith({
       title: 'Database: Database unreachable',
       message: 'Timed out while connecting to postgres',
@@ -51,9 +51,8 @@ describe('systemAlertNotifier', () => {
   });
 
   it('throttles repeated alerts for the same key', async () => {
-    const { sendSystemAlert } = await import(
-      '../../../../server/src/services/systemAlertNotifier.js'
-    );
+    const { sendSystemAlert } =
+      await import('../../../../server/src/services/systemAlertNotifier.js');
 
     const alert = {
       title: 'LLM startup validation failed',
@@ -67,7 +66,7 @@ describe('systemAlertNotifier', () => {
     await sendSystemAlert(alert);
     await sendSystemAlert(alert);
 
-    expect(sendSlackAlert).toHaveBeenCalledTimes(1);
+    expect(routeToSlack).toHaveBeenCalledTimes(1);
     expect(sendWhatsAppAlert).toHaveBeenCalledTimes(1);
   });
 });

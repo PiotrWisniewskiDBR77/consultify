@@ -105,14 +105,17 @@ describe('M03 — GET /decisions getTableColumns guard (real controller)', () =>
   });
 
   it('decision_impacts present → COUNT subquery + org-scoped list (not empty)', async () => {
-    setColumns({ decisions: ['escalation_level', 'source_type'], decision_impacts: ['is_blocker'] });
+    setColumns({
+      decisions: ['escalation_level', 'source_type'],
+      decision_impacts: ['is_blocker'],
+    });
 
     const res = await callGet();
 
     expect(mockQueryAll).toHaveBeenCalledTimes(1);
     const [sql, params] = mockQueryAll.mock.calls[0] as [string, any[]];
     expect(String(sql)).toMatch(/FROM decision_impacts di/i);
-    expect(String(sql)).toMatch(/is_blocker = TRUE/i);
+    expect(String(sql)).toMatch(/is_blocker::text IN \('1','true'\)/i);
     expect(String(sql)).toMatch(/d\.organization_id = \?/i);
     expect(params).toContain(ORG_ID);
 

@@ -104,6 +104,7 @@ describe('InitiativeController interview insight lineage', () => {
       get: vi.fn(),
       body: {
         title: 'Initiative from insight',
+        projectId: 'project-1',
         sourceType: 'interview_insight',
         sourceId: 'insight-1',
         actionContract: { target: 'initiative' },

@@ -108,8 +108,8 @@ describe('planningPortfolioReadService support tables', () => {
     const sql = String(queryAllMock.mock.calls[0]?.[0] || '');
     expect(sql).not.toContain('s.influence_level');
     expect(sql).not.toContain('s.interest_level');
-    expect(sql).toContain('NULL as influenceLevel');
-    expect(sql).toContain('NULL as interestLevel');
+    expect(sql).toContain('NULL as "influenceLevel"');
+    expect(sql).toContain('NULL as "interestLevel"');
   });
 
   it('lets superadmin edit gated top-bar fields in V8 readiness truth', async () => {
