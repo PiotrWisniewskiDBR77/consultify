@@ -140,6 +140,19 @@ export function buildFixturePlan(ctx: FixtureContext): FixtureStatement[] {
     verifyParams: [ctx.organizationId],
   };
   return [
+    row('organization-profile', `INSERT INTO organization_profiles
+      (id,organization_id,industry,company_size,headquarters_country,strategic_priorities,mission_statement,vision_statement,preferred_language,profile_completeness,created_by,updated_by)
+      VALUES ($1,$2,'Industrial automation','MEDIUM','PL',$3,$4,$5,'pl',1,$6,$6)
+      ON CONFLICT (organization_id) DO UPDATE SET
+        industry=EXCLUDED.industry,company_size=EXCLUDED.company_size,
+        headquarters_country=EXCLUDED.headquarters_country,
+        strategic_priorities=EXCLUDED.strategic_priorities,
+        mission_statement=EXCLUDED.mission_statement,vision_statement=EXCLUDED.vision_statement,
+        preferred_language=EXCLUDED.preferred_language,profile_completeness=1,
+        updated_by=EXCLUDED.updated_by,updated_at=now()`,
+      [stableTextId(ctx,'organization-profile'),ctx.organizationId,JSON.stringify(['Operational excellence','Digital transformation']),
+        'Deliver measurable transformation outcomes.','Build a resilient, data-driven organization.',ctx.userId],
+      'organization_profiles','id',stableTextId(ctx,'organization-profile'),ctx.organizationId),
     row('case', `INSERT INTO projects (id, organization_id, name, description, status) VALUES ($1,$2,$3,$4,'active') ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name,description=EXCLUDED.description`, [project,ctx.organizationId,'Program poprawy realizacji korzyści','Osiągnąć co najmniej 90% zweryfikowanej realizacji korzyści w ciągu 90 dni.'], 'projects','id',project,ctx.organizationId),
     row('case', `INSERT INTO case_core (case_id,project_id,organization_id,case_name,case_profile,governance_tier,case_status,contracted_closure_type,delivery_status,decision_status,implementation_status,outcome_status,sponsor_user_id,acceptance_criteria_ref,created_by_actor_id) VALUES ($1,$2,$3,$4,'TRANSFORMATION','CONTROLLED','ACTIVE','OUTCOME_VALIDATED','PENDING','PENDING','PENDING','PENDING',$5,$6,$5) ON CONFLICT (case_id) DO UPDATE SET case_name=EXCLUDED.case_name,case_status='ACTIVE' WHERE case_core.organization_id=EXCLUDED.organization_id`, [caseId,project,ctx.organizationId,'Program poprawy realizacji korzyści',ctx.userId,`${ACCEPTANCE_NAMESPACE}:case`], 'case_core','case_id',caseId,ctx.organizationId),
     {domain:'case',sql:`INSERT INTO case_plan_versions (case_plan_version_id,case_id,plan_number,status,semantic_graph,graph_digest,change_reason,review_history,proposed_at,proposed_by_actor_id,published_at,published_by_actor_id,created_by_actor_id) VALUES ($1,$2,1,'PUBLISHED',$3,$4,$5,$6,now(),$7,now(),$7,$7) ON CONFLICT (case_plan_version_id) DO NOTHING`,params:[casePlanVersion,caseId,JSON.stringify(casePlanGraph),graphDigest(casePlanGraph),'Plan odbiorowy programu realizacji korzyści.',JSON.stringify([{event:'PROPOSED',actorId:ctx.userId,at:'2026-08-13T00:00:00.000Z',reason:'Plan przygotowany do odbioru'},{event:'PUBLISHED',actorId:ctx.userId,at:'2026-08-13T00:05:00.000Z',reason:'Plan zatwierdzony do realizacji'}]),ctx.userId],verifySql:`SELECT count(*)::int AS count FROM case_plan_versions cpv JOIN case_core cc ON cc.case_id=cpv.case_id WHERE cpv.case_plan_version_id=$1 AND cc.organization_id=$2 AND cpv.status='PUBLISHED'`,verifyParams:[casePlanVersion,ctx.organizationId]},

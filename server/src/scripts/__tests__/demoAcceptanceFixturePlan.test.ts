@@ -10,10 +10,15 @@ describe('demo acceptance fixtures safety contract',()=>{
   it('uses deterministic IDs and covers every requested domain',()=>{
     expect(stableTextId(ctx,'case')).toBe(stableTextId(ctx,'case'));
     expect(stableUuid(ctx,'kpi')).toMatch(/^[0-9a-f-]{36}$/);
-    expect(new Set(buildFixturePlan(ctx).map(x=>x.domain))).toEqual(new Set(['case','shared','kpi','roi','okr','finance','artifact','ideas',...FINANCE_ACCEPTANCE_FLAG_KEYS.map(key=>`finance-flag:${key}`)]));
+    expect(new Set(buildFixturePlan(ctx).map(x=>x.domain))).toEqual(new Set(['organization-profile','case','shared','kpi','roi','okr','finance','artifact','ideas','assessment-definition:DRD','v8-runtime-flag',...FINANCE_ACCEPTANCE_FLAG_KEYS.map(key=>`finance-flag:${key}`)]));
   });
   it('contains no destructive SQL and every row has tenant-scoped readback',()=>{
-    for(const item of [...buildFixturePlan(ctx),...buildGoldenChildPlan(ctx)]){ expect(item.sql).not.toMatch(/\b(delete|truncate|drop|alter)\b/i); expect(item.sql).toMatch(/ON CONFLICT/i); expect(item.verifySql).toMatch(/organization_id\s*=\s*\$2/); }
+    for(const item of [...buildFixturePlan(ctx),...buildGoldenChildPlan(ctx)]){
+      expect(item.sql).not.toMatch(/\b(delete|truncate|drop|alter)\b/i);
+      expect(item.sql).toMatch(/ON CONFLICT/i);
+      if(item.domain==='assessment-definition:DRD') expect(item.verifySql).toContain("methodology_id='DRD'");
+      else expect(item.verifySql).toMatch(/organization_id\s*=\s*\$[12]/);
+    }
   });
   it('covers required golden child surfaces',()=>{
     expect(buildGoldenChildPlan(ctx).map(x=>x.domain)).toEqual(expect.arrayContaining(['kpi-version','kpi-measurement','kpi-deviation','kpi-scorecard','roi-baseline','roi-pir','okr-objective','okr-kr','okr-checkin','ideas-map','ideas-business-case','ideas-financial-case','artifact-workbook','artifact-workbook-version','artifact-document-approval','artifact-document-version','finance-valuation']));

@@ -35,8 +35,10 @@ function evidenceFile(testInfo: TestInfo, module: string, extension: string) {
 }
 
 function observe(page: Page) {
+  let phase: 'initial' | 'reload' | 'post-reload' = 'initial';
   const consoleErrors: string[] = [];
   const failedRequests: Array<{ url: string; error: string }> = [];
+  const reloadCausedAborts: Array<{ url: string; error: string; phase: 'reload' }> = [];
   const badApiResponses: Array<{ url: string; status: number }> = [];
   page.on('console', (message) => {
     if (message.type() === 'error' && !ignoredExternal.test(message.location().url || message.text())) {
@@ -45,8 +47,18 @@ function observe(page: Page) {
   });
   page.on('requestfailed', (request) => {
     const error = request.failure()?.errorText || 'unknown';
+    const requestUrl = new URL(request.url());
     const isReloadCancelledHealthProbe =
-      error === 'net::ERR_ABORTED' && new URL(request.url()).pathname === '/api/health';
+      error === 'net::ERR_ABORTED' && requestUrl.pathname === '/api/health';
+    const isReloadCancelledSocketPoll =
+      phase === 'reload' &&
+      error === 'net::ERR_ABORTED' &&
+      requestUrl.pathname === '/socket.io/' &&
+      requestUrl.searchParams.get('transport') === 'polling';
+    if (isReloadCancelledSocketPoll) {
+      reloadCausedAborts.push({ url: request.url(), error, phase: 'reload' });
+      return;
+    }
     if (error !== 'cancelled' && !isReloadCancelledHealthProbe && !ignoredExternal.test(request.url())) {
       failedRequests.push({ url: request.url(), error });
     }
@@ -56,7 +68,13 @@ function observe(page: Page) {
       badApiResponses.push({ url: response.url(), status: response.status() });
     }
   });
-  return { consoleErrors, failedRequests, badApiResponses };
+  return {
+    consoleErrors,
+    failedRequests,
+    reloadCausedAborts,
+    badApiResponses,
+    setPhase(next: 'initial' | 'reload' | 'post-reload') { phase = next; },
+  };
 }
 
 test.describe('LOCAL-BROWSER-16 normal OWNER UI gate', () => {
@@ -106,7 +124,9 @@ test.describe('LOCAL-BROWSER-16 normal OWNER UI gate', () => {
       const blockingA11y = axe.violations.filter((item) => item.impact === 'critical' || item.impact === 'serious');
 
       await page.screenshot({ path: evidenceFile(testInfo, contract.module, 'png'), fullPage: true });
+      runtime.setPhase('reload');
       await page.reload({ waitUntil: 'domcontentloaded' });
+      runtime.setPhase('post-reload');
       await expect(page.locator('#root')).toContainText(contract.visibleText, { timeout: 45_000 });
       await page.waitForTimeout(750);
 
@@ -116,7 +136,10 @@ test.describe('LOCAL-BROWSER-16 normal OWNER UI gate', () => {
         finalUrl: page.url(),
         ui,
         a11y: blockingA11y.map(({ id, impact, help, nodes }) => ({ id, impact, help, nodes: nodes.length })),
-        ...runtime,
+        consoleErrors: runtime.consoleErrors,
+        failedRequests: runtime.failedRequests,
+        reloadCausedAborts: runtime.reloadCausedAborts,
+        badApiResponses: runtime.badApiResponses,
       };
       const output = evidenceFile(testInfo, contract.module, 'json');
       fs.mkdirSync(path.dirname(output), { recursive: true });
