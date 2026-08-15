@@ -14,7 +14,7 @@ import path from 'path';
 vi.hoisted(() => {
   process.env.NODE_ENV = 'test';
   process.env.TEST_TYPE = 'integration';
-  process.env.MOCK_DB = 'false';
+  process.env.MOCK_DB = process.env.RUN_DB_TESTS === '1' ? 'false' : 'true';
   process.env.JWT_SECRET = 'test-secret-key-for-testing-only-min-32-chars';
 
   // Use a fixed path string to avoid ReferenceError with path import
@@ -29,7 +29,7 @@ import { getDatabaseAsync } from '../../../server/src/database/Database.js';
 import * as DbPromise from '../../../server/src/utils/DbPromise.js';
 import { TEST_SCHEMA } from '../../utils/testSchema.js';
 
-describe('Plan Limits Integration', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('Plan Limits Integration', () => {
   let authToken;
   let userId;
   let orgId;

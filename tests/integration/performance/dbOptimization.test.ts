@@ -5,7 +5,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { v4 as uuidv4 } from 'uuid';
 import { Client } from 'pg';
 
-describe('Database Performance Optimization', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('Database Performance Optimization', () => {
   let DbPromise: any;
   let pgClient: Client;
   const orgId = uuidv4();

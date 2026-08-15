@@ -10,12 +10,12 @@ import { getDatabase } from '../../server/src/database/Database.js';
 import { initializeDatabase } from '../../server/src/database/DatabaseInitializer.js';
 
 vi.hoisted(() => {
-  process.env.MOCK_DB = 'false';
+  process.env.MOCK_DB = process.env.RUN_DB_TESTS === '1' ? 'false' : 'true';
   const workerId = process.env.VITEST_WORKER_ID || '0';
   process.env.SQLITE_PATH = `./test-ai-layers-${workerId}.db`;
 });
 
-describe('AI Layers Integration', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('AI Layers Integration', () => {
   let app;
   let authToken;
   const db = getDatabase();

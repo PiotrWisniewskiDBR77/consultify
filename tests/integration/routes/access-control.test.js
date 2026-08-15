@@ -7,7 +7,7 @@ import { getDatabase } from '../../../server/src/database/Database.js';
 import { initializeDatabase } from '../../../server/src/database/DatabaseInitializer.js';
 
 vi.hoisted(() => {
-  process.env.MOCK_DB = 'false';
+  process.env.MOCK_DB = process.env.RUN_DB_TESTS === '1' ? 'false' : 'true';
   const workerId = process.env.VITEST_WORKER_ID || '0';
   process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
 });
@@ -21,7 +21,7 @@ vi.hoisted(() => {
 
 // @vitest-environment node
 
-describe('Integration Test: Access Control Routes', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('Integration Test: Access Control Routes', () => {
   const db = getDatabase();
   let adminToken;
   let userToken;

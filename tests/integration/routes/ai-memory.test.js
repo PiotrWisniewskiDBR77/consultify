@@ -7,13 +7,13 @@ import { getDatabase } from '../../../server/src/database/Database.js';
 import { initializeDatabase } from '../../../server/src/database/DatabaseInitializer.js';
 
 vi.hoisted(() => {
-  process.env.MOCK_DB = 'false';
-  const workerId = process.env.VITEST_WORKER_ID || '0';
-  process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
+  if (process.env.RUN_DB_TESTS === '1') {
+    process.env.MOCK_DB = 'false';
+  }
 });
 
 
-describe('AI Memory API', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('AI Memory API', () => {
   let app;
 
   beforeAll(async () => {

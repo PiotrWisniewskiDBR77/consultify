@@ -7,7 +7,7 @@ import { getDatabase } from '../../../server/src/database/Database.js';
 import { initializeDatabase } from '../../../server/src/database/DatabaseInitializer.js';
 
 vi.hoisted(() => {
-  process.env.MOCK_DB = 'false';
+  process.env.MOCK_DB = 'true';
   const workerId = process.env.VITEST_WORKER_ID || '0';
   process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
 });

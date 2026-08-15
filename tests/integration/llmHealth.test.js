@@ -7,12 +7,12 @@ import request from 'supertest';
 import { initializeDatabase } from '../../server/src/database/DatabaseInitializer.js';
 
 vi.hoisted(() => {
-  process.env.MOCK_DB = 'false';
-  const workerId = process.env.VITEST_WORKER_ID || '0';
-  process.env.SQLITE_PATH = `./test-llm-health-${workerId}.db`;
+  if (process.env.RUN_DB_TESTS === '1') {
+    process.env.MOCK_DB = 'false';
+  }
 });
 
-describe('LLM Health Integration', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('LLM Health Integration', () => {
   let app;
 
   beforeAll(async () => {

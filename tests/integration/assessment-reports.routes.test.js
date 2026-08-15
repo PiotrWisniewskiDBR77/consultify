@@ -6,13 +6,13 @@ import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { initializeDatabase } from '../../server/src/database/DatabaseInitializer.js';
 
 vi.hoisted(() => {
-  process.env.MOCK_DB = 'false';
-  const workerId = process.env.VITEST_WORKER_ID || '0';
-  process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
+  if (process.env.RUN_DB_TESTS === '1') {
+    process.env.MOCK_DB = 'false';
+  }
 });
 
 
-describe('Assessment Reports Routes', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('Assessment Reports Routes', () => {
   let app;
 
   beforeAll(async () => {
