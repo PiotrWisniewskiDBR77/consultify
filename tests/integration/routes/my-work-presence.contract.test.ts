@@ -47,17 +47,15 @@ function createApp() {
 }
 
 describe('my-work presence route contracts', () => {
-  it('returns coded 500 when idea presence polling fails', async () => {
+  it('does not expose the retired idea presence polling endpoint', async () => {
     listPresenceMock.mockRejectedValueOnce(new Error('presence-store-unavailable'));
     const app = createApp();
 
     const res = await request(app).get('/api/my-work/my-ideas/idea-1/presence');
-    expect(res.status).toBe(500);
-    expect(res.body.code).toBe('IDEA_TABLE_PRESENCE_POLL_FAILED');
-    expect(res.body.error).toBe('Failed to read idea presence');
+    expect(res.status).toBe(404);
   });
 
-  it('returns coded 500 when idea presence broadcast fails', async () => {
+  it('does not expose the retired idea presence broadcast endpoint', async () => {
     upsertPresenceMock.mockRejectedValueOnce(new Error('presence-upsert-failed'));
     const app = createApp();
 
@@ -68,8 +66,6 @@ describe('my-work presence route contracts', () => {
       timestamp: Date.now(),
       activeCell: { nodeId: 'node-1', colKey: 'title' },
     });
-    expect(res.status).toBe(500);
-    expect(res.body.code).toBe('IDEA_TABLE_PRESENCE_UPSERT_FAILED');
-    expect(res.body.error).toBe('Failed to broadcast presence');
+    expect(res.status).toBe(404);
   });
 });

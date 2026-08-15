@@ -30,13 +30,13 @@ describe('User/report stubbed routes (no 501 placeholders)', () => {
     expect(JSON.stringify(res.body)).not.toContain('Not implemented');
   });
 
-  it('GET /api/user/profile-completeness returns 503 (not 501)', async () => {
+  it('GET /api/user/profile-completeness returns current missing-user boundary (not 501)', async () => {
     const router = (await import('../../../server/src/routes/user/user-profile-completeness.routes.ts'))
       .default;
     const res = await request(makeApp('/api/user/profile-completeness', router)).get(
       '/api/user/profile-completeness'
     );
-    expect(res.status).toBe(503);
+    expect(res.status).toBe(404);
   });
 
   it('GET /api/user/professional-profile returns 503 (not 501)', async () => {
@@ -64,4 +64,3 @@ describe('User/report stubbed routes (no 501 placeholders)', () => {
     expect(res.status).toBe(503);
   });
 });
-

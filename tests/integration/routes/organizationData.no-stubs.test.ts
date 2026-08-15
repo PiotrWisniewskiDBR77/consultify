@@ -3,7 +3,7 @@ import request from 'supertest';
 
 import { makeTestApp } from '../_helpers/testApp';
 
-describe('Organization data routes (honest 503 when unavailable)', () => {
+describe('Organization data routes (current governed contracts)', () => {
   const basePath = '/api/organization-data';
   let router: any;
 
@@ -21,21 +21,19 @@ describe('Organization data routes (honest 503 when unavailable)', () => {
     router = (await import('../../../server/src/routes/organization/organization-data.routes.ts')).default;
   });
 
-  it('GET /api/organization-data/stats returns 503 with FEATURE_UNAVAILABLE', async () => {
+  it('GET /api/organization-data/stats returns the implemented stats contract', async () => {
     const res = await request(makeApp()).get(`${basePath}/stats`);
-    expect(res.status).toBe(503);
-    expect(res.body?.code).toBe('FEATURE_UNAVAILABLE');
+    expect(res.status).toBe(200);
+    expect(res.body?.success).toBe(true);
   });
 
-  it('POST /api/organization-data/export/all returns 503 with FEATURE_UNAVAILABLE', async () => {
+  it('POST /api/organization-data/export/all requires explicit confirmation', async () => {
     const res = await request(makeApp()).post(`${basePath}/export/all`).send({});
-    expect(res.status).toBe(503);
-    expect(res.body?.code).toBe('FEATURE_UNAVAILABLE');
+    expect(res.status).toBe(403);
   });
 
-  it('POST /api/organization-data/export/users returns 503 with FEATURE_UNAVAILABLE', async () => {
+  it('POST /api/organization-data/export/users requires explicit confirmation', async () => {
     const res = await request(makeApp()).post(`${basePath}/export/users`).send({});
-    expect(res.status).toBe(503);
-    expect(res.body?.code).toBe('FEATURE_UNAVAILABLE');
+    expect(res.status).toBe(403);
   });
 });

@@ -30,10 +30,10 @@ describe('Legacy stubbed routes (no 501 placeholders)', () => {
     expect(JSON.stringify(res.body)).not.toContain('Not implemented');
   });
 
-  it('GET /api/feature-flags returns 503 (not 501)', async () => {
+  it('GET /api/feature-flags enforces authentication (not 501)', async () => {
     const router = (await import('../../../server/src/routes/featureFlags.routes.ts')).default;
     const res = await request(makeApp('/api/feature-flags', router)).get('/api/feature-flags');
-    expect(res.status).toBe(503);
+    expect(res.status).toBe(401);
   });
 
   it('GET /api/workspace-defaults returns 503 (not 501)', async () => {
@@ -56,16 +56,16 @@ describe('Legacy stubbed routes (no 501 placeholders)', () => {
     expect(res.status).toBe(503);
   });
 
-  it('GET /api/help-analytics returns 503 (not 501)', async () => {
+  it('GET /api/help-analytics returns an implemented response (not 501)', async () => {
     const router = (await import('../../../server/src/routes/helpAnalytics.routes.ts')).default;
     const res = await request(makeApp('/api/help-analytics', router)).get('/api/help-analytics');
-    expect(res.status).toBe(503);
+    expect(res.status).toBe(200);
   });
 
-  it('GET /api/benchmark returns 503 (not 501)', async () => {
+  it('GET /api/benchmark returns an implemented response (not 501)', async () => {
     const router = (await import('../../../server/src/routes/benchmark.routes.ts')).default;
     const res = await request(makeApp('/api/benchmark', router)).get('/api/benchmark');
-    expect(res.status).toBe(503);
+    expect(res.status).toBe(200);
   });
 
   it('GET /api/locations returns 503 (not 501)', async () => {
