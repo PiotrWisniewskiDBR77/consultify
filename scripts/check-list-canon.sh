@@ -46,6 +46,43 @@ cd "$ROOT" || exit 1
 
 BASELINE="scripts/check-list-canon.baseline.txt"
 
+# Normalize a multiline opening <table ...> tag into one logical line before
+# checking the §27 exemption. Without this, an exemption placed on the next
+# line is invisible while child <thead>/<tbody> nodes are reported as debt.
+# Blank lines preserve approximate source line numbering for later findings.
+flatten_table_tags() {
+  awk '
+  {
+    line = $0
+    if (in_tag) {
+      buf = buf " " line
+      consumed++
+      if (line ~ />/) {
+        for (i = 1; i < consumed; i++) print ""
+        print buf
+        in_tag = 0
+        buf = ""
+        consumed = 0
+      }
+      next
+    }
+    if (line ~ /<table([ \t>\/]|$)/ && line !~ />/) {
+      in_tag = 1
+      buf = line
+      consumed = 1
+      next
+    }
+    print line
+  }
+  END {
+    if (in_tag) {
+      for (i = 1; i < consumed; i++) print ""
+      print buf
+    }
+  }
+  ' "$1"
+}
+
 MODE=""            # "" (auto) | all | update
 VERBOSE=0
 ARG_FILES_NL=""    # newline-joined — nazwy plików ze spacją nie mogą się rozjechać
@@ -79,31 +116,37 @@ list_scope_files() {
 # Liczba linii = liczba naruszeń pliku (to jest wielkość porównywana z baseline).
 # Logika detekcji NIEZMIENIONA względem wersji sprzed baseline'u.
 violations_for() {
-  local f="$1" bn table_lines unmarked_table all_table_exempt other_hits
+  local f="$1" bn flat logical_table_lines table_lines unmarked_table all_table_exempt other_hits
   bn=$(basename -- "$f")
+  flat=$(flatten_table_tags "$f")
 
   # 1) surowe prymitywy tabeli w komponencie = zakaz (mają być w StandardTable).
   # Wyjątek: znacznik §27-exempt na otwierającym <table> (archetyp Excel/Platforma-tabel,
   # patrz docs/ui-standards/DOKTRYNA_TABELA_NIE_EXCEL.md) — <thead>/<tbody> dziedziczą
   # wyjątek TYLKO gdy WSZYSTKIE <table> w pliku są oznaczone (brak mieszania archetypów
   # w jednym pliku; jeśli choć jeden <table> jest bez znacznika, plik i tak pada).
+  logical_table_lines=$(printf '%s\n' "$flat" | grep -nE '<table([ >/]|$)' || true)
+  # Keep the ratchet count stable for pre-existing unmarked multiline tables:
+  # their child primitives already count as violations in the baseline. The
+  # logical form is used to resolve exemptions, while same-line openings keep
+  # the historic standalone R1 count.
   table_lines=$(grep -nE '<table[ >/]' "$f" 2>/dev/null || true)
   unmarked_table=""
-  if [ -n "$table_lines" ]; then
-    unmarked_table=$(printf '%s\n' "$table_lines" | grep -v '§27-exempt' || true)
+  if [ -n "$logical_table_lines" ]; then
+    unmarked_table=$(printf '%s\n' "$logical_table_lines" | grep -v '§27-exempt' || true)
   fi
   all_table_exempt=0
-  if [ -n "$table_lines" ] && [ -z "$unmarked_table" ]; then
+  if [ -n "$logical_table_lines" ] && [ -z "$unmarked_table" ]; then
     all_table_exempt=1
   fi
-  if [ -n "$unmarked_table" ]; then
-    printf '%s\n' "$unmarked_table" | while IFS= read -r h; do
+  if [ -n "$table_lines" ]; then
+    printf '%s\n' "$table_lines" | grep -v '§27-exempt' | while IFS= read -r h; do
       [ -n "$h" ] || continue
       echo "R1|${h%%:*}|surowa tabela <table> bez §27-exempt — użyj <StandardTable>"
     done
   fi
 
-  other_hits=$(grep -nE '<thead[ >]|<tbody[ >]|role="table"|role="grid"|role="columnheader"' "$f" 2>/dev/null \
+  other_hits=$(printf '%s\n' "$flat" | grep -nE '<thead[ >]|<tbody[ >]|role="table"|role="grid"|role="columnheader"' \
     | grep -v '§27-exempt' || true)
   if [ -n "$other_hits" ] && [ "$all_table_exempt" != "1" ]; then
     printf '%s\n' "$other_hits" | while IFS= read -r h; do
