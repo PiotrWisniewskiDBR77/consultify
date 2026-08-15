@@ -28,9 +28,20 @@ if (!Array.isArray(overrides.rows)) {
 }
 
 const overrideByTip = new Map();
+const ALLOWED_OVERRIDE_VERDICTS = new Set([
+  'REPRESENTED_SUPERSEDED',
+  'REPRESENTED_CANONICAL',
+  'REJECTED_DESTRUCTIVE_SNAPSHOT',
+  'INTEGRATED_CANONICAL',
+  'CANDIDATE_INTEGRATION',
+  'OWNER_DECISION_REQUIRED',
+]);
 for (const override of overrides.rows) {
   if (!override.tip || overrideByTip.has(override.tip)) {
     throw new Error(`Invalid or duplicate semantic override tip: ${override.tip}`);
+  }
+  if (!ALLOWED_OVERRIDE_VERDICTS.has(override.verdict)) {
+    throw new Error(`Invalid semantic override verdict for ${override.tip}: ${override.verdict}`);
   }
   overrideByTip.set(override.tip, override);
 }
@@ -84,13 +95,19 @@ const rejectedDestructiveSnapshot = rows.filter(
   (row) => row.verdict === 'REJECTED_DESTRUCTIVE_SNAPSHOT'
 ).length;
 const integratedCanonical = rows.filter((row) => row.verdict === 'INTEGRATED_CANONICAL').length;
+const candidateIntegration = rows.filter((row) => row.verdict === 'CANDIDATE_INTEGRATION').length;
+const ownerDecisionRequired = rows.filter(
+  (row) => row.verdict === 'OWNER_DECISION_REQUIRED'
+).length;
 if (
   referenceHarnessOnly +
     reviewRequired +
     representedSuperseded +
     representedCanonical +
     rejectedDestructiveSnapshot +
-    integratedCanonical !==
+    integratedCanonical +
+    candidateIntegration +
+    ownerDecisionRequired !==
   source.independentHeadCount
 ) {
   throw new Error('Disposition count does not match independent head count');
@@ -121,6 +138,8 @@ const output = {
     representedCanonical,
     rejectedDestructiveSnapshot,
     integratedCanonical,
+    candidateIntegration,
+    ownerDecisionRequired,
     semanticReviewRequired: reviewRequired,
     deletionAuthorized: 0,
   },
@@ -137,6 +156,8 @@ const md = `# Recovered independent-head disposition ledger
 - \`REPRESENTED_CANONICAL\`: **${representedCanonical}**
 - \`REJECTED_DESTRUCTIVE_SNAPSHOT\`: **${rejectedDestructiveSnapshot}**
 - \`INTEGRATED_CANONICAL\`: **${integratedCanonical}**
+- \`CANDIDATE_INTEGRATION\`: **${candidateIntegration}**
+- \`OWNER_DECISION_REQUIRED\`: **${ownerDecisionRequired}**
 - \`SEMANTIC_REVIEW_REQUIRED\`: **${reviewRequired}**
 - Deletion authorized: **0**
 

@@ -16,7 +16,9 @@
     "representedCanonical": 15,
     "rejectedDestructiveSnapshot": 1,
     "integratedCanonical": 10,
-    "semanticReviewRequired": 156,
+    "candidateIntegration": 1,
+    "ownerDecisionRequired": 0,
+    "semanticReviewRequired": 155,
     "deletionAuthorized": 0
   },
   "rows": [
@@ -864,12 +866,12 @@
       "migrationPaths": [
         "server/migrations/20260801_meeting_core.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "CANDIDATE_INTEGRATION",
+      "taskId": "MTG-001-T01",
       "recoveryRef": "refs/recovery/unknown-20260815/2d0e6d8dab54e351c9e948f9dc98493282aac5ee",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "This head is the tip of a three-commit Meeting Core implementation (baeaad452, e51e57a4b, 2d0e6d8da) that is not represented by the current status-only meetingService: it adds lifecycle, meeting roles, notes, proposal-first task/decision outputs, atomic materialization and stuck-output reconciliation. It directly addresses the current MTG-001 DoD, but it also touches shared Task/Decision services and predates the later M12 CRUD route, so whole-branch integration is unsafe.",
+      "nextAction": "Execute the serialized, module-diff packet docs/cleanup/execution-packets/MTG-001-T01.md against the current canonical Meeting surface. Preserve all three recovery commits; do not merge the branch."
     },
     {
       "tip": "2dae208ac6222c437f18f60ca01c242917123d80",

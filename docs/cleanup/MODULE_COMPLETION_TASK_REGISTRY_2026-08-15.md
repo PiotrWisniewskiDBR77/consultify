@@ -479,8 +479,11 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
   pozostają jawnie do wykonania w ich właściwych gate'ach. Trzy dalsze historie
   są zastąpione przez późniejszy kanon: XLSX ma jeden adoptowany artefakt
   (3/3), komentarze Deck pozostają świadomie poza wspólnym MELS order (18/18),
-  a Process Flow ma nowszy toolbar z progressive disclosure (13/13). Aktualny
-  ledger ma 156 pozycji `SEMANTIC_REVIEW_REQUIRED`. Te 18 pozostaje zachowanym materiałem
+  a Process Flow ma nowszy toolbar z progressive disclosure (13/13). Meeting
+  Core został wyodrębniony jako pierwszy jawny `CANDIDATE_INTEGRATION` z
+  atomowym pakietem `MTG-001-T01`; nie jest już niesklasyfikowanym WIP i nie
+  będzie scalany jako branch. Aktualny ledger ma 155 pozycji
+  `SEMANTIC_REVIEW_REQUIRED`. Te 18 pozostaje zachowanym materiałem
   UX/prototypowym, ale nie
   jest kodem produkcyjnym do merge. Generator mechanicznie egzekwuje warunek
   ścieżek, unikalność, sumy i deterministyczny output; nadal
@@ -828,6 +831,12 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
 ### MTG-001 — Meeting/Minutes contract
 
 - Status: `PARTIAL`, P1; owner: Meeting lane.
+- Atomowy pakiet: `docs/cleanup/execution-packets/MTG-001-T01.md`, status
+  `READY_SERIAL_INTEGRATOR / PREFLIGHT_REQUIRED`.
+- Odzyskany kandydat: trzy commity `baeaad452..2d0e6d8da` zawierają lifecycle,
+  role, notes, proposal-first task/decision outputs, CAS i reconciliation.
+  Kandydat nie jest przodkiem kanonu i dotyka współdzielonych Task/Decision,
+  dlatego wymaga portu modułowego na aktualny M12 CRUD, nigdy merge brancha.
 - DoD: create -> agenda/materials -> notes -> proposed summary -> approve ->
   one decision + task + material -> cold reopen; consent/retention/tenant proof.
 

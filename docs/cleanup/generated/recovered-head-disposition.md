@@ -8,7 +8,9 @@
 - `REPRESENTED_CANONICAL`: **15**
 - `REJECTED_DESTRUCTIVE_SNAPSHOT`: **1**
 - `INTEGRATED_CANONICAL`: **10**
-- `SEMANTIC_REVIEW_REQUIRED`: **156**
+- `CANDIDATE_INTEGRATION`: **1**
+- `OWNER_DECISION_REQUIRED`: **0**
+- `SEMANTIC_REVIEW_REQUIRED`: **155**
 - Deletion authorized: **0**
 
 The first closed semantic rule is deliberately narrow: a head receives
