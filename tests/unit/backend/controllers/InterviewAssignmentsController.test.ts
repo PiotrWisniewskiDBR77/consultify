@@ -50,6 +50,7 @@ describe('InterviewController assignments', () => {
     mockQueryAll.mockReset();
     mockQueryOne.mockReset();
     mockQueryRun.mockReset();
+    mockQueryRun.mockResolvedValue({ changes: 1 });
     mockLlmCall.mockReset();
     mockGetTableColumns.mockReset();
     mockGetTableColumns.mockResolvedValue(
@@ -103,7 +104,8 @@ describe('InterviewController assignments', () => {
       created_by: 'admin-1',
     });
 
-    const { InterviewController } = await import('../../../../server/src/controllers/InterviewController.js');
+    const { InterviewController } =
+      await import('../../../../server/src/controllers/InterviewController.js');
     await InterviewController.getAssignment(mockReq, mockRes, mockNext);
 
     expect(mockRes.status).not.toHaveBeenCalledWith(403);
@@ -127,7 +129,8 @@ describe('InterviewController assignments', () => {
     });
     mockGetTableColumns.mockResolvedValueOnce(new Set());
 
-    const { InterviewController } = await import('../../../../server/src/controllers/InterviewController.js');
+    const { InterviewController } =
+      await import('../../../../server/src/controllers/InterviewController.js');
     await InterviewController.getAssignment(mockReq, mockRes, mockNext);
 
     expect(mockRes.status).toHaveBeenCalledWith(403);

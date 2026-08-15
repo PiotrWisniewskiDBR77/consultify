@@ -34,7 +34,7 @@ describe('adminSessionService', () => {
     });
 
     const insertArgs = fakeDb.run.mock.calls[0][1];
-    expect(insertArgs[3]).toBe('2026-04-11T12:00:00.000Z');
+    expect(insertArgs[4]).toBe('2026-04-11T12:00:00.000Z');
     expect(session).toEqual(
       expect.objectContaining({
         sessionType: 'jit',

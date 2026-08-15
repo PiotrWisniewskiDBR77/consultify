@@ -36,9 +36,7 @@ vi.mock('../../../server/src/services/ai/helpDocsContext.js', () => ({
   isProductOrHowToQuery: (...a: unknown[]) => mockIsProductQuery(...a),
 }));
 
-const { default: helpChatRoutes } = await import(
-  '../../../server/src/routes/helpChat.routes.js'
-);
+const { default: helpChatRoutes } = await import('../../../server/src/routes/helpChat.routes.js');
 
 function createApp(): Express {
   const app = express();
@@ -52,9 +50,7 @@ describe('Help Chat Routes', () => {
     vi.clearAllMocks();
     mockBuildContext.mockResolvedValue({
       isProductQuestion: true,
-      citations: [
-        { id: 'kb1', title: 'Tools Primer', link: '/kb/p25b-tools-primer' },
-      ],
+      citations: [{ id: 'kb1', title: 'Tools Primer', link: '/kb/p25b-tools-primer' }],
       systemInstructionAddon: '\n## KB Articles\n[KB1] Tools Primer...',
     });
     mockIsProductQuery.mockReturnValue(true);
@@ -92,18 +88,14 @@ describe('Help Chat Routes', () => {
     });
 
     it('includes system instruction addon from KB context', async () => {
-      await request(createApp())
-        .post('/api/help/chat')
-        .send({ message: 'What is the interview?' });
+      await request(createApp()).post('/api/help/chat').send({ message: 'What is the interview?' });
 
       const processCall = mockProcess.mock.calls[0][0];
       expect(processCall.options.systemInstruction).toContain('KB Articles');
     });
 
     it('uses capability help', async () => {
-      await request(createApp())
-        .post('/api/help/chat')
-        .send({ message: 'test question' });
+      await request(createApp()).post('/api/help/chat').send({ message: 'test question' });
 
       const processCall = mockProcess.mock.calls[0][0];
       expect(processCall.capability).toBe('help');
@@ -116,9 +108,7 @@ describe('Help Chat Routes', () => {
         systemInstructionAddon: '',
       });
 
-      await request(createApp())
-        .post('/api/help/chat')
-        .send({ message: 'How do I configure X?' });
+      await request(createApp()).post('/api/help/chat').send({ message: 'How do I configure X?' });
 
       const processCall = mockProcess.mock.calls[0][0];
       expect(processCall.options.systemInstruction).toContain(
@@ -127,9 +117,7 @@ describe('Help Chat Routes', () => {
     });
 
     it('system prompt mentions Teresa', async () => {
-      await request(createApp())
-        .post('/api/help/chat')
-        .send({ message: 'who are you?' });
+      await request(createApp()).post('/api/help/chat').send({ message: 'who are you?' });
 
       const processCall = mockProcess.mock.calls[0][0];
       expect(processCall.options.systemInstruction).toContain('Teresa');
@@ -138,12 +126,11 @@ describe('Help Chat Routes', () => {
     it('returns 500 on AI pipeline error', async () => {
       mockProcess.mockRejectedValue(new Error('AI unavailable'));
 
-      const res = await request(createApp())
-        .post('/api/help/chat')
-        .send({ message: 'test' });
+      const res = await request(createApp()).post('/api/help/chat').send({ message: 'test' });
 
       expect(res.status).toBe(500);
-      expect(res.body.error).toBe('AI unavailable');
+      expect(res.body.error).toBe('HelpChat request failed');
+      expect(JSON.stringify(res.body)).not.toContain('AI unavailable');
     });
   });
 });

@@ -37,13 +37,16 @@ export type ExpectedSchema = {
   columns: Map<string, string>; // "table.column" -> defining file
 };
 
-const TABLE_RE = /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?"?([a-zA-Z0-9_]+)"?/gi;
+const TABLE_RE =
+  /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:"?([a-zA-Z0-9_]+)"?\s*\.\s*)?"?([a-zA-Z0-9_]+)"?/gi;
 const ALTER_COL_RE =
-  /ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?"?([a-zA-Z0-9_]+)"?\s+ADD\s+COLUMN\s+(?:IF\s+NOT\s+EXISTS\s+)?"?([a-zA-Z0-9_]+)"?/gi;
+  /ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:"?([a-zA-Z0-9_]+)"?\s*\.\s*)?"?([a-zA-Z0-9_]+)"?\s+ADD\s+COLUMN\s+(?:IF\s+NOT\s+EXISTS\s+)?"?([a-zA-Z0-9_]+)"?/gi;
 // A table created and then dropped or renamed-away within the migrations is
 // transient (rename-swap or marker tables) and must not count as expected.
-const DROP_RE = /DROP\s+TABLE\s+(?:IF\s+EXISTS\s+)?"?([a-zA-Z0-9_]+)"?/gi;
-const RENAME_RE = /ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?"?([a-zA-Z0-9_]+)"?\s+RENAME\s+TO/gi;
+const DROP_RE =
+  /DROP\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:"?([a-zA-Z0-9_]+)"?\s*\.\s*)?"?([a-zA-Z0-9_]+)"?/gi;
+const RENAME_RE =
+  /ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:"?([a-zA-Z0-9_]+)"?\s*\.\s*)?"?([a-zA-Z0-9_]+)"?\s+RENAME\s+TO/gi;
 
 // Mirror of migrate.postgres.ts isSqliteOnlyMigration: the Postgres runner
 // deliberately skips these files, so verify must NOT expect their schema (else
@@ -90,15 +93,15 @@ export function parseExpectedSchema(dir: string, onlyPrefix?: string): ExpectedS
     // strip line comments so commented-out DDL is not counted
     const cleaned = sql.replace(/--[^\n]*/g, '');
     for (const m of cleaned.matchAll(TABLE_RE)) {
-      const t = m[1].toLowerCase();
+      const t = m[2].toLowerCase();
       if (!tables.has(t)) tables.set(t, file);
     }
     for (const m of cleaned.matchAll(ALTER_COL_RE)) {
-      const key = `${m[1].toLowerCase()}.${m[2].toLowerCase()}`;
+      const key = `${m[2].toLowerCase()}.${m[3].toLowerCase()}`;
       if (!columns.has(key)) columns.set(key, file);
     }
-    for (const m of cleaned.matchAll(DROP_RE)) droppedOrRenamed.add(m[1].toLowerCase());
-    for (const m of cleaned.matchAll(RENAME_RE)) droppedOrRenamed.add(m[1].toLowerCase());
+    for (const m of cleaned.matchAll(DROP_RE)) droppedOrRenamed.add(m[2].toLowerCase());
+    for (const m of cleaned.matchAll(RENAME_RE)) droppedOrRenamed.add(m[2].toLowerCase());
   }
   // Transient tables (created then dropped/renamed-away within the migration set)
   // are not part of the final schema — don't expect them on the live DB.

@@ -464,6 +464,31 @@ interface PresentationTemplateBackfillRow {
   updated_at: string | null;
 }
 
+export function resolvePresentationTemplateArtifactPosture(row: {
+  is_active: number | boolean | null;
+  is_system: number | boolean | null;
+  lifecycle_state: string | null;
+}): {
+  lifecycleState: 'draft' | 'approved' | 'deprecated';
+  isDraft: boolean;
+  visibilityScope: 'private' | 'organization';
+} {
+  const lifecycleState =
+    toBool(row.is_active) === false
+      ? 'deprecated'
+      : row.lifecycle_state === 'approved'
+        ? 'approved'
+        : row.lifecycle_state === 'deprecated'
+          ? 'deprecated'
+          : 'draft';
+  const isDraft = lifecycleState === 'draft';
+  return {
+    lifecycleState,
+    isDraft,
+    visibilityScope: isDraft && toBool(row.is_system) !== true ? 'private' : 'organization',
+  };
+}
+
 interface SheetTemplateBackfillRow {
   id: string;
   organization_id: string | null;
@@ -829,6 +854,14 @@ export function mapPresentationStatusToDeliveryState(status: string | null | und
   if (normalized === 'archived') return 'archived';
   if (normalized.includes('review')) return 'in_review';
   return 'editing';
+}
+
+export function resolvePresentationSlideCount(
+  deckJsonRaw: string | null | undefined,
+  materializedSlideCount: number | null
+): number | null {
+  const canonicalDeck = safeJsonParse<Record<string, unknown> | null>(deckJsonRaw, null);
+  return Array.isArray(canonicalDeck?.cards) ? canonicalDeck.cards.length : materializedSlideCount;
 }
 
 export function deriveArtifactVisibilityScope(params: {
@@ -2056,7 +2089,6 @@ async function backfillPresentationTemplatesForOrg(organizationId: string): Prom
       AND l.origin_runtime = 'presentation_template'
       AND l.origin_record_id = t.id
      WHERE (t.organization_id IS NULL OR t.organization_id = ?)
-       AND (t.is_active IS NULL OR t.is_active = TRUE)
        AND l.link_id IS NULL`,
     [organizationId, organizationId],
     { fallback: true }
@@ -2066,6 +2098,8 @@ async function backfillPresentationTemplatesForOrg(organizationId: string): Prom
   for (const row of rows || []) {
     try {
       const outline = safeJsonParse(row.outline_json, [] as any[]);
+      const { lifecycleState, isDraft, visibilityScope } =
+        resolvePresentationTemplateArtifactPosture(row);
       const result = await registerArtifactOrigin({
         organizationId,
         outputType: 'presentation',
@@ -2073,10 +2107,10 @@ async function backfillPresentationTemplatesForOrg(organizationId: string): Prom
         originRuntime: 'presentation_template',
         originRecordId: row.id,
         titleSnapshot: row.name || 'Untitled presentation template',
-        ownerUserId: null,
+        ownerUserId: row.created_by || null,
         createdBy: row.created_by || FALLBACK_ACTOR,
-        deliveryState: 'ready',
-        visibilityScope: 'organization',
+        deliveryState: isDraft ? 'draft' : 'ready',
+        visibilityScope,
         originSummary: {
           template: {
             // R11: locked identity block. `presentation_templates` likewise has
@@ -2086,10 +2120,7 @@ async function backfillPresentationTemplatesForOrg(organizationId: string): Prom
               originRuntime: 'presentation_template',
               orphaned: false,
               scope: deriveTemplateScope(row),
-              status:
-                normalizeTemplateStatus(row.lifecycle_state) === 'approved'
-                  ? 'published'
-                  : normalizeTemplateStatus(row.lifecycle_state),
+              status: lifecycleState === 'approved' ? 'published' : lifecycleState,
             }),
             description: row.description || '',
             deckType: row.deck_type || 'custom',
@@ -2105,7 +2136,22 @@ async function backfillPresentationTemplatesForOrg(organizationId: string): Prom
           },
         },
       });
-      if (result) inserted++;
+      if (result) {
+        await dbRun(
+          `UPDATE v8_output_artifacts
+             SET delivery_state = ?, visibility_scope = ?, is_draft = ?, last_transition_at = CURRENT_TIMESTAMP
+           WHERE artifact_id = ? AND organization_id = ?`,
+          [
+            isDraft ? 'draft' : 'ready',
+            visibilityScope,
+            isDraft ? 1 : 0,
+            result.artifactId,
+            organizationId,
+          ],
+          { fallback: true }
+        );
+        inserted++;
+      }
     } catch (err: any) {
       logger.warn(
         `${LOG_PREFIX} Failed to backfill presentation template ${row.id}: ${err?.message}`

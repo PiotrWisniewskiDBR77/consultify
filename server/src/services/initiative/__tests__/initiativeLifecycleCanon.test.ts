@@ -119,9 +119,13 @@ describe('initiativeLifecycleCanon (P11)', () => {
   it('InitiativeController records audited status transitions (regression / P11 acceptance)', () => {
     const controllerPath = join(__dirname, '../../../controllers/InitiativeController.ts');
     const src = readFileSync(controllerPath, 'utf-8');
+    const transitionService = readFileSync(
+      join(__dirname, '../initiativeTransitionService.ts'),
+      'utf-8'
+    );
     expect(src).toContain('initiative_status_history');
-    expect(src).toContain('INSERT INTO initiative_status_history');
-    expect(src).toContain('initiative_history');
+    expect(transitionService).toContain('INSERT INTO initiative_status_history');
+    expect(transitionService).toContain('INSERT INTO initiative_history');
   });
 
   it('AI blueprint apply is explicit user-gated (no silent proposal→DB without apply route)', () => {

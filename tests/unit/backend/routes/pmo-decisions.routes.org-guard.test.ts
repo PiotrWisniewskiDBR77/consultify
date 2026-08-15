@@ -12,10 +12,7 @@ vi.mock('../../../../server/src/controllers/DecisionController.js', () => ({
   default: new Proxy(
     {},
     {
-      get:
-        () =>
-        (_req: any, res: any) =>
-          res.status(200).json({ ok: true }),
+      get: () => (_req: any, res: any) => res.status(200).json({ ok: true }),
     }
   ),
 }));
@@ -24,10 +21,7 @@ vi.mock('../../../../server/src/controllers/DecisionPlaybookController.js', () =
   default: new Proxy(
     {},
     {
-      get:
-        () =>
-        (_req: any, res: any) =>
-          res.status(200).json({ ok: true }),
+      get: () => (_req: any, res: any) => res.status(200).json({ ok: true }),
     }
   ),
 }));
@@ -64,6 +58,12 @@ vi.mock('../../../../server/src/validators/decision.validators.js', () => ({
   DecideSchema: {},
   EscalateDecisionSchema: {},
   RemindDecisionSchema: {},
+  CreateDecisionCommentSchema: {},
+  UpdateDecisionCommentSchema: {},
+  CreateDecisionAlternativeSchema: {},
+  UpdateDecisionAlternativeSchema: {},
+  CreateDecisionRiskSchema: {},
+  UpdateDecisionRiskSchema: {},
 }));
 
 describe('pmo decisions routes org guard', () => {
@@ -73,7 +73,8 @@ describe('pmo decisions routes org guard', () => {
       role: 'ADMIN',
       organizationId: '',
     };
-    const { default: router } = await import('../../../../server/src/routes/pmo/decisions.routes.js');
+    const { default: router } =
+      await import('../../../../server/src/routes/pmo/decisions.routes.js');
     const app = express();
     app.use('/decisions', router);
 

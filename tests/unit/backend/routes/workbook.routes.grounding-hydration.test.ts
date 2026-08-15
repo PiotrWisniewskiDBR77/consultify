@@ -36,9 +36,13 @@ vi.mock('../../../../server/src/middleware/rateLimiting.middleware.js', () => ({
 }));
 
 vi.mock('../../../../server/src/utils/queryHelpers.js', () => ({
-  queryRun: vi.fn().mockResolvedValue(undefined),
+  queryRun: vi.fn().mockResolvedValue({ changes: 1 }),
   queryOne: vi.fn().mockResolvedValue(null),
   queryAll: vi.fn().mockResolvedValue([]),
+}));
+
+vi.mock('../../../../server/src/services/documentStudio/documentOrgContextSourcePack.js', () => ({
+  buildOrgContextSourcePack: vi.fn().mockResolvedValue(null),
 }));
 
 const generateMock = vi.fn().mockResolvedValue({
@@ -77,9 +81,8 @@ describe('workbook.routes — grounding hydration from artifactRunId', () => {
   });
 
   async function buildApp() {
-    const { default: workbookRouter } = await import(
-      '../../../../server/src/routes/workbook.routes.js'
-    );
+    const { default: workbookRouter } =
+      await import('../../../../server/src/routes/workbook.routes.js');
     const app = express();
     app.use(express.json());
     app.use('/workbook', workbookRouter);
@@ -116,11 +119,13 @@ describe('workbook.routes — grounding hydration from artifactRunId', () => {
 
   it('does not hydrate when explicit sourcePack was already sent (no lookup)', async () => {
     const app = await buildApp();
-    const res = await request(app).post('/workbook/generate').send({
-      prompt: 'Wygeneruj arkusz',
-      artifactRunId: 'run-1',
-      sourcePack: { key_points: ['Fakt X'] },
-    });
+    const res = await request(app)
+      .post('/workbook/generate')
+      .send({
+        prompt: 'Wygeneruj arkusz',
+        artifactRunId: 'run-1',
+        sourcePack: { key_points: ['Fakt X'] },
+      });
 
     expect(res.status).toBe(200);
     expect(getArtifactRunMock).not.toHaveBeenCalled();

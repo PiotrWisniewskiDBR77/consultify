@@ -90,7 +90,11 @@ describe('CP-28: V8 Migration Runner — dry-run validation', () => {
     expect(sql).toBe(input);
   });
 
-  it('all CREATE TABLE statements use v8_ prefix', () => {
+  it('CREATE TABLE statements use v8_ prefix except explicit shared AI prerequisites', () => {
+    const sharedPrerequisites = new Set([
+      'ai_playbook_template_versions',
+      'wave8_agent_tool_governance_events',
+    ]);
     for (const f of files) {
       const content = fs.readFileSync(path.join(MIGRATIONS_DIR, f), 'utf-8');
       const tableMatches = [
@@ -98,7 +102,7 @@ describe('CP-28: V8 Migration Runner — dry-run validation', () => {
       ];
       for (const m of tableMatches) {
         const tableName = m[1].toLowerCase();
-        expect(tableName).toMatch(/^v8_/);
+        expect(tableName.startsWith('v8_') || sharedPrerequisites.has(tableName)).toBe(true);
       }
     }
   });

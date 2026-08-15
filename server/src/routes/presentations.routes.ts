@@ -167,6 +167,7 @@ import {
 import {
   materializeTemplateVariableBrief,
   mapOutlineBlueprintToDeckSlides,
+  validatePresentationCustomTemplate,
 } from '../services/presentationTemplateRuntimeService.js';
 import {
   comparePresetsByName,
@@ -1289,6 +1290,14 @@ router.post(
       return;
     }
     const useLlm = req.body?.useLlm === true;
+    if (input.customTemplate !== undefined) {
+      const validation = validatePresentationCustomTemplate(input.customTemplate);
+      if (validation.ok === false) {
+        return res
+          .status(400)
+          .json({ success: false, error: 'custom_template_invalid', details: validation.errors });
+      }
+    }
 
     let draft;
     try {
@@ -1305,13 +1314,9 @@ router.post(
 
     const { template, llmRefined } = draft;
     const id = uuidv4().replace(/-/g, '');
-    // Base insert uses ONLY the migration-568 columns so template creation
-    // keeps working on installs where migration 767 (lifecycle + lineage)
-    // has not run yet. `lifecycle_state` defaults to `draft` either way
-    // (567 has no such column; 767 adds it with `DEFAULT 'draft'`).
     const insertAck = await dbRun(
-      `INSERT INTO presentation_templates (id, organization_id, name, description, deck_type, audience, goal, language_default, confidentiality_default, theme, outline_json, max_slides, min_slides, must_have_intents, recommended_visuals, is_system, is_active, cloned_from, created_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, FALSE, TRUE, NULL, ?)`,
+      `INSERT INTO presentation_templates (id, organization_id, name, description, deck_type, audience, goal, language_default, confidentiality_default, theme, outline_json, max_slides, min_slides, must_have_intents, recommended_visuals, layout_policy_json, is_system, is_active, cloned_from, created_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, FALSE, TRUE, NULL, ?)`,
       [
         id,
         orgId,
@@ -1328,6 +1333,7 @@ router.post(
         template.minSlides,
         JSON.stringify(template.mustHaveIntents),
         JSON.stringify(template.recommendedVisuals),
+        JSON.stringify({ customTemplate: input.customTemplate || null }),
         userId,
       ]
     );
@@ -1396,6 +1402,48 @@ router.get(
     if (!row) return res.status(404).json({ success: false, error: 'Template not found' });
     const template = normalizeTemplatePayload(row);
     res.json({ success: true, data: template });
+  })
+);
+
+router.delete(
+  '/templates/:id',
+  asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'template_approve')) return;
+    const orgId = getOrgId(req);
+    const templateId = String(req.params.id || '');
+    const existing = await readBackOrgTemplate(templateId, orgId);
+    if (!existing) return res.status(404).json({ success: false, error: 'Template not found' });
+    const lifecycleState = String(existing.lifecycle_state || 'draft');
+    if (lifecycleState !== 'draft') {
+      return res.status(409).json({
+        success: false,
+        error: 'Only draft templates can be deleted.',
+        code: 'TEMPLATE_DELETE_REQUIRES_DRAFT',
+        lifecycleState,
+      });
+    }
+    if (existing.is_system === true || existing.is_system === 1) {
+      return res.status(403).json({
+        success: false,
+        error: 'System templates cannot be deleted.',
+        code: 'SYSTEM_TEMPLATE_DELETE_FORBIDDEN',
+      });
+    }
+    const result = await dbRun(
+      `DELETE FROM presentation_templates
+        WHERE id = ? AND organization_id = ?
+          AND COALESCE(lifecycle_state, 'draft') = 'draft'
+          AND COALESCE(is_system, FALSE) = FALSE`,
+      [templateId, orgId]
+    );
+    if (!result?.changes) {
+      return res.status(409).json({
+        success: false,
+        error: 'Draft changed before deletion. Refresh and try again.',
+        code: 'TEMPLATE_DELETE_CONFLICT',
+      });
+    }
+    res.json({ success: true, data: { deletedTemplateId: templateId } });
   })
 );
 
@@ -1519,8 +1567,25 @@ router.put(
       }
     }
 
-    const { name, description, audience, goal, theme, outlineJson, maxSlides, colorTemplateId } =
-      req.body;
+    const {
+      name,
+      description,
+      audience,
+      goal,
+      theme,
+      outlineJson,
+      maxSlides,
+      colorTemplateId,
+      customTemplate,
+    } = req.body;
+    if (customTemplate !== undefined && customTemplate !== null) {
+      const validation = validatePresentationCustomTemplate(customTemplate);
+      if (validation.ok === false) {
+        return res
+          .status(400)
+          .json({ success: false, error: 'custom_template_invalid', details: validation.errors });
+      }
+    }
 
     // Fala 1 (2026-07-28) — "wzorzec kolorów" (N31). Reuses the existing,
     // previously-unused `layout_policy_json` free-form column (no new
@@ -1529,7 +1594,7 @@ router.put(
     // `colorTemplateId === undefined` means "field not sent, leave
     // untouched"; `null` or `''` means "explicitly cleared".
     let layoutPolicyJson: string | null = null;
-    if (colorTemplateId !== undefined) {
+    if (colorTemplateId !== undefined || customTemplate !== undefined) {
       let currentLayoutPolicy: Record<string, unknown> = {};
       if (existing?.layout_policy_json) {
         try {
@@ -1540,7 +1605,8 @@ router.put(
       }
       layoutPolicyJson = JSON.stringify({
         ...currentLayoutPolicy,
-        colorTemplateId: colorTemplateId || null,
+        ...(colorTemplateId !== undefined ? { colorTemplateId: colorTemplateId || null } : {}),
+        ...(customTemplate !== undefined ? { customTemplate: customTemplate || null } : {}),
       });
     }
 
@@ -1606,6 +1672,76 @@ function isValidLifecycleState(value: unknown): value is TemplateLifecycleState 
   return typeof value === 'string' && VALID_LIFECYCLE_STATES.has(value as TemplateLifecycleState);
 }
 
+async function syncPresentationTemplateArtifactGovernance(params: {
+  organizationId: string;
+  templateId: string;
+  lifecycleState: TemplateLifecycleState;
+  actorId: string;
+}): Promise<void> {
+  const template = (await getTemplateForOrgOrSystem(
+    params.templateId,
+    params.organizationId
+  )) as any;
+  if (!template) return;
+  let outline: unknown = [];
+  try {
+    outline = JSON.parse(template.outline_json || '[]');
+  } catch {
+    outline = [];
+  }
+  const isDraft = params.lifecycleState === 'draft';
+  const artifact = await artifactRegistryService.registerArtifactOrigin({
+    organizationId: params.organizationId,
+    outputType: 'presentation',
+    artifactFamily: 'template',
+    originRuntime: 'presentation_template',
+    originRecordId: params.templateId,
+    titleSnapshot: template.name || 'Untitled presentation template',
+    ownerUserId: params.actorId,
+    createdBy: template.created_by || params.actorId,
+    deliveryState: isDraft ? 'draft' : 'ready',
+    visibilityScope: isDraft ? 'private' : 'organization',
+    originSummary: {
+      template: {
+        canonicalTemplateId: params.templateId,
+        originRuntime: 'presentation_template',
+        orphaned: false,
+        scope: template.is_system ? 'application' : 'organization',
+        status: params.lifecycleState === 'approved' ? 'published' : params.lifecycleState,
+        description: template.description || '',
+        deckType: template.deck_type || 'custom',
+        structureBlueprint: {
+          outline: Array.isArray(outline)
+            ? outline
+            : Array.isArray((outline as any)?.outline)
+              ? (outline as any).outline
+              : [],
+        },
+        metadata: {
+          createdBy: template.created_by || params.actorId,
+          createdAt: template.created_at,
+          updatedAt: template.updated_at,
+          legacyTemplateId: params.templateId,
+        },
+      },
+    },
+  });
+  if (artifact) {
+    await dbRun(
+      `UPDATE v8_output_artifacts
+       SET delivery_state = ?, visibility_scope = ?, is_draft = ?, last_transition_at = CURRENT_TIMESTAMP
+       WHERE artifact_id = ? AND organization_id = ?`,
+      [
+        isDraft ? 'draft' : 'ready',
+        isDraft ? 'private' : 'organization',
+        isDraft ? 1 : 0,
+        artifact.artifactId,
+        params.organizationId,
+      ]
+    );
+  }
+}
+
 router.get(
   '/templates/:id/governance',
   asyncHandler(async (req, res) => {
@@ -1665,6 +1801,27 @@ router.post(
         code: 'INVALID_TARGET_STATE',
       });
     }
+    if (targetState === 'approved') {
+      const candidate = await getTemplateForOrgOrSystem(templateId, orgId);
+      if (candidate?.layout_policy_json) {
+        let customTemplate: unknown;
+        try {
+          customTemplate = JSON.parse(candidate.layout_policy_json)?.customTemplate;
+        } catch {
+          customTemplate = '__invalid_json__';
+        }
+        if (customTemplate != null) {
+          const validation = validatePresentationCustomTemplate(customTemplate);
+          if (validation.ok === false) {
+            return res.status(422).json({
+              success: false,
+              error: 'custom_template_invalid',
+              details: validation.errors,
+            });
+          }
+        }
+      }
+    }
 
     const result = await applyLifecycleTransition({
       templateId,
@@ -1694,6 +1851,15 @@ router.post(
         error: 'Template governance storage is unavailable.',
         code: 'TEMPLATE_GOVERNANCE_UNAVAILABLE',
         reason: result.reason || 'storage_error',
+      });
+    }
+
+    if (result.record) {
+      await syncPresentationTemplateArtifactGovernance({
+        organizationId: orgId,
+        templateId,
+        lifecycleState: targetState,
+        actorId: (req as any).user?.id || getUserId(req) || 'system',
       });
     }
 

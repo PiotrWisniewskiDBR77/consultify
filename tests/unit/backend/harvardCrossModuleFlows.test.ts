@@ -42,7 +42,10 @@ describe('Harvard cross-module flows — contract anchors exist', () => {
     expect(flowsWithTargets.length).toBeGreaterThanOrEqual(5);
     for (const f of flowsWithTargets) {
       for (const t of f.targetTables!) {
-        expect(schema.tables.has(t.toLowerCase()), `${f.id}: target table "${t}" not defined in migrations`).toBe(true);
+        expect(
+          schema.tables.has(t.toLowerCase()),
+          `${f.id}: target table "${t}" not defined in migrations`
+        ).toBe(true);
       }
     }
   });
@@ -51,7 +54,8 @@ describe('Harvard cross-module flows — contract anchors exist', () => {
     const stubs = FLOWS.filter((f) => f.status === 'stub').map((f) => f.id);
     // These are the documented STUB handoffs (INTEGRACJE §B). Keep them visible:
     // if a stub gets fixed, flip its status to 'works'/'partial' and update this list.
-    expect(stubs).toEqual(expect.arrayContaining(['B8b', 'B9']));
+    expect(stubs).toEqual(expect.arrayContaining(['B9']));
+    expect(FLOWS.find((flow) => flow.id === 'B8b')?.status).toBe('partial');
     // every stub must carry a note explaining the breakage
     for (const f of FLOWS.filter((x) => x.status === 'stub')) {
       expect(f.note, `stub ${f.id} needs a note`).toBeTruthy();

@@ -42,6 +42,12 @@ vi.mock('../../../../server/src/services/organizationService.js', () => ({
   },
 }));
 
+vi.mock('../../../../server/src/services/orgPeopleIamService.js', () => ({
+  changeOrganizationMemberRoleViaIam: vi.fn(async () => ({ ok: true })),
+  removeOrganizationMemberViaIam: vi.fn(async () => ({ ok: true })),
+  addOrganizationMemberViaIam: vi.fn(async () => ({ ok: true })),
+}));
+
 function createResponse() {
   const res: any = { statusCode: 200, body: undefined };
   res.status = vi.fn((code: number) => {

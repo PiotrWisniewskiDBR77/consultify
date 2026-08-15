@@ -35,6 +35,7 @@ vi.mock('../../../../server/src/services/organizationMetricsService.js', () => (
 vi.mock('../../../../server/src/utils/Logger.js', () => ({
   default: {
     error: vi.fn(),
+    warn: vi.fn(),
     info: vi.fn(),
     debug: vi.fn(),
   },
@@ -80,12 +81,12 @@ describe('Metrics Organization Routes', () => {
       expect(mockService.getOverview).toHaveBeenCalledWith('test-org-id');
     });
 
-    it('should return 500 on service error', async () => {
+    it('should return an explicit degraded response on service error', async () => {
       mockService.getOverview.mockRejectedValue(new Error('Database error'));
 
-      const response = await request(app).get('/api/metrics/org/overview').expect(500);
+      const response = await request(app).get('/api/metrics/org/overview').expect(200);
 
-      expect(response.body).toHaveProperty('error');
+      expect(response.body).toEqual({ degraded: true });
     });
   });
 

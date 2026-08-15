@@ -40,7 +40,7 @@ export const MODULES: ModuleSpec[] = [
   { id: 'M04', name: 'Notatnik', feRoute: '/my-work/notebook', access: 'open', endpoints: ['/api/notebook', '/api/v8/notebook'] },
   { id: 'M05', name: 'Ideas — Zarządzanie', feRoute: '/my-work/ideas', access: 'beta', endpoints: ['/api/my-work/idea-maps'] },
   { id: 'M06', name: 'Ideas — Mind Map', feRoute: '…/workspace/mindmap', access: 'beta', endpoints: ['/api/v8/mindmap/health'] },
-  { id: 'M07', name: 'Ideas — Process Flow', feRoute: '…/workspace/process_flow', access: 'beta', endpoints: ['/api/v8/process-flow/contract'] },
+  { id: 'M07', name: 'Ideas — Process Flow', feRoute: '…/workspace/process_flow', access: 'beta', endpoints: ['/api/my-work/my-ideas/:id/map'] },
   { id: 'M08', name: 'Ideas — Table', feRoute: '…/workspace/table', access: 'beta', endpoints: ['/api/table-platform/bases'] },
   { id: 'M09', name: 'Ideas — Whiteboard', feRoute: '…/workspace/whiteboard', access: 'beta', endpoints: ['/api/v8/multiplayer/health', '/api/my-work/idea-maps'] },
   { id: 'M10', name: 'Wywiad', feRoute: '/discovery', access: 'open', endpoints: ['/api/interview', '/api/v8/interview/templates'] },

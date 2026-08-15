@@ -195,21 +195,25 @@ describe('V8 My Work calendar routes', () => {
   });
 
   it('updates task-backed calendar event date through the V8 namespace', async () => {
-    mockQueryRun.mockResolvedValue({ changes: 1, lastID: undefined });
+    mockQueryAll.mockResolvedValueOnce([
+      { id: 'task-7', due_date: '2026-03-28', project_id: null, row_version: '43' },
+    ]);
 
     const res = await request(createApp()).put('/api/v8/my-work/calendar/events/task/task-7').send({
       start: '2026-03-28T10:00:00.000Z',
       allDay: true,
+      expectedVersion: '42',
     });
 
     expect(res.status).toBe(200);
     expect(res.body.meta.contract).toBe('my_work_calendar_v1');
     expect(res.body.data.source).toBe('task');
-    expect(mockQueryRun).toHaveBeenCalledWith(expect.stringContaining('UPDATE tasks'), [
+    expect(mockQueryAll).toHaveBeenCalledWith(expect.stringContaining('UPDATE tasks'), [
       '2026-03-28',
       'task-7',
       ORG,
       USER_ID,
+      '42',
     ]);
   });
 });

@@ -54,7 +54,8 @@ vi.mock('../../../../server/src/services/v8/artifactRegistryService.js', () => (
 describe('GET /api/workbook/:id/schema', () => {
   beforeEach(() => {
     queryOneMock.mockReset();
-    queryRunMock.mockClear();
+    queryRunMock.mockReset();
+    queryRunMock.mockResolvedValue({ changes: 1 });
     mockUser.organizationId = 'org-1';
   });
 

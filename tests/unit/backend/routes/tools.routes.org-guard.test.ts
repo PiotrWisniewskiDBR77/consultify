@@ -15,6 +15,7 @@ vi.mock('../../../../server/src/controllers/ToolController.js', () => ({
     createToolSession: (_req: any, res: any) => res.status(200).json({ id: 'tool-1' }),
     listToolSessions: (_req: any, res: any) => res.status(200).json({ sessions: [] }),
     getToolsHub: (_req: any, res: any) => res.status(200).json({}),
+    suggestTool: (_req: any, res: any) => res.status(200).json({ suggestions: [] }),
     getToolDoDCheck: (_req: any, res: any) => res.status(200).json({}),
     getRuntimeDoDStatus: (_req: any, res: any) => res.status(200).json({}),
     approveDoDGate: (_req: any, res: any) => res.status(200).json({}),
@@ -30,6 +31,12 @@ vi.mock('../../../../server/src/controllers/ToolController.js', () => ({
     listComments: (_req: any, res: any) => res.status(200).json({ comments: [] }),
     addComment: (_req: any, res: any) => res.status(201).json({}),
     deleteComment: (_req: any, res: any) => res.status(204).end(),
+    getHistory: (_req: any, res: any) => res.status(200).json({ history: [] }),
+    handoffSwotCandidate: (_req: any, res: any) => res.status(200).json({}),
+    createSwotProposals: (_req: any, res: any) => res.status(201).json({}),
+    listSwotProposals: (_req: any, res: any) => res.status(200).json({ proposals: [] }),
+    acceptSwotProposal: (_req: any, res: any) => res.status(200).json({}),
+    rejectSwotProposal: (_req: any, res: any) => res.status(200).json({}),
   },
 }));
 
@@ -65,6 +72,10 @@ vi.mock('../../../../server/src/validators/tool.validators.js', () => ({
   ApproveToolSchema: {},
   SendBackSchema: {},
   GenerateInitiativesSchema: {},
+  SuggestToolSchema: {},
+  CreateSwotProposalsSchema: {},
+  AcceptSwotProposalSchema: {},
+  RejectSwotProposalSchema: {},
 }));
 
 vi.mock('../../../../server/src/validators/toolRuntime.validators.js', () => ({

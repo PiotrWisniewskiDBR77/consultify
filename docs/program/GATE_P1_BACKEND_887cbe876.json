@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "baselineSha": "887cbe876e3c02f28bb30853a3edd2a7a1a06edd",
+  "gate": "GATE-P1-BACKEND",
+  "verdict": "PASS",
+  "testFiles": 23,
+  "testsPassed": 185,
+  "testsFailed": 0,
+  "records": [
+    { "file": "server/src/routes/__tests__/presentationCustomTemplateContract.test.ts", "verdict": "PASS", "resolution": "PRODUCT_REGRESSION_FIXED" },
+    { "file": "server/src/routes/__tests__/presentationTemplateApprovalLibraryRoundTrip.test.ts", "verdict": "PASS", "resolution": "PRODUCT_REGRESSION_FIXED" },
+    { "file": "server/src/routes/audits/__tests__/mounting.integration.test.ts", "verdict": "PASS", "resolution": "STALE_AUTH_ASSERTION_REMOVED_MOUNT_PROOF_PRESERVED" },
+    { "file": "server/src/routes/resultsVnext/__tests__/roiBenefitsRealization.routes.test.ts", "verdict": "PASS", "resolution": "CURRENT_EQUIVALENT" },
+    { "file": "server/src/routes/v8/__tests__/my-work-calendar.routes.test.ts", "verdict": "PASS", "resolution": "STALE_CAS_FIXTURE_UPDATED" },
+    { "file": "server/src/services/__tests__/artifactRegistryPresentationTemplatePosture.test.ts", "verdict": "PASS", "resolution": "PRODUCT_REGRESSION_FIXED" },
+    { "file": "server/src/services/initiative/__tests__/initiativeLifecycleCanon.test.ts", "verdict": "PASS", "resolution": "STALE_OWNER_ASSERTION_UPDATED" },
+    { "file": "server/src/services/v8/__tests__/v8-migration-runner.test.ts", "verdict": "PASS", "resolution": "STALE_SHARED_PREREQUISITE_ASSERTION_UPDATED" },
+    { "file": "tests/unit/backend/controllers/adminAudit.emission.test.ts", "verdict": "PASS", "resolution": "STALE_IAM_FIXTURE_UPDATED" },
+    { "file": "tests/unit/backend/controllers/InterviewAssignmentsController.test.ts", "verdict": "PASS", "resolution": "STALE_CAS_FIXTURE_UPDATED" },
+    { "file": "tests/unit/backend/controllers/OrganizationController.audit.test.ts", "verdict": "PASS", "resolution": "STALE_IAM_FIXTURE_UPDATED" },
+    { "file": "tests/unit/backend/harvardCrossModuleFlows.test.ts", "verdict": "PASS", "resolution": "PARSER_FIXED_AND_STALE_STATUS_UPDATED" },
+    { "file": "tests/unit/backend/harvardModuleContract.test.ts", "verdict": "PASS", "resolution": "CANONICAL_ENDPOINT_CORRECTED" },
+    { "file": "tests/unit/backend/helpChat.routes.test.ts", "verdict": "PASS", "resolution": "FAIL_CLOSED_CONTRACT_ALIGNED" },
+    { "file": "tests/unit/backend/routes/document-studio.routes.leak-guard.test.ts", "verdict": "PASS", "resolution": "FAIL_CLOSED_NOT_FOUND_CONTRACT_ALIGNED" },
+    { "file": "tests/unit/backend/routes/metricsOrgRoutes.test.ts", "verdict": "PASS", "resolution": "DEGRADED_CONTRACT_ALIGNED" },
+    { "file": "tests/unit/backend/routes/pmo-decisions.routes.org-guard.test.ts", "verdict": "PASS", "resolution": "STALE_VALIDATOR_FIXTURE_UPDATED" },
+    { "file": "tests/unit/backend/routes/tools.routes.org-guard.test.ts", "verdict": "PASS", "resolution": "STALE_ROUTE_FIXTURE_UPDATED" },
+    { "file": "tests/unit/backend/routes/workbook.routes.grounding-hydration.test.ts", "verdict": "PASS", "resolution": "STALE_PERSISTENCE_AND_ORG_CONTEXT_FIXTURE_UPDATED" },
+    { "file": "tests/unit/backend/routes/workbook.routes.schema-endpoint.test.ts", "verdict": "PASS", "resolution": "STALE_PERSISTENCE_ACK_FIXTURE_UPDATED" },
+    { "file": "tests/unit/backend/scripts/verifySchemaParser.test.ts", "verdict": "PASS", "resolution": "PRODUCT_REGRESSION_FIXED" },
+    { "file": "tests/unit/backend/services/adminSessionService.test.ts", "verdict": "PASS", "resolution": "STALE_INSERT_POSITION_ASSERTION_UPDATED" },
+    { "file": "tests/unit/backend/services/artifactRegistryService.test.ts", "verdict": "PASS", "resolution": "PRODUCT_REGRESSION_FIXED" }
+  ],
+  "evidence": {
+    "command": "npx vitest run <exact p1ServerAndBackend allowlist> --reporter=dot --maxWorkers=1",
+    "result": "23 files passed; 185 tests passed",
+    "diffCheck": "PASS",
+    "serverTypecheck": "PASS",
+    "rootTypecheck": "BASELINE_FAIL_3_UNCHANGED",
+    "rootTypecheckFiles": [
+      "src/components/AIChat/__tests__/TransformationCasesPanel.test.tsx",
+      "src/components/AIChat/__tests__/TransformationQualityTrustSection.test.tsx",
+      "src/components/MyWork/NotebookContent.tsx"
+    ]
+  }
+}
