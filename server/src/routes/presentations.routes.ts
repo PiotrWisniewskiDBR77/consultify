@@ -722,6 +722,9 @@ function normalizeDeckRow(row: any) {
   const canonicalDeck = coherence.document;
   return {
     ...row,
+    // Public and authenticated consumers use the parsed canonical document;
+    // keep deck_json as the compatibility transport for older links.
+    deck: canonicalDeck ?? undefined,
     deck_json: canonicalDeck ? JSON.stringify(canonicalDeck) : row.deck_json,
     slide_count: coherence.cardCount,
     declared_slide_count: coherence.declaredSlideCount,

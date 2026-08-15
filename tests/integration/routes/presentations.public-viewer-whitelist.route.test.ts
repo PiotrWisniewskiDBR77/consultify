@@ -175,6 +175,8 @@ describe('P0.4 — GET /presentations/shared/:token public viewer whitelist', ()
     let token: string | null = null;
     const persistedRow = {
       ...SHARED_DECK_ROW,
+      // New public links are intentionally mintable only for Public decks.
+      confidentiality: 'public',
       share_token: null,
       // Exercise normalization/repair, not a pass-through assertion: legacy
       // cards are accepted by normalizeDeckDocument and returned as schema v1.
