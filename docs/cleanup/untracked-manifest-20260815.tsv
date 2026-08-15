@@ -1,0 +1,260 @@
+PATH	CLASS	WHY
+.tmp-ie-live-acceptance.mjs	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+AI_HANDOVER/finance-final-tenant-snapshot-20260808/README.md	KEEP_DOC_PACKAGE	handover/checkpoint notes
+AI_HANDOVER/finance-final-tenant-snapshot-20260808/consultify-finance-dbr77-20260808.json.gz	KEEP_DOC_PACKAGE	handover/checkpoint notes
+AI_HANDOVER/finance-final-tenant-snapshot-20260808/consultify-finance-dbr77-20260808.json.gz.sha256	KEEP_DOC_PACKAGE	handover/checkpoint notes
+AI_HANDOVER/finance-final-tenant-snapshot-20260808/consultify-finance-dbr77-20260808.manifest.json	KEEP_DOC_PACKAGE	handover/checkpoint notes
+AI_HANDOVER/finance-recovery-20260807-0915/CHECKPOINT.md	KEEP_DOC_PACKAGE	handover/checkpoint notes
+AI_HANDOVER/finance-recovery-20260807-0915/SHA256SUMS	KEEP_DOC_PACKAGE	handover/checkpoint notes
+AI_HANDOVER/finance-recovery-20260807-0915/consultify-finance-recovery.dump	KEEP_DOC_PACKAGE	handover/checkpoint notes
+AI_HANDOVER/finance-recovery-20260807-0915/finance-apator-recovery-20260807.json	KEEP_DOC_PACKAGE	handover/checkpoint notes
+AI_HANDOVER/finance-recovery-20260807-0915/git-status.txt	KEEP_DOC_PACKAGE	handover/checkpoint notes
+AI_HANDOVER/finance-recovery-20260807-0915/head.txt	KEEP_DOC_PACKAGE	handover/checkpoint notes
+AI_HANDOVER/finance-recovery-20260807-0915/storage.tar.gz	KEEP_DOC_PACKAGE	handover/checkpoint notes
+AI_HANDOVER/finance-recovery-20260807-0915/tracked-changes.patch	KEEP_DOC_PACKAGE	handover/checkpoint notes
+AI_HANDOVER/finance-recovery-20260807-0915/untracked-files.tar.gz	KEEP_DOC_PACKAGE	handover/checkpoint notes
+AI_HANDOVER/threads/consultify_artifact_uiux_report_b_audit.md	KEEP_DOC_PACKAGE	handover/checkpoint notes
+AI_HANDOVER/threads/ui_table_repair_45_autonomous_supervision.md	KEEP_DOC_PACKAGE	handover/checkpoint notes
+AI_HANDOVER/threads/ui_table_repair_45_successor_handoff_2026-08-08.md	KEEP_DOC_PACKAGE	handover/checkpoint notes
+CONSULTIFY_COMPLETE_MVP_CHECKPOINT.md	KEEP_DOC_PACKAGE	handover/checkpoint notes
+CONSULTIFY_ROUND2_HARDENING_BACKLOG.csv	KEEP_DOC_PACKAGE	handover/checkpoint notes
+Harvard/wdrozenie-100/_HANDOFF_2026-07-30_PRZESIADKA.md	KEEP_CONTEXTUAL_DOC	history + decision records
+Harvard/wdrozenie-100/_HANDOFF_AGENT_SEJF_2026-07-30.md	KEEP_CONTEXTUAL_DOC	history + decision records
+Harvard/wdrozenie-100/_HANDOFF_EXCEL_I_MATERIALY_2026-07-29.md	KEEP_CONTEXTUAL_DOC	history + decision records
+Harvard/wdrozenie-100/_HANDOFF_MVP_2026-07-28.md	KEEP_CONTEXTUAL_DOC	history + decision records
+Harvard/wdrozenie-100/_HANDOFF_MVP_KPI_2026-07-28.md	KEEP_CONTEXTUAL_DOC	history + decision records
+Harvard/wdrozenie-100/_INWENTARZ_FUNKCJI_EDYTORA_2026-07-28.md	KEEP_CONTEXTUAL_DOC	history + decision records
+Harvard/wdrozenie-100/_KANON_JEZYK_NAWIGACJI_2026-07-28.md	KEEP_CONTEXTUAL_DOC	history + decision records
+Harvard/wdrozenie-100/_KANON_PRAWY_PANEL_2026-07-28.md	KEEP_CONTEXTUAL_DOC	history + decision records
+Harvard/wdrozenie-100/_KROK3_KONTRAKTY_VS_KOD_2026-08-03.md	KEEP_CONTEXTUAL_DOC	history + decision records
+Harvard/wdrozenie-100/_MVP_PLAN_I_ODBIOR_2026-07-28.md	KEEP_CONTEXTUAL_DOC	history + decision records
+Harvard/wdrozenie-100/_MVP_PRZEGLAD_MENU_2026-07-28.md	KEEP_CONTEXTUAL_DOC	history + decision records
+Harvard/wdrozenie-100/_MVP_ZAKRES_TESTY_JUSTYNA_2026-07-29.md	KEEP_CONTEXTUAL_DOC	history + decision records
+Harvard/wdrozenie-100/_ODBIOR_GRAFIK_16_MODULOW_2026-08-03.md	KEEP_CONTEXTUAL_DOC	history + decision records
+Harvard/wdrozenie-100/_ODBIOR_TABELE_PREVIEW_2026-07-27.md	KEEP_CONTEXTUAL_DOC	history + decision records
+Harvard/wdrozenie-100/_OGNIWO_8_DIAGNOZA_2026-07-28.md	KEEP_CONTEXTUAL_DOC	history + decision records
+Harvard/wdrozenie-100/_PLAN_NAPRAWY_UI_2026-07-27.md	KEEP_CONTEXTUAL_DOC	history + decision records
+Harvard/wdrozenie-100/_PROGRAM_NAPRAWCZY_IDEE_2026-07-27.md	KEEP_CONTEXTUAL_DOC	history + decision records
+Harvard/wdrozenie-100/_PROTOKOL_WERYFIKACJI_MAILA_2026-08-10.md	KEEP_CONTEXTUAL_DOC	history + decision records
+Harvard/wdrozenie-100/_PRZEJSCIE_MODUL_DOKUMENTY_2026-07-28.md	KEEP_CONTEXTUAL_DOC	history + decision records
+Harvard/wdrozenie-100/_RAPORT_NOC_IDEE_2026-07-27.md	KEEP_CONTEXTUAL_DOC	history + decision records
+Harvard/wdrozenie-100/_SPEC_GENERATOR_TEMPLATOW_2026-07-28.md	KEEP_CONTEXTUAL_DOC	history + decision records
+Harvard/wdrozenie-100/_SPEC_PRACA_NA_SLAJDACH_2026-07-28.md	KEEP_CONTEXTUAL_DOC	history + decision records
+M08_COMPLETE_MVP_REACCEPTANCE.md	KEEP_DOC_PACKAGE	handover/checkpoint notes
+M09_COMPLETE_MVP_REACCEPTANCE.md	KEEP_DOC_PACKAGE	handover/checkpoint notes
+M09_COMPLETE_MVP_SUPPLEMENT.md	KEEP_DOC_PACKAGE	handover/checkpoint notes
+M09_MVP_DEMO_STATUS.md	KEEP_DOC_PACKAGE	handover/checkpoint notes
+M12_COMPLETE_MVP_REPORT.md	KEEP_DOC_PACKAGE	handover/checkpoint notes
+M14_COMPLETE_MVP_REPORT.md	KEEP_DOC_PACKAGE	handover/checkpoint notes
+M15_COMPLETE_MVP_REPORT.md	KEEP_DOC_PACKAGE	handover/checkpoint notes
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/BULK_RECON_HANDOFF_2026-08-03.md	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/_run_log.txt	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/admin-panel/00_landing.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/admin-panel/my-documents.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/admin-panel/project-documents.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/assessment/00_landing.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/assessment/initiatives.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/assessment/outputs.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/assessment/processes.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/assessment/reports.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/audits/00_landing.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/audits/my-documents.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/audits/project-documents.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/chat/00_landing.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/execution/00_landing.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/execution/all.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/execution/management.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/execution/reporting.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/execution/rollout.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/execution/summary.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/finance/00_landing.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/finance/analysis.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/finance/enterprise-valuation.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/finance/models.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/finance/prediction.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/initiatives/00_landing.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/initiatives/active.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/initiatives/all.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/initiatives/analysis.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/initiatives/candidates.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/initiatives/goals.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/initiatives/new-initiative.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/initiatives/observability.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/initiatives/portfolio-health.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/interview/00_landing.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/interview/assign.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/interview/assigned.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/interview/initiatives.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/interview/insights.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/interview/sessions.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/interview/templates.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/materials/00_landing.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/materials/documents.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/meeting/00_landing.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/meeting/my-documents.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/meeting/project-documents.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/my-work/00_landing.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/my-work/calendar.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/my-work/client-vault.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/my-work/decisions.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/my-work/inbox.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/my-work/manager.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/my-work/notebook.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/my-work/run-agent.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/my-work/tasks.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/organization/00_landing.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/organization/my-documents.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/organization/project-documents.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/results/00_landing.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/settings/00_landing.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/settings/my-documents.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/settings/project-documents.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/tools/00_landing.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/tools/add-tool.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/tools/initiatives.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/tools/outputs.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/tools/reports.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/screens/tools/sessions.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/bulk-recon-sha-ad41701753/table-audit.mjs	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/sha-ad41701753/01-chat/inventory-checkpoint-a.md	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-acceptance/2026-08-03/sha-ad41701753/01-chat/inventory-checkpoint-a2.md	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-3f58e5ce7e-surface-registry-2026-08-04/MISSING_CAPTURE_QUEUE.csv	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-3f58e5ce7e-surface-registry-2026-08-04/README.md	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-3f58e5ce7e-surface-registry-2026-08-04/blocked/assessment__outputs__empty-no-selection__dark__desktop.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-3f58e5ce7e-surface-registry-2026-08-04/blocked/materials__excel__not-implemented__dark__desktop.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-3f58e5ce7e-surface-registry-2026-08-04/blocked/my-work__decision__object-open-broken__dark__desktop.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-3f58e5ce7e-surface-registry-2026-08-04/tables/assessment__initiatives__full__dark__desktop.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-3f58e5ce7e-surface-registry-2026-08-04/tables/assessment__reports__full__dark__desktop.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-3f58e5ce7e-surface-registry-2026-08-04/tools/assessment__drd__object-open__dark__desktop.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-3f58e5ce7e-surface-registry-2026-08-04/tools/assessment__library__full__dark__desktop.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-3f58e5ce7e-surface-registry-2026-08-04/tools/discovery__insight__object-open__dark__desktop.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-3f58e5ce7e-surface-registry-2026-08-04/tools/discovery__template-builder__object-open__dark__desktop.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-3f58e5ce7e-surface-registry-2026-08-04/tools/finance__analysis__object-open__dark__desktop.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-3f58e5ce7e-surface-registry-2026-08-04/tools/finance__model__object-open__dark__desktop.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-3f58e5ce7e-surface-registry-2026-08-04/tools/finance__statements__object-open__dark__desktop.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-3f58e5ce7e-surface-registry-2026-08-04/tools/finance__valuation__object-open__dark__desktop.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-3f58e5ce7e-surface-registry-2026-08-04/tools/initiatives__initiative__object-open__dark__desktop.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-3f58e5ce7e-surface-registry-2026-08-04/tools/materials__presentation__object-open__dark__desktop.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-3f58e5ce7e-surface-registry-2026-08-04/tools/materials__word__object-open__dark__desktop.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-3f58e5ce7e-surface-registry-2026-08-04/tools/my-work__notebook__object-open__dark__desktop.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-3f58e5ce7e-surface-registry-2026-08-04/tools/my-work__run-agent__builder__dark__desktop-02.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-3f58e5ce7e-surface-registry-2026-08-04/tools/my-work__run-agent__builder__dark__desktop.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-3f58e5ce7e-surface-registry-2026-08-04/tools/my-work__task__object-open__dark__desktop.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-3f58e5ce7e-surface-registry-2026-08-04/tools/results__kpi__detail-drawer__dark__desktop.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-3f58e5ce7e-surface-registry-2026-08-04/wizards/discovery__ai-initiative-wizard__step-01-insights__dark__desktop.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-3f58e5ce7e-surface-registry-2026-08-04/wizards/discovery__ai-insight-creator__step-01-define__dark__desktop.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-3f58e5ce7e-surface-registry-2026-08-04/wizards/materials__new-document__start-mode__dark__desktop.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-3f58e5ce7e-surface-registry-2026-08-04/wizards/materials__new-template__start-mode__dark__desktop.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-3f58e5ce7e-surface-registry-2026-08-04/wizards/materials__new-template__type-picker__dark__desktop.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/02-my-work/02-my-work__001__module__depth2-landing.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/02-my-work/02-my-work__002__landing-title-status-urgency-type-section__table-full.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/02-my-work/02-my-work__003__landing-title-status-urgency-type-section__table-kebab.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/02-my-work/02-my-work__004__landing-title-status-urgency-type-section__table-context-menu.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/02-my-work/02-my-work__005__tab-ideas__depth2-surface.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/02-my-work/02-my-work__006__tab-ideas-title-stage-tags-tool__table-full.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/02-my-work/02-my-work__007__tab-ideas-title-stage-tags-tool__table-kebab.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/02-my-work/02-my-work__008__tab-notebook__depth2-surface.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/02-my-work/02-my-work__009__tab-notebook-notebook-type-context-notes-updated__table-full.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/02-my-work/02-my-work__010__tab-inbox__depth2-surface.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/02-my-work/02-my-work__011__tab-inbox-title-status-urgency-type-section__table-full.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/02-my-work/02-my-work__012__tab-inbox-title-status-urgency-type-section__table-kebab.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/02-my-work/02-my-work__013__tab-inbox-title-status-urgency-type-section__table-context-menu.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/02-my-work/02-my-work__014__tab-tasks__depth2-surface.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/02-my-work/02-my-work__015__tab-tasks-task-status-priority-due-date-assignee__table-full.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/02-my-work/02-my-work__016__tab-tasks-task-status-priority-due-date-assignee__table-kebab.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/02-my-work/02-my-work__017__tab-tasks-task-status-priority-due-date-assignee__table-context-menu.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/02-my-work/02-my-work__018__tab-decisions__depth2-surface.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/02-my-work/02-my-work__019__tab-decisions-decision-type-status-priority-due-date__table-full.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/02-my-work/02-my-work__020__tab-decisions-decision-type-status-priority-due-date__table-kebab.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/02-my-work/02-my-work__021__tab-decisions-decision-type-status-priority-due-date__table-context-menu.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/02-my-work/02-my-work__022__tab-client-vault__depth2-surface.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/02-my-work/02-my-work__023__tab-client-vault-name-documents-size-in-ai-knowledge-indexing-errors__table-full.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/02-my-work/02-my-work__024__tab-client-vault-name-documents-size-in-ai-knowledge-indexing-errors__table-kebab.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/02-my-work/02-my-work__025__tab-client-vault-name-documents-size-in-ai-knowledge-indexing-errors__table-context-menu.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/02-my-work/02-my-work__026__tab-run-agent__depth2-surface.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/02-my-work/02-my-work__027__tab-run-agent-name-status-progress-scheduled-for-last-run__table-full.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/02-my-work/02-my-work__028__tab-run-agent-name-status-progress-scheduled-for-last-run__table-kebab.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/02-my-work/02-my-work__029__tab-run-agent-name-status-progress-scheduled-for-last-run__table-context-menu.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/02-my-work/02-my-work__030__tab-manager__depth2-surface.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/04-tools/04-tools__001__module__depth2-landing.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/04-tools/04-tools__002__landing-tool-category-tags-license-status__table-full.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/04-tools/04-tools__003__landing-tool-category-tags-license-status__table-kebab.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/04-tools/04-tools__004__landing-tool-category-tags-license-status__table-context-menu.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/04-tools/04-tools__005__tab-library__depth2-surface.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/04-tools/04-tools__006__tab-library-tool-category-tags-license-status__table-full.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/04-tools/04-tools__007__tab-library-tool-category-tags-license-status__table-kebab.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/04-tools/04-tools__008__tab-library-tool-category-tags-license-status__table-context-menu.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/04-tools/04-tools__009__tab-sessions__depth2-surface.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/04-tools/04-tools__010__tab-sessions-type-name-category-status-progress__table-full.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/04-tools/04-tools__011__tab-sessions-type-name-category-status-progress__table-kebab.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/04-tools/04-tools__012__tab-sessions-type-name-category-status-progress__table-context-menu.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/04-tools/04-tools__013__tab-outputs__depth2-surface.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/04-tools/04-tools__014__tab-outputs-type-name-status-updated__table-full.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/04-tools/04-tools__015__tab-outputs-type-name-status-updated__table-kebab.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/04-tools/04-tools__016__tab-outputs-type-name-status-updated__table-context-menu.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/04-tools/04-tools__017__tab-reports__depth2-surface.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/04-tools/04-tools__018__tab-reports-type-name-status-updated__table-full.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/04-tools/04-tools__019__tab-reports-type-name-status-updated__table-kebab.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/04-tools/04-tools__020__tab-reports-type-name-status-updated__table-context-menu.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/04-tools/04-tools__021__tab-initiatives__depth2-surface.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/04-tools/04-tools__022__tab-initiatives-initiative-axis-priority-status-roi__table-full.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/04-tools/04-tools__023__tab-initiatives-initiative-axis-priority-status-roi__table-kebab.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/04-tools/04-tools__024__tab-initiatives-initiative-axis-priority-status-roi__table-context-menu.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/08-results/08-results__001__module__depth2-landing.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/08-results/08-results__002__landing-kpi-target-actual-progress-status__table-full.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/08-results/08-results__003__tab-initiatives__depth2-surface.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/08-results/08-results__004__tab-initiatives-initiative-status-priority-owner-target-date__table-full.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/08-results/08-results__005__tab-initiatives-initiative-status-priority-owner-target-date__table-preview.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/08-results/08-results__006__tab-initiatives-initiative-status-priority-owner-target-date-object__depth-2-open.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p0/manifest-depth2-p0.json	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/03-interview/03-interview__001__module__depth2-landing.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/03-interview/03-interview__002__landing-type-name-status-progress-days-to-due__table-full.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/03-interview/03-interview__003__landing-type-name-status-progress-days-to-due__table-preview.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/03-interview/03-interview__004__landing-type-name-status-progress-days-to-due-object__depth-2-open.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/03-interview/03-interview__005__tab-inbox__depth2-surface.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/03-interview/03-interview__006__tab-inbox-type-name-status-progress-days-to-due__table-full.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/03-interview/03-interview__007__tab-inbox-type-name-status-progress-days-to-due__table-preview.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/03-interview/03-interview__008__tab-inbox-type-name-status-progress-days-to-due-object__depth-2-open.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/03-interview/03-interview__009__tab-sessions__depth2-surface.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/03-interview/03-interview__010__tab-sessions-name-template-assignee-status-progress__table-full.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/03-interview/03-interview__011__tab-sessions-name-template-assignee-status-progress__table-kebab.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/03-interview/03-interview__012__tab-sessions-name-template-assignee-status-progress__table-context-menu.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/03-interview/03-interview__013__tab-initiatives__depth2-surface.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/03-interview/03-interview__014__tab-initiatives-initiative-status-priority-owner-target-date__table-full.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/03-interview/03-interview__015__tab-initiatives-initiative-status-priority-owner-target-date__table-preview.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/03-interview/03-interview__016__tab-initiatives-initiative-status-priority-owner-target-date-object__depth-2-open.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/03-interview/03-interview__017__tab-initiatives-initiative-status-priority-owner-target-date__table-kebab.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/03-interview/03-interview__018__tab-initiatives-initiative-status-priority-owner-target-date__table-context-menu.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/05-assessment/05-assessment__001__module__depth2-landing.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/05-assessment/05-assessment__002__landing-framework-status-actions__table-full.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/05-assessment/05-assessment__003__landing-framework-status-actions__table-kebab.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/05-assessment/05-assessment__004__landing-framework-status-actions__table-context-menu.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/05-assessment/05-assessment__005__tab-library__depth2-surface.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/05-assessment/05-assessment__006__tab-library-framework-status-actions__table-full.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/05-assessment/05-assessment__007__tab-library-framework-status-actions__table-kebab.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/05-assessment/05-assessment__008__tab-library-framework-status-actions__table-context-menu.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/05-assessment/05-assessment__009__tab-initiatives__depth2-surface.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/05-assessment/05-assessment__010__tab-reports__depth2-surface.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/05-assessment/05-assessment__011__tab-outputs__depth2-surface.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/06-initiatives/06-initiatives__001__module__depth2-landing.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/06-initiatives/06-initiatives__002__landing-initiative-status-priority-owner-target-date__table-full.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/06-initiatives/06-initiatives__003__landing-initiative-status-priority-owner-target-date__table-preview.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/06-initiatives/06-initiatives__004__landing-initiative-status-priority-owner-target-date-object__depth-2-open.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/06-initiatives/06-initiatives__005__tab-candidates__depth2-surface.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/06-initiatives/06-initiatives__006__tab-analysis__depth2-surface.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/06-initiatives/06-initiatives__007__tab-portfolio-health__depth2-surface.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/06-initiatives/06-initiatives__008__tab-goals__depth2-surface.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/06-initiatives/06-initiatives__009__tab-goals-goal-progress-rollup-portfolio-status__table-full.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/06-initiatives/06-initiatives__010__tab-observability__depth2-surface.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/07-execution/07-execution__001__module__depth2-landing.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/07-execution/07-execution__002__tab-summary__depth2-surface.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/07-execution/07-execution__003__tab-management__depth2-surface.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/07-execution/07-execution__004__tab-rollout__depth2-surface.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/07-execution/07-execution__005__tab-rollout-name-current-baseline-target-progress__table-full.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/07-execution/07-execution__006__tab-rollout-name-current-baseline-target-progress__table-kebab.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/07-execution/07-execution__007__tab-rollout-name-current-baseline-target-progress__table-context-menu.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/07-execution/07-execution__008__tab-reporting__depth2-surface.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/07-execution/07-execution__009__tab-reporting-report-cadence-live-data-sections__table-full.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/07-execution/07-execution__010__tab-reporting-report-cadence-live-data-sections__table-preview.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/07-execution/07-execution__011__tab-reporting-report-cadence-live-data-sections-object__depth-2-open.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots
+artifacts/visual-current-state/sha-ad41701753-depth2-p1/07-execution/07-execution__012__tab-reporting-report-cadence-live-data-sections__table-kebab.png	QUARANTINE_RUNTIME	run artifacts, generated/screenshots

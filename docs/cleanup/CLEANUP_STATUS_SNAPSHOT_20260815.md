@@ -1,0 +1,143 @@
+# CLEANUP STATUS SNAPSHOT 2026-08-15
+
+- total status rows: 364
+- tracked modifications by top dir: 175
+- untracked: 189
+
+## Tracked modified top directories
+
+- src: 75
+- docs: 63
+- tests: 19
+- server: 10
+- .claude: 1
+- AUDYT_SRODOWISKA_ODBIORU.md: 1
+- Harvard: 1
+- audit-results.txt: 1
+- detailed-fixes.md: 1
+- dev-render: 1
+- package-lock.json: 1
+- package.json: 1
+
+## Untracked sample (first 120)
+- .tmp-ie-live-acceptance.mjs
+- AI_HANDOVER/
+- CONSULTIFY_COMPLETE_MVP_CHECKPOINT.md
+- CONSULTIFY_ROUND2_HARDENING_BACKLOG.csv
+- Harvard/wdrozenie-100/_HANDOFF_2026-07-30_PRZESIADKA.md
+- Harvard/wdrozenie-100/_HANDOFF_AGENT_SEJF_2026-07-30.md
+- Harvard/wdrozenie-100/_HANDOFF_EXCEL_I_MATERIALY_2026-07-29.md
+- Harvard/wdrozenie-100/_HANDOFF_MVP_2026-07-28.md
+- Harvard/wdrozenie-100/_HANDOFF_MVP_KPI_2026-07-28.md
+- Harvard/wdrozenie-100/_INWENTARZ_FUNKCJI_EDYTORA_2026-07-28.md
+- Harvard/wdrozenie-100/_KANON_JEZYK_NAWIGACJI_2026-07-28.md
+- Harvard/wdrozenie-100/_KANON_PRAWY_PANEL_2026-07-28.md
+- Harvard/wdrozenie-100/_KROK3_KONTRAKTY_VS_KOD_2026-08-03.md
+- Harvard/wdrozenie-100/_MVP_PLAN_I_ODBIOR_2026-07-28.md
+- Harvard/wdrozenie-100/_MVP_PRZEGLAD_MENU_2026-07-28.md
+- Harvard/wdrozenie-100/_MVP_ZAKRES_TESTY_JUSTYNA_2026-07-29.md
+- Harvard/wdrozenie-100/_ODBIOR_GRAFIK_16_MODULOW_2026-08-03.md
+- Harvard/wdrozenie-100/_ODBIOR_TABELE_PREVIEW_2026-07-27.md
+- Harvard/wdrozenie-100/_OGNIWO_8_DIAGNOZA_2026-07-28.md
+- Harvard/wdrozenie-100/_PLAN_NAPRAWY_UI_2026-07-27.md
+- Harvard/wdrozenie-100/_PROGRAM_NAPRAWCZY_IDEE_2026-07-27.md
+- Harvard/wdrozenie-100/_PROTOKOL_WERYFIKACJI_MAILA_2026-08-10.md
+- Harvard/wdrozenie-100/_PRZEJSCIE_MODUL_DOKUMENTY_2026-07-28.md
+- Harvard/wdrozenie-100/_RAPORT_NOC_IDEE_2026-07-27.md
+- Harvard/wdrozenie-100/_SPEC_GENERATOR_TEMPLATOW_2026-07-28.md
+- Harvard/wdrozenie-100/_SPEC_PRACA_NA_SLAJDACH_2026-07-28.md
+- M08_COMPLETE_MVP_REACCEPTANCE.md
+- M09_COMPLETE_MVP_REACCEPTANCE.md
+- M09_COMPLETE_MVP_SUPPLEMENT.md
+- M09_MVP_DEMO_STATUS.md
+- M12_COMPLETE_MVP_REPORT.md
+- M14_COMPLETE_MVP_REPORT.md
+- M15_COMPLETE_MVP_REPORT.md
+- artifacts/visual-acceptance/
+- artifacts/visual-current-state/
+- artifacts/visual-qa/
+- dev-render/mocks/m04-known-tools.json
+- dev-render/screens/assessment-five-surfaces.tsx
+- dev-render/screens/m04-mvp-tools.tsx
+- dev-render/screens/m09-mvp-materials.tsx
+- dev-render/screens/m15-mvp-admin.tsx
+- dev-render/screens/tools-sesja-wyjscie.tsx
+- docs/START_HERE.md
+- docs/cleanup/CANONICAL_CLEANUP_CHECKPOINT_20260815.md
+- docs/cleanup/CANONICAL_MODULE_STATUS_MATRIX_20260815.md
+- docs/cleanup/CLEANUP_5H_FAST_PATH_20260815.md
+- docs/cleanup/CLEANUP_QUARANTINE_MANIFEST_20260815.md
+- docs/cleanup/CLEANUP_RESIDUAL_ASSESSMENT_20260815.md
+- docs/cleanup/MODULES_20260815_EVIDENCE_BATCH_01.md
+- docs/cleanup/MODULE_CLOSURE_LEDGER_20260815.md
+- docs/cleanup/MODULE_NONGREEN_ACTION_PLAN_20260815.md
+- docs/cleanup/MODULE_ROUTING_EVIDENCE_20260815.md
+- docs/cleanup/MY_WORK_CLOSURE_EVIDENCE_20260815.md
+- docs/cleanup/RESIDUAL_INVENTORY_20260815.md
+- docs/modules/02_moja-praca/golden-flow-packet/
+- docs/modules/05_inicjatywy/MODULE_DOCUMENTATION_AND_CODE_AUDIT_2026-08-14.md
+- docs/modules/INITIATIVES_EXECUTION_FUNCTIONS_CANON.md
+- docs/modules/initiatives-execution-canon/
+- docs/product/AGENT_EXECUTION_V8_HARVEY_BENCHMARK_AND_CHARTER_REVIEW_2026-08-07.md
+- docs/product/AGENT_EXECUTION_V8_INCREMENTAL_DELIVERY_OPERATING_PLAN_2026-08-07.md
+- docs/product/AGENT_EXECUTION_V8_PRODUCT_CHARTER_DOD_AND_EPICS.md
+- docs/product/AGENT_TRANSFORMATION_LIFECYCLE_CANON_V1.md
+- docs/product/case-workspace/
+- docs/product/epics/
+- docs/product/results-vnext/
+- docs/program/CLAUDE_DELEGATION_OPERATING_RULE_2026-08-07.md
+- docs/program/CONSULTIFY_AGENT_RECOVERY_PACKETS_2026-08-08.md
+- docs/program/CONSULTIFY_RECOVERY_EXECUTION_REGISTER_2026-08-08.md
+- docs/program/CONSULTIFY_THREE_REBUILDS_CLEANUP_AND_RESUME_PLAN_2026-08-08.md
+- docs/program/METHOD_TOOLS_2026-08-13/
+- docs/program/WEEKEND_COMPLETION_2026-08-01/00_START_HERE/
+- docs/program/WEEKEND_COMPLETION_2026-08-01/01_GOVERNANCE/
+- docs/program/WEEKEND_COMPLETION_2026-08-01/02_PRODUCT_ARCHITECTURE/
+- docs/program/WEEKEND_COMPLETION_2026-08-01/03_MODULES/
+- docs/program/WEEKEND_COMPLETION_2026-08-01/04_DELIVERY/
+- docs/program/WEEKEND_COMPLETION_2026-08-01/AGREEMENTS/CONSULTIFY_EXECUTIVE_VISUAL_STANDARD_MCKINSEY_PREMIUM.md
+- docs/program/WEEKEND_COMPLETION_2026-08-01/AGREEMENTS/LIVE_ARTIFACT_IMPLEMENTATION_MASTER_PROGRAM.md
+- docs/program/WEEKEND_COMPLETION_2026-08-01/AGREEMENTS/METHOD_AND_TOOL_SIGNATURE_VISUALS_CATALOG.md
+- docs/program/WEEKEND_COMPLETION_2026-08-01/AGREEMENTS/METHOD_MODULES_END_TO_END_WORKFLOW_AND_RESULTS_CONTRACT.md
+- docs/program/WEEKEND_COMPLETION_2026-08-01/AGREEMENTS/PREMIUM_LIVE_ARTIFACT_EXPERIENCE_CONTRACT.md
+- docs/program/WEEKEND_COMPLETION_2026-08-01/AGREEMENTS/TOOL_PACK_MECHANICS_REGISTER.md
+- docs/program/WEEKEND_COMPLETION_2026-08-01/CODEX_DELIVERY_FOR_CTO_REVIEW_2026-08-02.md
+- docs/program/WEEKEND_COMPLETION_2026-08-01/MVP_VISUAL_ACCEPTANCE_PROGRAM.md
+- docs/program/WEEKEND_COMPLETION_2026-08-01/OVERNIGHT_CODEX_HANDOFF_2026-08-01.md
+- docs/program/WEEKEND_COMPLETION_2026-08-01/PACKETS/EXE-009_DISCOVERY.md
+- docs/program/WEEKEND_COMPLETION_2026-08-01/POST_MVP_WAVE_1.md
+- docs/program/WEEKEND_COMPLETION_2026-08-01/POST_MVP_WAVE_2_BACKORDER.md
+- docs/program/WEEKEND_COMPLETION_2026-08-01/PROGRESS_TRACKER_AGENT_PROMPT.md
+- docs/program/WEEKEND_COMPLETION_2026-08-01/RESULTS_EXECUTION_INITIATIVES_GOLDEN_THREAD_RECON_2026-08-01.md
+- docs/qa/ideas-navigation-2026-08-09/
+- docs/standards/idea-workspace/13_MIGRACJA_NAWIGACJI_2026-08-09.md
+- docs/standards/idea-workspace/14_MACIERZ_FUNKCJI_MENU_I_OCENA_2026-08-09.md
+- docs/ui-standards/CONSULTIFY_16_MODULE_FINAL_ACCEPTANCE_LEDGER_2026-08-04.csv
+- docs/ui-standards/CONSULTIFY_16_MODULE_FINAL_ACCEPTANCE_MDK_2026-08-04.md
+- docs/ui-standards/CONSULTIFY_16_MODULE_FINAL_ACCEPTANCE_SYSTEM_2026-08-04.md
+- docs/ui-standards/CONSULTIFY_APP_WIDE_UI_UX_CURRENT_STATE_AND_REMEDIATION_SPEC_2026-08-04.md
+- docs/ui-standards/CONSULTIFY_ATOMIC_ACCEPTANCE_PACKET_TEMPLATE_2026-08-04.md
+- docs/ui-standards/CONSULTIFY_FINAL_ACCEPTANCE_LESSONS_LEARNED_ROUND_1_2026-08-04.md
+- docs/ui-standards/CONSULTIFY_M01_M05_AGENT_LAUNCH_PROMPTS_2026-08-05.md
+- docs/ui-standards/CONSULTIFY_M01_M05_PORTFOLIO_EXECUTION_PLAN_2026-08-05.md
+- docs/ui-standards/CONSULTIFY_SURFACE_REGISTER_2026-08-04.csv
+- docs/ui-standards/CONSULTIFY_SURFACE_REGISTER_2026-08-04.md
+- docs/ui-standards/CONSULTIFY_TOKEN_EFFICIENT_AGENT_ORCHESTRATION_2026-08-04.md
+- docs/ui-standards/CONSULTIFY_TOOLS_AND_OPEN_PROBLEMS_REGISTER_2026-08-04.md
+- docs/ui-standards/FINAL_CANONICAL_DOCUMENTATION_ACCEPTANCE_2026-08-03.md
+- docs/ui-standards/MY_WORK_TABLE_SURFACE_CONTRACT_V1.md
+- docs/ui-standards/PHASE_1_RUNTIME_MAPPING_BRIEF_2026-08-03.md
+- docs/ui-standards/evidence/
+- docs/ui-standards/runtime-mapping-2026-08-03/
+- docs/validation/finance-v3/CLAUDE_FINANCE_COMPLETE_EXECUTION_PROMPT_2026-08-09.md
+- docs/validation/finance-v3/FINANCE_COMPLETE_PROGRAM_CLAUDE_HANDOFF_2026-08-09.md
+- docs/validation/finance-v3/FINANCE_COMPLETION_RECOMMENDATIONS_2026-08-09.md
+- docs/validation/finance-v3/FINANCE_CRITICAL_REVIEW_ADDENDUM_2026-08-09.md
+- docs/validation/finance-v3/FINANCE_IMPLEMENTATION_MASTER_PLAN_2026-08-09.md
+- docs/validation/finance-v3/OWNER_REVIEW_REGISTER_2026-08-09.md
+- missing-tip-relation-old.tsv
+- playwright.ideas-navigation.config.ts
+- server/scripts/seed-cepd-interview-templates.mjs
+- server/scripts/seed-cepd-organization.ts
+- server/src/config/__tests__/localDatabaseSafety.test.ts
+... +70 more
