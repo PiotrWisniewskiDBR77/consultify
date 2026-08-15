@@ -1092,6 +1092,7 @@ router.post(
         reportId: reportId ? String(reportId) : null,
         templateId: templateId ? String(templateId) : null,
         consultantBrief: consultantBrief ? String(consultantBrief) : null,
+        idempotencyKey: req.get('Idempotency-Key') || null,
       } as any);
 
       return res.status(202).json({ runId: run.runId });

@@ -39,6 +39,7 @@ type CreateRunParams = {
   reportId?: string | null;
   templateId?: string | null;
   consultantBrief?: string | null;
+  idempotencyKey?: string | null;
 };
 
 type RunProgress = {
@@ -247,6 +248,15 @@ export class AssessmentInitiativeGenerationRunService {
    * Creates a run record and starts processing asynchronously.
    */
   static async createAndStart(params: CreateRunParams): Promise<{ runId: string }> {
+    const idempotencyKey = String(params.idempotencyKey || '').trim() || null;
+    if (idempotencyKey) {
+      const replay = await queryHelpers.queryOne<{ id: string }>(
+        `SELECT id FROM assessment_initiative_generation_runs
+          WHERE organization_id = ? AND idempotency_key = ? LIMIT 1`,
+        [params.organizationId, idempotencyKey]
+      );
+      if (replay) return { runId: String(replay.id) };
+    }
     const runId = uuidv4();
     const createdAt = nowIso();
     const assessment = await fetchAssessment(params.assessmentId, params.organizationId);
@@ -284,29 +294,41 @@ export class AssessmentInitiativeGenerationRunService {
       startedAt: createdAt,
     };
 
-    await queryHelpers.queryRun(
-      `INSERT INTO assessment_initiative_generation_runs (
+    try {
+      await queryHelpers.queryRun(
+        `INSERT INTO assessment_initiative_generation_runs (
         id, assessment_id, organization_id, report_id, mode, methodology_id,
         requested_count, batch_size, status, created_by,
-        inputs_json, stats_json, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        runId,
-        params.assessmentId,
-        params.organizationId,
-        params.reportId ? String(params.reportId) : null,
-        params.mode,
-        params.methodologyId,
-        params.requestedCount,
-        params.batchSize,
-        'RUNNING',
-        params.userId,
-        safeJsonStringify(inputs),
-        safeJsonStringify(stats),
-        createdAt,
-        createdAt,
-      ]
-    );
+        inputs_json, stats_json, idempotency_key, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          runId,
+          params.assessmentId,
+          params.organizationId,
+          params.reportId ? String(params.reportId) : null,
+          params.mode,
+          params.methodologyId,
+          params.requestedCount,
+          params.batchSize,
+          'RUNNING',
+          params.userId,
+          safeJsonStringify(inputs),
+          safeJsonStringify(stats),
+          idempotencyKey,
+          createdAt,
+          createdAt,
+        ]
+      );
+    } catch (error) {
+      if (!idempotencyKey) throw error;
+      const winner = await queryHelpers.queryOne<{ id: string }>(
+        `SELECT id FROM assessment_initiative_generation_runs
+          WHERE organization_id = ? AND idempotency_key = ? LIMIT 1`,
+        [params.organizationId, idempotencyKey]
+      );
+      if (!winner) throw error;
+      return { runId: String(winner.id) };
+    }
 
     // Start async (best-effort). Do not block request/response cycle.
     setTimeout(() => {

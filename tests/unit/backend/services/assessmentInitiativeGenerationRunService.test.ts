@@ -26,6 +26,31 @@ describe('AssessmentInitiativeGenerationRunService', () => {
     vi.clearAllMocks();
   });
 
+  it('replays the same generation run for a tenant-scoped idempotency key', async () => {
+    (queryHelpers.queryOne as any).mockResolvedValueOnce({ id: 'run-existing' });
+
+    await expect(
+      AssessmentInitiativeGenerationRunService.createAndStart({
+        assessmentId: 'assessment-1',
+        organizationId: 'org-1',
+        userId: 'user-1',
+        mode: 'REPORT_ONLY',
+        methodologyId: 'DRD',
+        requestedCount: 5,
+        batchSize: 5,
+        includeChatContext: false,
+        reportId: 'report-1',
+        idempotencyKey: 'retry-1',
+      })
+    ).resolves.toEqual({ runId: 'run-existing' });
+
+    expect(queryHelpers.queryOne).toHaveBeenCalledWith(
+      expect.stringContaining('organization_id = ? AND idempotency_key = ?'),
+      ['org-1', 'retry-1']
+    );
+    expect(queryHelpers.queryRun).not.toHaveBeenCalled();
+  });
+
   it('processRun splits into 7-sized batches and persists', async () => {
     const runId = 'run-1';
     const orgId = 'org-1';
@@ -64,7 +89,10 @@ describe('AssessmentInitiativeGenerationRunService', () => {
           requested_count: 15,
           batch_size: 7,
           status: 'RUNNING',
-          inputs_json: JSON.stringify({ includeChatContext: true, templateId: 'tpl-card-standard' }),
+          inputs_json: JSON.stringify({
+            includeChatContext: true,
+            templateId: 'tpl-card-standard',
+          }),
           stats_json: JSON.stringify({}),
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -103,12 +131,14 @@ describe('AssessmentInitiativeGenerationRunService', () => {
     );
 
     let idCounter = 0;
-    (AssessmentInitiativeService.persistInitiatives as any).mockImplementation(async ({ initiatives }: any) => {
-      return (initiatives || []).map(() => {
-        idCounter += 1;
-        return { id: `i-${idCounter}`, title: 'x', status: 'DRAFT' };
-      });
-    });
+    (AssessmentInitiativeService.persistInitiatives as any).mockImplementation(
+      async ({ initiatives }: any) => {
+        return (initiatives || []).map(() => {
+          idCounter += 1;
+          return { id: `i-${idCounter}`, title: 'x', status: 'DRAFT' };
+        });
+      }
+    );
 
     // Invoke private method via bracket access (TS private is runtime-accessible)
     await (AssessmentInitiativeGenerationRunService as any).processRun(runId);
@@ -129,4 +159,3 @@ describe('AssessmentInitiativeGenerationRunService', () => {
     expect(templateUpdateCalls.length).toBeGreaterThan(0);
   });
 });
-
