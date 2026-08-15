@@ -3,7 +3,7 @@
 ## Evidence boundary
 
 This semantic inventory was reviewed against product-code SHA
-`7bf4d27cd751afb2d6c24d195891be5aa54c433b`. The current cleanup checkpoint is
+`f6a00552802d3a5d0f2bbd2c72316c05b55b8f82` (runner canonical SHA). The current cleanup checkpoint is
 its documentation-only descendant. Classifications below prove code wiring, not
 deployed-demo parity, provider health or a production migration ledger.
 
@@ -11,13 +11,13 @@ deployed-demo parity, provider health or a production migration ledger.
 
 | Module | Code status | Acceptance boundary |
 |---|---|---|
-| Chat | `LIVE_CONNECTED_CANDIDATE` | UI, stream/API, service and migrations are present. Provider/runtime/demo remain `NOT_VERIFIED`. |
-| My Work core | `LIVE_CONNECTED_CANDIDATE` | `/my-work/*`, hub, APIs, services and state migrations are connected. Radar and optional surfaces remain disabled. |
+| Chat | `LIVE_CONNECTED_CANDIDATE` | UI, stream/API, service and migrations are present. Standard gate scope is complete (`4052` files, `0` missing). Provider/runtime/demo remain `NOT_VERIFIED`. |
+| My Work core | `LIVE_CONNECTED_CANDIDATE` | `/my-work/*`, hub, APIs, services and state migrations are connected. Standard gate scope is complete. Provider/runtime/demo remain `NOT_VERIFIED`. |
 | Agent | `PARTIAL`, `DUPLICATE` | Legacy Agent Plan and new Transformation Case coexist. Agent writes `transformation_cases`; Case Workspace writes `case_core`. This is a P0 identity conflict. |
 | Assessment | `PARTIAL` | Base hub is connected. Five-surface lifecycle, publish/freeze/lineage and migration-ledger proof remain open. |
 | Tools | `LIVE_CONNECTED_CANDIDATE` core, `PARTIAL` catalog | Library, Sessions, Outputs, Reports and Initiatives surfaces are connected. Full catalog and migration ledger remain open. |
-| Initiatives | `LIVE_CONNECTED_CANDIDATE` core | Main route, hub, API and services are connected. Bulk stubs remain out of scope; old Roadmap/Portfolio views require final history review. |
-| Execution | `LIVE_CONNECTED_CANDIDATE` core | Main execution surfaces and backend are connected. Environment-dependent advanced flags and demo posture remain open. |
+| Initiatives | `LIVE_CONNECTED_CANDIDATE` core | Main route, hub, API and services are connected. Standard gate scope is complete. Bulk stubs remain out of scope; old Roadmap/Portfolio views require final history review. |
+| Execution | `LIVE_CONNECTED_CANDIDATE` core | Main execution surfaces and backend are connected. Standard gate scope is complete. Environment-dependent advanced flags and demo posture remain open. |
 | Results KPI/ROI/OKR | `IMPLEMENTED_UNMOUNTED`, `PARTIAL` | Rich VNext UI/API/services/tests exist, but all three main VNext flags default off. Migration ledger and demo proof are missing. |
 | Finance | `PARTIAL`, `DUPLICATE` | Legacy runtime and Finance v3 coexist with different ID spaces. V3 workspaces default off; canonical lane and bridge require a decision and proof. |
 | Materials / Artifact Studio | `LIVE_CONNECTED_CANDIDATE` base, `IMPLEMENTED_UNMOUNTED` V2 | Base library is connected. New studio lanes are fail-closed by flags. Provider, visual and demo proof remain open. |
@@ -97,3 +97,18 @@ without:
 4. browser golden flow and honest negative states;
 5. API and console/network error review;
 6. visual acceptance against the Consultify design contract.
+
+## Current test-gate snapshot
+
+- Standard gate: `4052/4052` files
+- Totals: `38798 PASS`, `581 FAIL`, `485 PENDING`, `19 TODO`
+- Missing/Unexpected: `0`
+- Non-green files: `283`
+- Concentration: `tests/integration` (`136`), `tests/unit` (`49`), `server/src` (`13`), `src/components` (`23`)
+
+### 5-hour execution plan for completion
+
+1. Zamknąć integration faili i pendingi tylko w modułach rdzeniowych: My Work, Initiatives, Execution, Tools, Assessment.
+2. Utrzymać Results/Finance/Audits jako `PARTIAL`/`IMPLEMENTED_UNMOUNTED` i nie otwierać nowych aktywacji bez decyzji flag + migration-ledger.
+3. Rozstrzygnąć model właściciela Case (`transformation_cases` kontra `case_core`) i przygotować jedną canonical ścieżkę dla Agenta.
+4. Po każdej partii zmian: aktualizacja tego dokumentu i krótki checkpoint z listą zmian.

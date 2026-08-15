@@ -95,9 +95,17 @@ as fresh-realDB requirements or repaired in the initiative notification
 harness. A later monolithic run was intentionally stopped because accumulated
 HTTP servers, ports and process-global state made it an inefficient method.
 
-The replacement standard gate must run the same complete scope in deterministic
-fresh-process shards and report every failing shard. Until that and the isolated,
-realDB and external-runtime gates pass, repository-wide tests remain `PARTIAL`.
+The replacement standard gate ran to completion on deterministic fresh-process shards
+on SHA `f6a00552802d3a5d0f2bbd2c72316c05b55b8f82`.
+
+- Standard scope: `4052/4052` files
+- Totals: `38798 PASS`, `581 FAIL`, `485 PENDING`, `19 TODO`, `283 non-green files`
+- Missing/Unexpected results: `0`
+- Performance test (`tests/performance/memory-leak.test.ts`) is split into a separate
+  `performance` gate and currently marked `PENDING`.
+
+Until isolated, realDB and external-runtime gates pass, repository-wide tests remain
+`PARTIAL`.
 
 ## Rules for module acceptance
 
@@ -126,7 +134,7 @@ agent statement cannot independently upgrade a module to `LIVE_CONNECTED`.
 - Structural source inventory: `PASS`, with manual review outstanding
 - Semantic module inventory: `IN_PROGRESS`
 - Git/worktree recovery inventory: `IN_PROGRESS`
-- Deterministic standard test gate: `IN_PROGRESS`
+- Deterministic standard test gate: `PARTIAL`
 - Isolated/realDB/external-runtime gates: `PENDING`
 - Demo parity with the checkpoint SHA: `NOT_VERIFIED`
 - Repository cleanup completion: `PARTIAL`
