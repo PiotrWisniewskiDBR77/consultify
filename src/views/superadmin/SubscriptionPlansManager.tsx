@@ -394,8 +394,9 @@ export const SubscriptionPlansManager: React.FC = () => {
                 <h3>Basic Information</h3>
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Plan Name *</label>
+                    <label htmlFor="subscription-plan-name">Plan Name *</label>
                     <input
+                      id="subscription-plan-name"
                       type="text"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}

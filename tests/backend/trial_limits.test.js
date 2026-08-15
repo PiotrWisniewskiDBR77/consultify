@@ -142,6 +142,7 @@ describe('Trial Mode Limits Verification', () => {
               id: mockOrgId,
               organization_type: 'TRIAL',
               is_active: 1,
+              onboarding_status: 'ORG_SETUP_COMPLETED',
               trial_tokens_used: 5000,
               trial_expires_at: new Date(Date.now() + 86400000).toISOString(),
             };
@@ -169,6 +170,7 @@ describe('Trial Mode Limits Verification', () => {
               id: mockOrgId,
               organization_type: 'TRIAL',
               is_active: 1,
+              onboarding_status: 'ORG_SETUP_COMPLETED',
               trial_tokens_used: 100001,
               trial_expires_at: new Date(Date.now() + 86400000).toISOString(),
             };

@@ -2011,7 +2011,7 @@ router.post(
           decodedAnalysisName,
           decodedAnalysisName,
           analysis.description || null,
-          normalizeStatusForDb('DRAFT'),
+          'DRAFT',
           costCapex,
           costOpex,
           expectedRoi,
