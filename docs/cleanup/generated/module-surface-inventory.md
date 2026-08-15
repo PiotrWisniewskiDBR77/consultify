@@ -1,6 +1,6 @@
 # Module surface inventory
 
-Generated from `working-tree` at 2026-08-14T17:54:56.769Z.
+Generated from `7bf4d27cd751afb2d6c24d195891be5aa54c433b` at 2026-08-15T04:01:15.187Z.
 
 > This is a coverage ledger, not a readiness verdict. Module attribution is heuristic and must be reviewed.
 

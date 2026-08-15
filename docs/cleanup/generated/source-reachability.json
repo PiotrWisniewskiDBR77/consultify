@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-14T17:54:56.115Z",
-  "gitSha": null,
+  "generatedAt": "2026-08-15T04:01:13.733Z",
+  "gitSha": "7bf4d27cd751afb2d6c24d195891be5aa54c433b",
   "limitations": [
     "ORPHAN_CANDIDATE is never deletion authority; dynamic registries, filesystem loading and runtime strings require manual review.",
     "SUPPORT_ONLY means reachable from tests or scripts but not from a configured runtime entrypoint.",
@@ -27358,6 +27358,7 @@
         "server/src/services/v8/transformationFinalOutputService.ts",
         "tests/integration/routes/artifact-runs.routes.sqlite.integration.test.ts",
         "tests/integration/routes/p21b-reports-template-artifactrun-e2e.sqlite.integration.test.ts",
+        "tests/integration/routes/wordy-p22.pipeline.test.ts",
         "tests/integration/services/artifactRegistryService.sqlite.integration.test.ts",
         "tests/unit/backend/reportGenerationService.test.ts"
       ]
@@ -36412,6 +36413,7 @@
         "tests/integration/routes/notifications.fail-closed.contract.test.ts",
         "tests/integration/routes/pmo.initiatives.fail-closed.contract.test.ts",
         "tests/integration/routes/report-builder.fail-closed.contract.test.ts",
+        "tests/integration/routes/wordy-p22.pipeline.test.ts",
         "tests/integration/server/correlation-before-json-parse.contract.test.ts",
         "tests/integration/server/json-body-limit.fail-closed.contract.test.ts",
         "tests/integration/server/multipart.multer.fail-closed.contract.test.ts",
@@ -70760,6 +70762,7 @@
         "src/components/Finance/baseline/AssumptionsView.tsx",
         "src/components/Finance/shared/FinanceWorkspaceBar.tsx",
         "src/components/Finance/statementPackWorkspaceV2/StatementPackWorkspaceV2.tsx",
+        "src/components/Initiatives/InitiativesHub.tsx",
         "src/components/Initiatives/Wizard/InitiativeWizardModal.tsx",
         "src/components/Interview/InsightCreatorModal.tsx",
         "src/components/MyWork/mindmap/AIAutoClustering.tsx",

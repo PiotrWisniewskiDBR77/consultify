@@ -1,6 +1,6 @@
 # Orphan candidate triage
 
-Generated from source inventory `null` at 2026-08-14T17:54:57.146Z.
+Generated from source inventory `7bf4d27cd751afb2d6c24d195891be5aa54c433b` at 2026-08-15T04:01:15.913Z.
 
 > No item in this report is authorized for deletion.
 
