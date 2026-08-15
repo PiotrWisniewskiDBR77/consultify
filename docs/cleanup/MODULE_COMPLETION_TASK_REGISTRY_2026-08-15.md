@@ -425,6 +425,14 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
   Oznacza to, że pierwsze 124 nie wymagają integracji produktu, ale ich refs
   pozostają chronione do CLEAN-003; pozostałych 297 nie wolno uznać za brakujące
   ani zbędne bez task ID i semantycznego verdictu.
+- Ledger niezależnych historii
+  `docs/cleanup/generated/recovered-head-disposition.json` zamyka pierwszy
+  semantyczny podzbiór 224 heads: 18 ma verdict `REFERENCE_HARNESS_ONLY`, bo
+  wszystkie ich unikalne ścieżki są ograniczone do `dev-render/`; 206 nadal
+  wymaga review. Te 18 pozostaje zachowanym materiałem UX/prototypowym, ale nie
+  jest kodem produkcyjnym do merge. Generator mechanicznie egzekwuje warunek
+  ścieżek, unikalność, sumy i deterministyczny output; nadal
+  `deletionAuthorized=0`.
 
 ### CLEAN-003 — kontrolowane usuwanie
 
