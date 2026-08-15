@@ -139,7 +139,10 @@
       "server/src/services/__tests__/nativeOwnerPinnedClient.test.ts",
       "tests/integration/idempotency.test.js",
       "tests/integration/systemHealthRepairRemoved.contract.test.ts",
-      "tests/integration/organization/competency-auth.test.ts"
+      "tests/integration/organization/competency-auth.test.ts",
+      "server/src/services/v8/__tests__/v8-operator-monitoring.test.ts",
+      "tests/integration/routes/artifact-runs.approve-vs-review-boundary.sqlite.integration.test.ts",
+      "tests/integration/system/health.noChildProcess.contract.test.ts"
     ]
   },
   "gates": {
@@ -207,7 +210,10 @@
         "server/src/services/v8/__tests__/v8-smoke-offline-validation.test.ts",
         "server/src/services/v8/__tests__/v8-smoke-suite.test.ts",
         "tests/integration/routes/presentations.share-revoke-and-rate-limit.route.test.ts",
-        "tests/integration/organization/competency-auth.test.ts"
+        "tests/integration/organization/competency-auth.test.ts",
+        "server/src/services/v8/__tests__/v8-operator-monitoring.test.ts",
+        "tests/integration/routes/artifact-runs.approve-vs-review-boundary.sqlite.integration.test.ts",
+        "tests/integration/system/health.noChildProcess.contract.test.ts"
       ]
     },
     "realdb": {
