@@ -130,6 +130,8 @@
       "server/src/services/v8/__tests__/v8-smoke-suite.test.ts",
       "tests/integration/transactions.test.js",
       "tests/integration/routes/presentations.share-revoke-and-rate-limit.route.test.ts",
+      "tests/integration/routes/table-platform.sheet-artifact.sqlite.integration.test.ts",
+      "tests/integration/errorHandling.test.js",
       "tests/integration/routes/p21b-reports-template-artifactrun-e2e.sqlite.integration.test.ts",
       "server/src/routes/__tests__/document-studio-client-reader.routes.test.ts",
       "server/src/services/__tests__/nativeOwnerPinnedClient.test.ts"
@@ -292,7 +294,9 @@
         "tests/integration/pmo-project-members.integration.test.ts",
         "tests/integration/routes/p21b-reports-template-artifactrun-e2e.sqlite.integration.test.ts",
         "server/src/routes/__tests__/document-studio-client-reader.routes.test.ts",
-        "server/src/services/__tests__/nativeOwnerPinnedClient.test.ts"
+        "server/src/services/__tests__/nativeOwnerPinnedClient.test.ts",
+        "tests/integration/routes/table-platform.sheet-artifact.sqlite.integration.test.ts",
+        "tests/integration/errorHandling.test.js"
       ]
     }
   }

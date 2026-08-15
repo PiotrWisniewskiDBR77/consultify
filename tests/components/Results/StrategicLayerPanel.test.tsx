@@ -142,24 +142,24 @@ describe('StrategicLayerPanel', () => {
     render(<StrategicLayerPanel projectId="all" />);
     await waitFor(() => expect(screen.getByTestId('strategic-layer-panel')).toBeInTheDocument());
     expect(screen.getByText('Balanced Scorecard')).toBeInTheDocument();
-    expect(screen.getByText('Finanse')).toBeInTheDocument();
-    expect(screen.getByText('Klient')).toBeInTheDocument();
-    expect(screen.getByText('Procesy')).toBeInTheDocument();
-    expect(screen.getByText('Rozwój')).toBeInTheDocument();
+    expect(screen.getByText('Finance')).toBeInTheDocument();
+    expect(screen.getByText('Customer')).toBeInTheDocument();
+    expect(screen.getByText('Processes')).toBeInTheDocument();
+    expect(screen.getByText('Growth')).toBeInTheDocument();
   });
 
   it('shows the unbalanced-scorecard warning when bsc.balanced is false', async () => {
     mockEndpoints(FULL);
     render(<StrategicLayerPanel projectId="all" />);
     await waitFor(() => expect(screen.getByTestId('strategic-layer-panel')).toBeInTheDocument());
-    expect(screen.getByText(/Scorecard niezrównoważony/)).toBeInTheDocument();
+    expect(screen.getByText(/Scorecard unbalanced/)).toBeInTheDocument();
   });
 
   it('renders the adoption dataSource badge (change-management)', async () => {
     mockEndpoints(FULL);
     render(<StrategicLayerPanel projectId="all" />);
     await waitFor(() => expect(screen.getByTestId('strategic-layer-panel')).toBeInTheDocument());
-    expect(screen.getByText(/Dane: zarządzanie zmianą/)).toBeInTheDocument();
+    expect(screen.getByText(/Source: change management/)).toBeInTheDocument();
     expect(screen.getByText('Automatyzacja faktur')).toBeInTheDocument();
   });
 
@@ -167,7 +167,7 @@ describe('StrategicLayerPanel', () => {
     mockEndpoints(FULL);
     render(<StrategicLayerPanel projectId="all" />);
     await waitFor(() => expect(screen.getByTestId('strategic-layer-panel')).toBeInTheDocument());
-    expect(screen.getByText('Profil korzyści')).toBeInTheDocument();
+    expect(screen.getByText('Benefit profile')).toBeInTheDocument();
     expect(screen.getByText('Redukcja kosztów')).toBeInTheDocument();
   });
 
@@ -175,7 +175,7 @@ describe('StrategicLayerPanel', () => {
     mockEndpoints(FULL);
     render(<StrategicLayerPanel projectId="all" />);
     await waitFor(() => expect(screen.getByTestId('strategic-layer-panel')).toBeInTheDocument());
-    expect(screen.getByText('OKR — kaskada celów')).toBeInTheDocument();
+    expect(screen.getByText('OKR — objective cascade')).toBeInTheDocument();
     expect(screen.getByText('Wzrost rentowności')).toBeInTheDocument();
     expect(screen.getByText('Obniż koszty operacyjne')).toBeInTheDocument();
   });
@@ -184,7 +184,7 @@ describe('StrategicLayerPanel', () => {
     mockEndpoints(FULL);
     render(<StrategicLayerPanel projectId="all" />);
     await waitFor(() => expect(screen.getByTestId('strategic-layer-panel')).toBeInTheDocument());
-    expect(screen.getByText('Utrzymanie wartości')).toBeInTheDocument();
+    expect(screen.getByText('Value sustainment')).toBeInTheDocument();
     // at-risk (non-sustained) status surfaces
     expect(screen.getByText('Inicjatywa A')).toBeInTheDocument();
   });
@@ -206,9 +206,9 @@ describe('StrategicLayerPanel', () => {
     });
     render(<StrategicLayerPanel projectId="all" />);
     await waitFor(() => expect(screen.getByTestId('strategic-layer-panel')).toBeInTheDocument());
-    expect(screen.getByText(/Brak inicjatyw zagrożonych/)).toBeInTheDocument();
-    expect(screen.getByText(/Brak profili korzyści/)).toBeInTheDocument();
-    expect(screen.getByText('Brak zdefiniowanych OKR')).toBeInTheDocument();
+    expect(screen.getByText(/No initiatives at risk/)).toBeInTheDocument();
+    expect(screen.getByText(/No benefit profiles/)).toBeInTheDocument();
+    expect(screen.getByText('No OKRs defined')).toBeInTheDocument();
   });
 
   it('survives all endpoints rejecting (Promise.allSettled) without crashing', async () => {
