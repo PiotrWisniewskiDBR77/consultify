@@ -24,6 +24,16 @@ deployed-demo parity, provider health or a production migration ledger.
 | Cases | `IMPLEMENTED_UNMOUNTED`, `DUPLICATE` | `/zlecenia/*` defaults off. Rich Case Workspace exists, but `case_core` conflicts semantically with Agent `transformation_cases`. |
 | Audits | `PARTIAL` | Base audit CRUD is connected. Criterion/five-surface/DRD/editing features remain flag-dependent and lack full lifecycle evidence. |
 
+## Priorytetowe backlogi wg bieżącego stanu testów (operacyjnie)
+
+- **P0**: `Routing/Auth` + `Superadmin` (blokująca masa testów infra/auth, wpływają na możliwość odpalenia e2e i stabilność środowiska).
+- **P1**: `MyWork`, `Initiatives`, `Assessment`, `Finance`, `Results` (cechy core produkcyjne + widoczne dla użytkownika).  
+- **P2**: `Tools`, `AIChat`, `Artifact/Materials`, `Execution` po zamknięciu P0/P1.
+- **P3**: `Other` (pozostałe testy niekrytyczne dla odbioru weekendowego).
+
+Źródłem rankingu jest pełny shard-summary:
+`docs/cleanup/FAIL_TRIAGE_2026-08-15.md`.
+
 ## Canonical chains and key evidence
 
 ### Chat and My Work

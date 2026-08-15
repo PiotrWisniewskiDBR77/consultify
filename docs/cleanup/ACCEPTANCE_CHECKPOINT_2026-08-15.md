@@ -141,3 +141,12 @@ agent statement cannot independently upgrade a module to `LIVE_CONNECTED`.
 
 This state is sufficient to continue controlled module-by-module investigation
 from one tree. It is not sufficient to declare the application release-ready.
+
+### 2026-08-15 Gate triage addendum
+
+- Full sharded standard gate (`f6a00552802d3a5d0f2bbd2c72316c05b55b8f82`) remains the governing base.
+- Failure concentration from the full scope is now explicit:
+  - `Routing/Auth` and `Superadmin` dominate non-core blockers.
+  - `MyWork` + `Initiatives` + `Assessment` are the highest-risk core surfaces visible in the fail set and should be the next fix batch.
+- This checkpoint now has a dedicated mapping of all fail files:
+  - `docs/cleanup/FAIL_TRIAGE_2026-08-15.md`
