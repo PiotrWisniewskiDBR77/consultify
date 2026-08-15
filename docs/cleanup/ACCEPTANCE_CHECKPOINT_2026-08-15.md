@@ -64,11 +64,14 @@ At this checkpoint 137 files are explicitly outside the standard wave:
 - 3 flaky harnesses requiring repair;
 - 6 stale harnesses requiring repair.
 
-The latest completed monolithic diagnostic wave reached 21,453 passing tests
-before five failures. The failures were subsequently classified as fresh-realDB
-requirements or repaired in the initiative notification harness. A later
-monolithic run was intentionally stopped because accumulated HTTP servers,
-ports and process-global state made it an inefficient diagnostic method.
+Fresh discovery with the same exclusions found 4,053 standard-scope test files.
+The previous monolithic diagnostics reached only a prefix of that manifest
+before their fail limit: the furthest reached 21,453 passing test cases and
+then stopped on five failures. Therefore those runs were diagnostic evidence,
+never a complete standard-gate PASS. The failures were subsequently classified
+as fresh-realDB requirements or repaired in the initiative notification
+harness. A later monolithic run was intentionally stopped because accumulated
+HTTP servers, ports and process-global state made it an inefficient method.
 
 The replacement standard gate must run the same complete scope in deterministic
 fresh-process shards and report every failing shard. Until that and the isolated,
