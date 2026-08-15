@@ -629,17 +629,21 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
   four-eyes, real provider i visual desktop/mobile; wszystkie sześć scope'ów
   osiągalne z aktualnego UI, a `transformative` wymaga jawnego potwierdzenia i
   zwraca fokus do triggera po Cancel/Escape/Continue.
+- Pakiet: `docs/cleanup/execution-packets/MAT-001-T01.md`; status
+  `READY_SERIAL_INTEGRATOR / PREFLIGHT_REQUIRED` na baseline `88db01dc0`.
 
 ### MAT-002 — Presentation real flow
 
 - Status: `PARTIAL`, P0; owner: Materials PPT lane.
-- Potwierdzona luka kodowa: template intake test z `0f9f98cfc` wymaga
+- Gap `MAT-002-G01` (`MISSING_CODE`), task `MAT-002-T01`: template intake test z `0f9f98cfc` wymaga
   dostępnego briefu, typed required variables i przesłania lineage/facts.
   Bieżący `PrezentacjeView` z `6a397b2448` tworzy deck automatycznie, a
   `POST /presentations/decks/from-template` nie waliduje ani nie materializuje
   `brief`/`variableValues`. To zadanie produktowe, nie naprawa harnessu.
 - DoD: create/edit/version/reopen/export PPTX; template approval, autosave title,
   lineage i render visual.
+- Pakiet: `docs/cleanup/execution-packets/MAT-002-T01.md`; status
+  `READY_SERIAL_INTEGRATOR / PREFLIGHT_REQUIRED` na baseline `88db01dc0`.
 
 ### MAT-003 — Spreadsheet real flow
 
