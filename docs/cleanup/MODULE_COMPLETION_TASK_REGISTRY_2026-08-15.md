@@ -471,8 +471,13 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
   późniejszy kanon. Dodatkowo odzyskany, niezweryfikowany finding szablonów
   prezentacji odtworzył na realnym PostgreSQL regresję 5/7; naprawa
   `1ec123c82` wymusza trwały, tenant-scoped readback dla plan/clone/update i
-  odwraca gate do 7/7 PASS. Aktualny ledger ma 171 pozycji
-  `SEMANTIC_REVIEW_REQUIRED`. Te 18 pozostaje zachowanym materiałem
+  odwraca gate do 7/7 PASS. Mechaniczny audyt bajtowej reprezentacji zamknął
+  następne 12 głów: Chat tenant-session, Initiatives M05, Tools race,
+  onboarding, Ideas table/mindmap, My Work Calendar, Agent final outputs,
+  deliverable normalization oraz trzy dokumenty są dokładnie obecne w kanonie.
+  Wykonany focused podzbiór daje 7 plików / 35 testów PASS; testy browser/realDB
+  pozostają jawnie do wykonania w ich właściwych gate'ach. Aktualny ledger ma
+  159 pozycji `SEMANTIC_REVIEW_REQUIRED`. Te 18 pozostaje zachowanym materiałem
   UX/prototypowym, ale nie
   jest kodem produkcyjnym do merge. Generator mechanicznie egzekwuje warunek
   ścieżek, unikalność, sumy i deterministyczny output; nadal

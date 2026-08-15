@@ -2,6 +2,90 @@
   "schemaVersion": 1,
   "rows": [
     {
+      "tip": "6ec5370ce32befffad3d0cf3bbbb65718d7abc97",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-IDEA-003",
+      "evidenceRule": "The recovered Ideas table overlap Playwright specification is byte-identical to tests/e2e/ideas-table-overlap-geometry.spec.ts in the canonical tree.",
+      "nextAction": "Execute it in the signed-in viewport matrix; exact source presence is not a current browser PASS. Retain the recovery ref until CLEAN-003."
+    },
+    {
+      "tip": "762d84d3bfccaccde939dd1cae3f18e15d3435e3",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-DOC-006",
+      "evidenceRule": "The recovered July 24 Ideas handoff is byte-identical to Harvard/wdrozenie-100/_HANDOFF_IDEE_2026-07-24.md in the canonical tree.",
+      "nextAction": "Keep it as historical evidence only; do not use its runtime claims as current demo proof. Retain the recovery ref until CLEAN-003."
+    },
+    {
+      "tip": "b8247fd2bb5a45b192228cb9d495d1aae1a8b82a",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-INI-004",
+      "evidenceRule": "The recovered Initiatives M05 PostgreSQL golden-flow suite is byte-identical to tests/integration/initiatives/m05-mvp-golden-flows.pg.test.ts in the canonical tree.",
+      "nextAction": "Run it in the consolidated fresh/upgrade PostgreSQL gate; source equality alone is not a current PASS. Retain the recovery ref until CLEAN-003."
+    },
+    {
+      "tip": "bd9bb884b497deea4f8e25c8609177045e4148b9",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-CHAT-002",
+      "evidenceRule": "The recovered durable tenant-scoped Chat session Playwright test is byte-identical to tests/e2e/smoke/chat-session-tenant-readback.spec.ts in the canonical tree.",
+      "nextAction": "Execute it against the exact release candidate and real tenant session; retain the recovery ref until CLEAN-003."
+    },
+    {
+      "tip": "bf2f61feb6da3a302f230ef69ee9a0d050722d5a",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-DOC-007",
+      "evidenceRule": "The recovered A2 preview inventory is byte-identical to Harvard/wdrozenie-100/_ANALIZA_A2_INWENTARZ_PREVIEW.md in the canonical tree.",
+      "nextAction": "Keep it as inventory history and validate current preview surfaces through module acceptance. Retain the recovery ref until CLEAN-003."
+    },
+    {
+      "tip": "eb3e2b5c857ce9ddd6ec8fc2eb8b868deddaa5db",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-ASM-002",
+      "evidenceRule": "The recovered Method/Assessment candidate record is byte-identical to docs/program/METHOD_ASSESSMENT_CORE_2026-08-13/ASSESSMENT_PRODUCT_CANDIDATE.md in the canonical tree.",
+      "nextAction": "Keep the candidate record but require ASM realDB and browser DoD before module completion. Retain the recovery ref until CLEAN-003."
+    },
+    {
+      "tip": "ef29137d1ea1ee002c4ba0f8753129a84b46ffe2",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-TLS-003",
+      "evidenceRule": "The recovered retry-safe Tools promotion race suite is byte-identical to tests/integration/tools-promotion-race.realdb.test.ts in the canonical tree.",
+      "nextAction": "Execute it in the consolidated Tools PostgreSQL gate; exact source presence is not a current realDB PASS. Retain the recovery ref until CLEAN-003."
+    },
+    {
+      "tip": "58a7b3f6f865da25b61d89114762f17210f1fedf",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-ONB-001",
+      "evidenceRule": "Both recovered onboarding files are byte-identical in the canonical tree. The focused FirstRunOnboarding contract passes 7/7, including the non-navigating Skip behavior.",
+      "nextAction": "Keep the canonical behavior and retain the recovery ref until CLEAN-003."
+    },
+    {
+      "tip": "9c59034f1fc2ea026049e96bd546d4780542763c",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-IDEA-004",
+      "evidenceRule": "Both recovered stale-draft Mind Map files are byte-identical in the canonical tree. The focused stale/retry contract passes 2/2.",
+      "nextAction": "Keep the canonical sync behavior and include cold-reopen recovery in Ideas browser acceptance; retain the recovery ref until CLEAN-003."
+    },
+    {
+      "tip": "c37123e6b56b1ac0c689f79b5d3d2cc928258fb5",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MYW-005",
+      "evidenceRule": "Both recovered Calendar capacity-refresh files are byte-identical in the canonical tree. The focused accepted/rejected/client-refused contract passes 3/3.",
+      "nextAction": "Keep the canonical refresh behavior and retain the recovery ref until CLEAN-003."
+    },
+    {
+      "tip": "d3e70665ce5ea88bbf58f9b4741d2b7d6cab81bc",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-AGT-004",
+      "evidenceRule": "All three recovered Transformation final-output files are byte-identical in the canonical tree. Focused native projection and service contracts pass 7/7.",
+      "nextAction": "Use these builders in AGT-003 realDB/browser artifact acceptance; retain the recovery ref until CLEAN-003."
+    },
+    {
+      "tip": "90beea635150753c795d37b875d3c21c38ad6e77",
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MAT-008",
+      "evidenceRule": "All four recovered deliverable block-normalization files are byte-identical in the canonical tree. Focused structural and normalization contracts pass 2 files / 16 tests.",
+      "nextAction": "Keep the normalization boundary and validate exported editable artifacts separately under MAT-001/002/003. Retain the recovery ref until CLEAN-003."
+    },
+    {
       "tip": "1244d038bec6dd4862a2723a354fcd77c9068e1e",
       "verdict": "INTEGRATED_CANONICAL",
       "taskId": "CLEAN-002-MAT-007",
