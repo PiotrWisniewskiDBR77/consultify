@@ -694,7 +694,14 @@ function extractResultRef(detail: Record<string, unknown> | null | undefined): s
   if (!detail || typeof detail !== 'object') return null;
   const handoff = detail.handoff_result;
   if (!handoff || typeof handoff !== 'object') return null;
-  const keys = ['signal_id', 'initiative_ref', 'calendar_ref', 'note_ref', 'insight_ref'];
+  const keys = [
+    'signal_id',
+    'initiative_ref',
+    'calendar_ref',
+    'note_ref',
+    'insight_ref',
+    'workbook_ref',
+  ];
   for (const key of keys) {
     const value = (handoff as Record<string, unknown>)[key];
     if (typeof value === 'string' && value.trim().length > 0) return value.trim();
@@ -827,7 +834,15 @@ function buildTeresaOperationContract(
     artifactId:
       typeof targetPayload.artifact_id === 'string'
         ? targetPayload.artifact_id
-        : baseContract.links.artifactId,
+        : proposal.target_module === 'excele'
+          ? resultRef
+          : baseContract.links.artifactId,
+    targetRef: {
+      artifactId: resultRef,
+      artifactType: proposal.target_module === 'excele' ? 'workbook' : proposal.target_module,
+      artifactModule: proposal.target_module,
+      relationship: 'target',
+    },
   });
 }
 
@@ -1767,8 +1782,47 @@ export async function executeProposal(params: {
     );
   }
 
-  // Transition to executing
-  await transitionState(proposalId, 'executing');
+  // Claim execution with one compare-and-set. Reading `approved` above is not
+  // sufficient: concurrent HTTP retries can both observe it and call the owner
+  // adapter. Exactly one request may cross this boundary.
+  const claimed = await dbRun(
+    `UPDATE teresa_proposals
+     SET state = 'executing', updated_at = ?
+     WHERE id = ? AND organization_id = ? AND state = 'approved'`,
+    [new Date().toISOString(), proposalId, organizationId],
+    { fallback: false }
+  );
+  if (!claimed.changes) {
+    const winner = await dbGet<ProposalRow>(
+      `SELECT * FROM teresa_proposals WHERE id = ? AND organization_id = ?`,
+      [proposalId, organizationId],
+      { fallback: false }
+    );
+    if (winner?.state === 'completed') {
+      const auditRows = await loadAuditEntries(proposalId);
+      const completedAudit = [...auditRows]
+        .reverse()
+        .find((entry) => entry.action === 'execution_completed');
+      return {
+        success: true,
+        proposal_id: proposalId,
+        target_module: winner.target_module as HandoffTargetModule,
+        state: 'completed',
+        audit_entry_id: completedAudit?.id ?? '',
+      };
+    }
+    if (winner?.state === 'executing') {
+      throw new TeresaCopilotError(
+        'Proposal execution is already in progress.',
+        'P08_EXECUTION_IN_PROGRESS',
+        409
+      );
+    }
+    throw new TeresaCopilotError(
+      `Cannot execute proposal in state: ${winner?.state || 'unknown'}. Must be approved first.`,
+      'P08_INVALID_STATE_TRANSITION'
+    );
+  }
   const executionStartAudit = await writeAuditEntry({
     proposalId,
     action: 'execution_started',

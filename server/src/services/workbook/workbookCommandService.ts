@@ -55,14 +55,18 @@ export interface UndoWorkbookCommandResult {
   orphanedCommentSheetIds: string[];
 }
 
-async function ensureCommandStorage(): Promise<void> {
+let commandStoragePromise: Promise<void> | null = null;
+
+async function initializeCommandStorage(): Promise<void> {
   for (const columnDefinition of [
     `approval_current INTEGER DEFAULT 0`,
     `version INTEGER DEFAULT 0`,
     `last_mutation_key TEXT`,
   ]) {
     try {
-      await queryHelpers.queryRun(`ALTER TABLE generated_workbooks ADD COLUMN ${columnDefinition}`);
+      await queryHelpers.queryRun(
+        `ALTER TABLE generated_workbooks ADD COLUMN IF NOT EXISTS ${columnDefinition}`
+      );
     } catch {
       // Additive migration: an existing column must not stop later checks.
     }
@@ -126,11 +130,21 @@ async function ensureCommandStorage(): Promise<void> {
   `);
   try {
     await queryHelpers.queryRun(
-      `ALTER TABLE generated_workbook_source_bindings ADD COLUMN anchor_state TEXT NOT NULL DEFAULT 'active'`
+      `ALTER TABLE generated_workbook_source_bindings ADD COLUMN IF NOT EXISTS anchor_state TEXT NOT NULL DEFAULT 'active'`
     );
   } catch {
     // Additive migration: the only expected failure is an existing column.
   }
+}
+
+async function ensureCommandStorage(): Promise<void> {
+  if (!commandStoragePromise) {
+    commandStoragePromise = initializeCommandStorage().catch((error) => {
+      commandStoragePromise = null;
+      throw error;
+    });
+  }
+  await commandStoragePromise;
 }
 
 function validateInput(input: ApplyWorkbookCommandInput): void {

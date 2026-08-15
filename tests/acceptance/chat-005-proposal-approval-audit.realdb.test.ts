@@ -11,6 +11,20 @@ const REJECTED_ID = `${PREFIX}rejected`;
 const FOREIGN_ORG_ID = `${PREFIX}foreign-org`;
 const FOREIGN_USER_ID = `${PREFIX}foreign-user`;
 const FOREIGN_MEMBER_ID = `${PREFIX}foreign-member`;
+const WORKBOOK_ID = `${PREFIX}workbook`;
+
+const INITIAL_WORKBOOK_SCHEMA = {
+  title: 'CHAT-05 governed workbook',
+  description: 'Acceptance fixture with a real immutable base version',
+  sheets: [
+    {
+      id: '11111111-1111-4111-8111-111111111111',
+      name: 'Readiness',
+      columns: [{ key: 'A', header: 'Status' }],
+      rows: [{ cells: { A: { value: 'Draft' } } }],
+    },
+  ],
+};
 
 let app: Express;
 let token: string;
@@ -22,12 +36,23 @@ async function cleanup(): Promise<void> {
     await client.query(`DELETE FROM ai_run_events WHERE action_id LIKE $1`, [`${PREFIX}%`]);
     await client.query(`DELETE FROM ai_run_ledger WHERE action_id LIKE $1`, [`${PREFIX}%`]);
     await client.query(`DELETE FROM ai_actions WHERE id LIKE $1`, [`${PREFIX}%`]);
-    await client.query(
-      `DELETE FROM teresa_handoff_results WHERE proposal_id LIKE $1`,
-      [`${PREFIX}%`]
-    );
+    await client.query(`DELETE FROM teresa_handoff_results WHERE proposal_id LIKE $1`, [
+      `${PREFIX}%`,
+    ]);
     await client.query(`DELETE FROM teresa_audit_log WHERE proposal_id LIKE $1`, [`${PREFIX}%`]);
     await client.query(`DELETE FROM teresa_proposals WHERE id LIKE $1`, [`${PREFIX}%`]);
+    const commandTable = await client.query(
+      `SELECT to_regclass('public.generated_workbook_revisions') AS name`
+    );
+    if (commandTable.rows[0]?.name) {
+      await client.query(`DELETE FROM generated_workbook_revisions WHERE workbook_id = $1`, [
+        WORKBOOK_ID,
+      ]);
+    }
+    await client.query(`DELETE FROM generated_workbook_versions WHERE workbook_id = $1`, [
+      WORKBOOK_ID,
+    ]);
+    await client.query(`DELETE FROM generated_workbooks WHERE id = $1`, [WORKBOOK_ID]);
     await client.query(`DELETE FROM organization_members WHERE id = $1`, [FOREIGN_MEMBER_ID]);
     await client.query(`DELETE FROM users WHERE id = $1`, [FOREIGN_USER_ID]);
     await client.query(`DELETE FROM organizations WHERE id = $1`, [FOREIGN_ORG_ID]);
@@ -62,7 +87,22 @@ function proposalBody(idempotencyKey: string, sessionId: string) {
       },
       audit_stub: { actor: 'teresa:copilot', timestamp: new Date().toISOString() },
     },
-    targetPayload: { prompt: 'Build the MVP readiness workbook.' },
+    targetPayload: {
+      prompt: 'Update the MVP readiness workbook.',
+      workbook_context: { workbook_id: WORKBOOK_ID, version_id: 1 },
+      workbook_mutation: {
+        command_id: 'chat.applyApprovedWorkbookProposal',
+        operations: [
+          {
+            type: 'setCell',
+            sheetIndex: 0,
+            rowIndex: 0,
+            columnKey: 'A',
+            value: 'Approved',
+          },
+        ],
+      },
+    },
   };
 }
 
@@ -76,6 +116,19 @@ beforeAll(async () => {
   const client = pgClient();
   await client.connect();
   try {
+    const serializedSchema = JSON.stringify(INITIAL_WORKBOOK_SCHEMA);
+    await client.query(
+      `INSERT INTO generated_workbooks
+         (id, organization_id, title, schema_json, sheet_count, created_by, version, created_at)
+       VALUES ($1, $2, $3, $4, 1, $5, 1, NOW())`,
+      [WORKBOOK_ID, SEED.ORG_ID, INITIAL_WORKBOOK_SCHEMA.title, serializedSchema, SEED.USER_ID]
+    );
+    await client.query(
+      `INSERT INTO generated_workbook_versions
+         (id, workbook_id, version, schema_json_snapshot, sheet_count, created_by, created_at)
+       VALUES ($1, $2, 1, $3, 1, $4, NOW())`,
+      [`${PREFIX}workbook-version-1`, WORKBOOK_ID, serializedSchema, SEED.USER_ID]
+    );
     await client.query(
       `INSERT INTO organizations (id, name, status, is_active, created_at)
        VALUES ($1, 'CHAT-05 foreign org', 'active', 1, NOW())`,
@@ -156,18 +209,22 @@ describe('CHAT-05 — proposal, approval, execution and durable audit', () => {
     expect(retry.status, JSON.stringify(retry.body)).toBe(200);
     expect(retry.body.data.execution.state).toBe('completed');
 
-    const reopened = await request(app)
-      .get(`/api/v8/teresa/proposal/${PROPOSAL_ID}`)
-      .set(auth());
+    const reopened = await request(app).get(`/api/v8/teresa/proposal/${PROPOSAL_ID}`).set(auth());
     expect(reopened.status, JSON.stringify(reopened.body)).toBe(200);
     expect(reopened.body.data).toEqual(
       expect.objectContaining({
         state: 'completed',
         approvalState: 'completed',
-        allowedActions: ['navigate'],
+        allowedActions: ['undo', 'navigate'],
+        resultRef: WORKBOOK_ID,
       })
     );
-    expect(reopened.body.data.resultRef).toEqual(expect.any(String));
+    expect(reopened.body.data.operationContract.links).toEqual(
+      expect.objectContaining({
+        artifactId: WORKBOOK_ID,
+        targetRef: expect.objectContaining({ artifactId: WORKBOOK_ID, artifactType: 'workbook' }),
+      })
+    );
 
     const verification = pgClient();
     await verification.connect();
@@ -180,7 +237,33 @@ describe('CHAT-05 — proposal, approval, execution and durable audit', () => {
         `SELECT action FROM teresa_audit_log WHERE proposal_id = $1 ORDER BY timestamp`,
         [PROPOSAL_ID]
       );
+      const workbook = await verification.query(
+        `SELECT organization_id, version, schema_json, last_mutation_key
+         FROM generated_workbooks WHERE id = $1`,
+        [WORKBOOK_ID]
+      );
+      const revisions = await verification.query(
+        `SELECT version, command_id, idempotency_key, operations_json
+         FROM generated_workbook_revisions
+         WHERE workbook_id = $1 AND organization_id = $2
+         ORDER BY version`,
+        [WORKBOOK_ID, SEED.ORG_ID]
+      );
       expect(receipt.rows[0].count).toBe(1);
+      expect(workbook.rows).toHaveLength(1);
+      expect(workbook.rows[0].organization_id).toBe(SEED.ORG_ID);
+      expect(workbook.rows[0].version).toBe(2);
+      expect(workbook.rows[0].last_mutation_key).toBe(`teresa:${PROPOSAL_ID}`);
+      const persistedSchema = JSON.parse(workbook.rows[0].schema_json);
+      expect(persistedSchema.sheets[0].rows[0].cells.A.value).toBe('Approved');
+      expect(revisions.rows).toHaveLength(1);
+      expect(revisions.rows[0]).toEqual(
+        expect.objectContaining({
+          version: 2,
+          command_id: 'chat.applyApprovedWorkbookProposal',
+          idempotency_key: `teresa:${PROPOSAL_ID}`,
+        })
+      );
       expect(audit.rows.map((row) => row.action)).toEqual([
         'proposal_created',
         'submitted_for_approval',
@@ -207,10 +290,18 @@ describe('CHAT-05 — proposal, approval, execution and durable audit', () => {
       organization_id: FOREIGN_ORG_ID,
     });
     expect(
-      (await request(app).get(`/api/v8/teresa/proposal/${REJECTED_ID}`).set('Authorization', `Bearer ${foreignToken}`)).status
+      (
+        await request(app)
+          .get(`/api/v8/teresa/proposal/${REJECTED_ID}`)
+          .set('Authorization', `Bearer ${foreignToken}`)
+      ).status
     ).toBe(404);
     expect(
-      (await request(app).post(`/api/v8/teresa/proposal/${REJECTED_ID}/approve`).set('Authorization', `Bearer ${foreignToken}`)).status
+      (
+        await request(app)
+          .post(`/api/v8/teresa/proposal/${REJECTED_ID}/approve`)
+          .set('Authorization', `Bearer ${foreignToken}`)
+      ).status
     ).toBe(404);
 
     const rejected = await request(app)
