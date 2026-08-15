@@ -312,7 +312,9 @@ query/localStorage ani wymagania zamkniętego wyłącznie deklaracją.
   Chat Ideas handoff, Finance missing-vs-zero, Document transformative edit,
   Tools CAS, E2E tenant isolation i atomowy Interview→Initiative;
   Preview lineage, DRD MVP reopen i Finance model/workbook są również
-  zintegrowane; pozostają 3 jawne kandydaty, integracja tylko pakietami.
+  zintegrowane; recovery ledger ma 0 kandydatów, 0 semantic unknown i 0
+  owner-decision unknown. Dalszą pracę wyznaczają wyłącznie atomowe taski
+  modułowe oraz brama release.
 - Etap 11: `COMPLETE_FOR_RECOVERY` — każdy recovered head ma disposition oraz
   przypisany task albo dowód represented/superseded/rejected.
 - Etap 12: `IN_PROGRESS` — istnieją task IDs i zależności, ale wszystkie taski

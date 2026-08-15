@@ -15,7 +15,7 @@ podzbiorów jako gotowości całej aplikacji.
 - Checkout: `/Users/piotrwisniewski/Developer/consultify-canonical-full-20260814`
 - Branch: `codex/consultify-canonical-cleanup-20260814`
 - Authority product SHA po integracji recovery:
-  `c0ca3f26d0ac8e525ed2d807ff5e197d0ce0a282`
+  `6fa460d51d79a693173dc6f7330c8ce940a2fc7c`
 - Cleanup baseline SHA przed końcowym raportem:
   `b4b02deedbf18bc4e61ef9ed3493e125b6505d89`
 - Aktualny raport wykonawczy:
@@ -55,7 +55,8 @@ Otwarte ryzyko recovery:
   zweryfikowanym bundle. 39 jest przodkami kanonu, 421 pozostaje rozbieżnymi
   kandydatami do modułowego review. Review recovery jest obecnie domknięte:
   224/224 heads w finalnym generatorze ma dyspozycję, zero semantic/owner
-  unknowns, trzy jawne kandydaty integracyjne;
+  unknowns i zero kandydatów integracyjnych. 30 odzyskanych historii zostało
+  zintegrowanych chirurgicznie, 96 sklasyfikowano jako zastąpione;
 - najważniejsze nieprzeniesione clean/local oraz dirty/WIP są zapisane w
   istniejących manifestach cleanup. Nie scalać całych branchy; tylko modułowy
   diff lub pojedynczy zweryfikowany commit.

@@ -21,8 +21,8 @@ pozostałe zadania i dowody potrzebne do zamknięcia.
 
 Pełna inwentaryzacja recovery jest zamknięta: `224/224` głów ma werdykt,
 `SEMANTIC_REVIEW_REQUIRED=0`, `OWNER_DECISION_REQUIRED=0`. Dyspozycja:
-18 reference/harness, 95 superseded, 76 represented canonical, 4 destructive
-rejected, 28 integrated, 3 jawne kandydaty integracyjne. Żadne usunięcie
+18 reference/harness, 96 superseded, 76 represented canonical, 4 destructive
+rejected, 30 integrated, 0 kandydatów integracyjnych. Żadne usunięcie
 nie jest jeszcze autoryzowane.
 
 Skala dowodu, stosowana osobno dla każdego modułu:
@@ -178,8 +178,9 @@ aktualnego zestawu D/S/B/V/P.
   - `ASM-003`: canonical report deep-link/origin filter i initiative batch.
   - `CLEAN-002-ASM-010`: DRD MVP subset jest zintegrowany — cold reopen pobiera
     właściwy session Output oraz persisted Reports/Initiative Drafts; focused
-    DRD `62/62 PASS`. Rich viewers, SIRI seed i broad Method Core są jawnie
-    post-MVP i pozostają kandydatem bez wholesale merge.
+    DRD `62/62 PASS`. Jedyna zgodna delta recovery, tenant-safe SIRI draft seed,
+    jest również zintegrowana. Rich viewers i niezamontowany presentation player
+    są jawnym post-MVP, nie kandydatem recovery.
 - DoD: save/reload/conflict/freeze/reopen, immutable lineage, role/tenant,
   C/F/D/S/B/V/P. Monday scope remains DRD only.
 
@@ -240,7 +241,8 @@ aktualnego zestawu D/S/B/V/P.
   - `FIN-001`: bridge/backfill report i jedna ID space; zero unresolved IDs.
   - `FIN-002`: pięć workspaces create/update/approve/reopen.
   - `FIN-003`: Results ROI reconciliation and append-only Actual.
-  - `CLEAN-002-FIN-005`: canonical i18n policy.
+  - `CLEAN-002-FIN-005` jest zintegrowany: 22 brakujące klucze semantyczne w
+    kanonicznych katalogach DE/ES/AR/JA; kontrakt locale `9/9 PASS`.
   - `CLEAN-002-FIN-006` jest zintegrowany: effective-tax policy,
     required-line presence i persisted Base/Bull/Bear workbook; `21/21 PASS`.
 - DoD: precision, RLS/tenant, fresh+upgrade, exports and C/F/D/S/B/V/P.
@@ -257,8 +259,9 @@ aktualnego zestawu D/S/B/V/P.
 - Zadania: `MAT-001` real DOCX; `MAT-002-T01` według istniejącego packetu
   `docs/cleanup/execution-packets/MAT-002-T01.md` dla real PPTX;
   `MAT-003` real XLSX; `MAT-004` launcher/retirement.
-  `CLEAN-002-MAT-024` remains post-MVP data task:
-  governed Atelier deck seed/materializer with target authority and rollback.
+  `CLEAN-002-MAT-024` jest zintegrowany jako bezpieczna capability danych:
+  dry-run default, ścisła authority/allowlist, pinned transaction, podpisany
+  rollback manifest i lost-COMMIT reconciliation. Nie wykonano zapisu na demo.
 - DoD: editable real files, stable reopen, formulas/formats, immutable versions,
   four-eyes where required, provider errors, desktop/mobile visual/a11y and
   C/F/D/S/B/V/P.
@@ -325,16 +328,20 @@ aktualnego zestawu D/S/B/V/P.
 - DoD: register→knowledge→certificate→code→sale→commission→payout plus expiry,
   correction, currency and partner isolation; C/F/D/S/B/V/P.
 
-## 4. Trzy pozostałe kandydaty integracyjne
+## 4. Recovery ledger — zamknięty
 
-| Kolejność | Task | Moduł | Zakres | Tryb |
-|---:|---|---|---|---|
-| 1 | `CLEAN-002-ASM-010` | Assessment | DRD subset zintegrowany; rich viewers/SIRI/broad Method Core pozostają | bounded post-MVP |
-| 2 | `CLEAN-002-FIN-005` | Finance | canonical i18n coverage | parallel post-MVP |
-| 3 | `CLEAN-002-MAT-024` | Materials data | governed Atelier deck fixture/materializer | serial data task, no demo write during integration |
+Wszystkie 224 niezależne odzyskane heads mają dyspozycję: 30 zostało
+zintegrowanych chirurgicznie, 76 jest reprezentowanych przez kanon, 96 ma
+nowsze odpowiedniki, 18 to wyłącznie harness/reference, a 4 to odrzucone
+destrukcyjne snapshoty. Pozostało zero kandydatów integracyjnych, zero
+semantic unknown i zero owner-decision unknown. `CLEAN-002-ASM-010` zachował
+DRD oraz SIRI seed, `CLEAN-002-FIN-005` domknął locale, a
+`CLEAN-002-MAT-024` dostarczył governed materializer bez zapisu na demo.
 
-Każdy task ma odzyskany SHA i `nextAction` w
-`generated/recovered-head-disposition.json`. Nie wolno scalać całych gałęzi.
+Pełna dyspozycja i reguła odzyskania pozostają w
+`generated/recovered-head-disposition.json`. Brak kandydatów recovery nie jest
+równoznaczny z gotowością runtime: dalszą pracę wyznaczają atomowe taski 16
+modułów i wspólna brama release.
 
 ## 5. Zamrożona kolejność wykonania
 

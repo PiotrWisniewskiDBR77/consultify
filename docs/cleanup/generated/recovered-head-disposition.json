@@ -12,11 +12,11 @@
   "summary": {
     "total": 224,
     "referenceHarnessOnly": 18,
-    "representedSuperseded": 95,
+    "representedSuperseded": 96,
     "representedCanonical": 76,
     "rejectedDestructiveSnapshot": 4,
-    "integratedCanonical": 28,
-    "candidateIntegration": 3,
+    "integratedCanonical": 30,
+    "candidateIntegration": 0,
     "ownerDecisionRequired": 0,
     "semanticReviewRequired": 0,
     "deletionAuthorized": 0
@@ -116,12 +116,12 @@
       "migrationPaths": [
         "server/migrations/20260813c_method_core_roles_and_approvals.sql"
       ],
-      "verdict": "CANDIDATE_INTEGRATION",
+      "verdict": "REPRESENTED_SUPERSEDED",
       "taskId": "CLEAN-002-ASM-010",
       "recoveryRef": "refs/recovery/unknown-20260815/031772082b7d4925e11986016079d02adeb17382",
       "deletionAuthorized": false,
-      "evidenceRule": "Canonical commit 9a5d49c83 closes the DRD MVP subset: a cold frozen/closed reopen resolves the exact session Output from canonical lineage and hydrates persisted Reports and Initiative Drafts without local content storage. The focused DRD matrix passes 62/62 and frontend typecheck passes. Current code already represents eight save/offline states and persisted presentation/report/output/draft lineage. The recovered head still contains post-MVP rich report/presentation viewers, SIRI seed and broader Method Core suites not integrated into the DRD MVP.",
-      "nextAction": "Keep the DRD MVP implementation. Reconcile the remaining rich viewers, SIRI seed and broader Method Core suites only in separately scoped post-MVP Assessment packets; never merge the recovered head wholesale."
+      "evidenceRule": "Canonical commit 9a5d49c83 closes the DRD MVP cold-reopen artifact lineage, and fbc14c1fb preserves the only remaining current-compatible value: a tenant-safe, dry-run-first SIRI draft seed. Its first disposable realPG run inserts one pack and replay is an immutable no-op; current SIRI/compiler tests pass 20/20 and Method Core tests 73/73. The recovered rich report surface depends on removed organization-wide routes and renders raw JSON, while its presentation player has no production consumer; broad suites target those retired contracts.",
+      "nextAction": "Keep the DRD MVP and governed SIRI draft seed. Treat rich report rendering, presentation playback and broader Assessment outputs as explicit post-MVP product work, not recovery integration; never merge the recovered head wholesale."
     },
     {
       "tip": "064f03242e87beeef1caa2002349fdc1e491f32c",
@@ -2989,12 +2989,12 @@
       "uniqueCommitCount": 4,
       "pathCount": 11,
       "migrationPaths": [],
-      "verdict": "CANDIDATE_INTEGRATION",
+      "verdict": "INTEGRATED_CANONICAL",
       "taskId": "CLEAN-002-FIN-005",
       "recoveryRef": "refs/recovery/unknown-20260815/8b254dd57dcc144da02236278d8c3a6d66ff9dcc",
       "deletionAuthorized": false,
-      "evidenceRule": "Finance, Meeting and Organization retain incomplete translation coverage; the recovered slice is partial and its standalone namespace files do not match the current namespace policy.",
-      "nextAction": "Reconcile semantic keys into the canonical translation namespace and supported-language fallback policy, port remaining hardcoded labels and add locale tests."
+      "evidenceRule": "Canonical commit ac956eb93 reconciles the real delta into the existing translation.json namespace: 22 semantic Finance, Meeting and Organization keys across DE, ES, AR and JA. It does not restore incompatible standalone namespaces. The locale authority/fallback/mounted contract passes 9/9, all six locale JSON catalogs parse and the full frontend typecheck passes.",
+      "nextAction": "Retain the canonical namespace policy and include the locale contract plus RTL/browser visual checks in the release gate."
     },
     {
       "tip": "8b416d8c74e2a29c689a099296034cc584ffe840",
@@ -3974,12 +3974,12 @@
       "uniqueCommitCount": 18,
       "pathCount": 31,
       "migrationPaths": [],
-      "verdict": "CANDIDATE_INTEGRATION",
+      "verdict": "INTEGRATED_CANONICAL",
       "taskId": "CLEAN-002-MAT-024",
       "recoveryRef": "refs/recovery/unknown-20260815/c3949cfeb5e8f3020bc629ae6ac0a7c60996bedb",
       "deletionAuthorized": false,
-      "evidenceRule": "Presentation read/coherence and autosave repairs are canonical, but the governed Atelier presentation fixture, target authority, dry-run materializer and commit-outcome reconciliation adapter are absent.",
-      "nextAction": "Port current-schema seed/template and an authorized dry-run-first deck materializer with exact target authority, row allowlist, pinned transaction, full before-image rollback, lost-COMMIT reconciliation and tests; do not execute against demo during integration."
+      "evidenceRule": "Canonical commit 6fa460d51 adds the current-schema Atelier deck template/seed and governed materializer: dry-run default, exact environment and tenant authority, three-row allowlist, explicit write/rollback tokens, signed full before-image manifest, pinned advisory-lock transaction and lost-COMMIT acknowledgement reconciliation. The root non-hosted matrix passes 237/237; the isolated implementation also passed 35/35 disposable realPG assertions and typecheck. No hosted or demo write was executed.",
+      "nextAction": "Retain the governed capability. Execute it against demo only under a separately authorized data operation with exact target readback, then run the signed-in Presentation acceptance flow."
     },
     {
       "tip": "c3b8f6d16b21c1e1970870e7ebcceb189b33a6f2",
