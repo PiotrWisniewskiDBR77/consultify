@@ -1,13 +1,14 @@
 # Consultify — finalny raport gotowości 16 modułów i plan wykonawczy
 
 Data: 2026-08-15
-Authority integrated candidate SHA: `032ca27f7`
+Authority product candidate SHA: `25adb32518dfde2cc17e3d5db7b2f6c7b955ffd7`
+Repository-owned browser evidence SHA: `2169562a89de4b09d23dfa4a9199b31484193288`
 Cleanup/report baseline SHA: `8210bc170`
-Status całego systemu: `NOT_RELEASE_READY / CLEAN_CODE_INVENTORY_COMPLETE`
+Status całego systemu: `NOT_RELEASE_READY / LOCAL_BROWSER_32_OF_32_GREEN / FULL_STANDARD_PENDING / DEPLOY_PARITY_PENDING`
 
-> CURRENT EVIDENCE CHECKPOINT — 2026-08-15, authority `032ca27f7`.
-> Sekcje historyczne niżej pozostają śladem decyzji. Aktualny werdykt i jedyna
-> pozostała kolejka wykonawcza znajdują się w sekcji 8.
+> CURRENT EVIDENCE CHECKPOINT — 2026-08-16, product authority `25adb3251`.
+> Sekcje historyczne pozostają śladem audytu; sekcja 9 na końcu jest bieżącym
+> werdyktem wykonawczym i zastępuje ich starsze statusy.
 
 ## 1. Co ten raport rozstrzyga
 
@@ -458,3 +459,34 @@ Wspólne taski: `SYS-001` = pełny test/typecheck/build/performance gate na jedn
 SHA; `REL-001` = deploy tego SHA, fresh/upgrade ledger, flag/env/data readback;
 `UX-001` = signed-in desktop/mobile, loading/empty/error, visual/a11y i brak
 technicznych enumów/UUID. Dopiero `SYS-001 + REL-001 + UX-001` może dodać S/B/V/P.
+
+## 9. FINAL evidence delta — authority `25adb3251`
+
+Ta sekcja zastępuje statusy bieżące z sekcji 8; historia pozostaje zachowana.
+
+| Brama | Stan na authority SHA | Dokładny dowód / ograniczenie |
+|---|---|---|
+| Recovery | `PASS_SEMANTICALLY_CLOSED` | 224 heads: 30 integrated, 76 represented canonical, 96 represented/superseded, 18 reference harness only, 4 rejected destructive; 0 candidate, owner decision i semantic review. `deletionAuthorized=0`, więc nie jest to zgoda na kasowanie. |
+| Static | `PASS_TYPECHECKS` | Root i server typecheck PASS na `25adb3251`. Production build na tym exact SHA pozostaje częścią `FULL_STANDARD=PENDING`. |
+| Triage 198 | `PASS_WITH_EXPLICIT_PENDING` | Discovery 198/198; 145 plików i 1363 assertions PASS, 53 pliki i 254 assertions jawnie PENDING, 0 unexpected; fresh pgvector 718/718 migracji. To nie jest pełny 4093-file standard. |
+| Performance | `PASS_FOCUSED_5_MINUTE` | 30 próbek: 37.68→38.30 MB, +1.65%, last-10 +0.25%, próg 20%; positive control +54.17% został wykryty. To nie jest production-load/demo proof. |
+| Local browser | `PASS_32_OF_32` | 16 modułów × desktop/mobile, normal OWNER; 0 console errors, blocking failed requests, unexpected API ≥400, blocking Axe i heading/layout failures. 32 runtime JSON + 32 screenshots. Dwa Chat aborty były wyłącznie reload-caused. |
+| Full standard | `PENDING` | Placeholder do wyniku finalnego agenta; brak wyniku nie może być zastąpiony triage198 ani local browser. |
+| Deploy/demo parity | `PENDING` | Brak dowodu, że demo serwuje exact product SHA z tym samym DB/flags/data. |
+
+Wszystkie 16 kart `*-BVP-001` mają obecnie lokalne `B=PASS` i `V=PASS` na
+`25adb3251`; ich `P` pozostaje `PENDING`. Dlatego identyfikatory nie są zamykane,
+lecz przechodzą do stanu `LOCAL_BV_DONE / DEPLOY_P_PENDING`.
+
+`UX-001=LOCAL_DONE`, `SYS-001=PARTIAL_FULL_STANDARD_PENDING`, a
+`REL-001=PENDING`. Finalny werdykt pozostaje `NOT_RELEASE_READY`. Jawne taski
+policy/deferred nadal obowiązują: `MAT-POL-001`, `MTG-POL-001`, `PRT-POL-001`,
+`AUD-002`, `SET-002`, non-DRD Assessment, non-SWOT Tools i full Partner payout.
+
+Authority evidence:
+
+- `docs/program/gates/LOCAL_BROWSER_16_EVIDENCE_25adb3251.json`;
+- `docs/program/gates/evidence/local-browser-16-25adb3251/`;
+- `docs/program/CONSOLIDATED_GATE_TRIAGE_198_1dd3aad2a.json`;
+- `docs/program/gates/PERFORMANCE_MEMORY_LEAK_GATE_3be83d285.json`;
+- `docs/cleanup/generated/recovered-head-disposition.json`.

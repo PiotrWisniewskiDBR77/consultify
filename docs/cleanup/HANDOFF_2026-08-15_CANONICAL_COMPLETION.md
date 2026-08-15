@@ -1,7 +1,9 @@
 # Consultify canonical completion handoff — 2026-08-15
 
-Current authority SHA: `032ca27f7`
-Current status: `16/16 INVENTORIED / PRODUCT CODE INTEGRATED / RELEASE ACCEPTANCE PENDING`
+Current product authority SHA: `25adb32518dfde2cc17e3d5db7b2f6c7b955ffd7`
+Current status: `16/16 INVENTORIED / PRODUCT CODE INTEGRATED / LOCAL BROWSER 32/32 PASS / FULL STANDARD + DEPLOY PENDING`
+
+Repository-owned browser evidence: `2169562a89de4b09d23dfa4a9199b31484193288`.
 
 > Ten checkpoint zastępuje starsze SHA i kolejki wykonawcze, ale nie usuwa
 > historii. Recovery ledger jest zamknięty i nie jest edytowany.
@@ -327,3 +329,40 @@ Następna kolejność jest jedyna:
 
 Do czasu zakończenia 1–3 system pozostaje `NOT_RELEASE_READY`; C/F/D nie może
 być raportowane jako DONE bez S/B/V/P.
+
+## FINAL successor checkpoint — product `25adb3251`
+
+Product authority to `25adb32518dfde2cc17e3d5db7b2f6c7b955ffd7`.
+Repo-owned browser evidence jest w commitcie
+`2169562a89de4b09d23dfa4a9199b31484193288`; nie zmienia product SHA.
+
+Potwierdzone:
+
+- recovery 224/224 jest semantycznie zamknięte, bez kandydatów i decyzji;
+- root i server typecheck PASS na exact product candidate;
+- triage198 ma 0 unexpected i fresh pgvector 718/718, ale 53 pliki pozostają
+  explicit pending poza wykonanym wycinkiem;
+- focused five-minute performance memory gate PASS z +1.65% wzrostu;
+- local signed-in browser 32/32 PASS dla 16 modułów na desktop/mobile, z
+  repo-owned runtime JSON, screenshots, API/console/a11y/heading/layout proof.
+
+Niepotwierdzone i blokujące release:
+
+- `FULL_STANDARD=PENDING` — placeholder do wyniku finalnego agenta, obejmujący
+  również exact-current production build;
+- `REL-001=PENDING` — brak deploy/demo parity exact SHA/DB/flags/data/rollback;
+- `P=PENDING` dla wszystkich 16 `*-BVP-001`; lokalne `B/V` są zakończone.
+
+Kolejność następcy:
+
+1. Wpisać wynik pełnego standardu tylko wtedy, gdy dotyczy exact authority SHA;
+   przy FAIL utworzyć atomowy defect, przy PASS zamknąć `SYS-001-TFINAL`.
+2. Jeśli product SHA zmieni się po fixie, powtórzyć pełny 32-test browser matrix.
+3. Wdrożyć exact candidate, wykonać readback i rollback proof z `REL-001-T01`.
+4. Powtórzyć 16 kart w deployed środowisku i dopiero wtedy zamknąć ich `P`.
+5. Policy/deferred rozstrzygać osobno; nie blokują uczciwego bounded MVP, ale
+   nie wolno ich oznaczyć jako zaimplementowane.
+
+Po zakończeniu lokalnego evidence run własne backend/Vite zostały zatrzymane,
+disposable PG container usunięty, a porty 3210, 3211 i 55491 zwolnione. Ten
+branch jest evidence/docs branch; nie integrować automatycznie.

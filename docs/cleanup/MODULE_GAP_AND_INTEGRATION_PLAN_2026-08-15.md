@@ -1,12 +1,13 @@
 # Consultify — modułowy gap plan i plan integracji
 
 Data: 2026-08-15  
-Authority integrated candidate SHA: `032ca27f7`
-Status: `CANONICAL_CLEANUP_ANALYSIS / RUNTIME_ACCEPTANCE_PENDING`
+Authority product candidate SHA: `25adb32518dfde2cc17e3d5db7b2f6c7b955ffd7`
+Repository-owned browser evidence SHA: `2169562a89de4b09d23dfa4a9199b31484193288`
+Status: `CANONICAL_CLEANUP_ANALYSIS / LOCAL_BROWSER_32_OF_32_GREEN / FULL_STANDARD_AND_DEPLOY_PENDING`
 
-> CURRENT checkpoint: produktowe luki opisane historycznie niżej zostały
+> CURRENT checkpoint 2026-08-16: produktowe luki opisane historycznie niżej zostały
 > zredukowane przez ancestry `6d2b6d05f..032ca27f7`. Aktualna lista luk jest
-> zamrożona w sekcji `Current gap delta` na końcu dokumentu.
+> zamrożona w sekcji `Final current gap delta` na końcu dokumentu.
 
 ## Cel i granica dowodu
 
@@ -340,3 +341,25 @@ Tools i full Partner payout.
 Stare wpisy o default-OFF Results/DRD, niepodłączonym Organization snapshot,
 braku IAM registry i base Audits CRUD są `SUPERSEDED_BY_INTEGRATED_CODE`.
 Nie budować ich ponownie; weryfikować na `032ca27f7`.
+
+## Final current gap delta — authority `25adb3251`
+
+Ta sekcja zastępuje poprzedni current gap delta. Nie ma już niesklasyfikowanego
+recovery gap (`candidateIntegration=0`, `ownerDecisionRequired=0`,
+`semanticReviewRequired=0`) ani unexpected failure w triage198. Local browser
+domknął `B/V` dla 16/16 modułów: 32/32 PASS na desktop/mobile.
+
+Pozostają dokładnie cztery klasy pracy:
+
+1. `SYS-001-TFINAL`: pełny standard na exact candidate SHA, w tym current
+   production build. Stan: `PENDING`; triage198 nie zastępuje pełnego standardu.
+2. `REL-001-T01`: deploy exact product SHA oraz readback client/server SHA,
+   migration ledger, flags, governed tenant data i rollback. Stan: `PENDING`.
+3. Zachowane 16 `*-BVP-001`: lokalne `B/V=DONE`, ale deployed parity `P=PENDING`.
+4. Jawne policy/deferred: `MAT-POL-001`, `MTG-POL-001`, `PRT-POL-001`,
+   `AUD-002`, `SET-002`, non-DRD Assessment, non-SWOT Tools i full Partner payout.
+
+Nie są lukami: recovery inventory, focused performance gate, root/server
+typechecks, triage198 ani local signed-in browser. Nie są też dowodem release:
+full standard, exact production build oraz deploy/demo parity pozostają jawnie
+niepotwierdzone. Recovery ledger nie autoryzuje usuwania (`deletionAuthorized=0`).

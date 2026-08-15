@@ -1,9 +1,10 @@
 # Consultify — wykonawczy rejestr dokończenia modułów
 
 Data: 2026-08-15  
-Authority integrated candidate SHA: `032ca27f7`
+Authority product candidate SHA: `25adb32518dfde2cc17e3d5db7b2f6c7b955ffd7`
+Repository-owned browser evidence SHA: `2169562a89de4b09d23dfa4a9199b31484193288`
 Cleanup/report baseline SHA: `8210bc170`
-Status: `EXECUTION_REGISTRY / NOT_RELEASE_READY`
+Status: `EXECUTION_REGISTRY / LOCAL_BROWSER_GREEN / FULL_STANDARD_PENDING / NOT_RELEASE_READY`
 
 ## Rozszerzenie siedmiopunktowego planu sprzątania
 
@@ -1055,3 +1056,26 @@ Pozostają wyłącznie: `CHAT-BVP-001`, `MYW-AGT-BVP-001`, `INT-BVP-001`,
 
 Nie uruchamiać ponownie zintegrowanych tasków bez reprodukowalnego FAIL na
 `032ca27f7`; odkryty defekt otrzymuje nowe atomowe ID.
+
+## FINAL atomic reconciliation — authority `25adb3251`
+
+Ta sekcja zastępuje bieżący status wcześniejszej tabeli. Wszystkie wymienione
+wyżej pakiety produktowe zachowują swoje scope, ale po integracji i focused/D
+evidence otrzymują `DONE_CODE_D`; nie oznacza to `DONE` modułu ani release.
+
+| Task / grupa | Finalny stan atomowy | Co pozostaje |
+|---|---|---|
+| `CHAT-001..003`, `MYW-001..002`, `AGT-001..003`, `INT-001..002`, `TLS-001..002`, `ASM-001..003`, `INI-001..002`, `EXE-001..002`, `RES-001..004`, `ORG-001..002`, `ADM-001`, `SET-001` | `DONE_CODE_D` | Wyłącznie odpowiedni deployed parity `P`. |
+| `MAT-001..004`, `FIN-001..003`, `MTG-001`, `AUD-001`, `PRT-001..003` | `DONE_CODE_D_BOUNDED` | Jawny zakres POST_MVP/policy poniżej oraz deployed parity `P`. |
+| 16 × `*-BVP-001` | `LOCAL_BV_DONE / DEPLOY_P_PENDING` | Weryfikacja deployed exact-SHA; zachować istniejące ID. |
+| `CLEAN-002` | `DONE_SEMANTIC_LEDGER` | 0 candidate/decision/review heads. |
+| `CLEAN-003` | `NOT_AUTHORIZED` | Nie usuwać: recovery ledger ma `deletionAuthorized=0`. |
+| `UX-001` | `LOCAL_DONE` | Dowód 32/32; parity na demo jest częścią `P`. |
+| `SYS-001` | `PARTIAL_FULL_STANDARD_PENDING` | Root/server TC PASS, triage/performance PASS w swoich zakresach; exact full standard i current production build `PENDING`. |
+| `REL-001` | `PENDING` | Deploy/readback/rollback exact product SHA. |
+
+Jedyna aktywna kolejka ogólna to `SYS-001-TFINAL` (placeholder final full
+standard), `REL-001-T01` oraz zachowane 16 `*-BVP-001` dla `P`. Osobno pozostają
+`MAT-POL-001`, `MTG-POL-001`, `PRT-POL-001`, `AUD-002`, `SET-002`, non-DRD
+Assessment, non-SWOT Tools i full Partner payout. Nie reaktywować tasków
+`DONE_CODE_D` bez nowego, reprodukowalnego FAIL na current authority SHA.
