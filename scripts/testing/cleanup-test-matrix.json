@@ -146,7 +146,8 @@
       "server/src/routes/resultsVnext/__tests__/roiPir.routes.test.ts",
       "tests/integration/assessment/drd-assessment-roundtrip.contract.test.ts",
       "tests/integration/buildSurfaceRemoved.contract.test.ts",
-      "tests/integration/superadmin-provisioning.e2e.test.ts"
+      "tests/integration/superadmin-provisioning.e2e.test.ts",
+      "tests/performance/memory-leak.test.ts"
     ]
   },
   "gates": {
@@ -321,6 +322,13 @@
         "server/src/services/__tests__/nativeOwnerPinnedClient.test.ts",
         "tests/integration/routes/table-platform.sheet-artifact.sqlite.integration.test.ts",
         "tests/integration/errorHandling.test.js"
+      ]
+    },
+    "performance": {
+      "reason": "Long-running performance evidence remains visible but must run in its dedicated runtime and must not hold the standard acceptance checkpoint open.",
+      "execution": "dedicated-performance-runtime-pending",
+      "files": [
+        "tests/performance/memory-leak.test.ts"
       ]
     }
   }

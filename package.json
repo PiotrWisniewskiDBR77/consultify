@@ -136,6 +136,7 @@
     "test:cleanup": "node scripts/testing/cleanup-test-artifacts.js",
     "test:cleanup-matrix:validate": "node scripts/testing/cleanup-test-matrix.mjs validate",
     "test:cleanup-matrix:standard": "node scripts/testing/cleanup-test-matrix.mjs run-standard",
+    "test:cleanup-matrix:standard-sharded": "node scripts/testing/cleanup-test-matrix.mjs run-standard-sharded",
     "test:cleanup-matrix:isolated": "node scripts/testing/cleanup-test-matrix.mjs run-isolated",
     "audit:source-reachability": "GIT_SHA=$(git rev-parse HEAD) node scripts/cleanup/source-reachability-inventory.mjs",
     "audit:module-surfaces": "GIT_SHA=$(git rev-parse HEAD) node scripts/cleanup/module-surface-inventory.mjs",
