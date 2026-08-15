@@ -61,6 +61,8 @@ export interface CreateInitiativeInput {
   keyRisks?: unknown[];
   sourceType?: string | null;
   sourceId?: string | null;
+  /** Durable idempotency link for candidate promotion. */
+  sourceCandidateId?: string | null;
   actionContract?: Record<string, unknown> | null;
   sourcePack?: Record<string, unknown> | null;
   evidenceRefs?: string[];
@@ -88,6 +90,8 @@ export interface CreateInitiativeOptions {
    * compatibility instead of a silent bypass).
    */
   allowMissingProject?: boolean;
+  /** Pinned transaction writer for atomic cross-domain handoffs. */
+  db?: Pick<typeof queryHelpers, 'queryRun'>;
 }
 
 export interface CreateInitiativeResult {
@@ -128,6 +132,7 @@ export async function createInitiative(
   const data: CreateInitiativeInput = validate
     ? (CreateInitiativeSchema.parse(preInput) as CreateInitiativeInput)
     : preInput;
+  const writeDb = options.db ?? queryHelpers;
 
   // F15 (data-integrity, continuation of Z139): decode HTML entities the global
   // input-sanitization middleware escaped on this field before storing. This is
@@ -218,9 +223,9 @@ export async function createInitiative(
       planned_start_date, planned_end_date,
       owner_business_id, owner_execution_id,
       problem_statement, deliverables, success_criteria, scope_in, scope_out, key_risks,
-      source_type, source_id, action_contract_json, source_pack_json, evidence_refs_json,
+      source_type, source_id, source_candidate_id, action_contract_json, source_pack_json, evidence_refs_json,
       created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
   const newParams = [
     id,
@@ -257,6 +262,7 @@ export async function createInitiative(
     JSON.stringify(data.keyRisks || []),
     sourceType,
     sourceId || null,
+    data.sourceCandidateId ?? null,
     JSON.stringify(
       data.actionContract && typeof data.actionContract === 'object' ? data.actionContract : {}
     ),
@@ -267,7 +273,7 @@ export async function createInitiative(
   ];
 
   try {
-    await queryHelpers.queryRun(newSql, newParams);
+    await writeDb.queryRun(newSql, newParams);
   } catch (error) {
     logger.warn(
       `[createInitiativeService] modern insert failed, falling back to legacy schema: ${
@@ -281,11 +287,11 @@ export async function createInitiative(
         start_date, end_date,
         owner_business_id, owner_execution_id,
         problem_statement, deliverables, success_criteria, scope_in, scope_out, key_risks,
-        source_type, source_id,
+        source_type, source_id, source_candidate_id,
         created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
-    await queryHelpers.queryRun(legacySql, [
+    await writeDb.queryRun(legacySql, [
       id,
       orgId,
       projectId,
@@ -311,6 +317,7 @@ export async function createInitiative(
       JSON.stringify(data.keyRisks || []),
       sourceType,
       sourceId || null,
+      data.sourceCandidateId ?? null,
       now,
       now,
     ]);
@@ -320,7 +327,7 @@ export async function createInitiative(
   // modern insert fell back to the legacy column set (which writes only `name`).
   // No-op on envs where the `title` column does not exist.
   try {
-    await queryHelpers.queryRun(
+    await writeDb.queryRun(
       `UPDATE initiatives SET title = ? WHERE id = ? AND organization_id = ? AND (title IS NULL OR title = '')`,
       [title, id, orgId]
     );
@@ -333,7 +340,7 @@ export async function createInitiative(
   // owner. Best-effort post-create UPDATE mirrors the title-alias pattern above.
   if (options.actor?.id) {
     try {
-      await queryHelpers.queryRun(
+      await writeDb.queryRun(
         `UPDATE initiatives SET created_by = ? WHERE id = ? AND organization_id = ? AND created_by IS NULL`,
         [String(options.actor.id), id, orgId]
       );

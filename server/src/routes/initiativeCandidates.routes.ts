@@ -21,6 +21,7 @@
 import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { requirePermission } from '../middleware/permission.middleware.js';
 import {
   acceptCandidate,
   type CandidateStatus,
@@ -32,6 +33,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
 
 const router = Router();
+const requireCandidateManage = requirePermission('INITIATIVE_CANDIDATE_MANAGE');
 
 const VALID_STATUSES: ReadonlyArray<CandidateStatus> = ['pending', 'accepted', 'dismissed'];
 
@@ -73,6 +75,7 @@ router.get(
 router.post(
   '/candidates/scan',
   verifyToken,
+  requireCandidateManage,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     if (!orgId) {
@@ -104,6 +107,7 @@ router.post(
 router.post(
   '/candidates/:id/accept',
   verifyToken,
+  requireCandidateManage,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     if (!orgId) {
@@ -148,6 +152,7 @@ router.post(
 router.post(
   '/candidates/:id/dismiss',
   verifyToken,
+  requireCandidateManage,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     if (!orgId) {

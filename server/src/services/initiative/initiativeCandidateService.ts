@@ -22,6 +22,7 @@
 
 import type { QueryResultRow } from 'pg';
 
+import { withPinnedPostgresTransaction } from '../../database/PostgresDatabase.js';
 import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import { createInitiative as funnelCreateInitiative } from './createInitiativeService.js';
@@ -699,6 +700,12 @@ export async function acceptCandidate(
   const language: 'en' | 'pl' = opts.language === 'en' ? 'en' : 'pl';
   const deps = opts.deps ?? defaultAcceptDeps();
 
+  // Production acceptance is one pinned transaction. Mock-db callers retain
+  // the legacy injectable path below for deterministic unit coverage.
+  if (db === defaultDb && orgId) {
+    return acceptCandidateAtomically(id, opts, deps);
+  }
+
   try {
     const params: unknown[] = [id];
     let sql = `SELECT * FROM initiative_candidates WHERE id = ?`;
@@ -920,6 +927,123 @@ export async function acceptCandidate(
   } catch {
     return null;
   }
+}
+
+async function acceptCandidateAtomically(
+  id: string,
+  opts: AcceptCandidateOptions,
+  deps: AcceptDeps
+): Promise<AcceptCandidatePayload | null> {
+  const orgId = opts.orgId!;
+  const userId = opts.userId;
+  const fill = opts.fill !== false;
+  const language: 'en' | 'pl' = opts.language === 'en' ? 'en' : 'pl';
+
+  const settled = await withPinnedPostgresTransaction(async (tx) => {
+    const row = await tx.queryOne<Record<string, unknown>>(
+      `SELECT * FROM initiative_candidates
+       WHERE id = ? AND organization_id = ?
+       FOR UPDATE`,
+      [id, orgId]
+    );
+    if (!row) return null;
+    const candidate = mapRow(row);
+    if (candidate.status === 'dismissed') {
+      throw acceptConflictError('Candidate was dismissed', 'CANDIDATE_DISMISSED');
+    }
+
+    let initiativeId = candidate.initiativeId ?? null;
+    let created = false;
+    if (!initiativeId) {
+      const recovered = await tx.queryOne<{ id: string }>(
+        `SELECT id FROM initiatives
+         WHERE organization_id = ? AND source_candidate_id = ?
+         LIMIT 1`,
+        [orgId, candidate.id]
+      );
+      initiativeId = recovered?.id ?? null;
+    }
+
+    if (!initiativeId) {
+      const inheritedProjectId = await resolveProjectIdFromSource(
+        orgId,
+        candidate.sourceType && candidate.sourceId ? candidate.sourceType : 'manual',
+        candidate.sourceId,
+        { queryOne: (sql, params) => tx.queryOne(sql, params) }
+      ).catch(() => null);
+      const result = await deps.createInitiative(
+        orgId,
+        {
+          title: candidate.title,
+          problemStatement: candidate.rationale || null,
+          projectId: inheritedProjectId,
+          sourceType: candidate.sourceType && candidate.sourceId ? candidate.sourceType : 'manual',
+          sourceId: candidate.sourceType && candidate.sourceId ? candidate.sourceId : null,
+          sourceCandidateId: candidate.id,
+        },
+        { validate: false, emitAudit: false, actor: { id: userId ?? null }, db: tx }
+      );
+      initiativeId = result.id;
+      created = true;
+    }
+
+    const linked = await tx.queryRun(
+      `UPDATE initiative_candidates
+       SET status = 'accepted', initiative_id = ?, accepted_at = NOW()
+       WHERE id = ? AND organization_id = ?
+         AND (initiative_id IS NULL OR initiative_id = ?)`,
+      [initiativeId, candidate.id, orgId, initiativeId]
+    );
+    if (Number(linked.changes ?? 0) !== 1) {
+      throw new Error('Candidate acceptance receipt/status link failed');
+    }
+
+    const readback = await tx.queryOne<{ candidate_id: string; initiative_id: string }>(
+      `SELECT c.id AS candidate_id, c.initiative_id
+       FROM initiative_candidates c
+       JOIN initiatives i ON i.id = c.initiative_id
+        AND i.organization_id = c.organization_id
+        AND i.source_candidate_id = c.id
+       WHERE c.id = ? AND c.organization_id = ? AND c.status = 'accepted'`,
+      [candidate.id, orgId]
+    );
+    if (!readback || readback.initiative_id !== initiativeId) {
+      throw new Error('Candidate acceptance tenant/lineage readback failed');
+    }
+
+    return { candidate, initiativeId, created };
+  });
+  if (!settled) return null;
+
+  const brief = [settled.candidate.title, settled.candidate.rationale].filter(Boolean).join('\n\n');
+  let filled = false;
+  if (fill && settled.created) {
+    try {
+      const generated = await deps.generateFull(deps.generatorDeps(), {
+        initiativeId: settled.initiativeId,
+        brief,
+        sourceType: settled.candidate.sourceType || 'manual',
+        organizationId: orgId,
+        language,
+      });
+      filled = (generated?.qualitySummary?.filled ?? 0) > 0;
+    } catch {
+      filled = false;
+    }
+  }
+  return {
+    candidateId: settled.candidate.id,
+    organizationId: settled.candidate.organizationId,
+    sourceType: settled.candidate.sourceType,
+    sourceId: settled.candidate.sourceId,
+    title: settled.candidate.title,
+    rationale: settled.candidate.rationale,
+    brief,
+    initiativeId: settled.initiativeId,
+    filled,
+    duplicateOfInitiativeId: settled.candidate.duplicateOfInitiativeId ?? null,
+    receiptPersisted: true,
+  };
 }
 
 // ---------------------------------------------------------------------------
