@@ -6,8 +6,8 @@ import { send as sendEmail } from '../emailService.js';
  *
  * Sends organization / project invitation emails via the shared SMTP-backed
  * emailService (DB `settings.smtp_*` with SMTP_* env fallback). When no SMTP
- * config is present, emailService logs to console and returns true, so the
- * invite link is always returned to the caller regardless of delivery.
+ * config is present, emailService returns false. The invite link is still
+ * returned to the caller, but delivery is never logged as successful.
  */
 export class InvitationSendingService {
   private getInviteLink(token: string): string {
@@ -40,7 +40,7 @@ export class InvitationSendingService {
   async sendOrgInvitation(email: string, token: string): Promise<string> {
     const inviteLink = this.getInviteLink(token);
     try {
-      await sendEmail({
+      const delivered = await sendEmail({
         to: email,
         subject: 'You have been invited to join an organization on Consultify',
         html: this.buildInviteHtml({
@@ -51,7 +51,11 @@ export class InvitationSendingService {
           cta: 'Accept invitation',
         }),
       });
-      logger.info(`[InvitationSending] Org invitation dispatched to ${email}`);
+      if (delivered) {
+        logger.info(`[InvitationSending] Org invitation dispatched to ${email}`);
+      } else {
+        logger.warn(`[InvitationSending] Org invitation was not delivered to ${email}`);
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       logger.warn(`[InvitationSending] Org invitation email failed (link still returned): ${msg}`);
@@ -62,7 +66,7 @@ export class InvitationSendingService {
   async sendProjectInvitation(email: string, projectName: string, token: string): Promise<string> {
     const inviteLink = this.getInviteLink(token);
     try {
-      await sendEmail({
+      const delivered = await sendEmail({
         to: email,
         subject: `You have been invited to the project "${projectName}" on Consultify`,
         html: this.buildInviteHtml({
@@ -72,7 +76,15 @@ export class InvitationSendingService {
           cta: 'Open project',
         }),
       });
-      logger.info(`[InvitationSending] Project invitation dispatched to ${email} (${projectName})`);
+      if (delivered) {
+        logger.info(
+          `[InvitationSending] Project invitation dispatched to ${email} (${projectName})`
+        );
+      } else {
+        logger.warn(
+          `[InvitationSending] Project invitation was not delivered to ${email} (${projectName})`
+        );
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       logger.warn(
@@ -85,7 +97,7 @@ export class InvitationSendingService {
   async sendResentInvitation(email: string, token: string): Promise<string> {
     const inviteLink = this.getInviteLink(token);
     try {
-      await sendEmail({
+      const delivered = await sendEmail({
         to: email,
         subject: 'Your Consultify invitation (resent)',
         html: this.buildInviteHtml({
@@ -96,7 +108,11 @@ export class InvitationSendingService {
           cta: 'Accept invitation',
         }),
       });
-      logger.info(`[InvitationSending] Invitation resent to ${email}`);
+      if (delivered) {
+        logger.info(`[InvitationSending] Invitation resent to ${email}`);
+      } else {
+        logger.warn(`[InvitationSending] Resent invitation was not delivered to ${email}`);
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       logger.warn(

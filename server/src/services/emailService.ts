@@ -8,6 +8,8 @@
  * Currently configured for console output, ready for SMTP integration.
  */
 
+import { randomUUID } from 'node:crypto';
+
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
@@ -33,7 +35,11 @@ interface SendEmailOptions {
     content?: string;
     contentType?: string;
   }>;
+  organizationId?: string;
+  recipientUserId?: string;
 }
+
+type SendOutcome = 'SENT' | 'FAILED' | 'MOCK';
 
 interface SMTPConfig {
   host?: string;
@@ -174,17 +180,20 @@ export async function send(options: SendEmailOptions): Promise<boolean> {
     settings[r.key] = r.value;
   });
 
+  const smtpUser = settings['smtp_user'] || process.env.SMTP_USER;
   const smtpConfig: SMTPConfig = {
     host: settings['smtp_host'] || process.env.SMTP_HOST,
     port: parseInt(settings['smtp_port'] || process.env.SMTP_PORT || '587', 10),
     secure: false, // true for 465, false for other ports
     auth: {
-      user: settings['smtp_user'] || process.env.SMTP_USER,
+      user: smtpUser,
       pass: settings['smtp_pass'] || process.env.SMTP_PASS,
     },
     from:
       settings['smtp_from'] ||
       process.env.SMTP_FROM ||
+      process.env.EMAIL_FROM ||
+      smtpUser ||
       '"Consultify System" <system@consultify.com>',
   };
 
@@ -197,7 +206,11 @@ export async function send(options: SendEmailOptions): Promise<boolean> {
   logger.info('------------------------------------------\n');
 
   // IF REAL CONFIG EXISTS, TRY SENDING
-  if (smtpConfig.host && smtpConfig.auth?.user) {
+  const smtpConfigured = Boolean(smtpConfig.host && smtpConfig.auth?.user);
+  let outcome: SendOutcome = 'MOCK';
+  let errorMessage: string | null = null;
+
+  if (smtpConfigured) {
     try {
       const transporter = nodemailer.createTransport(smtpConfig);
       await transporter.sendMail({
@@ -209,14 +222,64 @@ export async function send(options: SendEmailOptions): Promise<boolean> {
           `<h1>${subject}</h1><p>Template: ${template}</p><pre>${JSON.stringify(data, null, 2)}</pre>`,
         attachments,
       });
+      outcome = 'SENT';
       logger.info('[EMAIL SERVICE] Sent successfully via SMTP');
     } catch (e: unknown) {
       const error = e as Error;
+      outcome = 'FAILED';
+      errorMessage = error.message;
       logger.error('[EMAIL SERVICE] SMTP Failed:', error.message);
     }
+  } else {
+    logger.warn(`[EMAIL SERVICE] SMTP is not configured; email to ${to} was not delivered`);
   }
 
-  return true;
+  await recordSend({
+    to,
+    subject,
+    outcome,
+    errorMessage,
+    template,
+    organizationId: options.organizationId,
+    recipientUserId: options.recipientUserId,
+  });
+
+  return outcome === 'SENT';
+}
+
+async function recordSend(entry: {
+  to: string;
+  subject: string;
+  outcome: SendOutcome;
+  errorMessage: string | null;
+  template?: string;
+  organizationId?: string;
+  recipientUserId?: string;
+}): Promise<void> {
+  try {
+    const now = new Date().toISOString();
+    await DbPromise.run(
+      db,
+      `INSERT INTO email_sends
+         (id, organization_id, recipient_email, recipient_user_id, subject,
+          status, sent_at, failed_at, error_message, metadata)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        `es_${randomUUID()}`,
+        entry.organizationId ?? null,
+        entry.to,
+        entry.recipientUserId ?? null,
+        entry.subject,
+        entry.outcome,
+        entry.outcome === 'SENT' ? now : null,
+        entry.outcome === 'FAILED' ? now : null,
+        entry.errorMessage,
+        JSON.stringify({ template: entry.template ?? null }),
+      ]
+    );
+  } catch (error: unknown) {
+    logger.warn(`[EMAIL SERVICE] Failed to record delivery attempt: ${(error as Error).message}`);
+  }
 }
 
 /**
