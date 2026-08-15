@@ -12,7 +12,20 @@ vi.mock('react-hot-toast', () => ({ default: { success: vi.fn(), error: vi.fn() 
 
 const i18nState = vi.hoisted(() => ({ language: 'en' }));
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ i18n: i18nState, t: (k: string) => k }),
+  useTranslation: () => ({
+    i18n: i18nState,
+    t: (key: string, options?: Record<string, unknown>) => {
+      const labels: Record<string, string> = {
+        'myWorkNotebook.convertChecklistModal.noItems': 'No checklist items found in note.',
+        'myWorkNotebook.convertChecklistModal.selected': 'selected',
+        'myWorkNotebook.convertChecklistModal.deselectAll': 'Deselect all',
+        'myWorkNotebook.convertChecklistModal.createButton': 'Create {{count}} {{noun}}',
+        'myWorkNotebook.convertChecklistModal.taskSingular': 'task',
+        'myWorkNotebook.convertChecklistModal.taskPlural': 'tasks',
+      };
+      return (labels[key] ?? key).replace(/{{(\w+)}}/g, (_m, name) => String(options?.[name] ?? ''));
+    },
+  }),
 }));
 
 import { ConvertChecklistModal } from '@/components/MyWork/notebook/ConvertChecklistModal';

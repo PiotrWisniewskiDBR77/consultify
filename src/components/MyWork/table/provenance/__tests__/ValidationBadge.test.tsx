@@ -19,7 +19,10 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_k: string, def?: string) => def ?? _k,
+    t: (key: string, def?: string) =>
+      key === 'myWorkTable.validationBadge.validationStatus'
+        ? 'Validation status'
+        : def ?? key,
     i18n: { language: 'en' },
   }),
 }));

@@ -7,7 +7,7 @@ import QuickActions from '@/components/MyWork/shared/QuickActions';
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     i18n: { language: 'en' },
-    t: (key: string) => key,
+    t: (key: string, fallback?: string) => fallback ?? key,
   }),
 }));
 

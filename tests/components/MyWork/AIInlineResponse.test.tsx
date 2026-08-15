@@ -18,7 +18,18 @@ vi.mock('react-hot-toast', () => ({
 
 const i18nState = vi.hoisted(() => ({ language: 'en' }));
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ i18n: i18nState, t: (k: string) => k }),
+  useTranslation: () => ({
+    i18n: i18nState,
+    t: (key: string) =>
+      ({
+        'myWorkNotebook.aiInlineResponse.label_ask': 'AI Answer',
+        'myWorkNotebook.aiInlineResponse.label_expand': 'AI Expansion',
+        'myWorkNotebook.aiInlineResponse.label_challenge': 'AI Challenge',
+        'myWorkNotebook.aiInlineResponse.label_action': 'AI Action Plan',
+        'myWorkNotebook.aiInlineResponse.proposeForNote': 'Propose for note',
+        'myWorkNotebook.aiInlineResponse.failed': 'Failed to get AI response',
+      })[key] ?? key,
+  }),
 }));
 
 import { AIInlineResponse } from '@/components/MyWork/notebook/AIInlineResponse';
