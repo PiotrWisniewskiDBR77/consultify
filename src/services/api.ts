@@ -2503,6 +2503,19 @@ export const Api = {
         ),
       });
 
+      // CHAT-001 contract boundary: `/api/ai/chat/stream` owns conversational
+      // transport. `/api/v8/chat` owns snapshots/handoffs and is never a hidden
+      // fallback for a failed stream. Emit the resolved owner on every attempt
+      // so diagnostics can distinguish transport failure from V8 enrichment.
+      onThinking?.({
+        type: 'stream_transport',
+        owner: 'ai_chat_stream',
+        endpoint: '/api/ai/chat/stream',
+        v8Role: 'snapshot_and_handoff_only',
+        fallback: 'none',
+        httpStatus: response.status,
+      });
+
       // If backend didn't return SSE (e.g. 401/403 JSON), surface it immediately.
       // Otherwise the client would read a non-SSE body, never call onChunk, and appear as "nothing happens".
       if (!response.ok) {
@@ -2571,19 +2584,11 @@ export const Api = {
           }
         }
 
-        // Also show a short inline error so the assistant bubble doesn't stay empty.
-        const uiLang = getCachedUserLanguage();
-        const friendly =
-          code === 'ORG_NOT_FOUND'
-            ? uiLang === 'pl'
-              ? '⚠️ Brak organizacji w sesji. Wyloguj się i zaloguj ponownie.'
-              : '⚠️ Organization not found in session. Please log out and log in again.'
-            : uiLang === 'pl'
-              ? `⚠️ Nie udało się uruchomić AI (${code}).`
-              : `⚠️ AI request failed (${code}).`;
-        onChunk(friendly);
-        onDone();
-        return;
+        const requestError: any = new Error(serverMsg);
+        requestError.code = code;
+        requestError.httpStatus = response.status;
+        requestError.isStreamError = true;
+        throw requestError;
       }
 
       if (!response.body) throw new Error('ReadableStream not supported');
@@ -2618,15 +2623,11 @@ export const Api = {
           if (part.startsWith('data: ')) {
             const dataStr = part.replace('data: ', '').trim();
             if (dataStr === '[DONE]') {
-              // If stream ends without any visible output, show a friendly fallback
-              // (prevents "nothing happens" UX).
               if (!hasAnyVisibleOutput) {
-                const uiLang = getCachedUserLanguage();
-                const friendly =
-                  uiLang === 'pl'
-                    ? '⚠️ AI nie zwróciło odpowiedzi. Sprawdź konfigurację providera (OPENROUTER_API_KEY / OpenRouter w panelu SuperAdmin) oraz logi backendu.'
-                    : '⚠️ AI returned no output. Check LLM provider config (OPENROUTER_API_KEY / OpenRouter in SuperAdmin) and backend logs.';
-                onChunk(friendly);
+                const emptyError: any = new Error('AI stream completed without visible output');
+                emptyError.code = 'EMPTY_STREAM';
+                emptyError.isStreamError = true;
+                throw emptyError;
               }
               onDone();
               return;
@@ -2858,15 +2859,11 @@ export const Api = {
         }
       }
 
-      // If the SSE stream ended without any visible output, show a friendly fallback.
-      // This prevents the UX where the assistant bubble stays empty and gets hidden.
       if (!hasAnyVisibleOutput) {
-        const uiLang = getCachedUserLanguage();
-        const friendly =
-          uiLang === 'pl'
-            ? 'Nie udało się wygenerować odpowiedzi. Proszę spróbować ponownie za chwilę lub skontaktować się z administratorem.'
-            : 'Unable to generate a response. Please try again in a moment or contact your administrator.';
-        onChunk(friendly);
+        const emptyError: any = new Error('AI stream closed without visible output');
+        emptyError.code = 'EMPTY_STREAM';
+        emptyError.isStreamError = true;
+        throw emptyError;
       }
 
       onDone();
