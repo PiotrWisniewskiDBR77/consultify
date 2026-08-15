@@ -138,7 +138,8 @@
       "server/src/routes/__tests__/document-studio-client-reader.routes.test.ts",
       "server/src/services/__tests__/nativeOwnerPinnedClient.test.ts",
       "tests/integration/idempotency.test.js",
-      "tests/integration/systemHealthRepairRemoved.contract.test.ts"
+      "tests/integration/systemHealthRepairRemoved.contract.test.ts",
+      "tests/integration/organization/competency-auth.test.ts"
     ]
   },
   "gates": {
@@ -205,7 +206,8 @@
         "tests/unit/backend/agentPlan.routes.test.ts",
         "server/src/services/v8/__tests__/v8-smoke-offline-validation.test.ts",
         "server/src/services/v8/__tests__/v8-smoke-suite.test.ts",
-        "tests/integration/routes/presentations.share-revoke-and-rate-limit.route.test.ts"
+        "tests/integration/routes/presentations.share-revoke-and-rate-limit.route.test.ts",
+        "tests/integration/organization/competency-auth.test.ts"
       ]
     },
     "realdb": {

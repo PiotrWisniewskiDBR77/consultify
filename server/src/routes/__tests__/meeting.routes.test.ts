@@ -47,6 +47,11 @@ function createApp() {
   return app;
 }
 
+// Reuse one Express instance for the complete file. Creating a fresh app for
+// every Supertest request leaves overlapping ephemeral HTTP servers behind and
+// makes later requests fail nondeterministically with ECONNRESET/socket hang up.
+const app = createApp();
+
 const sampleMeeting = {
   id: 'meeting-1',
   organizationId: 'org-1',
@@ -68,7 +73,7 @@ describe('meeting routes', () => {
 
   it('GET / lists meetings for the org', async () => {
     mockList.mockResolvedValue([sampleMeeting]);
-    const res = await request(createApp()).get('/api/meeting');
+    const res = await request(app).get('/api/meeting');
     expect(res.status).toBe(200);
     expect(res.body.meetings).toHaveLength(1);
     expect(mockList).toHaveBeenCalledWith({ organizationId: 'org-1', projectId: null });
@@ -76,7 +81,7 @@ describe('meeting routes', () => {
 
   it('POST / creates a meeting', async () => {
     mockCreate.mockResolvedValue(sampleMeeting);
-    const res = await request(createApp())
+    const res = await request(app)
       .post('/api/meeting')
       .send({ title: 'Kickoff', startAt: '2026-07-01T10:00:00.000Z' });
     expect(res.status).toBe(201);
@@ -84,7 +89,7 @@ describe('meeting routes', () => {
   });
 
   it('POST / rejects missing title', async () => {
-    const res = await request(createApp())
+    const res = await request(app)
       .post('/api/meeting')
       .send({ startAt: '2026-07-01T10:00:00.000Z' });
     expect(res.status).toBe(400);
@@ -93,7 +98,7 @@ describe('meeting routes', () => {
 
   it('PUT /:id updates core fields', async () => {
     mockUpdate.mockResolvedValue({ ...sampleMeeting, title: 'Renamed' });
-    const res = await request(createApp())
+    const res = await request(app)
       .put('/api/meeting/meeting-1')
       .send({ title: 'Renamed', location: 'Office' });
     expect(res.status).toBe(200);
@@ -109,20 +114,20 @@ describe('meeting routes', () => {
   });
 
   it('PUT /:id rejects an empty title', async () => {
-    const res = await request(createApp()).put('/api/meeting/meeting-1').send({ title: '   ' });
+    const res = await request(app).put('/api/meeting/meeting-1').send({ title: '   ' });
     expect(res.status).toBe(400);
     expect(mockUpdate).not.toHaveBeenCalled();
   });
 
   it('PUT /:id returns 404 when the meeting is missing', async () => {
     mockUpdate.mockResolvedValue(null);
-    const res = await request(createApp()).put('/api/meeting/missing').send({ title: 'Renamed' });
+    const res = await request(app).put('/api/meeting/missing').send({ title: 'Renamed' });
     expect(res.status).toBe(404);
   });
 
   it('DELETE /:id removes a meeting', async () => {
     mockDelete.mockResolvedValue(true);
-    const res = await request(createApp()).delete('/api/meeting/meeting-1');
+    const res = await request(app).delete('/api/meeting/meeting-1');
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
     expect(mockDelete).toHaveBeenCalledWith({
@@ -133,12 +138,12 @@ describe('meeting routes', () => {
 
   it('DELETE /:id returns 404 when nothing was deleted', async () => {
     mockDelete.mockResolvedValue(false);
-    const res = await request(createApp()).delete('/api/meeting/missing');
+    const res = await request(app).delete('/api/meeting/missing');
     expect(res.status).toBe(404);
   });
 
   it('PATCH /:id/status validates the status value', async () => {
-    const res = await request(createApp())
+    const res = await request(app)
       .patch('/api/meeting/meeting-1/status')
       .send({ status: 'bogus' });
     expect(res.status).toBe(400);
@@ -147,7 +152,7 @@ describe('meeting routes', () => {
 
   it('PATCH /:id/status updates status', async () => {
     mockUpdateStatus.mockResolvedValue({ ...sampleMeeting, status: 'completed' });
-    const res = await request(createApp())
+    const res = await request(app)
       .patch('/api/meeting/meeting-1/status')
       .send({ status: 'completed' });
     expect(res.status).toBe(200);
@@ -156,7 +161,7 @@ describe('meeting routes', () => {
 
   it('POST /:id/decisions appends a decision', async () => {
     mockAddDecision.mockResolvedValue({ ...sampleMeeting, decisions: ['Ship'] });
-    const res = await request(createApp())
+    const res = await request(app)
       .post('/api/meeting/meeting-1/decisions')
       .send({ decision: 'Ship' });
     expect(res.status).toBe(201);
@@ -168,7 +173,7 @@ describe('meeting routes', () => {
       ...sampleMeeting,
       followUps: [{ id: 'fu-1', title: 'Recap', owner: 'Bob', status: 'open' }],
     });
-    const res = await request(createApp())
+    const res = await request(app)
       .post('/api/meeting/meeting-1/follow-ups')
       .send({ title: 'Recap', owner: 'Bob' });
     expect(res.status).toBe(201);
@@ -179,7 +184,7 @@ describe('meeting routes', () => {
   // let any member DELETE / change status; now only admin/owner/superadmin may.
   describe('L-04 role gate', () => {
     it('DELETE /:id returns 403 for a non-admin member', async () => {
-      const res = await request(createApp())
+      const res = await request(app)
         .delete('/api/meeting/meeting-1')
         .set('x-test-role', 'team_member');
       expect(res.status).toBe(403);
@@ -188,7 +193,7 @@ describe('meeting routes', () => {
 
     it('DELETE /:id is allowed for an admin', async () => {
       mockDelete.mockResolvedValue(true);
-      const res = await request(createApp())
+      const res = await request(app)
         .delete('/api/meeting/meeting-1')
         .set('x-test-role', 'admin');
       expect(res.status).toBe(200);
@@ -200,14 +205,14 @@ describe('meeting routes', () => {
 
     it('DELETE /:id is allowed for an owner', async () => {
       mockDelete.mockResolvedValue(true);
-      const res = await request(createApp())
+      const res = await request(app)
         .delete('/api/meeting/meeting-1')
         .set('x-test-role', 'owner');
       expect(res.status).toBe(200);
     });
 
     it('PATCH /:id/status returns 403 for a non-admin member', async () => {
-      const res = await request(createApp())
+      const res = await request(app)
         .patch('/api/meeting/meeting-1/status')
         .set('x-test-role', 'team_member')
         .send({ status: 'completed' });
@@ -217,7 +222,7 @@ describe('meeting routes', () => {
 
     it('PATCH /:id/status is allowed for an admin', async () => {
       mockUpdateStatus.mockResolvedValue({ ...sampleMeeting, status: 'completed' });
-      const res = await request(createApp())
+      const res = await request(app)
         .patch('/api/meeting/meeting-1/status')
         .set('x-test-role', 'admin')
         .send({ status: 'completed' });
@@ -228,11 +233,11 @@ describe('meeting routes', () => {
     it('read (GET) and create (POST) stay open to non-admin members', async () => {
       mockList.mockResolvedValue([sampleMeeting]);
       mockCreate.mockResolvedValue(sampleMeeting);
-      const listRes = await request(createApp())
+      const listRes = await request(app)
         .get('/api/meeting')
         .set('x-test-role', 'team_member');
       expect(listRes.status).toBe(200);
-      const createRes = await request(createApp())
+      const createRes = await request(app)
         .post('/api/meeting')
         .set('x-test-role', 'team_member')
         .send({ title: 'Kickoff', startAt: '2026-07-01T10:00:00.000Z' });
