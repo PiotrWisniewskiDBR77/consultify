@@ -9,19 +9,37 @@
  */
 import express from 'express';
 import request from 'supertest';
-import { beforeAll, describe, expect, it } from 'vitest';
-
-import skillsGapRoutes from '../../../server/src/routes/skills-gap.routes.js';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 describe('E-AUTH-A: /api/skills-gap requires auth', () => {
   let app: express.Express;
+  const previousNodeEnv = process.env.NODE_ENV;
+  const previousAuthBypass = process.env.ENABLE_TEST_AUTH_BYPASS;
+  const previousMockDb = process.env.MOCK_DB;
 
-  beforeAll(() => {
-    // Guarantee the no-token → 401 path (not the test-auth-bypass path).
-    delete process.env.ENABLE_TEST_AUTH_BYPASS;
+  beforeAll(async () => {
+    // Set fail-closed auth state before importing the router. Env loading during
+    // the router graph must not recapture an ambient test bypass.
+    process.env.NODE_ENV = 'test';
+    process.env.ENABLE_TEST_AUTH_BYPASS = 'false';
+    process.env.MOCK_DB = 'false';
+    vi.resetModules();
+    const { default: skillsGapRoutes } = await import(
+      '../../../server/src/routes/skills-gap.routes.js'
+    );
     app = express();
     app.use(express.json());
     app.use('/api/skills-gap', skillsGapRoutes);
+  });
+
+  afterAll(() => {
+    if (previousNodeEnv === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = previousNodeEnv;
+    if (previousAuthBypass === undefined) delete process.env.ENABLE_TEST_AUTH_BYPASS;
+    else process.env.ENABLE_TEST_AUTH_BYPASS = previousAuthBypass;
+    if (previousMockDb === undefined) delete process.env.MOCK_DB;
+    else process.env.MOCK_DB = previousMockDb;
+    vi.resetModules();
   });
 
   it('GET /by-competency without a token → 401', async () => {
