@@ -188,6 +188,21 @@ router.post(
   })
 );
 
+router.get(
+  '/planning-intakes/active',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const context = getV8Context(req);
+    const conversationId = String(req.query.conversationId ?? '').trim();
+    if (!conversationId) return res.status(400).json({ code: 'TRANSFORMATION_PLANNING_CONVERSATION_REQUIRED' });
+    const intake = await planningIntakeService.getActivePlanningIntake({
+      organizationId: context.organizationId,
+      actorUserId: context.userId,
+      conversationId,
+    });
+    return res.json({ data: { intake }, meta: { version: 'v8' } });
+  })
+);
+
 router.post(
   '/planning-intakes/from-template',
   asyncHandler(async (req: AuthRequest, res: Response) => {

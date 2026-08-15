@@ -467,6 +467,10 @@ export interface TransformationPlanningIntakeDto {
 }
 
 export const TransformationCasesApi = {
+  getActivePlanningIntake: (conversationId: string) =>
+    v8Get<{ intake: TransformationPlanningIntakeDto | null }>(
+      `/transformation-cases/planning-intakes/active?conversationId=${encodeURIComponent(conversationId)}`
+    ),
   startPlanningIntakeFromTemplate: (
     input: {
       templateId: string;

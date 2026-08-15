@@ -47,6 +47,7 @@ import type {
 import { ChatToSchemaPanel } from '@/components/MyWork/table/ChatToSchemaPanel';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { isValidLanguage, normalizeLanguageCode, type SupportedLanguage } from '@/i18n';
+import { TransformationCasesApi } from '@/services/api/v8/transformation-cases';
 import {
   deckTitleFromIntent,
   type DeliverableGenerationPlanItem,
@@ -140,6 +141,15 @@ import {
   getTeresaStartFailureMessage,
 } from './teresaRuntimeCopy';
 import { TeresaTTSPlayer } from './TeresaTTSPlayer';
+import { detectTransformationPlanIntent } from './transformationIntentDetector';
+import {
+  parsePlanningClarification,
+  planningFollowUp,
+  planningIntakeIdempotencyKey,
+  transformationCaseReadyMessage,
+  transformationIntakeMissingLabels,
+} from './transformationPlanningChat';
+export { transformationCaseReadyMessage, transformationIntakeMissingLabels } from './transformationPlanningChat';
 import { V8ArtifactRunControl } from './V8ArtifactRunControl';
 import { V8ContextIndicator } from './V8ContextIndicator';
 import { detectWhiteboardIntent } from './whiteboardIntentDetector';
@@ -897,6 +907,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   // when the matching tool is actually open; otherwise it falls through to
   // the normal LLM flow instead of silently no-op'ing.
   const [activeIdeaWorkspaceTool, setActiveIdeaWorkspaceTool] = useState<string | null>(null);
+  const [pendingTransformationIntakeId, setPendingTransformationIntakeId] = useState<string | null>(null);
   useEffect(() => {
     const onActiveIdeaTool = (event: Event) => {
       const detail = (event as CustomEvent).detail as { tool?: string | null } | undefined;
@@ -2470,6 +2481,16 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeConversationId]);
 
+  useEffect(() => {
+    let live = true;
+    setPendingTransformationIntakeId(null);
+    if (!activeConversationId) return () => { live = false; };
+    void TransformationCasesApi.getActivePlanningIntake(activeConversationId)
+      .then(({ intake }) => { if (live) setPendingTransformationIntakeId(intake?.intakeId ?? null); })
+      .catch((error) => console.error('[TransformationCase] Active intake recovery failed:', error));
+    return () => { live = false; };
+  }, [activeConversationId]);
+
   // ========================================================================
   // Scroll to bottom on new messages (P1-1, P1-10)
   // ========================================================================
@@ -2643,6 +2664,68 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             timestamp: new Date(),
           });
           onMessageSent?.(content);
+          return;
+        }
+      }
+
+      if (!attachments?.length && (pendingTransformationIntakeId || detectTransformationPlanIntent(text))) {
+        const language = effectiveChatLanguage === 'pl' ? 'pl' : 'en';
+        let conversationId = useConversationStore.getState().activeConversationId;
+        if (!conversationId) {
+          try {
+            conversationId = (await createConversation()).id;
+          } catch (error) {
+            console.error('[TransformationCase] Conversation creation failed:', error);
+            toast.error(language === 'pl' ? 'Nie udało się rozpocząć planu transformacji.' : 'Could not start the transformation plan.');
+            return;
+          }
+        }
+        addChatMessage({ id: `transformation-user-${Date.now()}`, role: 'user', content: text, timestamp: new Date() });
+        let persistenceDegraded = false;
+        try {
+          await addMessageToConversation({ conversationId, role: 'user', content: text, messageType: 'text' });
+        } catch {
+          persistenceDegraded = true;
+        }
+        try {
+          const parsed = parsePlanningClarification(text);
+          let intake = pendingTransformationIntakeId
+            ? await TransformationCasesApi.answerPlanningIntake(pendingTransformationIntakeId, parsed)
+            : await TransformationCasesApi.startPlanningIntake(
+                { mandate: text, projectId: workspaceContext?.projectId ?? null, conversationId, ...parsed },
+                planningIntakeIdempotencyKey(conversationId, text)
+              );
+          let responseContent: string;
+          if (intake.status === 'ready') {
+            const converted = await TransformationCasesApi.convertPlanningIntake(intake.intakeId);
+            intake = converted.intake;
+            setPendingTransformationIntakeId(null);
+            responseContent = transformationCaseReadyMessage(converted.transformationCaseId, language);
+          } else {
+            setPendingTransformationIntakeId(intake.intakeId);
+            responseContent = planningFollowUp(intake, language);
+          }
+          if (persistenceDegraded) responseContent += language === 'pl'
+            ? '\n\nUwaga: Case jest zapisany, ale zapis tej wiadomości w historii rozmowy nie powiódł się.'
+            : '\n\nNote: the Case state is durable, but this chat message could not be saved.';
+          addChatMessage({ id: `transformation-ai-${Date.now()}`, role: 'ai', content: responseContent, timestamp: new Date() });
+          try {
+            await addMessageToConversation({ conversationId, role: 'ai', content: responseContent, messageType: 'text' });
+          } catch {
+            toast.error(language === 'pl' ? 'Stan planu zapisano, ale historia rozmowy wymaga ponowienia.' : 'Plan state was saved, but chat history needs a retry.');
+          }
+          onMessageSent?.(content);
+          return;
+        } catch (error) {
+          console.error('[TransformationCase] Planning intake failed:', error);
+          addChatMessage({
+            id: `transformation-error-${Date.now()}`,
+            role: 'ai',
+            content: language === 'pl'
+              ? 'Nie udało się zapisać kroku planowania. Żadne wykonanie nie zostało uruchomione; możesz bezpiecznie ponowić.'
+              : 'The planning step could not be saved. No execution was started; it is safe to retry.',
+            timestamp: new Date(),
+          });
           return;
         }
       }

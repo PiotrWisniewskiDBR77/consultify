@@ -59,18 +59,29 @@ async function owned(intakeId: string, organizationId: string, actorUserId: stri
   return row;
 }
 export async function startPlanningIntake(input: { organizationId: string; actorUserId: string; idempotencyKey: string; mandate: string; projectId?: string | null; conversationId?: string | null; measurableOutcomes?: string[]; sponsor?: string | null; scope?: string | null; horizon?: string | null }) {
-  const existing = await queryOne<IntakeRow>(`SELECT * FROM transformation_planning_intakes WHERE organization_id=? AND idempotency_key=?`, [input.organizationId, input.idempotencyKey]);
-  if (existing) {
-    if (existing.initiated_by_user_id !== input.actorUserId) throw new TransformationCaseOperationError('TRANSFORMATION_PLANNING_INTAKE_ACTOR_MISMATCH', 403, 'Idempotency key belongs to another actor');
-    return map(existing, true);
-  }
   const mandate = clean(input.mandate);
   if (!mandate) throw new TransformationCaseOperationError('TRANSFORMATION_PLANNING_MANDATE_REQUIRED', 400, 'Mandate is required');
   const outcomes = (input.measurableOutcomes ?? []).map((x) => x.trim()).filter(Boolean);
   const missing = planningMissingKeys({ ...input, measurableOutcomes: outcomes });
-  const id = uuidv4();
-  await queryRun(`INSERT INTO transformation_planning_intakes (intake_id,organization_id,project_id,conversation_id,initiated_by_user_id,idempotency_key,status,mandate,measurable_outcomes_json,sponsor,scope,horizon,missing_keys_json) VALUES (?,?,?,?,?,?,?, ?,?::jsonb,?,?,?,?::jsonb)`, [id,input.organizationId,input.projectId ?? null,input.conversationId ?? null,input.actorUserId,input.idempotencyKey,missing.length?'needs_clarification':'ready',mandate,JSON.stringify(outcomes),clean(input.sponsor),clean(input.scope),clean(input.horizon),JSON.stringify(missing)]);
-  return map((await queryOne<IntakeRow>(`SELECT * FROM transformation_planning_intakes WHERE intake_id=?`, [id]))!);
+  const payload = { mandate, projectId: input.projectId ?? null, conversationId: input.conversationId ?? null, measurableOutcomes: outcomes, sponsor: clean(input.sponsor), scope: clean(input.scope), horizon: clean(input.horizon) };
+  const inputDigest = digestOf(payload);
+  return withPgTransaction(async (client) => {
+    await client.query(`SELECT pg_advisory_xact_lock(hashtext(?))`, [`${input.organizationId}:planning-intake:${input.idempotencyKey}`]);
+    const existing = (await client.query<IntakeRow>(`SELECT * FROM transformation_planning_intakes WHERE organization_id=? AND idempotency_key=? FOR UPDATE`, [input.organizationId, input.idempotencyKey])).rows[0];
+    if (existing) {
+      if (existing.initiated_by_user_id !== input.actorUserId) throw new TransformationCaseOperationError('TRANSFORMATION_PLANNING_INTAKE_ACTOR_MISMATCH', 403, 'Idempotency key belongs to another actor');
+      if (existing.input_digest && existing.input_digest !== inputDigest) throw new TransformationCaseOperationError('TRANSFORMATION_PLANNING_INTAKE_IDEMPOTENCY_CONFLICT', 409, 'Idempotency payload changed');
+      return map(existing, true);
+    }
+    const id = uuidv4();
+    await client.query(`INSERT INTO transformation_planning_intakes (intake_id,organization_id,project_id,conversation_id,initiated_by_user_id,idempotency_key,input_digest,status,mandate,measurable_outcomes_json,sponsor,scope,horizon,missing_keys_json) VALUES (?,?,?,?,?,?,?,?,?,?::jsonb,?,?,?,?::jsonb)`, [id,input.organizationId,payload.projectId,payload.conversationId,input.actorUserId,input.idempotencyKey,inputDigest,missing.length?'needs_clarification':'ready',mandate,JSON.stringify(outcomes),payload.sponsor,payload.scope,payload.horizon,JSON.stringify(missing)]);
+    return map((await client.query<IntakeRow>(`SELECT * FROM transformation_planning_intakes WHERE intake_id=?`, [id])).rows[0]);
+  });
+}
+
+export async function getActivePlanningIntake(input: { organizationId: string; actorUserId: string; conversationId: string }) {
+  const row = await queryOne<IntakeRow>(`SELECT * FROM transformation_planning_intakes WHERE organization_id=? AND initiated_by_user_id=? AND conversation_id=? AND status IN ('needs_clarification','ready') ORDER BY updated_at DESC, created_at DESC LIMIT 1`, [input.organizationId, input.actorUserId, input.conversationId]);
+  return row ? map(row) : null;
 }
 export async function answerPlanningIntake(input: { intakeId: string; organizationId: string; actorUserId: string; measurableOutcomes?: string[]; sponsor?: string | null; scope?: string | null; horizon?: string | null }) {
   const current = await owned(input.intakeId,input.organizationId,input.actorUserId);
