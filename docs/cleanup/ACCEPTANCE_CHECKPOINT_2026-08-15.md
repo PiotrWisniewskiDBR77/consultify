@@ -132,7 +132,9 @@ agent statement cannot independently upgrade a module to `LIVE_CONNECTED`.
 - Canonical tree: `PASS`
 - Frontend/backend compilation: `PASS`
 - Structural source inventory: `PASS`, with manual review outstanding
-- Semantic module inventory: `IN_PROGRESS`
+- Semantic module inventory: `PASS` — 16/16 menu modules have a code-level
+  AS-IS/TO-BE/GAP card in
+  `docs/cleanup/MODULE_GAP_AND_INTEGRATION_PLAN_2026-08-15.md`.
 - Git/worktree recovery inventory: `IN_PROGRESS`
 - Deterministic standard test gate: `PARTIAL`
 - Isolated/realDB/external-runtime gates: `PENDING`
@@ -141,6 +143,18 @@ agent statement cannot independently upgrade a module to `LIVE_CONNECTED`.
 
 This state is sufficient to continue controlled module-by-module investigation
 from one tree. It is not sufficient to declare the application release-ready.
+
+### Sixteen-module closeout addendum
+
+- Authority reviewed: `5792f250564b28bafc77b39fa1c9083e4756570d`.
+- The delta from `3c5f8e2d...` contains only the two canonical handoff docs.
+- Missing cards completed: Interview, Meeting, Organization, Admin Panel,
+  Settings and Partner Portal.
+- Representative focused gate: `10/10` files, `123/123` tests PASS, covering
+  Interview contracts, Meeting routes/service, Organization shell, Admin tenant
+  routes, Settings routes/API and Partner routing/V8 API.
+- An initial sandbox run hit `listen EPERM`; the same command outside that bind
+  restriction passed. This closes semantic inventory, not runtime acceptance.
 
 ### 2026-08-15 Gate triage addendum
 

@@ -23,6 +23,15 @@ deployed-demo parity, provider health or a production migration ledger.
 | Materials / Artifact Studio | `LIVE_CONNECTED_CANDIDATE` base, `IMPLEMENTED_UNMOUNTED` V2 | Base library is connected. New studio lanes are fail-closed by flags. Provider, visual and demo proof remain open. |
 | Cases | `IMPLEMENTED_UNMOUNTED`, `DUPLICATE` | `/zlecenia/*` defaults off. Rich Case Workspace exists, but `case_core` conflicts semantically with Agent `transformation_cases`. |
 | Audits | `PARTIAL` | Base audit CRUD is connected. Criterion/five-surface/DRD/editing features remain flag-dependent and lack full lifecycle evidence. |
+| Interview | `LIVE_CONNECTED_CANDIDATE`, `PARTIAL` | Hub and broad APIs exist, but publish/invite/respond/approve/handoff, external respondent isolation and answer-to-insight lineage lack one exact-SHA golden flow. |
+| Meeting | `LIVE_CONNECTED_CANDIDATE`, `PARTIAL` | Real hub and `/api/meeting` exist while menu says `soon`; approval, handoff, consent and transcript retention remain unproven. |
+| Organization | `LIVE_CONNECTED_CANDIDATE`, `PARTIAL` | `/organization/*` and context/claim/KG backends exist; overlapping surfaces, snapshot propagation and conflict/source-delete semantics remain open. |
+| Admin Panel | `LIVE_CONNECTED_CANDIDATE`, `SECURITY_CRITICAL_PARTIAL` | Tenant Admin and SuperAdmin are separately routed, but capability/audit/last-admin/cross-tenant negatives lack one verified matrix. |
+| Settings | `LIVE_CONNECTED_CANDIDATE`, `PARTIAL` | Large real surface exists, but controls lack one owner/storage/effect registry and full persistence, policy-conflict and secret proof. |
+| Partner Portal | `LIVE_CONNECTED_CANDIDATE`, `PARTIAL`, `DUPLICATE_API` | Scoped portal/APIs exist, but legacy/V8 coexist and individual referral through attribution/commission/payout is unproven. |
+
+Complete 16-module AS-IS/TO-BE/GAP:
+`docs/cleanup/MODULE_GAP_AND_INTEGRATION_PLAN_2026-08-15.md`.
 
 ## Priorytetowe backlogi wg bieżącego stanu testów (operacyjnie)
 

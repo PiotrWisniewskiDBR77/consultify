@@ -164,9 +164,10 @@ Poniższe klasyfikacje są code-level. Demo i exact deployed SHA pozostają
 | Materials | base `LIVE_CONNECTED_CANDIDATE`, V2 `PARTIAL` | potrzebne realne DOC/PPT/XLSX golden flows, provider i visual proof |
 | Audits | `PARTIAL / DUPLICATE` | `/api/audit` i `/api/audits`, sprzeczne open/soon; pełny moduł poza MVP |
 
-Pełny audyt musi objąć również pozostałe pozycje 16-modułowego menu:
-Interview, Meeting, Organization, Admin Panel, Settings i Partner Portal. Nie
-wolno wydać raportu „wszystkie moduły” bez tych kart.
+Pełny audyt 16/16 domknięto w potomnym raporcie
+`docs/cleanup/MODULE_GAP_AND_INTEGRATION_PLAN_2026-08-15.md`. Dodano Interview,
+Meeting, Organization, Admin Panel, Settings i Partner Portal. Klasyfikacja
+pozostaje code-level; demo i runtime acceptance nie są przez sam audyt dowiedzione.
 
 ## Rekomendowany zakres MVP na poniedziałek
 
@@ -199,7 +200,8 @@ Najbardziej realistyczny zakres do odbioru:
 
 ### P0 — pełny audyt 16 modułów
 
-5. Dokończyć karty Interview, Meeting, Organization, Admin, Settings, Partner.
+5. [DONE — code-level] Karty Interview, Meeting, Organization, Admin, Settings
+   i Partner są w `MODULE_GAP_AND_INTEGRATION_PLAN_2026-08-15.md`.
 6. Dla wszystkich 16 pozycji wykonać literalnie:
    `purpose/input/output/forbidden ownership → route → UI → API → service → DB/migrations → flags → tests → demo`.
 7. Dla każdego elementu sklasyfikować: mounted, unmounted, duplicate,
@@ -287,4 +289,3 @@ Cel jest ukończony dopiero wtedy, gdy jednocześnie:
 - demo odpowiada temu samemu SHA;
 - browser/realDB/visual evidence potwierdza zakres MVP;
 - raport cleanup i plan integracji są aktualne.
-
