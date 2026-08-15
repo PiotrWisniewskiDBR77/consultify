@@ -502,6 +502,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <Button
               variant="ghost"
               size="sm"
+              aria-label={
+                sidebarOpen
+                  ? t('settings.sidebar.closeNavigation', 'Close settings navigation')
+                  : t('settings.sidebar.openNavigation', 'Open settings navigation')
+              }
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className="p-2 text-[var(--c-text-secondary)] hover:text-[var(--c-text)] lg:hidden"
             >

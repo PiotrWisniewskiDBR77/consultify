@@ -108,12 +108,23 @@ export const OrgContextSummaryBanner: React.FC<OrgContextSummaryBannerProps> = (
       ? io(`${configuredTarget}/org-context`, {
           transports: ['websocket'],
           auth: { token },
+          autoConnect: false,
         })
       : io('/org-context', {
           transports: ['websocket'],
           auth: { token },
+          autoConnect: false,
         });
     socketRef.current = socket;
+
+    // Defer the transport by one macrotask. React StrictMode mounts and
+    // immediately disposes the first effect instance in development; opening
+    // the WebSocket synchronously makes that expected cleanup surface as a
+    // browser-level "closed before established" error. The real effect still
+    // connects on the next task, while the probe instance never opens a socket.
+    const connectTimer = window.setTimeout(() => {
+      if (!disposed) socket.connect();
+    }, 0);
 
     socket.on('connect', () => {
       if (disposed) return;
@@ -131,8 +142,11 @@ export const OrgContextSummaryBanner: React.FC<OrgContextSummaryBannerProps> = (
 
     return () => {
       disposed = true;
-      socket.emit('leave:org', organizationId);
-      socket.disconnect();
+      window.clearTimeout(connectTimer);
+      if (socket.connected) {
+        socket.emit('leave:org', organizationId);
+        socket.disconnect();
+      }
       socketRef.current = null;
     };
   }, [organizationId]);
