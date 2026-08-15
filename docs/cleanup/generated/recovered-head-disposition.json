@@ -15,8 +15,8 @@
     "representedSuperseded": 75,
     "representedCanonical": 45,
     "rejectedDestructiveSnapshot": 3,
-    "integratedCanonical": 17,
-    "candidateIntegration": 7,
+    "integratedCanonical": 20,
+    "candidateIntegration": 4,
     "ownerDecisionRequired": 0,
     "semanticReviewRequired": 59,
     "deletionAuthorized": 0
@@ -2083,12 +2083,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 10,
       "migrationPaths": [],
-      "verdict": "CANDIDATE_INTEGRATION",
+      "verdict": "INTEGRATED_CANONICAL",
       "taskId": "CLEAN-002-SEC-008",
       "recoveryRef": "refs/recovery/unknown-20260815/6a0b010f145118997ae4e4565a47cb9d4b5bf63c",
       "deletionAuthorized": false,
-      "evidenceRule": "Ten current AI or heuristic initiative producers can still persist HTML-escaped titles on raw fallback paths; central funnel decoding does not protect those writes when the funnel is disabled.",
-      "nextAction": "Decode once before funnel/raw branching in the audited producers and reuse the decoded title for persistence, notifications and returned entities; add entity-integrity tests."
+      "evidenceRule": "Canonical commit 1787da6c7 decodes generated initiative titles exactly once before funnel/raw branching across every current producer, reuses the decoded value consistently and does not resurrect the retired Finance direct-write path. Combined contract tests pass 16/16 and server typecheck passes.",
+      "nextAction": "Exercise representative generated titles through Tools, Assessment and Artifact conversion in realDB acceptance."
     },
     {
       "tip": "6d89655f03115fb6f4f5afdf20ec7652cc47f9a0",
@@ -2540,12 +2540,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 9,
       "migrationPaths": [],
-      "verdict": "CANDIDATE_INTEGRATION",
+      "verdict": "INTEGRATED_CANONICAL",
       "taskId": "CLEAN-002-INI-009",
       "recoveryRef": "refs/recovery/unknown-20260815/76952a279080ae8b3e2c63e99589b4f8275376dc",
       "deletionAuthorized": false,
-      "evidenceRule": "The canonical project resolver exists, but nine live raw initiative insertion paths still persist a null or source project without calling it, leaving an orphan-project risk when the funnel is disabled.",
-      "nextAction": "Port resolveInitiativeProjectId per current callsite in My Work, Tools, AI actions, Artifact conversion, Assessment, Initiative definitions, Notebook, Report import and Valuation; test null project, tenant system portfolio and funnel ON/OFF."
+      "evidenceRule": "Canonical commit 8a4f8cf3c integrates resolveInitiativeProjectId into every audited current raw initiative producer while preserving the governed Finance candidate boundary. Combined project/title tests pass 16/16 and server typecheck passes.",
+      "nextAction": "Prove tenant portfolio anchoring and funnel ON/OFF on disposable PostgreSQL during the Initiatives acceptance gate."
     },
     {
       "tip": "79aab0f517f89c60e097348f33aa894714309de9",
@@ -4784,12 +4784,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 7,
       "migrationPaths": [],
-      "verdict": "CANDIDATE_INTEGRATION",
+      "verdict": "INTEGRATED_CANONICAL",
       "taskId": "CLEAN-002-FIN-004",
       "recoveryRef": "refs/recovery/unknown-20260815/ecc92ae06a0a8c39552040fb5de6e28223bfc6db",
       "deletionAuthorized": false,
-      "evidenceRule": "Current Finance writes assumption status/note markers but has no assumptionCaveats read-side or equivalent response/completeness surfacing.",
-      "nextAction": "Port the focused assumptionCaveats service and test, then reapply route and Atelier seed completeness wiring to current files."
+      "evidenceRule": "Canonical commit e1fcbac0b adds the focused assumption-caveat read-side, appraisal response and Atelier completeness wiring while preserving strict fail-closed rate behavior. The isolated integration passed 64 focused tests plus frontend/backend typechecks.",
+      "nextAction": "Verify persisted caveats in the signed-in Finance appraisal flow and Atelier realDB acceptance."
     },
     {
       "tip": "ee1676c40f959d5cde13b138cae1e3376d5c0d8b",
