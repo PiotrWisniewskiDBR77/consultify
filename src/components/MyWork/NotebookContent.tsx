@@ -84,6 +84,7 @@ import { NotebookAttachmentsSection } from './notebook/NotebookAttachmentsSectio
 import { NotebookBacklinksBar } from './notebook/NotebookBacklinksBar';
 import { NotebookBubbleToolbar } from './notebook/NotebookBubbleToolbar';
 import { getNotebookUploadSourceSummary } from './notebook/notebookCaptureSourceSummary';
+import { extractNotebookConflictPage } from './notebook/notebookConflict';
 import { getNotebookConvertedOutputSummary } from './notebook/notebookConvertedOutputSummary';
 import { expandNotebookPageToCanvasDraft } from './notebook/notebookExpandToDocument';
 import { NotebookExportMenu } from './notebook/NotebookExportMenu';
@@ -1536,7 +1537,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
             // optimistic-lock token to the server's latest so the user can
             // reload/merge, and surface a non-destructive toast. Their unsaved
             // edits remain in the editor until they choose to reload.
-            const serverPage = err?.data?.data ?? null;
+            const serverPage = extractNotebookConflictPage<NotebookPage>(err);
             if (serverPage?.updatedAt) {
               // Advance the optimistic-lock token in the ref mirror ONLY (not
               // the rendered `pages` state) so a "Save mine anyway" retry can

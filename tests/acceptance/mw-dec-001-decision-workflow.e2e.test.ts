@@ -487,39 +487,19 @@ describe('MW-DEC-001 — Canonical Decision Workflow (real Postgres, real router
   // DecisionController.ts:1324) unconditionally runs, after every successful
   // approve/reject commit:
   //   SELECT impacted_type, impacted_id, is_blocker FROM decision_impacts
-  //   WHERE decision_id = ? AND is_blocker = TRUE
-  // On real Postgres this is a hard type error — "operator does not exist:
-  // integer = boolean" — REGARDLESS of whether any rows match (proven below
-  // with a raw query against zero matching rows). SQLite's dynamic typing
-  // (and any mock) would never surface this; it only appears against a real,
-  // strictly-typed Postgres instance, which is exactly why this test suite
-  // exists. The query is NOT wrapped in try/catch, so it crashes the
-  // in-flight request with an uncaught 500 — AFTER
-  // finalizeDecisionTransition's BEGIN/COMMIT has already landed the
-  // approve/reject atomically. Net effect: every terminal PATCH
-  // /api/decisions/:id/decide on real Postgres returns 500 to the caller
-  // even though the decision WAS correctly, atomically approved/rejected in
-  // the database. This is a genuine, high-severity, pre-existing bug
-  // (unrelated to the atomicity work MW-DEC-001 itself added — that part
-  // works correctly, see the DB assertions immediately below still hold)
-  // that the sibling backend agent needs to fix, e.g. `is_blocker = TRUE` ->
-  // `is_blocker = 1` (or make the column genuinely BOOLEAN and fix the two
-  // duplicate table definitions). Reported here, NOT patched by this
-  // Postgres-integration-test-owner seat — out of scope (application code,
-  // not the test harness) — and the tests below are left asserting the
-  // CORRECT (200) behavior so the suite stays honestly RED until it's fixed,
-  // per this task's explicit "do not fake a false pass" instruction.
-  it('FINDING: decision_impacts.is_blocker (INTEGER) vs "is_blocker = TRUE" (boolean literal) is a real Postgres type error, independent of any HTTP call', async () => {
-    await expect(
-      client.query(
-        `SELECT impacted_type, impacted_id, is_blocker FROM decision_impacts WHERE decision_id = $1 AND is_blocker = TRUE`,
-        [DEC_APPROVE]
-      )
-    ).rejects.toThrow(/operator does not exist: integer = boolean/);
+  // The canonical fresh schema now exposes a real BOOLEAN. Keep this direct
+  // PostgreSQL assertion so a future duplicate migration cannot silently
+  // regress the decision approval query back to INTEGER-vs-BOOLEAN failure.
+  it('decision_impacts.is_blocker is boolean-compatible on the canonical schema', async () => {
+    const result = await client.query(
+      `SELECT impacted_type, impacted_id, is_blocker FROM decision_impacts WHERE decision_id = $1 AND is_blocker = TRUE`,
+      [DEC_APPROVE]
+    );
+    expect(result.rows).toEqual(expect.any(Array));
   });
 
   // ═══════════════════════════ CASE 5 + 10 ═══════════════════════════
-  it('case 5+10: authorized decision-maker CAN approve; rationale/actor/timestamp/history persist atomically [BLOCKED by the is_blocker finding above — see comment]', async () => {
+  it('case 5+10: authorized decision-maker CAN approve; rationale/actor/timestamp/history persist atomically', async () => {
     const beforeHistoryCount = await client.query(
       `SELECT COUNT(*)::int AS c FROM decision_history WHERE decision_id=$1`,
       [DEC_APPROVE]

@@ -474,7 +474,7 @@ test.describe('MW-08 Notes UX acceptance — conflict handling', () => {
     await page.screenshot({ path: screenshotPath('06-conflict.png'), fullPage: true });
   });
 
-  test('[bonus, not gating] "Save mine anyway" after a conflict either resolves cleanly or is a known recovery gap', async ({
+  test('"Save mine anyway" advances to the server version and resolves the conflict', async ({
     page,
   }) => {
     test.setTimeout(120000);
@@ -514,29 +514,9 @@ test.describe('MW-08 Notes UX acceptance — conflict handling', () => {
     await keepMineButton.click();
     const retryPutRes = await retryPutPromise;
 
-    if (retryPutRes.status() === 409) {
-      // KNOWN GAP (see final report): the 409 handler reads
-      // `err.data` as if it were the fresh row directly, but
-      // `handleResponse`/`v8Put` throw with `err.data` set to the whole
-      // envelope `{error, code, data: freshRow, meta}` — so
-      // `conflictServerPage?.updatedAt` is always undefined and the
-      // optimistic-lock token never advances. "Save mine anyway" resends the
-      // same stale `expectedUpdatedAt` and collides again. Documented, not
-      // silently downgraded to a pass.
-      await expect(conflictBanner, 'conflict banner persists — known recovery gap').toBeVisible();
-      test.info().annotations.push({
-        type: 'known-bug',
-        description:
-          'MW-08: "Save mine anyway" re-sends the same stale expectedUpdatedAt and gets a ' +
-          'second 409 — NotebookContent.tsx reads err.data as the fresh row, but it is the ' +
-          '{error,code,data,meta} envelope, so conflictServerPage.updatedAt is always undefined ' +
-          'and the optimistic-lock token never advances.',
-      });
-    } else {
-      expect(retryPutRes.ok(), `retry save should succeed or 409, got ${retryPutRes.status()}`).toBeTruthy();
-      await expect(conflictBanner).toHaveCount(0);
-      await expect(saveState(page)).toContainText(/Saved|Zapisano/i, { timeout: 10000 });
-    }
+    expect(retryPutRes.ok(), `retry save must succeed, got ${retryPutRes.status()}`).toBeTruthy();
+    await expect(conflictBanner).toHaveCount(0);
+    await expect(saveState(page)).toContainText(/Saved|Zapisano/i, { timeout: 10000 });
   });
 });
 
