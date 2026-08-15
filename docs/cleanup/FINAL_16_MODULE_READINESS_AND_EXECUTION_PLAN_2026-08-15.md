@@ -1,8 +1,9 @@
 # Consultify — finalny raport gotowości 16 modułów i plan wykonawczy
 
 Data: 2026-08-15
-Authority code SHA: `c0ca3f26d`
-Cleanup baseline SHA: `b4b02deed`
+Authority product SHA: `1fa57d424`
+Authority acceptance SHA: `118e678d6`
+Cleanup/report baseline SHA: `8210bc170`
 Status całego systemu: `NOT_RELEASE_READY / CLEAN_CODE_INVENTORY_COMPLETE`
 
 ## 1. Co ten raport rozstrzyga
@@ -22,7 +23,7 @@ pozostałe zadania i dowody potrzebne do zamknięcia.
 Pełna inwentaryzacja recovery jest zamknięta: `224/224` głów ma werdykt,
 `SEMANTIC_REVIEW_REQUIRED=0`, `OWNER_DECISION_REQUIRED=0`. Dyspozycja:
 18 reference/harness, 95 superseded, 76 represented canonical, 4 destructive
-rejected, 23 integrated, 8 jawnych kandydatów integracyjnych. Żadne usunięcie
+rejected, 26 integrated, 5 jawnych kandydatów integracyjnych. Żadne usunięcie
 nie jest jeszcze autoryzowane.
 
 Skala dowodu, stosowana osobno dla każdego modułu:
@@ -133,9 +134,13 @@ aktualnego zestawu D/S/B/V/P.
   - `INT-001`: jeden canonical client i adaptery; publish/invite/respond/resume/
     submit/revoke. Shared API client zastrzeżony dla integratora.
   - `INT-002`: approved insight → candidate preview → handoff.
-  - `CLEAN-002-INT-005` + `INT-006` (`READY_SERIAL`): jedna transakcja/lease
-    claim→initiative→receipt/status, preview enrichment, PBAC, fault/race tests;
-    migracje i service integruje jedna osoba.
+  - `CLEAN-002-INT-005` (`INTEGRATED_CANONICAL`): jedna przypięta transakcja
+    claim→initiative→receipt/status; fresh PG 708 migracji, PBAC/tenant 12 PASS
+    + 1 jawny skip, fault/concurrency 2/2 PASS dwukrotnie.
+  - `CLEAN-002-INT-006` (`READY_SERIAL`): wyłącznie preview enrichment i
+    signed-in proof, że snapshot/title/rationale/actor/evidence pokazane przed
+    approval odpowiadają finalnemu Candidate i Initiative. Stary lease jest
+    zastąpiony przez silniejszy transaction invariant i nie wraca.
 - DoD: respondent wall, expiry/revoke, answer lineage, stale version, tenant,
   role i no-orphan retry na fresh/upgrade PG oraz signed-in browser.
 
@@ -188,8 +193,8 @@ aktualnego zestawu D/S/B/V/P.
 - Zadania:
   - `INI-001`: replay/idempotency, capability/role transitions, cancellation.
   - `INI-002`: exactly one handoff receipt and downstream ID.
-  - `CLEAN-002-INT-005/006`: atomic candidate acceptance before declaring
-    upstream handoffs safe.
+  - `CLEAN-002-INT-005` jest zintegrowany i ma realPG no-orphan/concurrency;
+    `INT-006` pozostaje tylko preview-to-final lineage.
 - DoD: retry produces one row, all rows have tenant project, cold reopen,
   gate/CAS, provenance, role/tenant negatives and C/F/D/S/B/V/P.
 
@@ -320,18 +325,15 @@ aktualnego zestawu D/S/B/V/P.
 - DoD: register→knowledge→certificate→code→sale→commission→payout plus expiry,
   correction, currency and partner isolation; C/F/D/S/B/V/P.
 
-## 4. Osiem pozostałych kandydatów integracyjnych
+## 4. Pięć pozostałych kandydatów integracyjnych
 
 | Kolejność | Task | Moduł | Zakres | Tryb |
 |---:|---|---|---|---|
-| 1 | `CLEAN-002-INT-005` | Interview/Initiatives | atomowy claim→initiative→receipt | serial, migrations/service |
-| 2 | `CLEAN-002-INT-006` | Interview | lease, preview, PBAC/fault/concurrency | serial po INT-005 |
-| 3 | `CLEAN-002-TEST-003` | Tools | CAS threading w H3/H31 tests | parallel |
-| 4 | `CLEAN-002-QA-005` | test platform | tenant isolation 11 E2E | parallel |
-| 5 | `CLEAN-002-ASM-010` | Assessment | artifact/report/presentation/SIRI reconciliation | bounded post-MVP; DRD subset only if required |
-| 6 | `CLEAN-002-FIN-005` | Finance | canonical i18n coverage | parallel post-MVP |
-| 7 | `CLEAN-002-FIN-006` | Finance | tax/required-lines/three scenarios | serial post-MVP |
-| 8 | `CLEAN-002-MAT-024` | Materials data | governed Atelier deck fixture/materializer | serial data task, no demo write during integration |
+| 1 | `CLEAN-002-INT-006` | Interview | preview→final lineage; lease/fault/concurrency już zastąpione silniejszą transakcją | serial UI/client acceptance |
+| 2 | `CLEAN-002-ASM-010` | Assessment | artifact/report/presentation/SIRI reconciliation | bounded post-MVP; DRD subset only if required |
+| 3 | `CLEAN-002-FIN-005` | Finance | canonical i18n coverage | parallel post-MVP |
+| 4 | `CLEAN-002-FIN-006` | Finance | tax/required-lines/three scenarios | serial post-MVP |
+| 5 | `CLEAN-002-MAT-024` | Materials data | governed Atelier deck fixture/materializer | serial data task, no demo write during integration |
 
 Każdy task ma odzyskany SHA i `nextAction` w
 `generated/recovered-head-disposition.json`. Nie wolno scalać całych gałęzi.
@@ -340,8 +342,9 @@ Każdy task ma odzyskany SHA i `nextAction` w
 
 1. **Fala 0 — authority:** freeze candidate SHA; update module/task documents;
    no shared checkout; zero semantic unknowns (osiągnięte).
-2. **Fala 1 — data invariants:** INT-005/006, Tools CAS tests, E2E isolation;
-   fresh/upgrade PG; candidate SHA A.
+2. **Fala 1 — data invariants:** INT-005, Tools CAS tests i E2E isolation są
+   zintegrowane; fresh PostgreSQL 16 + 708 migracji i atomic realPG są zielone.
+   Pozostały preview lineage z INT-006 jest pierwszym zadaniem następnej fali.
 3. **Fala 2 — MVP code:** CHAT-001/2/3, MYW-001/2, AGT-001/2/3, INT-001/2,
    TLS-001/2, ASM-001/2/3, INI-001/2, EXE-001/2; candidate SHA B.
 4. **Fala 3 — Materials and control plane:** MAT-001..4, ORG-001/2,
@@ -380,7 +383,7 @@ Ostatni literalny pełny standardowy przebieg, wykonany przed bieżącym product
 SHA, objął `4052/4052` plików dokładnie raz: `39 884` testy, `38 798 PASS`,
 `581 FAIL`, `485 pending`, `19 todo`, `283` niezielone pliki; performance był
 osobnym `PENDING`. Później naprawiono wiele starych harnessów, ale pełnej bramki
-na `c0ca3f26d` nie wykonano. Dlatego `S=EVIDENCE_MISSING`, a nie zielone.
+na `118e678d6` nie wykonano. Dlatego `S=EVIDENCE_MISSING`, a nie zielone.
 
 ## 6. Standard pojedynczego pakietu wykonawczego
 

@@ -15,8 +15,8 @@
     "representedSuperseded": 95,
     "representedCanonical": 76,
     "rejectedDestructiveSnapshot": 4,
-    "integratedCanonical": 23,
-    "candidateIntegration": 8,
+    "integratedCanonical": 26,
+    "candidateIntegration": 5,
     "ownerDecisionRequired": 0,
     "semanticReviewRequired": 0,
     "deletionAuthorized": 0
@@ -811,12 +811,12 @@
         "server/migrations/20260802_int008_accept_claim_lease.sql",
         "server/migrations/20260802_int008_readback_status_columns.sql"
       ],
-      "verdict": "CANDIDATE_INTEGRATION",
+      "verdict": "INTEGRATED_CANONICAL",
       "taskId": "CLEAN-002-INT-005",
       "recoveryRef": "refs/recovery/unknown-20260815/2bc65b803770fd55095b434cd0192afe1654492c",
       "deletionAuthorized": false,
-      "evidenceRule": "Current candidate acceptance can create an initiative before receipt claim and explicitly tolerates orphan reconciliation; strict atomic no-orphan acceptance is therefore not proven.",
-      "nextAction": "Design and port the transaction/lease invariant surgically onto the current service, then prove fault injection, retry and PostgreSQL concurrency; do not merge the 31-file WIP range."
+      "evidenceRule": "Canonical commits 1fa57d424 and 118e678d6 replace the fail-soft pre-claim create path with one pinned PostgreSQL transaction: tenant-scoped candidate lock, canonical Initiative create with source_candidate_id, candidate receipt/status link and lineage readback before COMMIT. Fresh PostgreSQL 16 applied all 708 migrations and immediate replay applied 0; PBAC/tenant acceptance passes 12 with one explicit isolated-schema skip; the realPG fault/concurrency packet passes twice and proves rollback leaves zero orphan, eight contenders create one Initiative and retry returns the same ID.",
+      "nextAction": "Retain the transaction invariant and include the realPG packet in the Initiative/Interview release shard. Signed-in preview-to-final lineage remains under CLEAN-002-INT-006."
     },
     {
       "tip": "2c6e6a0e6aadd661a327abc2b2c2707109f052b2",
@@ -2062,12 +2062,12 @@
       "uniqueCommitCount": 4,
       "pathCount": 11,
       "migrationPaths": [],
-      "verdict": "CANDIDATE_INTEGRATION",
+      "verdict": "INTEGRATED_CANONICAL",
       "taskId": "CLEAN-002-QA-005",
       "recoveryRef": "refs/recovery/unknown-20260815/689a3b86dc595493159ebe37c34f87aa637fdafa",
       "deletionAuthorized": false,
-      "evidenceRule": "Eleven evolved E2E counterparts do not retain the recovered test-support tenant-isolation semantics, creating a test safety gap rather than a runtime product gap.",
-      "nextAction": "Port isolation semantics to the current shared fixture API, run affected shards twice and prove no demo or production mutation."
+      "evidenceRule": "Canonical commit 39135b851 ports all eleven evolved E2E counterparts to the shared test-support tenant state without runtime or production changes. The static safety contract passes 4/4 twice and Playwright discovers 214 tests in the twelve affected files twice; no executable real-login or demo target remains.",
+      "nextAction": "Provision the missing local domain fixtures and run the 214-test shard on loopback. Keep its runtime verdict EVIDENCE_MISSING until then; never substitute demo or a shared database."
     },
     {
       "tip": "6a0b010f145118997ae4e4565a47cb9d4b5bf63c",
@@ -4962,8 +4962,8 @@
       "taskId": "CLEAN-002-INT-006",
       "recoveryRef": "refs/recovery/unknown-20260815/f28ec3c7376bcdbebae306f145a546c567056326",
       "deletionAuthorized": false,
-      "evidenceRule": "Current candidate handoff remains basic; the recovered ancestry uniquely contains preview enrichment, accept-claim lease migrations and fault, concurrency and PBAC acceptance proof that complement the unresolved no-orphan invariant.",
-      "nextAction": "Surgically reconcile the two claim/initiative migrations, doctrine tests, client preview fields and current handoff service enrichment plus fault/concurrency/PBAC tests; coordinate the transaction invariant with CLEAN-002-INT-005 and never cherry-pick wholesale."
+      "evidenceRule": "The atomic accept, PBAC, tenant, fault and concurrency portions are now represented by canonical commits 1fa57d424 and 118e678d6. The recovered lease model is superseded by the stronger single pinned transaction. The remaining unique gap is exact signed-in preview enrichment and proof that acceptedSnapshotId, title, rationale, actor and evidence lineage shown before approval match the final candidate and Initiative.",
+      "nextAction": "Port only the current-schema preview fields/client contract and add focused plus signed-in preview-to-final lineage proof. Do not restore the recovered lease migrations or broad WIP."
     },
     {
       "tip": "f3be96108633176a3e6f989f46df10c2e520ee34",
@@ -5251,12 +5251,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 7,
       "migrationPaths": [],
-      "verdict": "CANDIDATE_INTEGRATION",
+      "verdict": "INTEGRATED_CANONICAL",
       "taskId": "CLEAN-002-TEST-003",
       "recoveryRef": "refs/recovery/unknown-20260815/fbf506da65c3940364e94f7b56d79f2b407b9e4e",
       "deletionAuthorized": false,
-      "evidenceRule": "Runtime ToolController correctly requires expectedVersion/CAS, but the current h3-dowody and h31 acceptance PUTs omit it. Recovered tests thread the create-response version, assert increments and cover stale, cross-org and post-approval negatives.",
-      "nextAction": "Selectively port CAS/version threading and assertions into the current h3-dowody and h31-swot-flow acceptance tests; retain current aliases and reconcile h32 only if coverage requires it."
+      "evidenceRule": "Canonical commit d10298f78 threads create-response expectedVersion through every current H3/H31 Tool PUT, asserts version increments and GET readback, and adds stale, cross-org and post-approval negatives without runtime changes. The two files pass 5 tests with one intentional TLS-06 skip on fresh PostgreSQL 16 after the full 707-migration baseline used by that isolated lane.",
+      "nextAction": "Retain the current CAS assertions and close the intentional TLS-06 skip only in its owning lifecycle packet."
     },
     {
       "tip": "fc2e1d849116f13baba6d5bdd75309229008e93e",

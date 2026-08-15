@@ -1,8 +1,9 @@
 # Consultify — wykonawczy rejestr dokończenia modułów
 
 Data: 2026-08-15  
-Authority product SHA: `c0ca3f26d0ac8e525ed2d807ff5e197d0ce0a282`
-Cleanup baseline SHA: `b4b02deedbf18bc4e61ef9ed3493e125b6505d89`
+Authority product SHA: `1fa57d4247790f36ceb683534f4c2d97302b2c20`
+Authority acceptance SHA: `118e678d6`
+Cleanup/report baseline SHA: `8210bc170`
 Status: `EXECUTION_REGISTRY / NOT_RELEASE_READY`
 
 ## Rozszerzenie siedmiopunktowego planu sprzątania
@@ -309,8 +310,9 @@ query/localStorage ani wymagania zamkniętego wyłącznie deklaracją.
   wypełniony allowlist, fixtures, komendy i negative cases. Takiego tasku nie
   wolno przekazać agentowi jako implementacyjnego.
 - Etap 10: `IN_PROGRESS` — zintegrowano 23 recovered candidates, w tym ostatnio
-  Chat Ideas handoff, Finance missing-vs-zero i Document transformative edit;
-  pozostaje 8 jawnych kandydatów, integracja tylko pakietami.
+  Chat Ideas handoff, Finance missing-vs-zero, Document transformative edit,
+  Tools CAS, E2E tenant isolation i atomowy Interview→Initiative;
+  pozostaje 5 jawnych kandydatów, integracja tylko pakietami.
 - Etap 11: `COMPLETE_FOR_RECOVERY` — każdy recovered head ma disposition oraz
   przypisany task albo dowód represented/superseded/rejected.
 - Etap 12: `IN_PROGRESS` — istnieją task IDs i zależności, ale wszystkie taski

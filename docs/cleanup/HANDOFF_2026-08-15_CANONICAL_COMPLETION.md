@@ -55,7 +55,7 @@ Otwarte ryzyko recovery:
   zweryfikowanym bundle. 39 jest przodkami kanonu, 421 pozostaje rozbieżnymi
   kandydatami do modułowego review. Review recovery jest obecnie domknięte:
   224/224 heads w finalnym generatorze ma dyspozycję, zero semantic/owner
-  unknowns, osiem jawnych kandydatów integracyjnych;
+  unknowns, pięć jawnych kandydatów integracyjnych;
 - najważniejsze nieprzeniesione clean/local oraz dirty/WIP są zapisane w
   istniejących manifestach cleanup. Nie scalać całych branchy; tylko modułowy
   diff lub pojedynczy zweryfikowany commit.
