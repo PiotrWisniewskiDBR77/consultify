@@ -93,3 +93,37 @@ is stored in:
 
 The 224 heads remain `SEMANTIC_REVIEW_REQUIRED`; path-name classification alone
 does not authorize integration or deletion.
+
+## Highest-priority dirty WIP disposition
+
+The original five highest-priority dirty snapshots were reviewed separately
+from their old branch histories:
+
+- `018-ef29137d1ea1` (`wt-idem`): the untracked
+  `tests/integration/_helpers/assertRealPostgres.ts` exists in canon as a later,
+  documented superset. The old `948_tool_promotion_idempotency.sql` contract is
+  represented and extended by canonical
+  `948_tool_promotion_tenant_idempotency.sql`. Dirty WIP verdict:
+  `REPRESENTED / SUPERSEDED`.
+- `049-d97a6564a582` (Agent final integration): its only dirty patch adds an
+  end-user control calling `ProjectsApi.addMember(..., 'project_owner')` from
+  `ProjectTeamCard`. This is a self-elevation path and is not part of the
+  canonical Agent contract. Dirty WIP verdict: `REJECTED_SECURITY`.
+- `058-8b03e2dba590` (Results VNext): the untracked initiative status-default
+  migration is superseded by canonical
+  `20260821_initiatives_status_default_draft.sql`. The four tracked KPI/DB
+  changes diverged and remain assigned to `RES-002`, not approved for patch
+  application. Dirty WIP verdict: `PARTIAL_SUPERSEDED / MODULE_REVIEW`.
+- `002-b79fc79554a5` (Artifact QA): the untracked report source-ref migration is
+  superseded by canonical
+  `951_report_builder_reports_source_refs_json_gap.sql`. The 19 tracked
+  DOC/PPT/XLS changes diverged and are assigned to `MAT-001/002/003`; shared
+  route/service edits are not a blind patch. Dirty WIP verdict:
+  `PARTIAL_SUPERSEDED / MODULE_REVIEW`.
+- `048-bba792eabc13` (Initiatives/Execution): 23 tracked UI/test edits and eight
+  untracked business-label/fixture files diverged. They are assigned to
+  `INI-001`, `EXE-001` and `INI-002`; `src/index.css` and shared primitives stay
+  integrator-owned. Dirty WIP verdict: `MODULE_REVIEW`, never whole-branch merge.
+
+These verdicts classify the preserved dirty deltas, not every historical commit
+reachable from the corresponding old branch tip.
