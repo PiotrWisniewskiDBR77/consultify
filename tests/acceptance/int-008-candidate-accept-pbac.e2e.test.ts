@@ -264,4 +264,3 @@ describe('INT-08 — INITIATIVE_CANDIDATE_MANAGE: documented test-coverage limit
     // Intentionally skipped — see comment above.
   });
 });
-

@@ -454,4 +454,3 @@ describe('INT-08 — initiative-candidate accept: missing/deleted project never 
     expect(res.status, JSON.stringify(res.body)).toBeLessThan(500);
   });
 });
-
