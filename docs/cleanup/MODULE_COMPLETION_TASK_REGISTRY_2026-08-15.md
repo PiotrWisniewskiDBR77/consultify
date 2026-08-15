@@ -190,10 +190,20 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
 
 #### CLEAN-001C — 16 unit tests z mockami
 
-- Owner: mock-contract lane; allowlist: 16 testów i współdzielone test fixtures.
+- Status: `DONE` na SHA `7c8a7a5c8`; owner: mock-contract lane.
+- Allowlist: 16 testów, współdzielone test fixtures oraz dwa bezpośrednie pliki
+  produktu po potwierdzeniu regresji kontraktu Materials.
 - Praca: uzupełnić aktualne eksporty, hoisted factories, i18n i API contract;
   nie maskować brakującej funkcji produktu przez mock.
 - DoD: 16/16 PASS pojedynczo i razem; zero missing export/unhandled rejection.
+- Wynik: 16/16 plików, 54/54 testów PASS razem. Trzynaście plików miało
+  `STALE_CONTRACT` lub `HARNESS_BUG` (transakcje, schema guards, PostgreSQL SQL,
+  bezpieczne komunikaty, alert router, circuit threshold i izolacja mocked
+  persistence). Dwa testy Materials ujawniły `PRODUCT_REGRESSION`: diversity
+  post-processing usuwał wymagany drugi layout comparison, a normalizer tabel
+  kasował semantic cell styles. Naprawione w `487513558`; focused renderer i
+  generator gate: 5 plików, 42/42 PASS. Commity harnessów: `85f63e503`,
+  `eafffc4ac`, `7c8a7a5c8`.
 
 #### CLEAN-001D — 36 pure/source contracts
 
