@@ -27,6 +27,8 @@ const CreateTaskSchema = z.object({
   estimatedHours: z.number().positive().max(1000).optional(),
   tags: z.array(z.string().max(50)).max(10).optional(),
   initiativeId: z.string().uuid().optional(),
+  sourceType: z.string().max(100).optional(),
+  sourceId: z.string().max(500).optional(),
 });
 
 const UpdateTaskSchema = CreateTaskSchema.partial().extend({
@@ -137,8 +139,8 @@ export class TaskService {
       `INSERT INTO tasks (
                 id, organization_id, project_id, title, description, status, priority,
                 assignee_id, due_date, estimated_hours, tags, initiative_id,
-                created_by
-             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                created_by, source_type, source_id
+             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
              RETURNING *`,
       [
         id,
@@ -154,6 +156,8 @@ export class TaskService {
         validated.tags ? JSON.stringify(validated.tags) : null,
         validated.initiativeId || null,
         userId,
+        validated.sourceType || null,
+        validated.sourceId || null,
       ]
     );
 

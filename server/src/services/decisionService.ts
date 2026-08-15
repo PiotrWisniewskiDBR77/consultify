@@ -56,6 +56,8 @@ export interface CreateDecisionInput {
   deadline?: string;
   stakeholderIds?: string[];
   createdBy: string;
+  sourceType?: string;
+  sourceId?: string;
 }
 
 export interface MakeDecisionInput {
@@ -235,8 +237,8 @@ class DecisionService {
                 id, organization_id, project_id, initiative_id, task_id,
                 title, description, type, decision_maker_id,
                 options, criteria, deadline, escalation_deadline,
-                status, created_by, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)`,
+                status, created_by, created_at, updated_at, source_type, source_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?)`,
       [
         id,
         input.organizationId,
@@ -254,6 +256,8 @@ class DecisionService {
         input.createdBy,
         now,
         now,
+        input.sourceType || null,
+        input.sourceId || null,
       ]
     );
 

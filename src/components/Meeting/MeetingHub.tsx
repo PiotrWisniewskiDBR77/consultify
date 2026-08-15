@@ -40,6 +40,8 @@ import { ErrorState, LoadingState } from '@/components/ui/primitives';
 import { StatusChip } from '@/components/ui/primitives/chips';
 import { Api } from '@/services/api';
 
+import { MeetingCorePanel } from './MeetingCorePanel';
+
 type FollowUpStatus = 'open' | 'done';
 export type MeetingStatus = 'scheduled' | 'completed';
 
@@ -790,8 +792,6 @@ export const MeetingHub: React.FC = () => {
             onEdit={() => openEditModal(activeMeeting)}
             onDelete={() => setDeleteTarget(activeMeeting)}
             onToggleStatus={() => handleToggleMeetingStatus(activeMeeting.id)}
-            onAddDecision={() => setShowDecisionModal(true)}
-            onAddFollowUp={() => setShowFollowUpModal(true)}
             onGenerateNotes={() => {
               setGeneratedNote(null);
               setNotesTranscript('');
@@ -1385,8 +1385,6 @@ const MeetingDetailView: React.FC<{
   onEdit: () => void;
   onDelete: () => void;
   onToggleStatus: () => void;
-  onAddDecision: () => void;
-  onAddFollowUp: () => void;
   onGenerateNotes: () => void;
   onToggleFollowUpStatus: (followUpId: string) => void;
 }> = ({
@@ -1400,8 +1398,6 @@ const MeetingDetailView: React.FC<{
   onEdit,
   onDelete,
   onToggleStatus,
-  onAddDecision,
-  onAddFollowUp,
   onGenerateNotes,
   onToggleFollowUpStatus,
 }) => {
@@ -1442,20 +1438,6 @@ const MeetingDetailView: React.FC<{
               {meeting.status === 'completed'
                 ? t('meeting.markScheduled')
                 : t('meeting.markCompleted')}
-            </button>
-            <button
-              type="button"
-              onClick={onAddDecision}
-              className="h-9 px-4 rounded-full border border-c-border text-sm font-medium"
-            >
-              {t('meeting.addDecision2')}
-            </button>
-            <button
-              type="button"
-              onClick={onAddFollowUp}
-              className="h-9 px-4 rounded-full bg-c-text text-c-surface text-sm font-medium hover:opacity-90"
-            >
-              {t('meeting.addFollowUp2')}
             </button>
             <button
               type="button"
@@ -1540,6 +1522,9 @@ const MeetingDetailView: React.FC<{
             )}
           </div>
         </div>
+      </div>
+      <div className="mt-4">
+        <MeetingCorePanel meetingId={meeting.id} isPolish={isPolish} />
       </div>
     </div>
   );
