@@ -195,6 +195,89 @@ Budowę Agenta można wznowić dopiero, gdy:
 - Railway nadal wskazuje oczekiwany dokładny SHA;
 - rejestr środowiska i zasady pracy agentów są zapisane w repozytorium.
 
+## Etap 7 — chirurgiczny rejestr braków modułowych
+
+Status: W TRAKCIE
+
+Po uporządkowaniu pochodzenia kodu każdy moduł otrzymuje jedną kartę wykonawczą
+w `docs/cleanup/MODULE_COMPLETION_TASK_REGISTRY_2026-08-15.md`. Karta nie może
+być ogólnym backlogiem. Musi zawierać:
+
+- kanoniczny cel, wejścia, wyjścia, właściciela danych i handoff do następnego
+  modułu;
+- dokładny łańcuch `menu -> route -> ekran -> API -> serwis -> migracja ->
+  readback`;
+- elementy `LIVE_CONNECTED`, `IMPLEMENTED_UNMOUNTED`, `MISWIRED`, `ORPHAN`,
+  `DUPLICATE`, `SUPERSEDED` i `MISSING`;
+- jedną kanoniczną implementację oraz wskazane warianty, których nie wolno już
+  rozwijać;
+- osobne gap IDs dla każdej brakującej funkcji, bez łączenia niezależnych luk w
+  jedno nieostre zadanie;
+- wymagane dane demonstracyjne, role, flagi, migracje i zależności;
+- komendę reprodukcji, test pozytywny, negatywny, replay/idempotency, tenant i
+  cold-reload;
+- status demo i dokładny SHA dowodu; brak dowodu oznacza `EVIDENCE_MISSING`, a
+  nie `DONE`.
+
+DoD etapu: każdy moduł menu ma kartę, każdy wykryty brak ma stabilny task/gap ID,
+owner, priorytet, allowlistę plików, zależności i obserwowalny warunek końcowy.
+Nie istnieją wpisy typu „dokończyć UI”, „podłączyć backend” albo „naprawić
+testy” bez dokładnego kontraktu zachowania.
+
+## Etap 8 — pakiety wykonawcze dla agentów
+
+Status: W TRAKCIE
+
+Każdy gap dopuszczony do implementacji otrzymuje osobny pakiet w
+`docs/cleanup/execution-packets/`. Pakiet jest instrukcją wykonania, a nie
+ponownym zadaniem badawczym. Zawiera obowiązkowo:
+
+- baseline SHA, branch/worktree policy i wyłącznego właściciela zadania;
+- problem biznesowy oraz oczekiwane zachowanie użytkownika krok po kroku;
+- dokładne komponenty i kontrakty do wykorzystania oraz kod historyczny tylko
+  jako źródło do selektywnego odzyskania;
+- changed-file allowlist i jawne pliki współdzielone, których agent nie może
+  samodzielnie edytować;
+- sekwencję implementacji frontend/backend/schema/data bez whole-branch merge;
+- kryteria bezpieczeństwa, governance, provenance, idempotency i uczciwych
+  stanów unavailable/error;
+- pełną macierz testów oraz wymagane artefakty evidence;
+- definicję `DONE` opartą na zachowaniu i readback, nie na liczbie commitów ani
+  deklaracji wykonawcy;
+- handoff dla integratora: commit SHA, czysty status, test evidence, znane luki
+  i rollback/recovery path.
+
+DoD etapu: wszystkie zadania pierwszej fali mają gotowe, rozłączne pakiety;
+kolizje w `AppRoutes`, menu, globalnych flagach, migratorze, API barrel,
+deployment config i globalnych tokenach są przydzielone wyłącznie integratorowi.
+
+## Etap 9 — plan integracji, odbioru i uruchomienia
+
+Status: OCZEKUJE NA ETAPY 7–8 ORAZ CLEAN-001/CLEAN-002
+
+Implementacje są przyjmowane do jednego release candidate wyłącznie falami
+zapisanymi w rejestrze zadań. Dla każdej fali integrator:
+
+1. potwierdza exact baseline i brak nowych niezinwentaryzowanych zmian;
+2. przenosi reviewed module diff lub pojedynczy commit, nigdy cały brudny branch;
+3. rozwiązuje shared-file changes seryjnie;
+4. uruchamia focused tests, typecheck/build, fresh i upgrade PostgreSQL oraz
+   role/tenant/replay negatives;
+5. wykonuje signed-in desktop/mobile golden flow na normalnych routes, bez
+   query/localStorage activation i test-support;
+6. wykonuje wizualny odbiór Consultify: tokeny, typografia, gęstość, hierarchia,
+   loading/empty/error, responsywność oraz brak UUID i technicznych enumów;
+7. zapisuje readback danych i zgodność UI/API/DB;
+8. promuje jeden immutable candidate SHA i sprawdza, że UI, `/api/health`,
+   artefakt oraz demo wskazują ten sam SHA;
+9. aktualizuje kartę modułu na `DONE` dopiero po komplecie dowodów; w innym
+   przypadku zachowuje `PARTIAL`, `BLOCKED` lub `EVIDENCE_MISSING`.
+
+DoD etapu: istnieje jeden czysty release candidate, pełny gate ma jawny wynik,
+każdy moduł ma decyzję MVP/later i dowód stanu, demo odpowiada kandydatowi, a
+rollback oraz recovery są sprawdzone. Dopiero wtedy system jest gotowy do
+systematycznego odbioru lub uruchomienia.
+
 ## Dwie zgody właściciela
 
 1. **Zgoda A — preservation:** tworzenie refs, bundle, manifestów i commitów kwarantanny. Bez kasowania.
