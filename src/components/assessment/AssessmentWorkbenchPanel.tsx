@@ -283,6 +283,8 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
   );
 
   const evidenceOptions = workbench?.evidencePointers || [];
+  const methodologyId = workbench?.assessmentDefinitionRef.methodologyId || null;
+  const canApplyDrdPreset = methodologyId === 'DRD';
 
   const canComplete = useMemo(() => {
     return (
@@ -366,19 +368,21 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
           >
             {t('assessment.workbench.reload', 'Reload')}
           </button>
-          <button
-            type="button"
-            className="rounded-lg bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 hover:bg-navy-800 dark:hover:bg-[#DDE5EF] px-3 py-1.5 text-sm disabled:opacity-50"
-            onClick={() =>
-              void runAction(
-                () => V8AssessmentApi.applyWorkbenchPreset(assessmentId, 'DRD'),
-                t('assessment.workbench.toast.presetApplied', 'Preset applied')
-              )
-            }
-            disabled={isLoading || isBusy || !canEditUi}
-          >
-            {t('assessment.workbench.applyPreset', 'Apply DRD preset')}
-          </button>
+          {canApplyDrdPreset && (
+            <button
+              type="button"
+              className="rounded-lg bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 hover:bg-navy-800 dark:hover:bg-[#DDE5EF] px-3 py-1.5 text-sm disabled:opacity-50"
+              onClick={() =>
+                void runAction(
+                  () => V8AssessmentApi.applyWorkbenchPreset(assessmentId, 'DRD'),
+                  t('assessment.workbench.toast.presetApplied', 'Preset applied')
+                )
+              }
+              disabled={isLoading || isBusy || !canEditUi}
+            >
+              {t('assessment.workbench.applyPreset', 'Apply DRD preset')}
+            </button>
+          )}
           <button
             type="button"
             className="rounded-lg bg-emerald-600 text-white px-3 py-1.5 text-sm disabled:opacity-50"

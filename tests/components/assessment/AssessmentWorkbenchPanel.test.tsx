@@ -10,6 +10,7 @@ import { AssessmentWorkbenchPanel } from '../../../src/components/assessment/Ass
 const getWorkbench = vi.fn();
 const getWorkbenchDefinition = vi.fn();
 const getWorkbenchPromotionPayload = vi.fn();
+const applyWorkbenchPreset = vi.fn();
 
 vi.mock('react-hot-toast', () => ({
   toast: {
@@ -29,7 +30,7 @@ vi.mock('@/services/api/v8/assessment', () => ({
     getWorkbench: (...args: unknown[]) => getWorkbench(...args),
     getWorkbenchDefinition: (...args: unknown[]) => getWorkbenchDefinition(...args),
     getWorkbenchPromotionPayload: (...args: unknown[]) => getWorkbenchPromotionPayload(...args),
-    applyWorkbenchPreset: vi.fn(),
+    applyWorkbenchPreset: (...args: unknown[]) => applyWorkbenchPreset(...args),
     transitionWorkbench: vi.fn(),
     addWorkbenchEvidence: vi.fn(),
     setRequiredEvidenceKinds: vi.fn(),
@@ -110,5 +111,38 @@ describe('AssessmentWorkbenchPanel', () => {
     expect(screen.getByText('Missing interpretation proposal')).toBeInTheDocument();
     expect(screen.getByText('Review Readiness')).toBeInTheDocument();
     expect(screen.getByText('Downstream Status')).toBeInTheDocument();
+  });
+
+  it('does not offer the DRD-only preset for a SIRI assessment', async () => {
+    getWorkbench.mockResolvedValue({
+      workbench: {
+        contractVersion: 'p28_workbench_v1',
+        assessmentDefinitionRef: {
+          definitionId: 'asdef_siri_1.0',
+          methodologyId: 'SIRI',
+          version: '1.0',
+          status: 'published',
+          readOnly: true,
+        },
+        assessmentRunId: 'a-siri',
+        orgId: 'org-1',
+        runState: 'draft',
+        startedBy: 'user-1',
+        startedAt: '2026-04-11T00:00:00.000Z',
+        evidencePointers: [],
+        scoreProposal: null,
+        scoreReview: null,
+        interpretationProposal: null,
+        interpretationReview: null,
+        promotionTraces: [],
+      },
+      whatNext: [],
+    });
+
+    render(<AssessmentWorkbenchPanel assessmentId="a-siri" />);
+
+    await screen.findByText(/SIRI v1\.0/);
+    expect(screen.queryByRole('button', { name: /Apply DRD preset/i })).not.toBeInTheDocument();
+    expect(applyWorkbenchPreset).not.toHaveBeenCalled();
   });
 });
