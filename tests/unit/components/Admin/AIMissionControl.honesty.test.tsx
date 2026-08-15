@@ -4,8 +4,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AIMissionControl } from '@/components/Admin/AIMissionControl';
 import { Api } from '@/services/api';
 
-const t = (_key: string, fallback?: string, values?: Record<string, unknown>) =>
-  (fallback || _key).replace(/\{\{(\w+)\}\}/g, (_match, key) => String(values?.[key] ?? ''));
+const t = vi.hoisted(
+  () => (_key: string, fallback?: string, values?: Record<string, unknown>) =>
+    (fallback || _key).replace(/\{\{(\w+)\}\}/g, (_match, key) => String(values?.[key] ?? ''))
+);
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t, i18n: { language: 'en' } }) }));
 vi.mock('i18next', () => ({ default: { t } }));
 
