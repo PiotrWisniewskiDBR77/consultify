@@ -79,6 +79,39 @@ describe('V8InterviewApi', () => {
     expect(v8Get).toHaveBeenCalledWith('/interview/assignments/overdue');
   });
 
+  it('keeps assignment invitation and revocation on the canonical V8 adapter', async () => {
+    vi.mocked(v8Post).mockResolvedValue({ id: 'asg-1' } as any);
+    vi.mocked(v8Get).mockResolvedValue({ id: 'asg-1' } as any);
+    vi.mocked(v8Patch).mockResolvedValue({ id: 'asg-1' } as any);
+    vi.mocked(v8Delete).mockResolvedValue({ success: true } as any);
+
+    await V8InterviewApi.createAssignment({
+      assigneeUserId: 'user-1',
+      templateId: 'tpl-1',
+      dueAt: '2026-08-18T10:00:00.000Z',
+      isAnonymous: true,
+    });
+    await V8InterviewApi.getAssignment('asg/1');
+    await V8InterviewApi.updateAssignment('asg/1', { priority: 'urgent' });
+    await V8InterviewApi.archiveAssignment('asg/1');
+    await V8InterviewApi.restoreAssignment('asg/1');
+    await V8InterviewApi.revokeAssignment('asg/1');
+
+    expect(v8Post).toHaveBeenNthCalledWith(1, '/interview/assignments', {
+      assigneeUserId: 'user-1',
+      templateId: 'tpl-1',
+      dueAt: '2026-08-18T10:00:00.000Z',
+      isAnonymous: true,
+    });
+    expect(v8Get).toHaveBeenCalledWith('/interview/assignments/asg%2F1');
+    expect(v8Patch).toHaveBeenCalledWith('/interview/assignments/asg%2F1', {
+      priority: 'urgent',
+    });
+    expect(v8Post).toHaveBeenNthCalledWith(2, '/interview/assignments/asg%2F1/archive', {});
+    expect(v8Post).toHaveBeenNthCalledWith(3, '/interview/assignments/asg%2F1/restore', {});
+    expect(v8Delete).toHaveBeenCalledWith('/interview/assignments/asg%2F1');
+  });
+
   it('posts interview assignment workflow writes to the V8 namespace', async () => {
     vi.mocked(v8Post).mockResolvedValue({ success: true } as any);
 

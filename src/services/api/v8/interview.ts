@@ -141,6 +141,27 @@ export interface V8InterviewManageAssignmentResponse {
   newAssignment?: V8InterviewAssignment;
 }
 
+export interface V8InterviewCreateAssignmentPayload {
+  assigneeUserId?: string;
+  assigneeUserIds?: string[];
+  templateId: string;
+  dueAt?: string | null;
+  processRef?: string;
+  projectId?: string;
+  priority?: 'low' | 'medium' | 'high' | 'urgent';
+  escalateTo?: string;
+  notes?: string | null;
+  teamLeadId?: string;
+  isAnonymous?: boolean;
+}
+
+export interface V8InterviewUpdateAssignmentPayload {
+  dueAt?: string | null;
+  priority?: 'low' | 'medium' | 'high' | 'urgent';
+  notes?: string | null;
+  assigneeUserId?: string;
+}
+
 export interface V8InterviewInsight {
   id: string;
   organizationId: string;
@@ -617,6 +638,33 @@ export const V8InterviewApi = {
 
   getOverdueAssignments: () =>
     v8Get<{ assignments: V8InterviewAssignment[] }>('/interview/assignments/overdue'),
+
+  createAssignment: (payload: V8InterviewCreateAssignmentPayload) =>
+    v8Post<V8InterviewAssignment>('/interview/assignments', payload),
+
+  getAssignment: (id: string) =>
+    v8Get<V8InterviewAssignment>(`/interview/assignments/${encodeURIComponent(id)}`),
+
+  updateAssignment: (id: string, payload: V8InterviewUpdateAssignmentPayload) =>
+    v8Patch<V8InterviewAssignment>(
+      `/interview/assignments/${encodeURIComponent(id)}`,
+      payload
+    ),
+
+  revokeAssignment: (id: string) =>
+    v8Delete<{ success?: boolean }>(`/interview/assignments/${encodeURIComponent(id)}`),
+
+  archiveAssignment: (id: string) =>
+    v8Post<V8InterviewAssignment>(
+      `/interview/assignments/${encodeURIComponent(id)}/archive`,
+      {}
+    ),
+
+  restoreAssignment: (id: string) =>
+    v8Post<V8InterviewAssignment>(
+      `/interview/assignments/${encodeURIComponent(id)}/restore`,
+      {}
+    ),
 
   manageAssignment: (id: string, payload: V8InterviewManageAssignmentPayload) =>
     v8Patch<V8InterviewManageAssignmentResponse>(

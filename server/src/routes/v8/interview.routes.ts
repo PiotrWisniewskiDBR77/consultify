@@ -373,6 +373,49 @@ router.get(
   })
 );
 
+/**
+ * Canonical assignment management adapter.
+ *
+ * Keep the V8 client on one namespace for the complete authenticated invite
+ * lifecycle. The legacy controller remains the single mutation authority, so
+ * tenant, role, template-publication and anonymity rules cannot drift between
+ * two implementations.
+ */
+router.post(
+  '/assignments',
+  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
+  v8Wrap(InterviewController.createAssignment, interviewMeta)
+);
+
+router.get(
+  '/assignments/:id',
+  v8Wrap(InterviewController.getAssignment, interviewMeta)
+);
+
+router.patch(
+  '/assignments/:id',
+  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
+  v8Wrap(InterviewController.updateAssignment, interviewMeta)
+);
+
+router.delete(
+  '/assignments/:id',
+  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
+  v8Wrap(InterviewController.deleteAssignment, interviewMeta)
+);
+
+router.post(
+  '/assignments/:id/archive',
+  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
+  v8Wrap(InterviewController.archiveAssignment, interviewMeta)
+);
+
+router.post(
+  '/assignments/:id/restore',
+  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
+  v8Wrap(InterviewController.restoreAssignment, interviewMeta)
+);
+
 // V-A S1 — restore the function-level authorization the legacy /api/interview
 // stack enforces but the V8 production path dropped. Mirror the legacy gates
 // exactly (interview.routes.ts:104-161):

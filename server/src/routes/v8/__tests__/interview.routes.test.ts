@@ -16,6 +16,12 @@ const mockGetMyAssignments = vi.fn();
 const mockGetManagedAssignments = vi.fn();
 const mockGetOverdueAssignments = vi.fn();
 const mockResolveInterviewManagerScope = vi.fn();
+const mockCreateAssignment = vi.fn();
+const mockGetAssignment = vi.fn();
+const mockUpdateAssignment = vi.fn();
+const mockDeleteAssignment = vi.fn();
+const mockArchiveAssignment = vi.fn();
+const mockRestoreAssignment = vi.fn();
 const mockStartAssignment = vi.fn();
 const mockSubmitAssignment = vi.fn();
 const mockSendAssignmentReminder = vi.fn();
@@ -40,6 +46,12 @@ const mockUpdateReportWorksheet = vi.fn();
 
 vi.mock('../../../controllers/InterviewController.js', () => ({
   InterviewController: {
+    createAssignment: (...args: unknown[]) => mockCreateAssignment(...args),
+    getAssignment: (...args: unknown[]) => mockGetAssignment(...args),
+    updateAssignment: (...args: unknown[]) => mockUpdateAssignment(...args),
+    deleteAssignment: (...args: unknown[]) => mockDeleteAssignment(...args),
+    archiveAssignment: (...args: unknown[]) => mockArchiveAssignment(...args),
+    restoreAssignment: (...args: unknown[]) => mockRestoreAssignment(...args),
     startAssignment: (...args: unknown[]) => mockStartAssignment(...args),
     submitAssignment: (...args: unknown[]) => mockSubmitAssignment(...args),
     sendAssignmentReminder: (...args: unknown[]) => mockSendAssignmentReminder(...args),
@@ -545,6 +557,45 @@ describe('V8 Interview read-only routes', () => {
     expect(res.body.data?.session?.id).toBe('s1');
     expect(res.body.meta?.contract).toBe(V8_INTERVIEW_READ_CONTRACT);
     expect(mockGetSession).toHaveBeenCalledWith(ORG, 's1');
+  });
+
+  it('exposes create, detail, update and revoke through the canonical V8 assignment adapter', async () => {
+    mockCreateAssignment.mockImplementation(async (req: any, res: any) => {
+      res.status(201).json({ id: 'asg-new', templateId: req.body.templateId });
+    });
+    mockGetAssignment.mockImplementation(async (req: any, res: any) => {
+      res.json({ id: req.params.id, status: 'assigned' });
+    });
+    mockUpdateAssignment.mockImplementation(async (req: any, res: any) => {
+      res.json({ id: req.params.id, priority: req.body.priority });
+    });
+    mockDeleteAssignment.mockImplementation(async (_req: any, res: any) => {
+      res.json({ success: true });
+    });
+
+    const created = await request(createApp())
+      .post('/api/v8/interview/assignments')
+      .set('Authorization', 'Bearer x')
+      .send({ assigneeUserId: 'respondent-1', templateId: 'tpl-1' });
+    const detail = await request(createApp())
+      .get('/api/v8/interview/assignments/asg-new')
+      .set('Authorization', 'Bearer x');
+    const updated = await request(createApp())
+      .patch('/api/v8/interview/assignments/asg-new')
+      .set('Authorization', 'Bearer x')
+      .send({ priority: 'urgent' });
+    const revoked = await request(createApp())
+      .delete('/api/v8/interview/assignments/asg-new')
+      .set('Authorization', 'Bearer x');
+
+    expect(created.status).toBe(201);
+    expect(created.body.data).toMatchObject({ id: 'asg-new', templateId: 'tpl-1' });
+    expect(detail.body.data).toMatchObject({ id: 'asg-new', status: 'assigned' });
+    expect(updated.body.data).toMatchObject({ id: 'asg-new', priority: 'urgent' });
+    expect(revoked.body.data).toEqual({ success: true });
+    for (const response of [created, detail, updated, revoked]) {
+      expect(response.body.meta?.contract).toBe(V8_INTERVIEW_READ_CONTRACT);
+    }
   });
 
   it('POST /api/v8/interview/assignments/:id/start wraps response in V8 envelope', async () => {
