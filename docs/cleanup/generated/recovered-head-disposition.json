@@ -12,13 +12,13 @@
   "summary": {
     "total": 224,
     "referenceHarnessOnly": 18,
-    "representedSuperseded": 86,
-    "representedCanonical": 66,
+    "representedSuperseded": 90,
+    "representedCanonical": 73,
     "rejectedDestructiveSnapshot": 4,
-    "integratedCanonical": 20,
+    "integratedCanonical": 21,
     "candidateIntegration": 10,
     "ownerDecisionRequired": 0,
-    "semanticReviewRequired": 20,
+    "semanticReviewRequired": 8,
     "deletionAuthorized": 0
   },
   "rows": [
@@ -1099,12 +1099,12 @@
         "server/migrations/20260829_rvn_platform_outbox_parked_status.sql",
         "server/migrations/20260830_rvn_roi_finance_projections.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-RES-017",
       "recoveryRef": "refs/recovery/unknown-20260815/34a918cb8664c23394be8784a572ce7cc463be50",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "Despite the WIP label, current Results VNext KPI/ROI/OKR and Teresa proposal/lesson files and tests contain this work; the proposal panel has only later evolution.",
+      "nextAction": "Ignore WIP self-attestation and accept only current-SHA Results gates."
     },
     {
       "tip": "3528254b5d1ec1a9c645f9051518987d23db5c05",
@@ -2467,12 +2467,12 @@
         "server/migrations/20260823_finance_v3_bv_terminal_immutability.sql",
         "server/migrations/20260824_finance_v3_bv_superseded_immutability.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-FIN-014",
       "recoveryRef": "refs/recovery/unknown-20260815/742312e1d77af65001a4f75c01a09cd2180c9bd0",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The unique tip is an explicitly pre-acceptance FC-01 through FC-12 matrix; underlying Finance implementation has later representatives.",
+      "nextAction": "Preserve for provenance but never use its statuses as current acceptance."
     },
     {
       "tip": "75b3953b98d6a6fefff072c3523b6948c667cd27",
@@ -2705,12 +2705,12 @@
         "server/migrations/20260810_idea_conversion_mapping_version.sql",
         "server/migrations/20260812_idea_financial_case.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-IDE-019",
       "recoveryRef": "refs/recovery/unknown-20260815/7e7c3fe8be84b16e01879d7bd59b81144448ca0a",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "Idea financial-case migration, route, service and client API are exact current blobs while persistence UI and tests have later canonical code.",
+      "nextAction": "Keep current behavior and prove save, reopen and conflict on current DB/browser."
     },
     {
       "tip": "7f73a6ea4f99b706e383a825a6248824ebbe4450",
@@ -2798,12 +2798,12 @@
         "server/migrations/20260826_finance_v3_w2_selfclaim_child_tenant_fk.sql",
         "server/migrations/20260827_finance_v3_w3_backfill_artifacts_unique.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-FIN-019",
       "recoveryRef": "refs/recovery/unknown-20260815/7f73a6ea4f99b706e383a825a6248824ebbe4450",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The unique tip is a machine-readable AP connection inventory tied to an older candidate; underlying Decimal, enum and AP fixes are represented currently.",
+      "nextAction": "Retain as historical evidence and regenerate the inventory from current code if required."
     },
     {
       "tip": "8097779eaaa8593950779894ea512d5c662e2ba3",
@@ -3401,12 +3401,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 17,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-ORG-001",
       "recoveryRef": "refs/recovery/unknown-20260815/ade7eeea0b11749089c41d640f739a06e62e2a4c",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "Organization persistence coverage exists with later content and OrganizationView, role gate and locales are later canonical variants.",
+      "nextAction": "Keep current code and run organization persistence and role tests."
     },
     {
       "tip": "b0cbeca6ed16dd03d7b238b55a64c219aa5981e2",
@@ -3491,12 +3491,12 @@
       "migrationPaths": [
         "server/migrations/20260704_reconciliation_kpi_fk_to_legacy.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-FIN-018",
       "recoveryRef": "refs/recovery/unknown-20260815/b211d2e14561d5cbfa0fb88936d5931cf26f0399",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "Current WorkbookBuilder, schema and polish tests implement full calculation on load, accounting format, named ranges and data validation in a substantially richer builder.",
+      "nextAction": "Keep current builder and run workbook polish and roundtrip gates."
     },
     {
       "tip": "b2ae8aca2367b206fe66b38da96e542ed2a712a7",
@@ -3672,12 +3672,12 @@
         "server/migrations/934_organization_governance_profiles.sql",
         "server/migrations/935_plan_scenario_time_basis.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-EXE-014",
       "recoveryRef": "refs/recovery/unknown-20260815/bba792eabc133696ecdc4adcaf810e3642f0337c",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The underlying Initiatives/Execution implementation is present in current domain, PMO routes, canonical surfaces, contracts and E2E; the tip only records old owner acceptance and screenshots.",
+      "nextAction": "Keep current code and replace historical screenshots with current-SHA browser and database acceptance."
     },
     {
       "tip": "bc1db2a10ce7f0cfe3ab80b61d13406c0df2a2a7",
@@ -3868,12 +3868,12 @@
         "server/migrations/20260826_finance_v3_w2_selfclaim_child_tenant_fk.sql",
         "server/migrations/20260827_finance_v3_w3_backfill_artifacts_unique.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "CANDIDATE_INTEGRATION",
+      "taskId": "CLEAN-002-FIN-016",
       "recoveryRef": "refs/recovery/unknown-20260815/bfb78f8e51988cbaaaa3a2a555fe22f1e1a7d908",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "Current FinancialModelWorkspace regressed per-field missing-versus-zero semantics: it uses assumptions[key] ?? 0 and model-level imported labeling instead of MISSING, PRESENT_ZERO, PRESENT_NONZERO and per-key provenance.",
+      "nextAction": "Surgically restore the field-status helpers and blank MISSING/per-key Imported rendering in current FinancialModelWorkspace and restore its focused initial-balances regression test."
     },
     {
       "tip": "c21ae9bc5ce09cb30dd16ca67e0c7214515147d0",
@@ -4324,12 +4324,12 @@
       "uniqueCommitCount": 17,
       "pathCount": 51,
       "migrationPaths": [],
-      "verdict": "CANDIDATE_INTEGRATION",
+      "verdict": "INTEGRATED_CANONICAL",
       "taskId": "CLEAN-002-CHAT-013",
       "recoveryRef": "refs/recovery/unknown-20260815/d92737a1408086c478ec74348075854808b3e2fb",
       "deletionAuthorized": false,
-      "evidenceRule": "Current HandoffTargetModule and P08 target list advertise ideas, but TARGET_LABELS has no ideas entry, performHandoff has no ideas case and no handler/test exists; an approved Ideas handoff therefore has no execution implementation.",
-      "nextAction": "Add the Ideas target label and switch case plus a pinned transactional, tenant-verified, idempotent handler that inserts my_ideas, owner mapping and receipt/result atomically; prove unit, realPG concurrency/tenant and signed-in approval."
+      "evidenceRule": "Canonical commit e176a2cb9 adds the Ideas target, switch and pinned transaction for idea, canonical map and receipt with tenant/owner readback, advisory locking, rollback and idempotent retry. Unit contracts pass 5/5 and server typecheck passes; two prepared realPG tests remain explicitly skipped without M01_PG_URL.",
+      "nextAction": "Run the two realPG rollback/concurrency cases on disposable migrated PostgreSQL and then prove signed-in Teresa approval before runtime acceptance."
     },
     {
       "tip": "d97a6564a582c4c9f64d7a5f65d68d51801c5b00",
@@ -4382,12 +4382,12 @@
         "server/migrations/20260810_t01_u02_native_final_outputs.sql",
         "server/migrations/20260806_v8_agent_template_version_prerequisite.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-FIN-015",
       "recoveryRef": "refs/recovery/unknown-20260815/d97a6564a582c4c9f64d7a5f65d68d51801c5b00",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The valuation monetary-unit helper and UI formatting test are exact current blobs; later valuation/export/UI code still carries unit multiplier and source scaling.",
+      "nextAction": "Keep current behavior and verify valuation and export formatting."
     },
     {
       "tip": "d9c9a8ca02adc05b9187515c4b8bf11f46177980",
@@ -5041,12 +5041,12 @@
         "server/migrations/20260823_finance_v3_bv_terminal_immutability.sql",
         "server/migrations/20260824_finance_v3_bv_superseded_immutability.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-FIN-013",
       "recoveryRef": "refs/recovery/unknown-20260815/f3be96108633176a3e6f989f46df10c2e520ee34",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The underlying Finance/AP contracts and typed-test cleanup are represented by later current service and route tests; the unique tip is only a type-debt report.",
+      "nextAction": "Keep current code and run current Finance type and test gates."
     },
     {
       "tip": "f54d5bd7205f2437b36cc5d5a926ccf48ef0c5f7",
@@ -5152,12 +5152,12 @@
         "server/migrations/20260826_finance_v3_w2_selfclaim_child_tenant_fk.sql",
         "server/migrations/20260827_finance_v3_w3_backfill_artifacts_unique.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-FIN-017",
       "recoveryRef": "refs/recovery/unknown-20260815/f5a7f23c843e6c0e3c85905e7209968da778c746",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The tip explicitly marks an unverified WIP and uniquely adds only a historical 742-line audit probe; underlying Finance fixes have later current representatives.",
+      "nextAction": "Retain the recovery ref and do not add the unverified probe without a separately specified evidence task."
     },
     {
       "tip": "f673c5f0fb2791632a9ccdc93ae1aa1644f69831",
@@ -5168,12 +5168,12 @@
       "uniqueCommitCount": 2,
       "pathCount": 7,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-RES-016",
       "recoveryRef": "refs/recovery/unknown-20260815/f673c5f0fb2791632a9ccdc93ae1aa1644f69831",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The two commits are old Results discovery/implementation packets and a markdown reproducer, not unique implementation; current Results code and gates are later authorities.",
+      "nextAction": "Retain the recovery ref only and re-prove the listed risks at current SHA."
     },
     {
       "tip": "f75de0d63fbc2bc09153bb647eeb93a7c99947a5",
