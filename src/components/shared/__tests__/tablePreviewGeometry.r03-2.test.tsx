@@ -14,7 +14,7 @@
  * i klasy, które ją ustalają; piksele domyka dowód wizualny G3/G4.
  */
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -199,7 +199,7 @@ describe('R03-2 · zamykanie i focus return', () => {
     expect(document.activeElement).toBe(row);
   });
 
-  it('gdy element otwierający zniknął, focus wraca na kontener — skróty żyją dalej', () => {
+  it('gdy element otwierający zniknął, focus wraca na kontener — skróty żyją dalej', async () => {
     const { container } = renderLayout();
     const root = container.firstElementChild as HTMLElement;
 
@@ -211,7 +211,7 @@ describe('R03-2 · zamykanie i focus return', () => {
     ephemeral.remove();
 
     fireEvent.keyDown(root, { key: 'Escape' });
-    expect(document.activeElement).toBe(root);
+    await waitFor(() => expect(document.activeElement).toBe(root));
   });
 
   it('× i Escape prowadzą do tej samej ścieżki zamknięcia', () => {

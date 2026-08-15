@@ -203,7 +203,14 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
   const handleClose = useCallback(() => {
     setInternalPreviewOpen(false);
     onSelect(null);
-    requestAnimationFrame(() => returnFocusRef.current?.focus());
+    requestAnimationFrame(() => {
+      const returnTarget = returnFocusRef.current;
+      if (returnTarget?.isConnected) {
+        returnTarget.focus();
+        return;
+      }
+      containerRef.current?.focus();
+    });
   }, [onSelect]);
 
   useEffect(() => {

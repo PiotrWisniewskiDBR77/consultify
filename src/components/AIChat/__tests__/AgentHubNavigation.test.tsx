@@ -122,8 +122,10 @@ describe('canonical Agent workspace navigation', () => {
     expect(screen.getByTestId('agent-hub-workspace-summary')).toHaveTextContent(
       'Teresa prepares the work'
     );
-    expect(screen.getByTestId('agent-hub-workspace-summary')).toHaveTextContent('Case: case-old');
-    expect(screen.getByTestId('agent-hub-workspace-summary')).toHaveTextContent('Run: stale');
+    expect(screen.getByTestId('agent-hub-workspace-summary')).not.toHaveTextContent('case-old');
+    expect(screen.getByTestId('agent-hub-workspace-summary')).not.toHaveTextContent('stale');
+    expect(screen.getByTestId('location')).toHaveTextContent('transformationCaseId=case-old');
+    expect(screen.getByTestId('location')).toHaveTextContent('canonicalRunId=stale');
 
     fireEvent.click(screen.getByRole('button', { name: 'Select case' }));
     await waitFor(() =>
@@ -188,7 +190,7 @@ describe('canonical Agent workspace navigation', () => {
     expect(screen.getByTestId('location')).not.toHaveTextContent('canonicalRunId');
   });
 
-  it('uses canonical Polish Case and Run vocabulary with explicit empty context', async () => {
+  it('uses canonical Polish Case and Run vocabulary without exposing technical empty context', async () => {
     language = 'pl';
     renderHub('/my-work?tab=agent&agentView=processes');
 
@@ -196,8 +198,8 @@ describe('canonical Agent workspace navigation', () => {
     const summary = screen.getByTestId('agent-hub-workspace-summary');
     expect(summary).toHaveTextContent('Agent Hub — wspólna przestrzeń pracy');
     expect(summary).toHaveTextContent('kanoniczne Sprawy i Przebiegi');
-    expect(summary).toHaveTextContent('Sprawa: nie wybrano');
-    expect(summary).toHaveTextContent('Przebieg: nie wybrano');
+    expect(summary).not.toHaveTextContent('Sprawa: nie wybrano');
+    expect(summary).not.toHaveTextContent('Przebieg: nie wybrano');
     const areaStatus = summary.querySelector('[role="status"]');
     expect(areaStatus).toHaveAttribute('aria-live', 'polite');
     expect(areaStatus).toHaveTextContent('Bieżący obszar Agent Hub: Archiwum procesów');
