@@ -119,6 +119,8 @@ import { useAppStore } from '@/store/useAppStore';
 import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 import { isM03InboxStandardTableEnabled } from '@/utils/m03InboxStandardTableFlag';
 
+import { loadCanonicalInboxSnapshot } from './inboxCanonicalLoader';
+
 // duplicateIdentity — CB-04/RB-019/RV-029.
 //
 // Shared "semantic duplicate" grouping for Personal Tasks and Inbox: neither
@@ -2333,43 +2335,9 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     try {
       setLoading(true);
       setLoadError(null);
-      const status =
-        statusTab === 'all'
-          ? 'all'
-          : statusTab === 'done'
-            ? 'done'
-            : statusTab === 'saved'
-              ? 'saved'
-              : 'open';
       const v8Status = mapInboxStatusToV8(statusTab);
-      const [res] = await Promise.all([
-        (async () => {
-          try {
-            const [tableRes, statsRes] = await Promise.all([
-              V8MyWorkApi.getCanonicalInboxTable({ status: v8Status, limit: 200 }),
-              V8MyWorkApi.getCanonicalInboxStats().catch(() => null),
-            ]);
-            return buildInboxResponseFromCanonical(tableRes.items, statsRes);
-          } catch (error) {
-            if (!Api.shouldFallbackToLegacyMyWorkInbox(error)) {
-              throw error;
-            }
-            return Api.inboxGetTable({ status, limit: 200 }).catch(() =>
-              Api.get(`/my-work/inbox?limit=200&status=${status}`)
-            ) as Promise<InboxResponse>;
-          }
-        })(),
-        (async () => {
-          try {
-            return await V8MyWorkApi.materializeCanonicalInbox();
-          } catch (error) {
-            if (!Api.shouldFallbackToLegacyMyWorkInbox(error)) {
-              return null;
-            }
-            return Api.materializeInbox().catch(() => null);
-          }
-        })(),
-      ]);
+      const snapshot = await loadCanonicalInboxSnapshot({ status: v8Status, limit: 200 });
+      const res = buildInboxResponseFromCanonical(snapshot.items, snapshot.stats);
       setData(res);
       const now = new Date();
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());

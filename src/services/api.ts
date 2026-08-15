@@ -6448,8 +6448,11 @@ export const Api = {
   },
 
   shouldFallbackToLegacyMyWorkInbox: (error: any) => {
-    const status = Number(error?.status);
-    return [400, 404, 405, 501].includes(status);
+    void error;
+    // MYW-001: the mounted Inbox is canonical-only. A 404 may mean
+    // V8_ORG_DISABLED or a missing canonical schema, neither of which is a
+    // truthful reason to show a healthy-looking legacy Inbox.
+    return false;
   },
 
   getCanonicalInboxStats: async () => {
