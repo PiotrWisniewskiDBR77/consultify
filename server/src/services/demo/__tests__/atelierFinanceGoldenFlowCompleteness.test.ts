@@ -192,6 +192,13 @@ describe('verifyAtelierFinanceGoldenFlowComplete', () => {
     expect(result.reason).toBeUndefined();
     expect(result.appraisal).toBeDefined();
     expect(Number.isFinite(result.appraisal!.result.npv)).toBe(true);
+    expect(result.assumptionCaveats).toEqual([
+      {
+        key: 'implementationLag',
+        status: 'NEEDS_PRODUCT_DECISION',
+        note: ATELIER_MODEL_ASSUMPTIONS.implementationLagAssumptionNote,
+      },
+    ]);
     // Evidence, not a claim: dbAll/dbGet were genuinely called with the model id.
     expect(dbGet).toHaveBeenCalledWith(expect.stringMatching(/financial_models/), [MODEL_ID]);
   });

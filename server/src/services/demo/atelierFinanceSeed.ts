@@ -90,6 +90,7 @@ import crypto from 'crypto';
 
 import * as DbPromise from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import { extractAssumptionCaveats, type AssumptionCaveat } from '../assumptionCaveats.js';
 import { ensureCanonicalRegistryInDatabase } from '../financeCanonicalRegistrySyncService.js';
 import { appraiseComputeResult, type ModelAppraisal } from '../financialModelAppraisalAdapter.js';
 import { computeModel, getModel } from '../financialModelingService.js';
@@ -3310,6 +3311,8 @@ export interface AtelierFinanceGoldenFlowCompleteness {
   reason?: string;
   /** The appraisal actually computed, when `goldenFlowComplete` is true — evidence, not a claim. */
   appraisal?: ModelAppraisal;
+  /** Explicit unresolved/confirmed assumption markers carried by the model data. */
+  assumptionCaveats?: AssumptionCaveat[];
 }
 
 /**
@@ -3337,7 +3340,12 @@ export interface AtelierFinanceGoldenFlowCompleteness {
  * those two functions itself.
  */
 type AtelierAppraisalRateResolution =
-  | { ok: true; discountRatePct: number; hurdleRatePct: number }
+  | {
+      ok: true;
+      discountRatePct: number;
+      hurdleRatePct: number;
+      assumptions: Record<string, unknown>;
+    }
   | { ok: false; reason: string };
 
 async function resolveAtelierAppraisalRates(
@@ -3372,7 +3380,7 @@ async function resolveAtelierAppraisalRates(
       ? hurdleRatePctRaw
       : discountRatePct;
 
-  return { ok: true, discountRatePct, hurdleRatePct };
+  return { ok: true, discountRatePct, hurdleRatePct, assumptions };
 }
 
 /**
@@ -3442,6 +3450,7 @@ export async function verifyAtelierFinanceGoldenFlowComplete(
     discountRatePct: rates.discountRatePct,
     hurdleRatePct: rates.hurdleRatePct,
   });
+  const assumptionCaveats = extractAssumptionCaveats(rates.assumptions);
 
   if (!Number.isFinite(appraisal.result.npv)) {
     return {
@@ -3449,8 +3458,9 @@ export async function verifyAtelierFinanceGoldenFlowComplete(
       goldenFlowComplete: false,
       reason: `appraise() returned a non-finite NPV (${appraisal.result.npv}) for "${modelId}"`,
       appraisal,
+      assumptionCaveats,
     };
   }
 
-  return { fixtureComplete: true, goldenFlowComplete: true, appraisal };
+  return { fixtureComplete: true, goldenFlowComplete: true, appraisal, assumptionCaveats };
 }

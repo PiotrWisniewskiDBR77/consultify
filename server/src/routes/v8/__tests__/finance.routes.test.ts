@@ -924,6 +924,45 @@ describe('V8 finance read-only routes', () => {
       expect(input.hurdleRatePct).toBe(15);
       expect(Number.isFinite(result.npv)).toBe(true);
     });
+
+    it('surfaces explicit assumption status/note markers beside the appraisal', async () => {
+      mockGetModel.mockResolvedValue({
+        id: 'model-1',
+        organization_id: ORG,
+        assumptions_json: {
+          discountRatePct: 10,
+          hurdleRatePct: 10,
+          implementationLagAssumptionStatus: 'NEEDS_PRODUCT_DECISION',
+          implementationLagAssumptionNote: 'No ramp-up schedule exists in source data.',
+        },
+      });
+      mockComputeModel.mockResolvedValue(REAL_MODEL_EVENTS_PERIODS);
+
+      const res = await request(createApp()).get('/api/v8/finance/models/model-1/appraisal');
+
+      expect(res.status).toBe(200);
+      expect(res.body.assumptionCaveats).toEqual([
+        {
+          key: 'implementationLag',
+          status: 'NEEDS_PRODUCT_DECISION',
+          note: 'No ramp-up schedule exists in source data.',
+        },
+      ]);
+    });
+
+    it('returns an empty assumption caveat list when the model has no markers', async () => {
+      mockGetModel.mockResolvedValue({
+        id: 'model-1',
+        organization_id: ORG,
+        assumptions_json: { discountRatePct: 10 },
+      });
+      mockComputeModel.mockResolvedValue(REAL_MODEL_EVENTS_PERIODS);
+
+      const res = await request(createApp()).get('/api/v8/finance/models/model-1/appraisal');
+
+      expect(res.status).toBe(200);
+      expect(res.body.assumptionCaveats).toEqual([]);
+    });
   });
 
   it('POST /api/v8/finance/models/:id/compute returns envelope and delegates to computeModel', async () => {

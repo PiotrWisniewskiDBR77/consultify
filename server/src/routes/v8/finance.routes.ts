@@ -17,6 +17,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { upload } from '../../middleware/fileUpload.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
+import { extractAssumptionCaveats } from '../../services/assumptionCaveats.js';
 import { createBudget, listBudgets } from '../../services/budgetingService.js';
 import { searchStatementDocumentIntelligence } from '../../services/documentIntelligenceService.js';
 import { ensureCanonicalRegistryInDatabase } from '../../services/financeCanonicalRegistrySyncService.js';
@@ -710,6 +711,7 @@ router.get(
 
     return res.json({
       data: appraisal,
+      assumptionCaveats: extractAssumptionCaveats(assumptions),
       meta: financeMeta(),
     });
   })
