@@ -416,6 +416,15 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
   `recovered-tip-patch-equivalence-257a1393f8.json` oraz
   `recovered-independent-head-module-inventory-257a1393f8.json` w katalogu
   cleanup evidence. Pozostały verdict jest semantyczny, nie automatyczny.
+- Repozytoryjny ledger `docs/cleanup/generated/recovered-tip-disposition.json`
+  zawiera 421/421 unikalnych tipów i recovery refs: 124 mają zamknięty verdict
+  `REPRESENTED_PATCH_EQUIVALENT`, a 297 literalne
+  `SEMANTIC_REVIEW_REQUIRED`; `deletionAuthorized=0`. Generator
+  `scripts/cleanup/build-recovered-tip-disposition.mjs` waliduje sumy źródła,
+  unikalność i jest deterministyczny (powtórny build daje identyczny JSON).
+  Oznacza to, że pierwsze 124 nie wymagają integracji produktu, ale ich refs
+  pozostają chronione do CLEAN-003; pozostałych 297 nie wolno uznać za brakujące
+  ani zbędne bez task ID i semantycznego verdictu.
 
 ### CLEAN-003 — kontrolowane usuwanie
 
