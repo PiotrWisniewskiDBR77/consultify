@@ -80,12 +80,16 @@ const referenceHarnessOnly = rows.filter((row) => row.verdict === 'REFERENCE_HAR
 const reviewRequired = rows.filter((row) => row.verdict === 'SEMANTIC_REVIEW_REQUIRED').length;
 const representedSuperseded = rows.filter((row) => row.verdict === 'REPRESENTED_SUPERSEDED').length;
 const representedCanonical = rows.filter((row) => row.verdict === 'REPRESENTED_CANONICAL').length;
+const rejectedDestructiveSnapshot = rows.filter(
+  (row) => row.verdict === 'REJECTED_DESTRUCTIVE_SNAPSHOT'
+).length;
 const integratedCanonical = rows.filter((row) => row.verdict === 'INTEGRATED_CANONICAL').length;
 if (
   referenceHarnessOnly +
     reviewRequired +
     representedSuperseded +
     representedCanonical +
+    rejectedDestructiveSnapshot +
     integratedCanonical !==
   source.independentHeadCount
 ) {
@@ -115,6 +119,7 @@ const output = {
     referenceHarnessOnly,
     representedSuperseded,
     representedCanonical,
+    rejectedDestructiveSnapshot,
     integratedCanonical,
     semanticReviewRequired: reviewRequired,
     deletionAuthorized: 0,
@@ -130,6 +135,7 @@ const md = `# Recovered independent-head disposition ledger
 - \`REFERENCE_HARNESS_ONLY\`: **${referenceHarnessOnly}**
 - \`REPRESENTED_SUPERSEDED\`: **${representedSuperseded}**
 - \`REPRESENTED_CANONICAL\`: **${representedCanonical}**
+- \`REJECTED_DESTRUCTIVE_SNAPSHOT\`: **${rejectedDestructiveSnapshot}**
 - \`INTEGRATED_CANONICAL\`: **${integratedCanonical}**
 - \`SEMANTIC_REVIEW_REQUIRED\`: **${reviewRequired}**
 - Deletion authorized: **0**

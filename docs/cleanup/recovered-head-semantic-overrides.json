@@ -51,6 +51,13 @@
       "nextAction": "Use CLEAN-001 as the active test ledger; retain the historical recovery ref until CLEAN-003."
     },
     {
+      "tip": "14ffab4bdf72727bd22a856f2ef4a67997cd78a3",
+      "verdict": "REJECTED_DESTRUCTIVE_SNAPSHOT",
+      "taskId": "CLEAN-002-REJECT-001",
+      "evidenceRule": "This two-parent backup merge has the same delta against both parents: 334 deleted files, 15791 deleted lines, zero additions, and zero modifications. It contains no product change to integrate; integrating it would only remove repository policy, evidence, configuration, and source artifacts.",
+      "nextAction": "Never merge or cherry-pick this tip. Preserve the recovery ref and both reachable parents through CLEAN-003 and bundle verification."
+    },
+    {
       "tip": "1eb9289377c3b1e6e33aae3465f43b19d63e4421",
       "verdict": "INTEGRATED_CANONICAL",
       "taskId": "CLEAN-002-SEC-001",

@@ -14,8 +14,9 @@
     "referenceHarnessOnly": 18,
     "representedSuperseded": 7,
     "representedCanonical": 1,
+    "rejectedDestructiveSnapshot": 1,
     "integratedCanonical": 3,
-    "semanticReviewRequired": 195,
+    "semanticReviewRequired": 194,
     "deletionAuthorized": 0
   },
   "rows": [
@@ -474,12 +475,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 0,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REJECTED_DESTRUCTIVE_SNAPSHOT",
+      "taskId": "CLEAN-002-REJECT-001",
       "recoveryRef": "refs/recovery/unknown-20260815/14ffab4bdf72727bd22a856f2ef4a67997cd78a3",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "This two-parent backup merge has the same delta against both parents: 334 deleted files, 15791 deleted lines, zero additions, and zero modifications. It contains no product change to integrate; integrating it would only remove repository policy, evidence, configuration, and source artifacts.",
+      "nextAction": "Never merge or cherry-pick this tip. Preserve the recovery ref and both reachable parents through CLEAN-003 and bundle verification."
     },
     {
       "tip": "166104fc8c935d9c7918547a811ce7d71047a619",

@@ -443,8 +443,11 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
   Cztery małe historie dokumentacyjne zostały zweryfikowane: inwentarz ośmiu
   kart jest bajtowo obecny w kanonie (`REPRESENTED_CANONICAL`), a stare raporty
   Chat schema, Presentation W7 i Coverage są zastąpione przez aktualne
-  migracje/kod oraz repozytoryjne evidence CLEAN-001/Materials. Pozostałe 195
-  nadal wymaga review. Te 18 pozostaje zachowanym materiałem
+  migracje/kod oraz repozytoryjne evidence CLEAN-001/Materials. Backupowy merge
+  masowych usunięć otrzymał `REJECTED_DESTRUCTIVE_SNAPSHOT`: względem obu
+  rodziców usuwa dokładnie 334 pliki / 15 791 linii i niczego nie dodaje ani nie
+  modyfikuje; ref i rodzice pozostają chronione. Pozostałe 194 nadal wymaga
+  review. Te 18 pozostaje zachowanym materiałem
   UX/prototypowym, ale nie
   jest kodem produkcyjnym do merge. Generator mechanicznie egzekwuje warunek
   ścieżek, unikalność, sumy i deterministyczny output; nadal
