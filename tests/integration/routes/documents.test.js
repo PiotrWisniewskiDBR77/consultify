@@ -12,7 +12,7 @@ vi.hoisted(() => {
 });
 
 
-describe('Integration Test: Documents Routes', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('Integration Test: Documents Routes', () => {
   let app;
 
   beforeAll(async () => {

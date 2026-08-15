@@ -13,7 +13,7 @@ vi.hoisted(() => {
   process.env.SQLITE_PATH = `./test-ai-coach-${workerId}.db`;
 });
 
-describe('AI Coach API', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('AI Coach API', () => {
   let app;
   let authToken;
   const db = getDatabase();

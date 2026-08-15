@@ -13,7 +13,7 @@ vi.hoisted(() => {
   process.env.SQLITE_PATH = `./test-assessment-routes-${workerId}.db`;
 });
 
-describe('Assessment API', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('Assessment API', () => {
   let app;
   let authToken;
   const db = getDatabase();

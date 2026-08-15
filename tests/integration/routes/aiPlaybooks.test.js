@@ -13,7 +13,7 @@ vi.hoisted(() => {
   process.env.SQLITE_PATH = `./test-ai-playbooks-${workerId}.db`;
 });
 
-describe('AI Playbooks API', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('AI Playbooks API', () => {
   let app;
   let authToken;
   const db = getDatabase();

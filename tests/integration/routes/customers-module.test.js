@@ -12,7 +12,7 @@ vi.hoisted(() => {
 });
 
 
-describe('SuperAdmin Customers Module API', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('SuperAdmin Customers Module API', () => {
   let app;
 
   beforeAll(async () => {

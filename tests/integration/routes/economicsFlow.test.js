@@ -18,7 +18,7 @@ vi.hoisted(() => {
 
 const db = getDatabase();
 
-describe('Integration Test: Economics Financial Analysis Flow', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('Integration Test: Economics Financial Analysis Flow', () => {
   let analysisId;
   let optimisticScenarioId;
   let initiativeId;

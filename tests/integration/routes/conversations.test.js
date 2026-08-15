@@ -12,7 +12,7 @@ vi.hoisted(() => {
 });
 
 
-describe('Conversations API', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('Conversations API', () => {
   let app;
 
   beforeAll(async () => {

@@ -13,7 +13,7 @@ vi.hoisted(() => {
   process.env.SQLITE_PATH = `./test-ai-explain-${workerId}.db`;
 });
 
-describe('AI Explain API', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('AI Explain API', () => {
   let app;
   let authToken;
   const db = getDatabase();

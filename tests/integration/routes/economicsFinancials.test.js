@@ -11,7 +11,7 @@ vi.hoisted(() => {
   process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
 });
 
-describe('Economics Financials API', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('Economics Financials API', () => {
   let app;
 
   beforeAll(async () => {

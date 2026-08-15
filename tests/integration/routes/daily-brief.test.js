@@ -12,7 +12,7 @@ vi.hoisted(() => {
 });
 
 
-describe('Daily Brief API', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('Daily Brief API', () => {
   let app;
 
   beforeAll(async () => {

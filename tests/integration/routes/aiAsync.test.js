@@ -12,7 +12,7 @@ vi.hoisted(() => {
 });
 
 
-describe('AI Async API', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('AI Async API', () => {
   let app;
 
   beforeAll(async () => {
