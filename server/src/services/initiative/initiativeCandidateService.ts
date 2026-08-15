@@ -164,6 +164,22 @@ export interface AcceptCandidateOptions {
   deps?: AcceptDeps;
 }
 
+type CandidateAcceptConflict = Error & {
+  code: 'CANDIDATE_DISMISSED';
+  statusCode: 409;
+};
+
+function acceptConflictError(
+  message: string,
+  code: CandidateAcceptConflict['code']
+): CandidateAcceptConflict {
+  const error = new Error(message) as CandidateAcceptConflict;
+  error.name = 'CandidateAcceptConflict';
+  error.code = code;
+  error.statusCode = 409;
+  return error;
+}
+
 // ---------------------------------------------------------------------------
 // Heuristic candidate builder (deterministic stub — LLM seam marked)
 // ---------------------------------------------------------------------------

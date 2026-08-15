@@ -139,6 +139,13 @@ router.post(
       });
     } catch (err: unknown) {
       logger.error('[InitiativeCandidates] Accept error:', err);
+      const known = err as { code?: unknown; message?: unknown; statusCode?: unknown };
+      if (known.statusCode === 409 && known.code === 'CANDIDATE_DISMISSED') {
+        return res.status(409).json({
+          error: typeof known.message === 'string' ? known.message : 'Candidate was dismissed',
+          code: known.code,
+        });
+      }
       return res.status(500).json({ error: 'Failed to accept candidate' });
     }
   })

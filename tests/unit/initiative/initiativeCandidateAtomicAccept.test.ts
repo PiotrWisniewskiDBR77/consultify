@@ -105,4 +105,18 @@ describe('CLEAN-002-INT-005/006 atomic candidate acceptance', () => {
     expect(second?.initiativeId).toBe('initiative-1');
     expect(createInitiative).toHaveBeenCalledTimes(1);
   });
+
+  it('fails closed with a typed conflict when the candidate was dismissed', async () => {
+    candidate.status = 'dismissed';
+
+    await expect(
+      acceptCandidate(undefined, candidate.id, { orgId: 'org-1', fill: false })
+    ).rejects.toMatchObject({
+      code: 'CANDIDATE_DISMISSED',
+      statusCode: 409,
+    });
+    expect(statements).toContain('ROLLBACK');
+    expect(createInitiative).not.toHaveBeenCalled();
+    expect(initiative).toBeNull();
+  });
 });
