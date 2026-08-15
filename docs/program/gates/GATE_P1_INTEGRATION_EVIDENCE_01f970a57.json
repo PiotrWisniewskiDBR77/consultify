@@ -1,0 +1,59 @@
+{
+  "gate": "GATE-P1-INTEGRATION",
+  "candidateSha": "01f970a57a0e76b5ce94706488aca1b207ad4ccb",
+  "verifiedAt": "2026-08-16T00:07:00+02:00",
+  "environment": "isolated local worktree",
+  "productEdits": false,
+  "checks": [
+    {
+      "id": "root-typecheck",
+      "command": "npm run type-check",
+      "status": "PASS",
+      "exitCode": 0
+    },
+    {
+      "id": "server-typecheck",
+      "command": "npm --prefix server run typecheck",
+      "status": "PASS",
+      "exitCode": 0
+    },
+    {
+      "id": "production-build",
+      "command": "npm run build",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 55.4,
+      "notes": ["Vite chunk-size warnings are non-fatal"]
+    },
+    {
+      "id": "exact-45-file-gate",
+      "command": "npx vitest run <exact 45-file P1 integration allowlist> --maxWorkers=1 --no-file-parallelism --reporter=dot",
+      "status": "PASS",
+      "exitCode": 0,
+      "testFilesPassed": 43,
+      "testFilesSkippedByExplicitRealDbGate": 2,
+      "testFilesAccounted": 45,
+      "testsPassed": 176,
+      "testsSkippedByExplicitRealDbGate": 13,
+      "testsTotal": 189,
+      "durationSeconds": 69.85
+    },
+    {
+      "id": "diff-check",
+      "command": "git diff --check",
+      "status": "PASS",
+      "exitCode": 0
+    },
+    {
+      "id": "worktree-clean-after-gates",
+      "command": "git status --porcelain=v1",
+      "status": "PASS",
+      "output": ""
+    }
+  ],
+  "verdict": "PASS",
+  "limitations": [
+    "This packet is local code/build/test evidence only.",
+    "It does not constitute browser, visual, demo, deployment, or production evidence."
+  ]
+}
