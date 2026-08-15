@@ -482,7 +482,12 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
   a Process Flow ma nowszy toolbar z progressive disclosure (13/13). Meeting
   Core został wyodrębniony jako pierwszy jawny `CANDIDATE_INTEGRATION` z
   atomowym pakietem `MTG-001-T01`; nie jest już niesklasyfikowanym WIP i nie
-  będzie scalany jako branch. Aktualny ledger ma 155 pozycji
+  będzie scalany jako branch. Dwie kolejne historie zostały zastąpione przez
+  bezpieczniejszy kanon: przycisk presetu Assessment jest pokazywany wyłącznie
+  dla jedynej wspieranej metodologii DRD (2/2 i frontend typecheck), a wspólny
+  resolver map Ideas obsługuje odczyty metrics/artifacts/CSV z jednego wiersza
+  `is_canonical`; odzyskane kontrakty czytników są przywrócone i pełna macierz
+  shared-map ma 11/11 PASS. Aktualny ledger ma 153 pozycje
   `SEMANTIC_REVIEW_REQUIRED`. Te 18 pozostaje zachowanym materiałem
   UX/prototypowym, ale nie
   jest kodem produkcyjnym do merge. Generator mechanicznie egzekwuje warunek

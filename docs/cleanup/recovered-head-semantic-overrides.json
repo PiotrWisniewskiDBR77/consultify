@@ -2,6 +2,20 @@
   "schemaVersion": 1,
   "rows": [
     {
+      "tip": "4485dc7152a1cca989dd02c8f6bb6028f2cfeae5",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-IDEA-006",
+      "evidenceRule": "The recovered patch corrected CSV export to read the shared canonical map row. The current production route contains a later, broader resolveMapReadRow contract used consistently by metrics, artifact links and CSV export; it selects is_canonical in shared mode and preserves the owner-row fallback only for legacy mode. Canonical commit c60425a00 restores the three missing reader contracts, and the complete shared-map suite passes 11/11.",
+      "nextAction": "Keep the later shared resolver and restored coverage; do not cherry-pick the narrower recovered route implementation. Prove the three readers with signed-in members and persisted canonical data in Ideas browser/realDB acceptance; retain the recovery ref until CLEAN-003."
+    },
+    {
+      "tip": "e0a7ceb94ebf03e0578158ec5ca4a2d0a70435e6",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-ASM-003",
+      "evidenceRule": "The recovered Assessment UI passed the selected assessment methodology into the preset endpoint, but the current backend P28 preset registry supports DRD only; applying SIRI would return 400 and expose a false action. Canonical commit 626a73fff instead renders Apply DRD preset only for DRD assessments. The focused contract passes 2/2 and full frontend typecheck passes.",
+      "nextAction": "Do not restore the generic preset button until each methodology has an implemented backend preset. Keep SIRI honest and track its methodology-specific preset as post-MVP work; retain the recovery ref until CLEAN-003."
+    },
+    {
       "tip": "2d0e6d8dab54e351c9e948f9dc98493282aac5ee",
       "verdict": "CANDIDATE_INTEGRATION",
       "taskId": "MTG-001-T01",
