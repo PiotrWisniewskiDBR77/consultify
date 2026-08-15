@@ -67,7 +67,7 @@ describe('createInitiativeFromMove — generic tool→initiative round-trip', ()
       linkedQuadrants: ['q-market-dev'],
     };
 
-    const ok = await createInitiativeFromMove({ session, move, isPolish: false, addInitiative });
+    const ok = await createInitiativeFromMove({ session, move, t: (key) => key, addInitiative });
 
     expect(ok).toBe(true);
 
@@ -98,7 +98,7 @@ describe('createInitiativeFromMove — generic tool→initiative round-trip', ()
     const addInitiative = vi.fn();
     const move = { id: 'm', title: 'Fallback move', rationale: 'r' };
 
-    const ok = await createInitiativeFromMove({ session, move, isPolish: false, addInitiative });
+    const ok = await createInitiativeFromMove({ session, move, t: (key) => key, addInitiative });
 
     expect(ok).toBe(false);
     // Draft still captured locally so the tool flow is never broken.

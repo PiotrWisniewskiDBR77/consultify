@@ -55,6 +55,17 @@ vi.mock('../../../server/src/utils/queryHelpers.js', () => ({
   buildInPlaceholders: (values: unknown[]) => values.map(() => '?').join(', '),
   buildOrgFilter: () => '',
   buildUserFilter: () => '',
+  withPgTransaction: async (fn: (client: any) => Promise<unknown>) =>
+    fn({
+      query: async (sql: string, params: unknown[] = []) => {
+        if (/^\s*SELECT\b/i.test(sql)) {
+          const row = await mockQueryOne(sql, params);
+          return { rows: row ? [row] : [], rowCount: row ? 1 : 0 };
+        }
+        const result = await mockQueryRun(sql, params);
+        return { rows: [], rowCount: result?.changes ?? 0 };
+      },
+    }),
 }));
 
 vi.mock('../../../server/src/services/initiative/initiativeGateReadinessService.js', () => ({
@@ -110,7 +121,7 @@ async function patchStatus(body: Record<string, unknown>): Promise<{
 }> {
   mockQueryOne.mockImplementation(async (sql: string) => {
     const s = String(sql);
-    if (s.includes('SELECT status, name, created_by')) {
+    if (s.includes('SELECT status, name, created_by') || s.includes('SELECT * FROM initiatives')) {
       return { status: 'DRAFT', name: 'Test Initiative', created_by: ACTOR_ID };
     }
     if (s.includes('owner_business_id') && s.includes('owner_execution_id')) {
@@ -162,9 +173,7 @@ describe('M13/G5 — AI gate soft-block + override (real controller)', () => {
     const res = await patchStatus({});
 
     expect(res.statusCode).toBe(422);
-    expect(res.json).toEqual(
-      expect.objectContaining({ code: 'INITIATIVE_GATE_AI_SOFT_BLOCK' })
-    );
+    expect(res.json).toEqual(expect.objectContaining({ code: 'INITIATIVE_GATE_AI_SOFT_BLOCK' }));
     expect(mockRecordEvent).toHaveBeenCalledWith(
       expect.objectContaining({ blocked: true, overridden: false, score: 40 })
     );

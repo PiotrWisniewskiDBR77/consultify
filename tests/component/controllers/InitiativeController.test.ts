@@ -13,6 +13,7 @@ vi.mock('../../../server/src/utils/queryHelpers.js', () => ({
   queryAll: vi.fn(),
   queryOne: vi.fn(),
   queryRun: vi.fn(),
+  getTableColumns: vi.fn(async () => []),
 }));
 
 vi.mock('../../../server/src/services/notificationService.js', () => ({
@@ -121,7 +122,10 @@ describe('InitiativeController', () => {
       await InitiativeController.getInitiativeById(mockReq, mockRes);
 
       expect(mockRes.status).toHaveBeenCalledWith(404);
-      expect(mockRes.json).toHaveBeenCalledWith({ error: 'Initiative not found' });
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: 'Initiative not found',
+        code: 'INITIATIVE_NOT_FOUND',
+      });
     });
   });
 
@@ -129,6 +133,7 @@ describe('InitiativeController', () => {
     it('should create a new initiative', async () => {
       mockReq.body = {
         title: 'New Initiative',
+        projectId: 'project-123',
         axis: 'Growth',
         area: 'Marketing',
       };
@@ -146,13 +151,24 @@ describe('InitiativeController', () => {
       expect(queryHelpers.queryRun).toHaveBeenCalled();
     });
 
-    it('should return 400 if title is missing', async () => {
-      mockReq.body = {};
+    it('should return the card-formula violation if title is missing', async () => {
+      mockReq.body = { projectId: 'project-123' };
 
       await InitiativeController.createInitiative(mockReq, mockRes);
 
-      expect(mockRes.status).toHaveBeenCalledWith(400);
-      expect(mockRes.json).toHaveBeenCalledWith({ error: 'Title is required' });
+      expect(mockRes.status).toHaveBeenCalledWith(422);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: 'CARD_CONTENT_FORMULA_VIOLATION',
+          kind: 'initiative',
+          violations: [
+            expect.objectContaining({
+              code: 'initiative.title_present',
+              severity: 'hard',
+            }),
+          ],
+        })
+      );
     });
   });
 });
