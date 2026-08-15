@@ -4106,6 +4106,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
   return (
     <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-950">
+      <h1 className="sr-only">{t('myWork.hub.title', 'My Work')}</h1>
       {/* Navigation Bar (Golden Standard - same as InterviewHub) */}
       <div className="bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/[0.05]">
         {/* Main Navigation Row */}

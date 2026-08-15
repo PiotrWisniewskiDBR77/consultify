@@ -5280,6 +5280,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
 
   return (
     <>
+      <h1 className="sr-only">{isPolish ? 'Narzędzia konsultingowe' : 'Consulting Tools'}</h1>
       <StandardModuleBar
         tabs={tabs}
         activeTab={activeTab}
