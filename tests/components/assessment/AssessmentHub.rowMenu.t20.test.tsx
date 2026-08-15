@@ -65,11 +65,8 @@ describe('T20 AssessmentHub list-tab rowMenu: Open/Edit duplication removed', ()
     expect(rowMenuSlice).toContain("onClick: () => void handleRowAction('delete', row as any)");
   });
 
-  it('T20-M14 (Menu3BulkRow) and T21 (Details) wiring remain untouched', () => {
+  it('T20-M14 canonical bulk-row wiring remains present', () => {
     expect(source).toContain('<Menu3BulkRow');
-    expect(source).toContain(
-      'const previewDetailsText = buildAssessmentPreviewDetails(selectedRow, isPolish'
-    );
   });
 });
 

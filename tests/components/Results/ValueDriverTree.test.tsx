@@ -67,7 +67,7 @@ describe('ValueDriverTree', () => {
     await waitFor(() => expect(screen.getByTestId('value-driver-tree')).toBeInTheDocument());
     // stat labels
     expect(screen.getAllByText('KPI').length).toBeGreaterThan(0);
-    expect(screen.getByText('Węzły')).toBeInTheDocument();
+    expect(screen.getByText('Nodes')).toBeInTheDocument();
     // node count value
     expect(screen.getByText('4')).toBeInTheDocument();
   });
@@ -114,13 +114,13 @@ describe('ValueDriverTree', () => {
     });
     render(<ValueDriverTree projectId="all" />);
     await waitFor(() => expect(screen.getByTestId('value-driver-tree')).toBeInTheDocument());
-    expect(screen.getByText(/Brak powiązań KPI z inicjatywami/)).toBeInTheDocument();
+    expect(screen.getByText(/No KPI–initiative links/)).toBeInTheDocument();
   });
 
   it('renders the error state when the endpoint rejects', async () => {
     vi.mocked(Api.get).mockRejectedValue(new Error('boom'));
     render(<ValueDriverTree projectId="all" />);
     await waitFor(() => expect(screen.getByTestId('value-driver-tree-error')).toBeInTheDocument());
-    expect(screen.getByText(/Nie udało się załadować drzewa/)).toBeInTheDocument();
+    expect(screen.getByText(/Failed to load the tree/)).toBeInTheDocument();
   });
 });

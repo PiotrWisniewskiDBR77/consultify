@@ -78,10 +78,8 @@ import {
   ViewMode,
 } from '../shared/ModuleHub';
 import {
-  MENU_3_ACTION_DANGER,
   MENU_3_INNER_CLASS,
-  MENU_3_LEFT_CLASS,
-  MENU_3_RIGHT_CLASS,
+  Menu3BulkRow,
   Menu3Chip,
 } from '../shared/ModuleMenu3';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
@@ -1596,27 +1594,22 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
 
   const bulkCommandRowContent =
     (activeTab === 'list' || activeTab === 'processes') && selectedListIds.size > 0 ? (
-      <div className={MENU_3_INNER_CLASS}>
-        <div className={MENU_3_LEFT_CLASS}>
-          <span className="inline-flex h-7 items-center rounded-full px-2.5 text-[11px] font-semibold text-c-text whitespace-nowrap">
-            {`${selectedListIds.size} selected`}
-          </span>
-          <Menu3Chip onClick={() => setSelectedListIds(new Set(currentData.map((r: any) => r.id)))}>
-            Select all
-          </Menu3Chip>
-          <Menu3Chip onClick={() => setSelectedListIds(new Set())}>Clear</Menu3Chip>
-        </div>
-        <div className={MENU_3_RIGHT_CLASS}>
-          <button
-            type="button"
-            onClick={() => void handleBulkDeleteList()}
-            className={MENU_3_ACTION_DANGER}
-          >
-            <Trash2 size={12} />
-            Delete
-          </button>
-        </div>
-      </div>
+      <Menu3BulkRow
+        selectedLabel={`${selectedListIds.size} selected`}
+        selectAllLabel="Select all"
+        clearLabel="Clear"
+        onSelectAll={() => setSelectedListIds(new Set(currentData.map((r: any) => r.id)))}
+        onClear={() => setSelectedListIds(new Set())}
+        actions={[
+          {
+            id: 'delete',
+            label: 'Delete',
+            icon: Trash2,
+            onClick: () => void handleBulkDeleteList(),
+            variant: 'danger',
+          },
+        ]}
+      />
     ) : null;
 
   /**
@@ -2083,7 +2076,6 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
                 ],
                 universalHandlers: {
                   preview: () => setSelectedAssessmentId(String((row as any).id)),
-                  edit: () => handleOpenDocument(row as any),
                   // Brak API archiwizacji assessmentu — pozycja disabled z notą (StandardTable dokłada ją sama).
                 },
                 destructive: {
@@ -2358,7 +2350,6 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
                 ],
                 universalHandlers: {
                   preview: () => setSelectedInitiativeRowId(String((row as any).id)),
-                  edit: () => handleOpenDocument(row as any),
                 },
                 destructive: {
                   onClick: () => void handleRowAction('delete', row as any),

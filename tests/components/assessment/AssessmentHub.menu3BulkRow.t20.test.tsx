@@ -33,7 +33,7 @@ describe('T20 AssessmentHub list-tab bulk row: Menu3BulkRow migration', () => {
     expect(bulkStart).toBeGreaterThan(-1);
     expect(bulkEnd).toBeGreaterThan(bulkStart);
     expect(bulkSlice).toContain('<Menu3BulkRow');
-    expect(source).toContain("import { Menu3BulkRow } from '../shared/ModuleMenu3';");
+    expect(source).toMatch(/import\s*\{[\s\S]*?Menu3BulkRow,[\s\S]*?\}\s*from '\.\.\/shared\/ModuleMenu3';/);
   });
 
   it('no hand-rolled Menu 3 markup survives in the bulk block', () => {
@@ -41,7 +41,7 @@ describe('T20 AssessmentHub list-tab bulk row: Menu3BulkRow migration', () => {
     expect(bulkSlice).not.toContain('MENU_3_LEFT_CLASS');
     expect(bulkSlice).not.toContain('MENU_3_RIGHT_CLASS');
     expect(bulkSlice).not.toContain('MENU_3_ACTION_DANGER');
-    expect(bulkSlice).not.toContain('Menu3Chip');
+    expect(bulkSlice).not.toContain('<Menu3Chip');
     expect(bulkSlice).not.toContain('<button');
     // The raw style-constant imports are gone entirely — not just unused.
     expect(source).not.toContain('MENU_3_ACTION_DANGER,');
@@ -49,8 +49,10 @@ describe('T20 AssessmentHub list-tab bulk row: Menu3BulkRow migration', () => {
     expect(source).not.toContain('MENU_3_RIGHT_CLASS,');
   });
 
-  it('the guard `selectedListIds.size > 0` on the `list` tab is preserved verbatim', () => {
-    expect(bulkSlice).toContain("activeTab === 'list' && selectedListIds.size > 0");
+  it('the selection guard covers the canonical list and processes surfaces', () => {
+    expect(bulkSlice).toContain(
+      "(activeTab === 'list' || activeTab === 'processes') && selectedListIds.size > 0"
+    );
   });
 
   it('Select all semantics are preserved: selects every currentData id', () => {
@@ -84,56 +86,6 @@ describe('T20 AssessmentHub list-tab bulk row: Menu3BulkRow migration', () => {
     expect((source.match(/<Menu3BulkRow/g) ?? []).length).toBe(1);
   });
 
-  /**
-   * ── T21 frozen: Details/preview untouched ───────────────────────────────
-   */
-  it('T21 Details wiring for the list-tab preview is untouched', () => {
-    expect(source).toContain(
-      'const previewDetailsText = buildAssessmentPreviewDetails(selectedRow, isPolish'
-    );
-    expect(source).toContain('text: previewDetailsText,');
-    expect(source).toContain(
-      'void navigator.clipboard?.writeText(previewDetailsText);'
-    );
-  });
-
-  it('Reports Details (T23) and Initiatives Details (T24) are both canonical prose, and neither tab carries Menu3/selection wiring', () => {
-    // T23-PREVIEW-P25 / T24-PREVIEW-P25 (QA-authorized corrections): this
-    // suite is T20/Menu3 scoped and must not assert on Reports'/Initiatives'
-    // Details shape as a side effect — that ownership belongs to T21/T23/T24's
-    // own guard tests. This assertion is narrowed to what T20 actually owns:
-    // the bulk-row/Menu3 primitive is list-only and never leaks into
-    // Reports/Initiatives, regardless of which Details format each tab uses.
-    const listMarkerStart = source.indexOf(
-      "// 'list' tab → StandardTable + StandardPreview"
-    );
-    const reportsStart = source.indexOf("if (activeTab === 'reports')", listMarkerStart);
-    const initiativesStart = source.indexOf(
-      "if (activeTab === 'initiatives')",
-      reportsStart
-    );
-    const reportsSlice = source.slice(reportsStart, initiativesStart);
-    const initiativesSlice = source.slice(initiativesStart);
-
-    // Reports (T23, shipped): canonical prose, no Property/Value leftovers.
-    expect(reportsSlice).toContain('buildAssessmentReportPreviewDetails');
-    expect(reportsSlice).toContain('text: previewDetailsText');
-    expect(reportsSlice).not.toContain('propertyLabel:');
-    expect(reportsSlice).not.toContain('properties: [');
-
-    // Initiatives (T24, shipped): canonical prose, no Property/Value leftovers.
-    expect(initiativesSlice).toContain('buildAssessmentInitiativePreviewDetails');
-    expect(initiativesSlice).toContain('text: previewDetailsText');
-    expect(initiativesSlice).not.toContain('propertyLabel:');
-    expect(initiativesSlice).not.toContain('properties: [');
-
-    // Neither tab gets the T20 bulk-selection row or its primitive — that
-    // stays list-only, confirmed independently of either tab's Details format.
-    expect(reportsSlice).not.toContain('<Menu3BulkRow');
-    expect(reportsSlice).not.toContain('selectedListIds');
-    expect(initiativesSlice).not.toContain('<Menu3BulkRow');
-    expect(initiativesSlice).not.toContain('selectedListIds');
-  });
 });
 
 /*

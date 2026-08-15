@@ -39,7 +39,7 @@ describe('ValuationVisualsPanel — epic F1/F4 (Football Field + Sensitivity + T
     expect(panel).toBeInTheDocument();
     expect(panel).toHaveAttribute('data-empty', 'true');
     expect(
-      screen.getByText('Uruchom wycenę, aby zobaczyć wizualizacje.'),
+      screen.getByText('Run the valuation to see the visualizations.'),
     ).toBeInTheDocument();
   });
 
@@ -50,7 +50,7 @@ describe('ValuationVisualsPanel — epic F1/F4 (Football Field + Sensitivity + T
     expect(panel).toBeInTheDocument();
     expect(panel).toHaveAttribute('data-empty', 'true');
     expect(
-      screen.getByText('Uruchom wycenę, aby zobaczyć wizualizacje.'),
+      screen.getByText('Run the valuation to see the visualizations.'),
     ).toBeInTheDocument();
   });
 
