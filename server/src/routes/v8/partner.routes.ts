@@ -22,7 +22,6 @@ import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import legalService from '../../services/legalService.js';
 import PartnerCommissionService from '../../services/partnerCommissionService.js';
-import { ensurePartnerDemoDataset } from '../../services/partnerDemoSeedService.js';
 import { getActivePartnerOrgIdForUser } from '../../services/partnerOrgResolution.js';
 import {
   getPartnerPayoutSettings,
@@ -41,18 +40,12 @@ const router = Router();
 export const V8_PARTNER_READ_CONTRACT = 'partner_runtime_read_v1';
 export const V8_PARTNER_PROGRAM_CONTRACT = 'partner_program_p29_v1';
 
-router.use(
-  asyncHandler(async (req: AuthRequest, _res: Response, next) => {
-    const userId = req.userId || req.user?.id;
-    if (userId) {
-      const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
-      if (partnerOrgId) {
-        await ensurePartnerDemoDataset(partnerOrgId);
-      }
-    }
-    next();
-  })
-);
+function payoutPolicyNotConfigured(res: Response) {
+  return res.status(503).json({
+    error: 'A versioned commission and payout policy must be published before payout mutations',
+    code: 'PARTNER_PAYOUT_POLICY_NOT_CONFIGURED',
+  });
+}
 
 function partnerReadMeta(req: AuthRequest, partnerOrgId: string) {
   const { organizationId } = getV8Context(req);
@@ -63,6 +56,77 @@ function partnerReadMeta(req: AuthRequest, partnerOrgId: string) {
     v8TenantOrganizationId: organizationId,
   };
 }
+
+async function readPartnerConnection(partnerOrgId: string) {
+  const db = getDatabase();
+  const organization = await DbPromise.get<any>(
+    db,
+    `SELECT id, name, legal_name, tax_id, contact_email, contact_phone, website,
+            tier, status, partner_since, license_discount_percent,
+            commission_rate_percent, performance_score, public_listing_enabled
+       FROM partner_organizations WHERE id = ? LIMIT 1`,
+    [partnerOrgId]
+  );
+  if (!organization) return null;
+  const [specializations, regions] = await Promise.all([
+    DbPromise.all<{ framework: string }>(
+      db,
+      `SELECT framework FROM partner_specializations WHERE partner_org_id = ? ORDER BY framework`,
+      [partnerOrgId]
+    ),
+    DbPromise.all<{ region: string }>(
+      db,
+      `SELECT region FROM partner_regions WHERE partner_org_id = ? ORDER BY region`,
+      [partnerOrgId]
+    ),
+  ]);
+  return {
+    id: organization.id,
+    name: organization.name,
+    legalName: organization.legal_name || undefined,
+    taxId: organization.tax_id || undefined,
+    contactEmail: organization.contact_email,
+    contactPhone: organization.contact_phone || undefined,
+    website: organization.website || undefined,
+    tier: organization.tier,
+    status: organization.status,
+    partnerSince: organization.partner_since || undefined,
+    licenseDiscountPercent: organization.license_discount_percent ?? undefined,
+    commissionRatePercent: organization.commission_rate_percent ?? undefined,
+    performanceScore: organization.performance_score ?? undefined,
+    publicListingEnabled: Boolean(organization.public_listing_enabled),
+    specializations: specializations.map((item) => item.framework),
+    regions: regions.map((item) => item.region),
+  };
+}
+
+/** Canonical partner connection read. It never creates or seeds product data. */
+router.get(
+  '/connection',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.userId || req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
+    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    if (!partnerOrgId) {
+      return res.json({
+        data: {
+          connected: false,
+          selfConnectEnabled: process.env.PARTNER_SELF_CONNECT_ENABLED === 'true',
+        },
+        meta: { version: 'v8', contract: V8_PARTNER_READ_CONTRACT },
+      });
+    }
+    const organization = await readPartnerConnection(partnerOrgId);
+    return res.json({
+      data: {
+        connected: Boolean(organization),
+        selfConnectEnabled: process.env.PARTNER_SELF_CONNECT_ENABLED === 'true',
+        ...(organization ? { organization } : {}),
+      },
+      meta: partnerReadMeta(req, partnerOrgId),
+    });
+  })
+);
 
 function partnerProgramMeta(req: AuthRequest, partnerOrgId: string) {
   const { organizationId } = getV8Context(req);
@@ -164,6 +228,8 @@ router.post(
         code: 'PARTNER_ORG_REQUIRED',
       });
     }
+    return payoutPolicyNotConfigured(res);
+    /* c8 ignore start -- re-enabled only after a versioned policy authority is published */
     try {
       const payoutSettings = await getPartnerPayoutSettings(partnerOrgId);
       if (!isPartnerPayoutDestinationComplete(payoutSettings)) {
@@ -217,6 +283,7 @@ router.post(
         ...(whatNext.length ? { whatNext } : {}),
       });
     }
+    /* c8 ignore stop */
   })
 );
 
@@ -577,71 +644,10 @@ router.get(
     const tools = await PartnerReferralService.getReferralTools(partnerOrgId);
     const hasIdentity = (input: { referralCode?: string; referralLink?: string } | null) =>
       Boolean(String(input?.referralCode || '').trim() && String(input?.referralLink || '').trim());
-
-    const normalizeWithEnsuredIdentity = async (
-      baseTools: {
-        referralCode?: string;
-        referralLink?: string;
-        referralLinkSlug?: string;
-        qrCodeUrl?: string;
-        campaignLinks?: unknown[];
-      } | null
-    ) => {
-      const orgRow = await DbPromise.get<{ name?: string | null }>(
-        getDatabase(),
-        `SELECT name FROM partner_organizations WHERE id = ? LIMIT 1`,
-        [partnerOrgId]
-      );
-      const ensuredIdentity =
-        typeof (PartnerReferralService as any).ensurePartnerReferralIdentity === 'function'
-          ? await (PartnerReferralService as any).ensurePartnerReferralIdentity(
-              partnerOrgId,
-              orgRow?.name || undefined
-            )
-          : null;
-      const prefix = String(orgRow?.name || 'partner')
-        .toUpperCase()
-        .replace(/[^A-Z0-9]+/g, '')
-        .slice(0, 6);
-      const fallbackCode = `${prefix || 'PARTNER'}-${String(partnerOrgId).slice(0, 4).toUpperCase()}`;
-      const fallbackSlug = String(orgRow?.name || 'partner')
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '')
-        .concat(`-${String(partnerOrgId).slice(0, 6).toLowerCase()}`);
-      const referralCode =
-        String(baseTools?.referralCode || '').trim() ||
-        String(ensuredIdentity?.referralCode || '').trim() ||
-        fallbackCode;
-      const referralLinkSlug =
-        String(baseTools?.referralLinkSlug || '').trim() ||
-        String(ensuredIdentity?.referralLinkSlug || '').trim() ||
-        fallbackSlug;
-      return {
-        referralCode,
-        referralLink: `${process.env.APP_BASE_URL || 'https://consultify.ai'}/r/${referralLinkSlug}`,
-        referralLinkSlug,
-        qrCodeUrl: `${
-          process.env.APP_BASE_URL || 'https://consultify.ai'
-        }/api/partner/qr/${referralLinkSlug}`,
-        campaignLinks: Array.isArray(baseTools?.campaignLinks) ? baseTools?.campaignLinks : [],
-      };
-    };
-
-    if (!tools) {
-      // Compatibility guard: preserve a usable shape for clients even when
-      // campaign rows are unavailable.
-      const fallbackTools = await normalizeWithEnsuredIdentity(null);
-      return res.json({
-        data: { tools: fallbackTools },
-        meta: partnerReadMeta(req, partnerOrgId),
-      });
-    }
-
-    if (!hasIdentity(tools)) {
-      const healedTools = await normalizeWithEnsuredIdentity(tools);
-      return res.json({
-        data: { tools: healedTools },
+    if (!tools || !hasIdentity(tools)) {
+      return res.status(409).json({
+        error: 'Partner referral identity has not been provisioned',
+        code: 'PARTNER_REFERRAL_IDENTITY_REQUIRED',
         meta: partnerReadMeta(req, partnerOrgId),
       });
     }
@@ -850,6 +856,8 @@ router.post(
         code: 'PARTNER_ORG_REQUIRED',
       });
     }
+    return payoutPolicyNotConfigured(res);
+    /* c8 ignore start -- re-enabled only after a versioned policy authority is published */
     const payoutSettings = await getPartnerPayoutSettings(partnerOrgId);
     if (!isPartnerPayoutDestinationComplete(payoutSettings)) {
       const detail = await PartnerProgramLedgerService.getProgramStatusDetail(
@@ -931,6 +939,7 @@ router.post(
       },
       meta: partnerProgramMeta(req, partnerOrgId),
     });
+    /* c8 ignore stop */
   })
 );
 

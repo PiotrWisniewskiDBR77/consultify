@@ -53,7 +53,7 @@ function normalizeOnboardingStatus(payload: any): V8PartnerOnboardingStatus {
 }
 
 async function getPartnerConnection(): Promise<PartnerConnectionPayload> {
-  const response = await Api.get('/api/partners/connection');
+  const response = await V8PartnerApi.getConnection();
   return normalizeConnection(response);
 }
 

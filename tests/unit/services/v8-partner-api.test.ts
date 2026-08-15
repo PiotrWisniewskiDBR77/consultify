@@ -15,6 +15,15 @@ describe('V8PartnerApi', () => {
     vi.clearAllMocks();
   });
 
+  it('requests connection state from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({ connected: false, selfConnectEnabled: false });
+
+    const data = await V8PartnerApi.getConnection();
+
+    expect(v8Get).toHaveBeenCalledWith('/partner/connection');
+    expect(data.connected).toBe(false);
+  });
+
   it('requests partner referral analytics from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({
       analytics: {
@@ -423,9 +432,9 @@ describe('V8PartnerApi', () => {
     expect(data.publicListingEnabled).toBe(true);
   });
 
-  it('falls back to legacy partner routes only for bounded compatibility statuses', () => {
-    expect(shouldFallbackToLegacyPartner({ status: 404 })).toBe(true);
-    expect(shouldFallbackToLegacyPartner({ status: 501 })).toBe(true);
+  it('never falls back from the canonical V8 partner contract', () => {
+    expect(shouldFallbackToLegacyPartner({ status: 404 })).toBe(false);
+    expect(shouldFallbackToLegacyPartner({ status: 501 })).toBe(false);
     expect(shouldFallbackToLegacyPartner({ status: 500 })).toBe(false);
   });
 });

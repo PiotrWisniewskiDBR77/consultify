@@ -306,21 +306,23 @@ export interface V8PartnerPayoutSettingsUpdatePayload {
   payoutAccount: V8PartnerPayoutAccount | null;
 }
 
+export interface V8PartnerConnection {
+  connected: boolean;
+  selfConnectEnabled: boolean;
+  organization?: {
+    id: string;
+    name: string;
+    partnerSince?: string;
+  };
+}
+
 export const shouldFallbackToLegacyPartner = (error: unknown): boolean => {
-  const directStatus = Number((error as { status?: number })?.status);
-  const nestedStatus = Number((error as { response?: { status?: number } })?.response?.status);
-  const status = Number.isFinite(directStatus) && directStatus > 0 ? directStatus : nestedStatus;
-  const data =
-    (error as { data?: { code?: string } })?.data ||
-    (error as { response?: { data?: { code?: string } } })?.response?.data;
-  const code = String(data?.code || '').toUpperCase();
-  if (status === 403 && code === 'PARTNER_ORG_REQUIRED') {
-    return true;
-  }
-  return [400, 404, 405, 501].includes(status);
+  void error;
+  return false;
 };
 
 export const V8PartnerApi = {
+  getConnection: () => v8Get<V8PartnerConnection>('/partner/connection'),
   getReferralAnalytics: (days = 30) =>
     v8Get<{ analytics: V8PartnerReferralAnalytics; days: number }>('/partner/referral-analytics', {
       days: String(days),

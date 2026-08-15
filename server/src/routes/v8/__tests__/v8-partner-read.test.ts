@@ -25,6 +25,7 @@ const mockDeleteCampaignLink = vi.fn();
 const mockAcceptDocuments = vi.fn();
 const mockDbGet = vi.fn();
 const mockDbRun = vi.fn();
+const mockDbAll = vi.fn();
 const mockDbTransaction = vi.fn();
 const mockGetActivePartnerOrgIdForUser = vi.fn();
 const mockIsV8Enabled = vi.fn();
@@ -88,6 +89,7 @@ vi.mock('../../../utils/ensureUserOnboardingStatusTable.js', () => ({
 
 vi.mock('../../../utils/DbPromise.js', () => ({
   get: (...args: unknown[]) => mockDbGet(...args),
+  all: (...args: unknown[]) => mockDbAll(...args),
   run: (...args: unknown[]) => mockDbRun(...args),
   transaction: (...args: unknown[]) => mockDbTransaction(...args),
 }));
@@ -171,6 +173,7 @@ describe('V8 partner read bridge', () => {
     mockIsV8Enabled.mockResolvedValue(true);
     mockIsV8ShadowMode.mockResolvedValue(false);
     mockGetActivePartnerOrgIdForUser.mockResolvedValue('partner-org-resolved');
+    mockDbAll.mockResolvedValue([]);
     mockGetReferralAnalytics.mockResolvedValue({
       totalClicks: 3,
       uniqueClicks: 2,
@@ -350,6 +353,25 @@ describe('V8 partner read bridge', () => {
     expect(res.body.meta.v8TenantOrganizationId).toBe('tenant-org-v8');
   });
 
+  it('GET /api/v8/partner/connection is partner-scoped and performs no seed-on-read', async () => {
+    mockDbGet.mockResolvedValueOnce({
+      id: 'partner-org-resolved',
+      name: 'Canonical Partner',
+      contact_email: 'partner@example.com',
+      tier: 'registered',
+      status: 'active',
+      public_listing_enabled: false,
+    });
+    const app = createApp();
+    const res = await request(app).get('/api/v8/partner/connection');
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.connected).toBe(true);
+    expect(res.body.data.organization.id).toBe('partner-org-resolved');
+    expect(mockDbGet.mock.calls[0]?.[2]).toEqual(['partner-org-resolved']);
+    expect(mockDbRun).not.toHaveBeenCalled();
+  });
+
   it('GET /api/v8/partner/referral-analytics clamps days to 1..365', async () => {
     const app = createApp();
     const hi = await request(app).get('/api/v8/partner/referral-analytics?days=999');
@@ -427,15 +449,14 @@ describe('V8 partner read bridge', () => {
     expect(res.body.meta.partnerOrgId).toBe('partner-org-resolved');
   });
 
-  it('GET /api/v8/partner/referral-tools preserves legacy fallback shape when service returns null', async () => {
+  it('GET /api/v8/partner/referral-tools fails closed instead of seeding an identity on read', async () => {
     mockGetReferralTools.mockResolvedValueOnce(null);
     const app = createApp();
     const res = await request(app).get('/api/v8/partner/referral-tools');
 
-    expect(res.status).toBe(200);
-    expect(String(res.body.data.tools.referralCode || '').length).toBeGreaterThan(0);
-    expect(String(res.body.data.tools.referralLink || '').includes('/r/')).toBe(true);
-    expect(res.body.data.tools.campaignLinks).toEqual([]);
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('PARTNER_REFERRAL_IDENTITY_REQUIRED');
+    expect(mockDbRun).not.toHaveBeenCalled();
   });
 
   it('GET /api/v8/partner/onboarding-status returns onboarding readback with partner meta', async () => {
@@ -572,36 +593,28 @@ describe('V8 partner read bridge', () => {
     expect(mockGetEarningsSummary).not.toHaveBeenCalled();
   });
 
-  it('POST /api/v8/partner/payouts/request transitions payout lifecycle and appends governed ledger request', async () => {
+  it('POST /api/v8/partner/payouts/request fails closed until a versioned policy is published', async () => {
     const app = createApp();
     const res = await request(app).post('/api/v8/partner/payouts/request').send({
       notes: 'Please process this cycle',
     });
 
-    expect(res.status).toBe(201);
-    expect(mockTransitionLifecycle).toHaveBeenCalledWith({
-      partnerOrgId: 'partner-org-resolved',
-      toPhase: 'payout',
-      actor: 'partner',
-      actorId: 'user-partner-1',
-      reason: 'Please process this cycle',
-    });
-    expect(mockRequestPayout).toHaveBeenCalledWith({
-      partnerOrgId: 'partner-org-resolved',
-      payoutAccountId: undefined,
-      requestedBy: 'user-partner-1',
-      notes: 'Please process this cycle',
-    });
-    expect(mockAppendLedgerEntry).toHaveBeenCalledWith(
-      expect.objectContaining({
-        partnerOrgId: 'partner-org-resolved',
-        entryType: 'payout.requested',
-        actor: 'partner',
-        actorId: 'user-partner-1',
-      })
-    );
-    expect(res.body.data.payout.id).toBe('payout-1');
-    expect(res.body.meta.contract).toBe('partner_program_p29_v1');
+    expect(res.status).toBe(503);
+    expect(res.body.code).toBe('PARTNER_PAYOUT_POLICY_NOT_CONFIGURED');
+    expect(mockTransitionLifecycle).not.toHaveBeenCalled();
+    expect(mockRequestPayout).not.toHaveBeenCalled();
+    expect(mockAppendLedgerEntry).not.toHaveBeenCalled();
+  });
+
+  it('POST payout lifecycle edge also fails closed without the policy authority', async () => {
+    const app = createApp();
+    const res = await request(app)
+      .post('/api/v8/partner/program/lifecycle/request-payout-phase')
+      .send({ reason: 'cycle close' });
+
+    expect(res.status).toBe(503);
+    expect(res.body.code).toBe('PARTNER_PAYOUT_POLICY_NOT_CONFIGURED');
+    expect(mockTransitionLifecycle).not.toHaveBeenCalled();
   });
 
   it('POST /api/v8/partner/campaign-links delegates to createCampaignLink with partnerOrgId', async () => {
