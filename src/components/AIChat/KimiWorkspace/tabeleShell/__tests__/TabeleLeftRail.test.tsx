@@ -19,6 +19,18 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (_key: string, fallback?: string | Record<string, unknown>) => {
+      const options = typeof fallback === 'object' ? fallback : {};
+      const template =
+        typeof fallback === 'string' ? fallback : String(options.defaultValue ?? _key);
+      return template.replace(/{{(\w+)}}/g, (_match, name: string) => String(options[name] ?? ''));
+    },
+    i18n: { language: 'en' },
+  }),
+}));
+
 import { TABELE_DEFAULT_OUTLINE, TabeleLeftRail } from '../TabeleLeftRail';
 
 describe('TabeleLeftRail', () => {

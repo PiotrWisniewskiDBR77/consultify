@@ -3,7 +3,36 @@
  */
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const locale = vi.hoisted(() => ({ current: 'en' }));
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => {
+      const english: Record<string, string> = {
+        'discoveryToolsTools.digital.genericDomainStep.defaultHint':
+          'Teresa can help you refine this item.',
+        'discoveryToolsTools.digital.genericDomainStep.namePlaceholder': 'Item title...',
+        'discoveryToolsTools.digital.genericDomainStep.descPlaceholder': 'Description...',
+        'discoveryToolsTools.digital.genericDomainStep.empty': 'No items yet',
+        'discoveryToolsTools.common.add': 'Add',
+        'discoveryToolsTools.common.remove': 'Remove',
+      };
+      const polish: Record<string, string> = {
+        'discoveryToolsTools.digital.genericDomainStep.defaultHint':
+          'Teresa może pomóc dopracować tę pozycję.',
+        'discoveryToolsTools.digital.genericDomainStep.namePlaceholder': 'Nazwa pozycji...',
+        'discoveryToolsTools.digital.genericDomainStep.descPlaceholder': 'Opis...',
+        'discoveryToolsTools.digital.genericDomainStep.empty': 'Brak pozycji',
+        'discoveryToolsTools.common.add': 'Dodaj',
+        'discoveryToolsTools.common.remove': 'Usuń',
+      };
+      return (locale.current === 'pl' ? polish : english)[key] ?? key;
+    },
+    i18n: { language: locale.current },
+  }),
+}));
 
 import type { ToolSession } from '@/store/useToolStore';
 
@@ -30,6 +59,10 @@ function makeSession(overrides: Partial<ToolSession> = {}): ToolSession {
 }
 
 describe('GenericDomainStep', () => {
+  beforeEach(() => {
+    locale.current = 'en';
+  });
+
   it('renders the domain title, description and Teresa assist hint', () => {
     render(
       <GenericDomainStep
@@ -80,6 +113,7 @@ describe('GenericDomainStep', () => {
   });
 
   it('renders Polish labels when isPolish is true', () => {
+    locale.current = 'pl';
     render(
       <GenericDomainStep
         sectionId="use-cases"

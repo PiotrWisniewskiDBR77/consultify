@@ -7,7 +7,22 @@
  */
 import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => {
+      const translations: Record<string, string> = {
+        'discoveryToolsMain.toolCanvas.stepBeingPrepared': 'This step is being prepared',
+        'discoveryToolsMain.toolCanvas.stepBeingPreparedDescription':
+          'This workspace will be available soon.',
+      };
+      return translations[key] ?? key;
+    },
+    i18n: { language: 'en' },
+  }),
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
+}));
 
 import type { StepDefinition, ToolSession, ToolType } from '@/store/useToolStore';
 

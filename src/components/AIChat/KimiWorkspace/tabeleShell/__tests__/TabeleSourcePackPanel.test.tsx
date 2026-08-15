@@ -31,6 +31,18 @@ vi.mock('react-hot-toast', () => ({
   default: { success: vi.fn(), error: vi.fn() },
 }));
 
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (_key: string, fallback?: string | Record<string, unknown>) => {
+      const options = typeof fallback === 'object' ? fallback : {};
+      const template =
+        typeof fallback === 'string' ? fallback : String(options.defaultValue ?? _key);
+      return template.replace(/{{(\w+)}}/g, (_match, name: string) => String(options[name] ?? ''));
+    },
+    i18n: { language: 'en' },
+  }),
+}));
+
 import { TabeleSourcePackPanel } from '../sourcePack/TabeleSourcePackPanel';
 
 const SAMPLE_CANDIDATES = [

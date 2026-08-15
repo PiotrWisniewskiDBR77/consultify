@@ -17,31 +17,34 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (k: string, opts?: any) => {
-      if (typeof opts === 'string') return opts;
-      if (opts?.defaultValue) return opts.defaultValue;
-      const TRANSLATIONS: Record<string, string> = {
-        'audit.newAuditProgram': 'New audit program',
-        'audit.egIso27001Readiness': 'e.g. ISO 27001 readiness',
-        'audit.custom': 'Custom',
-        'audit.next': 'Next',
-        'audit.cancel': 'Cancel',
-        'audit.back': 'Back',
-        'audit.createProgram': 'Create program',
-        'audit.startBlank': 'Start blank',
-        'audit.pickInterviewTemplates': 'Pick the interview templates this audit will ask.',
-        'audit.pickPeopleWhoFillSurveys': 'Pick the people who will fill the surveys.',
-        'audit.defineObjectiveWhatToAsk': 'Define objective — what to ask',
-        'audit.close': 'Close',
-      };
-      return TRANSLATIONS[k] || k;
-    },
-    i18n: { language: 'en' },
-  }),
-  initReactI18next: { type: '3rdParty', init: vi.fn() },
-}));
+vi.mock('react-i18next', () => {
+  const translate = (k: string, opts?: any) => {
+    if (typeof opts === 'string') return opts;
+    if (opts?.defaultValue) return opts.defaultValue;
+    const TRANSLATIONS: Record<string, string> = {
+      'audit.newAuditProgram': 'New audit program',
+      'audit.egIso27001Readiness': 'e.g. ISO 27001 readiness',
+      'audit.custom': 'Custom',
+      'audit.next': 'Next',
+      'audit.cancel': 'Cancel',
+      'audit.back': 'Back',
+      'audit.createProgram': 'Create program',
+      'audit.startBlank': 'Start blank',
+      'audit.pickInterviewTemplates': 'Pick the interview templates this audit will ask.',
+      'audit.pickPeopleWhoFillSurveys': 'Pick the people who will fill the surveys.',
+      'audit.defineObjectiveWhatToAsk': 'Define objective — what to ask',
+      'audit.close': 'Close',
+    };
+    return TRANSLATIONS[k] || k;
+  };
+  return {
+    useTranslation: () => ({
+      t: translate,
+      i18n: { language: 'en', getFixedT: () => translate },
+    }),
+    initReactI18next: { type: '3rdParty', init: vi.fn() },
+  };
+});
 
 const { createProgram, listTemplateOptions, listUserOptions } = vi.hoisted(() => ({
   createProgram: vi.fn(),
@@ -87,6 +90,10 @@ describe('AuditOrchestratorWizard', () => {
     // step-1 fields
     expect(screen.getByPlaceholderText('e.g. ISO 27001 readiness')).toBeInTheDocument();
     expect(screen.getByText('Custom')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(listTemplateOptions).toHaveBeenCalledTimes(1);
+      expect(listUserOptions).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('gates Next until a program name is entered', async () => {
@@ -98,6 +105,10 @@ describe('AuditOrchestratorWizard', () => {
       target: { value: 'My audit' },
     });
     expect(next).not.toBeDisabled();
+    await waitFor(() => {
+      expect(listTemplateOptions).toHaveBeenCalledTimes(1);
+      expect(listUserOptions).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('steps through to Review and creates the program', async () => {

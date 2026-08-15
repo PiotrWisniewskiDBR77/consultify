@@ -24,9 +24,16 @@ vi.mock('react-i18next', () => ({
     t: (k: string, opts?: any) => {
       if (typeof opts === 'string') return opts;
       if (opts?.defaultValue) return opts.defaultValue;
-      return k;
+      const translations: Record<string, string> = {
+        'audit.auditPrograms': 'Audit programs',
+        'audit.newAuditProgram': 'New audit program',
+        'audit.noAuditProgramsYet': 'No audit programs yet.',
+        'audit.defineObjectiveWhatToAsk': 'Define the objective, what to ask, and who fills it.',
+        'audit.completion': 'Completion',
+      };
+      return translations[k] ?? k;
     },
-    i18n: { language: 'en' },
+    i18n: { language: 'en', getFixedT: () => (key: string) => key },
   }),
   initReactI18next: { type: '3rdParty', init: vi.fn() },
 }));
@@ -165,11 +172,12 @@ describe('AuditsHub — §27 list', () => {
     const row = await screen.findByText('ISO 27001 readiness');
     fireEvent.click(row);
 
-    // Preview pane renders the dashboard heading (program name) + a Completion block.
+    // The canonical compact preview renders completion inside its details text.
     await waitFor(() => {
       // program name appears in the preview dashboard heading as well
       expect(screen.getAllByText('ISO 27001 readiness').length).toBeGreaterThan(0);
-      expect(screen.getByText('Completion')).toBeInTheDocument();
+      expect(document.body).toHaveTextContent('Completion: —');
+      expect(getCompletion).not.toHaveBeenCalled();
     });
   });
 });

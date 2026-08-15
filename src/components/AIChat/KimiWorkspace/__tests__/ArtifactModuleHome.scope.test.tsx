@@ -19,6 +19,7 @@ vi.mock('react-i18next', () => ({
       (typeof opts === 'string' ? opts : opts?.defaultValue) ?? k,
     i18n: { language: 'en', resolvedLanguage: 'en' },
   }),
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
 }));
 
 vi.mock('react-router-dom', () => ({

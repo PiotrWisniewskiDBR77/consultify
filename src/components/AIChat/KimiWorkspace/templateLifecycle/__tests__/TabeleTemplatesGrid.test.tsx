@@ -17,7 +17,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_k: string, def?: string) => def ?? _k,
+    t: (
+      _key: string,
+      fallback?: string | Record<string, unknown>,
+      values?: Record<string, unknown>
+    ) => {
+      const options = typeof fallback === 'object' ? fallback : (values ?? {});
+      const template =
+        typeof fallback === 'string' ? fallback : String(options.defaultValue ?? _key);
+      return template.replace(/{{(\w+)}}/g, (_match, name: string) => String(options[name] ?? ''));
+    },
     i18n: { language: 'en' },
   }),
 }));

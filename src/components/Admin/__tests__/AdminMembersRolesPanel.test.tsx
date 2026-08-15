@@ -10,6 +10,28 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (
+      key: string,
+      fallback?: string | Record<string, unknown>,
+      values?: Record<string, unknown>
+    ) => {
+      const translations: Record<string, string> = {
+        'admin.membersRoles.guidance.owner.denial':
+          'Only an owner can assign or remove another owner.',
+        'admin.membersRoles.guidance.guest.denial': 'Guests cannot access admin tools.',
+      };
+      const options = typeof fallback === 'object' ? fallback : (values ?? {});
+      const template =
+        translations[key] ??
+        (typeof fallback === 'string' ? fallback : String(options.defaultValue ?? key));
+      return template.replace(/{{(\w+)}}/g, (_match, name: string) => String(options[name] ?? ''));
+    },
+    i18n: { language: 'en' },
+  }),
+}));
+
 import { Api } from '../../../services/api';
 import { AdminMembersRolesPanel } from '../AdminMembersRolesPanel';
 

@@ -130,7 +130,7 @@ describe('TabeleMelsView', () => {
     fireEvent.click(overflowToggle);
     const overflowMenu = screen.getByTestId('mels-topbar-overflow-menu');
     const overflowIds = within(overflowMenu)
-      .getAllByRole('button')
+      .getAllByRole('menuitem')
       .map((b) => b.getAttribute('data-mels-chip'));
     expect(overflowIds).toEqual(['history', 'governance', 'analytics', 'audit']);
   });
