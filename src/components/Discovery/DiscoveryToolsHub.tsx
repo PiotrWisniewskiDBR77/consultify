@@ -62,6 +62,10 @@ import {
 import { StandardTable } from '@/components/standard';
 import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { resolveToolStatus } from '@/domain/toolStatus';
+import {
+  selectVisibleToolSessions,
+  TOOL_SESSIONS_PAGE_LIMIT,
+} from './toolSessionVisibility';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api, clearGlobalTransportFailure, resetAuthLoopGuard } from '@/services/api';
@@ -184,6 +188,7 @@ const DISCOVERY_STATUSES: StatusFilterOption[] = [
     color: 'text-blue-400',
     bgColor: 'bg-blue-500',
   },
+  { id: 'approved', label: 'Approved', color: 'text-emerald-400', bgColor: 'bg-emerald-500' },
 ];
 
 // Reports tab: APPROVED, COMPLETED (finished analyses)
@@ -1001,6 +1006,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               'tool sessions',
               Api.listToolSessions({
                 projectId: currentProjectId || undefined,
+                limit: TOOL_SESSIONS_PAGE_LIMIT,
               }),
               { items: [] as ToolSessionData[], total: 0, limit: 0, offset: 0 }
             ),
@@ -1032,12 +1038,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           transformAssessmentSession
         );
 
-        // Split by status for different tabs
-        // Discovery: DRAFT, REVIEW (work in progress)
-        const discoveryItems = allSessions.filter(
-          (s) => s.status === 'DRAFT' || s.status === 'PENDING_REVIEW'
-        );
-        setDiscoveries(discoveryItems);
+        // Sessions owns every tool session, including approved sessions. Reports
+        // is artifact-backed and does not provide an alternate session listing.
+        setDiscoveries(selectVisibleToolSessions(allSessions));
 
         // Reports & Presentations: real artifacts (assessment reports, report builder
         // reports, decks). This used to be its own hand-rolled Record<string,
