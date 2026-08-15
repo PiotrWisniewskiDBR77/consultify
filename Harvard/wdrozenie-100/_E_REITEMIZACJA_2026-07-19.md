@@ -67,7 +67,7 @@ zawyżone nawet względem TEJ pełnej re-itemizacji — realnie ✅ dowód-runti
 | M26-D01 | D-01 stuby (37 mountStub, w tym ★webauthn ryzyko 404) | ⬜ | Finding potwierdzony w FALA-ARMY (linia 174) jako realny, nierozwiązany |
 | M26-selfconnect | self-connect | 🔵 | Nierozstrzygnięte, poza-v1 |
 | M25/M22-oauth | OAuth klucze | 🔵 | Bucket ENV Railway |
-| M25/M22-wave7 | wave7 label | ⬜ | Tabela żywa (linia 604) mówi wciąż ⬜DEC — wzmianka „wave7" w retractowanym bloku ✅72 nieaktualna |
+| M25/M22-wave7 | wave7 label | ✅ | ROZSTRZYGNIĘTE 07-19: Piotr — „wave7 label, usuń, martwy label". `_DECYZJE_RUNDA3.md` #12 i `M22-ai-os.md` L-05 zamknięte bez wdrożenia labela. Kod Wave 7 Connectors pozostaje bez zmian. |
 | M16-endpointy | ~50 endpointów przeznaczenie | 🟡 | `git log --grep="M16\|Economics"` potwierdza 20-21 paneli Economics/FinanceHub code-split+testowane (`499f2ae1f8`, `8f494d6fa8` value-ledger 4/4) — ancestor OK. Pozostałe ~29 endpointów bez jasnego przeznaczenia = DEC |
 | M16-tokenbilling | token-billing | 🔵 | Poza-v1 |
 | M24-adminsidebar | AdminSidebar rm | ✅ | `55f3561862` na demo: „rm AdminSidebar.tsx (0 importerów)" — ancestor potwierdzony |

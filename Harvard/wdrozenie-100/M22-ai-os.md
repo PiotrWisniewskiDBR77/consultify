@@ -46,7 +46,7 @@ Ocena powierzchni §27 + stany: karta §5. Wszystkie panele Wave używają włas
 | `ResearchSessionsDock.tsx` | `POST/GET /api/research/sessions` | `research_evidence`, `research_sessions` | `607_research_evidence_v3.sql` | REALNE (HTTP do EDGAR/GDELT/OpenAlex/Crossref) |
 | `Wave5ArtifactRuntimePanel.tsx` | `/api/artifacts/*` (`v8FeatureGate`) | `wave5_artifacts`, `_versions`, `_mutation_proposals` | `20260425_wave5_*` | REALNE **za `ENABLE_V8_GLOBAL`** → L-01 |
 | `Wave6ContextLearningPanel.tsx` | `/api/ai-context/*` | `wave6_context_snapshots`, `_ledger`, `_memory_candidates`, `_stewardship_decisions` | `20260425_wave6_*` | REALNE (Teresa memory) |
-| `Wave7ConnectorAdminPanel.tsx` | `/api/ai-connectors/*` | `wave7_connectors`, `_runs` | `20260425_wave7_*` | REALNE; **OAuth symulowany** (status = `req.body.status \|\| 'connected'`, `wave7-connectors.routes.ts:51-60`, brak realnego provider-flow) — L-05/D-02 czeka na decyzję Piotra |
+| `Wave7ConnectorAdminPanel.tsx` | `/api/ai-connectors/*` | `wave7_connectors`, `_runs` | `20260425_wave7_*` | REALNE; **OAuth symulowany** (status = `req.body.status \|\| 'connected'`, `wave7-connectors.routes.ts:51-60`, brak realnego provider-flow) — L-05/D-02 ZAMKNIĘTA 07-19: Piotr odrzucił label „Manual/Simulated", nie dodawać |
 | `Wave8AgentCatalogPanel.tsx` | `/api/ai-agents/*` | `wave8_agent_definitions`, `_runs`, `_schedules`, `_notifications` | `20260425_wave8_*` | REALNE |
 | `Wave9OutcomeAIOpsPanel.tsx` | `/api/ai-outcomes/*` | `wave9_outcomes`, `_evidence_registry`, `_provider_health`, `_eval_runs`, `_acceptance_runs`, `_incidents`, `_acceptance_decisions` | `20260425_wave9_*` | REALNE |
 | `AIOSHub.tsx` | (V10 voice-config live; Build Milestones = statyczny) | — | — | REALNE + 1 STUB UI |
@@ -82,7 +82,7 @@ Pełna tabela: karta §1g. Skrót: **←** M01 Czat (`ai_runs` mirror → Action
 - Story 3.1: middleware odrzuca non-dbr77. Gherkin: dane konto `@gmail.com`; gdy woła `/api/research/sessions`; wtedy 404. Zadania: [Z-04 → L-04 test T1 `internalTools.middleware.ts:72-76`]
 
 **EPIK 4 — Honest Wave 7 (FAZA 3) [karta §7 Fala 2]**
-- Story 4.1: OAuth jawny. Gherkin: dane connector OAuth; gdy user otwiera sekcję; wtedy label „Manual/Simulated" LUB realny redirect. Zadania: [Z-05 → L-05, **D-02**]
+- Story 4.1: OAuth jawny. Gherkin: dane connector OAuth; gdy user otwiera sekcję; wtedy label „Manual/Simulated" LUB realny redirect. Zadania: [Z-05 → L-05, **D-02** — ZAMKNIĘTA 07-19: Piotr odrzucił label, zostaje manual/simulated bez UI-oznaczenia]
 
 **EPIK 5 — Szlif kanonu (FAZA 4) [karta §7 Fala 3, DP-10]**
 - Story 5.1: §27 ActionCenter+ResearchSessions + i18n Wave panels + route-integration Wave 6–9 (T2–T5) + unit Wave 6 (T6). Zadania: [Z-06 → L-06 i18n (DP-10: świadomy dług internal, decyzja D-03), Z-07 → L-07 §27 (1 `<table>` w `AIOSWave0GateReport.tsx` + divs), Z-08 → L-08 route-integration tests]
@@ -124,7 +124,7 @@ REALNE 6 wave-service'ów (5–9 + research) + ActionCenter + AI Memory. STUB: A
 | L-02 | `actionDecisions` governance (PolicyEngine/audit-export) | W-03,W-04,W-05 | `Gateway.ts` — **0 wystąpień** (grep 2026-06-13) | — | — | **NIEAKTUALNA** — `_actionDecisionRoutes` USUNIĘTY `f35aa8d7c8`, DP-7 descope. Zweryfikowane kodem 2026-06-13 + 2026-06-17. |
 | L-03 | „7 guardów bez routerów" | W-01,W-04 | `Gateway.ts:388-395` (guard) + **`:486-512` (routery zamontowane)** | — | — | **NIEAKTUALNA** — wszystkie 7 routerów zamontowanych `Gateway.ts:486-512`. Zweryfikowane 2026-06-13 + 2026-06-17. |
 | L-04 | brak testu middleware security (T1) | W-01 | `internalTools.middleware.ts:72-76` | P0-test | 1 | **ZAMKNIĘTA 2026-06-17 8ca6d06028** — middleware hardened, 32/32 testów zielonych (`tests/unit/backend/middleware/internalTools.middleware.test.ts`) |
-| L-05 | OAuth Wave 7 symulowany | W-01 | `wave7-connectors.routes.ts:52-113` | P2 | 3 | **ODROCZONA-decyzja** — opcje+rekom CTO (B: trwały label „Manual/Simulated") wpisane do `_DECYZJE_RUNDA3.md` #12 (D-02); czeka na decyzję Piotra. Po decyzji B → dodać label w `Wave7ConnectorAdminPanel.tsx` |
+| L-05 | OAuth Wave 7 symulowany | W-01 | `wave7-connectors.routes.ts:52-113` | P2 | 3 | **ZAMKNIĘTA 07-19 (decyzja, bez wdrożenia)** — Piotr rozstrzygnął `_DECYZJE_RUNDA3.md` #12 (D-02): wave7 label = martwy, NIE dodawać do `Wave7ConnectorAdminPanel.tsx`. OAuth pozostaje manual/simulated bez UI-labela (świadomie, internal-only moduł) |
 | L-06 | i18n inline 5/9 plików | W-01,W-06 | `AIChat/Wave5-9*.tsx` (5 plików `isPolish`) | P2 | 4 | **CZĘŚCIOWO ZAMKNIĘTA 2026-06-17 `d14351d555`** — Wave5-9 codemod `isPolish→t('aios.*')` (223 konwersje, **212 kluczy → `scripts/i18n-sweep/keys_M22.json`** dla Harvard 2); 4 residue=nonStringTernary (słusznie pominięte). **Reszta ODROCZONA→H2/Faza4**: AIPlatformModule ~314 hardkodów EN (manual, poza codemodem) + injekcja `translation.json` (H2) |
 | L-07 | §27 niezastosowany (1 `<table>` + divs) | W-01 | `AIOSWave0GateReport.tsx` (1×`<table>`); ActionCenter/ResearchSessions własne `divs` | P2 | 4 | **ZAMKNIĘTA 2026-06-17 0c4cf8cc58** — AIOSWave0GateReport `<table>`→FilterableTable; ActionCenter (karty + conditional action-bary) i ResearchSessionsDock (master-detail dock) **zostawione świadomie** (nie tabularne, FilterableTable=regres UX) |
 | L-08 | brak route-integration Wave 6–9 + unit Wave 6 (T2–T6) | W-01 | tylko service-unit | P1-test | 4 | **ZAMKNIĘTA 2026-06-17 305e88012c** — 33 route-integration testy `tests/integration/ai-os/wave{6,7,8,9}-*.test.ts` (zielone); Wave 6 unit `wave6ContextLearningService.test.ts` (5) już istniał. Ścieżki → H1 do CI |
@@ -160,7 +160,7 @@ Audyt weryfikacyjny: teczka SOLID, deklaracje napraw zgodne z kodem (zweryfikowa
 | 4 | Research Sessions Dock | Lifecycle sesji research + evidence graph + final artifact (master-detail dock) | `src/components/AIChat/ResearchSessionsDock.tsx` |
 | 5 | Wave 5 Artifact Runtime Panel | Artefakty (za `ENABLE_V8_GLOBAL`); banner „unavailable" przy V8-off (L-01 zweryf. early-return `:253`) | `src/components/AIChat/Wave5ArtifactRuntimePanel.tsx` |
 | 6 | Wave 6 Context Learning Panel | Pamięć kontekstu Teresy: snapshots/ledger/memory-candidates/stewardship | `src/components/AIChat/Wave6ContextLearningPanel.tsx` |
-| 7 | Wave 7 Connector Admin Panel | Konektory (OAuth symulowany — L-05/D-02 otwarta) | `src/components/AIChat/Wave7ConnectorAdminPanel.tsx` |
+| 7 | Wave 7 Connector Admin Panel | Konektory (OAuth symulowany — L-05/D-02 zamknięta 07-19, label odrzucony) | `src/components/AIChat/Wave7ConnectorAdminPanel.tsx` |
 | 8 | Wave 8 Agent Catalog Panel | Katalog agentów: definitions/runs/schedules/notifications | `src/components/AIChat/Wave8AgentCatalogPanel.tsx` |
 | 9 | Wave 9 Outcome AIOps Panel | Outcomes/KPI: evidence/provider-health/eval/acceptance/incidents | `src/components/AIChat/Wave9OutcomeAIOpsPanel.tsx` |
 

@@ -12,13 +12,13 @@
   "summary": {
     "total": 224,
     "referenceHarnessOnly": 18,
-    "representedSuperseded": 48,
-    "representedCanonical": 24,
+    "representedSuperseded": 50,
+    "representedCanonical": 26,
     "rejectedDestructiveSnapshot": 3,
-    "integratedCanonical": 14,
+    "integratedCanonical": 15,
     "candidateIntegration": 0,
     "ownerDecisionRequired": 0,
-    "semanticReviewRequired": 117,
+    "semanticReviewRequired": 112,
     "deletionAuthorized": 0
   },
   "rows": [
@@ -352,12 +352,12 @@
       "uniqueCommitCount": 3,
       "pathCount": 3,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-ASM-009",
       "recoveryRef": "refs/recovery/unknown-20260815/1070b2f54caad8897aac67440df272221e31db36",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "This recovery line contained two acceptance tests already present in the canonical tree and a third AWF harness whose intended assertion was that lowercase OWNER incorrectly received 403. The current AssessmentController normalizes the authenticated role to uppercase before hasPermission, so restoring a test that requires the old authorization failure would codify a fixed defect.",
+      "nextAction": "Do not restore the negative bug-repro expectation. Add a current realDB positive DRAFT to IN_REVIEW to APPROVED OWNER flow to the Assessment acceptance packet, then retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "1241b8620ce5ad7e3d57658d945db1de5011fda2",
@@ -964,12 +964,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 4,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "INTEGRATED_CANONICAL",
+      "taskId": "CLEAN-002-AIOS-004",
       "recoveryRef": "refs/recovery/unknown-20260815/31218a1a81c4375ab05f56ae5ad157858af0f4f4",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered history preserved Piotr's July 19 decision that the Wave 7 Manual/Simulated label was dead and must not be implemented. The canonical registry already mentioned that decision but three module documents still called it open; the current integration updates only those four exact decision/status entries without changing connector code or importing the recovered historical counters.",
+      "nextAction": "Keep the Wave 7 code unchanged and the label task closed. Validate that no open module task still requests the rejected label, then retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "326ca36fb9c2d19e88bc0971f1e6d750dbcb17a9",
@@ -1810,12 +1810,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 3,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MYW-010",
       "recoveryRef": "refs/recovery/unknown-20260815/5ba0f152d984d5caba81fa08a89bc9bee4f78fe7",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "Both recovered regression tests are byte-equivalent to their canonical counterparts: MainLayout protects header layering and the H2.3 suite protects mind-map to process-flow branch conversion. The historical completion-register annotation is not current release evidence.",
+      "nextAction": "Keep both canonical tests in the My Work/UI shards and verify the corresponding browser paths at the final SHA; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "5d5646b3e393e546ff3bb2e280beeaabe97db5b3",
@@ -2575,12 +2575,12 @@
       "uniqueCommitCount": 3,
       "pathCount": 3,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-RES-010",
       "recoveryRef": "refs/recovery/unknown-20260815/79acfbc6885df13245483abac8793ac4c231cdf8",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered branch stamped CODE_GO_LOCAL/FROZEN_FOR_INTEGRATION onto RES-003A while explicitly leaving the full typecheck/build gate, a narrower close/escalate capability and retry orphan handling open. The current packet intentionally retains AWAITING_CODEX_REVIEW and later Results tasks own those unresolved gates.",
+      "nextAction": "Do not restore the premature GO annotation. Verify recovery-card tenancy, capability, retry and signed-in flow against the final candidate before changing the packet verdict; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "7a032468787ecb5e296991245104ffd903fadf6d",
@@ -2670,12 +2670,12 @@
       "uniqueCommitCount": 3,
       "pathCount": 3,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-SEC-006",
       "recoveryRef": "refs/recovery/unknown-20260815/7d9de0b6e87f6787ce8dbffe7531327679d2e816",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered SEC-PUB-002 correction and build-surface contract test are byte-equivalent to the canonical files. The broader security ancestry is represented in the current auth, public-entry, realtime-denial and system-health code and tests; the recovered tip is not an unintegrated alternative security stack.",
+      "nextAction": "Keep the current public-surface security contracts and rerun their integration shard at the final candidate SHA; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "7e7c3fe8be84b16e01879d7bd59b81144448ca0a",

@@ -742,7 +742,7 @@ F0-8 sweep ikon 🟡 (lucide-only ✓).
 ### Moduły (12)
 M27: tabele ~73-80 ⬜JA(po koncie) · Email Templates audyt ❓ODB · konto superadmina ⬜ODB O7 ·
 (i18n SuperAdmin 🔵 DP-10). M26: 5 migracji PROD ⬜**TYLKO PIOTR** (pre-condition portalu) ·
-D-01 stuby ⬜DEC · (self-connect 🔵 rozstrz.). M25/M22: OAuth klucze ⬜ENV E4 · wave7 label ⬜DEC.
+D-01 stuby ⬜DEC · (self-connect 🔵 rozstrz.). M25/M22: OAuth klucze ⬜ENV E4 · wave7 label ✅ zamknięty 07-19 (nie wdrażać).
 M16: ~50 endpointów przeznaczenie ⬜DEC · (token-billing 🔵). M24: AdminSidebar rm ⬜JA J22 · (Stripe 🔵 DP-11).
 M14: inwentarz uzgodnić („27/35" vs ~18 ekranów — dwa dokumenty) ❓JA · D-03 manager lanes ⬜DEC.
 
