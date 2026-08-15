@@ -229,12 +229,29 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
 
 #### CLEAN-001B — 58 UI component contracts
 
-- Owner: UI-harness lane; allowlist: 58 testów i ich bezpośrednie component
+- Status: `IN_PROGRESS`; owner: UI-harness lane; allowlist: 58 testów i ich bezpośrednie component
   fixtures/mocks; produkt tylko po udowodnionym regression verdict.
 - Praca: porównać oczekiwanie z aktualnym kanonem UI/i18n/design tokens; nadać
   `STALE_CONTRACT`, `HARNESS_BUG` lub `PRODUCT_REGRESSION`.
 - DoD: focused 58/58 PASS, brak act/unhandled warnings i brak snapshotów
   akceptujących techniczne UUID/enums.
+- Evidence cząstkowe: pierwsze 19 plików sklasyfikowane i zielone na commitach
+  `229aed81a` oraz `c9b262b04` (203/203 testy). Osiemnaście miało
+  `STALE_CONTRACT`/`HARNESS_BUG`: niepełne i18n/interpolation mocks, stare role
+  menu, zastąpiony canonical register/preview, historyczny BetaGate target i
+  nieaktualny canonical initiatives API shape. Jeden plik ujawnił
+  `PRODUCT_REGRESSION`: `DocumentStudioQaPanel` utracił dostępną akcję przejścia
+  do dokładnego finding; callback przywrócono w `c9b262b04`.
+- Otwarty verdict z drugiej partii: test
+  `PrezentacjeView.templateBrief.test.tsx` opisuje realną brakującą funkcję, nie
+  stale assertion. UI automatycznie wywołuje `from-template` bez briefu i
+  zmiennych, a endpoint dokumentuje wyłącznie `templateArtifactId` i `title`.
+  Luka jest przypisana do `MAT-002`; test pozostaje niezielony do implementacji.
+- Trzecia partia wykryła historyczne testy komponentów usuniętych jawnie przez
+  `d1d4f4d0e` (`DocumentStudioEditorPanel`, `TransformativeConfirmDialog`) oraz
+  przez `00e27b069`/`e750d04f9` (`PresentationPreview`). Nie wolno ich odtwarzać
+  tylko dla testu ani usuwać testów bez wpisu `SUPERSEDED` i recovery path w
+  CLEAN-002/CLEAN-003.
 
 #### CLEAN-001C — 16 unit tests z mockami
 
@@ -451,6 +468,11 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
 ### MAT-002 — Presentation real flow
 
 - Status: `PARTIAL`, P0; owner: Materials PPT lane.
+- Potwierdzona luka kodowa: template intake test z `0f9f98cfc` wymaga
+  dostępnego briefu, typed required variables i przesłania lineage/facts.
+  Bieżący `PrezentacjeView` z `6a397b2448` tworzy deck automatycznie, a
+  `POST /presentations/decks/from-template` nie waliduje ani nie materializuje
+  `brief`/`variableValues`. To zadanie produktowe, nie naprawa harnessu.
 - DoD: create/edit/version/reopen/export PPTX; template approval, autosave title,
   lineage i render visual.
 
