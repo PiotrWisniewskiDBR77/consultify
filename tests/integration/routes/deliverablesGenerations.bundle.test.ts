@@ -2,6 +2,8 @@ import express from 'express';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+vi.unmock('multer');
+
 /**
  * W13.1 — route integration tests for the unified pipeline:
  *   POST /bundle  and  POST /bundle/export
@@ -29,12 +31,56 @@ vi.mock('../../../server/src/middleware/rateLimiting.middleware.js', () => ({
 vi.mock('../../../server/src/services/presentationAccessPolicyService.js', () => ({
   hasPresentationCapability: () => true,
 }));
+vi.mock('../../../server/src/database/PostgresDatabase.js', () => ({
+  default: { query: vi.fn().mockResolvedValue({ rows: [] }) },
+}));
 vi.mock('../../../server/src/services/deliverables/deliverablesGenerationService.js', () => ({
   DeliverablesGenerationError: class extends Error {},
   plan: vi.fn(), start: vi.fn(), status: vi.fn(),
 }));
 vi.mock('../../../server/src/services/deliverables/deliverablesMetricsService.js', () => ({
   getDeliverableMetrics: vi.fn(),
+}));
+vi.mock('../../../server/src/services/deliverables/bundleOrchestrator.js', () => ({
+  generateBusinessPlan: vi.fn(),
+  spineToDeckSlides: vi.fn(),
+  spineToDocOutline: vi.fn(),
+  spineToTableIntent: vi.fn(),
+}));
+vi.mock('../../../server/src/services/deliverables/brandIngestion.js', () => ({
+  extractBrandTheme: vi.fn().mockResolvedValue(null),
+}));
+vi.mock('../../../server/src/services/deliverables/briefEnrichment.js', () => ({
+  enrichBriefWithOrgContext: vi.fn(async (brief: string) => ({ enrichedBrief: brief })),
+}));
+vi.mock('../../../server/src/services/dataCollection/connectorFramework.js', () => ({
+  connectorRegistry: {},
+}));
+vi.mock('../../../server/src/services/deliverables/materialDataBinding.js', () => ({
+  connectorDataset: vi.fn(),
+  formDataset: vi.fn(),
+}));
+vi.mock('../../../server/src/services/deliverables/qualityTelemetry.js', () => ({
+  aggregateQualityTelemetry: vi.fn(),
+  recordsFromRows: vi.fn(),
+}));
+vi.mock('../../../server/src/services/deliverables/starterTemplates.js', () => ({
+  firstRunSeedPlan: vi.fn(),
+}));
+vi.mock('../../../server/src/services/deliverables/uploadContextExtract.js', () => ({
+  extractUploadContext: vi.fn(),
+}));
+vi.mock('../../../server/src/services/ai/circuitBreaker.js', () => ({
+  STATE: {},
+  canExecute: vi.fn(() => true),
+  recordSuccess: vi.fn(),
+  recordFailure: vi.fn(),
+  reset: vi.fn(),
+  getStatus: vi.fn(() => ({})),
+  execute: vi.fn(async (_provider: string, operation: () => unknown) => operation()),
+  initialize: vi.fn(),
+  CircuitBreakerService: {},
+  default: {},
 }));
 
 const genBundle = vi.fn();
@@ -128,6 +174,26 @@ describe('W13.1 — POST /bundle/export (zip teczka)', () => {
     expect(Buffer.isBuffer(res.body)).toBe(true);
     expect(res.body.subarray(0, 2).toString('latin1')).toBe('PK');
     expect(exportFiles).toHaveBeenCalledWith(BUNDLE_STUB, 'modern', undefined);
+  });
+
+  it('multipart fields use the same export contract', async () => {
+    const res = await request(app)
+      .post('/api/deliverables/generations/bundle/export')
+      .field('brief', validBrief.brief)
+      .field('themeId', 'modern')
+      .expect(200);
+    expect(res.headers['content-type']).toMatch(/application\/zip/);
+    expect(exportFiles).toHaveBeenCalledWith(BUNDLE_STUB, 'modern', undefined);
+  });
+
+  it('malformed multipart fails closed instead of hanging', async () => {
+    const res = await request(app)
+      .post('/api/deliverables/generations/bundle/export')
+      .set('Content-Type', 'multipart/form-data; boundary=broken-boundary')
+      .send('--broken-boundary\r\nContent-Disposition: form-data; name="brief"\r\n');
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual(expect.objectContaining({ success: false, code: 'invalid_upload' }));
+    expect(genBundle).not.toHaveBeenCalled();
   });
 
   it('zero plików → 502', async () => {

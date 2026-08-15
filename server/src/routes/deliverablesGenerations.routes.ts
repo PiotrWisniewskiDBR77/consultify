@@ -453,6 +453,7 @@ const brandUpload = multer({
 }).single('brandFile');
 
 function parseBrandUpload(req: any, res: Response): Promise<void> {
+  if (!req.is('multipart/form-data')) return Promise.resolve();
   return new Promise((resolve, reject) => {
     brandUpload(req, res as any, (err: any) => {
       if (err) reject(err);
@@ -471,8 +472,13 @@ router.post('/bundle/export', aiRateLimiter, async (req: any, res: Response) => 
   // Parse optional multipart (brand file) — falls through for plain JSON too.
   try {
     await parseBrandUpload(req, res);
-  } catch {
-    // multer error (e.g. file too large) — ignore, proceed without brand override
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Invalid brand upload',
+      code: 'invalid_upload',
+    });
+    return;
   }
 
   // Body can come from JSON (no file) or from multipart form-data fields.
