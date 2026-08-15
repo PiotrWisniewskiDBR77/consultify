@@ -98,7 +98,7 @@ describe('AgentPlanPanel (warsztat) — czytelne nazwy etapów', () => {
     // Surowy identyfikator rejestru nie pojawia się nigdzie w UI.
     expect(screen.queryByText('get_assessment_data')).toBeNull();
     // Zamiast niego — czytelna etykieta narzędzia z katalogu warsztatu.
-    expect(screen.getAllByText(/Dane oceny/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/Assessment data/).length).toBeGreaterThanOrEqual(1);
   });
 
   it('krok bez toolInput.phase dostaje czytelną etykietę narzędzia zamiast snake_case', async () => {
@@ -118,7 +118,7 @@ describe('AgentPlanPanel (warsztat) — czytelne nazwy etapów', () => {
 
     render(<AgentPlanPanel planId="plan-1" />);
 
-    expect((await screen.findAllByText('Szukaj w wiedzy')).length).toBeGreaterThanOrEqual(1);
+    expect((await screen.findAllByText('Search knowledge')).length).toBeGreaterThanOrEqual(1);
     expect(screen.queryByText('search_knowledge_base')).toBeNull();
   });
 

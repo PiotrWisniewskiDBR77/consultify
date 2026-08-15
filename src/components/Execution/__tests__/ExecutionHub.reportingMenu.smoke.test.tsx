@@ -17,8 +17,8 @@ const reportingMenuSource = executionHubSource.slice(
 );
 
 describe('ExecutionHub Reporting row menu', () => {
-  it('declares one context Open full and delegates the only preview to the manage block', () => {
-    expect(reportingMenuSource).not.toContain("id: 'open_preview'");
+  it('declares direct preview/full actions and preserves the managed preview handler', () => {
+    expect(reportingMenuSource.match(/id: 'open_preview'/g)).toHaveLength(1);
     expect(reportingMenuSource.match(/id: 'open_full'/g)).toHaveLength(1);
     expect(
       reportingMenuSource.match(/preview: \(\) => setReportPreviewId\(report\.id\)/g)
@@ -32,7 +32,7 @@ describe('ExecutionHub Reporting row menu', () => {
         : []),
     ];
 
-    expect(composedActionOrder).toEqual(['open_full', 'open_preview']);
+    expect(composedActionOrder).toEqual(['open_preview', 'open_full', 'open_preview']);
   });
 
   it('passes that single contract to StandardTable for both row-menu entry points', () => {

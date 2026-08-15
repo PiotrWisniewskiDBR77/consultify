@@ -105,9 +105,7 @@ describe('NotebookLibraryContent', () => {
   it('shows a retry affordance when loading fails', async () => {
     getNotebooks.mockRejectedValue(new Error('boom'));
     render(<NotebookLibraryContent onOpenNotebook={vi.fn()} />);
-    // kanon TRIADA §27 — StandardTable's built-in error state hardcodes the
-    // "Retry" label itself (src/components/standard/StandardTable.tsx), unlike
-    // the bespoke SharedEmptyState this screen used before ("Try again").
-    await waitFor(() => expect(screen.getByText('Retry')).toBeTruthy());
+    // Canonical EmptyState owns the retry copy for every StandardTable error.
+    await waitFor(() => expect(screen.getByText('Try again')).toBeTruthy());
   });
 });

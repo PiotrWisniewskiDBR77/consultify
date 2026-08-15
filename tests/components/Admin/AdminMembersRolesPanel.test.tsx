@@ -9,6 +9,25 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+const { translate } = vi.hoisted(() => ({
+  translate: (
+    key: string,
+    fallback?: string | Record<string, unknown>,
+    values?: Record<string, unknown>
+  ) => {
+    const options = typeof fallback === 'object' ? fallback : (values ?? {});
+    const template = typeof fallback === 'string' ? fallback : String(options.defaultValue ?? key);
+    return template.replace(/{{(\w+)}}/g, (_match, name: string) => String(options[name] ?? ''));
+  },
+}));
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: translate,
+    i18n: { language: 'en' },
+  }),
+}));
+
 // --- Mocks -----------------------------------------------------------------
 
 const addOrganizationMember = vi.fn();
@@ -89,18 +108,11 @@ describe('AdminMembersRolesPanel — Add member (H2.11)', () => {
     render(<AdminMembersRolesPanel />);
     await waitFor(() => expect(getOrganizationMembers).toHaveBeenCalledTimes(1));
 
-    await user.type(
-      screen.getByPlaceholderText(/member@company.com/i),
-      'new.person@acme.com'
-    );
+    await user.type(screen.getByPlaceholderText(/member@company.com/i), 'new.person@acme.com');
     await user.click(screen.getByRole('button', { name: /add member/i }));
 
     await waitFor(() =>
-      expect(addOrganizationMember).toHaveBeenCalledWith(
-        'org-1',
-        'new.person@acme.com',
-        'MEMBER'
-      )
+      expect(addOrganizationMember).toHaveBeenCalledWith('org-1', 'new.person@acme.com', 'MEMBER')
     );
     // list refreshed (initial load + post-add reload)
     await waitFor(() => expect(getOrganizationMembers).toHaveBeenCalledTimes(2));
@@ -109,17 +121,12 @@ describe('AdminMembersRolesPanel — Add member (H2.11)', () => {
   });
 
   it('surfaces a server USER_NOT_FOUND failure as a visible, actionable error', async () => {
-    addOrganizationMember.mockRejectedValueOnce(
-      new Error('User not found for the provided email')
-    );
+    addOrganizationMember.mockRejectedValueOnce(new Error('User not found for the provided email'));
     const user = userEvent.setup();
     render(<AdminMembersRolesPanel />);
     await waitFor(() => expect(getOrganizationMembers).toHaveBeenCalled());
 
-    await user.type(
-      screen.getByPlaceholderText(/member@company.com/i),
-      'ghost@acme.com'
-    );
+    await user.type(screen.getByPlaceholderText(/member@company.com/i), 'ghost@acme.com');
     await user.click(screen.getByRole('button', { name: /add member/i }));
 
     const alert = await screen.findByRole('alert');

@@ -92,19 +92,19 @@ describe('L-06 — BetaGate mechanism (module simulated as closed)', () => {
   // MODULE_DOCUMENT_STUDIO is 'open' today so BetaGate is a no-op for it in
   // production. To prove the *gate itself* is wired and would enforce
   // access the moment the SSOT flips to 'closed', exercise BetaGate against
-  // a moduleId that IS closed today (MODULE_AUDITS), using the exact same
+  // a moduleId that IS closed today (MODULE_MEETING), using the exact same
   // component imported by AppRoutes.tsx.
   function renderClosedModuleGate(role: string) {
     authState.currentUser = { isAuthenticated: true, role };
     render(
-      <MemoryRouter initialEntries={['/audit-programs']}>
+      <MemoryRouter initialEntries={['/meeting']}>
         <Routes>
           <Route path="/chat" element={<div>Chat Screen</div>} />
           <Route
-            path="/audit-programs"
+            path="/meeting"
             element={
-              <BetaGate moduleId="MODULE_AUDITS">
-                <div>Audits Content</div>
+              <BetaGate moduleId="MODULE_MEETING">
+                <div>Meeting Content</div>
               </BetaGate>
             }
           />
@@ -117,12 +117,12 @@ describe('L-06 — BetaGate mechanism (module simulated as closed)', () => {
     renderClosedModuleGate('USER');
 
     expect(screen.getByText('Chat Screen')).toBeInTheDocument();
-    expect(screen.queryByText('Audits Content')).not.toBeInTheDocument();
+    expect(screen.queryByText('Meeting Content')).not.toBeInTheDocument();
   });
 
   it('still allows OWNER/ADMIN through a closed module (BETA_ADMINS_EXEMPT)', () => {
     renderClosedModuleGate('OWNER');
 
-    expect(screen.getByText('Audits Content')).toBeInTheDocument();
+    expect(screen.getByText('Meeting Content')).toBeInTheDocument();
   });
 });

@@ -31,18 +31,27 @@ vi.mock('react-hot-toast', () => {
   return { default: Object.assign(fn, { success: vi.fn(), error: vi.fn() }) };
 });
 
-const { getPortfolio, portfolioStoreState, appStoreState, conversationStoreState } = vi.hoisted(
-  () => ({
-    getPortfolio: vi.fn(),
-    portfolioStoreState: { refreshTrigger: 0 },
-    appStoreState: {
-      currentProjectId: 'proj-1',
-      currentUser: { id: 'u1', firstName: 'T', lastName: 'U', role: 'ADMIN' },
-      currentOrganization: { id: 'org-1' },
-    },
-    conversationStoreState: { addMessage: vi.fn() },
-  })
-);
+const {
+  getPortfolio,
+  listRegisteredInitiatives,
+  portfolioStoreState,
+  appStoreState,
+  conversationStoreState,
+} = vi.hoisted(() => ({
+  getPortfolio: vi.fn(),
+  listRegisteredInitiatives: vi.fn(),
+  portfolioStoreState: { refreshTrigger: 0 },
+  appStoreState: {
+    currentProjectId: 'proj-1',
+    currentUser: { id: 'u1', firstName: 'T', lastName: 'U', role: 'ADMIN' },
+    currentOrganization: { id: 'org-1' },
+  },
+  conversationStoreState: { addMessage: vi.fn() },
+}));
+
+vi.mock('@/services/initiatives-execution/runtimeApi', () => ({
+  listRegisteredInitiatives,
+}));
 
 vi.mock('@/services/api/v8/planning', () => ({
   V8PlanningApi: {
@@ -100,6 +109,8 @@ const renderHub = () =>
 beforeEach(() => {
   getPortfolio.mockReset();
   getPortfolio.mockResolvedValue({ initiatives: [] });
+  listRegisteredInitiatives.mockReset();
+  listRegisteredInitiatives.mockResolvedValue({ initiatives: [] });
 });
 
 afterEach(() => {
@@ -115,13 +126,26 @@ describe('InitiativesHub smoke', () => {
   });
 
   it('renders an initiative card when the portfolio has one initiative', async () => {
-    getPortfolio.mockResolvedValue({
+    listRegisteredInitiatives.mockResolvedValue({
       initiatives: [
         {
-          id: 'init-1',
-          name: 'Automate Onboarding',
-          status: 'REVIEW', // in the default "active" scope so it isn't filtered out
-          priority: 'high',
+          version: 1,
+          updatedAt: '2026-08-15T10:00:00.000Z',
+          initiative: {
+            initiativeId: 'init-1',
+            lifecycleState: 'DEFINED',
+            title: 'Automate Onboarding',
+            problem: 'Reduce onboarding lead time',
+            projectId: 'proj-1',
+            readiness: 'NOT_EVALUATED',
+            source: {
+              proposalId: 'proposal-1',
+              proposalVersion: 1,
+              sourceType: 'tool_output',
+              sourceId: 'source-1',
+              sourceVersion: 1,
+            },
+          },
         },
       ],
     });

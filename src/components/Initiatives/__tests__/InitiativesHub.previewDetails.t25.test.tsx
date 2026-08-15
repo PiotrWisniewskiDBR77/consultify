@@ -150,7 +150,7 @@ describe('T25 Initiatives Portfolio table preview Details', () => {
     expect(result).not.toMatch(/MARKER_/);
   });
 
-  it('changes only table Details and preserves block order, relations, actions, and adjacent modes', () => {
+  it('mounts the canonical table register and preserves adjacent preview modes', () => {
     const source = readFileSync(
       join(process.cwd(), 'src/components/Initiatives/InitiativesHub.tsx'),
       'utf8'
@@ -160,24 +160,16 @@ describe('T25 Initiatives Portfolio table preview Details', () => {
     const tableSlice = source.slice(tableStart, gridStart);
     const adjacentSlice = source.slice(gridStart);
 
-    expect(tableSlice).toContain('text: tablePreviewDetailsText');
-    expect(tableSlice).not.toContain("t('initiatives.noDescription', 'No description.')");
-    expect(tableSlice).toContain('selectedTableRow.sourceType && selectedTableRow.sourceId');
-    expect(tableSlice).toContain('actions={tablePreviewActions}');
-    const order = [
-      'meta={{',
-      'details={{',
-      'ai={{',
-      'relations={',
-      'actions={tablePreviewActions}',
-    ];
-    const positions = order.map((token) => tableSlice.indexOf(token));
-    expect(positions.every((position) => position >= 0)).toBe(true);
-    expect(positions).toEqual([...positions].sort((a, b) => a - b));
+    expect(tableSlice).toContain('<CanonicalInitiativeRegister');
+    expect(tableSlice).toContain('rows={searchedInitiatives}');
+    expect(tableSlice).toContain('onOpen={handleOpenInitiativeDocument}');
+    expect(tableSlice).toContain('row.sourceType && row.sourceId');
+    expect(tableSlice).toContain('relationForRow={(row) =>');
+    expect(tableSlice).not.toContain('tablePreviewDetailsText');
 
     expect(adjacentSlice).toContain('renderPreview={renderInitiativePreview}');
     expect(adjacentSlice).toContain('<PortfolioKanbanView');
     expect(adjacentSlice).toContain('<InitiativesTimelineView');
-    expect(adjacentSlice).not.toContain('tablePreviewDetailsText');
+    expect(adjacentSlice).not.toContain('<CanonicalInitiativeRegister');
   });
 });

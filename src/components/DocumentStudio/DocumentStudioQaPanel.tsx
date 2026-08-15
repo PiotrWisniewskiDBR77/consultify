@@ -31,6 +31,7 @@ import type {
 
 interface DocumentStudioQaPanelProps {
   artifactId: string;
+  onNavigateFinding?: (finding: DocumentQaFinding) => void;
 }
 
 const SEVERITY_STYLES: Record<DocumentQaSeverity, string> = {
@@ -129,9 +130,11 @@ function scoreColor(score: number): string {
 function CategoryReportView({
   report,
   categoryLabel,
+  onNavigateFinding,
 }: {
   report: DocumentQaCategoryReport;
   categoryLabel: string;
+  onNavigateFinding?: (finding: DocumentQaFinding) => void;
 }): React.ReactElement {
   const { t } = useTranslation();
   return (
@@ -178,6 +181,16 @@ function CategoryReportView({
                       {finding.blockId ? `block: ${finding.blockId}` : null}
                     </div>
                   ) : null}
+                  {onNavigateFinding ? (
+                    <button
+                      type="button"
+                      className="mt-1 text-xs font-medium underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                      aria-label={t('documentStudio.qa.goToFinding', 'Go to finding in document')}
+                      onClick={() => onNavigateFinding(finding)}
+                    >
+                      {t('documentStudio.qa.goToFinding', 'Go to finding in document')}
+                    </button>
+                  ) : null}
                 </div>
               </div>
             </li>
@@ -188,7 +201,10 @@ function CategoryReportView({
   );
 }
 
-export const DocumentStudioQaPanel: React.FC<DocumentStudioQaPanelProps> = ({ artifactId }) => {
+export const DocumentStudioQaPanel: React.FC<DocumentStudioQaPanelProps> = ({
+  artifactId,
+  onNavigateFinding,
+}) => {
   const { t } = useTranslation();
   const [report, setReport] = useState<DocumentQaReport | null>(null);
   const [loading, setLoading] = useState(false);
@@ -284,6 +300,7 @@ export const DocumentStudioQaPanel: React.FC<DocumentStudioQaPanelProps> = ({ ar
                 key={cat.category}
                 report={cat}
                 categoryLabel={labelForCategory(cat.category)}
+                onNavigateFinding={onNavigateFinding}
               />
             ))}
           </div>
