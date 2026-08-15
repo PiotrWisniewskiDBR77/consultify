@@ -144,6 +144,10 @@ import { V8ArtifactRunControl } from './V8ArtifactRunControl';
 import { V8ContextIndicator } from './V8ContextIndicator';
 import { detectWhiteboardIntent } from './whiteboardIntentDetector';
 import { type ActiveCanvasDocument, WorkCanvasDocumentPanel } from './WorkCanvasDocumentPanel';
+import {
+  resolveWorkspaceArtifactKind,
+  shouldOfferWorkspaceArtifactIntent,
+} from './workspaceArtifactIntent';
 
 // ============================================================================
 // Types
@@ -680,6 +684,7 @@ export const __private__ = {
   parseChatCanvasIntent,
   parseChatSaveIntent,
   describeUnconfirmedTeresaResult,
+  resolveWorkspaceArtifactKind,
 };
 
 interface UnifiedChatPanelProps {
@@ -2561,6 +2566,87 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         }
       }
 
+      // An open artifact editor owns a free-form turn before generic output
+      // classifiers. Otherwise workbook vocabulary inside a deck/document edit
+      // can create a new output instead of editing the artifact already open.
+      // Attachments retain the existing upload/grounding flow. Only an explicit
+      // handled=false response allows the generic classifier fallback.
+      let workspaceArtifactIntentOffered = false;
+      if (onModuleIntent && shouldOfferWorkspaceArtifactIntent(workspaceContext, attachments)) {
+        workspaceArtifactIntentOffered = true;
+        const artifactKind = resolveWorkspaceArtifactKind(workspaceContext);
+        try {
+          const moduleIntentResult = await onModuleIntent(content);
+          const handledByModule =
+            typeof moduleIntentResult === 'object'
+              ? moduleIntentResult.handled
+              : Boolean(moduleIntentResult);
+
+          if (handledByModule) {
+            addChatMessage({
+              id: `user-${Date.now()}`,
+              role: 'user',
+              content,
+              timestamp: new Date(),
+            });
+            if (activeConversationId) {
+              try {
+                await addMessageToConversation({
+                  conversationId: activeConversationId,
+                  role: 'user',
+                  content,
+                  messageType: 'text',
+                  metadata: { artifactKind } as any,
+                });
+              } catch {
+                /* best-effort persist */
+              }
+            }
+
+            const moduleReply =
+              typeof moduleIntentResult === 'object'
+                ? String(moduleIntentResult.reply || '').trim()
+                : '';
+            if (moduleReply) {
+              addChatMessage({
+                id: `module-intent-${Date.now()}`,
+                role: 'ai',
+                content: moduleReply,
+                timestamp: new Date(),
+              });
+              if (activeConversationId) {
+                try {
+                  await addMessageToConversation({
+                    conversationId: activeConversationId,
+                    role: 'ai',
+                    content: moduleReply,
+                    messageType: 'text',
+                    metadata: { artifactKind } as any,
+                  });
+                } catch {
+                  /* best-effort persist */
+                }
+              }
+            }
+            onMessageSent?.(content);
+            return;
+          }
+        } catch (err) {
+          console.error('[UnifiedChatPanel] Workspace artifact intent handler failed:', err);
+          const errorContent = i18n.language?.startsWith('pl')
+            ? 'Nie udało się wykonać tej akcji w otwartym artefakcie.'
+            : 'I could not complete that action in the open artifact.';
+          addChatMessage({
+            id: `module-intent-error-${Date.now()}`,
+            role: 'ai',
+            content: errorContent,
+            timestamp: new Date(),
+          });
+          onMessageSent?.(content);
+          return;
+        }
+      }
+
       // Explicit output tool routing (user picked a tool via OutputToolSelector)
       const outputTool = useAppStore.getState().chatOutputTool;
       if (outputTool !== 'auto') {
@@ -4091,7 +4177,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       };
       addChatMessage(userMessage);
 
-      if (onModuleIntent) {
+      if (onModuleIntent && !workspaceArtifactIntentOffered) {
         try {
           const moduleIntentResult = await onModuleIntent(effectivePrompt);
           const handledByModule =

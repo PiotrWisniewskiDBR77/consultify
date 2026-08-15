@@ -796,6 +796,92 @@ describe('UnifiedChatPanel (L2)', () => {
     expect(screen.queryByTestId('chat-compact-empty-state')).not.toBeInTheDocument();
   });
 
+  it('offers an open deck to its module writer before explicit generic output routing', async () => {
+    appStoreState.chatOutputTool = 'excele';
+    const onModuleIntent = vi.fn().mockResolvedValue({ handled: true, reply: 'Deck updated.' });
+
+    renderWithRouter(
+      <UnifiedChatPanel
+        mode="split"
+        workspaceContext={
+          {
+            view: 'PREZENTACJE_GEN',
+            type: 'presentation',
+            entityData: { artifactKind: 'deck' },
+            timestamp: new Date(),
+          } as any
+        }
+        onModuleIntent={onModuleIntent}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('send-button'));
+
+    await waitFor(() => expect(onModuleIntent).toHaveBeenCalledWith('hello'));
+    expect(onModuleIntent).toHaveBeenCalledTimes(1);
+    expect(setChatKickoffMessageMock).not.toHaveBeenCalled();
+    expect(setChatOutputToolMock).not.toHaveBeenCalled();
+    expect(startStreamMock).not.toHaveBeenCalled();
+    expect(addChatMessageMock).toHaveBeenCalledWith(
+      expect.objectContaining({ role: 'ai', content: 'Deck updated.' })
+    );
+  });
+
+  it('falls back after handled=false without offering the turn to the module twice', async () => {
+    appStoreState.chatOutputTool = 'excele';
+    const onModuleIntent = vi.fn().mockResolvedValue({ handled: false });
+
+    renderWithRouter(
+      <UnifiedChatPanel
+        mode="split"
+        workspaceContext={
+          {
+            view: 'EXCELE',
+            type: 'document',
+            entityData: { artifactKind: 'workbook' },
+            timestamp: new Date(),
+          } as any
+        }
+        onModuleIntent={onModuleIntent}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('send-button'));
+
+    await waitFor(() => expect(setChatOutputToolMock).toHaveBeenCalledWith('auto'));
+    expect(onModuleIntent).toHaveBeenCalledTimes(1);
+    expect(setChatKickoffMessageMock).toHaveBeenCalledWith('hello');
+    expect(startStreamMock).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['an attachment', 'deck', 'send-pdf'],
+    ['an unknown artifact context', 'unknown-kind', 'send-button'],
+  ])('preserves generic routing for %s', async (_case, artifactKind, sendButton) => {
+    appStoreState.chatOutputTool = 'excele';
+    const onModuleIntent = vi.fn().mockResolvedValue({ handled: true });
+
+    renderWithRouter(
+      <UnifiedChatPanel
+        mode="split"
+        workspaceContext={
+          {
+            view: 'PREZENTACJE_GEN',
+            type: 'general',
+            entityData: { artifactKind },
+            timestamp: new Date(),
+          } as any
+        }
+        onModuleIntent={onModuleIntent}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId(sendButton));
+
+    await waitFor(() => expect(setChatOutputToolMock).toHaveBeenCalledWith('auto'));
+    expect(onModuleIntent).not.toHaveBeenCalled();
+  });
+
   it('opens a clean work panel from the chat header', () => {
     renderWithRouter(<UnifiedChatPanel mode="full" />);
 
