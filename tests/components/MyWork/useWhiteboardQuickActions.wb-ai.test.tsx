@@ -96,7 +96,7 @@ describe('useWhiteboardQuickActions — AI quick actions (A2)', () => {
 
     dispatchQuickAction('wb_add_sticky');
 
-    expect(handlers.addElement).toHaveBeenCalledWith('sticky');
+    expect(handlers.addElement).toHaveBeenCalledWith('sticky', undefined);
     expect(handlers.runAIAction).not.toHaveBeenCalled();
   });
 
