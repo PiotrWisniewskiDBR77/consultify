@@ -386,4 +386,96 @@ describe('DP-3 (T4) — shared/canonical idea-map routes (ENABLE_SHARED_IDEA_MAP
       expect(res.status).toBe(404);
     });
   });
+
+  describe('GET /metrics/map', () => {
+    it('reads canonical rows by is_canonical without an owner-row join', async () => {
+      mockQueryAll.mockResolvedValueOnce([
+        {
+          ideaId: IDEA_ID,
+          nodesJson: JSON.stringify([NODE, { ...NODE, id: 'n2' }]),
+          edgesJson: JSON.stringify([EDGE]),
+          updatedAt: '2026-07-04T00:00:00.000Z',
+        },
+      ]);
+
+      const res = await request(buildApp()).get(`/api/my-work/my-ideas/metrics/map?ids=${IDEA_ID}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.metrics[IDEA_ID]).toEqual({
+        nodes: 2,
+        edges: 1,
+        items: 3,
+        updatedAt: '2026-07-04T00:00:00.000Z',
+      });
+      const metricsCall = mockQueryAll.mock.calls.find(([sql]) =>
+        /FROM my_idea_maps/i.test(String(sql))
+      );
+      expect(metricsCall).toBeDefined();
+      const [metricsSql, metricsParams] = metricsCall!;
+      expect(String(metricsSql)).toMatch(/is_canonical = TRUE/i);
+      expect(String(metricsSql)).not.toMatch(/JOIN my_ideas/i);
+      expect(metricsParams).toEqual([ORG_ID, IDEA_ID]);
+    });
+  });
+
+  describe('GET /objects/:objectId/artifacts', () => {
+    it('reads artifact links from the canonical row without owner lookup', async () => {
+      const link = { artifactType: 'document', artifactId: 'doc-1', title: 'Spec' };
+      const nodeWithLinks = { ...NODE, data: { ...NODE.data, artifactLinks: [link] } };
+      mockQueryOne
+        // resolveMapReadRow: prove that this idea has a canonical map row
+        .mockResolvedValueOnce({ id: CANONICAL_MAP_V2.id })
+        // route payload: read the same canonical row
+        .mockResolvedValueOnce({ nodes_json: JSON.stringify([nodeWithLinks]) });
+
+      const res = await request(buildApp()).get(
+        `/api/my-work/my-ideas/${IDEA_ID}/objects/${NODE.id}/artifacts`
+      );
+
+      expect(res.status).toBe(200);
+      expect(res.body.artifactLinks).toEqual([link]);
+      const canonicalSelect = mockQueryOne.mock.calls.find(
+        ([sql]) =>
+          /SELECT nodes_json/i.test(String(sql)) && /is_canonical = TRUE/i.test(String(sql))
+      );
+      expect(canonicalSelect).toBeDefined();
+      expect(canonicalSelect![1]).toEqual([IDEA_ID, ORG_ID]);
+      expect(mockQueryOne.mock.calls.some(([sql]) => /FROM my_ideas\b/i.test(String(sql)))).toBe(
+        false
+      );
+    });
+  });
+
+  describe('GET /export-csv', () => {
+    it('exports the canonical row selected by is_canonical without owner lookup', async () => {
+      const extensions = { table: { columns: [{ key: 'label', header: 'Name' }] } };
+      mockQueryOne
+        // resolveMapReadRow: prove that this idea has a canonical map row
+        .mockResolvedValueOnce({ id: CANONICAL_MAP_V2.id })
+        // route payload: export the same canonical row
+        .mockResolvedValueOnce({
+          nodes_json: JSON.stringify([
+            { id: 'a', type: 'idea', data: { label: 'Alpha' } },
+            { id: 'b', type: 'idea', data: { label: 'Beta' } },
+          ]),
+          extensions_json: JSON.stringify(extensions),
+        });
+
+      const res = await request(buildApp()).get(`/api/my-work/my-ideas/${IDEA_ID}/export-csv`);
+
+      expect(res.status).toBe(200);
+      expect(res.headers['content-type']).toMatch(/text\/csv/i);
+      expect(res.text).toBe('﻿Name\nAlpha\nBeta');
+      const canonicalSelect = mockQueryOne.mock.calls.find(
+        ([sql]) =>
+          /SELECT nodes_json, extensions_json/i.test(String(sql)) &&
+          /is_canonical = TRUE/i.test(String(sql))
+      );
+      expect(canonicalSelect).toBeDefined();
+      expect(canonicalSelect![1]).toEqual([IDEA_ID, ORG_ID]);
+      expect(mockQueryOne.mock.calls.some(([sql]) => /FROM my_ideas\b/i.test(String(sql)))).toBe(
+        false
+      );
+    });
+  });
 });
