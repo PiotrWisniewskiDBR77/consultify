@@ -16,6 +16,13 @@
       "nextAction": "Verify the approved-session row against seeded demo data during the signed-in Tools golden flow; retain the recovery ref until CLEAN-003."
     },
     {
+      "tip": "281db9bed128889dde40b0f62777c5812e77fd06",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-TLS-002",
+      "evidenceRule": "The recovered local supportedTools additions are superseded by the canonical DEDICATED_TOOL_TYPES registry and hasDedicatedToolDocumentView routing. ambition-decomposer, focus-tradeoff, and narrative-engine are present, production routing consumes the shared registry, and 2 focused files / 16 tests PASS.",
+      "nextAction": "Do not restore the local allowlist. Retain the recovery ref until CLEAN-003."
+    },
+    {
       "tip": "1eb9289377c3b1e6e33aae3465f43b19d63e4421",
       "verdict": "INTEGRATED_CANONICAL",
       "taskId": "CLEAN-002-SEC-001",

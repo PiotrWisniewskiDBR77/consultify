@@ -437,8 +437,10 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
   a realDB test wymaga teraz jawnego HTTP 200. Odzyskana widoczność
   zatwierdzonych sesji Tools została zintegrowana w `9be10e6eb`; kontrakt
   widoczności oraz istniejący hub gate dają 2 pliki / 44 testy, a frontend
-  typecheck jest zielony. Pozostałe 200 nadal wymaga review. Te 18 pozostaje
-  zachowanym materiałem
+  typecheck jest zielony. Lokalny allowlist trzech strategicznych narzędzi z
+  kolejnego odzyskanego head został zastąpiony przez współdzielony
+  `DEDICATED_TOOL_TYPES`; routing i registry mają 2 pliki / 16 testów PASS.
+  Pozostałe 199 nadal wymaga review. Te 18 pozostaje zachowanym materiałem
   UX/prototypowym, ale nie
   jest kodem produkcyjnym do merge. Generator mechanicznie egzekwuje warunek
   ścieżek, unikalność, sumy i deterministyczny output; nadal

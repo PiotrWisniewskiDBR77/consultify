@@ -12,9 +12,9 @@
   "summary": {
     "total": 224,
     "referenceHarnessOnly": 18,
-    "representedSuperseded": 3,
+    "representedSuperseded": 4,
     "integratedCanonical": 3,
-    "semanticReviewRequired": 200,
+    "semanticReviewRequired": 199,
     "deletionAuthorized": 0
   },
   "rows": [
@@ -767,12 +767,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 1,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-TLS-002",
       "recoveryRef": "refs/recovery/unknown-20260815/281db9bed128889dde40b0f62777c5812e77fd06",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered local supportedTools additions are superseded by the canonical DEDICATED_TOOL_TYPES registry and hasDedicatedToolDocumentView routing. ambition-decomposer, focus-tradeoff, and narrative-engine are present, production routing consumes the shared registry, and 2 focused files / 16 tests PASS.",
+      "nextAction": "Do not restore the local allowlist. Retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "2bb421898f5a9b50841ef8e148fe680c67f796ef",
