@@ -23,7 +23,7 @@ import { Router } from 'express';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
-import { requireOrgAccess } from '../middleware/rbac.middleware.js';
+import { requireOrgAccess, requireRole } from '../middleware/rbac.middleware.js';
 import {
   type AuditProgramStatus,
   computeCompletion,
@@ -42,6 +42,17 @@ router.use(apiAuthRateLimiter);
 router.use(verifyToken);
 router.use(requireOrgAccess());
 router.use(demoContextMiddleware);
+
+// Base beta policy: every organization member may read programs, while writes
+// require a role that can coordinate audit work. This intentionally does not
+// claim the fine-grained segregation-of-duties model of the Method kernel.
+const requireAuditProgramManager = requireRole(
+  'consultant',
+  'manager',
+  'admin',
+  'owner',
+  'superadmin'
+);
 
 // ---------------------------------------------------------------------------
 // Auth context — mirror insightSourceBaskets.routes.ts.
@@ -84,7 +95,7 @@ router.get('/programs', async (req: AuthRequest, res) => {
 // ---------------------------------------------------------------------------
 // POST /programs — create
 // ---------------------------------------------------------------------------
-router.post('/programs', async (req: AuthRequest, res) => {
+router.post('/programs', requireAuditProgramManager, async (req: AuthRequest, res) => {
   const { organizationId, userId } = authContext(req);
   if (!organizationId) return res.status(400).json({ error: 'Missing organization context' });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -128,7 +139,7 @@ router.get('/programs/:id', async (req: AuthRequest, res) => {
 // ---------------------------------------------------------------------------
 // PATCH /programs/:id — update
 // ---------------------------------------------------------------------------
-router.patch('/programs/:id', async (req: AuthRequest, res) => {
+router.patch('/programs/:id', requireAuditProgramManager, async (req: AuthRequest, res) => {
   const { organizationId } = authContext(req);
   if (!organizationId) return res.status(400).json({ error: 'Missing organization context' });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -177,24 +188,48 @@ router.patch('/programs/:id', async (req: AuthRequest, res) => {
   }
 });
 
+// Reopen is explicit rather than a magic client PATCH. A closed/archived
+// program returns to draft so a manager must deliberately review it before
+// generating new assignments again.
+router.post('/programs/:id/reopen', requireAuditProgramManager, async (req: AuthRequest, res) => {
+  const { organizationId } = authContext(req);
+  if (!organizationId) return res.status(400).json({ error: 'Missing organization context' });
+  try {
+    const existing = await getProgram(organizationId, req.params.id);
+    if (!existing) return res.status(404).json({ error: 'Audit program not found' });
+    if (existing.status !== 'completed' && existing.status !== 'archived') {
+      return res.status(409).json({ error: 'Only completed or archived programs can be reopened' });
+    }
+    const program = await updateProgram(organizationId, req.params.id, { status: 'draft' });
+    return res.json({ program });
+  } catch (error) {
+    logger.error('[audit-programs] reopen failed', { error });
+    return res.status(500).json({ error: 'Failed to reopen audit program' });
+  }
+});
+
 // ---------------------------------------------------------------------------
 // POST /programs/:id/generate-surveys — bulk-create interview assignments for
 // every selected template × assignee, reusing the interview assignment service
 // (#19). Idempotent: a program already generated returns alreadyGenerated:true.
 // Robust to partial failures — reports created/failed counts + per-pair errors.
 // ---------------------------------------------------------------------------
-router.post('/programs/:id/generate-surveys', async (req: AuthRequest, res) => {
-  const { organizationId, userId } = authContext(req);
-  if (!organizationId) return res.status(400).json({ error: 'Missing organization context' });
-  try {
-    const result = await generateSurveys(organizationId, userId, req.params.id);
-    if (!result) return res.status(404).json({ error: 'Audit program not found' });
-    return res.json(result);
-  } catch (error) {
-    logger.error('[audit-programs] generate-surveys failed', { error });
-    return res.status(500).json({ error: 'Failed to generate surveys' });
+router.post(
+  '/programs/:id/generate-surveys',
+  requireAuditProgramManager,
+  async (req: AuthRequest, res) => {
+    const { organizationId, userId } = authContext(req);
+    if (!organizationId) return res.status(400).json({ error: 'Missing organization context' });
+    try {
+      const result = await generateSurveys(organizationId, userId, req.params.id);
+      if (!result) return res.status(404).json({ error: 'Audit program not found' });
+      return res.json(result);
+    } catch (error) {
+      logger.error('[audit-programs] generate-surveys failed', { error });
+      return res.status(500).json({ error: 'Failed to generate surveys' });
+    }
   }
-});
+);
 
 // ---------------------------------------------------------------------------
 // GET /programs/:id/completion — completion rollup over the program's generated
@@ -216,7 +251,7 @@ router.get('/programs/:id/completion', async (req: AuthRequest, res) => {
 // ---------------------------------------------------------------------------
 // DELETE /programs/:id — delete
 // ---------------------------------------------------------------------------
-router.delete('/programs/:id', async (req: AuthRequest, res) => {
+router.delete('/programs/:id', requireAuditProgramManager, async (req: AuthRequest, res) => {
   const { organizationId } = authContext(req);
   if (!organizationId) return res.status(400).json({ error: 'Missing organization context' });
   try {

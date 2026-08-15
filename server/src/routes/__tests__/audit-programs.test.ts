@@ -47,6 +47,7 @@ vi.mock('../../middleware/auth.middleware.js', () => ({
 
 vi.mock('../../middleware/rbac.middleware.js', () => ({
   requireOrgAccess: () => (_req: any, _res: any, next: any) => next(),
+  requireRole: () => (_req: any, _res: any, next: any) => next(),
 }));
 
 vi.mock('../../middleware/rateLimiting.middleware.js', () => ({
@@ -247,6 +248,24 @@ describe('audit-programs CRUD org-scoping', () => {
     const res = await request(app).delete(`/api/audit/programs/${PROG_ID}`);
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
+  });
+
+  it('POST /programs/:id/reopen moves a completed program back to draft', async () => {
+    mockDbGet
+      .mockResolvedValueOnce(baseRow({ status: 'completed' }))
+      .mockResolvedValueOnce(baseRow({ status: 'completed' }))
+      .mockResolvedValueOnce(baseRow({ status: 'draft' }));
+    const app = await makeApp(ORG_A);
+    const res = await request(app).post(`/api/audit/programs/${PROG_ID}/reopen`);
+    expect(res.status).toBe(200);
+    expect(res.body.program.status).toBe('draft');
+  });
+
+  it('POST /programs/:id/reopen rejects a program that is not closed', async () => {
+    mockDbGet.mockResolvedValueOnce(baseRow({ status: 'active' }));
+    const app = await makeApp(ORG_A);
+    const res = await request(app).post(`/api/audit/programs/${PROG_ID}/reopen`);
+    expect(res.status).toBe(409);
   });
 
   // ── Mass-assignment: server-managed `config` bookkeeping keys ─────────────────

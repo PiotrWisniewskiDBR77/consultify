@@ -50,6 +50,8 @@ vi.mock('../../../src/components/Audit/auditApi', () => ({
   listPrograms: (...args: unknown[]) => mockListPrograms(...args),
   deleteProgram: (...args: unknown[]) => mockDeleteProgram(...args),
   generateSurveys: (...args: unknown[]) => mockGenerateSurveys(...args),
+  reopenProgram: vi.fn(),
+  updateProgram: vi.fn(),
   getCompletion: (...args: unknown[]) => mockGetCompletion(...args),
 }));
 
@@ -90,12 +92,7 @@ vi.mock('../../../src/components/shared/ModuleHub', () => ({
               ))}
             </button>
             {(getRowActions?.(row) ?? []).map((a: any) => (
-              <button
-                key={a.id}
-                aria-label={a.label}
-                disabled={a.disabled}
-                onClick={a.onClick}
-              >
+              <button key={a.id} aria-label={a.label} disabled={a.disabled} onClick={a.onClick}>
                 {a.label}
               </button>
             ))}
@@ -126,15 +123,15 @@ vi.mock('@/components/standard', () => ({
           const actions = [
             ...(menu.primary ?? []),
             ...(menu.statusTransitions ?? []),
-            ...(menu.destructive
-              ? [{ id: 'delete', label: 'Delete', ...menu.destructive }]
-              : []),
+            ...(menu.destructive ? [{ id: 'delete', label: 'Delete', ...menu.destructive }] : []),
           ];
           return (
             <div key={row.id} data-testid={`ft-row-${row.id}`}>
               <button data-testid={`ft-select-${row.id}`} onClick={() => onRowClick?.(row)}>
                 {columns.map((col: any) => (
-                  <span key={col.id}>{col.render ? col.render(row) : String(row[col.id] ?? '')}</span>
+                  <span key={col.id}>
+                    {col.render ? col.render(row) : String(row[col.id] ?? '')}
+                  </span>
                 ))}
               </button>
               {actions.map((action: any) => (
@@ -177,9 +174,7 @@ vi.mock('../../../src/components/shared/TableWithPreviewLayout', () => ({
   TableWithPreviewLayout: ({ children, selectedItem, renderPreview }: any) => (
     <div data-testid="table-preview-layout">
       {children}
-      {selectedItem ? (
-        <div data-testid="preview-pane">{renderPreview(selectedItem)}</div>
-      ) : null}
+      {selectedItem ? <div data-testid="preview-pane">{renderPreview(selectedItem)}</div> : null}
     </div>
   ),
 }));
@@ -193,15 +188,17 @@ vi.mock('../../../src/components/ui/primitives/chips', () => ({
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
-function makeProgram(overrides: Partial<{
-  id: string;
-  name: string;
-  status: string;
-  objective: string | null;
-  templateIds: string[];
-  assigneeIds: string[];
-  surveysGenerated: boolean;
-}> = {}) {
+function makeProgram(
+  overrides: Partial<{
+    id: string;
+    name: string;
+    status: string;
+    objective: string | null;
+    templateIds: string[];
+    assigneeIds: string[];
+    surveysGenerated: boolean;
+  }> = {}
+) {
   return {
     id: overrides.id ?? 'prog-1',
     organizationId: 'org-1',
@@ -224,9 +221,7 @@ function makeProgram(overrides: Partial<{
 const COMPLETION = { generated: false, total: 1, done: 0, percent: 0, byStatus: {} };
 
 function renderHub() {
-  return render(
-    <AuditsHubUnderTest />
-  );
+  return render(<AuditsHubUnderTest />);
 }
 
 // Import AFTER mocks are registered.
@@ -399,7 +394,9 @@ describe('AuditsHub — lista + dashboard (T6)', () => {
     await waitFor(() => {
       expect(screen.getByTestId('preview-pane')).toBeInTheDocument();
     });
-    expect(within(screen.getByTestId('preview-pane')).getByText('Clickable Program')).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId('preview-pane')).getByText('Clickable Program')
+    ).toBeInTheDocument();
   });
 
   it('shows "surveys generated" badge when surveysGenerated=true', async () => {

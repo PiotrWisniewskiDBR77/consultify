@@ -5,9 +5,9 @@
  * Triada standard (docs/ui-standards/TRIADA_KANON.md A4-A7): the list is
  * StandardTable + StandardPreview, 1:1 with the Assessment 'list' / Results
  * KPI catalog adopters. Kebab (canon A6): Open · Generate surveys · Open
- * preview/Edit/Archive (Edit gated by isAuditProgramEditEnabled() — real
- * backend, no wired screen yet; Archive has no backend at all — both shown
- * disabled with a note, never hidden) · Delete (destructive, always last).
+ * preview/Edit/Archive (Edit is a real PATCH round-trip; Archive remains
+ * disabled because the base beta has no archive command) · Delete
+ * (destructive, always last).
  *
  * What it does (works end-to-end):
  *  - Lists the org's audit programs from GET /api/audit/programs.
@@ -15,6 +15,7 @@
  *  - "New audit program" + quick "ISO 27001" launcher open the wizard.
  *  - Selecting a program shows a StandardPreview: status, objective, counts
  *    (templates, assignees), and a completion % derived from the real rollup.
+ *  - Edit saves base fields; completed/archived programs can be reopened.
  *  - Delete a program (row kebab, preview action, or Menu 3 bulk bar).
  *
  * Scale note (#19e): for the 400-assignee scale the owner targets, this list
@@ -62,7 +63,6 @@ import {
 import { StandardModuleBar } from '@/components/standard/StandardModuleBar';
 import { EntityStatusChip, MetaChip, statusChipTone } from '@/components/ui/primitives/chips';
 import { Api } from '@/services/api';
-import { isAuditProgramEditEnabled } from '@/utils/auditProgramEditStubFlag';
 import { isDrdReportEnabled } from '@/utils/drdReportFlag';
 
 import {
@@ -72,9 +72,11 @@ import {
   generateSurveys,
   getCompletion,
   listPrograms,
+  reopenProgram,
   type ProgramCompletion,
 } from './auditApi';
 import { AuditOrchestratorWizard } from './AuditOrchestratorWizard';
+import { AuditProgramEditDialog } from './AuditProgramEditDialog';
 
 const PAGE_SIZE = 50;
 
@@ -118,6 +120,7 @@ export const AuditsHub: React.FC = () => {
 
   const [wizardOpen, setWizardOpen] = useState(false);
   const [wizardPresetId, setWizardPresetId] = useState<string | null>(null);
+  const [editingProgram, setEditingProgram] = useState<AuditProgram | null>(null);
   // StandardTable owns the (unused-here) column filter chips. Search + status
   // remain SERVER-SIDE via ModuleHub (load()); these stay empty by design.
   const [tableFilters, setTableFilters] = useState<FilterChip[]>([]);
@@ -280,6 +283,16 @@ export const AuditsHub: React.FC = () => {
       await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : t('audit.failedToDelete'));
+    }
+  };
+
+  const handleReopen = async (program: AuditProgram) => {
+    try {
+      const reopened = await reopenProgram(program.id);
+      setPrograms((current) => current.map((item) => (item.id === reopened.id ? reopened : item)));
+      setSelectedId(reopened.id);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t('audit.failedToReopen', 'Failed to reopen'));
     }
   };
 
@@ -450,6 +463,16 @@ export const AuditsHub: React.FC = () => {
           },
         ],
         statusTransitions: [
+          ...(row.status === 'completed' || row.status === 'archived'
+            ? [
+                {
+                  id: 'reopen',
+                  label: t('common.reopen', 'Reopen'),
+                  icon: RefreshCw,
+                  onClick: () => void handleReopen(row),
+                },
+              ]
+            : []),
           {
             id: 'generate',
             label: row.surveysGenerated ? t('audit.surveysGenerated') : t('audit.generateSurveys'),
@@ -460,13 +483,7 @@ export const AuditsHub: React.FC = () => {
         ],
         universalHandlers: {
           preview: () => setSelectedId(row.id),
-          // DP-5 (src/utils/auditProgramEditStubFlag.ts): backend PATCH exists
-          // but no wired edit screen yet — gated OFF by default, disabled with
-          // a note rather than hidden, until the edit UI ships.
-          edit: isAuditProgramEditEnabled() ? () => setSelectedId(row.id) : undefined,
-          editNote: isAuditProgramEditEnabled()
-            ? undefined
-            : t('common.comingSoonBackend', 'Coming soon (backend)'),
+          edit: () => setEditingProgram(row),
           // No archive endpoint exists for audit programs at all — disabled
           // with a note, never hidden (canon A6 block 4).
           archiveNote: t('common.comingSoonBackend', 'Coming soon (backend)'),
@@ -516,6 +533,17 @@ export const AuditsHub: React.FC = () => {
       selectedProgram
         ? {
             informational: [
+              ...(selectedProgram.status === 'completed' || selectedProgram.status === 'archived'
+                ? [
+                    {
+                      id: 'reopen',
+                      variant: 'neutral' as const,
+                      label: t('common.reopen', 'Reopen'),
+                      icon: RefreshCw,
+                      onClick: () => void handleReopen(selectedProgram),
+                    },
+                  ]
+                : []),
               {
                 id: 'generate',
                 variant: 'neutral',
@@ -894,9 +922,9 @@ export const AuditsHub: React.FC = () => {
                   StandardTable + StandardPreview, 1:1 with the Assessment
                   'list' / Results KPI catalog adopters. Single click selects a
                   row and opens the program preview in the right pane. Kebab
-                  (⋮) carries Open · Generate surveys · Open preview/Edit/Archive
-                  (Edit+Archive disabled — no wired UI/API yet, see
-                  auditProgramEditStubFlag.ts) · Delete. */}
+                  (⋮) carries Open · Generate surveys/Reopen · Open
+                  preview/Edit/Archive (Archive disabled in the base beta) ·
+                  Delete. */}
                   <div className="h-[calc(100vh-260px)] min-h-[420px] flex overflow-hidden rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface">
                     <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
                       <StandardTable
@@ -1038,6 +1066,15 @@ export const AuditsHub: React.FC = () => {
           setWizardOpen(false);
           setSelectedId(program.id);
           void load();
+        }}
+      />
+      <AuditProgramEditDialog
+        program={editingProgram}
+        onClose={() => setEditingProgram(null)}
+        onSaved={(saved) => {
+          setPrograms((current) => current.map((item) => (item.id === saved.id ? saved : item)));
+          setEditingProgram(null);
+          setSelectedId(saved.id);
         }}
       />
     </div>

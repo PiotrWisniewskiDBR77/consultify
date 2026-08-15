@@ -155,17 +155,14 @@ export async function createProgram(input: CreateProgramInput): Promise<AuditPro
   return res?.data?.program as AuditProgram;
 }
 
-/**
- * Edit a program (PATCH /audit/programs/:id). The backend is real and working
- * (org-scoped; also called internally by the server's generateSurveys to persist
- * config). However there is intentionally NO user-facing "Edit program" screen
- * yet — DP-5 hides the edit surface behind a flag rather than half-building a
- * modal. Any FE caller of this wrapper MUST guard rendering with
- * `isAuditProgramEditEnabled()` from '@/utils/auditProgramEditStubFlag'. Until
- * the edit screen ships, this remains an unwired client wrapper by design.
- */
+/** Edit base program fields through the signed-in beta editor. */
 export async function updateProgram(id: string, input: UpdateProgramInput): Promise<AuditProgram> {
   const res = await Api.patch(`/audit/programs/${id}`, input);
+  return res?.data?.program as AuditProgram;
+}
+
+export async function reopenProgram(id: string): Promise<AuditProgram> {
+  const res = await Api.post(`/audit/programs/${id}/reopen`, {});
   return res?.data?.program as AuditProgram;
 }
 

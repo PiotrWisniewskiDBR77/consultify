@@ -58,6 +58,8 @@ vi.mock('../auditApi', () => ({
   deleteProgram,
   generateSurveys,
   getCompletion,
+  reopenProgram: vi.fn(),
+  updateProgram: vi.fn(),
   listTemplateOptions: vi.fn(async () => []),
   listUserOptions: vi.fn(async () => []),
   createProgram: vi.fn(async () => ({ id: 'new', name: 'New' })),
