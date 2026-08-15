@@ -575,9 +575,9 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
   są zastąpione przez późniejszy kanon: XLSX ma jeden adoptowany artefakt
   (3/3), komentarze Deck pozostają świadomie poza wspólnym MELS order (18/18),
   a Process Flow ma nowszy toolbar z progressive disclosure (13/13). Meeting
-  Core został wyodrębniony jako pierwszy jawny `CANDIDATE_INTEGRATION` z
-  atomowym pakietem `MTG-001-T01`; nie jest już niesklasyfikowanym WIP i nie
-  będzie scalany jako branch. Dwie kolejne historie zostały zastąpione przez
+  Core został selektywnie zintegrowany w `0bfc48721` z atomowego pakietu
+  `MTG-001-T01`; nie jest już niesklasyfikowanym WIP i nie został scalony jako
+  branch. Dwie kolejne historie zostały zastąpione przez
   bezpieczniejszy kanon: przycisk presetu Assessment jest pokazywany wyłącznie
   dla jedynej wspieranej metodologii DRD (2/2 i frontend typecheck), a wspólny
   resolver map Ideas obsługuje odczyty metrics/artifacts/CSV z jednego wiersza
@@ -954,13 +954,14 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
 
 ### MTG-001 — Meeting/Minutes contract
 
-- Status: `PARTIAL`, P1; owner: Meeting lane.
+- Status: `CODE_CONNECTED / REALDB_GREEN / BROWSER_EVIDENCE_MISSING`, P1;
+  owner: Meeting lane.
 - Atomowy pakiet: `docs/cleanup/execution-packets/MTG-001-T01.md`, status
-  `READY_SERIAL_INTEGRATOR / PREFLIGHT_REQUIRED`.
+  `CODE_CONNECTED / REALDB_GREEN / BROWSER_EVIDENCE_MISSING`.
 - Odzyskany kandydat: trzy commity `baeaad452..2d0e6d8da` zawierają lifecycle,
   role, notes, proposal-first task/decision outputs, CAS i reconciliation.
-  Kandydat nie jest przodkiem kanonu i dotyka współdzielonych Task/Decision,
-  dlatego wymaga portu modułowego na aktualny M12 CRUD, nigdy merge brancha.
+  Został przeniesiony modułowo na aktualny M12 CRUD w `0bfc48721`; recovery ref
+  pozostaje chroniony, ale funkcjonalność jest już reprezentowana w kanonie.
 - DoD: create -> agenda/materials -> notes -> proposed summary -> approve ->
   one decision + task + material -> cold reopen; consent/retention/tenant proof.
 
