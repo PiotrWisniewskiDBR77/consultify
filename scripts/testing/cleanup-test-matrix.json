@@ -142,7 +142,9 @@
       "tests/integration/organization/competency-auth.test.ts",
       "server/src/services/v8/__tests__/v8-operator-monitoring.test.ts",
       "tests/integration/routes/artifact-runs.approve-vs-review-boundary.sqlite.integration.test.ts",
-      "tests/integration/system/health.noChildProcess.contract.test.ts"
+      "tests/integration/system/health.noChildProcess.contract.test.ts",
+      "server/src/routes/resultsVnext/__tests__/roiPir.routes.test.ts",
+      "tests/integration/assessment/drd-assessment-roundtrip.contract.test.ts"
     ]
   },
   "gates": {
@@ -213,7 +215,9 @@
         "tests/integration/organization/competency-auth.test.ts",
         "server/src/services/v8/__tests__/v8-operator-monitoring.test.ts",
         "tests/integration/routes/artifact-runs.approve-vs-review-boundary.sqlite.integration.test.ts",
-        "tests/integration/system/health.noChildProcess.contract.test.ts"
+        "tests/integration/system/health.noChildProcess.contract.test.ts",
+        "server/src/routes/resultsVnext/__tests__/roiPir.routes.test.ts",
+        "tests/integration/assessment/drd-assessment-roundtrip.contract.test.ts"
       ]
     },
     "realdb": {
