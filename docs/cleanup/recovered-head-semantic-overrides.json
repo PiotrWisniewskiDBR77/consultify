@@ -2,6 +2,13 @@
   "schemaVersion": 1,
   "rows": [
     {
+      "tip": "1f546ff718f3f6c308ae110b85a083e68bf7e8fd",
+      "verdict": "INTEGRATED_CANONICAL",
+      "taskId": "CLEAN-002-MYW-001",
+      "evidenceRule": "The recovered PostgreSQL-safe bottleneck queries and fail-closed DbPromise behavior were reviewed and integrated in canonical commit d3be120e1767ee0c29c99caf94bd64bde799310a. The unit contract now asserts all three queries disable fallback and the blocking predicate is type-safe; 19 tests PASS and server typecheck PASS. The realDB acceptance assertion was strengthened to require HTTP 200 and remains part of the realDB gate.",
+      "nextAction": "Execute the strengthened acceptance suite in the consolidated fresh/upgrade PostgreSQL gate; retain the recovery ref until CLEAN-003."
+    },
+    {
       "tip": "1eb9289377c3b1e6e33aae3465f43b19d63e4421",
       "verdict": "INTEGRATED_CANONICAL",
       "taskId": "CLEAN-002-SEC-001",

@@ -432,7 +432,10 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
   kolejne heads otrzymały reviewed verdict: trzy `REPRESENTED_SUPERSEDED`, a
   luka izolacji projektów Vault została selektywnie zintegrowana w
   `14d65703a` i potwierdzona przez 5 plików / 37 testów oraz server typecheck.
-  Pozostałe 202 nadal wymagają review. Te 18 pozostaje zachowanym materiałem
+  Następnie odzyskana naprawa PostgreSQL dla bottlenecków decyzji została
+  zintegrowana w `d3be120e1`; unit contract 19/19 i server typecheck są zielone,
+  a realDB test wymaga teraz jawnego HTTP 200. Pozostałe 201 nadal wymagają
+  review. Te 18 pozostaje zachowanym materiałem
   UX/prototypowym, ale nie
   jest kodem produkcyjnym do merge. Generator mechanicznie egzekwuje warunek
   ścieżek, unikalność, sumy i deterministyczny output; nadal

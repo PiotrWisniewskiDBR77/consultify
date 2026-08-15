@@ -5,8 +5,8 @@
 - Independent heads: **224**
 - `REFERENCE_HARNESS_ONLY`: **18**
 - `REPRESENTED_SUPERSEDED`: **3**
-- `INTEGRATED_CANONICAL`: **1**
-- `SEMANTIC_REVIEW_REQUIRED`: **202**
+- `INTEGRATED_CANONICAL`: **2**
+- `SEMANTIC_REVIEW_REQUIRED`: **201**
 - Deletion authorized: **0**
 
 The first closed semantic rule is deliberately narrow: a head receives
