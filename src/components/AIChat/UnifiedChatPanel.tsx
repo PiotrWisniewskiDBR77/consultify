@@ -6753,7 +6753,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
               <div className="mt-12 flex flex-col items-center gap-1.5 pointer-events-none select-none">
                 <p className="text-3xl font-semibold tracking-tight text-c-text/70">Consultify®</p>
-                <p className="text-center text-[11px] uppercase tracking-[0.25em] text-c-text/30">
+                <p className="text-center text-[11px] uppercase tracking-[0.25em] text-c-text-secondary">
                   DBR77 Industrial Intelligence
                 </p>
               </div>

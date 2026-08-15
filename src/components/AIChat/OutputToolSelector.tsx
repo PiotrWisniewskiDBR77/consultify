@@ -54,7 +54,7 @@ export const OutputToolSelector: React.FC = () => {
       {/* Leading group label so the pills read as OUTPUT routing, not model
           selection — the bare "Auto" pill was being misread as "AI picks the
           best model" (composer audit D1). */}
-      <span className="mr-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500 select-none">
+      <span className="mr-1 text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 select-none">
         {t('chatOutputTool.groupLabel', 'Output')}
       </span>
       {TOOLS.map((tool) => {
