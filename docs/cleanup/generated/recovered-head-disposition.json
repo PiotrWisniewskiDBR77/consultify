@@ -12,13 +12,13 @@
   "summary": {
     "total": 224,
     "referenceHarnessOnly": 18,
-    "representedSuperseded": 26,
+    "representedSuperseded": 28,
     "representedCanonical": 15,
     "rejectedDestructiveSnapshot": 1,
     "integratedCanonical": 10,
     "candidateIntegration": 1,
     "ownerDecisionRequired": 0,
-    "semanticReviewRequired": 153,
+    "semanticReviewRequired": 151,
     "deletionAuthorized": 0
   },
   "rows": [
@@ -1115,12 +1115,12 @@
       "uniqueCommitCount": 3,
       "pathCount": 1,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-IDEA-007",
       "recoveryRef": "refs/recovery/unknown-20260815/3528254b5d1ec1a9c645f9051518987d23db5c05",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "This recovered head changes one status line in the July Ideas handoff from mind-map sweep in progress to complete. The canonical copy contains substantially later sections 10-14 documenting the actual integration, render debugging, visual acceptance, promotion and historical demo health, which supersede the intermediate one-line checkpoint.",
+      "nextAction": "Keep the later canonical handoff as historical evidence; do not reinsert the intermediate status paragraph. Validate current Ideas behavior only through the present Ideas module contracts and current runtime evidence. Retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "352ac10dac2e560b17d084ccf524a3249b41e15b",
@@ -4592,12 +4592,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 1,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-INI-005",
       "recoveryRef": "refs/recovery/unknown-20260815/e13b4cf90c8a4a2725fab98f6cdb7e0336111415",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered cross-module acceptance file predates the canonical Initiative/Execution and Results VNext flows. Its RED finding says deviation RCA suggestions have no HTTP route, but the current /api/v8/results/deviation-cases/:caseId/rca-suggest route is wired to deviationRcaSuggestService with permission and tenant checks; the focused current wiring suite passes 9/9. Current acceptance sources separately cover canonical Initiative start-to-Execution readback and KPI deviation persistence/concurrency, so restoring the old aggregate would reintroduce legacy /api/benefits and a now-false assertion.",
+      "nextAction": "Do not restore the historical aggregate harness. Execute the current Initiative/Execution and Results VNext realDB packets under INI-001/EXE-001/RES-001; the acceptance config and database prerequisites remain part of those packets, not this semantic review. Retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "e30de810937cfe258a88ab82ee28e36e856850a4",

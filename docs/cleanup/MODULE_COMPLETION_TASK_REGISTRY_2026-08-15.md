@@ -487,7 +487,12 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
   dla jedynej wspieranej metodologii DRD (2/2 i frontend typecheck), a wspólny
   resolver map Ideas obsługuje odczyty metrics/artifacts/CSV z jednego wiersza
   `is_canonical`; odzyskane kontrakty czytników są przywrócone i pełna macierz
-  shared-map ma 11/11 PASS. Aktualny ledger ma 153 pozycje
+  shared-map ma 11/11 PASS. Historyczny agregat Core został zastąpiony przez
+  aktualne, rozdzielone kontrakty Initiative/Execution i Results VNext; jego
+  dawny finding o braku RCA Suggest jest nieaktualny, a obecny route ma 9/9
+  focused PASS. Jednoliniowy checkpoint sweepu Ideas jest z kolei zastąpiony
+  późniejszymi sekcjami tego samego handoffu opisującymi integrację, render i
+  ówczesny odbiór. Aktualny ledger ma 151 pozycji
   `SEMANTIC_REVIEW_REQUIRED`. Te 18 pozostaje zachowanym materiałem
   UX/prototypowym, ale nie
   jest kodem produkcyjnym do merge. Generator mechanicznie egzekwuje warunek

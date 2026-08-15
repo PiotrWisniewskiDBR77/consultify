@@ -2,6 +2,20 @@
   "schemaVersion": 1,
   "rows": [
     {
+      "tip": "e13b4cf90c8a4a2725fab98f6cdb7e0336111415",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-INI-005",
+      "evidenceRule": "The recovered cross-module acceptance file predates the canonical Initiative/Execution and Results VNext flows. Its RED finding says deviation RCA suggestions have no HTTP route, but the current /api/v8/results/deviation-cases/:caseId/rca-suggest route is wired to deviationRcaSuggestService with permission and tenant checks; the focused current wiring suite passes 9/9. Current acceptance sources separately cover canonical Initiative start-to-Execution readback and KPI deviation persistence/concurrency, so restoring the old aggregate would reintroduce legacy /api/benefits and a now-false assertion.",
+      "nextAction": "Do not restore the historical aggregate harness. Execute the current Initiative/Execution and Results VNext realDB packets under INI-001/EXE-001/RES-001; the acceptance config and database prerequisites remain part of those packets, not this semantic review. Retain the recovery ref until CLEAN-003."
+    },
+    {
+      "tip": "3528254b5d1ec1a9c645f9051518987d23db5c05",
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-IDEA-007",
+      "evidenceRule": "This recovered head changes one status line in the July Ideas handoff from mind-map sweep in progress to complete. The canonical copy contains substantially later sections 10-14 documenting the actual integration, render debugging, visual acceptance, promotion and historical demo health, which supersede the intermediate one-line checkpoint.",
+      "nextAction": "Keep the later canonical handoff as historical evidence; do not reinsert the intermediate status paragraph. Validate current Ideas behavior only through the present Ideas module contracts and current runtime evidence. Retain the recovery ref until CLEAN-003."
+    },
+    {
       "tip": "4485dc7152a1cca989dd02c8f6bb6028f2cfeae5",
       "verdict": "REPRESENTED_SUPERSEDED",
       "taskId": "CLEAN-002-IDEA-006",
