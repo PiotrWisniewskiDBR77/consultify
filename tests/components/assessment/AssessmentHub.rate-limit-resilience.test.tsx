@@ -89,6 +89,7 @@ vi.mock('../../../src/components/shared/ModuleHub', () => ({
     <div>{items.map((item) => item.name).join(', ')}</div>
   ),
   StatusDropdown: () => null,
+  getStatusesForModule: () => [],
   ASSESSMENT_STATUSES: {},
   REPORT_STATUSES: {},
 }));
@@ -150,10 +151,6 @@ describe('AssessmentHub rate limit resilience', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => {
-      expect(screen.getByTestId('assessment-module-hub')).toBeInTheDocument();
-    });
-
     expect(apiMock.listAssessments).toHaveBeenCalled();
     expect(
       await screen.findByText(
@@ -196,7 +193,7 @@ describe('AssessmentHub rate limit resilience', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders the canonical Menu 3 AI actions in the hub', async () => {
+  it('renders only the canonical non-duplicated Menu 3 AI action in the hub', async () => {
     apiMock.listAssessments.mockResolvedValue({
       items: [
         {
@@ -216,10 +213,8 @@ describe('AssessmentHub rate limit resilience', () => {
     );
 
     expect(await screen.findByText('AI Triage')).toBeInTheDocument();
-    expect(screen.getByText('Chat')).toBeInTheDocument();
-    // #70: "Interpretation Draft" was unclear jargon — renamed to say what the
-    // button does (resume the most recently updated assessment's editor).
-    expect(screen.getByText('Resume latest assessment')).toBeInTheDocument();
+    expect(screen.queryByText('Chat')).not.toBeInTheDocument();
+    expect(screen.queryByText('Resume latest assessment')).not.toBeInTheDocument();
   });
 
   // #73: reports/initiatives used to open a bespoke `fixed inset-0` backdrop

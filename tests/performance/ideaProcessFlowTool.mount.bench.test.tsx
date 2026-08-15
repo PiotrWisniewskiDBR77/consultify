@@ -1,14 +1,14 @@
 /**
  * @vitest-environment jsdom
  *
- * Performance measurement — IdeaProcessFlowTool mount time vs node count.
+ * Performance measurement — IdeaProcessFlowTool mount time and viewport
+ * virtualization vs node count.
  *
  * Context (docs/qa/ideas-complete-transformation-2026-08-09/17_PERFORMANCE_MEASUREMENT.md):
- * a prior audit claimed "Process Flow ... missing `onlyRenderVisibleElements`
- * on the canvas" as a code-level risk but measured nothing. Code inspection
- * (src/components/MyWork/IdeaProcessFlowTool.tsx line ~3498, the `<ReactFlow
- * ...>` element) confirms `onlyRenderVisibleElements` is never passed — 0
- * matches in the file.
+ * The production canvas enables ReactFlow's `onlyRenderVisibleElements` once
+ * the graph reaches 300 nodes. This benchmark proves both sides of that
+ * boundary: a small graph mounts every node, while large graphs hydrate and
+ * mount only the viewport-visible subset.
  *
  * Mock scaffolding below is copied from the REAL, already-passing
  * tests/components/MyWork/IdeaProcessFlowTool.error-state.test.tsx (proven
@@ -20,6 +20,18 @@
 import React from 'react';
 import { render, cleanup, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
+
+// jsdom does not provide a constructible DOMMatrixReadOnly, while ReactFlow
+// reads m22 from it when measuring nodes. The benchmark needs only the default
+// scale represented by that property; real-browser geometry remains E2E work.
+class TestDOMMatrixReadOnly {
+  readonly m22 = 1;
+}
+Object.defineProperty(window, 'DOMMatrixReadOnly', {
+  configurable: true,
+  writable: true,
+  value: TestDOMMatrixReadOnly,
+});
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -237,7 +249,7 @@ function buildNodes(n: number) {
 const SIZES = [100, 500, 1000, 2500];
 const REPS = 2;
 
-describe('perf: IdeaProcessFlowTool mount time vs node count (no onlyRenderVisibleElements)', () => {
+describe('perf: IdeaProcessFlowTool mount time vs node count with viewport virtualization', () => {
   beforeEach(() => {
     apiGetMyIdeaMapMock.mockClear();
   });
@@ -249,7 +261,7 @@ describe('perf: IdeaProcessFlowTool mount time vs node count (no onlyRenderVisib
   const results: Array<{ n: number; meanMs: number; minMs: number; maxMs: number; domNodes: number }> = [];
 
   for (const n of SIZES) {
-    it(`N=${n}: mounts IdeaProcessFlowTool with ${n} real nodes, ${REPS} repetitions`, async () => {
+    it(`N=${n}: hydrates ${n} real nodes with the expected DOM strategy, ${REPS} repetitions`, async () => {
       currentNodes = buildNodes(n);
       const timings: number[] = [];
       let domNodes = 0;
@@ -261,7 +273,12 @@ describe('perf: IdeaProcessFlowTool mount time vs node count (no onlyRenderVisib
         await waitFor(
           () => {
             const count = container.querySelectorAll('.react-flow__node').length;
-            expect(count).toBe(n);
+            expect(count).toBeGreaterThan(0);
+            if (n < 300) {
+              expect(count).toBe(n);
+            } else {
+              expect(count).toBeLessThan(n);
+            }
           },
           { timeout: 60000 }
         );
@@ -282,7 +299,12 @@ describe('perf: IdeaProcessFlowTool mount time vs node count (no onlyRenderVisib
         `[processflow-mount-bench] N=${n} reps=${REPS} mean=${meanMs.toFixed(2)}ms min=${minMs.toFixed(2)}ms ` +
           `max=${maxMs.toFixed(2)}ms domNodes=${domNodes} all=[${timings.map((t) => t.toFixed(2)).join(', ')}]`
       );
-      expect(domNodes).toBe(n);
+      if (n < 300) {
+        expect(domNodes).toBe(n);
+      } else {
+        expect(domNodes).toBeGreaterThan(0);
+        expect(domNodes).toBeLessThan(n);
+      }
     }, 480000);
   }
 
