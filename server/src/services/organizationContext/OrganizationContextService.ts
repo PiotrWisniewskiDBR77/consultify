@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import { createHash } from 'node:crypto';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import { hasColumn } from '../../utils/dbSchema.js';
@@ -108,6 +109,41 @@ export interface OrganizationContextConflict {
   claimPath: string;
   values: unknown[];
   sourceTypes: string[];
+}
+
+export interface OrganizationContextSourceRef {
+  claimId: string;
+  itemId: string;
+  sourceType: string;
+  sourceId: string | null;
+  claimPath: string;
+  confidence: number;
+}
+
+export interface PublishedOrganizationContextSnapshot {
+  snapshotId: string;
+  organizationId: string;
+  schemaVersion: number;
+  contentHash: string;
+  sourceRefs: OrganizationContextSourceRef[];
+  context: ResolvedOrganizationContext;
+  createdBy: string;
+  createdAt: string;
+}
+
+export class OrganizationContextPublicationError extends Error {
+  constructor(
+    public readonly code:
+      | 'CLAIM_NOT_FOUND'
+      | 'CLAIM_CONFLICT'
+      | 'SOURCE_UNAVAILABLE'
+      | 'CONFIDENTIAL_SOURCE'
+      | 'STALE_REVIEW_STATUS',
+    message: string
+  ) {
+    super(message);
+    this.name = 'OrganizationContextPublicationError';
+  }
 }
 
 export interface ResolvedOrganizationContext {
@@ -318,6 +354,7 @@ async function getClaimQueryShape(): Promise<{
   sourceLabelSql: string;
   isExplicitSql: string;
   activeWhereSql: string;
+  approvedWhereSql: string;
 }> {
   const [hasClaimType, hasReviewStatus, hasSourceLabel, hasIsExplicit, hasStatus] =
     await Promise.all([
@@ -328,12 +365,17 @@ async function getClaimQueryShape(): Promise<{
       hasColumn('organization_context_claims', 'status').catch(() => false),
     ]);
 
+  const activeWhereSql = hasStatus ? ` AND c.status = 'active'` : '';
+  const approvedWhereSql = hasReviewStatus
+    ? ` AND c.review_status IN ('accepted', 'approved')`
+    : '';
   return {
     claimTypeSql: hasClaimType ? 'c.claim_type' : `'fact' as claim_type`,
     reviewStatusSql: hasReviewStatus ? 'c.review_status' : `'accepted' as review_status`,
     sourceLabelSql: hasSourceLabel ? 'i.source_label' : `NULL as source_label`,
     isExplicitSql: hasIsExplicit ? 'i.is_explicit' : '1 as is_explicit',
-    activeWhereSql: hasStatus ? ` AND c.status = 'active'` : '',
+    activeWhereSql,
+    approvedWhereSql: `${activeWhereSql}${approvedWhereSql}`,
   };
 }
 
@@ -397,10 +439,7 @@ function buildTimelineSummary(
   return sourceType.replace(/_/g, ' ');
 }
 
-function mergeUniqueObjects(
-  current: unknown,
-  next: unknown
-): Array<Record<string, unknown>> {
+function mergeUniqueObjects(current: unknown, next: unknown): Array<Record<string, unknown>> {
   const seen = new Set<string>();
   const merged: Array<Record<string, unknown>> = [];
   for (const entry of [...normalizeObjectRecords(current), ...normalizeObjectRecords(next)]) {
@@ -754,6 +793,209 @@ export class OrganizationContextService {
     return { itemId: id };
   }
 
+  async approveClaim(params: {
+    organizationId: string;
+    claimId: string;
+    reviewerId: string;
+    expectedReviewStatus?: string;
+  }): Promise<{ claimId: string; reviewStatus: 'approved' }> {
+    const row = await dbGet<{
+      id: string;
+      item_id: string;
+      claim_path: string;
+      value_json: string;
+      review_status: string;
+      visibility_scope: string | null;
+    }>(
+      `SELECT c.id, c.item_id, c.claim_path, c.value_json, c.review_status, i.visibility_scope
+       FROM organization_context_claims c
+       JOIN organization_context_items i
+         ON i.id = c.item_id AND i.organization_id = c.organization_id
+       WHERE c.id = ? AND c.organization_id = ? AND c.status = 'active'`,
+      [params.claimId, params.organizationId]
+    );
+    if (!row) {
+      throw new OrganizationContextPublicationError(
+        'CLAIM_NOT_FOUND',
+        'Claim or its source is unavailable in this organization'
+      );
+    }
+    if (!['organization', 'public'].includes(String(row.visibility_scope || 'organization'))) {
+      throw new OrganizationContextPublicationError(
+        'CONFIDENTIAL_SOURCE',
+        'Confidential or private sources cannot be published as organization context'
+      );
+    }
+    if (row.review_status === 'approved') {
+      return { claimId: row.id, reviewStatus: 'approved' };
+    }
+    const expected = params.expectedReviewStatus || 'proposed';
+    if (row.review_status !== expected) {
+      throw new OrganizationContextPublicationError(
+        'STALE_REVIEW_STATUS',
+        `Claim review status changed from ${expected} to ${row.review_status}`
+      );
+    }
+    const conflict = await dbGet<{ id: string }>(
+      `SELECT c.id
+       FROM organization_context_claims c
+       JOIN organization_context_items i
+         ON i.id = c.item_id AND i.organization_id = c.organization_id
+       WHERE c.organization_id = ?
+         AND c.id <> ?
+         AND c.claim_path = ?
+         AND c.value_json <> ?
+         AND c.status = 'active'
+         AND c.review_status IN ('accepted', 'approved')
+         AND COALESCE(i.visibility_scope, 'organization') IN ('organization', 'public')
+       LIMIT 1`,
+      [params.organizationId, params.claimId, row.claim_path, row.value_json]
+    );
+    if (conflict) {
+      throw new OrganizationContextPublicationError(
+        'CLAIM_CONFLICT',
+        `An approved value already exists for ${row.claim_path}`
+      );
+    }
+
+    await dbRun(
+      `UPDATE organization_context_claims
+       SET review_status = 'approved', reviewed_by = ?, reviewed_at = ?, updated_at = ?
+       WHERE id = ? AND organization_id = ? AND review_status = ? AND status = 'active'`,
+      [
+        params.reviewerId,
+        new Date().toISOString(),
+        new Date().toISOString(),
+        params.claimId,
+        params.organizationId,
+        expected,
+      ]
+    );
+    return { claimId: params.claimId, reviewStatus: 'approved' };
+  }
+
+  async publishSnapshot(params: {
+    organizationId: string;
+    createdBy: string;
+  }): Promise<PublishedOrganizationContextSnapshot> {
+    const claimRows = await dbAll<{
+      claim_id: string;
+      item_id: string;
+      claim_path: string;
+      confidence: number;
+      source_type: string | null;
+      source_id: string | null;
+      visibility_scope: string | null;
+    }>(
+      `SELECT c.id AS claim_id, c.item_id, c.claim_path, c.confidence,
+              i.source_type, i.source_id, i.visibility_scope
+       FROM organization_context_claims c
+       LEFT JOIN organization_context_items i
+         ON i.id = c.item_id AND i.organization_id = c.organization_id
+       WHERE c.organization_id = ?
+         AND c.status = 'active'
+         AND c.review_status IN ('accepted', 'approved')
+       ORDER BY c.created_at, c.id`,
+      [params.organizationId]
+    );
+    const missingSource = claimRows.find((row) => !row.source_type);
+    if (missingSource) {
+      throw new OrganizationContextPublicationError(
+        'SOURCE_UNAVAILABLE',
+        `Approved claim ${missingSource.claim_id} no longer has a source`
+      );
+    }
+    const confidentialSource = claimRows.find(
+      (row) => !['organization', 'public'].includes(String(row.visibility_scope || 'organization'))
+    );
+    if (confidentialSource) {
+      throw new OrganizationContextPublicationError(
+        'CONFIDENTIAL_SOURCE',
+        `Approved claim ${confidentialSource.claim_id} references a non-publishable source`
+      );
+    }
+
+    const context = await this.buildResolvedContext(params.organizationId);
+    if (context.conflicts.length > 0) {
+      throw new OrganizationContextPublicationError(
+        'CLAIM_CONFLICT',
+        'Organization context contains unresolved approved claim conflicts'
+      );
+    }
+    const snapshotId = uuidv4();
+    const createdAt = new Date().toISOString();
+    const sourceRefs: OrganizationContextSourceRef[] = claimRows.map((row) => ({
+      claimId: row.claim_id,
+      itemId: row.item_id,
+      sourceType: String(row.source_type),
+      sourceId: row.source_id || null,
+      claimPath: row.claim_path,
+      confidence: Number(row.confidence || 0),
+    }));
+    const immutablePayload = {
+      snapshotId,
+      organizationId: params.organizationId,
+      schemaVersion: ORGANIZATION_CONTEXT_SCHEMA_VERSION,
+      sourceRefs,
+      context,
+      createdBy: params.createdBy,
+      createdAt,
+    };
+    const contentHash = createHash('sha256').update(JSON.stringify(immutablePayload)).digest('hex');
+    await dbRun(
+      `INSERT INTO organization_context_publications
+       (id, organization_id, schema_version, snapshot_json, source_refs_json, content_hash, created_by, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        snapshotId,
+        params.organizationId,
+        ORGANIZATION_CONTEXT_SCHEMA_VERSION,
+        JSON.stringify(immutablePayload),
+        JSON.stringify(sourceRefs),
+        contentHash,
+        params.createdBy,
+        createdAt,
+      ]
+    );
+    return { ...immutablePayload, contentHash };
+  }
+
+  async getPublishedSnapshot(
+    organizationId: string,
+    snapshotId?: string
+  ): Promise<PublishedOrganizationContextSnapshot | null> {
+    const row = await dbGet<{
+      id: string;
+      organization_id: string;
+      schema_version: number;
+      snapshot_json: string;
+      source_refs_json: string;
+      content_hash: string;
+      created_by: string;
+      created_at: string;
+    }>(
+      `SELECT id, organization_id, schema_version, snapshot_json, source_refs_json,
+              content_hash, created_by, created_at
+       FROM organization_context_publications
+       WHERE organization_id = ?${snapshotId ? ' AND id = ?' : ''}
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      snapshotId ? [organizationId, snapshotId] : [organizationId]
+    );
+    if (!row) return null;
+    const payload = safeParseJson<Record<string, unknown>>(row.snapshot_json, {});
+    return {
+      snapshotId: row.id,
+      organizationId: row.organization_id,
+      schemaVersion: Number(row.schema_version),
+      contentHash: row.content_hash,
+      sourceRefs: safeParseJson<OrganizationContextSourceRef[]>(row.source_refs_json, []),
+      context: payload.context as ResolvedOrganizationContext,
+      createdBy: row.created_by,
+      createdAt: row.created_at,
+    };
+  }
+
   async rebuildSnapshot(organizationId: string): Promise<void> {
     const resolved = await this.buildResolvedContext(organizationId);
     const snapshot = {
@@ -939,7 +1181,7 @@ export class OrganizationContextService {
         [organizationId]
       ),
       safeGet<{ count?: number }>(
-        `SELECT COUNT(*) as count FROM organization_context_claims c WHERE c.organization_id = ?${claimShape.activeWhereSql}`,
+        `SELECT COUNT(*) as count FROM organization_context_claims c WHERE c.organization_id = ?${claimShape.approvedWhereSql}`,
         [organizationId]
       ),
       safeAll<ClaimRow>(
@@ -947,7 +1189,7 @@ export class OrganizationContextService {
                 i.source_type, ${claimShape.sourceLabelSql}, i.created_at as item_created_at, ${claimShape.isExplicitSql}
          FROM organization_context_claims c
          JOIN organization_context_items i ON i.id = c.item_id
-         WHERE c.organization_id = ?${claimShape.activeWhereSql}
+         WHERE c.organization_id = ?${claimShape.approvedWhereSql}
          ORDER BY c.created_at DESC`,
         [organizationId]
       ),
@@ -1044,18 +1286,9 @@ export class OrganizationContextService {
       .flatMap((entry) => (Array.isArray(entry) ? entry : [entry]))
       .map((entry) => (typeof entry === 'string' ? entry : null));
 
-    const legacyKeyMetrics = safeParseJson<unknown>(
-      interviewContext?.key_metrics,
-      []
-    );
-    const legacyStakeholders = safeParseJson<unknown>(
-      interviewContext?.stakeholders,
-      []
-    );
-    const legacyGaps = safeParseJson<unknown>(
-      interviewContext?.open_gaps,
-      []
-    );
+    const legacyKeyMetrics = safeParseJson<unknown>(interviewContext?.key_metrics, []);
+    const legacyStakeholders = safeParseJson<unknown>(interviewContext?.stakeholders, []);
+    const legacyGaps = safeParseJson<unknown>(interviewContext?.open_gaps, []);
     const legacyStrategicPriorities = normalizeArrayOfStrings(
       safeParseJson<unknown>(organizationProfile?.strategic_priorities, [])
     );
@@ -1570,7 +1803,8 @@ export class OrganizationContextService {
       claims: buildDocumentExtractionClaims({
         ...params.payload,
         snippet: extractedText.slice(0, 2000),
-      }),
+      }).map((claim) => ({ ...claim, reviewStatus: 'proposed' })),
+      rebuildSnapshot: false,
     });
   }
 

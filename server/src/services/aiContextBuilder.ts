@@ -581,9 +581,13 @@ export const AIContextBuilder = {
       // ignore
     }
 
-    const resolvedContext = await organizationContextService
-      .buildResolvedContext(organizationId)
+    // ORG-001: Chat consumes only an immutable, explicitly published snapshot.
+    // Draft/proposed claims and mutable context rows are never read into the
+    // request context. Tenant scope is enforced by getPublishedSnapshot().
+    const publishedContext = await organizationContextService
+      .getPublishedSnapshot(organizationId)
       .catch(() => null);
+    const resolvedContext = publishedContext?.context || null;
 
     const formattedFindings = (resolvedContext?.signals?.interviewFindings ?? []).map((f) => {
       const tag = `[${String(f.confidenceLevel).toUpperCase()}]`;
@@ -747,13 +751,16 @@ export const AIContextBuilder = {
       trust: resolvedContext?.trust,
       contextConflicts: resolvedContext?.conflicts,
       contextTimeline: resolvedContext?.timeline?.slice(0, 10),
+      organizationContextSnapshotId: publishedContext?.snapshotId,
+      organizationContextSourceRefs: publishedContext?.sourceRefs,
+      organizationContextContentHash: publishedContext?.contentHash,
       // Organization Memory: patterns and terminology for AI context
       orgPatterns: orgPatterns.length > 0 ? orgPatterns : undefined,
       terminology: Object.keys(terminology).length > 0 ? terminology : undefined,
       // Feedback #1b81d375 / #2f5803b0 / #30592ee0 / #fa158b06 — raw snapshot
       // of the org's collected context (interview Q&As, evidence files,
       // manual notes) so Teresa can cite actual tenant data in chat.
-      contextItemsSample: contextItemsSample || undefined,
+      contextItemsSample: undefined,
     };
   },
 

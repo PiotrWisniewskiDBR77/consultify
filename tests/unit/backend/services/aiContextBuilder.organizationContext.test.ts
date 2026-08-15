@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockDbAll = vi.fn();
 const mockDbGet = vi.fn();
-const mockBuildResolvedContext = vi.fn();
+const mockGetPublishedSnapshot = vi.fn();
 const mockLogger = {
   warn: vi.fn(),
   debug: vi.fn(),
@@ -19,7 +19,7 @@ vi.mock(
   '../../../../server/src/services/organizationContext/OrganizationContextService.js',
   () => ({
     default: {
-      buildResolvedContext: (...args: unknown[]) => mockBuildResolvedContext(...args),
+      getPublishedSnapshot: (...args: unknown[]) => mockGetPublishedSnapshot(...args),
     },
   })
 );
@@ -33,34 +33,56 @@ describe('AIContextBuilder organization layer', () => {
     vi.clearAllMocks();
     mockDbGet.mockResolvedValue(null);
     mockDbAll.mockResolvedValue([]);
-    mockBuildResolvedContext.mockResolvedValue({
-      profile: {
-        companyName: 'Resolved Org',
-        industry: 'Consulting',
+    mockGetPublishedSnapshot.mockResolvedValue({
+      snapshotId: 'snapshot-1',
+      contentHash: 'hash-1',
+      sourceRefs: [
+        {
+          claimId: 'claim-1',
+          itemId: 'item-1',
+          sourceType: 'document_extraction',
+          sourceId: 'doc-1',
+          claimPath: 'evidence.documentExtraction',
+          confidence: 0.8,
+        },
+      ],
+      context: {
+        profile: {
+          companyName: 'Resolved Org',
+          industry: 'Consulting',
+        },
+        strategic: {
+          goals: ['Grow advisory revenue'],
+        },
+        operations: {
+          keyMetrics: [{ name: 'Gross margin', value: 42 }],
+        },
+        systems: {
+          stack: ['HubSpot'],
+        },
+        stakeholders: [{ name: 'CEO' }],
+        notes: { manualContext: [] },
+        metadata: { custom: [] },
+        evidence: [],
+        signals: { interviewInsights: ['Strong PMO support'] },
+        conflicts: [
+          {
+            claimPath: 'profile.industry',
+            values: ['Consulting', 'Tech'],
+            sourceTypes: ['profile', 'interview'],
+          },
+        ],
+        timeline: [{ id: 't-1' }, { id: 't-2' }, { id: 't-3' }],
       },
-      strategic: {
-        goals: ['Grow advisory revenue'],
-      },
-      operations: {
-        keyMetrics: [{ name: 'Gross margin', value: 42 }],
-      },
-      systems: {
-        stack: ['HubSpot'],
-      },
-      stakeholders: [{ name: 'CEO' }],
-      notes: { manualContext: [] },
-      metadata: { custom: [] },
-      evidence: [],
-      signals: { interviewInsights: ['Strong PMO support'] },
-      conflicts: [{ claimPath: 'profile.industry', values: ['Consulting', 'Tech'], sourceTypes: ['profile', 'interview'] }],
-      timeline: [{ id: 't-1' }, { id: 't-2' }, { id: 't-3' }],
     });
   });
 
   it('injects resolved organization context into the central AI context builder', async () => {
     mockDbGet.mockImplementation(async (sql: string) => {
-      if (sql.includes('FROM organizations')) return { id: 'org-1', name: 'Legacy Org', industry: 'Legacy' };
-      if (sql.includes('FROM ai_organization_memory WHERE organization_id')) return { pmo_maturity: 'ADVANCED' };
+      if (sql.includes('FROM organizations'))
+        return { id: 'org-1', name: 'Legacy Org', industry: 'Legacy' };
+      if (sql.includes('FROM ai_organization_memory WHERE organization_id'))
+        return { pmo_maturity: 'ADVANCED' };
       return null;
     });
     mockDbAll.mockImplementation(async (sql: string) => {
@@ -71,7 +93,7 @@ describe('AIContextBuilder organization layer', () => {
     const mod = await import('../../../../server/src/services/aiContextBuilder.js');
     const organization = await mod.AIContextBuilder._buildOrganizationContext('org-1');
 
-    expect(mockBuildResolvedContext).toHaveBeenCalledWith('org-1');
+    expect(mockGetPublishedSnapshot).toHaveBeenCalledWith('org-1');
     expect(organization.organizationName).toBe('Resolved Org');
     expect(organization.industry).toBe('Consulting');
     expect(organization.activeProjectCount).toBe(2);
@@ -81,6 +103,22 @@ describe('AIContextBuilder organization layer', () => {
     );
     expect(organization.contextConflicts).toHaveLength(1);
     expect(organization.contextTimeline).toHaveLength(3);
+    expect(organization.organizationContextSnapshotId).toBe('snapshot-1');
+    expect(organization.organizationContextSourceRefs).toEqual([
+      expect.objectContaining({ claimId: 'claim-1', sourceId: 'doc-1' }),
+    ]);
+    expect(organization.organizationContextContentHash).toBe('hash-1');
+    expect(organization.contextItemsSample).toBeUndefined();
+  });
+
+  it('fails closed when no approved publication exists', async () => {
+    mockGetPublishedSnapshot.mockResolvedValueOnce(null);
+    const mod = await import('../../../../server/src/services/aiContextBuilder.js');
+    const organization = await mod.AIContextBuilder._buildOrganizationContext('org-2');
+
+    expect(organization.organizationContextSnapshotId).toBeUndefined();
+    expect(organization.profile).toBeUndefined();
+    expect(organization.contextItemsSample).toBeUndefined();
   });
 
   it('prefers canonical assessments over legacy maturity rows for assessment context', async () => {
