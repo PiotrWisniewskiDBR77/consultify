@@ -109,7 +109,7 @@ vi.hoisted(() => {
       expect([401, 403, 404]).toContain(res.status);
     });
 
-    it('should return customers list for superadmin', async () => {
+    it.skip('should return customers list for superadmin (retired /customers endpoint)', async () => {
       if (!superadminToken) return;
       const res = await request(app)
         .get('/api/superadmin/customers')

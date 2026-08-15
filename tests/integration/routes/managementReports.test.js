@@ -62,16 +62,15 @@ vi.hoisted(() => {
     );
   });
 
-  describe('GET /api/management-reports/types', () => {
+  describe('GET /api/management-reports/analytics/types', () => {
     it('should return available report types', async () => {
       const res = await request(app)
-        .get('/api/management-reports/types')
+        .get('/api/management-reports/analytics/types')
         .set('Authorization', `Bearer ${testToken}`);
 
       expect(res.status).toBe(200);
-      if (res.status === 200 && Array.isArray(res.body)) {
-        expect(res.body.length).toBeGreaterThanOrEqual(0);
-      }
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toBeDefined();
     });
   });
 
@@ -94,8 +93,8 @@ vi.hoisted(() => {
         .post('/api/management-reports/generate')
         .set('Authorization', `Bearer ${testToken}`)
         .send({
-          type: 'executive',
-          period: 'monthly',
+          reportType: 'PORTFOLIO_HEALTH',
+          scope: 'ORGANIZATION',
         });
 
       expect(res.status).toBe(200);
@@ -104,7 +103,7 @@ vi.hoisted(() => {
 
   describe('Authorization', () => {
     it('should require authentication for report types', async () => {
-      const res = await request(app).get('/api/management-reports/types');
+      const res = await request(app).get('/api/management-reports/analytics/types');
 
       // Route may not exist (404) or require auth (401/403)
       expect([401, 403, 404]).toContain(res.status);

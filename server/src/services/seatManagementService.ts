@@ -255,7 +255,7 @@ export async function purchaseSeats(
     `UPDATE organization_seats SET
             additional_seats_purchased = additional_seats_purchased + ?,
             total_seats_available = total_seats_available + ?,
-            updated_at = datetime('now')
+            updated_at = CURRENT_TIMESTAMP
         WHERE organization_id = ?`,
     [quantity, quantity, orgId]
   );
@@ -351,7 +351,7 @@ export async function releaseSeat(orgId: string, userId: string): Promise<Releas
     `UPDATE organization_seats SET
             additional_seats_purchased = MAX(0, additional_seats_purchased - 1),
             total_seats_available = MAX(base_seats_included, total_seats_available - 1),
-            updated_at = datetime('now')
+            updated_at = CURRENT_TIMESTAMP
         WHERE organization_id = ?`,
     [orgId]
   );
@@ -382,7 +382,7 @@ export async function updateSeatCount(orgId: string): Promise<UpdateSeatCountRes
 
   await DbPromise.run(
     db,
-    `UPDATE organization_seats SET seats_used = ?, updated_at = datetime('now') WHERE organization_id = ?`,
+    `UPDATE organization_seats SET seats_used = ?, updated_at = CURRENT_TIMESTAMP WHERE organization_id = ?`,
     [seatsUsed, orgId]
   );
 
@@ -423,7 +423,7 @@ export async function toggleAutoAddSeats(
     `UPDATE organization_seats SET
             auto_add_seats_on_invite = ?,
             auto_add_seats_threshold = ?,
-            updated_at = datetime('now')
+            updated_at = CURRENT_TIMESTAMP
         WHERE organization_id = ?`,
     [enabled ? 1 : 0, threshold, orgId]
   );

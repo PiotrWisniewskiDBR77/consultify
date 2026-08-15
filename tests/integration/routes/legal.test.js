@@ -31,21 +31,37 @@ const db = getDatabase();
 
     const hash = bcrypt.hashSync('test123', 8);
 
-    await new Promise((resolve) => {
-      db.serialize(() => {
-        db.run('INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)', [
-          testOrgId,
-          'Legal Test Org',
-          'enterprise',
-          'active',
-        ]);
-        db.run(
-          'INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
-          [testUserId, testOrgId, testEmail, hash, 'LegalUser', 'ADMIN'],
-          resolve
-        );
-      });
-    });
+    await db.run('INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)', [
+      testOrgId,
+      'Legal Test Org',
+      'enterprise',
+      'active',
+    ]);
+    await db.run(
+      'INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
+      [testUserId, testOrgId, testEmail, hash, 'LegalUser', 'ADMIN']
+    );
+
+    await db.run(
+      `INSERT INTO legal_documents
+         (id, type, name, version, content, status, requires_acceptance,
+          doc_type, is_active, title, created_by, published_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        `legal-tos-${testId}`,
+        'TOS',
+        'Terms of Service',
+        '1.0',
+        '# Test terms',
+        'active',
+        true,
+        'TOS',
+        true,
+        'Terms of Service',
+        testUserId,
+        testUserId,
+      ]
+    );
 
     const loginRes = await request(app).post('/api/auth/login').send({
       email: testEmail,

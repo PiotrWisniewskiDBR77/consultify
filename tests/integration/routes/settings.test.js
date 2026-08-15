@@ -59,7 +59,7 @@ const db = getDatabase();
   });
 
   describe('GET /api/settings', () => {
-    it('should return user settings', async () => {
+    it('should block the legacy platform settings root for an organization admin', async () => {
       if (!authToken) {
         console.log('Skipping settings test - no auth token');
         return;
@@ -69,8 +69,8 @@ const db = getDatabase();
         .get('/api/settings')
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect(res.status).toBe(200);
-      expect(res.body).toBeDefined();
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('LEGACY_SETTINGS_SCOPE_BLOCKED');
     });
 
     it('should require authentication', async () => {
@@ -81,7 +81,7 @@ const db = getDatabase();
   });
 
   describe('PUT /api/settings', () => {
-    it('should update user settings', async () => {
+    it('should block legacy platform setting writes for an organization admin', async () => {
       if (!authToken) {
         console.log('Skipping update settings test - no auth token');
         return;
@@ -95,7 +95,8 @@ const db = getDatabase();
           value: 'dark',
         });
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('LEGACY_SETTINGS_SCOPE_BLOCKED');
     });
   });
 });

@@ -29,18 +29,18 @@ vi.hoisted(() => {
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    // Clear tables before each test
-    await db.run('DELETE FROM initiatives');
-    await db.run('DELETE FROM projects');
-    await db.run('DELETE FROM organizations');
+    // Clear only this suite's children. Fresh canonical schemas can contain
+    // migration-owned users/organizations, so deleting whole parent tables is
+    // both unsafe and invalid under the current foreign keys.
+    await db.run("DELETE FROM initiatives WHERE organization_id = ?", ['org-1']);
 
     // Seed parent records
-    await db.run('INSERT INTO organizations (id, name, status) VALUES (?, ?, ?)', [
+    await db.run('INSERT INTO organizations (id, name, status) VALUES (?, ?, ?) ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, status = EXCLUDED.status', [
       'org-1',
       'Test Org',
       'active',
     ]);
-    await db.run('INSERT INTO projects (id, organization_id, name, status) VALUES (?, ?, ?, ?)', [
+    await db.run('INSERT INTO projects (id, organization_id, name, status) VALUES (?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET organization_id = EXCLUDED.organization_id, name = EXCLUDED.name, status = EXCLUDED.status', [
       'e8235222-2222-2222-2222-222222222222',
       'org-1',
       'Test Project',
@@ -76,11 +76,11 @@ vi.hoisted(() => {
       // Seed database
       await db.run(
         'INSERT INTO initiatives (id, organization_id, name, title, status, progress) VALUES (?, ?, ?, ?, ?, ?)',
-        [initId1, 'org-1', 'Digital Transformation', 'Digital Transformation', 'active', 50]
+        [initId1, 'org-1', 'Digital Transformation', 'Digital Transformation', 'EXECUTING', 50]
       );
       await db.run(
         'INSERT INTO initiatives (id, organization_id, name, title, status, progress) VALUES (?, ?, ?, ?, ?, ?)',
-        [initId2, 'org-1', 'Process Automation', 'Process Automation', 'planning', 10]
+        [initId2, 'org-1', 'Process Automation', 'Process Automation', 'PLANNING', 10]
       );
 
       const response = await request(testApp)
@@ -118,7 +118,7 @@ vi.hoisted(() => {
       const initId = '00000000-0000-0000-0000-000000000003';
       await db.run(
         'INSERT INTO initiatives (id, organization_id, name, title, status, progress) VALUES (?, ?, ?, ?, ?, ?)',
-        [initId, 'org-1', 'Single Initiative', 'Single Initiative', 'active', 20]
+        [initId, 'org-1', 'Single Initiative', 'Single Initiative', 'EXECUTING', 20]
       );
 
       const response = await request(testApp).get(`/api/initiatives/${initId}`).expect(200);

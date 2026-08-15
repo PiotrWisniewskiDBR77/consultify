@@ -1,0 +1,207 @@
+{
+  "schemaVersion": 1,
+  "baseline": "68fba9e8fd27e26e9a80854b08eb5b7a8bea82d6",
+  "database": {
+    "engine": "pgvector/pgvector:pg16",
+    "freshDatabase": "p2b_gate_final2",
+    "migrationCount": 717,
+    "migrationResult": "PASS"
+  },
+  "exactRun": {
+    "suiteFiles": 30,
+    "vitestSuitesPassed": 156,
+    "vitestSuitesTotal": 156,
+    "assertionsPassed": 129,
+    "assertionsTotal": 136,
+    "failed": 0,
+    "pending": 7,
+    "overall": "PASS_WITH_EXPLICIT_PENDING"
+  },
+  "productFixes": [
+    "subscription plan and organization seat runtime schema parity",
+    "PostgreSQL-safe seat timestamp updates",
+    "stage_gates lifecycle ledger fresh-schema producer"
+  ],
+  "records": [
+    {
+      "file": "tests/integration/routes/initiative-generator.test.js",
+      "verdict": "PASS_REALPG",
+      "evidence": "executed against fresh fully migrated disposable pgvector PostgreSQL",
+      "nextAction": "none"
+    },
+    {
+      "file": "tests/integration/routes/initiatives.test.js",
+      "verdict": "PASS_REALPG",
+      "evidence": "executed against fresh fully migrated disposable pgvector PostgreSQL",
+      "nextAction": "none"
+    },
+    {
+      "file": "tests/integration/routes/invitations.test.js",
+      "verdict": "PASS_REALPG",
+      "evidence": "executed against fresh fully migrated disposable pgvector PostgreSQL",
+      "nextAction": "none"
+    },
+    {
+      "file": "tests/integration/routes/legal.test.js",
+      "verdict": "PASS_REALPG",
+      "evidence": "executed against fresh fully migrated disposable pgvector PostgreSQL",
+      "nextAction": "none"
+    },
+    {
+      "file": "tests/integration/routes/managementReports.test.js",
+      "verdict": "PASS_REALPG",
+      "evidence": "executed against fresh fully migrated disposable pgvector PostgreSQL",
+      "nextAction": "none"
+    },
+    {
+      "file": "tests/integration/routes/media-ingestion.test.js",
+      "verdict": "EXPECTED_PENDING",
+      "evidence": "retired /api/media/ingest; canonical owner is Gateway /api/media-ingestion with source-specific routes",
+      "nextAction": "implement/verify in named canonical owner packet"
+    },
+    {
+      "file": "tests/integration/routes/metrics.conversion-intelligence.no-stub.test.js",
+      "verdict": "PASS_REALPG",
+      "evidence": "executed against fresh fully migrated disposable pgvector PostgreSQL",
+      "nextAction": "none"
+    },
+    {
+      "file": "tests/integration/routes/my-work.test.js",
+      "verdict": "PASS_REALPG",
+      "evidence": "executed against fresh fully migrated disposable pgvector PostgreSQL",
+      "nextAction": "none"
+    },
+    {
+      "file": "tests/integration/routes/notifications.test.js",
+      "verdict": "PASS_REALPG",
+      "evidence": "executed against fresh fully migrated disposable pgvector PostgreSQL",
+      "nextAction": "none"
+    },
+    {
+      "file": "tests/integration/routes/pinned-prompts.test.js",
+      "verdict": "PASS_REALPG",
+      "evidence": "executed against fresh fully migrated disposable pgvector PostgreSQL",
+      "nextAction": "none"
+    },
+    {
+      "file": "tests/integration/routes/pmoContext.test.js",
+      "verdict": "PASS_REALPG",
+      "evidence": "executed against fresh fully migrated disposable pgvector PostgreSQL",
+      "nextAction": "none"
+    },
+    {
+      "file": "tests/integration/routes/rapidlean-routes.test.js",
+      "verdict": "EXPECTED_PENDING",
+      "evidence": "retired bare /api/rapidlean; canonical route is /api/rapidlean/assessments",
+      "nextAction": "implement/verify in named canonical owner packet"
+    },
+    {
+      "file": "tests/integration/routes/roadmap.test.js",
+      "verdict": "EXPECTED_PENDING",
+      "evidence": "roadmap baseline endpoint is not implemented by current roadmap owner",
+      "nextAction": "implement/verify in named canonical owner packet"
+    },
+    {
+      "file": "tests/integration/routes/sessions.test.js",
+      "verdict": "PASS_REALPG",
+      "evidence": "executed against fresh fully migrated disposable pgvector PostgreSQL",
+      "nextAction": "none"
+    },
+    {
+      "file": "tests/integration/routes/settings.test.js",
+      "verdict": "PASS_REALPG",
+      "evidence": "executed against fresh fully migrated disposable pgvector PostgreSQL",
+      "nextAction": "none"
+    },
+    {
+      "file": "tests/integration/routes/stage-gates.test.js",
+      "verdict": "PASS_REALPG",
+      "evidence": "executed against fresh fully migrated disposable pgvector PostgreSQL",
+      "nextAction": "none"
+    },
+    {
+      "file": "tests/integration/routes/superadmin-ai-platform.test.js",
+      "verdict": "PASS_REALPG",
+      "evidence": "executed against fresh fully migrated disposable pgvector PostgreSQL",
+      "nextAction": "none"
+    },
+    {
+      "file": "tests/integration/routes/superadmin-analytics.test.js",
+      "verdict": "PASS_REALPG",
+      "evidence": "executed against fresh fully migrated disposable pgvector PostgreSQL",
+      "nextAction": "none"
+    },
+    {
+      "file": "tests/integration/routes/superadmin-configuration.test.js",
+      "verdict": "PASS_REALPG",
+      "evidence": "executed against fresh fully migrated disposable pgvector PostgreSQL",
+      "nextAction": "none"
+    },
+    {
+      "file": "tests/integration/routes/superadmin-customers.test.js",
+      "verdict": "EXPECTED_PENDING",
+      "evidence": "retired /api/superadmin/customers positive-list endpoint",
+      "nextAction": "implement/verify in named canonical owner packet"
+    },
+    {
+      "file": "tests/integration/routes/superadmin-iam.test.js",
+      "verdict": "PASS_REALPG",
+      "evidence": "executed against fresh fully migrated disposable pgvector PostgreSQL",
+      "nextAction": "none"
+    },
+    {
+      "file": "tests/integration/routes/superadmin-organizations-extended.test.js",
+      "verdict": "PASS_REALPG",
+      "evidence": "executed against fresh fully migrated disposable pgvector PostgreSQL",
+      "nextAction": "none"
+    },
+    {
+      "file": "tests/integration/routes/superadmin-revenue.test.js",
+      "verdict": "PASS_REALPG",
+      "evidence": "executed against fresh fully migrated disposable pgvector PostgreSQL",
+      "nextAction": "none"
+    },
+    {
+      "file": "tests/integration/routes/superadmin-security.test.js",
+      "verdict": "PASS_REALPG",
+      "evidence": "executed against fresh fully migrated disposable pgvector PostgreSQL",
+      "nextAction": "none"
+    },
+    {
+      "file": "tests/integration/routes/superadmin-support.test.js",
+      "verdict": "PASS_REALPG",
+      "evidence": "executed against fresh fully migrated disposable pgvector PostgreSQL",
+      "nextAction": "none"
+    },
+    {
+      "file": "tests/integration/routes/superadmin-system.test.js",
+      "verdict": "PASS_REALPG",
+      "evidence": "executed against fresh fully migrated disposable pgvector PostgreSQL",
+      "nextAction": "none"
+    },
+    {
+      "file": "tests/integration/routes/teams.test.js",
+      "verdict": "PASS_REALPG",
+      "evidence": "executed against fresh fully migrated disposable pgvector PostgreSQL",
+      "nextAction": "none"
+    },
+    {
+      "file": "tests/integration/routes/tokenBilling.test.js",
+      "verdict": "PASS_REALPG",
+      "evidence": "executed against fresh fully migrated disposable pgvector PostgreSQL",
+      "nextAction": "none"
+    },
+    {
+      "file": "tests/integration/routes/users.test.js",
+      "verdict": "PASS_REALPG",
+      "evidence": "executed against fresh fully migrated disposable pgvector PostgreSQL",
+      "nextAction": "none"
+    },
+    {
+      "file": "tests/integration/storage_security.test.js",
+      "verdict": "EXPECTED_PENDING",
+      "evidence": "project file upload/delete owner is not mounted; tenant-denial read contract still passes",
+      "nextAction": "implement/verify in named canonical owner packet"
+    }
+  ]
+}

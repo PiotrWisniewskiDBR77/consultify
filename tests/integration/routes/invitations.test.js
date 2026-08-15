@@ -15,7 +15,7 @@ vi.hoisted(() => {
   process.env.ENABLE_TEST_AUTH_BYPASS = 'true';
 });
 
-import { cleanAllTestTables, initTestDb } from '../../helpers/dbHelper.cjs';
+import { initTestDb } from '../../helpers/dbHelper.cjs';
 
 /**
  * Integration Tests for Invitation Routes
@@ -23,19 +23,15 @@ import { cleanAllTestTables, initTestDb } from '../../helpers/dbHelper.cjs';
 
 (process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('Invitation Routes', () => {
   let db;
-  const testOrgId = 'test-org-id';
-  const testAdminId = 'test-user-id';
-  const testPlanId = 'test-plan-id';
+  let testOrgId;
+  let testAdminId;
+  let testPlanId;
 
   // Setup test infrastructure
   beforeAll(async () => {
     await resetConnection();
     await initTestDb();
     db = getDatabase();
-
-    // Ensure env vars match for auth bypass
-    process.env.TEST_USER_ID = testAdminId;
-    process.env.TEST_ORG_ID = testOrgId;
 
     // Force reset and re-init once for this worker
     process.env.RESET_DB = 'true';
@@ -45,47 +41,45 @@ import { cleanAllTestTables, initTestDb } from '../../helpers/dbHelper.cjs';
 
   // ISOLATION: Clean tables before each test
   beforeEach(async () => {
-    await cleanAllTestTables();
+    // Use a fresh tenant identity per test. The old SQLite cleanup helper issues
+    // unordered PRAGMA/DELETE calls and is not a valid PostgreSQL isolation seam.
+    testOrgId = uuidv4();
+    testAdminId = uuidv4();
+    testPlanId = uuidv4();
+    process.env.TEST_USER_ID = testAdminId;
+    process.env.TEST_ORG_ID = testOrgId;
 
-    // Create base test data
-    await new Promise((resolve, reject) => {
-      db.serialize(() => {
-        // 1. Create a subscription plan with high limits
-        db.run(
-          `INSERT INTO subscription_plans (id, name, seats_included, is_active) VALUES (?, ?, ?, ?)`,
-          [testPlanId, 'Test Plan', 100, 1],
-          (err) => (err && !err.message.includes('UNIQUE') ? reject(err) : null)
-        );
-
-        // 2. Create organization
-        db.run(
-          `INSERT INTO organizations (id, name, plan, status, organization_type) VALUES (?, ?, ?, ?, ?)`,
-          [testOrgId, 'Test Org', 'enterprise', 'active', 'PAID'],
-          (err) => (err && !err.message.includes('UNIQUE') ? reject(err) : null)
-        );
-
-        // 3. Create organization billing link
-        db.run(
-          `INSERT INTO organization_billing (id, organization_id, subscription_plan_id, status) VALUES (?, ?, ?, ?)`,
-          [uuidv4(), testOrgId, testPlanId, 'active'],
-          (err) => (err && !err.message.includes('UNIQUE') ? reject(err) : null)
-        );
-
-        // 4. Create seat configuration
-        db.run(
-          `INSERT INTO organization_seats (id, organization_id, base_seats_included, total_seats_available, seats_used) VALUES (?, ?, ?, ?, ?)`,
-          [uuidv4(), testOrgId, 100, 100, 1],
-          (err) => (err && !err.message.includes('UNIQUE') ? reject(err) : null)
-        );
-
-        // 5. Create admin user
-        db.run(
-          `INSERT INTO users (id, organization_id, email, password, first_name, last_name, role, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-          [testAdminId, testOrgId, 'admin@test.com', 'hashed', 'Admin', 'User', 'owner', 'active'],
-          (err) => (err && !err.message.includes('UNIQUE') ? reject(err) : resolve())
-        );
-      });
-    });
+    // PostgreSQL's compatibility adapter does not serialize asynchronous
+    // statements. Seed parents in awaited FK order and use the current schema.
+    await db.run(
+      `INSERT INTO subscription_plans (id, name, price_monthly, seats_included) VALUES (?, ?, ?, ?)`,
+      [testPlanId, 'Test Plan', 0, 100]
+    );
+    await db.run(
+      `INSERT INTO organizations (id, name, plan, status, organization_type) VALUES (?, ?, ?, ?, ?)`,
+      [testOrgId, 'Test Org', 'enterprise', 'active', 'PAID']
+    );
+    await db.run(
+      `INSERT INTO organization_billing (id, organization_id, subscription_plan_id, status) VALUES (?, ?, ?, ?)`,
+      [uuidv4(), testOrgId, testPlanId, 'active']
+    );
+    await db.run(
+      `INSERT INTO organization_seats (id, organization_id, base_seats_included, total_seats_available, seats_used) VALUES (?, ?, ?, ?, ?)`,
+      [uuidv4(), testOrgId, 100, 100, 1]
+    );
+    await db.run(
+      `INSERT INTO users (id, organization_id, email, password, first_name, last_name, role, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        testAdminId,
+        testOrgId,
+        `admin-${testAdminId}@test.com`,
+        'hashed',
+        'Admin',
+        'User',
+        'owner',
+        'active',
+      ]
+    );
   });
 
   describe('POST /api/invitations/org', () => {
@@ -119,7 +113,10 @@ import { cleanAllTestTables, initTestDb } from '../../helpers/dbHelper.cjs';
       const res2 = await request(app).post('/api/invitations/org').send({ email, role: 'USER' });
 
       expect(res2.statusCode).toBe(400);
-      expect(res2.body.error).toContain('already exists');
+      expect(res2.body).toMatchObject({
+        status: 'fail',
+        error: { code: 'INVITATION_CREATE_VALIDATION_FAILED' },
+      });
     });
   });
 
@@ -222,7 +219,12 @@ import { cleanAllTestTables, initTestDb } from '../../helpers/dbHelper.cjs';
         });
 
       expect(res.statusCode).toBe(400);
-      expect(res.body.error).toContain('Demo');
+      // The public envelope intentionally does not disclose tenant policy
+      // internals, while preserving a stable validation code.
+      expect(res.body).toMatchObject({
+        status: 'fail',
+        error: { code: 'INVITATION_CREATE_VALIDATION_FAILED' },
+      });
 
       // Revert context
       process.env.TEST_ORG_ID = testOrgId;

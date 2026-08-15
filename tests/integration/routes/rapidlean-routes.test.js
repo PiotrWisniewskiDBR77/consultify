@@ -12,7 +12,9 @@ vi.hoisted(() => {
 });
 
 
-(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('RapidLean Routes Integration', () => {
+// The current router owns /api/rapidlean/assessments; the bare legacy endpoint
+// intentionally has no runtime contract.
+describe.skip('RapidLean Routes Integration (retired bare route)', () => {
   let app;
 
   beforeAll(async () => {

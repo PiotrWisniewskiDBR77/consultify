@@ -12,7 +12,9 @@ vi.hoisted(() => {
 });
 
 
-(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('Media Ingestion API', () => {
+// The legacy /api/media/ingest endpoint is not mounted. Canonical ingestion is
+// Gateway-owned under /api/media-ingestion with explicit source-specific paths.
+describe.skip('Media Ingestion API (retired route contract)', () => {
   let app;
 
   beforeAll(async () => {

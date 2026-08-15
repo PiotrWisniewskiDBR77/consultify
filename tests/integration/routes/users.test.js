@@ -127,10 +127,9 @@ vi.hoisted(() => {
         .put(`/api/users/${testUserId}`)
         .set('Authorization', `Bearer ${authToken}`)
         .send({
-          first_name: 'Updated',
+          firstName: 'Updated',
         });
 
-      // Accept 200 for success, 400 for validation, 403 for permission denied
       expect(res.status).toBe(200);
     });
   });

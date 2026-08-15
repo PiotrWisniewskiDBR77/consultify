@@ -8,6 +8,10 @@ import { describe, it, expect } from 'vitest';
   it('GET /api/metrics/conversion-intelligence returns 503', async () => {
     const res = await request(app).get('/api/metrics/conversion-intelligence');
     expect(res.status).toBe(503);
-    expect(res.body.code).toBe('FEATURE_UNAVAILABLE');
+    expect(res.body).toMatchObject({
+      statusCode: 503,
+      status: false,
+      type: 'not_configured',
+    });
   });
 });

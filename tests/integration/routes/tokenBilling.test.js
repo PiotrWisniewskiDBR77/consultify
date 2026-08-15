@@ -25,6 +25,7 @@ const db = getDatabase();
   const testOrgId = `token-billing-org-${testId}`;
   const testUserId = `token-billing-user-${testId}`;
   const testEmail = `token-billing-${testId}@test.com`;
+  const testPackageId = `token-package-${testId}`;
 
   beforeAll(async () => {
     await initializeDatabase();
@@ -57,6 +58,14 @@ const db = getDatabase();
     if (loginRes.body.token) {
       authToken = loginRes.body.token;
     }
+
+    await db.run(
+      `INSERT INTO token_packages
+         (id, name, tokens, price_usd, stripe_price_id, is_active, sort_order)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT (id) DO NOTHING`,
+      [testPackageId, 'Unconfigured Stripe Test Package', 1000, 10, null, 1, 999]
+    );
   });
 
   describe('GET /api/token-billing/balance', () => {
@@ -151,9 +160,11 @@ const db = getDatabase();
         .send({ packageId: testPackageId });
 
       expect(res.status).toBe(503);
-      expect(res.body.success).toBe(false);
-      expect(res.body.code).toBe('FEATURE_UNAVAILABLE');
-      expect(String(res.body.error || '')).toMatch(/stripe/i);
+      expect(res.body).toMatchObject({
+        statusCode: 503,
+        status: false,
+        type: 'not_configured',
+      });
     });
   });
 });
