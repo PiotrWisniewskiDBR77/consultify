@@ -126,6 +126,18 @@ export function buildFixturePlan(ctx: FixtureContext): FixtureStatement[] {
       WHERE flag_key=$1 AND organization_id=$2 AND environment='production' AND enabled=true`,
     verifyParams: [flagKey, ctx.organizationId],
   }));
+  const v8RuntimeFlag: FixtureStatement = {
+    domain: 'v8-runtime-flag',
+    sql: `INSERT INTO v8.v8_feature_flags
+      (flag_id,organization_id,module,enabled,updated_at,updated_by)
+      VALUES ($1,$2,'v8_enabled',1,now(),$3)
+      ON CONFLICT (organization_id,module) DO UPDATE SET
+        enabled=1, updated_at=now(), updated_by=EXCLUDED.updated_by`,
+    params: [`${ctx.organizationId}:v8_enabled`, ctx.organizationId, ctx.userId],
+    verifySql: `SELECT count(*)::int AS count FROM v8.v8_feature_flags
+      WHERE organization_id=$1 AND module='v8_enabled' AND enabled=1`,
+    verifyParams: [ctx.organizationId],
+  };
   return [
     row('case', `INSERT INTO projects (id, organization_id, name, description, status) VALUES ($1,$2,$3,$4,'active') ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name,description=EXCLUDED.description`, [project,ctx.organizationId,'Program poprawy realizacji korzyści','Osiągnąć co najmniej 90% zweryfikowanej realizacji korzyści w ciągu 90 dni.'], 'projects','id',project,ctx.organizationId),
     row('case', `INSERT INTO case_core (case_id,project_id,organization_id,case_name,case_profile,governance_tier,case_status,contracted_closure_type,delivery_status,decision_status,implementation_status,outcome_status,sponsor_user_id,acceptance_criteria_ref,created_by_actor_id) VALUES ($1,$2,$3,$4,'TRANSFORMATION','CONTROLLED','ACTIVE','OUTCOME_VALIDATED','PENDING','PENDING','PENDING','PENDING',$5,$6,$5) ON CONFLICT (case_id) DO UPDATE SET case_name=EXCLUDED.case_name,case_status='ACTIVE' WHERE case_core.organization_id=EXCLUDED.organization_id`, [caseId,project,ctx.organizationId,'Program poprawy realizacji korzyści',ctx.userId,`${ACCEPTANCE_NAMESPACE}:case`], 'case_core','case_id',caseId,ctx.organizationId),
@@ -138,6 +150,7 @@ export function buildFixturePlan(ctx: FixtureContext): FixtureStatement[] {
     row('finance', `INSERT INTO financial_models (id,organization_id,initiative_id,name,description,start_date,status,assumptions_json,created_by) VALUES ($1,$2,$3,$4,$5,CURRENT_DATE,'draft',$6,$7) ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name,description=EXCLUDED.description,assumptions_json=EXCLUDED.assumptions_json`, [finance,ctx.organizationId,initiative,'Zintegrowany model transformacji','Model finansowy programu poprawy realizacji korzyści.',JSON.stringify(financeAssumptions),ctx.userId], 'financial_models','id',finance,ctx.organizationId),
     row('artifact', `INSERT INTO presentation_decks (id,organization_id,project_id,title,description,status,generated_by,slide_count,outline_json,unified_json,deck_json) VALUES ($1,$2,$3,$4,$5,'ready',$6,6,$7,$8,NULL) ON CONFLICT (id) DO UPDATE SET title=EXCLUDED.title,status='ready',slide_count=6,outline_json=EXCLUDED.outline_json,unified_json=EXCLUDED.unified_json,deck_json=NULL`, [deck,ctx.organizationId,project,'Przegląd korzyści transformacji','Materiał decyzyjny dla komitetu sterującego.',ctx.userId,JSON.stringify(presentationSlides.map(slide=>({title:slide.key_message}))),JSON.stringify({meta:{project:'Program poprawy realizacji korzyści',client:'Komitet sterujący',template:'corporate',language:'pl',confidentiality:'internal'},slides:presentationSlides,marker:ACCEPTANCE_NAMESPACE})], 'presentation_decks','id',deck,ctx.organizationId),
     row('ideas', `INSERT INTO my_ideas (id,user_id,organization_id,title,body,tags,source_type) VALUES ($1,$2,$3,$4,$5,$6,'acceptance_fixture') ON CONFLICT (id) DO UPDATE SET title=EXCLUDED.title,body=EXCLUDED.body,tags=EXCLUDED.tags`, [idea,ctx.userId,ctx.organizationId,'Automatyczne monitorowanie realizacji korzyści','Pomysł na połączenie KPI, sygnałów wykonania i miesięcznego przeglądu zarządczego.',JSON.stringify(['benefits','automation','decision-log','financial-case','business-case'])], 'my_ideas','id',idea,ctx.organizationId),
+    v8RuntimeFlag,
     ...financeFlags,
   ];
 }

@@ -59,6 +59,17 @@ async function main() {
        RETURNING organization_id,user_id,upper(role) role,upper(status) status`, [`${ownerId}-membership`,organizationId,ownerId]);
     const seededMembership = acceptanceMembership.rows[0];
     if (!seededMembership || seededMembership.organization_id !== organizationId || seededMembership.user_id !== ownerId || seededMembership.role !== 'OWNER' || seededMembership.status !== 'ACTIVE') throw new Error('Acceptance OWNER membership readback failure');
+    await client.query(
+      `INSERT INTO user_preferences (user_id,key,value,updated_at)
+       VALUES ($1,'onboarding_completed','true',NOW())
+       ON CONFLICT (user_id,key) DO UPDATE SET value='true',updated_at=NOW()`,
+      [ownerId]
+    );
+    const onboardingPreference = await client.query(
+      `SELECT value FROM user_preferences WHERE user_id=$1 AND key='onboarding_completed'`,
+      [ownerId]
+    );
+    if (onboardingPreference.rows.length !== 1 || onboardingPreference.rows[0].value !== 'true') throw new Error('Acceptance OWNER onboarding preference readback failure');
     for (const item of plan) await client.query(item.sql, item.params);
     for (const item of plan) { const result = await client.query(item.verifySql,item.verifyParams); if (result.rows[0]?.count !== 1) throw new Error(`Readback failed: ${item.domain}`); }
     await client.query('COMMIT');
