@@ -158,8 +158,12 @@ describe('H3.1 — dynamic-swot pełny cykl e2e (real router + auth + DB + engin
     const sessionId: string = createRes.body?.id;
     expect(sessionId).toBeTruthy();
     expect(createRes.body?.status).toBe('DRAFT');
+    let sessionVersion: number = createRes.body?.version;
+    expect(sessionVersion).toBe(1);
     createdToolSessionIds.push(sessionId);
-    evidence(`[h31] created tool_sessions.id=${sessionId} toolType=dynamic-swot`);
+    evidence(
+      `[h31] created tool_sessions.id=${sessionId} toolType=dynamic-swot version=${sessionVersion}`
+    );
 
     // -------------------------------------------------------------------
     // 2) SAVE 1 — PUT: 4 kwadranty, 2 realne itemy każdy, wszystkie accepted.
@@ -246,12 +250,18 @@ describe('H3.1 — dynamic-swot pełny cykl e2e (real router + auth + DB + engin
         status: 'IN_PROGRESS',
         completionPercent: 40,
         confidenceAvg: 3,
+        expectedVersion: sessionVersion,
         answers: { items },
       });
 
-    expect(save1Res.status).toBe(200);
+    expect(save1Res.status, JSON.stringify(save1Res.body)).toBe(200);
     expect(save1Res.body?.id).toBe(sessionId);
-    evidence(`[h31] SAVE 1 (4 kwadranty, 8 itemów) ok, status=${save1Res.body?.status}`);
+    expect(save1Res.body?.version).toBe(sessionVersion + 1);
+    const staleVersion = sessionVersion;
+    sessionVersion = save1Res.body?.version;
+    evidence(
+      `[h31] SAVE 1 (4 kwadranty, 8 itemów) ok, status=${save1Res.body?.status} version=${sessionVersion}`
+    );
 
     // -------------------------------------------------------------------
     // 3) RELOAD 1 — GET: dowód że 4 kwadranty przetrwały round-trip.
@@ -261,6 +271,7 @@ describe('H3.1 — dynamic-swot pełny cykl e2e (real router + auth + DB + engin
       .set('Authorization', `Bearer ${token}`);
 
     expect(reload1Res.status).toBe(200);
+    expect(reload1Res.body?.version).toBe(sessionVersion);
     const reloadedItems: typeof items extends readonly (infer U)[] ? U[] : never =
       reload1Res.body?.answers?.items || [];
     expect(reloadedItems).toHaveLength(8);
@@ -274,6 +285,26 @@ describe('H3.1 — dynamic-swot pełny cykl e2e (real router + auth + DB + engin
       opportunities: 2,
       threats: 2,
     });
+
+    // A stale writer must receive the current server state and must not land.
+    const staleWrite = await request(toolsApp)
+      .put(`/api/tools/${sessionId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        expectedVersion: staleVersion,
+        answers: { items: [{ id: 'stale-loser', text: 'STALE OVERWRITE' }] },
+      });
+    expect(staleWrite.status, JSON.stringify(staleWrite.body)).toBe(409);
+    expect(staleWrite.body?.code).toBe('STALE_VERSION');
+    expect(staleWrite.body?.current?.version).toBe(sessionVersion);
+    expect(staleWrite.body?.current?.answers?.items).toHaveLength(8);
+
+    const afterStaleRead = await request(toolsApp)
+      .get(`/api/tools/${sessionId}`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(afterStaleRead.status).toBe(200);
+    expect(afterStaleRead.body?.version).toBe(sessionVersion);
+    expect(afterStaleRead.body?.answers?.items).toEqual(reloadedItems);
     evidence(
       `[h31] RELOAD 1 OK — 4 kwadranty potwierdzone: S=${byQuadrant.strengths} W=${byQuadrant.weaknesses} O=${byQuadrant.opportunities} T=${byQuadrant.threats}`
     );
@@ -403,12 +434,15 @@ describe('H3.1 — dynamic-swot pełny cykl e2e (real router + auth + DB + engin
       .send({
         completionPercent: 100,
         confidenceAvg: 4,
+        expectedVersion: sessionVersion,
         answers: { items: reloadedItems, tensions, moves, summary },
       });
 
-    expect(save2Res.status).toBe(200);
+    expect(save2Res.status, JSON.stringify(save2Res.body)).toBe(200);
     expect(save2Res.body?.id).toBe(sessionId);
-    evidence(`[h31] SAVE 2 (W2: tensions+moves+summary) ok`);
+    expect(save2Res.body?.version).toBe(sessionVersion + 1);
+    sessionVersion = save2Res.body?.version;
+    evidence(`[h31] SAVE 2 (W2: tensions+moves+summary) ok, version=${sessionVersion}`);
 
     // -------------------------------------------------------------------
     // 6) RELOAD 2 — GET: dowód że komplet wrócił bez strat.
@@ -418,6 +452,7 @@ describe('H3.1 — dynamic-swot pełny cykl e2e (real router + auth + DB + engin
       .set('Authorization', `Bearer ${token}`);
 
     expect(reload2Res.status).toBe(200);
+    expect(reload2Res.body?.version).toBe(sessionVersion);
     const finalAnswers = reload2Res.body?.answers || {};
     expect(finalAnswers.items).toHaveLength(8);
     expect(finalAnswers.tensions).toHaveLength(4);
@@ -511,8 +546,11 @@ describe('H3.1 — dynamic-swot pełny cykl e2e (real router + auth + DB + engin
       const foreignWrite = await request(toolsApp)
         .put(`/api/tools/${sessionId}`)
         .set('Authorization', `Bearer ${tokenB}`)
-        .send({ answers: { summary: { verdict: 'FOREIGN OVERWRITE' } } });
-      expect(foreignWrite.status).toBe(404);
+        .send({
+          expectedVersion: sessionVersion,
+          answers: { summary: { verdict: 'FOREIGN OVERWRITE' } },
+        });
+      expect(foreignWrite.status, JSON.stringify(foreignWrite.body)).toBe(404);
 
       const foreignConclusions = await client.query(
         `SELECT id FROM conclusions
@@ -584,8 +622,13 @@ describe('H3.1 — dynamic-swot pełny cykl e2e (real router + auth + DB + engin
       const tamperAfterApproval = await request(toolsApp)
         .put(`/api/tools/${sessionId}`)
         .set('Authorization', `Bearer ${token}`)
-        .send({ answers: { summary: { verdict: 'OWNER TAMPER AFTER APPROVAL' } } });
-      expect(tamperAfterApproval.status).toBe(409);
+        .send({
+          expectedVersion: sessionVersion,
+          answers: { summary: { verdict: 'OWNER TAMPER AFTER APPROVAL' } },
+        });
+      expect(tamperAfterApproval.status, JSON.stringify(tamperAfterApproval.body)).toBe(409);
+      expect(tamperAfterApproval.body?.code).not.toBe('STALE_VERSION');
+      expect(tamperAfterApproval.body?.error).toMatch(/locked after approval/i);
 
       const finalApprovedRead = await request(toolsApp)
         .get(`/api/tools/${sessionId}`)
@@ -643,8 +686,8 @@ describe('H3.1 — dynamic-swot pełny cykl e2e (real router + auth + DB + engin
       const repeatPromotion = await request(toolsApp)
         .post(`/api/tools/${sessionId}/promote`)
         .set('Authorization', `Bearer ${token}`)
-        .send({ outputType: 'report', title: `${PREFIX}ignored duplicate title` });
-      expect(repeatPromotion.status).toBe(200);
+        .send({ outputType: 'report', title: `${PREFIX}SWOT generated report` });
+      expect(repeatPromotion.status, JSON.stringify(repeatPromotion.body)).toBe(200);
       expect(repeatPromotion.body?.id).toBe(reportId);
       expect(repeatPromotion.body?.deduplicated).toBe(true);
 
@@ -674,6 +717,8 @@ describe('TLS-06 — approved SWOT output/report on real PostgreSQL', () => {
       .send({ toolType: 'dynamic-swot', name: `${PREFIX}tls06-source` });
     expect(createRes.status).toBe(200);
     const sessionId = String(createRes.body?.id || '');
+    let sessionVersion: number = createRes.body?.version;
+    expect(sessionVersion).toBe(1);
     createdToolSessionIds.push(sessionId);
 
     const answers = {
@@ -698,13 +743,18 @@ describe('TLS-06 — approved SWOT output/report on real PostgreSQL', () => {
         completionPercent: 100,
         confidenceAvg: 4,
         missingItems: [],
+        expectedVersion: sessionVersion,
       });
     expect(ready.status, JSON.stringify(ready.body)).toBe(200);
+    expect(ready.body?.version).toBe(sessionVersion + 1);
+    sessionVersion = ready.body?.version;
     const review = await request(toolsApp)
       .put(`/api/tools/${sessionId}`)
       .set('Authorization', `Bearer ${token}`)
-      .send({ status: 'REVIEW' });
+      .send({ status: 'REVIEW', expectedVersion: sessionVersion });
     expect(review.status, JSON.stringify(review.body)).toBe(200);
+    expect(review.body?.version).toBe(sessionVersion + 1);
+    sessionVersion = review.body?.version;
     const approve = await request(toolsApp)
       .post(`/api/tools/${sessionId}/approve`)
       .set('Authorization', `Bearer ${token}`)
@@ -758,8 +808,8 @@ describe('TLS-06 — approved SWOT output/report on real PostgreSQL', () => {
     const repeatPromotion = await request(toolsApp)
       .post(`/api/tools/${sessionId}/promote`)
       .set('Authorization', `Bearer ${token}`)
-      .send({ outputType: 'report', title: `${PREFIX}ignored duplicate title` });
-    expect(repeatPromotion.status).toBe(200);
+      .send({ outputType: 'report', title: `${PREFIX}SWOT generated report` });
+    expect(repeatPromotion.status, JSON.stringify(repeatPromotion.body)).toBe(200);
     expect(repeatPromotion.body).toMatchObject({ id: reportId, deduplicated: true });
 
     const tokenBAdmin = mintToken({

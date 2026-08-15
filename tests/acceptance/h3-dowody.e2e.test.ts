@@ -136,14 +136,15 @@ describe('H3.1 — SWOT (dynamicSwot) tool-sesja e2e (real router + auth + DB)',
     const sessionId: string = createRes.body?.id;
     expect(sessionId).toBeTruthy();
     expect(createRes.body?.status).toBe('DRAFT');
+    const createdVersion: number = createRes.body?.version;
+    expect(createdVersion).toBe(1);
     createdToolSessionIds.push(sessionId);
-    evidence(`[h3.1] created tool_sessions.id=${sessionId}`);
+    evidence(`[h3.1] created tool_sessions.id=${sessionId} version=${createdVersion}`);
 
     // 2) ANSWER — PUT /api/tools/:id with an accepted SWOT item + a W2
     //    finishing block (summary.verdict/executiveSummary — the shape
     //    the tool-agnostic bridge reads, per toolConclusionBridge.ts).
-    const verdict =
-      'Przewaga w segmencie B2B (61% przychodu) wymaga ochrony przed erozją marży.';
+    const verdict = 'Przewaga w segmencie B2B (61% przychodu) wymaga ochrony przed erozją marży.';
     const executiveSummary =
       'Analiza SWOT wskazuje silną pozycję rynkową klienta, ale rosnącą presję kosztową ze strony dwóch nowych konkurentów regionalnych.';
     const updateRes = await request(toolsApp)
@@ -153,6 +154,7 @@ describe('H3.1 — SWOT (dynamicSwot) tool-sesja e2e (real router + auth + DB)',
         status: 'IN_PROGRESS',
         completionPercent: 80,
         confidenceAvg: 4,
+        expectedVersion: createdVersion,
         answers: {
           items: [
             {
@@ -173,9 +175,12 @@ describe('H3.1 — SWOT (dynamicSwot) tool-sesja e2e (real router + auth + DB)',
         },
       });
 
-    expect(updateRes.status).toBe(200);
+    expect(updateRes.status, JSON.stringify(updateRes.body)).toBe(200);
     expect(updateRes.body?.id).toBe(sessionId);
-    evidence(`[h3.1] PUT answers ok, status=${updateRes.body?.status}`);
+    expect(updateRes.body?.version).toBe(createdVersion + 1);
+    evidence(
+      `[h3.1] PUT answers ok, status=${updateRes.body?.status} version=${createdVersion}->${updateRes.body?.version}`
+    );
 
     // 3) RELOAD — GET /api/tools/:id: proves answers PERSISTED + reload.
     const getRes = await request(toolsApp)
@@ -183,6 +188,7 @@ describe('H3.1 — SWOT (dynamicSwot) tool-sesja e2e (real router + auth + DB)',
       .set('Authorization', `Bearer ${token}`);
 
     expect(getRes.status).toBe(200);
+    expect(getRes.body?.version).toBe(createdVersion + 1);
     expect(getRes.body?.answers?.summary?.verdict).toBe(verdict);
     expect(getRes.body?.answers?.items).toHaveLength(2);
     evidence(
@@ -253,7 +259,10 @@ describe.each([
       axis1: { area1: { level: 3, notes: `${type} odpowiedź osi 1` } },
       axis2: { area1: { level: 2, notes: `${type} odpowiedź osi 2` } },
     };
-    const scoreSummary = { overallScore: 62, maturityLevel: type === 'SIRI' ? 'Band 2' : 'Level 3' };
+    const scoreSummary = {
+      overallScore: 62,
+      maturityLevel: type === 'SIRI' ? 'Band 2' : 'Level 3',
+    };
     const updateRes = await request(assessmentApp)
       .put(`/api/assessment-workflow-v2/${assessmentId}`)
       .set('Authorization', `Bearer ${token}`)
@@ -289,9 +298,8 @@ describe.each([
 // ===========================================================================
 describe('H6.13 — PDF export mechanika (real reportPdfService, minimal input)', () => {
   it('renders a real PDF buffer (%PDF- magic, >5kB) from a minimal status-report shape', async () => {
-    const { renderReportPdf } = (
-      await import('../../server/src/services/reportPdfService.js')
-    ).default;
+    const { renderReportPdf } = (await import('../../server/src/services/reportPdfService.js'))
+      .default;
 
     const pdf = await renderReportPdf({
       title: `${PREFIX}status-report`,
