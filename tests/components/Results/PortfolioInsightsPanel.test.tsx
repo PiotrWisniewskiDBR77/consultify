@@ -117,20 +117,20 @@ describe('PortfolioInsightsPanel', () => {
     mockEndpoints(FULL);
     render(<PortfolioInsightsPanel projectId="all" />);
     await waitFor(() => expect(screen.getByTestId('portfolio-funnel')).toBeInTheDocument());
-    expect(screen.getByText('Lejek wartości portfela')).toBeInTheDocument();
+    expect(screen.getByText('Portfolio value funnel')).toBeInTheDocument();
     // Stage labels appear in the stage grid AND in conversion rows -> getAllByText.
-    expect(screen.getAllByText('Pomysły').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Zrealizowane').length).toBeGreaterThan(0);
-    expect(screen.getByText(/Wartość zagrożona/)).toBeInTheDocument();
+    expect(screen.getAllByText('Ideas').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Realized').length).toBeGreaterThan(0);
+    expect(screen.getByText(/Value at risk/)).toBeInTheDocument();
   });
 
   it('renders the manager-signals section with a critical signal', async () => {
     mockEndpoints(FULL);
     render(<PortfolioInsightsPanel projectId="all" />);
     await waitFor(() => expect(screen.getByTestId('portfolio-insights-panel')).toBeInTheDocument());
-    expect(screen.getByText('Sygnały do M14 Wdrożenie')).toBeInTheDocument();
+    expect(screen.getByText('Signals to M14 Implementation')).toBeInTheDocument();
     expect(screen.getByText('Adopcja poniżej progu')).toBeInTheDocument();
-    expect(screen.getByText('1 krytycznych')).toBeInTheDocument();
+    expect(screen.getByText('1 critical')).toBeInTheDocument();
   });
 
   it('renders the run-rate section with the assumption flag', async () => {
@@ -138,14 +138,14 @@ describe('PortfolioInsightsPanel', () => {
     render(<PortfolioInsightsPanel projectId="all" />);
     await waitFor(() => expect(screen.getByTestId('portfolio-insights-panel')).toBeInTheDocument());
     expect(screen.getByText('Run-rate vs in-year')).toBeInTheDocument();
-    expect(screen.getByText(/założenie: 6 mies/)).toBeInTheDocument();
+    expect(screen.getByText(/assumption: 6-month measurement window/)).toBeInTheDocument();
   });
 
   it('renders the scenarios table with NPV/IRR rows', async () => {
     mockEndpoints(FULL);
     render(<PortfolioInsightsPanel projectId="all" />);
     await waitFor(() => expect(screen.getByTestId('portfolio-insights-panel')).toBeInTheDocument());
-    expect(screen.getByText('Scenariusze + IRR')).toBeInTheDocument();
+    expect(screen.getByText('Scenarios + IRR')).toBeInTheDocument();
     expect(screen.getByText('Bazowy')).toBeInTheDocument();
     expect(screen.getByText('Optymistyczny')).toBeInTheDocument();
   });
@@ -154,31 +154,31 @@ describe('PortfolioInsightsPanel', () => {
     mockEndpoints(FULL);
     render(<PortfolioInsightsPanel projectId="all" />);
     await waitFor(() => expect(screen.getByTestId('portfolio-insights-panel')).toBeInTheDocument());
-    expect(screen.getByText('Rekomendowane przesunięcia zasobów')).toBeInTheDocument();
-    expect(screen.getByText(/pojemność FTE = założenie/)).toBeInTheDocument();
+    expect(screen.getByText('Recommended resource shifts')).toBeInTheDocument();
+    expect(screen.getByText(/FTE capacity = assumption/)).toBeInTheDocument();
   });
 
   it('renders the finance-link aggregate when mappings exist', async () => {
     mockEndpoints(FULL);
     render(<PortfolioInsightsPanel projectId="all" />);
     await waitFor(() => expect(screen.getByTestId('portfolio-insights-panel')).toBeInTheDocument());
-    expect(screen.getByText('Spięcie z Finansami (M16)')).toBeInTheDocument();
-    expect(screen.getByText('Wpływ netto')).toBeInTheDocument();
+    expect(screen.getByText('Link to Finance (M16)')).toBeInTheDocument();
+    expect(screen.getByText('Net impact')).toBeInTheDocument();
   });
 
   it('shows the finance-link empty state when mappingCount is 0', async () => {
     mockEndpoints({ ...FULL, '/finance-link': { aggregate: null, mappingCount: 0 } });
     render(<PortfolioInsightsPanel projectId="all" />);
     await waitFor(() => expect(screen.getByTestId('portfolio-insights-panel')).toBeInTheDocument());
-    expect(screen.getByText(/Brak mapowań KPI→Finanse/)).toBeInTheDocument();
+    expect(screen.getByText(/No KPI→Finance mappings/)).toBeInTheDocument();
   });
 
   it('always renders the board-pack CTA', async () => {
     mockEndpoints(FULL);
     render(<PortfolioInsightsPanel projectId="all" />);
     await waitFor(() => expect(screen.getByTestId('portfolio-insights-panel')).toBeInTheDocument());
-    expect(screen.getByText('Board-pack / Auto-narracja wartości')).toBeInTheDocument();
-    expect(screen.getByText('Przejdź do Outputs →')).toBeInTheDocument();
+    expect(screen.getByText('Board-pack / Auto value narrative')).toBeInTheDocument();
+    expect(screen.getByText('Go to Outputs →')).toBeInTheDocument();
   });
 
   it('renders only the board-pack CTA when every endpoint returns empty payloads (no crash)', async () => {
@@ -194,13 +194,13 @@ describe('PortfolioInsightsPanel', () => {
     await waitFor(() => expect(screen.getByTestId('portfolio-insights-panel')).toBeInTheDocument());
     expect(screen.queryByTestId('portfolio-funnel')).not.toBeInTheDocument();
     expect(screen.queryByText('Run-rate vs in-year')).not.toBeInTheDocument();
-    expect(screen.getByText('Board-pack / Auto-narracja wartości')).toBeInTheDocument();
+    expect(screen.getByText('Board-pack / Auto value narrative')).toBeInTheDocument();
   });
 
   it('survives all endpoints rejecting without crashing', async () => {
     vi.mocked(Api.get).mockRejectedValue(new Error('boom'));
     render(<PortfolioInsightsPanel projectId="all" />);
     await waitFor(() => expect(screen.getByTestId('portfolio-insights-panel')).toBeInTheDocument());
-    expect(screen.getByText('Board-pack / Auto-narracja wartości')).toBeInTheDocument();
+    expect(screen.getByText('Board-pack / Auto value narrative')).toBeInTheDocument();
   });
 });
