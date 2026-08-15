@@ -12,13 +12,13 @@
   "summary": {
     "total": 224,
     "referenceHarnessOnly": 18,
-    "representedSuperseded": 84,
-    "representedCanonical": 58,
+    "representedSuperseded": 85,
+    "representedCanonical": 59,
     "rejectedDestructiveSnapshot": 4,
     "integratedCanonical": 20,
-    "candidateIntegration": 7,
+    "candidateIntegration": 10,
     "ownerDecisionRequired": 0,
-    "semanticReviewRequired": 33,
+    "semanticReviewRequired": 28,
     "deletionAuthorized": 0
   },
   "rows": [
@@ -116,12 +116,12 @@
       "migrationPaths": [
         "server/migrations/20260813c_method_core_roles_and_approvals.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "CANDIDATE_INTEGRATION",
+      "taskId": "CLEAN-002-ASM-010",
       "recoveryRef": "refs/recovery/unknown-20260815/031772082b7d4925e11986016079d02adeb17382",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "Current Assessment has newer role, recovery and SIRI code, but the recovered merge uniquely contains complete artifact tabs, report document/view, presentation deck/adapters, SIRI seed and broad Method Core HTTP/PostgreSQL acceptance suites absent from canon.",
+      "nextAction": "Reconcile surgically: SIRI seed; Method Core parity, vertical-slice, listing, Teresa, roster, roles/approvals and SIRI tests; artifact lineage/initiatives/reports tabs; presentation/report surfaces; DRD save-state and offline tests. Rebase modifications onto later current services and panels, never merge wholesale."
     },
     {
       "tip": "064f03242e87beeef1caa2002349fdc1e491f32c",
@@ -1043,12 +1043,12 @@
         "server/migrations/20260805_m02p03_inbox_projection_lifecycle.sql",
         "server/migrations/942_ai_agent_plan_run_idempotency.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_CANONICAL",
+      "taskId": "CLEAN-002-MYW-020",
       "recoveryRef": "refs/recovery/unknown-20260815/33cf53b78bc4e1fd15ff940218410ab2c81f43b0",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "Current My Work contains migration 942 idempotency, Notebook CAS, Decision fail-soft/current views, two-level navigation, Ideas and Vault; absent files are historical dev-render/evidence only.",
+      "nextAction": "Keep current code and re-prove My Work at the final exact SHA."
     },
     {
       "tip": "34a918cb8664c23394be8784a572ce7cc463be50",
@@ -1379,12 +1379,12 @@
         "server/migrations/000_z_core_baseline.sql",
         "server/migrations/20260810_finance_v3_co9_statement_money_numeric.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-FIN-012",
       "recoveryRef": "refs/recovery/unknown-20260815/3ce94e13203801050d0dc97f93f616c0a9c4a20a",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The tip consists of stale Finance V3 handoffs explicitly reporting fifteen red tests on a frozen base; current runtime, migrations and later corrections supersede those reports.",
+      "nextAction": "Retain the ref for provenance and use current Finance gates and exact-SHA evidence."
     },
     {
       "tip": "4256348c963ac2cde9b3ecb40a5df852d03a5ec7",
@@ -2603,12 +2603,12 @@
         "server/migrations/944_canvas_idea_materialization_receipts.sql",
         "server/migrations/945_chat_m01p04c_knowledge_doc_scope.sql"
       ],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-CHAT-015",
       "recoveryRef": "refs/recovery/unknown-20260815/7a032468787ecb5e296991245104ffd903fadf6d",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The M01 integration merge is dominated by obsolete screenshots, dashboards, registers and harness evidence; its product ancestry has later canonical descendants.",
+      "nextAction": "Keep the recovery ref and require current runtime proof rather than restoring the old evidence corpus."
     },
     {
       "tip": "7a2e4e4f17d57a6c7d6da9c3ec70dd76fc324ae3",
@@ -3315,12 +3315,12 @@
       "uniqueCommitCount": 5,
       "pathCount": 163,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-CHAT-014",
       "recoveryRef": "refs/recovery/unknown-20260815/a60a7fce01e79e0b4a81ae3bdf08bb7e220507d9",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The five M01 controlled-pause register and screenshot commits are old-SHA documentation evidence, not current acceptance; product code has later canonical descendants.",
+      "nextAction": "Retain the recovery ref only and execute current Chat gates."
     },
     {
       "tip": "a8b208cba1baab8b12d1e0405cd1582ef99f07da",
@@ -4958,12 +4958,12 @@
         "server/migrations/20260802_initiative_candidates_initiative_id.sql",
         "server/migrations/20260802_int008_accept_claim_lease.sql"
       ],
-      "verdict": "REPRESENTED_SUPERSEDED",
+      "verdict": "CANDIDATE_INTEGRATION",
       "taskId": "CLEAN-002-INT-006",
       "recoveryRef": "refs/recovery/unknown-20260815/f28ec3c7376bcdbebae306f145a546c567056326",
       "deletionAuthorized": false,
-      "evidenceRule": "This completion report is a predecessor of the later reviewed INT-008 candidate; replaying it would duplicate and obscure the unresolved atomicity invariant.",
-      "nextAction": "Close strict no-orphan claim-to-receipt atomicity under existing CLEAN-002-INT-005 only."
+      "evidenceRule": "Current candidate handoff remains basic; the recovered ancestry uniquely contains preview enrichment, accept-claim lease migrations and fault, concurrency and PBAC acceptance proof that complement the unresolved no-orphan invariant.",
+      "nextAction": "Surgically reconcile the two claim/initiative migrations, doctrine tests, client preview fields and current handoff service enrichment plus fault/concurrency/PBAC tests; coordinate the transaction invariant with CLEAN-002-INT-005 and never cherry-pick wholesale."
     },
     {
       "tip": "f3be96108633176a3e6f989f46df10c2e520ee34",
@@ -5251,12 +5251,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 7,
       "migrationPaths": [],
-      "verdict": "REPRESENTED_SUPERSEDED",
-      "taskId": "CLEAN-002-TLS-010",
+      "verdict": "CANDIDATE_INTEGRATION",
+      "taskId": "CLEAN-002-TEST-003",
       "recoveryRef": "refs/recovery/unknown-20260815/fbf506da65c3940364e94f7b56d79f2b407b9e4e",
       "deletionAuthorized": false,
-      "evidenceRule": "Expected-version, CAS and idempotency acceptance semantics exist in materially later current Tools suites, including stale, race, malicious-edit and real-source cases.",
-      "nextAction": "Do not restore the predecessor; run the current Tools realDB gate."
+      "evidenceRule": "Runtime ToolController correctly requires expectedVersion/CAS, but the current h3-dowody and h31 acceptance PUTs omit it. Recovered tests thread the create-response version, assert increments and cover stale, cross-org and post-approval negatives.",
+      "nextAction": "Selectively port CAS/version threading and assertions into the current h3-dowody and h31-swot-flow acceptance tests; retain current aliases and reconcile h32 only if coverage requires it."
     },
     {
       "tip": "fc2e1d849116f13baba6d5bdd75309229008e93e",
