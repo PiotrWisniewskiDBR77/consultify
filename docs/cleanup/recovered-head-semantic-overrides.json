@@ -745,10 +745,10 @@
     },
     {
       "tip": "a14467cdda16a19c436b729b14c3cbcf72e5487a",
-      "verdict": "CANDIDATE_INTEGRATION",
+      "verdict": "INTEGRATED_CANONICAL",
       "taskId": "CLEAN-002-FIN-006",
-      "evidenceRule": "Canonical Finance still lacks the recovered effective-tax policy, zero-versus-missing line presence rules, REQUIRED_LINES_PRESENT tie-out and persisted three-scenario workbook export.",
-      "nextAction": "Surgically port the tax policy and scenario behavior into current modeling, tie-out and export services/UI with focused tests and fresh PostgreSQL proof."
+      "evidenceRule": "Canonical commit 5bd7cece0 adds the current-schema effective-tax policy, explicit missing-versus-reported-zero line presence, fail-closed REQUIRED_LINES_PRESENT tie-out and persisted Base/Bull/Bear workbook export through the existing durable endpoint. The combined focused matrix passes 21/21 and both frontend and server typechecks pass.",
+      "nextAction": "Retain these contracts and prove the five Finance workspaces plus persisted workbook in FIN-002 browser/realDB acceptance; do not restore historical GO reports."
     },
     {
       "tip": "06e1fb75394654a4910f7aa89721178c513cb949",
@@ -1186,10 +1186,10 @@
     },
     {
       "tip": "f28ec3c7376bcdbebae306f145a546c567056326",
-      "verdict": "CANDIDATE_INTEGRATION",
+      "verdict": "INTEGRATED_CANONICAL",
       "taskId": "CLEAN-002-INT-006",
-      "evidenceRule": "The atomic accept, PBAC, tenant, fault and concurrency portions are now represented by canonical commits 1fa57d424 and 118e678d6. The recovered lease model is superseded by the stronger single pinned transaction. The remaining unique gap is exact signed-in preview enrichment and proof that acceptedSnapshotId, title, rationale, actor and evidence lineage shown before approval match the final candidate and Initiative.",
-      "nextAction": "Port only the current-schema preview fields/client contract and add focused plus signed-in preview-to-final lineage proof. Do not restore the recovered lease migrations or broad WIP."
+      "evidenceRule": "Canonical commit bbb9ad0cb adds the current-schema preview client and server-derived project, author, evidence, status and snapshot fields while preserving the stronger pinned transaction from INT-005. Real route plus disposable PostgreSQL acceptance passes 7/7 twice and proves preview title/rationale/snapshot/actor/evidence become the exact Candidate, handoff receipt and final Initiative source_candidate_id. The recovered lease migrations are superseded and intentionally absent.",
+      "nextAction": "Retain the preview-to-final lineage contract and include the 7-case real-route suite in the Interview release shard."
     },
     {
       "tip": "d92737a1408086c478ec74348075854808b3e2fb",
@@ -1216,8 +1216,8 @@
       "tip": "031772082b7d4925e11986016079d02adeb17382",
       "verdict": "CANDIDATE_INTEGRATION",
       "taskId": "CLEAN-002-ASM-010",
-      "evidenceRule": "Current Assessment has newer role, recovery and SIRI code, but the recovered merge uniquely contains complete artifact tabs, report document/view, presentation deck/adapters, SIRI seed and broad Method Core HTTP/PostgreSQL acceptance suites absent from canon.",
-      "nextAction": "Reconcile surgically: SIRI seed; Method Core parity, vertical-slice, listing, Teresa, roster, roles/approvals and SIRI tests; artifact lineage/initiatives/reports tabs; presentation/report surfaces; DRD save-state and offline tests. Rebase modifications onto later current services and panels, never merge wholesale."
+      "evidenceRule": "Canonical commit 9a5d49c83 closes the DRD MVP subset: a cold frozen/closed reopen resolves the exact session Output from canonical lineage and hydrates persisted Reports and Initiative Drafts without local content storage. The focused DRD matrix passes 62/62 and frontend typecheck passes. Current code already represents eight save/offline states and persisted presentation/report/output/draft lineage. The recovered head still contains post-MVP rich report/presentation viewers, SIRI seed and broader Method Core suites not integrated into the DRD MVP.",
+      "nextAction": "Keep the DRD MVP implementation. Reconcile the remaining rich viewers, SIRI seed and broader Method Core suites only in separately scoped post-MVP Assessment packets; never merge the recovered head wholesale."
     },
     {
       "tip": "a60a7fce01e79e0b4a81ae3bdf08bb7e220507d9",

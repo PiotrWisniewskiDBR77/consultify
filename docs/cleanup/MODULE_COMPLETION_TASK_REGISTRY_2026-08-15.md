@@ -1,8 +1,7 @@
 # Consultify — wykonawczy rejestr dokończenia modułów
 
 Data: 2026-08-15  
-Authority product SHA: `1fa57d4247790f36ceb683534f4c2d97302b2c20`
-Authority acceptance SHA: `118e678d6`
+Authority integrated candidate SHA: `5bd7cece0`
 Cleanup/report baseline SHA: `8210bc170`
 Status: `EXECUTION_REGISTRY / NOT_RELEASE_READY`
 
@@ -312,7 +311,8 @@ query/localStorage ani wymagania zamkniętego wyłącznie deklaracją.
 - Etap 10: `IN_PROGRESS` — zintegrowano 23 recovered candidates, w tym ostatnio
   Chat Ideas handoff, Finance missing-vs-zero, Document transformative edit,
   Tools CAS, E2E tenant isolation i atomowy Interview→Initiative;
-  pozostaje 5 jawnych kandydatów, integracja tylko pakietami.
+  Preview lineage, DRD MVP reopen i Finance model/workbook są również
+  zintegrowane; pozostają 3 jawne kandydaty, integracja tylko pakietami.
 - Etap 11: `COMPLETE_FOR_RECOVERY` — każdy recovered head ma disposition oraz
   przypisany task albo dowód represented/superseded/rejected.
 - Etap 12: `IN_PROGRESS` — istnieją task IDs i zależności, ale wszystkie taski

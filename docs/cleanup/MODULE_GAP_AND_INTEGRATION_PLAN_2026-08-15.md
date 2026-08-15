@@ -1,7 +1,7 @@
 # Consultify — modułowy gap plan i plan integracji
 
 Data: 2026-08-15  
-Authority product SHA: `1fa57d4247790f36ceb683534f4c2d97302b2c20`
+Authority integrated candidate SHA: `5bd7cece0`
 Status: `CANONICAL_CLEANUP_ANALYSIS / RUNTIME_ACCEPTANCE_PENDING`
 
 ## Cel i granica dowodu
@@ -15,7 +15,7 @@ SHA. To klasyfikacja code-level, nie dowód parity z demo.
 Wykonawczym rozwinięciem i aktualnym raportem 16/16 jest
 `docs/cleanup/FINAL_16_MODULE_READINESS_AND_EXECUTION_PLAN_2026-08-15.md`.
 Recovery ledger jest zamknięty: 224/224 heads ma dyspozycję, zero semantic i
-owner-decision unknowns; pozostało pięć jawnych kandydatów integracyjnych.
+owner-decision unknowns; pozostały trzy jawne kandydaty integracyjne.
 
 `DONE` wymaga całego łańcucha:
 

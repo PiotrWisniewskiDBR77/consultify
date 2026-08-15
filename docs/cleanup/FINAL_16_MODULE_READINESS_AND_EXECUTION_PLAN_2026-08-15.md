@@ -1,8 +1,7 @@
 # Consultify — finalny raport gotowości 16 modułów i plan wykonawczy
 
 Data: 2026-08-15
-Authority product SHA: `1fa57d424`
-Authority acceptance SHA: `118e678d6`
+Authority integrated candidate SHA: `5bd7cece0`
 Cleanup/report baseline SHA: `8210bc170`
 Status całego systemu: `NOT_RELEASE_READY / CLEAN_CODE_INVENTORY_COMPLETE`
 
@@ -23,7 +22,7 @@ pozostałe zadania i dowody potrzebne do zamknięcia.
 Pełna inwentaryzacja recovery jest zamknięta: `224/224` głów ma werdykt,
 `SEMANTIC_REVIEW_REQUIRED=0`, `OWNER_DECISION_REQUIRED=0`. Dyspozycja:
 18 reference/harness, 95 superseded, 76 represented canonical, 4 destructive
-rejected, 26 integrated, 5 jawnych kandydatów integracyjnych. Żadne usunięcie
+rejected, 28 integrated, 3 jawne kandydaty integracyjne. Żadne usunięcie
 nie jest jeszcze autoryzowane.
 
 Skala dowodu, stosowana osobno dla każdego modułu:
@@ -177,9 +176,10 @@ aktualnego zestawu D/S/B/V/P.
   - `ASM-001`: DRD-only golden flow i jeden methodology/version owner.
   - `ASM-002`: runtime DDL → migracje; fresh+upgrade ledger.
   - `ASM-003`: canonical report deep-link/origin filter i initiative batch.
-  - `CLEAN-002-ASM-010` (`POST_MVP` unless DRD needs subset): reconcile artifact
-    tabs, report/presentation surfaces, SIRI seed and Method Core suites from
-    recovered head; never merge whole branch.
+  - `CLEAN-002-ASM-010`: DRD MVP subset jest zintegrowany — cold reopen pobiera
+    właściwy session Output oraz persisted Reports/Initiative Drafts; focused
+    DRD `62/62 PASS`. Rich viewers, SIRI seed i broad Method Core są jawnie
+    post-MVP i pozostają kandydatem bez wholesale merge.
 - DoD: save/reload/conflict/freeze/reopen, immutable lineage, role/tenant,
   C/F/D/S/B/V/P. Monday scope remains DRD only.
 
@@ -241,8 +241,8 @@ aktualnego zestawu D/S/B/V/P.
   - `FIN-002`: pięć workspaces create/update/approve/reopen.
   - `FIN-003`: Results ROI reconciliation and append-only Actual.
   - `CLEAN-002-FIN-005`: canonical i18n policy.
-  - `CLEAN-002-FIN-006`: effective-tax policy, required-line presence,
-    three-scenario persisted workbook export.
+  - `CLEAN-002-FIN-006` jest zintegrowany: effective-tax policy,
+    required-line presence i persisted Base/Bull/Bear workbook; `21/21 PASS`.
 - DoD: precision, RLS/tenant, fresh+upgrade, exports and C/F/D/S/B/V/P.
   Finance pozostaje poza podstawowym MVP do wykonania FIN-001.
 
@@ -325,15 +325,13 @@ aktualnego zestawu D/S/B/V/P.
 - DoD: register→knowledge→certificate→code→sale→commission→payout plus expiry,
   correction, currency and partner isolation; C/F/D/S/B/V/P.
 
-## 4. Pięć pozostałych kandydatów integracyjnych
+## 4. Trzy pozostałe kandydaty integracyjne
 
 | Kolejność | Task | Moduł | Zakres | Tryb |
 |---:|---|---|---|---|
-| 1 | `CLEAN-002-INT-006` | Interview | preview→final lineage; lease/fault/concurrency już zastąpione silniejszą transakcją | serial UI/client acceptance |
-| 2 | `CLEAN-002-ASM-010` | Assessment | artifact/report/presentation/SIRI reconciliation | bounded post-MVP; DRD subset only if required |
-| 3 | `CLEAN-002-FIN-005` | Finance | canonical i18n coverage | parallel post-MVP |
-| 4 | `CLEAN-002-FIN-006` | Finance | tax/required-lines/three scenarios | serial post-MVP |
-| 5 | `CLEAN-002-MAT-024` | Materials data | governed Atelier deck fixture/materializer | serial data task, no demo write during integration |
+| 1 | `CLEAN-002-ASM-010` | Assessment | DRD subset zintegrowany; rich viewers/SIRI/broad Method Core pozostają | bounded post-MVP |
+| 2 | `CLEAN-002-FIN-005` | Finance | canonical i18n coverage | parallel post-MVP |
+| 3 | `CLEAN-002-MAT-024` | Materials data | governed Atelier deck fixture/materializer | serial data task, no demo write during integration |
 
 Każdy task ma odzyskany SHA i `nextAction` w
 `generated/recovered-head-disposition.json`. Nie wolno scalać całych gałęzi.
@@ -344,7 +342,8 @@ Każdy task ma odzyskany SHA i `nextAction` w
    no shared checkout; zero semantic unknowns (osiągnięte).
 2. **Fala 1 — data invariants:** INT-005, Tools CAS tests i E2E isolation są
    zintegrowane; fresh PostgreSQL 16 + 708 migracji i atomic realPG są zielone.
-   Pozostały preview lineage z INT-006 jest pierwszym zadaniem następnej fali.
+   Preview lineage z INT-006 jest również zintegrowany i ma real route/PG 7/7
+   PASS wykonane dwukrotnie.
 3. **Fala 2 — MVP code:** CHAT-001/2/3, MYW-001/2, AGT-001/2/3, INT-001/2,
    TLS-001/2, ASM-001/2/3, INI-001/2, EXE-001/2; candidate SHA B.
 4. **Fala 3 — Materials and control plane:** MAT-001..4, ORG-001/2,
@@ -383,7 +382,7 @@ Ostatni literalny pełny standardowy przebieg, wykonany przed bieżącym product
 SHA, objął `4052/4052` plików dokładnie raz: `39 884` testy, `38 798 PASS`,
 `581 FAIL`, `485 pending`, `19 todo`, `283` niezielone pliki; performance był
 osobnym `PENDING`. Później naprawiono wiele starych harnessów, ale pełnej bramki
-na `118e678d6` nie wykonano. Dlatego `S=EVIDENCE_MISSING`, a nie zielone.
+na `5bd7cece0` nie wykonano. Dlatego `S=EVIDENCE_MISSING`, a nie zielone.
 
 ## 6. Standard pojedynczego pakietu wykonawczego
 
