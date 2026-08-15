@@ -351,6 +351,11 @@ export interface TransformationPlan {
   createdByUserId: string;
   createdAt: string;
   updatedAt: string;
+  createdByType: 'human'|'teresa'|'template';
+  createdById: string|null;
+  basedOnPlanVersion: number|null;
+  changeReason: string|null;
+  reviewStatus: 'pending'|'in_review'|'accepted'|'changes_requested';
   steps: TransformationPlanStep[];
 }
 
@@ -392,6 +397,9 @@ export interface TransformationCase {
   createdAt: string;
   updatedAt: string;
   cancelledAt: string | null;
+  collaborationMode: 'teresa_led' | 'human_led' | 'teresa_draft_human_edit' | 'human_draft_teresa_review';
+  currentEditor: 'human' | 'teresa';
+  autonomyPolicyVersion: number;
   activePlan?: TransformationPlan | null;
   idempotentReplay?: boolean;
 }

@@ -11,6 +11,7 @@ import {
 import * as transformationCaseService from '../../services/v8/transformationCaseService.js';
 import * as transformationFinalOutputService from '../../services/v8/transformationFinalOutputService.js';
 import * as planningIntakeService from '../../services/v8/transformationPlanningIntakeService.js';
+import * as planCollaborationService from '../../services/v8/transformationPlanCollaborationService.js';
 import * as projectTeamService from '../../services/v8/transformationProjectTeamService.js';
 import * as runtimeCapabilityService from '../../services/v8/transformationRuntimeCapabilityService.js';
 import {
@@ -187,6 +188,39 @@ router.post(
     }
   })
 );
+
+router.patch('/collaboration/:transformationCaseId/mode', asyncHandler(async(req:AuthRequest,res:Response)=>{
+  const context=getV8Context(req),body=req.body??{};
+  if(!planCollaborationService.collaborationModes.includes(body.mode))return res.status(400).json({code:'TRANSFORMATION_COLLABORATION_MODE_INVALID'});
+  const caseId=String(req.params.transformationCaseId),current=await transformationCaseService.getTransformationCase(caseId,context.organizationId);
+  if(!current||!(await canSeeCase(current,context)))return res.status(404).json({code:'TRANSFORMATION_CASE_NOT_FOUND'});
+  if(!Number.isInteger(Number(body.expectedVersion))||String(body.reason??'').trim().length<3)return res.status(400).json({code:'TRANSFORMATION_COLLABORATION_INPUT_INVALID'});
+  try{const data=await planCollaborationService.changeCollaborationMode({caseId,organizationId:context.organizationId,actorUserId:context.userId,expectedVersion:Number(body.expectedVersion),mode:body.mode,currentEditor:body.currentEditor==='teresa'?'teresa':'human',reason:String(body.reason??'').trim()});return res.json({data,meta:{version:'v8'}});}catch(error){const handled=errorResponse(error,res);if(handled)return handled;throw error;}
+}));
+
+router.get('/collaboration/:transformationCaseId/suggestions',asyncHandler(async(req:AuthRequest,res:Response)=>{
+  const context=getV8Context(req);const caseId=String(req.params.transformationCaseId);
+  const current=await transformationCaseService.getTransformationCase(caseId,context.organizationId);
+  if(!current||!(await canSeeCase(current,context)))return res.status(404).json({code:'TRANSFORMATION_CASE_NOT_FOUND'});
+  return res.json({data:await planCollaborationService.listPlanSuggestions(caseId,context.organizationId),meta:{version:'v8'}});
+}));
+
+router.post('/collaboration/:transformationCaseId/suggestions',asyncHandler(async(req:AuthRequest,res:Response)=>{
+  const context=getV8Context(req),body=req.body??{},idempotencyKey=String(req.header('Idempotency-Key')??'').trim();
+  if(idempotencyKey.length<8)return res.status(400).json({code:'TRANSFORMATION_CASE_IDEMPOTENCY_KEY_REQUIRED'});
+  const caseId=String(req.params.transformationCaseId),current=await transformationCaseService.getTransformationCase(caseId,context.organizationId);
+  if(!current||!(await canSeeCase(current,context)))return res.status(404).json({code:'TRANSFORMATION_CASE_NOT_FOUND'});
+  if(!body.semanticDiff?.before||!body.semanticDiff?.after||String(body.rationale??'').trim().length<3||String(body.impact??'').trim().length<3)return res.status(400).json({code:'TRANSFORMATION_PLAN_SUGGESTION_INPUT_INVALID'});
+  try{const data=await planCollaborationService.proposePlanSuggestion({caseId,organizationId:context.organizationId,actorUserId:context.userId,expectedCaseVersion:Number(body.expectedCaseVersion),suggestedByType:body.suggestedByType==='human'?'human':'teresa',idempotencyKey,semanticDiff:body.semanticDiff,rationale:String(body.rationale??'').trim(),impact:String(body.impact??'').trim(),evidenceRefs:Array.isArray(body.evidenceRefs)?body.evidenceRefs.map(String):[]});return res.status(data.idempotentReplay?200:201).json({data,meta:{version:'v8',idempotentReplay:data.idempotentReplay}});}catch(error){const handled=errorResponse(error,res);if(handled)return handled;throw error;}
+}));
+
+router.post('/collaboration/:transformationCaseId/suggestions/:suggestionId/resolve',asyncHandler(async(req:AuthRequest,res:Response)=>{
+  const context=getV8Context(req),body=req.body??{};
+  const caseId=String(req.params.transformationCaseId),current=await transformationCaseService.getTransformationCase(caseId,context.organizationId);
+  if(!current||!(await canSeeCase(current,context)))return res.status(404).json({code:'TRANSFORMATION_CASE_NOT_FOUND'});
+  if(!['accept','reject'].includes(body.decision)||String(body.reason??'').trim().length<3)return res.status(400).json({code:'TRANSFORMATION_PLAN_SUGGESTION_RESOLUTION_INVALID'});
+  try{const data=await planCollaborationService.resolvePlanSuggestion({suggestionId:String(req.params.suggestionId),caseId,organizationId:context.organizationId,actorUserId:context.userId,expectedCaseVersion:Number(body.expectedCaseVersion),decision:body.decision,reason:String(body.reason??'').trim()});return res.json({data,meta:{version:'v8'}});}catch(error){const handled=errorResponse(error,res);if(handled)return handled;throw error;}
+}));
 
 router.get(
   '/planning-intakes/active',

@@ -135,6 +135,9 @@ interface CaseRow {
   created_at: string;
   updated_at: string;
   cancelled_at: string | null;
+  collaboration_mode: TransformationCase['collaborationMode'];
+  current_editor: TransformationCase['currentEditor'];
+  autonomy_policy_version: number;
 }
 
 interface PlanRow {
@@ -150,6 +153,11 @@ interface PlanRow {
   created_by_user_id: string;
   created_at: string;
   updated_at: string;
+  created_by_type?: TransformationPlan['createdByType'];
+  created_by_id?: string | null;
+  based_on_plan_version?: number | null;
+  change_reason?: string | null;
+  review_status?: TransformationPlan['reviewStatus'];
 }
 
 interface StepRow {
@@ -1101,6 +1109,11 @@ async function loadPlan(
     createdByUserId: row.created_by_user_id,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    createdByType: row.created_by_type ?? 'human',
+    createdById: row.created_by_id ?? row.created_by_user_id,
+    basedOnPlanVersion: row.based_on_plan_version ?? null,
+    changeReason: row.change_reason ?? null,
+    reviewStatus: row.review_status ?? 'pending',
     steps: steps.map(rowToStep),
   };
 }
@@ -1129,6 +1142,9 @@ async function rowToCase(row: CaseRow, replay = false): Promise<TransformationCa
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     cancelledAt: row.cancelled_at,
+    collaborationMode: row.collaboration_mode ?? 'teresa_draft_human_edit',
+    currentEditor: row.current_editor ?? 'human',
+    autonomyPolicyVersion: Number(row.autonomy_policy_version ?? 1),
     activePlan: row.active_plan_id ? await loadPlan(row.active_plan_id, row.organization_id) : null,
     idempotentReplay: replay,
   };
@@ -1623,12 +1639,14 @@ export async function reviseTransformationCase(
         ).rows
       : [];
     const currentSteps = currentStepRows.map(rowToStep);
+    const activePlanVersion=current.active_plan_id?Number((await client.query<{version:number}>(`SELECT version FROM transformation_plans WHERE plan_id=? AND transformation_case_id=? AND organization_id=? FOR UPDATE`,[current.active_plan_id,current.transformation_case_id,current.organization_id])).rows[0]?.version??0):0;
     if (input.steps) enforceAuthoritativeStepTruth(input.steps, currentSteps);
     const steps = input.steps
       ? validateAndCompileTransformationPlan(input.steps)
       : compileT01TransformationPlan();
 
     const nextVersion = current.version + 1;
+    const nextPlanVersion = activePlanVersion + 1;
     const nextMandate = input.mandate ?? current.mandate;
     const nextOutcomes =
       input.desiredOutcomes ?? jsonValue<string[]>(current.desired_outcomes_json, []);
@@ -1644,18 +1662,21 @@ export async function reviseTransformationCase(
       `INSERT INTO transformation_plans (
         plan_id, transformation_case_id, organization_id, version, status,
         methodology_key, summary, assumptions_json, risks_json, created_by_user_id,
+        created_by_type, created_by_id, based_on_plan_version, change_reason, review_status,
         created_at, updated_at
       ) VALUES (?, ?, ?, ?, 'pending_review', 'consultify-transformation-v1', ?, ?::jsonb,
-        ?::jsonb, ?, ?, ?)`,
+        ?::jsonb, ?, 'human', ?, ?, 'Human edited the collaborative Plan', 'pending', ?, ?)`,
       [
         planId,
         current.transformation_case_id,
         current.organization_id,
-        nextVersion,
+        nextPlanVersion,
         `Kompletny plan transformacji: ${nextMandate}`,
         JSON.stringify(nextAssumptions),
         JSON.stringify(risks),
         params.actorUserId,
+        params.actorUserId,
+        activePlanVersion||null,
         now,
         now,
       ]
@@ -1720,7 +1741,7 @@ export async function reviseTransformationCase(
     await client.query(
       `UPDATE v8_execution_runs SET plan_version = ?, updated_at = ?
        WHERE run_id = ? AND organization_id = ?`,
-      [nextVersion, now, current.execution_run_id, current.organization_id]
+      [nextPlanVersion, now, current.execution_run_id, current.organization_id]
     );
     const digest = createHash('sha256')
       .update(JSON.stringify({ nextMandate, nextOutcomes, nextVersion }))
@@ -1735,7 +1756,7 @@ export async function reviseTransformationCase(
         current.transformation_case_id,
         current.organization_id,
         planId,
-        nextVersion,
+        nextPlanVersion,
         params.actorUserId,
         params.correlationId ?? null,
         digest,
@@ -1976,7 +1997,7 @@ export async function approveTransformationPlan(
     }
     const nextVersion = current.version + 1;
     const approvedPlan = await client.query(
-      `UPDATE transformation_plans SET status = 'approved', updated_at = ?
+      `UPDATE transformation_plans SET status = 'approved', review_status='accepted', updated_at = ?
        WHERE plan_id = ? AND transformation_case_id = ? AND organization_id = ?`,
       [now, current.active_plan_id, current.transformation_case_id, current.organization_id]
     );

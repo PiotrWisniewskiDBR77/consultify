@@ -47,6 +47,7 @@ import {
   TransformationCasesApi,
   type TransformationFinalOutputRunDto,
   type TransformationPlanStepDto,
+  type TransformationPlanSuggestionDto,
 } from '@/services/api/v8/transformation-cases';
 import { useAppStore } from '@/store/useAppStore';
 import { ProjectTeamCard } from './ProjectTeamCard';
@@ -649,6 +650,7 @@ export const TransformationCasesPanel: React.FC<{
   const [newOutcome, setNewOutcome] = useState('');
   const [creatingCase, setCreatingCase] = useState(false);
   const [workspaceView, setWorkspaceView] = useState<CaseWorkspaceView>('plan');
+  const [planSuggestions, setPlanSuggestions] = useState<TransformationPlanSuggestionDto[]>([]);
 
   const loadCases = useCallback(async () => {
     setError(null);
@@ -800,6 +802,7 @@ export const TransformationCasesPanel: React.FC<{
 
   useEffect(() => {
     if (!selectedId) {
+      setPlanSuggestions([]);
       setCanonicalRuntime(undefined);
       setIdeasProposal(undefined);
       setInterviewsProposal(undefined);
@@ -816,6 +819,10 @@ export const TransformationCasesPanel: React.FC<{
       return;
     }
     let disposed = false;
+    const suggestionsRequest = TransformationCasesApi.listPlanSuggestions?.(selectedId);
+    if (suggestionsRequest) suggestionsRequest
+      .then((items) => { if (!disposed) setPlanSuggestions(items); })
+      .catch(() => { if (!disposed) setPlanSuggestions([]); });
     setFinalOutputPublication(null);
     setCanonicalRuntime(undefined);
     TransformationCasesApi.getCanonicalRuntime(selectedId)
@@ -1479,6 +1486,25 @@ export const TransformationCasesPanel: React.FC<{
       setStageAction(null);
     }
   }, [editableSteps, replaceCase, selectedRow]);
+
+  const changeCollaborationMode = useCallback(async (mode: TransformationCaseDto['collaborationMode']) => {
+    if (!selectedRow) return;
+    setStageAction('change-collaboration-mode');setError(null);
+    try {
+      replaceCase(await TransformationCasesApi.changeCollaborationMode(selectedRow.id, {
+        expectedVersion:selectedRow.transformationCase.version,mode,
+        currentEditor:mode==='teresa_led'?'teresa':'human',reason:'Collaboration mode selected in Agent Plan workspace',
+      }));
+    } catch (actionError) { setError(actionError instanceof Error?actionError.message:'Failed to change collaboration mode'); }
+    finally { setStageAction(null); }
+  },[replaceCase,selectedRow]);
+
+  const resolvePlanSuggestion = useCallback(async (suggestionId:string,decision:'accept'|'reject')=>{
+    if(!selectedRow)return;setStageAction(`suggestion-${decision}`);setError(null);
+    try{const result=await TransformationCasesApi.resolvePlanSuggestion(selectedRow.id,suggestionId,{expectedCaseVersion:selectedRow.transformationCase.version,decision,reason:decision==='accept'?'Accepted after semantic review':'Rejected after semantic review'});replaceCase(result.transformationCase);setPlanSuggestions(await TransformationCasesApi.listPlanSuggestions(selectedRow.id));}
+    catch(actionError){setError(actionError instanceof Error?actionError.message:'Failed to resolve suggestion');}
+    finally{setStageAction(null);}
+  },[replaceCase,selectedRow]);
 
   const handleProposeIdeas = useCallback(async () => {
     if (!selectedRow || selectedRow.transformationCase.status !== 'plan_approved') return;
@@ -2631,6 +2657,20 @@ export const TransformationCasesPanel: React.FC<{
                         </p>
                       </div>
                     </div>
+                    <label className="mt-4 block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
+                      {isPolish ? 'Tryb współpracy' : 'Collaboration mode'}
+                      <select
+                        value={item.collaborationMode ?? 'teresa_draft_human_edit'}
+                        onChange={(event)=>void changeCollaborationMode(event.target.value as TransformationCaseDto['collaborationMode'])}
+                        disabled={Boolean(stageAction)}
+                        className="mt-1 min-h-10 w-full rounded-lg border border-c-border bg-c-surface px-3 text-xs text-c-text"
+                      >
+                        <option value="teresa_led">Teresa led</option>
+                        <option value="human_led">Human led</option>
+                        <option value="teresa_draft_human_edit">Teresa draft, human edit</option>
+                        <option value="human_draft_teresa_review">Human draft, Teresa review</option>
+                      </select>
+                    </label>
                     <div className="mt-4 rounded-lg bg-c-bg p-3 text-xs leading-5 text-c-text-secondary">
                       {item.status === 'plan_proposed'
                         ? isPolish
@@ -2640,6 +2680,18 @@ export const TransformationCasesPanel: React.FC<{
                           ? 'Plan jest zatwierdzony. Przygotujmy teraz pierwszy pakiet pracy i decyzji.'
                           : 'The Plan is approved. Let us prepare the first package of work and decisions.'}
                     </div>
+                    {planSuggestions.filter((suggestion)=>suggestion.status==='pending_review').map((suggestion)=>(
+                      <div key={suggestion.suggestionId} className="mt-3 rounded-lg border border-c-border bg-c-surface p-3 text-xs">
+                        <p className="font-semibold text-c-text">{isPolish?'Propozycja zmiany planu':'Plan change proposal'}</p>
+                        <p className="mt-1 text-c-text-secondary">{suggestion.rationale}</p>
+                        <p className="mt-1 text-c-text-muted">{isPolish?'Wpływ':'Impact'}: {suggestion.impact}</p>
+                        <pre className="mt-2 max-h-36 overflow-auto whitespace-pre-wrap rounded bg-c-bg p-2 text-[10px] text-c-text-secondary">{JSON.stringify(suggestion.semanticDiff,null,2)}</pre>
+                        <div className="mt-2 flex gap-2">
+                          <button type="button" disabled={Boolean(stageAction)} onClick={()=>void resolvePlanSuggestion(suggestion.suggestionId,'accept')} className="rounded bg-c-primary px-3 py-2 font-semibold text-white">{isPolish?'Akceptuj jako nową wersję':'Accept as new version'}</button>
+                          <button type="button" disabled={Boolean(stageAction)} onClick={()=>void resolvePlanSuggestion(suggestion.suggestionId,'reject')} className="rounded border border-c-border px-3 py-2 text-c-text">{isPolish?'Odrzuć':'Reject'}</button>
+                        </div>
+                      </div>
+                    ))}
                     <div className="mt-4 space-y-2">
                       {item.status === 'plan_proposed' ? (
                         <button

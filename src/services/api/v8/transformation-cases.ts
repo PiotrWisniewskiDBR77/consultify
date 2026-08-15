@@ -28,6 +28,11 @@ export interface TransformationPlanDto {
   status: 'draft' | 'proposed' | 'pending_review' | 'approved' | 'cancelled';
   summary: string;
   steps: TransformationPlanStepDto[];
+  createdByType?: 'human'|'teresa'|'template';
+  createdById?: string|null;
+  basedOnPlanVersion?: number|null;
+  changeReason?: string|null;
+  reviewStatus?: 'pending'|'in_review'|'accepted'|'changes_requested';
 }
 
 export interface TransformationCaseDto {
@@ -65,6 +70,9 @@ export interface TransformationCaseDto {
   version: number;
   createdAt: string;
   updatedAt: string;
+  collaborationMode: 'teresa_led' | 'human_led' | 'teresa_draft_human_edit' | 'human_draft_teresa_review';
+  currentEditor: 'human' | 'teresa';
+  autonomyPolicyVersion: number;
   activePlan?: TransformationPlanDto | null;
   qualityEvaluation?: TransformationQualityEvaluationDto | null;
   idempotentReplay?: boolean;
@@ -466,7 +474,27 @@ export interface TransformationPlanningIntakeDto {
   idempotentReplay: boolean;
 }
 
+export interface TransformationPlanSuggestionDto {
+  suggestionId:string;transformationCaseId:string;sourcePlanId:string;sourcePlanVersion:number;
+  suggestedByType:'teresa'|'human';status:'pending_review'|'accepted'|'rejected'|'superseded';
+  semanticDiff:{before:Record<string,unknown>;after:Record<string,unknown>};
+  rationale:string;impact:string;evidenceRefs:string[];resultingPlanId:string|null;
+  createdAt:string;resolvedAt:string|null;idempotentReplay?:boolean;
+}
+export interface CreateTransformationPlanSuggestionInput {
+  expectedCaseVersion:number;suggestedByType:'teresa'|'human';
+  semanticDiff:TransformationPlanSuggestionDto['semanticDiff'];rationale:string;impact:string;evidenceRefs:string[];
+  idempotencyKey:string;
+}
+
 export const TransformationCasesApi = {
+  changeCollaborationMode: (caseId: string, input: { expectedVersion: number; mode: TransformationCaseDto['collaborationMode']; currentEditor: 'human'|'teresa'; reason: string }) =>
+    v8Patch<TransformationCaseDto>(`/transformation-cases/collaboration/${encodeURIComponent(caseId)}/mode`, input),
+  listPlanSuggestions: (caseId: string) => v8Get<TransformationPlanSuggestionDto[]>(`/transformation-cases/collaboration/${encodeURIComponent(caseId)}/suggestions`),
+  proposePlanSuggestion: (caseId: string, input: Omit<CreateTransformationPlanSuggestionInput,'idempotencyKey'>, idempotencyKey: string) =>
+    v8Post<TransformationPlanSuggestionDto>(`/transformation-cases/collaboration/${encodeURIComponent(caseId)}/suggestions`, input, { extraHeaders: { 'Idempotency-Key': idempotencyKey } }),
+  resolvePlanSuggestion: (caseId:string,suggestionId:string,input:{expectedCaseVersion:number;decision:'accept'|'reject';reason:string}) =>
+    v8Post<{transformationCase:TransformationCaseDto;resultingPlanId:string|null}>(`/transformation-cases/collaboration/${encodeURIComponent(caseId)}/suggestions/${encodeURIComponent(suggestionId)}/resolve`,input),
   getActivePlanningIntake: (conversationId: string) =>
     v8Get<{ intake: TransformationPlanningIntakeDto | null }>(
       `/transformation-cases/planning-intakes/active?conversationId=${encodeURIComponent(conversationId)}`

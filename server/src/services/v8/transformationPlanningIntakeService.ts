@@ -93,13 +93,19 @@ export async function answerPlanningIntake(input: { intakeId: string; organizati
   return map((await owned(input.intakeId,input.organizationId,input.actorUserId)));
 }
 export async function convertPlanningIntake(input: { intakeId: string; organizationId: string; actorUserId: string }) {
-  const current = await owned(input.intakeId,input.organizationId,input.actorUserId);
-  if (current.status === 'converted' && current.converted_case_id) return { intake: map(current,true), transformationCaseId: current.converted_case_id };
-  if (current.status !== 'ready') throw new TransformationCaseOperationError('TRANSFORMATION_PLANNING_CLARIFICATION_REQUIRED',409,`Missing: ${json<string[]>(current.missing_keys_json,[]).join(',')}`);
-  const transformationCase = await createTransformationCase({ organizationId: input.organizationId, initiatedByUserId: input.actorUserId, idempotencyKey:`planning-intake:${current.intake_id}`, mandate:current.mandate,projectId:current.project_id,conversationId:current.conversation_id,desiredOutcomes:json<string[]>(current.measurable_outcomes_json,[]),assumptions:[`Sponsor: ${current.sponsor}`,`Scope: ${current.scope}`,`Horizon: ${current.horizon}`],missingInputs:[],sourceRefs:[{artifactId:current.intake_id,artifactType:'transformation_planning_intake',module:'Agent'}] });
-  const claimed = await queryRun(`UPDATE transformation_planning_intakes SET status='converted',converted_case_id=?,updated_at=? WHERE intake_id=? AND organization_id=? AND initiated_by_user_id=? AND status='ready'`,[transformationCase.transformationCaseId,new Date().toISOString(),current.intake_id,input.organizationId,input.actorUserId]);
-  if (claimed.changes === 1) await queryRun(`INSERT INTO transformation_case_audit_events (audit_event_id,transformation_case_id,organization_id,plan_id,plan_version,event_type,actor_user_id,payload_digest,detail_json,created_at) SELECT ?,c.transformation_case_id,c.organization_id,c.active_plan_id,1,'transformation_planning_intake.converted',?, ?,?::jsonb,? FROM transformation_cases c WHERE c.transformation_case_id=?`,[uuidv4(),input.actorUserId,current.intake_id,JSON.stringify({intakeId:current.intake_id}),new Date().toISOString(),transformationCase.transformationCaseId]);
-  return { intake: map((await owned(current.intake_id,input.organizationId,input.actorUserId))), transformationCaseId: transformationCase.transformationCaseId };
+  return withPgTransaction(async(client)=>{
+    await client.query(`SELECT pg_advisory_xact_lock(hashtext(?))`,[`${input.organizationId}:planning-convert:${input.intakeId}`]);
+    const current=(await client.query<IntakeRow>(`SELECT * FROM transformation_planning_intakes WHERE intake_id=? AND organization_id=? FOR UPDATE`,[input.intakeId,input.organizationId])).rows[0];
+    if(!current)throw new TransformationCaseOperationError('TRANSFORMATION_PLANNING_INTAKE_NOT_FOUND',404,'Planning intake not found');
+    if(current.initiated_by_user_id!==input.actorUserId)throw new TransformationCaseOperationError('TRANSFORMATION_PLANNING_INTAKE_ACTOR_MISMATCH',403,'Planning intake belongs to another actor');
+    if(current.status==='converted'&&current.converted_case_id)return{intake:map(current,true),transformationCaseId:current.converted_case_id};
+    if(current.status!=='ready')throw new TransformationCaseOperationError('TRANSFORMATION_PLANNING_CLARIFICATION_REQUIRED',409,`Missing: ${json<string[]>(current.missing_keys_json,[]).join(',')}`);
+    const transformationCase=await createTransformationCase({organizationId:input.organizationId,initiatedByUserId:input.actorUserId,idempotencyKey:`planning-intake:${current.intake_id}`,mandate:current.mandate,projectId:current.project_id,conversationId:current.conversation_id,desiredOutcomes:json<string[]>(current.measurable_outcomes_json,[]),assumptions:[`Sponsor: ${current.sponsor}`,`Scope: ${current.scope}`,`Horizon: ${current.horizon}`],missingInputs:[],sourceRefs:[{artifactId:current.intake_id,artifactType:'transformation_planning_intake',module:'Agent'}]});
+    await client.query(`UPDATE transformation_planning_intakes SET status='converted',converted_case_id=?,updated_at=? WHERE intake_id=? AND organization_id=? AND initiated_by_user_id=? AND status='ready'`,[transformationCase.transformationCaseId,new Date().toISOString(),current.intake_id,input.organizationId,input.actorUserId]);
+    await client.query(`INSERT INTO transformation_case_audit_events (audit_event_id,transformation_case_id,organization_id,plan_id,plan_version,event_type,actor_user_id,payload_digest,detail_json,created_at) SELECT ?,c.transformation_case_id,c.organization_id,c.active_plan_id,1,'transformation_planning_intake.converted',?,?,?::jsonb,? FROM transformation_cases c WHERE c.transformation_case_id=?`,[uuidv4(),input.actorUserId,current.intake_id,JSON.stringify({intakeId:current.intake_id}),new Date().toISOString(),transformationCase.transformationCaseId]);
+    const converted=(await client.query<IntakeRow>(`SELECT * FROM transformation_planning_intakes WHERE intake_id=? AND organization_id=?`,[current.intake_id,input.organizationId])).rows[0];
+    return{intake:map(converted),transformationCaseId:transformationCase.transformationCaseId};
+  });
 }
 
 const digestOf = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
