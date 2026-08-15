@@ -97,13 +97,19 @@ shared API, flag resolvers, migrator i global styles ma wyłącznie integrator.
 
 ### CLEAN-002 — semantyczny ledger 421 rozbieżnych tipów
 
-- Status: `READY`, P0; owner: recovery-integrator.
+- Status: `IN_PROGRESS`, P0; owner: recovery-integrator.
 - Wejście: `refs/recovery/unknown-20260815/*`; bundle SHA-256
   `5bb23bea9d794b038a2710942a5bdf693417f6034ce7581f4c78480b034f5ade`.
 - Zakres: merge-base, moduł, unikalne migrations/seeds/routes/UI/tests i verdict
   `REPRESENTED`, `CANDIDATE`, `SUPERSEDED`, `REJECTED` lub `OWNER_DECISION`.
 - DoD: 421/421 ma verdict; każdy `CANDIDATE` wskazuje task ID i module diff;
   brak whole-branch merge.
+- Patch-equivalence wykonane dla 421/421: 124 tipy są `PATCH_REPRESENTED`, 297
+  zawiera unikalne patche. `git merge-base --independent` redukuje 297 do 224
+  niezależnych końcówek; 68 z nich dotyka migrations. Evidence:
+  `recovered-tip-patch-equivalence-257a1393f8.json` oraz
+  `recovered-independent-head-module-inventory-257a1393f8.json` w katalogu
+  cleanup evidence. Pozostały verdict jest semantyczny, nie automatyczny.
 
 ### CLEAN-003 — kontrolowane usuwanie
 

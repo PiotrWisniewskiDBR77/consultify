@@ -82,3 +82,14 @@ Before accepting a module:
 All previously missing tip objects are now recovered and independently
 bundle-protected. This does not claim that the 421 divergent tips are
 semantically integrated; they remain reviewable, recoverable candidates.
+
+Patch-equivalence against cleanup canon closed 124 of the 421 divergent tips as
+`PATCH_REPRESENTED`. The remaining 297 tips reduce to 224 independent history
+heads; 68 of those heads touch migration paths. Exact machine-readable evidence
+is stored in:
+
+- `/Users/piotrwisniewski/Developer/consultify-cleanup-evidence-20260814/recovered-tip-patch-equivalence-257a1393f8.json`
+- `/Users/piotrwisniewski/Developer/consultify-cleanup-evidence-20260814/recovered-independent-head-module-inventory-257a1393f8.json`
+
+The 224 heads remain `SEMANTIC_REVIEW_REQUIRED`; path-name classification alone
+does not authorize integration or deletion.
