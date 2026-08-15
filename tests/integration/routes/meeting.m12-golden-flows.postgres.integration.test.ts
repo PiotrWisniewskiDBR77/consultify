@@ -251,7 +251,7 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
     it('GF-13 update persists the new title (verified by SQL read-back)', async () => {
       const res = await request(app)
         .put(`/api/meeting/${id}`)
-        .set(member())
+        .set(admin())
         .send({ title: 'Edited title' });
       expect(res.status).toBe(200);
       expect((await rowById(id)).title).toBe('Edited title');
@@ -260,7 +260,7 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
     it('GF-14 update replaces array fields wholesale', async () => {
       await request(app)
         .put(`/api/meeting/${id}`)
-        .set(member())
+        .set(admin())
         .send({ agenda: ['New A', 'New B'], attendees: ['Zoe'] });
       const row = await rowById(id);
       expect(JSON.parse(row.agenda_json)).toEqual(['New A', 'New B']);
@@ -268,20 +268,20 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
     });
 
     it('GF-15 empty title is rejected 400 and does not blank the stored title', async () => {
-      const res = await request(app).put(`/api/meeting/${id}`).set(member()).send({ title: '   ' });
+      const res = await request(app).put(`/api/meeting/${id}`).set(admin()).send({ title: '   ' });
       expect(res.status).toBe(400);
       expect((await rowById(id)).title).toBe('Edited title');
     });
 
     it('GF-16 empty startAt is rejected 400', async () => {
-      const res = await request(app).put(`/api/meeting/${id}`).set(member()).send({ startAt: '' });
+      const res = await request(app).put(`/api/meeting/${id}`).set(admin()).send({ startAt: '' });
       expect(res.status).toBe(400);
     });
 
     it('GF-17 update of an unknown id is 404, not a fabricated success envelope', async () => {
       const res = await request(app)
         .put(`/api/meeting/meeting-does-not-exist`)
-        .set(member())
+        .set(admin())
         .send({ title: 'ghost' });
       expect(res.status).toBe(404);
     });
@@ -289,7 +289,7 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
     it('GF-18 update bumps updated_at', async () => {
       const before = (await rowById(id)).updated_at;
       await new Promise((r) => setTimeout(r, 5));
-      await request(app).put(`/api/meeting/${id}`).set(member()).send({ location: 'Room 9' });
+      await request(app).put(`/api/meeting/${id}`).set(admin()).send({ location: 'Room 9' });
       const after = (await rowById(id)).updated_at;
       expect(after).not.toBe(before);
     });
@@ -480,13 +480,12 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
       expect(res.body.note.source).toBe('heuristic');
     });
 
-    it('GF-33 extracted decisions/action items are actually persisted, not only returned', async () => {
+    it('GF-33 AI notes remain preview-only until proposal and human approval', async () => {
       const row = await rowById(id);
       const followUps = await followUpRows(id);
       const decisions = JSON.parse(row.decisions_json || '[]');
-      // The route claims (route comment + UI header "Decisions saved") that
-      // extracted outcomes become first-class records. Prove it against SQL.
-      expect(decisions.length + followUps.length).toBeGreaterThan(0);
+      expect(decisions).toEqual([]);
+      expect(followUps).toEqual([]);
     });
   });
 
@@ -566,7 +565,7 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
     it('GF-40 org B cannot update an org A meeting (404, and the row is unchanged)', async () => {
       const res = await request(app)
         .put(`/api/meeting/${orgAMeetingId}`)
-        .set(member(ORG_B, USER_B))
+        .set(admin(ORG_B, USER_B))
         .send({ title: 'Hijacked' });
       expect(res.status).toBe(404);
       expect((await rowById(orgAMeetingId)).title).toBe('Org A private');
