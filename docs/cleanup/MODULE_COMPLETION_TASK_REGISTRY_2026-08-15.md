@@ -502,8 +502,13 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
   kolejność migracji mają 8/8 oraz 22 PASS. Audyt migratora wykrył dodatkowo
   utracony import guard; `1df2181fe` przywraca eksport komparatora i uruchamia
   `main()` wyłącznie dla bezpośredniego CLI, z zielonym backend buildem.
-  Aktualny ledger ma 147 pozycji
-  `SEMANTIC_REVIEW_REQUIRED`. Te 18 pozostaje zachowanym materiałem
+  Trzy kolejne odzyskane historie zostały rozstrzygnięte chirurgicznie:
+  kanoniczne aliasy routingu Execution przywrócono w `babee1735` (37 testów
+  Playwright poprawnie odkrytych), brakujące teksty Inicjatyw zintegrowano i
+  uzupełniono dla sześciu języków w `f971213d7` (13/13 locale gate), a dwa
+  starsze mock-DB testy Document Studio zastąpiono istniejącymi mocniejszymi
+  kontraktami trwałości propozycji i realDB eksportu DOCX/PDF. Aktualny ledger
+  ma 144 pozycje `SEMANTIC_REVIEW_REQUIRED`. Te 18 pozostaje zachowanym materiałem
   UX/prototypowym, ale nie
   jest kodem produkcyjnym do merge. Generator mechanicznie egzekwuje warunek
   ścieżek, unikalność, sumy i deterministyczny output; nadal

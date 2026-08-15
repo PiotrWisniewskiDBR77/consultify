@@ -12,13 +12,13 @@
   "summary": {
     "total": 224,
     "referenceHarnessOnly": 18,
-    "representedSuperseded": 32,
+    "representedSuperseded": 33,
     "representedCanonical": 15,
     "rejectedDestructiveSnapshot": 1,
-    "integratedCanonical": 10,
+    "integratedCanonical": 12,
     "candidateIntegration": 1,
     "ownerDecisionRequired": 0,
-    "semanticReviewRequired": 147,
+    "semanticReviewRequired": 144,
     "deletionAuthorized": 0
   },
   "rows": [
@@ -717,12 +717,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 3,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "INTEGRATED_CANONICAL",
+      "taskId": "CLEAN-002-EXE-005",
       "recoveryRef": "refs/recovery/unknown-20260815/230c00cdeeb49ea0b541f876c78cdd29c8d5af02",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered canonical Execution route-alias assertions were restored in commit babee173582959f95231a92eeec34c8e0e81188c. Playwright discovery reports 37 tests across the three restored specifications; browser execution remains an acceptance requirement, not an inferred PASS.",
+      "nextAction": "Run the signed-in Execution alias and navigation flow against the exact release candidate SHA; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "272f96d5a4ba8101c1ec64263b6de4b3485dcc58",
@@ -4122,12 +4122,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 2,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "INTEGRATED_CANONICAL",
+      "taskId": "CLEAN-002-INI-006",
       "recoveryRef": "refs/recovery/unknown-20260815/d2e563b92e41c81df838242570aaea4c0eb8c197",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The missing Initiatives empty-state, AI suggestion, materialization, and portfolio-health strings were integrated and completed for EN, PL, DE, ES, AR, and JA in commit f971213d7. All six locale files parse as JSON and the locale completeness gate passes 13/13 tests.",
+      "nextAction": "Verify the visible Initiatives surfaces during the exact-SHA desktop/mobile golden flow; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "d3303857d5afe81ea501dafb899c216d92b1e4d8",
@@ -5267,12 +5267,12 @@
       "uniqueCommitCount": 1,
       "pathCount": 2,
       "migrationPaths": [],
-      "verdict": "SEMANTIC_REVIEW_REQUIRED",
-      "taskId": null,
+      "verdict": "REPRESENTED_SUPERSEDED",
+      "taskId": "CLEAN-002-MAT-002",
       "recoveryRef": "refs/recovery/unknown-20260815/fc2e1d849116f13baba6d5bdd75309229008e93e",
       "deletionAuthorized": false,
-      "evidenceRule": null,
-      "nextAction": "Review module-scoped diff and assign one semantic verdict plus task ID where integration is required."
+      "evidenceRule": "The recovered mock-DB proposal persistence test is superseded by approve-proposal-persist.spec.ts, which adds durable fresh-GET, re-approval idempotency, and rejection invariants. Its DOCX test is superseded by artifact-studio-realdb-export.spec.ts, which inspects OOXML ZIP contents, exported title, manifest byte length, PDF bytes, and cold rehydration. The recovered suite also accepts entitlement/QA branches without exercising bytes, so restoring it would weaken rather than extend the canonical evidence set.",
+      "nextAction": "Do not restore the older mock-DB specifications. Execute the canonical proposal and realDB export suites in the Materials acceptance packet; retain the recovery ref until CLEAN-003."
     },
     {
       "tip": "fcb98b772f8839d9b64887502a136bb31b5ef318",
