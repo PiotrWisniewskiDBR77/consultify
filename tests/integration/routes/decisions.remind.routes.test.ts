@@ -6,7 +6,9 @@ import { describe, expect, it, vi } from 'vitest';
 import { makeTestApp } from '../_helpers/testApp';
 
 const noop = vi.fn(async (_req: any, res: any) => res.status(200).json({ ok: true }));
-const remindDecision = vi.fn(async (_req: any, res: any) => res.status(200).json({ success: true }));
+const remindDecision = vi.fn(async (_req: any, res: any) =>
+  res.status(200).json({ success: true })
+);
 
 vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
   verifyToken: (_req: any, _res: any, next: any) => next(),
@@ -21,18 +23,21 @@ vi.mock('../../../server/src/middleware/rbac.middleware.js', () => ({
 }));
 
 vi.mock('../../../server/src/controllers/DecisionController.js', () => ({
-  default: {
-    getDecisions: noop,
-    getBottlenecks: noop,
-    getDecisionById: noop,
-    createDecision: noop,
-    updateDecision: noop,
-    decide: noop,
-    escalateDecision: noop,
-    remindDecision,
-    getCreatedTasks: noop,
-    transitionWorkflow: noop,
-  },
+  default: new Proxy(
+    {
+      getDecisions: noop,
+      getBottlenecks: noop,
+      getDecisionById: noop,
+      createDecision: noop,
+      updateDecision: noop,
+      decide: noop,
+      escalateDecision: noop,
+      remindDecision,
+      getCreatedTasks: noop,
+      transitionWorkflow: noop,
+    },
+    { get: (target, key) => (target as any)[key] ?? noop }
+  ),
 }));
 
 async function makeDecisionsApp() {
@@ -51,9 +56,11 @@ describe('Decisions remind endpoint', () => {
   it('POST /api/decisions/:id/remind returns 400 when message is too long', async () => {
     const app = await makeDecisionsApp();
     const msg = 'x'.repeat(501);
-    const res = await request(app).post('/api/decisions/d-1/remind').send({ message: msg }).expect(400);
+    const res = await request(app)
+      .post('/api/decisions/d-1/remind')
+      .send({ message: msg })
+      .expect(400);
     expect(res.body?.error || '').toMatch(/at most|too big|max/i);
     expect(remindDecision).not.toHaveBeenCalled();
   });
 });
-

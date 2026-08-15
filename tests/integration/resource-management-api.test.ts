@@ -26,6 +26,11 @@ vi.mock('../../server/src/middleware/auth.middleware.js', () => ({
   requireSuperAdmin: (_req: any, _res: any, next: any) => next(),
 }));
 
+vi.mock('../../server/src/middleware/superAdmin.middleware.js', () => ({
+  verifySuperAdmin: (_req: any, _res: any, next: any) => next(),
+  requireSuperAdminCapability: () => (_req: any, _res: any, next: any) => next(),
+}));
+
 vi.mock('../../server/src/services/budgetTrackingService.js', () => ({
   budgetTrackingService: {
     getBudgetStatus: vi.fn(async () => ({ ok: true })),

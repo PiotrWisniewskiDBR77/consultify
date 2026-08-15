@@ -40,7 +40,7 @@ describe('Demo write protection', () => {
     const req = makeReq({ method: 'POST', originalUrl: '/api/initiatives', demoHeader: 'true' });
     const res = makeRes();
     const next1 = vi.fn();
-    demoContextMiddleware(req, res as any, next1);
+    await demoContextMiddleware(req, res as any, next1);
     expect(next1).toHaveBeenCalled();
     expect(req.demo).toEqual(expect.objectContaining({ enabled: true }));
 
@@ -57,7 +57,7 @@ describe('Demo write protection', () => {
     const req = makeReq({ method: 'GET', originalUrl: '/api/initiatives', demoHeader: 'true' });
     const res = makeRes();
     const next1 = vi.fn();
-    demoContextMiddleware(req, res as any, next1);
+    await demoContextMiddleware(req, res as any, next1);
 
     const next2 = vi.fn();
     const mw = demoWriteProtection({ allowedRoutes: ['/api/demo/', '/api/auth/'] });
@@ -69,7 +69,7 @@ describe('Demo write protection', () => {
     const req = makeReq({ method: 'POST', originalUrl: '/api/demo/toggle', demoHeader: 'true' });
     const res = makeRes();
     const next1 = vi.fn();
-    demoContextMiddleware(req, res as any, next1);
+    await demoContextMiddleware(req, res as any, next1);
 
     const next2 = vi.fn();
     const mw = demoWriteProtection({ allowedRoutes: ['/api/demo/', '/api/auth/'] });
@@ -87,7 +87,7 @@ describe('Demo write protection', () => {
     req.organizationId = DEMO_ORG_ID;
     const res = makeRes();
     const next1 = vi.fn();
-    demoContextMiddleware(req, res as any, next1);
+    await demoContextMiddleware(req, res as any, next1);
 
     const next2 = vi.fn();
     const mw = demoWriteProtection({ allowedRoutes: ['/api/demo/', '/api/auth/'] });

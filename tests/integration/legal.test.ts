@@ -34,12 +34,12 @@ describe('Legal routes - REAL integration', () => {
     expect(res.body.data).toEqual(expect.any(Array));
   });
 
-  it('GET /document/:type returns 503 when not configured', async () => {
+  it('GET /document/:type returns 404 when no active document exists', async () => {
     const router = await loadLegalRouter();
     const app = makeTestApp({ mountPath: '/api/legal', router });
     const res = await request(app).get('/api/legal/document/tos');
-    expect(res.status).toBe(503);
-    expect(res.body.code).toMatch(/LEGAL_/);
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('LEGAL_DOC_NOT_FOUND');
   });
 
   it('GET /document/:type returns 404 for unknown type', async () => {
