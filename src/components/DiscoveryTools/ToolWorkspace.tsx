@@ -265,7 +265,12 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     dismissMissionSuggestion,
     rethinkCard,
     abortStream,
+    error: aiError,
   } = useToolAI({ toolType });
+
+  useEffect(() => {
+    if (aiError) toast.error(aiError);
+  }, [aiError]);
 
   const toolMeta = TOOL_METADATA[toolType] || getFallbackMeta(toolType);
   const stepDefs = getStepDefinitions();
@@ -557,7 +562,8 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
         console.warn('[ToolWorkspace] autosave failed', err);
         try {
           const fresh = await Api.getToolSession(toolSessionId);
-          sessionVersionRef.current = (fresh as { version?: number })?.version ?? sessionVersionRef.current;
+          sessionVersionRef.current =
+            (fresh as { version?: number })?.version ?? sessionVersionRef.current;
         } catch {
           // Best-effort only -- next tick will retry the GET too.
         }
@@ -595,7 +601,8 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
       // existed (sessionId prop) -- the create-effect's version write above
       // only covers a BRAND NEW session, so this GET is what populates
       // sessionVersionRef for a resumed one.
-      sessionVersionRef.current = (data as { version?: number }).version ?? sessionVersionRef.current;
+      sessionVersionRef.current =
+        (data as { version?: number }).version ?? sessionVersionRef.current;
     };
     loadGenerated();
   }, [toolSessionId]);
@@ -904,9 +911,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
         <dl className="space-y-2 text-sm">
           <div className="flex justify-between gap-2">
             <dt className="text-c-text-muted">{isPolish ? 'Narzędzie' : 'Tool'}</dt>
-            <dd className="text-right text-c-text">
-              {isPolish ? toolMeta.namePl : toolMeta.name}
-            </dd>
+            <dd className="text-right text-c-text">{isPolish ? toolMeta.namePl : toolMeta.name}</dd>
           </div>
           <div className="flex justify-between gap-2">
             <dt className="text-c-text-muted">{isPolish ? 'Krok' : 'Step'}</dt>
@@ -963,7 +968,10 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
       children: (
         <ul className="space-y-1.5 text-xs text-c-text-secondary">
           {toolDecisions.map((d, idx) => (
-            <li key={`${d.decision_type}-${idx}`} className="flex items-center justify-between gap-2">
+            <li
+              key={`${d.decision_type}-${idx}`}
+              className="flex items-center justify-between gap-2"
+            >
               <span>{d.decision_type}</span>
               <span className="text-c-text-muted">{d.decision_status || d.status}</span>
             </li>
@@ -1054,41 +1062,41 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
           (promoteToOutput's own eligibility gate — server/src/controllers/
           ToolController.ts). Read-only surface: server/src/routes/
           toolOutputs.routes.ts. */}
-      {toolStatus === 'APPROVED' && toolSessionId && (
-        <div className="border-t border-c-border-subtle bg-c-bg px-6 py-4">
-          <div className="mb-2 flex justify-end">
-            <button
-              type="button"
-              onClick={() => setShowOutputsFullView(true)}
-              className="text-xs font-medium text-c-text-secondary hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
-            >
-              {isPolish ? 'Otwórz pełny widok →' : 'Open full view →'}
-            </button>
+        {toolStatus === 'APPROVED' && toolSessionId && (
+          <div className="border-t border-c-border-subtle bg-c-bg px-6 py-4">
+            <div className="mb-2 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowOutputsFullView(true)}
+                className="text-xs font-medium text-c-text-secondary hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+              >
+                {isPolish ? 'Otwórz pełny widok →' : 'Open full view →'}
+              </button>
+            </div>
+            <ToolOutputsPanel toolSessionId={toolSessionId} />
           </div>
-          <ToolOutputsPanel toolSessionId={toolSessionId} />
-        </div>
-      )}
+        )}
 
-      {/* Action Bar */}
-      {toolStatus !== 'REVIEW' && (
-        <ToolActionBar
-          {...({
-            currentStep,
-            totalSteps: stepDefs.length,
-            canAdvance: canAdvanceStep(),
-            onPrevStep: handlePrevStep,
-            onNextStep: handleNextStep,
-            isPolish,
-            phaseAiActions,
-            activeAiActionId,
-            isStreaming,
-            onRunPhaseAiAction: (actionId: any) => void runPhaseAiAction(actionId),
-            onAbortAi: abortStream,
-            aiReviewCount,
-            onReviewAiCards: scrollToAiCards,
-          } as any)}
-        />
-      )}
+        {/* Action Bar */}
+        {toolStatus !== 'REVIEW' && (
+          <ToolActionBar
+            {...({
+              currentStep,
+              totalSteps: stepDefs.length,
+              canAdvance: canAdvanceStep(),
+              onPrevStep: handlePrevStep,
+              onNextStep: handleNextStep,
+              isPolish,
+              phaseAiActions,
+              activeAiActionId,
+              isStreaming,
+              onRunPhaseAiAction: (actionId: any) => void runPhaseAiAction(actionId),
+              onAbortAi: abortStream,
+              aiReviewCount,
+              onReviewAiCards: scrollToAiCards,
+            } as any)}
+          />
+        )}
       </ToolArtifactShell>
 
       <GlossaryPanel isOpen={isGlossaryOpen} onClose={() => setIsGlossaryOpen(false)} />

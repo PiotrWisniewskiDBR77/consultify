@@ -229,7 +229,8 @@ function DynamicSwotOutputs({
   );
   const [reportId, setReportId] = useState<string | null>(null);
   const [reportCreating, setReportCreating] = useState(false);
-  const [presCreated, setPresCreated] = useState(false);
+  const [presentationId, setPresentationId] = useState<string | null>(null);
+  const [presentationCreating, setPresentationCreating] = useState(false);
 
   const toggleReportSection = (id: string) => {
     setReportSections((prev) => {
@@ -282,6 +283,35 @@ function DynamicSwotOutputs({
       );
     } finally {
       setReportCreating(false);
+    }
+  };
+
+  const handleCreatePresentation = async () => {
+    if (presentationCreating || presSections.size === 0) return;
+    setPresentationCreating(true);
+    try {
+      const result = await Api.promoteToolOutput(session.id, {
+        outputType: 'presentation',
+        title: `${session.name || 'SWOT'} — SWOT Presentation`,
+        description: isPolish
+          ? 'Prezentacja utworzona z zatwierdzonej sesji Dynamic SWOT.'
+          : 'Presentation created from an approved Dynamic SWOT session.',
+        selectedSections: Array.from(presSections),
+      });
+      if (!result?.id) throw new Error('Presentation identifier missing from server response');
+      setPresentationId(String(result.id));
+      toast.success(
+        isPolish
+          ? 'Prezentację zapisano w Presentation Studio.'
+          : 'Presentation saved in Presentation Studio.'
+      );
+    } catch (error: any) {
+      toast.error(
+        error?.message ||
+          (isPolish ? 'Nie udało się utworzyć prezentacji.' : 'Failed to create presentation.')
+      );
+    } finally {
+      setPresentationCreating(false);
     }
   };
 
@@ -810,19 +840,27 @@ function DynamicSwotOutputs({
                 {presSections.size}{' '}
                 {t('discoveryToolsSteps.summaryStep.dynamicSwot.sectionsSelected')}
               </div>
-              {presCreated ? (
-                <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-4 py-2 text-xs font-medium text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300">
+              {presentationId ? (
+                <button
+                  type="button"
+                  onClick={() => navigate(`/presentations/builder/${presentationId}`)}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-4 py-2 text-xs font-medium text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300"
+                >
                   <Check className="h-3.5 w-3.5" />
                   {t('discoveryToolsSteps.summaryStep.dynamicSwot.presentationCreated')}
-                </span>
+                </button>
               ) : (
                 <button
-                  onClick={() => setPresCreated(true)}
-                  disabled={presSections.size === 0}
+                  onClick={handleCreatePresentation}
+                  disabled={presentationCreating || presSections.size === 0}
                   className="inline-flex items-center gap-2 rounded-lg bg-navy-900 dark:bg-[#F4F7FB] px-4 py-2 text-xs font-semibold text-white dark:text-navy-950 shadow-sm transition-all hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:opacity-40"
                 >
                   <Presentation className="h-3.5 w-3.5" />
-                  {t('discoveryToolsSteps.summaryStep.dynamicSwot.generatePresentation')}
+                  {presentationCreating
+                    ? isPolish
+                      ? 'Tworzenie…'
+                      : 'Creating…'
+                    : t('discoveryToolsSteps.summaryStep.dynamicSwot.generatePresentation')}
                 </button>
               )}
             </div>

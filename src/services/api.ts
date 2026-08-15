@@ -2405,6 +2405,9 @@ export const Api = {
         /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v.trim());
       const nonEmptyStringOrNull = (v: unknown): string | null =>
         typeof v === 'string' && v.trim().length > 0 ? v.trim() : null;
+      const nullableStreamKeys = new Set(['conversationId', 'selectedModelId', 'screenContext']);
+      const dropInvalidNulls = (key: string, value: unknown) =>
+        value === null && !nullableStreamKeys.has(key) ? undefined : value;
 
       // Per-user local inference (Ollama): stored in currentUser.aiConfig and persisted locally.
       // We forward it explicitly so the backend can use the per-user endpoint safely.
@@ -2462,39 +2465,42 @@ export const Api = {
         method: 'POST',
         headers: getHeaders(),
         signal: abortSignal,
-        body: JSON.stringify({
-          message,
-          history,
-          systemInstruction,
-          context,
-          roleName,
-          language,
-          // Streaming session affinity / resume support
-          // NOTE: backend uses `conversationId` as the stream session id to persist partial responses.
-          // If we don't pass it, the backend falls back to a timestamp-based id which the client can't predict.
-          // Never send JSON `null` — Zod expects string | omitted (UnifiedChatPanel can pass conversationId: null).
-          conversationId: resolvedStreamConversationId,
-          resumeFromPartial: Boolean(context?.resumeFromPartial),
-          // AI Configuration
-          aiModes,
-          knowledgeSources,
-          responseStyle,
-          privateMode: Boolean((options as any)?.privateMode),
-          assistantScope: options?.assistantScope ?? context?.assistantScope,
-          memoryScope: options?.memoryScope ?? context?.memoryScope,
-          // Model routing
-          selectedTier: options?.selectedTier,
-          selectedModelId: nonEmptyStringOrNull(
-            options?.selectedModelId ?? localProvider?.modelId ?? null
-          ),
-          // Explicit per-user provider override (used for local Ollama)
-          provider: localProvider?.provider,
-          endpoint: localProvider?.endpoint,
-          // Common context hints (keep as top-level so backend validator doesn't strip them)
-          projectId: isUuidLike(context?.projectId) ? context?.projectId : undefined,
-          screenContext: context?.screenContext,
-          focusMode: context?.focusMode,
-        }),
+        body: JSON.stringify(
+          {
+            message,
+            history,
+            systemInstruction,
+            context,
+            roleName,
+            language,
+            // Streaming session affinity / resume support
+            // NOTE: backend uses `conversationId` as the stream session id to persist partial responses.
+            // If we don't pass it, the backend falls back to a timestamp-based id which the client can't predict.
+            // Never send JSON `null` — Zod expects string | omitted (UnifiedChatPanel can pass conversationId: null).
+            conversationId: resolvedStreamConversationId,
+            resumeFromPartial: Boolean(context?.resumeFromPartial),
+            // AI Configuration
+            aiModes,
+            knowledgeSources,
+            responseStyle,
+            privateMode: Boolean((options as any)?.privateMode),
+            assistantScope: options?.assistantScope ?? context?.assistantScope,
+            memoryScope: options?.memoryScope ?? context?.memoryScope,
+            // Model routing
+            selectedTier: options?.selectedTier,
+            selectedModelId: nonEmptyStringOrNull(
+              options?.selectedModelId ?? localProvider?.modelId ?? null
+            ),
+            // Explicit per-user provider override (used for local Ollama)
+            provider: localProvider?.provider,
+            endpoint: localProvider?.endpoint,
+            // Common context hints (keep as top-level so backend validator doesn't strip them)
+            projectId: isUuidLike(context?.projectId) ? context?.projectId : undefined,
+            screenContext: context?.screenContext,
+            focusMode: context?.focusMode,
+          },
+          dropInvalidNulls
+        ),
       });
 
       // If backend didn't return SSE (e.g. 401/403 JSON), surface it immediately.
@@ -7165,12 +7171,16 @@ export const Api = {
   },
 
   listToolOutputReports: async (outputId: string): Promise<{ reports: any[] }> => {
-    const res = await fetch(`${API_URL}/tool-outputs/${outputId}/reports`, { headers: getHeaders() });
+    const res = await fetch(`${API_URL}/tool-outputs/${outputId}/reports`, {
+      headers: getHeaders(),
+    });
     return handleResponse(res, 'Failed to list tool output reports');
   },
 
   getToolOutputReport: async (reportId: string): Promise<{ report: any }> => {
-    const res = await fetch(`${API_URL}/tool-outputs/reports/${reportId}`, { headers: getHeaders() });
+    const res = await fetch(`${API_URL}/tool-outputs/reports/${reportId}`, {
+      headers: getHeaders(),
+    });
     return handleResponse(res, 'Failed to fetch tool output report');
   },
 
@@ -7330,11 +7340,14 @@ export const Api = {
     command: Record<string, unknown>,
     expectedVersion?: number
   ): Promise<{ ok: boolean; schema: any; version: number }> => {
-    const res = await fetch(`${API_URL}/workbook/${encodeURIComponent(workbookId)}/schema-command`, {
-      method: 'PATCH',
-      headers: getHeaders(),
-      body: JSON.stringify({ command, expectedVersion }),
-    });
+    const res = await fetch(
+      `${API_URL}/workbook/${encodeURIComponent(workbookId)}/schema-command`,
+      {
+        method: 'PATCH',
+        headers: getHeaders(),
+        body: JSON.stringify({ command, expectedVersion }),
+      }
+    );
     return handleResponse(res, 'Failed to update workbook structure');
   },
 
@@ -16098,7 +16111,10 @@ export const Api = {
     payload: {
       targetId: string;
       action:
-        'retry_failed_branch' | 'recover_expired_lease' | 'cancel_graph' | 'expire_stale_review';
+        | 'retry_failed_branch'
+        | 'recover_expired_lease'
+        | 'cancel_graph'
+        | 'expire_stale_review';
       reason: string;
     },
     idempotencyKey: string
@@ -16932,10 +16948,16 @@ export const Api = {
     return {
       preferences: {
         tone: (userSettings?.writing_tone || 'professional') as
-          'professional' | 'friendly' | 'casual' | 'academic',
+          | 'professional'
+          | 'friendly'
+          | 'casual'
+          | 'academic',
         formality: (userSettings?.formality || 'balanced') as 'formal' | 'balanced' | 'informal',
         verbosity: (userSettings?.verbosity || 'concise') as
-          'minimal' | 'concise' | 'detailed' | 'comprehensive',
+          | 'minimal'
+          | 'concise'
+          | 'detailed'
+          | 'comprehensive',
       },
     };
   },

@@ -205,7 +205,11 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
     cardId: string;
   } | null>(null);
 
-  const { startStream, isStreaming, streamedContent, abortStream } = useAIStream();
+  const { startStream, isStreaming, streamedContent, abortStream, lastError } = useAIStream();
+
+  useEffect(() => {
+    if (lastError) setError(lastError.message);
+  }, [lastError]);
 
   // O-C2 grounding validator: the exact text sent as the user prompt for the
   // in-flight request — this IS the grounding source (it already carries the
@@ -733,6 +737,7 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
 
     let parsed = extractObject(streamedContent);
     if (!parsed) {
+      setError('The AI response could not be interpreted. Please try again.');
       setPendingAction(null);
       setActiveAiActionId(null);
       return;

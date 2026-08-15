@@ -253,7 +253,12 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     dismissMissionSuggestion,
     rethinkCard,
     abortStream,
+    error: aiError,
   } = useToolAI({ toolType });
+
+  useEffect(() => {
+    if (aiError) toast.error(aiError);
+  }, [aiError]);
 
   const isStrategicPhaseTool = [
     'dynamic-swot',
