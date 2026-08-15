@@ -6,7 +6,15 @@
  */
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { Check, ChevronDown, FileText, Loader2, Presentation, X } from 'lucide-react';
+import {
+  Check,
+  ChevronDown,
+  FileSpreadsheet,
+  FileText,
+  Loader2,
+  Presentation,
+  X,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -16,7 +24,11 @@ import {
   getInvestmentCaseCandidateHandoff,
   previewInvestmentCaseCandidateHandoff,
 } from '@/services/api/v8/financeCandidateHandoff';
-import { exportFinancialAnalysis, type ExportResult } from '@/services/financeExportService';
+import {
+  exportFinancialAnalysis,
+  exportFinancialModelWorkbook,
+  type ExportResult,
+} from '@/services/financeExportService';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
 import { FinanceCandidateHandoffModal } from './shared/FinanceCandidateHandoffModal';
@@ -84,7 +96,9 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
   onExportComplete,
 }) => {
   const { t } = useTranslation();
-  const [outputType, setOutputType] = useState<'report' | 'presentation' | 'initiatives'>('report');
+  const [outputType, setOutputType] = useState<
+    'report' | 'presentation' | 'workbook' | 'initiatives'
+  >('report');
   const [useTemplate, setUseTemplate] = useState(false);
   const [templateId, setTemplateId] = useState<string>('');
   const [templates, setTemplates] = useState<ReportTemplate[]>([]);
@@ -136,23 +150,26 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
         template: hasTemplate ? 'yes' : 'no',
       });
 
-      const result = await exportFinancialAnalysis({
-        analysisId,
-        analysisTitle,
-        analysisType: (analysisType as any) || 'financial_analysis',
-        outputType,
-        templateId: hasTemplate ? templateId : undefined,
-        initiativeIds: relatedInitiativeIds,
-        brief: hasTemplate
-          ? undefined
-          : {
-              goal: briefGoal.trim() || undefined,
-              audience: briefAudience.trim() || undefined,
-              language: briefLanguage,
-              format: briefFormat.trim() || undefined,
-              scope: briefScope.trim() || undefined,
-            },
-      });
+      const result =
+        outputType === 'workbook'
+          ? await exportFinancialModelWorkbook({ modelId: analysisId })
+          : await exportFinancialAnalysis({
+              analysisId,
+              analysisTitle,
+              analysisType: (analysisType as any) || 'financial_analysis',
+              outputType,
+              templateId: hasTemplate ? templateId : undefined,
+              initiativeIds: relatedInitiativeIds,
+              brief: hasTemplate
+                ? undefined
+                : {
+                    goal: briefGoal.trim() || undefined,
+                    audience: briefAudience.trim() || undefined,
+                    language: briefLanguage,
+                    format: briefFormat.trim() || undefined,
+                    scope: briefScope.trim() || undefined,
+                  },
+            });
 
       trackFunnelEvent('finance_export_created', {
         outputId: result.outputId,
@@ -209,7 +226,7 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-6 space-y-5">
             {/* Output type cards */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => setOutputType('report')}
@@ -230,6 +247,33 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   {t('finance.export.reportDesc', 'Create a deliverable report from this analysis')}
+                </p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setOutputType('workbook')}
+                disabled={analysisType !== 'financial_model'}
+                className={`flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left disabled:cursor-not-allowed disabled:opacity-50 ${
+                  outputType === 'workbook'
+                    ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/20'
+                    : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600'
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-2 w-full">
+                  <FileSpreadsheet size={18} className="text-primary-500" />
+                  <span className="font-medium text-slate-900 dark:text-white">
+                    {t('finance.export.workbook', 'Workbook')}
+                  </span>
+                  {outputType === 'workbook' && (
+                    <Check size={16} className="text-primary-500 ml-auto" />
+                  )}
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  {t(
+                    'finance.export.workbookDesc',
+                    'Build a formula-driven Base/Bull/Bear workbook'
+                  )}
                 </p>
               </button>
 
@@ -287,7 +331,7 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
             </div>
 
             {/* Template toggle */}
-            {outputType !== 'initiatives' && (
+            {outputType !== 'initiatives' && outputType !== 'workbook' && (
               <div className="flex items-center justify-between">
                 <span className="text-sm text-slate-700 dark:text-slate-300">
                   {t('finance.export.useTemplate', 'Use template')}
@@ -311,7 +355,7 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
             )}
 
             {/* Template dropdown */}
-            {outputType !== 'initiatives' && useTemplate && (
+            {outputType !== 'initiatives' && outputType !== 'workbook' && useTemplate && (
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   {t('finance.export.selectTemplate', 'Select template')}
@@ -344,7 +388,7 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
             )}
 
             {/* No-template brief (SSOT) */}
-            {outputType !== 'initiatives' && !useTemplate && (
+            {outputType !== 'initiatives' && outputType !== 'workbook' && !useTemplate && (
               <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white/70 dark:bg-navy-800/30 p-4 space-y-3">
                 <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   {t('finance.export.briefTitle', 'Brief (no-template)')}
@@ -565,6 +609,8 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
                     <Loader2 size={16} className="animate-spin" />
                     {t('finance.export.creating', 'Creating...')}
                   </>
+                ) : outputType === 'workbook' ? (
+                  t('finance.export.createWorkbook', 'Create workbook')
                 ) : (
                   t('finance.export.createDraft', 'Create Draft')
                 )}

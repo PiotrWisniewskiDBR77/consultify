@@ -50,13 +50,25 @@ function coherentPack(): StatementPack {
 describe('crossStatementTieOutService', () => {
   it('coherent pack → every check passes', () => {
     const checks = validatePackTieOut(coherentPack());
-    expect(checks).toHaveLength(5);
+    expect(checks).toHaveLength(6);
     for (const c of checks) {
       expect(c.status, `${c.check} should pass`).toBe('pass');
       expect(Math.abs(c.difference)).toBeLessThanOrEqual(Math.abs(c.expected) * 0.01 + 1e-6);
     }
     const summary = tieOutSummary(checks);
-    expect(summary).toEqual({ passed: 5, warnings: 0, failed: 0, isClean: true });
+    expect(summary).toEqual({ passed: 6, warnings: 0, failed: 0, isClean: true });
+  });
+
+  it('missing required line fails closed even when zero substitution would balance', () => {
+    const pack = coherentPack();
+    delete pack.bs.TOTAL_ASSETS;
+    pack.bs.TOTAL_LIABILITIES = 0;
+    pack.bs.TOTAL_EQUITY = 0;
+    const checks = validatePackTieOut(pack);
+    const presence = find(checks, 'REQUIRED_LINES_PRESENT');
+    expect(presence.status).toBe('fail');
+    expect(presence.message).toContain('TOTAL_ASSETS');
+    expect(tieOutSummary(checks).isClean).toBe(false);
   });
 
   it('cash divergence → CLOSING_CASH_MATCH fails', () => {

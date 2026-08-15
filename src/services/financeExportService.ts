@@ -5,12 +5,104 @@
  */
 
 import { Api } from './api';
+import { V8FinanceApi, type V8FinanceModelDetail } from './api/v8/finance';
 
 export interface ExportResult {
   outputId: string;
-  outputType: 'report' | 'presentation';
+  outputType: 'report' | 'presentation' | 'workbook';
   title: string;
   hasTemplate: boolean;
+}
+
+type WorkbookScenarioKey = 'base' | 'bull' | 'bear';
+
+function finite(value: unknown, label: string): number {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) throw new Error(`Workbook export requires ${label}`);
+  return parsed;
+}
+
+function scenarioKey(label: unknown): WorkbookScenarioKey | null {
+  const normalized = String(label || '')
+    .trim()
+    .toLowerCase();
+  if (['base', 'baseline', 'bazowy'].includes(normalized)) return 'base';
+  if (['bull', 'upside', 'optimistic', 'optymistyczny'].includes(normalized)) return 'bull';
+  if (['bear', 'downside', 'conservative', 'pesymistyczny'].includes(normalized)) return 'bear';
+  return null;
+}
+
+export function buildFinanceWorkbookParams(
+  models: V8FinanceModelDetail[]
+): Record<string, unknown> {
+  const byScenario = new Map<WorkbookScenarioKey, V8FinanceModelDetail>();
+  for (const model of models) {
+    const key = scenarioKey(model.scenario);
+    if (key) byScenario.set(key, model);
+  }
+  for (const key of ['base', 'bull', 'bear'] as const) {
+    if (!byScenario.has(key)) {
+      throw new Error(`Workbook export requires a persisted ${key} scenario`);
+    }
+  }
+
+  const baseModel = byScenario.get('base')!;
+  const baseAssumptions = (baseModel.assumptions_json || {}) as Record<string, any>;
+  const baseBaseline = (baseAssumptions.baseline || {}) as Record<string, unknown>;
+  const baseRevenue = finite(baseBaseline.revenue, 'base.baseline.revenue');
+  const params: Record<string, unknown> = {
+    companyName: baseModel.name,
+    currencyCode: String(baseModel.currency || 'PLN').toUpperCase(),
+    startYear: Number(String(baseModel.start_date || '').slice(0, 4)) || new Date().getFullYear(),
+    baseRevenue,
+  };
+
+  for (const key of ['base', 'bull', 'bear'] as const) {
+    const model = byScenario.get(key)!;
+    const assumptions = (model.assumptions_json || {}) as Record<string, any>;
+    const baseline = (assumptions.baseline || {}) as Record<string, unknown>;
+    const revenue = finite(baseline.revenue, `${key}.baseline.revenue`);
+    if (revenue === 0) {
+      throw new Error(`Workbook export cannot derive ratios from zero ${key} revenue`);
+    }
+    params[`${key}.revenueGrowthPct`] = finite(
+      assumptions.revenueGrowthPct ?? 0,
+      `${key}.revenueGrowthPct`
+    );
+    params[`${key}.cogsPct`] = finite(baseline.cogs, `${key}.baseline.cogs`) / revenue;
+    params[`${key}.opexPct`] = finite(baseline.opex, `${key}.baseline.opex`) / revenue;
+    params[`${key}.daPct`] =
+      finite(baseline.depreciation, `${key}.baseline.depreciation`) / revenue;
+    params[`${key}.interestPct`] = finite(baseline.interest, `${key}.baseline.interest`) / revenue;
+    params[`${key}.taxRatePct`] = finite(assumptions.taxRatePct, `${key}.taxRatePct`);
+  }
+  return params;
+}
+
+export async function exportFinancialModelWorkbook(params: {
+  modelId: string;
+}): Promise<ExportResult> {
+  const caseResult = await V8FinanceApi.getCaseScenarios(params.modelId);
+  const scenarioRows = caseResult?.scenarios || [];
+  const details = await Promise.all(
+    scenarioRows.map(async (row) => (await V8FinanceApi.getModel(row.id)).model)
+  );
+  const workbookParams = buildFinanceWorkbookParams(details);
+  const sourceModel = details.find((model) => scenarioKey(model.scenario) === 'base')!;
+  const response = await Api.post('/workbook/templates/threeScenarioPnL/build', {
+    params: workbookParams,
+    projectId: sourceModel.project_id || undefined,
+    sourceInitiativeId: sourceModel.initiative_id || undefined,
+  });
+  if (!response?.id || !response?.downloadUrl) {
+    throw new Error('Workbook build did not return a persisted artifact');
+  }
+  return {
+    outputId: response.id,
+    outputType: 'workbook',
+    title: response.title || `Financial Model: ${sourceModel.name}`,
+    hasTemplate: true,
+  };
 }
 
 export type ExportableSourceType =

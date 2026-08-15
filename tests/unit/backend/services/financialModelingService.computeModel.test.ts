@@ -28,9 +28,8 @@ vi.mock('../../../../server/src/services/financeCanonicalResolver.js', () => ({
 
 describe('financialModelingService.computeModel (T054)', () => {
   it('computes P&L/BS/CF outputs and produces passing hard validations for a simple scenario', async () => {
-    const { computeModel } = await import(
-      '../../../../server/src/services/financialModelingService.js'
-    );
+    const { computeModel } =
+      await import('../../../../server/src/services/financialModelingService.js');
 
     mockDb.get.mockResolvedValueOnce({
       id: 'm1',
@@ -108,9 +107,8 @@ describe('financialModelingService.computeModel (T054)', () => {
   });
 
   it('treats one_time recurrence as applying only once (start period)', async () => {
-    const { computeModel } = await import(
-      '../../../../server/src/services/financialModelingService.js'
-    );
+    const { computeModel } =
+      await import('../../../../server/src/services/financialModelingService.js');
 
     mockDb.get.mockResolvedValueOnce({
       id: 'm2',
@@ -161,9 +159,8 @@ describe('financialModelingService.computeModel (T054)', () => {
   });
 
   it('uses persisted forecast drivers to differentiate eventless scenarios', async () => {
-    const { computeModel } = await import(
-      '../../../../server/src/services/financialModelingService.js'
-    );
+    const { computeModel } =
+      await import('../../../../server/src/services/financialModelingService.js');
     mockDb.get.mockResolvedValueOnce({
       id: 'm3',
       start_date: '2026-01-01',
@@ -209,9 +206,8 @@ describe('financialModelingService.computeModel (T054)', () => {
 
 describe('financialModelingService model seed periods', () => {
   it('seeds only the latest period when period labels live in JSON evidence', async () => {
-    const { createModel } = await import(
-      '../../../../server/src/services/financialModelingService.js'
-    );
+    const { createModel } =
+      await import('../../../../server/src/services/financialModelingService.js');
     mockLoadLatestStatementVersionSnapshot.mockResolvedValueOnce({
       versionNo: 6,
       snapshot: {
@@ -281,5 +277,54 @@ describe('financialModelingService model seed periods', () => {
     expect(assumptions.initialOtherLiabilities).toBe(600);
     expect(assumptions.baseline.revenue).toBe(3000);
     expect(mockDb.all).toHaveBeenCalledTimes(1);
+  });
+
+  it('preserves reported zero as present for critical and baseline lines', async () => {
+    const { createModel } =
+      await import('../../../../server/src/services/financialModelingService.js');
+    mockLoadLatestStatementVersionSnapshot.mockResolvedValueOnce({
+      versionNo: 1,
+      snapshot: {
+        values: [
+          { lineCode: 'CASH', value: 0, periodLabel: '2025' },
+          { lineCode: 'TOTAL_ASSETS', value: 0, periodLabel: '2025' },
+          { lineCode: 'TOTAL_EQUITY', value: 0, periodLabel: '2025' },
+          { lineCode: 'REVENUE', value: 0, periodLabel: '2025' },
+          { lineCode: 'COGS', value: 0, periodLabel: '2025' },
+          { lineCode: 'OPEX', value: 0, periodLabel: '2025' },
+        ],
+      },
+    });
+    mockDb.get.mockResolvedValueOnce({
+      id: 'stmt-zero',
+      period_label: 'FY2025',
+      period_start: '2025-01-01',
+      period_end: '2025-12-31',
+      currency: 'PLN',
+      scaling: 'units',
+      source_file_name: 'zero.csv',
+      status: 'confirmed',
+      readiness_status: 'ready',
+    });
+    mockDb.run.mockResolvedValue(undefined);
+
+    await createModel({
+      organizationId: 'org-zero',
+      name: 'reported-zero model',
+      startDate: '2026-01-01',
+      createdBy: 'user-zero',
+      sourceStatementId: 'stmt-zero',
+    });
+
+    const insertCall = [...mockDb.run.mock.calls]
+      .reverse()
+      .find((call) => String(call[0]).includes('INSERT INTO financial_models'));
+    const assumptionsJson = (insertCall![1] as any[]).find(
+      (parameter) => typeof parameter === 'string' && parameter.includes('seedSource')
+    );
+    const assumptions = JSON.parse(assumptionsJson);
+    expect(assumptions.initialCash).toBe(0);
+    expect(assumptions.initialEquity).toBe(0);
+    expect(assumptions.seedStatus.missingBaselineLines).toEqual([]);
   });
 });

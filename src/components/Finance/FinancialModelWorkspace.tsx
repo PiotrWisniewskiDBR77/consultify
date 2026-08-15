@@ -1367,6 +1367,28 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                         </div>
                       );
                     })}
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="w-48">
+                        <label className="text-sm text-slate-700 dark:text-slate-300">
+                          {t('finance.model.taxRate', 'Tax rate (%)')}
+                        </label>
+                        {assumptionStatusLabel('taxRatePct')}
+                      </div>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.1"
+                        value={Math.round(Number(assumptions.taxRatePct ?? 0) * 10000) / 100}
+                        onChange={(e) =>
+                          setAssumptions((prev) => ({
+                            ...prev,
+                            taxRatePct: Math.min(1, Math.max(0, Number(e.target.value) / 100)),
+                          }))
+                        }
+                        className="w-48 px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-sm text-right font-mono"
+                      />
+                    </div>
                     <div className="mt-2 flex items-center gap-3">
                       <button
                         onClick={handleSaveAssumptions}

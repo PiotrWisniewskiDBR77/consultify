@@ -121,6 +121,36 @@ export function validatePackTieOut(pack: StatementPack, tolerancePct = 1): TieOu
 
   const checks: TieOutCheck[] = [];
 
+  const required: Array<[StatementValues | undefined, string]> = [
+    [pnl, CODE.NET_INCOME],
+    [bs, CODE.RETAINED_EARNINGS],
+    [bs, CODE.CASH],
+    [bs, CODE.TOTAL_ASSETS],
+    [bs, CODE.TOTAL_LIABILITIES],
+    [bs, CODE.TOTAL_EQUITY],
+    [cf, CODE.CF_OPERATING],
+    [cf, CODE.CF_INVESTING],
+    [cf, CODE.CF_FINANCING],
+    [cf, CODE.CF_NET_CHANGE_IN_CASH],
+    [cf, CODE.CF_CLOSING_CASH],
+    [cf, CODE.CF_CHANGE_IN_WORKING_CAPITAL],
+    [bsPrior, CODE.RETAINED_EARNINGS],
+  ];
+  const missing = required
+    .filter(([values, code]) => !Object.prototype.hasOwnProperty.call(values || {}, code))
+    .map(([, code]) => code);
+  checks.push({
+    check: 'REQUIRED_LINES_PRESENT',
+    status: missing.length === 0 ? 'pass' : 'fail',
+    expected: required.length,
+    actual: required.length - missing.length,
+    difference: -missing.length,
+    message:
+      missing.length === 0
+        ? 'All required cross-statement lines are present.'
+        : `Tie-out is incomplete; missing required lines: ${missing.join(', ')}.`,
+  });
+
   // 1. NET_INCOME_TO_RETAINED — net income flows into the change in retained earnings.
   //    (Ignores dividends; a divergence here flags an undocumented equity movement.)
   const retainedClosing = val(bs, CODE.RETAINED_EARNINGS);

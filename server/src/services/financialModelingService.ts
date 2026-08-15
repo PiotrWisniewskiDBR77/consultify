@@ -14,6 +14,7 @@ import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js'
 import logger from '../utils/Logger.js';
 import { normalizeCanonicalLineCode } from './financeCanonicalResolver.js';
 import { toPeriodIsoDate } from './financePeriodFormat.js';
+import { deriveEffectiveTaxRate, normalizeTaxRate, taxExpenseFromEbt } from './financeTaxPolicy.js';
 import { getVerifiedPackSeed } from './financialStatementPackService.js';
 import { loadLatestStatementVersionSnapshot } from './financialStatementService.js';
 import {
@@ -218,13 +219,21 @@ function firstNonZero(map: Map<string, number>, codes: string[]): number {
   return 0;
 }
 
+/** Presence and value are different financial facts: a reported zero is data. */
+function hasCanonicalLine(map: Map<string, number>, codes: string[]): boolean {
+  return codes.some((code) => map.has(code));
+}
+
 function sumAbsoluteCodes(map: Map<string, number>, codes: string[]): number {
   return codes.reduce((sum, code) => sum + Math.abs(numberOrZero(map.get(code))), 0);
 }
 
 function latestPeriodRows<T extends { period_label?: string | null }>(rows: T[]): T[] {
   const ranked = rows
-    .map((row) => ({ row, year: Number(String(row.period_label || '').match(/(?:19|20)\d{2}/)?.[0] || 0) }))
+    .map((row) => ({
+      row,
+      year: Number(String(row.period_label || '').match(/(?:19|20)\d{2}/)?.[0] || 0),
+    }))
     .filter((entry) => entry.year > 0);
   if (ranked.length === 0) return rows;
   const latestYear = Math.max(...ranked.map((entry) => entry.year));
@@ -246,7 +255,8 @@ function parseJsonObject(value: unknown): Record<string, any> {
 
 function seedPeriodLabel(value: Record<string, any>): string | null {
   const evidence = parseJsonObject(value.evidenceJson ?? value.evidence_json);
-  const label = value.periodLabel ?? value.period_label ?? evidence.periodLabel ?? evidence.period_label;
+  const label =
+    value.periodLabel ?? value.period_label ?? evidence.periodLabel ?? evidence.period_label;
   return label == null || String(label).trim() === '' ? null : String(label);
 }
 
@@ -270,7 +280,11 @@ function mergeAssumptions(
 async function loadSeedValueRows(
   statementIds: string[]
 ): Promise<Array<{ line_code: string; value: number; period_label?: string | null }>> {
-  const rowsFromSnapshots: Array<{ line_code: string; value: number; period_label?: string | null }> = [];
+  const rowsFromSnapshots: Array<{
+    line_code: string;
+    value: number;
+    period_label?: string | null;
+  }> = [];
   let snapshotCoverage = 0;
 
   for (const statementId of statementIds) {
@@ -375,9 +389,10 @@ async function buildSeededAssumptionsFromStatement(
   const ap = firstNonZero(valuesByCode, ['AP', 'CURRENT_LIABILITIES']);
 
   const missingCritical: string[] = [];
-  if (totalAssets === 0) missingCritical.push('TOTAL_ASSETS');
-  if (equity === 0) missingCritical.push('EQUITY');
-  if (cash === 0) missingCritical.push('CASH');
+  if (!hasCanonicalLine(valuesByCode, ['TOTAL_ASSETS'])) missingCritical.push('TOTAL_ASSETS');
+  if (!hasCanonicalLine(valuesByCode, ['TOTAL_EQUITY', 'EQUITY', 'EQUITY_CAPITAL']))
+    missingCritical.push('EQUITY');
+  if (!hasCanonicalLine(valuesByCode, ['CASH'])) missingCritical.push('CASH');
   if (missingCritical.length > 0) {
     throw new Error(`Statement missing critical lines: ${missingCritical.join(', ')}`);
   }
@@ -385,20 +400,25 @@ async function buildSeededAssumptionsFromStatement(
   const grossProfit = firstNonZero(valuesByCode, ['GROSS_PROFIT']);
   const ebit = firstNonZero(valuesByCode, ['EBIT']);
   const directOpex = firstNonZero(valuesByCode, ['OPEX']);
-  const baselineOpex = directOpex || Math.abs(grossProfit - ebit) || sumAbsoluteCodes(valuesByCode, [
-    'RND',
-    'SGA',
-    'SELLING_EXPENSES',
-    'GENERAL_ADMIN_EXPENSES',
-    'OTHER_OPEX',
-  ]);
+  const baselineOpex =
+    directOpex ||
+    Math.abs(grossProfit - ebit) ||
+    sumAbsoluteCodes(valuesByCode, [
+      'RND',
+      'SGA',
+      'SELLING_EXPENSES',
+      'GENERAL_ADMIN_EXPENSES',
+      'OTHER_OPEX',
+    ]);
   const directDepreciation = firstNonZero(valuesByCode, ['DEPRECIATION']);
-  const baselineDepreciation = directDepreciation || sumAbsoluteCodes(valuesByCode, [
-    'DEPRECIATION_PPE_CF',
-    'DEPRECIATION_ROU_CF',
-    'DEPRECIATION_INTANGIBLES_CF',
-    'DEPRECIATION_AMORTIZATION_CF',
-  ]);
+  const baselineDepreciation =
+    directDepreciation ||
+    sumAbsoluteCodes(valuesByCode, [
+      'DEPRECIATION_PPE_CF',
+      'DEPRECIATION_ROU_CF',
+      'DEPRECIATION_INTANGIBLES_CF',
+      'DEPRECIATION_AMORTIZATION_CF',
+    ]);
   const otherAssets = totalAssets - cash - ar - inventory - ppe;
   const openingBalanceResidual = totalAssets - totalLiabilities - equity;
   const otherLiabilities = totalAssets - equity - ap - debt;
@@ -412,13 +432,12 @@ async function buildSeededAssumptionsFromStatement(
     capex: Math.abs(firstNonZero(valuesByCode, ['CAPEX', 'CAPEX_CF', 'CFI'])),
   };
 
-  const missingBaselineLines = Object.entries({
-    revenue: baseline.revenue,
-    cogs: baseline.cogs,
-    opex: baseline.opex,
-  })
-    .filter(([, value]) => !numberOrZero(value))
-    .map(([key]) => key);
+  const missingBaselineLines = [
+    !hasCanonicalLine(valuesByCode, ['REVENUE']) ? 'revenue' : null,
+    !hasCanonicalLine(valuesByCode, ['COGS']) ? 'cogs' : null,
+    !hasCanonicalLine(valuesByCode, ['OPEX']) ? 'opex' : null,
+  ].filter((key): key is string => key !== null);
+  const taxRatePct = deriveEffectiveTaxRate(baseline);
 
   return {
     assumptions: {
@@ -435,6 +454,7 @@ async function buildSeededAssumptionsFromStatement(
       initialOtherLiabilities: otherLiabilities,
       initialPPE: ppe,
       baseline,
+      ...(taxRatePct === null ? {} : { taxRatePct }),
       seedSource: {
         type: 'statement',
         statementId,
@@ -502,9 +522,10 @@ async function buildSeededAssumptionsFromPack(
   const ap = firstNonZero(valuesByCode, ['AP', 'CURRENT_LIABILITIES']);
 
   const missingCritical: string[] = [];
-  if (totalAssets === 0) missingCritical.push('TOTAL_ASSETS');
-  if (equity === 0) missingCritical.push('EQUITY');
-  if (cash === 0) missingCritical.push('CASH');
+  if (!hasCanonicalLine(valuesByCode, ['TOTAL_ASSETS'])) missingCritical.push('TOTAL_ASSETS');
+  if (!hasCanonicalLine(valuesByCode, ['TOTAL_EQUITY', 'EQUITY', 'EQUITY_CAPITAL']))
+    missingCritical.push('EQUITY');
+  if (!hasCanonicalLine(valuesByCode, ['CASH'])) missingCritical.push('CASH');
   if (missingCritical.length > 0) {
     throw new Error(`Statement pack missing critical lines: ${missingCritical.join(', ')}`);
   }
@@ -512,20 +533,25 @@ async function buildSeededAssumptionsFromPack(
   const grossProfit = firstNonZero(valuesByCode, ['GROSS_PROFIT']);
   const ebit = firstNonZero(valuesByCode, ['EBIT']);
   const directOpex = firstNonZero(valuesByCode, ['OPEX']);
-  const baselineOpex = directOpex || Math.abs(grossProfit - ebit) || sumAbsoluteCodes(valuesByCode, [
-    'RND',
-    'SGA',
-    'SELLING_EXPENSES',
-    'GENERAL_ADMIN_EXPENSES',
-    'OTHER_OPEX',
-  ]);
+  const baselineOpex =
+    directOpex ||
+    Math.abs(grossProfit - ebit) ||
+    sumAbsoluteCodes(valuesByCode, [
+      'RND',
+      'SGA',
+      'SELLING_EXPENSES',
+      'GENERAL_ADMIN_EXPENSES',
+      'OTHER_OPEX',
+    ]);
   const directDepreciation = firstNonZero(valuesByCode, ['DEPRECIATION']);
-  const baselineDepreciation = directDepreciation || sumAbsoluteCodes(valuesByCode, [
-    'DEPRECIATION_PPE_CF',
-    'DEPRECIATION_ROU_CF',
-    'DEPRECIATION_INTANGIBLES_CF',
-    'DEPRECIATION_AMORTIZATION_CF',
-  ]);
+  const baselineDepreciation =
+    directDepreciation ||
+    sumAbsoluteCodes(valuesByCode, [
+      'DEPRECIATION_PPE_CF',
+      'DEPRECIATION_ROU_CF',
+      'DEPRECIATION_INTANGIBLES_CF',
+      'DEPRECIATION_AMORTIZATION_CF',
+    ]);
   const otherAssets = totalAssets - cash - ar - inventory - ppe;
   const openingBalanceResidual = totalAssets - totalLiabilities - equity;
   const otherLiabilities = totalAssets - equity - ap - debt;
@@ -539,13 +565,12 @@ async function buildSeededAssumptionsFromPack(
     capex: Math.abs(firstNonZero(valuesByCode, ['CAPEX', 'CAPEX_CF', 'CFI'])),
   };
 
-  const missingBaselineLines = Object.entries({
-    revenue: baseline.revenue,
-    cogs: baseline.cogs,
-    opex: baseline.opex,
-  })
-    .filter(([, value]) => !numberOrZero(value))
-    .map(([key]) => key);
+  const missingBaselineLines = [
+    !hasCanonicalLine(valuesByCode, ['REVENUE']) ? 'revenue' : null,
+    !hasCanonicalLine(valuesByCode, ['COGS']) ? 'cogs' : null,
+    !hasCanonicalLine(valuesByCode, ['OPEX']) ? 'opex' : null,
+  ].filter((key): key is string => key !== null);
+  const taxRatePct = deriveEffectiveTaxRate(baseline);
 
   const statementLabel =
     packSeed.periodLabel || String(statements[0]?.period_label || statements[0]?.period_end || '');
@@ -565,6 +590,7 @@ async function buildSeededAssumptionsFromPack(
       initialOtherLiabilities: otherLiabilities,
       initialPPE: ppe,
       baseline,
+      ...(taxRatePct === null ? {} : { taxRatePct }),
       seedSource: {
         type: 'statement_pack',
         statementPackId: packId,
@@ -852,6 +878,7 @@ export async function computeModel(modelId: string): Promise<ComputeResult> {
     useZeroChangeBaseline && Number.isFinite(Number(forecastDrivers.revenueGrowthPct));
   // Monthly compute resolution (always 12 periods/year internally)
   const baselinePerPeriod = baselineRevenue / 12;
+  const taxRate = normalizeTaxRate(assumptions.taxRatePct);
 
   // Expand all events
   const eventAmounts = new Map<string, Map<string, number>>();
@@ -877,33 +904,35 @@ export async function computeModel(modelId: string): Promise<ComputeResult> {
     let totalWCChange = 0,
       totalEquityInjection = 0,
       totalDividend = 0;
+    let hasExplicitTaxEvent = false;
 
     if (useZeroChangeBaseline) {
       const forecastYear = Math.floor(pi / 12) + 1;
       const annualRevenue = hasForecastDrivers
-        ? baselineRevenue * Math.pow(1 + Number(forecastDrivers.revenueGrowthPct) / 100, forecastYear)
+        ? baselineRevenue *
+          Math.pow(1 + Number(forecastDrivers.revenueGrowthPct) / 100, forecastYear)
         : baselineRevenue;
       totalRevenue = annualRevenue / 12;
       const grossMarginPct = Number(forecastDrivers.grossMarginPct);
       const opexPctRevenue = Number(forecastDrivers.opexPctRevenue);
       const depreciationPctRevenue = Number(forecastDrivers.depreciationPctRevenue);
       const capexPctRevenue = Number(forecastDrivers.capexPctRevenue);
-      totalCOGS = totalRevenue *
+      totalCOGS =
+        totalRevenue *
         (Number.isFinite(grossMarginPct) ? 1 - grossMarginPct / 100 : baselineRatios.cogs || 0);
-      totalOPEX = totalRevenue *
+      totalOPEX =
+        totalRevenue *
         (Number.isFinite(opexPctRevenue) ? opexPctRevenue / 100 : baselineRatios.opex || 0);
-      totalDepr = totalRevenue *
+      totalDepr =
+        totalRevenue *
         (Number.isFinite(depreciationPctRevenue)
           ? depreciationPctRevenue / 100
           : baselineRatios.depreciation || 0);
       totalInterest = Number.isFinite(Number(forecastDrivers.debtCostPct))
         ? (runningDebt * Number(forecastDrivers.debtCostPct)) / 100 / 12
         : baselinePerPeriod * (baselineRatios.interest || 0);
-      const preTaxIncome = totalRevenue - totalCOGS - totalOPEX - totalDepr - totalInterest;
-      totalTax = hasForecastDrivers
-        ? Math.max(0, preTaxIncome * numberOrZero(assumptions.taxRatePct ?? 0.21))
-        : baselinePerPeriod * (baselineRatios.tax || 0);
-      totalCapex = totalRevenue *
+      totalCapex =
+        totalRevenue *
         (Number.isFinite(capexPctRevenue) ? capexPctRevenue / 100 : baselineRatios.capex || 0);
     }
 
@@ -935,6 +964,7 @@ export async function computeModel(modelId: string): Promise<ComputeResult> {
         case 'tax_accrual':
         case 'tax_payment':
           totalTax += Math.abs(amt);
+          hasExplicitTaxEvent = true;
           break;
         case 'capex_purchase':
           totalCapex += Math.abs(amt);
@@ -967,6 +997,11 @@ export async function computeModel(modelId: string): Promise<ComputeResult> {
     out.pl.EBIT = out.pl.EBITDA - totalDepr;
     out.pl.INTEREST_EXPENSE = -totalInterest;
     out.pl.EBT = out.pl.EBIT - totalInterest;
+    // Tax is driven by positive taxable profit, never by revenue. Explicit tax
+    // events override the canonical rate for the affected period.
+    if (!hasExplicitTaxEvent && taxRate !== null) {
+      totalTax = taxExpenseFromEbt(out.pl.EBT, taxRate);
+    }
     out.pl.TAX = -totalTax;
     out.pl.NET_INCOME = out.pl.EBT - totalTax;
 
@@ -1033,8 +1068,7 @@ export async function computeModel(modelId: string): Promise<ComputeResult> {
     out.bs.CURRENT_LIABILITIES = runningAP;
     out.bs.LONG_TERM_DEBT = runningDebt;
     out.bs.OTHER_LIABILITIES = initialOtherLiabilities;
-    out.bs.TOTAL_LIABILITIES =
-      out.bs.CURRENT_LIABILITIES + runningDebt + out.bs.OTHER_LIABILITIES;
+    out.bs.TOTAL_LIABILITIES = out.bs.CURRENT_LIABILITIES + runningDebt + out.bs.OTHER_LIABILITIES;
     out.bs.EQUITY_CAPITAL = runningEquityCapital;
     out.bs.RETAINED_EARNINGS = runningRetainedEarnings;
     out.bs.TOTAL_EQUITY = runningEquityCapital + runningRetainedEarnings;
