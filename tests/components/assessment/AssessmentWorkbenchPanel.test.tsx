@@ -18,6 +18,12 @@ vi.mock('react-hot-toast', () => ({
   },
 }));
 
+vi.mock('react-i18next', () => {
+  const t = (_key: string, fallback?: string) => fallback ?? _key;
+  const translation = { t, i18n: { language: 'en' } };
+  return { useTranslation: () => translation };
+});
+
 vi.mock('@/services/api/v8/assessment', () => ({
   V8AssessmentApi: {
     getWorkbench: (...args: unknown[]) => getWorkbench(...args),
@@ -98,7 +104,7 @@ describe('AssessmentWorkbenchPanel', () => {
       expect(screen.getByText('Assessment Workbench')).toBeInTheDocument();
     });
 
-    expect(screen.getByText(/awaiting_evidence/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Awaiting evidence/i).length).toBeGreaterThan(0);
     expect(screen.getByText('DRD canonical definition')).toBeInTheDocument();
     expect(screen.getByText('Add evidence before scoring.')).toBeInTheDocument();
     expect(screen.getByText('Missing interpretation proposal')).toBeInTheDocument();
