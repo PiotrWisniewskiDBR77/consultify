@@ -128,6 +128,8 @@
       "tests/unit/backend/agentPlan.routes.test.ts",
       "server/src/services/v8/__tests__/v8-smoke-offline-validation.test.ts",
       "server/src/services/v8/__tests__/v8-smoke-suite.test.ts",
+      "tests/integration/transactions.test.js",
+      "tests/integration/routes/presentations.share-revoke-and-rate-limit.route.test.ts",
       "tests/integration/routes/p21b-reports-template-artifactrun-e2e.sqlite.integration.test.ts",
       "server/src/routes/__tests__/document-studio-client-reader.routes.test.ts",
       "server/src/services/__tests__/nativeOwnerPinnedClient.test.ts"
@@ -196,7 +198,8 @@
         "tests/integration/routes/rolloutExtensions.routes.test.ts",
         "tests/unit/backend/agentPlan.routes.test.ts",
         "server/src/services/v8/__tests__/v8-smoke-offline-validation.test.ts",
-        "server/src/services/v8/__tests__/v8-smoke-suite.test.ts"
+        "server/src/services/v8/__tests__/v8-smoke-suite.test.ts",
+        "tests/integration/routes/presentations.share-revoke-and-rate-limit.route.test.ts"
       ]
     },
     "realdb": {
@@ -261,7 +264,8 @@
         "tests/integration/ai/l6-database-tables.test.ts",
         "tests/integration/routes/billing.routes.l3.test.ts",
         "tests/integration/flows/content-management-integration.test.ts",
-        "tests/integration/routes/superadmin-overview.test.js"
+        "tests/integration/routes/superadmin-overview.test.js",
+        "tests/integration/transactions.test.js"
       ]
     },
     "externalRuntime": {

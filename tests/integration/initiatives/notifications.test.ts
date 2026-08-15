@@ -52,6 +52,22 @@ vi.mock('../../../server/src/utils/queryHelpers.js', () => ({
   buildInPlaceholders: (values: unknown[]) => values.map(() => '?').join(', '),
   buildOrgFilter: () => '',
   buildUserFilter: () => '',
+  withPgTransaction: async (work: (client: any) => Promise<unknown>) =>
+    work({
+      query: async (sql: string, params: unknown[]) => {
+        const statement = String(sql);
+        if (/^\s*select\s+\*\s+from\s+initiatives/i.test(statement)) {
+          const row = await mockQueryOne(statement, params);
+          return { rows: row ? [row] : [], rowCount: row ? 1 : 0 };
+        }
+        if (/^\s*select/i.test(statement)) {
+          const rows = await mockQueryAll(statement, params);
+          return { rows: rows ?? [], rowCount: rows?.length ?? 0 };
+        }
+        const result = await mockQueryRun(statement, params);
+        return { rows: [], rowCount: result?.changes ?? 0 };
+      },
+    }),
 }));
 
 // Readiness gate — never block (we test notification wiring, not gating).
@@ -70,6 +86,15 @@ vi.mock('../../../server/src/services/initiative/initiativeAccessResolver.js', (
 // AI gate flag OFF → AI soft-block path is skipped (fail-safe default).
 vi.mock('../../../server/src/services/initiative/initiativeGateAiConfig.js', () => ({
   isInitiativeGateAiEnabled: vi.fn(async () => false),
+}));
+
+// The notification contract is downstream of lifecycle governance. Supply a
+// current approved decision so the real BLOCKED -> EXECUTING transition can
+// commit and reach the notification side effect under test.
+vi.mock('../../../server/src/services/initiative/initiativeLifecycleGateDecisionService.js', () => ({
+  assertCurrentApprovedInitiativeLifecycleGateDecision: vi.fn(async () => ({
+    decisionId: 'decision-current-go',
+  })),
 }));
 
 import { InitiativeController } from '../../../server/src/controllers/InitiativeController.js';
@@ -91,7 +116,7 @@ async function callStatusUpdate(opts: {
   mockQueryOne.mockImplementation(async (sql: string) => {
     const s = String(sql);
     // Initial lookup in updateInitiativeStatus.
-    if (s.includes('SELECT status, name, created_by')) {
+    if (s.includes('SELECT status, name, created_by') || s.includes('FOR UPDATE')) {
       return { status: opts.currentStatus, name: 'Test Initiative', created_by: ACTOR_ID };
     }
     // getInitiativeNotificationRecipients owner lookup.
