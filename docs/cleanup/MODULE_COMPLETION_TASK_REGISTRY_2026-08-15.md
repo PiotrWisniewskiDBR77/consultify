@@ -358,8 +358,11 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
   anchors sprzed przejścia hubów na `StandardModuleBar`, Results VNext i
   kanoniczny root Outputs. Nie znaleziono regresji produktu; focused gate,
   frontend typecheck i `git diff --check` są zielone.
-- Stan cząstkowy CLEAN-001B: 37/58 plików sklasyfikowanych i zielonych,
-  261/261 testów w zakończonych partiach. Otwarte product gaps i testy
+- Piąty verdict: `financialNarrativeBlocks.test.ts` był `HARNESS_BUG` po
+  migracji helpera do singletonu i18n; test otrzymał jawny angielski katalog
+  zamiast akceptować surowy klucz tłumaczenia. Focused 6/6 PASS.
+- Stan cząstkowy CLEAN-001B: 38/58 plików sklasyfikowanych i zielonych,
+  267/267 testów w zakończonych partiach. Otwarte product gaps i testy
   komponentów oczekujących na disposition nie są wliczane jako PASS.
 - Otwarty verdict z drugiej partii: test
   `PrezentacjeView.templateBrief.test.tsx` opisuje realną brakującą funkcję, nie
@@ -487,6 +490,36 @@ przechodzi wtedy do kodowania, dopóki rejestr nie wskaże chirurgicznego zakres
   `/zlecenia` nie są writerami w MVP.
 - DoD: create -> reload -> ten sam ID; brak UUID/raw enum/`NOT_CONNECTED` dla
   użytkownika; diagnostics tylko operator.
+
+#### AGT-001-G01 — rozmowa z Teresą tworzy i otwiera ten sam Transformation Case
+
+- Status: `DISCOVERY_REQUIRED`, P0; task: `AGT-001-T01`; klasyfikacja:
+  `MISWIRED` + `RUNTIME_UNPROVEN`; owner danych: `transformation_cases` przez
+  `TransformationCasesApi`, bez zapisu do `case_core` ani `ai_agent_plans`.
+- Requirement: Agent ma pozwalać zbudować flow automatycznie w rozmowie z
+  Teresą, a wynik rozmowy i ręczny builder muszą być projekcjami jednego Case i
+  jednego Plan (`docs/product/AGENT_HUB_UI_CONTRACT_V1.md`).
+- AS-IS: kanoniczny `src/components/AIChat/UnifiedChatPanel.tsx` nie importuje
+  `TransformationCasesApi`, nie rozpoznaje intencji planu i nie obsługuje
+  brakujących pól intake. Test
+  `tests/components/AIChat/UnifiedChatPanel.helpers.test.ts` odwołuje się do
+  nieistniejących eksportów `transformationIntakeMissingLabels`,
+  `transformationCaseReadyMessage` i `resolveWorkspaceArtifactKind`.
+- Recovery evidence: niekanoniczny commit `fec04bc5e` zawiera działający szkic
+  `detectTransformationPlanIntent -> startPlanningIntake -> answer -> convert`
+  oraz deep link z zakodowanym `transformationCaseId`; commit `3977b36b4`
+  zawiera resolver kontekstu Deck Builder. Oba fragmenty są kandydatami do
+  chirurgicznego diffu, nigdy do merge całego brancha.
+- TO-BE minus AS-IS: normalna rozmowa tworzy tenant-scoped intake, prosi tylko o
+  brakujące pola, konwertuje dokładnie raz do `transformation_cases` i otwiera
+  ten sam ID w `/my-work?tab=agent`; ręczny Agent widzi tę samą wersję planu.
+- Następny krok discovery: porównać szkice z aktualnym stream/send pipeline,
+  wskazać minimalny allowlist Chat + transformation API i rozstrzygnąć, czy
+  intake działa przed czy po server-stream confirm. Odpowiedź ma zawierać mapę
+  symboli, request/response, zapis DB i listę konfliktów ze współczesnym Chat.
+- Wymagany proof po implementacji: intent positive/negative; incomplete intake;
+  Unicode/query encoding; stale/replay; tenant denial; create -> readback ->
+  cold reload w Chat i Agent; normalny desktop/mobile browser bez query flag.
 
 ### AGT-002 — Teresa i człowiek edytują jeden Plan
 

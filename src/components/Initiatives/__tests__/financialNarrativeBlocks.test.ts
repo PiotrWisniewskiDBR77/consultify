@@ -4,7 +4,18 @@
  * one section replaces ONLY its own block and never clobbers the other's content,
  * and pre-existing free-form text is preserved.
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+vi.mock('@/i18n', () => ({
+  default: {
+    t: (key: string) =>
+      ({
+        'initiatives.financialNarrativeBlocks.financialAnalysisSizingRoi':
+          'Financial analysis (sizing + ROI)',
+        'initiatives.financialNarrativeBlocks.financialImpact': 'Financial impact',
+      })[key] ?? key,
+  },
+}));
 
 import { FINANCIAL_BLOCK_MARKER, upsertFinancialBlock } from '../financialNarrativeBlocks';
 
