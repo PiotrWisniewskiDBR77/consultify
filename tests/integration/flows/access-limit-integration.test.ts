@@ -1,11 +1,8 @@
-import path from 'path';
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import request from 'supertest';
 import { testFactory } from '../../helpers/TestFactory';
 
 vi.hoisted(() => {
-    const path = require('path');
-    process.env.SQLITE_PATH = path.resolve(__dirname, 'access-limit-integration.db');
     process.env.MOCK_DB = 'false';
     process.env.TEST_TYPE = 'integration';
 });
@@ -13,6 +10,7 @@ vi.hoisted(() => {
 import app from '../../../server/src/index';
 import { initializeDatabase } from '../../../server/src/database/DatabaseInitializer.js';
 import { resetConnection } from '../../../server/src/database/Database.js';
+import { all as dbAll } from '../../../server/src/utils/DbPromise.js';
 
 /**
  * L3 Integration Tests: Access & Usage Limit Integration
@@ -23,8 +21,11 @@ import { resetConnection } from '../../../server/src/database/Database.js';
  * - AccessTrialService
  * - AccessUsageService
  */
-describe('L3: Access & Usage Limit Integration', () => {
-    const testDbPath = path.resolve(__dirname, 'access-limit-integration.db');
+const describeRealDb = process.env.RUN_DB_TESTS === '1' && process.env.DATABASE_URL
+    ? describe
+    : describe.skip;
+
+describeRealDb('L3: Access & Usage Limit Integration', () => {
     let adminToken: string;
     let testOrgId: string;
 
@@ -58,6 +59,24 @@ describe('L3: Access & Usage Limit Integration', () => {
     });
 
     describe('Resource Limit Enforcement', () => {
+        it('has the complete AccessPolicy fresh-schema contract', async () => {
+            const rows = await dbAll<{ column_name: string }>(
+                `SELECT column_name FROM information_schema.columns
+                 WHERE table_schema = 'public'
+                   AND ((table_name = 'organizations' AND column_name = 'trial_tokens_used')
+                     OR (table_name = 'organization_billing' AND column_name IN
+                       ('billing_rail', 'contract_status', 'grace_until', 'access_expires_at')))
+                 ORDER BY column_name`
+            );
+            expect(rows.map((row) => row.column_name)).toEqual([
+                'access_expires_at',
+                'billing_rail',
+                'contract_status',
+                'grace_until',
+                'trial_tokens_used',
+            ]);
+        });
+
         it('should allow resource creation within plan limits', async () => {
             // Assuming 'starter' plan allows at least some projects
             const res = await request(app)
