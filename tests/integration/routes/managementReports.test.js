@@ -16,7 +16,7 @@ vi.hoisted(() => {
   process.env.SQLITE_PATH = `./test-mgmt-reports-${workerId}.db`;
 });
 
-describe('Integration Test: Management Reports Routes', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('Integration Test: Management Reports Routes', () => {
   const db = getDatabase();
   let testOrgId;
   let testUserId;

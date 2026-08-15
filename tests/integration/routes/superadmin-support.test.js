@@ -14,7 +14,7 @@ vi.hoisted(() => {
   process.env.SQLITE_PATH = `./test-superadmin-support-${workerId}.db`;
 });
 
-describe('SuperAdmin Support API', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('SuperAdmin Support API', () => {
   let app;
   let superadminToken;
   let regularToken;

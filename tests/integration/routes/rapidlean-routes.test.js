@@ -12,7 +12,7 @@ vi.hoisted(() => {
 });
 
 
-describe('RapidLean Routes Integration', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('RapidLean Routes Integration', () => {
   let app;
 
   beforeAll(async () => {

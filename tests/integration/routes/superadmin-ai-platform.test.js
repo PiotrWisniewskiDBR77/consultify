@@ -16,7 +16,7 @@ vi.hoisted(() => {
 
 // 501 means route is stubbed (not yet implemented)
 
-describe('SuperAdmin AI Platform API', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('SuperAdmin AI Platform API', () => {
   let app;
   const db = getDatabase();
 

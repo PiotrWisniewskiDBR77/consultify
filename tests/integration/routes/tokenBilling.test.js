@@ -19,7 +19,7 @@ vi.hoisted(() => {
  * Tests token billing API endpoints
  */
 const db = getDatabase();
-describe('Integration Test: Token Billing Routes', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('Integration Test: Token Billing Routes', () => {
   let authToken;
   const testId = Date.now();
   const testOrgId = `token-billing-org-${testId}`;

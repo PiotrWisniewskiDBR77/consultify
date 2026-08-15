@@ -1,0 +1,335 @@
+{
+  "baseline": "c0fc0aa62ee9d719e285c792c572936b9e484066",
+  "selection": "P2 records sorted by path, records 42-82 (last 41)",
+  "count": 41,
+  "records": [
+    {
+      "file": "tests/integration/routes/genericReports.no-stubs.test.ts",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 0,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/integration/routes/initiative-generator.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/initiatives.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 5,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/invitations.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 6,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/legal.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/managementReports.test.js",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 5,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/integration/routes/media-ingestion.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/metrics.conversion-intelligence.no-stub.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/my-work.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/notifications.escalations.authz.test.ts",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 3,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/integration/routes/notifications.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 4,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/pinned-prompts.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/pmoContext.test.js",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 5,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/integration/routes/rapidlean-routes.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/roadmap.test.js",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 6,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/integration/routes/sessions.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 2,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/settings.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/stage-gates.test.js",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 3,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/integration/routes/superadmin-ai-platform.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 13,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/superadmin-analytics.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 8,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/superadmin-configuration.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 7,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/superadmin-customers.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 3,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/superadmin-iam.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 3,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/superadmin-organizations-extended.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/superadmin-revenue.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 4,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/superadmin-security.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 2,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/superadmin-support.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/superadmin-system.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 12,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/teams.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/tokenBilling.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/routes/users.test.js",
+      "category": "STALE_CONTRACT",
+      "priority": "P2",
+      "failedAssertions": 1,
+      "pendingAssertions": 0,
+      "reason": "Legacy JavaScript route/integration contract requires current-router validation before product changes."
+    },
+    {
+      "file": "tests/integration/settings/account-deletion-routes-guard.test.ts",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 6,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/integration/settings/gdpr-settings-no-stubs.test.ts",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 3,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/integration/storage_security.test.js",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 4,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/integration/system/db-health.contract-codes.test.ts",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 3,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/integration/system/health.database.correlation-header.contract.test.ts",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 2,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/integration/test-support/testSupportRoutes.test.ts",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 4,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/unit/components/Execution/executionInitiativesKanban.dnd.test.tsx",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 0,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/unit/components/settings/ConnectedAppsSettings.honesty.test.tsx",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 0,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/unit/components/settings/MappingDriftPanel.honesty.test.tsx",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 0,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    },
+    {
+      "file": "tests/views/FullRoadmapView.test.tsx",
+      "category": "EXPECTED_PENDING",
+      "priority": "P2",
+      "failedAssertions": 0,
+      "pendingAssertions": 0,
+      "reason": "No failed assertion; file is non-green only because tests are pending, todo, or skipped."
+    }
+  ]
+}

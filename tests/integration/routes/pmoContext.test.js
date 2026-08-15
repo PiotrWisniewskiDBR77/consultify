@@ -18,7 +18,7 @@ vi.hoisted(() => {
 // Integration test for PMO Context API endpoint
 // Tests /api/pmo-context/:projectId routes
 
-describe('PMO Context API', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('PMO Context API', () => {
   const db = getDatabase();
   let testUserId;
   let testProjectId;

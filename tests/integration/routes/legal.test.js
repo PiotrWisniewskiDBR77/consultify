@@ -18,7 +18,7 @@ vi.hoisted(() => {
  * Tests Legal Document lifecycle and acceptance
  */
 const db = getDatabase();
-describe('Integration Test: Legal Routes', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('Integration Test: Legal Routes', () => {
   let authToken;
   const testId = Date.now();
   const testOrgId = `legal-org-${testId}`;

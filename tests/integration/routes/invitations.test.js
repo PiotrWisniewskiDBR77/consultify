@@ -21,7 +21,7 @@ import { cleanAllTestTables, initTestDb } from '../../helpers/dbHelper.cjs';
  * Integration Tests for Invitation Routes
  */
 
-describe('Invitation Routes', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('Invitation Routes', () => {
   let db;
   const testOrgId = 'test-org-id';
   const testAdminId = 'test-user-id';

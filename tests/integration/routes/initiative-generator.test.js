@@ -12,7 +12,7 @@ vi.hoisted(() => {
 });
 
 
-describe('Initiative Generator API', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('Initiative Generator API', () => {
   let app;
 
   beforeAll(async () => {

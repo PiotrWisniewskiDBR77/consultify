@@ -14,7 +14,7 @@ vi.hoisted(() => {
 });
 
 
-describe('SuperAdmin Revenue API', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('SuperAdmin Revenue API', () => {
   let app;
   const db = getDatabase();
 

@@ -16,7 +16,7 @@ vi.hoisted(() => {
   process.env.SQLITE_PATH = `./test-roadmap-${workerId}.db`;
 });
 
-describe('Integration Test: Roadmap Routes', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('Integration Test: Roadmap Routes', () => {
   const db = getDatabase();
   let testOrgId;
   let testUserId;

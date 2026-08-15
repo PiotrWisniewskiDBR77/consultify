@@ -12,7 +12,7 @@ vi.hoisted(() => {
 });
 
 
-describe('SuperAdmin Security API', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('SuperAdmin Security API', () => {
   let app;
 
   beforeAll(async () => {

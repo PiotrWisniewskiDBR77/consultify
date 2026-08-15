@@ -5,8 +5,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import MappingDriftPanel from '@/components/settings/integrations/MappingDriftPanel';
 import { V8SyncApi } from '@/services/api/v8/sync';
 
-const tMock = (_key: string, fallback?: string | { defaultValue?: string }) =>
-  typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key);
+const { tMock } = vi.hoisted(() => ({
+  tMock: (_key: string, fallback?: string | { defaultValue?: string }) =>
+    typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key),
+}));
 
 vi.mock('@/services/api/v8/client', () => ({
   v8Get: vi.fn(),
@@ -26,7 +28,8 @@ vi.mock('react-hot-toast', () => ({
   },
 }));
 
-vi.mock('react-i18next', () => ({
+vi.mock('react-i18next', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('react-i18next')>()),
   useTranslation: () => ({
     t: tMock,
   }),

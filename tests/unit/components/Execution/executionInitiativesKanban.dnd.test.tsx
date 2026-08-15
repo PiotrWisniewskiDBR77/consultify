@@ -72,7 +72,10 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 
-vi.mock('lucide-react', () => ({ User: () => null }));
+vi.mock('lucide-react', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('lucide-react')>()),
+  User: () => null,
+}));
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 import { ExecutionInitiativesKanbanView } from '@/components/Execution/ExecutionInitiativesKanbanView';

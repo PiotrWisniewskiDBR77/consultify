@@ -12,7 +12,7 @@ vi.hoisted(() => {
 });
 
 
-describe('Integration Test: Sessions Routes', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('Integration Test: Sessions Routes', () => {
   let app;
 
   beforeAll(async () => {

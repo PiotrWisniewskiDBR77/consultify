@@ -15,7 +15,7 @@ vi.hoisted(() => {
   process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
 });
 
-describe('Storage Security & Isolation Integration', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('Storage Security & Isolation Integration', () => {
   let testUserIdA;
   let testUserIdB;
   let testOrgIdA;

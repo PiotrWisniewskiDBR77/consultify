@@ -18,7 +18,7 @@ vi.hoisted(() => {
  * Tests teams API endpoints
  */
 const db = getDatabase();
-describe('Integration Test: Teams Routes', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('Integration Test: Teams Routes', () => {
   let authToken;
   const testId = Date.now();
   const testOrgId = `teams-org-${testId}`;

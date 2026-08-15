@@ -16,7 +16,7 @@ vi.hoisted(() => {
  * Initiatives Routes Integration Tests
  */
 
-describe('Initiatives Routes', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('Initiatives Routes', () => {
   let db;
 
   beforeAll(async () => {

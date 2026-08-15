@@ -4,8 +4,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ConnectedAppsSettings } from '@/components/settings/ConnectedAppsSettings';
 
-const refreshMock = vi.fn();
-const disconnectMock = vi.fn();
+const { refreshMock, disconnectMock } = vi.hoisted(() => ({
+  refreshMock: vi.fn(),
+  disconnectMock: vi.fn(),
+}));
 
 vi.mock('@/hooks/useUserIntegrations', () => ({
   useUserIntegrations: () => ({
@@ -46,7 +48,8 @@ vi.mock('react-hot-toast', () => ({
   },
 }));
 
-vi.mock('react-i18next', () => ({
+vi.mock('react-i18next', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('react-i18next')>()),
   useTranslation: () => ({
     t: (_key: string, fallback?: string | { defaultValue?: string }) =>
       typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key),

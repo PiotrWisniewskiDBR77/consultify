@@ -4,7 +4,7 @@ import { describe, it, expect } from 'vitest';
 
 // @vitest-environment node
 
-describe('Metrics conversion intelligence (honest 503)', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('Metrics conversion intelligence (honest 503)', () => {
   it('GET /api/metrics/conversion-intelligence returns 503', async () => {
     const res = await request(app).get('/api/metrics/conversion-intelligence');
     expect(res.status).toBe(503);

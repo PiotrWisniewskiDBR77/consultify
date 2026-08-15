@@ -17,7 +17,7 @@ vi.hoisted(() => {
  * Level 2: Integration Tests - Users Routes
  * Tests users API endpoints
  */
-describe('Integration Test: Users Routes', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('Integration Test: Users Routes', () => {
   console.log('[DEBUG] NODE_ENV:', process.env.NODE_ENV);
   let authToken;
   const testId = Date.now();

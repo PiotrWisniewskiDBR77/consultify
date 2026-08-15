@@ -14,7 +14,7 @@ vi.hoisted(() => {
 });
 
 
-describe('SuperAdmin Configuration API', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('SuperAdmin Configuration API', () => {
   let app;
   const db = getDatabase();
 

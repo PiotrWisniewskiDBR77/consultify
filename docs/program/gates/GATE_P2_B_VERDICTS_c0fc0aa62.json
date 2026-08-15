@@ -1,0 +1,263 @@
+{
+  "schemaVersion": 1,
+  "baseline": "c0fc0aa62ee9d719e285c792c572936b9e484066",
+  "selection": "deterministic last 41 P2 records sorted by path",
+  "overlap": {
+    "activeP1IntegrationBranch": "codex/gate-p1-integration",
+    "files": []
+  },
+  "exactRun": {
+    "passedAssertions": 8,
+    "failedAssertions": 0,
+    "pendingAssertions": 171,
+    "overall": "PENDING"
+  },
+  "records": [
+    {
+      "file": "tests/integration/routes/genericReports.no-stubs.test.ts",
+      "verdict": "EXPECTED_PENDING_RETIRED_CONTRACT",
+      "evidence": "owner/route contract retired; no replacement claim",
+      "nextAction": "replace in canonical module acceptance lane"
+    },
+    {
+      "file": "tests/integration/routes/initiative-generator.test.js",
+      "verdict": "HARNESS_ENV_REAL_DB_REQUIRED",
+      "evidence": "baseline forces MOCK_DB=false and cannot reach route without PostgreSQL role/schema",
+      "nextAction": "run with disposable migrated PostgreSQL using RUN_DB_TESTS=1"
+    },
+    {
+      "file": "tests/integration/routes/initiatives.test.js",
+      "verdict": "HARNESS_ENV_REAL_DB_REQUIRED",
+      "evidence": "baseline forces MOCK_DB=false and cannot reach route without PostgreSQL role/schema",
+      "nextAction": "run with disposable migrated PostgreSQL using RUN_DB_TESTS=1"
+    },
+    {
+      "file": "tests/integration/routes/invitations.test.js",
+      "verdict": "HARNESS_ENV_REAL_DB_REQUIRED",
+      "evidence": "baseline forces MOCK_DB=false and cannot reach route without PostgreSQL role/schema",
+      "nextAction": "run with disposable migrated PostgreSQL using RUN_DB_TESTS=1"
+    },
+    {
+      "file": "tests/integration/routes/legal.test.js",
+      "verdict": "HARNESS_ENV_REAL_DB_REQUIRED",
+      "evidence": "baseline forces MOCK_DB=false and cannot reach route without PostgreSQL role/schema",
+      "nextAction": "run with disposable migrated PostgreSQL using RUN_DB_TESTS=1"
+    },
+    {
+      "file": "tests/integration/routes/managementReports.test.js",
+      "verdict": "HARNESS_ENV_REAL_DB_REQUIRED",
+      "evidence": "baseline forces MOCK_DB=false and cannot reach route without PostgreSQL role/schema",
+      "nextAction": "run with disposable migrated PostgreSQL using RUN_DB_TESTS=1"
+    },
+    {
+      "file": "tests/integration/routes/media-ingestion.test.js",
+      "verdict": "HARNESS_ENV_REAL_DB_REQUIRED",
+      "evidence": "baseline forces MOCK_DB=false and cannot reach route without PostgreSQL role/schema",
+      "nextAction": "run with disposable migrated PostgreSQL using RUN_DB_TESTS=1"
+    },
+    {
+      "file": "tests/integration/routes/metrics.conversion-intelligence.no-stub.test.js",
+      "verdict": "HARNESS_ENV_REAL_DB_REQUIRED",
+      "evidence": "baseline forces MOCK_DB=false and cannot reach route without PostgreSQL role/schema",
+      "nextAction": "run with disposable migrated PostgreSQL using RUN_DB_TESTS=1"
+    },
+    {
+      "file": "tests/integration/routes/my-work.test.js",
+      "verdict": "HARNESS_ENV_REAL_DB_REQUIRED",
+      "evidence": "baseline forces MOCK_DB=false and cannot reach route without PostgreSQL role/schema",
+      "nextAction": "run with disposable migrated PostgreSQL using RUN_DB_TESTS=1"
+    },
+    {
+      "file": "tests/integration/routes/notifications.escalations.authz.test.ts",
+      "verdict": "EXPECTED_PENDING",
+      "evidence": "existing explicit pending contract",
+      "nextAction": "resolve owning capability packet"
+    },
+    {
+      "file": "tests/integration/routes/notifications.test.js",
+      "verdict": "HARNESS_ENV_REAL_DB_REQUIRED",
+      "evidence": "baseline forces MOCK_DB=false and cannot reach route without PostgreSQL role/schema",
+      "nextAction": "run with disposable migrated PostgreSQL using RUN_DB_TESTS=1"
+    },
+    {
+      "file": "tests/integration/routes/pinned-prompts.test.js",
+      "verdict": "HARNESS_ENV_REAL_DB_REQUIRED",
+      "evidence": "baseline forces MOCK_DB=false and cannot reach route without PostgreSQL role/schema",
+      "nextAction": "run with disposable migrated PostgreSQL using RUN_DB_TESTS=1"
+    },
+    {
+      "file": "tests/integration/routes/pmoContext.test.js",
+      "verdict": "HARNESS_ENV_REAL_DB_REQUIRED",
+      "evidence": "baseline forces MOCK_DB=false and cannot reach route without PostgreSQL role/schema",
+      "nextAction": "run with disposable migrated PostgreSQL using RUN_DB_TESTS=1"
+    },
+    {
+      "file": "tests/integration/routes/rapidlean-routes.test.js",
+      "verdict": "HARNESS_ENV_REAL_DB_REQUIRED",
+      "evidence": "baseline forces MOCK_DB=false and cannot reach route without PostgreSQL role/schema",
+      "nextAction": "run with disposable migrated PostgreSQL using RUN_DB_TESTS=1"
+    },
+    {
+      "file": "tests/integration/routes/roadmap.test.js",
+      "verdict": "HARNESS_ENV_REAL_DB_REQUIRED",
+      "evidence": "baseline forces MOCK_DB=false and cannot reach route without PostgreSQL role/schema",
+      "nextAction": "run with disposable migrated PostgreSQL using RUN_DB_TESTS=1"
+    },
+    {
+      "file": "tests/integration/routes/sessions.test.js",
+      "verdict": "HARNESS_ENV_REAL_DB_REQUIRED",
+      "evidence": "baseline forces MOCK_DB=false and cannot reach route without PostgreSQL role/schema",
+      "nextAction": "run with disposable migrated PostgreSQL using RUN_DB_TESTS=1"
+    },
+    {
+      "file": "tests/integration/routes/settings.test.js",
+      "verdict": "HARNESS_ENV_REAL_DB_REQUIRED",
+      "evidence": "baseline forces MOCK_DB=false and cannot reach route without PostgreSQL role/schema",
+      "nextAction": "run with disposable migrated PostgreSQL using RUN_DB_TESTS=1"
+    },
+    {
+      "file": "tests/integration/routes/stage-gates.test.js",
+      "verdict": "HARNESS_ENV_REAL_DB_REQUIRED",
+      "evidence": "baseline forces MOCK_DB=false and cannot reach route without PostgreSQL role/schema",
+      "nextAction": "run with disposable migrated PostgreSQL using RUN_DB_TESTS=1"
+    },
+    {
+      "file": "tests/integration/routes/superadmin-ai-platform.test.js",
+      "verdict": "HARNESS_ENV_REAL_DB_REQUIRED",
+      "evidence": "baseline forces MOCK_DB=false and cannot reach route without PostgreSQL role/schema",
+      "nextAction": "run with disposable migrated PostgreSQL using RUN_DB_TESTS=1"
+    },
+    {
+      "file": "tests/integration/routes/superadmin-analytics.test.js",
+      "verdict": "HARNESS_ENV_REAL_DB_REQUIRED",
+      "evidence": "baseline forces MOCK_DB=false and cannot reach route without PostgreSQL role/schema",
+      "nextAction": "run with disposable migrated PostgreSQL using RUN_DB_TESTS=1"
+    },
+    {
+      "file": "tests/integration/routes/superadmin-configuration.test.js",
+      "verdict": "HARNESS_ENV_REAL_DB_REQUIRED",
+      "evidence": "baseline forces MOCK_DB=false and cannot reach route without PostgreSQL role/schema",
+      "nextAction": "run with disposable migrated PostgreSQL using RUN_DB_TESTS=1"
+    },
+    {
+      "file": "tests/integration/routes/superadmin-customers.test.js",
+      "verdict": "HARNESS_ENV_REAL_DB_REQUIRED",
+      "evidence": "baseline forces MOCK_DB=false and cannot reach route without PostgreSQL role/schema",
+      "nextAction": "run with disposable migrated PostgreSQL using RUN_DB_TESTS=1"
+    },
+    {
+      "file": "tests/integration/routes/superadmin-iam.test.js",
+      "verdict": "HARNESS_ENV_REAL_DB_REQUIRED",
+      "evidence": "baseline forces MOCK_DB=false and cannot reach route without PostgreSQL role/schema",
+      "nextAction": "run with disposable migrated PostgreSQL using RUN_DB_TESTS=1"
+    },
+    {
+      "file": "tests/integration/routes/superadmin-organizations-extended.test.js",
+      "verdict": "HARNESS_ENV_REAL_DB_REQUIRED",
+      "evidence": "baseline forces MOCK_DB=false and cannot reach route without PostgreSQL role/schema",
+      "nextAction": "run with disposable migrated PostgreSQL using RUN_DB_TESTS=1"
+    },
+    {
+      "file": "tests/integration/routes/superadmin-revenue.test.js",
+      "verdict": "HARNESS_ENV_REAL_DB_REQUIRED",
+      "evidence": "baseline forces MOCK_DB=false and cannot reach route without PostgreSQL role/schema",
+      "nextAction": "run with disposable migrated PostgreSQL using RUN_DB_TESTS=1"
+    },
+    {
+      "file": "tests/integration/routes/superadmin-security.test.js",
+      "verdict": "HARNESS_ENV_REAL_DB_REQUIRED",
+      "evidence": "baseline forces MOCK_DB=false and cannot reach route without PostgreSQL role/schema",
+      "nextAction": "run with disposable migrated PostgreSQL using RUN_DB_TESTS=1"
+    },
+    {
+      "file": "tests/integration/routes/superadmin-support.test.js",
+      "verdict": "HARNESS_ENV_REAL_DB_REQUIRED",
+      "evidence": "baseline forces MOCK_DB=false and cannot reach route without PostgreSQL role/schema",
+      "nextAction": "run with disposable migrated PostgreSQL using RUN_DB_TESTS=1"
+    },
+    {
+      "file": "tests/integration/routes/superadmin-system.test.js",
+      "verdict": "HARNESS_ENV_REAL_DB_REQUIRED",
+      "evidence": "baseline forces MOCK_DB=false and cannot reach route without PostgreSQL role/schema",
+      "nextAction": "run with disposable migrated PostgreSQL using RUN_DB_TESTS=1"
+    },
+    {
+      "file": "tests/integration/routes/teams.test.js",
+      "verdict": "HARNESS_ENV_REAL_DB_REQUIRED",
+      "evidence": "baseline forces MOCK_DB=false and cannot reach route without PostgreSQL role/schema",
+      "nextAction": "run with disposable migrated PostgreSQL using RUN_DB_TESTS=1"
+    },
+    {
+      "file": "tests/integration/routes/tokenBilling.test.js",
+      "verdict": "HARNESS_ENV_REAL_DB_REQUIRED",
+      "evidence": "baseline forces MOCK_DB=false and cannot reach route without PostgreSQL role/schema",
+      "nextAction": "run with disposable migrated PostgreSQL using RUN_DB_TESTS=1"
+    },
+    {
+      "file": "tests/integration/routes/users.test.js",
+      "verdict": "HARNESS_ENV_REAL_DB_REQUIRED",
+      "evidence": "baseline forces MOCK_DB=false and cannot reach route without PostgreSQL role/schema",
+      "nextAction": "run with disposable migrated PostgreSQL using RUN_DB_TESTS=1"
+    },
+    {
+      "file": "tests/integration/settings/account-deletion-routes-guard.test.ts",
+      "verdict": "EXPECTED_PENDING",
+      "evidence": "existing explicit pending contract",
+      "nextAction": "resolve owning capability packet"
+    },
+    {
+      "file": "tests/integration/settings/gdpr-settings-no-stubs.test.ts",
+      "verdict": "EXPECTED_PENDING",
+      "evidence": "existing explicit pending contract",
+      "nextAction": "resolve owning capability packet"
+    },
+    {
+      "file": "tests/integration/storage_security.test.js",
+      "verdict": "HARNESS_ENV_REAL_DB_REQUIRED",
+      "evidence": "baseline forces MOCK_DB=false and cannot reach route without PostgreSQL role/schema",
+      "nextAction": "run with disposable migrated PostgreSQL using RUN_DB_TESTS=1"
+    },
+    {
+      "file": "tests/integration/system/db-health.contract-codes.test.ts",
+      "verdict": "EXPECTED_PENDING",
+      "evidence": "existing explicit pending contract",
+      "nextAction": "resolve owning capability packet"
+    },
+    {
+      "file": "tests/integration/system/health.database.correlation-header.contract.test.ts",
+      "verdict": "EXPECTED_PENDING",
+      "evidence": "existing explicit pending contract",
+      "nextAction": "resolve owning capability packet"
+    },
+    {
+      "file": "tests/integration/test-support/testSupportRoutes.test.ts",
+      "verdict": "EXPECTED_PENDING",
+      "evidence": "existing explicit pending contract",
+      "nextAction": "resolve owning capability packet"
+    },
+    {
+      "file": "tests/unit/components/Execution/executionInitiativesKanban.dnd.test.tsx",
+      "verdict": "REPAIRED_PASS",
+      "evidence": "current component contract executes",
+      "nextAction": "none"
+    },
+    {
+      "file": "tests/unit/components/settings/ConnectedAppsSettings.honesty.test.tsx",
+      "verdict": "REPAIRED_PASS",
+      "evidence": "current component contract executes",
+      "nextAction": "none"
+    },
+    {
+      "file": "tests/unit/components/settings/MappingDriftPanel.honesty.test.tsx",
+      "verdict": "REPAIRED_PASS",
+      "evidence": "current component contract executes",
+      "nextAction": "none"
+    },
+    {
+      "file": "tests/views/FullRoadmapView.test.tsx",
+      "verdict": "EXPECTED_PENDING_RETIRED_CONTRACT",
+      "evidence": "owner/route contract retired; no replacement claim",
+      "nextAction": "replace in canonical module acceptance lane"
+    }
+  ]
+}

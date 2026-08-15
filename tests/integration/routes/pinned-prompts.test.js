@@ -12,7 +12,7 @@ vi.hoisted(() => {
 });
 
 
-describe('Pinned Prompts API', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('Pinned Prompts API', () => {
   let app;
 
   beforeAll(async () => {

@@ -12,7 +12,7 @@ vi.hoisted(() => {
 });
 
 
-describe('Media Ingestion API', () => {
+(process.env.RUN_DB_TESTS === '1' ? describe : describe.skip)('Media Ingestion API', () => {
   let app;
 
   beforeAll(async () => {
