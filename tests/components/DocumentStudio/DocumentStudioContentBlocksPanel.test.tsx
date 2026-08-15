@@ -165,7 +165,8 @@ function renderPanel(onSchemaUpdated = vi.fn()): { onSchemaUpdated: ReturnType<t
 }
 
 async function openLibraryPanel(): Promise<HTMLElement> {
-  fireEvent.click(screen.getByTestId('mels-right-rail-tool-library'));
+  fireEvent.click(screen.getByTestId('mels-right-rail-tool-more'));
+  fireEvent.click(screen.getByTestId('document-studio-rail-overflow-item-library'));
   const panel = await screen.findByTestId('mels-right-rail-panel');
   return panel;
 }

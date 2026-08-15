@@ -144,7 +144,8 @@ describe('CRUD /api/deliverables/templates (T3)', () => {
     expect(updateDeliverableTemplateMock).toHaveBeenCalledWith(
       'tpl-deck-1',
       expect.objectContaining({ name: 'Renamed Deck' }),
-      'org-1'
+      'org-1',
+      'user-1'
     );
   });
 
@@ -158,7 +159,7 @@ describe('CRUD /api/deliverables/templates (T3)', () => {
     );
 
     expect(res.status).toBe(204);
-    expect(deleteDeliverableTemplateMock).toHaveBeenCalledWith('tpl-doc-1', 'org-1');
+    expect(deleteDeliverableTemplateMock).toHaveBeenCalledWith('tpl-doc-1', 'org-1', 'user-1');
   });
 
   // FT-2.I4 — GET /:id → 200 z danymi

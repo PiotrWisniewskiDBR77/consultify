@@ -52,6 +52,7 @@ vi.mock('react-router-dom', async () => {
 });
 
 vi.mock('@/services/api', () => ({
+  API_URL: '/api',
   Api: {
     get: apiGetMock,
     put: apiPutMock,
@@ -59,6 +60,7 @@ vi.mock('@/services/api', () => ({
     getConversations: vi.fn().mockResolvedValue({ conversations: [] }),
     getConversation: vi.fn(),
   },
+  getHeaders: () => ({ Authorization: 'Bearer test-token' }),
 }));
 
 vi.mock('@/services/api/v8', () => ({
