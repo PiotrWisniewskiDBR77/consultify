@@ -3662,6 +3662,46 @@
       "scopeDocument": "المستند"
     }
   },
+  "meeting": {
+    "project": "المشروع"
+  },
+  "finance": {
+    "modelWorkspace": {
+      "assumptionStatus": {
+        "sourced": "من المصدر",
+        "edited": "معدّل",
+        "assumed": "افتراض بالذكاء الاصطناعي — يحتاج إلى مراجعة",
+        "missing": "مفقود"
+      }
+    },
+    "explainPanel": {
+      "contribution": "المساهمة",
+      "priorPeriod": "الفترة السابقة",
+      "currentPeriod": "الفترة الحالية",
+      "technicalDetails": "التفاصيل التقنية",
+      "lineCode": "رمز البند",
+      "selectedCandidate": "المرشح المحدد"
+    }
+  },
+  "organization": {
+    "knowledgeGraph": {
+      "stats": {
+        "entities": "الكيانات",
+        "relations": "العلاقات",
+        "avgConfidence": "متوسط الثقة",
+        "stale": "قديم",
+        "redacted": "محجوب"
+      },
+      "searchPlaceholder": "ابحث عن كيانات في الرسم البياني المعرفي...",
+      "search": "بحث",
+      "refreshStats": "تحديث الإحصاءات",
+      "emptyOrg": {
+        "title": "الرسم البياني المعرفي فارغ",
+        "description": "سيتم ملء الرسم البياني المعرفي عندما تعالج تيريزا المقابلات والمستندات وسياق المؤسسة.",
+        "setupProfile": "إعداد ملف المؤسسة"
+      }
+    }
+  },
   "canvasEditBar": {
     "edgeLabel": "التسمية",
     "edgeCondition": "نوع الاتصال"

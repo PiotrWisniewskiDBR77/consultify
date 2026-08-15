@@ -3638,6 +3638,46 @@
       "scopeDocument": "Documento"
     }
   },
+  "meeting": {
+    "project": "Proyecto"
+  },
+  "finance": {
+    "modelWorkspace": {
+      "assumptionStatus": {
+        "sourced": "Obtenido de la fuente",
+        "edited": "Editado",
+        "assumed": "Supuesto por IA — requiere revisión",
+        "missing": "Falta"
+      }
+    },
+    "explainPanel": {
+      "contribution": "Contribución",
+      "priorPeriod": "Anterior",
+      "currentPeriod": "Actual",
+      "technicalDetails": "Detalles técnicos",
+      "lineCode": "Código de línea",
+      "selectedCandidate": "Candidato seleccionado"
+    }
+  },
+  "organization": {
+    "knowledgeGraph": {
+      "stats": {
+        "entities": "Entidades",
+        "relations": "Relaciones",
+        "avgConfidence": "Confianza media",
+        "stale": "Desactualizado",
+        "redacted": "Oculto"
+      },
+      "searchPlaceholder": "Buscar entidades en el grafo de conocimiento...",
+      "search": "Buscar",
+      "refreshStats": "Actualizar estadísticas",
+      "emptyOrg": {
+        "title": "Tu grafo de conocimiento está vacío",
+        "description": "Tu grafo de conocimiento se completará cuando Teresa procese entrevistas, documentos y el contexto de la organización.",
+        "setupProfile": "Configurar el perfil de la organización"
+      }
+    }
+  },
   "canvasEditBar": {
     "edgeLabel": "Etiqueta",
     "edgeCondition": "Tipo de conexión"

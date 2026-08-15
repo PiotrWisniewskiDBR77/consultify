@@ -3619,7 +3619,47 @@
             "scopeDocument": "ドキュメント"
         }
     },
-    "canvasEditBar": {
+  "meeting": {
+    "project": "プロジェクト"
+  },
+  "finance": {
+    "modelWorkspace": {
+      "assumptionStatus": {
+        "sourced": "ソースあり",
+        "edited": "編集済み",
+        "assumed": "AIの仮定 — 確認が必要",
+        "missing": "未入力"
+      }
+    },
+    "explainPanel": {
+      "contribution": "寄与",
+      "priorPeriod": "前期",
+      "currentPeriod": "当期",
+      "technicalDetails": "技術詳細",
+      "lineCode": "行コード",
+      "selectedCandidate": "選択された候補"
+    }
+  },
+  "organization": {
+    "knowledgeGraph": {
+      "stats": {
+        "entities": "エンティティ",
+        "relations": "関係",
+        "avgConfidence": "平均信頼度",
+        "stale": "古い情報",
+        "redacted": "非表示"
+      },
+      "searchPlaceholder": "ナレッジグラフのエンティティを検索...",
+      "search": "検索",
+      "refreshStats": "統計を更新",
+      "emptyOrg": {
+        "title": "ナレッジグラフは空です",
+        "description": "Teresa がインタビュー、文書、組織コンテキストを処理すると、ナレッジグラフに情報が追加されます。",
+        "setupProfile": "組織プロフィールを設定"
+      }
+    }
+  },
+  "canvasEditBar": {
         "edgeLabel": "ラベル",
         "edgeCondition": "接続タイプ"
     }

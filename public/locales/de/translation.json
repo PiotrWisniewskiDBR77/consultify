@@ -3762,6 +3762,46 @@
       "scopeDocument": "Dokument"
     }
   },
+  "meeting": {
+    "project": "Projekt"
+  },
+  "finance": {
+    "modelWorkspace": {
+      "assumptionStatus": {
+        "sourced": "Aus Quelle",
+        "edited": "Bearbeitet",
+        "assumed": "KI-Annahme — Prüfung erforderlich",
+        "missing": "Fehlend"
+      }
+    },
+    "explainPanel": {
+      "contribution": "Beitrag",
+      "priorPeriod": "Vorperiode",
+      "currentPeriod": "Aktuell",
+      "technicalDetails": "Technische Details",
+      "lineCode": "Zeilencode",
+      "selectedCandidate": "Ausgewählter Kandidat"
+    }
+  },
+  "organization": {
+    "knowledgeGraph": {
+      "stats": {
+        "entities": "Entitäten",
+        "relations": "Beziehungen",
+        "avgConfidence": "Durchschn. Konfidenz",
+        "stale": "Veraltet",
+        "redacted": "Redigiert"
+      },
+      "searchPlaceholder": "Entitäten im Wissensgraphen suchen...",
+      "search": "Suchen",
+      "refreshStats": "Statistik aktualisieren",
+      "emptyOrg": {
+        "title": "Ihr Wissensgraph ist leer",
+        "description": "Ihr Wissensgraph füllt sich, wenn Teresa Interviews, Dokumente und den Organisationskontext verarbeitet.",
+        "setupProfile": "Organisationsprofil einrichten"
+      }
+    }
+  },
   "canvasEditBar": {
     "edgeLabel": "Bezeichnung",
     "edgeCondition": "Verbindungstyp"
