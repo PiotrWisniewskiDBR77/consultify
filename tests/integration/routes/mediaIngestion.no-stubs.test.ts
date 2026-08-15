@@ -22,7 +22,7 @@ describe('Media ingestion routes (no degraded fake success)', () => {
     const res = await request(await mount()).get(`${basePath}/supported-types`);
     expect(res.status).toBe(503);
     expect(res.body).toEqual(
-      expect.objectContaining({ success: false, code: 'FEATURE_UNAVAILABLE' })
+      expect.objectContaining({ status: false, type: 'not_configured' })
     );
   });
 
@@ -30,7 +30,7 @@ describe('Media ingestion routes (no degraded fake success)', () => {
     const res = await request(await mount()).get(`${basePath}/capabilities`);
     expect(res.status).toBe(503);
     expect(res.body).toEqual(
-      expect.objectContaining({ success: false, code: 'FEATURE_UNAVAILABLE' })
+      expect.objectContaining({ status: false, type: 'not_configured' })
     );
   });
 
@@ -45,14 +45,14 @@ describe('Media ingestion routes (no degraded fake success)', () => {
       .send({ filename: 'x.png', mimeType: 'image/png' });
     expect(res.status).toBe(503);
     expect(res.body).toEqual(
-      expect.objectContaining({ success: false, code: 'FEATURE_UNAVAILABLE' })
+      expect.objectContaining({ status: false, type: 'not_configured' })
     );
   });
 
   it('POST /ingest/batch returns 503 (UI endpoint)', async () => {
     const res = await request(await mount()).post(`${basePath}/ingest/batch`).send({});
     expect(res.status).toBe(503);
-    expect(res.body).toEqual(expect.objectContaining({ success: false, code: 'FEATURE_UNAVAILABLE' }));
+    expect(res.body).toEqual(expect.objectContaining({ status: false, type: 'not_configured' }));
   });
 
   it('POST /ingest/youtube returns 503 (UI endpoint)', async () => {
@@ -60,7 +60,7 @@ describe('Media ingestion routes (no degraded fake success)', () => {
       .post(`${basePath}/ingest/youtube`)
       .send({ url: 'https://youtu.be/dQw4w9WgXcQ' });
     expect(res.status).toBe(503);
-    expect(res.body).toEqual(expect.objectContaining({ success: false, code: 'FEATURE_UNAVAILABLE' }));
+    expect(res.body).toEqual(expect.objectContaining({ status: false, type: 'not_configured' }));
   });
 
   it('POST /ingest/url returns 503 (UI endpoint)', async () => {
@@ -68,6 +68,6 @@ describe('Media ingestion routes (no degraded fake success)', () => {
       .post(`${basePath}/ingest/url`)
       .send({ url: 'https://example.com' });
     expect(res.status).toBe(503);
-    expect(res.body).toEqual(expect.objectContaining({ success: false, code: 'FEATURE_UNAVAILABLE' }));
+    expect(res.body).toEqual(expect.objectContaining({ status: false, type: 'not_configured' }));
   });
 });

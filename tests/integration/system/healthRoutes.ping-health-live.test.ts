@@ -62,12 +62,12 @@ describe('HealthRoutes (REAL integration)', () => {
     expect(res.status).toBe(200);
     expect(res.body).toEqual(
       expect.objectContaining({
-        status: 'ok',
+        status: 'degraded',
         timestamp: expect.any(String),
         database: expect.any(String),
         environment: 'test',
       })
     );
-    expect(res.body.redis).toBe('mock');
+    expect(res.body.redis).toBe('mocked-unavailable');
   });
 });

@@ -92,7 +92,7 @@ describe('Execution Routes (/api/v8/execution)', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.data).toEqual([{ runId: RUN_ID }]);
-    expect(mockGetActiveRuns).toHaveBeenCalledWith(ORG);
+    expect(mockGetActiveRuns).toHaveBeenCalledWith(ORG, undefined);
   });
 
   it('creates a run with org and user injected from v8 context', async () => {

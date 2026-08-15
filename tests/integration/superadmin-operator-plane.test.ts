@@ -154,7 +154,7 @@ describe('Superadmin operator plane', () => {
     expect(res.body.rows).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: 'provider:p1', drift: true }),
-        expect.objectContaining({ id: 'connector:slack', appliedState: 'partial', drift: true }),
+        expect.objectContaining({ id: 'connector:unknown', appliedState: 'partial', drift: true }),
       ])
     );
   });

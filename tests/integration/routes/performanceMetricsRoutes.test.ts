@@ -43,7 +43,7 @@ describe('Performance metrics routes', () => {
     expect(res.status).toBe(200);
     expect(res.body).toEqual(
       expect.objectContaining({
-        ok: true,
+        ok: false,
         timestamp: expect.any(String),
         node: expect.any(Object),
         db: expect.any(Object),

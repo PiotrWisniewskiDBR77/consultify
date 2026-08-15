@@ -31,7 +31,9 @@
  */
 import express from 'express';
 import request from 'supertest';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+vi.unmock('../../../server/src/middleware/auth.middleware.js');
 
 import aiInfrastructureRoutes from '../../../server/src/routes/ai/ai-infrastructure.routes.js';
 import aiPreferencesExtendedRoutes from '../../../server/src/routes/ai/ai-preferences-extended.routes.js';
