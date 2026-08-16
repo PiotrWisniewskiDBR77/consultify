@@ -38,7 +38,7 @@ import { LeanForm } from '@/components/assessment/tools/LeanForm';
 import { InitiativeSuggestionBadge } from '@/components/Initiatives/InitiativeSuggestionBadge';
 import { ArtifactPermalinkButton } from '@/components/shared/ArtifactPermalinkButton';
 import { DrdMethodWorkspaceScreen } from '@/components/assessment/drd/DrdMethodWorkspaceScreen';
-import { useFeatureFlags } from '@/hooks/useFeatureFlags';
+import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { ADMA_DIMENSIONS } from '@/services/admaStructure';
 import { Api } from '@/services/api';
 import { V8AssessmentApi } from '@/services/api/v8';
@@ -359,7 +359,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
   // NOTE (React 19 + useSyncExternalStore):
   // Avoid selectors returning new objects/arrays each call (even with shallow),
   // because it can trigger "getSnapshot should be cached" warnings/loops.
-  const { isEnabled } = useFeatureFlags();
+  const { isEnabled } = useFeatureFlagsContext();
   const setCurrentViewState = useAppStore((s) => s.setCurrentViewState);
   const currentUser = useAppStore((s) => s.currentUser);
   const isChatCollapsed = useAppStore((s) => s.isChatCollapsed);
@@ -371,6 +371,10 @@ export const AssessmentSessionEditorView: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const framework = (frameworkParam?.toLowerCase() as SupportedFramework | undefined) || undefined;
+  const mountDrdMethodWorkspace = shouldMountDrdMethodWorkspace(
+    framework,
+    isEnabled('drdMethodWorkspaceSliceV1')
+  );
 
   // Set currentView for breadcrumbs
   useEffect(() => {
@@ -702,7 +706,14 @@ export const AssessmentSessionEditorView: React.FC = () => {
   }, []);
 
   const load = useCallback(async () => {
-    if (!assessmentId) return;
+    // Method-core sessions have their own owner and loader. Running the legacy
+    // assessment lookup first makes a successfully-created method-core session
+    // render a false "not found" state before its workspace can mount.
+    if (!assessmentId || mountDrdMethodWorkspace) {
+      setError(null);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     setError(null);
     try {
@@ -736,6 +747,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
     loadAssessmentUserState,
     loadCoreAssessmentSession,
     loadSessionWorkbench,
+    mountDrdMethodWorkspace,
   ]);
 
   useEffect(() => {
@@ -1731,6 +1743,17 @@ export const AssessmentSessionEditorView: React.FC = () => {
     );
   }
 
+  // The method-core owner must win before legacy loading/error states. This
+  // also prevents a stale legacy error from masking a valid method session.
+  if (mountDrdMethodWorkspace) {
+    return (
+      <DrdMethodWorkspaceScreen
+        demoSessionId={assessmentId}
+        onExit={() => navigate('/assessment/overview')}
+      />
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="h-full flex items-center justify-center bg-c-bg">
@@ -1763,15 +1786,6 @@ export const AssessmentSessionEditorView: React.FC = () => {
   // return BEFORE renderEditor()/DRDForm/DRDAssessmentEditor/DRDMatrixSession
   // are ever reached, not a branch woven into the legacy DRD rendering path.
   // See src/hooks/useFeatureFlags.tsx `drdMethodWorkspaceSliceV1` for scope.
-  if (shouldMountDrdMethodWorkspace(framework, isEnabled('drdMethodWorkspaceSliceV1'))) {
-    return (
-      <DrdMethodWorkspaceScreen
-        demoSessionId={assessmentId}
-        onExit={() => navigate('/assessment/overview')}
-      />
-    );
-  }
-
   const renderEditor = () => {
     // RB-021: availability parity — the library/picker gate (isFrameworkComingSoon,
     // decision D-B) must be honored on this direct route too, including for
