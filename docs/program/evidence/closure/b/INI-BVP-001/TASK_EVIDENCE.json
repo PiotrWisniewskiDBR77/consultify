@@ -1,0 +1,66 @@
+{
+  "taskId": "INI-BVP-001",
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "productSha": "WORKTREE@64f507859c717494ffa5e83fae550173c9382230+lane-b-changes",
+  "leaseSha256": "f4d75f0aed94f2e34acaec63d91c245495e7e0f658aa36d1122342c2acecc612",
+  "toolchain": {
+    "node": "v24.12.0",
+    "npm": "11.6.2",
+    "vitest": "4.1.8",
+    "playwright": "1.62.1",
+    "postgres": "16.14 pgvector/pgvector:pg16",
+    "docker": "29.3.0"
+  },
+  "laneGates": {
+    "G0": "PASS — branch codex/closure-claude-b-transformation, HEAD==baseline at start, verify-closure-lane.mjs PASS",
+    "G1": "PASS — type-check exit 0, build:backend exit 0, build exit 0, discovery-gate PASS 4997/4997",
+    "G3_strict_migration": "PASS — fresh/repeat/dry-run exit 0; schema_migrations 703 success / 0 failed / 0 pending; 703/703 checksums independently verified; 1678 tables",
+    "G2_lane_baseline": "RED (pre-existing at sealed baseline): 747 collected of 761 real test files; 107 files failed / 557 passed / 83 skipped; 287 tests failed / 4270 passed / 617 skipped",
+    "G2_defects": "14 leased acceptance tests uncollectable by the mandated command; 110 further realDB files run without a DB by it; backend tests execute under jsdom because environmentMatchGlobs is dead in Vitest 4"
+  },
+  "ownerTables": [
+    "initiative_candidates",
+    "initiatives",
+    "ie_aggregate_state"
+  ],
+  "changedPaths": [
+    "server/src/services/initiative/initiativeCandidateService.ts",
+    "server/src/domain/initiatives-execution/postgresMaterialCommandUnitOfWork.ts",
+    "server/src/services/initiative/__tests__/ini-bvp-001-candidate-single-materialization.pg.test.ts"
+  ],
+  "changedPathRationale": {
+    "server/src/services/initiative/initiativeCandidateService.ts": "Fixes the disjoint-guard duplicate materialization: adopts a runtime-v1 receipt instead of minting a second DRAFT, adds registered_initiative_id to the claim predicate, and compensates the losing race so no orphan initiatives row remains.",
+    "server/src/domain/initiatives-execution/postgresMaterialCommandUnitOfWork.ts": "Explanatory comment only — the added SQL predicate was deliberately reverted because it referenced a column from a different migration inside an unguarded raw pg query.",
+    "server/src/services/initiative/__tests__/ini-bvp-001-candidate-single-materialization.pg.test.ts": "Real-PG reproduction and proof of the single-materialization invariant."
+  },
+  "commands": [
+    "node scripts/cleanup/verify-closure-lane.mjs b closure-execution-baseline-v2-20260816",
+    "jq -r '.tests.vitest[]' docs/cleanup/agents/generated/CLAUDE_LANE_B_PATH_LEASE.json | xargs -n 80 npx vitest run --no-file-parallelism --maxWorkers=1 --maxConcurrency=2 --retry=0",
+    "CI=true DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts  (fresh, repeat, --dry-run)"
+  ],
+  "denominators": {
+    "task": "5/5 pass, independently re-verified by Opus on a SECOND isolated database",
+    "laneRealDbPass": "110 leased realDB files on an isolated DB: 77 passed / 7 failed / 26 skipped; 675 tests: 565 passed / 51 failed / 59 skipped",
+    "recoveredAcceptance": "14 leased acceptance files the mandated G2 command cannot collect, run under vitest.acceptance.config.ts: 105 tests, 91 passed / 14 failed"
+  },
+  "fixtures": {
+    "prefix": "claude_b_",
+    "isolatedDb": "consultify-closure-b-64f50785 @127.0.0.1:55811; verification replica @55812; clean-room @55813",
+    "env": "NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false (all three required — NODE_ENV=test alone substitutes a mock DB)"
+  },
+  "negativeControls": {
+    "bothRaceDirections": "B-then-A fixed; A-then-B preserved",
+    "concurrent": "racing A and B converge to exactly ONE claim column, never both",
+    "orphanRows": "explicit initiatives row-count assertions — exactly one materialization, no extras",
+    "crossTenant": "org-B caller cannot accept an org-A candidate",
+    "noRunDbTests": "5 skipped (loud)",
+    "mockDb": "MOCK_DB=true -> 5 skipped, no silent pass",
+    "bogusDb": "ECONNREFUSED -> fails, proving a real connection"
+  },
+  "browserArtifacts": [],
+  "rollback": {
+    "method": "Revert the lane commits; all changes are additive application code plus new tests. NO migration was added by this lane, so no schema rollback is required and old readers are unaffected."
+  },
+  "verdict": "PARTIAL",
+  "openBlocker": "The matrix requires G0-G6 for this task; G4 signed-in browser/visual evidence was not produced, so DONE_CURRENT_SHA is not claimable. Pre-existing and NOT caused by this change: tests/integration/initiatives/m05fix01-candidate-acceptance-receipt.pg.test.ts fails at DDL setup (\"cannot drop ... because other objects depend on them\") identically on a FRESH migrated database."
+}

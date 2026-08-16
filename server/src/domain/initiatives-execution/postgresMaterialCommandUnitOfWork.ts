@@ -306,6 +306,24 @@ class PostgresMaterialCommandTransaction implements MaterialCommandTransaction {
     proposalVersion: number,
     initiativeId: string
   ): Promise<void> {
+    // INI-BVP-001 — considered adding `AND initiative_id IS NULL` here for
+    // symmetry with the classic funnel's guard (initiativeCandidateService.
+    // acceptCandidate now checks `initiative_id IS NULL AND
+    // registered_initiative_id IS NULL`), but deliberately did NOT: it is not
+    // load-bearing (this row is locked via `SELECT ... FOR UPDATE` in
+    // getSourceProposalForUpdate before this runs, so Postgres already
+    // serializes against a concurrent classic-funnel UPDATE on the same row —
+    // whichever side commits first, the other observes the committed
+    // `status`/claim-column state), and `initiative_id` was added by a
+    // DIFFERENT migration (932_initiative_candidate_acceptance_receipt.sql)
+    // than this table's own runtime-v1 columns
+    // (932_initiatives_execution_material_commands.sql). Unlike
+    // initiativeCandidateService.ts, this query is not wrapped in a
+    // catch-and-degrade around a missing column — referencing a column that
+    // may not exist on a partially-migrated environment would turn a working
+    // Register into an unhandled 5xx instead of the intended guard failure.
+    // `status = 'pending'` already blocks the case that matters here (the
+    // classic funnel sets status='accepted' on its own claim too).
     const result = await this.client.query(
       `UPDATE initiative_candidates
           SET status = 'accepted', disposition = 'REGISTER', registered_initiative_id = $1,

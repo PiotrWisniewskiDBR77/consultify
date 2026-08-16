@@ -1,0 +1,70 @@
+{
+  "taskId": "INI-MVP-GATE-001",
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "productSha": "WORKTREE@64f507859c717494ffa5e83fae550173c9382230+lane-b-changes",
+  "leaseSha256": "f4d75f0aed94f2e34acaec63d91c245495e7e0f658aa36d1122342c2acecc612",
+  "toolchain": {
+    "node": "v24.12.0",
+    "npm": "11.6.2",
+    "vitest": "4.1.8",
+    "playwright": "1.62.1",
+    "postgres": "16.14 pgvector/pgvector:pg16",
+    "docker": "29.3.0"
+  },
+  "laneGates": {
+    "G0": "PASS — branch codex/closure-claude-b-transformation, HEAD==baseline at start, verify-closure-lane.mjs PASS",
+    "G1": "PASS — type-check exit 0, build:backend exit 0, build exit 0, discovery-gate PASS 4997/4997",
+    "G3_strict_migration": "PASS — fresh/repeat/dry-run exit 0; schema_migrations 703 success / 0 failed / 0 pending; 703/703 checksums independently verified; 1678 tables",
+    "G2_lane_baseline": "RED (pre-existing at sealed baseline): 747 collected of 761 real test files; 107 files failed / 557 passed / 83 skipped; 287 tests failed / 4270 passed / 617 skipped",
+    "G2_defects": "14 leased acceptance tests uncollectable by the mandated command; 110 further realDB files run without a DB by it; backend tests execute under jsdom because environmentMatchGlobs is dead in Vitest 4"
+  },
+  "ownerTables": [
+    "initiative_lifecycle_gate_decisions"
+  ],
+  "changedPaths": [
+    "server/src/routes/pmo/initiatives.routes.ts",
+    "server/src/services/initiative/__tests__/ini-mvp-gate-001-lifecycle-gate-writer.pg.test.ts",
+    "server/src/services/initiative/__tests__/ini-mvp-gate-001-lifecycle-gate-route.test.ts"
+  ],
+  "changedPathRationale": {
+    "server/src/routes/pmo/initiatives.routes.ts": "Adds the missing PRODUCTION writer for the lifecycle gate ledger; before this, the read side was enforced in 6 places while the write side was reachable only from a manual script, so the gated transitions could never be satisfied through the product.",
+    "server/src/services/initiative/__tests__/ini-mvp-gate-001-lifecycle-gate-writer.pg.test.ts": "Real-PG proof of persistence, idempotency, concurrency, tenant denial and append-only immutability.",
+    "server/src/services/initiative/__tests__/ini-mvp-gate-001-lifecycle-gate-route.test.ts": "Route-level proof that the endpoint is reachable, fail-closed and contract-correct."
+  },
+  "commands": [
+    "node scripts/cleanup/verify-closure-lane.mjs b closure-execution-baseline-v2-20260816",
+    "jq -r '.tests.vitest[]' docs/cleanup/agents/generated/CLAUDE_LANE_B_PATH_LEASE.json | xargs -n 80 npx vitest run --no-file-parallelism --maxWorkers=1 --maxConcurrency=2 --retry=0",
+    "CI=true DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts  (fresh, repeat, --dry-run)"
+  ],
+  "denominators": {
+    "task": "23/23 pass — 9/9 realDB writer (independently re-verified by Opus under --environment node) + 14/14 route",
+    "laneRealDbPass": "110 leased realDB files on an isolated DB: 77 passed / 7 failed / 26 skipped; 675 tests: 565 passed / 51 failed / 59 skipped",
+    "recoveredAcceptance": "14 leased acceptance files the mandated G2 command cannot collect, run under vitest.acceptance.config.ts: 105 tests, 91 passed / 14 failed"
+  },
+  "fixtures": {
+    "prefix": "claude_b_",
+    "isolatedDb": "consultify-closure-b-64f50785 @127.0.0.1:55811; verification replica @55812; clean-room @55813",
+    "env": "NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false (all three required — NODE_ENV=test alone substitutes a mock DB)"
+  },
+  "negativeControls": {
+    "idempotentRetry": "same key -> exactly ONE row, 201 then 200 with the same decisionId",
+    "concurrent": "two simultaneous submissions -> one row (advisory-lock serialized)",
+    "crossTenantWrite": "denied (CASE_LINEAGE_INVALID)",
+    "crossTenantRead": "denied",
+    "immutability": "UPDATE and DELETE both rejected by trigger, SQLSTATE 55000",
+    "coldReadback": "new independent pg.Client re-reads the same decision",
+    "bodyInjection": "body-supplied organizationId/actor stripped by real validateBody; handler sources from req.user",
+    "failClosed": "unresolvable access context -> 403 not 500; guard throw -> 403 not 500",
+    "unauthorizedRole": "403 via real GATE_PERMITTED_ROLES",
+    "malformed": "400, service never called",
+    "typedConflict": "409 IDEMPOTENCY_CONFLICT, not a generic 500",
+    "noRunDbTests": "skips loudly rather than passing",
+    "cleanup": "zero claude_b_gate_% schemas and zero claude_b_% rows remain"
+  },
+  "browserArtifacts": [],
+  "rollback": {
+    "method": "Revert the lane commits; all changes are additive application code plus new tests. NO migration was added by this lane, so no schema rollback is required and old readers are unaffected."
+  },
+  "verdict": "DONE_CURRENT_SHA",
+  "openBlocker": "Task-required gates for this row are G0-G3 and G5-G6 (no G4) and all are met. Deliberately did NOT use the codebase-standard requireInitiativeCapability(..., {shadow:true}) because that middleware permits everyone at shipped defaults; used the fail-closed evaluateInitiativeGateAccess instead. Lane-wide G2 red is pre-existing at the sealed baseline and unrelated to this change."
+}
