@@ -270,7 +270,8 @@
     "lint:focus:ci": "bash scripts/check-focus-canon.sh --ci"
   },
   "overrides": {
-    "react-is": "^19.0.0"
+    "react-is": "^19.0.0",
+    "underscore": "1.13.8"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.1",
