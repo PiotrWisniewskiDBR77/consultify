@@ -1,43 +1,81 @@
 {
-  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "a62dbe340114d87eda75a0d2da2d77bee2a90685",
-  "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
-  "environment": {
-    "node": "v24.12.0",
-    "postgres": "16.14 (pgvector/pgvector:pg16)",
-    "vitest": "root vitest.config.ts",
-    "dbUrl": "127.0.0.1:55432 isolated lane container consultify-closure-c-64f50785"
-  },
-  "gateG0": "PASS pre-commit (lease PASS, 25 changed paths). POST-COMMIT the verifier reports 11 new source/test files as violations; all 11 match lane C allowedNewRoots and none exist at baseline — see ICR-C-003, a verifier defect (isTracked() is true for staged/committed paths), not a scope violation.",
-  "gateG1": "PASS — npm run type-check exit 0; npm run build:backend exit 0; test:discovery-gate PASS 4997/4997 discovered, 4698 executed.",
-  "gateG3": "PASS — strict migrate on FRESH from-zero DB exit 0; repeat run applied 0; --dry-run 0 pending; schema_migrations 709 success / 0 failed / 0 pending.",
   "taskId": "MAT-MVP-DOC-001",
-  "verdict": "PARTIAL",
+  "baselineSha": "f7d13be860a6c5a3cfa681a729b1483d9335338a",
+  "productSha": "811b4709f98b5ad11c2151b6e91c7bd86447e873",
+  "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
+  "changedPaths": [
+    "server/src/services/documentStudio/__tests__/documentBvpExport.pg.test.ts",
+    "docs/program/evidence/closure/c/MAT-MVP-DOC-001/TASK_EVIDENCE.json"
+  ],
+  "changedPathRationale": {
+    "server/src/services/documentStudio/__tests__/documentBvpExport.pg.test.ts": "Adds missing DOC-specific real-PostgreSQL proof for immutable DOCX receipts: exact source version/hash, cold readback, concurrent idempotency and terminal provider failure.",
+    "docs/program/evidence/closure/c/MAT-MVP-DOC-001/TASK_EVIDENCE.json": "Replaces stale 709-migration evidence with exact-current fresh PostgreSQL, mounted-auth, lineage, concurrency, failure and cold-readback results."
+  },
   "ownerTables": [
     "document_version_snapshots",
-    "document_studio_schema_overlay"
+    "document_studio_schema_overlay",
+    "artifact_export_receipts",
+    "organization_members"
+  ],
+  "commands": [
+    {
+      "command": "NODE_ENV=test DATABASE_URL=<fresh-local-pg> DB_TYPE=postgres MOCK_DB=false npm run db:migrate:strict",
+      "exitCode": 130,
+      "result": "Runner emitted Postgres migrations complete and independent ledger showed 729 success; interrupted afterward because its pool retained the process."
+    },
+    {
+      "command": "NODE_ENV=test DATABASE_URL=<fresh-local-pg> DB_TYPE=postgres MOCK_DB=false npm run db:migrate:strict",
+      "exitCode": 0,
+      "result": "Strict repeat applied 0 migrations."
+    },
+    {
+      "command": "NODE_ENV=test DATABASE_URL=<fresh-local-pg> DB_TYPE=postgres MOCK_DB=false npm run db:migrate:postgres:dry",
+      "exitCode": 0,
+      "result": "Dry run reported 0 pending migrations."
+    },
+    {
+      "command": "RUN_DB_TESTS=1 MOCK_DB=false CI=true NODE_ENV=test DB_TYPE=postgres DATABASE_URL=<fresh-local-pg> npx vitest run server/src/services/documentStudio/__tests__/documentVersionLineage.pg.test.ts server/src/services/documentStudio/__tests__/documentBvpExport.pg.test.ts server/src/services/materialExport/__tests__/materialsMountedAuth.pg.test.ts --no-file-parallelism --maxWorkers=1 --retry=0",
+      "exitCode": 0,
+      "result": "3 files; 15/15 tests passed."
+    },
+    { "command": "npm run type-check", "exitCode": 0 }
   ],
   "denominators": {
-    "realdbTests": "6 passed / 6 discovered"
+    "freshMigrationLedger": { "success": 729, "failed": 0 },
+    "repeatMigrations": { "applied": 0, "failed": 0 },
+    "dryRun": { "pending": 0 },
+    "documentLineageRealPostgres": { "passed": 6, "failed": 0 },
+    "documentExportRealPostgres": { "passed": 3, "failed": 0 },
+    "mountedAuthRealPostgres": { "passed": 6, "failed": 0 },
+    "combinedFocusedGate": { "passed": 15, "failed": 0 },
+    "typecheck": { "passed": 1, "failed": 0 }
+  },
+  "fixtures": {
+    "database": "fresh disposable pgvector PostgreSQL 16 on localhost:55495; schema_migrations ledger 729 success",
+    "mountedAuth": "production document-studio router with real HS256 JWT verification and ACTIVE organization_members rows",
+    "documentFlow": "manual content/autosave -> immutable checkpoint hash/parent lineage -> restore CAS -> cold module reopen",
+    "exportFlow": "DOC source version/content hash -> native:docx receipt -> provider success or terminal failure -> cold independent Pool readback"
   },
   "negativeControls": {
-    "concurrentCheckpoint": "exactly one 201 + one 409 DOC_CHECKPOINT_CONFLICT",
-    "concurrentRollback": "exactly one 200 + one 409 DOC_ROLLBACK_CONFLICT",
-    "staleExpectedVersion": "409",
-    "crossTenant": "denied",
-    "casLoadBearing": "negative control — neutering the CAS WHERE clause turned the stale-version test red, then reverted"
+    "anonymousMountedRoute401": true,
+    "authenticatedMissingScopeNoLeak": true,
+    "crossTenantDocumentDenied": true,
+    "staleExpectedVersion409": true,
+    "concurrentCheckpointExactlyOneWinner": true,
+    "concurrentRollbackExactlyOneWinner": true,
+    "concurrentDocxExportsEightAttemptsOneReceiptSevenReplays": true,
+    "terminalRendererFailureHasNoOutputHash": true,
+    "terminalFailureReplayRejected": "TERMINAL_EXPORT_REPLAY",
+    "coldDocumentReopen": true,
+    "coldExportReceiptReadbackWithIndependentPool": true,
+    "exactSourceVersionAndContentHashPinned": true
   },
-  "open": [
-    "G4 browser/visual not run.",
-    "Rollback-incidental revert snapshot still uses the frozen non-CAS sync path (audit-trail only; the actual apply is CAS-guarded)."
-  ],
-  "changedPaths": [],
-  "changedPathRationale": {},
-  "commands": [],
-  "fixtures": {},
   "browserArtifacts": [],
   "rollback": {
-    "method": "Not recorded by the lane; no rollback execution or completion claim is inferred.",
+    "method": "Remove the bounded DOC-specific contract test and restore this evidence file. No production schema or data changes were made.",
     "executed": false
-  }
+  },
+  "blocker": null,
+  "technicalVerdict": "PASS_FRESH_REALPG",
+  "verdict": "DONE_CURRENT_SHA"
 }
