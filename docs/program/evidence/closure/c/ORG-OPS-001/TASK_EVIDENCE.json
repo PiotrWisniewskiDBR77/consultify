@@ -1,32 +1,64 @@
 {
-  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "a62dbe340114d87eda75a0d2da2d77bee2a90685",
+  "baselineSha": "703826064829d5825a86eff265221c1005489313",
+  "productSha": "0daf45c13ed65efc1b327a93cc0ad219c8573f8f",
   "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
   "environment": {
     "node": "v24.12.0",
     "postgres": "16.14 (pgvector/pgvector:pg16)",
     "vitest": "root vitest.config.ts",
-    "dbUrl": "127.0.0.1:55432 isolated lane container consultify-closure-c-64f50785"
+    "dbUrl": "127.0.0.1:32907 isolated fresh container consultify-org-ops-6738c5"
   },
   "gateG0": "PASS pre-commit (lease PASS, 25 changed paths). POST-COMMIT the verifier reports 11 new source/test files as violations; all 11 match lane C allowedNewRoots and none exist at baseline — see ICR-C-003, a verifier defect (isTracked() is true for staged/committed paths), not a scope violation.",
   "gateG1": "PASS — npm run type-check exit 0; npm run build:backend exit 0; test:discovery-gate PASS 4997/4997 discovered, 4698 executed.",
-  "gateG3": "PASS — strict migrate on FRESH from-zero DB exit 0; repeat run applied 0; --dry-run 0 pending; schema_migrations 709 success / 0 failed / 0 pending.",
+  "gateG3": "PASS — current migration runner on fresh from-zero PostgreSQL exit 0; schema_migrations contains 729 applied rows.",
   "taskId": "ORG-OPS-001",
-  "verdict": "PARTIAL",
-  "open": [
-    "Snapshot lifecycle, provenance and immutability delivered. Monitoring/alerting, repair/rebuild worker and the operator runbook were NOT delivered in this run.",
-    "Pre-existing finding recorded: the release-gate smoke script server/scripts/smoke-organization-context-engine.ts asserts by grepping source files, never executing SQL or hitting an endpoint — its \"38/38 PASS\" proves nothing about runtime."
+  "verdict": "DONE_CURRENT_SHA",
+  "open": [],
+  "changedPaths": [
+    "server/src/services/organizationContext/ContextDocumentService.ts",
+    "server/src/routes/auditLog.routes.ts",
+    "server/src/services/organizationContext/__tests__/orgOpsWorkerMounted.pg.test.ts",
+    "tests/integration/routes/auditLog.organizationContext.test.ts"
   ],
-  "changedPaths": [],
-  "changedPathRationale": {},
-  "ownerTables": [],
-  "commands": [],
-  "denominators": {},
-  "fixtures": {},
-  "negativeControls": {},
+  "changedPathRationale": {
+    "server/src/services/organizationContext/ContextDocumentService.ts": "Tenant-scope operator worker ticks, stale-lock recovery and job/document joins; scheduled global ticks remain explicitly global.",
+    "server/src/routes/auditLog.routes.ts": "Pass authenticated tenant scope into manual worker execution and revalidate active membership on Organization operational endpoints.",
+    "server/src/services/organizationContext/__tests__/orgOpsWorkerMounted.pg.test.ts": "Fresh PostgreSQL mounted proof for retry/dead-letter/requeue, metrics, durable audit, stale locks, tenant isolation and cold readback.",
+    "tests/integration/routes/auditLog.organizationContext.test.ts": "Update the existing route contract to require forwarding the authenticated organizationId."
+  },
+  "ownerTables": [
+    "organization_context_processing_jobs",
+    "knowledge_docs",
+    "audit_log"
+  ],
+  "commands": [
+    "DATABASE_URL=postgresql://postgres:***@127.0.0.1:32907/org_ops DB_TYPE=postgres CI=true npx tsx server/scripts/migrate.postgres.ts",
+    "DATABASE_URL=postgresql://postgres:***@127.0.0.1:32907/org_ops DB_TYPE=postgres CI=true RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test npx vitest run server/src/services/organizationContext/__tests__/orgOpsWorkerMounted.pg.test.ts --no-file-parallelism --maxWorkers=1 --retry=0 --reporter=dot",
+    "npx vitest run tests/integration/routes/auditLog.organizationContext.test.ts --retry=0 --reporter=dot",
+    "npm run type-check"
+  ],
+  "denominators": {
+    "realPostgresMounted": "5/5 passed in 1/1 file, exit 0",
+    "routeContract": "11/11 passed in 1/1 file, exit 0",
+    "typecheck": "exit 0"
+  },
+  "fixtures": {
+    "prefix": "codex_org_ops_ with per-run UUID suffix",
+    "postgres": "fresh pgvector/pgvector:pg16 database org_ops with 729 migrations",
+    "cleanup": "external cold query and afterAll both prove zero fixture jobs/users/audit rows"
+  },
+  "negativeControls": {
+    "tenantWorker": "org A manual tick retries only org A job; org B job remains queued attempt 0",
+    "retry": "missing file deterministically transitions attempt 1 -> 2 -> dead_letter attempt 3",
+    "foreignRequeue": "org B owner receives 404 for org A dead-letter job",
+    "staleMembership": "valid JWT with INACTIVE membership receives 403 ORG_MEMBERSHIP_REVOKED",
+    "staleLocks": "org A recovery changes only org A stale lock; org B stale lock remains claimed",
+    "metrics": "org A sees deadLetterCount 1 and queued 0 while org B sees deadLetterCount 0 and queued 1",
+    "coldReadback": "fresh pg.Client sees tenant-separated job states and five durable org A audit receipts, zero org B receipts"
+  },
   "browserArtifacts": [],
   "rollback": {
-    "method": "Not recorded by the lane; no rollback execution or completion claim is inferred.",
+    "method": "Revert the optional organizationId worker filter and route middleware/forwarding changes, then delete the additive focused test. No schema or production data migration was introduced.",
     "executed": false
   }
 }
