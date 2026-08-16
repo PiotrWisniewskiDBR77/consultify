@@ -1,0 +1,129 @@
+{
+  "taskId": "AUD-MVP-RIGHTS-001",
+  "lane": "a",
+  "branch": "codex/closure-claude-a-method-evidence",
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "baselineTag": "closure-execution-baseline-v2-20260816",
+  "productSha": "78a618942ea0e12e7837bf64dec05f0b30bbdff1",
+  "leaseSha256": "a2f9be9983e3a03e5e64f1a51dca193199a5bec963a246c3b4fe94b378af1308",
+  "sharedCommitNote": "This commit also covers AUD-POL-001 (docs/program/evidence/closure/a/AUD-POL-001/TASK_EVIDENCE.json, same productSha and same test file). This record lists the rights/content inventory sweep and the two integrator change requests; the POL record lists the decision-packet framing and the fail-closed-gate proof.",
+  "changedPaths": [
+    "docs/program/evidence/closure/a/AUD-MVP-RIGHTS-001/RIGHTS_INVENTORY.md",
+    "docs/program/evidence/closure/a/AUD-MVP-RIGHTS-001/INTEGRATOR_CHANGE_REQUESTS.md",
+    "server/src/services/auditProgramRights/__tests__/auditPackRights.realdb.test.ts"
+  ],
+  "changedPathRationale": {
+    "docs/program/evidence/closure/a/AUD-MVP-RIGHTS-001/RIGHTS_INVENTORY.md": "The rights/provenance inventory itself: a repo-wide sweep (reproducible grep commands included) scoped to the Audits kernel's pack/preset/criteria content. Result: 0 instances of reproduced normative text, 3 instances of standard name/numbering used as content (all tracing to the single ISO_27001_PRESET), 5 incidental mentions. Explicitly separates the in-scope Audits-kernel content from the much larger (~1,125 line) adjacent Assessment-module ISO/SOC2/NIST/CMMI noise, which already carries its own disclaimers and is out of scope for this decision.",
+    "docs/program/evidence/closure/a/AUD-MVP-RIGHTS-001/INTEGRATOR_CHANGE_REQUESTS.md": "Two ready-to-review diffs for the integrator, both outside this lane's lease (server/src/routes/audits/** and src/components/Audit/** are explicitly excluded). ICR-1 (GAP 1) is a blind-appliable diff defaulting GET /packs and GET /packs/:id to published-only for non-admins. ICR-2 (GAP 2, the ISO 27001 preset) is deliberately NOT a ready-to-apply diff because it requires a Product decision first (retire vs. flag-gate vs. accept-as-is).",
+    "server/src/services/auditProgramRights/__tests__/auditPackRights.realdb.test.ts": "New real-Postgres proof, 10/10, including the GAP-1 characterization test (test 5: a plain org member CAN list/read a draft pack via GET /packs and GET /packs/:id today, proven rather than assumed) and the tenant-isolation/cold-readback controls that corroborate the inventory's claims about what the kernel actually enforces."
+  },
+  "commands": [
+    {
+      "gate": "G0",
+      "command": "node scripts/cleanup/verify-closure-lane.mjs a closure-execution-baseline-v2-20260816",
+      "exitCode": 0,
+      "result": "lane A lease PASS at baseline"
+    },
+    {
+      "gate": "G1",
+      "command": "npm run test:inventory:generate && npm run test:discovery-gate",
+      "exitCode": 0,
+      "result": "4997 discovered / 4997 manifest entries / 4698 executed-classified"
+    },
+    {
+      "gate": "G1",
+      "command": "npm run type-check",
+      "exitCode": 0,
+      "result": "zero TypeScript errors"
+    },
+    {
+      "gate": "G1",
+      "command": "npm run build:backend && NODE_OPTIONS=--max-old-space-size=8192 npm run build",
+      "exitCode": 0,
+      "result": "both exit 0; pre-existing chunk-size and browserslist warnings recorded, not promoted to failures"
+    },
+    {
+      "gate": "G3",
+      "command": "CI=true DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts",
+      "exitCode": 0,
+      "result": "703/703 success on strict fresh-schema run; repeat run applied zero; --dry-run reported zero pending; 1557 public tables"
+    },
+    {
+      "gate": "G2/task",
+      "command": "CI=true NODE_ENV=test DB_TYPE=postgres RUN_DB_TESTS=1 MOCK_DB=false POSTGRES_SKIP_INIT_IN_TEST=1 DATABASE_URL=\"postgresql://consultinity:consultinity@127.0.0.1:34910/aud_rights\" npx vitest run server/src/services/auditProgramRights/__tests__/auditPackRights.realdb.test.ts --no-file-parallelism --maxWorkers=1 --maxConcurrency=2 --retry=0",
+      "exitCode": 0,
+      "result": "1 file collected, 10 passed, 0 failed, 0 skipped, describe block 5 is the GAP-1 characterization"
+    },
+    {
+      "gate": "inventory sweep",
+      "command": "grep -rniE '\\b(ISO[ /-]?[0-9]{3,5}|IATF|VDA|SOC[ ]?2|NIST|COBIT|ITIL|HIPAA|PCI[ -]?DSS|CMMI)\\b' server/src/services/audits server/src/routes/audits src/components/Audit server/migrations/20260813_audits_method_core.sql server/migrations/20260813b_audits_source_classification_split.sql 2>/dev/null | grep -v \"__tests__\"",
+      "exitCode": null,
+      "result": "8 in-scope hits total: 0 reproduced normative text, 3 standard-name-as-content (all the ISO_27001_PRESET chain), 5 incidental mentions — full table in RIGHTS_INVENTORY.md"
+    }
+  ],
+  "denominators": {
+    "taskTests": {
+      "files": 1,
+      "passed": 10,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "note": "Shared with AUD-POL-001 (same file). Test 5 (GAP-1 characterization) is the test most directly attributable to this task; the rest corroborate both records."
+    },
+    "regression": null,
+    "note": "--retry=0 was mandatory: root vitest.config.ts sets retry: CI ? 3 : 1, which would otherwise let a flaky pass masquerade as green."
+  },
+  "realDb": {
+    "engine": "pgvector/pgvector:pg16",
+    "container": "consultify-closure-a-34910",
+    "databaseUrl": "postgresql://consultinity:consultinity@127.0.0.1:34910/aud_rights",
+    "schemaProvenance": "cloned from the strict-migration-runner database (703/703 schema_migrations success, 1557 public tables)",
+    "mockDb": false,
+    "note": "CI=true is required to unlock a local database host (server/src/config/databaseTargetResolver.ts:111-118)."
+  },
+  "knownConsequences": [
+    {
+      "description": "GAP 1: server/src/routes/audits/packs.routes.ts GET /packs and GET /packs/:id apply no publication_status filter by default and no capability check (only write routes call requireAdmin). Any authenticated org member — not just pack authors/admins — can browse and read draft/in-review pack content today. Ready-to-apply diff exists (ICR-1) but is outside this lane's lease.",
+      "blocking": false,
+      "source": "commit 78a618942ea0e12e7837bf64dec05f0b30bbdff1"
+    },
+    {
+      "description": "GAP 2: ISO_27001_PRESET (src/components/Audit/auditPresets.ts:47-145) is static frontend data reachable by default through the legacy Audit Orchestrator wizard (MODULE_AUDITS: 'open'), with no audit_norm_sources row and no rights check, because it feeds the legacy write path and never reaches packValidator. Standard-naming-as-content, not reproduced clause language, but still brands a client deliverable as an 'ISO 27001 readiness audit' outside the rights kernel. Fix is blocked on a Product decision (Section 1, item 2 of the AUD-POL-001 decision packet).",
+      "blocking": false,
+      "source": "commit 78a618942ea0e12e7837bf64dec05f0b30bbdff1"
+    }
+  ],
+  "browserArtifacts": [],
+  "rollback": {
+    "mechanism": "revert the commit; documentation and a new read-only test file only, no production code changed by this lane",
+    "schemaImpact": "none",
+    "flagImpact": "none",
+    "oldReaderCompatibility": "unaffected"
+  },
+  "integratorChangeRequests": [
+    {
+      "taskId": "AUD-MVP-RIGHTS-001",
+      "file": "server/src/routes/audits/packs.routes.ts",
+      "reason": "GAP 1: GET /packs and GET /packs/:id have no publication_status filter and no capability check, so any org member can read draft/in-review packs.",
+      "minimalHunk": "default the read path to status='published' unless the actor is a platform admin; full verbatim diff in docs/program/evidence/closure/a/AUD-MVP-RIGHTS-001/INTEGRATOR_CHANGE_REQUESTS.md ICR-1",
+      "consumerTest": "extend auditPackRights.realdb.test.ts describe block 5 with a route-level (supertest) HTTP test asserting a non-admin's GET /packs excludes the draft pack by default and GET /packs/:id for that draft returns 404",
+      "blocking": false
+    },
+    {
+      "taskId": "AUD-MVP-RIGHTS-001",
+      "file": "src/components/Audit/auditPresets.ts, src/components/Audit/AuditsHub.tsx",
+      "reason": "GAP 2: the legacy ISO 27001 preset bypasses the rights kernel entirely (no audit_norm_sources row, no packValidator gate, reachable by default).",
+      "minimalHunk": "intentionally not a ready-to-apply diff — requires a Product decision (retire vs. flag-gate vs. accept-as-is) first, per ICR-2 in INTEGRATOR_CHANGE_REQUESTS.md",
+      "consumerTest": "retire: a component test asserting no 'New ISO 27001 audit' element renders. flag-gate: a component test asserting the button is absent at the new flag's default (off) value.",
+      "blocking": false
+    }
+  ],
+  "openItems": [
+    "GAP 1 has a ready-to-apply diff but has not been applied (outside this lane's lease).",
+    "GAP 2 cannot be fixed until Product decides its disposition (retire / flag-gate / accept-as-is) — see AUD-POL-001 Section 1 item 2.",
+    "No browser/visual evidence exists for this task; it is a content/rights inventory plus backend negative-control tests, with no UI surface exercised."
+  ],
+  "unverifiedFields": [],
+  "verdict": "BLOCKED_OWNER",
+  "verdictRationale": "G0/G1/G3 shared gates pass at this SHA. The inventory itself is complete and evidence-backed (reproducible grep commands, every hit classified, zero hits excluded because inconvenient), and both named gaps are proven with real-Postgres tests rather than asserted. This task is BLOCKED_OWNER by design, matching AUD-POL-001: activating any named external standard, and deciding the ISO 27001 preset's fate, are Product + Methodology/Rights + Legal decisions this lane may not take. GAP 1 has a ready diff sitting outside this lane's lease waiting on the integrator; GAP 2 cannot even get a diff until Product decides. The engineering-verifiable half (what does the kernel actually contain and enforce today) is DONE; the decision half is not this lane's to close. No browser/visual evidence exists, consistent with this being an inventory/evidence task with no UI surface of its own."
+}
