@@ -19,7 +19,7 @@
 | Tools | source `b8d5747e53936ec130bc80c43e868e71f1fa2b60`; candidate `4cd5d54317` | `INTEGRATED_PENDING_VERIFICATION` | 49 patch-unique non-merge commits replayed. Static/type/discovery pass. Fresh strict PostgreSQL applies 703/703 then 0; full realDB denominator passes 12/12 files, 100/100 tests after schema-parity repair. Browser E2E and initiative-quality acceptance remain missing. `RUNTIME_ACTIVE=0` remains literal. |
 | Audits | source `1927914dddad0e2932bcd5238ff6eb611859e4cf`; candidate `ff2d3dfd8e` | `INTEGRATED_PENDING_VERIFICATION` | 34 patch-unique non-merge commits replayed. Fresh isolated realDB run passes 32/32 files, 259/259 tests, no skips. `audit_events` compatibility repair passed type-check, the full denominator, and catalog readback. Browser E2E remains open. Flag remains OFF. |
 | Case / Agent | `adf77cb833ec8b79e138d2ece96e7f5aafbe2ec0` | `ALREADY_PRESENT / KEEP_EVIDENCE` | All 782 source files exist; dedicated 110 services, 39 routes, 19 UI files and 19 migrations are byte-identical. Replay allowlist is empty. Run fresh Case gates; do not replay 120 stale/noisy commits. |
-| Artifact Studio | `64715cdd37515b865e68d969eab71cdd7e2b60b3` | `INTEGRATE_SELECTIVELY / HIGH_CONFLICT` | Five patch-unique commits, but every one of 48 touched paths overlaps candidate evolution. Reconstruct by bounded functional groups; never merge or blindly cherry-pick the 41-file commit. |
+| Artifact Studio | `64715cdd37515b865e68d969eab71cdd7e2b60b3` | `ALREADY_PRESENT / KEEP_EVIDENCE` | Tree proof supersedes noisy patch-id: 44/48 source-touched paths are byte-identical and four are newer on candidate. Replay allowlist is empty. Source-derived focused suite passes 15/15 files, 145/145 assertions; realDB/browser/human gates remain. |
 | Finance | `c78086057d38f57c5351c6254d41f02fd50246b6` | `BLOCKED` | Choose one canonical owner across legacy/V3/V4/V8/V10 before replay. |
 | Results | `8b03e2dba59055cd9abc74b48cea2990d12c0d3b` | `BLOCKED` | Confirm latest cumulative fan-in, mount/flag and Finance seam. |
 | UX recovery | local `c67726e98bcde5a9b129d09885bfb5104896bbf4`; remote `c6878103b4d43563bc1adbf6f885990340dc52e4` | `BLOCKED` | Provenance mismatch and contaminated recovery worktree. |
@@ -42,7 +42,7 @@
 1. Assessment verification and missing entry/source-of-truth resolution
 2. Tools browser verification and initiative-quality gate
 3. Audits browser verification
-4. Case verification and Artifact grouped reconstruction
+4. Case and Artifact verification (no replay)
 5. Results and Finance owner/data reconciliation
 6. CEPD allowlisted replay
 7. UX clean reconstruction

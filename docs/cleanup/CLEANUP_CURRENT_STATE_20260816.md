@@ -104,10 +104,14 @@ Fresh checks on this candidate:
   all 782 source files exist in the candidate, and its 110 dedicated services,
   39 routes, 19 UI files and 19 migrations are byte-identical. Replay allowlist
   is empty; verification remains open.
-- Artifact Studio source `64715cdd3751` contains five patch-unique commits, but
-  all 48 touched paths overlap later candidate evolution. It is classified
-  `INTEGRATE_SELECTIVELY / HIGH_CONFLICT`; reconstruction must proceed by
-  governance, backend DOC/PPT/XLSX, frontend, shell, tests and dependency groups.
+- Artifact Studio source `64715cdd3751` initially appeared to contain five
+  patch-unique commits because patch identity diverged. Tree-level reconciliation
+  proved that 44/48 touched paths are byte-identical and the remaining four are
+  intentionally newer in the candidate (test-discovery/CAS dependencies,
+  spreadsheet markup cleanup and nested accessible context menus). It is now
+  `ALREADY_PRESENT / KEEP_EVIDENCE`; replay allowlist is empty. Its focused
+  source-derived suite passed 145/145 assertions across 15 files after rebuilding
+  the locally skipped sqlite3 native binding (131 plus 14 approval assertions).
 - Commit hooks reported no new list, TRIADA, density, focus, or artifact-shell
   regression in the changed files. Existing repository-wide focus debt remains.
 
@@ -141,5 +145,5 @@ features. No bulk branch or worktree deletion is authorized by these counts.
    assertions.
 3. Resolve the one explicit broken orphan and the Assessment immutable-log
    `diff --check` policy without rewriting evidence silently.
-4. Verify already-present Case; reconstruct Artifact group-by-group; then
+4. Verify already-present Case and Artifact browser/realDB closure; then
    reconcile the owner-gated Results/Finance packages.
