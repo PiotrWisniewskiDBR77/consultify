@@ -82,18 +82,28 @@ class AuditEventsService {
       try {
         await db.run(
           `INSERT INTO audit_events (
-            id, ts, actor_user_id, actor_type, org_id, action_type, entity_type, entity_id,
-            metadata_json, ip, user_agent
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            id, ts, actor_id, actor_user_id, actor_type, org_id,
+            action, action_type, resource_type, resource_id, entity_type, entity_id,
+            before_json, after_json, metadata_json, ip, user_agent
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             id,
             new Date().toISOString(),
+            // The canonical actor_id may be protected by a FK on older
+            // databases. The compatibility lane preserves an unknown or
+            // external actor in actor_user_id instead of losing the event.
+            null,
             input.actorId || null,
             input.actorType,
             input.organizationId || null,
             input.action,
+            input.action,
             input.resourceType,
             input.resourceId || null,
+            input.resourceType,
+            input.resourceId || null,
+            input.before ? JSON.stringify(input.before) : null,
+            input.after ? JSON.stringify(input.after) : null,
             JSON.stringify({
               before: input.before || null,
               after: input.after || null,
