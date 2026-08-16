@@ -1,20 +1,79 @@
 {
   "taskId": "DATA-DR-001",
-  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "b37abda1d4a463dcdb63967acf09a4453613de7c",
-  "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
-  "changedPaths": [],
-  "changedPathRationale": {},
-  "ownerTables": ["backup_manifests", "schema_migrations"],
-  "commands": [
-    {"command": "DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts", "exitCode": 0, "result": "705 fresh"},
-    {"command": "DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts && ... --dry-run", "exitCode": 0, "result": "0 repeat; 0 pending; 705 success / 0 failure"}
+  "baselineSha": "4f6a1e777c5f5dbeaa014dbafdfb0b9828198344",
+  "productSha": "144b33df06ec3d69c903204dcb88041caf238335",
+  "leaseSha256": "not_applicable_codex_bounded_task",
+  "changedPaths": [
+    "server/scripts/lib/encryptedBackupArtifact.ts",
+    "server/scripts/backup-artifact-crypto.ts",
+    "tests/unit/backend/encryptedBackupArtifact.test.ts",
+    "docs/runbooks/DATA-DR-001_POSTGRES_RESTORE.md",
+    "docs/program/evidence/closure/codex/DATA-DR-001/TASK_EVIDENCE.json"
   ],
-  "denominators": {"rpoTargetMinutes": 15, "rtoTargetMinutes": 60, "measuredRestoreRuns": 0},
-  "fixtures": {"database": "fresh disposable PostgreSQL only; not a restore rehearsal"},
-  "negativeControls": {"productionRestore": "not authorized and not executed", "corruptBackup": "not yet tested"},
+  "changedPathRationale": {
+    "server/scripts/lib/encryptedBackupArtifact.ts": "AES-256-GCM artifact encryption, authenticated restore, plaintext/ciphertext checksums and objective calculation.",
+    "server/scripts/backup-artifact-crypto.ts": "Repository-owned operator CLI for encryption and verified decryption.",
+    "tests/unit/backend/encryptedBackupArtifact.test.ts": "Exact-byte restore and corrupted/incomplete/wrong-key negative controls.",
+    "docs/runbooks/DATA-DR-001_POSTGRES_RESTORE.md": "Isolated restore, verification, cleanup and production authorization procedure.",
+    "docs/program/evidence/closure/codex/DATA-DR-001/TASK_EVIDENCE.json": "Machine-readable drill evidence."
+  },
+  "ownerTables": ["organizations", "users"],
+  "commands": [
+    {
+      "command": "npx vitest run tests/unit/backend/encryptedBackupArtifact.test.ts --maxWorkers=1 --no-file-parallelism",
+      "exitCode": 0
+    },
+    {
+      "command": "isolated PostgreSQL 16 source/destination drill using pg_dump, gzip, backup-artifact-crypto encrypt/decrypt and psql -v ON_ERROR_STOP=1",
+      "exitCode": 0
+    },
+    {
+      "command": "corrupted ciphertext decrypt positive control",
+      "exitCode": 1,
+      "expectedExitCode": 1
+    }
+  ],
+  "denominators": {
+    "unitTestFiles": { "passed": 1, "failed": 0 },
+    "unitTests": { "passed": 3, "failed": 0, "skipped": 0, "todo": 0 },
+    "sourceOwnerTables": 2,
+    "restoredOwnerTables": 2,
+    "sourceOrganizations": 2,
+    "restoredOrganizations": 2,
+    "sourceUsers": 2,
+    "restoredUsers": 2,
+    "tenantAlphaUsers": 1,
+    "tenantBetaUsers": 1
+  },
+  "fixtures": {
+    "sourceContainer": "consultify-data-dr-src-4f6a1e77 (removed)",
+    "restoreContainer": "consultify-data-dr-dst-4f6a1e77 (removed)",
+    "postgresVersion": "16",
+    "sourceHash": "e49772b9fdfacd9076c79031e5716e70",
+    "restoredHash": "e49772b9fdfacd9076c79031e5716e70",
+    "ciphertextSha256": "2e1f885ab74c741c63d6c1003774aaf223a6bb21c3157d4c9ea541f644426250",
+    "rpoMs": 654,
+    "rtoMs": 23151,
+    "rpoTargetMs": 900000,
+    "rtoTargetMs": 3600000,
+    "containersRemoved": true
+  },
+  "negativeControls": {
+    "corruptedCiphertextRejected": true,
+    "corruptRestoreOutputNotCreated": true,
+    "wrongEncryptionKeyRejected": true,
+    "tenantCountsRemainSeparated": true
+  },
   "browserArtifacts": [],
-  "rollback": {"schema": "additive migrations only", "production": "no production action"},
-  "verdict": "FIX_REQUIRED",
-  "openBlockers": ["Encrypted checksum-bound backup and isolated restore/readback rehearsal are absent; RPO/RTO are targets, not measurements."]
+  "rollback": {
+    "schemaChanged": false,
+    "productionRestoreAuthorized": false,
+    "method": "Remove the additive scripts/tests/runbook; drill containers and plaintext artifacts were isolated from the repository and containers were removed."
+  },
+  "verdict": "PARTIAL",
+  "openBlockers": [
+    "The current application BackupCron remains daily and the logical BackupService is not wired to this encrypted PostgreSQL artifact seam, so default continuous RPO <=15 minutes is not yet operationally guaranteed.",
+    "No owner-provided KMS/key rotation, durable encrypted object-store target or production backup schedule was available; production restore remains separately unauthorized.",
+    "Migration/backfill replay and previous-SHA reader compatibility were not implicated by this schema-neutral drill and were not independently re-executed."
+  ]
 }
