@@ -1,36 +1,22 @@
 {
   "taskId": "SET-MVP-EXPORT-001",
-  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "04833b1161dc88402cdbd2565b2f3940c9d84607",
+  "baselineSha": "59a2bae0e1fd1bdf6e81a932349fb106709a9279",
+  "productSha": "cbffaa82cfc788a85da7b3e5bc569da8d0018014",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
-  "changedPaths": [
-    "server/src/services/gdprService.ts",
-    "tests/integration/settings/gdpr-settings-no-stubs.test.ts"
-  ],
-  "changedPathRationale": {"service": "PostgreSQL-compatible portable export request and durable readback", "tests": "auth, schema parity and no-fake-ETA controls"},
-  "ownerTables": ["gdpr_requests", "data_export_requests"],
+  "changedPaths": ["server/migrations/20260915_user_data_export_receipts.sql", "server/src/services/gdprService.ts", "server/src/routes/gdpr.routes.ts", "tests/integration/settings/gdpr-settings-no-stubs.test.ts", "docs/program/evidence/closure/codex/SET-MVP-EXPORT-001/TASK_EVIDENCE.json"],
+  "changedPathRationale": {"migration": "tenant-bound immutable receipt and ready-state parity", "service": "single hash-bound materialization and owner readback", "route": "authorized receipt-backed download", "test": "realPG retry, denial and tamper controls", "evidence": "current candidate proof"},
+  "ownerTables": ["data_export_requests", "user_data_export_receipts"],
   "commands": [
-    {"command": "npm run type-check", "exitCode": 0},
-    {"command": "npm run build:backend", "exitCode": 0},
-    {"command": "RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres DATABASE_URL=<isolated-local-pg> npx vitest run tests/integration/settings/account-deletion-routes-guard.test.ts tests/integration/settings/gdpr-settings-no-stubs.test.ts", "exitCode": 0, "result": "2 files, 9 tests passed, 0 failed/skipped"}
+    {"command": "DATABASE_URL=<fresh-pg> DB_TYPE=postgres NODE_ENV=test npx tsx server/scripts/migrate.postgres.ts", "exitCode": 0, "result": "725/725 applied"},
+    {"command": "DATABASE_URL=<fresh-pg> RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test npx vitest run tests/integration/settings/gdpr-settings-no-stubs.test.ts --reporter=dot --maxWorkers=1 --no-file-parallelism", "exitCode": 0, "result": "1/1 file; 4/4 passed; 0 failed/skipped"},
+    {"command": "npm run type-check", "exitCode": 130, "result": "no diagnostics emitted; bounded manual interruption after non-termination"}
   ],
-  "databaseProof": {
-    "freshMigrations": 703,
-    "repeatApplied": 0,
-    "ledgerNonSuccess": 0,
-    "scope": "disposable loopback PostgreSQL; no shared/demo/production data"
-  },
-  "denominators": {"settingsGdprTests": "9/9", "freshMigrations": 703},
-  "fixtures": {"database": "isolated local PostgreSQL", "scope": "authenticated tenant user"},
-  "negativeControls": [
-    "export requires authenticated user and organization scope",
-    "fresh-schema column variants are resolved from information_schema",
-    "no fake ETA response; request and direct readback are persisted"
-  ],
+  "databaseProof": {"engine": "pgvector/pgvector:pg16", "fixture": "fresh disposable set_export on loopback 32770", "freshMigrations": 725, "receiptReadback": "two downloads byte-identical with identical SHA-256", "immutability": "direct UPDATE rejected by PostgreSQL trigger"},
+  "denominators": {"focusedFiles": "1/1", "focusedTests": "4/4", "freshMigrations": "725/725", "negativeControls": "2/2", "typeCheck": "NOT_VERIFIED (exit 130)"},
+  "fixtures": {"database": "fresh disposable PostgreSQL 16", "identity": "tenant user plus distinct authenticated user", "artifact": "portable JSON from repository-backed collector"},
+  "negativeControls": ["different authenticated user receives 404 for guessed request id", "receipt mutation rejected by database trigger"],
   "browserArtifacts": [],
-  "rollback": {"code": "revert 04833b1161 before deployment", "data": "isolated export-request fixtures only"},
+  "rollback": {"code": "revert the listed implementation/test paths before deployment", "data": "drop receipt trigger/function/table and restore prior request status constraint; this run used disposable data only"},
   "verdict": "PARTIAL",
-  "openBlockers": [
-    "Immutable downloadable artifact hash and browser download/readback remain to close G4-G6 on the final integrated SHA."
-  ]
+  "openBlockers": ["G4 mounted-browser download/readback artifact is absent; type-check was interrupted without diagnostics and remains NOT_VERIFIED."]
 }
