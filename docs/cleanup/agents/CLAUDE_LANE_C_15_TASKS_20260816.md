@@ -10,6 +10,8 @@ Scope packet commit: `aca1b7a126`
 
 Execution-readiness packet commit: `59d572fb83`
 
+Execution baseline: `refs/tags/closure-execution-baseline-20260816`
+
 Read the canonical 82-task plan and
 `FOUR_BRANCH_EXECUTION_CONTRACT_20260816.md`,
 `EXECUTION_GATE_CATALOG_20260816.md` and

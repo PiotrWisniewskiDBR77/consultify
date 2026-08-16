@@ -10,6 +10,8 @@ Scope packet commit: `aca1b7a126`
 
 Execution-readiness packet commit: `59d572fb83`
 
+Execution baseline: `refs/tags/closure-execution-baseline-20260816`
+
 Mandatory context:
 
 - `../POST_CLEANUP_COMPLETION_PLAN.md`

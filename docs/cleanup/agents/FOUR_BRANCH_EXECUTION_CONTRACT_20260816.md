@@ -10,6 +10,8 @@ Scope packet commit: `aca1b7a126`
 
 Execution-readiness packet commit: `59d572fb83`
 
+Execution baseline ref: `refs/tags/closure-execution-baseline-20260816`
+
 ## Branches and ownership
 
 | Lane | Branch | Exclusive task ownership | Integration order |
@@ -21,7 +23,8 @@ Execution-readiness packet commit: `59d572fb83`
 
 Branches are sealed from the authority packet descendant recorded in each lane
 packet; product code is unchanged from the product/code baseline above. A
-worker must verify both identities before editing.
+worker must verify the tag resolves exactly to its clean starting HEAD before
+editing. This tag is local authority and is not a deployment or remote ref.
 
 ## Mandatory operating instruction
 
