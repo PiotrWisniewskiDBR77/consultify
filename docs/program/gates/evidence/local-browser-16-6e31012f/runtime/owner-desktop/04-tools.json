@@ -1,0 +1,30 @@
+{
+  "baseline": "6e31012fbe3458dd6a3faccde2e6540f7837d613",
+  "contract": {
+    "module": "04-tools",
+    "path": "/discovery-tools",
+    "visibleText": {},
+    "mixedAvailabilityCatalog": true
+  },
+  "finalUrl": "http://127.0.0.1:3220/discovery-tools",
+  "ui": {
+    "title": "Discovery Tools — Consultify",
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "color": "rgb(248, 250, 252)",
+    "fontFamily": "Inter, system-ui, -apple-system, sans-serif",
+    "viewport": {
+      "width": 1440,
+      "height": 960
+    },
+    "scrollWidth": 1440,
+    "interactiveCount": 121,
+    "enabledInteractiveCount": 121,
+    "headings": 1,
+    "mainLandmarks": 1
+  },
+  "a11y": [],
+  "consoleErrors": [],
+  "failedRequests": [],
+  "reloadCausedAborts": [],
+  "badApiResponses": []
+}

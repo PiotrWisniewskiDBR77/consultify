@@ -1,0 +1,1551 @@
+{
+  "config": {
+    "configFile": "/Users/piotrwisniewski/Developer/consultify-canonical-full-20260814/playwright.local-browser-16.config.ts",
+    "rootDir": "/Users/piotrwisniewski/Developer/consultify-canonical-full-20260814/tests/e2e/local-browser-16",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": "/Users/piotrwisniewski/Developer/consultify-canonical-full-20260814/tests/e2e/demo-acceptance/global-setup.ts",
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "/tmp/consultify-local-browser-16-6e31012f-final/playwright-results.json"
+        }
+      ],
+      [
+        "html",
+        {
+          "outputFolder": "/tmp/consultify-local-browser-16-6e31012f-final/html",
+          "open": "never"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/tmp/consultify-local-browser-16-6e31012f-final/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "owner-desktop",
+        "name": "owner-desktop",
+        "testDir": "/Users/piotrwisniewski/Developer/consultify-canonical-full-20260814/tests/e2e/local-browser-16",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 120000
+      },
+      {
+        "outputDir": "/tmp/consultify-local-browser-16-6e31012f-final/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "owner-mobile",
+        "name": "owner-mobile",
+        "testDir": "/Users/piotrwisniewski/Developer/consultify-canonical-full-20260814/tests/e2e/local-browser-16",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 120000
+      }
+    ],
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.57.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "modules.spec.ts",
+      "file": "modules.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "LOCAL-BROWSER-16 normal OWNER UI gate",
+          "file": "modules.spec.ts",
+          "line": 128,
+          "column": 6,
+          "specs": [
+            {
+              "title": "01-chat: mounted, reloadable, visual and accessible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "owner-desktop",
+                  "projectName": "owner-desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 9395,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-16T02:04:10.641Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-3b95b-dable-visual-and-accessible-owner-desktop/test-finished-1.png"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-3b95b-dable-visual-and-accessible-owner-desktop/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c30cd39e1c87f9ff656a-2afa56f2e2581f85ba5e",
+              "file": "modules.spec.ts",
+              "line": 130,
+              "column": 5
+            },
+            {
+              "title": "02-my-work: mounted, reloadable, visual and accessible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "owner-desktop",
+                  "projectName": "owner-desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 9342,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-16T02:04:20.673Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-2ab50-dable-visual-and-accessible-owner-desktop/test-finished-1.png"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-2ab50-dable-visual-and-accessible-owner-desktop/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c30cd39e1c87f9ff656a-52744eba2bc29c3c1603",
+              "file": "modules.spec.ts",
+              "line": 130,
+              "column": 5
+            },
+            {
+              "title": "03-interview: mounted, reloadable, visual and accessible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "owner-desktop",
+                  "projectName": "owner-desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 9664,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-16T02:04:30.529Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-4de80-dable-visual-and-accessible-owner-desktop/test-finished-1.png"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-4de80-dable-visual-and-accessible-owner-desktop/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c30cd39e1c87f9ff656a-32d3970b45ab3def1aa7",
+              "file": "modules.spec.ts",
+              "line": 130,
+              "column": 5
+            },
+            {
+              "title": "04-tools: mounted, reloadable, visual and accessible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "owner-desktop",
+                  "projectName": "owner-desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 15066,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-16T02:04:40.924Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-501fd-dable-visual-and-accessible-owner-desktop/test-finished-1.png"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-501fd-dable-visual-and-accessible-owner-desktop/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c30cd39e1c87f9ff656a-a44fd11e6437f01b93cd",
+              "file": "modules.spec.ts",
+              "line": 130,
+              "column": 5
+            },
+            {
+              "title": "05-assessment: mounted, reloadable, visual and accessible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "owner-desktop",
+                  "projectName": "owner-desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 10778,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-16T02:04:56.725Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-c3768-dable-visual-and-accessible-owner-desktop/test-finished-1.png"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-c3768-dable-visual-and-accessible-owner-desktop/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c30cd39e1c87f9ff656a-361f61ddecf58b8ea2fe",
+              "file": "modules.spec.ts",
+              "line": 130,
+              "column": 5
+            },
+            {
+              "title": "06-initiatives: mounted, reloadable, visual and accessible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "owner-desktop",
+                  "projectName": "owner-desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 11131,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-16T02:05:08.327Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-7ee06-dable-visual-and-accessible-owner-desktop/test-finished-1.png"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-7ee06-dable-visual-and-accessible-owner-desktop/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c30cd39e1c87f9ff656a-0ad54d15b8d63d1a36dc",
+              "file": "modules.spec.ts",
+              "line": 130,
+              "column": 5
+            },
+            {
+              "title": "07-execution: mounted, reloadable, visual and accessible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "owner-desktop",
+                  "projectName": "owner-desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8059,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-16T02:05:20.321Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-7e204-dable-visual-and-accessible-owner-desktop/test-finished-1.png"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-7e204-dable-visual-and-accessible-owner-desktop/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c30cd39e1c87f9ff656a-96caed6c9d2bc20802de",
+              "file": "modules.spec.ts",
+              "line": 130,
+              "column": 5
+            },
+            {
+              "title": "08-results: mounted, reloadable, visual and accessible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "owner-desktop",
+                  "projectName": "owner-desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8836,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-16T02:05:28.946Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-59a45-dable-visual-and-accessible-owner-desktop/test-finished-1.png"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-59a45-dable-visual-and-accessible-owner-desktop/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c30cd39e1c87f9ff656a-cdbf26d908d4e7d721a3",
+              "file": "modules.spec.ts",
+              "line": 130,
+              "column": 5
+            },
+            {
+              "title": "09-finance: mounted, reloadable, visual and accessible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "owner-desktop",
+                  "projectName": "owner-desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 9428,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-16T02:05:38.169Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-5b76a-dable-visual-and-accessible-owner-desktop/test-finished-1.png"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-5b76a-dable-visual-and-accessible-owner-desktop/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c30cd39e1c87f9ff656a-d4afef81129bd277e430",
+              "file": "modules.spec.ts",
+              "line": 130,
+              "column": 5
+            },
+            {
+              "title": "10-materials: mounted, reloadable, visual and accessible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "owner-desktop",
+                  "projectName": "owner-desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 9628,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-16T02:05:48.109Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-a967b-dable-visual-and-accessible-owner-desktop/test-finished-1.png"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-a967b-dable-visual-and-accessible-owner-desktop/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c30cd39e1c87f9ff656a-ff24ee038db11926229c",
+              "file": "modules.spec.ts",
+              "line": 130,
+              "column": 5
+            },
+            {
+              "title": "11-audits: mounted, reloadable, visual and accessible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "owner-desktop",
+                  "projectName": "owner-desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7433,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-16T02:05:58.234Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-61626-dable-visual-and-accessible-owner-desktop/test-finished-1.png"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-61626-dable-visual-and-accessible-owner-desktop/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c30cd39e1c87f9ff656a-e6ef2e2b33d438612621",
+              "file": "modules.spec.ts",
+              "line": 130,
+              "column": 5
+            },
+            {
+              "title": "12-meeting: mounted, reloadable, visual and accessible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "owner-desktop",
+                  "projectName": "owner-desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8341,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-16T02:06:06.092Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-9f28b-dable-visual-and-accessible-owner-desktop/test-finished-1.png"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-9f28b-dable-visual-and-accessible-owner-desktop/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c30cd39e1c87f9ff656a-b19b5ddee8f60f6e154d",
+              "file": "modules.spec.ts",
+              "line": 130,
+              "column": 5
+            },
+            {
+              "title": "13-organization: mounted, reloadable, visual and accessible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "owner-desktop",
+                  "projectName": "owner-desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 9394,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-16T02:06:14.886Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-ce086-dable-visual-and-accessible-owner-desktop/test-finished-1.png"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-ce086-dable-visual-and-accessible-owner-desktop/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c30cd39e1c87f9ff656a-1c626b883a42923b9b96",
+              "file": "modules.spec.ts",
+              "line": 130,
+              "column": 5
+            },
+            {
+              "title": "14-admin: mounted, reloadable, visual and accessible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "owner-desktop",
+                  "projectName": "owner-desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 9610,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-16T02:06:24.808Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-4b25f-dable-visual-and-accessible-owner-desktop/test-finished-1.png"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-4b25f-dable-visual-and-accessible-owner-desktop/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c30cd39e1c87f9ff656a-2949dac30c8069b18841",
+              "file": "modules.spec.ts",
+              "line": 130,
+              "column": 5
+            },
+            {
+              "title": "15-settings: mounted, reloadable, visual and accessible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "owner-desktop",
+                  "projectName": "owner-desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 9215,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-16T02:06:34.989Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-62df3-dable-visual-and-accessible-owner-desktop/test-finished-1.png"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-62df3-dable-visual-and-accessible-owner-desktop/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c30cd39e1c87f9ff656a-0ab79e0cbd1c8b1a43c0",
+              "file": "modules.spec.ts",
+              "line": 130,
+              "column": 5
+            },
+            {
+              "title": "16-partner-portal: mounted, reloadable, visual and accessible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "owner-desktop",
+                  "projectName": "owner-desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 9310,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-16T02:06:44.687Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-15667-dable-visual-and-accessible-owner-desktop/test-finished-1.png"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-15667-dable-visual-and-accessible-owner-desktop/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c30cd39e1c87f9ff656a-108dbebb91676cf00dcd",
+              "file": "modules.spec.ts",
+              "line": 130,
+              "column": 5
+            },
+            {
+              "title": "01-chat: mounted, reloadable, visual and accessible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "owner-mobile",
+                  "projectName": "owner-mobile",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7737,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-16T02:06:55.093Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-3b95b-dable-visual-and-accessible-owner-mobile/test-finished-1.png"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-3b95b-dable-visual-and-accessible-owner-mobile/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c30cd39e1c87f9ff656a-c78a197f88ab3b913b61",
+              "file": "modules.spec.ts",
+              "line": 130,
+              "column": 5
+            },
+            {
+              "title": "02-my-work: mounted, reloadable, visual and accessible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "owner-mobile",
+                  "projectName": "owner-mobile",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7930,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-16T02:07:03.777Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-2ab50-dable-visual-and-accessible-owner-mobile/test-finished-1.png"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-2ab50-dable-visual-and-accessible-owner-mobile/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c30cd39e1c87f9ff656a-4e4193d80d6a80d3035e",
+              "file": "modules.spec.ts",
+              "line": 130,
+              "column": 5
+            },
+            {
+              "title": "03-interview: mounted, reloadable, visual and accessible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "owner-mobile",
+                  "projectName": "owner-mobile",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8086,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-16T02:07:12.110Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-4de80-dable-visual-and-accessible-owner-mobile/test-finished-1.png"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-4de80-dable-visual-and-accessible-owner-mobile/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c30cd39e1c87f9ff656a-8e26c2f0a19656947b2a",
+              "file": "modules.spec.ts",
+              "line": 130,
+              "column": 5
+            },
+            {
+              "title": "04-tools: mounted, reloadable, visual and accessible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "owner-mobile",
+                  "projectName": "owner-mobile",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8924,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-16T02:07:20.680Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-501fd-dable-visual-and-accessible-owner-mobile/test-finished-1.png"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-501fd-dable-visual-and-accessible-owner-mobile/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c30cd39e1c87f9ff656a-59cb22bb5c24c1a3def0",
+              "file": "modules.spec.ts",
+              "line": 130,
+              "column": 5
+            },
+            {
+              "title": "05-assessment: mounted, reloadable, visual and accessible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "owner-mobile",
+                  "projectName": "owner-mobile",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8360,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-16T02:07:30.159Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-c3768-dable-visual-and-accessible-owner-mobile/test-finished-1.png"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-c3768-dable-visual-and-accessible-owner-mobile/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c30cd39e1c87f9ff656a-0909795192bd42f27182",
+              "file": "modules.spec.ts",
+              "line": 130,
+              "column": 5
+            },
+            {
+              "title": "06-initiatives: mounted, reloadable, visual and accessible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "owner-mobile",
+                  "projectName": "owner-mobile",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7871,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-16T02:07:39.172Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-7ee06-dable-visual-and-accessible-owner-mobile/test-finished-1.png"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-7ee06-dable-visual-and-accessible-owner-mobile/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c30cd39e1c87f9ff656a-42b31ffae8dd72902f3d",
+              "file": "modules.spec.ts",
+              "line": 130,
+              "column": 5
+            },
+            {
+              "title": "07-execution: mounted, reloadable, visual and accessible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "owner-mobile",
+                  "projectName": "owner-mobile",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6228,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-16T02:07:47.447Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-7e204-dable-visual-and-accessible-owner-mobile/test-finished-1.png"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-7e204-dable-visual-and-accessible-owner-mobile/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c30cd39e1c87f9ff656a-112b8db747cdff4ed5a2",
+              "file": "modules.spec.ts",
+              "line": 130,
+              "column": 5
+            },
+            {
+              "title": "08-results: mounted, reloadable, visual and accessible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "owner-mobile",
+                  "projectName": "owner-mobile",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7166,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-16T02:07:54.169Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-59a45-dable-visual-and-accessible-owner-mobile/test-finished-1.png"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-59a45-dable-visual-and-accessible-owner-mobile/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c30cd39e1c87f9ff656a-5af81935a555e084c61f",
+              "file": "modules.spec.ts",
+              "line": 130,
+              "column": 5
+            },
+            {
+              "title": "09-finance: mounted, reloadable, visual and accessible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "owner-mobile",
+                  "projectName": "owner-mobile",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7157,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-16T02:08:01.841Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-5b76a-dable-visual-and-accessible-owner-mobile/test-finished-1.png"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-5b76a-dable-visual-and-accessible-owner-mobile/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c30cd39e1c87f9ff656a-b21ff2e46f3f1849cbc7",
+              "file": "modules.spec.ts",
+              "line": 130,
+              "column": 5
+            },
+            {
+              "title": "10-materials: mounted, reloadable, visual and accessible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "owner-mobile",
+                  "projectName": "owner-mobile",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7133,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-16T02:08:09.454Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-a967b-dable-visual-and-accessible-owner-mobile/test-finished-1.png"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-a967b-dable-visual-and-accessible-owner-mobile/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c30cd39e1c87f9ff656a-67e2af0b7c82c9bcabff",
+              "file": "modules.spec.ts",
+              "line": 130,
+              "column": 5
+            },
+            {
+              "title": "11-audits: mounted, reloadable, visual and accessible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "owner-mobile",
+                  "projectName": "owner-mobile",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6773,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-16T02:08:17.067Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-61626-dable-visual-and-accessible-owner-mobile/test-finished-1.png"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-61626-dable-visual-and-accessible-owner-mobile/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c30cd39e1c87f9ff656a-7a02766ee1d39d4fe3a2",
+              "file": "modules.spec.ts",
+              "line": 130,
+              "column": 5
+            },
+            {
+              "title": "12-meeting: mounted, reloadable, visual and accessible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "owner-mobile",
+                  "projectName": "owner-mobile",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6388,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-16T02:08:24.272Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-9f28b-dable-visual-and-accessible-owner-mobile/test-finished-1.png"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-9f28b-dable-visual-and-accessible-owner-mobile/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c30cd39e1c87f9ff656a-966cc49b662362a2d585",
+              "file": "modules.spec.ts",
+              "line": 130,
+              "column": 5
+            },
+            {
+              "title": "13-organization: mounted, reloadable, visual and accessible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "owner-mobile",
+                  "projectName": "owner-mobile",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6377,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-16T02:08:31.005Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-ce086-dable-visual-and-accessible-owner-mobile/test-finished-1.png"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-ce086-dable-visual-and-accessible-owner-mobile/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c30cd39e1c87f9ff656a-e35f5ed20c5a23c3add2",
+              "file": "modules.spec.ts",
+              "line": 130,
+              "column": 5
+            },
+            {
+              "title": "14-admin: mounted, reloadable, visual and accessible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "owner-mobile",
+                  "projectName": "owner-mobile",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6403,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-16T02:08:37.776Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-4b25f-dable-visual-and-accessible-owner-mobile/test-finished-1.png"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-4b25f-dable-visual-and-accessible-owner-mobile/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c30cd39e1c87f9ff656a-87280879823354851b3b",
+              "file": "modules.spec.ts",
+              "line": 130,
+              "column": 5
+            },
+            {
+              "title": "15-settings: mounted, reloadable, visual and accessible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "owner-mobile",
+                  "projectName": "owner-mobile",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6552,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-16T02:08:44.507Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-62df3-dable-visual-and-accessible-owner-mobile/test-finished-1.png"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-62df3-dable-visual-and-accessible-owner-mobile/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c30cd39e1c87f9ff656a-5c08795f60dbe4b8e806",
+              "file": "modules.spec.ts",
+              "line": 130,
+              "column": 5
+            },
+            {
+              "title": "16-partner-portal: mounted, reloadable, visual and accessible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "owner-mobile",
+                  "projectName": "owner-mobile",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6570,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-16T02:08:51.426Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-15667-dable-visual-and-accessible-owner-mobile/test-finished-1.png"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/tmp/consultify-local-browser-16-6e31012f-final/test-results/modules-LOCAL-BROWSER-16-n-15667-dable-visual-and-accessible-owner-mobile/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c30cd39e1c87f9ff656a-cf0d3a723c927454aeeb",
+              "file": "modules.spec.ts",
+              "line": 130,
+              "column": 5
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-08-16T02:04:07.818Z",
+    "duration": 290878.176,
+    "expected": 32,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

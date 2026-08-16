@@ -1,0 +1,29 @@
+{
+  "baseline": "6e31012fbe3458dd6a3faccde2e6540f7837d613",
+  "contract": {
+    "module": "09-finance",
+    "path": "/finance",
+    "visibleText": {}
+  },
+  "finalUrl": "http://127.0.0.1:3220/finance?tab=statements",
+  "ui": {
+    "title": "Consultify",
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "color": "rgb(248, 250, 252)",
+    "fontFamily": "Inter, system-ui, -apple-system, sans-serif",
+    "viewport": {
+      "width": 1440,
+      "height": 960
+    },
+    "scrollWidth": 1440,
+    "interactiveCount": 49,
+    "enabledInteractiveCount": 49,
+    "headings": 1,
+    "mainLandmarks": 1
+  },
+  "a11y": [],
+  "consoleErrors": [],
+  "failedRequests": [],
+  "reloadCausedAborts": [],
+  "badApiResponses": []
+}
