@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
@@ -300,6 +302,63 @@ export type UserDataExport = {
   notifications: unknown[];
   securityEvents: any[];
 };
+
+export type UserDataExportArtifact = {
+  requestId: string;
+  body: string;
+  sha256: string;
+  bytes: number;
+  createdAt: string;
+};
+
+/**
+ * Materialize the exact downloadable bytes once. The unique request key makes
+ * retries/readbacks deterministic; ownership is checked on both the request
+ * and receipt so a guessed request id cannot cross a tenant or user boundary.
+ */
+export async function materializeUserDataExport(input: {
+  requestId: string;
+  userId: string;
+  organizationId: string;
+  payload: UserDataExport;
+}): Promise<UserDataExportArtifact | null> {
+  const body = JSON.stringify(input.payload, null, 2);
+  const sha256 = createHash('sha256').update(body, 'utf8').digest('hex');
+  const bytes = Buffer.byteLength(body, 'utf8');
+
+  const request = await dbGet<{ id: string }>(
+    `SELECT id FROM data_export_requests
+     WHERE id = ? AND user_id = ? AND organization_id = ? AND status IN ('ready', 'completed')`,
+    [input.requestId, input.userId, input.organizationId],
+    { fallback: false }
+  );
+  if (!request) return null;
+
+  await dbRun(
+    `INSERT INTO user_data_export_receipts
+       (request_id, organization_id, user_id, artifact_json, artifact_sha256, artifact_bytes)
+     VALUES (?, ?, ?, ?, ?, ?)
+     ON CONFLICT (request_id) DO NOTHING`,
+    [input.requestId, input.organizationId, input.userId, body, sha256, bytes],
+    { fallback: false }
+  );
+
+  const receipt = await dbGet<any>(
+    `SELECT request_id, artifact_json, artifact_sha256, artifact_bytes, created_at
+     FROM user_data_export_receipts
+     WHERE request_id = ? AND user_id = ? AND organization_id = ?`,
+    [input.requestId, input.userId, input.organizationId],
+    { fallback: false }
+  );
+  if (!receipt) return null;
+  return {
+    requestId: String(receipt.request_id),
+    body: String(receipt.artifact_json),
+    sha256: String(receipt.artifact_sha256),
+    bytes: Number(receipt.artifact_bytes),
+    createdAt: String(receipt.created_at),
+  };
+}
 
 export async function collectUserData(userId: string): Promise<UserDataExport> {
   const data: UserDataExport = {

@@ -21,6 +21,7 @@ import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js'
 import logger from '../utils/Logger.js';
 import { flagOn } from '../utils/pgFlags.js';
 import { verifyUserPassword } from '../utils/verifyUserPassword.js';
+import { materializeUserDataExport } from '../services/gdprService.js';
 
 // Apply rate limiting
 const router = Router();
@@ -143,6 +144,12 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const userId = req.user!.id;
+      const organizationId = req.organizationId;
+      if (!organizationId) {
+        return res.status(403).json(
+          buildGdprError(req, 403, 'GDPR_EXPORT_ORGANIZATION_REQUIRED', 'Organization context is required.')
+        );
+      }
 
       const row = await dbGet<{
         analytics: number | boolean;
@@ -426,9 +433,9 @@ router.post(
       // the GDPR data-subject-request export, so 'gdpr' is the correct value.
       await dbRun(
         `INSERT INTO data_export_requests (
-                id, user_id, export_type, status, requested_at, expires_at
-            ) VALUES (?, ?, 'gdpr', 'pending', datetime('now'), ?)`,
-        [requestId, userId, expiresAt.toISOString()]
+                id, organization_id, user_id, export_type, status, requested_at, expires_at
+            ) VALUES (?, ?, ?, 'gdpr', 'pending', datetime('now'), ?)`,
+        [requestId, organizationId, userId, expiresAt.toISOString()]
       );
 
       // In a real implementation, this would queue a background job
@@ -481,7 +488,7 @@ router.get(
       const userId = req.user!.id;
       const { requestId } = req.params;
 
-      const request = await dbGet<{ expires_at: string }>(
+      const request = await dbGet<{ expires_at: string; organization_id: string }>(
         `SELECT * FROM data_export_requests
             WHERE id = ? AND user_id = ? AND status = 'ready'`,
         [requestId, userId]
@@ -509,13 +516,26 @@ router.get(
 
       // Generate fresh export data
       const userData = await collectUserData(userId);
+      const artifact = await materializeUserDataExport({
+        requestId,
+        userId,
+        organizationId: request.organization_id,
+        payload: userData,
+      });
+      if (!artifact) {
+        return res.status(404).json(
+          buildGdprError(req, 404, 'GDPR_EXPORT_NOT_AUTHORIZED', 'Export was not found.')
+        );
+      }
 
       res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Digest', `sha-256=${artifact.sha256}`);
+      res.setHeader('X-Export-Receipt-SHA256', artifact.sha256);
       res.setHeader(
         'Content-Disposition',
         `attachment; filename=consultify-data-export-${new Date().toISOString().split('T')[0]}.json`
       );
-      return res.send(JSON.stringify(userData, null, 2));
+      return res.send(artifact.body);
     } catch (err: any) {
       logger.error('[GDPR] Download export error:', err);
       return res

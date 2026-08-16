@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import express from 'express';
 import jwt from 'jsonwebtoken';
+import { createHash } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
 
@@ -75,6 +76,7 @@ describe('Settings/GDPR routes (no stub responses)', () => {
     expect(realDatabaseReady).toBe(true);
     await db.run(`DELETE FROM gdpr_requests WHERE user_id = ?`, [userId]);
     await db.run(`DELETE FROM account_deletion_requests WHERE user_id = ?`, [userId]);
+    await db.run(`DELETE FROM user_data_export_receipts WHERE user_id = ?`, [userId]);
     await db.run(`DELETE FROM data_export_requests WHERE user_id = ?`, [userId]);
     await db.run(`DELETE FROM users WHERE id = ?`, [userId]);
     await db.run(`DELETE FROM organizations WHERE id = ?`, [orgId]);
@@ -107,6 +109,55 @@ describe('Settings/GDPR routes (no stub responses)', () => {
     ]);
     expect(row?.id).toBeTruthy();
     expect(row?.status).toBeTruthy();
+  });
+
+  it('materializes one immutable hash-bound download and denies a different user', async () => {
+    const created = await request(makeApp())
+      .post('/api/settings/export-data')
+      .set('Authorization', `Bearer ${makeToken()}`)
+      .send({ format: 'json', include: { profile: true } });
+    expect(created.status).toBe(202);
+    const requestId = created.body.request.id as string;
+    await db.run(`UPDATE data_export_requests SET status = 'ready' WHERE id = ?`, [requestId]);
+
+    const first = await request(makeApp())
+      .get(`/api/gdpr/download-export/${requestId}`)
+      .set('Authorization', `Bearer ${makeToken()}`);
+    expect(first.status).toBe(200);
+    const firstBody = JSON.stringify(first.body, null, 2);
+    const expectedHash = createHash('sha256').update(firstBody, 'utf8').digest('hex');
+    expect(first.headers['x-export-receipt-sha256']).toBe(expectedHash);
+
+    const second = await request(makeApp())
+      .get(`/api/gdpr/download-export/${requestId}`)
+      .set('Authorization', `Bearer ${makeToken()}`);
+    expect(second.status).toBe(200);
+    expect(second.headers['x-export-receipt-sha256']).toBe(expectedHash);
+    expect(second.body).toEqual(first.body);
+
+    const receipt = await db.get(
+      `SELECT artifact_sha256, artifact_bytes FROM user_data_export_receipts WHERE request_id = ?`,
+      [requestId]
+    );
+    expect(receipt.artifact_sha256).toBe(expectedHash);
+    expect(Number(receipt.artifact_bytes)).toBe(Buffer.byteLength(firstBody, 'utf8'));
+
+    const otherToken = jwt.sign(
+      { id: '00000000-0000-4000-8000-000000000099', organizationId: orgId, email: 'other@test.local', role: 'ADMIN' },
+      jwtSecret,
+      { expiresIn: '1h' }
+    );
+    const denied = await request(makeApp())
+      .get(`/api/gdpr/download-export/${requestId}`)
+      .set('Authorization', `Bearer ${otherToken}`);
+    expect(denied.status).toBe(404);
+
+    await expect(
+      db.run(`UPDATE user_data_export_receipts SET artifact_sha256 = ? WHERE request_id = ?`, [
+        '0'.repeat(64),
+        requestId,
+      ])
+    ).rejects.toThrow('user data export receipts are immutable');
   });
 
   it('POST /api/settings/gdpr/deletion-request creates a real request', async () => {
