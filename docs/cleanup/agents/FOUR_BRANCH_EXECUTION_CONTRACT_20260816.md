@@ -14,8 +14,8 @@ Authority packet commit: `aca1b7a126`
 | --- | --- | --- | ---: |
 | Codex integrator | `codex/recovery-canonical-20260816` | 37 retained tasks, shared files, integration and final gates | canonical |
 | Claude A | `codex/closure-claude-a-method-evidence` | 15 tasks: Assessment, Audits, Tools and two Interview evidence/delivery tasks | 1 |
-| Claude B | `codex/closure-claude-b-transformation` | 15 tasks: Decisions/Tasks/Agent, Initiatives and Execution | 2 |
-| Claude C | `codex/closure-claude-c-ideas-documents` | 15 tasks: Materials/Documents, Chat, Organization and Meeting document boundary; Ideas mandatory sub-packets | 3 |
+| Claude C | `codex/closure-claude-c-ideas-documents` | 15 tasks: Materials/Documents, Chat, Organization and Meeting document boundary; Ideas mandatory sub-packets | 2 |
+| Claude B | `codex/closure-claude-b-transformation` | 15 tasks: Decisions/Tasks/Agent, Initiatives and Execution | 3 |
 
 Branches are sealed from the authority packet descendant recorded in each lane
 packet; product code is unchanged from the product/code baseline above. A
@@ -56,6 +56,21 @@ An integrator request contains task ID, exact file, minimal hunk, reason,
 consumer tests and required ordering. The worker continues other safe work
 instead of modifying the shared file.
 
+## Resolved path leases
+
+The generated leases under `generated/CLAUDE_LANE_*_PATH_LEASE.{md,json}` are
+the exact tracked-file allowlists. They contain zero cross-lane overlap. The
+JSON SHA-256 is the lease identity and must be reported in every handoff.
+
+- Lane A: `df36e4171a8d3bbd8f772a0badd952b31e003d5ee789c7b2323b7c8da01b818b`
+- Lane B: `b7119b55c9b3d0d2ca9ec9eca7858f6c57a1bf901e8c81c117402fbfee60e0a1`
+- Lane C: `889f5a1cbe953d76149b5ac876c2ce0e6ce3b12e2775a4fa6d84cfa099688d28`
+
+New implementation/test files are allowed only below an already leased domain
+directory. New evidence goes to `docs/program/evidence/closure/<lane>/<task>/`.
+New migrations use the reserved namespace below. Everything else is an
+integrator request.
+
 ## Migration and fixture isolation
 
 - Claude A reserves migration namespace/date prefix `20260910_claude_a_*`.
@@ -79,8 +94,12 @@ needs become a handoff contract containing:
 - owner table/writer;
 - positive, retry/replay, stale and tenant-negative examples.
 
-Codex integrates A → B → C and reruns downstream invalidation gates after each
-lane. Agents do not merge each other and do not merge into canonical.
+Codex integrates A → C → B → Codex-owned Results/Finance and reruns downstream
+invalidation gates after each lane. A and C may be integrated in either order
+only if their contract tests remain disjoint. B starts from its sealed baseline
+but its final acceptance consumes the integrated A candidate and C Idea receipt
+through Codex-provided contract fixtures. Agents do not merge each other and do
+not merge into canonical.
 
 ## Git and safety
 

@@ -9,7 +9,9 @@ Product/code baseline: `0f5652690b59f5ebe3f465131bd591a2c4340d2e`
 Authority packet commit: `aca1b7a126`
 
 Read the canonical 82-task plan and
-`FOUR_BRANCH_EXECUTION_CONTRACT_20260816.md` in full before work.
+`FOUR_BRANCH_EXECUTION_CONTRACT_20260816.md`,
+`EXECUTION_GATE_CATALOG_20260816.md` and
+`OWNER_DECISIONS_AND_MEASURABLE_GATES_20260816.md` in full before work.
 
 ## Mission
 
@@ -81,16 +83,41 @@ Codex closes the My Work parent only after Claude B and C handoffs integrate.
 15. `MTG-UI-CANON-001` — minutes/proposals/materials/consent/retention/error
     states and complete responsive/a11y/visual evidence.
 
+## Atomic execution matrix
+
+| Task/packet | Required predecessors | Canonical owner records | Required gates | External disposition |
+| --- | --- | --- | --- | --- |
+| `IDEA-WORKSPACE-SUBPACKET-001` | Organization source contract | `ideas`, idea comments/business/financial cases/exports, collaboration snapshots/locks | G0–G6; collaboration race; confidentiality; cold reopen | Codex closes parent with lane B |
+| `IDEA-DOCUMENT-HANDOFF-SUBPACKET-001` | Idea workspace+Materials registry | versioned proposal plus artifact receipt; never direct foreign write | G0–G6; exactly-one artifact receipt; retry | Codex closes parent with lane B |
+| `MAT-POL-001` | none | decision/evidence only | G0, G6 | provider/legal/procurement owner |
+| `MAT-BVP-001` | provider-independent editors+registry | artifact registry/versions/lineage/approval/export receipts | G0–G6; DOC/PPT/XLSX edit/export/reopen | provider export may remain OFF |
+| `MAT-MVP-DOC-001` | artifact identity | document blocks/versions/approvals/share/audit | G0–G6; restore/share/revoke/rotate | none |
+| `MAT-MVP-PPT-001` | artifact identity | presentation decks/versions/templates/export records | G0–G6; notes/a11y/PPTX+PDF readback | approved provider for external export |
+| `MAT-MVP-XLSX-001` | artifact identity | workbook versions/commands/leases/export receipts | G0–G6; formulas/structure/CAS/reopen | none |
+| `MAT-MVP-EXPORT-001` | DOC/PPT/XLSX stable | immutable source/output/provider job receipt | G0–G3, G5–G6; hash/readback/retry | approved provider |
+| `MAT-UI-CANON-001` | three editors stable | mounted artifact shell/editors only | G0–G2, G4, G6 | manual UX/VoiceOver |
+| `CHAT-BVP-001` | Organization snapshot+Idea proposal contracts | conversations/messages/attachments/proposals/receipts | G0–G6; no foreign owner write; cold reopen | real provider call remains external if unavailable |
+| `CHAT-NFR-001` | Chat BVP | stream/provider telemetry and durable conversation | G0–G3, G5–G6; cancellation/timeout/restart | provider stability window |
+| `CHAT-UI-CANON-001` | Chat runtime stable | mounted Chat views only | G0–G2, G4, G6 | manual UX/VoiceOver |
+| `ORG-BVP-001` | none | organization context/claims/sources/snapshots/versions | G0–G6; immutable exact refs; confidentiality | none |
+| `ORG-OPS-001` | Organization owner | context events/worker state/retention/provenance | G0–G3, G5–G6; rebuild/restart/runbook | legal retention decision where destructive |
+| `ORG-UI-CANON-001` | Organization BVP | mounted Organization views only | G0–G2, G4, G6 | manual UX/VoiceOver |
+| `MTG-BVP-001` | Meeting policy defaults + downstream proposal contracts | meetings/minutes/participants/notes/outputs/idempotency/audit | G0–G6; exactly-one task/decision/material receipt | recording/transcript remains OFF |
+| `MTG-UI-CANON-001` | Meeting BVP | mounted Meeting views only | G0–G2, G4, G6 | manual UX/VoiceOver |
+
+The matrix has 17 rows because the two Ideas sub-packets are mandatory checks
+inside the 15 top-level task denominator; they do not create new program tasks.
+
 ## Domain allowlist
 
-Allowed after inventory: `Idea*` components/services/routes/tests and idea
-collaboration/snapshot/business/financial-case code; Materials/Artifact/
-DocumentStudio/Presentations/Workbook domain code/tests; Chat/AIChat domain;
-Organization context/claims/snapshot domain; Meeting minutes/proposal/material
-surfaces excluding policy; lane-C fixtures/evidence and reserved migrations.
-My Work decision/task/Agent lifecycle, Initiatives,
-Execution, Results, Finance, shared files, infrastructure and release code are
-forbidden.
+Exact tracked allowlist:
+`generated/CLAUDE_LANE_C_PATH_LEASE.json`, SHA-256
+`889f5a1cbe953d76149b5ac876c2ce0e6ce3b12e2775a4fa6d84cfa099688d28`.
+It contains Idea-owned paths, Materials/Artifact/DocumentStudio/Presentations/
+Workbook, Chat/AIChat, Organization context/snapshots and Meeting document
+boundary code/tests. No tracked path outside the manifest may be edited. My
+Work decision/task/Agent lifecycle, Initiatives, Execution, Results, Finance,
+shared files, infrastructure and release code are forbidden.
 
 ## Required order
 

@@ -9,7 +9,9 @@ Product/code baseline: `0f5652690b59f5ebe3f465131bd591a2c4340d2e`
 Authority packet commit: `aca1b7a126`
 
 Read the canonical 82-task plan and
-`FOUR_BRANCH_EXECUTION_CONTRACT_20260816.md` in full before work.
+`FOUR_BRANCH_EXECUTION_CONTRACT_20260816.md`,
+`EXECUTION_GATE_CATALOG_20260816.md` and
+`OWNER_DECISIONS_AND_MEASURABLE_GATES_20260816.md` in full before work.
 
 ## Mission
 
@@ -65,14 +67,35 @@ route/flag/migration registries. Emit versioned downstream contracts for Codex.
 15. `EXE-UI-CANON-001` — owner-backed runtime, preview-scoped actions,
     management/control states, responsive/a11y and visual evidence.
 
+## Atomic execution matrix
+
+| Task | Required predecessors | Canonical owner records | Required gates | External disposition |
+| --- | --- | --- | --- | --- |
+| `MYW-REALDB-FIXTURE-AUTH-001` | C Idea contract fixture available for final acceptance | lane-B fixture, `inbox_items`, `tasks`, `decisions`, `transformation_cases` | G0, G2–G3, G5–G6; zero unexplained pending | Codex supplies integrated contract fixture |
+| `MYW-AGT-BVP-001` | fixture authority + C Idea receipt contract | `inbox_items`, task/decision records, `transformation_cases`, plans/steps | G0–G6; stable IDs; retire/reopen; cold restart | none |
+| `AGT-OPS-001` | BVP writer stable | transformation audit/outbox/runtime records | G0–G3, G5–G6; restart/replay/long-run alerts | provider call may remain external |
+| `MYW-AGT-UI-CANON-001` | BVP stable | mounted My Work/Agent views only; Radar OFF | G0–G2, G4, G6 | manual UX/VoiceOver |
+| `INI-BVP-001` | A/C candidate contract fixture | `initiative_candidates`, `initiatives`, gates/handoffs/receipts | G0–G6; one row/receipt/downstream ID | Codex supplies integrated producer fixture |
+| `INI-MVP-PROFILE-001` | capability decision frozen | initiatives, project/team/capability/approval records | G0–G3, G5–G6; writer inventory=1 | integrator request for global capability registry |
+| `INI-MVP-PORTFOLIO-001` | profile+Initiative owner | portfolio/resource/roadmap/timeline/capacity read models | G0–G3, G5–G6; idempotent rebuild/readback | none |
+| `INI-MVP-GATE-001` | profile | lifecycle gate decisions/history/receipts | G0–G3, G5–G6; GO/NO-GO, stale and same-ID transition | none |
+| `INI-MVP-CARDS-001` | portfolio+gate contracts | persisted cards/read models and retirement disposition | G0–G4, G6; deterministic reopen | none |
+| `INI-UI-CANON-001` | Initiatives runtime stable | mounted Initiative views only | G0–G2, G4, G6 | manual UX/VoiceOver |
+| `EXE-BVP-001` | Initiative handoff | execution case/work/evidence/audit records and Results signal outbox | G0–G6; exactly-one signal; cold reopen | Codex owns downstream Results assertion |
+| `EXE-MVP-SPINE-001` | Execution owner frozen | plan/tasks/milestones/RACI/resources/budget/capacity/RAID/issues/changes/decisions | G0–G3, G5–G6; one health model | none |
+| `EXE-MVP-ACTIONS-001` | spine+capabilities | action target records and immutable audit | G0–G4, G6; implement or hidden; destructive negatives | policy defaults fail-closed |
+| `EXE-FLOW-ADAPTER-001` | Initiative+Execution owners | `initiative_handoffs`, execution receipts/outbox and versioned Results signal | G0–G3, G5–G6; retry/restart/exactly-once | Codex Results consumer packet |
+| `EXE-UI-CANON-001` | spine/actions stable | mounted Execution views only | G0–G2, G4, G6 | manual UX/VoiceOver |
+
 ## Domain allowlist
 
-Allowed after inventory: My Work decision/task/notebook surfaces excluding
-`Idea*`, Agent/transformation-case, Initiatives and Execution components/
-controllers/services/routes/domain tests; domain-owned tables/adapters; lane-B
-fixtures/evidence and reserved migrations. Candidate producer and Idea inputs
-are consumed through contracts; Results receives a versioned signal only.
-Shared infrastructure and other lanes are forbidden.
+Exact tracked allowlist:
+`generated/CLAUDE_LANE_B_PATH_LEASE.json`, SHA-256
+`b7119b55c9b3d0d2ca9ec9eca7858f6c57a1bf901e8c81c117402fbfee60e0a1`.
+It contains My Work decision/task/notebook excluding Idea-owned paths,
+Agent/transformation-case, Initiatives and Execution code/tests. No tracked
+path outside the manifest may be edited. Candidate producer and Idea inputs are
+consumed through contracts; Results receives a versioned signal only.
 
 ## Required order
 
@@ -81,7 +104,7 @@ Shared infrastructure and other lanes are forbidden.
 3. Close Initiative cards/read models.
 4. Establish Execution spine and action policy.
 5. Produce Initiative→Execution→Results adapter contracts and consumer-test
-   packet for Claude C; do not edit Results code.
+   packet for Codex-owned Results; do not edit Results code.
 6. UI canon packets, then full lane realDB/browser/regression handoff.
 
 ## Lane acceptance

@@ -14,6 +14,8 @@ Mandatory context:
 - `FOUR_BRANCH_EXECUTION_CONTRACT_20260816.md`
 - `../CLEANUP_CURRENT_STATE_20260816.md`
 - `../CLEANUP_RECOVERY_LEDGER_20260816.md`
+- `EXECUTION_GATE_CATALOG_20260816.md`
+- `OWNER_DECISIONS_AND_MEASURABLE_GATES_20260816.md`
 
 ## Mission
 
@@ -75,12 +77,38 @@ exact-SHA realDB/browser evidence and bounded commits for every reproduced gap.
    on fresh PG, forced AI review >12 s bounded fallback, nullable structured
    output and missing notification-preferences table fallback.
 
+## Atomic execution matrix
+
+`G0…G6` refer to `EXECUTION_GATE_CATALOG_20260816.md`. Owner records must be
+verified through the migration ledger and information_schema before editing;
+an unexpected second writer is a defect, not permission to add a third.
+
+| Task | Required predecessors | Canonical owner records | Required gates | External disposition |
+| --- | --- | --- | --- | --- |
+| `ASM-BVP-001` | catalog contract drafted | `method_sessions`, `method_evidence`, `method_outputs`, `assessment_reports`, `assessment_initiative_batches` | G0–G6; exactly-one batch; cold reopen | none |
+| `ASM-METHOD-CATALOG-001` | rights packet | `assessment_definitions`, `method_packs`, flag registry via integrator request | G0–G3, G5–G6; one active DRD version | `BLOCKED_OWNER` for non-DRD |
+| `ASM-UI-CANON-001` | ASM BVP stable | Assessment mounted routes/tabs; no new writer | G0–G2, G4, G6 | manual UX/VoiceOver |
+| `AUD-POL-001` | none | decision/evidence only | G0, G6 | methodology/legal owner |
+| `AUD-BVP-001` | owner contract | `audit_programs`, criteria/members/findings/evidence | G0–G6; flag OFF/ON; CRUD+cold reopen | none |
+| `AUD-MVP-OWNER-001` | none | `/audit-programs` writer and `audit_programs`; legacy routes no mutable owner | G0–G3, G5–G6; writer inventory=1 | integrator request for shared routes |
+| `AUD-MVP-RIGHTS-001` | AUD policy | `audit_packs`, `audit_pack_criteria`, provenance receipts | G0, G2–G3, G5–G6 | methodology/legal owner |
+| `AUD-MVP-LIFECYCLE-001` | owner+rights | `audit_evidence`, `audit_findings`, `audit_corrective_actions`, proposals, closure/effectiveness audit | G0–G6; SoD; full lifecycle | none after policy |
+| `AUD-MVP-AI-HANDOFF-001` | lifecycle owner | `audit_ai_proposals`, `audit_initiative_proposals`, receipt/outbox | G0–G6; proposal-only; exactly-one receipt | none |
+| `AUD-MVP-DATA-001` | schema+rights | lane-A governed fixture only | G0, G2–G6; exact 150/400/60/40/12 minima | none |
+| `TLS-BVP-001` | truthful catalog | `tool_sessions`, `tool_outputs`, approvals/reports/proposals/links | G0–G6; CAS; immutable nonempty output | none |
+| `TLS-CATALOG-001` | rights inventory | `method_packs`, known-tools/catalog registry via integrator request | G0–G3, G5–G6; one active SWOT packet | `BLOCKED_OWNER` for other tools |
+| `TLS-UI-CANON-001` | TLS BVP stable | mounted Tool surfaces only | G0–G2, G4, G6 | manual UX/VoiceOver |
+| `INT-BVP-001` | access contract | `interview_sessions`, assignments/members/answers/evidence/insights/handoffs | G0–G6; exact-one candidate; access matrix | none |
+| `INT-DELIVERY-OPS-001` | INT BVP | `interview_evidence`, answer history, notifications, AI audit | G0–G3, G5–G6; integer readback; forced >12s | none |
+
 ## Domain allowlist
 
-Allowed after inventory: Assessment/method-core assessment, Audits/audit
-programs, Tools/DiscoveryTools/method-core tool surfaces, and Interview
-evidence/delivery components/controllers/services/routes/tests; lane-A
-fixtures/evidence and reserved migrations.
+Exact tracked allowlist:
+`generated/CLAUDE_LANE_A_PATH_LEASE.json`, SHA-256
+`df36e4171a8d3bbd8f772a0badd952b31e003d5ee789c7b2323b7c8da01b818b`.
+It contains Assessment/method-core assessment, Audits/audit programs,
+Tools/DiscoveryTools/method-core tool surfaces and Interview evidence/delivery
+code/tests. No tracked path outside the manifest may be edited.
 
 Shared files listed in the four-branch contract remain integrator-only.
 Initiative creation is proposal/handoff only: lane A must never become the

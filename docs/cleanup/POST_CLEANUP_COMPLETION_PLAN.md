@@ -390,8 +390,8 @@ impact/invalidation matrix.
 
 The executable packets are under `docs/cleanup/agents/`. Claude C's two Ideas
 sub-packets are acceptance scope of existing parent tasks, not extra top-level
-denominator. Integration is serial A → B → C even when implementation runs in
-parallel.
+denominator. Integration is serial A → C → B → Codex Results/Finance even when
+implementation runs in parallel.
 
 1. **Packet freeze:** exact candidate, clean state, task owner, dependencies,
    allowlist/hash, fixture and commands. Historical branches are never bases.
