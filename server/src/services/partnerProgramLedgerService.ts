@@ -189,6 +189,7 @@ export interface AppendLedgerEntryInput {
 }
 
 let schemaEnsured = false;
+let schemaEnsurePromise: Promise<void> | null = null;
 
 export function isPartnerLedgerEntryType(value: unknown): value is PartnerLedgerEntryType {
   return (
@@ -247,7 +248,8 @@ function isOnboardChecklistComplete(checklist: Record<string, unknown>): boolean
 
 async function ensurePartnerProgramSchema(db: IDatabase): Promise<void> {
   if (schemaEnsured) return;
-  try {
+  if (schemaEnsurePromise) return schemaEnsurePromise;
+  schemaEnsurePromise = (async () => {
     await DbPromise.run(
       db,
       `CREATE TABLE IF NOT EXISTS partner_program_runtime (
@@ -287,7 +289,11 @@ async function ensurePartnerProgramSchema(db: IDatabase): Promise<void> {
        ON partner_program_ledger(partner_org_id, occurred_at DESC)`
     );
     schemaEnsured = true;
+  })();
+  try {
+    await schemaEnsurePromise;
   } catch (e) {
+    schemaEnsurePromise = null;
     logger.warn('[PartnerProgramLedger] ensureSchema', e);
     throw e;
   }
@@ -425,16 +431,6 @@ export class PartnerProgramLedgerService {
       }
     }
 
-    if (input.idempotencyKey) {
-      const existing = await DbPromise.get<{ id: string }>(
-        db,
-        `SELECT id FROM partner_program_ledger WHERE partner_org_id = ? AND idempotency_key = ?`,
-        [input.partnerOrgId, input.idempotencyKey]
-      );
-      if (existing?.id) {
-        return { id: existing.id, duplicate: true };
-      }
-    }
     const id = uuidv4();
     const now = new Date().toISOString();
     const occurredAt = input.occurredAt || now;
@@ -444,7 +440,10 @@ export class PartnerProgramLedgerService {
         id, partner_org_id, entry_type, amount, currency, occurred_at, recorded_at,
         source_ref, actor, actor_id, correlation_id, idempotency_key, reason_code, note,
         rule_version, related_entry_id, dispute_status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT (partner_org_id, idempotency_key)
+        WHERE idempotency_key IS NOT NULL
+      DO NOTHING`,
       [
         id,
         input.partnerOrgId,
@@ -470,6 +469,20 @@ export class PartnerProgramLedgerService {
       throw Object.assign(new Error(ins.error || 'Ledger insert failed'), {
         code: 'P29_LEDGER_WRITE_FAILED',
       });
+    }
+    if (input.idempotencyKey) {
+      const committed = await DbPromise.get<{ id: string }>(
+        db,
+        `SELECT id FROM partner_program_ledger WHERE partner_org_id = ? AND idempotency_key = ?`,
+        [input.partnerOrgId, input.idempotencyKey],
+        { fallback: false }
+      );
+      if (!committed?.id) {
+        throw Object.assign(new Error('Ledger idempotency readback failed'), {
+          code: 'P29_LEDGER_IDEMPOTENCY_READBACK_FAILED',
+        });
+      }
+      return { id: committed.id, duplicate: committed.id !== id };
     }
     return { id };
   }

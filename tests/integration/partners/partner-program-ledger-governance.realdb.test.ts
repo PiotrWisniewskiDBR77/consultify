@@ -10,6 +10,7 @@ const ORG_A = 'prt-ledger-test-org-a';
 const ORG_B = 'prt-ledger-test-org-b';
 let sql: Client;
 let savepointCounter = 0;
+let ledgerService: typeof import('../../../server/src/services/partnerProgramLedgerService.ts').default;
 
 async function expectDbError(operation: () => Promise<unknown>, pattern: RegExp) {
   const savepoint = `prt_expected_error_${++savepointCounter}`;
@@ -59,6 +60,11 @@ beforeAll(async () => {
   await sql.connect();
   const identity = await sql.query(`SELECT version() AS version`);
   expect(identity.rows[0].version).toMatch(/PostgreSQL/);
+  ledgerService = (await import('../../../server/src/services/partnerProgramLedgerService.ts')).default;
+  // Warm the idempotent schema guard before this suite opens its long-lived
+  // rollback transaction; concurrent writers must exercise INSERT contention,
+  // not DDL lock contention from lazy compatibility setup.
+  await ledgerService.listEntries('__prt-ledger-schema-warm__', { limit: 1 });
   await sql.query('BEGIN');
 });
 
@@ -156,5 +162,47 @@ describe.sequential('partner program append-only participant ledger (real PG)', 
       () => sql.query(`DELETE FROM partner_program_ledger WHERE id='prt-immutable'`),
       /append-only/
     );
+  });
+
+  it('coalesces concurrent retries into one committed fact and cold-reads the same immutable id', async () => {
+    const idempotencyKey = `prt-ledger-concurrent-${Date.now()}`;
+    const writes = await Promise.all(
+      Array.from({ length: 12 }, () =>
+        ledgerService.appendEntry({
+          partnerOrgId: ORG_A,
+          entryType: 'accrual.posted',
+          amount: 25,
+          currency: 'EUR',
+          actor: 'operator',
+          idempotencyKey,
+          ruleVersion: 'partner-test-rule-v1',
+          sourceRef: { technicalFixture: true },
+        })
+      )
+    );
+    expect(new Set(writes.map((write) => write.id)).size).toBe(1);
+    expect(writes.filter((write) => write.duplicate).length).toBe(11);
+
+    const cold = new Client({ connectionString });
+    await cold.connect();
+    try {
+      const persisted = await cold.query(
+        `SELECT id, partner_org_id, amount, currency, rule_version
+           FROM partner_program_ledger
+          WHERE partner_org_id=$1 AND idempotency_key=$2`,
+        [ORG_A, idempotencyKey]
+      );
+      expect(persisted.rows).toEqual([
+        expect.objectContaining({
+          id: writes[0].id,
+          partner_org_id: ORG_A,
+          amount: '25.0000',
+          currency: 'EUR',
+          rule_version: 'partner-test-rule-v1',
+        }),
+      ]);
+    } finally {
+      await cold.end();
+    }
   });
 });
