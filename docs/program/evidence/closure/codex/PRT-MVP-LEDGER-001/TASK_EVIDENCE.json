@@ -1,0 +1,9 @@
+{
+  "taskId": "PRT-MVP-LEDGER-001",
+  "productSha": "13f6e34c055bcfd525f9d2ac629784be8935f3d6",
+  "freshDatabase": {"migrationsApplied": 705, "repeatApplied": 0, "dryRunPending": 0, "ledgerFailure": 0},
+  "tests": {"freshRealPostgres": "6/6 PASS", "focusedPartner": "63/63 PASS"},
+  "proof": ["append-only UPDATE/DELETE guard", "tenant-scoped idempotency", "mandatory ruleVersion", "linked correction/reversal/dispute facts", "cross-tenant link denial", "finite amount validation"],
+  "verdict": "PARTIAL",
+  "openBlockers": ["Commercial/legal PRT-POL-001 must approve rule, eligibility, attribution, reversal, dispute, tax and payout policy."]
+}

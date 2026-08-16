@@ -1,0 +1,7 @@
+{
+  "taskId": "PRT-BVP-001",
+  "productSha": "13f6e34c055bcfd525f9d2ac629784be8935f3d6",
+  "tests": {"focusedPartner": "63/63 PASS", "ledgerRealPostgres": "6/6 PASS"},
+  "verdict": "PARTIAL",
+  "openBlockers": ["One realDB register->connect->certification->code->attribution->cold-reopen journey remains."]
+}

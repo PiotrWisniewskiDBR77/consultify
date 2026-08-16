@@ -1,0 +1,10 @@
+{
+  "taskId": "ADM-MVP-OPS-001",
+  "productSha": "13f6e34c055bcfd525f9d2ac629784be8935f3d6",
+  "freshDatabase": {"migrationsApplied": 705, "repeatApplied": 0, "dryRunPending": 0, "ledgerSuccess": 705, "ledgerFailure": 0},
+  "tests": {"unit": "15/15 PASS", "realPostgres": "2/2 PASS"},
+  "proof": ["tenant-scoped idempotent IAM jobs", "SKIP LOCKED claim", "lease/CAS stale denial", "retry/exhaustion", "durable audit and metrics", "operator runbook"],
+  "staticGates": {"typeCheck": "PASS", "backendBuild": "PASS", "diffCheck": "PASS"},
+  "verdict": "PARTIAL",
+  "openBlockers": ["Long-run worker/alert exercise and integrated invite-to-revoke journey remain."]
+}

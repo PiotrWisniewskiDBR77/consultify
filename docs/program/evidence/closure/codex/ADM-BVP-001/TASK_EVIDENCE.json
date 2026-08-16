@@ -1,0 +1,8 @@
+{
+  "taskId": "ADM-BVP-001",
+  "productSha": "13f6e34c055bcfd525f9d2ac629784be8935f3d6",
+  "tests": {"orgPeopleIamUnit": "15/15 PASS", "freshRealPostgresPacket": "PASS"},
+  "proof": ["membership reads fail closed", "role-change audit uses durable UUID", "missing member is rejected", "audit failure cannot produce false success"],
+  "verdict": "PARTIAL",
+  "openBlockers": ["Full invite->accept->role->revoke->new-session flow and last-owner browser negative remain."]
+}
