@@ -109,6 +109,7 @@ function ddl(): Promise<void> {
          organization_id TEXT,
          title TEXT,
          deck_json TEXT,
+         slide_count INTEGER NOT NULL DEFAULT 0,
          version INTEGER NOT NULL DEFAULT 1,
          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
        );
