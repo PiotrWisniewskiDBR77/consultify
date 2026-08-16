@@ -1,0 +1,34 @@
+{
+  "taskId": "ASM-UI-CANON-001",
+  "baselineSha": "c024bde874d49fe414d18c53ccc82bb85e87efbc",
+  "productSha": "ca963fe5112f6caf5bebdef04e4f0a624be00e91",
+  "leaseSha256": "integrator_fix_after_lane_a_handoff",
+  "changedPaths": [
+    "src/components/assessment/library/AssessmentLibraryTab.tsx",
+    "src/views/AssessmentSessionEditorView.tsx",
+    "tests/e2e/journeys/assessment-complete-flow.spec.ts",
+    "docs/program/evidence/closure/a/ASM-UI-CANON-001/UI_INVENTORY.md"
+  ],
+  "changedPathRationale": {
+    "src/components/assessment/library/AssessmentLibraryTab.tsx": "Reads the application FeatureFlagsProvider so the real DB-backed DRD flags reach the Library entry point.",
+    "src/views/AssessmentSessionEditorView.tsx": "Mounts the method-core workspace before legacy loading/error states and skips the wrong legacy owner lookup.",
+    "tests/e2e/journeys/assessment-complete-flow.spec.ts": "Defines the complete browser journey and required five-surface states.",
+    "docs/program/evidence/closure/a/ASM-UI-CANON-001/UI_INVENTORY.md": "Records real prior browser coverage, axe finding and the now-fixed mount blocker."
+  },
+  "ownerTables": [],
+  "commands": [
+    {"command": "npx vitest run drdMethodWorkspaceGating AssessmentSessionEditorView.availabilityGate AssessmentSessionEditorView.save-readback", "exitCode": 0},
+    {"command": "NODE_OPTIONS=--max-old-space-size=8192 npm run type-check -- --pretty false", "exitCode": 0}
+  ],
+  "denominators": {"focusedComponentTests": {"files": 3, "passed": 10, "failed": 0}},
+  "fixtures": {"framework": "DRD", "flagOwner": "FeatureFlagsProvider and DB-backed runtime flags"},
+  "negativeControls": {"nonDrdDoesNotMountMethodWorkspace": true, "legacyCMMIAndLeanRemainUnavailable": true, "legacyLookupSkippedForMethodCore": true},
+  "browserArtifacts": [],
+  "rollback": {"method": "Revert ca963fe511; no schema changes.", "executed": false},
+  "verdict": "NOT_VERIFIED",
+  "openBlockers": [
+    "The complete real browser journey must be rerun after the mount fix on the exact integrated SHA.",
+    "Permission, conflict and complete success states plus desktop/tablet/mobile, PL/EN, light/dark and axe need fresh artifacts.",
+    "Named human and VoiceOver sign-off remains external."
+  ]
+}
