@@ -3,6 +3,12 @@ import { Request, Response, Router } from 'express';
 import { isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
 import { betaGate } from '../middleware/betaGate.middleware.js';
 import { meetingIntelligenceService } from '../services/ai/meetingIntelligenceService.js';
+import { HandoffSpineError } from '../services/artifactHandoff/handoffSpineService.js';
+import {
+  decideMeetingNote,
+  listMeetingNotesForMeeting,
+  proposeMeetingNote,
+} from '../services/meetingBoundary/meetingBoundaryService.js';
 import {
   addMeetingDecision,
   addMeetingFollowUp,
@@ -17,6 +23,25 @@ import {
 } from '../services/meetingService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
+
+/** Maps `HandoffSpineError.code` (and our own boundary errors of the same
+ * shape) onto the HTTP status the route should answer with. Centralised so
+ * every proposal-flow route (generate-notes, notes/:noteId/decision) reports
+ * the same code the same way instead of each re-deriving it. */
+function statusForSpineErrorCode(code: string): number {
+  switch (code) {
+    case 'NOT_FOUND':
+      return 404;
+    case 'INVALID_STATE_TRANSITION':
+    case 'NOT_APPROVED':
+      return 409;
+    case 'NOT_A_HUMAN_ACTOR':
+    case 'INVALID_ARGUMENT':
+      return 400;
+    default:
+      return 500;
+  }
+}
 
 const router = Router();
 
@@ -230,11 +255,31 @@ router.patch(
 
 /**
  * POST /:id/generate-notes — Module 13 activation.
+ *
  * Turns a meeting transcript into structured AI notes (summary, key points,
- * decisions, action items) via meetingIntelligenceService, then persists the
- * extracted decisions + action items as meeting decisions/follow-ups so they
- * flow into the rest of the system. Falls back to the heuristic path when no
- * LLM is configured (service handles that internally).
+ * decisions, action items) via meetingIntelligenceService.
+ *
+ * L-05 (MTG-BVP-001, 2026-08-16): this used to persist the extracted
+ * decisions/action items DIRECTLY into `meetings.decisions_json` /
+ * `meeting_follow_ups` whenever `persist !== false` — i.e. persistence
+ * defaulted ON with NO human approval step, and no idempotency guard, so a
+ * retried/double-clicked request silently duplicated. The note content
+ * itself was also discarded the moment the HTTP response was sent — nothing
+ * durable stored it.
+ *
+ * The DEFAULT is now: the note is durably stored (`meeting_notes`) and
+ * proposed as a governed handoff (`artifactHandoff/handoffSpineService.ts`,
+ * `targetKind: 'material'`) — NOTHING is written into
+ * `meetings.decisions_json` / `meeting_follow_ups` until a human approves via
+ * `POST /:id/notes/:noteId/decision`. A retried call with the same transcript
+ * (or an explicit `idempotencyKey`) replays the SAME note + proposal instead
+ * of creating a second one.
+ *
+ * COMPATIBILITY PATH (`persist: true`, explicit opt-in — the OLD default is
+ * now off by default): when a caller explicitly asks for it, the old direct
+ * write to Meeting's OWN legacy tables still runs, unguarded, exactly as
+ * before. Callers relying on the old implicit-default behaviour must be
+ * updated to pass `persist: true` or to drive the new proposal/approve flow.
  */
 router.post(
   '/:id/generate-notes',
@@ -275,10 +320,10 @@ router.post(
       },
     });
 
-    // Persist extracted decisions + action items back into the meeting so they
-    // become first-class records (not trapped inside the AI response).
-    const persistOutcomes = req.body?.persist !== false;
-    if (persistOutcomes) {
+    // Explicit opt-in compatibility path only — see the route doc comment.
+    // Bypasses the proposal/approval governance entirely; deprecated.
+    const legacyAutoPersist = req.body?.persist === true;
+    if (legacyAutoPersist) {
       try {
         for (const d of note.decisions || []) {
           if (d?.decision) {
@@ -297,12 +342,120 @@ router.post(
         }
       } catch (persistErr: unknown) {
         const msg = persistErr instanceof Error ? persistErr.message : String(persistErr);
-        logger.warn(`[Meeting] generate-notes persist failed (notes still returned): ${msg}`);
+        logger.warn(`[Meeting] generate-notes legacy persist failed (notes still returned): ${msg}`);
       }
     }
 
+    let proposalInfo: { proposalId: string; state: string; replayed: boolean } | null = null;
+    let meetingNoteId: string | null = null;
+    try {
+      const idempotencyKey =
+        typeof req.body?.idempotencyKey === 'string' && req.body.idempotencyKey.trim()
+          ? req.body.idempotencyKey.trim()
+          : null;
+      const { note: storedNote, proposal, replayed } = await proposeMeetingNote({
+        organizationId: orgId,
+        meetingId,
+        createdBy: userId,
+        source: note.source === 'ai' ? 'ai' : 'heuristic',
+        language,
+        transcript,
+        summary: note.summary || '',
+        keyPoints: note.keyPoints || [],
+        decisions: note.decisions || [],
+        actionItems: note.actionItems || [],
+        idempotencyKey,
+      });
+      meetingNoteId = storedNote.id;
+      proposalInfo = { proposalId: proposal.proposalId, state: proposal.state, replayed };
+    } catch (proposeErr: unknown) {
+      const msg = proposeErr instanceof Error ? proposeErr.message : String(proposeErr);
+      logger.warn(`[Meeting] generate-notes proposal failed (notes still returned): ${msg}`);
+    }
+
     const refreshed = await getMeeting({ organizationId: orgId, meetingId });
-    return res.status(201).json({ note, meeting: refreshed || meeting });
+    return res.status(201).json({
+      note,
+      meeting: refreshed || meeting,
+      meetingNoteId,
+      proposal: proposalInfo,
+    });
+  })
+);
+
+/**
+ * GET /:id/notes — durable, governed AI notes for this meeting (newest
+ * first). Each entry carries `status` ('proposed' | 'approved' | 'rejected')
+ * mirroring its `artifact_handoff_proposals` state.
+ */
+router.get(
+  '/:id/notes',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const meetingId = String(req.params.id);
+    const meeting = await getMeeting({ organizationId: orgId, meetingId });
+    if (!meeting) return res.status(404).json({ error: 'Meeting not found' });
+    const notes = await listMeetingNotesForMeeting({ organizationId: orgId, meetingId });
+    return res.json({ notes });
+  })
+);
+
+/**
+ * POST /:id/notes/:noteId/decision — the human-approval gate. Body:
+ * `{ action: 'approve' | 'reject', reason?: string }`.
+ *
+ * L-05: mirrors the existing DELETE/status-change role gate
+ * (`requireMeetingAdmin`) — approving AI-extracted content into an approved
+ * meeting material is treated as the same class of privileged action as
+ * flipping meeting status or deleting a meeting, not an open-to-all-members
+ * action like adding a manual decision/follow-up.
+ *
+ * On approve, this performs approve + materialize as ONE call and returns
+ * the exactly-one receipt (`server/src/services/artifactHandoff/handoffSpineService.ts`
+ * guarantees the exactly-one invariant under concurrency/replay — this route
+ * does not reimplement it). On reject, nothing is materialized.
+ */
+router.post(
+  '/:id/notes/:noteId/decision',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    const userId = req.user?.id;
+    if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
+    if (!requireMeetingAdmin(req, res)) return;
+
+    const meetingId = String(req.params.id);
+    const noteId = String(req.params.noteId);
+    const action = String(req.body?.action || '').trim().toLowerCase();
+    if (action !== 'approve' && action !== 'reject') {
+      return res.status(400).json({ error: "action must be 'approve' or 'reject'" });
+    }
+
+    const meeting = await getMeeting({ organizationId: orgId, meetingId });
+    if (!meeting) return res.status(404).json({ error: 'Meeting not found' });
+
+    try {
+      const result = await decideMeetingNote({
+        organizationId: orgId,
+        meetingId,
+        noteId,
+        decidedBy: userId,
+        action,
+        reason: typeof req.body?.reason === 'string' ? req.body.reason : null,
+      });
+      if (!result) return res.status(404).json({ error: 'Meeting note not found' });
+      return res.status(200).json({
+        note: result.note,
+        proposal: result.proposal,
+        receipt: result.receipt,
+        replayed: result.replayed,
+      });
+    } catch (err: unknown) {
+      if (err instanceof HandoffSpineError) {
+        return res.status(statusForSpineErrorCode(err.code)).json({ error: err.message, code: err.code });
+      }
+      throw err;
+    }
   })
 );
 

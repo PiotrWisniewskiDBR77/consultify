@@ -94,6 +94,25 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
       `DELETE FROM meeting_follow_ups WHERE meeting_id IN (SELECT id FROM meetings WHERE organization_id = ANY($1))`,
       [[ORG_A, ORG_B]]
     );
+    // MTG-BVP-001: generate-notes is now proposal-first, so this suite also
+    // creates governed rows. Without these deletes the suite leaves orphan
+    // `meeting_notes` + `artifact_handoff_proposals`/`_receipts` behind —
+    // demo data is the product's face, and a probe must clean up after
+    // itself. Receipts go first (FK to proposals is ON DELETE RESTRICT).
+    await pool.query(
+      `DELETE FROM artifact_handoff_receipts r
+        USING artifact_handoff_proposals p
+        WHERE p.proposal_id = r.proposal_id
+          AND p.producer_kind = 'meeting'
+          AND p.organization_id = ANY($1)`,
+      [[ORG_A, ORG_B]]
+    );
+    await pool.query(
+      `DELETE FROM artifact_handoff_proposals
+        WHERE producer_kind = 'meeting' AND organization_id = ANY($1)`,
+      [[ORG_A, ORG_B]]
+    );
+    await pool.query(`DELETE FROM meeting_notes WHERE organization_id = ANY($1)`, [[ORG_A, ORG_B]]);
     await pool.query(`DELETE FROM meetings WHERE organization_id = ANY($1)`, [[ORG_A, ORG_B]]);
     await pool.end();
   });
@@ -480,13 +499,61 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
       expect(res.body.note.source).toBe('heuristic');
     });
 
-    it('GF-33 extracted decisions/action items are actually persisted, not only returned', async () => {
-      const row = await rowById(id);
-      const followUps = await followUpRows(id);
-      const decisions = JSON.parse(row.decisions_json || '[]');
-      // The route claims (route comment + UI header "Decisions saved") that
-      // extracted outcomes become first-class records. Prove it against SQL.
-      expect(decisions.length + followUps.length).toBeGreaterThan(0);
+    it('GF-33 extracted outcomes are PROPOSED, not auto-persisted, and only a human approval materializes exactly one', async () => {
+      // CONTRACT CHANGE (MTG-BVP-001). This test previously asserted that
+      // `generate-notes` persisted extracted decisions/action items straight
+      // into `decisions_json`/`meeting_follow_ups` by default. That behaviour
+      // violated frozen MVP decision #13 — "Meeting/Teresa proposes
+      // Task/Decision/Material; a HUMAN approves creation" — so the default
+      // was changed to proposal-first. The assertion below is deliberately
+      // STRONGER than the one it replaces: it pins both halves of the
+      // governance (nothing before approval, exactly one after it) rather
+      // than merely "something got written".
+      const before = await rowById(id);
+      const decisionsBefore = JSON.parse(before.decisions_json || '[]');
+      const followUpsBefore = await followUpRows(id);
+
+      const gen = await request(app).post(`/api/meeting/${id}/generate-notes`).set(member()).send({
+        transcript:
+          'Ann: we decided to ship the pilot on Friday. Bob: action item - Bob will prepare the rollout plan by Monday.',
+        language: 'en',
+      });
+      expect(gen.status).toBe(201);
+
+      // 1) A durable note and a PENDING proposal exist ...
+      expect(gen.body.meetingNoteId).toBeTruthy();
+      expect(gen.body.proposal?.proposalId).toBeTruthy();
+      expect(gen.body.proposal?.state).toBe('pending');
+
+      // ... and NOTHING was written to the legacy owner fields. This is the
+      // half that used to be broken: outcomes reached the record with no
+      // human in the loop.
+      const afterGen = await rowById(id);
+      expect(JSON.parse(afterGen.decisions_json || '[]')).toHaveLength(decisionsBefore.length);
+      expect(await followUpRows(id)).toHaveLength(followUpsBefore.length);
+
+      // 2) A human approval materializes EXACTLY ONE receipt. Approving twice
+      //    must stay at one — the uniqueness is enforced by the DB index
+      //    `idx_handoff_receipt_proposal_unique`, not by application care.
+      const noteId = gen.body.meetingNoteId;
+      const approve = () =>
+        request(app)
+          .post(`/api/meeting/${id}/notes/${noteId}/decision`)
+          .set(admin())
+          .send({ action: 'approve' });
+
+      expect((await approve()).status).toBe(200);
+      await approve(); // replay: must be idempotent, not a second effect
+
+      // The note row IS the produced material, so it is the receipt's
+      // `target_record_id`; `producer_record_id` holds the meeting id.
+      const { rows: receipts } = await pool.query(
+        `SELECT r.receipt_id FROM artifact_handoff_receipts r
+           JOIN artifact_handoff_proposals p ON p.proposal_id = r.proposal_id
+          WHERE p.producer_kind = 'meeting' AND r.target_record_id = $1`,
+        [noteId]
+      );
+      expect(receipts).toHaveLength(1);
     });
   });
 

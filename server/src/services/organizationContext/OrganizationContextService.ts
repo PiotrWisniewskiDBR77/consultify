@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
@@ -6,6 +8,12 @@ import logger from '../../utils/Logger.js';
 import { listFindings as listP10Findings } from '../v8/interviewInsightFindingsService.js';
 
 export const ORGANIZATION_CONTEXT_SCHEMA_VERSION = 1;
+
+// ── ORG-BVP-001 / ORG-OPS-001 (Lane C closure) ──────────────────────────────
+// Governed snapshot spine: claim -> human approval -> immutable, versioned,
+// hash-bound snapshot. Schema version for the payload `computeContentHash`
+// hashes over — bump only if the hashed shape changes.
+export const GOVERNED_SNAPSHOT_SCHEMA_VERSION = 1;
 
 export const ORGANIZATION_CONTEXT_CLAIM_PATHS = [
   'profile.companyName',
@@ -695,6 +703,232 @@ function buildChatClaims(input: Record<string, unknown>): ContextClaimInput[] {
   ];
 }
 
+// ─────────────────────────────────────────────────────────────────────────
+// ORG-BVP-001 / ORG-OPS-001 — governed snapshot spine types + pure helpers
+// ─────────────────────────────────────────────────────────────────────────
+
+export type ClaimReviewState = 'pending' | 'approved' | 'rejected';
+/**
+ * How a claim came to be considered "approved":
+ *  - 'explicit_review'   an actual row exists in
+ *                        `organization_context_claim_reviews` recording a
+ *                        human decision.
+ *  - 'legacy_auto_accept' no review row exists; the claim's own (pre-
+ *                        governance) `review_status` column reads
+ *                        'accepted'. This is the backward-compatibility path
+ *                        for rows written before this governance layer
+ *                        existed — see the comment on the `review_status`
+ *                        parameter in `recordContextSource` above.
+ */
+export type ClaimApprovalSource = 'explicit_review' | 'legacy_auto_accept';
+
+export interface GovernedClaimView {
+  claimId: string;
+  itemId: string;
+  claimPath: string;
+  value: unknown;
+  confidence: number;
+  sourceType: string;
+  visibilityScope: string;
+  legacyReviewStatus: string;
+  reviewState: ClaimReviewState;
+  approved: boolean;
+  approvalSource: ClaimApprovalSource;
+  decidedBy: string | null;
+  decidedAt: string | null;
+  createdAt: string;
+}
+
+export interface ClaimApprovalResult {
+  claimId: string;
+  reviewState: ClaimReviewState;
+  decidedBy: string | null;
+  decidedAt: string | null;
+  decisionNote: string | null;
+  /**
+   * True when THIS call was the one that actually transitioned the row
+   * (won the race under concurrency). False means a decision already
+   * existed (possibly from a concurrent caller that arrived first) and this
+   * call's guarded write affected 0 rows — `reviewState`/`decidedBy` still
+   * reflect the real, single, persisted decision.
+   */
+  wonDecision: boolean;
+}
+
+export interface GovernedSourceRef {
+  claimId: string;
+  itemId: string;
+  sourceType: string;
+  sourceDocId: string | null;
+  /** `knowledge_docs.file_hash` as it was AT PUBLISH TIME (frozen copy). */
+  fileHash: string | null;
+  /** `knowledge_docs.version` as it was AT PUBLISH TIME (frozen copy). */
+  docVersion: number | null;
+}
+
+export interface GovernedSnapshotClaimEntry {
+  claimId: string;
+  claimPath: string;
+  value: unknown;
+  confidence: number;
+  sourceType: string;
+  itemId: string;
+  visibilityScope: string;
+  approvalSource: ClaimApprovalSource;
+  decidedBy: string | null;
+  decidedAt: string | null;
+}
+
+/** The exact structure `content_hash` is computed over — see `computeContentHash`. */
+export interface GovernedSnapshotPayload {
+  organizationId: string;
+  schemaVersion: number;
+  claims: GovernedSnapshotClaimEntry[];
+}
+
+export interface GovernedSnapshotVersion {
+  organizationId: string;
+  version: number;
+  schemaVersion: number;
+  contentHash: string;
+  claimCount: number;
+  createdAt: string;
+  createdBy: string;
+}
+
+export interface DanglingSourceRef extends GovernedSourceRef {
+  dangling: boolean;
+  danglingReason: 'deleted' | 'soft_deleted' | 'hash_mismatch' | null;
+}
+
+export interface PinnedSnapshotRead extends GovernedSnapshotVersion {
+  claims: GovernedSnapshotClaimEntry[];
+  sourceRefs: DanglingSourceRef[];
+}
+
+/**
+ * Deterministic canonicalization for hashing: recursively sorts object keys
+ * so the same logical content always serializes identically regardless of
+ * SQL result ordering, V8 object-key insertion order, etc. Array ORDER is
+ * caller-controlled (callers sort arrays by a stable key, e.g. claimId,
+ * before hashing) — this function does not reorder arrays.
+ */
+export function canonicalizeForHash(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map((entry) => canonicalizeForHash(entry));
+  if (value && typeof value === 'object') {
+    // Apply `toJSON()` BEFORE key enumeration, mirroring what
+    // `JSON.stringify` does. Without this the hash and the stored bytes
+    // disagree for any value carrying a `toJSON` — most importantly `Date`,
+    // which node-pg returns for every `timestamptz` column (`decided_at`,
+    // `created_at`). A `Date` has NO own enumerable keys, so the loop below
+    // would canonicalize it to `{}` and hash that, while `JSON.stringify`
+    // writes an ISO string into `snapshot_json`. Re-hashing the stored
+    // snapshot then produced a DIFFERENT digest than the one recorded
+    // alongside it — i.e. a snapshot advertised as hash-bound whose hash did
+    // not actually verify, which defeats the whole point of publishing an
+    // immutable, tamper-evident version.
+    const maybeToJson = value as { toJSON?: () => unknown };
+    if (typeof maybeToJson.toJSON === 'function') {
+      return canonicalizeForHash(maybeToJson.toJSON());
+    }
+    const out: Record<string, unknown> = {};
+    for (const key of Object.keys(value as Record<string, unknown>).sort()) {
+      out[key] = canonicalizeForHash((value as Record<string, unknown>)[key]);
+    }
+    return out;
+  }
+  return value;
+}
+
+/**
+ * The EXACT bytes that are both hashed and persisted as `snapshot_json`.
+ *
+ * Storing this rather than a separate `JSON.stringify(payload)` is what makes
+ * `computeContentHash(JSON.parse(stored)) === stored content_hash` true by
+ * construction instead of by coincidence: the stored text is already
+ * canonical, so a round-trip through `JSON.parse` + `canonicalizeForHash` is
+ * a fixed point.
+ */
+export function canonicalJsonForHash(payload: unknown): string {
+  return JSON.stringify(canonicalizeForHash(payload));
+}
+
+/** sha256 hex digest of the canonicalized payload — the snapshot's `content_hash`. */
+export function computeContentHash(payload: GovernedSnapshotPayload): string {
+  return createHash('sha256').update(canonicalJsonForHash(payload)).digest('hex');
+}
+
+/**
+ * Resolves whether a claim counts as "approved" for governed-snapshot
+ * purposes, and why. See the `review_status` comment in `recordContextSource`
+ * for the backward-compatibility rule this implements.
+ */
+export function resolveClaimApproval(row: {
+  review_state: string | null;
+  decided_by: string | null;
+  decided_at: string | null;
+  legacy_review_status: string | null;
+}): {
+  reviewState: ClaimReviewState;
+  approved: boolean;
+  source: ClaimApprovalSource;
+  decidedBy: string | null;
+  decidedAt: string | null;
+} {
+  if (row.review_state === 'approved') {
+    return {
+      reviewState: 'approved',
+      approved: true,
+      source: 'explicit_review',
+      decidedBy: row.decided_by,
+      decidedAt: row.decided_at,
+    };
+  }
+  if (row.review_state === 'rejected') {
+    return {
+      reviewState: 'rejected',
+      approved: false,
+      source: 'explicit_review',
+      decidedBy: row.decided_by,
+      decidedAt: row.decided_at,
+    };
+  }
+  if (row.review_state === 'pending') {
+    return {
+      reviewState: 'pending',
+      approved: false,
+      source: 'explicit_review',
+      decidedBy: null,
+      decidedAt: null,
+    };
+  }
+  // No row in organization_context_claim_reviews at all — legacy fallback.
+  if (row.legacy_review_status === 'accepted') {
+    return {
+      reviewState: 'approved',
+      approved: true,
+      source: 'legacy_auto_accept',
+      decidedBy: null,
+      decidedAt: null,
+    };
+  }
+  return {
+    reviewState: 'pending',
+    approved: false,
+    source: 'legacy_auto_accept',
+    decidedBy: null,
+    decidedAt: null,
+  };
+}
+
+/** Extracts the source `knowledge_docs.id` a claim cites, if any. */
+function extractDocRefFromClaimValue(claimPath: string, value: unknown): string | null {
+  if (claimPath !== 'evidence.documentExtraction') return null;
+  if (!value || typeof value !== 'object') return null;
+  const docId = (value as Record<string, unknown>).docId;
+  return typeof docId === 'string' && docId ? docId : null;
+}
+
 export class OrganizationContextService {
   async recordContextSource(input: ContextSourceRecordInput): Promise<{ itemId: string }> {
     const id = uuidv4();
@@ -734,7 +968,22 @@ export class OrganizationContextService {
           valueToJson(claim.value),
           claim.confidence ?? 1,
           claim.claimType || 'fact',
-          claim.reviewStatus || 'accepted',
+          // ORG-BVP-001: claims created from this point on default to
+          // 'pending', not 'accepted' — a claim must go through the new
+          // approve/reject governance endpoints
+          // (`OrganizationContextService.approveClaim`/`rejectClaim`) before
+          // it is eligible for a published governed snapshot version (see
+          // `resolveClaimApproval` below). Rows written BEFORE this change
+          // keep whatever `review_status` they already have in the database
+          // (this statement only affects NEW inserts, never rewrites
+          // history) and are honored as approved via the
+          // 'legacy_auto_accept' fallback — see `resolveClaimApproval`.
+          // This does not change the LIVE/legacy resolved-context path
+          // (`buildResolvedContext` / `rebuildSnapshot`): that path has
+          // never filtered on `review_status`, only on `status='active'`
+          // (see `getClaimQueryShape`), so every existing caller of
+          // `recordContextSource` keeps working identically.
+          claim.reviewStatus || 'pending',
           now,
         ]
       );
@@ -1617,6 +1866,396 @@ export class OrganizationContextService {
       );
       return existingMetrics;
     }
+  }
+
+  // ───────────────────────────────────────────────────────────────────────
+  // ORG-BVP-001 / ORG-OPS-001 — governed snapshot spine
+  // ───────────────────────────────────────────────────────────────────────
+
+  /**
+   * Lists claims for an organization together with their governance
+   * decision (explicit review, or the legacy auto-accept fallback — see
+   * `resolveClaimApproval`). By default excludes claims whose
+   * `organization_context_items.visibility_scope = 'restricted'` — pass
+   * `includeRestricted: true` for internal/privileged callers (e.g.
+   * building the snapshot payload itself, which must still capture
+   * restricted claims; visibility filtering is enforced at READ time, see
+   * `getSnapshotVersion`).
+   */
+  async listGovernedClaims(
+    organizationId: string,
+    opts?: { includeRestricted?: boolean; limit?: number }
+  ): Promise<GovernedClaimView[]> {
+    const limit = Math.max(1, Math.min(opts?.limit ?? 200, 500));
+    const rows = await safeAll<{
+      claim_id: string;
+      item_id: string;
+      claim_path: string;
+      value_json: string;
+      confidence: number;
+      legacy_review_status: string | null;
+      created_at: string;
+      source_type: string;
+      visibility_scope: string | null;
+      review_state: string | null;
+      decided_by: string | null;
+      decided_at: string | null;
+    }>(
+      `SELECT c.id as claim_id, c.item_id, c.claim_path, c.value_json, c.confidence,
+              c.review_status as legacy_review_status, c.created_at,
+              i.source_type, i.visibility_scope,
+              r.review_state, r.decided_by, r.decided_at
+       FROM organization_context_claims c
+       JOIN organization_context_items i ON i.id = c.item_id
+       LEFT JOIN organization_context_claim_reviews r ON r.claim_id = c.id
+       WHERE c.organization_id = ? AND c.status = 'active'
+       ORDER BY c.created_at DESC
+       LIMIT ?`,
+      [organizationId, limit]
+    );
+
+    return rows
+      .filter((row) => opts?.includeRestricted || row.visibility_scope !== 'restricted')
+      .map((row) => {
+        const decision = resolveClaimApproval(row);
+        return {
+          claimId: row.claim_id,
+          itemId: row.item_id,
+          claimPath: row.claim_path,
+          value: safeParseJson(row.value_json, null),
+          confidence: Number(row.confidence || 0),
+          sourceType: row.source_type,
+          visibilityScope: row.visibility_scope || 'organization',
+          legacyReviewStatus: row.legacy_review_status || 'accepted',
+          reviewState: decision.reviewState,
+          approved: decision.approved,
+          approvalSource: decision.source,
+          decidedBy: decision.decidedBy,
+          decidedAt: decision.decidedAt,
+          createdAt: row.created_at,
+        };
+      });
+  }
+
+  /**
+   * Approves or rejects a claim. Tenant-scoped (returns null if the claim
+   * does not belong to `organizationId`, treated by callers as 404).
+   *
+   * Concurrency: implemented as a single atomic
+   * `INSERT ... ON CONFLICT (claim_id) DO UPDATE ... WHERE review_state =
+   * 'pending'` statement. Postgres serializes concurrent writers on the
+   * `claim_id` unique index, so exactly one caller's write can observe the
+   * row as absent/'pending' and transition it; every other concurrent
+   * caller's guarded UPDATE matches 0 rows. The method always re-reads the
+   * row afterward and returns the ACTUAL persisted decision (not
+   * necessarily the one this call attempted) plus `wonDecision` so the
+   * caller can tell the two cases apart.
+   */
+  private async decideClaim(
+    organizationId: string,
+    claimId: string,
+    actorId: string,
+    targetState: 'approved' | 'rejected',
+    note?: string | null
+  ): Promise<ClaimApprovalResult | null> {
+    const claim = await safeGet<{ id: string }>(
+      `SELECT c.id FROM organization_context_claims c WHERE c.id = ? AND c.organization_id = ?`,
+      [claimId, organizationId]
+    );
+    if (!claim) return null;
+
+    const now = new Date().toISOString();
+    const result = await dbRun(
+      `INSERT INTO organization_context_claim_reviews
+         (id, organization_id, claim_id, review_state, decided_by, decided_at, decision_note, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT (claim_id) DO UPDATE SET
+         review_state = EXCLUDED.review_state,
+         decided_by = EXCLUDED.decided_by,
+         decided_at = EXCLUDED.decided_at,
+         decision_note = EXCLUDED.decision_note,
+         updated_at = EXCLUDED.updated_at
+       WHERE organization_context_claim_reviews.review_state = 'pending'`,
+      [uuidv4(), organizationId, claimId, targetState, actorId, now, note || null, now, now]
+    );
+    const wonDecision = Number(result?.changes || 0) > 0;
+
+    const row = await safeGet<{
+      review_state: string;
+      decided_by: string | null;
+      decided_at: string | null;
+      decision_note: string | null;
+    }>(
+      `SELECT review_state, decided_by, decided_at, decision_note
+       FROM organization_context_claim_reviews WHERE claim_id = ? AND organization_id = ?`,
+      [claimId, organizationId]
+    );
+    if (!row) return null;
+
+    return {
+      claimId,
+      reviewState: row.review_state as ClaimReviewState,
+      decidedBy: row.decided_by,
+      decidedAt: row.decided_at,
+      decisionNote: row.decision_note,
+      wonDecision,
+    };
+  }
+
+  async approveClaim(
+    organizationId: string,
+    claimId: string,
+    actorId: string,
+    note?: string | null
+  ): Promise<ClaimApprovalResult | null> {
+    return this.decideClaim(organizationId, claimId, actorId, 'approved', note);
+  }
+
+  async rejectClaim(
+    organizationId: string,
+    claimId: string,
+    actorId: string,
+    note?: string | null
+  ): Promise<ClaimApprovalResult | null> {
+    return this.decideClaim(organizationId, claimId, actorId, 'rejected', note);
+  }
+
+  /**
+   * Publishes a new, immutable, hash-bound snapshot version from the
+   * CURRENTLY approved claims (explicit approvals, plus legacy
+   * auto-accepted rows — see `resolveClaimApproval`). Unapproved
+   * (pending/rejected) claims are excluded — this is the DB-level point of
+   * ORG-BVP-001. Version numbers are assigned atomically per organization
+   * (`MAX(version)+1` inside the same INSERT, guarded by the
+   * `UNIQUE(organization_id, version)` index) with a bounded retry loop so
+   * two racing publishes for the same org cannot collide on a version
+   * number.
+   */
+  async publishSnapshotVersion(
+    organizationId: string,
+    actorId: string
+  ): Promise<GovernedSnapshotVersion> {
+    const approvedClaims = (
+      await this.listGovernedClaims(organizationId, { includeRestricted: true, limit: 500 })
+    ).filter((c) => c.approved);
+
+    // Deterministic order so the same approved-claim set always produces
+    // the same content_hash, independent of SQL scan order.
+    approvedClaims.sort((a, b) => a.claimId.localeCompare(b.claimId));
+
+    const docIds = uniqStrings(
+      approvedClaims.map((c) => extractDocRefFromClaimValue(c.claimPath, c.value))
+    );
+    const docRows = docIds.length
+      ? await safeAll<{ id: string; file_hash: string | null; version: number | null }>(
+          `SELECT id, file_hash, version FROM knowledge_docs WHERE id = ANY(?)`,
+          [docIds]
+        )
+      : [];
+    const docById = new Map(docRows.map((d) => [d.id, d]));
+
+    const claimEntries: GovernedSnapshotClaimEntry[] = approvedClaims.map((c) => ({
+      claimId: c.claimId,
+      claimPath: c.claimPath,
+      value: c.value,
+      confidence: c.confidence,
+      sourceType: c.sourceType,
+      itemId: c.itemId,
+      visibilityScope: c.visibilityScope,
+      approvalSource: c.approvalSource,
+      decidedBy: c.decidedBy,
+      decidedAt: c.decidedAt,
+    }));
+
+    const sourceRefs: GovernedSourceRef[] = approvedClaims.map((c) => {
+      const docId = extractDocRefFromClaimValue(c.claimPath, c.value);
+      const doc = docId ? docById.get(docId) : undefined;
+      return {
+        claimId: c.claimId,
+        itemId: c.itemId,
+        sourceType: c.sourceType,
+        sourceDocId: docId,
+        fileHash: doc?.file_hash ?? null,
+        docVersion: doc?.version ?? null,
+      };
+    });
+
+    const payload: GovernedSnapshotPayload = {
+      organizationId,
+      schemaVersion: GOVERNED_SNAPSHOT_SCHEMA_VERSION,
+      claims: claimEntries,
+    };
+    const contentHash = computeContentHash(payload);
+    const now = new Date().toISOString();
+
+    const MAX_ATTEMPTS = 8;
+    let publishedId: string | null = null;
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+      const id = uuidv4();
+      const result = await dbRun(
+        `INSERT INTO organization_context_snapshot_versions
+           (id, organization_id, version, schema_version, content_hash, claim_count, snapshot_json, source_refs_json, created_at, created_by)
+         SELECT ?, ?, COALESCE(MAX(version), 0) + 1, ?, ?, ?, ?, ?, ?, ?
+         FROM organization_context_snapshot_versions WHERE organization_id = ?
+         ON CONFLICT (organization_id, version) DO NOTHING`,
+        [
+          id,
+          organizationId,
+          GOVERNED_SNAPSHOT_SCHEMA_VERSION,
+          contentHash,
+          claimEntries.length,
+          // Persist the SAME canonical bytes that `contentHash` was computed
+          // over — see `canonicalJsonForHash`. Using a plain
+          // `JSON.stringify(payload)` here stored a different serialization
+          // than the one hashed, so an integrity re-check of a published
+          // snapshot failed against its own recorded hash.
+          canonicalJsonForHash(payload),
+          canonicalJsonForHash(sourceRefs),
+          now,
+          actorId,
+          organizationId,
+        ]
+      );
+      if (Number(result?.changes || 0) > 0) {
+        publishedId = id;
+        break;
+      }
+    }
+    if (!publishedId) {
+      throw new Error(
+        `[OrgContext] Failed to publish snapshot version for org ${organizationId} after ${MAX_ATTEMPTS} attempts (version contention).`
+      );
+    }
+
+    const row = await safeGet<{ version: number; created_at: string }>(
+      `SELECT version, created_at FROM organization_context_snapshot_versions WHERE id = ?`,
+      [publishedId]
+    );
+
+    return {
+      organizationId,
+      version: Number(row?.version || 0),
+      schemaVersion: GOVERNED_SNAPSHOT_SCHEMA_VERSION,
+      contentHash,
+      claimCount: claimEntries.length,
+      createdAt: row?.created_at || now,
+      createdBy: actorId,
+    };
+  }
+
+  /** Metadata-only listing of published versions (no full payload). */
+  async listSnapshotVersions(
+    organizationId: string,
+    limit = 20
+  ): Promise<GovernedSnapshotVersion[]> {
+    const rows = await safeAll<{
+      version: number;
+      schema_version: number;
+      content_hash: string;
+      claim_count: number;
+      created_at: string;
+      created_by: string;
+    }>(
+      `SELECT version, schema_version, content_hash, claim_count, created_at, created_by
+       FROM organization_context_snapshot_versions
+       WHERE organization_id = ?
+       ORDER BY version DESC
+       LIMIT ?`,
+      [organizationId, Math.max(1, Math.min(limit, 100))]
+    );
+    return rows.map((r) => ({
+      organizationId,
+      version: Number(r.version),
+      schemaVersion: Number(r.schema_version),
+      contentHash: r.content_hash,
+      claimCount: Number(r.claim_count),
+      createdAt: r.created_at,
+      createdBy: r.created_by,
+    }));
+  }
+
+  /**
+   * Pinned, reproducible read of exactly ONE snapshot version. Reopening
+   * the same version later always returns the same `contentHash` (the row
+   * is immutable — see the migration's BEFORE UPDATE trigger).
+   *
+   * Detects dangling source refs (ORG-OPS-001 (e)): for every claim citing
+   * a `knowledge_docs` row, re-checks that row live and marks the ref
+   * `dangling: true` if the document was hard-deleted (`deleted: true`
+   * reason), soft-deleted (`deleted_at` set), or its `file_hash` no longer
+   * matches what was frozen at publish time (content changed since). The
+   * stored snapshot content itself is NEVER modified by this check — this
+   * is detection, not silent correction or corruption.
+   */
+  async getSnapshotVersion(
+    organizationId: string,
+    version: number,
+    opts?: { includeRestricted?: boolean }
+  ): Promise<PinnedSnapshotRead | null> {
+    const row = await safeGet<{
+      version: number;
+      schema_version: number;
+      content_hash: string;
+      claim_count: number;
+      snapshot_json: string;
+      source_refs_json: string;
+      created_at: string;
+      created_by: string;
+    }>(
+      `SELECT version, schema_version, content_hash, claim_count, snapshot_json, source_refs_json, created_at, created_by
+       FROM organization_context_snapshot_versions
+       WHERE organization_id = ? AND version = ?`,
+      [organizationId, version]
+    );
+    if (!row) return null;
+
+    const payload = safeParseJson<GovernedSnapshotPayload>(row.snapshot_json, {
+      organizationId,
+      schemaVersion: row.schema_version,
+      claims: [],
+    });
+    const refs = safeParseJson<GovernedSourceRef[]>(row.source_refs_json, []);
+
+    const visibleClaims = opts?.includeRestricted
+      ? payload.claims
+      : payload.claims.filter((c) => c.visibilityScope !== 'restricted');
+    const visibleClaimIds = new Set(visibleClaims.map((c) => c.claimId));
+
+    const docIds = uniqStrings(refs.map((r) => r.sourceDocId));
+    const liveDocs = docIds.length
+      ? await safeAll<{ id: string; file_hash: string | null; deleted_at: string | null }>(
+          `SELECT id, file_hash, deleted_at FROM knowledge_docs WHERE id = ANY(?)`,
+          [docIds]
+        )
+      : [];
+    const liveDocById = new Map(liveDocs.map((d) => [d.id, d]));
+
+    const sourceRefs: DanglingSourceRef[] = refs
+      .filter((r) => visibleClaimIds.has(r.claimId))
+      .map((r) => {
+        if (!r.sourceDocId) {
+          return { ...r, dangling: false, danglingReason: null };
+        }
+        const live = liveDocById.get(r.sourceDocId);
+        if (!live) return { ...r, dangling: true, danglingReason: 'deleted' as const };
+        if (live.deleted_at) return { ...r, dangling: true, danglingReason: 'soft_deleted' as const };
+        if (r.fileHash && live.file_hash && live.file_hash !== r.fileHash) {
+          return { ...r, dangling: true, danglingReason: 'hash_mismatch' as const };
+        }
+        return { ...r, dangling: false, danglingReason: null };
+      });
+
+    return {
+      organizationId,
+      version: Number(row.version),
+      schemaVersion: Number(row.schema_version),
+      contentHash: row.content_hash,
+      claimCount: Number(row.claim_count),
+      createdAt: row.created_at,
+      createdBy: row.created_by,
+      claims: visibleClaims,
+      sourceRefs,
+    };
   }
 }
 

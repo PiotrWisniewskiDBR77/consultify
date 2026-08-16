@@ -1,0 +1,25 @@
+{
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "productSha": "a62dbe340114d87eda75a0d2da2d77bee2a90685",
+  "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
+  "environment": {
+    "node": "v24.12.0",
+    "postgres": "16.14 (pgvector/pgvector:pg16)",
+    "vitest": "root vitest.config.ts",
+    "dbUrl": "127.0.0.1:55432 isolated lane container consultify-closure-c-64f50785"
+  },
+  "gateG0": "PASS pre-commit (lease PASS, 25 changed paths). POST-COMMIT the verifier reports 11 new source/test files as violations; all 11 match lane C allowedNewRoots and none exist at baseline — see ICR-C-003, a verifier defect (isTracked() is true for staged/committed paths), not a scope violation.",
+  "gateG1": "PASS — npm run type-check exit 0; npm run build:backend exit 0; test:discovery-gate PASS 4997/4997 discovered, 4698 executed.",
+  "gateG3": "PASS — strict migrate on FRESH from-zero DB exit 0; repeat run applied 0; --dry-run 0 pending; schema_migrations 709 success / 0 failed / 0 pending.",
+  "taskId": "MAT-MVP-EXPORT-001",
+  "verdict": "PARTIAL",
+  "ownerTables": [
+    "artifact_export_receipts"
+  ],
+  "denominators": {
+    "realdbTests": "12 passed (presentation path)"
+  },
+  "open": [
+    "Only the presentation export path is wired to export receipts. Document and Workbook export endpoints are NOT yet wired — previously they were recorded nowhere at all, so this is a partial, honestly-scoped improvement."
+  ]
+}

@@ -7,7 +7,10 @@ import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import { caseWorkspaceHandler } from '../caseWorkspace/_shared/handler.js';
 import { parseBody, parseParams } from '../caseWorkspace/_shared/validate.js';
+import { TARGET_KINDS } from '../../services/artifactHandoff/handoffSpineService.js';
 import * as caseIntakeService from '../../services/caseWorkspace/caseIntakeService.js';
+import { ChatHandoffError } from '../../services/chatHandoff/chatHandoffService.js';
+import * as chatHandoffService from '../../services/chatHandoff/chatHandoffService.js';
 import * as chatExecutionService from '../../services/v8/chatExecutionService.js';
 import * as contextConsumerBindingService from '../../services/v8/contextConsumerBindingService.js';
 import * as contextSnapshotService from '../../services/v8/contextSnapshotService.js';
@@ -506,6 +509,220 @@ router.get(
     const params = parseParams(z.object({ caseId: z.string().trim().min(1) }), req.params);
     const link = await caseIntakeService.findConversationForCase(params.caseId, actor.actorUserId);
     res.status(200).json({ data: link, meta: { version: 'v8' } });
+  })
+);
+
+// ==========================================
+// Chat-sourced governed handoff proposals (CHAT-BVP-001 / CHAT-NFR-001)
+// ==========================================
+/**
+ * "Chat PROPOSES, and must never own Idea or artifact lifecycle." These
+ * routes are the governed alternative to the ungated tool-call writes
+ * documented at `AIPipeline.ts:363-369` / `createTask.ts` / `createDecision.ts`
+ * (outside this lane's lease — not touched here): every write below goes
+ * through `chatHandoffService.ts`, which itself only ever touches
+ * `artifact_handoff_proposals` / `artifact_handoff_receipts` via the shared
+ * spine (`handoffSpineService.ts`). Full contract, payload shape, and how
+ * the lane owning documents/presentations/workbooks/materials should
+ * consume `producer_kind = 'chat'` rows: see `chatHandoffService.ts`'s file
+ * header ("CROSS-LANE CONTRACT"). There is deliberately NO materialize
+ * route here — only the lane that owns the target table may create the
+ * target row and call `materializeProposal`.
+ */
+
+function handleChatHandoffError(err: unknown, res: Response) {
+  if (err instanceof ChatHandoffError) {
+    res.status(err.httpStatus).json({ error: err.message, code: err.code });
+    return;
+  }
+  throw err;
+}
+
+const chatProposalTargetKindEnum = z.enum(TARGET_KINDS);
+
+const createChatProposalBody = z.object({
+  messageId: z.string().trim().min(1),
+  targetKind: chatProposalTargetKindEnum,
+  note: z.string().trim().min(1).max(2000).nullable().optional(),
+  suggestedTitle: z.string().trim().min(1).max(300).nullable().optional(),
+  idempotencyKey: z.string().trim().min(1).max(200).nullable().optional(),
+  clientCitations: z.array(z.unknown()).nullable().optional(),
+});
+
+const decideChatProposalBody = z.object({
+  reason: z.string().trim().min(1).max(2000).nullable().optional(),
+});
+
+const chatProposalIdParams = z.object({ proposalId: z.string().trim().min(1) });
+
+/**
+ * POST /conversations/:conversationId/handoff-proposals
+ *
+ * Creates a `producer_kind = 'chat'` proposal from ONE chat message —
+ * `messageId` is the stable source id, pinned by `source_content_hash`
+ * (sha256 of the canonicalized payload, which includes the message content
+ * and the server-extracted citations). Never writes any foreign-owner
+ * table; a 503/404/422 here (provider unavailable / message not found /
+ * empty content) means NO proposal row was created — see
+ * `chatHandoffService.createChatProposal`'s CHAT-NFR-001 fail-closed gate.
+ */
+router.post(
+  '/conversations/:conversationId/handoff-proposals',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const { conversationId } = req.params;
+
+    let body: z.infer<typeof createChatProposalBody>;
+    try {
+      body = createChatProposalBody.parse(req.body);
+    } catch (err) {
+      if (err instanceof ZodError) {
+        res.status(400).json({
+          error: 'Invalid proposal parameters',
+          code: 'VALIDATION_ERROR',
+          details: err.issues,
+        });
+        return;
+      }
+      throw err;
+    }
+
+    try {
+      const result = await chatHandoffService.createChatProposal({
+        organizationId,
+        userId,
+        conversationId,
+        messageId: body.messageId,
+        targetKind: body.targetKind,
+        note: body.note ?? null,
+        suggestedTitle: body.suggestedTitle ?? null,
+        clientCitations: body.clientCitations ?? null,
+        idempotencyKey: body.idempotencyKey ?? null,
+      });
+      res
+        .status(result.replayed ? 200 : 201)
+        .json({ data: result, meta: { version: 'v8' } });
+    } catch (err) {
+      handleChatHandoffError(err, res);
+    }
+  })
+);
+
+/**
+ * GET /conversations/:conversationId/handoff-proposals
+ * All chat-sourced proposals for this conversation, newest first,
+ * tenant-scoped.
+ */
+router.get(
+  '/conversations/:conversationId/handoff-proposals',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const { conversationId } = req.params;
+    const data = await chatHandoffService.listChatProposalsForConversation(
+      organizationId,
+      conversationId
+    );
+    res.json({ data, meta: { version: 'v8' } });
+  })
+);
+
+/**
+ * GET /handoff-proposals/:proposalId
+ * A single chat-sourced proposal — 404 for a proposal that does not exist,
+ * belongs to another organization, OR was not proposed by chat (this
+ * surface never reads another producer's proposal).
+ */
+router.get(
+  '/handoff-proposals/:proposalId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const { proposalId } = parseParams(chatProposalIdParams, req.params);
+    try {
+      const data = await chatHandoffService.getChatProposal(organizationId, proposalId);
+      res.json({ data, meta: { version: 'v8' } });
+    } catch (err) {
+      handleChatHandoffError(err, res);
+    }
+  })
+);
+
+/**
+ * POST /handoff-proposals/:proposalId/approve
+ * Human approval — `decidedBy` is always the authenticated caller's own
+ * userId, never a client-supplied actor. Enforced as a real human actor by
+ * the spine (`requireHumanActor`) and by a DB CHECK constraint.
+ */
+router.post(
+  '/handoff-proposals/:proposalId/approve',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const { proposalId } = parseParams(chatProposalIdParams, req.params);
+
+    let body: z.infer<typeof decideChatProposalBody>;
+    try {
+      body = decideChatProposalBody.parse(req.body ?? {});
+    } catch (err) {
+      if (err instanceof ZodError) {
+        res.status(400).json({
+          error: 'Invalid decision parameters',
+          code: 'VALIDATION_ERROR',
+          details: err.issues,
+        });
+        return;
+      }
+      throw err;
+    }
+
+    try {
+      const data = await chatHandoffService.approveChatProposal({
+        organizationId,
+        proposalId,
+        decidedBy: userId,
+        reason: body.reason ?? null,
+      });
+      res.json({ data, meta: { version: 'v8' } });
+    } catch (err) {
+      handleChatHandoffError(err, res);
+    }
+  })
+);
+
+/**
+ * POST /handoff-proposals/:proposalId/reject
+ * Same actor/tenant/producer guarantees as approve, above.
+ */
+router.post(
+  '/handoff-proposals/:proposalId/reject',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const { proposalId } = parseParams(chatProposalIdParams, req.params);
+
+    let body: z.infer<typeof decideChatProposalBody>;
+    try {
+      body = decideChatProposalBody.parse(req.body ?? {});
+    } catch (err) {
+      if (err instanceof ZodError) {
+        res.status(400).json({
+          error: 'Invalid decision parameters',
+          code: 'VALIDATION_ERROR',
+          details: err.issues,
+        });
+        return;
+      }
+      throw err;
+    }
+
+    try {
+      const data = await chatHandoffService.rejectChatProposal({
+        organizationId,
+        proposalId,
+        decidedBy: userId,
+        reason: body.reason ?? null,
+      });
+      res.json({ data, meta: { version: 'v8' } });
+    } catch (err) {
+      handleChatHandoffError(err, res);
+    }
   })
 );
 
