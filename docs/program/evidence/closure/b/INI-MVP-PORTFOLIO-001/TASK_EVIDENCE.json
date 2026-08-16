@@ -1,49 +1,41 @@
 {
   "taskId": "INI-MVP-PORTFOLIO-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "99406b784bf1332beb369be161e75a2422f00fc6",
+  "productSha": "c24d5a42558bd491250c28eeb3ee032385b230ba",
   "leaseSha256": "f4d75f0aed94f2e34acaec63d91c245495e7e0f658aa36d1122342c2acecc612",
-  "toolchain": {
-    "node": "v24.12.0",
-    "npm": "11.6.2",
-    "vitest": "4.1.8",
-    "playwright": "1.62.1",
-    "postgres": "16.14 pgvector/pgvector:pg16",
-    "docker": "29.3.0"
-  },
-  "laneGates": {
-    "G0": "PASS — branch codex/closure-claude-b-transformation, HEAD==baseline at start, verify-closure-lane.mjs PASS",
-    "G1": "PASS — type-check exit 0, build:backend exit 0, build exit 0, discovery-gate PASS 4997/4997",
-    "G3_strict_migration": "PASS — fresh/repeat/dry-run exit 0; schema_migrations 703 success / 0 failed / 0 pending; 703/703 checksums independently verified; 1678 tables",
-    "G2_lane_baseline": "RED (pre-existing at sealed baseline): 747 collected of 761 real test files; 107 files failed / 557 passed / 83 skipped; 287 tests failed / 4270 passed / 617 skipped",
-    "G2_defects": "14 leased acceptance tests uncollectable by the mandated command; 110 further realDB files run without a DB by it; backend tests execute under jsdom because environmentMatchGlobs is dead in Vitest 4"
-  },
-  "ownerTables": [
-    "initiative_resources",
-    "roadmap_waves"
+  "changedPaths": [
+    "server/src/services/capacityPolicy.ts",
+    "server/src/services/workloadCapacityService.ts",
+    "server/src/controllers/CapacityController.ts",
+    "server/src/controllers/__tests__/ini005-portfolio-resources-roadmap.pg.test.ts",
+    "tests/unit/services/workloadCapacityService.test.ts"
   ],
-  "changedPaths": [],
-  "changedPathRationale": {},
+  "changedPathRationale": {
+    "server/src/services/capacityPolicy.ts": "Single weekly-hours, overload, horizon, clamping and utilization policy shared by capacity readers.",
+    "server/src/services/workloadCapacityService.ts": "Removes request wall-clock input from Timeline and anchors repeated reads to persisted Initiative data.",
+    "server/src/controllers/CapacityController.ts": "Uses the shared capacity policy for user and project calculations.",
+    "server/src/controllers/__tests__/ini005-portfolio-resources-roadmap.pg.test.ts": "Proves all five read models and cold repeated equality on real PostgreSQL.",
+    "tests/unit/services/workloadCapacityService.test.ts": "Covers stable anchor and shared calculations."
+  },
+  "ownerTables": ["initiatives", "initiative_resources", "roadmap_waves", "tasks", "task_allocations"],
   "commands": [
-    "node scripts/cleanup/verify-closure-lane.mjs b closure-execution-baseline-v2-20260816",
-    "jq -r '.tests.vitest[]' docs/cleanup/agents/generated/CLAUDE_LANE_B_PATH_LEASE.json | xargs -n 80 npx vitest run --no-file-parallelism --maxWorkers=1 --maxConcurrency=2 --retry=0",
-    "CI=true DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts  (fresh, repeat, --dry-run)"
+    {"command": "NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres DATABASE_URL=<isolated-pg> npx vitest run --config vitest.config.ts server/src/controllers/__tests__/ini005-portfolio-resources-roadmap.pg.test.ts --no-file-parallelism --reporter=dot", "exitCode": 0},
+    {"command": "npx vitest run tests/unit/services/workloadCapacityService.test.ts server/src/routes/v8/__tests__/execution-control.routes.test.ts --reporter=dot", "exitCode": 0},
+    {"command": "npx tsc -p server/tsconfig.json --noEmit --pretty false", "exitCode": 0}
   ],
   "denominators": {
-    "task": "5 read models: 2 persisted (Resource, Roadmap), 3 computed (Portfolio, Timeline, Capacity)",
-    "laneRealDbPass": "110 leased realDB files on an isolated DB: 77 passed / 7 failed / 26 skipped; 675 tests: 565 passed / 51 failed / 59 skipped",
-    "recoveredAcceptance": "14 leased acceptance files the mandated G2 command cannot collect, run under vitest.acceptance.config.ts: 105 tests, 91 passed / 14 failed"
+    "realPostgres": {"files": 1, "passed": 15, "failed": 0, "skipped": 0},
+    "focusedUnitAndRoutes": {"files": 2, "passed": 38, "failed": 0, "skipped": 0}
   },
-  "fixtures": {
-    "prefix": "claude_b_",
-    "isolatedDb": "consultify-closure-b-64f50785 @127.0.0.1:55811; verification replica @55812; clean-room @55813",
-    "env": "NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false (all three required — NODE_ENV=test alone substitutes a mock DB)"
+  "fixtures": {"database": "Disposable pgvector PostgreSQL 16 on localhost:56673", "cleanup": "Container removed."},
+  "negativeControls": {
+    "crossTenantReadDenied": true,
+    "resourceStaleCasDenied": true,
+    "resourceConcurrentWriteSerialized": true,
+    "timelineIgnoresRequestWallClock": true,
+    "coldRepeatedReadEqual": true
   },
-  "negativeControls": {},
   "browserArtifacts": [],
-  "rollback": {
-    "method": "Revert the lane commits; all changes are additive application code plus new tests. NO migration was added by this lane, so no schema rollback is required and old readers are unaffected."
-  },
-  "verdict": "FIX_REQUIRED",
-  "openBlocker": "Timeline is anchored to new Date() per call plus a data-presence-dependent fallback, so it is not reproducible even in principle — idempotent rebuild/readback is undefined for it as designed. Capacity has two independent non-shared implementations. 4 of 8 central files are out-of-lease."
+  "rollback": {"method": "Revert commit c24d5a42558bd491250c28eeb3ee032385b230ba; no schema rollback required.", "executed": false},
+  "verdict": "DONE_CURRENT_SHA"
 }
