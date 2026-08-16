@@ -1,0 +1,45 @@
+{
+  "taskId": "INT-UI-CANON-001",
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "productSha": "71ec92695737d415b5319f001f9492bae4382e17",
+  "leaseSha256": "18eb0f2e24aee1d6415a29e1605597117f24c42a1f74439842581e7a92583742",
+  "changedPaths": [
+    "docs/program/evidence/closure/codex/INT-UI-CANON-001/TASK_EVIDENCE.json"
+  ],
+  "changedPathRationale": {
+    "docs/program/evidence/closure/codex/INT-UI-CANON-001/TASK_EVIDENCE.json": "Records bounded mounted Interview UI acceptance without converting the login-wall observation into a false authenticated PASS."
+  },
+  "ownerTables": ["interview_sessions", "interview_assignments", "interview_assignment_members"],
+  "commands": [
+    {
+      "command": "npx vitest run src/components/Interview/__tests__/InterviewHub.smoke.test.tsx src/components/Interview/__tests__/InterviewPipelineStepper.test.tsx src/components/method-workspace/__tests__/InterviewFocusPanel.test.tsx --reporter=dot",
+      "exitCode": 0
+    }
+  ],
+  "denominators": {
+    "focusedComponents": {"files": 3, "passed": 23, "failed": 0, "skipped": 0},
+    "mountedAuthenticatedJourneys": {"planned": 3, "completed": 0}
+  },
+  "fixtures": {
+    "frontend": "Vite staging frontend at localhost:3110",
+    "backend": "Existing localhost:3101 listener accepted TCP but /health returned no response within five seconds.",
+    "authentication": "No governed respondent, manager or owner browser fixture became available."
+  },
+  "negativeControls": {
+    "unauthenticatedInterviewRedirectsToLogin": true,
+    "respondentRoleMatrix": false,
+    "managerRoleMatrix": false,
+    "ownerRoleMatrix": false,
+    "axeCriticalSeriousZero": false
+  },
+  "browserArtifacts": [],
+  "rollback": {
+    "method": "Evidence-only packet; no runtime or schema change to roll back.",
+    "executed": false
+  },
+  "verdict": "NOT_VERIFIED",
+  "blockers": [
+    "Healthy isolated backend and governed respondent, manager and owner sessions are required for authenticated state, viewport, locale, theme, keyboard and axe coverage.",
+    "Manual VoiceOver and named human UX approval remain BLOCKED_HUMAN."
+  ]
+}
