@@ -1,92 +1,114 @@
-import app from '../../../server/src/index.js';
-import bcrypt from 'bcryptjs';
+import express from 'express';
 import request from 'supertest';
-import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
-import { getDatabase } from '../../../server/src/database/Database.js';
-import { initializeDatabase } from '../../../server/src/database/DatabaseInitializer.js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.hoisted(() => {
-  process.env.MOCK_DB = 'false';
-  const workerId = process.env.VITEST_WORKER_ID || '0';
-  process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
-});
+const db = vi.hoisted(() => ({
+  all: vi.fn(),
+  get: vi.fn(),
+  run: vi.fn(),
+}));
 
-// @vitest-environment node
-
-/**
- * Level 2: Integration Tests - Help & Enablement
- * Tests Playbooks and Help Events
- */
-const db = getDatabase();
-describe('Integration Test: Help Routes', () => {
-  let authToken;
-  const testId = Date.now();
-  const testOrgId = `help-org-${testId}`;
-  const testUserId = `help-user-${testId}`;
-  const testEmail = `help-${testId}@test.com`;
-
-  beforeAll(async () => {
-    await initializeDatabase();
-    await db.initPromise;
-
-    const hash = bcrypt.hashSync('test123', 8);
-
-    await new Promise((resolve) => {
-      db.serialize(() => {
-        db.run('INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)', [
-          testOrgId,
-          'Help Test Org',
-          'enterprise',
-          'active',
-        ]);
-        db.run(
-          'INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
-          [testUserId, testOrgId, testEmail, hash, 'HelpUser', 'ADMIN'],
-          resolve
-        );
-      });
-    });
-
-    const loginRes = await request(app).post('/api/auth/login').send({
-      email: testEmail,
-      password: 'test123',
-    });
-
-    if (loginRes.body.token) {
-      authToken = loginRes.body.token;
+vi.mock('../../../server/src/utils/DbPromise.js', () => db);
+vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
+  verifyToken: (req, res, next) => {
+    const authorization = req.get('authorization');
+    if (authorization !== 'Bearer help-test-token') {
+      return res.status(401).json({ error: 'Unauthorized' });
     }
+    req.user = {
+      id: 'help-user-1',
+      organizationId: 'help-org-1',
+      role: 'ADMIN',
+    };
+    req.userId = 'help-user-1';
+    req.organizationId = 'help-org-1';
+    return next();
+  },
+}));
+
+import helpRouter from '../../../server/src/routes/help.routes.js';
+
+const app = express();
+app.use(express.json());
+app.use('/api/help', helpRouter);
+
+describe('Integration Test: Help Routes', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    db.run.mockResolvedValue({ changes: 1 });
+    db.all.mockResolvedValue([]);
   });
 
-  describe('GET /api/help/playbooks', () => {
-    it('should return available playbooks', async () => {
-      if (!authToken) return;
+  it('rejects protected help routes without a bearer token', async () => {
+    const [playbooks, event] = await Promise.all([
+      request(app).get('/api/help/playbooks'),
+      request(app).post('/api/help/events').send({ eventType: 'VIEWED' }),
+    ]);
 
-      const res = await request(app)
-        .get('/api/help/playbooks')
-        .set('Authorization', `Bearer ${authToken}`);
-
-      expect(res.status).toBe(200);
-      if (res.status === 200) {
-        expect(res.body).toHaveProperty('playbooks');
-        expect(res.body).toHaveProperty('recommendedKey');
-      }
-    });
+    expect(playbooks.status).toBe(401);
+    expect(event.status).toBe(401);
+    expect(db.all).not.toHaveBeenCalled();
+    expect(db.run).not.toHaveBeenCalled();
   });
 
-  describe('POST /api/help/events', () => {
-    it('should log help event', async () => {
-      if (!authToken) return;
+  it('returns published playbooks and a deterministic recommendation', async () => {
+    db.all.mockResolvedValueOnce([
+      { id: 'playbook-1', key: 'onboarding-tour', title: 'Onboarding' },
+    ]);
 
-      const res = await request(app)
-        .post('/api/help/events')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({
-          playbookKey: 'onboarding-tour',
-          eventType: 'VIEWED',
-          context: { route: '/dashboard' },
-        });
+    const res = await request(app)
+      .get('/api/help/playbooks')
+      .set('Authorization', 'Bearer help-test-token');
 
-      expect(res.status).toBe(200);
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      success: true,
+      recommendedKey: 'onboarding-tour',
+      playbooks: [{ id: 'playbook-1', key: 'onboarding-tour' }],
     });
+    expect(db.all).toHaveBeenCalledWith(
+      expect.stringContaining("FROM help_playbooks WHERE status = 'published'"),
+      []
+    );
+  });
+
+  // This is a route/adapter contract. Durable persistence is covered only by a
+  // real-DB run; the endpoint deliberately exposes `stored` because help
+  // telemetry is fail-soft and must not block the user's primary workflow.
+  it('reports stored=true when the event adapter accepts the tenant-attributed write', async () => {
+    const res = await request(app)
+      .post('/api/help/events')
+      .set('Authorization', 'Bearer help-test-token')
+      .send({
+        eventType: 'VIEWED',
+        articleId: 'article-1',
+        metadata: { route: '/dashboard' },
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ success: true, message: 'Event logged', stored: true });
+    expect(res.body.eventId).toMatch(/^evt-/);
+    expect(db.run).toHaveBeenLastCalledWith(
+      expect.stringContaining('INSERT INTO help_events'),
+      expect.arrayContaining([
+        'help-user-1',
+        'help-org-1',
+        'VIEWED',
+        'article-1',
+        JSON.stringify({ route: '/dashboard' }),
+      ])
+    );
+  });
+
+  it('honestly reports fail-soft telemetry when the event write is unavailable', async () => {
+    db.run.mockRejectedValueOnce(new Error('telemetry unavailable'));
+
+    const res = await request(app)
+      .post('/api/help/events')
+      .set('Authorization', 'Bearer help-test-token')
+      .send({ eventType: 'VIEWED' });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ success: true, stored: false });
   });
 });
