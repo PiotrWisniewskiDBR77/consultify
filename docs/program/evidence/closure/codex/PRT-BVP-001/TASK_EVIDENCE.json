@@ -1,17 +1,18 @@
 {
   "taskId": "PRT-BVP-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "3cf595da94a516ade16b976cb1abf370a17213c0",
+  "productSha": "7e6ec829163eb39a585b5d663c8b7df8e146523c",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
-  "changedPaths": ["server/src/services/partnerOrgResolution.ts", "server/src/services/partnerReferralService.ts", "server/migrations/20260902_partner_commission_rates_repair.sql", "tests/integration/partners/partner-bvp-lifecycle.realdb.test.ts"],
-  "changedPathRationale": {"runtime": "tenant-safe partner resolution and atomic durable referral identity", "schema": "fresh-install certification commission rates", "tests": "lifecycle, concurrency, isolation and cold-client proof"},
-  "ownerTables": ["partner_users", "partner_referral_codes", "partner_attributions", "partner_certifications", "partner_commission_rates"],
-  "commands": [{"command": "vitest partner-bvp-lifecycle.realdb.test.ts on fresh PostgreSQL", "exitCode": 0}, {"command": "fresh PostgreSQL migrate/repeat/dry-run", "exitCode": 0}],
-  "denominators": {"partnerLifecycle": "6/6", "combinedRealDb": "36/36 across 9 files", "freshMigrations": "709/709 success"},
-  "fixtures": {"database": "disposable pgvector PostgreSQL 16 on localhost:56504", "concurrency": "eight simultaneous referral identity requests"},
-  "negativeControls": {"tenant": "foreign partner and attribution hidden", "duplicate": "duplicate attribution retry rejected", "inactive": "inactive code rejected", "fabricatedPayout": "no payout created"},
+  "changedPaths": ["server/src/services/partnerOrgResolution.ts", "server/src/services/partnerReferralService.ts", "server/migrations/20260902_partner_commission_rates_repair.sql", "server/migrations/20260913_partner_discount_tables_repair.sql", "tests/integration/partners/partner-bvp-lifecycle.realdb.test.ts", "tests/integration/partners/partner-bvp-http-lifecycle.realdb.test.ts", "tests/integration/partners/partner-bvp-cold-http-reader.ts"],
+  "changedPathRationale": {"runtime": "tenant-safe partner resolution and atomic durable referral identity", "schema": "fresh-install commission lookup plus structural-only discount tables; no commercial discount row is seeded", "tests": "literal HTTP registration/connect/certification/code/attribution and separate-process HTTP cold reopen, plus service concurrency/isolation controls"},
+  "ownerTables": ["users", "organizations", "partner_users", "partner_referral_codes", "partner_attributions", "partner_certifications", "partner_commission_rates", "partner_discount_config", "organization_discounts"],
+  "commands": [{"command": "DATABASE_URL=<fresh-pg> DB_TYPE=postgres NODE_ENV=test npx tsx server/scripts/migrate.postgres.ts", "exitCode": 0, "result": "723/723 applied"}, {"command": "same strict migration command repeated", "exitCode": 0, "result": "Applying migrations: 0"}, {"command": "RUN_DB_TESTS=1 MOCK_DB=false REQUIRE_DB_TESTS=1 npx vitest run partner-bvp-http-lifecycle.realdb.test.ts partner-bvp-lifecycle.realdb.test.ts partner-program-ledger-governance.realdb.test.ts --retry=0", "exitCode": 0, "result": "3/3 files, 14/14 tests"}, {"command": "npm run type-check -- --pretty false", "exitCode": 0}],
+  "denominators": {"literalHttpLifecycle": "1/1 including child-process HTTP cold reopen", "partnerServiceLifecycle": "6/6", "combinedPartnerRealDb": "14/14 across 3/3 files", "freshMigrations": "723/723", "repeatMigrations": "0 pending", "typecheck": "exit 0"},
+  "fixtures": {"database": "disposable pgvector/pgvector:pg16 PostgreSQL on localhost:55487", "http": "three unique registered users and organizations; self-connect explicitly enabled only in test env", "certification": "correct-option ids read from the isolated DB only to construct the technical exam fixture", "concurrency": "eight simultaneous referral identity requests"},
+  "negativeControls": {"tenant": "independently registered and connected foreign partner cannot read owning partner attribution", "duplicate": "duplicate attribution retry rejected", "inactive": "inactive code rejected", "coldBoundary": "new OS process starts a new Express listener and reads four authenticated Partner endpoints", "fabricatedPayout": "no payout or accrual-policy decision created", "discountPolicy": "repair migration creates empty structural tables and seeds no commercial rule"},
   "browserArtifacts": [],
   "rollback": {"code": "revert 3cf595da94 before deployment", "data": "additive migration only; no production migration executed"},
-  "verdict": "PARTIAL",
-  "openBlockers": ["Literal browser HTTP registration/connect journey and separate-process restart evidence remain."]
+  "verdict": "DONE_CURRENT_SHA",
+  "technicalVerdict": "PASS_LOCAL_REALPG",
+  "openBlockers": ["Repository changes are intentionally uncommitted; productSha identifies the starting candidate, not a committed integration SHA."]
 }

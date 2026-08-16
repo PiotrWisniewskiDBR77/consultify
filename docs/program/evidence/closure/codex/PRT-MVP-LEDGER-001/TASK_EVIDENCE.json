@@ -1,17 +1,18 @@
 {
   "taskId": "PRT-MVP-LEDGER-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "3cf595da94a516ade16b976cb1abf370a17213c0",
+  "productSha": "7e6ec829163eb39a585b5d663c8b7df8e146523c",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
   "changedPaths": ["server/migrations/20260901_partner_program_ledger_governance.sql", "server/src/services/partnerProgramLedgerService.ts", "server/src/services/partnerCommissionService.ts", "server/src/routes/partners.routes.ts", "server/src/routes/v8/partner.routes.ts", "tests/integration/partners/partner-program-ledger-governance.realdb.test.ts"],
-  "changedPathRationale": {"ledger": "append-only tenant-idempotent governed facts with linked correction, reversal and dispute", "tests": "real PostgreSQL invariants and mutation denial"},
+  "changedPathRationale": {"ledger": "append-only tenant-idempotent governed facts with linked correction, reversal and dispute; concurrent same-key writes atomically coalesce through partial-index ON CONFLICT plus canonical readback", "tests": "real PostgreSQL rule-version, tenant, correction, reversal, dispute, direct mutation denial, 12-writer concurrency and cold readback"},
   "ownerTables": ["partner_program_ledger", "partner_program_disputes"],
-  "commands": [{"command": "vitest partner-program-ledger-governance.realdb.test.ts on fresh PostgreSQL", "exitCode": 0}, {"command": "fresh PostgreSQL migrate/repeat/dry-run", "exitCode": 0}],
-  "denominators": {"ledgerRealDb": "6/6", "combinedRealDb": "36/36", "freshMigrations": "709/709 success"},
-  "fixtures": {"database": "disposable pgvector PostgreSQL 16 on localhost:56504"},
-  "negativeControls": {"mutation": "direct UPDATE and DELETE denied", "tenant": "cross-tenant linked fact denied", "idempotency": "same key isolated per tenant"},
+  "commands": [{"command": "DATABASE_URL=<fresh-pg> DB_TYPE=postgres NODE_ENV=test npx tsx server/scripts/migrate.postgres.ts", "exitCode": 0, "result": "723/723 applied; repeat 0 pending"}, {"command": "RUN_DB_TESTS=1 MOCK_DB=false REQUIRE_DB_TESTS=1 npx vitest run partner-program-ledger-governance.realdb.test.ts --retry=0", "exitCode": 0, "result": "1/1 file, 7/7 tests"}, {"command": "combined three-file Partner realPG gate", "exitCode": 0, "result": "3/3 files, 14/14 tests"}, {"command": "npm run type-check -- --pretty false", "exitCode": 0}],
+  "denominators": {"ledgerRealDb": "7/7", "concurrentSameKey": "12/12 calls returned one immutable id; 11 duplicate acknowledgements", "combinedPartnerRealDb": "14/14", "freshMigrations": "723/723", "repeatMigrations": "0 pending", "typecheck": "exit 0"},
+  "fixtures": {"database": "disposable pgvector/pgvector:pg16 PostgreSQL on localhost:55487", "ruleVersion": "partner-test-rule-v1 is an explicit synthetic technical fixture, not a production commercial decision"},
+  "negativeControls": {"mutation": "direct UPDATE and DELETE denied", "tenant": "cross-tenant linked fact denied and same idempotency key permitted independently per tenant", "idempotency": "12 concurrent same-tenant retries coalesce to exactly one row", "lineage": "missing/cross-tenant correction and dispute links rejected", "policy": "missing rule version rejected"},
   "browserArtifacts": [],
   "rollback": {"code": "revert ledger governance commit before deployment", "data": "append-only facts are never destructively rewritten"},
-  "verdict": "PARTIAL",
-  "openBlockers": ["Commercial/legal PRT-POL-001 must approve rule, eligibility, attribution, reversal, dispute, tax and payout policy."]
+  "verdict": "DONE_CURRENT_SHA",
+  "technicalVerdict": "PASS_LOCAL_REALPG",
+  "openBlockers": ["Repository changes are intentionally uncommitted; productSha identifies the starting candidate, not a committed integration SHA. Commercial values remain owned by PRT-POL-001 and were not required or inferred for this technical ledger proof."]
 }
