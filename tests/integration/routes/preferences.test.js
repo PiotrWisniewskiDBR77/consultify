@@ -31,36 +31,29 @@ describe('Integration Test: Preferences Routes', () => {
 
     const hash = bcrypt.hashSync('test123', 8);
 
-    await new Promise((resolve) => {
-      db.serialize(() => {
-        db.run('INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)', [
+    await db.run('INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)', [
           testOrgId,
           'Preferences Test Org',
           'enterprise',
           'active',
         ]);
-        db.run(
+    await db.run(
           'INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
-          [testUserId, testOrgId, testEmail, hash, 'PrefUser', 'USER'],
-          resolve
+          [testUserId, testOrgId, testEmail, hash, 'PrefUser', 'USER']
         );
-      });
-    });
 
     const loginRes = await request(app).post('/api/auth/login').send({
       email: testEmail,
       password: 'test123',
     });
 
-    if (loginRes.body.token) {
-      authToken = loginRes.body.token;
-    }
+    expect(loginRes.status).toBe(200);
+    expect(loginRes.body.token).toEqual(expect.any(String));
+    authToken = loginRes.body.token;
   });
 
   describe('GET /api/preferences', () => {
     it('should return user preferences', async () => {
-      if (!authToken) return;
-
       const res = await request(app)
         .get('/api/preferences')
         .set('Authorization', `Bearer ${authToken}`);
@@ -71,8 +64,6 @@ describe('Integration Test: Preferences Routes', () => {
 
   describe('GET /api/preferences/options', () => {
     it('should return available options', async () => {
-      if (!authToken) return;
-
       const res = await request(app)
         .get('/api/preferences/options')
         .set('Authorization', `Bearer ${authToken}`);
@@ -85,8 +76,6 @@ describe('Integration Test: Preferences Routes', () => {
 
   describe('PUT /api/preferences', () => {
     it('should update user preferences', async () => {
-      if (!authToken) return;
-
       const res = await request(app)
         .put('/api/preferences')
         .set('Authorization', `Bearer ${authToken}`)
@@ -102,8 +91,6 @@ describe('Integration Test: Preferences Routes', () => {
 
   describe('PUT /api/preferences/ui', () => {
     it('should update UI preferences', async () => {
-      if (!authToken) return;
-
       const res = await request(app)
         .put('/api/preferences/ui')
         .set('Authorization', `Bearer ${authToken}`)

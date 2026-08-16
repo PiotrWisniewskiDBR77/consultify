@@ -31,36 +31,29 @@ describe('Integration Test: Reports Routes', () => {
 
     const hash = bcrypt.hashSync('test123', 8);
 
-    await new Promise((resolve) => {
-      db.serialize(() => {
-        db.run('INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)', [
+    await db.run('INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)', [
           testOrgId,
           'Reports Test Org',
           'pro',
           'active',
         ]);
-        db.run(
+    await db.run(
           'INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
-          [testUserId, testOrgId, testEmail, hash, 'ReportUser', 'USER'],
-          resolve
+          [testUserId, testOrgId, testEmail, hash, 'ReportUser', 'USER']
         );
-      });
-    });
 
     const loginRes = await request(app).post('/api/auth/login').send({
       email: testEmail,
       password: 'test123',
     });
 
-    if (loginRes.body.token) {
-      authToken = loginRes.body.token;
-    }
+    expect(loginRes.status).toBe(200);
+    expect(loginRes.body.token).toEqual(expect.any(String));
+    authToken = loginRes.body.token;
   });
 
   describe('GET /api/reports/executive-overview', () => {
     it('should return executive overview', async () => {
-      if (!authToken) return;
-
       const res = await request(app)
         .get('/api/reports/executive-overview')
         .set('Authorization', `Bearer ${authToken}`);
@@ -77,8 +70,6 @@ describe('Integration Test: Reports Routes', () => {
 
   describe('GET /api/reports/org-overview', () => {
     it('should return organization overview', async () => {
-      if (!authToken) return;
-
       const res = await request(app)
         .get('/api/reports/org-overview')
         .set('Authorization', `Bearer ${authToken}`);

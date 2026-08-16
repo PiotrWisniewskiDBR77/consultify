@@ -31,36 +31,29 @@ describe('Integration Test: Premium Reports Routes', () => {
 
     const hash = bcrypt.hashSync('test123', 8);
 
-    await new Promise((resolve) => {
-      db.serialize(() => {
-        db.run('INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)', [
+    await db.run('INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)', [
           testOrgId,
           'Premium Reports Test Org',
           'enterprise',
           'active',
         ]);
-        db.run(
+    await db.run(
           'INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
-          [testUserId, testOrgId, testEmail, hash, 'PremUser', 'ADMIN'],
-          resolve
+          [testUserId, testOrgId, testEmail, hash, 'PremUser', 'ADMIN']
         );
-      });
-    });
 
     const loginRes = await request(app).post('/api/auth/login').send({
       email: testEmail,
       password: 'test123',
     });
 
-    if (loginRes.body.token) {
-      authToken = loginRes.body.token;
-    }
+    expect(loginRes.status).toBe(200);
+    expect(loginRes.body.token).toEqual(expect.any(String));
+    authToken = loginRes.body.token;
   });
 
   describe('POST /api/reports/premium/:reportId/pdf', () => {
     it('should handle PDF export request for non-existent report gracefully', async () => {
-      if (!authToken) return;
-
       // Using a fake ID, expecting 500 (internal error/not found handled via error block) or 404
       const res = await request(app)
         .post('/api/reports/premium/fake-report-id/pdf')

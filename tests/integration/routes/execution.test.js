@@ -32,42 +32,35 @@ describe('Integration Test: Execution Routes', () => {
 
     const hash = bcrypt.hashSync('test123', 8);
 
-    await new Promise((resolve) => {
-      db.serialize(() => {
-        db.run('INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)', [
+    await db.run('INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)', [
           testOrgId,
           'Execution Test Org',
           'enterprise',
           'active',
         ]);
-        db.run(
+    await db.run(
           'INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
-          [testUserId, testOrgId, testEmail, hash, 'ExecutionUser', 'ADMIN'],
-          resolve
+          [testUserId, testOrgId, testEmail, hash, 'ExecutionUser', 'ADMIN']
         );
-        db.run('INSERT INTO projects (id, organization_id, name, status) VALUES (?, ?, ?, ?)', [
+    await db.run('INSERT INTO projects (id, organization_id, name, status) VALUES (?, ?, ?, ?)', [
           testProjectId,
           testOrgId,
           'Execution Project',
           'active',
         ]);
-      });
-    });
 
     const loginRes = await request(app).post('/api/auth/login').send({
       email: testEmail,
       password: 'test123',
     });
 
-    if (loginRes.body.token) {
-      authToken = loginRes.body.token;
-    }
+    expect(loginRes.status).toBe(200);
+    expect(loginRes.body.token).toEqual(expect.any(String));
+    authToken = loginRes.body.token;
   });
 
   describe('GET /api/execution/:projectId/summary', () => {
     it('should return execution summary', async () => {
-      if (!authToken) return;
-
       const res = await request(app)
         .get(`/api/execution/${testProjectId}/summary`)
         .set('Authorization', `Bearer ${authToken}`);
@@ -78,8 +71,6 @@ describe('Integration Test: Execution Routes', () => {
 
   describe('GET /api/execution/:projectId/blockers', () => {
     it('should return blockers', async () => {
-      if (!authToken) return;
-
       const res = await request(app)
         .get(`/api/execution/${testProjectId}/blockers`)
         .set('Authorization', `Bearer ${authToken}`);
@@ -90,8 +81,6 @@ describe('Integration Test: Execution Routes', () => {
 
   describe('POST /api/execution/:projectId/gate-check', () => {
     it('should perform gate check', async () => {
-      if (!authToken) return;
-
       const res = await request(app)
         .post(`/api/execution/${testProjectId}/gate-check`)
         .set('Authorization', `Bearer ${authToken}`)
