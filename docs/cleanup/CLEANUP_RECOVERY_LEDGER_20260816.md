@@ -37,6 +37,21 @@
 - No local or remote branch ref is deleted before its patch identity is mapped
   to the accepted candidate or to a recovery bundle.
 
+## Executed stale-worktree retirement
+
+The following three registrations pointed to already-missing temporary
+directories. Their recovery pointers were verified before pruning the stale
+registration; the branch refs and commit objects remain intact.
+
+| Missing worktree path | Preserved branch | Preserved tip | Disposition |
+| --- | --- | --- | --- |
+| `/private/tmp/claude-501/-Users-piotrwisniewski-Library-Mobile-Documents-com-apple-CloudDocs-Documents-Antygracity-DRD-consultify/36376f43-9305-403d-84dd-af2d35aa4554/wt-mail` | `fix/email-obserwowalnosc-2026-08-10` | `9f71294f13b8fb528c9fbb28a886c157889e090c` | `PRUNE_REGISTRATION_ONLY` |
+| `/private/tmp/consultify-artifact-qa-292bafd4` | `codex/artifact-studio-remediation-20260812` | `b79fc79554a5780614823f1d860d0f6301a67efe` | `PRUNE_REGISTRATION_ONLY` |
+| `/private/tmp/consultify-cepd-fix.qD53l6` | `codex/cepd-interview-prod-fix-20260814` | `99b1fcf7d67fe30bb15e089cfbf5650ce54a9ea1` | `PRUNE_REGISTRATION_ONLY` |
+
+This operation does not classify the preserved branches as disposable and does
+not authorize deleting their refs.
+
 ## Planned recovery order
 
 1. Assessment verification and missing entry/source-of-truth resolution
