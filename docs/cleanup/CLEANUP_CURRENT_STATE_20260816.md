@@ -26,7 +26,7 @@ cleanup snapshots and five-hour plans are historical evidence.
 - Path: `/Users/piotrwisniewski/Developer/consultify-recovery-canonical-20260816`
 - Branch: `codex/recovery-canonical-20260816`
 - Baseline: `origin/demo` at `e45904dc7940f259b9cf017c283264d5c166c9ab`
-- Current implementation checkpoint before this state update: `ff2d3dfd8e044fb59864502606f087bf5f6d264d`
+- Current implementation checkpoint before this state update: `b214207c9c129730baafffbe3bb105c9a21df111`
 - Recovery control-plane commit: `844001c525`
 - Integrated packages: Assessment (fast-forward ancestry), Tools (49
   patch-unique non-merge commits) and Audits (34 patch-unique non-merge
@@ -94,6 +94,20 @@ Fresh checks on this candidate:
   zero pending, and the full Tools denominator again passed 12/12 and 100/100.
   Initiative quality advisories (10/10 checks failed for synthetic proposals)
   remain explicit product-quality debt; feature flags remain OFF.
+- The fresh real-PostgreSQL browser gate initially found two real defects:
+  backend `tsx` could not resolve client-only `@/` aliases in the shared SWOT
+  output builder, and the browser fixture omitted the now-mandatory CAS
+  `expectedVersion`. Commit `b214207c9c` repairs both. On a new 703-migration
+  database, Chromium then passed both durable SWOT journeys: deep-link/edit/
+  autosave/hard-reload and submit/approve/freeze/immutable-reload (2/2 PASS).
+- Case source `adf77cb833ec` is classified `ALREADY_PRESENT / KEEP_EVIDENCE`:
+  all 782 source files exist in the candidate, and its 110 dedicated services,
+  39 routes, 19 UI files and 19 migrations are byte-identical. Replay allowlist
+  is empty; verification remains open.
+- Artifact Studio source `64715cdd3751` contains five patch-unique commits, but
+  all 48 touched paths overlap later candidate evolution. It is classified
+  `INTEGRATE_SELECTIVELY / HIGH_CONFLICT`; reconstruction must proceed by
+  governance, backend DOC/PPT/XLSX, frontend, shell, tests and dependency groups.
 - Commit hooks reported no new list, TRIADA, density, focus, or artifact-shell
   regression in the changed files. Existing repository-wide focus debt remains.
 
@@ -120,10 +134,12 @@ features. No bulk branch or worktree deletion is authorized by these counts.
 
 ## Next gate
 
-1. Run fresh browser journeys for Assessment, Tools and Audits on the exact
-   candidate; realDB green does not authorize enabling their feature flags.
+1. Run fresh browser journeys for Assessment and Audits on the exact candidate;
+   Tools now has one green real-PostgreSQL Chromium slice, but its remaining
+   browser/quality/provider gates and feature-flag decision stay open.
 2. Reconcile the synthetic initiative quality advisories without weakening
    assertions.
 3. Resolve the one explicit broken orphan and the Assessment immutable-log
    `diff --check` policy without rewriting evidence silently.
-4. Reconcile Case/Artifact, then the owner-gated Results/Finance packages.
+4. Verify already-present Case; reconstruct Artifact group-by-group; then
+   reconcile the owner-gated Results/Finance packages.

@@ -35,11 +35,11 @@ authorization. `DEMO_READY` never implies this gate.
 
 | Module | Current status | Completion gate |
 | --- | --- | --- |
-| Assessment | `PARTIAL / INTEGRATED_PENDING_VERIFICATION` | One Library-to-session path, one registry owner, fresh DB and browser proof. |
-| Tools | `BLOCKED / NOT_INTEGRATED` | Selective replay, publishable pack policy, HTTP Teresa, fresh browser flow. |
-| Audits | `PARTIAL / NOT_INTEGRATED` | One production route/model, enabled policy, upgrade and browser proof. |
-| Case / Agent | `BLOCKED_OWNER_DECISION` | One lifecycle and data owner; legacy path explicitly retired or bridged. |
-| Artifact / Materials | `PARTIAL / EVIDENCE_MISSING` | One launcher and artifact lifecycle with persistence, export and reopen proof. |
+| Assessment | `PARTIAL / INTEGRATED_PENDING_VERIFICATION` | One Library-to-session path, one registry owner, fresh browser proof. |
+| Tools | `PARTIAL / INTEGRATED_REALDB_GREEN` | Browser golden flow, publishable-pack/initiative-quality policy and explicit flag decision. Fresh strict DB and 100/100 realDB assertions are green at the current candidate. |
+| Audits | `PARTIAL / INTEGRATED_REALDB_GREEN` | Browser golden flow and explicit flag decision. Fresh strict DB, 259/259 assertions and audit-event compatibility readback are green at the current candidate. |
+| Case / Agent | `ALREADY_PRESENT / VERIFICATION_REQUIRED` | No replay. Verify the existing lifecycle, 19 migrations, route/flag truth, persistence/outbox/restart, cross-module adapters and browser journeys; retain VoiceOver as literal blocker until proven. |
+| Artifact / Materials | `INTEGRATE_SELECTIVELY / HIGH_CONFLICT / EVIDENCE_MISSING` | Reconstruct the five-commit source by bounded DOC/PPT/XLSX/governance/shell groups, then prove persistence, export, reopen and accessibility on the new exact SHA. |
 | Results | `BLOCKED_DATA_AND_MOUNT` | One mounted KPI/ROI/OKR workspace and deterministic demo fixtures. |
 | Finance | `BLOCKED_ARCHITECTURE` | One canonical version spine, migration ledger and Results seam. |
 | CEPD / Interview | `PARTIAL / SELECTIVE_RECOVERY_REQUIRED` | Allowlisted fixes on candidate plus exact-schema runtime verification. |
