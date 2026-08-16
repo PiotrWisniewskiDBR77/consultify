@@ -2,24 +2,39 @@
  * M12 — Audit Programs route tests (Bramka D: testy fundamentu M12).
  *
  * Covers:
- *   - CRUD org-scoping: GET/PATCH/DELETE return 404 for wrong-org programs
- *   - generate-surveys fan-out: creates one assignment per template × assignee
+ *   - AUD-MVP-OWNER-001: the ENTIRE legacy write surface — CRUD
+ *     (POST/PATCH/DELETE) AND generate-surveys's bookkeeping UPDATE — is
+ *     retired. All of it refuses with 410 AUDIT_PROGRAM_LEGACY_WRITE_DISABLED
+ *     and never touches dbGet/dbRun/the assignment-create seam, by default
+ *     (isLegacyProgramWriteEnabled()=false); flipping the
+ *     AUDIT_PROGRAM_LEGACY_WRITES_ENABLED env var restores the old behavior
+ *     (proven per-endpoint below — this is the rollback story).
+ *   - Read org-scoping: GET/GET-list keep working (unaffected by the retirement)
+ *   - generate-surveys fan-out (flag ON only, see the dedicated describe
+ *     block): creates one assignment per template × assignee
  *   - SEC-3: generate-surveys filters foreign assignees via organization_members check
  *   - generate-surveys idempotency: alreadyGenerated=true skips re-fan-out
- *   - completion rollup endpoint
+ *   - completion rollup endpoint (read-only, unaffected)
  *
  * Call graph notes:
  *   getProgram()     → dbGet (single row lookup)
  *   listPrograms()   → dbGet (count) + dbAll (rows)
- *   createProgram()  → dbRun (INSERT) + dbGet (return)
- *   updateProgram()  → dbGet (existing) + dbRun (UPDATE) + dbGet (return)
- *   deleteProgram()  → dbGet (exist-check) + dbRun (DELETE)
- *   generateSurveys()→ dbGet (get) + dbAll (org_members) + create() + updateProgram()
+ *   createProgram()  → dbRun (INSERT) + dbGet (return)  — NOT reached from the
+ *                      route while the legacy-write flag is OFF (default)
+ *   updateProgram()  → dbGet (existing) + dbRun (UPDATE) + dbGet (return) — NOT
+ *                      reached from PATCH, nor from generate-surveys's
+ *                      bookkeeping call, while the legacy-write flag is OFF
+ *   deleteProgram()  → dbGet (exist-check) + dbRun (DELETE) — NOT reached from
+ *                      the route while the legacy-write flag is OFF (default)
+ *   generateSurveys()→ dbGet (get) + dbAll (org_members) + create() +
+ *                      updateProgram() — the WHOLE function is unreached
+ *                      while the legacy-write flag is OFF (route refuses
+ *                      before calling it)
  */
 
 import express, { type Express, type NextFunction, type Request } from 'express';
 import request from 'supertest';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ── Mock fns (hoisted) ────────────────────────────────────────────────────────
 
@@ -64,6 +79,13 @@ vi.mock('../../utils/Logger.js', () => ({
 vi.mock('../../services/InterviewAssignmentService.js', () => ({
   default: { create: (...args: any[]) => mockCreate(...args) },
 }));
+
+// auditProgramService.js itself is NOT mocked — isLegacyProgramWriteEnabled()
+// reads live process.env, so tests toggle it with vi.stubEnv and this
+// file-wide afterEach guarantees the stub never leaks into another test.
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
 
 // ── Test constants ────────────────────────────────────────────────────────────
 
@@ -179,7 +201,35 @@ describe('audit-programs CRUD org-scoping', () => {
     expect(countSql).not.toContain('status = ?');
   });
 
-  it('POST /programs creates with org scope', async () => {
+  // ── AUD-MVP-OWNER-001: legacy POST is retired by default ─────────────────────
+  it('POST /programs — default (flag unset): 410 AUDIT_PROGRAM_LEGACY_WRITE_DISABLED, never touches dbRun', async () => {
+    const app = await makeApp();
+    const res = await request(app)
+      .post('/api/audit/programs')
+      .send({ name: 'ISO 27001', status: 'draft' });
+    expect(res.status).toBe(410);
+    expect(res.body.code).toBe('AUDIT_PROGRAM_LEGACY_WRITE_DISABLED');
+    expect(mockDbRun).not.toHaveBeenCalled();
+  });
+
+  it('POST /programs — repeated attempts while disabled are refused every time (stale/replay negative)', async () => {
+    const app = await makeApp();
+    for (let i = 0; i < 3; i++) {
+      // eslint-disable-next-line no-await-in-loop
+      const res = await request(app)
+        .post('/api/audit/programs')
+        .send({ name: `ISO 27001 attempt ${i}`, status: 'draft' });
+      expect(res.status).toBe(410);
+      expect(res.body.code).toBe('AUDIT_PROGRAM_LEGACY_WRITE_DISABLED');
+    }
+    expect(mockDbRun).not.toHaveBeenCalled();
+  });
+
+  // ── Rollback story: AUDIT_PROGRAM_LEGACY_WRITES_ENABLED=true restores the
+  // pre-retirement behavior without a code revert. These are the ORIGINAL
+  // pre-retirement assertions, now gated behind the explicit opt-in. ─────────
+  it('POST /programs — flag ON (AUDIT_PROGRAM_LEGACY_WRITES_ENABLED=true): creates with org scope', async () => {
+    vi.stubEnv('AUDIT_PROGRAM_LEGACY_WRITES_ENABLED', 'true');
     mockDbGet.mockResolvedValueOnce(baseRow()); // createProgram → getProgram returns created row
     const app = await makeApp();
     const res = await request(app)
@@ -187,9 +237,11 @@ describe('audit-programs CRUD org-scoping', () => {
       .send({ name: 'ISO 27001', status: 'draft' });
     expect(res.status).toBe(201);
     expect(res.body.program.id).toBe(PROG_ID);
+    expect(mockDbRun).toHaveBeenCalled();
   });
 
-  it('POST /programs returns 400 when name is missing', async () => {
+  it('POST /programs — flag ON: still returns 400 when name is missing (validation preserved)', async () => {
+    vi.stubEnv('AUDIT_PROGRAM_LEGACY_WRITES_ENABLED', 'true');
     const app = await makeApp();
     const res = await request(app).post('/api/audit/programs').send({ status: 'draft' });
     expect(res.status).toBe(400);
@@ -218,8 +270,32 @@ describe('audit-programs CRUD org-scoping', () => {
     expect(res.status).toBe(404);
   });
 
-  it('PATCH /programs/:id returns 404 for wrong-org program', async () => {
+  // ── AUD-MVP-OWNER-001: legacy PATCH is retired by default ────────────────────
+  it('PATCH /programs/:id — default (flag unset): 410 AUDIT_PROGRAM_LEGACY_WRITE_DISABLED, never touches dbRun/dbGet', async () => {
+    const app = await makeApp(ORG_A);
+    const res = await request(app)
+      .patch(`/api/audit/programs/${PROG_ID}`)
+      .send({ name: 'Changed' });
+    expect(res.status).toBe(410);
+    expect(res.body.code).toBe('AUDIT_PROGRAM_LEGACY_WRITE_DISABLED');
+    expect(mockDbRun).not.toHaveBeenCalled();
+    // No lookup happens either — org-scoping is moot when the write path never runs.
+    expect(mockDbGet).not.toHaveBeenCalled();
+  });
+
+  it('PATCH /programs/:id — default: refuses identically for a wrong-org id too (tenant negative on the write surface)', async () => {
+    const app = await makeApp(ORG_B);
+    const res = await request(app)
+      .patch(`/api/audit/programs/${PROG_ID}`)
+      .send({ name: 'Changed' });
+    expect(res.status).toBe(410);
+    expect(mockDbRun).not.toHaveBeenCalled();
+  });
+
+  // ── Rollback story (flag ON): original pre-retirement assertions ────────────
+  it('PATCH /programs/:id — flag ON: returns 404 for wrong-org program (org-scoping preserved)', async () => {
     // updateProgram calls getProgram first — returns null for ORG_B
+    vi.stubEnv('AUDIT_PROGRAM_LEGACY_WRITES_ENABLED', 'true');
     mockDbGet.mockResolvedValueOnce(undefined);
     const app = await makeApp(ORG_B);
     const res = await request(app)
@@ -228,34 +304,57 @@ describe('audit-programs CRUD org-scoping', () => {
     expect(res.status).toBe(404);
   });
 
-  it('PATCH /programs/:id returns 400 when name is empty string', async () => {
+  it('PATCH /programs/:id — flag ON: returns 400 when name is empty string (validation preserved)', async () => {
+    vi.stubEnv('AUDIT_PROGRAM_LEGACY_WRITES_ENABLED', 'true');
     const app = await makeApp(ORG_A);
     const res = await request(app).patch(`/api/audit/programs/${PROG_ID}`).send({ name: '' });
     expect(res.status).toBe(400);
   });
 
-  it('DELETE /programs/:id returns 404 for wrong-org program', async () => {
+  // ── AUD-MVP-OWNER-001: legacy DELETE is retired by default ───────────────────
+  it('DELETE /programs/:id — default (flag unset): 410 AUDIT_PROGRAM_LEGACY_WRITE_DISABLED, never touches dbRun', async () => {
+    const app = await makeApp(ORG_A);
+    const res = await request(app).delete(`/api/audit/programs/${PROG_ID}`);
+    expect(res.status).toBe(410);
+    expect(res.body.code).toBe('AUDIT_PROGRAM_LEGACY_WRITE_DISABLED');
+    expect(mockDbRun).not.toHaveBeenCalled();
+  });
+
+  it('DELETE /programs/:id — default: refuses identically for a wrong-org id too (tenant negative on the write surface)', async () => {
+    const app = await makeApp(ORG_B);
+    const res = await request(app).delete(`/api/audit/programs/${PROG_ID}`);
+    expect(res.status).toBe(410);
+    expect(mockDbRun).not.toHaveBeenCalled();
+  });
+
+  // ── Rollback story (flag ON): original pre-retirement assertions ────────────
+  it('DELETE /programs/:id — flag ON: returns 404 for wrong-org program (org-scoping preserved)', async () => {
+    vi.stubEnv('AUDIT_PROGRAM_LEGACY_WRITES_ENABLED', 'true');
     mockDbGet.mockResolvedValueOnce(undefined);
     const app = await makeApp(ORG_B);
     const res = await request(app).delete(`/api/audit/programs/${PROG_ID}`);
     expect(res.status).toBe(404);
   });
 
-  it('DELETE /programs/:id returns 200 for own-org program', async () => {
+  it('DELETE /programs/:id — flag ON: returns 200 for own-org program (legacy delete restored)', async () => {
+    vi.stubEnv('AUDIT_PROGRAM_LEGACY_WRITES_ENABLED', 'true');
     mockDbGet.mockResolvedValueOnce(baseRow()); // deleteProgram → getProgram exist-check
     const app = await makeApp(ORG_A);
     const res = await request(app).delete(`/api/audit/programs/${PROG_ID}`);
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
+    expect(mockDbRun).toHaveBeenCalled();
   });
 
-  // ── Mass-assignment: server-managed `config` bookkeeping keys ─────────────────
+  // ── Mass-assignment: server-managed `config` bookkeeping keys (flag ON only —
+  // PATCH is retired by default; this exercises the restored path) ────────────
   // surveysGenerated / generatedAssignmentIds / generation are written ONLY by
   // generateSurveys(). A client PATCH must not forge them (a forged
   // surveysGenerated=true would permanently block the program's survey fan-out;
   // a forged generatedAssignmentIds would inflate completion %). The route strips
   // them from the incoming config and re-seeds them from the existing row.
-  it('PATCH /programs/:id ignores client-forged surveysGenerated/generatedAssignmentIds; server values win', async () => {
+  it('PATCH /programs/:id — flag ON: ignores client-forged surveysGenerated/generatedAssignmentIds; server values win', async () => {
+    vi.stubEnv('AUDIT_PROGRAM_LEGACY_WRITES_ENABLED', 'true');
     // Route flow when body.config is present:
     //   1: getProgram (route sanitization — read existing server-owned keys)
     //   2: updateProgram → getProgram (existence check)
@@ -304,9 +403,48 @@ describe('audit-programs CRUD org-scoping', () => {
   });
 });
 
-describe('audit-programs generate-surveys fan-out', () => {
+// ── AUD-MVP-OWNER-001 (lead decision 2026-08-16): generate-surveys's
+// bookkeeping updateProgram() call is now retired by default too — leaving it
+// reachable kept the legacy service as a second writer of audit_programs
+// (inventory=2, not 1), and there is no legitimate way to reach it anymore
+// once create/update/delete already refuse. Same flag, same 410 shape. ──────
+describe('audit-programs generate-surveys — retired by default (AUD-MVP-OWNER-001)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockDbAll.mockResolvedValue([]);
+    mockDbGet.mockResolvedValue(undefined);
+    mockDbRun.mockResolvedValue({ success: true, changes: 1 });
+    mockCreate.mockResolvedValue({ id: 'ia-1' });
+  });
+
+  it('POST .../generate-surveys — default (flag unset): 410 AUDIT_PROGRAM_LEGACY_WRITE_DISABLED, never touches dbGet/dbRun/mockCreate', async () => {
+    const app = await makeApp();
+    const res = await request(app).post(`/api/audit/programs/${PROG_ID}/generate-surveys`);
+    expect(res.status).toBe(410);
+    expect(res.body.code).toBe('AUDIT_PROGRAM_LEGACY_WRITE_DISABLED');
+    expect(mockDbGet).not.toHaveBeenCalled();
+    expect(mockDbRun).not.toHaveBeenCalled();
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
+
+  it('POST .../generate-surveys — default: refused identically regardless of program state (nothing is ever read to decide)', async () => {
+    // No mockDbGet.mockResolvedValueOnce() queued here on purpose: the whole
+    // point is that dbGet is NEVER called, so nothing is ever consumed — the
+    // refusal is unconditional, before the DB is touched at all. (An unused
+    // queued once-value would otherwise leak into the next describe block's
+    // mockDbGet queue, since vi.clearAllMocks() clears call history but not
+    // queued mockResolvedValueOnce values — only vi.resetAllMocks() does.)
+    const app = await makeApp();
+    const res = await request(app).post(`/api/audit/programs/${PROG_ID}/generate-surveys`);
+    expect(res.status).toBe(410);
+    expect(mockDbGet).not.toHaveBeenCalled();
+  });
+});
+
+describe('audit-programs generate-surveys fan-out — flag ON (AUDIT_PROGRAM_LEGACY_WRITES_ENABLED=true, rollback path)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.stubEnv('AUDIT_PROGRAM_LEGACY_WRITES_ENABLED', 'true');
     mockDbAll.mockResolvedValue([]);
     mockDbGet.mockResolvedValue(undefined);
     mockDbRun.mockResolvedValue({ success: true, changes: 1 });
