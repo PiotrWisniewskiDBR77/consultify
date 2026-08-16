@@ -1,28 +1,44 @@
 {
   "taskId": "RES-BVP-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "afd5058deeed171dad9177fd8054ba30a7257d79",
+  "productSha": "459b2d0da5d30b79d3c31d89ad0dcc7612b3c932",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
-  "changedPaths": [],
-  "changedPathRationale": {"none": "verification-only task; no implementation write in this evidence packet"},
+  "changedPaths": ["docs/program/evidence/closure/codex/RES-BVP-001/TASK_EVIDENCE.json"],
+  "changedPathRationale": {"evidence": "Current-SHA fresh PostgreSQL closure; existing backend required no product-code repair."},
   "ownerTables": ["kpi_definitions", "kpi_deviation_cases", "okr_sets", "roi_cases", "roi_pir_snapshots"],
   "commands": [
     {"command": "RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=<isolated-local-pg> npx vitest run <KPI revision+deviation, OKR publish+manager review, ROI lifecycle+PIR cold reopen packet>", "exitCode": 0, "result": "6 files, 30 tests passed, 0 failed/skipped"}
   ],
-  "denominators": {"realDbFiles": 6, "realDbTests": "30/30"},
+  "technicalClosure20260817": {
+    "candidateSha": "459b2d0da5d30b79d3c31d89ad0dcc7612b3c932",
+    "migrations": "fresh pgvector/pgvector:pg16: initial 729 applied; repeat 0; dry-run pending 0; ledger 729 success",
+    "goldenPacket": "6/6 files, 30/30 tests, exit 0",
+    "authAndIsolationPacket": "5/5 files, 36/36 tests, exit 0",
+    "okrWrongOrganizationPacket": "1/1 file, 5/5 tests, exit 0",
+    "typecheck": "NODE_OPTIONS=--max-old-space-size=8192 npm run type-check; exit 0"
+  },
+  "denominators": {"realDbFiles": 12, "realDbTests": "71/71", "failed": 0, "skipped": 0, "todo": 0},
   "fixtures": {"database": "isolated local PostgreSQL", "roles": "maker/checker and restricted reader fixtures"},
-  "negativeControls": {"makerChecker": "self-approval denied", "visibility": "restricted ROI case hidden", "concurrency": "deviation and revision writes remain singular"},
+  "negativeControls": {
+    "makerChecker": "KPI and OKR self-approval denied without mutation",
+    "authorization": "unrelated members denied KPI/OKR/ROI commands; generic denial does not leak protected identities",
+    "tenant": "KPI revision rejects wrong organization; OKR objective list/detail return empty/null for wrong organization",
+    "visibility": "existing PRIVATE/RESTRICTED_ACL joins hide KPI/OKR/ROI rows from outsiders; no visibility policy was chosen or changed",
+    "idempotency": "same KPI revision key creates one version",
+    "concurrency": "parallel KPI revisions preserve singular version numbers; parallel deviation writes preserve one case",
+    "coldReadback": "fresh connections recover KPI revision and finalized ROI PIR snapshot/hash byte-identically"
+  },
   "browserArtifacts": [],
-  "rollback": {"code": "verification-only evidence", "data": "isolated test fixtures only"},
+  "rollback": {"code": "verification-only evidence; no product-code rollback", "data": "disposable database fixtures only"},
   "positiveProof": [
     "KPI revision preserves immutable prior version, enforces maker-checker, idempotency and concurrent numbering",
     "KPI deviation opens exactly one case and escalates the same case under sequential/concurrent writes",
     "OKR publish pins immutable policy versions and manager review denies self-approval",
     "ROI case lifecycle enforces restricted visibility and PIR snapshot survives a fresh connection byte-identically"
   ],
+  "technicalVerdict": "DONE_CURRENT_SHA",
   "verdict": "PARTIAL",
   "openBlockers": [
-    "Final three-role deterministic fixture, rollout/mount decision and browser gold flows remain required.",
-    "Execution producer handoff must be integrated before the full cross-module Results contract can be accepted."
+    "Final three-role visibility policy, rollout/mount decision and browser gold flows remain owner/human gates outside this bounded backend closure."
   ]
 }
