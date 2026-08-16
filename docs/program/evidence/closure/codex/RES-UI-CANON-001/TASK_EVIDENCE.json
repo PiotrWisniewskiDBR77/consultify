@@ -1,0 +1,92 @@
+{
+  "taskId": "RES-UI-CANON-001",
+  "baselineSha": "71ec92695737d415b5319f001f9492bae4382e17",
+  "productSha": "8417acfb9cf59834c9ada2d930dd04cd61904df0",
+  "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
+  "changedPaths": [
+    "docs/program/evidence/closure/codex/RES-UI-CANON-001/IMPLEMENTATION_2026-08-16.md",
+    "docs/program/evidence/closure/codex/RES-UI-CANON-001/TASK_EVIDENCE.json",
+    "docs/program/evidence/closure/codex/RES-UI-CANON-001/owner-kpi-pl-dark-1440x900.png",
+    "docs/program/evidence/closure/codex/RES-UI-CANON-001/owner-roi-pl-dark-1440x900.png",
+    "docs/program/evidence/closure/codex/RES-UI-CANON-001/owner-okr-pl-dark-1440x900.png",
+    "docs/program/evidence/closure/codex/RES-UI-CANON-001/owner-okr-set-pl-dark-390x844.png",
+    "docs/program/evidence/closure/codex/RES-UI-CANON-001/owner-roi-en-light-768x1024.png"
+  ],
+  "changedPathRationale": {
+    "evidence": "Task-scoped mounted-browser report, machine-readable verdict and visual artifacts only; no product code was changed."
+  },
+  "ownerTables": [
+    "rvn_kpi_definitions",
+    "rvn_roi_cases",
+    "okr_vnext_sets",
+    "rvn_platform_visibility_policies"
+  ],
+  "commands": [
+    {
+      "command": "DATABASE_URL=<isolated-loopback-pg> NODE_ENV=test DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts",
+      "exitCode": 0,
+      "result": "722 fresh migrations applied"
+    },
+    {
+      "command": "same strict migration command; then same command --dry-run",
+      "exitCode": 0,
+      "result": "repeat 0 applied; dry-run 0 pending"
+    },
+    {
+      "command": "DATABASE_URL=<isolated-loopback-pg> NODE_ENV=test SEED_CONFIRM=YES_SEED_RN_G6_LOCAL npx tsx scripts/rn-g6-seed-runtime-dataset.ts --wipe",
+      "exitCode": 0,
+      "result": "2 tenants, 6 roles/users, deterministic KPI/ROI/OKR fixtures"
+    },
+    {
+      "command": "npx vitest run src/components/Results/__tests__ tests/resultsVnext/resultsVNextFeatureFlags.navigationPersist.test.ts tests/resultsVnext/kpi/kpiToolMappers.test.ts tests/resultsVnext/roi/ui/roiCaseFullToolMappers.test.ts --reporter=dot",
+      "exitCode": 0,
+      "result": "19 files, 133 tests passed"
+    }
+  ],
+  "denominators": {
+    "freshMigrationsApplied": 722,
+    "repeatMigrationsApplied": 0,
+    "dryRunPending": 0,
+    "focusedTestFiles": "19/19",
+    "focusedTests": "133/133",
+    "kpiLifecycleRowsOwnerOrgA": "6/6",
+    "roiLifecycleRowsOwnerOrgA": "6/6",
+    "okrSetsOwnerOrgA": "1/1",
+    "adminOrgBVisibleKpis": "2/2",
+    "browserScreenshots": 5,
+    "requiredViewportLanguageThemeMatrixCaptured": "PARTIAL",
+    "mountedAxeCriticalSerious": "NOT_VERIFIED"
+  },
+  "fixtures": {
+    "database": "isolated pgvector/pgvector:pg16 container on 127.0.0.1:56511",
+    "roles": ["OWNER org A", "MEMBER org A", "ADMIN org B"],
+    "viewports": ["1440x900", "768x1024", "390x844"],
+    "languages": ["pl", "en"],
+    "themes": ["dark", "light"]
+  },
+  "negativeControls": {
+    "memberForbidden": "MEMBER direct Results URL redirected to /interview and exposed no Results controls",
+    "tenantIsolation": "org-B ADMIN saw exactly the two org-B KPI rows, not six org-A rows",
+    "deepLinkReload": "OKR set URL and object survived reload byte-for-byte",
+    "visibilityDecision": "no Manager/Reader access or roll-up policy inferred"
+  },
+  "browserArtifacts": [
+    "docs/program/evidence/closure/codex/RES-UI-CANON-001/owner-kpi-pl-dark-1440x900.png",
+    "docs/program/evidence/closure/codex/RES-UI-CANON-001/owner-roi-pl-dark-1440x900.png",
+    "docs/program/evidence/closure/codex/RES-UI-CANON-001/owner-okr-pl-dark-1440x900.png",
+    "docs/program/evidence/closure/codex/RES-UI-CANON-001/owner-okr-set-pl-dark-390x844.png",
+    "docs/program/evidence/closure/codex/RES-UI-CANON-001/owner-roi-en-light-768x1024.png"
+  ],
+  "rollback": {
+    "code": "No product code change; remove this evidence directory only if evidence must be invalidated.",
+    "data": "Disposable container only; no shared data mutation."
+  },
+  "verdict": "PARTIAL",
+  "openBlockers": [
+    "RES-MVP-VISIBILITY-001 Product owner decision remains BLOCKED_OWNER; default OWNER/ADMIN-only behavior preserved.",
+    "Mounted axe critical/serious denominator was not established.",
+    "Complete state x viewport x language x theme screenshot matrix remains incomplete.",
+    "Manual VoiceOver and named human visual/brand acceptance remain BLOCKED_HUMAN.",
+    "Shared-shell unnamed icon buttons and missing sampled focus outlines require the shared-shell owner."
+  ]
+}
