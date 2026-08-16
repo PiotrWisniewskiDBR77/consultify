@@ -1,26 +1,46 @@
 {
   "taskId": "FIN-MVP-IMPORT-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "5f5c5e507a64b262ec9585b2469ba6277b0b6939",
+  "productSha": "c4b242882ba9bade05184b22c75dc7761d8ac1d2",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
-  "changedPaths": [],
-  "changedPathRationale": {"none": "verification-only evidence of the existing XLSX route contract"},
-  "ownerTables": ["finance_working_revisions", "finance_import_jobs", "finance_statement_lines"],
+  "changedPaths": [
+    "server/migrations/20260918_finance_import_receipts.sql",
+    "server/src/services/finance/canonical/financeImportService.ts",
+    "server/src/routes/v8/finance-v2/export-import.routes.ts",
+    "server/src/routes/v8/finance-v2/__tests__/export-import.routes.pg.test.ts"
+  ],
+  "changedPathRationale": {
+    "migration": "Adds tenant-scoped immutable import receipts with strong FKs to the canonical Finance TEXT identifiers.",
+    "service": "Makes replay reachable after a successful revision, rejects same-key/different-payload collisions, and serializes concurrent equal keys.",
+    "route": "Accepts reviewed XLSX and CSV MIME/extension pairs and returns receipt identity/hash.",
+    "test": "Adds real multipart CSV, validation/no-write, immutable cold receipt, payload-collision and 8-way concurrency proofs."
+  },
+  "ownerTables": ["finance_working_revisions", "finance_import_receipts", "finance_stmt_lines"],
   "commands": [
     {"command": "RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=<isolated-local-pg> npx vitest run server/src/routes/v8/finance-v2/__tests__/export-import.routes.pg.test.ts", "exitCode": 0, "result": "11 tests passed; XLSX export/parse/preview/correct/apply/readback, CAS and cross-tenant controls"}
   ],
-  "denominators": {"xlsxRouteTests": "11/11"},
-  "fixtures": {"database": "isolated local PostgreSQL", "format": "representative XLSX workbook"},
+  "technicalClosure20260817": {
+    "candidateSha": "6738c593779557f6e41f49895824adf2147b4740",
+    "migrations": "fresh strict PostgreSQL: 729 applied; repeat 0; dry-run pending 0; ledger 729 success",
+    "typecheck": "NODE_OPTIONS=--max-old-space-size=8192 npm run type-check; exit 0",
+    "focusedRealPostgres": "exit 0; 1/1 file; 14/14 tests; 0 failed/skipped/todo"
+  },
+  "denominators": {"xlsxCsvRouteTests": "14/14"},
+  "fixtures": {"database": "fresh disposable local PostgreSQL", "format": "representative XLSX workbook and CSV Values file"},
   "negativeControls": [
     "stale working revision returns 409 and is not silently applied twice",
     "cross-tenant export and preview return uniform 404",
     "malformed cross-tenant request does not disclose validation shape before authorization"
+    ,"invalid numeric CSV/XLSX-mapped row returns rowErrors and leaves canonical value byte-equivalent"
+    ,"same idempotency key with changed payload returns 409 IDEMPOTENCY_PAYLOAD_COLLISION"
+    ,"8 concurrent identical applies create one revision effect and one immutable receipt"
+    ,"direct receipt UPDATE is rejected by the database trigger"
   ],
   "browserArtifacts": [],
-  "rollback": {"code": "verification-only evidence", "data": "isolated import fixtures only"},
+  "rollback": {"code": "Revert the four technical changed paths after disabling new imports.", "data": "Non-destructive: retain immutable receipts and additive schema for audit; do not drop receipt evidence."},
+  "technicalVerdict": "DONE_CURRENT_SHA",
   "verdict": "PARTIAL",
   "openBlockers": [
-    "CSV representative fixture and immutable import-receipt hash are not covered by the current XLSX route suite.",
     "Browser map/correct/confirm evidence on the final integrated SHA remains required."
   ]
 }
