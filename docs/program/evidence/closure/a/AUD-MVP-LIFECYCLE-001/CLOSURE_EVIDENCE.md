@@ -13,14 +13,12 @@ The two gaps documented below are now technically closed in the working tree:
   one rejected stale writer, exactly one matching event, tenant denial and a
   fresh-pool cold readback.
 
-Real PostgreSQL result: task gate `12/12` in `5/5` files; Audits kernel
-regression `165/165` in `21/21` files; typecheck exit `0`. The disposable DB
-was previously created fresh at `722/722`, then advanced by four current
-migrations; repeat and dry-run both reported zero pending. A new from-zero
-run could not be produced because Docker storage was exhausted, so the final
-machine record remains `PARTIAL / PASS_ADVANCED_REALPG` until that exact G3
-proof is refreshed. Sections describing the former missing trigger and CAS
-below are retained as historical investigation, not current-state claims.
+Real PostgreSQL result: exact-current from-zero migration `726/726`, repeat
+`0`, dry-run `0`; task gate `12/12` in `5/5` files; Audits kernel regression
+`165/165` in `21/21` files; typecheck exit `0`. The final machine record is
+`DONE_CURRENT_SHA / PASS_FRESH_REALPG`. Sections describing the former missing
+trigger and CAS below are retained as historical investigation, not
+current-state claims.
 
 Lane: Claude A (`codex/closure-claude-a-method-evidence`,
 `/Users/piotrwisniewski/Developer/consultify-closure-claude-a`).

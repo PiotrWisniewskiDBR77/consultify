@@ -35,7 +35,7 @@
     "audit_initiative_proposals"
   ],
   "commands": [
-    {"command": "DATABASE_URL=<audbvp-pg> DB_TYPE=postgres NODE_ENV=test npm run db:migrate:strict", "exitCode": 0, "result": "advanced previously fresh 722-migration DB with 4/4 pending migrations including append-only guard"},
+    {"command": "DATABASE_URL=<fresh-audlife-pg> DB_TYPE=postgres NODE_ENV=test npm run db:migrate:strict", "exitCode": 0, "result": "exact-current fresh 726/726 migrations applied from zero"},
     {"command": "same strict migration command repeated", "exitCode": 0, "result": "Applying migrations: 0"},
     {"command": "same strict migration command with -- --dry-run", "exitCode": 0, "result": "Pending migrations: 0"},
     {"command": "realPG vitest: fullLifecycle + segregationOfDutiesNegatives + tenantIsolation + immutableTrail + lifecycleConcurrency, retry=0", "exitCode": 0, "result": "5/5 files, 12/12 tests"},
@@ -50,11 +50,11 @@
     "appendOnly": "2/2 direct SQL mutation classes denied: UPDATE and DELETE",
     "tenant": "cross-tenant lifecycle transition denied 403; owner state unchanged",
     "kernelRegression": "165/165 across 21/21 files",
-    "migrationAdvance": "4/4 pending applied after documented earlier fresh 722/722; repeat 0; dry-run 0",
+    "freshMigrations": "726/726 from zero; repeat 0; dry-run 0",
     "typecheck": "exit 0"
   },
   "fixtures": {
-    "database": "disposable consultify-aud-bvp-final PostgreSQL 16 on localhost:56663; originally fresh at 722/722 and advanced with four pending current migrations",
+    "database": "fresh disposable pgvector/pgvector:pg16 in consultify-aud-lifecycle-fresh-final on localhost:55489; exact-current 726/726 from zero",
     "lifecycle": "unique organizations and fieldwork programs with tenant-scoped members; new pg.Pool(max=1) used for cold readback",
     "policy": "no external methodology, rights, scoring or AUD-POL decision introduced"
   },
@@ -72,9 +72,9 @@
     "data": "migration is additive; audit history written after activation is intentionally not deletable and must be corrected by superseding events",
     "executed": false
   },
-  "technicalVerdict": "PASS_ADVANCED_REALPG",
-  "verdict": "PARTIAL",
+  "technicalVerdict": "PASS_FRESH_REALPG",
+  "verdict": "DONE_CURRENT_SHA",
   "openBlockers": [
-    "Exact current from-zero migration proof is unavailable because Docker storage is exhausted. A new container failed during initdb and a unique database failed during strict migration with No space left on device. The used disposable DB has documented fresh 722/722 provenance and was advanced successfully, but this is not represented as a fresh-current run."
+    "Changes are intentionally uncommitted; productSha is the candidate commit beneath this working tree, not an integrated product SHA."
   ]
 }
