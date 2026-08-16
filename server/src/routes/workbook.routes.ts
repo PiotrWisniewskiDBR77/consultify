@@ -23,6 +23,11 @@ import {
   evaluateArtifactExportPolicy,
 } from '../services/artifactExportPolicy.js';
 import { buildOrgContextSourcePack } from '../services/documentStudio/documentOrgContextSourcePack.js';
+import {
+  beginMaterialExport,
+  completeMaterialExport,
+  failMaterialExport,
+} from '../services/materialExport/materialExportReceiptService.js';
 import { createP23Error } from '../services/v8/exceleCanon.js';
 import {
   applyWorkbookCommand,
@@ -1405,8 +1410,9 @@ router.get(
       classification: string | null;
       approval_current: number | boolean | null;
       quality_report_json: string | null;
+      version: number | null;
     }>(
-      `SELECT schema_json, file_name, classification, approval_current, quality_report_json
+      `SELECT schema_json, file_name, classification, approval_current, quality_report_json, version
        FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
       [id, user.organizationId]
     );
@@ -1442,11 +1448,37 @@ router.get(
     const { buildWorkbookBuffer, classifyBuildError } =
       await import('../services/workbook/WorkbookBuilder.js');
     const schema = JSON.parse(row.schema_json);
+    const governedExport = await beginMaterialExport({
+      organizationId: user.organizationId,
+      artifactKind: 'workbook',
+      sourceRecordId: id,
+      sourceVersion: Math.max(1, Number(row.version) || 1),
+      sourceContent: schema,
+      outputFormat: 'xlsx',
+      createdBy: user.id,
+      requestKey:
+        typeof req.headers['idempotency-key'] === 'string'
+          ? req.headers['idempotency-key']
+          : null,
+    });
 
     let buffer: Buffer;
     try {
       buffer = await buildWorkbookBuffer(schema);
+      const completedReceipt = await completeMaterialExport({
+        begun: governedExport,
+        organizationId: user.organizationId,
+        bytes: buffer,
+      });
+      res.setHeader('X-Export-Receipt-Id', completedReceipt.exportReceiptId);
     } catch (err) {
+      await failMaterialExport({
+        begun: governedExport,
+        organizationId: user.organizationId,
+        failureCode: 'WORKBOOK_RENDER_FAILED',
+      }).catch((receiptError) =>
+        logger.error('[WorkbookRoutes] failed to persist governed export failure', receiptError)
+      );
       const classified = classifyBuildError(err);
       logger.error(`[WorkbookRoutes] Rebuild from schema failed: ${classified.code}`, err);
       res.status(500).json({

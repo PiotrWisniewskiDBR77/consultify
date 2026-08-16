@@ -172,6 +172,13 @@ import multer from 'multer';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
+import {
+  beginMaterialExport,
+  completeMaterialExport,
+  failMaterialExport,
+  type BegunMaterialExport,
+} from '../services/materialExport/materialExportReceiptService.js';
+import { getWave5Artifact } from '../services/wave5ArtifactRuntimeService.js';
 import { getDocumentAccessHistory } from '../services/documentStudio/documentAccessHistoryService.js';
 import {
   cancelApproval,
@@ -4855,6 +4862,7 @@ router.get(
     const exportMode = modeRaw as 'draft' | 'final' | null;
     const qaOverride = req.query.qaOverride === 'true' || req.query.qaOverride === '1';
     const { userRole } = getAuthContext(req as AuthRequest);
+    let governedExport: BegunMaterialExport | null = null;
 
     try {
       // Explicit v2 final exports require a current approval. Calls without a
@@ -4886,12 +4894,43 @@ router.get(
           return;
         }
       }
+      const [sourceSchema, sourceArtifact] = await Promise.all([
+        getDocumentArtifact(artifactId, organizationId),
+        getWave5Artifact(artifactId, organizationId),
+      ]);
+      if (!sourceSchema || !sourceArtifact) {
+        res.status(404).json({ error: 'document_not_found' });
+        return;
+      }
+      governedExport = await beginMaterialExport({
+        organizationId,
+        artifactKind: 'document',
+        sourceRecordId: artifactId,
+        sourceVersion: sourceArtifact.version,
+        sourceContent: sourceSchema,
+        outputFormat: format,
+        createdBy: userId,
+        requestKey:
+          typeof req.headers['idempotency-key'] === 'string'
+            ? req.headers['idempotency-key']
+            : null,
+      });
       const result = await exportDocumentArtifact(artifactId, organizationId, format, {
         userId,
         userRole,
         qaOverride,
         ...(exportMode ? { mode: exportMode } : {}),
       });
+      const exportedBytes =
+        result.contentBase64 !== undefined
+          ? Buffer.from(result.contentBase64, 'base64')
+          : Buffer.from(result.contentText || '', 'utf8');
+      const completedReceipt = await completeMaterialExport({
+        begun: governedExport,
+        organizationId,
+        bytes: exportedBytes,
+      });
+      res.setHeader('X-Export-Receipt-Id', completedReceipt.exportReceiptId);
       res.setHeader('X-Artifact-Export-Mode', exportMode ?? 'legacy-final');
       if (exportMode === 'draft') res.setHeader('X-Artifact-Draft', 'true');
       if (format === 'docx' || format === 'pdf') {
@@ -4921,6 +4960,18 @@ router.get(
 
       res.json(result);
     } catch (err) {
+      if (governedExport) {
+        await failMaterialExport({
+          begun: governedExport,
+          organizationId,
+          failureCode: 'DOCUMENT_RENDER_FAILED',
+        }).catch((receiptError) =>
+          logger.error('[DocumentStudio] failed to persist governed export failure', {
+            receiptError,
+            artifactId,
+          })
+        );
+      }
       if (err instanceof QaOverrideUnauthorizedError) {
         res.status(403).json({
           error: 'qa_override_unauthorized',
