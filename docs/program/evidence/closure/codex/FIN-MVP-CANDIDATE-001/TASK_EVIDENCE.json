@@ -1,17 +1,18 @@
 {
   "taskId": "FIN-MVP-CANDIDATE-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "b370e1a5da10e0b4fed31ab15a0b63a8e1e391ac",
+  "productSha": "0c2e54d0a9fea6f7f16c0d596c661526c0772ea4",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
   "changedPaths": [],
   "changedPathRationale": {"none": "tree reconciliation showed the Finance Candidate implementation already present; this packet re-verifies it on the current candidate"},
   "ownerTables": ["initiative_candidates", "finance_candidate_handoffs", "financial_statement_packs", "financial_models", "valuation_recommendations"],
-  "commands": [{"command": "vitest acceptance FIN-06 statement-pack + investment-case + valuation recommendation", "exitCode": 1, "result": "26/27 passed; one scenario-A timeout at 60s"}, {"command": "vitest acceptance FIN-06 valuation recommendation only", "exitCode": 0, "result": "11/11 passed including isolated scenario A"}],
-  "denominators": {"statementAndInvestmentInCombinedRun": "16/16", "valuationRerun": "11/11", "uniqueAcceptanceScenarios": 27},
-  "fixtures": {"database": "fresh disposable pgvector PostgreSQL 16 on localhost:56504 with 709/709 migrations", "sources": ["statement pack", "investment case", "valuation recommendation"]},
+  "commands": [{"command": "DATABASE_URL=<fresh-pg> RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test npx vitest run --config vitest.acceptance.config.ts tests/acceptance/fin-006-statement-pack-candidate-handoff.e2e.test.ts tests/acceptance/fin-006-investment-case-candidate-handoff.e2e.test.ts tests/acceptance/fin-006-valuation-recommendation-candidate-handoff.e2e.test.ts --reporter=dot", "exitCode": 0, "result": "four consecutive combined runs; each 3/3 files and 27/27 tests; 108/108 aggregate"}, {"command": "DATABASE_URL=<fresh-pg> NODE_ENV=test DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts; repeat; --dry-run", "exitCode": 0, "result": "fresh 723/723; repeat applied 0; dry-run pending 0; ledger success:723"}, {"command": "npm run type-check", "exitCode": 130, "result": "no diagnostics emitted but did not terminate after more than four minutes; manually stopped and recorded NOT_VERIFIED"}],
+  "denominators": {"combinedRuns": "4/4", "combinedFiles": "12/12", "combinedAssertions": "108/108", "uniqueAcceptanceScenarios": "27/27", "freshMigrations": "723/723; repeat 0; dry-run pending 0"},
+  "fixtures": {"database": "fresh disposable pgvector PostgreSQL 16 on loopback port 32901 with 723/723 migrations", "sources": ["statement pack", "investment case", "valuation recommendation"]},
   "negativeControls": {"directInitiative": "direct Finance-to-Initiative routes remain disabled", "tenant": "foreign tenant cannot preview, confirm or reopen", "concurrency": "five confirms create exactly one candidate/receipt", "toctou": "approval revoked between preview and confirm fails closed", "schema": "broken required schema fails closed"},
   "browserArtifacts": [],
   "rollback": {"code": "verification-only evidence; no code change", "data": "isolated fixtures only"},
+  "technicalVerdict": "PASS_REALPG_TIMEOUT_NOT_REPRODUCED",
   "verdict": "PARTIAL",
-  "openBlockers": ["The three-source suite had one order-dependent timeout even though the isolated valuation suite passed 11/11; investigate stability before DONE.", "G4 browser preview/confirm/readback evidence on the exact integrated SHA remains."]
+  "openBlockers": ["G4 browser preview/confirm/readback evidence on the exact integrated SHA remains.", "Full-repository type-check emitted no diagnostics but did not terminate within more than four minutes and was stopped; it remains NOT_VERIFIED on this SHA."]
 }
