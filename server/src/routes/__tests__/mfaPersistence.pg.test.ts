@@ -143,6 +143,47 @@ describe.skipIf(!REAL_DB)('MFA enrolment — real PostgreSQL', () => {
     const status = await request(app).get('/api/mfa/status');
     expect(status.body.enabled).toBe(true);
     expect(status.body.backupCodesRemaining).toBe(10);
+
+    // A separate pool proves the durable state is not an artefact of the
+    // connection used by the fixture or of the in-process route response.
+    const { Pool } = await import('pg');
+    const coldPool = new Pool({ connectionString: CONNECTION_STRING, max: 1 });
+    try {
+      const coldRead = await coldPool.query(
+        `SELECT enabled, backup_codes_count FROM user_mfa WHERE user_id = $1`,
+        [currentUserId]
+      );
+      expect(coldRead.rows[0]).toMatchObject({ enabled: true, backup_codes_count: 10 });
+    } finally {
+      await coldPool.end();
+    }
+  });
+
+  it('never exposes or consumes another authenticated user MFA factor', async () => {
+    const ownerUserId = await newUser();
+    currentUserId = ownerUserId;
+    const setup = await request(app).post('/api/mfa/setup').send({});
+    const enabled = await request(app)
+      .post('/api/mfa/verify-setup')
+      .send({ token: totp(setup.body.secret) });
+    const ownerBackupCode = enabled.body.backupCodes[0];
+
+    const otherUserId = await newUser();
+    currentUserId = otherUserId;
+    const foreignStatus = await request(app).get('/api/mfa/status');
+    expect(foreignStatus.status).toBe(200);
+    expect(foreignStatus.body.enabled).toBe(false);
+
+    const foreignAttempt = await request(app)
+      .post('/api/mfa/verify')
+      .send({ token: ownerBackupCode, isBackupCode: true });
+    expect(foreignAttempt.status).toBe(400);
+
+    const ownerRow = await pool.query(
+      `SELECT backup_codes_count FROM user_mfa WHERE user_id = $1`,
+      [ownerUserId]
+    );
+    expect(ownerRow.rows[0].backup_codes_count).toBe(10);
   });
 
   it('disable clears the secret and the factor stays off on re-read', async () => {
