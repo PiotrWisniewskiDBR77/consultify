@@ -1,14 +1,17 @@
 # Consultify — finalny raport gotowości 16 modułów i plan wykonawczy
 
 Data: 2026-08-15
-Authority product candidate SHA: `25adb32518dfde2cc17e3d5db7b2f6c7b955ffd7`
-Repository-owned browser evidence SHA: `2169562a89de4b09d23dfa4a9199b31484193288`
+Authority product candidate SHA: `6e31012fbe3458dd6a3faccde2e6540f7837d613`
+Authority acceptance code SHA: `14c8852a71cdc5c8bf723a9b21f5e1cc00a467f5`
+Repository-owned browser evidence SHA: `7a25a88a59193c24a0516ae78c293e0e5774a357`
+Repository-owned system-gate evidence SHA: `d1ee32a43` (canonical evidence HEAD `ad402cda3`)
 Cleanup/report baseline SHA: `8210bc170`
-Status całego systemu: `NOT_RELEASE_READY / LOCAL_BROWSER_32_OF_32_GREEN / FULL_STANDARD_PENDING / DEPLOY_PARITY_PENDING`
+Status całego systemu: `NOT_RELEASE_READY / LOCAL_ACCEPTANCE_PASS_WITH_1_EXPLICIT_PENDING / DEPLOY_PARITY_PENDING`
 
-> CURRENT EVIDENCE CHECKPOINT — 2026-08-16, product authority `25adb3251`.
-> Sekcje historyczne pozostają śladem audytu; sekcja 9 na końcu jest bieżącym
-> werdyktem wykonawczym i zastępuje ich starsze statusy.
+> CURRENT EVIDENCE CHECKPOINT — 2026-08-16, product authority `6e31012fb`,
+> acceptance authority `14c8852a7`. Sekcje historyczne pozostają śladem audytu;
+> sekcje 10–12 są bieżącym werdyktem i pakietem wykonawczym, zastępując ich
+> starsze statusy.
 
 ## 1. Co ten raport rozstrzyga
 
@@ -490,3 +493,138 @@ Authority evidence:
 - `docs/program/CONSOLIDATED_GATE_TRIAGE_198_1dd3aad2a.json`;
 - `docs/program/gates/PERFORMANCE_MEMORY_LEAK_GATE_3be83d285.json`;
 - `docs/cleanup/generated/recovered-head-disposition.json`.
+
+## 10. FINAL acceptance checkpoint — product `6e31012fb`
+
+Ta sekcja jest aktualnym autorytetem statusu i zastępuje sekcje 8–9 tam, gdzie
+podają starszy SHA. Aktualny final gate SHA:
+`14c8852a71cdc5c8bf723a9b21f5e1cc00a467f5`; patch
+raportu przygotowano w izolowanym worktree wywodzącym się z `cfcb90500`.
+Kod produktu pozostaje zamrożony na
+`6e31012fbe3458dd6a3faccde2e6540f7837d613`; późniejsze commity testowe i
+evidence nie zmieniają product authority.
+
+| Brama | Stan | Dowód / ograniczenie |
+|---|---|---|
+| Recovery | `PASS / CLOSED` | 224/224 heads sklasyfikowane; 0 semantic review, owner decision i candidate integration. Bundle/manifest są recovery authority; `deletionAuthorized=0`. |
+| Cleanup | `PASS_BOUNDED` | Po preservation usunięto 43 potwierdzone worktree. Nie jest to zgoda na usuwanie kolejnych checkoutów, refs ani orphan candidates. |
+| Static 6e3 | `PASS` | Root/server typecheck PASS; production build z limitem 8 GiB PASS w 57.24 s; migration unit/order/parity 17/17; inventory 931 unique bez kolizji; fresh PG 719; completeness 2/2; columns 12/12; bundle verify + restore + fsck PASS. |
+| Browser 6e3 | `PASS_32_OF_32` | Evidence `7a25a88a5`; fresh disposable pgvector PG, 719 migracji, normal OWNER, 16 modułów × desktop/mobile, 32 JSON + 32 PNG, 0 fail/skip/flaky, console/API/request/Axe/heading/main/overflow/loading = 0. Dwa Socket.IO aborty Chat były reload-caused. |
+| Full standard | `PASS_SCOPE_EQUIVALENT_034_4058` | 4058 plików; 40206 total, 39562 PASS, 0 FAIL, 625 pending, 19 todo na exact034. Dwa pliki 14c są realDB-only i standard-excluded, więc scope jest identyczny. |
+| Isolated matrix | `PASS_EXACT_14C_72_OF_72` | Exact14c: 72/72 pliki, 1590/1590 PASS, 0 pending, 0 fail. Wcześniejsze socket transients nie reprodukują się w finalnym evidence. |
+| RealDB matrix | `PASS_WITH_1_EXPLICIT_PENDING` | Exact14c, fresh PG 719: 64/64 pliki, 428 total, 427 PASS, 0 FAIL, 1 jawny My Work fixture-authority pending, 0 bad exits/unhandled. |
+| Deploy/demo | `PENDING` | Brak server/client SHA, migration/flag/data readback i rollback proof. Cleanup nie wykonał deployu. |
+
+`B/V=PASS_LOCAL` pochodzi z exact-6e3 matrix. `P=PENDING` dla wszystkich, więc
+żaden moduł nie otrzymuje pełnego `DONE`.
+
+| # | Moduł | C/F | D | B/V | P | Werdykt / pozostały task |
+|---:|---|---|---|---|---|---|
+| 1 | Chat | PASS | PASS_BOUNDED | PASS_LOCAL | PENDING | `CHAT-BVP-001` — tylko deployed parity. |
+| 2 | My Work + Agent | PASS | PASS_BOUNDED | PASS_LOCAL | PENDING | `MYW-AGT-BVP-001`. |
+| 3 | Interview | PASS | PASS | PASS_LOCAL | PENDING | `INT-BVP-001`. |
+| 4 | Tools | PASS | PASS Dynamic SWOT | PASS_LOCAL | PENDING | `TLS-BVP-001`; reszta POST_MVP. |
+| 5 | Assessment | PASS | PASS DRD | PASS_LOCAL | PENDING | `ASM-BVP-001`; inne metody POST_MVP. |
+| 6 | Initiatives | PASS | PASS | PASS_LOCAL | PENDING | `INI-BVP-001`. |
+| 7 | Execution | PASS | PASS | PASS_LOCAL | PENDING | `EXE-BVP-001`. |
+| 8 | Results | PASS | PASS | PASS_LOCAL | PENDING | `RES-BVP-001`. |
+| 9 | Finance | PASS | PASS_BOUNDED | PASS_LOCAL | PENDING | `FIN-BVP-001`; POST_MVP scope. |
+| 10 | Materials | PASS | PASS_BOUNDED | PASS_LOCAL | PENDING | `MAT-BVP-001`; `MAT-POL-001`. |
+| 11 | Audits | PASS beta | PASS_BOUNDED | PASS_LOCAL | PENDING | `AUD-BVP-001`; `AUD-002` POST_MVP. |
+| 12 | Meeting | PASS | PASS | PASS_LOCAL | PENDING | `MTG-BVP-001`; `MTG-POL-001`. |
+| 13 | Organization | PASS | PASS | PASS_LOCAL | PENDING | `ORG-BVP-001`. |
+| 14 | Admin | PASS | PASS | PASS_LOCAL | PENDING | `ADM-BVP-001`. |
+| 15 | Settings | PASS | PASS core | PASS_LOCAL | PENDING | `SET-BVP-001`; `SET-002` POST_MVP. |
+| 16 | Partner Portal | PASS bounded | PASS_BOUNDED | PASS_LOCAL | PENDING | `PRT-BVP-001`; `PRT-POL-001`. |
+
+Pozostają dokładnie: `MYW-REALDB-FIXTURE-AUTH-001` dla jednego jawnego
+fixture-authority pending; `REL-001-T01` do exact-SHA
+deploy/readback/rollback; 16 istniejących `*-BVP-001` do deployed `P`; oraz
+jawne policy/deferred `MAT/MTG/PRT-POL-001`, `AUD-002`, `SET-002`, non-DRD
+Assessment, non-SWOT Tools i pełny Partner. Jeśli product SHA się zmieni,
+powtórzyć pełne lokalne 32/32.
+
+Werdykt: `LOCAL_SYSTEM_GATE_DONE_BOUNDED / PASS_WITH_1_EXPLICIT_PENDING / DEPLOY_NOT_STARTED / NOT_RELEASE_READY`.
+
+## 11. Rejestr wykonania siedmiu etapów sprzątania
+
+Ten rejestr rozlicza pierwotny plan, a nie tylko ostatnią falę testów. `DONE`
+oznacza wykonany zakres techniczny z dowodem; nie oznacza automatycznie release.
+
+| Etap | Stan | Co wykonano | Dowód | Wynik / ograniczenie |
+|---|---|---|---|---|
+| 1. Freeze | `DONE_BOUNDED` | Zapisano SHA i status aktywnych zadań, zatrzymano współdzielone kodowanie na czas inwentaryzacji, WIP trafił do nazwanych worktree/kwarantanny. | manifesty worktree/SHA i handoff; dalsze pakiety wykonywano wyłącznie w izolowanych worktree | Freeze był kontrolowanym oknem, nie permanentną blokadą repo. |
+| 2. Pełna inwentaryzacja | `DONE` | Sklasyfikowano 224/224 recovered heads; unknown, owner-decision i candidate-integration = 0. | `docs/cleanup/generated/recovered-head-disposition.json` | Każda znaleziona historia ma disposition; brak zgody na utożsamianie nieosiągalnego ref z brakującym produktem. |
+| 3. Zabezpieczenie wartości | `DONE` | Zapisano bundle, manifesty SHA-256, recovery refs oraz odtwarzalne kopie przed cleanupem. | bundle verify, fresh restore i `git fsck` PASS na exact product gate | `deletionAuthorized=0` pozostaje literalne dla celów spoza potwierdzonej listy. |
+| 4. Rekonstrukcja jednego drzewa | `DONE_CODE` | Funkcje przenoszono chirurgicznie do jednego kanonu; nie scalano brudnych branchy w ciemno. | product authority `6e31012f…`; acceptance authority `14c8852a…`; clean evidence branches | Acceptance zawiera matrix/evidence, product SHA pozostaje osobnym autorytetem runtime. |
+| 5. Audyt modułów | `DONE_INVENTORY` | Wszystkie 16 modułów ma ownera danych, mounted chain, stan kodu/D/B/V/P i jawny backlog. | sekcje 2–3 oraz finalne karty poniżej | Kod i local acceptance są mocne; `P` pozostaje otwarte dla 16/16. |
+| 6. Usuwanie | `DONE_BOUNDED` | Po preservation usunięto 43 potwierdzone duplikaty/worktree; nie wykonano szerokiego delete refs/checkouts. | rejestr cleanup i recovery manifest | Każde dalsze usunięcie wymaga nowej listy celów i authority. |
+| 7. Brama końcowa | `DONE_BOUNDED / PASS_WITH_1_EXPLICIT_PENDING` | Browser/static PASS; standard 4058 scope-equivalent PASS; isolated exact14c 72/72; realDB exact14c 64/64 z jednym jawnym fixture-authority pending. | evidence `d1ee32a43`, canonical evidence HEAD `ad402cda3`; 0 test fail i 0 bad exits/unhandled | Lokalny gate zakończony uczciwie; otwarte są jeden material pending oraz release/deploy parity. |
+
+Wniosek po 1,5 dnia: inwentaryzacja i integracja kodu nie są już pracą do
+powtarzania. Pozostała weryfikacja systemowa i wdrożeniowa. Nowy development
+jest dozwolony tylko po reprodukowalnym failu jednej z tych bramek albo po
+jawnej decyzji policyjnej.
+
+## 12. Wykonywalny pakiet domknięcia 16 modułów
+
+### 12.1 Wspólny kontrakt wykonania
+
+Każde `*-BVP-001` ma ten sam owner wykonawczy: Release/CTO integrator. Product
+owner uczestniczy tylko przy `*-POL-001`. Kolejność jest stała:
+`SYS-001-TFINAL` → `SYS-001-ISOLATED` → `SYS-001-REALDB` → preflight
+`REL-001-T01` → deploy exact product SHA → governed fixture/readback → deployed
+desktop+mobile → rollback rehearsal. In-scope są tylko route/UI/API/service/
+schema już wskazane w karcie; out-of-scope: refactor, nowy UX, nowy writer,
+reaktywacja legacy i post-MVP.
+
+Brama modułowa wymaga: `S` source/static, `D` fresh/upgrade DB, `B` signed-in
+browser, `V` visual/a11y i `P` deployed parity. Obowiązkowe negatywy to tenant,
+role/capability, stale/replay, concurrency/idempotency oraz cold reopen, jeśli
+domena zapisuje dane. Migracja: `NONE_EXPECTED`; jeśli test ujawni schema gap,
+powstaje osobny defect z jedną ordered idempotent migration, fresh+upgrade testem
+i ponowieniem wszystkich bramek dotkniętych zmianą. Rollback: powrót do
+poprzedniego potwierdzonego SHA oraz odtworzenie poprzednich flag; migracji nie
+cofa się destrukcyjnie — muszą być backward-compatible. Literalne `DONE`:
+wszystkie wymagane S/D/B/V/P PASS na tym samym product SHA, zero unknown fail,
+server/client SHA i DB ledger readback zgodne, rollback rehearsal PASS.
+
+Komenda lokalnego modułu (już PASS na 6e3):
+`E2E_CANDIDATE_SHA=<product> E2E_BASE_URL=<url> npx playwright test -c playwright.local-browser-16.config.ts --grep "<NN-module>"`.
+Ta sama komenda z deployed URL jest wymagana dla `P`; nie wolno użyć query,
+localStorage, token injection ani route interception.
+
+### 12.2 Atomowe karty pozostałej pracy
+
+| Moduł / task | Już zintegrowane — nie otwierać ponownie | Exact in-scope / techniczny punkt kontroli | Out-of-scope / authority | Scenariusz + negatywy | DONE / rollback |
+|---|---|---|---|---|---|
+| 1 Chat `CHAT-BVP-001` | stream, retry, persistence, proposals, governed handoff | `/chat`; `UnifiedChatPanel.tsx`, `useAIStream.ts`, `api.ts`; `/api/ai/chat/stream`, V8 chat; conversations/messages/attachments/receipts | bez zmiany public contractu i bez legacy revival; owner Release | message+attachment+URL→citation→proposal→approve→receipt→reload; tenant, reject/retry, duplicate/concurrent approval | S/D/B/V/P na exact SHA; rollback deploy/flags |
+| 2 My Work + Agent `MYW-AGT-BVP-001` | tabs, Notebook CAS, Decisions/Ideas, transformation case CRUD/plan/runtime | `/my-work/*`; `MyWorkHub.tsx`, `AgentHubShell.tsx`; `/api/v8/my-work`, `/api/v8/transformation-cases`; My Work tables + `transformation_cases` | bez `case_core`/`ai_agent_plans` writerów; Release | event→inbox→decision/notebook/idea; conversation→same case/plan→reopen; tenant, stale CAS, retry/concurrency | exact P plus stable IDs/readback; rollback SHA/flags |
+| 3 Interview `INT-BVP-001` | assignments, answers/evidence, AI review, insight and atomic initiative claim | `/interview`, `/discovery`; `InterviewHub`; interview routes/services/tables | bez nowego client rewrite; Release | publish→invite→respond→resume→submit→approve insight→one candidate→reopen; expiry/revoke, respondent wall, tenant, stale, retry/no-orphan | S/D/B/V/P; rollback SHA, preserve immutable answers |
+| 4 Tools `TLS-BVP-001` | Dynamic SWOT engine, CAS, output/report/presentation promotion | `/discovery-tools`; `DiscoveryToolsHub.tsx`; `ToolController`, `ToolOutputsController`, `ToolInitiativeService`; sessions/known_tools/outputs/reports | tylko Dynamic SWOT MVP; inne tools `POST_MVP`; Release | mission/cards/evidence→review→approve immutable output→report/presentation/candidate→reopen; 409/428, tenant, race, replay | exact P and nonempty lineage; rollback flag/SHA |
+| 5 Assessment `ASM-BVP-001` | DRD HTTP workspace, CAS, freeze/report/output/reopen, initiative batch | `/assessment/*`; `AssessmentHub`, `AssessmentSessionEditorView`; V8/workflow-v2/report services; method/session/report tables | DRD only; SIRI/ADMA rich viewers `POST_MVP`; Release | library→session→answers/evidence→review/freeze→immutable report→batch→cold reopen; role, tenant, stale/replay, duplicate batch | exact P, one methodology/version and one batch; rollback flag/SHA |
+| 6 Initiatives `INI-BVP-001` | canonical hub, project anchoring/title decode, atomic candidate acceptance | `/initiatives`; `InitiativesHub`; initiatives/PMO controllers/services; initiatives/history/gates/receipts | bez nowego producer/writera; Release | approved candidate→exactly one initiative→gate→execution handoff→reopen; tenant project required, role, stale, retry/concurrency | one row/receipt/downstream ID, S/D/B/V/P; rollback SHA |
+| 7 Execution `EXE-BVP-001` | one handoff/case model, work/resources/control/report, independent evidence→Results | `/execution`; `ExecutionHub`; execution/control APIs and PMO services; execution/work/gates/evidence tables | retired light shell i technical table out; Release | Initiative card→case→work/resource/control/report→approved evidence→one Results write→reload; blocked, tenant, role, replay/concurrency | one health model and append-only result, exact P; rollback SHA |
+| 8 Results `RES-BVP-001` | KPI/ROI/OKR VNext, versioning, deviation/PIR/check-in/reflection | `/results/kpi|roi|okr`; ResultsVNext; `/api/vnext/results/*`; RVN tables/migrations | bez legacy shell; flags wyłącznie zgodnie z registry; Release | KPI observation loop, ROI baseline→actual→PIR, OKR KR→check-in→reflection; visibility, self-approval, stale, append-only, tenant | 3 flows local+deployed, flag readback; rollback flags/SHA |
+| 9 Finance `FIN-BVP-001` | five workspaces, caveats, missing-vs-zero, tax/tie-out, persisted 3-scenario workbook | `/finance`; `FinanceHub`; finance-v2/v3 bridge, statement/modeling services; finance-v3 entities | FIN expansion poza bounded MVP; Release | statement/baseline/prediction/analysis/valuation create→update→approve→export→reopen; precision, RLS/tenant, unresolved IDs=0, replay | exact D/B/V/P and export IDs; rollback SHA, non-destructive schema |
+| 10 Materials `MAT-BVP-001` | artifact registry, native editors/lineage, governed document edit, workbook leases | launcher→Document Studio/Presentations/Excele; artifact/native routes and services; artifact/version/native tables | real format policy only via `MAT-POL-001`; Release + product owner | open/edit/version/export/reopen existing DOC/PPT/XLSX; provider error, lease/CAS, four-eyes, tenant/concurrency | files reopen editable with stable lineage and exact P; rollback SHA/provider flag |
+| 11 Audits `AUD-BVP-001` | honest bounded beta surface and persisted audit program path | `/audit-programs` and mounted beta API/service; audit program tables | full Method Audit `AUD-002 POST_MVP`; no lifecycle merge now; Release | create→save→reopen→delete bounded audit; role/tenant, stale/replay, badge/route consistency | beta claims only, S/D/B/V/P; rollback route flag/SHA |
+| 12 Meeting `MTG-BVP-001` | CRUD, agenda/materials/notes, proposal-first outputs, realPG golden flow | `/meeting`; `MeetingHub`; meeting API/service; meetings/participants/notes/outputs/idempotency/audit | retention/consent choice only `MTG-POL-001`; Release + owner | create→agenda/materials→notes→proposal→approve→exactly one decision/task/material→reopen; consent, tenant, role, replay/concurrency | exact cardinality/readback and P; rollback SHA, retain audit |
+| 13 Organization `ORG-BVP-001` | immutable approved context snapshots consumed by Chat | `/organization/*`; Organization views; context/claims APIs and profile/KG services; org/claims/sources/snapshots | bez nowego KG model; Release | document→claim proposal→approve→snapshot→Chat with exact refs→reopen; conflict, source delete, tenant/confidentiality | immutable snapshot/ref equality, S/D/B/V/P; rollback SHA |
+| 14 Admin `ADM-BVP-001` | capability/ownership registry and invite/role/revoke persistence/audit | `/admin/*` (nie `/superadmin/*`); IAM/billing/integration/security/audit endpoints and tables | bez zmiany capability policy; Release | invite→accept→role→revoke→new session; last-owner, cross-org, stale role, no-capability | every mutation scoped/audited, controls hidden, exact P; rollback SHA |
+| 15 Settings `SET-BVP-001` | profile/language/theme/notifications/AI persistence and secret non-readback | `/settings/*`; settings modules; preferences/notification/appearance/AI APIs and storage | sensitive OAuth/MFA/export/delete `SET-002 POST_MVP`; Release | save→DB readback→reload→new session; tenant lock, no-op/error no fake success, secret absent | cross-session effect and S/D/B/V/P; rollback SHA/preferences compatible |
+| 16 Partner `PRT-BVP-001` | bounded authenticated V8 partner connect/read surfaces | `/partner/*`; Partner shell; current V8 partner routes/services; partner/referral/ledger tables | payout policy/full ledger `PRT-POL-001`/`PRT-002/003 POST_MVP`; owner required | register/connect→certification→code→read attribution→reopen; expiry, tenant/partner isolation, retry/concurrency | bounded claim only, exact P; rollback SHA/flag, no fabricated payout |
+
+### 12.3 Pełna integracja — zadania nadrzędne
+
+| Task | Owner | Wejście → wyjście | Exact acceptance / DONE |
+|---|---|---|---|
+| `SYS-001-TFINAL` | QA integrator | exact034 scope-equivalent dla 14c → 4058 dispositions | 40206 total / 39562 pass / 0 fail / 625 pending / 19 todo; `PASS_SCOPE_EQUIVALENT`. |
+| `SYS-001-ISOLATED` | QA integrator | exact14c 72 dedicated records | 72/72 files, 1590/1590 PASS, zero pending/fail. |
+| `SYS-001-REALDB` | DB/QA integrator | exact14c, fresh PG719, 64 records | 64/64 files, 428 total, 427 PASS, 0 fail, 1 explicit My Work fixture-authority pending, 0 bad exits/unhandled. |
+| `MYW-REALDB-FIXTURE-AUTH-001` | My Work fixture owner + QA | istniejący jawny pending → material authority/disposition | Potwierdzić właściciela fixture i wykonać właściwy assertion albo jawnie sklasyfikować non-product fixture; nie zmieniać produktu bez reprodukcji. |
+| `REL-001-T01` | Release owner, wymaga authority do deploy | green system gates + product `6e31012f…` → deployed exact SHA | preflight remote/env/flags; deploy; server+client SHA, 719 migration ledger, governed fixture, 16 desktop/mobile, visual/API/console, rollback rehearsal. |
+
+Nie istnieje drugi „plan budowy 16 modułów”. Jeżeli cztery zadania nadrzędne są
+zielone, a 16 deployed `*-BVP-001` spełnia literalne `DONE`, bounded MVP jest
+gotowy. Policy/post-MVP pozostaje jawnie poza tym werdyktem.

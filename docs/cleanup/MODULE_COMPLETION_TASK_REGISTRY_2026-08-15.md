@@ -1,10 +1,12 @@
 # Consultify — wykonawczy rejestr dokończenia modułów
 
 Data: 2026-08-15  
-Authority product candidate SHA: `25adb32518dfde2cc17e3d5db7b2f6c7b955ffd7`
-Repository-owned browser evidence SHA: `2169562a89de4b09d23dfa4a9199b31484193288`
+Authority product candidate SHA: `6e31012fbe3458dd6a3faccde2e6540f7837d613`
+Authority acceptance code SHA: `14c8852a71cdc5c8bf723a9b21f5e1cc00a467f5`
+Repository-owned browser evidence SHA: `7a25a88a59193c24a0516ae78c293e0e5774a357`
+Repository-owned system-gate evidence SHA: `d1ee32a43` (canonical evidence HEAD `ad402cda3`)
 Cleanup/report baseline SHA: `8210bc170`
-Status: `EXECUTION_REGISTRY / LOCAL_BROWSER_GREEN / FULL_STANDARD_PENDING / NOT_RELEASE_READY`
+Status: `EXECUTION_REGISTRY / LOCAL_SYSTEM_GATE_DONE_BOUNDED / PASS_WITH_1_EXPLICIT_PENDING / DEPLOY_PENDING / NOT_RELEASE_READY`
 
 ## Rozszerzenie siedmiopunktowego planu sprzątania
 
@@ -1071,7 +1073,7 @@ evidence otrzymują `DONE_CODE_D`; nie oznacza to `DONE` modułu ani release.
 | `CLEAN-002` | `DONE_SEMANTIC_LEDGER` | 0 candidate/decision/review heads. |
 | `CLEAN-003` | `NOT_AUTHORIZED` | Nie usuwać: recovery ledger ma `deletionAuthorized=0`. |
 | `UX-001` | `LOCAL_DONE` | Dowód 32/32; parity na demo jest częścią `P`. |
-| `SYS-001` | `PARTIAL_FULL_STANDARD_PENDING` | Root/server TC PASS, triage/performance PASS w swoich zakresach; exact full standard i current production build `PENDING`. |
+| `SYS-001` | `DONE_BOUNDED / PASS_WITH_1_EXPLICIT_PENDING` | Static/browser PASS; standard scope-equivalent PASS; isolated exact14c PASS; realDB exact14c 64/64 z jednym jawnym My Work fixture-authority pending. |
 | `REL-001` | `PENDING` | Deploy/readback/rollback exact product SHA. |
 
 Jedyna aktywna kolejka ogólna to `SYS-001-TFINAL` (placeholder final full
@@ -1079,3 +1081,77 @@ standard), `REL-001-T01` oraz zachowane 16 `*-BVP-001` dla `P`. Osobno pozostaj�
 `MAT-POL-001`, `MTG-POL-001`, `PRT-POL-001`, `AUD-002`, `SET-002`, non-DRD
 Assessment, non-SWOT Tools i full Partner payout. Nie reaktywować tasków
 `DONE_CODE_D` bez nowego, reprodukowalnego FAIL na current authority SHA.
+
+## FINAL task reconciliation — product `6e31012fb`
+
+Final gate SHA po integracji finance contract i health realDB classification:
+`14c8852a71cdc5c8bf723a9b21f5e1cc00a467f5`. Browser
+evidence: `7a25a88a59193c24a0516ae78c293e0e5774a357`. Wszystkie wcześniejsze
+taski produktowe oznaczone `DONE_CODE_D` pozostają zamknięte w zakresie kodu;
+nie otwierać ich bez reprodukowalnego defectu na product authority.
+
+| Task / grupa | Status teraz | Warunek zamknięcia |
+|---|---|---|
+| Produktowe `CHAT..PRT` z poprzedniej tabeli | `DONE_CODE_D` albo `DONE_CODE_D_BOUNDED` | Brak dalszej budowy pod tym task ID. |
+| `CLEAN-002` | `DONE_SEMANTIC_LEDGER` | 224/224 recovered heads sklasyfikowane; 0 unknown/candidate. |
+| `CLEAN-WT-043` | `DONE_PRESERVED_CLEANUP` | 43 potwierdzone worktree usunięte po preservation; bez rozszerzenia delete authority. |
+| `UX-001` | `DONE_LOCAL_BV` | Exact-6e3 browser 32/32; evidence `7a25a88a5`. |
+| 16 × `*-BVP-001` | `LOCAL_BV_DONE / DEPLOY_P_PENDING` | Deployed exact-SHA browser/readback; zachować obecne IDs. |
+| `SYS-001-STATIC` | `DONE_EXACT_6e3` | Root/server TC PASS; 8 GiB build PASS w 57.24 s; migration unit/order/parity 17/17; inventory 931 unique bez kolizji; fresh PG 719; completeness 2/2; columns 12/12; bundle verify + restore + fsck PASS. |
+| `SYS-001-TFINAL` | `PASS_SCOPE_EQUIVALENT_034_4058` | 40206 total, 39562 PASS, 0 FAIL, 625 pending, 19 todo; dwa pliki 14c są standard-excluded realDB fixtures. |
+| `SYS-001-ISOLATED` | `PASS_EXACT_14C_72_OF_72` | 72/72 files, 1590/1590 PASS, zero pending/fail. |
+| `SYS-001-REALDB` | `PASS_WITH_1_EXPLICIT_PENDING` | Exact14c freshPG719: 64/64 files, 428 total, 427 PASS, 0 fail, 1 My Work fixture-authority pending, 0 bad exits/unhandled. |
+| `MYW-REALDB-FIXTURE-AUTH-001` | `PENDING_MATERIAL_AUTHORITY` | Potwierdzić fixture owner/assertion lub jawnie sklasyfikować non-product fixture; bez product edit bez reprodukcji. |
+| `REL-001-T01` | `PENDING` | Remote/deploy preflight + exact SHA/DB/flags/data/rollback readback. |
+| `MAT-POL-001`, `MTG-POL-001`, `PRT-POL-001` | `OWNER_POLICY_PENDING` | Jawna decyzja właściciela. |
+| `AUD-002`, `SET-002`, non-DRD/non-SWOT/full Partner | `POST_MVP` | Nie blokują bounded MVP; nie są DONE. |
+
+### Executable remaining task list
+
+1. `MYW-REALDB-FIXTURE-AUTH-001`: rozstrzygnąć materialnie jedyny jawny pending.
+2. `REL-001-T01`: wykonać remote/deploy preflight;
+   wdrożyć jeden product SHA; odczytać server/client SHA, migration ledger,
+   flags/env, governed fixture i rollback rehearsal.
+3. `CHAT-BVP-001`, `MYW-AGT-BVP-001`, `INT-BVP-001`, `TLS-BVP-001`,
+   `ASM-BVP-001`, `INI-BVP-001`, `EXE-BVP-001`, `RES-BVP-001`,
+   `FIN-BVP-001`, `MAT-BVP-001`, `AUD-BVP-001`, `MTG-BVP-001`,
+   `ORG-BVP-001`, `ADM-BVP-001`, `SET-BVP-001`, `PRT-BVP-001`: wykonać
+   wyłącznie deployed `P` na exact SHA. Jeśli product SHA zmieni się po fixie,
+   powtórzyć także pełne lokalne 32/32.
+4. Policy/deferred utrzymać poza kolejką implementacyjną do jawnej decyzji.
+
+Reguły: `C/F/D` nie zamyka `B/V/P`; local `B/V` nie zamyka `P`; browser fresh
+PG nie zastępuje realDB matrix; focused/triage nie zastępuje full standard;
+remote visibility nie jest deploymentem, a deployment bez readbacku nie jest P.
+
+Do uzupełnienia pozostaje materialna disposition jednego My Work fixture-authority
+pending oraz deploy/parity. Lokalny system gate ma stan
+`PASS_WITH_1_EXPLICIT_PENDING`, nie pełne `DONE`.
+
+## Atomic execution metadata for the remaining registry
+
+Pełne 16 kart znajduje się w sekcji 12 dokumentu
+`FINAL_16_MODULE_READINESS_AND_EXECUTION_PLAN_2026-08-15.md` i jest częścią
+tego rejestru. Poniższe pola są obowiązkowe w każdym wykonaniu:
+
+- `taskId`: istniejący `<MODULE>-BVP-001`, bez tworzenia duplikatu;
+- `objective`: deployed parity już zintegrowanego owner flow;
+- `inScope`: wyłącznie mounted route/UI/API/service/schema wymienione w karcie;
+- `outOfScope`: refactor, nowy writer, legacy revival, policy i post-MVP;
+- `owner/authority`: Release/CTO integrator; owner decision tylko dla trzech
+  `*-POL-001`;
+- `dependencies`: `SYS-001-TFINAL` → isolated → realDB → `REL-001-T01`;
+- `migrationNeed`: `NONE_EXPECTED`; schema fail tworzy osobny defect i ordered,
+  idempotent, backward-compatible migration z fresh+upgrade proof;
+- `acceptance`: scenariusz golden flow, tenant/role/stale/replay/concurrency/
+  reopen negatives, S/D/B/V/P i exact-SHA runtime readback;
+- `rollback`: poprzedni potwierdzony deploy SHA i flag set; bez destrukcyjnego
+  cofania migracji;
+- `DONE`: wszystkie dowody PASS na jednym SHA, zero unknown/unhandled, deploy i
+  rollback rehearsal potwierdzone.
+
+Rejestr pozostałych tasków jest zamknięty do: 16 × `*-BVP-001`,
+`MYW-REALDB-FIXTURE-AUTH-001`,
+`REL-001-T01`, trzy policy oraz jawny post-MVP. Wszystkie inne historyczne taski
+są `DONE_CODE(_D/_BOUNDED)` i nie mogą zostać ponownie przypisane bez nowego
+reprodukowanego defectu.

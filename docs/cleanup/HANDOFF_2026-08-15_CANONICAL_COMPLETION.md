@@ -1,9 +1,11 @@
 # Consultify canonical completion handoff — 2026-08-15
 
-Current product authority SHA: `25adb32518dfde2cc17e3d5db7b2f6c7b955ffd7`
-Current status: `16/16 INVENTORIED / PRODUCT CODE INTEGRATED / LOCAL BROWSER 32/32 PASS / FULL STANDARD + DEPLOY PENDING`
+Current product authority SHA: `6e31012fbe3458dd6a3faccde2e6540f7837d613`
+Current acceptance code SHA: `14c8852a71cdc5c8bf723a9b21f5e1cc00a467f5`
+Current status: `16/16 INVENTORIED / PRODUCT CODE INTEGRATED / LOCAL_SYSTEM_GATE_DONE_BOUNDED / PASS_WITH_1_EXPLICIT_PENDING / DEPLOY PENDING`
 
-Repository-owned browser evidence: `2169562a89de4b09d23dfa4a9199b31484193288`.
+Repository-owned browser evidence: `7a25a88a59193c24a0516ae78c293e0e5774a357`.
+Repository-owned system-gate evidence: `d1ee32a43`; canonical evidence HEAD: `ad402cda3`.
 
 > Ten checkpoint zastępuje starsze SHA i kolejki wykonawcze, ale nie usuwa
 > historii. Recovery ledger jest zamknięty i nie jest edytowany.
@@ -348,8 +350,8 @@ Potwierdzone:
 
 Niepotwierdzone i blokujące release:
 
-- `FULL_STANDARD=PENDING` — placeholder do wyniku finalnego agenta, obejmujący
-  również exact-current production build;
+- `FULL_STANDARD=PASS_SCOPE_EQUIVALENT_034_4058` — 4058 GREEN na exact034;
+  dwa pliki zmienione w 14c są realDB-only i standard-excluded;
 - `REL-001=PENDING` — brak deploy/demo parity exact SHA/DB/flags/data/rollback;
 - `P=PENDING` dla wszystkich 16 `*-BVP-001`; lokalne `B/V` są zakończone.
 
@@ -366,3 +368,89 @@ Kolejność następcy:
 Po zakończeniu lokalnego evidence run własne backend/Vite zostały zatrzymane,
 disposable PG container usunięty, a porty 3210, 3211 i 55491 zwolnione. Ten
 branch jest evidence/docs branch; nie integrować automatycznie.
+
+## FINAL successor checkpoint — product `6e31012fb`, acceptance `14c8852a7`
+
+Final gate authority:
+`14c8852a71cdc5c8bf723a9b21f5e1cc00a467f5` po integracji aktualnego
+acceptance code.
+
+### Zakończone
+
+- product authority:
+  `6e31012fbe3458dd6a3faccde2e6540f7837d613`;
+- recovery 224/224 semantycznie zamknięte; bundle i manifesty zachowane;
+  `deletionAuthorized=0`;
+- 43 potwierdzone worktree usunięte po preservation; aktywne/evidence worktree
+  nie podlegają mechanicznemu cleanupowi;
+- static exact-6e3: `PASS`; root/server typecheck, 8 GiB build (57.24 s), migration unit/order/parity 17/17, inventory 931 unique bez kolizji, fresh PG 719, completeness 2/2, columns 12/12 oraz bundle verify + restore + fsck;
+- local browser exact-6e3: fresh disposable pgvector PG, 719 migracji, normal OWNER,
+  32/32 PASS, 32 JSON + 32 PNG, zero console/API/request/Axe/heading/landmark/
+  overflow/loading failures; evidence `7a25a88a5`;
+- wszystkie produktowe pakiety 16 modułów pozostają `DONE_CODE_D` albo jawnie
+  `DONE_CODE_D_BOUNDED`; nie ma zgody na ponowną masową budowę.
+
+### Finalne klasyfikacje i jedyny otwarty placeholder
+
+- `FULL_STANDARD=PASS_SCOPE_EQUIVALENT_034_4058`: 40206 total, 39562 PASS, 0 FAIL, 625 pending, 19 todo;
+- `ISOLATED_MATRIX=PASS_EXACT_14C_72_OF_72`: 1590/1590 PASS, zero pending/fail;
+- `REALDB_MATRIX=PASS_WITH_1_EXPLICIT_PENDING`: exact14c freshPG719, 64/64 files, 428 total, 427 PASS, 0 fail, 1 My Work fixture-authority pending, 0 bad exits/unhandled.
+
+Klasyfikacje standard i isolated są materialnym wynikiem, ale isolated nie jest
+claimem literalnego zera host transientów. Browser fresh DB nie zastępuje
+otwartego realDB64. Po wyniku realDB należy wpisać exact SHA, commands, counts,
+unhandled, dispositions i cleanup, bez usuwania historii.
+
+### Blokady release
+
+1. `MYW-REALDB-FIXTURE-AUTH-001`: materialna authority/disposition dla jedynego
+   jawnego pending; nie jest to potwierdzony product defect.
+2. `REL-001-T01`: remote/deploy preflight i deploy dokładnie wybranego product
+   SHA; readback server/client SHA, migracji, flags/env, governed data i
+   rollback. Cleanup nie wykonał deployu ani external mutation.
+3. Zachowane 16 `*-BVP-001`: lokalne `B/V` są PASS, lecz `P=PENDING`;
+   deployed desktop/mobile re-run jest obowiązkowy. Zmiana product SHA wymaga
+   ponowienia pełnego lokalnego 32/32.
+4. Policy/deferred: `MAT-POL-001`, `MTG-POL-001`, `PRT-POL-001`, `AUD-002`,
+   `SET-002`, non-DRD Assessment, non-SWOT Tools i pełny Partner.
+
+### Polecenie dla następcy
+
+Pracuj od acceptance `14c8852a7`, ale traktuj `6e31012fb` jako product
+authority. Najpierw odbierz finalne standard/isolated/realDB i zaktualizuj cztery
+raporty bez zmiany historii. Potem wykonaj `REL-001-T01`. Nie wdrażaj innego
+SHA, nie reaktywuj `DONE_CODE_D`, nie usuwaj kolejnych worktree/refs i nie
+oznaczaj modułu `DONE`, dopóki deployed `P` nie jest PASS.
+
+Werdykt: `CLEANUP_COMPLETE / LOCAL_SYSTEM_GATE_DONE_BOUNDED /
+PASS_WITH_1_EXPLICIT_PENDING / DEPLOY_NOT_STARTED / NOT_RELEASE_READY`.
+
+## Successor execution contract — rozliczenie 7 etapów i 16 modułów
+
+Źródłem wykonawczym jest sekcja 11–12 dokumentu
+`FINAL_16_MODULE_READINESS_AND_EXECUTION_PLAN_2026-08-15.md`. Nie wolno
+zastępować jej starszymi kolejkami z tego handoffu.
+
+| Etap pierwotnego planu | Stan końcowy | Następna akcja |
+|---|---|---|
+| Freeze | `DONE_BOUNDED` | Nie otwierać wspólnego WIP; nowe fixy tylko z reprodukcji gate. |
+| Inwentaryzacja | `DONE_224_OF_224` | Nie szukać ponownie „ukrytego kodu” bez nowego ref/path evidence. |
+| Zabezpieczenie | `DONE_RESTORABLE` | Zachować bundle/manifest; dalsze delete wymaga authority. |
+| Jedno drzewo | `DONE_CODE` | Product `6e31012f…`; acceptance `03452209…`. |
+| Audyt 16 modułów | `DONE_INVENTORY` | Używać wyłącznie 16 kart `*-BVP-001`. |
+| Usuwanie | `DONE_43_BOUNDED` | Nie rozszerzać cleanupu automatycznie. |
+| Brama końcowa | `DONE_BOUNDED / PASS_WITH_1_EXPLICIT_PENDING` | Standard 4058 PASS scope-equivalent, isolated exact14c 72/72, realDB exact14c 64/64 z jednym jawnym My Work fixture-authority pending; otwarte deploy/parity. |
+
+Każda z 16 kart zawiera task ID, in/out scope, authority, techniczny punkt
+kontroli, scenariusz, negatywy, migration posture, rollback i literalne `DONE`.
+Wspólna kolejność: full standard → isolated → realDB → deploy preflight → exact
+product deploy → governed readback → deployed desktop/mobile → rollback.
+Właściciel wykonawczy: Release/CTO integrator. Product owner jest wymagany
+wyłącznie dla `MAT-POL-001`, `MTG-POL-001`, `PRT-POL-001`; brak decyzji nie
+upoważnia do implementacyjnego zgadywania.
+
+Zakaz dla następcy: nie reaktywuj wcześniejszych `CHAT-001`, `AGT-001`,
+`ASM-001`, `EXE-001`, `ORG-001`, `ADM-001`, `SET-001` itd. na podstawie samego
+starego opisu. Są już rozliczone w current product; wolno utworzyć nowy defect
+tylko po dokładnym failu na current authority SHA. Pełny `DONE` modułu wymaga
+S/D/B/V/P na tym samym SHA oraz deployed server/client/DB/flag readback.

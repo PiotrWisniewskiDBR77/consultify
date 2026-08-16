@@ -1,9 +1,11 @@
 # Consultify — modułowy gap plan i plan integracji
 
 Data: 2026-08-15  
-Authority product candidate SHA: `25adb32518dfde2cc17e3d5db7b2f6c7b955ffd7`
-Repository-owned browser evidence SHA: `2169562a89de4b09d23dfa4a9199b31484193288`
-Status: `CANONICAL_CLEANUP_ANALYSIS / LOCAL_BROWSER_32_OF_32_GREEN / FULL_STANDARD_AND_DEPLOY_PENDING`
+Authority product candidate SHA: `6e31012fbe3458dd6a3faccde2e6540f7837d613`
+Authority acceptance code SHA: `14c8852a71cdc5c8bf723a9b21f5e1cc00a467f5`
+Repository-owned browser evidence SHA: `7a25a88a59193c24a0516ae78c293e0e5774a357`
+Repository-owned system-gate evidence SHA: `d1ee32a43` (canonical evidence HEAD `ad402cda3`)
+Status: `CANONICAL_CLEANUP_ANALYSIS / LOCAL_SYSTEM_GATE_DONE_BOUNDED / PASS_WITH_1_EXPLICIT_PENDING / DEPLOY_PENDING`
 
 > CURRENT checkpoint 2026-08-16: produktowe luki opisane historycznie niżej zostały
 > zredukowane przez ancestry `6d2b6d05f..032ca27f7`. Aktualna lista luk jest
@@ -363,3 +365,68 @@ Nie są lukami: recovery inventory, focused performance gate, root/server
 typechecks, triage198 ani local signed-in browser. Nie są też dowodem release:
 full standard, exact production build oraz deploy/demo parity pozostają jawnie
 niepotwierdzone. Recovery ledger nie autoryzuje usuwania (`deletionAuthorized=0`).
+
+## Final gap delta — product `6e31012fb`
+
+Kod produktu, recovery i lokalny odbiór wizualny nie mają niesklasyfikowanej
+luki. Evidence `7a25a88a5` potwierdza exact-6e3 32/32 dla 16 modułów na
+desktop/mobile, fresh pgvector PG i 719 migracji. Exact-current static dla 6e3
+jest `PASS`: root/server TC, 8 GiB build w 57.24 s, migration unit/order/parity
+17/17, inventory 931 unique bez kolizji, fresh PG 719, completeness 2/2,
+columns 12/12 oraz bundle verify + restore + fsck.
+Bundle i manifesty recovery są zweryfikowane;
+43 potwierdzone worktree usunięto dopiero po preservation. Pozostałe checkouty,
+refs i orphan candidates nie mają automatycznej delete authority.
+
+| Klasa | Task | Stan | Dokładna akcja |
+|---|---|---|---|
+| System | `SYS-001-TFINAL` | `PASS_SCOPE_EQUIVALENT_034_4058` | 40206 total / 39562 PASS / 0 FAIL / 625 pending / 19 todo. |
+| System | `SYS-001-ISOLATED` | `PASS_EXACT_14C_72_OF_72` | 72/72 files, 1590/1590 PASS, zero pending/fail. |
+| Data | `SYS-001-REALDB` | `PASS_WITH_1_EXPLICIT_PENDING` | Exact14c freshPG719: 64/64 files, 428 total, 427 PASS, 0 fail, 1 My Work fixture-authority pending, zero bad exits/unhandled. |
+| Data | `MYW-REALDB-FIXTURE-AUTH-001` | `PENDING_MATERIAL_AUTHORITY` | Potwierdzić fixture authority/assertion lub non-product disposition; nie zakładać defectu produktu. |
+| Release | `REL-001-T01` | `PENDING` | Remote/deploy preflight, exact SHA deploy, server/client SHA, DB ledger, flags, data i rollback readback. |
+| Module parity | 16 × `*-BVP-001` | `LOCAL_BV_DONE / P_PENDING` | Exact-6e3 local 32/32 PASS; pozostał tylko deployed re-run. |
+| Policy | `MAT/MTG/PRT-POL-001` | `OWNER_POLICY_PENDING` | Decyzja właściciela, nie implementacyjne zgadywanie. |
+| Deferred | `AUD-002`, `SET-002`, non-DRD/non-SWOT/full Partner | `POST_MVP` | Jawnie poza bounded MVP. |
+
+Remote/deploy preflight nie jest ukończonym deploymentem: brak potwierdzonego
+deployed server/client SHA, pełnego ledgeru migracji i flag, governed fixture
+readback oraz rollback rehearsal. `P=PENDING` dla 16/16, więc żaden moduł nie
+jest pełnym `DONE`, mimo mocnego `C/F/D/B/V`.
+
+Nie budować ponownie kodu modułowego. Następna integracja może zawierać tylko
+wynik bramki/evidence, reprodukowalny defect wykryty przez bramkę albo deploy
+configuration zaakceptowaną w `REL-001-T01`.
+
+## Closure architecture — kompletne domknięcie bez ponownej budowy
+
+Siedem kroków cleanupu ma następujący wynik: freeze `DONE_BOUNDED`, inventory
+`DONE_224/224`, preservation `DONE_RESTORABLE`, single-tree reconstruction
+`DONE_CODE`, module audit `DONE_16/16_INVENTORY`, deletion
+`DONE_43_BOUNDED`, final gate `IN_PROGRESS`. Szczegółowy evidence ledger jest w
+sekcji 11 raportu głównego.
+
+Jedyna dozwolona ścieżka integracji:
+
+1. `SYS-001-TFINAL`: zamknięte `PASS_SCOPE_EQUIVALENT_034_4058` z literalnymi counts.
+2. `SYS-001-ISOLATED`: zamknięte exact14c 72/72, 1590/1590 PASS.
+3. `SYS-001-REALDB`: `PASS_WITH_1_EXPLICIT_PENDING`; pozostaje tylko `MYW-REALDB-FIXTURE-AUTH-001`.
+4. Jeśli fail jest produktowy: minimalny allowlist, test reprodukujący, ordered
+   migration tylko gdy potrzebna, ponowienie dotkniętych bramek i nowy product
+   SHA; stale/harness/env nie może zmieniać produktu.
+5. `REL-001-T01`: deploy exact product SHA, server/client SHA, migrations,
+   flags, governed data i rollback readback.
+6. Uruchomić 16 deployed `*-BVP-001` zgodnie z atomowymi kartami w sekcji 12
+   raportu głównego. Wymagane tenant/role/stale/replay/concurrency/reopen oraz
+   S/D/B/V/P.
+
+Inputem nie jest „repo jako całość”, lecz exact product `6e31012f…` oraz
+acceptance `14c8852a…`. Outputem jest jeden signed release record albo literalny
+`BLOCKED` z jednym task ID i material evidence. Rollback zawsze wraca do
+poprzedniego potwierdzonego SHA/flag set; migracje pozostają kompatybilne wstecz.
+
+Pełne `DONE` bounded MVP: standard zaakceptowany scope-equivalent, isolated
+exact14c PASS, jawny My Work fixture-authority pending materialnie zamknięty,
+static/browser exact-current PASS, 16 deployed parity PASS, DB/flag/data readback PASS i
+rollback rehearsal PASS. Policy i post-MVP nie są przemilczane, ale nie mogą
+zostać przypadkiem włączone do bounded MVP.
