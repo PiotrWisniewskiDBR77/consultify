@@ -1,50 +1,56 @@
 {
-  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "a62dbe340114d87eda75a0d2da2d77bee2a90685",
-  "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
-  "environment": {
-    "node": "v24.12.0",
-    "postgres": "16.14 (pgvector/pgvector:pg16)",
-    "vitest": "root vitest.config.ts",
-    "dbUrl": "127.0.0.1:55432 isolated lane container consultify-closure-c-64f50785"
-  },
-  "gateG0": "PASS pre-commit (lease PASS, 25 changed paths). POST-COMMIT the verifier reports 11 new source/test files as violations; all 11 match lane C allowedNewRoots and none exist at baseline — see ICR-C-003, a verifier defect (isTracked() is true for staged/committed paths), not a scope violation.",
-  "gateG1": "PASS — npm run type-check exit 0; npm run build:backend exit 0; test:discovery-gate PASS 4997/4997 discovered, 4698 executed.",
-  "gateG3": "PASS — strict migrate on FRESH from-zero DB exit 0; repeat run applied 0; --dry-run 0 pending; schema_migrations 709 success / 0 failed / 0 pending.",
   "taskId": "MTG-BVP-001",
-  "verdict": "PARTIAL",
-  "ownerTables": [
-    "meeting_notes",
-    "artifact_handoff_proposals",
-    "artifact_handoff_receipts"
+  "baselineSha": "6738c593779557f6e41f49895824adf2147b4740",
+  "productSha": "d5fb7237544e9b37c442e0b26262d2d199cc9d0e",
+  "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
+  "changedPaths": [
+    "server/src/routes/meeting.routes.ts",
+    "server/src/services/meetingBoundary/__tests__/meetingBoundaryRoutes.pg.test.ts",
+    "server/src/services/meetingBoundary/__tests__/meetingBoundaryMountedAuth.pg.test.ts",
+    "docs/program/evidence/closure/c/MTG-BVP-001/TASK_EVIDENCE.json"
+  ],
+  "changedPathRationale": {
+    "server/src/routes/meeting.routes.ts": "Rejects the persist:true legacy bypass so generated outcomes cannot evade proposal and human approval.",
+    "server/src/services/meetingBoundary/__tests__/meetingBoundaryRoutes.pg.test.ts": "Proves the bypass fails closed without direct decisions/follow-up writes.",
+    "server/src/services/meetingBoundary/__tests__/meetingBoundaryMountedAuth.pg.test.ts": "Uses the production router, real JWT verification, memberships and PostgreSQL for auth, tenant, role, replay, concurrency and cold receipt readback.",
+    "docs/program/evidence/closure/c/MTG-BVP-001/TASK_EVIDENCE.json": "Current bounded technical evidence."
+  },
+  "ownerTables": ["meetings", "meeting_follow_ups", "meeting_notes", "artifact_handoff_proposals", "artifact_handoff_receipts"],
+  "commands": [
+    {"command": "NODE_ENV=test DATABASE_URL=<fresh-local-pg> DB_TYPE=postgres MOCK_DB=false npm run db:migrate:strict", "exitCode": 130, "result": "runner emitted Postgres migrations complete; process was interrupted while its pool remained open; DB ledger independently showed 729 success"},
+    {"command": "NODE_ENV=test DATABASE_URL=<fresh-local-pg> DB_TYPE=postgres MOCK_DB=false npm run db:migrate:strict", "exitCode": 0, "result": "repeat applied 0"},
+    {"command": "NODE_ENV=test DATABASE_URL=<fresh-local-pg> DB_TYPE=postgres MOCK_DB=false npm run db:migrate:postgres:dry", "exitCode": 0, "result": "0 pending"},
+    {"command": "RUN_DB_TESTS=1 MOCK_DB=false CI=true NODE_ENV=test DB_TYPE=postgres DATABASE_URL=<fresh-local-pg> npx vitest run server/src/services/meetingBoundary --no-file-parallelism --maxWorkers=1 --retry=0", "exitCode": 0},
+    {"command": "RUN_DB_TESTS=1 MOCK_DB=false CI=true NODE_ENV=test DB_TYPE=postgres DATABASE_URL=<fresh-local-pg> npx vitest run tests/integration/routes/meeting.m12-golden-flows.postgres.integration.test.ts --no-file-parallelism --maxWorkers=1 --retry=0", "exitCode": 0},
+    {"command": "npm run type-check", "exitCode": 0}
   ],
   "denominators": {
-    "realdbTests": "16 passed / 16 discovered",
-    "regression": "meeting.m12-golden-flows 48/48, stable across 3 consecutive runs"
+    "freshMigrationLedger": {"success": 729, "failed": 0},
+    "repeatMigrations": {"pending": 0},
+    "dryRun": {"pending": 0},
+    "meetingBoundaryRealPostgres": {"passed": 20, "failed": 0},
+    "meetingGoldenRegression": {"passed": 48, "failed": 0},
+    "typecheck": {"passed": 1, "failed": 0}
+  },
+  "fixtures": {
+    "database": "fresh disposable pgvector PostgreSQL 16 consultinity on localhost:55493",
+    "mountedAuth": "real HS256 JWT plus ACTIVE organization_members rows for USER and ADMIN in two tenants",
+    "flow": "create agenda/pre-read -> generate durable note/proposal -> human approve -> exactly-one material receipt"
   },
   "negativeControls": {
-    "doubleApproval": "ONE receipt",
-    "concurrentApproval": "ONE receipt",
-    "replayGenerateNotes": "ONE note + ONE proposal",
-    "unapproved": "materializes nothing",
-    "crossTenant": "denied",
-    "roleGate": "403/200",
-    "foreignWrites": "grep INSERT INTO tasks|decisions|materials -> zero matches"
+    "anonymous401": true,
+    "memberApproval403": true,
+    "crossTenant404": true,
+    "persistTrue409NoLegacyWrite": true,
+    "idempotentReplayOneNoteOneProposal": true,
+    "concurrentApprovalOneReceipt": true,
+    "coldIndependentPoolReceiptReadback": true,
+    "unapprovedAndRejectedMaterializeNothing": true,
+    "noForeignTaskDecisionMaterialWrites": true
   },
-  "findings": [
-    "GF-33 previously asserted auto-persist without approval, violating frozen MVP decision #13; it was rewritten to assert the stronger contract rather than weakened or deleted."
-  ],
-  "open": [
-    "G4 browser/visual not run.",
-    "ICR-C-001: server-side betaGate is a no-op while MODULE_MEETING is closed — outside lease, filed as an integrator request."
-  ],
-  "changedPaths": [],
-  "changedPathRationale": {},
-  "commands": [],
-  "fixtures": {},
   "browserArtifacts": [],
-  "rollback": {
-    "method": "Not recorded by the lane; no rollback execution or completion claim is inferred.",
-    "executed": false
-  }
+  "rollback": {"method": "Revert the bounded route/test changes; no schema or data rollback is needed.", "executed": false},
+  "blocker": null,
+  "technicalVerdict": "PASS_FRESH_REALPG",
+  "verdict": "DONE_CURRENT_SHA"
 }
