@@ -7,8 +7,8 @@ cleanup snapshots and five-hour plans are historical evidence.
 
 ## Literal status
 
-- Cleanup: `IN_PROGRESS`
-- Canonical candidate: `PARTIAL / STATIC_REALDB_AND_MODULE_MOUNT_GATES_GREEN`
+- Cleanup: `CLEANUP_COMPLETE / QUARANTINE_RETAINED / PHYSICAL_PRUNING_DEFERRED`
+- Canonical candidate: `INTEGRATION_READY = PARTIAL`
 - Demo: `NOT_VERIFIED`
 - Production: `NOT_AUTHORIZED / NOT_VERIFIED`
 
@@ -26,21 +26,44 @@ cleanup snapshots and five-hour plans are historical evidence.
 - Path: `/Users/piotrwisniewski/Developer/consultify-recovery-canonical-20260816`
 - Branch: `codex/recovery-canonical-20260816`
 - Baseline: `origin/demo` at `e45904dc7940f259b9cf017c283264d5c166c9ab`
-- Current committed checkpoint before this state update: `1f80643998b777722e0d2730dfa3f93705478cc8`
+- Verified cleanup checkpoint before this documentation seal: `4f68cd6a2a7230bebe1b4d8428d0194bdf4c89b7`
 - Recovery control-plane commit: `844001c525`
 - Integrated packages: Assessment (fast-forward ancestry), Tools (49
   patch-unique non-merge commits) and Audits (34 patch-unique non-merge
   commits), all replayed without merging the source branch heads
 - Tools pre-integration recovery point: branch
   `codex/recovery-pre-tools-20260816` at `2706985e9a`
-- Worktree state before this document update: clean
+- Worktree state at the verified checkpoint: clean
 
-## Current gate result
+## Cleanup closure proof
 
-Assessment and Tools are present but not fully runtime-accepted. `git diff --check
-e45904dc7940..031772082b7d` reports whitespace failures in captured HTTP/SQL log
-evidence under `docs/qa/a9-2026-08-13/`. These are evidence-file hygiene defects,
-not a product-code verdict, but the repository-wide diff gate is not green.
+- Every registered worktree is accounted for by
+  `evidence/WORKTREE_DISPOSITION_20260816.{md,json}` at the verified checkpoint:
+  317 total, comprising 1 canonical candidate, 1 frozen source, 137 dirty
+  quarantines and 178 ignored-evidence quarantines. Nothing remains prune-ready.
+- Every local branch ref is accounted for by
+  `evidence/BRANCH_DISPOSITION_20260816.{md,json}`: 1270 refs, 1071 unique tips,
+  560 represented ancestors, 82 unrepresented duplicate-tip refs and 628
+  unrepresented single-tip refs. All 649 unique unrepresented tips remain
+  recoverable in `QUARANTINE_BACKLOG`; no branch ref was deleted.
+- The named recovery packages Assessment, Tools, Audits, Case, Artifact,
+  Finance, Results, UX/UI45, CEPD, Ideas, My Work, Initiatives/Execution,
+  Chat/Teresa and Auth/Security have a tree-level or selective-recovery verdict
+  in the recovery ledger. No known package has an open replay allowlist.
+- Thirty-two clean represented checkout directories and three stale
+  registrations were retired only after fail-closed path/HEAD/status/ancestry
+  verification. Their branch refs and commit objects remain preserved.
+- Cleanup closure means canonical execution is separated from recoverable
+  history. It does not claim that quarantined history was fully reviewed or is
+  disposable, and it does not imply integration, demo, release or production
+  readiness.
+
+## Verification record and open product gates
+
+Repository cleanup gates are closed. The governed whitespace checker passes;
+immutable raw HTTP/SQL/regression evidence is excluded only by the explicit
+governance policy and remains byte-preserved. Product acceptance remains
+partial, as recorded below and in `POST_CLEANUP_COMPLETION_PLAN.md`.
 
 Assessment also retains product gaps recorded in its own handoff:
 
@@ -170,13 +193,13 @@ Fresh checks on this candidate:
 
 ## Repository scale
 
-- Local branches: 1268
+- Local branches: 1270
 - Remote branches: 189
 - Registered worktrees after candidate creation: 352; 3 stale registrations
   and 32 clean represented checkouts have since been retired, leaving 317
 - Unique worktree tip SHAs: 251
 - Worktrees sharing duplicate tips: 130
-- Local branches not merged into the baseline: 749
+- Local refs not represented by the cleanup candidate: 710 refs / 649 unique tips
 
 These numbers describe duplicated execution history, not 749 unique product
 features. No bulk branch or worktree deletion is authorized by these counts.
@@ -192,16 +215,9 @@ features. No bulk branch or worktree deletion is authorized by these counts.
 
 ## Next gate
 
-1. Extend the green Assessment/Audits route-and-mount proof into their complete
-   create/edit/freeze/readback browser journeys. Tools has one green real-
-   PostgreSQL Chromium slice, but its remaining quality/provider gates and
-   feature-flag decision stay open.
-2. Reconcile the synthetic initiative quality advisories without weakening
-   assertions.
-3. Resolve the Assessment immutable-log `diff --check` policy without rewriting
-   historical evidence silently. The explicit broken orphan is closed.
-4. Verify already-present Case, Artifact, Results and Finance browser/realDB
-   closure. Results/Finance require no code replay, but their mount/data/spine
-   and owner decisions remain literal blockers.
-5. Verify the two recovered CEPD behaviors on fresh PostgreSQL/browser, then
-   classify its old branch as evidence-only. UX needs no replay.
+Cleanup is no longer the active execution lane. Continue from
+`POST_CLEANUP_COMPLETION_PLAN.md` and advance `INTEGRATION_READY` module by
+module. The next evidence work is fresh PostgreSQL/browser closure for the
+already-present packages, followed by explicit mount/data/owner decisions for
+Results, Finance and rollout flags. `DEMO_READY` and `PRODUCTION_READY` remain
+separate later gates and must not be inferred from cleanup completion.

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "observedAt": "2026-08-16T17:43:18.997Z",
-  "candidate": "4bf0c299abcc3aee49936438f53e4e35cc382486",
+  "observedAt": "2026-08-16T17:46:38.231Z",
+  "candidate": "4f68cd6a2a7230bebe1b4d8428d0194bdf4c89b7",
   "totalRefs": 1270,
   "uniqueTips": 1071,
   "unrepresentedUniqueTips": 649,
@@ -3069,7 +3069,7 @@
     },
     {
       "branch": "codex/recovery-canonical-20260816",
-      "head": "4bf0c299abcc3aee49936438f53e4e35cc382486",
+      "head": "4f68cd6a2a7230bebe1b4d8428d0194bdf4c89b7",
       "tipMultiplicity": 1,
       "representedByCandidate": true,
       "decision": "REPRESENTED_ANCESTOR_KEEP_REF"

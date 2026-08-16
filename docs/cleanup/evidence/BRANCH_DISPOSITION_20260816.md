@@ -1,6 +1,6 @@
 # Local branch disposition — 2026-08-16
 
-Candidate observed: `4bf0c299abcc3aee49936438f53e4e35cc382486`
+Candidate observed: `4f68cd6a2a7230bebe1b4d8428d0194bdf4c89b7`
 
 This generated manifest accounts for every local branch ref. Quarantine is a
 recoverable control state: it is not semantic review, prune readiness, or
@@ -454,7 +454,7 @@ authorization to delete a branch or commit.
 | codex/pre-rebuild-db-integration-20260809 | `37546d4df24015d819b2d9bc54831575e6ab8e1c` | 1 | yes | `REPRESENTED_ANCESTOR_KEEP_REF` |
 | codex/pre-rebuild-v8-ui-integration-20260809 | `9d17cac11484a82f729a51044e30453e39fbcb02` | 1 | yes | `REPRESENTED_ANCESTOR_KEEP_REF` |
 | codex/recovery-agent-v8-20260808 | `fb0146253b465be699079372721fc437edeab066` | 1 | yes | `REPRESENTED_ANCESTOR_KEEP_REF` |
-| codex/recovery-canonical-20260816 | `4bf0c299abcc3aee49936438f53e4e35cc382486` | 1 | yes | `REPRESENTED_ANCESTOR_KEEP_REF` |
+| codex/recovery-canonical-20260816 | `4f68cd6a2a7230bebe1b4d8428d0194bdf4c89b7` | 1 | yes | `REPRESENTED_ANCESTOR_KEEP_REF` |
 | codex/recovery-catalog-20260803 | `bd3d696995e65a314e3d29fa79a47d47e448777e` | 1 | no | `QUARANTINE_UNIQUE_TIP_BACKLOG_KEEP_REF` |
 | codex/recovery-control-20260808 | `7dd8db2454931463ab15d15078b5d535422f46a8` | 1 | yes | `REPRESENTED_ANCESTOR_KEEP_REF` |
 | codex/recovery-documents-20260808 | `0f9f98cfc39fda402345ae7154abdd28ea60bbea` | 1 | yes | `REPRESENTED_ANCESTOR_KEEP_REF` |
