@@ -1,17 +1,23 @@
 {
   "taskId": "ADM-BVP-001",
-  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "3cf595da94a516ade16b976cb1abf370a17213c0",
-  "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
-  "changedPaths": ["server/src/controllers/AuthController.ts", "server/src/controllers/OrganizationController.ts", "server/src/services/invitationService.ts", "server/src/services/orgPeopleIamService.ts", "server/src/services/attributionService.ts", "server/migrations/20260903_admin_invitation_events.sql", "server/migrations/20260904_admin_seat_management_repair.sql", "server/migrations/20260905_attribution_events_repair.sql", "server/src/services/__tests__/adminIamBvp.pg.test.ts"],
-  "changedPathRationale": {"iam": "transactional capability, last-owner, revocation and audit enforcement", "schema": "fresh-install invitation, seat and attribution parity", "tests": "real PostgreSQL lifecycle and negative controls"},
-  "ownerTables": ["organization_members", "invitations", "invitation_events", "role_change_audit_events", "attribution_events", "organization_seats"],
-  "commands": [{"command": "fresh PostgreSQL migrate/repeat/dry-run", "exitCode": 0}, {"command": "vitest adminIamBvp.pg.test.ts", "exitCode": 0}, {"command": "vitest Invitation/Auth regression packet", "exitCode": 0}, {"command": "npm run type-check && npm run build:backend && npm run build", "exitCode": 0}],
-  "denominators": {"freshMigrations": "709/709 success; repeat 0; dry-run 0", "adminRealDb": "6/6", "authInvitationRegression": "38/38"},
-  "fixtures": {"database": "disposable pgvector PostgreSQL 16 on localhost:56504", "tenants": "owner tenant plus isolated foreign tenant"},
-  "negativeControls": {"capability": "missing capability denied", "lastOwner": "concurrent demotions preserve one OWNER", "tenant": "foreign target hidden with zero write/audit", "auditFailure": "audit failure rolls mutation back", "revocation": "new login returns ORG_MEMBERSHIP_REVOKED"},
-  "browserArtifacts": [],
-  "rollback": {"code": "revert 3cf595da94 before deployment", "data": "additive migrations only; no production migration executed"},
-  "verdict": "PARTIAL",
-  "openBlockers": ["G4 signed-in browser and human UI evidence are not yet captured on this exact SHA."]
+  "productSha": "ceb5bbe515e501dd2101d35529da433ad617fa21",
+  "verdict": "DONE_CURRENT_SHA",
+  "ownPathsThisRun": ["server/src/controllers/__tests__/OrganizationController.membership.test.ts", "docs/program/evidence/closure/codex/ADM-BVP-001/TASK_EVIDENCE.json"],
+  "commands": [
+    {"command": "fresh PostgreSQL migrate.postgres.ts", "exitCode": 0, "denominator": "722/722 migrations applied"},
+    {"command": "migrate.postgres.ts --dry-run", "exitCode": 0, "denominator": "0 pending"},
+    {"command": "vitest adminIamBvp.pg + admin-iam-operations.realdb + OrganizationController.membership", "exitCode": 0, "denominator": "14/14 tests, 3/3 files"},
+    {"command": "tsc -p server/tsconfig.json --noEmit", "exitCode": 0, "denominator": "server TypeScript project"}
+  ],
+  "positiveFlow": "invite -> accept -> MEMBER -> atomic ADMIN promotion -> fresh HTTP login with ADMIN readback -> atomic revoke -> second fresh HTTP login denied ORG_MEMBERSHIP_REVOKED",
+  "negativeControls": {
+    "capability": "member without users.invite denied; stale claimed OWNER denied from stored membership capability",
+    "lastOwnerConcurrency": "two concurrent owner demotions serialize: exactly one succeeds and one receives LAST_OWNER_PROTECTED",
+    "tenant": "cross-org target hidden with zero mutation/audit",
+    "auditRollback": "forced audit insert failure rolls membership mutation back",
+    "revocation": "fresh login after revoke returns 403 ORG_MEMBERSHIP_REVOKED"
+  },
+  "fixtureRepair": "Legacy controller unit fixtures mock the mandatory atomic IAM command and assert that boundary instead of obsolete organizationService/adminAudit side effects.",
+  "database": "Disposable PostgreSQL 16 at localhost:56674; no production/staging touched",
+  "openBlockers": []
 }

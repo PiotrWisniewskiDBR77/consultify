@@ -1,17 +1,18 @@
 {
   "taskId": "SET-BVP-001",
-  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "3cf595da94a516ade16b976cb1abf370a17213c0",
+  "baselineSha": "ec125eeb50abde81726d0087a8f5d955f64a3f83",
+  "productSha": "ceb5bbe515e501dd2101d35529da433ad617fa21",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
   "changedPaths": ["server/src/routes/settings.routes.ts", "server/src/routes/users.routes.ts", "tests/integration/settings/settings-cold-session.realdb.test.ts"],
   "changedPathRationale": {"routes": "persist profile, language, appearance, notification and AI contracts without false success or secret readback", "tests": "cold-session PostgreSQL readback and tenant negatives"},
   "ownerTables": ["users", "user_preferences", "notification_settings", "user_ai_preferences"],
-  "commands": [{"command": "vitest settings-cold-session.realdb.test.ts on fresh PostgreSQL", "exitCode": 0}, {"command": "npm run type-check && npm run build:backend && npm run build", "exitCode": 0}],
-  "denominators": {"combinedRealDb": "36/36 across 9 files", "freshMigrations": "709/709 success"},
-  "fixtures": {"database": "disposable pgvector PostgreSQL 16 on localhost:56504", "session": "new JWT and reopened database connection"},
+  "commands": [{"command": "DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:56512/settings_mfa RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test npx vitest run tests/integration/settings/settings-cold-session.realdb.test.ts server/src/routes/__tests__/mfaPersistence.pg.test.ts server/src/services/__tests__/MFAService.pg.test.ts --reporter=dot", "exitCode": 0, "result": "15/15 across 3 files"}, {"command": "DATABASE_URL=<fresh-pg> NODE_ENV=test DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts", "exitCode": 0, "result": "initial 722/722; repeat Applying migrations: 0"}, {"command": "DATABASE_URL=<fresh-pg> NODE_ENV=test DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts --dry-run", "exitCode": 0, "result": "Pending migrations: 0"}, {"command": "npm run type-check", "exitCode": 0}],
+  "denominators": {"combinedRealDb": "15/15 across 3 files; SET-BVP subset 4/4", "freshMigrations": "722/722 success; ledger success:722; repeat 0; dry-run pending 0", "typecheck": "1/1 command"},
+  "fixtures": {"database": "disposable PostgreSQL on loopback port 56512", "session": "new JWT and reopened application database pool"},
   "negativeControls": {"tenant": "cross-tenant write returns 403", "language": "invalid language returns 400", "secret": "secret is not returned and encryption absence fails closed"},
   "browserArtifacts": [],
   "rollback": {"code": "revert 3cf595da94 before deployment", "data": "no production writes executed"},
+  "technicalVerdict": "PASS_LOCAL_REALPG",
   "verdict": "PARTIAL",
   "openBlockers": ["G4 browser reload/visual evidence and human sign-off remain for exact-SHA completion."]
 }

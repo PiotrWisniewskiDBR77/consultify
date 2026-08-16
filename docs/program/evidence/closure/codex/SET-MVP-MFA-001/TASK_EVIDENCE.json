@@ -1,17 +1,18 @@
 {
   "taskId": "SET-MVP-MFA-001",
-  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "457fbb250aee38ad1ced2b07025bed2cede2d9e4",
+  "baselineSha": "ec125eeb50abde81726d0087a8f5d955f64a3f83",
+  "productSha": "ceb5bbe515e501dd2101d35529da433ad617fa21",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
   "changedPaths": ["server/src/services/MFAService.ts", "server/src/routes/mfa.routes.ts", "server/src/services/__tests__/MFAService.pg.test.ts", "server/src/routes/__tests__/mfaPersistence.pg.test.ts"],
   "changedPathRationale": {"runtime": "real TOTP, tenant enforcement, re-auth and fail-closed persistence", "tests": "real PostgreSQL factor lifecycle"},
   "ownerTables": ["user_mfa", "audit_logs", "organizations"],
-  "commands": [{"command": "fresh PostgreSQL db:migrate:strict and repeat", "exitCode": 0, "result": "710 migrations, repeat 0"}, {"command": "vitest MFAService.pg.test.ts mfaPersistence.pg.test.ts", "exitCode": 0, "result": "10/10 realDB"}, {"command": "vitest MFA route and service regressions", "exitCode": 0, "result": "20/20"}, {"command": "npm run type-check && npm run build:backend", "exitCode": 0}],
-  "denominators": {"mfaRealDb": "10/10 across 2 files", "mfaRegression": "20/20 across 3 files", "freshMigrations": "710/710 success"},
-  "fixtures": {"database": "disposable pgvector PostgreSQL 16 on localhost:56505", "concurrency": "two simultaneous attempts using one recovery code"},
-  "negativeControls": {"totp": "invalid token denied", "reauth": "wrong password preserves factor", "writeFailure": "enable/setup return failure rather than false success", "recoveryConcurrency": "same code produces exactly one 200 and one 401", "regeneration": "old codes invalidated and new code cannot be replayed", "auditSecrets": "secret, password and recovery code absent from audit payload"},
+  "commands": [{"command": "DATABASE_URL=<fresh-pg> NODE_ENV=test DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts", "exitCode": 0, "result": "initial 722/722; repeat Applying migrations: 0"}, {"command": "DATABASE_URL=<fresh-pg> NODE_ENV=test DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts --dry-run", "exitCode": 0, "result": "Pending migrations: 0"}, {"command": "DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:56512/settings_mfa RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test npx vitest run tests/integration/settings/settings-cold-session.realdb.test.ts server/src/routes/__tests__/mfaPersistence.pg.test.ts server/src/services/__tests__/MFAService.pg.test.ts --reporter=dot", "exitCode": 0, "result": "15/15 across 3 files; MFA subset 11/11 across 2 files"}, {"command": "npm run type-check", "exitCode": 0}],
+  "denominators": {"mfaRealDb": "11/11 across 2 files", "combinedRealDb": "15/15 across 3 files", "freshMigrations": "722/722 success; ledger success:722; repeat 0; dry-run pending 0", "typecheck": "1/1 command"},
+  "fixtures": {"database": "disposable PostgreSQL on loopback port 56512", "coldRead": "independent one-connection pg Pool after enrolment", "concurrency": "two simultaneous attempts using one recovery code"},
+  "negativeControls": {"totp": "invalid token denied", "userIsolation": "second authenticated user sees MFA disabled and cannot consume owner's recovery code; owner count remains 10", "reauth": "wrong password preserves factor", "writeFailure": "enable/setup return failure rather than false success", "recoveryConcurrency": "same code produces exactly one 200 and one 401; persisted count is 9", "regeneration": "old codes invalidated and new code cannot be replayed", "auditSecrets": "secret, password and recovery code absent from audit payload"},
   "browserArtifacts": [],
   "rollback": {"code": "revert MFA hardening commits before deployment", "data": "no production factor modified"},
+  "technicalVerdict": "PASS_LOCAL_REALPG",
   "verdict": "PARTIAL",
-  "openBlockers": ["The bounded recovery-code and audit DoD is green, but the program-level G4 signed-in authenticator journey and G5 rollback/cold-process proof have not yet been captured on this exact integrated SHA."]
+  "openBlockers": ["The technical MFA lifecycle, independent cold read, recovery concurrency and audit DoD are green. Program-level G4 signed-in authenticator/browser evidence remains outside this bounded backend task."]
 }

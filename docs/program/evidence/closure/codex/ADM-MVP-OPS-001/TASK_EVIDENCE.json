@@ -1,17 +1,14 @@
 {
   "taskId": "ADM-MVP-OPS-001",
-  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "3cf595da94a516ade16b976cb1abf370a17213c0",
-  "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
-  "changedPaths": ["server/migrations/20260816_admin_iam_operations.sql", "server/src/services/adminIamOperationsService.ts", "tests/integration/admin-iam-operations.realdb.test.ts", "docs/runbooks/ADMIN_IAM_OPERATIONS_RUNBOOK.md"],
-  "changedPathRationale": {"jobs": "tenant-scoped idempotent IAM queue with lease/CAS retry and durable audit", "runbook": "operator recovery procedure", "tests": "real PostgreSQL lifecycle and isolation"},
-  "ownerTables": ["admin_iam_jobs", "role_change_audit_events"],
-  "commands": [{"command": "vitest admin-iam-operations.realdb.test.ts on fresh PostgreSQL", "exitCode": 0}, {"command": "npm run type-check && npm run build:backend && npm run build", "exitCode": 0}],
-  "denominators": {"adminOpsRealDb": "2/2", "combinedRealDb": "36/36", "freshMigrations": "709/709 success"},
-  "fixtures": {"database": "disposable pgvector PostgreSQL 16 on localhost:56504"},
-  "negativeControls": {"tenant": "foreign worker claims no job", "lease": "stale lease cannot complete", "audit": "no orphan success event", "retry": "exhausted job becomes terminal failed"},
-  "browserArtifacts": [],
-  "rollback": {"code": "revert admin operations commits before deployment", "data": "queued jobs are durable and recoverable; no production queue touched"},
+  "productSha": "ceb5bbe515e501dd2101d35529da433ad617fa21",
   "verdict": "PARTIAL",
-  "openBlockers": ["Long-run worker/alert exercise and integrated invite-to-revoke journey remain."]
+  "ownPathsThisRun": ["docs/program/evidence/closure/codex/ADM-MVP-OPS-001/TASK_EVIDENCE.json"],
+  "commands": [
+    {"command": "fresh PostgreSQL migrate.postgres.ts", "exitCode": 0, "denominator": "722/722 migrations applied"},
+    {"command": "vitest adminIamBvp.pg + admin-iam-operations.realdb + OrganizationController.membership", "exitCode": 0, "denominator": "14/14 tests, 3/3 files; OPS slice 2/2"},
+    {"command": "tsc -p server/tsconfig.json --noEmit", "exitCode": 0, "denominator": "server TypeScript project"}
+  ],
+  "proved": ["tenant-scoped idempotent enqueue and payload-stable replay", "foreign tenant cannot claim", "lease/CAS stale worker denial", "retry then success with exact durable events", "attempt exhaustion reaches failed", "metrics readback and zero orphan events", "same fresh-PG packet includes the full invite-to-revoke journey"],
+  "singleResidualBlocker": "No sustained deployed worker/alert observation window was authorized or available; repository tests prove queue metrics and lifecycle but cannot prove a real operator alert fires under long-running production scheduling.",
+  "database": "Disposable PostgreSQL 16 at localhost:56674; no production/staging touched"
 }
