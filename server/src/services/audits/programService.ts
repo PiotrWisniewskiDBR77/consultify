@@ -51,17 +51,8 @@ import {
   toIso,
   toNum,
 } from './auditsDb.js';
-import {
-  assertCapability,
-  requireCapability,
-  resolveProgramAccess,
-} from './permissions.js';
-import {
-  assertGate,
-  assertTransitionAllowed,
-  evaluateGate,
-  nextStates,
-} from './lifecycle.js';
+import { assertCapability, requireCapability, resolveProgramAccess } from './permissions.js';
+import { assertGate, assertTransitionAllowed, evaluateGate, nextStates } from './lifecycle.js';
 import type { LifecycleGateFacts } from './lifecycle.js';
 import type {
   AuditActor,
@@ -180,7 +171,7 @@ async function requireCreateCapability(actor: AuditActor): Promise<void> {
   assertCapability(
     access,
     'program.create',
-    'Utworzenie nowego programu audytowego wymaga roli administratora organizacji (nowy program nie ma jeszcze przypisanego właściciela)',
+    'Utworzenie nowego programu audytowego wymaga roli administratora organizacji (nowy program nie ma jeszcze przypisanego właściciela)'
   );
 }
 
@@ -215,7 +206,7 @@ export interface ListProgramsResult {
  */
 export async function listPrograms(
   organizationId: string,
-  options: ListProgramsOptions = {},
+  options: ListProgramsOptions = {}
 ): Promise<ListProgramsResult> {
   const limit = clampLimit(options.limit);
   const offset = clampOffset(options.offset);
@@ -241,7 +232,7 @@ export async function listPrograms(
 
   const countRow = await auditGet<{ total: string }>(
     `SELECT COUNT(*)::text AS total FROM audit_programs p WHERE ${whereSql}`,
-    params,
+    params
   );
   const total = Number(countRow?.total ?? 0);
 
@@ -271,7 +262,7 @@ export async function listPrograms(
       WHERE ${whereSql}
       ORDER BY p.updated_at DESC
       LIMIT $${limitIdx} OFFSET $${offsetIdx}`,
-    [...params, limit, offset],
+    [...params, limit, offset]
   );
 
   const programs: ProgramListItem[] = rows.map((row) => ({
@@ -303,24 +294,24 @@ export interface ProgramDetail {
 
 export async function listMembers(
   organizationId: string,
-  programId: string,
+  programId: string
 ): Promise<AuditProgramMember[]> {
   const rows = await auditAll<Record<string, unknown>>(
     `SELECT * FROM audit_program_members
       WHERE organization_id = $1 AND program_id = $2 AND removed_at IS NULL
       ORDER BY assigned_at ASC`,
-    [organizationId, programId],
+    [organizationId, programId]
   );
   return rows.map(mapMemberRow);
 }
 
 export async function getProgram(
   organizationId: string,
-  id: string,
+  id: string
 ): Promise<ProgramDetail | null> {
   const row = await auditGet<Record<string, unknown>>(
     `SELECT * FROM audit_programs WHERE id = $1 AND organization_id = $2`,
-    [id, organizationId],
+    [id, organizationId]
   );
   if (!row) return null;
   const program = mapProgramRow(row);
@@ -337,7 +328,7 @@ export async function getProgram(
         (SELECT COUNT(*) FROM audit_evidence WHERE organization_id = $1 AND program_id = $2) AS evidence_total,
         (SELECT COUNT(*) FROM audit_evidence WHERE organization_id = $1 AND program_id = $2 AND accepted = true) AS evidence_accepted
       `,
-    [organizationId, id],
+    [organizationId, id]
   );
 
   const stats: ProgramStats = {
@@ -377,7 +368,7 @@ async function createProgramCore(
   organizationId: string,
   actor: AuditActor,
   input: CreateProgramFromPackInput,
-  extra: CreateProgramCoreExtra = {},
+  extra: CreateProgramCoreExtra = {}
 ): Promise<ProgramDetail> {
   if (!isNonEmpty(input.packId)) {
     throw new AuditDomainError('packId jest wymagany', 400, 'AUDIT_PACK_ID_REQUIRED');
@@ -388,18 +379,18 @@ async function createProgramCore(
 
   const pack = await auditGet<Record<string, unknown>>(
     `SELECT * FROM audit_packs WHERE id = $1 AND (organization_id = $2 OR organization_id IS NULL)`,
-    [input.packId, organizationId],
+    [input.packId, organizationId]
   );
   if (!pack) throw new AuditNotFoundError('Pakiet audytowy');
   if (String(pack.publication_status) !== 'published') {
     throw new AuditStateError(
-      'Nie można utworzyć programu z pakietu, który nie jest opublikowany (publication_status musi być "published")',
+      'Nie można utworzyć programu z pakietu, który nie jest opublikowany (publication_status musi być "published")'
     );
   }
 
   const packCriteria = await auditAll<Record<string, unknown>>(
     `SELECT * FROM audit_pack_criteria WHERE pack_id = $1 ORDER BY ordinal ASC`,
-    [input.packId],
+    [input.packId]
   );
 
   const programId = newId('aprog');
@@ -437,7 +428,7 @@ async function createProgramCore(
       actor.userId,
       now,
       now,
-    ],
+    ]
   );
 
   // Snapshot kryteriów, zachowując hierarchię parent → child przez mapowanie
@@ -482,7 +473,7 @@ async function createProgramCore(
         'open',
         now,
         now,
-      ],
+      ]
     );
   }
 
@@ -515,7 +506,7 @@ async function createProgramCore(
     throw new AuditDomainError(
       'Nie udało się utworzyć programu audytowego',
       500,
-      'AUDIT_PROGRAM_CREATE_FAILED',
+      'AUDIT_PROGRAM_CREATE_FAILED'
     );
   }
   return detail;
@@ -524,7 +515,7 @@ async function createProgramCore(
 export async function createProgramFromPack(
   organizationId: string,
   actor: AuditActor,
-  input: CreateProgramFromPackInput,
+  input: CreateProgramFromPackInput
 ): Promise<ProgramDetail> {
   await requireCreateCapability(actor);
   return createProgramCore(organizationId, actor, input);
@@ -551,7 +542,7 @@ export interface UpdateProgramInput {
 function assertPlanningState(program: AuditProgram, action: string): void {
   if (program.lifecycleState && program.lifecycleState !== 'planning') {
     throw new AuditStateError(
-      `Program można ${action} tylko w fazie "planning" (bieżący stan: ${program.lifecycleState})`,
+      `Program można ${action} tylko w fazie "planning" (bieżący stan: ${program.lifecycleState})`
     );
   }
 }
@@ -560,13 +551,13 @@ export async function updateProgram(
   organizationId: string,
   actor: AuditActor,
   id: string,
-  input: UpdateProgramInput,
+  input: UpdateProgramInput
 ): Promise<AuditProgram> {
   await requireCapability(actor, id, 'program.update');
 
   const row = await auditGet<Record<string, unknown>>(
     `SELECT * FROM audit_programs WHERE id = $1 AND organization_id = $2`,
-    [id, organizationId],
+    [id, organizationId]
   );
   if (!row) throw new AuditNotFoundError('Program audytowy');
   const existing = mapProgramRow(row);
@@ -582,8 +573,7 @@ export async function updateProgram(
     plannedEnd: input.plannedEnd !== undefined ? input.plannedEnd : existing.plannedEnd,
     programOwnerId:
       input.programOwnerId !== undefined ? input.programOwnerId : existing.programOwnerId,
-    leadAuditorId:
-      input.leadAuditorId !== undefined ? input.leadAuditorId : existing.leadAuditorId,
+    leadAuditorId: input.leadAuditorId !== undefined ? input.leadAuditorId : existing.leadAuditorId,
     projectId: input.projectId !== undefined ? input.projectId : existing.projectId,
     recurrence: input.recurrence !== undefined ? input.recurrence : existing.recurrence,
   };
@@ -608,7 +598,7 @@ export async function updateProgram(
       next.recurrence,
       id,
       organizationId,
-    ],
+    ]
   );
 
   await recordAuditEvent({
@@ -623,7 +613,7 @@ export async function updateProgram(
 
   const updated = await auditGet<Record<string, unknown>>(
     `SELECT * FROM audit_programs WHERE id = $1 AND organization_id = $2`,
-    [id, organizationId],
+    [id, organizationId]
   );
   return mapProgramRow(updated!);
 }
@@ -631,13 +621,13 @@ export async function updateProgram(
 export async function deleteProgram(
   organizationId: string,
   actor: AuditActor,
-  id: string,
+  id: string
 ): Promise<void> {
   await requireCapability(actor, id, 'program.delete');
 
   const row = await auditGet<Record<string, unknown>>(
     `SELECT * FROM audit_programs WHERE id = $1 AND organization_id = $2`,
-    [id, organizationId],
+    [id, organizationId]
   );
   if (!row) throw new AuditNotFoundError('Program audytowy');
   const existing = mapProgramRow(row);
@@ -645,11 +635,11 @@ export async function deleteProgram(
 
   await auditRun(
     `DELETE FROM audit_program_criteria WHERE program_id = $1 AND organization_id = $2`,
-    [id, organizationId],
+    [id, organizationId]
   );
   await auditRun(
     `DELETE FROM audit_program_members WHERE program_id = $1 AND organization_id = $2`,
-    [id, organizationId],
+    [id, organizationId]
   );
   await auditRun(`DELETE FROM audit_programs WHERE id = $1 AND organization_id = $2`, [
     id,
@@ -684,7 +674,7 @@ interface InsertMemberInput {
 async function insertMemberRow(
   organizationId: string,
   programId: string,
-  input: InsertMemberInput,
+  input: InsertMemberInput
 ): Promise<AuditProgramMember> {
   const id = newId('apmem');
   await auditRun(
@@ -712,12 +702,12 @@ async function insertMemberRow(
       input.conflictNote ?? null,
       input.competenceNote ?? null,
       input.assignedBy,
-    ],
+    ]
   );
   const row = await auditGet<Record<string, unknown>>(
     `SELECT * FROM audit_program_members
       WHERE program_id = $1 AND organization_id = $2 AND user_id = $3 AND member_role = $4`,
-    [programId, organizationId, input.userId, input.memberRole],
+    [programId, organizationId, input.userId, input.memberRole]
   );
   return mapMemberRow(row!);
 }
@@ -735,14 +725,14 @@ export async function addMember(
   organizationId: string,
   actor: AuditActor,
   programId: string,
-  input: AddMemberInput,
+  input: AddMemberInput
 ): Promise<AuditProgramMember> {
   await requireCapability(actor, programId, 'program.manage_members');
   if (!isNonEmpty(input.userId) || !isNonEmpty(input.memberRole)) {
     throw new AuditDomainError(
       'Dodanie członka programu wymaga userId i memberRole',
       400,
-      'AUDIT_MEMBER_INPUT_INVALID',
+      'AUDIT_MEMBER_INPUT_INVALID'
     );
   }
   const member = await insertMemberRow(organizationId, programId, {
@@ -773,13 +763,13 @@ export async function updateMember(
   actor: AuditActor,
   programId: string,
   memberId: string,
-  input: UpdateMemberInput,
+  input: UpdateMemberInput
 ): Promise<AuditProgramMember> {
   await requireCapability(actor, programId, 'program.manage_members');
   const existingRow = await auditGet<Record<string, unknown>>(
     `SELECT * FROM audit_program_members
       WHERE id = $1 AND organization_id = $2 AND program_id = $3 AND removed_at IS NULL`,
-    [memberId, organizationId, programId],
+    [memberId, organizationId, programId]
   );
   if (!existingRow) throw new AuditNotFoundError('Członek programu');
 
@@ -795,7 +785,7 @@ export async function updateMember(
       input.conflictNote !== undefined ? input.conflictNote : existingRow.conflict_note,
       input.competenceNote !== undefined ? input.competenceNote : existingRow.competence_note,
       memberId,
-    ],
+    ]
   );
 
   await recordAuditEvent({
@@ -809,7 +799,7 @@ export async function updateMember(
 
   const row = await auditGet<Record<string, unknown>>(
     `SELECT * FROM audit_program_members WHERE id = $1`,
-    [memberId],
+    [memberId]
   );
   return mapMemberRow(row!);
 }
@@ -818,13 +808,13 @@ export async function removeMember(
   organizationId: string,
   actor: AuditActor,
   programId: string,
-  memberId: string,
+  memberId: string
 ): Promise<void> {
   await requireCapability(actor, programId, 'program.manage_members');
   const existingRow = await auditGet<Record<string, unknown>>(
     `SELECT * FROM audit_program_members
       WHERE id = $1 AND organization_id = $2 AND program_id = $3 AND removed_at IS NULL`,
-    [memberId, organizationId, programId],
+    [memberId, organizationId, programId]
   );
   if (!existingRow) throw new AuditNotFoundError('Członek programu');
 
@@ -833,7 +823,7 @@ export async function removeMember(
       `SELECT COUNT(*)::text AS cnt FROM audit_program_members
         WHERE organization_id = $1 AND program_id = $2 AND member_role = 'program_owner'
           AND removed_at IS NULL`,
-      [organizationId, programId],
+      [organizationId, programId]
     );
     if (Number(ownersRow?.cnt ?? 0) <= 1) {
       throw new AuditStateError('Nie można usunąć ostatniego właściciela programu (program_owner)');
@@ -858,7 +848,7 @@ export async function removeMember(
 
 async function computeLifecycleFacts(
   organizationId: string,
-  programId: string,
+  programId: string
 ): Promise<LifecycleGateFacts> {
   const critRow = await auditGet<Record<string, unknown>>(
     `SELECT
@@ -867,7 +857,7 @@ async function computeLifecycleFacts(
         COUNT(*) FILTER (WHERE conformity_status = 'evidence_insufficient') AS insufficient_evidence_criteria
        FROM audit_program_criteria
       WHERE organization_id = $1 AND program_id = $2`,
-    [organizationId, programId],
+    [organizationId, programId]
   );
 
   const findingRow = await auditGet<Record<string, unknown>>(
@@ -890,7 +880,7 @@ async function computeLifecycleFacts(
         COUNT(*) FILTER (WHERE f.status NOT IN ('closed','risk_accepted','rejected')) AS unresolved_findings
        FROM audit_program_findings f
       WHERE f.organization_id = $1 AND f.program_id = $2`,
-    [organizationId, programId],
+    [organizationId, programId]
   );
 
   const actionRow = await auditGet<Record<string, unknown>>(
@@ -910,19 +900,19 @@ async function computeLifecycleFacts(
       ) AS actions_without_effectiveness_verification
       FROM audit_corrective_actions a
      WHERE a.organization_id = $1 AND a.program_id = $2`,
-    [organizationId, programId],
+    [organizationId, programId]
   );
 
   const leadRow = await auditGet<{ cnt: string }>(
     `SELECT COUNT(*)::text AS cnt FROM audit_program_members
       WHERE organization_id = $1 AND program_id = $2 AND member_role = 'lead_auditor'
         AND removed_at IS NULL`,
-    [organizationId, programId],
+    [organizationId, programId]
   );
 
   const programRow = await auditGet<{ criteria_snapshot_at: unknown }>(
     `SELECT criteria_snapshot_at FROM audit_programs WHERE organization_id = $1 AND id = $2`,
-    [organizationId, programId],
+    [organizationId, programId]
   );
 
   return {
@@ -933,7 +923,7 @@ async function computeLifecycleFacts(
     findingsWithoutResponse: Number(findingRow?.findings_without_response ?? 0),
     findingsWithoutApprovedAction: Number(findingRow?.findings_without_approved_action ?? 0),
     actionsWithoutEffectivenessVerification: Number(
-      actionRow?.actions_without_effectiveness_verification ?? 0,
+      actionRow?.actions_without_effectiveness_verification ?? 0
     ),
     unresolvedFindings: Number(findingRow?.unresolved_findings ?? 0),
     hasLeadAuditor: Number(leadRow?.cnt ?? 0) > 0,
@@ -946,13 +936,13 @@ export async function transitionLifecycle(
   actor: AuditActor,
   programId: string,
   targetState: AuditLifecycleState,
-  reason?: string | null,
+  reason?: string | null
 ): Promise<AuditProgram> {
   await requireCapability(actor, programId, 'program.advance_lifecycle');
 
   const row = await auditGet<Record<string, unknown>>(
     `SELECT * FROM audit_programs WHERE id = $1 AND organization_id = $2`,
-    [programId, organizationId],
+    [programId, organizationId]
   );
   if (!row) throw new AuditNotFoundError('Program audytowy');
   const program = mapProgramRow(row);
@@ -969,11 +959,12 @@ export async function transitionLifecycle(
   const legacyStatus = legacyStatusFor(targetState);
   const isClosing = targetState === 'closed';
 
-  await auditRun(
+  const transitioned = await auditGet<{ id: string }>(
     `UPDATE audit_programs
         SET lifecycle_state = $1, status = $2, closed_at = $3, closed_by = $4, closure_note = $5,
             updated_at = $6
-      WHERE id = $7 AND organization_id = $8`,
+      WHERE id = $7 AND organization_id = $8 AND lifecycle_state = $9
+      RETURNING id`,
     [
       targetState,
       legacyStatus,
@@ -983,8 +974,14 @@ export async function transitionLifecycle(
       now,
       programId,
       organizationId,
-    ],
+      current,
+    ]
   );
+  if (!transitioned) {
+    throw new AuditStateError(
+      'Stan programu zmienił się równolegle. Odśwież dane i spróbuj ponownie.'
+    );
+  }
 
   await recordAuditEvent({
     organizationId,
@@ -999,7 +996,7 @@ export async function transitionLifecycle(
 
   const updated = await auditGet<Record<string, unknown>>(
     `SELECT * FROM audit_programs WHERE id = $1 AND organization_id = $2`,
-    [programId, organizationId],
+    [programId, organizationId]
   );
   return mapProgramRow(updated!);
 }
@@ -1017,11 +1014,11 @@ export interface LifecycleStatusResult {
 
 export async function getLifecycleStatus(
   organizationId: string,
-  programId: string,
+  programId: string
 ): Promise<LifecycleStatusResult | null> {
   const row = await auditGet<Record<string, unknown>>(
     `SELECT lifecycle_state FROM audit_programs WHERE id = $1 AND organization_id = $2`,
-    [programId, organizationId],
+    [programId, organizationId]
   );
   if (!row) return null;
   const current = (row.lifecycle_state as AuditLifecycleState | null) ?? null;
@@ -1038,19 +1035,19 @@ export async function getLifecycleStatus(
 export async function startNextCycle(
   organizationId: string,
   actor: AuditActor,
-  programId: string,
+  programId: string
 ): Promise<ProgramDetail> {
   await requireCapability(actor, programId, 'program.advance_lifecycle');
 
   const row = await auditGet<Record<string, unknown>>(
     `SELECT * FROM audit_programs WHERE id = $1 AND organization_id = $2`,
-    [programId, organizationId],
+    [programId, organizationId]
   );
   if (!row) throw new AuditNotFoundError('Program audytowy');
   const prev = mapProgramRow(row);
   if (!prev.packId) {
     throw new AuditStateError(
-      'Program nie ma powiązanego pakietu — nie można rozpocząć kolejnego cyklu',
+      'Program nie ma powiązanego pakietu — nie można rozpocząć kolejnego cyklu'
     );
   }
 
@@ -1070,7 +1067,7 @@ export async function startNextCycle(
       plannedEnd: null,
       projectId: prev.projectId,
     },
-    { previousProgramId: prev.id, recurrence: prev.recurrence },
+    { previousProgramId: prev.id, recurrence: prev.recurrence }
   );
 
   await recordAuditEvent({

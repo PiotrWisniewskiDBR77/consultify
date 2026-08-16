@@ -39,7 +39,7 @@ if (!REAL_PG) {
   // eslint-disable-next-line no-console
   console.warn(
     '[programKernelBvp.pg.test.ts SKIPPED — clean skip, not a failure] wymaga ' +
-      'RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=postgresql://... CI=true (patrz nagłówek pliku)',
+      'RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=postgresql://... CI=true (patrz nagłówek pliku)'
   );
 }
 
@@ -84,10 +84,15 @@ suite('AUD-BVP-001 — programService kernel BVP (Postgres realny)', () => {
         `aud-bvp-pack-key-${RUN}`,
         'Pakiet testowy AUD-BVP-001 — programService',
         JSON.stringify([
-          { key: 'nonconforming', label: 'Niezgodność', nonConforming: true, requiresCorrectiveAction: true },
+          {
+            key: 'nonconforming',
+            label: 'Niezgodność',
+            nonConforming: true,
+            requiresCorrectiveAction: true,
+          },
         ]),
         JSON.stringify(['lead_auditor', 'auditor', 'auditee']),
-      ],
+      ]
     );
 
     rootCriterionId = `bvpprogpkc_${RUN}_root`;
@@ -97,7 +102,7 @@ suite('AUD-BVP-001 — programService kernel BVP (Postgres realny)', () => {
          (id, pack_id, parent_id, ordinal, ref_code, node_kind, title, requirement_text,
           audit_question, expected_evidence, mandatory)
        VALUES ($1,$2,NULL,1,'A','domain','Domena A', NULL, NULL, '[]'::jsonb, true)`,
-      [rootCriterionId, packId],
+      [rootCriterionId, packId]
     );
     await auditsDb.auditRun(
       `INSERT INTO audit_pack_criteria
@@ -110,7 +115,7 @@ suite('AUD-BVP-001 — programService kernel BVP (Postgres realny)', () => {
         rootCriterionId,
         'Wymaganie testowe AUD-BVP-001 — nie ruszać',
         JSON.stringify([{ kind: 'document', description: 'polityka', mandatory: true }]),
-      ],
+      ]
     );
   }
 
@@ -128,7 +133,10 @@ suite('AUD-BVP-001 — programService kernel BVP (Postgres realny)', () => {
       orgA,
       orgB,
     ]);
-    await auditsDb.auditRun(`DELETE FROM audit_programs WHERE organization_id IN ($1,$2)`, [orgA, orgB]);
+    await auditsDb.auditRun(`DELETE FROM audit_programs WHERE organization_id IN ($1,$2)`, [
+      orgA,
+      orgB,
+    ]);
   }
 
   beforeAll(async () => {
@@ -161,7 +169,7 @@ suite('AUD-BVP-001 — programService kernel BVP (Postgres realny)', () => {
 
     const row = await auditsDb.auditGet<Record<string, unknown>>(
       `SELECT * FROM audit_programs WHERE id = $1 AND organization_id = $2`,
-      [detail.program.id, orgA],
+      [detail.program.id, orgA]
     );
     expect(row).toBeTruthy();
     expect(row!.name).toBe('BVP Program v1');
@@ -172,7 +180,7 @@ suite('AUD-BVP-001 — programService kernel BVP (Postgres realny)', () => {
 
     const criteria = await auditsDb.auditAll<Record<string, unknown>>(
       `SELECT * FROM audit_program_criteria WHERE program_id = $1 ORDER BY ordinal ASC`,
-      [detail.program.id],
+      [detail.program.id]
     );
     expect(criteria).toHaveLength(2);
   });
@@ -195,7 +203,7 @@ suite('AUD-BVP-001 — programService kernel BVP (Postgres realny)', () => {
     // Nie ufaj odpowiedzi serwisu — odczytaj wiersz osobnym zapytaniem.
     const rowAfterEdit = await auditsDb.auditGet<Record<string, unknown>>(
       `SELECT * FROM audit_programs WHERE id = $1 AND organization_id = $2`,
-      [programId, orgA],
+      [programId, orgA]
     );
     expect(rowAfterEdit!.name).toBe('BVP Program v2 — edited');
     expect(rowAfterEdit!.objective).toBe('Cel po edycji');
@@ -205,7 +213,8 @@ suite('AUD-BVP-001 — programService kernel BVP (Postgres realny)', () => {
     // sam handle, którego użyto do zapisu.
     vi.resetModules();
     const freshAuditsDb = (await import('../../audits/auditsDb.js')) as AuditsDbModule;
-    const freshProgramService = (await import('../../audits/programService.js')) as ProgramServiceModule;
+    const freshProgramService =
+      (await import('../../audits/programService.js')) as ProgramServiceModule;
 
     const reopened = await freshProgramService.getProgram(orgA, programId);
     expect(reopened).toBeTruthy();
@@ -235,17 +244,17 @@ suite('AUD-BVP-001 — programService kernel BVP (Postgres realny)', () => {
       orgA,
       adminA,
       programId,
-      'preparation',
+      'preparation'
     );
     expect(afterLegal.lifecycleState).toBe('preparation');
 
     await expect(
-      programService.transitionLifecycle(orgA, adminA, programId, 'fieldwork'),
+      programService.transitionLifecycle(orgA, adminA, programId, 'fieldwork')
     ).rejects.toMatchObject({ code: 'AUDIT_INVALID_STATE', statusCode: 409 });
 
     const row = await auditsDb.auditGet<Record<string, unknown>>(
       `SELECT lifecycle_state FROM audit_programs WHERE id = $1 AND organization_id = $2`,
-      [programId, orgA],
+      [programId, orgA]
     );
     // Nielegalne przejście (preparation -> fieldwork wymaga bramki, ale TU
     // pada wcześniej: assertTransitionAllowed sprawdza dozwolone przejścia z
@@ -263,12 +272,12 @@ suite('AUD-BVP-001 — programService kernel BVP (Postgres realny)', () => {
     await programService.transitionLifecycle(orgA, adminA, programId, 'preparation');
 
     await expect(
-      programService.transitionLifecycle(orgA, adminA, programId, 'closed'),
+      programService.transitionLifecycle(orgA, adminA, programId, 'closed')
     ).rejects.toMatchObject({ code: 'AUDIT_INVALID_STATE', statusCode: 409 });
 
     const row = await auditsDb.auditGet<Record<string, unknown>>(
       `SELECT lifecycle_state FROM audit_programs WHERE id = $1 AND organization_id = $2`,
-      [programId, orgA],
+      [programId, orgA]
     );
     expect(row!.lifecycle_state).toBe('preparation');
   });
@@ -281,7 +290,7 @@ suite('AUD-BVP-001 — programService kernel BVP (Postgres realny)', () => {
   //     mogą się zastosować. To jest CHARAKTERYZACJA znanej luki, NIE test
   //     "co się zdarzyło" — luka jest potwierdzona empirycznie poniżej.
   // ---------------------------------------------------------------------
-  it('KNOWN-GAP CHARACTERIZATION: dwa współbieżne transitionLifecycle z "preparation" do RÓŻNYCH celów oba się stosują (brak blokady optymistycznej)', async () => {
+  it('serializuje dwa współbieżne transitionLifecycle: dokładnie jedno przejście i jedno zdarzenie', async () => {
     const created = await programService.createProgramFromPack(orgA, adminA, {
       packId,
       name: 'BVP Program — concurrency',
@@ -299,7 +308,7 @@ suite('AUD-BVP-001 — programService kernel BVP (Postgres realny)', () => {
 
     const rowBefore = await auditsDb.auditGet<Record<string, unknown>>(
       `SELECT lifecycle_state FROM audit_programs WHERE id = $1 AND organization_id = $2`,
-      [programId, orgA],
+      [programId, orgA]
     );
     expect(rowBefore!.lifecycle_state).toBe('preparation');
 
@@ -308,7 +317,7 @@ suite('AUD-BVP-001 — programService kernel BVP (Postgres realny)', () => {
     const eventsBefore = await auditsDb.auditAll<{ id: string }>(
       `SELECT id FROM audit_domain_events
         WHERE organization_id = $1 AND program_id = $2 AND event_type = 'program.lifecycle_transitioned'`,
-      [orgA, programId],
+      [orgA, programId]
     );
 
     // Dwa RÓŻNE wywołania z tego samego stanu 'preparation':
@@ -321,19 +330,19 @@ suite('AUD-BVP-001 — programService kernel BVP (Postgres realny)', () => {
         leadActor,
         programId,
         'planning',
-        'Współbieżny test luki — cofnięcie',
+        'Współbieżny test luki — cofnięcie'
       ),
     ]);
 
     const rowAfter = await auditsDb.auditGet<Record<string, unknown>>(
       `SELECT lifecycle_state FROM audit_programs WHERE id = $1 AND organization_id = $2`,
-      [programId, orgA],
+      [programId, orgA]
     );
     const transitionEvents = await auditsDb.auditAll<{ payload: unknown }>(
       `SELECT payload FROM audit_domain_events
         WHERE organization_id = $1 AND program_id = $2 AND event_type = 'program.lifecycle_transitioned'
         ORDER BY occurred_at ASC`,
-      [orgA, programId],
+      [orgA, programId]
     );
 
     // eslint-disable-next-line no-console
@@ -341,43 +350,26 @@ suite('AUD-BVP-001 — programService kernel BVP (Postgres realny)', () => {
     // eslint-disable-next-line no-console
     console.log('[AUD-BVP-001 KNOWN-GAP] wynik B (lead_auditor -> planning):', resultB.status);
     // eslint-disable-next-line no-console
-    console.log('[AUD-BVP-001 KNOWN-GAP] finalny lifecycle_state w bazie:', rowAfter!.lifecycle_state);
+    console.log(
+      '[AUD-BVP-001 KNOWN-GAP] finalny lifecycle_state w bazie:',
+      rowAfter!.lifecycle_state
+    );
     // eslint-disable-next-line no-console
     console.log(
       '[AUD-BVP-001 KNOWN-GAP] liczba zdarzeń lifecycle_transitioned zapisanych:',
-      transitionEvents.length,
+      transitionEvents.length
     );
 
-    // Charakteryzacja: udokumentuj DOKŁADNIE co się stało, zamiast zakładać.
-    if (resultA.status === 'fulfilled' && resultB.status === 'fulfilled') {
-      // Zgodnie z przewidywaniem luki: OBA wywołania przeszły walidację i
-      // bramkę (obie odczytały 'preparation' jako stan bieżący PRZED tym, jak
-      // którakolwiek strona zapisała swój UPDATE), więc oba wykonały ślepy
-      // UPDATE. Ostatni commit wygrywa — finalny stan to jeden z dwóch celów,
-      // a NIE błąd/odrzucenie drugiej strony.
-      expect(['fieldwork', 'planning']).toContain(rowAfter!.lifecycle_state);
-      // Log zdarzeń zawiera OBA przejścia, mimo że w bazie przetrwał tylko
-      // jeden stan — dowód, że dziennik i stan programu się rozjeżdżają.
-      expect(transitionEvents.length - eventsBefore.length).toBe(2);
-      // INTEGRATOR_CHANGE_REQUEST (patrz raport zamknięcia AUD-BVP-001):
-      // zamienić ślepy UPDATE w transitionLifecycle (programService.ts:972-987)
-      // na `UPDATE audit_programs SET ... WHERE id = $x AND organization_id = $y
-      // AND lifecycle_state = $current` + sprawdzenie liczby zmienionych
-      // wierszy; 0 wierszy -> rzucić AuditStateError/409 z jasnym komunikatem
-      // "stan zmienił się pod ręką, odśwież i spróbuj ponownie".
-    } else {
-      // Jeśli środowisko akurat zserializowało wywołania tak, że druga strona
-      // ODCZYTAŁA już zmieniony stan (i asertTransitionAllowed/gate odrzucił
-      // przejście z nowego stanu do jej celu) — to NADAL dowód braku blokady
-      // na poziomie UPDATE (odrzucenie przyszło z logiki przejść, nie z
-      // ochrony współbieżności), ale zapisz to jawnie zamiast milczeć.
-      expect(resultA.status === 'fulfilled' || resultB.status === 'fulfilled').toBe(true);
-      // eslint-disable-next-line no-console
-      console.log(
-        '[AUD-BVP-001 KNOWN-GAP] Ten przebieg NIE zaobserwował podwójnego zastosowania — ' +
-          'zapisz interleaving i uruchom ponownie, zanim uznasz lukę za obaloną.',
-      );
-    }
+    expect([resultA.status, resultB.status].sort()).toEqual(['fulfilled', 'rejected']);
+    expect(['fieldwork', 'planning']).toContain(rowAfter!.lifecycle_state);
+    expect(transitionEvents.length - eventsBefore.length).toBe(1);
+    const rejected =
+      resultA.status === 'rejected'
+        ? resultA.reason
+        : resultB.status === 'rejected'
+          ? resultB.reason
+          : null;
+    expect(String(rejected?.message || rejected)).toMatch(/zmienił się|niedozwolone/i);
   });
 
   // ---------------------------------------------------------------------
@@ -393,7 +385,7 @@ suite('AUD-BVP-001 — programService kernel BVP (Postgres realny)', () => {
 
     const rows = await auditsDb.auditAll<{ id: string }>(
       `SELECT id FROM audit_programs WHERE organization_id = $1 AND name = $2`,
-      [orgA, input.name],
+      [orgA, input.name]
     );
     expect(rows).toHaveLength(2);
   });
@@ -412,7 +404,7 @@ suite('AUD-BVP-001 — programService kernel BVP (Postgres realny)', () => {
     expect(readFromB).toBeNull();
 
     await expect(
-      programService.updateProgram(orgB, adminB, programId, { name: 'HACKED FROM ORG B' }),
+      programService.updateProgram(orgB, adminB, programId, { name: 'HACKED FROM ORG B' })
     ).rejects.toMatchObject({ code: 'AUDIT_NOT_FOUND' });
 
     // transitionLifecycle sprawdza capability PRZED istnieniem wiersza —
@@ -421,12 +413,12 @@ suite('AUD-BVP-001 — programService kernel BVP (Postgres realny)', () => {
     // więc odmowa dla org B przychodzi jako AUDIT_FORBIDDEN, nie AUDIT_NOT_FOUND
     // — to WCIĄŻ odmowa i WCIĄŻ brak modyfikacji, ale inny kod niż update/delete.
     await expect(
-      programService.transitionLifecycle(orgB, adminB, programId, 'preparation'),
+      programService.transitionLifecycle(orgB, adminB, programId, 'preparation')
     ).rejects.toMatchObject({ code: 'AUDIT_FORBIDDEN', statusCode: 403 });
 
     const rowStillA = await auditsDb.auditGet<Record<string, unknown>>(
       `SELECT name, lifecycle_state, organization_id FROM audit_programs WHERE id = $1`,
-      [programId],
+      [programId]
     );
     expect(rowStillA!.organization_id).toBe(orgA);
     expect(rowStillA!.name).toBe('BVP Program — tenant isolation');
@@ -451,16 +443,18 @@ suite('AUD-BVP-001 — programService kernel BVP (Postgres realny)', () => {
     });
 
     await expect(
-      programService.updateProgram(orgA, auditeeActor, programId, { name: 'AUDITEE PRÓBUJE EDYTOWAĆ' }),
+      programService.updateProgram(orgA, auditeeActor, programId, {
+        name: 'AUDITEE PRÓBUJE EDYTOWAĆ',
+      })
     ).rejects.toMatchObject({ code: 'AUDIT_FORBIDDEN', statusCode: 403 });
 
     await expect(
-      programService.transitionLifecycle(orgA, auditeeActor, programId, 'preparation'),
+      programService.transitionLifecycle(orgA, auditeeActor, programId, 'preparation')
     ).rejects.toMatchObject({ code: 'AUDIT_FORBIDDEN', statusCode: 403 });
 
     const row = await auditsDb.auditGet<Record<string, unknown>>(
       `SELECT name, lifecycle_state FROM audit_programs WHERE id = $1 AND organization_id = $2`,
-      [programId, orgA],
+      [programId, orgA]
     );
     expect(row!.name).toBe('BVP Program — role negative');
     expect(row!.lifecycle_state).toBe('planning');
@@ -480,11 +474,11 @@ suite('AUD-BVP-001 — programService kernel BVP (Postgres realny)', () => {
 
     const criteriaBefore = await auditsDb.auditAll(
       `SELECT id FROM audit_program_criteria WHERE program_id = $1`,
-      [programId],
+      [programId]
     );
     const membersBefore = await auditsDb.auditAll(
       `SELECT id FROM audit_program_members WHERE program_id = $1`,
-      [programId],
+      [programId]
     );
     expect(criteriaBefore.length).toBeGreaterThan(0);
     expect(membersBefore.length).toBeGreaterThan(0);
@@ -499,11 +493,11 @@ suite('AUD-BVP-001 — programService kernel BVP (Postgres realny)', () => {
     ]);
     const criteriaAfter = await auditsDb.auditAll(
       `SELECT id FROM audit_program_criteria WHERE program_id = $1`,
-      [programId],
+      [programId]
     );
     const membersAfter = await auditsDb.auditAll(
       `SELECT id FROM audit_program_members WHERE program_id = $1`,
-      [programId],
+      [programId]
     );
 
     expect(programRow).toBeTruthy();
@@ -538,7 +532,7 @@ suite('AUD-BVP-001 — legacy write surface retirement (HTTP, Postgres realny)',
         jti: `jti-${userId}-${Math.random().toString(36).slice(2, 10)}`,
       },
       (config as unknown as { JWT_SECRET: string }).JWT_SECRET,
-      { expiresIn: '30m' },
+      { expiresIn: '30m' }
     );
   }
 
@@ -562,7 +556,7 @@ suite('AUD-BVP-001 — legacy write surface retirement (HTTP, Postgres realny)',
 
     const countBefore = await auditsDb.auditGet<{ cnt: string }>(
       `SELECT COUNT(*)::text AS cnt FROM audit_programs WHERE organization_id = $1`,
-      [org],
+      [org]
     );
 
     const res = await request(app)
@@ -575,7 +569,7 @@ suite('AUD-BVP-001 — legacy write surface retirement (HTTP, Postgres realny)',
 
     const countAfter = await auditsDb.auditGet<{ cnt: string }>(
       `SELECT COUNT(*)::text AS cnt FROM audit_programs WHERE organization_id = $1`,
-      [org],
+      [org]
     );
     expect(countAfter!.cnt).toBe(countBefore!.cnt);
     expect(countAfter!.cnt).toBe('0');
