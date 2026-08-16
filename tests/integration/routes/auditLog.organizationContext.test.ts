@@ -464,6 +464,7 @@ describe('Audit log organization context read surfaces', () => {
     expect(dbMocks.processQueuedContextDocumentJobs).toHaveBeenCalledWith({
       limit: 2,
       recoverStaleLocks: true,
+      organizationId: 'test-org-id',
     });
     expect(dbMocks.dbRun).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO audit_log'),

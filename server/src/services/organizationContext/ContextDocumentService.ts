@@ -211,6 +211,8 @@ interface ExtractedDocumentContent {
 
 interface ProcessQueuedContextDocumentJobsInput {
   limit?: number;
+  /** Restrict an operator-triggered tick to exactly one tenant. Scheduled ticks omit it. */
+  organizationId?: string;
   recoverStaleLocks?: boolean;
   staleLockMs?: number;
   jobIds?: string[];
@@ -3637,12 +3639,17 @@ export const contextDocumentService = {
     const recoveredLocks =
       input.recoverStaleLocks === false
         ? 0
-        : await recoverStaleContextProcessingLocks({ staleBefore });
+        : await recoverStaleContextProcessingLocks({
+            staleBefore,
+            organizationId: input.organizationId,
+          });
     const requestedJobIds = Array.from(
       new Set((input.jobIds || []).map((jobId) => String(jobId || '').trim()).filter(Boolean))
     ).slice(0, limit);
     const jobFilter =
       requestedJobIds.length > 0 ? `AND j.id IN (${requestedJobIds.map(() => '?').join(',')})` : '';
+    const organizationFilter = input.organizationId ? 'AND j.organization_id = ?' : '';
+    const organizationParams = input.organizationId ? [input.organizationId] : [];
     const rows = await dbAll(
       `SELECT
          j.id as job_id,
@@ -3656,13 +3663,16 @@ export const contextDocumentService = {
          d.file_size_bytes,
          d.deleted_at
        FROM organization_context_processing_jobs j
-       JOIN knowledge_docs d ON d.id = j.document_id
+       JOIN knowledge_docs d
+         ON d.id = j.document_id
+        AND d.organization_id = j.organization_id
        WHERE j.status IN ('queued', 'retry_scheduled')
          AND d.deleted_at IS NULL
+         ${organizationFilter}
          ${jobFilter}
        ORDER BY j.created_at ASC
        LIMIT ?`,
-      [...requestedJobIds, limit],
+      [...organizationParams, ...requestedJobIds, limit],
       { fallback: true } as any
     );
 

@@ -5,7 +5,7 @@
 import { Request, Response, Router } from 'express';
 
 import { verifyAdmin } from '../middleware/admin.middleware.js';
-import { verifyToken } from '../middleware/auth.middleware.js';
+import { validateOrgMembership, verifyToken } from '../middleware/auth.middleware.js';
 import contextDocumentService from '../services/organizationContext/ContextDocumentService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
@@ -211,6 +211,7 @@ router.get(
 router.get(
   '/organization-context/processing-jobs/summary',
   verifyToken,
+  validateOrgMembership,
   verifyAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
@@ -231,6 +232,7 @@ router.get(
 router.get(
   '/organization-context/processing-jobs',
   verifyToken,
+  validateOrgMembership,
   verifyAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
@@ -297,6 +299,7 @@ router.get(
 router.post(
   '/organization-context/processing-jobs/recover-stale-locks',
   verifyToken,
+  validateOrgMembership,
   verifyAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
@@ -339,6 +342,7 @@ router.post(
 router.post(
   '/organization-context/processing-jobs/:jobId/requeue',
   verifyToken,
+  validateOrgMembership,
   verifyAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
@@ -391,6 +395,7 @@ router.post(
 router.post(
   '/organization-context/processing-jobs/run-worker',
   verifyToken,
+  validateOrgMembership,
   verifyAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
@@ -410,6 +415,7 @@ router.post(
     const result = await contextDocumentService.processQueuedContextDocumentJobs({
       limit,
       recoverStaleLocks: true,
+      organizationId: orgId,
     });
     const auditEventId = await recordAdminAuditEvent({
       organizationId: orgId,
