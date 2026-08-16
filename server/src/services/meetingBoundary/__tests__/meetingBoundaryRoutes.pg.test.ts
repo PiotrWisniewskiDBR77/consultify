@@ -162,7 +162,7 @@ describe('meeting boundary — route layer (real Postgres)', () => {
     expect(noteRow.rows[0].status).toBe('proposed');
   });
 
-  it('generate-notes with explicit persist:true still uses the old direct-write compatibility path', async () => {
+  it('generate-notes with persist:true fails closed and performs no direct legacy write', async () => {
     const created = await createMeeting();
     const meetingId = created.body.meeting.id;
 
@@ -174,16 +174,15 @@ describe('meeting boundary — route layer (real Postgres)', () => {
         language: 'en',
         persist: true,
       });
-    expect(res.status).toBe(201);
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('MEETING_APPROVAL_REQUIRED');
 
     const meetingRow = await pool.query(`SELECT decisions_json FROM meetings WHERE id = $1`, [meetingId]);
     const followUps = await pool.query(`SELECT COUNT(*)::int AS n FROM meeting_follow_ups WHERE meeting_id = $1`, [
       meetingId,
     ]);
-    const decisions = JSON.parse(meetingRow.rows[0].decisions_json || '[]');
-    // Same heuristic extraction as GF-33 in the golden-flow suite — the
-    // compatibility path reproduces the OLD unguarded behaviour on request.
-    expect(decisions.length + followUps.rows[0].n).toBeGreaterThan(0);
+    expect(JSON.parse(meetingRow.rows[0].decisions_json || '[]')).toEqual([]);
+    expect(followUps.rows[0].n).toBe(0);
   });
 
   it('a regular member cannot approve/reject a note (403); an admin can', async () => {

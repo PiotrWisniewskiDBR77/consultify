@@ -275,11 +275,8 @@ router.patch(
  * (or an explicit `idempotencyKey`) replays the SAME note + proposal instead
  * of creating a second one.
  *
- * COMPATIBILITY PATH (`persist: true`, explicit opt-in — the OLD default is
- * now off by default): when a caller explicitly asks for it, the old direct
- * write to Meeting's OWN legacy tables still runs, unguarded, exactly as
- * before. Callers relying on the old implicit-default behaviour must be
- * updated to pass `persist: true` or to drive the new proposal/approve flow.
+ * The legacy `persist:true` bypass is rejected. It had no idempotency or
+ * human-approval boundary and therefore cannot coexist with this contract.
  */
 router.post(
   '/:id/generate-notes',
@@ -292,6 +289,12 @@ router.post(
     const transcript = String(req.body?.transcript || '').trim();
     if (!transcript) {
       return res.status(400).json({ error: 'transcript is required' });
+    }
+    if (req.body?.persist === true) {
+      return res.status(409).json({
+        error: 'Direct persistence is unavailable; approve the generated meeting-note proposal',
+        code: 'MEETING_APPROVAL_REQUIRED',
+      });
     }
 
     const meeting = await getMeeting({ organizationId: orgId, meetingId });
@@ -319,32 +322,6 @@ router.post(
         userId,
       },
     });
-
-    // Explicit opt-in compatibility path only — see the route doc comment.
-    // Bypasses the proposal/approval governance entirely; deprecated.
-    const legacyAutoPersist = req.body?.persist === true;
-    if (legacyAutoPersist) {
-      try {
-        for (const d of note.decisions || []) {
-          if (d?.decision) {
-            await addMeetingDecision({ organizationId: orgId, meetingId, decision: d.decision });
-          }
-        }
-        for (const a of note.actionItems || []) {
-          if (a?.task) {
-            await addMeetingFollowUp({
-              organizationId: orgId,
-              meetingId,
-              title: a.task,
-              owner: a.owner || null,
-            });
-          }
-        }
-      } catch (persistErr: unknown) {
-        const msg = persistErr instanceof Error ? persistErr.message : String(persistErr);
-        logger.warn(`[Meeting] generate-notes legacy persist failed (notes still returned): ${msg}`);
-      }
-    }
 
     let proposalInfo: { proposalId: string; state: string; replayed: boolean } | null = null;
     let meetingNoteId: string | null = null;
