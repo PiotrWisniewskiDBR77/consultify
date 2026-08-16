@@ -30,6 +30,8 @@
  * `organizationId`. Cross-tenant lookups deny-by-default.
  */
 
+import { createHash } from 'node:crypto';
+
 import {
   computeDocumentSchemaDiff,
   summarizeDocumentSchemaDiff,
@@ -44,8 +46,12 @@ import type {
 import {
   __resetSnapshotRegistryDaoForTests,
   deleteSnapshot as daoDeleteSnapshot,
+  insertCheckpointSnapshotWithCas as daoInsertCheckpointSnapshotWithCas,
+  loadLatestSnapshotMeta as daoLoadLatestSnapshotMeta,
   loadSnapshotsForOrg as daoLoadSnapshotsForOrg,
+  loadVersionLineage as daoLoadVersionLineage,
   persistSnapshot as daoPersistSnapshot,
+  type DocumentVersionLineageEntry,
 } from './documentVersionSnapshotRegistryDao.js';
 
 // =============================================================================
@@ -189,6 +195,54 @@ function cloneSnapshot(snapshot: DocumentVersionSnapshot): DocumentVersionSnapsh
     ...snapshot,
     schema: deepClone(snapshot.schema),
   };
+}
+
+// =============================================================================
+// MAT-MVP-DOC-001 (Lane C, 2026-09-12) — content hash.
+//
+// Recursively sorts object keys (arrays keep their order — order IS content
+// for `sections`) so two snapshots with textually identical content always
+// hash identically regardless of how the object was constructed, and a
+// changed byte anywhere in the content changes the hash.
+//
+// Deliberately hashes only the CONTENT-relevant subset of the schema
+// (`title`, `sections`, `sourceRefs`) — not the whole `DocumentSchema`.
+// Fields like `updatedAt`/`documentStatus`/`statusChangedAt` are volatile
+// metadata that change on saves/rollbacks/status transitions WITHOUT the
+// document's actual content changing; including them would make "identical
+// content -> identical hash" false for the common case of two checkpoints
+// taken back-to-back with no edit in between. This mirrors the existing
+// `sectionsContentLength()` proxy above, which already treats `sections` as
+// the definitive "how much content is in here" signal.
+// =============================================================================
+
+function canonicalizeForHash(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonicalizeForHash);
+  if (value && typeof value === 'object') {
+    const sorted: Record<string, unknown> = {};
+    for (const k of Object.keys(value as Record<string, unknown>).sort()) {
+      sorted[k] = canonicalizeForHash((value as Record<string, unknown>)[k]);
+    }
+    return sorted;
+  }
+  return value;
+}
+
+/**
+ * sha256 hex digest of the canonicalized content-relevant subset of a
+ * `DocumentSchema`. Exported so route/service callers (and tests) can
+ * compute the SAME hash independently to assert equality/inequality
+ * without depending on internal snapshot-creation plumbing.
+ */
+export function computeDocumentSchemaContentHash(schema: DocumentSchema): string {
+  const contentSubset = {
+    title: schema?.title ?? null,
+    sections: schema?.sections ?? [],
+    sourceRefs: schema?.sourceRefs ?? [],
+  };
+  const canonical = canonicalizeForHash(contentSubset);
+  const json = JSON.stringify(canonical);
+  return createHash('sha256').update(json).digest('hex');
 }
 
 async function persistSnapshot(snapshot: DocumentVersionSnapshot): Promise<{ ok: boolean }> {
@@ -343,6 +397,14 @@ export function createDocumentVersionSnapshot(
     statusAtCapture: params.statusAtCapture,
     schema: deepClone(params.schema),
     origin: params.origin ?? 'manual',
+    // 20260912_claude_c_document_version_lineage (part a) — every snapshot,
+    // regardless of call site (manual checkpoint, autosave, rollback-revert,
+    // auto-status-change), gets a content hash and an explicit parent
+    // pointer now. `previousSnapshot` was already computed above for the
+    // structural-diff audit summary; reuse it here instead of resolving it
+    // twice.
+    contentHash: computeDocumentSchemaContentHash(params.schema),
+    parentVersionId: previousSnapshot?.versionId ?? null,
   };
 
   const next = [...existing, snapshot];
@@ -520,6 +582,157 @@ export function maybeAutoCaptureDocumentVersionSnapshot(
     return null;
   }
 }
+
+// =============================================================================
+// MAT-MVP-DOC-001 (Lane C) part (b) — CAS-guarded checkpoint.
+//
+// `documentStudioService.createDocumentSnapshot` (the handler behind
+// `POST /:artifactId/snapshots`) calls THIS function instead of the sync
+// `createDocumentVersionSnapshot` above. Autosave and the rollback-revert
+// snapshot keep using the sync path unmodified — see that function's own
+// doc comment (and `document-studio.routes.ts`'s "Codex final review,
+// Blocker 2" comment) for why its sync, fire-and-forget contract is frozen.
+// The checkpoint route is the one place a double-click / blind retry
+// without an `Idempotency-Key` could otherwise create two rows, so it is
+// the one place that gets a real, Postgres-adjudicated CAS guard.
+// =============================================================================
+
+export interface CreateCheckpointSnapshotWithCasParams {
+  organizationId: string;
+  artifactId: string;
+  userId: string;
+  schema: DocumentSchema;
+  statusAtCapture: DocumentStatus;
+  label?: string;
+  reason?: string;
+  /** Defaults to 'manual' — the checkpoint route never sets this today. */
+  origin?: DocumentVersionSnapshotOrigin;
+  /**
+   * The CAS token: the `versionId` of the snapshot the caller believes is
+   * currently latest, `null` to assert "no snapshot exists yet", or
+   * `undefined` to INFER it (the service reads the actual current latest
+   * via `loadLatestSnapshotMeta` immediately before the atomic insert and
+   * uses that as the gate). INFER is what every pre-existing caller gets
+   * for free — no request shape change required — while still producing a
+   * real, Postgres-adjudicated "exactly one of two concurrent checkpoints
+   * wins" outcome, because the atomic insert re-validates whatever value
+   * is passed here against Postgres's own state at insert time regardless
+   * of how that value was obtained.
+   */
+  expectedVersion?: string | null;
+}
+
+export type CreateCheckpointSnapshotWithCasResult =
+  | { outcome: 'created'; snapshot: DocumentVersionSnapshot }
+  | {
+      outcome: 'conflict';
+      /** What the caller asserted (possibly inferred) — for the error envelope's `yourVersion`. */
+      yourVersion: string | null;
+      /** What Postgres actually holds right now — for the error envelope's `serverVersion`. */
+      serverVersion: { versionId: string; versionNumber: number } | null;
+    }
+  | { outcome: 'error' };
+
+export async function createCheckpointSnapshotWithCas(
+  params: CreateCheckpointSnapshotWithCasParams
+): Promise<CreateCheckpointSnapshotWithCasResult> {
+  if (!params.organizationId || !params.artifactId || !params.userId || !params.schema) {
+    return { outcome: 'error' };
+  }
+
+  const expectedParentVersionId =
+    params.expectedVersion !== undefined
+      ? params.expectedVersion
+      : (await daoLoadLatestSnapshotMeta(params.artifactId, params.organizationId))?.versionId ?? null;
+
+  const contentHash = computeDocumentSchemaContentHash(params.schema);
+  const versionId = makeId('document-snapshot');
+  const capturedAt = nowIso();
+
+  const result = await daoInsertCheckpointSnapshotWithCas({
+    versionId,
+    artifactId: params.artifactId,
+    organizationId: params.organizationId,
+    capturedAt,
+    capturedBy: params.userId,
+    label: params.label?.trim() || null,
+    reason: params.reason?.trim() || null,
+    statusAtCapture: params.statusAtCapture,
+    schemaJson: JSON.stringify(params.schema),
+    origin: params.origin ?? 'manual',
+    contentHash,
+    expectedParentVersionId,
+  });
+
+  if (result.outcome === 'error') return { outcome: 'error' };
+  if (result.outcome === 'conflict') {
+    return { outcome: 'conflict', yourVersion: expectedParentVersionId, serverVersion: result.serverLatest };
+  }
+
+  const snapshot: DocumentVersionSnapshot = {
+    versionId,
+    artifactId: params.artifactId,
+    organizationId: params.organizationId,
+    versionNumber: result.versionNumber,
+    capturedAt,
+    capturedBy: params.userId,
+    label: params.label?.trim() || undefined,
+    reason: params.reason?.trim() || undefined,
+    statusAtCapture: params.statusAtCapture,
+    schema: deepClone(params.schema),
+    origin: params.origin ?? 'manual',
+    contentHash,
+    parentVersionId: result.parentVersionId,
+  };
+
+  // Keep the in-process cache consistent with what Postgres now holds so
+  // synchronous readers (`listDocumentVersionSnapshots`,
+  // `getMostRecentDocumentVersionSnapshot`, etc.) see this checkpoint
+  // immediately, exactly as the sync path does.
+  const k = key(params.organizationId, params.artifactId);
+  const existing = snapshotStore.get(k) ?? [];
+  snapshotStore.set(k, [...existing, snapshot]);
+  versionIndex.set(snapshot.versionId, snapshot);
+
+  recordAudit({
+    auditId: makeId('document-audit'),
+    artifactId: params.artifactId,
+    organizationId: params.organizationId,
+    action: 'document_version_snapshot_created',
+    actorId: params.userId,
+    occurredAt: snapshot.capturedAt,
+    details: {
+      versionId: snapshot.versionId,
+      versionNumber: snapshot.versionNumber,
+      origin: snapshot.origin,
+      label: snapshot.label,
+      reason: snapshot.reason,
+      statusAtCapture: snapshot.statusAtCapture,
+      previousVersionId: snapshot.parentVersionId,
+      contentHash: snapshot.contentHash,
+      cas: 'atomic_insert',
+    },
+  });
+
+  return { outcome: 'created', snapshot: cloneSnapshot(snapshot) };
+}
+
+// =============================================================================
+// MAT-MVP-DOC-001 (Lane C) part (c) — immutable-lineage readback.
+//
+// Always a direct, COLD Postgres read (bypasses `snapshotStore` entirely) so
+// callers can prove the chain survived a process restart. Tenant-scoped by
+// construction (the DAO query always predicates on organization_id).
+// =============================================================================
+
+export async function getDocumentVersionLineage(
+  artifactId: string,
+  organizationId: string
+): Promise<DocumentVersionLineageEntry[]> {
+  return daoLoadVersionLineage(artifactId, organizationId);
+}
+
+export type { DocumentVersionLineageEntry };
 
 // =============================================================================
 // Test-only helpers

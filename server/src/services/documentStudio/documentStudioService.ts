@@ -141,14 +141,17 @@ import {
   recordTemplateUsage,
 } from './documentTemplateService.js';
 import {
+  createCheckpointSnapshotWithCas,
   createDocumentVersionSnapshot as createDocumentVersionSnapshotInternal,
   ensureDocumentVersionSnapshotsHydrated,
+  getDocumentVersionLineage as getDocumentVersionLineageInternal,
   getDocumentVersionSnapshot,
   getDocumentVersionSnapshotByNumber,
   getMostRecentDocumentVersionSnapshot,
   listDocumentVersionSnapshots,
   maybeAutoCaptureDocumentVersionSnapshot,
   registerDocumentVersionSnapshotAuditPump,
+  type DocumentVersionLineageEntry,
 } from './documentVersionSnapshotService.js';
 
 /**
@@ -330,6 +333,40 @@ function persistSchemaOverlayWriteThrough(
 ): void {
   schemaOverlayStore.set(schemaOverlayKey(artifactId, organizationId), schema);
   void daoPersistSchemaOverlay(artifactId, organizationId, schema);
+}
+
+/**
+ * MAT-MVP-DOC-001 (Lane C) part (b) — CAS-guarded overlay write, used ONLY
+ * by `rollbackDocumentToVersion`. Deliberately a SEPARATE function from
+ * `persistSchemaOverlayWriteThrough` above (rather than adding an optional
+ * param to it) so its other call sites (approve-proposal, insert-content-
+ * block) keep their exact existing fire-and-forget, unconditional
+ * behavior — untouched, zero ripple risk.
+ *
+ * AWAITS `daoPersistSchemaOverlay`'s existing conditional-UPDATE CAS (the
+ * same mechanism `updateDocumentManualContent` already uses for the manual
+ * autosave path — see `documentEditorStateRegistryDao.ts`'s `persistSchemaOverlay`
+ * doc comment): `INSERT ... ON CONFLICT (artifact_id, organization_id) DO
+ * UPDATE ... WHERE schema_json->>'updatedAt' = $expectedVersion`. Two
+ * concurrent rollbacks that both read the same pre-rollback `updatedAt`
+ * race on this single statement; Postgres's own row-level conflict
+ * handling on the `ON CONFLICT` target guarantees only one write actually
+ * applies — the loser's `WHERE` re-check sees the winner's already-updated
+ * row and reports `changes: 0` (conflict), never both silently "succeeding".
+ * The overlay cache is updated ONLY on confirmed success, mirroring
+ * `updateDocumentManualContent`'s own contract.
+ */
+async function persistSchemaOverlayCasWriteThrough(
+  artifactId: string,
+  organizationId: string,
+  schema: DocumentSchema,
+  expectedVersion: string
+): Promise<{ ok: boolean; conflict?: boolean }> {
+  const result = await daoPersistSchemaOverlay(artifactId, organizationId, schema, expectedVersion);
+  if (result.ok) {
+    schemaOverlayStore.set(schemaOverlayKey(artifactId, organizationId), schema);
+  }
+  return result;
 }
 
 export interface PlanDocumentParams {
@@ -3030,6 +3067,24 @@ export {
   getDocumentVersionSnapshotByNumber,
   listDocumentVersionSnapshots,
 };
+export type { DocumentVersionLineageEntry };
+
+/**
+ * MAT-MVP-DOC-001 (Lane C) part (c) — "immutable-lineage readback": the
+ * full version -> parent -> hash chain for a document, tenant-scoped and
+ * always read cold from Postgres (never the in-process cache), so the
+ * chain's durability is provable rather than merely asserted by an
+ * in-memory view. Returns `[]` for an unknown/cross-tenant artifactId —
+ * same deny-by-default shape as every other reader in this module, never
+ * distinguishing "does not exist" from "belongs to another tenant".
+ */
+export async function getDocumentVersionLineage(
+  artifactId: string,
+  organizationId: string
+): Promise<DocumentVersionLineageEntry[]> {
+  if (!artifactId || !organizationId) return [];
+  return getDocumentVersionLineageInternal(artifactId, organizationId);
+}
 
 export interface CreateDocumentSnapshotParams {
   organizationId: string;
@@ -3039,16 +3094,59 @@ export interface CreateDocumentSnapshotParams {
   reason?: string;
   /** Defaults to 'manual'. */
   origin?: DocumentVersionSnapshotOrigin;
+  /**
+   * MAT-MVP-DOC-001 (Lane C) part (b) — optional CAS token: the `versionId`
+   * of the snapshot the CALLER believes is currently latest for this
+   * artifact (or `null` to assert "no snapshot exists yet"). Omitted →
+   * INFERRED by the service (reads the actual current latest immediately
+   * before the atomic insert and uses that). Choice, and its compatibility
+   * impact: INFER-by-default means every pre-existing caller of this
+   * function (there is exactly one production call site today,
+   * `document-studio.routes.ts`'s `POST /:artifactId/snapshots`, which
+   * never set this) keeps working with ZERO request-shape change and still
+   * gets a REAL Postgres-adjudicated "exactly one of two concurrent
+   * checkpoints wins" guarantee — the atomic insert re-validates whatever
+   * value ends up here against Postgres's own state at insert time,
+   * independent of whether that value was inferred or explicitly supplied.
+   * A caller that DOES want the stronger guarantee (reject a checkpoint
+   * against a document state it never actually observed) can start passing
+   * this explicitly at any time — purely additive.
+   */
+  expectedVersion?: string | null;
+}
+
+/**
+ * MAT-MVP-DOC-001 (Lane C) part (b) — thrown when the CAS guard on
+ * `createDocumentSnapshot` detects that the checkpoint's expected "current
+ * latest snapshot" does not match what Postgres actually holds (a stale
+ * caller, or the loser of a genuine concurrent race). Envelope shape
+ * mirrors `DocumentManualSaveConflictError` (`manual_save_conflict`) — same
+ * `yourVersion`/`serverVersion` pair, adapted to the checkpoint domain
+ * (snapshot identity rather than schema `updatedAt`).
+ */
+export class DocumentCheckpointVersionConflictError extends Error {
+  readonly code = 'checkpoint_conflict' as const;
+  readonly yourVersion: string | null;
+  readonly serverVersion: { versionId: string; versionNumber: number } | null;
+  constructor(yourVersion: string | null, serverVersion: { versionId: string; versionNumber: number } | null) {
+    super('Another checkpoint or an out-of-date view raced this one; retry against the current latest.');
+    this.name = 'DocumentCheckpointVersionConflictError';
+    this.yourVersion = yourVersion;
+    this.serverVersion = serverVersion;
+  }
 }
 
 /**
  * Capture the current schema as a versioned snapshot. Resolves the
  * live schema via `getDocumentArtifact` (which already overlays the
- * current lifecycle status) and forwards the deep clone to the
- * snapshot service together with the lifecycle status at capture time.
+ * current lifecycle status) and forwards the deep clone to the snapshot
+ * service together with the lifecycle status at capture time.
  *
- * Throws when the artifact does not exist (so callers don't silently
- * snapshot nothing).
+ * Throws `document_not_found` when the artifact does not exist, or
+ * `DocumentCheckpointVersionConflictError` (part b — CAS) when the
+ * checkpoint's expected latest-snapshot state does not match Postgres's
+ * actual current state (see `expectedVersion` above for the INFER-vs-
+ * explicit choice).
  */
 export async function createDocumentSnapshot(
   params: CreateDocumentSnapshotParams
@@ -3062,7 +3160,7 @@ export async function createDocumentSnapshot(
     throw new Error('document_not_found');
   }
   const lifecycle = getDocumentStatusOrDefault(params.artifactId, params.organizationId);
-  return createDocumentVersionSnapshotInternal({
+  const result = await createCheckpointSnapshotWithCas({
     organizationId: params.organizationId,
     artifactId: params.artifactId,
     userId: params.userId,
@@ -3071,7 +3169,16 @@ export async function createDocumentSnapshot(
     label: params.label,
     reason: params.reason,
     origin: params.origin ?? 'manual',
+    expectedVersion: params.expectedVersion,
   });
+
+  if (result.outcome === 'error') {
+    throw new Error('checkpoint_persistence_failed');
+  }
+  if (result.outcome === 'conflict') {
+    throw new DocumentCheckpointVersionConflictError(result.yourVersion, result.serverVersion);
+  }
+  return result.snapshot;
 }
 
 // =============================================================================
@@ -3106,12 +3213,49 @@ export class DocumentRollbackError extends Error {
   }
 }
 
+/**
+ * MAT-MVP-DOC-001 (Lane C) part (b) — thrown when the CAS guard on
+ * `rollbackDocumentToVersion` detects that the live document changed since
+ * the caller's expected version (explicit or inferred), so a retry or a
+ * double-click cannot apply the same rollback twice, or two different
+ * rollbacks cannot both silently "win". Envelope shape mirrors
+ * `DocumentManualSaveConflictError` (`manual_save_conflict`) — same
+ * `yourVersion`/`serverVersion` pair, both being the live schema's
+ * `updatedAt` token (the SAME token `updateDocumentManualContent` already
+ * uses for its own CAS), not a snapshot identity.
+ */
+export class DocumentRollbackVersionConflictError extends Error {
+  readonly code = 'rollback_conflict' as const;
+  readonly yourVersion: string;
+  readonly serverVersion: string;
+  constructor(yourVersion: string, serverVersion: string) {
+    super('The document changed since this rollback was requested; retry against the current version.');
+    this.name = 'DocumentRollbackVersionConflictError';
+    this.yourVersion = yourVersion;
+    this.serverVersion = serverVersion;
+  }
+}
+
 export interface RollbackDocumentToVersionParams {
   organizationId: string;
   artifactId: string;
   userId: string;
   versionId: string;
   reason?: string;
+  /**
+   * MAT-MVP-DOC-001 (Lane C) part (b) — optional CAS token: the live
+   * document's `updatedAt` the caller last observed. Omitted → INFERRED
+   * (the service uses the `updatedAt` it itself just read via
+   * `getDocumentArtifact` a few lines above, immediately before the CAS
+   * write). Same INFER-by-default choice as `createDocumentSnapshot`'s
+   * `expectedVersion` — see that param's doc comment for the full
+   * compatibility reasoning; it applies identically here. The one existing
+   * production caller (`POST /:artifactId/snapshots/:versionId/rollback`)
+   * never set this today and keeps working unchanged, while still getting
+   * a real Postgres-adjudicated "exactly one of two concurrent rollbacks
+   * applies" guarantee via the underlying `persistSchemaOverlay` CAS.
+   */
+  expectedVersion?: string;
 }
 
 export interface RollbackDocumentToVersionResult {
@@ -3170,6 +3314,21 @@ export async function rollbackDocumentToVersion(
     );
   }
 
+  // Part (b) — CAS guard. An explicitly-supplied `expectedVersion` that
+  // does not match the live document is rejected BEFORE any write (not
+  // even the pre-rollback revert snapshot below) — a clean, immediate 409
+  // for the "stale expected-version" case. When omitted, INFER: the
+  // `updatedAt` just read above becomes the CAS token, still re-validated
+  // atomically at the actual write a few lines down (so a concurrent
+  // writer that lands between this check and that write is still caught).
+  if (
+    params.expectedVersion !== undefined &&
+    String(liveSchema.updatedAt) !== String(params.expectedVersion)
+  ) {
+    throw new DocumentRollbackVersionConflictError(params.expectedVersion, liveSchema.updatedAt);
+  }
+  const casToken = params.expectedVersion ?? liveSchema.updatedAt;
+
   const lifecycleBefore = getDocumentStatusOrDefault(params.artifactId, params.organizationId);
 
   // Step 3 — capture pre-rollback state so the rollback is reversible.
@@ -3186,13 +3345,32 @@ export async function rollbackDocumentToVersion(
 
   // Step 4 — write the target schema into the overlay so subsequent
   // reads reflect the rolled-back content. Stamp updatedAt to now so
-  // the UI's last-modified affordance updates correctly.
+  // the UI's last-modified affordance updates correctly. CAS-guarded
+  // (part b): if the live document changed since `casToken` was read —
+  // whether by another rollback, a manual save, or any other overlay
+  // writer — this fails closed with a conflict instead of silently
+  // clobbering whatever won that race. A harmless orphaned
+  // `rollback_revert` snapshot (step 3, above) can be left behind on the
+  // losing side; snapshots are append-only by design and an unused extra
+  // history entry is not a correctness problem, unlike a clobbered write.
   const restoredSchema: DocumentSchema = {
     ...target.schema,
     artifactId: params.artifactId,
     updatedAt: nowIso(),
   };
-  persistSchemaOverlayWriteThrough(params.artifactId, params.organizationId, restoredSchema);
+  const casResult = await persistSchemaOverlayCasWriteThrough(
+    params.artifactId,
+    params.organizationId,
+    restoredSchema,
+    casToken
+  );
+  if (casResult.conflict) {
+    const winner = await daoLoadSchemaOverlay(params.artifactId, params.organizationId);
+    throw new DocumentRollbackVersionConflictError(casToken, winner?.updatedAt ?? liveSchema.updatedAt);
+  }
+  if (!casResult.ok) {
+    throw new Error('rollback_persistence_failed');
+  }
 
   // Step 5 — force lifecycle to draft via the system bypass. The
   // bypass emits its own document_status_changed audit entry tagged

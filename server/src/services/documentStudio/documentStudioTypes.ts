@@ -1397,6 +1397,25 @@ export interface DocumentVersionSnapshot {
   statusAtCapture: DocumentStatus;
   schema: DocumentSchema;
   origin: DocumentVersionSnapshotOrigin;
+  /**
+   * MAT-MVP-DOC-001 (Lane C, 2026-09-12) — sha256 of the canonicalized
+   * content-relevant subset of `schema` (title/sections/sourceRefs, with
+   * object keys recursively sorted) so identical content always hashes
+   * identically regardless of key order, and so a tampered/duplicated
+   * version is detectable. `undefined` on rows captured before this field
+   * existed — readers must tolerate that, never assume presence.
+   */
+  contentHash?: string;
+  /**
+   * MAT-MVP-DOC-001 (Lane C, 2026-09-12) — explicit pointer to the
+   * `versionId` of the snapshot that was most recent for this artifact at
+   * capture time (`null` for an artifact's first-ever snapshot). Previously
+   * this was only ever computed in memory and written into the audit
+   * entry's JSON `details.previousVersionId` — never onto the snapshot row
+   * itself, so lineage was only reconstructable by `version_number`
+   * ordering. `undefined` on rows captured before this field existed.
+   */
+  parentVersionId?: string | null;
 }
 
 /**

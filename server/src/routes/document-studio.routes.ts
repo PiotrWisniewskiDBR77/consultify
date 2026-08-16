@@ -299,6 +299,7 @@ import {
   createSourceEditProposal,
   createTransformativeEditProposal,
   deleteDocumentComment,
+  DocumentCheckpointVersionConflictError,
   DocumentCommentError,
   DocumentContentBlockInsertError,
   DocumentLifecycleTransitionError,
@@ -306,6 +307,7 @@ import {
   DocumentManualSaveNotFoundError,
   DocumentManualStructureMismatchError,
   DocumentRollbackError,
+  DocumentRollbackVersionConflictError,
   ensureDocumentCommentsHydrated,
   ensureDocumentLifecycleHydrated,
   ensureDocumentVersionSnapshotsHydrated,
@@ -315,6 +317,7 @@ import {
   getDocumentCommentSectionCounts,
   getDocumentGenerationWarnings,
   getDocumentLifecycleState,
+  getDocumentVersionLineage,
   getDocumentVersionSnapshot,
   insertDocumentContentBlock,
   listDocumentAuditEntriesAsync,
@@ -3645,11 +3648,24 @@ router.post(
     }
     const label = typeof req.body?.label === 'string' ? req.body.label : undefined;
     const reason = typeof req.body?.reason === 'string' ? req.body.reason : undefined;
+    // MAT-MVP-DOC-001 (Lane C) part (b) — optional CAS token: the caller's
+    // last-known "current latest snapshot" versionId. `undefined` (field
+    // omitted) means INFER — see `createDocumentSnapshot`'s own doc comment
+    // for the full compatibility reasoning. `null` explicitly asserts "no
+    // snapshot should exist yet".
+    const expectedVersion: string | null | undefined =
+      typeof req.body?.expectedVersion === 'string'
+        ? req.body.expectedVersion
+        : req.body?.expectedVersion === null
+          ? null
+          : undefined;
     await ensureDocumentLifecycleHydrated(organizationId);
     await ensureDocumentVersionSnapshotsHydrated(organizationId);
 
     // Blocker B (Codex, third round) — request-bound idempotency.
-    // `createDocumentSnapshot` has no CAS guard (see the comment below), so a
+    // `createDocumentSnapshot` now ALSO carries its own CAS guard (part b,
+    // MAT-MVP-DOC-001) independent of this header — see that function's doc
+    // comment. This idempotency layer stays as defence in depth for a
     // client retry of the SAME request (network timeout, disconnect before
     // the response arrived, etc.) must not be allowed to call it a second
     // time. Opt-in: a caller that sends no `Idempotency-Key` gets the exact
@@ -3747,6 +3763,7 @@ router.post(
         // 'manual' — the explicit-origin path stays @internal and only
         // the rollback orchestrator and (future) auto-status-change
         // hooks set it.
+        expectedVersion,
       });
       const versionId = (snapshot as { versionId?: string } | null)?.versionId ?? null;
 
@@ -3835,6 +3852,20 @@ router.post(
 
       res.status(201).json({ snapshot });
     } catch (err) {
+      // MAT-MVP-DOC-001 (Lane C) part (b) — CAS conflict. Envelope shape
+      // mirrors `manual_save_conflict` (see `DocumentManualSaveConflictError`
+      // handling on the manual-content-save route below).
+      if (err instanceof DocumentCheckpointVersionConflictError) {
+        res.status(409).json({
+          error: 'checkpoint_conflict',
+          code: 'DOC_CHECKPOINT_CONFLICT',
+          conflict: {
+            yourVersion: err.yourVersion,
+            serverVersion: err.serverVersion,
+          },
+        });
+        return;
+      }
       const message = err instanceof Error ? err.message : String(err);
       if (message === 'document_not_found') {
         res.status(404).json({ error: 'document_not_found', message: 'document_not_found' });
@@ -3873,6 +3904,33 @@ router.get(
       return;
     }
     res.json({ snapshot });
+  })
+);
+
+// MAT-MVP-DOC-001 (Lane C) part (c) — "immutable-lineage readback": the
+// full version -> parent -> hash chain for a document. Deliberately reads
+// COLD from Postgres (see `getDocumentVersionLineage`'s doc comment) rather
+// than the in-process snapshot cache the routes above use, so the chain's
+// durability is provable rather than merely reflecting this process's
+// current in-memory view. Tenant-scoped via the auth context's
+// `organizationId`, never a request parameter — an artifact belonging to
+// another tenant resolves to an empty chain, same deny-by-default shape as
+// the rest of this router.
+router.get(
+  '/:artifactId/lineage',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const artifactId = String(req.params.artifactId);
+    if (!artifactId) {
+      res.status(400).json({ error: 'artifactId is required' });
+      return;
+    }
+    const lineage = await getDocumentVersionLineage(artifactId, organizationId);
+    res.json({ artifactId, lineage });
   })
 );
 
@@ -3934,6 +3992,11 @@ router.post(
       return;
     }
     const reason = typeof req.body?.reason === 'string' ? req.body.reason : undefined;
+    // MAT-MVP-DOC-001 (Lane C) part (b) — optional CAS token: the live
+    // document's `updatedAt` the caller last observed. Omitted → INFER
+    // (see `rollbackDocumentToVersion`'s `expectedVersion` doc comment).
+    const expectedVersion: string | undefined =
+      typeof req.body?.expectedVersion === 'string' ? req.body.expectedVersion : undefined;
     await ensureDocumentLifecycleHydrated(organizationId);
     await ensureDocumentVersionSnapshotsHydrated(organizationId);
 
@@ -4023,6 +4086,7 @@ router.post(
         userId,
         versionId,
         reason,
+        expectedVersion,
       });
       const revertVersionId = result.revertSnapshot?.versionId ?? null;
 
@@ -4124,6 +4188,19 @@ router.post(
 
       res.json(result);
     } catch (err) {
+      // MAT-MVP-DOC-001 (Lane C) part (b) — CAS conflict. Envelope shape
+      // mirrors `manual_save_conflict`, same as the checkpoint route above.
+      if (err instanceof DocumentRollbackVersionConflictError) {
+        res.status(409).json({
+          error: 'rollback_conflict',
+          code: 'DOC_ROLLBACK_CONFLICT',
+          conflict: {
+            yourVersion: err.yourVersion,
+            serverVersion: err.serverVersion,
+          },
+        });
+        return;
+      }
       if (err instanceof DocumentRollbackError) {
         const status = mapRollbackErrorToStatus(err.code);
         res.status(status).json({ error: err.code, message: err.message });
