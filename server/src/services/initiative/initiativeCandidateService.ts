@@ -77,6 +77,16 @@ export interface InitiativeCandidate {
   initiativeId?: string | null;
   duplicateOfInitiativeId?: string | null;
   acceptedAt?: string | null;
+  /**
+   * INI-BVP-001 — the DISJOINT claim column written by the event-sourced
+   * runtime-v1 path (registerInitiative.ts via
+   * postgresMaterialCommandUnitOfWork.markSourceProposalRegistered). Unlike
+   * `initiativeId`, this points at an `ie_aggregate_state` row, never a real
+   * `initiatives` table row. Read here so `acceptCandidate` can recognize a
+   * candidate already claimed by that subsystem instead of minting a SECOND
+   * materialization.
+   */
+  registeredInitiativeId?: string | null;
 }
 
 /** Raw discovery artifact pulled from a source table before scoring. */
@@ -121,6 +131,16 @@ export interface AcceptCandidatePayload {
    * must not present that as a completed handoff.
    */
   receiptPersisted: boolean;
+  /**
+   * INI-BVP-001 — set when this candidate's durable materialization lives in
+   * the event-sourced runtime-v1 store (an `ie_aggregate_state` row claimed
+   * via registerInitiative.ts) rather than the classic funnel's `initiatives`
+   * table. When set, `initiativeId` is null on purpose: no relational DRAFT
+   * was created (or ever should be) for this acceptance — the FE should treat
+   * this candidate as accepted-elsewhere instead of expecting a DRAFT to
+   * navigate to.
+   */
+  registeredInitiativeId?: string | null;
 }
 
 /**
@@ -442,6 +462,8 @@ function mapRow(row: Record<string, unknown>): InitiativeCandidate {
     duplicateOfInitiativeId:
       row.duplicate_of_initiative_id != null ? String(row.duplicate_of_initiative_id) : null,
     acceptedAt: row.accepted_at != null ? String(row.accepted_at) : null,
+    registeredInitiativeId:
+      row.registered_initiative_id != null ? String(row.registered_initiative_id) : null,
   };
 }
 
@@ -720,6 +742,30 @@ export async function acceptCandidate(
       candidate.sourceType && candidate.sourceId ? candidate.sourceType : 'manual';
     const lineageSourceId = candidate.sourceType && candidate.sourceId ? candidate.sourceId : null;
 
+    // INI-BVP-001 — the event-sourced runtime-v1 path (registerInitiative.ts via
+    // postgresMaterialCommandUnitOfWork.markSourceProposalRegistered) can claim
+    // this SAME candidate row through `registered_initiative_id`, a column this
+    // funnel never wrote or checked. If that already happened, this candidate is
+    // ALREADY materialized — in the aggregate store, not `initiatives` — so this
+    // call must be a no-op read of that receipt, not a second DRAFT creation.
+    // Mirrors the `reusedReceipt` early-return below for `initiativeId`.
+    if (candidate.registeredInitiativeId && !candidate.initiativeId) {
+      return {
+        candidateId: candidate.id,
+        organizationId: candidate.organizationId,
+        sourceType: candidate.sourceType,
+        sourceId: candidate.sourceId,
+        title: candidate.title,
+        rationale: candidate.rationale,
+        brief,
+        initiativeId: null,
+        filled: false,
+        duplicateOfInitiativeId: null,
+        receiptPersisted: true,
+        registeredInitiativeId: candidate.registeredInitiativeId,
+      };
+    }
+
     // (b0) Zwornik cross-record de-dup — BEFORE minting a new DRAFT, check
     // whether an ACTIVE initiative already covers this topic (a different
     // discovery artifact proposing the same underlying initiative). Advisory
@@ -802,11 +848,14 @@ export async function acceptCandidate(
     //     missing the receipt columns turned every retry into a fresh duplicate DRAFT
     //     while the API kept answering 200.
     let receiptPersisted = reusedReceipt;
+    // INI-BVP-001 — surfaced to the caller only when a concurrent runtime-v1
+    // registration wins the race below (adopted instead of our local DRAFT).
+    let registeredInitiativeId: string | null = null;
     if (initiativeId && !reusedReceipt) {
       const receiptParams: unknown[] = [initiativeId, duplicateOfInitiativeId, candidate.id];
       let receiptSql = `UPDATE initiative_candidates
           SET status = 'accepted', initiative_id = ?, duplicate_of_initiative_id = ?, accepted_at = NOW()
-          WHERE id = ? AND initiative_id IS NULL`;
+          WHERE id = ? AND initiative_id IS NULL AND registered_initiative_id IS NULL`;
       if (orgId) {
         receiptSql += ` AND organization_id = ?`;
         receiptParams.push(orgId);
@@ -824,10 +873,12 @@ export async function acceptCandidate(
       if (claimed >= 1) {
         receiptPersisted = true;
       } else {
-        // Claim not ours: either a concurrent accept won it, or the write failed.
-        // Both cases are settled by re-reading the durable row.
+        // Claim not ours: either a concurrent accept won it (this funnel OR the
+        // runtime-v1 register path — INI-BVP-001), or the write failed. All
+        // cases are settled by re-reading the durable row; the database row is
+        // the arbiter, never our in-memory guess.
         const winnerParams: unknown[] = [candidate.id];
-        let winnerSql = `SELECT initiative_id, duplicate_of_initiative_id
+        let winnerSql = `SELECT initiative_id, duplicate_of_initiative_id, registered_initiative_id
           FROM initiative_candidates WHERE id = ?`;
         if (orgId) {
           winnerSql += ` AND organization_id = ?`;
@@ -837,6 +888,8 @@ export async function acceptCandidate(
           .queryOne<Record<string, unknown>>(winnerSql, winnerParams)
           .catch(() => null);
         const winnerId = winner?.initiative_id != null ? String(winner.initiative_id) : null;
+        const winnerRegisteredId =
+          winner?.registered_initiative_id != null ? String(winner.registered_initiative_id) : null;
 
         if (winnerId) {
           if (winnerId !== initiativeId) {
@@ -849,6 +902,48 @@ export async function acceptCandidate(
             winner?.duplicate_of_initiative_id != null
               ? String(winner.duplicate_of_initiative_id)
               : duplicateOfInitiativeId;
+          receiptPersisted = true;
+        } else if (winnerRegisteredId) {
+          // INI-BVP-001 — a concurrent runtime-v1 registration won the row in the
+          // gap between our SELECT and this UPDATE. That subsystem's claim is
+          // canonical. Discarding the in-memory `initiativeId` reference is NOT
+          // enough by itself: if step (b) above minted a FRESH DRAFT for us in
+          // THIS call (as opposed to (b0) matching a PRE-EXISTING initiative,
+          // which always pairs with a non-null `duplicateOfInitiativeId`), that
+          // row was really INSERTed into `initiatives` and would otherwise sit
+          // there forever as an orphan no candidate ever points to. Delete it —
+          // we know for certain we created it in this call and nothing else can
+          // reference it yet (the (c) fill step below hasn't run).
+          const weOwnAnOrphanDraft = Boolean(initiativeId) && !duplicateOfInitiativeId;
+          if (weOwnAnOrphanDraft) {
+            try {
+              const orphanOrgId = orgId || candidate.organizationId;
+              await db.queryRun(`DELETE FROM initiatives WHERE id = ? AND organization_id = ?`, [
+                initiativeId,
+                orphanOrgId,
+              ]);
+              logger.info(
+                `[initiativeCandidateService] candidate ${candidate.id}: deleted orphan DRAFT ${initiativeId} after losing the claim race to runtime-v1 registration ${winnerRegisteredId}`
+              );
+            } catch (cleanupErr) {
+              // Best-effort: log loudly rather than silently accepting an orphan.
+              // The candidate row itself still converges to exactly one claim
+              // column below — only the (rare) unlinked `initiatives` row would
+              // remain if this delete itself fails.
+              logger.error(
+                `[initiativeCandidateService] candidate ${candidate.id}: FAILED to delete orphan DRAFT ${initiativeId} after losing the claim race to runtime-v1 registration ${winnerRegisteredId} — orphan row remains: ${
+                  (cleanupErr as Error)?.message || cleanupErr
+                }`
+              );
+            }
+          } else {
+            logger.info(
+              `[initiativeCandidateService] candidate ${candidate.id}: concurrent runtime-v1 registration already resolved to initiative ${winnerRegisteredId} — adopting it (no local DRAFT had been created)`
+            );
+          }
+          registeredInitiativeId = winnerRegisteredId;
+          initiativeId = null;
+          duplicateOfInitiativeId = null;
           receiptPersisted = true;
         } else {
           // FAIL-CLOSED. The initiative exists but is unlinked; the candidate stays
@@ -916,6 +1011,7 @@ export async function acceptCandidate(
       filled,
       duplicateOfInitiativeId,
       receiptPersisted,
+      registeredInitiativeId,
     };
   } catch {
     return null;
