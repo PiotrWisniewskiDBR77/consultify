@@ -496,3 +496,24 @@ touch these — they are out of lease):**
   `server/src/controllers/ToolController.ts` as in-lease, contradicting the brief's explicit
   "OWNED BY OTHER AGENTS" instruction. Followed the brief; flagging the manifest for the lead
   to reconcile so a future agent isn't misled by the JSON alone.
+
+---
+
+## 8. Superseding technical closure — 2026-08-17
+
+The §6 change request is implemented in the bounded worktree. Production
+`KnownToolsService` consumes `APPROVED_MVP_TOOL_TYPES` directly, leaving exactly
+`dynamic-swot` launchable. Rows outside that set return `isActive=false` and
+`isComingSoon=true`; detail returns 404 and session creation returns 409 without a
+row. Tests mounted the production `tools.routes.ts` and `knownTools.routes.ts`
+routers under their Gateway prefixes on fresh PostgreSQL.
+
+Fresh migrations were 728/728; strict repeat and dry-run both reported zero
+pending. Focused results: backend governance 5/5, mounted realPG 6/6, existing
+inactive-tools UI contract 42/42, approved-runtime acceptance 1/1, and typecheck
+exit 0. `TASK_EVIDENCE.json` records exact commands and controls.
+
+This supersedes the earlier "19-wide real gate" current-state finding above,
+which remains as the pre-fix audit trail. No additional tool was approved; every
+tool except Dynamic SWOT remains unavailable pending an owner-approved packet,
+provenance and rights record.
