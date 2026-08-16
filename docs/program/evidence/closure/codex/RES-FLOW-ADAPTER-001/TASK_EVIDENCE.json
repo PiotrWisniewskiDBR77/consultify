@@ -1,13 +1,17 @@
 {
   "taskId": "RES-FLOW-ADAPTER-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "1f0dc51f291bc42dd0e361c321198e9cd7fb3e66",
+  "productSha": "73bf4deb47bcafa035f72fd9dad941c9a2ce44f1",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
   "changedPaths": [
     "server/src/services/resultsVnext/platform/commandCapabilityGuard.ts",
     "tests/resultsVnext/platform/commandCapabilityGuard.test.ts",
     "tests/resultsVnext/kpi/kpiIdentityAcrossSurfaces.realdb.test.ts",
-    "server/src/services/finance/canonical/__tests__/roiFinanceReconciliationAdapter.pg.test.ts"
+    "server/src/services/finance/canonical/__tests__/roiFinanceReconciliationAdapter.pg.test.ts",
+    "server/migrations/20260917_results_execution_signal_ingress.sql",
+    "server/src/services/resultsVnext/platform/executionSignalIngress.ts",
+    "server/src/services/resultsVnext/platform/platformOutboxDrainCron.ts",
+    "server/src/services/resultsVnext/platform/__tests__/executionSignalIngress.pg.test.ts"
   ],
   "changedPathRationale": {
     "server/src/services/resultsVnext/platform/commandCapabilityGuard.ts": "Fail closed with canonical DENY when an untyped or stale caller omits CommandAccessContext; prevents a TypeError/500 at the Results-Finance write boundary.",
@@ -74,14 +78,36 @@
     "oneOpenPerLink": "fixture isolates each scenario while production unique invariant remains enforced"
   },
   "browserArtifacts": [],
-  "rollback": {
-    "code": "revert commit 1f0dc51f291bc42dd0e361c321198e9cd7fb3e66",
-    "schema": "no migration or schema mutation introduced by this commit"
+  "technicalClosure20260817": {
+    "candidateSha": "73bf4deb47bcafa035f72fd9dad941c9a2ce44f1",
+    "changedPaths": [
+      "server/migrations/20260917_results_execution_signal_ingress.sql",
+      "server/src/services/resultsVnext/platform/executionSignalIngress.ts",
+      "server/src/services/resultsVnext/platform/platformOutboxDrainCron.ts",
+      "server/src/services/resultsVnext/platform/__tests__/executionSignalIngress.pg.test.ts"
+    ],
+    "executionToResults": {
+      "status": "PASS",
+      "contract": "Versioned Execution signal is claimed with SKIP LOCKED, recorded once as an immutable tenant-scoped Results ingress receipt, and atomically marked DELIVERED. PROCESSING leases older than five minutes are restart-reclaimable; unsupported payload versions fail closed without a receipt.",
+      "realPostgres": "fresh pgvector/pgvector:pg16; initial 728 migrations; repeat 0; dry-run pending 0; focused suite exit 0, 1/1 file, 2/2 tests",
+      "negativeControls": "8-way concurrent claim, cross-tenant pending preservation, unsupported payload_version=99 FAILED/no receipt, stale PROCESSING restart reclaim, immutable receipt UPDATE rejection"
+    },
+    "actualToFinance": {
+      "status": "PASS_EXISTING_CANONICAL_CONSUMER",
+      "contract": "Existing rvn_platform outbox and finance_projection consumer preserve Actual ownership and open reconciliation rather than overwriting Finance or Results Actual.",
+      "realPostgres": "vitest.acceptance.config.ts finance projection suite exit 0, 1/1 file, 15/15 tests"
+    },
+    "typecheck": "npm run type-check exit 0",
+    "uiAndVisibility": "NOT_IN_SCOPE; no owner visibility decision and no UI claim"
   },
-  "verdict": "PARTIAL",
+  "rollback": {
+    "code": "Disable the shared Results platform drain invocation, then revert the four technicalClosure20260817 paths.",
+    "schema": "Non-destructive rollback: retain immutable receipts and additive columns/table; do not drop evidence rows. Re-enable the consumer after code restoration."
+  },
   "openBlockers": [
-    "Full Execution-to-Results producer contract awaits lane B handoff.",
-    "Full outbox replay/restart and browser evidence for the integrated flow remain required.",
-    "Results visibility and Finance reconciliation owner decisions remain fail-closed."
-  ]
+    "Results visibility and Finance reconciliation owner decisions remain fail-closed and were not changed.",
+    "Browser/UI evidence is separate from this bounded adapter closure."
+  ],
+  "technicalVerdict": "PASS_CURRENT_SHA",
+  "verdict": "PARTIAL"
 }
