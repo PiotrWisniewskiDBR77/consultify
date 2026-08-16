@@ -1,6 +1,3 @@
-import os from 'node:os';
-import path from 'node:path';
-
 import bcrypt from 'bcryptjs';
 import express from 'express';
 import jwt from 'jsonwebtoken';
@@ -23,17 +20,16 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
  */
 describe('Account deletion routes are uniformly password-gated', () => {
   const prevEnv = { ...process.env };
-  const workerId = process.env.VITEST_WORKER_ID || '0';
-  const sqlitePath = path.join(os.tmpdir(), `consultify-deletion-guard-${workerId}.db`);
+  const databaseUrl = process.env.DATABASE_URL;
 
   let resetConnection: (() => Promise<void>) | null = null;
   let db: any;
   let settingsRouter: any;
   let gdprRouter: any;
-  let canRunIsolatedSqlite = true;
+  let realDatabaseReady = false;
 
-  const userId = 'u-del-guard-1';
-  const orgId = null;
+  const userId = '8ac9bb4f-8331-40fd-9970-4c3e51df09d1';
+  const orgId = '9c37ac09-151f-4aa9-bc0b-58cd87106342';
   const correctPassword = 'C0rrectHorse!';
   const wrongPassword = 'definitely-not-it';
   const passwordHash = bcrypt.hashSync(correctPassword, 4);
@@ -89,42 +85,20 @@ describe('Account deletion routes are uniformly password-gated', () => {
   beforeAll(async () => {
     process.env.NODE_ENV = 'test';
     process.env.MOCK_DB = 'false';
-    process.env.DB_TYPE = 'sqlite';
-    delete process.env.DATABASE_URL;
-    process.env.SQLITE_PATH = sqlitePath;
+    process.env.RUN_DB_TESTS = '1';
+    process.env.DB_TYPE = 'postgres';
+    if (!databaseUrl) {
+      throw new Error('This security suite requires a disposable PostgreSQL DATABASE_URL.');
+    }
+    process.env.DATABASE_URL = databaseUrl;
     process.env.JWT_SECRET = jwtSecret;
 
     const dbMod = await import('../../../server/src/database/Database.js');
-    canRunIsolatedSqlite = !process.env.DATABASE_URL;
-    if (!canRunIsolatedSqlite) {
-      return;
-    }
     resetConnection = dbMod.resetConnection;
     await resetConnection();
-    db = dbMod.getDatabase();
-
-    await db.exec(`
-      CREATE TABLE IF NOT EXISTS users (
-        id TEXT PRIMARY KEY,
-        organization_id TEXT,
-        email TEXT,
-        first_name TEXT,
-        last_name TEXT,
-        password TEXT,
-        role TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      );
-      CREATE TABLE IF NOT EXISTS account_deletion_requests (
-        id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL,
-        status TEXT NOT NULL,
-        reason TEXT,
-        notes TEXT,
-        requested_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        scheduled_for DATETIME,
-        completed_at DATETIME
-      );
-    `);
+    db = await dbMod.getDatabaseAsync();
+    await db.get('SELECT 1 AS ok');
+    realDatabaseReady = true;
 
     settingsRouter = (await import('../../../server/src/routes/settings.routes.ts')).default;
     gdprRouter = (await import('../../../server/src/routes/gdpr.routes.ts')).default;
@@ -139,16 +113,12 @@ describe('Account deletion routes are uniformly password-gated', () => {
   });
 
   beforeEach(async () => {
-    if (!canRunIsolatedSqlite) return;
-
-    await db.exec(`
-      DELETE FROM account_deletion_requests WHERE user_id = '${userId}';
-      DELETE FROM users WHERE id = '${userId}';
-    `);
-    // gdpr_requests is created lazily by the settings route; clean it best-effort.
-    await db
-      .run(`DELETE FROM gdpr_requests WHERE user_id = ?`, [userId])
-      .catch(() => undefined);
+    expect(realDatabaseReady).toBe(true);
+    await db.run(`DELETE FROM gdpr_requests WHERE user_id = ?`, [userId]);
+    await db.run(`DELETE FROM account_deletion_requests WHERE user_id = ?`, [userId]);
+    await db.run(`DELETE FROM users WHERE id = ?`, [userId]);
+    await db.run(`DELETE FROM organizations WHERE id = ?`, [orgId]);
+    await db.run(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [orgId, 'Deletion Guard']);
     await db.run(
       `INSERT INTO users (id, organization_id, email, first_name, last_name, password, role)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -159,8 +129,6 @@ describe('Account deletion routes are uniformly password-gated', () => {
   for (const route of routes) {
     describe(route.label, () => {
       it('rejects with 400 and writes no deletion row when password is missing', async () => {
-        if (!canRunIsolatedSqlite) return;
-
         const res = await route
           .method()
           .set('Authorization', `Bearer ${makeToken()}`)
@@ -171,8 +139,6 @@ describe('Account deletion routes are uniformly password-gated', () => {
       });
 
       it('rejects with 403 and writes no deletion row when password is wrong', async () => {
-        if (!canRunIsolatedSqlite) return;
-
         const res = await route
           .method()
           .set('Authorization', `Bearer ${makeToken()}`)
@@ -183,8 +149,6 @@ describe('Account deletion routes are uniformly password-gated', () => {
       });
 
       it('schedules deletion only when the correct password is supplied', async () => {
-        if (!canRunIsolatedSqlite) return;
-
         const res = await route
           .method()
           .set('Authorization', `Bearer ${makeToken()}`)

@@ -314,19 +314,29 @@ export async function collectUserData(userId: string): Promise<UserDataExport> {
     securityEvents: [],
   };
 
+  const userColumns = await getTableColumns('users');
+  const userSelect = ['id', 'email', 'first_name', 'last_name', 'role', 'created_at'];
+  if (userColumns.has('phone')) userSelect.push('phone');
+  else if (userColumns.has('phone_number')) userSelect.push('phone_number AS phone');
+  if (userColumns.has('last_login_at')) userSelect.push('last_login_at');
+  else if (userColumns.has('last_login')) userSelect.push('last_login AS last_login_at');
+
   data.user = await dbGet(
-    `SELECT id, email, first_name, last_name, phone, role, created_at, last_login_at
-     FROM users WHERE id = ?`,
-    [userId]
+    `SELECT ${userSelect.join(', ')} FROM users WHERE id = ?`,
+    [userId],
+    { fallback: false }
   );
 
-  const prefsRow = await dbGet<{ extended_preferences?: string }>(
-    `SELECT extended_preferences FROM users WHERE id = ?`,
-    [userId]
-  );
-  data.preferences = prefsRow?.extended_preferences
-    ? JSON.parse(prefsRow.extended_preferences)
-    : null;
+  if (userColumns.has('extended_preferences')) {
+    const prefsRow = await dbGet<{ extended_preferences?: string }>(
+      `SELECT extended_preferences FROM users WHERE id = ?`,
+      [userId],
+      { fallback: false }
+    );
+    data.preferences = prefsRow?.extended_preferences
+      ? JSON.parse(prefsRow.extended_preferences)
+      : null;
+  }
 
   data.projects = await dbAll(
     `SELECT id, name, description, status, created_at, updated_at
@@ -358,10 +368,18 @@ export async function collectUserData(userId: string): Promise<UserDataExport> {
   }
 
   try {
-    data.assessments = await dbAll(
-      `SELECT * FROM assessments WHERE user_id = ? ORDER BY created_at DESC LIMIT 100`,
-      [userId]
-    );
+    const assessmentColumns = await getTableColumns('assessments');
+    const assessmentOwnerColumn = assessmentColumns.has('user_id')
+      ? 'user_id'
+      : assessmentColumns.has('created_by')
+        ? 'created_by'
+        : null;
+    if (assessmentOwnerColumn) {
+      data.assessments = await dbAll(
+        `SELECT * FROM assessments WHERE ${assessmentOwnerColumn} = ? ORDER BY created_at DESC LIMIT 100`,
+        [userId]
+      );
+    }
   } catch (err: any) {
     logger.debug('[GDPR] Assessments export skipped:', err?.message || err);
   }
