@@ -106,6 +106,14 @@ vi.mock('../../../server/src/controllers/InitiativeController.js', () => ({
     getGateReadinessCheck: (_req: any, res: any) => res.status(200).json({}),
     getStatusHistory: (_req: any, res: any) => res.status(200).json([]),
     createInitiative: (_req: any, res: any) => res.status(201).json({}),
+    deleteInitiative: (_req: any, res: any) => res.status(200).json({}),
+    bulkAssignInitiatives: (_req: any, res: any) => res.status(200).json({}),
+    getLinkedItems: (_req: any, res: any) => res.status(200).json([]),
+    addLinkedItem: (_req: any, res: any) => res.status(200).json({}),
+    removeLinkedItem: (_req: any, res: any) => res.status(200).json({}),
+    checkSimilarInitiatives: (_req: any, res: any) => res.status(200).json([]),
+    getGateAiCheck: (_req: any, res: any) => res.status(200).json({}),
+    validateCard: (_req: any, res: any) => res.status(200).json({}),
   },
 }));
 

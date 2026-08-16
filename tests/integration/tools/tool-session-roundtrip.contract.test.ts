@@ -139,9 +139,56 @@ vi.mock('../../../server/src/services/initiative/createInitiativeService.js', ()
 let app: Express;
 
 const SWOT_ANSWERS = {
-  signals: [
-    { id: 's1', text: 'Strong brand recognition in EU mid-market', quadrant: 'strength' },
-    { id: 's2', text: 'Legacy ERP slows order-to-cash', quadrant: 'weakness' },
+  items: [
+    {
+      id: 's1',
+      text: 'Strong brand recognition in EU mid-market',
+      quadrant: 'strengths',
+      impact: 'high',
+      proposalStatus: 'accepted',
+      evidenceStatus: 'confirmed',
+    },
+    {
+      id: 's2',
+      text: 'Demand for regional delivery is increasing',
+      quadrant: 'opportunities',
+      impact: 'high',
+      proposalStatus: 'accepted',
+      evidenceStatus: 'confirmed',
+    },
+  ],
+  tensions: [
+    {
+      id: 't1',
+      title: 'Use brand strength to capture regional demand',
+      type: 'attack',
+      linkedItemIds: ['s1', 's2'],
+      linkedCorrelationIds: [],
+      insight: 'A bounded regional pilot can test demand without a full rollout.',
+    },
+  ],
+  recommendedMoves: [
+    {
+      id: 'm1',
+      title: 'Launch a regional mid-market pilot',
+      category: 'quick-win',
+      rationale: 'Existing brand strength lowers the cost of validating regional demand.',
+      linkedTensionIds: ['t1'],
+      linkedItemIds: ['s1', 's2'],
+      expectedImpact: 'high',
+      estimatedEffort: 'medium',
+      firstStep: 'Select one pilot customer and define success measures.',
+      ownerRole: 'Sales Director',
+      tradeoff: {
+        chosen: 'Direct regional pilot',
+        deferred: 'Full-market rollout',
+        cost: 'One quarter of focused delivery capacity',
+      },
+      rejectedAlternative: {
+        option: 'Immediate partner-led expansion',
+        reason: 'It would weaken control over the first implementation evidence.',
+      },
+    },
   ],
   summary: {
     executiveSummary: 'Prioritize EU expansion while modernizing order-to-cash.',
@@ -183,18 +230,31 @@ describe('H3 tool session round-trip (create → save → resume → output)', (
         priority_order INTEGER, created_at TEXT, updated_at TEXT
       )`
     );
+    await sqlRun(
+      `CREATE TABLE my_ideas (
+        id TEXT PRIMARY KEY, user_id TEXT, organization_id TEXT, title TEXT,
+        body TEXT, tags TEXT, source_type TEXT, source_pack_json TEXT,
+        created_at TEXT, updated_at TEXT
+      )`
+    );
 
     const { default: toolsRoutes } = await import('../../../server/src/routes/tools.routes.js');
     app = express();
     app.use(express.json());
     app.use('/api/tools', toolsRoutes);
+    app.use((error: any, _req: any, res: any, _next: any) => {
+      res.status(Number(error?.status) || 500).json({
+        error: String(error?.message || 'Unexpected test server failure'),
+        code: error?.code,
+      });
+    });
   });
 
   it('creates a SWOT tool session (DRAFT)', async () => {
     const res = await request(app)
       .post('/api/tools')
       .send({ toolType: 'dynamic-swot', name: 'SWOT — Acme growth review' });
-    expect(res.status).toBe(200);
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(res.body.id).toBeTruthy();
     expect(res.body.status).toBe('DRAFT');
     sessionId = res.body.id;
@@ -217,7 +277,7 @@ describe('H3 tool session round-trip (create → save → resume → output)', (
       confidenceAvg: 2,
       expectedVersion: 1,
     });
-    expect(res.status).toBe(200);
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(res.body.version).toBe(2);
   });
 
@@ -321,7 +381,7 @@ describe('H3 tool session round-trip (create → save → resume → output)', (
       title: 'SWOT output — EU expansion focus',
       description: 'Prioritize EU expansion while modernizing order-to-cash.',
     });
-    expect(res.status).toBe(200);
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(res.body.id).toBeTruthy();
     expect(res.body.sourceSessionId).toBe(sessionId);
     expect(res.body.sourceToolType).toBe('dynamic-swot');
@@ -342,7 +402,7 @@ describe('H3 tool session round-trip (create → save → resume → output)', (
       outputType: 'idea',
       title: 'SWOT output — EU expansion focus',
     });
-    expect(res.status).toBe(200);
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(res.body.deduplicated).toBe(true);
     expect(res.body.id).toBe(first?.initiative_id);
   });

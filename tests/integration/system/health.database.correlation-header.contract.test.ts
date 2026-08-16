@@ -23,6 +23,7 @@ vi.mock('../../../server/src/config/demoPolicy.js', () => ({
 
 vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
   verifyToken: (_req: any, _res: unknown, next: () => void) => next(),
+  requireSuperAdmin: (_req: any, _res: unknown, next: () => void) => next(),
 }));
 
 describe('health database correlation header contract', () => {
@@ -83,4 +84,3 @@ describe('health database correlation header contract', () => {
     expect(res.headers['x-correlation-id']).toBe('pack08s5-db-health-fail-1');
   });
 });
-

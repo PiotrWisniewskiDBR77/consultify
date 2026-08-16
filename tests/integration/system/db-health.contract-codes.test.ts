@@ -28,6 +28,7 @@ vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
     req.organizationId = 'org-1';
     next();
   },
+  requireSuperAdmin: (_req: any, _res: unknown, next: () => void) => next(),
 }));
 
 describe('DB health routes coded error contracts', () => {
