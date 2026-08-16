@@ -4,7 +4,7 @@
   "branch": "codex/closure-claude-a-method-evidence",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "baselineTag": "closure-execution-baseline-v2-20260816",
-  "productSha": "634f84eb7df5dd84fafa30591805b5d911d170cb",
+  "productSha": "976bca17e499de1abd3d6aaf53d73c0085c16c03",
   "leaseSha256": "a2f9be9983e3a03e5e64f1a51dca193199a5bec963a246c3b4fe94b378af1308",
   "changedPaths": [
     "server/migrations/20260910_claude_a_assessment_initiative_batch_uniqueness.sql",
@@ -14,7 +14,9 @@
     "server/src/method-core/MethodPackRegistry.ts",
     "server/src/routes/method-core.routes.ts",
     "server/src/services/assessmentMethodBootstrap/__tests__/asmBvp001DrdLibraryBootstrap.pg.test.ts",
-    "src/components/assessment/library/AssessmentLibraryTab.tsx"
+    "src/components/assessment/library/AssessmentLibraryTab.tsx",
+    "server/src/controllers/AssessmentController.ts",
+    "server/src/services/assessmentInitiativeGenerationRunService.ts"
   ],
   "changedPathRationale": {
     "server/migrations/20260910_claude_a_assessment_initiative_batch_uniqueness.sql": "Commit 60a1be98d5. Adds the DB-level partial unique index (one ACTIVE assessment_initiative_batches row per assessment_id/organization_id, superseded rows excluded) that is the only mechanism reaching all four INSERT sites, two of which are outside this lane's lease. Includes a guarded pre-reconciliation of pre-existing duplicates (keep-newest, losers marked superseded, never deleted).",
@@ -24,7 +26,9 @@
     "server/src/method-core/MethodPackRegistry.ts": "Commit 634f84eb7d. Adds ensureDrdPackRegistered(), an idempotent upsert of the DRD pack only (status 'pilot'); every other methodPackId stays fail-closed with pack_not_released.",
     "server/src/routes/method-core.routes.ts": "Commit 634f84eb7d. Wires ensureDrdPackRegistered() into POST /api/method/sessions, and separately fixes a pre-existing idempotency-key race (checked idemInsert.success instead of idemInsert.changes, so two concurrent same-key creates could both return 201 with different session ids).",
     "server/src/services/assessmentMethodBootstrap/__tests__/asmBvp001DrdLibraryBootstrap.pg.test.ts": "Commit 634f84eb7d. New real-Postgres proof: create persists a row, same key twice yields one row, concurrent creates yield one row, tenant negative, non-DRD pack refused (fail-closed control), bootstrap run twice yields one method_packs row, cold readback.",
-    "src/components/assessment/library/AssessmentLibraryTab.tsx": "Commit 634f84eb7d. Library Start now routes to the method-core session-create path when both drdMethodWorkspaceSliceV1 and drdHttpSourceOfTruthV1 flags are on (both default false); byte-for-byte unchanged legacy path otherwise, so no dual-write of the legacy assessments table on the new path."
+    "src/components/assessment/library/AssessmentLibraryTab.tsx": "Commit 634f84eb7d. Library Start now routes to the method-core session-create path when both drdMethodWorkspaceSliceV1 and drdHttpSourceOfTruthV1 flags are on (both default false); byte-for-byte unchanged legacy path otherwise, so no dual-write of the legacy assessments table on the new path.",
+    "server/src/controllers/AssessmentController.ts": "Commit 976bca17e4. Replaces the previously unconditional batch INSERT with the shared exactly-one upsert and uses the winning batch id.",
+    "server/src/services/assessmentInitiativeGenerationRunService.ts": "Commit 976bca17e4. Replaces the second unconditional batch INSERT with the same shared upsert and attaches subsequent links to the winning batch id."
   },
   "commands": [
     {
@@ -80,6 +84,12 @@
       "command": "npx vitest run <method-core suite> --retry=0",
       "exitCode": 0,
       "result": "20 files, 266/266 tests passed (per commit 634f84eb7d message; exact command not quoted in the commit body)"
+    },
+    {
+      "gate": "G2/integrator-writers",
+      "command": "DATABASE_URL=<disposable-postgres> DB_TYPE=postgres CI=true RUN_DB_TESTS=1 MOCK_DB=false npx vitest run server/src/services/assessment/__tests__/assessmentInitiativeBatchUniqueness.realdb.test.ts --no-file-parallelism --maxWorkers=1 --maxConcurrency=2 --retry=0 --reporter=dot",
+      "exitCode": 0,
+      "result": "1/1 file, 8/8 tests; one winner and seven reuse outcomes under concurrency, tenant/replay/cold-readback controls green. Full type-check emitted no diagnostics but was stopped after not terminating in the bounded window, so it is not claimed for this SHA."
     }
   ],
   "denominators": {
@@ -175,7 +185,7 @@
     "commands[8].command (exact vitest invocation for the 20-file/266-test method-core regression — commit message states the file/test counts but not the literal command)"
   ],
   "verdict": "PARTIAL",
-  "verdictRationale": "G0/G1/G3 shared gates pass at this SHA. Both in-lane task suites are fully green on real Postgres (8/8 and 7/7, 15/15 combined) with strong negative controls (concurrency, tenant, replay, cold readback). However this is explicitly NOT a closed guarantee: commit 60a1be98d5 records a KNOWN CONSEQUENCE that two out-of-lease writers (AssessmentController.ts:1547, assessmentInitiativeGenerationRunService.ts:146) do not catch the new unique-index violation and will surface a 500 instead of reusing the active batch until they adopt the shared upsert — this is a blocking integrator change request, not a cosmetic one. Additionally, the Library-to-Workspace click-through (part of this task's user-facing surface) has zero browser/visual evidence and is unproven end-to-end, though it is flag-gated OFF by default so it cannot regress a live user today. Both facts push this below DONE_CURRENT_SHA.",
+  "verdictRationale": "The two previously out-of-contract writers now use the shared upsertActiveAssessmentInitiativeBatch boundary. Fresh real PostgreSQL proves 8-way concurrency with one winner, seven reuse outcomes, tenant separation, replay, cold readback, index and mutation controls (8/8, retry disabled). The task remains PARTIAL only because the Library-to-Workspace click-through has no mounted browser evidence on this exact SHA and the full type-check did not terminate in the bounded window.",
   "ownerTables": [],
   "fixtures": {},
   "negativeControls": {}
