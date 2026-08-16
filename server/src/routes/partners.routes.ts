@@ -41,6 +41,7 @@ import {
 } from '../services/partnerCertificationService.js';
 import PartnerCommissionService from '../services/partnerCommissionService.js';
 import { ensurePartnerDemoDataset } from '../services/partnerDemoSeedService.js';
+import { partnerLegacyCutoverGuard } from '../services/partnerLegacyCutover.js';
 import { getActivePartnerOrgIdForUser } from '../services/partnerOrgResolution.js';
 import {
   getPartnerPayoutSettings,
@@ -225,6 +226,7 @@ async function requirePartnerOrgId(req: Request, res: Response): Promise<string 
 
 // Apply authentication to all routes
 router.use(verifyToken);
+router.use(partnerLegacyCutoverGuard);
 
 // =============================================================================
 // PARTNER CONNECTION (ONBOARDING)

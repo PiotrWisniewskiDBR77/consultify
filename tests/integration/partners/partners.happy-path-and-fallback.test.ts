@@ -11,7 +11,7 @@
  * nie SQL). Routing + auth-gate + kontrakt odpowiedzi są realne.
  */
 
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
 
 import { makeTestApp } from '../_helpers/testApp';
@@ -79,8 +79,15 @@ describe('M26 Portal Partnerski — happy-path + fallback', () => {
   beforeAll(async () => {
     process.env.NODE_ENV = 'test';
     process.env.ENABLE_TEST_AUTH_BYPASS = 'true';
+    // This suite intentionally proves the retired route contract. Production
+    // defaults to zero legacy writers; the explicit switch exercises rollback.
+    process.env.PARTNER_LEGACY_ROLLBACK_ENABLED = 'true';
     vi.resetModules();
     router = (await import('../../../server/src/routes/partners.routes.ts')).default;
+  });
+
+  afterAll(() => {
+    delete process.env.PARTNER_LEGACY_ROLLBACK_ENABLED;
   });
 
   beforeEach(() => {

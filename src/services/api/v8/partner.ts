@@ -306,7 +306,14 @@ export interface V8PartnerPayoutSettingsUpdatePayload {
   payoutAccount: V8PartnerPayoutAccount | null;
 }
 
+export const isPartnerLegacyRollbackEnabled = (): boolean =>
+  String(import.meta.env.VITE_PARTNER_LEGACY_ROLLBACK_ENABLED || '').toLowerCase() === 'true';
+
 export const shouldFallbackToLegacyPartner = (error: unknown): boolean => {
+  // Cutover default: V8 failures stay visible and never silently execute a
+  // legacy writer/read. The bounded rollback is explicit, build-time visible
+  // and independently mirrored by PARTNER_LEGACY_ROLLBACK_ENABLED server-side.
+  if (!isPartnerLegacyRollbackEnabled()) return false;
   const directStatus = Number((error as { status?: number })?.status);
   const nestedStatus = Number((error as { response?: { status?: number } })?.response?.status);
   const status = Number.isFinite(directStatus) && directStatus > 0 ? directStatus : nestedStatus;

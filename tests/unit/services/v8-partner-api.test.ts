@@ -13,6 +13,7 @@ import { v8Delete, v8Get, v8Post, v8Put } from '@/services/api/v8/client';
 describe('V8PartnerApi', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.unstubAllEnvs();
   });
 
   it('requests partner referral analytics from the V8 namespace', async () => {
@@ -423,7 +424,11 @@ describe('V8PartnerApi', () => {
     expect(data.publicListingEnabled).toBe(true);
   });
 
-  it('falls back to legacy partner routes only for bounded compatibility statuses', () => {
+  it('keeps legacy fallback off by default and enables only the explicit rollback switch', () => {
+    expect(shouldFallbackToLegacyPartner({ status: 404 })).toBe(false);
+    expect(shouldFallbackToLegacyPartner({ status: 501 })).toBe(false);
+
+    vi.stubEnv('VITE_PARTNER_LEGACY_ROLLBACK_ENABLED', 'true');
     expect(shouldFallbackToLegacyPartner({ status: 404 })).toBe(true);
     expect(shouldFallbackToLegacyPartner({ status: 501 })).toBe(true);
     expect(shouldFallbackToLegacyPartner({ status: 500 })).toBe(false);
