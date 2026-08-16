@@ -1,66 +1,61 @@
 {
   "taskId": "INI-BVP-001",
-  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "99406b784bf1332beb369be161e75a2422f00fc6",
+  "baselineSha": "cbbe9a41c68fc52a04257354e15c383a504748f2",
+  "productSha": "2f1ff0a89cb95f4c09ec80f25f95c9f41f72f645",
   "leaseSha256": "f4d75f0aed94f2e34acaec63d91c245495e7e0f658aa36d1122342c2acecc612",
-  "toolchain": {
-    "node": "v24.12.0",
-    "npm": "11.6.2",
-    "vitest": "4.1.8",
-    "playwright": "1.62.1",
-    "postgres": "16.14 pgvector/pgvector:pg16",
-    "docker": "29.3.0"
-  },
-  "laneGates": {
-    "G0": "PASS — branch codex/closure-claude-b-transformation, HEAD==baseline at start, verify-closure-lane.mjs PASS",
-    "G1": "PASS — type-check exit 0, build:backend exit 0, build exit 0, discovery-gate PASS 4997/4997",
-    "G3_strict_migration": "PASS — fresh/repeat/dry-run exit 0; schema_migrations 703 success / 0 failed / 0 pending; 703/703 checksums independently verified; 1678 tables",
-    "G2_lane_baseline": "RED (pre-existing at sealed baseline): 747 collected of 761 real test files; 107 files failed / 557 passed / 83 skipped; 287 tests failed / 4270 passed / 617 skipped",
-    "G2_defects": "14 leased acceptance tests uncollectable by the mandated command; 110 further realDB files run without a DB by it; backend tests execute under jsdom because environmentMatchGlobs is dead in Vitest 4"
-  },
-  "ownerTables": [
-    "initiative_candidates",
-    "initiatives",
-    "ie_aggregate_state"
+  "verdict": "PARTIAL",
+  "open": [
+    "The actual Initiative-to-Execution handoff adapter/receipt is owner-gated and was explicitly excluded. Candidate materialization and governed lifecycle gate are proven, but this packet does not claim the final downstream Execution handoff."
   ],
+  "environment": {
+    "node": "v24.12.0",
+    "postgres": "16 (pgvector/pgvector:pg16)",
+    "dbUrl": "127.0.0.1:32939/ini_bvp in disposable container consultify-ini-bvp-cbbe9a"
+  },
+  "ownerTables": ["initiative_candidates", "initiatives", "initiative_status_history", "initiative_lifecycle_gate_decisions", "ie_aggregate_state", "ie_command_receipts"],
   "changedPaths": [
     "server/src/services/initiative/initiativeCandidateService.ts",
-    "server/src/domain/initiatives-execution/postgresMaterialCommandUnitOfWork.ts",
-    "server/src/services/initiative/__tests__/ini-bvp-001-candidate-single-materialization.pg.test.ts"
+    "server/src/routes/initiativeCandidates.routes.ts",
+    "server/src/services/initiative/__tests__/ini-bvp-001-candidate-single-materialization.pg.test.ts",
+    "server/src/services/initiative/__tests__/ini-bvp-001-mounted-auth.pg.test.ts"
   ],
   "changedPathRationale": {
-    "server/src/services/initiative/initiativeCandidateService.ts": "Fixes the disjoint-guard duplicate materialization: adopts a runtime-v1 receipt instead of minting a second DRAFT, adds registered_initiative_id to the claim predicate, and compensates the losing race so no orphan initiatives row remains.",
-    "server/src/domain/initiatives-execution/postgresMaterialCommandUnitOfWork.ts": "Explanatory comment only — the added SQL predicate was deliberately reverted because it referenced a column from a different migration inside an unguarded raw pg query.",
-    "server/src/services/initiative/__tests__/ini-bvp-001-candidate-single-materialization.pg.test.ts": "Real-PG reproduction and proof of the single-materialization invariant."
+    "server/src/services/initiative/initiativeCandidateService.ts": "Compensates the losing A-vs-A acceptance race so exactly one Initiative row remains.",
+    "server/src/routes/initiativeCandidates.routes.ts": "Revalidates ACTIVE organization membership before every mounted candidate read/write.",
+    "server/src/services/initiative/__tests__/ini-bvp-001-candidate-single-materialization.pg.test.ts": "Strengthens the concurrency invariant from one-or-two rows to exactly one.",
+    "server/src/services/initiative/__tests__/ini-bvp-001-mounted-auth.pg.test.ts": "Adds real JWT, mounted route, tenant, stale-membership, concurrent acceptance and independent cold-readback proof."
   },
   "commands": [
-    "node scripts/cleanup/verify-closure-lane.mjs b closure-execution-baseline-v2-20260816",
-    "jq -r '.tests.vitest[]' docs/cleanup/agents/generated/CLAUDE_LANE_B_PATH_LEASE.json | xargs -n 80 npx vitest run --no-file-parallelism --maxWorkers=1 --maxConcurrency=2 --retry=0",
-    "CI=true DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts  (fresh, repeat, --dry-run)"
+    {"command": "DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32939/ini_bvp DB_TYPE=postgres CI=true npx tsx server/scripts/migrate.postgres.ts", "exitCode": 0, "result": "fresh migration complete; 731 ledger rows"},
+    {"command": "DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32939/ini_bvp DB_TYPE=postgres CI=true RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test npx vitest run server/src/services/initiative/__tests__/ini-bvp-001-candidate-single-materialization.pg.test.ts server/src/services/initiative/__tests__/ini-bvp-001-mounted-auth.pg.test.ts server/src/services/initiative/__tests__/ini-mvp-gate-001-lifecycle-gate-writer.pg.test.ts --no-file-parallelism --maxWorkers=1 --retry=0 --reporter=dot", "exitCode": 0, "result": "3/3 files, 17/17 tests"},
+    {"command": "DATABASE_URL=... npx vitest run server/src/services/initiative/__tests__/ini-bvp-001-mounted-auth.pg.test.ts --no-file-parallelism --maxWorkers=1 --retry=0 --reporter=dot", "exitCode": 0, "result": "1/1 file, 3/3 tests after cleanup repair"},
+    {"command": "npm run type-check", "exitCode": 0, "result": "passed"},
+    {"command": "git diff --check", "exitCode": 0, "result": "passed"}
   ],
   "denominators": {
-    "task": "5/5 pass, independently re-verified by Opus on a SECOND isolated database",
-    "laneRealDbPass": "110 leased realDB files on an isolated DB: 77 passed / 7 failed / 26 skipped; 675 tests: 565 passed / 51 failed / 59 skipped",
-    "recoveredAcceptance": "14 leased acceptance files the mandated G2 command cannot collect, run under vitest.acceptance.config.ts: 105 tests, 91 passed / 14 failed"
+    "combinedRealPostgres": "17 passed / 17 discovered in 3 files",
+    "mountedAuthRerun": "3 passed / 3 discovered",
+    "migration": "731/731 ledger rows",
+    "typeCheck": "1/1 exit 0"
   },
   "fixtures": {
-    "prefix": "claude_b_",
-    "isolatedDb": "consultify-closure-b-64f50785 @127.0.0.1:55811; verification replica @55812; clean-room @55813",
-    "env": "NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false (all three required — NODE_ENV=test alone substitutes a mock DB)"
+    "tenants": "two organizations; active owner in each plus inactive stale owner in source tenant",
+    "auth": "real signed JWT through mounted initiativeCandidates router",
+    "candidate": "classic candidate plus event-sourced runtime-v1 candidate contracts",
+    "database": "fresh isolated PostgreSQL, removed after proof"
   },
   "negativeControls": {
-    "bothRaceDirections": "B-then-A fixed; A-then-B preserved",
-    "concurrent": "racing A and B converge to exactly ONE claim column, never both",
-    "orphanRows": "explicit initiatives row-count assertions — exactly one materialization, no extras",
-    "crossTenant": "org-B caller cannot accept an org-A candidate",
-    "noRunDbTests": "5 skipped (loud)",
-    "mockDb": "MOCK_DB=true -> 5 skipped, no silent pass",
-    "bogusDb": "ECONNREFUSED -> fails, proving a real connection"
+    "classicConcurrency": "two simultaneous acceptCandidate calls converge on one receipt ID and exactly one initiatives row",
+    "crossSubsystemConcurrency": "classic and runtime-v1 acceptance converge to exactly one claim column and no orphan",
+    "tenant": "foreign organization acceptance returns 404 and writes nothing",
+    "staleMembership": "inactive membership JWT returns 403 ORG_MEMBERSHIP_REVOKED",
+    "lifecycleCapability": "governed lifecycle gate writer suite covers role/capability, stale version and same-ID transition controls",
+    "coldReadback": "independent pg.Client reopens accepted candidate joined to exactly one Initiative",
+    "cleanup": "post-suite candidate and Initiative prefix residue queries both returned zero"
   },
   "browserArtifacts": [],
   "rollback": {
-    "method": "Revert the lane commits; all changes are additive application code plus new tests. NO migration was added by this lane, so no schema rollback is required and old readers are unaffected."
-  },
-  "verdict": "PARTIAL",
-  "openBlocker": "The matrix requires G0-G6 for this task; G4 signed-in browser/visual evidence was not produced, so DONE_CURRENT_SHA is not claimable. Pre-existing and NOT caused by this change: tests/integration/initiatives/m05fix01-candidate-acceptance-receipt.pg.test.ts fails at DDL setup (\"cannot drop ... because other objects depend on them\") identically on a FRESH migrated database."
+    "method": "Remove the A-vs-A compensation branch, route membership middleware and the mounted proof. No migration or production data rollback is required.",
+    "executed": false
+  }
 }

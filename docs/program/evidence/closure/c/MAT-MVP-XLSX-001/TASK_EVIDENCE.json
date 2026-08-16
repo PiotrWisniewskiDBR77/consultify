@@ -1,48 +1,72 @@
 {
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "a62dbe340114d87eda75a0d2da2d77bee2a90685",
+  "productSha": "9a7b1a723a6864b204ebcef0681b2881b978d6fd",
   "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
   "environment": {
     "node": "v24.12.0",
     "postgres": "16.14 (pgvector/pgvector:pg16)",
     "vitest": "root vitest.config.ts",
-    "dbUrl": "127.0.0.1:55432 isolated lane container consultify-closure-c-64f50785"
+    "dbUrl": "127.0.0.1:32921 isolated container consultify-mat-xlsx-14889d7b"
   },
   "gateG0": "PASS pre-commit (lease PASS, 25 changed paths). POST-COMMIT the verifier reports 11 new source/test files as violations; all 11 match lane C allowedNewRoots and none exist at baseline — see ICR-C-003, a verifier defect (isTracked() is true for staged/committed paths), not a scope violation.",
   "gateG1": "PASS — npm run type-check exit 0; npm run build:backend exit 0; test:discovery-gate PASS 4997/4997 discovered, 4698 executed.",
-  "gateG3": "PASS — strict migrate on FRESH from-zero DB exit 0; repeat run applied 0; --dry-run 0 pending; schema_migrations 709 success / 0 failed / 0 pending.",
+  "gateG3": "PASS — strict migrate on FRESH from-zero DB exit 0; repeat run applied 0; --dry-run 0 pending; current shared-worktree schema_migrations 732 success / 0 failed / 0 pending.",
   "taskId": "MAT-MVP-XLSX-001",
-  "verdict": "PARTIAL",
+  "technicalVerdict": "DONE_CURRENT_SHA",
+  "verdict": "DONE_CURRENT_SHA",
   "ownerTables": [
     "generated_workbooks",
     "generated_workbook_revisions",
     "generated_workbook_governance_events"
   ],
   "denominators": {
-    "realdbTests": "10 passed / 10 discovered (isolated, repeatable)"
+    "canonicalRouteRealDb": "12 passed / 12 discovered",
+    "exportReceiptRealDb": "5 passed / 5 discovered",
+    "focusedGreenTotal": "28 passed / 28 discovered",
+    "reconciledMat006": "11 passed / 11 discovered",
+    "combinedCurrentAndCompatibility": "28 passed / 28 discovered across 3 files"
   },
   "findings": [
     "G3 violation CLOSED: the four workbook tables previously created by runtime DDL now exist after migration alone on a from-zero database.",
-    "Workbook share was a phantom (columns with zero writers); mint/revoke now implemented and enforced on read."
+    "Workbook share was a phantom (columns with zero writers); mint/revoke now implemented and enforced on read.",
+    "Current command runtime persists structural row edits and transformed formulas under one CAS version, creates one revision, replays idempotently, and cold-reopens from PostgreSQL.",
+    "Mounted authenticated XLSX download rebuilds the current version, preserves the formula in real XLSX bytes, and binds an immutable source/output hash receipt; retry reuses exactly one receipt."
   ],
   "open": [
-    "G4 browser/visual not run.",
-    "Formula evaluation remains client-side only (src/utils/workbookFormulaEngine.ts); no general server-side engine."
+    "G4 browser/visual remains a separate MAT-UI/human gate and was not claimed.",
+    "General server-side formula calculation is not introduced; XLSX-native formulas are structurally transformed, persisted, exported, and proven in the binary workbook."
   ],
-  "knownFlake": {
-    "test": "NEGATIVE CONTROL: cross-tenant archive denied (404); archiving blocks sharing",
-    "observed": "failed once in 3 full-suite runs; 10/10 in isolation and in chat+workbook / idea+workbook pairs",
-    "mechanism": "the makePublic() helper asserts .expect(200) against a HARDCODED baseVersion; if anything bumps the workbook version at that moment the governance PATCH returns 409 and the helper throws",
-    "disposition": "reported, not averaged away; needs the helper to read the current version instead of assuming it"
+  "knownFlake": null,
+  "changedPaths": [
+    "server/src/services/workbook/__tests__/workbookClosure.pg.test.ts",
+    "tests/integration/routes/workbook.mat006-lifecycle.postgres.integration.test.ts",
+    "docs/program/evidence/closure/c/MAT-MVP-XLSX-001/TASK_EVIDENCE.json"
+  ],
+  "changedPathRationale": {
+    "workbookClosure": "adds current mounted-route proof for structural formulas, revision/idempotency/cold reopen and governed XLSX receipt readback",
+    "mat006Reconciliation": "preserves the historical lifecycle, tenant, auth, share, injection and export coverage while binding it to canonical baseVersion/revisions/XLSX-only semantics",
+    "taskEvidence": "binds the owner-free technical closure to the current candidate SHA"
   },
-  "changedPaths": [],
-  "changedPathRationale": {},
-  "commands": [],
-  "fixtures": {},
-  "negativeControls": {},
+  "commands": [
+    {"command": "NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=<fresh-pg> npm run db:migrate:strict; repeat; npm run db:migrate:postgres:dry", "exitCode": 0, "result": "fresh/repeat/dry green; current ledger 732, repeat 0, pending 0"},
+    {"command": "DATABASE_URL=<fresh-pg> DB_TYPE=postgres RUN_DB_TESTS=1 MOCK_DB=false CI=true npx vitest run server/src/services/workbook/__tests__/workbookClosure.pg.test.ts --no-file-parallelism --maxWorkers=1 --retry=0 --reporter=dot", "exitCode": 0, "result": "12/12"},
+    {"command": "DATABASE_URL=<fresh-pg> DB_TYPE=postgres RUN_DB_TESTS=1 MOCK_DB=false CI=true npx vitest run server/src/services/materialExport/__tests__/materialExportReceiptService.pg.test.ts --no-file-parallelism --maxWorkers=1 --retry=0 --reporter=dot", "exitCode": 0, "result": "5/5"},
+    {"command": "DATABASE_URL=<fresh-pg> DB_TYPE=postgres NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false CI=true npx vitest run tests/integration/routes/workbook.mat006-lifecycle.postgres.integration.test.ts --no-file-parallelism --maxWorkers=1 --retry=0 --reporter=dot", "exitCode": 0, "result": "11/11 reconciled compatibility lifecycle"},
+    {"command": "DATABASE_URL=<fresh-pg> DB_TYPE=postgres NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false CI=true npx vitest run workbookClosure.pg workbook.mat006-lifecycle.postgres materialExportReceiptService.pg --no-file-parallelism --maxWorkers=1 --retry=0 --reporter=dot", "exitCode": 0, "result": "3/3 files, 28/28 tests"},
+    {"command": "NODE_OPTIONS=--max-old-space-size=8192 npm run type-check", "exitCode": 0, "result": "TypeScript noEmit passed"}
+  ],
+  "fixtures": {"database": "fresh disposable pgvector PostgreSQL 16", "auth": "production workbook router mounted in Express; parameterized authenticated tenant identity at the middleware boundary"},
+  "negativeControls": {
+    "tenant": "cross-tenant read/write/share/archive/export returns 404 and does not create a receipt",
+    "auth": "unauthenticated export returns 401",
+    "cas": "stale and concurrent same-base writes fail closed; exactly one winner/version bump",
+    "idempotency": "command replay creates one revision; repeated and 12-way concurrent export requests create one receipt",
+    "failure": "terminal render failure is durable and cannot be replayed as success; source/output drift is rejected",
+    "cold": "fresh mounted GET reads the transformed formula/version from PostgreSQL after cache invalidation"
+  },
   "browserArtifacts": [],
   "rollback": {
-    "method": "Not recorded by the lane; no rollback execution or completion claim is inferred.",
+    "method": "Tests/evidence only; no production data mutation. Remove the added assertions to revert. Test fixtures are deleted and verified at zero.",
     "executed": false
   }
 }
