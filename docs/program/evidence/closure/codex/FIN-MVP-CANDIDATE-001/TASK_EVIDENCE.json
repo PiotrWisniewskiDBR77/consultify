@@ -1,0 +1,17 @@
+{
+  "taskId": "FIN-MVP-CANDIDATE-001",
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "productSha": "b370e1a5da10e0b4fed31ab15a0b63a8e1e391ac",
+  "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
+  "changedPaths": [],
+  "changedPathRationale": {"none": "tree reconciliation showed the Finance Candidate implementation already present; this packet re-verifies it on the current candidate"},
+  "ownerTables": ["initiative_candidates", "finance_candidate_handoffs", "financial_statement_packs", "financial_models", "valuation_recommendations"],
+  "commands": [{"command": "vitest acceptance FIN-06 statement-pack + investment-case + valuation recommendation", "exitCode": 1, "result": "26/27 passed; one scenario-A timeout at 60s"}, {"command": "vitest acceptance FIN-06 valuation recommendation only", "exitCode": 0, "result": "11/11 passed including isolated scenario A"}],
+  "denominators": {"statementAndInvestmentInCombinedRun": "16/16", "valuationRerun": "11/11", "uniqueAcceptanceScenarios": 27},
+  "fixtures": {"database": "fresh disposable pgvector PostgreSQL 16 on localhost:56504 with 709/709 migrations", "sources": ["statement pack", "investment case", "valuation recommendation"]},
+  "negativeControls": {"directInitiative": "direct Finance-to-Initiative routes remain disabled", "tenant": "foreign tenant cannot preview, confirm or reopen", "concurrency": "five confirms create exactly one candidate/receipt", "toctou": "approval revoked between preview and confirm fails closed", "schema": "broken required schema fails closed"},
+  "browserArtifacts": [],
+  "rollback": {"code": "verification-only evidence; no code change", "data": "isolated fixtures only"},
+  "verdict": "PARTIAL",
+  "openBlockers": ["The three-source suite had one order-dependent timeout even though the isolated valuation suite passed 11/11; investigate stability before DONE.", "G4 browser preview/confirm/readback evidence on the exact integrated SHA remains."]
+}
