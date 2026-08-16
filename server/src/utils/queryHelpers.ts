@@ -226,6 +226,16 @@ export async function withPgTransaction<T>(
   fn: (client: PgTransactionClient) => Promise<T>
 ): Promise<T> {
   const client = new PgClient(databaseConfig.postgres as ConstructorParameters<typeof PgClient>[0]);
+  // node-postgres emits connection-level failures on the Client in addition to
+  // rejecting the in-flight query. An EventEmitter `error` without a listener
+  // terminates the whole Node process, so every dedicated transaction client
+  // must install this listener before connect(). The query rejection remains
+  // authoritative for rollback/caller error handling; this listener only
+  // prevents a second, process-fatal propagation path.
+  const handleClientError = (error: Error) => {
+    logger.error('[QueryHelper] withPgTransaction: client connection error:', error);
+  };
+  client.on('error', handleClientError);
   await client.connect();
 
   const wrapped: PgTransactionClient = {
@@ -257,6 +267,7 @@ export async function withPgTransaction<T>(
     await client.end().catch((closeErr) => {
       logger.error('[QueryHelper] withPgTransaction: failed to close client:', closeErr);
     });
+    client.off('error', handleClientError);
   }
 }
 
