@@ -131,6 +131,18 @@ Fresh checks on this candidate:
   remaining differences are later candidate evolution. Replay allowlist is
   empty. Runtime spine, flag rollout, version identity and Results seam still
   require proof before runtime acceptance.
+- UX recovery remote `c6878103b4` is an ancestor of the candidate. Its six-file
+  package has zero missing paths: four blobs are identical and two are later
+  functional evolutions. Local `c67726e98b` only reverts two out-of-scope focus
+  governance files and is `SUPERSEDED / SCOPE_CLEANUP_ONLY`; replaying it would
+  delete active canonical controls.
+- CEPD source `99b1fcf7d67f` contains no missing CEPD path. Tree and semantic
+  reconciliation reduced recovery to two hunks from `732e460ed2`: PostgreSQL
+  receives integer `1` for `ingest_to_knowledge`, and submission AI review is
+  bounded by 12 seconds. Both are now applied surgically; two focused Interview
+  route/security files pass 61/61 assertions and the 8 GB type-check is green.
+  Fresh-PostgreSQL evidence-write/readback and forced-timeout browser behavior
+  remain acceptance gates.
 - Commit hooks reported no new list, TRIADA, density, focus, or artifact-shell
   regression in the changed files. Existing repository-wide focus debt remains.
 
@@ -168,3 +180,5 @@ features. No bulk branch or worktree deletion is authorized by these counts.
 4. Verify already-present Case, Artifact, Results and Finance browser/realDB
    closure. Results/Finance require no code replay, but their mount/data/spine
    and owner decisions remain literal blockers.
+5. Verify the two recovered CEPD behaviors on fresh PostgreSQL/browser, then
+   classify its old branch as evidence-only. UX needs no replay.

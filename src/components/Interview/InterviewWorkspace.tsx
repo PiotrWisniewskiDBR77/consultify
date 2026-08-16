@@ -1463,7 +1463,13 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       let evaluation: InterviewAnswerEvaluation | null = aiEvaluation;
       try {
         // Refresh the AI signal silently; tolerate failure (local-only fallback).
-        const fresh = await runAiQualityReview({ silent: true });
+        const fresh = await withTimeout(
+          runAiQualityReview({ silent: true }),
+          12000,
+          isPolish
+            ? 'Przekroczono limit czasu oceny jakości AI.'
+            : 'AI quality review timed out.'
+        );
         if (fresh) evaluation = fresh;
       } catch {
         // ignore — fall back to whatever evaluation we already have

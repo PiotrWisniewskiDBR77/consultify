@@ -42,8 +42,8 @@ authorization. `DEMO_READY` never implies this gate.
 | Artifact / Materials | `ALREADY_PRESENT / VERIFICATION_REQUIRED` | No replay. Focused DOC/PPT/XLSX/governance/shell assertions are green; prove realDB persistence, export, cold reopen, browser accessibility and remaining human/provider/stability gates on the exact SHA. |
 | Results | `ALREADY_PRESENT / BLOCKED_DATA_AND_MOUNT` | No replay. Decide access and rollout, mount the KPI/ROI/OKR workspace deliberately, provide deterministic three-role fixtures, prove lifecycle/readback and bind fresh evidence to the exact SHA. |
 | Finance | `ALREADY_PRESENT / EVOLVED / RUNTIME_NOT_VERIFIED` | No replay. Prove one governed runtime owner, explicit OFF/ON workspace behavior, canonical artifact/business/working-revision identity, fresh migration lifecycle and the Results seam. |
-| CEPD / Interview | `PARTIAL / SELECTIVE_RECOVERY_REQUIRED` | Allowlisted fixes on candidate plus exact-schema runtime verification. |
-| UX tables/tools | `BLOCKED_RECOVERY` | Clean reconstruction from allowlist and independent acceptance rerun. |
+| CEPD / Interview | `PARTIAL / SELECTIVE_RECOVERY_APPLIED` | Two exact missing hunks are recovered. Prove integer evidence persistence on fresh PostgreSQL, bounded AI timeout, access matrix, nullable evaluation and notification fallback. |
+| UX tables/tools | `ALREADY_PRESENT / EVOLVED` | No replay. Rerun independent Assessment surface acceptance; retain the local scope-cleanup commit only as superseded evidence. |
 
 ## Execution rule
 

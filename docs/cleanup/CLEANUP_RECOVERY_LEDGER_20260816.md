@@ -22,9 +22,9 @@
 | Artifact Studio | `64715cdd37515b865e68d969eab71cdd7e2b60b3` | `ALREADY_PRESENT / KEEP_EVIDENCE` | Tree proof supersedes noisy patch-id: 44/48 source-touched paths are byte-identical and four are newer on candidate. Replay allowlist is empty. Source-derived focused suite passes 15/15 files, 145/145 assertions; realDB/browser/human gates remain. |
 | Finance | `c78086057d38f57c5351c6254d41f02fd50246b6` | `ALREADY_PRESENT / EVOLVED / RUNTIME_NOT_VERIFIED` | No replay: dedicated source surfaces are present and six differences are later candidate evolution. Prove one governed runtime owner across compatibility/V8 routes, OFF/ON flag behavior, version identity, fresh-DB lifecycle and the Results projection seam. |
 | Results | `5afefe8bb82fc1791c7f72c8c64a8205abd87f00` | `ALREADY_PRESENT / EVIDENCE_PARTIALLY_QUARANTINED / BLOCKED_DATA_AND_MOUNT` | No replay: dedicated runtime is present; 954 missing source paths are QA screenshots only and 23 shared paths evolved later. Owner/access, default-OFF mount, deterministic role fixtures, Finance projection ownership and fresh SHA-bound browser evidence remain open. |
-| UX recovery | local `c67726e98bcde5a9b129d09885bfb5104896bbf4`; remote `c6878103b4d43563bc1adbf6f885990340dc52e4` | `BLOCKED` | Provenance mismatch and contaminated recovery worktree. |
+| UX recovery | local `c67726e98bcde5a9b129d09885bfb5104896bbf4`; remote `c6878103b4d43563bc1adbf6f885990340dc52e4` | remote `ALREADY_PRESENT / EVOLVED`; local `SUPERSEDED / SCOPE_CLEANUP_ONLY` | Remote is candidate ancestry; six-file allowlist has 4 identical, 2 evolved, 0 missing. Do not replay local revert: it would remove active focus-governance files. |
 | UI45 | `64856e790afd0a66547d993fba13769878669c62` | `SUPERSEDED` | Preserve evidence and reconstruct only current-canon files. |
-| CEPD | `99b1fcf7d67fe30bb15e089cfbf5650ce54a9ea1` | `INTEGRATE_SELECTIVELY` | Extract eight named commits/files; whole branch is cross-system. |
+| CEPD | source `99b1fcf7d67fe30bb15e089cfbf5650ce54a9ea1`; recovered hunks from `732e460ed27fd3dc70d99623625e08b5f47a1548` | `INTEGRATED_SELECTIVE / VERIFICATION_REQUIRED` | No CEPD path is missing. Only integer PostgreSQL evidence ingestion and a 12-second AI-review timeout were absent and are now applied surgically. Focused Interview route/security tests pass 61/61 and type-check passes; fresh-PG write/readback and forced-timeout browser proof remain. |
 | Frozen main worktree | `869f9c322c61f01030c2900ea9c79ff046707f00` plus local state | `QUARANTINE_EVIDENCE` | Never reset, clean, stash, or merge as a unit. |
 
 ## Worktree and branch policy
@@ -59,6 +59,6 @@ not authorize deleting their refs.
 3. Audits browser verification
 4. Case and Artifact verification (no replay)
 5. Results and Finance runtime owner/data/mount verification (no replay)
-6. CEPD allowlisted replay
-7. UX clean reconstruction
+6. CEPD fresh-PG and timeout verification (two hunks already recovered)
+7. UX verification only (no reconstruction/replay)
 8. Worktree and branch deduplication
