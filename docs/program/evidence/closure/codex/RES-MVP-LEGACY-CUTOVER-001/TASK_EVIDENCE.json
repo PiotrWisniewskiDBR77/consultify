@@ -1,0 +1,18 @@
+{
+  "taskId": "RES-MVP-LEGACY-CUTOVER-001",
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "productSha": "5f5c5e507a64b262ec9585b2469ba6277b0b6939",
+  "changedPaths": ["tests/resultsVnext/roi/legacyIsolation.realdb.test.ts"],
+  "commands": [
+    {"command": "RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=<isolated-local-pg> npx vitest run tests/resultsVnext/kpi/legacyIsolation.realdb.test.ts tests/resultsVnext/okr/legacyIsolation.realdb.test.ts tests/resultsVnext/roi/legacyIsolation.realdb.test.ts", "exitCode": 0, "result": "6 tests passed; KPI/OKR/ROI vNext read models excluded poisoned legacy rows"}
+  ],
+  "negativeControls": [
+    "same-tenant poisoned legacy rows never appear in canonical KPI/OKR/ROI reads",
+    "static repository scan finds zero unauthorized legacy-table references",
+    "append-only ROI realization fixture is not deleted or mutated during teardown"
+  ],
+  "verdict": "PARTIAL",
+  "openBlockers": [
+    "Usage telemetry, backfill parity and owner-authorized retirement of all legacy writers remain required before cutover is complete."
+  ]
+}

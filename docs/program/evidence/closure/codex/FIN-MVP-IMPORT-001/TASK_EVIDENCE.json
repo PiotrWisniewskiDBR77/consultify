@@ -1,0 +1,19 @@
+{
+  "taskId": "FIN-MVP-IMPORT-001",
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "productSha": "5f5c5e507a64b262ec9585b2469ba6277b0b6939",
+  "changedPaths": [],
+  "commands": [
+    {"command": "RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=<isolated-local-pg> npx vitest run server/src/routes/v8/finance-v2/__tests__/export-import.routes.pg.test.ts", "exitCode": 0, "result": "11 tests passed; XLSX export/parse/preview/correct/apply/readback, CAS and cross-tenant controls"}
+  ],
+  "negativeControls": [
+    "stale working revision returns 409 and is not silently applied twice",
+    "cross-tenant export and preview return uniform 404",
+    "malformed cross-tenant request does not disclose validation shape before authorization"
+  ],
+  "verdict": "PARTIAL",
+  "openBlockers": [
+    "CSV representative fixture and immutable import-receipt hash are not covered by the current XLSX route suite.",
+    "Browser map/correct/confirm evidence on the final integrated SHA remains required."
+  ]
+}
