@@ -87,6 +87,13 @@ describe('OPS-DEMO-002 public demo entry contract', () => {
       expect(res.body.isDemo).toBe(true);
       expect(typeof res.body.token).toBe('string');
       expect(typeof res.body.refreshToken).toBe('string');
+      const relogin = await request(app).post('/api/auth/login').send({ email, password: FIXTURE_PASSWORD });
+      expect(relogin.status).toBe(200);
+      expect(relogin.body.user.isDemo).toBe(true);
+      expect(relogin.body.demoSession).toMatchObject({
+        id: res.body.demoSession.id,
+        organizationId: res.body.demoSession.organizationId,
+      });
 
       // The session org must be the caller's OWN tenant, not the curated base org.
       expect(res.body.demoSession).toBeTruthy();

@@ -385,6 +385,37 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       .trim()
       .toUpperCase();
 
+    // Public demo accounts belong to the stable base organization, while their
+    // data lives in a short-lived, per-user session tenant. A fresh login must
+    // return that active tenant again. Otherwise the client can only see the
+    // base `demo-org`, then tries to provision another demo through the guarded
+    // `/api/demo/toggle` write and is correctly denied as a public principal.
+    const activeDemoSession =
+      orgType === ORG_TYPES.DEMO
+        ? await new Promise<{
+            id: string;
+            session_org_id: string;
+            locale: 'en' | 'pl';
+            expires_at: string;
+            anchor_date: string;
+          } | null>((resolve, reject) => {
+            dependencies.db.get(
+              `SELECT id, session_org_id, COALESCE(locale, 'en') AS locale,
+                      expires_at, anchor_date
+                 FROM demo_sessions
+                WHERE user_id = ? AND base_org_id = ? AND status = 'active'
+                  AND expires_at > ?
+                ORDER BY created_at DESC
+                LIMIT 1`,
+              [user.id, user.organization_id, new Date().toISOString()],
+              (err: Error | null, row: unknown) => {
+                if (err) reject(err);
+                else resolve(row as any);
+              }
+            );
+          })
+        : null;
+
     // Generate tokens
     const deviceInfo = (req.get('user-agent') || 'Unknown Device').substring(0, 200);
     const tokenPair = await dependencies.RefreshTokenService.generateTokenPair(
@@ -444,6 +475,15 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       token: tokenPair.accessToken,
       refreshToken: tokenPair.refreshToken,
       expiresIn: tokenPair.expiresIn,
+      demoSession: activeDemoSession
+        ? {
+            id: activeDemoSession.id,
+            organizationId: activeDemoSession.session_org_id,
+            locale: activeDemoSession.locale,
+            expiresAt: activeDemoSession.expires_at,
+            anchorDate: activeDemoSession.anchor_date,
+          }
+        : null,
     });
 
     void new Promise<void>((resolve) => {

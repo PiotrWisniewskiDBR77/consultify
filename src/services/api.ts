@@ -1305,7 +1305,10 @@ export interface SwotProposal {
 
 export const Api = {
   // --- AUTH ---
-  login: async (email: string, password: string): Promise<User> => {
+  login: async (
+    email: string,
+    password: string
+  ): Promise<User & { demoSession?: DemoSessionPayload | null }> => {
     console.log('Api.login called:', { email, url: `${API_URL}/auth/login` });
     let res: Response;
     try {
@@ -1340,7 +1343,7 @@ export const Api = {
     return handleResponse(res, 'Login failed').then((data) => {
       // Save both access token and refresh token
       tokenService.saveTokens(data.token, data.refreshToken);
-      return data.user;
+      return { ...data.user, demoSession: data.demoSession ?? null };
     });
   },
 

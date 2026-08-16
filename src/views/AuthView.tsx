@@ -627,10 +627,12 @@ export const AuthView: React.FC<AuthViewProps> = ({
       setIsDemoLoading(true);
       try {
         const user = await Api.login(submittedEmail, submittedPassword);
-        const entered = await Api.enterDemo();
+        const session = user.isDemo && user.demoSession
+          ? user.demoSession
+          : (await Api.enterDemo())?.demoSession;
         // Same ordering rule as the sign-up branch: adopt, then hand over to the
         // caller that navigates.
-        adoptDemoSession(entered?.demoSession);
+        adoptDemoSession(session);
         onAuthSuccess({ ...user, hasWorkspace: true, isDemo: true } as any);
       } catch (err: any) {
         setError(mapPublicAuthError(err, 'login'));

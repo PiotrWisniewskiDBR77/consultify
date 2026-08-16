@@ -97,6 +97,14 @@ async function submitSignup() {
   return user;
 }
 
+async function submitLogin() {
+  const user = userEvent.setup();
+  await user.click(screen.getByRole('button', { name: 'Log in' }));
+  await user.type(screen.getByPlaceholderText('you@company.com'), SIGNUP_FIXTURE);
+  await user.type(screen.getByPlaceholderText('••••••••'), FIXTURE_PASSWORD);
+  await user.click(screen.getByRole('button', { name: /Log in & Enter Demo/i }));
+}
+
 function renderDemoModal(onSuccess = vi.fn()) {
   render(
     <DemoModeModal isOpen onClose={vi.fn()} onSuccess={onSuccess} mode="demo" />
@@ -192,5 +200,27 @@ describe('DemoModeModal public entry contract', () => {
       expect(setDemoSessionOrgIdMock).toHaveBeenCalledWith('demo-org-session-u1-abc');
       expect(onSuccess).toHaveBeenCalled();
     });
+  });
+
+  it('reuses a returning public-demo session without calling the forbidden enable toggle', async () => {
+    loginMock.mockResolvedValueOnce({
+      id: 'u-returning',
+      email: SIGNUP_FIXTURE,
+      isDemo: true,
+      demoSession: {
+        id: 's-returning',
+        organizationId: 'demo-org-session-returning-abc',
+        locale: 'en',
+        expiresAt: '2026-08-18T00:00:00.000Z',
+        anchorDate: '2026-08-17T00:00:00.000Z',
+      },
+    });
+
+    const onSuccess = renderDemoModal();
+    await submitLogin();
+
+    await waitFor(() => expect(onSuccess).toHaveBeenCalled());
+    expect(enterDemoMock).not.toHaveBeenCalled();
+    expect(setDemoSessionOrgIdMock).toHaveBeenCalledWith('demo-org-session-returning-abc');
   });
 });

@@ -282,6 +282,33 @@ describe('AuthView public demo entry adopts the isolated demo session', () => {
     expect(onAuthSuccess).toHaveBeenCalledWith(expect.objectContaining({ isDemo: true }));
   });
 
+  it('returning public-demo login reuses its active session and never enables demo again', async () => {
+    loginMock.mockResolvedValueOnce({
+      id: 'u-returning',
+      email: LOGIN_FIXTURE,
+      isDemo: true,
+      demoSession: demoSessionFixture('demo-org-session-returning-auth'),
+    });
+    const user = userEvent.setup();
+
+    render(
+      <AuthView
+        initialStep={AuthStep.LOGIN}
+        targetMode={SessionMode.DEMO}
+        onAuthSuccess={onAuthSuccess}
+        onBack={onBack}
+      />
+    );
+
+    await user.type(screen.getByTestId('email-input'), LOGIN_FIXTURE);
+    await user.type(screen.getByTestId('password-input'), FIXTURE_PASSWORD);
+    await user.click(screen.getByTestId('login-button'));
+
+    await waitFor(() => expect(onAuthSuccess).toHaveBeenCalled());
+    expect(enterDemoMock).not.toHaveBeenCalled();
+    expect(setDemoSessionOrgIdMock).toHaveBeenCalledWith('demo-org-session-returning-auth');
+  });
+
   it('a backend that returns no demoSession clears the org id instead of leaving a stale tenant pinned', async () => {
     loginMock.mockResolvedValueOnce({ id: 'u-4', email: LOGIN_FIXTURE });
     enterDemoMock.mockResolvedValueOnce({ success: true, isDemoMode: true });

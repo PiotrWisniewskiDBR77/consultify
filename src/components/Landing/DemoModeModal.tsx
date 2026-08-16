@@ -130,8 +130,13 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
           onSuccess({ ...user, hasWorkspace: true, isDemo: true }, 'demo');
         } else {
           const user = await Api.login(form.email, form.password);
-          const entered = await Api.enterDemo();
-          adoptDemoSession(entered?.demoSession);
+          // A returning public-demo account already owns an isolated active
+          // session. Reuse it instead of asking the fail-closed demo toggle to
+          // provision again (public demo principals may only leave via toggle).
+          const session = user.isDemo && user.demoSession
+            ? user.demoSession
+            : (await Api.enterDemo())?.demoSession;
+          adoptDemoSession(session);
           onSuccess({ ...user, hasWorkspace: true, isDemo: true }, 'demo');
         }
       } else {
