@@ -1,0 +1,29 @@
+{
+  "taskId": "SET-MVP-EXPORT-001",
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "productSha": "04833b1161dc88402cdbd2565b2f3940c9d84607",
+  "changedPaths": [
+    "server/src/services/gdprService.ts",
+    "tests/integration/settings/gdpr-settings-no-stubs.test.ts"
+  ],
+  "commands": [
+    {"command": "npm run type-check", "exitCode": 0},
+    {"command": "npm run build:backend", "exitCode": 0},
+    {"command": "RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres DATABASE_URL=<isolated-local-pg> npx vitest run tests/integration/settings/account-deletion-routes-guard.test.ts tests/integration/settings/gdpr-settings-no-stubs.test.ts", "exitCode": 0, "result": "2 files, 9 tests passed, 0 failed/skipped"}
+  ],
+  "databaseProof": {
+    "freshMigrations": 703,
+    "repeatApplied": 0,
+    "ledgerNonSuccess": 0,
+    "scope": "disposable loopback PostgreSQL; no shared/demo/production data"
+  },
+  "negativeControls": [
+    "export requires authenticated user and organization scope",
+    "fresh-schema column variants are resolved from information_schema",
+    "no fake ETA response; request and direct readback are persisted"
+  ],
+  "verdict": "PARTIAL",
+  "openBlockers": [
+    "Immutable downloadable artifact hash and browser download/readback remain to close G4-G6 on the final integrated SHA."
+  ]
+}
