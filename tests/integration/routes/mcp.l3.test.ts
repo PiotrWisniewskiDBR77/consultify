@@ -132,6 +132,12 @@ describe('MCP routes integration (L3)', () => {
     await dbRun(`ALTER TABLE ${from} RENAME TO ${to}`);
   };
 
+  const adminUser = {
+    id: 'test-user-id',
+    organizationId: 'test-org-id',
+    role: 'ADMIN',
+  };
+
   beforeAll(async () => {
     await initializeDatabase();
     if ((db as any).initPromise) await (db as any).initPromise;
@@ -169,7 +175,7 @@ describe('MCP routes integration (L3)', () => {
 
   it('GET /providers returns [] when no providers exist for the org', async () => {
     await dbRun(`DELETE FROM mcp_providers WHERE organization_id = ?`, ['test-org-id']);
-    const res = await dispatch({ method: 'GET', url: '/api/mcp/providers' });
+    const res = await dispatch({ method: 'GET', url: '/api/mcp/providers', user: adminUser });
     expect(res.status).toBe(200);
     expect(res.body).toEqual([]);
   });
@@ -192,7 +198,7 @@ describe('MCP routes integration (L3)', () => {
       ['p-3', 'other-org-id', 'Other', 'openai', 'active', '{"x":1}']
     );
 
-    const res = await dispatch({ method: 'GET', url: '/api/mcp/providers' });
+    const res = await dispatch({ method: 'GET', url: '/api/mcp/providers', user: adminUser });
     expect(res.status).toBe(200);
     expect(res.body.map((p: any) => p.id)).toEqual(['p-2', 'p-1']);
     expect(res.body[0]).toEqual(
@@ -203,6 +209,10 @@ describe('MCP routes integration (L3)', () => {
   it('GET /providers respects req.user.organizationId when set (bypass does not override)', async () => {
     await dbRun(`DELETE FROM mcp_providers`);
     await dbRun(
+      `INSERT OR IGNORE INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`,
+      ['org-x', 'Org X', 'enterprise', 'active']
+    );
+    await dbRun(
       `INSERT INTO mcp_providers (id, organization_id, name, type, status, config, created_at)
        VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`,
       ['p-orgx', 'org-x', 'OnlyOrgX', 'openai', 'active', '{}']
@@ -210,7 +220,7 @@ describe('MCP routes integration (L3)', () => {
     const res = await dispatch({
       method: 'GET',
       url: '/api/mcp/providers',
-      user: { id: 'test-user-id', organizationId: 'org-x' },
+      user: { id: 'test-user-id', organizationId: 'org-x', role: 'ADMIN' },
     });
     expect(res.status).toBe(200);
     expect(res.body.map((p: any) => p.id)).toEqual(['p-orgx']);
@@ -220,7 +230,7 @@ describe('MCP routes integration (L3)', () => {
     const res = await dispatch({
       method: 'GET',
       url: '/api/mcp/providers',
-      user: { id: 'test-user-id' },
+      user: { id: 'test-user-id', role: 'ADMIN' },
     });
     expect(res.status).toBe(200);
     expect(res.body).toEqual([]);
@@ -292,7 +302,7 @@ describe('MCP routes integration (L3)', () => {
     await dbRun(`DELETE FROM mcp_providers`);
     await renameTable('mcp_providers', 'mcp_providers_tmp');
     try {
-      const res = await dispatch({ method: 'GET', url: '/api/mcp/providers' });
+      const res = await dispatch({ method: 'GET', url: '/api/mcp/providers', user: adminUser });
       expect(res.status).toBe(200);
       expect(res.body).toEqual([]);
     } finally {

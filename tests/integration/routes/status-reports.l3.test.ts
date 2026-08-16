@@ -262,7 +262,7 @@ describe('Status reports routes integration (L3)', () => {
     expect(del.status).toBe(200);
     expect(del.body).toEqual({ success: true });
     const row = await dbGet<any>(`SELECT id FROM status_reports WHERE id = ?`, ['sr-del']);
-    expect(row).toBeUndefined();
+    expect(row).toBeNull();
   });
 
   it('GET / returns [] when status_reports table is missing (DbPromise all fallback)', async () => {
@@ -291,15 +291,14 @@ describe('Status reports routes integration (L3)', () => {
     }
   });
 
-  it('DELETE /:id returns success even when table is missing (DbPromise run fallback)', async () => {
+  it('DELETE /:id fails closed when the table is missing', async () => {
     await dbRun(`ALTER TABLE status_reports RENAME TO status_reports_tmp3`);
     try {
       const res = await dispatch({ method: 'DELETE', url: '/api/status-reports/any' });
-      expect(res.status).toBe(200);
-      expect(res.body).toEqual({ success: true });
+      expect(res.status).toBe(404);
+      expect(res.body).toEqual({ error: 'Report not found' });
     } finally {
       await dbRun(`ALTER TABLE status_reports_tmp3 RENAME TO status_reports`);
     }
   });
 });
-

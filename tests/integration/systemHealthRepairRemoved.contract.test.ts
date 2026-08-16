@@ -116,14 +116,11 @@ describe('SEC-PUB-001 anonymous auto-repair shell-out is removed', () => {
     // check alone could pass while a handler still shelled out before replying.
     expect(spawnLog.calls).toEqual([]);
 
-    // NOTE ON THE EXPECTED CODE: this app does not answer 404/405 for unknown
-    // `/api/*` routes. A catch-all rejects them with 401 before any 404 handler
-    // runs (verified: `POST /api/system/definitely-not-a-route` -> 401). So the
-    // meaningful assertion is that the removed path is *indistinguishable from a
-    // path that never existed*, which is strictly stronger than a bare 404.
+    // The meaningful assertion is that the removed path is indistinguishable
+    // from a path that never existed. The current secure catch-all returns 404.
     const control = await request(app).post(UNROUTED_CONTROL_PATH).send({});
     expect(res.status).toBe(control.status);
-    expect(res.status).toBe(401);
+    expect(res.status).toBe(404);
 
     // Rule out the states that would mean the handler still exists: 200/202 is a
     // successful repair, 500 is a repair that ran and blew up.
@@ -141,7 +138,7 @@ describe('SEC-PUB-001 anonymous auto-repair shell-out is removed', () => {
     // count must be zero under concurrency too, not merely on a single request.
     expect(spawnLog.calls).toHaveLength(0);
     for (const res of responses) {
-      expect(res.status).toBe(401);
+      expect(res.status).toBe(404);
       expect(res.status).not.toBe(200);
     }
   });

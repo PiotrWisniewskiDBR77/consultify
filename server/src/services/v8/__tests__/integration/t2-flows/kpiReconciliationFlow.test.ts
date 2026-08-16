@@ -26,6 +26,10 @@ vi.mock('../../../../../utils/Logger.js', () => ({
   default: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
 
+vi.mock('../../../../results/kpiDefinitionService.js', () => ({
+  createDefinition: vi.fn(async () => ({ id: 'canonical-kpi-test-id' })),
+}));
+
 // ── Real service imports ───────────────────────────────────────────────────
 
 import { recordDeltaEscalation } from '../../../financeIntegrationService.js';

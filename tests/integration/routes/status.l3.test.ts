@@ -141,6 +141,10 @@ describe('Status routes integration (L3)', () => {
       ['test-org-id', 'Test Org', 'enterprise', 'active']
     );
     await dbRun(
+      `INSERT OR IGNORE INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`,
+      ['other-org-id', 'Other Org', 'enterprise', 'active']
+    );
+    await dbRun(
       `INSERT OR IGNORE INTO users (id, organization_id, email, password, role, status, first_name, last_name)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       ['test-user-id', 'test-org-id', 'test@example.com', 'x', 'ADMIN', 'active', 'Test', 'User']
@@ -330,4 +334,3 @@ describe('Status routes integration (L3)', () => {
     expect(res.body).toEqual({ success: true });
   });
 });
-
