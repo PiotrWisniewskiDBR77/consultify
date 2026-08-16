@@ -4,17 +4,21 @@
   "branch": "codex/closure-claude-a-method-evidence",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "baselineTag": "closure-execution-baseline-v2-20260816",
-  "productSha": "55a55fc0111507ab686c7265323f12d4ea6ac511",
+  "productSha": "6f07c1ae923801b38405c82d056fe8ba7abf5682",
   "leaseSha256": "a2f9be9983e3a03e5e64f1a51dca193199a5bec963a246c3b4fe94b378af1308",
   "changedPaths": [
     "server/src/controllers/ToolController.ts",
     "server/src/services/tools/toolOutputSnapshotService.ts",
-    "server/src/services/toolFreeze/__tests__/tls-bvp-001-nonempty-lineage.realdb.test.ts"
+    "server/src/services/toolFreeze/__tests__/tls-bvp-001-nonempty-lineage.realdb.test.ts",
+    "tests/integration/tools-promote-characterization.realdb.test.ts",
+    "tests/integration/tools-promotion-race.realdb.test.ts"
   ],
   "changedPathRationale": {
     "server/src/controllers/ToolController.ts": "Small change (part of the 16-line net diff on this file) needed so the new EmptyToolOutputError from ensureToolOutputSnapshot is caught and mapped to HTTP 409 EMPTY_TOOL_OUTPUT, the same catch-and-map convention already used for SwotCandidateHandoffError.",
     "server/src/services/tools/toolOutputSnapshotService.ts": "The actual fix. ensureToolOutputSnapshot is the single chokepoint every promotion path (initiative/report/presentation/idea) funnels through via promoteToOutput (POST /:toolId/promote) — it now refuses to freeze a tool_outputs row with zero items/tensions/conclusions, scoped to dynamic-swot only. The 18 bridge-less tool types keep their pre-existing 'honestly empty' behaviour but now emit a warning on every empty freeze.",
-    "server/src/services/toolFreeze/__tests__/tls-bvp-001-nonempty-lineage.realdb.test.ts": "New real-Postgres proof, 10/10: refusal with no row created, positive control, non-SWOT scope boundary, CAS 428/409, immutability with byte-identical re-read, reopen creating a new revision, 10-way concurrent race converging on exactly one row, cross-tenant negative, cold readback via an independent client."
+    "server/src/services/toolFreeze/__tests__/tls-bvp-001-nonempty-lineage.realdb.test.ts": "New real-Postgres proof, 10/10: refusal with no row created, positive control, non-SWOT scope boundary, CAS 428/409, immutability with byte-identical re-read, reopen creating a new revision, 10-way concurrent race converging on exactly one row, cross-tenant negative, cold readback via an independent client.",
+    "tests/integration/tools-promote-characterization.realdb.test.ts": "Commit 6f07c1ae92 seeds one accepted, evidence-confirmed SWOT item instead of an invalid content-free APPROVED fixture.",
+    "tests/integration/tools-promotion-race.realdb.test.ts": "Commit 6f07c1ae92 applies the same publishable fixture contract to the promotion race proof."
   },
   "commands": [
     {
@@ -143,14 +147,34 @@
   ],
   "openItems": [
     "scripts/cleanup/verify-closure-lane.mjs grants its allowedNewRoots exemption only to files that are currently untracked (const isNew = !isTracked(file)), so a legitimately-placed new file starts being reported as a violation the moment it is committed. This lane's new file under server/src/services/toolFreeze/__tests__/ matches the allowed pattern and is benign.",
-    "The blocking known consequence (tool-session-roundtrip.contract.test.ts now red in the default suite, plus two unnamed fixtures) must be resolved before this task can be called closed without caveats.",
+    "The named default-suite regression is green (11/11) and the two identified content-free fixtures are repaired, but their real-PostgreSQL rerun is blocked by exhausted Docker storage.",
     "No browser/visual evidence exists for this task's user-facing surface (SWOT tool freeze/promote flow)."
   ],
   "unverifiedFields": [
-    "commands[6].command (exact regression command and the two unnamed additional broken fixture file paths — not quoted in the commit body)"
+    "The repaired real-PostgreSQL fixture suites have not completed on the current SHA because Docker cannot allocate pg_wal space."
   ],
+  "integratorClosure20260817": {
+    "candidateSha": "6f07c1ae923801b38405c82d056fe8ba7abf5682",
+    "defaultSuite": {
+      "command": "npx vitest run tests/integration/tools/tool-session-roundtrip.contract.test.ts --retry=0 --reporter=dot",
+      "exitCode": 0,
+      "result": "1/1 file, 11/11 tests; the named content-free SWOT fixture is already corrected on this SHA"
+    },
+    "identifiedFixtureRepairs": [
+      "tests/integration/tools-promote-characterization.realdb.test.ts",
+      "tests/integration/tools-promotion-race.realdb.test.ts"
+    ],
+    "fixtureRepairRationale": "Both helpers inserted APPROVED dynamic-swot sessions without answers_json while asserting successful promotion. They now seed one accepted, evidence-confirmed SWOT item, preserving the production nonempty-output contract rather than weakening it.",
+    "realPostgres": {
+      "status": "BLOCKED_INFRA",
+      "detail": "A new disposable pgvector/pg16 container failed during initdb with no space left on device. Reusing an existing container with a new isolated database also failed during migration with no space left on device. No realPG test result is claimed.",
+      "failedContainerCleanup": "Removed only consultify-tls-bvp-eb0a9771 with its anonymous volume; no other Docker resource was touched."
+    },
+    "unrelatedTestFinding": "tests/integration/routes/tools.p27.test.ts has 23 failures because it calls localhost through the root global fetch mock and never mounts an app; this is not caused by the SWOT freeze contract and was not edited.",
+    "g4": "NOT_VERIFIED; no browser evidence added in this bounded technical pass"
+  },
   "verdict": "PARTIAL",
-  "verdictRationale": "G0/G1/G3 shared gates pass at this SHA and the task's own suite is 10/10 on real Postgres with strong coverage (CAS, immutability, concurrency, tenant, cold readback). This is downgraded from DONE_CURRENT_SHA because the commit message records a KNOWN CONSEQUENCE that is an active regression, not a hypothetical: tests/integration/tools/tool-session-roundtrip.contract.test.ts runs in the DEFAULT test suite (unlike this task's own RUN_DB_TESTS-gated evidence) and now fails after this change, plus two further unnamed fixtures. A fix that breaks a default-suite test it did not update is not a clean close. No browser/visual evidence exists for the SWOT freeze/promote UI surface either, which the DoD would need for a full DONE.",
+  "verdictRationale": "The named default-suite regression is green (11/11) and both identified invalid content-free fixtures now satisfy the production nonempty-output contract without weakening CAS, immutability or tenant controls. The task remains PARTIAL because exhausted Docker storage prevented the two repaired real-PostgreSQL suites from being rerun on this exact SHA, and no mounted browser evidence exists for the SWOT freeze/promote UI flow.",
   "ownerTables": [],
   "fixtures": {},
   "negativeControls": {}
