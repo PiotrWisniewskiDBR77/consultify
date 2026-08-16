@@ -1,51 +1,80 @@
 {
   "taskId": "AUD-BVP-001",
-  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "1a23b5db5e004cdab3bda727ee6aaa124454f5ab",
+  "baselineSha": "cbbe9a41c68fc52a04257354e15c383a504748f2",
+  "productSha": "24469e530b437a71be92087bc11fc05d6309754d",
   "leaseSha256": "a2f9be9983e3a03e5e64f1a51dca193199a5bec963a246c3b4fe94b378af1308",
   "changedPaths": [
+    "server/migrations/20260921_audit_program_create_idempotency.sql",
+    "server/src/routes/audits/programs.routes.ts",
     "server/src/services/audits/programService.ts",
-    "server/src/services/auditProgramBvp/__tests__/programKernelBvp.pg.test.ts"
+    "server/src/services/auditProgramBvp/__tests__/programKernelBvp.pg.test.ts",
+    "docs/program/evidence/closure/a/AUD-BVP-001/TASK_EVIDENCE.json"
   ],
   "changedPathRationale": {
-    "server/src/services/audits/programService.ts": "Adds compare-and-set lifecycle transition on organization, program and expected state so a stale concurrent writer fails with 409 before an audit event is emitted.",
-    "server/src/services/auditProgramBvp/__tests__/programKernelBvp.pg.test.ts": "Requires exactly one accepted transition, one rejected transition and exactly one new domain event on real PostgreSQL."
+    "server/migrations/20260921_audit_program_create_idempotency.sql": "Adds tenant-scoped optional create idempotency identity and a DB uniqueness guard.",
+    "server/src/routes/audits/programs.routes.ts": "Passes the canonical Idempotency-Key header into the only live program writer.",
+    "server/src/services/audits/programService.ts": "Makes program+criteria+owner+created event one pinned PostgreSQL transaction and serializes same-key concurrent replays with an advisory transaction lock.",
+    "server/src/services/auditProgramBvp/__tests__/programKernelBvp.pg.test.ts": "Replaces the known duplicate-create assertion with an eight-way exactly-one complete aggregate control and respects DB-enforced append-only event cleanup.",
+    "docs/program/evidence/closure/a/AUD-BVP-001/TASK_EVIDENCE.json": "Current exact fresh-current technical evidence."
   },
-  "ownerTables": ["audit_programs", "audit_domain_events"],
+  "ownerTables": [
+    "audit_programs",
+    "audit_program_criteria",
+    "audit_program_members",
+    "audit_domain_events"
+  ],
   "commands": [
     {
-      "command": "DATABASE_URL=<isolated-pg> DB_TYPE=postgres POSTGRES_SKIP_INIT_IN_TEST=1 RUN_DB_TESTS=1 MOCK_DB=false npx vitest run server/src/services/auditProgramBvp/__tests__/programKernelBvp.pg.test.ts --maxWorkers=1 --no-file-parallelism --reporter=dot",
-      "exitCode": 0
+      "command": "NODE_ENV=test DATABASE_URL=<fresh-local-pg> DB_TYPE=postgres MOCK_DB=false npm run db:migrate:strict",
+      "exitCode": 130,
+      "result": "Emitted migration completion; independent ledger 732 success; interrupted afterward because pool retained process."
     },
     {
-      "command": "NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p server/tsconfig.json --noEmit --pretty false",
-      "exitCode": 0
+      "command": "NODE_ENV=test DATABASE_URL=<fresh-local-pg> DB_TYPE=postgres MOCK_DB=false npm run db:migrate:strict",
+      "exitCode": 0,
+      "result": "repeat applied 0"
     },
     {
-      "command": "git diff --check -- server/src/services/audits/programService.ts server/src/services/auditProgramBvp/__tests__/programKernelBvp.pg.test.ts",
-      "exitCode": 0
-    }
+      "command": "NODE_ENV=test DATABASE_URL=<fresh-local-pg> DB_TYPE=postgres MOCK_DB=false npm run db:migrate:postgres:dry",
+      "exitCode": 0,
+      "result": "0 pending"
+    },
+    {
+      "command": "DATABASE_URL=<fresh-local-pg> DB_TYPE=postgres POSTGRES_SKIP_INIT_IN_TEST=1 RUN_DB_TESTS=1 MOCK_DB=false CI=true NODE_ENV=test npx vitest run server/src/services/auditProgramBvp/__tests__/programKernelBvp.pg.test.ts --maxWorkers=1 --no-file-parallelism --retry=0",
+      "exitCode": 0,
+      "result": "11/11"
+    },
+    { "command": "npm run type-check", "exitCode": 0 }
   ],
   "denominators": {
-    "realPostgres": {"files": 1, "passed": 11, "failed": 0, "skipped": 0},
-    "migrations": {"appliedOnFreshDatabase": 722, "failed": 0}
+    "freshMigrationLedger": { "success": 732, "failed": 0 },
+    "repeatMigrations": { "applied": 0 },
+    "dryRun": { "pending": 0 },
+    "auditBvpRealPostgres": { "passed": 11, "failed": 0 },
+    "typecheck": { "passed": 1, "failed": 0 }
   },
   "fixtures": {
-    "database": "Disposable pgvector PostgreSQL 16 container consultify-aud-bvp-final on localhost:56663",
-    "cleanup": "Container is disposable and contains no production data."
+    "database": "fresh disposable pgvector PostgreSQL 16 localhost:55497",
+    "program": "published internal demonstration pack with two criteria, two tenants and program-scoped roles",
+    "http": "real Gateway legacy surface retirement controls; canonical kernel service backed by the production database adapter"
   },
   "negativeControls": {
     "crossTenantDenied": true,
     "roleDenied": true,
-    "legacyWriterRetired": true,
+    "legacyWriterRetired410": true,
     "illegalLifecycleTransitionDenied": true,
-    "concurrentLifecycleExactlyOneWinner": true,
-    "concurrentLifecycleExactlyOneEvent": true
+    "concurrentLifecycleExactlyOneWinnerOneEvent": true,
+    "eightConcurrentCreatesExactlyOneCompleteAggregate": true,
+    "createAtomicProgramCriteriaOwnerEvent": true,
+    "coldModulePoolReadback": true,
+    "appendOnlyEventCleanupRespected": true
   },
   "browserArtifacts": [],
   "rollback": {
-    "method": "Revert commit 1a23b5db5e004cdab3bda727ee6aaa124454f5ab; no schema rollback is required.",
+    "method": "Revert the five bounded paths; the additive nullable column/index can remain inert if code is reverted.",
     "executed": false
   },
-  "verdict": "PARTIAL"
+  "blocker": null,
+  "technicalVerdict": "PASS_FRESH_REALPG",
+  "verdict": "DONE_CURRENT_SHA"
 }
