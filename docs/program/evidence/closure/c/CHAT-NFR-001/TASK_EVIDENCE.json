@@ -1,38 +1,88 @@
 {
-  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "a62dbe340114d87eda75a0d2da2d77bee2a90685",
-  "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
-  "environment": {
-    "node": "v24.12.0",
-    "postgres": "16.14 (pgvector/pgvector:pg16)",
-    "vitest": "root vitest.config.ts",
-    "dbUrl": "127.0.0.1:55432 isolated lane container consultify-closure-c-64f50785"
-  },
-  "gateG0": "PASS pre-commit (lease PASS, 25 changed paths). POST-COMMIT the verifier reports 11 new source/test files as violations; all 11 match lane C allowedNewRoots and none exist at baseline — see ICR-C-003, a verifier defect (isTracked() is true for staged/committed paths), not a scope violation.",
-  "gateG1": "PASS — npm run type-check exit 0; npm run build:backend exit 0; test:discovery-gate PASS 4997/4997 discovered, 4698 executed.",
-  "gateG3": "PASS — strict migrate on FRESH from-zero DB exit 0; repeat run applied 0; --dry-run 0 pending; schema_migrations 709 success / 0 failed / 0 pending.",
+  "baselineSha": "7ed35487586ab2832445bde01f8e25ec4c320b2c",
+  "productSha": "a61d0ed49208a64b733e7f4a49fa4befaf1aa806",
+  "leaseSha256": "6cea3c806721c2d385d7f960e88d411966e5bf497bb35ccce222828f8b9819c4",
   "taskId": "CHAT-NFR-001",
   "verdict": "PARTIAL",
   "open": [
-    "Streaming cancellation, latency/retry budget, provider recovery and restart durability live in ai.routes.ts / AIPipeline.ts — OUTSIDE the lane lease. Reproduced findings recorded: cancellation stops the local read loop but passes no AbortController to the provider, and the streaming path has no retry at all.",
-    "No telemetry/runbook delivered."
+    "A real external-provider stability window remains unverified. Provider credentials, selection policy and external availability were explicitly outside this bounded closure; deterministic retry/cancellation/failure contracts are proven without claiming external reliability."
   ],
+  "environment": {
+    "node": "v24.12.0",
+    "postgres": "16 (pgvector/pgvector:pg16)",
+    "vitest": "root vitest.config.ts",
+    "dbUrl": "127.0.0.1:32919/chat_nfr in disposable container consultify-chat-nfr-f7d13b"
+  },
+  "gateG0": "PASS for the bounded Chat runtime, pipeline, provider transport tests and runbook paths; no UI, human gate or provider policy change.",
+  "gateG1": "PASS: npm run type-check exit 0; npm run build:backend exit 0.",
+  "gateG2": "PASS focused: 4/4 files and 32/32 tests on the fresh-PG environment.",
+  "gateG3": "PASS: fresh PostgreSQL migration exit 0, 729 schema_migrations rows, zero Chat fixture residue.",
+  "gateG4": "NOT_RUN_BY_SCOPE: no Chat UI or human acceptance was in this technical closure.",
+  "ownerTables": ["ai_partial_responses", "ai_usage_logs", "artifact_handoff_proposals", "artifact_handoff_receipts"],
+  "thresholds": {
+    "mountedDeterministicSse": "complete response, trust bundle and [DONE] in < 2000 ms",
+    "providerAttemptTimeout": "60000 ms maximum per provider stream attempt",
+    "providerRetryBudget": "one retry, maximum two streamText starts for a provider call",
+    "heartbeat": "15000 ms",
+    "partialCheckpointCadence": "after each >2000 ms accumulation interval"
+  },
   "denominators": {
-    "realdbTests": "covered within the 14 chatHandoff tests"
+    "combinedFreshPgAndNfr": "32 passed / 32 discovered in 4 files; exit 0",
+    "realPostgresChat": "19 passed / 19 discovered",
+    "streamTransportAndRuntime": "13 passed / 13 discovered",
+    "typeCheck": "1/1 command exit 0",
+    "backendBuild": "1/1 command exit 0",
+    "migration": "729/729 ledger rows on fresh database"
   },
   "negativeControls": {
-    "providerThrows": "PROVIDER_UNAVAILABLE 503, zero rows",
-    "providerNull": "SOURCE_NOT_FOUND 404, zero rows",
-    "providerEmpty": "EMPTY_SOURCE 422, zero rows"
+    "clientCancellation": "route AbortController propagates through AIPipeline to llmService; composed provider signal becomes aborted when caller aborts",
+    "timeout": "caller cancellation is composed with an enforced 60000 ms provider timeout",
+    "boundedRetry": "first provider startup failure then success invokes streamText exactly twice and emits recovered content",
+    "providerThrows": "PROVIDER_UNAVAILABLE 503 and zero phantom proposals",
+    "providerNull": "SOURCE_NOT_FOUND 404 and zero phantom proposals",
+    "providerEmpty": "EMPTY_SOURCE 422 and zero phantom proposals",
+    "emptyStream": "mounted route retains explicit EMPTY_STREAM SSE failure contract",
+    "tenantAndCold": "fresh-PG mounted Chat suite covers foreign/stale denial, idempotency, concurrency and independent cold readback",
+    "cleanup": "database query after tests returned proposal|receipt residue 0|0"
   },
-  "changedPaths": [],
-  "changedPathRationale": {},
-  "ownerTables": [],
-  "commands": [],
-  "fixtures": {},
+  "observability": {
+    "correlation": "X-Stream-Session-Id plus Chat trace ID, organization and conversation",
+    "events": "pipeline_metadata records provider/model/latency; disconnect completes trace as aborted; explicit RATE_LIMIT, STREAM_ERROR and EMPTY_STREAM codes",
+    "runbook": "docs/runbooks/CHAT_STREAM_RELIABILITY.md"
+  },
+  "changedPaths": [
+    "server/src/routes/ai.routes.ts",
+    "server/src/services/ai/AIPipeline.ts",
+    "server/src/services/ai/llmService.ts",
+    "server/src/types/ai.types.ts",
+    "server/src/services/ai/__tests__/tokenUsageCapture.test.ts",
+    "tests/integration/ai/ai-chat-stream-e2e-mode.test.ts",
+    "docs/runbooks/CHAT_STREAM_RELIABILITY.md"
+  ],
+  "changedPathRationale": {
+    "server/src/routes/ai.routes.ts": "Own the SSE client lifecycle with an AbortController and pass its signal into the pipeline.",
+    "server/src/services/ai/AIPipeline.ts": "Forward caller cancellation and the explicit 60-second stream budget to provider transport.",
+    "server/src/services/ai/llmService.ts": "Compose client cancellation with provider timeout without changing provider selection policy.",
+    "server/src/types/ai.types.ts": "Declare the optional lifecycle signal in the pipeline request contract.",
+    "server/src/services/ai/__tests__/tokenUsageCapture.test.ts": "Prove cancellation reaches provider invocation and retry is bounded to one recovery attempt.",
+    "tests/integration/ai/ai-chat-stream-e2e-mode.test.ts": "Measure the mounted deterministic SSE completion threshold.",
+    "docs/runbooks/CHAT_STREAM_RELIABILITY.md": "Document thresholds, signals, safe triage and recovery commands."
+  },
+  "commands": [
+    {"command": "DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32919/chat_nfr DB_TYPE=postgres CI=true npx tsx server/scripts/migrate.postgres.ts", "exitCode": 0, "result": "fresh migration complete, 729 ledger rows"},
+    {"command": "DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32919/chat_nfr DB_TYPE=postgres CI=true RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test ENABLE_V8_GLOBAL=true npx vitest run server/src/services/chatHandoff/__tests__/chatHandoffService.pg.test.ts server/src/services/chatHandoff/__tests__/chatHandoffMounted.pg.test.ts server/src/services/ai/__tests__/tokenUsageCapture.test.ts tests/integration/ai/ai-chat-stream-e2e-mode.test.ts --no-file-parallelism --maxWorkers=1 --retry=0 --reporter=dot", "exitCode": 0, "result": "4/4 files, 32/32 tests"},
+    {"command": "npm run type-check", "exitCode": 0, "result": "passed"},
+    {"command": "npm run build:backend", "exitCode": 0, "result": "runtime mirrors verified 9/9 and TypeScript build passed"}
+  ],
+  "fixtures": {
+    "postgres": "fresh isolated chat_nfr database",
+    "runtime": "mounted Express /api/ai/chat/stream in deterministic E2E_MODE",
+    "provider": "mocked streamText transport that exposes the real abortSignal argument and deterministic transient failure",
+    "chat": "real-PG two-tenant conversation/proposal/receipt fixtures from the CHAT-BVP suite"
+  },
   "browserArtifacts": [],
   "rollback": {
-    "method": "Not recorded by the lane; no rollback execution or completion claim is inferred.",
+    "method": "Remove AbortSignal forwarding/composition, the two focused assertions and CHAT_STREAM_RELIABILITY.md. No migration or production-data rollback is required.",
     "executed": false
   }
 }
