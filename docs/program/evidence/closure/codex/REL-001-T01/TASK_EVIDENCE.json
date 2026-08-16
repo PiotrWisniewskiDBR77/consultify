@@ -1,0 +1,23 @@
+{
+  "taskId": "REL-001-T01",
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "productSha": "748c801eb7ade1661a9ab5d43fd7dc73ca4badde",
+  "leaseSha256": "18eb0f2e24aee1d6415a29e1605597117f24c42a1f74439842581e7a92583742",
+  "changedPaths": ["docs/program/evidence/closure/codex/REL-001-T01/TASK_EVIDENCE.json"],
+  "changedPathRationale": {"docs/program/evidence/closure/codex/REL-001-T01/TASK_EVIDENCE.json": "Records the release gate as unverified and not authorized without performing a deployment or release mutation."},
+  "ownerTables": ["schema_migrations", "feature_flags"],
+  "commands": [{"command": "node scripts/cleanup/report-closure-progress.mjs", "exitCode": 0}],
+  "denominators": {
+    "precedingTasks": 81,
+    "precedingTasksDoneOrApprovedOut": false,
+    "deployedGoldenFlows": "0/16 on this exact SHA",
+    "telemetryWindows": "0/2",
+    "rollbackRehearsals": 0
+  },
+  "fixtures": {"deployment": "No production or release-candidate deployment was authorized in this program run."},
+  "negativeControls": {"noUnauthorizedPush": true, "noUnauthorizedDeploy": true, "noUnauthorizedRelease": true, "localPassNotTreatedAsRelease": true},
+  "browserArtifacts": [],
+  "rollback": {"method": "No deployment occurred, so no environment rollback was executed.", "executed": false},
+  "verdict": "NOT_VERIFIED",
+  "blockers": ["Every preceding task must be DONE_CURRENT_SHA or explicitly approved out.", "Exact-SHA deployment identity and 16 deployed golden flows are missing.", "Two consecutive 60-minute telemetry windows and rollback rehearsal are missing.", "Explicit Piotr release authorization has not been requested or granted."]
+}

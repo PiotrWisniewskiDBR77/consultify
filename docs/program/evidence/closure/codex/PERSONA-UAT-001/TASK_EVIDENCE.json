@@ -1,0 +1,21 @@
+{
+  "taskId": "PERSONA-UAT-001",
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "productSha": "748c801eb7ade1661a9ab5d43fd7dc73ca4badde",
+  "leaseSha256": "18eb0f2e24aee1d6415a29e1605597117f24c42a1f74439842581e7a92583742",
+  "changedPaths": ["docs/program/evidence/closure/codex/PERSONA-UAT-001/TASK_EVIDENCE.json"],
+  "changedPathRationale": {"docs/program/evidence/closure/codex/PERSONA-UAT-001/TASK_EVIDENCE.json": "Records the exact unfulfilled seven-persona human acceptance denominator and prevents automated module checks from being misreported as UAT."},
+  "ownerTables": ["users", "organization_members", "role_change_audit_events"],
+  "commands": [{"command": "node scripts/cleanup/report-closure-progress.mjs", "exitCode": 0}],
+  "denominators": {
+    "requiredPersonas": 7,
+    "namedHumanJourneysCompleted": 0,
+    "requiredRoles": ["Owner", "Admin", "Manager", "Consultant", "Member", "respondent", "partner"]
+  },
+  "fixtures": {"status": "Automated role fixtures exist in module packets, but no named human UAT roster or signed journey record exists."},
+  "negativeControls": {"automatedTestsNotAcceptedAsHumanUat": true, "namedReviewerPresent": false, "zeroP0P1HumanVerdict": false},
+  "browserArtifacts": [],
+  "rollback": {"method": "Evidence-only record; no runtime or schema change.", "executed": false},
+  "verdict": "BLOCKED_HUMAN",
+  "blocker": "Seven named people or explicitly accountable reviewers must execute and sign the positive and forbidden job stories on the exact candidate SHA."
+}

@@ -1,0 +1,24 @@
+{
+  "taskId": "UI-CANON-ALL-001",
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "productSha": "748c801eb7ade1661a9ab5d43fd7dc73ca4badde",
+  "leaseSha256": "18eb0f2e24aee1d6415a29e1605597117f24c42a1f74439842581e7a92583742",
+  "changedPaths": ["docs/program/evidence/closure/codex/UI-CANON-ALL-001/TASK_EVIDENCE.json"],
+  "changedPathRationale": {"docs/program/evidence/closure/codex/UI-CANON-ALL-001/TASK_EVIDENCE.json": "Records that module-level screenshots and focused tests do not yet satisfy the full sixteen-module cross-product UI matrix."},
+  "ownerTables": [],
+  "commands": [{"command": "node scripts/cleanup/report-closure-progress.mjs", "exitCode": 0}],
+  "denominators": {
+    "requiredModuleInventories": 16,
+    "requiredViewports": 3,
+    "requiredThemes": 2,
+    "requiredLocales": 2,
+    "requiredAxeCriticalSerious": 0,
+    "aggregateMatrixComplete": false
+  },
+  "fixtures": {"status": "Module packets include partial mounted evidence, but no one exact-SHA run covers every route, state, viewport, theme and locale."},
+  "negativeControls": {"localScreenshotsNotAcceptedAsAggregatePass": true, "mountedAxeAllModules": false, "fullKeyboardFocusReturn": false, "manualVoiceOver": false},
+  "browserArtifacts": [],
+  "rollback": {"method": "Evidence-only record; no runtime or schema change.", "executed": false},
+  "verdict": "NOT_VERIFIED",
+  "blockers": ["Complete the 16-module mounted matrix on one frozen SHA.", "Run axe and full keyboard/focus-return coverage.", "Obtain named visual and VoiceOver acceptance."]
+}
