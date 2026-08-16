@@ -72,6 +72,7 @@ function tokenFor(userId: string, orgId: string): string {
 
 let app: Express;
 let client: Awaited<ReturnType<typeof pgClient>>;
+const previousEnableV8Global = process.env.ENABLE_V8_GLOBAL;
 
 async function insertOrg(id: string): Promise<void> {
   await client.query(
@@ -247,6 +248,9 @@ async function cleanupFixtures(): Promise<void> {
 }
 
 beforeAll(async () => {
+  // This fixture mounts the real global V8 gate. Org-level rows alone are not
+  // authority to expose V8; mirror the deployed server toggle explicitly.
+  process.env.ENABLE_V8_GLOBAL = 'true';
   requireLocalDbUrl(); // fail loud (not silently skip) if DATABASE_URL isn't local
   client = pgClient();
   await client.connect();
@@ -353,9 +357,14 @@ beforeAll(async () => {
 }, 120_000);
 
 afterAll(async () => {
-  await removeFaultInjection();
-  await cleanupFixtures();
-  await client.end();
+  try {
+    await removeFaultInjection();
+    await cleanupFixtures();
+    await client.end();
+  } finally {
+    if (previousEnableV8Global === undefined) delete process.env.ENABLE_V8_GLOBAL;
+    else process.env.ENABLE_V8_GLOBAL = previousEnableV8Global;
+  }
 }, 60_000);
 
 describe('MW-CORE-001 golden flow: Inbox/Task (real Postgres, real routers)', () => {
