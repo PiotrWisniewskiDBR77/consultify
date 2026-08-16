@@ -7,23 +7,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const listAccessibleDocumentsMock = vi.fn();
 const uploadAndIngestMock = vi.fn();
 
-vi.mock('multer', () => {
-  const multerMock = vi.fn(() => ({
-    single: () => (req: any, _res: any, next: any) => {
-      if (req.get('x-test-file') === 'present') {
-        req.file = {
-          originalname: 'hello.txt',
-          mimetype: 'text/plain',
-          buffer: Buffer.from('hello'),
-          size: 5,
-        };
-      }
-      next();
-    },
-  }));
-  (multerMock as any).memoryStorage = vi.fn(() => ({}));
-  return { default: multerMock };
-});
+// The global test setup replaces multer with a raw-body compatibility stub.
+// This contract exercises the real multipart boundary and must use multer's
+// memory storage, otherwise the entire multipart envelope becomes `file.buffer`.
+vi.unmock('multer');
 
 vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
   verifyToken: (req: any, _res: any, next: any) => {
@@ -92,8 +79,11 @@ describe('documents fail-closed contract', () => {
     const res = await request(app)
       .post('/api/documents/upload')
       .set('x-test-auth', 'none')
-      .set('x-test-file', 'present')
-      .set('X-Correlation-ID', 'pack10s3-documents-unauthorized-1');
+      .set('X-Correlation-ID', 'pack10s3-documents-unauthorized-1')
+      .attach('file', Buffer.from('hello'), {
+        filename: 'hello.txt',
+        contentType: 'text/plain',
+      });
 
     expect(res.status).toBe(401);
     expect(res.body.status).toBe('fail');
@@ -102,13 +92,45 @@ describe('documents fail-closed contract', () => {
     expect(res.body.correlationId).toBe('pack10s3-documents-unauthorized-1');
   });
 
+  it('accepts a real multipart upload at the positive boundary', async () => {
+    const res = await request(app)
+      .post('/api/documents/upload')
+      .set('X-Correlation-ID', 'pack10s3-documents-upload-ok-1')
+      .attach('file', Buffer.from('hello'), {
+        filename: 'hello.txt',
+        contentType: 'text/plain',
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body).toEqual({
+      message: 'Document uploaded successfully',
+      document: { documentId: 'doc-1' },
+    });
+    expect(uploadAndIngestMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizationId: 'org-docs-1',
+        ownerId: 'u-docs-1',
+        scope: 'user',
+        sourceUpload: 'documents.library',
+        file: expect.objectContaining({
+          originalname: 'hello.txt',
+          mimetype: 'text/plain',
+          size: 5,
+        }),
+      })
+    );
+  });
+
   it('returns coded 500 when upload fails without leaking internals', async () => {
     uploadAndIngestMock.mockRejectedValueOnce(new Error('DOCUMENTS_INTERNAL_SECRET_UPLOAD'));
 
     const res = await request(app)
       .post('/api/documents/upload')
-      .set('x-test-file', 'present')
-      .set('X-Correlation-ID', 'pack10s3-documents-upload-fail-1');
+      .set('X-Correlation-ID', 'pack10s3-documents-upload-fail-1')
+      .attach('file', Buffer.from('hello'), {
+        filename: 'hello.txt',
+        contentType: 'text/plain',
+      });
 
     expect(res.status).toBe(500);
     expect(res.body.status).toBe('error');
@@ -118,4 +140,3 @@ describe('documents fail-closed contract', () => {
     expect(JSON.stringify(res.body)).not.toContain('DOCUMENTS_INTERNAL_SECRET_UPLOAD');
   });
 });
-

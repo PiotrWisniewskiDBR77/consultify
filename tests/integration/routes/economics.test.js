@@ -1,107 +1,88 @@
-import app from '../../../server/src/index.js';
-import bcrypt from 'bcryptjs';
-import request from 'supertest';
-import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
-import { getDatabase } from '../../../server/src/database/Database.js';
-import { initializeDatabase } from '../../../server/src/database/DatabaseInitializer.js';
-
-vi.hoisted(() => {
-  process.env.MOCK_DB = 'false';
-  const workerId = process.env.VITEST_WORKER_ID || '0';
-  process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
-});
-
 // @vitest-environment node
 
-/**
- * Level 2: Integration Tests - Economics (Digitization)
- */
-const db = getDatabase();
+import express from 'express';
+import request from 'supertest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const dbAll = vi.fn();
+const dbGet = vi.fn();
+const dbRun = vi.fn();
+
+vi.mock('../../../server/src/utils/DbPromise.js', () => ({
+  all: (...args) => dbAll(...args),
+  get: (...args) => dbGet(...args),
+  run: (...args) => dbRun(...args),
+}));
+
+vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
+  verifyToken: (req, _res, next) => {
+    req.user = { id: 'econ-user', organizationId: 'econ-org', role: 'ADMIN' };
+    next();
+  },
+}));
+
+import economicsRoutes from '../../../server/src/routes/economics.routes.ts';
+
+function createApp() {
+  const app = express();
+  app.use(express.json());
+  app.use('/api/economics', economicsRoutes);
+  return app;
+}
+
 describe('Integration Test: Economics Routes', () => {
-  let authToken;
-  const testId = Date.now();
-  const testOrgId = `econ-org-${testId}`;
-  const testUserId = `econ-user-${testId}`;
-  const testEmail = `econ-${testId}@test.com`;
-  const testProjectId = `econ-proj-${testId}`;
-
-  beforeAll(async () => {
-    await initializeDatabase();
-    await db.initPromise;
-
-    const hash = bcrypt.hashSync('test123', 8);
-
-    await new Promise((resolve) => {
-      db.serialize(() => {
-        db.run('INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)', [
-          testOrgId,
-          'Economics Org',
-          'enterprise',
-          'active',
-        ]);
-        db.run(
-          'INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
-          [testUserId, testOrgId, testEmail, hash, 'EconUser', 'ADMIN'],
-          resolve
-        );
-        db.run('INSERT INTO projects (id, organization_id, name, status) VALUES (?, ?, ?, ?)', [
-          testProjectId,
-          testOrgId,
-          'Econ Project',
-          'active',
-        ]);
-      });
-    });
-
-    const loginRes = await request(app).post('/api/auth/login').send({
-      email: testEmail,
-      password: 'test123',
-    });
-
-    if (loginRes.body.token) {
-      authToken = loginRes.body.token;
-    }
+  beforeEach(() => {
+    vi.clearAllMocks();
+    dbAll.mockResolvedValue([]);
+    dbGet.mockResolvedValue({ count: 0, avg: 0 });
+    dbRun.mockResolvedValue({ changes: 1 });
   });
 
-  describe('GET /api/economics/analyses', () => {
-    it('should list analyses', async () => {
-      if (!authToken) return;
+  it('GET /api/economics/analyses lists analyses for the authenticated tenant', async () => {
+    const res = await request(createApp()).get('/api/economics/analyses');
 
-      const res = await request(app)
-        .get('/api/economics/analyses')
-        .set('Authorization', `Bearer ${authToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ analyses: [], total: 0 });
+    expect(dbAll).toHaveBeenCalledWith(
+      expect.stringContaining('WHERE da.organization_id = ?'),
+      ['econ-org'],
+      { fallback: false }
+    );
+  });
 
-      expect(res.status).toBe(200);
+  it('GET /api/economics/stats returns current catalog counters', async () => {
+    dbGet
+      .mockResolvedValueOnce({ count: 7 })
+      .mockResolvedValueOnce({ count: 2 })
+      .mockResolvedValueOnce({ count: 3 })
+      .mockResolvedValueOnce({ count: 2 })
+      .mockResolvedValueOnce({ avg: 73 });
+
+    const res = await request(createApp()).get('/api/economics/stats');
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      total: 7,
+      draft: 2,
+      inProgress: 3,
+      completed: 2,
+      avgScore: 73,
     });
   });
 
-  describe('GET /api/economics/stats', () => {
-    it('should return catalog stats', async () => {
-      if (!authToken) return;
+  it('POST /api/economics/analyses persists a validated tenant-scoped analysis', async () => {
+    const res = await request(createApp())
+      .post('/api/economics/analyses')
+      .send({ name: 'Test Analysis', description: 'Integration Check', projectId: 'econ-proj' });
 
-      const res = await request(app)
-        .get('/api/economics/stats')
-        .set('Authorization', `Bearer ${authToken}`);
-
-      expect(res.status).toBe(200);
+    expect(res.status).toBe(201);
+    expect(res.body).toMatchObject({
+      success: true,
+      analysis: { name: 'Test Analysis', organizationId: 'econ-org' },
     });
-  });
-
-  describe('POST /api/economics/analyses', () => {
-    it('should create new analysis', async () => {
-      if (!authToken) return;
-
-      const res = await request(app)
-        .post('/api/economics/analyses')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({
-          name: 'Test Analysis',
-          description: 'Integration Check',
-          projectId: testProjectId,
-          tags: ['test'],
-        });
-
-      expect([200, 201]).toContain(res.status);
-    });
+    expect(dbRun).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT INTO digitization_analyses'),
+      expect.arrayContaining(['Test Analysis', 'econ-proj', 'econ-org', 'econ-user'])
+    );
   });
 });
