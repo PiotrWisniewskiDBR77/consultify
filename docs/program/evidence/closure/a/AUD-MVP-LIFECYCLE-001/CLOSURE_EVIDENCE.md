@@ -1,5 +1,27 @@
 # AUD-MVP-LIFECYCLE-001 — closure evidence
 
+## Superseding technical closure — 2026-08-17
+
+The two gaps documented below are now technically closed in the working tree:
+
+- `20260916_audit_domain_events_append_only.sql` installs a database trigger
+  rejecting both direct `UPDATE` and `DELETE`; corrections remain append-only
+  through the existing `supersedes` contract.
+- lifecycle CAS was already integrated in commit `1a23b5db5e`: the update is
+  conditional on the observed `lifecycle_state` and returns `409` when a
+  concurrent writer wins. `lifecycleConcurrency.test.ts` proves one winner,
+  one rejected stale writer, exactly one matching event, tenant denial and a
+  fresh-pool cold readback.
+
+Real PostgreSQL result: task gate `12/12` in `5/5` files; Audits kernel
+regression `165/165` in `21/21` files; typecheck exit `0`. The disposable DB
+was previously created fresh at `722/722`, then advanced by four current
+migrations; repeat and dry-run both reported zero pending. A new from-zero
+run could not be produced because Docker storage was exhausted, so the final
+machine record remains `PARTIAL / PASS_ADVANCED_REALPG` until that exact G3
+proof is refreshed. Sections describing the former missing trigger and CAS
+below are retained as historical investigation, not current-state claims.
+
 Lane: Claude A (`codex/closure-claude-a-method-evidence`,
 `/Users/piotrwisniewski/Developer/consultify-closure-claude-a`).
 Date: 2026-08-16/17. Requirement: criterion → evidence → finding → action →

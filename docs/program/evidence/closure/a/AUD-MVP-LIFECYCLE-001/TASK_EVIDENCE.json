@@ -1,164 +1,80 @@
 {
   "taskId": "AUD-MVP-LIFECYCLE-001",
-  "lane": "a",
-  "branch": "codex/closure-claude-a-method-evidence",
-  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "baselineTag": "closure-execution-baseline-v2-20260816",
-  "productSha": "acde875c9527468bb5a93faa0dcf0b1b73750a00",
+  "baselineSha": "cd7ff7822a44662f53250363c86207d2b79d4670",
+  "productSha": "5bf69768ef92be75744004fce34794c11bbb554d",
   "leaseSha256": "a2f9be9983e3a03e5e64f1a51dca193199a5bec963a246c3b4fe94b378af1308",
-  "sharedCommitNote": "This commit also covers AUD-MVP-AI-HANDOFF-001 (docs/program/evidence/closure/a/AUD-MVP-AI-HANDOFF-001/TASK_EVIDENCE.json, same productSha). This task is closed as an EVIDENCE task, not a code-fix task: all seven lifecycle stages already existed and were exercised end to end; the exactly-once migration (shared with AI-HANDOFF) is the fix for the 'candidate' stage specifically.",
   "changedPaths": [
-    "server/src/services/auditProgramHandoff/__tests__/fullLifecycle.e2e.test.ts",
-    "server/src/services/auditProgramHandoff/__tests__/segregationOfDutiesNegatives.test.ts",
-    "server/src/services/auditProgramHandoff/__tests__/tenantIsolation.test.ts",
+    "server/migrations/20260916_audit_domain_events_append_only.sql",
     "server/src/services/auditProgramHandoff/__tests__/immutableTrail.test.ts",
+    "server/src/services/auditProgramHandoff/__tests__/lifecycleConcurrency.test.ts",
     "server/src/services/auditProgramHandoff/__tests__/helpers.ts",
-    "server/migrations/20260910_claude_a_audit_initiative_proposal_exactly_once.sql",
-    "docs/program/evidence/closure/a/AUD-MVP-LIFECYCLE-001/CLOSURE_EVIDENCE.md"
+    "server/src/services/audits/__tests__/testHelpers.ts",
+    "server/src/services/audits/__tests__/criterionService.test.ts",
+    "server/src/services/audits/__tests__/evidenceService.test.ts",
+    "server/src/services/audits/__tests__/lifecycleGates.test.ts",
+    "server/src/services/audits/__tests__/programService.test.ts",
+    "server/src/services/audits/__tests__/goldenFlow.e2e.test.ts",
+    "server/src/routes/audits/__tests__/verticalSlice.http.test.ts",
+    "docs/program/evidence/closure/a/AUD-MVP-LIFECYCLE-001/CLOSURE_EVIDENCE.md",
+    "docs/program/evidence/closure/a/AUD-MVP-LIFECYCLE-001/TASK_EVIDENCE.json"
   ],
   "changedPathRationale": {
-    "server/src/services/auditProgramHandoff/__tests__/fullLifecycle.e2e.test.ts": "New real-Postgres proof, 2/2: runs all 7 stages (criterion -> evidence -> finding -> corrective action -> candidate -> closure -> effectiveness verification) in one program, SELECT-verifying all 8 rows at every stage; second test does a cold readback via a genuinely fresh pg.Pool plus a fresh getProposal() service call.",
-    "server/src/services/auditProgramHandoff/__tests__/segregationOfDutiesNegatives.test.ts": "New real-Postgres proof, 4/4: one test per SoD guard (assertNotConcludingOwnResponse, assertNotClosingOwnFinding, assertNotReviewingOwnFinding, assertIndependentVerifier), each asserting the EXACT denial message plus a positive control that the action succeeds when done by someone else. Independent corroboration of the kernel's own segregationOfDuties.test.ts (read-only, not modified).",
-    "server/src/services/auditProgramHandoff/__tests__/tenantIsolation.test.ts": "New real-Postgres proof, 1/1: org B cannot getProposal/listProposals/registerAsInitiative/getCriterion/getFinding on org A's data; positive control that org A can do all of the above on its own data.",
-    "server/src/services/auditProgramHandoff/__tests__/immutableTrail.test.ts": "New real-Postgres proof, 3/3: a written event is untouched by later unrelated activity; a DIRECT UPDATE against audit_domain_events is confirmed NOT blocked (no trigger, no REVOKE) — an honest finding that 'immutable' is a service-layer discipline, not a database-enforced guarantee; the pre-existing idempotency unique index prevents a true duplicate event.",
-    "server/src/services/auditProgramHandoff/__tests__/helpers.ts": "Shared fixtures for the new auditProgramHandoff test directory (used by all six new test files across both LIFECYCLE and AI-HANDOFF).",
-    "server/migrations/20260910_claude_a_audit_initiative_proposal_exactly_once.sql": "Shared with AUD-MVP-AI-HANDOFF-001: the exactly-once DB constraint that is the fix for the lifecycle's 'candidate' stage specifically (registerAsInitiative). See that record's changedPathRationale for the full mechanism.",
-    "docs/program/evidence/closure/a/AUD-MVP-LIFECYCLE-001/CLOSURE_EVIDENCE.md": "Committed evidence markdown: per-file test breakdown (18 total across 6 files, of which the 10 above are this task's own), the 7-stage walkthrough with SELECT verification, the reasoning for placing tests under server/src/services/auditProgramHandoff/__tests__/ instead of tests/auditProgramHandoff/ (a vitest include-glob trap that would otherwise silently 0-collect), the kernel regression run (21 files/165 tests), the audit_domain_events immutability correction, and one integrator change request (optimistic-concurrency guard for transitionLifecycle)."
+    "migration": "database-enforced rejection of UPDATE and DELETE on audit_domain_events; corrections use append-only supersedes lineage",
+    "lifecycleTests": "real PostgreSQL direct mutation denial plus two-writer CAS, exactly one transition event, tenant denial and fresh-pool cold readback",
+    "testTeardown": "removes only fixture cleanup attempts that became invalid once audit events were correctly made non-deletable; disposable test databases retain their audit evidence",
+    "evidence": "supersedes the former PARTIAL diagnosis with exact current implementation and gate results"
   },
+  "ownerTables": [
+    "audit_programs",
+    "audit_domain_events",
+    "audit_program_criteria",
+    "audit_evidence",
+    "audit_program_findings",
+    "audit_corrective_actions",
+    "audit_verifications",
+    "audit_initiative_proposals"
+  ],
   "commands": [
-    {
-      "gate": "G0",
-      "command": "node scripts/cleanup/verify-closure-lane.mjs a closure-execution-baseline-v2-20260816",
-      "exitCode": 0,
-      "result": "lane A lease PASS at baseline"
-    },
-    {
-      "gate": "G1",
-      "command": "npm run test:inventory:generate && npm run test:discovery-gate",
-      "exitCode": 0,
-      "result": "4997 discovered / 4997 manifest entries / 4698 executed-classified"
-    },
-    {
-      "gate": "G1",
-      "command": "npm run type-check",
-      "exitCode": 0,
-      "result": "zero TypeScript errors"
-    },
-    {
-      "gate": "G1",
-      "command": "npm run build:backend && NODE_OPTIONS=--max-old-space-size=8192 npm run build",
-      "exitCode": 0,
-      "result": "both exit 0; pre-existing chunk-size and browserslist warnings recorded, not promoted to failures"
-    },
-    {
-      "gate": "G3",
-      "command": "CI=true DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts",
-      "exitCode": 0,
-      "result": "703/703 success on strict fresh-schema run; repeat run applied zero; --dry-run reported zero pending; 1557 public tables"
-    },
-    {
-      "gate": "G2/task",
-      "command": "DATABASE_URL=postgresql://consultinity:consultinity@127.0.0.1:34916/consultinity DB_TYPE=postgres CI=true RUN_DB_TESTS=1 MOCK_DB=false npx vitest run server/src/services/auditProgramHandoff/__tests__ --no-file-parallelism --maxWorkers=1 --maxConcurrency=2 --retry=0",
-      "exitCode": 0,
-      "result": "6 files passed, 18 passed total across both LIFECYCLE and AI-HANDOFF test files; this task's own subset (fullLifecycle, segregationOfDutiesNegatives, tenantIsolation, immutableTrail) = 10/10"
-    },
-    {
-      "gate": "G2/regression",
-      "command": "DATABASE_URL=postgresql://consultinity:consultinity@127.0.0.1:34916/consultinity DB_TYPE=postgres CI=true RUN_DB_TESTS=1 MOCK_DB=false npx vitest run server/src/services/audits/__tests__ server/src/routes/audits/__tests__ --no-file-parallelism --maxWorkers=1 --maxConcurrency=2 --retry=0",
-      "exitCode": 0,
-      "result": "21 files passed, 165 tests passed, 0 failed, 74.34s (kernel regression, read-only corroboration)"
-    }
+    {"command": "DATABASE_URL=<audbvp-pg> DB_TYPE=postgres NODE_ENV=test npm run db:migrate:strict", "exitCode": 0, "result": "advanced previously fresh 722-migration DB with 4/4 pending migrations including append-only guard"},
+    {"command": "same strict migration command repeated", "exitCode": 0, "result": "Applying migrations: 0"},
+    {"command": "same strict migration command with -- --dry-run", "exitCode": 0, "result": "Pending migrations: 0"},
+    {"command": "realPG vitest: fullLifecycle + segregationOfDutiesNegatives + tenantIsolation + immutableTrail + lifecycleConcurrency, retry=0", "exitCode": 0, "result": "5/5 files, 12/12 tests"},
+    {"command": "realPG vitest: server/src/services/audits/__tests__ + server/src/routes/audits/__tests__, retry=0", "exitCode": 0, "result": "21/21 files, 165/165 tests"},
+    {"command": "npm run type-check -- --pretty false", "exitCode": 0, "result": "full repository typecheck passed"}
   ],
   "denominators": {
-    "taskTests": {
-      "files": 4,
-      "passed": 10,
-      "failed": 0,
-      "skipped": 0,
-      "todo": 0,
-      "breakdown": [
-        {
-          "file": "fullLifecycle.e2e.test.ts",
-          "passed": 2
-        },
-        {
-          "file": "segregationOfDutiesNegatives.test.ts",
-          "passed": 4
-        },
-        {
-          "file": "tenantIsolation.test.ts",
-          "passed": 1
-        },
-        {
-          "file": "immutableTrail.test.ts",
-          "passed": 3
-        }
-      ]
-    },
-    "regression": {
-      "files": 21,
-      "passed": 165,
-      "failed": 0,
-      "skipped": 0,
-      "todo": 0,
-      "scope": "server/src/services/audits/__tests__ + server/src/routes/audits/__tests__, kernel, read-only"
-    },
-    "note": "--retry=0 was mandatory: root vitest.config.ts sets retry: CI ? 3 : 1, which would otherwise let a flaky pass masquerade as green. Kernel regression count in this lane's own run (21 files/165 tests) is explicitly noted in CLOSURE_EVIDENCE.md as materially different from a ledger claim of 32 files/259 tests referenced in the task brief; the discrepancy is most likely scope (a wider audits-adjacent glob), not disagreement, but it was not reconciled and is reported as-is rather than silently resolved — see contradiction note in the final report."
+    "taskRealDb": "12/12 across 5/5 files",
+    "lifecycleStages": "7/7 persisted and cold-readable",
+    "segregationOfDuties": "4/4 negative controls plus positive independent-actor controls",
+    "casRace": "2/2 concurrent calls: exactly 1 success and 1 HTTP-domain 409; exactly 1 matching transition event",
+    "appendOnly": "2/2 direct SQL mutation classes denied: UPDATE and DELETE",
+    "tenant": "cross-tenant lifecycle transition denied 403; owner state unchanged",
+    "kernelRegression": "165/165 across 21/21 files",
+    "migrationAdvance": "4/4 pending applied after documented earlier fresh 722/722; repeat 0; dry-run 0",
+    "typecheck": "exit 0"
   },
-  "realDb": {
-    "engine": "pgvector/pgvector:pg16",
-    "container": "consultify-closure-a-34916",
-    "databaseUrl": "postgresql://consultinity:consultinity@127.0.0.1:34916/consultinity",
-    "schemaProvenance": "cloned from the strict-migration-runner database (703/703 schema_migrations success, 1557 public tables)",
-    "mockDb": false,
-    "note": "CI=true is required to unlock a local database host (server/src/config/databaseTargetResolver.ts:111-118). NODE_ENV=test alone was deliberately not relied on for DB selection."
+  "fixtures": {
+    "database": "disposable consultify-aud-bvp-final PostgreSQL 16 on localhost:56663; originally fresh at 722/722 and advanced with four pending current migrations",
+    "lifecycle": "unique organizations and fieldwork programs with tenant-scoped members; new pg.Pool(max=1) used for cold readback",
+    "policy": "no external methodology, rights, scoring or AUD-POL decision introduced"
   },
-  "knownConsequences": [
-    {
-      "description": "audit_domain_events is append-only by service-layer discipline only, NOT by a database trigger: a direct SQL UPDATE/DELETE is not blocked, proven by immutableTrail.test.ts mutating a row directly. The task brief's own wording ('immutable audit trail') reads as the stronger, database-enforced claim, which is not what exists today. This is a genuine gap relative to the task's named requirement, not a cosmetic finding.",
-      "blocking": false,
-      "source": "commit acde875c9527468bb5a93faa0dcf0b1b73750a00"
-    },
-    {
-      "description": "transitionLifecycle (programService.ts:944-1002) performs a blind UPDATE with no optimistic-concurrency WHERE clause on the current state, so two concurrent transitions to DIFFERENT target states from the same source can both pass their gate checks against a stale read and the later UPDATE silently wins, while the earlier transition's audit-trail event still claims a state that no longer matches audit_programs.lifecycle_state. Lower severity than the exactly-once gap (already fixed by this lane's migration) because transitions are typically single-actor and low-frequency.",
-      "blocking": false,
-      "source": "commit acde875c9527468bb5a93faa0dcf0b1b73750a00"
-    }
-  ],
+  "negativeControls": {
+    "appendOnlyUpdate": "direct UPDATE rejected by trigger with SQLSTATE 55000",
+    "appendOnlyDelete": "direct DELETE rejected by trigger with SQLSTATE 55000",
+    "concurrency": "stale second lifecycle writer receives AUDIT_INVALID_STATE 409 and emits no event",
+    "tenant": "foreign organization cannot advance owner program and owner state remains fieldwork",
+    "segregationOfDuties": "self-conclusion, self-review, self-close and self-effectiveness verification denied",
+    "regression": "full Audits service and route kernel remains 165/165 green"
+  },
   "browserArtifacts": [],
   "rollback": {
-    "mechanism": "revert the commit; the test files are net-new and additive (no production code changed by this task specifically beyond the shared exactly-once migration, see AUD-MVP-AI-HANDOFF-001's rollback note for that piece)",
-    "schemaImpact": "none directly attributable to this task beyond the shared migration described in AUD-MVP-AI-HANDOFF-001",
-    "flagImpact": "none — this task added no flags",
-    "oldReaderCompatibility": "unaffected — no production write path was changed for this task specifically"
+    "code": "revert the bounded migration/test/evidence changes before deployment; no commit was created",
+    "data": "migration is additive; audit history written after activation is intentionally not deletable and must be corrected by superseding events",
+    "executed": false
   },
-  "integratorChangeRequests": [
-    {
-      "taskId": "AUD-MVP-LIFECYCLE-001",
-      "file": "server/src/services/audits/programService.ts:944-1002",
-      "reason": "transitionLifecycle has no optimistic-concurrency guard: blind UPDATE with no WHERE lifecycle_state = $current clause, so two concurrent transitions to different targets from the same source state can silently produce a stale-wins outcome, with the audit trail event of the losing transition surviving even though the state it claims no longer matches reality.",
-      "minimalHunk": "add AND lifecycle_state = $current to the UPDATE's WHERE clause; if rowCount === 0, throw AuditStateError('stan programu zmienił się w międzyczasie'); requires auditRun to return the affected row count instead of discarding it",
-      "consumerTest": "a new case in server/src/services/audits/__tests__/programService.test.ts (kernel, not this lane) — two concurrent transitionLifecycle calls to DIFFERENT targets from the same source state, asserting exactly one succeeds and the final lifecycle_state matches the winner",
-      "blocking": false
-    },
-    {
-      "taskId": "AUD-MVP-LIFECYCLE-001",
-      "file": "audit_domain_events (schema)",
-      "reason": "No BEFORE UPDATE/DELETE trigger enforces append-only behaviour at the database layer; today's guarantee is service-layer discipline only (every write goes through recordAuditEvent, an INSERT ... ON CONFLICT DO NOTHING). A direct SQL statement, migration, or future new writer could mutate history undetected.",
-      "minimalHunk": "add a BEFORE UPDATE OR DELETE trigger on audit_domain_events that raises an exception, or REVOKE UPDATE/DELETE from the application role",
-      "consumerTest": "a negative test attempting a direct UPDATE/DELETE against the table and asserting it is rejected by the database, replacing today's test that documents the mutation succeeding",
-      "blocking": false
-    }
-  ],
-  "openItems": [
-    "scripts/cleanup/verify-closure-lane.mjs grants its allowedNewRoots exemption only to files that are currently untracked (const isNew = !isTracked(file)), so a legitimately-placed new file starts being reported as a violation the moment it is committed. This lane's new directory server/src/services/auditProgramHandoff/__tests__/ matches the allowed pattern and is benign.",
-    "The two non-blocking integrator change requests above (optimistic-concurrency guard on transitionLifecycle; a real database-level immutability trigger for audit_domain_events) should be scheduled — they are real gaps relative to the task's own wording, just not urgent enough to block this evidence closure.",
-    "No browser/visual evidence exists for this task; the Audits UI surface itself was not exercised, only the service layer via direct calls and SQL fixtures (matching the kernel's own goldenFlow.e2e.test.ts pattern)."
-  ],
-  "unverifiedFields": [],
+  "technicalVerdict": "PASS_ADVANCED_REALPG",
   "verdict": "PARTIAL",
-  "verdictRationale": "G0/G1/G3 shared gates pass at this SHA. All 7 lifecycle stages are proven end to end with SELECT verification at every stage, cold readback, SoD (4/4 with exact denial messages), and tenant isolation (1/1) — 10/10 task tests plus 165/165 kernel regression (read-only). This is marked PARTIAL rather than DONE_CURRENT_SHA because the task's own investigation surfaced a genuine, non-cosmetic gap against its named requirement: 'immutable audit trail' is disclosed as service-layer discipline only, not database-enforced (no trigger blocks a direct UPDATE/DELETE) — that is precisely the guarantee this task was supposed to close, and it is not closed, only honestly characterized. A second gap (no optimistic-concurrency guard on transitionLifecycle) was also found and not fixed within this lane's one-migration budget. Both are recorded as non-blocking integrator change requests rather than shipped fixes. No browser/visual evidence exists for the Audits UI either. Given the guidance to prefer PARTIAL when torn, and that a disclosed-but-unfixed core guarantee gap is a real shortfall (not just missing polish), PARTIAL is the honest verdict.",
-  "ownerTables": [],
-  "fixtures": {},
-  "negativeControls": {}
+  "openBlockers": [
+    "Exact current from-zero migration proof is unavailable because Docker storage is exhausted. A new container failed during initdb and a unique database failed during strict migration with No space left on device. The used disposable DB has documented fresh 722/722 provenance and was advanced successfully, but this is not represented as a fresh-current run."
+  ]
 }
