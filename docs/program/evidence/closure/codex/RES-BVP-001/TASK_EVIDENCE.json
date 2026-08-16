@@ -1,0 +1,20 @@
+{
+  "taskId": "RES-BVP-001",
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "productSha": "afd5058deeed171dad9177fd8054ba30a7257d79",
+  "changedPaths": [],
+  "commands": [
+    {"command": "RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=<isolated-local-pg> npx vitest run <KPI revision+deviation, OKR publish+manager review, ROI lifecycle+PIR cold reopen packet>", "exitCode": 0, "result": "6 files, 30 tests passed, 0 failed/skipped"}
+  ],
+  "positiveProof": [
+    "KPI revision preserves immutable prior version, enforces maker-checker, idempotency and concurrent numbering",
+    "KPI deviation opens exactly one case and escalates the same case under sequential/concurrent writes",
+    "OKR publish pins immutable policy versions and manager review denies self-approval",
+    "ROI case lifecycle enforces restricted visibility and PIR snapshot survives a fresh connection byte-identically"
+  ],
+  "verdict": "PARTIAL",
+  "openBlockers": [
+    "Final three-role deterministic fixture, rollout/mount decision and browser gold flows remain required.",
+    "Execution producer handoff must be integrated before the full cross-module Results contract can be accepted."
+  ]
+}
