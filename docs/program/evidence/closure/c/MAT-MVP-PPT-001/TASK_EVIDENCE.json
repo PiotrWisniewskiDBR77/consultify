@@ -1,47 +1,85 @@
 {
-  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "a62dbe340114d87eda75a0d2da2d77bee2a90685",
-  "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
-  "environment": {
-    "node": "v24.12.0",
-    "postgres": "16.14 (pgvector/pgvector:pg16)",
-    "vitest": "root vitest.config.ts",
-    "dbUrl": "127.0.0.1:55432 isolated lane container consultify-closure-c-64f50785"
-  },
-  "gateG0": "PASS pre-commit (lease PASS, 25 changed paths). POST-COMMIT the verifier reports 11 new source/test files as violations; all 11 match lane C allowedNewRoots and none exist at baseline — see ICR-C-003, a verifier defect (isTracked() is true for staged/committed paths), not a scope violation.",
-  "gateG1": "PASS — npm run type-check exit 0; npm run build:backend exit 0; test:discovery-gate PASS 4997/4997 discovered, 4698 executed.",
-  "gateG3": "PASS — strict migrate on FRESH from-zero DB exit 0; repeat run applied 0; --dry-run 0 pending; schema_migrations 709 success / 0 failed / 0 pending.",
   "taskId": "MAT-MVP-PPT-001",
-  "verdict": "PARTIAL",
+  "baselineSha": "14889d7b087585ae6f5d4a74e86c1b5e344e7c1c",
+  "productSha": "9dbc93169d9ef4fb2f6487eeeeb623e0292a1e81",
+  "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
+  "changedPaths": [
+    "server/src/services/presentationExport/__tests__/presentationDeckLifecycle.pg.test.ts",
+    "docs/program/evidence/closure/c/MAT-MVP-PPT-001/TASK_EVIDENCE.json"
+  ],
+  "changedPathRationale": {
+    "server/src/services/presentationExport/__tests__/presentationDeckLifecycle.pg.test.ts": "Closes the missing real-PostgreSQL and real-mounted-auth proof for deck autosave, immutable history, CAS restore, tenant isolation and cold reopen while preserving template, notes and accessibility metadata.",
+    "docs/program/evidence/closure/c/MAT-MVP-PPT-001/TASK_EVIDENCE.json": "Replaces stale 709-migration evidence with exact-current fresh PostgreSQL lifecycle/export/receipt/failure results."
+  },
   "ownerTables": [
     "presentation_decks",
     "presentation_deck_versions",
-    "artifact_export_receipts"
+    "artifact_export_receipts",
+    "organization_members"
+  ],
+  "commands": [
+    {
+      "command": "NODE_ENV=test DATABASE_URL=<fresh-local-pg> DB_TYPE=postgres MOCK_DB=false npm run db:migrate:strict",
+      "exitCode": 130,
+      "result": "Runner emitted Postgres migrations complete and independent ledger showed 731 success; interrupted afterward because its pool retained the process."
+    },
+    {
+      "command": "NODE_ENV=test DATABASE_URL=<fresh-local-pg> DB_TYPE=postgres MOCK_DB=false npm run db:migrate:strict",
+      "exitCode": 0,
+      "result": "Strict repeat applied 0 migrations."
+    },
+    {
+      "command": "NODE_ENV=test DATABASE_URL=<fresh-local-pg> DB_TYPE=postgres MOCK_DB=false npm run db:migrate:postgres:dry",
+      "exitCode": 0,
+      "result": "Dry run reported 0 pending migrations."
+    },
+    {
+      "command": "RUN_DB_TESTS=1 MOCK_DB=false CI=true NODE_ENV=test DB_TYPE=postgres DATABASE_URL=<fresh-local-pg> npx vitest run server/src/services/presentationExport/__tests__/presentationDeckLifecycle.pg.test.ts server/src/services/presentationExport/__tests__/presentationExportReceiptService.pg.test.ts server/src/services/materialExport/__tests__/materialsMountedAuth.pg.test.ts --no-file-parallelism --maxWorkers=1 --retry=0",
+      "exitCode": 0,
+      "result": "3 files; 22/22 tests passed."
+    },
+    {
+      "command": "npm run type-check",
+      "exitCode": 0
+    }
   ],
   "denominators": {
-    "realdbTests": "12 passed / 12 discovered"
+    "freshMigrationLedger": { "success": 731, "failed": 0 },
+    "repeatMigrations": { "applied": 0, "failed": 0 },
+    "dryRun": { "pending": 0 },
+    "mountedDeckLifecycleRealPostgres": { "passed": 4, "failed": 0 },
+    "presentationExportReceiptRealPostgres": { "passed": 12, "failed": 0 },
+    "mountedMaterialAuthRealPostgres": { "passed": 6, "failed": 0 },
+    "combinedFocusedGate": { "passed": 22, "failed": 0 },
+    "typecheck": { "passed": 1, "failed": 0 }
+  },
+  "fixtures": {
+    "database": "fresh disposable pgvector PostgreSQL 16 on localhost:55496; schema_migrations ledger 731 success",
+    "mountedAuth": "production presentations router with real HS256 JWT verification and ACTIVE organization_members rows in two tenants",
+    "deckLifecycle": "template-bound deck with speaker_notes and image alt_text -> autosave -> immutable version -> CAS restore -> independent Pool cold reopen",
+    "export": "real PptxPipelineService bytes independently unzipped with speaker notes, then immutable source/output/provider receipt readback"
   },
   "negativeControls": {
-    "concurrentExport": "ONE receipt",
-    "renderFailure": "recorded 'failed', never 'succeeded'",
-    "providerUnavailable": "explicit 'unavailable', no bytes",
-    "crossTenant": "denied"
+    "anonymousAutosave401": true,
+    "crossTenantVersionHistory404": true,
+    "concurrentAutosaveExactlyOne200One409": true,
+    "concurrentAutosaveExactlyOneSnapshot": true,
+    "staleVersionConflict": true,
+    "concurrentExportExactlyOneReceipt": true,
+    "crossTenantReceiptMutationDenied": true,
+    "renderFailureNeverSucceedsOrFabricatesBytes": true,
+    "unapprovedPdfProviderUnavailableNoFakeBytes": true,
+    "coldDeckReopenIndependentPool": true,
+    "coldReceiptReadback": true,
+    "speakerNotesSurviveRealPptxZipReopen": true,
+    "sourceAndOutputHashesIndependentlyVerified": true
   },
-  "findings": [
-    "Real PPTX bytes generated and unzipped independently: speaker notes present in ppt/notesSlides/notesSlide1.xml (export->reopen survival asserted, not assumed).",
-    "Stored output_content_hash matches an independently recomputed sha256 of the buffer."
-  ],
-  "open": [
-    "G4 browser/visual not run.",
-    "No WCAG/screen-reader audit performed; only alt-text/objectName labelling exists in code."
-  ],
-  "changedPaths": [],
-  "changedPathRationale": {},
-  "commands": [],
-  "fixtures": {},
   "browserArtifacts": [],
   "rollback": {
-    "method": "Not recorded by the lane; no rollback execution or completion claim is inferred.",
+    "method": "Remove the bounded lifecycle contract test and restore this evidence file. No production schema or data changes were made.",
     "executed": false
-  }
+  },
+  "blocker": null,
+  "technicalVerdict": "PASS_FRESH_REALPG",
+  "verdict": "DONE_CURRENT_SHA"
 }

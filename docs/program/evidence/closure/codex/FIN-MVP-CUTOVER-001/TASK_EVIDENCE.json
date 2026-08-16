@@ -1,32 +1,61 @@
 {
   "taskId": "FIN-MVP-CUTOVER-001",
-  "baselineSha": "3ad4a10545b02828cde74c81f40a75ea1305cea3",
-  "productSha": "8a16786480f5f9b994cabc37181bb9dcbb1be038",
+  "baselineSha": "14889d7b087585ae6f5d4a74e86c1b5e344e7c1c",
+  "productSha": "e14dbe596a4617ec0a8e81e15f1cd2f704f45123",
   "leaseSha256": "not_applicable_integrator_bounded_task",
+  "verdict": "PARTIAL",
+  "open": [
+    "Only 1 of 30 inventoried legacy V8 Finance writers has a proven canonical successor and is disabled by default. The remaining 29 stay available and are classified as legacy_uncovered_writer until route-by-route parity, backfill and usage evidence exists.",
+    "Rollout timing and Finance/Results reconciliation remain owner decisions; this evidence does not authorize rollout or change Results Actual ownership."
+  ],
+  "environment": {
+    "node": "v24.12.0",
+    "postgres": "16 (pgvector/pgvector:pg16)",
+    "dbUrl": "127.0.0.1:32929/fin_cutover in disposable container consultify-fin-cutover-14889d"
+  },
   "changedPaths": [
-    "server/migrations/20260907_finance_legacy_cutover.sql",
+    "server/migrations/20260920_finance_legacy_usage_idempotency.sql",
     "server/src/services/financeLegacyCutover.ts",
-    "server/src/routes/v8/finance.routes.ts",
-    "server/src/services/__tests__/financeLegacyCutover.test.ts",
     "server/src/services/__tests__/financeLegacyCutover.pg.test.ts"
   ],
   "changedPathRationale": {
-    "server/migrations/20260907_finance_legacy_cutover.sql": "Adds durable tenant-scoped cutover telemetry.",
-    "server/src/services/financeLegacyCutover.ts": "Classifies the legacy surface, records usage and fails closed for the proven tranche.",
-    "server/src/routes/v8/finance.routes.ts": "Mounts the cutover guard on the legacy V8 Finance surface.",
-    "server/src/services/__tests__/financeLegacyCutover.test.ts": "Proves default-off, rollback and telemetry behavior.",
-    "server/src/services/__tests__/financeLegacyCutover.pg.test.ts": "Proves durable telemetry and canonical ID pairing on isolated PostgreSQL."
+    "server/migrations/20260920_finance_legacy_usage_idempotency.sql": "Prevents HTTP retries from inflating cutover evidence for the same tenant/request/method/path/access classification.",
+    "server/src/services/financeLegacyCutover.ts": "Records cutover usage idempotently while keeping protected writes fail-closed even if telemetry fails.",
+    "server/src/services/__tests__/financeLegacyCutover.pg.test.ts": "Adds mounted route, retry, tenant-isolated alias bridge and independent cold-readback proof on fresh PostgreSQL."
   },
-  "ownerTables": ["finance_legacy_cutover_events"],
+  "ownerTables": ["finance_legacy_usage_events", "finance_artifact_aliases", "finance_artifacts", "finance_business_versions"],
   "commands": [
-    {"command": "cd server && npx vitest run src/services/__tests__/financeLegacyCutover.test.ts --reporter=dot", "exitCode": 0},
-    {"command": "RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test DATABASE_URL=<isolated-empty-db> npx vitest run src/services/__tests__/financeLegacyCutover.pg.test.ts --reporter=dot", "exitCode": 0},
-    {"command": "git diff --check -- <five task paths>", "exitCode": 0}
+    {"command": "DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32929/fin_cutover DB_TYPE=postgres CI=true npx tsx server/scripts/migrate.postgres.ts", "exitCode": 0, "result": "fresh migration complete; 731 ledger rows"},
+    {"command": "DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32929/fin_cutover DB_TYPE=postgres CI=true RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test ENABLE_V8_GLOBAL=true npx vitest run server/src/services/__tests__/financeLegacyCutover.test.ts server/src/services/__tests__/financeLegacyCutover.pg.test.ts --no-file-parallelism --maxWorkers=1 --retry=0 --reporter=dot", "exitCode": 0, "result": "2/2 files, 8/8 tests"},
+    {"command": "npm run type-check", "exitCode": 0, "result": "TypeScript noEmit passed"},
+    {"command": "git diff --check", "exitCode": 0, "result": "passed"}
   ],
-  "denominators": {"unit": {"passed": 4, "failed": 0}, "realDb": {"passed": 1, "failed": 0}, "legacyV8Writers": {"retired": 1, "total": 30}},
-  "fixtures": {"database": "isolated empty PostgreSQL database created and removed for the proof"},
-  "negativeControls": {"defaultLegacyWriterDenied": true, "telemetryFailureDoesNotEnableWriter": true, "rollbackRequiresExplicitFlag": true},
+  "denominators": {
+    "focused": "8 passed / 8 discovered in 2 files",
+    "realPostgres": "4 passed / 4 discovered, including real mounted Finance router",
+    "legacyV8Writers": "1 safely retired / 30 inventoried; 29 deliberately not disabled",
+    "migration": "731/731 ledger rows on fresh database",
+    "typeCheck": "1/1 exit 0"
+  },
+  "fixtures": {
+    "database": "fresh isolated PostgreSQL database removed after proof",
+    "tenants": "source tenant with canonical artifact/version alias and foreign tenant reusing the same legacy ID without an alias",
+    "mountedRoute": "real finance.routes mounted at /api/v8/finance with tenant context",
+    "requestIdentity": "stable x-request-id used for concurrent/retry-equivalent repeated guard calls"
+  },
+  "negativeControls": {
+    "zeroWriterDefault": "POST /models/:id/approve returns 410 FINANCE_LEGACY_WRITER_DISABLED through the real mounted router and never reaches the leaf writer",
+    "idempotency": "repeating the same tenant/request/path/access observation persists exactly one telemetry row",
+    "telemetryFailure": "storage failure cannot re-enable the protected writer",
+    "rollback": "only explicit FINANCE_LEGACY_WRITER_ROLLBACK_ENABLED=true reaches the legacy leaf; rollback observation is durable",
+    "tenant": "same legacy ID in a foreign tenant resolves no canonical artifact/version",
+    "coldReadback": "independent pg.Client reads stable canonical artifact and business-version IDs with one row per request/access kind",
+    "unprovenSurfaces": "29 uncovered writers remain enabled and visibly classified; no false zero-writer claim"
+  },
   "browserArtifacts": [],
-  "rollback": {"method": "Set FINANCE_LEGACY_WRITER_ROLLBACK_ENABLED=true for the bounded tranche; no destructive schema rollback.", "executed": true},
-  "verdict": "PARTIAL"
+  "rollback": {
+    "method": "Set FINANCE_LEGACY_WRITER_ROLLBACK_ENABLED=true to temporarily re-enable only the proven model-approval tranche. Remove the new unique index to revert telemetry deduplication; no Finance business data is deleted or rewritten.",
+    "executed": true,
+    "proof": "focused unit and real-PG tests observe rollback_writer and next() exactly once"
+  }
 }
