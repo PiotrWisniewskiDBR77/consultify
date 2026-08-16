@@ -122,6 +122,11 @@ export class CommandCapabilityDeniedError extends Error {
 export function evaluateCommandAccess(params: EvaluateCommandAccessParams): CommandAccessDecision {
   const { access, actorUserId, capability, responsibleUserIds } = params;
 
+  // Runtime callers can still arrive from untyped JS, old workers or stale
+  // test/queue payloads. Missing access must be a controlled fail-closed DENY,
+  // never a TypeError that becomes a 500 and bypasses the route's canonical
+  // authorization error mapping.
+  if (!access) return 'DENY';
   if (hasEffectiveCapability(access, capability)) return 'ALLOW';
 
   if (

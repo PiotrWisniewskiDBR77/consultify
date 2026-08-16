@@ -33,6 +33,16 @@ function access(overrides: Partial<CommandAccessContext> = {}): CommandAccessCon
 
 describe('resultsVnext/platform/commandCapabilityGuard', () => {
   describe('evaluateCommandAccess', () => {
+    it('DENYs a stale/untyped caller with no access context instead of throwing', () => {
+      expect(
+        evaluateCommandAccess({
+          access: undefined as unknown as CommandAccessContext,
+          actorUserId: 'user-owner',
+          capability: CAPABILITY,
+          responsibleUserIds: ['user-owner'],
+        })
+      ).toBe('DENY');
+    });
     it('ALLOWs a SUPERADMIN regardless of capabilities or record ownership', () => {
       const decision = evaluateCommandAccess({
         access: access({ platformRole: 'SUPERADMIN', capabilities: [] }),

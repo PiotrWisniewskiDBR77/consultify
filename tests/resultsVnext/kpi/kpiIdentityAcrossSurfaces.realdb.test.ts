@@ -52,6 +52,7 @@ const tag = `${Date.now().toString(36)}_${randomUUID().slice(0, 8)}`;
 const ORG_ID = `kpi-e005-identity-org-${tag}`;
 const USER = `kpi-e005-identity-user-${tag}`;
 const INITIATIVE_ID = `kpi-e005-identity-init-${tag}`;
+const FULL_ACCESS = { capabilities: ['*'], platformRole: null } as const;
 
 let client: Client;
 let reachable = false;
@@ -194,6 +195,10 @@ describe('KPI-E005 identity-across-surfaces (real Postgres)', () => {
         `INSERT INTO rvn_platform_visibility_policies
            (organization_id, domain, policy_version, visibility_mode, is_active, created_by)
          VALUES ($1, 'kpi', 1, 'OPEN_ORG', true, $2)
+         ON CONFLICT (organization_id, domain, policy_version)
+         DO UPDATE SET visibility_mode = EXCLUDED.visibility_mode,
+                       is_active = EXCLUDED.is_active,
+                       created_by = EXCLUDED.created_by
          RETURNING policy_id`,
         [ORG_ID, USER]
       );
@@ -254,6 +259,7 @@ describe('KPI-E005 identity-across-surfaces (real Postgres)', () => {
         createdBy: USER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `identity-scorecard-${kpiId}`,
+        access: FULL_ACCESS,
       });
       const scorecardId = scorecardOutcome.result.scorecard.scorecardId;
       await addScorecardItem({
@@ -264,6 +270,7 @@ describe('KPI-E005 identity-across-surfaces (real Postgres)', () => {
         actorEffectiveRole: 'consultant',
         idempotencyKey: `identity-scorecard-item-${kpiId}`,
         kpiId,
+        access: FULL_ACCESS,
       });
 
       // One InitiativeKPIImpact.
@@ -277,6 +284,7 @@ describe('KPI-E005 identity-across-surfaces (real Postgres)', () => {
         proposedBy: USER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `identity-impact-${kpiId}`,
+        access: FULL_ACCESS,
       });
 
       // ---- Surface 1: Portfolio list ----

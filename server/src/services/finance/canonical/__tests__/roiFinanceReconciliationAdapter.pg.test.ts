@@ -53,7 +53,7 @@ import { fileURLToPath } from 'node:url';
 import express, { type Express } from 'express';
 import pg from 'pg';
 import request from 'supertest';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
 const REAL_PG_REQUESTED =
@@ -252,12 +252,24 @@ describe.skipIf(!REAL_PG)(
         actorUserId: userId,
         actorEffectiveRole: 'preparer',
         idempotencyKey: `idem-create-link-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
       });
       linkId = linkOutcome.result.linkId;
       createdLinkIds.push(linkId);
 
       mockUser = { id: userId, organizationId: orgId };
     }, 60_000);
+
+    // The production invariant permits one OPEN reconciliation per Finance
+    // link. Each scenario below independently exercises that invariant, so a
+    // prior scenario (or Vitest retry) must not leak its open row into the
+    // next scenario and turn test ordering into product behavior.
+    beforeEach(async () => {
+      if (!raw || !orgId) return;
+      await raw.query(`DELETE FROM rvn_roi_finance_reconciliations WHERE organization_id = $1`, [
+        orgId,
+      ]);
+    });
 
     afterAll(async () => {
       if (!raw) return;
@@ -324,6 +336,7 @@ describe.skipIf(!REAL_PG)(
           financeValue: 120,
           actorId: userId,
           divergenceReason: 'Finance restated Q1 savings',
+          access: { capabilities: ['*'], platformRole: null },
         });
 
         expect(result.material).toBe(true);
@@ -362,6 +375,7 @@ describe.skipIf(!REAL_PG)(
           roiValue: 100,
           financeValue: 104,
           actorId: userId,
+          access: { capabilities: ['*'], platformRole: null },
         });
 
         expect(result.material).toBe(false);
@@ -389,6 +403,7 @@ describe.skipIf(!REAL_PG)(
           roiValue: 100,
           financeValue: 105,
           actorId: userId,
+          access: { capabilities: ['*'], platformRole: null },
         });
         expect(result.divergencePercent).toBeCloseTo(5, 6);
         expect(result.material).toBe(false);
@@ -404,6 +419,7 @@ describe.skipIf(!REAL_PG)(
           financeValue: 102,
           actorId: userId,
           thresholdPercent: 1,
+          access: { capabilities: ['*'], platformRole: null },
         });
         expect(result.material).toBe(true);
         expect(result.reconciliationOpened).toBe(true);
@@ -419,6 +435,7 @@ describe.skipIf(!REAL_PG)(
             roiValue: 100,
             financeValue: 500,
             actorId: userId,
+            access: { capabilities: ['*'], platformRole: null },
           })
         ).rejects.toMatchObject({ code: 'FINANCE_LINK_NOT_FOUND' });
       });
@@ -445,6 +462,7 @@ describe.skipIf(!REAL_PG)(
           roiValue: 200,
           financeValue: 300,
           actorId: userId,
+          access: { capabilities: ['*'], platformRole: null },
         });
         return opened.reconciliationId!;
       }
@@ -458,7 +476,7 @@ describe.skipIf(!REAL_PG)(
           `resolver-${userId}`,
           'Finance corrected its own mapping; ROI figure stands.',
           'resolved',
-          { organizationId: orgId }
+          { organizationId: orgId, access: { capabilities: ['*'], platformRole: null } }
         );
 
         expect(updated.status).toBe('resolved');
@@ -482,7 +500,7 @@ describe.skipIf(!REAL_PG)(
           userId,
           'Known FX timing difference, accepted by the CFO.',
           'accepted_divergence',
-          { organizationId: orgId }
+          { organizationId: orgId, access: { capabilities: ['*'], platformRole: null } }
         );
         expect(updated.status).toBe('accepted_divergence');
         expect(updated.resolvedAt).toBeTruthy();
@@ -494,6 +512,7 @@ describe.skipIf(!REAL_PG)(
           adapter.resolveReconciliationDecision(id, userId, 'stale attempt', 'resolved', {
             organizationId: orgId,
             expectedVersion: 99,
+            access: { capabilities: ['*'], platformRole: null },
           })
         ).rejects.toMatchObject({ code: 'STALE_VERSION' });
 
@@ -507,6 +526,7 @@ describe.skipIf(!REAL_PG)(
         await expect(
           adapter.resolveReconciliationDecision(id, userId, null, 'resolved', {
             organizationId: `other-org-${randomUUID()}`,
+            access: { capabilities: ['*'], platformRole: null },
           })
         ).rejects.toMatchObject({ code: 'RECONCILIATION_NOT_FOUND' });
       });
@@ -516,6 +536,7 @@ describe.skipIf(!REAL_PG)(
         await expect(
           adapter.resolveReconciliationDecision(id, userId, null, 'investigating' as never, {
             organizationId: orgId,
+            access: { capabilities: ['*'], platformRole: null },
           })
         ).rejects.toMatchObject({ code: 'INVALID_RECONCILIATION_RESOLUTION' });
       });
