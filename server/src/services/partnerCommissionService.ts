@@ -15,6 +15,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
+import { acquirePgClient } from '../database/PostgresDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import { assertPolicyCurrency, readApprovedPartnerAccrualPolicy } from './partnerAccrualPolicy.js';
@@ -137,6 +138,7 @@ export interface PayoutRequest {
   payoutAccountId?: string;
   requestedBy?: string;
   notes?: string;
+  idempotencyKey?: string;
 }
 
 // ==========================================
@@ -225,6 +227,32 @@ async function getPayoutRowById(payoutId: string): Promise<PayoutRow | null> {
     [payoutId]
   );
   return row ?? null;
+}
+
+function payoutRowToModel(row: PayoutRow): Payout {
+  return {
+    id: row.id,
+    partnerOrgId: row.partner_org_id,
+    payoutAccountId: row.payout_account_id || undefined,
+    periodStart: row.payout_period_start,
+    periodEnd: row.payout_period_end,
+    grossAmount: Number(row.gross_amount ?? 0),
+    fees: Number(row.fees ?? 0),
+    taxWithheld: Number(row.tax_withheld ?? 0),
+    netAmount: Number(row.net_amount ?? 0),
+    currency: row.currency,
+    transactionCount: Number(row.transaction_count),
+    status: row.status as PayoutStatus,
+    payoutMethod: row.payout_method || undefined,
+    payoutReference: row.payout_reference || undefined,
+    requestedAt: row.requested_at,
+    requestedBy: row.requested_by || undefined,
+    processedAt: row.processed_at || undefined,
+    completedAt: row.completed_at || undefined,
+    failureReason: row.failure_reason || undefined,
+    notes: row.notes || undefined,
+    createdAt: row.created_at,
+  };
 }
 
 /**
@@ -589,25 +617,41 @@ export async function getEarningsSummary(partnerOrgId: string): Promise<Earnings
 export async function requestPayout(params: PayoutRequest): Promise<Payout | null> {
   const { partnerOrgId, payoutAccountId, requestedBy, notes } = params;
 
+  let client: Awaited<ReturnType<typeof acquirePgClient>> | null = null;
   try {
     const policy = readApprovedPartnerAccrualPolicy();
-    // Get approved commissions not yet paid
-    const approvedCommissions = await DbPromise.all<{
-      id: string;
-      commission_amount: number;
-      currency: string;
-      transaction_date: string;
+    const idempotencyKey = String(params.idempotencyKey || '').trim();
+    client = await acquirePgClient();
+    await client.query('BEGIN');
+    await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [`partner-payout:${partnerOrgId}`]);
+
+    if (idempotencyKey) {
+      const prior = await client.query(
+        `SELECT p.* FROM partner_program_ledger l
+           JOIN partner_payouts p ON p.id::text = l.source_ref::jsonb->>'payoutId'
+          WHERE l.partner_org_id = $1 AND l.idempotency_key = $2 AND l.entry_type = 'payout.requested'`,
+        [partnerOrgId, idempotencyKey]
+      );
+      if (prior.rows[0]) {
+        await client.query('COMMIT');
+        return payoutRowToModel(prior.rows[0]);
+      }
+    }
+
+    const approvedResult = await client.query<{
+      id: string; commission_amount: string; currency: string; transaction_date: string;
     }>(
-      db,
       `SELECT id, commission_amount, currency, transaction_date
-             FROM partner_commission_transactions 
-             WHERE partner_org_id = ? AND status = 'APPROVED' AND payout_id IS NULL
-             ORDER BY transaction_date`,
+         FROM partner_commission_transactions
+        WHERE partner_org_id = $1 AND status = 'APPROVED' AND payout_id IS NULL
+        ORDER BY transaction_date FOR UPDATE`,
       [partnerOrgId]
     );
+    const approvedCommissions = approvedResult.rows;
 
     if (approvedCommissions.length === 0) {
       logger.warn(`[PartnerCommissionService] No approved commissions for payout: ${partnerOrgId}`);
+      await client.query('ROLLBACK');
       return null;
     }
     for (const commission of approvedCommissions) {
@@ -623,17 +667,17 @@ export async function requestPayout(params: PayoutRequest): Promise<Payout | nul
     const netAmount = grossAmount - fees;
 
     // Get payout threshold
-    const partner = await DbPromise.get<{ payout_threshold: number; payout_method: string }>(
-      db,
-      `SELECT payout_threshold, payout_method FROM partner_organizations WHERE id = ?`,
-      [partnerOrgId]
+    const partnerResult = await client.query<{ payout_method: string }>(
+      `SELECT payout_method FROM partner_organizations WHERE id = $1`, [partnerOrgId]
     );
+    const partner = partnerResult.rows[0];
 
     const threshold = policy.minimumPayoutMinor / 100;
     if (netAmount < threshold) {
       logger.warn(
         `[PartnerCommissionService] Payout amount €${netAmount} below threshold €${threshold}`
       );
+      await client.query('ROLLBACK');
       return null;
     }
 
@@ -647,13 +691,12 @@ export async function requestPayout(params: PayoutRequest): Promise<Payout | nul
     const payoutId = uuidv4();
     const now = new Date().toISOString();
 
-    await DbPromise.run(
-      db,
+    await client.query(
       `INSERT INTO partner_payouts 
              (id, partner_org_id, payout_account_id, payout_period_start, payout_period_end,
               gross_amount, fees, net_amount, currency, transaction_count, status,
               payout_method, requested_by, notes)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', ?, ?, ?)`,
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'PENDING',$11,$12,$13)`,
       [
         payoutId,
         partnerOrgId,
@@ -673,14 +716,24 @@ export async function requestPayout(params: PayoutRequest): Promise<Payout | nul
 
     // Link commissions to payout
     const commissionIds = approvedCommissions.map((c) => c.id);
-    const placeholders = commissionIds.map(() => '?').join(', ');
-    await DbPromise.run(
-      db,
+    await client.query(
       `UPDATE partner_commission_transactions 
-             SET payout_id = ?, updated_at = NOW()
-             WHERE id IN (${placeholders})`,
-      [payoutId, ...commissionIds]
+             SET payout_id = $1, updated_at = NOW()
+             WHERE id = ANY($2::uuid[]) AND partner_org_id = $3 AND payout_id IS NULL`,
+      [payoutId, commissionIds, partnerOrgId]
     );
+
+    await client.query(
+      `INSERT INTO partner_program_ledger
+        (id, partner_org_id, entry_type, amount, currency, occurred_at, recorded_at,
+         source_ref, actor, actor_id, correlation_id, idempotency_key, reason_code, note,
+         rule_version, related_entry_id, dispute_status)
+       VALUES ($1,$2,'payout.requested',$3,$4,$5,$5,$6,'partner',$7,NULL,$8,NULL,$9,$10,NULL,NULL)`,
+      [uuidv4(), partnerOrgId, netAmount, policy.baseCurrency, now,
+       JSON.stringify({ payoutId, payoutAccountId: payoutAccountId || null }), requestedBy || null,
+       idempotencyKey || `partner-payout-request:${payoutId}`, notes || null, policy.version]
+    );
+    await client.query('COMMIT');
 
     logger.info(
       `[PartnerCommissionService] Created payout request: €${netAmount} for partner ${partnerOrgId}`
@@ -706,8 +759,11 @@ export async function requestPayout(params: PayoutRequest): Promise<Payout | nul
       createdAt: now,
     };
   } catch (err: any) {
+    if (client) await client.query('ROLLBACK').catch(() => undefined);
     logger.error('[PartnerCommissionService] Error requesting payout:', err);
     return null;
+  } finally {
+    client?.release();
   }
 }
 
@@ -734,29 +790,7 @@ export async function getPayouts(
   try {
     const rows = await DbPromise.all<PayoutRow>(db, query, params);
 
-    return rows.map((row) => ({
-      id: row.id,
-      partnerOrgId: row.partner_org_id,
-      payoutAccountId: row.payout_account_id || undefined,
-      periodStart: row.payout_period_start,
-      periodEnd: row.payout_period_end,
-      grossAmount: Number(row.gross_amount ?? 0),
-      fees: Number(row.fees ?? 0),
-      taxWithheld: Number(row.tax_withheld ?? 0),
-      netAmount: Number(row.net_amount ?? 0),
-      currency: row.currency,
-      transactionCount: row.transaction_count,
-      status: row.status as PayoutStatus,
-      payoutMethod: row.payout_method || undefined,
-      payoutReference: row.payout_reference || undefined,
-      requestedAt: row.requested_at,
-      requestedBy: row.requested_by || undefined,
-      processedAt: row.processed_at || undefined,
-      completedAt: row.completed_at || undefined,
-      failureReason: row.failure_reason || undefined,
-      notes: row.notes || undefined,
-      createdAt: row.created_at,
-    }));
+    return rows.map(payoutRowToModel);
   } catch (err: any) {
     logger.error('[PartnerCommissionService] Error getting payouts:', err);
     return [];

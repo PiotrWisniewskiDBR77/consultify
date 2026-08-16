@@ -1036,13 +1036,14 @@ router.post('/payouts/request', async (req: Request, res: Response, next: NextFu
     const partnerOrgId = await requirePartnerOrgId(req, res);
     if (!partnerOrgId) return;
     const userId = (req as any).user?.id;
-    const { payoutAccountId, notes } = req.body;
+    const { payoutAccountId, notes, idempotencyKey } = req.body;
 
     const payout = await PartnerCommissionService.requestPayout({
       partnerOrgId,
       payoutAccountId,
       requestedBy: userId,
       notes,
+      idempotencyKey: typeof idempotencyKey === 'string' ? idempotencyKey.trim() : undefined,
     });
 
     if (!payout) {

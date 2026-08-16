@@ -890,6 +890,8 @@ router.post(
       payoutAccountId: req.body?.payoutAccountId,
       requestedBy: userId,
       notes: req.body?.notes,
+      idempotencyKey:
+        typeof req.body?.idempotencyKey === 'string' ? req.body.idempotencyKey.trim() : undefined,
     });
     if (!payout) {
       return res.status(400).json({
@@ -897,26 +899,6 @@ router.post(
         code: 'PAYOUT_NOT_AVAILABLE',
       });
     }
-
-    await PartnerProgramLedgerService.appendEntry({
-      partnerOrgId,
-      entryType: 'payout.requested',
-      ruleVersion: 'partner-payout-request-v1',
-      amount: Number(payout.netAmount || payout.grossAmount || 0),
-      currency: payout.currency || 'EUR',
-      actor: 'partner',
-      actorId: userId,
-      idempotencyKey:
-        typeof req.body?.idempotencyKey === 'string' && req.body.idempotencyKey.trim()
-          ? req.body.idempotencyKey.trim()
-          : `partner-payout-request:${payout.id}`,
-      sourceRef: {
-        payoutId: payout.id,
-        payoutAccountId: req.body?.payoutAccountId || null,
-        bridge: 'partner_commission_service',
-      },
-      note: typeof req.body?.notes === 'string' ? req.body.notes : null,
-    });
 
     const updatedDetail = await PartnerProgramLedgerService.getProgramStatusDetail(
       partnerOrgId,
