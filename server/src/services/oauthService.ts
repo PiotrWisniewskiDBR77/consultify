@@ -56,6 +56,14 @@ interface UserRow {
   status: string;
 }
 
+export type OAuthProvider = 'google' | 'linkedin';
+
+export interface ApprovedOAuthProviderDecision {
+  approved: true;
+  scopes: string[];
+  residency: string;
+}
+
 // ==========================================
 // STATE MANAGEMENT (in-memory, TTL ~10min)
 // ==========================================
@@ -81,7 +89,49 @@ setInterval(cleanExpiredStates, 60_000);
 // PROVIDER CONFIGS
 // ==========================================
 
+const REQUIRED_PROVIDER_SCOPES: Record<OAuthProvider, readonly string[]> = {
+  google: ['openid', 'email', 'profile'],
+  linkedin: ['openid', 'profile', 'email'],
+};
+
+/**
+ * Product secrets are deliberately insufficient to activate OAuth. Security /
+ * Privacy and Product must also publish an explicit provider decision. The
+ * registry is JSON so scopes and residency are reviewed as data, not inferred
+ * from whichever credentials happen to exist in an environment.
+ *
+ * Example:
+ * {"google":{"approved":true,"scopes":["openid","email","profile"],"residency":"EU"}}
+ */
+export function getApprovedOAuthProviderDecision(
+  provider: OAuthProvider
+): ApprovedOAuthProviderDecision | null {
+  const raw = process.env.OAUTH_APPROVED_PROVIDER_REGISTRY;
+  if (!raw) return null;
+
+  try {
+    const registry = JSON.parse(raw) as Record<string, unknown>;
+    const candidate = registry[provider];
+    if (!candidate || typeof candidate !== 'object') return null;
+    const decision = candidate as Record<string, unknown>;
+    if (decision.approved !== true || !Array.isArray(decision.scopes)) return null;
+    if (typeof decision.residency !== 'string' || !decision.residency.trim()) return null;
+
+    const scopes = decision.scopes.filter((scope): scope is string => typeof scope === 'string');
+    const required = REQUIRED_PROVIDER_SCOPES[provider];
+    if (scopes.length !== required.length || !required.every((scope) => scopes.includes(scope))) {
+      return null;
+    }
+
+    return { approved: true, scopes: [...scopes], residency: decision.residency.trim() };
+  } catch {
+    return null;
+  }
+}
+
 function getGoogleConfig(): OAuthProviderConfig | null {
+  const decision = getApprovedOAuthProviderDecision('google');
+  if (!decision) return null;
   if (!config.GOOGLE_CLIENT_ID || !config.GOOGLE_CLIENT_SECRET) return null;
   return {
     clientId: config.GOOGLE_CLIENT_ID,
@@ -90,11 +140,13 @@ function getGoogleConfig(): OAuthProviderConfig | null {
     authorizeUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
     tokenUrl: 'https://oauth2.googleapis.com/token',
     userInfoUrl: 'https://www.googleapis.com/oauth2/v3/userinfo',
-    scopes: ['openid', 'email', 'profile'],
+    scopes: decision.scopes,
   };
 }
 
 function getLinkedInConfig(): OAuthProviderConfig | null {
+  const decision = getApprovedOAuthProviderDecision('linkedin');
+  if (!decision) return null;
   if (!config.LINKEDIN_CLIENT_ID || !config.LINKEDIN_CLIENT_SECRET) return null;
   return {
     clientId: config.LINKEDIN_CLIENT_ID,
@@ -103,7 +155,7 @@ function getLinkedInConfig(): OAuthProviderConfig | null {
     authorizeUrl: 'https://www.linkedin.com/oauth/v2/authorization',
     tokenUrl: 'https://www.linkedin.com/oauth/v2/accessToken',
     userInfoUrl: 'https://api.linkedin.com/v2/userinfo',
-    scopes: ['openid', 'profile', 'email'],
+    scopes: decision.scopes,
   };
 }
 
@@ -415,20 +467,28 @@ class OAuthService {
    * Get OAuth provider status (for /api/auth/oauth/status)
    */
   getProviderStatus(): {
-    google: { configured: boolean; loginUrl: string };
-    linkedin: { configured: boolean; loginUrl: string };
+    google: { configured: boolean; approved: boolean; loginUrl: string; residency?: string };
+    microsoft: { configured: false; approved: false; loginUrl: string };
+    linkedin: { configured: boolean; approved: boolean; loginUrl: string; residency?: string };
   } {
+    const googleDecision = getApprovedOAuthProviderDecision('google');
+    const linkedinDecision = getApprovedOAuthProviderDecision('linkedin');
     const googleCfg = getGoogleConfig();
     const linkedinCfg = getLinkedInConfig();
 
     return {
       google: {
         configured: !!googleCfg,
+        approved: !!googleDecision,
         loginUrl: googleCfg ? '/api/auth/google' : '',
+        ...(googleDecision ? { residency: googleDecision.residency } : {}),
       },
+      microsoft: { configured: false, approved: false, loginUrl: '' },
       linkedin: {
         configured: !!linkedinCfg,
+        approved: !!linkedinDecision,
         loginUrl: linkedinCfg ? '/api/auth/linkedin' : '',
+        ...(linkedinDecision ? { residency: linkedinDecision.residency } : {}),
       },
     };
   }

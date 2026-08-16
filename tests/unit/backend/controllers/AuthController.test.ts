@@ -31,6 +31,12 @@ const mockRedisStore = vi.fn().mockImplementation(() => ({
   resetKey: vi.fn().mockResolvedValue(undefined),
 }));
 
+const returnActiveMembership = (sql: string, cb: (error: Error | null, row: unknown) => void) => {
+  if (!sql.includes('FROM organization_members')) return false;
+  cb(null, { role: 'USER' });
+  return true;
+};
+
 describe('AuthController (Genuine)', () => {
   let mockReq: Partial<Request>;
   let mockRes: Partial<Response>;
@@ -75,6 +81,7 @@ describe('AuthController (Genuine)', () => {
 
       // Mock DB to return null for user query
       mockDb.get.mockImplementation((sql, params, cb) => {
+        if (returnActiveMembership(sql, cb)) return;
         if (sql.includes('FROM users')) cb(null, null);
       });
 
@@ -89,6 +96,7 @@ describe('AuthController (Genuine)', () => {
 
       // Mock DB to return user
       mockDb.get.mockImplementation((sql, params, cb) => {
+        if (returnActiveMembership(sql, cb)) return;
         if (sql.includes('FROM users')) {
           cb(null, {
             id: 'u1',
@@ -112,6 +120,7 @@ describe('AuthController (Genuine)', () => {
       mockReq.body = { email: 'test@example.com', password: 'correct' };
 
       mockDb.get.mockImplementation((sql, params, cb) => {
+        if (returnActiveMembership(sql, cb)) return;
         if (sql.includes('FROM users')) {
           cb(null, {
             id: 'u1',
@@ -136,6 +145,7 @@ describe('AuthController (Genuine)', () => {
       mockReq.body = { email: 'test@example.com', password: 'correct' };
 
       mockDb.get.mockImplementation((sql, params, cb) => {
+        if (returnActiveMembership(sql, cb)) return;
         if (sql.includes('FROM users')) {
           cb(null, { id: 'u1', role: 'USER', password: 'hashed', organization_id: 'o1' });
         } else if (sql.includes('FROM organizations')) {
@@ -157,6 +167,7 @@ describe('AuthController (Genuine)', () => {
       mockReq.body = { email: 'valid@example.com', password: 'correct' };
 
       mockDb.get.mockImplementation((sql, params, cb) => {
+        if (returnActiveMembership(sql, cb)) return;
         if (sql.includes('FROM users')) {
           cb(null, {
             id: 'u1',
@@ -209,6 +220,7 @@ describe('AuthController (Genuine)', () => {
       mockReq.body = { email: 'admin@dbr77.com', password: 'correct' };
 
       mockDb.get.mockImplementation((sql, params, cb) => {
+        if (returnActiveMembership(sql, cb)) return;
         if (sql.includes('FROM users')) {
           cb(null, {
             id: 'admin-1',
@@ -272,6 +284,7 @@ describe('AuthController (Genuine)', () => {
       mockReq.body = { email: 'mfa@example.com', password: 'correct' };
 
       mockDb.get.mockImplementation((sql, params, cb) => {
+        if (returnActiveMembership(sql, cb)) return;
         if (sql.includes('FROM users')) {
           cb(null, { id: 'u1', role: 'USER', password: 'hashed', organization_id: 'o1' });
         } else if (sql.includes('FROM organizations')) {

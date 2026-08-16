@@ -151,7 +151,7 @@ export async function recordAttribution(
 
   const eventId = uuidv4();
 
-  await DbPromise.run(
+  const insertResult = await DbPromise.run(
     db,
     `INSERT INTO attribution_events (id, organization_id, user_id, source_type, source_id, campaign, partner_code, medium, metadata)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -165,8 +165,13 @@ export async function recordAttribution(
       partnerCode,
       medium,
       JSON.stringify(metadata),
-    ]
+    ],
+    { fallback: false }
   );
+
+  if (!insertResult.success) {
+    throw new Error(insertResult.error || 'Failed to persist attribution event');
+  }
 
   logger.info(
     `[AttributionService] Attribution recorded: ${sourceType} for org ${organizationId}${partnerCode ? ` (partner: ${partnerCode})` : ''}`

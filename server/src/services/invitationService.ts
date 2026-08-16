@@ -183,6 +183,22 @@ export class InvitationServiceClass {
     };
   }
 
+  private async assertInvitationCapability(
+    organizationId: string,
+    requestingUserId: string
+  ): Promise<void> {
+    const access = await resolveEffectiveAccess({
+      userId: requestingUserId,
+      organizationId,
+    });
+    if (
+      !hasEffectiveCapability(access, 'users.invite') &&
+      !hasEffectiveCapability(access, 'admin.people.manage')
+    ) {
+      throw new Error('Missing required invitation capability');
+    }
+  }
+
   // --- Orchestration Methods ---
 
   async createOrgInvitation(
@@ -206,6 +222,8 @@ export class InvitationServiceClass {
     if (!emailRegex.test(email)) {
       throw new Error('Invalid email format');
     }
+
+    await this.assertInvitationCapability(organizationId, invitedByUserId);
 
     const permissionCheck = await this.checkInvitePermission(organizationId, invitedByUserId);
     if (!permissionCheck.allowed) {
@@ -348,6 +366,8 @@ export class InvitationServiceClass {
     if (!emailRegex.test(email)) {
       throw new Error('Invalid email format');
     }
+
+    await this.assertInvitationCapability(organizationId, invitedByUserId);
 
     const project = await this.deps.db.get<{ id: string; name: string }>(
       `SELECT id, name FROM projects WHERE id = ? AND organization_id = ?`,
@@ -775,6 +795,7 @@ export class InvitationServiceClass {
     if (organizationId && invitation.organization_id !== organizationId) {
       throw new Error('Invitation not found');
     }
+    await this.assertInvitationCapability(invitation.organization_id, performedByUserId);
 
     if (
       invitation.status !== INVITATION_STATUS.PENDING &&
@@ -846,6 +867,7 @@ export class InvitationServiceClass {
     if (organizationId && invitation.organization_id !== organizationId) {
       throw new Error('Invitation not found');
     }
+    await this.assertInvitationCapability(invitation.organization_id, performedByUserId);
 
     await this.deps.dataService.markAsRevoked(invitationId);
 

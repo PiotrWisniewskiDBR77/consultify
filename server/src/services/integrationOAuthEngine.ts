@@ -398,12 +398,51 @@ export function getConnectorConfig(connectorId: string): ConnectorOAuthConfig | 
   return CONNECTOR_OAUTH_CONFIGS[connectorId];
 }
 
+export interface ApprovedConnectorDecision {
+  approved: true;
+  scopes: string[];
+  residency: string;
+}
+
+export function getConnectorApprovalDecision(
+  connectorId: string
+): ApprovedConnectorDecision | null {
+  const cfg = CONNECTOR_OAUTH_CONFIGS[connectorId];
+  if (!cfg || (cfg.authType !== 'oauth2' && cfg.authType !== 'token')) return null;
+  const raw = process.env.OAUTH_APPROVED_PROVIDER_REGISTRY;
+  if (!raw) return null;
+  try {
+    const registry = JSON.parse(raw) as Record<string, unknown>;
+    const candidate = registry[connectorId];
+    if (!candidate || typeof candidate !== 'object') return null;
+    const decision = candidate as Record<string, unknown>;
+    if (decision.approved !== true || !Array.isArray(decision.scopes)) return null;
+    if (typeof decision.residency !== 'string' || !decision.residency.trim()) return null;
+    const scopes = decision.scopes.filter((scope): scope is string => typeof scope === 'string');
+    if (
+      scopes.length !== cfg.scopes.length ||
+      !cfg.scopes.every((scope) => scopes.includes(scope))
+    ) {
+      return null;
+    }
+    return { approved: true, scopes: [...scopes], residency: decision.residency.trim() };
+  } catch {
+    return null;
+  }
+}
+
+export function isConnectorApproved(connectorId: string): boolean {
+  return getConnectorApprovalDecision(connectorId) !== null;
+}
+
 export function isConnectorConfigured(connectorId: string): boolean {
   const cfg = CONNECTOR_OAUTH_CONFIGS[connectorId];
   if (!cfg) return false;
   if (cfg.authType === 'basic') return true;
-  if (cfg.authType === 'token') return !!process.env[cfg.envClientId];
-  return !!getClientCredentials(cfg);
+  if (cfg.authType === 'token') {
+    return isConnectorApproved(connectorId) && !!process.env[cfg.envClientId];
+  }
+  return isConnectorApproved(connectorId) && !!getClientCredentials(cfg);
 }
 
 /**
@@ -416,6 +455,7 @@ export function generateAuthUrl(
 ): { url: string; state: string } | null {
   const cfg = CONNECTOR_OAUTH_CONFIGS[connectorId];
   if (!cfg || (cfg.authType !== 'oauth2' && cfg.authType !== 'token')) return null;
+  if (!isConnectorApproved(connectorId)) return null;
 
   const creds =
     cfg.authType === 'token'
@@ -480,6 +520,7 @@ export async function exchangeCode(
 } | null> {
   const cfg = CONNECTOR_OAUTH_CONFIGS[connectorId];
   if (!cfg || cfg.authType !== 'oauth2') return null;
+  if (!isConnectorApproved(connectorId)) return null;
 
   const creds = getClientCredentials(cfg);
   if (!creds) return null;
@@ -558,6 +599,7 @@ export async function refreshAccessToken(
 ): Promise<{ accessToken: string; refreshToken?: string; expiresIn?: number } | null> {
   const cfg = CONNECTOR_OAUTH_CONFIGS[connectorId];
   if (!cfg || cfg.authType !== 'oauth2') return null;
+  if (!isConnectorApproved(connectorId)) return null;
 
   const creds = getClientCredentials(cfg);
   if (!creds) return null;
@@ -620,6 +662,13 @@ export async function storeTokens(
     extraData?: Record<string, unknown>;
   }
 ): Promise<void> {
+  const cfg = CONNECTOR_OAUTH_CONFIGS[connectorId];
+  if (
+    (cfg?.authType === 'oauth2' || cfg?.authType === 'token') &&
+    !isConnectorApproved(connectorId)
+  ) {
+    throw new Error('OAuth connector is not approved');
+  }
   await ensureTokenTable();
   const id = crypto.randomUUID();
   const expiresAt = tokens.expiresIn
@@ -756,6 +805,12 @@ export async function testConnection(
 ): Promise<{ success: boolean; error?: string }> {
   const cfg = CONNECTOR_OAUTH_CONFIGS[connectorId];
   if (!cfg?.testUrl) return { success: false, error: 'No test URL configured' };
+  if (
+    (cfg.authType === 'oauth2' || cfg.authType === 'token') &&
+    !isConnectorApproved(connectorId)
+  ) {
+    return { success: false, error: 'OAuth connector is not approved' };
+  }
 
   const token = await getValidAccessToken(userId, connectorId);
   if (!token) return { success: false, error: 'No valid token' };
@@ -822,11 +877,20 @@ export async function listConnectedIntegrations(userId: string): Promise<
  */
 export function getConnectorAvailability(): Record<
   string,
-  { configured: boolean; authType: string }
+  { configured: boolean; approved: boolean; authType: string; residency?: string }
 > {
-  const result: Record<string, { configured: boolean; authType: string }> = {};
+  const result: Record<
+    string,
+    { configured: boolean; approved: boolean; authType: string; residency?: string }
+  > = {};
   for (const [id, cfg] of Object.entries(CONNECTOR_OAUTH_CONFIGS)) {
-    result[id] = { configured: isConnectorConfigured(id), authType: cfg.authType };
+    const decision = getConnectorApprovalDecision(id);
+    result[id] = {
+      configured: isConnectorConfigured(id),
+      approved: cfg.authType === 'basic' || !!decision,
+      authType: cfg.authType,
+      ...(decision ? { residency: decision.residency } : {}),
+    };
   }
   return result;
 }

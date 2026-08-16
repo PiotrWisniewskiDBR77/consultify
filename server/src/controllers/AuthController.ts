@@ -234,7 +234,11 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     }
 
     // Belt and braces for an account already retired by an earlier request.
-    if (String(user.status || '').trim().toLowerCase() === DEMO_EXPIRED_USER_STATUS) {
+    if (
+      String(user.status || '')
+        .trim()
+        .toLowerCase() === DEMO_EXPIRED_USER_STATUS
+    ) {
       res.status(403).json({
         error: 'This demo session has ended. Start a new demo to continue.',
         code: 'DEMO_SESSION_EXPIRED',
@@ -247,7 +251,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       // Ignore rate-limit cleanup failures on success.
     });
 
-    const [org, mfaStatus] = await Promise.all([
+    const [org, mfaStatus, activeMembership] = await Promise.all([
       new Promise<{
         id: string;
         name: string;
@@ -265,11 +269,40 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         );
       }),
       dependencies.MFAService.getMFAStatus(user.id),
+      new Promise<{ role: string } | null>((resolve, reject) => {
+        dependencies.db.get(
+          `SELECT role
+             FROM organization_members
+            WHERE organization_id = ? AND user_id = ?
+              AND UPPER(COALESCE(status, '')) = 'ACTIVE'
+            LIMIT 1`,
+          [user.organization_id, user.id],
+          (err: Error | null, row: unknown) => {
+            if (err) reject(err);
+            else resolve(row as { role: string } | null);
+          }
+        );
+      }),
     ]);
 
     if (!org) {
       res.status(404).json({ error: 'Organization not found' });
       return;
+    }
+
+    // Organization membership is the authorization source of truth. A fresh
+    // login must neither preserve a stale role from users.role nor mint a new
+    // session after membership revocation. This also makes role changes visible
+    // immediately in the next session without waiting for an old JWT to expire.
+    if (user.role !== 'SUPERADMIN') {
+      if (!activeMembership?.role) {
+        res.status(403).json({
+          error: 'You no longer have access to this organization',
+          code: 'ORG_MEMBERSHIP_REVOKED',
+        });
+        return;
+      }
+      user.role = activeMembership.role;
     }
 
     // Check organization status

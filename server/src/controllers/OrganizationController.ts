@@ -38,6 +38,15 @@ function conflict(res: Response, error: string, code: string, guidance: string):
   res.status(409).json({ error, code, guidance });
 }
 
+function respondIamDenial(res: Response, denial: { code: string; message: string }): void {
+  const status = ['LAST_OWNER_PROTECTED', 'SELF_LOCKOUT_REJECTED'].includes(denial.code)
+    ? 409
+    : denial.code === 'MEMBER_NOT_FOUND'
+      ? 404
+      : 403;
+  res.status(status).json({ error: denial.message, code: denial.code });
+}
+
 // ==========================================
 // CONTROLLER METHODS
 // ==========================================
@@ -320,7 +329,7 @@ export class OrganizationController {
         return;
       }
 
-      const { getMembers, updateMemberRole, normalizeOrganizationRole } =
+      const { getMembers, normalizeOrganizationRole } =
         await import('../services/organizationService.js');
       const members = await getMembers(orgId);
       const actor = members.find((m) => m.user_id === userId);
@@ -401,32 +410,21 @@ export class OrganizationController {
         return;
       }
 
-      const result = await updateMemberRole({
+      const { changeOrganizationMemberRoleAtomicallyViaIam } =
+        await import('../services/orgPeopleIamService.js');
+      const iamResult = await changeOrganizationMemberRoleAtomicallyViaIam({
+        actorId: userId,
+        actorRole,
         organizationId: orgId,
-        userId: target.user_id,
-        role: nextRole,
+        targetMemberId: target.user_id,
+        newRole: nextRole,
       });
-
-      // Audit proof (ADM-RAW-P1-004): role changes are high-risk admin writes and
-      // must always leave an admin_audit_logs trail with the before/after role.
-      try {
-        const { default: adminAuditService } = await import('../services/adminAuditService.js');
-        await adminAuditService.logAction({
-          adminId: userId,
-          actionType: 'update_member_role',
-          details: {
-            orgId,
-            isSensitive: true,
-            targetUserId,
-            fromRole: currentTargetRole,
-            toRole: nextRole,
-          },
-        });
-      } catch {
-        // Audit logging is best-effort; never block the membership mutation.
+      if (iamResult.denied) {
+        respondIamDenial(res, iamResult);
+        return;
       }
 
-      res.json(result);
+      res.json({ organizationId: orgId, userId: target.user_id, role: nextRole });
     }
   );
 
@@ -443,7 +441,7 @@ export class OrganizationController {
         return;
       }
 
-      const { getMembers, removeMember, normalizeOrganizationRole } =
+      const { getMembers, normalizeOrganizationRole } =
         await import('../services/organizationService.js');
       const members = await getMembers(orgId);
       const actor = members.find((m) => m.user_id === userId);
@@ -517,26 +515,17 @@ export class OrganizationController {
         return;
       }
 
-      await removeMember({
+      const { removeOrganizationMemberAtomicallyViaIam } =
+        await import('../services/orgPeopleIamService.js');
+      const iamResult = await removeOrganizationMemberAtomicallyViaIam({
+        actorId: userId,
+        actorRole,
         organizationId: orgId,
-        userId: target.user_id,
+        targetMemberId: target.user_id,
       });
-
-      // Audit proof (ADM-RAW-P1-004): member removals are high-risk admin writes.
-      try {
-        const { default: adminAuditService } = await import('../services/adminAuditService.js');
-        await adminAuditService.logAction({
-          adminId: userId,
-          actionType: 'remove_member',
-          details: {
-            orgId,
-            isSensitive: true,
-            targetUserId,
-            targetRole,
-          },
-        });
-      } catch {
-        // Audit logging is best-effort; never block the membership mutation.
+      if (iamResult.denied) {
+        respondIamDenial(res, iamResult);
+        return;
       }
 
       res.json({ message: 'Member removed' });

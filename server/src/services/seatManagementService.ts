@@ -127,7 +127,7 @@ export async function getSeatConfiguration(orgId: string): Promise<SeatConfigura
          FROM organization_seats os
          LEFT JOIN organization_billing ob ON os.organization_id = ob.organization_id
          LEFT JOIN subscription_plans sp ON ob.subscription_plan_id = sp.id
-         WHERE os.organization_id = ?`,
+         WHERE os.organization_id = ? AND os.user_id IS NULL`,
     [orgId]
   );
 
@@ -255,8 +255,8 @@ export async function purchaseSeats(
     `UPDATE organization_seats SET
             additional_seats_purchased = additional_seats_purchased + ?,
             total_seats_available = total_seats_available + ?,
-            updated_at = datetime('now')
-        WHERE organization_id = ?`,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE organization_id = ? AND user_id IS NULL`,
     [quantity, quantity, orgId]
   );
 
@@ -349,10 +349,10 @@ export async function releaseSeat(orgId: string, userId: string): Promise<Releas
   await DbPromise.run(
     db,
     `UPDATE organization_seats SET
-            additional_seats_purchased = MAX(0, additional_seats_purchased - 1),
-            total_seats_available = MAX(base_seats_included, total_seats_available - 1),
-            updated_at = datetime('now')
-        WHERE organization_id = ?`,
+            additional_seats_purchased = GREATEST(0, additional_seats_purchased - 1),
+            total_seats_available = GREATEST(base_seats_included, total_seats_available - 1),
+            updated_at = CURRENT_TIMESTAMP
+        WHERE organization_id = ? AND user_id IS NULL`,
     [orgId]
   );
 
@@ -382,7 +382,7 @@ export async function updateSeatCount(orgId: string): Promise<UpdateSeatCountRes
 
   await DbPromise.run(
     db,
-    `UPDATE organization_seats SET seats_used = ?, updated_at = datetime('now') WHERE organization_id = ?`,
+    `UPDATE organization_seats SET seats_used = ?, updated_at = CURRENT_TIMESTAMP WHERE organization_id = ? AND user_id IS NULL`,
     [seatsUsed, orgId]
   );
 
@@ -423,8 +423,8 @@ export async function toggleAutoAddSeats(
     `UPDATE organization_seats SET
             auto_add_seats_on_invite = ?,
             auto_add_seats_threshold = ?,
-            updated_at = datetime('now')
-        WHERE organization_id = ?`,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE organization_id = ? AND user_id IS NULL`,
     [enabled ? 1 : 0, threshold, orgId]
   );
 

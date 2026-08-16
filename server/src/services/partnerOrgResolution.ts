@@ -45,7 +45,7 @@ export async function getActivePartnerOrgIdForUser(userId: string): Promise<stri
       db,
       `SELECT pu.partner_org_id
        FROM partner_users pu
-       JOIN organization_members owner_member ON owner_member.user_id = pu.user_id
+       JOIN organization_members owner_member ON owner_member.user_id = pu.user_id::text
        JOIN organization_members candidate_member
          ON candidate_member.organization_id = owner_member.organization_id
         AND candidate_member.user_id = ?

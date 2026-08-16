@@ -25,6 +25,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
+import { encryptionEnabled, encryptSecret } from '../utils/secretEncryption.js';
 import { verifyUserPassword } from '../utils/verifyUserPassword.js';
 
 const router = Router();
@@ -701,6 +702,23 @@ const normalizeUserAIProviders = (value: unknown) => {
     .filter((provider) => provider.name.trim().length > 0);
 };
 
+const redactUserAIProviders = (value: unknown) =>
+  normalizeUserAIProviders(value).map(({ apiKey, ...provider }) => ({
+    ...provider,
+    hasApiKey: Boolean(apiKey),
+  }));
+
+const protectUserAIProvidersForStorage = (value: unknown) => {
+  const providers = normalizeUserAIProviders(value);
+  if (providers.some((provider) => provider.apiKey) && !encryptionEnabled()) {
+    throw new Error('AI provider secret encryption is not configured');
+  }
+  return providers.map((provider) => ({
+    ...provider,
+    ...(provider.apiKey ? { apiKey: encryptSecret(provider.apiKey) } : {}),
+  }));
+};
+
 /**
  * GET /api/settings/preferences/inbox-ai
  * Get user's inbox AI automation preferences.
@@ -812,7 +830,7 @@ router.get(
 
       if (prefs?.preferences_data) {
         const parsed = JSON.parse(prefs.preferences_data) as { providers?: unknown };
-        return res.json({ providers: normalizeUserAIProviders(parsed.providers) });
+        return res.json({ providers: redactUserAIProviders(parsed.providers) });
       }
 
       return res.json({ providers: [] });
@@ -841,7 +859,7 @@ router.put(
     }
 
     try {
-      const providers = normalizeUserAIProviders(req.body?.providers);
+      const providers = protectUserAIProvidersForStorage(req.body?.providers);
       await ensureUserPreferencesTable();
       const result = await upsertUserPreferenceValue(
         userId,
@@ -850,7 +868,7 @@ router.put(
       );
       if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
-      return res.json({ success: true, providers });
+      return res.json({ success: true, providers: redactUserAIProviders(providers) });
     } catch (err: any) {
       logger.error('[settings] Error updating personal AI providers:', {
         err,
@@ -1945,6 +1963,16 @@ router.get(
       return res.status(400).json({
         error:
           'This connector uses credential-based auth, not OAuth. Use POST /connect with credentials.',
+      });
+    }
+
+    if (
+      (cfg.authType === 'oauth2' || cfg.authType === 'token') &&
+      !oauthEngine.isConnectorApproved(connectorId)
+    ) {
+      return res.status(409).json({
+        error: 'OAuth provider is disabled until scopes and residency are approved',
+        code: 'OAUTH_PROVIDER_NOT_APPROVED',
       });
     }
 

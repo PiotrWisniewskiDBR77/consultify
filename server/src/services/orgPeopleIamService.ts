@@ -11,6 +11,7 @@
  */
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { withPinnedPostgresTransaction } from '../database/PostgresDatabase.js';
 import { v4 as uuidv4 } from 'uuid';
 import { hasEffectiveCapability, resolveEffectiveAccess } from './effectiveAccessService.js';
 
@@ -251,4 +252,159 @@ export async function removeOrganizationMemberViaIam(params: {
   });
 
   return ok();
+}
+
+/**
+ * Persist a role change and its security audit as one PostgreSQL transaction.
+ *
+ * The older guard-only helpers above are retained for compatibility with their
+ * callers/tests. HTTP membership writes use this command: it locks the current
+ * roster, re-evaluates last-owner/self-lockout rules against that locked state,
+ * writes the membership, and writes the durable audit before COMMIT. An audit
+ * failure therefore rolls the role change back instead of returning a false
+ * success.
+ */
+export async function changeOrganizationMemberRoleAtomicallyViaIam(params: {
+  actorId: string;
+  actorRole: string;
+  organizationId: string;
+  targetMemberId: string;
+  newRole: string;
+}): Promise<IamResult> {
+  const access = await resolveEffectiveAccess({
+    userId: params.actorId,
+    organizationId: params.organizationId,
+    applicationRole: params.actorRole,
+  });
+  if (!hasEffectiveCapability(access, 'admin.people.manage')) {
+    return deny('CAPABILITY_REQUIRED', 'Capability admin.people.manage required');
+  }
+
+  const newRole = String(params.newRole || '')
+    .trim()
+    .toUpperCase();
+  if (newRole === 'OWNER' && access.applicationRole !== 'OWNER') {
+    return deny('OWNER_ACTION_REQUIRED', 'Only an OWNER can promote another member to OWNER');
+  }
+
+  return withPinnedPostgresTransaction(
+    async (tx) => {
+      const members = await tx.queryAll<{ user_id: string; role: string }>(
+        `SELECT user_id, role
+         FROM organization_members
+        WHERE organization_id = ?
+        FOR UPDATE`,
+        [params.organizationId]
+      );
+      const target = members.find((member) => member.user_id === params.targetMemberId);
+      if (!target)
+        return deny('MEMBER_NOT_FOUND', 'Target member does not belong to this organisation');
+
+      const owners = members.filter((member) => String(member.role).toUpperCase() === 'OWNER');
+      if (
+        String(target.role).toUpperCase() === 'OWNER' &&
+        owners.length <= 1 &&
+        newRole !== 'OWNER'
+      ) {
+        return deny('LAST_OWNER_PROTECTED', 'Cannot demote the last OWNER of the organisation');
+      }
+      if (
+        params.targetMemberId === params.actorId &&
+        ['OWNER', 'ADMIN'].includes(String(target.role).toUpperCase()) &&
+        !['OWNER', 'ADMIN'].includes(newRole)
+      ) {
+        return deny('SELF_LOCKOUT_REJECTED', 'Role change would revoke your admin access');
+      }
+
+      const updated = await tx.queryRun(
+        `UPDATE organization_members
+          SET role = ?
+        WHERE organization_id = ? AND user_id = ?`,
+        [newRole, params.organizationId, params.targetMemberId]
+      );
+      if (updated.changes !== 1) throw new Error('IAM role change was not persisted');
+
+      const audit = await tx.queryRun(
+        `INSERT INTO role_change_audit_events
+        (id, organization_id, actor_id, action, resource_type, resource_id, before_json, after_json, created_at)
+       VALUES (?, ?, ?, 'role_change', 'organization_member', ?, ?, ?, CURRENT_TIMESTAMP)`,
+        [
+          uuidv4(),
+          params.organizationId,
+          params.actorId,
+          params.targetMemberId,
+          JSON.stringify({ role: target.role }),
+          JSON.stringify({ role: newRole }),
+        ]
+      );
+      if (audit.changes !== 1) throw new Error('IAM audit event was not persisted');
+      return ok();
+    },
+    { organizationId: params.organizationId }
+  );
+}
+
+/** Atomic membership revocation plus durable audit; see role command above. */
+export async function removeOrganizationMemberAtomicallyViaIam(params: {
+  actorId: string;
+  actorRole: string;
+  organizationId: string;
+  targetMemberId: string;
+}): Promise<IamResult> {
+  const access = await resolveEffectiveAccess({
+    userId: params.actorId,
+    organizationId: params.organizationId,
+    applicationRole: params.actorRole,
+  });
+  if (!hasEffectiveCapability(access, 'admin.people.manage')) {
+    return deny('CAPABILITY_REQUIRED', 'Capability admin.people.manage required to remove members');
+  }
+
+  return withPinnedPostgresTransaction(
+    async (tx) => {
+      const members = await tx.queryAll<{ user_id: string; role: string }>(
+        `SELECT user_id, role
+         FROM organization_members
+        WHERE organization_id = ?
+        FOR UPDATE`,
+        [params.organizationId]
+      );
+      const target = members.find((member) => member.user_id === params.targetMemberId);
+      if (!target)
+        return deny('MEMBER_NOT_FOUND', 'Target member does not belong to this organisation');
+
+      const owners = members.filter((member) => String(member.role).toUpperCase() === 'OWNER');
+      if (String(target.role).toUpperCase() === 'OWNER' && owners.length <= 1) {
+        return deny('LAST_OWNER_PROTECTED', 'Cannot remove the last OWNER of the organisation');
+      }
+      if (
+        params.targetMemberId === params.actorId &&
+        ['OWNER', 'ADMIN'].includes(String(target.role).toUpperCase())
+      ) {
+        return deny('SELF_LOCKOUT_REJECTED', 'Removal would revoke your admin access');
+      }
+
+      const removed = await tx.queryRun(
+        `DELETE FROM organization_members WHERE organization_id = ? AND user_id = ?`,
+        [params.organizationId, params.targetMemberId]
+      );
+      if (removed.changes !== 1) throw new Error('IAM member removal was not persisted');
+
+      const audit = await tx.queryRun(
+        `INSERT INTO role_change_audit_events
+        (id, organization_id, actor_id, action, resource_type, resource_id, before_json, after_json, created_at)
+       VALUES (?, ?, ?, 'member_removed', 'organization_member', ?, ?, NULL, CURRENT_TIMESTAMP)`,
+        [
+          uuidv4(),
+          params.organizationId,
+          params.actorId,
+          params.targetMemberId,
+          JSON.stringify({ role: target.role }),
+        ]
+      );
+      if (audit.changes !== 1) throw new Error('IAM audit event was not persisted');
+      return ok();
+    },
+    { organizationId: params.organizationId }
+  );
 }

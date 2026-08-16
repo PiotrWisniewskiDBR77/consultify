@@ -15,6 +15,7 @@ import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
 import { AuthRequest, requireRole, verifyToken } from '../middleware/auth.middleware.js';
+import { getRequestAccessRole } from '../middleware/requestAccess.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -199,21 +200,64 @@ router.put(
     const updates = req.body;
 
     try {
+      const actorId = req.user?.id;
+      const actorOrganizationId = req.user?.organizationId;
+      if (!actorId || !actorOrganizationId) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
+      const target = await dbGet<{ organization_id: string }>(
+        `SELECT organization_id FROM users WHERE id = ?`,
+        [id],
+        { fallback: false }
+      );
+      if (!target) return res.status(404).json({ error: 'User not found' });
+
+      const actorRole = getRequestAccessRole(req);
+      const isSelf = actorId === id;
+      const isSameTenantAdministrator =
+        target.organization_id === actorOrganizationId &&
+        (actorRole === 'owner' || actorRole === 'admin' || actorRole === 'superadmin');
+      if (!isSelf && !isSameTenantAdministrator) {
+        return res.status(403).json({ error: 'Not authorized to update this user' });
+      }
+
       const firstNameValue = updates?.firstName ?? updates?.first_name;
       if (firstNameValue !== undefined && !String(firstNameValue).trim()) {
         return res.status(400).json({ error: 'First name is required before saving' });
       }
 
       // Build dynamic update query
-      const allowedFields = ['first_name', 'last_name', 'avatar_url', 'status'];
+      const allowedFields = [
+        'first_name',
+        'last_name',
+        'avatar_url',
+        'status',
+        'job_title',
+        'language',
+      ];
       const setClause: string[] = [];
       const values: any[] = [];
 
-      for (const [key, value] of Object.entries(updates)) {
-        const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+      for (const [key, value] of Object.entries(updates || {})) {
+        const inputKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+        const snakeKey = inputKey === 'language_preference' ? 'language' : inputKey;
         if (allowedFields.includes(snakeKey)) {
+          if (snakeKey === 'language') {
+            const language = String(value || '').trim();
+            if (!/^[a-z]{2}(?:-[A-Z]{2})?$/.test(language)) {
+              return res.status(400).json({ error: 'Language preference is invalid' });
+            }
+          }
+          if (snakeKey === 'job_title' && String(value || '').length > 160) {
+            return res.status(400).json({ error: 'Job title is too long' });
+          }
           setClause.push(`${snakeKey} = ?`);
-          values.push(snakeKey === 'first_name' ? String(value).trim() : value);
+          values.push(
+            snakeKey === 'first_name' || snakeKey === 'job_title' || snakeKey === 'language'
+              ? String(value).trim()
+              : value
+          );
         }
       }
 
@@ -229,8 +273,14 @@ router.put(
       });
       if (!result.success) throw new Error(result.error || 'Failed to update user');
 
+      const persisted = await dbGet(
+        `SELECT id, first_name, last_name, avatar_url, status, job_title, language
+         FROM users WHERE id = ?`,
+        [id],
+        { fallback: false }
+      );
       logger.info(`[users] User ${id} updated`);
-      return res.json({ success: true, data: updates });
+      return res.json({ success: true, data: persisted });
     } catch (err: any) {
       logger.error('[users] Error updating user', {
         err,

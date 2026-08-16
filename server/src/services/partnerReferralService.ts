@@ -293,8 +293,7 @@ let db: IDatabase = getDatabase();
 // `partner.routes.ts` already healed toward `APP_BASE_URL || https://consultify.ai`,
 // so the two paths also disagreed on both the variable name and the default.
 // Accept either variable and default to the real product host.
-const BASE_URL =
-  process.env.APP_BASE_URL || process.env.APP_URL || 'https://consultify.ai';
+const BASE_URL = process.env.APP_BASE_URL || process.env.APP_URL || 'https://consultify.ai';
 let referralSchemaEnsured = false;
 
 /**
@@ -526,15 +525,38 @@ export async function ensurePartnerReferralIdentity(
   const generatedCode = existingCode || buildReferralCodeSeed(partnerName);
   const generatedSlug =
     existingSlug || sanitizeSlug(`${partnerName || 'partner'}-${partnerOrgId.slice(0, 6)}`);
+  // Multiple first reads can race while both identity columns are still NULL.
+  // Preserve the winner instead of letting the last writer replace it, then
+  // re-read the committed identity so every concurrent caller returns the same
+  // durable values.
   await DbPromise.run(
     db,
     `UPDATE partner_organizations
-     SET referral_code = ?, referral_link_slug = ?, updated_at = NOW()
+     SET referral_code = COALESCE(referral_code, ?),
+         referral_link_slug = COALESCE(referral_link_slug, ?),
+         updated_at = NOW()
      WHERE id = ?`,
     [generatedCode, generatedSlug, partnerOrgId],
     { fallback: false }
   );
-  return { referralCode: generatedCode, referralLinkSlug: generatedSlug };
+
+  const committed = await DbPromise.get<{
+    referral_code?: string | null;
+    referral_link_slug?: string | null;
+  }>(
+    db,
+    `SELECT referral_code, referral_link_slug FROM partner_organizations WHERE id = ?`,
+    [partnerOrgId],
+    { fallback: false }
+  );
+  const referralCode = String(committed?.referral_code || '').trim();
+  const referralLinkSlug = String(committed?.referral_link_slug || '').trim();
+  if (!referralCode || !referralLinkSlug) {
+    throw new Error(
+      `Failed to persist referral identity for partner organization: ${partnerOrgId}`
+    );
+  }
+  return { referralCode, referralLinkSlug };
 }
 
 // ==========================================
@@ -1015,7 +1037,8 @@ export async function getAttributionByOrganization(
     const row = await DbPromise.get<AttributionRow>(
       db,
       `SELECT * FROM partner_attributions WHERE organization_id = ?`,
-      [organizationId]
+      [organizationId],
+      { fallback: false }
     );
 
     if (!row) return null;
@@ -1038,7 +1061,7 @@ export async function getAttributionByOrganization(
     };
   } catch (err: any) {
     logger.error('[PartnerReferralService] Error getting attribution:', err);
-    return null;
+    throw err;
   }
 }
 
@@ -1066,7 +1089,9 @@ export async function getPartnerAttributions(
   params.push(limit, offset);
 
   try {
-    const rows = await DbPromise.all<AttributionRow & { org_name?: string }>(db, query, params);
+    const rows = await DbPromise.all<AttributionRow & { org_name?: string }>(db, query, params, {
+      fallback: false,
+    });
 
     return rows.map((row) => ({
       id: row.id,
@@ -1087,7 +1112,7 @@ export async function getPartnerAttributions(
     }));
   } catch (err: any) {
     logger.error('[PartnerReferralService] Error getting partner attributions:', err);
-    return [];
+    throw err;
   }
 }
 

@@ -89,7 +89,9 @@ describe('AuthController', () => {
       mockReq.body = { email: 'test@example.com', password: 'password123' };
 
       mockDb.get.mockImplementation((sql, params, cb) => {
-        if (sql.includes('users')) {
+        if (sql.includes('organization_members')) {
+          cb(null, { role: 'USER' });
+        } else if (sql.includes('users')) {
           cb(null, {
             id: 'user-123',
             email: 'test@example.com',
