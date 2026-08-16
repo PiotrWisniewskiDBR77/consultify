@@ -51,7 +51,9 @@ function parseArgs(): { coverageJson: string; threshold: number; baseBranch: str
   }
 
   if (!coverageJson) {
-    console.error('Usage: patch-coverage-gate.ts --coverage-json <path> [--threshold 80] [--base main]');
+    console.error(
+      'Usage: patch-coverage-gate.ts --coverage-json <path> [--threshold 80] [--base main]'
+    );
     process.exit(2);
   }
 
@@ -81,7 +83,9 @@ function getChangedSourceFiles(baseBranch: string): string[] {
       .filter((f) => !excludeDirs.some((dir) => f.includes(`/${dir}/`) || f.startsWith(`${dir}/`)))
       .filter((f) => !f.includes('.test.') && !f.includes('.spec.') && !f.includes('__tests__'));
   } catch {
-    console.warn(`${COLORS.yellow}Warning: Could not determine changed files. Falling back to staged files.${COLORS.reset}`);
+    console.warn(
+      `${COLORS.yellow}Warning: Could not determine changed files. Falling back to staged files.${COLORS.reset}`
+    );
     try {
       const staged = execSync('git diff --cached --name-only --diff-filter=ACMR', {
         encoding: 'utf-8',
@@ -128,8 +132,15 @@ function getCoverageForFile(coverageMap: Record<string, any>, relPath: string): 
   const stmtTotal = Object.keys(s).length;
   const stmtCovered = Object.values(s).filter((v: any) => v > 0).length;
 
-  const branchTotal = Object.values(b).reduce((acc: number, arr: any) => acc + (Array.isArray(arr) ? arr.length : 0), 0);
-  const branchCovered = Object.values(b).reduce((acc: number, arr: any) => acc + (Array.isArray(arr) ? arr.filter((v: any) => v > 0).length : 0), 0);
+  const branchTotal = Object.values(b).reduce(
+    (acc: number, arr: any) => acc + (Array.isArray(arr) ? arr.length : 0),
+    0
+  );
+  const branchCovered = Object.values(b).reduce(
+    (acc: number, arr: any) =>
+      acc + (Array.isArray(arr) ? arr.filter((v: any) => v > 0).length : 0),
+    0
+  );
 
   const fnTotal = Object.keys(f).length;
   const fnCovered = Object.values(f).filter((v: any) => v > 0).length;
@@ -146,15 +157,28 @@ function getCoverageForFile(coverageMap: Record<string, any>, relPath: string): 
 function main() {
   const { coverageJson, threshold, baseBranch } = parseArgs();
 
-  console.log(`\n${COLORS.cyan}╔══════════════════════════════════════════════════════╗${COLORS.reset}`);
-  console.log(`${COLORS.cyan}║${COLORS.reset}          ${COLORS.bold}PATCH COVERAGE GATE${COLORS.reset}                       ${COLORS.cyan}║${COLORS.reset}`);
-  console.log(`${COLORS.cyan}╚══════════════════════════════════════════════════════╝${COLORS.reset}\n`);
+  // Validate the required evidence before inspecting the diff.  Previously a
+  // no-source-change branch returned success even when the supplied coverage
+  // artifact did not exist, turning an input error into a false green gate.
+  const coverageMap = loadCoverageMap(coverageJson);
+
+  console.log(
+    `\n${COLORS.cyan}╔══════════════════════════════════════════════════════╗${COLORS.reset}`
+  );
+  console.log(
+    `${COLORS.cyan}║${COLORS.reset}          ${COLORS.bold}PATCH COVERAGE GATE${COLORS.reset}                       ${COLORS.cyan}║${COLORS.reset}`
+  );
+  console.log(
+    `${COLORS.cyan}╚══════════════════════════════════════════════════════╝${COLORS.reset}\n`
+  );
   console.log(`Threshold: ${threshold}% | Base: ${baseBranch}\n`);
 
   const changedFiles = getChangedSourceFiles(baseBranch);
 
   if (changedFiles.length === 0) {
-    console.log(`${COLORS.green}✅ No source files changed — patch coverage gate passes.${COLORS.reset}\n`);
+    console.log(
+      `${COLORS.green}✅ No source files changed — patch coverage gate passes.${COLORS.reset}\n`
+    );
     process.exit(0);
   }
 
@@ -164,7 +188,6 @@ function main() {
   }
   console.log();
 
-  const coverageMap = loadCoverageMap(coverageJson);
   const results: PatchResult[] = [];
   const uncovered: string[] = [];
 
@@ -185,20 +208,26 @@ function main() {
 
   for (const r of results) {
     const minPct = Math.min(r.statements, r.branches, r.functions, r.lines);
-    const status = minPct >= threshold ? `${COLORS.green}✅${COLORS.reset}` : `${COLORS.red}❌${COLORS.reset}`;
+    const status =
+      minPct >= threshold ? `${COLORS.green}✅${COLORS.reset}` : `${COLORS.red}❌${COLORS.reset}`;
     const shortFile = r.file.length > 50 ? '…' + r.file.slice(-49) : r.file;
 
     console.log(
       `| ${shortFile} | ${r.statements.toFixed(1)}% | ${r.branches.toFixed(1)}% | ${r.functions.toFixed(1)}% | ${r.lines.toFixed(1)}% | ${status} |`
     );
 
-    if (r.statements < threshold) failures.push(`${r.file}: statements ${r.statements.toFixed(1)}% < ${threshold}%`);
-    if (r.branches < threshold) failures.push(`${r.file}: branches ${r.branches.toFixed(1)}% < ${threshold}%`);
-    if (r.functions < threshold) failures.push(`${r.file}: functions ${r.functions.toFixed(1)}% < ${threshold}%`);
+    if (r.statements < threshold)
+      failures.push(`${r.file}: statements ${r.statements.toFixed(1)}% < ${threshold}%`);
+    if (r.branches < threshold)
+      failures.push(`${r.file}: branches ${r.branches.toFixed(1)}% < ${threshold}%`);
+    if (r.functions < threshold)
+      failures.push(`${r.file}: functions ${r.functions.toFixed(1)}% < ${threshold}%`);
   }
 
   if (uncovered.length > 0) {
-    console.log(`\n${COLORS.yellow}Files without coverage data (not instrumented or new):${COLORS.reset}`);
+    console.log(
+      `\n${COLORS.yellow}Files without coverage data (not instrumented or new):${COLORS.reset}`
+    );
     for (const f of uncovered) {
       console.log(`  ⚠ ${f}`);
     }

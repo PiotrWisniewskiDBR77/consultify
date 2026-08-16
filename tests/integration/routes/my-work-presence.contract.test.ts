@@ -1,6 +1,6 @@
 import express from 'express';
 import request from 'supertest';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const authState = vi.hoisted(() => ({
   userId: 'u-1' as string | null,
@@ -10,6 +10,7 @@ const authState = vi.hoisted(() => ({
 
 const listPresenceMock = vi.fn(async () => []);
 const upsertPresenceMock = vi.fn(async () => ({ ok: true }));
+const dbGetMock = vi.fn(async () => ({ id: 'idea-1' }));
 
 vi.mock('../../../server/src/middleware/auth.middleware.js', async () => {
   const actual = (await vi.importActual(
@@ -37,6 +38,10 @@ vi.mock('../../../server/src/services/realtimePlatformService.js', () => ({
   },
 }));
 
+vi.mock('../../../server/src/utils/DbPromise.js', () => ({
+  get: (...args: unknown[]) => dbGetMock(...args),
+}));
+
 const { default: myWorkRouter } = await import('../../../server/src/routes/my-work.routes.ts');
 
 function createApp() {
@@ -47,17 +52,23 @@ function createApp() {
 }
 
 describe('my-work presence route contracts', () => {
-  it('returns coded 500 when idea presence polling fails', async () => {
+  beforeEach(() => {
+    listPresenceMock.mockClear();
+    upsertPresenceMock.mockClear();
+    dbGetMock.mockReset();
+    dbGetMock.mockResolvedValue({ id: 'idea-1' });
+  });
+
+  it('degrades polling to an empty presence list when realtime is unavailable', async () => {
     listPresenceMock.mockRejectedValueOnce(new Error('presence-store-unavailable'));
     const app = createApp();
 
     const res = await request(app).get('/api/my-work/my-ideas/idea-1/presence');
-    expect(res.status).toBe(500);
-    expect(res.body.code).toBe('IDEA_TABLE_PRESENCE_POLL_FAILED');
-    expect(res.body.error).toBe('Failed to read idea presence');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ users: [] });
   });
 
-  it('returns coded 500 when idea presence broadcast fails', async () => {
+  it('reports a degraded broadcast without failing the primary collaboration flow', async () => {
     upsertPresenceMock.mockRejectedValueOnce(new Error('presence-upsert-failed'));
     const app = createApp();
 
@@ -68,8 +79,24 @@ describe('my-work presence route contracts', () => {
       timestamp: Date.now(),
       activeCell: { nodeId: 'node-1', colKey: 'title' },
     });
-    expect(res.status).toBe(500);
-    expect(res.body.code).toBe('IDEA_TABLE_PRESENCE_UPSERT_FAILED');
-    expect(res.body.error).toBe('Failed to broadcast presence');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ ok: false, degraded: true });
+  });
+
+  it('does not disclose presence for an idea outside the authenticated tenant', async () => {
+    dbGetMock.mockResolvedValueOnce(undefined).mockResolvedValueOnce(undefined);
+    const app = createApp();
+
+    const read = await request(app).get('/api/my-work/my-ideas/foreign-idea/presence');
+    const write = await request(app)
+      .post('/api/my-work/my-ideas/foreign-idea/presence')
+      .send({ activeCell: { nodeId: 'node-1', colKey: 'title' } });
+
+    expect(read.status).toBe(404);
+    expect(read.body).toEqual({ users: [] });
+    expect(write.status).toBe(404);
+    expect(write.body).toEqual({ error: 'Idea not found' });
+    expect(listPresenceMock).not.toHaveBeenCalled();
+    expect(upsertPresenceMock).not.toHaveBeenCalled();
   });
 });
