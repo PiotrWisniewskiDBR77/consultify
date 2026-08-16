@@ -81,7 +81,9 @@ async function recordUsage(params: {
            FROM finance_artifact_aliases
           WHERE organization_id = ? AND legacy_table = ? AND legacy_id = ?
           ORDER BY created_at DESC LIMIT 1
-       ) a ON TRUE`,
+       ) a ON TRUE
+     ON CONFLICT (organization_id,request_id,method,route_path,access_kind)
+       WHERE request_id IS NOT NULL DO NOTHING`,
     [
       organizationId,
       requestId || null,
