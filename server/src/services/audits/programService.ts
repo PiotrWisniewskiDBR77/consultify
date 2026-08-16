@@ -61,6 +61,8 @@ import type {
   AuditRole,
   ExpectedEvidenceSpec,
 } from './types.js';
+import type { PoolClient } from 'pg';
+import { acquirePgClient } from '../../database/PostgresDatabase.js';
 
 // ---------------------------------------------------------------------------
 // Typy lokalne — `audit_programs` nie ma własnego interfejsu w types.ts
@@ -357,6 +359,7 @@ export interface CreateProgramFromPackInput {
   plannedStart?: string | null;
   plannedEnd?: string | null;
   projectId?: string | null;
+  idempotencyKey?: string | null;
 }
 
 interface CreateProgramCoreExtra {
@@ -395,111 +398,152 @@ async function createProgramCore(
 
   const programId = newId('aprog');
   const now = new Date().toISOString();
+  const idempotencyKey = isNonEmpty(input.idempotencyKey) ? input.idempotencyKey.trim() : null;
+  const client: PoolClient = await acquirePgClient();
+  try {
+    await client.query('BEGIN');
+    if (idempotencyKey) {
+      await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [
+        `${organizationId}:${idempotencyKey}`,
+      ]);
+      const replay = await client.query<{ id: string }>(
+        `SELECT id FROM audit_programs
+          WHERE organization_id = $1 AND create_idempotency_key = $2`,
+        [organizationId, idempotencyKey]
+      );
+      if (replay.rows[0]) {
+        await client.query('COMMIT');
+        const existing = await getProgram(organizationId, replay.rows[0].id);
+        if (!existing) {
+          throw new AuditDomainError(
+            'Nie udało się odczytać programu po wznowieniu żądania',
+            500,
+            'AUDIT_PROGRAM_REPLAY_READ_FAILED'
+          );
+        }
+        return existing;
+      }
+    }
 
-  await auditRun(
-    `INSERT INTO audit_programs
+    await client.query(
+      `INSERT INTO audit_programs
        (id, organization_id, name, description, objective, status, preset, config,
         pack_id, pack_key, pack_version, lifecycle_state, scope_text, scope_json,
         criteria_snapshot_at, planned_start, planned_end, program_owner_id,
-        project_id, recurrence, previous_program_id, created_by, created_at, updated_at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24)`,
-    [
-      programId,
-      organizationId,
-      input.name.trim(),
-      null,
-      input.objective ?? null,
-      'draft',
-      null,
-      JSON.stringify({}),
-      pack.id,
-      pack.pack_key,
-      pack.version,
-      'planning',
-      input.scopeText ?? null,
-      null,
-      now,
-      input.plannedStart ?? null,
-      input.plannedEnd ?? null,
-      actor.userId,
-      input.projectId ?? null,
-      extra.recurrence ?? null,
-      extra.previousProgramId ?? null,
-      actor.userId,
-      now,
-      now,
-    ]
-  );
+        project_id, recurrence, previous_program_id, created_by, created_at, updated_at,
+        create_idempotency_key)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25)`,
+      [
+        programId,
+        organizationId,
+        input.name.trim(),
+        null,
+        input.objective ?? null,
+        'draft',
+        null,
+        JSON.stringify({}),
+        pack.id,
+        pack.pack_key,
+        pack.version,
+        'planning',
+        input.scopeText ?? null,
+        null,
+        now,
+        input.plannedStart ?? null,
+        input.plannedEnd ?? null,
+        actor.userId,
+        input.projectId ?? null,
+        extra.recurrence ?? null,
+        extra.previousProgramId ?? null,
+        actor.userId,
+        now,
+        now,
+        idempotencyKey,
+      ]
+    );
 
-  // Snapshot kryteriów, zachowując hierarchię parent → child przez mapowanie
-  // starych id pakietu na nowe id programu. Insert nie zależy od kolejności,
-  // bo `audit_program_criteria.parent_id` nie ma FK (świadomie — snapshot).
-  const idMap = new Map<string, string>();
-  for (const c of packCriteria) idMap.set(String(c.id), newId('apcrit'));
+    // Snapshot kryteriów, zachowując hierarchię parent → child przez mapowanie
+    // starych id pakietu na nowe id programu. Insert nie zależy od kolejności,
+    // bo `audit_program_criteria.parent_id` nie ma FK (świadomie — snapshot).
+    const idMap = new Map<string, string>();
+    for (const c of packCriteria) idMap.set(String(c.id), newId('apcrit'));
 
-  for (const c of packCriteria) {
-    const newCriterionId = idMap.get(String(c.id));
-    if (!newCriterionId) continue;
-    const mappedParent = c.parent_id ? (idMap.get(String(c.parent_id)) ?? null) : null;
-    const expectedEvidence = parseJson<ExpectedEvidenceSpec[]>(c.expected_evidence, []);
+    for (const c of packCriteria) {
+      const newCriterionId = idMap.get(String(c.id));
+      if (!newCriterionId) continue;
+      const mappedParent = c.parent_id ? (idMap.get(String(c.parent_id)) ?? null) : null;
+      const expectedEvidence = parseJson<ExpectedEvidenceSpec[]>(c.expected_evidence, []);
 
-    await auditRun(
-      `INSERT INTO audit_program_criteria
+      await client.query(
+        `INSERT INTO audit_program_criteria
          (id, program_id, organization_id, pack_criterion_id, parent_id, ordinal, ref_code,
           node_kind, title, requirement_text, source_reference, audit_question,
           expected_evidence, audit_procedure, sampling_guidance, mandatory, weight,
           applicable, conformity_status, work_status, created_at, updated_at)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)`,
+        [
+          newCriterionId,
+          programId,
+          organizationId,
+          c.id,
+          mappedParent,
+          Number(c.ordinal ?? 0),
+          c.ref_code ?? null,
+          c.node_kind ?? 'criterion',
+          c.title,
+          c.requirement_text ?? null,
+          c.source_reference ?? null,
+          c.audit_question ?? null,
+          JSON.stringify(expectedEvidence),
+          c.audit_procedure ?? null,
+          c.sampling_guidance ?? null,
+          toBool(c.mandatory ?? true),
+          c.weight ?? null,
+          true,
+          'not_tested',
+          'open',
+          now,
+          now,
+        ]
+      );
+    }
+
+    await client.query(
+      `INSERT INTO audit_program_members
+         (id, program_id, organization_id, user_id, member_role, independence_declared,
+          assigned_by, assigned_at)
+       VALUES ($1,$2,$3,$4,'program_owner',false,$5,$6)`,
+      [newId('apmem'), programId, organizationId, actor.userId, actor.userId, now]
+    );
+
+    await client.query(
+      `INSERT INTO audit_domain_events
+         (id, program_id, organization_id, entity_type, entity_id, event_type,
+          actor_id, summary, payload, idempotency_key, actor_kind)
+       VALUES ($1,$2,$3,'program',$2,'program.created_from_pack',$4,$5,$6,$7,'human')`,
       [
-        newCriterionId,
+        newId('ade'),
         programId,
         organizationId,
-        c.id,
-        mappedParent,
-        Number(c.ordinal ?? 0),
-        c.ref_code ?? null,
-        c.node_kind ?? 'criterion',
-        c.title,
-        c.requirement_text ?? null,
-        c.source_reference ?? null,
-        c.audit_question ?? null,
-        JSON.stringify(expectedEvidence),
-        c.audit_procedure ?? null,
-        c.sampling_guidance ?? null,
-        toBool(c.mandatory ?? true),
-        c.weight ?? null,
-        true,
-        'not_tested',
-        'open',
-        now,
-        now,
+        actor.userId,
+        `Utworzono program „${input.name.trim()}" z pakietu ${pack.pack_key} v${pack.version}`,
+        JSON.stringify({
+          packId: pack.id,
+          packKey: pack.pack_key,
+          packVersion: pack.version,
+          criteriaCount: packCriteria.length,
+          previousProgramId: extra.previousProgramId ?? null,
+        }),
+        idempotencyKey ? `program.create:${idempotencyKey}` : null,
       ]
     );
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw error;
+  } finally {
+    client.release();
   }
-
-  await insertMemberRow(organizationId, programId, {
-    userId: actor.userId,
-    memberRole: 'program_owner',
-    independenceDeclared: false,
-    assignedBy: actor.userId,
-  });
-
-  await recordAuditEvent({
-    organizationId,
-    programId,
-    entityType: 'program',
-    entityId: programId,
-    eventType: 'program.created_from_pack',
-    actorId: actor.userId,
-    summary: `Utworzono program „${input.name.trim()}" z pakietu ${pack.pack_key} v${pack.version}`,
-    payload: {
-      packId: pack.id,
-      packKey: pack.pack_key,
-      packVersion: pack.version,
-      criteriaCount: packCriteria.length,
-      previousProgramId: extra.previousProgramId ?? null,
-    },
-  });
 
   const detail = await getProgram(organizationId, programId);
   if (!detail) {

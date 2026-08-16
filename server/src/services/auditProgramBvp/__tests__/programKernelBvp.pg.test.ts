@@ -121,10 +121,9 @@ suite('AUD-BVP-001 — programService kernel BVP (Postgres realny)', () => {
 
   async function cleanupOrgRows(): Promise<void> {
     if (!auditsDb) return;
-    await auditsDb.auditRun(`DELETE FROM audit_domain_events WHERE organization_id IN ($1,$2)`, [
-      orgA,
-      orgB,
-    ]);
+    // audit_domain_events is DB-enforced append-only. This suite runs only on
+    // a disposable database, so its evidence rows are intentionally retained
+    // until the entire container is removed after the gate.
     await auditsDb.auditRun(`DELETE FROM audit_program_members WHERE organization_id IN ($1,$2)`, [
       orgA,
       orgB,
@@ -373,21 +372,34 @@ suite('AUD-BVP-001 — programService kernel BVP (Postgres realny)', () => {
   });
 
   // ---------------------------------------------------------------------
-  // 6 — REPLAY: powtórzenie identycznego żądania create NIE jest wykrywane
-  //     — brak klucza idempotencji na tworzeniu programu.
+  // 6 — REPLAY: ten sam klucz zwraca dokładnie ten sam kompletny agregat.
   // ---------------------------------------------------------------------
-  it('REPLAY: powtórzenie identycznego create tworzy DRUGI wiersz — brak klucza idempotencji', async () => {
-    const input = { packId, name: `BVP Program — replay ${RUN}`, objective: 'Replay' };
-    const first = await programService.createProgramFromPack(orgA, adminA, input);
-    const second = await programService.createProgramFromPack(orgA, adminA, input);
+  it('REPLAY/CONCURRENCY: osiem create z tym samym kluczem tworzy jeden kompletny program', async () => {
+    const input = {
+      packId,
+      name: `BVP Program — replay ${RUN}`,
+      objective: 'Replay',
+      idempotencyKey: `aud-bvp-create-${RUN}`,
+    };
+    const attempts = await Promise.all(
+      Array.from({ length: 8 }, () => programService.createProgramFromPack(orgA, adminA, input))
+    );
 
-    expect(first.program.id).not.toBe(second.program.id);
+    expect(new Set(attempts.map((result) => result.program.id)).size).toBe(1);
+    expect(attempts.every((result) => result.stats.criteriaTotal === 2)).toBe(true);
+    expect(attempts.every((result) => result.members.length === 1)).toBe(true);
 
     const rows = await auditsDb.auditAll<{ id: string }>(
       `SELECT id FROM audit_programs WHERE organization_id = $1 AND name = $2`,
       [orgA, input.name]
     );
-    expect(rows).toHaveLength(2);
+    expect(rows).toHaveLength(1);
+    const events = await auditsDb.auditAll<{ id: string }>(
+      `SELECT id FROM audit_domain_events
+        WHERE organization_id=$1 AND program_id=$2 AND event_type='program.created_from_pack'`,
+      [orgA, rows[0].id]
+    );
+    expect(events).toHaveLength(1);
   });
 
   // ---------------------------------------------------------------------

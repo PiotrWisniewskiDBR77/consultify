@@ -38,7 +38,7 @@ router.get(
       offset,
     });
     res.json({ success: true, data: result });
-  }),
+  })
 );
 
 router.get(
@@ -50,11 +50,15 @@ router.get(
     if (!detail) {
       res
         .status(404)
-        .json({ success: false, error: 'Program audytowy nie został znaleziony', code: 'AUDIT_NOT_FOUND' });
+        .json({
+          success: false,
+          error: 'Program audytowy nie został znaleziony',
+          code: 'AUDIT_NOT_FOUND',
+        });
       return;
     }
     res.json({ success: true, data: detail });
-  }),
+  })
 );
 
 router.post(
@@ -71,9 +75,10 @@ router.post(
       plannedStart: (body.plannedStart as string) ?? null,
       plannedEnd: (body.plannedEnd as string) ?? null,
       projectId: (body.projectId as string) ?? null,
+      idempotencyKey: asString(req.header('idempotency-key')),
     });
     res.status(201).json({ success: true, data: detail });
-  }),
+  })
 );
 
 router.patch(
@@ -85,10 +90,10 @@ router.patch(
       actor.organizationId,
       actor,
       req.params.id,
-      asRecord(req.body),
+      asRecord(req.body)
     );
     res.json({ success: true, data: program });
-  }),
+  })
 );
 
 router.delete(
@@ -98,7 +103,7 @@ router.delete(
     assertActor(actor);
     await programService.deleteProgram(actor.organizationId, actor, req.params.id);
     res.json({ success: true, data: { deleted: true } });
-  }),
+  })
 );
 
 router.get(
@@ -110,11 +115,15 @@ router.get(
     if (!status) {
       res
         .status(404)
-        .json({ success: false, error: 'Program audytowy nie został znaleziony', code: 'AUDIT_NOT_FOUND' });
+        .json({
+          success: false,
+          error: 'Program audytowy nie został znaleziony',
+          code: 'AUDIT_NOT_FOUND',
+        });
       return;
     }
     res.json({ success: true, data: status });
-  }),
+  })
 );
 
 router.post(
@@ -128,10 +137,10 @@ router.post(
       actor,
       req.params.id,
       body.targetState as AuditLifecycleState,
-      (body.reason as string) ?? null,
+      (body.reason as string) ?? null
     );
     res.json({ success: true, data: program });
-  }),
+  })
 );
 
 router.post(
@@ -141,7 +150,7 @@ router.post(
     assertActor(actor);
     const detail = await programService.startNextCycle(actor.organizationId, actor, req.params.id);
     res.status(201).json({ success: true, data: detail });
-  }),
+  })
 );
 
 router.get(
@@ -151,7 +160,7 @@ router.get(
     assertActor(actor);
     const members = await programService.listMembers(actor.organizationId, req.params.id);
     res.json({ success: true, data: members });
-  }),
+  })
 );
 
 router.post(
@@ -169,7 +178,7 @@ router.post(
       competenceNote: (body.competenceNote as string) ?? null,
     });
     res.status(201).json({ success: true, data: member });
-  }),
+  })
 );
 
 router.patch(
@@ -182,10 +191,10 @@ router.patch(
       actor,
       req.params.id,
       req.params.memberId,
-      asRecord(req.body),
+      asRecord(req.body)
     );
     res.json({ success: true, data: member });
-  }),
+  })
 );
 
 router.delete(
@@ -193,9 +202,14 @@ router.delete(
   route('DELETE /programs/:id/members/:memberId', async (req, res) => {
     const actor = auditActor(req);
     assertActor(actor);
-    await programService.removeMember(actor.organizationId, actor, req.params.id, req.params.memberId);
+    await programService.removeMember(
+      actor.organizationId,
+      actor,
+      req.params.id,
+      req.params.memberId
+    );
     res.json({ success: true, data: { removed: true } });
-  }),
+  })
 );
 
 router.get(
@@ -205,7 +219,7 @@ router.get(
     assertActor(actor);
     const coverage = await criterionService.getCoverage(actor.organizationId, req.params.id);
     res.json({ success: true, data: coverage });
-  }),
+  })
 );
 
 export default router;
