@@ -21,6 +21,8 @@ export const PARTNER_LEDGER_ENTRY_TYPES = [
   'payout.executed',
   'payout.failed',
   'payout.reconciled',
+  'dispute.opened',
+  'dispute.resolved',
   'lifecycle.transition',
 ] as const;
 
@@ -43,6 +45,9 @@ export interface PartnerLedgerEntryRow {
   idempotency_key: string | null;
   reason_code: string | null;
   note: string | null;
+  rule_version: string;
+  related_entry_id: string | null;
+  dispute_status: string | null;
 }
 
 /**
@@ -178,6 +183,9 @@ export interface AppendLedgerEntryInput {
   idempotencyKey?: string | null;
   reasonCode?: string | null;
   note?: string | null;
+  ruleVersion?: string | null;
+  relatedEntryId?: string | null;
+  disputeStatus?: 'open' | 'upheld' | 'rejected' | 'withdrawn' | null;
 }
 
 let schemaEnsured = false;
@@ -371,6 +379,31 @@ export class PartnerProgramLedgerService {
       );
     }
 
+    if (!Number.isFinite(input.amount)) {
+      throw Object.assign(new Error('Partner ledger amount must be finite'), {
+        code: 'P29_LEDGER_AMOUNT_INVALID',
+      });
+    }
+
+    const governedEntry = input.entryType !== 'lifecycle.transition';
+    const ruleVersion = String(input.ruleVersion || '').trim();
+    if (governedEntry && !ruleVersion) {
+      throw Object.assign(new Error(`ruleVersion is required for ${input.entryType}`), {
+        code: 'P29_LEDGER_RULE_VERSION_REQUIRED',
+      });
+    }
+    const relatedEntryRequired = [
+      'accrual.adjustment',
+      'accrual.reversal',
+      'dispute.opened',
+      'dispute.resolved',
+    ].includes(input.entryType);
+    if (relatedEntryRequired && !input.relatedEntryId) {
+      throw Object.assign(new Error(`relatedEntryId is required for ${input.entryType}`), {
+        code: 'P29_LEDGER_RELATED_ENTRY_REQUIRED',
+      });
+    }
+
     if (requiresDualControl(input.entryType, input.amount, false)) {
       const prevPayout = await DbPromise.get<{ id: string }>(
         db,
@@ -395,8 +428,8 @@ export class PartnerProgramLedgerService {
     if (input.idempotencyKey) {
       const existing = await DbPromise.get<{ id: string }>(
         db,
-        `SELECT id FROM partner_program_ledger WHERE idempotency_key = ?`,
-        [input.idempotencyKey]
+        `SELECT id FROM partner_program_ledger WHERE partner_org_id = ? AND idempotency_key = ?`,
+        [input.partnerOrgId, input.idempotencyKey]
       );
       if (existing?.id) {
         return { id: existing.id, duplicate: true };
@@ -409,8 +442,9 @@ export class PartnerProgramLedgerService {
       db,
       `INSERT INTO partner_program_ledger (
         id, partner_org_id, entry_type, amount, currency, occurred_at, recorded_at,
-        source_ref, actor, actor_id, correlation_id, idempotency_key, reason_code, note
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        source_ref, actor, actor_id, correlation_id, idempotency_key, reason_code, note,
+        rule_version, related_entry_id, dispute_status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         input.partnerOrgId,
@@ -426,6 +460,9 @@ export class PartnerProgramLedgerService {
         input.idempotencyKey ?? null,
         input.reasonCode ?? null,
         input.note ?? null,
+        governedEntry ? ruleVersion : input.ruleVersion || 'lifecycle-v1',
+        input.relatedEntryId ?? null,
+        input.disputeStatus ?? null,
       ],
       { fallback: false }
     );
@@ -448,7 +485,8 @@ export class PartnerProgramLedgerService {
     const rows = await DbPromise.all<PartnerLedgerEntryRow>(
       db,
       `SELECT id, partner_org_id, entry_type, amount, currency, occurred_at, recorded_at,
-              source_ref, actor, actor_id, correlation_id, idempotency_key, reason_code, note
+              source_ref, actor, actor_id, correlation_id, idempotency_key, reason_code, note,
+              rule_version, related_entry_id, dispute_status
        FROM partner_program_ledger
        WHERE partner_org_id = ?
        ORDER BY occurred_at DESC, recorded_at DESC

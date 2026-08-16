@@ -19,7 +19,7 @@ vi.mock('../../../../server/src/services/effectiveAccessService.ts', () => ({
 
 const mockDbAll = vi.fn();
 const mockDbGet = vi.fn();
-const mockDbRun = vi.fn().mockResolvedValue({ success: true });
+const mockDbRun = vi.fn().mockResolvedValue({ changes: 1 });
 
 vi.mock('../../../../server/src/utils/DbPromise.ts', () => ({
   all: (...args: unknown[]) => mockDbAll(...args),
@@ -63,7 +63,7 @@ describe('addOrganizationMemberViaIam', () => {
     mockHasEffectiveCapability.mockReset();
     mockDbAll.mockReset();
     mockDbGet.mockReset();
-    mockDbRun.mockReset().mockResolvedValue({ success: true });
+    mockDbRun.mockReset().mockResolvedValue({ changes: 1 });
   });
 
   it('allows admin actor with admin.people.manage', async () => {
@@ -146,7 +146,7 @@ describe('changeOrganizationMemberRoleViaIam', () => {
     mockHasEffectiveCapability.mockReset();
     mockDbAll.mockReset();
     mockDbGet.mockReset();
-    mockDbRun.mockReset().mockResolvedValue({ success: true });
+    mockDbRun.mockReset().mockResolvedValue({ changes: 1 });
   });
 
   it('allows OWNER to change member role', async () => {
@@ -243,6 +243,26 @@ describe('changeOrganizationMemberRoleViaIam', () => {
 
     expect(result.denied).toBe(false);
   });
+
+  it('fails closed when the role-change audit cannot be persisted', async () => {
+    mockResolveEffectiveAccess.mockResolvedValue({ applicationRole: 'OWNER', capabilities: [] });
+    mockHasEffectiveCapability.mockReturnValue(true);
+    mockMembers([
+      { user_id: ACTOR_ID, role: 'OWNER' },
+      { user_id: MEMBER_ID, role: 'MEMBER' },
+    ]);
+    mockDbRun.mockResolvedValue({ changes: 0 });
+
+    await expect(
+      changeOrganizationMemberRoleViaIam({
+        actorId: ACTOR_ID,
+        actorRole: 'OWNER',
+        organizationId: ORG_ID,
+        targetMemberId: MEMBER_ID,
+        newRole: 'ADMIN',
+      })
+    ).rejects.toThrow('IAM audit event was not persisted');
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -255,7 +275,7 @@ describe('removeOrganizationMemberViaIam', () => {
     mockHasEffectiveCapability.mockReset();
     mockDbAll.mockReset();
     mockDbGet.mockReset();
-    mockDbRun.mockReset().mockResolvedValue({ success: true });
+    mockDbRun.mockReset().mockResolvedValue({ changes: 1 });
   });
 
   it('allows removal of a regular member', async () => {

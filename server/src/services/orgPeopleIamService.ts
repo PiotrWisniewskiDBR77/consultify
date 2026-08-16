@@ -11,7 +11,7 @@
  */
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
-import logger from '../utils/Logger.js';
+import { v4 as uuidv4 } from 'uuid';
 import { hasEffectiveCapability, resolveEffectiveAccess } from './effectiveAccessService.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -60,7 +60,7 @@ async function getOrgMembers(
   const rows = await dbAll<{ user_id: string; role: string }>(
     `SELECT user_id, role FROM organization_members WHERE organization_id = ?`,
     [organizationId],
-    { fallback: true }
+    { fallback: false }
   );
   return rows || [];
 }
@@ -73,23 +73,24 @@ async function emitAuditEvent(params: {
   before?: unknown;
   after?: unknown;
 }): Promise<void> {
-  try {
-    await dbRun(
-      `INSERT OR IGNORE INTO role_change_audit_events
+  const auditId = uuidv4();
+  const result = await dbRun(
+    `INSERT INTO role_change_audit_events
         (id, organization_id, actor_id, action, resource_type, resource_id, before_json, after_json, created_at)
-       VALUES (lower(hex(randomblob(16))), ?, ?, ?, 'organization_member', ?, ?, ?, datetime('now'))`,
-      [
-        params.organizationId,
-        params.actorId,
-        params.action,
-        params.resourceId,
-        params.before ? JSON.stringify(params.before) : null,
-        params.after ? JSON.stringify(params.after) : null,
-      ],
-      { fallback: true }
-    );
-  } catch (err) {
-    logger.warn('[OrgPeopleIAM] audit write failed', err);
+       VALUES (?, ?, ?, ?, 'organization_member', ?, ?, ?, CURRENT_TIMESTAMP)`,
+    [
+      auditId,
+      params.organizationId,
+      params.actorId,
+      params.action,
+      params.resourceId,
+      params.before ? JSON.stringify(params.before) : null,
+      params.after ? JSON.stringify(params.after) : null,
+    ],
+    { fallback: false }
+  );
+  if (!result || Number(result.changes || 0) !== 1) {
+    throw new Error('IAM audit event was not persisted');
   }
 }
 
@@ -173,6 +174,9 @@ export async function changeOrganizationMemberRoleViaIam(params: {
 
   // Last-owner protection
   const members = await getOrgMembers(params.organizationId);
+  if (!members.some((member) => member.user_id === params.targetMemberId)) {
+    return deny('MEMBER_NOT_FOUND', 'Target member does not belong to this organisation');
+  }
   const owners = members.filter((m) => String(m.role).toUpperCase() === 'OWNER');
   const targetIsOwner = owners.some((m) => m.user_id === params.targetMemberId);
 
@@ -214,6 +218,9 @@ export async function removeOrganizationMemberViaIam(params: {
   }
 
   const members = await getOrgMembers(params.organizationId);
+  if (!members.some((member) => member.user_id === params.targetMemberId)) {
+    return deny('MEMBER_NOT_FOUND', 'Target member does not belong to this organisation');
+  }
 
   // Last-owner protection
   const owners = members.filter((m) => String(m.role).toUpperCase() === 'OWNER');

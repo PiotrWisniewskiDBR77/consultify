@@ -23,6 +23,7 @@ import { randomUUID } from 'node:crypto';
 import express, { type Express } from 'express';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import bcrypt from 'bcryptjs';
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
 const REAL_DB =
@@ -71,11 +72,10 @@ describe.skipIf(!REAL_DB)('MFA enrolment — real PostgreSQL', () => {
 
   const newUser = async (): Promise<string> => {
     const id = `user-mfa-${randomUUID()}`;
-    await pool.query(`INSERT INTO users (id, organization_id, email) VALUES ($1, $2, $3)`, [
-      id,
-      orgId,
-      `${id}@example.test`,
-    ]);
+    await pool.query(
+      `INSERT INTO users (id, organization_id, email, password) VALUES ($1, $2, $3, $4)`,
+      [id, orgId, `${id}@example.test`, bcrypt.hashSync('correct-password', 4)]
+    );
     createdUsers.push(id);
     return id;
   };
@@ -113,10 +113,9 @@ describe.skipIf(!REAL_DB)('MFA enrolment — real PostgreSQL', () => {
     expect(res.status).toBe(200);
     expect(res.body.secret).toBeTruthy();
 
-    const row = await pool.query(
-      `SELECT secret, enabled FROM user_mfa WHERE user_id = $1`,
-      [currentUserId]
-    );
+    const row = await pool.query(`SELECT secret, enabled FROM user_mfa WHERE user_id = $1`, [
+      currentUserId,
+    ]);
     expect(row.rowCount).toBe(1);
     expect(row.rows[0].secret).toBe(res.body.secret);
     expect(row.rows[0].enabled).toBe(false);
@@ -149,13 +148,15 @@ describe.skipIf(!REAL_DB)('MFA enrolment — real PostgreSQL', () => {
     currentUserId = await newUser();
 
     const setup = await request(app).post('/api/mfa/setup').send({});
-    await request(app).post('/api/mfa/verify-setup').send({ token: totp(setup.body.secret) });
+    await request(app)
+      .post('/api/mfa/verify-setup')
+      .send({ token: totp(setup.body.secret) });
 
     // The route requires a password confirmation and a current TOTP before it
     // will turn the factor off — both are part of its contract, not of this fix.
     const off = await request(app)
       .post('/api/mfa/disable')
-      .send({ password: 'confirm', token: totp(setup.body.secret) });
+      .send({ password: 'correct-password', token: totp(setup.body.secret) });
     expect(off.status).toBe(200);
 
     const row = await pool.query(`SELECT enabled, secret FROM user_mfa WHERE user_id = $1`, [
@@ -163,6 +164,26 @@ describe.skipIf(!REAL_DB)('MFA enrolment — real PostgreSQL', () => {
     ]);
     expect(row.rows[0].enabled).toBe(false);
     expect(row.rows[0].secret).toBeNull();
+  });
+
+  it('disable requires a real password re-authentication and preserves MFA on denial', async () => {
+    currentUserId = await newUser();
+    const setup = await request(app).post('/api/mfa/setup').send({});
+    await request(app)
+      .post('/api/mfa/verify-setup')
+      .send({ token: totp(setup.body.secret) });
+
+    const denied = await request(app)
+      .post('/api/mfa/disable')
+      .send({ password: 'wrong-password', token: totp(setup.body.secret) });
+    expect(denied.status).toBe(401);
+    expect(denied.body.code).toBe('REAUTH_FAILED');
+
+    const row = await pool.query(`SELECT enabled, secret FROM user_mfa WHERE user_id = $1`, [
+      currentUserId,
+    ]);
+    expect(row.rows[0].enabled).toBe(true);
+    expect(row.rows[0].secret).toBe(setup.body.secret);
   });
 
   it('a refused write makes ENABLEMENT fail instead of reporting "MFA enabled"', async () => {

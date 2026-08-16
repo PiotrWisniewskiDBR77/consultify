@@ -431,6 +431,7 @@ export async function approveCommissions(
       await PartnerProgramLedgerService.appendEntry({
         partnerOrgId: row.partner_org_id,
         entryType: 'accrual.posted',
+        ruleVersion: 'partner-commission-approval-v1',
         amount: Number(row.commission_amount || 0),
         currency: row.currency || 'EUR',
         actor: 'operator',
@@ -770,6 +771,7 @@ export async function processPayout(
       await PartnerProgramLedgerService.appendEntry({
         partnerOrgId: payout.partner_org_id,
         entryType: 'payout.approved',
+        ruleVersion: 'partner-payout-approval-v1',
         amount: Number(payout.net_amount || 0),
         currency: payout.currency || 'EUR',
         actor: 'operator',
@@ -835,6 +837,7 @@ export async function completePayout(
       await PartnerProgramLedgerService.appendEntry({
         partnerOrgId: payout.partner_org_id,
         entryType: 'payout.executed',
+        ruleVersion: 'partner-payout-execution-v1',
         amount: Number(payout.net_amount || 0),
         currency: payout.currency || 'EUR',
         actor: 'operator',
@@ -851,6 +854,7 @@ export async function completePayout(
       await PartnerProgramLedgerService.appendEntry({
         partnerOrgId: payout.partner_org_id,
         entryType: 'payout.reconciled',
+        ruleVersion: 'partner-payout-reconciliation-v1',
         amount: Number(payout.net_amount || 0),
         currency: payout.currency || 'EUR',
         actor: 'operator',
@@ -916,6 +920,7 @@ export async function failPayout(payoutId: string, reason: string): Promise<bool
       await PartnerProgramLedgerService.appendEntry({
         partnerOrgId: payout.partner_org_id,
         entryType: 'payout.failed',
+        ruleVersion: 'partner-payout-failure-v1',
         amount: Number(payout.net_amount || 0),
         currency: payout.currency || 'EUR',
         actor: 'operator',

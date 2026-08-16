@@ -901,6 +901,7 @@ router.post(
     await PartnerProgramLedgerService.appendEntry({
       partnerOrgId,
       entryType: 'payout.requested',
+      ruleVersion: 'partner-payout-request-v1',
       amount: Number(payout.netAmount || payout.grossAmount || 0),
       currency: payout.currency || 'EUR',
       actor: 'partner',

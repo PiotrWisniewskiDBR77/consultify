@@ -2759,6 +2759,9 @@ superAdminPartnerRouter.post(
         idempotencyKey,
         reasonCode,
         note,
+        ruleVersion,
+        relatedEntryId,
+        disputeStatus,
       } = req.body || {};
       if (!entryType || amount === undefined) {
         return res.status(400).json({ success: false, error: 'entryType and amount required' });
@@ -2776,6 +2779,9 @@ superAdminPartnerRouter.post(
         idempotencyKey: idempotencyKey || null,
         reasonCode: reasonCode || null,
         note: note || null,
+        ruleVersion: typeof ruleVersion === 'string' ? ruleVersion : null,
+        relatedEntryId: typeof relatedEntryId === 'string' ? relatedEntryId : null,
+        disputeStatus: typeof disputeStatus === 'string' ? disputeStatus : null,
       });
       res.json({ success: true, data: out });
     } catch (error: any) {

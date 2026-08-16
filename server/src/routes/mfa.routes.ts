@@ -7,6 +7,7 @@ import { Request, Response, Router } from 'express';
 import { verifyToken } from '../middleware/auth.middleware.js';
 const isAuthenticated = verifyToken; // alias for compatibility
 import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -331,9 +332,17 @@ router.post('/disable', verifyToken, isAuthenticated, async (req: Request, res: 
     const userId = (req as any).user?.id;
     const { token, password } = req.body;
 
-    // Verify current password first (simplified - would need proper password verification)
     if (!password) {
       return res.status(400).json({ error: 'Password confirmation required' });
+    }
+
+    const user = (await db.get('SELECT password FROM users WHERE id = ?', [userId])) as {
+      password: string;
+    } | null;
+    if (!user?.password || !bcrypt.compareSync(password, user.password)) {
+      return res
+        .status(401)
+        .json({ error: 'Current password is incorrect', code: 'REAUTH_FAILED' });
     }
 
     const mfaConfig = (await db.get('SELECT secret, enabled FROM user_mfa WHERE user_id = ?', [
