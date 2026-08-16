@@ -893,6 +893,22 @@ export async function acceptCandidate(
 
         if (winnerId) {
           if (winnerId !== initiativeId) {
+            // A-vs-A race: both callers may mint a DRAFT before one receipt
+            // wins. A pre-existing duplicate has duplicateOf set; otherwise
+            // this caller owns a fresh unlinked row and must compensate it.
+            const orphanDraftId = initiativeId;
+            if (orphanDraftId && !duplicateOfInitiativeId) {
+              try {
+                await db.queryRun(`DELETE FROM initiatives WHERE id = ? AND organization_id = ?`, [
+                  orphanDraftId,
+                  orgId || candidate.organizationId,
+                ]);
+              } catch (cleanupErr) {
+                logger.error(
+                  `[initiativeCandidateService] candidate ${candidate.id}: FAILED to delete orphan DRAFT ${orphanDraftId} after losing concurrent classic acceptance: ${(cleanupErr as Error)?.message || cleanupErr}`
+                );
+              }
+            }
             logger.info(
               `[initiativeCandidateService] candidate ${candidate.id}: concurrent accept already resolved to initiative ${winnerId} — adopting it and discarding local resolution ${initiativeId}`
             );

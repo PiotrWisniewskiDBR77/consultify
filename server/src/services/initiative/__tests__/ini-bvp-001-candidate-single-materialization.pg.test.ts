@@ -451,18 +451,9 @@ describe.skipIf(!REAL_PG)(
       expect(finalRow.initiative_id).toBe(r1?.initiativeId);
       expect(finalRow.registered_initiative_id).toBeNull();
 
-      // Documents PRE-EXISTING behaviour this task did NOT change: unlike the
-      // new A-vs-B `winnerRegisteredId` branch (which now compensates by
-      // deleting its own orphan DRAFT — see the CONCURRENT A-vs-B test above),
-      // the pre-existing A-vs-A `winnerId` branch has no such compensation. If
-      // both calls' `!initiativeId` checks race before either writes, BOTH
-      // mint a DRAFT via `deps.createInitiative`, but only ONE is ever linked
-      // to the candidate (asserted above) — the loser's row can remain an
-      // unlinked orphan in `initiatives`. This assertion records what actually
-      // happens rather than asserting a stronger guarantee this task never
-      // implemented for the A-vs-A path.
-      const initiativesCount = await countInitiatives(orgId);
-      expect(initiativesCount === 1 || initiativesCount === 2).toBe(true);
+      // If both calls minted a DRAFT before the claim, the losing caller now
+      // compensates its own unlinked row before adopting the durable winner.
+      expect(await countInitiatives(orgId)).toBe(1);
     });
 
     it('NEGATIVE CONTROL (b): cross-tenant accept is denied — an org-B caller cannot accept an org-A candidate', async () => {

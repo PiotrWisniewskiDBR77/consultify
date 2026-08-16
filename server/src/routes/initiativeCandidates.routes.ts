@@ -20,7 +20,11 @@
 
 import { Response, Router } from 'express';
 
-import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import {
+  type AuthRequest,
+  validateOrgMembership,
+  verifyToken,
+} from '../middleware/auth.middleware.js';
 import {
   acceptCandidate,
   type CandidateStatus,
@@ -32,6 +36,10 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
 
 const router = Router();
+
+// A JWT is a snapshot. Revalidate current ACTIVE membership before every
+// candidate read/write so a revoked user cannot materialize an Initiative.
+router.use(verifyToken, validateOrgMembership);
 
 const VALID_STATUSES: ReadonlyArray<CandidateStatus> = ['pending', 'accepted', 'dismissed'];
 
