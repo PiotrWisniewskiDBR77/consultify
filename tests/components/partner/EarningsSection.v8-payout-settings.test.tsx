@@ -109,7 +109,7 @@ describe('EarningsSection V8 payout settings seam', () => {
       settings: {
         minimumThreshold: 500,
         payoutMethod: 'PAYPAL',
-        autoPayoutEnabled: true,
+        autoPayoutEnabled: false,
         payoutAccount: {
           accountHolderName: 'Partner Co',
           iban: 'DE89 3704 0044 0532 0130 00',
@@ -143,7 +143,7 @@ describe('EarningsSection V8 payout settings seam', () => {
       expect(V8PartnerApi.updatePayoutSettings).toHaveBeenCalledWith({
         minimumThreshold: 500,
         payoutMethod: 'PAYPAL',
-        autoPayoutEnabled: true,
+        autoPayoutEnabled: false,
         payoutAccount: {
           accountHolderName: 'Updated Partner Co',
           iban: 'DE89 3704 0044 0532 0130 00',
@@ -154,6 +154,8 @@ describe('EarningsSection V8 payout settings seam', () => {
     }, { timeout: 10000 });
 
     expect(Api.put).not.toHaveBeenCalledWith('/api/partners/payout-settings', expect.anything());
+    expect(screen.queryByRole('button', { name: /auto-request payout/i })).not.toBeInTheDocument();
+    expect(screen.getByText('Manual payout requests only')).toBeInTheDocument();
     expect(toastSuccess).toHaveBeenCalledWith('Payout settings updated');
   });
 

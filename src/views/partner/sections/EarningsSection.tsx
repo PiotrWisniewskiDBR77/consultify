@@ -180,7 +180,9 @@ const normalizePayoutSettings = (payload: any): PayoutSettings => {
     payoutMethod: String(
       data?.payoutMethod ?? 'BANK_TRANSFER'
     ).toUpperCase() as PayoutSettings['payoutMethod'],
-    autoPayoutEnabled: Boolean(data?.autoPayoutEnabled),
+    // Automatic payout is deliberately outside the Partner workspace policy.
+    // Ignore stale/legacy truthy values so this UI cannot persist or advertise it.
+    autoPayoutEnabled: false,
     payoutAccount: {
       accountHolderName: String(payoutAccount?.accountHolderName ?? ''),
       iban: String(payoutAccount?.iban ?? ''),
@@ -324,14 +326,15 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
   }, []);
 
   const savePayoutSettingsWithFallback = useCallback(async (settings: PayoutSettings) => {
+    const governedSettings = { ...settings, autoPayoutEnabled: false };
     try {
-      const response = await V8PartnerApi.updatePayoutSettings(settings);
+      const response = await V8PartnerApi.updatePayoutSettings(governedSettings);
       return normalizePayoutSettings(response?.settings);
     } catch (error) {
       if (!shouldFallbackToLegacyPartner(error)) {
         throw error;
       }
-      const response = await Api.put('/api/partners/payout-settings', settings);
+      const response = await Api.put('/api/partners/payout-settings', governedSettings);
       return normalizePayoutSettings(unwrapApiData(response) ?? response);
     }
   }, []);
@@ -1283,33 +1286,17 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               <option value="1000">€1,000</option>
             </select>
           </div>
-          <div className="flex items-center justify-between">
+          <div
+            className="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-700/60 dark:bg-amber-500/10"
+            role="note"
+          >
             <div>
-              <p className="font-medium text-c-text">Auto-request Payout</p>
-              <p className="text-sm text-c-text-secondary">
-                Automatically request payout when threshold is reached
+              <p className="font-medium text-c-text">Manual payout requests only</p>
+              <p className="mt-1 text-sm text-c-text-secondary">
+                Automatic payout and self-approval are unavailable. Requests require independent
+                review outside the Partner workspace.
               </p>
             </div>
-            <button
-              onClick={() =>
-                setPayoutSettings((prev) => ({
-                  ...prev,
-                  autoPayoutEnabled: !prev.autoPayoutEnabled,
-                }))
-              }
-              aria-label="Toggle auto-request payout"
-              className={cn(
-                'relative inline-flex h-6 w-11 items-center rounded-full',
-                payoutSettings.autoPayoutEnabled ? 'bg-navy-900' : 'bg-slate-300 dark:bg-navy-600'
-              )}
-            >
-              <span
-                className={cn(
-                  'inline-block h-4 w-4 transform rounded-full bg-c-surface transition',
-                  payoutSettings.autoPayoutEnabled ? 'translate-x-6' : 'translate-x-1'
-                )}
-              />
-            </button>
           </div>
         </div>
       </div>

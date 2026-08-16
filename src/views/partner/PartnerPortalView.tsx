@@ -42,6 +42,11 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 import { type Breadcrumb, PartnerLayout } from '../../components/Partner/PartnerLayout';
 import {
+  loadPartnerCanonicalRuntime,
+  PartnerCanonicalRuntimePanel,
+  type PartnerCanonicalRuntimeSnapshot,
+} from '../../components/Partner/PartnerCanonicalRuntimePanel';
+import {
   loadPartnerRuntimeSummary,
   type PartnerRuntimeSummary,
   PartnerRuntimeSummaryStrip,
@@ -141,6 +146,8 @@ const DashboardSection: React.FC = () => {
   const { t } = useTranslation();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [v8RuntimeSummary, setV8RuntimeSummary] = useState<PartnerRuntimeSummary | null>(null);
+  const [canonicalRuntime, setCanonicalRuntime] =
+    useState<PartnerCanonicalRuntimeSnapshot | null>(null);
   const [onboardingStatus, setOnboardingStatus] = useState<V8PartnerOnboardingStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -209,6 +216,11 @@ const DashboardSection: React.FC = () => {
     }
   }, []);
 
+  const fetchCanonicalRuntime = useCallback(async () => {
+    const snapshot = await loadPartnerCanonicalRuntime();
+    setCanonicalRuntime(snapshot);
+  }, []);
+
   const fetchOnboardingStatus = useCallback(async () => {
     try {
       const response = await V8PartnerApi.getOnboardingStatus();
@@ -231,8 +243,9 @@ const DashboardSection: React.FC = () => {
   useEffect(() => {
     fetchDashboard();
     void fetchV8RuntimeSummary();
+    void fetchCanonicalRuntime();
     void fetchOnboardingStatus();
-  }, [fetchDashboard, fetchOnboardingStatus, fetchV8RuntimeSummary]);
+  }, [fetchCanonicalRuntime, fetchDashboard, fetchOnboardingStatus, fetchV8RuntimeSummary]);
 
   // DP-5 (M26 L-10): "Add New Client" dropped — client creation is a
   // FEATURE_NOT_AVAILABLE stub (503), so we don't surface a dead create action.
@@ -324,6 +337,7 @@ const DashboardSection: React.FC = () => {
   return (
     <div className="space-y-6">
       {v8RuntimeSummary && <PartnerRuntimeSummaryStrip summary={v8RuntimeSummary} />}
+      {canonicalRuntime && <PartnerCanonicalRuntimePanel snapshot={canonicalRuntime} />}
 
       {/* Welcome Header */}
       <div className="flex items-center justify-between">
