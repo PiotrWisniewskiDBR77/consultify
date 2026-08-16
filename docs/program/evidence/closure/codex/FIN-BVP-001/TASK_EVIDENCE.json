@@ -1,0 +1,22 @@
+{
+  "taskId": "FIN-BVP-001",
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "productSha": "191aa8ca09f86146b967713b011066d9d10a7eb6",
+  "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
+  "changedPaths": [],
+  "changedPathRationale": {"none": "tree reconciliation proved the Finance package already present; this record verifies the canonical five-workspace runtime contracts"},
+  "ownerTables": ["finance_artifacts", "finance_business_versions", "finance_statement_lines", "finance_analysis_kpi_values", "finance_baseline_outputs", "finance_prediction_runs", "finance_valuation_variants"],
+  "commands": [
+    {"command": "RUN_DB_TESTS=1 MOCK_DB=false vitest statements, baseline, prediction, analysis, valuation, cross-tenant and cold-reopen PostgreSQL suites", "exitCode": 0, "result": "43/43 tests across 7 files"}
+  ],
+  "denominators": {"financeRealDb": "43/43", "testFiles": "7/7", "canonicalWorkspaces": "5/5", "freshMigrationLedger": "710/710 success from the current additive schema"},
+  "fixtures": {"database": "disposable pgvector PostgreSQL 16 on localhost:56504", "workspaces": ["statement", "analysis", "baseline", "prediction", "valuation"]},
+  "negativeControls": {"tenant": "cross-tenant HTTP matrix remains hidden", "corruption": "cold-reopen detects a post-approval value mutation", "identity": "approved statement-to-valuation lineage reopens without recompute", "persistence": "approved baseline, valuation and complete chain retain hashes, outputs and lineage"},
+  "browserArtifacts": [],
+  "rollback": {"code": "verification-only evidence; no Finance code changed", "data": "isolated test fixtures only"},
+  "verdict": "PARTIAL",
+  "openBlockers": [
+    "G4 signed-in browser proof for all five flag OFF/ON workspaces, deep links, conflicts and identity readback remains.",
+    "The single governed runtime owner across compatibility and V8 routes, Results projection ownership, and production rollout decision remain unresolved architecture gates."
+  ]
+}
