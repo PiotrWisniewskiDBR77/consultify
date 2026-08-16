@@ -33,6 +33,7 @@ import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
 import activityService from '../services/ActivityService.js';
 import industryBenchmarkService from '../services/ai/industryBenchmarkService.js';
+import { upsertActiveAssessmentInitiativeBatch } from '../services/assessment/AssessmentWorkbenchService.js';
 import AssessmentInitiativeGenerationRunService from '../services/assessmentInitiativeGenerationRunService.js';
 import AssessmentPermissionService from '../services/assessmentPermissionService.js';
 import BenchmarkingService from '../services/benchmarkingService.js';
@@ -1350,7 +1351,13 @@ router.post(
       const now = new Date().toISOString();
       const initiativeId = uuidv4();
       const linkId = uuidv4();
-      const batchId = `manual-${initiativeId}`;
+      // ASM-BVP-001 (part 2): this is only the PROPOSED id for a brand-new
+      // batch. The actual id used below comes from
+      // upsertActiveAssessmentInitiativeBatch's CAS insert, which reuses an
+      // EXISTING active batch for this assessment (from this route or any
+      // other writer) instead of creating a second one when the DB-level
+      // uniqueness guard conflicts.
+      const proposedBatchId = `manual-${initiativeId}`;
 
       const { title: rawTitle, description, category, priority, risk } = req.body || {};
       // F15 (data-integrity, continuation of Z139): decode HTML entities the
@@ -1431,24 +1438,39 @@ router.post(
         );
       }
 
-      // Create a synthetic batch so history is consistent.
+      // Create (or reuse) a synthetic batch so history is consistent.
       // organization_id is NOT NULL with no DB default (Postgres) — omitting it
       // 500s with 23502. assessment.organization_id is already loaded above.
+      //
+      // ASM-BVP-001 (part 2): CAS insert via the DB-level uniqueness guard
+      // (server/migrations/20260910_claude_a_assessment_initiative_batch_uniqueness.sql).
+      // A second manual-add for this assessment — or any concurrent writer
+      // for the same assessment_id/organization_id — no longer creates a
+      // second batch row: it reuses the existing active one.
+      const { batchId, created: batchCreated } = await upsertActiveAssessmentInitiativeBatch({
+        batchId: proposedBatchId,
+        assessmentId: String(assessmentId),
+        organizationId: String(assessment.organization_id),
+        fields: {
+          methodology_id: 'manual',
+          initiatives_count: 0,
+          include_chat_context: 0,
+          generated_by: String(userId),
+          created_at: now,
+        },
+      });
+      // Additive, not an overwrite: when reusing an existing batch
+      // (batchCreated === false) its prior initiatives_count must be kept
+      // and incremented, not clobbered back down to 1.
       await db.run(
-        `INSERT INTO assessment_initiative_batches (
-          id, assessment_id, organization_id, methodology_id, initiatives_count, include_chat_context, generated_by, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          batchId,
-          String(assessmentId),
-          String(assessment.organization_id),
-          'manual',
-          1,
-          0,
-          String(userId),
-          now,
-        ]
+        `UPDATE assessment_initiative_batches SET initiatives_count = COALESCE(initiatives_count, 0) + 1 WHERE id = ?`,
+        [batchId]
       );
+      if (!batchCreated) {
+        logger.info(
+          `[AssessmentWorkflowV2] reused existing active batch ${batchId} for assessment ${assessmentId} (manual-initiative create lost the CAS race or a batch already existed)`
+        );
+      }
 
       // Link row — używa id zwróconego z lejka (krytyczne: link nie może być sierotą).
       await db.run(

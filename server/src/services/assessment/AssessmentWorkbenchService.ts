@@ -491,6 +491,114 @@ export interface AssessmentInitiativeSeedResult {
 const AUTO_INITIATIVE_BATCH_NAME = 'p28_workbench_auto';
 
 /**
+ * ASM-BVP-001 (part 2) — DB-level "at most one ACTIVE batch per assessment"
+ * guarantee. Backed by the partial unique index created in
+ * server/migrations/20260910_claude_a_assessment_initiative_batch_uniqueness.sql
+ * (`uq_assessment_initiative_batches_one_active_per_assessment` on
+ * `(assessment_id, COALESCE(organization_id, ''))` WHERE `status IS
+ * DISTINCT FROM 'superseded'`).
+ *
+ * Column-aware INSERT ... ON CONFLICT ... DO NOTHING, mirroring the
+ * established pattern in
+ * server/src/services/tools/toolOutputSnapshotService.ts's
+ * `persistSnapshot` (see server/migrations/947_tool_outputs_idempotency_guard.sql).
+ * A second sequential OR concurrent attempt for the same
+ * (assessment_id, organization_id) never inserts a duplicate row and never
+ * throws on the unique-index conflict — it returns the EXISTING active
+ * batch instead (`created: false`), so every call site (this file's H1.3
+ * auto-batch AND assessment-workflow-v2.routes.ts's manual-initiative
+ * batch) becomes idempotent/CAS-aware without duplicating the transaction
+ * logic.
+ *
+ * Exported so both owning call sites share one implementation instead of
+ * two independently-drifting copies of the same race-prone INSERT.
+ */
+export async function upsertActiveAssessmentInitiativeBatch(params: {
+  batchId: string;
+  assessmentId: string;
+  organizationId: string;
+  fields: Record<string, unknown>;
+}): Promise<{ batchId: string; created: boolean }> {
+  const { batchId, assessmentId, organizationId, fields } = params;
+  const batchCols = await getTableColumns('assessment_initiative_batches');
+
+  const cols: string[] = ['id', 'assessment_id'];
+  const values: unknown[] = [batchId, assessmentId];
+  const add = (col: string, val: unknown) => {
+    if (!batchCols.has(col)) return;
+    cols.push(col);
+    values.push(val);
+  };
+  add('organization_id', organizationId);
+  for (const [col, val] of Object.entries(fields)) add(col, val);
+
+  // Some existing test harnesses mock queryHelpers.js wholesale, providing
+  // only queryOne/queryRun/queryAll (e.g.
+  // assessmentWorkbench.p28b-e2e.test.ts and its siblings, which predate
+  // this CAS insert and exercise createInitiativesFromAssessmentRecommendations
+  // via a full state-machine walk to 'completed'). Under those harnesses
+  // `withRawPgTransaction` is not a function — attempting the real-Postgres
+  // CAS path there does not throw fast, it tries a real connection using
+  // whatever DATABASE_URL happens to be configured and hangs until timeout
+  // (reproduced: this exact regression, fixed here before landing).
+  // Mirrors the identical, pre-existing guard in
+  // server/src/services/tools/toolOutputSnapshotService.ts's
+  // ensureToolOutputSnapshot. Falls back to the pre-CAS best-effort INSERT
+  // (queryRun, `?` placeholders — properly mocked by those tests) instead.
+  let hasRawPgTransaction: boolean;
+  try {
+    hasRawPgTransaction = typeof queryHelpers.withRawPgTransaction === 'function';
+  } catch {
+    hasRawPgTransaction = false;
+  }
+  if (!hasRawPgTransaction) {
+    await queryHelpers.queryRun(
+      `INSERT INTO assessment_initiative_batches (${cols.join(', ')}) VALUES (${cols
+        .map(() => '?')
+        .join(', ')})`,
+      values
+    );
+    return { batchId, created: true };
+  }
+
+  const placeholders = cols.map((_, i) => `$${i + 1}`);
+  return queryHelpers.withRawPgTransaction(async (client) => {
+    const insertResult = await client.query(
+      `INSERT INTO assessment_initiative_batches (${cols.join(', ')})
+       VALUES (${placeholders.join(', ')})
+       ON CONFLICT (assessment_id, (COALESCE(organization_id, '')))
+       WHERE status IS DISTINCT FROM 'superseded'
+       DO NOTHING
+       RETURNING id`,
+      values
+    );
+    if (insertResult.rows.length > 0) {
+      return { batchId: String((insertResult.rows[0] as { id: string }).id), created: true };
+    }
+
+    // Lost the race (or a batch from a different call site already exists
+    // for this assessment) — never insert a second row; reuse the existing
+    // active one instead.
+    const existing = await client.query(
+      `SELECT id FROM assessment_initiative_batches
+        WHERE assessment_id = $1 AND COALESCE(organization_id, '') = COALESCE($2, '')
+          AND status IS DISTINCT FROM 'superseded'
+        ORDER BY created_at DESC NULLS LAST, id DESC
+        LIMIT 1`,
+      [assessmentId, organizationId]
+    );
+    if (existing.rows.length === 0) {
+      // Should be unreachable (conflict implies a row exists), but never
+      // silently return nothing — surface it loudly instead of a phantom.
+      throw new Error(
+        `upsertActiveAssessmentInitiativeBatch: insert conflicted but no active batch found for assessment ${assessmentId}`
+      );
+    }
+    return { batchId: String((existing.rows[0] as { id: string }).id), created: false };
+  });
+}
+
+/**
  * H1.3 — Assessment → Initiatives (automatic on approval/completion).
  *
  * Reuses the H1.2 handoffFinding idiom (interview-insights.routes.ts): a completed
@@ -573,31 +681,29 @@ async function createInitiativesFromAssessmentRecommendations(params: {
       .join('\n\n')
       .slice(0, 5000) || null;
 
-  // Batch first so links never orphan.
-  const batchId = uuidv4();
-  {
-    const cols: string[] = ['id', 'assessment_id'];
-    const vals: string[] = ['?', '?'];
-    const args: unknown[] = [batchId, assessmentId];
-    const add = (col: string, val: unknown) => {
-      if (!batchCols.has(col)) return;
-      cols.push(col);
-      vals.push('?');
-      args.push(val);
-    };
-    add('organization_id', organizationId);
-    add('batch_name', AUTO_INITIATIVE_BATCH_NAME);
-    add('methodology_id', AUTO_INITIATIVE_BATCH_NAME);
-    add('status', 'draft');
-    add('initiatives_count', 0);
-    add('include_chat_context', 0);
-    add('generated_by', userId);
-    add('created_by', userId);
-    add('created_at', now);
-    add('updated_at', now);
-    await queryHelpers.queryRun(
-      `INSERT INTO assessment_initiative_batches (${cols.join(', ')}) VALUES (${vals.join(', ')})`,
-      args
+  // Batch first so links never orphan. ASM-BVP-001 (part 2): CAS insert —
+  // never a duplicate active batch, never an unhandled conflict; a race or
+  // a batch already created for this assessment by a different call site
+  // (e.g. the manual-initiative route) is detected and reused instead.
+  const { batchId, created: batchCreated } = await upsertActiveAssessmentInitiativeBatch({
+    batchId: uuidv4(),
+    assessmentId,
+    organizationId,
+    fields: {
+      batch_name: AUTO_INITIATIVE_BATCH_NAME,
+      methodology_id: AUTO_INITIATIVE_BATCH_NAME,
+      status: 'draft',
+      initiatives_count: 0,
+      include_chat_context: 0,
+      generated_by: userId,
+      created_by: userId,
+      created_at: now,
+      updated_at: now,
+    },
+  });
+  if (!batchCreated) {
+    logger.info(
+      `[AssessmentWorkbench] reused existing active batch ${batchId} for assessment ${assessmentId} (H1.3 auto-generation lost the CAS race or a batch already existed)`
     );
   }
 
@@ -676,9 +782,13 @@ async function createInitiativesFromAssessmentRecommendations(params: {
     created.push({ initiativeId, title });
   }
 
-  if (batchCols.has('initiatives_count')) {
+  // ASM-BVP-001 (part 2): additive, not an overwrite — when `batchCreated`
+  // is false this row is a REUSED existing batch that may already carry a
+  // non-zero count from an earlier writer/attempt; a bare `= created.length`
+  // would silently erase that prior count instead of accumulating it.
+  if (batchCols.has('initiatives_count') && created.length > 0) {
     await queryHelpers.queryRun(
-      `UPDATE assessment_initiative_batches SET initiatives_count = ? WHERE id = ?`,
+      `UPDATE assessment_initiative_batches SET initiatives_count = COALESCE(initiatives_count, 0) + ? WHERE id = ?`,
       [created.length, batchId]
     );
   }
