@@ -60,10 +60,28 @@ async function seedSession(opts: {
     await c.query(
       `INSERT INTO tool_sessions
          (id, organization_id, project_id, tool_type, name, status, completion_percent,
-          confidence_avg, created_by, updated_by, created_at, updated_at)
-       VALUES ($1,$2,NULL,$3,$4,$5,100,4.5,$6,$6,NOW(),NOW())
+          confidence_avg, answers_json, created_by, updated_by, created_at, updated_at)
+       VALUES ($1,$2,NULL,$3,$4,$5,100,4.5,$6,$7,$7,NOW(),NOW())
        ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status`,
-      [opts.id, opts.org, opts.toolType ?? 'dynamic-swot', `char ${opts.id}`, opts.status, USER]
+      [
+        opts.id,
+        opts.org,
+        opts.toolType ?? 'dynamic-swot',
+        `char ${opts.id}`,
+        opts.status,
+        JSON.stringify({
+          items: [
+            {
+              id: 's1',
+              text: 'Verified customer retention strength',
+              quadrant: 'strengths',
+              proposalStatus: 'accepted',
+              evidenceStatus: 'confirmed',
+            },
+          ],
+        }),
+        USER,
+      ]
     );
   } finally {
     await c.end();
@@ -117,10 +135,9 @@ beforeAll(async () => {
 afterAll(async () => {
   const c = await db();
   try {
-    await c.query(`DELETE FROM tool_initiative_links WHERE organization_id IN ($1,$2)`, [
-      ORG_A,
-      ORG_B,
-    ]).catch(() => undefined);
+    await c
+      .query(`DELETE FROM tool_initiative_links WHERE organization_id IN ($1,$2)`, [ORG_A, ORG_B])
+      .catch(() => undefined);
     await c.query(`DELETE FROM tool_sessions WHERE organization_id IN ($1,$2)`, [ORG_A, ORG_B]);
   } finally {
     await c.end();

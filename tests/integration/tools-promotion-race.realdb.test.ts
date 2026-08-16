@@ -119,8 +119,8 @@ async function seedSession(opts: {
     await c.query(
       `INSERT INTO tool_sessions
          (id, organization_id, project_id, tool_type, name, status, completion_percent,
-          confidence_avg, created_by, updated_by, version, created_at, updated_at)
-       VALUES ($1,$2,NULL,$3,$4,$5,100,4.5,$6,$6,$7,NOW(),NOW())
+          confidence_avg, answers_json, created_by, updated_by, version, created_at, updated_at)
+       VALUES ($1,$2,NULL,$3,$4,$5,100,4.5,$6,$7,$7,$8,NOW(),NOW())
        ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status`,
       [
         opts.id,
@@ -128,6 +128,17 @@ async function seedSession(opts: {
         opts.toolType ?? 'dynamic-swot',
         `race ${opts.id}`,
         opts.status ?? 'APPROVED',
+        JSON.stringify({
+          items: [
+            {
+              id: 's1',
+              text: 'Verified customer retention strength',
+              quadrant: 'strengths',
+              proposalStatus: 'accepted',
+              evidenceStatus: 'confirmed',
+            },
+          ],
+        }),
         USER,
         opts.version ?? 1,
       ]
@@ -154,10 +165,10 @@ beforeAll(async () => {
   // correctness, but keeps the test run's console signal-to-noise sane.
   const seedDb = await db();
   try {
-    await seedDb.query(`INSERT INTO organizations (id, name) VALUES ($1, $1), ($2, $2) ON CONFLICT (id) DO NOTHING`, [
-      ORG_A,
-      ORG_B,
-    ]);
+    await seedDb.query(
+      `INSERT INTO organizations (id, name) VALUES ($1, $1), ($2, $2) ON CONFLICT (id) DO NOTHING`,
+      [ORG_A, ORG_B]
+    );
   } catch {
     // If `organizations.name` isn't a real/required column on some schema
     // variant, the audit-log noise is harmless — don't fail setup over it.
@@ -191,11 +202,14 @@ beforeAll(async () => {
 afterAll(async () => {
   const c = await db();
   try {
-    await c.query(`DELETE FROM tool_initiative_links WHERE organization_id IN ($1,$2)`, [ORG_A, ORG_B]);
-    await c.query(`DELETE FROM my_ideas WHERE organization_id IN ($1,$2) AND source_type = 'tool'`, [
+    await c.query(`DELETE FROM tool_initiative_links WHERE organization_id IN ($1,$2)`, [
       ORG_A,
       ORG_B,
     ]);
+    await c.query(
+      `DELETE FROM my_ideas WHERE organization_id IN ($1,$2) AND source_type = 'tool'`,
+      [ORG_A, ORG_B]
+    );
     // NOTE: no `v8_artifact_runs` cleanup — see the `presentation` finding
     // below. The controller's INSERT into that table (ToolController.ts,
     // outputType === 'presentation' branch) targets columns
@@ -209,8 +223,12 @@ afterAll(async () => {
     // this suite's `presentation` promotion. Out of scope for C15/C16;
     // flagged separately.
     await c.query(`DELETE FROM tool_sessions WHERE organization_id IN ($1,$2)`, [ORG_A, ORG_B]);
-    await c.query(`DELETE FROM audit_log WHERE organization_id IN ($1,$2)`, [ORG_A, ORG_B]).catch(() => undefined);
-    await c.query(`DELETE FROM organizations WHERE id IN ($1,$2)`, [ORG_A, ORG_B]).catch(() => undefined);
+    await c
+      .query(`DELETE FROM audit_log WHERE organization_id IN ($1,$2)`, [ORG_A, ORG_B])
+      .catch(() => undefined);
+    await c
+      .query(`DELETE FROM organizations WHERE id IN ($1,$2)`, [ORG_A, ORG_B])
+      .catch(() => undefined);
   } finally {
     await c.end();
   }
