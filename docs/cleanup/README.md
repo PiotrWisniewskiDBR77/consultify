@@ -19,6 +19,11 @@ All dated five-hour plans, acceleration briefs, status snapshots, and earlier
 cleanup checkpoints are evidence only unless the current-state document links
 to them explicitly. They must not be used as active execution instructions.
 
+`retired/` contains tracked historical evidence removed from the active read
+order. In particular, the old `CLEANUP_REPORT.md` name was retired because it
+described only a January 2026 server TypeScript exercise and was repeatedly
+mistaken for the current whole-repository cleanup report.
+
 ## Scope
 
 - classify canonical vs historical vs garbage material

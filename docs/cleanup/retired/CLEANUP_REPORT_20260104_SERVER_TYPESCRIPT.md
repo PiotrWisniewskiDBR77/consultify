@@ -1,3 +1,9 @@
+# Historical — not the repository cleanup report
+
+This document covers only the January 2026 server TypeScript cleanup. It is
+retained as evidence and must not be used as the current repository-cleanup
+status. Current authority: `../CLEANUP_CURRENT_STATE_20260816.md`.
+
 # 🧹 Legacy Code Cleanup Report
 
 **Date:** January 4, 2026  
