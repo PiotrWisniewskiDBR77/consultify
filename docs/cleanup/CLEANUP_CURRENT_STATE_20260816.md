@@ -26,7 +26,8 @@ cleanup snapshots and five-hour plans are historical evidence.
 - Path: `/Users/piotrwisniewski/Developer/consultify-recovery-canonical-20260816`
 - Branch: `codex/recovery-canonical-20260816`
 - Baseline: `origin/demo` at `e45904dc7940f259b9cf017c283264d5c166c9ab`
-- Current HEAD: `031772082b7d4925e11986016079d02adeb17382`
+- Current verified implementation checkpoint: `8c0e29ae56`
+- Recovery control-plane commit: `844001c525`
 - Integrated package: Assessment, fast-forward ancestry only
 - Candidate divergence from baseline: 156 commits ahead, zero behind
 - Worktree state before this document update: clean
@@ -44,6 +45,20 @@ Assessment also retains product gaps recorded in its own handoff:
 - `assessment_definitions`, `method_packs`, and client feature flags are not one
   coherent source of truth;
 - historical browser evidence does not replace a fresh run on this candidate.
+
+Fresh checks on this candidate:
+
+- `npm ci --ignore-scripts`: PASS; 2075 packages installed, lockfile unchanged.
+- Dependency audit emitted 52 vulnerabilities: 4 low, 12 moderate, 35 high,
+  1 critical. No automatic dependency mutation was performed.
+- `npx vitest run src/method-core src/components/assessment ...`: 48 test
+  files PASS, 10 SKIPPED; 394 tests PASS, 158 SKIPPED. The skipped denominator
+  includes real-PostgreSQL/HTTP tests and therefore remains evidence missing.
+- `npm run type-check`: initially failed with six candidate errors; fixed in
+  `8c0e29ae56`, then PASS.
+- Focused regression after the fix: 3 files PASS, 19 tests PASS.
+- Commit hooks reported no new list, TRIADA, density, focus, or artifact-shell
+  regression in the changed files. Existing repository-wide focus debt remains.
 
 ## Repository scale
 
@@ -73,4 +88,3 @@ features. No bulk branch or worktree deletion is authorized by these counts.
    necessary and resolve the diff-check policy for immutable captured logs.
 3. Run scoped static and test gates after dependencies are restored.
 4. Reconcile Tools selectively, then Audits; do not merge their branch heads.
-
