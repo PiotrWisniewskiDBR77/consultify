@@ -1,0 +1,16 @@
+{
+  "taskId": "TLS-CATALOG-001",
+  "baselineSha": "46a55509ef9880c34ca990b3b8f0d332ade9cb61",
+  "productSha": "37aa125625a3db302d3837ffb236172d51387093",
+  "leaseSha256": "a2f9be9983e3a03e5e64f1a51dca193199a5bec963a246c3b4fe94b378af1308",
+  "changedPaths": ["server/src/services/toolCatalog/approvedMvpToolTypes.ts", "server/src/services/toolCatalog/__tests__/mvpGateGovernance.documentingCurrentBehavior.test.ts", "server/src/services/toolCatalog/__tests__/mvpGateRealPostgres.controller.pg.test.ts", "docs/program/evidence/closure/a/TLS-CATALOG-001/CATALOG_INVENTORY.md"],
+  "changedPathRationale": {"server/src/services/toolCatalog/approvedMvpToolTypes.ts": "Pins Dynamic SWOT as the only approved MVP tool type.", "server/src/services/toolCatalog/__tests__/mvpGateGovernance.documentingCurrentBehavior.test.ts": "Catalog governance characterization and fail-closed proof.", "server/src/services/toolCatalog/__tests__/mvpGateRealPostgres.controller.pg.test.ts": "Real PostgreSQL controller gate proof.", "docs/program/evidence/closure/a/TLS-CATALOG-001/CATALOG_INVENTORY.md": "Rights and runtime catalog inventory."},
+  "ownerTables": ["method_packs"],
+  "commands": [{"command": "RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres CI=true DATABASE_URL=<isolated-pg> npx vitest run <TLS catalog and SWOT tests> --retry=0", "exitCode": 0}],
+  "denominators": {"combinedCurrentRun": {"files": 5, "passed": 42, "failed": 0}, "catalogRecorded": {"passed": 41, "failed": 0}},
+  "fixtures": {"activeMvpTool": "dynamic_swot"},
+  "negativeControls": {"unapprovedToolsUnavailable": true, "tenantScopedRealDb": true},
+  "browserArtifacts": [],
+  "rollback": {"method": "Revert the catalog gate commit; no destructive schema rollback.", "executed": false},
+  "verdict": "PARTIAL"
+}

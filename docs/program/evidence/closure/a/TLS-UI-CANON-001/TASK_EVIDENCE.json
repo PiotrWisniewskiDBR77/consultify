@@ -1,0 +1,16 @@
+{
+  "taskId": "TLS-UI-CANON-001",
+  "baselineSha": "46a55509ef9880c34ca990b3b8f0d332ade9cb61",
+  "productSha": "37aa125625a3db302d3837ffb236172d51387093",
+  "leaseSha256": "a2f9be9983e3a03e5e64f1a51dca193199a5bec963a246c3b4fe94b378af1308",
+  "changedPaths": ["src/components/DiscoveryTools/tools/DynamicSWOT/__tests__/SWOTBuildPhase.a11y-states.test.tsx", "docs/program/evidence/closure/a/TLS-UI-CANON-001/UI_INVENTORY.md"],
+  "changedPathRationale": {"src/components/DiscoveryTools/tools/DynamicSWOT/__tests__/SWOTBuildPhase.a11y-states.test.tsx": "Covers empty/conflict/success-adjacent, accessible names, PL and dark-mode structure.", "docs/program/evidence/closure/a/TLS-UI-CANON-001/UI_INVENTORY.md": "Records mounted-flow coverage and missing human/browser axes."},
+  "ownerTables": [],
+  "commands": [{"command": "npx vitest run src/components/DiscoveryTools/tools/DynamicSWOT/__tests__/SWOTBuildPhase.a11y-states.test.tsx --retry=0", "exitCode": 0}],
+  "denominators": {"recordedComponentAndBrowserTests": {"passed": 24, "failed": 0}},
+  "fixtures": {"language": ["EN", "PL"], "theme": ["light-structural", "dark-structural"]},
+  "negativeControls": {"coreCompetencyWithoutEvidenceBlocked": true},
+  "browserArtifacts": [],
+  "rollback": {"method": "Test/evidence-only packet; no runtime rollback required.", "executed": false},
+  "verdict": "BLOCKED_HUMAN"
+}

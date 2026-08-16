@@ -1,0 +1,16 @@
+{
+  "taskId": "AUD-MVP-DATA-001",
+  "baselineSha": "7287b375e412517369de3e2c412126a9448d9da4",
+  "productSha": "46a55509ef9880c34ca990b3b8f0d332ade9cb61",
+  "leaseSha256": "a2f9be9983e3a03e5e64f1a51dca193199a5bec963a246c3b4fe94b378af1308",
+  "changedPaths": ["server/src/services/auditProgramFixtures/fixtureGenerator.ts", "server/src/services/auditProgramFixtures/__tests__/fixtureGenerator.pg.test.ts", "docs/program/evidence/closure/a/AUD-MVP-DATA-001/FIXTURE_EVIDENCE.md"],
+  "changedPathRationale": {"server/src/services/auditProgramFixtures/fixtureGenerator.ts": "Creates the governed, deterministic scale fixture.", "server/src/services/auditProgramFixtures/__tests__/fixtureGenerator.pg.test.ts": "Proves exact minima, role/tenant, performance and cold readback.", "docs/program/evidence/closure/a/AUD-MVP-DATA-001/FIXTURE_EVIDENCE.md": "Records counts and performance evidence."},
+  "ownerTables": ["audit_programs", "audit_criteria", "audit_evidence", "audit_findings", "audit_corrective_actions", "audit_initiative_proposals"],
+  "commands": [{"command": "RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres CI=true DATABASE_URL=<isolated-pg> npx vitest run server/src/services/auditProgramFixtures/__tests__/fixtureGenerator.pg.test.ts --retry=0", "exitCode": 0}],
+  "denominators": {"realDb": {"passed": 11, "failed": 0}, "fixtureMinima": {"criteria": 150, "evidence": 400, "findings": 60, "actions": 40, "candidates": 12}},
+  "fixtures": {"kind": "governed synthetic audit fixture"},
+  "negativeControls": {"crossTenantDenied": true, "roleBoundaries": true, "coldReadback": true},
+  "browserArtifacts": [],
+  "rollback": {"method": "Fixture cleanup removes only prefixed synthetic rows; no production data mutation.", "executed": true},
+  "verdict": "DONE_CURRENT_SHA"
+}

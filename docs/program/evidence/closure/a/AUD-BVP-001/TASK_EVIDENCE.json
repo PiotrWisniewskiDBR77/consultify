@@ -1,0 +1,16 @@
+{
+  "taskId": "AUD-BVP-001",
+  "baselineSha": "d950f779d7f9ea0677ab339901e7856bd8f4dce1",
+  "productSha": "4d2bbee39d91d75c8c3e1535a4085be360ae1ef4",
+  "leaseSha256": "a2f9be9983e3a03e5e64f1a51dca193199a5bec963a246c3b4fe94b378af1308",
+  "changedPaths": ["server/src/services/auditProgramBvp/__tests__/programKernelBvp.pg.test.ts", "docs/program/evidence/closure/a/AUD-BVP-001/MOUNTED_CONTRACT.md"],
+  "changedPathRationale": {"server/src/services/auditProgramBvp/__tests__/programKernelBvp.pg.test.ts": "Exercises mounted program create/edit/reopen, role/tenant, flag and legacy-writer boundaries on real PostgreSQL.", "docs/program/evidence/closure/a/AUD-BVP-001/MOUNTED_CONTRACT.md": "Documents the mounted ownership contract and observed lifecycle race gap."},
+  "ownerTables": ["audit_programs", "audit_domain_events"],
+  "commands": [{"command": "RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres CI=true DATABASE_URL=<isolated-pg> npx vitest run server/src/services/auditProgramBvp/__tests__/programKernelBvp.pg.test.ts --retry=0", "exitCode": 0}],
+  "denominators": {"combinedCurrentRun": {"files": 5, "passed": 42, "failed": 0}},
+  "fixtures": {"database": "integrator isolated PostgreSQL"},
+  "negativeControls": {"crossTenantDenied": true, "legacyWriterRetired": true, "lifecycleRaceCharacterized": true},
+  "browserArtifacts": [],
+  "rollback": {"method": "Evidence-only packet; no schema rollback required.", "executed": false},
+  "verdict": "FIX_REQUIRED"
+}

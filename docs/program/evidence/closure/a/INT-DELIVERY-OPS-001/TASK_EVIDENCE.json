@@ -1,0 +1,34 @@
+{
+  "taskId": "INT-DELIVERY-OPS-001",
+  "baselineSha": "78a618942ea0e12e7837bf64dec05f0b30bbdff1",
+  "productSha": "d950f779d7f9ea0677ab339901e7856bd8f4dce1",
+  "leaseSha256": "a2f9be9983e3a03e5e64f1a51dca193199a5bec963a246c3b4fe94b378af1308",
+  "changedPaths": [
+    "server/src/controllers/InterviewController.ts",
+    "src/components/Interview/InterviewWorkspace.tsx",
+    "server/src/routes/interviewDelivery/__tests__/interviewAiReviewTimeoutFallback.pg.test.ts",
+    "server/src/routes/interviewDelivery/__tests__/interviewAnswerCasAndNullableFixType.pg.test.ts",
+    "server/src/routes/interviewDelivery/__tests__/interviewEvidenceIngestToKnowledge.pg.test.ts",
+    "server/src/routes/interviewDelivery/__tests__/interviewGetSessionAccessMatrix.pg.test.ts",
+    "server/src/routes/interviewDelivery/__tests__/interviewNotificationPreferencesFallback.pg.test.ts"
+  ],
+  "changedPathRationale": {
+    "server/src/controllers/InterviewController.ts": "Persists INTEGER-compatible knowledge-ingest values, enforces answer CAS, nullable fixType, bounded AI fallback and governed session access.",
+    "src/components/Interview/InterviewWorkspace.tsx": "Bounds pre-submit AI review at 12 seconds and prevents a late promise from overwriting settled state.",
+    "server/src/routes/interviewDelivery/__tests__/interviewAiReviewTimeoutFallback.pg.test.ts": "Timeout positive control without fabricated result.",
+    "server/src/routes/interviewDelivery/__tests__/interviewAnswerCasAndNullableFixType.pg.test.ts": "CAS stale-write denial and nullable structured-output proof.",
+    "server/src/routes/interviewDelivery/__tests__/interviewEvidenceIngestToKnowledge.pg.test.ts": "INTEGER write/readback proof.",
+    "server/src/routes/interviewDelivery/__tests__/interviewGetSessionAccessMatrix.pg.test.ts": "Role and tenant access matrix.",
+    "server/src/routes/interviewDelivery/__tests__/interviewNotificationPreferencesFallback.pg.test.ts": "Missing preferences-table fallback without false success."
+  },
+  "ownerTables": ["interview_evidence", "interview_answers", "interview_sessions", "notification_preferences"],
+  "commands": [
+    {"command": "RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres CI=true DATABASE_URL=<isolated-pg> npx vitest run <five interview delivery realDB files> --retry=0", "exitCode": 0}
+  ],
+  "denominators": {"realDb": {"files": 5, "passed": 29, "failed": 0, "skipped": 0}},
+  "fixtures": {"database": "integrator isolated PostgreSQL with current migration ledger", "aiTimeoutPositiveControl": "provider exceeds configured bound"},
+  "negativeControls": {"staleAnswerDenied409": true, "missingPreferencesTableNo500": true, "crossTenantSessionDenied": true, "lateAiReviewCannotOverwrite": true},
+  "browserArtifacts": [],
+  "rollback": {"method": "Revert code while preserving additive schema; no destructive rollback.", "executed": false},
+  "verdict": "PARTIAL"
+}
