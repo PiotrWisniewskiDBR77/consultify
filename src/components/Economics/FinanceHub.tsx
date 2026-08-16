@@ -339,6 +339,28 @@ export interface FinanceDetailBranches {
   needsFullHeight: boolean;
 }
 
+export type FinanceDeepLink = {
+  tab: ModuleTab;
+  entityId: string;
+};
+
+/** Canonical Finance detail URLs, including all five flag-gated workspaces. */
+export function parseFinanceDeepLink(pathname: string): FinanceDeepLink | null {
+  const match = pathname.match(
+    /^\/finance\/(statements|models|analyses|predictions|valuations)\/([^/]+)$/
+  );
+  if (!match) return null;
+
+  const tabBySegment: Record<string, ModuleTab> = {
+    statements: 'statements',
+    models: 'models',
+    analyses: 'analysis',
+    predictions: 'prediction',
+    valuations: 'valuation',
+  };
+  return { tab: tabBySegment[match[1]], entityId: decodeURIComponent(match[2]) };
+}
+
 export function resolveFinanceDetailBranches(
   kind: FinanceKind,
   predictionType: PredictionType | undefined,
@@ -616,28 +638,38 @@ export const FinanceHub: React.FC = () => {
   }, [location.pathname, location.search, navigate]);
 
   useEffect(() => {
-    const deepLinkMatch = location.pathname.match(
-      /^\/finance\/(statements|models|analyses)\/(.+)$/
-    );
-    if (!deepLinkMatch) return;
-    const [, segment, entityId] = deepLinkMatch;
-    const tabMap: Record<string, ModuleTab> = {
-      statements: 'statements',
-      models: 'models',
-      analyses: 'analysis',
-    };
-    const tab = tabMap[segment];
-    if (tab && tab !== activeTab) setActiveTab(tab);
-    if (entityId && entityId !== activeDocumentId) {
-      setActiveDocumentId(entityId);
-      const row = rowsForActiveTab.find((r) => r.id === entityId);
-      if (row) {
-        setActiveDocument(row);
-        onSelectRow(row);
-      }
+    const deepLink = parseFinanceDeepLink(location.pathname);
+    if (!deepLink) return;
+    const { tab, entityId } = deepLink;
+    // Wait for useFinanceData to expose rows for the target tab. Previously the
+    // effect looked in the old tab's rows once and never retried, so cold links
+    // silently stayed on the list.
+    if (tab !== activeTab) {
+      setActiveTab(tab);
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname]);
+    const row = rowsForActiveTab.find((candidate) => candidate.id === entityId);
+    if (!row) return;
+    const currentPredictionType = (activeDocument as FinanceModelRow | null)?.predictionType;
+    const targetPredictionType = (row as FinanceModelRow).predictionType;
+    if (
+      entityId !== activeDocumentId ||
+      activeDocument?.kind !== row.kind ||
+      currentPredictionType !== targetPredictionType
+    ) {
+      setActiveDocumentId(entityId);
+      setActiveDocument(row);
+      onSelectRow(row);
+    }
+  }, [
+    activeDocument,
+    activeDocumentId,
+    activeTab,
+    location.pathname,
+    onSelectRow,
+    rowsForActiveTab,
+    setActiveDocumentId,
+  ]);
 
   useEffect(() => {
     if (!activeDocument) return;

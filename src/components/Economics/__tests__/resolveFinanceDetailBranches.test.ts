@@ -22,7 +22,11 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { type FinanceDetailBranchFlags, resolveFinanceDetailBranches } from '../FinanceHub';
+import {
+  type FinanceDetailBranchFlags,
+  parseFinanceDeepLink,
+  resolveFinanceDetailBranches,
+} from '../FinanceHub';
 import type { FinanceKind, PredictionType } from '../financeTypes';
 
 const ALL_FLAGS_OFF: FinanceDetailBranchFlags = {
@@ -62,6 +66,27 @@ const ALL_KINDS: { kind: FinanceKind; predictionType?: PredictionType }[] = [
   { kind: 'prediction', predictionType: 'budget' },
   { kind: 'valuation' },
 ];
+
+describe('parseFinanceDeepLink — five canonical Finance workspaces', () => {
+  it.each([
+    ['/finance/statements/pack-1', 'statements', 'pack-1'],
+    ['/finance/models/model-1', 'models', 'model-1'],
+    ['/finance/analyses/analysis-1', 'analysis', 'analysis-1'],
+    ['/finance/predictions/prediction-1', 'prediction', 'prediction-1'],
+    ['/finance/valuations/valuation-1', 'valuation', 'valuation-1'],
+  ] as const)('%s resolves to %s', (path, tab, entityId) => {
+    expect(parseFinanceDeepLink(path)).toEqual({ tab, entityId });
+  });
+
+  it('decodes an encoded immutable id and rejects non-canonical paths', () => {
+    expect(parseFinanceDeepLink('/finance/models/model%2F2026')).toEqual({
+      tab: 'models',
+      entityId: 'model/2026',
+    });
+    expect(parseFinanceDeepLink('/finance/prediction/model-1')).toBeNull();
+    expect(parseFinanceDeepLink('/finance/models/model-1/extra')).toBeNull();
+  });
+});
 
 describe('resolveFinanceDetailBranches — AP_MOUNT §B', () => {
   describe('flags all OFF (real production default) — byte-identical to pre-AP_MOUNT legacy logic', () => {
