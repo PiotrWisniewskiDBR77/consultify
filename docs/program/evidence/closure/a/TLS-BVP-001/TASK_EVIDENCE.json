@@ -4,7 +4,7 @@
   "branch": "codex/closure-claude-a-method-evidence",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "baselineTag": "closure-execution-baseline-v2-20260816",
-  "productSha": "6f07c1ae923801b38405c82d056fe8ba7abf5682",
+  "productSha": "670794629f8b1143b055f04ca7117ead066b1608",
   "leaseSha256": "a2f9be9983e3a03e5e64f1a51dca193199a5bec963a246c3b4fe94b378af1308",
   "changedPaths": [
     "server/src/controllers/ToolController.ts",
@@ -147,14 +147,12 @@
   ],
   "openItems": [
     "scripts/cleanup/verify-closure-lane.mjs grants its allowedNewRoots exemption only to files that are currently untracked (const isNew = !isTracked(file)), so a legitimately-placed new file starts being reported as a violation the moment it is committed. This lane's new file under server/src/services/toolFreeze/__tests__/ matches the allowed pattern and is benign.",
-    "The named default-suite regression is green (11/11) and the two identified content-free fixtures are repaired, but their real-PostgreSQL rerun is blocked by exhausted Docker storage.",
+    "The named default-suite regression is green (11/11), and the repaired fixture suites plus original TLS suite are green on fresh strict-migrated PostgreSQL (32/32).",
     "No browser/visual evidence exists for this task's user-facing surface (SWOT tool freeze/promote flow)."
   ],
-  "unverifiedFields": [
-    "The repaired real-PostgreSQL fixture suites have not completed on the current SHA because Docker cannot allocate pg_wal space."
-  ],
+  "unverifiedFields": ["Mounted browser G4 for the SWOT freeze/promote UI flow."],
   "integratorClosure20260817": {
-    "candidateSha": "6f07c1ae923801b38405c82d056fe8ba7abf5682",
+    "candidateSha": "670794629f8b1143b055f04ca7117ead066b1608",
     "defaultSuite": {
       "command": "npx vitest run tests/integration/tools/tool-session-roundtrip.contract.test.ts --retry=0 --reporter=dot",
       "exitCode": 0,
@@ -164,17 +162,21 @@
       "tests/integration/tools-promote-characterization.realdb.test.ts",
       "tests/integration/tools-promotion-race.realdb.test.ts"
     ],
-    "fixtureRepairRationale": "Both helpers inserted APPROVED dynamic-swot sessions without answers_json while asserting successful promotion. They now seed one accepted, evidence-confirmed SWOT item, preserving the production nonempty-output contract rather than weakening it.",
+    "fixtureRepairRationale": "Both helpers inserted APPROVED dynamic-swot sessions without answers_json while asserting successful promotion. They now seed two accepted, evidence-confirmed SWOT items, a valid two-item tension and one W2-valid recommended move with tradeoff and rejected alternative, preserving the production nonempty-output contract rather than weakening it.",
     "realPostgres": {
-      "status": "BLOCKED_INFRA",
-      "detail": "A new disposable pgvector/pg16 container failed during initdb with no space left on device. Reusing an existing container with a new isolated database also failed during migration with no space left on device. No realPG test result is claimed.",
-      "failedContainerCleanup": "Removed only consultify-tls-bvp-eb0a9771 with its anonymous volume; no other Docker resource was touched."
+      "status": "PASS",
+      "database": "fresh disposable pgvector/pgvector:pg16 on loopback port 32904",
+      "migrations": "initial Applying migrations: 726 and complete; ledger success:727; repeat applied 0; dry-run pending 0",
+      "command": "DATABASE_URL=<fresh-pg> RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test CI=true npx vitest run tests/integration/tools-promote-characterization.realdb.test.ts tests/integration/tools-promotion-race.realdb.test.ts server/src/services/toolFreeze/__tests__/tls-bvp-001-nonempty-lineage.realdb.test.ts --retry=0 --reporter=dot",
+      "result": "exit 0; 3/3 files; 32/32 tests; 0 failed/skipped/todo",
+      "coverage": "empty-output refusal, W2-valid positive promotion, CAS 428/409, immutable byte-identical readback, reopen revision, tenant denial, cold readback, 10-way snapshot race and 25-way downstream promotion race"
     },
-    "unrelatedTestFinding": "tests/integration/routes/tools.p27.test.ts has 23 failures because it calls localhost through the root global fetch mock and never mounts an app; this is not caused by the SWOT freeze contract and was not edited.",
+    "additionalHarnessClosure": "tests/integration/routes/tools.p27.test.ts now mounts the real router through supertest and passes twice at 26/26 on commit 6c4fd71cdb; the former 23 failures were harness-only, not product failures.",
+    "technicalVerdict": "PASS_CURRENT_SHA",
     "g4": "NOT_VERIFIED; no browser evidence added in this bounded technical pass"
   },
   "verdict": "PARTIAL",
-  "verdictRationale": "The named default-suite regression is green (11/11) and both identified invalid content-free fixtures now satisfy the production nonempty-output contract without weakening CAS, immutability or tenant controls. The task remains PARTIAL because exhausted Docker storage prevented the two repaired real-PostgreSQL suites from being rerun on this exact SHA, and no mounted browser evidence exists for the SWOT freeze/promote UI flow.",
+  "verdictRationale": "Technical closure is green on the exact candidate: named default suite 11/11 plus the two repaired fixture suites and original TLS real-PostgreSQL suite 32/32 on a fresh strict-migrated database. The task remains PARTIAL only because no mounted browser evidence exists for the SWOT freeze/promote UI flow.",
   "ownerTables": [],
   "fixtures": {},
   "negativeControls": {}
