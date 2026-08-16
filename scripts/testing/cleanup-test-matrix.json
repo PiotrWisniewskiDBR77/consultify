@@ -227,7 +227,6 @@
         "tests/integration/admin/adminP32-cross-org-idor.test.ts",
         "tests/integration/routes/auditLog.organizationContext.test.ts",
         "server/src/routes/v8/__tests__/public-anna.routes.test.ts",
-        "tests/integration/routes/health.l3.test.ts",
         "tests/unit/backend/routes/workbook.routes.templates-c3.test.ts",
         "tests/unit/backend/controllers/authController.test.js",
         "server/src/routes/__tests__/m13-cross-org-idor.test.ts",
@@ -323,7 +322,8 @@
         "tests/integration/buildSurfaceRemoved.contract.test.ts",
         "tests/integration/superadmin-provisioning.e2e.test.ts",
         "tests/integration/routes/aiExplainability.no-stubs.test.js",
-        "tests/integration/routes/governanceAdmin.test.js"
+        "tests/integration/routes/governanceAdmin.test.js",
+        "tests/integration/routes/health.l3.test.ts"
       ]
     },
     "legacyPostgresPort": {
