@@ -2,7 +2,7 @@
 
 Wersja: `2.0.0`
 
-Status: `ACTIVE_EXECUTION_SSOT / 82_TASKS / NOT_RELEASE_READY`
+Status: `EXECUTION_READY / 82_TASKS / NOT_RELEASE_READY`
 
 ## Purpose
 
@@ -452,6 +452,12 @@ human VoiceOver/brand UAT, legal/methodology/provider decisions or production
 authorization. Those remain named external gates, not hidden contingency.
 
 ## Task packet and execution ledger contract
+
+Packet readiness is machine-verified by
+`node scripts/cleanup/verify-closure-plan.mjs`. The accepted execution packet
+commit is `59d572fb83`; branches are sealed by its documentation-only
+descendant. This readiness means tasks are unambiguous and safely assignable;
+it does not pre-claim implementation or release success.
 
 Before start, every task records: `taskId`, owner, exact baseline SHA,
 allowlist/hash, dependencies, fixture IDs/provenance, commands and denominators,

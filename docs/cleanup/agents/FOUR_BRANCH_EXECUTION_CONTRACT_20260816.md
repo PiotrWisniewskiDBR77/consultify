@@ -1,12 +1,14 @@
 # Consultify — contract for four-branch completion execution
 
-Status: `ACTIVE / AUTHORITY_PACKET`
+Status: `EXECUTION_READY / AUTHORITY_PACKET`
 
 Plan authority: `../POST_CLEANUP_COMPLETION_PLAN.md`
 
 Product/code baseline: `0f5652690b59f5ebe3f465131bd591a2c4340d2e`
 
-Authority packet commit: `aca1b7a126`
+Scope packet commit: `aca1b7a126`
+
+Execution-readiness packet commit: `59d572fb83`
 
 ## Branches and ownership
 

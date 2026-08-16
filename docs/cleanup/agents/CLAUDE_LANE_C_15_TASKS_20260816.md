@@ -6,7 +6,9 @@ Worktree: `/Users/piotrwisniewski/Developer/consultify-closure-claude-c`
 
 Product/code baseline: `0f5652690b59f5ebe3f465131bd591a2c4340d2e`
 
-Authority packet commit: `aca1b7a126`
+Scope packet commit: `aca1b7a126`
+
+Execution-readiness packet commit: `59d572fb83`
 
 Read the canonical 82-task plan and
 `FOUR_BRANCH_EXECUTION_CONTRACT_20260816.md`,
