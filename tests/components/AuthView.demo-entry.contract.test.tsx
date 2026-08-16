@@ -157,6 +157,26 @@ describe('AuthView public demo entry adopts the isolated demo session', () => {
     });
   });
 
+  it('retains controlled login email and password values after real input events', async () => {
+    const user = userEvent.setup();
+    render(
+      <AuthView
+        initialStep={AuthStep.LOGIN}
+        targetMode={SessionMode.DEMO}
+        onAuthSuccess={onAuthSuccess}
+        onBack={onBack}
+      />
+    );
+
+    const email = screen.getByTestId('email-input');
+    const password = screen.getByTestId('password-input');
+    await user.type(email, LOGIN_FIXTURE);
+    expect(email).toHaveValue(LOGIN_FIXTURE);
+    await user.type(password, FIXTURE_PASSWORD);
+    expect(email).toHaveValue(LOGIN_FIXTURE);
+    expect(password).toHaveValue(FIXTURE_PASSWORD);
+  });
+
   it('/auth/demo sign-up: adopts the session org BEFORE onAuthSuccess', async () => {
     registerDemoMock.mockResolvedValueOnce({
       user: { id: 'u-1', email: SIGNUP_FIXTURE, isDemo: true },
