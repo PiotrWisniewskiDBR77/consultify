@@ -70,13 +70,26 @@ export interface Distribution {
   recipientEmail: string | null;
   recipientName: string | null;
   publicToken: string;
-  status: 'pending' | 'sent' | 'opened' | 'started' | 'completed' | 'expired';
+  status: 'pending' | 'sent' | 'opened' | 'started' | 'completed' | 'expired' | 'revoked';
   anonymityMode: 'identified' | 'anonymous' | 'pseudonymous';
   sentAt: string | null;
   openedAt: string | null;
   startedAt: string | null;
   completedAt: string | null;
   reminderCount: number;
+  expiresAt: string;
+  revokedAt: string | null;
+}
+
+export class InterviewDistributionError extends Error {
+  constructor(
+    message: string,
+    public readonly code: 'INVITE_NOT_FOUND' | 'INVITE_EXPIRED' | 'INVITE_REVOKED' | 'INVALID_EXPIRY',
+    public readonly statusCode: number
+  ) {
+    super(message);
+    this.name = 'InterviewDistributionError';
+  }
 }
 
 export interface Finding {
@@ -207,15 +220,29 @@ class InterviewEnterpriseService {
       recipientEmail?: string;
       recipientName?: string;
       anonymityMode?: 'identified' | 'anonymous' | 'pseudonymous';
+      expiresAt?: string;
     }
   ): Promise<Distribution> {
     const id = uuidv4();
     const publicToken = crypto.randomBytes(32).toString('hex');
+    const session = await queryHelpers.queryOne<{ id: string }>(
+      `SELECT id FROM interview_sessions WHERE id = ? AND organization_id = ?`,
+      [sessionId, orgId]
+    );
+    if (!session) {
+      throw new InterviewDistributionError('Interview session not found', 'INVITE_NOT_FOUND', 404);
+    }
+    const expiresAt = data.expiresAt
+      ? new Date(data.expiresAt)
+      : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    if (!Number.isFinite(expiresAt.getTime()) || expiresAt.getTime() <= Date.now()) {
+      throw new InterviewDistributionError('Invite expiry must be in the future', 'INVALID_EXPIRY', 400);
+    }
 
     await queryHelpers.queryRun(
       `INSERT INTO interview_distributions
-       (id, organization_id, session_id, channel, recipient_email, recipient_name, public_token, anonymity_mode, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+       (id, organization_id, session_id, channel, recipient_email, recipient_name, public_token, anonymity_mode, status, expires_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)`,
       [
         id,
         orgId,
@@ -225,6 +252,7 @@ class InterviewEnterpriseService {
         data.recipientName || null,
         publicToken,
         data.anonymityMode || 'identified',
+        expiresAt.toISOString(),
       ]
     );
 
@@ -242,6 +270,8 @@ class InterviewEnterpriseService {
       startedAt: null,
       completedAt: null,
       reminderCount: 0,
+      expiresAt: expiresAt.toISOString(),
+      revokedAt: null,
     };
   }
 
@@ -284,6 +314,52 @@ class InterviewEnterpriseService {
       [publicToken]
     );
     return row ? mapDistributionRow(row) : null;
+  }
+
+  async resolveActiveDistributionByToken(publicToken: string): Promise<Distribution> {
+    const token = String(publicToken || '').trim();
+    if (!/^[a-f0-9]{64}$/i.test(token)) {
+      throw new InterviewDistributionError('Invite not found', 'INVITE_NOT_FOUND', 404);
+    }
+    const active = await queryHelpers.queryOne<any>(
+      `UPDATE interview_distributions
+          SET status = CASE WHEN status IN ('pending','sent') THEN 'opened' ELSE status END,
+              opened_at = COALESCE(opened_at, CURRENT_TIMESTAMP)
+        WHERE public_token = ?
+          AND revoked_at IS NULL
+          AND expires_at > CURRENT_TIMESTAMP
+          AND status NOT IN ('expired','revoked')
+        RETURNING *`,
+      [token]
+    );
+    if (active) return mapDistributionRow(active);
+
+    const terminal = await queryHelpers.queryOne<any>(
+      `SELECT revoked_at, expires_at FROM interview_distributions WHERE public_token = ?`,
+      [token]
+    );
+    if (!terminal) {
+      throw new InterviewDistributionError('Invite not found', 'INVITE_NOT_FOUND', 404);
+    }
+    if (terminal.revoked_at) {
+      throw new InterviewDistributionError('Invite revoked', 'INVITE_REVOKED', 410);
+    }
+    await queryHelpers.queryRun(
+      `UPDATE interview_distributions SET status='expired'
+        WHERE public_token=? AND revoked_at IS NULL AND expires_at <= CURRENT_TIMESTAMP`,
+      [token]
+    );
+    throw new InterviewDistributionError('Invite expired', 'INVITE_EXPIRED', 410);
+  }
+
+  async revokeDistribution(orgId: string, distributionId: string, actorId: string): Promise<boolean> {
+    const result = await queryHelpers.queryRun(
+      `UPDATE interview_distributions
+          SET revoked_at = CURRENT_TIMESTAMP, revoked_by = ?, status = 'revoked'
+        WHERE id = ? AND organization_id = ? AND revoked_at IS NULL`,
+      [actorId, distributionId, orgId]
+    );
+    return (result?.changes || 0) > 0;
   }
 
   async createReminderSchedule(
@@ -733,6 +809,12 @@ function mapDistributionRow(r: any): Distribution {
     startedAt: r.started_at,
     completedAt: r.completed_at,
     reminderCount: r.reminder_count || 0,
+    expiresAt: r.expires_at instanceof Date ? r.expires_at.toISOString() : String(r.expires_at),
+    revokedAt: r.revoked_at
+      ? r.revoked_at instanceof Date
+        ? r.revoked_at.toISOString()
+        : String(r.revoked_at)
+      : null,
   };
 }
 

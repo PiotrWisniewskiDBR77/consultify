@@ -12,10 +12,38 @@ import { z } from 'zod';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
-import { interviewEnterpriseService } from '../services/interviewEnterpriseService.js';
+import {
+  InterviewDistributionError,
+  interviewEnterpriseService,
+} from '../services/interviewEnterpriseService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
+
+router.get(
+  '/public/distributions/:token',
+  asyncHandler(async (req, res) => {
+    try {
+      const invite = await interviewEnterpriseService.resolveActiveDistributionByToken(
+        req.params.token
+      );
+      res.json({
+        distributionId: invite.id,
+        sessionId: invite.sessionId,
+        status: invite.status,
+        anonymityMode: invite.anonymityMode,
+        expiresAt: invite.expiresAt,
+      });
+    } catch (error) {
+      if (error instanceof InterviewDistributionError) {
+        res.status(error.statusCode).json({ error: error.code });
+        return;
+      }
+      throw error;
+    }
+  })
+);
+
 router.use(verifyToken);
 router.use(demoContextMiddleware);
 
@@ -120,6 +148,7 @@ router.post(
       recipientEmail: z.string().email().optional(),
       recipientName: z.string().max(200).optional(),
       anonymityMode: z.enum(['identified', 'anonymous', 'pseudonymous']).optional(),
+      expiresAt: z.string().datetime().optional(),
     });
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) {
@@ -172,6 +201,24 @@ router.post(
     );
     if (!ok) {
       res.status(404).json({ error: 'Distribution not found' });
+      return;
+    }
+    res.json({ ok: true });
+  })
+);
+
+router.post(
+  '/distributions/:distributionId/revoke',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const ok = await interviewEnterpriseService.revokeDistribution(
+      identity.orgId,
+      req.params.distributionId,
+      identity.userId
+    );
+    if (!ok) {
+      res.status(404).json({ error: 'Distribution not found or already revoked' });
       return;
     }
     res.json({ ok: true });
