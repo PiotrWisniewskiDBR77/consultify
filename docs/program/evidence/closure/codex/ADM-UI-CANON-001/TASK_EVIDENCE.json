@@ -1,0 +1,17 @@
+{
+  "taskId": "ADM-UI-CANON-001",
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "productSha": "995ca54c511678305cca3bd360796e236ebfb1d9",
+  "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
+  "changedPaths": ["src/components/Admin/AdminMembersRolesPanel.tsx", "src/components/Admin/AdminSecurityIdentityPanel.tsx", "src/views/admin/AdminSettingsModule.tsx", "tests/unit/components/Admin/AdminMembersRolesPanel.test.tsx", "tests/unit/components/Admin/AdminSecurityIdentityPanel.test.tsx", "src/views/admin/__tests__/AdminSettingsModule.test.tsx"],
+  "changedPathRationale": {"authorization": "forbidden controls are absent for non-manager personas and handlers remain guarded", "accessibility": "canonical tabs, keyboard navigation and accessible mobile drawer", "tests": "persona, ARIA and keyboard regression coverage"},
+  "ownerTables": [],
+  "commands": [{"command": "vitest three changed Admin suites plus admin-rbac", "exitCode": 0, "result": "27/27 across 4 files"}, {"command": "mounted real app unauthenticated admin guard", "exitCode": 0, "result": "frontend/backend health 200 and redirect to login proved"}, {"command": "authenticated settings/admin Playwright smoke", "exitCode": 130, "result": "interrupted after hang; 0/2 completed"}, {"command": "npx tsc --noEmit --pretty false with 4GB heap", "exitCode": 134, "result": "OOM after about 141 seconds; no diagnostics before termination"}],
+  "denominators": {"focusedTests": "27/27", "unauthenticatedMountedGuard": "1/1", "authenticatedBrowserSmoke": "0/2"},
+  "fixtures": {"roles": ["USER", "ADMIN", "OWNER", "SUPERADMIN", "unauthenticated"], "runtime": "mounted local frontend/backend with real PostgreSQL"},
+  "negativeControls": {"rbac": "USER cannot see invite, role, remove, invite-code or ownership controls", "keyboard": "tablist supports ArrowLeft, ArrowRight, Home and End", "mobile": "Escape closes drawer and returns focus"},
+  "browserArtifacts": [],
+  "rollback": {"code": "revert 995ca54c51 before deployment", "data": "no schema or production data change"},
+  "verdict": "PARTIAL",
+  "openBlockers": ["Authenticated responsive and axe browser journey did not complete.", "Manual VoiceOver sign-off and a successful exact-SHA static gate remain."]
+}
