@@ -1,39 +1,57 @@
 {
-  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "a62dbe340114d87eda75a0d2da2d77bee2a90685",
-  "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
-  "environment": {
-    "node": "v24.12.0",
-    "postgres": "16.14 (pgvector/pgvector:pg16)",
-    "vitest": "root vitest.config.ts",
-    "dbUrl": "127.0.0.1:55432 isolated lane container consultify-closure-c-64f50785"
-  },
-  "gateG0": "PASS pre-commit (lease PASS, 25 changed paths). POST-COMMIT the verifier reports 11 new source/test files as violations; all 11 match lane C allowedNewRoots and none exist at baseline — see ICR-C-003, a verifier defect (isTracked() is true for staged/committed paths), not a scope violation.",
-  "gateG1": "PASS — npm run type-check exit 0; npm run build:backend exit 0; test:discovery-gate PASS 4997/4997 discovered, 4698 executed.",
-  "gateG3": "PASS — strict migrate on FRESH from-zero DB exit 0; repeat run applied 0; --dry-run 0 pending; schema_migrations 709 success / 0 failed / 0 pending.",
   "taskId": "MAT-BVP-001",
-  "verdict": "PARTIAL",
-  "ownerTables": [
-    "document_version_snapshots",
-    "presentation_deck_versions",
-    "generated_workbook_revisions",
-    "artifact_export_receipts"
+  "baselineSha": "459b2d0da5d30b79d3c31d89ad0dcc7612b3c932",
+  "productSha": "dd27522c52f830f0c5d76dde048f2159900a3fd7",
+  "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
+  "changedPaths": [
+    "server/src/services/materialExport/__tests__/materialsMountedAuth.pg.test.ts",
+    "docs/program/evidence/closure/c/MAT-BVP-001/TASK_EVIDENCE.json"
+  ],
+  "changedPathRationale": {
+    "server/src/services/materialExport/__tests__/materialsMountedAuth.pg.test.ts": "Mounts all three production material routers and proves real JWT/membership auth plus fail-closed nonexistent/cross-scope exports.",
+    "docs/program/evidence/closure/c/MAT-BVP-001/TASK_EVIDENCE.json": "Current combined DOC/PPT/XLSX technical evidence."
+  },
+  "ownerTables": ["document_version_snapshots", "presentation_deck_versions", "generated_workbook_revisions", "artifact_export_receipts"],
+  "commands": [
+    {"command": "NODE_ENV=test DATABASE_URL=<fresh-local-pg> DB_TYPE=postgres MOCK_DB=false npm run db:migrate:strict", "exitCode": 130, "result": "runner emitted migrations complete; DB ledger independently showed 729 success; process interrupted only after pool remained open"},
+    {"command": "NODE_ENV=test DATABASE_URL=<fresh-local-pg> DB_TYPE=postgres MOCK_DB=false npm run db:migrate:strict", "exitCode": 0, "result": "repeat applied 0"},
+    {"command": "NODE_ENV=test DATABASE_URL=<fresh-local-pg> DB_TYPE=postgres MOCK_DB=false npm run db:migrate:postgres:dry", "exitCode": 0, "result": "0 pending"},
+    {"command": "RUN_DB_TESTS=1 MOCK_DB=false CI=true NODE_ENV=test DB_TYPE=postgres DATABASE_URL=<fresh-local-pg> npx vitest run <five MAT BVP suites> --no-file-parallelism --maxWorkers=1 --retry=0", "exitCode": 0},
+    {"command": "npm run type-check", "exitCode": 0}
   ],
   "denominators": {
-    "realdbTests": "28 passed (DOC 6, PPT 12, XLSX 10)"
+    "freshMigrationLedger": {"success": 729, "failed": 0},
+    "repeatMigrations": {"pending": 0},
+    "dryRun": {"pending": 0},
+    "documentVersionLineage": {"passed": 6, "failed": 0},
+    "presentationExport": {"passed": 12, "failed": 0},
+    "workbookLifecycle": {"passed": 10, "failed": 0},
+    "docXlsxReceipts": {"passed": 5, "failed": 0},
+    "mountedRealAuth": {"passed": 6, "failed": 0},
+    "combinedRealPostgres": {"passed": 39, "failed": 0},
+    "typecheck": {"passed": 1, "failed": 0}
   },
-  "open": [
-    "No single browser-verified end-to-end journey across all three editors (G4 not run).",
-    "Four-eyes approval exists for DOC only; Workbook/Presentation use a separate approval engine (approval_assignments) that was not unified."
-  ],
-  "changedPaths": [],
-  "changedPathRationale": {},
-  "commands": [],
-  "fixtures": {},
-  "negativeControls": {},
+  "fixtures": {
+    "database": "fresh disposable pgvector PostgreSQL 16 consultinity on localhost:55494",
+    "formats": ["DOCX", "PPTX", "XLSX"],
+    "mountedRoutes": ["document-studio", "workbook", "presentations"],
+    "auth": "real HS256 JWT plus ACTIVE organization membership"
+  },
+  "negativeControls": {
+    "anonymousExport401AllFormats": true,
+    "authenticatedMissingArtifactNoLeak": true,
+    "exactSourceVersionAndHash": true,
+    "staleVersion409": true,
+    "concurrentCasExactlyOneWinner": true,
+    "concurrentExportOneReceipt": true,
+    "crossTenantDenied": true,
+    "terminalReceiptImmutable": true,
+    "providerFailureNoFakeSuccess": true,
+    "coldReopenAndExportReadback": true
+  },
   "browserArtifacts": [],
-  "rollback": {
-    "method": "Not recorded by the lane; no rollback execution or completion claim is inferred.",
-    "executed": false
-  }
+  "rollback": {"method": "Remove the additive mounted-auth test and revert evidence; no product/schema change was required.", "executed": false},
+  "blocker": null,
+  "technicalVerdict": "PASS_FRESH_REALPG",
+  "verdict": "DONE_CURRENT_SHA"
 }
