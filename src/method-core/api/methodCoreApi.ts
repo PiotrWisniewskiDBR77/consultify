@@ -723,7 +723,7 @@ export interface ListArtefactSnapshotsParams {
   readonly status?: MethodArtefactStatus;
 }
 
-function buildQuery(params: Record<string, string | undefined>): string {
+function buildQuery(params: ListArtefactSnapshotsParams): string {
   const qs = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
     if (value) qs.set(key, value);

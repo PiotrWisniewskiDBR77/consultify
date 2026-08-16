@@ -1159,27 +1159,21 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                     tabIndex={onRowClick || onRowDoubleClick ? 0 : undefined}
                     role={onRowClick ? 'button' : undefined}
                     onKeyDown={(event) => {
-                      if (!onRowClick && !onRowDoubleClick) return;
-                      // Spacja przewija stronę, jeśli jej nie zatrzymać.
-                      if (event.key === 'Enter' || event.key === ' ') {
+                      if ((onRowClick || onRowDoubleClick) && (event.key === 'Enter' || event.key === ' ')) {
+                        // Spacja przewija stronę, jeśli jej nie zatrzymać.
                         // Klawisz na kontrolce wewnątrz wiersza (przycisk,
                         // checkbox, kebab) należy do niej, nie do wiersza.
                         if (event.target !== event.currentTarget) return;
                         event.preventDefault();
                         onRowClick?.(row);
+                        return;
                       }
-                    }}
-                    // `aria-selected` przyszło z demo — czytnik ekranu musi
-                    // wiedzieć, który wiersz jest wybrany, niezależnie od tego,
-                    // że wizualnie widać to po tle.
-                    aria-selected={row.id === selectedRowId}
-                    onClick={() => onRowClick?.(row)}
-                    onDoubleClick={() => onRowDoubleClick?.(row)}
-                    onKeyDown={(e) => {
+
                       if (
                         !(
                           !hideRowActions &&
-                          (e.key === 'ContextMenu' || (e.shiftKey && e.key === 'F10'))
+                          (event.key === 'ContextMenu' ||
+                            (event.shiftKey && event.key === 'F10'))
                         )
                       )
                         return;
@@ -1190,14 +1184,20 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                           ? (getRowActions(row)?.length ?? 0) > 0
                           : true;
                       if (!hasMenu) return;
-                      e.preventDefault();
-                      e.stopPropagation();
-                      const rect = e.currentTarget.getBoundingClientRect();
+                      event.preventDefault();
+                      event.stopPropagation();
+                      const rect = event.currentTarget.getBoundingClientRect();
                       setContextMenuRow({
                         rowId: String(row.id),
                         point: { x: Math.max(rect.left + 24, rect.right - 40), y: rect.top + 28 },
                       });
                     }}
+                    // `aria-selected` przyszło z demo — czytnik ekranu musi
+                    // wiedzieć, który wiersz jest wybrany, niezależnie od tego,
+                    // że wizualnie widać to po tle.
+                    aria-selected={row.id === selectedRowId}
+                    onClick={() => onRowClick?.(row)}
+                    onDoubleClick={() => onRowDoubleClick?.(row)}
                     onContextMenu={
                       hideRowActions
                         ? undefined

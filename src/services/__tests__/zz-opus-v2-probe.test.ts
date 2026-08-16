@@ -9,9 +9,11 @@ describe('OPUS PROBE — COORD-11 drd_scoring_v2', () => {
     const mid7 = calculateAxisScoreV2(1, { '1A': { actual: 5, target: 5 } } as never);
     console.log('PROBE v2 2A(5/5) =', JSON.stringify(max5));
     console.log('PROBE v2 1A(5/7) =', JSON.stringify(mid7));
-    expect(max5.scoreNorm).toBeCloseTo(1.0, 3);
-    expect(mid7.scoreNorm).toBeCloseTo(0.6667, 3);
-    expect(max5.scoreNorm).not.toBeCloseTo(mid7.scoreNorm, 3);
+    expect(max5.scoreNorm).not.toBeNull();
+    expect(mid7.scoreNorm).not.toBeNull();
+    expect(max5.scoreNorm!).toBeCloseTo(1.0, 3);
+    expect(mid7.scoreNorm!).toBeCloseTo(0.6667, 3);
+    expect(max5.scoreNorm!).not.toBeCloseTo(mid7.scoreNorm!, 3);
   });
 
   it('★ legacy NADAL myli 5/5 z 5/7 (dowod, ze nie poprawiono go po cichu)', () => {
@@ -32,7 +34,9 @@ describe('OPUS PROBE — COORD-11 drd_scoring_v2', () => {
     console.log('PROBE v2 dwa ocenione   =', JSON.stringify(dwa));
     console.log('PROBE v2 + nieoceniony  =', JSON.stringify(zNieocenionym));
     // wynik NIE spada (kanon: nieoceniony nie wchodzi do sredniej)
-    expect(zNieocenionym.scoreNorm).toBeCloseTo(dwa.scoreNorm, 4);
+    expect(zNieocenionym.scoreNorm).not.toBeNull();
+    expect(dwa.scoreNorm).not.toBeNull();
+    expect(zNieocenionym.scoreNorm!).toBeCloseTo(dwa.scoreNorm!, 4);
     // ale coverage spada
     expect(zNieocenionym.coverage).toBeLessThan(dwa.coverage);
   });
