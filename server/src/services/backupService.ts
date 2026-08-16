@@ -28,7 +28,10 @@
  * A read-only `getRestoreInfo()` describes what a restore *would* do.
  */
 
-import { randomUUID } from 'crypto';
+import { createCipheriv, createDecipheriv, createHash, randomBytes, randomUUID } from 'crypto';
+import type { Readable } from 'stream';
+
+import { Client as PgClient } from 'pg';
 
 import { all as dbAll, columnExists, run as dbRun, tableExists } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -109,6 +112,8 @@ export interface BackupManifest {
   totalRows: number;
   storageKey: string;
   provider: string;
+  encrypted: true;
+  encryptionAlgorithm: 'aes-256-gcm';
 }
 
 export interface BackupRecord {
@@ -127,6 +132,8 @@ export interface BackupRecord {
   expiresAt: string | null;
   tables: BackupTableEntry[];
   error?: string | null;
+  checksumSha256: string | null;
+  encrypted: boolean;
   /** Cloud-presence flags read by backup.routes.ts. */
   hasS3: boolean;
   hasGCS: boolean;
@@ -137,6 +144,31 @@ export interface CreateBackupOptions {
   organizationId?: string;
   /** Override the critical-tables list for this backup. */
   tables?: string[];
+  actorId?: string;
+}
+
+export interface RestoreBackupOptions {
+  targetDatabaseUrl: string;
+  actorId: string;
+  expectedOrganizationId?: string;
+}
+
+export interface RestoreResult {
+  backupId: string;
+  targetDatabase: string;
+  restoredTables: number;
+  restoredRows: number;
+  checksumVerified: true;
+  organizationId: string | null;
+}
+
+interface EncryptedBackupEnvelope {
+  format: 'consultify-encrypted-json-v1';
+  algorithm: 'aes-256-gcm';
+  iv: string;
+  authTag: string;
+  ciphertext: string;
+  checksumSha256: string;
 }
 
 export class BackupNotImplementedError extends Error {
@@ -170,9 +202,34 @@ async function ensureTable(): Promise<void> {
           row_count INTEGER DEFAULT 0,
           size_bytes INTEGER DEFAULT 0,
           manifest_json TEXT,
+          checksum_sha256 TEXT,
+          encrypted BOOLEAN NOT NULL DEFAULT false,
           error TEXT,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           expires_at TIMESTAMP
+        )`,
+        [],
+        { fallback: false }
+      );
+      await dbRun(`ALTER TABLE backup_manifests ADD COLUMN IF NOT EXISTS checksum_sha256 TEXT`, [], {
+        fallback: false,
+      });
+      await dbRun(
+        `ALTER TABLE backup_manifests ADD COLUMN IF NOT EXISTS encrypted BOOLEAN NOT NULL DEFAULT false`,
+        [],
+        { fallback: false }
+      );
+      await dbRun(
+        `CREATE TABLE IF NOT EXISTS backup_access_audit (
+          id TEXT PRIMARY KEY,
+          backup_id TEXT,
+          actor_id TEXT NOT NULL,
+          action TEXT NOT NULL,
+          outcome TEXT NOT NULL,
+          target_database TEXT,
+          organization_id TEXT,
+          details_json TEXT,
+          created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
         )`,
         [],
         { fallback: false }
@@ -221,9 +278,79 @@ function rowToRecord(row: any): BackupRecord {
     expiresAt: toIso(row.expires_at),
     tables,
     error: row.error ?? null,
+    checksumSha256: row.checksum_sha256 ?? null,
+    encrypted: row.encrypted === true || row.encrypted === 1,
     hasS3: provider === 's3' || provider === 'r2',
     hasGCS: provider === 'gcs',
   };
+}
+
+function encryptionKey(): Buffer {
+  const raw = process.env.BACKUP_ENCRYPTION_KEY?.trim();
+  if (!raw) throw new Error('BACKUP_ENCRYPTION_KEY is required; unencrypted backups are forbidden');
+  const key = /^[0-9a-f]{64}$/i.test(raw) ? Buffer.from(raw, 'hex') : Buffer.from(raw, 'base64');
+  if (key.length !== 32) throw new Error('BACKUP_ENCRYPTION_KEY must decode to exactly 32 bytes');
+  return key;
+}
+
+function sha256(value: Buffer): string {
+  return createHash('sha256').update(value).digest('hex');
+}
+
+function encryptPayload(plaintext: Buffer): { body: Buffer; checksumSha256: string } {
+  const iv = randomBytes(12);
+  const cipher = createCipheriv('aes-256-gcm', encryptionKey(), iv);
+  const ciphertext = Buffer.concat([cipher.update(plaintext), cipher.final()]);
+  const checksumSha256 = sha256(ciphertext);
+  const envelope: EncryptedBackupEnvelope = {
+    format: 'consultify-encrypted-json-v1',
+    algorithm: 'aes-256-gcm',
+    iv: iv.toString('base64'),
+    authTag: cipher.getAuthTag().toString('base64'),
+    ciphertext: ciphertext.toString('base64'),
+    checksumSha256,
+  };
+  return { body: Buffer.from(JSON.stringify(envelope), 'utf8'), checksumSha256 };
+}
+
+function decryptPayload(body: Buffer, expectedChecksum: string): Buffer {
+  const envelope = JSON.parse(body.toString('utf8')) as EncryptedBackupEnvelope;
+  if (envelope.format !== 'consultify-encrypted-json-v1' || envelope.algorithm !== 'aes-256-gcm') {
+    throw new Error('Unsupported or unencrypted backup format');
+  }
+  const ciphertext = Buffer.from(envelope.ciphertext, 'base64');
+  const actual = sha256(ciphertext);
+  if (actual !== envelope.checksumSha256 || actual !== expectedChecksum) {
+    throw new Error('BACKUP_CHECKSUM_MISMATCH');
+  }
+  const decipher = createDecipheriv('aes-256-gcm', encryptionKey(), Buffer.from(envelope.iv, 'base64'));
+  decipher.setAuthTag(Buffer.from(envelope.authTag, 'base64'));
+  return Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+}
+
+async function streamToBuffer(stream: Readable): Promise<Buffer> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of stream) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  return Buffer.concat(chunks);
+}
+
+async function writeAccessAudit(input: {
+  backupId?: string;
+  actorId: string;
+  action: string;
+  outcome: string;
+  targetDatabase?: string;
+  organizationId?: string | null;
+  details?: Record<string, unknown>;
+}): Promise<void> {
+  await dbRun(
+    `INSERT INTO backup_access_audit
+      (id, backup_id, actor_id, action, outcome, target_database, organization_id, details_json)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [randomUUID(), input.backupId ?? null, input.actorId, input.action, input.outcome,
+      input.targetDatabase ?? null, input.organizationId ?? null, JSON.stringify(input.details ?? {})],
+    { fallback: false }
+  );
 }
 
 // ==========================================
@@ -305,9 +432,12 @@ class BackupService {
       totalRows,
       storageKey,
       provider,
+      encrypted: true,
+      encryptionAlgorithm: 'aes-256-gcm',
     };
 
-    const body = Buffer.from(JSON.stringify({ manifest, data }), 'utf8');
+    const plaintext = Buffer.from(JSON.stringify({ manifest, data }), 'utf8');
+    const { body, checksumSha256 } = encryptPayload(plaintext);
     const sizeBytes = body.byteLength;
 
     // Persist the object first; only record a row once the bytes are durable.
@@ -316,8 +446,9 @@ class BackupService {
     await dbRun(
       `INSERT INTO backup_manifests
         (id, type, scope, organization_id, reason, status, storage_key, provider,
-         table_count, row_count, size_bytes, manifest_json, created_at, expires_at)
-       VALUES (?, ?, ?, ?, ?, 'completed', ?, ?, ?, ?, ?, ?, ?, ?)`,
+         table_count, row_count, size_bytes, manifest_json, created_at, expires_at,
+         checksum_sha256, encrypted)
+       VALUES (?, ?, ?, ?, ?, 'completed', ?, ?, ?, ?, ?, ?, ?, ?, ?, true)`,
       [
         id,
         type,
@@ -332,6 +463,7 @@ class BackupService {
         JSON.stringify(manifest),
         createdAt,
         expiresAt,
+        checksumSha256,
       ],
       { fallback: false }
     );
@@ -339,6 +471,14 @@ class BackupService {
     logger.info(
       `[BackupService] backup ${id} created (scope=${scope}, tables=${includedTables.length}, rows=${totalRows}, ${sizeBytes}B, provider=${provider})`
     );
+    await writeAccessAudit({
+      backupId: id,
+      actorId: options.actorId || 'system',
+      action: 'BACKUP_CREATED',
+      outcome: 'SUCCESS',
+      organizationId,
+      details: { checksumSha256, encrypted: true, tableCount: includedTables.length, totalRows },
+    });
 
     return {
       id,
@@ -356,6 +496,8 @@ class BackupService {
       expiresAt,
       tables,
       error: null,
+      checksumSha256,
+      encrypted: true,
       hasS3: provider === 's3' || provider === 'r2',
       hasGCS: provider === 'gcs',
     };
@@ -402,8 +544,7 @@ class BackupService {
     return {
       total: rows.length,
       lastBackup: lastBackup === null ? null : new Date(lastBackup).toISOString(),
-      // Cron runs daily at 03:00 UTC — surface the next occurrence for the UI.
-      nextBackup: nextDailyBackupUtc(),
+      nextBackup: nextQuarterHourUtc(),
       failed,
       expired,
     };
@@ -460,7 +601,7 @@ class BackupService {
    */
   async getRestoreInfo(backupId: string): Promise<{
     backupId: string;
-    implemented: false;
+    implemented: true;
     found: boolean;
     manifest: BackupManifest | null;
     message: string;
@@ -479,35 +620,113 @@ class BackupService {
     }
     return {
       backupId,
-      implemented: false,
+      implemented: true,
       found: rows.length > 0,
       manifest,
-      message:
-        'Restore is not yet implemented (v2). This backup is a logical JSON export; ' +
-        'restoring it into a live database requires a supervised, schema-aware import that ' +
-        'is out of scope for v1. Use the export for manual/offline recovery.',
+      message: 'Restore is available only to a supervised, explicitly isolated recovery/test PostgreSQL target.',
     };
   }
 
-  /**
-   * Not implemented in v1 — throws a typed error so the route can answer 501
-   * (honest) instead of the historic 503 crash.
-   */
-  async restoreBackup(backupId: string): Promise<never> {
-    await this.getRestoreInfo(backupId);
-    throw new BackupNotImplementedError(
-      `Restore of backup "${backupId}" is not implemented (v2). See getRestoreInfo() for details.`
-    );
+  /** Restore a verified encrypted backup into an explicitly isolated PostgreSQL database. */
+  async restoreBackup(backupId: string, options: RestoreBackupOptions): Promise<RestoreResult> {
+    await ensureTable();
+    if (!options.actorId?.trim()) throw new Error('RESTORE_ACTOR_REQUIRED');
+
+    const target = new URL(options.targetDatabaseUrl);
+    const targetDatabase = target.pathname.replace(/^\//, '');
+    const sourceDatabase = (() => {
+      try { return new URL(process.env.DATABASE_URL || '').pathname.replace(/^\//, ''); } catch { return ''; }
+    })();
+    const localHost = ['127.0.0.1', 'localhost', '::1'].includes(target.hostname);
+    const isolatedName = /(restore|recovery|test)/i.test(targetDatabase);
+    if ((!localHost && process.env.BACKUP_ALLOW_REMOTE_RESTORE !== 'true') || !isolatedName || targetDatabase === sourceDatabase) {
+      await writeAccessAudit({ backupId, actorId: options.actorId, action: 'RESTORE', outcome: 'ACCESS_DENIED', targetDatabase });
+      throw new Error('RESTORE_TARGET_NOT_ISOLATED');
+    }
+
+    const rows = await dbAll<any>(`SELECT * FROM backup_manifests WHERE id = ?`, [backupId]);
+    if (!rows.length) throw new Error('BACKUP_NOT_FOUND');
+    const record = rowToRecord(rows[0]);
+    if (!record.storageKey || !record.checksumSha256 || !record.encrypted) {
+      throw new Error('BACKUP_NOT_RESTORABLE_ENCRYPTED_FORMAT');
+    }
+
+    await writeAccessAudit({ backupId, actorId: options.actorId, action: 'RESTORE_STARTED', outcome: 'STARTED', targetDatabase, organizationId: record.organizationId });
+    let client: PgClient | null = null;
+    try {
+      const object = await getStorage().getObject(record.storageKey);
+      const plaintext = decryptPayload(await streamToBuffer(object.stream), record.checksumSha256);
+      const payload = JSON.parse(plaintext.toString('utf8')) as { manifest: BackupManifest; data: Record<string, Array<Record<string, unknown>>> };
+      if (payload.manifest.id !== backupId || payload.manifest.organizationId !== record.organizationId) {
+        throw new Error('BACKUP_MANIFEST_MISMATCH');
+      }
+      if (options.expectedOrganizationId && payload.manifest.organizationId !== options.expectedOrganizationId) {
+        throw new Error('RESTORE_ORGANIZATION_MISMATCH');
+      }
+
+      // Validate every row before opening the transaction: a tenant backup may
+      // never contain a row belonging to another organization.
+      if (payload.manifest.scope === 'organization' && payload.manifest.organizationId) {
+        const orgId = payload.manifest.organizationId;
+        for (const [table, tableRows] of Object.entries(payload.data)) {
+          for (const row of tableRows) {
+            const rowOrg = table === 'organizations' ? row.id : row.organization_id;
+            if (String(rowOrg ?? '') !== orgId) throw new Error('BACKUP_CROSS_TENANT_ROW');
+          }
+        }
+      }
+
+      client = new PgClient({ connectionString: options.targetDatabaseUrl });
+      client.on('error', (error) => logger.error('[BackupService] restore target client error:', error));
+      await client.connect();
+      await client.query('BEGIN');
+      let restoredTables = 0;
+      let restoredRows = 0;
+      for (const tableEntry of payload.manifest.tables.filter((entry) => !entry.skipped)) {
+        const table = tableEntry.name;
+        if (!SAFE_IDENT.test(table)) throw new Error('BACKUP_UNSAFE_TABLE');
+        const tableRows = payload.data[table] || [];
+        const exists = await client.query(`SELECT to_regclass($1) AS name`, [`public.${table}`]);
+        if (!exists.rows[0]?.name) throw new Error(`RESTORE_TARGET_TABLE_MISSING:${table}`);
+        const columnsResult = await client.query<{ column_name: string }>(
+          `SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name=$1`,
+          [table]
+        );
+        const allowedColumns = new Set(columnsResult.rows.map((r) => r.column_name));
+        for (const row of tableRows) {
+          const columns = Object.keys(row).filter((column) => allowedColumns.has(column) && SAFE_IDENT.test(column));
+          if (!columns.length) continue;
+          const placeholders = columns.map((_, index) => `$${index + 1}`).join(', ');
+          const quoted = columns.map((column) => `"${column}"`).join(', ');
+          await client.query(
+            `INSERT INTO "${table}" (${quoted}) VALUES (${placeholders}) ON CONFLICT DO NOTHING`,
+            columns.map((column) => row[column])
+          );
+          restoredRows += 1;
+        }
+        restoredTables += 1;
+      }
+      await client.query('COMMIT');
+      const result: RestoreResult = { backupId, targetDatabase, restoredTables, restoredRows, checksumVerified: true, organizationId: record.organizationId };
+      await writeAccessAudit({ backupId, actorId: options.actorId, action: 'RESTORE_COMPLETED', outcome: 'SUCCESS', targetDatabase, organizationId: record.organizationId, details: { ...result } });
+      return result;
+    } catch (error) {
+      if (client) await client.query('ROLLBACK').catch(() => undefined);
+      const message = error instanceof Error ? error.message : String(error);
+      await writeAccessAudit({ backupId, actorId: options.actorId, action: 'RESTORE_FAILED', outcome: 'FAILED', targetDatabase, organizationId: record.organizationId, details: { message } });
+      throw error;
+    } finally {
+      if (client) await client.end().catch(() => undefined);
+    }
   }
 }
 
-/** Next 03:00 UTC occurrence (mirrors cron/BackupCron.ts schedule). */
-function nextDailyBackupUtc(): string {
+/** Next 15-minute boundary (mirrors cron/BackupCron.ts schedule). */
+function nextQuarterHourUtc(): string {
   const now = new Date();
-  const next = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 3, 0, 0, 0)
-  );
-  if (next.getTime() <= now.getTime()) next.setUTCDate(next.getUTCDate() + 1);
+  const next = new Date(now);
+  next.setUTCSeconds(0, 0);
+  next.setUTCMinutes(Math.floor(now.getUTCMinutes() / 15) * 15 + 15);
   return next.toISOString();
 }
 

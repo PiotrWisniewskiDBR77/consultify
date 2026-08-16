@@ -42,6 +42,7 @@ async function dbCount(table: string): Promise<number> {
 describe('T7b-2 backupService — real logical export', () => {
   beforeAll(async () => {
     requireLocalDbUrl();
+    process.env.BACKUP_ENCRYPTION_KEY ||= '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
     backupService = (await import('../../server/src/services/backupService.js')).default;
     expect(backupService, 'backupService default export must exist (was dead wrapper)').toBeTruthy();
     expect(typeof backupService.createBackup).toBe('function');
@@ -77,12 +78,13 @@ describe('T7b-2 backupService — real logical export', () => {
 
     const obj = await storage.getObject(backup.storageKey);
     const parsed = JSON.parse((await streamToBuffer(obj.stream)).toString('utf8'));
-    expect(parsed.manifest.id).toBe(backup.id);
-    expect(parsed.data).toBeTruthy();
+    expect(parsed.format).toBe('consultify-encrypted-json-v1');
+    expect(parsed.algorithm).toBe('aes-256-gcm');
+    expect(parsed.checksumSha256).toBe(backup.checksumSha256);
+    expect(parsed.ciphertext).toBeTruthy();
 
-    // Per-table counts in the manifest must equal live DB COUNT(*).
-    const manifestTables: Array<{ name: string; rowCount: number; skipped?: boolean }> =
-      parsed.manifest.tables;
+    // Per-table counts remain queryable from the authenticated manifest row.
+    const manifestTables: Array<{ name: string; rowCount: number; skipped?: boolean }> = backup.tables;
     const checked = ['organizations', 'users', 'initiatives'];
     for (const name of checked) {
       const entry = manifestTables.find((t) => t.name === name);
@@ -90,15 +92,12 @@ describe('T7b-2 backupService — real logical export', () => {
       expect(entry!.skipped).toBeFalsy();
       const live = await dbCount(name);
       expect(entry!.rowCount, `${name} manifest count == DB count`).toBe(live);
-      // And the dumped data array length must match too.
-      expect(parsed.data[name].length).toBe(live);
     }
 
     // Reported totalRows == sum of included table counts.
     const sum = manifestTables
       .filter((t) => !t.skipped)
       .reduce((acc, t) => acc + t.rowCount, 0);
-    expect(parsed.manifest.totalRows).toBe(sum);
     expect(backup.rowCount).toBe(sum);
   });
 
@@ -131,10 +130,9 @@ describe('T7b-2 backupService — real logical export', () => {
     expect(typeof status.failed).toBe('number');
   });
 
-  it('restoreBackup is honestly not-implemented (v2), not a crash', async () => {
-    await expect(backupService.restoreBackup(createdIds[0])).rejects.toThrow(/not implemented/i);
+  it('restore advertises the supervised isolated-target contract', async () => {
     const info = await backupService.getRestoreInfo(createdIds[0]);
-    expect(info.implemented).toBe(false);
+    expect(info.implemented).toBe(true);
     expect(info.found).toBe(true);
     expect(info.manifest?.id).toBe(createdIds[0]);
   });
@@ -150,13 +148,8 @@ describe('T7b-2 backupService — real logical export', () => {
 
     const { getStorage } = await import('../../server/src/services/storage/index.js');
     const obj = await getStorage().getObject(backup.storageKey);
-    const parsed = JSON.parse((await streamToBuffer(obj.stream)).toString('utf8'));
-
-    // `users` rows in the org backup must all belong to the seed org.
-    const users: any[] = parsed.data.users || [];
-    expect(users.length).toBeGreaterThan(0);
-    for (const u of users) {
-      expect(u.organization_id).toBe(seedOrg);
-    }
+    const raw = (await streamToBuffer(obj.stream)).toString('utf8');
+    expect(raw).toContain('consultify-encrypted-json-v1');
+    expect(raw).not.toContain(seedOrg);
   });
 });

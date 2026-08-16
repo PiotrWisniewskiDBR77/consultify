@@ -116,26 +116,22 @@ router.post('/restore', verifySuperAdmin, async (req, res) => {
     const BackupService = (await import('../../services/backupService.js').then(
       (m) => m.default || m
     )) as typeof import('../../services/backupService.js')['default'];
-    const { backupId } = req.body;
-    // Restore execution is v2. Answer 501 (honest "not implemented") with the
-    // read-only restore-info describing what a restore WOULD do — never a
-    // 503 crash. See services/backupService.ts (BackupNotImplementedError).
-    const info = await BackupService.getRestoreInfo(backupId);
-    return res.status(501).json({
-      success: false,
-      code: 'RESTORE_NOT_IMPLEMENTED',
-      message: info.message,
-      backupId: info.backupId,
-      found: info.found,
-      manifest: info.manifest,
+    const { backupId, targetDatabaseUrl, expectedOrganizationId } = req.body;
+    const result = await BackupService.restoreBackup(backupId, {
+      targetDatabaseUrl,
+      expectedOrganizationId,
+      actorId: String((req as any).user?.id || ''),
     });
+    return res.json({ success: true, restore: result });
   } catch (error: any) {
-    logger.warn('[BackupRoutes] BackupService not available for restore');
-    return respondBackupUnavailable(
-      req,
-      res,
-      'Backup restore is not available (service missing or not configured).'
-    );
+    const code = String(error?.message || 'RESTORE_FAILED');
+    logger.warn(`[BackupRoutes] restore rejected: ${code}`);
+    if (code === 'BACKUP_NOT_FOUND') return res.status(404).json({ success: false, code });
+    if (code === 'RESTORE_TARGET_NOT_ISOLATED') return res.status(403).json({ success: false, code });
+    if (/REQUIRED|MISMATCH|UNSAFE|UNENCRYPTED|CHECKSUM/.test(code)) {
+      return res.status(400).json({ success: false, code });
+    }
+    return res.status(500).json({ success: false, code: 'RESTORE_FAILED' });
   }
 });
 
@@ -173,7 +169,9 @@ router.post('/manual', verifySuperAdmin, async (req, res) => {
       (m) => m.default || m
     )) as typeof import('../../services/backupService.js')['default'];
     const { type = 'full', reason = 'manual' } = req.body;
-    const backup = await BackupService.createBackup(type, reason);
+    const backup = await BackupService.createBackup(type, reason, {
+      actorId: String((req as any).user?.id || 'system'),
+    });
     return res.json({ success: true, backup });
   } catch (error: any) {
     logger.warn('[BackupRoutes] BackupService not available for manual backup');
@@ -182,6 +180,26 @@ router.post('/manual', verifySuperAdmin, async (req, res) => {
       res,
       'Manual backup is not available (service missing or not configured).'
     );
+  }
+});
+
+/** Create an encrypted export limited to the authenticated admin's tenant. */
+router.post('/organization/manual', async (req, res) => {
+  try {
+    const BackupService = (await import('../../services/backupService.js').then(
+      (m) => m.default || m
+    )) as typeof import('../../services/backupService.js')['default'];
+    const organizationId = String((req as any).user?.organizationId || '');
+    const actorId = String((req as any).user?.id || '');
+    if (!organizationId || !actorId) return res.status(403).json({ success: false, code: 'TENANT_CONTEXT_REQUIRED' });
+    const backup = await BackupService.createBackup(req.body?.type || 'full', req.body?.reason || 'tenant-manual', {
+      organizationId,
+      actorId,
+    });
+    return res.json({ success: true, backup });
+  } catch (error: any) {
+    logger.warn('[BackupRoutes] tenant backup failed');
+    return res.status(500).json({ success: false, code: 'TENANT_BACKUP_FAILED' });
   }
 });
 

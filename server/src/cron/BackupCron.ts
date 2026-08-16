@@ -1,7 +1,7 @@
 /**
  * Backup Cron Job
  *
- * Automated daily backups at 3 AM UTC.
+ * Automated encrypted backups every 15 minutes (internal-beta RPO gate).
  * Also runs retention policy cleanup.
  *
  * Enterprise SaaS Architecture - TypeScript Backend
@@ -76,9 +76,9 @@ class BackupCron {
       return;
     }
 
-    // Daily at 3 AM UTC
+    // Every 15 minutes: maximum scheduled RPO is 15 minutes.
     this.job = cron.schedule(
-      '0 3 * * *',
+      '*/15 * * * *',
       async () => {
         const deps = await this.ensureDeps();
         logger.info('[BackupCron] Starting scheduled backup...');
@@ -87,7 +87,7 @@ class BackupCron {
           const startTime = Date.now();
 
           // Create backup
-          const result = await deps.backupService.createBackup('full', 'scheduled');
+          const result = await deps.backupService.createBackup('incremental', 'scheduled-rpo-15m');
           const duration = Date.now() - startTime;
 
           this.successCount++;
@@ -143,7 +143,7 @@ class BackupCron {
       }
     );
 
-    logger.info('[BackupCron] Scheduled daily backup at 3:00 AM UTC');
+    logger.info('[BackupCron] Scheduled encrypted backup every 15 minutes');
   }
 
   /**

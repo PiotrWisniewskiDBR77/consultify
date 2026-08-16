@@ -59,7 +59,7 @@ describe('BackupCron', () => {
             BackupCron.startBackupJob();
 
             expect(mockCron.schedule).toHaveBeenCalledWith(
-                '0 3 * * *',
+                '*/15 * * * *',
                 expect.any(Function),
                 { timezone: 'UTC' }
             );
@@ -85,7 +85,7 @@ describe('BackupCron', () => {
 
             await scheduledCallback();
 
-            expect(mockBackupService.createBackup).toHaveBeenCalledWith('full', 'scheduled');
+            expect(mockBackupService.createBackup).toHaveBeenCalledWith('incremental', 'scheduled-rpo-15m');
             expect(mockBackupService.runRetentionPolicy).toHaveBeenCalled();
         });
 
@@ -135,7 +135,6 @@ describe('BackupCron', () => {
         });
     });
 });
-
 
 
 

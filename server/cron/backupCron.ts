@@ -1,7 +1,7 @@
 /**
  * Backup Cron Job
  *
- * Automated daily backups at 3 AM UTC.
+ * Automated encrypted backups every 15 minutes.
  * Also runs retention policy cleanup.
  */
 
@@ -20,15 +20,15 @@ function startBackupJob() {
     return;
   }
 
-  // Daily at 3 AM UTC
+  // Every 15 minutes: maximum scheduled RPO is 15 minutes.
   backupJob = cron.schedule(
-    '0 3 * * *',
+    '*/15 * * * *',
     async () => {
       console.log('[BackupCron] Starting scheduled backup...');
 
       try {
         // Create backup
-        const result = await BackupService.createBackup('full', 'scheduled');
+        const result = await BackupService.createBackup('incremental', 'scheduled-rpo-15m');
         console.log(`[BackupCron] Backup completed: ${result.id}`);
 
         // Run retention policy
@@ -53,7 +53,7 @@ function startBackupJob() {
     }
   );
 
-  console.log('[BackupCron] Scheduled daily backup at 3:00 AM UTC');
+  console.log('[BackupCron] Scheduled encrypted backup every 15 minutes');
 }
 
 /**
