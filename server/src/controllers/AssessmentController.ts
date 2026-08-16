@@ -17,6 +17,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import AssessmentEvidenceService from '../services/AssessmentEvidenceService.js';
 import AssessmentInitiativeService from '../services/assessmentInitiativeService.js';
+import { upsertActiveAssessmentInitiativeBatch } from '../services/assessment/AssessmentWorkbenchService.js';
 import { getAssessmentRoles } from '../services/assessmentPermissionService.js';
 import NotificationService from '../services/notificationService.js';
 import { hasPermission } from '../services/permissionService.js';
@@ -1505,48 +1506,21 @@ export class AssessmentController {
         return;
       }
 
-      const batchId = uuidv4();
+      const proposedBatchId = uuidv4();
       const now = new Date().toISOString();
-
-      // Some deployments may not yet have report_id on batches.
-      // Detect columns to keep compatibility.
-      const batchCols = await (async (): Promise<Set<string> | null> => {
-        try {
-          const rows = await queryHelpers.getTableColumns('assessment_initiative_batches');
-          return new Set((rows || []).map((r) => r.name).filter(Boolean) as string[]);
-        } catch {
-          // Unknown schema: avoid inserting optional columns like report_id.
-          return null;
-        }
-      })();
-
-      const insertBatchCols: string[] = [];
-      const insertBatchValues: unknown[] = [];
-      const pushBatch = (col: string, value: unknown) => {
-        if (batchCols === null && col === 'report_id') return;
-        if (batchCols && !batchCols.has(col)) return;
-        insertBatchCols.push(col);
-        insertBatchValues.push(value);
-      };
-      pushBatch('id', batchId);
-      pushBatch('assessment_id', assessmentId);
-      // organization_id is NOT NULL with no DB default (Postgres) — omitting it
-      // 500s with 23502. Resolve from the authenticated user's org, same as
-      // TaskService.createTask fix (2e7edff335).
-      pushBatch('organization_id', user.organizationId);
-      pushBatch('methodology_id', methodologyId);
-      pushBatch('initiatives_count', count);
-      pushBatch('include_chat_context', includeChatContext ? 1 : 0);
-      pushBatch('generated_by', user.id);
-      pushBatch('created_at', now);
-      // Optional: link batch to a report (when provided)
-      pushBatch('report_id', reportId ? String(reportId) : null);
-
-      const batchPlaceholders = insertBatchCols.map(() => '?').join(', ');
-      await queryHelpers.queryRun(
-        `INSERT INTO assessment_initiative_batches (${insertBatchCols.join(', ')}) VALUES (${batchPlaceholders})`,
-        insertBatchValues
-      );
+      const { batchId } = await upsertActiveAssessmentInitiativeBatch({
+        batchId: proposedBatchId,
+        assessmentId,
+        organizationId: user.organizationId,
+        fields: {
+          methodology_id: methodologyId,
+          initiatives_count: count,
+          include_chat_context: includeChatContext ? 1 : 0,
+          generated_by: user.id,
+          created_at: now,
+          report_id: reportId ? String(reportId) : null,
+        },
+      });
 
       const decisionId = await createDecisionRecord({
         orgId: user.organizationId,

@@ -16,6 +16,7 @@ import { v4 as uuidv4 } from 'uuid';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import AssessmentInitiativeService from './assessmentInitiativeService.js';
+import { upsertActiveAssessmentInitiativeBatch } from './assessment/AssessmentWorkbenchService.js';
 
 export type InitiativeGenerationRunMode = 'ASSESSMENT_REPORT' | 'REPORT_ONLY';
 export type InitiativeGenerationRunStatus =
@@ -78,21 +79,6 @@ const safeJsonStringify = (value: any): string => {
 
 const nowIso = () => new Date().toISOString();
 
-// Cache batch table columns for schema-variant safe inserts
-let batchColsCache: Set<string> | null | undefined = undefined;
-async function getBatchColumns(): Promise<Set<string> | null> {
-  if (batchColsCache !== undefined) return batchColsCache;
-  try {
-    const rows = await queryHelpers.getTableColumns('assessment_initiative_batches');
-    const cols = new Set((rows || []).map((r) => r.name).filter(Boolean) as string[]);
-    batchColsCache = cols.size ? cols : null;
-    return batchColsCache;
-  } catch {
-    batchColsCache = null;
-    return batchColsCache;
-  }
-}
-
 async function insertBatch(params: {
   batchId: string;
   runId: string;
@@ -105,47 +91,20 @@ async function insertBatch(params: {
   createdAt: string;
   reportId?: string | null;
 }) {
-  const columns = await getBatchColumns();
-  const baseAllowedWhenUnknown = new Set([
-    'id',
-    'assessment_id',
-    'organization_id',
-    'methodology_id',
-    'initiatives_count',
-    'include_chat_context',
-    'generated_by',
-    'created_at',
-  ]);
-
-  const cols: string[] = [];
-  const values: unknown[] = [];
-  const push = (col: string, value: unknown) => {
-    if (columns === null && !baseAllowedWhenUnknown.has(col)) return;
-    if (columns && !columns.has(col)) return;
-    cols.push(col);
-    values.push(value);
-  };
-
-  push('id', params.batchId);
-  push('assessment_id', params.assessmentId);
-  // organization_id is NOT NULL with no DB default (Postgres) — omitting it
-  // 500s with 23502. Caller (processRun) already has organizationId from the
-  // run row.
-  push('organization_id', params.organizationId);
-  push('methodology_id', params.methodologyId);
-  push('initiatives_count', params.initiativesCount);
-  push('include_chat_context', params.includeChatContext ? 1 : 0);
-  push('generated_by', params.generatedBy);
-  push('created_at', params.createdAt);
-  // Optional columns (schema may vary)
-  push('report_id', params.reportId ? String(params.reportId) : null);
-  push('run_id', params.runId);
-
-  const placeholders = cols.map(() => '?').join(', ');
-  await queryHelpers.queryRun(
-    `INSERT INTO assessment_initiative_batches (${cols.join(', ')}) VALUES (${placeholders})`,
-    values
-  );
+  return upsertActiveAssessmentInitiativeBatch({
+    batchId: params.batchId,
+    assessmentId: params.assessmentId,
+    organizationId: params.organizationId,
+    fields: {
+      methodology_id: params.methodologyId,
+      initiatives_count: params.initiativesCount,
+      include_chat_context: params.includeChatContext ? 1 : 0,
+      generated_by: params.generatedBy,
+      created_at: params.createdAt,
+      report_id: params.reportId ? String(params.reportId) : null,
+      run_id: params.runId,
+    },
+  });
 }
 
 async function updateBatchCount(batchId: string, count: number) {
@@ -614,12 +573,12 @@ export class AssessmentInitiativeGenerationRunService {
     let totalCreated = 0;
     for (let offset = 0; offset < requestedCount; offset += batchSize) {
       const batchCount = Math.min(batchSize, requestedCount - offset);
-      const batchId = uuidv4();
+      let batchId = uuidv4();
       const createdAt = nowIso();
 
       // Create batch row first (required by FK on links)
       try {
-        await insertBatch({
+        const batchResult = await insertBatch({
           batchId,
           runId,
           assessmentId,
@@ -635,6 +594,9 @@ export class AssessmentInitiativeGenerationRunService {
               ? String(reportId)
               : null,
         });
+        // Every writer shares the same exactly-one contract. If another path
+        // won the race, all links produced by this run attach to that row.
+        if (!batchResult.created) batchId = batchResult.batchId;
         stats.batchesCreated += 1;
         await updateRun({ stats });
       } catch (e: any) {
