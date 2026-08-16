@@ -89,6 +89,11 @@ import {
   evaluateRevertEligibility,
   type RevertEligibilityReason,
 } from '../services/presentationDeckRevertService.js';
+import {
+  beginPresentationExport,
+  completePresentationExport,
+  failPresentationExport,
+} from '../services/presentationExport/presentationExportReceiptService.js';
 import { buildParityReportForDeck } from '../services/presentationExportParityService.js';
 import type { DeckSetup } from '../services/presentationGeneratorService.js';
 import { generateDeck, generateOutline } from '../services/presentationGeneratorService.js';
@@ -334,6 +339,16 @@ function getOrgId(req: any): string {
 
 function getUserId(req: any): string {
   return req.user?.id || req.userId || 'system';
+}
+
+// MAT-MVP-PPT-001 — optional client-supplied idempotency key for export
+// receipts, same header idiom as `document-studio.routes.ts` ('idempotency-key').
+// No header means no behavior change beyond the deterministic per-version
+// default key derived in `presentationExportReceiptService.ts`.
+function getIdempotencyKeyHeader(req: Request): string | null {
+  const raw = req.headers['idempotency-key'];
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  return typeof value === 'string' && value.trim() !== '' ? value.trim() : null;
 }
 
 // R11 deck slice (2026-07-26) — same code→HTTP mapping as
@@ -2466,6 +2481,19 @@ router.get(
       return res.status(quality.status ?? 422).json(quality.payload);
     }
 
+    // MAT-MVP-PPT-001 — freeze + hash the source and open a governed export
+    // receipt BEFORE rendering. The existing `presentation_export_records`
+    // write below is kept as-is; this is the additive, hash-bound spine
+    // receipt (see `presentationExportReceiptService.ts`).
+    const pptxExportBegin = await beginPresentationExport({
+      organizationId: orgId,
+      deckId: String(req.params.id || ''),
+      deck,
+      format: 'pptx',
+      createdBy: userId,
+      requestIdempotencyKey: getIdempotencyKeyHeader(req),
+    });
+
     let freshDeck: any;
     try {
       freshDeck = await ensureCurrentPptxExport(deck);
@@ -2474,6 +2502,16 @@ router.get(
         error instanceof CurrentPptxExportError
           ? error.message
           : 'The current presentation could not be rendered.';
+      await failPresentationExport({
+        organizationId: orgId,
+        exportReceiptId: pptxExportBegin.receipt.exportReceiptId,
+        failureCode: 'PPTX_CURRENT_RENDER_FAILED',
+      }).catch((receiptErr) => {
+        logger.error(
+          '[Presentations] Could not record export-receipt failure (pptx render)',
+          receiptErr
+        );
+      });
       await recordPresentationExportRecord({
         organizationId: orgId,
         userId,
@@ -2493,6 +2531,16 @@ router.get(
     const cards = getDeckCards(freshDeck);
     const limitCheck = enforceExportLimits(freshDeck, cards);
     if (!limitCheck.ok) {
+      await failPresentationExport({
+        organizationId: orgId,
+        exportReceiptId: pptxExportBegin.receipt.exportReceiptId,
+        failureCode: 'EXPORT_LIMIT_EXCEEDED',
+      }).catch((receiptErr) => {
+        logger.error(
+          '[Presentations] Could not record export-receipt failure (pptx limit)',
+          receiptErr
+        );
+      });
       await recordCanonicalDeckExportTrace({
         organizationId: orgId,
         userId,
@@ -2515,6 +2563,32 @@ router.get(
         .status(422)
         .json({ success: false, error: limitCheck.error, code: 'EXPORT_LIMIT_EXCEEDED' });
     }
+
+    // Hash the ACTUAL produced bytes on disk (not the deck JSON) — this is
+    // what distinguishes a real export receipt from a plausible-looking one.
+    let pptxExportBuffer: Buffer;
+    try {
+      pptxExportBuffer = fs.readFileSync(path.resolve(freshDeck.export_path));
+    } catch (readErr: any) {
+      await failPresentationExport({
+        organizationId: orgId,
+        exportReceiptId: pptxExportBegin.receipt.exportReceiptId,
+        failureCode: 'OUTPUT_READ_FAILED',
+      }).catch((receiptErr) => {
+        logger.error(
+          '[Presentations] Could not record export-receipt failure (pptx read)',
+          receiptErr
+        );
+      });
+      throw readErr;
+    }
+    await completePresentationExport({
+      organizationId: orgId,
+      exportReceiptId: pptxExportBegin.receipt.exportReceiptId,
+      buffer: pptxExportBuffer,
+    }).catch((receiptErr) => {
+      logger.error('[Presentations] Could not record export-receipt success (pptx)', receiptErr);
+    });
 
     const filename = presentationExportFilename(deck.title, 'pptx', isDraftExport);
     markPresentationExportResponse(res, exportMode, String(freshDeck.id), freshDeck.version);
@@ -2688,6 +2762,17 @@ router.get(
         .json({ success: false, error: limitCheck.error, code: 'EXPORT_LIMIT_EXCEEDED' });
     }
 
+    // MAT-MVP-PPT-001 — freeze + hash the source and open a governed export
+    // receipt right before rendering (see `presentationExportReceiptService.ts`).
+    const pdfExportBegin = await beginPresentationExport({
+      organizationId: orgId,
+      deckId: String(deckId || ''),
+      deck,
+      format: 'pdf',
+      createdBy: userId,
+      requestIdempotencyKey: getIdempotencyKeyHeader(req),
+    });
+
     const filename = presentationExportFilename(deck.title, 'pdf', isDraftExport);
     markPresentationExportResponse(res, exportMode, String(deck.id), deck.version);
     res.setHeader('Content-Type', 'application/pdf');
@@ -2696,7 +2781,16 @@ router.get(
     try {
       const pdfMargin = 48;
       const doc = new PDFDocument({ margin: pdfMargin, size: 'A4' });
-      doc.pipe(res);
+      // Buffered (not `doc.pipe(res)`) so the FULL rendered bytes can be
+      // hashed for the governed export receipt before anything is sent to
+      // the client — see `completePresentationExport` below, which requires
+      // real bytes' proof (hash + size), never a fabricated success.
+      const pdfChunks: Buffer[] = [];
+      const pdfFinished = new Promise<Buffer>((resolve, reject) => {
+        doc.on('data', (chunk: Buffer) => pdfChunks.push(chunk));
+        doc.on('end', () => resolve(Buffer.concat(pdfChunks)));
+        doc.on('error', reject);
+      });
 
       cards.forEach((card: any, index: number) => {
         if (index > 0) doc.addPage();
@@ -2759,6 +2853,15 @@ router.get(
       });
 
       doc.end();
+      const pdfBuffer = await pdfFinished;
+
+      await completePresentationExport({
+        organizationId: orgId,
+        exportReceiptId: pdfExportBegin.receipt.exportReceiptId,
+        buffer: pdfBuffer,
+      }).catch((receiptErr) => {
+        logger.error('[Presentations] Could not record export-receipt success (pdf)', receiptErr);
+      });
 
       await recordCanonicalDeckExportTrace({
         organizationId: orgId,
@@ -2787,7 +2890,15 @@ router.get(
         entityId: String(deckId || ''),
         actionUrl: `/presentations/builder/${deckId}`,
       }).catch(() => null);
+      res.end(pdfBuffer);
     } catch (exportErr: any) {
+      await failPresentationExport({
+        organizationId: orgId,
+        exportReceiptId: pdfExportBegin.receipt.exportReceiptId,
+        failureCode: exportErr?.message ? String(exportErr.message).slice(0, 200) : 'unknown',
+      }).catch((receiptErr) => {
+        logger.error('[Presentations] Could not record export-receipt failure (pdf)', receiptErr);
+      });
       await recordCanonicalDeckExportTrace({
         organizationId: orgId,
         userId,
@@ -7425,32 +7536,82 @@ router.post(
       `attachment; filename="${title.replace(/[^a-zA-Z0-9_-]/g, '_')}_png.zip"`
     );
 
-    const archive = Archiver('zip', { zlib: { level: 9 } });
-    archive.pipe(res);
-
-    for (let i = 0; i < cards.length; i++) {
-      const card = cards[i];
-      const cardTitle = card.title || card.key_message || `slide_${i + 1}`;
-      const safeName = cardTitle.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 60);
-
-      const svg = renderCardToSvg(card, i, title, deck.theme || 'corporate');
-      const pngBuffer = await sharp(Buffer.from(svg, 'utf-8')).png().toBuffer();
-
-      archive.append(Readable.from(pngBuffer), {
-        name: `${String(i + 1).padStart(2, '0')}_${safeName}.png`,
-      });
-    }
-
-    await archive.finalize();
-    await recordPresentationExportRecord({
+    // MAT-MVP-PPT-001 — freeze + hash the source and open a governed export
+    // receipt right before rendering (see `presentationExportReceiptService.ts`).
+    const pngExportBegin = await beginPresentationExport({
       organizationId: orgId,
-      userId,
       deckId: String(deckId || ''),
+      deck,
       format: 'png',
-      status: 'completed',
-      qualityReport: quality.report,
-      filePath: null,
+      createdBy: userId,
+      requestIdempotencyKey: getIdempotencyKeyHeader(req),
     });
+
+    try {
+      const archive = Archiver('zip', { zlib: { level: 9 } });
+      // Buffered (not `archive.pipe(res)`) so the FULL zip bytes can be
+      // hashed for the governed export receipt before anything is sent to
+      // the client.
+      const zipChunks: Buffer[] = [];
+      const zipFinished = new Promise<Buffer>((resolve, reject) => {
+        archive.on('data', (chunk: Buffer) => zipChunks.push(chunk));
+        archive.on('end', () => resolve(Buffer.concat(zipChunks)));
+        archive.on('error', reject);
+      });
+
+      for (let i = 0; i < cards.length; i++) {
+        const card = cards[i];
+        const cardTitle = card.title || card.key_message || `slide_${i + 1}`;
+        const safeName = cardTitle.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 60);
+
+        const svg = renderCardToSvg(card, i, title, deck.theme || 'corporate');
+        const pngBuffer = await sharp(Buffer.from(svg, 'utf-8')).png().toBuffer();
+
+        archive.append(Readable.from(pngBuffer), {
+          name: `${String(i + 1).padStart(2, '0')}_${safeName}.png`,
+        });
+      }
+
+      await archive.finalize();
+      const zipBuffer = await zipFinished;
+
+      await completePresentationExport({
+        organizationId: orgId,
+        exportReceiptId: pngExportBegin.receipt.exportReceiptId,
+        buffer: zipBuffer,
+      }).catch((receiptErr) => {
+        logger.error('[Presentations] Could not record export-receipt success (png)', receiptErr);
+      });
+
+      await recordPresentationExportRecord({
+        organizationId: orgId,
+        userId,
+        deckId: String(deckId || ''),
+        format: 'png',
+        status: 'completed',
+        qualityReport: quality.report,
+        filePath: null,
+      });
+      res.end(zipBuffer);
+    } catch (exportErr: any) {
+      await failPresentationExport({
+        organizationId: orgId,
+        exportReceiptId: pngExportBegin.receipt.exportReceiptId,
+        failureCode: exportErr?.message ? String(exportErr.message).slice(0, 200) : 'unknown',
+      }).catch((receiptErr) => {
+        logger.error('[Presentations] Could not record export-receipt failure (png)', receiptErr);
+      });
+      await recordPresentationExportRecord({
+        organizationId: orgId,
+        userId,
+        deckId: String(deckId || ''),
+        format: 'png',
+        status: 'failed',
+        qualityReport: quality.report,
+        errorCategory: exportErr?.message || 'unknown',
+      });
+      throw exportErr;
+    }
   })
 );
 
