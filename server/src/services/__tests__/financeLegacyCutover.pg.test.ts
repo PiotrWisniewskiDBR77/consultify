@@ -1,6 +1,4 @@
-import fs from 'node:fs/promises';
-import path from 'node:path';
-
+import { randomUUID } from 'node:crypto';
 import type { NextFunction, Response } from 'express';
 import { Client } from 'pg';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
@@ -9,6 +7,7 @@ import {
   FINANCE_LEGACY_WRITER_ROLLBACK_ENV,
   financeLegacyCutoverGuard,
 } from '../financeLegacyCutover.js';
+import { createArtifact } from '../finance/canonical/artifactVersionService.js';
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
 const REAL_PG =
@@ -17,36 +16,34 @@ const REAL_PG =
   CONNECTION_STRING.startsWith('postgres');
 
 describe.skipIf(!REAL_PG)('Finance legacy cutover telemetry (fresh real PostgreSQL)', () => {
-  const organizationId = 'org-fin-cutover';
-  const userId = 'user-fin-cutover';
-  const legacyId = 'legacy-model-1';
-  const artifactId = '11111111-1111-4111-8111-111111111111';
-  const businessVersionId = '22222222-2222-4222-8222-222222222222';
+  const fixtureId = randomUUID();
+  const organizationId = `org-fin-cutover-${fixtureId}`;
+  const userId = `user-fin-cutover-${fixtureId}`;
+  const legacyId = `legacy-model-${fixtureId}`;
+  let artifactId = '';
+  let businessVersionId = '';
   let client: Client;
 
   beforeAll(async () => {
     client = new Client({ connectionString: CONNECTION_STRING });
     await client.connect();
-    const migration = await fs.readFile(
-      path.resolve(process.cwd(), 'migrations/20260907_finance_legacy_cutover.sql'),
-      'utf8'
-    );
-    await client.query(migration);
-    await client.query(`
-      CREATE TABLE finance_artifact_aliases (
-        organization_id TEXT NOT NULL,
-        legacy_table TEXT NOT NULL,
-        legacy_id TEXT NOT NULL,
-        artifact_id UUID,
-        business_version_id UUID,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-      )
-    `);
+    await client.query(`INSERT INTO organizations(id,name) VALUES($1,$2)`, [
+      organizationId,
+      'Finance cutover fixture',
+    ]);
+    const canonical = await createArtifact({
+      organizationId,
+      artifactType: 'STATEMENT_PACK',
+      createdBy: userId,
+    });
+    artifactId = canonical.artifact.artifact_id;
+    businessVersionId = canonical.businessVersion.business_version_id;
     await client.query(
       `INSERT INTO finance_artifact_aliases
-         (organization_id,legacy_table,legacy_id,artifact_id,business_version_id)
-       VALUES ($1,'financial_models',$2,$3,$4)`,
-      [organizationId, legacyId, artifactId, businessVersionId]
+         (organization_id,legacy_table,legacy_id,artifact_id,business_version_id,
+          mapping_confidence,mapping_reason,created_by)
+       VALUES ($1,'financial_models',$2,$3,$4,'AUTO_MIGRATE','test fixture',$5)`,
+      [organizationId, legacyId, artifactId, businessVersionId, userId]
     );
   });
 
