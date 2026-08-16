@@ -1,0 +1,130 @@
+{
+  "taskId": "FIN-UI-CANON-001",
+  "baselineSha": "71ec92695737d415b5319f001f9492bae4382e17",
+  "productSha": "748c801eb7ade1661a9ab5d43fd7dc73ca4badde",
+  "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
+  "observedCandidateSha": "6b5587aca30ca8a1d2c1ae7d9ced694595ac87f4",
+  "ownerTables": [
+    "feature_flags",
+    "finance_artifacts",
+    "finance_business_versions",
+    "finance_artifact_aliases",
+    "finance_stmt_lines",
+    "finance_baseline_models",
+    "finance_baseline_outputs",
+    "finance_analysis_kpi_values",
+    "finance_valuation_cases"
+  ],
+  "changedPaths": [
+    "src/components/Economics/FinanceHub.tsx",
+    "src/components/Economics/__tests__/resolveFinanceDetailBranches.test.ts",
+    "docs/program/evidence/closure/codex/FIN-UI-CANON-001/TASK_EVIDENCE.json"
+  ],
+  "changedPathRationale": {
+    "runtime": "Cold deep links now resolve after the target tab rows load and cover Statement Pack, Baseline, Analysis, Prediction and Valuation.",
+    "tests": "Regression coverage for all five canonical URL segments, encoded immutable ids and invalid path controls.",
+    "evidence": "Exact isolated runtime, browser, responsive, locale/theme and focused-test results."
+  },
+  "fixtures": {
+    "browserDatabase": "disposable pgvector/pgvector:pg16 container consultify-fin-ui-71ec9269 on 127.0.0.1:55484",
+    "cleanRouteGateDatabase": "disposable pgvector/pgvector:pg16 container consultify-fin-ui-fix on 127.0.0.1:55486",
+    "application": "Vite 127.0.0.1:3000 plus Express 127.0.0.1:3001 with NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false",
+    "tenant": "demo-org",
+    "financeSeed": "reset-and-seed-finance-demo.ts, explicit isolated RESET_FINANCE_CONFIRM=YES",
+    "flags": [
+      "financeStatementPackWorkspaceV2",
+      "financeBaselineWorkspaceV1",
+      "financePredictionWorkspaceV1",
+      "financeAnalysisWorkspaceV1",
+      "financeValuationWorkspaceV1"
+    ]
+  },
+  "commands": [
+    {
+      "command": "DATABASE_URL=<isolated-pg> DB_TYPE=postgres NODE_ENV=test npx tsx server/scripts/migrate.postgres.ts (fresh)",
+      "exitCode": 0,
+      "result": "722 migrations applied"
+    },
+    {
+      "command": "DATABASE_URL=<isolated-pg> DB_TYPE=postgres NODE_ENV=test npx tsx server/scripts/migrate.postgres.ts (repeat)",
+      "exitCode": 0,
+      "result": "Applying migrations: 0"
+    },
+    {
+      "command": "npx vitest run five Finance workspace test directories plus resolveFinanceDetailBranches.test.ts",
+      "exitCode": 0,
+      "result": "45/45 files, 411/411 tests"
+    },
+    {
+      "command": "npx vitest run src/components/Economics/__tests__/resolveFinanceDetailBranches.test.ts",
+      "exitCode": 0,
+      "result": "1/1 file, 21/21 tests"
+    },
+    {
+      "command": "REQUIRE_DB_TESTS=1 RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=<isolated-pg> npx vitest run six finance-v2 PG route suites",
+      "exitCode": 0,
+      "result": "6/6 files passed, 42/42 tests passed on a newly created, strictly migrated database"
+    },
+    {
+      "command": "DATABASE_URL=<clean-route-gate-pg> DB_TYPE=postgres NODE_ENV=test npx tsx server/scripts/migrate.postgres.ts (repeat after route gate)",
+      "exitCode": 0,
+      "result": "Applying migrations: 0"
+    },
+    {
+      "command": "npx eslint FinanceHub.tsx resolveFinanceDetailBranches.test.ts",
+      "exitCode": 0,
+      "result": "0 errors; 30 pre-existing FinanceHub warnings"
+    }
+  ],
+  "denominators": {
+    "freshMigrations": "722/722",
+    "repeatMigrations": "0 pending",
+    "focusedUiTests": "411/411",
+    "deepLinkRegression": "21/21",
+    "realPostgresRoutes": "42/42 across exactly 6/6 files on fresh isolated PostgreSQL",
+    "browserWorkspaceMounts": "3/5 directly opened with real seeded records (Statement Pack, Baseline, Analysis); Prediction exposed a same-id stale-selection symptom before the deep-link fix; Valuation not completed in the bounded run",
+    "responsiveWidths": "3/3 without document horizontal overflow (1440, 768, 390)",
+    "locales": "2/2 (PL, EN)",
+    "themes": "2/2 (light, dark)"
+  },
+  "browserEvidence": {
+    "off": "With no remote rows, Finance rendered the existing legacy five-tab list and seeded Statement Pack.",
+    "on": "All five tenant-scoped remote flags evaluated true through /api/feature-flags/runtime; Statement Pack, Baseline and Analysis canonical mounts rendered against real PostgreSQL data.",
+    "coldReload": "GET /finance/models/<immutable-id> after the fix reopened the Baseline detail with one matching heading.",
+    "responsive": [
+      { "width": 1440, "bodyScrollWidth": 1440, "documentScrollWidth": 1440 },
+      { "width": 768, "bodyScrollWidth": 768, "documentScrollWidth": 768 },
+      { "width": 390, "bodyScrollWidth": 390, "documentScrollWidth": 390 }
+    ],
+    "localeTheme": {
+      "enDark": { "lang": "en", "className": "dark focus-highlight", "colorScheme": "dark" },
+      "plLight": { "lang": "pl", "className": "focus-highlight", "colorScheme": "light" }
+    }
+  },
+  "browserArtifacts": [],
+  "invalidatedEvidence": [
+    {
+      "result": "5/6 files, 40/42 tests on the reused browser/seed database",
+      "reason": "The database had already been mutated by application startup and demo seeding. Both failures disappeared on a newly created database after strict from-zero migrations; this run is contaminated fixture evidence, not a regression."
+    }
+  ],
+  "negativeControls": {
+    "offPath": "Remote Finance workspace flags absent before ON fixture; legacy runtime remained available.",
+    "invalidDeepLinks": "Singular and extra-segment paths return null in the parser regression test.",
+    "encodedIdentity": "Encoded immutable id is decoded exactly.",
+    "tenant": "Cross-tenant Baseline control returned 404 with code=NOT_FOUND on fresh isolated PostgreSQL."
+  },
+  "rollback": {
+    "code": "Revert only the two Finance UI paths listed in changedPaths.",
+    "data": "No production data touched; the disposable container holds all fixture mutations."
+  },
+  "verdict": "PARTIAL",
+  "humanGate": "BLOCKED_HUMAN",
+  "openBlockers": [
+    "Mounted browser completion for Prediction and Valuation, plus explicit conflict/error-state journeys, is incomplete.",
+    "Axe coverage is present only in the existing focused component suites, not a mounted axe scan of every workspace.",
+    "Keyboard traversal was not completed across every workspace.",
+    "Human visual review and VoiceOver remain BLOCKED_HUMAN by task contract.",
+    "Server startup's secondary Table Platform runner logged a non-fatal syntax error in 20260809_finance_v3_d03_analysis_03_kpi_p0_catalog.sql even though the strict migration runner passed fresh and repeat."
+  ]
+}
