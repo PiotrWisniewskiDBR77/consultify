@@ -47,9 +47,8 @@ import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 // Server-side bridge into the shared, engine-grounded domain layer. Path is
 // relative (not the `@/*` alias) because server/tsconfig.json's `@/*` maps to
-// server/src/*, not the repo-root src/*; tsx resolves each file's aliases
-// against the tsconfig nearest to THAT file, so buildSwotOutput.ts's own
-// `@/config/...` imports still resolve correctly against the root tsconfig.
+// server/src/*, not the repo-root src/*. Files in this shared dependency must
+// also use relative imports so the backend can execute them directly via tsx.
 import { buildSwotOutput, SWOT_ENGINE_VERSION } from '../../../../src/toolOutputs/buildSwotOutput';
 import { computeOutputHash } from '../../../../src/toolOutputs/outputLifecycle';
 import {

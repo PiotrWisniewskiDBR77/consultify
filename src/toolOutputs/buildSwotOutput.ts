@@ -15,8 +15,8 @@
 import {
   isAcceptedSwotItem,
   validateRecommendedMove,
-} from '@/config/swot/swotTensionEngine';
-import type { SWOTItem, SWOTMove, SWOTTension } from '@/store/useToolStore';
+} from '../config/swot/swotTensionEngine';
+import type { SWOTItem, SWOTMove, SWOTTension } from '../store/useToolStore';
 
 import { computeOutputHash } from './outputLifecycle';
 import type {

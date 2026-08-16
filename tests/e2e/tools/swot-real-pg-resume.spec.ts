@@ -73,12 +73,14 @@ test('TLS-02/03: SWOT deep-link, edit, durable autosave and hard-reload resume o
     data: { toolType: 'dynamic-swot', name: `TLS real-PG SWOT ${Date.now()}` },
   });
   expect(create.status()).toBe(200);
-  const sessionId = String((await create.json()).id || '');
+  const createdSession = await create.json();
+  const sessionId = String(createdSession.id || '');
   expect(sessionId.length).toBeGreaterThan(8);
 
   const seed = await request.put(`${API_BASE_URL}/api/tools/${sessionId}`, {
     headers,
     data: {
+      expectedVersion: createdSession.version,
       status: 'IN_PROGRESS',
       completionPercent: 20,
       confidenceAvg: 4,
@@ -174,11 +176,13 @@ test('TLS-05: ready SWOT is submitted and approved in UI, frozen in PostgreSQL a
     data: { toolType: 'dynamic-swot', name: `TLS quality gate ${Date.now()}` },
   });
   expect(create.status()).toBe(200);
-  const sessionId = String((await create.json()).id || '');
+  const createdSession = await create.json();
+  const sessionId = String(createdSession.id || '');
 
   const ready = await request.put(`${API_BASE_URL}/api/tools/${sessionId}`, {
     headers,
     data: {
+      expectedVersion: createdSession.version,
       answers: completeSwotAnswers,
       completionPercent: 100,
       confidenceAvg: 4,
