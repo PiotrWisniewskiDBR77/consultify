@@ -1,0 +1,55 @@
+{
+  "taskId": "OPS-OBS-001",
+  "baselineSha": "c1d7e615ecf07426c3361313bd99d3227153a010",
+  "productSha": "b3eaf7ab134ed9a484dc09db082a2e4311ae30de",
+  "leaseSha256": "not_applicable_integrator_bounded_task",
+  "changedPaths": [
+    "server/src/services/operationalAlertService.ts",
+    "server/src/middleware/metrics.middleware.ts",
+    "tests/unit/backend/operationalAlertService.test.ts",
+    "docs/runbooks/OPS-OBS-001_OPERATIONAL_ALERTS.md",
+    "docs/program/evidence/closure/integrator/OPS-OBS-001/TASK_EVIDENCE.json"
+  ],
+  "changedPathRationale": {
+    "server/src/services/operationalAlertService.ts": "Bounded correlation-aware signal and alert state seam.",
+    "server/src/middleware/metrics.middleware.ts": "Publishes active operational alerts through the existing Prometheus export.",
+    "tests/unit/backend/operationalAlertService.test.ts": "Positive controls, fail-closed identity validation, thresholds and recovery acknowledgment.",
+    "docs/runbooks/OPS-OBS-001_OPERATIONAL_ALERTS.md": "Runbook linked by every emitted alert kind.",
+    "docs/program/evidence/closure/integrator/OPS-OBS-001/TASK_EVIDENCE.json": "Machine-readable bounded-task evidence."
+  },
+  "ownerTables": [],
+  "commands": [
+    {
+      "command": "npx vitest run tests/unit/backend/operationalAlertService.test.ts tests/integration/routes/metrics.prometheus.export.fail-closed.contract.test.ts --maxWorkers=1 --no-file-parallelism",
+      "exitCode": 0
+    },
+    {
+      "command": "npx vitest run tests/unit/backend/middleware/metrics.middleware.test.ts --maxWorkers=1 --no-file-parallelism",
+      "exitCode": 0
+    },
+    {
+      "command": "git diff --check -- server/src/services/operationalAlertService.ts server/src/middleware/metrics.middleware.ts tests/unit/backend/operationalAlertService.test.ts docs/runbooks/OPS-OBS-001_OPERATIONAL_ALERTS.md",
+      "exitCode": 0
+    }
+  ],
+  "denominators": {
+    "focusedTestFiles": { "passed": 3, "failed": 0 },
+    "focusedTests": { "passed": 32, "failed": 0, "skipped": 0, "todo": 0 }
+  },
+  "fixtures": {
+    "writeFailurePositiveControl": "1 failure in 100 writes over five minutes",
+    "recovery": "clock advanced beyond five-minute window before acknowledgment"
+  },
+  "negativeControls": {
+    "missingCorrelationIdRejected": true,
+    "unsafeIdentityRejected": true,
+    "activeAlertAcknowledgmentRejected": true,
+    "staleOutboxAndAuthSamplesDoNotAlert": true
+  },
+  "browserArtifacts": [],
+  "rollback": {
+    "method": "Revert the four implementation/runbook paths; no schema or persisted runtime state is introduced.",
+    "executed": false
+  },
+  "verdict": "PARTIAL"
+}
