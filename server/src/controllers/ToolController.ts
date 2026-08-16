@@ -29,6 +29,7 @@ import {
 } from '../services/tools/swotCandidateHandoffService.js';
 import {
   buildPresentationSlidesFromOutput,
+  EmptyToolOutputError,
   ensureToolOutputSnapshot,
   persistCanonicalReport,
   recordInitiativeProposal,
@@ -2297,7 +2298,20 @@ export class ToolController {
       // that existing consumers (getGeneratedInitiatives, the idempotency
       // ledger below) already rely on; it is NOT a second source of truth
       // for content — `tool_outputs` is.
-      const canonicalOutput = await ensureToolOutputSnapshot(session, { id: user.id }, now);
+      let canonicalOutput: Awaited<ReturnType<typeof ensureToolOutputSnapshot>>;
+      try {
+        canonicalOutput = await ensureToolOutputSnapshot(session, { id: user.id }, now);
+      } catch (err) {
+        // TLS-BVP-001: refuse to promote/freeze an empty-lineage snapshot.
+        // Same catch-and-map convention as SwotCandidateHandoffError below
+        // (error carries its own status+code; anything else rethrows to the
+        // existing asyncHandler/error-middleware path, unchanged).
+        if (err instanceof EmptyToolOutputError) {
+          res.status(err.status).json({ error: err.message, code: err.code });
+          return;
+        }
+        throw err;
+      }
 
       const promoteBatchId = `promote-${outputType}`;
 
