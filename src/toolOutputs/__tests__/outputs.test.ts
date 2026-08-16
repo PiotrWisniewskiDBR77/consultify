@@ -102,7 +102,6 @@ describe('contentHash — determinizm', () => {
     expect(a.contentHash).not.toBe(c.contentHash);
   });
 });
-
 describe('cykl życia Outputu — niezmienność', () => {
   it('przechodzi draft → in_review → approved', () => {
     const approved = approve(submitForReview(makeOutput()), 'user-1', '2026-08-13T12:00:00Z');
@@ -265,4 +264,3 @@ describe('deterministyczny renderer Report/Presentation', () => {
     expect(first).toBe(second);
   });
 });
-

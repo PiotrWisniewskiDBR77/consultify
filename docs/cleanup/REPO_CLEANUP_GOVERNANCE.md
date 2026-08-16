@@ -57,6 +57,16 @@ Before deleting or retiring a file, verify:
 3. a non-suffixed or better-canonical replacement exists
 4. the file is not carrying unique content that has not been preserved elsewhere
 
+## Whitespace Gate
+
+Use `scripts/cleanup/check-candidate-whitespace.sh` for the recovery candidate.
+It applies `git diff --check` to code and ordinary documentation while excluding
+only named raw-evidence corpora (`docs/qa`, readiness evidence, regression
+transcripts and generated handoff test TSVs). Those captures preserve external
+HTTP/SQL/tool bytes; normalizing them would alter evidence. Adding a new exclude
+pattern requires a governance change and must never be used to hide source-code
+whitespace failures.
+
 ## Version-Stack Rules
 
 - `V8` documents may supersede older docs, but older docs remain historical until an index says otherwise.

@@ -163,6 +163,10 @@ Fresh checks on this candidate:
   method-contract mirrors. `server npm run build` first verifies mirror drift
   and then passes. Focused domain/contract regression passes 4/4 files and
   43/43 assertions.
+- Repository whitespace policy now distinguishes mutable source/docs from raw
+  immutable HTTP/SQL/regression evidence. The candidate gate checks every
+  changed path except explicitly named evidence corpora; those files retain
+  exact source bytes rather than being silently normalized.
 
 ## Repository scale
 
