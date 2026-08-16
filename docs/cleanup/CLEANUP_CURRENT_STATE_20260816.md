@@ -157,7 +157,8 @@ Fresh checks on this candidate:
 
 - Local branches: 1268
 - Remote branches: 189
-- Registered worktrees after candidate creation: 352
+- Registered worktrees after candidate creation: 352; 3 stale registrations
+  and 32 clean represented checkouts have since been retired, leaving 317
 - Unique worktree tip SHAs: 251
 - Worktrees sharing duplicate tips: 130
 - Local branches not merged into the baseline: 749

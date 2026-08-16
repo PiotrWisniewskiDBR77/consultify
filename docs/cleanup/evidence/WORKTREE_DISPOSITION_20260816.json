@@ -1,11 +1,10 @@
 {
   "schemaVersion": 1,
-  "observedAt": "2026-08-16T17:19:39.891Z",
-  "candidate": "1ca9d0c06b509dcf6ede144770fb3520ae6d3e7a",
-  "total": 349,
+  "observedAt": "2026-08-16T17:24:42.016Z",
+  "candidate": "b7d6bc3c43b30b84281573b4a15bc5ab5e2fda56",
+  "total": 317,
   "counts": {
     "KEEP_CANONICAL": 1,
-    "PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY": 32,
     "QUARANTINE_DIRTY": 137,
     "QUARANTINE_FROZEN_SOURCE": 1,
     "QUARANTINE_IGNORED_EVIDENCE_REVIEW": 178
@@ -474,24 +473,6 @@
       "decision": "QUARANTINE_IGNORED_EVIDENCE_REVIEW"
     },
     {
-      "path": "/Users/piotrwisniewski/.codex/worktrees/ideas-streams/baseline-demo",
-      "head": "9d17cac11484a82f729a51044e30453e39fbcb02",
-      "branch": null,
-      "detached": true,
-      "prunable": null,
-      "statusEntries": 0,
-      "trackedEntries": 0,
-      "untrackedEntries": 0,
-      "conflictEntries": 0,
-      "statusError": null,
-      "tipMultiplicity": 2,
-      "ignoredEntries": [
-        "!! node_modules/"
-      ],
-      "representedByCandidate": true,
-      "decision": "PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY"
-    },
-    {
       "path": "/Users/piotrwisniewski/.codex/worktrees/ideas-streams/s1-contrast",
       "head": "2c12080ebf030e27b345b499d085f4c4b42fe253",
       "branch": "codex/ideas-s26-processflow",
@@ -689,65 +670,6 @@
       "decision": "QUARANTINE_IGNORED_EVIDENCE_REVIEW"
     },
     {
-      "path": "/Users/piotrwisniewski/.codex/worktrees/mac-a11-siri-pm",
-      "head": "85ae001a8c0ff11ae1c3f6c7f2f0c5d4d4424115",
-      "branch": "codex/mac-a11-siri-pm-20260813",
-      "detached": false,
-      "prunable": null,
-      "statusEntries": 0,
-      "trackedEntries": 0,
-      "untrackedEntries": 0,
-      "conflictEntries": 0,
-      "statusError": null,
-      "tipMultiplicity": 1,
-      "ignoredEntries": [
-        "!! junit.xml",
-        "!! node_modules",
-        "!! server/node_modules"
-      ],
-      "representedByCandidate": true,
-      "decision": "PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY"
-    },
-    {
-      "path": "/Users/piotrwisniewski/.codex/worktrees/mac-a12-registers",
-      "head": "a299a6cb8ace38df142de3a8f84f586550f320fd",
-      "branch": "codex/mac-a12-registers-20260813",
-      "detached": false,
-      "prunable": null,
-      "statusEntries": 0,
-      "trackedEntries": 0,
-      "untrackedEntries": 0,
-      "conflictEntries": 0,
-      "statusError": null,
-      "tipMultiplicity": 1,
-      "ignoredEntries": [
-        "!! node_modules",
-        "!! server/node_modules"
-      ],
-      "representedByCandidate": true,
-      "decision": "PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY"
-    },
-    {
-      "path": "/Users/piotrwisniewski/.codex/worktrees/mac-a13-drd-scoring",
-      "head": "707f070ffd6cc7ef986bec10bc5d9a98e77aa61c",
-      "branch": "codex/mac-a13-drd-scoring-20260813",
-      "detached": false,
-      "prunable": null,
-      "statusEntries": 0,
-      "trackedEntries": 0,
-      "untrackedEntries": 0,
-      "conflictEntries": 0,
-      "statusError": null,
-      "tipMultiplicity": 1,
-      "ignoredEntries": [
-        "!! junit.xml",
-        "!! node_modules",
-        "!! server/node_modules"
-      ],
-      "representedByCandidate": true,
-      "decision": "PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY"
-    },
-    {
       "path": "/Users/piotrwisniewski/.codex/worktrees/mac-a14-boot",
       "head": "710863dccea19b159d2b7e03bff270ac9e805416",
       "branch": "codex/mac-a14-boot-20260813",
@@ -771,151 +693,6 @@
       ],
       "representedByCandidate": true,
       "decision": "QUARANTINE_IGNORED_EVIDENCE_REVIEW"
-    },
-    {
-      "path": "/Users/piotrwisniewski/.codex/worktrees/mac-a2-kernel",
-      "head": "f6ded745470b237786853a740cd588899f179ea6",
-      "branch": "codex/mac-a2-kernel-20260813",
-      "detached": false,
-      "prunable": null,
-      "statusEntries": 0,
-      "trackedEntries": 0,
-      "untrackedEntries": 0,
-      "conflictEntries": 0,
-      "statusError": null,
-      "tipMultiplicity": 1,
-      "ignoredEntries": [
-        "!! junit.xml",
-        "!! node_modules",
-        "!! server/node_modules"
-      ],
-      "representedByCandidate": true,
-      "decision": "PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY"
-    },
-    {
-      "path": "/Users/piotrwisniewski/.codex/worktrees/mac-a3-drd",
-      "head": "0dedfb4e13daf88013713a6657a25bc446ea1f6c",
-      "branch": "codex/mac-a3-drd-20260813",
-      "detached": false,
-      "prunable": null,
-      "statusEntries": 0,
-      "trackedEntries": 0,
-      "untrackedEntries": 0,
-      "conflictEntries": 0,
-      "statusError": null,
-      "tipMultiplicity": 1,
-      "ignoredEntries": [
-        "!! junit.xml",
-        "!! node_modules",
-        "!! server/node_modules"
-      ],
-      "representedByCandidate": true,
-      "decision": "PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY"
-    },
-    {
-      "path": "/Users/piotrwisniewski/.codex/worktrees/mac-a4-siri",
-      "head": "efc79a16f20f2a2b43da3a16fae5a0307936bdb2",
-      "branch": "codex/mac-a4-siri-20260813",
-      "detached": false,
-      "prunable": null,
-      "statusEntries": 0,
-      "trackedEntries": 0,
-      "untrackedEntries": 0,
-      "conflictEntries": 0,
-      "statusError": null,
-      "tipMultiplicity": 1,
-      "ignoredEntries": [
-        "!! junit.xml",
-        "!! node_modules",
-        "!! server/node_modules"
-      ],
-      "representedByCandidate": true,
-      "decision": "PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY"
-    },
-    {
-      "path": "/Users/piotrwisniewski/.codex/worktrees/mac-a5-workspace",
-      "head": "4141b8da7f17fb07492b196a1cdd367a7c4ebc4f",
-      "branch": "codex/mac-a5-workspace-20260813",
-      "detached": false,
-      "prunable": null,
-      "statusEntries": 0,
-      "trackedEntries": 0,
-      "untrackedEntries": 0,
-      "conflictEntries": 0,
-      "statusError": null,
-      "tipMultiplicity": 1,
-      "ignoredEntries": [
-        "!! dev-render/.vite-cache/",
-        "!! junit.xml",
-        "!! node_modules",
-        "!! server/node_modules"
-      ],
-      "representedByCandidate": true,
-      "decision": "PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY"
-    },
-    {
-      "path": "/Users/piotrwisniewski/.codex/worktrees/mac-a6-drd-slice",
-      "head": "f76c215e74f64c536763f19b5d8e618bde535dfd",
-      "branch": "codex/mac-a6-drd-slice-20260813",
-      "detached": false,
-      "prunable": null,
-      "statusEntries": 0,
-      "trackedEntries": 0,
-      "untrackedEntries": 0,
-      "conflictEntries": 0,
-      "statusError": null,
-      "tipMultiplicity": 1,
-      "ignoredEntries": [
-        "!! dev-render/.vite-cache/",
-        "!! junit.xml",
-        "!! node_modules",
-        "!! server/dist/",
-        "!! server/node_modules"
-      ],
-      "representedByCandidate": true,
-      "decision": "PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY"
-    },
-    {
-      "path": "/Users/piotrwisniewski/.codex/worktrees/mac-a7-siri-slice",
-      "head": "1d10b340170cb941a96227ccb081bc468caaaa88",
-      "branch": "codex/mac-a7-siri-slice-20260813",
-      "detached": false,
-      "prunable": null,
-      "statusEntries": 0,
-      "trackedEntries": 0,
-      "untrackedEntries": 0,
-      "conflictEntries": 0,
-      "statusError": null,
-      "tipMultiplicity": 1,
-      "ignoredEntries": [
-        "!! dev-render/.vite-cache/",
-        "!! junit.xml",
-        "!! node_modules",
-        "!! server/node_modules"
-      ],
-      "representedByCandidate": true,
-      "decision": "PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY"
-    },
-    {
-      "path": "/Users/piotrwisniewski/.codex/worktrees/mac-a8-outputs",
-      "head": "b960534d9751172f61dca710e0db6c1960318874",
-      "branch": "codex/mac-a8-outputs-20260813",
-      "detached": false,
-      "prunable": null,
-      "statusEntries": 0,
-      "trackedEntries": 0,
-      "untrackedEntries": 0,
-      "conflictEntries": 0,
-      "statusError": null,
-      "tipMultiplicity": 1,
-      "ignoredEntries": [
-        "!! junit.xml",
-        "!! node_modules",
-        "!! server/dist/",
-        "!! server/node_modules"
-      ],
-      "representedByCandidate": true,
-      "decision": "PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY"
     },
     {
       "path": "/Users/piotrwisniewski/.codex/worktrees/mac-audit2-a",
@@ -948,25 +725,6 @@
       "ignoredEntries": [],
       "representedByCandidate": false,
       "decision": "QUARANTINE_DIRTY"
-    },
-    {
-      "path": "/Users/piotrwisniewski/.codex/worktrees/mac-base6",
-      "head": "f3e7df565e0da826ba110d85aad3c3c81a1087f1",
-      "branch": null,
-      "detached": true,
-      "prunable": null,
-      "statusEntries": 0,
-      "trackedEntries": 0,
-      "untrackedEntries": 0,
-      "conflictEntries": 0,
-      "statusError": null,
-      "tipMultiplicity": 3,
-      "ignoredEntries": [
-        "!! junit.xml",
-        "!! node_modules"
-      ],
-      "representedByCandidate": true,
-      "decision": "PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY"
     },
     {
       "path": "/Users/piotrwisniewski/.codex/worktrees/mac-clean-integ",
@@ -1063,46 +821,6 @@
       "ignoredEntries": [],
       "representedByCandidate": false,
       "decision": "QUARANTINE_DIRTY"
-    },
-    {
-      "path": "/Users/piotrwisniewski/.codex/worktrees/mac-p0-http",
-      "head": "827a5c558c74151764915fd9b425a58d55df4d1b",
-      "branch": "codex/mac-p0-http-20260813",
-      "detached": false,
-      "prunable": null,
-      "statusEntries": 0,
-      "trackedEntries": 0,
-      "untrackedEntries": 0,
-      "conflictEntries": 0,
-      "statusError": null,
-      "tipMultiplicity": 1,
-      "ignoredEntries": [
-        "!! junit.xml",
-        "!! node_modules",
-        "!! server/node_modules"
-      ],
-      "representedByCandidate": true,
-      "decision": "PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY"
-    },
-    {
-      "path": "/Users/piotrwisniewski/.codex/worktrees/mac-p0a-bootstrap",
-      "head": "5b5eb2889169a0f74c7c641e4307b0dedac14dcc",
-      "branch": "codex/mac-p0a-bootstrap-20260813",
-      "detached": false,
-      "prunable": null,
-      "statusEntries": 0,
-      "trackedEntries": 0,
-      "untrackedEntries": 0,
-      "conflictEntries": 0,
-      "statusError": null,
-      "tipMultiplicity": 1,
-      "ignoredEntries": [
-        "!! junit.xml",
-        "!! node_modules",
-        "!! server/node_modules"
-      ],
-      "representedByCandidate": true,
-      "decision": "PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY"
     },
     {
       "path": "/Users/piotrwisniewski/.codex/worktrees/mac-p0b-freeze",
@@ -2778,67 +2496,6 @@
       "decision": "QUARANTINE_IGNORED_EVIDENCE_REVIEW"
     },
     {
-      "path": "/Users/piotrwisniewski/consultify-wt/ib",
-      "head": "bab04f0311c4d136a45083389d1d221c1bd40799",
-      "branch": "codex/asm-ib",
-      "detached": false,
-      "prunable": null,
-      "statusEntries": 0,
-      "trackedEntries": 0,
-      "untrackedEntries": 0,
-      "conflictEntries": 0,
-      "statusError": null,
-      "tipMultiplicity": 1,
-      "ignoredEntries": [
-        "!! dev-render/.vite-cache/",
-        "!! node_modules",
-        "!! server/node_modules"
-      ],
-      "representedByCandidate": true,
-      "decision": "PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY"
-    },
-    {
-      "path": "/Users/piotrwisniewski/consultify-wt/ic",
-      "head": "97307f0f45e7d8238aadb7b83c91248af2f385f9",
-      "branch": "codex/asm-ic",
-      "detached": false,
-      "prunable": null,
-      "statusEntries": 0,
-      "trackedEntries": 0,
-      "untrackedEntries": 0,
-      "conflictEntries": 0,
-      "statusError": null,
-      "tipMultiplicity": 1,
-      "ignoredEntries": [
-        "!! dev-render/.vite-cache/",
-        "!! junit.xml",
-        "!! node_modules",
-        "!! server/node_modules"
-      ],
-      "representedByCandidate": true,
-      "decision": "PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY"
-    },
-    {
-      "path": "/Users/piotrwisniewski/consultify-wt/id",
-      "head": "f479cacf5b639cb9ee075960f76decc61cbcf0b9",
-      "branch": "codex/asm-id",
-      "detached": false,
-      "prunable": null,
-      "statusEntries": 0,
-      "trackedEntries": 0,
-      "untrackedEntries": 0,
-      "conflictEntries": 0,
-      "statusError": null,
-      "tipMultiplicity": 1,
-      "ignoredEntries": [
-        "!! dev-render/.vite-cache/",
-        "!! node_modules",
-        "!! server/node_modules"
-      ],
-      "representedByCandidate": true,
-      "decision": "PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY"
-    },
-    {
       "path": "/Users/piotrwisniewski/consultify-wt/ideas-a11y-backlog",
       "head": "2915bfb7c63e1c29fe1fbb13971fb328ee945293",
       "branch": null,
@@ -2929,7 +2586,7 @@
       "untrackedEntries": 0,
       "conflictEntries": 0,
       "statusError": null,
-      "tipMultiplicity": 2,
+      "tipMultiplicity": 1,
       "ignoredEntries": [
         "!! node_modules",
         "!! uploads/assessments/"
@@ -3132,26 +2789,6 @@
       "decision": "QUARANTINE_DIRTY"
     },
     {
-      "path": "/Users/piotrwisniewski/consultify-wt/if",
-      "head": "c277003936145276fdd7c145087c8daed9026a9d",
-      "branch": "codex/asm-if",
-      "detached": false,
-      "prunable": null,
-      "statusEntries": 0,
-      "trackedEntries": 0,
-      "untrackedEntries": 0,
-      "conflictEntries": 0,
-      "statusError": null,
-      "tipMultiplicity": 1,
-      "ignoredEntries": [
-        "!! dev-render/.vite-cache/",
-        "!! node_modules",
-        "!! server/node_modules"
-      ],
-      "representedByCandidate": true,
-      "decision": "PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY"
-    },
-    {
       "path": "/Users/piotrwisniewski/consultify-wt/ig",
       "head": "a9ea4849629742d8ffcc578bdd80f695633e6ac2",
       "branch": "codex/asm-ig",
@@ -3166,26 +2803,6 @@
       "ignoredEntries": [],
       "representedByCandidate": true,
       "decision": "QUARANTINE_DIRTY"
-    },
-    {
-      "path": "/Users/piotrwisniewski/consultify-wt/ih",
-      "head": "98636f91f4c6a05d912843b349fcec4cba1eb662",
-      "branch": "codex/asm-ih",
-      "detached": false,
-      "prunable": null,
-      "statusEntries": 0,
-      "trackedEntries": 0,
-      "untrackedEntries": 0,
-      "conflictEntries": 0,
-      "statusError": null,
-      "tipMultiplicity": 1,
-      "ignoredEntries": [
-        "!! junit.xml",
-        "!! node_modules",
-        "!! server/node_modules"
-      ],
-      "representedByCandidate": true,
-      "decision": "PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY"
     },
     {
       "path": "/Users/piotrwisniewski/consultify-wt/integrity-ic1-revert",
@@ -3377,66 +2994,6 @@
       "decision": "QUARANTINE_IGNORED_EVIDENCE_REVIEW"
     },
     {
-      "path": "/Users/piotrwisniewski/consultify-wt/s1",
-      "head": "94a3a48f76fecd3c9e9d08ff2c2e2847caa0a369",
-      "branch": "codex/asm-s1",
-      "detached": false,
-      "prunable": null,
-      "statusEntries": 0,
-      "trackedEntries": 0,
-      "untrackedEntries": 0,
-      "conflictEntries": 0,
-      "statusError": null,
-      "tipMultiplicity": 1,
-      "ignoredEntries": [
-        "!! junit.xml",
-        "!! node_modules",
-        "!! server/node_modules"
-      ],
-      "representedByCandidate": true,
-      "decision": "PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY"
-    },
-    {
-      "path": "/Users/piotrwisniewski/consultify-wt/s2",
-      "head": "614798da99cfce30e780493b19eeb8c4872f01e5",
-      "branch": "codex/asm-s2",
-      "detached": false,
-      "prunable": null,
-      "statusEntries": 0,
-      "trackedEntries": 0,
-      "untrackedEntries": 0,
-      "conflictEntries": 0,
-      "statusError": null,
-      "tipMultiplicity": 1,
-      "ignoredEntries": [
-        "!! junit.xml",
-        "!! node_modules",
-        "!! server/node_modules"
-      ],
-      "representedByCandidate": true,
-      "decision": "PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY"
-    },
-    {
-      "path": "/Users/piotrwisniewski/consultify-wt/s3",
-      "head": "2da6bee75b6dbda704ff956f2115245cb80c62a0",
-      "branch": "codex/asm-s3",
-      "detached": false,
-      "prunable": null,
-      "statusEntries": 0,
-      "trackedEntries": 0,
-      "untrackedEntries": 0,
-      "conflictEntries": 0,
-      "statusError": null,
-      "tipMultiplicity": 1,
-      "ignoredEntries": [
-        "!! junit.xml",
-        "!! node_modules",
-        "!! server/node_modules"
-      ],
-      "representedByCandidate": true,
-      "decision": "PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY"
-    },
-    {
       "path": "/Users/piotrwisniewski/consultify-wt/s4",
       "head": "ee3e6ecabf89f207a22fe8969707e6451da0ea50",
       "branch": "codex/asm-s4",
@@ -3463,184 +3020,6 @@
       ],
       "representedByCandidate": true,
       "decision": "QUARANTINE_IGNORED_EVIDENCE_REVIEW"
-    },
-    {
-      "path": "/Users/piotrwisniewski/consultify-wt/s4-baseline",
-      "head": "e45904dc7940f259b9cf017c283264d5c166c9ab",
-      "branch": null,
-      "detached": true,
-      "prunable": null,
-      "statusEntries": 0,
-      "trackedEntries": 0,
-      "untrackedEntries": 0,
-      "conflictEntries": 0,
-      "statusError": null,
-      "tipMultiplicity": 2,
-      "ignoredEntries": [
-        "!! node_modules"
-      ],
-      "representedByCandidate": true,
-      "decision": "PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY"
-    },
-    {
-      "path": "/Users/piotrwisniewski/consultify-wt/s5",
-      "head": "9c5a9ebcd4db4f9afff06712004b54f81a2ffba3",
-      "branch": "codex/asm-s5",
-      "detached": false,
-      "prunable": null,
-      "statusEntries": 0,
-      "trackedEntries": 0,
-      "untrackedEntries": 0,
-      "conflictEntries": 0,
-      "statusError": null,
-      "tipMultiplicity": 1,
-      "ignoredEntries": [
-        "!! junit.xml",
-        "!! node_modules",
-        "!! server/node_modules"
-      ],
-      "representedByCandidate": true,
-      "decision": "PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY"
-    },
-    {
-      "path": "/Users/piotrwisniewski/consultify-wt/s6",
-      "head": "cb1daad166ba98511b3fae0bc5d12ec325171a78",
-      "branch": "codex/asm-s6",
-      "detached": false,
-      "prunable": null,
-      "statusEntries": 0,
-      "trackedEntries": 0,
-      "untrackedEntries": 0,
-      "conflictEntries": 0,
-      "statusError": null,
-      "tipMultiplicity": 1,
-      "ignoredEntries": [
-        "!! junit.xml",
-        "!! node_modules",
-        "!! server/node_modules"
-      ],
-      "representedByCandidate": true,
-      "decision": "PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY"
-    },
-    {
-      "path": "/Users/piotrwisniewski/consultify-wt/s7",
-      "head": "bc014a9c567c7b17e2244c1cc494003c2c66c12c",
-      "branch": "codex/asm-s7",
-      "detached": false,
-      "prunable": null,
-      "statusEntries": 0,
-      "trackedEntries": 0,
-      "untrackedEntries": 0,
-      "conflictEntries": 0,
-      "statusError": null,
-      "tipMultiplicity": 1,
-      "ignoredEntries": [
-        "!! junit.xml",
-        "!! node_modules",
-        "!! server/node_modules"
-      ],
-      "representedByCandidate": true,
-      "decision": "PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY"
-    },
-    {
-      "path": "/Users/piotrwisniewski/consultify-wt/t1",
-      "head": "a5086638ea4e6d3b90b889e94bc8a16589d75a52",
-      "branch": "codex/asm-t1",
-      "detached": false,
-      "prunable": null,
-      "statusEntries": 0,
-      "trackedEntries": 0,
-      "untrackedEntries": 0,
-      "conflictEntries": 0,
-      "statusError": null,
-      "tipMultiplicity": 1,
-      "ignoredEntries": [
-        "!! junit.xml",
-        "!! node_modules",
-        "!! server/node_modules"
-      ],
-      "representedByCandidate": true,
-      "decision": "PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY"
-    },
-    {
-      "path": "/Users/piotrwisniewski/consultify-wt/t2",
-      "head": "9063bfe76a4dabf458688b5a6fa26f3a73ec57f6",
-      "branch": "codex/asm-t2",
-      "detached": false,
-      "prunable": null,
-      "statusEntries": 0,
-      "trackedEntries": 0,
-      "untrackedEntries": 0,
-      "conflictEntries": 0,
-      "statusError": null,
-      "tipMultiplicity": 1,
-      "ignoredEntries": [
-        "!! junit.xml",
-        "!! node_modules",
-        "!! server/node_modules"
-      ],
-      "representedByCandidate": true,
-      "decision": "PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY"
-    },
-    {
-      "path": "/Users/piotrwisniewski/consultify-wt/t3",
-      "head": "28e704e6a9738294f3f719db4e470d318199fb59",
-      "branch": "codex/asm-t3",
-      "detached": false,
-      "prunable": null,
-      "statusEntries": 0,
-      "trackedEntries": 0,
-      "untrackedEntries": 0,
-      "conflictEntries": 0,
-      "statusError": null,
-      "tipMultiplicity": 1,
-      "ignoredEntries": [
-        "!! junit.xml",
-        "!! node_modules",
-        "!! server/node_modules"
-      ],
-      "representedByCandidate": true,
-      "decision": "PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY"
-    },
-    {
-      "path": "/Users/piotrwisniewski/consultify-wt/t4",
-      "head": "9d19df8d714fa2b87a2ee05ae9471390a9c46541",
-      "branch": "codex/asm-t4",
-      "detached": false,
-      "prunable": null,
-      "statusEntries": 0,
-      "trackedEntries": 0,
-      "untrackedEntries": 0,
-      "conflictEntries": 0,
-      "statusError": null,
-      "tipMultiplicity": 1,
-      "ignoredEntries": [
-        "!! junit.xml",
-        "!! node_modules",
-        "!! server/node_modules"
-      ],
-      "representedByCandidate": true,
-      "decision": "PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY"
-    },
-    {
-      "path": "/Users/piotrwisniewski/consultify-wt/t5",
-      "head": "4d2eb093a6cfa9acafc8a74376c7f47b275728ad",
-      "branch": "codex/asm-t5",
-      "detached": false,
-      "prunable": null,
-      "statusEntries": 0,
-      "trackedEntries": 0,
-      "untrackedEntries": 0,
-      "conflictEntries": 0,
-      "statusError": null,
-      "tipMultiplicity": 1,
-      "ignoredEntries": [
-        "!! dev-render/.vite-cache/",
-        "!! node_modules",
-        "!! server/node_modules"
-      ],
-      "representedByCandidate": true,
-      "decision": "PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY"
     },
     {
       "path": "/Users/piotrwisniewski/consultify-wt/t6",
@@ -4110,25 +3489,6 @@
       "decision": "QUARANTINE_IGNORED_EVIDENCE_REVIEW"
     },
     {
-      "path": "/Users/piotrwisniewski/consultify-wt/w3-baseline",
-      "head": "f3e7df565e0da826ba110d85aad3c3c81a1087f1",
-      "branch": null,
-      "detached": true,
-      "prunable": null,
-      "statusEntries": 0,
-      "trackedEntries": 0,
-      "untrackedEntries": 0,
-      "conflictEntries": 0,
-      "statusError": null,
-      "tipMultiplicity": 3,
-      "ignoredEntries": [
-        "!! node_modules",
-        "!! server/node_modules"
-      ],
-      "representedByCandidate": true,
-      "decision": "PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY"
-    },
-    {
       "path": "/Users/piotrwisniewski/consultify-wt/w3-determinizm",
       "head": "f38eea968c5c068095678cf92588bcdeab73e33b",
       "branch": "codex/finance-v3-w3-determinizm",
@@ -4395,13 +3755,13 @@
     },
     {
       "path": "/Users/piotrwisniewski/Developer/consultify-recovery-canonical-20260816",
-      "head": "1ca9d0c06b509dcf6ede144770fb3520ae6d3e7a",
+      "head": "b7d6bc3c43b30b84281573b4a15bc5ab5e2fda56",
       "branch": "codex/recovery-canonical-20260816",
       "detached": false,
       "prunable": null,
-      "statusEntries": 2,
+      "statusEntries": 1,
       "trackedEntries": 0,
-      "untrackedEntries": 2,
+      "untrackedEntries": 1,
       "conflictEntries": 0,
       "statusError": null,
       "tipMultiplicity": 1,
@@ -4740,7 +4100,7 @@
       "untrackedEntries": 1,
       "conflictEntries": 0,
       "statusError": null,
-      "tipMultiplicity": 3,
+      "tipMultiplicity": 1,
       "ignoredEntries": [],
       "representedByCandidate": true,
       "decision": "QUARANTINE_DIRTY"
@@ -4896,7 +4256,7 @@
       "untrackedEntries": 0,
       "conflictEntries": 0,
       "statusError": null,
-      "tipMultiplicity": 2,
+      "tipMultiplicity": 1,
       "ignoredEntries": [],
       "representedByCandidate": true,
       "decision": "QUARANTINE_DIRTY"

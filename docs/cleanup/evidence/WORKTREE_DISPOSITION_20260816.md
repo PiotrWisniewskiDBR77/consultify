@@ -1,6 +1,6 @@
 # Worktree disposition — 2026-08-16
 
-Candidate: `1ca9d0c06b509dcf6ede144770fb3520ae6d3e7a`
+Candidate: `b7d6bc3c43b30b84281573b4a15bc5ab5e2fda56`
 
 This is a generated recovery manifest. `PRUNE_READY` means the checked-out
 commit is represented by the candidate and tracked/untracked status is clean;
@@ -11,7 +11,6 @@ it does not authorize deleting the preserved branch ref.
 | Decision | Count |
 | --- | ---: |
 | `KEEP_CANONICAL` | 1 |
-| `PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY` | 32 |
 | `QUARANTINE_DIRTY` | 137 |
 | `QUARANTINE_FROZEN_SOURCE` | 1 |
 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` | 178 |
@@ -43,7 +42,6 @@ it does not authorize deleting the preserved branch ref.
 | /Users/piotrwisniewski/.codex/worktrees/h4-regress | codex/h-h4-regress | `af54e2c051ca40f37fa743e9421cd97dba162ef5` | 3 | 0 | no | 1 | `QUARANTINE_DIRTY` |
 | /Users/piotrwisniewski/.codex/worktrees/h5-e2e | codex/h-h5-e2e | `91b562ea6658b4873dab2a36808a1e9e2cd34421` | 0 | 6 | no | 1 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
 | /Users/piotrwisniewski/.codex/worktrees/harness-fix | fix/dev-render-dangling-import-20260813 | `8b379a0eb9da1dd389e892852931caa8e4bb704f` | 0 | 1 | no | 1 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
-| /Users/piotrwisniewski/.codex/worktrees/ideas-streams/baseline-demo | (detached) | `9d17cac11484a82f729a51044e30453e39fbcb02` | 0 | 1 | yes | 2 | `PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY` |
 | /Users/piotrwisniewski/.codex/worktrees/ideas-streams/s1-contrast | codex/ideas-s26-processflow | `2c12080ebf030e27b345b499d085f4c4b42fe253` | 0 | 3 | no | 4 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
 | /Users/piotrwisniewski/.codex/worktrees/ideas-streams/s2-locale | codex/ideas-s20-docs | `feae0276a2a1915c5a468ea1741e7615b3580aee` | 0 | 2 | no | 1 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
 | /Users/piotrwisniewski/.codex/worktrees/ideas-streams/s3-ab | codex/ideas-s24-mindmap | `2c12080ebf030e27b345b499d085f4c4b42fe253` | 0 | 3 | no | 4 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
@@ -53,27 +51,14 @@ it does not authorize deleting the preserved branch ref.
 | /Users/piotrwisniewski/.codex/worktrees/ideas-streams/s7-table | codex/ideas-s19-slice | `1b315f4af72cecef77b01d7e270afa8f8cbfb588` | 0 | 3 | no | 1 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
 | /Users/piotrwisniewski/.codex/worktrees/ideas-streams/s8-confid | codex/ideas-s27-table | `2c12080ebf030e27b345b499d085f4c4b42fe253` | 0 | 5 | no | 4 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
 | /Users/piotrwisniewski/.codex/worktrees/ideas-transform/consultify | codex/ideas-transformation-20260809 | `4b634dc21ee476eab97f09b8a41ec2c8c10111dd` | 0 | 23 | no | 1 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
-| /Users/piotrwisniewski/.codex/worktrees/mac-a11-siri-pm | codex/mac-a11-siri-pm-20260813 | `85ae001a8c0ff11ae1c3f6c7f2f0c5d4d4424115` | 0 | 3 | yes | 1 | `PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY` |
-| /Users/piotrwisniewski/.codex/worktrees/mac-a12-registers | codex/mac-a12-registers-20260813 | `a299a6cb8ace38df142de3a8f84f586550f320fd` | 0 | 2 | yes | 1 | `PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY` |
-| /Users/piotrwisniewski/.codex/worktrees/mac-a13-drd-scoring | codex/mac-a13-drd-scoring-20260813 | `707f070ffd6cc7ef986bec10bc5d9a98e77aa61c` | 0 | 3 | yes | 1 | `PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY` |
 | /Users/piotrwisniewski/.codex/worktrees/mac-a14-boot | codex/mac-a14-boot-20260813 | `710863dccea19b159d2b7e03bff270ac9e805416` | 0 | 8 | yes | 1 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
-| /Users/piotrwisniewski/.codex/worktrees/mac-a2-kernel | codex/mac-a2-kernel-20260813 | `f6ded745470b237786853a740cd588899f179ea6` | 0 | 3 | yes | 1 | `PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY` |
-| /Users/piotrwisniewski/.codex/worktrees/mac-a3-drd | codex/mac-a3-drd-20260813 | `0dedfb4e13daf88013713a6657a25bc446ea1f6c` | 0 | 3 | yes | 1 | `PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY` |
-| /Users/piotrwisniewski/.codex/worktrees/mac-a4-siri | codex/mac-a4-siri-20260813 | `efc79a16f20f2a2b43da3a16fae5a0307936bdb2` | 0 | 3 | yes | 1 | `PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY` |
-| /Users/piotrwisniewski/.codex/worktrees/mac-a5-workspace | codex/mac-a5-workspace-20260813 | `4141b8da7f17fb07492b196a1cdd367a7c4ebc4f` | 0 | 4 | yes | 1 | `PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY` |
-| /Users/piotrwisniewski/.codex/worktrees/mac-a6-drd-slice | codex/mac-a6-drd-slice-20260813 | `f76c215e74f64c536763f19b5d8e618bde535dfd` | 0 | 5 | yes | 1 | `PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY` |
-| /Users/piotrwisniewski/.codex/worktrees/mac-a7-siri-slice | codex/mac-a7-siri-slice-20260813 | `1d10b340170cb941a96227ccb081bc468caaaa88` | 0 | 4 | yes | 1 | `PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY` |
-| /Users/piotrwisniewski/.codex/worktrees/mac-a8-outputs | codex/mac-a8-outputs-20260813 | `b960534d9751172f61dca710e0db6c1960318874` | 0 | 4 | yes | 1 | `PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY` |
 | /Users/piotrwisniewski/.codex/worktrees/mac-audit2-a | (detached) | `e0afbc46a65454612ca57061765afb83b4d12e70` | 1 | 0 | no | 2 | `QUARANTINE_DIRTY` |
 | /Users/piotrwisniewski/.codex/worktrees/mac-audit2-b | (detached) | `e0afbc46a65454612ca57061765afb83b4d12e70` | 3 | 0 | no | 2 | `QUARANTINE_DIRTY` |
-| /Users/piotrwisniewski/.codex/worktrees/mac-base6 | (detached) | `f3e7df565e0da826ba110d85aad3c3c81a1087f1` | 0 | 2 | yes | 3 | `PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY` |
 | /Users/piotrwisniewski/.codex/worktrees/mac-clean-integ | codex/method-assessment-clean-20260813 | `0f0bce1c9954681ef8e01618529f10614d9de951` | 0 | 7 | no | 1 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
 | /Users/piotrwisniewski/.codex/worktrees/mac-e2e-true | codex/e2e-true-20260813 | `6d9011200517af4ad5685b7beaba43fe60e72228` | 1 | 0 | no | 1 | `QUARANTINE_DIRTY` |
 | /Users/piotrwisniewski/.codex/worktrees/mac-fix-focus | codex/fix-focus-ring-20260813 | `4b16de024426151c93638cc22216b49ad275b3c4` | 0 | 3 | no | 1 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
 | /Users/piotrwisniewski/.codex/worktrees/mac-fix-hub | codex/fix-hub-library-20260813 | `ab8ee5582b9e1aede85adbf51f00ccddb886bce1` | 0 | 3 | no | 1 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
 | /Users/piotrwisniewski/.codex/worktrees/mac-mpq-b | (detached) | `14e65cd7686c0ee708b895d4c636d0f9c9ce0fc7` | 1 | 0 | no | 1 | `QUARANTINE_DIRTY` |
-| /Users/piotrwisniewski/.codex/worktrees/mac-p0-http | codex/mac-p0-http-20260813 | `827a5c558c74151764915fd9b425a58d55df4d1b` | 0 | 3 | yes | 1 | `PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY` |
-| /Users/piotrwisniewski/.codex/worktrees/mac-p0a-bootstrap | codex/mac-p0a-bootstrap-20260813 | `5b5eb2889169a0f74c7c641e4307b0dedac14dcc` | 0 | 3 | yes | 1 | `PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY` |
 | /Users/piotrwisniewski/.codex/worktrees/mac-p0b-freeze | codex/mac-p0b-freeze-20260813 | `17ac1d28b09102160e227fcb0dcd6c5341b7becf` | 0 | 7 | yes | 1 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
 | /Users/piotrwisniewski/.codex/worktrees/mac-p0c-ui | codex/mac-p0c-ui-20260813 | `ca64351b1380288b37cc5ab86bf0352b1f89bec3` | 0 | 8 | yes | 1 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
 | /Users/piotrwisniewski/.codex/worktrees/mac-p0d-a9 | codex/mac-p0d-a9-20260813 | `3e848b421d3b3245094f206e0c078883b61ff6cf` | 1 | 0 | yes | 1 | `QUARANTINE_DIRTY` |
@@ -154,15 +139,12 @@ it does not authorize deleting the preserved branch ref.
 | /Users/piotrwisniewski/consultify-wt/g4-table-scale | (detached) | `e0fc428a332fea10aa7887511e9fd55554a1d2de` | 8 | 0 | no | 6 | `QUARANTINE_DIRTY` |
 | /Users/piotrwisniewski/consultify-wt/gate-a-20260809 | codex/finance-v3-gate-a-20260809 | `ef3437c66e6d362a9affb4cddeda54b70250eb40` | 0 | 4 | no | 1 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
 | /Users/piotrwisniewski/consultify-wt/ia | codex/asm-ia | `3f878453383c0248cceeb68da196d25e1ab51f12` | 0 | 31 | yes | 1 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
-| /Users/piotrwisniewski/consultify-wt/ib | codex/asm-ib | `bab04f0311c4d136a45083389d1d221c1bd40799` | 0 | 3 | yes | 1 | `PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY` |
-| /Users/piotrwisniewski/consultify-wt/ic | codex/asm-ic | `97307f0f45e7d8238aadb7b83c91248af2f385f9` | 0 | 4 | yes | 1 | `PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY` |
-| /Users/piotrwisniewski/consultify-wt/id | codex/asm-id | `f479cacf5b639cb9ee075960f76decc61cbcf0b9` | 0 | 3 | yes | 1 | `PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY` |
 | /Users/piotrwisniewski/consultify-wt/ideas-a11y-backlog | (detached) | `2915bfb7c63e1c29fe1fbb13971fb328ee945293` | 50 | 0 | no | 3 | `QUARANTINE_DIRTY` |
 | /Users/piotrwisniewski/consultify-wt/ideas-a11y-dialog | (detached) | `3dd93792b9860d0c64aea2ba4cb693a3734b3a4b` | 26 | 0 | no | 6 | `QUARANTINE_DIRTY` |
 | /Users/piotrwisniewski/consultify-wt/ideas-conf-write | (detached) | `fc2c177377b82658d119a663472e827f30784cd8` | 3 | 0 | no | 1 | `QUARANTINE_DIRTY` |
 | /Users/piotrwisniewski/consultify-wt/ideas-e12-runtime | (detached) | `410b3fc7a09769631a863ca6d97b69863a098b26` | 2 | 0 | no | 2 | `QUARANTINE_DIRTY` |
 | /Users/piotrwisniewski/consultify-wt/ideas-e14-a11y | (detached) | `04a959288f0d8fde6242e6d5c8a4cfd0f82c30d9` | 9 | 0 | no | 2 | `QUARANTINE_DIRTY` |
-| /Users/piotrwisniewski/consultify-wt/ideas-e15-baseline | (detached) | `9d17cac11484a82f729a51044e30453e39fbcb02` | 0 | 2 | yes | 2 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
+| /Users/piotrwisniewski/consultify-wt/ideas-e15-baseline | (detached) | `9d17cac11484a82f729a51044e30453e39fbcb02` | 0 | 2 | yes | 1 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
 | /Users/piotrwisniewski/consultify-wt/ideas-e15-round1 | (detached) | `3dd93792b9860d0c64aea2ba4cb693a3734b3a4b` | 1 | 0 | no | 6 | `QUARANTINE_DIRTY` |
 | /Users/piotrwisniewski/consultify-wt/ideas-evidence-pack | (detached) | `2915bfb7c63e1c29fe1fbb13971fb328ee945293` | 11 | 0 | no | 3 | `QUARANTINE_DIRTY` |
 | /Users/piotrwisniewski/consultify-wt/ideas-gate3-conf | (detached) | `b03937fcf97c89959f679091caae5b8cc56b1e7f` | 1 | 0 | no | 2 | `QUARANTINE_DIRTY` |
@@ -175,9 +157,7 @@ it does not authorize deleting the preserved branch ref.
 | /Users/piotrwisniewski/consultify-wt/ideas-visual-gate | (detached) | `3dd93792b9860d0c64aea2ba4cb693a3734b3a4b` | 25 | 0 | no | 6 | `QUARANTINE_DIRTY` |
 | /Users/piotrwisniewski/consultify-wt/ideas-visual2 | (detached) | `b03937fcf97c89959f679091caae5b8cc56b1e7f` | 11 | 0 | no | 2 | `QUARANTINE_DIRTY` |
 | /Users/piotrwisniewski/consultify-wt/ie | codex/asm-ie | `71cd0b63251c831661a2be65cea8750b4e7e3c15` | 1 | 0 | yes | 1 | `QUARANTINE_DIRTY` |
-| /Users/piotrwisniewski/consultify-wt/if | codex/asm-if | `c277003936145276fdd7c145087c8daed9026a9d` | 0 | 3 | yes | 1 | `PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY` |
 | /Users/piotrwisniewski/consultify-wt/ig | codex/asm-ig | `a9ea4849629742d8ffcc578bdd80f695633e6ac2` | 1 | 0 | yes | 1 | `QUARANTINE_DIRTY` |
-| /Users/piotrwisniewski/consultify-wt/ih | codex/asm-ih | `98636f91f4c6a05d912843b349fcec4cba1eb662` | 0 | 3 | yes | 1 | `PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY` |
 | /Users/piotrwisniewski/consultify-wt/integrity-ic1-revert | codex/finance-v3-integrity-ic1-revert | `fbaf181eae98c331f889a2d24a6b1f4ce45e66ea` | 0 | 2 | no | 1 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
 | /Users/piotrwisniewski/consultify-wt/integrity-ic2-failclosed | codex/finance-v3-integrity-ic2-failclosed | `3a152e4e05787c32896af984c95f737cee25d8f6` | 0 | 2 | no | 1 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
 | /Users/piotrwisniewski/consultify-wt/method-audits-20260813 | codex/method-audits-20260813 | `1927914dddad0e2932bcd5238ff6eb611859e4cf` | 0 | 13 | no | 1 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
@@ -187,19 +167,7 @@ it does not authorize deleting the preserved branch ref.
 | /Users/piotrwisniewski/consultify-wt/roi-e007-integration | codex/finance-v3-roi-e007-integration | `a1de531d901c6e6d5cb6b11f255d9fcab0accf93` | 0 | 7 | no | 1 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
 | /Users/piotrwisniewski/consultify-wt/roi-e007-streamB-rewrite | codex/finance-v3-roi-e007-streamB-rewrite | `47e67bd886902b20ab18572c1098e119af917ee4` | 0 | 2 | no | 1 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
 | /Users/piotrwisniewski/consultify-wt/roi-e007-streamC-rewrite | codex/finance-v3-roi-e007-streamC-rewrite | `57de4e77603f3dad2d434798299ba3dbd862205a` | 0 | 3 | no | 1 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
-| /Users/piotrwisniewski/consultify-wt/s1 | codex/asm-s1 | `94a3a48f76fecd3c9e9d08ff2c2e2847caa0a369` | 0 | 3 | yes | 1 | `PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY` |
-| /Users/piotrwisniewski/consultify-wt/s2 | codex/asm-s2 | `614798da99cfce30e780493b19eeb8c4872f01e5` | 0 | 3 | yes | 1 | `PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY` |
-| /Users/piotrwisniewski/consultify-wt/s3 | codex/asm-s3 | `2da6bee75b6dbda704ff956f2115245cb80c62a0` | 0 | 3 | yes | 1 | `PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY` |
 | /Users/piotrwisniewski/consultify-wt/s4 | codex/asm-s4 | `ee3e6ecabf89f207a22fe8969707e6451da0ea50` | 0 | 11 | yes | 1 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
-| /Users/piotrwisniewski/consultify-wt/s4-baseline | (detached) | `e45904dc7940f259b9cf017c283264d5c166c9ab` | 0 | 1 | yes | 2 | `PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY` |
-| /Users/piotrwisniewski/consultify-wt/s5 | codex/asm-s5 | `9c5a9ebcd4db4f9afff06712004b54f81a2ffba3` | 0 | 3 | yes | 1 | `PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY` |
-| /Users/piotrwisniewski/consultify-wt/s6 | codex/asm-s6 | `cb1daad166ba98511b3fae0bc5d12ec325171a78` | 0 | 3 | yes | 1 | `PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY` |
-| /Users/piotrwisniewski/consultify-wt/s7 | codex/asm-s7 | `bc014a9c567c7b17e2244c1cc494003c2c66c12c` | 0 | 3 | yes | 1 | `PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY` |
-| /Users/piotrwisniewski/consultify-wt/t1 | codex/asm-t1 | `a5086638ea4e6d3b90b889e94bc8a16589d75a52` | 0 | 3 | yes | 1 | `PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY` |
-| /Users/piotrwisniewski/consultify-wt/t2 | codex/asm-t2 | `9063bfe76a4dabf458688b5a6fa26f3a73ec57f6` | 0 | 3 | yes | 1 | `PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY` |
-| /Users/piotrwisniewski/consultify-wt/t3 | codex/asm-t3 | `28e704e6a9738294f3f719db4e470d318199fb59` | 0 | 3 | yes | 1 | `PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY` |
-| /Users/piotrwisniewski/consultify-wt/t4 | codex/asm-t4 | `9d19df8d714fa2b87a2ee05ae9471390a9c46541` | 0 | 3 | yes | 1 | `PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY` |
-| /Users/piotrwisniewski/consultify-wt/t5 | codex/asm-t5 | `4d2eb093a6cfa9acafc8a74376c7f47b275728ad` | 0 | 3 | yes | 1 | `PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY` |
 | /Users/piotrwisniewski/consultify-wt/t6 | codex/asm-t6 | `bde351015c95afab4e01472b68ae7076c60e7125` | 0 | 11 | yes | 1 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
 | /Users/piotrwisniewski/consultify-wt/u2 | codex/method-audits-u2 | `8dd49c0631b3891a10c83295e460bbe99ff8d818` | 0 | 3 | no | 1 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
 | /Users/piotrwisniewski/consultify-wt/u3 | codex/method-audits-u3 | `50e1316cc73402dbd6134d4bc548fbc0bf81796e` | 0 | 3 | no | 1 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
@@ -223,7 +191,6 @@ it does not authorize deleting the preserved branch ref.
 | /Users/piotrwisniewski/consultify-wt/w2-slo | codex/finance-v3-w2-slo | `e3503acd36eb1ab6c232e0e0f4c4d5007e76f180` | 0 | 3 | no | 1 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
 | /Users/piotrwisniewski/consultify-wt/w3 | codex/method-audits-w3 | `96609b5ecb19d1755ecef8936d4a2283033e5f83` | 0 | 4 | no | 1 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
 | /Users/piotrwisniewski/consultify-wt/w3-backfilllock | codex/finance-v3-w3-backfilllock | `5a6f98d78f4eb8dc810dd7b2e483174454ac69b8` | 0 | 3 | no | 1 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
-| /Users/piotrwisniewski/consultify-wt/w3-baseline | (detached) | `f3e7df565e0da826ba110d85aad3c3c81a1087f1` | 0 | 2 | yes | 3 | `PRUNE_READY_REPRESENTED_REPRODUCIBLE_IGNORED_ONLY` |
 | /Users/piotrwisniewski/consultify-wt/w3-determinizm | codex/finance-v3-w3-determinizm | `f38eea968c5c068095678cf92588bcdeab73e33b` | 0 | 3 | no | 1 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
 | /Users/piotrwisniewski/consultify-wt/w3-hashconsol | codex/finance-v3-w3-hashconsol | `038cf1ea9ee0d4bac43af608adedcfe4f9b54898` | 0 | 3 | no | 1 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
 | /Users/piotrwisniewski/consultify-wt/w4 | codex/method-audits-w4 | `6a43c9a16473d0896bc5d11841b2461a47b9b366` | 0 | 3 | no | 1 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
@@ -235,7 +202,7 @@ it does not authorize deleting the preserved branch ref.
 | /Users/piotrwisniewski/dev/consultify-case-workspace-v1-20260809 | claude/case-workspace-v1-20260809 | `adf77cb833ec8b79e138d2ece96e7f5aafbe2ec0` | 0 | 51 | no | 2 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
 | /Users/piotrwisniewski/Developer/consultify-artifact-recovery-20260812 | codex/artifact-studio-recovery-20260812 | `a16f5af6c1cf0d2d8453275b179b26e5405adb5c` | 0 | 4 | no | 1 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
 | /Users/piotrwisniewski/Developer/consultify-initiatives-execution-20260809 | codex/initiatives-execution-20260809 | `bba792eabc133696ecdc4adcaf810e3642f0337c` | 31 | 0 | no | 1 | `QUARANTINE_DIRTY` |
-| /Users/piotrwisniewski/Developer/consultify-recovery-canonical-20260816 | codex/recovery-canonical-20260816 | `1ca9d0c06b509dcf6ede144770fb3520ae6d3e7a` | 2 | 0 | yes | 1 | `KEEP_CANONICAL` |
+| /Users/piotrwisniewski/Developer/consultify-recovery-canonical-20260816 | codex/recovery-canonical-20260816 | `b7d6bc3c43b30b84281573b4a15bc5ab5e2fda56` | 1 | 0 | yes | 1 | `KEEP_CANONICAL` |
 | /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify-agent-final-integration-20260808 | codex/agent-documents-final-20260808 | `d97a6564a582c4c9f64d7a5f65d68d51801c5b00` | 1 | 0 | no | 1 | `QUARANTINE_DIRTY` |
 | /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify-agent-t01-i01 | codex/agent-t01-i01 | `3b0c337ee472d07122033d5339cdf3bdb2f254ee` | 269 | 0 | yes | 4 | `QUARANTINE_DIRTY` |
 | /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify-cb01-accessibility-20260808 | codex/report-b-cb-01-accessibility-20260808 | `3b0c337ee472d07122033d5339cdf3bdb2f254ee` | 70 | 0 | yes | 4 | `QUARANTINE_DIRTY` |
@@ -255,7 +222,7 @@ it does not authorize deleting the preserved branch ref.
 | /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/.claude/worktrees/agent-a8fc11cf93aa8a6e7 | worktree-agent-a8fc11cf93aa8a6e7 | `ffcc8e00a35955b1f1be79969317309cde1df094` | 2 | 0 | no | 11 | `QUARANTINE_DIRTY` |
 | /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/.claude/worktrees/amazing-burnell-3aee3c | claude/amazing-burnell-3aee3c | `f3a45b0c9084c90ac20a77759e8e64375e3a3b3f` | 1 | 0 | yes | 18 | `QUARANTINE_DIRTY` |
 | /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/.claude/worktrees/charming-greider-95c3cf | (detached) | `f3a45b0c9084c90ac20a77759e8e64375e3a3b3f` | 0 | 1 | yes | 18 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
-| /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/.claude/worktrees/charming-lichterman-a04367 | fix/rowactionsmenu-disabled-danger-20260812 | `f3e7df565e0da826ba110d85aad3c3c81a1087f1` | 6 | 0 | yes | 3 | `QUARANTINE_DIRTY` |
+| /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/.claude/worktrees/charming-lichterman-a04367 | fix/rowactionsmenu-disabled-danger-20260812 | `f3e7df565e0da826ba110d85aad3c3c81a1087f1` | 6 | 0 | yes | 1 | `QUARANTINE_DIRTY` |
 | /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/.claude/worktrees/charming-thompson-ac70f7 | claude/charming-thompson-ac70f7 | `1271a0f721771bec5ff39177ece85631a243a250` | 2 | 0 | no | 2 | `QUARANTINE_DIRTY` |
 | /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/.claude/worktrees/clever-ardinghelli-bbd9f6 | fix/artifact-right-panel-mobile-20260813 | `adf77cb833ec8b79e138d2ece96e7f5aafbe2ec0` | 2 | 0 | no | 2 | `QUARANTINE_DIRTY` |
 | /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/.claude/worktrees/determined-driscoll-04d402 | codex/fv3p-p0-snapshot-rbac | `0f4e079f34b1012fb05b2003da4a7876ea388857` | 8 | 0 | no | 1 | `QUARANTINE_DIRTY` |
@@ -264,7 +231,7 @@ it does not authorize deleting the preserved branch ref.
 | /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/.claude/worktrees/goofy-wilbur-426cd0 | claude/silly-kepler-68381f | `f3a45b0c9084c90ac20a77759e8e64375e3a3b3f` | 1 | 0 | yes | 18 | `QUARANTINE_DIRTY` |
 | /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/.claude/worktrees/hopeful-shtern-fa67ab | claude/hopeful-shtern-fa67ab | `f3a45b0c9084c90ac20a77759e8e64375e3a3b3f` | 1 | 0 | yes | 18 | `QUARANTINE_DIRTY` |
 | /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/.claude/worktrees/interesting-dirac-7e6413 | claude/interesting-dirac-7e6413 | `8f9bc237d07c8ae85a9221721ab47e592bcc58e9` | 18 | 0 | no | 2 | `QUARANTINE_DIRTY` |
-| /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/.claude/worktrees/keen-jemison-e993c7 | claude/wonderful-tharp-7ce76c | `e45904dc7940f259b9cf017c283264d5c166c9ab` | 2 | 0 | yes | 2 | `QUARANTINE_DIRTY` |
+| /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/.claude/worktrees/keen-jemison-e993c7 | claude/wonderful-tharp-7ce76c | `e45904dc7940f259b9cf017c283264d5c166c9ab` | 2 | 0 | yes | 1 | `QUARANTINE_DIRTY` |
 | /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/.claude/worktrees/laughing-faraday-563e37 | claude/laughing-faraday-563e37 | `f3a45b0c9084c90ac20a77759e8e64375e3a3b3f` | 5 | 0 | yes | 18 | `QUARANTINE_DIRTY` |
 | /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/.claude/worktrees/mystifying-hawking-874e99 | claude/great-shirley-eb9b52 | `f3a45b0c9084c90ac20a77759e8e64375e3a3b3f` | 1 | 0 | yes | 18 | `QUARANTINE_DIRTY` |
 | /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify/.claude/worktrees/nervous-williams-88a4e7 | (detached) | `f3a45b0c9084c90ac20a77759e8e64375e3a3b3f` | 0 | 1 | yes | 18 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |

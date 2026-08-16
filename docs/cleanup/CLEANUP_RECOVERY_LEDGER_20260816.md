@@ -56,8 +56,8 @@ not authorize deleting their refs.
 
 The deterministic manifest in
 `evidence/WORKTREE_DISPOSITION_20260816.{md,json}` inspected every registered
-worktree at candidate `1ca9d0c06b509dcf6ede144770fb3520ae6d3e7a`, including
-ordinary status and ignored paths:
+worktree, including ordinary status and ignored paths. The first accepted
+manifest at `1ca9d0c06b509dcf6ede144770fb3520ae6d3e7a` found:
 
 - 1 canonical candidate;
 - 1 frozen source quarantine;
@@ -66,6 +66,14 @@ ordinary status and ignored paths:
 - 32 clean worktrees whose commits are represented by the candidate and whose
   only ignored content is reproducible (`node_modules`, build output, caches or
   test reports), eligible for checkout retirement while preserving branch refs.
+
+All 32 eligible checkouts were then retired by the fail-closed verifier
+`scripts/cleanup/retire-represented-worktrees.mjs`. Before every removal it
+rechecked the exact path, HEAD, ordinary status, ignored allowlist and candidate
+ancestry. No branch ref was deleted. The post-action manifest at
+`b7d6bc3c43b30b84281573b4a15bc5ab5e2fda56` contains 317 worktrees: 1
+canonical, 1 frozen source, 137 dirty quarantines and 178 ignored-evidence or
+unmerged quarantines; zero further checkout is prune-ready.
 
 The generated decision is path-specific. It never authorizes deleting a branch
 ref, and it must be regenerated after any worktree or candidate change.
