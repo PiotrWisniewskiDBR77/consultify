@@ -77,7 +77,7 @@ describe('V8 Finance Intelligence — orphaned engine wiring', () => {
       expect(mockGet).toHaveBeenCalledWith(expect.any(String), [PACK_ID, ORG]);
     });
 
-    it('runs the 5 tie-out checks over the pack canonical value maps', async () => {
+    it('runs the five tie-out calculations plus the required-lines integrity check', async () => {
       mockGet.mockResolvedValueOnce({ id: PACK_ID, organization_id: ORG }); // pack
       mockAll
         .mockResolvedValueOnce([
@@ -108,7 +108,7 @@ describe('V8 Finance Intelligence — orphaned engine wiring', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.data.packId).toBe(PACK_ID);
-      expect(res.body.data.checks).toHaveLength(5);
+      expect(res.body.data.checks).toHaveLength(6);
       const byCheck = Object.fromEntries(
         res.body.data.checks.map((c: { check: string; status: string }) => [c.check, c.status])
       );
@@ -116,7 +116,11 @@ describe('V8 Finance Intelligence — orphaned engine wiring', () => {
       expect(byCheck.CLOSING_CASH_MATCH).toBe('pass'); // 10 = 10
       expect(byCheck.CF_SECTIONS_SUM).toBe('pass'); // 5 - 2 - 1 = 2
       expect(byCheck.CF_INDIRECT_RECONCILE).toBe('pass'); // 8 + 0 - 3 = 5
-      expect(res.body.data.summary.isClean).toBe(true);
+      // The mounted route currently has no prior-period BS input, so the
+      // service must expose the missing prerequisite instead of returning a
+      // false-clean result for the five arithmetic checks.
+      expect(byCheck.REQUIRED_LINES_PRESENT).toBe('fail');
+      expect(res.body.data.summary.isClean).toBe(false);
       expect(res.body.meta.contract).toBe('finance_intelligence_runtime_v1');
     });
   });
