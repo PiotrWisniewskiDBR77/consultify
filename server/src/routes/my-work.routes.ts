@@ -16,7 +16,12 @@ import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
 import { featureFlags } from '../config/FeatureFlags.js';
-import { type AuthRequest, requireRole, verifyToken } from '../middleware/auth.middleware.js';
+import {
+  type AuthRequest,
+  requireRole,
+  validateOrgMembership,
+  verifyToken,
+} from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
@@ -86,6 +91,7 @@ const dayDiffSql = (endColumn: string, startColumn: string) =>
 
 router.use(apiAuthRateLimiter);
 router.use(verifyToken);
+router.use(validateOrgMembership);
 router.use(demoContextMiddleware);
 
 type InboxItemType =

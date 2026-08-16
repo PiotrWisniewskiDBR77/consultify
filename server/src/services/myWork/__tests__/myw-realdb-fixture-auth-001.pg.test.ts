@@ -90,7 +90,10 @@
  * within one.
  */
 
+import express, { type Express } from 'express';
+import jwt from 'jsonwebtoken';
 import { Client, Pool } from 'pg';
+import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import * as inboxService from '../../inboxService.js';
@@ -105,6 +108,7 @@ const ORG_ID_OTHER = 'claude_b_org_auth001_other';
 const PROJECT_ID = 'claude_b_project_auth001';
 const OWNER_USER_ID = 'claude_b_actor_owner_auth001';
 const OTHER_USER_ID = 'claude_b_actor_other_auth001';
+const STALE_USER_ID = 'claude_b_actor_stale_auth001';
 const TASK_ID = 'claude_b_task_auth001';
 const DECISION_ID = 'claude_b_decision_auth001';
 const NOTIFICATION_ID = 'claude_b_notification_auth001';
@@ -190,6 +194,12 @@ const evidence = {
   crossTenantTriageResult: null as unknown,
   ownerItemStatusAfterCrossTenantAttempt: null as string | null,
   ownerTriageByOwnerResult: null as string | null,
+  mountedOwnerStatus: null as number | null,
+  mountedOwnerRows: null as number | null,
+  mountedOtherTenantStatus: null as number | null,
+  mountedOtherTenantRows: null as number | null,
+  mountedStaleMembershipStatus: null as number | null,
+  mountedStaleMembershipCode: null as string | null,
   finalResidualRowCount: null as number | null,
 };
 
@@ -197,6 +207,10 @@ let ready = false;
 /** Out-of-band pool for fixture setup/teardown — separate from the app's own pool. */
 let control: Pool | null = null;
 let ownerItemIdTask: string | null = null;
+let mountedApp: Express | null = null;
+let ownerToken = '';
+let otherToken = '';
+let staleToken = '';
 
 async function preCleanAndSeed(): Promise<void> {
   control = new Pool({ connectionString: CONNECTION_STRING, max: 4 });
@@ -227,6 +241,11 @@ async function preCleanAndSeed(): Promise<void> {
     ORG_ID_OTHER,
     `${OTHER_USER_ID}@example.test`,
   ]);
+  await control.query(`INSERT INTO users (id, organization_id, email) VALUES ($1, $2, $3)`, [
+    STALE_USER_ID,
+    ORG_ID,
+    `${STALE_USER_ID}@example.test`,
+  ]);
   await control.query(
     `INSERT INTO organization_members (id, organization_id, user_id, role, status)
        VALUES ($1, $2, $3, 'OWNER', 'ACTIVE')`,
@@ -236,6 +255,11 @@ async function preCleanAndSeed(): Promise<void> {
     `INSERT INTO organization_members (id, organization_id, user_id, role, status)
        VALUES ($1, $2, $3, 'OWNER', 'ACTIVE')`,
     [`${OTHER_USER_ID}-member`, ORG_ID_OTHER, OTHER_USER_ID]
+  );
+  await control.query(
+    `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+       VALUES ($1, $2, $3, 'MEMBER', 'INACTIVE')`,
+    [`${STALE_USER_ID}-member`, ORG_ID, STALE_USER_ID]
   );
 
   // --- source-of-truth rows for the owner (tasks/decisions/notifications) --
@@ -265,12 +289,12 @@ async function teardownRows(pool: Pool): Promise<void> {
     .catch(() => undefined);
   await pool
     .query(`DELETE FROM my_work_inbox_triage WHERE user_id = ANY($1::text[])`, [
-      [OWNER_USER_ID, OTHER_USER_ID],
+      [OWNER_USER_ID, OTHER_USER_ID, STALE_USER_ID],
     ])
     .catch(() => undefined);
   await pool
     .query(`DELETE FROM my_work_focus_state WHERE user_id = ANY($1::text[])`, [
-      [OWNER_USER_ID, OTHER_USER_ID],
+      [OWNER_USER_ID, OTHER_USER_ID, STALE_USER_ID],
     ])
     .catch(() => undefined);
   await pool.query(`DELETE FROM notifications WHERE id = $1`, [NOTIFICATION_ID]).catch(() => undefined);
@@ -283,7 +307,9 @@ async function teardownRows(pool: Pool): Promise<void> {
     .catch(() => undefined);
   await pool.query(`DELETE FROM projects WHERE id = $1`, [PROJECT_ID]).catch(() => undefined);
   await pool
-    .query(`DELETE FROM users WHERE id = ANY($1::text[])`, [[OWNER_USER_ID, OTHER_USER_ID]])
+    .query(`DELETE FROM users WHERE id = ANY($1::text[])`, [
+      [OWNER_USER_ID, OTHER_USER_ID, STALE_USER_ID],
+    ])
     .catch(() => undefined);
   await pool
     .query(`DELETE FROM organizations WHERE id = ANY($1::text[])`, [[ORG_ID, ORG_ID_OTHER]])
@@ -298,7 +324,7 @@ async function countResidualRows(pool: Pool): Promise<number> {
     [`SELECT count(*)::int AS n FROM tasks WHERE id = $1`, [TASK_ID]],
     [`SELECT count(*)::int AS n FROM organization_members WHERE organization_id = ANY($1::text[])`, [[ORG_ID, ORG_ID_OTHER]]],
     [`SELECT count(*)::int AS n FROM projects WHERE id = $1`, [PROJECT_ID]],
-    [`SELECT count(*)::int AS n FROM users WHERE id = ANY($1::text[])`, [[OWNER_USER_ID, OTHER_USER_ID]]],
+    [`SELECT count(*)::int AS n FROM users WHERE id = ANY($1::text[])`, [[OWNER_USER_ID, OTHER_USER_ID, STALE_USER_ID]]],
     [`SELECT count(*)::int AS n FROM organizations WHERE id = ANY($1::text[])`, [[ORG_ID, ORG_ID_OTHER]]],
   ];
   let total = 0;
@@ -322,6 +348,20 @@ beforeAll(async () => {
     }
     evidence.connectionTarget = CONNECTION_STRING.replace(/:[^:@/]*@/, ':***@');
     await preCleanAndSeed();
+
+    const { default: config } = await import('../../../config/Config.js');
+    const sign = (id: string, organizationId: string, role: string) =>
+      jwt.sign({ id, organizationId, role, email: `${id}@example.test` }, config.JWT_SECRET, {
+        expiresIn: '10m',
+      });
+    ownerToken = sign(OWNER_USER_ID, ORG_ID, 'OWNER');
+    otherToken = sign(OTHER_USER_ID, ORG_ID_OTHER, 'OWNER');
+    staleToken = sign(STALE_USER_ID, ORG_ID, 'MEMBER');
+
+    const { default: myWorkRouter } = await import('../../../routes/my-work.routes.js');
+    mountedApp = express();
+    mountedApp.use(express.json());
+    mountedApp.use('/api/my-work', myWorkRouter);
     ready = true;
   } catch (e) {
     if (e instanceof SoftSkip) return;
@@ -448,6 +488,35 @@ describe('MYW-REALDB-FIXTURE-AUTH-001 — governed My Work fixture over real Pos
     );
     evidence.otherOrgRowsRawCount = rawOtherCount[0]?.n ?? -1;
     expect(evidence.otherOrgRowsRawCount).toBe(0);
+  });
+
+  it('mounted HTTP/JWT path admits the owner, isolates another tenant, and rejects an inactive membership', async (ctx) => {
+    if (!requireReady(ctx)) return;
+    expect(mountedApp).not.toBeNull();
+
+    const owner = await request(mountedApp as Express)
+      .get('/api/my-work/inbox/canonical')
+      .set('Authorization', `Bearer ${ownerToken}`);
+    evidence.mountedOwnerStatus = owner.status;
+    evidence.mountedOwnerRows = Array.isArray(owner.body?.items) ? owner.body.items.length : null;
+    expect(owner.status).toBe(200);
+    expect(owner.body.items).toHaveLength(3);
+
+    const other = await request(mountedApp as Express)
+      .get('/api/my-work/inbox/canonical')
+      .set('Authorization', `Bearer ${otherToken}`);
+    evidence.mountedOtherTenantStatus = other.status;
+    evidence.mountedOtherTenantRows = Array.isArray(other.body?.items) ? other.body.items.length : null;
+    expect(other.status).toBe(200);
+    expect(other.body.items).toHaveLength(0);
+
+    const stale = await request(mountedApp as Express)
+      .get('/api/my-work/inbox/canonical')
+      .set('Authorization', `Bearer ${staleToken}`);
+    evidence.mountedStaleMembershipStatus = stale.status;
+    evidence.mountedStaleMembershipCode = stale.body?.code ?? null;
+    expect(stale.status).toBe(403);
+    expect(stale.body).toMatchObject({ code: 'ORG_MEMBERSHIP_REVOKED' });
   });
 
   it('cross-tenant triageItem() mutation attempt is rejected by ownership scope and leaves the row unchanged', async (ctx) => {
