@@ -1,0 +1,39 @@
+-- Lane C (closure) — closes the `source_version` first-proposal race in
+-- `artifact_handoff_proposals`, found while writing the acceptance tests for
+-- `20260912_claude_c_handoff_spine.sql` / `handoffSpineService.ts`.
+--
+-- ── THE RACE ────────────────────────────────────────────────────────────
+-- `createProposal()` computes `source_version` as
+-- `1 + max(source_version)` for the same
+-- `(organization_id, producer_kind, producer_record_id)` triple, and takes a
+-- `SELECT ... FOR UPDATE` lock on the existing rows for that triple first so
+-- concurrent proposals serialize their version allocation. That works once
+-- at least one row already exists — but Postgres cannot `FOR UPDATE`-lock a
+-- row that does not exist yet. Two concurrent FIRST-TIME proposals for a
+-- brand-new producer record (no caller-supplied idempotency key — that path
+-- is already deduplicated by `idx_handoff_proposal_org_idem`) can both
+-- observe zero existing rows, both compute `nextVersion = 1`, and both
+-- successfully INSERT — two DISTINCT proposals both stamped version 1.
+--
+-- ── WHY THIS IS A NEW FILE, NOT AN EDIT ────────────────────────────────
+-- `20260912_claude_c_handoff_spine.sql` is already APPLIED. Editing an
+-- applied migration changes its checksum out from under any environment
+-- that already ran it (drift between "what the migration file says now" and
+-- "what actually ran there"), which is exactly the class of bug this
+-- program has been burned by before (see the fresh-DB guard note in that
+-- file's own header). Additive migrations never need a rollback story
+-- (per this program's session rules) — this file only ADDS an index.
+--
+-- ── WHAT THIS ADDS ──────────────────────────────────────────────────────
+-- A unique index on `(organization_id, producer_kind, producer_record_id,
+-- source_version)` — the DB-enforced version of the invariant the
+-- application was previously only best-effort about. A second INSERT that
+-- would have collided on `source_version` now fails with a NAMED,
+-- catchable 23505 instead of silently succeeding with a duplicate version.
+-- `handoffSpineService.ts`'s `createProposal()` catches a violation on THIS
+-- index by name and retries once with a freshly recomputed version, so the
+-- RACE LOSER lands on the next version instead of failing the caller.
+--
+-- IF NOT EXISTS, so re-running is a no-op (verified by repeat-run + --dry-run).
+CREATE UNIQUE INDEX IF NOT EXISTS idx_handoff_proposal_version_unique
+  ON artifact_handoff_proposals (organization_id, producer_kind, producer_record_id, source_version);
