@@ -1,0 +1,17 @@
+{
+  "taskId": "PRT-UI-CANON-001",
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "productSha": "020eff97ac03cac5341d41a669888554bf4e696a",
+  "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
+  "changedPaths": ["src/components/Partner/PartnerCanonicalRuntimePanel.tsx", "src/views/partner/PartnerPortalView.tsx", "src/views/partner/sections/EarningsSection.tsx", "tests/components/partner/PartnerCanonicalRuntimePanel.test.tsx", "tests/components/partner/EarningsSection.v8-payout-settings.test.tsx"],
+  "changedPathRationale": {"runtime": "one honest read-only view of program, certification, attribution, ledger and policy-gated accrual", "policy": "automatic payout control removed and every outgoing settings payload forces false", "tests": "state degradation and payout-policy regression"},
+  "ownerTables": ["partner_organizations", "partner_certifications", "partner_attributions", "partner_program_ledger"],
+  "commands": [{"command": "vitest PartnerCanonicalRuntimePanel and EarningsSection payout-settings", "exitCode": 0, "result": "5/5 across 2 files"}],
+  "denominators": {"focusedTests": "5/5", "canonicalSurfaces": "5/5"},
+  "fixtures": {"surfaces": ["partner", "certification", "attribution", "ledger", "accrual"]},
+  "negativeControls": {"partialFailure": "per-surface unavailable or degraded state replaces false success", "payout": "stale true values normalize to false and cannot be written", "approval": "manual request and independent approval boundary is explicit"},
+  "browserArtifacts": [],
+  "rollback": {"code": "revert 020eff97ac before deployment", "data": "no schema or production data change"},
+  "verdict": "PARTIAL",
+  "openBlockers": ["Mounted browser journey, responsive screenshots, axe and human visual sign-off remain missing.", "The legacy Earnings test still emits a pre-existing maximum-update-depth warning and required one retry."]
+}

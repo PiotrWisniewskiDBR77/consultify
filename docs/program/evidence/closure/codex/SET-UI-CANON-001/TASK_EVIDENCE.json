@@ -1,0 +1,17 @@
+{
+  "taskId": "SET-UI-CANON-001",
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "productSha": "bd488700fca5bda3d82d6063470a71b37d9781e0",
+  "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
+  "changedPaths": ["src/views/SettingsView.tsx", "src/components/settings/SettingsSidebar.tsx", "tests/unit/components/settings/SettingsCanonicalAccessibility.test.tsx"],
+  "changedPathRationale": {"shell": "semantic responsive navigation, mobile dismissal and focus/scroll management", "accessibility": "landmarks, heading, aria-expanded, aria-controls and aria-current", "tests": "canonical Settings accessibility and honesty states"},
+  "ownerTables": [],
+  "commands": [{"command": "vitest Settings canonical accessibility plus authentication, privacy, accessibility and keyboard honesty suites", "exitCode": 0, "result": "11/11 across 5 files"}, {"command": "npm run type-check -- --pretty false", "exitCode": 0}],
+  "denominators": {"focusedTests": "11/11", "testFiles": "5/5"},
+  "fixtures": {"states": ["authentication", "privacy", "accessibility", "keyboard", "mobile navigation"]},
+  "negativeControls": {"collapsedNavigation": "hidden descendants leave the keyboard tree", "escape": "mobile overlay closes and restores body scroll", "semantics": "active section and expanded groups are programmatically exposed"},
+  "browserArtifacts": [],
+  "rollback": {"code": "revert bd488700fc before deployment", "data": "no schema or production data change"},
+  "verdict": "PARTIAL",
+  "openBlockers": ["Mounted signed-in desktop/mobile browser, axe scan and human keyboard/visual sign-off remain missing."]
+}

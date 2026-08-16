@@ -1,7 +1,7 @@
 {
   "taskId": "SEC-PRIV-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "ccbbeeb1305880629544a4a9810caaedec22a950",
+  "productSha": "ba8ed533743948273ee4d5021a2365c7befbd269",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
   "changedPaths": [],
   "changedPathRationale": {"none": "verification-only evidence for security controls already represented in the canonical candidate"},
@@ -15,7 +15,16 @@
     {
       "command": "npm audit --omit=dev --audit-level=high --json",
       "exitCode": 1,
-      "result": "23 production dependency findings: 11 high, 10 moderate, 2 low, 0 critical"
+      "result": "after compatible remediation: 12 production findings, 3 high, 7 moderate, 2 low, 0 critical; high reduced from 11 to 3"
+    },
+    {
+      "command": "vitest branding SVG XSS, Canvas Markdown, Work Canvas Document and router redirect",
+      "exitCode": 0,
+      "result": "42/42 tests across 4 files"
+    },
+    {
+      "command": "NODE_OPTIONS=--max-old-space-size=8192 npm run type-check",
+      "exitCode": 0
     }
   ],
   "denominators": {"securityFocusedTests": "35/35", "testFiles": "4/4"},
@@ -30,7 +39,8 @@
   "rollback": {"code": "verification-only evidence; no runtime change", "data": "no production data touched"},
   "verdict": "PARTIAL",
   "openBlockers": [
-    "Production dependency audit is red with 11 high-severity findings, including transitive denial-of-service, SSRF/trust-boundary, information-disclosure and parser risks; upgrade and compatibility verification are required.",
+    "Production dependency audit remains red with three high records from two upstream chains: pptxgenjs to image-size and mammoth to underscore; no published compatible safe release is currently available.",
+    "The contract-test script discovers zero tests because its existing glob does not match the repository test files; the denominator gate is red.",
     "Full secret scan, privacy export/delete proof, browser authorization matrix, and release-SHA production evidence remain outside this focused packet."
   ]
 }
