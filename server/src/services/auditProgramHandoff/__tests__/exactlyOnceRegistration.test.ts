@@ -57,7 +57,11 @@ const MIGRATION_FILE = path.join(
   'server/migrations/20260910_claude_a_audit_initiative_proposal_exactly_once.sql',
 );
 
-const DOCKER_CONTAINER = 'consultify-closure-a-34916';
+// Integration must be able to run this proof against the integrator's isolated
+// PostgreSQL container. Keep the lane-local name only as a backwards-compatible
+// default instead of silently creating the scratch database in a different DB.
+const DOCKER_CONTAINER =
+  process.env.CLOSURE_POSTGRES_CONTAINER || 'consultify-closure-a-34916';
 
 function dockerAvailable(): boolean {
   try {
