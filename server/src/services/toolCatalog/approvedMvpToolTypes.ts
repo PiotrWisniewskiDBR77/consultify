@@ -10,17 +10,13 @@
  *    marked UNAVAILABLE."
  *
  * This module is the SINGLE machine-readable statement of that decision.
- * It intentionally has NO production callers — it does not gate anything
- * by itself. It exists so a test can compare it against the REAL runtime
- * gate (`ACTIVE_KNOWN_TOOL_TYPES` in
- * `server/src/services/KnownToolsService.ts`, out of this lane's edit
- * scope — see `mvpGateGovernance.redByDesign.test.ts`) and FAIL LOUDLY when
- * they diverge, instead of leaving a silent policy violation undetectable.
+ * `KnownToolsService` consumes it directly for the production launch gate;
+ * tests assert exact equality so a second catalog cannot silently emerge.
  *
  * Do NOT add tool types here without a corresponding owner-approved packet
  * + provenance + rights record (see `docs/program/evidence/closure/a/
  * TLS-CATALOG-001/CATALOG_INVENTORY.md`). Adding an entry here without one
- * would just move the lie from KnownToolsService.ts into this file.
+ * would make the production catalog claim unsupported availability.
  */
 export const APPROVED_MVP_TOOL_TYPES: ReadonlySet<string> = new Set<string>(['dynamic-swot']);
 

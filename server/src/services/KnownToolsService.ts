@@ -1,6 +1,7 @@
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import { QueryAdapter } from '../utils/QueryAdapter.js';
+import { APPROVED_MVP_TOOL_TYPES } from './toolCatalog/approvedMvpToolTypes.js';
 import { mergeLibraryContentJson } from './libraryContentMerge.js';
 
 type ToolRow = {
@@ -200,33 +201,11 @@ type SeedKnownTool = {
   isComingSoon?: boolean;
 };
 
-// The curated Wave 1 SHIP set — tools with a complete, launchable step flow.
-// Everything NOT in this set is rendered as "Coming soon" (isComingSoon: true)
-// in the Library and is blocked from starting a session.
-export const ACTIVE_KNOWN_TOOL_TYPES = new Set<string>([
-  // 11 fully-worked strategic + automation
-  'dynamic-swot',
-  'market-forces',
-  'value-chain',
-  'capability-mapper',
-  'ambition-decomposer',
-  'focus-tradeoff',
-  'narrative-engine',
-  'growth-paths',
-  'portfolio-priority',
-  'risk-uncertainty',
-  'process-automation',
-  // 5 operational with real domain step UIs
-  'sop-builder',
-  'a3-problem-solving',
-  'smed-planner',
-  'dms-builder',
-  'inventory-autopilot',
-  // 3 digital with Wave 1 GenericDomainStep flows
-  'ai-discovery',
-  'pain-explorer',
-  'rpa-scanner',
-]);
+// Compatibility export for existing callers. The owner-approved MVP registry is
+// the single source of truth: only tools with a provenance/rights packet may be
+// launchable. Seed rows outside this set remain visible as coming-soon but the
+// session writer fails closed even if their database is_active flag is true.
+export const ACTIVE_KNOWN_TOOL_TYPES = new Set<string>(APPROVED_MVP_TOOL_TYPES);
 
 export const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
   {
@@ -880,6 +859,7 @@ class KnownToolsService {
 
     const items: KnownToolListItem[] = (rows || []).map((row) => {
       const toolType = row.tool_type || row.name;
+      const isActive = this.isKnownToolActive(toolType, row.is_active);
       const description = pickTranslation(
         row.description_translations,
         lang,
@@ -898,8 +878,8 @@ class KnownToolsService {
         tags,
         icon: row.icon || null,
         isLicensed: Boolean(row.is_licensed),
-        isActive: this.isKnownToolActive(toolType, row.is_active),
-        isComingSoon: Boolean(row.is_coming_soon),
+        isActive,
+        isComingSoon: !isActive || Boolean(row.is_coming_soon),
         sortOrder: Number(row.sort_order || 0),
         createdAt: row.created_at || null,
       };

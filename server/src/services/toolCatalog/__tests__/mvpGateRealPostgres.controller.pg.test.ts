@@ -2,10 +2,9 @@
  * TLS-CATALOG-001 — real-PostgreSQL proof of the actual runtime gate
  * behaviour behind `ACTIVE_KNOWN_TOOL_TYPES`.
  *
- * Exercises the REAL production handlers (`ToolController.createToolSession`
- * / `getToolSession` / `listToolSessions`, all read-only-imported — this
- * lane does not own `server/src/controllers/ToolController.ts` and makes no
- * edit to it here) through an in-process Express app + supertest, against a
+ * Exercises the REAL production router (`server/src/routes/tools.routes.ts`,
+ * mounted at the same `/api/tools` prefix as Gateway) through an in-process
+ * Express app + supertest, against a
  * REAL, migrated PostgreSQL instance — same pattern already established by
  * `tests/integration/toolSessionHttpAdapter.realdb.test.ts` and
  * `tests/integration/tools-promotion-race.realdb.test.ts`.
@@ -70,6 +69,8 @@ if (!process.env.DATABASE_URL || !process.env.DATABASE_URL.startsWith('postgres'
 }
 process.env.DB_TYPE = 'postgres';
 process.env.NODE_ENV = process.env.NODE_ENV || 'test';
+process.env.ENABLE_TEST_AUTH_BYPASS = 'true';
+process.env.RATE_LIMIT_BYPASS = 'true';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 const FORBIDDEN_DB_HOSTS = ['centerbeam.proxy.rlwy.net', 'trolley.proxy.rlwy.net', 'ballast.proxy.rlwy.net'];
@@ -117,7 +118,8 @@ beforeAll(async () => {
     await probe.end();
   }
 
-  const ToolController = (await import('../../../controllers/ToolController.js')).default;
+  const toolsRoutes = (await import('../../../routes/tools.routes.js')).default;
+  const knownToolsRoutes = (await import('../../../routes/knownTools.routes.js')).default;
 
   app = express();
   app.use(express.json());
@@ -130,9 +132,8 @@ beforeAll(async () => {
     };
     next();
   });
-  app.post('/api/tools', ToolController.createToolSession);
-  app.get('/api/tools', ToolController.listToolSessions);
-  app.get('/api/tools/:toolId', ToolController.getToolSession);
+  app.use('/api/tools', toolsRoutes);
+  app.use('/api/known-tools', knownToolsRoutes);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   app.use((err: any, _req: any, res: any, _next: any) => {
     res.status(500).json({ error: err?.message || 'unknown', code: err?.code });
@@ -162,6 +163,22 @@ afterAll(async () => {
 });
 
 describe('TLS-CATALOG-001 — real runtime gate against real Postgres', () => {
+  it('MOUNTED CATALOG: only Dynamic SWOT is active; unsupported rows are explicitly coming-soon and have no detail route', async () => {
+    const catalog = await request(app).get('/api/known-tools?limit=50').set(asUser(ORG_A));
+    expect(catalog.status).toBe(200);
+    const active = catalog.body.items.filter((item: { isActive: boolean }) => item.isActive);
+    expect(active.map((item: { toolType: string }) => item.toolType)).toEqual([ACTIVE_TOOL_TYPE]);
+    const unavailable = catalog.body.items.find(
+      (item: { toolType: string }) => item.toolType === INACTIVE_TOOL_TYPE
+    );
+    expect(unavailable).toMatchObject({ isActive: false, isComingSoon: true });
+
+    const detail = await request(app)
+      .get(`/api/known-tools/${INACTIVE_TOOL_TYPE}`)
+      .set(asUser(ORG_A));
+    expect(detail.status).toBe(404);
+  }, 30_000);
+
   it('POSITIVE CONTROL: dynamic-swot (owner-approved MVP tool) still starts a session', async () => {
     const res = await request(app)
       .post('/api/tools')

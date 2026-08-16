@@ -64,8 +64,8 @@ const REAL_INACTIVE_TOOL_SLUGS = [
 const REAL_ACTIVE_TOOL_SLUG = 'dynamic-swot';
 
 describe('ACTIVE_KNOWN_TOOL_TYPES (real backend registry) — RV-028', () => {
-  it('the real production allowlist has exactly 19 entries (matches the documented Wave-1 SHIP set)', () => {
-    expect(ACTIVE_KNOWN_TOOL_TYPES.size).toBe(19);
+  it('the real production allowlist has exactly the one owner-approved MVP entry', () => {
+    expect([...ACTIVE_KNOWN_TOOL_TYPES]).toEqual(['dynamic-swot']);
   });
 
   it.each(REAL_INACTIVE_TOOL_SLUGS)(

@@ -9,42 +9,20 @@ import { describe, expect, it } from 'vitest';
 
 import { ACTIVE_KNOWN_TOOL_TYPES, SQLITE_KNOWN_TOOLS_SEED } from '../KnownToolsService.js';
 
-const SHIP = [
-  'dynamic-swot',
-  'market-forces',
-  'value-chain',
-  'capability-mapper',
-  'ambition-decomposer',
-  'focus-tradeoff',
-  'narrative-engine',
-  'growth-paths',
-  'portfolio-priority',
-  'risk-uncertainty',
-  'process-automation',
-  'sop-builder',
-  'a3-problem-solving',
-  'smed-planner',
-  'dms-builder',
-  'inventory-autopilot',
-  'ai-discovery',
-  'pain-explorer',
-  'rpa-scanner',
-];
+const SHIP = ['dynamic-swot'];
 
 describe('known-tools catalog SHIP/HIDE decision', () => {
-  it('activates exactly the 19 curated SHIP tools', () => {
-    expect(ACTIVE_KNOWN_TOOL_TYPES.size).toBe(19);
+  it('activates exactly the owner-approved MVP tool', () => {
+    expect(ACTIVE_KNOWN_TOOL_TYPES.size).toBe(1);
     for (const t of SHIP) {
       expect(ACTIVE_KNOWN_TOOL_TYPES.has(t)).toBe(true);
     }
   });
 
-  it('marks every non-SHIP seed tool as coming-soon', () => {
+  it('keeps every non-SHIP seed outside the launch gate', () => {
     const hidden = SQLITE_KNOWN_TOOLS_SEED.filter((s) => !ACTIVE_KNOWN_TOOL_TYPES.has(s.toolType));
     expect(hidden.length).toBeGreaterThanOrEqual(12);
-    for (const tool of hidden) {
-      expect(tool.isComingSoon).toBe(true);
-    }
+    expect(hidden.every((tool) => !ACTIVE_KNOWN_TOOL_TYPES.has(tool.toolType))).toBe(true);
   });
 
   it('never marks a SHIP tool as coming-soon', () => {

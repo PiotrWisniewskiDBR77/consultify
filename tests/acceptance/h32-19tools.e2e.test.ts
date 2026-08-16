@@ -1,12 +1,10 @@
 /**
- * Acceptance E2E — H3.2 checklista mechaniki sesji dla 19 Active Discovery Tools.
+ * Acceptance E2E — H3.2 mechanics for owner-approved Active Discovery Tools.
  *
  * REALNY runtime, zero mocków logiki biznesowej, zero LLM:
- *  - Lista 19 toolType czytana z `src/config/agentManifests/discoveryToolsRegistry.ts`
- *    (`BUILT_TOOL_IDS` — jedyne SSOT tej listy, ten sam zbiór jest
- *    `ACTIVE_KNOWN_TOOL_TYPES` w `server/src/services/KnownToolsService.ts`).
- *    Import celowo z prawdziwego pliku (nie przepisany ręcznie), żeby test nie
- *    ześlizgnął się z rzeczywistością gdy ktoś doda/usunie tool.
+ *  - The list comes from the owner-approved runtime registry consumed by
+ *    `KnownToolsService`, so this acceptance test cannot resurrect built but
+ *    commercially/provenance-unapproved tools.
  *  - REALNY router `server/src/routes/tools.routes.ts`
  *    (ToolController.createToolSession/updateToolSession/getToolSession) za
  *    REALNYM verifyToken.
@@ -28,7 +26,7 @@ import express, { type Express } from 'express';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { BUILT_TOOL_IDS } from '../../src/config/agentManifests/discoveryToolsRegistry';
+import { APPROVED_MVP_TOOL_TYPES } from '../../server/src/services/toolCatalog/approvedMvpToolTypes';
 import { mintToken, pgClient } from './harness.js';
 import { SEED, seed } from './seed.mjs';
 
@@ -123,7 +121,7 @@ afterAll(async () => {
 // ===========================================================================
 // H3.2 — jedna sesja per toolType: create -> save -> reload -> W2 conclusion
 // ===========================================================================
-describe.each(BUILT_TOOL_IDS.map((toolType) => ({ toolType })))(
+describe.each([...APPROVED_MVP_TOOL_TYPES].map((toolType) => ({ toolType })))(
   'H3.2 — $toolType tool-sesja e2e (real router + auth + DB)',
   ({ toolType }) => {
     it(`creates, saves a minimal accepted item + W2 verdict, reloads, and the conclusion lands in conclusions (${toolType})`, async () => {
