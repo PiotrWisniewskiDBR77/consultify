@@ -22,8 +22,16 @@ import { validateBody } from '../../middleware/validation.middleware.js';
 import auditEventsService from '../../services/AuditEventsService.js';
 import blueprintService from '../../services/blueprintService.js';
 import { createInitiative as funnelCreateInitiative } from '../../services/initiative/createInitiativeService.js';
-import { requireInitiativeWriteAccess } from '../../services/initiative/initiativeGovernanceGuard.js';
+import {
+  evaluateInitiativeGateAccess,
+  requireInitiativeWriteAccess,
+} from '../../services/initiative/initiativeGovernanceGuard.js';
 import { upsertInitiativeKpiAssignment } from '../../services/initiative/initiativeKpiAssignmentService.js';
+import {
+  INITIATIVE_LIFECYCLE_GATE_DOMAINS,
+  InitiativeLifecycleGateDecisionError,
+  recordInitiativeLifecycleGateDecision,
+} from '../../services/initiative/initiativeLifecycleGateDecisionService.js';
 import {
   createWizardSession,
   evaluateShortlistGateForSession,
@@ -3753,6 +3761,145 @@ router.put(
   requireInitiativeCapability('initiative.gate_role.manage', { shadow: true }),
   InitiativeController.updateGateRoles
 );
+
+/**
+ * POST /api/initiatives/:id/lifecycle-gate-decisions
+ *
+ * INI-MVP-GATE-001: mounted writer for the canonical
+ * `initiative_lifecycle_gate_decisions` owner (T01/U03). Records a human
+ * GO (`decisionStatus: 'approved'`) or NO-GO (`'rejected'`) lifecycle gate
+ * decision by delegating to the existing, unmodified
+ * `recordInitiativeLifecycleGateDecision()` — this route does no SQL of its
+ * own. That function already enforces: an active in-tenant human actor, an
+ * exact-scope A05 approval receipt, tenant-scoped Case→Initiative lineage,
+ * an un-expired deadline, and idempotent-replay-safe writes guarded by a
+ * transaction-scoped advisory lock + `UNIQUE(organization_id,
+ * idempotency_key)` — so a retry of the same key returns the SAME decision
+ * row rather than creating a second one, and two concurrent submissions of
+ * the same key serialize to exactly one row. The table's own DB trigger
+ * forbids UPDATE/DELETE; every reversal is therefore a NEW row chained via
+ * `supersedesDecisionId`, which the underlying function computes — never a
+ * mutation of an existing row.
+ *
+ * Tenant scope (`organizationId`) and the acting human
+ * (`humanActorUserId`) come ONLY from the authenticated session — never from
+ * the request body — so a caller cannot record a decision for, or as, a
+ * different organization/user by forging body fields.
+ *
+ * Capability: FAILS CLOSED. Reuses `evaluateInitiativeGateAccess` (the same
+ * admin/role allowlist that already gates initiative APPROVE/REJECT
+ * governance elsewhere in this codebase — `initiativeGovernanceGuard.ts`),
+ * mapping `decisionStatus: 'approved' -> APPROVE` / `'rejected' -> REJECT`.
+ * That evaluator itself fails closed when it cannot resolve access ("Fail
+ * closed: if we cannot resolve the access context, deny the gate."); this
+ * handler additionally treats ANY error thrown while resolving access as a
+ * deny, so an unexpected failure can never fall through to an allow. This is
+ * deliberately NOT `requireInitiativeCapability(..., { shadow: true })` —
+ * that helper's shadow mode (used elsewhere in this file) is telemetry-only
+ * and, even without `shadow`, silently ALLOWS every caller unless the
+ * `EFFECTIVE_ACCESS_ENFORCE`/`EFFECTIVE_ACCESS_SHADOW` env flags happen to be
+ * set — the opposite of fail-closed this endpoint requires.
+ *
+ * Body: RecordInitiativeLifecycleGateDecisionInput minus organizationId/
+ * humanActorUserId (see above). `initiativeId` comes from the path.
+ */
+const LifecycleGateDecisionSchema = z.object({
+  transformationCaseId: z.string().trim().min(1).max(255),
+  pmoDomain: z.enum(INITIATIVE_LIFECYCLE_GATE_DOMAINS),
+  decisionStatus: z.enum(['approved', 'rejected']),
+  sourceDigest: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .regex(/^[0-9a-f]{64}$/, 'sourceDigest must be a SHA-256 hex digest'),
+  sourceCaseVersion: z.number().int().min(1),
+  baselineRefs: z.array(z.string().trim().min(1)).min(1).max(200),
+  a05ProposalVersionId: z.string().trim().min(1).max(255),
+  a05ApprovalReceiptRef: z.string().trim().min(1).max(255),
+  humanAuthorityRef: z.string().trim().min(1).max(255),
+  rationale: z.string().trim().min(1).max(4000),
+  deadlineAt: z.string().trim().min(1),
+  idempotencyKey: z.string().trim().min(1).max(255),
+});
+
+router.post(
+  '/:id/lifecycle-gate-decisions',
+  requireOrgRole('user'),
+  validateBody(LifecycleGateDecisionSchema),
+  async (req: any, res: any) => {
+    const orgId = req.user?.organizationId;
+    const actorUserId = req.user?.id;
+    if (!orgId || !actorUserId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const initiativeId = String(req.params.id || '').trim();
+    if (!initiativeId) {
+      return res.status(400).json({ error: 'initiative id is required', code: 'INITIATIVE_ID_REQUIRED' });
+    }
+
+    const governanceGate: 'APPROVE' | 'REJECT' =
+      req.body.decisionStatus === 'approved' ? 'APPROVE' : 'REJECT';
+
+    let access: any;
+    try {
+      access = await evaluateInitiativeGateAccess({
+        organizationId: String(orgId),
+        initiativeId,
+        userId: String(actorUserId),
+        gate: governanceGate,
+        systemRoleHint: req.user?.role ?? null,
+        isSuperAdmin: req.user?.isSuperAdmin === true,
+      });
+    } catch (accessErr) {
+      // FAIL CLOSED: any error resolving governance access denies the write —
+      // never falls through to an allow.
+      logger.error('[M13 Initiatives] lifecycle gate access check failed', accessErr);
+      return res.status(403).json({
+        error: 'Unable to verify governance authority for this gate decision',
+        code: 'INITIATIVE_GATE_DECISION_ACCESS_CHECK_FAILED',
+      });
+    }
+    if (!access.allowed) {
+      return res.status(403).json({ error: access.reason, code: access.code });
+    }
+
+    try {
+      const result = await queryHelpers.withPgTransaction((client) =>
+        recordInitiativeLifecycleGateDecision(client, {
+          organizationId: String(orgId),
+          initiativeId,
+          transformationCaseId: req.body.transformationCaseId,
+          pmoDomain: req.body.pmoDomain,
+          decisionStatus: req.body.decisionStatus,
+          sourceDigest: req.body.sourceDigest,
+          sourceCaseVersion: req.body.sourceCaseVersion,
+          baselineRefs: req.body.baselineRefs,
+          a05ProposalVersionId: req.body.a05ProposalVersionId,
+          a05ApprovalReceiptRef: req.body.a05ApprovalReceiptRef,
+          humanActorUserId: String(actorUserId),
+          humanAuthorityRef: req.body.humanAuthorityRef,
+          rationale: req.body.rationale,
+          deadlineAt: req.body.deadlineAt,
+          idempotencyKey: req.body.idempotencyKey,
+        })
+      );
+      return res.status(result.idempotentReplay ? 200 : 201).json({
+        decision: result.decision,
+        idempotentReplay: result.idempotentReplay,
+      });
+    } catch (err: any) {
+      if (err instanceof InitiativeLifecycleGateDecisionError) {
+        return res.status(err.statusCode).json({ error: err.message, code: err.code });
+      }
+      return failInitiative500(
+        res,
+        'Failed to record initiative lifecycle gate decision',
+        'INITIATIVE_GATE_DECISION_WRITE_FAILED',
+        err
+      );
+    }
+  }
+);
+
 router.post('/similar-check', InitiativeController.checkSimilarInitiatives);
 router.post('/validate-card', InitiativeController.validateCard);
 router.post('/:id/gate-ai-check', InitiativeController.getGateAiCheck);
