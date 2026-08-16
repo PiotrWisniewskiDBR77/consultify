@@ -1,7 +1,7 @@
 {
   "taskId": "MYW-REALDB-FIXTURE-AUTH-001",
-  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "99406b784bf1332beb369be161e75a2422f00fc6",
+  "baselineSha": "f8855ba42592c3a319c3e191cb3f5d21a4945e65",
+  "productSha": "12be0ab654ebb66041f6604ca396dfeab71a9361",
   "leaseSha256": "f4d75f0aed94f2e34acaec63d91c245495e7e0f658aa36d1122342c2acecc612",
   "toolchain": {
     "node": "v24.12.0",
@@ -25,18 +25,22 @@
     "notifications"
   ],
   "changedPaths": [
+    "server/src/routes/my-work.routes.ts",
     "server/src/services/myWork/__tests__/myw-realdb-fixture-auth-001.pg.test.ts"
   ],
   "changedPathRationale": {
+    "server/src/routes/my-work.routes.ts": "Mount validateOrgMembership after verifyToken so revoked or inactive membership cannot use a stale JWT organization context on My Work routes.",
     "server/src/services/myWork/__tests__/myw-realdb-fixture-auth-001.pg.test.ts": "New governed positive fixture proving owner/capability and cross-tenant denial on real PG for this task."
   },
   "commands": [
     "node scripts/cleanup/verify-closure-lane.mjs b closure-execution-baseline-v2-20260816",
     "jq -r '.tests.vitest[]' docs/cleanup/agents/generated/CLAUDE_LANE_B_PATH_LEASE.json | xargs -n 80 npx vitest run --no-file-parallelism --maxWorkers=1 --maxConcurrency=2 --retry=0",
-    "CI=true DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts  (fresh, repeat, --dry-run)"
+    "CI=true DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts  (fresh database, exit 0)",
+    "DATABASE_URL=postgresql://postgres:***@127.0.0.1:32771/myw_auth NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres npx vitest run server/src/services/myWork/__tests__/myw-realdb-fixture-auth-001.pg.test.ts --retry=0 --reporter=dot",
+    "npm run type-check"
   ],
   "denominators": {
-    "task": "5/5 pass on real PostgreSQL via the real materializeInboxItems/getInboxItems/triageItem functions",
+    "task": "6/6 pass on fresh real PostgreSQL: service materialize/read/triage plus mounted Express router with real JWT and membership middleware",
     "laneRealDbPass": "110 leased realDB files on an isolated DB: 77 passed / 7 failed / 26 skipped; 675 tests: 565 passed / 51 failed / 59 skipped",
     "recoveredAcceptance": "14 leased acceptance files the mandated G2 command cannot collect, run under vitest.acceptance.config.ts: 105 tests, 91 passed / 14 failed"
   },
@@ -47,6 +51,7 @@
   },
   "negativeControls": {
     "crossTenant": "other-org actor sees 0 rows; cross-tenant triageItem returns null and leaves row pending (verified on a fresh connection)",
+    "mountedAuth": "owner JWT receives 200 and 3 rows; valid foreign-tenant JWT receives 200 and 0 rows; inactive-member stale JWT receives 403 ORG_MEMBERSHIP_REVOKED",
     "coldReadback": "re-read via a new independent pg.Client",
     "cleanup": "afterAll + independent docker exec count = 0 residual rows",
     "mockControl": "RUN_DB_TESTS unset -> loud skip; MOCK_DB=true -> not a silent pass"
@@ -55,6 +60,6 @@
   "rollback": {
     "method": "Revert the lane commits; all changes are additive application code plus new tests. NO migration was added by this lane, so no schema rollback is required and old readers are unaffected."
   },
-  "verdict": "PARTIAL",
-  "openBlocker": "The packet names canonical table `inbox_items`, which DOES NOT EXIST (to_regclass NULL). Real projection is canonical_inbox_items; ai_inbox and v8_inbox_materializations are two further independent projections. Lane G2 remains red at baseline and 26 leased realDB files skip undispositioned."
+  "verdict": "DONE_CURRENT_SHA",
+  "openBlocker": null
 }

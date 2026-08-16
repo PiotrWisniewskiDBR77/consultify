@@ -5,6 +5,27 @@ Test file: `server/src/services/myWork/__tests__/myw-realdb-fixture-auth-001.pg.
 (moved from the originally-instructed `server/src/services/__tests__/...` after the
 lease verifier rejected that directory — see "Path correction" below).
 
+## Current closure addendum — 2026-08-17
+
+The earlier 5/5 proof exercised the production service functions but did not
+mount the HTTP authentication chain. The production router now mounts
+`validateOrgMembership` immediately after `verifyToken`, and the same fresh-PG
+suite mounts the real router with signed JWTs. Current result: **6/6, exit 0**.
+
+- owner JWT: HTTP 200, exactly 3 owned rows;
+- valid JWT for a different tenant: HTTP 200, exactly 0 rows;
+- stale JWT for an actor whose membership is `INACTIVE`: HTTP 403 with
+  `ORG_MEMBERSHIP_REVOKED`;
+- independent cold readback: 3 committed rows;
+- cross-tenant write attempt: `null`, owner row remains `pending`;
+- teardown: 0 residual fixture rows;
+- `npm run type-check`: exit 0.
+
+This closes the task at the current candidate. No role-only restriction was
+invented: an active MEMBER is entitled to its own My Work inbox; the denied
+negative control is loss of active organization membership, not merely a
+lower role label.
+
 ## Two packet claims verified first (both CONFIRMED)
 
 1. **`inbox_items` does not exist.**
