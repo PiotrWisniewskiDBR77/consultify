@@ -1,35 +1,63 @@
 {
-  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "a62dbe340114d87eda75a0d2da2d77bee2a90685",
-  "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
-  "environment": {
-    "node": "v24.12.0",
-    "postgres": "16.14 (pgvector/pgvector:pg16)",
-    "vitest": "root vitest.config.ts",
-    "dbUrl": "127.0.0.1:55432 isolated lane container consultify-closure-c-64f50785"
-  },
-  "gateG0": "PASS pre-commit (lease PASS, 25 changed paths). POST-COMMIT the verifier reports 11 new source/test files as violations; all 11 match lane C allowedNewRoots and none exist at baseline — see ICR-C-003, a verifier defect (isTracked() is true for staged/committed paths), not a scope violation.",
-  "gateG1": "PASS — npm run type-check exit 0; npm run build:backend exit 0; test:discovery-gate PASS 4997/4997 discovered, 4698 executed.",
-  "gateG3": "PASS — strict migrate on FRESH from-zero DB exit 0; repeat run applied 0; --dry-run 0 pending; schema_migrations 709 success / 0 failed / 0 pending.",
   "taskId": "MAT-MVP-EXPORT-001",
-  "verdict": "PARTIAL",
-  "ownerTables": [
-    "artifact_export_receipts"
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "productSha": "8d3170bb4fc922b70f2c90381b4c2a5ba281483a",
+  "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
+  "changedPaths": [
+    "server/src/routes/document-studio.routes.ts",
+    "server/src/routes/workbook.routes.ts",
+    "server/migrations/20260914_artifact_export_receipts_immutability.sql",
+    "server/src/services/materialExport/materialExportReceiptService.ts",
+    "server/src/services/materialExport/__tests__/materialExportReceiptService.pg.test.ts",
+    "docs/program/evidence/closure/c/MAT-MVP-EXPORT-001/TASK_EVIDENCE.json"
+  ],
+  "changedPathRationale": {
+    "documentRoute": "binds permitted markdown, DOCX and PDF renders to the exact tenant-scoped Wave5 version and schema hash, records the native provider outcome, returns the receipt id and records render failure",
+    "workbookRoute": "binds XLSX renders to the exact tenant-scoped generated_workbooks version and schema hash, records the ExcelJS provider outcome, returns the receipt id and records render failure",
+    "receiptService": "shared DOC/XLSX source and byte hashing, provider identity, tenant-scoped idempotency, concurrency replay validation and fail-closed terminal handling",
+    "migration": "database-enforced immutable source/provider identity and exactly one pending-to-terminal outcome, including direct SQL bypass protection",
+    "tests": "real PostgreSQL proof of source/output hashes, failure, concurrency, idempotency, tenant isolation and direct mutation denial",
+    "evidence": "exact candidate, commands, denominators, fixtures and negative controls for this bounded closure"
+  },
+  "ownerTables": ["artifact_export_receipts", "wave5_artifacts", "generated_workbooks"],
+  "commands": [
+    {"command": "DATABASE_URL=<isolated-pg> DB_TYPE=postgres NODE_ENV=test npm run db:migrate:strict", "exitCode": 0, "result": "fresh 724/724 migrations applied"},
+    {"command": "DATABASE_URL=<isolated-pg> DB_TYPE=postgres NODE_ENV=test npm run db:migrate:strict", "exitCode": 0, "result": "repeat Applying migrations: 0"},
+    {"command": "DATABASE_URL=<isolated-pg> DB_TYPE=postgres NODE_ENV=test npm run db:migrate:strict -- --dry-run", "exitCode": 0, "result": "Pending migrations: 0"},
+    {"command": "DATABASE_URL=<isolated-pg> DB_TYPE=postgres NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false REQUIRE_DB_TESTS=1 npx vitest run server/src/services/materialExport/__tests__/materialExportReceiptService.pg.test.ts server/src/services/presentationExport/__tests__/presentationExportReceiptService.pg.test.ts server/src/services/artifactHandoff/__tests__/handoffSpine.pg.test.ts --reporter=dot --retry=0", "exitCode": 0, "result": "3/3 files and 36/36 tests; MAT DOC/XLSX subset 5/5"},
+    {"command": "npm run type-check -- --pretty false", "exitCode": 0, "result": "full repository typecheck passed"}
   ],
   "denominators": {
-    "realdbTests": "12 passed (presentation path)"
+    "materialDocXlsxRealDb": "5/5",
+    "combinedReceiptRegressionGate": "36/36 across 3/3 files",
+    "concurrentXlsx": "12/12 calls coalesced to one tenant-scoped receipt; 11 replay acknowledgements",
+    "freshMigrations": "724/724",
+    "repeatMigrations": "0 pending",
+    "dryRunMigrations": "0 pending",
+    "typecheck": "exit 0"
   },
-  "open": [
-    "Only the presentation export path is wired to export receipts. Document and Workbook export endpoints are NOT yet wired — previously they were recorded nowhere at all, so this is a partial, honestly-scoped improvement."
-  ],
-  "changedPaths": [],
-  "changedPathRationale": {},
-  "commands": [],
-  "fixtures": {},
-  "negativeControls": {},
+  "fixtures": {
+    "database": "fresh disposable pgvector/pgvector:pg16 PostgreSQL on localhost:55488 in consultify-mat-export",
+    "document": "synthetic tenant-scoped Wave5 document source with explicit version, canonical schema and deterministic exported bytes",
+    "workbook": "synthetic tenant-scoped generated workbook source with explicit version, canonical schema and deterministic XLSX bytes",
+    "providers": "native:utf8-markdown, native:docx, native:pdfkit and native:exceljs; no external provider or production credential used"
+  },
+  "negativeControls": {
+    "sourceDrift": "same idempotency key with changed source version or canonical source hash is rejected",
+    "outputDrift": "completed receipt replay with changed bytes hash or size is rejected",
+    "tenant": "foreign tenant cannot complete another tenant receipt and tenant identity is immutable at the database boundary",
+    "failure": "provider/render failure is recorded as an explicit terminal failed outcome and cannot be retried as success",
+    "concurrency": "12 simultaneous same-tenant XLSX begins create exactly one receipt",
+    "directMutation": "direct SQL mutation of terminal source or output fields is denied by the immutability trigger",
+    "regression": "existing PPT and common handoff receipt contracts remain green in the same 36-test gate"
+  },
   "browserArtifacts": [],
   "rollback": {
-    "method": "Not recorded by the lane; no rollback execution or completion claim is inferred.",
+    "code": "revert the five Materials implementation paths before deployment; no commit was created by this task",
+    "data": "additive trigger/function migration only; no production database or artifact was modified",
     "executed": false
-  }
+  },
+  "technicalVerdict": "PASS_LOCAL_REALPG",
+  "verdict": "DONE_CURRENT_SHA",
+  "openBlockers": []
 }
