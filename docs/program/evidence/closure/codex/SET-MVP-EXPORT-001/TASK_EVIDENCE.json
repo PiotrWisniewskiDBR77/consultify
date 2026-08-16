@@ -2,10 +2,13 @@
   "taskId": "SET-MVP-EXPORT-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "productSha": "04833b1161dc88402cdbd2565b2f3940c9d84607",
+  "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
   "changedPaths": [
     "server/src/services/gdprService.ts",
     "tests/integration/settings/gdpr-settings-no-stubs.test.ts"
   ],
+  "changedPathRationale": {"service": "PostgreSQL-compatible portable export request and durable readback", "tests": "auth, schema parity and no-fake-ETA controls"},
+  "ownerTables": ["gdpr_requests", "data_export_requests"],
   "commands": [
     {"command": "npm run type-check", "exitCode": 0},
     {"command": "npm run build:backend", "exitCode": 0},
@@ -17,11 +20,15 @@
     "ledgerNonSuccess": 0,
     "scope": "disposable loopback PostgreSQL; no shared/demo/production data"
   },
+  "denominators": {"settingsGdprTests": "9/9", "freshMigrations": 703},
+  "fixtures": {"database": "isolated local PostgreSQL", "scope": "authenticated tenant user"},
   "negativeControls": [
     "export requires authenticated user and organization scope",
     "fresh-schema column variants are resolved from information_schema",
     "no fake ETA response; request and direct readback are persisted"
   ],
+  "browserArtifacts": [],
+  "rollback": {"code": "revert 04833b1161 before deployment", "data": "isolated export-request fixtures only"},
   "verdict": "PARTIAL",
   "openBlockers": [
     "Immutable downloadable artifact hash and browser download/readback remain to close G4-G6 on the final integrated SHA."

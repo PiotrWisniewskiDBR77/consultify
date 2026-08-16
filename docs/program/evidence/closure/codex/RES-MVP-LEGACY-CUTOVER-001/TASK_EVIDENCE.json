@@ -2,15 +2,22 @@
   "taskId": "RES-MVP-LEGACY-CUTOVER-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "productSha": "5f5c5e507a64b262ec9585b2469ba6277b0b6939",
+  "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
   "changedPaths": ["tests/resultsVnext/roi/legacyIsolation.realdb.test.ts"],
+  "changedPathRationale": {"test": "prove canonical KPI/OKR/ROI reads exclude poisoned legacy rows without mutating immutable realizations"},
+  "ownerTables": ["rvn_kpi_definitions", "rvn_okr_sets", "rvn_roi_cases", "roi_realized_values"],
   "commands": [
     {"command": "RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=<isolated-local-pg> npx vitest run tests/resultsVnext/kpi/legacyIsolation.realdb.test.ts tests/resultsVnext/okr/legacyIsolation.realdb.test.ts tests/resultsVnext/roi/legacyIsolation.realdb.test.ts", "exitCode": 0, "result": "6 tests passed; KPI/OKR/ROI vNext read models excluded poisoned legacy rows"}
   ],
+  "denominators": {"legacyIsolationTests": "6/6", "domains": 3},
+  "fixtures": {"database": "isolated local PostgreSQL", "poisonedRows": "same-tenant legacy KPI, OKR and ROI records"},
   "negativeControls": [
     "same-tenant poisoned legacy rows never appear in canonical KPI/OKR/ROI reads",
     "static repository scan finds zero unauthorized legacy-table references",
     "append-only ROI realization fixture is not deleted or mutated during teardown"
   ],
+  "browserArtifacts": [],
+  "rollback": {"code": "test-only change", "data": "test fixture teardown preserves append-only realization semantics"},
   "verdict": "PARTIAL",
   "openBlockers": [
     "Usage telemetry, backfill parity and owner-authorized retirement of all legacy writers remain required before cutover is complete."

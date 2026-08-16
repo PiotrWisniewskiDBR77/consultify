@@ -2,21 +2,28 @@
   "taskId": "SET-MVP-DELETE-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "productSha": "04833b1161dc88402cdbd2565b2f3940c9d84607",
+  "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
   "changedPaths": [
     "tests/integration/settings/account-deletion-routes-guard.test.ts",
     "tests/integration/settings/gdpr-settings-no-stubs.test.ts"
   ],
+  "changedPathRationale": {"tests": "prove authenticated scheduling and fail-closed password/tenant guards while destructive execution remains disabled"},
+  "ownerTables": ["account_deletion_requests", "gdpr_requests"],
   "commands": [
     {"command": "npm run type-check", "exitCode": 0},
     {"command": "npm run build:backend", "exitCode": 0},
     {"command": "RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres DATABASE_URL=<isolated-local-pg> npx vitest run tests/integration/settings/account-deletion-routes-guard.test.ts tests/integration/settings/gdpr-settings-no-stubs.test.ts", "exitCode": 0, "result": "missing password 400; wrong password 403; correct password creates exactly one scheduled record on both canonical routes"}
   ],
+  "denominators": {"settingsGdprTests": "9/9", "destructiveExecutions": 0},
+  "fixtures": {"database": "isolated local PostgreSQL", "policy": "destructive execution OFF"},
   "negativeControls": [
     "missing password writes zero deletion rows",
     "wrong password writes zero deletion rows",
     "organization-less user fails closed",
     "destructive execution was not enabled or invoked"
   ],
+  "browserArtifacts": [],
+  "rollback": {"code": "revert 04833b1161 before deployment", "data": "no destructive execution occurred"},
   "verdict": "BLOCKED_OWNER",
   "openBlockers": [
     "Legal/Privacy must approve retention minima/maxima, anonymize-versus-delete, legal hold approval and release.",

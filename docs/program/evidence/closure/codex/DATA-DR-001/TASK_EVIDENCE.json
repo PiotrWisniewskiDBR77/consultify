@@ -1,7 +1,7 @@
 {
   "taskId": "DATA-DR-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "010efaa52267278791cd445d6c2a52f18628acbb",
+  "productSha": "b37abda1d4a463dcdb63967acf09a4453613de7c",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
   "changedPaths": [],
   "changedPathRationale": {},

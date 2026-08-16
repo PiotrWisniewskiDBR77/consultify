@@ -2,15 +2,22 @@
   "taskId": "FIN-MVP-IMPORT-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "productSha": "5f5c5e507a64b262ec9585b2469ba6277b0b6939",
+  "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
   "changedPaths": [],
+  "changedPathRationale": {"none": "verification-only evidence of the existing XLSX route contract"},
+  "ownerTables": ["finance_working_revisions", "finance_import_jobs", "finance_statement_lines"],
   "commands": [
     {"command": "RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=<isolated-local-pg> npx vitest run server/src/routes/v8/finance-v2/__tests__/export-import.routes.pg.test.ts", "exitCode": 0, "result": "11 tests passed; XLSX export/parse/preview/correct/apply/readback, CAS and cross-tenant controls"}
   ],
+  "denominators": {"xlsxRouteTests": "11/11"},
+  "fixtures": {"database": "isolated local PostgreSQL", "format": "representative XLSX workbook"},
   "negativeControls": [
     "stale working revision returns 409 and is not silently applied twice",
     "cross-tenant export and preview return uniform 404",
     "malformed cross-tenant request does not disclose validation shape before authorization"
   ],
+  "browserArtifacts": [],
+  "rollback": {"code": "verification-only evidence", "data": "isolated import fixtures only"},
   "verdict": "PARTIAL",
   "openBlockers": [
     "CSV representative fixture and immutable import-receipt hash are not covered by the current XLSX route suite.",
