@@ -52,6 +52,24 @@ registration; the branch refs and commit objects remain intact.
 This operation does not classify the preserved branches as disposable and does
 not authorize deleting their refs.
 
+## Generated worktree disposition
+
+The deterministic manifest in
+`evidence/WORKTREE_DISPOSITION_20260816.{md,json}` inspected every registered
+worktree at candidate `1ca9d0c06b509dcf6ede144770fb3520ae6d3e7a`, including
+ordinary status and ignored paths:
+
+- 1 canonical candidate;
+- 1 frozen source quarantine;
+- 137 dirty worktrees retained in quarantine;
+- 178 worktrees with ignored evidence or unmerged state retained for review;
+- 32 clean worktrees whose commits are represented by the candidate and whose
+  only ignored content is reproducible (`node_modules`, build output, caches or
+  test reports), eligible for checkout retirement while preserving branch refs.
+
+The generated decision is path-specific. It never authorizes deleting a branch
+ref, and it must be regenerated after any worktree or candidate change.
+
 ## Planned recovery order
 
 1. Assessment verification and missing entry/source-of-truth resolution
