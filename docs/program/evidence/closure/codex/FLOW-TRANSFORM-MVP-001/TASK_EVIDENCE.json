@@ -1,0 +1,60 @@
+{
+  "taskId": "FLOW-TRANSFORM-MVP-001",
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "productSha": "c50c4895f11012ea4326fd9879521716f100a5d8",
+  "leaseSha256": "18eb0f2e24aee1d6415a29e1605597117f24c42a1f74439842581e7a92583742",
+  "changedPaths": [
+    "tests/integration/exe009-closure-delivery-receipt.realdb.test.ts",
+    "docs/program/evidence/closure/codex/FLOW-TRANSFORM-MVP-001/TASK_EVIDENCE.json"
+  ],
+  "changedPathRationale": {
+    "tests/integration/exe009-closure-delivery-receipt.realdb.test.ts": "Updates the Execution to Results and Finance acceptance fixture to satisfy the immutable human-approved CLOSURE decision owner instead of bypassing the canonical transition gate.",
+    "docs/program/evidence/closure/codex/FLOW-TRANSFORM-MVP-001/TASK_EVIDENCE.json": "Separates the proven downstream real-PostgreSQL slice from the still-unproven full transformation and deployed-browser journey."
+  },
+  "ownerTables": [
+    "initiative_lifecycle_gate_decisions",
+    "closure_delivery_receipts",
+    "initiative_benefits",
+    "kpi_time_series",
+    "ie_aggregate_state",
+    "ie_outbox_events"
+  ],
+  "commands": [
+    {
+      "command": "DATABASE_URL=<fresh-pg> DB_TYPE=postgres POSTGRES_SKIP_INIT_IN_TEST=1 RUN_DB_TESTS=1 MOCK_DB=false npx vitest run tests/integration/exe009-closure-delivery-receipt.realdb.test.ts --maxWorkers=1 --no-file-parallelism --reporter=dot",
+      "exitCode": 0
+    },
+    {
+      "command": "IE_TEST_DATABASE_URL=<fresh-pg> npx vitest run tests/integration/initiatives-execution/resultsMeasurement.realdb.test.ts --maxWorkers=1 --no-file-parallelism --reporter=dot",
+      "exitCode": 0
+    }
+  ],
+  "denominators": {
+    "freshMigrations": {"applied": 722, "failed": 0},
+    "executionResultsFinanceReceipt": {"files": 1, "passed": 27, "failed": 0, "skipped": 0},
+    "resultsFinanceAuthoritativeBridge": {"files": 1, "passed": 2, "failed": 0, "skipped": 0}
+  },
+  "fixtures": {
+    "database": "Disposable fresh pgvector PostgreSQL 16 database on localhost:56663",
+    "closureAuthority": "Per-initiative immutable approved CLOSURE decision with exact proposal review and human actor fixture"
+  },
+  "negativeControls": {
+    "closureWithoutApprovedDecisionDenied": true,
+    "concurrentClosureExactlyOneReceipt": true,
+    "deliveryRetryIdempotent": true,
+    "crossTenantReceiptDenied": true,
+    "financeNeverAutoRealizesCandidate": true,
+    "restartReconciliationRecoversPendingReceipt": true
+  },
+  "browserArtifacts": [],
+  "rollback": {
+    "method": "Revert commit c50c4895f11012ea4326fd9879521716f100a5d8; production runtime and schema were not changed.",
+    "executed": false
+  },
+  "verdict": "PARTIAL",
+  "openBlockers": [
+    "No single test yet creates the entire Organization or Interview or DRD or SWOT source through candidate, Initiative, Execution, Results Actual, Finance reconciliation and PIR under one stable lineage.",
+    "Upstream A and C producer receipts have not yet been exercised in the same fresh database as this downstream slice.",
+    "Deployed desktop and mobile journey and rollback rehearsal are not authorized or verified."
+  ]
+}
