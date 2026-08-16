@@ -1,45 +1,66 @@
 {
-  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "a62dbe340114d87eda75a0d2da2d77bee2a90685",
-  "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
-  "environment": {
-    "node": "v24.12.0",
-    "postgres": "16.14 (pgvector/pgvector:pg16)",
-    "vitest": "root vitest.config.ts",
-    "dbUrl": "127.0.0.1:55432 isolated lane container consultify-closure-c-64f50785"
-  },
-  "gateG0": "PASS pre-commit (lease PASS, 25 changed paths). POST-COMMIT the verifier reports 11 new source/test files as violations; all 11 match lane C allowedNewRoots and none exist at baseline — see ICR-C-003, a verifier defect (isTracked() is true for staged/committed paths), not a scope violation.",
-  "gateG1": "PASS — npm run type-check exit 0; npm run build:backend exit 0; test:discovery-gate PASS 4997/4997 discovered, 4698 executed.",
-  "gateG3": "PASS — strict migrate on FRESH from-zero DB exit 0; repeat run applied 0; --dry-run 0 pending; schema_migrations 709 success / 0 failed / 0 pending.",
+  "baselineSha": "158f878743e90bc64ebfdaefdb470e99b205ce68",
+  "productSha": "d6b636cd6bd5244b368ffee9df731d98bf231b7b",
+  "leaseSha256": "6cea3c806721c2d385d7f960e88d411966e5bf497bb35ccce222828f8b9819c4",
   "taskId": "CHAT-BVP-001",
   "verdict": "PARTIAL",
   "open": [
-    "The live chat write path (ai.routes.ts, AIPipeline.ts, services/ai/tools/*, actionProposalEngine.ts) is OUTSIDE the lane lease and still permits ungated create_task/create_decision. This surface is an ALTERNATIVE governed path, not yet the only path; wiring the model/UI to prefer it is integration work for the owner of those files.",
-    "No consumer yet materializes producer_kind=chat proposals into a target artifact.",
-    "G4 browser/visual not run."
+    "No target-owner consumer is wired to materialize producer_kind=chat proposals into an actual artifact. The shared exactly-once receipt spine is proven, but wiring a document/material owner consumer is an owner-boundary integration and was not invented here."
   ],
-  "ownerTables": [
-    "artifact_handoff_proposals",
-    "artifact_handoff_receipts"
-  ],
+  "environment": {
+    "node": "v24.12.0",
+    "postgres": "16 (pgvector/pgvector:pg16)",
+    "vitest": "root vitest.config.ts",
+    "dbUrl": "127.0.0.1:32910/chat_bvp in disposable container consultify-chat-bvp-459b2d"
+  },
+  "gateG0": "PASS for the bounded three-path change; no Chat UI, provider policy, foreign owner table, commit, push or deploy was touched.",
+  "gateG1": "PASS: npm run type-check exit 0; focused mounted route contract 18/18 exit 0.",
+  "gateG3": "PASS: fresh PostgreSQL migration exit 0; schema_migrations contains 729 rows.",
+  "gateG4": "NOT_RUN_BY_SCOPE: Chat UI, human review and browser acceptance were explicitly excluded from this bounded technical closure.",
+  "ownerTables": ["conversations", "conversation_messages", "artifact_handoff_proposals", "artifact_handoff_receipts"],
   "denominators": {
-    "realdbTests": "14 passed / 14 discovered (clean DB)"
+    "realPostgres": "19 passed / 19 discovered in 2 files (14 service + 5 mounted JWT/runtime)",
+    "focusedRoute": "18 passed / 18 discovered in 1 file",
+    "typeCheck": "1 command passed / 1 run, exit 0",
+    "migration": "729 schema_migrations rows after fresh migration, exit 0"
   },
   "negativeControls": {
-    "idempotentPropose": "same key twice -> ONE proposal",
-    "concurrentApprove": "ONE decision + ONE receipt",
-    "humanActor": "'system'/'' rejected",
-    "crossTenant": "propose/read/approve/reject denied",
-    "producerBoundary": "a non-chat proposal row is invisible to this surface",
-    "foreignWrites": "service contains ZERO raw SQL write statements; all writes go through the spine"
+    "staleMembership": "real signed JWT for INACTIVE membership denied 403 ORG_MEMBERSHIP_REVOKED by mounted app",
+    "crossTenant": "foreign organization read and approve both denied 404",
+    "idempotentCreateRace": "two concurrent mounted requests with one key returned 200/201, same proposal ID, database count exactly 1",
+    "approvalRace": "two concurrent mounted approvals converged on the same human decision",
+    "materializationRetry": "two concurrent shared-spine materializations returned one receipt ID and cold database count exactly 1",
+    "reject": "mounted human rejection persisted rejected state",
+    "missingSource": "missing message denied 404 SOURCE_NOT_FOUND with no phantom proposal",
+    "providerAndEmptyStream": "existing service suite fail-closed controls remained green; no provider policy was changed",
+    "coldReadback": "independent new pg.Client read exact source hash, citation payload, materialized state and one receipt",
+    "cleanup": "test afterAll asserted zero proposal/user residue for generated fixture IDs"
   },
-  "changedPaths": [],
-  "changedPathRationale": {},
-  "commands": [],
-  "fixtures": {},
+  "changedPaths": [
+    "server/src/routes/v8/chat.routes.ts",
+    "server/src/services/chatHandoff/__tests__/chatHandoffMounted.pg.test.ts",
+    "server/src/services/v8/__tests__/chat-routes.test.ts"
+  ],
+  "changedPathRationale": {
+    "server/src/routes/v8/chat.routes.ts": "Revalidate active organization membership on the mounted Chat router so a stale JWT fails closed.",
+    "server/src/services/chatHandoff/__tests__/chatHandoffMounted.pg.test.ts": "Fresh real-PostgreSQL mounted JWT proof for tenant, retry, concurrent approval/materialization and cold reopen.",
+    "server/src/services/v8/__tests__/chat-routes.test.ts": "Keep the isolated auth-module mock aligned with the production middleware export contract."
+  },
+  "commands": [
+    {"command": "DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32910/chat_bvp DB_TYPE=postgres CI=true npx tsx server/scripts/migrate.postgres.ts", "exitCode": 0, "result": "fresh migration completed; 729 ledger rows"},
+    {"command": "DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32910/chat_bvp DB_TYPE=postgres CI=true RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test ENABLE_V8_GLOBAL=true npx vitest run server/src/services/chatHandoff/__tests__/chatHandoffService.pg.test.ts server/src/services/chatHandoff/__tests__/chatHandoffMounted.pg.test.ts --no-file-parallelism --maxWorkers=1 --retry=0 --reporter=dot", "exitCode": 0, "result": "2/2 files, 19/19 tests"},
+    {"command": "npx vitest run server/src/services/v8/__tests__/chat-routes.test.ts --retry=0 --reporter=dot", "exitCode": 0, "result": "1/1 file, 18/18 tests"},
+    {"command": "npm run type-check", "exitCode": 0, "result": "TypeScript noEmit passed"}
+  ],
+  "fixtures": {
+    "organizations": "two isolated active organizations",
+    "personas": "active owner in each organization plus an INACTIVE stale owner in the source organization",
+    "source": "real conversation and AI messages containing attachment citation marker, named source citation and URL",
+    "auth": "real signed JWTs through the production mounted V8 router"
+  },
   "browserArtifacts": [],
   "rollback": {
-    "method": "Not recorded by the lane; no rollback execution or completion claim is inferred.",
+    "method": "Remove the route-local chatMembershipGuard and its import, delete the mounted proof file, and remove the mock export addition; no database schema or production data mutation is part of this patch.",
     "executed": false
   }
 }
