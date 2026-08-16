@@ -52,6 +52,8 @@
  */
 import { createHash, randomUUID } from 'node:crypto';
 import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import pg, { type PoolClient } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -172,9 +174,9 @@ describe.skipIf(!REAL_PG)(
       pool = new pg.Pool({ connectionString: CONNECTION_STRING });
       await pool.query(`CREATE SCHEMA ${quotedSchema}`);
 
-      const migrationPath = new URL(
-        '../../../../migrations/20260810_t01_initiative_lifecycle_gate_decisions.sql',
-        import.meta.url
+      const migrationPath = path.resolve(
+        path.dirname(fileURLToPath(import.meta.url)),
+        '../../../../migrations/20260810_t01_initiative_lifecycle_gate_decisions.sql'
       );
       const migration = fs.readFileSync(migrationPath, 'utf8');
 
