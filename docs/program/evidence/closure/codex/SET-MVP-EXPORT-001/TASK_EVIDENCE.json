@@ -1,7 +1,7 @@
 {
   "taskId": "SET-MVP-EXPORT-001",
   "baselineSha": "59a2bae0e1fd1bdf6e81a932349fb106709a9279",
-  "productSha": "cbffaa82cfc788a85da7b3e5bc569da8d0018014",
+  "productSha": "56831061f3446b372fe798055e6cca9fa3b380b0",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
   "changedPaths": ["server/migrations/20260915_user_data_export_receipts.sql", "server/src/services/gdprService.ts", "server/src/routes/gdpr.routes.ts", "tests/integration/settings/gdpr-settings-no-stubs.test.ts", "docs/program/evidence/closure/codex/SET-MVP-EXPORT-001/TASK_EVIDENCE.json"],
   "changedPathRationale": {"migration": "tenant-bound immutable receipt and ready-state parity", "service": "single hash-bound materialization and owner readback", "route": "authorized receipt-backed download", "test": "realPG retry, denial and tamper controls", "evidence": "current candidate proof"},
