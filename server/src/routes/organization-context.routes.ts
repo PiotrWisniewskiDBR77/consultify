@@ -1,6 +1,10 @@
 import { Response, Router } from 'express';
 
-import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import {
+  type AuthRequest,
+  validateOrgMembership,
+  verifyToken,
+} from '../middleware/auth.middleware.js';
 import { emitOrgContextRebuilt } from '../realtime/orgContextRealtime.js';
 import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -24,6 +28,7 @@ function isAdminLike(req: AuthRequest): boolean {
 }
 
 router.use(verifyToken);
+router.use(validateOrgMembership);
 
 router.get(
   '/',
