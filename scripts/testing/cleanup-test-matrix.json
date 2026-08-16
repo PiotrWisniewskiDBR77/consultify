@@ -41,6 +41,7 @@
       "tests/resultsVnext/teresa-kpi-e2e-no-silent-approval.test.ts",
       "tests/resultsVnext/platform/eventClassificationContract.test.ts",
       "tests/resultsVnext/okr/okrRbacGuard.test.ts",
+      "server/src/routes/__tests__/workbook-org-context.routes.test.ts",
       "tests/integration/mywork/my-work.golden-flow-inbox-task.test.ts",
       "tests/integration/demoPublicEntry.contract.test.ts",
       "tests/integration/demoRealtimeDenial.contract.test.ts",
@@ -255,7 +256,8 @@
         "tests/integration/assessment/drd-assessment-roundtrip.contract.test.ts",
         "tests/integration/admin/adminBackup.no-demo.test.ts",
         "server/src/routes/v8/__tests__/multiplayer.routes.test.ts",
-        "tests/resultsVnext/okr/okrRbacGuard.test.ts"
+        "tests/resultsVnext/okr/okrRbacGuard.test.ts",
+        "server/src/routes/__tests__/workbook-org-context.routes.test.ts"
       ]
     },
     "realdb": {
