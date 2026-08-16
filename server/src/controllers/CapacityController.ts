@@ -8,6 +8,12 @@
 import type { Response } from 'express';
 
 import type { AuthenticatedRequest } from '../types/index.js';
+import {
+  CAPACITY_POLICY,
+  capacityHoursForAllocation,
+  isOverloaded,
+  utilizationPercent,
+} from '../services/capacityPolicy.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
@@ -26,8 +32,7 @@ export class CapacityController {
         return;
       }
 
-      const DEFAULT_WEEKLY_HOURS = 40;
-      let totalCapacity = DEFAULT_WEEKLY_HOURS;
+      let totalCapacity: number = CAPACITY_POLICY.weeklyHoursPerFte;
       const projectId = req.query.projectId ? String(req.query.projectId) : null;
       const allocRows =
         (await queryHelpers.queryAll<{ allocation_percent: number }>(
@@ -40,8 +45,7 @@ export class CapacityController {
         totalCapacity = allocRows.reduce(
           (sum, r) =>
             sum +
-            (Math.min(100, Math.max(0, Number(r.allocation_percent) || 0)) / 100) *
-              DEFAULT_WEEKLY_HOURS,
+            capacityHoursForAllocation(r.allocation_percent),
           0
         );
       }
@@ -54,7 +58,7 @@ export class CapacityController {
       );
       const assignedHours = Number(assignedResult?.hours || 0);
       const availableHours = Math.max(0, totalCapacity - assignedHours);
-      const utilization = totalCapacity > 0 ? Math.round((assignedHours / totalCapacity) * 100) : 0;
+      const utilization = utilizationPercent(assignedHours, totalCapacity);
       res.json({
         userId,
         totalCapacity: Math.round(totalCapacity * 10) / 10,
@@ -78,7 +82,6 @@ export class CapacityController {
         res.status(401).json({ error: 'Unauthorized' });
         return;
       }
-      const DEFAULT_WEEKLY_HOURS = 40;
       const members =
         (await queryHelpers.queryAll<{ user_id: string; allocation_percent: number }>(
           `SELECT user_id, COALESCE(allocation_percent, 100) as allocation_percent
@@ -92,7 +95,7 @@ export class CapacityController {
         overload: number;
       }> = [];
       for (const m of members) {
-        const cap = (Math.min(100, Math.max(0, m.allocation_percent)) / 100) * DEFAULT_WEEKLY_HOURS;
+        const cap = capacityHoursForAllocation(m.allocation_percent);
         const row = await queryHelpers.queryOne<{ hours: number }>(
           `SELECT COALESCE(SUM(estimated_hours), 0) as hours FROM tasks
            WHERE assignee_id = ? AND project_id = ? AND organization_id = ?
@@ -100,7 +103,7 @@ export class CapacityController {
           [m.user_id, projectId, orgId]
         );
         const assigned = Number(row?.hours || 0);
-        if (assigned > cap * 1.05) {
+        if (isOverloaded(assigned, cap)) {
           overloads.push({
             userId: m.user_id,
             assignedHours: Math.round(assigned * 10) / 10,
@@ -124,11 +127,10 @@ export class CapacityController {
         res.status(401).json({ error: 'Unauthorized' });
         return;
       }
-      const DEFAULT_WEEKLY_HOURS = 40;
       const teamCap = await queryHelpers.queryOne<{ cap: number }>(
         `SELECT COALESCE(SUM((COALESCE(pm.allocation_percent, 100) / 100.0) * ?), 0) as cap
          FROM project_members pm WHERE pm.project_id = ?`,
-        [DEFAULT_WEEKLY_HOURS, projectId]
+        [CAPACITY_POLICY.weeklyHoursPerFte, projectId]
       );
       const required = await queryHelpers.queryOne<{ hours: number }>(
         `SELECT COALESCE(SUM(estimated_hours), 0) as hours FROM tasks

@@ -17,10 +17,15 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => {
   return { __esModule: true, default: api, all, get, run };
 });
 
-import { getCapacityOverview, getOverloadAlerts } from '../../../server/src/services/workloadCapacityService';
+import {
+  getCapacityOverview,
+  getCapacityTimeline,
+  getOverloadAlerts,
+} from '../../../server/src/services/workloadCapacityService';
 import DbPromise from '../../../server/src/utils/DbPromise.js';
 
 const mockedAll = vi.mocked(DbPromise.all);
+const mockedGet = vi.mocked(DbPromise.get);
 
 /**
  * The service issues (in order):
@@ -171,5 +176,39 @@ describe('workloadCapacityService.getOverloadAlerts', () => {
 
     const alerts = await getOverloadAlerts('org-1', 'week');
     expect(alerts).toEqual([]);
+  });
+});
+
+describe('workloadCapacityService.getCapacityTimeline', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('uses an explicit stable anchor and returns identical cold readbacks', async () => {
+    mockedGet.mockImplementation(async (sql: string) => {
+      if (sql.includes('COUNT(*) AS cnt')) return { cnt: 2 } as never;
+      if (sql.includes('task_allocations')) return { hours: 0 } as never;
+      if (sql.includes('SUM(estimated_hours)')) return { hours: 10 } as never;
+      throw new Error(`Unexpected query: ${sql}`);
+    });
+
+    const first = await getCapacityTimeline('org-1', 'initiative-1', '2026-08-12');
+    vi.clearAllMocks(); // simulate a fresh service consumer/restart boundary
+    mockedGet.mockImplementation(async (sql: string) => {
+      if (sql.includes('COUNT(*) AS cnt')) return { cnt: 2 } as never;
+      if (sql.includes('task_allocations')) return { hours: 0 } as never;
+      if (sql.includes('SUM(estimated_hours)')) return { hours: 10 } as never;
+      throw new Error(`Unexpected query: ${sql}`);
+    });
+    const cold = await getCapacityTimeline('org-1', 'initiative-1', '2026-08-12');
+
+    expect(cold).toEqual(first);
+    expect(first).toHaveLength(12);
+    expect(first[0]).toEqual({
+      weekStart: '2026-08-10',
+      totalCapacity: 80,
+      totalAllocated: 10,
+      utilizationPercent: 13,
+    });
   });
 });

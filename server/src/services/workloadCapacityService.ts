@@ -4,8 +4,12 @@
  */
 
 import DbPromise from '../utils/DbPromise.js';
+import {
+  CAPACITY_POLICY,
+  capacityHoursForAllocation,
+  utilizationPercent,
+} from './capacityPolicy.js';
 
-const DEFAULT_WEEKLY_HOURS = 40;
 const displayNameSql = (userAlias: string, fallbackExpr: string) =>
   `COALESCE(NULLIF(TRIM(COALESCE(${userAlias}.first_name, '') || ' ' || COALESCE(${userAlias}.last_name, '')), ''), ${userAlias}.email, ${fallbackExpr})`;
 const recentDaysSql = (days: number) =>
@@ -136,7 +140,7 @@ export async function getCapacityOverview(orgId: string): Promise<CapacityOvervi
   for (const m of members) {
     const existing = userCapMap.get(m.user_id);
     const addedCap =
-      (Math.min(100, Math.max(0, Number(m.allocation_percent) || 0)) / 100) * DEFAULT_WEEKLY_HOURS;
+      capacityHoursForAllocation(m.allocation_percent);
     if (existing) {
       existing.capacityHours += addedCap;
     } else {
@@ -251,13 +255,13 @@ export async function getUserForecast(orgId: string, userId: string): Promise<We
     [userId, orgId]
   );
 
-  let weeklyCapacity = DEFAULT_WEEKLY_HOURS;
+  let weeklyCapacity: number = CAPACITY_POLICY.weeklyHoursPerFte;
   if (allocRows.length > 0) {
     weeklyCapacity = allocRows.reduce(
       (sum, r) =>
         sum +
         (Math.min(100, Math.max(0, Number(r.allocation_percent) || 0)) / 100) *
-          DEFAULT_WEEKLY_HOURS,
+          CAPACITY_POLICY.weeklyHoursPerFte,
       0
     );
   }
@@ -559,9 +563,25 @@ export interface CapacityTimelineWeek {
 
 export async function getCapacityTimeline(
   orgId: string,
-  initiativeId?: string
+  initiativeId?: string,
+  explicitAnchor?: string
 ): Promise<CapacityTimelineWeek[]> {
-  const today = new Date();
+  const anchorRow = explicitAnchor
+    ? { anchor_date: explicitAnchor }
+    : initiativeId
+      ? await DbPromise.get<{ anchor_date: string }>(
+          `SELECT created_at AS anchor_date FROM initiatives WHERE id = ? AND organization_id = ?`,
+          [initiativeId, orgId]
+        )
+      : await DbPromise.get<{ anchor_date: string }>(
+          `SELECT MIN(created_at) AS anchor_date FROM initiatives WHERE organization_id = ?`,
+          [orgId]
+        );
+  // Never anchor a persisted-data read model to request wall-clock time.
+  // Initiative creation is stable across restart/cold readback; an empty org
+  // uses a documented fixed Monday until its first initiative is persisted.
+  const anchor = new Date(anchorRow?.anchor_date || '1970-01-05T00:00:00.000Z');
+  if (Number.isNaN(anchor.getTime())) throw new Error('Invalid capacity timeline anchor');
   const weeks: CapacityTimelineWeek[] = [];
 
   let memberCountRow: { cnt: number } | null = null;
@@ -577,10 +597,10 @@ export async function getCapacityTimeline(
     );
   }
   const memberCount = Number(memberCountRow?.cnt || 0);
-  const weeklyCapacity = memberCount * DEFAULT_WEEKLY_HOURS;
+  const weeklyCapacity = memberCount * CAPACITY_POLICY.weeklyHoursPerFte;
 
-  for (let w = 0; w < 12; w++) {
-    const weekStart = getMonday(new Date(today.getTime() + w * 7 * 24 * 60 * 60 * 1000));
+  for (let w = 0; w < CAPACITY_POLICY.timelineWeeks; w++) {
+    const weekStart = getMonday(new Date(anchor.getTime() + w * 7 * 24 * 60 * 60 * 1000));
     const wsStr = formatDate(weekStart);
 
     let allocated = 0;
@@ -600,8 +620,8 @@ export async function getCapacityTimeline(
     }
 
     if (allocated === 0) {
-      const params: unknown[] = [orgId];
-      let sql = `SELECT COALESCE(SUM(estimated_hours), 0) / 12.0 AS hours
+      const params: unknown[] = [CAPACITY_POLICY.timelineWeeks, orgId];
+      let sql = `SELECT COALESCE(SUM(estimated_hours), 0) / ? AS hours
                  FROM tasks
                  WHERE organization_id = ?
                    AND LOWER(COALESCE(status, '')) NOT IN ('done','completed','validated','cancelled')`;
@@ -613,7 +633,7 @@ export async function getCapacityTimeline(
       allocated = Number(row?.hours || 0);
     }
 
-    const util = weeklyCapacity > 0 ? Math.round((allocated / weeklyCapacity) * 100) : 0;
+    const util = utilizationPercent(allocated, weeklyCapacity);
     weeks.push({
       weekStart: wsStr,
       totalCapacity: round1(weeklyCapacity),

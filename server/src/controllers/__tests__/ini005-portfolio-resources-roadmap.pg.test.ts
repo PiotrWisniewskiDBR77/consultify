@@ -102,6 +102,8 @@ describe.skipIf(!REAL_PG)('INI-05 Portfolio/Resources/Roadmap — real PostgreSQ
   let pool: InstanceType<typeof import('pg').Pool>;
   let InitiativeController: typeof import('../InitiativeController.js').default;
   let getPortfolioRead: typeof import('../../services/v8/planningPortfolioReadService.js').getPortfolioRead;
+  let getCapacityTimeline: typeof import('../../services/workloadCapacityService.js').getCapacityTimeline;
+  let getInitiativeCapacity: typeof import('../../services/workloadCapacityService.js').getInitiativeCapacity;
 
   const orgA = `org-a-${randomUUID()}`;
   const orgB = `org-b-${randomUUID()}`;
@@ -125,6 +127,7 @@ describe.skipIf(!REAL_PG)('INI-05 Portfolio/Resources/Roadmap — real PostgreSQ
         role TEXT,
         first_name TEXT,
         last_name TEXT,
+        email TEXT,
         avatar_url TEXT
       )`,
       `CREATE TABLE IF NOT EXISTS projects (
@@ -219,9 +222,20 @@ describe.skipIf(!REAL_PG)('INI-05 Portfolio/Resources/Roadmap — real PostgreSQ
       )`,
       `CREATE TABLE IF NOT EXISTS tasks (
         id TEXT PRIMARY KEY,
+        organization_id TEXT,
         project_id TEXT,
         initiative_id TEXT,
+        assignee_id TEXT,
+        estimated_hours NUMERIC DEFAULT 0,
+        status TEXT DEFAULT 'todo',
         updated_at TIMESTAMPTZ
+      )`,
+      `CREATE TABLE IF NOT EXISTS task_allocations (
+        id TEXT PRIMARY KEY,
+        task_id TEXT NOT NULL,
+        organization_id TEXT NOT NULL,
+        week_start DATE NOT NULL,
+        allocated_hours NUMERIC NOT NULL
       )`,
     ];
     for (const sql of statements) {
@@ -310,6 +324,9 @@ describe.skipIf(!REAL_PG)('INI-05 Portfolio/Resources/Roadmap — real PostgreSQ
     InitiativeController = (await import('../InitiativeController.js')).default;
     getPortfolioRead = (await import('../../services/v8/planningPortfolioReadService.js'))
       .getPortfolioRead;
+    ({ getCapacityTimeline, getInitiativeCapacity } = await import(
+      '../../services/workloadCapacityService.js'
+    ));
   }, 60000);
 
   afterAll(async () => {
@@ -375,6 +392,7 @@ describe.skipIf(!REAL_PG)('INI-05 Portfolio/Resources/Roadmap — real PostgreSQ
       }
     } else {
       for (const table of [
+        'task_allocations',
         'tasks',
         'audit_events',
         'initiative_history',
@@ -802,6 +820,54 @@ describe.skipIf(!REAL_PG)('INI-05 Portfolio/Resources/Roadmap — real PostgreSQ
       expect(
         milestonesAfterReload.body.milestones.some((m: any) => m.id === milestone.body.milestone.id)
       ).toBe(true);
+    });
+  });
+
+  describe('Timeline + Capacity — deterministic real-PG cold readback', () => {
+    it('uses the persisted initiative anchor and shared capacity policy across repeated reads', async () => {
+      const initiativeId = await seedInitiative({ project_id: projectA });
+      await pool.query(`UPDATE initiatives SET created_at = '2026-08-12T10:00:00Z' WHERE id = $1`, [
+        initiativeId,
+      ]);
+      const resourceId = `resource-${randomUUID()}`;
+      await pool.query(
+        `INSERT INTO initiative_resources
+           (id, initiative_id, organization_id, user_id, role, allocation_percentage)
+         VALUES ($1,$2,$3,$4,'member',100)`,
+        [resourceId, initiativeId, orgA, ownerUserA]
+      );
+      const taskId = `task-${randomUUID()}`;
+      await pool.query(
+        `INSERT INTO tasks
+           (id, organization_id, project_id, initiative_id, assignee_id, estimated_hours, status)
+         VALUES ($1,$2,$3,$4,$5,24,'todo')`,
+        [taskId, orgA, projectA, initiativeId, ownerUserA]
+      );
+      await pool.query(
+        `INSERT INTO task_allocations (id, task_id, organization_id, week_start, allocated_hours)
+         VALUES ($1,$2,$3,'2026-08-10',24)`,
+        [`allocation-${randomUUID()}`, taskId, orgA]
+      );
+
+      const firstTimeline = await getCapacityTimeline(orgA, initiativeId);
+      const firstCapacity = await getInitiativeCapacity(orgA, initiativeId);
+      const coldTimeline = await getCapacityTimeline(orgA, initiativeId);
+      const coldCapacity = await getInitiativeCapacity(orgA, initiativeId);
+
+      expect(coldTimeline).toEqual(firstTimeline);
+      expect(coldCapacity).toEqual(firstCapacity);
+      expect(firstTimeline).toHaveLength(12);
+      expect(firstTimeline[0]).toEqual({
+        weekStart: '2026-08-10',
+        totalCapacity: 40,
+        totalAllocated: 24,
+        utilizationPercent: 60,
+      });
+      expect(firstCapacity.resources[0]).toMatchObject({
+        userId: ownerUserA,
+        allocationPercent: 100,
+        allocatedHours: 24,
+      });
     });
   });
 });
