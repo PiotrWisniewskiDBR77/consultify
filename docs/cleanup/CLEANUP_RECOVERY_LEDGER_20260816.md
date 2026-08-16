@@ -16,8 +16,8 @@
 | Baseline demo | `e45904dc7940f259b9cf017c283264d5c166c9ab` | canonical baseline | Never infer production readiness from this role. |
 | Assessment | `031772082b7d4925e11986016079d02adeb17382` | `INTEGRATED_PENDING_VERIFICATION` | Library-to-session gap, registry split, fresh gates missing. |
 | Assessment clean handoff | `0f0bce1c9954681ef8e01618529f10614d9de951` | `INTEGRATE_SELECTIVELY` | Diverged from demo; use as source for later fixes/evidence, not branch merge. |
-| Tools | source `b8d5747e53936ec130bc80c43e868e71f1fa2b60`; candidate `59d6d0d85c` | `INTEGRATED_PENDING_VERIFICATION` | 49 patch-unique non-merge commits replayed. Static/type/discovery and 496 focused assertions pass; fresh strict PostgreSQL, realDB and browser E2E remain missing. `RUNTIME_ACTIVE=0` remains literal. |
-| Audits | source `1927914dddad0e2932bcd5238ff6eb611859e4cf`; candidate `5d9b33ac58` | `INTEGRATED_PENDING_VERIFICATION` | 34 patch-unique non-merge commits replayed. Type/discovery pass, but focused run has 27 failed and 45 skipped assertions; fresh isolated PostgreSQL, repairs and browser E2E required. Flag remains OFF. |
+| Tools | source `b8d5747e53936ec130bc80c43e868e71f1fa2b60`; candidate `4cd5d54317` | `INTEGRATED_PENDING_VERIFICATION` | 49 patch-unique non-merge commits replayed. Static/type/discovery pass. Fresh strict PostgreSQL applies 703/703 then 0; full realDB denominator passes 12/12 files, 100/100 tests after schema-parity repair. Browser E2E and initiative-quality acceptance remain missing. `RUNTIME_ACTIVE=0` remains literal. |
+| Audits | source `1927914dddad0e2932bcd5238ff6eb611859e4cf`; candidate `4cd5d54317` | `INTEGRATED_PENDING_VERIFICATION` | 34 patch-unique non-merge commits replayed. Fresh isolated realDB run passes 32/32 files, 259/259 tests, no skips. Soft-failing `audit_events` dual-schema write and browser E2E remain open. Flag remains OFF. |
 | Finance | `c78086057d38f57c5351c6254d41f02fd50246b6` | `BLOCKED` | Choose one canonical owner across legacy/V3/V4/V8/V10 before replay. |
 | Results | `8b03e2dba59055cd9abc74b48cea2990d12c0d3b` | `BLOCKED` | Confirm latest cumulative fan-in, mount/flag and Finance seam. |
 | UX recovery | local `c67726e98bcde5a9b129d09885bfb5104896bbf4`; remote `c6878103b4d43563bc1adbf6f885990340dc52e4` | `BLOCKED` | Provenance mismatch and contaminated recovery worktree. |
@@ -38,8 +38,8 @@
 ## Planned recovery order
 
 1. Assessment verification and missing entry/source-of-truth resolution
-2. Tools fresh PostgreSQL, realDB and browser verification
-3. Audits repair plus isolated realDB and browser verification
+2. Tools browser verification and initiative-quality gate
+3. Audits `audit_events` reconciliation plus browser verification
 4. Case and Artifact reconciliation
 5. Results and Finance owner/data reconciliation
 6. CEPD allowlisted replay

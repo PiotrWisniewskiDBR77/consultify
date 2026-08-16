@@ -8,7 +8,7 @@ cleanup snapshots and five-hour plans are historical evidence.
 ## Literal status
 
 - Cleanup: `IN_PROGRESS`
-- Canonical candidate: `PARTIAL / STATIC_GATES_GREEN / RUNTIME_EVIDENCE_MISSING`
+- Canonical candidate: `PARTIAL / STATIC_AND_REALDB_GATES_GREEN / BROWSER_EVIDENCE_MISSING`
 - Demo: `NOT_VERIFIED`
 - Production: `NOT_AUTHORIZED / NOT_VERIFIED`
 
@@ -26,7 +26,7 @@ cleanup snapshots and five-hour plans are historical evidence.
 - Path: `/Users/piotrwisniewski/Developer/consultify-recovery-canonical-20260816`
 - Branch: `codex/recovery-canonical-20260816`
 - Baseline: `origin/demo` at `e45904dc7940f259b9cf017c283264d5c166c9ab`
-- Current implementation checkpoint before this state update: `5d9b33ac58`
+- Current implementation checkpoint before this state update: `4cd5d54317463b548b099c65bf54ddc9b9d59ba7`
 - Recovery control-plane commit: `844001c525`
 - Integrated packages: Assessment (fast-forward ancestry), Tools (49
   patch-unique non-merge commits) and Audits (34 patch-unique non-merge
@@ -72,11 +72,24 @@ Fresh checks on this candidate:
 - Full `npm run type-check` after Audits integration: PASS.
 - Test discovery after Audits: 4996/4996 classified; 4697 ACTIVE, 290
   PLAYWRIGHT, 7 INTENTIONALLY_EXCLUDED, 1 LEGACY, 1 BROKEN_ORPHAN; PASS.
-- Audits focused run: 32 files; 14 PASS, 10 FAIL, 8 SKIPPED. Assertions: 152
-  PASS, 27 FAIL, 45 SKIPPED. Failures include an invalid local PostgreSQL role
-  (`iris`) and real contract regressions in update/readback and route auth
-  expectations. Audits is therefore `INTEGRATED_PENDING_REPAIR /
-  RUNTIME_BLOCKED`, not accepted.
+- The earlier Audits result (27 failed, 45 skipped) used an invalid ambient
+  `iris` target and is retained only as negative-control evidence. On the
+  isolated disposable PostgreSQL database the complete selected Audits
+  denominator passed: 32/32 files and 259/259 tests, with no skips. The run
+  still exposed a soft-failing `audit_events` dual-schema write path; browser
+  proof and that event-schema reconciliation remain open.
+- A disposable `pgvector/pgvector:pg16` instance on port 32900 built a database
+  from zero with all 702 then 703 strict migrations; both idempotent reruns
+  applied zero migrations. Commit `51d9c48b98` makes the CW-P01..P11 dependency
+  order explicit and its focused deterministic regression passed.
+- The first full Tools realDB run passed 12/12 files and 100/100 tests but
+  surfaced missing runtime columns on fresh schema. Additive migration
+  `20260816_recovery_runtime_schema_parity.sql` in `4cd5d54317` repaired
+  `organizations` context/MFA columns and `initiatives.source_report_id`.
+  A second database rebuilt from zero applied 703/703 migrations, reran with
+  zero pending, and the full Tools denominator again passed 12/12 and 100/100.
+  Initiative quality advisories (10/10 checks failed for synthetic proposals)
+  remain explicit product-quality debt; feature flags remain OFF.
 - Commit hooks reported no new list, TRIADA, density, focus, or artifact-shell
   regression in the changed files. Existing repository-wide focus debt remains.
 
@@ -103,11 +116,10 @@ features. No bulk branch or worktree deletion is authorized by these counts.
 
 ## Next gate
 
-1. Provision an isolated disposable PostgreSQL role/database and run Tools and
-   Audits strict migrations plus realDB suites; do not reuse the ambient
-   `iris_test` target.
-   runtime readiness from the 482 unit/component tests.
-2. Resolve the one explicit broken orphan and the Assessment immutable-log
+1. Run fresh browser journeys for Assessment, Tools and Audits on the exact
+   candidate; realDB green does not authorize enabling their feature flags.
+2. Reconcile the soft-failing `audit_events` write contract and the synthetic
+   initiative quality advisories without weakening assertions.
+3. Resolve the one explicit broken orphan and the Assessment immutable-log
    `diff --check` policy without rewriting evidence silently.
-3. Repair the Audits update/readback and auth-boundary failures on the candidate.
 4. Reconcile Case/Artifact, then the owner-gated Results/Finance packages.
