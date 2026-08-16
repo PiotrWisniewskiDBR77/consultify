@@ -1,7 +1,7 @@
 {
   "taskId": "FIN-MVP-CANDIDATE-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "0c2e54d0a9fea6f7f16c0d596c661526c0772ea4",
+  "productSha": "59a2bae0e1fd1bdf6e81a932349fb106709a9279",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
   "changedPaths": [],
   "changedPathRationale": {"none": "tree reconciliation showed the Finance Candidate implementation already present; this packet re-verifies it on the current candidate"},
@@ -10,9 +10,9 @@
   "denominators": {"combinedRuns": "4/4", "combinedFiles": "12/12", "combinedAssertions": "108/108", "uniqueAcceptanceScenarios": "27/27", "freshMigrations": "723/723; repeat 0; dry-run pending 0"},
   "fixtures": {"database": "fresh disposable pgvector PostgreSQL 16 on loopback port 32901 with 723/723 migrations", "sources": ["statement pack", "investment case", "valuation recommendation"]},
   "negativeControls": {"directInitiative": "direct Finance-to-Initiative routes remain disabled", "tenant": "foreign tenant cannot preview, confirm or reopen", "concurrency": "five confirms create exactly one candidate/receipt", "toctou": "approval revoked between preview and confirm fails closed", "schema": "broken required schema fails closed"},
-  "browserArtifacts": [],
+  "browserArtifacts": [{"runtime": "mounted Vite :33100 + real server :33101 + fresh PostgreSQL :32902", "result": "BLOCKED_BEFORE_G4", "detail": "Login screen mounted and was inspected with Browser. Both semantic locator fill and visible-DOM typing left the controlled email/password inputs empty, so no authenticated Finance transition was executed. Auth/UI paths were concurrently owned and explicitly out of Finance-only scope."}],
   "rollback": {"code": "verification-only evidence; no code change", "data": "isolated fixtures only"},
   "technicalVerdict": "PASS_REALPG_TIMEOUT_NOT_REPRODUCED",
   "verdict": "PARTIAL",
-  "openBlockers": ["G4 browser preview/confirm/readback evidence on the exact integrated SHA remains.", "Full-repository type-check emitted no diagnostics but did not terminate within more than four minutes and was stopped; it remains NOT_VERIFIED on this SHA."]
+  "openBlockers": ["G4 browser preview/confirm/readback remains BLOCKED at login: the mounted login form clears/does not retain both semantically filled and visible-DOM typed values. Auth/UI paths were concurrently modified and outside the Finance-only allowlist.", "Full-repository type-check emitted no diagnostics but did not terminate within more than four minutes and was stopped; it remains NOT_VERIFIED on this SHA."]
 }
