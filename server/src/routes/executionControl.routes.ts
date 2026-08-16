@@ -34,6 +34,10 @@ import {
   getInitiativeBudgetSummary,
   getPortfolioBudgetSummary,
 } from '../services/executionBudgetService.js';
+import {
+  recordExecutionActionAudit,
+  requireImplementedExecutionAction,
+} from '../services/executionActionRegistryService.js';
 import { getTimelineWarningsSnapshot } from '../services/executionControlReadService.js';
 import { dispatchProjectCommunicationEvent } from '../services/integrations/communicationSyncService.js';
 import { detectRiskSignals } from '../services/riskDetectionService.js';
@@ -549,7 +553,33 @@ router.delete(
     const { initiativeId } = req.query;
     if (!initiativeId) return res.status(400).json({ error: 'initiativeId is required' });
 
-    await deleteBudgetEntry(orgId, String(req.params.entryId), String(initiativeId));
+    await requireImplementedExecutionAction('execution.budget.delete');
+    const deleted = await deleteBudgetEntry(
+      orgId,
+      String(req.params.entryId),
+      String(initiativeId)
+    );
+    const requestId = String(req.headers['x-request-id'] || '').trim() || null;
+    if (!deleted) {
+      await recordExecutionActionAudit({
+        organizationId: orgId,
+        actionId: 'execution.budget.delete',
+        targetId: String(req.params.entryId),
+        actorId: String(req.user?.id || ''),
+        outcome: 'NOT_FOUND',
+        reasonCode: 'budget_entry_not_found',
+        requestId,
+      });
+      return res.status(404).json({ error: 'Budget entry not found' });
+    }
+    await recordExecutionActionAudit({
+      organizationId: orgId,
+      actionId: 'execution.budget.delete',
+      targetId: String(req.params.entryId),
+      actorId: String(req.user?.id || ''),
+      outcome: 'SUCCEEDED',
+      requestId,
+    });
     return res.json({ success: true });
   })
 );

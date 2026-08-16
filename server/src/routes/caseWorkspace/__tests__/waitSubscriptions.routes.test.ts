@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockGetV8Context = vi.fn();
 const mockRequireCaseAccess = vi.fn();
+const mockRequireOrgRole = vi.fn();
 const mockCreateWait = vi.fn();
 const mockGetWait = vi.fn();
 const mockResolveWait = vi.fn();
@@ -14,10 +15,14 @@ vi.mock('../../../middleware/v8Auth.middleware.js', () => ({
 }));
 
 vi.mock('../../../services/caseWorkspace/caseWorkspaceAuthContext.js', async () => {
-  const actual = await vi.importActual<typeof import('../../../services/caseWorkspace/caseWorkspaceAuthContext.js')>(
-    '../../../services/caseWorkspace/caseWorkspaceAuthContext.js'
-  );
-  return { ...actual, requireCaseAccess: (...args: unknown[]) => mockRequireCaseAccess(...args) };
+  const actual = await vi.importActual<
+    typeof import('../../../services/caseWorkspace/caseWorkspaceAuthContext.js')
+  >('../../../services/caseWorkspace/caseWorkspaceAuthContext.js');
+  return {
+    ...actual,
+    requireCaseAccess: (...args: unknown[]) => mockRequireCaseAccess(...args),
+    requireOrgRole: (...args: unknown[]) => mockRequireOrgRole(...args),
+  };
 });
 
 vi.mock('../../../services/caseWorkspace/waitSubscriptionService.js', () => ({
@@ -47,8 +52,24 @@ function createApp(): Express {
 describe('caseWorkspace wait routes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetV8Context.mockReturnValue({ organizationId: ORG, userId: USER, userRole: 'ADMIN', isSuperAdmin: false });
-    mockRequireCaseAccess.mockResolvedValue({ membershipId: 'm1', organizationId: ORG, userId: USER, role: 'ADMIN' });
+    mockGetV8Context.mockReturnValue({
+      organizationId: ORG,
+      userId: USER,
+      userRole: 'ADMIN',
+      isSuperAdmin: false,
+    });
+    mockRequireCaseAccess.mockResolvedValue({
+      membershipId: 'm1',
+      organizationId: ORG,
+      userId: USER,
+      role: 'ADMIN',
+    });
+    mockRequireOrgRole.mockResolvedValue({
+      membershipId: 'm1',
+      organizationId: ORG,
+      userId: USER,
+      role: 'ADMIN',
+    });
   });
 
   it('requires either body.correlationKey or an Idempotency-Key header to create a wait', async () => {

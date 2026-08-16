@@ -20,7 +20,11 @@ import { Router } from 'express';
 import { z } from 'zod';
 
 import * as svc from '../../services/caseWorkspace/caseCoreService.js';
-import { requireCaseAccessForActor, requireOrgMemberForActor } from './_shared/access.js';
+import {
+  requireCaseAccessForActor,
+  requireOrgMemberForActor,
+  requireOrgRoleForActor,
+} from './_shared/access.js';
 import { caseWorkspaceHandler } from './_shared/handler.js';
 import { parseBody, parseParams, parseQuery } from './_shared/validate.js';
 
@@ -28,7 +32,11 @@ const router = Router();
 
 const caseProfileEnum = z.enum(['LIGHT', 'STANDARD', 'TRANSFORMATION', 'MONITORING']);
 const governanceTierEnum = z.enum(['LIGHTWEIGHT', 'STANDARD', 'CONTROLLED']);
-const autonomyPolicyEnum = z.enum(['ASK_EACH_ACTION', 'ASK_MATERIAL_ACTIONS', 'EXECUTE_APPROVED_PLAN']);
+const autonomyPolicyEnum = z.enum([
+  'ASK_EACH_ACTION',
+  'ASK_MATERIAL_ACTIONS',
+  'EXECUTE_APPROVED_PLAN',
+]);
 const caseStatusEnum = z.enum(['DRAFT', 'ACTIVE', 'BLOCKED', 'CLOSED', 'FAILED', 'CANCELLED']);
 const closureTypeEnum = z.enum([
   'DELIVERY_COMPLETED',
@@ -90,7 +98,11 @@ router.get(
   caseWorkspaceHandler(async (req, res, actor) => {
     const query = parseQuery(listCasesQuery, req.query);
     await requireOrgMemberForActor(actor);
-    const items = await svc.listCasesForOrganization(actor.organizationId, query, actor.actorUserId);
+    const items = await svc.listCasesForOrganization(
+      actor.organizationId,
+      query,
+      actor.actorUserId
+    );
     res.status(200).json({ data: items });
   })
 );
@@ -140,6 +152,9 @@ router.post(
     const params = parseParams(caseIdParams, req.params);
     const body = parseBody(transitionStatusBody, req.body);
     await requireCaseAccessForActor(actor, params.caseId);
+    if (body.targetStatus === 'CLOSED' || body.targetStatus === 'CANCELLED') {
+      await requireOrgRoleForActor(actor, 'ADMIN');
+    }
     const updated = await svc.transitionStatus(
       params.caseId,
       body.targetStatus,
@@ -225,6 +240,7 @@ router.post(
     const params = parseParams(caseIdParams, req.params);
     const body = parseBody(recordClosureBody, req.body);
     await requireCaseAccessForActor(actor, params.caseId);
+    await requireOrgRoleForActor(actor, 'ADMIN');
     const updated = await svc.recordClosure(
       params.caseId,
       body.closureType,
@@ -244,7 +260,12 @@ router.post(
     const params = parseParams(caseIdParams, req.params);
     const body = parseBody(cancelCaseBody, req.body);
     await requireCaseAccessForActor(actor, params.caseId);
-    const updated = await svc.cancelCase(params.caseId, { actorUserId: actor.actorUserId }, body.reason);
+    await requireOrgRoleForActor(actor, 'ADMIN');
+    const updated = await svc.cancelCase(
+      params.caseId,
+      { actorUserId: actor.actorUserId },
+      body.reason
+    );
     res.status(200).json({ data: updated });
   })
 );

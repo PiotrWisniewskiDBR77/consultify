@@ -180,16 +180,20 @@ export async function deleteBudgetEntry(
   organizationId: string,
   entryId: string,
   initiativeId: string
-): Promise<void> {
-  await dbRun(`DELETE FROM budget_entries WHERE id = ? AND organization_id = ?`, [
-    entryId,
-    organizationId,
-  ]);
+): Promise<boolean> {
+  const deleted = await dbRun(
+    `DELETE FROM budget_entries
+      WHERE id = ? AND organization_id = ? AND initiative_id = ?`,
+    [entryId, organizationId, initiativeId],
+    { fallback: false }
+  );
+  if (!deleted.changes) return false;
   await recalcInitiativeActualTotal(organizationId, initiativeId);
 
   // M14→M15 feed-forward: budget composition changed (non-blocking)
   const { fireBudgetHealthExport } = await import('./executionResultsBridge.js');
   fireBudgetHealthExport(organizationId, initiativeId);
+  return true;
 }
 
 // ── Budget Summary (Initiative Level) ──────────────────────────

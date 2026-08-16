@@ -21,7 +21,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 
 import * as svc from '../../services/caseWorkspace/artifactLinkService.js';
-import { requireCaseAccessForActor } from './_shared/access.js';
+import { requireCaseAccessForActor, requireOrgRoleForActor } from './_shared/access.js';
 import { caseWorkspaceHandler, readIdempotencyKeyHeader } from './_shared/handler.js';
 import { toCaseWorkspaceAppError } from './_shared/errors.js';
 import { parseBody, parseParams, parseQuery } from './_shared/validate.js';
@@ -184,7 +184,11 @@ router.post(
     const params = parseParams(linkIdParams, req.params);
     const body = parseBody(reasonOnlyBody, req.body);
     await requireCaseAccessForLink(actor, params.linkId);
-    const updated = await svc.markLinkStale(params.linkId, { actorUserId: actor.actorUserId }, body.reason ?? null);
+    const updated = await svc.markLinkStale(
+      params.linkId,
+      { actorUserId: actor.actorUserId },
+      body.reason ?? null
+    );
     res.status(200).json({ data: updated });
   })
 );
@@ -212,6 +216,7 @@ router.delete(
     const params = parseParams(linkIdParams, req.params);
     const body = parseBody(reasonOnlyBody, req.body);
     await requireCaseAccessForLink(actor, params.linkId);
+    await requireOrgRoleForActor(actor, 'ADMIN');
     const updated = await svc.unlinkArtifactFromCase(
       params.linkId,
       { actorUserId: actor.actorUserId },

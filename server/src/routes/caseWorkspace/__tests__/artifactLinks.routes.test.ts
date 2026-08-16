@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockGetV8Context = vi.fn();
 const mockRequireCaseAccess = vi.fn();
+const mockRequireOrgRole = vi.fn();
 const mockLinkArtifactToCase = vi.fn();
 const mockGetArtifactLink = vi.fn();
 const mockUnlinkArtifactFromCase = vi.fn();
@@ -14,10 +15,14 @@ vi.mock('../../../middleware/v8Auth.middleware.js', () => ({
 }));
 
 vi.mock('../../../services/caseWorkspace/caseWorkspaceAuthContext.js', async () => {
-  const actual = await vi.importActual<typeof import('../../../services/caseWorkspace/caseWorkspaceAuthContext.js')>(
-    '../../../services/caseWorkspace/caseWorkspaceAuthContext.js'
-  );
-  return { ...actual, requireCaseAccess: (...args: unknown[]) => mockRequireCaseAccess(...args) };
+  const actual = await vi.importActual<
+    typeof import('../../../services/caseWorkspace/caseWorkspaceAuthContext.js')
+  >('../../../services/caseWorkspace/caseWorkspaceAuthContext.js');
+  return {
+    ...actual,
+    requireCaseAccess: (...args: unknown[]) => mockRequireCaseAccess(...args),
+    requireOrgRole: (...args: unknown[]) => mockRequireOrgRole(...args),
+  };
 });
 
 vi.mock('../../../services/caseWorkspace/artifactLinkService.js', () => ({
@@ -33,6 +38,7 @@ vi.mock('../../../services/caseWorkspace/artifactLinkService.js', () => ({
 
 import artifactLinksRoutes from '../artifactLinks.routes.js';
 import { errorHandlerMiddleware } from '../../../utils/ErrorHandler.js';
+import { CaseWorkspaceAuthError } from '../../../services/caseWorkspace/caseWorkspaceAuthContext.js';
 
 const ORG = 'org-1';
 const USER = 'user-1';
@@ -48,8 +54,24 @@ function createApp(): Express {
 describe('caseWorkspace artifact-link routes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetV8Context.mockReturnValue({ organizationId: ORG, userId: USER, userRole: 'ADMIN', isSuperAdmin: false });
-    mockRequireCaseAccess.mockResolvedValue({ membershipId: 'm1', organizationId: ORG, userId: USER, role: 'ADMIN' });
+    mockGetV8Context.mockReturnValue({
+      organizationId: ORG,
+      userId: USER,
+      userRole: 'ADMIN',
+      isSuperAdmin: false,
+    });
+    mockRequireCaseAccess.mockResolvedValue({
+      membershipId: 'm1',
+      organizationId: ORG,
+      userId: USER,
+      role: 'ADMIN',
+    });
+    mockRequireOrgRole.mockResolvedValue({
+      membershipId: 'm1',
+      organizationId: ORG,
+      userId: USER,
+      role: 'ADMIN',
+    });
   });
 
   it('rejects a link-artifact body with an invalid relation enum with 400', async () => {
@@ -71,7 +93,9 @@ describe('caseWorkspace artifact-link routes', () => {
 
   it('resolves the owning caseId via getArtifactLink before authorizing unlink, and 404s when missing', async () => {
     mockGetArtifactLink.mockResolvedValue(null);
-    const res = await request(createApp()).delete('/api/v8/case-workspace/artifact-links/link-missing').send({});
+    const res = await request(createApp())
+      .delete('/api/v8/case-workspace/artifact-links/link-missing')
+      .send({});
     expect(res.status).toBe(404);
     expect(mockUnlinkArtifactFromCase).not.toHaveBeenCalled();
   });
@@ -79,13 +103,29 @@ describe('caseWorkspace artifact-link routes', () => {
   it('maps artifact_link_not_active to 409 on unlink of an already-unlinked link', async () => {
     mockGetArtifactLink.mockResolvedValue({ linkId: 'link-1', caseId: 'case-1' });
     mockUnlinkArtifactFromCase.mockRejectedValue(new Error('artifact_link_not_active'));
-    const res = await request(createApp()).delete('/api/v8/case-workspace/artifact-links/link-1').send({});
+    const res = await request(createApp())
+      .delete('/api/v8/case-workspace/artifact-links/link-1')
+      .send({});
     expect(res.status).toBe(409);
+  });
+
+  it('fails closed before a MEMBER can unlink an artifact', async () => {
+    mockGetArtifactLink.mockResolvedValue({ linkId: 'link-1', caseId: 'case-1' });
+    mockRequireOrgRole.mockRejectedValue(
+      new CaseWorkspaceAuthError('insufficient_org_role', 'insufficient role')
+    );
+    const res = await request(createApp())
+      .delete('/api/v8/case-workspace/artifact-links/link-1')
+      .send({ reason: 'remove' });
+    expect(res.status).toBe(403);
+    expect(mockUnlinkArtifactFromCase).not.toHaveBeenCalled();
   });
 
   it('checks case access before listing artifact links for a case', async () => {
     mockListArtifactLinksForCase.mockResolvedValue([]);
-    const res = await request(createApp()).get('/api/v8/case-workspace/cases/case-1/artifact-links');
+    const res = await request(createApp()).get(
+      '/api/v8/case-workspace/cases/case-1/artifact-links'
+    );
     expect(res.status).toBe(200);
     expect(mockRequireCaseAccess).toHaveBeenCalledWith(USER, 'case-1');
   });

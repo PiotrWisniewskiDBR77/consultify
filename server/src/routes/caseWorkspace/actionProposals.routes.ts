@@ -23,7 +23,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 
 import * as svc from '../../services/caseWorkspace/proposalApprovalService.js';
-import { requireCaseAccessForActor } from './_shared/access.js';
+import { requireCaseAccessForActor, requireOrgRoleForActor } from './_shared/access.js';
 import { caseWorkspaceHandler, readIdempotencyKeyHeader } from './_shared/handler.js';
 import { toCaseWorkspaceAppError } from './_shared/errors.js';
 import { parseBody, parseParams, parseQuery } from './_shared/validate.js';
@@ -218,6 +218,7 @@ router.post(
       return;
     }
     await requireCaseAccessForProposal(actor, params.actionProposalId);
+    await requireOrgRoleForActor(actor, 'ADMIN');
     const { expectedVersion, ...decisionInput } = body;
     const result = await svc.recordApprovalDecision(
       params.actionProposalId,
@@ -235,6 +236,7 @@ router.post(
     const params = parseParams(proposalIdParams, req.params);
     const body = parseBody(expectedVersionBody, req.body);
     await requireCaseAccessForProposal(actor, params.actionProposalId);
+    await requireOrgRoleForActor(actor, 'ADMIN');
     const updated = await svc.transitionProposalToExecuting(
       params.actionProposalId,
       { actorUserId: actor.actorUserId },
@@ -326,6 +328,7 @@ router.post(
     const params = parseParams(proposalIdParams, req.params);
     const body = parseBody(revokeBody, req.body);
     await requireCaseAccessForProposal(actor, params.actionProposalId);
+    await requireOrgRoleForActor(actor, 'ADMIN');
     const updated = await svc.revokeApprovedProposal(
       params.actionProposalId,
       { actorUserId: actor.actorUserId },

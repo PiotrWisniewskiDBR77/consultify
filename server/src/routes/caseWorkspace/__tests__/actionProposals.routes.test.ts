@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockGetV8Context = vi.fn();
 const mockRequireCaseAccess = vi.fn();
+const mockRequireOrgRole = vi.fn();
 const mockCreateActionProposal = vi.fn();
 const mockGetActionProposal = vi.fn();
 const mockRecordApprovalDecision = vi.fn();
@@ -14,10 +15,14 @@ vi.mock('../../../middleware/v8Auth.middleware.js', () => ({
 }));
 
 vi.mock('../../../services/caseWorkspace/caseWorkspaceAuthContext.js', async () => {
-  const actual = await vi.importActual<typeof import('../../../services/caseWorkspace/caseWorkspaceAuthContext.js')>(
-    '../../../services/caseWorkspace/caseWorkspaceAuthContext.js'
-  );
-  return { ...actual, requireCaseAccess: (...args: unknown[]) => mockRequireCaseAccess(...args) };
+  const actual = await vi.importActual<
+    typeof import('../../../services/caseWorkspace/caseWorkspaceAuthContext.js')
+  >('../../../services/caseWorkspace/caseWorkspaceAuthContext.js');
+  return {
+    ...actual,
+    requireCaseAccess: (...args: unknown[]) => mockRequireCaseAccess(...args),
+    requireOrgRole: (...args: unknown[]) => mockRequireOrgRole(...args),
+  };
 });
 
 vi.mock('../../../services/caseWorkspace/proposalApprovalService.js', () => ({
@@ -38,6 +43,7 @@ vi.mock('../../../services/caseWorkspace/proposalApprovalService.js', () => ({
 
 import actionProposalsRoutes from '../actionProposals.routes.js';
 import { errorHandlerMiddleware } from '../../../utils/ErrorHandler.js';
+import { CaseWorkspaceAuthError } from '../../../services/caseWorkspace/caseWorkspaceAuthContext.js';
 
 const ORG = 'org-1';
 const USER = 'user-1';
@@ -63,8 +69,24 @@ function createApp(): Express {
 describe('caseWorkspace action-proposal routes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetV8Context.mockReturnValue({ organizationId: ORG, userId: USER, userRole: 'ADMIN', isSuperAdmin: false });
-    mockRequireCaseAccess.mockResolvedValue({ membershipId: 'm1', organizationId: ORG, userId: USER, role: 'ADMIN' });
+    mockGetV8Context.mockReturnValue({
+      organizationId: ORG,
+      userId: USER,
+      userRole: 'ADMIN',
+      isSuperAdmin: false,
+    });
+    mockRequireCaseAccess.mockResolvedValue({
+      membershipId: 'm1',
+      organizationId: ORG,
+      userId: USER,
+      role: 'ADMIN',
+    });
+    mockRequireOrgRole.mockResolvedValue({
+      membershipId: 'm1',
+      organizationId: ORG,
+      userId: USER,
+      role: 'ADMIN',
+    });
   });
 
   it('requires an Idempotency-Key (header or body) to create a proposal', async () => {
@@ -83,7 +105,11 @@ describe('caseWorkspace action-proposal routes', () => {
       .send(VALID_PROPOSAL_BODY);
     expect(res.status).toBe(201);
     expect(mockCreateActionProposal).toHaveBeenCalledWith(
-      expect.objectContaining({ idempotencyKey: 'idem-1', caseId: 'case-1', createdByActorId: USER })
+      expect.objectContaining({
+        idempotencyKey: 'idem-1',
+        caseId: 'case-1',
+        createdByActorId: USER,
+      })
     );
   });
 
@@ -151,6 +177,28 @@ describe('caseWorkspace action-proposal routes', () => {
       });
     expect(res.status).toBe(409);
     expect(res.body.error.code).toBe('PROPOSAL_STALE');
+  });
+
+  it('fails closed before a MEMBER can approve a proposal', async () => {
+    mockGetActionProposal.mockResolvedValue({ actionProposalId: 'cwprop-1', caseId: 'case-1' });
+    mockRequireOrgRole.mockRejectedValue(
+      new CaseWorkspaceAuthError('insufficient_org_role', 'insufficient role')
+    );
+    const res = await request(createApp())
+      .post('/api/v8/case-workspace/proposals/cwprop-1/decision')
+      .set('Idempotency-Key', 'member-negative')
+      .send({
+        proposalVersion: 1,
+        payloadDigest: 'sha256:abc',
+        decision: 'APPROVE',
+        source: 'BUTTON',
+        authenticationAssurance: 'mfa',
+        approvalChannelPolicy: 'standard',
+        policyVersion: 'v1',
+        expectedVersion: 1,
+      });
+    expect(res.status).toBe(403);
+    expect(mockRecordApprovalDecision).not.toHaveBeenCalled();
   });
 
   it('checks case access before listing proposals for a case', async () => {

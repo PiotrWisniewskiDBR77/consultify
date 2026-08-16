@@ -22,7 +22,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 
 import * as svc from '../../services/caseWorkspace/waitSubscriptionService.js';
-import { requireCaseAccessForActor } from './_shared/access.js';
+import { requireCaseAccessForActor, requireOrgRoleForActor } from './_shared/access.js';
 import { caseWorkspaceHandler, readIdempotencyKeyHeader } from './_shared/handler.js';
 import { toCaseWorkspaceAppError } from './_shared/errors.js';
 import { parseBody, parseParams, parseQuery } from './_shared/validate.js';
@@ -35,7 +35,10 @@ const waitStatusEnum = z.enum(['ACTIVE', 'SATISFIED', 'EXPIRED', 'CANCELLED']);
 
 const waitIdParams = z.object({ waitId: z.string().trim().min(1) });
 
-async function requireCaseAccessForWait(actor: CaseWorkspaceActor, waitId: string): Promise<svc.CaseWait> {
+async function requireCaseAccessForWait(
+  actor: CaseWorkspaceActor,
+  waitId: string
+): Promise<svc.CaseWait> {
   const wait = await svc.getWait(waitId, actor.actorUserId);
   if (!wait) {
     throw toCaseWorkspaceAppError(new Error('wait_not_found'), actor.correlationId);
@@ -193,6 +196,7 @@ router.post(
     const params = parseParams(waitIdParams, req.params);
     const body = parseBody(cancelWaitBody, req.body);
     await requireCaseAccessForWait(actor, params.waitId);
+    await requireOrgRoleForActor(actor, 'ADMIN');
     const updated = await svc.cancelWait(
       params.waitId,
       { actorUserId: actor.actorUserId },

@@ -52,7 +52,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 
 import * as svc from '../../services/caseWorkspace/runLifecycleService.js';
-import { requireCaseAccessForActor } from './_shared/access.js';
+import { requireCaseAccessForActor, requireOrgRoleForActor } from './_shared/access.js';
 import { caseWorkspaceHandler, readIdempotencyKeyHeader } from './_shared/handler.js';
 import { toCaseWorkspaceAppError } from './_shared/errors.js';
 import { parseBody, parseParams } from './_shared/validate.js';
@@ -61,7 +61,10 @@ const router = Router();
 
 const caseIdParams = z.object({ caseId: z.string().trim().min(1) });
 const runIdParams = z.object({ runId: z.string().trim().min(1) });
-const nodeIdParams = z.object({ runId: z.string().trim().min(1), nodeId: z.string().trim().min(1) });
+const nodeIdParams = z.object({
+  runId: z.string().trim().min(1),
+  nodeId: z.string().trim().min(1),
+});
 const nodeRunIdParams = z.object({
   runId: z.string().trim().min(1),
   nodeRunId: z.string().trim().min(1),
@@ -85,7 +88,10 @@ router.post(
     await requireCaseAccessForActor(actor, params.caseId);
     const idempotencyKey = readIdempotencyKeyHeader(req) ?? body.idempotencyKey;
     if (!idempotencyKey) {
-      throw toCaseWorkspaceAppError(new Error('run_lifecycle_idempotency_key_required'), actor.correlationId);
+      throw toCaseWorkspaceAppError(
+        new Error('run_lifecycle_idempotency_key_required'),
+        actor.correlationId
+      );
     }
     const run = await svc.createRun(
       {
@@ -132,7 +138,9 @@ router.post(
   '/runs/:runId/start',
   caseWorkspaceHandler(async (req, res, actor) => {
     const params = parseParams(runIdParams, req.params);
-    const result = await svc.startRun(params.runId, actor.actorUserId, { correlationId: actor.correlationId });
+    const result = await svc.startRun(params.runId, actor.actorUserId, {
+      correlationId: actor.correlationId,
+    });
     res.status(200).json({ data: result });
   })
 );
@@ -166,7 +174,13 @@ router.post(
   caseWorkspaceHandler(async (req, res, actor) => {
     const params = parseParams(runIdParams, req.params);
     const body = parseBody(cancelRunBody, req.body);
-    const run = await svc.cancelRun(params.runId, actor.actorUserId, body.expectedVersion, body.reason);
+    await requireOrgRoleForActor(actor, 'ADMIN');
+    const run = await svc.cancelRun(
+      params.runId,
+      actor.actorUserId,
+      body.expectedVersion,
+      body.reason
+    );
     res.status(200).json({ data: run });
   })
 );
@@ -188,21 +202,37 @@ router.post(
   caseWorkspaceHandler(async (req, res, actor) => {
     const params = parseParams(runIdParams, req.params);
     const body = parseBody(failRunBody, req.body);
-    const run = await svc.failRun(params.runId, actor.actorUserId, body.expectedVersion, body.reason);
+    const run = await svc.failRun(
+      params.runId,
+      actor.actorUserId,
+      body.expectedVersion,
+      body.reason
+    );
     res.status(200).json({ data: run });
   })
 );
 
 // POST /runs/:runId/outcome — recordRunOutcome
 const outcomeBody = expectedVersionBody.extend({
-  outcomeStatus: z.enum(['PENDING_REVIEW', 'ACCEPTED', 'REJECTED', 'PARTIALLY_ACCEPTED', 'NOT_APPLICABLE']),
+  outcomeStatus: z.enum([
+    'PENDING_REVIEW',
+    'ACCEPTED',
+    'REJECTED',
+    'PARTIALLY_ACCEPTED',
+    'NOT_APPLICABLE',
+  ]),
 });
 router.post(
   '/runs/:runId/outcome',
   caseWorkspaceHandler(async (req, res, actor) => {
     const params = parseParams(runIdParams, req.params);
     const body = parseBody(outcomeBody, req.body);
-    const run = await svc.recordRunOutcome(params.runId, body.outcomeStatus, actor.actorUserId, body.expectedVersion);
+    const run = await svc.recordRunOutcome(
+      params.runId,
+      body.outcomeStatus,
+      actor.actorUserId,
+      body.expectedVersion
+    );
     res.status(200).json({ data: run });
   })
 );
