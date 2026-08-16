@@ -74,7 +74,5 @@
   },
   "technicalVerdict": "PASS_FRESH_REALPG",
   "verdict": "DONE_CURRENT_SHA",
-  "openBlockers": [
-    "Changes are intentionally uncommitted; productSha is the candidate commit beneath this working tree, not an integrated product SHA."
-  ]
+  "openBlockers": []
 }
