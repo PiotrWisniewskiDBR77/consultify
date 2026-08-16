@@ -8,7 +8,7 @@ cleanup snapshots and five-hour plans are historical evidence.
 ## Literal status
 
 - Cleanup: `IN_PROGRESS`
-- Canonical candidate: `PARTIAL / NOT_INTEGRATION_READY`
+- Canonical candidate: `PARTIAL / STATIC_GATES_GREEN / RUNTIME_EVIDENCE_MISSING`
 - Demo: `NOT_VERIFIED`
 - Production: `NOT_AUTHORIZED / NOT_VERIFIED`
 
@@ -26,15 +26,17 @@ cleanup snapshots and five-hour plans are historical evidence.
 - Path: `/Users/piotrwisniewski/Developer/consultify-recovery-canonical-20260816`
 - Branch: `codex/recovery-canonical-20260816`
 - Baseline: `origin/demo` at `e45904dc7940f259b9cf017c283264d5c166c9ab`
-- Current verified implementation checkpoint: `8c0e29ae56`
+- Current verified implementation checkpoint: `59d6d0d85c`
 - Recovery control-plane commit: `844001c525`
-- Integrated package: Assessment, fast-forward ancestry only
-- Candidate divergence from baseline: 156 commits ahead, zero behind
+- Integrated packages: Assessment (fast-forward ancestry) and Tools (49
+  patch-unique, ordered non-merge commits replayed selectively)
+- Tools pre-integration recovery point: branch
+  `codex/recovery-pre-tools-20260816` at `2706985e9a`
 - Worktree state before this document update: clean
 
 ## Current gate result
 
-Assessment is present but not accepted. `git diff --check
+Assessment and Tools are present but not runtime-accepted. `git diff --check
 e45904dc7940..031772082b7d` reports whitespace failures in captured HTTP/SQL log
 evidence under `docs/qa/a9-2026-08-13/`. These are evidence-file hygiene defects,
 not a product-code verdict, but the repository-wide diff gate is not green.
@@ -57,6 +59,15 @@ Fresh checks on this candidate:
 - `npm run type-check`: initially failed with six candidate errors; fixed in
   `8c0e29ae56`, then PASS.
 - Focused regression after the fix: 3 files PASS, 19 tests PASS.
+- Tools focused verification: 13 files PASS, 482 tests PASS. React `act(...)`
+  warnings remain test-harness debt, not failed assertions.
+- Tool-session synchronization regression: 1 file PASS, 14 tests PASS.
+- Test discovery manifest regenerated from the integrated candidate: 4964 of
+  4964 files classified; discovery gate PASS. Classification is 4665 ACTIVE,
+  290 PLAYWRIGHT, 7 INTENTIONALLY_EXCLUDED, 1 LEGACY and 1 explicit
+  BROKEN_ORPHAN (`tests/e2e/security-cookie-auth.spec.ts`).
+- Full `npm run type-check` after Tools integration: PASS after three boundary
+  typing fixes committed in `59d6d0d85c`.
 - Commit hooks reported no new list, TRIADA, density, focus, or artifact-shell
   regression in the changed files. Existing repository-wide focus debt remains.
 
@@ -83,8 +94,9 @@ features. No bulk branch or worktree deletion is authorized by these counts.
 
 ## Next gate
 
-1. Commit this control layer on the candidate.
-2. Separate Assessment product commits from evidence-only/harness material where
-   necessary and resolve the diff-check policy for immutable captured logs.
-3. Run scoped static and test gates after dependencies are restored.
-4. Reconcile Tools selectively, then Audits; do not merge their branch heads.
+1. Run Tools fresh strict PostgreSQL migrations and realDB suites; do not infer
+   runtime readiness from the 482 unit/component tests.
+2. Resolve the one explicit broken orphan and the Assessment immutable-log
+   `diff --check` policy without rewriting evidence silently.
+3. Reconcile Audits selectively; do not merge its branch head.
+4. Reconcile Case/Artifact, then the owner-gated Results/Finance packages.

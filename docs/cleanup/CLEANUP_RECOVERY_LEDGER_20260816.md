@@ -16,7 +16,7 @@
 | Baseline demo | `e45904dc7940f259b9cf017c283264d5c166c9ab` | canonical baseline | Never infer production readiness from this role. |
 | Assessment | `031772082b7d4925e11986016079d02adeb17382` | `INTEGRATED_PENDING_VERIFICATION` | Library-to-session gap, registry split, fresh gates missing. |
 | Assessment clean handoff | `0f0bce1c9954681ef8e01618529f10614d9de951` | `INTEGRATE_SELECTIVELY` | Diverged from demo; use as source for later fixes/evidence, not branch merge. |
-| Tools | `b8d5747e53936ec130bc80c43e868e71f1fa2b60` | `INTEGRATE_SELECTIVELY` | `RUNTIME_ACTIVE=0`, 0/19 publishable in recorded state, shared-kernel overlap. |
+| Tools | source `b8d5747e53936ec130bc80c43e868e71f1fa2b60`; candidate `59d6d0d85c` | `INTEGRATED_PENDING_VERIFICATION` | 49 patch-unique non-merge commits replayed. Static/type/discovery and 496 focused assertions pass; fresh strict PostgreSQL, realDB and browser E2E remain missing. `RUNTIME_ACTIVE=0` remains literal. |
 | Audits | `1927914dddad0e2932bcd5238ff6eb611859e4cf` | `INTEGRATE_SELECTIVELY` | Flag default OFF, parallel data models, browser E2E missing. |
 | Finance | `c78086057d38f57c5351c6254d41f02fd50246b6` | `BLOCKED` | Choose one canonical owner across legacy/V3/V4/V8/V10 before replay. |
 | Results | `8b03e2dba59055cd9abc74b48cea2990d12c0d3b` | `BLOCKED` | Confirm latest cumulative fan-in, mount/flag and Finance seam. |
@@ -38,11 +38,10 @@
 ## Planned recovery order
 
 1. Assessment verification and missing entry/source-of-truth resolution
-2. Tools selective replay
+2. Tools fresh PostgreSQL, realDB and browser verification
 3. Audits selective replay
 4. Case and Artifact reconciliation
 5. Results and Finance owner/data reconciliation
 6. CEPD allowlisted replay
 7. UX clean reconstruction
 8. Worktree and branch deduplication
-
