@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "acceptanceSha": "14c8852a71cdc5c8bf723a9b21f5e1cc00a467f5",
+  "standardEvidenceSha": "0345220974ef8f6eb5fef4959c71b51cc72953d2",
+  "changedPaths": [
+    "tests/integration/routes/capacity.test.js",
+    "tests/integration/routes/pmo-analysis.test.js"
+  ],
+  "matrixSha256": "e687bc74fcf643c51cc8f0e1d21d998c96d1a984a6ebda72e9013fce9aad7bf1",
+  "changedPathOwnership": {
+    "realdb": [
+      "tests/integration/routes/capacity.test.js",
+      "tests/integration/routes/pmo-analysis.test.js"
+    ],
+    "isolated": [],
+    "standard": []
+  },
+  "standard": {
+    "inputSetUnchanged": true,
+    "fileCount": 4058,
+    "shards": 12,
+    "concurrency": 1,
+    "tests": 40206,
+    "passed": 39562,
+    "failed": 0,
+    "pending": 625,
+    "todo": 19,
+    "missingResultFiles": 0,
+    "unexpectedResultFiles": 0,
+    "discoverySha256": "813f083d2b199a48c6215793b0fc9a6bffc8b230e1171b1bb8926fbf36ab20f4",
+    "manifestSha256": "efa116b174911d11118fae1d4b32995679dd9cb030b2d794ef0897f0106d6423",
+    "summarySha256": "6bb734d8966b2206142f6069017a63e1bcad7a3c840888f6a0f8f3f2a93aaccc"
+  },
+  "isolated": {
+    "inputSetUnchanged": true,
+    "executedOnAcceptanceSha": true,
+    "files": 72,
+    "tests": 1590,
+    "passed": 1590,
+    "failed": 0,
+    "pending": 0,
+    "todo": 0,
+    "nonZeroExits": 0,
+    "cooldownMs": 500,
+    "resultsSha256": "af1b46440c9540b9b5cc27a7d040815ca010f0a92e669f95b33b7fe1f5277606"
+  },
+  "realdb": {
+    "executedOnAcceptanceSha": true,
+    "files": 64,
+    "migrations": 719,
+    "tests": 428,
+    "passed": 427,
+    "failed": 0,
+    "pending": 1,
+    "todo": 0,
+    "nonZeroExits": 0,
+    "resultsSha256": "1300a23862b335af76cafb2ffa747d0ae0cf22b337cdc3e8e060732f4b13214b"
+  },
+  "legacyPostgresPort": {
+    "files": 27,
+    "verdict": "NOT_RELEASE_EVIDENCE"
+  },
+  "verdict": "PASS"
+}
