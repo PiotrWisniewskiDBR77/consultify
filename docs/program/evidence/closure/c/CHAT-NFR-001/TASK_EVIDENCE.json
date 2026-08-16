@@ -24,5 +24,15 @@
     "providerThrows": "PROVIDER_UNAVAILABLE 503, zero rows",
     "providerNull": "SOURCE_NOT_FOUND 404, zero rows",
     "providerEmpty": "EMPTY_SOURCE 422, zero rows"
+  },
+  "changedPaths": [],
+  "changedPathRationale": {},
+  "ownerTables": [],
+  "commands": [],
+  "fixtures": {},
+  "browserArtifacts": [],
+  "rollback": {
+    "method": "Not recorded by the lane; no rollback execution or completion claim is inferred.",
+    "executed": false
   }
 }

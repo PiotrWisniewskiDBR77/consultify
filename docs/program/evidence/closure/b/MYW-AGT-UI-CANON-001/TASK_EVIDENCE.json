@@ -1,7 +1,7 @@
 {
   "taskId": "MYW-AGT-UI-CANON-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "WORKTREE@64f507859c717494ffa5e83fae550173c9382230+lane-b-changes",
+  "productSha": "99406b784bf1332beb369be161e75a2422f00fc6",
   "leaseSha256": "f4d75f0aed94f2e34acaec63d91c245495e7e0f658aa36d1122342c2acecc612",
   "toolchain": {
     "node": "v24.12.0",

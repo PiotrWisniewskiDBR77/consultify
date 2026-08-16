@@ -67,7 +67,13 @@
     }
   ],
   "denominators": {
-    "taskTests": { "files": 1, "passed": 10, "failed": 0, "skipped": 0, "todo": 0 },
+    "taskTests": {
+      "files": 1,
+      "passed": 10,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0
+    },
     "regression": {
       "files": 7,
       "passed": 62,
@@ -75,10 +81,22 @@
       "skipped": 0,
       "todo": 0,
       "breakdown": [
-        { "suite": "tool-sessions-cas", "passed": 11 },
-        { "suite": "tools-outputs-immutable", "passed": 10 },
-        { "suite": "tools-links-org-scope", "passed": 7 },
-        { "suite": "four further promote-calling suites (unnamed in commit message)", "passed": 34 }
+        {
+          "suite": "tool-sessions-cas",
+          "passed": 11
+        },
+        {
+          "suite": "tools-outputs-immutable",
+          "passed": 10
+        },
+        {
+          "suite": "tools-links-org-scope",
+          "passed": 7
+        },
+        {
+          "suite": "four further promote-calling suites (unnamed in commit message)",
+          "passed": 34
+        }
       ]
     },
     "note": "--retry=0 was mandatory: root vitest.config.ts sets retry: CI ? 3 : 1, which would otherwise let a flaky pass masquerade as green."
@@ -132,5 +150,8 @@
     "commands[6].command (exact regression command and the two unnamed additional broken fixture file paths — not quoted in the commit body)"
   ],
   "verdict": "PARTIAL",
-  "verdictRationale": "G0/G1/G3 shared gates pass at this SHA and the task's own suite is 10/10 on real Postgres with strong coverage (CAS, immutability, concurrency, tenant, cold readback). This is downgraded from DONE_CURRENT_SHA because the commit message records a KNOWN CONSEQUENCE that is an active regression, not a hypothetical: tests/integration/tools/tool-session-roundtrip.contract.test.ts runs in the DEFAULT test suite (unlike this task's own RUN_DB_TESTS-gated evidence) and now fails after this change, plus two further unnamed fixtures. A fix that breaks a default-suite test it did not update is not a clean close. No browser/visual evidence exists for the SWOT freeze/promote UI surface either, which the DoD would need for a full DONE."
+  "verdictRationale": "G0/G1/G3 shared gates pass at this SHA and the task's own suite is 10/10 on real Postgres with strong coverage (CAS, immutability, concurrency, tenant, cold readback). This is downgraded from DONE_CURRENT_SHA because the commit message records a KNOWN CONSEQUENCE that is an active regression, not a hypothetical: tests/integration/tools/tool-session-roundtrip.contract.test.ts runs in the DEFAULT test suite (unlike this task's own RUN_DB_TESTS-gated evidence) and now fails after this change, plus two further unnamed fixtures. A fix that breaks a default-suite test it did not update is not a clean close. No browser/visual evidence exists for the SWOT freeze/promote UI surface either, which the DoD would need for a full DONE.",
+  "ownerTables": [],
+  "fixtures": {},
+  "negativeControls": {}
 }

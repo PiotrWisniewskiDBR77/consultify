@@ -25,5 +25,15 @@
   "open": [
     "No single browser-verified end-to-end journey across all three editors (G4 not run).",
     "Four-eyes approval exists for DOC only; Workbook/Presentation use a separate approval engine (approval_assignments) that was not unified."
-  ]
+  ],
+  "changedPaths": [],
+  "changedPathRationale": {},
+  "commands": [],
+  "fixtures": {},
+  "negativeControls": {},
+  "browserArtifacts": [],
+  "rollback": {
+    "method": "Not recorded by the lane; no rollback execution or completion claim is inferred.",
+    "executed": false
+  }
 }

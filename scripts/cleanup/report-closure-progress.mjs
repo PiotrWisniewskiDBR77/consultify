@@ -32,11 +32,26 @@ const required = [
   'changedPathRationale', 'ownerTables', 'commands', 'denominators', 'fixtures',
   'negativeControls', 'browserArtifacts', 'rollback', 'verdict',
 ];
-const acceptedVerdicts = new Set(['DONE_CURRENT_SHA', 'PARTIAL', 'FIX_REQUIRED', 'BLOCKED_OWNER', 'BLOCKED_HUMAN']);
+const acceptedVerdicts = new Set([
+  'DONE_CURRENT_SHA',
+  'PARTIAL',
+  'FIX_REQUIRED',
+  'BLOCKED_OWNER',
+  'BLOCKED_HUMAN',
+  'NOT_VERIFIED',
+  'EVIDENCE_MISSING',
+]);
+const evidenceLaneDirectory = new Map([
+  ['claude-a', 'a'],
+  ['claude-b', 'b'],
+  ['claude-c', 'c'],
+  ['codex', 'codex'],
+]);
 const rows = [];
 for (const taskId of authority) {
   const lane = owner.get(taskId);
-  const file = `docs/program/evidence/closure/${lane}/${taskId}/TASK_EVIDENCE.json`;
+  const evidenceDirectory = evidenceLaneDirectory.get(lane);
+  const file = `docs/program/evidence/closure/${evidenceDirectory}/${taskId}/TASK_EVIDENCE.json`;
   if (!lane || !existsSync(path.join(root, file))) {
     rows.push({ taskId, lane: lane ?? 'UNASSIGNED', verdict: 'MISSING_EVIDENCE', issues: ['missing evidence file'] });
     continue;

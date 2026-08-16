@@ -37,5 +37,14 @@
   "open": [
     "G4 browser/visual not run.",
     "ICR-C-001: server-side betaGate is a no-op while MODULE_MEETING is closed — outside lease, filed as an integrator request."
-  ]
+  ],
+  "changedPaths": [],
+  "changedPathRationale": {},
+  "commands": [],
+  "fixtures": {},
+  "browserArtifacts": [],
+  "rollback": {
+    "method": "Not recorded by the lane; no rollback execution or completion claim is inferred.",
+    "executed": false
+  }
 }

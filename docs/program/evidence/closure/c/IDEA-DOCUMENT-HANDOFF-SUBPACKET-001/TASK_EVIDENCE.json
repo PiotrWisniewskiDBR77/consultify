@@ -36,5 +36,14 @@
   "open": [
     "my-work.routes.ts /convert itself still has the duplicate-row defect — that file is outside the lane lease and was deliberately not touched.",
     "materializeIdeaArtifact does not create the real document/deck/workbook row; those owner tables belong to other lanes. Cross-lane contract documented."
-  ]
+  ],
+  "changedPaths": [],
+  "changedPathRationale": {},
+  "commands": [],
+  "fixtures": {},
+  "browserArtifacts": [],
+  "rollback": {
+    "method": "Not recorded by the lane; no rollback execution or completion claim is inferred.",
+    "executed": false
+  }
 }

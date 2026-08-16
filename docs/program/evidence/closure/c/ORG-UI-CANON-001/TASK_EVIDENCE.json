@@ -15,5 +15,17 @@
   "verdict": "NOT_VERIFIED",
   "open": [
     "No browser/visual evidence produced. Note: the only component that rendered raw claims/timeline (OrganizationContextOverview.tsx) is dead code, so there is currently no live UI surface for the claims review journey."
-  ]
+  ],
+  "changedPaths": [],
+  "changedPathRationale": {},
+  "ownerTables": [],
+  "commands": [],
+  "denominators": {},
+  "fixtures": {},
+  "negativeControls": {},
+  "browserArtifacts": [],
+  "rollback": {
+    "method": "Not recorded by the lane; no rollback execution or completion claim is inferred.",
+    "executed": false
+  }
 }

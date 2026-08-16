@@ -34,5 +34,14 @@
   "open": [
     "G4 browser/visual not run.",
     "No WCAG/screen-reader audit performed; only alt-text/objectName labelling exists in code."
-  ]
+  ],
+  "changedPaths": [],
+  "changedPathRationale": {},
+  "commands": [],
+  "fixtures": {},
+  "browserArtifacts": [],
+  "rollback": {
+    "method": "Not recorded by the lane; no rollback execution or completion claim is inferred.",
+    "executed": false
+  }
 }

@@ -15,5 +15,17 @@
   "verdict": "NOT_VERIFIED",
   "open": [
     "No browser/visual evidence produced. Same G4 + BLOCKED_HUMAN position as MAT-UI-CANON-001."
-  ]
+  ],
+  "changedPaths": [],
+  "changedPathRationale": {},
+  "ownerTables": [],
+  "commands": [],
+  "denominators": {},
+  "fixtures": {},
+  "negativeControls": {},
+  "browserArtifacts": [],
+  "rollback": {
+    "method": "Not recorded by the lane; no rollback execution or completion claim is inferred.",
+    "executed": false
+  }
 }

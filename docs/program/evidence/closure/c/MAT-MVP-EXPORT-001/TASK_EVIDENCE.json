@@ -21,5 +21,15 @@
   },
   "open": [
     "Only the presentation export path is wired to export receipts. Document and Workbook export endpoints are NOT yet wired — previously they were recorded nowhere at all, so this is a partial, honestly-scoped improvement."
-  ]
+  ],
+  "changedPaths": [],
+  "changedPathRationale": {},
+  "commands": [],
+  "fixtures": {},
+  "negativeControls": {},
+  "browserArtifacts": [],
+  "rollback": {
+    "method": "Not recorded by the lane; no rollback execution or completion claim is inferred.",
+    "executed": false
+  }
 }

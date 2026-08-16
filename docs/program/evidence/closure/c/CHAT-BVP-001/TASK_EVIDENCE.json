@@ -32,5 +32,14 @@
     "crossTenant": "propose/read/approve/reject denied",
     "producerBoundary": "a non-chat proposal row is invisible to this surface",
     "foreignWrites": "service contains ZERO raw SQL write statements; all writes go through the spine"
+  },
+  "changedPaths": [],
+  "changedPathRationale": {},
+  "commands": [],
+  "fixtures": {},
+  "browserArtifacts": [],
+  "rollback": {
+    "method": "Not recorded by the lane; no rollback execution or completion claim is inferred.",
+    "executed": false
   }
 }

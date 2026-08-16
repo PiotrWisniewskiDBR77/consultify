@@ -77,13 +77,32 @@
       "skipped": 0,
       "todo": 0,
       "breakdown": [
-        { "file": "fullLifecycle.e2e.test.ts", "passed": 2 },
-        { "file": "segregationOfDutiesNegatives.test.ts", "passed": 4 },
-        { "file": "tenantIsolation.test.ts", "passed": 1 },
-        { "file": "immutableTrail.test.ts", "passed": 3 }
+        {
+          "file": "fullLifecycle.e2e.test.ts",
+          "passed": 2
+        },
+        {
+          "file": "segregationOfDutiesNegatives.test.ts",
+          "passed": 4
+        },
+        {
+          "file": "tenantIsolation.test.ts",
+          "passed": 1
+        },
+        {
+          "file": "immutableTrail.test.ts",
+          "passed": 3
+        }
       ]
     },
-    "regression": { "files": 21, "passed": 165, "failed": 0, "skipped": 0, "todo": 0, "scope": "server/src/services/audits/__tests__ + server/src/routes/audits/__tests__, kernel, read-only" },
+    "regression": {
+      "files": 21,
+      "passed": 165,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "scope": "server/src/services/audits/__tests__ + server/src/routes/audits/__tests__, kernel, read-only"
+    },
     "note": "--retry=0 was mandatory: root vitest.config.ts sets retry: CI ? 3 : 1, which would otherwise let a flaky pass masquerade as green. Kernel regression count in this lane's own run (21 files/165 tests) is explicitly noted in CLOSURE_EVIDENCE.md as materially different from a ledger claim of 32 files/259 tests referenced in the task brief; the discrepancy is most likely scope (a wider audits-adjacent glob), not disagreement, but it was not reconciled and is reported as-is rather than silently resolved — see contradiction note in the final report."
   },
   "realDb": {
@@ -138,5 +157,8 @@
   ],
   "unverifiedFields": [],
   "verdict": "PARTIAL",
-  "verdictRationale": "G0/G1/G3 shared gates pass at this SHA. All 7 lifecycle stages are proven end to end with SELECT verification at every stage, cold readback, SoD (4/4 with exact denial messages), and tenant isolation (1/1) — 10/10 task tests plus 165/165 kernel regression (read-only). This is marked PARTIAL rather than DONE_CURRENT_SHA because the task's own investigation surfaced a genuine, non-cosmetic gap against its named requirement: 'immutable audit trail' is disclosed as service-layer discipline only, not database-enforced (no trigger blocks a direct UPDATE/DELETE) — that is precisely the guarantee this task was supposed to close, and it is not closed, only honestly characterized. A second gap (no optimistic-concurrency guard on transitionLifecycle) was also found and not fixed within this lane's one-migration budget. Both are recorded as non-blocking integrator change requests rather than shipped fixes. No browser/visual evidence exists for the Audits UI either. Given the guidance to prefer PARTIAL when torn, and that a disclosed-but-unfixed core guarantee gap is a real shortfall (not just missing polish), PARTIAL is the honest verdict."
+  "verdictRationale": "G0/G1/G3 shared gates pass at this SHA. All 7 lifecycle stages are proven end to end with SELECT verification at every stage, cold readback, SoD (4/4 with exact denial messages), and tenant isolation (1/1) — 10/10 task tests plus 165/165 kernel regression (read-only). This is marked PARTIAL rather than DONE_CURRENT_SHA because the task's own investigation surfaced a genuine, non-cosmetic gap against its named requirement: 'immutable audit trail' is disclosed as service-layer discipline only, not database-enforced (no trigger blocks a direct UPDATE/DELETE) — that is precisely the guarantee this task was supposed to close, and it is not closed, only honestly characterized. A second gap (no optimistic-concurrency guard on transitionLifecycle) was also found and not fixed within this lane's one-migration budget. Both are recorded as non-blocking integrator change requests rather than shipped fixes. No browser/visual evidence exists for the Audits UI either. Given the guidance to prefer PARTIAL when torn, and that a disclosed-but-unfixed core guarantee gap is a real shortfall (not just missing polish), PARTIAL is the honest verdict.",
+  "ownerTables": [],
+  "fixtures": {},
+  "negativeControls": {}
 }

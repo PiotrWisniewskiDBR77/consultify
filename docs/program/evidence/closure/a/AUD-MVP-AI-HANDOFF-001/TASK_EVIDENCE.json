@@ -85,11 +85,24 @@
       "skipped": 0,
       "todo": 0,
       "breakdown": [
-        { "file": "exactlyOnceRegistration.test.ts", "passed": 4 },
-        { "file": "aiBoundaryNegatives.test.ts", "passed": 4 }
+        {
+          "file": "exactlyOnceRegistration.test.ts",
+          "passed": 4
+        },
+        {
+          "file": "aiBoundaryNegatives.test.ts",
+          "passed": 4
+        }
       ]
     },
-    "regression": { "files": 21, "passed": 165, "failed": 0, "skipped": 0, "todo": 0, "scope": "server/src/services/audits/__tests__ + server/src/routes/audits/__tests__, kernel, read-only" },
+    "regression": {
+      "files": 21,
+      "passed": 165,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "scope": "server/src/services/audits/__tests__ + server/src/routes/audits/__tests__, kernel, read-only"
+    },
     "note": "--retry=0 was mandatory: root vitest.config.ts sets retry: CI ? 3 : 1, which would otherwise let a flaky pass masquerade as green."
   },
   "realDb": {
@@ -135,5 +148,8 @@
   ],
   "unverifiedFields": [],
   "verdict": "DONE_CURRENT_SHA",
-  "verdictRationale": "G0/G1/G3 shared gates pass at this SHA. The exactly-one-downstream-receipt guarantee is enforced at the database layer (stronger than an application check) and proven 4/4 on real Postgres including a concurrent race, sequential replay, positive control and a pre-existing-duplicate migration-safety control. AI proposal-only / human-approval enforcement is independently re-verified against this HEAD, 4/4. Kernel regression (165/165, read-only) shows no breakage. The one recorded consequence — a cross-lane note about the initiatives-table index — is explicitly non-blocking (scoped by source_type='audit', no writer added by this lane) and the audit_domain_events immutability correction belongs primarily to the LIFECYCLE record. No browser/visual evidence exists, but this task has no UI surface, so that absence does not bear on its DoD."
+  "verdictRationale": "G0/G1/G3 shared gates pass at this SHA. The exactly-one-downstream-receipt guarantee is enforced at the database layer (stronger than an application check) and proven 4/4 on real Postgres including a concurrent race, sequential replay, positive control and a pre-existing-duplicate migration-safety control. AI proposal-only / human-approval enforcement is independently re-verified against this HEAD, 4/4. Kernel regression (165/165, read-only) shows no breakage. The one recorded consequence — a cross-lane note about the initiatives-table index — is explicitly non-blocking (scoped by source_type='audit', no writer added by this lane) and the audit_domain_events immutability correction belongs primarily to the LIFECYCLE record. No browser/visual evidence exists, but this task has no UI surface, so that absence does not bear on its DoD.",
+  "ownerTables": [],
+  "fixtures": {},
+  "negativeControls": {}
 }

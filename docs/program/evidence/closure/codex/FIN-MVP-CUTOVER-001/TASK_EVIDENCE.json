@@ -1,0 +1,32 @@
+{
+  "taskId": "FIN-MVP-CUTOVER-001",
+  "baselineSha": "3ad4a10545b02828cde74c81f40a75ea1305cea3",
+  "productSha": "8a16786480f5f9b994cabc37181bb9dcbb1be038",
+  "leaseSha256": "not_applicable_integrator_bounded_task",
+  "changedPaths": [
+    "server/migrations/20260907_finance_legacy_cutover.sql",
+    "server/src/services/financeLegacyCutover.ts",
+    "server/src/routes/v8/finance.routes.ts",
+    "server/src/services/__tests__/financeLegacyCutover.test.ts",
+    "server/src/services/__tests__/financeLegacyCutover.pg.test.ts"
+  ],
+  "changedPathRationale": {
+    "server/migrations/20260907_finance_legacy_cutover.sql": "Adds durable tenant-scoped cutover telemetry.",
+    "server/src/services/financeLegacyCutover.ts": "Classifies the legacy surface, records usage and fails closed for the proven tranche.",
+    "server/src/routes/v8/finance.routes.ts": "Mounts the cutover guard on the legacy V8 Finance surface.",
+    "server/src/services/__tests__/financeLegacyCutover.test.ts": "Proves default-off, rollback and telemetry behavior.",
+    "server/src/services/__tests__/financeLegacyCutover.pg.test.ts": "Proves durable telemetry and canonical ID pairing on isolated PostgreSQL."
+  },
+  "ownerTables": ["finance_legacy_cutover_events"],
+  "commands": [
+    {"command": "cd server && npx vitest run src/services/__tests__/financeLegacyCutover.test.ts --reporter=dot", "exitCode": 0},
+    {"command": "RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test DATABASE_URL=<isolated-empty-db> npx vitest run src/services/__tests__/financeLegacyCutover.pg.test.ts --reporter=dot", "exitCode": 0},
+    {"command": "git diff --check -- <five task paths>", "exitCode": 0}
+  ],
+  "denominators": {"unit": {"passed": 4, "failed": 0}, "realDb": {"passed": 1, "failed": 0}, "legacyV8Writers": {"retired": 1, "total": 30}},
+  "fixtures": {"database": "isolated empty PostgreSQL database created and removed for the proof"},
+  "negativeControls": {"defaultLegacyWriterDenied": true, "telemetryFailureDoesNotEnableWriter": true, "rollbackRequiresExplicitFlag": true},
+  "browserArtifacts": [],
+  "rollback": {"method": "Set FINANCE_LEGACY_WRITER_ROLLBACK_ENABLED=true for the bounded tranche; no destructive schema rollback.", "executed": true},
+  "verdict": "PARTIAL"
+}

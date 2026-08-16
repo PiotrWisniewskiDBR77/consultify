@@ -16,5 +16,17 @@
   "open": [
     "Snapshot lifecycle, provenance and immutability delivered. Monitoring/alerting, repair/rebuild worker and the operator runbook were NOT delivered in this run.",
     "Pre-existing finding recorded: the release-gate smoke script server/scripts/smoke-organization-context-engine.ts asserts by grepping source files, never executing SQL or hitting an endpoint — its \"38/38 PASS\" proves nothing about runtime."
-  ]
+  ],
+  "changedPaths": [],
+  "changedPathRationale": {},
+  "ownerTables": [],
+  "commands": [],
+  "denominators": {},
+  "fixtures": {},
+  "negativeControls": {},
+  "browserArtifacts": [],
+  "rollback": {
+    "method": "Not recorded by the lane; no rollback execution or completion claim is inferred.",
+    "executed": false
+  }
 }

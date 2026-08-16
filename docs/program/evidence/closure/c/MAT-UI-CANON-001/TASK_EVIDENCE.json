@@ -16,5 +16,17 @@
   "open": [
     "No browser/visual evidence produced in this lane run. Requires G4: 1440x900/768x1024/390x844, light+dark, PL+EN, all states, axe critical/serious = 0, keyboard/focus.",
     "Manual VoiceOver and human brand/UX acceptance remain literally BLOCKED_HUMAN per the gate catalog regardless of automated results."
-  ]
+  ],
+  "changedPaths": [],
+  "changedPathRationale": {},
+  "ownerTables": [],
+  "commands": [],
+  "denominators": {},
+  "fixtures": {},
+  "negativeControls": {},
+  "browserArtifacts": [],
+  "rollback": {
+    "method": "Not recorded by the lane; no rollback execution or completion claim is inferred.",
+    "executed": false
+  }
 }

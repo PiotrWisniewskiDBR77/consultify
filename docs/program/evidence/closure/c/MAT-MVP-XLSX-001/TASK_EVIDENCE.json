@@ -34,5 +34,15 @@
     "observed": "failed once in 3 full-suite runs; 10/10 in isolation and in chat+workbook / idea+workbook pairs",
     "mechanism": "the makePublic() helper asserts .expect(200) against a HARDCODED baseVersion; if anything bumps the workbook version at that moment the governance PATCH returns 409 and the helper throws",
     "disposition": "reported, not averaged away; needs the helper to read the current version instead of assuming it"
+  },
+  "changedPaths": [],
+  "changedPathRationale": {},
+  "commands": [],
+  "fixtures": {},
+  "negativeControls": {},
+  "browserArtifacts": [],
+  "rollback": {
+    "method": "Not recorded by the lane; no rollback execution or completion claim is inferred.",
+    "executed": false
   }
 }

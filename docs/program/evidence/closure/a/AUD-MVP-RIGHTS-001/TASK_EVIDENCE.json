@@ -125,5 +125,8 @@
   ],
   "unverifiedFields": [],
   "verdict": "BLOCKED_OWNER",
-  "verdictRationale": "G0/G1/G3 shared gates pass at this SHA. The inventory itself is complete and evidence-backed (reproducible grep commands, every hit classified, zero hits excluded because inconvenient), and both named gaps are proven with real-Postgres tests rather than asserted. This task is BLOCKED_OWNER by design, matching AUD-POL-001: activating any named external standard, and deciding the ISO 27001 preset's fate, are Product + Methodology/Rights + Legal decisions this lane may not take. GAP 1 has a ready diff sitting outside this lane's lease waiting on the integrator; GAP 2 cannot even get a diff until Product decides. The engineering-verifiable half (what does the kernel actually contain and enforce today) is DONE; the decision half is not this lane's to close. No browser/visual evidence exists, consistent with this being an inventory/evidence task with no UI surface of its own."
+  "verdictRationale": "G0/G1/G3 shared gates pass at this SHA. The inventory itself is complete and evidence-backed (reproducible grep commands, every hit classified, zero hits excluded because inconvenient), and both named gaps are proven with real-Postgres tests rather than asserted. This task is BLOCKED_OWNER by design, matching AUD-POL-001: activating any named external standard, and deciding the ISO 27001 preset's fate, are Product + Methodology/Rights + Legal decisions this lane may not take. GAP 1 has a ready diff sitting outside this lane's lease waiting on the integrator; GAP 2 cannot even get a diff until Product decides. The engineering-verifiable half (what does the kernel actually contain and enforce today) is DONE; the decision half is not this lane's to close. No browser/visual evidence exists, consistent with this being an inventory/evidence task with no UI surface of its own.",
+  "ownerTables": [],
+  "fixtures": {},
+  "negativeControls": {}
 }

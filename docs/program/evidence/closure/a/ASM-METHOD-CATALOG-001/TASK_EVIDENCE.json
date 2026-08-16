@@ -23,7 +23,9 @@
   "governedOwner": {
     "constant": "GOVERNED_ASSESSMENT_TYPES",
     "location": "server/src/routes/v8/assessment.routes.ts",
-    "value": ["DRD"],
+    "value": [
+      "DRD"
+    ],
     "enforcedAt": [
       "POST /api/v8/assessment (create)",
       "GET /api/v8/assessment/definitions/:methodologyId (read path parity)",
@@ -32,12 +34,42 @@
     ]
   },
   "denialMatrix": [
-    { "input": "DRD", "status": 201, "code": null, "persisted": true },
-    { "input": "SIRI", "status": 403, "code": "ASSESSMENT_METHOD_NOT_ENABLED", "persisted": false },
-    { "input": "ADMA", "status": 403, "code": "ASSESSMENT_METHOD_NOT_ENABLED", "persisted": false },
-    { "input": "CMMI", "status": 403, "code": "ASSESSMENT_METHOD_NOT_ENABLED", "persisted": false },
-    { "input": "LEAN", "status": 403, "code": "ASSESSMENT_METHOD_NOT_ENABLED", "persisted": false },
-    { "input": "unknown/garbage", "status": 400, "code": "ASSESSMENT_INVALID_TYPE", "persisted": false }
+    {
+      "input": "DRD",
+      "status": 201,
+      "code": null,
+      "persisted": true
+    },
+    {
+      "input": "SIRI",
+      "status": 403,
+      "code": "ASSESSMENT_METHOD_NOT_ENABLED",
+      "persisted": false
+    },
+    {
+      "input": "ADMA",
+      "status": 403,
+      "code": "ASSESSMENT_METHOD_NOT_ENABLED",
+      "persisted": false
+    },
+    {
+      "input": "CMMI",
+      "status": 403,
+      "code": "ASSESSMENT_METHOD_NOT_ENABLED",
+      "persisted": false
+    },
+    {
+      "input": "LEAN",
+      "status": 403,
+      "code": "ASSESSMENT_METHOD_NOT_ENABLED",
+      "persisted": false
+    },
+    {
+      "input": "unknown/garbage",
+      "status": 400,
+      "code": "ASSESSMENT_INVALID_TYPE",
+      "persisted": false
+    }
   ],
   "commands": [
     {
@@ -66,8 +98,20 @@
     }
   ],
   "denominators": {
-    "taskTests": { "files": 1, "passed": 7, "failed": 0, "skipped": 0, "todo": 0 },
-    "regression": { "files": 3, "passed": 56, "failed": 0, "skipped": 0, "todo": 0 },
+    "taskTests": {
+      "files": 1,
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    "regression": {
+      "files": 3,
+      "passed": 56,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0
+    },
     "note": "--retry=0 was mandatory: root vitest.config.ts sets retry: CI ? 3 : 1, which would otherwise let a flaky pass masquerade as green."
   },
   "realDb": {
@@ -108,5 +152,6 @@
     "Activation of any non-DRD methodology remains BLOCKED_OWNER (Product + Methodology/Rights) per docs/cleanup/agents/OWNER_DECISIONS_AND_MEASURABLE_GATES_20260816.md."
   ],
   "verdict": "DONE_CURRENT_SHA",
-  "verdictRationale": "G0 lease and whitespace clean; G1 static gates green at this SHA (discovery 4997/4997, type-check 0 errors, backend and frontend builds exit 0); G3 strict fresh-PostgreSQL migration gate passed on the schema this task was proven against (703/703 success, repeat run applied zero, dry-run zero pending); G2 task denominator 7/7 with no skips; G5 negative controls (tenant, unapproved method, unknown type, nothing-persisted-on-refusal, cold readback) all proven; G6 evidence recorded here. The non-DRD ACTIVATION decision stays BLOCKED_OWNER by design - that is the recorded fail-closed default this task implements, not missing work."
+  "verdictRationale": "G0 lease and whitespace clean; G1 static gates green at this SHA (discovery 4997/4997, type-check 0 errors, backend and frontend builds exit 0); G3 strict fresh-PostgreSQL migration gate passed on the schema this task was proven against (703/703 success, repeat run applied zero, dry-run zero pending); G2 task denominator 7/7 with no skips; G5 negative controls (tenant, unapproved method, unknown type, nothing-persisted-on-refusal, cold readback) all proven; G6 evidence recorded here. The non-DRD ACTIVATION decision stays BLOCKED_OWNER by design - that is the recorded fail-closed default this task implements, not missing work.",
+  "fixtures": {}
 }

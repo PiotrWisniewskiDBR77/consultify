@@ -18,5 +18,17 @@
     "Reproduced against the live DB: my_ideas.confidentiality, my_ideas.maturity_gates_json and my_idea_conversions.mapping_version DO NOT EXIST (0 columns) — those migrations are self-marked NOT APPLIED and genuinely are not applied, so Confidentiality/Maturity/conversion-lineage are non-functional on a fresh database.",
     "Idea node locks are in-memory only (ideaCollabWs.gateway.ts lockedNodes Map) — lost on restart, unsafe across instances.",
     "Decision/scoring governance is enforced client-side only; it persists inside my_idea_maps.nodes_json, so a raw API call bypasses the state machine."
-  ]
+  ],
+  "changedPaths": [],
+  "changedPathRationale": {},
+  "ownerTables": [],
+  "commands": [],
+  "denominators": {},
+  "fixtures": {},
+  "negativeControls": {},
+  "browserArtifacts": [],
+  "rollback": {
+    "method": "Not recorded by the lane; no rollback execution or completion claim is inferred.",
+    "executed": false
+  }
 }

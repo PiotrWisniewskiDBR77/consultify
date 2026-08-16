@@ -90,11 +90,24 @@
       "skipped": 0,
       "todo": 0,
       "breakdown": [
-        { "file": "assessmentInitiativeBatchUniqueness.realdb.test.ts", "passed": 8 },
-        { "file": "asmBvp001DrdLibraryBootstrap.pg.test.ts", "passed": 7 }
+        {
+          "file": "assessmentInitiativeBatchUniqueness.realdb.test.ts",
+          "passed": 8
+        },
+        {
+          "file": "asmBvp001DrdLibraryBootstrap.pg.test.ts",
+          "passed": 7
+        }
       ]
     },
-    "regression": { "files": 20, "passed": 266, "failed": 0, "skipped": 0, "todo": 0, "scope": "method-core regression, per commit 634f84eb7d" },
+    "regression": {
+      "files": 20,
+      "passed": 266,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "scope": "method-core regression, per commit 634f84eb7d"
+    },
     "note": "--retry=0 was mandatory: root vitest.config.ts sets retry: CI ? 3 : 1, which would otherwise let a flaky pass masquerade as green."
   },
   "realDb": [
@@ -162,5 +175,8 @@
     "commands[8].command (exact vitest invocation for the 20-file/266-test method-core regression — commit message states the file/test counts but not the literal command)"
   ],
   "verdict": "PARTIAL",
-  "verdictRationale": "G0/G1/G3 shared gates pass at this SHA. Both in-lane task suites are fully green on real Postgres (8/8 and 7/7, 15/15 combined) with strong negative controls (concurrency, tenant, replay, cold readback). However this is explicitly NOT a closed guarantee: commit 60a1be98d5 records a KNOWN CONSEQUENCE that two out-of-lease writers (AssessmentController.ts:1547, assessmentInitiativeGenerationRunService.ts:146) do not catch the new unique-index violation and will surface a 500 instead of reusing the active batch until they adopt the shared upsert — this is a blocking integrator change request, not a cosmetic one. Additionally, the Library-to-Workspace click-through (part of this task's user-facing surface) has zero browser/visual evidence and is unproven end-to-end, though it is flag-gated OFF by default so it cannot regress a live user today. Both facts push this below DONE_CURRENT_SHA."
+  "verdictRationale": "G0/G1/G3 shared gates pass at this SHA. Both in-lane task suites are fully green on real Postgres (8/8 and 7/7, 15/15 combined) with strong negative controls (concurrency, tenant, replay, cold readback). However this is explicitly NOT a closed guarantee: commit 60a1be98d5 records a KNOWN CONSEQUENCE that two out-of-lease writers (AssessmentController.ts:1547, assessmentInitiativeGenerationRunService.ts:146) do not catch the new unique-index violation and will surface a 500 instead of reusing the active batch until they adopt the shared upsert — this is a blocking integrator change request, not a cosmetic one. Additionally, the Library-to-Workspace click-through (part of this task's user-facing surface) has zero browser/visual evidence and is unproven end-to-end, though it is flag-gated OFF by default so it cannot regress a live user today. Both facts push this below DONE_CURRENT_SHA.",
+  "ownerTables": [],
+  "fixtures": {},
+  "negativeControls": {}
 }

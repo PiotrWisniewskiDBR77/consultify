@@ -74,8 +74,14 @@
       "skipped": 0,
       "todo": 0,
       "breakdown": [
-        { "file": "audit-programs.test.ts (mocked)", "passed": 32 },
-        { "file": "auditProgramLegacyWriteRetirement.realdb.test.ts (real Postgres)", "passed": 16 }
+        {
+          "file": "audit-programs.test.ts (mocked)",
+          "passed": 32
+        },
+        {
+          "file": "auditProgramLegacyWriteRetirement.realdb.test.ts (real Postgres)",
+          "passed": 16
+        }
       ]
     },
     "regression": null,
@@ -107,5 +113,8 @@
     "denominators.regression (no regression suite counts stated in the commit message beyond the two task-test files)"
   ],
   "verdict": "DONE_CURRENT_SHA",
-  "verdictRationale": "G0/G1/G3 shared gates pass at this SHA. Writer inventory for audit_programs is verified at exactly 1 by a reproducible grep plus a per-line reachability table (WRITER_INVENTORY.md), not merely asserted. 48/48 tests pass across mocked (32) and real-Postgres (16) suites, including byte-equality proof that a refused write leaves the row untouched and a flag-ON positive control proving the rollback path genuinely writes. No known consequence or blocking integrator change request is recorded for this commit, unlike ASM-BVP-001, TLS-BVP-001 and INT-BVP-001. The change is backend-only (routes/services) with no UI surface, so the general absence of browser/visual evidence across this lane's eight tasks does not bear on this task's DoD."
+  "verdictRationale": "G0/G1/G3 shared gates pass at this SHA. Writer inventory for audit_programs is verified at exactly 1 by a reproducible grep plus a per-line reachability table (WRITER_INVENTORY.md), not merely asserted. 48/48 tests pass across mocked (32) and real-Postgres (16) suites, including byte-equality proof that a refused write leaves the row untouched and a flag-ON positive control proving the rollback path genuinely writes. No known consequence or blocking integrator change request is recorded for this commit, unlike ASM-BVP-001, TLS-BVP-001 and INT-BVP-001. The change is backend-only (routes/services) with no UI surface, so the general absence of browser/visual evidence across this lane's eight tasks does not bear on this task's DoD.",
+  "ownerTables": [],
+  "fixtures": {},
+  "negativeControls": {}
 }

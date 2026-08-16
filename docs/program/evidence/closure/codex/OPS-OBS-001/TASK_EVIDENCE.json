@@ -8,14 +8,14 @@
     "server/src/middleware/metrics.middleware.ts",
     "tests/unit/backend/operationalAlertService.test.ts",
     "docs/runbooks/OPS-OBS-001_OPERATIONAL_ALERTS.md",
-    "docs/program/evidence/closure/integrator/OPS-OBS-001/TASK_EVIDENCE.json"
+    "docs/program/evidence/closure/codex/OPS-OBS-001/TASK_EVIDENCE.json"
   ],
   "changedPathRationale": {
     "server/src/services/operationalAlertService.ts": "Bounded correlation-aware signal and alert state seam.",
     "server/src/middleware/metrics.middleware.ts": "Publishes active operational alerts through the existing Prometheus export.",
     "tests/unit/backend/operationalAlertService.test.ts": "Positive controls, fail-closed identity validation, thresholds and recovery acknowledgment.",
     "docs/runbooks/OPS-OBS-001_OPERATIONAL_ALERTS.md": "Runbook linked by every emitted alert kind.",
-    "docs/program/evidence/closure/integrator/OPS-OBS-001/TASK_EVIDENCE.json": "Machine-readable bounded-task evidence."
+    "docs/program/evidence/closure/codex/OPS-OBS-001/TASK_EVIDENCE.json": "Machine-readable bounded-task evidence."
   },
   "ownerTables": [],
   "commands": [

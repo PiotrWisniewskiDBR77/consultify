@@ -55,7 +55,13 @@
     }
   ],
   "denominators": {
-    "taskTests": { "files": 1, "passed": 11, "failed": 0, "skipped": 0, "todo": 0 },
+    "taskTests": {
+      "files": 1,
+      "passed": 11,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0
+    },
     "regression": null,
     "note": "--retry=0 was mandatory: root vitest.config.ts sets retry: CI ? 3 : 1, which would otherwise let a flaky pass masquerade as green. No regression suite counts are stated in the commit message for this task, unlike the other seven records in this lane."
   },
@@ -91,5 +97,8 @@
     "denominators.regression (not stated in the commit message for this task)"
   ],
   "verdict": "PARTIAL",
-  "verdictRationale": "G0/G1/G3 shared gates pass at this SHA and the exactly-one-candidate half is solidly proven: 11/11 real-Postgres tests including both writer path orders, concurrency, tenant, replay, cold readback, and dedup-of-existing-duplicates. This is PARTIAL, not DONE_CURRENT_SHA, because the task's full published scope (docs/cleanup/agents/CLAUDE_LANE_A_15_TASKS_20260816.md) also requires proving invite/expiry/revoke, the anonymous respondent wall, and the org owner/admin/direct/team assignee access matrix — none of which appears in any commit in this lane's range. That is not a minor gap; it is roughly half of the named DoD, and it is unclear from the evidence available to this record whether the underlying code even exists to test. No browser/visual evidence exists either. The lead or owner needs to decide whether the untouched half is in scope, already covered elsewhere, or genuinely missing before this can move past PARTIAL."
+  "verdictRationale": "G0/G1/G3 shared gates pass at this SHA and the exactly-one-candidate half is solidly proven: 11/11 real-Postgres tests including both writer path orders, concurrency, tenant, replay, cold readback, and dedup-of-existing-duplicates. This is PARTIAL, not DONE_CURRENT_SHA, because the task's full published scope (docs/cleanup/agents/CLAUDE_LANE_A_15_TASKS_20260816.md) also requires proving invite/expiry/revoke, the anonymous respondent wall, and the org owner/admin/direct/team assignee access matrix — none of which appears in any commit in this lane's range. That is not a minor gap; it is roughly half of the named DoD, and it is unclear from the evidence available to this record whether the underlying code even exists to test. No browser/visual evidence exists either. The lead or owner needs to decide whether the untouched half is in scope, already covered elsewhere, or genuinely missing before this can move past PARTIAL.",
+  "ownerTables": [],
+  "fixtures": {},
+  "negativeControls": {}
 }

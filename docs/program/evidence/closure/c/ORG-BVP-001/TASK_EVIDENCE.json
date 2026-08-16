@@ -36,5 +36,14 @@
   "open": [
     "Pinned-snapshot CONSUMPTION by Chat/Idea is not wired: AIPipeline.ts and aiContextBuilder.ts are outside the lane lease. Capability is exposed and the consumer contract is documented for the integrator.",
     "G4 browser/visual not run."
-  ]
+  ],
+  "changedPaths": [],
+  "changedPathRationale": {},
+  "commands": [],
+  "fixtures": {},
+  "browserArtifacts": [],
+  "rollback": {
+    "method": "Not recorded by the lane; no rollback execution or completion claim is inferred.",
+    "executed": false
+  }
 }

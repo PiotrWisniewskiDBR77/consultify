@@ -34,5 +34,13 @@
     "All four export engines are IN-PROCESS and MIT (pptxgenjs 4.0.1, exceljs 4.4.0, docx 9.5.1, pdfkit 0.17.2) — no external provider exists, so DPA/residency/SLA limbs do not apply to the current runtime.",
     "puppeteer 24.39.0 is declared but has zero imports in server/src.",
     "PDF export is a pdfkit text dump, not a visual render of the deck — owner decision D4."
-  ]
+  ],
+  "changedPathRationale": {},
+  "commands": [],
+  "fixtures": {},
+  "browserArtifacts": [],
+  "rollback": {
+    "method": "Not recorded by the lane; no rollback execution or completion claim is inferred.",
+    "executed": false
+  }
 }

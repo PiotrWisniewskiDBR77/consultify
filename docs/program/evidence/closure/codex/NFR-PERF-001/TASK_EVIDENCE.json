@@ -1,0 +1,21 @@
+{
+  "taskId": "NFR-PERF-001",
+  "baselineSha": "8a16786480f5f9b994cabc37181bb9dcbb1be038",
+  "productSha": "1aa428c17df7cbdd2012aadc26e70c231ae3ec68",
+  "leaseSha256": "not_applicable_integrator_bounded_task",
+  "changedPaths": ["server/src/utils/queryHelpers.ts"],
+  "changedPathRationale": {"server/src/utils/queryHelpers.ts": "Contains pg.Client connection errors so a rejected transaction cannot also terminate the Node process through an unhandled EventEmitter error."},
+  "ownerTables": [],
+  "commands": [
+    {"command": "npx vitest run server/src/utils/__tests__/pinnedTransactionClient.test.ts --reporter=dot", "exitCode": 0},
+    {"command": "NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p server/tsconfig.json --noEmit --pretty false", "exitCode": 0},
+    {"command": "case-workspace real PostgreSQL performance orchestrator before and after fix", "exitCode": 0},
+    {"command": "npm run test:performance", "exitCode": 130}
+  ],
+  "denominators": {"focusedTests": {"passed": 5, "failed": 0}, "profile": {"cases": 1000, "historyEvents": 9000, "outboxDelivered": 10001}, "fullPerformanceSuite": {"completed": false, "observedFailuresBeforeStop": 11}},
+  "fixtures": {"database": "isolated pgvector PostgreSQL runner", "faultInjectionRecovery": "24/24"},
+  "negativeControls": {"unhandledClientErrorBefore": true, "unhandledClientErrorAfter": false, "duplicates": 0},
+  "browserArtifacts": [],
+  "rollback": {"method": "Revert the listener change; no schema or persistent state is introduced.", "executed": false},
+  "verdict": "PARTIAL"
+}
