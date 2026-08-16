@@ -115,13 +115,18 @@ export const AppProviders: React.FC<AppProvidersProps> = React.memo(({ children 
   const isAuthInitializing = useAppStore((s) => s.isAuthInitializing);
   const enableHeavyProviders =
     shouldEnableHeavyProviders(hasCurrentUser) || shouldEnableProvidersForRoute();
+  const enableLocalFeatureFlagOverrides =
+    import.meta.env.VITE_ENABLE_LOCAL_FEATURE_FLAG_OVERRIDES === 'true';
 
   return (
     <ErrorBoundary>
       <ThemeSync />
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
-          <FeatureFlagsProvider showDevTools={false}>
+          <FeatureFlagsProvider
+            config={{ enableLocalOverrides: enableLocalFeatureFlagOverrides }}
+            showDevTools={false}
+          >
             <AutoSaveProvider>
               <TourProvider>
                 <HelpProvider>

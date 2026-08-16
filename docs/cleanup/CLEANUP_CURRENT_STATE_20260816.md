@@ -8,7 +8,7 @@ cleanup snapshots and five-hour plans are historical evidence.
 ## Literal status
 
 - Cleanup: `IN_PROGRESS`
-- Canonical candidate: `PARTIAL / STATIC_AND_REALDB_GATES_GREEN / BROWSER_EVIDENCE_MISSING`
+- Canonical candidate: `PARTIAL / STATIC_REALDB_AND_MODULE_MOUNT_GATES_GREEN`
 - Demo: `NOT_VERIFIED`
 - Production: `NOT_AUTHORIZED / NOT_VERIFIED`
 
@@ -26,7 +26,7 @@ cleanup snapshots and five-hour plans are historical evidence.
 - Path: `/Users/piotrwisniewski/Developer/consultify-recovery-canonical-20260816`
 - Branch: `codex/recovery-canonical-20260816`
 - Baseline: `origin/demo` at `e45904dc7940f259b9cf017c283264d5c166c9ab`
-- Current implementation checkpoint before this state update: `b214207c9c129730baafffbe3bb105c9a21df111`
+- Current committed checkpoint before this state update: `1f80643998b777722e0d2730dfa3f93705478cc8`
 - Recovery control-plane commit: `844001c525`
 - Integrated packages: Assessment (fast-forward ancestry), Tools (49
   patch-unique non-merge commits) and Audits (34 patch-unique non-merge
@@ -37,7 +37,7 @@ cleanup snapshots and five-hour plans are historical evidence.
 
 ## Current gate result
 
-Assessment and Tools are present but not runtime-accepted. `git diff --check
+Assessment and Tools are present but not fully runtime-accepted. `git diff --check
 e45904dc7940..031772082b7d` reports whitespace failures in captured HTTP/SQL log
 evidence under `docs/qa/a9-2026-08-13/`. These are evidence-file hygiene defects,
 not a product-code verdict, but the repository-wide diff gate is not green.
@@ -81,7 +81,7 @@ Fresh checks on this candidate:
   compatibility columns while populating canonical action/resource fields.
   Full type-check and the complete 32-file/259-test Audits denominator passed
   again; catalog readback showed 16 events with canonical actions, including
-  one compatibility-actor event. Browser proof remains open.
+  one compatibility-actor event.
 - A disposable `pgvector/pgvector:pg16` instance on port 32900 built a database
   from zero with all 702 then 703 strict migrations; both idempotent reruns
   applied zero migrations. Commit `51d9c48b98` makes the CW-P01..P11 dependency
@@ -112,6 +112,25 @@ Fresh checks on this candidate:
   `ALREADY_PRESENT / KEEP_EVIDENCE`; replay allowlist is empty. Its focused
   source-derived suite passed 145/145 assertions across 15 files after rebuilding
   the locally skipped sqlite3 native binding (131 plus 14 approval assertions).
+- A production-route Chromium mount gate now passes 2/2 against the fresh
+  703-migration PostgreSQL database: Assessment and Audits each render their
+  five canonical surfaces at the real authenticated application route. The
+  first attempt was rejected as invalid because AppProviders ignored the test's
+  local flag overrides. The accepted run uses the explicit, staging-only
+  `VITE_ENABLE_LOCAL_FEATURE_FLAG_OVERRIDES=true` switch; production remains
+  fail-closed by default. This proves route/mount/tab truth, not the complete
+  create/edit/freeze/readback golden journeys.
+- Results final fan-in is `5afefe8bb82fc1791c7f72c8c64a8205abd87f00`,
+  not the older `8b03e2dba590` handoff. Tree reconciliation found the dedicated
+  Results runtime already present. All 954 source-only paths are historical
+  QA screenshots/evidence; the 23 evolved paths preserve later route, flag,
+  migration, ROI-engine and shared-integration work. Replay allowlist is empty.
+- Finance final fan-in is `c78086057d38f57c5351c6254d41f02fd50246b6`.
+  Dedicated implementation is already present: 125/127 Finance components,
+  72/73 Economics components and 120/122 Finance service files are identical;
+  remaining differences are later candidate evolution. Replay allowlist is
+  empty. Runtime spine, flag rollout, version identity and Results seam still
+  require proof before runtime acceptance.
 - Commit hooks reported no new list, TRIADA, density, focus, or artifact-shell
   regression in the changed files. Existing repository-wide focus debt remains.
 
@@ -138,12 +157,14 @@ features. No bulk branch or worktree deletion is authorized by these counts.
 
 ## Next gate
 
-1. Run fresh browser journeys for Assessment and Audits on the exact candidate;
-   Tools now has one green real-PostgreSQL Chromium slice, but its remaining
-   browser/quality/provider gates and feature-flag decision stay open.
+1. Extend the green Assessment/Audits route-and-mount proof into their complete
+   create/edit/freeze/readback browser journeys. Tools has one green real-
+   PostgreSQL Chromium slice, but its remaining quality/provider gates and
+   feature-flag decision stay open.
 2. Reconcile the synthetic initiative quality advisories without weakening
    assertions.
 3. Resolve the one explicit broken orphan and the Assessment immutable-log
    `diff --check` policy without rewriting evidence silently.
-4. Verify already-present Case and Artifact browser/realDB closure; then
-   reconcile the owner-gated Results/Finance packages.
+4. Verify already-present Case, Artifact, Results and Finance browser/realDB
+   closure. Results/Finance require no code replay, but their mount/data/spine
+   and owner decisions remain literal blockers.

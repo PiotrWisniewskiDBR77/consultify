@@ -35,13 +35,13 @@ authorization. `DEMO_READY` never implies this gate.
 
 | Module | Current status | Completion gate |
 | --- | --- | --- |
-| Assessment | `PARTIAL / INTEGRATED_PENDING_VERIFICATION` | One Library-to-session path, one registry owner, fresh browser proof. |
+| Assessment | `PARTIAL / ROUTE_MOUNT_GREEN` | Five-surface Chromium mount is green on fresh PostgreSQL. Complete Library-to-session, unify registry ownership and prove create/edit/freeze/readback. |
 | Tools | `PARTIAL / INTEGRATED_REALDB_GREEN` | Browser golden flow, publishable-pack/initiative-quality policy and explicit flag decision. Fresh strict DB and 100/100 realDB assertions are green at the current candidate. |
-| Audits | `PARTIAL / INTEGRATED_REALDB_GREEN` | Browser golden flow and explicit flag decision. Fresh strict DB, 259/259 assertions and audit-event compatibility readback are green at the current candidate. |
+| Audits | `PARTIAL / REALDB_AND_ROUTE_MOUNT_GREEN` | Fresh strict DB, 259/259 assertions, event compatibility readback and five-surface Chromium mount are green. Complete the audit golden flow and make the explicit rollout decision; default remains OFF. |
 | Case / Agent | `ALREADY_PRESENT / VERIFICATION_REQUIRED` | No replay. Verify the existing lifecycle, 19 migrations, route/flag truth, persistence/outbox/restart, cross-module adapters and browser journeys; retain VoiceOver as literal blocker until proven. |
 | Artifact / Materials | `ALREADY_PRESENT / VERIFICATION_REQUIRED` | No replay. Focused DOC/PPT/XLSX/governance/shell assertions are green; prove realDB persistence, export, cold reopen, browser accessibility and remaining human/provider/stability gates on the exact SHA. |
-| Results | `BLOCKED_DATA_AND_MOUNT` | One mounted KPI/ROI/OKR workspace and deterministic demo fixtures. |
-| Finance | `BLOCKED_ARCHITECTURE` | One canonical version spine, migration ledger and Results seam. |
+| Results | `ALREADY_PRESENT / BLOCKED_DATA_AND_MOUNT` | No replay. Decide access and rollout, mount the KPI/ROI/OKR workspace deliberately, provide deterministic three-role fixtures, prove lifecycle/readback and bind fresh evidence to the exact SHA. |
+| Finance | `ALREADY_PRESENT / EVOLVED / RUNTIME_NOT_VERIFIED` | No replay. Prove one governed runtime owner, explicit OFF/ON workspace behavior, canonical artifact/business/working-revision identity, fresh migration lifecycle and the Results seam. |
 | CEPD / Interview | `PARTIAL / SELECTIVE_RECOVERY_REQUIRED` | Allowlisted fixes on candidate plus exact-schema runtime verification. |
 | UX tables/tools | `BLOCKED_RECOVERY` | Clean reconstruction from allowlist and independent acceptance rerun. |
 

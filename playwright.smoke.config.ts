@@ -39,7 +39,7 @@ export default defineConfig({
           // Smoke uses a deterministic staging dev server instead.
           ...(isFrontendServer
             ? {
-                command: `VITE_API_TARGET=${backendUrl} npx vite --mode staging --port ${frontendPort} --strictPort`,
+                command: `VITE_API_TARGET=${backendUrl} VITE_ENABLE_LOCAL_FEATURE_FLAG_OVERRIDES=true npx vite --mode staging --port ${frontendPort} --strictPort`,
               }
             : {}),
           // Backend must be fresh for deterministic auth + lane tests.
