@@ -61,7 +61,7 @@
       "result": "1/1 file, 21/21 tests"
     },
     {
-      "command": "REQUIRE_DB_TESTS=1 RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=<isolated-pg> npx vitest run six finance-v2 PG route suites",
+      "command": "REQUIRE_DB_TESTS=1 RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=<clean-route-gate-pg> npx vitest run server/src/routes/v8/finance-v2/__tests__/mount-proof.pg.test.ts server/src/routes/v8/finance-v2/__tests__/legacy-id-bridge.routes.pg.test.ts server/src/routes/v8/finance-v2/__tests__/baseline.routes.pg.test.ts server/src/routes/v8/finance-v2/__tests__/prediction.routes.pg.test.ts server/src/routes/v8/finance-v2/__tests__/analysis.routes.pg.test.ts server/src/routes/v8/finance-v2/__tests__/valuation.routes.pg.test.ts --reporter=dot",
       "exitCode": 0,
       "result": "6/6 files passed, 42/42 tests passed on a newly created, strictly migrated database"
     },
