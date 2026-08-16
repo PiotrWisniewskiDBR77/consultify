@@ -318,6 +318,41 @@ describe('M19 · L-07 — deck version snapshot round-trip (S4, real SQL)', () =
     expect(count.n).toBe(0); // conflict path must not persist a snapshot
   });
 
+  it('concurrent autosaves with the same expected version create exactly one snapshot', async () => {
+    await seedDeck('deck-1', ORG, JSON.stringify({ cards: [{ id: 'c1', title: 'v1' }] }), 1);
+
+    const [first, second] = await Promise.all([
+      request(app)
+        .put('/api/presentations/decks/deck-1/autosave')
+        .set('x-deck-version', '1')
+        .send({ cards: [{ id: 'c1', title: 'writer-a' }] }),
+      request(app)
+        .put('/api/presentations/decks/deck-1/autosave')
+        .set('x-deck-version', '1')
+        .send({ cards: [{ id: 'c1', title: 'writer-b' }] }),
+    ]);
+
+    expect([first.status, second.status].sort()).toEqual([200, 409]);
+
+    const liveDeck: any = await new Promise((resolve, reject) =>
+      sqliteCtx.db.get(
+        'SELECT version FROM presentation_decks WHERE id = ?',
+        ['deck-1'],
+        (err: Error | null, row: unknown) => (err ? reject(err) : resolve(row))
+      )
+    );
+    const snapshots: any = await new Promise((resolve, reject) =>
+      sqliteCtx.db.get(
+        'SELECT COUNT(*) AS n FROM presentation_deck_versions WHERE deck_id = ?',
+        ['deck-1'],
+        (err: Error | null, row: unknown) => (err ? reject(err) : resolve(row))
+      )
+    );
+
+    expect(liveDeck.version).toBe(2);
+    expect(snapshots.n).toBe(1);
+  });
+
   it('multiple autosaves accumulate an ordered version history (DESC by version)', async () => {
     await seedDeck('deck-1', ORG, JSON.stringify({ cards: [{ id: 'c1', title: 'v1' }] }), 1);
 

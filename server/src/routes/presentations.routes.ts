@@ -4021,26 +4021,6 @@ router.put(
         : String(deck.title || 'Untitled');
     const canonicalSlideCount = Array.isArray(canonicalBody.cards) ? canonicalBody.cards.length : 0;
 
-    if (deck.deck_json) {
-      try {
-        const slideCount = (() => {
-          try {
-            const parsed = JSON.parse(deck.deck_json);
-            return Array.isArray(parsed?.cards) ? parsed.cards.length : 0;
-          } catch {
-            return 0;
-          }
-        })();
-        await dbRun(
-          `INSERT INTO presentation_deck_versions (id, deck_id, version, deck_json_snapshot, slide_count, created_by, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-          [uuidv4().replace(/-/g, ''), deckId, deck.version, deck.deck_json, slideCount, userId]
-        );
-      } catch {
-        // Version history table may not exist yet; non-blocking
-      }
-    }
-
     // Compare-and-swap: pin the UPDATE to the exact version we just read
     // (or the client-supplied version, when present) so two writers that
     // both observed the same starting version can no longer BOTH succeed.
@@ -4067,6 +4047,29 @@ router.put(
         serverVersion: latest?.version ?? null,
         clientVersion,
       });
+    }
+
+    // Persist history only after this writer wins the compare-and-swap.
+    // Writing the snapshot before the guarded UPDATE allowed a concurrent
+    // loser to return 409 while still leaving an orphan duplicate snapshot.
+    if (deck.deck_json) {
+      try {
+        const slideCount = (() => {
+          try {
+            const parsed = JSON.parse(deck.deck_json);
+            return Array.isArray(parsed?.cards) ? parsed.cards.length : 0;
+          } catch {
+            return 0;
+          }
+        })();
+        await dbRun(
+          `INSERT INTO presentation_deck_versions (id, deck_id, version, deck_json_snapshot, slide_count, created_by, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+          [uuidv4().replace(/-/g, ''), deckId, deck.version, deck.deck_json, slideCount, userId]
+        );
+      } catch {
+        // Version history table may not exist yet; non-blocking
+      }
     }
 
     res.json({ success: true, version: newVersion });
