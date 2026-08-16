@@ -231,50 +231,53 @@ Single machine-readable statement of the owner's frozen MVP decision:
 `APPROVED_MVP_TOOL_TYPES = new Set(['dynamic-swot'])`. No production callers — exists purely
 so the contract test below has something authoritative to compare the real gate against.
 
-### 5.2 Governed-truth contract test — **RED BY DESIGN, made authoritative**
-`server/src/services/toolCatalog/__tests__/mvpGateGovernance.redByDesign.test.ts`
-
-Imports the real `ACTIVE_KNOWN_TOOL_TYPES` (read-only) and asserts it deep-equals
-`APPROVED_MVP_TOOL_TYPES`. Chosen as the **authoritative** variant (not the documenting one)
-because the closure brief is explicit that turning the invisible policy violation into a red
-gate is "the point" — a governance contract that always passes because it only describes
-current behavior would not create the pressure the owner's decision requires. Failure message
-names every extra active tool type and points at the exact remediation (integrator change
-request, §6).
-
-Command and literal result:
-```
-npx vitest run server/src/services/toolCatalog/__tests__/mvpGateGovernance.redByDesign.test.ts --retry=0
-```
-```
-Test Files  1 failed (1)
-     Tests  1 failed (1)
-```
-Failure message (verified verbatim from the run):
-```
-ACTIVE_KNOWN_TOOL_TYPES (server/src/services/KnownToolsService.ts:206-229, 19 entries) does not
-match the owner-approved MVP set APPROVED_MVP_TOOL_TYPES
-(server/src/services/toolCatalog/approvedMvpToolTypes.ts, 1 entry).
-  18 tool type(s) are ACTIVE in the real gate but NOT owner-approved for MVP — ...:
-    a3-problem-solving, ai-discovery, ambition-decomposer, capability-mapper, dms-builder,
-    focus-tradeoff, growth-paths, inventory-autopilot, market-forces, narrative-engine,
-    pain-explorer, portfolio-priority, process-automation, risk-uncertainty, rpa-scanner,
-    smed-planner, sop-builder, value-chain
-  FIX: reduce ACTIVE_KNOWN_TOOL_TYPES to exactly {dynamic-swot} ...
-```
-
-### 5.3 Documenting companion — **GREEN, not authoritative**
+### 5.2 Governance test — **GREEN, the sole committed governance test (revised 2026-08-16)**
 `server/src/services/toolCatalog/__tests__/mvpGateGovernance.documentingCurrentBehavior.test.ts`
 
-Pins the real gate's current (as of 2026-08-16) shape by name, so the suite is not simply red
-with no information, and so any future edit to `ACTIVE_KNOWN_TOOL_TYPES` shows up here too.
+An earlier version of this packet also committed a **red-by-design** companion
+(`mvpGateGovernance.redByDesign.test.ts`) that asserted `ACTIVE_KNOWN_TOOL_TYPES` deep-equals
+`APPROVED_MVP_TOOL_TYPES` and was expected to fail until the fix in §6 landed. **Lead review
+reversed that decision and the file has been DELETED.** Reasoning (lead's, preserved here):
+this branch merges through an integrator across three lanes (A, then C, then B); a
+permanently-failing test in the shared tree makes every downstream run red and
+indistinguishable from a real regression a later lane introduces, converting a precise,
+documented policy gap into ambient noise. The precise statement of the violation, the exact
+expected end state, and what must change now live exclusively in §6 below, where they are
+unambiguous and cannot rot into noise.
 
+The green test is now the **sole** committed governance artifact, and it was strengthened
+(per the reversal) to pin the real gate by **exact set membership, not just size** — a
+size-only assertion (`size === 19`) would let a swap (one tool type removed, a different one
+added, size unchanged) slip through silently. It now lists all 19 current members by name and
+asserts the live `ACTIVE_KNOWN_TOOL_TYPES` equals that pinned list exactly; the moment anyone
+edits the real gate — including the eventual TLS-CATALOG-001 fix itself — this test goes red
+and must be updated in the same commit, deliberately. This is the ratchet: it converts a
+one-time inventory finding into a durable guard against silent future drift, without ever
+blocking an unrelated lane's merge with a permanent failure.
+
+Command and literal result:
 ```
 npx vitest run server/src/services/toolCatalog/__tests__/mvpGateGovernance.documentingCurrentBehavior.test.ts --retry=0
 ```
 ```
 Test Files  1 passed (1)
-     Tests  4 passed (4)
+     Tests  5 passed (5)
+```
+
+Failure message the strengthened assertion produces if the pinned set and the live gate ever
+diverge (verified by exercising the delta-description helper in isolation — see the test
+file's `describeSetDelta()` — against a synthetic swap of one tool type for another with the
+same set size):
+```
+ACTIVE_KNOWN_TOOL_TYPES (server/src/services/KnownToolsService.ts:206-229) changed: added to
+the gate (not previously pinned): <new-tool>; removed from the gate (previously pinned, now
+gone): <old-tool>.
+This test intentionally pins EXACT membership (not size) so a swap can't slip through
+silently. If this change was deliberate, update the pinned list in THIS file in the same
+commit. If it widens the gate beyond the owner-approved MVP set, it also needs owner sign-off,
+a packet, provenance and rights record per the frozen MVP decision — see
+docs/program/evidence/closure/a/TLS-CATALOG-001/CATALOG_INVENTORY.md §6 (the integrator change
+request, target end state: exactly {'dynamic-swot'}).
 ```
 
 ### 5.4 Real-Postgres controller proof
@@ -323,16 +326,51 @@ organization_id LIKE 'tls-catalog-001-%'` → `0`.
 
 | File | Tests | Pass | Fail |
 |---|---|---|---|
-| `mvpGateGovernance.redByDesign.test.ts` | 1 | 0 | **1 (by design)** |
-| `mvpGateGovernance.documentingCurrentBehavior.test.ts` | 4 | 4 | 0 |
+| `mvpGateGovernance.documentingCurrentBehavior.test.ts` | 5 | 5 | 0 |
 | `mvpGateRealPostgres.controller.pg.test.ts` | 5 | 5 | 0 |
-| **Total** | **10** | **9** | **1 (intentional, informative)** |
+| **Total** | **10** | **10** | **0** |
 
-No `skipped`/`todo` tests. No existing test was modified, weakened, or deleted.
+No `skipped`/`todo` tests. No existing test was modified, weakened, or deleted. The suite is
+fully green — the only intentionally-failing test this packet ever produced
+(`mvpGateGovernance.redByDesign.test.ts`) has been deleted per lead review; its content was
+moved into §6, not lost.
 
 ---
 
 ## 6. Integrator Change Request — TLS-CATALOG-001-FIX-01
+
+### 6.0 The violation, stated precisely
+
+This subsection is the content that was previously enforced by a now-deleted red-by-design
+test (`mvpGateGovernance.redByDesign.test.ts` — removed 2026-08-16 per lead review; see §5.2
+for why). It is restated here in full so the policy gap remains unambiguous and actionable
+without depending on a permanently-failing test in the shared tree.
+
+**The violation:** `ACTIVE_KNOWN_TOOL_TYPES` (`server/src/services/KnownToolsService.ts:206-
+229`, the real runtime gate — confirmed in §3/§5.4 to be the *only* signal that matters,
+since the `tools.is_active` DB column is `1` for every row) currently has **19 entries**. The
+owner's frozen MVP decision authorizes exactly **1**: `dynamic-swot`. The other 18 —
+`market-forces`, `value-chain`, `capability-mapper`, `ambition-decomposer`, `focus-tradeoff`,
+`narrative-engine`, `growth-paths`, `portfolio-priority`, `risk-uncertainty`,
+`process-automation`, `sop-builder`, `a3-problem-solving`, `smed-planner`, `dms-builder`,
+`inventory-autopilot`, `ai-discovery`, `pain-explorer`, `rpa-scanner` — are launchable today
+(`POST /api/tools` returns `200`) with no owner-approved packet, provenance, or rights record
+for any of them, directly contradicting: *"Tools MVP is Dynamic SWOT. Every other tool
+requires a separate packet, provenance and rights, and must be hidden or explicitly marked
+UNAVAILABLE."*
+
+**Exact expected end state:** `ACTIVE_KNOWN_TOOL_TYPES` must equal `new Set(['dynamic-swot'])`
+— exactly one entry, no more, no fewer. This is machine-readably pinned in
+`server/src/services/toolCatalog/approvedMvpToolTypes.ts` (`APPROVED_MVP_TOOL_TYPES`, in-lease,
+already committed) so any future check can compare against it programmatically instead of
+re-deriving it from prose.
+
+**What must change:** the code edit in §6.1 below, PLUS every consumer test enumerated further
+down in this section ("Consumer test to run after the change" / "Blast radius") that
+hard-codes the current 19-entry assumption — those tests do not update themselves and will go
+red the instant the gate shrinks unless updated in the same change.
+
+### 6.1 The code change
 
 **File:** `server/src/services/KnownToolsService.ts`
 **Lines:** 206-229
@@ -382,9 +420,12 @@ export const ACTIVE_KNOWN_TOOL_TYPES = new Set<string>([
 `tools.is_active` DB column is always `1` in practice — see §3 finding 3 — so it contributes
 nothing). It currently lets 18 tool types launch that have no owner-approved packet,
 provenance, or rights record, directly contradicting the frozen MVP decision. Reducing it to
-`{'dynamic-swot'}` is the single change that makes the real gate match the owner's decision;
-`server/src/services/toolCatalog/mvpGateGovernance.redByDesign.test.ts` (this packet) turns
-green the moment this line lands correctly and stays red until then.
+`{'dynamic-swot'}` is the single change that makes the real gate match the owner's decision.
+The committed governance test,
+`server/src/services/toolCatalog/__tests__/mvpGateGovernance.documentingCurrentBehavior.test.ts`
+(§5.2), pins the CURRENT 19-entry membership by name and will go red the moment this edit
+lands — at that point update its pinned list (and the four consumer tests below) in the SAME
+change, deliberately, so the suite lands green with the new, correct state rather than red.
 
 **Consumer test to run after the change (must go from 19→1 cleanly, this packet does NOT
 touch these — they are out of lease):**
