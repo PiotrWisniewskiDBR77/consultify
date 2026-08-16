@@ -1,16 +1,51 @@
 {
   "taskId": "AUD-BVP-001",
-  "baselineSha": "d950f779d7f9ea0677ab339901e7856bd8f4dce1",
-  "productSha": "4d2bbee39d91d75c8c3e1535a4085be360ae1ef4",
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "productSha": "1a23b5db5e004cdab3bda727ee6aaa124454f5ab",
   "leaseSha256": "a2f9be9983e3a03e5e64f1a51dca193199a5bec963a246c3b4fe94b378af1308",
-  "changedPaths": ["server/src/services/auditProgramBvp/__tests__/programKernelBvp.pg.test.ts", "docs/program/evidence/closure/a/AUD-BVP-001/MOUNTED_CONTRACT.md"],
-  "changedPathRationale": {"server/src/services/auditProgramBvp/__tests__/programKernelBvp.pg.test.ts": "Exercises mounted program create/edit/reopen, role/tenant, flag and legacy-writer boundaries on real PostgreSQL.", "docs/program/evidence/closure/a/AUD-BVP-001/MOUNTED_CONTRACT.md": "Documents the mounted ownership contract and observed lifecycle race gap."},
+  "changedPaths": [
+    "server/src/services/audits/programService.ts",
+    "server/src/services/auditProgramBvp/__tests__/programKernelBvp.pg.test.ts"
+  ],
+  "changedPathRationale": {
+    "server/src/services/audits/programService.ts": "Adds compare-and-set lifecycle transition on organization, program and expected state so a stale concurrent writer fails with 409 before an audit event is emitted.",
+    "server/src/services/auditProgramBvp/__tests__/programKernelBvp.pg.test.ts": "Requires exactly one accepted transition, one rejected transition and exactly one new domain event on real PostgreSQL."
+  },
   "ownerTables": ["audit_programs", "audit_domain_events"],
-  "commands": [{"command": "RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres CI=true DATABASE_URL=<isolated-pg> npx vitest run server/src/services/auditProgramBvp/__tests__/programKernelBvp.pg.test.ts --retry=0", "exitCode": 0}],
-  "denominators": {"combinedCurrentRun": {"files": 5, "passed": 42, "failed": 0}},
-  "fixtures": {"database": "integrator isolated PostgreSQL"},
-  "negativeControls": {"crossTenantDenied": true, "legacyWriterRetired": true, "lifecycleRaceCharacterized": true},
+  "commands": [
+    {
+      "command": "DATABASE_URL=<isolated-pg> DB_TYPE=postgres POSTGRES_SKIP_INIT_IN_TEST=1 RUN_DB_TESTS=1 MOCK_DB=false npx vitest run server/src/services/auditProgramBvp/__tests__/programKernelBvp.pg.test.ts --maxWorkers=1 --no-file-parallelism --reporter=dot",
+      "exitCode": 0
+    },
+    {
+      "command": "NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p server/tsconfig.json --noEmit --pretty false",
+      "exitCode": 0
+    },
+    {
+      "command": "git diff --check -- server/src/services/audits/programService.ts server/src/services/auditProgramBvp/__tests__/programKernelBvp.pg.test.ts",
+      "exitCode": 0
+    }
+  ],
+  "denominators": {
+    "realPostgres": {"files": 1, "passed": 11, "failed": 0, "skipped": 0},
+    "migrations": {"appliedOnFreshDatabase": 722, "failed": 0}
+  },
+  "fixtures": {
+    "database": "Disposable pgvector PostgreSQL 16 container consultify-aud-bvp-final on localhost:56663",
+    "cleanup": "Container is disposable and contains no production data."
+  },
+  "negativeControls": {
+    "crossTenantDenied": true,
+    "roleDenied": true,
+    "legacyWriterRetired": true,
+    "illegalLifecycleTransitionDenied": true,
+    "concurrentLifecycleExactlyOneWinner": true,
+    "concurrentLifecycleExactlyOneEvent": true
+  },
   "browserArtifacts": [],
-  "rollback": {"method": "Evidence-only packet; no schema rollback required.", "executed": false},
-  "verdict": "FIX_REQUIRED"
+  "rollback": {
+    "method": "Revert commit 1a23b5db5e004cdab3bda727ee6aaa124454f5ab; no schema rollback is required.",
+    "executed": false
+  },
+  "verdict": "PARTIAL"
 }
