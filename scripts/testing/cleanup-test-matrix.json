@@ -43,6 +43,8 @@
       "tests/resultsVnext/okr/okrRbacGuard.test.ts",
       "server/src/routes/__tests__/workbook-org-context.routes.test.ts",
       "tests/integration/ai/pinned-insights.routes.test.ts",
+      "tests/integration/admin/adminSsoSelf.routes.test.ts",
+      "tests/integration/document-studio/export-qa-gate.routes.test.ts",
       "tests/integration/mywork/my-work.golden-flow-inbox-task.test.ts",
       "tests/integration/demoPublicEntry.contract.test.ts",
       "tests/integration/demoRealtimeDenial.contract.test.ts",
@@ -259,7 +261,9 @@
         "server/src/routes/v8/__tests__/multiplayer.routes.test.ts",
         "tests/resultsVnext/okr/okrRbacGuard.test.ts",
         "server/src/routes/__tests__/workbook-org-context.routes.test.ts",
-        "tests/integration/ai/pinned-insights.routes.test.ts"
+        "tests/integration/ai/pinned-insights.routes.test.ts",
+        "tests/integration/admin/adminSsoSelf.routes.test.ts",
+        "tests/integration/document-studio/export-qa-gate.routes.test.ts"
       ]
     },
     "realdb": {
