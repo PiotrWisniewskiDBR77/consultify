@@ -20,6 +20,7 @@ import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import { createBudget, listBudgets } from '../../services/budgetingService.js';
 import { searchStatementDocumentIntelligence } from '../../services/documentIntelligenceService.js';
 import { ensureCanonicalRegistryInDatabase } from '../../services/financeCanonicalRegistrySyncService.js';
+import { financeLegacyCutoverGuard } from '../../services/financeLegacyCutover.js';
 import {
   getFinanceTraceId,
   logFinanceError,
@@ -134,6 +135,10 @@ import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.
 import logger from '../../utils/Logger.js';
 
 const router = Router();
+
+// FIN-MVP-CUTOVER-001: observe the complete legacy surface and fail closed
+// only for writers with an explicitly proven canonical successor.
+router.use(financeLegacyCutoverGuard);
 
 const FINANCE_PACKAGE_ROOT = process.env.FINANCE_PACKAGE_ROOT || '/data/finance-packages';
 
