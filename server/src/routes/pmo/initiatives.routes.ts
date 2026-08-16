@@ -13,7 +13,7 @@ import { InitiativeStatus } from '../../constants/initiativeStatuses.js';
 import InitiativeControllerRaw from '../../controllers/InitiativeController.js';
 const InitiativeController = InitiativeControllerRaw as any;
 import { StaffingPlanController } from '../../controllers/StaffingPlanController.js';
-import { verifyToken } from '../../middleware/auth.middleware.js';
+import { validateOrgMembership, verifyToken } from '../../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
 import { requireInitiativeCapability } from '../../middleware/effectiveCapability.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
@@ -27,6 +27,10 @@ import {
   requireInitiativeWriteAccess,
 } from '../../services/initiative/initiativeGovernanceGuard.js';
 import { upsertInitiativeKpiAssignment } from '../../services/initiative/initiativeKpiAssignmentService.js';
+import {
+  InitiativeProfileError,
+  updateInitiativeProfile,
+} from '../../services/initiative/initiativeProfileService.js';
 import {
   INITIATIVE_LIFECYCLE_GATE_DOMAINS,
   InitiativeLifecycleGateDecisionError,
@@ -123,6 +127,7 @@ router.use(apiAuthRateLimiter);
 
 // Apply auth middleware to all routes
 router.use(verifyToken);
+router.use(validateOrgMembership);
 router.use(requireOrgAccess());
 
 // Apply demo context middleware (switches org to demo org if x-demo-mode header is set)
@@ -3107,6 +3112,27 @@ router.get('/by-status/:statuses', InitiativeController.getInitiativesByStatus);
  */
 router.get('/:id', InitiativeController.getInitiativeById);
 
+router.put('/:id/profile', requireOrgRole('OWNER', 'ADMIN'), async (req: any, res: any) => {
+  try {
+    const result = await updateInitiativeProfile(
+      req.user.organizationId,
+      req.params.id,
+      req.user.id,
+      {
+        summary: String(req.body?.summary || ''),
+        expectedVersion: Number(req.body?.expectedVersion),
+        idempotencyKey: String(req.get('Idempotency-Key') || ''),
+      }
+    );
+    return res.status(result.idempotentReplay ? 200 : 201).json(result);
+  } catch (error) {
+    if (error instanceof InitiativeProfileError) {
+      return res.status(error.statusCode).json({ code: error.code, error: error.message });
+    }
+    throw error;
+  }
+});
+
 /**
  * PUT /api/initiatives/:id
  * Update initiative
@@ -3833,7 +3859,9 @@ router.post(
 
     const initiativeId = String(req.params.id || '').trim();
     if (!initiativeId) {
-      return res.status(400).json({ error: 'initiative id is required', code: 'INITIATIVE_ID_REQUIRED' });
+      return res
+        .status(400)
+        .json({ error: 'initiative id is required', code: 'INITIATIVE_ID_REQUIRED' });
     }
 
     const governanceGate: 'APPROVE' | 'REJECT' =
