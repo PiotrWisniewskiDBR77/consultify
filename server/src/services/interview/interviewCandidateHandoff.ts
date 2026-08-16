@@ -59,6 +59,33 @@
  * `SELECT ... FOR UPDATE` inside `withPinnedPostgresTransaction` — the same
  * mechanism `drdQualityReview.ts`/`drdCandidateHandoff.ts` already use. No
  * separate advisory lock or mutex is introduced.
+ *
+ * INT-BVP-001 (exactly-one-candidate hardening, migration
+ * `20260910_claude_a_interview_candidate_exactly_once.sql`): `source_type`
+ * strings alone can never unify this module's 'interview_insight_finding'
+ * writes with the independent, unconditioned `scanForCandidates` writer's
+ * 'interview_insight' writes (initiativeCandidateService.ts — OUTSIDE this
+ * module's lease). The two use DIFFERENT id domains for `source_id` (a
+ * FINDING id here vs an INSIGHT id there), so a plain unique index on
+ * (source_type, source_id) would never catch the cross-path duplicate. The
+ * shared business identity is the INSIGHT id
+ * (`interview_insight_findings.insight_id` here, `interview_insights.id`
+ * there), so for the 'insight_finding' kind this module now writes the
+ * CANDIDATE row's `source_id` as the INSIGHT id, not the finding id — see
+ * `candidateSourceId` in `approveInterviewCandidateHandoff` below. The
+ * RECEIPT's own `source_id` column (`interview_candidate_handoffs`) is left
+ * unchanged (still the finding id) because
+ * `routes/interviewCandidateHandoff.routes.ts` looks receipts up by
+ * findingId. A partial unique index on
+ * `initiative_candidates(organization_id, source_id)` scoped to
+ * `source_type IN ('interview_insight','interview_insight_finding') AND
+ * status <> 'dismissed'` then binds BOTH writers without editing the
+ * out-of-lease scan writer at all. `createCandidateFromSource` has no ON
+ * CONFLICT clause (deliberately fail-closed for its normal callers), so a
+ * losing insert here is caught via a SAVEPOINT (Postgres 25P02-safe — same
+ * pattern `roiCaseCommands.ts`/`okrSetCommands.ts` already use) and resolved
+ * to the winning candidate instead of failing the handoff or creating a
+ * duplicate.
  */
 import { v4 as uuidv4 } from 'uuid';
 
@@ -178,6 +205,17 @@ interface CandidateRow {
 
 function toIsoString(value: string | Date): string {
   return value instanceof Date ? value.toISOString() : String(value);
+}
+
+// Postgres reports a unique-index violation as error code '23505'. The
+// SQLite driver used elsewhere in the repo's unit tests reports
+// 'SQLITE_CONSTRAINT' for the same condition — matching both mirrors
+// ToolController.ts's `isUniqueViolation` convention so this helper stays
+// usable regardless of backend, even though the DoD evidence for this fix
+// is real-Postgres only.
+function isUniqueViolation(err: unknown): boolean {
+  const code = (err as { code?: unknown } | null | undefined)?.code;
+  return code === '23505' || code === 'SQLITE_CONSTRAINT';
 }
 
 function toHandoffRecord(row: HandoffRow): InterviewHandoffRecord {
@@ -423,15 +461,76 @@ export async function approveInterviewCandidateHandoff(params: {
       };
     }
 
-    const candidate = await createCandidateFromSource(tx, {
-      organizationId,
-      sourceType: resolved.sourceType,
-      sourceId: resolved.sourceId,
-      title: resolved.title,
-      rationale: resolved.rationale,
-      fitScore: 1,
-      createdBy: actorId,
-    });
+    // INT-BVP-001 shared-key dedupe (see header comment): for the
+    // 'insight_finding' kind, write the CANDIDATE's own source_id as the
+    // INSIGHT id (not the finding id) so it lands in the same identity
+    // domain scanForCandidates uses for its 'interview_insight' writes.
+    // For 'submission', resolved.insightId is always null, so this is
+    // byte-for-byte the previous behavior (falls back to resolved.sourceId).
+    const candidateSourceId = resolved.insightId ?? resolved.sourceId;
+    const sharesInsightDedupeDomain = resolved.sourceType === 'interview_insight_finding';
+
+    let candidate: { id: string; title: string; rationale: string; status: string };
+    let createdCandidate: boolean;
+
+    if (sharesInsightDedupeDomain) {
+      // `createCandidateFromSource` has no ON CONFLICT clause (it is
+      // deliberately fail-closed for its normal single-record callers), so
+      // a concurrent or earlier scanForCandidates() write — or a racing
+      // call to this same function for a sibling finding on the same
+      // insight — holding `uq_initiative_candidates_interview_insight_once`
+      // surfaces here as a plain Postgres 23505. A SAVEPOINT is required to
+      // recover cleanly: without one, Postgres aborts the WHOLE transaction
+      // on the unique violation and the retry SELECT below would itself
+      // fail with 25P02 (transaction aborted) — see roiCaseCommands.ts's
+      // identical, previously-verified pattern.
+      await tx.queryRun('SAVEPOINT interview_candidate_insight_dedupe');
+      try {
+        candidate = await createCandidateFromSource(tx, {
+          organizationId,
+          sourceType: resolved.sourceType,
+          sourceId: candidateSourceId,
+          title: resolved.title,
+          rationale: resolved.rationale,
+          fitScore: 1,
+          createdBy: actorId,
+        });
+        await tx.queryRun('RELEASE SAVEPOINT interview_candidate_insight_dedupe');
+        createdCandidate = true;
+      } catch (err) {
+        if (!isUniqueViolation(err)) throw err;
+        await tx.queryRun('ROLLBACK TO SAVEPOINT interview_candidate_insight_dedupe');
+        const winner = await tx.queryOne<CandidateRow>(
+          `SELECT id, title, rationale, status FROM initiative_candidates
+           WHERE organization_id = ? AND source_id = ?
+             AND source_type IN ('interview_insight', 'interview_insight_finding')
+             AND status <> 'dismissed'
+           LIMIT 1`,
+          [organizationId, candidateSourceId]
+        );
+        if (!winner) {
+          throw new InterviewCandidateHandoffError(
+            'HANDOFF_INCONSISTENT',
+            500,
+            'Unique violation on the shared insight candidate slot but no winning candidate row could be found',
+            { organizationId, candidateSourceId }
+          );
+        }
+        candidate = winner;
+        createdCandidate = false;
+      }
+    } else {
+      candidate = await createCandidateFromSource(tx, {
+        organizationId,
+        sourceType: resolved.sourceType,
+        sourceId: candidateSourceId,
+        title: resolved.title,
+        rationale: resolved.rationale,
+        fitScore: 1,
+        createdBy: actorId,
+      });
+      createdCandidate = true;
+    }
     await testFaultInjector?.('candidate-created');
 
     const handoffId = uuidv4();
@@ -475,7 +574,14 @@ export async function approveInterviewCandidateHandoff(params: {
 
     return {
       handoff: toHandoffRecord(receiptRow),
-      created: true,
+      // Previously always `true` here (this branch is reached only when no
+      // handoff RECEIPT existed yet). Now reflects whether a NEW candidate
+      // row was actually inserted: a receipt is always freshly created in
+      // this branch, but INT-BVP-001's shared-key dedupe can resolve the
+      // candidate itself to an existing row created by the other path (or
+      // a sibling finding on the same insight) — `false` in that case,
+      // consistent with the existingHandoff branch above.
+      created: createdCandidate,
       candidate: {
         id: candidate.id,
         title: candidate.title,
@@ -512,14 +618,31 @@ export async function getInterviewCandidateHandoff(params: {
   if (!row) return null;
 
   // `acceptCandidate()` (untouched, existing flow) propagates the
-  // CANDIDATE's OWN source_type/source_id onto the Initiative it creates —
-  // not the candidate's own id. `row.source_id` here is that same original
-  // assignment/finding id (identical to what was passed as `sourceId` to
-  // `createCandidateFromSource`), so this is the correct join key.
-  const initiativeRow = await queryHelpers.queryOne<{ id: string }>(
-    `SELECT id FROM initiatives WHERE organization_id = ? AND source_type = ? AND source_id = ? LIMIT 1`,
-    [organizationId, sourceType, row.source_id]
-  );
+  // CANDIDATE's OWN source_type/source_id onto the Initiative it creates.
+  // Read those directly off the candidate row (via `row.candidate_id`)
+  // rather than reusing this receipt's own source_id: INT-BVP-001's
+  // shared-insight dedupe (see this file's header comment) makes the
+  // candidate's `source_id` differ from the receipt's `source_id` for the
+  // 'interview_insight_finding' kind — the candidate uses the INSIGHT id,
+  // while the receipt deliberately keeps the FINDING id (so
+  // routes/interviewCandidateHandoff.routes.ts's findingId lookups keep
+  // working). Joining through the candidate is the only value guaranteed
+  // to match what acceptCandidate() actually copied onto the Initiative.
+  const candidateRow = await queryHelpers.queryOne<{
+    source_type: string | null;
+    source_id: string | null;
+  }>(`SELECT source_type, source_id FROM initiative_candidates WHERE id = ? AND organization_id = ?`, [
+    row.candidate_id,
+    organizationId,
+  ]);
+
+  const initiativeRow =
+    candidateRow?.source_type && candidateRow?.source_id
+      ? await queryHelpers.queryOne<{ id: string }>(
+          `SELECT id FROM initiatives WHERE organization_id = ? AND source_type = ? AND source_id = ? LIMIT 1`,
+          [organizationId, candidateRow.source_type, candidateRow.source_id]
+        )
+      : null;
 
   return {
     ...toHandoffRecord(row),

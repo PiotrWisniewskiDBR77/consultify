@@ -66,7 +66,7 @@ import {
   type TeresaStatement,
 } from '../method-core/contracts/index.js';
 import { methodEventStore } from '../method-core/MethodEventStore.js';
-import { methodPackRegistry } from '../method-core/MethodPackRegistry.js';
+import { DRD_METHOD_PACK_ID, ensureDrdPackRegistered, methodPackRegistry } from '../method-core/MethodPackRegistry.js';
 import { MethodSessionService, type PackReadinessLookup } from '../method-core/MethodSessionService.js';
 import { teresaProposalService } from '../method-core/TeresaProposalService.js';
 import {
@@ -455,6 +455,18 @@ router.post(
       // ON DELETE CASCADE removes both together). Fall through to create.
     }
 
+    // --- ASM-BVP-001: governed bootstrap for DRD ONLY --------------------
+    // Idempotent upsert of the `method_packs` row DRD needs to pass
+    // `canStartSession` below — see MethodPackRegistry.ensureDrdPackRegistered's
+    // own header comment for the readiness-status rationale. Every other
+    // methodPackId (SIRI/ADMA/CMMI/Lean/anything else) is deliberately left
+    // untouched here and stays fail-closed (`pack_not_released`) until it
+    // gets its own governed bootstrap — this is NOT a general "register
+    // whatever pack was requested" path.
+    if (methodPackId === DRD_METHOD_PACK_ID) {
+      await ensureDrdPackRegistered(organizationId);
+    }
+
     const bypassActive = isDemoBypassAllowed(readDemoBypassEnv(), requestedBypass);
     const service = bypassActive
       ? new MethodSessionService(alwaysStartablePacks, methodEventStore, outputBridge)
@@ -489,6 +501,48 @@ router.post(
     );
     if (!idemInsert.success) {
       throw new Error(`method-core-http: idempotency anchor insert failed: ${idemInsert.error ?? 'unknown'}`);
+    }
+
+    // ASM-BVP-001: lost-race repair. `existingIdemRow` above only catches a
+    // SEQUENTIAL replay (request 2 arrives after request 1's anchor row is
+    // already committed) — two genuinely CONCURRENT requests for the SAME
+    // (organizationId, idempotencyKey) can both pass that check as null (the
+    // anchor can only be written AFTER `service.createSession` succeeds,
+    // since `method_session_create_idempotency.session_id` has a NOT NULL FK
+    // into `method_sessions`, so it cannot be reserved up front). Both
+    // requests then genuinely INSERT a `method_sessions` row before either
+    // reaches this `INSERT ... ON CONFLICT DO NOTHING`. Only ONE of those two
+    // anchor inserts can win the (organization_id, idempotency_key) primary
+    // key; `idemInsert.changes === 0` is how the LOSER finds out — its own
+    // `result.session` above is now an unreferenced orphan (nothing will
+    // ever look it up by id) with an orphaned 'owner' role row alongside it.
+    // Delete it (cascades to method_session_roles/method_session_role_events
+    // — ON DELETE CASCADE, server/migrations/20260813_method_core_1_kernel.sql)
+    // and replay the WINNER's session, exactly like the sequential-replay
+    // branch at the top of this handler does — so "N concurrent creates, one
+    // Idempotency-Key" converges on exactly one `method_sessions` row and one
+    // returned session id no matter how the race lands.
+    if ((idemInsert.changes ?? 0) === 0) {
+      const deleteOrphan = await DbPromise.run(`DELETE FROM method_sessions WHERE id = ?`, [result.session.id], {
+        fallback: false,
+      });
+      if (!deleteOrphan.success) {
+        throw new Error(
+          `method-core-http: failed to delete orphaned session ${result.session.id} after a lost idempotency race: ${deleteOrphan.error ?? 'unknown'}`
+        );
+      }
+      const winnerRow = await DbPromise.get<{ session_id: string }>(
+        `SELECT session_id FROM method_session_create_idempotency WHERE organization_id = ? AND idempotency_key = ?`,
+        [organizationId, idempotencyKey]
+      );
+      const winnerSession = winnerRow ? await sessionService.getSession(winnerRow.session_id) : null;
+      if (!winnerSession) {
+        throw new Error(
+          `method-core-http: lost an idempotency race for (${organizationId}, ${idempotencyKey}) but the winning session ${winnerRow?.session_id ?? '(anchor missing)'} could not be read back`
+        );
+      }
+      res.status(200).json({ session: winnerSession, idempotentReplay: true });
+      return;
     }
 
     res.status(201).json({

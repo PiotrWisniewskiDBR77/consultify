@@ -81,7 +81,30 @@ function workbenchMutationMeta() {
   };
 }
 
+// Pre-existing (unrelated to ASM-METHOD-CATALOG-001) request-shape
+// validation: is this a TYPE STRING THIS ROUTER KNOWS ABOUT AT ALL. This is
+// NOT a governance/approval list — it answers "is this a well-formed
+// request" (400 ASSESSMENT_INVALID_TYPE for a typo/garbage string), same
+// contract other suites (tests/integration/assessment/
+// drd-assessment-roundtrip.contract.test.ts) already depend on. Kept
+// separate from GOVERNED_ASSESSMENT_TYPES below on purpose — do not merge
+// the two checks/lists.
 const VALID_ASSESSMENT_TYPES = new Set(['DRD', 'SIRI', 'ADMA', 'CMMI', 'LEAN']);
+
+// ASM-METHOD-CATALOG-001: SINGLE governed source of truth for which
+// assessment methodologies are selectable on this V8 surface (create +
+// definitions catalog). Governed by the owner decision recorded at
+// docs/program/evidence/closure/a/ASM-METHOD-CATALOG-001/DECISION_PACKET.md —
+// Product + Methodology/Rights own this list. Fail-closed default: DRD is
+// the only methodology with cleared content provenance/rights. SIRI, ADMA,
+// CMMI, LEAN (recognized types per VALID_ASSESSMENT_TYPES above, but NOT
+// governed) stay BLOCKED — their editors and route branches remain in the
+// codebase, just unreachable — until an owner explicitly re-approves a type
+// here. Do NOT add a second hardcoded governance list anywhere in this
+// file; extend this Set only after the decision packet records the owner's
+// approval. Every value in this Set MUST also be a member of
+// VALID_ASSESSMENT_TYPES (the shape-validation check always runs first).
+const GOVERNED_ASSESSMENT_TYPES = new Set(['DRD']);
 const SUPPORTED_P28_HANDOFFS = [
   {
     targetKind: 'outputs_artifact',
@@ -198,6 +221,29 @@ function buildCapabilityDenied(role: string | undefined | null) {
     role: role || null,
     whatNext: [
       'Ask an organization admin or owner to grant a role capable of creating or editing assessments.',
+    ],
+  };
+}
+
+/**
+ * ASM-METHOD-CATALOG-001: fail-closed denial for an assessment methodology
+ * that is recognized by {@link VALID_ASSESSMENT_TYPES} but is not in
+ * {@link GOVERNED_ASSESSMENT_TYPES} — e.g. SIRI/ADMA/CMMI/LEAN today.
+ *
+ * A garbage/unknown type never reaches this helper: on POST / the
+ * shape-validation check runs first and returns 400 ASSESSMENT_INVALID_TYPE.
+ * Both branches are fail-closed — neither can fall through to create a row —
+ * so an unrecognized or typo'd type can never be silently allowed through.
+ */
+function buildMethodNotEnabledDenied(assessmentType: string) {
+  return {
+    error: 'Assessment methodology is not enabled',
+    code: 'ASSESSMENT_METHOD_NOT_ENABLED',
+    assessmentType,
+    allowedTypes: Array.from(GOVERNED_ASSESSMENT_TYPES),
+    whatNext: [
+      'This methodology is fail-closed pending a Product + Methodology/Rights owner decision (ASM-METHOD-CATALOG-001).',
+      'See docs/program/evidence/closure/a/ASM-METHOD-CATALOG-001/DECISION_PACKET.md for the decision packet.',
     ],
   };
 }
@@ -355,6 +401,16 @@ router.get(
         .json({ error: 'Methodology id is required', code: 'P28_DEFINITION_METHOD_REQUIRED' });
     }
 
+    // ASM-METHOD-CATALOG-001: read path mirrors the write-path governance
+    // gate below — the definitions catalog is only browsable for a
+    // governed methodology. Without this, GET would quietly agree with a
+    // client-side "SIRI available" assumption by returning 200 (with an
+    // empty versions array, since nothing is ever seeded for SIRI), instead
+    // of an explicit, machine-checkable denial matching POST /.
+    if (!GOVERNED_ASSESSMENT_TYPES.has(methodologyId)) {
+      return res.status(403).json(buildMethodNotEnabledDenied(methodologyId));
+    }
+
     const versions = await AssessmentDefinitionService.listDefinitionVersions(methodologyId);
     return res.json({
       data: { methodologyId, versions },
@@ -452,11 +508,25 @@ router.post(
       });
     }
 
+    // Pre-existing shape validation FIRST: an unrecognized/garbage type is a
+    // malformed request (400 ASSESSMENT_INVALID_TYPE), not a governance
+    // decision — preserves the contract
+    // tests/integration/assessment/drd-assessment-roundtrip.contract.test.ts
+    // already asserts for this exact case.
     if (!VALID_ASSESSMENT_TYPES.has(assessmentType)) {
       return res.status(400).json({
         error: 'Invalid assessment type',
         code: 'ASSESSMENT_INVALID_TYPE',
       });
+    }
+
+    // ASM-METHOD-CATALOG-001: fail-closed governance gate, runs SECOND —
+    // only reached once the type is known-well-formed. A recognized type
+    // that is not (yet) governed (SIRI/ADMA/CMMI/LEAN today) is refused
+    // here with the distinct governance status/code. Both branches are
+    // fail-closed: neither ever falls through to create a row.
+    if (!GOVERNED_ASSESSMENT_TYPES.has(assessmentType)) {
+      return res.status(403).json(buildMethodNotEnabledDenied(assessmentType));
     }
 
     // ASM-001A: DRD assessments created from the Library tab bind to a
@@ -584,6 +654,14 @@ router.post(
       });
     }
 
+    // ASM-METHOD-CATALOG-001: sibling create path for the definitions
+    // catalog — block drafting a definition for a non-governed methodology
+    // so a SIRI/ADMA/CMMI/LEAN definition can never reach the publish step
+    // (below) in the first place, admin role notwithstanding.
+    if (!GOVERNED_ASSESSMENT_TYPES.has(methodologyId)) {
+      return res.status(403).json(buildMethodNotEnabledDenied(methodologyId));
+    }
+
     const definition = await AssessmentDefinitionService.createDraftDefinitionVersion({
       methodologyId,
       version,
@@ -612,6 +690,21 @@ router.post(
       return res
         .status(400)
         .json({ error: 'Definition id is required', code: 'P28_DEFINITION_ID_REQUIRED' });
+    }
+
+    // ASM-METHOD-CATALOG-001: defense in depth — even though the draft
+    // route above already blocks creating a non-governed draft, refuse to
+    // flip ANY non-governed methodology's draft to published/read-only
+    // here too, so this endpoint is not a bypass for a definition that
+    // predates the gate (e.g. seeded directly, or drafted before this fix).
+    const existingDefinition = await AssessmentDefinitionService.getDefinitionById(definitionId);
+    if (!existingDefinition) {
+      return res
+        .status(404)
+        .json({ error: 'Definition not found', code: 'P28_DEFINITION_NOT_FOUND' });
+    }
+    if (!GOVERNED_ASSESSMENT_TYPES.has(existingDefinition.methodologyId)) {
+      return res.status(403).json(buildMethodNotEnabledDenied(existingDefinition.methodologyId));
     }
 
     const definition = await AssessmentDefinitionService.publishDefinitionVersion({

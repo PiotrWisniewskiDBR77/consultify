@@ -1,0 +1,111 @@
+{
+  "taskId": "AUD-MVP-OWNER-001",
+  "lane": "a",
+  "branch": "codex/closure-claude-a-method-evidence",
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "baselineTag": "closure-execution-baseline-v2-20260816",
+  "productSha": "b438de0f4d00a0a5be7319c7e5250f9f336d6af1",
+  "leaseSha256": "a2f9be9983e3a03e5e64f1a51dca193199a5bec963a246c3b4fe94b378af1308",
+  "changedPaths": [
+    "server/src/routes/audit-programs.routes.ts",
+    "server/src/services/auditProgramService.ts",
+    "server/src/routes/__tests__/audit-programs.test.ts",
+    "server/src/services/__tests__/auditProgramService.e2e-sqlite.test.ts",
+    "server/src/services/auditProgramOwner/__tests__/auditProgramLegacyWriteRetirement.realdb.test.ts",
+    "docs/program/evidence/closure/a/AUD-MVP-OWNER-001/WRITER_INVENTORY.md"
+  ],
+  "changedPathRationale": {
+    "server/src/routes/audit-programs.routes.ts": "Adds the AUDIT_PROGRAM_LEGACY_WRITES_ENABLED kill-switch (default unset = OFF). With it off, legacy create/update/delete AND the generate-surveys bookkeeping path (the last remaining route into updateProgram) return 410 AUDIT_PROGRAM_LEGACY_WRITE_DISABLED before touching the database. Legacy reads are untouched.",
+    "server/src/services/auditProgramService.ts": "Neuters the legacy ensureSchema()'s CREATE TABLE IF NOT EXISTS audit_programs self-healing (a second schema owner for a table the Audits kernel migration also defines), verified safe against the real 703/703-migrated database where the table already exists with all 33 columns.",
+    "server/src/routes/__tests__/audit-programs.test.ts": "32 mocked route tests, including two new default-OFF negatives asserting zero db calls, and the eight pre-existing generate-surveys tests preserved unweakened under an explicit flag-ON describe block (they now prove the rollback path).",
+    "server/src/services/__tests__/auditProgramService.e2e-sqlite.test.ts": "Existing sqlite e2e suite for the legacy service, updated to remain consistent with the flag-gated behaviour; exact test count contributed by this file's changes is not broken out separately in the commit message (see unverifiedFields).",
+    "server/src/services/auditProgramOwner/__tests__/auditProgramLegacyWriteRetirement.realdb.test.ts": "New real-Postgres proof, 16/16, including full-row byte-equality assertions that the table is unchanged after a refused write, plus a flag-ON positive control proving the rollback path really writes.",
+    "docs/program/evidence/closure/a/AUD-MVP-OWNER-001/WRITER_INVENTORY.md": "Committed evidence: reproducible grep for the final writer inventory (=1), per-line reachability table for all 7 SQL statement sites across both files, and the recorded lead decision to also close the generate-surveys bookkeeping UPDATE (not left as an exception)."
+  },
+  "commands": [
+    {
+      "gate": "G0",
+      "command": "node scripts/cleanup/verify-closure-lane.mjs a closure-execution-baseline-v2-20260816",
+      "exitCode": 0,
+      "result": "lane A lease PASS at baseline"
+    },
+    {
+      "gate": "G1",
+      "command": "npm run test:inventory:generate && npm run test:discovery-gate",
+      "exitCode": 0,
+      "result": "4997 discovered / 4997 manifest entries / 4698 executed-classified"
+    },
+    {
+      "gate": "G1",
+      "command": "npm run type-check",
+      "exitCode": 0,
+      "result": "zero TypeScript errors"
+    },
+    {
+      "gate": "G1",
+      "command": "npm run build:backend && NODE_OPTIONS=--max-old-space-size=8192 npm run build",
+      "exitCode": 0,
+      "result": "both exit 0; pre-existing chunk-size and browserslist warnings recorded, not promoted to failures"
+    },
+    {
+      "gate": "G3",
+      "command": "CI=true DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts",
+      "exitCode": 0,
+      "result": "703/703 success on strict fresh-schema run; repeat run applied zero; --dry-run reported zero pending; 1557 public tables"
+    },
+    {
+      "gate": "G2/task",
+      "command": "DATABASE_URL=postgresql://consultinity:consultinity@127.0.0.1:34915/consultinity DB_TYPE=postgres CI=true RUN_DB_TESTS=1 MOCK_DB=false npx vitest run server/src/services/auditProgramOwner/__tests__/auditProgramLegacyWriteRetirement.realdb.test.ts --retry=0",
+      "exitCode": 0,
+      "result": "1 file collected, 16 passed, 0 failed, 0 skipped, per docs/program/evidence/closure/a/AUD-MVP-OWNER-001/WRITER_INVENTORY.md"
+    },
+    {
+      "gate": "G2/task (mocked)",
+      "command": "npx vitest run server/src/routes/__tests__/audit-programs.test.ts --retry=0",
+      "exitCode": 0,
+      "result": "32 passed, 0 failed, 0 skipped, per commit message"
+    }
+  ],
+  "denominators": {
+    "taskTests": {
+      "files": 2,
+      "passed": 48,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "breakdown": [
+        { "file": "audit-programs.test.ts (mocked)", "passed": 32 },
+        { "file": "auditProgramLegacyWriteRetirement.realdb.test.ts (real Postgres)", "passed": 16 }
+      ]
+    },
+    "regression": null,
+    "note": "--retry=0 was mandatory: root vitest.config.ts sets retry: CI ? 3 : 1, which would otherwise let a flaky pass masquerade as green. The exact test-count contribution of the modified auditProgramService.e2e-sqlite.test.ts is not broken out separately in the commit message."
+  },
+  "realDb": {
+    "engine": "pgvector/pgvector:pg16",
+    "container": "consultify-closure-a-34915",
+    "databaseUrl": "postgresql://consultinity:consultinity@127.0.0.1:34915/consultinity",
+    "schemaProvenance": "cloned from the strict-migration-runner database (703/703 schema_migrations success, 1557 public tables)",
+    "mockDb": false,
+    "note": "CI=true is required to unlock a local database host (server/src/config/databaseTargetResolver.ts:111-118). NODE_ENV=test alone was deliberately not relied on for DB selection."
+  },
+  "knownConsequences": [],
+  "browserArtifacts": [],
+  "rollback": {
+    "mechanism": "set AUDIT_PROGRAM_LEGACY_WRITES_ENABLED=true to fully restore legacy write behaviour with no code revert; both states (flag off, flag on) are proven in the same test run",
+    "schemaImpact": "none — no migration; the change removes a redundant CREATE TABLE IF NOT EXISTS self-heal, verified safe against the already-fully-migrated real database",
+    "flagImpact": "AUDIT_PROGRAM_LEGACY_WRITES_ENABLED, default unset = OFF = legacy writes retired; reversible by env var alone",
+    "oldReaderCompatibility": "unaffected — legacy READS are untouched by this change; only legacy WRITE routes (create/update/delete/generate-surveys) return 410 by default"
+  },
+  "integratorChangeRequests": [],
+  "openItems": [
+    "scripts/cleanup/verify-closure-lane.mjs grants its allowedNewRoots exemption only to files that are currently untracked (const isNew = !isTracked(file)), so a legitimately-placed new file starts being reported as a violation the moment it is committed. This lane's new file under server/src/services/auditProgramOwner/__tests__/ matches the allowed pattern and is benign.",
+    "No browser/visual evidence exists for this task, but it is a backend writer-retirement change with no new or modified UI surface, so browser evidence is not part of its DoD."
+  ],
+  "unverifiedFields": [
+    "denominators.taskTests.breakdown exact contribution of auditProgramService.e2e-sqlite.test.ts (folded into the 48 total per the commit message but not itemized separately)",
+    "denominators.regression (no regression suite counts stated in the commit message beyond the two task-test files)"
+  ],
+  "verdict": "DONE_CURRENT_SHA",
+  "verdictRationale": "G0/G1/G3 shared gates pass at this SHA. Writer inventory for audit_programs is verified at exactly 1 by a reproducible grep plus a per-line reachability table (WRITER_INVENTORY.md), not merely asserted. 48/48 tests pass across mocked (32) and real-Postgres (16) suites, including byte-equality proof that a refused write leaves the row untouched and a flag-ON positive control proving the rollback path genuinely writes. No known consequence or blocking integrator change request is recorded for this commit, unlike ASM-BVP-001, TLS-BVP-001 and INT-BVP-001. The change is backend-only (routes/services) with no UI surface, so the general absence of browser/visual evidence across this lane's eight tasks does not bear on this task's DoD."
+}

@@ -31,6 +31,7 @@ import {
   deleteProgram,
   generateSurveys,
   getProgram,
+  isLegacyProgramWriteEnabled,
   listPrograms,
   updateProgram,
 } from '../services/auditProgramService.js';
@@ -42,6 +43,47 @@ router.use(apiAuthRateLimiter);
 router.use(verifyToken);
 router.use(requireOrgAccess());
 router.use(demoContextMiddleware);
+
+// ---------------------------------------------------------------------------
+// AUD-MVP-OWNER-001 — legacy CRUD-write retirement.
+//
+// `audit_programs` had two independent writer families hitting the same live
+// table: this router's create/update/delete (createProgram/updateProgram/
+// deleteProgram in auditProgramService.ts) and the Audits kernel
+// (server/src/routes/audits/programs.routes.ts + services/audits/
+// programService.ts, mounted at /api/audits/programs). The kernel is now the
+// canonical writer for NEW/changed program identity. This router's ENTIRE
+// write surface — the CRUD trio (POST /programs, PATCH /programs/:id,
+// DELETE /programs/:id) AND generate-surveys's bookkeeping UPDATE
+// (POST /programs/:id/generate-surveys, which calls updateProgram() to
+// persist config.surveysGenerated/generatedAssignmentIds/generation) — is
+// retired to a fixed, machine-checkable refusal before the request ever
+// touches the DB. The task's acceptance bar is a writer inventory of exactly
+// 1; leaving generate-surveys's UPDATE reachable would have kept this
+// service as a second writer of the canonical table, and there is no
+// legitimate way to reach that UPDATE anymore once create/update/delete all
+// refuse (no legacy-created program can exist to fan out). Reads
+// (GET /programs, GET /programs/:id, GET /programs/:id/completion) keep
+// working so the default-ON legacy AuditsHub list view is unaffected.
+//
+// Governed by auditProgramService.isLegacyProgramWriteEnabled()
+// (AUDIT_PROGRAM_LEGACY_WRITES_ENABLED env var, default OFF = disabled =
+// SAFE). This is a reversible kill-switch, not a deletion: flipping the env
+// var back to 'true' restores the pre-retirement behavior without a code
+// revert, in case the kernel path turns out not to be ready somewhere.
+// ---------------------------------------------------------------------------
+const LEGACY_WRITE_DISABLED_BODY = {
+  error:
+    'Legacy audit-program writes are retired. The Audits kernel ' +
+    '(/api/audits/programs) is now the canonical writer for audit_programs; ' +
+    'this endpoint is read-only.',
+  code: 'AUDIT_PROGRAM_LEGACY_WRITE_DISABLED',
+} as const;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function sendLegacyWriteDisabled(res: any): void {
+  res.status(410).json(LEGACY_WRITE_DISABLED_BODY);
+}
 
 // ---------------------------------------------------------------------------
 // Auth context — mirror insightSourceBaskets.routes.ts.
@@ -85,6 +127,7 @@ router.get('/programs', async (req: AuthRequest, res) => {
 // POST /programs — create
 // ---------------------------------------------------------------------------
 router.post('/programs', async (req: AuthRequest, res) => {
+  if (!isLegacyProgramWriteEnabled()) return sendLegacyWriteDisabled(res);
   const { organizationId, userId } = authContext(req);
   if (!organizationId) return res.status(400).json({ error: 'Missing organization context' });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -129,6 +172,7 @@ router.get('/programs/:id', async (req: AuthRequest, res) => {
 // PATCH /programs/:id — update
 // ---------------------------------------------------------------------------
 router.patch('/programs/:id', async (req: AuthRequest, res) => {
+  if (!isLegacyProgramWriteEnabled()) return sendLegacyWriteDisabled(res);
   const { organizationId } = authContext(req);
   if (!organizationId) return res.status(400).json({ error: 'Missing organization context' });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -182,8 +226,19 @@ router.patch('/programs/:id', async (req: AuthRequest, res) => {
 // every selected template × assignee, reusing the interview assignment service
 // (#19). Idempotent: a program already generated returns alreadyGenerated:true.
 // Robust to partial failures — reports created/failed counts + per-pair errors.
+//
+// AUD-MVP-OWNER-001 (lead decision, 2026-08-16): initially left unblocked as
+// a "bookkeeping-only" exception (it never creates a new program identity),
+// but the task's acceptance bar is a writer inventory of exactly 1 — leaving
+// this UPDATE reachable kept the legacy service writing the canonical table,
+// so the inventory was 2. It is also incoherent to keep one legacy write path
+// open on a resource whose create/update/delete already refuse: nothing can
+// legitimately reach a state where fan-out should run through the legacy
+// service anymore. Gated behind the same flag/response shape as the CRUD
+// trio; reversible the same way (AUDIT_PROGRAM_LEGACY_WRITES_ENABLED=true).
 // ---------------------------------------------------------------------------
 router.post('/programs/:id/generate-surveys', async (req: AuthRequest, res) => {
+  if (!isLegacyProgramWriteEnabled()) return sendLegacyWriteDisabled(res);
   const { organizationId, userId } = authContext(req);
   if (!organizationId) return res.status(400).json({ error: 'Missing organization context' });
   try {
@@ -217,6 +272,7 @@ router.get('/programs/:id/completion', async (req: AuthRequest, res) => {
 // DELETE /programs/:id — delete
 // ---------------------------------------------------------------------------
 router.delete('/programs/:id', async (req: AuthRequest, res) => {
+  if (!isLegacyProgramWriteEnabled()) return sendLegacyWriteDisabled(res);
   const { organizationId } = authContext(req);
   if (!organizationId) return res.status(400).json({ error: 'Missing organization context' });
   try {

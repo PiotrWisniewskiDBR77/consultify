@@ -1,0 +1,136 @@
+{
+  "taskId": "TLS-BVP-001",
+  "lane": "a",
+  "branch": "codex/closure-claude-a-method-evidence",
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "baselineTag": "closure-execution-baseline-v2-20260816",
+  "productSha": "55a55fc0111507ab686c7265323f12d4ea6ac511",
+  "leaseSha256": "a2f9be9983e3a03e5e64f1a51dca193199a5bec963a246c3b4fe94b378af1308",
+  "changedPaths": [
+    "server/src/controllers/ToolController.ts",
+    "server/src/services/tools/toolOutputSnapshotService.ts",
+    "server/src/services/toolFreeze/__tests__/tls-bvp-001-nonempty-lineage.realdb.test.ts"
+  ],
+  "changedPathRationale": {
+    "server/src/controllers/ToolController.ts": "Small change (part of the 16-line net diff on this file) needed so the new EmptyToolOutputError from ensureToolOutputSnapshot is caught and mapped to HTTP 409 EMPTY_TOOL_OUTPUT, the same catch-and-map convention already used for SwotCandidateHandoffError.",
+    "server/src/services/tools/toolOutputSnapshotService.ts": "The actual fix. ensureToolOutputSnapshot is the single chokepoint every promotion path (initiative/report/presentation/idea) funnels through via promoteToOutput (POST /:toolId/promote) — it now refuses to freeze a tool_outputs row with zero items/tensions/conclusions, scoped to dynamic-swot only. The 18 bridge-less tool types keep their pre-existing 'honestly empty' behaviour but now emit a warning on every empty freeze.",
+    "server/src/services/toolFreeze/__tests__/tls-bvp-001-nonempty-lineage.realdb.test.ts": "New real-Postgres proof, 10/10: refusal with no row created, positive control, non-SWOT scope boundary, CAS 428/409, immutability with byte-identical re-read, reopen creating a new revision, 10-way concurrent race converging on exactly one row, cross-tenant negative, cold readback via an independent client."
+  },
+  "commands": [
+    {
+      "gate": "G0",
+      "command": "node scripts/cleanup/verify-closure-lane.mjs a closure-execution-baseline-v2-20260816",
+      "exitCode": 0,
+      "result": "lane A lease PASS at baseline"
+    },
+    {
+      "gate": "G1",
+      "command": "npm run test:inventory:generate && npm run test:discovery-gate",
+      "exitCode": 0,
+      "result": "4997 discovered / 4997 manifest entries / 4698 executed-classified"
+    },
+    {
+      "gate": "G1",
+      "command": "npm run type-check",
+      "exitCode": 0,
+      "result": "zero TypeScript errors"
+    },
+    {
+      "gate": "G1",
+      "command": "npm run build:backend && NODE_OPTIONS=--max-old-space-size=8192 npm run build",
+      "exitCode": 0,
+      "result": "both exit 0; pre-existing chunk-size and browserslist warnings recorded, not promoted to failures"
+    },
+    {
+      "gate": "G3",
+      "command": "CI=true DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts",
+      "exitCode": 0,
+      "result": "703/703 success on strict fresh-schema run; repeat run applied zero; --dry-run reported zero pending; 1557 public tables"
+    },
+    {
+      "gate": "G2/task",
+      "command": "DATABASE_URL=postgresql://consultinity:consultinity@127.0.0.1:34914/consultinity DB_TYPE=postgres CI=true RUN_DB_TESTS=1 MOCK_DB=false npx vitest run server/src/services/toolFreeze/__tests__/tls-bvp-001-nonempty-lineage.realdb.test.ts --retry=0",
+      "exitCode": 0,
+      "result": "1 file collected, 10 passed, 0 failed, 0 skipped"
+    },
+    {
+      "gate": "G2/regression",
+      "command": "npx vitest run tool-sessions-cas tools-outputs-immutable tools-links-org-scope <four further promote-calling suites> --retry=0",
+      "exitCode": 0,
+      "result": "tool-sessions-cas 11/11, tools-outputs-immutable 10/10, tools-links-org-scope 7/7, plus 34/34 across four further promote-calling suites (per commit message; individual file names and the literal combined command are not quoted in the commit body)"
+    },
+    {
+      "gate": "mirror-check",
+      "command": "scripts/cleanup/sync-server-runtime-mirrors.mjs --check",
+      "exitCode": 0,
+      "result": "9 mirror files verified, no drift; neither changed file is part of the mirror pair"
+    }
+  ],
+  "denominators": {
+    "taskTests": { "files": 1, "passed": 10, "failed": 0, "skipped": 0, "todo": 0 },
+    "regression": {
+      "files": 7,
+      "passed": 62,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "breakdown": [
+        { "suite": "tool-sessions-cas", "passed": 11 },
+        { "suite": "tools-outputs-immutable", "passed": 10 },
+        { "suite": "tools-links-org-scope", "passed": 7 },
+        { "suite": "four further promote-calling suites (unnamed in commit message)", "passed": 34 }
+      ]
+    },
+    "note": "--retry=0 was mandatory: root vitest.config.ts sets retry: CI ? 3 : 1, which would otherwise let a flaky pass masquerade as green."
+  },
+  "realDb": {
+    "engine": "pgvector/pgvector:pg16",
+    "container": "consultify-closure-a-34914",
+    "databaseUrl": "postgresql://consultinity:consultinity@127.0.0.1:34914/consultinity",
+    "schemaProvenance": "cloned from the strict-migration-runner database (703/703 schema_migrations success, 1557 public tables)",
+    "mockDb": false,
+    "note": "CI=true is required to unlock a local database host (server/src/config/databaseTargetResolver.ts:111-118). NODE_ENV=test alone was deliberately not relied on for DB selection."
+  },
+  "knownConsequences": [
+    {
+      "description": "Three test fixtures elsewhere in the repo seed content-free dynamic-swot sessions and now receive 409 EMPTY_TOOL_OUTPUT where they previously asserted 200. Highest priority is tests/integration/tools/tool-session-roundtrip.contract.test.ts because it runs in the DEFAULT suite (not behind RUN_DB_TESTS), so it is a live, currently-red regression outside this lane's own G2 evidence.",
+      "blocking": true,
+      "source": "commit 55a55fc0111507ab686c7265323f12d4ea6ac511"
+    }
+  ],
+  "browserArtifacts": [],
+  "rollback": {
+    "mechanism": "revert the single commit; no migration, no schema change, purely a code-level guard added at ensureToolOutputSnapshot plus a mapped 409 in ToolController.ts",
+    "schemaImpact": "none",
+    "flagImpact": "none — the guard is unconditional for dynamic-swot, not behind a runtime flag; reverting the commit is the only way to restore the prior behaviour",
+    "oldReaderCompatibility": "unaffected — no stored row shape changed; a revert simply stops refusing empty-lineage freezes again"
+  },
+  "integratorChangeRequests": [
+    {
+      "taskId": "TLS-BVP-001",
+      "file": "tests/integration/tools/tool-session-roundtrip.contract.test.ts",
+      "reason": "Seeds a content-free dynamic-swot session and asserts 200 on freeze/promote; now correctly receives 409 EMPTY_TOOL_OUTPUT. This file runs in the default suite (not behind RUN_DB_TESTS), so it is a currently-failing test after this commit until it is updated to seed non-empty lineage or assert the new refusal.",
+      "minimalHunk": "update the fixture to include at least one item/tension/conclusion before promote, or split the case into an explicit empty-lineage negative assertion",
+      "consumerTest": "the file itself, run in the default (non-DB-gated) suite",
+      "blocking": true
+    },
+    {
+      "taskId": "TLS-BVP-001",
+      "file": "unspecified — two further fixtures referenced only as \"three test fixtures\" in the commit message",
+      "reason": "Commit message states three fixtures are affected but names only tool-session-roundtrip.contract.test.ts explicitly; the other two file paths are not given.",
+      "minimalHunk": null,
+      "consumerTest": null,
+      "blocking": true
+    }
+  ],
+  "openItems": [
+    "scripts/cleanup/verify-closure-lane.mjs grants its allowedNewRoots exemption only to files that are currently untracked (const isNew = !isTracked(file)), so a legitimately-placed new file starts being reported as a violation the moment it is committed. This lane's new file under server/src/services/toolFreeze/__tests__/ matches the allowed pattern and is benign.",
+    "The blocking known consequence (tool-session-roundtrip.contract.test.ts now red in the default suite, plus two unnamed fixtures) must be resolved before this task can be called closed without caveats.",
+    "No browser/visual evidence exists for this task's user-facing surface (SWOT tool freeze/promote flow)."
+  ],
+  "unverifiedFields": [
+    "commands[6].command (exact regression command and the two unnamed additional broken fixture file paths — not quoted in the commit body)"
+  ],
+  "verdict": "PARTIAL",
+  "verdictRationale": "G0/G1/G3 shared gates pass at this SHA and the task's own suite is 10/10 on real Postgres with strong coverage (CAS, immutability, concurrency, tenant, cold readback). This is downgraded from DONE_CURRENT_SHA because the commit message records a KNOWN CONSEQUENCE that is an active regression, not a hypothetical: tests/integration/tools/tool-session-roundtrip.contract.test.ts runs in the DEFAULT test suite (unlike this task's own RUN_DB_TESTS-gated evidence) and now fails after this change, plus two further unnamed fixtures. A fix that breaks a default-suite test it did not update is not a clean close. No browser/visual evidence exists for the SWOT freeze/promote UI surface either, which the DoD would need for a full DONE."
+}

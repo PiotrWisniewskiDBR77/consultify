@@ -1,0 +1,94 @@
+{
+  "taskId": "AUD-POL-001",
+  "lane": "a",
+  "branch": "codex/closure-claude-a-method-evidence",
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "baselineTag": "closure-execution-baseline-v2-20260816",
+  "productSha": "78a618942ea0e12e7837bf64dec05f0b30bbdff1",
+  "leaseSha256": "a2f9be9983e3a03e5e64f1a51dca193199a5bec963a246c3b4fe94b378af1308",
+  "sharedCommitNote": "This commit also covers AUD-MVP-RIGHTS-001 (docs/program/evidence/closure/a/AUD-MVP-RIGHTS-001/TASK_EVIDENCE.json, same productSha and same test file). This record lists the decision-packet framing and the fail-closed-gate proof; the RIGHTS record lists the content-inventory sweep and the two named gaps' integrator change requests.",
+  "changedPaths": [
+    "docs/program/evidence/closure/a/AUD-POL-001/DECISION_PACKET.md",
+    "server/src/services/auditProgramRights/__tests__/auditPackRights.realdb.test.ts"
+  ],
+  "changedPathRationale": {
+    "docs/program/evidence/closure/a/AUD-POL-001/DECISION_PACKET.md": "The decision packet itself: states the required owner decisions (which named standards get rights, whether the legacy ISO 27001 preset stays reachable, whether GAP 1 is accepted for MVP), the accountable owner (Product + Methodology/Rights + Legal — this lane may not decide), three options with consequences, the recommended fail-closed default (already the de facto state), what stays blocked until an owner accepts, the code that enforces the fail-closed default today (verified, not assumed), the two gaps and their minimal fixes, and segregation-of-duties facts verified at the call site.",
+    "server/src/services/auditProgramRights/__tests__/auditPackRights.realdb.test.ts": "New real-Postgres proof, 10/10, that directly supports the decision packet's Section 6 claims: publish refused for a title implying a named standard (PACK_TITLE_IMPLIES_NORMATIVE), publish refused for VERIFIED_NORMATIVE without a verified source (SOURCE_MISSING), a draft pack cannot launch a program (zero-row SELECT proof), a positive control that the clean internal DEMONSTRATION pack still publishes and launches, tenant negatives, and cold readback through a separate pool."
+  },
+  "commands": [
+    {
+      "gate": "G0",
+      "command": "node scripts/cleanup/verify-closure-lane.mjs a closure-execution-baseline-v2-20260816",
+      "exitCode": 0,
+      "result": "lane A lease PASS at baseline"
+    },
+    {
+      "gate": "G1",
+      "command": "npm run test:inventory:generate && npm run test:discovery-gate",
+      "exitCode": 0,
+      "result": "4997 discovered / 4997 manifest entries / 4698 executed-classified"
+    },
+    {
+      "gate": "G1",
+      "command": "npm run type-check",
+      "exitCode": 0,
+      "result": "zero TypeScript errors"
+    },
+    {
+      "gate": "G1",
+      "command": "npm run build:backend && NODE_OPTIONS=--max-old-space-size=8192 npm run build",
+      "exitCode": 0,
+      "result": "both exit 0; pre-existing chunk-size and browserslist warnings recorded, not promoted to failures"
+    },
+    {
+      "gate": "G3",
+      "command": "CI=true DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts",
+      "exitCode": 0,
+      "result": "703/703 success on strict fresh-schema run; repeat run applied zero; --dry-run reported zero pending; 1557 public tables"
+    },
+    {
+      "gate": "G2/task",
+      "command": "CI=true NODE_ENV=test DB_TYPE=postgres RUN_DB_TESTS=1 MOCK_DB=false POSTGRES_SKIP_INIT_IN_TEST=1 DATABASE_URL=\"postgresql://consultinity:consultinity@127.0.0.1:34910/aud_rights\" npx vitest run server/src/services/auditProgramRights/__tests__/auditPackRights.realdb.test.ts --no-file-parallelism --maxWorkers=1 --maxConcurrency=2 --retry=0",
+      "exitCode": 0,
+      "result": "1 file collected, 10 passed, 0 failed, 0 skipped"
+    }
+  ],
+  "denominators": {
+    "taskTests": {
+      "files": 1,
+      "passed": 10,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "note": "The full 10 tests are shared with AUD-MVP-RIGHTS-001 (same file). Tests 1-4, 6 and 7 primarily support this task's fail-closed-gate claims (publish refusal, usage refusal, positive control, tenant, cold readback); test 5 (GAP-1 characterization) primarily supports AUD-MVP-RIGHTS-001."
+    },
+    "regression": null,
+    "note": "--retry=0 was mandatory: root vitest.config.ts sets retry: CI ? 3 : 1, which would otherwise let a flaky pass masquerade as green. No separate kernel regression run is recorded for this commit."
+  },
+  "realDb": {
+    "engine": "pgvector/pgvector:pg16",
+    "container": "consultify-closure-a-34910",
+    "databaseUrl": "postgresql://consultinity:consultinity@127.0.0.1:34910/aud_rights",
+    "schemaProvenance": "cloned from the strict-migration-runner database (703/703 schema_migrations success, 1557 public tables)",
+    "mockDb": false,
+    "note": "CI=true is required to unlock a local database host (server/src/config/databaseTargetResolver.ts:111-118). NODE_ENV=test alone was deliberately not relied on for DB selection; here it is set alongside CI=true, not instead of it."
+  },
+  "knownConsequences": [],
+  "browserArtifacts": [],
+  "rollback": {
+    "mechanism": "revert the commit; documentation and a new read-only test file only, no production code changed",
+    "schemaImpact": "none",
+    "flagImpact": "none",
+    "oldReaderCompatibility": "unaffected"
+  },
+  "integratorChangeRequests": [],
+  "openItems": [
+    "GAP 1 (unpublished packs listable/readable by any org member) has a ready-to-apply diff in docs/program/evidence/closure/a/AUD-MVP-RIGHTS-001/INTEGRATOR_CHANGE_REQUESTS.md, but it is outside this lane's lease (server/src/routes/audits/** is excluded).",
+    "GAP 2 (the legacy ISO 27001 preset bypasses the rights kernel entirely) is intentionally NOT a ready-to-apply diff — it requires a Product decision (retire vs. flag-gate vs. accept-as-is) before any code changes, per Section 1 item 2 of the decision packet.",
+    "The independence detector getIndependenceReport (auditTrailService.ts:269) is reachable via GET /trail/independence but has no caller anywhere in src/, server/src/cron, server/src/jobs, or server/src/scripts — a detector nobody runs is not a control.",
+    "No browser/visual evidence exists for this task; it is a decision packet plus backend negative-control tests, with no UI surface exercised."
+  ],
+  "unverifiedFields": [],
+  "verdict": "BLOCKED_OWNER",
+  "verdictRationale": "G0/G1/G3 shared gates pass at this SHA and the packet's factual claims are proven, not asserted: 10/10 real-Postgres tests confirm the fail-closed publish/usage gates work today, all four segregation-of-duties guards are wired at their call sites, and two real gaps (GAP 1 read-path filtering, GAP 2 legacy ISO 27001 preset bypass) are identified with evidence rather than hidden. This task is BLOCKED_OWNER by design: activating any named external standard, and deciding the fate of the legacy ISO 27001 preset, are Product + Methodology/Rights + Legal decisions this lane may not take (explicitly stated in the decision packet itself). The engineering-verifiable half of this task (does the fail-closed default actually hold today) is DONE; the decision half cannot be closed by this lane regardless of code quality. No browser/visual evidence exists, consistent with this being a decision/evidence task with no UI surface."
+}

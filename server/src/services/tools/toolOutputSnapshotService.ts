@@ -162,6 +162,59 @@ function outputPayload(output: ToolOutput): OutputPayload {
 const GENERIC_ENGINE_VERSION = 'generic-fallback-1.0.0';
 
 /**
+ * TLS-BVP-001 — NONEMPTY LINEAGE GUARD.
+ *
+ * Thrown from `buildOutputForSession` (below), BEFORE `submitForReview` /
+ * `approveOutput` run and before any `tool_outputs` row is written — this is
+ * the freeze/approve chokepoint: `ensureToolOutputSnapshot` is the ONLY
+ * place a `tool_outputs` row is created (see this module's header), and it
+ * is itself called from exactly one call site,
+ * `ToolController.promoteToOutput` (server/src/controllers/ToolController.ts,
+ * `POST /:toolId/promote` — the only route wired to it). Every promotion
+ * path (initiative/report/presentation/idea) goes through that one function,
+ * so a guard here cannot be bypassed by any caller.
+ *
+ * WHY HERE, NOT IN `requireDoD`/`getPromotionBlockers` (ToolController.ts):
+ * those gates check `completion_percent`/`confidence_avg` and runtime DoD
+ * items — neither ever inspects items/tensions/conclusions length (the
+ * exact gap TLS-BVP-001 closes). They also run on every session-approval
+ * path (`approveTool`, `requestReview`, `approveDoDGate`), which is a wider
+ * surface than "about to freeze an immutable snapshot" — adding a
+ * content-shape check there would also gate flows that never touch
+ * `tool_outputs` at all. The freeze boundary is the narrowest point every
+ * promotion path actually funnels through.
+ *
+ * SCOPE (deliberate, stated plainly — not a silent global block): enforced
+ * ONLY for `dynamic-swot`, the one MVP tool with a real engine bridge
+ * (`buildSwotOutput`). Blast radius: promoting a dynamic-swot session whose
+ * accepted items/tensions never produced a move that clears the W2 gate
+ * (zero conclusions) is now refused with 409 EMPTY_TOOL_OUTPUT; every other
+ * dynamic-swot promotion is unaffected. The other RUNTIME_ELIGIBLE_TOOL_TYPES
+ * fall through to the generic branch below, which this module's own header
+ * (see top of file) already documents as producing a structurally valid but
+ * "honestly empty" snapshot — those tools have no engine to derive a
+ * conclusion FROM, so blocking them here would fail EVERY one of their
+ * promotions, not just the genuinely-empty ones; that is a separate,
+ * larger decision (give each tool its own build*Output bridge) outside
+ * this task's scope. Left visibly deferred, not silently allowed: the
+ * generic branch logs every empty snapshot it creates (see
+ * `logger.warn(...)` below) so this gap stays observable until each tool
+ * gets its own bridge.
+ */
+export class EmptyToolOutputError extends Error {
+  public readonly code = 'EMPTY_TOOL_OUTPUT';
+  public readonly status = 409;
+  constructor(toolSessionId: string, toolType: string) {
+    super(
+      `Tool session ${toolSessionId} (${toolType}) produced zero conclusions — an ` +
+        'approved/frozen output must have nonempty lineage (TLS-BVP-001). Accept at ' +
+        'least one recommended move that clears the W2 gate before promoting.'
+    );
+    this.name = 'EmptyToolOutputError';
+  }
+}
+
+/**
  * Builds a draft ToolOutput from the session's CURRENT state. Called at most
  * once per session per promotion cycle — after this, the session may change
  * freely and the snapshot will not follow, by design (immutability property).
@@ -197,6 +250,16 @@ function buildOutputForSession(
       sourceRevision,
       createdBy: actor.id,
     });
+    // TLS-BVP-001: dynamic-swot is the one tool type this guard is scoped
+    // to (see EmptyToolOutputError's doc comment above for why here, and
+    // the exact blast radius). Zero conclusions means no move cleared the
+    // W2 gate — no traceable business value to freeze, even though items/
+    // tensions may be nonempty. Checked BEFORE submitForReview/approveOutput
+    // and before any DB write, so a refusal never leaves a tool_outputs row
+    // behind.
+    if (output.conclusions.length === 0) {
+      throw new EmptyToolOutputError(session.id, session.tool_type);
+    }
     return output;
   }
 
@@ -219,6 +282,17 @@ function buildOutputForSession(
     sourceRevision,
     engineVersion: GENERIC_ENGINE_VERSION,
   };
+  // TLS-BVP-001 SCOPE NOTE: the nonempty-lineage guard is NOT applied here —
+  // see EmptyToolOutputError's doc comment for why. Left visible (not
+  // silent): every empty generic-fallback snapshot logs a warning so this
+  // deferred gap stays observable instead of disappearing into "it worked".
+  logger.warn(
+    `[toolOutputSnapshotService] TLS-BVP-001 scope: freezing an EMPTY output for ` +
+      `tool_type=${session.tool_type} (no engine bridge yet — nonempty-lineage ` +
+      'enforcement is deliberately NOT applied to this tool_type, see ' +
+      'EmptyToolOutputError doc comment).',
+    { toolSessionId: session.id, organizationId: session.organization_id }
+  );
   return { ...draft, contentHash: computeOutputHash(draft) };
 }
 

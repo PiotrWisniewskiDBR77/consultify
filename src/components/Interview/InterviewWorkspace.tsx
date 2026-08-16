@@ -607,7 +607,15 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   ]);
 
   const runAiQualityReview = useCallback(
-    async (opts?: { silent?: boolean }) => {
+    // INT-DELIVERY-OPS-001 (2): `signal` is an optional settled-guard. The
+    // caller-side `withTimeout()` races this promise against a timer but has
+    // no way to cancel it — the loser keeps running and, without this guard,
+    // still called setAiEvaluation(...) after the caller already moved on
+    // with the timeout fallback (state clobbered by a stale late resolve). A
+    // caller that wraps this call in withTimeout creates a `{ cancelled: false }`
+    // object, passes it in, and flips `cancelled = true` in the timeout's catch
+    // branch; this function then skips its state writes for that call.
+    async (opts?: { silent?: boolean; signal?: { cancelled: boolean } }) => {
       if (!session?.id) return null;
       setIsAiEvaluating(true);
       setAiEvaluationError(null);
@@ -619,6 +627,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               language,
             })
         )) as InterviewAnswerEvaluation;
+        if (opts?.signal?.cancelled) return result;
         setAiEvaluation(result);
         setAiEvaluationUpdatedAt(new Date().toISOString());
         if (!opts?.silent) {
@@ -627,6 +636,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         return result;
       } catch (error) {
         console.error('[InterviewWorkspace] Failed to evaluate answers:', error);
+        if (opts?.signal?.cancelled) return null;
         const message = t('interview.workspace.failedToRunAiQuality');
         setAiEvaluationError(message);
         if (!opts?.silent) toast.error(message);
@@ -1027,7 +1037,17 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       setIsSaving(true);
 
       try {
-        const updated = await Api.patch(`/interview/questions/${questionId}`, updates);
+        // INT-BVP-001 (6): opportunistically round-trip the last-known
+        // `updatedAt` for this question so the server's optional CAS guard can
+        // engage. `updatedAt` isn't on the InterviewQuestion type yet (still
+        // owned by QuestionsList.tsx), hence the cast — the field is present
+        // at runtime because buildQuestionResponse now includes it. Omitting
+        // it (older cached question objects) is fully backward compatible:
+        // the backend treats a missing `expectedUpdatedAt` as "no guard".
+        const current = questions.find((q) => q.id === questionId);
+        const expectedUpdatedAt = (current as any)?.updatedAt;
+        const payload = expectedUpdatedAt ? { ...updates, expectedUpdatedAt } : updates;
+        const updated = await Api.patch(`/interview/questions/${questionId}`, payload);
         const nextQuestions = questions.map((q) =>
           q.id === questionId ? { ...q, ...updated } : q
         );
@@ -1043,9 +1063,17 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           onSessionChange?.(nextSession);
           return nextSession;
         });
-      } catch (error) {
+      } catch (error: any) {
         console.error('[InterviewWorkspace] Failed to update question:', error);
-        toast.error(t('interview.workspace.failedToSave'));
+        if (error?.status === 409) {
+          toast.error(
+            isPolish
+              ? 'Ktoś inny zaktualizował tę odpowiedź w międzyczasie. Odśwież i spróbuj ponownie.'
+              : 'This answer was updated elsewhere. Reload and try again.'
+          );
+        } else {
+          toast.error(t('interview.workspace.failedToSave'));
+        }
       } finally {
         setIsSaving(false);
       }
@@ -1461,10 +1489,16 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
       setQualityGate((prev) => ({ ...prev, checking: true }));
       let evaluation: InterviewAnswerEvaluation | null = aiEvaluation;
+      // INT-DELIVERY-OPS-001 (2): settled-guard — Promise.race inside withTimeout
+      // cannot cancel the losing promise, so runAiQualityReview keeps running
+      // after we give up on it below. Flip this once the timeout fires so a late
+      // resolve is a no-op inside runAiQualityReview instead of overwriting
+      // aiEvaluation state after the quality gate already moved on.
+      const aiReviewSignal = { cancelled: false };
       try {
         // Refresh the AI signal silently; tolerate failure (local-only fallback).
         const fresh = await withTimeout(
-          runAiQualityReview({ silent: true }),
+          runAiQualityReview({ silent: true, signal: aiReviewSignal }),
           12000,
           isPolish
             ? 'Przekroczono limit czasu oceny jakości AI.'
@@ -1473,6 +1507,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         if (fresh) evaluation = fresh;
       } catch {
         // ignore — fall back to whatever evaluation we already have
+        aiReviewSignal.cancelled = true;
       }
 
       const weak = computeWeakAnswers(evaluation);

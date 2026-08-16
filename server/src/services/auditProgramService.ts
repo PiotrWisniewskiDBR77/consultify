@@ -16,12 +16,20 @@
  * existing interview assignment endpoints. See the route handlers + the
  * frontend wizard for the explicit "Generate surveys" TODO.
  *
- * Persistence model: a single `audit_programs` table. The flexible parts
+ * Persistence model: a single `audit_programs` table, shared with the Audits
+ * kernel (server/src/services/audits/programService.ts) — see
+ * server/migrations/20260813_audits_method_core.sql. The flexible parts
  * (templateIds, assigneeIds, preset section→role plan, completion snapshot) live
  * in a JSON `config` column so we can evolve the shape without migrations.
- * DB_MANAGED_SCHEMA is off, so the table is created lazily via
- * CREATE TABLE IF NOT EXISTS — same pattern as insightSourceBasketService.ts /
- * discovery.routes.ts.
+ *
+ * AUD-MVP-OWNER-001 (2026-08-16): this service used to lazily self-heal the
+ * table's schema via `CREATE TABLE IF NOT EXISTS` on every call — a second
+ * schema owner for a table the Audits kernel migration also owns, which was
+ * part of the two-writer defect this task closes. `ensureSchema()` is now a
+ * no-op; the table is schema-owned exclusively by the migration pipeline.
+ * The CRUD *write* surface (create/update/delete) reached from
+ * audit-programs.routes.ts is also retired — see
+ * `isLegacyProgramWriteEnabled()` below. Reads keep working unconditionally.
  */
 
 import { randomUUID } from 'crypto';
@@ -116,34 +124,55 @@ function normalizeStatus(value: unknown, fallback: AuditProgramStatus): AuditPro
 }
 
 // ---------------------------------------------------------------------------
+// AUD-MVP-OWNER-001 — legacy write kill-switch
+// ---------------------------------------------------------------------------
+// `audit_programs` had TWO independent writer families hitting the SAME live
+// Postgres table: this legacy orchestrator (createProgram/updateProgram/
+// deleteProgram below) and the Audits kernel
+// (server/src/services/audits/programService.ts — INSERT at :409, UPDATE at
+// :592/:973, DELETE at :654). The kernel is the canonical writer going
+// forward; server/migrations/20260813_audits_method_core.sql formalizes the
+// shared schema (same table, same base columns + kernel-only ALTER-ed
+// columns like pack_id) and treats rows the kernel didn't author as
+// `legacy` on read.
+//
+// This flag gates the ENTIRE write surface reached from
+// audit-programs.routes.ts — the CRUD trio (POST /programs, PATCH
+// /programs/:id, DELETE /programs/:id) AND generate-surveys's bookkeeping
+// updateProgram() call — only reads (listPrograms/getProgram/
+// computeCompletion) are unaffected, so the default-ON legacy AuditsHub list
+// view keeps working for pre-existing rows.
+//
+// Default: DISABLED (safe) — legacy CRUD writes are retired. Rollback: set
+// AUDIT_PROGRAM_LEGACY_WRITES_ENABLED=true to restore the pre-retirement
+// behavior without a code revert (e.g. if the kernel path is not actually
+// ready in some environment). Unset/false re-disables it. Route-layer check
+// lives in audit-programs.routes.ts; this getter is the single source of
+// truth both the routes and tests read.
+export function isLegacyProgramWriteEnabled(): boolean {
+  return String(process.env.AUDIT_PROGRAM_LEGACY_WRITES_ENABLED || '').toLowerCase() === 'true';
+}
+
+// ---------------------------------------------------------------------------
 // Lazy schema (DB_MANAGED_SCHEMA is off — create on first use)
 // ---------------------------------------------------------------------------
 
 let schemaReady = false;
 
+/**
+ * AUD-MVP-OWNER-001: retired the self-healing `CREATE TABLE IF NOT EXISTS
+ * audit_programs` (+ its index) that used to run here on every call. A
+ * second component defining the canonical table's own schema was part of
+ * the two-writer defect this task closes — `audit_programs` is now
+ * schema-owned exclusively by the ordinary migration pipeline
+ * (server/migrations/20260813_audits_method_core.sql CREATE TABLE IF NOT
+ * EXISTS + ALTER TABLE ... ADD COLUMN IF NOT EXISTS, plus the earlier
+ * baseline migration). Safe no-op: verified against a real, fully-migrated
+ * Postgres (703/703 migrations applied) for this task — the table and its
+ * index already exist before this function ever runs, so read/write SQL
+ * below is unaffected.
+ */
 export async function ensureSchema(): Promise<void> {
-  if (schemaReady) return;
-  await dbRun(
-    `CREATE TABLE IF NOT EXISTS audit_programs (
-      id TEXT PRIMARY KEY,
-      organization_id TEXT NOT NULL,
-      name TEXT NOT NULL,
-      description TEXT,
-      objective TEXT,
-      status TEXT NOT NULL DEFAULT 'draft',
-      preset TEXT,
-      config TEXT,
-      created_by TEXT NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`,
-    []
-  );
-  await dbRun(
-    `CREATE INDEX IF NOT EXISTS idx_audit_programs_org
-       ON audit_programs(organization_id)`,
-    []
-  ).catch(() => {});
   schemaReady = true;
 }
 

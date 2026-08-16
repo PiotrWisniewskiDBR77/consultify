@@ -22,13 +22,20 @@
  * ask the backend for a new endpoint here — one already exists.
  */
 import { Clock3, Library as LibraryIcon, PlayCircle } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
 import { ErrorState } from '@/components/shared/states';
 import { type StandardRowMenu, StandardTable, type TableColumn } from '@/components/standard';
 import { StatusChip } from '@/components/ui/primitives/chips';
+import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
+import {
+  createSession as createMethodCoreSession,
+  MethodCoreApiError,
+  newIdempotencyKey,
+} from '@/method-core/api/methodCoreApi';
+import { DRD_METHOD_PACK_ID, DRD_METHOD_PACK_VERSION } from '@/method-core/methods/drd/compileDrdPack';
 import { V8AssessmentApi } from '@/services/api/v8';
 import type { V8AssessmentDefinitionRecord } from '@/services/api/v8/assessment';
 
@@ -77,6 +84,46 @@ const METHODOLOGY_CATALOG: MethodologyRow[] = [
   },
 ];
 
+// ---------------------------------------------------------------------------
+// ASM-BVP-001 — double-click guard for the method-core create-session path.
+//
+// Pure, ref-driven (never React state): a `useState` re-render gap means two
+// rapid clicks can both read the SAME pre-update `startingId` value — state
+// updates are not visible to a second synchronous event handler invocation
+// until the component actually re-renders. A plain mutable ref has no such
+// gap (JS is single-threaded; the first call's synchronous `.add()` is
+// visible to the second call immediately), so it is the one used to decide
+// whether a click may dispatch a create request at all. Exported so the
+// double-click guarantee is testable without mounting the full component
+// (see tests/assessmentBvp/AssessmentLibraryTab.methodCoreStart.test.ts).
+// ---------------------------------------------------------------------------
+export function shouldDispatchMethodCoreStart(inFlight: Set<string>, rowId: string): boolean {
+  if (inFlight.has(rowId)) return false;
+  inFlight.add(rowId);
+  return true;
+}
+
+/**
+ * Returns a stable Idempotency-Key for THIS in-flight start attempt on
+ * `rowId` — generated once (via `generate`) and reused for as long as the
+ * attempt is in flight (including any underlying HTTP retry inside
+ * `fetchWithRetry`), never re-randomized mid-attempt. Combined with
+ * `shouldDispatchMethodCoreStart`'s synchronous re-entrancy guard above, a
+ * double-click can therefore never reach the network as two distinct
+ * `POST /api/method/sessions` calls with two different keys.
+ */
+export function getOrCreateStartIdempotencyKey(
+  keys: Map<string, string>,
+  rowId: string,
+  generate: () => string
+): string {
+  const existing = keys.get(rowId);
+  if (existing) return existing;
+  const created = generate();
+  keys.set(rowId, created);
+  return created;
+}
+
 function pickLatestPublished(
   versions: V8AssessmentDefinitionRecord[]
 ): V8AssessmentDefinitionRecord | null {
@@ -92,10 +139,38 @@ function pickLatestPublished(
 
 export const AssessmentLibraryTab: React.FC = () => {
   const navigate = useNavigate();
+  // ASM-UI-CANON-001 (2026-08-16): was the bare `useFeatureFlags()` hook,
+  // which creates its OWN independent flag-resolution state (defaults
+  // `enableLocalOverrides` to false) instead of reading the app-level
+  // `<FeatureFlagsProvider>` — so `VITE_ENABLE_LOCAL_FEATURE_FLAG_OVERRIDES=true`
+  // + a `consultify_feature_flags` localStorage override could never reach
+  // `drdMethodWorkspaceSliceV1`/`drdHttpSourceOfTruthV1` here, even though
+  // both flags declare `allowLocalOverride: true` and every other Assessment
+  // surface (AssessmentHub.tsx) already reads flags through the context.
+  // `useFeatureFlagsContext()` returns the identical `UseFeatureFlagsReturn`
+  // shape, so this is a pure fix, not a behavior change to default (OFF)
+  // flag values.
+  const { isEnabled } = useFeatureFlagsContext();
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [drdDefinition, setDrdDefinition] = useState<V8AssessmentDefinitionRecord | null>(null);
   const [startingId, setStartingId] = useState<MethodologyId | null>(null);
+
+  // ASM-BVP-001: the DRD method-core workspace path is active only when BOTH
+  // flags are on — `drdMethodWorkspaceSliceV1` mounts DrdMethodWorkspaceScreen
+  // at all, `drdHttpSourceOfTruthV1` is what makes it actually resolve the
+  // route id via `GET /api/method/sessions/:id` instead of treating it as an
+  // opaque localStorage key (src/method-core/methods/drd/drdHttpSessionRuntime.ts).
+  // Both default OFF (src/hooks/useFeatureFlags.tsx) — with either off, this
+  // branch never runs and `handleStart` is BYTE-FOR-BYTE the legacy
+  // `V8AssessmentApi.createAssessment` call it always was.
+  const drdMethodCoreActive =
+    isEnabled('drdMethodWorkspaceSliceV1') && isEnabled('drdHttpSourceOfTruthV1');
+
+  // Double-click guards for the method-core create path — refs, not state,
+  // see `shouldDispatchMethodCoreStart`'s header comment for why.
+  const startInFlightRef = useRef<Set<MethodologyId>>(new Set());
+  const startIdempotencyKeysRef = useRef<Map<MethodologyId, string>>(new Map());
 
   const loadDrdDefinition = useCallback(async () => {
     setIsLoading(true);
@@ -121,40 +196,101 @@ export const AssessmentLibraryTab: React.FC = () => {
     void loadDrdDefinition();
   }, [loadDrdDefinition]);
 
+  // Whether Start may be clicked for this row at all — for DRD under the
+  // method-core path, the legacy `drdDefinition` (a DIFFERENT, V8
+  // `assessment_definitions`-backed catalog, unrelated to `method_packs`) is
+  // no longer a precondition: the DRD pack is bootstrapped server-side by
+  // `ensureDrdPackRegistered` (server/src/method-core/MethodPackRegistry.ts)
+  // on the create-session path itself.
+  const canStartRow = useCallback(
+    (row: MethodologyRow): boolean => {
+      if (!row.supported) return false;
+      if (row.id === 'DRD' && drdMethodCoreActive) return true;
+      return !!drdDefinition;
+    },
+    [drdDefinition, drdMethodCoreActive]
+  );
+
   const handleStart = useCallback(
     async (row: MethodologyRow) => {
-      if (!row.supported || !drdDefinition) return;
+      if (!canStartRow(row)) return;
+      // Synchronous re-entrancy guard — see `shouldDispatchMethodCoreStart`'s
+      // header comment. Applied uniformly (not just the method-core branch)
+      // so a double-click can never dispatch two legacy creates either.
+      if (!shouldDispatchMethodCoreStart(startInFlightRef.current, row.id)) return;
+
+      const methodCoreDrdStart = row.id === 'DRD' && drdMethodCoreActive;
+
       setStartingId(row.id);
       const toastId = toast.loading(`Starting ${row.name}…`);
       try {
-        const created = await V8AssessmentApi.createAssessment({
-          assessmentType: row.id,
-          name: `${row.name} — ${new Date().toLocaleDateString()}`,
-          definitionId: drdDefinition.id,
-          definitionVersion: drdDefinition.version,
-        });
-        const newId = (created as any)?.id || (created as any)?.assessment?.id;
-        if (!newId) throw new Error('Assessment created but no id was returned');
-        toast.success(`${row.name} started`, { id: toastId });
-        navigate(`/assessment/${row.id.toLowerCase()}/${newId}`);
-      } catch (e: any) {
-        const code = e?.data?.code;
-        if (code === 'DEFINITION_NOT_PUBLISHED' || code === 'DEFINITION_NOT_FOUND') {
-          toast.error(
-            code === 'DEFINITION_NOT_PUBLISHED'
-              ? 'This DRD definition is no longer published. Refreshing the Library…'
-              : 'The selected DRD definition could not be found. Refreshing the Library…',
-            { id: toastId }
+        if (methodCoreDrdStart) {
+          // ASM-BVP-001: real `method_sessions` row via the shared kernel —
+          // NEVER also INSERTs into the legacy `assessments` table (no dual
+          // write: CLAUDE.md / frozen MVP decision #1). `mode: 'guided_manual'`
+          // matches what the legacy DRD editor always was — Library "Start"
+          // has no UI for choosing Teresa-led mode yet.
+          const idempotencyKey = getOrCreateStartIdempotencyKey(
+            startIdempotencyKeysRef.current,
+            row.id,
+            newIdempotencyKey
           );
-          void loadDrdDefinition();
+          const res = await createMethodCoreSession(
+            {
+              module: 'assessment',
+              methodPackId: DRD_METHOD_PACK_ID,
+              methodPackVersion: DRD_METHOD_PACK_VERSION,
+              mode: 'guided_manual',
+              projectId: null,
+            },
+            idempotencyKey
+          );
+          toast.success(`${row.name} started`, { id: toastId });
+          // Same URL shape the legacy path below already navigates to
+          // (`/assessment/<framework>/<id>`) — `shouldMountDrdMethodWorkspace`
+          // (src/views/AssessmentSessionEditorView.tsx) keys off the lowercase
+          // 'drd' framework segment, unchanged by this branch.
+          navigate(`/assessment/drd/${res.session.id}`);
         } else {
-          toast.error(e?.message || `Failed to start ${row.name}`, { id: toastId });
+          const created = await V8AssessmentApi.createAssessment({
+            assessmentType: row.id,
+            name: `${row.name} — ${new Date().toLocaleDateString()}`,
+            definitionId: (drdDefinition as V8AssessmentDefinitionRecord).id,
+            definitionVersion: (drdDefinition as V8AssessmentDefinitionRecord).version,
+          });
+          const newId = (created as any)?.id || (created as any)?.assessment?.id;
+          if (!newId) throw new Error('Assessment created but no id was returned');
+          toast.success(`${row.name} started`, { id: toastId });
+          navigate(`/assessment/${row.id.toLowerCase()}/${newId}`);
+        }
+      } catch (e: any) {
+        if (e instanceof MethodCoreApiError) {
+          const reason =
+            e.body?.error === 'pack_not_released'
+              ? 'The DRD method pack is not yet registered for production sessions.'
+              : e.message || `Failed to start ${row.name}`;
+          toast.error(reason, { id: toastId });
+        } else {
+          const code = e?.data?.code;
+          if (code === 'DEFINITION_NOT_PUBLISHED' || code === 'DEFINITION_NOT_FOUND') {
+            toast.error(
+              code === 'DEFINITION_NOT_PUBLISHED'
+                ? 'This DRD definition is no longer published. Refreshing the Library…'
+                : 'The selected DRD definition could not be found. Refreshing the Library…',
+              { id: toastId }
+            );
+            void loadDrdDefinition();
+          } else {
+            toast.error(e?.message || `Failed to start ${row.name}`, { id: toastId });
+          }
         }
       } finally {
         setStartingId(null);
+        startInFlightRef.current.delete(row.id);
+        startIdempotencyKeysRef.current.delete(row.id);
       }
     },
-    [drdDefinition, navigate, loadDrdDefinition]
+    [canStartRow, drdDefinition, drdMethodCoreActive, navigate, loadDrdDefinition]
   );
 
   const columns: TableColumn[] = useMemo(
@@ -177,6 +313,14 @@ export const AssessmentLibraryTab: React.FC = () => {
           if (row.id !== 'DRD') {
             return <StatusChip label="Coming soon" tone="neutral" />;
           }
+          // Method-core path: DRD is startable via the governed `method_packs`
+          // bootstrap regardless of the legacy V8 definitions catalog — see
+          // `drdMethodCoreActive`'s header comment. Only rendered when BOTH
+          // flags are ON (default OFF), so this never paints for Piotr before
+          // an explicit accepted flag flip (CLAUDE.md rule #7).
+          if (drdMethodCoreActive) {
+            return <StatusChip label="Method Core (pilot)" tone="success" />;
+          }
           if (isLoading) {
             return <StatusChip label="Checking…" tone="neutral" />;
           }
@@ -191,7 +335,7 @@ export const AssessmentLibraryTab: React.FC = () => {
         label: 'Actions',
         width: '140px',
         render: (row: MethodologyRow) => {
-          const disabled = !row.supported || !drdDefinition || startingId === row.id;
+          const disabled = !canStartRow(row) || startingId === row.id;
           return (
             <button
               type="button"
@@ -202,11 +346,11 @@ export const AssessmentLibraryTab: React.FC = () => {
               }}
               className="inline-flex h-9 items-center gap-2 rounded-full border border-[var(--c-border)] bg-[var(--c-surface)] px-3 text-sm font-medium text-[var(--c-text)] transition-colors hover:bg-[var(--c-surface-raised)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)] disabled:cursor-not-allowed disabled:opacity-50"
               title={
-                row.supported
-                  ? drdDefinition
-                    ? `Start a new ${row.name} assessment`
-                    : 'No published definition available yet'
-                  : 'Not available in this MVP'
+                canStartRow(row)
+                  ? `Start a new ${row.name} assessment`
+                  : row.supported
+                    ? 'No published definition available yet'
+                    : 'Not available in this MVP'
               }
             >
               {startingId === row.id ? (
@@ -220,7 +364,7 @@ export const AssessmentLibraryTab: React.FC = () => {
         },
       },
     ],
-    [drdDefinition, isLoading, startingId, handleStart]
+    [canStartRow, drdDefinition, drdMethodCoreActive, isLoading, startingId, handleStart]
   );
 
   const data = useMemo(() => METHODOLOGY_CATALOG.map((row) => ({ ...row })), []);
@@ -228,9 +372,8 @@ export const AssessmentLibraryTab: React.FC = () => {
   const rowMenu = useCallback(
     (row: any): StandardRowMenu => {
       const methodology = row as MethodologyRow;
-      const canStart = methodology.supported && !!drdDefinition;
       return {
-        primary: canStart
+        primary: canStartRow(methodology)
           ? [
               {
                 id: 'start',
@@ -242,7 +385,7 @@ export const AssessmentLibraryTab: React.FC = () => {
           : [],
       };
     },
-    [drdDefinition, handleStart]
+    [canStartRow, handleStart]
   );
 
   return (

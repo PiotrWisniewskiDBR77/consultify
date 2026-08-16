@@ -1,0 +1,95 @@
+{
+  "taskId": "INT-BVP-001",
+  "lane": "a",
+  "branch": "codex/closure-claude-a-method-evidence",
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "baselineTag": "closure-execution-baseline-v2-20260816",
+  "productSha": "6ce3cea3c5186d3dc04f63575353bdfec1415af8",
+  "leaseSha256": "a2f9be9983e3a03e5e64f1a51dca193199a5bec963a246c3b4fe94b378af1308",
+  "changedPaths": [
+    "server/migrations/20260910_claude_a_interview_candidate_exactly_once.sql",
+    "server/src/services/interview/interviewCandidateHandoff.ts",
+    "server/src/services/interviewCandidate/__tests__/interviewCandidateExactlyOnce.pg.test.ts"
+  ],
+  "changedPathRationale": {
+    "server/migrations/20260910_claude_a_interview_candidate_exactly_once.sql": "Adds a partial unique index on initiative_candidates(organization_id, source_id), scoped to the two interview source types and non-dismissed rows, making a duplicate impossible for both the gated handoff writer and the out-of-lease scanForCandidates writer. Includes a guarded pre-reconciliation of pre-existing duplicates (already-promoted row wins, else earliest created_at; losers dismissed, never deleted; rows with initiative_id set are never touched).",
+    "server/src/services/interview/interviewCandidateHandoff.ts": "The handoff now writes the candidate row's source_id as the INSIGHT id (not the finding id) for the 'interview_insight_finding' kind, so the same partial unique index catches duplicates from both writers despite their different source_type strings and id domains. getInterviewCandidateHandoff now resolves the downstream initiative through candidate_id instead of the receipt's source_id. Losing inserts inside the handoff are caught via a SAVEPOINT because createCandidateFromSource has no ON CONFLICT clause.",
+    "server/src/services/interviewCandidate/__tests__/interviewCandidateExactlyOnce.pg.test.ts": "New real-Postgres proof, 11/11: both path orders converge on one row, concurrent execution converges on one row, two positive controls (single handoff still succeeds; two different insights still get their own candidate, proving the constraint is not over-scoped), gate negative, retry/replay, tenant negative, cold readback, zero orphans, and migration application over pre-seeded duplicates on a scratch database."
+  },
+  "commands": [
+    {
+      "gate": "G0",
+      "command": "node scripts/cleanup/verify-closure-lane.mjs a closure-execution-baseline-v2-20260816",
+      "exitCode": 0,
+      "result": "lane A lease PASS at baseline"
+    },
+    {
+      "gate": "G1",
+      "command": "npm run test:inventory:generate && npm run test:discovery-gate",
+      "exitCode": 0,
+      "result": "4997 discovered / 4997 manifest entries / 4698 executed-classified"
+    },
+    {
+      "gate": "G1",
+      "command": "npm run type-check",
+      "exitCode": 0,
+      "result": "zero TypeScript errors"
+    },
+    {
+      "gate": "G1",
+      "command": "npm run build:backend && NODE_OPTIONS=--max-old-space-size=8192 npm run build",
+      "exitCode": 0,
+      "result": "both exit 0; pre-existing chunk-size and browserslist warnings recorded, not promoted to failures"
+    },
+    {
+      "gate": "G3",
+      "command": "CI=true DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts",
+      "exitCode": 0,
+      "result": "703/703 success on strict fresh-schema run; repeat run applied zero; --dry-run reported zero pending; 1557 public tables"
+    },
+    {
+      "gate": "G2/task",
+      "command": "DATABASE_URL=postgresql://consultinity:consultinity@127.0.0.1:34918/consultinity DB_TYPE=postgres CI=true RUN_DB_TESTS=1 MOCK_DB=false npx vitest run server/src/services/interviewCandidate/__tests__/interviewCandidateExactlyOnce.pg.test.ts --no-file-parallelism --maxWorkers=1 --maxConcurrency=2 --retry=0",
+      "exitCode": 0,
+      "result": "1 file collected, 11 passed, 0 failed, 0 skipped"
+    }
+  ],
+  "denominators": {
+    "taskTests": { "files": 1, "passed": 11, "failed": 0, "skipped": 0, "todo": 0 },
+    "regression": null,
+    "note": "--retry=0 was mandatory: root vitest.config.ts sets retry: CI ? 3 : 1, which would otherwise let a flaky pass masquerade as green. No regression suite counts are stated in the commit message for this task, unlike the other seven records in this lane."
+  },
+  "realDb": {
+    "engine": "pgvector/pgvector:pg16",
+    "container": "consultify-closure-a-34918",
+    "databaseUrl": "postgresql://consultinity:consultinity@127.0.0.1:34918/consultinity",
+    "schemaProvenance": "cloned from the strict-migration-runner database (703/703 schema_migrations success, 1557 public tables)",
+    "mockDb": false,
+    "note": "CI=true is required to unlock a local database host (server/src/config/databaseTargetResolver.ts:111-118). NODE_ENV=test alone was deliberately not relied on for DB selection."
+  },
+  "knownConsequences": [
+    {
+      "description": "scanForCandidates (cron + manual scan, outside this lane) wraps its own INSERT in a catch that does not rethrow, so a 23505 from the new index is absorbed and cannot crash the scan cron or the manual-scan route — but the cost is wasted retries until the root-cause integrator fix (unifying source_id semantics on that path) lands.",
+      "blocking": false,
+      "source": "commit 6ce3cea3c5186d3dc04f63575353bdfec1415af8"
+    }
+  ],
+  "browserArtifacts": [],
+  "rollback": {
+    "mechanism": "revert the commit; the migration's index creation is additive/reversible, but its pre-existing-duplicate reconciliation (dismissing losing rows) is a data mutation a code revert does not undo — dismissed rows stay dismissed, never deleted",
+    "schemaImpact": "one new partial unique index on initiative_candidates(organization_id, source_id), scoped by WHERE clause to the two interview source types and non-dismissed rows; no column changes",
+    "flagImpact": "none — the fix is unconditional, not behind a runtime flag",
+    "oldReaderCompatibility": "existing lookups by findingId are unaffected because the handoff receipt keeps the finding id; only the internal candidate row's source_id changed for the 'interview_insight_finding' kind. Historical source_ids are deliberately NOT rewritten, so already-accepted initiatives' lineage is undisturbed."
+  },
+  "integratorChangeRequests": [],
+  "openItems": [
+    "Per docs/cleanup/agents/CLAUDE_LANE_A_15_TASKS_20260816.md line 76-79, INT-BVP-001's full scope is \"publish -> invite -> respondent resume -> submit -> approve, insight -> one candidate -> cold reopen. Prove expiry/revoke, anonymous wall, org owner/admin/direct/team assignee access, tenant, stale and concurrency.\" This commit closes only the 'insight -> exactly one candidate' slice. No commit in this lane's range touches invite/expiry/revoke, the anonymous respondent wall, or the org owner/admin/direct/team assignee access matrix — a repo-wide search for INT-BVP-001 outside this task's own evidence and the lane task list found no other reference. Whether that half maps onto any existing code at all is unresolved and is a scope question for the owner, not something this lane silently completed.",
+    "scripts/cleanup/verify-closure-lane.mjs grants its allowedNewRoots exemption only to files that are currently untracked (const isNew = !isTracked(file)), so a legitimately-placed new file starts being reported as a violation the moment it is committed. This lane's new file under server/src/services/interviewCandidate/__tests__/ matches the allowed pattern and is benign.",
+    "No browser/visual evidence exists for any part of the Interview surface for this task."
+  ],
+  "unverifiedFields": [
+    "denominators.regression (not stated in the commit message for this task)"
+  ],
+  "verdict": "PARTIAL",
+  "verdictRationale": "G0/G1/G3 shared gates pass at this SHA and the exactly-one-candidate half is solidly proven: 11/11 real-Postgres tests including both writer path orders, concurrency, tenant, replay, cold readback, and dedup-of-existing-duplicates. This is PARTIAL, not DONE_CURRENT_SHA, because the task's full published scope (docs/cleanup/agents/CLAUDE_LANE_A_15_TASKS_20260816.md) also requires proving invite/expiry/revoke, the anonymous respondent wall, and the org owner/admin/direct/team assignee access matrix — none of which appears in any commit in this lane's range. That is not a minor gap; it is roughly half of the named DoD, and it is unclear from the evidence available to this record whether the underlying code even exists to test. No browser/visual evidence exists either. The lead or owner needs to decide whether the untouched half is in scope, already covered elsewhere, or genuinely missing before this can move past PARTIAL."
+}

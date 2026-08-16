@@ -125,8 +125,34 @@ const TEMPLATE_2 = 'tpl-iso-a9';
 const FOREIGN_TEMPLATE = 'tpl-foreign';
 
 async function seedFixtures(): Promise<void> {
+  // AUD-MVP-OWNER-001: `ensureSchema()` used to lazily CREATE TABLE IF NOT
+  // EXISTS audit_programs on first call — a second schema owner for a table
+  // the Audits kernel migration also owns, which was part of the two-writer
+  // defect this task closes. ensureSchema() is now a no-op (schema is owned
+  // exclusively by the migration pipeline on a real DB), so THIS fixture must
+  // now play the role the migration plays in production: create the table
+  // before any service call runs. Mirrors the real schema (see
+  // auditProgramService.ts's former CREATE TABLE + server/migrations/
+  // 20260813_audits_method_core.sql section 0).
+  await runAsync(`CREATE TABLE IF NOT EXISTS audit_programs (
+    id TEXT PRIMARY KEY,
+    organization_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT,
+    objective TEXT,
+    status TEXT NOT NULL DEFAULT 'draft',
+    preset TEXT,
+    config TEXT,
+    created_by TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  )`);
+  await runAsync(
+    `CREATE INDEX IF NOT EXISTS idx_audit_programs_org ON audit_programs(organization_id)`
+  );
+
   // Supporting tables the service's SEC-3 guards + rollup query. The service
-  // itself lazily creates audit_programs; these are its dependencies.
+  // itself used to lazily create audit_programs; these are its dependencies.
   await runAsync(`CREATE TABLE IF NOT EXISTS organization_members (
     organization_id TEXT, user_id TEXT, status TEXT
   )`);
