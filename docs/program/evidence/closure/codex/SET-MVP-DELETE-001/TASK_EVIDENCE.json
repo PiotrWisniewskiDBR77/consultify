@@ -9,7 +9,7 @@
   "commands": [
     {"command": "npm run type-check", "exitCode": 0},
     {"command": "npm run build:backend", "exitCode": 0},
-    {"command": "RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres DATABASE_URL=<isolated-local-pg> npx vitest run tests/integration/settings/account-deletion-routes-guard.test.ts tests/integration/settings/gdpr-settings-no-stubs.test.ts", "exitCode": 0, "result": "missing password 400; wrong password 403; correct password creates exactly one scheduled record on both canonical routes"
+    {"command": "RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres DATABASE_URL=<isolated-local-pg> npx vitest run tests/integration/settings/account-deletion-routes-guard.test.ts tests/integration/settings/gdpr-settings-no-stubs.test.ts", "exitCode": 0, "result": "missing password 400; wrong password 403; correct password creates exactly one scheduled record on both canonical routes"}
   ],
   "negativeControls": [
     "missing password writes zero deletion rows",
