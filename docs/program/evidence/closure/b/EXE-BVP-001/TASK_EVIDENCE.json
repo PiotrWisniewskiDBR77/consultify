@@ -1,7 +1,8 @@
 {
   "taskId": "EXE-BVP-001",
   "baselineSha": "7bd1ed4c6f36a2ea759abb86bf37d3ae1ec935fd",
-  "productSha": "7e3fa1d1d260b1af0179bb94eb49ba6daf0a4443",
+  "productSha": "dc6d6743fb",
+  "technicalVerdict": "PASS_CURRENT_SHA",
   "leaseSha256": "f4d75f0aed94f2e34acaec63d91c245495e7e0f658aa36d1122342c2acecc612",
   "toolchain": {
     "node": "v24.12.0",
@@ -13,8 +14,8 @@
   },
   "laneGates": {
     "G0": "PASS — branch codex/closure-claude-b-transformation, HEAD==baseline at start, verify-closure-lane.mjs PASS",
-    "G1": "PASS — type-check exit 0, build:backend exit 0, build exit 0, discovery-gate PASS 4997/4997",
-    "G3_strict_migration": "PASS — fresh/repeat/dry-run exit 0; schema_migrations 703 success / 0 failed / 0 pending; 703/703 checksums independently verified; 1678 tables",
+    "G1": "PASS — server type-check exit 0 and build:backend exit 0 on dc6d6743fb",
+    "G3_strict_migration": "PASS — fresh 733/733, repeat 0, dry-run 0 on isolated pgvector PostgreSQL 16",
     "G2_lane_baseline": "RED (pre-existing at sealed baseline): 747 collected of 761 real test files; 107 files failed / 557 passed / 83 skipped; 287 tests failed / 4270 passed / 617 skipped",
     "G2_defects": "14 leased acceptance tests uncollectable by the mandated command; 110 further realDB files run without a DB by it; backend tests execute under jsdom because environmentMatchGlobs is dead in Vitest 4"
   },
@@ -36,10 +37,13 @@
   "commands": [
     "node scripts/cleanup/verify-closure-lane.mjs b closure-execution-baseline-v2-20260816",
     "jq -r '.tests.vitest[]' docs/cleanup/agents/generated/CLAUDE_LANE_B_PATH_LEASE.json | xargs -n 80 npx vitest run --no-file-parallelism --maxWorkers=1 --maxConcurrency=2 --retry=0",
-    "CI=true DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts  (fresh, repeat, --dry-run)"
+    "CI=true DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts (fresh 733, repeat 0, dry-run 0)",
+    "RUN_DB_TESTS=1 MOCK_DB=false npx vitest run executionBvpService.pg.test.ts — 1/1 file, 1/1 full mounted flow",
+    "NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p server/tsconfig.json --noEmit — exit 0",
+    "NODE_OPTIONS=--max-old-space-size=8192 npm run build:backend — exit 0"
   ],
   "denominators": {
-    "task": "End-to-end chain trace; breaks at entry and at both exits",
+    "task": "Mounted Initiative→Case→spine→four-eyes evidence→one Results signal→one immutable ingress receipt→cold reopen, 1/1",
     "laneRealDbPass": "110 leased realDB files on an isolated DB: 77 passed / 7 failed / 26 skipped; 675 tests: 565 passed / 51 failed / 59 skipped",
     "recoveredAcceptance": "14 leased acceptance files the mandated G2 command cannot collect, run under vitest.acceptance.config.ts: 105 tests, 91 passed / 14 failed"
   },
@@ -48,11 +52,20 @@
     "isolatedDb": "consultify-closure-b-64f50785 @127.0.0.1:55811; verification replica @55812; clean-room @55813",
     "env": "NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false (all three required — NODE_ENV=test alone substitutes a mock DB)"
   },
-  "negativeControls": {},
+  "negativeControls": {
+    "tenant": "Foreign tenant link attempt denied",
+    "bodySpoof": "Body organizationId is ignored; authenticated actor tenant is authoritative",
+    "staleCas": "Second spine write at stale version is rejected",
+    "fourEyes": "Submitter cannot approve own delivery evidence",
+    "producerConcurrency": "Eight close requests converge to one signal ID",
+    "consumerConcurrency": "Eight consumers create exactly one Results ingress receipt",
+    "immutability": "Direct receipt mutation rejected by database trigger",
+    "coldRestart": "Independent PostgreSQL client joins exact producer envelope to immutable receipt"
+  },
   "browserArtifacts": [],
   "rollback": {
     "method": "Revert application code while retaining the additive 20260908 execution spine schema for old-reader compatibility; do not destructively roll back an applied migration."
   },
   "verdict": "PARTIAL",
-  "openBlocker": "No task-local blocker. Downstream Results consumption remains owner-gated and is intentionally not claimed by this producer/outbox task; see IMPLEMENTATION_2026-08-16.md."
+  "openBlocker": "Backend G0-G3/G5-G6 is closed including the formerly missing Results consumer. Overall remains PARTIAL because the task matrix requires G4 and no mounted browser/human Execution journey is claimed here."
 }

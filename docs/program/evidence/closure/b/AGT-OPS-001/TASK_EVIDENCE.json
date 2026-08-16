@@ -1,7 +1,8 @@
 {
   "taskId": "AGT-OPS-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "99406b784bf1332beb369be161e75a2422f00fc6",
+  "productSha": "dc6d6743fb",
+  "technicalVerdict": "PASS_CURRENT_SHA",
   "leaseSha256": "f4d75f0aed94f2e34acaec63d91c245495e7e0f658aa36d1122342c2acecc612",
   "toolchain": {
     "node": "v24.12.0",
@@ -13,8 +14,8 @@
   },
   "laneGates": {
     "G0": "PASS — branch codex/closure-claude-b-transformation, HEAD==baseline at start, verify-closure-lane.mjs PASS",
-    "G1": "PASS — type-check exit 0, build:backend exit 0, build exit 0, discovery-gate PASS 4997/4997",
-    "G3_strict_migration": "PASS — fresh/repeat/dry-run exit 0; schema_migrations 703 success / 0 failed / 0 pending; 703/703 checksums independently verified; 1678 tables",
+    "G1": "PASS — server type-check exit 0 and build:backend exit 0 on dc6d6743fb",
+    "G3_strict_migration": "PASS — fresh 733/733, repeat 0, dry-run 0 on isolated pgvector PostgreSQL 16",
     "G2_lane_baseline": "RED (pre-existing at sealed baseline): 747 collected of 761 real test files; 107 files failed / 557 passed / 83 skipped; 287 tests failed / 4270 passed / 617 skipped",
     "G2_defects": "14 leased acceptance tests uncollectable by the mandated command; 110 further realDB files run without a DB by it; backend tests execute under jsdom because environmentMatchGlobs is dead in Vitest 4"
   },
@@ -22,15 +23,33 @@
     "ai_agent_plans",
     "v8_agent_canonical_projection_outbox"
   ],
-  "changedPaths": [],
-  "changedPathRationale": {},
+  "changedPaths": [
+    "server/src/index.ts",
+    "server/src/workers/aiWorker.ts",
+    "server/src/workers/aiWorkerRuntime.ts",
+    "server/src/workers/__tests__/aiWorkerRuntime.test.ts",
+    "server/src/workers/__tests__/aiWorkerTenant.test.ts",
+    "server/src/workers/__tests__/aiWorkerRedis.integration.test.ts",
+    "server/src/services/ai/__tests__/agentPlannerDispatch.pg.test.ts"
+  ],
+  "changedPathRationale": {
+    "server/src/index.ts": "Controlled startup and graceful shutdown of the existing ai-tasks consumer",
+    "server/src/workers/aiWorker.ts": "Tenant envelope validation, lazy dependencies and terminal retry telemetry",
+    "server/src/workers/aiWorkerRuntime.ts": "Default-OFF owner-gated singleton runtime",
+    "server/src/workers/__tests__/aiWorkerRedis.integration.test.ts": "Real Redis/BullMQ consume-retry-exhaust-retain proof",
+    "server/src/services/ai/__tests__/agentPlannerDispatch.pg.test.ts": "Real PostgreSQL idempotency, tenant and cold-readback proof"
+  },
   "commands": [
     "node scripts/cleanup/verify-closure-lane.mjs b closure-execution-baseline-v2-20260816",
     "jq -r '.tests.vitest[]' docs/cleanup/agents/generated/CLAUDE_LANE_B_PATH_LEASE.json | xargs -n 80 npx vitest run --no-file-parallelism --maxWorkers=1 --maxConcurrency=2 --retry=0",
-    "CI=true DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts  (fresh, repeat, --dry-run)"
+    "CI=true DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts  (fresh 733, repeat 0, --dry-run 0)",
+    "RUN_REDIS_TESTS=1 REDIS_URL=redis://127.0.0.1:32942 npx vitest run aiWorkerRedis.integration.test.ts aiWorkerRuntime.test.ts aiWorkerTenant.test.ts — 3/3 files, 6/6",
+    "RUN_DB_TESTS=1 MOCK_DB=false npx vitest run agentPlannerDispatch.pg.test.ts — 1/1 file, 3/3",
+    "NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p server/tsconfig.json --noEmit — exit 0",
+    "NODE_OPTIONS=--max-old-space-size=8192 npm run build:backend — exit 0"
   ],
   "denominators": {
-    "task": "Evidence-only; runbook produced",
+    "task": "Worker runtime 6/6 plus planner realDB 3/3; zero skipped/todo",
     "laneRealDbPass": "110 leased realDB files on an isolated DB: 77 passed / 7 failed / 26 skipped; 675 tests: 565 passed / 51 failed / 59 skipped",
     "recoveredAcceptance": "14 leased acceptance files the mandated G2 command cannot collect, run under vitest.acceptance.config.ts: 105 tests, 91 passed / 14 failed"
   },
@@ -39,11 +58,17 @@
     "isolatedDb": "consultify-closure-b-64f50785 @127.0.0.1:55811; verification replica @55812; clean-room @55813",
     "env": "NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false (all three required — NODE_ENV=test alone substitutes a mock DB)"
   },
-  "negativeControls": {},
+  "negativeControls": {
+    "defaultOff": "No consumer starts without ENABLE_AI_TASKS_WORKER=true",
+    "mockRedis": "Explicit enable with MOCK_REDIS=true fails closed",
+    "tenantEnvelope": "Missing organization or queue-user/payload-user mismatch rejected before planner import",
+    "retryExhaustion": "Real BullMQ performs exactly 2 attempts, marks deadLetter=true and retains failed job",
+    "foreignTenant": "Planner enqueue scope mismatch rejected; one stable dispatch key cold-read from PostgreSQL"
+  },
   "browserArtifacts": [],
   "rollback": {
     "method": "Revert the lane commits; all changes are additive application code plus new tests. NO migration was added by this lane, so no schema rollback is required and old readers are unaffected."
   },
   "verdict": "BLOCKED_OWNER",
-  "openBlocker": "CRITICAL: the ai-tasks BullMQ consumer is never started — initWorker (workers/aiWorker.ts:98) has ZERO callers, aiWorker is imported nowhere, no Procfile, start runs only the API. Agent plans enqueue and never execute. v8_agent_canonical_projection_outbox is likewise drained only by a manual proof script. Every fix file (agentPlannerService, agentFolderService, agentOperatorConsoleService, agentCanonicalRunService, workers/aiWorker.ts, server/src/index.ts) is OUTSIDE every lane lease."
+  "openBlocker": "Technical consumer/startup/retry/restart seam is closed. Enabling autonomous background execution remains an explicit owner decision; default stays OFF and no production provider/stability window is claimed."
 }
