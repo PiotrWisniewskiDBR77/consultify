@@ -1,7 +1,12 @@
 {
   "taskId": "ADM-MVP-OPS-001",
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "productSha": "ceb5bbe515e501dd2101d35529da433ad617fa21",
+  "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
   "verdict": "PARTIAL",
+  "changedPaths": ["docs/program/evidence/closure/codex/ADM-MVP-OPS-001/TASK_EVIDENCE.json"],
+  "changedPathRationale": {"evidence": "Current-SHA queue lifecycle proof with deployed observation blocker preserved."},
+  "ownerTables": ["admin_iam_jobs", "admin_iam_job_events", "role_change_audit_events"],
   "ownPathsThisRun": ["docs/program/evidence/closure/codex/ADM-MVP-OPS-001/TASK_EVIDENCE.json"],
   "commands": [
     {"command": "fresh PostgreSQL migrate.postgres.ts", "exitCode": 0, "denominator": "722/722 migrations applied"},
@@ -9,6 +14,11 @@
     {"command": "tsc -p server/tsconfig.json --noEmit", "exitCode": 0, "denominator": "server TypeScript project"}
   ],
   "proved": ["tenant-scoped idempotent enqueue and payload-stable replay", "foreign tenant cannot claim", "lease/CAS stale worker denial", "retry then success with exact durable events", "attempt exhaustion reaches failed", "metrics readback and zero orphan events", "same fresh-PG packet includes the full invite-to-revoke journey"],
+  "negativeControls": {"tenant": "foreign tenant cannot claim", "lease": "stale worker rejected", "retry": "exhausted job terminal failed", "audit": "zero orphan events"},
+  "denominators": {"freshMigrations": "722/722", "focusedPacket": "14/14 tests in 3/3 files", "opsRealDb": "2/2"},
+  "fixtures": {"database": "disposable PostgreSQL 16 localhost:56674"},
+  "browserArtifacts": [],
+  "rollback": {"code": "Revert evidence update.", "data": "Test jobs cleaned; no production queue touched."},
   "singleResidualBlocker": "No sustained deployed worker/alert observation window was authorized or available; repository tests prove queue metrics and lifecycle but cannot prove a real operator alert fires under long-running production scheduling.",
   "database": "Disposable PostgreSQL 16 at localhost:56674; no production/staging touched"
 }

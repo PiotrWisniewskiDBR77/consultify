@@ -1,7 +1,12 @@
 {
   "taskId": "ADM-BVP-001",
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "productSha": "ceb5bbe515e501dd2101d35529da433ad617fa21",
+  "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
   "verdict": "DONE_CURRENT_SHA",
+  "changedPaths": ["server/src/controllers/__tests__/OrganizationController.membership.test.ts", "docs/program/evidence/closure/codex/ADM-BVP-001/TASK_EVIDENCE.json"],
+  "changedPathRationale": {"fixture": "Align mandatory atomic capability-governed IAM command fixture.", "evidence": "Current-SHA real PostgreSQL proof."},
+  "ownerTables": ["organization_members", "invitations", "invitation_events", "role_change_audit_events", "attribution_events", "organization_seats"],
   "ownPathsThisRun": ["server/src/controllers/__tests__/OrganizationController.membership.test.ts", "docs/program/evidence/closure/codex/ADM-BVP-001/TASK_EVIDENCE.json"],
   "commands": [
     {"command": "fresh PostgreSQL migrate.postgres.ts", "exitCode": 0, "denominator": "722/722 migrations applied"},
@@ -19,5 +24,9 @@
   },
   "fixtureRepair": "Legacy controller unit fixtures mock the mandatory atomic IAM command and assert that boundary instead of obsolete organizationService/adminAudit side effects.",
   "database": "Disposable PostgreSQL 16 at localhost:56674; no production/staging touched",
+  "denominators": {"freshMigrations": "722/722", "focusedPacket": "14/14 tests in 3/3 files", "adminBvpRealDb": "6/6"},
+  "fixtures": {"database": "disposable PostgreSQL 16 localhost:56674", "tenants": "owner and isolated foreign tenant"},
+  "browserArtifacts": [],
+  "rollback": {"code": "Revert fixture/evidence update.", "data": "Test rows cleaned; additive migrations only."},
   "openBlockers": []
 }

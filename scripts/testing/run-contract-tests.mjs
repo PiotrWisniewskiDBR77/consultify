@@ -35,6 +35,16 @@ if (files.length === 0) {
 console.log(`[contract:${suite}] discovered ${files.length} files`);
 const vitest = resolve(root, 'node_modules/vitest/vitest.mjs');
 const failures = [];
+const mountedServerContracts = new Set([
+  'tests/integration/authMeDemoTtl.contract.test.ts',
+  'tests/integration/buildSurfaceRemoved.contract.test.ts',
+  'tests/integration/demoPublicEntry.contract.test.ts',
+  'tests/integration/demoRealtimeDenial.contract.test.ts',
+  'tests/integration/publicSystemSurface.contract.test.ts',
+  'tests/integration/spaCatchAllDisclosure.contract.test.ts',
+  'tests/integration/system/health.noChildProcess.contract.test.ts',
+  'tests/integration/systemHealthRepairRemoved.contract.test.ts',
+]);
 
 // Contract tests frequently replace process.env, module mocks and singleton
 // state.  A single Vitest process made later files depend on discovery order.
@@ -42,10 +52,28 @@ const failures = [];
 // reproducible and a failure points at an actual contract, not leaked state.
 for (const [index, file] of files.entries()) {
   console.log(`[contract:${suite}] ${index + 1}/${files.length} ${file}`);
+  const env = { ...process.env };
+  if (mountedServerContracts.has(file)) {
+    // These contracts import the real mounted server, whose readiness path
+    // intentionally touches PostgreSQL. Never let tests/setup.ts silently
+    // invent the historical iris@localhost fallback: require an operator-owned
+    // isolated database and make the real-DB intent explicit.
+    if (!process.env.CONTRACT_DATABASE_URL) {
+      console.error(
+        `[contract:${suite}] ${file} requires CONTRACT_DATABASE_URL for its mounted-server fixture`
+      );
+      failures.push({ file, status: 2, error: 'CONTRACT_DATABASE_URL is not set' });
+      continue;
+    }
+    env.DATABASE_URL = process.env.CONTRACT_DATABASE_URL;
+    env.DB_TYPE = 'postgres';
+    env.MOCK_DB = 'false';
+    env.RUN_DB_TESTS = '1';
+  }
   const result = spawnSync(
     process.execPath,
     [vitest, 'run', file, '--no-file-parallelism', '--maxWorkers=1', '--reporter=dot'],
-    { cwd: root, env: process.env, stdio: 'inherit' }
+    { cwd: root, env, stdio: 'inherit' }
   );
 
   if (result.error || result.status !== 0) {
