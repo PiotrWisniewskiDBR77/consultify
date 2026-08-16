@@ -155,6 +155,24 @@ export const EARLY_VERSION_OVERRIDES: Record<string, number> = {
   '20260802_int001_template_publication_versions.sql': 727.5,
 };
 
+// Several Case Workspace packets intentionally share the same date prefix but
+// encode their dependency order as CW-P01..CW-P11, not alphabetically. Keep
+// them in the dated phase while making that declared producer/consumer order
+// executable on a fresh database.
+export const SAME_DATE_ORDER_OVERRIDES: Record<string, string> = {
+  '20260809_case_workspace_case_core.sql': '20260809_01',
+  '20260809_case_workspace_case_plan_version.sql': '20260809_02',
+  '20260809_case_workspace_capability_registry.sql': '20260809_03',
+  '20260809_case_workspace_run_binding.sql': '20260809_04',
+  '20260809_case_workspace_proposals_approvals.sql': '20260809_05',
+  '20260809_case_workspace_wait_subscription.sql': '20260809_06',
+  '20260809_case_workspace_history_value.sql': '20260809_07',
+  '20260809_case_workspace_plays.sql': '20260809_08',
+  '20260809_case_workspace_artifact_links.sql': '20260809_09',
+  '20260809_case_workspace_execution_graph.sql': '20260809_10',
+  '20260809_case_workspace_migration_readiness.sql': '20260809_11',
+};
+
 export function phaseAndKeyFor(m: Migration): { phase: number; key: string } {
   const f = m.filename;
   if (LATE_PHASE_SET.has(f)) {
@@ -165,6 +183,9 @@ export function phaseAndKeyFor(m: Migration): { phase: number; key: string } {
     const paddedInt = String(Math.trunc(version)).padStart(6, '0');
     const fraction = version % 1 !== 0 ? String(version).split('.')[1] : '0';
     return { phase: 0, key: `${paddedInt}.${fraction}_${f}` };
+  }
+  if (Object.prototype.hasOwnProperty.call(SAME_DATE_ORDER_OVERRIDES, f)) {
+    return { phase: 1, key: `${SAME_DATE_ORDER_OVERRIDES[f]}_${f}` };
   }
   const numbered = f.match(NUMBERED_RE);
   if (numbered) {

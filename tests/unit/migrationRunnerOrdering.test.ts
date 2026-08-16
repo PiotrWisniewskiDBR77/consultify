@@ -5,10 +5,38 @@ import { describe, expect, it } from 'vitest';
 
 import {
   LATE_PHASE_MANIFEST,
+  SAME_DATE_ORDER_OVERRIDES,
   compareMigrationOrder,
   phaseAndKeyFor,
   sortMigrationsDeterministically,
 } from '../../server/scripts/migrationOrdering.js';
+
+const CASE_WORKSPACE_PACKET = [
+  '20260809_case_workspace_case_core.sql',
+  '20260809_case_workspace_case_plan_version.sql',
+  '20260809_case_workspace_capability_registry.sql',
+  '20260809_case_workspace_run_binding.sql',
+  '20260809_case_workspace_proposals_approvals.sql',
+  '20260809_case_workspace_wait_subscription.sql',
+  '20260809_case_workspace_history_value.sql',
+  '20260809_case_workspace_plays.sql',
+  '20260809_case_workspace_artifact_links.sql',
+  '20260809_case_workspace_execution_graph.sql',
+  '20260809_case_workspace_migration_readiness.sql',
+];
+
+describe('GATE I1 — kolejność pakietu Case Workspace CW-P01..P11', () => {
+  it('sortuje wszystkie migracje z tego samego dnia w zadeklarowanej kolejności zależności', () => {
+    expect(Object.keys(SAME_DATE_ORDER_OVERRIDES)).toEqual(CASE_WORKSPACE_PACKET);
+    expect(
+      [...CASE_WORKSPACE_PACKET]
+        .reverse()
+        .map((filename) => ({ filename, version: '', filepath: '', checksum: '' }))
+        .sort(compareMigrationOrder)
+        .map(({ filename }) => filename)
+    ).toEqual(CASE_WORKSPACE_PACKET);
+  });
+});
 
 /**
  * GATE I1 — test porządkowania migracji.
