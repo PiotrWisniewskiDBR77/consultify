@@ -4,7 +4,9 @@ Branch: `codex/closure-claude-b-transformation`
 
 Worktree: `/Users/piotrwisniewski/Developer/consultify-closure-claude-b`
 
-Common baseline: filled by the integrator when branches are created.
+Product/code baseline: `0f5652690b59f5ebe3f465131bd591a2c4340d2e`
+
+Authority packet commit: `aca1b7a126`
 
 Read the canonical 82-task plan and
 `FOUR_BRANCH_EXECUTION_CONTRACT_20260816.md` in full before work.

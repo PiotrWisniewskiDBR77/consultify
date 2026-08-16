@@ -4,7 +4,9 @@ Branch: `codex/closure-claude-a-method-evidence`
 
 Worktree: `/Users/piotrwisniewski/Developer/consultify-closure-claude-a`
 
-Common baseline: filled by the integrator when branches are created.
+Product/code baseline: `0f5652690b59f5ebe3f465131bd591a2c4340d2e`
+
+Authority packet commit: `aca1b7a126`
 
 Mandatory context:
 

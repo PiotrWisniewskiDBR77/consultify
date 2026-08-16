@@ -4,6 +4,10 @@ Status: `ACTIVE / AUTHORITY_PACKET`
 
 Plan authority: `../POST_CLEANUP_COMPLETION_PLAN.md`
 
+Product/code baseline: `0f5652690b59f5ebe3f465131bd591a2c4340d2e`
+
+Authority packet commit: `aca1b7a126`
+
 ## Branches and ownership
 
 | Lane | Branch | Exclusive task ownership | Integration order |
@@ -13,8 +17,9 @@ Plan authority: `../POST_CLEANUP_COMPLETION_PLAN.md`
 | Claude B | `codex/closure-claude-b-transformation` | 15 tasks: Decisions/Tasks/Agent, Initiatives and Execution | 2 |
 | Claude C | `codex/closure-claude-c-ideas-documents` | 15 tasks: Materials/Documents, Chat, Organization and Meeting document boundary; Ideas mandatory sub-packets | 3 |
 
-The common baseline is recorded in each lane packet. A worker must verify that
-its branch/worktree starts at that exact SHA before editing.
+Branches are sealed from the authority packet descendant recorded in each lane
+packet; product code is unchanged from the product/code baseline above. A
+worker must verify both identities before editing.
 
 ## Mandatory operating instruction
 
