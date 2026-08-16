@@ -32,6 +32,8 @@
  * note) — then asserts zero rows remain for this suite's ids.
  */
 import express from 'express';
+import { createHash } from 'node:crypto';
+import ExcelJS from 'exceljs';
 import { Pool } from 'pg';
 import request from 'supertest';
 import { v4 as uuidv4 } from 'uuid';
@@ -117,6 +119,9 @@ describe('MAT-MVP-XLSX-001 workbook closure (real Postgres)', () => {
 
   afterAll(async () => {
     if (createdWorkbookIds.length) {
+      await pool.query(`DELETE FROM artifact_export_receipts WHERE source_record_id = ANY($1)`, [
+        createdWorkbookIds,
+      ]);
       for (const table of AUX_TABLES) {
         await pool.query(`DELETE FROM ${table} WHERE workbook_id = ANY($1)`, [createdWorkbookIds]);
       }
@@ -398,6 +403,147 @@ describe('MAT-MVP-XLSX-001 workbook closure (real Postgres)', () => {
     const dbRow = await pool.query(`SELECT version FROM generated_workbooks WHERE id = $1`, [id]);
     // version started at 1; exactly `successCount` writes landed.
     expect(Number(dbRow.rows[0].version)).toBe(1 + successCount);
+  });
+
+  it('structural command preserves formulas, creates exactly one version, replays idempotently and cold-reopens', async () => {
+    const id = await createBlankWorkbook(ORG_A, USER_A, 'structural-formula-version');
+    const initial = await request(app)
+      .get(`/api/workbook/${id}`)
+      .set(authHeaders(ORG_A, USER_A))
+      .expect(200);
+    const initialRows = initial.body.schema_json.sheets[0].rows.length as number;
+
+    const payload = {
+      commandId: `cmd-${RUN_ID}-formula`,
+      baseVersion: 1,
+      idempotencyKey: `idem-${RUN_ID}-formula`,
+      operations: [
+        { type: 'setCell', sheetIndex: 0, rowIndex: 0, columnKey: 'A', formula: '=SUM(A2:A2)' },
+        { type: 'insertRows', sheetIndex: 0, atIndex: 0, count: 1 },
+      ],
+    };
+    const applied = await request(app)
+      .post(`/api/workbook/${id}/commands`)
+      .set(authHeaders(ORG_A, USER_A))
+      .send(payload)
+      .expect(200);
+    expect(applied.body).toMatchObject({ duplicate: false, version: 2, operationCount: 2 });
+
+    const replay = await request(app)
+      .post(`/api/workbook/${id}/commands`)
+      .set(authHeaders(ORG_A, USER_A))
+      .send(payload)
+      .expect(200);
+    expect(replay.body).toMatchObject({ duplicate: true, version: 2, operationCount: 2 });
+
+    const revisions = await request(app)
+      .get(`/api/workbook/${id}/revisions`)
+      .set(authHeaders(ORG_A, USER_A))
+      .expect(200);
+    expect(revisions.body.revisions).toHaveLength(1);
+    expect(revisions.body.revisions[0]).toMatchObject({ version: 2, command_id: payload.commandId });
+
+    // A new HTTP read reconstructs the workbook exclusively from PostgreSQL;
+    // command processing invalidates the runtime cache before this request.
+    const reopened = await request(app)
+      .get(`/api/workbook/${id}`)
+      .set(authHeaders(ORG_A, USER_A))
+      .expect(200);
+    expect(reopened.body.version).toBe(2);
+    expect(reopened.body.schema_json.sheets[0].rows).toHaveLength(initialRows + 1);
+    expect(reopened.body.schema_json.sheets[0].rows[1].cells.A.formula).toBe('SUM(A3:A3)');
+
+    const persisted = await pool.query(
+      `SELECT version, last_mutation_key, schema_json FROM generated_workbooks WHERE id=$1`,
+      [id]
+    );
+    expect(Number(persisted.rows[0].version)).toBe(2);
+    expect(persisted.rows[0].last_mutation_key).toBe(payload.idempotencyKey);
+  });
+
+  it('mounted download exports current version with one immutable receipt; retry and tenant/auth negatives fail closed', async () => {
+    const id = await createBlankWorkbook(ORG_A, USER_A, 'governed-export-receipt');
+    await request(app)
+      .patch(`/api/workbook/${id}/cell`)
+      .set(authHeaders(ORG_A, USER_A))
+      .send({ sheetIndex: 0, rowIndex: 0, columnKey: 'A', formula: '=1+2', baseVersion: 1 })
+      .expect(200);
+
+    const requestKey = `download-${RUN_ID}`;
+    const first = await request(app)
+      .get(`/api/workbook/${id}/download`)
+      .set(authHeaders(ORG_A, USER_A))
+      .set('idempotency-key', requestKey)
+      .buffer(true)
+      .parse((res, callback) => {
+        const chunks: Buffer[] = [];
+        res.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+        res.on('end', () => callback(null, Buffer.concat(chunks)));
+      })
+      .expect(200);
+    const receiptId = first.headers['x-export-receipt-id'] as string;
+    expect(receiptId).toBeTruthy();
+    expect(Buffer.isBuffer(first.body)).toBe(true);
+    expect(first.body.subarray(0, 2).toString('utf8')).toBe('PK');
+    const exported = new ExcelJS.Workbook();
+    await exported.xlsx.load(first.body);
+    const formulas: string[] = [];
+    exported.eachSheet((worksheet) =>
+      worksheet.eachRow((row) =>
+        row.eachCell((cell) => {
+          const value = cell.value as { formula?: string } | null;
+          if (value && typeof value === 'object' && typeof value.formula === 'string') {
+            formulas.push(value.formula);
+          }
+        })
+      )
+    );
+    expect(formulas).toContain('1+2');
+
+    const second = await request(app)
+      .get(`/api/workbook/${id}/download`)
+      .set(authHeaders(ORG_A, USER_A))
+      .set('idempotency-key', requestKey)
+      .buffer(true)
+      .parse((res, callback) => {
+        const chunks: Buffer[] = [];
+        res.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+        res.on('end', () => callback(null, Buffer.concat(chunks)));
+      })
+      .expect(200);
+    expect(second.headers['x-export-receipt-id']).toBe(receiptId);
+    expect(Buffer.compare(first.body, second.body)).toBe(0);
+
+    const receipts = await pool.query(
+      `SELECT source_version,source_content_hash,provider_key,status,output_content_hash,
+              output_byte_size,idempotency_key
+         FROM artifact_export_receipts WHERE source_record_id=$1`,
+      [id]
+    );
+    expect(receipts.rows).toHaveLength(1);
+    expect(receipts.rows[0]).toMatchObject({
+      source_version: 2,
+      provider_key: 'native:exceljs',
+      status: 'succeeded',
+      output_content_hash: createHash('sha256').update(first.body).digest('hex'),
+      output_byte_size: first.body.length,
+    });
+    expect(receipts.rows[0].source_content_hash).toMatch(/^[a-f0-9]{64}$/);
+    expect(receipts.rows[0].idempotency_key).toContain(requestKey);
+
+    await request(app)
+      .get(`/api/workbook/${id}/download`)
+      .set(authHeaders(ORG_B, USER_B))
+      .expect(404);
+    await request(app)
+      .get(`/api/workbook/${id}/download`)
+      .set('x-test-unauth', '1')
+      .expect(401);
+    const afterNegatives = await pool.query(
+      `SELECT count(*)::int AS n FROM artifact_export_receipts WHERE source_record_id=$1`,
+      [id]
+    );
+    expect(afterNegatives.rows[0].n).toBe(1);
   });
 
   // -------------------------------------------------------------------

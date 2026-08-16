@@ -1,7 +1,7 @@
 /** @vitest-environment node */
 
 /**
- * MAT-006 — Workbook lifecycle (versions/checkpoint/restore/share/revoke/
+ * MAT-006 — Workbook lifecycle (revisions/restore/share/revoke/
  * export) against a REAL Postgres database (per the MAT-006 spec: "Tests —
  * required, real Postgres, not mocked"). Boots the real, production
  * `workbook.routes.ts` router + real `queryHelpers`/`PostgresDatabase`/
@@ -72,6 +72,7 @@ vi.mock('../../../server/src/services/v8/artifactRegistryService.js', () => ({
   deriveArtifactVisibilityScope: vi.fn().mockReturnValue('private'),
 }));
 
+const RUN_ID = uuidv4().slice(0, 8);
 const ORG_A = `org-mat006-a-${uuidv4().slice(0, 8)}`;
 const ORG_B = `org-mat006-b-${uuidv4().slice(0, 8)}`;
 const USER_A = `user-mat006-a-${uuidv4().slice(0, 8)}`;
@@ -79,40 +80,6 @@ const USER_B = `user-mat006-b-${uuidv4().slice(0, 8)}`;
 
 function authHeaders(orgId: string, userId: string) {
   return { 'x-test-org-id': orgId, 'x-test-user-id': userId };
-}
-
-/** Minimal, real RFC4180 field parser (quoted fields, doubled-`""`
- * escaping, embedded commas) for one already-newline-split CSV row — used to
- * genuinely parse back the CSV export in tests instead of a naive
- * `.split(',')` that breaks on quoted commas. */
-function parseCsvLine(line: string): string[] {
-  const fields: string[] = [];
-  let cur = '';
-  let inQuotes = false;
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
-    if (inQuotes) {
-      if (ch === '"') {
-        if (line[i + 1] === '"') {
-          cur += '"';
-          i++;
-        } else {
-          inQuotes = false;
-        }
-      } else {
-        cur += ch;
-      }
-    } else if (ch === '"') {
-      inQuotes = true;
-    } else if (ch === ',') {
-      fields.push(cur);
-      cur = '';
-    } else {
-      cur += ch;
-    }
-  }
-  fields.push(cur);
-  return fields;
 }
 
 describe('MAT-006 workbook lifecycle (real Postgres)', () => {
@@ -139,6 +106,9 @@ describe('MAT-006 workbook lifecycle (real Postgres)', () => {
     // sprzątają po sobie, zero rekordów testowych"). CASCADE takes the
     // version-history rows with it.
     if (createdWorkbookIds.length) {
+      await pool.query(`DELETE FROM artifact_export_receipts WHERE source_record_id = ANY($1)`, [
+        createdWorkbookIds,
+      ]);
       await pool.query(`DELETE FROM generated_workbooks WHERE id = ANY($1)`, [createdWorkbookIds]);
     }
     // MAT-010 G12 fix: this suite predates the MAT-010 lineage hooks now
@@ -172,84 +142,77 @@ describe('MAT-006 workbook lifecycle (real Postgres)', () => {
   // ---------------------------------------------------------------------
   // GOLDEN FLOW
   // ---------------------------------------------------------------------
-  it('golden flow: create -> edit -> formula -> checkpoint -> edit -> history -> restore -> same id -> new version -> hard reread', async () => {
+  it('golden flow: create -> atomic edit+formula -> edit -> revision history -> restore -> same id -> new version -> hard reread', async () => {
     const id = await createBlankWorkbook(ORG_A, USER_A, 'MAT-006 Golden Flow');
 
-    // 2) change a cell value
-    const v1 = await request(app)
-      .patch(`/api/workbook/${id}/cell`)
+    const first = await request(app)
+      .post(`/api/workbook/${id}/commands`)
       .set(authHeaders(ORG_A, USER_A))
-      .send({ sheetIndex: 0, rowIndex: 0, columnKey: 'A', value: 21 })
+      .send({
+        commandId: `golden-first-${RUN_ID}`,
+        baseVersion: 1,
+        idempotencyKey: `golden-first-${RUN_ID}`,
+        operations: [
+          { type: 'setCell', sheetIndex: 0, rowIndex: 0, columnKey: 'A', value: 21 },
+          { type: 'setCell', sheetIndex: 0, rowIndex: 0, columnKey: 'B', formula: '=A2*2' },
+        ],
+      })
       .expect(200);
-    expect(v1.body.version).toBe(2); // blank insert = version 1, first edit -> 2
-
-    // 3) save a formula and confirm its computed result via the existing
-    // GET /:id/schema read path (untouched, MAT-005 mechanism).
-    await request(app)
-      .patch(`/api/workbook/${id}/cell`)
-      .set(authHeaders(ORG_A, USER_A))
-      .send({ sheetIndex: 0, rowIndex: 0, columnKey: 'B', formula: '=A2*2' })
-      .expect(200);
+    expect(first.body.version).toBe(2);
 
     const afterFormula = await request(app)
       .get(`/api/workbook/${id}`)
       .set(authHeaders(ORG_A, USER_A))
       .expect(200);
-    expect(afterFormula.body.version).toBe(3);
+    expect(afterFormula.body.version).toBe(2);
     const cellsAfterFormula = afterFormula.body.schema_json.sheets[0].rows[0].cells;
     expect(cellsAfterFormula.A).toEqual(expect.objectContaining({ value: 21 }));
     expect(cellsAfterFormula.B).toEqual(expect.objectContaining({ formula: 'A2*2' }));
 
-    // 4) create a checkpoint/version (explicit, no content change)
-    const checkpoint = await request(app)
-      .post(`/api/workbook/${id}/checkpoint`)
+    const second = await request(app)
+      .post(`/api/workbook/${id}/commands`)
       .set(authHeaders(ORG_A, USER_A))
-      .send({ expectedVersion: 3 })
+      .send({
+        commandId: `golden-second-${RUN_ID}`,
+        baseVersion: 2,
+        idempotencyKey: `golden-second-${RUN_ID}`,
+        operations: [
+          { type: 'setCell', sheetIndex: 0, rowIndex: 1, columnKey: 'A', value: 'second edit' },
+        ],
+      })
       .expect(200);
-    expect(checkpoint.body.version).toBe(4);
-    const versionToRestoreTo = checkpoint.body.checkpointedFromVersion; // 3, content = A=21,B=formula
-
-    // 5) make another change
-    await request(app)
-      .patch(`/api/workbook/${id}/cell`)
-      .set(authHeaders(ORG_A, USER_A))
-      .send({ sheetIndex: 0, rowIndex: 1, columnKey: 'A', value: 'second edit' })
-      .expect(200);
+    expect(second.body.version).toBe(3);
+    const versionToRestoreTo = 2;
 
     // 6) GET/history shows both versions (at least the pre-checkpoint and
     // pre-second-edit snapshots)
     const history = await request(app)
-      .get(`/api/workbook/${id}/versions`)
+      .get(`/api/workbook/${id}/revisions`)
       .set(authHeaders(ORG_A, USER_A))
       .expect(200);
-    expect(Array.isArray(history.body.data)).toBe(true);
-    expect(history.body.data.length).toBeGreaterThanOrEqual(3); // v1(blank),v2(cellA),v3(before checkpoint)... history rows are PRE-write snapshots
-    const versionNumbersInHistory = history.body.data.map((v: any) => v.version);
+    expect(Array.isArray(history.body.revisions)).toBe(true);
+    expect(history.body.revisions).toHaveLength(2);
+    const versionNumbersInHistory = history.body.revisions.map((v: any) => v.version);
     expect(versionNumbersInHistory).toContain(versionToRestoreTo);
-
-    // Find the specific history row id whose `version` == versionToRestoreTo
-    // (content: A=21, B=formula A2*2, no row1 edit yet) to restore to.
-    const targetHistoryRow = history.body.data.find((v: any) => v.version === versionToRestoreTo);
-    expect(targetHistoryRow).toBeTruthy();
 
     const beforeRestore = await request(app)
       .get(`/api/workbook/${id}`)
       .set(authHeaders(ORG_A, USER_A))
       .expect(200);
-    const versionBeforeRestore = beforeRestore.body.version; // 5
+    const versionBeforeRestore = beforeRestore.body.version; // 3
 
     // 7) restore brings back the earlier content
     const restore = await request(app)
-      .post(`/api/workbook/${id}/versions/${targetHistoryRow.id}/restore`)
+      .post(`/api/workbook/${id}/revisions/${versionToRestoreTo}/restore`)
       .set(authHeaders(ORG_A, USER_A))
-      .send({ expectedVersion: versionBeforeRestore })
+      .send({ baseVersion: versionBeforeRestore })
       .expect(200);
 
     // 8) artifact id stays the same across restore
     expect(restore.body.ok).toBe(true);
     // 9) restore creates a NEW version instead of rewriting history
     expect(restore.body.version).toBe(versionBeforeRestore + 1);
-    expect(restore.body.restoredFromVersion).toBe(versionToRestoreTo);
+    expect(restore.body.sourceVersion).toBe(versionToRestoreTo);
 
     // 10) hard reload shows the restored state (fresh GET, same id)
     const afterRestore = await request(app)
@@ -268,10 +231,10 @@ describe('MAT-006 workbook lifecycle (real Postgres)', () => {
     // History must still contain the OLD version-5 (post-second-edit, pre-
     // restore) content — restore snapshots forward, never deletes/rewrites.
     const historyAfterRestore = await request(app)
-      .get(`/api/workbook/${id}/versions`)
+      .get(`/api/workbook/${id}/revisions`)
       .set(authHeaders(ORG_A, USER_A))
       .expect(200);
-    const preRestoreSnapshot = historyAfterRestore.body.data.find(
+    const preRestoreSnapshot = historyAfterRestore.body.revisions.find(
       (v: any) => v.version === versionBeforeRestore
     );
     expect(preRestoreSnapshot).toBeTruthy();
@@ -280,18 +243,18 @@ describe('MAT-006 workbook lifecycle (real Postgres)', () => {
   // ---------------------------------------------------------------------
   // NEGATIVE CONTROL 1 — CAS conflict on cell PATCH (concurrent edit)
   // ---------------------------------------------------------------------
-  it('NEGATIVE CONTROL: concurrent edits with the same expectedVersion — exactly one winner, one 409, DB holds only the winner content', async () => {
+  it('NEGATIVE CONTROL: concurrent edits with the same baseVersion — exactly one winner, one 409, DB holds only the winner content', async () => {
     const id = await createBlankWorkbook(ORG_A, USER_A, 'MAT-006 Concurrency');
     // version is 1 right after /blank.
     const [r1, r2] = await Promise.all([
       request(app)
         .patch(`/api/workbook/${id}/cell`)
         .set(authHeaders(ORG_A, USER_A))
-        .send({ sheetIndex: 0, rowIndex: 0, columnKey: 'A', value: 'writer-1', expectedVersion: 1 }),
+        .send({ sheetIndex: 0, rowIndex: 0, columnKey: 'A', value: 'writer-1', baseVersion: 1 }),
       request(app)
         .patch(`/api/workbook/${id}/cell`)
         .set(authHeaders(ORG_A, USER_A))
-        .send({ sheetIndex: 0, rowIndex: 0, columnKey: 'A', value: 'writer-2', expectedVersion: 1 }),
+        .send({ sheetIndex: 0, rowIndex: 0, columnKey: 'A', value: 'writer-2', baseVersion: 1 }),
     ]);
     const statuses = [r1.status, r2.status].sort();
     // Exactly one winner (200) and one conflict (409) — this is the concrete
@@ -308,22 +271,22 @@ describe('MAT-006 workbook lifecycle (real Postgres)', () => {
   });
 
   // ---------------------------------------------------------------------
-  // NEGATIVE CONTROL 2 — stale expectedVersion rejected outright
+  // NEGATIVE CONTROL 2 — stale baseVersion rejected outright
   // ---------------------------------------------------------------------
-  it('NEGATIVE CONTROL: stale expectedVersion on cell PATCH is rejected with 409 before any write', async () => {
+  it('NEGATIVE CONTROL: stale baseVersion on cell PATCH is rejected with 409 before any write', async () => {
     const id = await createBlankWorkbook(ORG_A, USER_A, 'MAT-006 Stale Version');
     await request(app)
       .patch(`/api/workbook/${id}/cell`)
       .set(authHeaders(ORG_A, USER_A))
-      .send({ sheetIndex: 0, rowIndex: 0, columnKey: 'A', value: 'first' })
+      .send({ sheetIndex: 0, rowIndex: 0, columnKey: 'A', value: 'first', baseVersion: 1 })
       .expect(200); // version now 2
 
     const stale = await request(app)
       .patch(`/api/workbook/${id}/cell`)
       .set(authHeaders(ORG_A, USER_A))
-      .send({ sheetIndex: 0, rowIndex: 0, columnKey: 'A', value: 'stale-write', expectedVersion: 1 })
+      .send({ sheetIndex: 0, rowIndex: 0, columnKey: 'A', value: 'stale-write', baseVersion: 1 })
       .expect(409);
-    expect(stale.body.code).toBe('VERSION_CONFLICT');
+    expect(stale.body.code).toBe('WORKBOOK_VERSION_CONFLICT');
 
     const dbRow = await pool.query(`SELECT schema_json FROM generated_workbooks WHERE id = $1`, [id]);
     const cellA = JSON.parse(dbRow.rows[0].schema_json).sheets[0].rows[0].cells.A;
@@ -331,18 +294,23 @@ describe('MAT-006 workbook lifecycle (real Postgres)', () => {
   });
 
   // ---------------------------------------------------------------------
-  // NEGATIVE CONTROL 3 — restore fault-injection rollback (transactional)
+  // NEGATIVE CONTROL 3 — stale restore is rejected atomically
   // ---------------------------------------------------------------------
-  it('NEGATIVE CONTROL: fault-injected restore rolls back atomically — no partial state, pre-restore snapshot NOT leaked into history', async () => {
+  it('NEGATIVE CONTROL: stale restore leaves head and revision history byte-identical', async () => {
     const id = await createBlankWorkbook(ORG_A, USER_A, 'MAT-006 Fault Injection');
     await request(app)
-      .patch(`/api/workbook/${id}/cell`)
+      .post(`/api/workbook/${id}/commands`)
       .set(authHeaders(ORG_A, USER_A))
-      .send({ sheetIndex: 0, rowIndex: 0, columnKey: 'A', value: 'pre-fault' })
-      .expect(200); // version 2
+      .send({ commandId: `restore-v2-${RUN_ID}`, baseVersion: 1, idempotencyKey: `restore-v2-${RUN_ID}`, operations: [{ type: 'setCell', sheetIndex: 0, rowIndex: 0, columnKey: 'A', value: 'v2' }] })
+      .expect(200);
+    await request(app)
+      .post(`/api/workbook/${id}/commands`)
+      .set(authHeaders(ORG_A, USER_A))
+      .send({ commandId: `restore-v3-${RUN_ID}`, baseVersion: 2, idempotencyKey: `restore-v3-${RUN_ID}`, operations: [{ type: 'setCell', sheetIndex: 0, rowIndex: 0, columnKey: 'A', value: 'v3' }] })
+      .expect(200);
 
     const historyBefore = await pool.query(
-      `SELECT COUNT(*)::int AS n FROM generated_workbook_versions WHERE workbook_id = $1`,
+      `SELECT COUNT(*)::int AS n FROM generated_workbook_revisions WHERE workbook_id = $1`,
       [id]
     );
     const dbBefore = await pool.query(
@@ -350,39 +318,24 @@ describe('MAT-006 workbook lifecycle (real Postgres)', () => {
       [id]
     );
 
-    // History currently has exactly 1 row (the pre-edit blank snapshot at
-    // version 1, written by the PATCH above).
     const historyCountBefore = historyBefore.rows[0].n;
 
-    const realHistory = await pool.query(
-      `SELECT id FROM generated_workbook_versions WHERE workbook_id = $1 ORDER BY version ASC LIMIT 1`,
-      [id]
-    );
-    const realVersionId = realHistory.rows[0].id;
-
     const faulted = await request(app)
-      .post(`/api/workbook/${id}/versions/${realVersionId}/restore`)
-      .set({ ...authHeaders(ORG_A, USER_A), 'x-mat006-force-restore-fault': '1' })
-      .send({ expectedVersion: 2 });
-    expect(faulted.status).toBe(500);
+      .post(`/api/workbook/${id}/revisions/2/restore`)
+      .set(authHeaders(ORG_A, USER_A))
+      .send({ baseVersion: 2 });
+    expect(faulted.status).toBe(409);
+    expect(faulted.body.code).toBe('WORKBOOK_VERSION_CONFLICT');
 
     const dbAfter = await pool.query(
       `SELECT schema_json, version FROM generated_workbooks WHERE id = $1`,
       [id]
     );
     const historyAfter = await pool.query(
-      `SELECT COUNT(*)::int AS n FROM generated_workbook_versions WHERE workbook_id = $1`,
+      `SELECT COUNT(*)::int AS n FROM generated_workbook_revisions WHERE workbook_id = $1`,
       [id]
     );
 
-    // Real DB state proves atomicity: version UNCHANGED, schema_json
-    // UNCHANGED, and — crucially — the history row count is UNCHANGED too.
-    // If the transaction were NOT atomic (the exact "applied then errored"
-    // gap this repo's institutional memory flags), the pre-restore snapshot
-    // INSERT that ran before the forced fault would have landed even though
-    // the overall operation failed — this assertion would then fail because
-    // historyAfter.n would be historyCountBefore + 1 (or +2, once per
-    // attempt) instead of unchanged.
     expect(Number(dbAfter.rows[0].version)).toBe(Number(dbBefore.rows[0].version));
     expect(dbAfter.rows[0].schema_json).toBe(dbBefore.rows[0].schema_json);
     expect(historyAfter.rows[0].n).toBe(historyCountBefore);
@@ -391,7 +344,7 @@ describe('MAT-006 workbook lifecycle (real Postgres)', () => {
   // ---------------------------------------------------------------------
   // NEGATIVE CONTROL 4 — cross-tenant denial
   // ---------------------------------------------------------------------
-  it('NEGATIVE CONTROL: cross-tenant read/write/checkpoint/restore/share all 404 for a different org', async () => {
+  it('NEGATIVE CONTROL: cross-tenant read/write/restore/share are 404 and revision listing is empty', async () => {
     const id = await createBlankWorkbook(ORG_A, USER_A, 'MAT-006 Cross Tenant');
 
     const getRes = await request(app).get(`/api/workbook/${id}`).set(authHeaders(ORG_B, USER_B));
@@ -403,16 +356,16 @@ describe('MAT-006 workbook lifecycle (real Postgres)', () => {
       .send({ sheetIndex: 0, rowIndex: 0, columnKey: 'A', value: 'intruder' });
     expect(patchRes.status).toBe(404);
 
-    const checkpointRes = await request(app)
-      .post(`/api/workbook/${id}/checkpoint`)
+    const revisionsRes = await request(app)
+      .get(`/api/workbook/${id}/revisions`)
       .set(authHeaders(ORG_B, USER_B))
-      .send({});
-    expect(checkpointRes.status).toBe(404);
+    expect(revisionsRes.status).toBe(200);
+    expect(revisionsRes.body.revisions).toEqual([]);
 
     const restoreRes = await request(app)
-      .post(`/api/workbook/${id}/versions/${uuidv4()}/restore`)
+      .post(`/api/workbook/${id}/revisions/2/restore`)
       .set(authHeaders(ORG_B, USER_B))
-      .send({ expectedVersion: 1 });
+      .send({ baseVersion: 1 });
     expect(restoreRes.status).toBe(404);
 
     const shareRes = await request(app)
@@ -449,6 +402,16 @@ describe('MAT-006 workbook lifecycle (real Postgres)', () => {
       .patch(`/api/workbook/${id}/cell`)
       .set(authHeaders(ORG_A, USER_A))
       .send({ sheetIndex: 0, rowIndex: 0, columnKey: 'A', value: 'shared-content' })
+      .expect(200);
+    await request(app)
+      .patch(`/api/workbook/${id}/governance`)
+      .set(authHeaders(ORG_A, USER_A))
+      .send({
+        field: 'classification',
+        value: 'public',
+        baseVersion: 2,
+        reason: 'MAT-006 public-share compatibility proof',
+      })
       .expect(200);
 
     const share = await request(app)
@@ -555,26 +518,30 @@ describe('MAT-006 workbook lifecycle (real Postgres)', () => {
 
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load(download.body as Buffer);
-    const ws = wb.worksheets[0];
-    // 13) XLSX export opens and contains values/formulas.
-    const cellA = ws.getRow(2).getCell('A');
-    const cellB = ws.getRow(2).getCell('B');
-    const cellC = ws.getRow(2).getCell('C');
-    expect(cellA.value).toBe(21);
-    expect((cellB.value as any)?.formula).toBe('A2*2');
-    // Injection cell must NOT be typed as a formula (that's the whole
-    // vulnerability — a DDE/formula-typed cell auto-executing on open).
-    expect(cellC.type).not.toBe(ExcelJS.ValueType.Formula);
-    const cellCText = typeof cellC.value === 'string' ? cellC.value : String(cellC.value);
-    // Neutralized: no longer starts with a raw dangerous character.
-    expect(/^[=+\-@]/.test(cellCText)).toBe(false);
-    expect(cellCText).toContain("cmd|'/c calc'!A1");
+    const values: unknown[] = [];
+    const formulas: string[] = [];
+    wb.eachSheet((sheet) =>
+      sheet.eachRow((row) =>
+        row.eachCell((cell) => {
+          values.push(cell.value);
+          const formula = (cell.value as { formula?: string } | null)?.formula;
+          if (typeof formula === 'string') formulas.push(formula);
+        })
+      )
+    );
+    expect(values).toContain(21);
+    expect(formulas).toContain('A2*2');
+    const injection = values.find(
+      (value) => typeof value === 'string' && value.includes("cmd|'/c calc'!A1")
+    );
+    expect(typeof injection).toBe('string');
+    expect(/^[=+\-@]/.test(injection as string)).toBe(false);
   });
 
   // ---------------------------------------------------------------------
-  // CSV export + parse-back + injection
+  // Retired CSV compatibility surface + canonical XLSX replacement
   // ---------------------------------------------------------------------
-  it('CSV export: single-sheet scope headers present, RFC4180 quoting, UTF-8, injection payload neutralized, actually parses back', async () => {
+  it('retired CSV path is absent while canonical XLSX preserves comma/UTF-8 data safely', async () => {
     const id = await createBlankWorkbook(ORG_A, USER_A, 'MAT-006 CSV, with a comma in the title');
     await request(app)
       .patch(`/api/workbook/${id}/cell`)
@@ -587,40 +554,46 @@ describe('MAT-006 workbook lifecycle (real Postgres)', () => {
       .send({ sheetIndex: 0, rowIndex: 1, columnKey: 'A', value: '=HYPERLINK("evil")' })
       .expect(200);
 
-    const csvRes = await request(app)
+    const retiredCsv = await request(app)
       .get(`/api/workbook/${id}/export/csv?sheetIndex=0`)
+      .set(authHeaders(ORG_A, USER_A));
+    expect(retiredCsv.status).toBe(404);
+
+    const xlsx = await request(app)
+      .get(`/api/workbook/${id}/download`)
       .set(authHeaders(ORG_A, USER_A))
+      .buffer(true)
+      .parse((response, callback) => {
+        const chunks: Buffer[] = [];
+        response.on('data', (chunk: Buffer) => chunks.push(chunk));
+        response.on('end', () => callback(null, Buffer.concat(chunks)));
+        response.on('error', callback);
+      })
       .expect(200);
-
-    // 14) explicit, machine-readable contract limitation (not just docs).
-    expect(csvRes.headers['x-consultify-csv-scope']).toContain('sheet 1 of 1');
-    expect(csvRes.headers['x-consultify-csv-limitation']).toMatch(/one sheet/i);
-    expect(csvRes.headers['content-type']).toContain('text/csv');
-    expect(csvRes.headers['content-type']).toContain('utf-8');
-
-    const csvText: string = csvRes.text;
-    const withoutBom = csvText.replace(/^﻿/, '');
-    const lines = withoutBom.trim().split('\r\n');
-    // Real RFC4180 field parse (quoted fields, doubled-quote escaping,
-    // embedded commas) — not a naive `.split(',')`, per the task's "actually
-    // parse it, don't just check status" requirement.
-    const dataRow0 = parseCsvLine(lines[1]);
-    expect(dataRow0[0]).toBe('contains, a comma');
-    const dataRow1 = parseCsvLine(lines[2]);
-    // Injection payload neutralized with a leading apostrophe, never a bare "=".
-    expect(dataRow1[0].startsWith('=')).toBe(false);
-    expect(dataRow1[0]).toBe("'=HYPERLINK(\"evil\")");
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(xlsx.body as Buffer);
+    const strings: string[] = [];
+    workbook.eachSheet((sheet) =>
+      sheet.eachRow((row) =>
+        row.eachCell((cell) => {
+          if (typeof cell.value === 'string') strings.push(cell.value);
+        })
+      )
+    );
+    expect(strings).toContain('contains, a comma');
+    const injection = strings.find((value) => value.includes('HYPERLINK("evil")'));
+    expect(injection).toBeTruthy();
+    expect(injection?.startsWith('=')).toBe(false);
   });
 
   // ---------------------------------------------------------------------
-  // CSV export — out-of-range sheetIndex is a clean 400, not a crash
+  // Retired CSV route remains a clean 404, never a crash
   // ---------------------------------------------------------------------
-  it('CSV export: an out-of-range sheetIndex is rejected with 400, not a 500 crash', async () => {
+  it('retired CSV route with arbitrary sheetIndex is a clean 404, not a 500 crash', async () => {
     const id = await createBlankWorkbook(ORG_A, USER_A, 'MAT-006 CSV OOB');
     const res = await request(app)
       .get(`/api/workbook/${id}/export/csv?sheetIndex=99`)
       .set(authHeaders(ORG_A, USER_A));
-    expect(res.status).toBe(400);
-    expect(res.body.code).toBe('SHEET_INDEX_OUT_OF_RANGE');
+    expect(res.status).toBe(404);
   });
 });
