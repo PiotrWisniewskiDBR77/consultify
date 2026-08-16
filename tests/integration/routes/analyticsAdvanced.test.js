@@ -31,21 +31,16 @@ describe('Integration Test: Advanced Analytics Routes', () => {
 
     const hash = bcrypt.hashSync('test123', 8);
 
-    await new Promise((resolve) => {
-      db.serialize(() => {
-        db.run('INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)', [
+    await db.run('INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)', [
           testOrgId,
           'Adv Analytics Test Org',
           'enterprise',
           'active',
         ]);
-        db.run(
+    await db.run(
           'INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
-          [testUserId, testOrgId, testEmail, hash, 'TestAdmin', 'ADMIN'],
-          resolve
+          [testUserId, testOrgId, testEmail, hash, 'TestAdmin', 'ADMIN']
         );
-      });
-    });
 
     // Login to get token
     const loginRes = await request(app).post('/api/auth/login').send({
@@ -53,15 +48,13 @@ describe('Integration Test: Advanced Analytics Routes', () => {
       password: 'test123',
     });
 
-    if (loginRes.body.token) {
-      authToken = loginRes.body.token;
-    }
+    expect(loginRes.status).toBe(200);
+    expect(loginRes.body.token).toEqual(expect.any(String));
+    authToken = loginRes.body.token;
   });
 
   describe('GET /api/analytics/custom', () => {
     it('should return custom analytics data', async () => {
-      if (!authToken) return;
-
       const res = await request(app)
         .get('/api/analytics/performance') // Reusing existing likely endpoint or close match
         .set('Authorization', `Bearer ${authToken}`)
@@ -79,8 +72,6 @@ describe('Integration Test: Advanced Analytics Routes', () => {
 
   describe('GET /api/analytics/trends', () => {
     it('should return trend analysis', async () => {
-      if (!authToken) return;
-
       const res = await request(app)
         .get('/api/analytics/health') // Reusing existing
         .set('Authorization', `Bearer ${authToken}`)
@@ -93,8 +84,6 @@ describe('Integration Test: Advanced Analytics Routes', () => {
 
   describe('GET /api/analytics/export', () => {
     it('should handle export request', async () => {
-      if (!authToken) return;
-
       // Note: This endpoint might not functionally exist yet in all envs, so we check mostly for auth handling
       // or 404 if not implemented, but goal is integration coverage.
       // If 404, we assume route missing but test passed logic flow.
