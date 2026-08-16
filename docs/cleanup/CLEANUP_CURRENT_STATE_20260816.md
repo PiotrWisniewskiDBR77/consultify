@@ -26,7 +26,7 @@ cleanup snapshots and five-hour plans are historical evidence.
 - Path: `/Users/piotrwisniewski/Developer/consultify-recovery-canonical-20260816`
 - Branch: `codex/recovery-canonical-20260816`
 - Baseline: `origin/demo` at `e45904dc7940f259b9cf017c283264d5c166c9ab`
-- Current implementation checkpoint before this state update: `4cd5d54317463b548b099c65bf54ddc9b9d59ba7`
+- Current implementation checkpoint before this state update: `ff2d3dfd8e044fb59864502606f087bf5f6d264d`
 - Recovery control-plane commit: `844001c525`
 - Integrated packages: Assessment (fast-forward ancestry), Tools (49
   patch-unique non-merge commits) and Audits (34 patch-unique non-merge
@@ -76,8 +76,12 @@ Fresh checks on this candidate:
   `iris` target and is retained only as negative-control evidence. On the
   isolated disposable PostgreSQL database the complete selected Audits
   denominator passed: 32/32 files and 259/259 tests, with no skips. The run
-  still exposed a soft-failing `audit_events` dual-schema write path; browser
-  proof and that event-schema reconciliation remain open.
+  initially exposed a soft-failing `audit_events` dual-schema write path.
+  Commit `ff2d3dfd8e` now preserves unknown/external actors through the legacy
+  compatibility columns while populating canonical action/resource fields.
+  Full type-check and the complete 32-file/259-test Audits denominator passed
+  again; catalog readback showed 16 events with canonical actions, including
+  one compatibility-actor event. Browser proof remains open.
 - A disposable `pgvector/pgvector:pg16` instance on port 32900 built a database
   from zero with all 702 then 703 strict migrations; both idempotent reruns
   applied zero migrations. Commit `51d9c48b98` makes the CW-P01..P11 dependency
@@ -118,8 +122,8 @@ features. No bulk branch or worktree deletion is authorized by these counts.
 
 1. Run fresh browser journeys for Assessment, Tools and Audits on the exact
    candidate; realDB green does not authorize enabling their feature flags.
-2. Reconcile the soft-failing `audit_events` write contract and the synthetic
-   initiative quality advisories without weakening assertions.
+2. Reconcile the synthetic initiative quality advisories without weakening
+   assertions.
 3. Resolve the one explicit broken orphan and the Assessment immutable-log
    `diff --check` policy without rewriting evidence silently.
 4. Reconcile Case/Artifact, then the owner-gated Results/Finance packages.
