@@ -1,0 +1,71 @@
+{
+  "taskId": "PRT-MVP-ACCRUAL-001",
+  "baselineSha": "ca963fe5112f6caf5bebdef04e4f0a624be00e91",
+  "productSha": "ee0945a4bd636060a6d2d6d6ca0e772247d3bbce",
+  "leaseSha256": "not_applicable_codex_bounded_task",
+  "changedPaths": [
+    "server/src/services/partnerAccrualPolicy.ts",
+    "server/src/services/partnerCommissionService.ts",
+    "server/src/services/partnerPayoutSettingsService.ts",
+    "tests/unit/backend/partnerAccrualPolicy.test.ts",
+    "docs/program/evidence/closure/codex/PRT-MVP-ACCRUAL-001/TASK_EVIDENCE.json"
+  ],
+  "changedPathRationale": {
+    "server/src/services/partnerAccrualPolicy.ts": "Fail-closed owner gate for a complete approved versioned commercial rule and one base currency.",
+    "server/src/services/partnerCommissionService.ts": "Requires approved policy and active tenant-matching attribution, derives rates/fees/threshold/currency only from policy, and enforces independent payout approval.",
+    "server/src/services/partnerPayoutSettingsService.ts": "Forces automatic payout false on read and write.",
+    "tests/unit/backend/partnerAccrualPolicy.test.ts": "Absent/draft/malformed/currency mismatch negative controls.",
+    "docs/program/evidence/closure/codex/PRT-MVP-ACCRUAL-001/TASK_EVIDENCE.json": "Machine-readable owner-blocked handoff."
+  },
+  "ownerTables": [
+    "partner_attributions",
+    "partner_commission_transactions",
+    "partner_program_ledger",
+    "partner_payouts"
+  ],
+  "commands": [
+    {
+      "command": "npx vitest run tests/unit/backend/partnerAccrualPolicy.test.ts tests/integration/p28-p29.program-assessment.contract.test.ts tests/integration/p29-payout-readiness.contract.test.ts --maxWorkers=1 --no-file-parallelism",
+      "exitCode": 0
+    }
+  ],
+  "denominators": {
+    "focusedTestFiles": { "passed": 3, "failed": 0 },
+    "focusedTests": { "passed": 19, "failed": 0, "skipped": 0, "todo": 0 },
+    "ownerDecisionFieldsRequired": 6,
+    "ownerDecisionFieldsApproved": 0
+  },
+  "fixtures": {
+    "policyGate": "No production policy supplied; runtime remains fail-closed.",
+    "requiredPolicyFields": [
+      "status=APPROVED",
+      "version",
+      "baseCurrency",
+      "commissionRateBps",
+      "payoutFeeBps",
+      "minimumPayoutMinor"
+    ]
+  },
+  "negativeControls": {
+    "absentPolicyBlocked": true,
+    "draftPolicyBlocked": true,
+    "malformedPolicyBlocked": true,
+    "currencyMismatchBlocked": true,
+    "missingOrInactiveAttributionBlocked": true,
+    "automaticPayoutForcedFalse": true,
+    "requesterCannotApproveOwnPayout": true,
+    "reversalDisputeTenantAndAppendOnly": "Covered by existing partner-program-ledger governance trigger and realDB suite; not rerun in this bounded packet."
+  },
+  "browserArtifacts": [],
+  "rollback": {
+    "policy": "Unset PARTNER_ACCRUAL_POLICY_JSON to preserve fail-closed behavior; ledger facts remain append-only.",
+    "destructive": false
+  },
+  "verdict": "FIX_REQUIRED",
+  "verdictRationale": "The backend no longer invents currency, rate, fee, threshold or rule version and cannot create an accrual without an approved policy plus active tenant-matching attribution. Automatic payout is forced off and approval requires a different actor. BLOCKED_OWNER remains a literal release blocker, but it is not yet the only blocker: the legacy payout request route and multi-step payout persistence still need one transactional canonical writer proof before this task can honestly resolve to BLOCKED_OWNER alone.",
+  "openBlockers": [
+    "Commercial + Finance + Legal must approve the base currency, versioned commission rule, eligibility and attribution window, payout fee/minimum, reversal/dispute treatment and tax responsibility.",
+    "The legacy /api/partners payout request path does not append payout.requested to the canonical ledger, and payout row/link/ledger effects are not proven atomic under failure or concurrency.",
+    "Current-SHA full real-PostgreSQL concurrent request and cold-reopen acceptance should be rerun after the approved policy fixture exists; running it now would fabricate the owner decision."
+  ]
+}
