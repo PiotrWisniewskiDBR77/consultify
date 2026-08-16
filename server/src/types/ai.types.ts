@@ -158,6 +158,8 @@ export interface AIPipelineRequest {
   context?: AIContext;
   options?: AIOptions;
   history?: ChatMessage[];
+  /** Cancels provider work when the HTTP/SSE consumer disconnects. */
+  abortSignal?: AbortSignal;
 }
 
 export interface AIContext {

@@ -195,6 +195,8 @@ type CallParams = {
    * Note: circuit-breaker retries can extend total wall time unless retryAttempts is reduced.
    */
   timeoutMs?: number;
+  /** Caller lifecycle cancellation, composed with the provider timeout. */
+  abortSignal?: AbortSignal;
   /**
    * Circuit breaker options override (e.g. retryAttempts, retry delays).
    * Use sparingly; interactive UI endpoints should prefer fail-fast.
@@ -1268,10 +1270,14 @@ export class LLMService {
       let lastError: Error | null = null;
       for (let attempt = 0; attempt < 2; attempt++) {
         try {
+          const timeoutSignal = AbortSignal.timeout(params.timeoutMs ?? 60_000);
+          const abortSignal = params.abortSignal
+            ? AbortSignal.any([params.abortSignal, timeoutSignal])
+            : timeoutSignal;
           const result = await streamText({
             model,
             messages: formattedMessages as any,
-            abortSignal: AbortSignal.timeout(60000),
+            abortSignal,
             ...(typeof params.temperature === 'number' ? { temperature: params.temperature } : {}),
             ...(typeof params.maxTokens === 'number' ? { maxOutputTokens: params.maxTokens } : {}),
             ...(providerOptions ? { providerOptions: providerOptions as any } : {}),

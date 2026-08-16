@@ -205,4 +205,50 @@ describe('llmService.callStream usage capture', () => {
     expect(await collect(result.stream as AsyncIterable<string>)).toBe('x');
     await expect(result.usagePromise).resolves.toBeUndefined();
   });
+
+  it('composes caller cancellation with a bounded provider timeout', async () => {
+    mockStreamText.mockResolvedValue({
+      textStream: (async function* () {
+        yield 'chunk';
+      })(),
+      usage: Promise.resolve(undefined),
+      totalUsage: Promise.resolve(undefined),
+    });
+    const controller = new AbortController();
+    const { llmService } = await import('../llmService.js');
+    await llmService.callStream({
+      type: 'chat',
+      modelConfig: { provider: 'openrouter', id: 'openai/gpt-4o', apiKey: 'test-key' },
+      messages: [{ role: 'user', content: 'cancel me' }],
+      abortSignal: controller.signal,
+      timeoutMs: 250,
+    } as any);
+
+    const providerSignal = mockStreamText.mock.calls.at(-1)?.[0]?.abortSignal as AbortSignal;
+    expect(providerSignal).toBeInstanceOf(AbortSignal);
+    expect(providerSignal.aborted).toBe(false);
+    controller.abort();
+    expect(providerSignal.aborted).toBe(true);
+  });
+
+  it('uses the bounded single retry and then streams provider recovery', async () => {
+    mockStreamText
+      .mockRejectedValueOnce(new Error('transient provider failure'))
+      .mockResolvedValueOnce({
+        textStream: (async function* () {
+          yield 'recovered';
+        })(),
+        usage: Promise.resolve(undefined),
+        totalUsage: Promise.resolve(undefined),
+      });
+    const { llmService } = await import('../llmService.js');
+    const result = await llmService.callStream({
+      type: 'chat',
+      modelConfig: { provider: 'openrouter', id: 'openai/gpt-4o', apiKey: 'test-key' },
+      messages: [{ role: 'user', content: 'retry once' }],
+    } as any);
+
+    expect(await collect(result.stream as AsyncIterable<string>)).toBe('recovered');
+    expect(mockStreamText).toHaveBeenCalledTimes(2);
+  });
 });

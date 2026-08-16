@@ -78,17 +78,20 @@ describe('AI chat stream (E2E_MODE deterministic)', () => {
     if (!canListen) this.skip();
     const app = makeApp();
 
+    const startedAt = performance.now();
     const res = await request(app).post('/api/ai/chat/stream').send({
       message: 'hello',
       history: [],
       projectId: '11111111-1111-4111-8111-111111111111',
     });
+    const durationMs = performance.now() - startedAt;
 
     expect(res.status).toBe(200);
     expect(String(res.headers['content-type'] || '')).toMatch(/text\/event-stream/i);
     expect(res.text).toContain('data:');
     expect(res.text).toContain('E2E_OK:');
     expect(res.text).toContain('[DONE]');
+    expect(durationMs).toBeLessThan(2_000);
 
     const events = parseSseData(res.text);
     const trustEvent = events.find((event) => event?.type === 'trust_bundle');

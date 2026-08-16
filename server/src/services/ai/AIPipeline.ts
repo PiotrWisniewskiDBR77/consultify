@@ -535,6 +535,8 @@ export class AIPipeline {
               maxTokens: modelConfig.maxTokens,
               temperature: request.options?.temperature ?? 0.7,
               stream: true,
+              abortSignal: request.abortSignal,
+              timeoutMs: 60_000,
               // Reasoning: request medium-effort native thinking and a sink to
               // capture the deltas. No-ops on providers without reasoning support.
               ...(showReasoning

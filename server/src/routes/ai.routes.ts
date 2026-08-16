@@ -1583,6 +1583,7 @@ router.post(
     let isClientConnected = true;
     let streamAborted = false;
     let streamCompleted = false;
+    const streamAbortController = new AbortController();
     let deepThinkingStartedLogged = false;
     // Tracing / diagnostics (must be in outer stream handler scope)
     let chatRunId: string | null = null;
@@ -2179,6 +2180,7 @@ router.post(
       if (streamCompleted) return;
       isClientConnected = false;
       streamAborted = true;
+      streamAbortController.abort(new Error('chat_stream_client_disconnected'));
       clearInterval(heartbeatInterval);
       logger.info(`[Stream] Client disconnected: ${streamSessionId}`);
 
@@ -2540,6 +2542,7 @@ router.post(
           privateMode: Boolean(privateMode),
         },
         stream: true,
+        abortSignal: streamAbortController.signal,
         options: {
           role: roleName,
           systemInstruction: [enhancedSystemInstruction, wave6ProfilePrompt]
