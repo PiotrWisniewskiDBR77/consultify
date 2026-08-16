@@ -187,7 +187,7 @@ export async function getPartnerPayoutSettings(
   return {
     minimumThreshold: Number(orgRow?.payout_threshold ?? 100),
     payoutMethod: normalizePayoutMethod(orgRow?.payout_method),
-    autoPayoutEnabled: Boolean(orgRow?.auto_payout_enabled),
+    autoPayoutEnabled: false,
     payoutAccount: decryptedAccount,
   };
 }
@@ -203,7 +203,8 @@ export async function updatePartnerPayoutSettings(
     ? Number(input.minimumThreshold)
     : 100;
   const payoutMethod = normalizePayoutMethod(input.payoutMethod);
-  const autoPayoutEnabled = Boolean(input.autoPayoutEnabled);
+  // Commercial owner decision fixes MVP to manual payout requests only.
+  const autoPayoutEnabled = false;
   const payoutAccount = sanitizeAccountDetails(input.payoutAccount);
 
   await DbPromise.run(

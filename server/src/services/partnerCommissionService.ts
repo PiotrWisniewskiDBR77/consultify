@@ -17,6 +17,7 @@ import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { assertPolicyCurrency, readApprovedPartnerAccrualPolicy } from './partnerAccrualPolicy.js';
 import PartnerProgramLedgerService from './partnerProgramLedgerService.js';
 
 // ==========================================
@@ -262,8 +263,24 @@ export async function createCommission(
     notes,
   } = params;
 
+  const policy = readApprovedPartnerAccrualPolicy();
+  assertPolicyCurrency(policy, currency);
+  if (!attributionId) {
+    throw new Error('PARTNER_ELIGIBLE_ATTRIBUTION_REQUIRED');
+  }
+  const eligibleAttribution = await DbPromise.get<{ id: string }>(
+    db,
+    `SELECT id FROM partner_attributions
+      WHERE id = ? AND partner_org_id = ? AND organization_id = ? AND status = 'ACTIVE'`,
+    [attributionId, partnerOrgId, organizationId],
+    { fallback: false }
+  );
+  if (!eligibleAttribution?.id) {
+    throw new Error('PARTNER_ELIGIBLE_ATTRIBUTION_REQUIRED');
+  }
+  const governedRate = policy.commissionRateBps / 100;
   const id = uuidv4();
-  const commissionAmount = Math.round(grossAmount * commissionRate) / 100;
+  const commissionAmount = Math.round(grossAmount * governedRate) / 100;
   const transactionDate = new Date().toISOString();
 
   try {
@@ -285,7 +302,7 @@ export async function createCommission(
         billingPeriodStart || null,
         billingPeriodEnd || null,
         grossAmount,
-        commissionRate,
+        governedRate,
         commissionAmount,
         currency,
         invoiceId || null,
@@ -309,7 +326,7 @@ export async function createCommission(
       billingPeriodStart,
       billingPeriodEnd,
       grossAmount,
-      commissionRate,
+      commissionRate: governedRate,
       commissionAmount,
       currency,
       invoiceId,
@@ -407,6 +424,7 @@ export async function approveCommissions(
   }
 
   try {
+    const policy = readApprovedPartnerAccrualPolicy();
     const placeholders = commissionIds.map(() => '?').join(', ');
     const pendingRows = await DbPromise.all<CommissionRow>(
       db,
@@ -428,10 +446,11 @@ export async function approveCommissions(
     );
 
     for (const row of pendingRows) {
+      assertPolicyCurrency(policy, row.currency || '');
       await PartnerProgramLedgerService.appendEntry({
         partnerOrgId: row.partner_org_id,
         entryType: 'accrual.posted',
-        ruleVersion: 'partner-commission-approval-v1',
+        ruleVersion: policy.version,
         amount: Number(row.commission_amount || 0),
         currency: row.currency || 'EUR',
         actor: 'operator',
@@ -571,6 +590,7 @@ export async function requestPayout(params: PayoutRequest): Promise<Payout | nul
   const { partnerOrgId, payoutAccountId, requestedBy, notes } = params;
 
   try {
+    const policy = readApprovedPartnerAccrualPolicy();
     // Get approved commissions not yet paid
     const approvedCommissions = await DbPromise.all<{
       id: string;
@@ -590,13 +610,16 @@ export async function requestPayout(params: PayoutRequest): Promise<Payout | nul
       logger.warn(`[PartnerCommissionService] No approved commissions for payout: ${partnerOrgId}`);
       return null;
     }
+    for (const commission of approvedCommissions) {
+      assertPolicyCurrency(policy, commission.currency);
+    }
 
     // Calculate totals
     const grossAmount = approvedCommissions.reduce(
       (sum, c) => sum + Number(c.commission_amount || 0),
       0
     );
-    const fees = Math.max(grossAmount * 0.01, 0); // 1% fee, minimum €0
+    const fees = Math.max(grossAmount * (policy.payoutFeeBps / 10_000), 0);
     const netAmount = grossAmount - fees;
 
     // Get payout threshold
@@ -606,7 +629,7 @@ export async function requestPayout(params: PayoutRequest): Promise<Payout | nul
       [partnerOrgId]
     );
 
-    const threshold = partner?.payout_threshold || 100;
+    const threshold = policy.minimumPayoutMinor / 100;
     if (netAmount < threshold) {
       logger.warn(
         `[PartnerCommissionService] Payout amount €${netAmount} below threshold €${threshold}`
@@ -630,7 +653,7 @@ export async function requestPayout(params: PayoutRequest): Promise<Payout | nul
              (id, partner_org_id, payout_account_id, payout_period_start, payout_period_end,
               gross_amount, fees, net_amount, currency, transaction_count, status,
               payout_method, requested_by, notes)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'EUR', ?, 'PENDING', ?, ?, ?)`,
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', ?, ?, ?)`,
       [
         payoutId,
         partnerOrgId,
@@ -640,6 +663,7 @@ export async function requestPayout(params: PayoutRequest): Promise<Payout | nul
         grossAmount,
         fees,
         netAmount,
+        policy.baseCurrency,
         approvedCommissions.length,
         partner?.payout_method || 'BANK_TRANSFER',
         requestedBy || null,
@@ -672,7 +696,7 @@ export async function requestPayout(params: PayoutRequest): Promise<Payout | nul
       fees,
       taxWithheld: 0,
       netAmount,
-      currency: 'EUR',
+      currency: policy.baseCurrency,
       transactionCount: approvedCommissions.length,
       status: 'PENDING',
       payoutMethod: partner?.payout_method || 'BANK_TRANSFER',
@@ -755,6 +779,12 @@ export async function processPayout(
   try {
     const payout = await getPayoutRowById(payoutId);
     if (!payout) return false;
+    const policy = readApprovedPartnerAccrualPolicy();
+    assertPolicyCurrency(policy, payout.currency || '');
+    if (!processedBy || processedBy === payout.requested_by) {
+      logger.warn(`[PartnerCommissionService] Independent payout approval required: ${payoutId}`);
+      return false;
+    }
     const result = await DbPromise.run(
       db,
       `UPDATE partner_payouts 
@@ -771,7 +801,7 @@ export async function processPayout(
       await PartnerProgramLedgerService.appendEntry({
         partnerOrgId: payout.partner_org_id,
         entryType: 'payout.approved',
-        ruleVersion: 'partner-payout-approval-v1',
+        ruleVersion: policy.version,
         amount: Number(payout.net_amount || 0),
         currency: payout.currency || 'EUR',
         actor: 'operator',
