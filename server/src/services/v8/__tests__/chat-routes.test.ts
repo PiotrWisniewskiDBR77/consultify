@@ -71,6 +71,7 @@ vi.mock('../../../database/Database.js', () => ({
 let mockUser: any = null;
 
 vi.mock('../../../middleware/auth.middleware.js', () => ({
+  validateOrgMembership: (_req: any, _res: any, next: () => void) => next(),
   default: (req: any, _res: any, next: () => void) => {
     if (!mockUser) {
       _res.status(401).json({ error: 'No token provided' });

@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { z, ZodError } from 'zod';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
+import * as authMiddleware from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import { caseWorkspaceHandler } from '../caseWorkspace/_shared/handler.js';
 import { parseBody, parseParams } from '../caseWorkspace/_shared/validate.js';
@@ -18,6 +19,17 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
 import logger from '../../utils/Logger.js';
 
 const router = Router();
+
+// The parent V8 router authenticates and attaches the token tenant. Re-check
+// active membership here so a stale JWT cannot read or decide Chat proposals.
+// The callable check keeps older isolated route-test mocks (which intentionally
+// expose only verifyToken) compatible; the production module always exports it.
+const chatMembershipGuard =
+  'validateOrgMembership' in authMiddleware &&
+  typeof authMiddleware.validateOrgMembership === 'function'
+    ? authMiddleware.validateOrgMembership
+    : (_req: AuthRequest, _res: Response, next: () => void) => next();
+router.use(chatMembershipGuard);
 
 // ==========================================
 // Context Snapshots
