@@ -311,97 +311,97 @@ function readTestModeGateEnv(): TestModeGateEnv {
 // place.
 const databaseInitPromise: Promise<void> = shouldInitializeTestDatabase(readTestModeGateEnv())
   ? (async () => {
-        try {
-          logger.info('[Server] Initializing database...');
-          const mockDbEnabled = shouldUseMockDatabase(readTestModeGateEnv());
+      try {
+        logger.info('[Server] Initializing database...');
+        const mockDbEnabled = shouldUseMockDatabase(readTestModeGateEnv());
 
-          const db = await getDatabaseAsync();
-          logger.info('[Server] Database instance created:', db ? 'OK' : 'MOCK');
+        const db = await getDatabaseAsync();
+        logger.info('[Server] Database instance created:', db ? 'OK' : 'MOCK');
 
-          if ((db as any)?.isMock || mockDbEnabled) {
-            logger.info('[Server] MOCK_DB enabled; skipping schema init + connection pool');
-            dbReady = true;
-            dbInitError = null;
-            return;
-          }
+        if ((db as any)?.isMock || mockDbEnabled) {
+          logger.info('[Server] MOCK_DB enabled; skipping schema init + connection pool');
+          dbReady = true;
+          dbInitError = null;
+          return;
+        }
 
-          // Initialize and verify schema
-          const { initializeDatabase } = await import('./database/DatabaseInitializer.js');
-          const initResult = skipManagedSchema
-            ? {
-                success: true,
-                message: 'DB_MANAGED_SCHEMA disabled; skipping initializeDatabase()',
-              }
-            : await initializeDatabase();
-
-          if (!initResult.success) {
-            logger.error(`[Server] Database initialization failed: ${initResult.message}`);
-            dbReady = false;
-            dbInitError = initResult.message || 'Database initialization failed';
-            // P0A (2026-08-13): schema init failed before migrations were even
-            // attempted. Leaving `tpMigrationStatus` at its initial 'pending'
-            // here is the same class of bug this whole story is about — a
-            // stuck-forever 'pending' is indistinguishable from "still
-            // starting" on /api/health/migrations. Record it as blocked/failed
-            // explicitly instead.
-            tpMigrationStatus = {
-              state: 'failed',
-              detail: `Blocked before migrations ran: ${dbInitError}`,
-            };
-            if (isProduction) {
-              logger.error(
-                '[Server] CRITICAL: Database schema incomplete. Refusing to serve traffic. Exiting...'
-              );
-              process.exit(1);
+        // Initialize and verify schema
+        const { initializeDatabase } = await import('./database/DatabaseInitializer.js');
+        const initResult = skipManagedSchema
+          ? {
+              success: true,
+              message: 'DB_MANAGED_SCHEMA disabled; skipping initializeDatabase()',
             }
-            // Dev/test: stay alive, but explicitly NOT ready. The /api gate
-            // above keeps every business route on 503 while dbReady is false.
+          : await initializeDatabase();
+
+        if (!initResult.success) {
+          logger.error(`[Server] Database initialization failed: ${initResult.message}`);
+          dbReady = false;
+          dbInitError = initResult.message || 'Database initialization failed';
+          // P0A (2026-08-13): schema init failed before migrations were even
+          // attempted. Leaving `tpMigrationStatus` at its initial 'pending'
+          // here is the same class of bug this whole story is about — a
+          // stuck-forever 'pending' is indistinguishable from "still
+          // starting" on /api/health/migrations. Record it as blocked/failed
+          // explicitly instead.
+          tpMigrationStatus = {
+            state: 'failed',
+            detail: `Blocked before migrations ran: ${dbInitError}`,
+          };
+          if (isProduction) {
             logger.error(
-              '[Server] Database schema incomplete — staying up in DEGRADED/NOT-READY state (no traffic served).'
+              '[Server] CRITICAL: Database schema incomplete. Refusing to serve traffic. Exiting...'
             );
-            return;
+            process.exit(1);
           }
+          // Dev/test: stay alive, but explicitly NOT ready. The /api gate
+          // above keeps every business route on 503 while dbReady is false.
+          logger.error(
+            '[Server] Database schema incomplete — staying up in DEGRADED/NOT-READY state (no traffic served).'
+          );
+          return;
+        }
 
-          logger.info(`[Server] Database schema initialized: ${initResult.message}`);
+        logger.info(`[Server] Database schema initialized: ${initResult.message}`);
 
-          // Initialize connection pool
-          if (process.env.DISABLE_CONNECTION_POOL !== 'true') {
-            try {
-              const poolTimeout = new Promise<never>((_, reject) =>
-                setTimeout(() => reject(new Error('Connection pool init timeout (15s)')), 15000)
-              );
-              await Promise.race([initializeConnectionPool(), poolTimeout]);
-              logger.info('[Server] ✅ Connection pool initialized');
-            } catch (poolError) {
-              logger.error('[Server] Connection pool initialization failed:', poolError);
-              logger.warn('[Server] Continuing with singleton database connection');
-            }
-          } else {
-            logger.info('[Server] Connection pooling disabled (DISABLE_CONNECTION_POOL=true)');
+        // Initialize connection pool
+        if (process.env.DISABLE_CONNECTION_POOL !== 'true') {
+          try {
+            const poolTimeout = new Promise<never>((_, reject) =>
+              setTimeout(() => reject(new Error('Connection pool init timeout (15s)')), 15000)
+            );
+            await Promise.race([initializeConnectionPool(), poolTimeout]);
+            logger.info('[Server] ✅ Connection pool initialized');
+          } catch (poolError) {
+            logger.error('[Server] Connection pool initialization failed:', poolError);
+            logger.warn('[Server] Continuing with singleton database connection');
           }
+        } else {
+          logger.info('[Server] Connection pooling disabled (DISABLE_CONNECTION_POOL=true)');
+        }
 
-          // ── Table Platform migrations — PART OF READINESS ─────────────────
-          // Previously deferred to a 5s setTimeout AFTER dbReady=true, which
-          // published the app with a possibly incomplete schema and reduced a
-          // migration failure to a log line. The sequence now lives in
-          // ./startup/databaseReadiness.ts so its order and failure policy are
-          // testable; schema init already succeeded above.
-          // Defensive bound: readiness must never hang the process forever.
-          // Migrations/seeding run real SQL against a possibly slow or locked
-          // database; if that stalls we want an explicit "timed out" error on
-          // /api/ready (and a production exit) rather than an eternal 503 with
-          // `error: null`. Configurable because a very large migration set can
-          // legitimately take longer than the default on first boot.
-          const READINESS_TIMEOUT_MS = Number(process.env.DB_READINESS_TIMEOUT_MS) || 120_000;
+        // ── Table Platform migrations — PART OF READINESS ─────────────────
+        // Previously deferred to a 5s setTimeout AFTER dbReady=true, which
+        // published the app with a possibly incomplete schema and reduced a
+        // migration failure to a log line. The sequence now lives in
+        // ./startup/databaseReadiness.ts so its order and failure policy are
+        // testable; schema init already succeeded above.
+        // Defensive bound: readiness must never hang the process forever.
+        // Migrations/seeding run real SQL against a possibly slow or locked
+        // database; if that stalls we want an explicit "timed out" error on
+        // /api/ready (and a production exit) rather than an eternal 503 with
+        // `error: null`. Configurable because a very large migration set can
+        // legitimately take longer than the default on first boot.
+        const READINESS_TIMEOUT_MS = Number(process.env.DB_READINESS_TIMEOUT_MS) || 120_000;
 
-          const { establishDatabaseReadiness } = await import('./startup/databaseReadiness.js');
-          // Scalenie: ciało z demo (dodaje evaluateSqlChain — bramkę
-          // release gate), opakowane w withTimeout z gałęzi Assessment
-          // (P0A). Bez timeoutu sekwencja gotowości potrafiła wisieć w
-          // nieskończoność, przez co serwer nigdy nie zaczynał obsługiwać
-          // tras; bez evaluateSqlChain traci się nową bramkę spójności SQL.
-          const outcome = await withTimeout(
-            establishDatabaseReadiness({
+        const { establishDatabaseReadiness } = await import('./startup/databaseReadiness.js');
+        // Scalenie: ciało z demo (dodaje evaluateSqlChain — bramkę
+        // release gate), opakowane w withTimeout z gałęzi Assessment
+        // (P0A). Bez timeoutu sekwencja gotowości potrafiła wisieć w
+        // nieskończoność, przez co serwer nigdy nie zaczynał obsługiwać
+        // tras; bez evaluateSqlChain traci się nową bramkę spójności SQL.
+        const outcome = await withTimeout(
+          establishDatabaseReadiness({
             initializeSchema: async () => ({ success: true, message: 'verified above' }),
             // No arguments: production always resolves the canonical directory.
             runMigrations: async () => {
@@ -409,7 +409,8 @@ const databaseInitPromise: Promise<void> = shouldInitializeTestDatabase(readTest
               return runMigrations();
             },
             evaluateSqlChain: async () => {
-              const { evaluateSqlChain } = await import('./services/releaseGate/sqlChainEvaluator.js');
+              const { evaluateSqlChain } =
+                await import('./services/releaseGate/sqlChainEvaluator.js');
               const { getDatabase } = await import('./database/Database.js');
               const fs = await import('fs');
               const path = await import('path');
@@ -418,7 +419,9 @@ const databaseInitPromise: Promise<void> = shouldInitializeTestDatabase(readTest
                 path.resolve(process.cwd(), 'migrations'),
               ].find((candidate) => fs.existsSync(candidate));
               if (!migrationsDir) {
-                throw new Error('Canonical migrations directory not found for readiness evaluation');
+                throw new Error(
+                  'Canonical migrations directory not found for readiness evaluation'
+                );
               }
               return evaluateSqlChain({
                 db: getDatabase() as any,
@@ -450,106 +453,106 @@ const databaseInitPromise: Promise<void> = shouldInitializeTestDatabase(readTest
               });
             },
           }),
-            READINESS_TIMEOUT_MS,
-            `Database readiness sequence (migrations/seeding) did not settle within ${READINESS_TIMEOUT_MS}ms`
-          );
+          READINESS_TIMEOUT_MS,
+          `Database readiness sequence (migrations/seeding) did not settle within ${READINESS_TIMEOUT_MS}ms`
+        );
 
-          tpMigrationStatus = outcome.migrations;
-          sqlMigrationStatus = outcome.sqlMigrations;
+        tpMigrationStatus = outcome.migrations;
+        sqlMigrationStatus = outcome.sqlMigrations;
 
-          if (!outcome.ready) {
-            dbReady = false;
-            dbInitError = outcome.error;
-            if (outcome.shouldExitProcess) {
-              logger.error('[Server] CRITICAL: incomplete schema in production. Exiting...');
-              process.exit(1);
-            }
-            logger.error(
-              '[Server] Staying up in DEGRADED/NOT-READY state — /api/ready reports 503 and no business route is served.'
-            );
-            return; // nothing seeded, never ready
-          }
-
-          // Schema verified AND migrations settled — only now is the app ready.
-          dbReady = true;
-          dbInitError = null;
-          logger.info('[Server] ✅ Database ready — serving traffic');
-
-          // Schedule periodic schema verification (every 5 minutes)
-          const healthCheckInterval = setInterval(
-            async () => {
-              try {
-                const { verifyDatabaseHealth } = await import('./database/DatabaseInitializer.js');
-                const healthy = await verifyDatabaseHealth();
-                if (!healthy) {
-                  logger.warn('[Server] Database health check failed - schema may be incomplete');
-                  await sendSystemAlert({
-                    title: 'Database schema health degraded',
-                    message:
-                      'Periodic database verification failed. Schema may be incomplete or migrations are missing.',
-                    severity: 'WARNING',
-                    source: 'Database',
-                    throttleKey: 'database_schema_health_failed',
-                    throttleMs: 30 * 60 * 1000,
-                  });
-                }
-              } catch (err: any) {
-                const error = err as Error;
-                logger.error(`[Server] Database health check error: ${error.message}`);
-                await sendSystemAlert({
-                  title: 'Database health check error',
-                  message: error.message,
-                  severity: 'CRITICAL',
-                  source: 'Database',
-                  throttleKey: 'database_health_check_error',
-                  throttleMs: 15 * 60 * 1000,
-                });
-              }
-            },
-            5 * 60 * 1000
-          ) as NodeJS.Timeout;
-
-          (global as any).__HEALTH_CHECK_INTERVAL__ = healthCheckInterval;
-        } catch (err: any) {
-          const error = err as Error;
-          logger.error(`[Server] Database initialization failed: ${error.message}`);
-          await sendSystemAlert({
-            title: 'Database initialization failed',
-            message: error.message || 'Database initialization failed',
-            severity: 'CRITICAL',
-            source: 'Database',
-            throttleKey: 'database_initialization_failed',
-            throttleMs: 15 * 60 * 1000,
-          });
+        if (!outcome.ready) {
           dbReady = false;
-          dbInitError = error.message || 'Database initialization failed';
-          // P0A (2026-08-13): this branch also catches `withTimeout` rejecting
-          // the readiness sequence (see startup/withTimeout.ts). Before this
-          // fix, `outcome.migrations` (line ~385, `tpMigrationStatus =
-          // outcome.migrations`) never ran on that path — because the
-          // `await withTimeout(...)` above threw instead of resolving — so
-          // `tpMigrationStatus` stayed at its module-init default
-          // `{ state: 'pending', detail: null }` FOREVER, even though
-          // `dbInitError` correctly showed the timeout message. That is the
-          // exact "pending forever, indistinguishable from starting up"
-          // failure mode this whole file exists to prevent, just for
-          // `/api/health/migrations` instead of `/api/ready`. `withTimeout`
-          // does NOT cancel the underlying `establishDatabaseReadiness()` call
-          // on timeout (see withTimeout.ts docstring) — it may still be
-          // running migrations/seeding against the database in the
-          // background — but its eventual result is never read here, so it
-          // can never retroactively flip this back to 'ok'/'ready'.
-          tpMigrationStatus = {
-            state: 'failed',
-            detail: dbInitError,
-          };
-          if (isProduction) {
-            logger.error('[Server] CRITICAL: Cannot proceed without database. Exiting...');
+          dbInitError = outcome.error;
+          if (outcome.shouldExitProcess) {
+            logger.error('[Server] CRITICAL: incomplete schema in production. Exiting...');
             process.exit(1);
           }
+          logger.error(
+            '[Server] Staying up in DEGRADED/NOT-READY state — /api/ready reports 503 and no business route is served.'
+          );
+          return; // nothing seeded, never ready
         }
-      })()
-    : Promise.resolve();
+
+        // Schema verified AND migrations settled — only now is the app ready.
+        dbReady = true;
+        dbInitError = null;
+        logger.info('[Server] ✅ Database ready — serving traffic');
+
+        // Schedule periodic schema verification (every 5 minutes)
+        const healthCheckInterval = setInterval(
+          async () => {
+            try {
+              const { verifyDatabaseHealth } = await import('./database/DatabaseInitializer.js');
+              const healthy = await verifyDatabaseHealth();
+              if (!healthy) {
+                logger.warn('[Server] Database health check failed - schema may be incomplete');
+                await sendSystemAlert({
+                  title: 'Database schema health degraded',
+                  message:
+                    'Periodic database verification failed. Schema may be incomplete or migrations are missing.',
+                  severity: 'WARNING',
+                  source: 'Database',
+                  throttleKey: 'database_schema_health_failed',
+                  throttleMs: 30 * 60 * 1000,
+                });
+              }
+            } catch (err: any) {
+              const error = err as Error;
+              logger.error(`[Server] Database health check error: ${error.message}`);
+              await sendSystemAlert({
+                title: 'Database health check error',
+                message: error.message,
+                severity: 'CRITICAL',
+                source: 'Database',
+                throttleKey: 'database_health_check_error',
+                throttleMs: 15 * 60 * 1000,
+              });
+            }
+          },
+          5 * 60 * 1000
+        ) as NodeJS.Timeout;
+
+        (global as any).__HEALTH_CHECK_INTERVAL__ = healthCheckInterval;
+      } catch (err: any) {
+        const error = err as Error;
+        logger.error(`[Server] Database initialization failed: ${error.message}`);
+        await sendSystemAlert({
+          title: 'Database initialization failed',
+          message: error.message || 'Database initialization failed',
+          severity: 'CRITICAL',
+          source: 'Database',
+          throttleKey: 'database_initialization_failed',
+          throttleMs: 15 * 60 * 1000,
+        });
+        dbReady = false;
+        dbInitError = error.message || 'Database initialization failed';
+        // P0A (2026-08-13): this branch also catches `withTimeout` rejecting
+        // the readiness sequence (see startup/withTimeout.ts). Before this
+        // fix, `outcome.migrations` (line ~385, `tpMigrationStatus =
+        // outcome.migrations`) never ran on that path — because the
+        // `await withTimeout(...)` above threw instead of resolving — so
+        // `tpMigrationStatus` stayed at its module-init default
+        // `{ state: 'pending', detail: null }` FOREVER, even though
+        // `dbInitError` correctly showed the timeout message. That is the
+        // exact "pending forever, indistinguishable from starting up"
+        // failure mode this whole file exists to prevent, just for
+        // `/api/health/migrations` instead of `/api/ready`. `withTimeout`
+        // does NOT cancel the underlying `establishDatabaseReadiness()` call
+        // on timeout (see withTimeout.ts docstring) — it may still be
+        // running migrations/seeding against the database in the
+        // background — but its eventual result is never read here, so it
+        // can never retroactively flip this back to 'ok'/'ready'.
+        tpMigrationStatus = {
+          state: 'failed',
+          detail: dbInitError,
+        };
+        if (isProduction) {
+          logger.error('[Server] CRITICAL: Cannot proceed without database. Exiting...');
+          process.exit(1);
+        }
+      }
+    })()
+  : Promise.resolve();
 
 // ============================================================
 // SERVER STARTUP (moved to end of file after all routes registered)
@@ -1399,7 +1402,6 @@ logger.info(`[Server] Final frontend dist path: ${frontendDistPath}`);
  * Coverage: tests/integration/buildSurfaceRemoved.contract.test.ts
  */
 
-
 const isStaticAssetRequest = (requestPath: string): boolean =>
   /\.[a-z0-9]+$/i.test(requestPath) ||
   requestPath.startsWith('/assets/') ||
@@ -2010,9 +2012,8 @@ if (startServer && shouldStartHttpServer) {
     // subscribeToOutboxDelivery consumer ever ran. The transactional write
     // side was correct; only the delivery side was never started.
     try {
-      const { startCaseWorkspaceOutboxWorker } = await import(
-        './services/caseWorkspace/outboxWorker.js'
-      );
+      const { startCaseWorkspaceOutboxWorker } =
+        await import('./services/caseWorkspace/outboxWorker.js');
       startCaseWorkspaceOutboxWorker();
     } catch (err: any) {
       logger.warn('[Server] Case Workspace outbox worker not started:', err?.message);
@@ -2021,14 +2022,15 @@ if (startServer && shouldStartHttpServer) {
     // Capability bindings are in-memory and must be rebuilt on every boot. The bootstrap
     // remains fail-closed unless a configured actor is a real ADMIN of the configured org.
     try {
-      const { bootstrapCaseWorkspaceCapabilities } = await import(
-        './services/caseWorkspace/capabilityBootstrap.js'
-      );
+      const { bootstrapCaseWorkspaceCapabilities } =
+        await import('./services/caseWorkspace/capabilityBootstrap.js');
       const bootResult = await bootstrapCaseWorkspaceCapabilities();
       if (bootResult.status === 'REGISTERED') {
         logger.info('[Server] Case Workspace capability adapters registered (7 adapters).');
       } else {
-        logger.warn(`[Server] Case Workspace capability adapters not registered: ${bootResult.status}.`);
+        logger.warn(
+          `[Server] Case Workspace capability adapters not registered: ${bootResult.status}.`
+        );
       }
     } catch (err: any) {
       logger.warn('[Server] Case Workspace capability adapters not started:', err?.message);
@@ -2049,6 +2051,17 @@ if (startServer && shouldStartHttpServer) {
         '[Server] Closure delivery receipt reconciliation sweep not started:',
         err?.message
       );
+    }
+
+    // AGT-OPS-001: controlled consumer for the existing ai-tasks queue.
+    // Default OFF: enabling autonomous background execution remains an owner
+    // decision. When explicitly enabled, initialization is fail-closed.
+    try {
+      const { startAiTasksWorker } = await import('./workers/aiWorkerRuntime.js');
+      await startAiTasksWorker();
+    } catch (err: any) {
+      logger.error('[Server] ai-tasks worker requested but failed to start:', err?.message);
+      throw err;
     }
 
     // Slack Command Center progress feed (Filar 4 / F3): batched #cf-progress
@@ -2191,6 +2204,15 @@ if (startServer && shouldStartHttpServer) {
             clearInterval(healthCheckInterval);
             (global as any).__HEALTH_CHECK_INTERVAL__ = null;
             logger.info('[Shutdown] Health check interval cleared');
+          }
+
+          // Close BullMQ queue
+          try {
+            const { stopAiTasksWorker } = await import('./workers/aiWorkerRuntime.js');
+            await stopAiTasksWorker();
+            logger.info('[Shutdown] BullMQ ai-tasks worker closed');
+          } catch (err: any) {
+            logger.warn('[Shutdown] Error closing ai-tasks worker:', err.message);
           }
 
           // Close BullMQ queue
