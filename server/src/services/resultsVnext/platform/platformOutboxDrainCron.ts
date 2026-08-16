@@ -32,7 +32,12 @@ import {
   reclaimExpiredClaims,
   type RvnOutboxRow,
 } from './outboxDrain.js';
-import { CONSUMER_REGISTRY, UNBUILT_CONSUMER_GROUPS, type RvnPlatformEventRow } from './consumerRegistry.js';
+import {
+  CONSUMER_REGISTRY,
+  UNBUILT_CONSUMER_GROUPS,
+  type RvnPlatformEventRow,
+} from './consumerRegistry.js';
+import { drainExecutionSignalIngress } from './executionSignalIngress.js';
 
 const DEFAULT_BATCH_SIZE = 50;
 const DEFAULT_BACKOFF_SECONDS = 30;
@@ -124,7 +129,12 @@ export async function runOutboxDispatchTick(
         // rvn_platform_outbox.event_id has a NOT NULL FK to
         // rvn_platform_events — unreachable in practice, but fail this row
         // rather than crash the whole tick if it ever happens.
-        await markFailed(dispatchClient, row.outbox_id, 'EVENT_ROW_NOT_FOUND', DEFAULT_BACKOFF_SECONDS);
+        await markFailed(
+          dispatchClient,
+          row.outbox_id,
+          'EVENT_ROW_NOT_FOUND',
+          DEFAULT_BACKOFF_SECONDS
+        );
         result.failed++;
         continue;
       }
@@ -186,7 +196,12 @@ export async function runOutboxDispatchTick(
           // Same defensive double-rollback-is-a-no-op pattern as atomicWrite.ts.
         }
         const message = err instanceof Error ? err.message : String(err);
-        const failResult = await markFailed(dispatchClient, row.outbox_id, message, DEFAULT_BACKOFF_SECONDS);
+        const failResult = await markFailed(
+          dispatchClient,
+          row.outbox_id,
+          message,
+          DEFAULT_BACKOFF_SECONDS
+        );
         result.failed++;
         if (failResult.status === 'dead_letter') {
           result.deadLettered++;
@@ -220,9 +235,7 @@ let drainTimer: ReturnType<typeof setInterval> | null = null;
 export function startPlatformOutboxDrainCron(): void {
   if (process.env.NODE_ENV === 'test') return;
   if (String(process.env.RVN_PLATFORM_OUTBOX_DRAIN_ENABLED ?? 'true').toLowerCase() === 'false') {
-    logger.info(
-      '[RvnPlatformOutbox] RVN_PLATFORM_OUTBOX_DRAIN_ENABLED=false — drain not started.'
-    );
+    logger.info('[RvnPlatformOutbox] RVN_PLATFORM_OUTBOX_DRAIN_ENABLED=false — drain not started.');
     return;
   }
   if (drainTimer) return;
@@ -232,7 +245,7 @@ export function startPlatformOutboxDrainCron(): void {
     Number(process.env.RVN_PLATFORM_OUTBOX_DRAIN_INTERVAL_MS) || 60_000
   );
   const tick = () => {
-    void runOutboxDispatchTick().catch((err) => {
+    void Promise.all([runOutboxDispatchTick(), drainExecutionSignalIngress()]).catch((err) => {
       logger.warn('[RvnPlatformOutbox] drain tick failed (non-fatal)', {
         error: err instanceof Error ? err.message : String(err),
       });
