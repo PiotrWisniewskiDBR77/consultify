@@ -32,42 +32,41 @@ describe('Integration Test: Capacity Routes', () => {
 
     const hash = bcrypt.hashSync('test123', 8);
 
-    await new Promise((resolve) => {
-      db.serialize(() => {
-        db.run('INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)', [
-          testOrgId,
-          'Capacity Test Org',
-          'enterprise',
-          'active',
-        ]);
-        db.run(
-          'INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
-          [testUserId, testOrgId, testEmail, hash, 'CapacityUser', 'ADMIN'],
-          resolve
-        );
-        db.run('INSERT INTO projects (id, organization_id, name, status) VALUES (?, ?, ?, ?)', [
-          testProjectId,
-          testOrgId,
-          'Capacity Project',
-          'active',
-        ]);
-      });
-    });
+    await db.run('INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)', [
+      testOrgId,
+      'Capacity Test Org',
+      'enterprise',
+      'active',
+    ]);
+    await db.run(
+      'INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
+      [testUserId, testOrgId, testEmail, hash, 'CapacityUser', 'ADMIN']
+    );
+    await db.run('INSERT INTO projects (id, organization_id, name, status) VALUES (?, ?, ?, ?)', [
+      testProjectId,
+      testOrgId,
+      'Capacity Project',
+      'active',
+    ]);
 
     const loginRes = await request(app).post('/api/auth/login').send({
       email: testEmail,
       password: 'test123',
     });
 
-    if (loginRes.body.token) {
-      authToken = loginRes.body.token;
-    }
+    expect(loginRes.status).toBe(200);
+    expect(loginRes.body.token).toEqual(expect.any(String));
+    authToken = loginRes.body.token;
+  });
+
+  afterAll(async () => {
+    await db.run('DELETE FROM projects WHERE id = ?', [testProjectId]);
+    await db.run('DELETE FROM users WHERE id = ?', [testUserId]);
+    await db.run('DELETE FROM organizations WHERE id = ?', [testOrgId]);
   });
 
   describe('GET /api/capacity/user/:userId', () => {
     it('should calculate user capacity', async () => {
-      if (!authToken) return;
-
       const res = await request(app)
         .get(`/api/capacity/user/${testUserId}?projectId=${testProjectId}`)
         .set('Authorization', `Bearer ${authToken}`);
@@ -78,8 +77,6 @@ describe('Integration Test: Capacity Routes', () => {
 
   describe('GET /api/capacity/project/:projectId/overloads', () => {
     it('should detect overloads', async () => {
-      if (!authToken) return;
-
       const res = await request(app)
         .get(`/api/capacity/project/${testProjectId}/overloads`)
         .set('Authorization', `Bearer ${authToken}`);
@@ -90,8 +87,6 @@ describe('Integration Test: Capacity Routes', () => {
 
   describe('GET /api/capacity/project/:projectId/summary', () => {
     it('should return capacity summary', async () => {
-      if (!authToken) return;
-
       const res = await request(app)
         .get(`/api/capacity/project/${testProjectId}/summary`)
         .set('Authorization', `Bearer ${authToken}`);
