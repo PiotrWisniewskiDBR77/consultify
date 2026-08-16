@@ -4,17 +4,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AdminMembersRolesPanel } from '@/components/Admin/AdminMembersRolesPanel';
 import { Api } from '@/services/api';
 
+let mockedUser = { id: 'user-1', email: 'owner@example.com', role: 'OWNER' };
+let mockedMembers: any[] = [];
+
 vi.mock('@/services/api', () => ({
   Api: {
-    getOrganizationMembers: vi.fn().mockResolvedValue([
-      {
-        user_id: 'user-1',
-        name: 'Owner User',
-        email: 'owner@example.com',
-        role: 'OWNER',
-        status: 'ACTIVE',
-      },
-    ]),
+    getOrganizationMembers: vi.fn(() => Promise.resolve(mockedMembers)),
     post: vi.fn().mockResolvedValue({ code: { code: 'TENANT-CODE-123' } }),
   },
 }));
@@ -22,7 +17,7 @@ vi.mock('@/services/api', () => ({
 vi.mock('@/store/useAppStore', () => ({
   useAppStore: () => ({
     currentOrganization: { id: 'org-1', name: 'Acme' },
-    currentUser: { id: 'user-1', email: 'owner@example.com' },
+    currentUser: mockedUser,
   }),
 }));
 
@@ -40,6 +35,25 @@ vi.mock('react-hot-toast', () => ({
 describe('AdminMembersRolesPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockedUser = { id: 'user-1', email: 'owner@example.com', role: 'OWNER' };
+    mockedMembers = [{ user_id: 'user-1', name: 'Owner User', email: 'owner@example.com', role: 'OWNER', status: 'ACTIVE' }];
+  });
+
+  it('does not render forbidden management controls for a read-only member persona', async () => {
+    mockedUser = { id: 'user-2', email: 'member@example.com', role: 'USER' };
+    mockedMembers = [
+      { user_id: 'user-1', email: 'owner@example.com', role: 'OWNER', status: 'ACTIVE' },
+      { user_id: 'user-2', email: 'member@example.com', role: 'MEMBER', status: 'ACTIVE' },
+    ];
+
+    render(<AdminMembersRolesPanel />);
+
+    expect(await screen.findByText(/Read-only access/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Add member/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Generate code/i })).not.toBeInTheDocument();
+    expect(screen.queryByText('Team Invite Code')).not.toBeInTheDocument();
+    expect(screen.queryByText('Ownership management')).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
   });
 
   it('generates tenant access codes through the access-codes generate endpoint', async () => {

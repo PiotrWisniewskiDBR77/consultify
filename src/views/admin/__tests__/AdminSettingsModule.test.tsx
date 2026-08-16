@@ -6,7 +6,7 @@
  * (the historical bug documented in the module-17 audit).
  */
 
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
@@ -88,5 +88,16 @@ describe('AdminSettingsModule section routing', () => {
   it('falls back to the people panel for unknown segments', () => {
     renderAt('/admin/unknown-section');
     expect(screen.getByTestId('panel-people')).toBeInTheDocument();
+  });
+
+  it('exposes mobile navigation state and restores focus after Escape', () => {
+    renderAt('/admin/people');
+    const toggle = screen.getByRole('button', { name: /Toggle admin navigation/i });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('button', { name: /Close admin navigation/i })).toBeInTheDocument();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
   });
 });

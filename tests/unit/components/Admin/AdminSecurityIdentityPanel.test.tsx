@@ -1,5 +1,5 @@
 import { MemoryRouter } from 'react-router-dom';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { AdminSecurityIdentityPanel } from '@/components/Admin/AdminSecurityIdentityPanel';
@@ -36,7 +36,31 @@ describe('AdminSecurityIdentityPanel', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByRole('button', { name: /Risk summary/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Risk summary/i })).toBeInTheDocument();
     expect(screen.getByText('Risk summary mocked')).toBeInTheDocument();
+  });
+
+  it('implements an accessible keyboard-navigable tab contract', () => {
+    render(
+      <MemoryRouter initialEntries={['/admin/security']}>
+        <AdminSecurityIdentityPanel />
+      </MemoryRouter>
+    );
+
+    const tablist = screen.getByRole('tablist', { name: /Security and identity sections/i });
+    const tabs = screen.getAllByRole('tab');
+    expect(tablist).toContainElement(tabs[0]);
+    expect(tabs[0]).toHaveAttribute('aria-selected', 'true');
+    expect(tabs[0]).toHaveAttribute('tabindex', '0');
+    expect(tabs[1]).toHaveAttribute('tabindex', '-1');
+
+    tabs[0].focus();
+    fireEvent.keyDown(tabs[0], { key: 'ArrowRight' });
+    expect(tabs[1]).toHaveFocus();
+    expect(tabs[1]).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tabpanel')).toHaveAttribute('aria-labelledby', tabs[1].id);
+
+    fireEvent.keyDown(tabs[1], { key: 'End' });
+    expect(tabs[tabs.length - 1]).toHaveFocus();
   });
 });

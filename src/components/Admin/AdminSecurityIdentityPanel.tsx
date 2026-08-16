@@ -1,5 +1,5 @@
 import { KeyRound, Link2, Shield, ShieldAlert, UserCog, UsersRound } from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 
@@ -53,6 +53,7 @@ export const AdminSecurityIdentityPanel: React.FC = () => {
     return tabs.some((tab) => tab.id === raw) ? (raw as TabId) : 'policy';
   }, [searchParams]);
   const [activeTab, setActiveTab] = useState<TabId>(requestedTab);
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   useEffect(() => {
     setActiveTab(requestedTab);
@@ -63,6 +64,18 @@ export const AdminSecurityIdentityPanel: React.FC = () => {
     const nextParams = new URLSearchParams(searchParams);
     nextParams.set('tab', tab);
     setSearchParams(nextParams, { replace: true });
+  };
+
+  const handleTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
+    let nextIndex: number | null = null;
+    if (event.key === 'ArrowRight') nextIndex = (index + 1) % tabs.length;
+    if (event.key === 'ArrowLeft') nextIndex = (index - 1 + tabs.length) % tabs.length;
+    if (event.key === 'Home') nextIndex = 0;
+    if (event.key === 'End') nextIndex = tabs.length - 1;
+    if (nextIndex === null) return;
+    event.preventDefault();
+    handleTabChange(tabs[nextIndex].id);
+    tabRefs.current[nextIndex]?.focus();
   };
 
   return (
@@ -80,13 +93,20 @@ export const AdminSecurityIdentityPanel: React.FC = () => {
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-2 dark:border-white/10 dark:bg-white/5">
-        <div className="flex flex-wrap gap-2">
-          {tabs.map((tab) => {
+        <div className="flex flex-wrap gap-2" role="tablist" aria-label={t('admin.security.identityPanel.tabs.label', 'Security and identity sections')}>
+          {tabs.map((tab, index) => {
             const Icon = tab.icon;
             return (
               <button
                 key={tab.id}
+                ref={(node) => { tabRefs.current[index] = node; }}
+                id={`admin-security-tab-${tab.id}`}
+                role="tab"
+                aria-selected={activeTab === tab.id}
+                aria-controls={`admin-security-panel-${tab.id}`}
+                tabIndex={activeTab === tab.id ? 0 : -1}
                 onClick={() => handleTabChange(tab.id)}
+                onKeyDown={(event) => handleTabKeyDown(event, index)}
                 className={cn(
                   'inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition',
                   activeTab === tab.id
@@ -102,12 +122,14 @@ export const AdminSecurityIdentityPanel: React.FC = () => {
         </div>
       </div>
 
-      {activeTab === 'policy' && <AdminSecurityPolicyPanel />}
-      {activeTab === 'collaboration' && <AdminCollaborationControlsPanel />}
-      {activeTab === 'api-access' && <ApiKeysManagementView />}
-      {activeTab === 'iam' && <AdminIamPolicyPanel />}
-      {activeTab === 'scim' && <AdminScimLifecyclePanel />}
-      {activeTab === 'risk' && <AdminRiskSummaryPanel />}
+      <div role="tabpanel" id={`admin-security-panel-${activeTab}`} aria-labelledby={`admin-security-tab-${activeTab}`}>
+        {activeTab === 'policy' && <AdminSecurityPolicyPanel />}
+        {activeTab === 'collaboration' && <AdminCollaborationControlsPanel />}
+        {activeTab === 'api-access' && <ApiKeysManagementView />}
+        {activeTab === 'iam' && <AdminIamPolicyPanel />}
+        {activeTab === 'scim' && <AdminScimLifecyclePanel />}
+        {activeTab === 'risk' && <AdminRiskSummaryPanel />}
+      </div>
     </div>
   );
 };

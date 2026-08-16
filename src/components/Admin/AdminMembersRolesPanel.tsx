@@ -216,6 +216,12 @@ export const AdminMembersRolesPanel: React.FC = () => {
 
   const handleRemove = async (memberId: string) => {
     if (!orgId) return;
+    if (!canManageTeam) {
+      toast.error(
+        t('admin.membersRoles.remove.denied', 'Only a team owner or admin can remove members')
+      );
+      return;
+    }
     try {
       setSavingMemberId(memberId);
       await Api.removeOrganizationMember(orgId, memberId);
@@ -232,6 +238,12 @@ export const AdminMembersRolesPanel: React.FC = () => {
 
   const handleGenerateInviteCode = async () => {
     if (!orgId) return;
+    if (!canManageTeam) {
+      toast.error(
+        t('admin.membersRoles.code.denied', 'Only a team owner or admin can generate invite codes')
+      );
+      return;
+    }
 
     try {
       setIsGeneratingCode(true);
@@ -307,6 +319,9 @@ export const AdminMembersRolesPanel: React.FC = () => {
       render: (row) => {
         const isBusy = savingMemberId === row.memberId;
         const ownerProtected = row.role === 'OWNER';
+        if (!canManageTeam) {
+          return <span className="text-sm text-c-text-secondary">{roleLabels[row.role as RoleOption]}</span>;
+        }
         return (
           <div onClick={(e) => e.stopPropagation()} className="max-w-[160px]">
             <SelectField
@@ -381,7 +396,7 @@ export const AdminMembersRolesPanel: React.FC = () => {
               )}
             </p>
           </div>
-          <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr),160px,auto] sm:items-end">
+          {canManageTeam ? <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr),160px,auto] sm:items-end">
             <Input
               type="email"
               value={inviteEmail}
@@ -411,7 +426,11 @@ export const AdminMembersRolesPanel: React.FC = () => {
             >
               {t('admin.membersRoles.invite.cta', 'Add member')}
             </Button>
-          </div>
+          </div> : (
+            <p role="status" className="text-sm text-c-text-muted">
+              {t('admin.membersRoles.readOnly', 'Read-only access. Management controls are available only to workspace owners and admins.')}
+            </p>
+          )}
         </div>
 
         {inviteError && (
@@ -483,7 +502,7 @@ export const AdminMembersRolesPanel: React.FC = () => {
                 const ownerProtected = row.role === 'OWNER';
                 const selfProtected = row.memberId === currentUser?.id;
                 const isBusy = savingMemberId === row.memberId;
-                if (ownerProtected || selfProtected || isBusy) return [];
+                if (!canManageTeam || ownerProtected || selfProtected || isBusy) return [];
                 return [
                   {
                     id: 'remove',
@@ -504,8 +523,8 @@ export const AdminMembersRolesPanel: React.FC = () => {
         )}
       </div>
 
-      {/* Team invite code */}
-      <div className="rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-5">
+      {/* Forbidden controls are not rendered for non-managing personas. */}
+      {canManageTeam && <div className="rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h3 className="text-lg font-semibold text-c-text">
@@ -612,9 +631,9 @@ export const AdminMembersRolesPanel: React.FC = () => {
             </div>
           </div>
         )}
-      </div>
+      </div>}
 
-      <OwnershipManagementView />
+      {canManageTeam && <OwnershipManagementView />}
     </div>
   );
 };

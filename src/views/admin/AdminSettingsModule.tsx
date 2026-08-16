@@ -1,5 +1,5 @@
 import { Menu, X } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -152,6 +152,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
 
   const rawResolvedState = useMemo(
     () => resolveAdminState(location.pathname, location.search, initialTab),
@@ -173,6 +174,17 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
       navigate('/admin/people', { replace: true });
     }
   }, [rawResolvedState.section, commandCenterEnabled, navigate]);
+
+  useEffect(() => {
+    if (!sidebarOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      setSidebarOpen(false);
+      requestAnimationFrame(() => menuButtonRef.current?.focus());
+    };
+    document.addEventListener('keydown', closeOnEscape);
+    return () => document.removeEventListener('keydown', closeOnEscape);
+  }, [sidebarOpen]);
 
   const handleSectionChange = useCallback(
     (section: AdminSettingsSection) => {
@@ -214,13 +226,16 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
   return (
     <div className="relative flex h-full bg-slate-50 dark:bg-navy-950">
       {sidebarOpen && (
-        <div
+        <button
+          type="button"
+          aria-label={t('admin.shell.closeNavigation', 'Close admin navigation')}
           className="fixed inset-0 z-30 bg-black/50 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       <div
+        id="admin-settings-navigation"
         className={cn(
           'fixed inset-y-0 left-0 z-40 w-[300px] transform transition-transform duration-300 ease-in-out lg:static lg:transform-none',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
@@ -236,9 +251,13 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
       <div className="flex min-w-0 flex-1 flex-col bg-white dark:bg-navy-900">
         <div className="flex items-center border-b border-slate-200 px-4 py-2 lg:hidden dark:border-white/10">
           <Button
+            ref={menuButtonRef}
             variant="ghost"
             size="sm"
             onClick={() => setSidebarOpen((prev) => !prev)}
+            aria-label={t('admin.shell.toggleNavigation', 'Toggle admin navigation')}
+            aria-expanded={sidebarOpen}
+            aria-controls="admin-settings-navigation"
             className="p-2 text-slate-600 hover:text-navy-900 dark:text-slate-400 dark:hover:text-white"
           >
             {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
