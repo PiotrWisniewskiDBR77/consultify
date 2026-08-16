@@ -1,8 +1,17 @@
 {
   "taskId": "ADM-BVP-001",
-  "productSha": "13f6e34c055bcfd525f9d2ac629784be8935f3d6",
-  "tests": {"orgPeopleIamUnit": "15/15 PASS", "freshRealPostgresPacket": "PASS"},
-  "proof": ["membership reads fail closed", "role-change audit uses durable UUID", "missing member is rejected", "audit failure cannot produce false success"],
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "productSha": "3cf595da94a516ade16b976cb1abf370a17213c0",
+  "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
+  "changedPaths": ["server/src/controllers/AuthController.ts", "server/src/controllers/OrganizationController.ts", "server/src/services/invitationService.ts", "server/src/services/orgPeopleIamService.ts", "server/src/services/attributionService.ts", "server/migrations/20260903_admin_invitation_events.sql", "server/migrations/20260904_admin_seat_management_repair.sql", "server/migrations/20260905_attribution_events_repair.sql", "server/src/services/__tests__/adminIamBvp.pg.test.ts"],
+  "changedPathRationale": {"iam": "transactional capability, last-owner, revocation and audit enforcement", "schema": "fresh-install invitation, seat and attribution parity", "tests": "real PostgreSQL lifecycle and negative controls"},
+  "ownerTables": ["organization_members", "invitations", "invitation_events", "role_change_audit_events", "attribution_events", "organization_seats"],
+  "commands": [{"command": "fresh PostgreSQL migrate/repeat/dry-run", "exitCode": 0}, {"command": "vitest adminIamBvp.pg.test.ts", "exitCode": 0}, {"command": "vitest Invitation/Auth regression packet", "exitCode": 0}, {"command": "npm run type-check && npm run build:backend && npm run build", "exitCode": 0}],
+  "denominators": {"freshMigrations": "709/709 success; repeat 0; dry-run 0", "adminRealDb": "6/6", "authInvitationRegression": "38/38"},
+  "fixtures": {"database": "disposable pgvector PostgreSQL 16 on localhost:56504", "tenants": "owner tenant plus isolated foreign tenant"},
+  "negativeControls": {"capability": "missing capability denied", "lastOwner": "concurrent demotions preserve one OWNER", "tenant": "foreign target hidden with zero write/audit", "auditFailure": "audit failure rolls mutation back", "revocation": "new login returns ORG_MEMBERSHIP_REVOKED"},
+  "browserArtifacts": [],
+  "rollback": {"code": "revert 3cf595da94 before deployment", "data": "additive migrations only; no production migration executed"},
   "verdict": "PARTIAL",
-  "openBlockers": ["Full invite->accept->role->revoke->new-session flow and last-owner browser negative remain."]
+  "openBlockers": ["G4 signed-in browser and human UI evidence are not yet captured on this exact SHA."]
 }

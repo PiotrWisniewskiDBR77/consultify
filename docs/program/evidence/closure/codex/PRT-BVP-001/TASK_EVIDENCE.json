@@ -1,7 +1,17 @@
 {
   "taskId": "PRT-BVP-001",
-  "productSha": "13f6e34c055bcfd525f9d2ac629784be8935f3d6",
-  "tests": {"focusedPartner": "63/63 PASS", "ledgerRealPostgres": "6/6 PASS"},
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "productSha": "3cf595da94a516ade16b976cb1abf370a17213c0",
+  "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
+  "changedPaths": ["server/src/services/partnerOrgResolution.ts", "server/src/services/partnerReferralService.ts", "server/migrations/20260902_partner_commission_rates_repair.sql", "tests/integration/partners/partner-bvp-lifecycle.realdb.test.ts"],
+  "changedPathRationale": {"runtime": "tenant-safe partner resolution and atomic durable referral identity", "schema": "fresh-install certification commission rates", "tests": "lifecycle, concurrency, isolation and cold-client proof"},
+  "ownerTables": ["partner_users", "partner_referral_codes", "partner_attributions", "partner_certifications", "partner_commission_rates"],
+  "commands": [{"command": "vitest partner-bvp-lifecycle.realdb.test.ts on fresh PostgreSQL", "exitCode": 0}, {"command": "fresh PostgreSQL migrate/repeat/dry-run", "exitCode": 0}],
+  "denominators": {"partnerLifecycle": "6/6", "combinedRealDb": "36/36 across 9 files", "freshMigrations": "709/709 success"},
+  "fixtures": {"database": "disposable pgvector PostgreSQL 16 on localhost:56504", "concurrency": "eight simultaneous referral identity requests"},
+  "negativeControls": {"tenant": "foreign partner and attribution hidden", "duplicate": "duplicate attribution retry rejected", "inactive": "inactive code rejected", "fabricatedPayout": "no payout created"},
+  "browserArtifacts": [],
+  "rollback": {"code": "revert 3cf595da94 before deployment", "data": "additive migration only; no production migration executed"},
   "verdict": "PARTIAL",
-  "openBlockers": ["One realDB register->connect->certification->code->attribution->cold-reopen journey remains."]
+  "openBlockers": ["Literal browser HTTP registration/connect journey and separate-process restart evidence remain."]
 }

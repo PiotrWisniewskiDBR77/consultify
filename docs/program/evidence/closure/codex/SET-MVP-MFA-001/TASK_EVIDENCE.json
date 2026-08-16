@@ -1,10 +1,17 @@
 {
   "taskId": "SET-MVP-MFA-001",
-  "productSha": "13f6e34c055bcfd525f9d2ac629784be8935f3d6",
-  "freshDatabase": {"migrationsApplied": 705, "repeatApplied": 0, "dryRunPending": 0},
-  "tests": {"realPostgres": "7/7 PASS", "combinedFreshDatabasePacket": "30/30 PASS"},
-  "proof": ["real TOTP challenge", "tenant enforcement", "success/failure audit", "last_verified_at", "bcrypt re-auth before disable", "denied disable preserves factor"],
-  "staticGates": {"typeCheck": "PASS", "backendBuild": "PASS"},
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "productSha": "3cf595da94a516ade16b976cb1abf370a17213c0",
+  "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
+  "changedPaths": ["server/src/services/MFAService.ts", "server/src/routes/mfa.routes.ts", "server/src/services/__tests__/MFAService.pg.test.ts", "server/src/routes/__tests__/mfaPersistence.pg.test.ts"],
+  "changedPathRationale": {"runtime": "real TOTP, tenant enforcement, re-auth and fail-closed persistence", "tests": "real PostgreSQL factor lifecycle"},
+  "ownerTables": ["user_mfa", "audit_logs", "organizations"],
+  "commands": [{"command": "vitest MFAService.pg.test.ts mfaPersistence.pg.test.ts on fresh PostgreSQL", "exitCode": 0}, {"command": "npm run type-check && npm run build:backend && npm run build", "exitCode": 0}],
+  "denominators": {"mfaRealDb": "7/7", "combinedRealDb": "36/36", "freshMigrations": "709/709 success"},
+  "fixtures": {"database": "disposable pgvector PostgreSQL 16 on localhost:56504"},
+  "negativeControls": {"totp": "invalid token denied", "reauth": "wrong password preserves factor", "writeFailure": "enable/setup return failure rather than false success"},
+  "browserArtifacts": [],
+  "rollback": {"code": "revert MFA hardening commits before deployment", "data": "no production factor modified"},
   "verdict": "PARTIAL",
   "openBlockers": ["Concurrent backup-code consumption and complete enroll/recovery audit matrix remain."]
 }

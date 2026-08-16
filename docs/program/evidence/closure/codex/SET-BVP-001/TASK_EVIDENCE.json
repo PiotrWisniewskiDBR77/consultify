@@ -1,7 +1,17 @@
 {
   "taskId": "SET-BVP-001",
-  "productSha": "13f6e34c055bcfd525f9d2ac629784be8935f3d6",
-  "tests": {"focusedSettings": "25/25 PASS", "static": "type-check and backend build PASS"},
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "productSha": "3cf595da94a516ade16b976cb1abf370a17213c0",
+  "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
+  "changedPaths": ["server/src/routes/settings.routes.ts", "server/src/routes/users.routes.ts", "tests/integration/settings/settings-cold-session.realdb.test.ts"],
+  "changedPathRationale": {"routes": "persist profile, language, appearance, notification and AI contracts without false success or secret readback", "tests": "cold-session PostgreSQL readback and tenant negatives"},
+  "ownerTables": ["users", "user_preferences", "notification_settings", "user_ai_preferences"],
+  "commands": [{"command": "vitest settings-cold-session.realdb.test.ts on fresh PostgreSQL", "exitCode": 0}, {"command": "npm run type-check && npm run build:backend && npm run build", "exitCode": 0}],
+  "denominators": {"combinedRealDb": "36/36 across 9 files", "freshMigrations": "709/709 success"},
+  "fixtures": {"database": "disposable pgvector PostgreSQL 16 on localhost:56504", "session": "new JWT and reopened database connection"},
+  "negativeControls": {"tenant": "cross-tenant write returns 403", "language": "invalid language returns 400", "secret": "secret is not returned and encryption absence fails closed"},
+  "browserArtifacts": [],
+  "rollback": {"code": "revert 3cf595da94 before deployment", "data": "no production writes executed"},
   "verdict": "PARTIAL",
-  "openBlockers": ["Profile/theme/language/notifications/AI persistence needs one realDB cold-session proof and secret non-readback assertion."]
+  "openBlockers": ["G4 browser reload/visual evidence and human sign-off remain for exact-SHA completion."]
 }

@@ -1,9 +1,17 @@
 {
   "taskId": "PRT-MVP-LEDGER-001",
-  "productSha": "13f6e34c055bcfd525f9d2ac629784be8935f3d6",
-  "freshDatabase": {"migrationsApplied": 705, "repeatApplied": 0, "dryRunPending": 0, "ledgerFailure": 0},
-  "tests": {"freshRealPostgres": "6/6 PASS", "focusedPartner": "63/63 PASS"},
-  "proof": ["append-only UPDATE/DELETE guard", "tenant-scoped idempotency", "mandatory ruleVersion", "linked correction/reversal/dispute facts", "cross-tenant link denial", "finite amount validation"],
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "productSha": "3cf595da94a516ade16b976cb1abf370a17213c0",
+  "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
+  "changedPaths": ["server/migrations/20260901_partner_program_ledger_governance.sql", "server/src/services/partnerProgramLedgerService.ts", "server/src/services/partnerCommissionService.ts", "server/src/routes/partners.routes.ts", "server/src/routes/v8/partner.routes.ts", "tests/integration/partners/partner-program-ledger-governance.realdb.test.ts"],
+  "changedPathRationale": {"ledger": "append-only tenant-idempotent governed facts with linked correction, reversal and dispute", "tests": "real PostgreSQL invariants and mutation denial"},
+  "ownerTables": ["partner_program_ledger", "partner_program_disputes"],
+  "commands": [{"command": "vitest partner-program-ledger-governance.realdb.test.ts on fresh PostgreSQL", "exitCode": 0}, {"command": "fresh PostgreSQL migrate/repeat/dry-run", "exitCode": 0}],
+  "denominators": {"ledgerRealDb": "6/6", "combinedRealDb": "36/36", "freshMigrations": "709/709 success"},
+  "fixtures": {"database": "disposable pgvector PostgreSQL 16 on localhost:56504"},
+  "negativeControls": {"mutation": "direct UPDATE and DELETE denied", "tenant": "cross-tenant linked fact denied", "idempotency": "same key isolated per tenant"},
+  "browserArtifacts": [],
+  "rollback": {"code": "revert ledger governance commit before deployment", "data": "append-only facts are never destructively rewritten"},
   "verdict": "PARTIAL",
   "openBlockers": ["Commercial/legal PRT-POL-001 must approve rule, eligibility, attribution, reversal, dispute, tax and payout policy."]
 }
