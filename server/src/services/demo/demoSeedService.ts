@@ -3,6 +3,7 @@ import * as DbPromise from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 import { fireClosureHandoff } from '../executionResultsBridge.js';
 import { organizationContextService } from '../organizationContext/OrganizationContextService.js';
+import { seedAtelierPresentationDecks } from './atelierPresentationDeckSeed.js';
 import {
   ATELIER_CANONICAL_DISCOUNT_RATE_PCT,
   ATELIER_CANONICAL_MODEL_NAME_EN,
@@ -52,7 +53,10 @@ export interface SeedDemoDatasetResult {
     decisions: number;
     reports: number;
     docs: number;
+    decks: number;
   };
+  failures: SeedDemoDatasetStageFailure[];
+  complete: boolean;
   scenarios: ReturnType<typeof getAtelierToysDemoScenarios>;
   toolCoverage: ReturnType<typeof getAtelierToysToolCoverage>;
   /**
@@ -72,6 +76,11 @@ export interface SeedDemoDatasetResult {
    * `atelierFinanceSeed.ts` for what is actually checked.
    */
   financeGoldenFlowCompleteness: AtelierFinanceGoldenFlowCompleteness;
+}
+
+export interface SeedDemoDatasetStageFailure {
+  stage: string;
+  detail: string;
 }
 
 type UserMap = Record<string, { id: string; email: string }>;
@@ -4207,6 +4216,28 @@ export async function seedAtelierToysDemoDataset(
   await upsertAtelierRolloutArtifacts(organizationId, userMap, projectMap);
   // Spine stage 09: Outputs / Deliverables linked back to the flagship initiative.
   await upsertAtelierDeliverables(organizationId, userMap, initiativeMap);
+  const deckSeed = await seedAtelierPresentationDecks({
+    organizationId,
+    anchorDate,
+    userMap,
+    initiativeMap,
+  });
+  const failures: SeedDemoDatasetStageFailure[] = deckSeed.failures.map((failure) => ({
+    stage: 'presentation_decks',
+    detail: `${failure.deckId}: ${failure.reason}`,
+  }));
+  if (failures.length > 0) {
+    logger.error('[demoSeedService] Atelier presentation seed incomplete', {
+      organizationId,
+      failures,
+    });
+  }
+  if (deckSeed.skipped > 0) {
+    logger.warn('[demoSeedService] Atelier presentation seed preserved non-owned content', {
+      organizationId,
+      skipped: deckSeed.skipped,
+    });
+  }
   await upsertNotifications(organizationId, userMap, locale);
   await upsertActivityLogs(organizationId, userMap, locale);
 
@@ -4222,7 +4253,10 @@ export async function seedAtelierToysDemoDataset(
       decisions: decisionCount,
       reports: reportCount,
       docs: docCount,
+      decks: deckSeed.decks,
     },
+    failures,
+    complete: failures.length === 0,
     scenarios,
     toolCoverage,
     financeGoldenFlow,
