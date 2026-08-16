@@ -14,11 +14,27 @@ import { EntityStatusChip } from '../ui/primitives/chips';
 
 type RoleOption = 'OWNER' | 'ADMIN' | 'MEMBER' | 'GUEST';
 
-const ROLE_GUIDANCE: Array<{ role: RoleOption }> = [
-  { role: 'OWNER' },
-  { role: 'ADMIN' },
-  { role: 'MEMBER' },
-  { role: 'GUEST' },
+const ROLE_GUIDANCE: Array<{ role: RoleOption; description: string; denial: string }> = [
+  {
+    role: 'OWNER',
+    description: 'Full workspace control, ownership transfer, and owner-only safeguards.',
+    denial: 'Only an owner can assign or remove another owner.',
+  },
+  {
+    role: 'ADMIN',
+    description: 'Can manage team members, member roles, and team invite codes.',
+    denial: 'Cannot change owner membership or bypass owner protections.',
+  },
+  {
+    role: 'MEMBER',
+    description: 'Standard workspace access without team administration permissions.',
+    denial: 'Cannot open Team Admin or change membership.',
+  },
+  {
+    role: 'GUEST',
+    description: 'Restricted collaborator role with no admin access.',
+    denial: 'Guests cannot access admin tools.',
+  },
 ];
 
 export const AdminMembersRolesPanel: React.FC = () => {
@@ -339,10 +355,13 @@ export const AdminMembersRolesPanel: React.FC = () => {
               {roleLabels[item.role]}
             </div>
             <p className="mt-2 text-sm text-c-text-secondary">
-              {t(`admin.membersRoles.guidance.${item.role.toLowerCase()}.description`, '')}
+              {t(
+                `admin.membersRoles.guidance.${item.role.toLowerCase()}.description`,
+                item.description
+              )}
             </p>
             <p className="mt-2 text-xs text-c-text-muted">
-              {t(`admin.membersRoles.guidance.${item.role.toLowerCase()}.denial`, '')}
+              {t(`admin.membersRoles.guidance.${item.role.toLowerCase()}.denial`, item.denial)}
             </p>
           </div>
         ))}
