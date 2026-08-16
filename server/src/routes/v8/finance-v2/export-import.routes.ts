@@ -10,19 +10,10 @@
  * `financeImportService.ts`'s own header documents (parse / preview / apply)
  * plus the export writer — no new domain logic.
  *
- * SCOPE NARROWING (documented, not silent): only `.xlsx` uploads are
- * accepted at `/import/parse`. `parseFinanceExcelBuffer`'s own doc comment
- * says a `.csv` upload "carries only the Values-equivalent sheet — the
- * caller must supply the original manifest separately", which would require
- * this router to accept a client-supplied manifest object with no file-
- * embedded provenance to check it against. `checkManifestCompatibility`
- * (called inside `previewFinanceImport`) already validates
- * `manifest.organizationId`/`artifactId` against the caller's real,
- * authenticated context — so an XLSX's file-embedded manifest is safe to
- * trust for that comparison, but accepting an arbitrary client-typed JSON
- * manifest for a CSV upload would need its own review this package's time
- * budget does not cover. `.csv` import is therefore out of scope for this
- * pass — reported, not silently dropped.
+ * Both `.xlsx` and `.csv` are accepted at `/import/parse`. CSV deliberately
+ * carries no embedded manifest; preview/apply still require the original
+ * export manifest and validate its organization/artifact/version against the
+ * authenticated tenant before returning taxonomy or diff details.
  */
 
 import type { Response } from 'express';
@@ -51,14 +42,20 @@ import {
 
 const router = Router();
 
-const xlsxUpload = multer({
+const financeImportUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 25 * 1024 * 1024 }, // 25MB — generous for a 5k x 60 statement pack (AP-02 size target)
   fileFilter: (_req, file, cb) => {
-    const okMime =
+    const name = file.originalname.toLowerCase();
+    const xlsx =
+      name.endsWith('.xlsx') &&
       file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-    const okExt = file.originalname.toLowerCase().endsWith('.xlsx');
-    cb(null, okMime || okExt);
+    const csv =
+      name.endsWith('.csv') &&
+      ['text/csv', 'application/csv', 'application/vnd.ms-excel', 'text/plain'].includes(
+        file.mimetype
+      );
+    cb(null, xlsx || csv);
   },
 });
 
@@ -94,16 +91,21 @@ router.get(
 );
 
 // ---------------------------------------------------------------------------
-// POST /import/parse — multipart .xlsx upload -> { manifest, manifestIssues, rows }
+// POST /import/parse — multipart .xlsx/.csv upload -> { manifest, manifestIssues, rows }
 // ---------------------------------------------------------------------------
 
 router.post(
   '/import/parse',
-  xlsxUpload.single('file'),
+  financeImportUpload.single('file'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const file = (req as AuthRequest & { file?: Express.Multer.File }).file;
     if (!file) {
-      return sendError(res, 400, 'INVALID_BODY', 'multipart field "file" (.xlsx) is required');
+      return sendError(
+        res,
+        400,
+        'INVALID_BODY',
+        'multipart field "file" (.xlsx or .csv) is required'
+      );
     }
     const parsed = await parseFinanceExcelBuffer(file.buffer, file.originalname);
     return res.status(200).json({ data: parsed, meta: financeV2Meta() });
@@ -198,6 +200,7 @@ function httpStatusForApplyImportError(code: string): number {
       return 422;
     case 'STATE_PRECONDITION_FAILED':
     case 'WORKING_REVISION_CONFLICT':
+    case 'IDEMPOTENCY_PAYLOAD_COLLISION':
     case 'REOPEN_FAILED':
       return 409;
     default:
@@ -297,6 +300,8 @@ router.post(
         appliedCount: result.appliedCount,
         idempotentReplay: result.idempotentReplay,
         reopened: result.reopened,
+        receiptId: result.receiptId,
+        requestHash: result.requestHash,
       },
       meta: financeV2Meta(),
     });

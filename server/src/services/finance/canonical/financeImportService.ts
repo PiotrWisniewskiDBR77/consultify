@@ -58,7 +58,10 @@ import { v4 as uuidv4 } from 'uuid';
 import ExcelJS from 'exceljs';
 import { Readable } from 'stream';
 
-import { withPinnedPostgresTransaction, type PinnedTransactionClient } from '../../../database/PostgresDatabase.js';
+import {
+  withPinnedPostgresTransaction,
+  type PinnedTransactionClient,
+} from '../../../database/PostgresDatabase.js';
 import {
   financeStmtLinesCellRef,
   cellRefKey,
@@ -75,7 +78,10 @@ import {
   type FinanceValueInput,
   type Operation,
 } from '../../../types/finance/Operation.js';
-import type { FinanceValue, FinanceValueStatus } from '../../../types/finance/financeValueSemantics.js';
+import type {
+  FinanceValue,
+  FinanceValueStatus,
+} from '../../../types/finance/financeValueSemantics.js';
 import { MAX_CELLS_PER_OPERATION, chunkArray } from '../grid/gridCoordinates.js';
 import {
   reopenVersion,
@@ -110,13 +116,21 @@ export interface ParsedFinanceImport {
 function scalarCellValue(value: ExcelJS.CellValue): unknown {
   if (value == null) return null;
   if (value instanceof Date) return value.toISOString();
-  if (typeof value === 'object' && 'result' in (value as any)) return scalarCellValue((value as any).result);
+  if (typeof value === 'object' && 'result' in (value as any))
+    return scalarCellValue((value as any).result);
   if (typeof value === 'object' && 'text' in (value as any)) return String((value as any).text);
   return value;
 }
 
-function readManifestSheet(sheet: ExcelJS.Worksheet | undefined): { manifest: FinanceExcelManifest | null; issues: string[] } {
-  if (!sheet) return { manifest: null, issues: [`No '${FINANCE_EXCEL_SHEET_NAMES.manifest}' sheet found in the uploaded file`] };
+function readManifestSheet(sheet: ExcelJS.Worksheet | undefined): {
+  manifest: FinanceExcelManifest | null;
+  issues: string[];
+} {
+  if (!sheet)
+    return {
+      manifest: null,
+      issues: [`No '${FINANCE_EXCEL_SHEET_NAMES.manifest}' sheet found in the uploaded file`],
+    };
   const kv: Record<string, string> = {};
   for (let r = 2; r <= sheet.rowCount; r++) {
     const row = sheet.getRow(r);
@@ -124,9 +138,26 @@ function readManifestSheet(sheet: ExcelJS.Worksheet | undefined): { manifest: Fi
     const value = scalarCellValue(row.getCell(2).value);
     if (field) kv[String(field)] = value == null ? '' : String(value);
   }
-  const required = ['manifestVersion', 'source', 'exportId', 'organizationId', 'artifactId', 'artifactType', 'businessVersionId', 'businessVersionStatus', 'businessVersionNo', 'businessVersionCasVersion', 'workingRevisionId', 'asOf', 'defaultUnit', 'defaultPresentationCurrency', 'rowCount'];
+  const required = [
+    'manifestVersion',
+    'source',
+    'exportId',
+    'organizationId',
+    'artifactId',
+    'artifactType',
+    'businessVersionId',
+    'businessVersionStatus',
+    'businessVersionNo',
+    'businessVersionCasVersion',
+    'workingRevisionId',
+    'asOf',
+    'defaultUnit',
+    'defaultPresentationCurrency',
+    'rowCount',
+  ];
   const missing = required.filter((key) => !(key in kv));
-  if (missing.length > 0) return { manifest: null, issues: [`Manifest sheet is missing fields: ${missing.join(', ')}`] };
+  if (missing.length > 0)
+    return { manifest: null, issues: [`Manifest sheet is missing fields: ${missing.join(', ')}`] };
   const manifest: FinanceExcelManifest = {
     manifestVersion: Number(kv.manifestVersion) as 1,
     source: kv.source as FinanceExcelManifest['source'],
@@ -135,7 +166,8 @@ function readManifestSheet(sheet: ExcelJS.Worksheet | undefined): { manifest: Fi
     artifactId: kv.artifactId!,
     artifactType: kv.artifactType as FinanceExcelManifest['artifactType'],
     businessVersionId: kv.businessVersionId!,
-    businessVersionStatus: kv.businessVersionStatus as FinanceExcelManifest['businessVersionStatus'],
+    businessVersionStatus:
+      kv.businessVersionStatus as FinanceExcelManifest['businessVersionStatus'],
     businessVersionNo: Number(kv.businessVersionNo),
     businessVersionCasVersion: Number(kv.businessVersionCasVersion),
     workingRevisionId: kv.workingRevisionId!,
@@ -172,7 +204,10 @@ function readValuesSheet(sheet: ExcelJS.Worksheet): RawImportRow[] {
 }
 
 /** Parses an uploaded `.xlsx`/`.csv` buffer into `{ manifest, rows }`. CSV files carry only the Values-equivalent sheet — the caller must supply the original manifest separately in that case (task wording: "bierze zaimportowany plik... + oryginalny manifest"). */
-export async function parseFinanceExcelBuffer(buffer: Buffer, filename: string): Promise<ParsedFinanceImport> {
+export async function parseFinanceExcelBuffer(
+  buffer: Buffer,
+  filename: string
+): Promise<ParsedFinanceImport> {
   const workbook = new ExcelJS.Workbook();
   const isCsv = filename.toLowerCase().endsWith('.csv');
   if (isCsv) {
@@ -187,9 +222,16 @@ export async function parseFinanceExcelBuffer(buffer: Buffer, filename: string):
     return { manifest: null, manifestIssues: [], rows: readValuesSheet(sheet) };
   }
 
-  const { manifest, issues } = readManifestSheet(workbook.getWorksheet(FINANCE_EXCEL_SHEET_NAMES.manifest));
+  const { manifest, issues } = readManifestSheet(
+    workbook.getWorksheet(FINANCE_EXCEL_SHEET_NAMES.manifest)
+  );
   const valuesSheet = workbook.getWorksheet(FINANCE_EXCEL_SHEET_NAMES.values);
-  if (!valuesSheet) return { manifest, manifestIssues: [...issues, `No '${FINANCE_EXCEL_SHEET_NAMES.values}' sheet found`], rows: [] };
+  if (!valuesSheet)
+    return {
+      manifest,
+      manifestIssues: [...issues, `No '${FINANCE_EXCEL_SHEET_NAMES.values}' sheet found`],
+      rows: [],
+    };
   return { manifest, manifestIssues: issues, rows: readValuesSheet(valuesSheet) };
 }
 
@@ -240,7 +282,12 @@ async function buildTaxonomyLookups(
   return {
     entityByCode: new Map(entities.map((e) => [e.entity_code, { id: e.id }])),
     periodByLabel: new Map(periods.map((p) => [p.label, { period_id: p.period_id }])),
-    lineByKey: new Map(lines.map((l) => [`${l.statement_type}|${l.line_code}`, { id: l.id, statement_type: l.statement_type }])),
+    lineByKey: new Map(
+      lines.map((l) => [
+        `${l.statement_type}|${l.line_code}`,
+        { id: l.id, statement_type: l.statement_type },
+      ])
+    ),
   };
 }
 
@@ -267,7 +314,8 @@ function resolveImportRow(
 
   const entityCode = get('Entity Code');
   const entity = lookups.entityByCode.get(entityCode);
-  if (!entity) return fail(`Entity Code '${entityCode}' is not a known entity for this business version`);
+  if (!entity)
+    return fail(`Entity Code '${entityCode}' is not a known entity for this business version`);
 
   const periodLabel = get('Period Label');
   const period = lookups.periodByLabel.get(periodLabel);
@@ -287,15 +335,19 @@ function resolveImportRow(
 
   const isAdjustment = parseBooleanCell(raw['Is Adjustment']);
   const adjustmentReason = get('Adjustment Reason') || null;
-  if (isAdjustment && !adjustmentReason) return fail(`Is Adjustment = TRUE requires a non-empty Adjustment Reason`);
+  if (isAdjustment && !adjustmentReason)
+    return fail(`Is Adjustment = TRUE requires a non-empty Adjustment Reason`);
 
   const nativeCurrency = get('Native Currency');
   const presentationCurrency = get('Presentation Currency');
   const unit = get('Unit');
   const multiplier = get('Multiplier') || '1';
-  if (nativeCurrency.length !== 3) return fail(`Native Currency '${nativeCurrency}' must be a 3-letter ISO 4217 code`);
-  if (presentationCurrency.length !== 3) return fail(`Presentation Currency '${presentationCurrency}' must be a 3-letter ISO 4217 code`);
-  if (!['UNITS', 'THOUSANDS', 'MILLIONS', 'BILLIONS'].includes(unit)) return fail(`Unit '${unit}' is invalid`);
+  if (nativeCurrency.length !== 3)
+    return fail(`Native Currency '${nativeCurrency}' must be a 3-letter ISO 4217 code`);
+  if (presentationCurrency.length !== 3)
+    return fail(`Presentation Currency '${presentationCurrency}' must be a 3-letter ISO 4217 code`);
+  if (!['UNITS', 'THOUSANDS', 'MILLIONS', 'BILLIONS'].includes(unit))
+    return fail(`Unit '${unit}' is invalid`);
 
   const cellRef = financeStmtLinesCellRef({
     organizationId,
@@ -320,10 +372,15 @@ function resolveImportRow(
   };
   const parsedSchema = FinanceValueInputSchema.safeParse(valueInput);
   if (!parsedSchema.success) {
-    return fail(`Row fails FinanceValue shape validation: ${parsedSchema.error.issues.map((i) => i.message).join('; ')}`);
+    return fail(
+      `Row fails FinanceValue shape validation: ${parsedSchema.error.issues.map((i) => i.message).join('; ')}`
+    );
   }
 
-  return { ok: true, cell: { rowNumber, cellKey: cellRefKey(cellRef), cellRef, value: parsedSchema.data } };
+  return {
+    ok: true,
+    cell: { rowNumber, cellKey: cellRefKey(cellRef), cellRef, value: parsedSchema.data },
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -403,8 +460,10 @@ function valuesEqual(current: CurrentCellRow, incoming: FinanceValueInput): bool
   return (
     current.value_status === incoming.status &&
     current.value_decimal === incoming.valueDecimal &&
-    (incoming.nativeCurrency === undefined || current.native_currency === incoming.nativeCurrency) &&
-    (incoming.presentationCurrency === undefined || current.presentation_currency === incoming.presentationCurrency) &&
+    (incoming.nativeCurrency === undefined ||
+      current.native_currency === incoming.nativeCurrency) &&
+    (incoming.presentationCurrency === undefined ||
+      current.presentation_currency === incoming.presentationCurrency) &&
     (incoming.unit === undefined || current.unit === incoming.unit) &&
     (incoming.multiplier === undefined || current.multiplier === incoming.multiplier) &&
     current.is_adjustment === (incoming.isAdjustment ?? false) &&
@@ -448,7 +507,10 @@ export function computeFinanceImportDiffPure(
     }
     const { cell } = resolved;
     if (seenKeys.has(cell.cellKey)) {
-      rowErrors.push({ rowNumber: cell.rowNumber, message: `Duplicate row for the same cell (${cell.cellKey}) — every cell must appear at most once in one import file` });
+      rowErrors.push({
+        rowNumber: cell.rowNumber,
+        message: `Duplicate row for the same cell (${cell.cellKey}) — every cell must appear at most once in one import file`,
+      });
       continue;
     }
     seenKeys.add(cell.cellKey);
@@ -512,7 +574,9 @@ export interface FinanceImportPreviewResult {
   totalRows: number;
 }
 
-export async function previewFinanceImport(params: PreviewFinanceImportParams): Promise<FinanceImportPreviewResult> {
+export async function previewFinanceImport(
+  params: PreviewFinanceImportParams
+): Promise<FinanceImportPreviewResult> {
   const manifestCheck = checkManifestCompatibility(params.manifest, params);
   const { diff, rowErrors } = await withPinnedPostgresTransaction((tx) =>
     computeFinanceImportDiff(tx, params.organizationId, params.businessVersionId, params.rows)
@@ -557,6 +621,7 @@ export type ApplyFinanceImportErrorCode =
   | 'MANIFEST_MISMATCH'
   | 'STATE_PRECONDITION_FAILED'
   | 'WORKING_REVISION_CONFLICT'
+  | 'IDEMPOTENCY_PAYLOAD_COLLISION'
   | 'VALIDATION_FAILED'
   | 'REOPEN_FAILED';
 
@@ -569,6 +634,8 @@ export type ApplyFinanceImportResult =
       appliedCount: { added: number; changed: number; cleared: number };
       idempotentReplay: boolean;
       reopened: boolean;
+      receiptId: string;
+      requestHash: string;
     }
   | {
       ok: false;
@@ -579,12 +646,15 @@ export type ApplyFinanceImportResult =
       currentWorkingRevisionId?: string;
     };
 
-function operationsFromDiff(diff: FinanceImportDiff, ctx: {
-  actorId: string;
-  actorRole: FinanceRole;
-  sourceWorkingRevisionId: string;
-  now: string;
-}): Operation[] {
+function operationsFromDiff(
+  diff: FinanceImportDiff,
+  ctx: {
+    actorId: string;
+    actorRole: FinanceRole;
+    sourceWorkingRevisionId: string;
+    now: string;
+  }
+): Operation[] {
   const operations: Operation[] = [];
   const addAndChange = [
     ...diff.toAdd.map((c) => ({ cellRef: c.cellRef, value: c.value })),
@@ -623,14 +693,20 @@ function operationsFromDiff(diff: FinanceImportDiff, ctx: {
 }
 
 /** The AP-00 executor for `finance_stmt_lines` — applies one already-validated batch of `paste`/`clear` operations inside the CALLER's transaction. Not exported: `applyFinanceImport` is the only caller today; a future generic AP-00 executor (any grid mutation, not just Excel import) would lift this out, per the file header's scope note. */
-async function executeStmtLinesOperations(tx: PinnedTransactionClient, operations: readonly Operation[]): Promise<number> {
+async function executeStmtLinesOperations(
+  tx: PinnedTransactionClient,
+  operations: readonly Operation[]
+): Promise<number> {
   let applied = 0;
   for (const op of operations) {
     if (op.type === 'paste') {
       for (let i = 0; i < op.target.length; i++) {
         const ref = op.target[i]!;
         const value = op.values[i]!;
-        if (ref.rowKey.tableName !== 'finance_stmt_lines' || ref.columnKey.tableName !== 'finance_stmt_lines') {
+        if (
+          ref.rowKey.tableName !== 'finance_stmt_lines' ||
+          ref.columnKey.tableName !== 'finance_stmt_lines'
+        ) {
           throw new Error(`executeStmtLinesOperations: unsupported table ${ref.tableName}`);
         }
         await tx.queryRun(
@@ -677,7 +753,10 @@ async function executeStmtLinesOperations(tx: PinnedTransactionClient, operation
       }
     } else if (op.type === 'clear') {
       for (const ref of op.target) {
-        if (ref.rowKey.tableName !== 'finance_stmt_lines' || ref.columnKey.tableName !== 'finance_stmt_lines') {
+        if (
+          ref.rowKey.tableName !== 'finance_stmt_lines' ||
+          ref.columnKey.tableName !== 'finance_stmt_lines'
+        ) {
           throw new Error(`executeStmtLinesOperations: unsupported table ${ref.tableName}`);
         }
         const result = await tx.queryRun(
@@ -697,7 +776,9 @@ async function executeStmtLinesOperations(tx: PinnedTransactionClient, operation
         applied += result.changes;
       }
     } else {
-      throw new Error(`executeStmtLinesOperations: operation type '${op.type}' is not implemented by the Excel-import executor (only 'paste'/'clear' are needed for re-import)`);
+      throw new Error(
+        `executeStmtLinesOperations: operation type '${op.type}' is not implemented by the Excel-import executor (only 'paste'/'clear' are needed for re-import)`
+      );
     }
   }
   return applied;
@@ -746,10 +827,10 @@ async function copyStatementPackContentForReopen(params: {
       perimeter_event: string;
       perimeter_event_date: string | null;
       discontinued_operation: boolean;
-    }>(`SELECT * FROM finance_stmt_entities WHERE organization_id = ? AND business_version_id = ?`, [
-      params.organizationId,
-      params.fromBusinessVersionId,
-    ]);
+    }>(
+      `SELECT * FROM finance_stmt_entities WHERE organization_id = ? AND business_version_id = ?`,
+      [params.organizationId, params.fromBusinessVersionId]
+    );
 
     const entityIdMap = new Map<string, string>();
     for (const e of entities) {
@@ -781,10 +862,10 @@ async function copyStatementPackContentForReopen(params: {
     // Second pass: fix up parent_entity_row_id now that every new id is known.
     for (const e of entities) {
       if (e.parent_entity_row_id && entityIdMap.has(e.parent_entity_row_id)) {
-        await tx.queryRun(`UPDATE finance_stmt_entities SET parent_entity_row_id = ? WHERE id = ?`, [
-          entityIdMap.get(e.parent_entity_row_id),
-          entityIdMap.get(e.id),
-        ]);
+        await tx.queryRun(
+          `UPDATE finance_stmt_entities SET parent_entity_row_id = ? WHERE id = ?`,
+          [entityIdMap.get(e.parent_entity_row_id), entityIdMap.get(e.id)]
+        );
       }
     }
 
@@ -861,7 +942,9 @@ async function copyStatementPackContentForReopen(params: {
   });
 }
 
-export async function applyFinanceImport(params: ApplyFinanceImportParams): Promise<ApplyFinanceImportResult> {
+export async function applyFinanceImport(
+  params: ApplyFinanceImportParams
+): Promise<ApplyFinanceImportResult> {
   const manifestCheck = checkManifestCompatibility(params.manifest, params);
   if (!manifestCheck.ok) {
     return { ok: false, code: 'MANIFEST_MISMATCH', message: manifestCheck.issues.join('; ') };
@@ -870,6 +953,7 @@ export async function applyFinanceImport(params: ApplyFinanceImportParams): Prom
   let effectiveBusinessVersionId = params.businessVersionId;
   let effectiveWorkingRevisionId = params.expectedWorkingRevisionId;
   let reopened = false;
+  const requestHash = canonicalPayloadHash({ manifest: params.manifest, rows: params.rows });
 
   const currentBv = await withPinnedPostgresTransaction((tx) =>
     tx.queryOne<BusinessVersionRow>(
@@ -900,7 +984,11 @@ export async function applyFinanceImport(params: ApplyFinanceImportParams): Prom
       restatementClass: params.reopen.restatementClass,
     });
     if (!reopenResult.ok) {
-      return { ok: false, code: 'REOPEN_FAILED', message: `reopenVersion failed: ${reopenResult.code} — ${reopenResult.message}` };
+      return {
+        ok: false,
+        code: 'REOPEN_FAILED',
+        message: `reopenVersion failed: ${reopenResult.code} — ${reopenResult.message}`,
+      };
     }
     effectiveBusinessVersionId = reopenResult.businessVersion.business_version_id;
     effectiveWorkingRevisionId = reopenResult.workingRevision.working_revision_id;
@@ -938,22 +1026,65 @@ export async function applyFinanceImport(params: ApplyFinanceImportParams): Prom
   }
 
   return withPinnedPostgresTransaction(async (tx) => {
+    await tx.queryRun(`SELECT pg_advisory_xact_lock(hashtextextended(?, 0))`, [
+      `${params.organizationId}:${params.artifactId}:${params.batchIdempotencyKey}`,
+    ]);
+    const priorReceipt = await tx.queryOne<{
+      receipt_id: string;
+      request_hash: string;
+      result_payload: any;
+    }>(
+      `SELECT receipt_id,request_hash,result_payload FROM finance_import_receipts
+        WHERE organization_id=? AND artifact_id=? AND batch_idempotency_key=?`,
+      [params.organizationId, params.artifactId, params.batchIdempotencyKey]
+    );
+    if (priorReceipt) {
+      if (priorReceipt.request_hash !== requestHash) {
+        return {
+          ok: false,
+          code: 'IDEMPOTENCY_PAYLOAD_COLLISION',
+          message: 'The idempotency key was already committed with a different import payload',
+        };
+      }
+      return {
+        ...priorReceipt.result_payload,
+        ok: true,
+        receiptId: priorReceipt.receipt_id,
+        requestHash,
+        idempotentReplay: true,
+      };
+    }
     const bv = await tx.queryOne<BusinessVersionRow>(
       `SELECT * FROM finance_business_versions WHERE business_version_id = ? AND organization_id = ? FOR UPDATE`,
       [effectiveBusinessVersionId, params.organizationId]
     );
     if (!bv) return { ok: false, code: 'NOT_FOUND', message: 'Business version not found' };
     if (!isContentMutableStatus(bv.status)) {
-      return { ok: false, code: 'STATE_PRECONDITION_FAILED', message: `Business version is ${bv.status}, not content-mutable`, reopenRequired: true };
+      return {
+        ok: false,
+        code: 'STATE_PRECONDITION_FAILED',
+        message: `Business version is ${bv.status}, not content-mutable`,
+        reopenRequired: true,
+      };
     }
 
-    const currentWr = await tx.queryOne<{ working_revision_id: string; revision_seq: number; artifact_id: string; checkpoint_payload: unknown }>(
+    const currentWr = await tx.queryOne<{
+      working_revision_id: string;
+      revision_seq: number;
+      artifact_id: string;
+      checkpoint_payload: unknown;
+    }>(
       `SELECT working_revision_id, revision_seq, artifact_id, checkpoint_payload
          FROM finance_working_revisions
         WHERE artifact_id = ? AND organization_id = ? AND is_current = true FOR UPDATE`,
       [params.artifactId, params.organizationId]
     );
-    if (!currentWr) return { ok: false, code: 'NOT_FOUND', message: 'No current working revision for this artifact' };
+    if (!currentWr)
+      return {
+        ok: false,
+        code: 'NOT_FOUND',
+        message: 'No current working revision for this artifact',
+      };
     if (currentWr.working_revision_id !== effectiveWorkingRevisionId) {
       return {
         ok: false,
@@ -963,42 +1094,51 @@ export async function applyFinanceImport(params: ApplyFinanceImportParams): Prom
       };
     }
 
-    // Idempotency replay: has this exact batchIdempotencyKey already been
-    // committed as a checkpoint? (mirrors `checkpointOperationStack`'s own
-    // demote-then-insert ledger, reusing `checkpoint_payload` rather than a
-    // new table.)
-    const replay = await tx.queryOne<{ working_revision_id: string; revision_seq: number; checkpoint_payload: any }>(
-      `SELECT working_revision_id, revision_seq, checkpoint_payload FROM finance_working_revisions
-        WHERE artifact_id = ? AND organization_id = ? AND checkpoint_payload->>'batchIdempotencyKey' = ?
-        ORDER BY revision_seq DESC LIMIT 1`,
-      [params.artifactId, params.organizationId, params.batchIdempotencyKey]
+    const { diff, rowErrors } = await computeFinanceImportDiff(
+      tx,
+      params.organizationId,
+      effectiveBusinessVersionId,
+      params.rows
     );
-    if (replay) {
-      const appliedCount = replay.checkpoint_payload?.appliedCount ?? { added: 0, changed: 0, cleared: 0 };
+    if (rowErrors.length > 0) {
       return {
-        ok: true,
-        businessVersionId: effectiveBusinessVersionId,
-        newWorkingRevisionId: replay.working_revision_id,
-        newRevisionSeq: Number(replay.revision_seq),
-        appliedCount,
-        idempotentReplay: true,
-        reopened,
+        ok: false,
+        code: 'VALIDATION_FAILED',
+        message: `${rowErrors.length} row(s) failed validation`,
+        rowErrors,
       };
     }
-
-    const { diff, rowErrors } = await computeFinanceImportDiff(tx, params.organizationId, effectiveBusinessVersionId, params.rows);
-    if (rowErrors.length > 0) {
-      return { ok: false, code: 'VALIDATION_FAILED', message: `${rowErrors.length} row(s) failed validation`, rowErrors };
-    }
     if (diff.toAdd.length === 0 && diff.toChange.length === 0 && diff.toClear.length === 0) {
-      return {
-        ok: true,
+      const appliedCount = { added: 0, changed: 0, cleared: 0 };
+      const resultPayload = {
         businessVersionId: effectiveBusinessVersionId,
         newWorkingRevisionId: currentWr.working_revision_id,
         newRevisionSeq: Number(currentWr.revision_seq),
-        appliedCount: { added: 0, changed: 0, cleared: 0 },
-        idempotentReplay: false,
+        appliedCount,
         reopened,
+      };
+      const receipt = await tx.queryOne<{ receipt_id: string }>(
+        `INSERT INTO finance_import_receipts
+           (organization_id,artifact_id,business_version_id,working_revision_id,
+            batch_idempotency_key,request_hash,result_payload,applied_by)
+         VALUES(?,?,?,?,?,?,?::jsonb,?) RETURNING receipt_id`,
+        [
+          params.organizationId,
+          params.artifactId,
+          effectiveBusinessVersionId,
+          currentWr.working_revision_id,
+          params.batchIdempotencyKey,
+          requestHash,
+          JSON.stringify(resultPayload),
+          params.actorId,
+        ]
+      );
+      return {
+        ok: true,
+        ...resultPayload,
+        idempotentReplay: false,
+        receiptId: receipt!.receipt_id,
+        requestHash,
       };
     }
 
@@ -1027,22 +1167,39 @@ export async function applyFinanceImport(params: ApplyFinanceImportParams): Prom
     }
     const parsedBatch = ApplyOperationsBatchRequestSchema.safeParse(batchRequest);
     if (!parsedBatch.success) {
-      return { ok: false, code: 'VALIDATION_FAILED', message: `Batch failed AP-00 schema validation: ${parsedBatch.error.issues.map((i) => i.message).join('; ')}` };
+      return {
+        ok: false,
+        code: 'VALIDATION_FAILED',
+        message: `Batch failed AP-00 schema validation: ${parsedBatch.error.issues.map((i) => i.message).join('; ')}`,
+      };
     }
     const duplicates = findDuplicateTargetsInBatch(parsedBatch.data.operations);
     if (duplicates.length > 0) {
-      return { ok: false, code: 'VALIDATION_FAILED', message: `Batch has duplicate cell targets: ${duplicates.join(', ')}` };
+      return {
+        ok: false,
+        code: 'VALIDATION_FAILED',
+        message: `Batch has duplicate cell targets: ${duplicates.join(', ')}`,
+      };
     }
 
     const appliedCells = await executeStmtLinesOperations(tx, parsedBatch.data.operations);
-    const appliedCount = { added: diff.toAdd.length, changed: diff.toChange.length, cleared: diff.toClear.length };
+    const appliedCount = {
+      added: diff.toAdd.length,
+      changed: diff.toChange.length,
+      cleared: diff.toClear.length,
+    };
     if (appliedCells !== diff.toAdd.length + diff.toChange.length + diff.toClear.length) {
-      throw new Error(`executeStmtLinesOperations applied ${appliedCells} cells, expected ${diff.toAdd.length + diff.toChange.length + diff.toClear.length} — aborting transaction`);
+      throw new Error(
+        `executeStmtLinesOperations applied ${appliedCells} cells, expected ${diff.toAdd.length + diff.toChange.length + diff.toClear.length} — aborting transaction`
+      );
     }
 
     // Demote-then-INSERT working revision — same ordering `reopenVersion()`/
     // `checkpointOperationStack()` already use.
-    await tx.queryRun(`UPDATE finance_working_revisions SET is_current = false WHERE artifact_id = ? AND is_current = true`, [params.artifactId]);
+    await tx.queryRun(
+      `UPDATE finance_working_revisions SET is_current = false WHERE artifact_id = ? AND is_current = true`,
+      [params.artifactId]
+    );
     const newWorkingRevisionId = uuidv4();
     const nextSeq = Number(currentWr.revision_seq) + 1;
     const checkpointPayload = {
@@ -1070,16 +1227,39 @@ export async function applyFinanceImport(params: ApplyFinanceImportParams): Prom
         params.actorId,
       ]
     );
-    if (!inserted) throw new Error('finance_working_revisions insert (Excel import) returned no row');
+    if (!inserted)
+      throw new Error('finance_working_revisions insert (Excel import) returned no row');
 
-    return {
-      ok: true,
+    const resultPayload = {
       businessVersionId: effectiveBusinessVersionId,
       newWorkingRevisionId: inserted.working_revision_id,
       newRevisionSeq: Number(inserted.revision_seq),
       appliedCount,
-      idempotentReplay: false,
       reopened,
+    };
+    const receipt = await tx.queryOne<{ receipt_id: string }>(
+      `INSERT INTO finance_import_receipts
+         (organization_id,artifact_id,business_version_id,working_revision_id,
+          batch_idempotency_key,request_hash,result_payload,applied_by)
+       VALUES(?,?,?,?,?,?,?::jsonb,?) RETURNING receipt_id`,
+      [
+        params.organizationId,
+        params.artifactId,
+        effectiveBusinessVersionId,
+        inserted.working_revision_id,
+        params.batchIdempotencyKey,
+        requestHash,
+        JSON.stringify(resultPayload),
+        params.actorId,
+      ]
+    );
+
+    return {
+      ok: true,
+      ...resultPayload,
+      idempotentReplay: false,
+      receiptId: receipt!.receipt_id,
+      requestHash,
     };
   });
 }

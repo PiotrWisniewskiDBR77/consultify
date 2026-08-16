@@ -17,7 +17,9 @@ import { randomUUID } from 'node:crypto';
 
 import express from 'express';
 import request from 'supertest';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
+
+vi.unmock('multer');
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
 const REAL_PG_REQUESTED =
@@ -220,6 +222,22 @@ describe.skipIf(!REAL_PG)(
       parsedRows = res.body.data.rows;
     });
 
+    it('POST /import/parse — accepts a representative CSV and preserves the Values mapping', async () => {
+      const headers = Object.keys(parsedRows[0]).filter((key) => key !== '__rowNumber');
+      const quote = (value: unknown) => `"${String(value ?? '').replaceAll('"', '""')}"`;
+      const csv = `${headers.map(quote).join(',')}\n${headers
+        .map((header) => quote(parsedRows[0][header]))
+        .join(',')}\n`;
+      const res = await request(appA)
+        .post('/api/v8/finance-v2/import/parse')
+        .attach('file', Buffer.from(csv), { filename: 'values.csv', contentType: 'text/csv' });
+      expect(res.status).toBe(200);
+      expect(res.body.data.manifest).toBeNull();
+      expect(res.body.data.manifestIssues).toEqual([]);
+      expect(res.body.data.rows).toHaveLength(1);
+      expect(res.body.data.rows[0]['Entity Code']).toBe(entityCode);
+    });
+
     it('POST /import/preview — unedited round-trip: no changes needed', async () => {
       const res = await request(appA)
         .post('/api/v8/finance-v2/import/preview')
@@ -245,6 +263,36 @@ describe.skipIf(!REAL_PG)(
         res.body.data.diff.toChange[0].after.value.valueDecimal ??
           res.body.data.diff.toChange[0].after.value.value_decimal
       ).toBeDefined();
+    });
+
+    it('POST /import/preview — invalid numeric input returns rowErrors and performs no write', async () => {
+      const invalidRows = parsedRows.map((r: any) =>
+        r['Value'] !== undefined ? { ...r, Value: 'not-a-number' } : r
+      );
+      const before = await withPinnedPostgresTransaction((tx) =>
+        tx.queryOne<{ value_decimal: string }>(
+          `SELECT value_decimal FROM finance_stmt_lines
+            WHERE organization_id=? AND business_version_id=? AND entity_id=? AND canonical_line_id=? AND period_id=?`,
+          [orgA, bvId, entityId, canonicalLineId, periodId]
+        )
+      );
+      const res = await request(appA).post('/api/v8/finance-v2/import/preview').send({
+        artifactId,
+        businessVersionId: bvId,
+        manifest: parsedManifest,
+        rows: invalidRows,
+      });
+      expect(res.status).toBe(200);
+      expect(res.body.data.ok).toBe(false);
+      expect(res.body.data.rowErrors).toHaveLength(1);
+      const after = await withPinnedPostgresTransaction((tx) =>
+        tx.queryOne<{ value_decimal: string }>(
+          `SELECT value_decimal FROM finance_stmt_lines
+            WHERE organization_id=? AND business_version_id=? AND entity_id=? AND canonical_line_id=? AND period_id=?`,
+          [orgA, bvId, entityId, canonicalLineId, periodId]
+        )
+      );
+      expect(after?.value_decimal).toBe(before?.value_decimal);
     });
 
     it('POST /import/apply — commits the edited value; SQL confirms finance_stmt_lines actually changed and a new working revision was checkpointed', async () => {
@@ -291,7 +339,7 @@ describe.skipIf(!REAL_PG)(
       expect(newWr!.working_revision_id).toBe(res.body.data.newWorkingRevisionId);
     });
 
-    it('POST /import/apply — CAS protection: retrying with the now-stale expectedWorkingRevisionId (post-first-apply) is rejected 409 WORKING_REVISION_CONFLICT, not silently double-applied', async () => {
+    it('POST /import/apply — same request replays its immutable receipt; same key with changed payload fails closed', async () => {
       const staleWr = await withPinnedPostgresTransaction((tx) =>
         tx.queryOne<{ working_revision_id: string }>(
           `SELECT working_revision_id FROM finance_working_revisions WHERE business_version_id = ? AND organization_id = ? AND is_current = true`,
@@ -313,11 +361,9 @@ describe.skipIf(!REAL_PG)(
       expect(first.status).toBe(200);
       expect(first.body.data.idempotentReplay).toBe(false);
       expect(first.body.data.appliedCount.changed).toBe(1);
+      expect(first.body.data.receiptId).toEqual(expect.any(String));
+      expect(first.body.data.requestHash).toMatch(/^[a-f0-9]{64}$/);
 
-      // Retry with the SAME (now-stale, pre-first-apply) expectedWorkingRevisionId and the SAME
-      // idempotency key — a naive implementation might treat "same idempotency key" as "safe to
-      // replay" regardless of CAS; this proves the CAS pin is checked and wins, so a genuinely
-      // stale retry cannot silently re-apply on top of a revision it never saw.
       const second = await request(appA).post('/api/v8/finance-v2/import/apply').send({
         artifactId,
         businessVersionId: bvId,
@@ -326,9 +372,24 @@ describe.skipIf(!REAL_PG)(
         rows: editedRows,
         batchIdempotencyKey: idempotencyKey,
       });
-      expect(second.status).toBe(409);
-      expect(second.body).toHaveProperty('code', 'WORKING_REVISION_CONFLICT');
-      expect(second.body.currentWorkingRevisionId).toBe(first.body.data.newWorkingRevisionId);
+      expect(second.status).toBe(200);
+      expect(second.body.data.idempotentReplay).toBe(true);
+      expect(second.body.data.receiptId).toBe(first.body.data.receiptId);
+      expect(second.body.data.newWorkingRevisionId).toBe(first.body.data.newWorkingRevisionId);
+
+      const collisionRows = parsedRows.map((r: any) =>
+        r['Value'] !== undefined ? { ...r, Value: 777 } : r
+      );
+      const collision = await request(appA).post('/api/v8/finance-v2/import/apply').send({
+        artifactId,
+        businessVersionId: bvId,
+        expectedWorkingRevisionId: staleWr!.working_revision_id,
+        manifest: parsedManifest,
+        rows: collisionRows,
+        batchIdempotencyKey: idempotencyKey,
+      });
+      expect(collision.status).toBe(409);
+      expect(collision.body).toHaveProperty('code', 'IDEMPOTENCY_PAYLOAD_COLLISION');
 
       // SQL confirms the value from the ONE successful apply, not double-touched by the rejected retry.
       const sqlRow = await withPinnedPostgresTransaction((tx) =>
@@ -339,6 +400,63 @@ describe.skipIf(!REAL_PG)(
         )
       );
       expect(Number(sqlRow!.value_decimal)).toBe(999);
+
+      const receipt = await withPinnedPostgresTransaction((tx) =>
+        tx.queryOne<{ request_hash: string; result_payload: any }>(
+          `SELECT request_hash,result_payload FROM finance_import_receipts
+            WHERE organization_id=? AND receipt_id=?`,
+          [orgA, first.body.data.receiptId]
+        )
+      );
+      expect(receipt?.request_hash).toBe(first.body.data.requestHash);
+      expect(receipt?.result_payload.newWorkingRevisionId).toBe(
+        first.body.data.newWorkingRevisionId
+      );
+      await expect(
+        withPinnedPostgresTransaction((tx) =>
+          tx.queryRun(
+            `UPDATE finance_import_receipts SET request_hash='tampered' WHERE receipt_id=?`,
+            [first.body.data.receiptId]
+          )
+        )
+      ).rejects.toThrow(/immutable/);
+    });
+
+    it('POST /import/apply — concurrent identical requests commit once and return one receipt', async () => {
+      const currentWr = await withPinnedPostgresTransaction((tx) =>
+        tx.queryOne<{ working_revision_id: string }>(
+          `SELECT working_revision_id FROM finance_working_revisions
+            WHERE artifact_id=? AND organization_id=? AND is_current=true`,
+          [artifactId, orgA]
+        )
+      );
+      const rows = parsedRows.map((r: any) =>
+        r['Value'] !== undefined ? { ...r, Value: 555 } : r
+      );
+      const body = {
+        artifactId,
+        businessVersionId: bvId,
+        expectedWorkingRevisionId: currentWr!.working_revision_id,
+        manifest: parsedManifest,
+        rows,
+        batchIdempotencyKey: `expimp-race-${randomUUID()}`,
+      };
+      const responses = await Promise.all(
+        Array.from({ length: 8 }, () =>
+          request(appA).post('/api/v8/finance-v2/import/apply').send(body)
+        )
+      );
+      expect(responses.every((response) => response.status === 200)).toBe(true);
+      expect(responses.filter((response) => !response.body.data.idempotentReplay)).toHaveLength(1);
+      expect(new Set(responses.map((response) => response.body.data.receiptId)).size).toBe(1);
+      const receipts = await withPinnedPostgresTransaction((tx) =>
+        tx.queryOne<{ count: string }>(
+          `SELECT count(*)::text AS count FROM finance_import_receipts
+            WHERE organization_id=? AND artifact_id=? AND batch_idempotency_key=?`,
+          [orgA, artifactId, body.batchIdempotencyKey]
+        )
+      );
+      expect(receipts?.count).toBe('1');
     });
 
     // -----------------------------------------------------------------
