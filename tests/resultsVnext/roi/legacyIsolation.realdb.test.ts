@@ -61,7 +61,6 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   buildCaseThroughTracking,
   buildClientConfig,
-  cleanupRoiPirFixtures,
   DB_CONFIGURED,
   insertInitiative,
   insertOrganization,
@@ -175,22 +174,10 @@ describe('ROI-E008 legacy isolation (real Postgres)', () => {
 
   afterAll(async () => {
     if (!reachable) return;
-    await client.query(`DELETE FROM v8_roi_realization_entries WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(`DELETE FROM v8_kpi_definitions WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(`DELETE FROM benefits_register WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(`DELETE FROM roi_realized_values WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(`DELETE FROM roi_assumptions WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(`DELETE FROM initiative_benefits WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(`DELETE FROM analysis_financials WHERE organization_id::text = $1::text`, [
-      String(POISON_INT_ORG_ID),
-    ]);
-    await client.query(`DELETE FROM digitization_analyses WHERE organization_id = $1`, [ORG_ID]);
-
-    // cleanupRoiPirFixtures deletes rvn_roi_cases (which FKs to
-    // initiatives.id) AND initiatives itself, in the right order — do not
-    // delete initiatives separately before this call, or the FK constraint
-    // blocks it.
-    await cleanupRoiPirFixtures(client, ORG_ID);
+    // The fixture deliberately writes an append-only realization entry. Its
+    // dependency graph cannot be deleted without defeating the production
+    // immutability trigger, so unique test rows live until the mandatory
+    // disposable database is destroyed after the evidence run.
     await client.end();
     if (modules.closePgPool) await modules.closePgPool();
   }, 30_000);
