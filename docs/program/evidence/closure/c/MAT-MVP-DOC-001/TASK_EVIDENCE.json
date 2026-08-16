@@ -1,0 +1,34 @@
+{
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "productSha": "a62dbe340114d87eda75a0d2da2d77bee2a90685",
+  "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
+  "environment": {
+    "node": "v24.12.0",
+    "postgres": "16.14 (pgvector/pgvector:pg16)",
+    "vitest": "root vitest.config.ts",
+    "dbUrl": "127.0.0.1:55432 isolated lane container consultify-closure-c-64f50785"
+  },
+  "gateG0": "PASS pre-commit (lease PASS, 25 changed paths). POST-COMMIT the verifier reports 11 new source/test files as violations; all 11 match lane C allowedNewRoots and none exist at baseline — see ICR-C-003, a verifier defect (isTracked() is true for staged/committed paths), not a scope violation.",
+  "gateG1": "PASS — npm run type-check exit 0; npm run build:backend exit 0; test:discovery-gate PASS 4997/4997 discovered, 4698 executed.",
+  "gateG3": "PASS — strict migrate on FRESH from-zero DB exit 0; repeat run applied 0; --dry-run 0 pending; schema_migrations 709 success / 0 failed / 0 pending.",
+  "taskId": "MAT-MVP-DOC-001",
+  "verdict": "PARTIAL",
+  "ownerTables": [
+    "document_version_snapshots",
+    "document_studio_schema_overlay"
+  ],
+  "denominators": {
+    "realdbTests": "6 passed / 6 discovered"
+  },
+  "negativeControls": {
+    "concurrentCheckpoint": "exactly one 201 + one 409 DOC_CHECKPOINT_CONFLICT",
+    "concurrentRollback": "exactly one 200 + one 409 DOC_ROLLBACK_CONFLICT",
+    "staleExpectedVersion": "409",
+    "crossTenant": "denied",
+    "casLoadBearing": "negative control — neutering the CAS WHERE clause turned the stale-version test red, then reverted"
+  },
+  "open": [
+    "G4 browser/visual not run.",
+    "Rollback-incidental revert snapshot still uses the frozen non-CAS sync path (audit-trail only; the actual apply is CAS-guarded)."
+  ]
+}

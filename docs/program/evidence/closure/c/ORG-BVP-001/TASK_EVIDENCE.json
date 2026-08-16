@@ -1,0 +1,40 @@
+{
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "productSha": "a62dbe340114d87eda75a0d2da2d77bee2a90685",
+  "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
+  "environment": {
+    "node": "v24.12.0",
+    "postgres": "16.14 (pgvector/pgvector:pg16)",
+    "vitest": "root vitest.config.ts",
+    "dbUrl": "127.0.0.1:55432 isolated lane container consultify-closure-c-64f50785"
+  },
+  "gateG0": "PASS pre-commit (lease PASS, 25 changed paths). POST-COMMIT the verifier reports 11 new source/test files as violations; all 11 match lane C allowedNewRoots and none exist at baseline — see ICR-C-003, a verifier defect (isTracked() is true for staged/committed paths), not a scope violation.",
+  "gateG1": "PASS — npm run type-check exit 0; npm run build:backend exit 0; test:discovery-gate PASS 4997/4997 discovered, 4698 executed.",
+  "gateG3": "PASS — strict migrate on FRESH from-zero DB exit 0; repeat run applied 0; --dry-run 0 pending; schema_migrations 709 success / 0 failed / 0 pending.",
+  "taskId": "ORG-BVP-001",
+  "verdict": "PARTIAL",
+  "ownerTables": [
+    "organization_context_snapshot_versions",
+    "organization_context_claim_reviews",
+    "organization_context_claims"
+  ],
+  "denominators": {
+    "realdbTests": "11 passed / 11 discovered"
+  },
+  "negativeControls": {
+    "immutability": "direct UPDATE on a published snapshot version rejected by DB trigger",
+    "reopen": "v2 publish leaves v1 byte-identical with matching content_hash",
+    "unapprovedExcluded": "pending claims absent from published snapshot",
+    "concurrentDecisions": "exactly one decision",
+    "crossTenant": "denied",
+    "confidentiality": "restricted claim filtered from default read",
+    "sourceDeletion": "detectable, stored content unaltered"
+  },
+  "findings": [
+    "Fixed a real integrity defect: content_hash did not match a hash recomputed from the stored snapshot_json, because node-pg returns Date for timestamptz and canonicalizeForHash reduced Date to {} while JSON.stringify wrote an ISO string. The snapshot was advertised as hash-bound while its hash did not verify."
+  ],
+  "open": [
+    "Pinned-snapshot CONSUMPTION by Chat/Idea is not wired: AIPipeline.ts and aiContextBuilder.ts are outside the lane lease. Capability is exposed and the consumer contract is documented for the integrator.",
+    "G4 browser/visual not run."
+  ]
+}
