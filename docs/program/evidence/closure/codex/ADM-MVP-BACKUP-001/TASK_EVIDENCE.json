@@ -1,17 +1,119 @@
 {
   "taskId": "ADM-MVP-BACKUP-001",
-  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "b37abda1d4a463dcdb63967acf09a4453613de7c",
-  "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
-  "changedPaths": [],
-  "changedPathRationale": {},
-  "ownerTables": ["backup_manifests"],
-  "commands": [{"command": "rg -n 'restoreBackup|RESTORE_NOT_IMPLEMENTED' server/src/services/backupService.ts server/src/routes/admin/backup.routes.ts", "exitCode": 0}],
-  "denominators": {"backupImplementation": 1, "restoreImplementation": 0},
-  "fixtures": {},
-  "negativeControls": {"organizationExport": "tables without organization boundary are skipped", "liveRestore": "not exposed; route returns honest 501"},
+  "baselineSha": "3f603e65d323b95a7b78e1b4984f87dd099648f2",
+  "productSha": "5e752a41cc604ae5fc8d929d7c6392d65bc41da8",
+  "leaseSha256": "not_applicable_codex_bounded_task",
+  "generatedAt": "2026-08-16T20:55:00.000Z",
+  "scope": "Tenant encrypted export, isolated PostgreSQL restore, integrity, access audit and recovery rehearsal",
+  "changedPaths": [
+    "server/src/services/backupService.ts",
+    "server/src/routes/admin/backup.routes.ts",
+    "server/src/cron/BackupCron.ts",
+    "server/cron/backupCron.ts",
+    "server/migrations/20260908_admin_backup_restore_integrity.sql",
+    "tests/integration/admin/adminBackup.restore.realdb.test.ts",
+    "tests/acceptance/backup-service-t7b2.e2e.test.ts",
+    "tests/unit/backend/cron/backupCron.test.ts",
+    "docs/program/evidence/closure/codex/ADM-MVP-BACKUP-001/TASK_EVIDENCE.json"
+  ],
+  "changedPathRationale": {
+    "server/src/services/backupService.ts": "Creates encrypted tenant-scoped backup objects and performs validated transactional isolated restores.",
+    "server/src/routes/admin/backup.routes.ts": "Enforces SUPERADMIN restore and tenant-bound manual backup authorization.",
+    "server/src/cron/BackupCron.ts": "Schedules encrypted backups every 15 minutes and reports the next boundary.",
+    "server/cron/backupCron.ts": "Keeps the alternate cron entry aligned to the 15-minute RPO schedule.",
+    "server/migrations/20260908_admin_backup_restore_integrity.sql": "Adds the append-only backup access audit ledger and mutation guards.",
+    "tests/integration/admin/adminBackup.restore.realdb.test.ts": "Proves encrypted source-to-isolated-target restore, integrity, tenancy and audit on real PostgreSQL.",
+    "tests/acceptance/backup-service-t7b2.e2e.test.ts": "Updates the acceptance contract for mandatory encryption.",
+    "tests/unit/backend/cron/backupCron.test.ts": "Proves the 15-minute schedule and fail-closed error behavior.",
+    "docs/program/evidence/closure/codex/ADM-MVP-BACKUP-001/TASK_EVIDENCE.json": "Machine-readable task evidence."
+  },
+  "ownerTables": ["backup_access_audit"],
+  "implementation": {
+    "format": "consultify-encrypted-json-v1",
+    "encryption": "AES-256-GCM; 32-byte BACKUP_ENCRYPTION_KEY mandatory; plaintext fallback forbidden",
+    "integrity": "SHA-256 over ciphertext plus AES-GCM authentication tag, verified before target transaction",
+    "tenantBoundary": "organization backup and every restored row are tenant-validated before BEGIN",
+    "restoreBoundary": "explicit actor and isolated recovery/test database; source/live target rejected",
+    "audit": "create/start/success/failure/denial ledger with UPDATE/DELETE trigger rejection",
+    "rpo": "cron */15 * * * *, matching proposed RPO <=15m",
+    "retention": "existing configurable encrypted-object retention preserved"
+  },
+  "realPostgres": {
+    "image": "pgvector/pgvector:pg16",
+    "sourceDatabase": "backup_source_test",
+    "restoreDatabase": "backup_restore_test",
+    "sourceMigrationCount": 721,
+    "restoreMigrationCount": 722,
+    "migrationExitCode": 0,
+    "rehearsal": {
+      "backupScope": "organization",
+      "sourceRows": 1,
+      "restoredRows": 1,
+      "restoredTables": 1,
+      "latestTenantReadback": 1,
+      "crossTenantRows": 0,
+      "restoreTestDurationMs": 27,
+      "freshTargetMigrationApproxSeconds": 33,
+      "rtoThresholdSeconds": 3600,
+      "rtoObservedUnderThreshold": true
+    }
+  },
+  "commands": [
+    {
+      "command": "NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres DATABASE_URL=<source> BACKUP_RESTORE_TARGET_DATABASE_URL=<restore> BACKUP_ENCRYPTION_KEY=<redacted> UPLOADS_BASE_DIR=/tmp/adm-backup-001-storage npx vitest run tests/integration/admin/adminBackup.restore.realdb.test.ts tests/integration/routes/backups.no-stub.test.ts tests/unit/backend/cron/backupCron.test.ts --reporter=dot",
+      "exitCode": 0,
+      "denominator": "3/3 files; 14/14 tests"
+    },
+    {
+      "command": "NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p server/tsconfig.json --noEmit --pretty false",
+      "exitCode": 0,
+      "denominator": "server TypeScript project"
+    },
+    {
+      "command": "git diff --check -- <ADM-MVP-BACKUP-001 allowlist>",
+      "exitCode": 0,
+      "denominator": "implementation and test allowlist"
+    }
+  ],
+  "denominators": {
+    "realDbBackupRestoreTests": "5/5",
+    "combinedFocusedTests": "14/14",
+    "encryptedObjects": "1/1",
+    "checksumVerifiedRestores": "1/1",
+    "targetTenantReadback": "1/1",
+    "crossTenantLeak": "0 rows",
+    "negativeControls": "4/4",
+    "typeCheck": "PASS"
+  },
+  "negativeControls": {
+    "wrongExpectedTenant": "RESTORE_ORGANIZATION_MISMATCH before mutation",
+    "sourceOrLiveTarget": "RESTORE_TARGET_NOT_ISOLATED plus ACCESS_DENIED audit",
+    "corruptedCiphertext": "checksum/authentication rejection before target mutation",
+    "auditMutation": "UPDATE rejected by append-only trigger",
+    "plaintextDisclosure": "stored object contains no tenant id or tenant name",
+    "missingEncryptionKey": "fails closed; no plaintext fallback"
+  },
+  "fixtures": {
+    "source": "disposable pgvector PostgreSQL backup_source_test",
+    "target": "disposable isolated PostgreSQL backup_restore_test",
+    "productionPolicy": "not supplied and not inferred"
+  },
   "browserArtifacts": [],
-  "rollback": {"code": "no code change", "data": "no restore or deletion executed"},
-  "verdict": "FIX_REQUIRED",
-  "openBlockers": ["Logical backup lacks checksum/encryption proof, supervised isolated restore, access-audit receipt and recovery rehearsal."]
+  "cleanup": {
+    "sourceFixtures": "removed by test",
+    "target": "disposable database/container",
+    "storage": "/tmp/adm-backup-001-storage",
+    "productionTouched": false
+  },
+  "rollback": {
+    "code": "revert changed allowlist paths before integration",
+    "schema": "additive and backward-readable",
+    "data": "no production data and no live restore"
+  },
+  "verdict": "BLOCKED_OWNER",
+  "openBlockers": [
+    "RPO/RTO defaults require accountable-owner acceptance for release-facing status.",
+    "No deployment or production scheduler observation was authorized.",
+    "Encryption-key rotation and durable S3/R2 provisioning remain environment-owner operations."
+  ]
 }
