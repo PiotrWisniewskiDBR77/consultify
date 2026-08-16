@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-08-16T16:11:50.952Z",
+  "generatedAt": "2026-08-16T16:17:57.165Z",
   "generatedBy": "scripts/testing/generate-test-inventory.ts",
-  "totalDiscovered": 4964,
+  "totalDiscovered": 4996,
   "counts": {
-    "ACTIVE": 4665,
+    "ACTIVE": 4697,
     "INTENTIONALLY_EXCLUDED": 7,
     "LEGACY": 1,
     "PLAYWRIGHT": 290,
@@ -751,6 +751,18 @@
     },
     {
       "path": "server/src/routes/__tests__/workbook-sources.routes.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "server/src/routes/audits/__tests__/mounting.integration.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "server/src/routes/audits/__tests__/verticalSlice.http.test.ts",
       "classification": "ACTIVE",
       "reason": "Collected by default vitest.config.ts.",
       "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
@@ -2257,6 +2269,120 @@
     },
     {
       "path": "server/src/services/assessment/__tests__/drdEvidenceScoring.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "server/src/services/audits/__tests__/aiBoundaries.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "server/src/services/audits/__tests__/aiProposalService.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "server/src/services/audits/__tests__/auditTrailService.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "server/src/services/audits/__tests__/correctiveActionService.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "server/src/services/audits/__tests__/criterionService.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "server/src/services/audits/__tests__/evidenceService.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "server/src/services/audits/__tests__/findingService.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "server/src/services/audits/__tests__/goldenFlow.e2e.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "server/src/services/audits/__tests__/lifecycleGates.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "server/src/services/audits/__tests__/normSourceService.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "server/src/services/audits/__tests__/outputService.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "server/src/services/audits/__tests__/packService.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "server/src/services/audits/__tests__/packValidator.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "server/src/services/audits/__tests__/programService.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "server/src/services/audits/__tests__/proposalService.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "server/src/services/audits/__tests__/reportRenderer.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "server/src/services/audits/__tests__/segregationOfDuties.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "server/src/services/audits/__tests__/sourceClassificationAxes.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "server/src/services/audits/__tests__/verificationService.test.ts",
       "classification": "ACTIVE",
       "reason": "Collected by default vitest.config.ts.",
       "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
@@ -5555,6 +5681,66 @@
       "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
     },
     {
+      "path": "src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "src/components/Audit/method/__tests__/AuditOutputsTab.test.tsx",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "src/components/Audit/method/__tests__/AuditsMethodHub.processesLabel.test.tsx",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "src/components/Audit/method/__tests__/auditStatusTones.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "src/components/Audit/method/workspace/__tests__/CriterionWorkspace.test.tsx",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "src/components/Audit/method/workspace/__tests__/EvidencePanel.test.tsx",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "src/components/Audit/method/workspace/__tests__/FindingPanel.test.tsx",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "src/components/Audit/method/workspace/__tests__/RemediationPanel.test.tsx",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "src/components/Audit/method/workspace/__tests__/TeresaProposalCard.test.tsx",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
       "path": "src/components/Benefits/__tests__/ValuationWorkspace.candidateHandoff.test.tsx",
       "classification": "ACTIVE",
       "reason": "Collected by default vitest.config.ts.",
@@ -7296,6 +7482,12 @@
     },
     {
       "path": "src/layouts/__tests__/MainLayoutTeresaClose.contract.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "src/method-core-adapters/audits/__tests__/auditsKernelAdapter.test.ts",
       "classification": "ACTIVE",
       "reason": "Collected by default vitest.config.ts.",
       "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"

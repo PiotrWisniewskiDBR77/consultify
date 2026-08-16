@@ -26,10 +26,11 @@ cleanup snapshots and five-hour plans are historical evidence.
 - Path: `/Users/piotrwisniewski/Developer/consultify-recovery-canonical-20260816`
 - Branch: `codex/recovery-canonical-20260816`
 - Baseline: `origin/demo` at `e45904dc7940f259b9cf017c283264d5c166c9ab`
-- Current verified implementation checkpoint: `59d6d0d85c`
+- Current implementation checkpoint before this state update: `5d9b33ac58`
 - Recovery control-plane commit: `844001c525`
-- Integrated packages: Assessment (fast-forward ancestry) and Tools (49
-  patch-unique, ordered non-merge commits replayed selectively)
+- Integrated packages: Assessment (fast-forward ancestry), Tools (49
+  patch-unique non-merge commits) and Audits (34 patch-unique non-merge
+  commits), all replayed without merging the source branch heads
 - Tools pre-integration recovery point: branch
   `codex/recovery-pre-tools-20260816` at `2706985e9a`
 - Worktree state before this document update: clean
@@ -68,6 +69,14 @@ Fresh checks on this candidate:
   BROKEN_ORPHAN (`tests/e2e/security-cookie-auth.spec.ts`).
 - Full `npm run type-check` after Tools integration: PASS after three boundary
   typing fixes committed in `59d6d0d85c`.
+- Full `npm run type-check` after Audits integration: PASS.
+- Test discovery after Audits: 4996/4996 classified; 4697 ACTIVE, 290
+  PLAYWRIGHT, 7 INTENTIONALLY_EXCLUDED, 1 LEGACY, 1 BROKEN_ORPHAN; PASS.
+- Audits focused run: 32 files; 14 PASS, 10 FAIL, 8 SKIPPED. Assertions: 152
+  PASS, 27 FAIL, 45 SKIPPED. Failures include an invalid local PostgreSQL role
+  (`iris`) and real contract regressions in update/readback and route auth
+  expectations. Audits is therefore `INTEGRATED_PENDING_REPAIR /
+  RUNTIME_BLOCKED`, not accepted.
 - Commit hooks reported no new list, TRIADA, density, focus, or artifact-shell
   regression in the changed files. Existing repository-wide focus debt remains.
 
@@ -94,9 +103,11 @@ features. No bulk branch or worktree deletion is authorized by these counts.
 
 ## Next gate
 
-1. Run Tools fresh strict PostgreSQL migrations and realDB suites; do not infer
+1. Provision an isolated disposable PostgreSQL role/database and run Tools and
+   Audits strict migrations plus realDB suites; do not reuse the ambient
+   `iris_test` target.
    runtime readiness from the 482 unit/component tests.
 2. Resolve the one explicit broken orphan and the Assessment immutable-log
    `diff --check` policy without rewriting evidence silently.
-3. Reconcile Audits selectively; do not merge its branch head.
+3. Repair the Audits update/readback and auth-boundary failures on the candidate.
 4. Reconcile Case/Artifact, then the owner-gated Results/Finance packages.
