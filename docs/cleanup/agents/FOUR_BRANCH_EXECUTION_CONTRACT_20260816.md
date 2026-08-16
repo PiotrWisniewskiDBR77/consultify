@@ -10,7 +10,7 @@ Scope packet commit: `aca1b7a126`
 
 Execution-readiness packet commit: `59d572fb83`
 
-Execution baseline ref: `refs/tags/closure-execution-baseline-20260816`
+Execution baseline ref: `refs/tags/closure-execution-baseline-v2-20260816`
 
 ## Branches and ownership
 
@@ -63,18 +63,22 @@ instead of modifying the shared file.
 
 ## Resolved path leases
 
-The generated leases under `generated/CLAUDE_LANE_*_PATH_LEASE.{md,json}` are
-the exact tracked-file allowlists. They contain zero cross-lane overlap. The
-JSON SHA-256 is the lease identity and must be reported in every handoff.
+The generated Claude leases and `generated/CODEX_INTEGRATOR_PATH_LEASE` are
+tracked-file ceilings, not permission to edit every listed file. A task may
+touch only the smallest task-relevant subset and must list that subset in its
+evidence record. The four ceilings contain zero overlap. The JSON SHA-256 is
+the lease identity and must be reported in every handoff.
 
-- Lane A: `df36e4171a8d3bbd8f772a0badd952b31e003d5ee789c7b2323b7c8da01b818b`
-- Lane B: `b7119b55c9b3d0d2ca9ec9eca7858f6c57a1bf901e8c81c117402fbfee60e0a1`
-- Lane C: `889f5a1cbe953d76149b5ac876c2ce0e6ce3b12e2775a4fa6d84cfa099688d28`
+- Lane A: `a2f9be9983e3a03e5e64f1a51dca193199a5bec963a246c3b4fe94b378af1308`
+- Lane B: `f4d75f0aed94f2e34acaec63d91c245495e7e0f658aa36d1122342c2acecc612`
+- Lane C: `7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c`
+- Codex: `0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860`
 
-New implementation/test files are allowed only below an already leased domain
-directory. New evidence goes to `docs/program/evidence/closure/<lane>/<task>/`.
-New migrations use the reserved namespace below. Everything else is an
-integrator request.
+New implementation/test files are allowed only below the exact domain roots
+enforced by `verify-closure-lane.mjs`; a filename keyword elsewhere is not
+sufficient. New evidence goes to
+`docs/program/evidence/closure/<lane>/<task>/`. New migrations use the reserved
+namespace below. Everything else is an integrator request.
 
 ## Migration and fixture isolation
 

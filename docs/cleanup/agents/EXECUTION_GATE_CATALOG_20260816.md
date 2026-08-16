@@ -48,20 +48,46 @@ skip/todo in an acceptance-relevant test requires task-level disposition; exit
 ## G3 — fresh and upgrade PostgreSQL
 
 Choose a unique lane port and container name; never reuse a developer/demo DB.
+The authoritative schema proof is the fail-closed application migration runner,
+not `tests/acceptance/schema.mjs`. The latter catches individual SQL failures
+and applies compatibility workarounds, so it may be used for functional legacy
+acceptance only and can never satisfy the migration gate.
 
 ```bash
 export ACCEPTANCE_PG_PORT=<UNIQUE_PORT>
 export ACCEPTANCE_PG_NAME=consultify-closure-<l>-<SHORT_SHA>
-node tests/acceptance/run.mjs
-SKIP_DB_UP=1 node tests/acceptance/run.mjs
+export DATABASE_URL="postgresql://consultinity:consultinity@127.0.0.1:${ACCEPTANCE_PG_PORT}/consultinity"
+docker run -d --name "$ACCEPTANCE_PG_NAME" \
+  -e POSTGRES_USER=consultinity -e POSTGRES_PASSWORD=consultinity \
+  -e POSTGRES_DB=consultinity -p "${ACCEPTANCE_PG_PORT}:5432" pgvector/pgvector:pg16
 docker exec "$ACCEPTANCE_PG_NAME" pg_isready -U consultinity
+DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts
+DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts
+DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts --dry-run
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c \
+  "select status,count(*) from schema_migrations group by status order by status"
 ```
 
-The first run proves fresh schema/seed/acceptance. The second proves
-idempotent/upgrade behavior on the same database. Task-specific realDB files
-from the lane manifest are also executed with `RUN_DB_TESTS=1 MOCK_DB=false`
-and the harness `DATABASE_URL`. Record migration ledger, information_schema
-checks, tenant/org/actor/fixture IDs and both run denominators.
+The first strict run proves a fresh schema; the second must apply zero files;
+the dry run must report zero pending files. `schema_migrations` must contain no
+failed/pending row and its stored checksums must agree with the files at the
+exact product SHA. Never pass `--safe` for acceptance. Where runtime-managed
+Table Platform migrations apply, verify `tp_migration_history` by the same
+fail-closed rule.
+
+Only after this strict gate passes may the functional harness and task realDB
+tests run against a separately created database or a documented compatible
+schema:
+
+```bash
+node tests/acceptance/run.mjs
+```
+
+Task-specific realDB files from the lane manifest are executed with
+`RUN_DB_TESTS=1 MOCK_DB=false` and the exact `DATABASE_URL`. Record both
+migration and functional denominators, information_schema checks,
+tenant/org/actor/fixture IDs, and all failures. A harness PASS cannot override
+a strict migration FAIL.
 
 Cleanup after evidence capture:
 
@@ -70,9 +96,10 @@ docker stop "$ACCEPTANCE_PG_NAME"
 docker rm "$ACCEPTANCE_PG_NAME"
 ```
 
-PASS: fresh and repeat exit 0, zero lazy/runtime DDL, zero orphan rows, cleanup
-confirmed. A migration change additionally requires migration structural,
-functional, duplicates and completeness tests.
+PASS: strict fresh/repeat/dry-run exit 0; zero failed or pending ledger rows;
+checksums match; functional acceptance exits 0; zero lazy/runtime DDL; zero
+orphan rows; cleanup confirmed. A migration change additionally requires
+migration structural, functional, duplicate and completeness tests.
 
 ## G4 — signed-in browser and visual
 
@@ -123,6 +150,8 @@ Required fields:
   "baselineSha": "...",
   "productSha": "...",
   "leaseSha256": "...",
+  "changedPaths": [],
+  "changedPathRationale": {},
   "ownerTables": [],
   "commands": [],
   "denominators": {},
@@ -135,4 +164,5 @@ Required fields:
 ```
 
 `DONE_CURRENT_SHA` requires G0–G6 as applicable. Missing evidence preserves a
-non-DONE verdict.
+non-DONE verdict. Every changed path must be named and justified against this
+task; lane-level lease membership alone is insufficient.

@@ -49,15 +49,19 @@ if (assigned.length !== 82) fail(`expected 82 assigned tasks, found ${assigned.l
 
 const contract = read('docs/cleanup/agents/FOUR_BRANCH_EXECUTION_CONTRACT_20260816.md');
 if (!contract.includes('A → C → B → Codex-owned Results/Finance')) fail('integration graph is not A → C → B → Codex Results/Finance');
-for (const lane of ['A', 'B', 'C']) {
-  const manifest = JSON.parse(read(`docs/cleanup/agents/generated/CLAUDE_LANE_${lane}_PATH_LEASE.json`));
+const leaseFiles = [
+  ['A', 'docs/cleanup/agents/generated/CLAUDE_LANE_A_PATH_LEASE.json'],
+  ['B', 'docs/cleanup/agents/generated/CLAUDE_LANE_B_PATH_LEASE.json'],
+  ['C', 'docs/cleanup/agents/generated/CLAUDE_LANE_C_PATH_LEASE.json'],
+  ['CODEX', 'docs/cleanup/agents/generated/CODEX_INTEGRATOR_PATH_LEASE.json'],
+];
+for (const [lane, file] of leaseFiles) {
+  const manifest = JSON.parse(read(file));
   const hash = createHash('sha256').update(`${manifest.files.join('\n')}\n`).digest('hex');
   if (hash !== manifest.sha256) fail(`lane ${lane}: path lease SHA mismatch`);
   if (!contract.includes(manifest.sha256)) fail(`lane ${lane}: lease SHA absent from contract`);
 }
-const manifests = ['A', 'B', 'C'].map((lane) =>
-  new Set(JSON.parse(read(`docs/cleanup/agents/generated/CLAUDE_LANE_${lane}_PATH_LEASE.json`)).files)
-);
+const manifests = leaseFiles.map(([, file]) => new Set(JSON.parse(read(file)).files));
 for (let left = 0; left < manifests.length; left += 1) {
   for (let right = left + 1; right < manifests.length; right += 1) {
     const overlap = [...manifests[left]].filter((file) => manifests[right].has(file));
@@ -68,6 +72,6 @@ for (let left = 0; left < manifests.length; left += 1) {
 if (!process.exitCode) {
   console.log('closure-plan PASS: 74 module + 8 cross-program = 82 unique tasks');
   console.log('ownership PASS: A15 + B15 + C15 + Codex37; zero duplicates/missing');
-  console.log('leases PASS: A/B/C SHA-valid and zero tracked-path overlap');
+  console.log('leases PASS: A/B/C/Codex SHA-valid and zero tracked-path overlap');
   console.log('graph PASS: A → C → B → Codex Results/Finance');
 }

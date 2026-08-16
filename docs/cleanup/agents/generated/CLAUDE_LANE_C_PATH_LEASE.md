@@ -1,12 +1,12 @@
 # Claude lane C — resolved path lease
 
-Authority HEAD: `1dd6ceba004603d21c5434fbb7a5a14c9554b712`
+Authority HEAD: `c40a9ba58e28ccc78bdef8d1f61f64db60e088eb`
 
 Branch: `codex/closure-claude-c-ideas-documents`
 
-Lease SHA-256: `889f5a1cbe953d76149b5ac876c2ce0e6ce3b12e2775a4fa6d84cfa099688d28`
+Lease SHA-256: `7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c`
 
-Counts: 1948 tracked paths; 1134 source/docs; 751 Vitest; 63 Playwright/visual.
+Counts: 1943 tracked paths; 1132 source/docs; 748 Vitest; 63 Playwright/visual.
 
 Only the paths below may be modified. Shared files require an integrator
 request. New files must live below an already-listed domain directory or
@@ -45,6 +45,7 @@ the lane reserved migration/evidence namespace.
 - `server/migrations/20260324_v81_sheet_artifact_wave2.sql`
 - `server/migrations/20260330_p17b_artifact_runs_preflight_failure_packaging.sql`
 - `server/migrations/20260330_v81_templates_as_outputs_artifacts.sql`
+- `server/migrations/20260409_p17c_artifact_run_audit_log.sql`
 - `server/migrations/20260409_p17c_artifact_runs_cancelled_status.sql`
 - `server/migrations/20260411_p30d_organization_type_and_new_fields.sql`
 - `server/migrations/20260412_organization_switch_log.sql`
@@ -67,6 +68,7 @@ the lane reserved migration/evidence namespace.
 - `server/migrations/20260807_approve_dbr77_workbook_templates.sql`
 - `server/migrations/20260808_board_ready_documents_templates.sql`
 - `server/migrations/20260808_documents_template_kpi_formula_repair.sql`
+- `server/migrations/20260809_artifact_studio_audit_and_presentation_cards.sql`
 - `server/migrations/20260809_case_workspace_artifact_links.sql`
 - `server/migrations/20260809_finance_v3_b01_core_artifacts.sql`
 - `server/migrations/20260810_idea_business_case.sql`
@@ -135,6 +137,7 @@ the lane reserved migration/evidence namespace.
 - `server/migrations/ops/20260418_feedback_chat_history_in_progress.sql`
 - `server/migrations/ops/20260418_feedback_chat_scoping_in_progress.sql`
 - `server/migrations/rollback/20260417_chat_message_types_execution_family.down.sql`
+- `server/scripts/audit-organization-context-cross-app.ts`
 - `server/scripts/bootstrap-organization-context-engine-schema.ts`
 - `server/scripts/check-presentation-governance.ts`
 - `server/scripts/copy-showcase-my-ideas-to-anna.ts`
@@ -178,8 +181,6 @@ the lane reserved migration/evidence namespace.
 - `server/src/_backup/ts-js-collisions/routes/organization/rbac.routes.js`
 - `server/src/_backup/ts-js-collisions/routes/organization/teams.routes.js`
 - `server/src/_backup/ts-js-collisions/services/ai/organizationMemoryStore.js`
-- `server/src/_backup/ts-js-collisions/services/ai/processors/pptxProcessor.js`
-- `server/src/_backup/ts-js-collisions/services/ai/processors/spreadsheetProcessor.js`
 - `server/src/_backup/ts-js-collisions/services/organizationMetadataService.js`
 - `server/src/_backup/ts-js-collisions/services/organizationService.js`
 - `server/src/_backup/ts-js-collisions/validators/chat-projects.validators.js`
@@ -262,8 +263,6 @@ the lane reserved migration/evidence namespace.
 - `server/src/routes/organization/organizations.routes.ts`
 - `server/src/routes/organization/ownership.routes`
 - `server/src/routes/organization/ownership.routes.ts`
-- `server/src/routes/organization/partner-code.routes`
-- `server/src/routes/organization/partner-code.routes.ts`
 - `server/src/routes/organization/rbac.routes`
 - `server/src/routes/organization/rbac.routes.ts`
 - `server/src/routes/organization/teams.routes`
@@ -276,8 +275,6 @@ the lane reserved migration/evidence namespace.
 - `server/src/routes/public-artifacts.routes.ts`
 - `server/src/routes/v8/__tests__/p08-artifact-studio-teresa-bridge.test.ts`
 - `server/src/routes/v8/chat.routes.ts`
-- `server/src/routes/v8/finance-v2/__tests__/artifacts-lifecycle-compute.routes.pg.test.ts`
-- `server/src/routes/v8/finance-v2/artifacts.routes.ts`
 - `server/src/routes/workbook.routes.ts`
 - `server/src/services/__tests__/artifactContentResolverService.test.ts`
 - `server/src/services/__tests__/artifactRegistryPresentationTemplatePosture.test.ts`
@@ -297,6 +294,7 @@ the lane reserved migration/evidence namespace.
 - `server/src/services/__tests__/presentationAgentEditService.test.ts`
 - `server/src/services/__tests__/presentationAlertPlaygroundService.test.ts`
 - `server/src/services/__tests__/presentationApprovedTemplateService.test.ts`
+- `server/src/services/__tests__/presentationAuditIntegrityService.test.ts`
 - `server/src/services/__tests__/presentationBenchmarkJudgeService.test.ts`
 - `server/src/services/__tests__/presentationBenchmarkScorecardService.test.ts`
 - `server/src/services/__tests__/presentationBenchmarkTrendService.test.ts`
@@ -334,9 +332,11 @@ the lane reserved migration/evidence namespace.
 - `server/src/services/__tests__/presentationStaleRegenRenderable.test.ts`
 - `server/src/services/__tests__/presentationStudioApprovalTicketService.test.ts`
 - `server/src/services/__tests__/presentationStudioIntentDensityDefaultsService.test.ts`
+- `server/src/services/__tests__/presentationStudioLayoutAuditService.test.ts`
 - `server/src/services/__tests__/presentationStudioLayoutCapacityAdminService.test.ts`
 - `server/src/services/__tests__/presentationStudioLayoutCapacityPersistenceService.test.ts`
 - `server/src/services/__tests__/presentationStudioLayoutCapacityRegistryService.test.ts`
+- `server/src/services/__tests__/presentationStudioSlideAuditDecoratorService.test.ts`
 - `server/src/services/__tests__/presentationStudioSourceArtifactsService.test.ts`
 - `server/src/services/__tests__/presentationSubscriberDashboardService.test.ts`
 - `server/src/services/__tests__/presentationSubscriberTokenManagementService.test.ts`
@@ -364,8 +364,6 @@ the lane reserved migration/evidence namespace.
 - `server/src/services/ai/meetingIntelligenceService.ts`
 - `server/src/services/ai/organizationMemoryStore`
 - `server/src/services/ai/organizationMemoryStore.ts`
-- `server/src/services/ai/processors/pptxProcessor`
-- `server/src/services/ai/processors/spreadsheetProcessor`
 - `server/src/services/artifactApprovalService.ts`
 - `server/src/services/artifactExportPolicy.ts`
 - `server/src/services/artifacts/ArtifactConversionService.ts`
@@ -459,6 +457,7 @@ the lane reserved migration/evidence namespace.
 - `server/src/services/documentStudio/__tests__/documentStudioGovernance.test.ts`
 - `server/src/services/documentStudio/__tests__/documentStudioMode3.test.ts`
 - `server/src/services/documentStudio/__tests__/documentStudioPreflight.test.ts`
+- `server/src/services/documentStudio/__tests__/documentStudioProposalDiffAudit.test.ts`
 - `server/src/services/documentStudio/__tests__/documentStudioRollback.test.ts`
 - `server/src/services/documentStudio/__tests__/documentStudioService.test.ts`
 - `server/src/services/documentStudio/__tests__/documentStudioSnapshotIntegration.test.ts`
@@ -525,9 +524,6 @@ the lane reserved migration/evidence namespace.
 - `server/src/services/documentStudio/documentVersionSnapshotService.ts`
 - `server/src/services/documentTextExtractor.ts`
 - `server/src/services/feedbackArtifacts.ts`
-- `server/src/services/finance/canonical/__tests__/artifactVersionSupersededImmutability.pg.test.ts`
-- `server/src/services/finance/canonical/__tests__/artifactVersionTerminalTransitions.pg.test.ts`
-- `server/src/services/finance/canonical/artifactVersionService.ts`
 - `server/src/services/ideaAIGeneratorService.ts`
 - `server/src/services/ideaAISuggestionsService.ts`
 - `server/src/services/ideaBusinessCaseService.ts`
@@ -551,6 +547,7 @@ the lane reserved migration/evidence namespace.
 - `server/src/services/presentationAgentEditService.ts`
 - `server/src/services/presentationAlertPlaygroundService.ts`
 - `server/src/services/presentationApprovedTemplateService.ts`
+- `server/src/services/presentationAuditIntegrityService.ts`
 - `server/src/services/presentationBenchmarkJudgeService.ts`
 - `server/src/services/presentationBenchmarkScorecardService.ts`
 - `server/src/services/presentationBenchmarkTrendService.ts`
@@ -588,10 +585,12 @@ the lane reserved migration/evidence namespace.
 - `server/src/services/presentationSourcePackService.ts`
 - `server/src/services/presentationStudioApprovalTicketService.ts`
 - `server/src/services/presentationStudioIntentDensityDefaultsService.ts`
+- `server/src/services/presentationStudioLayoutAuditService.ts`
 - `server/src/services/presentationStudioLayoutCapacityAdminService.ts`
 - `server/src/services/presentationStudioLayoutCapacityPersistenceService.ts`
 - `server/src/services/presentationStudioLayoutCapacityRegistryService.ts`
 - `server/src/services/presentationStudioOrchestrationService.ts`
+- `server/src/services/presentationStudioSlideAuditDecoratorService.ts`
 - `server/src/services/presentationStudioSourceArtifactsService.ts`
 - `server/src/services/presentationSubscriberDashboardService.ts`
 - `server/src/services/presentationSubscriberTokenManagementService.ts`
@@ -733,7 +732,6 @@ the lane reserved migration/evidence namespace.
 - `server/src/types/artifactContent.ts`
 - `server/src/types/artifactRegistry.ts`
 - `server/src/types/chatExecutionIntegration.ts`
-- `server/src/types/finance/ArtifactRef.ts`
 - `server/src/types/pptxgenjs.d.ts`
 - `server/src/utils/requestOrganization.ts`
 - `server/src/validators/chat-projects.validators.ts`
@@ -757,6 +755,9 @@ the lane reserved migration/evidence namespace.
 - `src/components/AIChat/Actions/index.ts`
 - `src/components/AIChat/ActiveModeStrip.tsx`
 - `src/components/AIChat/AddFilesMenu.tsx`
+- `src/components/AIChat/AgentAudit/AgentAuditVerdictPanel.tsx`
+- `src/components/AIChat/AgentAudit/AgentSuggestionCard.tsx`
+- `src/components/AIChat/AgentAudit/index.ts`
 - `src/components/AIChat/AgentHubShell.tsx`
 - `src/components/AIChat/AgentManifestLauncher.tsx`
 - `src/components/AIChat/AgentOperationsPanel.tsx`
@@ -1000,14 +1001,6 @@ the lane reserved migration/evidence namespace.
 - `src/components/AIChat/unbackedCanvasClaim.ts`
 - `src/components/AIChat/useChatProjectsRealtime.ts`
 - `src/components/AIChat/whiteboardIntentDetector.ts`
-- `src/components/Admin/ChatV9FlagsIndicator.tsx`
-- `src/components/Admin/ChatV9FlagsOverlay.tsx`
-- `src/components/Admin/ChatV9FlagsPanel.tsx`
-- `src/components/Admin/ChatV9FlagsResetHandler.tsx`
-- `src/components/Admin/__tests__/ChatV9FlagsIndicator.test.tsx`
-- `src/components/Admin/__tests__/ChatV9FlagsOverlay.test.tsx`
-- `src/components/Admin/__tests__/ChatV9FlagsPanel.test.tsx`
-- `src/components/Admin/__tests__/ChatV9FlagsResetHandler.test.tsx`
 - `src/components/Chat/ChatActionButton.tsx`
 - `src/components/Chat/ChatActionCard.tsx`
 - `src/components/Chat/ChatSmartSuggestions.tsx`
@@ -1070,10 +1063,7 @@ the lane reserved migration/evidence namespace.
 - `src/components/DocumentStudio/publicReader/clientReaderApi.ts`
 - `src/components/DocumentStudio/templateStructureOps.ts`
 - `src/components/DocumentStudio/types.ts`
-- `src/components/Economics/FinanceModelDocumentView.tsx`
 - `src/components/Execution/ReportDocumentView.tsx`
-- `src/components/Finance/statementPackWorkspaceV2/RelatedArtifactsSection.tsx`
-- `src/components/Finance/statementPackWorkspaceV2/__tests__/RelatedArtifactsSection.test.tsx`
 - `src/components/FullReportDocument.tsx`
 - `src/components/Help/DocumentationRenderer.tsx`
 - `src/components/Initiatives/InitiativeDocumentView.tsx`
@@ -1177,10 +1167,12 @@ the lane reserved migration/evidence namespace.
 - `src/components/Organization/OrganizationAdminPanel.tsx`
 - `src/components/Organization/OrganizationSidebar.tsx`
 - `src/components/Organization/OrganizationV8CanonPanel.tsx`
+- `src/components/PresentationStudio/PresentationStudioLayoutAuditBanner.tsx`
 - `src/components/PresentationStudio/PresentationStudioLayoutCapacityAdminPanel.tsx`
 - `src/components/PresentationStudio/PresentationStudioPage.tsx`
 - `src/components/PresentationStudio/PresentationStudioSetupForm.tsx`
 - `src/components/PresentationStudio/PresentationStudioSourceArtifactPicker.tsx`
+- `src/components/PresentationStudio/__tests__/PresentationStudioLayoutAuditBanner.test.tsx`
 - `src/components/PresentationStudio/__tests__/PresentationStudioLayoutCapacityAdminPanel.test.tsx`
 - `src/components/PresentationStudio/__tests__/PresentationStudioPage.test.tsx`
 - `src/components/Presentations/BrandKitSettings.tsx`
@@ -1193,6 +1185,7 @@ the lane reserved migration/evidence namespace.
 - `src/components/Presentations/DeckBuilder/CardRenderer.tsx`
 - `src/components/Presentations/DeckBuilder/CommandPalette.tsx`
 - `src/components/Presentations/DeckBuilder/ConflictBanner.tsx`
+- `src/components/Presentations/DeckBuilder/DeckAuditLogModal.tsx`
 - `src/components/Presentations/DeckBuilder/DeckBuilder.tsx`
 - `src/components/Presentations/DeckBuilder/DeckBuilderBottomBar.tsx`
 - `src/components/Presentations/DeckBuilder/DeckBuilderMelsChips.tsx`
@@ -1374,6 +1367,7 @@ the lane reserved migration/evidence namespace.
 - `src/routes/__tests__/presentationWizardRedirect.test.ts`
 - `src/routes/ideaWorkspaceNavigation.ts`
 - `src/routes/presentationWizardRedirect.ts`
+- `src/services/__tests__/presentationAuditLogSavedViews.test.ts`
 - `src/services/__tests__/presentationGovernanceDeepLinks.test.ts`
 - `src/services/__tests__/presentationGovernanceWatchlistDiff.test.ts`
 - `src/services/__tests__/presentationTemplateArchitectApprove.test.ts`
@@ -1400,6 +1394,8 @@ the lane reserved migration/evidence namespace.
 - `src/services/ideaFinance/types.ts`
 - `src/services/presentationAgentHistory.ts`
 - `src/services/presentationAlertPlayground.ts`
+- `src/services/presentationAuditLog.ts`
+- `src/services/presentationAuditLogSavedViews.ts`
 - `src/services/presentationBenchmarkTrend.ts`
 - `src/services/presentationExport.ts`
 - `src/services/presentationGovernance.ts`
@@ -1492,6 +1488,7 @@ the lane reserved migration/evidence namespace.
 - `src/views/vault/VaultDocumentsView.tsx`
 - `src/views/vault/vaultDocuments.ts`
 - `tests/acceptance/chat-003-citation-provenance-readback.realdb.test.ts`
+- `tests/acceptance/chat-005-proposal-approval-audit.realdb.test.ts`
 - `tests/acceptance/chat-007-009-owner-handoff-reopen.realdb.test.ts`
 - `tests/acceptance/chat-007-fixes.realdb.test.ts`
 - `tests/acceptance/chat-m01-006-citation-verifier-table-map.realdb.test.ts`
@@ -1644,7 +1641,6 @@ the lane reserved migration/evidence namespace.
 - `tests/components/ReportsAndPresentations/materialFormatColumns.test.tsx`
 - `tests/components/ReportsAndPresentations/useRapData.canonicalArtifacts.test.tsx`
 - `tests/components/RouterSync.idea-artifact.test.tsx`
-- `tests/components/SuperAdmin/OrganizationsView.test.tsx`
 - `tests/components/TemplateBuilder/TemplateBuilder.workbookSheets.test.tsx`
 - `tests/components/discovery-tools/StrategicToolsView.artifact-query.contract.test.tsx`
 - `tests/components/discovery-tools/ToolDocumentView.approveReadiness.test.tsx`
@@ -1712,7 +1708,6 @@ the lane reserved migration/evidence namespace.
 - `tests/e2e/tools/idea-whiteboard.spec.ts`
 - `tests/e2e/unified-chat.spec.ts`
 - `tests/fixtures/factories/organizationFactory.ts`
-- `tests/fixtures/finance/dbr77-financial-statements.xlsx`
 - `tests/hooks/useIdeaMapSync.antiWipe.test.ts`
 - `tests/hooks/useIdeaMapSync.deferred-payload.test.ts`
 - `tests/hooks/useOpenChatWithContext.idea.test.ts`
@@ -1763,7 +1758,6 @@ the lane reserved migration/evidence namespace.
 - `tests/integration/organization/competency-auth.test.ts`
 - `tests/integration/organizations/member-role-id-resolution.test.ts`
 - `tests/integration/organizations/organization-endpoints.test.ts`
-- `tests/integration/partners/partners.no-demo-organization-referral-dashboard.test.ts`
 - `tests/integration/presentations/_helpers/alert-worker-pg-harness.ts`
 - `tests/integration/presentations/alert-worker.integration.test.ts`
 - `tests/integration/presentations/atelier-deck-canonical-roundtrip.contract.test.ts`
@@ -1788,6 +1782,7 @@ the lane reserved migration/evidence namespace.
 - `tests/integration/routes/artifactLineage.mat010-routes.postgres.integration.test.ts`
 - `tests/integration/routes/artifactLineage.mat010.postgres.integration.test.ts`
 - `tests/integration/routes/artifacts.routes.test.ts`
+- `tests/integration/routes/auditLog.organizationContext.test.ts`
 - `tests/integration/routes/document-studio.export-trace.routes.test.ts`
 - `tests/integration/routes/documents.fail-closed.contract.test.ts`
 - `tests/integration/routes/documents.test.js`
@@ -1819,7 +1814,6 @@ the lane reserved migration/evidence namespace.
 - `tests/performance/ideaProcessFlowTool.mount.bench.test.tsx`
 - `tests/performance/ideaTableTool.mount.bench.test.tsx`
 - `tests/performance/ideaWhiteboardTool.mount.bench.test.tsx`
-- `tests/resultsVnext/kpi/organizationKpiAttention.realdb.test.ts`
 - `tests/store/useConversationStore.chat-root-rehydrate.test.ts`
 - `tests/unit/AIChat/agentPlanPanel.blocksToSteps.test.ts`
 - `tests/unit/AIChat/canvasDiffOps.test.ts`
@@ -1846,6 +1840,7 @@ the lane reserved migration/evidence namespace.
 - `tests/unit/backend/chatPermissionService/mapOrgRoleToChatRole.test.ts`
 - `tests/unit/backend/chatPermissionService/resolveUserChatRole.test.ts`
 - `tests/unit/backend/chatPolicyGateway.contract.test.ts`
+- `tests/unit/backend/controllers/OrganizationController.audit.test.ts`
 - `tests/unit/backend/controllers/OrganizationController.test.js`
 - `tests/unit/backend/controllers/OrganizationController.test.ts`
 - `tests/unit/backend/featureFlagsTeresaIdeaActionsDefault.test.ts`

@@ -1,12 +1,12 @@
 # Claude lane B — resolved path lease
 
-Authority HEAD: `1dd6ceba004603d21c5434fbb7a5a14c9554b712`
+Authority HEAD: `c40a9ba58e28ccc78bdef8d1f61f64db60e088eb`
 
 Branch: `codex/closure-claude-b-transformation`
 
-Lease SHA-256: `b7119b55c9b3d0d2ca9ec9eca7858f6c57a1bf901e8c81c117402fbfee60e0a1`
+Lease SHA-256: `f4d75f0aed94f2e34acaec63d91c245495e7e0f658aa36d1122342c2acecc612`
 
-Counts: 2064 tracked paths; 1245 source/docs; 789 Vitest; 30 Playwright/visual.
+Counts: 2066 tracked paths; 1252 source/docs; 784 Vitest; 30 Playwright/visual.
 
 Only the paths below may be modified. Shared files require an integrator
 request. New files must live below an already-listed domain directory or
@@ -73,6 +73,8 @@ the lane reserved migration/evidence namespace.
 - `server/migrations/294_execution_center.sql`
 - `server/migrations/334_initiative_watchers.sql`
 - `server/migrations/335_initiative_stakeholders.sql`
+- `server/migrations/505_assessment_initiative_batches_report_id.sql`
+- `server/migrations/512_assessment_initiative_generation_runs.sql`
 - `server/migrations/513_initiative_card_scope_templates.sql`
 - `server/migrations/526_initiative_templates_v2.sql`
 - `server/migrations/529_initiative_section_types.sql`
@@ -109,6 +111,8 @@ the lane reserved migration/evidence namespace.
 - `server/migrations/never-ran/655_v4_initiative_blueprints.sql`
 - `server/migrations/never-ran/662_v4_initiatives_tools_enterprise.sql`
 - `server/migrations/never-ran/670_initiative_kpi_assignment_runtime.sql`
+- `server/scripts/audit-elkomtech-initiatives.ts`
+- `server/scripts/audit-prod-mywork-data.ts`
 - `server/scripts/backfill-initiative-project.ts`
 - `server/scripts/seed-demo-initiatives.js`
 - `server/scripts/seed-elkomtech-initiative-cards.ts`
@@ -119,6 +123,7 @@ the lane reserved migration/evidence namespace.
 - `server/scripts/seed-insights-initiatives-rich-demo.ts`
 - `server/scripts/seed-mywork-demo.ts`
 - `server/scripts/seed-mywork-test-data.ts`
+- `server/scripts/seed-repair-approved-assessments-and-add-initiatives.ts`
 - `server/scripts/smoke-v3-execution-knowledge.ts`
 - `server/scripts/write-elkomtech-initiatives.ts`
 - `server/src/_backup/ts-js-collisions/ai/actionExecutionAdapter.js`
@@ -340,6 +345,8 @@ the lane reserved migration/evidence namespace.
 - `server/src/services/ai/tools/createInitiative`
 - `server/src/services/ai/tools/generateInitiative.ts`
 - `server/src/services/ai/tools/getInitiativeCard.ts`
+- `server/src/services/assessmentInitiativeGenerationRunService.ts`
+- `server/src/services/assessmentInitiativeService.ts`
 - `server/src/services/caseWorkspace/__tests__/_helpers/fixtureCleanup.ts`
 - `server/src/services/caseWorkspace/__tests__/_helpers/outboxOrdering.ts`
 - `server/src/services/caseWorkspace/__tests__/_helpers/schemaBootstrapGuard.ts`
@@ -406,19 +413,14 @@ the lane reserved migration/evidence namespace.
 - `server/src/services/caseWorkspace/__tests__/runBindingService.pg.test.ts`
 - `server/src/services/caseWorkspace/__tests__/runLifecycleService.pg.test.ts`
 - `server/src/services/caseWorkspace/__tests__/runSemantics.pg.test.ts`
-- `server/src/services/caseWorkspace/__tests__/security/artifactLinkService.security.pg.test.ts`
-- `server/src/services/caseWorkspace/__tests__/security/caseCoreService.security.pg.test.ts`
-- `server/src/services/caseWorkspace/__tests__/security/newSurface.security.pg.test.ts`
-- `server/src/services/caseWorkspace/__tests__/security/planVersionEnumeration.security.pg.test.ts`
-- `server/src/services/caseWorkspace/__tests__/security/playService.security.pg.test.ts`
-- `server/src/services/caseWorkspace/__tests__/security/playsEnumeration.security.pg.test.ts`
-- `server/src/services/caseWorkspace/__tests__/security/proposalApprovalService.security.pg.test.ts`
 - `server/src/services/caseWorkspace/__tests__/waitSubscriptionService.pg.test.ts`
+- `server/src/services/caseWorkspace/adapters/__tests__/assessmentAdapter.pg.test.ts`
 - `server/src/services/caseWorkspace/adapters/__tests__/capabilityBootWiring.pg.test.ts`
 - `server/src/services/caseWorkspace/adapters/__tests__/capabilityBootstrap.pg.test.ts`
 - `server/src/services/caseWorkspace/adapters/__tests__/documentsAdapter.pg.test.ts`
 - `server/src/services/caseWorkspace/adapters/__tests__/resultsAdapter.pg.test.ts`
 - `server/src/services/caseWorkspace/adapters/_shared.ts`
+- `server/src/services/caseWorkspace/adapters/assessmentAdapter.ts`
 - `server/src/services/caseWorkspace/adapters/decisionAdapter.ts`
 - `server/src/services/caseWorkspace/adapters/documentsAdapter.ts`
 - `server/src/services/caseWorkspace/adapters/financeAdapter.ts`
@@ -482,6 +484,7 @@ the lane reserved migration/evidence namespace.
 - `server/src/services/initiative/__tests__/initiativeTransitionService.canonicalGateOwner.test.ts`
 - `server/src/services/initiative/__tests__/initiativeTransitionService.closureGate.test.ts`
 - `server/src/services/initiative/__tests__/initiativeWizardService.test.ts`
+- `server/src/services/initiative/auditInitiativeService.ts`
 - `server/src/services/initiative/cardColumnHydration.ts`
 - `server/src/services/initiative/cardContentFormulaPrompt.ts`
 - `server/src/services/initiative/cardSpecSchema.ts`
@@ -538,10 +541,6 @@ the lane reserved migration/evidence namespace.
 - `server/src/services/report/ReportExecutionService`
 - `server/src/services/report/ReportExecutionService.ts`
 - `server/src/services/reportInitiativeService.ts`
-- `server/src/services/resultsVnext/kpi/kpiInitiativeImpactCommands.ts`
-- `server/src/services/resultsVnext/kpi/kpiInitiativeImpactRepository.ts`
-- `server/src/services/resultsVnext/kpi/kpiInitiativeImpactTypes.ts`
-- `server/src/services/resultsVnext/platform/myworkProjectionConsumer.ts`
 - `server/src/services/v8/__tests__/agentToolExecutionGovernanceService.test.ts`
 - `server/src/services/v8/__tests__/executionManagementSnapshotService.test.ts`
 - `server/src/services/v8/__tests__/executionSpineApprovalFlow.test.ts`
@@ -587,6 +586,7 @@ the lane reserved migration/evidence namespace.
 - `server/src/validators/pmoRoles.validators.ts`
 - `src/components/AIChat/TransformationCasesPanel.tsx`
 - `src/components/AIChat/__tests__/TransformationCasesPanel.test.tsx`
+- `src/components/Audit/method/tabs/AuditInitiativesTab.tsx`
 - `src/components/CaseWorkspace/CaseDetailScreen.tsx`
 - `src/components/CaseWorkspace/CaseWorkspaceHub.tsx`
 - `src/components/CaseWorkspace/CaseWorkspaceRoute.tsx`
@@ -608,9 +608,6 @@ the lane reserved migration/evidence namespace.
 - `src/components/CaseWorkspace/ui.tsx`
 - `src/components/Decisions/DecisionsByInitiative.tsx`
 - `src/components/Discovery/nodes/InitiativeNode.tsx`
-- `src/components/Economics/InitiativeBusinessCaseCard.tsx`
-- `src/components/Economics/InitiativeFinancialIntegration.tsx`
-- `src/components/Economics/modals/LinkInitiativeModal.tsx`
 - `src/components/Execution/AcceptanceRequesterPanel.tsx`
 - `src/components/Execution/BenefitsRegisterPanel.tsx`
 - `src/components/Execution/BudgetControlPanel.tsx`
@@ -817,6 +814,7 @@ the lane reserved migration/evidence namespace.
 - `src/components/MyWork/Dashboard/VelocityChart.tsx`
 - `src/components/MyWork/Dashboard/WorkloadHeatmap.tsx`
 - `src/components/MyWork/Decision/DecisionAlternativesSection.tsx`
+- `src/components/MyWork/Decision/DecisionAuditTrail.tsx`
 - `src/components/MyWork/Decision/DecisionCommentsSection.tsx`
 - `src/components/MyWork/Decision/DecisionDecideBar.tsx`
 - `src/components/MyWork/Decision/DecisionRisksSection.tsx`
@@ -1157,6 +1155,7 @@ the lane reserved migration/evidence namespace.
 - `src/components/MyWork/shared/EmptyState.tsx`
 - `src/components/MyWork/shared/EscalationRulesSection.tsx`
 - `src/components/MyWork/shared/EvidenceSection.tsx`
+- `src/components/MyWork/shared/ImpactAssessmentCompact.tsx`
 - `src/components/MyWork/shared/KeyboardShortcutsHelp.tsx`
 - `src/components/MyWork/shared/KeyboardShortcutsModal.tsx`
 - `src/components/MyWork/shared/LinkedItemsSection.tsx`
@@ -1166,6 +1165,7 @@ the lane reserved migration/evidence namespace.
 - `src/components/MyWork/shared/ReadEditToggle.tsx`
 - `src/components/MyWork/shared/RelatedContext.tsx`
 - `src/components/MyWork/shared/RelatedItemsList.tsx`
+- `src/components/MyWork/shared/RiskAssessmentCompact.tsx`
 - `src/components/MyWork/shared/SavedViewsMenu.tsx`
 - `src/components/MyWork/shared/StakeholdersSection.tsx`
 - `src/components/MyWork/shared/TaskTemplates.tsx`
@@ -1181,6 +1181,7 @@ the lane reserved migration/evidence namespace.
 - `src/components/MyWork/table/AITableProposal.tsx`
 - `src/components/MyWork/table/ActivityFeed.tsx`
 - `src/components/MyWork/table/AddColumnDialog.tsx`
+- `src/components/MyWork/table/AuditTrailPanel.tsx`
 - `src/components/MyWork/table/CalendarView.tsx`
 - `src/components/MyWork/table/CellEditor.tsx`
 - `src/components/MyWork/table/CellExpandPopover.tsx`
@@ -1335,6 +1336,7 @@ the lane reserved migration/evidence namespace.
 - `src/components/MyWork/table/tableRowLimits.ts`
 - `src/components/MyWork/table/tableTypes.ts`
 - `src/components/MyWork/table/useAttachments.ts`
+- `src/components/MyWork/table/useAuditTrail.ts`
 - `src/components/MyWork/table/useRollupComputation.ts`
 - `src/components/MyWork/table/useSchemaProposal.ts`
 - `src/components/MyWork/table/useTableKeyboard.ts`
@@ -1396,6 +1398,7 @@ the lane reserved migration/evidence namespace.
 - `src/components/MyWork/whiteboard/whiteboardPlacement.ts`
 - `src/components/MyWork/whiteboard/whiteboardProposalPatch.ts`
 - `src/components/MyWork/whiteboard/whiteboardReactions.ts`
+- `src/components/PMO/AuditTrailViewer.tsx`
 - `src/components/PMO/CharterBuilder.tsx`
 - `src/components/PMO/GateStatus.tsx`
 - `src/components/PMO/InitiativeCompletenessChecker.tsx`
@@ -1416,8 +1419,6 @@ the lane reserved migration/evidence namespace.
 - `src/components/ReportBuilder/ReportEditor/CreateInitiativeModal.tsx`
 - `src/components/ReportBuilder/blocks/InitiativeCards.tsx`
 - `src/components/Reports/InitiativesReportSection.tsx`
-- `src/components/Results/ResultsInitiativesView.tsx`
-- `src/components/ResultsVNext/kpiTool/kpiInitiativeImpactApi.ts`
 - `src/components/dashboard/DashboardExecutionSnapshot.tsx`
 - `src/components/demo/DemoSignupModal.tsx`
 - `src/components/shared/ExecutiveModuleShell/ShortcutHelpModal.tsx`
@@ -1648,6 +1649,7 @@ the lane reserved migration/evidence namespace.
 - `tests/components/MyWork/whiteboard/immediateNaming.wb-p2-01.test.tsx`
 - `tests/components/MyWork/whiteboardProposalPatch.test.ts`
 - `tests/components/MyWork/workspaceGraphRuntime.softMerge.t7.test.ts`
+- `tests/components/PMO/AuditTrailViewer.test.tsx`
 - `tests/components/PMO/CharterBuilder.test.tsx`
 - `tests/components/PMO/GateStatus.test.tsx`
 - `tests/components/PMO/InitiativeCompletenessChecker.test.tsx`
@@ -1743,6 +1745,7 @@ the lane reserved migration/evidence namespace.
 - `tests/integration/initiatives/due-breach-cron.test.ts`
 - `tests/integration/initiatives/due-breach.test.ts`
 - `tests/integration/initiatives/executionDistribution.test.ts`
+- `tests/integration/initiatives/from-audit-404.test.ts`
 - `tests/integration/initiatives/gate-ai-soft-block.test.ts`
 - `tests/integration/initiatives/generate-section-card.test.ts`
 - `tests/integration/initiatives/groundingEnrichment.test.ts`
@@ -1807,10 +1810,6 @@ the lane reserved migration/evidence namespace.
 - `tests/integration/routes/v8.execution.routes.test.ts`
 - `tests/integration/routes/v8.my-work.inbox-triage.contract.test.ts`
 - `tests/integration/routes/v8.my-work.routes.test.ts`
-- `tests/resultsVnext/kpi/initiativeKpiImpactBaselineFreeze.realdb.test.ts`
-- `tests/resultsVnext/kpi/initiativeKpiImpactCommands.test.ts`
-- `tests/resultsVnext/kpi/kpiInitiativeImpactPerspectivesRoutesRealdb.test.ts`
-- `tests/resultsVnext/roi/roiObligationsSurviveInitiativeClosure.realdb.test.ts`
 - `tests/unit/backend/InitiativeService.test.ts`
 - `tests/unit/backend/controllers/InitiativeController.test.ts`
 - `tests/unit/backend/initiative/initiativeService.test.ts`
@@ -1859,10 +1858,12 @@ the lane reserved migration/evidence namespace.
 - `tests/unit/backend/routes/pmo-initiatives.routes.program-rollup.test.ts`
 - `tests/unit/backend/routes/pmo-projects.routes.org-guard.test.ts`
 - `tests/unit/backend/routes/pmo-tasks.routes.org-guard.test.ts`
+- `tests/unit/backend/services/assessmentInitiativeGenerationRunService.test.ts`
+- `tests/unit/backend/services/assessmentInitiativeService.collectInsightCandidates.test.ts`
+- `tests/unit/backend/services/assessmentInitiativeService.evidencePersist.test.ts`
 - `tests/unit/backend/services/initiativeGeneration.quantifiedGoal.test.ts`
 - `tests/unit/backend/services/initiativeGeneration.r6aPrompt.test.ts`
 - `tests/unit/backend/services/initiativeGenerationService.formula.test.ts`
-- `tests/unit/backend/services/initiativeGovernanceService.crossorg.test.ts`
 - `tests/unit/backend/services/initiativeGovernanceService.test.ts`
 - `tests/unit/backend/services/pmoHealthService.test.js`
 - `tests/unit/backend/statusMachine/initiativeTransitions.test.ts`
@@ -1919,6 +1920,7 @@ the lane reserved migration/evidence namespace.
 - `tests/unit/execution/rolloutStagesService.test.ts`
 - `tests/unit/execution/status-machine.test.ts`
 - `tests/unit/execution/whatIfSimulator.test.ts`
+- `tests/unit/initiative/auditInitiativeService.test.ts`
 - `tests/unit/initiative/candidateAutoScan.test.ts`
 - `tests/unit/initiative/cardBlockSchema.test.ts`
 - `tests/unit/initiative/cardColumnHydration.test.ts`

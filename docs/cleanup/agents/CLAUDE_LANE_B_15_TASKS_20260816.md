@@ -10,7 +10,7 @@ Scope packet commit: `aca1b7a126`
 
 Execution-readiness packet commit: `59d572fb83`
 
-Execution baseline: `refs/tags/closure-execution-baseline-20260816`
+Execution baseline: `refs/tags/closure-execution-baseline-v2-20260816`
 
 Read the canonical 82-task plan and
 `FOUR_BRANCH_EXECUTION_CONTRACT_20260816.md`,
@@ -95,7 +95,7 @@ route/flag/migration registries. Emit versioned downstream contracts for Codex.
 
 Exact tracked allowlist:
 `generated/CLAUDE_LANE_B_PATH_LEASE.json`, SHA-256
-`b7119b55c9b3d0d2ca9ec9eca7858f6c57a1bf901e8c81c117402fbfee60e0a1`.
+`f4d75f0aed94f2e34acaec63d91c245495e7e0f658aa36d1122342c2acecc612`.
 It contains My Work decision/task/notebook excluding Idea-owned paths,
 Agent/transformation-case, Initiatives and Execution code/tests. No tracked
 path outside the manifest may be edited. Candidate producer and Idea inputs are

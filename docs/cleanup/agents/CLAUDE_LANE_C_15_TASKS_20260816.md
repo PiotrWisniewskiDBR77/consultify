@@ -10,7 +10,7 @@ Scope packet commit: `aca1b7a126`
 
 Execution-readiness packet commit: `59d572fb83`
 
-Execution baseline: `refs/tags/closure-execution-baseline-20260816`
+Execution baseline: `refs/tags/closure-execution-baseline-v2-20260816`
 
 Read the canonical 82-task plan and
 `FOUR_BRANCH_EXECUTION_CONTRACT_20260816.md`,
@@ -116,7 +116,7 @@ inside the 15 top-level task denominator; they do not create new program tasks.
 
 Exact tracked allowlist:
 `generated/CLAUDE_LANE_C_PATH_LEASE.json`, SHA-256
-`889f5a1cbe953d76149b5ac876c2ce0e6ce3b12e2775a4fa6d84cfa099688d28`.
+`7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c`.
 It contains Idea-owned paths, Materials/Artifact/DocumentStudio/Presentations/
 Workbook, Chat/AIChat, Organization context/snapshots and Meeting document
 boundary code/tests. No tracked path outside the manifest may be edited. My

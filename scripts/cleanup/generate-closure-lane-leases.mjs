@@ -25,8 +25,8 @@ const shared = [
 const activeRoot = /^(?:src|server\/(?:src|migrations|scripts)|tests|scripts)\//;
 const laneMatchers = {
   a: [
-    /assessment/i,
-    /audit/i,
+    /(?:^|\/)(?:assessment|Assessment|DiscoveryTools)(?:\/|\.|-)/,
+    /(?:auditPrograms?|audit-programs?|audit_programs?|auditsFive|CriterionWorkspace)/i,
     /discoverytools/i,
     /method-core/i,
     /tool(?:controller|output|initiative|session|registry|catalog|definition|pack)/i,
@@ -48,6 +48,12 @@ const laneMatchers = {
     /organization/i,
     /meeting/i,
   ],
+  d: [
+    /(?:^|\/)(?:Results|resultsVnext|results-vnext)(?:\/|\.|-)/,
+    /(?:^|\/)(?:Finance|Economics|finance)(?:\/|\.|-)/,
+    /(?:^|\/)(?:Admin|SuperAdmin|Settings|Partner|Security|Auth)(?:\/|\.|-)/,
+    /(?:resultsVNext|financeV[234810]|financial-model|skills-gap|saml|sso|security|privacy|partner)/i,
+  ],
 };
 
 const lanes = {
@@ -60,12 +66,16 @@ const lanes = {
   c: {
     branch: 'codex/closure-claude-c-ideas-documents',
   },
+  d: {
+    branch: 'codex/recovery-canonical-20260816',
+  },
 };
 
 const matches = (file, expressions) => expressions.some((expression) => expression.test(file));
 const isShared = (file) => matches(file, shared);
 const ownerFor = (file) => {
   if (!activeRoot.test(file) || isShared(file)) return null;
+  if (matches(file, laneMatchers.d)) return 'd';
   if (matches(file, laneMatchers.a)) return 'a';
   if (matches(file, laneMatchers.bStrong)) return 'b';
   if (matches(file, laneMatchers.c)) return 'c';
@@ -86,7 +96,7 @@ for (const [lane, config] of Object.entries(lanes)) {
     schemaVersion: 1,
     generatedAt: new Date().toISOString(),
     authorityHead: head,
-    lane,
+    lane: lane === 'd' ? 'codex' : lane,
     branch: config.branch,
     rule: 'Only listed tracked paths may be changed. Shared files require an integrator request. New files must live under an already-listed domain directory or the reserved migration/evidence namespace.',
     sha256,
@@ -97,9 +107,10 @@ for (const [lane, config] of Object.entries(lanes)) {
   };
   const dir = path.join(root, 'docs/cleanup/agents/generated');
   mkdirSync(dir, { recursive: true });
-  writeFileSync(path.join(dir, `CLAUDE_LANE_${lane.toUpperCase()}_PATH_LEASE.json`), `${JSON.stringify(payload, null, 2)}\n`);
+  const stem = lane === 'd' ? 'CODEX_INTEGRATOR_PATH_LEASE' : `CLAUDE_LANE_${lane.toUpperCase()}_PATH_LEASE`;
+  writeFileSync(path.join(dir, `${stem}.json`), `${JSON.stringify(payload, null, 2)}\n`);
   const md = [
-    `# Claude lane ${lane.toUpperCase()} — resolved path lease`,
+    `# ${lane === 'd' ? 'Codex integrator' : `Claude lane ${lane.toUpperCase()}`} — resolved path lease`,
     '',
     `Authority HEAD: \`${head}\``,
     '',
@@ -118,6 +129,6 @@ for (const [lane, config] of Object.entries(lanes)) {
     ...files.map((file) => `- \`${file}\``),
     '',
   ].join('\n');
-  writeFileSync(path.join(dir, `CLAUDE_LANE_${lane.toUpperCase()}_PATH_LEASE.md`), md);
+  writeFileSync(path.join(dir, `${stem}.md`), md);
   console.log(`${lane}: ${files.length} paths, ${vitest.length} vitest, ${playwright.length} playwright, ${sha256}`);
 }

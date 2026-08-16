@@ -27,11 +27,14 @@ Every accepted decision records: decision ID, selected option, owner, timestamp,
 rationale, affected tasks, effective SHA and evidence invalidation. Silence never
 changes a fail-closed default.
 
-## Quantified default gates
+## Quantified proposed default gates
 
-These are the program acceptance defaults. A different number requires a new
-owner decision before tests run; agents may not tune thresholds to observed
-results.
+These values are testable recommendations, not a silently inferred business
+decision. Agents use them for provisional engineering evidence, but every
+release-facing claim remains `BLOCKED_OWNER` until the accountable owner
+accepts them. An accepted or changed value is recorded in the decision
+register before release qualification; agents may never tune a threshold to
+observed results.
 
 ### Performance — `NFR-PERF-001`
 

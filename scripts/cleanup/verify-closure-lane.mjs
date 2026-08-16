@@ -35,9 +35,21 @@ for (const command of [
 const reservedMigration = new RegExp(`^server/migrations/2026091${lane === 'a' ? '0' : lane === 'b' ? '1' : '2'}_claude_${lane}_[^/]+\\.sql$`);
 const reservedEvidence = new RegExp(`^docs/program/evidence/closure/${lane}/[^/]+/`);
 const allowedNewRoots = {
-  a: /(?:assessment|audit|discoverytools|method-core|tool|interview)/i,
-  b: /(?:mywork|my-work|transformation.?case|initiative|execution|pmo)/i,
-  c: /(?:idea|artifact|document|presentation|pptx|workbook|spreadsheet|xlsx|chat|organization|meeting)/i,
+  a: [
+    /^src\/(?:components\/(?:assessment|Assessment|DiscoveryTools|Audit|Interview)|method-core|toolPacks|toolOutputs)\//,
+    /^server\/src\/(?:controllers|routes|services)\/(?:assessment|auditPrograms?|interview|tool)[^/]*\//i,
+    /^(?:tests|server\/tests)\/(?:assessment|auditPrograms?|interview|tool)[^/]*/i,
+  ],
+  b: [
+    /^src\/components\/(?:MyWork|Initiatives|Execution|CaseWorkspace)\//,
+    /^server\/src\/(?:controllers|routes|services)\/(?:caseWorkspace|myWork|initiative|execution|inbox|task|decision)[^/]*\//i,
+    /^(?:tests|server\/tests)\/(?:caseWorkspace|myWork|initiative|execution|inbox|task|decision)[^/]*/i,
+  ],
+  c: [
+    /^src\/components\/(?:AIChat|Chat|DocumentStudio|Presentations|PresentationStudio|Organization|Meeting)\//,
+    /^server\/src\/(?:controllers|routes|services)\/(?:artifact|document|presentation|workbook|chat|organization|meeting|idea)[^/]*\//i,
+    /^(?:tests|server\/tests)\/(?:artifact|document|presentation|workbook|chat|organization|meeting|idea)[^/]*/i,
+  ],
 };
 const isTracked = (file) => {
   try {
@@ -51,7 +63,7 @@ const isTracked = (file) => {
 const violations = [...changed].filter((file) => {
   if (leased.has(file) || reservedMigration.test(file) || reservedEvidence.test(file)) return false;
   const isNew = !isTracked(file);
-  return !(isNew && allowedNewRoots[lane].test(file));
+  return !(isNew && allowedNewRoots[lane].some((rootPattern) => rootPattern.test(file)));
 });
 
 if (violations.length > 0) {

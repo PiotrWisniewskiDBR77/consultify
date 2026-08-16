@@ -10,7 +10,7 @@ Scope packet commit: `aca1b7a126`
 
 Execution-readiness packet commit: `59d572fb83`
 
-Execution baseline: `refs/tags/closure-execution-baseline-20260816`
+Execution baseline: `refs/tags/closure-execution-baseline-v2-20260816`
 
 Mandatory context:
 
@@ -109,7 +109,7 @@ an unexpected second writer is a defect, not permission to add a third.
 
 Exact tracked allowlist:
 `generated/CLAUDE_LANE_A_PATH_LEASE.json`, SHA-256
-`df36e4171a8d3bbd8f772a0badd952b31e003d5ee789c7b2323b7c8da01b818b`.
+`a2f9be9983e3a03e5e64f1a51dca193199a5bec963a246c3b4fe94b378af1308`.
 It contains Assessment/method-core assessment, Audits/audit programs,
 Tools/DiscoveryTools/method-core tool surfaces and Interview evidence/delivery
 code/tests. No tracked path outside the manifest may be edited.
