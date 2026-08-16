@@ -1,7 +1,7 @@
 {
   "taskId": "EXE-MVP-ACTIONS-001",
-  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "99406b784bf1332beb369be161e75a2422f00fc6",
+  "baselineSha": "7bd1ed4c6f36a2ea759abb86bf37d3ae1ec935fd",
+  "productSha": "7e3fa1d1d260b1af0179bb94eb49ba6daf0a4443",
   "leaseSha256": "f4d75f0aed94f2e34acaec63d91c245495e7e0f658aa36d1122342c2acecc612",
   "toolchain": {
     "node": "v24.12.0",
@@ -22,8 +22,24 @@
     "budget_entries",
     "case_core"
   ],
-  "changedPaths": [],
-  "changedPathRationale": {},
+  "changedPaths": [
+    "server/migrations/20260908_execution_bvp_spine.sql",
+    "server/src/services/executionActionRegistryService.ts",
+    "server/src/services/executionBudgetService.ts",
+    "server/src/routes/executionControl.routes.ts",
+    "server/src/routes/caseWorkspace/cases.routes.ts",
+    "server/src/routes/caseWorkspace/actionProposals.routes.ts",
+    "server/src/routes/caseWorkspace/runLifecycle.routes.ts",
+    "server/src/routes/caseWorkspace/waitSubscriptions.routes.ts",
+    "server/src/routes/caseWorkspace/artifactLinks.routes.ts",
+    "docs/program/evidence/closure/b/EXE-MVP-ACTIONS-001/IMPLEMENTATION_2026-08-16.md"
+  ],
+  "changedPathRationale": {
+    "server/migrations/20260908_execution_bvp_spine.sql": "13-action governed registry and immutable audit table",
+    "server/src/services/executionActionRegistryService.ts": "Runtime registry truth and audit writer",
+    "server/src/services/executionBudgetService.ts": "Tenant+initiative rowcount fail-closed deletion",
+    "server/src/routes/caseWorkspace/cases.routes.ts": "ADMIN floor on terminal Case actions"
+  },
   "commands": [
     "node scripts/cleanup/verify-closure-lane.mjs b closure-execution-baseline-v2-20260816",
     "jq -r '.tests.vitest[]' docs/cleanup/agents/generated/CLAUDE_LANE_B_PATH_LEASE.json | xargs -n 80 npx vitest run --no-file-parallelism --maxWorkers=1 --maxConcurrency=2 --retry=0",
@@ -42,8 +58,8 @@
   "negativeControls": {},
   "browserArtifacts": [],
   "rollback": {
-    "method": "Revert the lane commits; all changes are additive application code plus new tests. NO migration was added by this lane, so no schema rollback is required and old readers are unaffected."
+    "method": "Revert application code while retaining the additive execution action registry/audit schema for old-reader compatibility."
   },
-  "verdict": "FIX_REQUIRED",
-  "openBlocker": "Both reported gaps CONFIRMED. (a) deleteBudgetEntry performs a hard DELETE with no affected-row check and returns void, so a wrong in-tenant entryId silently reports success; zero test coverage and zero frontend callers. It IS tenant-scoped, so cross-tenant deletion cannot occur. (b) Case Workspace mutations are membership-only with no role floor — a MEMBER can close/cancel a Case exactly as freely as an OWNER, including DESTRUCTIVE-effect proposals — and no audit trail is written. Both fixes are IN-LEASE but were not made: they are behaviour changes needing owner sign-off, not defect repairs."
+  "verdict": "PARTIAL",
+  "openBlocker": "No task-local blocker. No UI change was required: 9 actions are implemented and 4 controls remain explicitly hidden; see IMPLEMENTATION_2026-08-16.md."
 }

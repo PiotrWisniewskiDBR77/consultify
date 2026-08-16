@@ -1,7 +1,7 @@
 {
   "taskId": "EXE-BVP-001",
-  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "99406b784bf1332beb369be161e75a2422f00fc6",
+  "baselineSha": "7bd1ed4c6f36a2ea759abb86bf37d3ae1ec935fd",
+  "productSha": "7e3fa1d1d260b1af0179bb94eb49ba6daf0a4443",
   "leaseSha256": "f4d75f0aed94f2e34acaec63d91c245495e7e0f658aa36d1122342c2acecc612",
   "toolchain": {
     "node": "v24.12.0",
@@ -22,8 +22,17 @@
     "case_core",
     "case_workspace_artifact_links"
   ],
-  "changedPaths": [],
-  "changedPathRationale": {},
+  "changedPaths": [
+    "server/migrations/20260908_execution_bvp_spine.sql",
+    "server/src/services/executionBvpService.ts",
+    "server/src/services/__tests__/executionBvpService.pg.test.ts",
+    "docs/program/evidence/closure/b/EXE-BVP-001/IMPLEMENTATION_2026-08-16.md"
+  ],
+  "changedPathRationale": {
+    "server/migrations/20260908_execution_bvp_spine.sql": "Additive owner-neutral receipt/evidence/outbox schema",
+    "server/src/services/executionBvpService.ts": "Transactional golden-flow writer with CAS, tenancy, replay and concurrency",
+    "server/src/services/__tests__/executionBvpService.pg.test.ts": "Fresh realPG golden flow and negative controls"
+  },
   "commands": [
     "node scripts/cleanup/verify-closure-lane.mjs b closure-execution-baseline-v2-20260816",
     "jq -r '.tests.vitest[]' docs/cleanup/agents/generated/CLAUDE_LANE_B_PATH_LEASE.json | xargs -n 80 npx vitest run --no-file-parallelism --maxWorkers=1 --maxConcurrency=2 --retry=0",
@@ -42,8 +51,8 @@
   "negativeControls": {},
   "browserArtifacts": [],
   "rollback": {
-    "method": "Revert the lane commits; all changes are additive application code plus new tests. NO migration was added by this lane, so no schema rollback is required and old readers are unaffected."
+    "method": "Revert application code while retaining the additive 20260908 execution spine schema for old-reader compatibility; do not destructively roll back an applied migration."
   },
-  "verdict": "FIX_REQUIRED",
-  "openBlocker": "Opus-verified at schema level: case_core has NO initiative_id column and no FK to initiatives (only organizations/projects/users) — the Initiative->Execution link does not exist structurally, and no intake adapter exists in code. Evidence is not an approval gate: caseCoreService.ts:889 accepts any truthy string for COMPLETED_PARTIAL closure with no lookup into case_workspace_artifact_links. \"Exactly one Results signal\" is architecturally ambiguous: nothing consumes case.closure_recorded."
+  "verdict": "PARTIAL",
+  "openBlocker": "No task-local blocker. Downstream Results consumption remains owner-gated and is intentionally not claimed by this producer/outbox task; see IMPLEMENTATION_2026-08-16.md."
 }
