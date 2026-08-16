@@ -25,6 +25,14 @@
 | UX recovery | local `c67726e98bcde5a9b129d09885bfb5104896bbf4`; remote `c6878103b4d43563bc1adbf6f885990340dc52e4` | remote `ALREADY_PRESENT / EVOLVED`; local `SUPERSEDED / SCOPE_CLEANUP_ONLY` | Remote is candidate ancestry; six-file allowlist has 4 identical, 2 evolved, 0 missing. Do not replay local revert: it would remove active focus-governance files. |
 | UI45 | `64856e790afd0a66547d993fba13769878669c62` | `SUPERSEDED` | Preserve evidence and reconstruct only current-canon files. |
 | CEPD | source `99b1fcf7d67fe30bb15e089cfbf5650ce54a9ea1`; recovered hunks from `732e460ed27fd3dc70d99623625e08b5f47a1548` | `INTEGRATED_SELECTIVE / VERIFICATION_REQUIRED` | No CEPD path is missing. Only integer PostgreSQL evidence ingestion and a 12-second AI-review timeout were absent and are now applied surgically. Focused Interview route/security tests pass 61/61 and type-check passes; fresh-PG write/readback and forced-timeout browser proof remain. |
+| Ideas / My Work transformation | `4b634dc21ee476eab97f09b8a41ec2c8c10111dd` | `ALREADY_PRESENT / EVIDENCE_QUARANTINED` | 461 source paths are identical and 12 evolved later. All 363 source-only paths are historical QA screenshots; runtime replay allowlist is empty. |
+| My Work Core | `a0741afbef96f9821e6db6f8b52579e8a3b71474` | `ALREADY_PRESENT / SUPERSEDED` | Candidate contains the extended `m02p03` lifecycle migration and current idempotency behavior. The old Radar default-ON helper is intentionally superseded by literal `RADAR_ENABLED=false`; replay allowlist is empty. |
+| Initiatives + Execution | `bba792eabc133696ecdc4adcaf810e3642f0337c`; later evidence `599f50932dfd8de63db96b4557fcad08ffb02a2f` | `ALREADY_PRESENT / EVOLVED / VERIFICATION_REQUIRED` | No dedicated source-only code, migration or test path is missing. Candidate preserves later lifecycle, closure, capability, execution-spine and KPI-impact controls. Replay allowlist is empty; fresh runtime gates remain. |
+| M06 Execution | `4256348c963ac2cde9b3ecb40a5df852d03a5ec7` | `SUPERSEDED_IMPLEMENTATION / KEEP_HISTORICAL_EVIDENCE` | Dedicated implementation is represented by the evolved candidate. Do not replay. |
+| Chat / Teresa | `023b818ac6354dbbd5ac48b0514279e0c73ea8d3` | `ALREADY_PRESENT / EVOLVED_SAFER` | Three governed-handoff paths are exact; `WorkCanvasDocumentPanel` retains the handoff and adds user-mediated concurrent-save recovery. Replay allowlist is empty. |
+| Broad helper tip | `111868e07ab0fec15b4db7604b0cd400a93e3192` | `SUPERSEDED_BY_EVOLVED_CANDIDATE / EVIDENCE_ONLY` | Zero missing runtime/test path. Eight source-only files are historical Ideas PNGs; do not replay the mixed 75-path tip. |
+| Auth sweep | `d07c483dc7ee76a940c154e3d038b4d476641738` | `ALREADY_PRESENT_EXACT` | All four scoped skills-gap authentication paths are byte-identical. Replay allowlist is empty. |
+| SAML / automation security | `6e9657f562e89cc13136cc548b198ffc1662a5cd` | `ALREADY_PRESENT / SECURITY_EVOLVED` | Three scoped paths are exact. Candidate SSO retains fail-closed signature verification and adds stronger encryption-at-rest evolution; automation remains fail-closed without a sandbox. Replay allowlist is empty. |
 | Frozen main worktree | `869f9c322c61f01030c2900ea9c79ff046707f00` plus local state | `QUARANTINE_EVIDENCE` | Never reset, clean, stash, or merge as a unit. |
 
 ## Worktree and branch policy
@@ -75,8 +83,29 @@ ancestry. No branch ref was deleted. The post-action manifest at
 canonical, 1 frozen source, 137 dirty quarantines and 178 ignored-evidence or
 unmerged quarantines; zero further checkout is prune-ready.
 
-The generated decision is path-specific. It never authorizes deleting a branch
-ref, and it must be regenerated after any worktree or candidate change.
+The current generated manifest, observed at candidate `4bf0c299abcc3aee49936438f53e4e35cc382486`,
+contains 317 worktrees: 1 canonical, 1 frozen source, 137 dirty quarantines and
+178 ignored-evidence quarantines. Zero checkout is prune-ready. The generated
+decision is path-specific. It never authorizes deleting a branch ref, and it
+must be regenerated after any worktree or candidate change.
+
+## Generated local-branch disposition
+
+`evidence/BRANCH_DISPOSITION_20260816.{md,json}` deterministically accounts for
+every local branch ref at candidate `4bf0c299abcc3aee49936438f53e4e35cc382486`:
+
+- 1270 local refs covering 1071 unique tip SHAs;
+- 560 refs whose commits are ancestors of the candidate;
+- 82 unrepresented refs sharing duplicate tips;
+- 628 unrepresented single-tip refs;
+- 649 unique unrepresented tips retained in quarantine.
+
+The last two classes are an explicit `QUARANTINE_BACKLOG`: preserved and
+excluded from canonical execution, but not semantically reviewed, disposable,
+prune-ready, or authorized for deletion. Named high-value package families are
+resolved separately in the package ledger. Unknown-but-contained history is
+therefore not an unknown integration input and does not block repository cleanup
+closure; it remains recoverable historical backlog outside the completion plan.
 
 ## Planned recovery order
 

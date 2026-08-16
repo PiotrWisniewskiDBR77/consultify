@@ -1,6 +1,6 @@
 # Worktree disposition — 2026-08-16
 
-Candidate: `b7d6bc3c43b30b84281573b4a15bc5ab5e2fda56`
+Candidate: `4bf0c299abcc3aee49936438f53e4e35cc382486`
 
 This is a generated recovery manifest. `PRUNE_READY` means the checked-out
 commit is represented by the candidate and tracked/untracked status is clean;
@@ -202,7 +202,7 @@ it does not authorize deleting the preserved branch ref.
 | /Users/piotrwisniewski/dev/consultify-case-workspace-v1-20260809 | claude/case-workspace-v1-20260809 | `adf77cb833ec8b79e138d2ece96e7f5aafbe2ec0` | 0 | 51 | no | 2 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
 | /Users/piotrwisniewski/Developer/consultify-artifact-recovery-20260812 | codex/artifact-studio-recovery-20260812 | `a16f5af6c1cf0d2d8453275b179b26e5405adb5c` | 0 | 4 | no | 1 | `QUARANTINE_IGNORED_EVIDENCE_REVIEW` |
 | /Users/piotrwisniewski/Developer/consultify-initiatives-execution-20260809 | codex/initiatives-execution-20260809 | `bba792eabc133696ecdc4adcaf810e3642f0337c` | 31 | 0 | no | 1 | `QUARANTINE_DIRTY` |
-| /Users/piotrwisniewski/Developer/consultify-recovery-canonical-20260816 | codex/recovery-canonical-20260816 | `b7d6bc3c43b30b84281573b4a15bc5ab5e2fda56` | 1 | 0 | yes | 1 | `KEEP_CANONICAL` |
+| /Users/piotrwisniewski/Developer/consultify-recovery-canonical-20260816 | codex/recovery-canonical-20260816 | `4bf0c299abcc3aee49936438f53e4e35cc382486` | 0 | 18 | yes | 1 | `KEEP_CANONICAL` |
 | /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify-agent-final-integration-20260808 | codex/agent-documents-final-20260808 | `d97a6564a582c4c9f64d7a5f65d68d51801c5b00` | 1 | 0 | no | 1 | `QUARANTINE_DIRTY` |
 | /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify-agent-t01-i01 | codex/agent-t01-i01 | `3b0c337ee472d07122033d5339cdf3bdb2f254ee` | 269 | 0 | yes | 4 | `QUARANTINE_DIRTY` |
 | /Users/piotrwisniewski/Library/Mobile Documents/com~apple~CloudDocs/Documents/Antygracity/DRD/consultify-cb01-accessibility-20260808 | codex/report-b-cb-01-accessibility-20260808 | `3b0c337ee472d07122033d5339cdf3bdb2f254ee` | 70 | 0 | yes | 4 | `QUARANTINE_DIRTY` |

@@ -48,6 +48,12 @@ Use two different mechanisms:
 
 Do **not** use a tracked `archive/` or `quarantine/` path as the primary repo-visible retirement mechanism, because those names are intentionally ignored by `.gitignore`.
 
+Branch/worktree quarantine is a control disposition, not necessarily a physical
+move. A preserved ref or registered worktree may remain in place when its exact
+path, HEAD and status are manifested and it is excluded from canonical
+execution. `QUARANTINE_BACKLOG` never means reviewed, represented, disposable,
+prune-ready, or authorized for deletion.
+
 ## Delete Rules
 
 Before deleting or retiring a file, verify:

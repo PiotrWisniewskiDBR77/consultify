@@ -11,7 +11,10 @@ the exact candidate SHA recorded in `CLEANUP_CURRENT_STATE_20260816.md`.
 ### 1. `CLEANUP_COMPLETE`
 
 Requires one clean candidate, a complete recovery/quarantine ledger, no unknown
-valuable branch packages, and a recoverable disposition for retired worktrees.
+valuable package allowed to enter canonical execution, and a recoverable
+disposition for retired worktrees. Preserved unreviewed refs may remain as a
+literal `QUARANTINE_BACKLOG`; they are not integration inputs, reviewed assets,
+prune-ready material, or authorization to delete history.
 
 ### 2. `INTEGRATION_READY`
 
@@ -44,6 +47,10 @@ authorization. `DEMO_READY` never implies this gate.
 | Finance | `ALREADY_PRESENT / EVOLVED / RUNTIME_NOT_VERIFIED` | No replay. Prove one governed runtime owner, explicit OFF/ON workspace behavior, canonical artifact/business/working-revision identity, fresh migration lifecycle and the Results seam. |
 | CEPD / Interview | `PARTIAL / SELECTIVE_RECOVERY_APPLIED` | Two exact missing hunks are recovered. Prove integer evidence persistence on fresh PostgreSQL, bounded AI timeout, access matrix, nullable evaluation and notification fallback. |
 | UX tables/tools | `ALREADY_PRESENT / EVOLVED` | No replay. Rerun independent Assessment surface acceptance; retain the local scope-cleanup commit only as superseded evidence. |
+| Ideas / My Work | `ALREADY_PRESENT / VERIFICATION_REQUIRED` | No replay. Prove Ideas four-surface behavior and My Work tenant idempotency, projection retire/reopen and literal Radar-OFF mount truth on fresh PostgreSQL. |
+| Initiatives / Execution | `ALREADY_PRESENT / EVOLVED / VERIFICATION_REQUIRED` | No replay. Prove canonical routes, fresh migration ledger, lifecycle and forbidden-transition flows, tenant/RBAC, owner-backed execution, closure, and Results/Finance persistence seams. |
+| Chat / Teresa | `ALREADY_PRESENT / EVOLVED_SAFER / VERIFICATION_REQUIRED` | No replay. Verify governed handoff, conflict recovery, provider behavior, persistence and cross-tenant denial on the exact runtime candidate. |
+| Auth / Security | `ALREADY_PRESENT / SECURITY_EVOLVED` | No replay. Retain fail-closed SAML verification and sandbox enforcement; run the exact candidate security and negative-control gates before release. |
 
 ## Execution rule
 
