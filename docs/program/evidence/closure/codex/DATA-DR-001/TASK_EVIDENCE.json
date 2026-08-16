@@ -1,0 +1,20 @@
+{
+  "taskId": "DATA-DR-001",
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "productSha": "010efaa52267278791cd445d6c2a52f18628acbb",
+  "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
+  "changedPaths": [],
+  "changedPathRationale": {},
+  "ownerTables": ["backup_manifests", "schema_migrations"],
+  "commands": [
+    {"command": "DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts", "exitCode": 0, "result": "705 fresh"},
+    {"command": "DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts && ... --dry-run", "exitCode": 0, "result": "0 repeat; 0 pending; 705 success / 0 failure"}
+  ],
+  "denominators": {"rpoTargetMinutes": 15, "rtoTargetMinutes": 60, "measuredRestoreRuns": 0},
+  "fixtures": {"database": "fresh disposable PostgreSQL only; not a restore rehearsal"},
+  "negativeControls": {"productionRestore": "not authorized and not executed", "corruptBackup": "not yet tested"},
+  "browserArtifacts": [],
+  "rollback": {"schema": "additive migrations only", "production": "no production action"},
+  "verdict": "FIX_REQUIRED",
+  "openBlockers": ["Encrypted checksum-bound backup and isolated restore/readback rehearsal are absent; RPO/RTO are targets, not measurements."]
+}

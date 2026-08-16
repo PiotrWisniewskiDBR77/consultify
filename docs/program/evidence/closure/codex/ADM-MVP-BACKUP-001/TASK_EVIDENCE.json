@@ -1,0 +1,17 @@
+{
+  "taskId": "ADM-MVP-BACKUP-001",
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "productSha": "010efaa52267278791cd445d6c2a52f18628acbb",
+  "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
+  "changedPaths": [],
+  "changedPathRationale": {},
+  "ownerTables": ["backup_manifests"],
+  "commands": [{"command": "rg -n 'restoreBackup|RESTORE_NOT_IMPLEMENTED' server/src/services/backupService.ts server/src/routes/admin/backup.routes.ts", "exitCode": 0}],
+  "denominators": {"backupImplementation": 1, "restoreImplementation": 0},
+  "fixtures": {},
+  "negativeControls": {"organizationExport": "tables without organization boundary are skipped", "liveRestore": "not exposed; route returns honest 501"},
+  "browserArtifacts": [],
+  "rollback": {"code": "no code change", "data": "no restore or deletion executed"},
+  "verdict": "FIX_REQUIRED",
+  "openBlockers": ["Logical backup lacks checksum/encryption proof, supervised isolated restore, access-audit receipt and recovery rehearsal."]
+}
