@@ -54,6 +54,10 @@ Every module advances through:
 Missing evidence preserves `PARTIAL`, `BLOCKED`, `EVIDENCE_MISSING`, or
 `NOT_VERIFIED`. Historical green runs do not transfer across SHAs.
 
+The test-discovery gate currently has no unresolved or broken-orphan file:
+4997/4997 are classified, including the recovered cookie-auth security suite
+(11/11 assertions green).
+
 ## Historical plans
 
 The following classes are historical evidence and not active instructions:

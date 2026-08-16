@@ -106,10 +106,6 @@ const MANUAL_OVERRIDES: Record<string, { classification: Entry['classification']
     classification: 'LEGACY',
     reason: 'Not a vitest suite (hand-rolled test() helper, needs a live server on :3001, ends with process.exit). "No test suite found" under vitest. Run manually: tsx server/tests/virtual-workers-integration.test.ts.',
   },
-  'tests/e2e/security-cookie-auth.spec.ts': {
-    classification: 'BROKEN_ORPHAN',
-    reason: 'Genuine vitest suite (imports describe/it from vitest, not @playwright/test) sitting inside the playwright testDir (tests/e2e). vitest.config.ts excludes tests/e2e/** wholesale; `playwright test --list` finds 0 tests in it (no playwright test() calls). Invisible to BOTH runners. When run standalone: 7/11 fail (production-guard tests mutate process.env.NODE_ENV at runtime, but auth.middleware.ts:27 caches isProductionEnv at module load, so the guard never re-evaluates — the test cannot validate what it claims to). Needs owner triage; not fixed in this test-discovery sprint.',
-  },
   'scripts/testing/__tests__/artifact-studio-release-evidence-gate.test.mjs': {
     classification: 'ACTIVE',
     reason: 'node:test suite (not vitest) for scripts/testing/artifact-studio-release-evidence-gate.mjs. Wired 2026-08-13 via npm run test:node-native.',

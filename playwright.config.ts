@@ -70,7 +70,6 @@ export default defineConfig({
     '**/* [0-9].tsx',
     '**/* [0-9].js',
     '**/* [0-9].jsx',
-    '**/security-cookie-auth.spec.ts',
     '**/security-policies-api.spec.ts',
   ],
   fullyParallel: true,

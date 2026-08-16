@@ -1,13 +1,12 @@
 {
-  "generatedAt": "2026-08-16T16:17:57.165Z",
+  "generatedAt": "2026-08-16T17:07:44.763Z",
   "generatedBy": "scripts/testing/generate-test-inventory.ts",
-  "totalDiscovered": 4996,
+  "totalDiscovered": 4997,
   "counts": {
-    "ACTIVE": 4697,
+    "ACTIVE": 4698,
     "INTENTIONALLY_EXCLUDED": 7,
     "LEGACY": 1,
-    "PLAYWRIGHT": 290,
-    "BROKEN_ORPHAN": 1
+    "PLAYWRIGHT": 291
   },
   "unresolvedCount": 0,
   "entries": [
@@ -14195,11 +14194,6 @@
       "runner": "playwright test (various playwright*.config.ts)"
     },
     {
-      "path": "tests/e2e/security-cookie-auth.spec.ts",
-      "classification": "BROKEN_ORPHAN",
-      "reason": "Genuine vitest suite (imports describe/it from vitest, not @playwright/test) sitting inside the playwright testDir (tests/e2e). vitest.config.ts excludes tests/e2e/** wholesale; `playwright test --list` finds 0 tests in it (no playwright test() calls). Invisible to BOTH runners. When run standalone: 7/11 fail (production-guard tests mutate process.env.NODE_ENV at runtime, but auth.middleware.ts:27 caches isProductionEnv at module load, so the guard never re-evaluates — the test cannot validate what it claims to). Needs owner triage; not fixed in this test-discovery sprint."
-    },
-    {
       "path": "tests/e2e/security/security-settings.spec.ts",
       "classification": "PLAYWRIGHT",
       "reason": "Imports @playwright/test; runs under the Playwright test runner, not vitest.",
@@ -14447,6 +14441,12 @@
     },
     {
       "path": "tests/e2e/smoke/pmo-workflow-role-sweep.spec.ts",
+      "classification": "PLAYWRIGHT",
+      "reason": "Imports @playwright/test; runs under the Playwright test runner, not vitest.",
+      "runner": "playwright test (various playwright*.config.ts)"
+    },
+    {
+      "path": "tests/e2e/smoke/recovery-module-browser-gates.spec.ts",
       "classification": "PLAYWRIGHT",
       "reason": "Imports @playwright/test; runs under the Playwright test runner, not vitest.",
       "runner": "playwright test (various playwright*.config.ts)"
@@ -19871,6 +19871,12 @@
     },
     {
       "path": "tests/security/branding-svg-xss.test.ts",
+      "classification": "ACTIVE",
+      "reason": "Collected by default vitest.config.ts.",
+      "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"
+    },
+    {
+      "path": "tests/security/cookie-auth.test.ts",
       "classification": "ACTIVE",
       "reason": "Collected by default vitest.config.ts.",
       "runner": "vitest.config.ts (npm run test:unit / test:component / test:integration / ...)"

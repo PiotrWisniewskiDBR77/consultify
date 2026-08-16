@@ -3,7 +3,7 @@
  * Validates the complete security posture of the cookie-based auth system.
  * These tests verify the actual HTTP behavior without mocks.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import jwt from 'jsonwebtoken';
 import {
   setAuthCookies,
@@ -48,6 +48,7 @@ function createRes() {
     clearCookie: vi.fn((n: string, o: any) => {
       cleared[n] = o;
     }),
+    setHeader: vi.fn(),
     status: vi.fn().mockReturnThis(),
     json: vi.fn(),
     _cookies: cookies,
@@ -186,9 +187,9 @@ describe('E2E: Cookie Auth Security (L4)', () => {
       };
       const sanitized = sanitizeObject(body) as any;
       expect(sanitized.title).not.toContain('<script>');
-      expect(sanitized.title).not.toContain('document.cookie');
+      expect(sanitized.title).toContain('&lt;script&gt;');
       expect(sanitized.description).not.toContain('<img');
-      expect(sanitized.description).not.toContain('onerror');
+      expect(sanitized.description).toContain('&lt;img');
     });
 
     it('CSRF attack without token is blocked', () => {

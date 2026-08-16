@@ -24,8 +24,8 @@ import {
 import { DEMO_ORG_ID, DEMO_SESSION_ORG_HEADER } from './demoGuard.middleware.js';
 
 // Used by security integrity gate and to ensure test bypasses never run in prod.
-const isProductionEnv = process.env.NODE_ENV === 'production';
-const isTestEnv = process.env.NODE_ENV === 'test';
+const isProductionEnv = (): boolean => process.env.NODE_ENV === 'production';
+const isTestEnv = (): boolean => process.env.NODE_ENV === 'test';
 const MAX_AUTH_JWT_CHARS = 8192;
 const MAX_AUTH_HEADER_CHARS = MAX_AUTH_JWT_CHARS + 64;
 const MAX_AUTH_JWT_SEGMENT_CHARS = 6144;
@@ -449,7 +449,7 @@ const extractToken = (req: AuthRequest): string | null => {
   if (cookieToken) return cookieToken;
 
   // Try body or query (legacy support), but keep production strict.
-  if (!isProductionEnv) {
+  if (!isProductionEnv()) {
     let bodyToken: string | null = null;
     try {
       bodyToken = normalizeTokenCandidate(req.body?.token);
@@ -844,7 +844,7 @@ const attachUser = async (
     const normalizedEmailForOverride = normalizedEmail.toLowerCase();
     const forcedEmails = getForcedSuperAdminEmails();
     if (
-      !isProductionEnv &&
+      !isProductionEnv() &&
       normalizedEmailForOverride &&
       forcedEmails.has(normalizedEmailForOverride)
     ) {
@@ -1121,13 +1121,13 @@ const checkTokenRevocation = async (
  */
 export const verifyToken = asyncHandler(
   async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-    if (!isTestEnv) {
+    if (!isTestEnv()) {
       logger.debug(`[AuthMiddleware] Verifying token for path: ${safeReadRequestPath(req)}`);
     }
     const { jwt: jwtLib, config } = await getDeps();
 
     const token = extractToken(req);
-    if (!isTestEnv) {
+    if (!isTestEnv()) {
       logger.debug(`[AuthMiddleware] Token extracted: ${token ? 'YES' : 'NO'}`);
     }
 
@@ -1188,7 +1188,7 @@ export const verifyToken = asyncHandler(
     //
     // This enables CI Playwright runtime tests without relying on seeded
     // credentials or secrets in CI.
-    if (!isProductionEnv && process.env.E2E_MODE === 'true') {
+    if (!isProductionEnv() && process.env.E2E_MODE === 'true') {
       try {
         const decodedRaw = jwtLib.decode(token);
         const decodedClaims = isPlainJwtPayload(decodedRaw)
@@ -1321,7 +1321,7 @@ export const verifyToken = asyncHandler(
         return;
       }
 
-      if (!isTestEnv) {
+      if (!isTestEnv()) {
         logger.debug(
           `[AuthMiddleware] Verifying token: ${token.substring(0, 10)}... with secret length: ${jwtSecret?.length}`
         );

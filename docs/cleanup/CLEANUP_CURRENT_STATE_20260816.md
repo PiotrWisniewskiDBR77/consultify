@@ -72,6 +72,13 @@ Fresh checks on this candidate:
 - Full `npm run type-check` after Audits integration: PASS.
 - Test discovery after Audits: 4996/4996 classified; 4697 ACTIVE, 290
   PLAYWRIGHT, 7 INTENTIONALLY_EXCLUDED, 1 LEGACY, 1 BROKEN_ORPHAN; PASS.
+- The sole `BROKEN_ORPHAN` has now been closed. The Vitest security suite was
+  moved out of Playwright's directory to `tests/security/cookie-auth.test.ts`,
+  its stale response mock/escaping assertions were repaired, and production
+  bypass guards now re-evaluate the current environment instead of caching it
+  at module import. The suite passes 11/11. Regenerated discovery classifies
+  4997/4997 files: 4698 ACTIVE, 291 PLAYWRIGHT, 7 intentionally excluded and
+  1 legacy; zero unresolved and zero broken orphan.
 - The earlier Audits result (27 failed, 45 skipped) used an invalid ambient
   `iris` target and is retained only as negative-control evidence. On the
   isolated disposable PostgreSQL database the complete selected Audits
@@ -175,8 +182,8 @@ features. No bulk branch or worktree deletion is authorized by these counts.
    feature-flag decision stay open.
 2. Reconcile the synthetic initiative quality advisories without weakening
    assertions.
-3. Resolve the one explicit broken orphan and the Assessment immutable-log
-   `diff --check` policy without rewriting evidence silently.
+3. Resolve the Assessment immutable-log `diff --check` policy without rewriting
+   historical evidence silently. The explicit broken orphan is closed.
 4. Verify already-present Case, Artifact, Results and Finance browser/realDB
    closure. Results/Finance require no code replay, but their mount/data/spine
    and owner decisions remain literal blockers.
