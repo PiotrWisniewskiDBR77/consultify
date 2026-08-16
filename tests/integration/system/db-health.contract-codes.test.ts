@@ -1,12 +1,15 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
 
-import { canBindEphemeralPort, makeTestApp } from '../_helpers/testApp';
+import { makeTestApp } from '../_helpers/testApp';
 
-const getConnectionPool = vi.fn();
-const getHealthMonitor = vi.fn();
-const resolveReachableDatabaseUrl = vi.fn();
-const resolveDemoPolicy = vi.fn();
+const { getConnectionPool, getHealthMonitor, resolveReachableDatabaseUrl, resolveDemoPolicy } =
+  vi.hoisted(() => ({
+    getConnectionPool: vi.fn(),
+    getHealthMonitor: vi.fn(),
+    resolveReachableDatabaseUrl: vi.fn(),
+    resolveDemoPolicy: vi.fn(),
+  }));
 
 vi.mock('../../../server/src/database/index.js', () => ({
   getConnectionPool: () => getConnectionPool(),
@@ -28,14 +31,13 @@ vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
     req.organizationId = 'org-1';
     next();
   },
+  requireSuperAdmin: (_req: any, _res: unknown, next: () => void) => next(),
 }));
 
 describe('DB health routes coded error contracts', () => {
-  let canListen = true;
   let router: any;
 
   beforeAll(async () => {
-    canListen = await canBindEphemeralPort();
     router = (await import('../../../server/src/routes/health.routes.ts')).default;
   });
 
@@ -71,8 +73,7 @@ describe('DB health routes coded error contracts', () => {
 
   const makeApp = () => makeTestApp({ mountPath: '/api/health', router });
 
-  it('returns coded 503 when /database probe fails', async function () {
-    if (!canListen) this.skip();
+  it('returns coded 503 when /database probe fails', async () => {
     getConnectionPool.mockImplementationOnce(() => {
       throw new Error('database internal detail');
     });
@@ -83,8 +84,7 @@ describe('DB health routes coded error contracts', () => {
     expect(JSON.stringify(res.body)).not.toContain('database internal detail');
   });
 
-  it('returns coded 503 when /connections stats read fails', async function () {
-    if (!canListen) this.skip();
+  it('returns coded 503 when /connections stats read fails', async () => {
     getConnectionPool.mockReturnValueOnce({
       getStats: () => {
         throw new Error('pool internal detail');
@@ -97,8 +97,7 @@ describe('DB health routes coded error contracts', () => {
     expect(JSON.stringify(res.body)).not.toContain('pool internal detail');
   });
 
-  it('returns coded 500 when /data-context resolution fails', async function () {
-    if (!canListen) this.skip();
+  it('returns coded 500 when /data-context resolution fails', async () => {
     resolveReachableDatabaseUrl.mockImplementationOnce(() => {
       throw new Error('resolver internal detail');
     });

@@ -2,11 +2,12 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 
-import { canBindEphemeralPort } from '../_helpers/testApp';
 import { correlationMiddleware } from '../../../server/src/utils/RequestStore.js';
 
-const getConnectionPool = vi.fn();
-const getHealthMonitor = vi.fn();
+const { getConnectionPool, getHealthMonitor } = vi.hoisted(() => ({
+  getConnectionPool: vi.fn(),
+  getHealthMonitor: vi.fn(),
+}));
 
 vi.mock('../../../server/src/database/index.js', () => ({
   getConnectionPool: () => getConnectionPool(),
@@ -23,14 +24,13 @@ vi.mock('../../../server/src/config/demoPolicy.js', () => ({
 
 vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
   verifyToken: (_req: any, _res: unknown, next: () => void) => next(),
+  requireSuperAdmin: (_req: any, _res: unknown, next: () => void) => next(),
 }));
 
 describe('health database correlation header contract', () => {
-  let canListen = true;
   let router: any;
 
   beforeAll(async () => {
-    canListen = await canBindEphemeralPort();
     router = (await import('../../../server/src/routes/health.routes.ts')).default;
   });
 
@@ -58,8 +58,7 @@ describe('health database correlation header contract', () => {
     return app;
   }
 
-  it('echoes correlation header on healthy database response', async function () {
-    if (!canListen) this.skip();
+  it('echoes correlation header on healthy database response', async () => {
     const res = await request(makeApp())
       .get('/api/health/database')
       .set('X-Correlation-ID', 'pack08s5-db-health-ok-1');
@@ -68,8 +67,7 @@ describe('health database correlation header contract', () => {
     expect(res.headers['x-correlation-id']).toBe('pack08s5-db-health-ok-1');
   });
 
-  it('echoes correlation header on coded database probe failure', async function () {
-    if (!canListen) this.skip();
+  it('echoes correlation header on coded database probe failure', async () => {
     getConnectionPool.mockImplementationOnce(() => {
       throw new Error('db probe failed');
     });
@@ -83,4 +81,3 @@ describe('health database correlation header contract', () => {
     expect(res.headers['x-correlation-id']).toBe('pack08s5-db-health-fail-1');
   });
 });
-
