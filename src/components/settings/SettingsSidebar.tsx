@@ -543,6 +543,8 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
 
   return (
     <div
+      role="complementary"
+      aria-label={t('settings.sidebar.navigationRegion', 'Settings navigation')}
       className={cn(
         'flex h-full w-[280px] flex-col border-r border-[var(--c-border-subtle)] bg-[var(--c-surface)]',
         className
@@ -560,7 +562,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
 
       {/* Navigation - Collapsible Groups (Admin style - no icons on group headers) */}
       <div className="flex-1 overflow-y-auto px-3">
-        <nav className="space-y-1">
+        <nav aria-label={t('settings.sidebar.navigation', 'Settings sections')} className="space-y-1">
           {navGroups.map((group) => {
             const isExpanded = expandedGroups.has(group.id);
 
@@ -568,11 +570,15 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
               <div key={group.id}>
                 {/* Group Header - Clickable, no icon (Admin style) */}
                 <button
+                  type="button"
                   onClick={() => toggleGroup(group.id)}
+                  aria-expanded={isExpanded}
+                  aria-controls={`settings-group-${group.id}`}
                   className="flex w-full items-center justify-between px-2 py-2.5 text-[11px] font-semibold tracking-wider text-[var(--c-text-muted)] transition-colors hover:text-[var(--c-text-secondary)]"
                 >
                   <span>{group.label}</span>
                   <ChevronDown
+                    aria-hidden="true"
                     className={cn(
                       'w-4 h-4 transition-transform duration-200',
                       !isExpanded && '-rotate-90'
@@ -582,6 +588,8 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
 
                 {/* Group Items - Animated collapse */}
                 <div
+                  id={`settings-group-${group.id}`}
+                  hidden={!isExpanded}
                   className={cn(
                     'overflow-hidden transition-all duration-200 ease-in-out',
                     isExpanded ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0'
@@ -594,8 +602,10 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
 
                       return (
                         <button
+                          type="button"
                           key={item.id}
                           onClick={() => onSectionChange(item.id)}
+                          aria-current={isActive ? 'page' : undefined}
                           className={cn(
                             'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]',
                             isActive
@@ -604,6 +614,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                           )}
                         >
                           <Icon
+                            aria-hidden="true"
                             className={cn(
                               'h-4 w-4 flex-shrink-0',
                               isActive ? 'text-[var(--c-info)]' : 'text-[var(--c-text-muted)]'
@@ -626,10 +637,11 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
       {/* Footer */}
       <div className="border-t border-[var(--c-border-subtle)] p-3">
         <button
+          type="button"
           onClick={onBack || (() => window.history.back())}
           className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-[var(--c-text-secondary)] transition-colors hover:bg-[var(--c-surface-raised)] hover:text-[var(--c-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
         >
-          <LogOut className="w-4 h-4 rotate-180" />
+          <LogOut aria-hidden="true" className="w-4 h-4 rotate-180" />
           {t('settings.sidebar.backToDashboard', 'Back to Dashboard')}
         </button>
       </div>

@@ -13,7 +13,7 @@
  */
 
 import { ChevronRight, Menu, X } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -240,6 +240,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
   const isPilotParticipant = isPilotParticipantRole(currentUser?.role);
   const pilotAllowedSections = useMemo(
     () => ['profile', 'auth-access', 'language', 'theme'] as SettingsSection[],
@@ -293,6 +294,21 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       navigate(ROUTES.SETTINGS.PROFILE, { replace: true });
     }
   }, [activeSection, currentUser?.role, location.pathname, navigate]);
+
+  useEffect(() => {
+    if (!sidebarOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    mobileMenuButtonRef.current?.focus();
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setSidebarOpen(false);
+    };
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [sidebarOpen]);
 
   // Handle section change - update URL
   const handleSectionChange = useCallback(
@@ -471,7 +487,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     <div className="relative flex h-full bg-[var(--c-bg)]">
       {/* Mobile Overlay */}
       {sidebarOpen && (
-        <div
+        <button
+          type="button"
+          aria-label={t('settings.sidebar.closeNavigation', 'Close settings navigation')}
           className="fixed inset-0 z-30 bg-black/50 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
@@ -479,6 +497,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
       {/* Left Sidebar - Admin Style */}
       <div
+        id="settings-navigation"
         className={cn(
           'fixed inset-y-0 left-0 z-40 w-[280px] transform transition-transform duration-300 ease-in-out',
           'lg:static lg:transform-none',
@@ -500,9 +519,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <div className="flex items-center gap-3">
             {/* Mobile menu button */}
             <Button
+              ref={mobileMenuButtonRef}
               variant="ghost"
               size="sm"
               onClick={() => setSidebarOpen(!sidebarOpen)}
+              aria-label={
+                sidebarOpen
+                  ? t('settings.sidebar.closeNavigation', 'Close settings navigation')
+                  : t('settings.sidebar.openNavigation', 'Open settings navigation')
+              }
+              aria-expanded={sidebarOpen}
+              aria-controls="settings-navigation"
               className="p-2 text-[var(--c-text-secondary)] hover:text-[var(--c-text)] lg:hidden"
             >
               {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -510,21 +537,29 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
             {/* Breadcrumbs */}
             <div className="flex items-center text-sm font-medium text-[var(--c-text-muted)]">
-              <span
+              <button
+                type="button"
                 onClick={handleBackToDashboard}
-                className="cursor-pointer transition-colors hover:text-[var(--c-text)]"
+                className="rounded-sm transition-colors hover:text-[var(--c-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
               >
                 {t('settings.sidebar.title', 'Settings')}
-              </span>
-              <ChevronRight size={14} className="mx-2" />
-              <span className="text-[var(--c-text)]">{currentMeta.title}</span>
+              </button>
+              <ChevronRight size={14} aria-hidden="true" className="mx-2" />
+              <h1 id="settings-page-title" className="truncate text-sm font-medium text-[var(--c-text)]">
+                {currentMeta.title}
+              </h1>
             </div>
           </div>
         </header>
 
         {/* Content */}
         <ScrollArea className="flex-1">
-          <div className="p-4 lg:p-6 max-w-5xl mx-auto w-full space-y-6">{renderContent()}</div>
+          <main
+            aria-labelledby="settings-page-title"
+            className="mx-auto w-full max-w-5xl space-y-6 p-4 sm:p-5 lg:p-6"
+          >
+            {renderContent()}
+          </main>
         </ScrollArea>
       </div>
     </div>
