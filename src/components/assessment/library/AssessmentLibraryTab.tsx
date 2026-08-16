@@ -29,7 +29,7 @@ import { useNavigate } from 'react-router-dom';
 import { ErrorState } from '@/components/shared/states';
 import { type StandardRowMenu, StandardTable, type TableColumn } from '@/components/standard';
 import { StatusChip } from '@/components/ui/primitives/chips';
-import { useFeatureFlags } from '@/hooks/useFeatureFlags';
+import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import {
   createSession as createMethodCoreSession,
   MethodCoreApiError,
@@ -139,7 +139,18 @@ function pickLatestPublished(
 
 export const AssessmentLibraryTab: React.FC = () => {
   const navigate = useNavigate();
-  const { isEnabled } = useFeatureFlags();
+  // ASM-UI-CANON-001 (2026-08-16): was the bare `useFeatureFlags()` hook,
+  // which creates its OWN independent flag-resolution state (defaults
+  // `enableLocalOverrides` to false) instead of reading the app-level
+  // `<FeatureFlagsProvider>` — so `VITE_ENABLE_LOCAL_FEATURE_FLAG_OVERRIDES=true`
+  // + a `consultify_feature_flags` localStorage override could never reach
+  // `drdMethodWorkspaceSliceV1`/`drdHttpSourceOfTruthV1` here, even though
+  // both flags declare `allowLocalOverride: true` and every other Assessment
+  // surface (AssessmentHub.tsx) already reads flags through the context.
+  // `useFeatureFlagsContext()` returns the identical `UseFeatureFlagsReturn`
+  // shape, so this is a pure fix, not a behavior change to default (OFF)
+  // flag values.
+  const { isEnabled } = useFeatureFlagsContext();
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [drdDefinition, setDrdDefinition] = useState<V8AssessmentDefinitionRecord | null>(null);
