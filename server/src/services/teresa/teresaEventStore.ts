@@ -15,8 +15,8 @@
 import type { PoolClient } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
 
-import type { MethodActorKind, MethodEventType } from '../../../../src/method-core/contracts/events';
-import { isMethodEventType } from '../../../../src/method-core/contracts/events';
+import type { MethodActorKind, MethodEventType } from '../../method-core/contracts/events.js';
+import { isMethodEventType } from '../../method-core/contracts/events.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 
 export interface TeresaEventInput {

@@ -8,7 +8,7 @@
     "dev": "tsx src/index.ts",
     "dev:watch": "tsx watch src/index.ts",
     "dev:ts": "tsx watch src/index.ts",
-    "build": "tsc --build tsconfig.build.json --force",
+    "build": "cd .. && node scripts/cleanup/sync-server-runtime-mirrors.mjs --check && cd server && tsc --build tsconfig.build.json --force",
     "build:clean": "rm -rf dist && tsc --build",
     "build:watch": "tsc --build --watch",
     "build:fast": "tsc --build --incremental",

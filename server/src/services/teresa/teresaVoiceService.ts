@@ -14,9 +14,9 @@
  * preview -> confirm -> commit path, using a supplied transcript string in
  * place of live STT output.
  */
-import type { TeresaCommitRequest, TeresaCommitResult, TeresaPreview } from '../../../../src/method-core/contracts/teresa';
-import type { TeresaSwotSessionSnapshot } from './teresaCapabilities';
-import { commit, propose, type TeresaCommitContext } from './teresaKernel';
+import type { TeresaCommitRequest, TeresaCommitResult, TeresaPreview } from '../../method-core/contracts/teresa.js';
+import type { TeresaSwotSessionSnapshot } from './teresaCapabilities.js';
+import { commit, propose, type TeresaCommitContext } from './teresaKernel.js';
 
 export const REAL_AUDIO_NOT_VERIFIED = true as const;
 

@@ -152,6 +152,17 @@ Fresh checks on this candidate:
   remain acceptance gates.
 - Commit hooks reported no new list, TRIADA, density, focus, or artifact-shell
   regression in the changed files. Existing repository-wide focus debt remains.
+- Whole frontend/shared production build passes with the documented 8 GB Node
+  heap. Vite reports non-blocking stale-Browserslist, CSS deprecation, mixed
+  static/dynamic import and large-chunk warnings; these are retained as build
+  debt, not hidden as failures.
+- The first backend production build exposed cross-root runtime imports that
+  `tsx` and the root type-check tolerated but `server/tsconfig.build.json`
+  correctly rejected. Server-safe generated mirrors now keep the framework-free
+  SWOT/output domain inside `server/rootDir`; Teresa uses the existing server
+  method-contract mirrors. `server npm run build` first verifies mirror drift
+  and then passes. Focused domain/contract regression passes 4/4 files and
+  43/43 assertions.
 
 ## Repository scale
 

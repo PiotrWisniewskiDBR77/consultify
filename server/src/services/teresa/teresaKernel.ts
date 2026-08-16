@@ -28,20 +28,20 @@ import type {
   TeresaPreview,
   TeresaProposedChange,
   TeresaQualityCheck,
-} from '../../../../src/method-core/contracts/teresa';
-import { TERESA_FORBIDDEN_EFFECTS } from '../../../../src/method-core/contracts/teresa';
+} from '../../method-core/contracts/teresa.js';
+import { TERESA_FORBIDDEN_EFFECTS } from '../../method-core/contracts/teresa.js';
 import {
   assertCapabilityNotForbidden,
   TERESA_CAPABILITY_REGISTRY,
   type TeresaSwotSessionSnapshot,
-} from './teresaCapabilities';
+} from './teresaCapabilities.js';
 import {
   appendEvent,
   findConsumingEvent,
   getEventById,
   withTeresaTransaction,
   type TeresaEventRow,
-} from './teresaEventStore';
+} from './teresaEventStore.js';
 
 /** Preview lifetime — long enough for a human to read and decide, short enough that a stale proposal cannot land later. */
 const PREVIEW_TTL_MS = 15 * 60 * 1000;

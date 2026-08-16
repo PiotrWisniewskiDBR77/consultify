@@ -49,21 +49,21 @@ import * as queryHelpers from '../../utils/queryHelpers.js';
 // relative (not the `@/*` alias) because server/tsconfig.json's `@/*` maps to
 // server/src/*, not the repo-root src/*. Files in this shared dependency must
 // also use relative imports so the backend can execute them directly via tsx.
-import { buildSwotOutput, SWOT_ENGINE_VERSION } from '../../../../src/toolOutputs/buildSwotOutput';
-import { computeOutputHash } from '../../../../src/toolOutputs/outputLifecycle';
+import { buildSwotOutput, SWOT_ENGINE_VERSION } from '../../sharedRuntime/toolOutputs/buildSwotOutput.js';
+import { computeOutputHash } from '../../sharedRuntime/toolOutputs/outputLifecycle.js';
 import {
   approve as approveOutput,
   reopen as reopenOutput,
   submitForReview,
-} from '../../../../src/toolOutputs/outputLifecycle';
-import { renderToolReport, REPORT_RENDERER_VERSION } from '../../../../src/toolOutputs/renderReport';
+} from '../../sharedRuntime/toolOutputs/outputLifecycle.js';
+import { renderToolReport, REPORT_RENDERER_VERSION } from '../../sharedRuntime/toolOutputs/renderReport.js';
 import type {
   OutputConclusion,
   OutputEvidenceItem,
   OutputTension,
   ToolOutput,
   ToolReportKind,
-} from '../../../../src/toolOutputs/types';
+} from '../../sharedRuntime/toolOutputs/types.js';
 import type { StructuredSlideInput } from '../presentationDeckDocumentService.js';
 
 /** Minimal shape this module needs from a `tool_sessions` row. */

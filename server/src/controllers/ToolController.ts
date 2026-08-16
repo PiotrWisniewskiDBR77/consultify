@@ -9,8 +9,8 @@ import type { Response } from 'express';
 import type { PoolClient } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
 
-import type { SwotAcceptGateItem } from '../../../src/config/swot/swotAcceptGate';
-import { evaluateSwotAcceptGate, stampAcceptedSwotItem } from '../../../src/config/swot/swotAcceptGate';
+import type { SwotAcceptGateItem } from '../sharedRuntime/config/swot/swotAcceptGate.js';
+import { evaluateSwotAcceptGate, stampAcceptedSwotItem } from '../sharedRuntime/config/swot/swotAcceptGate.js';
 import { generateSwotProposals } from '../services/ai/swotProposalService.js';
 import auditEventsService from '../services/AuditEventsService.js';
 import { safePersistToolSessionConclusion } from '../services/conclusions/toolConclusionBridge.js';

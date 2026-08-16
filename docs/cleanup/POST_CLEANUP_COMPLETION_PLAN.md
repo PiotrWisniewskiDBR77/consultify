@@ -58,6 +58,11 @@ The test-discovery gate currently has no unresolved or broken-orphan file:
 4997/4997 are classified, including the recovered cookie-auth security suite
 (11/11 assertions green).
 
+Both production compile surfaces are green on the recovery candidate:
+frontend/shared Vite build with the documented 8 GB heap and the strict backend
+TypeScript emit. Backend build also verifies that its generated SWOT/output
+runtime mirrors have not drifted from their root domain sources.
+
 ## Historical plans
 
 The following classes are historical evidence and not active instructions:

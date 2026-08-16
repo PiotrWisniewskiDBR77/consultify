@@ -19,7 +19,7 @@
  * Handlers may reference tension ids for grounding but never fabricate or
  * override one.
  */
-import type { SWOTItem } from '../../../../src/store/useToolStore';
+import type { SWOTItem } from '../../sharedRuntime/types/swot.js';
 import {
   TERESA_CAPABILITIES,
   TERESA_FORBIDDEN_EFFECTS,
@@ -31,7 +31,7 @@ import {
   type TeresaQualityCheck,
   type TeresaQualityVerdict,
   type TeresaStatement,
-} from '../../../../src/method-core/contracts/teresa';
+} from '../../method-core/contracts/teresa.js';
 
 export interface TeresaSwotSessionSnapshot {
   sessionId: string;
