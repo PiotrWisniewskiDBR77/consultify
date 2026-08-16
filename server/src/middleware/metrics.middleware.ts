@@ -11,6 +11,8 @@
 
 import type { NextFunction, Request, Response } from 'express';
 
+import { getOperationalPrometheusMetrics } from '../services/operationalAlertService.js';
+
 interface MetricsBucket {
   requests: number;
   errors: number;
@@ -171,6 +173,10 @@ export function getPrometheusMetrics(): string {
         `http_requests_by_status{status="${escapePrometheusLabelValue(status)}"} ${toPrometheusCounter(count)}`
       );
     }
+
+    lines.push(`# HELP consultify_operational_alert_active Whether an OPS-OBS-001 alert is active`);
+    lines.push(`# TYPE consultify_operational_alert_active gauge`);
+    lines.push(getOperationalPrometheusMetrics());
 
     return lines.join('\n') + '\n';
   } catch {
