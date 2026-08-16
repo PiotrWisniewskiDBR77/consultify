@@ -1,0 +1,17 @@
+{
+  "taskId": "PRT-POL-001",
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "productSha": "c8ffd7be0e9b848932064b70a5c8271a9da45f1e",
+  "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
+  "changedPaths": [],
+  "changedPathRationale": {},
+  "ownerTables": ["partner_program_ledger"],
+  "commands": [{"command": "RUN_DB_TESTS=1 npx vitest run tests/integration/partners/partner-program-ledger-governance.realdb.test.ts", "exitCode": 0}],
+  "denominators": {"policyDecisionsRequired": 1, "policyDecisionsApproved": 0},
+  "fixtures": {"database": "fresh isolated PostgreSQL"},
+  "negativeControls": {"payout": "automatic payout remains disabled", "ledger": "append-only and versioned"},
+  "browserArtifacts": [],
+  "rollback": {"policy": "manual payout only; no destructive ledger rollback"},
+  "verdict": "BLOCKED_OWNER",
+  "openBlockers": ["Commercial/Legal must approve currency, rules, eligibility, attribution window, reversal/dispute/tax and payout policy."]
+}

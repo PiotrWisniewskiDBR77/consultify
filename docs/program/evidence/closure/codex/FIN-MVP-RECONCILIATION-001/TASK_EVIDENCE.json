@@ -1,0 +1,17 @@
+{
+  "taskId": "FIN-MVP-RECONCILIATION-001",
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "productSha": "c8ffd7be0e9b848932064b70a5c8271a9da45f1e",
+  "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
+  "changedPaths": [],
+  "changedPathRationale": {},
+  "ownerTables": ["rvn_roi_finance_links", "rvn_roi_finance_reconciliations"],
+  "commands": [{"command": "RUN_DB_TESTS=1 npx vitest run server/src/services/finance/canonical/__tests__/roiFinanceReconciliationAdapter.pg.test.ts", "exitCode": 0}],
+  "denominators": {"focusedRealDbTests": 1, "ownerDecisionsApproved": 0},
+  "fixtures": {"database": "isolated PostgreSQL"},
+  "negativeControls": {"actualOverwrite": "legacy Actual cannot be overwritten; proposal/reconciliation only"},
+  "browserArtifacts": [],
+  "rollback": {"code": "no policy expansion", "schema": "additive reconciliation records remain readable"},
+  "verdict": "BLOCKED_OWNER",
+  "openBlockers": ["Finance/Results owner must approve the writer for pinned_finance_value and tracked_metric and the reconciliation threshold."]
+}
