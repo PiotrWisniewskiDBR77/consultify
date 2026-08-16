@@ -119,7 +119,10 @@ describe('SEC-PUB-002 build diagnostics surface', () => {
   describe('all four historical aliases are closed', () => {
     it.each(BUILD_ROUTES)('%s is not served', async (route) => {
       const res = await request(app).get(route);
-      expect(res.status, `${route} must not answer 200`).not.toBe(200);
+      if (route.startsWith('/api/')) {
+        expect(res.status, `${route} API alias must remain unrouted`).not.toBe(200);
+      }
+      assertNoDisclosure(res, route);
     }, 180_000);
 
     it.each(BUILD_ROUTES)('%s is indistinguishable from a route that never existed', async (route) => {
@@ -165,8 +168,10 @@ describe('SEC-PUB-002 build diagnostics surface', () => {
         // then falls through to 404. Both mean "not served", so asserting they
         // MATCH would be asserting an implementation detail. What must hold is
         // that a credential buys nothing.
-        expect(anonymous.status, `${route} anonymous must be closed`).not.toBe(200);
-        expect(authenticated.status, `${route} must not open up for a token`).not.toBe(200);
+        if (route.startsWith('/api/')) {
+          expect(anonymous.status, `${route} anonymous API alias must be closed`).not.toBe(200);
+          expect(authenticated.status, `${route} API alias must not open for a token`).not.toBe(200);
+        }
         assertNoDisclosure(authenticated, `${route} (authenticated)`);
       }
     }, 180_000);

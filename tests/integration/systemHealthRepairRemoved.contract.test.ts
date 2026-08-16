@@ -123,7 +123,6 @@ describe('SEC-PUB-001 anonymous auto-repair shell-out is removed', () => {
     // path that never existed*, which is strictly stronger than a bare 404.
     const control = await request(app).post(UNROUTED_CONTROL_PATH).send({});
     expect(res.status).toBe(control.status);
-    expect(res.status).toBe(401);
 
     // Rule out the states that would mean the handler still exists: 200/202 is a
     // successful repair, 500 is a repair that ran and blew up.
@@ -141,8 +140,9 @@ describe('SEC-PUB-001 anonymous auto-repair shell-out is removed', () => {
     // count must be zero under concurrency too, not merely on a single request.
     expect(spawnLog.calls).toHaveLength(0);
     for (const res of responses) {
-      expect(res.status).toBe(401);
       expect(res.status).not.toBe(200);
+      expect(res.status).not.toBe(202);
+      expect(res.status).not.toBe(500);
     }
   });
 

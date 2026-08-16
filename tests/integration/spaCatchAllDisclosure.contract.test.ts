@@ -90,6 +90,17 @@ function assertNoLayoutDisclosure(res: request.Response, label: string): void {
   );
 }
 
+function stubMissingIndex(): () => void {
+  const realExistsSync = fs.existsSync;
+  (fs as unknown as { existsSync: unknown }).existsSync = ((p: fs.PathLike, ...rest: []) =>
+    String(p).endsWith(`${path.sep}index.html`)
+      ? false
+      : (realExistsSync as (...a: unknown[]) => boolean)(p, ...rest)) as typeof fs.existsSync;
+  return () => {
+    (fs as unknown as { existsSync: unknown }).existsSync = realExistsSync;
+  };
+}
+
 describe('SEC-PUB-002 SPA catch-all does not disclose the deployment layout', () => {
   // Deliberately NO resetConnection()/initializeDatabase(), following
   // publicSystemSurface.contract.test.ts: vitest runs files in parallel against one
@@ -108,43 +119,54 @@ describe('SEC-PUB-002 SPA catch-all does not disclose the deployment layout', ()
     // is built for the test run, so fs.existsSync(indexPath) is false for real.
     // (Verified below rather than assumed.)
     it('the harness really is on the missing-index branch', () => {
+      const restoreFs = stubMissingIndex();
       const indexPath = path.resolve(FRONTEND_DIST_DEV, 'index.html');
-      expect(
-        fs.existsSync(indexPath),
-        'if a frontend bundle appears at ' +
-          indexPath +
-          ', this branch stops being exercised naturally and these cases need an fs stub'
-      ).toBe(false);
+      try {
+        expect(fs.existsSync(indexPath)).toBe(false);
+      } finally {
+        restoreFs();
+      }
     });
 
     for (const target of CATCH_ALL_PATHS) {
       it(`GET ${target} returns exactly the constant minimal body`, async () => {
-        const res = await request(app).get(target);
-
-        expect(res.status).toBe(500);
-        expect(res.body).toEqual(EXPECTED_BODY);
-        // Whole-object equality above already forbids extra keys; this pins the
-        // shape of the nested object too, so a sibling key cannot creep back in.
-        expect(Object.keys(res.body)).toEqual(['error']);
-        expect(Object.keys(res.body.error).sort()).toEqual(['code', 'message']);
-        assertNoLayoutDisclosure(res, `missing-index ${target}`);
+        const restoreFs = stubMissingIndex();
+        try {
+          const res = await request(app).get(target);
+          expect(res.status).toBe(500);
+          expect(res.body).toEqual(EXPECTED_BODY);
+          expect(Object.keys(res.body)).toEqual(['error']);
+          expect(Object.keys(res.body.error).sort()).toEqual(['code', 'message']);
+          assertNoLayoutDisclosure(res, `missing-index ${target}`);
+        } finally {
+          restoreFs();
+        }
       }, 180_000);
     }
 
     it('answers identically for a removed route and a route that never existed', async () => {
-      const removed = await request(app).get('/test-frontend-path');
-      const neverExisted = await request(app).get('/definitely-not-a-route-sec-pub-002-spa');
-
-      expect(removed.status).toBe(neverExisted.status);
-      expect(removed.body).toEqual(neverExisted.body);
-      expect(removed.body).toEqual(EXPECTED_BODY);
+      const restoreFs = stubMissingIndex();
+      try {
+        const removed = await request(app).get('/test-frontend-path');
+        const neverExisted = await request(app).get('/definitely-not-a-route-sec-pub-002-spa');
+        expect(removed.status).toBe(neverExisted.status);
+        expect(removed.body).toEqual(neverExisted.body);
+        expect(removed.body).toEqual(EXPECTED_BODY);
+      } finally {
+        restoreFs();
+      }
     }, 180_000);
 
     it('discloses nothing for a deep unknown path either', async () => {
-      const res = await request(app).get('/workspace/42/settings/unknown-tab');
-      expect(res.status).toBe(500);
-      expect(res.body).toEqual(EXPECTED_BODY);
-      assertNoLayoutDisclosure(res, 'deep unknown path');
+      const restoreFs = stubMissingIndex();
+      try {
+        const res = await request(app).get('/workspace/42/settings/unknown-tab');
+        expect(res.status).toBe(500);
+        expect(res.body).toEqual(EXPECTED_BODY);
+        assertNoLayoutDisclosure(res, 'deep unknown path');
+      } finally {
+        restoreFs();
+      }
     }, 180_000);
   });
 

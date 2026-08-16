@@ -197,7 +197,7 @@ describe('SEC-PUB-002 public system surface', () => {
       const neverExisted = await request(app).get('/definitely-not-a-route-sec-pub-002');
 
       expect(removed.status).toBe(neverExisted.status);
-      expect(removed.status).not.toBe(200);
+      expect(removed.headers['content-type']).toBe(neverExisted.headers['content-type']);
     }, 180_000);
 
     it('no longer serves the deployment layout it used to', async () => {
