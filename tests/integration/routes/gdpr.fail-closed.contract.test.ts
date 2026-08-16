@@ -8,6 +8,7 @@ const dbRunMock = vi.fn();
 vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
   verifyToken: (req: any, _res: unknown, next: () => void) => {
     req.user = { id: 'user-gdpr-1', organizationId: 'org-gdpr-1' };
+    req.organizationId = 'org-gdpr-1';
     next();
   },
 }));

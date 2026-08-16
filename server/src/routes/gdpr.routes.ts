@@ -144,13 +144,6 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const userId = req.user!.id;
-      const organizationId = req.organizationId;
-      if (!organizationId) {
-        return res.status(403).json(
-          buildGdprError(req, 403, 'GDPR_EXPORT_ORGANIZATION_REQUIRED', 'Organization context is required.')
-        );
-      }
-
       const row = await dbGet<{
         analytics: number | boolean;
         personalization: number | boolean;
@@ -406,6 +399,17 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const userId = req.user!.id;
+      const organizationId = req.organizationId;
+      if (!organizationId) {
+        return res.status(403).json(
+          buildGdprError(
+            req,
+            403,
+            'GDPR_EXPORT_ORGANIZATION_REQUIRED',
+            'Organization context is required.'
+          )
+        );
+      }
 
       // Check for existing pending request
       const existing = await dbGet<{ id: string }>(
