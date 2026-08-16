@@ -551,7 +551,12 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
       setSessionName(sessionData.name || '');
       setCreatedAt(sessionData.createdAt || '');
       setLastModified(sessionData.updatedAt || '');
-      setGeneratedInitiatives(sessionData.generatedInitiatives || []);
+      setGeneratedInitiatives(
+        (sessionData.generatedInitiatives || []).map((initiative) => ({
+          ...initiative,
+          title: initiative.title || initiative.id,
+        }))
+      );
       setToolDecisions((sessionData.decisions as unknown as Decision[]) || []);
       setToolPermissions(sessionData.permissions || {});
 
@@ -563,7 +568,10 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         updatedAt: sessionData.updatedAt,
         status: sessionData.status,
         answers: sessionData.answers || {},
-        completionPercent: sessionData.completion_percent ?? sessionData.completionPercent,
+        completionPercent:
+          typeof sessionData.completion_percent === 'number'
+            ? sessionData.completion_percent
+            : sessionData.completionPercent,
         wizardState: (sessionData.wizardState as { currentStep?: string } | null) ?? null,
       });
       hydratedSessionObjectRef.current = useToolStore.getState().currentSession;

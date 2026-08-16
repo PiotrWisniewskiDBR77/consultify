@@ -60,7 +60,7 @@ describe('load()', () => {
       loaded = await result.current.load();
     });
 
-    expect(loaded?.id).toBe('tool-1');
+    expect((loaded as { id: string } | null)?.id).toBe('tool-1');
     expect(result.current.data).toEqual({ mission: 'grow' });
     expect(result.current.status).toBe('ready');
     expect(result.current.lastSyncedAt).toBe('2026-08-13T00:00:00.000Z');
