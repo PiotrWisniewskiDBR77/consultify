@@ -10,6 +10,14 @@ Repository-owned system-gate evidence: `d1ee32a43`; canonical evidence HEAD: `ad
 > Ten checkpoint zastępuje starsze SHA i kolejki wykonawcze, ale nie usuwa
 > historii. Recovery ledger jest zamknięty i nie jest edytowany.
 
+> **Pakiet startowy dla 16 agentów:** agenci nie wykonują bezpośrednio
+> historycznych kolejek z tego handoffu. Obowiązują
+> `docs/cleanup/agents/SHARED_CONTEXT_16_MODULE_AGENTS.md` oraz
+> `docs/cleanup/agents/MODULE_AGENT_TASK_QUEUE.md`. Pierwszy plik rozdziela
+> finalny docs HEAD `59a804d572`, product authority `6e31012fbe` i acceptance
+> authority `14c8852a7`; drugi zawiera 16 atomowych kart `M01–M16`, lease
+> registry i format dowodu.
+
 ## Objective
 
 Doprowadzić Consultify do jednego zabezpieczonego, czystego i zrozumiałego
@@ -17,8 +25,10 @@ drzewa kanonicznego, zintegrować całą wartościową pracę, sklasyfikować i
 domknąć stan wszystkich modułów oraz przygotować system do systematycznych
 odbiorów przed weekendowym uruchomieniem.
 
-Ten cel pozostaje `IN_PROGRESS`. Nie wolno interpretować poniższych zielonych
-podzbiorów jako gotowości całej aplikacji.
+Cel rekonstrukcji, klasyfikacji i przygotowania odbiorów jest `COMPLETE`.
+Release pozostaje `NOT_RELEASE_READY`, ponieważ deployed parity `P` i jeden
+jawny My Work fixture-authority pending nie są zamknięte. Nie wolno
+interpretować lokalnych zielonych bramek jako zgody na push/deploy.
 
 ## Jedyny kanon roboczy
 
@@ -168,20 +178,20 @@ decision evidence. Część dokumentów jest ACCEPTED, część nadal
 Poniższe klasyfikacje są code-level. Demo i exact deployed SHA pozostają
 `NOT_VERIFIED`, o ile nie wskazano inaczej.
 
-| Moduł | Stan | Najważniejsza luka |
-|---|---|---|
-| Chat | `LIVE_CONNECTED_CANDIDATE / PARTIAL` | legacy `/api/ai` i V8 są rozdzielone; brak aktualnego exact-SHA browser/realDB proof |
-| My Work | `LIVE_CONNECTED_CANDIDATE / PARTIAL` | silent V8→legacy fallback może ukrywać awarię; Radar wyłączony; brak pełnego lineage proof |
-| Agent | `PARTIAL / DUPLICATE` | `transformation_cases`, `case_core` i `ai_agent_plans` konkurują; brak jednego trwałego collaboration contract |
-| Cases | `IMPLEMENTED_UNMOUNTED / DUPLICATE` | route fail-closed; konflikt ownera z Agentem |
-| Assessment | `LIVE_CONNECTED_CANDIDATE / PARTIAL` | wiele generacji API/schema, runtime DDL, report redirect race; na MVP tylko DRD |
-| Tools | `LIVE_CONNECTED_CANDIDATE / PARTIAL` | tylko Dynamic SWOT ma pełny engine; generic outputs mogą być puste; runtime DDL |
-| Initiatives | `LIVE_CONNECTED_CANDIDATE` core | brak pełnego role/transition, idempotency i live handoff proof |
-| Execution | `LIVE_CONNECTED_CANDIDATE` core | brak aktualnego one-handoff→one-case oraz delivery-evidence browser/readback proof |
-| Results KPI/ROI/OKR | `PARTIAL / DISABLED` | `/results` prowadzi do VNext, ale wszystkie trzy domeny default OFF |
-| Finance | `PARTIAL / DUPLICATE / CLOSED` | legacy i canonical ID spaces; bridge/backfill nieudowodniony; flags OFF |
-| Materials | base `LIVE_CONNECTED_CANDIDATE`, V2 `PARTIAL` | potrzebne realne DOC/PPT/XLSX golden flows, provider i visual proof |
-| Audits | `PARTIAL / DUPLICATE` | `/api/audit` i `/api/audits`, sprzeczne open/soon; pełny moduł poza MVP |
+| Moduł               | Stan                                          | Najważniejsza luka                                                                                             |
+| ------------------- | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Chat                | `LIVE_CONNECTED_CANDIDATE / PARTIAL`          | legacy `/api/ai` i V8 są rozdzielone; brak aktualnego exact-SHA browser/realDB proof                           |
+| My Work             | `LIVE_CONNECTED_CANDIDATE / PARTIAL`          | silent V8→legacy fallback może ukrywać awarię; Radar wyłączony; brak pełnego lineage proof                     |
+| Agent               | `PARTIAL / DUPLICATE`                         | `transformation_cases`, `case_core` i `ai_agent_plans` konkurują; brak jednego trwałego collaboration contract |
+| Cases               | `IMPLEMENTED_UNMOUNTED / DUPLICATE`           | route fail-closed; konflikt ownera z Agentem                                                                   |
+| Assessment          | `LIVE_CONNECTED_CANDIDATE / PARTIAL`          | wiele generacji API/schema, runtime DDL, report redirect race; na MVP tylko DRD                                |
+| Tools               | `LIVE_CONNECTED_CANDIDATE / PARTIAL`          | tylko Dynamic SWOT ma pełny engine; generic outputs mogą być puste; runtime DDL                                |
+| Initiatives         | `LIVE_CONNECTED_CANDIDATE` core               | brak pełnego role/transition, idempotency i live handoff proof                                                 |
+| Execution           | `LIVE_CONNECTED_CANDIDATE` core               | brak aktualnego one-handoff→one-case oraz delivery-evidence browser/readback proof                             |
+| Results KPI/ROI/OKR | `PARTIAL / DISABLED`                          | `/results` prowadzi do VNext, ale wszystkie trzy domeny default OFF                                            |
+| Finance             | `PARTIAL / DUPLICATE / CLOSED`                | legacy i canonical ID spaces; bridge/backfill nieudowodniony; flags OFF                                        |
+| Materials           | base `LIVE_CONNECTED_CANDIDATE`, V2 `PARTIAL` | potrzebne realne DOC/PPT/XLSX golden flows, provider i visual proof                                            |
+| Audits              | `PARTIAL / DUPLICATE`                         | `/api/audit` i `/api/audits`, sprzeczne open/soon; pełny moduł poza MVP                                        |
 
 Pełny audyt 16/16 domknięto w potomnym raporcie
 `docs/cleanup/MODULE_GAP_AND_INTEGRATION_PLAN_2026-08-15.md`. Dodano Interview,
@@ -431,15 +441,15 @@ PASS_WITH_1_EXPLICIT_PENDING / DEPLOY_NOT_STARTED / NOT_RELEASE_READY`.
 `FINAL_16_MODULE_READINESS_AND_EXECUTION_PLAN_2026-08-15.md`. Nie wolno
 zastępować jej starszymi kolejkami z tego handoffu.
 
-| Etap pierwotnego planu | Stan końcowy | Następna akcja |
-|---|---|---|
-| Freeze | `DONE_BOUNDED` | Nie otwierać wspólnego WIP; nowe fixy tylko z reprodukcji gate. |
-| Inwentaryzacja | `DONE_224_OF_224` | Nie szukać ponownie „ukrytego kodu” bez nowego ref/path evidence. |
-| Zabezpieczenie | `DONE_RESTORABLE` | Zachować bundle/manifest; dalsze delete wymaga authority. |
-| Jedno drzewo | `DONE_CODE` | Product `6e31012f…`; acceptance `03452209…`. |
-| Audyt 16 modułów | `DONE_INVENTORY` | Używać wyłącznie 16 kart `*-BVP-001`. |
-| Usuwanie | `DONE_43_BOUNDED` | Nie rozszerzać cleanupu automatycznie. |
-| Brama końcowa | `DONE_BOUNDED / PASS_WITH_1_EXPLICIT_PENDING` | Standard 4058 PASS scope-equivalent, isolated exact14c 72/72, realDB exact14c 64/64 z jednym jawnym My Work fixture-authority pending; otwarte deploy/parity. |
+| Etap pierwotnego planu | Stan końcowy                                  | Następna akcja                                                                                                                                                |
+| ---------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Freeze                 | `DONE_BOUNDED`                                | Nie otwierać wspólnego WIP; nowe fixy tylko z reprodukcji gate.                                                                                               |
+| Inwentaryzacja         | `DONE_224_OF_224`                             | Nie szukać ponownie „ukrytego kodu” bez nowego ref/path evidence.                                                                                             |
+| Zabezpieczenie         | `DONE_RESTORABLE`                             | Zachować bundle/manifest; dalsze delete wymaga authority.                                                                                                     |
+| Jedno drzewo           | `DONE_CODE`                                   | Product `6e31012f…`; acceptance `03452209…`.                                                                                                                  |
+| Audyt 16 modułów       | `DONE_INVENTORY`                              | Używać wyłącznie 16 kart `*-BVP-001`.                                                                                                                         |
+| Usuwanie               | `DONE_43_BOUNDED`                             | Nie rozszerzać cleanupu automatycznie.                                                                                                                        |
+| Brama końcowa          | `DONE_BOUNDED / PASS_WITH_1_EXPLICIT_PENDING` | Standard 4058 PASS scope-equivalent, isolated exact14c 72/72, realDB exact14c 64/64 z jednym jawnym My Work fixture-authority pending; otwarte deploy/parity. |
 
 Każda z 16 kart zawiera task ID, in/out scope, authority, techniczny punkt
 kontroli, scenariusz, negatywy, migration posture, rollback i literalne `DONE`.
