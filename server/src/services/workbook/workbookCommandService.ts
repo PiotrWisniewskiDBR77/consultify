@@ -7,6 +7,7 @@ import {
   type WorkbookMutation,
 } from './workbookMutationEngine.js';
 import { invalidateWorkbookRuntimeCache } from './workbookRuntimeCache.js';
+import { assertWorkbookSchema } from './workbookSchemaGuard.js';
 import type { WorkbookSchema } from './WorkbookSchema.js';
 
 export class WorkbookCommandError extends Error {
@@ -55,82 +56,16 @@ export interface UndoWorkbookCommandResult {
   orphanedCommentSheetIds: string[];
 }
 
+// FIX (G3 closure, 2026-08-16): this used to run its own
+// `CREATE TABLE IF NOT EXISTS` / `ALTER TABLE ... ADD COLUMN` block, in
+// parallel with (and byte-for-byte duplicating) the one `ensureWorkbookSchema()`
+// ran in `workbook.routes.ts` — TWO independent runtime-DDL call sites for the
+// same tables. Both now delegate to the single shared assertion in
+// `workbookSchemaGuard.ts`; see that module for the full rationale (closure
+// gate G3: zero lazy/runtime DDL). DDL lives exclusively in
+// `server/migrations/20260912_claude_c_workbook_schema.sql`.
 async function ensureCommandStorage(): Promise<void> {
-  for (const columnDefinition of [
-    `approval_current INTEGER DEFAULT 0`,
-    `version INTEGER DEFAULT 0`,
-    `last_mutation_key TEXT`,
-  ]) {
-    try {
-      await queryHelpers.queryRun(`ALTER TABLE generated_workbooks ADD COLUMN ${columnDefinition}`);
-    } catch {
-      // Additive migration: an existing column must not stop later checks.
-    }
-  }
-  await queryHelpers.queryRun(`
-    CREATE TABLE IF NOT EXISTS generated_workbook_revisions (
-      id TEXT PRIMARY KEY,
-      workbook_id TEXT NOT NULL,
-      organization_id TEXT NOT NULL,
-      version INTEGER NOT NULL,
-      command_id TEXT NOT NULL,
-      idempotency_key TEXT,
-      base_schema_json TEXT NOT NULL,
-      schema_json TEXT NOT NULL,
-      operations_json TEXT DEFAULT '[]',
-      created_by TEXT NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE(workbook_id, organization_id, version)
-    )
-  `);
-  await queryHelpers.queryRun(`
-    CREATE TABLE IF NOT EXISTS generated_workbook_comments (
-      id TEXT PRIMARY KEY,
-      workbook_id TEXT NOT NULL,
-      organization_id TEXT NOT NULL,
-      sheet_id TEXT,
-      range_ref TEXT,
-      anchored_version INTEGER NOT NULL DEFAULT 0,
-      parent_comment_id TEXT,
-      body TEXT NOT NULL,
-      status TEXT NOT NULL DEFAULT 'open',
-      anchor_state TEXT NOT NULL DEFAULT 'active',
-      idempotency_key TEXT,
-      created_by TEXT NOT NULL,
-      resolved_by TEXT,
-      resolved_at TIMESTAMP,
-      deleted_at TIMESTAMP,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE(workbook_id, organization_id, idempotency_key)
-    )
-  `);
-  await queryHelpers.queryRun(`
-    CREATE TABLE IF NOT EXISTS generated_workbook_source_bindings (
-      id TEXT PRIMARY KEY,
-      workbook_id TEXT NOT NULL,
-      organization_id TEXT NOT NULL,
-      sheet_id TEXT NOT NULL,
-      range_ref TEXT NOT NULL,
-      label TEXT NOT NULL,
-      source_ref TEXT,
-      source_type TEXT,
-      anchored_version INTEGER NOT NULL DEFAULT 0,
-      anchor_state TEXT NOT NULL DEFAULT 'active',
-      idempotency_key TEXT,
-      created_by TEXT NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE(workbook_id, organization_id, idempotency_key)
-    )
-  `);
-  try {
-    await queryHelpers.queryRun(
-      `ALTER TABLE generated_workbook_source_bindings ADD COLUMN anchor_state TEXT NOT NULL DEFAULT 'active'`
-    );
-  } catch {
-    // Additive migration: the only expected failure is an existing column.
-  }
+  await assertWorkbookSchema();
 }
 
 function validateInput(input: ApplyWorkbookCommandInput): void {
