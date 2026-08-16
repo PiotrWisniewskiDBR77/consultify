@@ -1,0 +1,42 @@
+{
+  "taskId": "PRT-MVP-LEGACY-CUTOVER-001",
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "productSha": "4f356fb86a8f7b92457e87956f18e70c5e0cd869",
+  "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
+  "changedPaths": [
+    "server/migrations/20260906_partner_legacy_cutover.sql",
+    "server/src/services/partnerLegacyCutover.ts",
+    "server/src/routes/partners.routes.ts",
+    "src/services/api/v8/partner.ts",
+    "tests/integration/partners/partner-legacy-cutover.realdb.test.ts",
+    "tests/integration/partners/partners.happy-path-and-fallback.test.ts",
+    "tests/unit/services/v8-partner-api.test.ts"
+  ],
+  "changedPathRationale": {
+    "schema": "durable legacy-usage telemetry and deterministic referral-identity backfill",
+    "runtime": "default-off legacy fallback and 410 zero-writer guard for eight V8-owned mutations",
+    "tests": "real PostgreSQL telemetry, rollback, cutover and client fallback verification"
+  },
+  "ownerTables": ["partner_legacy_usage_events", "partner_organizations"],
+  "commands": [
+    {"command": "fresh PostgreSQL migration apply, repeat and dry-run", "exitCode": 0, "result": "710 successful ledger entries, 0 non-success, repeat 0, pending 0"},
+    {"command": "Partner cutover realPG plus V8 API", "exitCode": 0, "result": "28/28 passed"},
+    {"command": "sequential fresh realPG cutover, BVP, append-only ledger, API and referral", "exitCode": 0, "result": "43/43 passed"},
+    {"command": "explicit retired-route rollback plus V8 API", "exitCode": 0, "result": "29/29 passed"},
+    {"command": "npm run type-check", "exitCode": 0}
+  ],
+  "denominators": {"freshMigrations": "710/710", "cutoverAndApi": "28/28", "sequentialRealDb": "43/43", "rollbackAndApi": "29/29"},
+  "fixtures": {"database": "fresh disposable pgvector PostgreSQL", "coveredLegacyWriters": 8, "declaredLegacyWriters": 16},
+  "negativeControls": {
+    "default": "covered legacy mutations return 410 and identify their V8 successor",
+    "rollback": "legacy access requires an explicit client and server rollback switch and is recorded",
+    "telemetry": "uncovered writers are reported as uncovered rather than falsely classified as cut over"
+  },
+  "browserArtifacts": [],
+  "rollback": {"code": "PARTNER_LEGACY_ROLLBACK_ENABLED and VITE_PARTNER_LEGACY_ROLLBACK_ENABLED", "data": "additive telemetry and identity backfill; no production migration executed"},
+  "verdict": "PARTIAL",
+  "openBlockers": [
+    "Eight of sixteen declared legacy mutations still lack a V8 successor and remain deliberately uncovered.",
+    "The legacy mount, 39 direct client references, deployed parity telemetry window, complete historical backfill and production rollback rehearsal remain open."
+  ]
+}

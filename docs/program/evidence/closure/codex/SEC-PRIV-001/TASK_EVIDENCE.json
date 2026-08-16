@@ -1,0 +1,36 @@
+{
+  "taskId": "SEC-PRIV-001",
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "productSha": "ccbbeeb1305880629544a4a9810caaedec22a950",
+  "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
+  "changedPaths": [],
+  "changedPathRationale": {"none": "verification-only evidence for security controls already represented in the canonical candidate"},
+  "ownerTables": ["oauth_provider_approval_registry", "audit_logs"],
+  "commands": [
+    {
+      "command": "MOCK_DB=false npx vitest run AutomationService.test.ts SSOService.test.ts oauthProviderApprovalRegistry.test.ts skills-gap.auth.routes.test.ts --no-file-parallelism --maxWorkers=1 --maxConcurrency=1",
+      "exitCode": 0,
+      "result": "4 files and 35 tests passed using the real authentication middleware"
+    },
+    {
+      "command": "npm audit --omit=dev --audit-level=high --json",
+      "exitCode": 1,
+      "result": "23 production dependency findings: 11 high, 10 moderate, 2 low, 0 critical"
+    }
+  ],
+  "denominators": {"securityFocusedTests": "35/35", "testFiles": "4/4"},
+  "fixtures": {"authentication": "real verifyToken middleware selected with MOCK_DB=false", "oauth": "approved-provider registry decisions without exposing credentials"},
+  "negativeControls": {
+    "skillsGap": "anonymous read and write requests rejected",
+    "automation": "run_script remains fail closed without an approved sandbox",
+    "saml": "claims rejected without a registered signature verifier and verified certificate",
+    "oauth": "credentials alone cannot activate a provider; malformed or over-broad approvals are rejected"
+  },
+  "browserArtifacts": [],
+  "rollback": {"code": "verification-only evidence; no runtime change", "data": "no production data touched"},
+  "verdict": "PARTIAL",
+  "openBlockers": [
+    "Production dependency audit is red with 11 high-severity findings, including transitive denial-of-service, SSRF/trust-boundary, information-disclosure and parser risks; upgrade and compatibility verification are required.",
+    "Full secret scan, privacy export/delete proof, browser authorization matrix, and release-SHA production evidence remain outside this focused packet."
+  ]
+}
