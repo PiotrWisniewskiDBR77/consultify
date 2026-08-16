@@ -1663,6 +1663,9 @@ const buildQuestionResponse = (row: any) => {
     tags: parseJson(row.tags, []),
     sortOrder: row.sort_order || 0,
     isTemplate: flagOn(row.is_template), // bigint on PG → coerce
+    // INT-BVP-001 (6): exposed so a client can round-trip it back as
+    // `expectedUpdatedAt` on the next PATCH for optimistic-concurrency (CAS).
+    updatedAt: row.updated_at || undefined,
   };
 };
 
@@ -2827,10 +2830,24 @@ export async function loadManagedInterviewSessionsForManager(
   return merged;
 }
 
+// INT-BVP-001 (2): the AI review endpoint had no server-side bound at all —
+// only the client raced it against a 12s timer and gave up, while the
+// request (and the provider call behind it) kept running unbounded. Default
+// picked to sit above the client's 12s soft-timeout (so the common case
+// still returns a real result before the client gives up) while still
+// guaranteeing the HTTP request itself cannot hang indefinitely. Env-
+// overridable for ops tuning without a redeploy; hardcoded default keeps the
+// bound defined even when the env var is unset/misconfigured.
+const INTERVIEW_AI_REVIEW_TIMEOUT_MS = (() => {
+  const raw = Number(process.env.INTERVIEW_AI_REVIEW_TIMEOUT_MS);
+  return Number.isFinite(raw) && raw > 0 ? raw : 20000;
+})();
+
 async function evaluateInterviewSessionAnswers(params: {
   session: { id?: string; name?: string };
   questions: any[];
   language?: unknown;
+  timeoutMs?: number;
 }): Promise<InterviewAiReviewSnapshot> {
   const { session, questions } = params;
   const langCode: 'pl' | 'en' = params.language === 'pl' ? 'pl' : 'en';
@@ -2961,6 +2978,11 @@ ${questionsForPrompt}`;
       maxTokens: 2500,
       temperature: 0.1,
       cache: false,
+      // INT-BVP-001 (2): llmService's own AbortSignal.timeout enforcement —
+      // real cancellation, not just a promise race — defaults to 60s when
+      // unset. Pass our bound through so the provider call itself gets
+      // aborted instead of only being ignored by the HTTP layer above.
+      timeoutMs: params.timeoutMs,
     });
 
     const evaluation = (result as any).object || { questionEvaluations: [], recommendations: [] };
@@ -3259,9 +3281,53 @@ export const InterviewController = {
     const user = requireUser(req);
     const { id } = req.params;
 
+    // INT-BVP-001 (5): bring getSession up to the same access standard as its
+    // siblings (getQuestions/getNotes/getEvidence/getLinkedItems/getSummary) —
+    // org-only scoping let any authenticated org member read another user's
+    // session (including anonymous-session summary content the D18-A wall
+    // exists to hide) just by knowing the session id. Reuse the existing
+    // access-matrix helper rather than writing a parallel check.
+    try {
+      await assertSessionAccessibleOrThrow({
+        sessionId: id,
+        organizationId: user.organizationId,
+        userId: user.id,
+        userRole: user.role,
+      });
+    } catch (e: any) {
+      const msg = String(e?.message || '');
+      if (msg.toLowerCase().includes('not found')) {
+        res.status(404).json({ error: 'Session not found' });
+        return;
+      }
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
     const session = await loadInterviewSessionForOrganization(user.organizationId, id);
     if (!session) {
       res.status(404).json({ error: 'Session not found' });
+      return;
+    }
+
+    // D18-A hard wall — same redaction contract as getSummary: an elevated
+    // org role or team member may pass the access-matrix check above (it's a
+    // valid session-level participant) but must still not see per-respondent
+    // summary content for an anonymous session unless they ARE the respondent.
+    await ensureInterviewAnonymityColumns();
+    const anonymityRow = await queryHelpers.queryOne(
+      `SELECT owner_id, is_anonymous FROM interview_sessions WHERE id = ? AND organization_id = ?`,
+      [id, user.organizationId]
+    );
+    if (isAnonymityWallActive(anonymityRow, user.id, 'owner_id')) {
+      res.json({
+        ...session,
+        summaryFacts: [],
+        summaryGaps: [],
+        summaryConstraints: [],
+        summaryPainPoints: [],
+        anonymized: true,
+      });
       return;
     }
 
@@ -7111,13 +7177,7 @@ Answer type: ${(question as any).answer_type || 'open'}`;
       return;
     }
 
-    try {
-      const evaluation = await evaluateInterviewSessionAnswers({
-        session: session as any,
-        questions: questions as any[],
-        language,
-      });
-
+    const persistSnapshot = async (evaluation: InterviewAiReviewSnapshot) => {
       try {
         await ensureInterviewAssignmentAiReviewColumns();
         const assignment = await queryHelpers.queryOne(
@@ -7140,6 +7200,74 @@ Answer type: ${(question as any).answer_type || 'open'}`;
       } catch (persistError) {
         logger.warn('[evaluateSessionAnswers] Failed to persist AI review snapshot', persistError);
       }
+    };
+
+    // INT-BVP-001 (2): the server previously awaited evaluateInterviewSessionAnswers
+    // with NO bound — a hung provider hung the HTTP request indefinitely. We now
+    // race it against INTERVIEW_AI_REVIEW_TIMEOUT_MS on top of llmService's own
+    // (now-passed-through) abort timeout, so the response is guaranteed within the
+    // bound even if the provider/mocked call ignores its own timeout. `responded`
+    // guards against a double res.* call if the underlying promise settles after
+    // we've already sent the timeout fallback (Express would throw on a second
+    // response); the loser promise, if it does complete later, only persists the
+    // snapshot for a future read — it never touches interview_questions/answers,
+    // so the user's already-persisted answer is never at risk either way.
+    let responded = false;
+    const timeoutMs = INTERVIEW_AI_REVIEW_TIMEOUT_MS;
+    const TIMED_OUT = Symbol('interview-ai-review-timed-out');
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeoutPromise = new Promise<typeof TIMED_OUT>((resolve) => {
+      timer = setTimeout(() => resolve(TIMED_OUT), timeoutMs);
+    });
+
+    const evaluationPromise = evaluateInterviewSessionAnswers({
+      session: session as any,
+      questions: questions as any[],
+      language,
+      timeoutMs,
+    });
+
+    // Never let the loser promise produce an unhandled rejection once we've
+    // stopped awaiting it below.
+    evaluationPromise.catch(() => undefined);
+
+    try {
+      const winner = await Promise.race([evaluationPromise, timeoutPromise]);
+
+      if (winner === TIMED_OUT) {
+        responded = true;
+        logger.warn('[evaluateSessionAnswers] AI review exceeded bound, returning fallback', {
+          sessionId,
+          timeoutMs,
+        });
+        // Explicit, non-fabricated fallback: overallVerdict:'timeout' and an
+        // empty questionEvaluations/recommendations set — never a guessed score.
+        res.json({
+          overallScore: 0,
+          overallVerdict: 'timeout',
+          questionEvaluations: [],
+          recommendations: [],
+          weakAnswerMap: [],
+          rubricVersion: INTERVIEW_RUBRIC_VERSION,
+          rubricCriteria: INTERVIEW_RUBRIC_CRITERIA.map((c) => ({
+            key: c.key,
+            label: language === 'pl' ? c.labelPl : c.labelEn,
+            description: language === 'pl' ? c.descriptionPl : c.descriptionEn,
+            maxScore: INTERVIEW_RUBRIC_MAX_PER_CRITERION,
+          })),
+          timedOut: true,
+        });
+
+        // Best-effort: if the provider eventually answers, still persist the
+        // snapshot for a later read (e.g. getSummary/getAssignment). No response
+        // is sent for it — `responded` is already true.
+        evaluationPromise.then((late) => persistSnapshot(late)).catch(() => undefined);
+        return;
+      }
+
+      const evaluation = winner as InterviewAiReviewSnapshot;
+      await persistSnapshot(evaluation);
+      responded = true;
 
       // D18-A hard wall — the FULL evaluation (with per-answer feedback/
       // justification, which may quote the raw answer) is always persisted
@@ -7148,8 +7276,12 @@ Answer type: ${(question as any).answer_type || 'open'}`;
       const wallActive = isAnonymityWallActive(session, user.id, 'owner_id');
       res.json(wallActive ? redactAiReviewSnapshotForAnonymity(evaluation) : evaluation);
     } catch (err) {
-      logger.error('[evaluateSessionAnswers] AI call failed:', err);
-      res.status(500).json({ error: 'AI evaluation failed' });
+      if (!responded) {
+        logger.error('[evaluateSessionAnswers] AI call failed:', err);
+        res.status(500).json({ error: 'AI evaluation failed' });
+      }
+    } finally {
+      if (timer) clearTimeout(timer);
     }
   }),
 
@@ -7315,7 +7447,19 @@ ${JSON.stringify(questions || [], null, 2)}
       voiceTranscriptStatus,
       voiceAudioEvidenceId,
       aiSuggestionId,
+      expectedUpdatedAt,
     } = req.body;
+
+    // INT-BVP-001 (6): optional per-answer CAS guard. `updated_at` already
+    // exists on interview_questions (no schema change needed) but the API
+    // never exposed it, so no client could send back an "expected" version —
+    // updateQuestion was plain last-write-wins under the coarse session-lock
+    // check above. Additive/opt-in: a client that sends `expectedUpdatedAt`
+    // (round-tripped from a prior GET/PATCH response's `updatedAt`) gets a
+    // real optimistic-concurrency guard and a 409 on a lost race; a client
+    // that omits it keeps the pre-existing (documented, known-gap)
+    // last-write-wins behaviour unchanged.
+    const hasCasGuard = typeof expectedUpdatedAt === 'string' && expectedUpdatedAt.trim().length > 0;
 
     // M03R-004 — normalizacja NA ZAPISIE. Klient może przysłać `ANSWERED`;
     // do kolumny wchodzi wyłącznie postać kanoniczna, żeby nie dokładać
@@ -7409,6 +7553,11 @@ ${JSON.stringify(questions || [], null, 2)}
     updates.push('updated_at = ?');
     params.push(new Date().toISOString());
     params.push(questionId, user.organizationId);
+    // CAS predicate appended after id/organization_id so it lines up with the
+    // trailing `WHERE id = ? AND organization_id = ?[ AND updated_at = ?]` text
+    // in both branches below.
+    const casClause = hasCasGuard ? ' AND updated_at = ?' : '';
+    const casParams = hasCasGuard ? [expectedUpdatedAt] : [];
 
     let updateResult;
     if (aiSuggestionId !== undefined) {
@@ -7432,7 +7581,7 @@ ${JSON.stringify(questions || [], null, 2)}
          )
          UPDATE interview_questions
             SET ${updates.join(', ')}
-          WHERE id = ? AND organization_id = ?
+          WHERE id = ? AND organization_id = ?${casClause}
             AND EXISTS (SELECT 1 FROM accepted)`,
         [
           answerText.trim(),
@@ -7442,17 +7591,29 @@ ${JSON.stringify(questions || [], null, 2)}
           questionId,
           user.organizationId,
           ...params,
+          ...casParams,
         ]
       );
       if (updateResult.changes !== 1) {
+        // Same 409 shape either way: an already-decided suggestion and a lost
+        // CAS race are both "someone else moved this answer since you loaded
+        // it" — the client's remediation (reload) is identical for both.
         res.status(409).json({ error: 'AI suggestion is missing or already decided' });
         return;
       }
     } else {
       updateResult = await queryHelpers.queryRun(
-        `UPDATE interview_questions SET ${updates.join(', ')} WHERE id = ? AND organization_id = ?`,
-        params
+        `UPDATE interview_questions SET ${updates.join(', ')} WHERE id = ? AND organization_id = ?${casClause}`,
+        [...params, ...casParams]
       );
+      if (hasCasGuard && updateResult.changes !== 1) {
+        // Same 409 shape the file already uses elsewhere (Session is locked /
+        // AI suggestion is missing or already decided) for a conflict outcome.
+        res.status(409).json({
+          error: 'Answer was modified by another update since it was loaded. Reload and try again.',
+        });
+        return;
+      }
     }
 
     // Update session progress
@@ -8015,7 +8176,16 @@ ${JSON.stringify(questions || [], null, 2)}
         resolvedFileType,
         url || null,
         transcriptText || null,
-        ingestToKnowledge !== false,
+        // INT-BVP-001/INT-DELIVERY-OPS-001 (1): write a literal 0/1 here, matching the
+        // auto-evidence write site above (line ~1836). A raw JS boolean is NOT
+        // universally safe for this column: `ensureInterviewEvidenceColumns` (line
+        // ~766) creates it as INTEGER on environments where the table didn't
+        // already exist, and node-pg throws 22P02 "invalid input syntax for type
+        // integer" when a boolean parameter is bound to an integer column. The
+        // literal 0/1 form is accepted by Postgres for BOTH integer columns and
+        // legacy boolean columns (boolean text-input parser accepts '1'/'0'), so
+        // it is safe regardless of which physical type a given environment has.
+        ingestToKnowledge !== false ? 1 : 0,
         user.id,
         now,
       ]
@@ -8729,10 +8899,21 @@ ${JSON.stringify(questions || [], null, 2)}
     const { sessionId } = req.params;
 
     try {
+      // INT-BVP-001 (5, parity finding): this call was the only one of the five
+      // assertSessionAccessibleOrThrow call sites in this file that omitted
+      // `userRole` — getQuestions/getNotes/getEvidence/getLinkedItems (and the
+      // new getSession check above) all pass it. Without it, canUserAccessSession's
+      // elevated-role branch never fires, so an org OWNER/ADMIN could NOT read a
+      // non-anonymous session's summary unless they also happened to be the
+      // assignee/team member — inconsistent with every sibling endpoint and with
+      // the access matrix's documented intent. Discovered while writing the
+      // getSession/getSummary parity test; fixed here since it's the same
+      // one-line pattern already used identically four other times in this file.
       await assertSessionAccessibleOrThrow({
         sessionId,
         organizationId: user.organizationId,
         userId: user.id,
+        userRole: user.role,
       });
     } catch (e: any) {
       const msg = String(e?.message || '');
