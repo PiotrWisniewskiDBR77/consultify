@@ -66,9 +66,17 @@ const counts = rows.reduce((acc, row) => {
   return acc;
 }, {});
 const invalid = rows.filter((row) => row.issues.length > 0);
+const missingEvidence = rows.filter((row) => row.verdict === 'MISSING_EVIDENCE');
+const invalidPresentEvidence = invalid.filter((row) => row.verdict !== 'MISSING_EVIDENCE');
 const incomplete = rows.filter((row) => row.verdict !== 'DONE_CURRENT_SHA');
-console.log(JSON.stringify({ denominator: authority.length, counts, invalidEvidence: invalid, incomplete }, null, 2));
+console.log(JSON.stringify({
+  denominator: authority.length,
+  counts,
+  missingEvidence,
+  invalidPresentEvidence,
+  incomplete,
+}, null, 2));
 
-if (process.argv.includes('--require-complete') && (authority.length !== 82 || invalid.length || incomplete.length)) {
+if (process.argv.includes('--require-complete') && (authority.length !== 82 || missingEvidence.length || invalidPresentEvidence.length || incomplete.length)) {
   process.exitCode = 1;
 }
