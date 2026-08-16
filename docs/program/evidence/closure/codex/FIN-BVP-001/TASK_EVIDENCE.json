@@ -1,22 +1,50 @@
 {
   "taskId": "FIN-BVP-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "191aa8ca09f86146b967713b011066d9d10a7eb6",
+  "productSha": "15a95fdff4887c62c140a3b946219c59e179b092",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
-  "changedPaths": [],
-  "changedPathRationale": {"none": "tree reconciliation proved the Finance package already present; this record verifies the canonical five-workspace runtime contracts"},
-  "ownerTables": ["finance_artifacts", "finance_business_versions", "finance_statement_lines", "finance_analysis_kpi_values", "finance_baseline_outputs", "finance_prediction_runs", "finance_valuation_variants"],
-  "commands": [
-    {"command": "RUN_DB_TESTS=1 MOCK_DB=false vitest statements, baseline, prediction, analysis, valuation, cross-tenant and cold-reopen PostgreSQL suites", "exitCode": 0, "result": "43/43 tests across 7 files"}
+  "changedPaths": [
+    "server/migrations/20260919_finance_legacy_usage_identity_types.sql",
+    "server/src/services/__tests__/financeLegacyCutover.pg.test.ts",
+    "docs/program/evidence/closure/codex/FIN-BVP-001/TASK_EVIDENCE.json"
   ],
-  "denominators": {"financeRealDb": "43/43", "testFiles": "7/7", "canonicalWorkspaces": "5/5", "freshMigrationLedger": "710/710 success from the current additive schema"},
-  "fixtures": {"database": "disposable pgvector PostgreSQL 16 on localhost:56504", "workspaces": ["statement", "analysis", "baseline", "prediction", "valuation"]},
-  "negativeControls": {"tenant": "cross-tenant HTTP matrix remains hidden", "corruption": "cold-reopen detects a post-approval value mutation", "identity": "approved statement-to-valuation lineage reopens without recompute", "persistence": "approved baseline, valuation and complete chain retain hashes, outputs and lineage"},
+  "changedPathRationale": {
+    "migration": "data-preserving alignment of cutover telemetry identity columns with the canonical Finance TEXT identifier domain",
+    "test": "run the cutover guard against the full current schema and canonical artifact writer instead of a stale migration-only fixture",
+    "evidence": "current-SHA real PostgreSQL closure record"
+  },
+  "ownerTables": ["finance_artifacts", "finance_business_versions", "finance_statement_lines", "finance_analysis_kpi_values", "finance_baseline_outputs", "finance_prediction_runs", "finance_valuation_variants", "finance_legacy_usage_events"],
+  "commands": [
+    {"command": "NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=<fresh-pg> npm run db:migrate:strict; repeat; npm run db:migrate:postgres:dry", "exitCode": 0, "result": "fresh ledger 730/730; incremental apply 1, repeat apply 0, dry pending 0"},
+    {"command": "RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test CI=true npx vitest run statements.routes.pg baseline.routes.pg prediction.routes.pg analysis.routes.pg valuation.routes.pg tenantMatrix.pg coldReopen.pg --retry=0 --reporter=dot", "exitCode": 0, "result": "59/59 tests across 7/7 files"},
+    {"command": "RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test CI=true npx vitest run artifacts-lifecycle-compute.routes.pg approveRbacGate.pg financeLegacyCutover.pg financeLegacyCutover financeCanonicalRoute --retry=0 --reporter=dot", "exitCode": 0, "result": "42/42 tests across 5/5 files"},
+    {"command": "RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test CI=true npx vitest run export-import.routes.pg.test.ts --retry=0 --reporter=dot", "exitCode": 0, "result": "14/14 tests; eight concurrent identical applies commit once and return one durable receipt"},
+    {"command": "RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test CI=true npx vitest run --config vitest.acceptance.config.ts tests/acceptance/rvn-outbox-finance-projection.e2e.test.ts --retry=0 --reporter=dot", "exitCode": 0, "result": "15/15 acceptance tests for the Results-to-Finance projection seam"},
+    {"command": "NODE_OPTIONS=--max-old-space-size=8192 npm run type-check", "exitCode": 0, "result": "TypeScript noEmit passed"}
+  ],
+  "denominators": {"financePrimaryRealDb": "59/59", "financeSupplemental": "42/42", "importConcurrency": "14/14", "resultsFinanceSeam": "15/15", "totalFocusedTests": "130/130", "canonicalWorkspaces": "5/5", "freshMigrationLedger": "730/730"},
+  "fixtures": {"database": "disposable pgvector PostgreSQL 16 container consultify-fin-bvp-f7d13be8 on localhost:32911", "workspaces": ["statement", "analysis", "baseline", "prediction", "valuation"]},
+  "negativeControls": {
+    "tenant": "cross-tenant HTTP matrix remains hidden and Results projection is organization-scoped",
+    "rbac": "approve endpoint rejects unauthorized roles and preserves the capability/endpoint contract",
+    "version": "lifecycle CAS and stale-version conflicts are fail-closed",
+    "idempotency": "repeated compute/import requests reuse the canonical result/receipt",
+    "concurrency": "eight simultaneous identical import applies produce one commit and one receipt",
+    "corruption": "cold-reopen detects a post-approval value mutation",
+    "resultsSeam": "diverging actuals open one reconciliation without overwriting either side; failed projection is durably marked; legacy financial_* tables remain byte-identical"
+  },
+  "routeIdentity": {
+    "canonicalFrontend": "/finance",
+    "canonicalApi": "/api/v8/finance-v2",
+    "protectedLegacyWriter": "POST /models/:legacyId/approve is default-off with a canonical successor and explicit non-destructive rollback environment switch",
+    "durableBridge": "blocked and rollback telemetry resolves and stores the canonical artifact/business-version pair"
+  },
   "browserArtifacts": [],
-  "rollback": {"code": "verification-only evidence; no Finance code changed", "data": "isolated test fixtures only"},
+  "rollback": {"code": "FINANCE_LEGACY_WRITER_ROLLBACK_ENABLED=true re-enables only the protected legacy approval writer; it does not rewrite canonical data", "data": "the identity-type migration is lossless UUID-to-TEXT; isolated fixtures only"},
+  "technicalVerdict": "DONE_CURRENT_SHA",
   "verdict": "PARTIAL",
   "openBlockers": [
-    "G4 signed-in browser proof for all five flag OFF/ON workspaces, deep links, conflicts and identity readback remains.",
-    "The single governed runtime owner across compatibility and V8 routes, Results projection ownership, and production rollout decision remain unresolved architecture gates."
+    "G4 signed-in browser proof for all five workspaces, deep links, conflicts and identity readback remains a separate UI/human gate.",
+    "Production reconciliation policy and expansion/rollout beyond the protected default-off legacy writer remain owner decisions; this task does not make them."
   ]
 }
