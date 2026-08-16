@@ -93,7 +93,6 @@ suite('lifecycle gates — transitionLifecycle → fieldwork (Postgres realny �
 
   afterAll(async () => {
     if (!auditsDb) return;
-    await auditsDb.auditRun(`DELETE FROM audit_domain_events WHERE organization_id = $1`, [orgId]);
     await auditsDb.auditRun(`DELETE FROM audit_program_members WHERE organization_id = $1`, [orgId]);
     await auditsDb.auditRun(`DELETE FROM audit_program_criteria WHERE organization_id = $1`, [orgId]);
     await auditsDb.auditRun(`DELETE FROM audit_programs WHERE organization_id = $1`, [orgId]);

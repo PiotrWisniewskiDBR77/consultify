@@ -182,7 +182,6 @@ export async function cleanupOrg(pool: Pool, organizationId: string): Promise<vo
     );
   }
   for (const table of [
-    'audit_domain_events',
     'audit_ai_proposals',
     'audit_initiative_proposals',
     'audit_verifications',

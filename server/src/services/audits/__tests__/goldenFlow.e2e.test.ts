@@ -68,7 +68,6 @@ async function cleanup(): Promise<void> {
     'audit_evidence_requests',
     'audit_program_criteria',
     'audit_program_members',
-    'audit_domain_events',
     'audit_ai_proposals',
     'audit_programs',
   ]) {

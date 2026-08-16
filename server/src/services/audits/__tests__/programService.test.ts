@@ -99,7 +99,6 @@ suite('programService (Postgres realny — U3)', () => {
 
   afterAll(async () => {
     if (!auditsDb) return;
-    await auditsDb.auditRun(`DELETE FROM audit_domain_events WHERE organization_id IN ($1,$2)`, [orgA, orgB]);
     await auditsDb.auditRun(`DELETE FROM audit_program_members WHERE organization_id IN ($1,$2)`, [orgA, orgB]);
     await auditsDb.auditRun(`DELETE FROM audit_program_criteria WHERE organization_id IN ($1,$2)`, [orgA, orgB]);
     await auditsDb.auditRun(`DELETE FROM audit_programs WHERE organization_id IN ($1,$2)`, [orgA, orgB]);

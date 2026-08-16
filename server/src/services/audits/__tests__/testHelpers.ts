@@ -136,7 +136,6 @@ export async function addEvidence(
 }
 
 export async function cleanupFixture(organizationId: string): Promise<void> {
-  await auditRun(`DELETE FROM audit_domain_events WHERE organization_id = $1`, [organizationId]);
   await auditRun(`DELETE FROM audit_verifications WHERE organization_id = $1`, [organizationId]);
   await auditRun(`DELETE FROM audit_corrective_actions WHERE organization_id = $1`, [organizationId]);
   await auditRun(`DELETE FROM audit_management_responses WHERE organization_id = $1`, [organizationId]);

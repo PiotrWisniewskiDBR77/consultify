@@ -2,16 +2,9 @@
  * immutableTrail — AUD-MVP-LIFECYCLE-001 "immutable trail" DoD item 8.
  *
  * `audit_domain_events` is meant to be append-only. This proves it two ways:
- *  1. A direct UPDATE/DELETE against the table (bypassing the service layer
- *     entirely) is possible at the SQL level (no DB trigger enforces
- *     immutability — confirmed by reading the schema, see below), but a row
- *     written through the service and never touched again stays byte-for-byte
- *     identical — i.e. NOTHING in the normal service call chain ever mutates
- *     it. This is the honest claim: "append-only" here is a service-layer
- *     discipline (every write is `recordAuditEvent`, an INSERT ... ON
- *     CONFLICT DO NOTHING — server/src/services/audits/auditsDb.ts:130-169),
- *     not a database-enforced invariant (no BEFORE UPDATE/DELETE trigger, no
- *     REVOKE UPDATE/DELETE — checked directly against the live schema).
+ *  1. Direct UPDATE and DELETE statements are rejected by the database-level
+ *     append-only trigger, while unrelated normal writes leave prior rows
+ *     byte-for-byte unchanged.
  *  2. The idempotency key prevents a duplicate event: the same
  *     (organization_id, program_id, idempotency_key) inserted twice produces
  *     exactly ONE row (`uq_audit_domain_events_idempotency`, defined in
@@ -45,7 +38,8 @@ describeDb('audit_domain_events — immutable trail (real Postgres)', () => {
 
   afterAll(async () => {
     if (!pool) return;
-    await pool.query(`DELETE FROM audit_domain_events WHERE organization_id = $1`, [orgId]);
+    // audit_domain_events is intentionally not cleaned up: this suite runs on
+    // a disposable database and the production invariant forbids deletion.
     await pool.query(`DELETE FROM audit_programs WHERE organization_id = $1`, [orgId]);
     await pool.query(`DELETE FROM organizations WHERE id = $1`, [orgId]);
     await pool.end();
@@ -75,8 +69,7 @@ describeDb('audit_domain_events — immutable trail (real Postgres)', () => {
 
     // Nothing else touches this row. Re-read after unrelated activity in the
     // same org (another event for a DIFFERENT entity) and confirm byte-for-byte
-    // equality — this is the practical meaning of "append-only" for a table
-    // with no DB-level trigger enforcing it (see file header).
+    // equality in addition to the database-enforced mutation controls.
     await auditsDb.recordAuditEvent({
       organizationId: orgId,
       programId,
@@ -96,7 +89,7 @@ describeDb('audit_domain_events — immutable trail (real Postgres)', () => {
     expect(after.rows[0]).toEqual(snapshot);
   });
 
-  it('a direct UPDATE/DELETE against audit_domain_events is NOT blocked by a DB trigger — documents the real guarantee honestly', async () => {
+  it('rejects direct UPDATE and DELETE at the database boundary', async () => {
     const programId = await makeProgram(pool, orgId, uid('user'));
     await auditsDb.recordAuditEvent({
       organizationId: orgId,
@@ -104,24 +97,25 @@ describeDb('audit_domain_events — immutable trail (real Postgres)', () => {
       entityType: 'probe',
       entityId: 'probe-mutate',
       eventType: 'probe.recorded',
-      summary: 'Row that will be directly mutated to prove there is no DB trigger',
+      summary: 'Immutable row protected by the database trigger',
     });
 
-    // If a future migration adds a BEFORE UPDATE/DELETE trigger to enforce
-    // true database-level immutability, this direct UPDATE will start
-    // throwing and this assertion must flip to `.rejects.toThrow(...)` —
-    // that would be a strictly STRONGER guarantee, not a regression.
     await expect(
       pool.query(`UPDATE audit_domain_events SET summary='tampered' WHERE organization_id=$1 AND entity_id='probe-mutate'`, [
         orgId,
       ]),
-    ).resolves.toBeDefined();
+    ).rejects.toThrow(/append-only/);
 
-    const mutated = await pool.query(
+    await expect(
+      pool.query(`DELETE FROM audit_domain_events WHERE organization_id=$1 AND entity_id='probe-mutate'`, [orgId]),
+    ).rejects.toThrow(/append-only/);
+
+    const preserved = await pool.query(
       `SELECT summary FROM audit_domain_events WHERE organization_id=$1 AND entity_id='probe-mutate'`,
       [orgId],
     );
-    expect(mutated.rows[0].summary).toBe('tampered');
+    expect(preserved.rows).toHaveLength(1);
+    expect(preserved.rows[0].summary).toBe('Immutable row protected by the database trigger');
   });
 
   it('the idempotency key prevents a duplicate event: same key inserted twice ⇒ exactly ONE row', async () => {
