@@ -1,0 +1,87 @@
+{
+  "taskId": "RES-FLOW-ADAPTER-001",
+  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "productSha": "1f0dc51f291bc42dd0e361c321198e9cd7fb3e66",
+  "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
+  "changedPaths": [
+    "server/src/services/resultsVnext/platform/commandCapabilityGuard.ts",
+    "tests/resultsVnext/platform/commandCapabilityGuard.test.ts",
+    "tests/resultsVnext/kpi/kpiIdentityAcrossSurfaces.realdb.test.ts",
+    "server/src/services/finance/canonical/__tests__/roiFinanceReconciliationAdapter.pg.test.ts"
+  ],
+  "changedPathRationale": {
+    "server/src/services/resultsVnext/platform/commandCapabilityGuard.ts": "Fail closed with canonical DENY when an untyped or stale caller omits CommandAccessContext; prevents a TypeError/500 at the Results-Finance write boundary.",
+    "tests/resultsVnext/platform/commandCapabilityGuard.test.ts": "Positive regression proof for the missing-access denial path.",
+    "tests/resultsVnext/kpi/kpiIdentityAcrossSurfaces.realdb.test.ts": "Pass the mandatory access context and make the OPEN_ORG fixture idempotent under repeated execution.",
+    "server/src/services/finance/canonical/__tests__/roiFinanceReconciliationAdapter.pg.test.ts": "Pass mandatory access context and isolate the one-open-reconciliation invariant across tests/retries."
+  },
+  "ownerTables": [
+    "schema_migrations",
+    "rvn_platform_visibility_policies",
+    "rvn_roi_finance_links",
+    "rvn_roi_finance_reconciliations",
+    "rvn_platform_events",
+    "rvn_kpi_definitions",
+    "rvn_kpi_scorecards",
+    "rvn_kpi_initiative_impacts"
+  ],
+  "commands": [
+    {
+      "command": "npm run type-check",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run build:backend",
+      "exitCode": 0
+    },
+    {
+      "command": "NODE_ENV=test DB_TYPE=postgres DATABASE_URL=<isolated-local-pg> npx tsx server/scripts/migrate.postgres.ts",
+      "exitCode": 0,
+      "result": "703 applied on fresh database"
+    },
+    {
+      "command": "NODE_ENV=test DB_TYPE=postgres DATABASE_URL=<same-isolated-pg> npx tsx server/scripts/migrate.postgres.ts && ... --dry-run",
+      "exitCode": 0,
+      "result": "0 applied; 0 pending; ledger 703 success / 0 non-success"
+    },
+    {
+      "command": "RUN_DB_TESTS=1 MOCK_DB=false npx vitest run tests/resultsVnext/platform/commandCapabilityGuard.test.ts server/src/services/finance/canonical/__tests__/roiFinanceReconciliationAdapter.pg.test.ts tests/resultsVnext/kpi/kpiIdentityAcrossSurfaces.realdb.test.ts",
+      "exitCode": 0
+    }
+  ],
+  "denominators": {
+    "focusedUnitAndRealDbFiles": 3,
+    "focusedUnitAndRealDbTests": 32,
+    "passed": 32,
+    "failed": 0,
+    "skipped": 0,
+    "todo": 0,
+    "strictFreshMigrations": 703,
+    "strictRepeatApplied": 0,
+    "strictDryRunPending": 0,
+    "migrationLedgerNonSuccess": 0
+  },
+  "fixtures": {
+    "database": "isolated pgvector/pgvector:pg16 container on loopback",
+    "data": "per-suite UUID tenant/user/case/link/KPI/scorecard fixtures",
+    "cleanup": "suite cleanup plus disposable container; no shared/demo/production database"
+  },
+  "negativeControls": {
+    "missingAccess": "controlled COMMAND_CAPABILITY_DENIED instead of TypeError/500",
+    "crossTenant": "Finance cross-tenant routes and reconciliation tenant hiding passed in the surrounding realDB packet",
+    "staleCas": "reconciliation stale expectedVersion rejection passed",
+    "legacyActualOverwrite": "trigger rejects raw overwrite; endpoint returns governed reconciliation without false success",
+    "oneOpenPerLink": "fixture isolates each scenario while production unique invariant remains enforced"
+  },
+  "browserArtifacts": [],
+  "rollback": {
+    "code": "revert commit 1f0dc51f291bc42dd0e361c321198e9cd7fb3e66",
+    "schema": "no migration or schema mutation introduced by this commit"
+  },
+  "verdict": "PARTIAL",
+  "openBlockers": [
+    "Full Execution-to-Results producer contract awaits lane B handoff.",
+    "Full outbox replay/restart and browser evidence for the integrated flow remain required.",
+    "Results visibility and Finance reconciliation owner decisions remain fail-closed."
+  ]
+}
