@@ -19,6 +19,43 @@ const db = {
   run: (sql: string, params: any[]) => dbRun(sql, params),
 };
 
+type MfaAuditAction =
+  | 'security.mfa.enroll_started'
+  | 'security.mfa.enroll_completed'
+  | 'security.mfa.enroll_failed'
+  | 'security.mfa.challenge'
+  | 'security.mfa.recovery_code'
+  | 'security.mfa.recovery_codes_regenerated'
+  | 'security.mfa.disable';
+
+async function writeMfaAudit(
+  req: Request,
+  userId: string,
+  actionType: MfaAuditAction,
+  success: boolean,
+  reason?: string
+): Promise<void> {
+  const user = (await db.get(`SELECT organization_id FROM users WHERE id = ?`, [userId])) as
+    | { organization_id: string }
+    | undefined;
+  const result = await db.run(
+    `INSERT INTO audit_logs
+       (id, timestamp, user_id, action_type, resource_type, resource_id,
+        organization_id, details, ip_address, user_agent, created_at)
+     VALUES (gen_random_uuid()::text, NOW(), ?, ?, 'user_mfa', ?, ?, ?, ?, ?, NOW())`,
+    [
+      userId,
+      actionType,
+      userId,
+      user?.organization_id ?? null,
+      JSON.stringify({ success, ...(reason ? { reason } : {}) }),
+      req.ip ?? null,
+      req.get('user-agent') ?? null,
+    ]
+  );
+  if (!result?.success) throw new Error('MFA audit event was not persisted');
+}
+
 // Simple TOTP implementation for demonstration
 // In production, use a library like speakeasy or otplib
 function generateSecret(): string {
@@ -131,6 +168,8 @@ router.post('/setup', verifyToken, isAuthenticated, async (req: Request, res: Re
         .json({ error: 'Nie udało się skonfigurować MFA', code: 'MFA_SETUP_NOT_PERSISTED' });
     }
 
+    await writeMfaAudit(req, userId, 'security.mfa.enroll_started', true);
+
     logger.info(`[MFA] Setup initiated for user ${userId}`);
 
     res.json({
@@ -158,6 +197,7 @@ router.post('/verify-setup', verifyToken, isAuthenticated, async (req: Request, 
     const { token } = req.body;
 
     if (!token || token.length !== 6) {
+      await writeMfaAudit(req, userId, 'security.mfa.enroll_failed', false, 'invalid_format');
       return res.status(400).json({ error: 'Invalid token format' });
     }
 
@@ -166,16 +206,18 @@ router.post('/verify-setup', verifyToken, isAuthenticated, async (req: Request, 
     } | null;
 
     if (!mfaConfig?.secret) {
+      await writeMfaAudit(req, userId, 'security.mfa.enroll_failed', false, 'not_initialized');
       return res.status(400).json({ error: 'MFA not initialized. Please start setup first.' });
     }
 
     if (!verifyTOTP(mfaConfig.secret, token)) {
+      await writeMfaAudit(req, userId, 'security.mfa.enroll_failed', false, 'invalid_totp');
       return res.status(400).json({ error: 'Invalid verification code' });
     }
 
     // Generate backup codes
     const backupCodes = Array.from({ length: 10 }, () =>
-      crypto.randomBytes(4).toString('hex').toUpperCase()
+      crypto.randomBytes(8).toString('hex').toUpperCase()
     );
     const hashedBackupCodes = backupCodes.map((code) =>
       crypto.createHash('sha256').update(code).digest('hex')
@@ -208,6 +250,8 @@ router.post('/verify-setup', verifyToken, isAuthenticated, async (req: Request, 
         .status(500)
         .json({ error: 'Nie udało się włączyć MFA', code: 'MFA_ENABLE_NOT_PERSISTED' });
     }
+
+    await writeMfaAudit(req, userId, 'security.mfa.enroll_completed', true);
 
     logger.info(`[MFA] Successfully enabled for user ${userId}`);
 
@@ -256,46 +300,67 @@ router.post('/verify', verifyToken, async (req: Request, res: Response) => {
     if (isBackupCode) {
       // Verify backup code
       const hashedInput = crypto.createHash('sha256').update(token.toUpperCase()).digest('hex');
-      const backupCodes = JSON.parse(mfaConfig.backup_codes || '[]');
-      const codeIndex = backupCodes.indexOf(hashedInput);
-
-      if (codeIndex >= 0) {
-        // Remove used backup code
-        backupCodes.splice(codeIndex, 1);
-        const consumeResult = await db.run(
-          `
-          UPDATE user_mfa
-          SET backup_codes = ?, backup_codes_count = backup_codes_count - 1
+      // One conditional UPDATE is the compare-and-swap. PostgreSQL locks the
+      // row and re-checks the predicate after a concurrent writer commits, so
+      // exactly one request can remove and accept a given recovery-code hash.
+      const consumeResult = await db.run(
+        `UPDATE user_mfa
+            SET backup_codes = COALESCE(
+                  (SELECT jsonb_agg(code)::text
+                     FROM jsonb_array_elements_text(COALESCE(backup_codes, '[]')::jsonb) AS code
+                    WHERE code <> ?),
+                  '[]'
+                ),
+                backup_codes_count = GREATEST(backup_codes_count - 1, 0),
+                last_verified_at = NOW(),
+                updated_at = NOW()
           WHERE user_id = ?
-        `,
-          [JSON.stringify(backupCodes), userId]
-        );
-        // A recovery code that is accepted but not consumed stays valid
-        // forever — the opposite of single-use. Refuse rather than admit on an
-        // unpersisted consumption.
-        if (!consumeResult?.success) {
-          logger.error('[MFA] Failed to consume backup code', {
-            userId,
-            error: consumeResult?.error,
-            correlationId: (req as any).correlationId,
-          });
-          return res.status(500).json({
-            error: 'Weryfikacja nie powiodła się',
-            code: 'MFA_BACKUP_CODE_NOT_CONSUMED',
-          });
-        }
-        verified = true;
+            AND enabled = true
+            AND EXISTS (
+              SELECT 1
+                FROM jsonb_array_elements_text(COALESCE(backup_codes, '[]')::jsonb) AS code
+               WHERE code = ?
+            )`,
+        [hashedInput, userId, hashedInput]
+      );
+      if (!consumeResult?.success) {
+        logger.error('[MFA] Failed to consume backup code', {
+          userId,
+          error: consumeResult?.error,
+          correlationId: (req as any).correlationId,
+        });
+        return res.status(500).json({
+          error: 'Weryfikacja nie powiodła się',
+          code: 'MFA_BACKUP_CODE_NOT_CONSUMED',
+        });
       }
+      verified = consumeResult.changes === 1;
+      await writeMfaAudit(
+        req,
+        userId,
+        'security.mfa.recovery_code',
+        verified,
+        verified ? undefined : 'invalid_or_consumed'
+      );
     } else {
       // Verify TOTP
       verified = verifyTOTP(mfaConfig.secret, token);
+      await writeMfaAudit(
+        req,
+        userId,
+        'security.mfa.challenge',
+        verified,
+        verified ? undefined : 'invalid_totp'
+      );
     }
 
     if (!verified) {
       return res.status(401).json({ error: 'Invalid verification code' });
     }
 
-    const stampResult = await db.run(
+    const stampResult = isBackupCode
+      ? { success: true }
+      : await db.run(
       `
       UPDATE user_mfa SET last_verified_at = datetime('now') WHERE user_id = ?
     `,
@@ -333,6 +398,7 @@ router.post('/disable', verifyToken, isAuthenticated, async (req: Request, res: 
     const { token, password } = req.body;
 
     if (!password) {
+      await writeMfaAudit(req, userId, 'security.mfa.disable', false, 'password_required');
       return res.status(400).json({ error: 'Password confirmation required' });
     }
 
@@ -340,6 +406,7 @@ router.post('/disable', verifyToken, isAuthenticated, async (req: Request, res: 
       password: string;
     } | null;
     if (!user?.password || !bcrypt.compareSync(password, user.password)) {
+      await writeMfaAudit(req, userId, 'security.mfa.disable', false, 'reauth_failed');
       return res
         .status(401)
         .json({ error: 'Current password is incorrect', code: 'REAUTH_FAILED' });
@@ -350,11 +417,13 @@ router.post('/disable', verifyToken, isAuthenticated, async (req: Request, res: 
     ])) as { secret: string; enabled: boolean } | null;
 
     if (!mfaConfig?.enabled) {
+      await writeMfaAudit(req, userId, 'security.mfa.disable', false, 'not_enabled');
       return res.status(400).json({ error: 'MFA is not enabled' });
     }
 
     // Verify TOTP before disabling
     if (!verifyTOTP(mfaConfig.secret, token)) {
+      await writeMfaAudit(req, userId, 'security.mfa.disable', false, 'invalid_totp');
       return res.status(401).json({ error: 'Invalid verification code' });
     }
 
@@ -380,6 +449,8 @@ router.post('/disable', verifyToken, isAuthenticated, async (req: Request, res: 
         .status(500)
         .json({ error: 'Nie udało się wyłączyć MFA', code: 'MFA_DISABLE_NOT_PERSISTED' });
     }
+
+    await writeMfaAudit(req, userId, 'security.mfa.disable', true);
 
     logger.info(`[MFA] Disabled for user ${userId}`);
 
@@ -415,11 +486,18 @@ router.post(
       }
 
       if (!verifyTOTP(mfaConfig.secret, token)) {
+        await writeMfaAudit(
+          req,
+          userId,
+          'security.mfa.recovery_codes_regenerated',
+          false,
+          'invalid_totp'
+        );
         return res.status(401).json({ error: 'Invalid verification code' });
       }
 
       const backupCodes = Array.from({ length: 10 }, () =>
-        crypto.randomBytes(4).toString('hex').toUpperCase()
+        crypto.randomBytes(8).toString('hex').toUpperCase()
       );
       const hashedBackupCodes = backupCodes.map((code) =>
         crypto.createHash('sha256').update(code).digest('hex')
@@ -448,6 +526,8 @@ router.post(
           code: 'MFA_BACKUP_CODES_NOT_PERSISTED',
         });
       }
+
+      await writeMfaAudit(req, userId, 'security.mfa.recovery_codes_regenerated', true);
 
       res.json({
         success: true,

@@ -96,6 +96,7 @@ describe.skipIf(!REAL_DB)('MFA enrolment — real PostgreSQL', () => {
   // Children before parents; only ids this file created.
   afterAll(async () => {
     if (!pool) return;
+    await pool.query(`DELETE FROM audit_logs WHERE user_id = ANY($1)`, [createdUsers]);
     await pool.query(`DELETE FROM user_mfa WHERE user_id = ANY($1)`, [createdUsers]);
     await pool.query(`DELETE FROM users WHERE id = ANY($1)`, [createdUsers]);
     await pool.query(`DELETE FROM organizations WHERE id = $1`, [orgId]);
@@ -184,6 +185,117 @@ describe.skipIf(!REAL_DB)('MFA enrolment — real PostgreSQL', () => {
     ]);
     expect(row.rows[0].enabled).toBe(true);
     expect(row.rows[0].secret).toBe(setup.body.secret);
+  });
+
+  it('consumes one backup code atomically exactly once under concurrent requests', async () => {
+    currentUserId = await newUser();
+    const setup = await request(app).post('/api/mfa/setup').send({});
+    const enabled = await request(app)
+      .post('/api/mfa/verify-setup')
+      .send({ token: totp(setup.body.secret) });
+    const recoveryCode = enabled.body.backupCodes[0];
+
+    const responses = await Promise.all([
+      request(app).post('/api/mfa/verify').send({ token: recoveryCode, isBackupCode: true }),
+      request(app).post('/api/mfa/verify').send({ token: recoveryCode, isBackupCode: true }),
+    ]);
+
+    expect(responses.map((response) => response.status).sort()).toEqual([200, 401]);
+    const row = await pool.query(
+      `SELECT backup_codes, backup_codes_count FROM user_mfa WHERE user_id = $1`,
+      [currentUserId]
+    );
+    expect(row.rows[0].backup_codes_count).toBe(9);
+    expect(JSON.parse(row.rows[0].backup_codes)).toHaveLength(9);
+
+    const audits = await pool.query(
+      `SELECT details FROM audit_logs
+        WHERE user_id = $1 AND action_type = 'security.mfa.recovery_code'
+        ORDER BY created_at`,
+      [currentUserId]
+    );
+    expect(audits.rows).toHaveLength(2);
+    expect(audits.rows.map((auditRow) => JSON.parse(auditRow.details).success).sort()).toEqual([
+      false,
+      true,
+    ]);
+  });
+
+  it('regeneration invalidates every old backup code and the new set remains single-use', async () => {
+    currentUserId = await newUser();
+    const setup = await request(app).post('/api/mfa/setup').send({});
+    const enabled = await request(app)
+      .post('/api/mfa/verify-setup')
+      .send({ token: totp(setup.body.secret) });
+    const oldCode = enabled.body.backupCodes[0];
+
+    const regenerated = await request(app)
+      .post('/api/mfa/regenerate-backup-codes')
+      .send({ token: totp(setup.body.secret) });
+    expect(regenerated.status).toBe(200);
+    expect(regenerated.body.backupCodes).toHaveLength(10);
+
+    const oldAttempt = await request(app)
+      .post('/api/mfa/verify')
+      .send({ token: oldCode, isBackupCode: true });
+    expect(oldAttempt.status).toBe(401);
+
+    const newCode = regenerated.body.backupCodes[0];
+    const first = await request(app)
+      .post('/api/mfa/verify')
+      .send({ token: newCode, isBackupCode: true });
+    const replay = await request(app)
+      .post('/api/mfa/verify')
+      .send({ token: newCode, isBackupCode: true });
+    expect(first.status).toBe(200);
+    expect(replay.status).toBe(401);
+
+    const row = await pool.query(`SELECT backup_codes_count FROM user_mfa WHERE user_id = $1`, [
+      currentUserId,
+    ]);
+    expect(row.rows[0].backup_codes_count).toBe(9);
+  });
+
+  it('audits enroll, challenge, recovery-code regeneration, and disable outcomes without secrets', async () => {
+    currentUserId = await newUser();
+    const setup = await request(app).post('/api/mfa/setup').send({});
+    await request(app).post('/api/mfa/verify-setup').send({ token: '000000' });
+    await request(app)
+      .post('/api/mfa/verify-setup')
+      .send({ token: totp(setup.body.secret) });
+    await request(app).post('/api/mfa/verify').send({ token: '000000' });
+    await request(app).post('/api/mfa/verify').send({ token: totp(setup.body.secret) });
+    await request(app)
+      .post('/api/mfa/regenerate-backup-codes')
+      .send({ token: totp(setup.body.secret) });
+    await request(app)
+      .post('/api/mfa/disable')
+      .send({ password: 'wrong-password', token: totp(setup.body.secret) });
+    await request(app)
+      .post('/api/mfa/disable')
+      .send({ password: 'correct-password', token: totp(setup.body.secret) });
+
+    const audit = await pool.query(
+      `SELECT action_type, details FROM audit_logs
+        WHERE user_id = $1 AND action_type LIKE 'security.mfa.%'
+        ORDER BY created_at`,
+      [currentUserId]
+    );
+    const actions = audit.rows.map((auditRow) => auditRow.action_type);
+    expect(actions).toEqual(
+      expect.arrayContaining([
+        'security.mfa.enroll_started',
+        'security.mfa.enroll_failed',
+        'security.mfa.enroll_completed',
+        'security.mfa.challenge',
+        'security.mfa.recovery_codes_regenerated',
+        'security.mfa.disable',
+      ])
+    );
+    expect(audit.rows.some((auditRow) => JSON.parse(auditRow.details).success === false)).toBe(true);
+    const serialized = JSON.stringify(audit.rows);
+    expect(serialized).not.toContain(setup.body.secret);
+    expect(serialized).not.toContain('correct-password');
   });
 
   it('a refused write makes ENABLEMENT fail instead of reporting "MFA enabled"', async () => {
