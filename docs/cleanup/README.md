@@ -8,7 +8,8 @@ It does **not** define product behavior. For product truth use `docs/product/DOC
 
 1. `CLEANUP_CURRENT_STATE_20260816.md` — the only current operational state
 2. `CLEANUP_RECOVERY_LEDGER_20260816.md` — package, branch, worktree, and quarantine decisions
-3. `POST_CLEANUP_COMPLETION_PLAN.md` — the product completion plan after cleanup
+3. `POST_CLEANUP_COMPLETION_PLAN.md` — active 82-task application completion
+   plan with four-branch ownership
 4. `REPO_CLEANUP_GOVERNANCE.md` — durable cleanup rules
 5. `REPO_CLEANUP_LEDGER.md` — historical cleanup decisions predating the current recovery
 6. `PARALLEL_DOC_TREES_CLASSIFICATION.md`
