@@ -166,6 +166,19 @@ async function getMarketplaceProvider(orgId: string): Promise<any | null> {
 
 async function tryGetColumns(table: string): Promise<Set<string>> {
   try {
+    const rows = await dbAll<{ name: string }>(
+      `SELECT column_name AS name
+       FROM information_schema.columns
+       WHERE table_schema = current_schema() AND table_name = ?`,
+      [table]
+    );
+    if (rows?.length) {
+      return new Set(rows.map((r) => String(r.name || '')).filter(Boolean));
+    }
+  } catch {
+    // SQLite compatibility fallback below.
+  }
+  try {
     const rows = await dbAll<{ name: string }>(`PRAGMA table_info(${table})`, []);
     return new Set((rows || []).map((r) => String(r.name || '')).filter(Boolean));
   } catch {
@@ -489,8 +502,10 @@ router.get(
     // Aggregate context from various sources
     const activeProject = await dbAll(
       `SELECT p.id, p.name FROM projects p
-    JOIN project_users pm ON p.id = pm.project_id WHERE pm.user_id = ? AND p.status = 'active' LIMIT 3`,
-      [userId]
+    JOIN project_members pm ON p.id = pm.project_id
+    WHERE pm.user_id = ? AND p.organization_id = ? AND p.status = 'active'
+    LIMIT 3`,
+      [userId, orgId]
     );
     res.json({
       user: { id: userId },

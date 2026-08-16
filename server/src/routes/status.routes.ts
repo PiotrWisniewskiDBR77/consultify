@@ -28,7 +28,13 @@ router.get(
   `,
       [orgId]
     );
-    res.json(statuses);
+    res.json(
+      (statuses || []).map((status: any) => ({
+        ...status,
+        progress_pct: status.progress_pct == null ? status.progress_pct : Number(status.progress_pct),
+        open_tasks: Number(status.open_tasks || 0),
+      }))
+    );
   })
 );
 
@@ -49,7 +55,17 @@ router.get(
   `,
       [orgId]
     );
-    res.json(overview || { total: 0, active: 0, completed: 0, at_risk: 0, avg_progress: 0 });
+    if (!overview) {
+      return res.json({ total: 0, active: 0, completed: 0, at_risk: 0, avg_progress: 0 });
+    }
+    return res.json({
+      ...overview,
+      total: Number((overview as any).total || 0),
+      active: Number((overview as any).active || 0),
+      completed: Number((overview as any).completed || 0),
+      at_risk: Number((overview as any).at_risk || 0),
+      avg_progress: Number((overview as any).avg_progress || 0),
+    });
   })
 );
 
