@@ -6,11 +6,18 @@ It does **not** define product behavior. For product truth use `docs/product/DOC
 
 ## Read Order
 
-1. `REPO_CLEANUP_GOVERNANCE.md`
-2. `REPO_CLEANUP_LEDGER.md`
-3. `PARALLEL_DOC_TREES_CLASSIFICATION.md`
-4. `SOFTS_REFERENCE_HANDLING.md`
-5. `MAINTAINER_HYGIENE_CHECKLIST.md`
+1. `CLEANUP_CURRENT_STATE_20260816.md` — the only current operational state
+2. `CLEANUP_RECOVERY_LEDGER_20260816.md` — package, branch, worktree, and quarantine decisions
+3. `POST_CLEANUP_COMPLETION_PLAN.md` — the product completion plan after cleanup
+4. `REPO_CLEANUP_GOVERNANCE.md` — durable cleanup rules
+5. `REPO_CLEANUP_LEDGER.md` — historical cleanup decisions predating the current recovery
+6. `PARALLEL_DOC_TREES_CLASSIFICATION.md`
+7. `SOFTS_REFERENCE_HANDLING.md`
+8. `MAINTAINER_HYGIENE_CHECKLIST.md`
+
+All dated five-hour plans, acceleration briefs, status snapshots, and earlier
+cleanup checkpoints are evidence only unless the current-state document links
+to them explicitly. They must not be used as active execution instructions.
 
 ## Scope
 
