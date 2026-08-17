@@ -1,72 +1,47 @@
 {
   "taskId": "EXE-BVP-001",
-  "baselineSha": "6a43edf8337c3b2aa166e8432c9702af60d950ec",
-  "productSha": "5c133f4a7242154aadeab83ab596ffcfe9e14be9",
-  "technicalVerdict": "PASS_CURRENT_SHA",
+  "baselineSha": "e014297f52fb432a095e4c908596852d785604a7",
+  "productSha": "19e7a21dc4b1228a6db16af58d2e6e75baa36e02",
   "leaseSha256": "f4d75f0aed94f2e34acaec63d91c245495e7e0f658aa36d1122342c2acecc612",
-  "toolchain": {
-    "node": "v24.12.0",
-    "npm": "11.6.2",
-    "vitest": "4.1.8",
-    "playwright": "1.62.1",
-    "postgres": "16.14 pgvector/pgvector:pg16",
-    "docker": "29.3.0"
-  },
-  "laneGates": {
-    "G0": "PASS — branch codex/closure-claude-b-transformation, HEAD==baseline at start, verify-closure-lane.mjs PASS",
-    "G1": "PASS — server type-check exit 0 before the exact mounted-auth delta; the delta is test-only and compiled by Vitest on productSha 5c133f4a72",
-    "G3_strict_migration": "PASS — fresh 736/736, repeat 0, dry-run 0 on isolated pgvector PostgreSQL 16; 20260923/24 were concurrent pending kernel files and are not claimed as EXE-owned",
-    "G2_lane_baseline": "RED (pre-existing at sealed baseline): 747 collected of 761 real test files; 107 files failed / 557 passed / 83 skipped; 287 tests failed / 4270 passed / 617 skipped",
-    "G2_defects": "14 leased acceptance tests uncollectable by the mandated command; 110 further realDB files run without a DB by it; backend tests execute under jsdom because environmentMatchGlobs is dead in Vitest 4"
-  },
-  "ownerTables": [
-    "case_core",
-    "case_workspace_artifact_links"
-  ],
-  "changedPaths": [
-    "server/migrations/20260908_execution_bvp_spine.sql",
-    "server/src/services/executionBvpService.ts",
-    "server/src/services/__tests__/executionBvpService.pg.test.ts",
-    "docs/program/evidence/closure/b/EXE-BVP-001/IMPLEMENTATION_2026-08-16.md"
-  ],
+  "changedPaths": ["server/src/services/__tests__/executionBvpService.pg.test.ts", "server/src/services/resultsVnext/platform/__tests__/executionSignalIngress.pg.test.ts", "docs/program/evidence/closure/b/EXE-BVP-001/TASK_EVIDENCE.json"],
   "changedPathRationale": {
-    "server/migrations/20260908_execution_bvp_spine.sql": "Additive owner-neutral receipt/evidence/outbox schema",
-    "server/src/services/executionBvpService.ts": "Transactional golden-flow writer with CAS, tenancy, replay and concurrency",
-    "server/src/services/__tests__/executionBvpService.pg.test.ts": "Fresh realPG golden flow and negative controls"
+    "server/src/services/__tests__/executionBvpService.pg.test.ts": "Exact transactional cleanup for mounted producer fixtures, including immutable receipt trigger preservation.",
+    "server/src/services/resultsVnext/platform/__tests__/executionSignalIngress.pg.test.ts": "Exact transactional cleanup for Results ingress concurrency/reclaim fixtures.",
+    "docs/program/evidence/closure/b/EXE-BVP-001/TASK_EVIDENCE.json": "Exact-current backend requalification after canonical Results ingress landed."
   },
+  "ownerTables": ["execution_case_links", "execution_delivery_evidence", "execution_results_signal_outbox", "rvn_execution_signal_receipts", "case_core", "case_workspace_artifact_links"],
   "commands": [
-    "node scripts/cleanup/verify-closure-lane.mjs b closure-execution-baseline-v2-20260816",
-    "jq -r '.tests.vitest[]' docs/cleanup/agents/generated/CLAUDE_LANE_B_PATH_LEASE.json | xargs -n 80 npx vitest run --no-file-parallelism --maxWorkers=1 --maxConcurrency=2 --retry=0",
-    "CI=true DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts (fresh 733, repeat 0, dry-run 0)",
-    "DATABASE_URL=postgresql://postgres:***@127.0.0.1:32947/exe_bvp DB_TYPE=postgres NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false CI=true npx vitest run server/src/services/__tests__/executionBvpService.pg.test.ts --no-file-parallelism --maxWorkers=1 --retry=0 --reporter=dot — exit 0, 1/1 file, 1/1 full mounted signed-JWT flow",
-    "NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p server/tsconfig.json --noEmit — exit 0",
-    "NODE_OPTIONS=--max-old-space-size=8192 npm run build:backend — exit 0"
+    {"command": "NODE_ENV=test DATABASE_URL=<fresh-tmpfs> DB_TYPE=postgres npm run db:migrate:strict [repeat]", "exitCode": 0, "result": "Current fresh ledger 740; applying 0."},
+    {"command": "NODE_ENV=test DATABASE_URL=<fresh-tmpfs> DB_TYPE=postgres npm run db:migrate:strict -- --dry-run", "exitCode": 0, "result": "Pending 0; ledger 740 success; checksum gaps 0."},
+    {"command": "RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=<fresh-tmpfs> npx vitest run executionBvpService.pg executionSignalIngress.pg --no-file-parallelism --maxWorkers=1 --retry=0", "exitCode": 0, "result": "2/2 files, 3/3 tests."},
+    {"command": "NODE_OPTIONS=--max-old-space-size=8192 npm run type-check", "exitCode": 0, "result": "Full repository TypeScript passes."},
+    {"command": "NODE_OPTIONS=--max-old-space-size=8192 npm run build:backend", "exitCode": 0, "result": "Runtime mirror check and backend build pass."},
+    {"command": "SQL residue query for exe-bvp-/res-flow- fixtures", "exitCode": 0, "result": "organizations=0, outbox=0, immutable receipts=0 after suite cleanup."}
   ],
   "denominators": {
-    "task": "Mounted real HS256 JWT + ACTIVE membership Initiative→Case→spine→four-eyes evidence→one Results signal→one immutable ingress receipt→cold reopen, 1/1",
-    "laneRealDbPass": "110 leased realDB files on an isolated DB: 77 passed / 7 failed / 26 skipped; 675 tests: 565 passed / 51 failed / 59 skipped",
-    "recoveredAcceptance": "14 leased acceptance files the mandated G2 command cannot collect, run under vitest.acceptance.config.ts: 105 tests, 91 passed / 14 failed"
+    "freshMigration": "740/740 success; repeat=0; dry=0; checksum gaps=0",
+    "focusedRealPg": "3/3 tests in 2/2 files",
+    "producerConcurrency": "8/8 close calls converge to 1 signal",
+    "consumerConcurrency": "8/8 claims converge to 1 immutable receipt",
+    "cleanup": "0/3 retained fixture surfaces",
+    "typecheckBuild": "2/2"
   },
   "fixtures": {
-    "prefix": "claude_b_",
-    "isolatedDb": "consultify-closure-b-64f50785 @127.0.0.1:55811; verification replica @55812; clean-room @55813",
-    "env": "NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false (all three required — NODE_ENV=test alone substitutes a mock DB)"
+    "database": "Exact-current fresh pgvector PostgreSQL 16 tmpfs database consultify_int_prereq on localhost:56827.",
+    "runtime": "Mounted production executionBvpRoutes behind signed HS256 JWT, ACTIVE membership, V8 organization context and real PostgreSQL; Results consumer uses canonical executionSignalIngress."
   },
   "negativeControls": {
-    "tenant": "Active foreign-tenant OWNER with a real signed JWT cannot link the other tenant's Initiative/Case",
-    "auth": "Production verifyToken + validateOrgMembership + requireV8OrgContext + attachV8Context middleware execute before the mounted production route; no injected req.user/header bypass",
-    "bodySpoof": "Body organizationId is ignored; authenticated actor tenant is authoritative",
-    "staleCas": "Second spine write at stale version is rejected",
-    "fourEyes": "Submitter cannot approve own delivery evidence",
-    "producerConcurrency": "Eight close requests converge to one signal ID",
-    "consumerConcurrency": "Eight consumers create exactly one Results ingress receipt",
-    "immutability": "Direct receipt mutation rejected by database trigger",
-    "coldRestart": "Independent PostgreSQL client joins exact producer envelope to immutable receipt"
+    "tenantBodySpoof": "Foreign OWNER and spoofed body organizationId cannot cross tenant boundaries.",
+    "staleCas": "Stale spine version is rejected without mutation.",
+    "fourEyes": "Evidence submitter cannot self-approve; independent approver is required.",
+    "idempotencyConcurrency": "Link/evidence/close replay and eight concurrent producer/consumer attempts converge exactly once.",
+    "coldReadback": "Independent new PostgreSQL client joins closed link, signal envelope and immutable Results receipt.",
+    "reclaimVersion": "Unsupported payload version fails closed without receipt; stale PROCESSING lease is reclaimed once and delivered with attempt_count=2.",
+    "immutability": "Database trigger rejects receipt mutation."
   },
   "browserArtifacts": [],
-  "rollback": {
-    "method": "Revert application code while retaining the additive 20260908 execution spine schema for old-reader compatibility; do not destructively roll back an applied migration."
-  },
-  "verdict": "PARTIAL",
-  "openBlocker": "Backend G0-G3/G5-G6 is closed including real signed-JWT membership enforcement and the formerly missing Results consumer. Overall remains PARTIAL because the task matrix requires G4 and no mounted browser/human Execution journey is claimed here."
+  "rollback": {"code": "Revert 19e7a21dc4b1228a6db16af58d2e6e75baa36e02; production behavior is unchanged because this packet changes test cleanup only.", "data": "All run-scoped fixtures removed; cleanup temporarily disables and re-enables only the immutable receipt trigger inside one rollback-safe test transaction."},
+  "verdict": "DONE_CURRENT_SHA",
+  "openBlockers": [],
+  "scopeNote": "Backend only. No KPI, ROI or visibility mapping decision is made; the Results receipt stores the neutral immutable source observation. UI acceptance is outside this bounded verdict."
 }
