@@ -2,16 +2,24 @@
   "taskId": "FLOW-TRANSFORM-MVP-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "productSha": "c50c4895f11012ea4326fd9879521716f100a5d8",
-  "technicalSourceSha": "64590c5b4a530b53b4432ef990b709efe3ef12e3",
-  "requalificationSha": "1a0a9ef50694f981bcba167429e956493829180a",
+  "historicalTechnicalSourceSha": "64590c5b4a530b53b4432ef990b709efe3ef12e3",
+  "technicalSourceSha": "d7e1b42a5f60281b6c552d8571e731288e792c73",
+  "requalificationSha": "d7e1b42a5f60281b6c552d8571e731288e792c73",
+  "reconciliationSha": "d7e1b42a5f60281b6c552d8571e731288e792c73",
   "patchEquivalence": "Canonical 64590c5b4a530b53b4432ef990b709efe3ef12e3 is byte-for-byte patch-equivalent to reported source 1fd80eb9e28f02215683a0be487e5b950d0e0533 across all nine scoped-cleanup paths.",
   "leaseSha256": "18eb0f2e24aee1d6415a29e1605597117f24c42a1f74439842581e7a92583742",
   "changedPaths": [
     "tests/integration/exe009-closure-delivery-receipt.realdb.test.ts",
+    "server/src/services/closureDeliveryReceiptService.ts",
+    "server/src/services/resultsVnext/roi/closureReceiptRoiCaseAdapter.ts",
+    "tests/integration/crossflow/cf-00-closure-receipt-roi-binding.realdb.test.ts",
     "docs/program/evidence/closure/codex/FLOW-TRANSFORM-MVP-001/TASK_EVIDENCE.json"
   ],
   "changedPathRationale": {
     "tests/integration/exe009-closure-delivery-receipt.realdb.test.ts": "Updates the Execution to Results and Finance acceptance fixture to satisfy the immutable human-approved CLOSURE decision owner instead of bypassing the canonical transition gate.",
+    "server/src/services/closureDeliveryReceiptService.ts": "Optionally invokes the default-OFF bounded receipt-to-ROI adapter, records terminal non-bindable actorless receipts and exposes retry recovery without changing Finance approval or PIR state.",
+    "server/src/services/resultsVnext/roi/closureReceiptRoiCaseAdapter.ts": "Creates or replays one tenant-bound inert ROI case using an immutable event fingerprint, truthful ACTIVE actor and owner attribution, and fail-closed collision semantics.",
+    "tests/integration/crossflow/cf-00-closure-receipt-roi-binding.realdb.test.ts": "Proves concurrency, immutable replay/collision, second-receipt reuse, failure recovery, actorless disposition, zero automatic Finance/PIR outcomes and fully guarded cleanup on real PostgreSQL.",
     "docs/program/evidence/closure/codex/FLOW-TRANSFORM-MVP-001/TASK_EVIDENCE.json": "Separates the proven downstream real-PostgreSQL slice from the still-unproven full transformation and deployed-browser journey."
   },
   "ownerTables": [
@@ -20,7 +28,16 @@
     "initiative_benefits",
     "kpi_time_series",
     "ie_aggregate_state",
-    "ie_outbox_events"
+    "ie_outbox_events",
+    "rvn_roi_cases",
+    "rvn_roi_baselines",
+    "rvn_roi_calculation_policy",
+    "rvn_platform_resource_visibility",
+    "rvn_platform_resource_acl",
+    "rvn_platform_obligations",
+    "rvn_platform_visibility_policies",
+    "rvn_platform_events",
+    "rvn_platform_outbox"
   ],
   "commands": [
     {
@@ -45,12 +62,27 @@
       "command": "same exact-current environment npx vitest run <four closure-evidence files> exe009-closure-delivery-receipt execution-closure-evidence-gate.golden-flow roiObligationsSurviveInitiativeClosure ClosureSection --no-file-parallelism --maxWorkers=1 --retry=0 --reporter=dot",
       "exitCode": 0,
       "result": "8/8 files; 170/170 tests; forced downstream rollback passed; both immutable triggers enabled O; exact fixture residue 0"
+    },
+    {
+      "command": "DATABASE_URL=<own-flow-pg> DB_TYPE=postgres NODE_ENV=test npx tsx server/scripts/migrate.postgres.ts; <same env> npx tsx server/scripts/migrate.postgres.ts; <same env> npx tsx server/scripts/migrate.postgres.ts --dry-run",
+      "exitCode": 0,
+      "result": "fresh 762; repeat 0; dry pending 0; ledger 762"
+    },
+    {
+      "command": "RUN_DB_TESTS=1 MOCK_DB=false FLOW_TRANSFORM_ALLOW_FIXTURE_CLEANUP=1 FLOW_TRANSFORM_DISPOSABLE_DB_PREFIX=flow_postfanin CLOSURE_EVIDENCE_ALLOW_IMMUTABLE_FIXTURE_CLEANUP=1 CLOSURE_EVIDENCE_DISPOSABLE_DB_PREFIX=flow_postfanin DATABASE_URL=<own-flow-pg> npx vitest run tests/integration/crossflow/cf-00-closure-receipt-roi-binding.realdb.test.ts tests/integration/closure-evidence/authorization-matrix.realdb.test.ts tests/integration/closure-evidence/governed-artifact-evidence.realdb.test.ts tests/integration/closure-evidence/meeting-notebook-evidence.realdb.test.ts tests/integration/closure-evidence/tool-output-producer-flow.realdb.test.ts tests/integration/exe009-closure-delivery-receipt.realdb.test.ts tests/integration/execution-closure-evidence-gate.golden-flow.realdb.test.ts tests/resultsVnext/roi/roiObligationsSurviveInitiativeClosure.realdb.test.ts tests/components/Initiatives/ClosureSection.test.tsx --no-file-parallelism --maxWorkers=1 --retry=0",
+      "exitCode": 0,
+      "result": "9/9 files; 171/171 tests in one clean invocation"
+    },
+    {
+      "command": "NODE_OPTIONS=--max-old-space-size=8192 npm run type-check && npm --prefix server run typecheck && npm run build:backend",
+      "exitCode": 0,
+      "result": "root and server TypeScript plus backend build passed"
     }
   ],
   "denominators": {
-    "freshMigrations": {"applied": 722, "failed": 0},
-    "executionResultsFinanceReceipt": {"files": 1, "passed": 27, "failed": 0, "skipped": 0},
-    "resultsFinanceAuthoritativeBridge": {"files": 1, "passed": 2, "failed": 0, "skipped": 0},
+    "freshMigrations": { "applied": 722, "failed": 0 },
+    "executionResultsFinanceReceipt": { "files": 1, "passed": 27, "failed": 0, "skipped": 0 },
+    "resultsFinanceAuthoritativeBridge": { "files": 1, "passed": 2, "failed": 0, "skipped": 0 },
     "exactCurrentSchema": "fresh 758; repeat 0; dry-run pending 0; ledger 758",
     "exactCurrentClosureEvidence": "4/4 files; 113/113",
     "exactCurrentCombined": "8/8 files; 170/170",
@@ -74,7 +106,7 @@
   },
   "browserArtifacts": [],
   "rollback": {
-    "method": "Revert commit c50c4895f11012ea4326fd9879521716f100a5d8; production runtime and schema were not changed.",
+    "method": "Keep FLOW_CLOSURE_ROI_BINDING_ENABLED disabled or stop its callers; if code rollback is required, revert the bounded FLOW chain from 61bf9750ac through d7e1b42a5f while preserving existing immutable receipt and platform-event history. No schema migration or production enablement was introduced by this seam.",
     "executed": false
   },
   "verdict": "PARTIAL",
@@ -116,6 +148,28 @@
       "Results Actual and Finance reconciliation across the complete product journey under one stable identity",
       "deployed desktop or mobile journey",
       "production rollback rehearsal or release authorization"
+    ]
+  },
+  "boundedReceiptToRoiRequalification": {
+    "technicalSourceSha": "d7e1b42a5f60281b6c552d8571e731288e792c73",
+    "reconciliationSha": "d7e1b42a5f60281b6c552d8571e731288e792c73",
+    "scope": "Default-OFF, tenant-bound closure receipt to inert ROI case binding only; it is not the complete transformation lineage.",
+    "changedPaths": [
+      "server/src/services/closureDeliveryReceiptService.ts",
+      "server/src/services/resultsVnext/roi/closureReceiptRoiCaseAdapter.ts",
+      "tests/integration/crossflow/cf-00-closure-receipt-roi-binding.realdb.test.ts"
+    ],
+    "database": "Own disposable PostgreSQL 16; fresh 762, repeat 0, dry pending 0, ledger 762.",
+    "result": "9/9 files and 171/171 tests passed in one clean no-retry invocation; bounded seam 1/1.",
+    "proved": "ACTIVE receipt actor and explicit ACTIVE initiative owner bind immutable receipt/event identity to one inert ROI case under eight-way concurrency; replay and immutable-fingerprint collisions fail closed; a second receipt reuses the same initiative case; an actorless materialized receipt receives a permanent non-bindable disposition; target-before-receipt update failure is recovered by the global sweep; cold DB readback preserves the binding.",
+    "noAutomaticOutcome": "The test asserts zero realized values, zero Finance reconciliations and zero PIR records; Finance remains NEEDS_DECISION and the feature flag is not enabled or deployed.",
+    "cleanup": "Explicit disposable guards, advisory lock, pinned transactional cleanup, forced cleanup rollback, named trigger O and the complete owned-table residue object all passed before and after COMMIT.",
+    "static": "Root and server TypeScript checks and backend build passed.",
+    "doesNotProve": [
+      "one Organization or Interview or DRD or SWOT source through candidate, Initiative, Execution and closure receipt in one database",
+      "Results Actual through Finance reconciliation and PIR under one stable identity",
+      "a separately restarted operating-system process for the reconciliation sweep",
+      "deployed desktop or mobile behavior, production rollback or release authorization"
     ]
   }
 }

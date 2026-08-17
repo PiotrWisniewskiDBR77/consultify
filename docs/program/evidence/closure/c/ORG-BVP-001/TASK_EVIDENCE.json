@@ -2,11 +2,15 @@
   "taskId": "ORG-BVP-001",
   "baselineSha": "3d58ec9f028cfaf8d2daf6dcd2d6e89ee8cb3898",
   "productSha": "1c2549c3156b0d9c3cd6d9b27e81e94f846d12ee",
+  "technicalSourceSha": "1fb020058f81e73173333d7f52a5f74c2550561e",
+  "reconciliationSha": "d7e1b42a5f60281b6c552d8571e731288e792c73",
   "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
   "verdict": "PARTIAL",
   "technicalVerdict": "DONE_CURRENT_SHA",
-  "verdictRationale": "The owner-free pinned-consumption gap is closed on exact product SHA 1c2549c315: additive governed-only Chat and Idea routes require snapshotId+version+contentHash, persist that exact ref inside the proposal hash and an immutable binding receipt, and replay without resolving live/latest context. Legacy routes remain compatible and are not dual-written. Literal task remains PARTIAL only because browser/human G4 was outside this backend package.",
-  "open": ["Mounted browser/human G4 for the user-facing governed snapshot selection flow remains NOT_VERIFIED."],
+  "verdictRationale": "The owner-free pinned-consumption and mounted governed-upload gaps are closed. Exact refs remain immutable; new uploads persist the SHA-256 of their actual bytes; cold reads fail closed when a source hash is unavailable, unverified, mismatched or deleted. Literal task remains PARTIAL only because human G4 acceptance is not verified.",
+  "open": [
+    "Human VoiceOver, brand, named-persona and owner acceptance for the final governed snapshot journey remain NOT_VERIFIED."
+  ],
   "changedPaths": [
     "server/migrations/20260929_org_context_consumer_bindings.sql",
     "server/src/services/organizationContext/OrganizationContextService.ts",
@@ -16,7 +20,15 @@
     "server/src/routes/v8/chat.routes.ts",
     "server/src/services/ideaHandoff/ideaHandoffService.ts",
     "server/src/routes/ideaBusinessCase.routes.ts",
-    "server/src/routes/organization-context.routes.ts"
+    "server/src/routes/organization-context.routes.ts",
+    "server/migrations/20261015_knowledge_docs_file_hash.sql",
+    "server/src/services/organizationContext/ContextDocumentService.ts",
+    "server/src/services/organizationContext/__tests__/knowledgeDocsFileHashMigration15.realdb.test.ts",
+    "server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts",
+    "tests/integration/routes/organization-context.routes.test.ts",
+    "tests/unit/backend/services/contextDocumentService.storage-usage.test.ts",
+    "tests/e2e/organization/org-ui-canon-governed-context.spec.ts",
+    "tests/e2e/organization/orgUiGovernedContextFixture.ts"
   ],
   "changedPathRationale": {
     "server/migrations/20260929_org_context_consumer_bindings.sql": "Adds an immutable exact-ref receipt keyed to the governed Chat/Idea proposal; no existing table is rewritten.",
@@ -27,21 +39,89 @@
     "server/src/routes/v8/chat.routes.ts": "Adds a governed-only Chat proposal endpoint that rejects missing refs while leaving the legacy endpoint unchanged.",
     "server/src/services/ideaHandoff/ideaHandoffService.ts": "Embeds and binds an explicitly supplied governed ref in the canonical Idea artifact proposal.",
     "server/src/routes/ideaBusinessCase.routes.ts": "Adds governed-only Idea proposal endpoint and active-membership enforcement; legacy proposal endpoint remains available.",
-    "server/src/routes/organization-context.routes.ts": "Adds an explicit latest-to-exact-ref resolver; execution/replay never calls latest or buildResolvedContext."
+    "server/src/routes/organization-context.routes.ts": "Adds an explicit latest-to-exact-ref resolver; execution/replay never calls latest or buildResolvedContext.",
+    "server/migrations/20261015_knowledge_docs_file_hash.sql": "Adds a nullable, validated lowercase SHA-256 field to knowledge_docs without fabricating hashes for historical rows.",
+    "server/src/services/organizationContext/ContextDocumentService.ts": "Hashes the exact uploaded memory buffer and persists that digest atomically with the knowledge_docs row.",
+    "server/src/services/organizationContext/__tests__/knowledgeDocsFileHashMigration15.realdb.test.ts": "Proves fresh and compatible late apply plus fail-before-mutation for incompatible type, malformed data and weakened same-name CHECK.",
+    "server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts": "Proves frozen hash integrity and fail-closed unavailable, unverified, mismatched and deleted source states on real PostgreSQL.",
+    "tests/integration/routes/organization-context.routes.test.ts": "Keeps the isolated route fixture aligned with the production ACTIVE-membership wall without weakening route assertions.",
+    "tests/unit/backend/services/contextDocumentService.storage-usage.test.ts": "Proves successful upload persists the digest of the exact bytes and quota denial performs no persisted hash write.",
+    "tests/e2e/organization/org-ui-canon-governed-context.spec.ts": "Exercises mounted multipart upload, governed approval and publish, cold reopen and fail-closed source drift with signed role and tenant negatives.",
+    "tests/e2e/organization/orgUiGovernedContextFixture.ts": "Provides guarded disposable fixtures and exact cleanup for the mounted known-byte governed-context journey."
   },
   "ownerTables": [
     "organization_context_snapshot_versions",
     "organization_context_consumer_bindings",
-    "artifact_handoff_proposals"
+    "artifact_handoff_proposals",
+    "knowledge_docs"
   ],
   "commands": [
-    { "gate": "G3-fresh", "command": "DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32914/org_pinned DB_TYPE=postgres CI=true npx tsx server/scripts/migrate.postgres.ts", "exitCode": 0, "result": "743/743 distinct/success, including 20260929" },
-    { "gate": "G3-repeat-dry", "command": "<same env> migrate; <same env> migrate --dry-run", "exitCode": 0, "result": "repeat 0; dry pending 0" },
-    { "gate": "G2-consumers", "command": "DATABASE_URL=<org_pinned> DB_TYPE=postgres CI=true RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test ENABLE_V8_GLOBAL=true npx vitest run orgPinnedConsumersMounted orgContextGovernedSnapshot chatHandoffService ideaHandoffService --no-file-parallelism --maxWorkers=1 --retry=0 --reporter=dot", "exitCode": 0, "result": "4/4 files; 41/41 tests" },
-    { "gate": "G2-existing-mounted", "command": "DATABASE_URL=<org_pinned> ... npx vitest run orgBvpMountedGoldenPath.pg.test.ts --retry=0", "exitCode": 0, "result": "1/1 file; 4/4 tests" },
-    { "gate": "G2-chat-route", "command": "npx vitest run server/src/services/v8/__tests__/chat-routes.test.ts --retry=0 --reporter=dot", "exitCode": 0, "result": "18/18 tests" },
-    { "gate": "G1-typecheck", "command": "npm run type-check", "exitCode": 0, "result": "full repository tsc passed" },
-    { "gate": "G1-build", "command": "npm run build:backend", "exitCode": 0, "result": "9 mirrors verified; backend build passed" }
+    {
+      "gate": "G3-fresh",
+      "command": "DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32914/org_pinned DB_TYPE=postgres CI=true npx tsx server/scripts/migrate.postgres.ts",
+      "exitCode": 0,
+      "result": "743/743 distinct/success, including 20260929"
+    },
+    {
+      "gate": "G3-repeat-dry",
+      "command": "<same env> migrate; <same env> migrate --dry-run",
+      "exitCode": 0,
+      "result": "repeat 0; dry pending 0"
+    },
+    {
+      "gate": "G2-consumers",
+      "command": "DATABASE_URL=<org_pinned> DB_TYPE=postgres CI=true RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test ENABLE_V8_GLOBAL=true npx vitest run orgPinnedConsumersMounted orgContextGovernedSnapshot chatHandoffService ideaHandoffService --no-file-parallelism --maxWorkers=1 --retry=0 --reporter=dot",
+      "exitCode": 0,
+      "result": "4/4 files; 41/41 tests"
+    },
+    {
+      "gate": "G2-existing-mounted",
+      "command": "DATABASE_URL=<org_pinned> ... npx vitest run orgBvpMountedGoldenPath.pg.test.ts --retry=0",
+      "exitCode": 0,
+      "result": "1/1 file; 4/4 tests"
+    },
+    {
+      "gate": "G2-chat-route",
+      "command": "npx vitest run server/src/services/v8/__tests__/chat-routes.test.ts --retry=0 --reporter=dot",
+      "exitCode": 0,
+      "result": "18/18 tests"
+    },
+    {
+      "gate": "G1-typecheck",
+      "command": "npm run type-check",
+      "exitCode": 0,
+      "result": "full repository tsc passed"
+    },
+    {
+      "gate": "G1-build",
+      "command": "npm run build:backend",
+      "exitCode": 0,
+      "result": "9 mirrors verified; backend build passed"
+    },
+    {
+      "gate": "G3-exact-current",
+      "command": "DATABASE_URL=<own-disposable-org-pg> DB_TYPE=postgres NODE_ENV=test npx tsx server/scripts/migrate.postgres.ts; <same env> npx tsx server/scripts/migrate.postgres.ts; <same env> npx tsx server/scripts/migrate.postgres.ts --dry-run",
+      "exitCode": 0,
+      "result": "fresh 762; repeat 0; dry pending 0; ledger 762; checksum-null 0"
+    },
+    {
+      "gate": "G2-exact-current-focused",
+      "command": "RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=<own-disposable-org-pg> npx vitest run server/src/services/organizationContext/__tests__/knowledgeDocsFileHashMigration15.realdb.test.ts server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts server/src/services/organizationContext/__tests__/orgPinnedConsumersMounted.pg.test.ts tests/integration/routes/organization-context.routes.test.ts tests/unit/backend/services/contextDocumentService.storage-usage.test.ts --no-file-parallelism --maxWorkers=1 --retry=0",
+      "exitCode": 0,
+      "result": "6/6 files; 54/54 tests"
+    },
+    {
+      "gate": "G4-exact-current-mounted",
+      "command": "E2E_MODE=false DATABASE_URL=<own-disposable-org-pg> npx playwright test tests/e2e/organization/org-ui-canon-governed-context.spec.ts --workers=1 --retries=0",
+      "exitCode": 0,
+      "result": "2/2 tests"
+    },
+    {
+      "gate": "G1-exact-current-static",
+      "command": "NODE_OPTIONS=--max-old-space-size=8192 npm run type-check && npm --prefix server run typecheck && npm run build:backend && NODE_OPTIONS=--max-old-space-size=8192 npm run build",
+      "exitCode": 0,
+      "result": "root and server TypeScript plus backend and frontend builds passed"
+    }
   ],
   "denominators": {
     "freshMigrations": { "discovered": 743, "applied": 743, "successful": 743, "failed": 0 },
@@ -71,13 +151,26 @@
     "noLiveReplay": "latest resolver returns exact ref before command; persisted command/replay reads only exact id/version/hash"
   },
   "migrationChecksums": {
-    "20260929_org_context_consumer_bindings.sql": "188f3e814c7a5e89ee0e3cef895d983afaa0d49efa3256752b7e8d3bc39146c5"
+    "20260929_org_context_consumer_bindings.sql": "188f3e814c7a5e89ee0e3cef895d983afaa0d49efa3256752b7e8d3bc39146c5",
+    "20261015_knowledge_docs_file_hash.sql": "8da301a8bf8b98038b26b58fc9a1496c4584b07ad1cd6812c3cab0abef278477"
   },
   "browserArtifacts": [],
-  "gateG4": "NOT_VERIFIED_BY_SCOPE",
+  "gateG4": "PARTIAL_TECHNICAL_MOUNTED_PASS_HUMAN_NOT_VERIFIED",
+  "exactCurrentRequalification": {
+    "technicalSourceSha": "1fb020058f81e73173333d7f52a5f74c2550561e",
+    "reconciliationSha": "d7e1b42a5f60281b6c552d8571e731288e792c73",
+    "relationship": "Later commits are FLOW-only and do not change the scoped Organization product or test tree.",
+    "migration": "20261015_knowledge_docs_file_hash.sql; SHA-256 8da301a8bf8b98038b26b58fc9a1496c4584b07ad1cd6812c3cab0abef278477; fresh 762, repeat 0, dry pending 0, ledger 762, checksum-null 0.",
+    "focused": "6 files and 54/54 tests passed on real PostgreSQL.",
+    "mounted": "2/2 mounted production journeys passed: multipart known bytes to persisted digest, governed publish and cold read, then mismatch, unavailable hash and deletion fail closed with role and tenant negatives.",
+    "hashTruth": "Historical NULL is preserved as source_hash_unverified; frozen hash with live NULL is hash_unavailable; differing hashes are hash_mismatch; deleted sources remain fail-closed.",
+    "cleanup": "Organization, user, document, claim and snapshot fixture residue 0; immutable snapshot trigger enabled O; file_hash CHECK validated; ungranted locks 0; uploaded files removed.",
+    "static": "Root and server TypeScript checks and backend and frontend builds passed.",
+    "doesNotProve": "Human VoiceOver, brand, named-persona or owner acceptance."
+  },
   "rollback": {
-    "method": "Stop callers of the two governed-only endpoints and revert product commit 1c2549c315. Legacy endpoints remain intact. Preserve immutable binding rows; destructive table removal is not authorized.",
+    "method": "Keep governed upload/hash consumers disabled or stop their callers, then revert the scoped Organization product commits only if needed. Preserve immutable bindings, snapshots and the nullable knowledge_docs.file_hash values, including historical NULL; destructive table or column removal is not authorized.",
     "executed": false,
-    "schemaImpact": "one additive table/index/trigger; existing tables are unchanged"
+    "schemaImpact": "The historical pinned-consumer substrate is additive; migration 20261015 adds one nullable validated column and no index or fabricated backfill."
   }
 }
