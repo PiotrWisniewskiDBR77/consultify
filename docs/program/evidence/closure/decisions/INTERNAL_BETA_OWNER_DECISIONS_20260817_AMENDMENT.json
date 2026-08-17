@@ -1,0 +1,88 @@
+{
+  "recordId": "INTERNAL-BETA-OWNER-DECISIONS-20260817-AMENDMENT-01",
+  "amends": "INTERNAL-BETA-OWNER-DECISIONS-20260817",
+  "recordedAt": "2026-08-17T12:30:00+02:00",
+  "effectiveProductSha": "84de0f084746c03e46e870482ca8518dc26cb2f8",
+  "effectiveForDescendants": true,
+  "releaseAuthorized": false,
+  "deploymentAuthorized": false,
+  "productionRestoreAuthorized": false,
+  "authority": {
+    "programOwner": "Piotr Wisniewski",
+    "ownerStatement": "Ja biorę wszystkie role; przepchnijmy.",
+    "interpretation": "The program owner assumes the accountable company-side roles and authorizes fail-closed repository implementation and evidence reconciliation. This does not manufacture external facts or authorize release."
+  },
+  "governanceBoundary": "The owner role assumption does not create third-party IP rights, licenses, DPAs, residency, tax or KYC facts, storage or encryption-key provisioning, historical-data disposition evidence, deployed observation, production restore authority or release authority.",
+  "decisions": [
+    {
+      "decisionId": "AMD-RES-VISIBILITY-001",
+      "affectedTasks": ["RES-MVP-VISIBILITY-001"],
+      "status": "APPROVED_RESTRICTED_SCOPE_IMPLEMENTATION_REQUIRED",
+      "decision": "Results remains visible only to active OWNER and ADMIN members of the owning tenant. Every other persona and every foreign tenant remains denied.",
+      "remainingGate": "Literal mounted enforcement across canonical Results routes, cold session and cross-tenant controls."
+    },
+    {
+      "decisionId": "AMD-FIN-RECONCILIATION-001",
+      "affectedTasks": ["FIN-MVP-RECONCILIATION-001"],
+      "status": "APPROVED_RESTRICTED_SCOPE_ENVIRONMENT_QUARANTINE",
+      "decision": "Results Actual remains immutable, Finance remains proposal/dispute only, the boundary remains greater than 5 percent, and pre-decision rows must never be inferred or auto-backfilled.",
+      "remainingGate": "Any environment containing pre-decision rows is quarantined from the internal beta until row-by-row disposition is recorded."
+    },
+    {
+      "decisionId": "AMD-MAT-POLICY-001",
+      "affectedTasks": ["MAT-POL-001"],
+      "status": "APPROVED_RESTRICTED_SCOPE_IMPLEMENTATION_REQUIRED",
+      "decision": "Only the named in-process engines are approved. Presentation PDF must be labelled as a text summary without visual-parity claims. Unknown-provenance templates remain unavailable.",
+      "remainingGate": "Engine and license provenance, honest PDF labelling and template provenance quarantine require current product proof."
+    },
+    {
+      "decisionId": "AMD-AUD-RIGHTS-001",
+      "affectedTasks": ["AUD-POL-001", "AUD-MVP-RIGHTS-001"],
+      "status": "APPROVED_RESTRICTED_SCOPE_IMPLEMENTATION_REQUIRED",
+      "decision": "Only the owned internal transformation pack may ship. Draft reads must be author or platform-administrator scoped, the legacy ISO preset must be default-OFF and inaccessible, and the independence detector must be operationalized.",
+      "remainingGate": "The three repository controls and mounted negative proofs are not waived by this decision."
+    },
+    {
+      "decisionId": "AMD-MTG-APPROVED-OUT-001",
+      "affectedTasks": ["MTG-POL-001"],
+      "status": "APPROVED_OUT",
+      "decision": "Meeting recording and transcript capture or persistence are excluded and remain OFF; authored agenda, minutes, decisions and follow-ups remain included.",
+      "reopenWhen": "Legal and Privacy evidence supports recording or transcription."
+    },
+    {
+      "decisionId": "AMD-ADM-BACKUP-TARGETS-001",
+      "affectedTasks": ["ADM-MVP-BACKUP-001"],
+      "status": "ENGINEERING_TARGET_ACCEPTED_RELEASE_EXCLUDED",
+      "decision": "RPO at most 15 minutes and RTO at most 60 minutes are accepted internal-beta engineering targets only.",
+      "remainingGate": "Deployed scheduler observation, durable storage, key rotation and production restore remain environment and release gates."
+    },
+    {
+      "decisionId": "AMD-SET-OAUTH-APPROVED-OUT-001",
+      "affectedTasks": ["SET-MVP-OAUTH-001"],
+      "status": "APPROVED_OUT",
+      "decision": "No OAuth provider is approved for this MVP. Credentials alone never activate a provider.",
+      "reopenWhen": "A named provider has approved scopes, DPA, residency, redirect ownership and revoke semantics."
+    },
+    {
+      "decisionId": "AMD-SET-DELETE-APPROVED-OUT-001",
+      "affectedTasks": ["SET-MVP-DELETE-001"],
+      "status": "APPROVED_RESTRICTED_SCOPE",
+      "decision": "Authenticated deletion request and cancellation remain included; destructive anonymization or purge execution remains excluded and OFF; legal hold overrides scheduling.",
+      "reopenWhen": "Legal and Privacy approve a versioned data-class action and retention matrix."
+    },
+    {
+      "decisionId": "AMD-PRT-POLICY-CLOSED-001",
+      "affectedTasks": ["PRT-POL-001"],
+      "status": "POLICY_BOUNDARY_APPROVED",
+      "decision": "Referral, certification, attribution and immutable ledger may ship. Economics, accrual, payout policy and payout execution are excluded. No currency, rate, tax or KYC fact is inferred.",
+      "completionBasis": "The absent-policy default is fail-closed and automatic payout is prohibited."
+    },
+    {
+      "decisionId": "AMD-PRT-ACCRUAL-APPROVED-OUT-001",
+      "affectedTasks": ["PRT-MVP-ACCRUAL-001"],
+      "status": "APPROVED_OUT",
+      "decision": "Commission accrual and payout are excluded from this MVP; the synthetic policy fixture remains technical control evidence only.",
+      "reopenWhen": "Commercial, Finance and Legal approve versioned economics, jurisdiction, tax, KYC, reversal and dispute treatment."
+    }
+  ]
+}
