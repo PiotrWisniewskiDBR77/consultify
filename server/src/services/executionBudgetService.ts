@@ -7,6 +7,7 @@
  */
 import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { getCurrentPgTransactionClient } from '../utils/queryHelpers.js';
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -181,14 +182,37 @@ export async function deleteBudgetEntry(
   entryId: string,
   initiativeId: string
 ): Promise<boolean> {
-  const deleted = await dbRun(
-    `DELETE FROM budget_entries
+  const transactionClient = getCurrentPgTransactionClient();
+  let deletedCount = 0;
+  if (transactionClient) {
+    const deleted = await transactionClient.query(
+      `DELETE FROM budget_entries WHERE id = ? AND organization_id = ? AND initiative_id = ?`,
+      [entryId, organizationId, initiativeId]
+    );
+    deletedCount = deleted.rowCount;
+  } else {
+    const deleted = await dbRun(
+      `DELETE FROM budget_entries
       WHERE id = ? AND organization_id = ? AND initiative_id = ?`,
-    [entryId, organizationId, initiativeId],
-    { fallback: false }
-  );
-  if (!deleted.changes) return false;
-  await recalcInitiativeActualTotal(organizationId, initiativeId);
+      [entryId, organizationId, initiativeId],
+      { fallback: false }
+    );
+    deletedCount = deleted.changes ?? 0;
+  }
+  if (!deletedCount) return false;
+  if (transactionClient) {
+    const result = await transactionClient.query<{ total: number }>(
+      `SELECT COALESCE(SUM(amount), 0) as total FROM budget_entries
+       WHERE initiative_id = ? AND organization_id = ? AND entry_type = 'ACTUAL'`,
+      [initiativeId, organizationId]
+    );
+    await transactionClient.query(
+      `UPDATE initiatives SET actual_budget_total = ?, updated_at = NOW() WHERE id = ? AND organization_id = ?`,
+      [result.rows[0]?.total || 0, initiativeId, organizationId]
+    );
+  } else {
+    await recalcInitiativeActualTotal(organizationId, initiativeId);
+  }
 
   // M14→M15 feed-forward: budget composition changed (non-blocking)
   const { fireBudgetHealthExport } = await import('./executionResultsBridge.js');

@@ -6,6 +6,19 @@ vi.mock('../../utils/DbPromise.js', () => ({
   get: (...args: unknown[]) => mockGet(...args),
   run: (...args: unknown[]) => mockRun(...args),
 }));
+vi.mock('../../utils/queryHelpers.js', () => ({
+  withPgTransaction: async (fn: (client: { query: (sql: string, params?: unknown[]) => Promise<unknown> }) => Promise<unknown>) =>
+    fn({
+      query: async (sql: string, params: unknown[] = []) => {
+        if (/^\s*SELECT/i.test(sql)) {
+          const row = await mockGet(sql, params);
+          return { rows: row ? [row] : [], rowCount: row ? 1 : 0 };
+        }
+        await mockRun(sql, params, { fallback: false });
+        return { rows: [], rowCount: 1 };
+      },
+    }),
+}));
 
 import {
   executeGovernedExecutionAction,

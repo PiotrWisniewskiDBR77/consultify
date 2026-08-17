@@ -2,6 +2,7 @@ import { Pool } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { executeGovernedExecutionAction } from '../executionActionRegistryService.js';
+import { getCurrentPgTransactionClient, withPgTransaction } from '../../utils/queryHelpers.js';
 
 const databaseUrl = process.env.DATABASE_URL;
 const describePg = process.env.RUN_DB_TESTS === '1' && databaseUrl ? describe : describe.skip;
@@ -18,9 +19,21 @@ describePg('execution action governance real PostgreSQL', () => {
 
   beforeAll(async () => {
     await pool.query(`INSERT INTO organizations (id,name) VALUES ($1,$2)`, [orgId, 'EXE action proof']);
+    await pool.query(`CREATE TABLE IF NOT EXISTS exe_action_uow_probe (
+      organization_id text NOT NULL, action_id text NOT NULL, kind text NOT NULL,
+      target_id text NOT NULL, UNIQUE (organization_id,action_id,kind,target_id)
+    )`);
+    await pool.query(`CREATE OR REPLACE FUNCTION exe_action_audit_test_failure() RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN IF NEW.request_id = 'force-audit-failure' THEN RAISE EXCEPTION 'forced audit insert failure'; END IF; RETURN NEW; END $$`);
+    await pool.query(`DROP TRIGGER IF EXISTS trg_exe_action_audit_test_failure ON execution_action_audit`);
+    await pool.query(`CREATE TRIGGER trg_exe_action_audit_test_failure BEFORE INSERT ON execution_action_audit
+      FOR EACH ROW EXECUTE FUNCTION exe_action_audit_test_failure()`);
   });
 
   afterAll(async () => {
+    await pool.query(`DROP TABLE IF EXISTS exe_action_uow_probe`).catch(() => undefined);
+    await pool.query(`DROP TRIGGER IF EXISTS trg_exe_action_audit_test_failure ON execution_action_audit`).catch(() => undefined);
+    await pool.query(`DROP FUNCTION IF EXISTS exe_action_audit_test_failure()`).catch(() => undefined);
     await pool.query(`DELETE FROM organizations WHERE id=$1`, [orgId]).catch(() => undefined);
     await pool.end();
   });
@@ -28,13 +41,34 @@ describePg('execution action governance real PostgreSQL', () => {
   it.each(ACTIONS)('writes a success audit for governed action %s', async (actionId) => {
     await expect(executeGovernedExecutionAction({
       organizationId: orgId, actionId, targetId: `${actionId}-target`, actorId,
-      membershipRole: 'ADMIN', operation: async () => ({ ok: true }),
+      membershipRole: 'ADMIN', operation: () => withPgTransaction(async (client) => {
+        expect(client).toBe(getCurrentPgTransactionClient());
+        await client.query(`INSERT INTO exe_action_uow_probe (organization_id,action_id,kind,target_id)
+          VALUES (?,?,?,?),(?,?,?,?)`, [orgId, actionId, 'domain', `${actionId}-target`, orgId, actionId, 'outbox', `${actionId}-target`]);
+        return { ok: true };
+      }),
     })).resolves.toEqual({ ok: true });
     const row = await pool.query(
       `SELECT outcome FROM execution_action_audit WHERE organization_id=$1 AND action_id=$2 ORDER BY occurred_at DESC LIMIT 1`,
       [orgId, actionId]
     );
     expect(row.rows[0]?.outcome).toBe('SUCCEEDED');
+  });
+
+  it.each(ACTIONS)('rolls back domain and outbox when audit insert fails for %s', async (actionId) => {
+    const targetId = `rollback-${actionId}`;
+    await expect(executeGovernedExecutionAction({
+      organizationId: orgId, actionId, targetId, actorId, membershipRole: 'ADMIN',
+      requestId: 'force-audit-failure',
+      operation: () => withPgTransaction(async (client) => {
+        expect(client).toBe(getCurrentPgTransactionClient());
+        await client.query(`INSERT INTO exe_action_uow_probe (organization_id,action_id,kind,target_id)
+          VALUES (?,?,?,?),(?,?,?,?)`, [orgId, actionId, 'domain', targetId, orgId, actionId, 'outbox', targetId]);
+        return true;
+      }),
+    })).rejects.toThrow('forced audit insert failure');
+    const rows = await pool.query(`SELECT kind FROM exe_action_uow_probe WHERE organization_id=$1 AND target_id=$2`, [orgId, targetId]);
+    expect(rows.rowCount).toBe(0);
   });
 
   it('enforces live policy drift and preserves the target', async () => {

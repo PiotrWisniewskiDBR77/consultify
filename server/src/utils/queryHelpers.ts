@@ -6,6 +6,7 @@
  */
 
 import { Client as PgClient } from 'pg';
+import { AsyncLocalStorage } from 'node:async_hooks';
 
 import databaseConfig from '../config/DatabaseConfig.js';
 import { getDatabase } from '../database/Database.js';
@@ -191,6 +192,13 @@ export interface PgTransactionClient {
   query<T = unknown>(sql: string, params?: unknown[]): Promise<{ rows: T[]; rowCount: number }>;
 }
 
+const pgTransactionContext = new AsyncLocalStorage<PgTransactionClient>();
+
+/** Current request-scoped pinned client, if the caller is already in a UoW. */
+export function getCurrentPgTransactionClient(): PgTransactionClient | undefined {
+  return pgTransactionContext.getStore();
+}
+
 /**
  * Run `fn` inside a single, pinned PostgreSQL transaction (BEGIN … COMMIT/ROLLBACK
  * on ONE dedicated `pg` connection).
@@ -225,6 +233,8 @@ export interface PgTransactionClient {
 export async function withPgTransaction<T>(
   fn: (client: PgTransactionClient) => Promise<T>
 ): Promise<T> {
+  const inherited = pgTransactionContext.getStore();
+  if (inherited) return fn(inherited);
   const client = new PgClient(databaseConfig.postgres as ConstructorParameters<typeof PgClient>[0]);
   // node-postgres emits connection-level failures on the Client in addition to
   // rejecting the in-flight query. An EventEmitter `error` without a listener
@@ -252,7 +262,7 @@ export async function withPgTransaction<T>(
     await client.query('SET search_path TO public, v8').catch(() => undefined);
 
     await wrapped.query('BEGIN');
-    const result = await fn(wrapped);
+    const result = await pgTransactionContext.run(wrapped, () => fn(wrapped));
     await wrapped.query('COMMIT');
     return result;
   } catch (err) {
