@@ -1,0 +1,400 @@
+{
+  "schemaVersion": 1,
+  "authorityTaskId": "UI-CANON-ALL-001",
+  "reconciliationSha": "ab8cef0c501a511364dbe5ddf32c0ab77eb96c7d",
+  "requiredStates": [
+    "default",
+    "loading",
+    "empty",
+    "error",
+    "permission",
+    "conflict",
+    "success",
+    "stale"
+  ],
+  "requiredHumanGates": ["named-persona", "ux-brand", "voiceover"],
+  "modules": [
+    {
+      "moduleId": "CHAT",
+      "module": "Chat",
+      "taskId": "CHAT-UI-CANON-001",
+      "evidencePath": "docs/program/evidence/closure/c/CHAT-UI-CANON-001/TASK_EVIDENCE.json",
+      "g4ResultPath": "docs/program/evidence/closure/ui-g4/CHAT-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "classification": "TECHNICAL_CURRENT_WITH_GAPS",
+      "routes": ["/chat"],
+      "surfaces": ["conversation", "composer", "stream recovery", "handoff"],
+      "stateCoverage": {
+        "default": "covered",
+        "loading": "covered",
+        "empty": "covered",
+        "error": "covered",
+        "permission": "open",
+        "conflict": "covered",
+        "success": "covered",
+        "stale": "open"
+      },
+      "openGaps": ["mounted forbidden state", "mounted stale state", "human acceptance"]
+    },
+    {
+      "moduleId": "MYW",
+      "module": "My Work / Agent",
+      "taskId": "MYW-AGT-UI-CANON-001",
+      "evidencePath": "docs/program/evidence/closure/b/MYW-AGT-UI-CANON-001/TASK_EVIDENCE.json",
+      "g4ResultPath": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "classification": "TECHNICAL_CURRENT_WITH_GAPS",
+      "routes": ["/my-work"],
+      "surfaces": ["tasks", "decisions", "inbox", "agent proposals"],
+      "stateCoverage": {
+        "default": "covered",
+        "loading": "covered",
+        "empty": "covered",
+        "error": "covered",
+        "permission": "partial",
+        "conflict": "open",
+        "success": "partial",
+        "stale": "open"
+      },
+      "openGaps": [
+        "versioned stale-write contract",
+        "seeded non-empty Inbox, Decisions and Agent",
+        "immediate revoked-membership UI",
+        "human acceptance"
+      ]
+    },
+    {
+      "moduleId": "INT",
+      "module": "Interview",
+      "taskId": "INT-UI-CANON-001",
+      "evidencePath": "docs/program/evidence/closure/codex/INT-UI-CANON-001/TASK_EVIDENCE.json",
+      "g4ResultPath": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "classification": "TECHNICAL_CURRENT_HUMAN_ONLY",
+      "routes": ["/interview", "/interview/respond/:token"],
+      "surfaces": ["management", "invite", "public respondent", "answer form"],
+      "stateCoverage": {
+        "default": "covered",
+        "loading": "covered",
+        "empty": "covered",
+        "error": "covered",
+        "permission": "covered",
+        "conflict": "covered",
+        "success": "covered",
+        "stale": "covered"
+      },
+      "openGaps": ["human acceptance"]
+    },
+    {
+      "moduleId": "TLS",
+      "module": "Tools",
+      "taskId": "TLS-UI-CANON-001",
+      "evidencePath": "docs/program/evidence/closure/a/TLS-UI-CANON-001/TASK_EVIDENCE.json",
+      "g4ResultPath": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "classification": "TECHNICAL_CURRENT_HUMAN_ONLY",
+      "routes": ["/discovery-tools"],
+      "surfaces": ["catalog", "tool workspace", "session output", "promotion"],
+      "stateCoverage": {
+        "default": "covered",
+        "loading": "covered",
+        "empty": "covered",
+        "error": "covered",
+        "permission": "covered",
+        "conflict": "covered",
+        "success": "covered",
+        "stale": "covered"
+      },
+      "openGaps": ["human acceptance"]
+    },
+    {
+      "moduleId": "ASM",
+      "module": "Assessment",
+      "taskId": "ASM-UI-CANON-001",
+      "evidencePath": "docs/program/evidence/closure/a/ASM-UI-CANON-001/TASK_EVIDENCE.json",
+      "g4ResultPath": "docs/program/evidence/closure/ui-g4/ASM-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "classification": "TECHNICAL_CURRENT_HUMAN_ONLY",
+      "routes": ["/assessment"],
+      "surfaces": ["library", "session", "output", "initiative batch"],
+      "stateCoverage": {
+        "default": "covered",
+        "loading": "covered",
+        "empty": "covered",
+        "error": "covered",
+        "permission": "covered",
+        "conflict": "covered",
+        "success": "covered",
+        "stale": "covered"
+      },
+      "openGaps": ["human acceptance"]
+    },
+    {
+      "moduleId": "INI",
+      "module": "Initiatives",
+      "taskId": "INI-UI-CANON-001",
+      "evidencePath": "docs/program/evidence/closure/b/INI-UI-CANON-001/TASK_EVIDENCE.json",
+      "g4ResultPath": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "classification": "TECHNICAL_CURRENT_WITH_GAPS",
+      "routes": ["/initiatives", "/initiatives/candidates/:id", "/initiatives/:id"],
+      "surfaces": ["candidates", "portfolio", "cards", "profile", "linked execution"],
+      "stateCoverage": {
+        "default": "covered",
+        "loading": "covered",
+        "empty": "covered",
+        "error": "covered",
+        "permission": "covered",
+        "conflict": "covered",
+        "success": "covered",
+        "stale": "partial"
+      },
+      "openGaps": ["literal full candidate-to-schedule browser lifecycle", "human acceptance"]
+    },
+    {
+      "moduleId": "EXE",
+      "module": "Execution",
+      "taskId": "EXE-UI-CANON-001",
+      "evidencePath": "docs/program/evidence/closure/b/EXE-UI-CANON-001/TASK_EVIDENCE.json",
+      "g4ResultPath": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "classification": "TECHNICAL_CURRENT_WITH_GAPS",
+      "routes": ["/execution", "/execution/:caseId"],
+      "surfaces": ["case list", "case workspace", "capacity", "governed actions"],
+      "stateCoverage": {
+        "default": "covered",
+        "loading": "partial",
+        "empty": "partial",
+        "error": "partial",
+        "permission": "partial",
+        "conflict": "covered",
+        "success": "partial",
+        "stale": "covered"
+      },
+      "openGaps": [
+        "capacity and nine governed-action journeys",
+        "dead and unreachable surface disposition",
+        "broader auth and error qualification",
+        "human acceptance"
+      ]
+    },
+    {
+      "moduleId": "RES",
+      "module": "Results",
+      "taskId": "RES-UI-CANON-001",
+      "evidencePath": "docs/program/evidence/closure/codex/RES-UI-CANON-001/TASK_EVIDENCE.json",
+      "g4ResultPath": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "classification": "TECHNICAL_CURRENT_WITH_GAPS",
+      "routes": ["/results"],
+      "surfaces": ["KPI", "ROI", "OKR", "queue and registry links"],
+      "stateCoverage": {
+        "default": "covered",
+        "loading": "covered",
+        "empty": "covered",
+        "error": "partial",
+        "permission": "covered",
+        "conflict": "partial",
+        "success": "partial",
+        "stale": "open"
+      },
+      "openGaps": [
+        "404 qualification",
+        "visibility owner decision",
+        "KPI submode invariant",
+        "full KPI, ROI and OKR journeys",
+        "human acceptance"
+      ]
+    },
+    {
+      "moduleId": "FIN",
+      "module": "Finance",
+      "taskId": "FIN-UI-CANON-001",
+      "evidencePath": "docs/program/evidence/closure/codex/FIN-UI-CANON-001/TASK_EVIDENCE.json",
+      "g4ResultPath": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "classification": "TECHNICAL_CURRENT_WITH_GAPS",
+      "routes": ["/finance"],
+      "surfaces": ["statements", "budget", "analysis", "prediction", "valuation"],
+      "stateCoverage": {
+        "default": "covered",
+        "loading": "covered",
+        "empty": "covered",
+        "error": "covered",
+        "permission": "covered",
+        "conflict": "open",
+        "success": "partial",
+        "stale": "open"
+      },
+      "openGaps": [
+        "Prediction and Valuation completion",
+        "explicit conflict journey",
+        "secondary migration qualification",
+        "human acceptance"
+      ]
+    },
+    {
+      "moduleId": "MAT",
+      "module": "Materials",
+      "taskId": "MAT-UI-CANON-001",
+      "evidencePath": "docs/program/evidence/closure/c/MAT-UI-CANON-001/TASK_EVIDENCE.json",
+      "g4ResultPath": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "classification": "TECHNICAL_CURRENT_WITH_GAPS",
+      "routes": ["/presentations", "/documents", "/workbooks"],
+      "surfaces": ["document editor", "deck editor", "workbook grid", "export and reopen"],
+      "stateCoverage": {
+        "default": "covered",
+        "loading": "covered",
+        "empty": "covered",
+        "error": "covered",
+        "permission": "covered",
+        "conflict": "covered",
+        "success": "covered",
+        "stale": "open"
+      },
+      "openGaps": ["mounted stale state", "human acceptance"]
+    },
+    {
+      "moduleId": "AUD",
+      "module": "Audits",
+      "taskId": null,
+      "evidencePath": null,
+      "g4ResultPath": "docs/program/evidence/closure/ui-g4/AUD-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "proposalPath": "docs/program/evidence/closure/ui-g4/AUD-UI-CANON-001/PROPOSAL_EVIDENCE.json",
+      "classification": "MISSING_FROZEN_MODULE_PACKET",
+      "routes": ["/audit-programs"],
+      "surfaces": ["program list", "program lifecycle", "findings and evidence"],
+      "stateCoverage": {
+        "default": "historical",
+        "loading": "open",
+        "empty": "historical",
+        "error": "open",
+        "permission": "open",
+        "conflict": "open",
+        "success": "historical",
+        "stale": "open"
+      },
+      "openGaps": [
+        "no frozen-82 AUD-UI-CANON-001 authority task",
+        "proposal evidence is not completion evidence",
+        "human acceptance"
+      ]
+    },
+    {
+      "moduleId": "MTG",
+      "module": "Meetings",
+      "taskId": "MTG-UI-CANON-001",
+      "evidencePath": "docs/program/evidence/closure/c/MTG-UI-CANON-001/TASK_EVIDENCE.json",
+      "g4ResultPath": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "classification": "TECHNICAL_CURRENT_WITH_GAPS",
+      "routes": ["/meeting"],
+      "surfaces": ["meeting", "notes", "proposal approval", "materialization receipt"],
+      "stateCoverage": {
+        "default": "covered",
+        "loading": "covered",
+        "empty": "covered",
+        "error": "covered",
+        "permission": "covered",
+        "conflict": "partial",
+        "success": "covered",
+        "stale": "open"
+      },
+      "openGaps": [
+        "mounted stale and concurrency",
+        "distinct OWNER browser proof",
+        "recording and consent policy",
+        "human acceptance"
+      ]
+    },
+    {
+      "moduleId": "ORG",
+      "module": "Organization",
+      "taskId": "ORG-UI-CANON-001",
+      "evidencePath": "docs/program/evidence/closure/c/ORG-UI-CANON-001/TASK_EVIDENCE.json",
+      "g4ResultPath": "docs/program/evidence/closure/ui-g4/ORG-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "classification": "TECHNICAL_CURRENT_WITH_GAPS",
+      "routes": ["/organization"],
+      "surfaces": ["sources", "claims", "snapshots", "governed publish"],
+      "stateCoverage": {
+        "default": "covered",
+        "loading": "covered",
+        "empty": "covered",
+        "error": "covered",
+        "permission": "covered",
+        "conflict": "covered",
+        "success": "covered",
+        "stale": "covered"
+      },
+      "openGaps": [
+        "upload-to-governed-claim seam",
+        "dead or unmounted component disposition",
+        "human acceptance"
+      ]
+    },
+    {
+      "moduleId": "ADM",
+      "module": "Admin",
+      "taskId": "ADM-UI-CANON-001",
+      "evidencePath": "docs/program/evidence/closure/codex/ADM-UI-CANON-001/TASK_EVIDENCE.json",
+      "g4ResultPath": "docs/program/evidence/closure/ui-g4/ADM-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "classification": "TECHNICAL_CURRENT_WITH_GAPS",
+      "routes": ["/admin", "/superadmin/system"],
+      "surfaces": ["IAM", "audit", "health", "backup read-only characterization"],
+      "stateCoverage": {
+        "default": "covered",
+        "loading": "covered",
+        "empty": "covered",
+        "error": "partial",
+        "permission": "covered",
+        "conflict": "partial",
+        "success": "covered",
+        "stale": "partial"
+      },
+      "openGaps": [
+        "mobile interstitial",
+        "mounted stale, concurrency and error recovery",
+        "deployed environment",
+        "human acceptance"
+      ]
+    },
+    {
+      "moduleId": "SET",
+      "module": "Settings",
+      "taskId": "SET-UI-CANON-001",
+      "evidencePath": "docs/program/evidence/closure/codex/SET-UI-CANON-001/TASK_EVIDENCE.json",
+      "g4ResultPath": "docs/program/evidence/closure/ui-g4/SET-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "classification": "TECHNICAL_CURRENT_WITH_GAPS",
+      "routes": ["/settings"],
+      "surfaces": ["preferences", "security", "connected apps", "privacy"],
+      "stateCoverage": {
+        "default": "covered",
+        "loading": "covered",
+        "empty": "covered",
+        "error": "partial",
+        "permission": "covered",
+        "conflict": "partial",
+        "success": "covered",
+        "stale": "open"
+      },
+      "openGaps": [
+        "404 qualification",
+        "OAuth owner policy",
+        "MFA login and revoke matrix",
+        "account deletion legal decision",
+        "human acceptance"
+      ]
+    },
+    {
+      "moduleId": "PRT",
+      "module": "Partner",
+      "taskId": "PRT-UI-CANON-001",
+      "evidencePath": "docs/program/evidence/closure/codex/PRT-UI-CANON-001/TASK_EVIDENCE.json",
+      "g4ResultPath": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "classification": "TECHNICAL_CURRENT_WITH_GAPS",
+      "routes": ["/partner"],
+      "surfaces": ["partner profile", "certification", "attribution", "ledger and accrual"],
+      "stateCoverage": {
+        "default": "covered",
+        "loading": "covered",
+        "empty": "covered",
+        "error": "partial",
+        "permission": "covered",
+        "conflict": "covered",
+        "success": "covered",
+        "stale": "open"
+      },
+      "openGaps": ["404 qualification", "legacy Earnings warning and retry", "human acceptance"]
+    }
+  ]
+}
