@@ -120,7 +120,12 @@ export function classifyDomainCode(rawMessage: string): { status: number; code: 
     return { status: 409, code };
   }
 
-  if (code.endsWith('_forbidden') || code.endsWith('_unauthorized')) return { status: 403, code };
+  if (
+    code === 'insufficient_org_role' ||
+    code === 'not_org_member' ||
+    code.endsWith('_forbidden') ||
+    code.endsWith('_unauthorized')
+  ) return { status: 403, code };
   if (code.endsWith('_required') || code.endsWith('_invalid')) return { status: 400, code };
   if (code.includes('_mismatch')) return { status: 422, code };
 

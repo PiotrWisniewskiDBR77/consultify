@@ -54,10 +54,14 @@ const APPROVER = {
   password: 'CaseWorkspaceApprover!2026',
   userId: 'cw-stream-e-approver',
 };
+const LIMITED_MEMBER = {
+  email: 'cw.stream.e.member@local.test', password: 'CaseWorkspaceMember!2026', userId: 'cw-stream-e-member',
+};
 
 let db: ControlDb;
 let token: string;
 let approverToken: string;
+let memberToken: string;
 let stackReason: string | undefined;
 
 const state: {
@@ -76,8 +80,10 @@ beforeAll(async () => {
   await assertNoAuthBypass();
   db = new ControlDb();
   await db.ensureLoginUser({ ...APPROVER, organizationId: SEED_USER.organizationId, role: 'OWNER' });
+  await db.ensureLoginUser({ ...LIMITED_MEMBER, organizationId: SEED_USER.organizationId, role: 'MEMBER' });
   token = await login();
   approverToken = await login(APPROVER.email, APPROVER.password);
+  memberToken = await login(LIMITED_MEMBER.email, LIMITED_MEMBER.password);
   await db.ensureProject(PROJECT_ID, SEED_USER.organizationId, `E2E part2 ${SUFFIX}`);
 }, 120_000);
 
@@ -710,6 +716,153 @@ describe('10. Failure, retry, recovery on an action proposal', () => {
     // event beyond proposal.failed exists in the trail.
     expect(events.length).toBeGreaterThan(failIdx + 1);
     void lastApproveIdx;
+  });
+});
+
+// ===========================================================================
+// EXE-MVP-ACTIONS-001 — production-router proof for governed surfaces that
+// are not otherwise exercised by the historical live-stack scenarios.
+// ===========================================================================
+describe('EXE-MVP-ACTIONS-001 governed production routes', () => {
+  it('mutates close, run-cancel, wait-cancel, artifact-unlink and proposal-revoke through real JWT routes', async () => {
+    requireStack();
+
+    const closeCase = await createCase(token, 'STANDARD', 'STANDARD', `Governed close ${SUFFIX}`);
+    expect(closeCase.status).toBe(201);
+    const closed = await api(token, 'POST', `/case-workspace/cases/${closeCase.caseId}/closure`, {
+      closureType: 'COMPLETED_PARTIAL', evidenceRef: `evidence:${SUFFIX}`,
+    });
+    expect(closed.status).toBe(200);
+
+    const run = await api<{ data: { runId: string; version: number } }>(
+      token, 'POST', `/case-workspace/cases/${state.caseId}/runs`,
+      { casePlanVersionId: state.planVersionId },
+      { 'Idempotency-Key': `governed-run-${SUFFIX}` }
+    );
+    expect(run.status).toBe(201);
+    const cancelledRun = await api(token, 'POST', `/case-workspace/runs/${run.body.data.runId}/cancel`, {
+      expectedVersion: run.body.data.version, reason: 'bounded proof',
+    });
+    expect(cancelledRun.status).toBe(200);
+
+    const wait = await api<{ data: { waitId: string; version: number } }>(
+      token, 'POST', `/case-workspace/cases/${state.caseId}/waits`,
+      { runId: state.runId, waitType: 'DOMAIN_EVENT', correlationKey: `governed-wait-${SUFFIX}`, expectedEventType: 'proof.event' }
+    );
+    expect(wait.status).toBe(201);
+    const cancelledWait = await api(token, 'POST', `/case-workspace/waits/${wait.body.data.waitId}/cancel`, {
+      expectedVersion: wait.body.data.version, reason: 'bounded proof',
+    });
+    expect(cancelledWait.status).toBe(200);
+
+    const link = await api<{ data: { linkId: string } }>(
+      token, 'POST', `/case-workspace/cases/${state.caseId}/artifact-links`,
+      { artifactType: 'DOCUMENT', artifactId: `governed-artifact-${SUFFIX}`, relation: 'INPUT' },
+      { 'Idempotency-Key': `governed-link-${SUFFIX}` }
+    );
+    expect(link.status).toBe(201);
+    const unlinked = await api(token, 'DELETE', `/case-workspace/artifact-links/${link.body.data.linkId}`, {
+      reason: 'bounded proof',
+    });
+    expect(unlinked.status).toBe(200);
+
+    const proposal = await api<{ data: { actionProposalId: string; proposalVersion: number } }>(
+      token, 'POST', `/case-workspace/cases/${state.caseId}/proposals`, {
+        runId: state.runId, nodeRunId: `governed-revoke-${SUFFIX}`,
+        casePlanVersionId: state.planVersionId, payloadDigest: `sha256:revoke${SUFFIX}`,
+        policySnapshotRef: 'policy-e2e2', effectClass: 'SENSITIVE_UPDATE',
+        previewRef: 'preview-e2e2', proposerType: 'AGENT',
+      }, { 'Idempotency-Key': `governed-proposal-${SUFFIX}` }
+    );
+    expect(proposal.status).toBe(201);
+    const submitted = await api<{ data: { version: number } }>(token, 'POST',
+      `/case-workspace/proposals/${proposal.body.data.actionProposalId}/submit-for-review`, { expectedVersion: 1 });
+    expect(submitted.status).toBe(200);
+    const approved = await api<{ data: { proposal: { version: number } } }>(approverToken, 'POST',
+      `/case-workspace/proposals/${proposal.body.data.actionProposalId}/decision`, {
+        proposalVersion: proposal.body.data.proposalVersion, payloadDigest: `sha256:revoke${SUFFIX}`,
+        decision: 'APPROVE', source: 'BUTTON', authenticationAssurance: 'SESSION_MFA',
+        approvalChannelPolicy: 'UI_BUTTON_ONLY', policyVersion: 'v1', reason: 'approve revoke proof',
+        expectedVersion: submitted.body.data.version,
+      }, { 'Idempotency-Key': `governed-decision-${SUFFIX}` });
+    expect(approved.status).toBe(200);
+    const revoked = await api(token, 'POST',
+      `/case-workspace/proposals/${proposal.body.data.actionProposalId}/revoke`, {
+        expectedVersion: approved.body.data.proposal.version, reason: 'bounded proof',
+      });
+    expect(revoked.status).toBe(200);
+
+    const actionIds = ['case.close', 'case.run.cancel', 'case.wait.cancel', 'case.artifact.unlink', 'case.proposal.revoke'];
+    const audits = await db.rows<{ action_id: string; outcome: string }>(
+      `SELECT action_id,outcome FROM execution_action_audit WHERE action_id = ANY($1::text[]) AND outcome='SUCCEEDED'`,
+      [actionIds]
+    );
+    expect(new Set(audits.map((row) => row.action_id))).toEqual(new Set(actionIds));
+  });
+
+  it('deletes a real budget entry through the mounted legacy production route', async () => {
+    requireStack();
+    const initiativeId = `governed-initiative-${SUFFIX}`;
+    const entryId = `governed-budget-${SUFFIX}`;
+    await db.rows(
+      `INSERT INTO initiatives (id,organization_id,project_id,name,status,created_by)
+       VALUES ($1,$2,$3,$4,'DRAFT',$5)`,
+      [initiativeId, SEED_USER.organizationId, PROJECT_ID, `Governed budget ${SUFFIX}`, SEED_USER.userId]
+    );
+    await db.rows(
+      `INSERT INTO budget_entries (id,organization_id,initiative_id,project_id,entry_type,cost_type,amount,created_by)
+       VALUES ($1,$2,$3,$4,'FORECAST','OPEX',100,$5)`,
+      [entryId, SEED_USER.organizationId, initiativeId, PROJECT_ID, SEED_USER.userId]
+    );
+
+    const response = await fetch(
+      `${BACKEND}/api/execution-control/budget/entries/${entryId}?initiativeId=${initiativeId}`,
+      { method: 'DELETE', headers: { Authorization: `Bearer ${token}`, 'X-Request-Id': `governed-budget-${SUFFIX}` } }
+    );
+    expect(response.status).toBe(200);
+    expect(await db.one(`SELECT id FROM budget_entries WHERE id=$1`, [entryId])).toBeNull();
+    const audit = await db.one<{ outcome: string }>(
+      `SELECT outcome FROM execution_action_audit WHERE action_id='execution.budget.delete' AND target_id=$1 ORDER BY occurred_at DESC LIMIT 1`,
+      [entryId]
+    );
+    expect(audit?.outcome).toBe('SUCCEEDED');
+  });
+
+  it('denies all 9 implemented actions to an insufficient real membership before domain access', async () => {
+    requireStack();
+    const target = `denied-${SUFFIX}`;
+    const calls = [
+      () => api(memberToken, 'POST', `/case-workspace/cases/${target}/closure`, { closureType: 'COMPLETED_PARTIAL', evidenceRef: 'denied' }),
+      () => api(memberToken, 'POST', `/case-workspace/cases/${target}/cancel`, { reason: 'denied' }),
+      () => api(memberToken, 'POST', `/case-workspace/waits/${target}/cancel`, { reason: 'denied', expectedVersion: 1 }),
+      () => api(memberToken, 'POST', `/case-workspace/runs/${target}/cancel`, { reason: 'denied', expectedVersion: 1 }),
+      () => api(memberToken, 'DELETE', `/case-workspace/artifact-links/${target}`, { reason: 'denied' }),
+      () => api(memberToken, 'POST', `/case-workspace/proposals/${target}/decision`, {
+        proposalVersion: 1, payloadDigest: 'sha256:denied', decision: 'REJECT', source: 'BUTTON',
+        authenticationAssurance: 'SESSION_MFA', approvalChannelPolicy: 'UI_BUTTON_ONLY', policyVersion: 'v1',
+        expectedVersion: 1, reason: 'denied', idempotencyKey: `denied-decision-${SUFFIX}`,
+      }),
+      () => api(memberToken, 'POST', `/case-workspace/proposals/${target}/transition-to-executing`, { expectedVersion: 1 }),
+      () => api(memberToken, 'POST', `/case-workspace/proposals/${target}/revoke`, { reason: 'denied', expectedVersion: 1 }),
+      async () => {
+        const response = await fetch(`${BACKEND}/api/execution-control/budget/entries/${target}?initiativeId=${target}`, {
+          method: 'DELETE', headers: { Authorization: `Bearer ${memberToken}`, 'X-Request-Id': `denied-budget-${SUFFIX}` },
+        });
+        return { status: response.status };
+      },
+    ];
+    for (const [index, call] of calls.entries()) {
+      const result = await call();
+      expect(result.status, `implemented action denial index ${index}: ${JSON.stringify(result.body)}`).toBe(403);
+    }
+    const denied = await db.rows<{ action_id: string }>(
+      `SELECT DISTINCT action_id FROM execution_action_audit WHERE actor_id=$1 AND outcome='DENIED'`,
+      [LIMITED_MEMBER.userId]
+    );
+    expect(new Set(denied.map((row) => row.action_id))).toEqual(new Set([
+      'case.close', 'case.cancel', 'case.wait.cancel', 'case.run.cancel', 'case.artifact.unlink',
+      'case.proposal.decide', 'case.proposal.execute', 'case.proposal.revoke', 'execution.budget.delete',
+    ]));
   });
 });
 

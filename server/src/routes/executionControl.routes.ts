@@ -554,15 +554,23 @@ router.delete(
 
     const requestId = String(req.headers['x-request-id'] || '').trim() || null;
     const membership = await requireOrgMember(String(req.user?.id || ''), orgId);
-    const deleted = await executeGovernedExecutionAction({
-      organizationId: orgId,
-      actionId: 'execution.budget.delete',
-      targetId: String(req.params.entryId),
-      actorId: String(req.user?.id || ''),
-      membershipRole: membership.role === 'CONSULTANT' ? 'MEMBER' : membership.role,
-      requestId,
-      operation: () => deleteBudgetEntry(orgId, String(req.params.entryId), String(initiativeId)),
-    });
+    let deleted: boolean;
+    try {
+      deleted = await executeGovernedExecutionAction({
+        organizationId: orgId,
+        actionId: 'execution.budget.delete',
+        targetId: String(req.params.entryId),
+        actorId: String(req.user?.id || ''),
+        membershipRole: membership.role === 'CONSULTANT' ? 'MEMBER' : membership.role,
+        requestId,
+        operation: () => deleteBudgetEntry(orgId, String(req.params.entryId), String(initiativeId)),
+      });
+    } catch (error) {
+      if (error instanceof Error && error.message === 'insufficient_org_role') {
+        return res.status(403).json({ error: 'Forbidden', code: 'INSUFFICIENT_ORG_ROLE' });
+      }
+      throw error;
+    }
     if (!deleted) {
       return res.status(404).json({ error: 'Budget entry not found' });
     }
