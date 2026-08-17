@@ -1,9 +1,11 @@
 {
   "baselineSha": "7ed35487586ab2832445bde01f8e25ec4c320b2c",
-  "productSha": "a61d0ed49208a64b733e7f4a49fa4befaf1aa806",
+  "productSha": "9931050ca74e6cdefd2b02a1dbf518f0115a4908",
   "leaseSha256": "6cea3c806721c2d385d7f960e88d411966e5bf497bb35ccce222828f8b9819c4",
   "taskId": "CHAT-NFR-001",
   "verdict": "PARTIAL",
+  "technicalVerdict": "DONE_CURRENT_SHA",
+  "verdictRationale": "All repository-owned cancellation, bounded retry, durable disconnect checkpoint, cold explicit resume, tenant isolation, telemetry and runbook obligations are proven on exact current 9931050ca74e6cdefd2b02a1dbf518f0115a4908. Overall PARTIAL is retained only because a deployed real external-provider stability window is not repository-owned and was not executed.",
   "open": [
     "A real external-provider stability window remains unverified. Provider credentials, selection policy and external availability were explicitly outside this bounded closure; deterministic retry/cancellation/failure contracts are proven without claiming external reliability."
   ],
@@ -11,12 +13,12 @@
     "node": "v24.12.0",
     "postgres": "16 (pgvector/pgvector:pg16)",
     "vitest": "root vitest.config.ts",
-    "dbUrl": "127.0.0.1:32919/chat_nfr in disposable container consultify-chat-nfr-f7d13b"
+    "dbUrl": "disposable tmpfs PostgreSQL used for exact-current CHAT qualification; removed after zero-residue verification"
   },
   "gateG0": "PASS for the bounded Chat runtime, pipeline, provider transport tests and runbook paths; no UI, human gate or provider policy change.",
-  "gateG1": "PASS: npm run type-check exit 0; npm run build:backend exit 0.",
-  "gateG2": "PASS focused: 4/4 files and 32/32 tests on the fresh-PG environment.",
-  "gateG3": "PASS: fresh PostgreSQL migration exit 0, 729 schema_migrations rows, zero Chat fixture residue.",
+  "gateG1": "PASS exact-current: 8 GB server TypeScript check exit 0; backend build exit 0; mounted frontend build exit 0.",
+  "gateG2": "PASS exact-current: combined real PostgreSQL 7/7, mounted browser 2/2, focused unit/hook 77/77, including the literal disconnect/cold-resume proof 1/1.",
+  "gateG3": "PASS exact-current: fresh PostgreSQL migration exit 0 with 758/758 unique successful ledger rows; repeat applied 0; dry-run pending 0; exact Chat fixture residue 0.",
   "gateG4": "NOT_RUN_BY_SCOPE: no Chat UI or human acceptance was in this technical closure.",
   "ownerTables": ["ai_partial_responses", "ai_usage_logs", "artifact_handoff_proposals", "artifact_handoff_receipts"],
   "thresholds": {
@@ -32,7 +34,13 @@
     "streamTransportAndRuntime": "13 passed / 13 discovered",
     "typeCheck": "1/1 command exit 0",
     "backendBuild": "1/1 command exit 0",
-    "migration": "729/729 ledger rows on fresh database"
+    "migration": "729/729 ledger rows on the historical fresh database",
+    "exactCurrentRealPostgres": "7 passed / 7 discovered; exit 0",
+    "exactCurrentMountedBrowser": "2 passed / 2 discovered; exit 0",
+    "exactCurrentUnitAndHook": "77 passed / 77 discovered; exit 0",
+    "literalDisconnectColdResume": "1 passed / 1 discovered; exit 0",
+    "exactCurrentMigration": "758/758 successful unique ledger rows; repeat 0; dry-run pending 0",
+    "exactCurrentResidue": "0 Chat checkpoint/session/fixture rows for the bounded fixture identity"
   },
   "negativeControls": {
     "clientCancellation": "route AbortController propagates through AIPipeline to llmService; composed provider signal becomes aborted when caller aborts",
@@ -43,7 +51,8 @@
     "providerEmpty": "EMPTY_SOURCE 422 and zero phantom proposals",
     "emptyStream": "mounted route retains explicit EMPTY_STREAM SSE failure contract",
     "tenantAndCold": "fresh-PG mounted Chat suite covers foreign/stale denial, idempotency, concurrency and independent cold readback",
-    "cleanup": "database query after tests returned proposal|receipt residue 0|0"
+    "cleanup": "database query after tests returned proposal|receipt residue 0|0",
+    "literalDisconnectRecovery": "An active delayed mounted stream is disconnected after a persisted partial; a new Pool reads the durable checkpoint; discovery causes zero provider calls; explicit user resume causes exactly one call, returns partial plus continued final output, and clears the checkpoint. Failure retention remains covered by the mounted recovery suite."
   },
   "observability": {
     "correlation": "X-Stream-Session-Id plus Chat trace ID, organization and conversation",
@@ -57,7 +66,14 @@
     "server/src/types/ai.types.ts",
     "server/src/services/ai/__tests__/tokenUsageCapture.test.ts",
     "tests/integration/ai/ai-chat-stream-e2e-mode.test.ts",
-    "docs/runbooks/CHAT_STREAM_RELIABILITY.md"
+    "docs/runbooks/CHAT_STREAM_RELIABILITY.md",
+    "server/migrations/20261010_chat_partial_response_tenant_scope.sql",
+    "src/components/AIChat/UnifiedChatPanel.tsx",
+    "src/hooks/useAIStream.ts",
+    "tests/components/AIChat/UnifiedChatPanel.test.tsx",
+    "tests/e2e/ui-canon-g4/chat-stream-resilience.spec.ts",
+    "tests/integration/ai/chat-partial-recovery.realpg.test.ts",
+    "tests/integration/ai/chat-stream-disconnect.mounted.realpg.test.ts"
   ],
   "changedPathRationale": {
     "server/src/routes/ai.routes.ts": "Own the SSE client lifecycle with an AbortController and pass its signal into the pipeline.",
@@ -66,13 +82,22 @@
     "server/src/types/ai.types.ts": "Declare the optional lifecycle signal in the pipeline request contract.",
     "server/src/services/ai/__tests__/tokenUsageCapture.test.ts": "Prove cancellation reaches provider invocation and retry is bounded to one recovery attempt.",
     "tests/integration/ai/ai-chat-stream-e2e-mode.test.ts": "Measure the mounted deterministic SSE completion threshold.",
-    "docs/runbooks/CHAT_STREAM_RELIABILITY.md": "Document thresholds, signals, safe triage and recovery commands."
+    "docs/runbooks/CHAT_STREAM_RELIABILITY.md": "Document thresholds, signals, safe triage and recovery commands.",
+    "server/migrations/20261010_chat_partial_response_tenant_scope.sql": "Persist tenant-scoped interrupted-stream checkpoints with collision-safe identity and late-safe constraints.",
+    "src/components/AIChat/UnifiedChatPanel.tsx": "Expose explicit user-controlled recovery without autonomous provider invocation.",
+    "src/hooks/useAIStream.ts": "Own checkpoint discovery, resume request lifecycle and terminal cleanup semantics.",
+    "tests/components/AIChat/UnifiedChatPanel.test.tsx": "Prove recovery affordance behavior and prevent implicit provider invocation.",
+    "tests/e2e/ui-canon-g4/chat-stream-resilience.spec.ts": "Prove mounted explicit recovery, failure retention and strict membership behavior.",
+    "tests/integration/ai/chat-partial-recovery.realpg.test.ts": "Prove tenant-scoped persistence, collision, cold readback and cleanup on real PostgreSQL.",
+    "tests/integration/ai/chat-stream-disconnect.mounted.realpg.test.ts": "Prove a literal active-stream disconnect through a cold new Pool and exactly one explicit resume invocation."
   },
   "commands": [
     {"command": "DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32919/chat_nfr DB_TYPE=postgres CI=true npx tsx server/scripts/migrate.postgres.ts", "exitCode": 0, "result": "fresh migration complete, 729 ledger rows"},
     {"command": "DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32919/chat_nfr DB_TYPE=postgres CI=true RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test ENABLE_V8_GLOBAL=true npx vitest run server/src/services/chatHandoff/__tests__/chatHandoffService.pg.test.ts server/src/services/chatHandoff/__tests__/chatHandoffMounted.pg.test.ts server/src/services/ai/__tests__/tokenUsageCapture.test.ts tests/integration/ai/ai-chat-stream-e2e-mode.test.ts --no-file-parallelism --maxWorkers=1 --retry=0 --reporter=dot", "exitCode": 0, "result": "4/4 files, 32/32 tests"},
     {"command": "npm run type-check", "exitCode": 0, "result": "passed"},
-    {"command": "npm run build:backend", "exitCode": 0, "result": "runtime mirrors verified 9/9 and TypeScript build passed"}
+    {"command": "npm run build:backend", "exitCode": 0, "result": "runtime mirrors verified 9/9 and TypeScript build passed"},
+    {"command": "exact-current fresh migration + repeat + dry-run on disposable tmpfs PostgreSQL", "exitCode": 0, "result": "758/758 successful unique migrations; repeat 0; dry-run pending 0"},
+    {"command": "exact-current focused CHAT qualification", "exitCode": 0, "result": "real PostgreSQL 7/7; mounted browser 2/2; unit/hook 77/77; literal disconnect/cold resume 1/1; residue 0"}
   ],
   "fixtures": {
     "postgres": "fresh isolated chat_nfr database",
@@ -82,7 +107,7 @@
   },
   "browserArtifacts": [],
   "rollback": {
-    "method": "Remove AbortSignal forwarding/composition, the two focused assertions and CHAT_STREAM_RELIABILITY.md. No migration or production-data rollback is required.",
+    "method": "Disable recovery presentation and resume entrypoints while retaining the additive checkpoint table for rollback-safe data preservation; revert the bounded recovery service/UI/test commits only after confirming no active checkpoints. AbortSignal forwarding and the reliability runbook remain independently safe.",
     "executed": false
   }
 }

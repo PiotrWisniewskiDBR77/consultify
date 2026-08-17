@@ -1,34 +1,71 @@
 {
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "a62dbe340114d87eda75a0d2da2d77bee2a90685",
+  "productSha": "9931050ca74e6cdefd2b02a1dbf518f0115a4908",
   "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
   "environment": {
     "node": "v24.12.0",
     "postgres": "16.14 (pgvector/pgvector:pg16)",
     "vitest": "root vitest.config.ts",
-    "dbUrl": "127.0.0.1:55432 isolated lane container consultify-closure-c-64f50785"
+    "dbUrl": "historical G4 database plus exact-current disposable tmpfs PostgreSQL; exact-current container removed after zero-residue verification"
   },
-  "gateG0": "PASS pre-commit (lease PASS, 25 changed paths). POST-COMMIT the verifier reports 11 new source/test files as violations; all 11 match lane C allowedNewRoots and none exist at baseline — see ICR-C-003, a verifier defect (isTracked() is true for staged/committed paths), not a scope violation.",
-  "gateG1": "PASS — npm run type-check exit 0; npm run build:backend exit 0; test:discovery-gate PASS 4997/4997 discovered, 4698 executed.",
-  "gateG3": "PASS — strict migrate on FRESH from-zero DB exit 0; repeat run applied 0; --dry-run 0 pending; schema_migrations 709 success / 0 failed / 0 pending.",
+  "gateG0": "PASS exact-current reconciliation: bounded Chat recovery/UI paths are present at 9931050ca74e6cdefd2b02a1dbf518f0115a4908. The historical lane verifier defect remains recorded in prior evidence and is not treated as a current scope failure.",
+  "gateG1": "PASS exact-current: 8 GB server TypeScript check exit 0; backend build exit 0; mounted frontend build exit 0.",
+  "gateG2": "PASS exact-current automated recovery scope: real PostgreSQL 7/7, mounted browser 2/2, focused unit/hook 77/77, literal disconnect/cold resume 1/1.",
+  "gateG3": "PASS exact-current: fresh PostgreSQL 758/758 successful unique migrations; repeat applied 0; dry-run pending 0; bounded fixture residue 0.",
+  "gateG4": "PARTIAL: historical mounted G4 passed 12/12 PL/EN light/dark desktop/tablet/mobile cells, axe critical/serious 0/0, keyboard/focus, deep-link, reload and cold reopen; exact-current recovery interaction passed. Human VoiceOver/persona/visual-owner acceptance and rendered forbidden/stale states remain open.",
   "taskId": "CHAT-UI-CANON-001",
-  "verdict": "NOT_VERIFIED",
+  "verdict": "PARTIAL",
+  "technicalVerdict": "PARTIAL",
+  "verdictRationale": "Exact-current repository-owned recovery behavior is proven, including mounted disconnect, durable checkpoint, cold explicit resume, zero provider invocation before the click, exactly one after it, combined output, failure retention and strict membership. The full UI DoD is not DONE because task-specific forbidden/stale rendered states and human VoiceOver, named-persona and visual/brand acceptance remain open.",
   "open": [
-    "No browser/visual evidence produced. Same G4 + BLOCKED_HUMAN position as MAT-UI-CANON-001."
+    "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending.",
+    "Task-specific forbidden and stale rendered UI states were not reached by the final automated G4; the strict membership backend and mounted revoked/foreign negatives do not substitute for those rendered-state assertions."
   ],
-  "changedPaths": [],
-  "changedPathRationale": {},
-  "ownerTables": [],
-  "commands": [],
+  "changedPaths": [
+    "src/components/AIChat/UnifiedChatPanel.tsx",
+    "src/hooks/useAIStream.ts",
+    "tests/components/AIChat/UnifiedChatPanel.test.tsx",
+    "tests/e2e/ui-canon-g4/chat-stream-resilience.spec.ts",
+    "tests/integration/ai/chat-stream-disconnect.mounted.realpg.test.ts"
+  ],
+  "changedPathRationale": {
+    "src/components/AIChat/UnifiedChatPanel.tsx": "Render the explicit recovery affordance and keep recovery user-controlled.",
+    "src/hooks/useAIStream.ts": "Discover durable checkpoints and request resume without an implicit provider call.",
+    "tests/components/AIChat/UnifiedChatPanel.test.tsx": "Prove focused panel recovery and failure-state behavior.",
+    "tests/e2e/ui-canon-g4/chat-stream-resilience.spec.ts": "Prove the mounted signed-auth recovery journey and failure retention.",
+    "tests/integration/ai/chat-stream-disconnect.mounted.realpg.test.ts": "Prove literal disconnect, cold readback and exactly one explicit resume invocation."
+  },
+  "ownerTables": [
+    "ai_partial_responses"
+  ],
+  "commands": [
+    {"command": "exact-current fresh migration + repeat + dry-run on disposable tmpfs PostgreSQL", "exitCode": 0, "result": "758/758 successful unique migrations; repeat 0; dry-run pending 0"},
+    {"command": "exact-current focused CHAT qualification", "exitCode": 0, "result": "real PostgreSQL 7/7; mounted browser 2/2; unit/hook 77/77; literal disconnect/cold resume 1/1; residue 0"},
+    {"command": "8 GB server TypeScript check + backend build + mounted frontend build", "exitCode": 0, "result": "all static gates passed"}
+  ],
   "denominators": {
     "automatedG4Cells": "12/12",
     "automatedG4Screenshots": "14/14",
     "automatedG4AxeCriticalSerious": "0/0",
     "automatedG4UnnamedControls": 0,
-    "automatedG4VisibleFocus": "PASS"
+    "automatedG4VisibleFocus": "PASS",
+    "exactCurrentRealPostgres": "7/7",
+    "exactCurrentMountedRecoveryBrowser": "2/2",
+    "exactCurrentUnitAndHook": "77/77",
+    "literalDisconnectColdResume": "1/1",
+    "exactCurrentMigration": "758/758 successful unique rows; repeat 0; dry-run pending 0",
+    "exactCurrentResidue": "0"
   },
-  "fixtures": {},
-  "negativeControls": {},
+  "fixtures": {
+    "recovery": "Real tenant/user/conversation/message identities on disposable fresh PostgreSQL with delayed mounted stream and persisted checkpoint.",
+    "browser": "Mounted Chat route with signed authentication for active membership plus revoked/foreign negative controls."
+  },
+  "negativeControls": {
+    "implicitResume": "Cold checkpoint discovery performs zero provider invocation until the user explicitly clicks resume.",
+    "singleInvocation": "Explicit resume performs exactly one provider invocation.",
+    "failureRetention": "Mounted recovery failure retains the checkpoint and does not present false completion.",
+    "tenantAndMembership": "Same-session tenant scope, foreign tenant and revoked membership fail closed in the focused PostgreSQL/browser gates."
+  },
   "browserArtifacts": [
     {
       "kind": "mounted_signed_auth_g4_final",
@@ -118,7 +155,8 @@
     }
   ],
   "resolvedBlockers": [
-    "Final mounted signed-auth automated G4 completed on candidate 836bfd633af7a689e7a3fb06971cbd8fe57bafe7: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed."
+    "Final mounted signed-auth automated G4 completed on candidate 836bfd633af7a689e7a3fb06971cbd8fe57bafe7: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed.",
+    "Exact-current 9931050ca74e6cdefd2b02a1dbf518f0115a4908 proves the previously missing deterministic recovery journey: active disconnect, durable checkpoint, cold discovery without provider invocation, explicit keyboard/click resume, exactly one provider invocation, partial plus continued final output, failure retention and zero residue."
   ],
   "automatedG4Verdict": {
     "verdict": "PASS_EXACT_SHA",
