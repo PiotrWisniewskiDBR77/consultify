@@ -1,5 +1,5 @@
 import { AlertTriangle, Plus, Save, ShieldCheck, Trash2 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -35,8 +35,11 @@ const emptyPolicy: AdminIamPolicy = {
 
 export const AdminIamPolicyPanel: React.FC = () => {
   const { t } = useTranslation();
+  const loadErrorText = t('admin.security.iamPolicy.errors.load', 'Failed to load IAM policy');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const [policy, setPolicy] = useState<AdminIamPolicy>(emptyPolicy);
   const [assignments, setAssignments] = useState<any[]>([]);
   const [assignmentForm, setAssignmentForm] = useState({
@@ -47,27 +50,41 @@ export const AdminIamPolicyPanel: React.FC = () => {
     expiresAt: '',
   });
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        setLoading(true);
-        const [result, assignmentResult] = await Promise.all([
-          Api.getAdminIAMPolicy(),
-          Api.getAdminIAMAssignments(),
-        ]);
-        setPolicy(result?.policy || emptyPolicy);
-        setAssignments(assignmentResult?.assignments || []);
-      } catch (error: any) {
-        toast.error(
-          error?.message || t('admin.security.iamPolicy.errors.load', 'Failed to load IAM policy')
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
+  const load = useCallback(async () => {
+    try {
+      setLoading(true);
+      setLoadError(null);
+      const [result, assignmentResult] = await Promise.all([
+        Api.getAdminIAMPolicy(),
+        Api.getAdminIAMAssignments(),
+      ]);
+      setPolicy(result?.policy || emptyPolicy);
+      setAssignments(assignmentResult?.assignments || []);
+      setHasLoaded(true);
+    } catch (error: any) {
+      const message = error?.message || loadErrorText;
+      setLoadError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  }, [loadErrorText]);
 
+  useEffect(() => {
     void load();
-  }, [t]);
+  }, [load]);
+
+  const reloadAfterConflict = async (error: any): Promise<boolean> => {
+    if (Number(error?.status || error?.statusCode) !== 409) return false;
+    await load();
+    toast.error(
+      t(
+        'admin.security.iamPolicy.errors.stale',
+        'This IAM state changed elsewhere. The authoritative state was reloaded.'
+      )
+    );
+    return true;
+  };
 
   const updateRole = (index: number, changes: Partial<DelegatedRole>) => {
     setPolicy((current) => ({
@@ -106,6 +123,7 @@ export const AdminIamPolicyPanel: React.FC = () => {
       setPolicy(result?.policy || policy);
       toast.success(t('admin.security.iamPolicy.toasts.updated', 'IAM policy updated'));
     } catch (error: any) {
+      if (await reloadAfterConflict(error)) return;
       toast.error(
         error?.message || t('admin.security.iamPolicy.errors.update', 'Failed to update IAM policy')
       );
@@ -132,6 +150,7 @@ export const AdminIamPolicyPanel: React.FC = () => {
         t('admin.security.iamPolicy.toasts.assignmentCreated', 'Delegated assignment created')
       );
     } catch (error: any) {
+      if (await reloadAfterConflict(error)) return;
       toast.error(
         error?.message ||
           t(
@@ -150,6 +169,7 @@ export const AdminIamPolicyPanel: React.FC = () => {
         t('admin.security.iamPolicy.toasts.assignmentRemoved', 'Delegated assignment removed')
       );
     } catch (error: any) {
+      if (await reloadAfterConflict(error)) return;
       toast.error(
         error?.message ||
           t(
@@ -168,8 +188,37 @@ export const AdminIamPolicyPanel: React.FC = () => {
     );
   }
 
+  if (!hasLoaded) {
+    return (
+      <div
+        className="rounded-2xl border border-red-300 bg-red-50 p-5 dark:border-red-900 dark:bg-red-950/30"
+        role="alert"
+      >
+        <p className="font-medium text-red-800 dark:text-red-200">{loadError || loadErrorText}</p>
+        <button
+          type="button"
+          onClick={() => void load()}
+          className="mt-3 rounded-lg border border-red-300 px-3 py-2 text-sm font-medium text-red-800 dark:border-red-800 dark:text-red-200"
+        >
+          {t('common.retry', 'Retry')}
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+      {loadError ? (
+        <div
+          className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200"
+          role="alert"
+        >
+          <span>{loadError}</span>
+          <button type="button" onClick={() => void load()} className="font-medium underline">
+            {t('common.retry', 'Retry')}
+          </button>
+        </div>
+      ) : null}
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <div className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">

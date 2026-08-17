@@ -1,0 +1,40 @@
+import { fireEvent, render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { AdminAuditLogPanel } from '@/components/Admin/AdminAuditLogPanel';
+import { Api } from '@/services/api';
+
+vi.mock('@/services/api', () => ({
+  Api: {
+    getTenantAdminAuditLogs: vi.fn(),
+    getTenantAdminAuditStats: vi.fn(),
+    getAdminRiskSummary: vi.fn(),
+    getAdminComplianceSummary: vi.fn(),
+    exportTenantAdminAuditLogs: vi.fn(),
+    updateAdminComplianceDataRetention: vi.fn(),
+  },
+}));
+
+vi.mock('react-hot-toast', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+
+describe('AdminAuditLogPanel authoritative states', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(Api.getTenantAdminAuditLogs).mockResolvedValue({ logs: [] });
+    vi.mocked(Api.getTenantAdminAuditStats).mockResolvedValue({ totalLogs: 0 });
+    vi.mocked(Api.getAdminRiskSummary).mockResolvedValue({ summary: {} });
+    vi.mocked(Api.getAdminComplianceSummary).mockResolvedValue({ summary: {} });
+  });
+
+  it('does not present zero audit metrics as truth after a failed initial load', async () => {
+    vi.mocked(Api.getTenantAdminAuditLogs)
+      .mockRejectedValueOnce(new Error('Audit unavailable'))
+      .mockResolvedValueOnce({ logs: [] });
+    render(<AdminAuditLogPanel />);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Audit unavailable');
+    expect(screen.queryByText('Total logs')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Retry/i }));
+    expect(await screen.findByText('Total logs')).toBeInTheDocument();
+  });
+});

@@ -294,7 +294,9 @@ async function getAdminActor(
   isSuperAdmin: boolean;
   capabilities: string[];
 } | null> {
-  const orgId = String(req.query.orgId || req.user?.organizationId || '').trim();
+  const tokenOrgId = String(req.user?.organizationId || '').trim();
+  const requestedOrgId = String(req.query.orgId || tokenOrgId).trim();
+  const orgId = tokenOrgId;
   const actorId = String(req.user?.id || '').trim();
   const isSuperAdmin = isRequestSuperAdmin(req);
   const requestRole = getRequestAccessRole(req);
@@ -304,7 +306,7 @@ async function getAdminActor(
     return null;
   }
 
-  if (orgId !== req.user?.organizationId && !isSuperAdmin) {
+  if (requestedOrgId !== orgId) {
     res.status(403).json({
       error: 'Cross-organization admin access is blocked',
       code: 'ADMIN_BOUNDARY_VIOLATION',
@@ -313,24 +315,39 @@ async function getAdminActor(
     return null;
   }
 
-  const membership = await dbGet<{ role?: string }>(
-    `SELECT role FROM organization_members WHERE organization_id = ? AND user_id = ? LIMIT 1`,
-    [orgId, actorId],
-    { fallback: true }
-  );
+  let membership: { role?: string; status?: string } | null;
+  try {
+    membership = await dbGet<{ role?: string; status?: string }>(
+      `SELECT role, status FROM organization_members
+       WHERE organization_id = ? AND user_id = ?
+       LIMIT 1`,
+      [orgId, actorId],
+      { fallback: false }
+    );
+  } catch {
+    res.status(503).json({
+      error: 'Admin membership could not be verified',
+      code: 'ADMIN_MEMBERSHIP_LOOKUP_FAILED',
+    });
+    return null;
+  }
+
+  if (
+    !membership ||
+    String(membership.status || '')
+      .trim()
+      .toUpperCase() !== 'ACTIVE'
+  ) {
+    res.status(403).json({
+      error: 'Active organization membership required',
+      code: 'ADMIN_MEMBERSHIP_REQUIRED',
+    });
+    return null;
+  }
   const actorRole = normalizeOrganizationRole(
     membership?.role || (requestRole === 'superadmin' ? 'OWNER' : requestRole)
   );
   const capabilities = await getActorCapabilities(orgId, actorId, actorRole, isSuperAdmin);
-
-  if (!isSuperAdmin && !membership) {
-    res.status(403).json({
-      error: 'Admin access required',
-      code: 'ADMIN_ACCESS_REQUIRED',
-      guidance: adminGuidance(requestRole),
-    });
-    return null;
-  }
 
   if (!isSuperAdmin && !['OWNER', 'ADMIN'].includes(actorRole) && capabilities.length === 0) {
     res.status(403).json({

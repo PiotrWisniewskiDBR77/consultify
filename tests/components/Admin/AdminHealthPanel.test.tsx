@@ -65,9 +65,7 @@ describe('AdminHealthPanel', () => {
 
   it('surfaces the error message for a failing probe', async () => {
     render(<AdminHealthPanel />);
-    expect(
-      await screen.findByText('Audit entry not readable after emission')
-    ).toBeInTheDocument();
+    expect(await screen.findByText('Audit entry not readable after emission')).toBeInTheDocument();
   });
 
   it('runs all probes when "Run all" is clicked', async () => {
@@ -95,8 +93,24 @@ describe('AdminHealthPanel', () => {
       summary: SUMMARY,
     });
     render(<AdminHealthPanel />);
-    expect(
-      await screen.findByText(/disabled in this environment/i)
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/disabled in this environment/i)).toBeInTheDocument();
+  });
+
+  it('does not present unknown probe metrics as truth after load failure and supports retry', async () => {
+    (Api.getHealthPanelProbes as any)
+      .mockRejectedValueOnce(new Error('Health unavailable'))
+      .mockResolvedValueOnce({
+        success: true,
+        envAllowed: true,
+        catalog: PROBES,
+        results: PROBES,
+        summary: SUMMARY,
+      });
+    render(<AdminHealthPanel />);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Health unavailable');
+    expect(screen.queryByText('Not run')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Retry/i }));
+    expect(await screen.findByText('KPI create → read → delete')).toBeInTheDocument();
   });
 });

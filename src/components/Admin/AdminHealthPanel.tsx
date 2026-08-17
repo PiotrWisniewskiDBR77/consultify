@@ -65,18 +65,24 @@ export const AdminHealthPanel: React.FC = () => {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [envAllowed, setEnvAllowed] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const [runningAll, setRunningAll] = useState(false);
   const [runningProbe, setRunningProbe] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const data = await Api.getHealthPanelProbes();
       setResults(Array.isArray(data?.results) ? data.results : []);
       setSummary(data?.summary || null);
       setEnvAllowed(data?.envAllowed !== false);
+      setHasLoaded(true);
     } catch (error: any) {
-      toast.error(error?.message || 'Failed to load health probes');
+      const message = error?.message || 'Failed to load health probes';
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -144,8 +150,33 @@ export const AdminHealthPanel: React.FC = () => {
     [summary, t]
   );
 
+  if (!hasLoaded && loadError && !loading) {
+    return (
+      <div
+        className="rounded-2xl border border-red-300 bg-red-50 p-5 text-sm text-red-900 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200"
+        role="alert"
+      >
+        <p>{loadError}</p>
+        <Button variant="outline" className="mt-3" onClick={() => void load()}>
+          {t('common.retry', { defaultValue: 'Retry' })}
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
+      {loadError ? (
+        <div
+          className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200"
+          role="alert"
+        >
+          <span>{loadError}</span>
+          <button type="button" onClick={() => void load()} className="font-medium underline">
+            {t('common.retry', { defaultValue: 'Retry' })}
+          </button>
+        </div>
+      ) : null}
       {/* Header card */}
       <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
         <div className="flex flex-wrap items-start justify-between gap-3">

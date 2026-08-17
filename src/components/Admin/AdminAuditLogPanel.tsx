@@ -22,6 +22,8 @@ export const AdminAuditLogPanel: React.FC = () => {
   });
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [riskSummary, setRiskSummary] = useState<any>(null);
   const [complianceSummary, setComplianceSummary] = useState<any>(null);
@@ -31,6 +33,7 @@ export const AdminAuditLogPanel: React.FC = () => {
   const load = useCallback(async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const [logResult, statsResult, riskResult, complianceResult] = await Promise.all([
         Api.getTenantAdminAuditLogs({ limit: 100, search }),
         Api.getTenantAdminAuditStats(),
@@ -48,10 +51,12 @@ export const AdminAuditLogPanel: React.FC = () => {
       setRetentionDays(
         Number(complianceResult?.summary?.dataRetention?.auditLogRetentionDays || 730)
       );
+      setHasLoaded(true);
     } catch (error: any) {
-      toast.error(
-        error?.message || t('admin.security.auditLog.errors.load', 'Failed to load audit logs')
-      );
+      const message =
+        error?.message || t('admin.security.auditLog.errors.load', 'Failed to load audit logs');
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -165,8 +170,33 @@ export const AdminAuditLogPanel: React.FC = () => {
     },
   ];
 
+  if (!hasLoaded && loadError && !loading) {
+    return (
+      <div
+        className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-900 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200"
+        role="alert"
+      >
+        <p>{loadError}</p>
+        <button type="button" onClick={() => void load()} className="mt-3 font-medium underline">
+          {t('common.retry', 'Retry')}
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
+      {loadError ? (
+        <div
+          className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-900 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200"
+          role="alert"
+        >
+          <span>{loadError}</span>
+          <button type="button" onClick={() => void load()} className="font-medium underline">
+            {t('common.retry', 'Retry')}
+          </button>
+        </div>
+      ) : null}
       <div className="grid gap-4 md:grid-cols-3">
         <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
           <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">

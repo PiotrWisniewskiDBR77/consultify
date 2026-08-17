@@ -12,7 +12,7 @@
  *
  * Mounted at /api/admin/health-panel (Gateway.ts).
  */
-import { type Response, Router } from 'express';
+import { type NextFunction, type Response, Router } from 'express';
 
 import verifyAdmin from '../../middleware/admin.middleware.js';
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
@@ -28,10 +28,53 @@ import {
   summarizeResults,
 } from '../../services/health/healthProbeService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
+import { get as dbGet } from '../../utils/DbPromise.js';
 
 const router = Router();
 
 router.use(verifyToken);
+router.use(
+  asyncHandler(async (req: AuthRequest, res: Response, next: NextFunction) => {
+    const organizationId = String(req.user?.organizationId || '').trim();
+    const userId = String(req.user?.id || '').trim();
+    if (!organizationId || !userId) {
+      res.status(401).json({ success: false, error: 'Unauthorized', code: 'UNAUTHORIZED' });
+      return;
+    }
+
+    try {
+      const membership = await dbGet<{ status?: string }>(
+        `SELECT status FROM organization_members
+         WHERE organization_id = ? AND user_id = ?
+         LIMIT 1`,
+        [organizationId, userId],
+        { fallback: false }
+      );
+      if (
+        !membership ||
+        String(membership.status || '')
+          .trim()
+          .toUpperCase() !== 'ACTIVE'
+      ) {
+        res.status(403).json({
+          success: false,
+          error: 'Active organization membership required',
+          code: 'ADMIN_MEMBERSHIP_REQUIRED',
+        });
+        return;
+      }
+    } catch {
+      res.status(503).json({
+        success: false,
+        error: 'Admin membership could not be verified',
+        code: 'ADMIN_MEMBERSHIP_LOOKUP_FAILED',
+      });
+      return;
+    }
+
+    next();
+  })
+);
 router.use(verifyAdmin);
 
 function getContext(req: AuthRequest): HealthProbeContext | null {

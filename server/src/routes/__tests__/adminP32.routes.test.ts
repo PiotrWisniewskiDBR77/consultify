@@ -15,6 +15,8 @@ const getPolicySummary = vi.fn();
 const getOrgContextPolicy = vi.fn();
 
 let mockUserRole = 'admin';
+let mockUserId = 'user-1';
+let mockOrganizationId = 'org-1';
 
 vi.mock('../../utils/DbPromise.js', () => ({
   all: (...args: any[]) => dbAll(...args),
@@ -25,14 +27,36 @@ vi.mock('../../utils/DbPromise.js', () => ({
 vi.mock('../../middleware/auth.middleware.js', () => ({
   verifyToken: (req: any, _res: any, next: any) => {
     req.user = {
-      id: 'user-1',
-      organizationId: 'org-1',
+      id: mockUserId,
+      organizationId: mockOrganizationId,
       role: mockUserRole,
       isSuperAdmin: String(mockUserRole).toLowerCase() === 'superadmin',
     };
     req.userRole = mockUserRole;
     next();
   },
+}));
+
+vi.mock('../../middleware/admin.middleware.js', () => ({
+  default: (req: any, res: any, next: any) => {
+    const role = String(req.user?.role || '').toUpperCase();
+    if (!['ADMIN', 'OWNER', 'SUPERADMIN'].includes(role)) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    next();
+  },
+}));
+
+const getCachedResults = vi.fn();
+vi.mock('../../services/health/healthProbeService.js', () => ({
+  HEALTH_PROBES: [],
+  getCachedResults: (...args: any[]) => getCachedResults(...args),
+  summarizeResults: () => ({ total: 0 }),
+  isHealthPanelAllowedEnv: () => false,
+  cacheProbeResult: vi.fn(),
+  getProbeById: vi.fn(),
+  runAllProbes: vi.fn(),
+  runProbe: vi.fn(),
 }));
 
 vi.mock('../../services/adminAuditService.js', () => ({
@@ -92,6 +116,8 @@ function createApp(): Express {
 describe('adminP32Routes', () => {
   beforeEach(() => {
     mockUserRole = 'admin';
+    mockUserId = 'user-1';
+    mockOrganizationId = 'org-1';
     dbAll.mockReset();
     dbGet.mockReset();
     dbRun.mockReset();
@@ -130,9 +156,86 @@ describe('adminP32Routes', () => {
     scimMappingsHasProjectId.mockResolvedValue(true);
   });
 
+  it.each(['ADMIN', 'OWNER'])('allows an ACTIVE %s membership', async (role) => {
+    mockUserRole = role.toLowerCase();
+    dbGet.mockResolvedValueOnce({ role, status: 'ACTIVE' });
+    getLogs.mockResolvedValue([]);
+
+    const res = await request(createApp()).get('/api/admin/audit-logs');
+
+    expect(res.status).toBe(200);
+    expect(getLogs).toHaveBeenCalledTimes(1);
+  });
+
+  it('denies a revoked membership on the first request with the same token', async () => {
+    dbGet.mockResolvedValueOnce({ role: 'ADMIN', status: 'ACTIVE' });
+    getLogs.mockResolvedValue([]);
+    const app = createApp();
+    expect((await request(app).get('/api/admin/audit-logs')).status).toBe(200);
+
+    dbGet.mockResolvedValueOnce({ role: 'ADMIN', status: 'REVOKED' });
+    const revoked = await request(app).get('/api/admin/audit-logs');
+
+    expect(revoked.status).toBe(403);
+    expect(revoked.body.code).toBe('ADMIN_MEMBERSHIP_REQUIRED');
+    expect(getLogs).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not let SUPERADMIN bypass a missing membership', async () => {
+    mockUserRole = 'superadmin';
+    dbGet.mockResolvedValueOnce(null);
+
+    const res = await request(createApp()).get('/api/admin/audit-logs');
+
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('ADMIN_MEMBERSHIP_REQUIRED');
+    expect(getLogs).not.toHaveBeenCalled();
+  });
+
+  it('fails closed with 503 when the authoritative membership lookup fails', async () => {
+    dbGet.mockRejectedValueOnce(new Error('database unavailable'));
+
+    const res = await request(createApp()).get('/api/admin/audit-logs');
+
+    expect(res.status).toBe(503);
+    expect(res.body.code).toBe('ADMIN_MEMBERSHIP_LOOKUP_FAILED');
+    expect(getLogs).not.toHaveBeenCalled();
+  });
+
+  it('rejects a foreign query selector and ignores body organization authority', async () => {
+    const foreign = await request(createApp()).get('/api/admin/audit-logs?orgId=org-2');
+    expect(foreign.status).toBe(403);
+    expect(foreign.body.code).toBe('ADMIN_BOUNDARY_VIOLATION');
+    expect(dbGet).not.toHaveBeenCalled();
+
+    dbGet.mockResolvedValueOnce({ role: 'ADMIN', status: 'ACTIVE' });
+    getLogs.mockResolvedValue([]);
+    const bodySpoof = await request(createApp())
+      .get('/api/admin/audit-logs')
+      .send({ organizationId: 'org-2' });
+    expect(bodySpoof.status).toBe(200);
+    expect(getLogs).toHaveBeenCalledWith(expect.objectContaining({ organizationId: 'org-1' }));
+  });
+
+  it('applies the same authoritative membership gate before the health admin role', async () => {
+    const healthRouter = (await import('../admin/health-panel.routes.js')).default;
+    const app = express();
+    app.use('/api/admin/health-panel', healthRouter);
+
+    dbGet.mockResolvedValueOnce({ status: 'REVOKED' });
+    expect((await request(app).get('/api/admin/health-panel/probes')).status).toBe(403);
+
+    dbGet.mockRejectedValueOnce(new Error('database unavailable'));
+    expect((await request(app).get('/api/admin/health-panel/probes')).status).toBe(503);
+
+    dbGet.mockResolvedValueOnce({ status: 'ACTIVE' });
+    getCachedResults.mockResolvedValueOnce([]);
+    expect((await request(app).get('/api/admin/health-panel/probes')).status).toBe(200);
+  });
+
   it('blocks guests from the admin cockpit with explicit guidance', async () => {
     mockUserRole = 'guest';
-    dbGet.mockResolvedValueOnce({ role: 'GUEST' });
+    dbGet.mockResolvedValueOnce({ role: 'GUEST', status: 'ACTIVE' });
 
     const app = createApp();
     const res = await request(app).get('/api/admin/security');
@@ -144,7 +247,7 @@ describe('adminP32Routes', () => {
 
   it('returns canonical security policy from org + organization_settings + sso', async () => {
     dbGet
-      .mockResolvedValueOnce({ role: 'ADMIN' })
+      .mockResolvedValueOnce({ role: 'ADMIN', status: 'ACTIVE' })
       .mockResolvedValueOnce({ mfa_required: 1, mfa_grace_period_days: 5 })
       .mockResolvedValueOnce({
         setting_value: JSON.stringify({
@@ -173,7 +276,7 @@ describe('adminP32Routes', () => {
   });
 
   it('writes collaboration controls to canonical settings keys and audits the change', async () => {
-    dbGet.mockResolvedValueOnce({ role: 'OWNER' });
+    dbGet.mockResolvedValueOnce({ role: 'OWNER', status: 'ACTIVE' });
     dbAll.mockResolvedValueOnce([
       { key: 'tenant:org-1:guest_access_enabled', value: 'false' },
       { key: 'tenant:org-1:external_link_sharing', value: 'false' },
@@ -198,7 +301,7 @@ describe('adminP32Routes', () => {
   });
 
   it('filters audit logs to the active organization only', async () => {
-    dbGet.mockResolvedValueOnce({ role: 'ADMIN' });
+    dbGet.mockResolvedValueOnce({ role: 'ADMIN', status: 'ACTIVE' });
     getLogs.mockResolvedValue([
       {
         id: 'log-1',
@@ -230,7 +333,7 @@ describe('adminP32Routes', () => {
 
   it('returns enterprise admin overview with billing, ai, and audit posture', async () => {
     dbGet
-      .mockResolvedValueOnce({ role: 'ADMIN' })
+      .mockResolvedValueOnce({ role: 'ADMIN', status: 'ACTIVE' })
       .mockResolvedValueOnce({ total: 1 })
       .mockResolvedValueOnce({
         subscription_plan_id: 'plan-1',
@@ -301,7 +404,7 @@ describe('adminP32Routes', () => {
   });
 
   it('reads and writes tenant IAM policy from organization settings', async () => {
-    dbGet.mockResolvedValueOnce({ role: 'OWNER' }).mockResolvedValueOnce({
+    dbGet.mockResolvedValueOnce({ role: 'OWNER', status: 'ACTIVE' }).mockResolvedValueOnce({
       setting_value: JSON.stringify({
         delegatedRoles: [
           { id: 'billing_admin', name: 'Billing Admin', capabilities: ['billing:read'] },
@@ -322,7 +425,7 @@ describe('adminP32Routes', () => {
     expect(getRes.status).toBe(200);
     expect(getRes.body.policy.accessReviewCadenceDays).toBe(60);
 
-    dbGet.mockResolvedValueOnce({ role: 'OWNER' }).mockResolvedValueOnce({
+    dbGet.mockResolvedValueOnce({ role: 'OWNER', status: 'ACTIVE' }).mockResolvedValueOnce({
       setting_value: JSON.stringify({
         delegatedRoles: [],
         accessReviewsEnabled: true,
@@ -353,7 +456,7 @@ describe('adminP32Routes', () => {
   it('allows delegated billing admins to access billing summaries', async () => {
     mockUserRole = 'member';
     dbGet
-      .mockResolvedValueOnce({ role: 'MEMBER' })
+      .mockResolvedValueOnce({ role: 'MEMBER', status: 'ACTIVE' })
       .mockResolvedValueOnce({
         subscription_plan_id: 'plan-1',
         status: 'active',
@@ -396,11 +499,11 @@ describe('adminP32Routes', () => {
 
   it('creates delegated assignments, payment methods, and SCIM tokens from admin surfaces', async () => {
     dbGet
-      .mockResolvedValueOnce({ role: 'OWNER' })
-      .mockResolvedValueOnce({ role: 'OWNER' })
+      .mockResolvedValueOnce({ role: 'OWNER', status: 'ACTIVE' })
+      .mockResolvedValueOnce({ role: 'OWNER', status: 'ACTIVE' })
       .mockResolvedValueOnce({ count: 0 })
       .mockResolvedValueOnce({ id: 'pm-1', brand: 'Visa', last4: '4242' })
-      .mockResolvedValueOnce({ role: 'OWNER' });
+      .mockResolvedValueOnce({ role: 'OWNER', status: 'ACTIVE' });
 
     const app = createApp();
 
@@ -430,7 +533,7 @@ describe('adminP32Routes', () => {
     expect(String(scimRes.body.token.token)).toContain('scim_');
   });
 
-  it('allows platform superadmins to read another organization via explicit orgId context', async () => {
+  it('does not let platform superadmins select a foreign organization context', async () => {
     mockUserRole = 'superadmin';
     dbGet
       .mockResolvedValueOnce(undefined)
@@ -486,14 +589,15 @@ describe('adminP32Routes', () => {
     const app = createApp();
     const res = await request(app).get('/api/admin/overview').query({ orgId: 'org-2' });
 
-    expect(res.status).toBe(200);
-    expect(res.body.overview.billing.plan.name).toBe('Global Enterprise');
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('ADMIN_BOUNDARY_VIOLATION');
+    expect(dbGet).not.toHaveBeenCalled();
   });
 
   it('assigns a manual-billing plan + limits and audits the change', async () => {
     dbGet
       // getAdminActor membership lookup
-      .mockResolvedValueOnce({ role: 'ADMIN' })
+      .mockResolvedValueOnce({ role: 'ADMIN', status: 'ACTIVE' })
       // assignBillingPlan: plan id validation
       .mockResolvedValueOnce({ id: 'plan-pro' })
       // assignBillingPlan: existing organization_billing row
@@ -545,7 +649,7 @@ describe('adminP32Routes', () => {
 
   it('rejects an invalid plan assignment payload with validation errors', async () => {
     dbGet
-      .mockResolvedValueOnce({ role: 'ADMIN' })
+      .mockResolvedValueOnce({ role: 'ADMIN', status: 'ACTIVE' })
       // plan id validation: no matching plan
       .mockResolvedValueOnce(null);
 
@@ -566,7 +670,7 @@ describe('adminP32Routes', () => {
   // ── HP-25 B2/B4: SCIM group-mapping per-project + org-scope ──
 
   it('creates a per-project group mapping using the token org (never the body org)', async () => {
-    dbGet.mockResolvedValueOnce({ role: 'OWNER' });
+    dbGet.mockResolvedValueOnce({ role: 'OWNER', status: 'ACTIVE' });
     insertScimGroupMapping.mockResolvedValueOnce({
       id: 'map-1',
       externalGroupId: 'grp-1',
@@ -605,7 +709,7 @@ describe('adminP32Routes', () => {
   });
 
   it('returns 404 when the mapping targets a project outside the org (cross-org guard)', async () => {
-    dbGet.mockResolvedValueOnce({ role: 'OWNER' });
+    dbGet.mockResolvedValueOnce({ role: 'OWNER', status: 'ACTIVE' });
     insertScimGroupMapping.mockRejectedValueOnce(
       new ScimGroupMappingError('PROJECT_NOT_IN_ORG', 'Project not found in this organization')
     );
@@ -636,7 +740,7 @@ describe('adminP32Routes', () => {
   });
 
   it('scopes the delete to the active org (id + organization_id predicate)', async () => {
-    dbGet.mockResolvedValueOnce({ role: 'OWNER' });
+    dbGet.mockResolvedValueOnce({ role: 'OWNER', status: 'ACTIVE' });
 
     const app = createApp();
     const res = await request(app).delete('/api/admin/identity/scim/group-mappings/map-9');
