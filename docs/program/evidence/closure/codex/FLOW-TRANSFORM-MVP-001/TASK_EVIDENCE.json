@@ -2,9 +2,9 @@
   "taskId": "FLOW-TRANSFORM-MVP-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "productSha": "c50c4895f11012ea4326fd9879521716f100a5d8",
-  "technicalSourceSha": "64590c5b4a",
+  "technicalSourceSha": "64590c5b4a530b53b4432ef990b709efe3ef12e3",
   "requalificationSha": "1a0a9ef50694f981bcba167429e956493829180a",
-  "patchEquivalence": "Canonical 64590c5b4a is byte-for-byte patch-equivalent to reported source 1fd80eb9e28f02215683a0be487e5b950d0e0533 across all nine scoped-cleanup paths.",
+  "patchEquivalence": "Canonical 64590c5b4a530b53b4432ef990b709efe3ef12e3 is byte-for-byte patch-equivalent to reported source 1fd80eb9e28f02215683a0be487e5b950d0e0533 across all nine scoped-cleanup paths.",
   "leaseSha256": "18eb0f2e24aee1d6415a29e1605597117f24c42a1f74439842581e7a92583742",
   "changedPaths": [
     "tests/integration/exe009-closure-delivery-receipt.realdb.test.ts",
@@ -85,7 +85,7 @@
   ],
   "currentTechnicalRequalification": {
     "candidateSha": "1a0a9ef50694f981bcba167429e956493829180a",
-    "technicalSourceSha": "64590c5b4a",
+    "technicalSourceSha": "64590c5b4a530b53b4432ef990b709efe3ef12e3",
     "database": "own disposable pgvector PostgreSQL 16; fresh 758, repeat 0, dry-run pending 0",
     "closureEvidence": "113/113",
     "combinedFlowRegression": "170/170",
