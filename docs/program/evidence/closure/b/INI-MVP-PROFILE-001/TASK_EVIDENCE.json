@@ -1,8 +1,8 @@
 {
   "taskId": "INI-MVP-PROFILE-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "dc6d6743fb",
-  "technicalVerdict": "PASS_PROFILE_WRITER_CURRENT_SHA",
+  "productSha": "a0a1e8ea54636d294b7677f7601da8982c54021a",
+  "technicalVerdict": "DONE_CURRENT_SHA",
   "leaseSha256": "f4d75f0aed94f2e34acaec63d91c245495e7e0f658aa36d1122342c2acecc612",
   "toolchain": {
     "node": "v24.12.0",
@@ -14,7 +14,7 @@
   },
   "laneGates": {
     "G0": "PASS — branch codex/closure-claude-b-transformation, HEAD==baseline at start, verify-closure-lane.mjs PASS",
-    "G1": "PASS — server type-check exit 0 and build:backend exit 0 on dc6d6743fb",
+    "G1": "PASS — server type-check exit 0 and build:backend exit 0 on the cutover implementation; final duplicate-owner type-check exit 0",
     "G3_strict_migration": "PASS — fresh 733/733, repeat 0, dry-run 0 on isolated pgvector PostgreSQL 16",
     "G2_lane_baseline": "RED (pre-existing at sealed baseline): 747 collected of 761 real test files; 107 files failed / 557 passed / 83 skipped; 287 tests failed / 4270 passed / 617 skipped",
     "G2_defects": "14 leased acceptance tests uncollectable by the mandated command; 110 further realDB files run without a DB by it; backend tests execute under jsdom because environmentMatchGlobs is dead in Vitest 4"
@@ -26,13 +26,23 @@
     "server/migrations/20260922_initiative_profile_version_receipts.sql",
     "server/src/services/initiative/initiativeProfileService.ts",
     "server/src/routes/pmo/initiatives.routes.ts",
-    "server/src/services/initiative/__tests__/initiativeProfileService.pg.test.ts"
+    "server/src/services/initiative/__tests__/initiativeProfileService.pg.test.ts",
+    "server/src/services/initiative/createInitiativeService.ts",
+    "server/src/services/assessment/AssessmentWorkbenchService.ts",
+    "tests/unit/initiative/createInitiativeService.test.ts",
+    "tests/unit/initiative/initiativeFunnelDefault.contract.test.ts",
+    "16 flag-governed production creator files enumerated by initiativeFunnelDefault.contract.test.ts"
   ],
   "changedPathRationale": {
     "server/migrations/20260922_initiative_profile_version_receipts.sql": "Versioned immutable idempotency receipt",
     "server/src/services/initiative/initiativeProfileService.ts": "Pinned transaction, DB-authoritative role, CAS and payload collision",
     "server/src/routes/pmo/initiatives.routes.ts": "Mounted authenticated profile endpoint and active-membership validation",
-    "server/src/services/initiative/__tests__/initiativeProfileService.pg.test.ts": "Mounted JWT, 8-way concurrency, tenant, stale-role and cold-readback proof"
+    "server/src/services/initiative/__tests__/initiativeProfileService.pg.test.ts": "Mounted JWT, 8-way concurrency, tenant, stale-role and cold-readback proof",
+    "server/src/services/initiative/createInitiativeService.ts": "Single relational persistence owner now includes schema-preserving duplicate",
+    "server/src/services/assessment/AssessmentWorkbenchService.ts": "Former unconditional raw writer now consumes the funnel",
+    "tests/unit/initiative/createInitiativeService.test.ts": "Duplicate field preservation, identity/state reset, audit and tenant-negative proof",
+    "tests/unit/initiative/initiativeFunnelDefault.contract.test.ts": "Static default-ON creator inventory, no Assessment or route raw writer, capability enforcement",
+    "16 flag-governed production creator files enumerated by initiativeFunnelDefault.contract.test.ts": "Funnel defaults ON; explicit false is the bounded emergency rollback"
   },
   "commands": [
     "node scripts/cleanup/verify-closure-lane.mjs b closure-execution-baseline-v2-20260816",
@@ -41,9 +51,10 @@
     "RUN_DB_TESTS=1 MOCK_DB=false npx vitest run initiativeProfileService.pg.test.ts — 1/1 file, 2/2",
     "NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p server/tsconfig.json --noEmit — exit 0",
     "NODE_OPTIONS=--max-old-space-size=8192 npm run build:backend — exit 0"
+    ,"npx vitest run tests/unit/initiative/createInitiativeService.test.ts tests/unit/initiative/initiativeFunnelDefault.contract.test.ts --retry=0 — 2/2 files, 15/15 tests, exit 0"
   ],
   "denominators": {
-    "task": "Canonical profile mutation seam 2/2 realDB; broader initiative-create writer inventory remains greater than 1",
+    "task": "Canonical profile mutation seam 2/2 realDB; initiative creation cutover contract 2/2 files and 15/15 tests; active relational writer owner inventory=1",
     "laneRealDbPass": "110 leased realDB files on an isolated DB: 77 passed / 7 failed / 26 skipped; 675 tests: 565 passed / 51 failed / 59 skipped",
     "recoveredAcceptance": "14 leased acceptance files the mandated G2 command cannot collect, run under vitest.acceptance.config.ts: 105 tests, 91 passed / 14 failed"
   },
@@ -65,6 +76,7 @@
   "rollback": {
     "method": "Revert the lane commits; all changes are additive application code plus new tests. NO migration was added by this lane, so no schema rollback is required and old readers are unaffected."
   },
-  "verdict": "PARTIAL",
-  "openBlocker": "The new governed profile writer is complete, but the task-level DoD also requires initiative creation writer inventory=1. The current active model still has multiple flag-gated/raw creation paths and a parallel runtime aggregate, so the overall task remains PARTIAL until creation cutover is reconciled rather than inferred from this narrower writer."
+  "verdict": "DONE_CURRENT_SHA",
+  "openBlocker": null,
+  "scopeDisposition": "The separate ie_aggregate_state material-command aggregate already has its own single writer and is explicitly outside this task's relational initiatives writer-inventory scope. It is not counted as a second INSERT writer into initiatives."
 }
