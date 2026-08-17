@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createHash } from 'node:crypto';
 
 const mocks = vi.hoisted(() => ({
   dbRun: vi.fn(),
@@ -43,11 +44,14 @@ vi.mock('node:fs', () => ({
   },
 }));
 
-vi.mock('../../../../server/src/services/organizationContext/OrganizationContextService.js', () => ({
-  default: {
-    recordAttachmentExtraction: mocks.recordAttachmentExtraction,
-  },
-}));
+vi.mock(
+  '../../../../server/src/services/organizationContext/OrganizationContextService.js',
+  () => ({
+    default: {
+      recordAttachmentExtraction: mocks.recordAttachmentExtraction,
+    },
+  })
+);
 
 vi.mock('../../../../server/src/services/ragService.js', () => ({
   default: {
@@ -55,9 +59,8 @@ vi.mock('../../../../server/src/services/ragService.js', () => ({
   },
 }));
 
-const { default: contextDocumentService, recordContextStorageUsage } = await import(
-  '../../../../server/src/services/organizationContext/ContextDocumentService.js'
-);
+const { default: contextDocumentService, recordContextStorageUsage } =
+  await import('../../../../server/src/services/organizationContext/ContextDocumentService.js');
 
 describe('ContextDocumentService storage accounting', () => {
   const originalEnv = { ...process.env };
@@ -98,10 +101,14 @@ describe('ContextDocumentService storage accounting', () => {
       percentage: 0,
     });
     mocks.recordStorageUsage.mockReset().mockResolvedValue({ id: 'usage-1', bytes: 2048 });
-    mocks.recordProjectStorageUsage.mockReset().mockResolvedValue({ projectId: 'project-1', bytes: 2048 });
+    mocks.recordProjectStorageUsage
+      .mockReset()
+      .mockResolvedValue({ projectId: 'project-1', bytes: 2048 });
     mocks.mkdir.mockReset().mockResolvedValue(undefined);
     mocks.writeFile.mockReset().mockResolvedValue(undefined);
-    mocks.readFile.mockReset().mockResolvedValue(Buffer.from('queued document text that can be processed'));
+    mocks.readFile
+      .mockReset()
+      .mockResolvedValue(Buffer.from('queued document text that can be processed'));
     mocks.recordAttachmentExtraction.mockReset().mockResolvedValue(undefined);
     mocks.generateEmbedding.mockReset().mockResolvedValue([0.1, 0.2]);
   });
@@ -174,6 +181,10 @@ describe('ContextDocumentService storage accounting', () => {
       expect.any(Object)
     );
     expect(mocks.recordStorageUsage).not.toHaveBeenCalled();
+    const quotaInsert = mocks.dbRun.mock.calls.find((call) =>
+      String(call[0]).includes("'quota_blocked'")
+    );
+    expect(String(quotaInsert?.[0])).not.toContain('file_hash');
   });
 
   it('records processing job lifecycle for degraded extraction outcomes', async () => {
@@ -266,20 +277,27 @@ describe('ContextDocumentService storage accounting', () => {
       updated_at: '2026-05-03T10:00:00.000Z',
     });
 
+    const bytes = Buffer.from(
+      'This is a sufficiently long strategy document with enough context for chunk creation.'
+    );
     await contextDocumentService.uploadAndIngest({
       file: {
         originalname: 'strategy.txt',
         mimetype: 'text/plain',
         size: 96,
-        buffer: Buffer.from(
-          'This is a sufficiently long strategy document with enough context for chunk creation.'
-        ),
+        buffer: bytes,
       } as Express.Multer.File,
       organizationId: 'org-1',
       ownerId: 'user-1',
       scope: 'user',
       sourceUpload: 'documents.library',
     });
+
+    expect(mocks.dbRun).toHaveBeenCalledWith(
+      expect.stringMatching(/INSERT INTO knowledge_docs[\s\S]*file_hash/),
+      expect.arrayContaining([createHash('sha256').update(bytes).digest('hex')]),
+      expect.any(Object)
+    );
 
     expect(mocks.dbRun).toHaveBeenCalledWith(
       expect.stringContaining('normalized_md = ?'),
@@ -435,20 +453,18 @@ describe('ContextDocumentService storage accounting', () => {
   });
 
   it('schedules retry when queued worker cannot read the source file before max attempts', async () => {
-    mocks.dbAll
-      .mockResolvedValueOnce([{ id: 'job-stale' }])
-      .mockResolvedValueOnce([
-        {
-          job_id: 'job-retry',
-          document_id: 'doc-retry',
-          attempt_count: 0,
-          filepath: '/missing/context.txt',
-          original_name: 'context.txt',
-          filename: 'context.txt',
-          mime_type: 'text/plain',
-          file_size_bytes: 128,
-        },
-      ]);
+    mocks.dbAll.mockResolvedValueOnce([{ id: 'job-stale' }]).mockResolvedValueOnce([
+      {
+        job_id: 'job-retry',
+        document_id: 'doc-retry',
+        attempt_count: 0,
+        filepath: '/missing/context.txt',
+        original_name: 'context.txt',
+        filename: 'context.txt',
+        mime_type: 'text/plain',
+        file_size_bytes: 128,
+      },
+    ]);
     mocks.readFile.mockRejectedValueOnce(new Error('source file unavailable'));
 
     const result = await contextDocumentService.processQueuedContextDocumentJobs({ limit: 1 });
@@ -482,20 +498,18 @@ describe('ContextDocumentService storage accounting', () => {
   });
 
   it('dead-letters queued worker jobs after the final failed attempt', async () => {
-    mocks.dbAll
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([
-        {
-          job_id: 'job-dead',
-          document_id: 'doc-dead',
-          attempt_count: 2,
-          filepath: '/missing/final.txt',
-          original_name: 'final.txt',
-          filename: 'final.txt',
-          mime_type: 'text/plain',
-          file_size_bytes: 128,
-        },
-      ]);
+    mocks.dbAll.mockResolvedValueOnce([]).mockResolvedValueOnce([
+      {
+        job_id: 'job-dead',
+        document_id: 'doc-dead',
+        attempt_count: 2,
+        filepath: '/missing/final.txt',
+        original_name: 'final.txt',
+        filename: 'final.txt',
+        mime_type: 'text/plain',
+        file_size_bytes: 128,
+      },
+    ]);
     mocks.readFile.mockRejectedValueOnce(new Error('source file unavailable'));
 
     const result = await contextDocumentService.processQueuedContextDocumentJobs({ limit: 1 });
@@ -517,7 +531,11 @@ describe('ContextDocumentService storage accounting', () => {
     );
     expect(mocks.dbRun).toHaveBeenCalledWith(
       expect.stringContaining("SET status = 'failed'"),
-      expect.arrayContaining([expect.stringContaining('source_file_unavailable'), expect.any(String), 'doc-dead']),
+      expect.arrayContaining([
+        expect.stringContaining('source_file_unavailable'),
+        expect.any(String),
+        'doc-dead',
+      ]),
       expect.any(Object)
     );
   });
@@ -561,7 +579,11 @@ describe('ContextDocumentService storage accounting', () => {
         brokerDeploymentReady: true,
         brokerDeploymentMissing: [],
         asyncCutoverReady: false,
-        asyncCutoverBlockers: ['scheduler_disabled', 'stale_worker_locks_present', 'dead_letters_present'],
+        asyncCutoverBlockers: [
+          'scheduler_disabled',
+          'stale_worker_locks_present',
+          'dead_letters_present',
+        ],
         locatorUpgradePlan: {
           baselineReady: [
             'char_range_chunks',

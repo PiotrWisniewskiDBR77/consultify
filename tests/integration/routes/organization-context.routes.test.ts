@@ -8,7 +8,9 @@ const listClaims = vi.fn();
 const rebuildSnapshot = vi.fn();
 
 vi.mock('../../../server/src/middleware/auth.middleware.js', async () => {
-  const actual = (await vi.importActual('../../../server/src/middleware/auth.middleware.js')) as any;
+  const actual = (await vi.importActual(
+    '../../../server/src/middleware/auth.middleware.js'
+  )) as any;
   return {
     ...actual,
     verifyToken: (req: any, _res: any, next: any) => {
@@ -18,6 +20,7 @@ vi.mock('../../../server/src/middleware/auth.middleware.js', async () => {
       req.organizationId = 'org-1';
       next();
     },
+    validateOrgMembership: (_req: any, _res: any, next: any) => next(),
   };
 });
 
@@ -30,9 +33,8 @@ vi.mock('../../../server/src/services/organizationContext/OrganizationContextSer
   },
 }));
 
-const { default: organizationContextRouter } = await import(
-  '../../../server/src/routes/organization-context.routes.ts'
-);
+const { default: organizationContextRouter } =
+  await import('../../../server/src/routes/organization-context.routes.ts');
 
 describe('Organization context routes', () => {
   const makeApp = () => {

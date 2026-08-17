@@ -42,11 +42,8 @@ process.env.CI = 'true';
 process.env.RUN_DB_TESTS = '1';
 process.env.MOCK_DB = 'false';
 
-const {
-  organizationContextService,
-  computeContentHash,
-  canonicalizeForHash,
-} = await import('../../server/src/services/organizationContext/OrganizationContextService.js');
+const { organizationContextService, computeContentHash, canonicalizeForHash } =
+  await import('../../server/src/services/organizationContext/OrganizationContextService.js');
 
 describe('ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spine (real Postgres)', () => {
   const suffix = randomUUID().slice(0, 8);
@@ -159,10 +156,10 @@ describe('ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spi
        VALUES ($1,$2,'ai_context',$2,$3,'admin','Claude C restricted item','{}','{}',1,'restricted',NOW(),NOW())`,
       [restrictedItem, orgA, userA]
     );
-    await client.query(
-      `UPDATE organization_context_claims SET item_id = $1 WHERE id = $2`,
-      [restrictedItem, claimRestricted]
-    );
+    await client.query(`UPDATE organization_context_claims SET item_id = $1 WHERE id = $2`, [
+      restrictedItem,
+      claimRestricted,
+    ]);
   });
 
   afterAll(async () => {
@@ -178,14 +175,22 @@ describe('ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spi
       ])
       .catch(() => {});
     await client
-      .query(`DELETE FROM organization_context_claims WHERE organization_id = ANY($1)`, [[orgA, orgB, orgEmpty]])
+      .query(`DELETE FROM organization_context_claims WHERE organization_id = ANY($1)`, [
+        [orgA, orgB, orgEmpty],
+      ])
       .catch(() => {});
     await client
-      .query(`DELETE FROM organization_context_items WHERE organization_id = ANY($1)`, [[orgA, orgB, orgEmpty]])
+      .query(`DELETE FROM organization_context_items WHERE organization_id = ANY($1)`, [
+        [orgA, orgB, orgEmpty],
+      ])
       .catch(() => {});
     await client.query(`DELETE FROM knowledge_docs WHERE id = $1`, [docId]).catch(() => {});
-    await client.query(`DELETE FROM users WHERE id = ANY($1)`, [[userA, userB, userEmpty]]).catch(() => {});
-    await client.query(`DELETE FROM organizations WHERE id = ANY($1)`, [[orgA, orgB, orgEmpty]]).catch(() => {});
+    await client
+      .query(`DELETE FROM users WHERE id = ANY($1)`, [[userA, userB, userEmpty]])
+      .catch(() => {});
+    await client
+      .query(`DELETE FROM organizations WHERE id = ANY($1)`, [[orgA, orgB, orgEmpty]])
+      .catch(() => {});
 
     // Test-hygiene proof: zero leftovers for every fixture id, across every
     // table this suite touched.
@@ -226,7 +231,9 @@ describe('ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spi
 
   // ── Legacy backward-compatibility + pending-by-default ────────────────────
   it('treats a pre-governance accepted claim as approved (legacy_auto_accept), and a plain-pending claim as NOT approved', async () => {
-    const claims = await organizationContextService.listGovernedClaims(orgA, { includeRestricted: true });
+    const claims = await organizationContextService.listGovernedClaims(orgA, {
+      includeRestricted: true,
+    });
     const legacy = claims.find((c: any) => c.claimId === claimLegacyAccepted);
     const pending = claims.find((c: any) => c.claimId === claimPendingPlain);
 
@@ -254,7 +261,9 @@ describe('ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spi
     const crossOrgApprove = await organizationContextService.approveClaim(orgA, claimOrgB, userA);
     expect(crossOrgApprove).toBeNull();
 
-    const orgBClaims = await organizationContextService.listGovernedClaims(orgB, { includeRestricted: true });
+    const orgBClaims = await organizationContextService.listGovernedClaims(orgB, {
+      includeRestricted: true,
+    });
     expect(orgBClaims.map((c: any) => c.claimId)).toEqual([claimOrgB]);
     expect(orgBClaims.some((c: any) => c.claimId === claimLegacyAccepted)).toBe(false);
   });
@@ -275,7 +284,12 @@ describe('ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spi
   });
 
   it('approves pending claims, then publishes v1 excluding still-unapproved claims and carrying exact refs (claim id + file_hash + version)', async () => {
-    const approveDoc = await organizationContextService.approveClaim(orgA, claimWithDoc, userA, 'looks correct');
+    const approveDoc = await organizationContextService.approveClaim(
+      orgA,
+      claimWithDoc,
+      userA,
+      'looks correct'
+    );
     expect(approveDoc?.reviewState).toBe('approved');
     expect(approveDoc?.wonDecision).toBe(true);
 
@@ -286,7 +300,9 @@ describe('ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spi
     expect(version.contentHash).toMatch(/^[0-9a-f]{64}$/);
     publishedV1ContentHash = version.contentHash;
 
-    const pinned = await organizationContextService.getSnapshotVersion(orgA, 1, { includeRestricted: true });
+    const pinned = await organizationContextService.getSnapshotVersion(orgA, 1, {
+      includeRestricted: true,
+    });
     expect(pinned).not.toBeNull();
     const claimIds = pinned!.claims.map((c: any) => c.claimId).sort();
     expect(claimIds).toContain(claimLegacyAccepted);
@@ -331,20 +347,26 @@ describe('ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spi
   });
 
   it('reopen: publishing v2 does not change v1 — same content_hash, byte-identical snapshot_json', async () => {
-    const approvePending = await organizationContextService.approveClaim(orgA, claimPendingPlain, userA);
+    const approvePending = await organizationContextService.approveClaim(
+      orgA,
+      claimPendingPlain,
+      userA
+    );
     expect(approvePending?.reviewState).toBe('approved');
 
     const v2 = await organizationContextService.publishSnapshotVersion(orgA, userA);
     expect(v2.version).toBe(2);
     expect(v2.contentHash).not.toBe(publishedV1ContentHash);
 
-    const v2Claims = (
-      await organizationContextService.getSnapshotVersion(orgA, 2, { includeRestricted: true })
-    )!.claims.map((c: any) => c.claimId);
+    const v2Claims = (await organizationContextService.getSnapshotVersion(orgA, 2, {
+      includeRestricted: true,
+    }))!.claims.map((c: any) => c.claimId);
     expect(v2Claims).toContain(claimPendingPlain);
 
     // Reopen v1 AFTER v2 exists.
-    const reopened = await organizationContextService.getSnapshotVersion(orgA, 1, { includeRestricted: true });
+    const reopened = await organizationContextService.getSnapshotVersion(orgA, 1, {
+      includeRestricted: true,
+    });
     expect(reopened!.contentHash).toBe(publishedV1ContentHash);
 
     const rawAfter = await client.query(
@@ -384,13 +406,17 @@ describe('ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spi
 
   // ── Source deletion negative (detectability, not silent corruption) ────
   it('hard-deleting the cited source document is DETECTABLE on the pinned read, and does not alter the stored snapshot content', async () => {
-    const before = await organizationContextService.getSnapshotVersion(orgA, 1, { includeRestricted: true });
+    const before = await organizationContextService.getSnapshotVersion(orgA, 1, {
+      includeRestricted: true,
+    });
     const refBefore = before!.sourceRefs.find((r: any) => r.claimId === claimWithDoc);
     expect(refBefore?.dangling).toBe(false);
 
     await client.query(`DELETE FROM knowledge_docs WHERE id = $1`, [docId]);
 
-    const after = await organizationContextService.getSnapshotVersion(orgA, 1, { includeRestricted: true });
+    const after = await organizationContextService.getSnapshotVersion(orgA, 1, {
+      includeRestricted: true,
+    });
     // The stored content itself is untouched — same hash as always.
     expect(after!.contentHash).toBe(publishedV1ContentHash);
     const refAfter = after!.sourceRefs.find((r: any) => r.claimId === claimWithDoc);
@@ -410,6 +436,27 @@ describe('ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spi
        ON CONFLICT (id) DO NOTHING`,
       [docId, docHashV2, orgA]
     );
+
+    const changed = await organizationContextService.getSnapshotVersion(orgA, 1, {
+      includeRestricted: true,
+    });
+    const changedRef = changed!.sourceRefs.find((r: any) => r.claimId === claimWithDoc);
+    expect(changedRef?.fileHash).toBe(docHashV1);
+    expect(changedRef?.dangling).toBe(true);
+    expect(changedRef?.danglingReason).toBe('hash_mismatch');
+
+    // Historical documents whose original bytes were unavailable are
+    // deliberately NULL, never assigned a fabricated digest. NULL means
+    // "unknown", so the reader preserves the frozen ref without inventing a
+    // mismatch against an unverifiable live value.
+    await client.query(`UPDATE knowledge_docs SET file_hash = NULL WHERE id = $1`, [docId]);
+    const unknown = await organizationContextService.getSnapshotVersion(orgA, 1, {
+      includeRestricted: true,
+    });
+    const unknownRef = unknown!.sourceRefs.find((r: any) => r.claimId === claimWithDoc);
+    expect(unknownRef?.fileHash).toBe(docHashV1);
+    expect(unknownRef?.dangling).toBe(false);
+    expect(unknownRef?.danglingReason).toBeNull();
   });
 
   it('canonicalizeForHash sorts object keys recursively (order-independent hashing)', () => {

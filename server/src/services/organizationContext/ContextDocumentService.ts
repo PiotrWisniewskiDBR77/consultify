@@ -1,5 +1,6 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 
 import { v4 as uuidv4 } from 'uuid';
 
@@ -2873,6 +2874,7 @@ export const contextDocumentService = {
     const docId = uuidv4();
     const sourceUpload = input.sourceUpload || 'documents.library';
     const fileSizeBytes = Number(input.file.size || input.file.buffer?.byteLength || 0);
+    const fileHash = createHash('sha256').update(input.file.buffer).digest('hex');
     const projectIdForScope = scope === 'project' ? input.projectId || null : null;
 
     const quotaFailure = await checkContextStorageQuota({
@@ -2970,13 +2972,14 @@ export const contextDocumentService = {
 
     await dbRun(
       `INSERT INTO knowledge_docs
-       (id, filename, filepath, status, organization_id, project_id, owner_id, scope, file_size_bytes,
+       (id, filename, filepath, file_hash, status, organization_id, project_id, owner_id, scope, file_size_bytes,
         mime_type, original_name, source_upload, processing_error, chunk_count, version, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 0, 1, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 0, 1, ?, ?)`,
       [
         docId,
         path.basename(finalPath),
         finalPath,
+        fileHash,
         'uploaded',
         input.organizationId,
         projectIdForScope,
