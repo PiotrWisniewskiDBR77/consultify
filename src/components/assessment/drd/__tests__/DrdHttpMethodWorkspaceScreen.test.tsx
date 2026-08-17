@@ -161,6 +161,36 @@ describe('requirement 7 — loading and error each have their own visible state'
 });
 
 describe('requirement 3 — a 409 on write shows an explicit conflict screen, never a silent overwrite', () => {
+  it('keeps Freeze disabled for an in-review owner without the approver process role', async () => {
+    const storage = makeMemoryStorage();
+    hoisted.getSession.mockResolvedValue({
+      session: makeSession({ state: 'in_review', version: 4 }),
+      roles: ['owner'],
+    });
+    hoisted.listEvents.mockResolvedValue([]);
+
+    render(<DrdHttpMethodWorkspaceScreen storage={storage} demoSessionId="sess-http-1" />);
+
+    expect(await screen.findByTestId('freeze-button')).toBeDisabled();
+    expect(hoisted.freeze).not.toHaveBeenCalled();
+  });
+
+  it('turns a real stale transition 409 into ConflictView without painting false success', async () => {
+    const storage = makeMemoryStorage();
+    hoisted.getSession.mockResolvedValue({ session: makeSession({ state: 'active', version: 3 }), roles: ['owner'] });
+    hoisted.listEvents.mockResolvedValue([]);
+    hoisted.transition.mockRejectedValue(
+      new MethodCoreApiError('version conflict', 409, { error: 'version_conflict', currentVersion: 4 })
+    );
+
+    render(<DrdHttpMethodWorkspaceScreen storage={storage} demoSessionId="sess-http-1" />);
+    fireEvent.click(await screen.findByRole('button', { name: /Wyślij do przeglądu/i }));
+
+    expect(await screen.findByTestId('drd-http-conflict-view')).toBeInTheDocument();
+    expect(screen.queryByTestId('drd-http-frozen-output-view')).not.toBeInTheDocument();
+    expect(hoisted.freeze).not.toHaveBeenCalled();
+  });
+
   it('forceState="conflict" renders the conflict view with the server version and an explicit reload action', async () => {
     const storage = makeMemoryStorage();
     hoisted.createSession.mockResolvedValue({ session: makeSession({ version: 3 }), idempotentReplay: false });

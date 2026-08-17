@@ -29,6 +29,9 @@ const hoisted = vi.hoisted(() => ({
   transition: vi.fn(),
   freeze: vi.fn(),
   getOutput: vi.fn(),
+  listOutputs: vi.fn(),
+  listReports: vi.fn(),
+  listInitiativeDrafts: vi.fn(),
   teresaPreview: vi.fn(),
   teresaCommit: vi.fn(),
   createReport: vi.fn(),
@@ -48,6 +51,9 @@ vi.mock('@/method-core/api/methodCoreApi', async () => {
     transition: hoisted.transition,
     freeze: hoisted.freeze,
     getOutput: hoisted.getOutput,
+    listOutputs: hoisted.listOutputs,
+    listReports: hoisted.listReports,
+    listInitiativeDrafts: hoisted.listInitiativeDrafts,
     teresaPreview: hoisted.teresaPreview,
     teresaCommit: hoisted.teresaCommit,
     createReport: hoisted.createReport,
@@ -98,6 +104,9 @@ const networkError = () => new MethodCoreApiError('Network request failed', 0, {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  hoisted.listOutputs.mockResolvedValue({ outputs: [], total: 0 });
+  hoisted.listReports.mockResolvedValue([]);
+  hoisted.listInitiativeDrafts.mockResolvedValue([]);
 });
 
 describe('requirement 6 — an OLDER cached revision never survives refresh()', () => {
@@ -171,9 +180,9 @@ describe('requirement 8 — frozen Output only ever comes from a server response
     expect(storage.getItem('method-core:http-cache:sess-1:output-id')).not.toContain('contentHash');
   });
 
-  it('resuming a frozen session with a cached output-id pointer re-fetches content from getOutput(), never from storage', async () => {
+  it('resuming a frozen session discovers the current Output from the server, ignoring a stale cached pointer', async () => {
     const storage = makeMemoryStorage();
-    storage.setItem('method-core:http-cache:sess-1:output-id', 'out-1');
+    storage.setItem('method-core:http-cache:sess-1:output-id', 'out-stale');
     hoisted.getSession.mockResolvedValue({ session: makeSession({ state: 'frozen' }), roles: ['owner'] });
     hoisted.listEvents.mockResolvedValue([]);
     const serverOutput = {
@@ -193,6 +202,10 @@ describe('requirement 8 — frozen Output only ever comes from a server response
       contentHash: 'freshFromServer',
       frozenAt: '2026-08-13T00:00:00.000Z',
     };
+    hoisted.listOutputs.mockResolvedValue({
+      outputs: [{ id: 'out-1', sessionId: 'sess-1', outputVersion: 1 }],
+      total: 1,
+    });
     hoisted.getOutput.mockResolvedValue({ output: serverOutput, superseded: false, supersededByOutputId: null });
 
     const runtime = new DrdHttpSessionRuntime('sess-1', storage);
@@ -200,6 +213,55 @@ describe('requirement 8 — frozen Output only ever comes from a server response
 
     expect(hoisted.getOutput).toHaveBeenCalledWith('out-1');
     expect(runtime.getState().output?.contentHash).toBe('freshFromServer');
+    expect(storage.getItem('method-core:http-cache:sess-1:output-id')).toBe('out-1');
+  });
+
+  it('cold reopen hydrates persisted report and initiative state for the exact current Output', async () => {
+    const storage = makeMemoryStorage();
+    hoisted.getSession.mockResolvedValue({ session: makeSession({ state: 'frozen' }), roles: ['owner'] });
+    hoisted.listEvents.mockResolvedValue([]);
+    hoisted.listOutputs.mockResolvedValue({
+      outputs: [
+        { id: 'out-old', sessionId: 'sess-1', outputVersion: 1 },
+        { id: 'out-current', sessionId: 'sess-1', outputVersion: 2 },
+        { id: 'out-foreign', sessionId: 'sess-other', outputVersion: 99 },
+      ],
+      total: 3,
+    });
+    const output = {
+      id: 'out-current', organizationId: 'org-1', sessionId: 'sess-1', module: 'assessment' as const,
+      methodPackId: 'drd', methodPackVersion: '2.0.0-methodpack.1', outputVersion: 2,
+      scope: 'full', current: {}, target: {}, gap: {}, limitations: [], findings: [],
+      contentHash: 'canonical-cold-hash', frozenAt: '2026-08-13T00:00:00.000Z',
+    };
+    const report = { id: 'report-1', outputId: 'out-current', title: 'Persisted DRD report' };
+    const initiative = { id: 'draft-1', outputId: 'out-current', title: 'Persisted initiative' };
+    hoisted.getOutput.mockResolvedValue({ output, superseded: false, supersededByOutputId: null });
+    hoisted.listReports.mockResolvedValue([report]);
+    hoisted.listInitiativeDrafts.mockResolvedValue([initiative]);
+
+    const runtime = new DrdHttpSessionRuntime('sess-1', storage);
+    await runtime.refresh();
+
+    expect(runtime.getState()).toMatchObject({
+      status: 'ready', output, reports: [report], initiatives: [initiative],
+    });
+    expect(hoisted.listReports).toHaveBeenCalledWith({ outputId: 'out-current', status: 'current' });
+    expect(hoisted.listInitiativeDrafts).toHaveBeenCalledWith({ outputId: 'out-current', status: 'current' });
+  });
+
+  it('fails closed when canonical Output discovery is unavailable instead of presenting cached success', async () => {
+    const storage = makeMemoryStorage();
+    storage.setItem('method-core:http-cache:sess-1:output-id', 'out-cached');
+    hoisted.getSession.mockResolvedValue({ session: makeSession({ state: 'frozen' }), roles: ['owner'] });
+    hoisted.listEvents.mockResolvedValue([]);
+    hoisted.listOutputs.mockRejectedValue(new Error('output listing unavailable'));
+
+    const runtime = new DrdHttpSessionRuntime('sess-1', storage);
+    await runtime.refresh();
+
+    expect(runtime.getState()).toMatchObject({ status: 'error', output: null });
+    expect(hoisted.getOutput).not.toHaveBeenCalled();
   });
 });
 

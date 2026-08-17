@@ -23,10 +23,33 @@
  */
 import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const featureGate = vi.hoisted(() => ({ enabled: false }));
+
+vi.mock('@/contexts/FeatureFlagsContext', () => ({
+  useFeatureFlagsContext: () => ({
+    isEnabled: (id: string) => id === 'drdHttpSourceOfTruthV1' && featureGate.enabled,
+  }),
+}));
+
+// Deliberately opposite to the provider value. This catches a regression to
+// the isolated bare hook, which ignores the application provider's resolved
+// overrides and previously sent this nested screen down the legacy path.
+vi.mock('@/hooks/useFeatureFlags', () => ({
+  useFeatureFlags: () => ({ isEnabled: () => false }),
+}));
+
+vi.mock('../DrdHttpMethodWorkspaceScreen', () => ({
+  DrdHttpMethodWorkspaceScreen: () => <div data-testid="drd-http-provider-path" />,
+}));
 
 import { shouldMountDrdMethodWorkspace } from '@/views/AssessmentSessionEditorView';
 import { DrdMethodWorkspaceScreen } from '../DrdMethodWorkspaceScreen';
+
+beforeEach(() => {
+  featureGate.enabled = false;
+});
 
 function makeMemoryStorage(): Storage {
   const store = new Map<string, string>();
@@ -71,5 +94,13 @@ describe('DrdMethodWorkspaceScreen (the ON-path render target) mounts the REAL M
     const storage = makeMemoryStorage();
     render(<DrdMethodWorkspaceScreen storage={storage} seedTo="interview" />);
     expect(screen.getByText(/SESJA DEMONSTRACYJNA/i)).toBeInTheDocument();
+  });
+
+  it('uses the application provider decision instead of an isolated bare-hook default', () => {
+    featureGate.enabled = true;
+    render(<DrdMethodWorkspaceScreen storage={makeMemoryStorage()} />);
+
+    expect(screen.getByTestId('drd-http-provider-path')).toBeInTheDocument();
+    expect(screen.queryByText(/SESJA DEMONSTRACYJNA/i)).not.toBeInTheDocument();
   });
 });

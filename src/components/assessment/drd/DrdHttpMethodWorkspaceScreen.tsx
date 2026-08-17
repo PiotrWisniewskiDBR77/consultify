@@ -20,16 +20,12 @@
  * ★ Known gaps (server routes are P0A/P0B territory, out of this file's
  * reach — see the `drdHttpSourceOfTruthV1` flag description for the full
  * rationale):
- *  - no HTTP endpoint assigns extra process roles after session creation
- *    (only `owner`, auto-granted to the creator) — so `in_review -> frozen`
- *    (approver-only) will 403 for a lone demo user unless roles were seeded
- *    directly in the database out-of-band (dev/test only, never this file's
- *    job to fake).
+ *  - role assignment is governed by the method-core role endpoints; this
+ *    workspace consumes effective process roles but does not administer them.
  *  - no HTTP endpoint reopens a frozen session into a new revision — the
  *    Reopen action is disabled with an explicit message instead of faked.
- *  - no HTTP endpoint lists Reports/Initiative Drafts by session — this
- *    screen only knows about ones created in the CURRENT browser session
- *    (see `DrdHttpRuntimeState.reports`/`.initiatives`'s own comment).
+ *  - persisted Output/Report/Initiative Draft state is rehydrated through
+ *    the canonical method-core list endpoints.
  */
 import { AlertTriangle, ArrowLeft, CloudOff, FileText, Lightbulb, Lock, RefreshCw, RotateCcw } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -678,7 +674,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
 
   const canSendToReview = session.state === 'active';
   const canSendBack = session.state === 'in_review';
-  const canFreeze = session.state === 'in_review';
+  const canFreeze = session.state === 'in_review' && state.roles.includes('approver');
 
   return (
     <div className="flex h-full flex-col">
@@ -812,7 +808,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
       <div className="flex shrink-0 items-center gap-2 border-t border-c-border-subtle px-4 py-2 text-xs">
         <button
           type="button"
-          onClick={() => void runtime?.transition('in_review')}
+          onClick={() => void runtime?.transition('in_review').catch(() => undefined)}
           disabled={!canSendToReview}
           className="rounded-md border border-c-border px-2.5 py-1 font-medium text-c-text-secondary disabled:opacity-40 hover:bg-c-surface-raised"
         >
@@ -820,7 +816,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
         </button>
         <button
           type="button"
-          onClick={() => void runtime?.transition('active')}
+          onClick={() => void runtime?.transition('active').catch(() => undefined)}
           disabled={!canSendBack}
           className="rounded-md border border-c-border px-2.5 py-1 font-medium text-c-text-secondary disabled:opacity-40 hover:bg-c-surface-raised"
         >
@@ -879,8 +875,8 @@ const FrozenOutputHttpView: React.FC<{
         </div>
         {!output ? (
           <p className="text-xs text-c-text-muted">
-            Sesja jest zamrożona na serwerze, ale ten przeglądarka nie ma lokalnego wskaźnika do jej Outputu (żaden `freeze()`
-            nie wykonał się w tej karcie) — serwer nie udostępnia listy Outputów po sesji. Znany, udokumentowany brak (P0A/P0B).
+            Sesja jest zamrożona na serwerze, ale nie udało się odnaleźć jej bieżącego Outputu. Odśwież widok;
+            ekran nie odtworzy treści z lokalnego cache.
           </p>
         ) : (
           <div className="space-y-2 text-xs text-c-text-secondary">
@@ -923,7 +919,7 @@ const FrozenOutputHttpView: React.FC<{
           </button>
         </div>
         {state.reports.length === 0 ? (
-          <p className="text-xs text-c-text-muted">Brak wygenerowanego raportu w tej sesji przeglądarki.</p>
+          <p className="text-xs text-c-text-muted">Brak zapisanego raportu dla tego Outputu.</p>
         ) : (
           state.reports.map((r, i) => {
             const rec = r as { id?: string; title?: string; content?: { executiveSummary?: string } };
@@ -949,7 +945,7 @@ const FrozenOutputHttpView: React.FC<{
           </button>
         </div>
         {state.initiatives.length === 0 ? (
-          <p className="text-xs text-c-text-muted">Brak draftów w tej sesji przeglądarki.</p>
+          <p className="text-xs text-c-text-muted">Brak zapisanego Initiative Proposal Draft dla tego Outputu.</p>
         ) : (
           state.initiatives.map((d, i) => {
             const rec = d as { id?: string; title?: string; summary?: string | null; confidence?: string };

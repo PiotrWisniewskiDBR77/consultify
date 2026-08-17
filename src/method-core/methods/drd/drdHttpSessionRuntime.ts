@@ -48,6 +48,9 @@ import {
   isOfflineError,
   isVersionConflict,
   listEvents,
+  listInitiativeDrafts,
+  listOutputs,
+  listReports,
   MethodCoreApiError,
   newIdempotencyKey,
   teresaCommit,
@@ -90,14 +93,12 @@ export interface DrdHttpRuntimeState {
    * localStorage: an ephemeral decision queue, not session state. */
   readonly previews: readonly TeresaPreview[];
   /** The session's frozen Output — set only from a server response (either
-   * this browser's own `freeze()` call, or a `getOutput()` re-fetch keyed
-   * off a locally cached output id — see `outputIdCacheKey`). Never
+   * this browser's own `freeze()` call or the canonical Output listing).
+   * A cached id is only a best-effort compatibility pointer; it is never
    * reconstructed from any other localStorage content. */
   readonly output: MethodOutputSummary | null;
-  /** Report Snapshots / Initiative Proposal Drafts created THIS session
-   * (in-memory only — no GET-list endpoint exists server-side; a page
-   * reload loses this list even though the records exist on the server,
-   * a known gap tracked in the P0C report, not a silent fabrication). */
+  /** Persisted Report Snapshots / Initiative Proposal Drafts for the current
+   * Output. Hydrated from the server on every frozen-session refresh. */
   readonly reports: readonly unknown[];
   readonly initiatives: readonly unknown[];
 }
@@ -115,13 +116,9 @@ function cacheKey(sessionId: string): string {
 function pendingKey(sessionId: string): string {
   return `method-core:pending-writes:${sessionId}`;
 }
-/** Caches ONLY the Output's server-assigned id (a pointer), never its
- * content — `refresh()` always re-fetches the actual Output via
- * `getOutput(id)` before anything renders it. Exists because the server has
- * no "list outputs by session" endpoint the browser can call; without this
- * pointer a page reload on an already-frozen session cannot rediscover
- * which Output belongs to it (documented gap — see this file's class-level
- * comment on `reports`/`initiatives` for the same limitation). */
+/** Caches ONLY the Output's server-assigned id (a pointer), never content.
+ * Canonical refresh discovers the current Output through the server list;
+ * the pointer is retained solely for compatibility/diagnostics. */
 function outputIdCacheKey(sessionId: string): string {
   return `method-core:http-cache:${sessionId}:output-id`;
 }
@@ -212,35 +209,45 @@ export class DrdHttpSessionRuntime {
         listEvents(this.sessionId),
       ]);
       let output = this.state.output;
+      let reports = this.state.reports;
+      let initiatives = this.state.initiatives;
       if (session.state === 'frozen' || session.state === 'closed') {
-        const cachedOutputId = output?.id ?? this.readCachedOutputId();
-        if (cachedOutputId && cachedOutputId !== output?.id) {
+        const listed = await listOutputs({ sessionId: this.sessionId, status: 'current', limit: 100 });
+        const latest = [...listed.outputs]
+          .filter((candidate) => candidate.sessionId === this.sessionId)
+          .sort((a, b) => (b.outputVersion ?? -1) - (a.outputVersion ?? -1))[0];
+
+        if (latest) {
+          const [detail, persistedReports, persistedInitiatives] = await Promise.all([
+            getOutput(latest.id),
+            listReports({ outputId: latest.id, status: 'current' }),
+            listInitiativeDrafts({ outputId: latest.id, status: 'current' }),
+          ]);
+          output = detail.output;
+          reports = persistedReports;
+          initiatives = persistedInitiatives;
           try {
-            const res = await getOutput(cachedOutputId);
-            output = res.output;
+            this.storage.setItem(outputIdCacheKey(this.sessionId), output.id);
           } catch {
-            // Pointer stale/unreadable — leave whatever we had (possibly
-            // null). The UI must show that gap honestly, never fabricate
-            // Output content from anything else.
+            // Canonical discovery above remains authoritative after a cold
+            // restart; this pointer is only a compatibility optimization.
           }
+        } else {
+          output = null;
+          reports = [];
+          initiatives = [];
         }
       } else {
         // Session left frozen/closed (e.g. after a future reopen path) — an
         // Output from a PRIOR state must never linger and be mistaken for
         // the current one.
         output = null;
+        reports = [];
+        initiatives = [];
       }
-      this.setState({ status: 'ready', session, roles, events, error: null, serverVersion: null, output });
+      this.setState({ status: 'ready', session, roles, events, error: null, serverVersion: null, output, reports, initiatives });
     } catch (err) {
       this.handleFailure(err);
-    }
-  }
-
-  private readCachedOutputId(): string | null {
-    try {
-      return this.storage.getItem(outputIdCacheKey(this.sessionId));
-    } catch {
-      return null;
     }
   }
 

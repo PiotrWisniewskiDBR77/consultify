@@ -18,6 +18,7 @@ import { AlertTriangle, ArrowLeft, FileText, Lightbulb, Lock, RotateCcw } from '
 import React, { useCallback, useMemo, useState } from 'react';
 
 import { MethodWorkspaceShell } from '@/components/method-workspace/MethodWorkspaceShell';
+import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { StandardTable } from '@/components/standard/StandardTable';
 import type {
   InterviewFocusQuestion,
@@ -32,7 +33,6 @@ import type {
 } from '@/method-core/outputs';
 import { DRD_STRUCTURE } from '@/services/drdStructure';
 
-import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import {
   buildMatrixRowsForAxis,
   buildNavigatorNodes,
@@ -797,7 +797,7 @@ export const DrdMethodWorkspaceScreen: React.FC<DrdMethodWorkspaceScreenProps> =
   forceState,
   ...props
 }) => {
-  const { isEnabled } = useFeatureFlags();
+  const { isEnabled } = useFeatureFlagsContext();
   const httpSourceOfTruth = forceHttpSourceOfTruth ?? isEnabled('drdHttpSourceOfTruthV1');
   if (httpSourceOfTruth) {
     return <DrdHttpMethodWorkspaceScreen {...props} forceState={forceState} />;
