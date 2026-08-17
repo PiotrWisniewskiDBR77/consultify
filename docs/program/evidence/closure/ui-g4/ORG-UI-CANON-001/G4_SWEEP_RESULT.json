@@ -3,8 +3,8 @@
   "key": "ORG",
   "module": "Organization",
   "route": "/organization",
-  "productSha": "40e1a89bdd118de828fd5f716839789fc340a20a",
-  "startedAt": "2026-08-17T01:53:36.382Z",
+  "productSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
+  "startedAt": "2026-08-17T06:01:00.591Z",
   "cells": [
     {
       "viewport": "desktop",
@@ -280,9 +280,7 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": [
-        "Failed to load resource: the server responded with a status of 404 ()"
-      ]
+      "consoleErrors": []
     },
     {
       "viewport": "desktop",
@@ -368,17 +366,8 @@
   },
   "keyboard": {
     "reachableControls": 40,
-    "focusAlwaysVisible": false,
-    "invisibleFocusSamples": [
-      "button..group",
-      "button..group",
-      "button.w-full.flex",
-      "button.w-full.flex",
-      "button.w-full.flex",
-      "button.w-full.flex",
-      "button.w-full.flex",
-      "button.w-full.flex"
-    ],
+    "focusAlwaysVisible": true,
+    "invisibleFocusSamples": [],
     "escapeHandled": "Escape pressed on the surface; surface stayed mounted (no dialog was open to close).",
     "focusReturn": "Focus remained inside the document after Escape.",
     "tabOrderMonotonic": true

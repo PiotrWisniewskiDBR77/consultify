@@ -3,8 +3,8 @@
   "key": "INT",
   "module": "Interview",
   "route": "/interview",
-  "productSha": "40e1a89bdd118de828fd5f716839789fc340a20a",
-  "startedAt": "2026-08-17T01:42:01.408Z",
+  "productSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
+  "startedAt": "2026-08-17T05:43:39.280Z",
   "cells": [
     {
       "viewport": "desktop",
@@ -320,17 +320,8 @@
   },
   "keyboard": {
     "reachableControls": 40,
-    "focusAlwaysVisible": false,
-    "invisibleFocusSamples": [
-      "button..group",
-      "button..group",
-      "button..group",
-      "button.w-full.flex",
-      "button.w-full.flex",
-      "button.w-full.flex",
-      "button.w-full.flex",
-      "button.w-full.flex"
-    ],
+    "focusAlwaysVisible": true,
+    "invisibleFocusSamples": [],
     "escapeHandled": "Escape pressed on the surface; surface stayed mounted (no dialog was open to close).",
     "focusReturn": "Focus remained inside the document after Escape.",
     "tabOrderMonotonic": true

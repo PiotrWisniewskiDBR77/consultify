@@ -3,8 +3,8 @@
   "key": "RES",
   "module": "Results",
   "route": "/results",
-  "productSha": "40e1a89bdd118de828fd5f716839789fc340a20a",
-  "startedAt": "2026-08-17T01:49:00.219Z",
+  "productSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
+  "startedAt": "2026-08-17T05:53:40.886Z",
   "cells": [
     {
       "viewport": "desktop",
@@ -20,19 +20,8 @@
       },
       "axe": {
         "critical": 0,
-        "serious": 1,
-        "violations": [
-          {
-            "id": "color-contrast",
-            "impact": "serious",
-            "nodes": 2,
-            "help": "Elements must meet minimum color contrast ratio thresholds",
-            "targets": [
-              ".text-c-danger.font-semibold.text-sm",
-              ".border-c-danger\\/40"
-            ]
-          }
-        ]
+        "serious": 0,
+        "violations": []
       },
       "unnamedControls": {
         "count": 0,
@@ -81,19 +70,8 @@
       },
       "axe": {
         "critical": 0,
-        "serious": 1,
-        "violations": [
-          {
-            "id": "color-contrast",
-            "impact": "serious",
-            "nodes": 2,
-            "help": "Elements must meet minimum color contrast ratio thresholds",
-            "targets": [
-              ".text-c-danger.font-semibold.text-sm",
-              ".border-c-danger\\/40"
-            ]
-          }
-        ]
+        "serious": 0,
+        "violations": []
       },
       "unnamedControls": {
         "count": 0,
@@ -142,19 +120,8 @@
       },
       "axe": {
         "critical": 0,
-        "serious": 1,
-        "violations": [
-          {
-            "id": "color-contrast",
-            "impact": "serious",
-            "nodes": 2,
-            "help": "Elements must meet minimum color contrast ratio thresholds",
-            "targets": [
-              ".text-c-danger.font-semibold.text-sm",
-              ".border-c-danger\\/40"
-            ]
-          }
-        ]
+        "serious": 0,
+        "violations": []
       },
       "unnamedControls": {
         "count": 0,
@@ -203,19 +170,8 @@
       },
       "axe": {
         "critical": 0,
-        "serious": 1,
-        "violations": [
-          {
-            "id": "color-contrast",
-            "impact": "serious",
-            "nodes": 2,
-            "help": "Elements must meet minimum color contrast ratio thresholds",
-            "targets": [
-              ".text-c-danger.font-semibold.text-sm",
-              ".border-c-danger\\/40"
-            ]
-          }
-        ]
+        "serious": 0,
+        "violations": []
       },
       "unnamedControls": {
         "count": 0,
@@ -264,19 +220,8 @@
       },
       "axe": {
         "critical": 0,
-        "serious": 1,
-        "violations": [
-          {
-            "id": "color-contrast",
-            "impact": "serious",
-            "nodes": 2,
-            "help": "Elements must meet minimum color contrast ratio thresholds",
-            "targets": [
-              ".text-c-danger.font-semibold.text-sm",
-              ".border-c-danger\\/40"
-            ]
-          }
-        ]
+        "serious": 0,
+        "violations": []
       },
       "unnamedControls": {
         "count": 0,
@@ -325,19 +270,8 @@
       },
       "axe": {
         "critical": 0,
-        "serious": 1,
-        "violations": [
-          {
-            "id": "color-contrast",
-            "impact": "serious",
-            "nodes": 2,
-            "help": "Elements must meet minimum color contrast ratio thresholds",
-            "targets": [
-              ".text-c-danger.font-semibold.text-sm",
-              ".border-c-danger\\/40"
-            ]
-          }
-        ]
+        "serious": 0,
+        "violations": []
       },
       "unnamedControls": {
         "count": 0,
@@ -456,17 +390,8 @@
   },
   "keyboard": {
     "reachableControls": 39,
-    "focusAlwaysVisible": false,
-    "invisibleFocusSamples": [
-      "button..group",
-      "button..group",
-      "button..group",
-      "button.w-full.flex",
-      "button.w-full.flex",
-      "button.w-full.flex",
-      "button.w-full.flex",
-      "button.w-full.flex"
-    ],
+    "focusAlwaysVisible": true,
+    "invisibleFocusSamples": [],
     "escapeHandled": "Escape pressed on the surface; surface stayed mounted (no dialog was open to close).",
     "focusReturn": "Focus remained inside the document after Escape.",
     "tabOrderMonotonic": true

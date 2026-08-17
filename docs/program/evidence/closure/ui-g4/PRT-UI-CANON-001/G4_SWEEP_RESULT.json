@@ -3,8 +3,8 @@
   "key": "PRT",
   "module": "Partner Portal",
   "route": "/partner",
-  "productSha": "40e1a89bdd118de828fd5f716839789fc340a20a",
-  "startedAt": "2026-08-17T01:57:01.679Z",
+  "productSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
+  "startedAt": "2026-08-17T06:06:45.473Z",
   "cells": [
     {
       "viewport": "desktop",
@@ -27,7 +27,10 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": []
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ]
     },
     {
       "viewport": "desktop",
@@ -43,22 +46,8 @@
       },
       "axe": {
         "critical": 0,
-        "serious": 1,
-        "violations": [
-          {
-            "id": "color-contrast",
-            "impact": "serious",
-            "nodes": 11,
-            "help": "Elements must meet minimum color contrast ratio thresholds",
-            "targets": [
-              ".mt-0\\.5",
-              "div:nth-child(1) > .px-2.tracking-wider.hover\\:text-slate-700 > span",
-              ".max-h-\\[600px\\] > .pb-2.space-y-0\\.5 > .dark\\:hover\\:bg-navy-800\\/20.hover\\:text-slate-900.py-2:nth-child(2) > .text-left.flex-1",
-              ".max-h-\\[600px\\] > .pb-2.space-y-0\\.5 > .dark\\:hover\\:bg-navy-800\\/20.hover\\:text-slate-900.py-2:nth-child(3) > .text-left.flex-1",
-              "div:nth-child(2) > .px-2.tracking-wider.hover\\:text-slate-700 > span"
-            ]
-          }
-        ]
+        "serious": 0,
+        "violations": []
       },
       "unnamedControls": {
         "count": 0,
@@ -103,22 +92,8 @@
       },
       "axe": {
         "critical": 0,
-        "serious": 1,
-        "violations": [
-          {
-            "id": "color-contrast",
-            "impact": "serious",
-            "nodes": 11,
-            "help": "Elements must meet minimum color contrast ratio thresholds",
-            "targets": [
-              ".mt-0\\.5",
-              "div:nth-child(1) > .px-2.tracking-wider.hover\\:text-slate-700 > span",
-              ".max-h-\\[600px\\] > .pb-2.space-y-0\\.5 > .dark\\:hover\\:bg-navy-800\\/20.hover\\:text-slate-900.py-2:nth-child(2) > .text-left.flex-1",
-              ".max-h-\\[600px\\] > .pb-2.space-y-0\\.5 > .dark\\:hover\\:bg-navy-800\\/20.hover\\:text-slate-900.py-2:nth-child(3) > .text-left.flex-1",
-              "div:nth-child(2) > .px-2.tracking-wider.hover\\:text-slate-700 > span"
-            ]
-          }
-        ]
+        "serious": 0,
+        "violations": []
       },
       "unnamedControls": {
         "count": 0,
@@ -371,17 +346,8 @@
   },
   "keyboard": {
     "reachableControls": 40,
-    "focusAlwaysVisible": false,
-    "invisibleFocusSamples": [
-      "button..group",
-      "button..group",
-      "button.w-full.flex",
-      "button.w-full.flex",
-      "button.w-full.flex",
-      "button.w-full.flex",
-      "button.w-full.flex",
-      "button.w-full.flex"
-    ],
+    "focusAlwaysVisible": true,
+    "invisibleFocusSamples": [],
     "escapeHandled": "Escape pressed on the surface; surface stayed mounted (no dialog was open to close).",
     "focusReturn": "Focus remained inside the document after Escape.",
     "tabOrderMonotonic": true

@@ -3,8 +3,8 @@
   "key": "MYW",
   "module": "My Work (incl. Agent)",
   "route": "/my-work",
-  "productSha": "40e1a89bdd118de828fd5f716839789fc340a20a",
-  "startedAt": "2026-08-17T01:40:48.098Z",
+  "productSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
+  "startedAt": "2026-08-17T05:41:19.898Z",
   "cells": [
     {
       "viewport": "desktop",
@@ -318,30 +318,9 @@
         "clientWidth": 1440
       },
       "axe": {
-        "critical": 1,
-        "serious": 1,
-        "violations": [
-          {
-            "id": "aria-allowed-attr",
-            "impact": "critical",
-            "nodes": 2,
-            "help": "Elements must only use supported ARIA attributes",
-            "targets": [
-              "tr[role=\"button\"]:nth-child(1)",
-              "tr[role=\"button\"]:nth-child(2)"
-            ]
-          },
-          {
-            "id": "nested-interactive",
-            "impact": "serious",
-            "nodes": 2,
-            "help": "Interactive controls must not be nested",
-            "targets": [
-              "tr[role=\"button\"]:nth-child(1)",
-              "tr[role=\"button\"]:nth-child(2)"
-            ]
-          }
-        ]
+        "critical": 0,
+        "serious": 0,
+        "violations": []
       },
       "unnamedControls": {
         "count": 0,
@@ -364,17 +343,8 @@
   },
   "keyboard": {
     "reachableControls": 40,
-    "focusAlwaysVisible": false,
-    "invisibleFocusSamples": [
-      "button..group",
-      "button..group",
-      "button..group",
-      "button.w-full.flex",
-      "button.w-full.flex",
-      "button.w-full.flex",
-      "button.w-full.flex",
-      "button.w-full.flex"
-    ],
+    "focusAlwaysVisible": true,
+    "invisibleFocusSamples": [],
     "escapeHandled": "Escape pressed on the surface; surface stayed mounted (no dialog was open to close).",
     "focusReturn": "Focus remained inside the document after Escape.",
     "tabOrderMonotonic": true
