@@ -1,18 +1,24 @@
 {
   "taskId": "OPS-OBS-001",
-  "baselineSha": "c1d7e615ecf07426c3361313bd99d3227153a010",
-  "productSha": "b3eaf7ab134ed9a484dc09db082a2e4311ae30de",
+  "baselineSha": "92284b90e97f164ff4d4f0d75241cfea82021d58",
+  "productSha": "7287a5c2764e1e168c639b7e78dc4cc22454b6d5",
   "leaseSha256": "not_applicable_integrator_bounded_task",
   "changedPaths": [
     "server/src/services/operationalAlertService.ts",
+    "server/src/database/PostgresDatabase.ts",
     "server/src/middleware/metrics.middleware.ts",
+    "server/src/services/resultsVnext/platform/platformOutboxDrainCron.ts",
+    "server/src/services/resultsVnext/platform/__tests__/operationalAlertWiring.pg.test.ts",
     "tests/unit/backend/operationalAlertService.test.ts",
     "docs/runbooks/OPS-OBS-001_OPERATIONAL_ALERTS.md",
     "docs/program/evidence/closure/codex/OPS-OBS-001/TASK_EVIDENCE.json"
   ],
   "changedPathRationale": {
     "server/src/services/operationalAlertService.ts": "Bounded correlation-aware signal and alert state seam.",
-    "server/src/middleware/metrics.middleware.ts": "Publishes active operational alerts through the existing Prometheus export.",
+    "server/src/database/PostgresDatabase.ts": "Exposes bounded live primary-pool saturation without initializing a pool for metrics alone.",
+    "server/src/middleware/metrics.middleware.ts": "Feeds completed 401/403 denials and live DB saturation into operational alerts and publishes the resulting Prometheus gauges.",
+    "server/src/services/resultsVnext/platform/platformOutboxDrainCron.ts": "Samples oldest outbox age and records downstream dispatch success/failure from the production Results platform worker.",
+    "server/src/services/resultsVnext/platform/__tests__/operationalAlertWiring.pg.test.ts": "Real-PostgreSQL positive control for oldest-age and terminal dispatcher failure wiring.",
     "tests/unit/backend/operationalAlertService.test.ts": "Positive controls, fail-closed identity validation, thresholds and recovery acknowledgment.",
     "docs/runbooks/OPS-OBS-001_OPERATIONAL_ALERTS.md": "Runbook linked by every emitted alert kind.",
     "docs/program/evidence/closure/codex/OPS-OBS-001/TASK_EVIDENCE.json": "Machine-readable bounded-task evidence."
@@ -20,36 +26,51 @@
   "ownerTables": [],
   "commands": [
     {
-      "command": "npx vitest run tests/unit/backend/operationalAlertService.test.ts tests/integration/routes/metrics.prometheus.export.fail-closed.contract.test.ts --maxWorkers=1 --no-file-parallelism",
+      "command": "npx vitest run tests/unit/backend/operationalAlertService.test.ts tests/unit/backend/middleware/metrics.middleware.test.ts tests/integration/routes/metrics.prometheus.export.fail-closed.contract.test.ts --maxWorkers=1 --no-file-parallelism --retry=0",
       "exitCode": 0
     },
     {
-      "command": "npx vitest run tests/unit/backend/middleware/metrics.middleware.test.ts --maxWorkers=1 --no-file-parallelism",
+      "command": "DATABASE_URL=<fresh-pg> RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test npx vitest run server/src/services/resultsVnext/platform/__tests__/operationalAlertWiring.pg.test.ts --maxWorkers=1 --no-file-parallelism --retry=0",
       "exitCode": 0
     },
     {
-      "command": "git diff --check -- server/src/services/operationalAlertService.ts server/src/middleware/metrics.middleware.ts tests/unit/backend/operationalAlertService.test.ts docs/runbooks/OPS-OBS-001_OPERATIONAL_ALERTS.md",
+      "command": "strict migration from zero; repeat; dry-run",
+      "exitCode": 0
+    },
+    {
+      "command": "NODE_OPTIONS=--max-old-space-size=8192 npm run type-check -- --pretty false && NODE_OPTIONS=--max-old-space-size=8192 npm run build:backend",
       "exitCode": 0
     }
   ],
   "denominators": {
-    "focusedTestFiles": { "passed": 3, "failed": 0 },
-    "focusedTests": { "passed": 32, "failed": 0, "skipped": 0, "todo": 0 }
+    "migrations": { "applied": 734, "failed": 0, "repeatApplied": 0, "dryRunPending": 0 },
+    "focusedTestFiles": { "passed": 4, "failed": 0 },
+    "focusedTests": { "passed": 35, "failed": 0, "skipped": 0, "todo": 0 }
   },
   "fixtures": {
     "writeFailurePositiveControl": "1 failure in 100 writes over five minutes",
-    "recovery": "clock advanced beyond five-minute window before acknowledgment"
+    "recovery": "clock advanced beyond five-minute window before acknowledgment",
+    "realOutbox": "six-minute-old unregistered Results platform envelope with max_attempts=1"
   },
   "negativeControls": {
     "missingCorrelationIdRejected": true,
     "unsafeIdentityRejected": true,
     "activeAlertAcknowledgmentRejected": true,
-    "staleOutboxAndAuthSamplesDoNotAlert": true
+    "staleOutboxAndAuthSamplesDoNotAlert": true,
+    "realOutboxDeadLetterRaisesWriteAndAgeAlerts": true,
+    "fiveCompletedAuthDenialsRaiseAlert": true,
+    "metricsScrapeDoesNotInitializeDbPool": true
   },
   "browserArtifacts": [],
   "rollback": {
-    "method": "Revert the four implementation/runbook paths; no schema or persisted runtime state is introduced.",
+    "method": "Revert product commit 7287a5c2764e1e168c639b7e78dc4cc22454b6d5; no schema or persisted runtime state is introduced.",
     "executed": false
   },
-  "verdict": "PARTIAL"
+  "technicalVerdict": "PASS_LIVE_SIGNAL_WIRING",
+  "verdict": "PARTIAL",
+  "openBlockers": [
+    "Alert state remains in-memory per process; no durable incident/acknowledgment ledger exists.",
+    "No real alert transport paging/dashboard or multi-instance aggregation window is wired.",
+    "No deployed sustained observation window or exercised operator incident is authorized or verified."
+  ]
 }
