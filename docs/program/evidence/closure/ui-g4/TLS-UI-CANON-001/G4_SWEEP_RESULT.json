@@ -1,0 +1,868 @@
+{
+  "taskId": "TLS-UI-CANON-001",
+  "key": "TLS",
+  "module": "Consulting / Discovery Tools",
+  "route": "/discovery-tools",
+  "productSha": "40e1a89bdd118de828fd5f716839789fc340a20a",
+  "startedAt": "2026-08-17T01:43:52.765Z",
+  "cells": [
+    {
+      "viewport": "desktop",
+      "language": "pl",
+      "theme": "light",
+      "route": "/discovery-tools",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__desktop__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 1,
+        "serious": 2,
+        "violations": [
+          {
+            "id": "aria-allowed-attr",
+            "impact": "critical",
+            "nodes": 36,
+            "help": "Elements must only use supported ARIA attributes",
+            "targets": [
+              "tr[role=\"button\"]:nth-child(1)",
+              "tr[role=\"button\"]:nth-child(2)",
+              "tr[role=\"button\"]:nth-child(3)",
+              "tr[role=\"button\"]:nth-child(4)",
+              "tr[role=\"button\"]:nth-child(5)"
+            ]
+          },
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 12,
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "targets": [
+              "tr[role=\"button\"]:nth-child(1) > td:nth-child(3) > .text-emerald-400.text-xs.font-medium",
+              "tr[role=\"button\"]:nth-child(2) > td:nth-child(3) > .text-emerald-400.text-xs.font-medium",
+              "tr[role=\"button\"]:nth-child(3) > td:nth-child(3) > .text-emerald-400.text-xs.font-medium",
+              "tr[role=\"button\"]:nth-child(4) > td:nth-child(3) > .text-emerald-400.text-xs.font-medium",
+              "tr[role=\"button\"]:nth-child(5) > td:nth-child(3) > .text-emerald-400.text-xs.font-medium"
+            ]
+          },
+          {
+            "id": "nested-interactive",
+            "impact": "serious",
+            "nodes": 36,
+            "help": "Interactive controls must not be nested",
+            "targets": [
+              "tr[role=\"button\"]:nth-child(1)",
+              "tr[role=\"button\"]:nth-child(2)",
+              "tr[role=\"button\"]:nth-child(3)",
+              "tr[role=\"button\"]:nth-child(4)",
+              "tr[role=\"button\"]:nth-child(5)"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "desktop",
+      "language": "pl",
+      "theme": "dark",
+      "route": "/discovery-tools",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__desktop__pl__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 1,
+        "serious": 1,
+        "violations": [
+          {
+            "id": "aria-allowed-attr",
+            "impact": "critical",
+            "nodes": 36,
+            "help": "Elements must only use supported ARIA attributes",
+            "targets": [
+              "tr[role=\"button\"]:nth-child(1)",
+              "tr[role=\"button\"]:nth-child(2)",
+              "tr[role=\"button\"]:nth-child(3)",
+              "tr[role=\"button\"]:nth-child(4)",
+              "tr[role=\"button\"]:nth-child(5)"
+            ]
+          },
+          {
+            "id": "nested-interactive",
+            "impact": "serious",
+            "nodes": 36,
+            "help": "Interactive controls must not be nested",
+            "targets": [
+              "tr[role=\"button\"]:nth-child(1)",
+              "tr[role=\"button\"]:nth-child(2)",
+              "tr[role=\"button\"]:nth-child(3)",
+              "tr[role=\"button\"]:nth-child(4)",
+              "tr[role=\"button\"]:nth-child(5)"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "desktop",
+      "language": "en",
+      "theme": "light",
+      "route": "/discovery-tools",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__desktop__en__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 1,
+        "serious": 2,
+        "violations": [
+          {
+            "id": "aria-allowed-attr",
+            "impact": "critical",
+            "nodes": 36,
+            "help": "Elements must only use supported ARIA attributes",
+            "targets": [
+              "tr[role=\"button\"]:nth-child(1)",
+              "tr[role=\"button\"]:nth-child(2)",
+              "tr[role=\"button\"]:nth-child(3)",
+              "tr[role=\"button\"]:nth-child(4)",
+              "tr[role=\"button\"]:nth-child(5)"
+            ]
+          },
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 12,
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "targets": [
+              "tr[role=\"button\"]:nth-child(1) > td:nth-child(3) > .text-emerald-400.text-xs.font-medium",
+              "tr[role=\"button\"]:nth-child(2) > td:nth-child(3) > .text-emerald-400.text-xs.font-medium",
+              "tr[role=\"button\"]:nth-child(3) > td:nth-child(3) > .text-emerald-400.text-xs.font-medium",
+              "tr[role=\"button\"]:nth-child(4) > td:nth-child(3) > .text-emerald-400.text-xs.font-medium",
+              "tr[role=\"button\"]:nth-child(5) > td:nth-child(3) > .text-emerald-400.text-xs.font-medium"
+            ]
+          },
+          {
+            "id": "nested-interactive",
+            "impact": "serious",
+            "nodes": 36,
+            "help": "Interactive controls must not be nested",
+            "targets": [
+              "tr[role=\"button\"]:nth-child(1)",
+              "tr[role=\"button\"]:nth-child(2)",
+              "tr[role=\"button\"]:nth-child(3)",
+              "tr[role=\"button\"]:nth-child(4)",
+              "tr[role=\"button\"]:nth-child(5)"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "desktop",
+      "language": "en",
+      "theme": "dark",
+      "route": "/discovery-tools",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__desktop__en__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 1,
+        "serious": 1,
+        "violations": [
+          {
+            "id": "aria-allowed-attr",
+            "impact": "critical",
+            "nodes": 36,
+            "help": "Elements must only use supported ARIA attributes",
+            "targets": [
+              "tr[role=\"button\"]:nth-child(1)",
+              "tr[role=\"button\"]:nth-child(2)",
+              "tr[role=\"button\"]:nth-child(3)",
+              "tr[role=\"button\"]:nth-child(4)",
+              "tr[role=\"button\"]:nth-child(5)"
+            ]
+          },
+          {
+            "id": "nested-interactive",
+            "impact": "serious",
+            "nodes": 36,
+            "help": "Interactive controls must not be nested",
+            "targets": [
+              "tr[role=\"button\"]:nth-child(1)",
+              "tr[role=\"button\"]:nth-child(2)",
+              "tr[role=\"button\"]:nth-child(3)",
+              "tr[role=\"button\"]:nth-child(4)",
+              "tr[role=\"button\"]:nth-child(5)"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "tablet",
+      "language": "pl",
+      "theme": "light",
+      "route": "/discovery-tools",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__tablet__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      },
+      "axe": {
+        "critical": 1,
+        "serious": 1,
+        "violations": [
+          {
+            "id": "aria-allowed-attr",
+            "impact": "critical",
+            "nodes": 36,
+            "help": "Elements must only use supported ARIA attributes",
+            "targets": [
+              "tr[role=\"button\"]:nth-child(1)",
+              "tr[role=\"button\"]:nth-child(2)",
+              "tr[role=\"button\"]:nth-child(3)",
+              "tr[role=\"button\"]:nth-child(4)",
+              "tr[role=\"button\"]:nth-child(5)"
+            ]
+          },
+          {
+            "id": "nested-interactive",
+            "impact": "serious",
+            "nodes": 36,
+            "help": "Interactive controls must not be nested",
+            "targets": [
+              "tr[role=\"button\"]:nth-child(1)",
+              "tr[role=\"button\"]:nth-child(2)",
+              "tr[role=\"button\"]:nth-child(3)",
+              "tr[role=\"button\"]:nth-child(4)",
+              "tr[role=\"button\"]:nth-child(5)"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "tablet",
+      "language": "pl",
+      "theme": "dark",
+      "route": "/discovery-tools",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__tablet__pl__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      },
+      "axe": {
+        "critical": 1,
+        "serious": 1,
+        "violations": [
+          {
+            "id": "aria-allowed-attr",
+            "impact": "critical",
+            "nodes": 36,
+            "help": "Elements must only use supported ARIA attributes",
+            "targets": [
+              "tr[role=\"button\"]:nth-child(1)",
+              "tr[role=\"button\"]:nth-child(2)",
+              "tr[role=\"button\"]:nth-child(3)",
+              "tr[role=\"button\"]:nth-child(4)",
+              "tr[role=\"button\"]:nth-child(5)"
+            ]
+          },
+          {
+            "id": "nested-interactive",
+            "impact": "serious",
+            "nodes": 36,
+            "help": "Interactive controls must not be nested",
+            "targets": [
+              "tr[role=\"button\"]:nth-child(1)",
+              "tr[role=\"button\"]:nth-child(2)",
+              "tr[role=\"button\"]:nth-child(3)",
+              "tr[role=\"button\"]:nth-child(4)",
+              "tr[role=\"button\"]:nth-child(5)"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "tablet",
+      "language": "en",
+      "theme": "light",
+      "route": "/discovery-tools",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__tablet__en__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      },
+      "axe": {
+        "critical": 1,
+        "serious": 1,
+        "violations": [
+          {
+            "id": "aria-allowed-attr",
+            "impact": "critical",
+            "nodes": 36,
+            "help": "Elements must only use supported ARIA attributes",
+            "targets": [
+              "tr[role=\"button\"]:nth-child(1)",
+              "tr[role=\"button\"]:nth-child(2)",
+              "tr[role=\"button\"]:nth-child(3)",
+              "tr[role=\"button\"]:nth-child(4)",
+              "tr[role=\"button\"]:nth-child(5)"
+            ]
+          },
+          {
+            "id": "nested-interactive",
+            "impact": "serious",
+            "nodes": 36,
+            "help": "Interactive controls must not be nested",
+            "targets": [
+              "tr[role=\"button\"]:nth-child(1)",
+              "tr[role=\"button\"]:nth-child(2)",
+              "tr[role=\"button\"]:nth-child(3)",
+              "tr[role=\"button\"]:nth-child(4)",
+              "tr[role=\"button\"]:nth-child(5)"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "tablet",
+      "language": "en",
+      "theme": "dark",
+      "route": "/discovery-tools",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__tablet__en__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      },
+      "axe": {
+        "critical": 1,
+        "serious": 1,
+        "violations": [
+          {
+            "id": "aria-allowed-attr",
+            "impact": "critical",
+            "nodes": 36,
+            "help": "Elements must only use supported ARIA attributes",
+            "targets": [
+              "tr[role=\"button\"]:nth-child(1)",
+              "tr[role=\"button\"]:nth-child(2)",
+              "tr[role=\"button\"]:nth-child(3)",
+              "tr[role=\"button\"]:nth-child(4)",
+              "tr[role=\"button\"]:nth-child(5)"
+            ]
+          },
+          {
+            "id": "nested-interactive",
+            "impact": "serious",
+            "nodes": 36,
+            "help": "Interactive controls must not be nested",
+            "targets": [
+              "tr[role=\"button\"]:nth-child(1)",
+              "tr[role=\"button\"]:nth-child(2)",
+              "tr[role=\"button\"]:nth-child(3)",
+              "tr[role=\"button\"]:nth-child(4)",
+              "tr[role=\"button\"]:nth-child(5)"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "mobile",
+      "language": "pl",
+      "theme": "light",
+      "route": "/discovery-tools",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__mobile__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "axe": {
+        "critical": 1,
+        "serious": 1,
+        "violations": [
+          {
+            "id": "aria-allowed-attr",
+            "impact": "critical",
+            "nodes": 36,
+            "help": "Elements must only use supported ARIA attributes",
+            "targets": [
+              "tr[role=\"button\"]:nth-child(1)",
+              "tr[role=\"button\"]:nth-child(2)",
+              "tr[role=\"button\"]:nth-child(3)",
+              "tr[role=\"button\"]:nth-child(4)",
+              "tr[role=\"button\"]:nth-child(5)"
+            ]
+          },
+          {
+            "id": "nested-interactive",
+            "impact": "serious",
+            "nodes": 36,
+            "help": "Interactive controls must not be nested",
+            "targets": [
+              "tr[role=\"button\"]:nth-child(1)",
+              "tr[role=\"button\"]:nth-child(2)",
+              "tr[role=\"button\"]:nth-child(3)",
+              "tr[role=\"button\"]:nth-child(4)",
+              "tr[role=\"button\"]:nth-child(5)"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "mobile",
+      "language": "pl",
+      "theme": "dark",
+      "route": "/discovery-tools",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__mobile__pl__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "axe": {
+        "critical": 1,
+        "serious": 1,
+        "violations": [
+          {
+            "id": "aria-allowed-attr",
+            "impact": "critical",
+            "nodes": 36,
+            "help": "Elements must only use supported ARIA attributes",
+            "targets": [
+              "tr[role=\"button\"]:nth-child(1)",
+              "tr[role=\"button\"]:nth-child(2)",
+              "tr[role=\"button\"]:nth-child(3)",
+              "tr[role=\"button\"]:nth-child(4)",
+              "tr[role=\"button\"]:nth-child(5)"
+            ]
+          },
+          {
+            "id": "nested-interactive",
+            "impact": "serious",
+            "nodes": 36,
+            "help": "Interactive controls must not be nested",
+            "targets": [
+              "tr[role=\"button\"]:nth-child(1)",
+              "tr[role=\"button\"]:nth-child(2)",
+              "tr[role=\"button\"]:nth-child(3)",
+              "tr[role=\"button\"]:nth-child(4)",
+              "tr[role=\"button\"]:nth-child(5)"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "mobile",
+      "language": "en",
+      "theme": "light",
+      "route": "/discovery-tools",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__mobile__en__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "axe": {
+        "critical": 1,
+        "serious": 1,
+        "violations": [
+          {
+            "id": "aria-allowed-attr",
+            "impact": "critical",
+            "nodes": 36,
+            "help": "Elements must only use supported ARIA attributes",
+            "targets": [
+              "tr[role=\"button\"]:nth-child(1)",
+              "tr[role=\"button\"]:nth-child(2)",
+              "tr[role=\"button\"]:nth-child(3)",
+              "tr[role=\"button\"]:nth-child(4)",
+              "tr[role=\"button\"]:nth-child(5)"
+            ]
+          },
+          {
+            "id": "nested-interactive",
+            "impact": "serious",
+            "nodes": 36,
+            "help": "Interactive controls must not be nested",
+            "targets": [
+              "tr[role=\"button\"]:nth-child(1)",
+              "tr[role=\"button\"]:nth-child(2)",
+              "tr[role=\"button\"]:nth-child(3)",
+              "tr[role=\"button\"]:nth-child(4)",
+              "tr[role=\"button\"]:nth-child(5)"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "mobile",
+      "language": "en",
+      "theme": "dark",
+      "route": "/discovery-tools",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__mobile__en__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "axe": {
+        "critical": 1,
+        "serious": 1,
+        "violations": [
+          {
+            "id": "aria-allowed-attr",
+            "impact": "critical",
+            "nodes": 36,
+            "help": "Elements must only use supported ARIA attributes",
+            "targets": [
+              "tr[role=\"button\"]:nth-child(1)",
+              "tr[role=\"button\"]:nth-child(2)",
+              "tr[role=\"button\"]:nth-child(3)",
+              "tr[role=\"button\"]:nth-child(4)",
+              "tr[role=\"button\"]:nth-child(5)"
+            ]
+          },
+          {
+            "id": "nested-interactive",
+            "impact": "serious",
+            "nodes": 36,
+            "help": "Interactive controls must not be nested",
+            "targets": [
+              "tr[role=\"button\"]:nth-child(1)",
+              "tr[role=\"button\"]:nth-child(2)",
+              "tr[role=\"button\"]:nth-child(3)",
+              "tr[role=\"button\"]:nth-child(4)",
+              "tr[role=\"button\"]:nth-child(5)"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "desktop",
+      "language": "pl",
+      "theme": "light",
+      "route": "/discovery-tools/strategic",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__discovery-tools-strategic__desktop__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 1,
+        "serious": 2,
+        "violations": [
+          {
+            "id": "aria-allowed-attr",
+            "impact": "critical",
+            "nodes": 10,
+            "help": "Elements must only use supported ARIA attributes",
+            "targets": [
+              "tr[role=\"button\"]:nth-child(1)",
+              "tr[role=\"button\"]:nth-child(2)",
+              "tr[role=\"button\"]:nth-child(3)",
+              "tr[role=\"button\"]:nth-child(4)",
+              "tr[role=\"button\"]:nth-child(5)"
+            ]
+          },
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 10,
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "targets": [
+              "tr[role=\"button\"]:nth-child(1) > td:nth-child(3) > .text-emerald-400.text-xs.font-medium",
+              "tr[role=\"button\"]:nth-child(2) > td:nth-child(3) > .text-emerald-400.text-xs.font-medium",
+              "tr[role=\"button\"]:nth-child(3) > td:nth-child(3) > .text-emerald-400.text-xs.font-medium",
+              "tr[role=\"button\"]:nth-child(4) > td:nth-child(3) > .text-emerald-400.text-xs.font-medium",
+              "tr[role=\"button\"]:nth-child(5) > td:nth-child(3) > .text-emerald-400.text-xs.font-medium"
+            ]
+          },
+          {
+            "id": "nested-interactive",
+            "impact": "serious",
+            "nodes": 10,
+            "help": "Interactive controls must not be nested",
+            "targets": [
+              "tr[role=\"button\"]:nth-child(1)",
+              "tr[role=\"button\"]:nth-child(2)",
+              "tr[role=\"button\"]:nth-child(3)",
+              "tr[role=\"button\"]:nth-child(4)",
+              "tr[role=\"button\"]:nth-child(5)"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "desktop",
+      "language": "pl",
+      "theme": "light",
+      "route": "/discovery-tools/operational",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__discovery-tools-operational__desktop__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 1,
+        "serious": 2,
+        "violations": [
+          {
+            "id": "aria-allowed-attr",
+            "impact": "critical",
+            "nodes": 10,
+            "help": "Elements must only use supported ARIA attributes",
+            "targets": [
+              "tr[role=\"button\"]:nth-child(1)",
+              "tr[role=\"button\"]:nth-child(2)",
+              "tr[role=\"button\"]:nth-child(3)",
+              "tr[role=\"button\"]:nth-child(4)",
+              "tr[role=\"button\"]:nth-child(5)"
+            ]
+          },
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 10,
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "targets": [
+              "tr[role=\"button\"]:nth-child(1) > td:nth-child(3) > .text-blue-400.text-xs.font-medium",
+              "tr[role=\"button\"]:nth-child(2) > td:nth-child(3) > .text-blue-400.text-xs.font-medium",
+              "tr[role=\"button\"]:nth-child(3) > td:nth-child(3) > .text-blue-400.text-xs.font-medium",
+              "tr[role=\"button\"]:nth-child(4) > td:nth-child(3) > .text-blue-400.text-xs.font-medium",
+              "tr[role=\"button\"]:nth-child(5) > td:nth-child(3) > .text-blue-400.text-xs.font-medium"
+            ]
+          },
+          {
+            "id": "nested-interactive",
+            "impact": "serious",
+            "nodes": 10,
+            "help": "Interactive controls must not be nested",
+            "targets": [
+              "tr[role=\"button\"]:nth-child(1)",
+              "tr[role=\"button\"]:nth-child(2)",
+              "tr[role=\"button\"]:nth-child(3)",
+              "tr[role=\"button\"]:nth-child(4)",
+              "tr[role=\"button\"]:nth-child(5)"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "desktop",
+      "language": "pl",
+      "theme": "light",
+      "route": "/discovery-tools/digital",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__discovery-tools-digital__desktop__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 1,
+        "serious": 2,
+        "violations": [
+          {
+            "id": "aria-allowed-attr",
+            "impact": "critical",
+            "nodes": 10,
+            "help": "Elements must only use supported ARIA attributes",
+            "targets": [
+              "tr[role=\"button\"]:nth-child(1)",
+              "tr[role=\"button\"]:nth-child(2)",
+              "tr[role=\"button\"]:nth-child(3)",
+              "tr[role=\"button\"]:nth-child(4)",
+              "tr[role=\"button\"]:nth-child(5)"
+            ]
+          },
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 10,
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "targets": [
+              "tr[role=\"button\"]:nth-child(1) > td:nth-child(3) > .text-blue-400.text-xs.font-medium",
+              "tr[role=\"button\"]:nth-child(2) > td:nth-child(3) > .text-blue-400.text-xs.font-medium",
+              "tr[role=\"button\"]:nth-child(3) > td:nth-child(3) > .text-blue-400.text-xs.font-medium",
+              "tr[role=\"button\"]:nth-child(4) > td:nth-child(3) > .text-blue-400.text-xs.font-medium",
+              "tr[role=\"button\"]:nth-child(5) > td:nth-child(3) > .text-blue-400.text-xs.font-medium"
+            ]
+          },
+          {
+            "id": "nested-interactive",
+            "impact": "serious",
+            "nodes": 10,
+            "help": "Interactive controls must not be nested",
+            "targets": [
+              "tr[role=\"button\"]:nth-child(1)",
+              "tr[role=\"button\"]:nth-child(2)",
+              "tr[role=\"button\"]:nth-child(3)",
+              "tr[role=\"button\"]:nth-child(4)",
+              "tr[role=\"button\"]:nth-child(5)"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    }
+  ],
+  "deepLink": {
+    "ok": true,
+    "detail": "deep-link /discovery-tools settled at /discovery-tools — surface content matched"
+  },
+  "reload": {
+    "ok": true,
+    "detail": "reload settled at /discovery-tools — surface content matched"
+  },
+  "coldReopen": {
+    "ok": true,
+    "detail": "cold context (fresh storage state, no SPA memory) settled at /discovery-tools — surface content matched"
+  },
+  "keyboard": {
+    "reachableControls": 40,
+    "focusAlwaysVisible": false,
+    "invisibleFocusSamples": [
+      "button..group",
+      "button..group",
+      "button..group",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex"
+    ],
+    "escapeHandled": "Escape pressed on the surface; surface stayed mounted (no dialog was open to close).",
+    "focusReturn": "Focus remained inside the document after Escape.",
+    "tabOrderMonotonic": true
+  },
+  "states": [],
+  "statesNotPresent": [
+    "forbidden",
+    "stale"
+  ],
+  "negativeControls": {
+    "onboardingRetiredViaRealApi": "PUT /api/preferences -> 200",
+    "noRequestInterception": "This harness never calls page.route()/fulfill(); every response comes from the real backend on real Postgres.",
+    "blockingOverlayDetection": "A surface counts as rendered only when no dialog/aria-modal covers >15% of the viewport.",
+    "themeAndLanguageAreObserved": "Theme and language are set before first paint and each of the 12 cells is captured separately; identical captures across cells would be visible as identical files."
+  },
+  "gates": [
+    "AppRoutes.tsx:1934-1948 — only ProductionModuleGate, a no-op outside the consultify.ai production hostname."
+  ]
+}

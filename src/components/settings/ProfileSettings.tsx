@@ -680,9 +680,12 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                 </p>
               </div>
               <div className="space-y-1.5">
-                <label className={labelClass}>{t('settings.profile.pronouns', 'Pronouns')}</label>
+                <label className={labelClass} htmlFor="profile-pronouns">
+                  {t('settings.profile.pronouns', 'Pronouns')}
+                </label>
                 <div className="relative">
                   <select
+                    id="profile-pronouns"
                     value={formState.pronouns}
                     onChange={(e) => updateFormField('pronouns', e.target.value)}
                     className={inputClass + ' appearance-none cursor-pointer pr-8'}
@@ -711,7 +714,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                 </div>
               </div>
               <div className="space-y-1.5">
-                <label className={labelClass}>
+                <label className={labelClass} htmlFor="profile-department">
                   {t('settings.profile.department', 'Department')}
                 </label>
                 <div className="relative">
@@ -720,6 +723,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                     className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--c-text-muted)] pointer-events-none"
                   />
                   <select
+                    id="profile-department"
                     value={formState.department}
                     onChange={(e) => updateFormField('department', e.target.value)}
                     className={selectClass}
@@ -757,10 +761,11 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-1.5">
-                <label className={labelClass}>
+                <label className={labelClass} htmlFor="profile-first-name">
                   {t('settings.profile.firstName', 'First Name')}
                 </label>
                 <input
+                  id="profile-first-name"
                   value={formState.firstName}
                   aria-invalid={firstNameValidationError ? 'true' : undefined}
                   aria-describedby={
@@ -779,21 +784,27 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                 )}
               </div>
               <div className="space-y-1.5">
-                <label className={labelClass}>{t('settings.profile.lastName', 'Last Name')}</label>
+                <label className={labelClass} htmlFor="profile-last-name">
+                  {t('settings.profile.lastName', 'Last Name')}
+                </label>
                 <input
+                  id="profile-last-name"
                   value={formState.lastName}
                   onChange={(e) => updateFormField('lastName', e.target.value)}
                   className={inputClass}
                 />
               </div>
               <div className="space-y-1.5">
-                <label className={labelClass}>{t('auth.phone', 'Phone')}</label>
+                <label className={labelClass} htmlFor="profile-phone">
+                  {t('auth.phone', 'Phone')}
+                </label>
                 <div className="relative">
                   <Phone
                     size={14}
                     className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--c-text-muted)]"
                   />
                   <input
+                    id="profile-phone"
                     value={formState.phone}
                     onChange={(e) => updateFormField('phone', e.target.value)}
                     className={inputWithIconClass}
@@ -801,13 +812,16 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                 </div>
               </div>
               <div className="space-y-1.5">
-                <label className={labelClass}>{t('settings.profile.company', 'Company')}</label>
+                <label className={labelClass} htmlFor="profile-company-name">
+                  {t('settings.profile.company', 'Company')}
+                </label>
                 <div className="relative">
                   <Building2
                     size={14}
                     className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--c-text-muted)]"
                   />
                   <input
+                    id="profile-company-name"
                     value={formState.companyName}
                     onChange={(e) => updateFormField('companyName', e.target.value)}
                     className={inputWithIconClass}
@@ -932,7 +946,10 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                       />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-[var(--c-text)]">
+                      <label
+                        className="text-sm font-medium text-[var(--c-text)]"
+                        htmlFor="profile-out-of-office-toggle"
+                      >
                         {t('settings.profile.outOfOffice', 'Out of Office')}
                       </label>
                       <p className="text-xs text-[var(--c-text-muted)]">
@@ -944,6 +961,9 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                     </div>
                   </div>
                   <button
+                    id="profile-out-of-office-toggle"
+                    role="switch"
+                    aria-checked={formState.isOutOfOffice}
                     onClick={() => updateFormField('isOutOfOffice', !formState.isOutOfOffice)}
                     className={`relative h-6 w-12 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)] ${
                       formState.isOutOfOffice
@@ -1002,13 +1022,16 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Timezone */}
               <div className="space-y-1.5">
-                <label className={labelClass}>{t('settings.profile.timezone', 'Timezone')}</label>
+                <label className={labelClass} htmlFor="profile-timezone">
+                  {t('settings.profile.timezone', 'Timezone')}
+                </label>
                 <div className="relative">
                   <Clock
                     size={14}
                     className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--c-text-muted)] pointer-events-none"
                   />
                   <select
+                    id="profile-timezone"
                     value={formState.timezone}
                     onChange={(e) => updateFormField('timezone', e.target.value)}
                     className={selectClass}
@@ -1047,7 +1070,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
 
               {/* Date Format */}
               <div className="space-y-1.5">
-                <label className={labelClass}>
+                <label className={labelClass} htmlFor="profile-date-format">
                   {t('settings.profile.dateFormat', 'Date Format')}
                 </label>
                 <div className="relative">
@@ -1056,6 +1079,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
                     className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--c-text-muted)] pointer-events-none"
                   />
                   <select
+                    id="profile-date-format"
                     value={formState.dateFormat}
                     onChange={(e) => updateFormField('dateFormat', e.target.value)}
                     className={selectClass}

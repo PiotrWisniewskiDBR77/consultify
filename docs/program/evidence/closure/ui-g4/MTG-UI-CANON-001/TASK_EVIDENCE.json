@@ -1,0 +1,161 @@
+{
+  "taskId": "MTG-UI-CANON-001",
+  "lane": "UI-G4",
+  "baselineSha": "c4f84a2baa7f1ce9c7b03a68ebbd1783cdbc581b",
+  "productSha": "40e1a89bdd118de828fd5f716839789fc340a20a",
+  "verdict": "AUTOMATED_G4_FAIL / BLOCKED_HUMAN",
+  "verdictLiteral": "The automatable half of G4 FAILS on this exact SHA for the reasons listed in automatedFailures. No human sign-off is claimed or implied.",
+  "environment": {
+    "mountedApplication": "real backend process (tsx server/src/index.ts) + Vite-served client",
+    "database": "real PostgreSQL 16 (pgvector/pgvector:pg16), schema built from the canonical migration chain from zero",
+    "authentication": "real signed JWT from POST /api/test-support/bootstrap; no anonymous or stubbed session",
+    "requestInterception": "none — the harness never calls page.route()/fulfill()",
+    "harness": "docs/program/evidence/closure/ui-g4/HARNESS.md"
+  },
+  "surface": {
+    "module": "Meeting",
+    "route": "/meeting",
+    "gates": [
+      "AppRoutes.tsx:2492-2508 — BetaGate moduleId='MODULE_MEETING' status 'closed' (betaAccess.ts:53) with admin exemption; the ADMIN session passes.",
+      "The sidebar still badges Meeting as 'soon' (menuConfig.ts:174-179) although the hub is a working CRUD surface — recorded as a stale-label finding.",
+      "MTG-POL-001 default: recording OFF, no transcript persistence without opt-in."
+    ]
+  },
+  "denominators": {
+    "cells": 12,
+    "primaryCells": 12,
+    "viewports": [
+      "1440x900",
+      "768x1024",
+      "390x844"
+    ],
+    "languages": [
+      "pl",
+      "en"
+    ],
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "primaryCellsRendered": 12,
+    "secondaryCells": 0,
+    "secondaryCellsRendered": 0,
+    "screenshots": 12,
+    "keyboardControlsTraversed": 40,
+    "axeCriticalTotal": 0,
+    "axeSeriousTotal": 0,
+    "axeViolationIds": {},
+    "statesProbed": 0,
+    "statesObserved": 0
+  },
+  "fixtures": {
+    "tenant": "fresh organization created by the test-support bootstrap for this run",
+    "dataState": "a brand-new tenant, so surfaces render their genuine empty state unless a probe seeded data through the real API",
+    "onboarding": "PUT /api/preferences -> 200"
+  },
+  "navigation": {
+    "deepLink": {
+      "ok": true,
+      "detail": "deep-link /meeting settled at /meeting — surface content matched"
+    },
+    "reload": {
+      "ok": true,
+      "detail": "reload settled at /meeting — surface content matched"
+    },
+    "coldReopen": {
+      "ok": true,
+      "detail": "cold context (fresh storage state, no SPA memory) settled at /meeting — surface content matched"
+    }
+  },
+  "keyboard": {
+    "reachableControls": 40,
+    "focusAlwaysVisible": false,
+    "invisibleFocusSamples": [
+      "button..group",
+      "button..group",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex"
+    ],
+    "escapeHandled": "Escape pressed on the surface; surface stayed mounted (no dialog was open to close).",
+    "focusReturn": "Focus remained inside the document after Escape.",
+    "tabOrderMonotonic": true
+  },
+  "states": [],
+  "statesNotPresent": [
+    "stale"
+  ],
+  "negativeControls": {
+    "onboardingRetiredViaRealApi": "PUT /api/preferences -> 200",
+    "noRequestInterception": "This harness never calls page.route()/fulfill(); every response comes from the real backend on real Postgres.",
+    "blockingOverlayDetection": "A surface counts as rendered only when no dialog/aria-modal covers >15% of the viewport.",
+    "themeAndLanguageAreObserved": "Theme and language are set before first paint and each of the 12 cells is captured separately; identical captures across cells would be visible as identical files."
+  },
+  "screenshots": [
+    {
+      "file": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__desktop__en__dark.png",
+      "sha256": "bfe97085286a156e5942e60ba1519a82df00e42b80f215f4ac3bddb6e1d65476"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__desktop__en__light.png",
+      "sha256": "a753a241e1cbd2272f57e378c8691a8e3225975ca2005f8fe661501690f1ef44"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__desktop__pl__dark.png",
+      "sha256": "d1c0dc791149b4e61c046d5535392c98966995f3c6fecd973e0e2e0a650a1cee"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__desktop__pl__light.png",
+      "sha256": "cf0570e58f6c91feffe284734ac59c38da43b1638a251d4ee656a4c08f1f7a3c"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__mobile__en__dark.png",
+      "sha256": "8b985667676154bb7b8876972f66f62160fba7d79a2e9da05b2488a85ec89465"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__mobile__en__light.png",
+      "sha256": "976fea6465f0738b369ddfbb15c3f0c1d84fcb36974f8f18a8195a56980e6d39"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__mobile__pl__dark.png",
+      "sha256": "4d36d95890abfb20662d271e6e53ffca0463bd8c2988a838bb5449d5f02f40c2"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__mobile__pl__light.png",
+      "sha256": "025fe2f3e1ed3fc068ab673aa0a1799ebe330ea9a406ef19cbbdd30a2d806233"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__tablet__en__dark.png",
+      "sha256": "cf65dc142c9bfcd08d643cfcabe6bfc4d4cc6c634e569579defeaff3b20d67fd"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__tablet__en__light.png",
+      "sha256": "25e2f93b0a231414ba7ff951a048866e966bf2aab521a84cf48a7a1adc9f42b0"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__tablet__pl__dark.png",
+      "sha256": "d53e2ac92eba791cd5147aae657531aeb9fe19b934d7ff56577189f074af4ab4"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__tablet__pl__light.png",
+      "sha256": "f2b39fdeafc510d6f55af705644f5257452672bdfd14880aafbc137689a99c68"
+    }
+  ],
+  "screenshotBinding": "Every screenshot above was produced by the sweep run recorded in productSha 40e1a89bdd118de828fd5f716839789fc340a20a; the sha256 of each file is listed so a later re-render cannot be passed off as this run.",
+  "automatedFailures": [
+    "focus indicator not visible on every reachable control (8 sample(s): button..group, button..group, button.w-full.flex, button.w-full.flex)"
+  ],
+  "measurementCaveats": [],
+  "blockedHuman": [
+    "Manual VoiceOver pass — no automated tool substitutes for it.",
+    "Brand/visual acceptance by the UX owner.",
+    "Named target-role human acceptance (per OWNER_DECISIONS_AND_MEASURABLE_GATES §UI aggregate)."
+  ],
+  "rollback": {
+    "method": "This lane adds test/harness/evidence files only; reverting the lane commits removes them with no schema or runtime change. Any source fix is listed per-commit and is individually revertable.",
+    "executed": false
+  }
+}

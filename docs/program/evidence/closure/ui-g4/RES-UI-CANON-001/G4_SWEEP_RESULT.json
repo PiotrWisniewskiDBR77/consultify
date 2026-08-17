@@ -1,0 +1,504 @@
+{
+  "taskId": "RES-UI-CANON-001",
+  "key": "RES",
+  "module": "Results",
+  "route": "/results",
+  "productSha": "40e1a89bdd118de828fd5f716839789fc340a20a",
+  "startedAt": "2026-08-17T01:49:00.219Z",
+  "cells": [
+    {
+      "viewport": "desktop",
+      "language": "pl",
+      "theme": "light",
+      "route": "/results",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__desktop__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 1,
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 2,
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "targets": [
+              ".text-c-danger.font-semibold.text-sm",
+              ".border-c-danger\\/40"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "viewport": "desktop",
+      "language": "pl",
+      "theme": "dark",
+      "route": "/results",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__desktop__pl__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "viewport": "desktop",
+      "language": "en",
+      "theme": "light",
+      "route": "/results",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__desktop__en__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 1,
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 2,
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "targets": [
+              ".text-c-danger.font-semibold.text-sm",
+              ".border-c-danger\\/40"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "viewport": "desktop",
+      "language": "en",
+      "theme": "dark",
+      "route": "/results",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__desktop__en__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "viewport": "tablet",
+      "language": "pl",
+      "theme": "light",
+      "route": "/results",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__tablet__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 1,
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 2,
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "targets": [
+              ".text-c-danger.font-semibold.text-sm",
+              ".border-c-danger\\/40"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "viewport": "tablet",
+      "language": "pl",
+      "theme": "dark",
+      "route": "/results",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__tablet__pl__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "viewport": "tablet",
+      "language": "en",
+      "theme": "light",
+      "route": "/results",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__tablet__en__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 1,
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 2,
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "targets": [
+              ".text-c-danger.font-semibold.text-sm",
+              ".border-c-danger\\/40"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "viewport": "tablet",
+      "language": "en",
+      "theme": "dark",
+      "route": "/results",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__tablet__en__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "viewport": "mobile",
+      "language": "pl",
+      "theme": "light",
+      "route": "/results",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__mobile__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 1,
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 2,
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "targets": [
+              ".text-c-danger.font-semibold.text-sm",
+              ".border-c-danger\\/40"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "viewport": "mobile",
+      "language": "pl",
+      "theme": "dark",
+      "route": "/results",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__mobile__pl__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "viewport": "mobile",
+      "language": "en",
+      "theme": "light",
+      "route": "/results",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__mobile__en__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 1,
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 2,
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "targets": [
+              ".text-c-danger.font-semibold.text-sm",
+              ".border-c-danger\\/40"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "viewport": "mobile",
+      "language": "en",
+      "theme": "dark",
+      "route": "/results",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__mobile__en__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "viewport": "desktop",
+      "language": "pl",
+      "theme": "light",
+      "route": "/results/kpi",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__results-kpi__desktop__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "desktop",
+      "language": "pl",
+      "theme": "light",
+      "route": "/results/roi",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__results-roi__desktop__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "desktop",
+      "language": "pl",
+      "theme": "light",
+      "route": "/results/okr",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__results-okr__desktop__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    }
+  ],
+  "deepLink": {
+    "ok": true,
+    "detail": "deep-link /results settled at /results — surface content matched"
+  },
+  "reload": {
+    "ok": true,
+    "detail": "reload settled at /results — surface content matched"
+  },
+  "coldReopen": {
+    "ok": true,
+    "detail": "cold context (fresh storage state, no SPA memory) settled at /results — surface content matched"
+  },
+  "keyboard": {
+    "reachableControls": 39,
+    "focusAlwaysVisible": false,
+    "invisibleFocusSamples": [
+      "button..group",
+      "button..group",
+      "button..group",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex"
+    ],
+    "escapeHandled": "Escape pressed on the surface; surface stayed mounted (no dialog was open to close).",
+    "focusReturn": "Focus remained inside the document after Escape.",
+    "tabOrderMonotonic": true
+  },
+  "states": [
+    {
+      "state": "empty",
+      "observed": true,
+      "path": "/results",
+      "detail": "Reached without an explicit text assertion.",
+      "screenshot": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__state-empty.png"
+    },
+    {
+      "state": "error",
+      "observed": true,
+      "path": "/results/kpi/00000000-0000-0000-0000-000000000000",
+      "detail": "Reached without an explicit text assertion.",
+      "screenshot": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__state-error.png"
+    }
+  ],
+  "statesNotPresent": [
+    "stale"
+  ],
+  "negativeControls": {
+    "onboardingRetiredViaRealApi": "PUT /api/preferences -> 200",
+    "noRequestInterception": "This harness never calls page.route()/fulfill(); every response comes from the real backend on real Postgres.",
+    "blockingOverlayDetection": "A surface counts as rendered only when no dialog/aria-modal covers >15% of the viewport.",
+    "themeAndLanguageAreObserved": "Theme and language are set before first paint and each of the 12 cells is captured separately; identical captures across cells would be visible as identical files."
+  },
+  "gates": [
+    "AppRoutes.tsx:2632-2648 — BetaGate moduleId='MODULE_BENEFITS' status 'open' (betaAccess.ts:39): never blocks.",
+    "Results-Next registries (kpiRegistry/roiRegistry/okrRegistry, resultsVNextFeatureFlags.ts:32-48) default OFF; enabled here via their own localStorage keys so the registries render instead of the disabled panel. The default-OFF behaviour is itself recorded, not hidden.",
+    "RES-MVP-VISIBILITY-001 default is OWNER/ADMIN only; the bootstrap session is ADMIN."
+  ]
+}

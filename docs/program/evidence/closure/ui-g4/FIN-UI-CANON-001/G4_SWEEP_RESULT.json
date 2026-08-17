@@ -1,0 +1,344 @@
+{
+  "taskId": "FIN-UI-CANON-001",
+  "key": "FIN",
+  "module": "Finance",
+  "route": "/finance",
+  "productSha": "40e1a89bdd118de828fd5f716839789fc340a20a",
+  "startedAt": "2026-08-17T01:50:12.603Z",
+  "cells": [
+    {
+      "viewport": "desktop",
+      "language": "pl",
+      "theme": "light",
+      "route": "/finance",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__desktop__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "desktop",
+      "language": "pl",
+      "theme": "dark",
+      "route": "/finance",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__desktop__pl__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "desktop",
+      "language": "en",
+      "theme": "light",
+      "route": "/finance",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__desktop__en__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "desktop",
+      "language": "en",
+      "theme": "dark",
+      "route": "/finance",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__desktop__en__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "tablet",
+      "language": "pl",
+      "theme": "light",
+      "route": "/finance",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__tablet__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "tablet",
+      "language": "pl",
+      "theme": "dark",
+      "route": "/finance",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__tablet__pl__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "tablet",
+      "language": "en",
+      "theme": "light",
+      "route": "/finance",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__tablet__en__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "tablet",
+      "language": "en",
+      "theme": "dark",
+      "route": "/finance",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__tablet__en__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "mobile",
+      "language": "pl",
+      "theme": "light",
+      "route": "/finance",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__mobile__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "mobile",
+      "language": "pl",
+      "theme": "dark",
+      "route": "/finance",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__mobile__pl__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "mobile",
+      "language": "en",
+      "theme": "light",
+      "route": "/finance",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__mobile__en__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "mobile",
+      "language": "en",
+      "theme": "dark",
+      "route": "/finance",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__mobile__en__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    }
+  ],
+  "deepLink": {
+    "ok": true,
+    "detail": "deep-link /finance settled at /finance — surface content matched"
+  },
+  "reload": {
+    "ok": true,
+    "detail": "reload settled at /finance — surface content matched"
+  },
+  "coldReopen": {
+    "ok": true,
+    "detail": "cold context (fresh storage state, no SPA memory) settled at /finance — surface content matched"
+  },
+  "keyboard": {
+    "reachableControls": 40,
+    "focusAlwaysVisible": false,
+    "invisibleFocusSamples": [
+      "button..group",
+      "button..group",
+      "button..group",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex"
+    ],
+    "escapeHandled": "Escape pressed on the surface; surface stayed mounted (no dialog was open to close).",
+    "focusReturn": "Focus remained inside the document after Escape.",
+    "tabOrderMonotonic": true
+  },
+  "states": [
+    {
+      "state": "empty",
+      "observed": true,
+      "path": "/finance",
+      "detail": "Reached without an explicit text assertion.",
+      "screenshot": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__state-empty.png"
+    },
+    {
+      "state": "error",
+      "observed": true,
+      "path": "/finance/statements/00000000-0000-0000-0000-000000000000",
+      "detail": "Reached without an explicit text assertion.",
+      "screenshot": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__state-error.png"
+    }
+  ],
+  "statesNotPresent": [
+    "stale"
+  ],
+  "negativeControls": {
+    "onboardingRetiredViaRealApi": "PUT /api/preferences -> 200",
+    "noRequestInterception": "This harness never calls page.route()/fulfill(); every response comes from the real backend on real Postgres.",
+    "blockingOverlayDetection": "A surface counts as rendered only when no dialog/aria-modal covers >15% of the viewport.",
+    "themeAndLanguageAreObserved": "Theme and language are set before first paint and each of the 12 cells is captured separately; identical captures across cells would be visible as identical files."
+  },
+  "gates": [
+    "AppRoutes.tsx:2254-2270 — BetaGate moduleId='MODULE_ECONOMICS' status 'closed' (betaAccess.ts:47), but BETA_ADMINS_EXEMPT=true (betaAccess.ts:32) and the session is ADMIN, so it passes. A non-admin is redirected to /chat — that redirect is the surface's real forbidden behaviour.",
+    "FIN-MVP-RECONCILIATION-001 default: Results Actual immutable, Finance may only raise a proposal/dispute."
+  ]
+}

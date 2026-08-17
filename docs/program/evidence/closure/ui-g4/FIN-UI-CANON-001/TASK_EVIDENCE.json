@@ -1,0 +1,183 @@
+{
+  "taskId": "FIN-UI-CANON-001",
+  "lane": "UI-G4",
+  "baselineSha": "c4f84a2baa7f1ce9c7b03a68ebbd1783cdbc581b",
+  "productSha": "40e1a89bdd118de828fd5f716839789fc340a20a",
+  "verdict": "AUTOMATED_G4_FAIL / BLOCKED_HUMAN",
+  "verdictLiteral": "The automatable half of G4 FAILS on this exact SHA for the reasons listed in automatedFailures. No human sign-off is claimed or implied.",
+  "environment": {
+    "mountedApplication": "real backend process (tsx server/src/index.ts) + Vite-served client",
+    "database": "real PostgreSQL 16 (pgvector/pgvector:pg16), schema built from the canonical migration chain from zero",
+    "authentication": "real signed JWT from POST /api/test-support/bootstrap; no anonymous or stubbed session",
+    "requestInterception": "none — the harness never calls page.route()/fulfill()",
+    "harness": "docs/program/evidence/closure/ui-g4/HARNESS.md"
+  },
+  "surface": {
+    "module": "Finance",
+    "route": "/finance",
+    "gates": [
+      "AppRoutes.tsx:2254-2270 — BetaGate moduleId='MODULE_ECONOMICS' status 'closed' (betaAccess.ts:47), but BETA_ADMINS_EXEMPT=true (betaAccess.ts:32) and the session is ADMIN, so it passes. A non-admin is redirected to /chat — that redirect is the surface's real forbidden behaviour.",
+      "FIN-MVP-RECONCILIATION-001 default: Results Actual immutable, Finance may only raise a proposal/dispute."
+    ]
+  },
+  "denominators": {
+    "cells": 12,
+    "primaryCells": 12,
+    "viewports": [
+      "1440x900",
+      "768x1024",
+      "390x844"
+    ],
+    "languages": [
+      "pl",
+      "en"
+    ],
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "primaryCellsRendered": 12,
+    "secondaryCells": 0,
+    "secondaryCellsRendered": 0,
+    "screenshots": 14,
+    "keyboardControlsTraversed": 40,
+    "axeCriticalTotal": 0,
+    "axeSeriousTotal": 0,
+    "axeViolationIds": {},
+    "statesProbed": 2,
+    "statesObserved": 2
+  },
+  "fixtures": {
+    "tenant": "fresh organization created by the test-support bootstrap for this run",
+    "dataState": "a brand-new tenant, so surfaces render their genuine empty state unless a probe seeded data through the real API",
+    "onboarding": "PUT /api/preferences -> 200"
+  },
+  "navigation": {
+    "deepLink": {
+      "ok": true,
+      "detail": "deep-link /finance settled at /finance — surface content matched"
+    },
+    "reload": {
+      "ok": true,
+      "detail": "reload settled at /finance — surface content matched"
+    },
+    "coldReopen": {
+      "ok": true,
+      "detail": "cold context (fresh storage state, no SPA memory) settled at /finance — surface content matched"
+    }
+  },
+  "keyboard": {
+    "reachableControls": 40,
+    "focusAlwaysVisible": false,
+    "invisibleFocusSamples": [
+      "button..group",
+      "button..group",
+      "button..group",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex"
+    ],
+    "escapeHandled": "Escape pressed on the surface; surface stayed mounted (no dialog was open to close).",
+    "focusReturn": "Focus remained inside the document after Escape.",
+    "tabOrderMonotonic": true
+  },
+  "states": [
+    {
+      "state": "empty",
+      "observed": true,
+      "path": "/finance",
+      "detail": "Reached without an explicit text assertion.",
+      "screenshot": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__state-empty.png"
+    },
+    {
+      "state": "error",
+      "observed": true,
+      "path": "/finance/statements/00000000-0000-0000-0000-000000000000",
+      "detail": "Reached without an explicit text assertion.",
+      "screenshot": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__state-error.png"
+    }
+  ],
+  "statesNotPresent": [
+    "stale"
+  ],
+  "negativeControls": {
+    "onboardingRetiredViaRealApi": "PUT /api/preferences -> 200",
+    "noRequestInterception": "This harness never calls page.route()/fulfill(); every response comes from the real backend on real Postgres.",
+    "blockingOverlayDetection": "A surface counts as rendered only when no dialog/aria-modal covers >15% of the viewport.",
+    "themeAndLanguageAreObserved": "Theme and language are set before first paint and each of the 12 cells is captured separately; identical captures across cells would be visible as identical files."
+  },
+  "screenshots": [
+    {
+      "file": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__desktop__en__dark.png",
+      "sha256": "14fe79bb3d7ffce021caadddd0ec94c04c7c890dbb5dedf3915d07ce7a41d886"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__desktop__en__light.png",
+      "sha256": "478ac3f9e9296901ae243585979bac520f9badab50c001c460e60085eb6909fd"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__desktop__pl__dark.png",
+      "sha256": "0ce2bc7e5e66f10df93466b1dd7a490c12c2bbfd4f5ad28fe5c76b5037a761df"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__desktop__pl__light.png",
+      "sha256": "739ae3d663ddaae8320380cb7e88830091fc4b00db2230b2134d492bb85e52dc"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__mobile__en__dark.png",
+      "sha256": "ab9ce6b10fbb3f5ae67b8d5d350e16b1c4e4a39b11a867b88080d1aa46a42ac0"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__mobile__en__light.png",
+      "sha256": "246dd698dccd033ffca955851e098506f9c0a149f4846ea4f4475a2cf42f7b9f"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__mobile__pl__dark.png",
+      "sha256": "7b32941662bcaff8ff4a6e602763e59cc30139eb0d6606eafa56b560ac55af56"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__mobile__pl__light.png",
+      "sha256": "cd80a97737622a2f217fcebafa771ee5aa71d69ab725931a1dada8018510551e"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__state-empty.png",
+      "sha256": "3762d5e08d842fde0d17c14d1e2cbb8ff31facfabf2c47826327569ba487b339"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__state-error.png",
+      "sha256": "4ee82d0099a9b537c81e5b1fcc1cb101d81b1827c7784495dad7a33cb3f94f34"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__tablet__en__dark.png",
+      "sha256": "000e6284e24e53517f493d0622d621384563f4e6a0eb37506cfbb29906405ecf"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__tablet__en__light.png",
+      "sha256": "c19aca7c71593e776f06b02ec9372738175b423ba1ab3e6268cbe60b5feb3002"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__tablet__pl__dark.png",
+      "sha256": "7154efd0c8287edcd6fa052c22692ed85a208e23882a365f47c64d7351f7f4c4"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__tablet__pl__light.png",
+      "sha256": "df84fa7bbd255b9de1e5b9fda3862d8efa808948c1abd81c2147ab550671d10b"
+    }
+  ],
+  "screenshotBinding": "Every screenshot above was produced by the sweep run recorded in productSha 40e1a89bdd118de828fd5f716839789fc340a20a; the sha256 of each file is listed so a later re-render cannot be passed off as this run.",
+  "automatedFailures": [
+    "focus indicator not visible on every reachable control (8 sample(s): button..group, button..group, button..group, button.w-full.flex)"
+  ],
+  "measurementCaveats": [],
+  "blockedHuman": [
+    "Manual VoiceOver pass — no automated tool substitutes for it.",
+    "Brand/visual acceptance by the UX owner.",
+    "Named target-role human acceptance (per OWNER_DECISIONS_AND_MEASURABLE_GATES §UI aggregate)."
+  ],
+  "rollback": {
+    "method": "This lane adds test/harness/evidence files only; reverting the lane commits removes them with no schema or runtime change. Any source fix is listed per-commit and is individually revertable.",
+    "executed": false
+  }
+}

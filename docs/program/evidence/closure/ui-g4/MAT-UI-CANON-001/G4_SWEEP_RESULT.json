@@ -1,0 +1,395 @@
+{
+  "taskId": "MAT-UI-CANON-001",
+  "key": "MAT",
+  "module": "Materials",
+  "route": "/presentations",
+  "productSha": "40e1a89bdd118de828fd5f716839789fc340a20a",
+  "startedAt": "2026-08-17T01:51:28.292Z",
+  "cells": [
+    {
+      "viewport": "desktop",
+      "language": "pl",
+      "theme": "light",
+      "route": "/presentations",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__desktop__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "desktop",
+      "language": "pl",
+      "theme": "dark",
+      "route": "/presentations",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__desktop__pl__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "desktop",
+      "language": "en",
+      "theme": "light",
+      "route": "/presentations",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__desktop__en__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "desktop",
+      "language": "en",
+      "theme": "dark",
+      "route": "/presentations",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__desktop__en__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "tablet",
+      "language": "pl",
+      "theme": "light",
+      "route": "/presentations",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__tablet__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "tablet",
+      "language": "pl",
+      "theme": "dark",
+      "route": "/presentations",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__tablet__pl__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "tablet",
+      "language": "en",
+      "theme": "light",
+      "route": "/presentations",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__tablet__en__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "tablet",
+      "language": "en",
+      "theme": "dark",
+      "route": "/presentations",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__tablet__en__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "mobile",
+      "language": "pl",
+      "theme": "light",
+      "route": "/presentations",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__mobile__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "mobile",
+      "language": "pl",
+      "theme": "dark",
+      "route": "/presentations",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__mobile__pl__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "mobile",
+      "language": "en",
+      "theme": "light",
+      "route": "/presentations",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__mobile__en__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "mobile",
+      "language": "en",
+      "theme": "dark",
+      "route": "/presentations",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__mobile__en__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "desktop",
+      "language": "pl",
+      "theme": "light",
+      "route": "/document-studio",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__document-studio__desktop__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 1,
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 1,
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "targets": [
+              ".text-c-focus-solid > .md\\:inline.hidden"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "desktop",
+      "language": "pl",
+      "theme": "light",
+      "route": "/tabele",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__tabele__desktop__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 1,
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 1,
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "targets": [
+              ".text-c-text\\/\\[0\\.12\\]"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    }
+  ],
+  "deepLink": {
+    "ok": true,
+    "detail": "deep-link /presentations settled at /presentations — surface content matched"
+  },
+  "reload": {
+    "ok": true,
+    "detail": "reload settled at /presentations — surface content matched"
+  },
+  "coldReopen": {
+    "ok": true,
+    "detail": "cold context (fresh storage state, no SPA memory) settled at /presentations — surface content matched"
+  },
+  "keyboard": {
+    "reachableControls": 40,
+    "focusAlwaysVisible": false,
+    "invisibleFocusSamples": [
+      "button..group",
+      "button..group",
+      "button..group",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex"
+    ],
+    "escapeHandled": "Escape pressed on the surface; surface stayed mounted (no dialog was open to close).",
+    "focusReturn": "Focus remained inside the document after Escape.",
+    "tabOrderMonotonic": true
+  },
+  "states": [],
+  "statesNotPresent": [
+    "stale"
+  ],
+  "negativeControls": {
+    "onboardingRetiredViaRealApi": "PUT /api/preferences -> 200",
+    "noRequestInterception": "This harness never calls page.route()/fulfill(); every response comes from the real backend on real Postgres.",
+    "blockingOverlayDetection": "A surface counts as rendered only when no dialog/aria-modal covers >15% of the viewport.",
+    "themeAndLanguageAreObserved": "Theme and language are set before first paint and each of the 12 cells is captured separately; identical captures across cells would be visible as identical files."
+  },
+  "gates": [
+    "AppRoutes.tsx:2471-2490 — BetaGate moduleId='MODULE_PRESENTATIONS' status 'open'.",
+    "MAT-POL-001 default: provider-independent editing ON, external export UNAVAILABLE until a provider is approved."
+  ]
+}

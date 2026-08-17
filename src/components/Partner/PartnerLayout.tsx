@@ -143,6 +143,12 @@ export const PartnerLayout: React.FC<PartnerLayoutProps> = ({
               {isMobile && (
                 <button
                   onClick={() => setSidebarOpen(!sidebarOpen)}
+                  aria-label={
+                    sidebarOpen
+                      ? t('partner.layout.closeNavigation', 'Close partner navigation')
+                      : t('partner.layout.openNavigation', 'Open partner navigation')
+                  }
+                  aria-expanded={sidebarOpen}
                   className="p-2 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-navy-800/20 transition-colors"
                 >
                   {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}

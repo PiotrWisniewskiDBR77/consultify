@@ -1,0 +1,186 @@
+{
+  "taskId": "MYW-AGT-UI-CANON-001",
+  "lane": "UI-G4",
+  "baselineSha": "c4f84a2baa7f1ce9c7b03a68ebbd1783cdbc581b",
+  "productSha": "40e1a89bdd118de828fd5f716839789fc340a20a",
+  "verdict": "AUTOMATED_G4_FAIL / BLOCKED_HUMAN",
+  "verdictLiteral": "The automatable half of G4 FAILS on this exact SHA for the reasons listed in automatedFailures. No human sign-off is claimed or implied.",
+  "environment": {
+    "mountedApplication": "real backend process (tsx server/src/index.ts) + Vite-served client",
+    "database": "real PostgreSQL 16 (pgvector/pgvector:pg16), schema built from the canonical migration chain from zero",
+    "authentication": "real signed JWT from POST /api/test-support/bootstrap; no anonymous or stubbed session",
+    "requestInterception": "none — the harness never calls page.route()/fulfill()",
+    "harness": "docs/program/evidence/closure/ui-g4/HARNESS.md"
+  },
+  "surface": {
+    "module": "My Work (incl. Agent)",
+    "route": "/my-work",
+    "gates": [
+      "AppRoutes.tsx:1481-1500 — ProductionModuleGate is a no-op ('My Work' is in PUBLIC_PRODUCTION_CORE_ROUTE_MODULES, AppRoutes.tsx:825).",
+      "Agent tab: isAgentPlanEnabled() default ON (src/utils/agentPlanFlag.ts). Vault tab: isClientVaultEnabled() default ON (src/utils/clientVaultFlag.ts). Neither is overridden here.",
+      "manager tab requires isAdmin||isManager||isSuperAdmin — satisfied by the ADMIN bootstrap session.",
+      "home/Radar tab is hardcoded RADAR_ENABLED=false (MyWorkHub.tsx:245) with no runtime override — it cannot mount for anyone and is recorded as dead code, not swept."
+    ]
+  },
+  "denominators": {
+    "cells": 14,
+    "primaryCells": 12,
+    "viewports": [
+      "1440x900",
+      "768x1024",
+      "390x844"
+    ],
+    "languages": [
+      "pl",
+      "en"
+    ],
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "primaryCellsRendered": 12,
+    "secondaryCells": 2,
+    "secondaryCellsRendered": 2,
+    "screenshots": 15,
+    "keyboardControlsTraversed": 40,
+    "axeCriticalTotal": 1,
+    "axeSeriousTotal": 1,
+    "axeViolationIds": {
+      "aria-allowed-attr": 1,
+      "nested-interactive": 1
+    },
+    "statesProbed": 1,
+    "statesObserved": 1
+  },
+  "fixtures": {
+    "tenant": "fresh organization created by the test-support bootstrap for this run",
+    "dataState": "a brand-new tenant, so surfaces render their genuine empty state unless a probe seeded data through the real API",
+    "onboarding": "PUT /api/preferences -> 200"
+  },
+  "navigation": {
+    "deepLink": {
+      "ok": true,
+      "detail": "deep-link /my-work settled at /my-work — surface content matched"
+    },
+    "reload": {
+      "ok": true,
+      "detail": "reload settled at /my-work — surface content matched"
+    },
+    "coldReopen": {
+      "ok": true,
+      "detail": "cold context (fresh storage state, no SPA memory) settled at /my-work — surface content matched"
+    }
+  },
+  "keyboard": {
+    "reachableControls": 40,
+    "focusAlwaysVisible": false,
+    "invisibleFocusSamples": [
+      "button..group",
+      "button..group",
+      "button..group",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex"
+    ],
+    "escapeHandled": "Escape pressed on the surface; surface stayed mounted (no dialog was open to close).",
+    "focusReturn": "Focus remained inside the document after Escape.",
+    "tabOrderMonotonic": true
+  },
+  "states": [
+    {
+      "state": "empty",
+      "observed": true,
+      "path": "/my-work",
+      "detail": "Reached without an explicit text assertion.",
+      "screenshot": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens/MYW__state-empty.png"
+    }
+  ],
+  "statesNotPresent": [
+    "stale"
+  ],
+  "negativeControls": {
+    "onboardingRetiredViaRealApi": "PUT /api/preferences -> 200",
+    "noRequestInterception": "This harness never calls page.route()/fulfill(); every response comes from the real backend on real Postgres.",
+    "blockingOverlayDetection": "A surface counts as rendered only when no dialog/aria-modal covers >15% of the viewport.",
+    "themeAndLanguageAreObserved": "Theme and language are set before first paint and each of the 12 cells is captured separately; identical captures across cells would be visible as identical files."
+  },
+  "screenshots": [
+    {
+      "file": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens/MYW__desktop__en__dark.png",
+      "sha256": "48cea7b0a59a40a1b265ac35cb50a0360f7739c4777c8ff1131479fc2275d4b3"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens/MYW__desktop__en__light.png",
+      "sha256": "b5c4e174ec726a4a677420f884479b4add5b905c533efba50ab895f216fc83e7"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens/MYW__desktop__pl__dark.png",
+      "sha256": "d346b41d9a0fab06d8a77e488943a5aa61703ff6508e52b63c658ec6fedb1cb1"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens/MYW__desktop__pl__light.png",
+      "sha256": "7fdefd2d740cc2f7cb1caf2b291767ad0155dc7d88b04f7a641653a75220c42f"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens/MYW__mobile__en__dark.png",
+      "sha256": "6d73b4ac68f5032ab6da1adc28de1ebe2a84f2840231e477cf531cd50f7469a6"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens/MYW__mobile__en__light.png",
+      "sha256": "fcd961837317749d449163c44c5ec244889e7d6a17b3b2aa8ef5f623d52f8619"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens/MYW__mobile__pl__dark.png",
+      "sha256": "0aa8db844d16faaf2b6ccf049cd96079f2d0185486a1d8a6e51a45fc37237c25"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens/MYW__mobile__pl__light.png",
+      "sha256": "891dd4d771c25ff8d9f66146994f04c52ecf28adf8d09fd0c6aaa88210c6264f"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens/MYW__my-work-tab-agent__desktop__pl__light.png",
+      "sha256": "8f7bf823471cd5c66f88ff4fcfcd3d131c2b0e7f96774286a8b3898d29085cc3"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens/MYW__my-work-tab-vault__desktop__pl__light.png",
+      "sha256": "37020de99ba6c90ae90c08bfa65eb196b4a05db46789985aae1a1174c2edf222"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens/MYW__state-empty.png",
+      "sha256": "a7d067cd85292a8b80ce7375633780becc241d1b4dd4eaa529f515842ae54da2"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens/MYW__tablet__en__dark.png",
+      "sha256": "4d8da4368fe2491b72e4ffa7020533eb458c7b7809539a52af89cd24476b1b29"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens/MYW__tablet__en__light.png",
+      "sha256": "621029721059693a714f2b0e44947fbe43a051d09bd6290f13c484ed65f7bc80"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens/MYW__tablet__pl__dark.png",
+      "sha256": "8ffefd71a082a1492c528982bf55f53e0d41eead0931212b435acac0bb8fd84b"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens/MYW__tablet__pl__light.png",
+      "sha256": "eb20f0865cc5966a34f105b1a34d1d7435c65522221579d07ba59870735b6acb"
+    }
+  ],
+  "screenshotBinding": "Every screenshot above was produced by the sweep run recorded in productSha 40e1a89bdd118de828fd5f716839789fc340a20a; the sha256 of each file is listed so a later re-render cannot be passed off as this run.",
+  "automatedFailures": [
+    "axe not clean: 1 critical + 1 serious across 14 cells (aria-allowed-attr×1, nested-interactive×1)",
+    "focus indicator not visible on every reachable control (8 sample(s): button..group, button..group, button..group, button.w-full.flex)"
+  ],
+  "measurementCaveats": [],
+  "blockedHuman": [
+    "Manual VoiceOver pass — no automated tool substitutes for it.",
+    "Brand/visual acceptance by the UX owner.",
+    "Named target-role human acceptance (per OWNER_DECISIONS_AND_MEASURABLE_GATES §UI aggregate)."
+  ],
+  "rollback": {
+    "method": "This lane adds test/harness/evidence files only; reverting the lane commits removes them with no schema or runtime change. Any source fix is listed per-commit and is individually revertable.",
+    "executed": false
+  }
+}

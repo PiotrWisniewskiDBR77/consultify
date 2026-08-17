@@ -1,0 +1,199 @@
+{
+  "taskId": "RES-UI-CANON-001",
+  "lane": "UI-G4",
+  "baselineSha": "c4f84a2baa7f1ce9c7b03a68ebbd1783cdbc581b",
+  "productSha": "40e1a89bdd118de828fd5f716839789fc340a20a",
+  "verdict": "AUTOMATED_G4_FAIL / BLOCKED_HUMAN",
+  "verdictLiteral": "The automatable half of G4 FAILS on this exact SHA for the reasons listed in automatedFailures. No human sign-off is claimed or implied.",
+  "environment": {
+    "mountedApplication": "real backend process (tsx server/src/index.ts) + Vite-served client",
+    "database": "real PostgreSQL 16 (pgvector/pgvector:pg16), schema built from the canonical migration chain from zero",
+    "authentication": "real signed JWT from POST /api/test-support/bootstrap; no anonymous or stubbed session",
+    "requestInterception": "none — the harness never calls page.route()/fulfill()",
+    "harness": "docs/program/evidence/closure/ui-g4/HARNESS.md"
+  },
+  "surface": {
+    "module": "Results",
+    "route": "/results",
+    "gates": [
+      "AppRoutes.tsx:2632-2648 — BetaGate moduleId='MODULE_BENEFITS' status 'open' (betaAccess.ts:39): never blocks.",
+      "Results-Next registries (kpiRegistry/roiRegistry/okrRegistry, resultsVNextFeatureFlags.ts:32-48) default OFF; enabled here via their own localStorage keys so the registries render instead of the disabled panel. The default-OFF behaviour is itself recorded, not hidden.",
+      "RES-MVP-VISIBILITY-001 default is OWNER/ADMIN only; the bootstrap session is ADMIN."
+    ]
+  },
+  "denominators": {
+    "cells": 15,
+    "primaryCells": 12,
+    "viewports": [
+      "1440x900",
+      "768x1024",
+      "390x844"
+    ],
+    "languages": [
+      "pl",
+      "en"
+    ],
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "primaryCellsRendered": 12,
+    "secondaryCells": 3,
+    "secondaryCellsRendered": 3,
+    "screenshots": 17,
+    "keyboardControlsTraversed": 39,
+    "axeCriticalTotal": 0,
+    "axeSeriousTotal": 6,
+    "axeViolationIds": {
+      "color-contrast": 6
+    },
+    "statesProbed": 2,
+    "statesObserved": 2
+  },
+  "fixtures": {
+    "tenant": "fresh organization created by the test-support bootstrap for this run",
+    "dataState": "a brand-new tenant, so surfaces render their genuine empty state unless a probe seeded data through the real API",
+    "onboarding": "PUT /api/preferences -> 200"
+  },
+  "navigation": {
+    "deepLink": {
+      "ok": true,
+      "detail": "deep-link /results settled at /results — surface content matched"
+    },
+    "reload": {
+      "ok": true,
+      "detail": "reload settled at /results — surface content matched"
+    },
+    "coldReopen": {
+      "ok": true,
+      "detail": "cold context (fresh storage state, no SPA memory) settled at /results — surface content matched"
+    }
+  },
+  "keyboard": {
+    "reachableControls": 39,
+    "focusAlwaysVisible": false,
+    "invisibleFocusSamples": [
+      "button..group",
+      "button..group",
+      "button..group",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex"
+    ],
+    "escapeHandled": "Escape pressed on the surface; surface stayed mounted (no dialog was open to close).",
+    "focusReturn": "Focus remained inside the document after Escape.",
+    "tabOrderMonotonic": true
+  },
+  "states": [
+    {
+      "state": "empty",
+      "observed": true,
+      "path": "/results",
+      "detail": "Reached without an explicit text assertion.",
+      "screenshot": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__state-empty.png"
+    },
+    {
+      "state": "error",
+      "observed": true,
+      "path": "/results/kpi/00000000-0000-0000-0000-000000000000",
+      "detail": "Reached without an explicit text assertion.",
+      "screenshot": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__state-error.png"
+    }
+  ],
+  "statesNotPresent": [
+    "stale"
+  ],
+  "negativeControls": {
+    "onboardingRetiredViaRealApi": "PUT /api/preferences -> 200",
+    "noRequestInterception": "This harness never calls page.route()/fulfill(); every response comes from the real backend on real Postgres.",
+    "blockingOverlayDetection": "A surface counts as rendered only when no dialog/aria-modal covers >15% of the viewport.",
+    "themeAndLanguageAreObserved": "Theme and language are set before first paint and each of the 12 cells is captured separately; identical captures across cells would be visible as identical files."
+  },
+  "screenshots": [
+    {
+      "file": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__desktop__en__dark.png",
+      "sha256": "6806b9d2733087f77e53123627ed13c3864f95d2efcc2f93dc7d61aa1824b082"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__desktop__en__light.png",
+      "sha256": "e6fa55c9efa08f90d8bb0d985a556fc20f66266915a76d34f748762c090950ac"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__desktop__pl__dark.png",
+      "sha256": "eb86fe3a7520ddfbecc614887cfeb9ac7b0323001cfea1f4279066ee565c8750"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__desktop__pl__light.png",
+      "sha256": "90b9758321d0f5b40226b7669efdb29c8cbcc9c0fd57bdf2ea0a581db0be5b59"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__mobile__en__dark.png",
+      "sha256": "748adbbcd24f956d5edd12c84246177aabc959758e3a89e64eb3b0aa7b9119cb"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__mobile__en__light.png",
+      "sha256": "62bbec2572cde016dd332c1e9b96493b1de5e6cfd07883bc4f0d4177383a6e43"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__mobile__pl__dark.png",
+      "sha256": "747301d7a53a58d9e5eb73bd06991423e1e9178060cabf3c13a92bd29ec54743"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__mobile__pl__light.png",
+      "sha256": "2ce4fbe38657f74530a49a1bcf5b758b5f5be3d6eecd1636b31fea298c8c7502"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__results-kpi__desktop__pl__light.png",
+      "sha256": "baf9df0400b4b0f938ace457c1bb79e911ce6e55a8177695347eded68d1d7b71"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__results-okr__desktop__pl__light.png",
+      "sha256": "39d57d45da11bd83606aa3315384a4a0a95e99358e4932e336b2493fd26dfab8"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__results-roi__desktop__pl__light.png",
+      "sha256": "d6be77db17caa98dd40f04ed3e4d8ccb439b8092c3e325adfc20cd92ae5daa49"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__state-empty.png",
+      "sha256": "a937ad1267664074f0780f66c61c25217741741f42b4c7d056031ddd8a6a9089"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__state-error.png",
+      "sha256": "9b2c8c16442b9cc2b9f166288b64d3e418f150c713fb0eee442534061b7a4229"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__tablet__en__dark.png",
+      "sha256": "dc2e5ad0f1548798146f0b050a66d726e0eaef24f32cdd6a4c7189dd40dab824"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__tablet__en__light.png",
+      "sha256": "e539bb63ff19b0c2c5e46fb8dd9c19a4f220aa553001d6ff8762e9ddb02d95d3"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__tablet__pl__dark.png",
+      "sha256": "7717ac4830c78e9dfe3ce09892387af6854021209af6514478c9377fea4cc94f"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__tablet__pl__light.png",
+      "sha256": "00af2bcff95121172c1a909250a00746e80c622bfa375451c0e81578fe19cb0b"
+    }
+  ],
+  "screenshotBinding": "Every screenshot above was produced by the sweep run recorded in productSha 40e1a89bdd118de828fd5f716839789fc340a20a; the sha256 of each file is listed so a later re-render cannot be passed off as this run.",
+  "automatedFailures": [
+    "axe not clean: 0 critical + 6 serious across 15 cells (color-contrast×6)",
+    "focus indicator not visible on every reachable control (8 sample(s): button..group, button..group, button..group, button.w-full.flex)"
+  ],
+  "measurementCaveats": [],
+  "blockedHuman": [
+    "Manual VoiceOver pass — no automated tool substitutes for it.",
+    "Brand/visual acceptance by the UX owner.",
+    "Named target-role human acceptance (per OWNER_DECISIONS_AND_MEASURABLE_GATES §UI aggregate)."
+  ],
+  "rollback": {
+    "method": "This lane adds test/harness/evidence files only; reverting the lane commits removes them with no schema or runtime change. Any source fix is listed per-commit and is individually revertable.",
+    "executed": false
+  }
+}

@@ -324,7 +324,14 @@ export const AdminMembersRolesPanel: React.FC = () => {
         }
         return (
           <div onClick={(e) => e.stopPropagation()} className="max-w-[160px]">
+            <label
+              htmlFor={`admin-member-role-select-${row.memberId}`}
+              className="sr-only"
+            >
+              {t('admin.membersRoles.roleSelectLabel', 'Role for {{name}}', { name: row.name })}
+            </label>
             <SelectField
+              id={`admin-member-role-select-${row.memberId}`}
               value={row.role}
               disabled={isBusy || ownerProtected}
               onChange={(value) => void handleRoleChange(row.memberId, value as RoleOption)}
@@ -408,16 +415,22 @@ export const AdminMembersRolesPanel: React.FC = () => {
               placeholder={t('admin.membersRoles.invite.placeholder', 'member@company.com')}
               aria-label={t('admin.membersRoles.invite.emailLabel', 'Member email')}
             />
-            <SelectField
-              value={inviteRole}
-              onChange={(value) => setInviteRole(value as RoleOption)}
-              placeholder=""
-              options={[
-                { value: 'MEMBER', label: roleLabels.MEMBER },
-                { value: 'ADMIN', label: roleLabels.ADMIN },
-                { value: 'GUEST', label: roleLabels.GUEST },
-              ]}
-            />
+            <div>
+              <label htmlFor="admin-invite-role-select" className="sr-only">
+                {t('admin.membersRoles.invite.roleLabel', 'Invite role')}
+              </label>
+              <SelectField
+                id="admin-invite-role-select"
+                value={inviteRole}
+                onChange={(value) => setInviteRole(value as RoleOption)}
+                placeholder=""
+                options={[
+                  { value: 'MEMBER', label: roleLabels.MEMBER },
+                  { value: 'ADMIN', label: roleLabels.ADMIN },
+                  { value: 'GUEST', label: roleLabels.GUEST },
+                ]}
+              />
+            </div>
             <Button
               variant="primary"
               onClick={() => void handleInvite()}
@@ -544,16 +557,22 @@ export const AdminMembersRolesPanel: React.FC = () => {
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-[160px,120px,auto] sm:items-end">
-            <SelectField
-              value={generatedInviteRole}
-              onChange={(value) => setGeneratedInviteRole(value as RoleOption)}
-              placeholder=""
-              options={[
-                { value: 'MEMBER', label: roleLabels.MEMBER },
-                { value: 'GUEST', label: roleLabels.GUEST },
-                { value: 'ADMIN', label: roleLabels.ADMIN },
-              ]}
-            />
+            <div>
+              <label htmlFor="admin-generated-invite-role-select" className="sr-only">
+                {t('admin.membersRoles.code.roleLabel', 'Invite code role')}
+              </label>
+              <SelectField
+                id="admin-generated-invite-role-select"
+                value={generatedInviteRole}
+                onChange={(value) => setGeneratedInviteRole(value as RoleOption)}
+                placeholder=""
+                options={[
+                  { value: 'MEMBER', label: roleLabels.MEMBER },
+                  { value: 'GUEST', label: roleLabels.GUEST },
+                  { value: 'ADMIN', label: roleLabels.ADMIN },
+                ]}
+              />
+            </div>
             <Input
               type="number"
               min={1}

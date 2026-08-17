@@ -1,0 +1,176 @@
+{
+  "taskId": "ADM-UI-CANON-001",
+  "lane": "UI-G4",
+  "baselineSha": "c4f84a2baa7f1ce9c7b03a68ebbd1783cdbc581b",
+  "productSha": "40e1a89bdd118de828fd5f716839789fc340a20a",
+  "verdict": "AUTOMATED_G4_FAIL / BLOCKED_HUMAN",
+  "verdictLiteral": "The automatable half of G4 FAILS on this exact SHA for the reasons listed in automatedFailures. No human sign-off is claimed or implied.",
+  "environment": {
+    "mountedApplication": "real backend process (tsx server/src/index.ts) + Vite-served client",
+    "database": "real PostgreSQL 16 (pgvector/pgvector:pg16), schema built from the canonical migration chain from zero",
+    "authentication": "real signed JWT from POST /api/test-support/bootstrap; no anonymous or stubbed session",
+    "requestInterception": "none — the harness never calls page.route()/fulfill()",
+    "harness": "docs/program/evidence/closure/ui-g4/HARNESS.md"
+  },
+  "surface": {
+    "module": "Admin",
+    "route": "/admin",
+    "gates": [
+      "AppRoutes.tsx:3032-3048 — ProtectedRoute(requiredRole=\"ADMIN\"). The bootstrap session is exactly ADMIN.",
+      "A SUPERADMIN is redirected to /superadmin instead of AdminView (ProtectedRoute.tsx:84-90), so the fixture role matters and is pinned to ADMIN.",
+      "AdminSettingsModule parses the pathname manually; valid sections are people|billing|ai|security|audit|command|health, default 'people'."
+    ]
+  },
+  "denominators": {
+    "cells": 15,
+    "primaryCells": 12,
+    "viewports": [
+      "1440x900",
+      "768x1024",
+      "390x844"
+    ],
+    "languages": [
+      "pl",
+      "en"
+    ],
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "primaryCellsRendered": 12,
+    "secondaryCells": 3,
+    "secondaryCellsRendered": 3,
+    "screenshots": 15,
+    "keyboardControlsTraversed": 40,
+    "axeCriticalTotal": 0,
+    "axeSeriousTotal": 5,
+    "axeViolationIds": {
+      "color-contrast": 5
+    },
+    "statesProbed": 0,
+    "statesObserved": 0
+  },
+  "fixtures": {
+    "tenant": "fresh organization created by the test-support bootstrap for this run",
+    "dataState": "a brand-new tenant, so surfaces render their genuine empty state unless a probe seeded data through the real API",
+    "onboarding": "PUT /api/preferences -> 200"
+  },
+  "navigation": {
+    "deepLink": {
+      "ok": true,
+      "detail": "deep-link /admin settled at /admin — surface content matched"
+    },
+    "reload": {
+      "ok": true,
+      "detail": "reload settled at /admin — surface content matched"
+    },
+    "coldReopen": {
+      "ok": true,
+      "detail": "cold context (fresh storage state, no SPA memory) settled at /admin — surface content matched"
+    }
+  },
+  "keyboard": {
+    "reachableControls": 40,
+    "focusAlwaysVisible": false,
+    "invisibleFocusSamples": [
+      "button..group",
+      "button..group",
+      "button..group",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex"
+    ],
+    "escapeHandled": "Escape pressed on the surface; surface stayed mounted (no dialog was open to close).",
+    "focusReturn": "Focus remained inside the document after Escape.",
+    "tabOrderMonotonic": true
+  },
+  "states": [],
+  "statesNotPresent": [
+    "stale"
+  ],
+  "negativeControls": {
+    "onboardingRetiredViaRealApi": "PUT /api/preferences -> 200",
+    "noRequestInterception": "This harness never calls page.route()/fulfill(); every response comes from the real backend on real Postgres.",
+    "blockingOverlayDetection": "A surface counts as rendered only when no dialog/aria-modal covers >15% of the viewport.",
+    "themeAndLanguageAreObserved": "Theme and language are set before first paint and each of the 12 cells is captured separately; identical captures across cells would be visible as identical files."
+  },
+  "screenshots": [
+    {
+      "file": "docs/program/evidence/closure/ui-g4/ADM-UI-CANON-001/screens/ADM__admin-billing__desktop__pl__light.png",
+      "sha256": "9b14a8d8709ee94132142a984d5df543c3ff7b02fb40aec6655b74d8662efd46"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/ADM-UI-CANON-001/screens/ADM__admin-people__desktop__pl__light.png",
+      "sha256": "ad3299d506a2702bb18649f48dcd99541bf00a26655fdf2bb654c5c7e0f4f653"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/ADM-UI-CANON-001/screens/ADM__admin-security__desktop__pl__light.png",
+      "sha256": "554a54da714b334eeca818375be53b1dba17a81e54beda3faa9a8037f6aca371"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/ADM-UI-CANON-001/screens/ADM__desktop__en__dark.png",
+      "sha256": "7c91988f22763c56201bdafb1500bea9c7e2c901bf635c96c9f79c7ad9723dd0"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/ADM-UI-CANON-001/screens/ADM__desktop__en__light.png",
+      "sha256": "920aa8a96f410b1cc98ebac4f549565ce068fdd618e44bab48f645118a4fde9e"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/ADM-UI-CANON-001/screens/ADM__desktop__pl__dark.png",
+      "sha256": "aa675e4e548684f752bdbd122b7e31c2d49c8a076f47449ef6e25d0edc703210"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/ADM-UI-CANON-001/screens/ADM__desktop__pl__light.png",
+      "sha256": "64e656a9f21d94286f053c30e41b3d32158938432a955062bd6bfbfe32f302a9"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/ADM-UI-CANON-001/screens/ADM__mobile__en__dark.png",
+      "sha256": "207ec8c9e7bf2963684d9b57a1412e80afe2a3321a457e350a3801a667e2edda"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/ADM-UI-CANON-001/screens/ADM__mobile__en__light.png",
+      "sha256": "f4584594209961429aad956aa8c708ba146ab072bc3d141130289ae02587fb6b"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/ADM-UI-CANON-001/screens/ADM__mobile__pl__dark.png",
+      "sha256": "51ce61a1d6b717214f58b73095c9a063da84f870b31041706ecd72cb3a182792"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/ADM-UI-CANON-001/screens/ADM__mobile__pl__light.png",
+      "sha256": "7fb8e97787054d8570f47eaef190aba552e1a1d757e76e8dc241125f7d416d06"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/ADM-UI-CANON-001/screens/ADM__tablet__en__dark.png",
+      "sha256": "509c7aee195d6e6e23f507306cdac98e53e5936b0662ff9764923a6295a1fefe"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/ADM-UI-CANON-001/screens/ADM__tablet__en__light.png",
+      "sha256": "0385fb040120b3696d09e0ccc81b3352c2d9412d6b5be1c37a7af7467271b595"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/ADM-UI-CANON-001/screens/ADM__tablet__pl__dark.png",
+      "sha256": "366a98ab44792bf7a091f7a27e881c5067a4d1415b97f44582d629a97d7a9ab5"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/ADM-UI-CANON-001/screens/ADM__tablet__pl__light.png",
+      "sha256": "6ae004519f446db2b5df2c17aaa2878a78933af295cbecc45358367cd91e1bc5"
+    }
+  ],
+  "screenshotBinding": "Every screenshot above was produced by the sweep run recorded in productSha 40e1a89bdd118de828fd5f716839789fc340a20a; the sha256 of each file is listed so a later re-render cannot be passed off as this run.",
+  "automatedFailures": [
+    "axe not clean: 0 critical + 5 serious across 15 cells (color-contrast×5)",
+    "focus indicator not visible on every reachable control (8 sample(s): button..group, button..group, button..group, button.w-full.flex)"
+  ],
+  "measurementCaveats": [],
+  "blockedHuman": [
+    "Manual VoiceOver pass — no automated tool substitutes for it.",
+    "Brand/visual acceptance by the UX owner.",
+    "Named target-role human acceptance (per OWNER_DECISIONS_AND_MEASURABLE_GATES §UI aggregate)."
+  ],
+  "rollback": {
+    "method": "This lane adds test/harness/evidence files only; reverting the lane commits removes them with no schema or runtime change. Any source fix is listed per-commit and is individually revertable.",
+    "executed": false
+  }
+}

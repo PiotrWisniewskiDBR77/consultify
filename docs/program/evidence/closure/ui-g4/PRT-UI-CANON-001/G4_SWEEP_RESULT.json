@@ -1,0 +1,404 @@
+{
+  "taskId": "PRT-UI-CANON-001",
+  "key": "PRT",
+  "module": "Partner Portal",
+  "route": "/partner",
+  "productSha": "40e1a89bdd118de828fd5f716839789fc340a20a",
+  "startedAt": "2026-08-17T01:57:01.679Z",
+  "cells": [
+    {
+      "viewport": "desktop",
+      "language": "pl",
+      "theme": "light",
+      "route": "/partner",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__desktop__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "desktop",
+      "language": "pl",
+      "theme": "dark",
+      "route": "/partner",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__desktop__pl__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 1,
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 11,
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "targets": [
+              ".mt-0\\.5",
+              "div:nth-child(1) > .px-2.tracking-wider.hover\\:text-slate-700 > span",
+              ".max-h-\\[600px\\] > .pb-2.space-y-0\\.5 > .dark\\:hover\\:bg-navy-800\\/20.hover\\:text-slate-900.py-2:nth-child(2) > .text-left.flex-1",
+              ".max-h-\\[600px\\] > .pb-2.space-y-0\\.5 > .dark\\:hover\\:bg-navy-800\\/20.hover\\:text-slate-900.py-2:nth-child(3) > .text-left.flex-1",
+              "div:nth-child(2) > .px-2.tracking-wider.hover\\:text-slate-700 > span"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "desktop",
+      "language": "en",
+      "theme": "light",
+      "route": "/partner",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__desktop__en__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "desktop",
+      "language": "en",
+      "theme": "dark",
+      "route": "/partner",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__desktop__en__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 1,
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 11,
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "targets": [
+              ".mt-0\\.5",
+              "div:nth-child(1) > .px-2.tracking-wider.hover\\:text-slate-700 > span",
+              ".max-h-\\[600px\\] > .pb-2.space-y-0\\.5 > .dark\\:hover\\:bg-navy-800\\/20.hover\\:text-slate-900.py-2:nth-child(2) > .text-left.flex-1",
+              ".max-h-\\[600px\\] > .pb-2.space-y-0\\.5 > .dark\\:hover\\:bg-navy-800\\/20.hover\\:text-slate-900.py-2:nth-child(3) > .text-left.flex-1",
+              "div:nth-child(2) > .px-2.tracking-wider.hover\\:text-slate-700 > span"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "tablet",
+      "language": "pl",
+      "theme": "light",
+      "route": "/partner",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__tablet__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "tablet",
+      "language": "pl",
+      "theme": "dark",
+      "route": "/partner",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__tablet__pl__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "tablet",
+      "language": "en",
+      "theme": "light",
+      "route": "/partner",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__tablet__en__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "tablet",
+      "language": "en",
+      "theme": "dark",
+      "route": "/partner",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__tablet__en__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "mobile",
+      "language": "pl",
+      "theme": "light",
+      "route": "/partner",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__mobile__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "mobile",
+      "language": "pl",
+      "theme": "dark",
+      "route": "/partner",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__mobile__pl__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "mobile",
+      "language": "en",
+      "theme": "light",
+      "route": "/partner",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__mobile__en__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "mobile",
+      "language": "en",
+      "theme": "dark",
+      "route": "/partner",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__mobile__en__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "desktop",
+      "language": "pl",
+      "theme": "light",
+      "route": "/partner/dashboard",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__partner-dashboard__desktop__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "desktop",
+      "language": "pl",
+      "theme": "light",
+      "route": "/partner/commission",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__partner-commission__desktop__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    }
+  ],
+  "deepLink": {
+    "ok": true,
+    "detail": "deep-link /partner settled at /partner — surface content matched"
+  },
+  "reload": {
+    "ok": true,
+    "detail": "reload settled at /partner — surface content matched"
+  },
+  "coldReopen": {
+    "ok": true,
+    "detail": "cold context (fresh storage state, no SPA memory) settled at /partner — surface content matched"
+  },
+  "keyboard": {
+    "reachableControls": 40,
+    "focusAlwaysVisible": false,
+    "invisibleFocusSamples": [
+      "button..group",
+      "button..group",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex"
+    ],
+    "escapeHandled": "Escape pressed on the surface; surface stayed mounted (no dialog was open to close).",
+    "focusReturn": "Focus remained inside the document after Escape.",
+    "tabOrderMonotonic": true
+  },
+  "states": [],
+  "statesNotPresent": [
+    "stale"
+  ],
+  "negativeControls": {
+    "onboardingRetiredViaRealApi": "PUT /api/preferences -> 200",
+    "noRequestInterception": "This harness never calls page.route()/fulfill(); every response comes from the real backend on real Postgres.",
+    "blockingOverlayDetection": "A surface counts as rendered only when no dialog/aria-modal covers >15% of the viewport.",
+    "themeAndLanguageAreObserved": "Theme and language are set before first paint and each of the 12 cells is captured separately; identical captures across cells would be visible as identical files."
+  },
+  "gates": [
+    "AppRoutes.tsx:3077-3093 — ProtectedRoute(requireAuth) only; the route deliberately has no role gate and relies on server-side data scoping.",
+    "A fresh admin with no partner connection sees the \"Connect your partner profile\" CTA rather than partner data — that is the honest default surface for this fixture, not an error.",
+    "PRT-POL-001 / PRT-MVP-ACCRUAL-001 defaults: one base currency, versioned accrual, manual payout request, no auto payout/KYC/tax."
+  ]
+}

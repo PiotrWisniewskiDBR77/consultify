@@ -1,0 +1,182 @@
+{
+  "taskId": "INI-UI-CANON-001",
+  "lane": "UI-G4",
+  "baselineSha": "c4f84a2baa7f1ce9c7b03a68ebbd1783cdbc581b",
+  "productSha": "40e1a89bdd118de828fd5f716839789fc340a20a",
+  "verdict": "AUTOMATED_G4_FAIL / BLOCKED_HUMAN",
+  "verdictLiteral": "The automatable half of G4 FAILS on this exact SHA for the reasons listed in automatedFailures. No human sign-off is claimed or implied.",
+  "environment": {
+    "mountedApplication": "real backend process (tsx server/src/index.ts) + Vite-served client",
+    "database": "real PostgreSQL 16 (pgvector/pgvector:pg16), schema built from the canonical migration chain from zero",
+    "authentication": "real signed JWT from POST /api/test-support/bootstrap; no anonymous or stubbed session",
+    "requestInterception": "none — the harness never calls page.route()/fulfill()",
+    "harness": "docs/program/evidence/closure/ui-g4/HARNESS.md"
+  },
+  "surface": {
+    "module": "Initiatives",
+    "route": "/initiatives",
+    "gates": [
+      "AppRoutes.tsx:2188-2202 — ProductionModuleGate no-op ('Initiatives' is a core module)."
+    ]
+  },
+  "denominators": {
+    "cells": 14,
+    "primaryCells": 12,
+    "viewports": [
+      "1440x900",
+      "768x1024",
+      "390x844"
+    ],
+    "languages": [
+      "pl",
+      "en"
+    ],
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "primaryCellsRendered": 12,
+    "secondaryCells": 2,
+    "secondaryCellsRendered": 2,
+    "screenshots": 15,
+    "keyboardControlsTraversed": 40,
+    "axeCriticalTotal": 0,
+    "axeSeriousTotal": 8,
+    "axeViolationIds": {
+      "color-contrast": 8
+    },
+    "statesProbed": 1,
+    "statesObserved": 1
+  },
+  "fixtures": {
+    "tenant": "fresh organization created by the test-support bootstrap for this run",
+    "dataState": "a brand-new tenant, so surfaces render their genuine empty state unless a probe seeded data through the real API",
+    "onboarding": "PUT /api/preferences -> 200"
+  },
+  "navigation": {
+    "deepLink": {
+      "ok": true,
+      "detail": "deep-link /initiatives settled at /initiatives — surface content matched"
+    },
+    "reload": {
+      "ok": true,
+      "detail": "reload settled at /initiatives — surface content matched"
+    },
+    "coldReopen": {
+      "ok": true,
+      "detail": "cold context (fresh storage state, no SPA memory) settled at /initiatives — surface content matched"
+    }
+  },
+  "keyboard": {
+    "reachableControls": 40,
+    "focusAlwaysVisible": false,
+    "invisibleFocusSamples": [
+      "button..group",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex"
+    ],
+    "escapeHandled": "Escape pressed on the surface; surface stayed mounted (no dialog was open to close).",
+    "focusReturn": "Focus remained inside the document after Escape.",
+    "tabOrderMonotonic": true
+  },
+  "states": [
+    {
+      "state": "empty",
+      "observed": true,
+      "path": "/initiatives",
+      "detail": "Reached without an explicit text assertion.",
+      "screenshot": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__state-empty.png"
+    }
+  ],
+  "statesNotPresent": [
+    "stale"
+  ],
+  "negativeControls": {
+    "onboardingRetiredViaRealApi": "PUT /api/preferences -> 200",
+    "noRequestInterception": "This harness never calls page.route()/fulfill(); every response comes from the real backend on real Postgres.",
+    "blockingOverlayDetection": "A surface counts as rendered only when no dialog/aria-modal covers >15% of the viewport.",
+    "themeAndLanguageAreObserved": "Theme and language are set before first paint and each of the 12 cells is captured separately; identical captures across cells would be visible as identical files."
+  },
+  "screenshots": [
+    {
+      "file": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__desktop__en__dark.png",
+      "sha256": "93e2e6dbdbe8f2e405ed80552711d208443e92ce0e54ba2a82a9ba55ed74398c"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__desktop__en__light.png",
+      "sha256": "4dc6f261552e6d548039714b2b74c8d58a23b5f6fb89dc92990684d1a89261ac"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__desktop__pl__dark.png",
+      "sha256": "be1be3a736a4d46f5d989c7fe31957096d1fead29681d659a0059e954ef0cdad"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__desktop__pl__light.png",
+      "sha256": "f063b08a11eda307081e244ba7119821cfbad9d5835c898fe93fcaf55e4e9e79"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__mobile__en__dark.png",
+      "sha256": "74a4298291065051cc61e52db0c09b11fe2d42fd550f695cc13a013fb38e93bb"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__mobile__en__light.png",
+      "sha256": "02a181f2aa5dbe9c6eac310c90cc05d916576e9444eb7f83616ae6dea2e0f4e2"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__mobile__pl__dark.png",
+      "sha256": "c33017a447267f6f928140728047f4c5a373f60dec1fa40c783a03751b700ad8"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__mobile__pl__light.png",
+      "sha256": "77f540b331a1471bdd7ae156c032b447d2383c282fdc492fdbf914d210941f01"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__portfolio__desktop__pl__light.png",
+      "sha256": "9e5c40714135737eb75649697b7b2c22ffc218cc44178e64eddcf4f1a1e98fdf"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__roadmap__desktop__pl__light.png",
+      "sha256": "f063b08a11eda307081e244ba7119821cfbad9d5835c898fe93fcaf55e4e9e79"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__state-empty.png",
+      "sha256": "006a96655cf27c2ad4f7dd4de5fd12cc03588a9d6610a4a56a5fa7bd847d1da4"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__tablet__en__dark.png",
+      "sha256": "9d915ba33db6c6b4b1eb39e104c6385c766ba2ab3844712626a8558a63740a89"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__tablet__en__light.png",
+      "sha256": "b5bc584223e4cef19e95d5022b52979a1e1f61db4baaec2f68cc4ce0061f29e6"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__tablet__pl__dark.png",
+      "sha256": "5b0a81dc0fd4e9c03f59f04e9f1af75d9acfff9b1295c9848ed8eb2fd6d89a65"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__tablet__pl__light.png",
+      "sha256": "ad7f45902faffcd3c1f96741e4c3a5825ef898280701afb83299685824f2f175"
+    }
+  ],
+  "screenshotBinding": "Every screenshot above was produced by the sweep run recorded in productSha 40e1a89bdd118de828fd5f716839789fc340a20a; the sha256 of each file is listed so a later re-render cannot be passed off as this run.",
+  "automatedFailures": [
+    "axe not clean: 0 critical + 8 serious across 14 cells (color-contrast×8)",
+    "focus indicator not visible on every reachable control (8 sample(s): button..group, button.w-full.flex, button.w-full.flex, button.w-full.flex)"
+  ],
+  "measurementCaveats": [],
+  "blockedHuman": [
+    "Manual VoiceOver pass — no automated tool substitutes for it.",
+    "Brand/visual acceptance by the UX owner.",
+    "Named target-role human acceptance (per OWNER_DECISIONS_AND_MEASURABLE_GATES §UI aggregate)."
+  ],
+  "rollback": {
+    "method": "This lane adds test/harness/evidence files only; reverting the lane commits removes them with no schema or runtime change. Any source fix is listed per-commit and is individually revertable.",
+    "executed": false
+  }
+}

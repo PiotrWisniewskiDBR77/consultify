@@ -1,0 +1,177 @@
+{
+  "taskId": "TLS-UI-CANON-001",
+  "lane": "UI-G4",
+  "baselineSha": "c4f84a2baa7f1ce9c7b03a68ebbd1783cdbc581b",
+  "productSha": "40e1a89bdd118de828fd5f716839789fc340a20a",
+  "verdict": "AUTOMATED_G4_FAIL / BLOCKED_HUMAN",
+  "verdictLiteral": "The automatable half of G4 FAILS on this exact SHA for the reasons listed in automatedFailures. No human sign-off is claimed or implied.",
+  "environment": {
+    "mountedApplication": "real backend process (tsx server/src/index.ts) + Vite-served client",
+    "database": "real PostgreSQL 16 (pgvector/pgvector:pg16), schema built from the canonical migration chain from zero",
+    "authentication": "real signed JWT from POST /api/test-support/bootstrap; no anonymous or stubbed session",
+    "requestInterception": "none — the harness never calls page.route()/fulfill()",
+    "harness": "docs/program/evidence/closure/ui-g4/HARNESS.md"
+  },
+  "surface": {
+    "module": "Consulting / Discovery Tools",
+    "route": "/discovery-tools",
+    "gates": [
+      "AppRoutes.tsx:1934-1948 — only ProductionModuleGate, a no-op outside the consultify.ai production hostname."
+    ]
+  },
+  "denominators": {
+    "cells": 15,
+    "primaryCells": 12,
+    "viewports": [
+      "1440x900",
+      "768x1024",
+      "390x844"
+    ],
+    "languages": [
+      "pl",
+      "en"
+    ],
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "primaryCellsRendered": 12,
+    "secondaryCells": 3,
+    "secondaryCellsRendered": 3,
+    "screenshots": 15,
+    "keyboardControlsTraversed": 40,
+    "axeCriticalTotal": 15,
+    "axeSeriousTotal": 20,
+    "axeViolationIds": {
+      "aria-allowed-attr": 15,
+      "color-contrast": 5,
+      "nested-interactive": 15
+    },
+    "statesProbed": 0,
+    "statesObserved": 0
+  },
+  "fixtures": {
+    "tenant": "fresh organization created by the test-support bootstrap for this run",
+    "dataState": "a brand-new tenant, so surfaces render their genuine empty state unless a probe seeded data through the real API",
+    "onboarding": "PUT /api/preferences -> 200"
+  },
+  "navigation": {
+    "deepLink": {
+      "ok": true,
+      "detail": "deep-link /discovery-tools settled at /discovery-tools — surface content matched"
+    },
+    "reload": {
+      "ok": true,
+      "detail": "reload settled at /discovery-tools — surface content matched"
+    },
+    "coldReopen": {
+      "ok": true,
+      "detail": "cold context (fresh storage state, no SPA memory) settled at /discovery-tools — surface content matched"
+    }
+  },
+  "keyboard": {
+    "reachableControls": 40,
+    "focusAlwaysVisible": false,
+    "invisibleFocusSamples": [
+      "button..group",
+      "button..group",
+      "button..group",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex"
+    ],
+    "escapeHandled": "Escape pressed on the surface; surface stayed mounted (no dialog was open to close).",
+    "focusReturn": "Focus remained inside the document after Escape.",
+    "tabOrderMonotonic": true
+  },
+  "states": [],
+  "statesNotPresent": [
+    "forbidden",
+    "stale"
+  ],
+  "negativeControls": {
+    "onboardingRetiredViaRealApi": "PUT /api/preferences -> 200",
+    "noRequestInterception": "This harness never calls page.route()/fulfill(); every response comes from the real backend on real Postgres.",
+    "blockingOverlayDetection": "A surface counts as rendered only when no dialog/aria-modal covers >15% of the viewport.",
+    "themeAndLanguageAreObserved": "Theme and language are set before first paint and each of the 12 cells is captured separately; identical captures across cells would be visible as identical files."
+  },
+  "screenshots": [
+    {
+      "file": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__desktop__en__dark.png",
+      "sha256": "96af4eafa8a877f16dbbd0874f9b5b01761c108dac21faaafeab1eb870a9f629"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__desktop__en__light.png",
+      "sha256": "24b7fb67d479f489236a8e6ce28567ff656c23127cc9e1d35e301376ae978186"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__desktop__pl__dark.png",
+      "sha256": "c56996098a2947a2c5774a90b65bf8554b4ab7923e2cd7011ce8346af1fc5b4a"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__desktop__pl__light.png",
+      "sha256": "be2108ccaaa8a677a96630fbc7e5ea1601024dca403efd72839827e21f42d0d9"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__discovery-tools-digital__desktop__pl__light.png",
+      "sha256": "5bf538fa7aa4b6a99bce4784cfd45fe0b5addf14453a6d18550b44bf779f93c5"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__discovery-tools-operational__desktop__pl__light.png",
+      "sha256": "2a3e6ea539e61525f0b2eb11009c653165e687af60cc89670538c76eb93915c3"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__discovery-tools-strategic__desktop__pl__light.png",
+      "sha256": "20b32a7661c4f1a2ca6c455060ecc5788c361ca417406c7a61022c7b3043688e"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__mobile__en__dark.png",
+      "sha256": "9466aa8e955f4600908b5b453fd5aa2052ffa88965b0db216ec8148227b48083"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__mobile__en__light.png",
+      "sha256": "53f494f13c242fd9beb4786024357e2c7f8ea3b90e5cd39447c8d531b9ae3f90"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__mobile__pl__dark.png",
+      "sha256": "93fc6cb1688ecd31687e55ad1c39e17984d823369f813d8a6037aec8167a0597"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__mobile__pl__light.png",
+      "sha256": "f3cbd1f5c6502476dc1b25d9374bc653353ea626441c928f458b303be0abe95e"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__tablet__en__dark.png",
+      "sha256": "4cb8f156ce4146ce74e5bdf01c64848fb04767d02ea5953de92c7ace6428276d"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__tablet__en__light.png",
+      "sha256": "88ea58d799ed8032c85be14e9bedca9f18a739e27c10b38e6e6da8b6131ad2f8"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__tablet__pl__dark.png",
+      "sha256": "847d63e692ab0f4207016abf46934472d988bca4e84d5ef786a1c6467401dbe1"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__tablet__pl__light.png",
+      "sha256": "5c956e6e85d0dbbd281005975c85b0a0d1622be4eafe86501482c2b3e33aca4b"
+    }
+  ],
+  "screenshotBinding": "Every screenshot above was produced by the sweep run recorded in productSha 40e1a89bdd118de828fd5f716839789fc340a20a; the sha256 of each file is listed so a later re-render cannot be passed off as this run.",
+  "automatedFailures": [
+    "axe not clean: 15 critical + 20 serious across 15 cells (aria-allowed-attr×15, color-contrast×5, nested-interactive×15)",
+    "focus indicator not visible on every reachable control (8 sample(s): button..group, button..group, button..group, button.w-full.flex)"
+  ],
+  "measurementCaveats": [],
+  "blockedHuman": [
+    "Manual VoiceOver pass — no automated tool substitutes for it.",
+    "Brand/visual acceptance by the UX owner.",
+    "Named target-role human acceptance (per OWNER_DECISIONS_AND_MEASURABLE_GATES §UI aggregate)."
+  ],
+  "rollback": {
+    "method": "This lane adds test/harness/evidence files only; reverting the lane commits removes them with no schema or runtime change. Any source fix is listed per-commit and is individually revertable.",
+    "executed": false
+  }
+}

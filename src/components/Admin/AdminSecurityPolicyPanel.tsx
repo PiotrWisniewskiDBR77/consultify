@@ -186,6 +186,10 @@ export const AdminSecurityPolicyPanel: React.FC = () => {
                 onChange={(event) =>
                   setPolicy((prev) => ({ ...prev, ssoProviderType: event.target.value }))
                 }
+                aria-label={t(
+                  'admin.security.policyPanel.sso.providerTypeLabel',
+                  'SSO provider type'
+                )}
                 className="rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-white/10 dark:bg-navy-900 dark:text-white"
               >
                 <option value="custom">
@@ -203,6 +207,7 @@ export const AdminSecurityPolicyPanel: React.FC = () => {
                     ssoProtocol: event.target.value === 'oidc' ? 'oidc' : 'saml',
                   }))
                 }
+                aria-label={t('admin.security.policyPanel.sso.protocolLabel', 'SSO protocol')}
                 className="rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-white/10 dark:bg-navy-900 dark:text-white"
               >
                 <option value="saml">SAML</option>

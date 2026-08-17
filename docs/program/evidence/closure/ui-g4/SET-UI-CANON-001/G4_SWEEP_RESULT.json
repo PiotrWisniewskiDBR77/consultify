@@ -1,0 +1,449 @@
+{
+  "taskId": "SET-UI-CANON-001",
+  "key": "SET",
+  "module": "Settings",
+  "route": "/settings",
+  "productSha": "40e1a89bdd118de828fd5f716839789fc340a20a",
+  "startedAt": "2026-08-17T01:55:50.515Z",
+  "cells": [
+    {
+      "viewport": "desktop",
+      "language": "pl",
+      "theme": "light",
+      "route": "/settings",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/SET-UI-CANON-001/screens/SET__desktop__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "desktop",
+      "language": "pl",
+      "theme": "dark",
+      "route": "/settings",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/SET-UI-CANON-001/screens/SET__desktop__pl__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 1,
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 1,
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "targets": [
+              ".text-\\[var\\(--c-accent\\)\\]"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "desktop",
+      "language": "en",
+      "theme": "light",
+      "route": "/settings",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/SET-UI-CANON-001/screens/SET__desktop__en__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "desktop",
+      "language": "en",
+      "theme": "dark",
+      "route": "/settings",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/SET-UI-CANON-001/screens/SET__desktop__en__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 1,
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 1,
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "targets": [
+              ".text-\\[var\\(--c-accent\\)\\]"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "tablet",
+      "language": "pl",
+      "theme": "light",
+      "route": "/settings",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/SET-UI-CANON-001/screens/SET__tablet__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "tablet",
+      "language": "pl",
+      "theme": "dark",
+      "route": "/settings",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/SET-UI-CANON-001/screens/SET__tablet__pl__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 1,
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 1,
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "targets": [
+              ".text-\\[var\\(--c-accent\\)\\]"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "tablet",
+      "language": "en",
+      "theme": "light",
+      "route": "/settings",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/SET-UI-CANON-001/screens/SET__tablet__en__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "tablet",
+      "language": "en",
+      "theme": "dark",
+      "route": "/settings",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/SET-UI-CANON-001/screens/SET__tablet__en__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 1,
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 1,
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "targets": [
+              ".text-\\[var\\(--c-accent\\)\\]"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "mobile",
+      "language": "pl",
+      "theme": "light",
+      "route": "/settings",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/SET-UI-CANON-001/screens/SET__mobile__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "mobile",
+      "language": "pl",
+      "theme": "dark",
+      "route": "/settings",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/SET-UI-CANON-001/screens/SET__mobile__pl__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 1,
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 1,
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "targets": [
+              ".text-\\[var\\(--c-accent\\)\\]"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "mobile",
+      "language": "en",
+      "theme": "light",
+      "route": "/settings",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/SET-UI-CANON-001/screens/SET__mobile__en__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "mobile",
+      "language": "en",
+      "theme": "dark",
+      "route": "/settings",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/SET-UI-CANON-001/screens/SET__mobile__en__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 1,
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 1,
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "targets": [
+              ".text-\\[var\\(--c-accent\\)\\]"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "desktop",
+      "language": "pl",
+      "theme": "light",
+      "route": "/settings/profile",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/SET-UI-CANON-001/screens/SET__settings-profile__desktop__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    },
+    {
+      "viewport": "desktop",
+      "language": "pl",
+      "theme": "light",
+      "route": "/settings/security-dashboard",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/SET-UI-CANON-001/screens/SET__settings-security-dashboard__desktop__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 1,
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 9,
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "targets": [
+              ".mb-1.gap-2.items-center > h4",
+              ".hover\\:border-c-accent.hover\\:bg-c-accent-soft.p-4:nth-child(1) > .mb-3.items-start.justify-between > .gap-3.items-center.flex > div:nth-child(2) > .text-white.font-medium",
+              ".hover\\:border-c-accent.hover\\:bg-c-accent-soft.p-4:nth-child(1) > .mb-3.items-start.justify-between > .gap-3.items-center.flex > div:nth-child(2) > .text-emerald-400",
+              ".hover\\:border-c-accent.hover\\:bg-c-accent-soft.p-4:nth-child(2) > .mb-3.items-start.justify-between > .gap-3.items-center.flex > div:nth-child(2) > .text-white.font-medium",
+              ".gap-3.items-center.flex > div:nth-child(2) > .text-danger-400"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": []
+    }
+  ],
+  "deepLink": {
+    "ok": true,
+    "detail": "deep-link /settings settled at /settings/profile — surface content matched"
+  },
+  "reload": {
+    "ok": true,
+    "detail": "reload settled at /settings/profile — surface content matched"
+  },
+  "coldReopen": {
+    "ok": true,
+    "detail": "cold context (fresh storage state, no SPA memory) settled at /settings/profile — surface content matched"
+  },
+  "keyboard": {
+    "reachableControls": 40,
+    "focusAlwaysVisible": false,
+    "invisibleFocusSamples": [
+      "button..group",
+      "button..group",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex"
+    ],
+    "escapeHandled": "Escape pressed on the surface; surface stayed mounted (no dialog was open to close).",
+    "focusReturn": "Focus remained inside the document after Escape.",
+    "tabOrderMonotonic": true
+  },
+  "states": [],
+  "statesNotPresent": [
+    "stale"
+  ],
+  "negativeControls": {
+    "onboardingRetiredViaRealApi": "PUT /api/preferences -> 200",
+    "noRequestInterception": "This harness never calls page.route()/fulfill(); every response comes from the real backend on real Postgres.",
+    "blockingOverlayDetection": "A surface counts as rendered only when no dialog/aria-modal covers >15% of the viewport.",
+    "themeAndLanguageAreObserved": "Theme and language are set before first paint and each of the 12 cells is captured separately; identical captures across cells would be visible as identical files."
+  },
+  "gates": [
+    "AppRoutes.tsx:2992-3013 — ProtectedRoute(requireAuth) only; /settings redirects to /settings/profile.",
+    "SET-MVP-OAUTH-001 and SET-MVP-DELETE-001 defaults stay fail-closed: no provider enabled, destructive deletion execution OFF."
+  ]
+}

@@ -1,0 +1,540 @@
+{
+  "taskId": "INI-UI-CANON-001",
+  "key": "INI",
+  "module": "Initiatives",
+  "route": "/initiatives",
+  "productSha": "40e1a89bdd118de828fd5f716839789fc340a20a",
+  "startedAt": "2026-08-17T01:46:33.982Z",
+  "cells": [
+    {
+      "viewport": "desktop",
+      "language": "pl",
+      "theme": "light",
+      "route": "/initiatives",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__desktop__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 1,
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 2,
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "targets": [
+              ".text-danger-300",
+              ".text-danger-200\\/80"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[InitiativesHub] Fetch error: RuntimeApiError: UNKNOWN_ERROR\n    at listRegisteredInitiatives (http://127.0.0.1:3940/src/services/initiatives-execution/runtimeApi.ts:578:27)\n    at async http://127.0.0.1:3940/src/components/Initiatives/InitiativesHub.tsx:323:27",
+        "[InitiativesHub] Fetch error: RuntimeApiError: UNKNOWN_ERROR\n    at listRegisteredInitiatives (http://127.0.0.1:3940/src/services/initiatives-execution/runtimeApi.ts:578:27)\n    at async http://127.0.0.1:3940/src/components/Initiatives/InitiativesHub.tsx:323:27"
+      ]
+    },
+    {
+      "viewport": "desktop",
+      "language": "pl",
+      "theme": "dark",
+      "route": "/initiatives",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__desktop__pl__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[InitiativesHub] Fetch error: RuntimeApiError: UNKNOWN_ERROR\n    at listRegisteredInitiatives (http://127.0.0.1:3940/src/services/initiatives-execution/runtimeApi.ts:578:27)\n    at async http://127.0.0.1:3940/src/components/Initiatives/InitiativesHub.tsx:323:27",
+        "[InitiativesHub] Fetch error: RuntimeApiError: UNKNOWN_ERROR\n    at listRegisteredInitiatives (http://127.0.0.1:3940/src/services/initiatives-execution/runtimeApi.ts:578:27)\n    at async http://127.0.0.1:3940/src/components/Initiatives/InitiativesHub.tsx:323:27"
+      ]
+    },
+    {
+      "viewport": "desktop",
+      "language": "en",
+      "theme": "light",
+      "route": "/initiatives",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__desktop__en__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 1,
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 2,
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "targets": [
+              ".text-danger-300",
+              ".text-danger-200\\/80"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[InitiativesHub] Fetch error: RuntimeApiError: UNKNOWN_ERROR\n    at listRegisteredInitiatives (http://127.0.0.1:3940/src/services/initiatives-execution/runtimeApi.ts:578:27)\n    at async http://127.0.0.1:3940/src/components/Initiatives/InitiativesHub.tsx:323:27",
+        "[InitiativesHub] Fetch error: RuntimeApiError: UNKNOWN_ERROR\n    at listRegisteredInitiatives (http://127.0.0.1:3940/src/services/initiatives-execution/runtimeApi.ts:578:27)\n    at async http://127.0.0.1:3940/src/components/Initiatives/InitiativesHub.tsx:323:27"
+      ]
+    },
+    {
+      "viewport": "desktop",
+      "language": "en",
+      "theme": "dark",
+      "route": "/initiatives",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__desktop__en__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[InitiativesHub] Fetch error: RuntimeApiError: UNKNOWN_ERROR\n    at listRegisteredInitiatives (http://127.0.0.1:3940/src/services/initiatives-execution/runtimeApi.ts:578:27)\n    at async http://127.0.0.1:3940/src/components/Initiatives/InitiativesHub.tsx:323:27",
+        "[InitiativesHub] Fetch error: RuntimeApiError: UNKNOWN_ERROR\n    at listRegisteredInitiatives (http://127.0.0.1:3940/src/services/initiatives-execution/runtimeApi.ts:578:27)\n    at async http://127.0.0.1:3940/src/components/Initiatives/InitiativesHub.tsx:323:27"
+      ]
+    },
+    {
+      "viewport": "tablet",
+      "language": "pl",
+      "theme": "light",
+      "route": "/initiatives",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__tablet__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 1,
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 2,
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "targets": [
+              ".text-danger-300",
+              ".text-danger-200\\/80"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[InitiativesHub] Fetch error: RuntimeApiError: UNKNOWN_ERROR\n    at listRegisteredInitiatives (http://127.0.0.1:3940/src/services/initiatives-execution/runtimeApi.ts:578:27)\n    at async http://127.0.0.1:3940/src/components/Initiatives/InitiativesHub.tsx:323:27",
+        "[InitiativesHub] Fetch error: RuntimeApiError: UNKNOWN_ERROR\n    at listRegisteredInitiatives (http://127.0.0.1:3940/src/services/initiatives-execution/runtimeApi.ts:578:27)\n    at async http://127.0.0.1:3940/src/components/Initiatives/InitiativesHub.tsx:323:27"
+      ]
+    },
+    {
+      "viewport": "tablet",
+      "language": "pl",
+      "theme": "dark",
+      "route": "/initiatives",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__tablet__pl__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[InitiativesHub] Fetch error: RuntimeApiError: UNKNOWN_ERROR\n    at listRegisteredInitiatives (http://127.0.0.1:3940/src/services/initiatives-execution/runtimeApi.ts:578:27)\n    at async http://127.0.0.1:3940/src/components/Initiatives/InitiativesHub.tsx:323:27",
+        "[InitiativesHub] Fetch error: RuntimeApiError: UNKNOWN_ERROR\n    at listRegisteredInitiatives (http://127.0.0.1:3940/src/services/initiatives-execution/runtimeApi.ts:578:27)\n    at async http://127.0.0.1:3940/src/components/Initiatives/InitiativesHub.tsx:323:27"
+      ]
+    },
+    {
+      "viewport": "tablet",
+      "language": "en",
+      "theme": "light",
+      "route": "/initiatives",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__tablet__en__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 1,
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 2,
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "targets": [
+              ".text-danger-300",
+              ".text-danger-200\\/80"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[InitiativesHub] Fetch error: RuntimeApiError: UNKNOWN_ERROR\n    at listRegisteredInitiatives (http://127.0.0.1:3940/src/services/initiatives-execution/runtimeApi.ts:578:27)\n    at async http://127.0.0.1:3940/src/components/Initiatives/InitiativesHub.tsx:323:27",
+        "[InitiativesHub] Fetch error: RuntimeApiError: UNKNOWN_ERROR\n    at listRegisteredInitiatives (http://127.0.0.1:3940/src/services/initiatives-execution/runtimeApi.ts:578:27)\n    at async http://127.0.0.1:3940/src/components/Initiatives/InitiativesHub.tsx:323:27"
+      ]
+    },
+    {
+      "viewport": "tablet",
+      "language": "en",
+      "theme": "dark",
+      "route": "/initiatives",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__tablet__en__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[InitiativesHub] Fetch error: RuntimeApiError: UNKNOWN_ERROR\n    at listRegisteredInitiatives (http://127.0.0.1:3940/src/services/initiatives-execution/runtimeApi.ts:578:27)\n    at async http://127.0.0.1:3940/src/components/Initiatives/InitiativesHub.tsx:323:27",
+        "[InitiativesHub] Fetch error: RuntimeApiError: UNKNOWN_ERROR\n    at listRegisteredInitiatives (http://127.0.0.1:3940/src/services/initiatives-execution/runtimeApi.ts:578:27)\n    at async http://127.0.0.1:3940/src/components/Initiatives/InitiativesHub.tsx:323:27"
+      ]
+    },
+    {
+      "viewport": "mobile",
+      "language": "pl",
+      "theme": "light",
+      "route": "/initiatives",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__mobile__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 1,
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 2,
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "targets": [
+              ".text-danger-300",
+              ".text-danger-200\\/80"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[InitiativesHub] Fetch error: RuntimeApiError: UNKNOWN_ERROR\n    at listRegisteredInitiatives (http://127.0.0.1:3940/src/services/initiatives-execution/runtimeApi.ts:578:27)\n    at async http://127.0.0.1:3940/src/components/Initiatives/InitiativesHub.tsx:323:27",
+        "[InitiativesHub] Fetch error: RuntimeApiError: UNKNOWN_ERROR\n    at listRegisteredInitiatives (http://127.0.0.1:3940/src/services/initiatives-execution/runtimeApi.ts:578:27)\n    at async http://127.0.0.1:3940/src/components/Initiatives/InitiativesHub.tsx:323:27"
+      ]
+    },
+    {
+      "viewport": "mobile",
+      "language": "pl",
+      "theme": "dark",
+      "route": "/initiatives",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__mobile__pl__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[InitiativesHub] Fetch error: RuntimeApiError: UNKNOWN_ERROR\n    at listRegisteredInitiatives (http://127.0.0.1:3940/src/services/initiatives-execution/runtimeApi.ts:578:27)\n    at async http://127.0.0.1:3940/src/components/Initiatives/InitiativesHub.tsx:323:27",
+        "[InitiativesHub] Fetch error: RuntimeApiError: UNKNOWN_ERROR\n    at listRegisteredInitiatives (http://127.0.0.1:3940/src/services/initiatives-execution/runtimeApi.ts:578:27)\n    at async http://127.0.0.1:3940/src/components/Initiatives/InitiativesHub.tsx:323:27"
+      ]
+    },
+    {
+      "viewport": "mobile",
+      "language": "en",
+      "theme": "light",
+      "route": "/initiatives",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__mobile__en__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 1,
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 2,
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "targets": [
+              ".text-danger-300",
+              ".text-danger-200\\/80"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[InitiativesHub] Fetch error: RuntimeApiError: UNKNOWN_ERROR\n    at listRegisteredInitiatives (http://127.0.0.1:3940/src/services/initiatives-execution/runtimeApi.ts:578:27)\n    at async http://127.0.0.1:3940/src/components/Initiatives/InitiativesHub.tsx:323:27",
+        "[InitiativesHub] Fetch error: RuntimeApiError: UNKNOWN_ERROR\n    at listRegisteredInitiatives (http://127.0.0.1:3940/src/services/initiatives-execution/runtimeApi.ts:578:27)\n    at async http://127.0.0.1:3940/src/components/Initiatives/InitiativesHub.tsx:323:27"
+      ]
+    },
+    {
+      "viewport": "mobile",
+      "language": "en",
+      "theme": "dark",
+      "route": "/initiatives",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__mobile__en__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[InitiativesHub] Fetch error: RuntimeApiError: UNKNOWN_ERROR\n    at listRegisteredInitiatives (http://127.0.0.1:3940/src/services/initiatives-execution/runtimeApi.ts:578:27)\n    at async http://127.0.0.1:3940/src/components/Initiatives/InitiativesHub.tsx:323:27",
+        "[InitiativesHub] Fetch error: RuntimeApiError: UNKNOWN_ERROR\n    at listRegisteredInitiatives (http://127.0.0.1:3940/src/services/initiatives-execution/runtimeApi.ts:578:27)\n    at async http://127.0.0.1:3940/src/components/Initiatives/InitiativesHub.tsx:323:27"
+      ]
+    },
+    {
+      "viewport": "desktop",
+      "language": "pl",
+      "theme": "light",
+      "route": "/roadmap",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__roadmap__desktop__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 1,
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 2,
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "targets": [
+              ".text-danger-300",
+              ".text-danger-200\\/80"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[InitiativesHub] Fetch error: RuntimeApiError: UNKNOWN_ERROR\n    at listRegisteredInitiatives (http://127.0.0.1:3940/src/services/initiatives-execution/runtimeApi.ts:578:27)\n    at async http://127.0.0.1:3940/src/components/Initiatives/InitiativesHub.tsx:323:27",
+        "[InitiativesHub] Fetch error: RuntimeApiError: UNKNOWN_ERROR\n    at listRegisteredInitiatives (http://127.0.0.1:3940/src/services/initiatives-execution/runtimeApi.ts:578:27)\n    at async http://127.0.0.1:3940/src/components/Initiatives/InitiativesHub.tsx:323:27"
+      ]
+    },
+    {
+      "viewport": "desktop",
+      "language": "pl",
+      "theme": "light",
+      "route": "/portfolio",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__portfolio__desktop__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 1,
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 2,
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "targets": [
+              ".text-danger-300",
+              ".text-danger-200\\/80"
+            ]
+          }
+        ]
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "[InitiativesHub] Fetch error: RuntimeApiError: UNKNOWN_ERROR\n    at listRegisteredInitiatives (http://127.0.0.1:3940/src/services/initiatives-execution/runtimeApi.ts:578:27)\n    at async http://127.0.0.1:3940/src/components/Initiatives/InitiativesHub.tsx:323:27",
+        "[InitiativesHub] Fetch error: RuntimeApiError: UNKNOWN_ERROR\n    at listRegisteredInitiatives (http://127.0.0.1:3940/src/services/initiatives-execution/runtimeApi.ts:578:27)\n    at async http://127.0.0.1:3940/src/components/Initiatives/InitiativesHub.tsx:323:27"
+      ]
+    }
+  ],
+  "deepLink": {
+    "ok": true,
+    "detail": "deep-link /initiatives settled at /initiatives — surface content matched"
+  },
+  "reload": {
+    "ok": true,
+    "detail": "reload settled at /initiatives — surface content matched"
+  },
+  "coldReopen": {
+    "ok": true,
+    "detail": "cold context (fresh storage state, no SPA memory) settled at /initiatives — surface content matched"
+  },
+  "keyboard": {
+    "reachableControls": 40,
+    "focusAlwaysVisible": false,
+    "invisibleFocusSamples": [
+      "button..group",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex"
+    ],
+    "escapeHandled": "Escape pressed on the surface; surface stayed mounted (no dialog was open to close).",
+    "focusReturn": "Focus remained inside the document after Escape.",
+    "tabOrderMonotonic": true
+  },
+  "states": [
+    {
+      "state": "empty",
+      "observed": true,
+      "path": "/initiatives",
+      "detail": "Reached without an explicit text assertion.",
+      "screenshot": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__state-empty.png"
+    }
+  ],
+  "statesNotPresent": [
+    "stale"
+  ],
+  "negativeControls": {
+    "onboardingRetiredViaRealApi": "PUT /api/preferences -> 200",
+    "noRequestInterception": "This harness never calls page.route()/fulfill(); every response comes from the real backend on real Postgres.",
+    "blockingOverlayDetection": "A surface counts as rendered only when no dialog/aria-modal covers >15% of the viewport.",
+    "themeAndLanguageAreObserved": "Theme and language are set before first paint and each of the 12 cells is captured separately; identical captures across cells would be visible as identical files."
+  },
+  "gates": [
+    "AppRoutes.tsx:2188-2202 — ProductionModuleGate no-op ('Initiatives' is a core module)."
+  ]
+}

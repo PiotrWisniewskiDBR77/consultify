@@ -1,0 +1,164 @@
+{
+  "taskId": "EXE-UI-CANON-001",
+  "lane": "UI-G4",
+  "baselineSha": "c4f84a2baa7f1ce9c7b03a68ebbd1783cdbc581b",
+  "productSha": "40e1a89bdd118de828fd5f716839789fc340a20a",
+  "verdict": "AUTOMATED_G4_FAIL / BLOCKED_HUMAN",
+  "verdictLiteral": "The automatable half of G4 FAILS on this exact SHA for the reasons listed in automatedFailures. No human sign-off is claimed or implied.",
+  "environment": {
+    "mountedApplication": "real backend process (tsx server/src/index.ts) + Vite-served client",
+    "database": "real PostgreSQL 16 (pgvector/pgvector:pg16), schema built from the canonical migration chain from zero",
+    "authentication": "real signed JWT from POST /api/test-support/bootstrap; no anonymous or stubbed session",
+    "requestInterception": "none — the harness never calls page.route()/fulfill()",
+    "harness": "docs/program/evidence/closure/ui-g4/HARNESS.md"
+  },
+  "surface": {
+    "module": "Execution",
+    "route": "/execution",
+    "gates": [
+      "AppRoutes.tsx:2322-2342 wrapped in V8UnavailableBanner(moduleName=\"Execution\") — same ENABLE_V8_GLOBAL dependency as Interview; the harness sets it true.",
+      "ProductionModuleGate names 'Implementation' rather than 'Execution' in PUBLIC_PRODUCTION_CORE_ROUTE_MODULES (AppRoutes.tsx:825) — a naming mismatch that only bites on the VTS public-production hostname; no-op here."
+    ]
+  },
+  "denominators": {
+    "cells": 13,
+    "primaryCells": 12,
+    "viewports": [
+      "1440x900",
+      "768x1024",
+      "390x844"
+    ],
+    "languages": [
+      "pl",
+      "en"
+    ],
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "primaryCellsRendered": 12,
+    "secondaryCells": 1,
+    "secondaryCellsRendered": 1,
+    "screenshots": 13,
+    "keyboardControlsTraversed": 40,
+    "axeCriticalTotal": 0,
+    "axeSeriousTotal": 0,
+    "axeViolationIds": {},
+    "statesProbed": 0,
+    "statesObserved": 0
+  },
+  "fixtures": {
+    "tenant": "fresh organization created by the test-support bootstrap for this run",
+    "dataState": "a brand-new tenant, so surfaces render their genuine empty state unless a probe seeded data through the real API",
+    "onboarding": "PUT /api/preferences -> 200"
+  },
+  "navigation": {
+    "deepLink": {
+      "ok": true,
+      "detail": "deep-link /execution settled at /execution — surface content matched"
+    },
+    "reload": {
+      "ok": true,
+      "detail": "reload settled at /execution — surface content matched"
+    },
+    "coldReopen": {
+      "ok": true,
+      "detail": "cold context (fresh storage state, no SPA memory) settled at /execution — surface content matched"
+    }
+  },
+  "keyboard": {
+    "reachableControls": 40,
+    "focusAlwaysVisible": false,
+    "invisibleFocusSamples": [
+      "button..group",
+      "button..group",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex"
+    ],
+    "escapeHandled": "Escape pressed on the surface; surface stayed mounted (no dialog was open to close).",
+    "focusReturn": "Focus remained inside the document after Escape.",
+    "tabOrderMonotonic": true
+  },
+  "states": [],
+  "statesNotPresent": [
+    "stale"
+  ],
+  "negativeControls": {
+    "onboardingRetiredViaRealApi": "PUT /api/preferences -> 200",
+    "noRequestInterception": "This harness never calls page.route()/fulfill(); every response comes from the real backend on real Postgres.",
+    "blockingOverlayDetection": "A surface counts as rendered only when no dialog/aria-modal covers >15% of the viewport.",
+    "themeAndLanguageAreObserved": "Theme and language are set before first paint and each of the 12 cells is captured separately; identical captures across cells would be visible as identical files."
+  },
+  "screenshots": [
+    {
+      "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__desktop__en__dark.png",
+      "sha256": "4b3e4dde8bcc7eb5a1bb6e62bbb5d9dc178e68ff6d6287e9aba7a2843443f915"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__desktop__en__light.png",
+      "sha256": "9eaa3befad17fb411156177bac0ed9fccffaf6e55e19485cb78d5eb755d23cac"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__desktop__pl__dark.png",
+      "sha256": "51e5a9849bd810474f909f8afdc42b38fd533cbb733071d7891edd78c08fd241"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__desktop__pl__light.png",
+      "sha256": "99adf412fc3db7fbed08293b3a06b0d70ba72d0e2abcfb98ddc8bb024fe86b9c"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__execution-tab-rollout__desktop__pl__light.png",
+      "sha256": "848573de5f39ee9080e2017b0198b263f4a2f86c0e1d20eb54d72fe73c12703a"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__mobile__en__dark.png",
+      "sha256": "377671148fa057767c84cd35b44ee76eb0e29075a4c5fc24ddff0eec9de5756a"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__mobile__en__light.png",
+      "sha256": "9d6b584404c6b437c8c395bc9bb102cad4b4b9e778d0aef6cc9410fc601b59fa"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__mobile__pl__dark.png",
+      "sha256": "d8955343c7ec764a60beffb5a152b7d7ef3574bea2381f72cc06d38b635d4281"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__mobile__pl__light.png",
+      "sha256": "dbba5042651bc8413ba505aa69a04a3d73540e8d660cf435e5c959b8c741ca01"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__tablet__en__dark.png",
+      "sha256": "211736ffe90715c7ab56caf8362f1656181e98f46f162e8ff54488ac89955b53"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__tablet__en__light.png",
+      "sha256": "f75ba8de6b42dac33039462e76b5c80cd9e309bac167fd14e1e882109dae8211"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__tablet__pl__dark.png",
+      "sha256": "acbdf328d462e451648a2bd8b7001bab2a4244d9f8dda46f24534ed7c19d497f"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__tablet__pl__light.png",
+      "sha256": "04651eb8078d4204320b514649ebebd98150e06efce546b571522c3ae5e9cf2c"
+    }
+  ],
+  "screenshotBinding": "Every screenshot above was produced by the sweep run recorded in productSha 40e1a89bdd118de828fd5f716839789fc340a20a; the sha256 of each file is listed so a later re-render cannot be passed off as this run.",
+  "automatedFailures": [
+    "focus indicator not visible on every reachable control (8 sample(s): button..group, button..group, button.w-full.flex, button.w-full.flex)"
+  ],
+  "measurementCaveats": [],
+  "blockedHuman": [
+    "Manual VoiceOver pass — no automated tool substitutes for it.",
+    "Brand/visual acceptance by the UX owner.",
+    "Named target-role human acceptance (per OWNER_DECISIONS_AND_MEASURABLE_GATES §UI aggregate)."
+  ],
+  "rollback": {
+    "method": "This lane adds test/harness/evidence files only; reverting the lane commits removes them with no schema or runtime change. Any source fix is listed per-commit and is individually revertable.",
+    "executed": false
+  }
+}

@@ -1,0 +1,168 @@
+{
+  "taskId": "ASM-UI-CANON-001",
+  "lane": "UI-G4",
+  "baselineSha": "c4f84a2baa7f1ce9c7b03a68ebbd1783cdbc581b",
+  "productSha": "40e1a89bdd118de828fd5f716839789fc340a20a",
+  "verdict": "AUTOMATED_G4_FAIL / BLOCKED_HUMAN",
+  "verdictLiteral": "The automatable half of G4 FAILS on this exact SHA for the reasons listed in automatedFailures. No human sign-off is claimed or implied.",
+  "environment": {
+    "mountedApplication": "real backend process (tsx server/src/index.ts) + Vite-served client",
+    "database": "real PostgreSQL 16 (pgvector/pgvector:pg16), schema built from the canonical migration chain from zero",
+    "authentication": "real signed JWT from POST /api/test-support/bootstrap; no anonymous or stubbed session",
+    "requestInterception": "none — the harness never calls page.route()/fulfill()",
+    "harness": "docs/program/evidence/closure/ui-g4/HARNESS.md"
+  },
+  "surface": {
+    "module": "Assessment",
+    "route": "/assessment",
+    "gates": [
+      "AppRoutes.tsx:2153-2185 — ProtectedRoute(requireAuth) + ProductionModuleGate; no BetaGate.",
+      "assessmentFiveSurfacesV1 defaults TRUE (useFeatureFlags.tsx:177-202) and is not overridden; landing tab is \"library\"."
+    ]
+  },
+  "denominators": {
+    "cells": 14,
+    "primaryCells": 12,
+    "viewports": [
+      "1440x900",
+      "768x1024",
+      "390x844"
+    ],
+    "languages": [
+      "pl",
+      "en"
+    ],
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "primaryCellsRendered": 12,
+    "secondaryCells": 2,
+    "secondaryCellsRendered": 2,
+    "screenshots": 14,
+    "keyboardControlsTraversed": 40,
+    "axeCriticalTotal": 0,
+    "axeSeriousTotal": 0,
+    "axeViolationIds": {},
+    "statesProbed": 0,
+    "statesObserved": 0
+  },
+  "fixtures": {
+    "tenant": "fresh organization created by the test-support bootstrap for this run",
+    "dataState": "a brand-new tenant, so surfaces render their genuine empty state unless a probe seeded data through the real API",
+    "onboarding": "PUT /api/preferences -> 200"
+  },
+  "navigation": {
+    "deepLink": {
+      "ok": true,
+      "detail": "deep-link /assessment settled at /assessment — surface content matched"
+    },
+    "reload": {
+      "ok": true,
+      "detail": "reload settled at /assessment — surface content matched"
+    },
+    "coldReopen": {
+      "ok": true,
+      "detail": "cold context (fresh storage state, no SPA memory) settled at /assessment — surface content matched"
+    }
+  },
+  "keyboard": {
+    "reachableControls": 40,
+    "focusAlwaysVisible": false,
+    "invisibleFocusSamples": [
+      "button..group",
+      "button..group",
+      "button..group",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex",
+      "button.w-full.flex"
+    ],
+    "escapeHandled": "Escape pressed on the surface; surface stayed mounted (no dialog was open to close).",
+    "focusReturn": "Focus remained inside the document after Escape.",
+    "tabOrderMonotonic": true
+  },
+  "states": [],
+  "statesNotPresent": [
+    "stale"
+  ],
+  "negativeControls": {
+    "onboardingRetiredViaRealApi": "PUT /api/preferences -> 200",
+    "noRequestInterception": "This harness never calls page.route()/fulfill(); every response comes from the real backend on real Postgres.",
+    "blockingOverlayDetection": "A surface counts as rendered only when no dialog/aria-modal covers >15% of the viewport.",
+    "themeAndLanguageAreObserved": "Theme and language are set before first paint and each of the 12 cells is captured separately; identical captures across cells would be visible as identical files."
+  },
+  "screenshots": [
+    {
+      "file": "docs/program/evidence/closure/ui-g4/ASM-UI-CANON-001/screens/ASM__assessment-drd__desktop__pl__light.png",
+      "sha256": "03b738b8802edfa58174a54c002daa2521d4fa9d08717bc87b7219993a994e82"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/ASM-UI-CANON-001/screens/ASM__assessment-siri__desktop__pl__light.png",
+      "sha256": "c84c482c015a978d62a8f6514016c5c632a7a8870c3c662dc3daf024e846f976"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/ASM-UI-CANON-001/screens/ASM__desktop__en__dark.png",
+      "sha256": "af2f93623ec62c43cf044c1cd3c462dc2133ee8bd311f408e36896fc1cdd6081"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/ASM-UI-CANON-001/screens/ASM__desktop__en__light.png",
+      "sha256": "9b1445a3e8d661dd10bcc641bb8001b079f0a624acce1794b37b041fc41c85ff"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/ASM-UI-CANON-001/screens/ASM__desktop__pl__dark.png",
+      "sha256": "7c2cc19f258dc65bc82a1f09b8d041928763957e31468613d46b3b82a4f09f5b"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/ASM-UI-CANON-001/screens/ASM__desktop__pl__light.png",
+      "sha256": "423a47ab5048297bb3a76f7477b93dfab0ed05fe3ab0a783476b0f43426ebef2"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/ASM-UI-CANON-001/screens/ASM__mobile__en__dark.png",
+      "sha256": "0d0d92561df8ab0ebf0702fee77a3021b9b1f9a2717deec9d095c8f47ead4b3a"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/ASM-UI-CANON-001/screens/ASM__mobile__en__light.png",
+      "sha256": "10a8122a423288fd2842b11316a548ac14ade17843746f61169a1a33b22602d0"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/ASM-UI-CANON-001/screens/ASM__mobile__pl__dark.png",
+      "sha256": "dc6acabdb1dd95b7018bcd8c892f1d1a4261906fb20b10d1d5514d4313c95258"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/ASM-UI-CANON-001/screens/ASM__mobile__pl__light.png",
+      "sha256": "1a8c23685286d71e2b1aaa6fe6a305d7f039b508567d6f5d0e649c401f2a8f71"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/ASM-UI-CANON-001/screens/ASM__tablet__en__dark.png",
+      "sha256": "675264765b24eac6cba3c99caad21d7ed9ee46eae1817831fe71990f3e8d06fb"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/ASM-UI-CANON-001/screens/ASM__tablet__en__light.png",
+      "sha256": "6ea35dda5a867798c963cc016294908632197f1d06f6b9f93b8a1530dceeb53a"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/ASM-UI-CANON-001/screens/ASM__tablet__pl__dark.png",
+      "sha256": "7623e885f572c747f7b6636715ecbbd1f93ad88bd2ee85707c1d0fa500a50d3c"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/ASM-UI-CANON-001/screens/ASM__tablet__pl__light.png",
+      "sha256": "31e21684220de26ecab2c88bf3f2254b60060c92213aff0100e3fd06845c5d85"
+    }
+  ],
+  "screenshotBinding": "Every screenshot above was produced by the sweep run recorded in productSha 40e1a89bdd118de828fd5f716839789fc340a20a; the sha256 of each file is listed so a later re-render cannot be passed off as this run.",
+  "automatedFailures": [
+    "focus indicator not visible on every reachable control (8 sample(s): button..group, button..group, button..group, button.w-full.flex)"
+  ],
+  "measurementCaveats": [],
+  "blockedHuman": [
+    "Manual VoiceOver pass — no automated tool substitutes for it.",
+    "Brand/visual acceptance by the UX owner.",
+    "Named target-role human acceptance (per OWNER_DECISIONS_AND_MEASURABLE_GATES §UI aggregate)."
+  ],
+  "rollback": {
+    "method": "This lane adds test/harness/evidence files only; reverting the lane commits removes them with no schema or runtime change. Any source fix is listed per-commit and is individually revertable.",
+    "executed": false
+  }
+}
