@@ -155,6 +155,7 @@ describe('Settings/GDPR routes (no stub responses)', () => {
     const databaseName = (
       await cleanupClient.query<{ current_database: string }>('SELECT current_database()')
     ).rows[0]!.current_database;
+    expect(databaseName).toMatch(/^set_export_/);
     expect(databaseName.startsWith(allowedPrefix)).toBe(true);
     await cleanupClient.query(
       `SELECT pg_advisory_lock(hashtext('SET-MVP-EXPORT-001-INTEGRATION'))`

@@ -59,6 +59,62 @@ test.describe('SET-MVP-EXPORT receipt-backed mounted journey', () => {
       expect(membership.rows).toHaveLength(1);
       expect(String(membership.rows[0].status).toUpperCase()).toBe('ACTIVE');
 
+      // Crash-window control: create a real request, fail immediately, clean it
+      // by its discovered ID, release the retained-session lock, then prove the
+      // next run starts from baseline zero before exercising the UI journey.
+      const interrupted = await request.post(`${API_BASE_URL}/api/gdpr/export-request`, {
+        headers: getAuthHeader(),
+        data: {},
+      });
+      expect(interrupted.status()).toBe(200);
+      await expect(
+        Promise.reject(new Error('SET_EXPORT_FORCED_AFTER_REQUEST_CREATION'))
+      ).rejects.toThrow('SET_EXPORT_FORCED_AFTER_REQUEST_CREATION');
+      const interruptedIds = (
+        await client.query<{ id: string }>(
+          `SELECT id FROM data_export_requests WHERE organization_id=$1 AND user_id=$2 ORDER BY id`,
+          [state.organizationId, state.userId]
+        )
+      ).rows.map((row) => row.id);
+      expect(interruptedIds).toContain(String((await interrupted.json()).request.id));
+      await client.query('BEGIN');
+      try {
+        await client.query(
+          `ALTER TABLE user_data_export_receipts DISABLE TRIGGER trg_user_data_export_receipts_immutable`
+        );
+        await client.query(
+          `DELETE FROM user_data_export_receipts WHERE request_id = ANY($1::text[])`,
+          [interruptedIds]
+        );
+        await client.query(`DELETE FROM data_export_requests WHERE id = ANY($1::text[])`, [
+          interruptedIds,
+        ]);
+        await client.query(
+          `ALTER TABLE user_data_export_receipts ENABLE TRIGGER trg_user_data_export_receipts_immutable`
+        );
+        await client.query('COMMIT');
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      }
+      expect(
+        (
+          await client.query<{ unlocked: boolean }>(
+            `SELECT pg_advisory_unlock(hashtext('SET-MVP-EXPORT-001')) unlocked`
+          )
+        ).rows[0]!.unlocked
+      ).toBe(true);
+      lockHeld = false;
+      await client.query(`SELECT pg_advisory_lock(hashtext('SET-MVP-EXPORT-001'))`);
+      lockHeld = true;
+      const nextRunBaseline = await client.query<{ requests: number; receipts: number }>(
+        `SELECT
+           (SELECT count(*)::int FROM data_export_requests WHERE organization_id=$1 AND user_id=$2) requests,
+           (SELECT count(*)::int FROM user_data_export_receipts WHERE organization_id=$1 AND user_id=$2) receipts`,
+        [state.organizationId, state.userId]
+      );
+      expect(nextRunBaseline.rows[0]).toEqual({ requests: 0, receipts: 0 });
+
       const touchedRoutes: string[] = [];
       page.on('request', (entry) => {
         const pathname = new URL(entry.url()).pathname;
@@ -222,6 +278,13 @@ test.describe('SET-MVP-EXPORT receipt-backed mounted journey', () => {
       expect(trigger.rows).toEqual([{ tgenabled: 'O' }]);
     } finally {
       try {
+        const rediscoveredIds = (
+          await client.query<{ id: string }>(
+            `SELECT id FROM data_export_requests WHERE organization_id=$1 AND user_id=$2 ORDER BY id`,
+            [state.organizationId, state.userId]
+          )
+        ).rows.map((row) => row.id);
+        exportRequestIds = [...new Set([...exportRequestIds, ...rediscoveredIds])].sort();
         await client.query(
           `UPDATE organization_members SET status='ACTIVE' WHERE organization_id=$1 AND user_id=$2`,
           [state.organizationId, state.userId]
