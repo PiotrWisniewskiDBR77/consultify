@@ -58,6 +58,7 @@ import {
   assertPromotionBranchReached,
   assertRealPostgresTestEnvironment,
 } from '../../../../../tests/integration/_helpers/assertRealPostgres.js';
+import { mintToken } from '../../../../../tests/integration/crossflow-runtime/runtimeFixture.js';
 
 // vitest.config.ts hardcodes DB_TYPE=sqlite project-wide — override BEFORE
 // the environment assertion below, same convention as every other
@@ -94,7 +95,14 @@ async function db(): Promise<Client> {
 }
 
 function as(org: string, user = ACTOR) {
-  return { 'x-test-org': org, 'x-test-user': user, 'x-test-role': 'admin' };
+  return {
+    Authorization: `Bearer ${mintToken({
+      id: user,
+      email: `${user}@example.test`,
+      organizationId: org,
+      role: 'ADMIN',
+    })}`,
+  };
 }
 
 /** A dynamic-swot session with NO accepted content — the negative fixture. */
@@ -234,11 +242,16 @@ beforeAll(async () => {
        ON CONFLICT (id) DO NOTHING`,
       [ACTOR, ORG_A, `${P}actor@example.test`, ACTOR_B, ORG_B, `${P}actorb@example.test`]
     );
+    await c.query(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+       VALUES ($1,$2,$3,'ADMIN','ACTIVE'),($4,$5,$6,'ADMIN','ACTIVE')
+       ON CONFLICT (organization_id,user_id) DO UPDATE SET role='ADMIN',status='ACTIVE'`,
+      [`${P}memberA`, ORG_A, ACTOR, `${P}memberB`, ORG_B, ACTOR_B]
+    );
   } finally {
     await c.end();
   }
 
-  const ToolController = (await import('../../../controllers/ToolController.js')).default;
   const svc = await import('../../tools/toolOutputSnapshotService.js');
   EmptyToolOutputError = svc.EmptyToolOutputError;
   getToolOutputById = svc.getToolOutputById;
@@ -248,31 +261,10 @@ beforeAll(async () => {
   mutateConclusions = lifecycle.mutateConclusions;
   ImmutableOutputError = lifecycle.ImmutableOutputError;
 
-  const { UpdateToolSessionSchema } = await import('../../../validators/tool.validators.js');
-  const { validateBody } = await import('../../../middleware/validation.middleware.js');
-
   app = express();
   app.use(express.json());
-  // Same header-driven synthetic auth as every other *.realdb.test.ts in
-  // this repo (tool-sessions-cas / tools-outputs-immutable /
-  // tools-promotion-race) — bypasses verifyToken/requireOrgAccess, which are
-  // orthogonal to what this suite proves.
-  app.use((req, _res, next) => {
-    (req as any).user = {
-      id: req.header('x-test-user') || ACTOR,
-      organizationId: req.header('x-test-org') || ORG_A,
-      role: req.header('x-test-role') || 'admin',
-      email: `${P}u@example.test`,
-    };
-    next();
-  });
-  app.get('/api/tools/:toolId', ToolController.getToolSession);
-  app.put(
-    '/api/tools/:toolId',
-    validateBody(UpdateToolSessionSchema),
-    ToolController.updateToolSession
-  );
-  app.post('/api/tools/:toolId/promote', ToolController.promoteToOutput);
+  const toolsRouter = (await import('../../../routes/tools.routes.js')).default;
+  app.use('/api/tools', toolsRouter);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   app.use((err: any, _req: any, res: any, _next: any) => {
     res.status(500).json({ error: err?.message || 'unknown', code: err?.code });
@@ -302,6 +294,7 @@ afterAll(async () => {
       [ORG_A, ORG_B]
     );
     await c.query(`DELETE FROM tool_sessions WHERE organization_id IN ($1,$2)`, [ORG_A, ORG_B]);
+    await c.query(`DELETE FROM organization_members WHERE organization_id IN ($1,$2)`, [ORG_A, ORG_B]);
     await c.query(`DELETE FROM users WHERE id IN ($1,$2)`, [ACTOR, ACTOR_B]).catch(() => undefined);
     await c
       .query(`DELETE FROM organizations WHERE id IN ($1,$2)`, [ORG_A, ORG_B])
@@ -697,6 +690,68 @@ describe('TLS-BVP-001 — nonempty-lineage guard on tool_outputs freeze (real Po
       expect(row.status).toBe('approved');
       expect(row.frozen_at).toBeTruthy();
       expect(row.payload_json.conclusions.length).toBeGreaterThan(0);
+    } finally {
+      await independent.end();
+    }
+  });
+
+  it('11. MOUNTED GOLDEN PATH: real JWT create → answer/evidence → review → approve → immutable output → promotion receipt', async () => {
+    const created = await request(app)
+      .post('/api/tools')
+      .set(as(ORG_A))
+      .send({ toolType: 'dynamic-swot', name: `${P}mounted golden path` });
+    expect(created.status, JSON.stringify(created.body)).toBe(200);
+    const sessionId = created.body.id as string;
+
+    const answers = {
+      items: [
+        { id: 'i1', text: 'Confirmed delivery strength', quadrant: 'strengths', impact: 'high', proposalStatus: 'accepted', evidenceStatus: 'confirmed' },
+        { id: 'i2', text: 'Confirmed regional demand', quadrant: 'opportunities', impact: 'high', proposalStatus: 'accepted', evidenceStatus: 'confirmed' },
+      ],
+      tensions: [{ id: 't1', title: 'Strength meets demand', type: 'attack', linkedItemIds: ['i1', 'i2'], linkedCorrelationIds: [], insight: 'A bounded pilot tests the thesis.' }],
+      recommendedMoves: [{
+        id: 'm1', title: 'Launch bounded pilot', category: 'quick-win',
+        rationale: 'Both source items are evidence-confirmed.', linkedTensionIds: ['t1'], linkedItemIds: ['i1', 'i2'],
+        expectedImpact: 'high', estimatedEffort: 'medium', firstStep: 'Select one customer', ownerRole: 'Sales Director',
+        tradeoff: { chosen: 'Direct pilot', deferred: 'Full rollout', cost: 'One quarter capacity' },
+        rejectedAlternative: { option: 'Immediate partner rollout', reason: 'Insufficient first-party evidence' },
+      }],
+    };
+    const saved = await request(app).put(`/api/tools/${sessionId}`).set(as(ORG_A)).send({
+      answers, contextSnapshot: { mission: 'Validate regional growth safely' },
+      completionPercent: 100, confidenceAvg: 4.5, missingItems: [], expectedVersion: 1,
+    });
+    expect(saved.status, JSON.stringify(saved.body)).toBe(200);
+    expect(saved.body.version).toBe(2);
+
+    const review = await request(app).post(`/api/tools/${sessionId}/request-review`).set(as(ORG_A)).send({});
+    expect(review.status, JSON.stringify(review.body)).toBe(200);
+    expect(review.body.status).toBe('REVIEW');
+    const approved = await request(app).post(`/api/tools/${sessionId}/approve`).set(as(ORG_A)).send({});
+    expect(approved.status, JSON.stringify(approved.body)).toBe(200);
+    expect(approved.body.status).toBe('APPROVED');
+
+    const body = { outputType: 'idea', title: `${P}mounted promoted idea`, description: 'Frozen SWOT lineage' };
+    const promoted = await request(app).post(`/api/tools/${sessionId}/promote`).set(as(ORG_A)).send(body);
+    expect(promoted.status, JSON.stringify(promoted.body)).toBe(200);
+    const replay = await request(app).post(`/api/tools/${sessionId}/promote`).set(as(ORG_A)).send(body);
+    expect(replay.status, JSON.stringify(replay.body)).toBe(200);
+    expect(replay.body.id).toBe(promoted.body.id);
+    expect(replay.body.deduplicated).toBe(true);
+
+    const independent = new Client({ connectionString: DATABASE_URL });
+    await independent.connect();
+    try {
+      const output = (await independent.query(
+        `SELECT id,status,payload_json FROM tool_outputs WHERE tool_session_id=$1`, [sessionId]
+      )).rows[0];
+      const receipt = (await independent.query(
+        `SELECT initiative_id,source_revision,output_type,idempotency_key
+           FROM tool_initiative_links WHERE tool_session_id=$1 AND batch_id='promote-idea'`, [sessionId]
+      )).rows[0];
+      expect(output.status).toBe('approved');
+      expect(output.payload_json.conclusions.length).toBeGreaterThan(0);
+      expect(receipt).toMatchObject({ initiative_id: promoted.body.id, source_revision: 2, output_type: 'idea', idempotency_key: 'promote-idea' });
     } finally {
       await independent.end();
     }
