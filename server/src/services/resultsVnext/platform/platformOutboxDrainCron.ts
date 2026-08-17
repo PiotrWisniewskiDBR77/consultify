@@ -22,7 +22,8 @@ import type { PoolClient } from 'pg';
 
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
 import { operationalAlerts } from '../../operationalAlertService.js';
-import { durableOperationalAlertsEnabled, recordOperationalAlertSignal } from '../../operationalAlertSignalDeliveryService.js';
+import { durableOperationalAlertsEnabled } from '../../operationalAlertSignalDeliveryService.js';
+import { enqueueOperationalAlertRepairIntent } from '../../operationalAlertRepairService.js';
 import logger from '../../../utils/Logger.js';
 import { sendSystemAlert } from '../../systemAlertNotifier.js';
 
@@ -43,18 +44,17 @@ import {
 let missedDurableAlertSignals = 0;
 async function recordDurableWrite(event: RvnPlatformEventRow, row: RvnOutboxRow, outcome: 'SUCCESS' | 'FAILURE') {
   if (!durableOperationalAlertsEnabled()) return;
-  try { await recordOperationalAlertSignal({
+  try { await enqueueOperationalAlertRepairIntent({
     organizationId: event.organization_id,
     actorId: event.actor_user_id ?? 'system',
     correlationId: event.event_id,
     sourceType: 'rvn_platform_outbox',
-    sourceId: row.outbox_id,
+    sourceTerminalId: row.outbox_id,
     kind: 'WRITE_FAILURE_RATE',
     outcome,
-    idempotencyKey: `rvn:${row.outbox_id}:${outcome}`,
   }); } catch (error) {
     missedDurableAlertSignals++;
-    logger.warn('[RvnPlatformOutbox] primary outcome committed; missed alert signal counted in-process; no durable repair cursor', { outboxId: row.outbox_id, outcome, error: error instanceof Error ? error.message : String(error) });
+    logger.warn('[RvnPlatformOutbox] primary outcome committed; repair-intent enqueue missed; terminal-source reconstruction remains available', { outboxId: row.outbox_id, outcome, error: error instanceof Error ? error.message : String(error) });
   }
 }
 export function getMissedResultsDurableAlertSignals(): number { return missedDurableAlertSignals; }

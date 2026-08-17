@@ -66,7 +66,8 @@
  */
 
 import logger from '../../utils/Logger.js';
-import { durableOperationalAlertsEnabled, recordOperationalAlertSignal } from '../operationalAlertSignalDeliveryService.js';
+import { durableOperationalAlertsEnabled } from '../operationalAlertSignalDeliveryService.js';
+import { enqueueOperationalAlertRepairIntent } from '../operationalAlertRepairService.js';
 import {
   countDeadLetterEvents,
   dispatchPendingEvents,
@@ -339,12 +340,12 @@ async function runTickBody(
       sourceId: `tick:${bucket}`,
     };
     try { await Promise.all([
-      recordOperationalAlertSignal({ ...base, kind: 'OUTBOX_OLDEST_AGE', outcome: 'SAMPLE', observedValue: (backlog.oldestPendingAgeSeconds ?? 0) * 1000, idempotencyKey: `case:${options.organizationId}:${bucket}:age` }),
-      ...(result.delivered > 0 ? [recordOperationalAlertSignal({ ...base, sourceId: `tick:${bucket}:success`, kind: 'WRITE_FAILURE_RATE', outcome: 'SUCCESS', observedValue: result.delivered, idempotencyKey: `case:${options.organizationId}:${bucket}:success` })] : []),
-      ...(result.failed > 0 ? [recordOperationalAlertSignal({ ...base, sourceId: `tick:${bucket}:failure`, kind: 'WRITE_FAILURE_RATE', outcome: 'FAILURE', observedValue: result.failed, idempotencyKey: `case:${options.organizationId}:${bucket}:failure` })] : []),
+      enqueueOperationalAlertRepairIntent({ ...base, sourceTerminalId: `tick:${bucket}:age`, kind: 'OUTBOX_OLDEST_AGE', outcome: 'SAMPLE', observedValue: (backlog.oldestPendingAgeSeconds ?? 0) * 1000 }),
+      ...(result.delivered > 0 ? [enqueueOperationalAlertRepairIntent({ ...base, sourceTerminalId: `tick:${bucket}:success`, kind: 'WRITE_FAILURE_RATE', outcome: 'SUCCESS', observedValue: result.delivered })] : []),
+      ...(result.failed > 0 ? [enqueueOperationalAlertRepairIntent({ ...base, sourceTerminalId: `tick:${bucket}:failure`, kind: 'WRITE_FAILURE_RATE', outcome: 'FAILURE', observedValue: result.failed })] : []),
     ]); } catch (error) {
       missedDurableAlertSignals++;
-      logger.warn(`[CaseWorkspaceOutboxWorker] primary tick outcome preserved; missed alert signal counted in-process; no durable repair cursor: ${error instanceof Error ? error.message : String(error)}`);
+      logger.warn(`[CaseWorkspaceOutboxWorker] primary tick outcome preserved; repair-intent enqueue missed; terminal-source reconstruction remains available: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 

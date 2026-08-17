@@ -8,8 +8,8 @@ vi.mock('../../utils/DbPromise.js', () => ({
 vi.mock('../notificationService.js', () => ({ default: { send: vi.fn(async () => { state.sendCalls++; }) } }));
 vi.mock('../operationalAlertSignalDeliveryService.js', () => ({
   durableOperationalAlertsEnabled: () => true,
-  recordOperationalAlertSignal: vi.fn(async () => { state.signalCalls++; throw new Error('forced alert store down'); }),
 }));
+vi.mock('../operationalAlertRepairService.js', () => ({ enqueueOperationalAlertRepairIntent: vi.fn(async () => { state.signalCalls++; throw new Error('forced alert store down'); }) }));
 vi.mock('../caseWorkspace/eventOutboxService.js', () => ({
   dispatchPendingEvents: vi.fn(async () => { state.dispatchCalls++; return { claimed: 1, delivered: 1, failed: 0, failedEventIds: [] }; }),
   countDeadLetterEvents: vi.fn(async () => 0),

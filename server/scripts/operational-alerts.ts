@@ -7,6 +7,7 @@ import {
   recordOperationalAlertSignal,
 } from '../src/services/operationalAlertSignalDeliveryService.js';
 import type { OperationalAlertKind } from '../src/services/operationalAlertService.js';
+import { listOperationalAlertRepairStatus, redriveOperationalAlertRepairIntent, runOperationalAlertRepairTick } from '../src/services/operationalAlertRepairService.js';
 
 function arg(name: string): string | undefined {
   const index = process.argv.indexOf(`--${name}`);
@@ -16,6 +17,9 @@ function arg(name: string): string | undefined {
 async function main() {
   const command = process.argv[2];
   const organizationId = arg('organization');
+  if (command === 'repair-status') { console.log(JSON.stringify(await listOperationalAlertRepairStatus(organizationId), null, 2)); return; }
+  if (command === 'repair-redrive') { const intentId=arg('intent'); if(!intentId) throw new Error('--intent is required'); console.log(JSON.stringify(await redriveOperationalAlertRepairIntent(intentId), null, 2)); return; }
+  if (command === 'repair-tick') { console.log(JSON.stringify(await runOperationalAlertRepairTick({workerId:arg('operator')??'operator-cli'}), null, 2)); return; }
   if (command === 'list') {
     console.log(JSON.stringify(await listOperationalAlertDeliveryState({ organizationId }), null, 2));
     return;
