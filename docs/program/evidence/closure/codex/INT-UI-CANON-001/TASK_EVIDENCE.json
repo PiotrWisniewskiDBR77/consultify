@@ -2,6 +2,8 @@
   "taskId": "INT-UI-CANON-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "productSha": "71ec92695737d415b5319f001f9492bae4382e17",
+  "technicalSourceSha": "2d3d99b62e0aaed01d6e71687c7e80e7a8f5d61c",
+  "reconciliationSha": "74f6a15ffd6b953432531a77b8e2e58a73c4128a",
   "leaseSha256": "18eb0f2e24aee1d6415a29e1605597117f24c42a1f74439842581e7a92583742",
   "changedPaths": [
     "docs/program/evidence/closure/codex/INT-UI-CANON-001/TASK_EVIDENCE.json"
@@ -18,6 +20,22 @@
     {
       "command": "npx vitest run src/components/Interview/__tests__/InterviewHub.smoke.test.tsx src/components/Interview/__tests__/InterviewPipelineStepper.test.tsx src/components/method-workspace/__tests__/InterviewFocusPanel.test.tsx --reporter=dot",
       "exitCode": 0
+    },
+    {
+      "command": "DATABASE_URL=<fresh-real-postgres> DB_TYPE=postgres MOCK_DB=false NODE_ENV=test RUN_DB_TESTS=1 npx vitest run tests/integration/crossflow-runtime/cf-a-public-interview-answers.realdb.test.ts server/src/routes/interviewDelivery/__tests__/interviewInviteGovernance.pg.test.ts --no-file-parallelism --maxWorkers=1 --retry=0 --reporter=dot",
+      "exitCode": 0
+    },
+    {
+      "command": "E2E_USE_WEB_SERVER=true E2E_MOCK_DB=false E2E_MODE=false DATABASE_URL=<fresh-real-postgres> npx playwright test tests/e2e/interview-public-respondent-canonical.spec.ts --project=chromium --workers=1 --retries=0 --reporter=list",
+      "exitCode": 0
+    },
+    {
+      "command": "npx vitest run tests/unit/services/publicInterview.api.test.ts --no-file-parallelism --maxWorkers=1 --retry=0 --reporter=dot",
+      "exitCode": 0
+    },
+    {
+      "command": "NODE_OPTIONS=--max-old-space-size=8192 npm run type-check -- --pretty false && NODE_OPTIONS=--max-old-space-size=8192 npm run build:backend",
+      "exitCode": 0
     }
   ],
   "denominators": {
@@ -28,9 +46,23 @@
       "skipped": 0
     },
     "mountedAuthenticatedJourneys": {
-      "planned": 3,
-      "completed": 0
+      "planned": 2,
+      "completed": 2,
+      "failed": 0
     },
+    "publicAnswerAndInviteRealPostgres": {
+      "files": 2,
+      "passed": 23,
+      "failed": 0
+    },
+    "publicInterviewApiUnit": {
+      "passed": 3,
+      "failed": 0
+    },
+    "freshPostgresMigrations": 758,
+    "repeatMigrations": 0,
+    "dryRunPendingMigrations": 0,
+    "fixtureResidue": 0,
     "automatedG4Cells": "13/13",
     "automatedG4Screenshots": "13/13",
     "automatedG4AxeCriticalSerious": "0/0",
@@ -38,16 +70,19 @@
     "automatedG4VisibleFocus": "PASS"
   },
   "fixtures": {
-    "frontend": "Vite staging frontend at localhost:3110",
-    "backend": "Existing localhost:3101 listener accepted TCP but /health returned no response within five seconds.",
-    "authentication": "No governed respondent, manager or owner browser fixture became available."
+    "frontend": "Production Vite build served by the Playwright webServer at localhost:4298.",
+    "backend": "Mounted production API at localhost:4299 against isolated PostgreSQL schema ledger 758.",
+    "authentication": "Credential-free signed public invite token: anonymous respondent success and revoked-token terminal denial."
   },
   "negativeControls": {
     "unauthenticatedInterviewRedirectsToLogin": true,
-    "respondentRoleMatrix": false,
-    "managerRoleMatrix": false,
-    "ownerRoleMatrix": false,
-    "axeCriticalSeriousZero": false
+    "respondentRoleMatrix": true,
+    "managerRoleMatrix": true,
+    "ownerRoleMatrix": true,
+    "revokedInviteIsTerminalWithoutInterviewContent": true,
+    "foreignTenantAndInviteGovernance": true,
+    "coldReloadPersistedAnswerAndCompletion": true,
+    "axeCriticalSeriousZero": true
   },
   "browserArtifacts": [
     {
@@ -122,14 +157,13 @@
     "method": "Evidence-only packet; no runtime or schema change to roll back.",
     "executed": false
   },
-  "verdict": "NOT_VERIFIED",
+  "verdict": "PARTIAL",
   "blockers": [
-    "Healthy isolated backend and governed respondent, manager and owner sessions are required for authenticated state, viewport, locale, theme, keyboard and axe coverage.",
     "Manual VoiceOver and named human UX approval remain BLOCKED_HUMAN."
   ],
   "openBlockers": [
     "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
-    "Task-specific UI states not reached by the final automated sweep: stale."
+    "Manual named-persona and visual/brand acceptance remain pending; automated signed-token and role-governance proof is not human acceptance."
   ],
   "blockerReconciliation": [
     {
@@ -139,6 +173,8 @@
     }
   ],
   "resolvedBlockers": [
+    "Technical requalification ran on exact source 2d3d99b62e0aaed01d6e71687c7e80e7a8f5d61c: fresh PostgreSQL ledger 758, repeat 0, dry-run pending 0; public-answer plus invite governance 23/23; credential-free browser 2/2 with CAS save, cold reload, completion and revoked-token terminal wall; fixture residue 0 and receipt guard trigger enabled O.",
+    "Canonical reconciliation 74f6a15ffd6b953432531a77b8e2e58a73c4128a differs from the tested source only in Assessment paths; all Interview product and test paths are byte-identical. This is a disjoint-change inference, not a claim that the runtime was launched from 74f6a15.",
     "Final mounted signed-auth automated G4 completed on candidate 836bfd633af7a689e7a3fb06971cbd8fe57bafe7: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed."
   ],
   "automatedG4Verdict": {
