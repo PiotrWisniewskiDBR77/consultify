@@ -257,27 +257,28 @@ describe.skipIf(!enabled)('IDEA-WORKSPACE-SUBPACKET durable collaboration (real 
     const sql = await readFile('server/migrations/20261012_idea_workspace_durable_collaboration.sql', 'utf8');
     const good = `idea_late_${randomUUID().replace(/-/g, '').slice(0, 8)}`;
     const bad = `idea_bad_${randomUUID().replace(/-/g, '').slice(0, 8)}`;
+    const client = await pool.connect();
     try {
-      await pool.query(`CREATE SCHEMA ${good}`);
-      await pool.query(`SET search_path TO ${good},public`);
-      await pool.query(`CREATE TABLE my_ideas(id text,organization_id text)`);
-      await pool.query(`INSERT INTO my_ideas VALUES('late-idea','late-org')`);
-      await pool.query(`CREATE TABLE idea_workspace_node_locks(
+      await client.query(`CREATE SCHEMA ${good}`);
+      await client.query(`SET search_path TO ${good},public`);
+      await client.query(`CREATE TABLE my_ideas(id text,organization_id text)`);
+      await client.query(`INSERT INTO my_ideas VALUES('late-idea','late-org')`);
+      await client.query(`CREATE TABLE idea_workspace_node_locks(
         organization_id text,idea_id text,node_id text,holder_user_id text,lease_owner text,
         fencing_token bigint,acquired_at timestamptz,expires_at timestamptz)`);
-      await pool.query(`CREATE TABLE idea_workspace_lock_events(
-        organization_id text,idea_id text,node_id text,actor_user_id text,lease_owner text,
-        fencing_token bigint,event_type text,correlation_id text)`);
-      await pool.query(`INSERT INTO idea_workspace_node_locks VALUES
+      await client.query(`CREATE TABLE idea_workspace_lock_events(
+        id bigint PRIMARY KEY,organization_id text,idea_id text,node_id text,actor_user_id text,lease_owner text,
+        fencing_token bigint,event_type text,correlation_id text,created_at timestamptz)`);
+      await client.query(`INSERT INTO idea_workspace_node_locks VALUES
         ('late-org','late-idea','node','user','worker',7,NOW()-interval '1m',NOW()+interval '1m')`);
-      await pool.query(`INSERT INTO idea_workspace_lock_events VALUES
-        ('late-org','late-idea','node','user','worker',7,'ACQUIRED','corr')`);
-      await pool.query(sql);
-      const reconciled = await pool.query(
+      await client.query(`INSERT INTO idea_workspace_lock_events VALUES
+        (41,'late-org','late-idea','node','user','worker',7,'ACQUIRED','corr',NOW()-interval '1m')`);
+      await client.query(sql);
+      const reconciled = await client.query(
         `SELECT fencing_token,updated_at IS NOT NULL AS updated FROM idea_workspace_node_locks WHERE node_id='node'`
       );
       expect(reconciled.rows[0]).toMatchObject({ fencing_token: '7', updated: true });
-      const pk = await pool.query<{ cols: string[] }>(`SELECT array_agg(a.attname ORDER BY k.ord) AS cols
+      const pk = await client.query<{ cols: string[] }>(`SELECT array_agg(a.attname ORDER BY k.ord) AS cols
         FROM pg_constraint c CROSS JOIN LATERAL unnest(c.conkey) WITH ORDINALITY k(attnum,ord)
         JOIN pg_attribute a ON a.attrelid=c.conrelid AND a.attnum=k.attnum
         WHERE c.conrelid='idea_workspace_node_locks'::regclass AND c.contype='p'`);
@@ -286,22 +287,29 @@ describe.skipIf(!enabled)('IDEA-WORKSPACE-SUBPACKET durable collaboration (real 
         ? rawPkColumns
         : String(rawPkColumns || '').replace(/^\{|\}$/g, '').split(',').filter(Boolean);
       expect(normalizedPkColumns).toEqual(['organization_id','idea_id','node_id']);
+      const generatedEvent = await client.query<{ id: string; created_at: Date }>(`INSERT INTO idea_workspace_lock_events
+        (organization_id,idea_id,node_id,actor_user_id,lease_owner,fencing_token,event_type,correlation_id)
+        VALUES ('late-org','late-idea','generated','user','worker',8,'ACQUIRED','generated-corr')
+        RETURNING id,created_at`);
+      expect(Number(generatedEvent.rows[0]?.id)).toBe(42);
+      expect(generatedEvent.rows[0]?.created_at).toBeTruthy();
 
-      await pool.query(`CREATE SCHEMA ${bad}`);
-      await pool.query(`SET search_path TO ${bad},public`);
-      await pool.query(`CREATE TABLE idea_workspace_node_locks(
+      await client.query(`CREATE SCHEMA ${bad}`);
+      await client.query(`SET search_path TO ${bad},public`);
+      await client.query(`CREATE TABLE idea_workspace_node_locks(
         organization_id text,idea_id text,node_id text PRIMARY KEY,holder_user_id text,lease_owner text,
         fencing_token bigint,acquired_at timestamptz,expires_at timestamptz)`);
-      await pool.query(`INSERT INTO idea_workspace_node_locks VALUES
+      await client.query(`INSERT INTO idea_workspace_node_locks VALUES
         ('late-org','late-idea','node','user','worker',7,NOW()-interval '1m',NOW()+interval '1m')`);
-      await expect(pool.query(sql)).rejects.toThrow('IDEA_WORKSPACE_LATE_PREFLIGHT');
-      const untouched = await pool.query<{ n: number }>(`SELECT count(*)::int AS n FROM information_schema.columns
+      await expect(client.query(sql)).rejects.toThrow('IDEA_WORKSPACE_LATE_PREFLIGHT');
+      const untouched = await client.query<{ n: number }>(`SELECT count(*)::int AS n FROM information_schema.columns
         WHERE table_schema=$1 AND table_name='idea_workspace_node_locks' AND column_name='updated_at'`, [bad]);
       expect(untouched.rows[0]?.n).toBe(0);
     } finally {
-      await pool.query('SET search_path TO public');
-      await pool.query(`DROP SCHEMA IF EXISTS ${good} CASCADE`);
-      await pool.query(`DROP SCHEMA IF EXISTS ${bad} CASCADE`);
+      await client.query('SET search_path TO public');
+      await client.query(`DROP SCHEMA IF EXISTS ${good} CASCADE`);
+      await client.query(`DROP SCHEMA IF EXISTS ${bad} CASCADE`);
+      client.release();
     }
   });
 
@@ -365,6 +373,65 @@ describe.skipIf(!enabled)('IDEA-WORKSPACE-SUBPACKET durable collaboration (real 
         await client.query(`DROP SCHEMA IF EXISTS ${schema} CASCADE`);
         client.release();
       }
+    }
+  });
+
+  it('fails before mutation on incompatible optional final-column types', async () => {
+    const sql = await readFile('server/migrations/20261012_idea_workspace_durable_collaboration.sql', 'utf8');
+    const cases = [
+      { name: 'lock_updated', table: 'idea_workspace_node_locks', ddl: `CREATE TABLE idea_workspace_node_locks(
+        organization_id text,idea_id text,node_id text,holder_user_id text,lease_owner text,fencing_token bigint,
+        acquired_at timestamptz,expires_at timestamptz,updated_at text,PRIMARY KEY(organization_id,idea_id,node_id))`,
+        insert: `INSERT INTO idea_workspace_node_locks VALUES('o','i','n','u','w',1,NOW(),NOW()+interval '1m','bad')`, error: 'lock updated_at type incompatible' },
+      { name: 'event_id', table: 'idea_workspace_lock_events', ddl: `CREATE TABLE idea_workspace_lock_events(
+        id text PRIMARY KEY,organization_id text,idea_id text,node_id text,actor_user_id text,lease_owner text,
+        fencing_token bigint,event_type text,correlation_id text,created_at timestamptz)`,
+        insert: `INSERT INTO idea_workspace_lock_events VALUES('bad','o','i','n','u','w',1,'ACQUIRED','c',NOW())`, error: 'event id type incompatible' },
+      { name: 'event_created', table: 'idea_workspace_lock_events', ddl: `CREATE TABLE idea_workspace_lock_events(
+        id bigint PRIMARY KEY,organization_id text,idea_id text,node_id text,actor_user_id text,lease_owner text,
+        fencing_token bigint,event_type text,correlation_id text,created_at text)`,
+        insert: `INSERT INTO idea_workspace_lock_events VALUES(1,'o','i','n','u','w',1,'ACQUIRED','c','bad')`, error: 'event created_at type incompatible' },
+    ] as const;
+    for (const fixture of cases) {
+      const schema = `idea_optional_${fixture.name}_${randomUUID().replace(/-/g, '').slice(0, 8)}`;
+      const client = await pool.connect();
+      try {
+        await client.query(`CREATE SCHEMA ${schema}`);
+        await client.query(`SET search_path TO ${schema},public`);
+        await client.query(fixture.ddl);
+        await client.query(fixture.insert);
+        const before = await client.query(`SELECT row_to_json(t)::text AS row FROM ${fixture.table} t`);
+        await expect(client.query(sql)).rejects.toThrow(`IDEA_WORKSPACE_LATE_PREFLIGHT: ${fixture.error}`);
+        expect((await client.query(`SELECT row_to_json(t)::text AS row FROM ${fixture.table} t`)).rows).toEqual(before.rows);
+      } finally {
+        await client.query('SET search_path TO public');
+        await client.query(`DROP SCHEMA IF EXISTS ${schema} CASCADE`);
+        client.release();
+      }
+    }
+  });
+
+  it('rejects weakened same-named CHECK constraints before any reconciliation', async () => {
+    const sql = await readFile('server/migrations/20261012_idea_workspace_durable_collaboration.sql', 'utf8');
+    const schema = `idea_check_${randomUUID().replace(/-/g, '').slice(0, 8)}`;
+    const client = await pool.connect();
+    try {
+      await client.query(`CREATE SCHEMA ${schema}`);
+      await client.query(`SET search_path TO ${schema},public`);
+      await client.query(`CREATE TABLE idea_workspace_node_locks(
+        organization_id text,idea_id text,node_id text,holder_user_id text,lease_owner text,fencing_token bigint,
+        acquired_at timestamptz,expires_at timestamptz,updated_at timestamptz,
+        PRIMARY KEY(organization_id,idea_id,node_id),
+        CONSTRAINT idea_workspace_node_locks_fence_positive CHECK(fencing_token > -100))`);
+      await client.query(`INSERT INTO idea_workspace_node_locks VALUES('o','i','n','u','w',1,NOW(),NOW()+interval '1m',NOW())`);
+      await expect(client.query(sql)).rejects.toThrow('IDEA_WORKSPACE_LATE_PREFLIGHT: lock fencing CHECK incompatible');
+      const definition = await client.query<{ def: string }>(`SELECT pg_get_constraintdef(oid) AS def FROM pg_constraint
+        WHERE conrelid='idea_workspace_node_locks'::regclass AND conname='idea_workspace_node_locks_fence_positive'`);
+      expect(definition.rows[0]?.def).toMatch(/fencing_token\s*>\s*(?:')?-100(?:'::integer)?/);
+    } finally {
+      await client.query('SET search_path TO public');
+      await client.query(`DROP SCHEMA IF EXISTS ${schema} CASCADE`);
+      client.release();
     }
   });
 });

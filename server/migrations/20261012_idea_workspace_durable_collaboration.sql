@@ -11,6 +11,7 @@ DECLARE
   present_count INTEGER;
   pk_columns TEXT[];
   types_ok BOOLEAN;
+  constraint_definition TEXT;
 BEGIN
   rel := to_regclass('idea_workspace_node_locks');
   IF rel IS NOT NULL THEN
@@ -30,6 +31,14 @@ BEGIN
     ) expected(name,typ)
     LEFT JOIN pg_attribute a ON a.attrelid=rel AND a.attname=expected.name AND NOT a.attisdropped;
     IF NOT types_ok THEN RAISE EXCEPTION 'IDEA_WORKSPACE_LATE_PREFLIGHT: lock identity column types incompatible'; END IF;
+    IF EXISTS (SELECT 1 FROM pg_attribute WHERE attrelid=rel AND attname='updated_at' AND NOT attisdropped
+      AND format_type(atttypid,atttypmod) <> 'timestamp with time zone') THEN
+      RAISE EXCEPTION 'IDEA_WORKSPACE_LATE_PREFLIGHT: lock updated_at type incompatible';
+    END IF;
+    IF EXISTS (SELECT 1 FROM pg_attribute WHERE attrelid=rel AND attname='updated_at' AND NOT attisdropped) THEN
+      EXECUTE 'SELECT EXISTS (SELECT 1 FROM idea_workspace_node_locks WHERE updated_at IS NULL)' INTO types_ok;
+      IF types_ok THEN RAISE EXCEPTION 'IDEA_WORKSPACE_LATE_PREFLIGHT: lock updated_at contains NULL'; END IF;
+    END IF;
     IF present_count = 8 AND EXISTS (
       SELECT 1 FROM idea_workspace_node_locks WHERE organization_id IS NULL OR idea_id IS NULL OR
         node_id IS NULL OR holder_user_id IS NULL OR lease_owner IS NULL OR fencing_token IS NULL OR
@@ -41,6 +50,16 @@ BEGIN
     WHERE c.conrelid=rel AND c.contype='p';
     IF pk_columns IS NOT NULL AND pk_columns <> ARRAY['organization_id','idea_id','node_id']::TEXT[] THEN
       RAISE EXCEPTION 'IDEA_WORKSPACE_LATE_PREFLIGHT: lock PK must be (organization_id,idea_id,node_id)';
+    END IF;
+    SELECT pg_get_constraintdef(oid) INTO constraint_definition FROM pg_constraint
+      WHERE conrelid=rel AND conname='idea_workspace_node_locks_fence_positive';
+    IF constraint_definition IS NOT NULL AND constraint_definition NOT LIKE '%fencing_token > 0%' THEN
+      RAISE EXCEPTION 'IDEA_WORKSPACE_LATE_PREFLIGHT: lock fencing CHECK incompatible';
+    END IF;
+    SELECT pg_get_constraintdef(oid) INTO constraint_definition FROM pg_constraint
+      WHERE conrelid=rel AND conname='idea_workspace_node_locks_valid_window';
+    IF constraint_definition IS NOT NULL AND constraint_definition NOT LIKE '%expires_at > acquired_at%' THEN
+      RAISE EXCEPTION 'IDEA_WORKSPACE_LATE_PREFLIGHT: lock lease-window CHECK incompatible';
     END IF;
   END IF;
 
@@ -61,6 +80,18 @@ BEGIN
     ) expected(name,typ)
     LEFT JOIN pg_attribute a ON a.attrelid=rel AND a.attname=expected.name AND NOT a.attisdropped;
     IF NOT types_ok THEN RAISE EXCEPTION 'IDEA_WORKSPACE_LATE_PREFLIGHT: event identity column types incompatible'; END IF;
+    IF EXISTS (SELECT 1 FROM pg_attribute WHERE attrelid=rel AND attname='id' AND NOT attisdropped
+      AND format_type(atttypid,atttypmod) <> 'bigint') THEN
+      RAISE EXCEPTION 'IDEA_WORKSPACE_LATE_PREFLIGHT: event id type incompatible';
+    END IF;
+    IF EXISTS (SELECT 1 FROM pg_attribute WHERE attrelid=rel AND attname='created_at' AND NOT attisdropped
+      AND format_type(atttypid,atttypmod) <> 'timestamp with time zone') THEN
+      RAISE EXCEPTION 'IDEA_WORKSPACE_LATE_PREFLIGHT: event created_at type incompatible';
+    END IF;
+    IF EXISTS (SELECT 1 FROM pg_attribute WHERE attrelid=rel AND attname='created_at' AND NOT attisdropped) THEN
+      EXECUTE 'SELECT EXISTS (SELECT 1 FROM idea_workspace_lock_events WHERE created_at IS NULL)' INTO types_ok;
+      IF types_ok THEN RAISE EXCEPTION 'IDEA_WORKSPACE_LATE_PREFLIGHT: event created_at contains NULL'; END IF;
+    END IF;
     IF present_count = 8 AND EXISTS (
       SELECT 1 FROM idea_workspace_lock_events WHERE organization_id IS NULL OR idea_id IS NULL OR
         node_id IS NULL OR actor_user_id IS NULL OR lease_owner IS NULL OR fencing_token IS NULL OR
@@ -73,6 +104,24 @@ BEGIN
     IF pk_columns IS NOT NULL AND pk_columns <> ARRAY['id']::TEXT[] THEN
       RAISE EXCEPTION 'IDEA_WORKSPACE_LATE_PREFLIGHT: event PK must be (id)';
     END IF;
+    IF EXISTS (SELECT 1 FROM idea_workspace_lock_events WHERE id IS NULL) THEN
+      RAISE EXCEPTION 'IDEA_WORKSPACE_LATE_PREFLIGHT: event id contains NULL';
+    END IF;
+    IF EXISTS (SELECT id FROM idea_workspace_lock_events GROUP BY id HAVING count(*) > 1) THEN
+      RAISE EXCEPTION 'IDEA_WORKSPACE_LATE_PREFLIGHT: event id is not unique';
+    END IF;
+    SELECT pg_get_constraintdef(oid) INTO constraint_definition FROM pg_constraint
+      WHERE conrelid=rel AND conname='idea_workspace_lock_events_fence_positive';
+    IF constraint_definition IS NOT NULL AND constraint_definition NOT LIKE '%fencing_token > 0%' THEN
+      RAISE EXCEPTION 'IDEA_WORKSPACE_LATE_PREFLIGHT: event fencing CHECK incompatible';
+    END IF;
+    SELECT pg_get_constraintdef(oid) INTO constraint_definition FROM pg_constraint
+      WHERE conrelid=rel AND conname='idea_workspace_lock_events_type_valid';
+    IF constraint_definition IS NOT NULL AND NOT (
+      constraint_definition LIKE '%event_type%' AND constraint_definition LIKE '%ACQUIRED%' AND
+      constraint_definition LIKE '%RECLAIMED%' AND constraint_definition LIKE '%RENEWED%' AND
+      constraint_definition LIKE '%RELEASED%' AND constraint_definition LIKE '%FENCE_REJECTED%'
+    ) THEN RAISE EXCEPTION 'IDEA_WORKSPACE_LATE_PREFLIGHT: event type CHECK incompatible'; END IF;
   END IF;
 END $$;
 
@@ -110,6 +159,9 @@ ALTER TABLE idea_workspace_node_locks ALTER COLUMN fencing_token SET NOT NULL;
 ALTER TABLE idea_workspace_node_locks ALTER COLUMN acquired_at SET NOT NULL;
 ALTER TABLE idea_workspace_node_locks ALTER COLUMN expires_at SET NOT NULL;
 ALTER TABLE idea_workspace_node_locks ALTER COLUMN updated_at SET NOT NULL;
+ALTER TABLE idea_workspace_node_locks ALTER COLUMN fencing_token SET DEFAULT 1;
+ALTER TABLE idea_workspace_node_locks ALTER COLUMN acquired_at SET DEFAULT NOW();
+ALTER TABLE idea_workspace_node_locks ALTER COLUMN updated_at SET DEFAULT NOW();
 
 DO $$ BEGIN
   IF NOT EXISTS (
@@ -173,6 +225,17 @@ ALTER TABLE idea_workspace_lock_events ADD COLUMN IF NOT EXISTS fencing_token BI
 ALTER TABLE idea_workspace_lock_events ADD COLUMN IF NOT EXISTS event_type TEXT;
 ALTER TABLE idea_workspace_lock_events ADD COLUMN IF NOT EXISTS correlation_id TEXT;
 ALTER TABLE idea_workspace_lock_events ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+
+-- A compatible historical BIGINT id without a default is repairable: attach a
+-- canonical owned sequence and advance it beyond every preserved row before
+-- accepting new inserts. Wrong id types were rejected by the preflight above.
+CREATE SEQUENCE IF NOT EXISTS idea_workspace_lock_events_id_seq;
+ALTER SEQUENCE idea_workspace_lock_events_id_seq OWNED BY idea_workspace_lock_events.id;
+SELECT setval('idea_workspace_lock_events_id_seq',
+  COALESCE((SELECT max(id) + 1 FROM idea_workspace_lock_events), 1), false);
+ALTER TABLE idea_workspace_lock_events ALTER COLUMN id
+  SET DEFAULT nextval('idea_workspace_lock_events_id_seq');
+ALTER TABLE idea_workspace_lock_events ALTER COLUMN created_at SET DEFAULT NOW();
 ALTER TABLE idea_workspace_lock_events ALTER COLUMN id SET NOT NULL;
 ALTER TABLE idea_workspace_lock_events ALTER COLUMN organization_id SET NOT NULL;
 ALTER TABLE idea_workspace_lock_events ALTER COLUMN idea_id SET NOT NULL;
@@ -198,6 +261,78 @@ DO $$ BEGIN
     ALTER TABLE idea_workspace_lock_events ADD CONSTRAINT idea_workspace_lock_events_type_valid
       CHECK (event_type IN ('ACQUIRED','RECLAIMED','RENEWED','RELEASED','FENCE_REJECTED'));
   END IF;
+END $$;
+
+-- Final contract verification is deliberately semantic, not name-only. A
+-- same-named but weakened CHECK must never be accepted as the durable lock
+-- contract merely because it exists.
+DO $$
+DECLARE
+  def TEXT;
+  pk_columns TEXT[];
+  columns_valid BOOLEAN;
+BEGIN
+  SELECT bool_and(a.attname IS NOT NULL AND format_type(a.atttypid,a.atttypmod)=expected.typ AND a.attnotnull)
+  INTO columns_valid
+  FROM (VALUES
+    ('organization_id','text'),('idea_id','text'),('node_id','text'),('holder_user_id','text'),
+    ('lease_owner','text'),('fencing_token','bigint'),('acquired_at','timestamp with time zone'),
+    ('expires_at','timestamp with time zone'),('updated_at','timestamp with time zone')
+  ) expected(name,typ)
+  LEFT JOIN pg_attribute a ON a.attrelid='idea_workspace_node_locks'::regclass
+    AND a.attname=expected.name AND NOT a.attisdropped;
+  IF NOT columns_valid THEN RAISE EXCEPTION 'IDEA_WORKSPACE_FINAL_VALIDATION: lock columns'; END IF;
+  SELECT array_agg(a.attname ORDER BY ord.n) INTO pk_columns
+  FROM pg_constraint c CROSS JOIN LATERAL unnest(c.conkey) WITH ORDINALITY ord(attnum,n)
+  JOIN pg_attribute a ON a.attrelid=c.conrelid AND a.attnum=ord.attnum
+  WHERE c.conrelid='idea_workspace_node_locks'::regclass AND c.contype='p';
+  IF pk_columns <> ARRAY['organization_id','idea_id','node_id']::TEXT[] THEN
+    RAISE EXCEPTION 'IDEA_WORKSPACE_FINAL_VALIDATION: lock PK';
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_attribute a JOIN pg_attrdef d ON d.adrelid=a.attrelid AND d.adnum=a.attnum
+    WHERE a.attrelid='idea_workspace_node_locks'::regclass AND a.attname='updated_at'
+  ) THEN RAISE EXCEPTION 'IDEA_WORKSPACE_FINAL_VALIDATION: lock updated_at default'; END IF;
+
+  SELECT pg_get_constraintdef(oid) INTO def FROM pg_constraint
+    WHERE conrelid='idea_workspace_node_locks'::regclass AND conname='idea_workspace_node_locks_fence_positive';
+  IF def IS NULL OR def NOT LIKE '%fencing_token > 0%' THEN RAISE EXCEPTION 'IDEA_WORKSPACE_FINAL_VALIDATION: lock fencing CHECK'; END IF;
+  SELECT pg_get_constraintdef(oid) INTO def FROM pg_constraint
+    WHERE conrelid='idea_workspace_node_locks'::regclass AND conname='idea_workspace_node_locks_valid_window';
+  IF def IS NULL OR def NOT LIKE '%expires_at > acquired_at%' THEN RAISE EXCEPTION 'IDEA_WORKSPACE_FINAL_VALIDATION: lock lease-window CHECK'; END IF;
+  SELECT pg_get_constraintdef(oid) INTO def FROM pg_constraint
+    WHERE conrelid='idea_workspace_lock_events'::regclass AND conname='idea_workspace_lock_events_fence_positive';
+  IF def IS NULL OR def NOT LIKE '%fencing_token > 0%' THEN RAISE EXCEPTION 'IDEA_WORKSPACE_FINAL_VALIDATION: event fencing CHECK'; END IF;
+  SELECT pg_get_constraintdef(oid) INTO def FROM pg_constraint
+    WHERE conrelid='idea_workspace_lock_events'::regclass AND conname='idea_workspace_lock_events_type_valid';
+  IF def IS NULL OR NOT (def LIKE '%event_type%' AND def LIKE '%ACQUIRED%' AND def LIKE '%RECLAIMED%' AND
+    def LIKE '%RENEWED%' AND def LIKE '%RELEASED%' AND def LIKE '%FENCE_REJECTED%') THEN
+    RAISE EXCEPTION 'IDEA_WORKSPACE_FINAL_VALIDATION: event type CHECK';
+  END IF;
+
+  SELECT bool_and(a.attname IS NOT NULL AND format_type(a.atttypid,a.atttypmod)=expected.typ AND a.attnotnull)
+  INTO columns_valid
+  FROM (VALUES
+    ('id','bigint'),('organization_id','text'),('idea_id','text'),('node_id','text'),
+    ('actor_user_id','text'),('lease_owner','text'),('fencing_token','bigint'),
+    ('event_type','text'),('correlation_id','text'),('created_at','timestamp with time zone')
+  ) expected(name,typ)
+  LEFT JOIN pg_attribute a ON a.attrelid='idea_workspace_lock_events'::regclass
+    AND a.attname=expected.name AND NOT a.attisdropped;
+  IF NOT columns_valid THEN RAISE EXCEPTION 'IDEA_WORKSPACE_FINAL_VALIDATION: event columns'; END IF;
+  SELECT array_agg(a.attname ORDER BY ord.n) INTO pk_columns
+  FROM pg_constraint c CROSS JOIN LATERAL unnest(c.conkey) WITH ORDINALITY ord(attnum,n)
+  JOIN pg_attribute a ON a.attrelid=c.conrelid AND a.attnum=ord.attnum
+  WHERE c.conrelid='idea_workspace_lock_events'::regclass AND c.contype='p';
+  IF pk_columns <> ARRAY['id']::TEXT[] THEN RAISE EXCEPTION 'IDEA_WORKSPACE_FINAL_VALIDATION: event PK'; END IF;
+  SELECT pg_get_expr(d.adbin,d.adrelid) INTO def
+  FROM pg_attribute a JOIN pg_attrdef d ON d.adrelid=a.attrelid AND d.adnum=a.attnum
+  WHERE a.attrelid='idea_workspace_lock_events'::regclass AND a.attname='id';
+  IF def IS NULL OR def NOT LIKE 'nextval(%' THEN RAISE EXCEPTION 'IDEA_WORKSPACE_FINAL_VALIDATION: event id default'; END IF;
+  SELECT pg_get_expr(d.adbin,d.adrelid) INTO def
+  FROM pg_attribute a JOIN pg_attrdef d ON d.adrelid=a.attrelid AND d.adnum=a.attnum
+  WHERE a.attrelid='idea_workspace_lock_events'::regclass AND a.attname='created_at';
+  IF def IS NULL OR def NOT LIKE '%now()%' THEN RAISE EXCEPTION 'IDEA_WORKSPACE_FINAL_VALIDATION: event created_at default'; END IF;
 END $$;
 
 CREATE INDEX IF NOT EXISTS idx_idea_workspace_lock_events_scope
