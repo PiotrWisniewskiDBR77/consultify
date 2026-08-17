@@ -2,6 +2,14 @@
   "taskId": "RES-UI-CANON-001",
   "baselineSha": "71ec92695737d415b5319f001f9492bae4382e17",
   "productSha": "8417acfb9cf59834c9ada2d930dd04cd61904df0",
+  "technicalSourceSha": "63c2ee2818ef85c298234d98aa0900395d955c9b",
+  "requalificationSha": "63c2ee2818ef85c298234d98aa0900395d955c9b",
+  "reconciliationSha": "163a702f128518965bcdb132dda9c664231a75fa",
+  "currentRequalification": {
+    "scope": "The current wave adds a neutral, flag-gated KPI registry queue link and backend membership/observation hardening; it does not prove the full Results UI.",
+    "gates": "Queue link OFF absent, ON visible and exact-route click were covered by focused ResultsHub tests; legacy content remains available.",
+    "limitations": "Manual VoiceOver/persona/brand acceptance, stale and conflict states, and the complete Results surface matrix remain open."
+  },
   "discoverabilitySourceSha": "1972bd2913e59ebb3cdc345b4963adb2b3e67b10",
   "discoverabilityIntegratedSha": "b53684c4620e4e25338b3bea6e5ccbb466981323",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",

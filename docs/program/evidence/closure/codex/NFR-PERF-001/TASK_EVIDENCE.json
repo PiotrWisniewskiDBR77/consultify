@@ -2,6 +2,21 @@
   "taskId": "NFR-PERF-001",
   "baselineSha": "9d4d7f2ccd15eb3ecfe5530ce2a23b7af971d69f",
   "productSha": "c2ebb9db52cdc84b3ba5fb987caaa0257055b208",
+  "technicalSourceSha": "163a702f128518965bcdb132dda9c664231a75fa",
+  "requalificationSha": "163a702f128518965bcdb132dda9c664231a75fa",
+  "reconciliationSha": "163a702f128518965bcdb132dda9c664231a75fa",
+  "financeB2PerformanceGate": {
+    "verdict": "PERF_FAIL",
+    "candidateSha": "163a702f128518965bcdb132dda9c664231a75fa",
+    "workload": "50 distinct models x 60 months x 2580 persisted outputs per approval",
+    "thresholdP95Ms": 1200,
+    "attemptP95Ms": [
+      1585.35,
+      1813.76
+    ],
+    "interpretation": "Both corrected current-candidate attempts exceed the release threshold. The set-based UNNEST change is functionally green but does not satisfy the Finance B2 performance gate.",
+    "preservedEvidence": "Existing Case profile and literal 30-minute steady-load measurements remain separate historical evidence and are not overwritten by this Finance-specific failure."
+  },
   "leaseSha256": "not_applicable_integrator_bounded_task",
   "changedPaths": [
     "server/src/routes/caseWorkspace/cases.routes.ts",

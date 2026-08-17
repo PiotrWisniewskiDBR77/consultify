@@ -1,6 +1,19 @@
 {
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "productSha": "a62dbe340114d87eda75a0d2da2d77bee2a90685",
+  "technicalSourceSha": "bf3e86f7a5fa25199d03ad30eb4e05c5be3128c2",
+  "requalificationSha": "bebf0d118cece77c36ce9dc0ac6f5e566f69c41b",
+  "reconciliationSha": "163a702f128518965bcdb132dda9c664231a75fa",
+  "currentRequalification": {
+    "scope": "Owner-free durable Idea collaboration backend and mounted runtime only; historical productSha is preserved.",
+    "gates": [
+      "Fresh PostgreSQL migration ledger 759 with repeat 0, dry-run 0 and checksum verification.",
+      "Focused real PostgreSQL 12/12, gateway 8/8 and mounted WebSocket E2E 1/1.",
+      "Lease fencing, restart/reclaim, revoked and foreign membership denial, immutable audit, residue 0 and triggers enabled.",
+      "Root/server type checks and backend/frontend builds passed on the requalification candidate."
+    ],
+    "pathContinuity": "The eight IDEA product/test paths were unchanged from bebf0d118c through reconciliation SHA 163a702f."
+  },
   "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
   "environment": {
     "node": "v24.12.0",
@@ -14,10 +27,9 @@
   "taskId": "IDEA-WORKSPACE-SUBPACKET-001",
   "verdict": "NOT_VERIFIED",
   "open": [
-    "The Idea workspace surfaces (table/mindmap/process-flow/whiteboard, collaboration/locks/snapshots, confidentiality, decision/scoring governance) are driven by server/src/routes/my-work.routes.ts, which is OUTSIDE the lane C lease. No governed change was possible without an integrator request.",
-    "Reproduced against the live DB: my_ideas.confidentiality, my_ideas.maturity_gates_json and my_idea_conversions.mapping_version DO NOT EXIST (0 columns) — those migrations are self-marked NOT APPLIED and genuinely are not applied, so Confidentiality/Maturity/conversion-lineage are non-functional on a fresh database.",
-    "Idea node locks are in-memory only (ideaCollabWs.gateway.ts lockedNodes Map) — lost on restart, unsafe across instances.",
-    "Decision/scoring governance is enforced client-side only; it persists inside my_idea_maps.nodes_json, so a raw API call bypasses the state machine."
+    "The current technical packet closes durable collaboration locks, fencing, restart/reclaim and server-validated graph mutation, but does not by itself prove the complete table/mindmap/process-flow/whiteboard UI matrix.",
+    "Confidentiality, maturity governance, conversion lineage, manual accessibility/persona/brand acceptance and any owner-defined scoring thresholds remain outside this bounded technical proof.",
+    "This subpacket is mandatory supporting scope in Lane C but is explicitly not one of the 82 top-level authority tasks; its NOT_VERIFIED verdict is therefore not counted by the frozen-82 reporter and is not silently promoted here."
   ],
   "changedPaths": [],
   "changedPathRationale": {},

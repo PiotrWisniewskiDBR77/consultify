@@ -5,6 +5,18 @@
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "baselineTag": "closure-execution-baseline-v2-20260816",
   "productSha": "78a618942ea0e12e7837bf64dec05f0b30bbdff1",
+  "technicalSourceSha": "b9cb1200752bd39d2361799ff5b20bb254b5b05c",
+  "requalificationSha": "b9cb1200752bd39d2361799ff5b20bb254b5b05c",
+  "reconciliationSha": "163a702f128518965bcdb132dda9c664231a75fa",
+  "currentRequalification": {
+    "scope": "Repository-owned strict membership, preset gating, durable cursor and scheduler controls; no legal, methodology or human policy acceptance is inferred.",
+    "gates": [
+      "Combined cursor and scheduler real PostgreSQL gates passed 26/26 in parallel and 26/26 sequentially.",
+      "Mounted membership and denied-write controls preserved zero unauthorized domain events.",
+      "Cursor, program and advisory-lock residue were zero; static/type gates passed."
+    ],
+    "pathContinuity": "The audited 17-path AUD technical surface was unchanged from b9cb120075 through reconciliation SHA 163a702f."
+  },
   "leaseSha256": "a2f9be9983e3a03e5e64f1a51dca193199a5bec963a246c3b4fe94b378af1308",
   "ownerDecision": {"recordId": "INTERNAL-BETA-OWNER-DECISIONS-20260817-AMENDMENT-01", "decisionId": "AMD-AUD-RIGHTS-001", "status": "APPROVED_RESTRICTED_SCOPE_IMPLEMENTATION_REQUIRED"},
   "amendmentSha": "617b5d29c229e6c073452a17c8da1888ce18aa8d59a5913fa0d9aa59b2272702",

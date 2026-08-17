@@ -2,6 +2,14 @@
   "taskId": "FIN-BVP-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "productSha": "15a95fdff4887c62c140a3b946219c59e179b092",
+  "technicalSourceSha": "1302aa62e8854e923bc6cfe1b146d3ff8d441262",
+  "requalificationSha": "163a702f128518965bcdb132dda9c664231a75fa",
+  "reconciliationSha": "163a702f128518965bcdb132dda9c664231a75fa",
+  "currentRequalification": {
+    "scope": "Set-based UNNEST persistence and mounted two-door authorization were integrated without changing historical product identity.",
+    "gates": "Functional UoW/parity gates and mounted signed authorization were green on the integrated candidate.",
+    "limitations": "The corrected Finance B2 release performance gate remains red, and UI, rollout and reconciliation-owner gates remain open."
+  },
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
   "changedPaths": [
     "server/migrations/20260919_finance_legacy_usage_identity_types.sql",

@@ -2,8 +2,14 @@
   "taskId": "FIN-MVP-CUTOVER-001",
   "baselineSha": "14889d7b087585ae6f5d4a74e86c1b5e344e7c1c",
   "productSha": "e14dbe596a4617ec0a8e81e15f1cd2f704f45123",
-  "technicalSourceSha": "74f6a15ffd6b953432531a77b8e2e58a73c4128a",
-  "reconciliationSha": "de4100cead8759afcc2ee4e3a8d349242a22fd4a",
+  "technicalSourceSha": "4ea5bc3349f8f27f2302941980939e66c5744ced",
+  "requalificationSha": "bd0e076fd6f6ecf2553bad4db571954fd2b11051",
+  "reconciliationSha": "163a702f128518965bcdb132dda9c664231a75fa",
+  "currentTwoDoorRequalification": {
+    "scope": "Mounted signed-auth two-door proof and organization scoping; no rollout or broad writer retirement is inferred.",
+    "gates": "Canonical signer, ACTIVE membership success and fail-closed authorization controls passed on the integrated candidate.",
+    "limitations": "Only 1 of 30 inventoried legacy V8 writers is safely retired; 29 remain deliberately enabled pending usage/parity and owner rollout decisions."
+  },
   "technicalVerdict": "PASS_CURRENT_LEGACY_CUTOVER_KERNEL",
   "currentKernelRequalification": {
     "migration": "Fresh exact-current PostgreSQL ledger 758/758/758 successful and unique with zero missing checksums; strict repeat applied 0 and dry-run reported 0 pending.",
