@@ -21,7 +21,10 @@ import { requireOrgAccess, requireOrgRole } from '../../middleware/rbac.middlewa
 import { validateBody } from '../../middleware/validation.middleware.js';
 import auditEventsService from '../../services/AuditEventsService.js';
 import blueprintService from '../../services/blueprintService.js';
-import { createInitiative as funnelCreateInitiative } from '../../services/initiative/createInitiativeService.js';
+import {
+  createInitiative as funnelCreateInitiative,
+  duplicateInitiative,
+} from '../../services/initiative/createInitiativeService.js';
 import {
   evaluateInitiativeGateAccess,
   requireInitiativeWriteAccess,
@@ -1202,10 +1205,9 @@ router.get('/raci-results-summary', async (req: any, res: any) => {
  * Note: This intentionally duplicates only the main `initiatives` row and does not clone
  * deep project-management sub-entities (tasks, RAID, etc.). Those can be re-generated later.
  *
- * USPOJNIENIE A3: ŚWIADOMY WYJĄTEK od „jeden lejek". Duplikacja kopiuje wszystkie
- * kolumny istniejącego rekordu (nie jest świeżym tworzeniem z walidacją) i SAMA
- * wymusza status startowy `DRAFT` + nowy UUID + org-scope + created_by (niżej).
- * Przejście przez createInitiativeService zgubiłoby skopiowane pola/lineage.
+ * Duplikacja zachowuje wszystkie kolumny istniejącego rekordu, ale jej zapis
+ * należy do kanonicznego createInitiativeService. Router nie jest drugim
+ * writerem i odpowiada wyłącznie za auth/HTTP.
  */
 router.post(
   '/:id/duplicate',
@@ -1216,88 +1218,17 @@ router.post(
       const userId = req.user?.id;
       if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
-      const originalId = String(req.params.id || '');
-      const original = (await queryHelpers.queryOne(
-        `SELECT * FROM initiatives WHERE id = ? AND organization_id = ?`,
-        [originalId, String(orgId)]
-      )) as any;
-      if (!original) return res.status(404).json({ error: 'Initiative not found' });
-
-      const now = new Date().toISOString();
-      const newId = uuidv4();
-      const baseTitle = String(original.title || original.name || 'Initiative');
-      // F15 (data-integrity, continuation of Z139): decode HTML entities the
-      // global sanitizer escaped on a custom title override before storing.
-      const newTitle = req.body?.title
-        ? decodeHtmlEntities(String(req.body.title))
-        : `${baseTitle} (Copy)`;
-
-      // SQLite-first: duplicate using actual table columns to avoid NOT NULL surprises.
-      let cols: string[] = [];
-      try {
-        const info = (await queryHelpers.queryAll(`PRAGMA table_info(initiatives)`)) as Array<{
-          name?: string;
-        }>;
-        cols = (info || []).map((r) => String(r.name || '')).filter(Boolean);
-      } catch {
-        cols = [];
-      }
-
-      if (cols.length === 0) {
-        // Fallback minimal insert (best-effort). D1: still anchor project_id.
-        const fallbackProjectId = await resolveInitiativeProjectId(
-          String(orgId),
-          original.project_id,
-          { createdBy: userId ? String(userId) : null }
-        );
-        // FIX (NOT-NULL sweep): initiatives.name is NOT NULL with no DB default
-        // (Postgres) — this best-effort fallback only wrote `title`, which 500s
-        // with 23502.
-        await queryHelpers.queryRun(
-          `INSERT INTO initiatives (id, organization_id, project_id, title, name, status, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, 'DRAFT', ?, ?)`,
-          [newId, String(orgId), fallbackProjectId, newTitle, newTitle, now, now]
-        );
-        return res.status(201).json({ id: newId });
-      }
-
-      // D1 (Zwornik §9 Faza 3): duplicate creates a NEW initiative row — if the
-      // ORIGINAL was itself a pre-zwornik orphan (project_id NULL), anchor the
-      // copy to the org's system portfolio project instead of propagating the
-      // orphan.
-      const anchoredProjectId = await resolveInitiativeProjectId(
-        String(orgId),
-        original.project_id,
-        { createdBy: userId ? String(userId) : null }
-      );
-
-      const insertCols: string[] = [];
-      const insertVals: any[] = [];
-      for (const c of cols) {
-        insertCols.push(c);
-        if (c === 'id') insertVals.push(newId);
-        else if (c === 'organization_id') insertVals.push(String(orgId));
-        else if (c === 'title') insertVals.push(newTitle);
-        else if (c === 'name') insertVals.push(newTitle);
-        else if (c === 'status') insertVals.push('DRAFT');
-        else if (c === 'project_id') insertVals.push(anchoredProjectId);
-        else if (c === 'created_at') insertVals.push(now);
-        else if (c === 'updated_at') insertVals.push(now);
-        else if (c === 'created_by')
-          insertVals.push(String(userId || original.created_by || 'system'));
-        else if (c === 'updated_by')
-          insertVals.push(String(userId || original.updated_by || 'system'));
-        else insertVals.push(original[c] ?? null);
-      }
-
-      const placeholders = insertCols.map(() => '?').join(', ');
-      await queryHelpers.queryRun(
-        `INSERT INTO initiatives (${insertCols.join(', ')}) VALUES (${placeholders})`,
-        insertVals
-      );
-
-      return res.status(201).json({ id: newId });
+      const duplicated = await duplicateInitiative(String(orgId), String(req.params.id || ''), {
+        title: req.body?.title ? String(req.body.title) : null,
+        actor: {
+          id: userId ? String(userId) : null,
+          ip: req.ip,
+          userAgent: req.get?.('user-agent') || null,
+        },
+      });
+      return res.status(201).json({ id: duplicated.id });
     } catch (err: any) {
+      if (err?.statusCode === 404) return res.status(404).json({ error: 'Initiative not found' });
       return failInitiative500(
         res,
         'Failed to duplicate initiative',

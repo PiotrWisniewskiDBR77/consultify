@@ -4,13 +4,17 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { queryRun, auditLog } = vi.hoisted(() => ({
+const { queryRun, queryOne, queryAll, auditLog } = vi.hoisted(() => ({
   queryRun: vi.fn(),
+  queryOne: vi.fn(),
+  queryAll: vi.fn(),
   auditLog: vi.fn(),
 }));
 
 vi.mock('../../../server/src/utils/queryHelpers.js', () => ({
   queryRun: (...a: unknown[]) => queryRun(...a),
+  queryOne: (...a: unknown[]) => queryOne(...a),
+  queryAll: (...a: unknown[]) => queryAll(...a),
 }));
 vi.mock('../../../server/src/services/AuditEventsService.js', () => ({
   default: { log: (...a: unknown[]) => auditLog(...a) },
@@ -19,7 +23,10 @@ vi.mock('../../../server/src/utils/Logger.js', () => ({
   default: { warn: vi.fn(), info: vi.fn(), error: vi.fn() },
 }));
 
-import { createInitiative } from '../../../server/src/services/initiative/createInitiativeService';
+import {
+  createInitiative,
+  duplicateInitiative,
+} from '../../../server/src/services/initiative/createInitiativeService';
 
 const ORG = 'org-1';
 
@@ -33,7 +40,11 @@ const lastInsert = () => {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  queryRun.mockReset();
   queryRun.mockResolvedValue(undefined);
+  queryOne.mockReset();
+  queryAll.mockReset();
+  auditLog.mockReset();
   auditLog.mockResolvedValue(undefined);
 });
 
@@ -103,8 +114,12 @@ describe('createInitiativeService — single funnel', () => {
   });
 
   it('falls back to legacy schema when modern insert throws', async () => {
-    queryRun.mockRejectedValueOnce(new Error('column "program_id" does not exist'));
-    queryRun.mockResolvedValueOnce(undefined);
+    queryRun.mockImplementation(async (sql: unknown) => {
+      if (String(sql).includes('program_id')) {
+        throw new Error('column "program_id" does not exist');
+      }
+      return undefined;
+    });
     const res = await createInitiative(ORG, { title: 'Drift' });
     expect(res.id).toBeTruthy();
     // modern insert (fail) + legacy insert + title-sync UPDATE = 3 calls; 2 are INSERTs.
@@ -112,5 +127,53 @@ describe('createInitiativeService — single funnel', () => {
       String(c[0]).includes('INSERT INTO initiatives')
     );
     expect(insertCalls.length).toBe(2);
+  });
+
+  it('duplicates through the canonical owner while preserving fields and resetting identity/state', async () => {
+    queryOne.mockResolvedValue({
+      id: 'source-1',
+      organization_id: ORG,
+      project_id: 'project-1',
+      name: 'Original',
+      title: 'Original',
+      status: 'ACTIVE',
+      summary: 'Preserved summary',
+      created_by: 'old-owner',
+      created_at: '2025-01-01T00:00:00.000Z',
+      updated_at: '2025-01-01T00:00:00.000Z',
+    });
+    queryAll.mockResolvedValue(
+      ['id', 'organization_id', 'project_id', 'name', 'title', 'status', 'summary', 'created_by', 'created_at', 'updated_at'].map(
+        (name) => ({ name })
+      )
+    );
+
+    const result = await duplicateInitiative(ORG, 'source-1', {
+      title: 'Kopia',
+      actor: { id: 'new-owner' },
+    });
+
+    expect(result.id).not.toBe('source-1');
+    expect(result).toMatchObject({ title: 'Kopia', name: 'Kopia', status: 'DRAFT' });
+    const { sql, params } = lastInsert();
+    expect(sql).toContain('summary');
+    expect(params).toContain('Preserved summary');
+    expect(params).toContain('new-owner');
+    expect(params).toContain('DRAFT');
+    expect(auditLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'initiative.created',
+        organizationId: ORG,
+        after: expect.objectContaining({ sourceType: 'duplicate', sourceId: 'source-1' }),
+      })
+    );
+  });
+
+  it('fails closed when the duplicate source is outside the tenant', async () => {
+    queryOne.mockResolvedValue(undefined);
+    await expect(duplicateInitiative(ORG, 'foreign-source')).rejects.toMatchObject({
+      statusCode: 404,
+    });
+    expect(queryRun).not.toHaveBeenCalled();
   });
 });

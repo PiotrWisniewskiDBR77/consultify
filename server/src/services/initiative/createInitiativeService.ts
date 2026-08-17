@@ -107,6 +107,109 @@ export interface CreateInitiativeResult {
   qualityWarnings?: string[];
 }
 
+export interface DuplicateInitiativeOptions {
+  title?: string | null;
+  actor?: { id?: string | null; ip?: string | null; userAgent?: string | null };
+}
+
+/**
+ * Duplicate an Initiative through the same canonical persistence owner as every
+ * other creation path. Duplication intentionally preserves schema-specific
+ * fields from the source row, but the raw INSERT remains here so route handlers
+ * cannot become independent creation writers again.
+ */
+export async function duplicateInitiative(
+  orgId: string,
+  originalId: string,
+  options: DuplicateInitiativeOptions = {}
+): Promise<CreateInitiativeResult> {
+  if (!orgId) throw new Error('organizationId is required to duplicate an initiative');
+
+  const original = (await queryHelpers.queryOne(
+    `SELECT * FROM initiatives WHERE id = ? AND organization_id = ?`,
+    [originalId, orgId]
+  )) as Record<string, unknown> | undefined;
+  if (!original) {
+    const error = new Error('Initiative not found');
+    (error as { statusCode?: number }).statusCode = 404;
+    throw error;
+  }
+
+  const id = uuidv4();
+  const now = new Date().toISOString();
+  const sourceTitle = String(original.title || original.name || 'Initiative');
+  const title = decodeHtmlEntities(String(options.title || `${sourceTitle} (Copy)`));
+  const projectId = await (async () => {
+    const existing = original.project_id ? String(original.project_id) : null;
+    if (existing || !isRequireInitiativeProjectEnabled()) return existing;
+    return resolveOrCreateSystemPortfolioProject(orgId, {
+      createdBy: options.actor?.id ?? null,
+    });
+  })();
+
+  let columns: string[] = [];
+  try {
+    const info = (await queryHelpers.queryAll(`PRAGMA table_info(initiatives)`)) as Array<{
+      name?: string;
+    }>;
+    columns = info.map((row) => String(row.name || '')).filter(Boolean);
+  } catch {
+    columns = [];
+  }
+
+  if (columns.length === 0) {
+    await queryHelpers.queryRun(
+      `INSERT INTO initiatives (id, organization_id, project_id, title, name, status, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, 'DRAFT', ?, ?)`,
+      [id, orgId, projectId, title, title, now, now]
+    );
+  } else {
+    const values = columns.map((column) => {
+      if (column === 'id') return id;
+      if (column === 'organization_id') return orgId;
+      if (column === 'title' || column === 'name') return title;
+      if (column === 'status') return 'DRAFT';
+      if (column === 'project_id') return projectId;
+      if (column === 'created_at' || column === 'updated_at') return now;
+      if (column === 'created_by') return String(options.actor?.id || original.created_by || 'system');
+      if (column === 'updated_by') return String(options.actor?.id || original.updated_by || 'system');
+      return original[column] ?? null;
+    });
+    await queryHelpers.queryRun(
+      `INSERT INTO initiatives (${columns.join(', ')}) VALUES (${columns.map(() => '?').join(', ')})`,
+      values
+    );
+  }
+
+  if (options.actor?.id) {
+    try {
+      await auditEventsService.log({
+        actorId: String(options.actor.id),
+        actorType: 'USER',
+        action: 'initiative.created',
+        resourceType: 'initiative',
+        resourceId: id,
+        organizationId: orgId,
+        after: { id, title, projectId, status: 'DRAFT', sourceType: 'duplicate', sourceId: originalId },
+        ip: options.actor.ip || undefined,
+        userAgent: options.actor.userAgent || undefined,
+      });
+    } catch (error) {
+      logger.warn('[createInitiativeService] duplicate audit failed', error);
+    }
+  }
+
+  return {
+    id,
+    name: title,
+    title,
+    status: 'DRAFT',
+    sourceType: String(original.source_type || 'manual'),
+    sourceId: original.source_id ? String(original.source_id) : null,
+    projectId,
+  };
+}
+
 /**
  * Create one initiative through the canonical funnel. Throws on validation/lineage
  * failure (callers map to HTTP). Org-scoped — `orgId` is mandatory.

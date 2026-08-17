@@ -49,4 +49,18 @@ describe('INI-MVP-PROFILE-001 canonical initiative creation cutover', () => {
     expect(source).toContain('requireInitiativeCapability(capability, { ...options, shadow: false })');
     expect(source).not.toMatch(/\brequireInitiativeCapability\(['"]/);
   });
+
+  it('keeps duplication inside the canonical persistence owner instead of a route writer', () => {
+    const route = fs.readFileSync(
+      path.join(ROOT, 'server/src/routes/pmo/initiatives.routes.ts'),
+      'utf8'
+    );
+    const owner = fs.readFileSync(
+      path.join(ROOT, 'server/src/services/initiative/createInitiativeService.ts'),
+      'utf8'
+    );
+    expect(route).toContain('duplicateInitiative(');
+    expect(route).not.toMatch(/INSERT\s+INTO\s+initiatives/i);
+    expect(owner).toContain('export async function duplicateInitiative(');
+  });
 });
