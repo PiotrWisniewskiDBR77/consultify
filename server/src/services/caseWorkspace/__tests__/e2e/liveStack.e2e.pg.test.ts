@@ -136,6 +136,8 @@ beforeAll(async () => {
   await assertNoAuthBypass();
 
   db = new ControlDb();
+  await db.ensureLoginUser({ ...APPROVER, organizationId: SEED_USER.organizationId, role: 'OWNER' });
+  await db.ensureLoginUser({ ...OTHER_TENANT, userId: 'cw-stream-e-other-user', role: 'OWNER', projectId: OTHER_TENANT.projectId });
   token = await login();
   approverToken = await login(APPROVER.email, APPROVER.password);
   otherToken = await login(OTHER_TENANT.email, OTHER_TENANT.password);

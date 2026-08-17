@@ -311,6 +311,25 @@ export class ControlDb {
     );
   }
 
+  /** Idempotent fixed-identity fixture required before a real login. */
+  async ensureLoginUser(input: {
+    userId: string; organizationId: string; email: string; password: string;
+    role?: 'OWNER' | 'ADMIN' | 'MEMBER'; projectId?: string;
+  }): Promise<void> {
+    await this.pool.query(`INSERT INTO organizations (id,name) VALUES ($1,$2)
+      ON CONFLICT (id) DO NOTHING`, [input.organizationId, `CW E2E ${input.organizationId}`]);
+    if (input.projectId) await this.ensureProject(input.projectId, input.organizationId, `CW E2E ${input.projectId}`);
+    const passwordHash = await bcrypt.hash(input.password, 10);
+    await this.pool.query(`INSERT INTO users (id,organization_id,email,password,first_name,last_name,role,status)
+      VALUES ($1,$2,$3,$4,'CW','E2E','ADMIN','active')
+      ON CONFLICT (id) DO UPDATE SET email=EXCLUDED.email,password=EXCLUDED.password,status='active'`,
+      [input.userId, input.organizationId, input.email.toLowerCase(), passwordHash]);
+    await this.pool.query(`INSERT INTO organization_members (id,organization_id,user_id,role,status)
+      VALUES ($1,$2,$3,$4,'ACTIVE') ON CONFLICT (organization_id,user_id)
+      DO UPDATE SET role=EXCLUDED.role,status='ACTIVE'`,
+      [`cw-e2e-member-${input.userId}`, input.organizationId, input.userId, input.role ?? 'OWNER']);
+  }
+
   async setMembershipStatus(userId: string, orgId: string, status: string): Promise<void> {
     await this.pool.query(
       `UPDATE organization_members SET status = $3 WHERE user_id = $1 AND organization_id = $2`,

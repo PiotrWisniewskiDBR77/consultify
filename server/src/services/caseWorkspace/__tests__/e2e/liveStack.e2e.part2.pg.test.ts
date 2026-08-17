@@ -75,6 +75,7 @@ beforeAll(async () => {
   }
   await assertNoAuthBypass();
   db = new ControlDb();
+  await db.ensureLoginUser({ ...APPROVER, organizationId: SEED_USER.organizationId, role: 'OWNER' });
   token = await login();
   approverToken = await login(APPROVER.email, APPROVER.password);
   await db.ensureProject(PROJECT_ID, SEED_USER.organizationId, `E2E part2 ${SUFFIX}`);
