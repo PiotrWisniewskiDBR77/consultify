@@ -58,12 +58,14 @@ if (!ENABLED) {
 }
 
 const FLAG = 'AUDIT_INDEPENDENCE_DETECTOR_CRON_ENABLED';
-const CLEANUP_LOCK_KEY = 8_113_2028;
+/** Shared with the cursor suite: both own the same global cursor singleton. */
+const SUITE_LOCK_KEY = 8_113_2029;
 
 suite('Scheduler job 43 — audit independence detector flag gate (real Postgres)', () => {
   let auditsDb: typeof import('../../services/audits/auditsDb.js');
   let cursorMod: typeof import('../../services/audits/independenceScanCursor.js');
   let acquirePgClient: typeof import('../../database/PostgresDatabase.js').acquirePgClient;
+  let suiteLockClient: Awaited<ReturnType<typeof acquirePgClient>> | undefined;
 
   const RUN_PREFIX = `aprog_audsched_${randomUUID().replace(/-/g, '')}_`;
   const orgId = `aud-sched-org-${randomUUID()}`;
@@ -82,10 +84,10 @@ suite('Scheduler job 43 — audit independence detector flag gate (real Postgres
   /** Scoped, FK-safe, advisory-locked cleanup of this run's rows plus the singleton it owns. */
   async function cleanupOwnFixtures(): Promise<void> {
     await assertDisposableDatabase();
-    const client = await acquirePgClient();
+    if (!suiteLockClient) throw new Error('AUD_SCHED_SUITE_LOCK_NOT_HELD');
+    const client = suiteLockClient;
     try {
       await client.query('BEGIN');
-      await client.query('SELECT pg_advisory_xact_lock($1)', [CLEANUP_LOCK_KEY]);
       await client.query(`DELETE FROM audit_program_criteria WHERE program_id LIKE $1`, [
         `${RUN_PREFIX}%`,
       ]);
@@ -96,7 +98,7 @@ suite('Scheduler job 43 — audit independence detector flag gate (real Postgres
       await client.query('ROLLBACK').catch(() => {});
       throw err;
     } finally {
-      client.release();
+      // Retained until after final cleanup/residue verification in afterAll.
     }
   }
 
@@ -138,7 +140,15 @@ suite('Scheduler job 43 — audit independence detector flag gate (real Postgres
     cursorMod = await import('../../services/audits/independenceScanCursor.js');
     ({ acquirePgClient } = await import('../../database/PostgresDatabase.js'));
     await assertDisposableDatabase();
-  });
+    const client = await acquirePgClient();
+    try {
+      await client.query('SELECT pg_advisory_lock($1)', [SUITE_LOCK_KEY]);
+      suiteLockClient = client;
+    } catch (error) {
+      client.release();
+      throw error;
+    }
+  }, 120_000);
 
   beforeEach(async () => {
     await cleanupOwnFixtures();
@@ -151,13 +161,28 @@ suite('Scheduler job 43 — audit independence detector flag gate (real Postgres
   });
 
   afterAll(async () => {
-    await cleanupOwnFixtures();
-    const row = await auditsDb.auditGet<{ n: string }>(
-      `SELECT count(*)::text AS n FROM audit_programs WHERE id LIKE $1`,
-      [`${RUN_PREFIX}%`],
-    );
-    expect(Number(row?.n)).toBe(0); // residue0
-  });
+    const client = suiteLockClient;
+    if (!client) throw new Error('AUD_SCHED_SUITE_LOCK_NOT_HELD');
+    try {
+      await cleanupOwnFixtures();
+      const row = await auditsDb.auditGet<{ n: string }>(
+        `SELECT count(*)::text AS n FROM audit_programs WHERE id LIKE $1`,
+        [`${RUN_PREFIX}%`],
+      );
+      expect(Number(row?.n)).toBe(0); // residue0
+    } finally {
+      try {
+        const unlocked = await client.query<{ unlocked: boolean }>(
+          'SELECT pg_advisory_unlock($1) AS unlocked',
+          [SUITE_LOCK_KEY],
+        );
+        expect(unlocked.rows).toEqual([{ unlocked: true }]);
+      } finally {
+        suiteLockClient = undefined;
+        client.release();
+      }
+    }
+  }, 120_000);
 
   describe('flag OFF (default)', () => {
     it('does not import the job module, does not touch the database, and claims nothing', async () => {

@@ -94,8 +94,8 @@ if (!REAL_PG) {
   );
 }
 
-/** Advisory-lock key: constant for this suite, so two concurrent runs serialise instead of interleaving. */
-const CLEANUP_LOCK_KEY = 8_113_2026;
+/** Shared with the Scheduler flag suite: both own the same global cursor row. */
+const SUITE_LOCK_KEY = 8_113_2029;
 
 suite('independenceScanCursor — durable checkpoint + fenced lease (real Postgres)', () => {
   let cursorMod: typeof import('../independenceScanCursor.js');
@@ -110,6 +110,7 @@ suite('independenceScanCursor — durable checkpoint + fenced lease (real Postgr
    */
   const RUN_PREFIX = `aprog_audindep_${randomUUID().replace(/-/g, '')}_`;
   let acquirePgClient: typeof import('../../../database/PostgresDatabase.js').acquirePgClient;
+  let suiteLockClient: Awaited<ReturnType<typeof acquirePgClient>> | undefined;
 
   /**
    * Refuses unless the server itself reports a database whose name starts with
@@ -143,10 +144,10 @@ suite('independenceScanCursor — durable checkpoint + fenced lease (real Postgr
    */
   async function cleanupOwnFixtures(prefixOverride?: string): Promise<void> {
     await assertDisposableDatabase(prefixOverride);
-    const client = await acquirePgClient();
+    if (!suiteLockClient) throw new Error('AUD_INDEPENDENCE_SUITE_LOCK_NOT_HELD');
+    const client = suiteLockClient;
     try {
       await client.query('BEGIN');
-      await client.query('SELECT pg_advisory_xact_lock($1)', [CLEANUP_LOCK_KEY]);
       const like = `${RUN_PREFIX}%`;
       // Children first (FK-safe), then the parent rows — all restricted to ids
       // this run created. No unqualified DELETE, no TRUNCATE.
@@ -158,7 +159,8 @@ suite('independenceScanCursor — durable checkpoint + fenced lease (real Postgr
       await client.query('ROLLBACK').catch(() => {});
       throw err;
     } finally {
-      client.release();
+      // The retained session owns the suite-level advisory lock and is released
+      // only after final cleanup/residue verification in afterAll.
     }
   }
 
@@ -176,17 +178,40 @@ suite('independenceScanCursor — durable checkpoint + fenced lease (real Postgr
     auditsDb = await import('../auditsDb.js');
     ({ acquirePgClient } = await import('../../../database/PostgresDatabase.js'));
     await assertDisposableDatabase();
-  });
+    const client = await acquirePgClient();
+    try {
+      await client.query('SELECT pg_advisory_lock($1)', [SUITE_LOCK_KEY]);
+      suiteLockClient = client;
+    } catch (error) {
+      client.release();
+      throw error;
+    }
+  }, 120_000);
 
   beforeEach(async () => {
     await cleanupOwnFixtures();
   });
 
   afterAll(async () => {
-    await cleanupOwnFixtures();
-    // Residue assertion: this run must leave none of its own rows behind.
-    expect(await countOwnPrograms()).toBe(0);
-  });
+    const client = suiteLockClient;
+    if (!client) throw new Error('AUD_INDEPENDENCE_SUITE_LOCK_NOT_HELD');
+    try {
+      await cleanupOwnFixtures();
+      // Residue assertion: this run must leave none of its own rows behind.
+      expect(await countOwnPrograms()).toBe(0);
+    } finally {
+      try {
+        const unlocked = await client.query<{ unlocked: boolean }>(
+          'SELECT pg_advisory_unlock($1) AS unlocked',
+          [SUITE_LOCK_KEY],
+        );
+        expect(unlocked.rows).toEqual([{ unlocked: true }]);
+      } finally {
+        suiteLockClient = undefined;
+        client.release();
+      }
+    }
+  }, 120_000);
 
   async function seedPrograms(count: number): Promise<string[]> {
     const ids: string[] = [];
@@ -424,7 +449,8 @@ suite('independenceScanCursor — durable checkpoint + fenced lease (real Postgr
       const client = await acquirePgClient();
       try {
         await client.query('BEGIN');
-        await client.query('SELECT pg_advisory_xact_lock($1)', [CLEANUP_LOCK_KEY]);
+        // The retained suite session already holds SUITE_LOCK_KEY. Re-locking
+        // the same key from this different session would deadlock the suite.
         const res = await client.query(`DELETE FROM audit_programs WHERE id LIKE $1`, [
           `${RUN_PREFIX}%`,
         ]);
