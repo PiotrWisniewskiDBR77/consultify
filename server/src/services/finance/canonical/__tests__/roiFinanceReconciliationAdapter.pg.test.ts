@@ -266,9 +266,12 @@ describe.skipIf(!REAL_PG)(
     // next scenario and turn test ordering into product behavior.
     beforeEach(async () => {
       if (!raw || !orgId) return;
+      await raw.query(`SET session_replication_role = replica`);
+      await raw.query(`DELETE FROM rvn_finance_reconciliation_decisions WHERE organization_id = $1`, [orgId]);
       await raw.query(`DELETE FROM rvn_roi_finance_reconciliations WHERE organization_id = $1`, [
         orgId,
       ]);
+      await raw.query(`SET session_replication_role = origin`);
     });
 
     afterAll(async () => {
@@ -285,10 +288,13 @@ describe.skipIf(!REAL_PG)(
            FOR EACH ROW EXECUTE FUNCTION benefit_tracking_deny_actual_overwrite()`
         );
         if (createdLinkIds.length > 0) {
+          await raw.query(`SET session_replication_role = replica`);
+          await raw.query(`DELETE FROM rvn_finance_reconciliation_decisions WHERE organization_id = $1`, [orgId]);
           await raw.query(
             `DELETE FROM rvn_roi_finance_reconciliations WHERE organization_id = $1`,
             [orgId]
           );
+          await raw.query(`SET session_replication_role = origin`);
           await raw.query(`DELETE FROM rvn_roi_finance_links WHERE link_id = ANY($1::uuid[])`, [
             createdLinkIds,
           ]);
@@ -300,7 +306,9 @@ describe.skipIf(!REAL_PG)(
 
     async function readReconciliation(reconciliationId: string) {
       const result = await raw.query(
-        `SELECT reconciliation_id, case_id, finance_link_id, roi_value, finance_value, status,
+        `SELECT reconciliation_id, case_id, finance_link_id, roi_value, finance_value,
+              reconciliation_kind, materiality_threshold_pct,
+              decision_policy_version, decision_policy_digest, status,
               opened_by, resolved_by, resolution_notes, row_version
          FROM rvn_roi_finance_reconciliations WHERE reconciliation_id = $1`,
         [reconciliationId]
@@ -327,7 +335,7 @@ describe.skipIf(!REAL_PG)(
 
     describe('detectAndReconcile', () => {
       it('opens a reconciliation ABOVE the threshold, with explicit scalar roi_value/finance_value', async () => {
-        // 100 -> 120 = 20% divergence, four times the provisional 5% threshold.
+        // 100 -> 120 = 20% divergence, four times the approved 5% threshold.
         const result = await adapter.detectAndReconcile({
           organizationId: orgId,
           caseId,
@@ -342,7 +350,7 @@ describe.skipIf(!REAL_PG)(
         expect(result.material).toBe(true);
         expect(result.reconciliationOpened).toBe(true);
         expect(result.divergencePercent).toBeCloseTo(20, 6);
-        expect(result.thresholdPercent).toBe(adapter.PROVISIONAL_MATERIALITY_THRESHOLD_PCT);
+        expect(result.thresholdPercent).toBe(adapter.FINANCE_RECONCILIATION_MATERIALITY_THRESHOLD_PCT);
         expect(result.reconciliationId).toBeTruthy();
 
         // Read back OUT OF BAND: the seam stores jawne skalary, not a jsonb blob.
@@ -355,6 +363,12 @@ describe.skipIf(!REAL_PG)(
         expect(row.finance_link_id).toBe(linkId);
         expect(row.opened_by).toBe(userId);
         expect(row.resolved_by).toBeNull();
+        expect(row.reconciliation_kind).toBe('dispute');
+        expect(Number(row.materiality_threshold_pct)).toBe(5);
+        expect(row.decision_policy_version).toBe('DEC-FIN-RESULTS-RECONCILIATION-001/v1');
+        expect(row.decision_policy_digest).toBe(
+          'sha256:a0b04a2bcd42d9fa8a2680f0dd35008f4226bc92db5ecc63756732d7a8854e6d'
+        );
       });
 
       it('writes NOTHING below the threshold (no row, no event)', async () => {
@@ -410,20 +424,60 @@ describe.skipIf(!REAL_PG)(
         expect(result.reconciliationOpened).toBe(false);
       });
 
-      it('honours a caller-supplied threshold (per-org override once the owner decides)', async () => {
+      it('opens at 5.0001% and does not permit a caller override of the frozen threshold', async () => {
         const result = await adapter.detectAndReconcile({
           organizationId: orgId,
           caseId,
           linkId,
           roiValue: 100,
-          financeValue: 102,
+          financeValue: 105.0001,
           actorId: userId,
-          thresholdPercent: 1,
           access: { capabilities: ['*'], platformRole: null },
         });
         expect(result.material).toBe(true);
         expect(result.reconciliationOpened).toBe(true);
-        expect(result.thresholdPercent).toBe(1);
+        expect(result.divergencePercent).toBeCloseTo(5.0001, 6);
+        expect(result.thresholdPercent).toBe(5);
+      });
+
+      it('uses absolute divergence for negative values and the non-zero Finance side when ROI base is zero', async () => {
+        expect(adapter.assessMateriality(-100, -105)).toMatchObject({
+          divergenceAbsolute: 5,
+          divergencePercent: 5,
+          material: false,
+        });
+        expect(adapter.assessMateriality(-100, -105.0001).material).toBe(true);
+        expect(adapter.assessMateriality(0, 100)).toMatchObject({
+          divergenceAbsolute: 100,
+          divergencePercent: 100,
+          material: true,
+        });
+        expect(adapter.assessMateriality(0, 0)).toMatchObject({
+          divergenceAbsolute: 0,
+          divergencePercent: null,
+          material: false,
+        });
+      });
+
+      it('rejects direct SQL mutation of immutable proposal facts', async () => {
+        const opened = await adapter.detectAndReconcile({
+          organizationId: orgId,
+          caseId,
+          linkId,
+          roiValue: 100,
+          financeValue: 120,
+          actorId: userId,
+          reconciliationKind: 'proposal',
+          access: { capabilities: ['*'], platformRole: null },
+        });
+        const id = opened.reconciliationId!;
+        await expect(
+          raw.query(
+            `UPDATE rvn_roi_finance_reconciliations SET finance_value = finance_value + 1
+              WHERE reconciliation_id = $1`,
+            [id]
+          )
+        ).rejects.toThrow(/immutable/i);
       });
 
       it('rejects a link that does not belong to the case (canonical validation, not ours)', async () => {
@@ -497,7 +551,7 @@ describe.skipIf(!REAL_PG)(
         const id = await openOne();
         const updated = await adapter.resolveReconciliationDecision(
           id,
-          userId,
+          `acceptor-${userId}`,
           'Known FX timing difference, accepted by the CFO.',
           'accepted_divergence',
           { organizationId: orgId, access: { capabilities: ['*'], platformRole: null } }
@@ -509,7 +563,7 @@ describe.skipIf(!REAL_PG)(
       it('respects CAS: a stale expectedVersion is rejected, the row is untouched', async () => {
         const id = await openOne();
         await expect(
-          adapter.resolveReconciliationDecision(id, userId, 'stale attempt', 'resolved', {
+          adapter.resolveReconciliationDecision(id, `resolver-${userId}`, 'stale attempt', 'resolved', {
             organizationId: orgId,
             expectedVersion: 99,
             access: { capabilities: ['*'], platformRole: null },
@@ -524,7 +578,7 @@ describe.skipIf(!REAL_PG)(
       it('hides a reconciliation from another organization behind NOT_FOUND', async () => {
         const id = await openOne();
         await expect(
-          adapter.resolveReconciliationDecision(id, userId, null, 'resolved', {
+          adapter.resolveReconciliationDecision(id, `resolver-${userId}`, null, 'resolved', {
             organizationId: `other-org-${randomUUID()}`,
             access: { capabilities: ['*'], platformRole: null },
           })

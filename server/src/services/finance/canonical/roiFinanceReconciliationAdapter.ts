@@ -38,15 +38,8 @@
  *     an initiative id or a bare reconciliation id does not yet know the
  *     case id. Both are strictly reads; neither bypasses a write path.
  *
- * MATERIALITY THRESHOLD — PROVISIONAL_PENDING_OWNER_DECISION.
- * `docs/validation/finance-v3/generated/gate-b/GATE_B_INTEGRATION_RECONCILIATION.md`
- * §7 (B02-Q4) escalates the real number to the owner (Decyzja właścicielska
- * #8) and, so Gate C is not blocked, fixes a temporary placeholder: 5% of the
- * line value, explicitly marked provisional in code. That is the default
- * below. It is a DEFAULT, not a constant baked into call sites: every entry
- * point takes an optional `thresholdPercent` so a per-organization threshold
- * can be threaded through the day the owner decides, without touching this
- * file's logic.
+ * MATERIALITY THRESHOLD — final DEC-FIN policy: above 5% opens; exactly 5%
+ * remains within tolerance. Callers cannot override the approved boundary.
  */
 import { randomUUID } from 'node:crypto';
 
@@ -72,11 +65,9 @@ import {
 // ==========================================
 
 /**
- * PROVISIONAL_PENDING_OWNER_DECISION — Gate B §7 (B02-Q4) placeholder.
- * 5 (percent) of the line value. NOT final; must not enter any GO-gate as a
- * settled number without the owner's confirmation.
+ * Approved DEC-FIN materiality boundary.
  */
-export const PROVISIONAL_MATERIALITY_THRESHOLD_PCT = 5;
+export const FINANCE_RECONCILIATION_MATERIALITY_THRESHOLD_PCT = 5;
 
 /** Terminal decisions a human can record on an open reconciliation. */
 export type RoiFinanceReconciliationResolution = Extract<
@@ -145,7 +136,7 @@ export interface MaterialityVerdict {
 export function assessMateriality(
   roiValue: number,
   financeValue: number,
-  thresholdPercent: number = PROVISIONAL_MATERIALITY_THRESHOLD_PCT
+  thresholdPercent: number = FINANCE_RECONCILIATION_MATERIALITY_THRESHOLD_PCT
 ): MaterialityVerdict {
   if (!Number.isFinite(roiValue) || !Number.isFinite(financeValue)) {
     throw new RoiFinanceReconciliationAdapterError(
@@ -184,8 +175,7 @@ export interface DetectAndReconcileParams {
   financeValue: number;
   actorId: string;
   divergenceReason?: string | null;
-  /** Overrides the provisional 5% default (per-org threshold, once decided). */
-  thresholdPercent?: number;
+  reconciliationKind?: 'proposal' | 'dispute';
   actorEffectiveRole?: string;
   /** Supply a stable key to make a retried detection idempotent. */
   idempotencyKey?: string;
@@ -225,7 +215,7 @@ export async function detectAndReconcile(
     financeValue,
     actorId,
     divergenceReason = null,
-    thresholdPercent = PROVISIONAL_MATERIALITY_THRESHOLD_PCT,
+    reconciliationKind = 'dispute',
     actorEffectiveRole = DEFAULT_ACTOR_ROLE,
     idempotencyKey = `roi-fin-reconcile-${randomUUID()}`,
     correlationId,
@@ -234,7 +224,11 @@ export async function detectAndReconcile(
     access,
   } = params;
 
-  const verdict = assessMateriality(roiValue, financeValue, thresholdPercent);
+  const verdict = assessMateriality(
+    roiValue,
+    financeValue,
+    FINANCE_RECONCILIATION_MATERIALITY_THRESHOLD_PCT
+  );
 
   if (!verdict.material) {
     return {
@@ -256,6 +250,8 @@ export async function detectAndReconcile(
     financeLinkId: linkId,
     roiValue,
     financeValue,
+    reconciliationKind,
+    materialityThresholdPercent: FINANCE_RECONCILIATION_MATERIALITY_THRESHOLD_PCT,
     divergenceReason: divergenceReason ?? buildDefaultDivergenceReason(verdict),
     actorUserId: actorId,
     actorEffectiveRole,
@@ -278,8 +274,7 @@ function buildDefaultDivergenceReason(verdict: MaterialityVerdict): string {
   const pct = verdict.divergencePercent === null ? 'n/a' : verdict.divergencePercent.toFixed(2);
   return (
     `Finance value diverges from the recorded ROI value by ${verdict.divergenceAbsolute} ` +
-    `(${pct}%), above the ${verdict.thresholdPercent}% materiality threshold ` +
-    `(PROVISIONAL_PENDING_OWNER_DECISION, Gate B §7 / B02-Q4)`
+    `(${pct}%), above the ${verdict.thresholdPercent}% DEC-FIN materiality threshold`
   );
 }
 

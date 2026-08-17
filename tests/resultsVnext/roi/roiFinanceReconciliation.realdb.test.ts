@@ -49,6 +49,7 @@ const DB_CONFIGURED = buildClientConfig() !== null;
 const tag = `${Date.now().toString(36)}_${randomUUID().slice(0, 8)}`;
 const ORG_ID = `roi-e007-fin-recon-org-${tag}`;
 const USER_MAKER = `roi-e007-fin-recon-maker-${tag}`;
+const USER_RESOLVER = `roi-e007-fin-recon-resolver-${tag}`;
 const INITIATIVE_ID = `roi-e007-fin-recon-init-${tag}`;
 
 let client: Client;
@@ -201,7 +202,10 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
 
   afterAll(async () => {
     if (!reachable) return;
+    await client.query(`SET session_replication_role = replica`);
+    await client.query(`DELETE FROM rvn_finance_reconciliation_decisions WHERE organization_id = $1`, [ORG_ID]);
     await client.query(`DELETE FROM rvn_roi_finance_reconciliations WHERE organization_id = $1`, [ORG_ID]);
+    await client.query(`SET session_replication_role = origin`);
     await client.query(`DELETE FROM rvn_roi_finance_links WHERE organization_id = $1`, [ORG_ID]);
     await client.query(
       `DELETE FROM rvn_platform_resource_acl
@@ -344,7 +348,7 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
         organizationId: ORG_ID,
         expectedVersion: openOutcome.result.rowVersion, // stale — already moved to updateOutcome.resultingVersion
         status: 'resolved',
-        actorUserId: USER_MAKER,
+        actorUserId: USER_RESOLVER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `recon-cas-stale-${randomUUID()}`,
         access: { capabilities: ['*'], platformRole: null },
@@ -373,13 +377,13 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
       expectedVersion: openOutcome.result.rowVersion,
       status: 'resolved',
       resolutionNotes: 'Confirmed timing difference, both figures correct',
-      actorUserId: USER_MAKER,
+      actorUserId: USER_RESOLVER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `recon-resolve-${randomUUID()}`,
         access: { capabilities: ['*'], platformRole: null },
 });
     expect(resolvedOutcome.result.status).toBe('resolved');
-    expect(resolvedOutcome.result.resolvedBy).toBe(USER_MAKER);
+    expect(resolvedOutcome.result.resolvedBy).toBe(USER_RESOLVER);
     expect(resolvedOutcome.result.resolvedAt).not.toBeNull();
     expect(resolvedOutcome.result.resolutionNotes).toBe('Confirmed timing difference, both figures correct');
   });
@@ -436,7 +440,7 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
         expectedVersion: investigatingOutcome.resultingVersion,
         status: 'accepted_divergence',
         resolutionNotes: 'Client accepted residual variance',
-        actorUserId: USER_MAKER,
+        actorUserId: USER_RESOLVER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: `recon-fanout-accepted-${randomUUID()}`,
         access: { capabilities: ['*'], platformRole: null },
@@ -445,4 +449,105 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
       expect(resolvedGroups).toEqual(['finance_projection', 'mywork_projection']);
     }
   );
+
+  itDB('DEC-FIN: terminal resolution is capability-only, forbids responsible/self bypass, and CAS has one winner', async () => {
+    const fixture = await buildCaseWithFinanceLink('7');
+    const idempotencyKey = `recon-policy-${randomUUID()}`;
+    const openInput = {
+      caseId: fixture.caseId,
+      organizationId: ORG_ID,
+      financeLinkId: fixture.linkId,
+      reconciliationKind: 'proposal' as const,
+      roiValue: -100,
+      financeValue: -105.0001,
+      actorUserId: USER_MAKER,
+      actorEffectiveRole: 'member',
+      idempotencyKey,
+      access: { capabilities: ['results.roi.finance_reconciliation.open'], platformRole: null },
+    };
+    const opened = await openRoiFinanceReconciliation(openInput);
+    const replayed = await openRoiFinanceReconciliation(openInput);
+    expect(replayed.outcome).toBe('duplicate');
+    expect(replayed.result.reconciliationId).toBe(opened.result.reconciliationId);
+    expect(opened.result).toMatchObject({
+      reconciliationKind: 'proposal',
+      materialityThresholdPercent: 5,
+      decisionPolicyVersion: 'DEC-FIN-RESULTS-RECONCILIATION-001/v1',
+      decisionPolicyDigest: 'sha256:a0b04a2bcd42d9fa8a2680f0dd35008f4226bc92db5ecc63756732d7a8854e6d',
+    });
+
+    const common = {
+      reconciliationId: opened.result.reconciliationId,
+      caseId: fixture.caseId,
+      organizationId: ORG_ID,
+      expectedVersion: opened.result.rowVersion,
+      status: 'resolved' as const,
+      actorEffectiveRole: 'member',
+    };
+    await expect(updateRoiFinanceReconciliationStatus({
+      ...common,
+      actorUserId: USER_MAKER,
+      idempotencyKey: `self-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
+    })).rejects.toMatchObject({ code: 'FINANCE_RECONCILIATION_SELF_RESOLUTION_DENIED' });
+    await expect(updateRoiFinanceReconciliationStatus({
+      ...common,
+      actorUserId: USER_RESOLVER,
+      idempotencyKey: `unauthorized-${randomUUID()}`,
+      access: { capabilities: [], platformRole: null },
+    })).rejects.toMatchObject({ code: 'COMMAND_CAPABILITY_DENIED' });
+
+    const attempts = await Promise.allSettled([
+      updateRoiFinanceReconciliationStatus({
+        ...common,
+        actorUserId: USER_RESOLVER,
+        idempotencyKey: `winner-a-${randomUUID()}`,
+        access: { capabilities: ['results.roi.finance_reconciliation.resolve'], platformRole: null },
+      }),
+      updateRoiFinanceReconciliationStatus({
+        ...common,
+        actorUserId: `${USER_RESOLVER}-other`,
+        idempotencyKey: `winner-b-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
+      }),
+    ]);
+    expect(attempts.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
+    expect(attempts.filter((result) => result.status === 'rejected')).toHaveLength(1);
+
+    const decision = await client.query<{
+      decision_id: string;
+      decision_version: number;
+      decision_policy_digest: string;
+    }>(
+      `SELECT decision_id, decision_version, decision_policy_digest
+         FROM rvn_finance_reconciliation_decisions
+        WHERE reconciliation_id = $1`,
+      [opened.result.reconciliationId]
+    );
+    expect(decision.rows).toHaveLength(1);
+    expect(decision.rows[0]).toMatchObject({
+      decision_version: 2,
+      decision_policy_digest: 'sha256:a0b04a2bcd42d9fa8a2680f0dd35008f4226bc92db5ecc63756732d7a8854e6d',
+    });
+    await expect(
+      client.query(
+        `UPDATE rvn_finance_reconciliation_decisions SET resolution_notes='tampered'
+          WHERE decision_id=$1`,
+        [decision.rows[0]!.decision_id]
+      )
+    ).rejects.toThrow(/append-only/i);
+
+    const event = await client.query<{ policy_version: string; payload: Record<string, unknown> }>(
+      `SELECT policy_version, payload FROM rvn_platform_events
+        WHERE organization_id = $1 AND event_type = 'roi.finance_reconciliation_resolved'
+          AND aggregate_id = $2 ORDER BY occurred_at DESC LIMIT 1`,
+      [ORG_ID, fixture.caseId]
+    );
+    expect(event.rows[0]?.policy_version).toBe(
+      'DEC-FIN-RESULTS-RECONCILIATION-001/v1@sha256:a0b04a2bcd42d9fa8a2680f0dd35008f4226bc92db5ecc63756732d7a8854e6d'
+    );
+    expect(event.rows[0]?.payload).toMatchObject({
+      decisionPolicyVersion: 'DEC-FIN-RESULTS-RECONCILIATION-001/v1',
+    });
+  });
 });

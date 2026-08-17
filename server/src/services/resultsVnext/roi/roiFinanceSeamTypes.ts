@@ -110,6 +110,12 @@ export interface RoiFinanceReconciliationRow {
   finance_link_id: string;
   roi_value: string;
   finance_value: string;
+  reconciliation_kind: 'proposal' | 'dispute';
+  materiality_threshold_pct: string;
+  decision_policy_version: string;
+  decision_policy_digest: string;
+  terminal_decision_id: string | null;
+  terminal_decision_version: number | null;
   divergence_reason: string | null;
   status: RoiFinanceReconciliationStatus;
   opened_by: string;
@@ -127,6 +133,12 @@ export interface RoiFinanceReconciliation {
   financeLinkId: string;
   roiValue: number | null;
   financeValue: number | null;
+  reconciliationKind: 'proposal' | 'dispute';
+  materialityThresholdPercent: number;
+  decisionPolicyVersion: string;
+  decisionPolicyDigest: string;
+  terminalDecisionId: string | null;
+  terminalDecisionVersion: number | null;
   divergenceReason: string | null;
   status: RoiFinanceReconciliationStatus;
   openedBy: string;
@@ -145,6 +157,12 @@ export function toRoiFinanceReconciliation(row: RoiFinanceReconciliationRow): Ro
     financeLinkId: row.finance_link_id,
     roiValue: toNullableNumber(row.roi_value),
     financeValue: toNullableNumber(row.finance_value),
+    reconciliationKind: row.reconciliation_kind,
+    materialityThresholdPercent: Number(row.materiality_threshold_pct),
+    decisionPolicyVersion: row.decision_policy_version,
+    decisionPolicyDigest: row.decision_policy_digest,
+    terminalDecisionId: row.terminal_decision_id,
+    terminalDecisionVersion: row.terminal_decision_version,
     divergenceReason: row.divergence_reason,
     status: row.status,
     openedBy: row.opened_by,

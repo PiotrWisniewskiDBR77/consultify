@@ -80,6 +80,13 @@ export class RoiFinanceReconciliationValidationError extends Error {
 export const ROI_FINANCE_RECONCILIATION_CAPABILITIES = {
   open: 'results.roi.finance_reconciliation.open',
   updateStatus: 'results.roi.finance_reconciliation.update_status',
+  resolve: 'results.roi.finance_reconciliation.resolve',
+} as const;
+
+export const FINANCE_RECONCILIATION_POLICY = {
+  version: 'DEC-FIN-RESULTS-RECONCILIATION-001/v1',
+  digest: 'sha256:a0b04a2bcd42d9fa8a2680f0dd35008f4226bc92db5ecc63756732d7a8854e6d',
+  materialityThresholdPercent: 5,
 } as const;
 
 async function loadRoiCaseOwnerUserId(
@@ -104,6 +111,8 @@ export interface OpenRoiFinanceReconciliationInput {
   financeLinkId: string;
   roiValue: number;
   financeValue: number;
+  reconciliationKind?: 'proposal' | 'dispute';
+  materialityThresholdPercent?: number;
   divergenceReason?: string | null;
   actorUserId: string;
   actorEffectiveRole: string;
@@ -123,6 +132,8 @@ export async function openRoiFinanceReconciliation(
     financeLinkId,
     roiValue,
     financeValue,
+    reconciliationKind = 'dispute',
+    materialityThresholdPercent = FINANCE_RECONCILIATION_POLICY.materialityThresholdPercent,
     divergenceReason = null,
     actorUserId,
     actorEffectiveRole,
@@ -136,6 +147,23 @@ export async function openRoiFinanceReconciliation(
   return executeAtomicCreate<RoiFinanceReconciliation>({
     organizationId,
     applyMutation: async (client) => {
+      // The table permits only one open reconciliation per Finance link. A
+      // retried create must therefore serialize on its tenant/idempotency key
+      // before the domain INSERT; otherwise the domain unique index can fire
+      // before executeAtomicCreate reaches its event-level replay guard.
+      await client.query(`SELECT pg_advisory_xact_lock(hashtext($1), hashtext($2))`, [
+        organizationId,
+        idempotencyKey,
+      ]);
+      const replay = await client.query<{ after_state: { reconciliation?: RoiFinanceReconciliation } | null }>(
+        `SELECT after_state FROM rvn_platform_events
+          WHERE organization_id = $1 AND idempotency_key = $2
+          LIMIT 1`,
+        [organizationId, idempotencyKey]
+      );
+      const replayedReconciliation = replay.rows[0]?.after_state?.reconciliation;
+      if (replayedReconciliation) return replayedReconciliation;
+
       const caseOwnerUserId = await loadRoiCaseOwnerUserId(client, caseId, organizationId);
       assertCommandCapability({
         access,
@@ -153,12 +181,17 @@ export async function openRoiFinanceReconciliation(
       }
 
       const insertResult = await client.query<RoiFinanceReconciliationRow>(
-        `INSERT INTO rvn_roi_finance_reconciliations (
+         `INSERT INTO rvn_roi_finance_reconciliations (
            case_id, organization_id, finance_link_id, roi_value, finance_value,
+           reconciliation_kind, materiality_threshold_pct,
+           decision_policy_version, decision_policy_digest,
            divergence_reason, status, opened_by
-         ) VALUES ($1,$2,$3,$4,$5,$6,'open',$7)
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'open',$11)
          RETURNING *`,
-        [caseId, organizationId, financeLinkId, roiValue, financeValue, divergenceReason, actorUserId]
+        [caseId, organizationId, financeLinkId, roiValue, financeValue,
+          reconciliationKind, materialityThresholdPercent,
+          FINANCE_RECONCILIATION_POLICY.version, FINANCE_RECONCILIATION_POLICY.digest,
+          divergenceReason, actorUserId]
       );
       const row = insertResult.rows[0];
       if (!row) throw new Error('[openRoiFinanceReconciliation] insert returned no row');
@@ -178,7 +211,7 @@ export async function openRoiFinanceReconciliation(
         correlationId: correlationId ?? randomUUID(),
         causationId,
         occurredAt: new Date().toISOString(),
-        policyVersion: '',
+        policyVersion: `${FINANCE_RECONCILIATION_POLICY.version}@${FINANCE_RECONCILIATION_POLICY.digest}`,
         beforeState: null,
         afterState,
         stateHash: computeStateHash(afterState),
@@ -188,8 +221,23 @@ export async function openRoiFinanceReconciliation(
         idempotencyKey,
         expectedVersion: null,
         resultingVersion: 1,
-        payload: { caseId, reconciliationId: result.reconciliationId },
+        payload: {
+          caseId,
+          reconciliationId: result.reconciliationId,
+          reconciliationKind: result.reconciliationKind,
+          decisionPolicyVersion: result.decisionPolicyVersion,
+          decisionPolicyDigest: result.decisionPolicyDigest,
+        },
       } satisfies AtomicEventInput;
+    },
+    loadExistingResult: async (_client, existingEvent) => {
+      const afterState = existingEvent.after_state as { reconciliation?: RoiFinanceReconciliation } | null;
+      if (!afterState?.reconciliation) {
+        throw new Error(
+          `[openRoiFinanceReconciliation] replay event ${existingEvent.event_id} has no reconciliation result`
+        );
+      }
+      return afterState.reconciliation;
     },
   });
 }
@@ -268,27 +316,52 @@ export async function updateRoiFinanceReconciliationStatus(
       }
 
       const caseOwnerUserId = await loadRoiCaseOwnerUserId(client, caseId, organizationId);
-      assertCommandCapability({
-        access,
-        actorUserId,
-        capability: ROI_FINANCE_RECONCILIATION_CAPABILITIES.updateStatus,
-        responsibleUserIds: [caseOwnerUserId],
-      });
-
       beforeState = { reconciliation: toRoiFinanceReconciliation(currentRow) };
 
       isTerminalTransition = ROI_FINANCE_RECONCILIATION_TERMINAL_STATUSES.includes(status);
+      assertCommandCapability({
+        access,
+        actorUserId,
+        capability: isTerminalTransition
+          ? ROI_FINANCE_RECONCILIATION_CAPABILITIES.resolve
+          : ROI_FINANCE_RECONCILIATION_CAPABILITIES.updateStatus,
+        // DEC-FIN: a case responsible member is not a Finance owner and may
+        // never terminally resolve/accept. The responsible bypass remains
+        // only for the non-terminal investigating workflow.
+        responsibleUserIds: isTerminalTransition ? undefined : [caseOwnerUserId],
+      });
+      if (isTerminalTransition && currentRow.opened_by === actorUserId) {
+        throw new RoiFinanceReconciliationValidationError(
+          'The actor who opened a Finance reconciliation may not resolve or accept it.',
+          'FINANCE_RECONCILIATION_SELF_RESOLUTION_DENIED'
+        );
+      }
       const mergedNotes = resolutionNotes !== undefined ? resolutionNotes : currentRow.resolution_notes;
+      const terminalDecisionId = isTerminalTransition ? randomUUID() : currentRow.terminal_decision_id;
+      if (isTerminalTransition) {
+        await client.query(
+          `INSERT INTO rvn_finance_reconciliation_decisions (
+             decision_id, reconciliation_id, organization_id, decision_version,
+             decision_status, resolution_notes, decided_by,
+             decision_policy_version, decision_policy_digest
+           ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+          [terminalDecisionId, reconciliationId, organizationId, nextVersion,
+            status, mergedNotes, actorUserId,
+            FINANCE_RECONCILIATION_POLICY.version, FINANCE_RECONCILIATION_POLICY.digest]
+        );
+      }
 
       const updateResult = await client.query<RoiFinanceReconciliationRow>(
         `UPDATE rvn_roi_finance_reconciliations
             SET status = $1, resolution_notes = $2,
                 resolved_by = CASE WHEN $3 THEN $4 ELSE resolved_by END,
                 resolved_at = CASE WHEN $3 THEN now() ELSE resolved_at END,
-                row_version = $5
-          WHERE reconciliation_id = $6
+                terminal_decision_id = CASE WHEN $3 THEN $5 ELSE terminal_decision_id END,
+                terminal_decision_version = CASE WHEN $3 THEN $6 ELSE terminal_decision_version END,
+                row_version = $6
+          WHERE reconciliation_id = $7
           RETURNING *`,
-        [status, mergedNotes, isTerminalTransition, actorUserId, nextVersion, reconciliationId]
+        [status, mergedNotes, isTerminalTransition, actorUserId, terminalDecisionId, nextVersion, reconciliationId]
       );
       const updatedRow = updateResult.rows[0];
       if (!updatedRow) {
@@ -317,7 +390,7 @@ export async function updateRoiFinanceReconciliationStatus(
         correlationId: correlationId ?? randomUUID(),
         causationId,
         occurredAt: new Date().toISOString(),
-        policyVersion: '',
+        policyVersion: `${result.decisionPolicyVersion}@${result.decisionPolicyDigest}`,
         beforeState,
         afterState,
         stateHash: computeStateHash(afterState),
@@ -327,7 +400,14 @@ export async function updateRoiFinanceReconciliationStatus(
         idempotencyKey,
         expectedVersion,
         resultingVersion: nextVersion,
-        payload: { caseId, reconciliationId },
+        payload: {
+          caseId,
+          reconciliationId,
+          decisionPolicyVersion: result.decisionPolicyVersion,
+          decisionPolicyDigest: result.decisionPolicyDigest,
+          terminalDecisionId: result.terminalDecisionId,
+          terminalDecisionVersion: result.terminalDecisionVersion,
+        },
       } satisfies AtomicEventInput;
     },
   });
