@@ -16,10 +16,27 @@ export interface OrgUiGovernedFixture {
   cleanup(): Promise<void>;
 }
 
+const CLEANUP_OPT_IN = 'ORG_UI_ALLOW_IMMUTABLE_FIXTURE_CLEANUP';
+const DISPOSABLE_DB_PREFIX_ENV = 'ORG_UI_DISPOSABLE_DB_PREFIX';
+
 export async function createOrgUiGovernedFixture(): Promise<OrgUiGovernedFixture> {
   const databaseUrl = process.env.DATABASE_URL ?? '';
   if (!databaseUrl.startsWith('postgres')) throw new Error('real PostgreSQL DATABASE_URL required');
+  if (process.env[CLEANUP_OPT_IN] !== '1') {
+    throw new Error(`${CLEANUP_OPT_IN}=1 is required for scoped immutable fixture cleanup`);
+  }
+  const disposablePrefix = process.env[DISPOSABLE_DB_PREFIX_ENV]?.trim();
+  if (!disposablePrefix) {
+    throw new Error(`${DISPOSABLE_DB_PREFIX_ENV} is required`);
+  }
   const pool = new Pool({ connectionString: databaseUrl });
+  const database = await pool.query<{ name: string }>('SELECT current_database() AS name');
+  if (!database.rows[0]?.name.startsWith(disposablePrefix)) {
+    await pool.end();
+    throw new Error(
+      `Refusing ORG UI fixture cleanup outside disposable database prefix ${disposablePrefix}`
+    );
+  }
   const organizationId = randomUUID();
   const foreignOrganizationId = randomUUID();
   const docId = randomUUID();
@@ -85,38 +102,64 @@ export async function createOrgUiGovernedFixture(): Promise<OrgUiGovernedFixture
   ) as Record<OrgUiPersona, string>;
 
   const cleanupRows = async () => {
-    await pool.query(
-      `DELETE FROM organization_context_snapshot_versions WHERE organization_id = ANY($1)`,
-      [[organizationId, foreignOrganizationId]]
-    );
-    await pool.query(`DELETE FROM organization_context_claim_reviews WHERE organization_id = ANY($1)`, [
-      [organizationId, foreignOrganizationId],
-    ]);
-    await pool.query(`DELETE FROM organization_context_claims WHERE organization_id = ANY($1)`, [
-      [organizationId, foreignOrganizationId],
-    ]);
-    await pool.query(`DELETE FROM organization_context_items WHERE organization_id = ANY($1)`, [
-      [organizationId, foreignOrganizationId],
-    ]);
-    await pool.query(`DELETE FROM organization_context_snapshots WHERE organization_id = ANY($1)`, [
-      [organizationId, foreignOrganizationId],
-    ]);
-    await pool.query(`DELETE FROM knowledge_docs WHERE id=$1`, [docId]);
-    await pool.query(`DELETE FROM organization_members WHERE organization_id = ANY($1)`, [
-      [organizationId, foreignOrganizationId],
-    ]);
-    await pool.query(`DELETE FROM users WHERE id = ANY($1)`, [Object.values(users).map((u) => u.id)]);
-    await pool.query(`DELETE FROM organizations WHERE id = ANY($1)`, [
-      [organizationId, foreignOrganizationId],
-    ]);
-    const residue = await pool.query<{ n: number }>(
-      `SELECT
-       (SELECT count(*) FROM organization_context_items WHERE organization_id = ANY($1))::int +
-       (SELECT count(*) FROM organization_context_snapshot_versions WHERE organization_id = ANY($1))::int +
-       (SELECT count(*) FROM users WHERE id = ANY($2))::int AS n`,
-      [[organizationId, foreignOrganizationId], Object.values(users).map((u) => u.id)]
-    );
-    if (residue.rows[0]?.n !== 0) throw new Error(`ORG UI fixture residue=${residue.rows[0]?.n}`);
+    const cleanupClient = await pool.connect();
+    const orgIds = [organizationId, foreignOrganizationId];
+    const userIds = Object.values(users).map((u) => u.id);
+    try {
+      await cleanupClient.query('BEGIN');
+      await cleanupClient.query(
+        `SELECT pg_advisory_xact_lock(hashtext('org-ui-governed-fixture-cleanup'))`
+      );
+      await cleanupClient.query(
+        `DELETE FROM organization_context_snapshot_versions WHERE organization_id = ANY($1)`,
+        [orgIds]
+      );
+      await cleanupClient.query(
+        `DELETE FROM organization_context_claim_reviews WHERE organization_id = ANY($1)`,
+        [orgIds]
+      );
+      await cleanupClient.query(
+        `DELETE FROM organization_context_claims WHERE organization_id = ANY($1)`,
+        [orgIds]
+      );
+      await cleanupClient.query(
+        `DELETE FROM organization_context_items WHERE organization_id = ANY($1)`,
+        [orgIds]
+      );
+      await cleanupClient.query(
+        `DELETE FROM organization_context_snapshots WHERE organization_id = ANY($1)`,
+        [orgIds]
+      );
+      await cleanupClient.query(`DELETE FROM knowledge_docs WHERE id=$1`, [docId]);
+      await cleanupClient.query(
+        `DELETE FROM organization_members WHERE organization_id = ANY($1)`,
+        [orgIds]
+      );
+      await cleanupClient.query(`DELETE FROM users WHERE id = ANY($1)`, [userIds]);
+      await cleanupClient.query(`DELETE FROM organizations WHERE id = ANY($1)`, [orgIds]);
+      const residue = await cleanupClient.query<{ n: number }>(
+        `SELECT
+         (SELECT count(*) FROM organization_context_snapshot_versions WHERE organization_id = ANY($1))::int +
+         (SELECT count(*) FROM organization_context_claim_reviews WHERE organization_id = ANY($1))::int +
+         (SELECT count(*) FROM organization_context_claims WHERE organization_id = ANY($1))::int +
+         (SELECT count(*) FROM organization_context_items WHERE organization_id = ANY($1))::int +
+         (SELECT count(*) FROM organization_context_snapshots WHERE organization_id = ANY($1))::int +
+         (SELECT count(*) FROM knowledge_docs WHERE id = $2)::int +
+         (SELECT count(*) FROM organization_members WHERE organization_id = ANY($1))::int +
+         (SELECT count(*) FROM users WHERE id = ANY($3))::int +
+         (SELECT count(*) FROM organizations WHERE id = ANY($1))::int AS n`,
+        [orgIds, docId, userIds]
+      );
+      if (residue.rows[0]?.n !== 0) {
+        throw new Error(`ORG UI fixture residue=${residue.rows[0]?.n}`);
+      }
+      await cleanupClient.query('COMMIT');
+    } catch (error) {
+      await cleanupClient.query('ROLLBACK').catch(() => undefined);
+      throw error;
+    } finally {
+      cleanupClient.release();
+    }
   };
 
   try {
@@ -159,8 +202,11 @@ export async function createOrgUiGovernedFixture(): Promise<OrgUiGovernedFixture
   }
 
   const cleanup = async () => {
-    await cleanupRows();
-    await pool.end();
+    try {
+      await cleanupRows();
+    } finally {
+      await pool.end();
+    }
   };
 
   return { pool, organizationId, foreignOrganizationId, docId, tokens, users, cleanup };

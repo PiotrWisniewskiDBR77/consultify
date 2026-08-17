@@ -54,8 +54,10 @@ describe('ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spi
 
   const orgA = p('org_a');
   const orgB = p('org_b');
+  const orgEmpty = p('org_empty');
   const userA = p('user_a');
   const userB = p('user_b');
+  const userEmpty = p('user_empty');
   const docId = p('doc');
   const docHashV1 = createHash('sha256').update('claude_c fixture bytes v1').digest('hex');
   const docHashV2 = createHash('sha256').update('claude_c fixture bytes v2 (edited)').digest('hex');
@@ -84,6 +86,7 @@ describe('ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spi
     for (const [id, name] of [
       [orgA, 'Claude C org A'],
       [orgB, 'Claude C org B'],
+      [orgEmpty, 'Claude C empty org'],
     ]) {
       await client.query(
         `INSERT INTO organizations (id, name, plan, status) VALUES ($1,$2,'enterprise','active')
@@ -94,6 +97,7 @@ describe('ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spi
     for (const [uid, oid] of [
       [userA, orgA],
       [userB, orgB],
+      [userEmpty, orgEmpty],
     ]) {
       await client.query(
         `INSERT INTO users (id, organization_id, email, password, role, status, first_name, last_name)
@@ -165,23 +169,23 @@ describe('ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spi
     if (!connected) return; // beforeAll threw before connecting — nothing to clean up.
     await client
       .query(`DELETE FROM organization_context_snapshot_versions WHERE organization_id = ANY($1)`, [
-        [orgA, orgB],
+        [orgA, orgB, orgEmpty],
       ])
       .catch(() => {});
     await client
       .query(`DELETE FROM organization_context_claim_reviews WHERE organization_id = ANY($1)`, [
-        [orgA, orgB],
+        [orgA, orgB, orgEmpty],
       ])
       .catch(() => {});
     await client
-      .query(`DELETE FROM organization_context_claims WHERE organization_id = ANY($1)`, [[orgA, orgB]])
+      .query(`DELETE FROM organization_context_claims WHERE organization_id = ANY($1)`, [[orgA, orgB, orgEmpty]])
       .catch(() => {});
     await client
-      .query(`DELETE FROM organization_context_items WHERE organization_id = ANY($1)`, [[orgA, orgB]])
+      .query(`DELETE FROM organization_context_items WHERE organization_id = ANY($1)`, [[orgA, orgB, orgEmpty]])
       .catch(() => {});
     await client.query(`DELETE FROM knowledge_docs WHERE id = $1`, [docId]).catch(() => {});
-    await client.query(`DELETE FROM users WHERE id = ANY($1)`, [[userA, userB]]).catch(() => {});
-    await client.query(`DELETE FROM organizations WHERE id = ANY($1)`, [[orgA, orgB]]).catch(() => {});
+    await client.query(`DELETE FROM users WHERE id = ANY($1)`, [[userA, userB, userEmpty]]).catch(() => {});
+    await client.query(`DELETE FROM organizations WHERE id = ANY($1)`, [[orgA, orgB, orgEmpty]]).catch(() => {});
 
     // Test-hygiene proof: zero leftovers for every fixture id, across every
     // table this suite touched.
@@ -195,7 +199,7 @@ describe('ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spi
          (SELECT COUNT(*) FROM users WHERE id = ANY($3)) +
          (SELECT COUNT(*) FROM organizations WHERE id = ANY($1))
          AS n`,
-      [[orgA, orgB], docId, [userA, userB]]
+      [[orgA, orgB, orgEmpty], docId, [userA, userB, userEmpty]]
     );
     expect(Number(leftovers.rows[0].n)).toBe(0);
 
@@ -258,6 +262,17 @@ describe('ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spi
   // ── Approval + publish + exact refs ────────────────────────────────────
   let publishedV1ContentHash = '';
   let publishedV1SnapshotRaw = '';
+
+  it('rejects a direct empty publish before writing a snapshot version', async () => {
+    await expect(
+      organizationContextService.publishSnapshotVersion(orgEmpty, userEmpty)
+    ).rejects.toMatchObject({ code: 'NO_APPROVED_GOVERNED_CLAIMS' });
+    const rows = await client.query(
+      `SELECT id FROM organization_context_snapshot_versions WHERE organization_id = $1`,
+      [orgEmpty]
+    );
+    expect(rows.rows).toHaveLength(0);
+  });
 
   it('approves pending claims, then publishes v1 excluding still-unapproved claims and carrying exact refs (claim id + file_hash + version)', async () => {
     const approveDoc = await organizationContextService.approveClaim(orgA, claimWithDoc, userA, 'looks correct');

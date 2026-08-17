@@ -139,6 +139,23 @@ describe.skipIf(!REAL_DB)('ORG-BVP-001 — mounted organization golden path (rea
     expect(proposed).toMatchObject({ approved: false, reviewState: 'pending' });
     expect(proposed.value).toMatchObject({ docId, filename: 'org-bvp-source.txt' });
     claimId = proposed.claimId;
+
+    const before = await pool.query<{ n: number }>(
+      `SELECT count(*)::int n FROM organization_context_snapshot_versions WHERE organization_id = $1`,
+      [orgId]
+    );
+    const emptyPublish = await request(app)
+      .post('/api/organization-context/governed/publish')
+      .set(auth(ownerToken))
+      .send({});
+    expect(emptyPublish.status).toBe(422);
+    expect(emptyPublish.body).toMatchObject({ code: 'NO_APPROVED_GOVERNED_CLAIMS' });
+    const after = await pool.query<{ n: number }>(
+      `SELECT count(*)::int n FROM organization_context_snapshot_versions WHERE organization_id = $1`,
+      [orgId]
+    );
+    expect(before.rows[0]?.n).toBe(0);
+    expect(after.rows[0]?.n).toBe(0);
   });
 
   it('denies insufficient role, stale membership and foreign-tenant approval', async () => {

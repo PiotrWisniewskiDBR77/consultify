@@ -6,7 +6,9 @@ import {
   verifyToken,
 } from '../middleware/auth.middleware.js';
 import { emitOrgContextRebuilt } from '../realtime/orgContextRealtime.js';
-import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
+import organizationContextService, {
+  NoApprovedGovernedClaimsError,
+} from '../services/organizationContext/OrganizationContextService.js';
 import { resolveLatestGovernedSnapshotRef } from '../services/organizationContext/governedSnapshotConsumerBindingService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
@@ -190,8 +192,16 @@ router.post(
       res.status(401).json({ error: 'Unauthorized' });
       return;
     }
-    const version = await organizationContextService.publishSnapshotVersion(orgId, actorId);
-    res.status(201).json(version);
+    try {
+      const version = await organizationContextService.publishSnapshotVersion(orgId, actorId);
+      res.status(201).json(version);
+    } catch (error) {
+      if (error instanceof NoApprovedGovernedClaimsError) {
+        res.status(422).json({ error: error.message, code: error.code });
+        return;
+      }
+      throw error;
+    }
   })
 );
 

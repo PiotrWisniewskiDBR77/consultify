@@ -11,6 +11,15 @@ const realDb =
   process.env.MOCK_DB === 'false' &&
   (process.env.DATABASE_URL ?? '').startsWith('postgres');
 
+if (realDb) {
+  if (process.env.ORG_UI_ALLOW_IMMUTABLE_FIXTURE_CLEANUP !== '1') {
+    throw new Error('ORG_UI_ALLOW_IMMUTABLE_FIXTURE_CLEANUP=1 is required');
+  }
+  if (!process.env.ORG_UI_DISPOSABLE_DB_PREFIX) {
+    throw new Error('ORG_UI_DISPOSABLE_DB_PREFIX is required');
+  }
+}
+
 test.describe('ORG-UI-CANON-001 governed context journey', () => {
   test.skip(!realDb, 'requires mounted application and real PostgreSQL');
   test.describe.configure({ mode: 'serial' });

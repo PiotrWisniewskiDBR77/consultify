@@ -15,6 +15,15 @@ export const ORGANIZATION_CONTEXT_SCHEMA_VERSION = 1;
 // hashes over — bump only if the hashed shape changes.
 export const GOVERNED_SNAPSHOT_SCHEMA_VERSION = 1;
 
+export class NoApprovedGovernedClaimsError extends Error {
+  readonly code = 'NO_APPROVED_GOVERNED_CLAIMS';
+
+  constructor() {
+    super('At least one approved governed claim is required to publish a snapshot.');
+    this.name = 'NoApprovedGovernedClaimsError';
+  }
+}
+
 export const ORGANIZATION_CONTEXT_CLAIM_PATHS = [
   'profile.companyName',
   'profile.description',
@@ -2040,6 +2049,13 @@ export class OrganizationContextService {
     const approvedClaims = (
       await this.listGovernedClaims(organizationId, { includeRestricted: true, limit: 500 })
     ).filter((c) => c.approved);
+
+    // Publishing an empty payload creates a formally valid immutable version
+    // that carries no governed truth. Reject before document lookup, hashing,
+    // version allocation, or any database write.
+    if (approvedClaims.length === 0) {
+      throw new NoApprovedGovernedClaimsError();
+    }
 
     // Deterministic order so the same approved-claim set always produces
     // the same content_hash, independent of SQL scan order.
