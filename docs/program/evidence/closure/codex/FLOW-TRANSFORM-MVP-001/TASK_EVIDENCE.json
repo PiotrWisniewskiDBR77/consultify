@@ -97,5 +97,25 @@
       "deployed desktop or mobile journey",
       "production rollback rehearsal or release authorization"
     ]
+  },
+  "exactCurrentRequalification": {
+    "technicalSourceSha": "163a702f128518965bcdb132dda9c664231a75fa",
+    "reconciliationSha": "eb44d038f6a03863a8468cf1fe6f985219d75af7",
+    "relationship": "The reconciliation SHA differs from the tested technical source only by evidence files; the product and test tree used by this packet is unchanged.",
+    "scope": "Downstream closure evidence and Execution to Results to Finance regression only.",
+    "database": "Own disposable pgvector PostgreSQL 16; fresh 761, repeat 0, dry-run pending 0, ledger 761.",
+    "command": "RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test DATABASE_URL=<own-disposable-pg> CLOSURE_EVIDENCE_ALLOW_IMMUTABLE_FIXTURE_CLEANUP=1 CLOSURE_EVIDENCE_DISPOSABLE_DB_PREFIX=<exact-prefix> npx vitest run tests/integration/closure-evidence/authorization-matrix.realdb.test.ts tests/integration/closure-evidence/governed-artifact-evidence.realdb.test.ts tests/integration/closure-evidence/meeting-notebook-evidence.realdb.test.ts tests/integration/closure-evidence/tool-output-producer-flow.realdb.test.ts tests/integration/exe009-closure-delivery-receipt.realdb.test.ts tests/integration/execution-closure-evidence-gate.golden-flow.realdb.test.ts tests/resultsVnext/roi/roiObligationsSurviveInitiativeClosure.realdb.test.ts tests/components/Initiatives/ClosureSection.test.tsx --no-file-parallelism --maxWorkers=1 --retry=0",
+    "result": "8/8 files and 170/170 tests passed; exit 0; duration 15.68 seconds.",
+    "forcedRollback": "Repository forced-cleanup and forced downstream rollback controls passed.",
+    "triggers": "initiative_lifecycle_gate_decisions_immutable=O; trg_initiative_closure_evidence_append_only=O",
+    "residue": "Non-system organizations and users, initiatives, closure evidence, lifecycle decisions, closure receipts and other pool connections were all 0.",
+    "artifacts": "Raw logs were written only to /tmp and are not claimed as committed evidence artifacts.",
+    "doesNotProve": [
+      "one stable Organization or Interview or DRD or SWOT source-to-PIR lineage",
+      "upstream A and C producer receipts exercised in the same database as the downstream slice",
+      "Results Actual and Finance reconciliation across the complete product journey under one stable identity",
+      "deployed desktop or mobile journey",
+      "production rollback rehearsal or release authorization"
+    ]
   }
 }

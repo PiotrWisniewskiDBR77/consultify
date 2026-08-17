@@ -7,7 +7,7 @@
   "reconciliationSha": "163a702f128518965bcdb132dda9c664231a75fa",
   "currentResultsObservation": {
     "scope": "Observation and membership hardening only; it is not evidence of legacy cutover.",
-    "truth": "20 of 217 inventoried producer paths were observed plus 3 explicitly exercised controls; absence of an observation proves nothing about an unobserved writer.",
+    "truth": "20 of 217 discovered HTTP write sites were observed (covering 22 endpoints), plus 3 observed non-HTTP service write sites; absence of an observation proves nothing about an unobserved writer.",
     "gates": "Migration 20261014 shape/definition proof, tenant-scoped dedupe, mounted strict membership and focused observation tests passed on the technical source SHA.",
     "pathContinuity": "The 19 Results product/test paths were unchanged from 63c2ee2818 through reconciliation SHA 163a702f."
   },

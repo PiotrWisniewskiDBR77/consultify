@@ -11,10 +11,12 @@
     "workload": "50 distinct models x 60 months x 2580 persisted outputs per approval",
     "thresholdP95Ms": 1200,
     "attemptP95Ms": [
-      1585.35,
-      1813.76
+      2404.6,
+      2277.9,
+      2279.5
     ],
-    "interpretation": "Both corrected current-candidate attempts exceed the release threshold. The set-based UNNEST change is functionally green but does not satisfy the Finance B2 performance gate.",
+    "medianP95Ms": 2279.5,
+    "interpretation": "All three source-bound Finance B2 attempts exceed the release threshold. The set-based UNNEST change is functionally green but does not satisfy the Finance B2 performance gate.",
     "preservedEvidence": "Existing Case profile and literal 30-minute steady-load measurements remain separate historical evidence and are not overwritten by this Finance-specific failure."
   },
   "leaseSha256": "not_applicable_integrator_bounded_task",
