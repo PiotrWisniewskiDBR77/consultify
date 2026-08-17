@@ -39,6 +39,32 @@
  * 6. No business content. The payload shape below cannot carry KPI values,
  *    names, or request bodies — there is deliberately no field for them.
  *
+ * WHAT THIS MEASURES, STATED PRECISELY
+ * This is INVOCATION telemetry over an ENUMERATED SUBSET of writer surfaces —
+ * not a count of unique business mutations, and not a complete census of Results
+ * writes.
+ *  - Unit of measurement: "an observed writer surface was invoked and its
+ *    business write succeeded". A client replaying the same logical mutation
+ *    under a NEW correlation id is counted twice; the ledger cannot know the two
+ *    calls meant one business intent. See `resultsWriterInventory.ts`.
+ *  - Denominator: only the inventory's OBSERVED entries are instrumented.
+ *    Surfaces marked EXPLICITLY_UNOBSERVED there emit nothing at all.
+ *
+ * BEST-EFFORT, NOT DURABLE — THE LIMITATION IN FULL
+ * `observeWriter` is fire-and-forget: it is dispatched AFTER the business write
+ * has committed and is deliberately not awaited, so the HTTP response can be
+ * sent before the observation reaches Postgres. Consequences, stated plainly:
+ *  - a process crash, container stop, or connection loss in that window loses
+ *    the observation while the business write survives;
+ *  - a database outage loses every observation attempted during it;
+ *  - there is NO outbox, NO retry and NO backfill here.
+ * Therefore: an observation's PRESENCE is trustworthy evidence that a writer ran.
+ * Its ABSENCE proves nothing. "Zero observations" must never be read as "zero
+ * usage" without an independent healthy-denominator signal, and this ledger is
+ * NOT durable proof and NOT zero-writer authority. A literal cutover decision
+ * needs durable (outbox-backed) telemetry, which is deliberately NOT smuggled
+ * into this module and requires its own owner-approved scope.
+ *
  * Retention and rollout of this ledger remain OWNER_DECISION.
  */
 import { randomUUID } from 'crypto';
@@ -113,9 +139,15 @@ export function correlationIdFromRequest(req: CorrelationCarrier): string | unde
   return undefined;
 }
 
-/** Structured outcome. Callers ignore it; tests assert on it. */
+/**
+ * Structured outcome. Callers ignore it; tests assert on it.
+ *
+ * `recorded: true` is only ever returned with a CONFIRMED `observationId` —
+ * either the id the INSERT returned, or the id of the row a dedupe collapsed
+ * onto. An unconfirmed write reports `recorded: false`.
+ */
 export type RecordWriterObservationResult =
-  | { recorded: true; deduped: boolean }
+  | { recorded: true; deduped: boolean; observationId: string }
   | { recorded: false; errorCode: 'WRITER_OBS_WRITE_FAILED' };
 
 /**
@@ -129,11 +161,16 @@ export async function recordWriterObservation(
   const correlationId = input.correlationId || randomUUID();
 
   try {
-    const result = await DbPromise.run(
+    // RETURNING (not `changes`) is what CONFIRMS the row: `recorded: true` must
+    // never be reported on an unconfirmed INSERT. A driver-reported affected-row
+    // count is a weaker signal than the database handing back the identity it
+    // actually persisted.
+    const inserted = await DbPromise.get<{ observation_id: string }>(
       `INSERT INTO results_writer_observations
          (organization_id, actor_user_id, writer_family, operation, endpoint, correlation_id)
        VALUES (?, ?, ?, ?, ?, ?)
-       ON CONFLICT (correlation_id, writer_family, operation) DO NOTHING`,
+       ON CONFLICT (organization_id, correlation_id, writer_family, operation) DO NOTHING
+       RETURNING observation_id`,
       [
         input.organizationId,
         input.actorUserId ?? null,
@@ -143,14 +180,40 @@ export async function recordWriterObservation(
         correlationId,
       ],
       // See semantic 3 in the module doc: the default `fallback: true` would
-      // resolve `{success:false}` on a real failure and this catch would never
-      // run, so the structured error could never be emitted.
+      // resolve a failure instead of rejecting, and this catch would never run,
+      // so the structured error could never be emitted.
       { fallback: false }
     );
 
-    // `changes === 0` means the unique index absorbed a retry of the same
-    // correlated operation — a successful dedupe, not a failure.
-    return { recorded: true, deduped: (result.changes ?? 0) === 0 };
+    if (inserted?.observation_id) {
+      return { recorded: true, deduped: false, observationId: inserted.observation_id };
+    }
+
+    // No row returned means EITHER the tenant-scoped unique index absorbed a
+    // retry (a real dedupe) OR nothing was written at all. Those are not the
+    // same outcome and must not be collapsed into an optimistic `true`, so the
+    // dedupe claim is confirmed by reading the row that is supposed to exist.
+    const existing = await DbPromise.get<{ observation_id: string }>(
+      `SELECT observation_id FROM results_writer_observations
+        WHERE organization_id = ? AND correlation_id = ? AND writer_family = ? AND operation = ?`,
+      [input.organizationId, correlationId, input.writerFamily, input.operation],
+      { fallback: false }
+    );
+
+    if (existing?.observation_id) {
+      return { recorded: true, deduped: true, observationId: existing.observation_id };
+    }
+
+    logger.error('[ResultsWriterObs] observation insert returned no row and none exists', {
+      code: 'WRITER_OBS_WRITE_FAILED',
+      reason: 'UNCONFIRMED_INSERT',
+      writerFamily: input.writerFamily,
+      operation: input.operation,
+      endpoint: input.endpoint,
+      organizationId: input.organizationId,
+      correlationId,
+    });
+    return { recorded: false, errorCode: 'WRITER_OBS_WRITE_FAILED' };
   } catch (error) {
     logger.error('[ResultsWriterObs] observation write failed', {
       code: 'WRITER_OBS_WRITE_FAILED',
