@@ -17,6 +17,7 @@ suite('FLOW-TRANSFORM closure receipt -> ROI case durable binding', () => {
   const secondReceiptId = `materialized-done:${randomUUID()}:receipt`;
   const secondTransitionRef = `materialized-done:${randomUUID()}:transition`;
   const actorlessReceiptId = `materialized-done:${randomUUID()}:receipt`;
+  const foreignDueReceiptId = `materialized-done:${randomUUID()}:foreign-due-receipt`;
   let client: pg.Client;
   let ensureBinding: typeof import('../../../server/src/services/resultsVnext/roi/closureReceiptRoiCaseAdapter.js').ensureRoiCaseForClosureReceipt;
   let textIdentityUuid: typeof import('../../../server/src/services/resultsVnext/roi/closureReceiptRoiCaseAdapter.js').closureTextIdentityUuid;
@@ -64,6 +65,13 @@ suite('FLOW-TRANSFORM closure receipt -> ROI case durable binding', () => {
        VALUES($1,$2,$3,$4,$5,'Crossflow Owner','DELIVERED','NEEDS_DECISION','{}'::jsonb)`,
       [receiptId, orgA, initiativeId, transitionRef, closerA]
     );
+    await client.query(
+      `INSERT INTO closure_delivery_receipts
+         (id,organization_id,initiative_id,transition_audit_ref,actor_id,actor_label,
+          results_status,finance_status,finance_payload)
+       VALUES($1,$2,$3,$4,NULL,'Foreign sibling','DELIVERED','NEEDS_DECISION','{}'::jsonb)`,
+      [foreignDueReceiptId, orgA, initiativeId, `materialized-done:${randomUUID()}:foreign-transition`]
+    );
   });
 
   afterAll(async () => {
@@ -91,7 +99,7 @@ suite('FLOW-TRANSFORM closure receipt -> ROI case durable binding', () => {
         (SELECT count(*)::int FROM rvn_platform_events WHERE event_id=ANY($8::uuid[])) events,
         (SELECT count(*)::int FROM rvn_platform_outbox WHERE event_id=ANY($8::uuid[])) outbox`;
       const residueParams = [[orgA, orgB], [ownerA, closerA], orgA, initiativeId,
-        [receiptId, secondReceiptId, actorlessReceiptId], capturedCaseIds, capturedCaseIds, capturedEventIds];
+        [receiptId, secondReceiptId, actorlessReceiptId, foreignDueReceiptId], capturedCaseIds, capturedCaseIds, capturedEventIds];
       const emptyResidue = { organizations: 0, users: 0, members: 0, initiatives: 0, receipts: 0,
         cases: 0, baselines: 0, calculation_policies: 0, visibility: 0, acl: 0, obligations: 0,
         visibility_policies: 0, events: 0, outbox: 0 };
@@ -105,7 +113,7 @@ suite('FLOW-TRANSFORM closure receipt -> ROI case durable binding', () => {
     await client.query(`DELETE FROM rvn_platform_resource_visibility WHERE organization_id=$1`, [orgA]);
     await client.query(`DELETE FROM rvn_roi_cases WHERE organization_id=$1`, [orgA]);
     await client.query(`DELETE FROM rvn_platform_visibility_policies WHERE organization_id=$1`, [orgA]);
-    await client.query(`DELETE FROM closure_delivery_receipts WHERE id=ANY($1::text[])`, [[receiptId, secondReceiptId, actorlessReceiptId]]);
+    await client.query(`DELETE FROM closure_delivery_receipts WHERE id=ANY($1::text[])`, [[receiptId, secondReceiptId, actorlessReceiptId, foreignDueReceiptId]]);
     await client.query(`DELETE FROM initiatives WHERE id=$1`, [initiativeId]);
     await client.query(`DELETE FROM organization_members WHERE organization_id=$1`, [orgA]);
     await client.query(`DELETE FROM users WHERE id=ANY($1::text[])`, [[ownerA, closerA]]);
@@ -254,8 +262,8 @@ suite('FLOW-TRANSFORM closure receipt -> ROI case durable binding', () => {
       );
       expect(persisted.rows[0]).toEqual({ finance_status: 'NEEDS_DECISION', roi_case_id: null });
       delete process.env.FLOW_CLOSURE_ROI_FORCE_RECEIPT_UPDATE_FAILURE;
-      await client.query(`UPDATE closure_delivery_receipts SET next_retry_at=NOW()-INTERVAL '1 second' WHERE id=$1`, [receiptId]);
-      expect(await runReconciliationSweep(10)).toEqual({ claimed: 1, delivered: 1, stillPending: 0 });
+      await client.query(`UPDATE closure_delivery_receipts SET created_at='1970-01-01T00:00:00Z',next_retry_at=NOW()-INTERVAL '1 second' WHERE id=$1`, [receiptId]);
+      expect(await runReconciliationSweep(1)).toEqual({ claimed: 1, delivered: 1, stillPending: 0 });
       persisted = await client.query(
         `SELECT finance_status,finance_payload->>'roiCaseId' AS roi_case_id
            FROM closure_delivery_receipts WHERE id=$1`,
@@ -296,7 +304,17 @@ suite('FLOW-TRANSFORM closure receipt -> ROI case durable binding', () => {
       await attemptDeliveryInternal(actorlessReceiptId);
       const actorless = await client.query(`SELECT finance_payload->>'roiBindingDisposition' disposition,next_retry_at FROM closure_delivery_receipts WHERE id=$1`, [actorlessReceiptId]);
       expect(actorless.rows[0]).toEqual({ disposition: 'NON_BINDABLE_MISSING_ACTOR', next_retry_at: null });
-      expect(await runReconciliationSweep(10)).toEqual({ claimed: 0, delivered: 0, stillPending: 0 });
+      const nextGlobalCandidate = await client.query<{ id: string }>(
+        `SELECT id FROM closure_delivery_receipts
+          WHERE finance_payload->>'roiCaseId' IS NULL
+            AND COALESCE(finance_payload->>'roiBindingDisposition','') <> 'NON_BINDABLE_MISSING_ACTOR'
+            AND (next_retry_at IS NULL OR next_retry_at <= CURRENT_TIMESTAMP)
+          ORDER BY created_at ASC LIMIT 1`
+      );
+      expect(nextGlobalCandidate.rows.map((row) => row.id)).toEqual([foreignDueReceiptId]);
+      expect(await runReconciliationSweep(1)).toEqual({ claimed: 1, delivered: 1, stillPending: 0 });
+      expect((await client.query(`SELECT finance_payload->>'roiBindingDisposition' disposition FROM closure_delivery_receipts WHERE id=$1`, [foreignDueReceiptId])).rows[0]).toEqual({ disposition: 'NON_BINDABLE_MISSING_ACTOR' });
+      expect((await client.query(`SELECT finance_payload->>'roiBindingDisposition' disposition,next_retry_at FROM closure_delivery_receipts WHERE id=$1`, [actorlessReceiptId])).rows[0]).toEqual({ disposition: 'NON_BINDABLE_MISSING_ACTOR', next_retry_at: null });
       const forbidden = await client.query(
         `SELECT
            (SELECT count(*)::int FROM roi_realized_values WHERE initiative_id=$1) realized,
