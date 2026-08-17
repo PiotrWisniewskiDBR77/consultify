@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 import * as queryHelpers from '../../../utils/queryHelpers.js';
 import { createRoiCase, type CreateRoiCaseResult } from './roiCaseCommands.js';
 import type { AtomicCommandOutcome } from '../platform/atomicWrite.js';
@@ -27,6 +29,18 @@ interface BindingSourceRow {
 export interface EnsureClosureReceiptRoiCaseInput {
   organizationId: string;
   receiptId: string;
+}
+
+/** PostgreSQL's platform event envelope requires UUID correlation/causation,
+ * while the canonical closure receipt deliberately owns TEXT identities.
+ * Preserve TEXT in the idempotency/reason and derive a stable UUID only for
+ * the typed event columns. */
+export function closureTextIdentityUuid(namespace: string, value: string): string {
+  const hex = createHash('sha256').update(`${namespace}\u0000${value}`).digest('hex').slice(0, 32);
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-5${hex.slice(13, 16)}-${(
+    (parseInt(hex[16]!, 16) & 0x3) |
+    0x8
+  ).toString(16)}${hex.slice(17, 20)}-${hex.slice(20)}`;
 }
 
 /**
@@ -91,8 +105,8 @@ export async function ensureRoiCaseForClosureReceipt(
     createdBy: source.owner_user_id,
     actorEffectiveRole: source.actor_role,
     idempotencyKey: `closure-receipt:${source.receipt_id}:roi-case:v1`,
-    correlationId: source.receipt_id,
-    causationId: source.transition_audit_ref,
-    reason: 'Create an inert ROI case shell for explicit post-closure review',
+    correlationId: closureTextIdentityUuid('closure-receipt', source.receipt_id),
+    causationId: closureTextIdentityUuid('closure-transition', source.transition_audit_ref),
+    reason: `Create an inert ROI case shell for closure receipt ${source.receipt_id}; transition ${source.transition_audit_ref}`,
   });
 }

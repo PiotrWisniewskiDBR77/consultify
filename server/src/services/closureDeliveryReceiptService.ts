@@ -668,6 +668,12 @@ export async function attemptDeliveryInternal(
   if (closureRoiBindingEnabled()) {
     try {
       const binding = await ensureRoiCaseForClosureReceipt({ organizationId, receiptId });
+      if (
+        process.env.NODE_ENV === 'test' &&
+        process.env.FLOW_CLOSURE_ROI_FORCE_RECEIPT_UPDATE_FAILURE === 'true'
+      ) {
+        throw new Error('forced closure ROI receipt JSON update failure');
+      }
       await queryHelpers.queryRun(
         `UPDATE closure_delivery_receipts
             SET finance_payload = COALESCE(finance_payload, '{}'::jsonb) || ?::jsonb,
