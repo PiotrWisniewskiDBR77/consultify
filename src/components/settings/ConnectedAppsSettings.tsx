@@ -1098,7 +1098,10 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
         />
         {searchQuery && (
           <button
+            type="button"
             onClick={() => setSearchQuery('')}
+            aria-label={t('myWork.filters.clearSearch', 'Clear search')}
+            title={t('myWork.filters.clearSearch', 'Clear search')}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-c-text-secondary hover:text-c-text-secondary"
           >
             <X size={14} />
