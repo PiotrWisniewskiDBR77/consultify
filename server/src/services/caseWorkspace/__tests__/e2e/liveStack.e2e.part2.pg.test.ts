@@ -57,11 +57,15 @@ const APPROVER = {
 const LIMITED_MEMBER = {
   email: 'cw.stream.e.member@local.test', password: 'CaseWorkspaceMember!2026', userId: 'cw-stream-e-member',
 };
+const POLICY_ADMIN = {
+  email: 'cw.stream.e.policy-admin@local.test', password: 'CaseWorkspacePolicy!2026', userId: 'cw-stream-e-policy-admin',
+};
 
 let db: ControlDb;
 let token: string;
 let approverToken: string;
 let memberToken: string;
+let adminToken: string;
 let stackReason: string | undefined;
 
 const state: {
@@ -69,6 +73,7 @@ const state: {
   planVersionId?: string;
   runId?: string;
 } = {};
+const ownedCaseIds: string[] = [];
 
 beforeAll(async () => {
   assertLocalDatabase();
@@ -81,13 +86,38 @@ beforeAll(async () => {
   db = new ControlDb();
   await db.ensureLoginUser({ ...APPROVER, organizationId: SEED_USER.organizationId, role: 'OWNER' });
   await db.ensureLoginUser({ ...LIMITED_MEMBER, organizationId: SEED_USER.organizationId, role: 'MEMBER' });
+  await db.ensureLoginUser({ ...POLICY_ADMIN, organizationId: SEED_USER.organizationId, role: 'ADMIN' });
   token = await login();
   approverToken = await login(APPROVER.email, APPROVER.password);
   memberToken = await login(LIMITED_MEMBER.email, LIMITED_MEMBER.password);
+  adminToken = await login(POLICY_ADMIN.email, POLICY_ADMIN.password);
   await db.ensureProject(PROJECT_ID, SEED_USER.organizationId, `E2E part2 ${SUFFIX}`);
 }, 120_000);
 
 afterAll(async () => {
+  if (db) {
+    const owned = await db.rows<{ case_id: string }>(
+      `SELECT case_id FROM case_core WHERE project_id=$1`, [PROJECT_ID]
+    );
+    const caseIds = Array.from(new Set([...ownedCaseIds, ...owned.map((row) => row.case_id)]));
+    const tables = await db.rows<{ table_name: string }>(
+      `SELECT table_name FROM information_schema.columns
+        WHERE table_schema='public' AND column_name='case_id' AND table_name <> 'case_core'`
+    );
+    // Delete only rows tied to this file's exact generated case ids. Repeated
+    // deepest-first attempts resolve FK chains without TRUNCATE or touching
+    // another suite's organization-wide fixtures.
+    for (let pass = 0; pass < 40; pass += 1) {
+      for (const { table_name: table } of tables) {
+        if (!/^[a-z0-9_]+$/.test(table)) throw new Error(`unsafe cleanup table: ${table}`);
+        try { await db.rows(`DELETE FROM "${table}" WHERE case_id=ANY($1::text[])`, [caseIds]); } catch { /* FK child is removed on a later pass. */ }
+      }
+    }
+    await db.rows(`DELETE FROM case_core WHERE case_id=ANY($1::text[])`, [caseIds]);
+    await db.rows(`DELETE FROM budget_entries WHERE initiative_id LIKE $1`, [`%${SUFFIX}%`]);
+    await db.rows(`DELETE FROM initiatives WHERE id LIKE $1`, [`%${SUFFIX}%`]);
+    await db.rows(`DELETE FROM projects WHERE id=$1`, [PROJECT_ID]).catch(() => []);
+  }
   await db?.close();
 });
 
@@ -116,7 +146,9 @@ async function createCase(
     governanceTier,
     contractedClosureType: 'DELIVERY_COMPLETED',
   });
-  return { status: res.status, caseId: (res.body as { data?: { caseId: string } })?.data?.caseId };
+  const caseId = (res.body as { data?: { caseId: string } })?.data?.caseId;
+  if (res.status === 201 && caseId) ownedCaseIds.push(caseId);
+  return { status: res.status, caseId };
 }
 
 // ===========================================================================
@@ -863,6 +895,174 @@ describe('EXE-MVP-ACTIONS-001 governed production routes', () => {
       'case.close', 'case.cancel', 'case.wait.cancel', 'case.run.cancel', 'case.artifact.unlink',
       'case.proposal.decide', 'case.proposal.execute', 'case.proposal.revoke', 'execution.budget.delete',
     ]));
+  });
+
+  it('rolls back all 9 real domain mutations when the terminal success audit insert fails', async () => {
+    requireStack();
+    const requestId = `force-audit-failure-${SUFFIX}`;
+    const headers = { 'X-Request-Id': requestId, 'X-Correlation-Id': requestId };
+
+    const closeCase = await createCase(token, 'STANDARD', 'STANDARD', `Rollback close ${SUFFIX}`);
+    const cancelCase = await createCase(token, 'STANDARD', 'STANDARD', `Rollback cancel ${SUFFIX}`);
+    expect(closeCase.status).toBe(201);
+    expect(cancelCase.status).toBe(201);
+    const run = await api<{ data: { runId: string; version: number } }>(token, 'POST',
+      `/case-workspace/cases/${state.caseId}/runs`, { casePlanVersionId: state.planVersionId },
+      { 'Idempotency-Key': `rollback-run-${SUFFIX}` });
+    expect(run.status).toBe(201);
+    const wait = await api<{ data: { waitId: string; version: number } }>(token, 'POST',
+      `/case-workspace/cases/${state.caseId}/waits`, {
+        runId: state.runId, waitType: 'DOMAIN_EVENT', correlationKey: `rollback-wait-${SUFFIX}`,
+        expectedEventType: 'rollback.event',
+      });
+    expect(wait.status).toBe(201);
+    const link = await api<{ data: { linkId: string } }>(token, 'POST',
+      `/case-workspace/cases/${state.caseId}/artifact-links`, {
+        artifactType: 'DOCUMENT', artifactId: `rollback-artifact-${SUFFIX}`, relation: 'INPUT',
+      }, { 'Idempotency-Key': `rollback-link-${SUFFIX}` });
+    expect(link.status).toBe(201);
+
+    async function proposalFixture(tag: string, approve: boolean) {
+      const created = await api<{ data: { actionProposalId: string; proposalVersion: number } }>(token, 'POST',
+        `/case-workspace/cases/${state.caseId}/proposals`, {
+          runId: state.runId, nodeRunId: `rollback-${tag}-${SUFFIX}`, casePlanVersionId: state.planVersionId,
+          payloadDigest: `sha256:rollback-${tag}-${SUFFIX}`, policySnapshotRef: 'policy-rollback',
+          effectClass: 'SENSITIVE_UPDATE', previewRef: 'preview-rollback', proposerType: 'AGENT',
+        }, { 'Idempotency-Key': `rollback-proposal-${tag}-${SUFFIX}` });
+      expect(created.status).toBe(201);
+      const submitted = await api<{ data: { version: number } }>(token, 'POST',
+        `/case-workspace/proposals/${created.body.data.actionProposalId}/submit-for-review`, { expectedVersion: 1 });
+      expect(submitted.status).toBe(200);
+      let version = submitted.body.data.version;
+      if (approve) {
+        const approved = await api<{ data: { proposal: { version: number } } }>(approverToken, 'POST',
+          `/case-workspace/proposals/${created.body.data.actionProposalId}/decision`, {
+            proposalVersion: created.body.data.proposalVersion,
+            payloadDigest: `sha256:rollback-${tag}-${SUFFIX}`, decision: 'APPROVE', source: 'BUTTON',
+            authenticationAssurance: 'SESSION_MFA', approvalChannelPolicy: 'UI_BUTTON_ONLY',
+            policyVersion: 'v1', reason: 'prepare rollback fixture', expectedVersion: version,
+          }, { 'Idempotency-Key': `rollback-approve-${tag}-${SUFFIX}` });
+        expect(approved.status).toBe(200);
+        version = approved.body.data.proposal.version;
+      }
+      return { id: created.body.data.actionProposalId, proposalVersion: created.body.data.proposalVersion, version };
+    }
+    const decide = await proposalFixture('decide', false);
+    const execute = await proposalFixture('execute', true);
+    const revoke = await proposalFixture('revoke', true);
+    const initiativeId = `rollback-initiative-${SUFFIX}`;
+    const entryId = `rollback-budget-${SUFFIX}`;
+    await db.rows(`INSERT INTO initiatives (id,organization_id,project_id,name,status,created_by)
+      VALUES ($1,$2,$3,$4,'DRAFT',$5)`,
+      [initiativeId, SEED_USER.organizationId, PROJECT_ID, `Rollback budget ${SUFFIX}`, SEED_USER.userId]);
+    await db.rows(`INSERT INTO budget_entries
+      (id,organization_id,initiative_id,project_id,entry_type,cost_type,amount,created_by)
+      VALUES ($1,$2,$3,$4,'FORECAST','OPEX',100,$5)`,
+      [entryId, SEED_USER.organizationId, initiativeId, PROJECT_ID, SEED_USER.userId]);
+
+    const targetIds = [closeCase.caseId!, cancelCase.caseId!, run.body.data.runId, wait.body.data.waitId,
+      link.body.data.linkId, decide.id, execute.id, revoke.id, entryId];
+    const before = await db.rows<{ target_id: string; events: string }>(
+      `SELECT x.target_id, count(o.event_id)::text events FROM unnest($1::text[]) x(target_id)
+       LEFT JOIN case_workspace_event_outbox o ON o.aggregate_id=x.target_id GROUP BY x.target_id`, [targetIds]);
+
+    await db.rows(`CREATE OR REPLACE FUNCTION exe_actions_fail_audit_insert() RETURNS trigger AS $$
+      BEGIN IF NEW.request_id = '${requestId}' THEN RAISE EXCEPTION 'forced mounted audit failure'; END IF; RETURN NEW; END; $$ LANGUAGE plpgsql`);
+    await db.rows(`DROP TRIGGER IF EXISTS trg_exe_actions_fail_audit ON execution_action_audit`);
+    await db.rows(`CREATE TRIGGER trg_exe_actions_fail_audit BEFORE INSERT ON execution_action_audit
+      FOR EACH ROW EXECUTE FUNCTION exe_actions_fail_audit_insert()`);
+    try {
+      const calls = [
+        () => api(token, 'POST', `/case-workspace/cases/${closeCase.caseId}/closure`,
+          { closureType: 'COMPLETED_PARTIAL', evidenceRef: 'rollback' }, headers),
+        () => api(token, 'POST', `/case-workspace/cases/${cancelCase.caseId}/cancel`, { reason: 'rollback' }, headers),
+        () => api(token, 'POST', `/case-workspace/waits/${wait.body.data.waitId}/cancel`,
+          { reason: 'rollback', expectedVersion: wait.body.data.version }, headers),
+        () => api(token, 'POST', `/case-workspace/runs/${run.body.data.runId}/cancel`,
+          { reason: 'rollback', expectedVersion: run.body.data.version }, headers),
+        () => api(token, 'DELETE', `/case-workspace/artifact-links/${link.body.data.linkId}`, { reason: 'rollback' }, headers),
+        () => api(approverToken, 'POST', `/case-workspace/proposals/${decide.id}/decision`, {
+          proposalVersion: decide.proposalVersion, payloadDigest: `sha256:rollback-decide-${SUFFIX}`,
+          decision: 'REJECT', source: 'BUTTON', authenticationAssurance: 'SESSION_MFA',
+          approvalChannelPolicy: 'UI_BUTTON_ONLY', policyVersion: 'v1', reason: 'rollback',
+          expectedVersion: decide.version, idempotencyKey: `rollback-decision-${SUFFIX}`,
+        }, headers),
+        () => api(token, 'POST', `/case-workspace/proposals/${execute.id}/transition-to-executing`,
+          { expectedVersion: execute.version }, headers),
+        () => api(token, 'POST', `/case-workspace/proposals/${revoke.id}/revoke`,
+          { reason: 'rollback', expectedVersion: revoke.version }, headers),
+        async () => {
+          const response = await fetch(`${BACKEND}/api/execution-control/budget/entries/${entryId}?initiativeId=${initiativeId}`, {
+            method: 'DELETE', headers: { Authorization: `Bearer ${token}`, 'X-Request-Id': requestId },
+          });
+          return { status: response.status };
+        },
+      ];
+      for (const [index, call] of calls.entries()) {
+        expect((await call()).status, `forced audit rollback index ${index}`).toBe(500);
+      }
+    } finally {
+      await db.rows(`DROP TRIGGER IF EXISTS trg_exe_actions_fail_audit ON execution_action_audit`);
+      await db.rows(`DROP FUNCTION IF EXISTS exe_actions_fail_audit_insert()`);
+    }
+
+    const cases = await db.rows<{ case_id: string; closure_type: string | null; case_status: string }>(
+      `SELECT case_id,closure_type,case_status FROM case_core WHERE case_id=ANY($1::text[])`,
+      [[closeCase.caseId, cancelCase.caseId]]);
+    expect(cases.find((row) => row.case_id === closeCase.caseId)?.closure_type).toBeNull();
+    expect(cases.find((row) => row.case_id === cancelCase.caseId)?.case_status).toBe('DRAFT');
+    expect((await db.one<{ status: string }>(`SELECT status FROM case_workspace_runs WHERE run_id=$1`, [run.body.data.runId]))?.status).toBe('CREATED');
+    expect((await db.one<{ status: string }>(`SELECT status FROM case_workspace_waits WHERE wait_id=$1`, [wait.body.data.waitId]))?.status).toBe('ACTIVE');
+    expect((await db.one<{ link_status: string }>(`SELECT link_status FROM case_workspace_artifact_links WHERE link_id=$1`, [link.body.data.linkId]))?.link_status).toBe('ACTIVE');
+    for (const fixture of [decide, execute, revoke]) {
+      const row = await db.one<{ status: string }>(`SELECT status FROM case_workspace_action_proposals WHERE action_proposal_id=$1`, [fixture.id]);
+      expect(row?.status).toBe(fixture === decide ? 'PENDING_REVIEW' : 'APPROVED');
+    }
+    expect(await db.one(`SELECT id FROM budget_entries WHERE id=$1`, [entryId])).not.toBeNull();
+    const after = await db.rows<{ target_id: string; events: string }>(
+      `SELECT x.target_id, count(o.event_id)::text events FROM unnest($1::text[]) x(target_id)
+       LEFT JOIN case_workspace_event_outbox o ON o.aggregate_id=x.target_id GROUP BY x.target_id`, [targetIds]);
+    expect(after).toEqual(before);
+    expect(await db.rows(`SELECT audit_id FROM execution_action_audit WHERE request_id=$1`, [requestId])).toHaveLength(0);
+  });
+
+  it('enforces live policy drift, keeps hidden/unregistered HTTP surfaces absent, and cold-reads persisted outcomes', async () => {
+    requireStack();
+    const driftCase = await createCase(adminToken, 'STANDARD', 'STANDARD', `Policy drift ${SUFFIX}`);
+    expect(driftCase.status).toBe(201);
+    await db.rows(`UPDATE execution_action_registry SET minimum_role='OWNER' WHERE action_id='case.close'`);
+    try {
+      const denied = await api(adminToken, 'POST', `/case-workspace/cases/${driftCase.caseId}/closure`, {
+        closureType: 'COMPLETED_PARTIAL', evidenceRef: 'policy-drift',
+      }, { 'X-Correlation-Id': `policy-drift-${SUFFIX}` });
+      expect(denied.status).toBe(403);
+      expect((await db.one<{ closure_type: string | null }>(
+        `SELECT closure_type FROM case_core WHERE case_id=$1`, [driftCase.caseId]))?.closure_type).toBeNull();
+    } finally {
+      await db.rows(`UPDATE execution_action_registry SET minimum_role='ADMIN' WHERE action_id='case.close'`);
+    }
+
+    for (const actionId of ['execution.initiative.delete', `unregistered.${SUFFIX}`]) {
+      const response = await fetch(`${BACKEND}/api/v8/case-workspace/actions/${actionId}`, {
+        method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: '{}',
+      });
+      expect(response.status).toBe(404);
+    }
+
+    const cold = new ControlDb();
+    try {
+      const rows = await cold.rows<{ action_id: string; outcomes: string[] }>(
+        `SELECT action_id,array_agg(DISTINCT outcome ORDER BY outcome) outcomes
+           FROM execution_action_audit
+          WHERE action_id=ANY($1::text[]) GROUP BY action_id`, [[
+          'case.close', 'case.cancel', 'case.wait.cancel', 'case.run.cancel', 'case.artifact.unlink',
+          'case.proposal.decide', 'case.proposal.execute', 'case.proposal.revoke', 'execution.budget.delete',
+        ]]);
+      expect(rows).toHaveLength(9);
+      expect(rows.find((row) => row.action_id === 'case.close')?.outcomes).toContain('DENIED');
+    } finally {
+      await cold.close();
+    }
   });
 });
 
