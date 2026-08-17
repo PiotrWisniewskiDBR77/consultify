@@ -20,6 +20,7 @@ export default defineConfig({
       DB_TYPE: 'sqlite',
       NODE_ENV: 'test',
     },
+    setupFiles: ['./tests/performance/setup.ts'],
     include: [
       'tests/performance/**/*.{test,spec}.{js,ts,jsx,tsx}',
       // Support legacy extensionless tests (to be phased out)

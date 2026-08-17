@@ -4,11 +4,11 @@
  * Performance measurement — IdeaProcessFlowTool mount time vs node count.
  *
  * Context (docs/qa/ideas-complete-transformation-2026-08-09/17_PERFORMANCE_MEASUREMENT.md):
- * a prior audit claimed "Process Flow ... missing `onlyRenderVisibleElements`
- * on the canvas" as a code-level risk but measured nothing. Code inspection
- * (src/components/MyWork/IdeaProcessFlowTool.tsx line ~3498, the `<ReactFlow
- * ...>` element) confirms `onlyRenderVisibleElements` is never passed — 0
- * matches in the file.
+ * Process Flow enables ReactFlow's `onlyRenderVisibleElements` once the
+ * hydrated source reaches 300 nodes. The benchmark therefore verifies two
+ * different contracts: below the threshold every hydrated node is present in
+ * the DOM; at and above it the full source is hydrated while only a non-empty
+ * viewport subset is mounted in the DOM.
  *
  * Mock scaffolding below is copied from the REAL, already-passing
  * tests/components/MyWork/IdeaProcessFlowTool.error-state.test.tsx (proven
@@ -23,8 +23,18 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback?: any) =>
-      typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key),
+    t: (_key: string, fallback?: any, interpolation?: Record<string, unknown>) => {
+      const template = typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key);
+      const values = interpolation ?? (typeof fallback === 'object' ? fallback : undefined);
+      if (!values) return template;
+      return Object.entries(values).reduce(
+        (value, [key, replacement]) =>
+          key === 'defaultValue'
+            ? value
+            : value.replaceAll(`{{${key}}}`, String(replacement)),
+        template
+      );
+    },
     i18n: { language: 'en' },
   }),
   initReactI18next: { type: '3rdParty', init: vi.fn() },
@@ -237,7 +247,7 @@ function buildNodes(n: number) {
 const SIZES = [100, 500, 1000, 2500];
 const REPS = 2;
 
-describe('perf: IdeaProcessFlowTool mount time vs node count (no onlyRenderVisibleElements)', () => {
+describe('perf: IdeaProcessFlowTool hydration and visible-DOM culling vs node count', () => {
   beforeEach(() => {
     apiGetMyIdeaMapMock.mockClear();
   });
@@ -246,13 +256,21 @@ describe('perf: IdeaProcessFlowTool mount time vs node count (no onlyRenderVisib
     cleanup();
   });
 
-  const results: Array<{ n: number; meanMs: number; minMs: number; maxMs: number; domNodes: number }> = [];
+  const results: Array<{
+    n: number;
+    meanMs: number;
+    minMs: number;
+    maxMs: number;
+    hydratedNodes: number;
+    visibleDomNodes: number;
+  }> = [];
 
   for (const n of SIZES) {
     it(`N=${n}: mounts IdeaProcessFlowTool with ${n} real nodes, ${REPS} repetitions`, async () => {
       currentNodes = buildNodes(n);
       const timings: number[] = [];
-      let domNodes = 0;
+      let hydratedNodes = 0;
+      let visibleDomNodes = 0;
       for (let r = 0; r < REPS; r++) {
         const t0 = performance.now();
         const { container, unmount } = render(
@@ -261,28 +279,42 @@ describe('perf: IdeaProcessFlowTool mount time vs node count (no onlyRenderVisib
         await waitFor(
           () => {
             const count = container.querySelectorAll('.react-flow__node').length;
-            expect(count).toBe(n);
+            expect(container.textContent).toContain(`Steps ${n}`);
+            if (n < 300) {
+              expect(count).toBe(n);
+            } else {
+              expect(count).toBeGreaterThan(0);
+              expect(count).toBeLessThan(n);
+            }
           },
           { timeout: 60000 }
         );
         const t1 = performance.now();
         timings.push(t1 - t0);
         if (r === REPS - 1) {
-          domNodes = container.querySelectorAll('.react-flow__node').length;
+          hydratedNodes = n;
+          visibleDomNodes = container.querySelectorAll('.react-flow__node').length;
         }
         unmount();
       }
       const meanMs = timings.reduce((a, b) => a + b, 0) / timings.length;
       const minMs = Math.min(...timings);
       const maxMs = Math.max(...timings);
-      results.push({ n, meanMs, minMs, maxMs, domNodes });
+      results.push({ n, meanMs, minMs, maxMs, hydratedNodes, visibleDomNodes });
 
       // eslint-disable-next-line no-console
       console.log(
         `[processflow-mount-bench] N=${n} reps=${REPS} mean=${meanMs.toFixed(2)}ms min=${minMs.toFixed(2)}ms ` +
-          `max=${maxMs.toFixed(2)}ms domNodes=${domNodes} all=[${timings.map((t) => t.toFixed(2)).join(', ')}]`
+          `max=${maxMs.toFixed(2)}ms hydratedNodes=${hydratedNodes} visibleDomNodes=${visibleDomNodes} ` +
+          `all=[${timings.map((t) => t.toFixed(2)).join(', ')}]`
       );
-      expect(domNodes).toBe(n);
+      expect(hydratedNodes).toBe(n);
+      if (n < 300) {
+        expect(visibleDomNodes).toBe(n);
+      } else {
+        expect(visibleDomNodes).toBeGreaterThan(0);
+        expect(visibleDomNodes).toBeLessThan(n);
+      }
     }, 480000);
   }
 
@@ -290,10 +322,13 @@ describe('perf: IdeaProcessFlowTool mount time vs node count (no onlyRenderVisib
     // eslint-disable-next-line no-console
     console.log('\n[processflow-mount-bench] SUMMARY TABLE');
     // eslint-disable-next-line no-console
-    console.log('N\tmean_ms\tmin_ms\tmax_ms\tdomNodes');
+    console.log('N\tmean_ms\tmin_ms\tmax_ms\thydratedNodes\tvisibleDomNodes');
     for (const r of results) {
       // eslint-disable-next-line no-console
-      console.log(`${r.n}\t${r.meanMs.toFixed(2)}\t${r.minMs.toFixed(2)}\t${r.maxMs.toFixed(2)}\t${r.domNodes}`);
+      console.log(
+        `${r.n}\t${r.meanMs.toFixed(2)}\t${r.minMs.toFixed(2)}\t${r.maxMs.toFixed(2)}` +
+          `\t${r.hydratedNodes}\t${r.visibleDomNodes}`
+      );
     }
     expect(results.length).toBeGreaterThan(0);
   });

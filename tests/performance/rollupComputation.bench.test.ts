@@ -1,4 +1,6 @@
 /**
+ * @vitest-environment jsdom
+ *
  * Performance measurement — useRollupComputation / computeRollupValue
  * (src/components/MyWork/table/useRollupComputation.ts).
  *
