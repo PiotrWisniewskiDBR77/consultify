@@ -1,7 +1,7 @@
 {
   "taskId": "OPS-OBS-001",
   "baselineSha": "92284b90e97f164ff4d4f0d75241cfea82021d58",
-  "productSha": "7287a5c2764e1e168c639b7e78dc4cc22454b6d5",
+  "productSha": "e33d09f5b86d5f10c4ee1c277ffbdfe664cdf895",
   "leaseSha256": "not_applicable_integrator_bounded_task",
   "changedPaths": [
     "server/src/services/operationalAlertService.ts",
@@ -10,6 +10,12 @@
     "server/src/services/resultsVnext/platform/platformOutboxDrainCron.ts",
     "server/src/services/resultsVnext/platform/__tests__/operationalAlertWiring.pg.test.ts",
     "tests/unit/backend/operationalAlertService.test.ts",
+    "server/migrations/20260925_operational_alert_incident_ledger.sql",
+    "server/migrations/20260926_operational_alert_recovery_grace.sql",
+    "server/src/services/operationalAlertIncidentService.ts",
+    "server/src/services/operationalAlertIncidentCron.ts",
+    "server/src/services/__tests__/operationalAlertIncidentService.pg.test.ts",
+    "server/src/cron/Scheduler.ts",
     "docs/runbooks/OPS-OBS-001_OPERATIONAL_ALERTS.md",
     "docs/program/evidence/closure/codex/OPS-OBS-001/TASK_EVIDENCE.json"
   ],
@@ -20,10 +26,16 @@
     "server/src/services/resultsVnext/platform/platformOutboxDrainCron.ts": "Samples oldest outbox age and records downstream dispatch success/failure from the production Results platform worker.",
     "server/src/services/resultsVnext/platform/__tests__/operationalAlertWiring.pg.test.ts": "Real-PostgreSQL positive control for oldest-age and terminal dispatcher failure wiring.",
     "tests/unit/backend/operationalAlertService.test.ts": "Positive controls, fail-closed identity validation, thresholds and recovery acknowledgment.",
-    "docs/runbooks/OPS-OBS-001_OPERATIONAL_ALERTS.md": "Runbook linked by every emitted alert kind.",
+    "server/migrations/20260925_operational_alert_incident_ledger.sql": "Creates the durable incident state and append-only transition event ledger.",
+    "server/migrations/20260926_operational_alert_recovery_grace.sql": "Forward-only upgrade adds persisted last-breach time without rewriting an already-applied migration.",
+    "server/src/services/operationalAlertIncidentService.ts": "Serializes multi-replica detection, restart-safe recovery and acknowledgment in PostgreSQL.",
+    "server/src/services/operationalAlertIncidentCron.ts": "Reconciles bounded in-process signals into the durable ledger with a safe evaluator identity and in-flight guard.",
+    "server/src/services/__tests__/operationalAlertIncidentService.pg.test.ts": "Real-PostgreSQL concurrency, restart, recovery, acknowledgment and append-only negative controls.",
+    "server/src/cron/Scheduler.ts": "Runs durable alert reconciliation every 30 seconds with an emergency rollback flag.",
+    "docs/runbooks/OPS-OBS-001_OPERATIONAL_ALERTS.md": "Runbook documents the durable incident lifecycle and operator acknowledgment boundary.",
     "docs/program/evidence/closure/codex/OPS-OBS-001/TASK_EVIDENCE.json": "Machine-readable bounded-task evidence."
   },
-  "ownerTables": [],
+  "ownerTables": ["operational_alert_incidents", "operational_alert_incident_events"],
   "commands": [
     {
       "command": "npx vitest run tests/unit/backend/operationalAlertService.test.ts tests/unit/backend/middleware/metrics.middleware.test.ts tests/integration/routes/metrics.prometheus.export.fail-closed.contract.test.ts --maxWorkers=1 --no-file-parallelism --retry=0",
@@ -38,12 +50,16 @@
       "exitCode": 0
     },
     {
+      "command": "DATABASE_URL=<real-pg> RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test npx vitest run server/src/services/__tests__/operationalAlertIncidentService.pg.test.ts --no-file-parallelism --maxWorkers=1 --retry=0 --reporter=dot",
+      "exitCode": 0
+    },
+    {
       "command": "NODE_OPTIONS=--max-old-space-size=8192 npm run type-check -- --pretty false && NODE_OPTIONS=--max-old-space-size=8192 npm run build:backend",
       "exitCode": 0
     }
   ],
   "denominators": {
-    "migrations": { "applied": 734, "failed": 0, "repeatApplied": 0, "dryRunPending": 0 },
+    "migrations": { "applied": 738, "failed": 0, "repeatApplied": 0, "dryRunPending": 0 },
     "focusedTestFiles": { "passed": 4, "failed": 0 },
     "focusedTests": { "passed": 35, "failed": 0, "skipped": 0, "todo": 0 }
   },
@@ -59,18 +75,22 @@
     "staleOutboxAndAuthSamplesDoNotAlert": true,
     "realOutboxDeadLetterRaisesWriteAndAgeAlerts": true,
     "fiveCompletedAuthDenialsRaiseAlert": true,
-    "metricsScrapeDoesNotInitializeDbPool": true
+    "metricsScrapeDoesNotInitializeDbPool": true,
+    "eightConcurrentDetectionsCreateOneIncident": true,
+    "freshReplicaCannotPrematurelyRecoverIncident": true,
+    "activeIncidentAcknowledgmentRejected": true,
+    "directEventUpdateAndDeleteRejected": true,
+    "postTestIncidentAndEventResidue": "0/0"
   },
   "browserArtifacts": [],
   "rollback": {
-    "method": "Revert product commit 7287a5c2764e1e168c639b7e78dc4cc22454b6d5; no schema or persisted runtime state is introduced.",
+    "method": "Disable OPERATIONAL_ALERT_LEDGER_ENABLED for emergency runtime rollback and revert product commit e33d09f5b86d5f10c4ee1c277ffbdfe664cdf895. The additive tables remain readable and are not dropped.",
     "executed": false
   },
-  "technicalVerdict": "PASS_LIVE_SIGNAL_WIRING",
+  "technicalVerdict": "PASS_DURABLE_MULTI_REPLICA_INCIDENT_LEDGER",
   "verdict": "PARTIAL",
   "openBlockers": [
-    "Alert state remains in-memory per process; no durable incident/acknowledgment ledger exists.",
-    "No real alert transport paging/dashboard or multi-instance aggregation window is wired.",
+    "No real external paging transport or operator dashboard is wired.",
     "No deployed sustained observation window or exercised operator incident is authorized or verified."
   ]
 }
