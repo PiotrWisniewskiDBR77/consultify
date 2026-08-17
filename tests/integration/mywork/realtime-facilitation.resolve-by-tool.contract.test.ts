@@ -20,6 +20,7 @@ vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
     req.organizationId = 'org-1';
     next();
   },
+  validateOrgMembership: (_req: unknown, _res: unknown, next: () => void) => next(),
 }));
 
 vi.mock('../../../server/src/services/realtimePlatformService.js', () => ({

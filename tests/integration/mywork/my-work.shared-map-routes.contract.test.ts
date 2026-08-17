@@ -87,6 +87,7 @@ vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
     next();
   },
   requireRole: () => (_req: unknown, _res: unknown, next: () => void) => next(),
+  validateOrgMembership: (_req: unknown, _res: unknown, next: () => void) => next(),
   requireSuperAdmin: (_req: unknown, _res: unknown, next: () => void) => next(),
 }));
 

@@ -21,7 +21,7 @@ import { beforeAll, afterEach, describe, expect, it } from 'vitest';
 
 import fs from 'fs';
 
-import app from '../../server/src/index';
+import app, { databaseInitPromise } from '../../server/src/index';
 import { dbProxy } from '../../server/src/database/Database.js';
 import { setDependencies } from '../../server/src/controllers/AuthController.js';
 
@@ -107,6 +107,7 @@ describe('SEC-PUB-002 SPA catch-all does not disclose the deployment layout', ()
   // shared database, and tearing the connection down from here destabilises other
   // files. These cases seed nothing — they only need the app to answer.
   beforeAll(async () => {
+    await databaseInitPromise;
     await setDependencies({ db: dbProxy });
   }, 180_000);
 

@@ -35,7 +35,7 @@ vi.hoisted(() => {
   process.env.DEMO_ORG_ID = 'demo-org';
 });
 
-import app from '../../server/src/index';
+import app, { databaseInitPromise } from '../../server/src/index';
 import { initializeDatabase } from '../../server/src/database/DatabaseInitializer.js';
 import { dbProxy, resetConnection } from '../../server/src/database/Database.js';
 import { setDependencies } from '../../server/src/controllers/AuthController.js';
@@ -62,6 +62,7 @@ async function registerDemo(email: string, password = FIXTURE_PASSWORD) {
 
 describe('OPS-DEMO-002 public demo entry contract', () => {
   beforeAll(async () => {
+    await databaseInitPromise;
     await resetConnection();
     const init = await initializeDatabase();
     if (!init.success) throw new Error(`DB init failed: ${init.message}`);

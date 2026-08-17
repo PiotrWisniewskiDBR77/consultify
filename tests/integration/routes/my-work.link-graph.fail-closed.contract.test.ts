@@ -8,6 +8,7 @@ const queryAllMock = vi.fn();
 const queryRunMock = vi.fn();
 
 vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
+  validateOrgMembership: (_req: any, _res: any, next: any) => next(),
   verifyToken: (req: any, _res: any, next: any) => {
     if (req.get('x-test-auth') === 'none') {
       req.user = undefined;
@@ -121,4 +122,3 @@ describe('my-work link graph fail-closed contract', () => {
     expect(JSON.stringify(res.body)).not.toContain('Expected');
   });
 });
-

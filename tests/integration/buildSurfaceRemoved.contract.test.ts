@@ -119,23 +119,18 @@ describe('SEC-PUB-002 build diagnostics surface', () => {
   describe('all four historical aliases are closed', () => {
     it.each(BUILD_ROUTES)('%s is not served', async (route) => {
       const res = await request(app).get(route);
-      if (route.startsWith('/api/')) {
-        expect(res.status, `${route} API alias must remain unrouted`).not.toBe(200);
-      }
+      expect(res.status, `${route} removed alias must remain an explicit tombstone`).toBe(404);
+      expect(res.body).toEqual({ error: { code: 'NOT_FOUND', message: 'Not found' } });
       assertNoDisclosure(res, route);
     }, 180_000);
 
     it.each(BUILD_ROUTES)('%s is indistinguishable from a route that never existed', async (route) => {
-      // Asserting a fixed status would be brittle: unknown /api/* answers 401 here
-      // while unknown non-API paths fall through to the SPA catch-all. The property
-      // that matters is that these routes are no longer special.
+      // The historical aliases are deliberately more explicit than arbitrary
+      // unknown browser paths: they are retired operational endpoints, never SPA
+      // navigation. Their fixed tombstone prevents a future catch-all from
+      // accidentally resurrecting them as HTTP 200.
       const removed = await request(app).get(route);
-      const neverExisted = await request(app).get(
-        route.startsWith('/api/')
-          ? '/api/definitely-not-a-route-sec-pub-002'
-          : '/__definitely-not-a-route-sec-pub-002'
-      );
-      expect(removed.status).toBe(neverExisted.status);
+      expect(removed.status).toBe(404);
     }, 180_000);
 
     it.each(BUILD_ROUTES)('%s discloses no path, key or raw error', async (route) => {

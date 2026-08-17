@@ -309,7 +309,7 @@ function readTestModeGateEnv(): TestModeGateEnv {
 // `false` forever with `dbInitError` staying `null`: not a slow/stuck
 // migration, but the readiness sequence never being started in the first
 // place.
-const databaseInitPromise: Promise<void> = shouldInitializeTestDatabase(readTestModeGateEnv())
+export const databaseInitPromise: Promise<void> = shouldInitializeTestDatabase(readTestModeGateEnv())
   ? (async () => {
       try {
         logger.info('[Server] Initializing database...');
@@ -1401,6 +1401,21 @@ logger.info(`[Server] Final frontend dist path: ${frontendDistPath}`);
  *
  * Coverage: tests/integration/buildSurfaceRemoved.contract.test.ts
  */
+const REMOVED_BUILD_DIAGNOSTIC_PATHS: string[] = [
+  '/__build-info',
+  '/__build-graph',
+  '/api/build-info',
+  '/api/build-graph',
+];
+
+// A removed diagnostic endpoint is not an SPA route. Without an explicit
+// tombstone the two non-API aliases fall through to serveIndexHtml and answer
+// 200, which makes a retired operational surface look live to probes and human
+// operators. Keep the response constant and detail-free; all methods receive
+// the same honest not-found contract before either the API or SPA catch-all.
+app.all(REMOVED_BUILD_DIAGNOSTIC_PATHS, (_req, res) => {
+  res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Not found' } });
+});
 
 const isStaticAssetRequest = (requestPath: string): boolean =>
   /\.[a-z0-9]+$/i.test(requestPath) ||

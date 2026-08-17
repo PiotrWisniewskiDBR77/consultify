@@ -50,7 +50,7 @@ vi.hoisted(() => {
 
 import jwt from 'jsonwebtoken';
 
-import app from '../../server/src/index';
+import app, { databaseInitPromise } from '../../server/src/index';
 import config from '../../server/src/config/Config.js';
 import { initializeDatabase } from '../../server/src/database/DatabaseInitializer.js';
 import { dbProxy, resetConnection } from '../../server/src/database/Database.js';
@@ -150,6 +150,7 @@ function authCookies(res: request.Response): string[] {
 
 describe('OPS-DEMO-002 — GET /api/auth/me credential issuance', () => {
   beforeAll(async () => {
+    await databaseInitPromise;
     await resetConnection();
     const init = await initializeDatabase();
     if (!init.success) throw new Error(`DB init failed: ${init.message}`);

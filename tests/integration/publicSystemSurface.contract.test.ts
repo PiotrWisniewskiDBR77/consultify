@@ -66,7 +66,7 @@ vi.hoisted(() => {
   process.env.MOCK_DB = 'false';
 });
 
-import app from '../../server/src/index';
+import app, { databaseInitPromise } from '../../server/src/index';
 import { dbProxy } from '../../server/src/database/Database.js';
 import { setDependencies } from '../../server/src/controllers/AuthController.js';
 
@@ -100,6 +100,7 @@ describe('SEC-PUB-002 public system surface', () => {
   // demoPublicEntry fail intermittently. These cases only need the app to answer;
   // they do not seed anything, so they can ride whatever connection the app has.
   beforeAll(async () => {
+    await databaseInitPromise;
     await setDependencies({ db: dbProxy });
   }, 180_000);
 

@@ -9,6 +9,7 @@ const generateSectionMock = vi.fn();
 const suggestSectionsMock = vi.fn();
 
 vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
+  validateOrgMembership: (_req: any, _res: any, next: any) => next(),
   verifyToken: (req: any, _res: any, next: any) => {
     if (req.get('x-test-auth') === 'none') {
       req.user = undefined;

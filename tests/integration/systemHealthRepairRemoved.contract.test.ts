@@ -64,7 +64,7 @@ vi.mock('child_process', async (importOriginal) => {
   return { ...actual, default: actual, exec: fakeExec, spawn: fakeSpawn };
 });
 
-import app from '../../server/src/index';
+import app, { databaseInitPromise } from '../../server/src/index';
 import { initializeDatabase } from '../../server/src/database/DatabaseInitializer.js';
 import { dbProxy, resetConnection } from '../../server/src/database/Database.js';
 import { setDependencies } from '../../server/src/controllers/AuthController.js';
@@ -87,6 +87,7 @@ const UNROUTED_CONTROL_PATH = '/api/system/definitely-not-a-route-sec-pub-001';
 
 describe('SEC-PUB-001 anonymous auto-repair shell-out is removed', () => {
   beforeAll(async () => {
+    await databaseInitPromise;
     await resetConnection();
     const init = await initializeDatabase();
     if (!init.success) throw new Error(`DB init failed: ${init.message}`);

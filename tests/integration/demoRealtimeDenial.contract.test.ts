@@ -36,7 +36,7 @@ vi.hoisted(() => {
     process.env.JWT_SECRET || 'ops-demo-002-realtime-fixture-secret-at-least-32-chars';
 });
 
-import app from '../../server/src/index';
+import app, { databaseInitPromise } from '../../server/src/index';
 import { initializeDatabase } from '../../server/src/database/DatabaseInitializer.js';
 import { dbProxy, resetConnection } from '../../server/src/database/Database.js';
 import { setDependencies } from '../../server/src/controllers/AuthController.js';
@@ -67,6 +67,7 @@ const GUARDED_NAMESPACES = ['/chat-projects', '/org-context', '/facilitation', '
 
 describe('OPS-DEMO-002 realtime denial', () => {
   beforeAll(async () => {
+    await databaseInitPromise;
     await resetConnection();
     const init = await initializeDatabase();
     if (!init.success) throw new Error(`DB init failed: ${init.message}`);
