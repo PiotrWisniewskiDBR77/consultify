@@ -11,6 +11,7 @@ import {
   publishInitiativeCard,
   readAnalysisReadiness,
   readDefinitionReadiness,
+  readExecutionCaseByInitiative,
   readInitiativeCapabilities,
   readInitiativeCards,
   readRegisteredInitiative,
@@ -19,6 +20,7 @@ import {
   requestDefinitionDecision,
   requestScheduleDecision,
   reviewInitiativeCard,
+  RuntimeApiError,
   startInitiativeAnalysis,
 } from '../../../src/services/initiatives-execution/runtimeApi';
 
@@ -36,6 +38,7 @@ vi.mock('../../../src/services/initiatives-execution/runtimeApi', async () => {
     readRegisteredInitiative: vi.fn(),
     readInitiativeCards: vi.fn(),
     readDefinitionReadiness: vi.fn(),
+    readExecutionCaseByInitiative: vi.fn(),
     readAnalysisReadiness: vi.fn(),
     readInitiativeCapabilities: vi.fn(),
     listMyDefinitionDecisions: vi.fn(),
@@ -89,6 +92,10 @@ describe('CanonicalInitiativeCardWorkspace', () => {
       .mockResolvedValue({ initiativeVersion: 1, cards: [] });
     vi.mocked(readDefinitionReadiness).mockReset().mockResolvedValue(readiness);
     vi.mocked(readAnalysisReadiness).mockReset().mockResolvedValue(readiness);
+    vi.mocked(readExecutionCaseByInitiative).mockReset().mockResolvedValue({
+      executionCaseId: 'execution-case-1',
+      detail: { state: 'PLANNED' },
+    });
     vi.mocked(readInitiativeCapabilities).mockReset().mockResolvedValue({
       actorId: 'initiative-owner',
       canView: true,
@@ -186,6 +193,62 @@ describe('CanonicalInitiativeCardWorkspace', () => {
         })
       )
     );
+  });
+
+  it('reads the neutral linked Execution case after scheduling and opens its exact deep link', async () => {
+    const onOpenExecution = vi.fn();
+    vi.mocked(readRegisteredInitiative).mockResolvedValue({
+      ...initiative,
+      initiative: {
+        ...initiative.initiative,
+        lifecycleState: 'SCHEDULED',
+        handoffPackageId: 'handoff-1',
+        handoffPackageVersion: 3,
+      },
+    });
+    render(
+      <CanonicalInitiativeCardWorkspace
+        initiativeId="initiative-card-ui"
+        onBack={vi.fn()}
+        onOpenExecution={onOpenExecution}
+      />
+    );
+
+    expect(await screen.findByText('Execution execution-case-1 · PLANNED')).toBeInTheDocument();
+    expect(readExecutionCaseByInitiative).toHaveBeenCalledWith(
+      'initiative-card-ui',
+      expect.any(AbortSignal)
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Open Execution' }));
+    expect(onOpenExecution).toHaveBeenCalledWith('execution-case-1');
+  });
+
+  it('labels a schedule conflict accurately and offers bounded truth reload', async () => {
+    vi.mocked(readRegisteredInitiative).mockResolvedValue({
+      ...initiative,
+      initiative: { ...initiative.initiative, lifecycleState: 'APPROVED_BACKLOG' },
+    });
+    vi.mocked(requestScheduleDecision).mockRejectedValueOnce(
+      new RuntimeApiError(409, 'STALE_VERSION')
+    );
+    render(<CanonicalInitiativeCardWorkspace initiativeId="initiative-card-ui" onBack={vi.fn()} />);
+    await screen.findByRole('region', { name: 'Schedule readiness' });
+    for (const [label, value] of [
+      ['Schedule Portfolio reference', 'portfolio-1@3'],
+      ['Schedule Plan reference', 'plan-1@4'],
+      ['Schedule Capacity reference', 'capacity-1@2'],
+      ['Schedule authority', 'authority-1'],
+      ['Schedule Execution Manager', 'manager-1'],
+      ['Schedule Decision due', '2026-08-20T12:00'],
+    ]) {
+      fireEvent.change(screen.getByLabelText(label), { target: { value } });
+    }
+    fireEvent.click(screen.getByRole('button', { name: 'Request Schedule Decision' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Schedule decision request conflicted with newer truth'
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Reload current truth' }));
+    await waitFor(() => expect(readRegisteredInitiative).toHaveBeenCalledTimes(2));
   });
 
   it('publishes a content version without self-accepting its review', async () => {

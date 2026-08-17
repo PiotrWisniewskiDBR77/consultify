@@ -24,6 +24,7 @@ import {
   publishInitiativeCard,
   readAnalysisReadiness,
   readDefinitionReadiness,
+  readExecutionCaseByInitiative,
   readInitiativeCapabilities,
   readInitiativeCards,
   readRegisteredInitiative,
@@ -39,6 +40,7 @@ import {
 interface Props {
   initiativeId: string;
   onBack: () => void;
+  onOpenExecution?: (executionCaseId: string) => void;
   initialCardKey?: string | null;
   initialFindingId?: string | null;
   onContextChange?: (context: {
@@ -98,6 +100,7 @@ function textValue(value: unknown): string {
 export const CanonicalInitiativeCardWorkspace: React.FC<Props> = ({
   initiativeId,
   onBack,
+  onOpenExecution,
   initialCardKey,
   initialFindingId,
   onContextChange,
@@ -112,6 +115,10 @@ export const CanonicalInitiativeCardWorkspace: React.FC<Props> = ({
   const [handoffPackage, setHandoffPackage] = useState<{ id: string; version: number } | null>(
     null
   );
+  const [linkedExecutionCase, setLinkedExecutionCase] = useState<{
+    executionCaseId: string;
+    state: string;
+  } | null>(null);
   const [cards, setCards] = useState<InitiativeCardVersionReadModel[]>([]);
   const [definitionReadiness, setDefinitionReadiness] =
     useState<DefinitionReadinessReadModel | null>(null);
@@ -176,6 +183,7 @@ export const CanonicalInitiativeCardWorkspace: React.FC<Props> = ({
   const [commitmentIds, setCommitmentIds] = useState('');
   const [criticalPeriodIds, setCriticalPeriodIds] = useState('');
   const [writeState, setWriteState] = useState<'IDLE' | 'SAVING' | 'CONFLICT' | 'FAILED'>('IDLE');
+  const [writeAction, setWriteAction] = useState('Update');
   const commandIds = useRef(new Map<string, string>());
   const definitionRequestIds = useRef(
     new Map<number, { clientRequestId: string; decisionId: string }>()
@@ -231,6 +239,18 @@ export const CanonicalInitiativeCardWorkspace: React.FC<Props> = ({
             }
           : null
       );
+      if (initiative.initiative.lifecycleState === 'SCHEDULED') {
+        const linked = (await readExecutionCaseByInitiative(initiativeId, signal)) as {
+          executionCaseId: string;
+          detail: { state: string };
+        };
+        setLinkedExecutionCase({
+          executionCaseId: linked.executionCaseId,
+          state: linked.detail.state,
+        });
+      } else {
+        setLinkedExecutionCase(null);
+      }
       setWorkRefs(initiative.initiative.workRefs ?? []);
       setInitiativeVersion(cardResult.initiativeVersion);
       setCards(cardResult.cards);
@@ -342,6 +362,7 @@ export const CanonicalInitiativeCardWorkspace: React.FC<Props> = ({
       writeState === 'SAVING'
     )
       return;
+    setWriteAction(selected.version > 0 ? 'Material change request' : 'Card publish');
     setWriteState('SAVING');
     const commandKey = `${selected.id}:${selected.version}:${initiativeVersion}`;
     const clientRequestId = commandIds.current.get(commandKey) ?? crypto.randomUUID();
@@ -445,6 +466,7 @@ export const CanonicalInitiativeCardWorkspace: React.FC<Props> = ({
       !aiProposal.evidence
     )
       return;
+    setWriteAction('AI analysis proposal');
     setWriteState('SAVING');
     const proposalId = `ai-analysis-${initiativeId}-${selected.id}-${selected.version}`;
     const versioned = (value: string) =>
@@ -505,6 +527,7 @@ export const CanonicalInitiativeCardWorkspace: React.FC<Props> = ({
       writeState === 'SAVING'
     )
       return;
+    setWriteAction('Card review');
     setWriteState('SAVING');
     const commandKey = `review:${selected.id}:${selected.version}:${initiativeVersion}:${outcome}`;
     const clientRequestId = commandIds.current.get(commandKey) ?? crypto.randomUUID();
@@ -535,6 +558,7 @@ export const CanonicalInitiativeCardWorkspace: React.FC<Props> = ({
       writeState === 'SAVING'
     )
       return;
+    setWriteAction('Definition decision request');
     setWriteState('SAVING');
     const cachedRequest = definitionRequestIds.current.get(initiativeVersion);
     const requestIds = cachedRequest ?? {
@@ -561,6 +585,7 @@ export const CanonicalInitiativeCardWorkspace: React.FC<Props> = ({
 
   const decideCurrentDefinition = async (outcome: 'APPROVED' | 'RETURNED') => {
     if (!myDefinitionDecision || !decisionRationale.trim() || writeState === 'SAVING') return;
+    setWriteAction('Definition decision');
     setWriteState('SAVING');
     const commandKey = `definition-decision:${myDefinitionDecision.decisionId}:${outcome}`;
     const clientRequestId = commandIds.current.get(commandKey) ?? crypto.randomUUID();
@@ -591,6 +616,7 @@ export const CanonicalInitiativeCardWorkspace: React.FC<Props> = ({
       writeState === 'SAVING'
     )
       return;
+    setWriteAction('Remediation work creation');
     setWriteState('SAVING');
     const key = `${findingId}:${initiativeVersion}`;
     const ids = remediationIds.current.get(key) ?? {
@@ -637,6 +663,7 @@ export const CanonicalInitiativeCardWorkspace: React.FC<Props> = ({
       writeState === 'SAVING'
     )
       return;
+    setWriteAction('Source refresh');
     setWriteState('SAVING');
     const key = `${initiativeVersion}:${source.currentProposalVersion}:${source.currentSourceVersion}`;
     const clientRequestId = sourceRefreshIds.current.get(key) ?? crypto.randomUUID();
@@ -659,6 +686,7 @@ export const CanonicalInitiativeCardWorkspace: React.FC<Props> = ({
 
   const startAnalysis = async () => {
     if (lifecycleState !== 'DEFINED' || !capabilities?.canUpdate || writeState === 'SAVING') return;
+    setWriteAction('Analysis start');
     setWriteState('SAVING');
     const key = `analysis-start:${initiativeVersion}`;
     const clientRequestId = analysisCommandIds.current.get(key) ?? crypto.randomUUID();
@@ -688,6 +716,7 @@ export const CanonicalInitiativeCardWorkspace: React.FC<Props> = ({
       writeState === 'SAVING'
     )
       return;
+    setWriteAction('Analysis decision request');
     setWriteState('SAVING');
     const key = `analysis-request:${initiativeVersion}`;
     const clientRequestId = analysisCommandIds.current.get(key) ?? crypto.randomUUID();
@@ -731,6 +760,7 @@ export const CanonicalInitiativeCardWorkspace: React.FC<Props> = ({
       writeState === 'SAVING'
     )
       return;
+    setWriteAction('Schedule decision request');
     setWriteState('SAVING');
     const key = `schedule-request:${initiativeVersion}`;
     const ids = scheduleCommandIds.current.get(key) ?? {
@@ -883,9 +913,21 @@ export const CanonicalInitiativeCardWorkspace: React.FC<Props> = ({
           className="mx-4 mt-3 flex items-center gap-2 rounded-md border border-c-danger/30 p-3 text-sm text-c-danger"
         >
           <AlertTriangle aria-hidden="true" size={15} />
-          {writeState === 'CONFLICT'
-            ? 'This card changed. Reload before publishing again.'
-            : 'Publish failed; the previous version remains current.'}
+          <span>
+            {writeState === 'CONFLICT'
+              ? `${writeAction} conflicted with newer truth. Reload before trying again.`
+              : `${writeAction} failed. The previous durable state remains current.`}
+          </span>
+          <button
+            type="button"
+            className="btn-secondary ml-auto"
+            onClick={() => {
+              setState('LOADING');
+              void load().catch(() => setState('ERROR'));
+            }}
+          >
+            Reload current truth
+          </button>
         </div>
       ) : null}
 
@@ -1212,6 +1254,23 @@ export const CanonicalInitiativeCardWorkspace: React.FC<Props> = ({
                       ? `${handoffPackage.id} v${handoffPackage.version}`
                       : 'read-back pending'}
                   </div>
+                  {linkedExecutionCase ? (
+                    <div className="mt-3 flex items-center justify-between gap-3">
+                      <span>
+                        Execution {linkedExecutionCase.executionCaseId} ·{' '}
+                        {linkedExecutionCase.state}
+                      </span>
+                      {onOpenExecution ? (
+                        <button
+                          type="button"
+                          className="btn-secondary"
+                          onClick={() => onOpenExecution(linkedExecutionCase.executionCaseId)}
+                        >
+                          Open Execution
+                        </button>
+                      ) : null}
+                    </div>
+                  ) : null}
                 </div>
               ) : scheduleDecisionId ? (
                 <p role="status" className="mt-3 text-xs text-c-text-muted">

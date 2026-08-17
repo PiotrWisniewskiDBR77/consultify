@@ -21,6 +21,7 @@ import {
   GitBranch,
   Lightbulb,
   List,
+  Inbox,
   Plus,
   Shield,
   Sparkles,
@@ -218,7 +219,13 @@ interface InitiativesHubProps {
   initialTab?: ModuleTab;
 }
 
-const CANONICAL_INITIATIVES_TABS = new Set<ModuleTab>(['list', 'portfolio', 'plan', 'capacity']);
+const CANONICAL_INITIATIVES_TABS = new Set<ModuleTab>([
+  'list',
+  'candidates',
+  'portfolio',
+  'plan',
+  'capacity',
+]);
 
 export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'list' }) => {
   const { t, i18n } = useTranslation();
@@ -608,6 +615,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         id: 'list' as ModuleTab,
         label: 'Inicjatywy',
         icon: <List size={16} />,
+      },
+      {
+        id: 'candidates' as ModuleTab,
+        label: 'Kandydaci',
+        icon: <Inbox size={16} />,
       },
       {
         id: 'portfolio' as ModuleTab,
@@ -1528,6 +1540,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           return (
             <CanonicalInitiativeCardWorkspace
               initiativeId={activeDocumentId}
+              onOpenExecution={(executionCaseId) =>
+                navigate(`/execution?tab=list&open=${encodeURIComponent(executionCaseId)}`)
+              }
               initialCardKey={searchParams.get('cardKey')}
               initialFindingId={searchParams.get('findingId')}
               onContextChange={({ cardKey, findingId }) => {
@@ -2232,7 +2247,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         }
         filterControls={rightControls}
         commandRowContent={
-          activeTab === 'portfolio' || activeTab === 'plan' || activeTab === 'capacity'
+          activeTab === 'portfolio' ||
+          activeTab === 'plan' ||
+          activeTab === 'capacity' ||
+          activeTab === 'candidates'
             ? undefined
             : isBulkMode
               ? bulkBarContent
