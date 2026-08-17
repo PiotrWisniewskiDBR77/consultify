@@ -19,6 +19,7 @@ import {
   listDurableIdeaNodeLocks,
   releaseDurableIdeaNodeLock,
 } from '../realtime/ideaMapAccess.js';
+import type { GraphPatchOp, IdeaNodeFenceMap } from '../realtime/ideaMapAccess.js';
 import {
   isWsOrgContextFresh,
   resolveWsOrgContext,
@@ -91,6 +92,23 @@ const COLORS = ['#f43f5e', '#8b5cf6', '#06b6d4', '#22c55e', '#f59e0b', '#ec4899'
 
 const HEARTBEAT_INTERVAL_MS = 30_000;
 const PONG_TIMEOUT_MS = 10_000;
+const MAX_WS_PAYLOAD_BYTES = 256 * 1024;
+const MAX_GRAPH_PATCH_OPS = 200;
+const GRAPH_OPS = new Set(['add_node', 'update_node', 'remove_node', 'add_edge', 'update_edge', 'remove_edge']);
+
+function validateGraphPatchMessage(msg: any): { ok: true; ops: GraphPatchOp[] } | { ok: false } {
+  if (!Array.isArray(msg?.operations) || msg.operations.length > MAX_GRAPH_PATCH_OPS) return { ok: false };
+  for (const op of msg.operations) {
+    if (!op || !GRAPH_OPS.has(op.op) || !op.data || typeof op.data !== 'object') return { ok: false };
+    const id = op.data.id;
+    if (typeof id !== 'string' || id.length < 1 || id.length > 200) return { ok: false };
+    for (const key of ['source', 'target']) {
+      if (op.data[key] != null && (typeof op.data[key] !== 'string' || op.data[key].length > 200)) return { ok: false };
+    }
+  }
+  if (msg.correlationId != null && (typeof msg.correlationId !== 'string' || msg.correlationId.length > 128)) return { ok: false };
+  return { ok: true, ops: msg.operations };
+}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -514,6 +532,10 @@ export function attachIdeaCollabWs(server: HttpServer): void {
 
     ws.on('message', async (data: Buffer) => {
       try {
+        if (data.byteLength > MAX_WS_PAYLOAD_BYTES) {
+          ws.send(JSON.stringify({ type: 'error', code: 'INVALID_MESSAGE' }));
+          return;
+        }
         const msg = JSON.parse(data.toString());
 
         // #101 Grupa 0: every mutating op must (a) run against a FRESH active
@@ -552,6 +574,16 @@ export function attachIdeaCollabWs(server: HttpServer): void {
             }
             return;
           }
+          if (featureFlags.ENABLE_SHARED_IDEA_MAPS) {
+            const currentMembership = await assertIdeaMembership(
+              db, user.organizationId || '', user.id, ideaId
+            );
+            if (!currentMembership.canWrite) {
+              ws.__canWrite = false;
+              ws.send(JSON.stringify({ type: 'error', code: 'NOT_A_WRITER', op: msg.type }));
+              return;
+            }
+          }
         }
 
         switch (msg.type) {
@@ -574,7 +606,13 @@ export function attachIdeaCollabWs(server: HttpServer): void {
 
           case 'lock_node': {
             const nodeId = msg.nodeId;
-            if (!nodeId) break;
+            const ttlSeconds = Number(msg.ttlSeconds ?? 30);
+            if (typeof nodeId !== 'string' || !nodeId || nodeId.length > 200 ||
+                !Number.isFinite(ttlSeconds) || ttlSeconds < 5 || ttlSeconds > 300 ||
+                (msg.correlationId != null && (typeof msg.correlationId !== 'string' || msg.correlationId.length > 128))) {
+              ws.send(JSON.stringify({ type: 'error', code: 'INVALID_MESSAGE' }));
+              break;
+            }
             const acquired = await acquireDurableIdeaNodeLock(db, {
               organizationId: user.organizationId || '',
               ideaId,
@@ -582,7 +620,7 @@ export function attachIdeaCollabWs(server: HttpServer): void {
               userId: user.id,
               leaseOwner: ws.__leaseOwner || '',
               correlationId: String(msg.correlationId || randomUUID()),
-              ttlSeconds: Number(msg.ttlSeconds || 30),
+              ttlSeconds,
             });
             if (!acquired) {
               const locks = await listDurableIdeaNodeLocks(db, user.organizationId || '', ideaId);
@@ -645,15 +683,19 @@ export function attachIdeaCollabWs(server: HttpServer): void {
           }
 
           case 'graph_patch': {
+            const validated = validateGraphPatchMessage(msg);
+            if (!validated.ok) {
+              ws.send(JSON.stringify({ type: 'error', code: 'INVALID_MESSAGE' }));
+              break;
+            }
             const patch = {
               type: 'graph_patch',
               userId: user.id,
               userName: user.name,
               timestamp: Date.now(),
-              operations: msg.operations,
+              operations: validated.ops,
             };
             state.lastActivity = Date.now();
-            ws.__actionsCount = (ws.__actionsCount || 0) + 1;
 
             // Relay-only mode preserves the legacy live-room behavior. Shared
             // maps relay only after the canonical fenced write succeeds, so a
@@ -663,34 +705,35 @@ export function attachIdeaCollabWs(server: HttpServer): void {
               if (otherWs !== ws && otherWs.readyState === 1) otherWs.send(patchStr);
             });
 
-            if (ws.__sessionId) {
-              persistEvent(db, ws.__sessionId, 'graph_patch', {
-                opCount: Array.isArray(msg.operations) ? msg.operations.length : 0,
-              });
-            }
-
             // (b+c) DP-3: sequentially persist into the canonical row and
             // broadcast the new version to the WHOLE room (author included).
             // Flag OFF → relay-only, exactly today's behavior.
             if (featureFlags.ENABLE_SHARED_IDEA_MAPS) {
-              const ops = Array.isArray(msg.operations) ? msg.operations : [];
+              const ops = validated.ops;
               try {
+                const touchedNodeIds = [...new Set(ops.flatMap((op) => {
+                  if (op.op.endsWith('_node')) return [String(op.data?.id || '')];
+                  return [String(op.data?.source || ''), String(op.data?.target || '')];
+                }).filter(Boolean))];
+                const fences: IdeaNodeFenceMap = {};
+                for (const nodeId of touchedNodeIds) {
+                  const token = ws.__lockTokens?.get(nodeId);
+                  if (token != null) fences[nodeId] = {
+                    leaseOwner: ws.__leaseOwner || '', fencingToken: token,
+                  };
+                }
                 const { version } = await applyGraphPatchToCanonical(
                   db,
                   ideaId,
                   user.organizationId || authUser?.organizationId || '',
                   user.id,
                   ops,
-                  msg.nodeId && (msg.fencingToken || ws.__lockTokens?.get(String(msg.nodeId)))
-                    ? {
-                        nodeId: String(msg.nodeId),
-                        leaseOwner: ws.__leaseOwner || '',
-                        fencingToken: Number(
-                          msg.fencingToken || ws.__lockTokens?.get(String(msg.nodeId))
-                        ),
-                      }
-                    : undefined
+                  fences
                 );
+                ws.__actionsCount = (ws.__actionsCount || 0) + 1;
+                if (ws.__sessionId) await persistEvent(db, ws.__sessionId, 'graph_patch', {
+                  opCount: ops.length, correlationId: String(msg.correlationId || ''), version,
+                });
                 relayPatch();
                 broadcastGraphVersion(ideaId, version);
               } catch (err) {

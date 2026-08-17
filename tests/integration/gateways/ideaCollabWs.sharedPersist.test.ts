@@ -15,7 +15,7 @@
  */
 import http from 'http';
 import net from 'net';
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import jwt from 'jsonwebtoken';
 import WebSocket from 'ws';
 
@@ -38,6 +38,8 @@ interface StoreState {
     string,
     { id: string; version: number; nodes_json: string; edges_json: string; last_editor?: string }
   >; // ideaId -> canonical row
+  locks: Map<string, { holder: string; owner: string; token: number; expiresAt: number }>;
+  collabEvents: Array<{ eventType: string; payload: unknown }>;
 }
 
 const store = vi.hoisted(
@@ -46,6 +48,8 @@ const store = vi.hoisted(
       ideaOrg: new Map<string, string>(),
       members: new Set<string>(),
       canonical: new Map(),
+      locks: new Map(),
+      collabEvents: [],
     }) as StoreState
 );
 
@@ -73,6 +77,21 @@ vi.mock('../../../server/src/utils/dbSchema.js', () => ({
 // db.get dispatcher: matches the queries the gateway + ideaMapAccess issue.
 async function dbGet(sql: string, params: unknown[] = []): Promise<unknown> {
   const s = sql.replace(/\s+/g, ' ').trim();
+  if (/INSERT INTO idea_workspace_node_locks/.test(s)) {
+    const org = String(params[3]); const idea = String(params[4]); const node = String(params[5]);
+    const holder = String(params[6]); const owner = String(params[7]); const ttl = Number(params[8]);
+    const key = `${org}:${idea}:${node}`; const prior = store.locks.get(key);
+    if (prior && prior.expiresAt > Date.now() && (prior.holder !== holder || prior.owner !== owner)) return null;
+    const next = { holder, owner, token: (prior?.token || 0) + 1, expiresAt: Date.now() + ttl * 1000 };
+    store.locks.set(key, next);
+    return { nodeId: node, holderUserId: holder, leaseOwner: owner, fencingToken: next.token, expiresAt: new Date(next.expiresAt).toISOString() };
+  }
+  if (/DELETE FROM idea_workspace_node_locks/.test(s)) {
+    const key = `${params[0]}:${params[1]}:${params[2]}`; const lock = store.locks.get(key);
+    const released = !!lock && lock.holder === params[3] && lock.owner === params[4] && lock.token === Number(params[5]);
+    if (released) store.locks.delete(key);
+    return { released };
+  }
 
   // my_ideas org check (flag-OFF upgrade path + membership idea existence)
   if (/SELECT id FROM my_ideas WHERE id = \? AND organization_id = \?/.test(s)) {
@@ -103,9 +122,25 @@ async function dbGet(sql: string, params: unknown[] = []): Promise<unknown> {
   return null;
 }
 
+async function dbAll(sql: string, params: unknown[] = []): Promise<unknown[]> {
+  if (/FROM idea_workspace_node_locks/.test(sql)) {
+    const prefix = `${params[0]}:${params[1]}:`;
+    return [...store.locks.entries()].filter(([key, lock]) => key.startsWith(prefix) && lock.expiresAt > Date.now())
+      .map(([key, lock]) => ({ nodeId: key.slice(prefix.length), holderUserId: lock.holder, leaseOwner: lock.owner, fencingToken: lock.token, expiresAt: new Date(lock.expiresAt).toISOString() }));
+  }
+  return [];
+}
+
 // db.run dispatcher: the canonical UPDATE (find the row by its id and mutate it).
 async function dbRun(sql: string, params: unknown[] = []): Promise<{ changes: number }> {
   const s = sql.replace(/\s+/g, ' ').trim();
+  if (/INSERT INTO collab_session_events \(session_id, event_type, payload_json\)/.test(s)) {
+    store.collabEvents.push({
+      eventType: String(params[1]),
+      payload: params[2] == null ? null : JSON.parse(String(params[2])),
+    });
+    return { changes: 1 };
+  }
   if (/UPDATE my_idea_maps SET nodes_json = \?, edges_json = \?, version = \?, last_editor_user_id = \?/.test(s)) {
     const [nodesJson, edgesJson, version, lastEditor, , rowId] = params as [
       string,
@@ -140,7 +175,7 @@ vi.mock('../../../server/src/database/Database.js', () => ({
       execCalls.push(sql);
     },
     query: vi.fn().mockResolvedValue({ rows: [] }),
-    all: vi.fn().mockResolvedValue([]),
+    all: (sql: string, params?: unknown[]) => dbAll(sql, params),
     prepare: vi.fn(),
   }),
 }));
@@ -173,7 +208,12 @@ vi.mock('../../../server/src/database/PostgresDatabase.js', () => ({
           return { rows: row ? [{ ...row }] : [], rowCount: row ? 1 : 0 };
         }
         if (/FROM idea_workspace_node_locks/.test(normalized)) {
-          return { rows: [], rowCount: 0 };
+          const [org, idea, nodes] = params as [string, string, string[]];
+          const rows = nodes.flatMap((node) => {
+            const lock = store.locks.get(`${org}:${idea}:${node}`);
+            return lock ? [{ node_id: node, lease_owner: lock.owner, fencing_token: String(lock.token), unexpired: lock.expiresAt > Date.now() }] : [];
+          });
+          return { rows, rowCount: rows.length };
         }
         if (/UPDATE my_idea_maps SET nodes_json = \$1/.test(normalized)) {
           const [nodesJson, edgesJson, version, lastEditor, rowId, org, expectedVersion] = params as [
@@ -263,12 +303,16 @@ function sendUpgrade(port: number, path: string, token?: string): Promise<number
 }
 
 /** Open a WS client and wait for the OPEN event. */
+const liveSockets = new Set<WebSocket>();
+
 function connect(port: number, ideaId: string, token: string): Promise<WebSocket> {
   return new Promise((resolve, reject) => {
     const ws = new WebSocket(`ws://127.0.0.1:${port}/ws/collab/${ideaId}?token=${encodeURIComponent(token)}`);
     const t = setTimeout(() => reject(new Error('connect timeout')), 3000);
     ws.on('open', () => {
       clearTimeout(t);
+      liveSockets.add(ws);
+      ws.once('close', () => liveSockets.delete(ws));
       resolve(ws);
     });
     ws.on('error', (err) => {
@@ -321,12 +365,25 @@ describe('DP-3 T5 — ideaCollabWs shared canonical persist', () => {
     );
   });
 
+  afterEach(async () => {
+    const closing = [...liveSockets].map((socket) => new Promise<void>((resolve) => {
+      if (socket.readyState === WebSocket.CLOSED) return resolve();
+      socket.once('close', () => resolve());
+      socket.close();
+      setTimeout(() => { if (socket.readyState !== WebSocket.CLOSED) socket.terminate(); resolve(); }, 250);
+    }));
+    await Promise.all(closing);
+    liveSockets.clear();
+  });
+
   beforeEach(() => {
     flagState.ENABLE_SHARED_IDEA_MAPS = true;
     execCalls.length = 0;
     store.ideaOrg.clear();
     store.members.clear();
     store.canonical.clear();
+    store.locks.clear();
+    store.collabEvents.length = 0;
     pinnedState.tail = Promise.resolve();
   });
 
@@ -380,6 +437,11 @@ describe('DP-3 T5 — ideaCollabWs shared canonical persist', () => {
     const row = store.canonical.get('idea-1')!;
     expect(row.version).toBe(4);
     expect(row.last_editor).toBe('userA');
+    expect(store.collabEvents.filter((event) =>
+      event.eventType === 'graph_patch' &&
+      typeof event.payload === 'object' && event.payload !== null &&
+      (event.payload as any).opCount === 2 && (event.payload as any).version === 4
+    )).toHaveLength(1);
     const nodes = JSON.parse(row.nodes_json);
     expect(nodes.find((n: any) => n.id === 'n2')).toBeTruthy();
     expect(nodes.find((n: any) => n.id === 'n1').position).toEqual({ x: 5, y: 5 });
@@ -454,8 +516,53 @@ describe('DP-3 T5 — ideaCollabWs shared canonical persist', () => {
     expect((await failure).code).toBe('GRAPH_PERSIST_FAILED');
     await delay(100);
     expect(relayed).toBe(false);
+    expect(store.collabEvents.some((event) => event.eventType === 'graph_patch')).toBe(false);
     wsA.close();
     wsB.close();
+  });
+
+  it('uses the server-held lock fence automatically and denies a non-holder', async () => {
+    store.ideaOrg.set('idea-lock', 'org-a');
+    store.members.add('org-a:userA');
+    store.members.add('org-a:userB');
+    store.canonical.set('idea-lock', {
+      id: 'map-lock', version: 1,
+      nodes_json: JSON.stringify([{ id: 'locked-node', label: 'before' }]), edges_json: '[]',
+    });
+    const wsA = await connect(port, 'idea-lock', signToken({ id: 'userA', organizationId: 'org-a' }));
+    const wsB = await connect(port, 'idea-lock', signToken({ id: 'userB', organizationId: 'org-a' }));
+    const acquired = onceMessageOfType(wsA, 'lock_acquired');
+    wsA.send(JSON.stringify({ type: 'lock_node', nodeId: 'locked-node', ttlSeconds: 30 }));
+    expect((await acquired).fencingToken).toBe(1);
+    const succeeded = onceMessageOfType(wsA, 'graph_version');
+    wsA.send(JSON.stringify({ type: 'graph_patch', operations: [
+      { op: 'update_node', data: { id: 'locked-node', label: 'holder' } },
+    ] }));
+    expect((await succeeded).version).toBe(2);
+    const denied = onceMessageOfType(wsB, 'error');
+    wsB.send(JSON.stringify({ type: 'graph_patch', operations: [
+      { op: 'update_node', data: { id: 'locked-node', label: 'nonholder' } },
+    ] }));
+    expect((await denied).code).toBe('GRAPH_PERSIST_FAILED');
+    expect(store.canonical.get('idea-lock')?.version).toBe(2);
+    wsA.close(); wsB.close();
+  });
+
+  it('rejects malformed graph ops and a membership revoked after socket upgrade without version bump', async () => {
+    store.ideaOrg.set('idea-validate', 'org-a');
+    store.members.add('org-a:userA');
+    store.canonical.set('idea-validate', { id: 'map-validate', version: 4, nodes_json: '[]', edges_json: '[]' });
+    const ws = await connect(port, 'idea-validate', signToken({ id: 'userA', organizationId: 'org-a' }));
+    const malformed = onceMessageOfType(ws, 'error');
+    ws.send(JSON.stringify({ type: 'graph_patch', operations: [{ op: 'unknown', data: { id: 'x' } }] }));
+    expect((await malformed).code).toBe('INVALID_MESSAGE');
+    expect(store.canonical.get('idea-validate')?.version).toBe(4);
+    store.members.delete('org-a:userA');
+    const revoked = onceMessageOfType(ws, 'error');
+    ws.send(JSON.stringify({ type: 'graph_patch', operations: [{ op: 'add_node', data: { id: 'x' } }] }));
+    expect((await revoked).code).toBe('NOT_A_WRITER');
+    expect(store.canonical.get('idea-validate')?.version).toBe(4);
+    ws.close();
   });
 
   it('flag OFF → no persist (DB untouched) but relay still delivers the patch', async () => {

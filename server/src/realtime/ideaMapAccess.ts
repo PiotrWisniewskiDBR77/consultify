@@ -182,6 +182,8 @@ export interface GraphPersistResult {
   version: number;
 }
 
+export type IdeaNodeFenceMap = Record<string, { leaseOwner: string; fencingToken: number }>;
+
 export interface DurableNodeLock {
   nodeId: string;
   holderUserId: string;
@@ -399,7 +401,7 @@ async function persistCanonicalPatch(
   organizationId: string,
   userId: string,
   ops: GraphPatchOp[],
-  fence?: { nodeId: string; leaseOwner: string; fencingToken: number }
+  fences: IdeaNodeFenceMap = {}
 ): Promise<GraphPersistResult> {
   const { getPoolClientForPinnedTransaction } = await import('../database/PostgresDatabase.js');
   const client = await getPoolClientForPinnedTransaction();
@@ -418,22 +420,27 @@ async function persistCanonicalPatch(
     );
     const canonical = selected.rows[0];
     if (!canonical) throw new Error(`No canonical map row for idea ${ideaId} in org ${organizationId}`);
-    const touchedNodeIds = [...new Set(ops.map((op) => String(op?.data?.id || '')).filter(Boolean))];
+    const touchedNodeIds = [...new Set(ops.flatMap((op) => {
+      const data = op?.data || {};
+      if (op.op.endsWith('_node')) return [String(data.id || '')];
+      if (op.op.endsWith('_edge')) return [String(data.source || ''), String(data.target || '')];
+      return [];
+    }).filter(Boolean))];
     if (touchedNodeIds.length > 0) {
       const locks = await client.query<{
         node_id: string; lease_owner: string; fencing_token: string;
       }>(
-        `SELECT node_id, lease_owner, fencing_token
+        `SELECT node_id, lease_owner, fencing_token, expires_at > NOW() AS unexpired
          FROM idea_workspace_node_locks
          WHERE organization_id = $1 AND idea_id = $2 AND node_id = ANY($3::text[])
-           AND expires_at > NOW()
          FOR UPDATE`,
         [organizationId, ideaId, touchedNodeIds]
       );
       for (const lock of locks.rows) {
+        const fence = fences[lock.node_id];
         if (
+          !(lock as typeof lock & { unexpired: boolean }).unexpired ||
           !fence ||
-          fence.nodeId !== lock.node_id ||
           fence.leaseOwner !== lock.lease_owner ||
           fence.fencingToken !== Number(lock.fencing_token)
         ) {
@@ -506,7 +513,7 @@ export async function applyGraphPatchToCanonical(
   organizationId: string,
   userId: string,
   ops: GraphPatchOp[],
-  fence?: { nodeId: string; leaseOwner: string; fencingToken: number }
+  fences: IdeaNodeFenceMap = {}
 ): Promise<GraphPersistResult> {
-  return persistCanonicalPatch(db, ideaId, organizationId, userId, ops, fence);
+  return persistCanonicalPatch(db, ideaId, organizationId, userId, ops, fences);
 }

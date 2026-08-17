@@ -17,7 +17,8 @@ import {
 } from '../../server/src/validators/ideaWorkspaceGraph.validators.js';
 
 const connectionString = process.env.DATABASE_URL || '';
-const enabled = process.env.RUN_DB_TESTS === '1' && process.env.MOCK_DB === 'false' && /^postgres/.test(connectionString);
+const enabled = process.env.RUN_DB_TESTS === '1' && process.env.MOCK_DB === 'false' &&
+  process.env.IDEA_WORKSPACE_ALLOW_FIXTURE_CLEANUP === '1' && /^postgres/.test(connectionString);
 const prefix = `idea-ws-${randomUUID().slice(0, 8)}`;
 const orgA = `${prefix}-org-a`;
 const orgB = `${prefix}-org-b`;
@@ -98,11 +99,22 @@ describe.skipIf(!enabled)('IDEA-WORKSPACE-SUBPACKET durable collaboration (real 
     if (!pool) return;
     try {
       await pool.query('DELETE FROM idea_workspace_node_locks WHERE organization_id = $1', [orgA]);
-      await pool.query('ALTER TABLE idea_workspace_lock_events DISABLE TRIGGER trg_idea_workspace_lock_events_append_only');
+      await pool.query('BEGIN');
       try {
+        await pool.query('ALTER TABLE idea_workspace_lock_events DISABLE TRIGGER trg_idea_workspace_lock_events_append_only');
         await pool.query('DELETE FROM idea_workspace_lock_events WHERE organization_id = $1', [orgA]);
-      } finally {
         await pool.query('ALTER TABLE idea_workspace_lock_events ENABLE TRIGGER trg_idea_workspace_lock_events_append_only');
+        await pool.query('COMMIT');
+      } catch (error) {
+        await pool.query('ROLLBACK');
+        throw error;
+      } finally {
+        const state = await pool.query<{ tgenabled: string }>(
+          `SELECT tgenabled FROM pg_trigger WHERE tgname='trg_idea_workspace_lock_events_append_only'`
+        );
+        if (state.rows[0]?.tgenabled !== 'O') {
+          await pool.query('ALTER TABLE idea_workspace_lock_events ENABLE TRIGGER trg_idea_workspace_lock_events_append_only');
+        }
       }
       await pool.query('DELETE FROM my_idea_maps WHERE id = $1', [mapA]);
       await pool.query('DELETE FROM my_ideas WHERE id = $1', [ideaA]);
@@ -141,6 +153,11 @@ describe.skipIf(!enabled)('IDEA-WORKSPACE-SUBPACKET durable collaboration (real 
        WHERE organization_id=$1 AND idea_id=$2 AND node_id='node-1'`,
       [orgA, ideaA]
     );
+    await expect(applyGraphPatchToCanonical(
+      db, ideaA, orgA, userA,
+      [{ op: 'update_node', data: { id: 'node-1', label: 'expired stale write' } }],
+      { 'node-1': { leaseOwner: 'worker-old', fencingToken: first!.fencingToken } }
+    )).rejects.toThrow('IDEA_NODE_LOCK_FENCE_REJECTED');
     const reclaimed = await acquireDurableIdeaNodeLock(db, {
       organizationId: orgA, ideaId: ideaA, nodeId: 'node-1', userId: userB,
       leaseOwner: 'worker-new', correlationId: `${prefix}-reclaim`, ttlSeconds: 30,
@@ -164,6 +181,9 @@ describe.skipIf(!enabled)('IDEA-WORKSPACE-SUBPACKET durable collaboration (real 
     await expect(pool.query(
       `UPDATE idea_workspace_lock_events SET event_type='RELEASED' WHERE organization_id=$1`,
       [orgA]
+    )).rejects.toMatchObject({ code: 'P0001' });
+    await expect(pool.query(
+      `DELETE FROM idea_workspace_lock_events WHERE organization_id=$1`, [orgA]
     )).rejects.toMatchObject({ code: 'P0001' });
   });
 
@@ -195,12 +215,34 @@ describe.skipIf(!enabled)('IDEA-WORKSPACE-SUBPACKET durable collaboration (real 
     await expect(applyGraphPatchToCanonical(
       db, ideaA, orgA, userB,
       [{ op: 'update_node', data: { id: 'concurrent-0', label: 'stale overwrite' } }],
-      { nodeId: 'concurrent-0', leaseOwner: 'lease-old', fencingToken: lock!.fencingToken - 1 }
+      { 'concurrent-0': { leaseOwner: 'lease-old', fencingToken: lock!.fencingToken - 1 } }
     )).rejects.toThrow('IDEA_NODE_LOCK_FENCE_REJECTED');
     await releaseDurableIdeaNodeLock(db, {
       organizationId: orgA, ideaId: ideaA, nodeId: 'concurrent-0', userId: userA,
       leaseOwner: 'lease-current', fencingToken: lock!.fencingToken, correlationId: `${prefix}-fence-release`,
     });
+  });
+
+  it('requires a valid fence for every locked node in a multi-node patch', async () => {
+    const first = await acquireDurableIdeaNodeLock(db, {
+      organizationId: orgA, ideaId: ideaA, nodeId: 'concurrent-1', userId: userA,
+      leaseOwner: 'multi', correlationId: `${prefix}-multi-1`, ttlSeconds: 30,
+    });
+    const second = await acquireDurableIdeaNodeLock(db, {
+      organizationId: orgA, ideaId: ideaA, nodeId: 'concurrent-2', userId: userA,
+      leaseOwner: 'multi', correlationId: `${prefix}-multi-2`, ttlSeconds: 30,
+    });
+    const ops = [
+      { op: 'update_node', data: { id: 'concurrent-1', label: 'one' } },
+      { op: 'update_node', data: { id: 'concurrent-2', label: 'two' } },
+    ];
+    await expect(applyGraphPatchToCanonical(db, ideaA, orgA, userA, ops, {
+      'concurrent-1': { leaseOwner: 'multi', fencingToken: first!.fencingToken },
+    })).rejects.toThrow('IDEA_NODE_LOCK_FENCE_REJECTED');
+    await expect(applyGraphPatchToCanonical(db, ideaA, orgA, userA, ops, {
+      'concurrent-1': { leaseOwner: 'multi', fencingToken: first!.fencingToken },
+      'concurrent-2': { leaseOwner: 'multi', fencingToken: second!.fencingToken },
+    })).resolves.toMatchObject({ version: expect.any(Number) });
   });
 
   it('validates governed wire shapes without inventing maturity thresholds', () => {
