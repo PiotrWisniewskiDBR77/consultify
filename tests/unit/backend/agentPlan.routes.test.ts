@@ -51,6 +51,25 @@ vi.mock('../../../server/src/queues/aiQueue.js', () => ({
   default: { add: queueAdd },
 }));
 
+vi.mock('../../../server/src/services/ai/agentTaskDispatchService.js', () => ({
+  dispatchAgentTask: vi.fn(async (input) => {
+    try {
+      await queueAdd('AGENT_BACKGROUND_TASK', {
+        taskType: 'AGENT_BACKGROUND_TASK',
+        userId: input.userId,
+        payload: {
+          planId: input.planId,
+          organizationId: input.organizationId,
+          userId: input.userId,
+        },
+      });
+      return { status: 'ENQUEUED' };
+    } catch {
+      return { status: 'PENDING' };
+    }
+  }),
+}));
+
 const { default: agentPlanRoutes } = await import(
   '../../../server/src/routes/ai/agent-plan.routes.js'
 );

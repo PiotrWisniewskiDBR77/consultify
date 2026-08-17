@@ -33,34 +33,25 @@ async function enqueueBackgroundExecution(payload: {
   beforeEnqueue?: () => Promise<void>;
 }): Promise<boolean> {
   try {
-    const { default: aiQueue } = (await import('../queues/aiQueue.js')) as {
-      default: { add: (name: string, data: unknown) => Promise<unknown> };
-    };
-    const enqueue = async () => {
-      await payload.beforeEnqueue?.();
-      return aiQueue.add('AGENT_BACKGROUND_TASK', {
-        taskType: 'AGENT_BACKGROUND_TASK',
-        payload: {
-          planId: payload.planId,
-          organizationId: payload.organizationId,
-          userId: payload.userId,
-        },
-        userId: payload.userId,
-      });
-    };
+    const { dispatchAgentTask } = await import('../services/ai/agentTaskDispatchService.js');
+    const dispatchKey = payload.dispatchKey || payload.planId;
+    const enqueue = () => dispatchAgentTask({ planId: payload.planId, organizationId: payload.organizationId,
+      userId: payload.userId, dispatchKey }, { beforeEnqueue: payload.beforeEnqueue });
     if (payload.canonicalRunId) {
       const { agentPlannerService } = await import('../services/ai/agentPlannerService.js');
-      await agentPlannerService.executeGovernedEnqueue({
+      const governed = await agentPlannerService.executeGovernedEnqueue({
         planId: payload.planId,
         organizationId: payload.organizationId,
         userId: payload.userId,
-        dispatchKey: payload.dispatchKey || payload.planId,
+        dispatchKey,
         enqueue,
       });
+      const status = (governed.result as { status?: string } | undefined)?.status;
+      return status === 'ENQUEUED' || status === 'REPLAY' || governed.replayed;
     } else {
-      await enqueue();
+      const dispatched = await enqueue();
+      return dispatched.status === 'ENQUEUED' || dispatched.status === 'REPLAY';
     }
-    return true;
   } catch (error: unknown) {
     logger.warn('[AgentPlanScheduler] Background dispatch unavailable, plan left pending', {
       planId: payload.planId,
@@ -78,6 +69,9 @@ export interface AgentPlanSchedulerResult {
 }
 
 export async function runAgentPlanScheduler(force = false): Promise<AgentPlanSchedulerResult> {
+  if (process.env.ENABLE_AI_TASKS_WORKER !== 'true') {
+    return { plansDispatched: 0, waitStepsResumed: 0, contextBlocked: 0, errors: 0 };
+  }
   if (isTestEnv() && !force) {
     return { plansDispatched: 0, waitStepsResumed: 0, contextBlocked: 0, errors: 0 };
   }

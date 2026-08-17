@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { planner, queueAdd } = vi.hoisted(() => ({
+const { planner, dispatchAgentTask } = vi.hoisted(() => ({
   planner: {
     listScheduledPlansDue: vi.fn(),
     listWaitStepsDue: vi.fn(),
@@ -8,11 +8,11 @@ const { planner, queueAdd } = vi.hoisted(() => ({
     resumeWaitStep: vi.fn(),
     executeGovernedEnqueue: vi.fn(),
   },
-  queueAdd: vi.fn(),
+  dispatchAgentTask: vi.fn(),
 }));
 
 vi.mock('../../services/ai/agentPlannerService.js', () => ({ agentPlannerService: planner }));
-vi.mock('../../queues/aiQueue.js', () => ({ default: { add: queueAdd } }));
+vi.mock('../../services/ai/agentTaskDispatchService.js', () => ({ dispatchAgentTask }));
 vi.mock('../../utils/Logger.js', () => ({
   default: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
@@ -20,6 +20,7 @@ vi.mock('../../utils/Logger.js', () => ({
 describe('agent plan scheduler context gate', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.ENABLE_AI_TASKS_WORKER = 'true';
     planner.listScheduledPlansDue.mockResolvedValue([
       { id: 'plan-1', organizationId: 'org-1', userId: 'user-1' },
     ]);
@@ -30,6 +31,16 @@ describe('agent plan scheduler context gate', () => {
       replayed: false,
       result: await input.enqueue(),
     }));
+  });
+
+  it('does not inspect or enqueue due work while the shared worker flag is OFF', async () => {
+    process.env.ENABLE_AI_TASKS_WORKER = 'false';
+    const { runAgentPlanScheduler } = await import('../agentPlanSchedulerJob.js');
+    expect(await runAgentPlanScheduler(true)).toEqual({
+      plansDispatched: 0, waitStepsResumed: 0, contextBlocked: 0, errors: 0,
+    });
+    expect(planner.listScheduledPlansDue).not.toHaveBeenCalled();
+    expect(dispatchAgentTask).not.toHaveBeenCalled();
   });
 
   it('does not enqueue or resume when canonical context is blocked', async () => {
@@ -46,7 +57,7 @@ describe('agent plan scheduler context gate', () => {
       contextBlocked: 2,
       errors: 0,
     });
-    expect(queueAdd).not.toHaveBeenCalled();
+    expect(dispatchAgentTask).not.toHaveBeenCalled();
     expect(planner.resumeWaitStep).not.toHaveBeenCalled();
   });
 
@@ -56,7 +67,10 @@ describe('agent plan scheduler context gate', () => {
       decision: 'allowed',
       reason: 'fresh',
     });
-    queueAdd.mockResolvedValue({ id: 'job' });
+    dispatchAgentTask.mockImplementation(async (_input, options) => {
+      await options?.beforeEnqueue?.();
+      return { status: 'ENQUEUED', receiptId: 'receipt-1' };
+    });
     const { runAgentPlanScheduler } = await import('../agentPlanSchedulerJob.js');
     const result = await runAgentPlanScheduler(true);
     expect(result).toEqual({
@@ -65,7 +79,7 @@ describe('agent plan scheduler context gate', () => {
       contextBlocked: 0,
       errors: 0,
     });
-    expect(queueAdd).toHaveBeenCalledTimes(2);
+    expect(dispatchAgentTask).toHaveBeenCalledTimes(2);
     expect(planner.resumeWaitStep).toHaveBeenCalledTimes(1);
   });
 
@@ -100,7 +114,7 @@ describe('agent plan scheduler context gate', () => {
     const { runAgentPlanScheduler } = await import('../agentPlanSchedulerJob.js');
     const result = await runAgentPlanScheduler(true);
     expect(result.errors).toBe(2);
-    expect(queueAdd).not.toHaveBeenCalled();
+    expect(dispatchAgentTask).not.toHaveBeenCalled();
     expect(planner.resumeWaitStep).not.toHaveBeenCalled();
   });
 });

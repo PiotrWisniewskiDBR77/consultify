@@ -178,20 +178,14 @@ async function tryDispatchBackgroundExecution(payload: {
   userId: string;
 }): Promise<'enqueued' | 'unavailable'> {
   try {
-    const { default: aiQueue } = (await import('../../queues/aiQueue.js')) as {
-      default: { add: (name: string, data: unknown) => Promise<unknown> };
-    };
-    await agentPlannerService.executeGovernedEnqueue({
+    const { dispatchAgentTask } = await import('../../services/ai/agentTaskDispatchService.js');
+    const governed = await agentPlannerService.executeGovernedEnqueue({
       ...payload,
       dispatchKey: `route:${payload.planId}`,
-      enqueue: () =>
-        aiQueue.add('AGENT_BACKGROUND_TASK', {
-          taskType: 'AGENT_BACKGROUND_TASK',
-          payload,
-          userId: payload.userId,
-        }),
+      enqueue: () => dispatchAgentTask({ ...payload, dispatchKey: `route:${payload.planId}` }),
     });
-    return 'enqueued';
+    const status = (governed.result as { status?: string } | undefined)?.status;
+    return status === 'ENQUEUED' || status === 'REPLAY' || governed.replayed ? 'enqueued' : 'unavailable';
   } catch (error: unknown) {
     logger.warn('[AgentPlanRoutes] Background dispatch unavailable, plan left pending', {
       planId: payload.planId,
