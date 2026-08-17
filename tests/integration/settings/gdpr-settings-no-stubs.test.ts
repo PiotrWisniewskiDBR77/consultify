@@ -2,7 +2,8 @@ import bcrypt from 'bcryptjs';
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import { createHash } from 'node:crypto';
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import pg from 'pg';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
 
 describe('Settings/GDPR routes (no stub responses)', () => {
@@ -16,6 +17,9 @@ describe('Settings/GDPR routes (no stub responses)', () => {
   let userControlsRouter: any;
   let dbPromiseModule: typeof import('../../../server/src/utils/DbPromise.js');
   let realDatabaseReady = false;
+  let cleanupPool: pg.Pool;
+  let cleanupClient: pg.PoolClient;
+  let rollbackProofPending = true;
 
   const userId = 'f9ddc79d-2fb4-4557-8ff0-08db960b1255';
   const orgId = '1373318f-aab6-476e-8299-993d4eb4086a';
@@ -46,6 +50,93 @@ describe('Settings/GDPR routes (no stub responses)', () => {
     return app;
   };
 
+  const cleanupExactFixtureRows = async (proveRollback = false) => {
+    let provedRollback = false;
+    const requestIds = (
+      await cleanupClient.query<{ id: string }>(
+        `SELECT id FROM data_export_requests WHERE user_id = ANY($1::text[]) ORDER BY id`,
+        [[userId, foreignUserId]]
+      )
+    ).rows.map((row) => row.id);
+    const gdprIds = (
+      await cleanupClient.query<{ id: string }>(
+        `SELECT id FROM gdpr_requests WHERE user_id = ANY($1::text[]) ORDER BY id`,
+        [[userId, foreignUserId]]
+      )
+    ).rows.map((row) => row.id);
+    const deletionIds = (
+      await cleanupClient.query<{ id: string }>(
+        `SELECT id FROM account_deletion_requests WHERE user_id = ANY($1::text[]) ORDER BY id`,
+        [[userId, foreignUserId]]
+      )
+    ).rows.map((row) => row.id);
+    const receiptCount = Number(
+      (
+        await cleanupClient.query<{ n: number }>(
+          `SELECT count(*)::int n FROM user_data_export_receipts WHERE request_id = ANY($1::text[])`,
+          [requestIds]
+        )
+      ).rows[0]!.n
+    );
+
+    if (proveRollback && receiptCount > 0) {
+      await cleanupClient.query('BEGIN');
+      try {
+        await cleanupClient.query(
+          `ALTER TABLE user_data_export_receipts DISABLE TRIGGER trg_user_data_export_receipts_immutable`
+        );
+        await cleanupClient.query(
+          `DELETE FROM user_data_export_receipts WHERE request_id = ANY($1::text[])`,
+          [requestIds]
+        );
+        await cleanupClient.query(`SELECT * FROM set_export_forced_cleanup_failure`);
+        throw new Error('forced cleanup failure did not fail');
+      } catch {
+        await cleanupClient.query('ROLLBACK');
+      }
+      const rolledBack = await cleanupClient.query<{ receipts: number; enabled: string }>(
+        `SELECT
+           (SELECT count(*)::int FROM user_data_export_receipts WHERE request_id = ANY($1::text[])) receipts,
+           (SELECT tgenabled FROM pg_trigger WHERE tgname='trg_user_data_export_receipts_immutable') enabled`,
+        [requestIds]
+      );
+      expect(rolledBack.rows[0]!.receipts).toBeGreaterThan(0);
+      expect(rolledBack.rows[0]!.enabled).toBe('O');
+      provedRollback = true;
+    }
+
+    await cleanupClient.query('BEGIN');
+    try {
+      await cleanupClient.query(
+        `ALTER TABLE user_data_export_receipts DISABLE TRIGGER trg_user_data_export_receipts_immutable`
+      );
+      await cleanupClient.query(
+        `DELETE FROM user_data_export_receipts WHERE request_id = ANY($1::text[])`,
+        [requestIds]
+      );
+      await cleanupClient.query(`DELETE FROM data_export_requests WHERE id = ANY($1::text[])`, [
+        requestIds,
+      ]);
+      await cleanupClient.query(`DELETE FROM gdpr_requests WHERE id = ANY($1::text[])`, [gdprIds]);
+      await cleanupClient.query(
+        `DELETE FROM account_deletion_requests WHERE id = ANY($1::text[])`,
+        [deletionIds]
+      );
+      await cleanupClient.query(
+        `ALTER TABLE user_data_export_receipts ENABLE TRIGGER trg_user_data_export_receipts_immutable`
+      );
+      const trigger = await cleanupClient.query<{ tgenabled: string }>(
+        `SELECT tgenabled FROM pg_trigger WHERE tgname='trg_user_data_export_receipts_immutable'`
+      );
+      expect(trigger.rows).toEqual([{ tgenabled: 'O' }]);
+      await cleanupClient.query('COMMIT');
+    } catch (error) {
+      await cleanupClient.query('ROLLBACK');
+      throw error;
+    }
+    return provedRollback;
+  };
+
   beforeAll(async () => {
     process.env.NODE_ENV = 'test';
     process.env.MOCK_DB = 'false';
@@ -56,6 +147,18 @@ describe('Settings/GDPR routes (no stub responses)', () => {
     }
     process.env.DATABASE_URL = databaseUrl;
     process.env.JWT_SECRET = jwtSecret;
+
+    const allowedPrefix = process.env.SET_EXPORT_DISPOSABLE_DB_PREFIX;
+    if (!allowedPrefix) throw new Error('SET_EXPORT_DISPOSABLE_DB_PREFIX is required.');
+    cleanupPool = new pg.Pool({ connectionString: databaseUrl, max: 1 });
+    cleanupClient = await cleanupPool.connect();
+    const databaseName = (
+      await cleanupClient.query<{ current_database: string }>('SELECT current_database()')
+    ).rows[0]!.current_database;
+    expect(databaseName.startsWith(allowedPrefix)).toBe(true);
+    await cleanupClient.query(
+      `SELECT pg_advisory_lock(hashtext('SET-MVP-EXPORT-001-INTEGRATION'))`
+    );
 
     vi.resetModules();
     const dbMod = await import('../../../server/src/database/Database.js');
@@ -75,19 +178,7 @@ describe('Settings/GDPR routes (no stub responses)', () => {
 
   afterAll(async () => {
     try {
-      await db?.run(`DELETE FROM user_data_export_receipts WHERE user_id IN (?, ?)`, [
-        userId,
-        foreignUserId,
-      ]);
-      await db?.run(`DELETE FROM data_export_requests WHERE user_id IN (?, ?)`, [
-        userId,
-        foreignUserId,
-      ]);
-      await db?.run(`DELETE FROM gdpr_requests WHERE user_id IN (?, ?)`, [userId, foreignUserId]);
-      await db?.run(`DELETE FROM account_deletion_requests WHERE user_id IN (?, ?)`, [
-        userId,
-        foreignUserId,
-      ]);
+      await cleanupExactFixtureRows(false);
       await db?.run(`DELETE FROM organization_members WHERE user_id IN (?, ?)`, [
         userId,
         foreignUserId,
@@ -96,16 +187,27 @@ describe('Settings/GDPR routes (no stub responses)', () => {
       await db?.run(`DELETE FROM organizations WHERE id IN (?, ?)`, [orgId, foreignOrgId]);
       await resetConnection?.();
     } finally {
-      process.env = prevEnv;
+      try {
+        if (cleanupClient) {
+          expect(
+            (
+              await cleanupClient.query<{ unlocked: boolean }>(
+                `SELECT pg_advisory_unlock(hashtext('SET-MVP-EXPORT-001-INTEGRATION')) unlocked`
+              )
+            ).rows[0]!.unlocked
+          ).toBe(true);
+        }
+      } finally {
+        cleanupClient?.release();
+        await cleanupPool?.end();
+        process.env = prevEnv;
+      }
     }
   });
 
   beforeEach(async () => {
     expect(realDatabaseReady).toBe(true);
-    await db.run(`DELETE FROM gdpr_requests WHERE user_id = ?`, [userId]);
-    await db.run(`DELETE FROM account_deletion_requests WHERE user_id = ?`, [userId]);
-    await db.run(`DELETE FROM user_data_export_receipts WHERE user_id = ?`, [userId]);
-    await db.run(`DELETE FROM data_export_requests WHERE user_id = ?`, [userId]);
+    await cleanupExactFixtureRows(false);
     await db.run(`DELETE FROM organization_members WHERE user_id IN (?, ?)`, [
       userId,
       foreignUserId,
@@ -143,6 +245,11 @@ describe('Settings/GDPR routes (no stub responses)', () => {
        VALUES (?, ?, ?, 'ADMIN', 'ACTIVE'), (?, ?, ?, 'ADMIN', 'ACTIVE')`,
       [`member-${userId}`, orgId, userId, `member-${foreignUserId}`, foreignOrgId, foreignUserId]
     );
+  });
+
+  afterEach(async () => {
+    const provedRollback = await cleanupExactFixtureRows(rollbackProofPending);
+    if (provedRollback) rollbackProofPending = false;
   });
 
   it('POST /api/settings/export-data creates a real request (no fake eta)', async () => {

@@ -33,6 +33,8 @@ test.describe('SET-MVP-EXPORT receipt-backed mounted journey', () => {
     const foreignRunId = `set-export-foreign-${randomUUID()}`;
     let foreignToken = '';
     let requestId = '';
+    let exportRequestIds: string[] = [];
+    let lockHeld = false;
     try {
       const databaseName = (
         await client.query<{ current_database: string }>('SELECT current_database()')
@@ -40,9 +42,16 @@ test.describe('SET-MVP-EXPORT receipt-backed mounted journey', () => {
       expect(databaseName.startsWith('set_export_')).toBe(true);
       expect(databaseName.startsWith(String(allowedPrefix))).toBe(true);
       await client.query(`SELECT pg_advisory_lock(hashtext('SET-MVP-EXPORT-001'))`);
+      lockHeld = true;
 
-      await client.query(`DELETE FROM user_data_export_receipts WHERE user_id=$1`, [state.userId]);
-      await client.query(`DELETE FROM data_export_requests WHERE user_id=$1`, [state.userId]);
+      expect(
+        (
+          await client.query<{ n: number }>(
+            `SELECT count(*)::int n FROM data_export_requests WHERE organization_id=$1 AND user_id=$2`,
+            [state.organizationId, state.userId]
+          )
+        ).rows[0]!.n
+      ).toBe(0);
       const membership = await client.query(
         `SELECT status FROM organization_members WHERE organization_id=$1 AND user_id=$2`,
         [state.organizationId, state.userId]
@@ -199,53 +208,105 @@ test.describe('SET-MVP-EXPORT receipt-backed mounted journey', () => {
       );
       expect(afterDenied.rows[0]).toEqual(beforeDenied.rows[0]);
 
+      exportRequestIds = (
+        await client.query<{ id: string }>(
+          `SELECT id FROM data_export_requests WHERE organization_id=$1 AND user_id=$2 ORDER BY id`,
+          [state.organizationId, state.userId]
+        )
+      ).rows.map((row) => row.id);
+      expect(exportRequestIds).toContain(requestId);
+
       const trigger = await client.query<{ tgenabled: string }>(
         `SELECT tgenabled FROM pg_trigger WHERE tgname='trg_user_data_export_receipts_immutable'`
       );
       expect(trigger.rows).toEqual([{ tgenabled: 'O' }]);
     } finally {
-      await client
-        .query(
+      try {
+        await client.query(
           `UPDATE organization_members SET status='ACTIVE' WHERE organization_id=$1 AND user_id=$2`,
           [state.organizationId, state.userId]
-        )
-        .catch(() => undefined);
-      await client.query(
-        `DELETE FROM user_data_export_receipts WHERE organization_id=$1 AND user_id=$2`,
-        [state.organizationId, state.userId]
-      );
-      await client.query(
-        `DELETE FROM data_export_requests WHERE organization_id=$1 AND user_id=$2`,
-        [state.organizationId, state.userId]
-      );
-      expect(
-        (
-          await client.query(
-            `SELECT count(*)::int n FROM user_data_export_receipts WHERE user_id=$1`,
-            [state.userId]
-          )
-        ).rows[0].n
-      ).toBe(0);
-      expect(
-        (
-          await client.query(`SELECT count(*)::int n FROM data_export_requests WHERE user_id=$1`, [
-            state.userId,
-          ])
-        ).rows[0].n
-      ).toBe(0);
-      if (foreignToken) {
-        await request
-          .post(`${API_BASE_URL}/api/test-support/cleanup`, {
-            headers: { 'x-test-support-key': TEST_SUPPORT_KEY },
-            data: { runId: foreignRunId },
-          })
-          .catch(() => undefined);
+        );
+        if (exportRequestIds.length > 0) {
+          await client.query('BEGIN');
+          try {
+            await client.query(
+              `ALTER TABLE user_data_export_receipts DISABLE TRIGGER trg_user_data_export_receipts_immutable`
+            );
+            await client.query(
+              `DELETE FROM user_data_export_receipts WHERE request_id = ANY($1::text[])`,
+              [exportRequestIds]
+            );
+            await client.query(`SELECT * FROM set_export_forced_cleanup_failure`);
+            throw new Error('forced cleanup failure did not fail');
+          } catch {
+            await client.query('ROLLBACK');
+          }
+          expect(
+            (
+              await client.query<{ n: number }>(
+                `SELECT count(*)::int n FROM user_data_export_receipts WHERE request_id = ANY($1::text[])`,
+                [exportRequestIds]
+              )
+            ).rows[0]!.n
+          ).toBeGreaterThan(0);
+
+          await client.query('BEGIN');
+          try {
+            await client.query(
+              `ALTER TABLE user_data_export_receipts DISABLE TRIGGER trg_user_data_export_receipts_immutable`
+            );
+            await client.query(
+              `DELETE FROM user_data_export_receipts WHERE request_id = ANY($1::text[])`,
+              [exportRequestIds]
+            );
+            await client.query(`DELETE FROM data_export_requests WHERE id = ANY($1::text[])`, [
+              exportRequestIds,
+            ]);
+            await client.query(
+              `ALTER TABLE user_data_export_receipts ENABLE TRIGGER trg_user_data_export_receipts_immutable`
+            );
+            const enabled = await client.query<{ tgenabled: string }>(
+              `SELECT tgenabled FROM pg_trigger WHERE tgname='trg_user_data_export_receipts_immutable'`
+            );
+            expect(enabled.rows).toEqual([{ tgenabled: 'O' }]);
+            await client.query('COMMIT');
+          } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+          }
+        }
+        const residue = await client.query<{ requests: number; receipts: number }>(
+          `SELECT
+             (SELECT count(*)::int FROM data_export_requests WHERE id = ANY($1::text[])) requests,
+             (SELECT count(*)::int FROM user_data_export_receipts WHERE request_id = ANY($1::text[])) receipts`,
+          [exportRequestIds]
+        );
+        expect(residue.rows[0]).toEqual({ requests: 0, receipts: 0 });
+      } finally {
+        try {
+          if (foreignToken) {
+            await request.post(`${API_BASE_URL}/api/test-support/cleanup`, {
+              headers: { 'x-test-support-key': TEST_SUPPORT_KEY },
+              data: { runId: foreignRunId },
+            });
+          }
+        } finally {
+          try {
+            if (lockHeld) {
+              expect(
+                (
+                  await client.query<{ unlocked: boolean }>(
+                    `SELECT pg_advisory_unlock(hashtext('SET-MVP-EXPORT-001')) unlocked`
+                  )
+                ).rows[0]!.unlocked
+              ).toBe(true);
+            }
+          } finally {
+            client.release();
+            await pool.end();
+          }
+        }
       }
-      await client
-        .query(`SELECT pg_advisory_unlock(hashtext('SET-MVP-EXPORT-001'))`)
-        .catch(() => undefined);
-      client.release();
-      await pool.end();
     }
   });
 });
