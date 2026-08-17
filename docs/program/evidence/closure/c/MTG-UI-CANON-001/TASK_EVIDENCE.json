@@ -1,6 +1,8 @@
 {
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "productSha": "a62dbe340114d87eda75a0d2da2d77bee2a90685",
+  "technicalSourceSha": "a408f409ffbc8479c1927804161d816cc782a412",
+  "reconciliationSha": "c8da53f1f4469bc39734fa0fee76298dd4d41e3f",
   "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
   "environment": {
     "node": "v24.12.0",
@@ -12,9 +14,12 @@
   "gateG1": "PASS — npm run type-check exit 0; npm run build:backend exit 0; test:discovery-gate PASS 4997/4997 discovered, 4698 executed.",
   "gateG3": "PASS — strict migrate on FRESH from-zero DB exit 0; repeat run applied 0; --dry-run 0 pending; schema_migrations 709 success / 0 failed / 0 pending.",
   "taskId": "MTG-UI-CANON-001",
-  "verdict": "NOT_VERIFIED",
+  "verdict": "PARTIAL",
   "open": [
-    "No browser/visual evidence produced. Same G4 + BLOCKED_HUMAN position as MAT-UI-CANON-001."
+    "The integrated governed-note UI packet is repository-qualified, but literal current real stale and concurrent-update browser proof remains open.",
+    "A separate mounted OWNER browser journey remains required; a generic authenticated persona does not prove OWNER behavior.",
+    "Recording and consent policy remains an owner-controlled boundary and is not inferred from the UI implementation.",
+    "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending."
   ],
   "changedPaths": [],
   "changedPathRationale": {},
@@ -100,17 +105,20 @@
   },
   "openBlockers": [
     "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
-    "Task-specific UI states not reached by the final automated sweep: stale."
+    "Literal current real stale and concurrency behavior is not proven through the mounted browser journey.",
+    "A distinct OWNER browser proof is missing; the existing automated G4 persona is not accepted as an OWNER substitute.",
+    "Recording and consent policy remains owner-controlled and unresolved by this technical packet."
   ],
   "blockerReconciliation": [
     {
-      "historicalBlocker": null,
-      "classification": "NO_HISTORICAL_OPEN_BLOCKER_LINES",
-      "detail": "The final G4 result is additive; current openBlockers enumerate only remaining human, state, reachability or console qualification gates."
+      "historicalBlocker": "Meeting note governance lacked a bound current UI implementation.",
+      "classification": "PARTIALLY_RESOLVED",
+      "detail": "Technical source a408f409ffbc8479c1927804161d816cc782a412 hardens the integrated governed-note proposal UI and its acceptance harness. It does not close literal real stale/concurrency, distinct OWNER-browser, recording/consent-policy or human acceptance gates."
     }
   ],
   "resolvedBlockers": [
-    "Final mounted signed-auth automated G4 completed on candidate 836bfd633af7a689e7a3fb06971cbd8fe57bafe7: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed."
+    "Final mounted signed-auth automated G4 completed on candidate 836bfd633af7a689e7a3fb06971cbd8fe57bafe7: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed.",
+    "Integrated technical source a408f409ffbc8479c1927804161d816cc782a412 binds and hardens the governed-note proposal UI packet; its ancestry is reconciled at c8da53f1f4469bc39734fa0fee76298dd4d41e3f."
   ],
   "automatedG4Verdict": {
     "verdict": "PASS_EXACT_SHA",

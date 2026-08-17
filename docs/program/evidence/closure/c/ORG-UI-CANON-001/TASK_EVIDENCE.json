@@ -1,6 +1,8 @@
 {
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "productSha": "a62dbe340114d87eda75a0d2da2d77bee2a90685",
+  "technicalSourceSha": "a6b8230d45464c3eaefb930698e4b7dddd4458f8",
+  "reconciliationSha": "c8da53f1f4469bc39734fa0fee76298dd4d41e3f",
   "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
   "environment": {
     "node": "v24.12.0",
@@ -12,9 +14,11 @@
   "gateG1": "PASS — npm run type-check exit 0; npm run build:backend exit 0; test:discovery-gate PASS 4997/4997 discovered, 4698 executed.",
   "gateG3": "PASS — strict migrate on FRESH from-zero DB exit 0; repeat run applied 0; --dry-run 0 pending; schema_migrations 709 success / 0 failed / 0 pending.",
   "taskId": "ORG-UI-CANON-001",
-  "verdict": "NOT_VERIFIED",
+  "verdict": "PARTIAL",
   "open": [
-    "No browser/visual evidence produced. Note: the only component that rendered raw claims/timeline (OrganizationContextOverview.tsx) is dead code, so there is currently no live UI surface for the claims review journey."
+    "The current governed-context workspace is mounted and technically qualified, but the upload-to-governed-claim UI seam is not proven end to end.",
+    "Disposition of superseded dead or unmounted organization components remains incomplete; their historical presence is not treated as a live product surface.",
+    "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending."
   ],
   "changedPaths": [],
   "changedPathRationale": {},
@@ -25,7 +29,10 @@
     "automatedG4Screenshots": "15/15",
     "automatedG4AxeCriticalSerious": "0/0",
     "automatedG4UnnamedControls": 0,
-    "automatedG4VisibleFocus": "PASS"
+    "automatedG4VisibleFocus": "PASS",
+    "governedContextMountedJourneysAtTechnicalSource": "2/2",
+    "governedContextRealPgBackendAtTechnicalSource": "16/16",
+    "governedContextFocusedUiAtTechnicalSource": "7/7"
   },
   "fixtures": {},
   "negativeControls": {},
@@ -112,17 +119,19 @@
   },
   "openBlockers": [
     "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
-    "Task-specific UI states not reached by the final automated sweep: stale."
+    "Upload-to-governed-claim is not yet proven as a complete mounted product seam.",
+    "Superseded dead or unmounted organization components still require explicit KEEP/CONNECT/DELETE disposition."
   ],
   "blockerReconciliation": [
     {
-      "historicalBlocker": null,
-      "classification": "NO_HISTORICAL_OPEN_BLOCKER_LINES",
-      "detail": "The final G4 result is additive; current openBlockers enumerate only remaining human, state, reachability or console qualification gates."
+      "historicalBlocker": "No live UI surface for the governed claims review journey.",
+      "classification": "PARTIALLY_RESOLVED",
+      "detail": "Technical source a6b8230d45464c3eaefb930698e4b7dddd4458f8 provides the mounted governed-context claim/review/approve/publish/reopen workspace and rejects empty approved snapshots with stable NO_APPROVED_GOVERNED_CLAIMS semantics. It does not prove the upload-to-governed-claim seam or dispose every superseded component."
     }
   ],
   "resolvedBlockers": [
-    "Final mounted signed-auth automated G4 completed on candidate 836bfd633af7a689e7a3fb06971cbd8fe57bafe7: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed."
+    "Final mounted signed-auth automated G4 completed on candidate 836bfd633af7a689e7a3fb06971cbd8fe57bafe7: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed.",
+    "Integrated technical source a6b8230d45464c3eaefb930698e4b7dddd4458f8 closes the live governed-context workspace and fail-closed empty-publish repository contract; its ancestry is reconciled at c8da53f1f4469bc39734fa0fee76298dd4d41e3f."
   ],
   "automatedG4Verdict": {
     "verdict": "PASS_EXACT_SHA",
