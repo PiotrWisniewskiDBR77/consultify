@@ -51,14 +51,14 @@ BEGIN
     IF pk_columns IS NOT NULL AND pk_columns <> ARRAY['organization_id','idea_id','node_id']::TEXT[] THEN
       RAISE EXCEPTION 'IDEA_WORKSPACE_LATE_PREFLIGHT: lock PK must be (organization_id,idea_id,node_id)';
     END IF;
-    SELECT pg_get_constraintdef(oid) INTO constraint_definition FROM pg_constraint
+    SELECT lower(regexp_replace(regexp_replace(pg_get_constraintdef(oid),'::text','','g'),'[[:space:]()'']','','g')) INTO constraint_definition FROM pg_constraint
       WHERE conrelid=rel AND conname='idea_workspace_node_locks_fence_positive';
-    IF constraint_definition IS NOT NULL AND constraint_definition NOT LIKE '%fencing_token > 0%' THEN
+    IF constraint_definition IS NOT NULL AND constraint_definition <> 'checkfencing_token>0' THEN
       RAISE EXCEPTION 'IDEA_WORKSPACE_LATE_PREFLIGHT: lock fencing CHECK incompatible';
     END IF;
-    SELECT pg_get_constraintdef(oid) INTO constraint_definition FROM pg_constraint
+    SELECT lower(regexp_replace(regexp_replace(pg_get_constraintdef(oid),'::text','','g'),'[[:space:]()'']','','g')) INTO constraint_definition FROM pg_constraint
       WHERE conrelid=rel AND conname='idea_workspace_node_locks_valid_window';
-    IF constraint_definition IS NOT NULL AND constraint_definition NOT LIKE '%expires_at > acquired_at%' THEN
+    IF constraint_definition IS NOT NULL AND constraint_definition <> 'checkexpires_at>acquired_at' THEN
       RAISE EXCEPTION 'IDEA_WORKSPACE_LATE_PREFLIGHT: lock lease-window CHECK incompatible';
     END IF;
   END IF;
@@ -110,18 +110,17 @@ BEGIN
     IF EXISTS (SELECT id FROM idea_workspace_lock_events GROUP BY id HAVING count(*) > 1) THEN
       RAISE EXCEPTION 'IDEA_WORKSPACE_LATE_PREFLIGHT: event id is not unique';
     END IF;
-    SELECT pg_get_constraintdef(oid) INTO constraint_definition FROM pg_constraint
+    SELECT lower(regexp_replace(regexp_replace(pg_get_constraintdef(oid),'::text','','g'),'[[:space:]()'']','','g')) INTO constraint_definition FROM pg_constraint
       WHERE conrelid=rel AND conname='idea_workspace_lock_events_fence_positive';
-    IF constraint_definition IS NOT NULL AND constraint_definition NOT LIKE '%fencing_token > 0%' THEN
+    IF constraint_definition IS NOT NULL AND constraint_definition <> 'checkfencing_token>0' THEN
       RAISE EXCEPTION 'IDEA_WORKSPACE_LATE_PREFLIGHT: event fencing CHECK incompatible';
     END IF;
-    SELECT pg_get_constraintdef(oid) INTO constraint_definition FROM pg_constraint
+    SELECT lower(regexp_replace(regexp_replace(pg_get_constraintdef(oid),'::text','','g'),'[[:space:]()'']','','g')) INTO constraint_definition FROM pg_constraint
       WHERE conrelid=rel AND conname='idea_workspace_lock_events_type_valid';
-    IF constraint_definition IS NOT NULL AND NOT (
-      constraint_definition LIKE '%event_type%' AND constraint_definition LIKE '%ACQUIRED%' AND
-      constraint_definition LIKE '%RECLAIMED%' AND constraint_definition LIKE '%RENEWED%' AND
-      constraint_definition LIKE '%RELEASED%' AND constraint_definition LIKE '%FENCE_REJECTED%'
-    ) THEN RAISE EXCEPTION 'IDEA_WORKSPACE_LATE_PREFLIGHT: event type CHECK incompatible'; END IF;
+    IF constraint_definition IS NOT NULL AND constraint_definition <>
+      'checkevent_type=anyarray[acquired,reclaimed,renewed,released,fence_rejected]' THEN
+      RAISE EXCEPTION 'IDEA_WORKSPACE_LATE_PREFLIGHT: event type CHECK incompatible';
+    END IF;
   END IF;
 END $$;
 
@@ -294,19 +293,18 @@ BEGIN
     WHERE a.attrelid='idea_workspace_node_locks'::regclass AND a.attname='updated_at'
   ) THEN RAISE EXCEPTION 'IDEA_WORKSPACE_FINAL_VALIDATION: lock updated_at default'; END IF;
 
-  SELECT pg_get_constraintdef(oid) INTO def FROM pg_constraint
+  SELECT lower(regexp_replace(regexp_replace(pg_get_constraintdef(oid),'::text','','g'),'[[:space:]()'']','','g')) INTO def FROM pg_constraint
     WHERE conrelid='idea_workspace_node_locks'::regclass AND conname='idea_workspace_node_locks_fence_positive';
-  IF def IS NULL OR def NOT LIKE '%fencing_token > 0%' THEN RAISE EXCEPTION 'IDEA_WORKSPACE_FINAL_VALIDATION: lock fencing CHECK'; END IF;
-  SELECT pg_get_constraintdef(oid) INTO def FROM pg_constraint
+  IF def IS DISTINCT FROM 'checkfencing_token>0' THEN RAISE EXCEPTION 'IDEA_WORKSPACE_FINAL_VALIDATION: lock fencing CHECK'; END IF;
+  SELECT lower(regexp_replace(regexp_replace(pg_get_constraintdef(oid),'::text','','g'),'[[:space:]()'']','','g')) INTO def FROM pg_constraint
     WHERE conrelid='idea_workspace_node_locks'::regclass AND conname='idea_workspace_node_locks_valid_window';
-  IF def IS NULL OR def NOT LIKE '%expires_at > acquired_at%' THEN RAISE EXCEPTION 'IDEA_WORKSPACE_FINAL_VALIDATION: lock lease-window CHECK'; END IF;
-  SELECT pg_get_constraintdef(oid) INTO def FROM pg_constraint
+  IF def IS DISTINCT FROM 'checkexpires_at>acquired_at' THEN RAISE EXCEPTION 'IDEA_WORKSPACE_FINAL_VALIDATION: lock lease-window CHECK'; END IF;
+  SELECT lower(regexp_replace(regexp_replace(pg_get_constraintdef(oid),'::text','','g'),'[[:space:]()'']','','g')) INTO def FROM pg_constraint
     WHERE conrelid='idea_workspace_lock_events'::regclass AND conname='idea_workspace_lock_events_fence_positive';
-  IF def IS NULL OR def NOT LIKE '%fencing_token > 0%' THEN RAISE EXCEPTION 'IDEA_WORKSPACE_FINAL_VALIDATION: event fencing CHECK'; END IF;
-  SELECT pg_get_constraintdef(oid) INTO def FROM pg_constraint
+  IF def IS DISTINCT FROM 'checkfencing_token>0' THEN RAISE EXCEPTION 'IDEA_WORKSPACE_FINAL_VALIDATION: event fencing CHECK'; END IF;
+  SELECT lower(regexp_replace(regexp_replace(pg_get_constraintdef(oid),'::text','','g'),'[[:space:]()'']','','g')) INTO def FROM pg_constraint
     WHERE conrelid='idea_workspace_lock_events'::regclass AND conname='idea_workspace_lock_events_type_valid';
-  IF def IS NULL OR NOT (def LIKE '%event_type%' AND def LIKE '%ACQUIRED%' AND def LIKE '%RECLAIMED%' AND
-    def LIKE '%RENEWED%' AND def LIKE '%RELEASED%' AND def LIKE '%FENCE_REJECTED%') THEN
+  IF def IS DISTINCT FROM 'checkevent_type=anyarray[acquired,reclaimed,renewed,released,fence_rejected]' THEN
     RAISE EXCEPTION 'IDEA_WORKSPACE_FINAL_VALIDATION: event type CHECK';
   END IF;
 

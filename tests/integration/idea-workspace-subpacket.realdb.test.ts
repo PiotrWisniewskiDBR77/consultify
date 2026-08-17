@@ -434,4 +434,52 @@ describe.skipIf(!enabled)('IDEA-WORKSPACE-SUBPACKET durable collaboration (real 
       client.release();
     }
   });
+
+  it('rejects OR-true and event-type-superset CHECKs without changing seeded rows', async () => {
+    const sql = await readFile('server/migrations/20261012_idea_workspace_durable_collaboration.sql', 'utf8');
+    const fixtures = [
+      {
+        suffix: 'lock_or', table: 'idea_workspace_node_locks', error: 'lock fencing CHECK incompatible',
+        ddl: `CREATE TABLE idea_workspace_node_locks(
+          organization_id text,idea_id text,node_id text,holder_user_id text,lease_owner text,fencing_token bigint,
+          acquired_at timestamptz,expires_at timestamptz,updated_at timestamptz,
+          PRIMARY KEY(organization_id,idea_id,node_id),
+          CONSTRAINT idea_workspace_node_locks_fence_positive CHECK(fencing_token > 0 OR true))`,
+        insert: `INSERT INTO idea_workspace_node_locks VALUES('o','i','n','u','w',1,NOW(),NOW()+interval '1m',NOW())`,
+      },
+      {
+        suffix: 'event_or', table: 'idea_workspace_lock_events', error: 'event type CHECK incompatible',
+        ddl: `CREATE TABLE idea_workspace_lock_events(
+          id bigint PRIMARY KEY,organization_id text,idea_id text,node_id text,actor_user_id text,lease_owner text,
+          fencing_token bigint,event_type text,correlation_id text,created_at timestamptz,
+          CONSTRAINT idea_workspace_lock_events_type_valid CHECK(event_type IN ('ACQUIRED','RECLAIMED','RENEWED','RELEASED','FENCE_REJECTED') OR true))`,
+        insert: `INSERT INTO idea_workspace_lock_events VALUES(1,'o','i','n','u','w',1,'ACQUIRED','c',NOW())`,
+      },
+      {
+        suffix: 'event_extra', table: 'idea_workspace_lock_events', error: 'event type CHECK incompatible',
+        ddl: `CREATE TABLE idea_workspace_lock_events(
+          id bigint PRIMARY KEY,organization_id text,idea_id text,node_id text,actor_user_id text,lease_owner text,
+          fencing_token bigint,event_type text,correlation_id text,created_at timestamptz,
+          CONSTRAINT idea_workspace_lock_events_type_valid CHECK(event_type IN ('ACQUIRED','RECLAIMED','RENEWED','RELEASED','FENCE_REJECTED','EXTRA')))` ,
+        insert: `INSERT INTO idea_workspace_lock_events VALUES(1,'o','i','n','u','w',1,'ACQUIRED','c',NOW())`,
+      },
+    ];
+    for (const fixture of fixtures) {
+      const schema = `idea_check_${fixture.suffix}_${randomUUID().replace(/-/g, '').slice(0, 6)}`;
+      const client = await pool.connect();
+      try {
+        await client.query(`CREATE SCHEMA ${schema}`);
+        await client.query(`SET search_path TO ${schema},public`);
+        await client.query(fixture.ddl);
+        await client.query(fixture.insert);
+        const before = await client.query(`SELECT row_to_json(t)::text AS row FROM ${fixture.table} t`);
+        await expect(client.query(sql)).rejects.toThrow(`IDEA_WORKSPACE_LATE_PREFLIGHT: ${fixture.error}`);
+        expect((await client.query(`SELECT row_to_json(t)::text AS row FROM ${fixture.table} t`)).rows).toEqual(before.rows);
+      } finally {
+        await client.query('SET search_path TO public');
+        await client.query(`DROP SCHEMA IF EXISTS ${schema} CASCADE`);
+        client.release();
+      }
+    }
+  });
 });
