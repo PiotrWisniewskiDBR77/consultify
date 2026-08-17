@@ -55,6 +55,40 @@ export const EVIDENCE_ROOT = path.resolve(
   'docs/program/evidence/closure/ui-g4'
 );
 
+/** Longer than the product's canonical `duration-150` transition. */
+export const FOCUS_SETTLE_MS = 225;
+
+export async function measureActiveFocus(page: Page) {
+  return page.evaluate(() => {
+    const el = document.activeElement as HTMLElement | null;
+    if (!el || el === document.body) return null;
+    const cs = window.getComputedStyle(el);
+    const outlined =
+      cs.outlineStyle !== 'none' && cs.outlineWidth !== '0px' && cs.outlineColor !== 'transparent';
+    const shadowed = cs.boxShadow !== 'none' && cs.boxShadow !== '';
+    const r = el.getBoundingClientRect();
+    const onScreen =
+      r.width > 0 &&
+      r.height > 0 &&
+      r.bottom > 0 &&
+      r.right > 0 &&
+      r.top < window.innerHeight &&
+      r.left < window.innerWidth;
+    const typingEditor =
+      el instanceof HTMLTextAreaElement ||
+      el.getAttribute('contenteditable') === 'true' ||
+      el.classList.contains('ProseMirror');
+    return {
+      tag: el.tagName.toLowerCase(),
+      cls: (el.getAttribute('class') || '').split(/\s+/).slice(0, 2).join('.'),
+      visibleFocus: typingEditor || outlined || shadowed,
+      onScreen,
+      typingEditor,
+      outlineWidth: cs.outlineWidth,
+    };
+  });
+}
+
 /** Set once per run by the spec, so the local onboarding key can be seeded. */
 let ONBOARDED_USER_ID = '';
 export function setOnboardedUserId(id: string) {
@@ -395,23 +429,12 @@ export async function sweepKeyboard(context: BrowserContext, spec: SurfaceSpec) 
 
   for (let i = 0; i < 40; i++) {
     await page.keyboard.press('Tab');
-    const info = await page.evaluate(() => {
-      const el = document.activeElement as HTMLElement | null;
-      if (!el || el === document.body) return null;
-      const cs = window.getComputedStyle(el);
-      const outlined =
-        cs.outlineStyle !== 'none' && cs.outlineWidth !== '0px' && cs.outlineColor !== 'transparent';
-      const shadowed = cs.boxShadow !== 'none' && cs.boxShadow !== '';
-      const ringed = /ring|focus/.test(el.getAttribute('class') || '');
-      const r = el.getBoundingClientRect();
-      return {
-        tag: el.tagName.toLowerCase(),
-        cls: (el.getAttribute('class') || '').split(/\s+/).slice(0, 2).join('.'),
-        visibleFocus: outlined || shadowed || ringed,
-        onScreen: r.width > 0 && r.height > 0,
-      };
-    });
-    if (!info) continue;
+    // `transition-all duration-150` also animates outline width. Measuring in
+    // the same tick as Tab sees the transition's 0px starting value and turns
+    // a real 2px ring into a false failure. Measure after the transition.
+    await page.waitForTimeout(FOCUS_SETTLE_MS);
+    const info = await measureActiveFocus(page);
+    if (!info?.onScreen) continue;
     reachableControls++;
     const id = `${info.tag}.${info.cls}`;
     seen.push(id);
