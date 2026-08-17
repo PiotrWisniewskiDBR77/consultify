@@ -1,206 +1,228 @@
 #!/usr/bin/env node
-
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const SHA_RE = /^[0-9a-f]{40}$/;
-const MIGRATION_ROOT = 'server/migrations/';
-
-const sha256 = (value) => createHash('sha256').update(value).digest('hex');
-
-const stableValue = (value) => {
-  if (Array.isArray(value)) return value.map(stableValue);
-  if (value && typeof value === 'object') {
-    return Object.fromEntries(
-      Object.keys(value)
-        .sort()
-        .map((key) => [key, stableValue(value[key])])
-    );
-  }
-  return value;
+const SHA = /^[0-9a-f]{40}$/,
+  HASH = /^[0-9a-f]{64}$/,
+  ROOT = 'server/migrations/';
+const REQUIRED = ['backendBuild', 'frontendBuild', 'reporter82', 'typecheck'];
+const DESTRUCTIVE = [
+  [
+    'DESTRUCTIVE_DROP',
+    /\bDROP\s+(?:TABLE|SCHEMA|TYPE|DOMAIN|DATABASE|EXTENSION|FUNCTION|TRIGGER)\b/i,
+  ],
+  ['DESTRUCTIVE_TRUNCATE', /\bTRUNCATE\b/i],
+  ['DESTRUCTIVE_DROP_COLUMN', /\bALTER\s+TABLE[\s\S]{0,300}?\bDROP\s+COLUMN\b/i],
+  ['DESTRUCTIVE_RENAME', /\bALTER\s+(?:TABLE|TYPE)[\s\S]{0,300}?\bRENAME\s+(?:TO|COLUMN)\b/i],
+  ['DESTRUCTIVE_REPLACE', /\bCREATE\s+OR\s+REPLACE\s+(?:FUNCTION|PROCEDURE|VIEW)\b/i],
+];
+const hash = (v) => createHash('sha256').update(v).digest('hex');
+const stable = (v) =>
+  Array.isArray(v)
+    ? v.map(stable)
+    : v && typeof v === 'object'
+      ? Object.fromEntries(
+          Object.keys(v)
+            .sort()
+            .map((k) => [k, stable(v[k])])
+        )
+      : v;
+export const canonicalManifestBody = (m) => {
+  const { manifestSha256: _, ...body } = m;
+  return `${JSON.stringify(stable(body))}\n`;
 };
-
-export const canonicalManifestBody = (manifest) => {
-  const { manifestSha256: _manifestSha256, ...body } = manifest;
-  return `${JSON.stringify(stableValue(body))}\n`;
-};
-
-export const hashCanonicalManifest = (manifest) => sha256(canonicalManifestBody(manifest));
-
-const git = (repo, args, encoding = 'utf8') =>
-  execFileSync('git', ['-C', repo, ...args], {
-    encoding,
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
-
-const gitText = (repo, args) => git(repo, args).trim();
-const gitFile = (repo, sha, path) => git(repo, ['show', `${sha}:${path}`], null);
-
-const listMigrationPaths = (repo, sha) => {
-  const output = gitText(repo, ['ls-tree', '-r', '--name-only', sha, '--', MIGRATION_ROOT]);
-  return output
-    ? output
+export const hashCanonicalManifest = (m) => hash(canonicalManifestBody(m));
+const git = (r, a, e = 'utf8') =>
+  execFileSync('git', ['-C', r, ...a], { encoding: e, stdio: ['ignore', 'pipe', 'pipe'] });
+const text = (r, a) => git(r, a).trim(),
+  file = (r, s, p) => git(r, ['show', `${s}:${p}`], null);
+const migrations = (r, s) => {
+  const o = text(r, ['ls-tree', '-r', '--name-only', s, '--', ROOT]);
+  return o
+    ? o
         .split('\n')
-        .filter((path) => path.startsWith(MIGRATION_ROOT))
+        .filter((p) => p.startsWith(ROOT))
         .sort()
     : [];
 };
+const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/--.*$/gm, ' ');
 
-const isRecognizedSbom = (format, parsed) => {
-  if (format === 'cyclonedx-json') return parsed?.bomFormat === 'CycloneDX';
-  if (format === 'spdx-json') return typeof parsed?.spdxVersion === 'string';
-  return false;
-};
-
-export function verifyReleaseCandidateBundle({ manifest, repo }) {
-  const errors = [];
-  const add = (code, detail) => errors.push({ code, detail });
-  const candidateSha = manifest?.candidateSha;
-  const previousSha = manifest?.previousVerifiedSha;
-
-  if (manifest?.schemaVersion !== 1) add('MANIFEST_SCHEMA_UNSUPPORTED', 'schemaVersion must equal 1');
-  if (!SHA_RE.test(candidateSha ?? '')) add('CANDIDATE_SHA_INVALID', 'candidateSha must be a full lowercase SHA-1');
-  if (!SHA_RE.test(previousSha ?? '')) add('PREVIOUS_SHA_INVALID', 'previousVerifiedSha must be a full lowercase SHA-1');
-  if (manifest?.authorization !== 'NOT_AUTHORIZED') {
-    add('AUTHORIZATION_MUST_REMAIN_NOT_AUTHORIZED', 'bundle verification cannot assert release authorization');
-  }
-  if (manifest?.cleanBuild !== true) add('CLEAN_BUILD_ASSERTION_REQUIRED', 'cleanBuild must be explicitly true');
-  if (!SHA_RE.test(manifest?.treeSha ?? '')) add('TREE_SHA_INVALID', 'treeSha must be a full lowercase SHA-1');
-  if (!/^[0-9a-f]{64}$/.test(manifest?.manifestSha256 ?? '')) {
-    add('MANIFEST_HASH_INVALID', 'manifestSha256 must be a lowercase SHA-256');
-  } else if (hashCanonicalManifest(manifest) !== manifest.manifestSha256) {
-    add('MANIFEST_HASH_MISMATCH', 'canonical manifest body does not match manifestSha256');
-  }
-
-  if (errors.some(({ code }) => code === 'CANDIDATE_SHA_INVALID' || code === 'PREVIOUS_SHA_INVALID')) {
-    return finish(manifest, errors);
-  }
-
-  try {
-    gitText(repo, ['cat-file', '-e', `${candidateSha}^{commit}`]);
-  } catch {
-    add('CANDIDATE_COMMIT_MISSING', candidateSha);
-    return finish(manifest, errors);
-  }
-  try {
-    gitText(repo, ['cat-file', '-e', `${previousSha}^{commit}`]);
-  } catch {
-    add('PREVIOUS_COMMIT_MISSING', previousSha);
-    return finish(manifest, errors);
-  }
-
-  const actualTreeSha = gitText(repo, ['rev-parse', `${candidateSha}^{tree}`]);
-  if (manifest.treeSha !== actualTreeSha) add('TREE_SHA_MISMATCH', `expected ${actualTreeSha}`);
-
-  try {
-    git(repo, ['merge-base', '--is-ancestor', previousSha, candidateSha]);
-  } catch {
-    add('ROLLBACK_SHA_NOT_ANCESTOR', `${previousSha} is not an ancestor of ${candidateSha}`);
-  }
-
-  verifyGitArtifact({ manifestEntry: manifest.lockfile, label: 'LOCKFILE', repo, candidateSha, add });
-  const sbomBytes = verifyGitArtifact({
-    manifestEntry: manifest.sbom,
-    label: 'SBOM',
-    repo,
-    candidateSha,
-    add,
-  });
-  if (sbomBytes) {
+export function verifyReleaseCandidateBundle({ manifest: m, repo, bundleDir = process.cwd() }) {
+  const errors = [],
+    add = (code, detail) => errors.push({ code, detail }),
+    c = m?.candidateSha,
+    p = m?.previousVerifiedSha;
+  if (m?.schemaVersion !== 2) add('MANIFEST_SCHEMA_UNSUPPORTED', 'schemaVersion must equal 2');
+  if (!SHA.test(c ?? '')) add('CANDIDATE_SHA_INVALID', 'full lowercase SHA required');
+  if (!SHA.test(p ?? '')) add('PREVIOUS_SHA_INVALID', 'full lowercase SHA required');
+  if (m?.authorization !== 'NOT_AUTHORIZED')
+    add('AUTHORIZATION_MUST_REMAIN_NOT_AUTHORIZED', 'GO is owner-only');
+  if (m?.technicalStatus !== 'TECHNICAL_BUNDLE_READY')
+    add('TECHNICAL_STATUS_INVALID', 'TECHNICAL_BUNDLE_READY required');
+  if (typeof m?.candidateRef !== 'string' || !m.candidateRef.startsWith('refs/'))
+    add('CANDIDATE_REF_INVALID', 'explicit refs/* required');
+  if (!SHA.test(m?.treeSha ?? '')) add('TREE_SHA_INVALID', 'full tree SHA required');
+  if (!HASH.test(m?.manifestSha256 ?? '')) add('MANIFEST_HASH_INVALID', 'SHA-256 required');
+  else if (hashCanonicalManifest(m) !== m.manifestSha256)
+    add('MANIFEST_HASH_MISMATCH', 'canonical body mismatch');
+  if (!SHA.test(c ?? '') || !SHA.test(p ?? '')) return finish(m, errors);
+  for (const [s, code] of [
+    [c, 'CANDIDATE_COMMIT_MISSING'],
+    [p, 'PREVIOUS_COMMIT_MISSING'],
+  ])
     try {
-      const parsed = JSON.parse(sbomBytes.toString('utf8'));
-      if (!isRecognizedSbom(manifest.sbom?.format, parsed)) {
-        add('SBOM_FORMAT_UNRECOGNIZED', 'expected cyclonedx-json or spdx-json matching payload');
-      }
+      text(repo, ['cat-file', '-e', `${s}^{commit}`]);
     } catch {
-      add('SBOM_JSON_INVALID', 'SBOM must be valid JSON');
+      add(code, s);
     }
+  if (errors.some((e) => e.code.endsWith('_COMMIT_MISSING'))) return finish(m, errors);
+  const tree = text(repo, ['rev-parse', `${c}^{tree}`]);
+  if (m.treeSha !== tree) add('TREE_SHA_MISMATCH', `expected ${tree}`);
+  try {
+    const actual = text(repo, ['rev-parse', '--verify', m.candidateRef]);
+    if (actual !== c) add('CANDIDATE_REF_MISMATCH', actual);
+  } catch {
+    add('CANDIDATE_REF_MISSING', m.candidateRef);
   }
-
-  const candidateMigrations = listMigrationPaths(repo, candidateSha);
-  const ledger = Array.isArray(manifest.migrations) ? manifest.migrations : [];
-  const ledgerPaths = ledger.map((entry) => entry?.path);
-  if (JSON.stringify(ledgerPaths) !== JSON.stringify([...ledgerPaths].sort())) {
-    add('MIGRATION_LEDGER_NOT_SORTED', 'migration entries must be sorted by path');
+  if (text(repo, ['status', '--porcelain=v1', '--untracked-files=all']))
+    add('WORKTREE_DIRTY', 'repository has changes');
+  try {
+    git(repo, ['merge-base', '--is-ancestor', p, c]);
+  } catch {
+    add('ROLLBACK_SHA_NOT_ANCESTOR', p);
   }
-  if (new Set(ledgerPaths).size !== ledgerPaths.length) add('MIGRATION_LEDGER_DUPLICATE', 'duplicate migration path');
-  if (JSON.stringify(ledgerPaths) !== JSON.stringify(candidateMigrations)) {
-    add('MIGRATION_LEDGER_INCOMPLETE', 'ledger must exactly equal candidate migration inventory');
-  }
-  for (const entry of ledger) {
-    verifyGitArtifact({ manifestEntry: entry, label: 'MIGRATION', repo, candidateSha, add });
-  }
-
-  const previousMigrations = listMigrationPaths(repo, previousSha);
-  const candidateSet = new Set(candidateMigrations);
-  for (const path of previousMigrations) {
-    if (!candidateSet.has(path)) {
-      add('ROLLBACK_MIGRATION_DELETED', path);
+  gitArtifact(m.lockfile, 'LOCKFILE', repo, c, add);
+  const sb = external(m.sbom, 'SBOM', bundleDir, add);
+  if (sb)
+    try {
+      const j = JSON.parse(sb);
+      if (j.bomFormat !== 'CycloneDX' || j.specVersion !== '1.5')
+        add('SBOM_FORMAT_UNRECOGNIZED', 'CycloneDX 1.5 required');
+      if (j.metadata?.properties?.find((x) => x.name === 'consultify:candidateSha')?.value !== c)
+        add('SBOM_CANDIDATE_MISMATCH', c);
+      if (m.sbom.sourceLockfileSha256 !== m.lockfile.sha256)
+        add('SBOM_LOCKFILE_BINDING_MISMATCH', 'lock hash differs');
+    } catch {
+      add('SBOM_JSON_INVALID', 'invalid JSON');
+    }
+  const cm = migrations(repo, c),
+    pm = migrations(repo, p),
+    ledger = Array.isArray(m.migrations) ? m.migrations : [],
+    lp = ledger.map((x) => x?.path);
+  if (JSON.stringify(lp) !== JSON.stringify([...lp].sort()))
+    add('MIGRATION_LEDGER_NOT_SORTED', 'sort required');
+  if (new Set(lp).size !== lp.length) add('MIGRATION_LEDGER_DUPLICATE', 'duplicates');
+  if (JSON.stringify(lp) !== JSON.stringify(cm))
+    add('MIGRATION_LEDGER_INCOMPLETE', 'inventory differs');
+  for (const e of ledger) gitArtifact(e, 'MIGRATION', repo, c, add);
+  const cs = new Set(cm),
+    ps = new Set(pm);
+  for (const x of pm) {
+    if (!cs.has(x)) {
+      add('ROLLBACK_MIGRATION_DELETED', x);
       continue;
     }
-    const before = gitFile(repo, previousSha, path);
-    const after = gitFile(repo, candidateSha, path);
-    if (!before.equals(after)) add('ROLLBACK_MIGRATION_MODIFIED', path);
+    if (!file(repo, p, x).equals(file(repo, c, x))) add('ROLLBACK_MIGRATION_MODIFIED', x);
   }
-
-  return finish(manifest, errors);
+  for (const x of cm.filter((x) => !ps.has(x))) {
+    const sql = strip(file(repo, c, x).toString());
+    for (const [code, re] of DESTRUCTIVE) if (re.test(sql)) add(code, x);
+  }
+  const receipts = Array.isArray(m.receipts) ? m.receipts : [],
+    names = receipts.map((x) => x?.name);
+  for (const n of REQUIRED) if (!names.includes(n)) add('REQUIRED_RECEIPT_MISSING', n);
+  if (new Set(names).size !== names.length) add('RECEIPT_DUPLICATE', 'names');
+  for (const e of receipts) {
+    const b = external(e, 'RECEIPT', bundleDir, add);
+    if (!b) continue;
+    try {
+      const r = JSON.parse(b);
+      if (r.candidateSha !== c) add('RECEIPT_CANDIDATE_MISMATCH', e.name);
+      if (r.exitCode !== 0) add('RECEIPT_GATE_FAILED', e.name);
+      if (
+        e.name === 'reporter82' &&
+        (r.denominator !== 82 || r.missingEvidence !== 0 || r.invalidEvidence !== 0)
+      )
+        add('REPORTER82_INVALID', e.name);
+    } catch {
+      add('RECEIPT_JSON_INVALID', e.name ?? e.path);
+    }
+  }
+  return finish(m, errors);
 }
-
-function verifyGitArtifact({ manifestEntry, label, repo, candidateSha, add }) {
-  if (!manifestEntry || typeof manifestEntry.path !== 'string' || !/^[0-9a-f]{64}$/.test(manifestEntry.sha256 ?? '')) {
-    add(`${label}_ENTRY_INVALID`, 'path and lowercase SHA-256 are required');
-    return null;
+function gitArtifact(e, l, r, c, add) {
+  if (!e || typeof e.path !== 'string' || !HASH.test(e.sha256 ?? '')) {
+    add(`${l}_ENTRY_INVALID`, 'path/hash');
+    return;
   }
-  let bytes;
   try {
-    bytes = gitFile(repo, candidateSha, manifestEntry.path);
+    if (hash(file(r, c, e.path)) !== e.sha256) add(`${l}_HASH_MISMATCH`, e.path);
   } catch {
-    add(`${label}_OBJECT_MISSING`, manifestEntry.path);
+    add(`${l}_OBJECT_MISSING`, e.path);
+  }
+}
+function external(e, l, d, add) {
+  if (
+    !e ||
+    typeof e.path !== 'string' ||
+    e.path.startsWith('/') ||
+    e.path.includes('..') ||
+    !HASH.test(e.sha256 ?? '')
+  ) {
+    add(`${l}_ENTRY_INVALID`, 'safe path/hash');
     return null;
   }
-  const actual = sha256(bytes);
-  if (actual !== manifestEntry.sha256) add(`${label}_HASH_MISMATCH`, manifestEntry.path);
-  return bytes;
+  try {
+    const b = readFileSync(resolve(d, e.path));
+    if (hash(b) !== e.sha256) add(`${l}_HASH_MISMATCH`, e.path);
+    return b;
+  } catch {
+    add(`${l}_FILE_MISSING`, e.path);
+    return null;
+  }
 }
-
-function finish(manifest, errors) {
-  const sortedErrors = errors.sort((a, b) => `${a.code}:${a.detail}`.localeCompare(`${b.code}:${b.detail}`));
-  return stableValue({
-    schemaVersion: 1,
+function finish(m, errors) {
+  const e = errors.sort((a, b) => `${a.code}:${a.detail}`.localeCompare(`${b.code}:${b.detail}`));
+  return stable({
+    schemaVersion: 2,
     taskId: 'REL-001-T01',
-    candidateSha: manifest?.candidateSha ?? null,
+    candidateSha: m?.candidateSha ?? null,
+    technicalStatus: e.length ? 'NOT_VERIFIED' : 'TECHNICAL_BUNDLE_READY',
     authorization: 'NOT_AUTHORIZED',
-    verified: sortedErrors.length === 0,
+    verified: e.length === 0,
     releaseGo: false,
-    errors: sortedErrors,
+    errors: e,
   });
 }
-
-function parseArgs(argv) {
-  const values = { repo: process.cwd(), manifest: null };
-  for (let index = 0; index < argv.length; index += 1) {
-    if (argv[index] === '--repo') values.repo = argv[++index];
-    else if (argv[index] === '--manifest') values.manifest = argv[++index];
-    else throw new Error(`Unknown argument: ${argv[index]}`);
+function args(a) {
+  const v = { repo: process.cwd(), manifest: null };
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] === '--repo') v.repo = a[++i];
+    else if (a[i] === '--manifest') v.manifest = a[++i];
+    else throw Error(`Unknown argument: ${a[i]}`);
   }
-  if (!values.manifest) throw new Error('--manifest is required');
-  return values;
+  if (!v.manifest) throw Error('--manifest is required');
+  return v;
 }
-
 async function main() {
   let result;
   try {
-    const args = parseArgs(process.argv.slice(2));
-    const manifest = JSON.parse(readFileSync(resolve(args.manifest), 'utf8'));
-    result = verifyReleaseCandidateBundle({ manifest, repo: resolve(args.repo) });
-  } catch (error) {
-    result = finish(null, [{ code: 'VERIFIER_INPUT_ERROR', detail: error instanceof Error ? error.message : String(error) }]);
+    const a = args(process.argv.slice(2)),
+      mp = resolve(a.manifest);
+    result = verifyReleaseCandidateBundle({
+      manifest: JSON.parse(readFileSync(mp, 'utf8')),
+      repo: resolve(a.repo),
+      bundleDir: dirname(mp),
+    });
+  } catch (e) {
+    result = finish(null, [
+      { code: 'VERIFIER_INPUT_ERROR', detail: e instanceof Error ? e.message : String(e) },
+    ]);
   }
   process.stdout.write(`${JSON.stringify(result)}\n`);
   process.exitCode = result.verified ? 0 : 1;
 }
-
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) await main();

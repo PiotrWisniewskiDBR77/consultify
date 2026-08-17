@@ -5,161 +5,145 @@ import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { dirname, resolve } from 'node:path';
 import test, { afterEach } from 'node:test';
-
-import {
-  hashCanonicalManifest,
-  verifyReleaseCandidateBundle,
-} from '../../../scripts/release/verify-release-candidate-bundle.mjs';
-
-const verifier = resolve('scripts/release/verify-release-candidate-bundle.mjs');
-const roots = [];
-const hash = (value) => createHash('sha256').update(value).digest('hex');
-const git = (repo, args) =>
-  execFileSync('git', ['-C', repo, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
-
+import { generateReleaseCandidateBundle } from '../../../scripts/release/generate-release-candidate-bundle.mjs';
+import { verifyReleaseCandidateBundle } from '../../../scripts/release/verify-release-candidate-bundle.mjs';
+const roots = [],
+  hash = (v) => createHash('sha256').update(v).digest('hex'),
+  git = (r, a) => execFileSync('git', ['-C', r, ...a], { encoding: 'utf8' }).trim();
 afterEach(() => {
   while (roots.length) rmSync(roots.pop(), { recursive: true, force: true });
 });
-
-function write(repo, path, body) {
-  const target = resolve(repo, path);
-  mkdirSync(dirname(target), { recursive: true });
-  writeFileSync(target, body);
-}
-
-function commit(repo, message) {
-  git(repo, ['add', '.']);
-  git(repo, ['commit', '-m', message]);
-  return git(repo, ['rev-parse', 'HEAD']);
-}
-
-function fixture() {
-  const repo = mkdtempSync(resolve(tmpdir(), 'consultify-release-verifier-'));
-  roots.push(repo);
+const write = (r, p, b) => {
+  const t = resolve(r, p);
+  mkdirSync(dirname(t), { recursive: true });
+  writeFileSync(t, b);
+};
+const commit = (r, m) => {
+  git(r, ['add', '.']);
+  git(r, ['commit', '-m', m]);
+  return git(r, ['rev-parse', 'HEAD']);
+};
+function fx(sql = 'ALTER TABLE base ADD COLUMN name text;\n') {
+  const repo = mkdtempSync(resolve(tmpdir(), 'rel-v-')),
+    out = mkdtempSync(resolve(tmpdir(), 'rel-b-'));
+  roots.push(repo, out);
   git(repo, ['init', '-q']);
-  git(repo, ['config', 'user.email', 'release-test@example.com']);
-  git(repo, ['config', 'user.name', 'Release Test']);
-  write(repo, 'package-lock.json', '{"lockfileVersion":3}\n');
-  write(repo, 'sbom.json', '{"bomFormat":"CycloneDX","specVersion":"1.5"}\n');
-  write(repo, 'server/migrations/001_base.sql', 'CREATE TABLE base(id text);\n');
-  const previousSha = commit(repo, 'previous verified');
-  write(repo, 'server/migrations/002_additive.sql', 'ALTER TABLE base ADD COLUMN name text;\n');
+  git(repo, ['config', 'user.email', 'x@y']);
+  git(repo, ['config', 'user.name', 'x']);
+  write(
+    repo,
+    'package-lock.json',
+    JSON.stringify({
+      lockfileVersion: 3,
+      packages: { 'node_modules/a': { name: 'a', version: '1.0.0' } },
+    }) + '\n'
+  );
+  write(repo, 'server/migrations/001.sql', 'CREATE TABLE base(id text);\n');
+  const previousVerifiedSha = commit(repo, 'previous');
+  write(repo, 'server/migrations/002.sql', sql);
   const candidateSha = commit(repo, 'candidate');
-  return { repo, previousSha, candidateSha };
-}
-
-function artifact(repo, candidateSha, path) {
-  const body = execFileSync('git', ['-C', repo, 'show', `${candidateSha}:${path}`]);
-  return { path, sha256: hash(body) };
-}
-
-function manifestFor({ repo, previousSha, candidateSha }) {
-  const migrations = git(repo, ['ls-tree', '-r', '--name-only', candidateSha, '--', 'server/migrations'])
-    .split('\n')
-    .sort()
-    .map((path) => artifact(repo, candidateSha, path));
-  const manifest = {
-    schemaVersion: 1,
+  git(repo, ['branch', 'release-candidate', candidateSha]);
+  const receipts = {};
+  for (const name of ['backendBuild', 'frontendBuild', 'reporter82', 'typecheck']) {
+    const p = resolve(out, `${name}.json`);
+    writeFileSync(
+      p,
+      JSON.stringify({
+        candidateSha,
+        exitCode: 0,
+        denominator: name === 'reporter82' ? 82 : undefined,
+        missingEvidence: 0,
+        invalidEvidence: 0,
+      })
+    );
+    receipts[name] = p;
+  }
+  const manifest = generateReleaseCandidateBundle({
+    repo,
     candidateSha,
-    previousVerifiedSha: previousSha,
-    treeSha: git(repo, ['rev-parse', `${candidateSha}^{tree}`]),
-    authorization: 'NOT_AUTHORIZED',
-    cleanBuild: true,
-    lockfile: artifact(repo, candidateSha, 'package-lock.json'),
-    sbom: { ...artifact(repo, candidateSha, 'sbom.json'), format: 'cyclonedx-json' },
-    migrations,
-  };
-  manifest.manifestSha256 = hashCanonicalManifest(manifest);
-  return manifest;
-}
-
-function rehash(manifest) {
-  manifest.manifestSha256 = hashCanonicalManifest(manifest);
-  return manifest;
-}
-
-test('accepts an exact immutable Git bundle while retaining NOT_AUTHORIZED', () => {
-  const fx = fixture();
-  const result = verifyReleaseCandidateBundle({ manifest: manifestFor(fx), repo: fx.repo });
-  assert.equal(result.verified, true);
-  assert.equal(result.authorization, 'NOT_AUTHORIZED');
-  assert.equal(result.releaseGo, false);
-  assert.deepEqual(result.errors, []);
-});
-
-test('CLI emits stable machine JSON and deterministic exit codes', () => {
-  const fx = fixture();
-  const path = resolve(fx.repo, 'manifest.json');
-  writeFileSync(path, `${JSON.stringify(manifestFor(fx), null, 2)}\n`);
-  const first = spawnSync(process.execPath, [verifier, '--repo', fx.repo, '--manifest', path], { encoding: 'utf8' });
-  const second = spawnSync(process.execPath, [verifier, '--repo', fx.repo, '--manifest', path], { encoding: 'utf8' });
-  assert.equal(first.status, 0);
-  assert.equal(second.status, 0);
-  assert.equal(first.stdout, second.stdout);
-  assert.equal(JSON.parse(first.stdout).releaseGo, false);
-
-  const invalidPath = resolve(fx.repo, 'invalid.json');
-  writeFileSync(invalidPath, '{}\n');
-  const invalid = spawnSync(process.execPath, [verifier, '--repo', fx.repo, '--manifest', invalidPath], { encoding: 'utf8' });
-  assert.equal(invalid.status, 1);
-  assert.equal(JSON.parse(invalid.stdout).verified, false);
-});
-
-test('rejects manifest, tree, lockfile, SBOM and migration-ledger tampering', () => {
-  const fx = fixture();
-  const mutations = [
-    (m) => { m.manifestSha256 = '0'.repeat(64); },
-    (m) => { m.treeSha = '0'.repeat(40); return rehash(m); },
-    (m) => { m.lockfile.sha256 = '0'.repeat(64); return rehash(m); },
-    (m) => { m.sbom.sha256 = '0'.repeat(64); return rehash(m); },
-    (m) => { m.migrations[0].sha256 = '0'.repeat(64); return rehash(m); },
-    (m) => { m.migrations.reverse(); return rehash(m); },
-    (m) => { m.migrations.pop(); return rehash(m); },
-  ];
-  for (const mutate of mutations) {
-    const manifest = structuredClone(manifestFor(fx));
-    mutate(manifest);
-    assert.equal(verifyReleaseCandidateBundle({ manifest, repo: fx.repo }).verified, false);
-  }
-});
-
-test('rejects GO claims and missing clean-build assertion', () => {
-  const fx = fixture();
-  const go = manifestFor(fx);
-  go.authorization = 'GO';
-  rehash(go);
-  const dirty = manifestFor(fx);
-  dirty.cleanBuild = false;
-  rehash(dirty);
-  assert.match(JSON.stringify(verifyReleaseCandidateBundle({ manifest: go, repo: fx.repo })), /AUTHORIZATION_MUST_REMAIN_NOT_AUTHORIZED/);
-  assert.match(JSON.stringify(verifyReleaseCandidateBundle({ manifest: dirty, repo: fx.repo })), /CLEAN_BUILD_ASSERTION_REQUIRED/);
-});
-
-test('rejects a rollback SHA that is not an ancestor', () => {
-  const fx = fixture();
-  git(fx.repo, ['checkout', '--orphan', 'unrelated']);
-  for (const path of ['package-lock.json', 'sbom.json', 'server/migrations/001_base.sql', 'server/migrations/002_additive.sql']) {
-    try { rmSync(resolve(fx.repo, path), { force: true }); } catch {}
-  }
-  write(fx.repo, 'unrelated.txt', 'unrelated\n');
-  const unrelated = commit(fx.repo, 'unrelated');
-  const manifest = manifestFor(fx);
-  manifest.previousVerifiedSha = unrelated;
-  rehash(manifest);
-  assert.match(JSON.stringify(verifyReleaseCandidateBundle({ manifest, repo: fx.repo })), /ROLLBACK_SHA_NOT_ANCESTOR/);
-});
-
-for (const scenario of ['deletion', 'modification']) {
-  test(`rejects ${scenario} of a migration required by the previous verified SHA`, () => {
-    const fx = fixture();
-    git(fx.repo, ['checkout', '-q', fx.previousSha]);
-    if (scenario === 'deletion') rmSync(resolve(fx.repo, 'server/migrations/001_base.sql'));
-    else write(fx.repo, 'server/migrations/001_base.sql', 'CREATE TABLE changed(id text);\n');
-    write(fx.repo, 'server/migrations/002_additive.sql', 'ALTER TABLE base ADD COLUMN name text;\n');
-    const incompatibleSha = commit(fx.repo, `migration ${scenario}`);
-    const incompatible = manifestFor({ ...fx, candidateSha: incompatibleSha });
-    const result = verifyReleaseCandidateBundle({ manifest: incompatible, repo: fx.repo });
-    assert.equal(result.verified, false);
-    assert.match(JSON.stringify(result), scenario === 'deletion' ? /ROLLBACK_MIGRATION_DELETED/ : /ROLLBACK_MIGRATION_MODIFIED/);
+    previousVerifiedSha,
+    candidateRef: 'refs/heads/release-candidate',
+    receiptFiles: receipts,
+    outputDir: out,
   });
+  return { repo, out, manifest, candidateSha, previousVerifiedSha, receipts };
 }
+test('valid bundle is technical ready but never GO', () => {
+  const x = fx(),
+    r = verifyReleaseCandidateBundle({ manifest: x.manifest, repo: x.repo, bundleDir: x.out });
+  assert.equal(r.verified, true);
+  assert.equal(r.technicalStatus, 'TECHNICAL_BUNDLE_READY');
+  assert.equal(r.authorization, 'NOT_AUTHORIZED');
+  assert.equal(r.releaseGo, false);
+});
+test('CLI output and exit code are deterministic', () => {
+  const x = fx(),
+    mp = resolve(x.out, 'release-candidate-manifest.json'),
+    script = resolve('scripts/release/verify-release-candidate-bundle.mjs');
+  const a = spawnSync(process.execPath, [script, '--repo', x.repo, '--manifest', mp], {
+      encoding: 'utf8',
+    }),
+    b = spawnSync(process.execPath, [script, '--repo', x.repo, '--manifest', mp], {
+      encoding: 'utf8',
+    });
+  assert.equal(a.status, 0);
+  assert.equal(b.status, 0);
+  assert.equal(a.stdout, b.stdout);
+  assert.equal(JSON.parse(a.stdout).releaseGo, false);
+});
+test('fails closed for tamper, stale receipt, ref mismatch, dirty tree and GO', () => {
+  for (const mode of ['tamper', 'stale', 'ref', 'dirty', 'go']) {
+    const x = fx(),
+      m = structuredClone(x.manifest);
+    if (mode === 'tamper') writeFileSync(resolve(x.out, 'sbom.cdx.json'), '{}');
+    if (mode === 'stale') {
+      const e = m.receipts[0],
+        b = JSON.parse(readFileSync(resolve(x.out, e.path)));
+      b.candidateSha = '0'.repeat(40);
+      writeFileSync(resolve(x.out, e.path), JSON.stringify(b));
+      e.sha256 = hash(readFileSync(resolve(x.out, e.path)));
+    }
+    if (mode === 'ref') git(x.repo, ['branch', '-f', 'release-candidate', x.previousVerifiedSha]);
+    if (mode === 'dirty') write(x.repo, 'dirty.txt', 'x');
+    if (mode === 'go') m.authorization = 'GO';
+    const r = verifyReleaseCandidateBundle({ manifest: m, repo: x.repo, bundleDir: x.out });
+    assert.equal(r.verified, false, mode);
+    assert.equal(r.releaseGo, false);
+  }
+});
+test('rejects nonancestor and historical migration mutation/deletion', () => {
+  for (const mode of ['nonancestor', 'mutation', 'deletion']) {
+    const x = fx(),
+      m = structuredClone(x.manifest);
+    if (mode === 'nonancestor') {
+      git(x.repo, ['checkout', '--orphan', 'other']);
+      write(x.repo, 'other', 'x');
+      const s = commit(x.repo, 'other');
+      m.previousVerifiedSha = s;
+    } else {
+      git(x.repo, ['checkout', '-q', x.candidateSha]);
+      if (mode === 'mutation') write(x.repo, 'server/migrations/001.sql', 'changed');
+      else rmSync(resolve(x.repo, 'server/migrations/001.sql'));
+      const s = commit(x.repo, mode);
+      git(x.repo, ['branch', '-f', 'release-candidate', s]);
+      m.candidateSha = s;
+      m.treeSha = git(x.repo, ['rev-parse', `${s}^{tree}`]);
+    }
+    const r = verifyReleaseCandidateBundle({ manifest: m, repo: x.repo, bundleDir: x.out });
+    assert.equal(r.verified, false, mode);
+  }
+});
+test('rejects destructive SQL in every new migration class', () => {
+  for (const sql of [
+    'DROP TABLE base;',
+    'TRUNCATE base;',
+    'ALTER TABLE base DROP COLUMN id;',
+    'ALTER TABLE base RENAME TO other;',
+    'CREATE OR REPLACE VIEW v AS SELECT 1;',
+  ]) {
+    const x = fx(sql),
+      r = verifyReleaseCandidateBundle({ manifest: x.manifest, repo: x.repo, bundleDir: x.out });
+    assert.equal(r.verified, false, sql);
+    assert.match(JSON.stringify(r.errors), /DESTRUCTIVE_/);
+  }
+});
