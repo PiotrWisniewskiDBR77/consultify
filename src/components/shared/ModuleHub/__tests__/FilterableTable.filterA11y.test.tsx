@@ -72,6 +72,25 @@ const renderTable = (activeFilters: Array<{ column: string; value: string }> = [
   );
 
 describe('FilterableTable — shared column-filter accessible contract', () => {
+  it('keeps an interactive row keyboard-operable without an invalid button role', () => {
+    const onRowClick = vi.fn();
+    render(
+      <FilterableTable
+        columns={COLUMNS}
+        data={DATA}
+        activeFilters={[]}
+        onFilterChange={vi.fn()}
+        onRowClick={onRowClick}
+      />
+    );
+
+    const row = screen.getByText('Row one').closest('tr');
+    expect(row).toHaveAttribute('tabindex', '0');
+    expect(row).not.toHaveAttribute('role', 'button');
+    fireEvent.keyDown(row!, { key: 'Enter' });
+    expect(onRowClick).toHaveBeenCalledWith(DATA[0]);
+  });
+
   it('names the filter trigger with the column and communicates no active filter', () => {
     renderTable();
     expect(

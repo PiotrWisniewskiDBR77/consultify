@@ -1157,7 +1157,6 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                     // robią. Wiersz bez handlera zostaje nieinteraktywny, żeby
                     // nie zaśmiecać kolejności fokusa pustymi przystankami.
                     tabIndex={onRowClick || onRowDoubleClick ? 0 : undefined}
-                    role={onRowClick ? 'button' : undefined}
                     onKeyDown={(event) => {
                       if ((onRowClick || onRowDoubleClick) && (event.key === 'Enter' || event.key === ' ')) {
                         // Spacja przewija stronę, jeśli jej nie zatrzymać.

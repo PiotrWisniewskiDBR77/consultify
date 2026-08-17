@@ -31,4 +31,9 @@ describe('primitives/Select', () => {
     expect(select).toHaveAttribute('aria-invalid', 'true');
     expect(screen.getByText('Required field')).toBeInTheDocument();
   });
+
+  it('accepts an accessible name when a visible label is rendered elsewhere', () => {
+    render(<Select aria-label="Choose owner" options={options} value="a" />);
+    expect(screen.getByRole('combobox', { name: 'Choose owner' })).toBeInTheDocument();
+  });
 });

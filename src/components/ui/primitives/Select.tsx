@@ -37,6 +37,10 @@ export interface SelectProps {
   wrapperClassName?: string;
   id?: string;
   name?: string;
+  /** Accessible name when no visible `label` is rendered. */
+  'aria-label'?: string;
+  /** Links the control to an externally-rendered visible label. */
+  'aria-labelledby'?: string;
 }
 
 const CONTROL_CLASS =
@@ -63,6 +67,8 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
       wrapperClassName,
       id: providedId,
       name,
+      'aria-label': ariaLabel,
+      'aria-labelledby': ariaLabelledBy,
     },
     ref
   ) => {
@@ -88,6 +94,8 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
             onChange={(event) => onChange?.(event.target.value)}
             disabled={disabled}
             required={required}
+            aria-label={ariaLabel}
+            aria-labelledby={ariaLabelledBy}
             aria-invalid={error ? true : undefined}
             aria-describedby={describedById}
             className={cn(
