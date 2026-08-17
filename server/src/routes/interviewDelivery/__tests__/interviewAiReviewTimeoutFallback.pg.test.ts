@@ -65,6 +65,7 @@ describe.skipIf(!REAL_DB)('evaluateSessionAnswers server-side timeout — real P
   const userId = `user-timeout-${tag}`;
   const sessionId = `session-timeout-${tag}`;
   const questionId = `question-timeout-${tag}`;
+  const assignmentId = `assignment-timeout-${tag}`;
 
   beforeAll(async () => {
     const { Pool: PgPool } = await import('pg');
@@ -87,6 +88,12 @@ describe.skipIf(!REAL_DB)('evaluateSessionAnswers server-side timeout — real P
          (id, session_id, organization_id, category, question_text, answer_text, status, is_required)
        VALUES ($1, $2, $3, 'strategy', 'What is your goal?', 'the user''s already-persisted answer', 'answered', 0)`,
       [questionId, sessionId, orgId]
+    );
+    await pool.query(
+      `INSERT INTO interview_assignments
+         (id, organization_id, assignee_user_id, template_id, session_id)
+       VALUES ($1, $2, $3, 'tmpl-timeout', $4)`,
+      [assignmentId, orgId, userId, sessionId]
     );
 
     // The "hung provider": resolves long after our bound, with a well-formed
@@ -132,6 +139,7 @@ describe.skipIf(!REAL_DB)('evaluateSessionAnswers server-side timeout — real P
 
   afterAll(async () => {
     if (!pool) return;
+    await pool.query(`DELETE FROM interview_assignments WHERE id = $1`, [assignmentId]);
     await pool.query(`DELETE FROM interview_questions WHERE session_id = $1`, [sessionId]);
     await pool.query(`DELETE FROM interview_sessions WHERE id = $1`, [sessionId]);
     await pool.query(`DELETE FROM users WHERE id = $1`, [userId]);
@@ -140,6 +148,8 @@ describe.skipIf(!REAL_DB)('evaluateSessionAnswers server-side timeout — real P
   });
 
   it('HEADLINE: responds within the bound with an explicit, non-fabricated fallback — and the persisted answer is untouched', async () => {
+    const { getRequestMetrics } = await import('../../../middleware/metrics.middleware.js');
+    const metricsBefore = getRequestMetrics().aiTimeouts;
     const startedAt = Date.now();
     const res = await request(app).post(
       `/api/interview/sessions/${sessionId}/evaluate-answers`
@@ -158,11 +168,25 @@ describe.skipIf(!REAL_DB)('evaluateSessionAnswers server-side timeout — real P
     expect(res.body.overallScore).toBe(0);
     expect(res.body.questionEvaluations).toEqual([]);
     expect(res.body.recommendations).toEqual([]);
+    expect(getRequestMetrics().aiTimeouts).toBe(metricsBefore + 1);
 
-    const row = await pool.query(`SELECT answer_text FROM interview_questions WHERE id = $1`, [
-      questionId,
-    ]);
+    const row = await pool.query(`SELECT answer_text FROM interview_questions WHERE id = $1`, [questionId]);
     expect(row.rows[0].answer_text).toBe("the user's already-persisted answer");
+
+    const persisted = await pool.query(
+      `SELECT ai_review_snapshot_json, ai_reviewed_at FROM interview_assignments WHERE id = $1`,
+      [assignmentId]
+    );
+    expect(persisted.rows[0].ai_reviewed_at).toBeTruthy();
+    const timeoutSnapshot =
+      typeof persisted.rows[0].ai_review_snapshot_json === 'string'
+        ? JSON.parse(persisted.rows[0].ai_review_snapshot_json)
+        : persisted.rows[0].ai_review_snapshot_json;
+    expect(timeoutSnapshot).toMatchObject({
+      overallVerdict: 'timeout',
+      timedOut: true,
+      questionEvaluations: [],
+    });
   });
 
   it('the late provider response does not crash the process and does not corrupt the persisted answer once it finally resolves', async () => {

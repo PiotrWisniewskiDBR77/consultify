@@ -77,6 +77,8 @@ export interface InterviewQuestion {
   confidenceScore: number;
   answeredBy?: string;
   answeredAt?: string;
+  /** Optimistic-concurrency token required by the governed answer writer. */
+  updatedAt?: string;
   tags: string[];
   sortOrder: number;
   isTemplate: boolean;

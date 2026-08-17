@@ -10,7 +10,7 @@ import { Router } from 'express';
 import multer from 'multer';
 
 import { InterviewController } from '../controllers/InterviewController.js';
-import { verifyToken } from '../middleware/auth.middleware.js';
+import { validateOrgMembership, verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { requireAnyPermission, requirePermission } from '../middleware/permission.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
@@ -33,6 +33,7 @@ const templateSourceUpload = multer({
 // Middleware
 router.use(apiAuthRateLimiter);
 router.use(verifyToken);
+router.use(validateOrgMembership);
 router.use(requireOrgAccess());
 router.use(demoContextMiddleware);
 

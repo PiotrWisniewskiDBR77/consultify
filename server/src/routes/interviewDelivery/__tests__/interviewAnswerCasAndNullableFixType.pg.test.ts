@@ -8,11 +8,9 @@
  * no version predicate — last-write-wins, the only guard being the coarse
  * session-status lock. `updated_at` already existed but was never exposed to
  * the client, so nothing could round-trip it back as an "expected" version.
- * AFTER: `buildQuestionResponse` now returns `updatedAt`; a client that sends
- * it back as `expectedUpdatedAt` gets `AND updated_at = ?` appended to the
- * UPDATE and a 409 on a lost race. Omitting the field keeps the exact
- * pre-existing (documented) last-write-wins behaviour — proved explicitly
- * below as a characterization test, not a passing guarantee.
+ * AFTER: `buildQuestionResponse` returns `updatedAt`; every material PATCH must
+ * send it as `expectedUpdatedAt`. Missing precondition is 428 and a stale or
+ * concurrently-lost precondition is 409.
  *
  * (3) `EvalSchema.fixType` is `z.enum([...]).nullable()`. Proved here: (a) a
  * provider response with `fixType: null` does not crash the endpoint, and
@@ -126,29 +124,25 @@ describe.skipIf(!REAL_DB)('updateQuestion CAS + nullable fixType — real Postgr
   });
 
   describe('CAS guard', () => {
-    it('a PATCH without expectedUpdatedAt (default) is plain last-write-wins — CHARACTERIZATION of the known, documented gap, not a guarantee', async () => {
-      const first = await request(app)
+    it('a PATCH without expectedUpdatedAt fails with 428 and does not mutate', async () => {
+      const missing = await request(app)
         .patch(`/api/interview/questions/${questionId}`)
-        .send({ answerText: 'lww-v1' });
-      expect(first.status).toBe(200);
-
-      const second = await request(app)
-        .patch(`/api/interview/questions/${questionId}`)
-        .send({ answerText: 'lww-v2' });
-      expect(second.status).toBe(200);
+        .send({ answerText: 'must-not-land' });
+      expect(missing.status).toBe(428);
+      expect(missing.body.code).toBe('ANSWER_PRECONDITION_REQUIRED');
 
       const row = await pool.query(`SELECT answer_text FROM interview_questions WHERE id = $1`, [
         questionId,
       ]);
-      expect(row.rows[0].answer_text).toBe('lww-v2');
+      expect(row.rows[0].answer_text).toBe('initial answer');
     });
 
     it('a PATCH with a CURRENT expectedUpdatedAt succeeds and returns a fresh updatedAt', async () => {
-      const before = await request(app)
-        .patch(`/api/interview/questions/${questionId2}`)
-        .send({ answerText: 'cas-baseline' });
-      expect(before.status).toBe(200);
-      const t0 = before.body.updatedAt;
+      const before = await pool.query(
+        `SELECT updated_at FROM interview_questions WHERE id = $1`,
+        [questionId2]
+      );
+      const t0 = new Date(before.rows[0].updated_at).toISOString();
       expect(t0).toBeTruthy();
 
       await new Promise((r) => setTimeout(r, 10));
@@ -171,10 +165,11 @@ describe.skipIf(!REAL_DB)('updateQuestion CAS + nullable fixType — real Postgr
       // test). t0 (the value BEFORE that write) is now stale — exactly the
       // shape of two concurrent clients that both read the row before either
       // wrote, one of them losing the race.
-      const before = await request(app)
-        .patch(`/api/interview/questions/${questionId2}`)
-        .send({ answerText: 'cas-rebaseline' });
-      const staleVersion = before.body.updatedAt;
+      const before = await pool.query(
+        `SELECT updated_at FROM interview_questions WHERE id = $1`,
+        [questionId2]
+      );
+      const staleVersion = new Date(before.rows[0].updated_at).toISOString();
 
       await new Promise((r) => setTimeout(r, 10));
       const legit = await request(app)
@@ -194,6 +189,27 @@ describe.skipIf(!REAL_DB)('updateQuestion CAS + nullable fixType — real Postgr
         questionId2,
       ]);
       expect(row.rows[0].answer_text).toBe('cas-legit-winner');
+    });
+
+    it('two concurrent writers with the same version produce exactly one winner', async () => {
+      const before = await pool.query(
+        `SELECT updated_at FROM interview_questions WHERE id = $1`,
+        [questionId]
+      );
+      const version = new Date(before.rows[0].updated_at).toISOString();
+      const [a, b] = await Promise.all([
+        request(app)
+          .patch(`/api/interview/questions/${questionId}`)
+          .send({ answerText: 'concurrent-a', expectedUpdatedAt: version }),
+        request(app)
+          .patch(`/api/interview/questions/${questionId}`)
+          .send({ answerText: 'concurrent-b', expectedUpdatedAt: version }),
+      ]);
+      expect([a.status, b.status].sort()).toEqual([200, 409]);
+      const row = await pool.query(`SELECT answer_text FROM interview_questions WHERE id = $1`, [
+        questionId,
+      ]);
+      expect(['concurrent-a', 'concurrent-b']).toContain(row.rows[0].answer_text);
     });
 
     it('cold readback: a fresh pool/connection sees the CAS-winning value', async () => {

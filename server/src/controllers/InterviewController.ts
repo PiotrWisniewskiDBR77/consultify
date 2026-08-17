@@ -14,6 +14,7 @@ import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
+import { incrementAiTimeouts } from '../middleware/metrics.middleware.js';
 import { IngestionPipeline } from '../services/ai/ingestionPipeline.js';
 import { llmService } from '../services/ai/llmService.js';
 import {
@@ -207,7 +208,8 @@ type InterviewAiOverallVerdict =
   | 'ready_for_approval'
   | 'needs_improvement'
   | 'insufficient'
-  | 'empty';
+  | 'empty'
+  | 'timeout';
 type InterviewReviewAlignment =
   | 'aligned'
   | 'manager_stricter_than_ai'
@@ -7236,13 +7238,14 @@ Answer type: ${(question as any).answer_type || 'open'}`;
 
       if (winner === TIMED_OUT) {
         responded = true;
+        incrementAiTimeouts();
         logger.warn('[evaluateSessionAnswers] AI review exceeded bound, returning fallback', {
           sessionId,
           timeoutMs,
         });
         // Explicit, non-fabricated fallback: overallVerdict:'timeout' and an
         // empty questionEvaluations/recommendations set — never a guessed score.
-        res.json({
+        const timeoutEvaluation: InterviewAiReviewSnapshot & { timedOut: true } = {
           overallScore: 0,
           overallVerdict: 'timeout',
           questionEvaluations: [],
@@ -7256,7 +7259,13 @@ Answer type: ${(question as any).answer_type || 'open'}`;
             maxScore: INTERVIEW_RUBRIC_MAX_PER_CRITERION,
           })),
           timedOut: true,
-        });
+        };
+
+        // Persist the terminal timeout marker before reporting it. This gives
+        // operators and a restarted process durable evidence that the provider
+        // timed out, rather than leaving the only truth in a transient log.
+        await persistSnapshot(timeoutEvaluation);
+        res.json(timeoutEvaluation);
 
         // Best-effort: if the provider eventually answers, still persist the
         // snapshot for a later read (e.g. getSummary/getAssignment). No response
@@ -7450,16 +7459,18 @@ ${JSON.stringify(questions || [], null, 2)}
       expectedUpdatedAt,
     } = req.body;
 
-    // INT-BVP-001 (6): optional per-answer CAS guard. `updated_at` already
-    // exists on interview_questions (no schema change needed) but the API
-    // never exposed it, so no client could send back an "expected" version —
-    // updateQuestion was plain last-write-wins under the coarse session-lock
-    // check above. Additive/opt-in: a client that sends `expectedUpdatedAt`
-    // (round-tripped from a prior GET/PATCH response's `updatedAt`) gets a
-    // real optimistic-concurrency guard and a 409 on a lost race; a client
-    // that omits it keeps the pre-existing (documented, known-gap)
-    // last-write-wins behaviour unchanged.
+    // INT-DELIVERY-OPS-001: every material answer mutation requires a version
+    // precondition. The client receives `updatedAt` from every read/PATCH and
+    // must round-trip it. Silent last-write-wins is not a valid delivery
+    // contract: a missing token is distinct from a stale token (428 vs 409).
     const hasCasGuard = typeof expectedUpdatedAt === 'string' && expectedUpdatedAt.trim().length > 0;
+    if (!hasCasGuard) {
+      res.status(428).json({
+        error: 'expectedUpdatedAt is required. Reload the answer and try again.',
+        code: 'ANSWER_PRECONDITION_REQUIRED',
+      });
+      return;
+    }
 
     // M03R-004 — normalizacja NA ZAPISIE. Klient może przysłać `ANSWERED`;
     // do kolumny wchodzi wyłącznie postać kanoniczna, żeby nie dokładać
@@ -7556,7 +7567,16 @@ ${JSON.stringify(questions || [], null, 2)}
     // CAS predicate appended after id/organization_id so it lines up with the
     // trailing `WHERE id = ? AND organization_id = ?[ AND updated_at = ?]` text
     // in both branches below.
-    const casClause = hasCasGuard ? ' AND updated_at = ?' : '';
+    const isPostgres =
+      process.env.DB_TYPE === 'postgres' ||
+      /^postgres(?:ql)?:/i.test(String(process.env.DATABASE_URL || ''));
+    // JSON timestamps carry millisecond precision while PostgreSQL defaults can
+    // retain microseconds. Compare the client token at its real precision or a
+    // first edit of a freshly-created question would be rejected as stale.
+    const versionPredicate = isPostgres
+      ? "date_trunc('milliseconds', updated_at) = date_trunc('milliseconds', CAST(? AS timestamptz))"
+      : 'updated_at = ?';
+    const casClause = hasCasGuard ? ` AND ${versionPredicate}` : '';
     const casParams = hasCasGuard ? [expectedUpdatedAt] : [];
 
     let updateResult;

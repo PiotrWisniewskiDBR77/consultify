@@ -1037,16 +1037,22 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       setIsSaving(true);
 
       try {
-        // INT-BVP-001 (6): opportunistically round-trip the last-known
-        // `updatedAt` for this question so the server's optional CAS guard can
-        // engage. `updatedAt` isn't on the InterviewQuestion type yet (still
-        // owned by QuestionsList.tsx), hence the cast — the field is present
-        // at runtime because buildQuestionResponse now includes it. Omitting
-        // it (older cached question objects) is fully backward compatible:
-        // the backend treats a missing `expectedUpdatedAt` as "no guard".
-        const current = questions.find((q) => q.id === questionId);
-        const expectedUpdatedAt = (current as any)?.updatedAt;
-        const payload = expectedUpdatedAt ? { ...updates, expectedUpdatedAt } : updates;
+        // INT-DELIVERY-OPS-001: answer writes are never last-write-wins. A
+        // legacy/cached object without a token is refreshed before mutation;
+        // if the server still cannot provide a token, fail locally instead of
+        // sending an unguarded write that the backend correctly rejects (428).
+        let current = questions.find((q) => q.id === questionId);
+        if (!current?.updatedAt) {
+          const refreshed = (await Api.get(
+            `/interview/sessions/${session.id}/questions`
+          )) as InterviewQuestion[];
+          current = refreshed.find((q) => q.id === questionId);
+          setQuestions(refreshed);
+        }
+        if (!current?.updatedAt) {
+          throw Object.assign(new Error('Answer version is unavailable'), { status: 428 });
+        }
+        const payload = { ...updates, expectedUpdatedAt: current.updatedAt };
         const updated = await Api.patch(`/interview/questions/${questionId}`, payload);
         const nextQuestions = questions.map((q) =>
           q.id === questionId ? { ...q, ...updated } : q
@@ -1070,6 +1076,12 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             isPolish
               ? 'Ktoś inny zaktualizował tę odpowiedź w międzyczasie. Odśwież i spróbuj ponownie.'
               : 'This answer was updated elsewhere. Reload and try again.'
+          );
+        } else if (error?.status === 428) {
+          toast.error(
+            isPolish
+              ? 'Nie udało się ustalić wersji odpowiedzi. Odśwież wywiad i spróbuj ponownie.'
+              : 'The answer version is unavailable. Reload the interview and try again.'
           );
         } else {
           toast.error(t('interview.workspace.failedToSave'));
