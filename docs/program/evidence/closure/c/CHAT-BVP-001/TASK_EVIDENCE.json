@@ -1,66 +1,95 @@
 {
-  "baselineSha": "158f878743e90bc64ebfdaefdb470e99b205ce68",
-  "productSha": "d6b636cd6bd5244b368ffee9df731d98bf231b7b",
-  "leaseSha256": "6cea3c806721c2d385d7f960e88d411966e5bf497bb35ccce222828f8b9819c4",
   "taskId": "CHAT-BVP-001",
+  "baselineSha": "b5a69603f3ac94b4f5b17a45396a01767af2d5ff",
+  "productSha": "490ccb1f1946dca8b4978b034653002a08dac2b8",
+  "leaseSha256": "6cea3c806721c2d385d7f960e88d411966e5bf497bb35ccce222828f8b9819c4",
   "verdict": "PARTIAL",
+  "technicalVerdict": "DONE_CURRENT_SHA",
+  "verdictRationale": "Owner-free backend closure is green on exact product SHA 490ccb1f19: approved Chat proposals now have immutable neutral delivery, tenant-scoped lease/reclaim, policy-drift checks, crash-window reconciliation and exactly-one shared receipt. Literal DONE still needs each artifact owner to map the envelope into its real document/deck/workbook/material table.",
   "open": [
-    "No target-owner consumer is wired to materialize producer_kind=chat proposals into an actual artifact. The shared exactly-once receipt spine is proven, but wiring a document/material owner consumer is an owner-boundary integration and was not invented here."
+    "BLOCKED_OWNER: define the target-specific mapping and create the real owner-table artifact. This neutral adapter deliberately does not claim that a foreign artifact exists before its owner supplies targetRecordId."
   ],
-  "environment": {
-    "node": "v24.12.0",
-    "postgres": "16 (pgvector/pgvector:pg16)",
-    "vitest": "root vitest.config.ts",
-    "dbUrl": "127.0.0.1:32910/chat_bvp in disposable container consultify-chat-bvp-459b2d"
-  },
-  "gateG0": "PASS for the bounded three-path change; no Chat UI, provider policy, foreign owner table, commit, push or deploy was touched.",
-  "gateG1": "PASS: npm run type-check exit 0; focused mounted route contract 18/18 exit 0.",
-  "gateG3": "PASS: fresh PostgreSQL migration exit 0; schema_migrations contains 729 rows.",
-  "gateG4": "NOT_RUN_BY_SCOPE: Chat UI, human review and browser acceptance were explicitly excluded from this bounded technical closure.",
-  "ownerTables": ["conversations", "conversation_messages", "artifact_handoff_proposals", "artifact_handoff_receipts"],
-  "denominators": {
-    "realPostgres": "19 passed / 19 discovered in 2 files (14 service + 5 mounted JWT/runtime)",
-    "focusedRoute": "18 passed / 18 discovered in 1 file",
-    "typeCheck": "1 command passed / 1 run, exit 0",
-    "migration": "729 schema_migrations rows after fresh migration, exit 0"
-  },
-  "negativeControls": {
-    "staleMembership": "real signed JWT for INACTIVE membership denied 403 ORG_MEMBERSHIP_REVOKED by mounted app",
-    "crossTenant": "foreign organization read and approve both denied 404",
-    "idempotentCreateRace": "two concurrent mounted requests with one key returned 200/201, same proposal ID, database count exactly 1",
-    "approvalRace": "two concurrent mounted approvals converged on the same human decision",
-    "materializationRetry": "two concurrent shared-spine materializations returned one receipt ID and cold database count exactly 1",
-    "reject": "mounted human rejection persisted rejected state",
-    "missingSource": "missing message denied 404 SOURCE_NOT_FOUND with no phantom proposal",
-    "providerAndEmptyStream": "existing service suite fail-closed controls remained green; no provider policy was changed",
-    "coldReadback": "independent new pg.Client read exact source hash, citation payload, materialized state and one receipt",
-    "cleanup": "test afterAll asserted zero proposal/user residue for generated fixture IDs"
-  },
   "changedPaths": [
+    "server/migrations/20260928_chat_handoff_owner_ingress.sql",
+    "server/src/services/chatHandoff/chatTargetOwnerIngressService.ts",
     "server/src/routes/v8/chat.routes.ts",
-    "server/src/services/chatHandoff/__tests__/chatHandoffMounted.pg.test.ts",
-    "server/src/services/v8/__tests__/chat-routes.test.ts"
+    "server/src/services/chatHandoff/__tests__/chatHandoffMounted.pg.test.ts"
   ],
   "changedPathRationale": {
-    "server/src/routes/v8/chat.routes.ts": "Revalidate active organization membership on the mounted Chat router so a stale JWT fails closed.",
-    "server/src/services/chatHandoff/__tests__/chatHandoffMounted.pg.test.ts": "Fresh real-PostgreSQL mounted JWT proof for tenant, retry, concurrent approval/materialization and cold reopen.",
-    "server/src/services/v8/__tests__/chat-routes.test.ts": "Keep the isolated auth-module mock aligned with the production middleware export contract."
+    "server/migrations/20260928_chat_handoff_owner_ingress.sql": "Adds immutable exactly-once approved-envelope delivery plus a separate mutable claim lease; no foreign artifact table is written.",
+    "server/src/services/chatHandoff/chatTargetOwnerIngressService.ts": "Implements idempotent delivery, SKIP LOCKED claim, expired-lease reclaim, version/hash/target fail-closed checks and crash-safe shared-receipt completion.",
+    "server/src/routes/v8/chat.routes.ts": "Mounts signed-JWT OWNER/ADMIN delivery, claim and completion endpoints with token-derived organization context.",
+    "server/src/services/chatHandoff/__tests__/chatHandoffMounted.pg.test.ts": "Provides mounted realPG proof for immutable ingress, capability/tenant/version negatives, reclaim, crash window, 8-way completion and cold readback."
   },
-  "commands": [
-    {"command": "DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32910/chat_bvp DB_TYPE=postgres CI=true npx tsx server/scripts/migrate.postgres.ts", "exitCode": 0, "result": "fresh migration completed; 729 ledger rows"},
-    {"command": "DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32910/chat_bvp DB_TYPE=postgres CI=true RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test ENABLE_V8_GLOBAL=true npx vitest run server/src/services/chatHandoff/__tests__/chatHandoffService.pg.test.ts server/src/services/chatHandoff/__tests__/chatHandoffMounted.pg.test.ts --no-file-parallelism --maxWorkers=1 --retry=0 --reporter=dot", "exitCode": 0, "result": "2/2 files, 19/19 tests"},
-    {"command": "npx vitest run server/src/services/v8/__tests__/chat-routes.test.ts --retry=0 --reporter=dot", "exitCode": 0, "result": "1/1 file, 18/18 tests"},
-    {"command": "npm run type-check", "exitCode": 0, "result": "TypeScript noEmit passed"}
+  "ownerTables": [
+    "conversations",
+    "conversation_messages",
+    "artifact_handoff_proposals",
+    "artifact_handoff_receipts",
+    "chat_handoff_owner_ingress",
+    "chat_handoff_owner_claims"
   ],
+  "commands": [
+    {
+      "gate": "G3-fresh",
+      "command": "DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:56827/chat_bvp_current DB_TYPE=postgres CI=true npx tsx server/scripts/migrate.postgres.ts",
+      "exitCode": 0,
+      "result": "742 applied; ledger 742 rows / 742 distinct filenames / 742 success"
+    },
+    {
+      "gate": "G3-repeat-dry",
+      "command": "<same env> npx tsx server/scripts/migrate.postgres.ts; <same env> npx tsx server/scripts/migrate.postgres.ts --dry-run",
+      "exitCode": 0,
+      "result": "repeat Applying migrations: 0; dry-run Pending migrations: 0"
+    },
+    {
+      "gate": "G2-realPG-mounted",
+      "command": "DATABASE_URL=<chat_bvp_current> DB_TYPE=postgres CI=true RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test ENABLE_V8_GLOBAL=true npx vitest run server/src/services/chatHandoff/__tests__/chatHandoffService.pg.test.ts server/src/services/chatHandoff/__tests__/chatHandoffMounted.pg.test.ts --no-file-parallelism --maxWorkers=1 --retry=0 --reporter=dot",
+      "exitCode": 0,
+      "result": "2/2 files; 22/22 tests"
+    },
+    {
+      "gate": "G2-route",
+      "command": "npx vitest run server/src/services/v8/__tests__/chat-routes.test.ts --retry=0 --reporter=dot",
+      "exitCode": 0,
+      "result": "1/1 file; 18/18 tests"
+    },
+    { "gate": "G1-typecheck", "command": "npm run type-check", "exitCode": 0, "result": "full repository tsc passed" },
+    { "gate": "G1-build", "command": "npm run build:backend", "exitCode": 0, "result": "9 mirrors verified; backend tsc build passed" }
+  ],
+  "denominators": {
+    "freshMigrations": { "discovered": 742, "applied": 742, "successful": 742, "failed": 0 },
+    "repeatMigrations": { "applied": 0 },
+    "dryRun": { "pending": 0 },
+    "realPostgres": { "files": 2, "passed": 22, "failed": 0, "skipped": 0, "todo": 0 },
+    "routeRegression": { "files": 1, "passed": 18, "failed": 0, "skipped": 0, "todo": 0 },
+    "typeCheck": { "passed": 1, "failed": 0 },
+    "backendBuild": { "passed": 1, "failed": 0 }
+  },
   "fixtures": {
-    "organizations": "two isolated active organizations",
-    "personas": "active owner in each organization plus an INACTIVE stale owner in the source organization",
-    "source": "real conversation and AI messages containing attachment citation marker, named source citation and URL",
-    "auth": "real signed JWTs through the production mounted V8 router"
+    "database": "fresh isolated chat_bvp_current in tmpfs container consultify-int-prereq-fresh, loopback 56827",
+    "personas": "two tenant OWNERs, INACTIVE stale member, insufficient MEMBER JWT",
+    "source": "real conversation_messages with citation-bearing content",
+    "cleanup": "post-gate proposals=0, ingress=0, claims=0, users=0 for test prefixes; container preserved"
+  },
+  "negativeControls": {
+    "immutableIngress": "UPDATE and DELETE denied by trigger",
+    "tenantAndCapability": "foreign tenant gets no work; MEMBER 403; stale membership 403",
+    "versionPolicy": "unknown contract and post-delivery source_version drift return 409",
+    "lease": "exclusive claim, expiry reclaim, incremented attempt and stale-token 409",
+    "crashWindow": "receipt committed before claim completion is reconciled after reclaim without a second receipt",
+    "concurrency": "8 completion calls converge on one receipt",
+    "targetConflict": "different targetRecordId replay returns 409"
+  },
+  "migrationChecksums": {
+    "20260927_runtime_v1_execution_identity_seam.sql": "5a6f6e22dbd204423806aa08a36ffbac252bb11d69ec45b771284df957d1bb02",
+    "20260928_chat_handoff_owner_ingress.sql": "d802c0b1a02e3fbaa3959657d6953203dda352f8714db3e35a4bbcd69b9359c4"
   },
   "browserArtifacts": [],
+  "gateG4": "NOT_RUN_BY_SCOPE: no Chat UI or browser acceptance changed.",
   "rollback": {
-    "method": "Remove the route-local chatMembershipGuard and its import, delete the mounted proof file, and remove the mock export addition; no database schema or production data mutation is part of this patch.",
-    "executed": false
+    "method": "Stop callers and revert 490ccb1f19. Preserve additive ingress rows as evidence; destructive table drops are not authorized.",
+    "executed": false,
+    "schemaImpact": "two additive tables, indexes and immutable trigger; no existing row shape changed"
   }
 }
