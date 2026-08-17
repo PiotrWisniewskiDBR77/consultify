@@ -115,6 +115,9 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
   const actorB = { organizationId: orgB, userId: `aud-rights-b-${randomUUID()}` };
 
   const cleanupOrgIds = [orgA, orgB];
+  const cleanupActorIds = [adminActor.userId, memberActor.userId, actorB.userId];
+  const cleanupPackIds = new Set<string>();
+  const cleanupProgramIds = new Set<string>();
 
   beforeAll(async () => {
     auditsDb = await import('../../audits/auditsDb.js');
@@ -156,23 +159,84 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
     await assertDisposableDatabase(prefixOverride);
     const { acquirePgClient } = await import('../../../database/PostgresDatabase.js');
     const client = await acquirePgClient();
+    let appendOnlyTriggerDisabled = false;
     try {
       await client.query('BEGIN');
       await client.query('SELECT pg_advisory_xact_lock($1)', [PACK_RIGHTS_CLEANUP_LOCK_KEY]);
-      for (const orgId of cleanupOrgIds) {
-        // Children before parents; every statement bounded by organization_id.
-        await client.query(`DELETE FROM audit_program_criteria WHERE organization_id = $1`, [orgId]);
-        await client.query(`DELETE FROM audit_programs WHERE organization_id = $1`, [orgId]);
-        await client.query(
-          `DELETE FROM audit_pack_criteria WHERE pack_id IN (SELECT id FROM audit_packs WHERE organization_id = $1)`,
-          [orgId],
-        );
-        await client.query(`DELETE FROM audit_packs WHERE organization_id = $1`, [orgId]);
-        await client.query(`DELETE FROM audit_norm_sources WHERE organization_id = $1`, [orgId]);
-      }
+      for (const row of (
+        await client.query<{ id: string }>(
+          `SELECT id FROM audit_packs WHERE organization_id = ANY($1)`,
+          [cleanupOrgIds],
+        )
+      ).rows) cleanupPackIds.add(row.id);
+      for (const row of (
+        await client.query<{ id: string }>(
+          `SELECT id FROM audit_programs WHERE organization_id = ANY($1)`,
+          [cleanupOrgIds],
+        )
+      ).rows) cleanupProgramIds.add(row.id);
+      const trigger = await client.query<{ tgname: string; tgenabled: string }>(
+        `SELECT tgname,tgenabled FROM pg_trigger
+          WHERE tgrelid='audit_domain_events'::regclass
+            AND tgname='trg_audit_domain_events_append_only' AND NOT tgisinternal`,
+      );
+      expect(trigger.rows).toEqual([
+        { tgname: 'trg_audit_domain_events_append_only', tgenabled: 'O' },
+      ]);
+      await client.query(
+        `ALTER TABLE audit_domain_events DISABLE TRIGGER trg_audit_domain_events_append_only`,
+      );
+      appendOnlyTriggerDisabled = true;
+      await client.query(
+        `DELETE FROM audit_domain_events
+          WHERE (organization_id = ANY($1) OR actor_id = ANY($2))`,
+        [cleanupOrgIds, cleanupActorIds],
+      );
+      await client.query(
+        `ALTER TABLE audit_domain_events ENABLE TRIGGER trg_audit_domain_events_append_only`,
+      );
+      appendOnlyTriggerDisabled = false;
+      expect(
+        (
+          await client.query<{ tgenabled: string }>(
+            `SELECT tgenabled FROM pg_trigger
+              WHERE tgrelid='audit_domain_events'::regclass
+                AND tgname='trg_audit_domain_events_append_only' AND NOT tgisinternal`,
+          )
+        ).rows,
+      ).toEqual([{ tgenabled: 'O' }]);
+      // Children before parents, bounded by ids captured from this run's exact organizations.
+      await client.query(`DELETE FROM audit_program_criteria WHERE program_id = ANY($1)`, [
+        [...cleanupProgramIds],
+      ]);
+      await client.query(`DELETE FROM audit_programs WHERE id = ANY($1)`, [[...cleanupProgramIds]]);
+      await client.query(`DELETE FROM audit_pack_criteria WHERE pack_id = ANY($1)`, [
+        [...cleanupPackIds],
+      ]);
+      await client.query(`DELETE FROM audit_packs WHERE id = ANY($1)`, [[...cleanupPackIds]]);
+      await client.query(`DELETE FROM audit_norm_sources WHERE organization_id = ANY($1)`, [
+        cleanupOrgIds,
+      ]);
       await client.query('COMMIT');
     } catch (err) {
+      if (appendOnlyTriggerDisabled) {
+        await client
+          .query(
+            `ALTER TABLE audit_domain_events ENABLE TRIGGER trg_audit_domain_events_append_only`,
+          )
+          .catch(() => {});
+        appendOnlyTriggerDisabled = false;
+      }
       await client.query('ROLLBACK').catch(() => {});
+      expect(
+        (
+          await client.query<{ tgenabled: string }>(
+            `SELECT tgenabled FROM pg_trigger
+              WHERE tgrelid='audit_domain_events'::regclass
+                AND tgname='trg_audit_domain_events_append_only' AND NOT tgisinternal`,
+          )
+        ).rows,
+      ).toEqual([{ tgenabled: 'O' }]);
       throw err; // surfaced, never swallowed
     } finally {
       client.release();
@@ -184,11 +248,28 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
       `SELECT (
          (SELECT count(*) FROM audit_packs    WHERE organization_id = ANY($1)) +
          (SELECT count(*) FROM audit_programs WHERE organization_id = ANY($1)) +
-         (SELECT count(*) FROM audit_norm_sources WHERE organization_id = ANY($1))
+         (SELECT count(*) FROM audit_norm_sources WHERE organization_id = ANY($1)) +
+         (SELECT count(*) FROM audit_domain_events
+           WHERE (organization_id = ANY($1) OR actor_id = ANY($2))) +
+         (SELECT count(*) FROM audit_pack_criteria WHERE pack_id = ANY($3)) +
+         (SELECT count(*) FROM audit_program_criteria WHERE program_id = ANY($4)) +
+         (SELECT count(*) FROM organization_members
+           WHERE organization_id = ANY($1) OR user_id = ANY($2)) +
+         (SELECT count(*) FROM users WHERE id = ANY($2)) +
+         (SELECT count(*) FROM organizations WHERE id = ANY($1))
        )::text AS n`,
-      [cleanupOrgIds],
+      [cleanupOrgIds, cleanupActorIds, [...cleanupPackIds], [...cleanupProgramIds]],
     );
     return Number(row?.n ?? -1);
+  }
+
+  async function ownDomainEventSnapshot(): Promise<Record<string, unknown>[]> {
+    return auditsDb.auditAll<Record<string, unknown>>(
+      `SELECT * FROM audit_domain_events
+        WHERE (organization_id = ANY($1) OR actor_id = ANY($2))
+        ORDER BY occurred_at,id`,
+      [cleanupOrgIds, cleanupActorIds],
+    );
   }
 
   afterAll(async () => {
@@ -516,6 +597,7 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
         `SELECT * FROM audit_packs WHERE id = $1`,
         [draft.id],
       );
+      const eventsBefore = await ownDomainEventSnapshot();
 
       const app = express();
       app.use(express.json());
@@ -534,6 +616,7 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
         [draft.id],
       );
       expect(after).toEqual(before);
+      expect(await ownDomainEventSnapshot()).toEqual(eventsBefore);
     });
 
     it('COMPARE is scoped like get: a stranger cannot diff two draft versions, the author can, admin can', async () => {
@@ -620,6 +703,7 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
         `SELECT * FROM audit_packs WHERE pack_key = $1 ORDER BY version`,
         [packKey],
       );
+      const eventsBefore = await ownDomainEventSnapshot();
 
       const app = express();
       app.use(express.json());
@@ -644,6 +728,7 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
         [packKey],
       );
       expect(afterRows).toEqual(beforeRows);
+      expect(await ownDomainEventSnapshot()).toEqual(eventsBefore);
     });
 
     it('FOREIGN TENANT gets 404 on get/compare/validate for org A content', async () => {
