@@ -21,6 +21,43 @@ let feedbackService: any;
 import logger from '../utils/Logger.js';
 import * as trialCron from './TrialCron.js';
 
+/**
+ * The body of scheduled job 43 (audit independence detector sweep), exported so
+ * the flag gate and the single-claim behaviour can be exercised directly
+ * against a real database. Registering it through `cron.schedule` below means
+ * the scheduled path and the tested path are the same function, rather than a
+ * test asserting against a re-implementation of the guard.
+ *
+ * DEFAULT-OFF: with AUDIT_INDEPENDENCE_DETECTOR_CRON_ENABLED unset, this
+ * returns before the dynamic import, so nothing is loaded, no connection is
+ * taken and no lease is claimed. Enabling the flag changes only whether the
+ * scan runs — it grants no access, alters no policy, mutates no audit data and
+ * adds no UI.
+ */
+export async function runAuditIndependenceSchedulerTick(): Promise<void> {
+  if (process.env.AUDIT_INDEPENDENCE_DETECTOR_CRON_ENABLED !== 'true') return;
+  try {
+    const { runTick } = await import('../jobs/auditIndependenceDetectorJob.js');
+    const result = await runTick();
+    if (
+      result.claimed &&
+      (result.withViolations > 0 || result.errors > 0 || result.cycleWrapped || !result.progressRecorded)
+    ) {
+      logger.warn('[Scheduler] Audit independence scan tick', {
+        scanned: result.scanned,
+        withViolations: result.withViolations,
+        totalViolations: result.totalViolations,
+        errors: result.errors,
+        cycleWrapped: result.cycleWrapped,
+        progressRecorded: result.progressRecorded,
+        cyclesCompletedBefore: result.cyclesCompletedBefore,
+      });
+    }
+  } catch (err: any) {
+    logger.error('[Scheduler] Audit independence detector tick failed:', err?.message || err);
+  }
+}
+
 export const Scheduler = {
   jobs: [] as cron.ScheduledTask[],
   async init(): Promise<void> {
@@ -851,29 +888,7 @@ export const Scheduler = {
     // real deployment and observed running, do not describe the detector as
     // "operationalized" or "deployed"; "implemented, gated off" is the honest
     // description (see the job file's header).
-    const job43 = cron.schedule('*/15 * * * *', async () => {
-      if (process.env.AUDIT_INDEPENDENCE_DETECTOR_CRON_ENABLED !== 'true') return;
-      try {
-        const { runTick } = await import('../jobs/auditIndependenceDetectorJob.js');
-        const result = await runTick();
-        if (
-          result.claimed &&
-          (result.withViolations > 0 || result.errors > 0 || result.cycleWrapped || !result.progressRecorded)
-        ) {
-          logger.warn('[Scheduler] Audit independence scan tick', {
-            scanned: result.scanned,
-            withViolations: result.withViolations,
-            totalViolations: result.totalViolations,
-            errors: result.errors,
-            cycleWrapped: result.cycleWrapped,
-            progressRecorded: result.progressRecorded,
-            cyclesCompletedBefore: result.cyclesCompletedBefore,
-          });
-        }
-      } catch (err: any) {
-        logger.error('[Scheduler] Audit independence detector tick failed:', err?.message || err);
-      }
-    });
+    const job43 = cron.schedule('*/15 * * * *', runAuditIndependenceSchedulerTick);
     this.jobs.push(job43);
 
     logger.info(

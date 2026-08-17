@@ -587,7 +587,15 @@ suite('independenceScanCursor — durable checkpoint + fenced lease (real Postgr
       expect(row?.id).toBe('global');
     });
 
-    it('FAILS CLOSED on a divergent lease_fence type, mutating nothing', async () => {
+    async function columnNames(): Promise<string[]> {
+      const cols = await auditsDb.auditAll<{ attname: string }>(
+        `SELECT attname FROM pg_attribute
+          WHERE attrelid = 'audit_independence_scan_cursor'::regclass AND attnum > 0 AND NOT attisdropped`,
+      );
+      return cols.map((c) => c.attname).sort();
+    }
+
+    it('preflight FAILS CLOSED on a divergent column TYPE, mutating nothing', async () => {
       await dropCursorTable();
       await auditsDb.auditRun(`
         CREATE TABLE audit_independence_scan_cursor (
@@ -596,13 +604,79 @@ suite('independenceScanCursor — durable checkpoint + fenced lease (real Postgr
           lease_fence TEXT NOT NULL DEFAULT '0'
         )`);
 
-      await expect(applyMigration()).rejects.toThrow(/AUD13_FENCE_TYPE_MISMATCH/);
+      await expect(applyMigration()).rejects.toThrow(/AUD13_COLUMN_TYPE_MISMATCH/);
+      // Preflight ran before any ALTER: the other six columns were NOT added.
+      expect(await columnNames()).toEqual(['id', 'last_program_id', 'lease_fence']);
+    });
 
-      const cols = await auditsDb.auditAll<{ attname: string }>(
-        `SELECT attname FROM pg_attribute
-          WHERE attrelid = 'audit_independence_scan_cursor'::regclass AND attnum > 0 AND NOT attisdropped`,
+    it('preflight FAILS CLOSED on divergent NULLABILITY, mutating nothing', async () => {
+      await dropCursorTable();
+      await auditsDb.auditRun(`
+        CREATE TABLE audit_independence_scan_cursor (
+          id TEXT PRIMARY KEY DEFAULT 'global',
+          last_program_id TEXT NULL DEFAULT ''
+        )`);
+
+      await expect(applyMigration()).rejects.toThrow(/AUD13_COLUMN_NULLABILITY_MISMATCH/);
+      expect(await columnNames()).toEqual(['id', 'last_program_id']);
+    });
+
+    it('preflight FAILS CLOSED on a divergent DEFAULT, mutating nothing', async () => {
+      await dropCursorTable();
+      await auditsDb.auditRun(`
+        CREATE TABLE audit_independence_scan_cursor (
+          id TEXT PRIMARY KEY DEFAULT 'wrong-default',
+          last_program_id TEXT NOT NULL DEFAULT ''
+        )`);
+
+      await expect(applyMigration()).rejects.toThrow(/AUD13_COLUMN_DEFAULT_MISMATCH/);
+      expect(await columnNames()).toEqual(['id', 'last_program_id']);
+    });
+
+    it('preflight FAILS CLOSED when a nullable column carries an unexpected default, mutating nothing', async () => {
+      await dropCursorTable();
+      await auditsDb.auditRun(`
+        CREATE TABLE audit_independence_scan_cursor (
+          id TEXT PRIMARY KEY DEFAULT 'global',
+          last_program_id TEXT NOT NULL DEFAULT '',
+          leased_by TEXT DEFAULT 'someone'
+        )`);
+
+      await expect(applyMigration()).rejects.toThrow(/AUD13_COLUMN_DEFAULT_MISMATCH/);
+      expect(await columnNames()).toEqual(['id', 'last_program_id', 'leased_by']);
+    });
+
+    it('the preflight verifies ALL EIGHT columns — the shipped table matches type, nullability and default exactly', async () => {
+      await dropCursorTable();
+      await applyMigration();
+      const shape = await auditsDb.auditAll<{
+        attname: string;
+        typ: string;
+        notnull: boolean;
+        def: string | null;
+      }>(
+        `SELECT a.attname,
+                a.atttypid::regtype::text AS typ,
+                a.attnotnull AS notnull,
+                pg_get_expr(d.adbin, d.adrelid) AS def
+           FROM pg_attribute a
+           LEFT JOIN pg_attrdef d ON d.adrelid = a.attrelid AND d.adnum = a.attnum
+          WHERE a.attrelid = 'audit_independence_scan_cursor'::regclass
+            AND a.attnum > 0 AND NOT a.attisdropped
+          ORDER BY a.attnum`,
       );
-      expect(cols.map((c) => c.attname).sort()).toEqual(['id', 'last_program_id', 'lease_fence']);
+      expect(
+        shape.map((c) => `${c.attname}|${c.typ}|${c.notnull}|${c.def ?? '-'}`),
+      ).toEqual([
+        "id|text|true|'global'::text",
+        "last_program_id|text|true|''::text",
+        'cycles_completed|bigint|true|0',
+        'lease_fence|bigint|true|0',
+        'leased_by|text|false|-',
+        'leased_until|timestamp with time zone|false|-',
+        'last_tick_at|timestamp with time zone|false|-',
+        'updated_at|timestamp with time zone|true|now()',
+      ]);
     });
 
     it('resolves the primary key by conrelid, not by constraint name — a same-named constraint on another table proves nothing', async () => {

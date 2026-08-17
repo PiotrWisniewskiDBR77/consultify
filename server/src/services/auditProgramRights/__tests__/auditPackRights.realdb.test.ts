@@ -60,7 +60,21 @@ if (REAL_PG) {
   process.env.DB_TYPE = 'postgres';
 }
 
-const suite = REAL_PG ? describe : describe.skip;
+/**
+ * FIXTURE CLEANUP SAFETY (same contract as independenceScanCursor.realdb.test.ts).
+ * This suite deletes rows in afterAll. Even though every delete is bounded by
+ * organization_id, the deletes must never be pointed at a database the runner
+ * does not own, and a cleanup that fails must say so instead of silently
+ * leaving residue. Both are enforced below.
+ */
+const CLEANUP_OPT_IN = process.env.AUD_PACK_RIGHTS_ALLOW_FIXTURE_CLEANUP === '1';
+const DISPOSABLE_DB_PREFIX = process.env.AUD_PACK_RIGHTS_DISPOSABLE_DB_PREFIX ?? '';
+const DESTRUCTIVE_FIXTURES_ENABLED = REAL_PG && CLEANUP_OPT_IN && DISPOSABLE_DB_PREFIX.length > 0;
+
+/** Distinct from the cursor suite's key so the two suites do not serialise against each other. */
+const PACK_RIGHTS_CLEANUP_LOCK_KEY = 8_113_2027;
+
+const suite = DESTRUCTIVE_FIXTURES_ENABLED ? describe : describe.skip;
 
 if (!REAL_PG) {
   // eslint-disable-next-line no-console
@@ -68,6 +82,14 @@ if (!REAL_PG) {
     '[auditPackRights.realdb.test.ts SKIPPED — clean skip, not a failure] wymaga ' +
       'NODE_ENV=test DB_TYPE=postgres RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=postgresql://... ' +
       '(patrz komentarz na górze pliku)',
+  );
+} else if (!DESTRUCTIVE_FIXTURES_ENABLED) {
+  // eslint-disable-next-line no-console
+  console.warn(
+    '[auditPackRights.realdb.test.ts SKIPPED — clean skip, not a failure] this suite deletes ' +
+      'fixture rows and therefore requires an explicit disposable-database declaration: set ' +
+      'AUD_PACK_RIGHTS_ALLOW_FIXTURE_CLEANUP=1 and ' +
+      'AUD_PACK_RIGHTS_DISPOSABLE_DB_PREFIX=<prefix of the throwaway database you created>.',
   );
 }
 
@@ -102,14 +124,105 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
     packSeed = await import('../../audits/packSeed.js');
   });
 
-  afterAll(async () => {
-    for (const orgId of cleanupOrgIds) {
-      await auditsDb.auditRun(`DELETE FROM audit_program_criteria WHERE organization_id = $1`, [orgId]).catch(() => {});
-      await auditsDb.auditRun(`DELETE FROM audit_programs WHERE organization_id = $1`, [orgId]).catch(() => {});
-      await auditsDb.auditRun(`DELETE FROM audit_pack_criteria WHERE pack_id IN (SELECT id FROM audit_packs WHERE organization_id = $1)`, [orgId]).catch(() => {});
-      await auditsDb.auditRun(`DELETE FROM audit_packs WHERE organization_id = $1`, [orgId]).catch(() => {});
-      await auditsDb.auditRun(`DELETE FROM audit_norm_sources WHERE organization_id = $1`, [orgId]).catch(() => {});
+  /**
+   * Refuses unless the SERVER reports a database whose name starts with the
+   * caller-declared disposable prefix. Asked of `current_database()` rather
+   * than parsed from the connection string, which can lie (pgbouncer, a
+   * copy-pasted URL, a search_path trick). Throws before any DELETE is
+   * prepared, so a mismatch cannot execute a partial cleanup.
+   */
+  async function assertDisposableDatabase(prefixOverride?: string): Promise<string> {
+    const prefix = prefixOverride ?? DISPOSABLE_DB_PREFIX;
+    if (!CLEANUP_OPT_IN) throw new Error('AUD_PACK_RIGHTS_FIXTURE_CLEANUP_NOT_OPTED_IN');
+    if (!prefix) throw new Error('AUD_PACK_RIGHTS_DISPOSABLE_DB_PREFIX_MISSING');
+    const row = await auditsDb.auditGet<{ db: string }>(`SELECT current_database() AS db`);
+    const db = String(row?.db ?? '');
+    if (!db.startsWith(prefix)) {
+      throw new Error(
+        `AUD_PACK_RIGHTS_DISPOSABLE_DB_MISMATCH: current_database()='${db}' does not start with declared disposable prefix '${prefix}' — refusing to delete anything.`,
+      );
     }
+    return db;
+  }
+
+  /**
+   * FK-safe cleanup, scoped to exactly the organizations this run created,
+   * inside one transaction holding a transaction-scoped advisory lock.
+   * Errors are NOT swallowed: the previous `.catch(() => {})` on every
+   * statement meant a cleanup that silently failed still reported success and
+   * left residue behind for the next run to trip over.
+   */
+  async function cleanupOwnFixtures(prefixOverride?: string): Promise<void> {
+    await assertDisposableDatabase(prefixOverride);
+    const { acquirePgClient } = await import('../../../database/PostgresDatabase.js');
+    const client = await acquirePgClient();
+    try {
+      await client.query('BEGIN');
+      await client.query('SELECT pg_advisory_xact_lock($1)', [PACK_RIGHTS_CLEANUP_LOCK_KEY]);
+      for (const orgId of cleanupOrgIds) {
+        // Children before parents; every statement bounded by organization_id.
+        await client.query(`DELETE FROM audit_program_criteria WHERE organization_id = $1`, [orgId]);
+        await client.query(`DELETE FROM audit_programs WHERE organization_id = $1`, [orgId]);
+        await client.query(
+          `DELETE FROM audit_pack_criteria WHERE pack_id IN (SELECT id FROM audit_packs WHERE organization_id = $1)`,
+          [orgId],
+        );
+        await client.query(`DELETE FROM audit_packs WHERE organization_id = $1`, [orgId]);
+        await client.query(`DELETE FROM audit_norm_sources WHERE organization_id = $1`, [orgId]);
+      }
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw err; // surfaced, never swallowed
+    } finally {
+      client.release();
+    }
+  }
+
+  async function countOwnRows(): Promise<number> {
+    const row = await auditsDb.auditGet<{ n: string }>(
+      `SELECT (
+         (SELECT count(*) FROM audit_packs    WHERE organization_id = ANY($1)) +
+         (SELECT count(*) FROM audit_programs WHERE organization_id = ANY($1)) +
+         (SELECT count(*) FROM audit_norm_sources WHERE organization_id = ANY($1))
+       )::text AS n`,
+      [cleanupOrgIds],
+    );
+    return Number(row?.n ?? -1);
+  }
+
+  afterAll(async () => {
+    await cleanupOwnFixtures();
+    // residue0 for everything this run created.
+    expect(await countOwnRows()).toBe(0);
+  });
+
+  describe('0. fixture cleanup is guarded and scoped', () => {
+    it('a disposable-DB prefix MISMATCH aborts before deleting anything', async () => {
+      const pack = await createDraftPack({ packKey: `aud-rights-cleanup-canary-${randomUUID()}` });
+      await expect(cleanupOwnFixtures('definitely-not-this-database-')).rejects.toThrow(
+        /AUD_PACK_RIGHTS_DISPOSABLE_DB_MISMATCH/,
+      );
+      const survivor = await auditsDb.auditGet<{ id: string }>(
+        `SELECT id FROM audit_packs WHERE id = $1`,
+        [pack.id],
+      );
+      expect(survivor?.id).toBe(pack.id); // canary intact — no partial cleanup
+    });
+
+    it('the guard reads current_database() from the server and accepts only a true prefix', async () => {
+      const db = await assertDisposableDatabase();
+      expect(db.startsWith(DISPOSABLE_DB_PREFIX)).toBe(true);
+      await expect(assertDisposableDatabase(`x${db}`)).rejects.toThrow(
+        /AUD_PACK_RIGHTS_DISPOSABLE_DB_MISMATCH/,
+      );
+    });
+
+    it('cleanup errors are surfaced, not swallowed', async () => {
+      // A syntactically valid but impossible prefix must reject rather than
+      // resolve — proving the removal of the old per-statement `.catch(() => {})`.
+      await expect(cleanupOwnFixtures(' -impossible-prefix')).rejects.toBeInstanceOf(Error);
+    });
   });
 
   const validTaxonomy = [

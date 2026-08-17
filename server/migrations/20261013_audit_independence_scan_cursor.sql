@@ -34,11 +34,20 @@
 -- performing any mutation. Structural checks resolve by `conrelid`/`regclass`,
 -- never by constraint name alone: a same-named constraint on a different table
 -- must not be accepted as proof about this one.
+--
+-- PREFLIGHT
+-- The full expected shape — every column, its type, its nullability and its
+-- default — is verified BEFORE the first mutation. A divergence anywhere in
+-- that set aborts the whole DO block, so a rejected environment is left exactly
+-- as it was rather than half-converged. Adding columns only happens after the
+-- entire preflight has passed.
 DO $migration$
 DECLARE
   v_relid              oid;
   v_pk_columns         text[];
-  v_missing_columns    text[];
+  v_missing_columns    text[] := ARRAY[]::text[];
+  v_spec               RECORD;
+  v_actual             RECORD;
   v_expected_columns   text[] := ARRAY[
     'id', 'last_program_id', 'cycles_completed', 'lease_fence',
     'leased_by', 'leased_until', 'last_tick_at', 'updated_at'
@@ -91,43 +100,82 @@ BEGIN
       USING ERRCODE = 'invalid_table_definition';
   END IF;
 
-  -- Column-type divergence on the columns that carry meaning is likewise not
-  -- auto-repairable: widening/narrowing a populated fence or cursor column is
-  -- a data decision, not a schema detail.
-  IF EXISTS (
-    SELECT 1 FROM pg_attribute
-     WHERE attrelid = v_relid AND attname = 'lease_fence' AND NOT attisdropped
-       AND atttypid <> 'bigint'::regtype
-  ) THEN
-    RAISE EXCEPTION
-      'AUD13_FENCE_TYPE_MISMATCH: audit_independence_scan_cursor.lease_fence exists with a non-bigint type; refusing to converge. No changes were applied.'
-      USING ERRCODE = 'invalid_table_definition';
-  END IF;
+  -- Full per-column preflight: type, nullability and default for ALL EIGHT
+  -- columns. A column that is absent is recorded for convergence; a column that
+  -- is PRESENT but shaped differently aborts, because silently re-typing,
+  -- re-nulling or re-defaulting a populated column is a data decision a
+  -- migration may not take on its own. Every check runs before any ALTER.
+  FOR v_spec IN
+    SELECT *
+      FROM (VALUES
+        -- Defaults are compared against pg_get_expr() output. They are built
+        -- with quote_literal() rather than hand-escaped, so the expectation
+        -- cannot drift from what Postgres actually renders.
+        ('id',               'text',        TRUE,  quote_literal('global') || '::text'),
+        ('last_program_id',  'text',        TRUE,  quote_literal('')       || '::text'),
+        ('cycles_completed', 'bigint',      TRUE,  '0'),
+        ('lease_fence',      'bigint',      TRUE,  '0'),
+        ('leased_by',        'text',        FALSE, NULL),
+        ('leased_until',     'timestamptz', FALSE, NULL),
+        ('last_tick_at',     'timestamptz', FALSE, NULL),
+        ('updated_at',       'timestamptz', TRUE,  'now()')
+      ) AS s(col, expected_type, expected_notnull, expected_default)
+  LOOP
+    SELECT a.attname,
+           a.atttypid                    AS actual_typid,
+           format_type(a.atttypid, NULL) AS actual_type,
+           a.attnotnull                  AS actual_notnull,
+           pg_get_expr(d.adbin, d.adrelid) AS actual_default
+      INTO v_actual
+      FROM pg_attribute a
+      LEFT JOIN pg_attrdef d ON d.adrelid = a.attrelid AND d.adnum = a.attnum
+     WHERE a.attrelid = v_relid AND a.attname = v_spec.col AND NOT a.attisdropped;
 
-  IF EXISTS (
-    SELECT 1 FROM pg_attribute
-     WHERE attrelid = v_relid AND attname = 'last_program_id' AND NOT attisdropped
-       AND atttypid <> 'text'::regtype
-  ) THEN
-    RAISE EXCEPTION
-      'AUD13_CURSOR_TYPE_MISMATCH: audit_independence_scan_cursor.last_program_id exists with a non-text type; refusing to converge. No changes were applied.'
-      USING ERRCODE = 'invalid_table_definition';
-  END IF;
+    IF NOT FOUND THEN
+      v_missing_columns := v_missing_columns || v_spec.col;
+      CONTINUE;
+    END IF;
+
+    -- Compare by regtype OID, not by rendered name: `timestamptz` and
+    -- `timestamp with time zone` are the same type, and a string comparison
+    -- would reject the migration's own output.
+    IF v_actual.actual_typid <> v_spec.expected_type::regtype THEN
+      RAISE EXCEPTION
+        'AUD13_COLUMN_TYPE_MISMATCH: audit_independence_scan_cursor.% has type % but % is required; refusing to converge. No changes were applied.',
+        v_spec.col, v_actual.actual_type, v_spec.expected_type
+        USING ERRCODE = 'invalid_table_definition';
+    END IF;
+
+    IF v_actual.actual_notnull <> v_spec.expected_notnull THEN
+      RAISE EXCEPTION
+        'AUD13_COLUMN_NULLABILITY_MISMATCH: audit_independence_scan_cursor.% is %, expected %; refusing to converge. No changes were applied.',
+        v_spec.col,
+        CASE WHEN v_actual.actual_notnull THEN 'NOT NULL' ELSE 'NULLABLE' END,
+        CASE WHEN v_spec.expected_notnull THEN 'NOT NULL' ELSE 'NULLABLE' END
+        USING ERRCODE = 'invalid_table_definition';
+    END IF;
+
+    IF v_spec.expected_default IS NULL THEN
+      IF v_actual.actual_default IS NOT NULL THEN
+        RAISE EXCEPTION
+          'AUD13_COLUMN_DEFAULT_MISMATCH: audit_independence_scan_cursor.% has default % but must have none; refusing to converge. No changes were applied.',
+          v_spec.col, v_actual.actual_default
+          USING ERRCODE = 'invalid_table_definition';
+      END IF;
+    ELSIF v_actual.actual_default IS DISTINCT FROM v_spec.expected_default THEN
+      RAISE EXCEPTION
+        'AUD13_COLUMN_DEFAULT_MISMATCH: audit_independence_scan_cursor.% has default % but % is required; refusing to converge. No changes were applied.',
+        v_spec.col, coalesce(v_actual.actual_default, '<none>'), v_spec.expected_default
+        USING ERRCODE = 'invalid_table_definition';
+    END IF;
+  END LOOP;
 
   -- ---------------------------------------------------------------------
   -- Converge: add only what is missing. Existing rows keep their cursor,
   -- fence and progress; new columns arrive with the same defaults a clean
   -- install would have given them, so a historical row stays valid.
   -- ---------------------------------------------------------------------
-  SELECT array_agg(expected)
-    INTO v_missing_columns
-    FROM unnest(v_expected_columns) AS expected
-   WHERE NOT EXISTS (
-     SELECT 1 FROM pg_attribute
-      WHERE attrelid = v_relid AND attname = expected AND NOT attisdropped
-   );
-
-  IF v_missing_columns IS NOT NULL THEN
+  IF array_length(v_missing_columns, 1) IS NOT NULL THEN
     IF 'id' = ANY(v_missing_columns) THEN
       RAISE EXCEPTION
         'AUD13_ID_COLUMN_MISSING: audit_independence_scan_cursor exists without an id column; refusing to converge. No changes were applied.'
