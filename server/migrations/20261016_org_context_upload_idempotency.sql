@@ -34,7 +34,7 @@ BEGIN
     JOIN unnest(c.conkey) WITH ORDINALITY k(attnum, ord) ON true
     JOIN pg_attribute a ON a.attrelid=t.oid AND a.attnum=k.attnum
    WHERE n.nspname='public' AND t.relname='organization_context_upload_receipts' AND c.contype='f';
-  IF actual_fks <> 'foreignkeydocument_idreferencesknowledge_docsidondeleterestrict,foreignkeyorganization_idreferencesorganizationsidondeleterestrict' THEN
+  IF actual_fks IS NULL OR actual_fks <> 'foreignkeydocument_idreferencesknowledge_docsidondeleterestrict,foreignkeyorganization_idreferencesorganizationsidondeleterestrict' THEN
     RAISE EXCEPTION 'organization_context_upload_receipts has incompatible foreign keys: %', actual_fks;
   END IF;
 
@@ -56,7 +56,7 @@ BEGIN
    WHERE n.nspname = 'public' AND t.relname = 'organization_context_upload_receipts'
      AND c.conname = 'ck_org_context_upload_receipt_key';
   actual_check := replace(actual_check, '::text', '');
-  IF actual_check <> 'checklengthbtrimidempotency_key>=1andlengthbtrimidempotency_key<=200' THEN
+  IF actual_check IS NULL OR actual_check <> 'checklengthbtrimidempotency_key>=1andlengthbtrimidempotency_key<=200' THEN
     RAISE EXCEPTION 'organization_context_upload_receipts has incompatible key check: %', actual_check;
   END IF;
 
@@ -66,7 +66,7 @@ BEGIN
    WHERE n.nspname='public' AND t.relname='organization_context_upload_receipts'
      AND c.conname='ck_org_context_upload_receipt_hash';
   actual_check := replace(actual_check, '::text', '');
-  IF actual_check <> 'checkrequest_hash~''^[0-9a-f]{64}$''' THEN
+  IF actual_check IS NULL OR actual_check <> 'checkrequest_hash~''^[0-9a-f]{64}$''' THEN
     RAISE EXCEPTION 'organization_context_upload_receipts has incompatible hash check: %', actual_check;
   END IF;
 
@@ -76,7 +76,7 @@ BEGIN
    WHERE n.nspname='public' AND t.relname='organization_context_upload_receipts'
      AND c.conname='ck_org_context_upload_receipt_status';
   actual_check := replace(actual_check, '::text', '');
-  IF actual_check NOT IN ('checkstatus=anyarray[''processing'',''completed'']', 'checkstatusin''processing'',''completed''') THEN
+  IF actual_check IS NULL OR actual_check NOT IN ('checkstatus=anyarray[''processing'',''completed'']', 'checkstatusin''processing'',''completed''') THEN
     RAISE EXCEPTION 'organization_context_upload_receipts has incompatible status check: %', actual_check;
   END IF;
 
@@ -86,7 +86,7 @@ BEGIN
    WHERE n.nspname='public' AND t.relname='organization_context_upload_receipts'
      AND c.conname='ck_org_context_upload_receipt_completion';
   actual_check := replace(actual_check, '::text', '');
-  IF actual_check <> 'checkstatus=''processing''anddocument_idisnullandresponse_jsonisnullandcompleted_atisnullorstatus=''completed''anddocument_idisnotnullandresponse_jsonisnotnullandcompleted_atisnotnull' THEN
+  IF actual_check IS NULL OR actual_check <> 'checkstatus=''processing''anddocument_idisnullandresponse_jsonisnullandcompleted_atisnullorstatus=''completed''anddocument_idisnotnullandresponse_jsonisnotnullandcompleted_atisnotnull' THEN
     RAISE EXCEPTION 'organization_context_upload_receipts has incompatible completion check: %', actual_check;
   END IF;
 
@@ -101,10 +101,11 @@ BEGIN
   END IF;
 
   IF actual_trigger IS NOT NULL THEN
-    SELECT lower(regexp_replace(pg_get_functiondef(p.oid), '[[:space:]]', '', 'g')) INTO actual_function
+    SELECT lower(regexp_replace(p.prosrc, '[[:space:]]', '', 'g')) INTO actual_function
       FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
      WHERE n.nspname='public' AND p.proname='guard_org_context_upload_receipt_immutability';
-    IF actual_function IS NULL OR actual_function NOT LIKE '%tg_op=''delete''%old.organization_idisdistinctfromnew.organization_id%old.status<>''processing''ornew.status<>''completed''%returnnew;%' THEN
+    IF actual_function IS NULL OR actual_function <>
+      'beginiftg_op=''delete''thenraiseexception''organizationcontextuploadreceiptsareimmutable'';endif;ifold.organization_idisdistinctfromnew.organization_idorold.idempotency_keyisdistinctfromnew.idempotency_keyorold.request_hashisdistinctfromnew.request_hashorold.created_atisdistinctfromnew.created_atthenraiseexception''organizationcontextuploadreceiptidentityisimmutable'';endif;ifold.status<>''processing''ornew.status<>''completed''orold.document_idisnotnullorold.response_jsonisnotnullorold.completed_atisnotnullthenraiseexception''organizationcontextuploadreceiptisterminal'';endif;returnnew;end;' THEN
       RAISE EXCEPTION 'organization_context_upload_receipts has incompatible trigger function';
     END IF;
   END IF;

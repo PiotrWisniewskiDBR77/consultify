@@ -185,6 +185,29 @@ suite('migration16 organization-context upload idempotency — exact late-safe c
     expect((await pool.query(`SELECT count(*)::int n FROM "${schema}".organization_context_upload_receipts`)).rows).toEqual([{ n: 0 }]);
   });
 
+  it.each([
+    ['both foreign keys', (ddl: string) => ddl
+      .replace(/ REFERENCES "[^"]+"\.organizations\(id\) ON DELETE RESTRICT/, '')
+      .replace(/ REFERENCES "[^"]+"\.knowledge_docs\(id\) ON DELETE RESTRICT/, '')],
+    ['key check', (ddl: string) => ddl.replace(/,\s*CONSTRAINT ck_org_context_upload_receipt_key CHECK\(length\(btrim\(idempotency_key\)\) BETWEEN 1 AND 200\)/, '')],
+    ['hash check', (ddl: string) => ddl.replace(/,\s*CONSTRAINT ck_org_context_upload_receipt_hash CHECK\(request_hash ~ '\^\[0-9a-f\]\{64\}\$'\)/, '')],
+    ['status check', (ddl: string) => ddl.replace(/,\s*CONSTRAINT ck_org_context_upload_receipt_status CHECK\(status IN \('PROCESSING','COMPLETED'\)\)/, '')],
+    ['completion check', (ddl: string) => ddl.replace(/,\s*CONSTRAINT ck_org_context_upload_receipt_completion CHECK\([\s\S]*\)\s*$/, '')],
+  ])('rejects an otherwise canonical table missing %s with byte-identical rows and schema', async (_label, remove) => {
+    const schema = await makeSchema();
+    const ddl = remove(canonicalDdl(schema));
+    await pool.query(`CREATE TABLE "${schema}".organization_context_upload_receipts (${ddl})`);
+    await pool.query(`INSERT INTO "${schema}".organizations VALUES ('same-parent')`);
+    await pool.query(`INSERT INTO "${schema}".knowledge_docs VALUES ('same-parent')`);
+    await pool.query(`INSERT INTO "${schema}".organization_context_upload_receipts
+      (organization_id,idempotency_key,request_hash) VALUES ('same-parent','same-key',$1)`, ['c'.repeat(64)]);
+    const before = await shape(schema);
+    const rowsBefore = await pool.query(`SELECT * FROM "${schema}".organization_context_upload_receipts`);
+    await expect(apply(schema)).rejects.toThrow(/incompatible/i);
+    expect(await shape(schema)).toEqual(before);
+    expect((await pool.query(`SELECT * FROM "${schema}".organization_context_upload_receipts`)).rows).toEqual(rowsBefore.rows);
+  });
+
   it('rejects a wrong same-name trigger before replacing it', async () => {
     const schema = await makeSchema();
     await pool.query(`CREATE TABLE "${schema}".organization_context_upload_receipts (${canonicalDdl(schema)})`);
@@ -192,6 +215,16 @@ suite('migration16 organization-context upload idempotency — exact late-safe c
     await pool.query(`CREATE TRIGGER trg_org_context_upload_receipt_immutable BEFORE UPDATE ON "${schema}".organization_context_upload_receipts FOR EACH ROW EXECUTE FUNCTION "${schema}".guard_org_context_upload_receipt_immutability()`);
     const before = await shape(schema);
     await expect(apply(schema)).rejects.toThrow(/incompatible trigger/i);
+    expect(await shape(schema)).toEqual(before);
+  });
+
+  it('rejects a canonical trigger wired to a weakened same-name function before mutation', async () => {
+    const schema = await makeSchema();
+    await pool.query(`CREATE TABLE "${schema}".organization_context_upload_receipts (${canonicalDdl(schema)})`);
+    await pool.query(`CREATE FUNCTION "${schema}".guard_org_context_upload_receipt_immutability() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END $$`);
+    await pool.query(`CREATE TRIGGER trg_org_context_upload_receipt_immutable BEFORE UPDATE OR DELETE ON "${schema}".organization_context_upload_receipts FOR EACH ROW EXECUTE FUNCTION "${schema}".guard_org_context_upload_receipt_immutability()`);
+    const before = await shape(schema);
+    await expect(apply(schema)).rejects.toThrow(/incompatible trigger function/i);
     expect(await shape(schema)).toEqual(before);
   });
 });
