@@ -1,95 +1,163 @@
 {
   "taskId": "CHAT-BVP-001",
   "baselineSha": "b5a69603f3ac94b4f5b17a45396a01767af2d5ff",
-  "productSha": "490ccb1f1946dca8b4978b034653002a08dac2b8",
+  "productSha": "812793c45f8d8025684aebce10086d3062987eee",
+  "integrationSha": "d9de65506c0211ed5273331d8f4ea75a892f744c",
   "leaseSha256": "6cea3c806721c2d385d7f960e88d411966e5bf497bb35ccce222828f8b9819c4",
-  "verdict": "PARTIAL",
+  "verdict": "DONE_CURRENT_SHA",
   "technicalVerdict": "DONE_CURRENT_SHA",
-  "verdictRationale": "Owner-free backend closure is green on exact product SHA 490ccb1f19: approved Chat proposals now have immutable neutral delivery, tenant-scoped lease/reclaim, policy-drift checks, crash-window reconciliation and exactly-one shared receipt. Literal DONE still needs each artifact owner to map the envelope into its real document/deck/workbook/material table.",
+  "verdictRationale": "The approved, human-selected Chat handoff is technically closed on the integrated product state: immutable neutral ingress and exactly-once receipt semantics are followed by explicit, versioned document, presentation, workbook and artifact_origin mappings through canonical owner commands. Corrective SHA 812793c45f closes consumed-ingress reconciliation, deterministic target replay and DOC/PPT crash windows; workbook port SHA 9a8d7ae5fb closes the adjacent custom-template regression; cleanup SHA d9de65506c makes the mounted proof residue-free. The post-fan-in gate passed 750 migrations, all 30 Chat tests, C3 6/6 and mounted workbook 2/2 with zero fixture residue. Autonomous target selection, UI acceptance and external rendering/provider policy remain outside this backend BVP and are not claimed.",
   "open": [
-    "BLOCKED_OWNER: define the target-specific mapping and create the real owner-table artifact. This neutral adapter deliberately does not claim that a foreign artifact exists before its owner supplies targetRecordId."
+    "EXCLUDED_NOT_BLOCKING: Chat does not autonomously select a target, content or command; a human-approved proposal supplies the explicit target kind and versioned command envelope.",
+    "EXCLUDED_NOT_BLOCKING: artifact_origin binds an existing canonical registry origin and canonical JSON hash; it does not claim material bytes or a newly rendered material.",
+    "EXCLUDED_NOT_BLOCKING: external PDF/rendering approval and live-provider stability belong to MAT-POL/MAT-MVP-EXPORT and CHAT-NFR; this task proves provider/empty-source failure is fail-closed but does not authorize an external provider.",
+    "EXCLUDED_NOT_BLOCKING: browser, visual and human accessibility acceptance belong to CHAT-UI-CANON-001."
   ],
+  "integrationShas": {
+    "chatTargetMappings": "812793c45f8d8025684aebce10086d3062987eee",
+    "workbookCustomTemplatePort": "9a8d7ae5fb934f90f2e569d97a2e64ab84af4a4c",
+    "workbookFixtureCleanup": "d9de65506c0211ed5273331d8f4ea75a892f744c"
+  },
   "changedPaths": [
     "server/migrations/20260928_chat_handoff_owner_ingress.sql",
-    "server/src/services/chatHandoff/chatTargetOwnerIngressService.ts",
+    "server/migrations/20261004_chat_target_mapping_receipts.sql",
     "server/src/routes/v8/chat.routes.ts",
-    "server/src/services/chatHandoff/__tests__/chatHandoffMounted.pg.test.ts"
+    "server/src/services/chatHandoff/chatTargetOwnerIngressService.ts",
+    "server/src/services/chatHandoff/chatTargetMappingService.ts",
+    "server/src/services/chatHandoff/__tests__/chatHandoffService.pg.test.ts",
+    "server/src/services/chatHandoff/__tests__/chatHandoffMounted.pg.test.ts",
+    "server/src/services/chatHandoff/__tests__/chatTargetMapping.pg.test.ts",
+    "server/src/services/documentStudio/documentStudioService.ts",
+    "server/src/services/presentationGeneratorService.ts",
+    "server/src/services/workbook/workbookCreationService.ts",
+    "server/src/services/workbook/customWorkbookTemplateService.ts",
+    "server/src/routes/workbook.routes.ts",
+    "tests/unit/backend/routes/workbook.routes.templates-c3.test.ts",
+    "tests/integration/routes/workbook-custom-template.mounted.pg.test.ts"
   ],
   "changedPathRationale": {
-    "server/migrations/20260928_chat_handoff_owner_ingress.sql": "Adds immutable exactly-once approved-envelope delivery plus a separate mutable claim lease; no foreign artifact table is written.",
-    "server/src/services/chatHandoff/chatTargetOwnerIngressService.ts": "Implements idempotent delivery, SKIP LOCKED claim, expired-lease reclaim, version/hash/target fail-closed checks and crash-safe shared-receipt completion.",
-    "server/src/routes/v8/chat.routes.ts": "Mounts signed-JWT OWNER/ADMIN delivery, claim and completion endpoints with token-derived organization context.",
-    "server/src/services/chatHandoff/__tests__/chatHandoffMounted.pg.test.ts": "Provides mounted realPG proof for immutable ingress, capability/tenant/version negatives, reclaim, crash window, 8-way completion and cold readback."
+    "server/migrations/20260928_chat_handoff_owner_ingress.sql": "Durable immutable approved-envelope ingress and a separate claim lease.",
+    "server/migrations/20261004_chat_target_mapping_receipts.sql": "Durable versioned target-mapping receipts and append-only attempts in the collision-free final slot.",
+    "server/src/routes/v8/chat.routes.ts": "Mounted signed-JWT proposal, approval, ingress, claim and mapping surface with token-derived tenant identity.",
+    "server/src/services/chatHandoff/chatTargetOwnerIngressService.ts": "Tenant-scoped lease/reclaim, policy-drift controls and crash-safe shared-receipt completion.",
+    "server/src/services/chatHandoff/chatTargetMappingService.ts": "Explicit mapping validation, canonical command invocation, deterministic replay and target-before-receipt reconciliation.",
+    "server/src/services/chatHandoff/__tests__/chatHandoffService.pg.test.ts": "RealPG source/citation/proposal/approval/receipt, provider failure, concurrency and cold-read proof.",
+    "server/src/services/chatHandoff/__tests__/chatHandoffMounted.pg.test.ts": "Mounted auth, membership, tenant, reclaim, immutability, 8-way convergence and cold-reopen proof.",
+    "server/src/services/chatHandoff/__tests__/chatTargetMapping.pg.test.ts": "Mounted all-four mapping, collision, drift, revoked/foreign, DOC/PPT crash and artifact_origin proof.",
+    "server/src/services/documentStudio/documentStudioService.ts": "Source-bound stable identity for idempotent canonical document replay.",
+    "server/src/services/presentationGeneratorService.ts": "Stable deck identity used by the pinned deck/version mapping transaction.",
+    "server/src/services/workbook/workbookCreationService.ts": "Single canonical deterministic workbook command shared by Chat and production routes.",
+    "server/src/services/workbook/customWorkbookTemplateService.ts": "Tenant-aware lifecycle and exact version/hash resolution.",
+    "server/src/routes/workbook.routes.ts": "Canonical workbook command reuse and governed custom-template fallback.",
+    "tests/unit/backend/routes/workbook.routes.templates-c3.test.ts": "C3 static/custom/unknown and persistence-failure regression.",
+    "tests/integration/routes/workbook-custom-template.mounted.pg.test.ts": "Mounted lifecycle/tenant/version/hash proof and fixture-scoped transactional zero-residue cleanup."
   },
   "ownerTables": [
-    "conversations",
-    "conversation_messages",
-    "artifact_handoff_proposals",
-    "artifact_handoff_receipts",
-    "chat_handoff_owner_ingress",
-    "chat_handoff_owner_claims"
+    "conversations", "conversation_messages", "artifact_handoff_proposals",
+    "artifact_handoff_receipts", "chat_handoff_owner_ingress", "chat_handoff_owner_claims",
+    "chat_target_mapping_receipts", "chat_target_mapping_attempts", "wave5_artifacts",
+    "presentation_decks", "presentation_deck_versions", "generated_workbooks",
+    "v8_output_artifacts", "v8_artifact_origin_links", "tp_base_templates"
   ],
   "commands": [
     {
-      "gate": "G3-fresh",
-      "command": "DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:56827/chat_bvp_current DB_TYPE=postgres CI=true npx tsx server/scripts/migrate.postgres.ts",
+      "gate": "G3-post-fan-in-fresh",
+      "command": "NODE_ENV=test DATABASE_URL=<fresh tmpfs PostgreSQL 16> npm run db:migrate:strict",
       "exitCode": 0,
-      "result": "742 applied; ledger 742 rows / 742 distinct filenames / 742 success"
+      "result": "750 discovered/applied/successful; 750 distinct filenames; 750 populated and unique recorded checksums"
     },
     {
-      "gate": "G3-repeat-dry",
-      "command": "<same env> npx tsx server/scripts/migrate.postgres.ts; <same env> npx tsx server/scripts/migrate.postgres.ts --dry-run",
+      "gate": "G3-post-fan-in-repeat-dry",
+      "command": "<same database> npm run db:migrate:strict; npm run db:migrate:strict -- --dry-run",
       "exitCode": 0,
       "result": "repeat Applying migrations: 0; dry-run Pending migrations: 0"
     },
     {
-      "gate": "G2-realPG-mounted",
-      "command": "DATABASE_URL=<chat_bvp_current> DB_TYPE=postgres CI=true RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test ENABLE_V8_GLOBAL=true npx vitest run server/src/services/chatHandoff/__tests__/chatHandoffService.pg.test.ts server/src/services/chatHandoff/__tests__/chatHandoffMounted.pg.test.ts --no-file-parallelism --maxWorkers=1 --retry=0 --reporter=dot",
+      "gate": "G2-chat-target-and-handoff",
+      "command": "RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test DATABASE_URL=<fresh tmpfs PostgreSQL 16> npx vitest run chatHandoffService.pg.test.ts chatHandoffMounted.pg.test.ts chatTargetMapping.pg.test.ts serially",
       "exitCode": 0,
-      "result": "2/2 files; 22/22 tests"
+      "result": "3/3 files; 30/30 tests; document, presentation, workbook, artifact_origin and neutral handoff"
     },
     {
-      "gate": "G2-route",
-      "command": "npx vitest run server/src/services/v8/__tests__/chat-routes.test.ts --retry=0 --reporter=dot",
+      "gate": "G2-workbook-C3",
+      "command": "npx vitest run tests/unit/backend/routes/workbook.routes.templates-c3.test.ts",
       "exitCode": 0,
-      "result": "1/1 file; 18/18 tests"
+      "result": "1/1 file; 6/6 tests"
     },
-    { "gate": "G1-typecheck", "command": "npm run type-check", "exitCode": 0, "result": "full repository tsc passed" },
-    { "gate": "G1-build", "command": "npm run build:backend", "exitCode": 0, "result": "9 mirrors verified; backend tsc build passed" }
+    {
+      "gate": "G2-workbook-mounted",
+      "command": "RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test DATABASE_URL=<fresh tmpfs PostgreSQL 16> npx vitest run tests/integration/routes/workbook-custom-template.mounted.pg.test.ts",
+      "exitCode": 0,
+      "result": "1/1 file; 2/2 tests; corrective cleanup rerun also 2/2"
+    },
+    {
+      "gate": "G1-typecheck-product-lineage",
+      "command": "NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit -p server/tsconfig.json",
+      "exitCode": 0,
+      "result": "Passed on the corrective Chat mapping product lineage; not represented as a post-fan-in d9de run"
+    },
+    {
+      "gate": "G1-build-product-lineage",
+      "command": "npm run build:backend",
+      "exitCode": 0,
+      "result": "Passed on the corrective Chat mapping product lineage; exact-current global static fan-in is reported separately by the integrator"
+    }
   ],
   "denominators": {
-    "freshMigrations": { "discovered": 742, "applied": 742, "successful": 742, "failed": 0 },
+    "freshMigrations": { "discovered": 750, "applied": 750, "successful": 750, "failed": 0, "distinctFilenames": 750, "checksumMissing": 0, "distinctChecksums": 750 },
     "repeatMigrations": { "applied": 0 },
     "dryRun": { "pending": 0 },
-    "realPostgres": { "files": 2, "passed": 22, "failed": 0, "skipped": 0, "todo": 0 },
-    "routeRegression": { "files": 1, "passed": 18, "failed": 0, "skipped": 0, "todo": 0 },
-    "typeCheck": { "passed": 1, "failed": 0 },
-    "backendBuild": { "passed": 1, "failed": 0 }
+    "chatTargetAndHandoff": { "files": 3, "passed": 30, "failed": 0, "skipped": 0, "todo": 0 },
+    "workbookC3": { "files": 1, "passed": 6, "failed": 0, "skipped": 0, "todo": 0 },
+    "workbookMounted": { "files": 1, "passed": 2, "failed": 0, "skipped": 0, "todo": 0 },
+    "typeCheckProductLineage": { "passed": 1, "failed": 0 },
+    "backendBuildProductLineage": { "passed": 1, "failed": 0 }
   },
   "fixtures": {
-    "database": "fresh isolated chat_bvp_current in tmpfs container consultify-int-prereq-fresh, loopback 56827",
-    "personas": "two tenant OWNERs, INACTIVE stale member, insufficient MEMBER JWT",
-    "source": "real conversation_messages with citation-bearing content",
-    "cleanup": "post-gate proposals=0, ingress=0, claims=0, users=0 for test prefixes; container preserved"
+    "database": "fresh isolated tmpfs PostgreSQL 16 for post-fan-in d9de; disposable container removed",
+    "personas": "active owners/members in two tenants plus inactive/revoked and insufficient-role signed-JWT controls",
+    "source": "real conversation_messages with version/hash-bound citations and explicit approved mapping envelopes",
+    "cleanup": "wb_late schemas=0; public tp_base_templates.status remains NOT NULL; fixture organizations/templates/generated_workbooks/v8_output_artifacts/v8_artifact_origin_links all 0; cache process terminated"
   },
   "negativeControls": {
-    "immutableIngress": "UPDATE and DELETE denied by trigger",
-    "tenantAndCapability": "foreign tenant gets no work; MEMBER 403; stale membership 403",
-    "versionPolicy": "unknown contract and post-delivery source_version drift return 409",
-    "lease": "exclusive claim, expiry reclaim, incremented attempt and stale-token 409",
-    "crashWindow": "receipt committed before claim completion is reconciled after reclaim without a second receipt",
-    "concurrency": "8 completion calls converge on one receipt",
-    "targetConflict": "different targetRecordId replay returns 409"
+    "providerFailure": "throwing, unresolved and empty-source providers create no phantom proposal or receipt",
+    "immutableIngress": "UPDATE and DELETE of immutable ingress/attempt evidence are rejected",
+    "tenantAndMembership": "foreign tenant, body spoof, revoked/stale membership and insufficient capability fail closed before target creation",
+    "versionPolicy": "unsupported schema, source version/hash drift and ambiguous material alias fail closed",
+    "leaseAndConcurrency": "exclusive lease/reclaim and 8-way replay converge on one target and receipt",
+    "crashWindows": "consumed-receipt reconciliation, target-before-receipt reclaim, DOC collision and PPT deck-before-version rollback are covered",
+    "artifactOriginHonesty": "artifact_origin verifies an existing tenant-owned origin using canonical JSON hashing; foreign and drifted origins are rejected",
+    "workbookPersistence": "infrastructure failures return 5xx with no workbook/cache/artifact; unknown/private/deprecated templates create no residue"
   },
   "migrationChecksums": {
-    "20260927_runtime_v1_execution_identity_seam.sql": "5a6f6e22dbd204423806aa08a36ffbac252bb11d69ec45b771284df957d1bb02",
-    "20260928_chat_handoff_owner_ingress.sql": "d802c0b1a02e3fbaa3959657d6953203dda352f8714db3e35a4bbcd69b9359c4"
+    "20260928_chat_handoff_owner_ingress.sql": "d802c0b1a02e3fbaa3959657d6953203dda352f8714db3e35a4bbcd69b9359c4",
+    "20261004_chat_target_mapping_receipts.sql": "59e2e5375ffc321b4697488901af959d119093e24742d19bd246da3a721246f2"
   },
+  "historicalEvidence": [
+    {
+      "state": "neutral-ingress",
+      "productSha": "490ccb1f1946dca8b4978b034653002a08dac2b8",
+      "verdictThen": "PARTIAL",
+      "fact": "Immutable neutral ingress, lease/reclaim and shared receipt were green while owner-table mappings were absent."
+    },
+    {
+      "state": "first-target-mapping",
+      "productSha": "69ac8a702cb7b059b26b82b9fb8a02a5b30e8f2e",
+      "verdictThen": "PARTIAL",
+      "fact": "Chat reached 30/30 but adjacent workbook C3 remained 5/6 with custom-template 404; this red is retained and superseded by 9a8d7ae5fb with C3 6/6."
+    },
+    {
+      "state": "post-fan-in-cleanup-detection",
+      "productSha": "9a8d7ae5fb934f90f2e569d97a2e64ab84af4a4c",
+      "verdictThen": "FIX_REQUIRED",
+      "fact": "The first functional-green fan-in run left two artifacts and two origin links; d9de65506c fixed fixture cleanup and the rerun proved residue 0."
+    }
+  ],
   "browserArtifacts": [],
-  "gateG4": "NOT_RUN_BY_SCOPE: no Chat UI or browser acceptance changed.",
+  "gateG4": "NOT_RUN_BY_SCOPE: CHAT-UI-CANON-001 owns browser, responsive, keyboard, accessibility and human visual acceptance.",
   "rollback": {
-    "method": "Stop callers and revert 490ccb1f19. Preserve additive ingress rows as evidence; destructive table drops are not authorized.",
+    "method": "Stop target-owner consumers and revert mapping callers through 812793c45f; preserve immutable ingress, receipt and attempt rows. Destructive table drops and provider enablement are not authorized.",
     "executed": false,
-    "schemaImpact": "two additive tables, indexes and immutable trigger; no existing row shape changed"
+    "schemaImpact": "Additive ingress/mapping tables and triggers; canonical commands gained optional stable identities and workbook route reuse without a second owner store."
   }
 }
