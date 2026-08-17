@@ -1,23 +1,55 @@
 {
   "taskId": "REL-001-T01",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "748c801eb7ade1661a9ab5d43fd7dc73ca4badde",
+  "productSha": "2669d3eee60a42016b9e36b8afe17243ab29ac59",
   "leaseSha256": "18eb0f2e24aee1d6415a29e1605597117f24c42a1f74439842581e7a92583742",
-  "changedPaths": ["docs/program/evidence/closure/codex/REL-001-T01/TASK_EVIDENCE.json"],
-  "changedPathRationale": {"docs/program/evidence/closure/codex/REL-001-T01/TASK_EVIDENCE.json": "Records the release gate as unverified and not authorized without performing a deployment or release mutation."},
+  "changedPaths": [
+    "scripts/release/verify-release-candidate-bundle.mjs",
+    "tests/unit/release/verify-release-candidate-bundle.test.mjs",
+    "docs/program/evidence/closure/codex/REL-001-T01/TASK_EVIDENCE.json"
+  ],
+  "changedPathRationale": {
+    "scripts/release/verify-release-candidate-bundle.mjs": "Fail-closed exact-Git-object verifier for a NOT_AUTHORIZED candidate manifest, lockfile, SBOM, migration inventory and additive rollback compatibility.",
+    "tests/unit/release/verify-release-candidate-bundle.test.mjs": "Disposable Git-repository positive and tamper/nonancestor/deletion/modification/GO negative controls.",
+    "docs/program/evidence/closure/codex/REL-001-T01/TASK_EVIDENCE.json": "Records repository preflight capability without claiming deployment or release authorization."
+  },
   "ownerTables": ["schema_migrations", "feature_flags"],
-  "commands": [{"command": "node scripts/cleanup/report-closure-progress.mjs", "exitCode": 0}],
+  "commands": [
+    {
+      "command": "node --test tests/unit/release/verify-release-candidate-bundle.test.mjs",
+      "exitCode": 0
+    },
+    { "command": "NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit", "exitCode": 0 },
+    { "command": "node scripts/cleanup/report-closure-progress.mjs", "exitCode": 0 }
+  ],
   "denominators": {
     "precedingTasks": 81,
     "precedingTasksDoneOrApprovedOut": false,
     "deployedGoldenFlows": "0/16 on this exact SHA",
     "telemetryWindows": "0/2",
-    "rollbackRehearsals": 0
+    "rollbackRehearsals": 0,
+    "releaseVerifierTests": "7/7"
   },
-  "fixtures": {"deployment": "No production or release-candidate deployment was authorized in this program run."},
-  "negativeControls": {"noUnauthorizedPush": true, "noUnauthorizedDeploy": true, "noUnauthorizedRelease": true, "localPassNotTreatedAsRelease": true},
+  "fixtures": {
+    "deployment": "No production or release-candidate deployment was authorized in this program run."
+  },
+  "negativeControls": {
+    "noUnauthorizedPush": true,
+    "noUnauthorizedDeploy": true,
+    "noUnauthorizedRelease": true,
+    "localPassNotTreatedAsRelease": true
+  },
   "browserArtifacts": [],
-  "rollback": {"method": "No deployment occurred, so no environment rollback was executed.", "executed": false},
+  "rollback": {
+    "method": "No deployment occurred, so no environment rollback was executed.",
+    "executed": false
+  },
+  "technicalVerdict": "PASS_FAIL_CLOSED_EXACT_SHA_BUNDLE_VERIFIER",
   "verdict": "NOT_VERIFIED",
-  "blockers": ["Every preceding task must be DONE_CURRENT_SHA or explicitly approved out.", "Exact-SHA deployment identity and 16 deployed golden flows are missing.", "Two consecutive 60-minute telemetry windows and rollback rehearsal are missing.", "Explicit Piotr release authorization has not been requested or granted."]
+  "blockers": [
+    "Every preceding task must be DONE_CURRENT_SHA or explicitly approved out.",
+    "Exact-SHA deployment identity and 16 deployed golden flows are missing.",
+    "Two consecutive 60-minute telemetry windows and rollback rehearsal are missing.",
+    "Explicit Piotr release authorization has not been requested or granted."
+  ]
 }
