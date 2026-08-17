@@ -3,11 +3,13 @@
 import { randomUUID } from 'node:crypto';
 
 import express from 'express';
+import jwt from 'jsonwebtoken';
 import { Client } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { attachV8Context } from '../../middleware/v8Auth.middleware.js';
+import verifyToken, { validateOrgMembership } from '../../middleware/auth.middleware.js';
+import { attachV8Context, requireV8OrgContext } from '../../middleware/v8Auth.middleware.js';
 import executionBvpRoutes from '../../routes/caseWorkspace/executionBvp.routes.js';
 import { consumeNextExecutionSignal } from '../resultsVnext/platform/executionSignalIngress.js';
 
@@ -29,11 +31,15 @@ describe.skipIf(!REAL_PG)(
     const artifactA = `exe-artifact-a-${tag}`;
     const submitter = `exe-submitter-${tag}`;
     const approver = `exe-approver-${tag}`;
+    const foreignOwner = `exe-foreign-owner-${tag}`;
     let db: Client;
     let app: express.Express;
+    let submitterToken = '';
+    let approverToken = '';
+    let foreignToken = '';
 
-    function auth(orgId: string, userId: string) {
-      return { 'x-test-org-id': orgId, 'x-test-user-id': userId };
+    function auth(token: string) {
+      return { Authorization: `Bearer ${token}` };
     }
 
     beforeAll(async () => {
@@ -42,13 +48,33 @@ describe.skipIf(!REAL_PG)(
       await db.query(`INSERT INTO organizations(id,name) VALUES($1,$1),($2,$2)`, [orgA, orgB]);
       await db.query(
         `INSERT INTO users(id,organization_id,email,role,status)
-       VALUES($1,$2,$3,'ADMIN','active'),($4,$2,$5,'ADMIN','active')`,
-        [submitter, orgA, `${submitter}@example.test`, approver, `${approver}@example.test`]
+       VALUES($1,$2,$3,'ADMIN','active'),($4,$2,$5,'ADMIN','active'),
+             ($6,$7,$8,'OWNER','active')`,
+        [
+          submitter,
+          orgA,
+          `${submitter}@example.test`,
+          approver,
+          `${approver}@example.test`,
+          foreignOwner,
+          orgB,
+          `${foreignOwner}@example.test`,
+        ]
       );
       await db.query(
         `INSERT INTO organization_members(id,organization_id,user_id,role,status)
-       VALUES($1,$2,$3,'ADMIN','ACTIVE'),($4,$2,$5,'ADMIN','ACTIVE')`,
-        [`membership-${submitter}`, orgA, submitter, `membership-${approver}`, approver]
+       VALUES($1,$2,$3,'ADMIN','ACTIVE'),($4,$2,$5,'ADMIN','ACTIVE'),
+             ($6,$7,$8,'OWNER','ACTIVE')`,
+        [
+          `membership-${submitter}`,
+          orgA,
+          submitter,
+          `membership-${approver}`,
+          approver,
+          `membership-${foreignOwner}`,
+          orgB,
+          foreignOwner,
+        ]
       );
       await db.query(`INSERT INTO projects(id,organization_id,name) VALUES($1,$2,$1)`, [
         projectA,
@@ -71,15 +97,22 @@ describe.skipIf(!REAL_PG)(
         [artifactA, orgA, projectA, caseA, `document-${tag}`, submitter]
       );
 
+      const { default: config } = await import('../../config/Config.js');
+      const sign = (userId: string, organizationId: string, role: string) =>
+        jwt.sign(
+          { id: userId, organizationId, role, email: `${userId}@example.test` },
+          config.JWT_SECRET,
+          { algorithm: 'HS256', expiresIn: '10m' }
+        );
+      submitterToken = sign(submitter, orgA, 'ADMIN');
+      approverToken = sign(approver, orgA, 'ADMIN');
+      foreignToken = sign(foreignOwner, orgB, 'OWNER');
+
       app = express();
       app.use(express.json());
-      app.use((req: any, _res, next) => {
-        req.organizationId = req.get('x-test-org-id');
-        req.userId = req.get('x-test-user-id');
-        req.userRole = 'ADMIN';
-        req.user = { id: req.userId, organizationId: req.organizationId, role: 'ADMIN' };
-        next();
-      });
+      app.use(verifyToken);
+      app.use(validateOrgMembership);
+      app.use(requireV8OrgContext);
       app.use(attachV8Context);
       app.use('/api/v8/case-workspace', executionBvpRoutes);
       app.use(
@@ -98,21 +131,21 @@ describe.skipIf(!REAL_PG)(
     it('mounts authenticated tenant scope and delivers one exact immutable Results receipt under replay/concurrency', async () => {
       const crossTenant = await request(app)
         .post('/api/v8/case-workspace/execution-bvp/links')
-        .set(auth(orgB, submitter))
+        .set(auth(foreignToken))
         .set('Idempotency-Key', `cross-${tag}`)
         .send({ initiativeId: initiativeA, caseId: caseA, organizationId: orgA });
       expect([403, 404]).toContain(crossTenant.status);
 
       const linked = await request(app)
         .post('/api/v8/case-workspace/execution-bvp/links')
-        .set(auth(orgA, submitter))
+        .set(auth(submitterToken))
         .set('Idempotency-Key', `intake-${tag}`)
         .send({ initiativeId: initiativeA, caseId: caseA, organizationId: orgB })
         .expect(201);
       const linkId = linked.body.data.link_id as string;
       const replay = await request(app)
         .post('/api/v8/case-workspace/execution-bvp/links')
-        .set(auth(orgA, submitter))
+        .set(auth(submitterToken))
         .set('Idempotency-Key', `intake-${tag}`)
         .send({ initiativeId: initiativeA, caseId: caseA })
         .expect(201);
@@ -120,7 +153,7 @@ describe.skipIf(!REAL_PG)(
 
       const spine = await request(app)
         .post(`/api/v8/case-workspace/execution-bvp/links/${linkId}/spine`)
-        .set(auth(orgA, submitter))
+        .set(auth(submitterToken))
         .send({
           workRef: `case_workspace_run:${tag}`,
           resourceRef: `initiative_resources:${initiativeA}`,
@@ -132,7 +165,7 @@ describe.skipIf(!REAL_PG)(
 
       const stale = await request(app)
         .post(`/api/v8/case-workspace/execution-bvp/links/${linkId}/spine`)
-        .set(auth(orgA, submitter))
+        .set(auth(submitterToken))
         .send({
           workRef: 'x',
           resourceRef: 'x',
@@ -144,19 +177,19 @@ describe.skipIf(!REAL_PG)(
 
       const submitted = await request(app)
         .post(`/api/v8/case-workspace/execution-bvp/links/${linkId}/evidence`)
-        .set(auth(orgA, submitter))
+        .set(auth(submitterToken))
         .set('Idempotency-Key', `evidence-${tag}`)
         .send({ artifactLinkId: artifactA, contentDigest: 'sha256:content-a' })
         .expect(201);
       const evidenceId = submitted.body.data.evidence_id as string;
       const selfApproval = await request(app)
         .post(`/api/v8/case-workspace/execution-bvp/evidence/${evidenceId}/approve`)
-        .set(auth(orgA, submitter))
+        .set(auth(submitterToken))
         .send({ expectedVersion: 1 });
       expect(selfApproval.status).toBe(404);
       await request(app)
         .post(`/api/v8/case-workspace/execution-bvp/evidence/${evidenceId}/approve`)
-        .set(auth(orgA, approver))
+        .set(auth(approverToken))
         .send({ expectedVersion: 1 })
         .expect(200);
 
@@ -165,7 +198,7 @@ describe.skipIf(!REAL_PG)(
         Array.from({ length: 8 }, () =>
           request(app)
             .post(closePath)
-            .set(auth(orgA, approver))
+            .set(auth(approverToken))
             .set('Idempotency-Key', `signal-${tag}`)
             .send({ evidenceId, expectedVersion: spine.body.data.version })
         )
