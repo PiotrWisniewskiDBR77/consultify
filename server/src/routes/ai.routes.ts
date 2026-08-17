@@ -2078,6 +2078,41 @@ router.post(
     if (process.env.E2E_MODE === 'true') {
       const assistantFull = `E2E_OK: Received "${message}".`;
 
+      if (resumeFromPartial && conversationId) {
+        const partial = (await dbGet(
+          `SELECT content FROM ai_partial_responses
+           WHERE session_id = ? AND user_id = ? AND organization_id = ?
+             AND EXISTS (
+               SELECT 1 FROM organization_members om
+               WHERE om.organization_id = ai_partial_responses.organization_id
+                 AND om.user_id = ai_partial_responses.user_id
+                 AND UPPER(om.status) = 'ACTIVE'
+             )`,
+          [conversationId, req.userId, req.organizationId]
+        )) as { content?: string } | null;
+        if (!partial?.content) {
+          res.write(
+            `data: ${JSON.stringify({
+              type: 'error',
+              code: 'PARTIAL_RECOVERY_NOT_FOUND',
+              message: 'Interrupted response could not be resumed.',
+              sessionId: streamSessionId,
+            })}\n\n`
+          );
+          streamCompleted = true;
+          clearInterval(heartbeatInterval);
+          return res.end();
+        }
+        accumulatedContent = partial.content;
+        res.write(
+          `data: ${JSON.stringify({
+            type: 'resume',
+            text: partial.content,
+            sessionId: streamSessionId,
+          })}\n\n`
+        );
+      }
+
       // Actually persist, matching the comment above (previously this stub only
       // streamed SSE chunks and never wrote to conversation_messages, so the
       // runtime smoke's DB-persistence assertion always timed out — found
@@ -2141,6 +2176,14 @@ router.post(
 
         emitMinimalTrustBundle(assistantFull, { mode: 'e2e_mode', reason: 'deterministic_stream' });
         res.write('data: [DONE]\n\n');
+
+        if (resumeFromPartial && conversationId) {
+          await dbRun(
+            `DELETE FROM ai_partial_responses
+             WHERE session_id = ? AND user_id = ? AND organization_id = ?`,
+            [conversationId, req.userId, req.organizationId]
+          );
+        }
 
         return res.end();
       } catch (e: any) {
@@ -2251,6 +2294,8 @@ router.post(
           ON CONFLICT(session_id) DO UPDATE SET
               content = excluded.content,
               updated_at = CURRENT_TIMESTAMP
+          WHERE ai_partial_responses.organization_id = excluded.organization_id
+            AND ai_partial_responses.user_id = excluded.user_id
         `,
         [uuidv4(), sessionId, userId, orgId, content]
       );
@@ -2340,14 +2385,27 @@ router.post(
 
       if (resumeFromPartial && conversationId) {
         let partial: string | null = null;
+        let partialLookupFailed = false;
         try {
           const row = (await dbGet(
-            `SELECT content FROM ai_partial_responses WHERE session_id = ? AND user_id = ?`,
-            [conversationId, req.userId]
+            `SELECT content FROM ai_partial_responses
+             WHERE session_id = ? AND user_id = ? AND organization_id = ?
+               AND EXISTS (
+                 SELECT 1 FROM organization_members om
+                 WHERE om.organization_id = ai_partial_responses.organization_id
+                   AND om.user_id = ai_partial_responses.user_id
+                   AND UPPER(om.status) = 'ACTIVE'
+               )`,
+            [conversationId, req.userId, req.organizationId]
           )) as { content?: string } | null;
           partial = row?.content ?? null;
-        } catch {
-          // ai_partial_responses may have different schema (content vs response_chunk)
+        } catch (error) {
+          partialLookupFailed = true;
+          logger.warn('[AI Stream] Tenant-scoped partial lookup failed', {
+            sessionId: conversationId,
+            organizationId: req.organizationId,
+            error: error instanceof Error ? error.message : String(error),
+          });
         }
 
         if (partial) {
@@ -2359,6 +2417,19 @@ router.post(
               sessionId: streamSessionId,
             })}\n\n`
           );
+        } else {
+          res.write(
+            `data: ${JSON.stringify({
+              type: 'error',
+              code: partialLookupFailed
+                ? 'PARTIAL_RECOVERY_UNAVAILABLE'
+                : 'PARTIAL_RECOVERY_NOT_FOUND',
+              message: 'Interrupted response could not be resumed.',
+              sessionId: streamSessionId,
+            })}\n\n`
+          );
+          streamCompleted = true;
+          return res.end();
         }
 
         // Partial resume logic handled by sending previous content to client
@@ -5102,8 +5173,7 @@ router.post(
                       confidence: c.confidence,
                       // GF-CHAT-02 fragment anchor: real chunk ordinal from
                       // knowledge_chunks.chunk_index, `null` (never `0`) when unknown.
-                      fragmentIndex:
-                        typeof c.fragmentIndex === 'number' ? c.fragmentIndex : null,
+                      fragmentIndex: typeof c.fragmentIndex === 'number' ? c.fragmentIndex : null,
                     })),
                   });
                 }
@@ -5489,7 +5559,11 @@ router.post(
             }
           }
 
-          await dbRun(`DELETE FROM ai_partial_responses WHERE session_id = ?`, [streamSessionId]);
+          await dbRun(
+            `DELETE FROM ai_partial_responses
+             WHERE session_id = ? AND user_id = ? AND organization_id = ?`,
+            [streamSessionId, req.userId, req.organizationId]
+          );
 
           // Track token usage for trial budget (rough estimate based on chars)
           try {
@@ -5548,8 +5622,7 @@ router.post(
                       link: c.sourceUrl || '',
                       excerpt: c.fragmentExcerpt || c.text || '',
                       confidence: c.confidence,
-                      fragmentIndex:
-                        typeof c.fragmentIndex === 'number' ? c.fragmentIndex : null,
+                      fragmentIndex: typeof c.fragmentIndex === 'number' ? c.fragmentIndex : null,
                     })),
                   });
                 }
@@ -5795,9 +5868,15 @@ router.get(
         `
             SELECT content, updated_at
             FROM ai_partial_responses
-            WHERE session_id = ? AND user_id = ?
+            WHERE session_id = ? AND user_id = ? AND organization_id = ?
+              AND EXISTS (
+                SELECT 1 FROM organization_members om
+                WHERE om.organization_id = ai_partial_responses.organization_id
+                  AND om.user_id = ai_partial_responses.user_id
+                  AND UPPER(om.status) = 'ACTIVE'
+              )
         `,
-        [req.params.sessionId, req.userId]
+        [req.params.sessionId, req.userId, req.organizationId]
       )) as { content: string; updated_at: string } | null;
 
       if (!row) {
@@ -5812,7 +5891,15 @@ router.get(
         canResume: true,
       });
     } catch (err: any) {
-      return res.status(500).json({ error: (err as Error).message });
+      logger.warn('[AI Stream] Partial-response discovery failed', {
+        sessionId: req.params.sessionId,
+        organizationId: req.organizationId,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      return res.status(503).json({
+        error: 'Partial response discovery unavailable',
+        code: 'PARTIAL_RECOVERY_UNAVAILABLE',
+      });
     }
   })
 );

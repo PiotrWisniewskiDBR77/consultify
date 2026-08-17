@@ -1059,6 +1059,13 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const [selectedMultiOptions, setSelectedMultiOptions] = useState<string[]>([]);
   const [dtHintDismissed, setDtHintDismissed] = useState(false);
   const [abortFeedback, setAbortFeedback] = useState<'partial' | 'cancelled' | null>(null);
+  const [partialRecovery, setPartialRecovery] = useState<{
+    sessionId: string;
+    content: string;
+    updatedAt?: string;
+  } | null>(null);
+  const [partialRecoveryError, setPartialRecoveryError] = useState<string | null>(null);
+  const [isResumingPartial, setIsResumingPartial] = useState(false);
   const [dtSavingDecision, setDtSavingDecision] = useState<string | null>(null);
   const [dtDecisionSaved, setDtDecisionSaved] = useState<Set<string>>(new Set());
   const [dtPendingConfirm, setDtPendingConfirm] = useState<{
@@ -1411,6 +1418,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     retryLastStream,
     lastError,
     clearLastError,
+    checkPartialResponse,
+    resumeFromPartial,
     isStreaming,
     streamedContent,
     reasoning: streamedReasoning,
@@ -2138,7 +2147,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           id: `idea-action-error-${Date.now()}`,
           role: 'ai',
           content: t('aiChat.teresaAction.error', {
-            defaultValue: 'Nie udało się wykonać akcji „{{action}}” — wystąpił błąd. Nic nie zostało potwierdzone jako zrobione.',
+            defaultValue:
+              'Nie udało się wykonać akcji „{{action}}” — wystąpił błąd. Nic nie zostało potwierdzone jako zrobione.',
             action: payload.toolName,
           }),
           timestamp: new Date(),
@@ -2146,6 +2156,137 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       }
     },
   });
+
+  // A disconnected stream is a durable, tenant-bound checkpoint. Discovery is
+  // explicit on a cold/deep conversation load; resuming always remains a human
+  // action and never silently invokes the provider.
+  const partialDiscoveryErrorLabel = t(
+    'aiChat.partialRecovery.discoveryFailed',
+    'Interrupted response could not be checked.'
+  );
+  useEffect(() => {
+    let cancelled = false;
+    setPartialRecovery(null);
+    setPartialRecoveryError(null);
+    if (!activeConversationId || isConversationLoading)
+      return () => {
+        cancelled = true;
+      };
+
+    void checkPartialResponse(activeConversationId)
+      .then((partial) => {
+        if (!cancelled && partial?.canResume && partial.content.trim()) {
+          setPartialRecovery(partial);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setPartialRecoveryError(partialDiscoveryErrorLabel);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    activeConversationId,
+    checkPartialResponse,
+    isConversationLoading,
+    partialDiscoveryErrorLabel,
+  ]);
+
+  const handleResumePartial = useCallback(async () => {
+    if (!partialRecovery || isStreaming || isResumingPartial) return;
+    let sourceMessages = activeMessages;
+    let latestUserIndex = [...sourceMessages]
+      .map((message) => String(message.role || '').toLowerCase())
+      .lastIndexOf('user');
+    // On a hard deep-link the checkpoint lookup can finish before the
+    // conversation store has hydrated. Re-read through the canonical store
+    // loader once; never fabricate the original prompt.
+    if (latestUserIndex < 0 && activeConversationId) {
+      await fetchConversation(activeConversationId);
+      sourceMessages = useConversationStore.getState().activeMessages;
+      latestUserIndex = [...sourceMessages]
+        .map((message) => String(message.role || '').toLowerCase())
+        .lastIndexOf('user');
+    }
+    const latestUser = latestUserIndex >= 0 ? sourceMessages[latestUserIndex] : null;
+    const prompt = typeof latestUser?.content === 'string' ? latestUser.content.trim() : '';
+    if (!prompt) {
+      setPartialRecoveryError(
+        t(
+          'aiChat.partialRecovery.missingPrompt',
+          'The original request is unavailable; start a new message.'
+        )
+      );
+      return;
+    }
+    setIsResumingPartial(true);
+    setPartialRecoveryError(null);
+    try {
+      await resumeFromPartial(
+        partialRecovery.sessionId,
+        prompt,
+        sourceMessages.slice(0, latestUserIndex)
+      );
+      setPartialRecovery(null);
+    } catch {
+      setPartialRecoveryError(
+        t('aiChat.partialRecovery.resumeFailed', 'The interrupted response could not be resumed.')
+      );
+    } finally {
+      setIsResumingPartial(false);
+    }
+  }, [
+    activeConversationId,
+    activeMessages,
+    fetchConversation,
+    isResumingPartial,
+    isStreaming,
+    partialRecovery,
+    resumeFromPartial,
+    t,
+  ]);
+
+  const partialRecoveryNotice =
+    partialRecovery || partialRecoveryError ? (
+      <div
+        className="mb-2 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 dark:border-sky-900/40 dark:bg-sky-900/20"
+        data-testid="chat-partial-recovery"
+        role="status"
+      >
+        <div className="flex items-center justify-between gap-3">
+          <div className="text-xs text-sky-900 dark:text-sky-100">
+            {partialRecoveryError ||
+              t('aiChat.partialRecovery.available', 'An interrupted response is available.')}
+          </div>
+          <div className="flex items-center gap-2">
+            {partialRecovery && (
+              <button
+                type="button"
+                onClick={() => void handleResumePartial()}
+                disabled={isResumingPartial || isStreaming}
+                className="rounded-md bg-sky-700 px-3 py-1 text-xs font-medium text-white hover:bg-sky-800 disabled:opacity-50"
+              >
+                {isResumingPartial
+                  ? t('aiChat.partialRecovery.resuming', 'Resuming…')
+                  : t('aiChat.partialRecovery.resume', 'Resume')}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                setPartialRecovery(null);
+                setPartialRecoveryError(null);
+              }}
+              className="rounded-md bg-c-surface-raised px-3 py-1 text-xs font-medium text-sky-900 hover:bg-c-border-subtle dark:text-sky-100"
+            >
+              {t('common.dismiss', 'Dismiss')}
+            </button>
+          </div>
+        </div>
+      </div>
+    ) : null;
 
   // Krok A — klik „Potwierdź": ponowne `executeTeresaTool` z DOKŁADNIE tym samym
   // toolName+ctx zapamiętanym w `teresaPendingConfirm`, ale `confirmed: true`.
@@ -2184,7 +2325,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         id: `idea-action-confirm-error-${Date.now()}`,
         role: 'ai',
         content: t('aiChat.teresaAction.error', {
-          defaultValue: 'Nie udało się wykonać akcji „{{action}}” — wystąpił błąd. Nic nie zostało potwierdzone jako zrobione.',
+          defaultValue:
+            'Nie udało się wykonać akcji „{{action}}” — wystąpił błąd. Nic nie zostało potwierdzone jako zrobione.',
           action: pending.toolName,
         }),
         timestamp: new Date(),
@@ -5276,44 +5418,45 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   // real backend contract this maps onto.
   // ------------------------------------------------------------------------
   const [branchList, setBranchList] = useState<ConversationBranch[]>([]);
-  const [branchParentConversationId, setBranchParentConversationId] = useState<string | null>(
-    null
-  );
+  const [branchParentConversationId, setBranchParentConversationId] = useState<string | null>(null);
   const [branchSelfName, setBranchSelfName] = useState<string | null>(null);
   const [branchesLoading, setBranchesLoading] = useState(false);
   const [branchesError, setBranchesError] = useState<string | null>(null);
   const [branchCreating, setBranchCreating] = useState(false);
 
-  const refreshBranches = useCallback(async (conversationId: string) => {
-    setBranchesLoading(true);
-    setBranchesError(null);
-    try {
-      const res: any = await Api.getConversationBranches(conversationId);
-      const mapped: ConversationBranch[] = Array.isArray(res?.branches)
-        ? res.branches.map((b: any) => ({
-            id: b.id,
-            conversationId: b.conversationId,
-            parentBranchId: b.parentBranchId ?? null,
-            forkMessageId: b.forkMessageId,
-            name: b.branchName || 'Branch',
-            messageCount: b.messageCount,
-            createdAt: b.createdAt,
-            createdBy: b.createdBy,
-          }))
-        : [];
-      setBranchList(mapped);
-      setBranchParentConversationId(res?.isBranch ? res?.parentConversationId || null : null);
-      setBranchSelfName(res?.isBranch ? res?.branchName || null : null);
-    } catch (err) {
-      console.error('[UnifiedChatPanel] Failed to load conversation branches:', err);
-      setBranchList([]);
-      setBranchParentConversationId(null);
-      setBranchSelfName(null);
-      setBranchesError(t('branch.loadFailed', 'Could not load branches.'));
-    } finally {
-      setBranchesLoading(false);
-    }
-  }, [t]);
+  const refreshBranches = useCallback(
+    async (conversationId: string) => {
+      setBranchesLoading(true);
+      setBranchesError(null);
+      try {
+        const res: any = await Api.getConversationBranches(conversationId);
+        const mapped: ConversationBranch[] = Array.isArray(res?.branches)
+          ? res.branches.map((b: any) => ({
+              id: b.id,
+              conversationId: b.conversationId,
+              parentBranchId: b.parentBranchId ?? null,
+              forkMessageId: b.forkMessageId,
+              name: b.branchName || 'Branch',
+              messageCount: b.messageCount,
+              createdAt: b.createdAt,
+              createdBy: b.createdBy,
+            }))
+          : [];
+        setBranchList(mapped);
+        setBranchParentConversationId(res?.isBranch ? res?.parentConversationId || null : null);
+        setBranchSelfName(res?.isBranch ? res?.branchName || null : null);
+      } catch (err) {
+        console.error('[UnifiedChatPanel] Failed to load conversation branches:', err);
+        setBranchList([]);
+        setBranchParentConversationId(null);
+        setBranchSelfName(null);
+        setBranchesError(t('branch.loadFailed', 'Could not load branches.'));
+      } finally {
+        setBranchesLoading(false);
+      }
+    },
+    [t]
+  );
 
   useEffect(() => {
     if (!activeConversationId || String(activeConversationId).startsWith('local-')) {
@@ -5356,7 +5499,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       // the latest message in the thread so far (server falls back to "no
       // messages" only when the source conversation is truly empty).
       const msgs = useConversationStore.getState().activeMessages || [];
-      const lastRealMsg = [...msgs].reverse().find((m: any) => !String(m.id || '').startsWith('local-'));
+      const lastRealMsg = [...msgs]
+        .reverse()
+        .find((m: any) => !String(m.id || '').startsWith('local-'));
       setBranchCreating(true);
       try {
         const res: any = await Api.branchConversation(sourceId, lastRealMsg?.id, name);
@@ -5808,83 +5953,83 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const renderMessage = (msg: ChatMessage, index: number) => (
     <div key={msg.id} data-message-anchor={msg.id}>
       <MessageRenderer
-      msg={msg}
-      index={index}
-      displayMessages={displayMessages}
-      isCompact={isCompact}
-      isDisabled={isDisabled}
-      activeConversationId={activeConversationId}
-      thinkingSteps={thinkingSteps}
-      streamStartedAt={streamStartedAt}
-      streamCompletedSignal={streamCompletedSignal}
-      retryInfo={retryInfo}
-      abortFeedback={abortFeedback}
-      agentAuditState={agentAuditState}
-      agentAuditBusy={agentAuditBusy}
-      agentRegistryById={agentRegistryById}
-      agentReviewProgressByAgentId={agentReviewProgressByAgentId}
-      agentSourcesByAgentId={agentSourcesByAgentId}
-      agentAuditActiveTabByMessageId={agentAuditActiveTabByMessageId}
-      setAgentAuditActiveTabByMessageId={setAgentAuditActiveTabByMessageId}
-      deepThinkingHint={deepThinkingHint}
-      dtHintDismissed={dtHintDismissed}
-      dtPendingConfirm={dtPendingConfirm}
-      setDtPendingConfirm={setDtPendingConfirm}
-      dtConfirmBusy={dtConfirmBusy}
-      dtSavingDecision={dtSavingDecision}
-      dtDecisionSaved={dtDecisionSaved}
-      interimInsight={interimInsight}
-      aiConfig={aiConfig}
-      editingMessageId={editingMessageId}
-      editingText={editingText}
-      editBusy={editBusy}
-      setEditingText={setEditingText}
-      hoveredMessageId={hoveredMessageId}
-      setHoveredMessageId={setHoveredMessageId}
-      copiedMessageId={copiedMessageId}
-      contextSaveBusyMessageId={contextSaveBusyMessageId}
-      contextSavedMessageIds={contextSavedMessageIds}
-      selectedMultiOptions={selectedMultiOptions}
-      voiceState={voiceState}
-      handleCopyMessage={handleCopyMessage}
-      handleStartEditMessage={handleStartEditMessage}
-      handleBranchFromMessage={handleBranchFromMessage}
-      handleCancelEditMessage={handleCancelEditMessage}
-      handleCommitEditMessage={handleCommitEditMessage}
-      handleViewArtifacts={handleViewArtifacts}
-      onOpenDeliverableArtifact={handleOpenDeliverableArtifact}
-      onEmitArtifactFromMessage={handleEmitArtifactFromMessage}
-      handleFeedback={handleFeedback}
-      handleSendMessage={handleSendMessage}
-      handleEnableDeepThinking={handleEnableDeepThinking}
-      handleDeepThinkingProceed={handleDeepThinkingProceed}
-      handleDeepThinkingReconfirm={handleDeepThinkingReconfirm}
-      handleSaveAsDecision={handleSaveAsDecision}
-      handleSaveAsIdea={handleSaveAsIdea}
-      handleSaveAsNote={handleSaveAsNote}
-      handleSaveToContext={handleSaveToContext}
-      handleRunDirectedDeepening={handleRunDirectedDeepening}
-      handleMultiSelectToggle={handleMultiSelectToggle}
-      handleMultiSelectConfirm={handleMultiSelectConfirm}
-      refreshAgentAuditSuggestionsOnly={refreshAgentAuditSuggestionsOnly}
-      speak={speak}
-      stopSpeaking={stopSpeaking}
-      setDtHintDismissed={setDtHintDismissed}
-      addArtifact={addArtifact}
-      toggleArtifactsPanel={toggleArtifactsPanel}
-      exportArtifact={exportArtifact}
-      handleAgentAuditAccept={handleAgentAuditAccept}
-      onOptionSelect={onOptionSelect}
-      isRtlChatLanguage={isRtlChatLanguage}
-      onProposalApprove={handleProposalApprove}
-      onProposalReject={handleProposalReject}
-      onProposalExecute={handleProposalExecute}
-      onProposalInspect={handleProposalInspect}
-      proposalBusyById={proposalBusyById}
-      teresaPendingConfirm={teresaPendingConfirm}
-      teresaConfirmBusy={teresaConfirmBusy}
-      onTeresaConfirmProceed={handleTeresaConfirmProceed}
-      onTeresaConfirmCancel={handleTeresaConfirmCancel}
+        msg={msg}
+        index={index}
+        displayMessages={displayMessages}
+        isCompact={isCompact}
+        isDisabled={isDisabled}
+        activeConversationId={activeConversationId}
+        thinkingSteps={thinkingSteps}
+        streamStartedAt={streamStartedAt}
+        streamCompletedSignal={streamCompletedSignal}
+        retryInfo={retryInfo}
+        abortFeedback={abortFeedback}
+        agentAuditState={agentAuditState}
+        agentAuditBusy={agentAuditBusy}
+        agentRegistryById={agentRegistryById}
+        agentReviewProgressByAgentId={agentReviewProgressByAgentId}
+        agentSourcesByAgentId={agentSourcesByAgentId}
+        agentAuditActiveTabByMessageId={agentAuditActiveTabByMessageId}
+        setAgentAuditActiveTabByMessageId={setAgentAuditActiveTabByMessageId}
+        deepThinkingHint={deepThinkingHint}
+        dtHintDismissed={dtHintDismissed}
+        dtPendingConfirm={dtPendingConfirm}
+        setDtPendingConfirm={setDtPendingConfirm}
+        dtConfirmBusy={dtConfirmBusy}
+        dtSavingDecision={dtSavingDecision}
+        dtDecisionSaved={dtDecisionSaved}
+        interimInsight={interimInsight}
+        aiConfig={aiConfig}
+        editingMessageId={editingMessageId}
+        editingText={editingText}
+        editBusy={editBusy}
+        setEditingText={setEditingText}
+        hoveredMessageId={hoveredMessageId}
+        setHoveredMessageId={setHoveredMessageId}
+        copiedMessageId={copiedMessageId}
+        contextSaveBusyMessageId={contextSaveBusyMessageId}
+        contextSavedMessageIds={contextSavedMessageIds}
+        selectedMultiOptions={selectedMultiOptions}
+        voiceState={voiceState}
+        handleCopyMessage={handleCopyMessage}
+        handleStartEditMessage={handleStartEditMessage}
+        handleBranchFromMessage={handleBranchFromMessage}
+        handleCancelEditMessage={handleCancelEditMessage}
+        handleCommitEditMessage={handleCommitEditMessage}
+        handleViewArtifacts={handleViewArtifacts}
+        onOpenDeliverableArtifact={handleOpenDeliverableArtifact}
+        onEmitArtifactFromMessage={handleEmitArtifactFromMessage}
+        handleFeedback={handleFeedback}
+        handleSendMessage={handleSendMessage}
+        handleEnableDeepThinking={handleEnableDeepThinking}
+        handleDeepThinkingProceed={handleDeepThinkingProceed}
+        handleDeepThinkingReconfirm={handleDeepThinkingReconfirm}
+        handleSaveAsDecision={handleSaveAsDecision}
+        handleSaveAsIdea={handleSaveAsIdea}
+        handleSaveAsNote={handleSaveAsNote}
+        handleSaveToContext={handleSaveToContext}
+        handleRunDirectedDeepening={handleRunDirectedDeepening}
+        handleMultiSelectToggle={handleMultiSelectToggle}
+        handleMultiSelectConfirm={handleMultiSelectConfirm}
+        refreshAgentAuditSuggestionsOnly={refreshAgentAuditSuggestionsOnly}
+        speak={speak}
+        stopSpeaking={stopSpeaking}
+        setDtHintDismissed={setDtHintDismissed}
+        addArtifact={addArtifact}
+        toggleArtifactsPanel={toggleArtifactsPanel}
+        exportArtifact={exportArtifact}
+        handleAgentAuditAccept={handleAgentAuditAccept}
+        onOptionSelect={onOptionSelect}
+        isRtlChatLanguage={isRtlChatLanguage}
+        onProposalApprove={handleProposalApprove}
+        onProposalReject={handleProposalReject}
+        onProposalExecute={handleProposalExecute}
+        onProposalInspect={handleProposalInspect}
+        proposalBusyById={proposalBusyById}
+        teresaPendingConfirm={teresaPendingConfirm}
+        teresaConfirmBusy={teresaConfirmBusy}
+        onTeresaConfirmProceed={handleTeresaConfirmProceed}
+        onTeresaConfirmCancel={handleTeresaConfirmCancel}
       />
     </div>
   );
@@ -6404,6 +6549,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               )}
 
               <div id="chat-input" className="mt-8 w-full max-w-5xl text-left">
+                {partialRecoveryNotice}
                 {!!lastError && !isStreaming && (
                   <div className="mb-2 flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-900/40 dark:bg-amber-900/20">
                     <div className="text-xs text-amber-800 dark:text-amber-200">
@@ -6731,6 +6877,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         {!showFullWelcomeEmptyState && (
           <div id="chat-input" className={`${isCompact ? 'p-2' : 'px-3 pb-1.5 pt-3'} bg-c-bg`}>
             <div className="mx-auto w-full max-w-5xl">
+              {partialRecoveryNotice}
               {!!lastError && !isStreaming && (
                 <div className="mb-2 flex items-center justify-between gap-3 rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-900/20 px-3 py-2">
                   <div className="text-xs text-amber-800 dark:text-amber-200">

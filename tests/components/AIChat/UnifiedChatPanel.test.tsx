@@ -210,6 +210,8 @@ const startStreamMock = vi.fn();
 const abortStreamMock = vi.fn(() => false);
 const retryLastStreamMock = vi.fn();
 const clearLastErrorMock = vi.fn();
+const checkPartialResponseMock = vi.fn(async () => null);
+const resumeFromPartialMock = vi.fn();
 
 let aiStreamOptionsCaptured: any = null;
 let aiStreamState: any = {
@@ -217,6 +219,8 @@ let aiStreamState: any = {
   retryLastStream: retryLastStreamMock,
   lastError: null,
   clearLastError: clearLastErrorMock,
+  checkPartialResponse: checkPartialResponseMock,
+  resumeFromPartial: resumeFromPartialMock,
   isStreaming: false,
   streamedContent: '',
   researchProgress: null,
@@ -481,8 +485,11 @@ describe('UnifiedChatPanel (L2)', () => {
       consumeAIInteraction: vi.fn(),
     };
 
-    ({ UnifiedChatPanel, buildCanvasContextPacket, __private__: unifiedChatPrivate } =
-      await import('../../../src/components/AIChat/UnifiedChatPanel'));
+    ({
+      UnifiedChatPanel,
+      buildCanvasContextPacket,
+      __private__: unifiedChatPrivate,
+    } = await import('../../../src/components/AIChat/UnifiedChatPanel'));
 
     appStoreState = {
       ...appStoreState,
@@ -580,6 +587,10 @@ describe('UnifiedChatPanel (L2)', () => {
     });
     h.apiMock.updateConversation.mockResolvedValue({ id: 'conv-new-branch' });
     h.apiMock.deleteConversation.mockResolvedValue({ success: true, deleted: 'conv-new-branch' });
+    checkPartialResponseMock.mockReset();
+    checkPartialResponseMock.mockResolvedValue(null);
+    resumeFromPartialMock.mockReset();
+    resumeFromPartialMock.mockResolvedValue(undefined);
   });
 
   it('derives chat language from explicit preference over store fallbacks', () => {
@@ -605,6 +616,52 @@ describe('UnifiedChatPanel (L2)', () => {
     expect(screen.getByTestId('chat-history-button')).toBeInTheDocument();
   });
 
+  it('discovers a cold partial response and resumes only after explicit user action', async () => {
+    conversationStoreState.activeConversationId = 'conv-partial';
+    conversationStoreState.activeMessages = [
+      { id: 'u1', role: 'user', content: 'Continue this analysis' },
+    ];
+    checkPartialResponseMock.mockResolvedValue({
+      sessionId: 'conv-partial',
+      content: 'Saved partial',
+      canResume: true,
+    });
+
+    renderWithRouter(<UnifiedChatPanel />);
+
+    expect(await screen.findByTestId('chat-partial-recovery')).toHaveTextContent(
+      'An interrupted response is available.'
+    );
+    expect(resumeFromPartialMock).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Resume' }));
+    await waitFor(() =>
+      expect(resumeFromPartialMock).toHaveBeenCalledWith(
+        'conv-partial',
+        'Continue this analysis',
+        []
+      )
+    );
+  });
+
+  it('fails closed when a partial checkpoint has no persisted user request', async () => {
+    conversationStoreState.activeConversationId = 'conv-no-prompt';
+    conversationStoreState.activeMessages = [];
+    checkPartialResponseMock.mockResolvedValue({
+      sessionId: 'conv-no-prompt',
+      content: 'Saved partial',
+      canResume: true,
+    });
+
+    renderWithRouter(<UnifiedChatPanel />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Resume' }));
+    await waitFor(() =>
+      expect(screen.getByTestId('chat-partial-recovery')).toHaveTextContent(
+        'The original request is unavailable'
+      )
+    );
+    expect(resumeFromPartialMock).not.toHaveBeenCalled();
+  });
+
   // M01-P03A — BranchSelector was found fully orphaned (finding M01-035):
   // imported nowhere in src/. These tests are the negative-control proof
   // that it is now REALLY mounted and wired, not just present in the tree
@@ -614,9 +671,7 @@ describe('UnifiedChatPanel (L2)', () => {
   describe('M01-P03A conversation branching (BranchSelector)', () => {
     it('mounts the branch selector once a real (non-local) conversation is active and lists its branches', async () => {
       conversationStoreState.activeConversationId = 'conv-branch-test';
-      conversationStoreState.activeMessages = [
-        { id: 'msg-1', role: 'user', content: 'hello' },
-      ];
+      conversationStoreState.activeMessages = [{ id: 'msg-1', role: 'user', content: 'hello' }];
       h.apiMock.getConversationBranches.mockResolvedValue({
         conversationId: 'conv-branch-test',
         isBranch: false,
@@ -686,9 +741,7 @@ describe('UnifiedChatPanel (L2)', () => {
       );
       // Post-create, the panel re-fetches so a fresh reopen of the dropdown
       // would show the newly created branch (not a locally-fabricated one).
-      await waitFor(() =>
-        expect(h.apiMock.getConversationBranches).toHaveBeenCalledTimes(2)
-      );
+      await waitFor(() => expect(h.apiMock.getConversationBranches).toHaveBeenCalledTimes(2));
     });
   });
 
@@ -971,7 +1024,9 @@ describe('UnifiedChatPanel (L2)', () => {
 
     expect(await screen.findByTestId('chat-work-panel')).toBeInTheDocument();
     await waitFor(() => expect(h.apiMock.createResearchSession).toHaveBeenCalled());
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/work-canvas/drafts', expect.any(Object)));
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith('/api/work-canvas/drafts', expect.any(Object))
+    );
     expect(addMessageToConversationMock).toHaveBeenCalledWith(
       expect.objectContaining({
         conversationId: 'conv-1',
@@ -994,12 +1049,10 @@ describe('UnifiedChatPanel (L2)', () => {
     expect(unifiedChatPrivate.parseChatCanvasIntent('/canvas decision memo')?.starterId).toBe(
       'decision'
     );
-    expect(unifiedChatPrivate.parseChatCanvasIntent('wrzuć to do Canvas jako plan')?.starterId).toBe(
-      'plan'
-    );
     expect(
-      unifiedChatPrivate.parseChatCanvasIntent('normalna wiadomość bez routingu')
-    ).toBeNull();
+      unifiedChatPrivate.parseChatCanvasIntent('wrzuć to do Canvas jako plan')?.starterId
+    ).toBe('plan');
+    expect(unifiedChatPrivate.parseChatCanvasIntent('normalna wiadomość bez routingu')).toBeNull();
   });
 
   it('summarizes recent workflow timeline events in the Canvas context packet', () => {
@@ -1264,8 +1317,12 @@ describe('UnifiedChatPanel (L2)', () => {
         id: 'workflow-rollout-1',
         lifecycle: 'approved',
         outputCount: 1,
-        stepSummaries: [expect.objectContaining({ id: 'step-approval', outputId: 'report-rollout-1' })],
-        approvalStatuses: [expect.objectContaining({ stepId: 'step-approval', status: 'approved' })],
+        stepSummaries: [
+          expect.objectContaining({ id: 'step-approval', outputId: 'report-rollout-1' }),
+        ],
+        approvalStatuses: [
+          expect.objectContaining({ stepId: 'step-approval', status: 'approved' }),
+        ],
       }),
     ]);
     expect(packet?.workflowEventSummaries).toEqual([
@@ -1845,7 +1902,7 @@ describe('UnifiedChatPanel (L2)', () => {
       opts.defaultValue.replace('{{action}}', String(opts.action ?? ''));
 
     describe('describeUnconfirmedTeresaResult (pure helper — decides what the user sees)', () => {
-      it('passes an existing result.message through verbatim (refusals keep the registry\'s own text)', () => {
+      it("passes an existing result.message through verbatim (refusals keep the registry's own text)", () => {
         const content = unifiedChatPrivate.describeUnconfirmedTeresaResult(
           { ok: false, actionId: 'x', message: 'Nie mogę tego zrobić.' },
           'idea_x',
@@ -1894,7 +1951,11 @@ describe('UnifiedChatPanel (L2)', () => {
       });
 
       it('no result at all (the catch/exception path) -> null, left to the caller', () => {
-        const content = unifiedChatPrivate.describeUnconfirmedTeresaResult(undefined, 'idea_w', fakeT);
+        const content = unifiedChatPrivate.describeUnconfirmedTeresaResult(
+          undefined,
+          'idea_w',
+          fakeT
+        );
         expect(content).toBeNull();
       });
     });
@@ -1937,7 +1998,9 @@ describe('UnifiedChatPanel (L2)', () => {
               timestamp: new Date(),
             } as any
           }
-          customMessages={[{ id: 'seed-1', role: 'user', content: 'hi', timestamp: new Date() } as any]}
+          customMessages={[
+            { id: 'seed-1', role: 'user', content: 'hi', timestamp: new Date() } as any,
+          ]}
         />
       );
     }

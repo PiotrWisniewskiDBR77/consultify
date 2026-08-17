@@ -370,6 +370,7 @@ export type UseAIStreamReturn = {
     sessionId: string;
     content: string;
     canResume?: boolean;
+    updatedAt?: string;
   } | null>;
 
   isStreaming: boolean;
@@ -479,6 +480,7 @@ type PartialResponse = {
   sessionId: string;
   content: string;
   canResume?: boolean;
+  updatedAt?: string;
 };
 
 export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
@@ -1484,13 +1486,19 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
 
-        if (!response.ok) {
+        if (response.status === 404) {
           return null;
+        }
+        if (!response.ok) {
+          throw new Error(`chat_partial_discovery_failed_${response.status}`);
         }
 
         return (await response.json()) as PartialResponse;
       } catch (error) {
-        return null;
+        if (error instanceof Error && error.message.startsWith('chat_partial_discovery_failed_')) {
+          throw error;
+        }
+        throw new Error('chat_partial_discovery_unavailable');
       }
     },
     []
