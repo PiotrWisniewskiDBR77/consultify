@@ -79,6 +79,54 @@ interface DistributionScope {
   sessionStatus: string | null;
 }
 
+export interface PublicInterviewQuestionSnapshot {
+  answerText: string | null;
+  contextNote: string | null;
+  id: string;
+  isRequired: boolean;
+  questionText: string;
+  updatedAt: string;
+}
+
+/**
+ * Reads the respondent-visible question snapshot for an already token-resolved
+ * distribution. The distribution row is resolved again inside the pinned
+ * transaction so a revoke/expiry racing the route-level lookup fails closed.
+ */
+export async function readPublicQuestionSnapshot(
+  distributionId: string
+): Promise<PublicInterviewQuestionSnapshot[] | null> {
+  return withPgTransaction(async (tx) => {
+    const scope = await loadScope(tx, distributionId);
+    if (!scope) return null;
+
+    const result = await tx.query<{
+      answer_text: string | null;
+      context_note: string | null;
+      id: string;
+      is_required: boolean | number | null;
+      question_text: string;
+      updated_at: Date;
+    }>(
+      `SELECT id, question_text, is_required, answer_text, context_note, updated_at
+         FROM interview_questions
+        WHERE organization_id = CAST(? AS text)
+          AND session_id = CAST(? AS text)
+        ORDER BY sort_order ASC NULLS LAST, id ASC`,
+      [scope.organizationId, scope.sessionId]
+    );
+
+    return result.rows.map((row) => ({
+      answerText: row.answer_text,
+      contextNote: row.context_note,
+      id: row.id,
+      isRequired: Boolean(row.is_required),
+      questionText: row.question_text,
+      updatedAt: new Date(row.updated_at).toISOString(),
+    }));
+  });
+}
+
 /**
  * Canonical fingerprint of the semantic payload. Key order is fixed here rather
  * than relying on object literal order so the same answer always hashes the

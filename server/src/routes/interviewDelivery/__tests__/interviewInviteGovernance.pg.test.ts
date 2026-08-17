@@ -23,6 +23,10 @@ describe.skipIf(!REAL_PG)('interview invite governance (real PostgreSQL)', () =>
   const orgB = `int-invite-org-b-${tag}`;
   const owner = `int-invite-owner-${tag}`;
   const sessionId = `int-invite-session-${tag}`;
+  const otherSessionId = `int-invite-other-session-${tag}`;
+  const questionA = `int-invite-question-a-${tag}`;
+  const questionB = `int-invite-question-b-${tag}`;
+  const foreignQuestion = `int-invite-question-foreign-${tag}`;
   const distributionIds: string[] = [];
 
   beforeAll(async () => {
@@ -35,12 +39,26 @@ describe.skipIf(!REAL_PG)('interview invite governance (real PostgreSQL)', () =>
     );
     await pool.query(
       `INSERT INTO interview_sessions (id, organization_id, owner_id, status, is_anonymous)
-       VALUES ($1,$2,$3,'in_progress',true)`,
-      [sessionId, orgA, owner]
+       VALUES ($1,$3,$4,'in_progress',true),($2,$3,$4,'in_progress',true)`,
+      [sessionId, otherSessionId, orgA, owner]
     );
-    ({ interviewEnterpriseService: service } = await import(
-      '../../../services/interviewEnterpriseService.js'
-    ));
+    await pool.query(
+      `INSERT INTO interview_questions
+         (id, session_id, organization_id, category, question_text, answer_text,
+          context_note, status, is_required, sort_order)
+       VALUES
+         ($1,$3,$4,'strategy','Second question',NULL,NULL,'pending',0,2),
+         ($2,$3,$4,'strategy','First question','existing','context','answered',1,1)`,
+      [questionB, questionA, sessionId, orgA]
+    );
+    await pool.query(
+      `INSERT INTO interview_questions
+         (id, session_id, organization_id, category, question_text, status, is_required, sort_order)
+       VALUES ($1,$2,$3,'strategy','Foreign session question','pending',0,1)`,
+      [foreignQuestion, otherSessionId, orgA]
+    );
+    ({ interviewEnterpriseService: service } =
+      await import('../../../services/interviewEnterpriseService.js'));
     const { default: router } = await import('../../../routes/interview-enterprise.routes.js');
     app = express();
     app.use(express.json());
@@ -50,7 +68,15 @@ describe.skipIf(!REAL_PG)('interview invite governance (real PostgreSQL)', () =>
   afterAll(async () => {
     if (!pool) return;
     await pool.query(`DELETE FROM interview_distributions WHERE id = ANY($1)`, [distributionIds]);
-    await pool.query(`DELETE FROM interview_sessions WHERE id=$1`, [sessionId]);
+    await pool.query(`DELETE FROM interview_questions WHERE id IN ($1,$2,$3)`, [
+      questionA,
+      questionB,
+      foreignQuestion,
+    ]);
+    await pool.query(`DELETE FROM interview_sessions WHERE id IN ($1,$2)`, [
+      sessionId,
+      otherSessionId,
+    ]);
     await pool.query(`DELETE FROM users WHERE id=$1`, [owner]);
     await pool.query(`DELETE FROM organizations WHERE id IN ($1,$2)`, [orgA, orgB]);
     await pool.end();
@@ -72,14 +98,36 @@ describe.skipIf(!REAL_PG)('interview invite governance (real PostgreSQL)', () =>
     const created = await invite();
     expect(new Date(created.expiresAt).getTime()).toBeGreaterThan(Date.now());
 
-    const res = await request(app).get(`/api/interview-v4/public/distributions/${created.publicToken}`);
+    const res = await request(app).get(
+      `/api/interview-v4/public/distributions/${created.publicToken}`
+    );
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({
       distributionId: created.id,
       sessionId,
       status: 'opened',
       anonymityMode: 'anonymous',
+      questions: [
+        {
+          id: questionA,
+          questionText: 'First question',
+          answerText: 'existing',
+          contextNote: 'context',
+          isRequired: true,
+        },
+        {
+          id: questionB,
+          questionText: 'Second question',
+          answerText: null,
+          contextNote: null,
+          isRequired: false,
+        },
+      ],
     });
+    expect(res.body.questions.every((question: { updatedAt?: string }) => question.updatedAt)).toBe(
+      true
+    );
+    expect(JSON.stringify(res.body)).not.toContain('Foreign session question');
     expect(JSON.stringify(res.body)).not.toContain('private.respondent');
     expect(JSON.stringify(res.body)).not.toContain(orgA);
     expect(JSON.stringify(res.body)).not.toContain(created.publicToken);
@@ -91,14 +139,18 @@ describe.skipIf(!REAL_PG)('interview invite governance (real PostgreSQL)', () =>
       `UPDATE interview_distributions SET expires_at=NOW()-INTERVAL '1 second' WHERE id=$1`,
       [created.id]
     );
-    const res = await request(app).get(`/api/interview-v4/public/distributions/${created.publicToken}`);
+    const res = await request(app).get(
+      `/api/interview-v4/public/distributions/${created.publicToken}`
+    );
     expect(res.status).toBe(410);
     expect(res.body).toEqual({ error: 'INVITE_EXPIRED' });
 
     const { Pool: PgPool } = await import('pg');
     const cold = new PgPool({ connectionString: DATABASE_URL, max: 1 });
     try {
-      const row = await cold.query(`SELECT status FROM interview_distributions WHERE id=$1`, [created.id]);
+      const row = await cold.query(`SELECT status FROM interview_distributions WHERE id=$1`, [
+        created.id,
+      ]);
       expect(row.rows[0].status).toBe('expired');
     } finally {
       await cold.end();
@@ -111,7 +163,9 @@ describe.skipIf(!REAL_PG)('interview invite governance (real PostgreSQL)', () =>
     expect(await service.revokeDistribution(orgA, created.id, owner)).toBe(true);
     expect(await service.revokeDistribution(orgA, created.id, owner)).toBe(false);
 
-    const res = await request(app).get(`/api/interview-v4/public/distributions/${created.publicToken}`);
+    const res = await request(app).get(
+      `/api/interview-v4/public/distributions/${created.publicToken}`
+    );
     expect(res.status).toBe(410);
     expect(res.body).toEqual({ error: 'INVITE_REVOKED' });
     const row = await pool.query(
@@ -128,12 +182,15 @@ describe.skipIf(!REAL_PG)('interview invite governance (real PostgreSQL)', () =>
       service.resolveActiveDistributionByToken(created.publicToken),
       service.revokeDistribution(orgA, created.id, owner),
     ]);
-    const row = await pool.query(`SELECT status, revoked_at FROM interview_distributions WHERE id=$1`, [
-      created.id,
-    ]);
+    const row = await pool.query(
+      `SELECT status, revoked_at FROM interview_distributions WHERE id=$1`,
+      [created.id]
+    );
     expect(row.rows[0].status).toBe('revoked');
     expect(row.rows[0].revoked_at).toBeTruthy();
-    await expect(service.resolveActiveDistributionByToken(created.publicToken)).rejects.toMatchObject({
+    await expect(
+      service.resolveActiveDistributionByToken(created.publicToken)
+    ).rejects.toMatchObject({
       code: 'INVITE_REVOKED',
       statusCode: 410,
     });

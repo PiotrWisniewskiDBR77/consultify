@@ -20,6 +20,7 @@ import {
 import {
   PUBLIC_ANSWER_STATUS,
   completeDistributionByToken,
+  readPublicQuestionSnapshot,
   savePublicAnswer,
 } from '../services/interviewPublicAnswerService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -33,12 +34,18 @@ router.get(
       const invite = await interviewEnterpriseService.resolveActiveDistributionByToken(
         req.params.token
       );
+      const questions = await readPublicQuestionSnapshot(invite.id);
+      if (!questions) {
+        res.status(410).json({ error: 'DISTRIBUTION_NOT_ACTIVE' });
+        return;
+      }
       res.json({
         distributionId: invite.id,
         sessionId: invite.sessionId,
         status: invite.status,
         anonymityMode: invite.anonymityMode,
         expiresAt: invite.expiresAt,
+        questions,
       });
     } catch (error) {
       if (error instanceof InterviewDistributionError) {
@@ -123,7 +130,9 @@ router.post(
         req.params.token
       );
       const result = await completeDistributionByToken(distribution.id);
-      res.status(200).json({ completed: result.completed, alreadyComplete: result.alreadyComplete });
+      res
+        .status(200)
+        .json({ completed: result.completed, alreadyComplete: result.alreadyComplete });
     } catch (error) {
       if (error instanceof InterviewDistributionError) {
         res.status(error.statusCode).json({ error: error.code });

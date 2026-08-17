@@ -555,6 +555,11 @@ const DRDAuditReportView = lazyWithRetry(() =>
 const PublicMiniAssessmentView = lazyWithRetry(() =>
   import('@/views/PublicMiniAssessmentView').then((m) => ({ default: m.PublicMiniAssessmentView }))
 );
+const PublicInterviewRespondentView = lazyWithRetry(() =>
+  import('@/views/PublicInterviewRespondentView').then((m) => ({
+    default: m.PublicInterviewRespondentView,
+  }))
+);
 
 // Education Hub (Public)
 const ToolsShowcasePage = lazyWithRetry(() =>
@@ -1237,6 +1242,15 @@ export const AppRoutes: React.FC = () => {
         />
 
         {/* Public Mini Assessment (T015) */}
+        <Route
+          path="/interview/respond/:token"
+          element={
+            <Suspense fallback={<LoadingScreen message="Loading interview..." />}>
+              <PublicInterviewRespondentView />
+            </Suspense>
+          }
+        />
+
         <Route
           path="/assess/:token?"
           element={

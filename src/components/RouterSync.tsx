@@ -181,6 +181,7 @@ export const RouterSync: React.FC = () => {
     const defaultAuthenticatedRoute = getDefaultAuthenticatedRoute(userRole);
     const isPilotAllowedRoute = isPilotAllowedPath(path);
     const isInternalToolsRoute = isInternalToolsPath(path);
+    const isPublicInterviewRespondentRoute = path.startsWith('/interview/respond/');
 
     // Prevent infinite loops: skip if we're already navigating
     if (isNavigatingRef.current) {
@@ -266,7 +267,7 @@ export const RouterSync: React.FC = () => {
       path.startsWith('/assessment') ||
       path.startsWith('/discovery-tools') ||
       path.startsWith('/context') ||
-      path.startsWith('/interview') ||
+      (path.startsWith('/interview') && !isPublicInterviewRespondentRoute) ||
       path.startsWith('/wordy') ||
       path.startsWith('/excele') ||
       path.startsWith('/tabele') ||
