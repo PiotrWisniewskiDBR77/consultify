@@ -23,19 +23,26 @@ const input = {
   outcome: 'FAILURE' as const,
 };
 let cursorSnapshot: Array<{ source_type: string; effective_at: Date; terminal_id: string }> = [];
+let cursorControlDb: Client;
 
 describe.skipIf(!enabled)('OPS durable missed-signal repair realPG', () => {
   beforeAll(async () => {
+    if (process.env.OPS_REPAIR_ALLOW_CURSOR_RESTORE_TEST !== '1')
+      throw new Error('OPS_REPAIR_CURSOR_TEST_REQUIRES_EXPLICIT_DISPOSABLE_DB');
     process.env.OPERATIONAL_ALERT_DURABLE_ENABLED = 'true';
     process.env.OPERATIONAL_ALERT_REPAIR_ENABLED = 'true';
-    const db = new Client({ connectionString: url });
-    await db.connect();
+    cursorControlDb = new Client({ connectionString: url });
+    await cursorControlDb.connect();
+    const databaseName = (await cursorControlDb.query(`SELECT current_database() name`)).rows[0]
+      .name as string;
+    if (!/^ops_(hold|repair)/.test(databaseName))
+      throw new Error(`OPS_REPAIR_CURSOR_TEST_DB_NOT_DISPOSABLE:${databaseName}`);
+    await cursorControlDb.query(`SELECT pg_advisory_lock(hashtext('ops-repair-cursor-test'))`);
     cursorSnapshot = (
-      await db.query(
+      await cursorControlDb.query(
         `SELECT source_type,effective_at,terminal_id FROM operational_alert_repair_cursors ORDER BY source_type`
       )
     ).rows;
-    await db.end();
   });
   afterAll(async () => {
     delete process.env.OPERATIONAL_ALERT_DURABLE_ENABLED;
@@ -88,10 +95,12 @@ describe.skipIf(!enabled)('OPS durable missed-signal repair realPG', () => {
       `ALTER TABLE operational_alert_signals ENABLE TRIGGER trg_operational_alert_signals_immutable`
     );
     for (const cursor of cursorSnapshot)
-      await db.query(
+      await cursorControlDb.query(
         `INSERT INTO operational_alert_repair_cursors(source_type,effective_at,terminal_id) VALUES($1,$2,$3) ON CONFLICT(source_type) DO UPDATE SET effective_at=excluded.effective_at,terminal_id=excluded.terminal_id,updated_at=now()`,
         [cursor.source_type, cursor.effective_at, cursor.terminal_id]
       );
+    await cursorControlDb.query(`SELECT pg_advisory_unlock(hashtext('ops-repair-cursor-test'))`);
+    await cursorControlDb.end();
     await db.end();
   });
   it('collapses 8-way intent, rejects collision, repairs exactly one signal and cold-reads receipt', async () => {
@@ -418,6 +427,104 @@ describe.skipIf(!enabled)('OPS durable missed-signal repair realPG', () => {
         intent.intent_id,
       ])
     ).rejects.toThrow();
+
+    const callerTimestamp = '2000-01-01T00:00:00.000Z';
+    const rvnRows: Array<{ outboxId: string; eventId: string; terminal: boolean }> = [];
+    for (const terminal of [false, true]) {
+      const eventId = randomUUID(),
+        outboxId = randomUUID(),
+        suffix = terminal ? 'terminal' : 'pending';
+      await db.query(
+        `INSERT INTO rvn_platform_events(event_id,event_type,aggregate_type,aggregate_id,organization_id,actor_user_id,actor_effective_role,command_id,correlation_id,policy_version,state_hash,source,idempotency_key,resulting_version) VALUES($1,'test','test',$2,$3,$4,'SYSTEM',$5,$6,'v1','hash','test',$7,1)`,
+        [
+          eventId,
+          `${prefix}-spoof-${suffix}`,
+          org,
+          `${prefix}-actor`,
+          randomUUID(),
+          randomUUID(),
+          `${prefix}-spoof-${suffix}`,
+        ]
+      );
+      await db.query(
+        `INSERT INTO rvn_platform_outbox(outbox_id,event_id,consumer_group,status,dispatched_at,operational_alert_terminal_at) VALUES($1,$2,$3,$4,$5,$6)`,
+        [
+          outboxId,
+          eventId,
+          `${prefix}-spoof-${suffix}`,
+          terminal ? 'dispatched' : 'pending',
+          terminal ? new Date() : null,
+          callerTimestamp,
+        ]
+      );
+      rvnRows.push({ outboxId, eventId, terminal });
+    }
+    const notificationIds = [`${prefix}-spoof-n-pending`, `${prefix}-spoof-n-terminal`];
+    await db.query(
+      `INSERT INTO notification_outbox(id,user_id,organization_id,type,payload_json,status,dedupe_key,operational_alert_terminal_at) VALUES($1,$3,$4,'test','{}','PENDING',$1,$5),($2,$3,$4,'test','{}','SENT',$2,$5)`,
+      [notificationIds[0], notificationIds[1], `${prefix}-user`, org, callerTimestamp]
+    );
+    const caseIds = [`${prefix}-spoof-case-pending`, `${prefix}-spoof-case-terminal`];
+    await db.query(
+      `INSERT INTO case_workspace_event_outbox(event_id,event_type,organization_id,aggregate_type,aggregate_id,actor_user_id,correlation_id,delivered_at,operational_alert_terminal_at) VALUES($1,'test',$3,'test',$1,$4,$1,NULL,$5),($2,'test',$3,'test',$2,$4,$2,clock_timestamp(),$5)`,
+      [caseIds[0], caseIds[1], org, `${prefix}-actor`, callerTimestamp]
+    );
+    const spoofProof = await db.query(
+      `SELECT
+        (SELECT operational_alert_terminal_at FROM rvn_platform_outbox WHERE outbox_id=$1) rvn_pending,
+        (SELECT operational_alert_terminal_at FROM rvn_platform_outbox WHERE outbox_id=$2) rvn_terminal,
+        (SELECT operational_alert_terminal_at FROM notification_outbox WHERE id=$3) notification_pending,
+        (SELECT operational_alert_terminal_at FROM notification_outbox WHERE id=$4) notification_terminal,
+        (SELECT operational_alert_terminal_at FROM case_workspace_event_outbox WHERE event_id=$5) case_pending,
+        (SELECT operational_alert_terminal_at FROM case_workspace_event_outbox WHERE event_id=$6) case_terminal`,
+      [
+        rvnRows[0].outboxId,
+        rvnRows[1].outboxId,
+        notificationIds[0],
+        notificationIds[1],
+        caseIds[0],
+        caseIds[1],
+      ]
+    );
+    expect(spoofProof.rows[0].rvn_pending).toBeNull();
+    expect(spoofProof.rows[0].notification_pending).toBeNull();
+    expect(spoofProof.rows[0].case_pending).toBeNull();
+    for (const key of ['rvn_terminal', 'notification_terminal', 'case_terminal'])
+      expect(new Date(spoofProof.rows[0][key]).getTime()).toBeGreaterThan(
+        new Date(callerTimestamp).getTime()
+      );
+    await db.query(
+      `UPDATE rvn_platform_outbox SET operational_alert_terminal_at=$2 WHERE outbox_id=$1`,
+      [rvnRows[1].outboxId, callerTimestamp]
+    );
+    await db.query(`UPDATE notification_outbox SET operational_alert_terminal_at=$2 WHERE id=$1`, [
+      notificationIds[1],
+      callerTimestamp,
+    ]);
+    try {
+      await db.query(
+        `UPDATE case_workspace_event_outbox SET operational_alert_terminal_at=$2 WHERE event_id=$1`,
+        [caseIds[1], callerTimestamp]
+      );
+    } catch {
+      // The case append-only guard may reject the rewrite before the terminal stamp trigger.
+    }
+    const rewriteProof = await db.query(
+      `SELECT
+        (SELECT operational_alert_terminal_at FROM rvn_platform_outbox WHERE outbox_id=$1) rvn_terminal,
+        (SELECT operational_alert_terminal_at FROM notification_outbox WHERE id=$2) notification_terminal,
+        (SELECT operational_alert_terminal_at FROM case_workspace_event_outbox WHERE event_id=$3) case_terminal`,
+      [rvnRows[1].outboxId, notificationIds[1], caseIds[1]]
+    );
+    expect(new Date(rewriteProof.rows[0].rvn_terminal).toISOString()).toBe(
+      new Date(spoofProof.rows[0].rvn_terminal).toISOString()
+    );
+    expect(new Date(rewriteProof.rows[0].notification_terminal).toISOString()).toBe(
+      new Date(spoofProof.rows[0].notification_terminal).toISOString()
+    );
+    expect(new Date(rewriteProof.rows[0].case_terminal).toISOString()).toBe(
+      new Date(spoofProof.rows[0].case_terminal).toISOString()
+    );
     await db.end();
   });
 });
@@ -429,10 +536,17 @@ describe.runIf(enabled && Boolean(latePrefix))(
     let db: Client;
     let snapshot: Array<{ source_type: string; effective_at: Date; terminal_id: string }> = [];
     beforeAll(async () => {
+      if (process.env.OPS_REPAIR_ALLOW_CURSOR_RESTORE_TEST !== '1')
+        throw new Error('OPS_REPAIR_CURSOR_TEST_REQUIRES_EXPLICIT_DISPOSABLE_DB');
       process.env.OPERATIONAL_ALERT_DURABLE_ENABLED = 'true';
       process.env.OPERATIONAL_ALERT_REPAIR_ENABLED = 'true';
       db = new Client({ connectionString: url });
       await db.connect();
+      const databaseName = (await db.query(`SELECT current_database() name`)).rows[0]
+        .name as string;
+      if (!/^ops_(hold|repair)/.test(databaseName))
+        throw new Error(`OPS_REPAIR_CURSOR_TEST_DB_NOT_DISPOSABLE:${databaseName}`);
+      await db.query(`SELECT pg_advisory_lock(hashtext('ops-repair-cursor-test'))`);
       snapshot = (
         await db.query(
           `SELECT source_type,effective_at,terminal_id FROM operational_alert_repair_cursors ORDER BY source_type`
@@ -464,6 +578,7 @@ describe.runIf(enabled && Boolean(latePrefix))(
           `UPDATE operational_alert_repair_cursors SET effective_at=$2,terminal_id=$3,updated_at=now() WHERE source_type=$1`,
           [cursor.source_type, cursor.effective_at, cursor.terminal_id]
         );
+      await db.query(`SELECT pg_advisory_unlock(hashtext('ops-repair-cursor-test'))`);
       delete process.env.OPERATIONAL_ALERT_DURABLE_ENABLED;
       delete process.env.OPERATIONAL_ALERT_REPAIR_ENABLED;
       await db.end();
