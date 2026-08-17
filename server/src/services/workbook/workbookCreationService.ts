@@ -15,6 +15,16 @@ export interface CreateCanonicalWorkbookInput {
   sourceHash: string;
   sourcePack?: unknown;
   evidenceRefs?: unknown;
+  description?: string | null;
+  prompt?: string | null;
+  fileName?: string;
+  validationErrors?: unknown;
+  qualityScore?: number | null;
+  pipelineLog?: unknown;
+  actionContract?: unknown;
+  qualityReport?: unknown;
+  createdAt?: string;
+  prebuiltBuffer?: Buffer;
 }
 
 export interface CanonicalWorkbookResult {
@@ -40,31 +50,40 @@ export async function createCanonicalWorkbook(
   }
   const schema = { ...input.schema, title: input.title };
   const contentHash = digest({ schema, sourceIdentity: input.sourceIdentity, sourceHash: input.sourceHash });
-  const existing = await queryHelpers.queryOne<{ schema_json: string; version: number; evidence_refs_json: string }>(
-    `SELECT schema_json, COALESCE(version,0) version, evidence_refs_json
-       FROM generated_workbooks WHERE id=? AND organization_id=?`,
-    [input.workbookId, input.organizationId]
+  const existing = await queryHelpers.queryOne<{ organization_id:string; schema_json: string; version: number; evidence_refs_json: string; action_contract_json:string }>(
+    `SELECT organization_id,schema_json, COALESCE(version,0) version, evidence_refs_json,action_contract_json
+       FROM generated_workbooks WHERE id=?`,
+    [input.workbookId]
   );
   if (existing) {
+    if(existing.organization_id!==input.organizationId) throw new Error('workbook_create_identity_collision');
     const refs = JSON.parse(existing.evidence_refs_json || '{}') as { contentHash?: string };
-    if (refs.contentHash !== contentHash) throw new Error('workbook_create_identity_collision');
+    const contract = JSON.parse(existing.action_contract_json || '{}') as { ownerContentHash?: string };
+    if ((contract.ownerContentHash??refs.contentHash) !== contentHash) throw new Error('workbook_create_identity_collision');
     const reopened = JSON.parse(existing.schema_json) as WorkbookSchema;
     const bytes = await buildWorkbookBuffer(reopened);
     return { workbookId: input.workbookId, version: Number(existing.version), schema: reopened,
       bytesHash: digest(bytes), contentHash, replayed: true };
   }
-  const bytes = await buildWorkbookBuffer(schema);
-  await queryHelpers.queryRun(
+  const bytes = input.prebuiltBuffer ?? await buildWorkbookBuffer(schema);
+  const inserted = await queryHelpers.queryRun(
     `INSERT INTO generated_workbooks
       (id,organization_id,title,description,prompt,schema_json,sheet_count,file_name,file_size,
        validation_errors,quality_score,pipeline_log,action_contract_json,source_pack_json,
        evidence_refs_json,quality_report_json,created_by,created_at,version)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP,0)`,
-    [input.workbookId,input.organizationId,input.title,null,'chat-approved-owner-command',
-      JSON.stringify(schema),schema.sheets.length,`${input.title.replace(/\s+/g,'_')}.xlsx`,bytes.length,
-      null,null,'[]',JSON.stringify({command:'chat-target-mapping',version:'v1'}),
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,0)`,
+    [input.workbookId,input.organizationId,input.title,input.description??null,input.prompt??'canonical-owner-command',
+      JSON.stringify(schema),schema.sheets.length,input.fileName??`${input.title.replace(/\s+/g,'_')}.xlsx`,bytes.length,
+      input.validationErrors===undefined?null:JSON.stringify(input.validationErrors),input.qualityScore??null,JSON.stringify(input.pipelineLog??[]),JSON.stringify({
+        ...(input.actionContract&&typeof input.actionContract==='object'?input.actionContract as Record<string,unknown>:{command:'canonical-workbook-create',version:'v1'}),
+        ownerContentHash:contentHash,sourceIdentity:input.sourceIdentity,sourceHash:input.sourceHash,
+      }),
       JSON.stringify(input.sourcePack??{sourceIdentity:input.sourceIdentity,sourceHash:input.sourceHash}),
-      JSON.stringify(input.evidenceRefs??{contentHash}),JSON.stringify({}),input.userId]
+      JSON.stringify(input.evidenceRefs??[]),JSON.stringify(input.qualityReport??{}),input.userId,
+      input.createdAt??new Date().toISOString()]
   );
+  if (inserted && typeof inserted === 'object' && 'changes' in inserted && inserted.changes === 0) {
+    throw new Error('workbook_create_persist_failed');
+  }
   return { workbookId: input.workbookId, version: 0, schema, bytesHash: digest(bytes), contentHash, replayed:false };
 }

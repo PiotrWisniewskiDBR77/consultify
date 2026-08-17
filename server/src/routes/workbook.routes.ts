@@ -8,6 +8,8 @@
  *      a new generated_workbooks row (editable starting point)
  */
 
+import { createHash } from 'node:crypto';
+
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { v4 as uuidv4 } from 'uuid';
@@ -776,7 +778,8 @@ function draftFileName(fileName: string): string {
  * register/adopt the Outputs Library artifact — then return the JSON response
  * payload. Factored out so the template path reuses the EXACT same persistence,
  * caching and artifact-registration code as `/generate` (no duplication, one
- * card per workbook). Fail-soft on persist/registration (logs, never throws).
+ * card per workbook). Owner persistence fails closed: an unpersisted workbook
+ * must never receive an artifact-registration success response.
  */
 async function finalizeGeneratedWorkbook(params: {
   result: {
@@ -824,38 +827,30 @@ async function finalizeGeneratedWorkbook(params: {
 
   // Persist metadata
   try {
-    await queryHelpers.queryRun(
-      `INSERT INTO generated_workbooks (id, organization_id, title, description, prompt, schema_json, sheet_count, file_name, file_size, validation_errors, quality_score, pipeline_log, action_contract_json, source_pack_json, evidence_refs_json, quality_report_json, created_by, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        result.id,
-        user.organizationId,
-        result.schema.title,
-        result.schema.description || null,
-        params.promptText,
-        JSON.stringify(result.schema),
-        result.schema.sheets.length,
-        result.fileName,
-        result.buffer.length,
-        result.validationErrors.length > 0 ? JSON.stringify(result.validationErrors) : null,
-        result.qualityScore,
-        JSON.stringify(result.pipelineLog),
-        JSON.stringify(
-          params.actionContract && typeof params.actionContract === 'object'
-            ? params.actionContract
-            : {}
-        ),
-        JSON.stringify(
-          params.sourcePack && typeof params.sourcePack === 'object' ? params.sourcePack : {}
-        ),
-        JSON.stringify(Array.isArray(params.evidenceRefs) ? params.evidenceRefs : []),
-        JSON.stringify(result.qualityReport ?? {}),
-        user.id,
-        result.generatedAt,
-      ]
-    );
+    await createCanonicalWorkbook({
+      workbookId: result.id,
+      organizationId: user.organizationId,
+      userId: user.id,
+      title: result.schema.title,
+      schema: result.schema,
+      sourceIdentity: `${params.source}:${result.id}`,
+      sourceHash: createHash('sha256').update(result.buffer).digest('hex'),
+      sourcePack: params.sourcePack,
+      evidenceRefs: params.evidenceRefs,
+      description: result.schema.description || null,
+      prompt: params.promptText,
+      fileName: result.fileName,
+      validationErrors: result.validationErrors.length > 0 ? result.validationErrors : undefined,
+      qualityScore: result.qualityScore,
+      pipelineLog: result.pipelineLog,
+      actionContract: params.actionContract,
+      qualityReport: result.qualityReport,
+      createdAt: result.generatedAt,
+      prebuiltBuffer: result.buffer,
+    });
   } catch (err) {
     logger.warn('[WorkbookRoutes] Failed to persist workbook metadata:', err);
+    throw err;
   }
 
   // Register in V8 artifact registry (P19 Outputs Library integration)

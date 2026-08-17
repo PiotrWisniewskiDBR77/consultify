@@ -455,6 +455,9 @@ export interface MaterializeDocumentParams {
   userId: string;
   /** Optional owner-command identity for durable cross-service replay. */
   externalArtifactId?: string;
+  /** Durable owner-command provenance used to verify a stable-id replay. */
+  ownerSourceIdentity?: string;
+  ownerSourceHash?: string;
   intake: DocumentIntake;
   outline?: DocumentOutline;
   sourceRefs?: DocumentSourceRef[];
@@ -1111,6 +1114,13 @@ export async function materializeDocumentArtifact(
     [STUDIO_MODE_METADATA_KEY]: mode,
     [STUDIO_DOC_TYPE_METADATA_KEY]: outline.documentType,
   };
+  if (params.ownerSourceIdentity || params.ownerSourceHash) {
+    if (!params.ownerSourceIdentity || !params.ownerSourceHash) {
+      throw new Error('document_owner_source_identity_incomplete');
+    }
+    metadata.chatOwnerSourceIdentity = params.ownerSourceIdentity;
+    metadata.chatOwnerSourceHash = params.ownerSourceHash;
+  }
   if (template) {
     metadata[STUDIO_TEMPLATE_ID_METADATA_KEY] = template.templateId;
     metadata[STUDIO_TEMPLATE_VERSION_METADATA_KEY] = template.version;
