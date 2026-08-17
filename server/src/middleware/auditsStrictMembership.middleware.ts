@@ -47,7 +47,7 @@ function read<T>(get: () => T): T | undefined {
   }
 }
 
-export const requireActiveAuditsMembership = async (
+export const requireActiveTenantMembership = async (
   req: AuthRequest,
   res: Response,
   next: NextFunction
@@ -94,5 +94,12 @@ export const requireActiveAuditsMembership = async (
     deny(res);
   }
 };
+
+/**
+ * Backwards-compatible Audits name. The implementation is tenant-neutral and
+ * may be mounted by other security-sensitive routers that require immediate
+ * revocation and fail-closed database semantics.
+ */
+export const requireActiveAuditsMembership = requireActiveTenantMembership;
 
 export default requireActiveAuditsMembership;

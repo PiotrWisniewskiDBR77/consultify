@@ -7,6 +7,7 @@ import { Router } from 'express';
 
 import ToolControllerRaw from '../controllers/ToolController.js';
 const ToolController = ToolControllerRaw as any;
+import { requireActiveTenantMembership } from '../middleware/auditsStrictMembership.middleware.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
@@ -30,6 +31,7 @@ const router = Router();
 
 router.use(apiAuthRateLimiter);
 router.use(verifyToken);
+router.use(requireActiveTenantMembership);
 router.use(requireOrgAccess());
 router.use(demoContextMiddleware);
 

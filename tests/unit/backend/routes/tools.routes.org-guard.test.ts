@@ -15,6 +15,7 @@ vi.mock('../../../../server/src/controllers/ToolController.js', () => ({
     createToolSession: (_req: any, res: any) => res.status(200).json({ id: 'tool-1' }),
     listToolSessions: (_req: any, res: any) => res.status(200).json({ sessions: [] }),
     getToolsHub: (_req: any, res: any) => res.status(200).json({}),
+    suggestTool: (_req: any, res: any) => res.status(200).json({}),
     getToolDoDCheck: (_req: any, res: any) => res.status(200).json({}),
     getRuntimeDoDStatus: (_req: any, res: any) => res.status(200).json({}),
     approveDoDGate: (_req: any, res: any) => res.status(200).json({}),
@@ -24,13 +25,23 @@ vi.mock('../../../../server/src/controllers/ToolController.js', () => ({
     approveTool: (_req: any, res: any) => res.status(200).json({}),
     sendBackToDraft: (_req: any, res: any) => res.status(200).json({}),
     promoteToOutput: (_req: any, res: any) => res.status(200).json({}),
+    handoffSwotCandidate: (_req: any, res: any) => res.status(200).json({}),
     retryFromFailure: (_req: any, res: any) => res.status(200).json({}),
     generateInitiatives: (_req: any, res: any) => res.status(200).json({}),
     getGeneratedInitiatives: (_req: any, res: any) => res.status(200).json({}),
     listComments: (_req: any, res: any) => res.status(200).json({ comments: [] }),
     addComment: (_req: any, res: any) => res.status(201).json({}),
     deleteComment: (_req: any, res: any) => res.status(204).end(),
+    getHistory: (_req: any, res: any) => res.status(200).json({ history: [] }),
+    createSwotProposals: (_req: any, res: any) => res.status(201).json({}),
+    listSwotProposals: (_req: any, res: any) => res.status(200).json({ proposals: [] }),
+    acceptSwotProposal: (_req: any, res: any) => res.status(200).json({}),
+    rejectSwotProposal: (_req: any, res: any) => res.status(200).json({}),
   },
+}));
+
+vi.mock('../../../../server/src/middleware/auditsStrictMembership.middleware.js', () => ({
+  requireActiveTenantMembership: (_req: any, _res: any, next: () => void) => next(),
 }));
 
 vi.mock('../../../../server/src/middleware/auth.middleware.js', () => ({
@@ -60,6 +71,10 @@ vi.mock('../../../../server/src/middleware/validation.middleware.js', () => ({
 
 vi.mock('../../../../server/src/validators/tool.validators.js', () => ({
   CreateToolSessionSchema: {},
+  CreateSwotProposalsSchema: {},
+  AcceptSwotProposalSchema: {},
+  RejectSwotProposalSchema: {},
+  SuggestToolSchema: {},
   UpdateToolSessionSchema: {},
   RequestReviewSchema: {},
   ApproveToolSchema: {},
