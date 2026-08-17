@@ -9,7 +9,7 @@ let missedDurableAlertSignals = 0;
 async function recordNotificationAlert(row: OutboxRow, outcome: 'SUCCESS' | 'FAILURE'): Promise<void> {
   if (!durableOperationalAlertsEnabled()) return;
   try { await recordOperationalAlertSignal({ organizationId: row.organization_id, actorId: 'system:notification-outbox', correlationId: row.id, sourceType: 'notification_outbox', sourceId: row.id, kind: 'WRITE_FAILURE_RATE', outcome, idempotencyKey: `notification:${row.id}:${outcome}` }); }
-  catch (error) { missedDurableAlertSignals++; logger.warn('[NotificationOutbox] primary status committed; durable alert signal queued for operator repair', { id: row.id, outcome, error: error instanceof Error ? error.message : String(error) }); }
+  catch (error) { missedDurableAlertSignals++; logger.warn('[NotificationOutbox] primary status committed; missed alert signal counted in-process; no durable repair cursor', { id: row.id, outcome, error: error instanceof Error ? error.message : String(error) }); }
 }
 export function getMissedNotificationDurableAlertSignals(): number { return missedDurableAlertSignals; }
 

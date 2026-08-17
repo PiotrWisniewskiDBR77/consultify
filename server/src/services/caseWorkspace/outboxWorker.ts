@@ -344,7 +344,7 @@ async function runTickBody(
       ...(result.failed > 0 ? [recordOperationalAlertSignal({ ...base, sourceId: `tick:${bucket}:failure`, kind: 'WRITE_FAILURE_RATE', outcome: 'FAILURE', observedValue: result.failed, idempotencyKey: `case:${options.organizationId}:${bucket}:failure` })] : []),
     ]); } catch (error) {
       missedDurableAlertSignals++;
-      logger.warn(`[CaseWorkspaceOutboxWorker] primary tick outcome preserved; durable alert signal queued for operator repair: ${error instanceof Error ? error.message : String(error)}`);
+      logger.warn(`[CaseWorkspaceOutboxWorker] primary tick outcome preserved; missed alert signal counted in-process; no durable repair cursor: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 

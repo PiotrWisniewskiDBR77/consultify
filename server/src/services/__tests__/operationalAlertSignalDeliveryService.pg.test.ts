@@ -59,6 +59,9 @@ describe.skipIf(!REAL_PG)('OPS-OBS tenant signal delivery (real PostgreSQL)', ()
     await expect(recordOperationalAlertSignal(signal({ idempotencyKey: `${prefix}-disabled` }))).rejects.toThrow('OPS_ALERT_DURABLE_DISABLED');
     const override = await recordOperationalAlertSignal(signal({ idempotencyKey: `${prefix}-operator`, sourceType: 'operator_positive_control', metadata: { synthetic: true }, operatorOverride: true }));
     expect(override.signal_id).toBeTruthy();
+    process.env.OPERATIONAL_ALERT_LEDGER_ENABLED = 'false';
+    await expect(recordOperationalAlertSignal(signal({ idempotencyKey: `${prefix}-master-disabled-operator`, sourceType: 'operator_positive_control', metadata: { synthetic: true }, operatorOverride: true }))).rejects.toThrow('OPS_ALERT_DURABLE_DISABLED');
+    delete process.env.OPERATIONAL_ALERT_LEDGER_ENABLED;
     process.env.OPERATIONAL_ALERT_DURABLE_ENABLED = 'true';
     await recordOperationalAlertSignal(signal({ organizationId: otherOrg, idempotencyKey: `${prefix}-foreign` }));
     const db = new Client({ connectionString: DATABASE_URL }); await db.connect();

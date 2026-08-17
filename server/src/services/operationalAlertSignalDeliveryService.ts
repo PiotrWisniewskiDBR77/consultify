@@ -38,7 +38,10 @@ export interface OperationalAlertSignalInput {
 }
 
 export async function recordOperationalAlertSignal(input: OperationalAlertSignalInput) {
-  if (!durableOperationalAlertsEnabled()) {
+  if (process.env.OPERATIONAL_ALERT_LEDGER_ENABLED === 'false') {
+    throw new Error('OPS_ALERT_DURABLE_DISABLED');
+  }
+  if (process.env.OPERATIONAL_ALERT_DURABLE_ENABLED !== 'true') {
     if (!(input.operatorOverride === true && input.sourceType === 'operator_positive_control' && input.metadata?.synthetic === true)) {
       throw new Error('OPS_ALERT_DURABLE_DISABLED');
     }

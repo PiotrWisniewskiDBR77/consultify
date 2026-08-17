@@ -54,7 +54,7 @@ async function recordDurableWrite(event: RvnPlatformEventRow, row: RvnOutboxRow,
     idempotencyKey: `rvn:${row.outbox_id}:${outcome}`,
   }); } catch (error) {
     missedDurableAlertSignals++;
-    logger.warn('[RvnPlatformOutbox] primary outcome committed; durable alert signal queued for operator repair', { outboxId: row.outbox_id, outcome, error: error instanceof Error ? error.message : String(error) });
+    logger.warn('[RvnPlatformOutbox] primary outcome committed; missed alert signal counted in-process; no durable repair cursor', { outboxId: row.outbox_id, outcome, error: error instanceof Error ? error.message : String(error) });
   }
 }
 export function getMissedResultsDurableAlertSignals(): number { return missedDurableAlertSignals; }
