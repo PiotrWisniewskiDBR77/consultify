@@ -543,6 +543,22 @@ export const Scheduler = {
     });
     this.jobs.push(job29);
 
+    // OPS-OBS-001: persist alert transitions every 30 seconds. The durable
+    // service serializes each alert kind with an advisory transaction lock,
+    // so multiple replicas converge on one incident/event chain. Opt-out is
+    // reserved for emergency rollback; production defaults to durable state.
+    const job29a = cron.schedule('*/30 * * * * *', async () => {
+      if (process.env.OPERATIONAL_ALERT_LEDGER_ENABLED === 'false') return;
+      try {
+        const { persistCurrentOperationalAlerts } =
+          await import('../services/operationalAlertIncidentCron.js');
+        await persistCurrentOperationalAlerts();
+      } catch (err: any) {
+        logger.error('[Scheduler] Durable operational alert tick failed:', err?.message || err);
+      }
+    });
+    this.jobs.push(job29a);
+
     // 30. Organization Context External Queue Consumer - Run every 30 seconds when external queue configured.
     // Off by default: requires ORG_CONTEXT_QUEUE_BACKEND=external + scheduler enabled + pull URL set.
     const job30 = cron.schedule('*/30 * * * * *', async () => {
@@ -806,9 +822,8 @@ export const Scheduler = {
     const job42 = cron.schedule('* * * * *', async () => {
       if (process.env.COMPUTE_JOB_REAPER_CRON_ENABLED === 'false') return;
       try {
-        const { reapExpiredLeases } = await import(
-          '../services/finance/canonical/computeJobService.js'
-        );
+        const { reapExpiredLeases } =
+          await import('../services/finance/canonical/computeJobService.js');
         const reaped = await reapExpiredLeases({ batchSize: 100 });
         if (reaped.length > 0) {
           logger.warn('[Scheduler] Compute job lease reaper reclaimed abandoned jobs', {

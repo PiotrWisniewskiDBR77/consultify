@@ -14,8 +14,17 @@ Current production wiring:
   `X-Request-Id` is the correlation label.
 - Every Prometheus scrape samples the live primary PostgreSQL pool saturation before evaluating
   alerts. No database pool is initialized solely for a scrape.
-- These signals are in-memory per process. A real alert transport, durable incident state and a
-  multi-instance aggregation window remain separate release gates; restart clears the local window.
+- The scheduler evaluates the local bounded windows every 30 seconds and reconciles them into
+  `operational_alert_incidents`. PostgreSQL advisory locks and the one-open-incident index collapse
+  concurrent evaluators into one durable incident per kind.
+- `operational_alert_incident_events` is the append-only DETECTED/RECOVERED/ACKNOWLEDGED history.
+  Direct UPDATE or DELETE is rejected by PostgreSQL. A restart or a second process reads the same
+  open incident instead of silently clearing operational history.
+- An evaluator that has just started cannot recover another evaluator's active incident merely
+  because its local sample window is empty. Recovery is accepted only after the persisted
+  `last_breached_at` is older than the signal-specific recovery window.
+- A real paging transport, dashboard and deployed multi-instance observation window remain separate
+  release gates. Their absence does not authorize weakening or bypassing the durable ledger.
 
 1. `WRITE_FAILURE_RATE`: stop retries that can duplicate effects, trace the correlation ID through
    the owner writer and outbox, verify tenant/actor/source/result fields, then replay one idempotent
@@ -27,6 +36,8 @@ Current production wiring:
 4. `REPEATED_AUTH_DENIALS`: preserve denial correlation IDs, check tenant/role boundaries and rate
    limiting, and escalate suspected abuse. Do not weaken authorization to recover service.
 
-After the signal clears, call `acknowledgeRecovery(kind)` only after the relevant probe succeeds.
-Record `recoveredAt` and `acknowledgedAt`. If the alert remains active or has no recovery timestamp,
-acknowledgment must fail closed. The owner target remains 99.5% internal-beta availability.
+After the signal clears, the scheduler first persists `RECOVERED`. An operator may acknowledge the
+specific durable `incidentId` only after the relevant probe succeeds. `ACTIVE` incidents reject
+acknowledgment; a successful acknowledgment appends an `ACKNOWLEDGED` event and closes the open
+incident. Never acknowledge by kind alone because that can target the wrong occurrence. The owner
+target remains 99.5% internal-beta availability.
