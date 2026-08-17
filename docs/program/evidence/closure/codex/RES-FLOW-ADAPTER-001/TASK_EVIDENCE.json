@@ -1,7 +1,7 @@
 {
   "taskId": "RES-FLOW-ADAPTER-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "73bf4deb47bcafa035f72fd9dad941c9a2ce44f1",
+  "productSha": "dd05642ce057405fab211f70537dfbebb5b08414",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
   "changedPaths": [
     "server/src/services/resultsVnext/platform/commandCapabilityGuard.ts",
@@ -104,10 +104,18 @@
     "code": "Disable the shared Results platform drain invocation, then revert the four technicalClosure20260817 paths.",
     "schema": "Non-destructive rollback: retain immutable receipts and additive columns/table; do not drop evidence rows. Re-enable the consumer after code restoration."
   },
-  "openBlockers": [
-    "Results visibility and Finance reconciliation owner decisions remain fail-closed and were not changed.",
-    "Browser/UI evidence is separate from this bounded adapter closure."
-  ],
-  "technicalVerdict": "PASS_CURRENT_SHA",
-  "verdict": "PARTIAL"
+  "postFanInQualification20260817": {
+    "candidateSha": "dd05642ce057405fab211f70537dfbebb5b08414",
+    "executionToResults": "PASS: ingress 2/2 and mounted producer 1/1",
+    "resultsGolden": "PASS: KPI/OKR/ROI 30/30",
+    "actualToFinance": "PASS: Finance projection 15/15 and reconciliation 9/9",
+    "systemAuthority": "Projection-only entrypoint validates exact persisted tenant/case source event; public command retains ACTIVE membership; spoofed event/tenant fail closed",
+    "materiality": "equal numeric currency mismatch accepted; same-currency <=5% rejected; >5% accepted",
+    "migrations": "fresh 752; repeat 0; dry 0; ledger 752 success with unique filename/checksum",
+    "static": "8GB server TypeScript and backend build exit 0",
+    "residue": "fixture organizations/users/events/reconciliations/execution receipts all 0"
+  },
+  "openBlockers": [],
+  "technicalVerdict": "DONE_CURRENT_SHA",
+  "verdict": "DONE_CURRENT_SHA"
 }

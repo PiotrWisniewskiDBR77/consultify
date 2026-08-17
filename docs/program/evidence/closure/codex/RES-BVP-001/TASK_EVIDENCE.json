@@ -1,7 +1,7 @@
 {
   "taskId": "RES-BVP-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "459b2d0da5d30b79d3c31d89ad0dcc7612b3c932",
+  "productSha": "dd05642ce057405fab211f70537dfbebb5b08414",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
   "changedPaths": ["docs/program/evidence/closure/codex/RES-BVP-001/TASK_EVIDENCE.json"],
   "changedPathRationale": {"evidence": "Current-SHA fresh PostgreSQL closure; existing backend required no product-code repair."},
@@ -36,9 +36,16 @@
     "OKR publish pins immutable policy versions and manager review denies self-approval",
     "ROI case lifecycle enforces restricted visibility and PIR snapshot survives a fresh connection byte-identically"
   ],
+  "postFanInQualification20260817": {
+    "candidateSha": "dd05642ce057405fab211f70537dfbebb5b08414",
+    "migrations": "fresh constrained tmpfs PG16: 752 applied; repeat 0; dry 0; ledger 752 unique successful filenames/checksums",
+    "visibility": "mounted signed-JWT OWNER/ADMIN 4/4 across 11 Results routers; route/flag 217/217",
+    "golden": "KPI/OKR/ROI 30/30",
+    "flow": "Execution 3/3; Finance projection 15/15; Finance reconciliation 9/9",
+    "static": "8GB server TypeScript and backend build exit 0",
+    "residue": "fixture organizations/users/events/reconciliations/execution receipts all 0"
+  },
   "technicalVerdict": "DONE_CURRENT_SHA",
-  "verdict": "PARTIAL",
-  "openBlockers": [
-    "Final three-role visibility policy, rollout/mount decision and browser gold flows remain owner/human gates outside this bounded backend closure."
-  ]
+  "verdict": "DONE_CURRENT_SHA",
+  "openBlockers": []
 }

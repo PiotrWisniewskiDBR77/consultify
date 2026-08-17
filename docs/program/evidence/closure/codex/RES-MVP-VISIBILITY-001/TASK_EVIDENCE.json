@@ -1,7 +1,7 @@
 {
   "taskId": "RES-MVP-VISIBILITY-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "c8ffd7be0e9b848932064b70a5c8271a9da45f1e",
+  "productSha": "dd05642ce057405fab211f70537dfbebb5b08414",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
   "ownerDecision": {"recordId": "INTERNAL-BETA-OWNER-DECISIONS-20260817-AMENDMENT-01", "decisionId": "AMD-RES-VISIBILITY-001", "status": "APPROVED_RESTRICTED_SCOPE_IMPLEMENTATION_REQUIRED"},
   "amendmentSha": "617b5d29c229e6c073452a17c8da1888ce18aa8d59a5913fa0d9aa59b2272702",
@@ -16,7 +16,17 @@
   "negativeControls": {"default": "Results visibility remains restricted; no broader role matrix inferred"},
   "browserArtifacts": [],
   "rollback": {"code": "no code change", "policy": "retain current restrictive policy"},
-  "technicalVerdict": "FIX_REQUIRED_OWNER_DECISION_COMPLETE",
-  "verdict": "PARTIAL",
-  "openBlockers": ["Repository-owned technical gap: prove and, where absent, enforce OWNER/ADMIN allow plus Manager/Consultant/Member/respondent/partner and cross-tenant denial across every canonical Results route, cold session and direct deep link."]
+  "postFanInQualification20260817": {
+    "candidateSha": "dd05642ce057405fab211f70537dfbebb5b08414",
+    "decision": "Internal beta admits only authoritative ACTIVE OWNER or ADMIN; no wildcard or super-admin bypass",
+    "mounted": "4/4 signed-JWT real PostgreSQL tests across all 11 Results router instances",
+    "negativeControls": "MEMBER, CONSULTANT, revoked, missing, foreign tenant, body spoof, token-role/super-admin spoof and DB outage fail closed",
+    "regression": "route/flag 217/217; Results golden 30/30",
+    "migrations": "fresh 752; repeat 0; dry 0; ledger/checksum 752/752",
+    "static": "8GB server TypeScript and backend build exit 0",
+    "residue": "0"
+  },
+  "technicalVerdict": "DONE_CURRENT_SHA",
+  "verdict": "DONE_CURRENT_SHA",
+  "openBlockers": []
 }
