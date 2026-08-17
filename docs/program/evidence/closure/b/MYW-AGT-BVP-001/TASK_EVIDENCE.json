@@ -1,49 +1,102 @@
 {
   "taskId": "MYW-AGT-BVP-001",
-  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "99406b784bf1332beb369be161e75a2422f00fc6",
+  "baselineSha": "5d9ae8e61488d4fa2a103f51833b0d3f45a6df1c",
+  "historicalLaneBaselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "productSha": "7583ca8f86c37e0d7dbc1175b2ccbbceb261e9f6",
+  "currentQualificationSha": "2441b89b5cd5463c8aca1dd76ee39c2d4a765dad",
+  "currentShaDelta": "The only commit after the qualified combined product state is test-only OPS commit 2441b89b5c, changing server/src/services/__tests__/operationalAlertIncidentService.pg.test.ts; it has no MYW overlap.",
   "leaseSha256": "f4d75f0aed94f2e34acaec63d91c245495e7e0f658aa36d1122342c2acecc612",
-  "toolchain": {
-    "node": "v24.12.0",
-    "npm": "11.6.2",
-    "vitest": "4.1.8",
-    "playwright": "1.62.1",
-    "postgres": "16.14 pgvector/pgvector:pg16",
-    "docker": "29.3.0"
+  "decision": {
+    "id": "DEC-AGT-AUTONOMY-001",
+    "status": "APPROVED_RESTRICTED_SCOPE",
+    "scope": "Human-requested proposal-only materialization. A human supplies target, content and source identity; a different active human approves. Autonomous selection, approval and worker enablement remain default-OFF and excluded."
   },
+  "technicalVerdict": "PASS_HUMAN_REQUESTED_ONLY_CANONICAL_MATERIALIZATION",
+  "verdict": "DONE_CURRENT_SHA",
   "laneGates": {
-    "G0": "PASS — branch codex/closure-claude-b-transformation, HEAD==baseline at start, verify-closure-lane.mjs PASS",
-    "G1": "PASS — type-check exit 0, build:backend exit 0, build exit 0, discovery-gate PASS 4997/4997",
-    "G3_strict_migration": "PASS — fresh/repeat/dry-run exit 0; schema_migrations 703 success / 0 failed / 0 pending; 703/703 checksums independently verified; 1678 tables",
-    "G2_lane_baseline": "RED (pre-existing at sealed baseline): 747 collected of 761 real test files; 107 files failed / 557 passed / 83 skipped; 287 tests failed / 4270 passed / 617 skipped",
-    "G2_defects": "14 leased acceptance tests uncollectable by the mandated command; 110 further realDB files run without a DB by it; backend tests execute under jsdom because environmentMatchGlobs is dead in Vitest 4"
+    "G0": "PASS — integration baseline 5d9ae8e614; combined MYW product 7583ca8f86; current 2441b89b5c differs only by one disjoint OPS test; worktree clean.",
+    "G1": "PASS — 8 GB type-check exit 0; build:backend exit 0; 9 runtime mirrors verified.",
+    "G2": "PASS — MYW realPG 8/8, route 2/2, mounted signed-JWT Task+Decision+Notebook 1/1, canonical writer regressions 25/25 with 8 pre-existing TODO.",
+    "G3_strict_migration": "PASS — exact combined fresh tmpfs PostgreSQL 747/747; repeat 0; dry-run 0; 747 successful unique ledger rows; checksum-null 0.",
+    "G3_late_upgrade": "PASS — retained two generic duplicate Decision and two generic duplicate Notebook rows sharing (organization_id,idempotency_key), while installing MYW-namespaced unique indexes; retained 2/2."
+  },
+  "historicalQualification": {
+    "status": "SUPERSEDED_BY_IMPLEMENTATION_AND_CURRENT_SHA_PROOF",
+    "laneG2Red": "At sealed lane baseline: 747/761 real test files collected; 107 failed, 557 passed, 83 skipped; 287 tests failed, 4270 passed, 617 skipped.",
+    "laneRealDb": "110 leased realDB files: 77 passed, 7 failed, 26 skipped; 675 tests: 565 passed, 51 failed, 59 skipped.",
+    "recoveredAcceptance": "14 acceptance files: 105 tests, 91 passed, 14 failed.",
+    "harnessDefects": "14 leased acceptance files were uncollectable by the old command; 110 realDB files ran without DB configuration; backend tests inherited jsdom under ineffective old environment routing.",
+    "supersededBlocker": "The historical event->inbox investigation found a static blueprint and opposite-direction inbox projection, with no authorized artifact writer. That remains true history but is not the implemented contract. The restricted adapter starts from an explicit human request and separate approval, then invokes canonical writers; it does not claim autonomous event->inbox planning."
   },
   "ownerTables": [
-    "transformation_cases",
-    "canonical_inbox_items"
+    "myw_agent_materialization_proposals",
+    "myw_agent_materialization_approvals",
+    "myw_agent_materialization_receipts",
+    "myw_agent_canonical_outbox",
+    "tasks",
+    "decisions",
+    "decision_stakeholders",
+    "decision_history",
+    "notebook_pages"
   ],
-  "changedPaths": [],
-  "changedPathRationale": {},
+  "changedPaths": [
+    "server/migrations/20261001_myw_agent_approved_materialization.sql",
+    "server/src/routes/my-work.routes.ts",
+    "server/src/routes/my-work/agent-materialization.routes.ts",
+    "server/src/services/TaskService.ts",
+    "server/src/services/decisionService.ts",
+    "server/src/services/notebookService.ts",
+    "server/src/services/myWork/agentApprovedMaterializationService.ts",
+    "server/src/services/myWork/__tests__/agentApprovedMaterializationService.pg.test.ts",
+    "tests/acceptance/myw-agent-approved-materialization.realdb.test.ts",
+    "tests/unit/backend/myw-agent-approved-materialization.routes.test.ts",
+    "docs/program/evidence/closure/b/MYW-AGT-BVP-001/TASK_EVIDENCE.json"
+  ],
+  "changedPathRationale": {
+    "governance": "Immutable versioned proposal, append-only separate approval, CAS state and durable receipt with lease/reclaim.",
+    "canonicalWriters": "Task, Decision and Notebook use canonical services with caller idempotency/source identity; no second artifact store.",
+    "requiredSteps": "Decision resumes core, stakeholder/history and durable notification intent. Notebook resumes core, provenance/FTS and durable intent. Receipt succeeds after required canonical steps.",
+    "outboxBoundary": "myw_agent_canonical_outbox is a durable intent ledger only. No consumer, delivery, notification completion or exactly-once embedding is claimed.",
+    "auth": "Mounted MyWork signed-JWT router derives tenant/user identity and rechecks ACTIVE membership."
+  },
   "commands": [
-    "node scripts/cleanup/verify-closure-lane.mjs b closure-execution-baseline-v2-20260816",
-    "jq -r '.tests.vitest[]' docs/cleanup/agents/generated/CLAUDE_LANE_B_PATH_LEASE.json | xargs -n 80 npx vitest run --no-file-parallelism --maxWorkers=1 --maxConcurrency=2 --retry=0",
-    "CI=true DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts  (fresh, repeat, --dry-run)"
+    "NODE_ENV=test DB_TYPE=postgres DATABASE_URL=<fresh-tmpfs> npm run db:migrate:strict — Applying migrations: 747, exit 0",
+    "repeat — Applying migrations: 0; dry-run — Pending migrations: 0; ledger 747/747/747 success; checksum-null 0",
+    "late-upgrade seeded generic duplicate Decision and Notebook groups, removed only MYW-owned objects/ledger row, then strict apply 1 — exit 0; duplicates retained 2/2",
+    "RUN_DB_TESTS=1 vitest MYW service plus route contract — 2 files, 10/10",
+    "RUN_DB_TESTS=1 vitest acceptance config mounted flow — 1 file, 1/1 covering all three targets",
+    "vitest Decision/Notebook canonical regressions — 3 files, 25 passed, 8 pre-existing TODO",
+    "NODE_OPTIONS=--max-old-space-size=8192 npm run type-check — exit 0",
+    "npm run build:backend — exit 0; 9 runtime mirrors verified",
+    "jq empty; scripts/cleanup/report-closure-progress.mjs; git diff --check — exit 0"
   ],
   "denominators": {
-    "task": "Evidence-only trace; no code change (fix surface is outside the lease)",
-    "laneRealDbPass": "110 leased realDB files on an isolated DB: 77 passed / 7 failed / 26 skipped; 675 tests: 565 passed / 51 failed / 59 skipped",
-    "recoveredAcceptance": "14 leased acceptance files the mandated G2 command cannot collect, run under vitest.acceptance.config.ts: 105 tests, 91 passed / 14 failed"
+    "migration": "fresh 747/747 successful unique filenames; repeat 0; dry-run 0; checksum-null 0; late apply 1/1, duplicate groups retained 2/2",
+    "realPgService": "1/1 file, 8/8 tests",
+    "routeContract": "1/1 file, 2/2 tests",
+    "mountedSignedJwt": "1/1 file, 1/1 test with Task, Decision and Notebook subflows",
+    "canonicalWriterRegression": "3/3 files, 25/25 executed passed; 8 pre-existing TODO",
+    "historicalLaneRed": "Preserved under historicalQualification; not silently converted into a current green lane claim."
   },
   "fixtures": {
-    "prefix": "claude_b_",
-    "isolatedDb": "consultify-closure-b-64f50785 @127.0.0.1:55811; verification replica @55812; clean-room @55813",
-    "env": "NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false (all three required — NODE_ENV=test alone substitutes a mock DB)"
+    "database": "Own disposable tmpfs pgvector PostgreSQL 16 on the combined product state; removed after qualification.",
+    "identity": "Random UUID-prefixed organizations, users, plans and idempotency keys.",
+    "cleanup": "Final org/proposal/approval/receipt/outbox/task/decision/notebook residue 0/0/0/0/0/0/0/0."
   },
-  "negativeControls": {},
+  "negativeControls": {
+    "defaultOff": "No autonomy, scheduler, provider, worker bootstrap or feature default was enabled.",
+    "humanSeparation": "Requester cannot self-approve; rejected and expired proposals create no artifact.",
+    "tenantAndMembership": "Body identity spoof rejected; foreign tenant hidden; revoked membership fails closed.",
+    "idempotencyAndCas": "Eight-way replay converges; collision and stale versions fail closed.",
+    "sourceTruth": "Source plan version/hash drift fails closed.",
+    "crashRecovery": "Task after core, Decision after history-before-intent, Notebook after core-before-provenance/FTS reconcile to one target and completed required steps.",
+    "appendOnly": "Proposal/approval and receipt immutable payload are DB-enforced; receipt status follows its explicit state machine.",
+    "noDeliveryClaim": "Durable intent rows are persisted, but no consumer/delivery/external notification or exactly-once embedding claim is made."
+  },
   "browserArtifacts": [],
   "rollback": {
-    "method": "Revert the lane commits; all changes are additive application code plus new tests. NO migration was added by this lane, so no schema rollback is required and old readers are unaffected."
+    "method": "Keep autonomy/default OFF and revert the MYW product chain if required. Additive governance and intent rows remain forensic history and must not be destructively deleted.",
+    "invalidation": "Requalify after MyWork auth ordering, membership policy, source identity, proposal CAS, canonical writer semantics or migration ordering changes."
   },
-  "verdict": "BLOCKED_OWNER",
-  "openBlocker": "Packet chain event->inbox->decision/task/notebook does NOT exist: materialization runs the OPPOSITE direction (inbox is a projection reading FROM tasks/decisions/notifications); no triage or AI-assist path creates an artifact. conversation->plan is not derived from the conversation — compileT01TransformationPlan returns a STATIC blueprint identical for every case, several steps self-reporting NOT_CONNECTED. Consolidating decisions/tasks writers needs 19 and 24 files respectively that Lane B may not edit."
+  "openBlocker": "None for the restricted human-requested-only adapter. Autonomous selection/materialization remains excluded and default-OFF by decision, not an implementation blocker."
 }
