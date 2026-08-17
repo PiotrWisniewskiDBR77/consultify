@@ -1,7 +1,7 @@
 {
   "taskId": "EXE-MVP-ACTIONS-001",
   "baselineSha": "eb310fb344d3339c67cad81188ce13c6f950d100",
-  "productSha": "d9fcb6fea8",
+  "productSha": "d9fcb6fea8ff5d063751d9712931ccfebaf37e3c",
   "leaseSha256": "f4d75f0aed94f2e34acaec63d91c245495e7e0f658aa36d1122342c2acecc612",
   "changedPaths": [
     "server/migrations/20260917_execution_action_audit_immutability.sql",
