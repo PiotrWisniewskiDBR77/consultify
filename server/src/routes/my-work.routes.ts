@@ -62,6 +62,7 @@ import {
   validateAndNormalizeGraph,
 } from '../validators/ideaWorkspaceGraph.validators.js';
 import calendarRouter from './my-work/calendar.routes.js';
+import agentMaterializationRouter from './my-work/agent-materialization.routes.js';
 import decisionsRouter from './my-work/decisions.routes.js';
 import focusRouter from './my-work/focus.routes.js';
 import homeRouter from './my-work/home.routes.js';
@@ -93,6 +94,7 @@ router.use(apiAuthRateLimiter);
 router.use(verifyToken);
 router.use(validateOrgMembership);
 router.use(demoContextMiddleware);
+router.use(agentMaterializationRouter);
 
 type InboxItemType =
   | 'new_assignment'
