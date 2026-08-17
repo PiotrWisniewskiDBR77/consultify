@@ -105,7 +105,8 @@ BEGIN
   SELECT string_agg(format('%s:%s', column_name, data_type), ', ' ORDER BY column_name)
     INTO v_bad_types
     FROM information_schema.columns
-   WHERE table_name = 'results_writer_observations'
+   WHERE table_schema = 'public'
+     AND table_name = 'results_writer_observations'
      AND (
        (column_name IN ('observation_id','organization_id','actor_user_id','writer_family',
                         'operation','endpoint','correlation_id') AND data_type <> 'text')
@@ -119,7 +120,7 @@ BEGIN
   --    it must be a UNIQUE index on this table, over exactly
   --    (organization_id, correlation_id, writer_family, operation) IN THAT ORDER,
   --    and unconditional (a partial index would leave rows undeduplicated).
-  IF EXISTS (SELECT 1 FROM pg_class WHERE relname = 'uq_results_writer_observation_tenant_correlated_op') THEN
+  IF to_regclass('public.uq_results_writer_observation_tenant_correlated_op') IS NOT NULL THEN
     SELECT i.indisunique,
            pg_get_expr(i.indpred, i.indrelid),
            string_agg(a.attname, ',' ORDER BY k.ord)
@@ -127,7 +128,7 @@ BEGIN
       FROM pg_index i
       CROSS JOIN LATERAL unnest(i.indkey) WITH ORDINALITY AS k(attnum, ord)
       JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = k.attnum
-     WHERE i.indexrelid = 'uq_results_writer_observation_tenant_correlated_op'::regclass
+     WHERE i.indexrelid = 'public.uq_results_writer_observation_tenant_correlated_op'::regclass
        AND i.indrelid = v_rel
      GROUP BY i.indisunique, i.indpred, i.indrelid;
 
@@ -151,7 +152,7 @@ BEGIN
   -- 4. The writer-family CHECK, if a constraint with that name already exists:
   --    its DEFINITION must whitelist exactly the five known families. A
   --    same-named CHECK over a different family set would let mislabelled rows in.
-  SELECT pg_get_constraintdef(c.oid)
+  SELECT lower(regexp_replace(regexp_replace(pg_get_constraintdef(c.oid), '::text', '', 'g'), '[[:space:]()'']', '', 'g'))
     INTO v_check_def
     FROM pg_constraint c
    WHERE c.conrelid = v_rel
@@ -159,17 +160,29 @@ BEGIN
      AND c.conname = 'results_writer_observations_writer_family_check';
 
   IF v_check_def IS NOT NULL THEN
-    IF NOT (
-      v_check_def LIKE '%legacy_kpi_crud%'
-      AND v_check_def LIKE '%kpi_reports%'
-      AND v_check_def LIKE '%vnext_kpi%'
-      AND v_check_def LIKE '%execution_results%'
-      AND v_check_def LIKE '%results_finance%'
-      AND v_check_def LIKE '%writer_family%'
-    ) THEN
+    IF v_check_def <>
+      'checkwriter_family=anyarray[legacy_kpi_crud,kpi_reports,vnext_kpi,execution_results,results_finance]' THEN
       v_problems := v_problems ||
         format('writer_family CHECK has an unexpected definition: %s', v_check_def);
     END IF;
+  END IF;
+
+  -- 5. Existing rows must already be unique under the target tenant-scoped
+  -- key. Detect this in the preflight block so a duplicate fails before any
+  -- additive columns/constraints are applied.
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+     WHERE table_schema = 'public' AND table_name = 'results_writer_observations'
+       AND column_name IN ('organization_id','correlation_id','writer_family','operation')
+     GROUP BY table_schema, table_name HAVING count(*) = 4
+  ) THEN
+    v_problems := v_problems || 'target dedupe columns are incomplete';
+  ELSIF EXISTS (
+    SELECT 1 FROM results_writer_observations
+     GROUP BY organization_id, correlation_id, writer_family, operation
+    HAVING count(*) > 1
+  ) THEN
+    v_problems := v_problems || 'duplicate rows exist under the target tenant-scoped key';
   END IF;
 
   IF array_length(v_problems, 1) > 0 THEN
@@ -208,7 +221,7 @@ DO $$
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint
-     WHERE conrelid = 'results_writer_observations'::regclass
+     WHERE conrelid = 'public.results_writer_observations'::regclass
        AND conname  = 'results_writer_observations_writer_family_check'
   ) THEN
     ALTER TABLE results_writer_observations
@@ -284,7 +297,7 @@ END $$;
 
 -- Retire the pre-corrective, tenant-BLIND unique index. Leaving it in place
 -- would keep collapsing a second tenant's identically-correlated observation.
-DROP INDEX IF EXISTS uq_results_writer_observation_correlated_op;
+DROP INDEX IF EXISTS public.uq_results_writer_observation_correlated_op;
 
 -- Corrected key: a retry of the same correlated operation WITHIN ONE TENANT
 -- records exactly one row; the same correlation id in another tenant is a
@@ -344,7 +357,7 @@ BEGIN
   SELECT string_agg(column_name || ':' || data_type, ',' ORDER BY column_name)
     INTO v_cols
     FROM information_schema.columns
-   WHERE table_name = 'results_writer_observations';
+   WHERE table_schema = 'public' AND table_name = 'results_writer_observations';
 
   IF v_cols IS DISTINCT FROM
      'actor_user_id:text,correlation_id:text,created_at:timestamp with time zone,endpoint:text,observation_id:text,operation:text,organization_id:text,writer_family:text'
@@ -358,32 +371,29 @@ BEGIN
       FROM pg_constraint c
       CROSS JOIN LATERAL unnest(c.conkey) WITH ORDINALITY AS k(attnum, ord)
       JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = k.attnum
-     WHERE c.conrelid = 'results_writer_observations'::regclass AND c.contype = 'p'
+     WHERE c.conrelid = 'public.results_writer_observations'::regclass AND c.contype = 'p'
   ) IS DISTINCT FROM 'observation_id' THEN
     v_problems := v_problems || 'PRIMARY KEY is not exactly (observation_id)';
   END IF;
 
   -- CHECK by DEFINITION: must whitelist exactly the five known families.
   IF (
-    SELECT pg_get_constraintdef(c.oid)
+    SELECT lower(regexp_replace(regexp_replace(pg_get_constraintdef(c.oid), '::text', '', 'g'), '[[:space:]()'']', '', 'g'))
       FROM pg_constraint c
-     WHERE c.conrelid = 'results_writer_observations'::regclass
+     WHERE c.conrelid = 'public.results_writer_observations'::regclass
        AND c.contype = 'c'
        AND c.conname = 'results_writer_observations_writer_family_check'
   ) IS NULL THEN
     v_problems := v_problems || 'missing writer_family CHECK constraint';
-  ELSIF NOT EXISTS (
-    SELECT 1 FROM pg_constraint c
-     WHERE c.conrelid = 'results_writer_observations'::regclass
+  ELSIF (
+    SELECT lower(regexp_replace(regexp_replace(pg_get_constraintdef(c.oid), '::text', '', 'g'), '[[:space:]()'']', '', 'g'))
+      FROM pg_constraint c
+     WHERE c.conrelid = 'public.results_writer_observations'::regclass
        AND c.contype = 'c'
        AND c.conname = 'results_writer_observations_writer_family_check'
-       AND pg_get_constraintdef(c.oid) LIKE '%legacy_kpi_crud%'
-       AND pg_get_constraintdef(c.oid) LIKE '%kpi_reports%'
-       AND pg_get_constraintdef(c.oid) LIKE '%vnext_kpi%'
-       AND pg_get_constraintdef(c.oid) LIKE '%execution_results%'
-       AND pg_get_constraintdef(c.oid) LIKE '%results_finance%'
-  ) THEN
-    v_problems := v_problems || 'writer_family CHECK does not whitelist the five known families';
+  ) IS DISTINCT FROM
+    'checkwriter_family=anyarray[legacy_kpi_crud,kpi_reports,vnext_kpi,execution_results,results_finance]' THEN
+    v_problems := v_problems || 'writer_family CHECK is not the exact five-family whitelist';
   END IF;
 
   -- Unique index by DEFINITION: unique, unconditional, exact key and order.
@@ -392,8 +402,8 @@ BEGIN
       FROM pg_index i
       CROSS JOIN LATERAL unnest(i.indkey) WITH ORDINALITY AS k(attnum, ord)
       JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = k.attnum
-     WHERE i.indexrelid = 'uq_results_writer_observation_tenant_correlated_op'::regclass
-       AND i.indrelid = 'results_writer_observations'::regclass
+     WHERE i.indexrelid = 'public.uq_results_writer_observation_tenant_correlated_op'::regclass
+       AND i.indrelid = 'public.results_writer_observations'::regclass
        AND i.indisunique
        AND i.indpred IS NULL
   ) IS DISTINCT FROM 'organization_id,correlation_id,writer_family,operation' THEN
@@ -402,13 +412,13 @@ BEGIN
   END IF;
 
   IF EXISTS (
-    SELECT 1 FROM pg_class WHERE relname = 'uq_results_writer_observation_correlated_op'
+    SELECT 1 WHERE to_regclass('public.uq_results_writer_observation_correlated_op') IS NOT NULL
   ) THEN
     v_problems := v_problems || 'pre-corrective tenant-blind unique index still present';
   END IF;
 
   IF (SELECT count(*) FROM pg_trigger
-       WHERE tgrelid = 'results_writer_observations'::regclass
+       WHERE tgrelid = 'public.results_writer_observations'::regclass
          AND NOT tgisinternal
          AND tgname IN ('trg_results_writer_observation_no_update',
                         'trg_results_writer_observation_no_delete')) <> 2

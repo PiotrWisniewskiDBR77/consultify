@@ -29,18 +29,28 @@ function read(relativeToServerSrc: string): string {
   return readFileSync(path.join(SERVER_SRC, relativeToServerSrc), 'utf8');
 }
 
-/** Counts `router.post|put|patch|delete(` registrations. */
+/** Counts conventional `router` and named `*Router` write registrations. */
 function countWriteSites(source: string): number {
-  return (source.match(/router\.(post|put|patch|delete)\(/g) ?? []).length;
+  return (source.match(/\b(?:router|[A-Za-z_$][\w$]*Router)\.(?:post|put|patch|delete)\(/g) ?? [])
+    .length;
+}
+
+function discoveredAsResultsSurface(relativeEntry: string, source: string): boolean {
+  return (
+    /result|benefit/i.test(relativeEntry) ||
+    /publish-to-results|syncToModule\([^\n]*['"]results['"]/i.test(source)
+  );
 }
 
 /** Every distinct Results route file named by the inventory. */
 const ROUTE_FILES = Array.from(
-  new Set(RESULTS_WRITER_INVENTORY.filter((e) => e.source.startsWith('routes/')).map((e) => e.source))
+  new Set(
+    RESULTS_WRITER_INVENTORY.filter((e) => e.source.startsWith('routes/')).map((e) => e.source)
+  )
 );
 
 /**
- * FILESYSTEM DISCOVERY — makes 216 a discovered denominator rather than a
+ * FILESYSTEM DISCOVERY — makes 217 a discovered denominator rather than a
  * hand-maintained list.
  *
  * Walks `server/src/routes` and returns every non-test `.ts` file whose path
@@ -59,7 +69,8 @@ function discoverResultsRouteFiles(dir = 'routes'): string[] {
         continue;
       }
       if (!entry.endsWith('.ts')) continue;
-      if (!/result|benefit/i.test(relativeEntry)) continue;
+      const source = readFileSync(path.join(SERVER_SRC, relativeEntry), 'utf8');
+      if (!discoveredAsResultsSurface(relativeEntry, source)) continue;
       found.push(relativeEntry);
     }
   };
@@ -72,13 +83,20 @@ describe('Results writer inventory — denominator gate', () => {
     const mismatches: string[] = [];
 
     for (const file of ROUTE_FILES) {
-      const onDisk = countWriteSites(read(file));
-      const declared = RESULTS_WRITER_INVENTORY.filter((e) => e.source === file).reduce(
-        (total, e) => total + e.writeSites,
-        0
-      );
+      const source = read(file);
+      const entries = RESULTS_WRITER_INVENTORY.filter((e) => e.source === file);
+      const selectors = entries.filter((e) => e.routeSelector);
+      const onDisk = selectors.length
+        ? selectors.reduce(
+            (total, entry) => total + source.split(entry.routeSelector as string).length - 1,
+            0
+          )
+        : countWriteSites(source);
+      const declared = entries.reduce((total, e) => total + e.writeSites, 0);
       if (onDisk !== declared) {
-        mismatches.push(`${file}: ${onDisk} write sites on disk, ${declared} declared in inventory`);
+        mismatches.push(
+          `${file}: ${onDisk} write sites on disk, ${declared} declared in inventory`
+        );
       }
     }
 
@@ -103,10 +121,19 @@ describe('Results writer inventory — denominator gate', () => {
     expect(missingFromDisk).toEqual([]);
 
     // The discovered write-site total IS the denominator.
-    const discoveredTotal = discoveredWithWrites.reduce(
-      (total, file) => total + countWriteSites(read(file)),
-      0
-    );
+    const discoveredTotal = discoveredWithWrites.reduce((total, file) => {
+      const entries = RESULTS_WRITER_INVENTORY.filter((entry) => entry.source === file);
+      const selectors = entries.filter((entry) => entry.routeSelector);
+      return (
+        total +
+        (selectors.length
+          ? selectors.reduce(
+              (sum, entry) => sum + read(file).split(entry.routeSelector as string).length - 1,
+              0
+            )
+          : countWriteSites(read(file)))
+      );
+    }, 0);
     expect(discoveredTotal).toBe(RESULTS_WRITER_DENOMINATOR.totalHttpWriteSites);
   });
 
@@ -128,13 +155,15 @@ describe('Results writer inventory — denominator gate', () => {
     // Ground truth: `observeWriter({` for direct call sites, plus this router's
     // own local helper `observeVnextKpiWriter(` for the vNext KPI file.
     const actual: Record<string, number> = {
-      'routes/benefits.routes.ts': (read('routes/benefits.routes.ts').match(/observeWriter\(\{/g) ?? [])
-        .length,
+      'routes/benefits.routes.ts': (
+        read('routes/benefits.routes.ts').match(/observeWriter\(\{/g) ?? []
+      ).length,
       'routes/results-kpi-reports.routes.ts': (
         read('routes/results-kpi-reports.routes.ts').match(/observeWriter\(\{/g) ?? []
       ).length,
-      'routes/v8/results.routes.ts': (read('routes/v8/results.routes.ts').match(/observeWriter\(\{/g) ?? [])
-        .length,
+      'routes/v8/results.routes.ts': (
+        read('routes/v8/results.routes.ts').match(/observeWriter\(\{/g) ?? []
+      ).length,
       // The 11 vNext sites call the local helper, which wraps observeWriter once.
       'routes/resultsVnext/kpi.routes.ts': (
         read('routes/resultsVnext/kpi.routes.ts').match(/observeVnextKpiWriter\(req, auth,/g) ?? []
@@ -166,8 +195,8 @@ describe('Results writer inventory — denominator gate', () => {
     // The packet's actual scope, asserted so nobody can later describe it as
     // "all Results writers" without this test failing.
     expect(d.observedHttpWriteSites).toBe(20);
-    expect(d.unobservedHttpWriteSites).toBe(196);
-    expect(d.totalHttpWriteSites).toBe(216);
+    expect(d.unobservedHttpWriteSites).toBe(197);
+    expect(d.totalHttpWriteSites).toBe(217);
     expect(d.observedServiceWriteSites).toBe(3);
     // 20 sites cover 22 endpoints: the lifecycle factory site mounts 3.
     expect(d.observedEndpoints).toBe(22);

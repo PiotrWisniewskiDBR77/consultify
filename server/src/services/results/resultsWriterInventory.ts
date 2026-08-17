@@ -10,7 +10,7 @@
  * EXPLICITLY_UNOBSERVED — with a reason and an owner blocker for each gap.
  *
  * SCOPE OF THE CURRENT PACKET, STATED HONESTLY
- * This packet instruments a SUBSET: 20 HTTP write sites out of 216 Results write
+ * This packet instruments a SUBSET: 20 HTTP write sites out of 217 discovered Results write
  * sites, plus 3 non-HTTP service sites. It is NOT a census of Results writers.
  * The un-instrumented remainder is enumerated below rather than omitted, so the
  * gap is visible instead of implied.
@@ -24,12 +24,13 @@
  *
  * COUNTING CONVENTION — THE DENOMINATOR IS DISCOVERED, NOT HAND-LISTED
  * A "write site" is one `router.post|put|patch|delete(...)` registration in a
- * Results route file. The 216 total is produced by FILESYSTEM DISCOVERY:
+ * Results route file. The 217 total is produced by FILESYSTEM DISCOVERY:
  * `__tests__/resultsWriterInventory.denominator.test.ts` walks
  * `server/src/routes`, selects every non-test `.ts` whose path matches
- * result/benefit, counts its write sites, and fails if any writer-bearing file is
- * absent from this inventory (or if a listed file no longer exists). So a new
- * Results router cannot quietly shrink the world this ledger claims to describe.
+ * result/benefit plus semantic cross-module producers such as
+ * `publish-to-results`, counts router registrations (including named `*Router`
+ * identifiers), and fails if any writer-bearing file is absent from this
+ * inventory. So a new Results router cannot quietly shrink the world described.
  *
  * One site can mount several endpoints: `kpi.routes.ts`'s `mountLifecycleRoute`
  * factory is a single site serving activate/suspend/archive, which is why 20
@@ -49,6 +50,8 @@ export interface ResultsWriterInventoryEntry {
   methods: Array<'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'SERVICE'>;
   /** Number of `router.post|put|patch|delete` sites in `source` covered by this entry. */
   writeSites: number;
+  /** Optional exact route fragment when only a semantic cross-module writer in a larger router is counted. */
+  routeSelector?: string;
   /** Endpoints served by those sites (differs from writeSites only where a factory mounts several). */
   endpoints: number;
   family: ResultsWriterFamily | null;
@@ -88,7 +91,8 @@ export const OBSERVED_WRITERS: ResultsWriterInventoryEntry[] = [
     effect: 'results_kpi_report_snapshots + a Report Builder report artifact',
     status: 'OBSERVED',
     observationSite: 'observeWriter() after createSnapshot / refreshSnapshot',
-    reason: 'KPI report snapshot create + refresh, both with a live UI caller (ResultsKpiReportsView).',
+    reason:
+      'KPI report snapshot create + refresh, both with a live UI caller (ResultsKpiReportsView).',
     ownerBlocker: null,
   },
   {
@@ -98,9 +102,11 @@ export const OBSERVED_WRITERS: ResultsWriterInventoryEntry[] = [
     writeSites: 11,
     endpoints: 13,
     family: 'vnext_kpi',
-    effect: 'rvn_kpi_definitions, rvn_kpi_definition_versions, rvn_kpi_measurements, rvn_platform_events',
+    effect:
+      'rvn_kpi_definitions, rvn_kpi_definition_versions, rvn_kpi_measurements, rvn_platform_events',
     status: 'OBSERVED',
-    observationSite: 'observeVnextKpiWriter() at 11 sites; the lifecycle factory site covers 3 endpoints',
+    observationSite:
+      'observeVnextKpiWriter() at 11 sites; the lifecycle factory site covers 3 endpoints',
     reason:
       'The vNext KPI lifecycle/measurement writers — the successor candidate whose real usage the cutover question is about.',
     ownerBlocker: null,
@@ -114,7 +120,8 @@ export const OBSERVED_WRITERS: ResultsWriterInventoryEntry[] = [
     family: 'results_finance',
     effect: 'v8_kpi_finance_reconciliations',
     status: 'OBSERVED',
-    observationSite: 'observeWriter() after pullAndReconcileInitiative in POST /reconciliations/pull',
+    observationSite:
+      'observeWriter() after pullAndReconcileInitiative in POST /reconciliations/pull',
     reason:
       'Results -> Finance reconciliation. Instrumented at the HANDLER, not in the service: healthProbeService calls pullAndReconcileInitiative directly, and probe traffic must not count as real usage.',
     ownerBlocker: null,
@@ -154,6 +161,22 @@ export const OBSERVED_WRITERS: ResultsWriterInventoryEntry[] = [
  * these requires an owner-approved allowlist, which does not exist yet.
  */
 export const UNOBSERVED_WRITERS: ResultsWriterInventoryEntry[] = [
+  {
+    source: 'routes/table-platform.routes.ts',
+    mount: '/api/table-platform/governed-models/:modelId/publish-to-results',
+    methods: ['POST'],
+    writeSites: 1,
+    routeSelector: "router.post('/governed-models/:modelId/publish-to-results'",
+    endpoints: 1,
+    family: null,
+    effect: "syncToModule(modelId, 'results') / tp_module_sync_results",
+    status: 'EXPLICITLY_UNOBSERVED',
+    observationSite: null,
+    reason:
+      'A cross-module Table Platform producer publishes governed-model selections into Results; its filename does not contain result/benefit, so semantic discovery is required.',
+    ownerBlocker:
+      'Needs an owner-approved family classification and instrumentation contract; absence from the current ledger proves nothing about Table Platform publication.',
+  },
   {
     source: 'routes/benefits.routes.ts',
     mount: '/api/benefits',
@@ -280,7 +303,8 @@ export const UNOBSERVED_WRITERS: ResultsWriterInventoryEntry[] = [
     observationSite: null,
     reason:
       'The entire vNext ROI domain. This packet covered KPI only; ROI has its own cutover question and its own owner decision.',
-    ownerBlocker: 'Needs an owner-approved allowlist. No ROI usage conclusion may be drawn from this ledger.',
+    ownerBlocker:
+      'Needs an owner-approved allowlist. No ROI usage conclusion may be drawn from this ledger.',
   },
   {
     source: 'routes/resultsVnext/okr.routes.ts',
@@ -294,7 +318,8 @@ export const UNOBSERVED_WRITERS: ResultsWriterInventoryEntry[] = [
     observationSite: null,
     reason:
       'The entire vNext OKR domain. This packet covered KPI only; OKR has its own cutover question and its own owner decision.',
-    ownerBlocker: 'Needs an owner-approved allowlist. No OKR usage conclusion may be drawn from this ledger.',
+    ownerBlocker:
+      'Needs an owner-approved allowlist. No OKR usage conclusion may be drawn from this ledger.',
   },
 ];
 
@@ -311,7 +336,7 @@ const sum = (entries: ResultsWriterInventoryEntry[], key: 'writeSites' | 'endpoi
  * `totalHttpWriteSites` is the honest coverage ratio of this packet.
  */
 export const RESULTS_WRITER_DENOMINATOR = {
-  /** All `router.post|put|patch|delete` sites across the Results route files. */
+  /** Results-named route writers plus explicitly discovered semantic cross-module producers. */
   get totalHttpWriteSites(): number {
     return sum(
       RESULTS_WRITER_INVENTORY.filter((e) => e.source.startsWith('routes/')),

@@ -54,7 +54,8 @@ vi.mock('../../server/src/utils/DbPromise.js', async (importOriginal) => {
     ...actual,
     get: (...args: unknown[]) => {
       // `get` is overloaded as (sql, ...) and (db, sql, ...).
-      const sql = typeof args[0] === 'string' ? args[0] : typeof args[1] === 'string' ? args[1] : '';
+      const sql =
+        typeof args[0] === 'string' ? args[0] : typeof args[1] === 'string' ? args[1] : '';
       if (membershipLookup.failing && /organization_members/i.test(sql)) {
         membershipLookup.interceptedHits += 1;
         return Promise.reject(new Error('injected membership lookup failure (bounded test seam)'));
@@ -137,25 +138,33 @@ describe.skipIf(!enabled).sequential('mounted Results routers — strict members
       { algorithm: 'HS256', expiresIn: '10m' }
     );
 
-  /** The three counters every denial must leave untouched, per tenant. */
+  /** Business + intent + both observation ledgers every denial must leave untouched. */
   async function deltas(organizationId: string): Promise<{
     business: number;
     intents: number;
-    observations: number;
+    writerObservations: number;
+    cutoverObservations: number;
   }> {
-    const { rows } = await pool.query<{ business: string; intents: string; observations: string }>(
+    const { rows } = await pool.query<{
+      business: string;
+      intents: string;
+      writer_observations: string;
+      cutover_observations: string;
+    }>(
       `SELECT
          ((SELECT count(*) FROM initiative_kpis WHERE organization_id = $1) +
           (SELECT count(*) FROM results_kpi_report_snapshots WHERE organization_id = $1) +
           (SELECT count(*) FROM rvn_kpi_definitions WHERE organization_id = $1))::text AS business,
          (SELECT count(*) FROM legacy_cutover_signal_intents WHERE organization_id = $1)::text AS intents,
-         (SELECT count(*) FROM results_writer_observations WHERE organization_id = $1)::text AS observations`,
+         (SELECT count(*) FROM results_writer_observations WHERE organization_id = $1)::text AS writer_observations,
+         (SELECT count(*) FROM legacy_cutover_usage_events WHERE organization_id = $1)::text AS cutover_observations`,
       [organizationId]
     );
     return {
       business: Number(rows[0]?.business ?? '0'),
       intents: Number(rows[0]?.intents ?? '0'),
-      observations: Number(rows[0]?.observations ?? '0'),
+      writerObservations: Number(rows[0]?.writer_observations ?? '0'),
+      cutoverObservations: Number(rows[0]?.cutover_observations ?? '0'),
     };
   }
 
@@ -299,7 +308,14 @@ describe.skipIf(!enabled).sequential('mounted Results routers — strict members
           `ALTER TABLE results_writer_observations ENABLE TRIGGER ${DELETE_TRIGGER}`
         );
 
-        await client.query(`DELETE FROM legacy_cutover_signal_intents WHERE organization_id = ANY($1::text[])`, [orgs]);
+        await client.query(
+          `DELETE FROM legacy_cutover_signal_intents WHERE organization_id = ANY($1::text[])`,
+          [orgs]
+        );
+        await client.query(
+          `DELETE FROM legacy_cutover_usage_events WHERE organization_id = ANY($1::text[])`,
+          [orgs]
+        );
 
         // Report Builder artifacts created by the KPI-reports writer reference both
         // the organization and the acting user: children first, then the report,
@@ -318,27 +334,57 @@ describe.skipIf(!enabled).sequential('mounted Results routers — strict members
             'report_builder_sessions',
             'report_builder_versions',
           ]) {
-            await client.query(`DELETE FROM ${table} WHERE report_id = ANY($1::text[])`, [reportIds]);
+            await client.query(`DELETE FROM ${table} WHERE report_id = ANY($1::text[])`, [
+              reportIds,
+            ]);
           }
-          await client.query(`DELETE FROM report_builder_reports WHERE id = ANY($1::text[])`, [reportIds]);
+          await client.query(`DELETE FROM report_builder_reports WHERE id = ANY($1::text[])`, [
+            reportIds,
+          ]);
         }
-        await client.query(`DELETE FROM report_builder_templates WHERE organization_id = ANY($1::text[])`, [orgs]);
-        await client.query(`DELETE FROM report_builder_block_types WHERE organization_id = ANY($1::text[])`, [orgs]);
+        await client.query(
+          `DELETE FROM report_builder_templates WHERE organization_id = ANY($1::text[])`,
+          [orgs]
+        );
+        await client.query(
+          `DELETE FROM report_builder_block_types WHERE organization_id = ANY($1::text[])`,
+          [orgs]
+        );
 
-        await client.query(`DELETE FROM results_kpi_report_snapshots WHERE organization_id = ANY($1::text[])`, [orgs]);
-        await client.query(`DELETE FROM kpi_metric_audit_log WHERE organization_id = ANY($1::text[])`, [orgs]);
+        await client.query(
+          `DELETE FROM results_kpi_report_snapshots WHERE organization_id = ANY($1::text[])`,
+          [orgs]
+        );
+        await client.query(
+          `DELETE FROM kpi_metric_audit_log WHERE organization_id = ANY($1::text[])`,
+          [orgs]
+        );
         // initiative_kpis.current_definition_version and kpi_definition_versions.kpi_id
         // reference each other: break the pointer, then versions, then the KPIs.
         await client.query(
           `UPDATE initiative_kpis SET current_definition_version = NULL WHERE organization_id = ANY($1::text[])`,
           [orgs]
         );
-        await client.query(`DELETE FROM kpi_definition_versions WHERE organization_id = ANY($1::text[])`, [orgs]);
-        await client.query(`DELETE FROM initiative_kpis WHERE organization_id = ANY($1::text[])`, [orgs]);
+        await client.query(
+          `DELETE FROM kpi_definition_versions WHERE organization_id = ANY($1::text[])`,
+          [orgs]
+        );
+        await client.query(`DELETE FROM initiative_kpis WHERE organization_id = ANY($1::text[])`, [
+          orgs,
+        ]);
 
-        await client.query(`DELETE FROM rvn_kpi_definition_versions WHERE organization_id = ANY($1::text[])`, [orgs]);
-        await client.query(`DELETE FROM rvn_kpi_definitions WHERE organization_id = ANY($1::text[])`, [orgs]);
-        await client.query(`DELETE FROM organization_members WHERE organization_id = ANY($1::text[])`, [orgs]);
+        await client.query(
+          `DELETE FROM rvn_kpi_definition_versions WHERE organization_id = ANY($1::text[])`,
+          [orgs]
+        );
+        await client.query(
+          `DELETE FROM rvn_kpi_definitions WHERE organization_id = ANY($1::text[])`,
+          [orgs]
+        );
+        await client.query(
+          `DELETE FROM organization_members WHERE organization_id = ANY($1::text[])`,
+          [orgs]
+        );
         await client.query(`DELETE FROM users WHERE organization_id = ANY($1::text[])`, [orgs]);
         await client.query(`DELETE FROM organizations WHERE id = ANY($1::text[])`, [orgs]);
 
@@ -347,6 +393,7 @@ describe.skipIf(!enabled).sequential('mounted Results routers — strict members
           `SELECT (
              (SELECT count(*) FROM results_writer_observations WHERE organization_id = ANY($1::text[])) +
              (SELECT count(*) FROM legacy_cutover_signal_intents WHERE organization_id = ANY($1::text[])) +
+             (SELECT count(*) FROM legacy_cutover_usage_events WHERE organization_id = ANY($1::text[])) +
              (SELECT count(*) FROM initiative_kpis WHERE organization_id = ANY($1::text[])) +
              (SELECT count(*) FROM kpi_definition_versions WHERE organization_id = ANY($1::text[])) +
              (SELECT count(*) FROM results_kpi_report_snapshots WHERE organization_id = ANY($1::text[])) +
@@ -359,7 +406,9 @@ describe.skipIf(!enabled).sequential('mounted Results routers — strict members
           [orgs]
         );
         if (Number(residue.rows[0]?.n ?? '0') !== 0) {
-          throw new Error(`teardown left ${residue.rows[0]?.n} row(s) behind for this run's tenants`);
+          throw new Error(
+            `teardown left ${residue.rows[0]?.n} row(s) behind for this run's tenants`
+          );
         }
 
         // Exact named triggers must be back to 'O' BEFORE we commit.
@@ -396,7 +445,9 @@ describe.skipIf(!enabled).sequential('mounted Results routers — strict members
       // The wall must not be what stops an ACTIVE member. Downstream governance
       // (e.g. vNext's NO_ACTIVE_VISIBILITY_POLICY) may still refuse — a different,
       // pre-existing decision and not this gate's subject.
-      expect(res.body?.code, `${surface.name} denied by the wall`).not.toBe(MEMBERSHIP_REVOKED_CODE);
+      expect(res.body?.code, `${surface.name} denied by the wall`).not.toBe(
+        MEMBERSHIP_REVOKED_CODE
+      );
       expect(res.status, surface.name).not.toBe(403);
     }
   });
@@ -412,7 +463,7 @@ describe.skipIf(!enabled).sequential('mounted Results routers — strict members
 
     await settle();
     const after = await deltas(orgA);
-    expect(after.observations).toBe(before.observations + 1);
+    expect(after.writerObservations).toBe(before.writerObservations + 1);
     expect(after.business).toBe(before.business + 1);
 
     const { rows } = await pool.query<{ writer_family: string; operation: string }>(
@@ -423,7 +474,7 @@ describe.skipIf(!enabled).sequential('mounted Results routers — strict members
     expect(rows[0]).toMatchObject({ writer_family: 'legacy_kpi_crud', operation: 'createKpi' });
   });
 
-  it('MISSING identity: 401 on every walled router with delta 0/0/0', async () => {
+  it('MISSING identity: 401 on every walled router with delta 0/0/0/0', async () => {
     const before = await deltas(orgA);
     for (const surface of WALLED_WRITES) {
       const res = await surface.exec(undefined);
@@ -433,7 +484,7 @@ describe.skipIf(!enabled).sequential('mounted Results routers — strict members
     expect(await deltas(orgA)).toEqual(before);
   });
 
-  it('INVALID identity (bad signature): 401 with delta 0/0/0', async () => {
+  it('INVALID identity (bad signature): 401 with delta 0/0/0/0', async () => {
     const before = await deltas(orgA);
     const forged = jwt.sign(
       { id: activeAdmin, organizationId: orgA, role: 'ADMIN' },
@@ -448,7 +499,7 @@ describe.skipIf(!enabled).sequential('mounted Results routers — strict members
     expect(await deltas(orgA)).toEqual(before);
   });
 
-  it('REVOKED membership: first request 403 ORG_MEMBERSHIP_REVOKED with delta 0/0/0', async () => {
+  it('REVOKED membership: first request 403 ORG_MEMBERSHIP_REVOKED with delta 0/0/0/0', async () => {
     const before = await deltas(orgA);
     const bearer = token(revokedAdmin, orgA);
     for (const surface of WALLED_WRITES) {
@@ -460,7 +511,7 @@ describe.skipIf(!enabled).sequential('mounted Results routers — strict members
     expect(await deltas(orgA)).toEqual(before);
   });
 
-  it('MISSING membership row: 403 with delta 0/0/0', async () => {
+  it('MISSING membership row: 403 with delta 0/0/0/0', async () => {
     const before = await deltas(orgA);
     const bearer = token(noMembership, orgA);
     for (const surface of WALLED_WRITES) {
@@ -472,7 +523,7 @@ describe.skipIf(!enabled).sequential('mounted Results routers — strict members
     expect(await deltas(orgA)).toEqual(before);
   });
 
-  it('SUPERADMIN without membership: 403 — a role claim is no bypass — delta 0/0/0', async () => {
+  it('SUPERADMIN without membership: 403 — a role claim is no bypass — delta 0/0/0/0', async () => {
     const before = await deltas(orgA);
     const bearer = token(superNoMembership, orgA, 'SUPERADMIN', { isSuperAdmin: true });
     for (const surface of WALLED_WRITES) {
@@ -484,7 +535,7 @@ describe.skipIf(!enabled).sequential('mounted Results routers — strict members
     expect(await deltas(orgA)).toEqual(before);
   });
 
-  it('FOREIGN tenant writing a REAL org-A resource: exact 404, delta 0/0/0 in BOTH tenants', async () => {
+  it('FOREIGN tenant writing a REAL org-A resource: exact 404, delta 0/0/0/0 in BOTH tenants', async () => {
     // A real, existing org-A KPI id — not a fabricated uuid, so the request is
     // genuinely cross-tenant rather than merely "not found for everyone".
     expect(orgAKpiId).toBeTruthy();
@@ -508,7 +559,7 @@ describe.skipIf(!enabled).sequential('mounted Results routers — strict members
     expect(await deltas(orgB)).toEqual(beforeB);
   });
 
-  it('membership lookup DB FAILURE (bounded to organization_members): 503 fail-closed, delta 0/0/0', async () => {
+  it('membership lookup DB FAILURE (bounded to organization_members): 503 fail-closed, delta 0/0/0/0', async () => {
     const before = await deltas(orgA);
     const bearer = token(activeAdmin, orgA);
 
@@ -577,19 +628,25 @@ describe.skipIf(!enabled).sequential('mounted Results routers — strict members
   });
 
   it('v8/results REGRESSION: the pre-existing wall still denies revoked and missing membership', async () => {
+    const beforeRevoked = await deltas(orgA);
     const revoked = await request(app)
       .post('/v8-results/reconciliations/pull')
       .set('Authorization', `Bearer ${token(revokedAdmin, orgA)}`)
       .send({ initiativeId: 'none', mappings: [{ kpiId: 'k', driverKey: 'd' }] });
     expect(revoked.status).toBe(403);
     expect(revoked.body?.code).toBe(MEMBERSHIP_REVOKED_CODE);
+    await settle();
+    expect(await deltas(orgA)).toEqual(beforeRevoked);
 
+    const beforeMissing = await deltas(orgA);
     const missing = await request(app)
       .post('/v8-results/reconciliations/pull')
       .set('Authorization', `Bearer ${token(noMembership, orgA)}`)
       .send({ initiativeId: 'none', mappings: [{ kpiId: 'k', driverKey: 'd' }] });
     expect(missing.status).toBe(403);
     expect(missing.body?.code).toBe(MEMBERSHIP_REVOKED_CODE);
+    await settle();
+    expect(await deltas(orgA)).toEqual(beforeMissing);
 
     const active = await request(app)
       .post('/v8-results/reconciliations/pull')
