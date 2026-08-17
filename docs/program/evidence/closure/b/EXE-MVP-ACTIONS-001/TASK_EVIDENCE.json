@@ -77,8 +77,8 @@
     "method": "Revert 75714ca5b4d1b874524d485b551744d72a7657a8 and d9fcb6fea8ff5d063751d9712931ccfebaf37e3c. Retaining the additive append-only trigger is backward compatible."
   },
   "verdict": "PARTIAL",
-  "openBlocker": "Backend/runtime and task-specific mounted UI DoD are complete. Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending.",
+  "openBlocker": "Backend/runtime DoD is complete, but the mounted UI proof covers only the delivery-closure slice. The remaining nine governed action surfaces still require task-specific loading, empty, backend-error and success-state UI qualification, followed by manual VoiceOver, named-persona and visual/brand owner acceptance.",
   "resolvedBlockers": [
-    "Exact-current governed actions and delivery closure requalified patch-equivalent at 6de1fe8532/39341f3ffb (source bf55070e2f/aa118bbdcb): realPG 4/4 and signed mounted UI 2/2, residue 0, trigger restored/enabled."
+    "Exact-current backend/runtime governed actions and the delivery-closure UI slice requalified patch-equivalent at 6de1fe8532/39341f3ffb (source bf55070e2f/aa118bbdcb): realPG 4/4 and signed mounted UI 2/2, residue 0, trigger restored/enabled. This does not qualify all nine governed action UIs."
   ]
 }

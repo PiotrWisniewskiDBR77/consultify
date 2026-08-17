@@ -122,8 +122,11 @@
     "method": "Revert the lane commits; all changes are additive application code plus new tests. NO migration was added by this lane, so no schema rollback is required and old readers are unaffected."
   },
   "verdict": "PARTIAL",
-  "openBlocker": "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending.",
+  "openBlocker": "The delivery-closure slice is technically proven, but capacity UI, all nine governed action UIs, loading/empty/backend-error states, and owner disposition for five dead surfaces plus one flag-ON unreachable surface remain open; manual VoiceOver, named-persona and visual/brand acceptance also remain pending.",
   "openBlockers": [
+    "Capacity UI and all nine governed action UIs still require task-specific signed journeys across loading, empty, backend-error and success states.",
+    "Five dead surfaces and one flag-ON but unreachable surface require explicit owner disposition before canonical UI closure.",
+    "Historical 403 observations are scoped as resolved only for the delivery-closure journey; other Execution surfaces still require task-specific auth/error qualification.",
     "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md."
   ],
   "blockerReconciliation": [
@@ -134,7 +137,7 @@
     }
   ],
   "resolvedBlockers": [
-    "Exact-current signed technical UI 2/2 proves capacity/actions/four-eyes/close/immutable Results receipt plus stale, tenant, revoked, deep/reload/cold and no-false-success paths; historical generic G4 stale and console-403 qualification blockers are superseded by this task-specific packet.",
+    "Exact-current signed technical UI 2/2 proves only the delivery-closure slice: four-eyes, close, immutable Results receipt, stale, foreign-tenant, revoked, deep/reload/cold and no-false-success paths. It does not qualify capacity UI, all governed action UIs, or unrelated historical 403 observations.",
     "Final mounted signed-auth automated G4 completed on candidate 836bfd633af7a689e7a3fb06971cbd8fe57bafe7: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed."
   ],
   "automatedG4Verdict": {
