@@ -128,11 +128,29 @@ describe.skipIf(!REAL_DB)('INT-DELIVERY-OPS mounted auth — real PostgreSQL', (
     expect(response.status).toBe(404);
   });
 
+  it('foreign tenant cannot evaluate the session', async () => {
+    const response = await request(app)
+      .post(`/api/interview/sessions/${sessionA}/evaluate-answers`)
+      .set(bearer(tokenB))
+      .send({ language: 'en' });
+    expect(response.status).toBe(404);
+  });
+
   it('stale JWT with inactive membership is denied before the controller', async () => {
     const response = await request(app)
       .post(`/api/interview/sessions/${sessionA}/evaluate-answers`)
       .set(bearer(staleToken))
       .send({ language: 'en' });
+    expect(response.status).toBe(403);
+    expect(response.body).toMatchObject({ code: 'ORG_MEMBERSHIP_REVOKED' });
+  });
+
+  it('inactive membership cannot mutate even with a valid signed JWT', async () => {
+    const current = await pool.query(`SELECT updated_at FROM interview_questions WHERE id=$1`, [questionA]);
+    const response = await request(app)
+      .patch(`/api/interview/questions/${questionA}`)
+      .set(bearer(staleToken))
+      .send({ answerText: 'revoked', expectedUpdatedAt: new Date(current.rows[0].updated_at).toISOString() });
     expect(response.status).toBe(403);
     expect(response.body).toMatchObject({ code: 'ORG_MEMBERSHIP_REVOKED' });
   });

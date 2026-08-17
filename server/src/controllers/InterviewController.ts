@@ -15,6 +15,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
 import { incrementAiTimeouts } from '../middleware/metrics.middleware.js';
+import { logAIAction } from '../services/auditService.js';
 import { IngestionPipeline } from '../services/ai/ingestionPipeline.js';
 import { llmService } from '../services/ai/llmService.js';
 import {
@@ -7265,12 +7266,21 @@ Answer type: ${(question as any).answer_type || 'open'}`;
         // operators and a restarted process durable evidence that the provider
         // timed out, rather than leaving the only truth in a transient log.
         await persistSnapshot(timeoutEvaluation);
+        await logAIAction('interview_review.timeout', {
+          actorId: user.id,
+          actionDescription: 'Interview AI review exceeded its server-side timeout.',
+          resourceType: 'interview_session',
+          resourceId: sessionId,
+          organizationId: user.organizationId,
+          metadata: { timeoutMs, terminalVerdict: 'timeout' },
+          result: 'failure',
+          errorMessage: 'AI review provider exceeded the configured timeout.',
+        });
         res.json(timeoutEvaluation);
 
-        // Best-effort: if the provider eventually answers, still persist the
-        // snapshot for a later read (e.g. getSummary/getAssignment). No response
-        // is sent for it — `responded` is already true.
-        evaluationPromise.then((late) => persistSnapshot(late)).catch(() => undefined);
+        // A late provider completion must not rewrite the terminal timeout
+        // snapshot. The durable audit row above and the assignment snapshot
+        // must agree after restart; callers may explicitly retry evaluation.
         return;
       }
 

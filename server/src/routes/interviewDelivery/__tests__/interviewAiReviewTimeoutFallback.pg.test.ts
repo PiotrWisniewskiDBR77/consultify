@@ -139,6 +139,10 @@ describe.skipIf(!REAL_DB)('evaluateSessionAnswers server-side timeout — real P
 
   afterAll(async () => {
     if (!pool) return;
+    await pool.query(
+      `DELETE FROM audit_log WHERE action = 'ai.interview_review.timeout' AND resource_id = $1`,
+      [sessionId]
+    );
     await pool.query(`DELETE FROM interview_assignments WHERE id = $1`, [assignmentId]);
     await pool.query(`DELETE FROM interview_questions WHERE session_id = $1`, [sessionId]);
     await pool.query(`DELETE FROM interview_sessions WHERE id = $1`, [sessionId]);
@@ -199,5 +203,36 @@ describe.skipIf(!REAL_DB)('evaluateSessionAnswers server-side timeout — real P
       questionId,
     ]);
     expect(row.rows[0].answer_text).toBe("the user's already-persisted answer");
+
+    const { Pool: PgPool } = await import('pg');
+    const cold = new PgPool({ connectionString: CONNECTION_STRING });
+    try {
+      const persisted = await cold.query(
+        `SELECT ai_review_snapshot_json FROM interview_assignments WHERE id = $1`,
+        [assignmentId]
+      );
+      const snapshot =
+        typeof persisted.rows[0].ai_review_snapshot_json === 'string'
+          ? JSON.parse(persisted.rows[0].ai_review_snapshot_json)
+          : persisted.rows[0].ai_review_snapshot_json;
+      expect(snapshot).toMatchObject({ overallVerdict: 'timeout', timedOut: true });
+
+      const audit = await cold.query(
+        `SELECT action, result, resource_id, organization_id, metadata
+           FROM audit_log
+          WHERE action = 'ai.interview_review.timeout'
+            AND resource_id = $1 AND organization_id = $2`,
+        [sessionId, orgId]
+      );
+      expect(audit.rows).toHaveLength(1);
+      expect(audit.rows[0]).toMatchObject({ result: 'failure', resource_id: sessionId, organization_id: orgId });
+      const metadata =
+        typeof audit.rows[0].metadata === 'string'
+          ? JSON.parse(audit.rows[0].metadata)
+          : audit.rows[0].metadata;
+      expect(metadata).toMatchObject({ timeoutMs: TEST_TIMEOUT_MS, terminalVerdict: 'timeout' });
+    } finally {
+      await cold.end();
+    }
   }, 10000);
 });
