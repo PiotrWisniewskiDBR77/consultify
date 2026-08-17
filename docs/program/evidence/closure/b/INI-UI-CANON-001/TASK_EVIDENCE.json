@@ -1,7 +1,9 @@
 {
   "taskId": "INI-UI-CANON-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "99406b784bf1332beb369be161e75a2422f00fc6",
+  "productSha": "b962d7c6bcfa1fe42c03d025f9ff76cc6decc9b3",
+  "technicalSourceSha": "0900a2a828bb407b50e0f8bf59e5b3e1dbb4fb24",
+  "integrationBaselineSha": "8883e410b8fa5ad4c67421f16804062cf40e8416",
   "leaseSha256": "f4d75f0aed94f2e34acaec63d91c245495e7e0f658aa36d1122342c2acecc612",
   "toolchain": {
     "node": "v24.12.0",
@@ -16,32 +18,69 @@
     "G1": "PASS — type-check exit 0, build:backend exit 0, build exit 0, discovery-gate PASS 4997/4997",
     "G3_strict_migration": "PASS — fresh/repeat/dry-run exit 0; schema_migrations 703 success / 0 failed / 0 pending; 703/703 checksums independently verified; 1678 tables",
     "G2_lane_baseline": "RED (pre-existing at sealed baseline): 747 collected of 761 real test files; 107 files failed / 557 passed / 83 skipped; 287 tests failed / 4270 passed / 617 skipped",
-    "G2_defects": "14 leased acceptance tests uncollectable by the mandated command; 110 further realDB files run without a DB by it; backend tests execute under jsdom because environmentMatchGlobs is dead in Vitest 4"
+    "G2_defects": "14 leased acceptance tests uncollectable by the mandated command; 110 further realDB files run without a DB by it; backend tests execute under jsdom because environmentMatchGlobs is dead in Vitest 4",
+    "technical_current": "PASS — integrated product b962d7c6bc; fresh PostgreSQL 756/756, repeat 0, dry 0, checksum gaps 0; mounted signed-JWT 5/5; focused UI unit 11/11; residue 0; 8 GB typecheck, backend build and 8 GB frontend build exit 0",
+    "frontend_build_disclosure": "The first frontend build with the default 4 GB Node heap reached chunk rendering and exited 134 OOM. The exact same source rerun with NODE_OPTIONS=--max-old-space-size=8192 completed exit 0; this was a resource limit, not a product regression."
   },
-  "ownerTables": [],
-  "changedPaths": [],
-  "changedPathRationale": {},
+  "ownerTables": [
+    "initiative_candidates",
+    "ie_aggregate_state",
+    "ie_aggregate_relations",
+    "organization_members"
+  ],
+  "changedPaths": [
+    "src/components/Initiatives/InitiativesHub.tsx",
+    "src/components/Initiatives/CanonicalInitiativeCardWorkspace.tsx",
+    "tests/acceptance/ini-ui-canonical-mounted.realpg.test.ts",
+    "tests/unit/initiatives-execution/canonicalInitiativeCardWorkspace.test.tsx",
+    "tests/unit/initiatives-execution/initiativesHubCanonicalTabs.test.tsx"
+  ],
+  "changedPathRationale": {
+    "src/components/Initiatives/InitiativesHub.tsx": "Makes governed candidates a canonical deep-link-stable tab and routes an exact linked Execution case into the canonical Execution surface.",
+    "src/components/Initiatives/CanonicalInitiativeCardWorkspace.tsx": "Reads the neutral runtime-v1 Initiative-to-Execution relation, renders exact case identity/state, and adds action-specific conflict/failure recovery without changing policy.",
+    "tests/acceptance/ini-ui-canonical-mounted.realpg.test.ts": "Proves signed auth, active roles, revoked/foreign denial, exact candidate and linked Execution readback, and cold new-Pool persistence on real PostgreSQL.",
+    "tests/unit/initiatives-execution/canonicalInitiativeCardWorkspace.test.tsx": "Covers exact linked-case response shape, CTA identity, action-specific conflict and bounded reload.",
+    "tests/unit/initiatives-execution/initiativesHubCanonicalTabs.test.tsx": "Prevents regression to the historical unreachable candidates deep link and missing Execution navigation."
+  },
   "commands": [
     "node scripts/cleanup/verify-closure-lane.mjs b closure-execution-baseline-v2-20260816",
     "jq -r '.tests.vitest[]' docs/cleanup/agents/generated/CLAUDE_LANE_B_PATH_LEASE.json | xargs -n 80 npx vitest run --no-file-parallelism --maxWorkers=1 --maxConcurrency=2 --retry=0",
-    "CI=true DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts  (fresh, repeat, --dry-run)"
+    "CI=true DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts  (fresh, repeat, --dry-run)",
+    "NODE_ENV=test DB_TYPE=postgres DATABASE_URL=<own-tmpfs-pg> npx tsx server/scripts/migrate.postgres.ts; repeat; --dry-run",
+    "NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=<own-tmpfs-pg> npx vitest run --config vitest.acceptance.config.ts tests/acceptance/ini-ui-canonical-mounted.realpg.test.ts --reporter=verbose",
+    "npx vitest run tests/unit/initiatives-execution/canonicalInitiativeCardWorkspace.test.tsx tests/unit/initiatives-execution/initiativesHubCanonicalTabs.test.tsx",
+    "NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p tsconfig.json --noEmit",
+    "npm run build:backend",
+    "NODE_OPTIONS=--max-old-space-size=8192 npm run build"
   ],
   "denominators": {
-    "task": "Mounted 4 (list/portfolio/plan/capacity), gated 0, dead 3 (+3 unreachable-but-imported)",
+    "task": "Historical lane denominator: mounted 4 (list/portfolio/plan/capacity), gated 0, dead 3 (+3 unreachable-but-imported). Current technical product: candidates is a fifth canonical reachable tab; observability/portfolioHealth remain outside this bounded packet.",
     "laneRealDbPass": "110 leased realDB files on an isolated DB: 77 passed / 7 failed / 26 skipped; 675 tests: 565 passed / 51 failed / 59 skipped",
     "recoveredAcceptance": "14 leased acceptance files the mandated G2 command cannot collect, run under vitest.acceptance.config.ts: 105 tests, 91 passed / 14 failed",
     "automatedG4Cells": "14/14",
     "automatedG4Screenshots": "15/15",
     "automatedG4AxeCriticalSerious": "0/0",
     "automatedG4UnnamedControls": 0,
-    "automatedG4VisibleFocus": "PASS"
+    "automatedG4VisibleFocus": "PASS",
+    "technicalFreshMigration": "756/756 successful unique filenames; repeat Applying migrations: 0; dry Pending migrations: 0; empty checksum count 0",
+    "technicalMountedRealPg": "1 file, 5/5 passed",
+    "technicalFocusedUnit": "2 files, 11/11 passed",
+    "technicalResidue": "organizations/users/organization_members/initiative_candidates/ie_aggregate_state/ie_aggregate_relations = 0/0/0/0/0/0"
   },
   "fixtures": {
     "prefix": "claude_b_",
     "isolatedDb": "consultify-closure-b-64f50785 @127.0.0.1:55811; verification replica @55812; clean-room @55813",
-    "env": "NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false (all three required — NODE_ENV=test alone substitutes a mock DB)"
+    "env": "NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false (all three required — NODE_ENV=test alone substitutes a mock DB)",
+    "technicalFreshDb": "single disposable pgvector PostgreSQL 16 tmpfs container; removed after residue verification",
+    "technicalPrefix": "ini-ui-<uuid>"
   },
-  "negativeControls": {},
+  "negativeControls": {
+    "revokedMembership": "PASS — signed revoked tenant member receives 404 NOT_FOUND for linked Execution and no identity leak.",
+    "foreignTenant": "PASS — signed active foreign-tenant OWNER receives 404 NOT_FOUND.",
+    "roleTruth": "PASS — ACTIVE OWNER, ADMIN and MEMBER use the authoritative membership path; token role does not create foreign access.",
+    "coldReadback": "PASS — a new PostgreSQL Pool reads the exact executionCaseId, initiativeId and PLANNED state after mounted HTTP read.",
+    "responseShape": "PASS — mounted test falsified the initial top-level-state assumption; UI now consumes the production response detail.state without weakening the assertion."
+  },
   "browserArtifacts": [
     {
       "kind": "mounted_signed_auth_g4_final",
@@ -122,21 +161,30 @@
   "rollback": {
     "method": "Revert the lane commits; all changes are additive application code plus new tests. NO migration was added by this lane, so no schema rollback is required and old readers are unaffected."
   },
-  "verdict": "BLOCKED_HUMAN",
-  "openBlocker": "No code path can set activeTab to observability/candidates/portfolioHealth. Consequence: a candidate CANNOT be actioned from /initiatives today — the backend accept API is live and mounted, but its UI is dead and the intended replacement surface is itself unreachable. Named human UX + VoiceOver verdict required.",
+  "verdict": "PARTIAL",
+  "openBlocker": "The repo-owned technical reachability blocker is closed. Remaining acceptance is human VoiceOver/brand/persona review plus task-specific browser lifecycle coverage that has not yet literally exercised every definition, analysis and schedule transition state through the rendered UI.",
   "openBlockers": [
     "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
-    "Task-specific UI states not reached by the final automated sweep: stale."
+    "The historical generic G4 sweep did not exercise the full rendered candidate→cards→definition→analysis→schedule authority lifecycle; its only explicit missing state was stale. Focused unit and mounted HTTP/realPG tests close reachability, conflict, role, tenant and linked-Execution persistence, but are not a substitute for a literal full browser lifecycle."
   ],
   "blockerReconciliation": [
     {
-      "historicalBlocker": null,
-      "classification": "NO_HISTORICAL_OPEN_BLOCKER_LINES",
-      "detail": "The final G4 result is additive; current openBlockers enumerate only remaining human, state, reachability or console qualification gates."
+      "historicalBlocker": "No code path can set activeTab to candidates; candidate registration and the intended canonical replacement surface are unreachable.",
+      "classification": "RESOLVED_CURRENT_PRODUCT",
+      "detail": "Integrated product b962d7c6bc makes candidates a member of CANONICAL_INITIATIVES_TABS, renders a visible tab, preserves sourceProposalId in URL context and opens canonical runtime-v1 Initiative truth."
+    },
+    {
+      "historicalBlocker": "A scheduled Initiative exposed only a frozen handoff and no neutral path to its Execution case.",
+      "classification": "RESOLVED_CURRENT_PRODUCT",
+      "detail": "The canonical workspace reads the existing runtime-v1 relation, consumes the production detail.state response shape and opens /execution?tab=list&open=<exact case id>."
     }
   ],
   "resolvedBlockers": [
-    "Final mounted signed-auth automated G4 completed on candidate 836bfd633af7a689e7a3fb06971cbd8fe57bafe7: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed."
+    "Final mounted signed-auth automated G4 completed on candidate 836bfd633af7a689e7a3fb06971cbd8fe57bafe7: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed.",
+    "Candidate registration is now canonical and deep-link reachable from /initiatives; the legacy unreachable branch is no longer the only mount.",
+    "SCHEDULED Initiative truth now exposes exact linked Execution identity/state and a bounded Open Execution action.",
+    "Write conflicts and failures are action-specific and offer bounded reload of durable truth instead of the misleading universal Publish failed message.",
+    "Fresh-current technical qualification passed at integrated product b962d7c6bc: migrations 756, mounted signed-JWT realPG 5/5, focused unit 11/11, cold readback, role/tenant negatives, residue zero, typecheck and both builds."
   ],
   "automatedG4Verdict": {
     "verdict": "PASS_EXACT_SHA",
