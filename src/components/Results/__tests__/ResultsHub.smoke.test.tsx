@@ -11,7 +11,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -38,7 +38,7 @@ vi.mock('react-hot-toast', () => {
 
 // Observe the exact local Menu 2 contract passed to the shared renderer.
 vi.mock('../../standard/StandardModuleBar', () => ({
-  StandardModuleBar: ({ tabs, activeTab, onTabChange, children }: any) => (
+  StandardModuleBar: ({ tabs, activeTab, onTabChange, commandRowContent, children }: any) => (
     <div data-testid="results-module-bar" data-active-tab={activeTab}>
       {(tabs || []).map((tab: any) => (
         <button
@@ -50,10 +50,17 @@ vi.mock('../../standard/StandardModuleBar', () => ({
           {tab.label}
         </button>
       ))}
+      <div data-testid="results-command-row">{commandRowContent}</div>
       {children}
     </div>
   ),
 }));
+
+const { navigate } = vi.hoisted(() => ({ navigate: vi.fn() }));
+vi.mock('react-router-dom', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react-router-dom')>();
+  return { ...actual, useNavigate: () => navigate };
+});
 
 vi.mock('../../shared/ModuleHub/useModuleOpenDocuments', () => ({
   useModuleOpenDocuments: () => ({
@@ -67,6 +74,12 @@ vi.mock('../../shared/ModuleHub/useModuleOpenDocuments', () => ({
 const { loadResultsKpis } = vi.hoisted(() => ({ loadResultsKpis: vi.fn() }));
 vi.mock('../kpiRuntime', () => ({ loadResultsKpis }));
 vi.mock('../resultsFeatureFlags', () => ({ isResultsFlagEnabled: () => false }));
+
+const resultsVNextFlags = vi.hoisted(() => ({ kpiRegistry: false }));
+vi.mock('../../ResultsVNext/resultsVNextFeatureFlags', () => ({
+  isResultsVNextFlagEnabled: (flag: string) =>
+    flag === 'kpiRegistry' && resultsVNextFlags.kpiRegistry,
+}));
 
 vi.mock('@/store/useAppStore', () => ({
   useAppStore: (selector: any) =>
@@ -84,6 +97,12 @@ vi.mock('@/services/initiativeWriteTruth', () => ({
 import { ResultsHub } from '../ResultsHub';
 
 describe('ResultsHub smoke', () => {
+  beforeEach(() => {
+    resultsVNextFlags.kpiRegistry = false;
+    loadResultsKpis.mockReset();
+    navigate.mockReset();
+  });
+
   it('passes clean Menu 2 names without counts and preserves tab navigation', async () => {
     loadResultsKpis.mockResolvedValue({ kpis: [], initiatives: [], mappings: [] });
     render(
@@ -110,5 +129,34 @@ describe('ResultsHub smoke', () => {
 
     fireEvent.click(screen.getByTestId('results-tab-roi'));
     expect(screen.getByTestId('results-module-bar')).toHaveAttribute('data-active-tab', 'roi');
+  });
+
+  it('keeps the legacy KPI workspace unchanged and hides the registry link while its flag is OFF', async () => {
+    loadResultsKpis.mockResolvedValue({ kpis: [], initiatives: [], mappings: [] });
+    render(
+      <MemoryRouter initialEntries={['/results']}>
+        <ResultsHub />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => expect(screen.getByTestId('results-module-bar')).toBeInTheDocument());
+    expect(screen.getByTestId('results-tab-results_kpi')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Open KPI registry (preview)' })).toBeNull();
+  });
+
+  it('shows the neutral registry link only when enabled and navigates to the exact governed route', async () => {
+    resultsVNextFlags.kpiRegistry = true;
+    loadResultsKpis.mockResolvedValue({ kpis: [], initiatives: [], mappings: [] });
+    render(
+      <MemoryRouter initialEntries={['/results']}>
+        <ResultsHub />
+      </MemoryRouter>
+    );
+
+    const link = await screen.findByRole('button', { name: 'Open KPI registry (preview)' });
+    expect(screen.getByTestId('results-tab-results_kpi')).toBeInTheDocument();
+    fireEvent.click(link);
+    expect(navigate).toHaveBeenCalledTimes(1);
+    expect(navigate).toHaveBeenCalledWith('/results/kpi');
   });
 });

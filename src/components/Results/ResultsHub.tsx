@@ -42,6 +42,7 @@ import { updateInitiativeStatusWriteTruth } from '@/services/initiativeWriteTrut
 import { useAppStore } from '@/store/useAppStore';
 import { mapHubLoadFailureToPresentation } from '@/utils/errors/mapHubLoadFailureToPresentation';
 
+import { isResultsVNextFlagEnabled } from '../ResultsVNext/resultsVNextFeatureFlags';
 import { Banner } from '../shared/Banner';
 import { HubWorkAreaLoadError } from '../shared/ModuleHub';
 import { FilterChip } from '../shared/ModuleHub/ActiveFilters';
@@ -1318,11 +1319,26 @@ export const ResultsHub: React.FC = () => {
         </button>
       ) : null;
 
-    if (!scopedExecutionButton && !viewInOutputsButton) return null;
+    // The vNext KPI registry is an additive, separately governed surface. Keep
+    // the legacy KPI workspace unchanged and expose only a neutral deep-link
+    // when that registry's existing default-OFF flag is explicitly enabled.
+    const openKpiRegistryButton =
+      activeTab === 'results_kpi' && isResultsVNextFlagEnabled('kpiRegistry') ? (
+        <button
+          type="button"
+          onClick={() => navigate(ROUTES.RESULTS_KPI.ROOT)}
+          className={MENU_3_ACTION_NEUTRAL}
+        >
+          <span>{t('results.actions.openKpiRegistry', 'Open KPI registry (preview)')}</span>
+        </button>
+      ) : null;
+
+    if (!scopedExecutionButton && !viewInOutputsButton && !openKpiRegistryButton) return null;
     return (
       <div className={MENU_3_RIGHT_CLASS}>
         {scopedExecutionButton}
         {viewInOutputsButton}
+        {openKpiRegistryButton}
       </div>
     );
   }, [activeTab, kpiWorkspaceMode, navigate, openScopedExecutionLane, scopedInitiativeId, t]);
