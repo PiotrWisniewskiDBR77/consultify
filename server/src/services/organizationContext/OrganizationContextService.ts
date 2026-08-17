@@ -787,6 +787,7 @@ export interface GovernedSnapshotPayload {
 }
 
 export interface GovernedSnapshotVersion {
+  snapshotId: string;
   organizationId: string;
   version: number;
   schemaVersion: number;
@@ -1888,6 +1889,7 @@ export class OrganizationContextService {
   ): Promise<GovernedClaimView[]> {
     const limit = Math.max(1, Math.min(opts?.limit ?? 200, 500));
     const rows = await safeAll<{
+      id: string;
       claim_id: string;
       item_id: string;
       claim_path: string;
@@ -2133,6 +2135,7 @@ export class OrganizationContextService {
     );
 
     return {
+      snapshotId: publishedId,
       organizationId,
       version: Number(row?.version || 0),
       schemaVersion: GOVERNED_SNAPSHOT_SCHEMA_VERSION,
@@ -2149,6 +2152,7 @@ export class OrganizationContextService {
     limit = 20
   ): Promise<GovernedSnapshotVersion[]> {
     const rows = await safeAll<{
+      id: string;
       version: number;
       schema_version: number;
       content_hash: string;
@@ -2156,7 +2160,7 @@ export class OrganizationContextService {
       created_at: string;
       created_by: string;
     }>(
-      `SELECT version, schema_version, content_hash, claim_count, created_at, created_by
+      `SELECT id, version, schema_version, content_hash, claim_count, created_at, created_by
        FROM organization_context_snapshot_versions
        WHERE organization_id = ?
        ORDER BY version DESC
@@ -2164,6 +2168,7 @@ export class OrganizationContextService {
       [organizationId, Math.max(1, Math.min(limit, 100))]
     );
     return rows.map((r) => ({
+      snapshotId: r.id,
       organizationId,
       version: Number(r.version),
       schemaVersion: Number(r.schema_version),
@@ -2193,6 +2198,7 @@ export class OrganizationContextService {
     opts?: { includeRestricted?: boolean }
   ): Promise<PinnedSnapshotRead | null> {
     const row = await safeGet<{
+      id: string;
       version: number;
       schema_version: number;
       content_hash: string;
@@ -2202,7 +2208,7 @@ export class OrganizationContextService {
       created_at: string;
       created_by: string;
     }>(
-      `SELECT version, schema_version, content_hash, claim_count, snapshot_json, source_refs_json, created_at, created_by
+      `SELECT id, version, schema_version, content_hash, claim_count, snapshot_json, source_refs_json, created_at, created_by
        FROM organization_context_snapshot_versions
        WHERE organization_id = ? AND version = ?`,
       [organizationId, version]
@@ -2246,6 +2252,7 @@ export class OrganizationContextService {
       });
 
     return {
+      snapshotId: row.id,
       organizationId,
       version: Number(row.version),
       schemaVersion: Number(row.schema_version),

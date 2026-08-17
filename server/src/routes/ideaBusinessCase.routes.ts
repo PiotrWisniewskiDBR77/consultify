@@ -45,7 +45,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 
 import type { AuthRequest } from '../middleware/auth.middleware.js';
-import { verifyToken } from '../middleware/auth.middleware.js';
+import { validateOrgMembership, verifyToken } from '../middleware/auth.middleware.js';
 import { requireTables, requireUser } from './my-work/_helpers.js';
 import ideaBusinessCaseService, {
   IdeaBusinessCaseForeignOrgError,
@@ -57,7 +57,9 @@ import {
   IdeaHandoffError,
   materializeIdeaArtifact,
   proposeIdeaArtifact,
+  proposeGovernedIdeaArtifact,
 } from '../services/ideaHandoff/ideaHandoffService.js';
+import { GovernedSnapshotBindingError } from '../services/organizationContext/governedSnapshotConsumerBindingService.js';
 import { HandoffSpineError } from '../services/artifactHandoff/handoffSpineService.js';
 import { getDatabase } from '../database/Database.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -65,6 +67,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 const router = Router();
 
 router.use(verifyToken);
+router.use(validateOrgMembership);
 
 // Loose on purpose: section content shapes are large and owned by the client
 // type (`src/types/ideaBusinessCase.ts`); the server's job is persistence,
@@ -174,6 +177,14 @@ const ProposeArtifactBodySchema = z.object({
   targetKind: z.enum(IDEA_ARTIFACT_TARGET_KINDS),
   idempotencyKey: z.string().trim().min(1).max(200).optional(),
 });
+const GovernedSnapshotRefSchema = z.object({
+  snapshotId: z.string().uuid(),
+  version: z.number().int().positive(),
+  contentHash: z.string().regex(/^[a-f0-9]{64}$/i),
+});
+const ProposeGovernedArtifactBodySchema = ProposeArtifactBodySchema.extend({
+  governedSnapshotRef: GovernedSnapshotRefSchema,
+});
 
 const DecisionBodySchema = z.object({
   action: z.enum(['approve', 'reject']),
@@ -259,6 +270,38 @@ router.post(
       });
       res.status(replayed ? 200 : 201).json({ proposal, replayed });
     } catch (error) {
+      if (respondToHandoffError(res, error)) return;
+      throw error;
+    }
+  })
+);
+
+router.post(
+  '/:ideaId/governed-artifact-proposals',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const ideaId = String(req.params.ideaId || '').trim();
+    const parsed = ProposeGovernedArtifactBodySchema.safeParse(req.body);
+    if (!ideaId || !parsed.success) {
+      res.status(400).json({ error: 'Governed snapshot ref is required', code: 'SNAPSHOT_REF_REQUIRED' });
+      return;
+    }
+    try {
+      const result = await proposeGovernedIdeaArtifact({
+        organizationId: identity.orgId,
+        ideaId,
+        targetKind: parsed.data.targetKind,
+        createdBy: identity.userId,
+        idempotencyKey: parsed.data.idempotencyKey ?? null,
+        governedSnapshotRef: parsed.data.governedSnapshotRef,
+      });
+      res.status(result.replayed ? 200 : 201).json(result);
+    } catch (error) {
+      if (error instanceof GovernedSnapshotBindingError) {
+        res.status(error.httpStatus).json({ error: error.message, code: error.code });
+        return;
+      }
       if (respondToHandoffError(res, error)) return;
       throw error;
     }

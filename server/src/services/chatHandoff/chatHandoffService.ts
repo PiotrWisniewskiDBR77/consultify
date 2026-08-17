@@ -92,6 +92,12 @@ import {
   type HandoffProposal,
   type TargetKind,
 } from '../artifactHandoff/handoffSpineService.js';
+import {
+  recordGovernedConsumerBinding,
+  validateGovernedSnapshotRef,
+  type GovernedConsumerBinding,
+  type GovernedSnapshotRef,
+} from '../organizationContext/governedSnapshotConsumerBindingService.js';
 
 // ---------------------------------------------------------------------------
 // Errors
@@ -223,6 +229,7 @@ export interface ChatProposalPayloadV1 {
   /** Whatever the caller supplied, if anything. Informational only — never
    * used for the hash's authority and never trusted over `citations` above. */
   clientCitations: unknown[] | null;
+  governedSnapshotRef?: GovernedSnapshotRef;
 }
 
 // ---------------------------------------------------------------------------
@@ -239,6 +246,7 @@ export interface CreateChatProposalInput {
   suggestedTitle?: string | null;
   clientCitations?: unknown[] | null;
   idempotencyKey?: string | null;
+  governedSnapshotRef?: GovernedSnapshotRef;
   /** Test/DI seam only — HTTP callers always get `pgChatMessageSourceProvider`. */
   sourceProvider?: ChatMessageSourceProvider;
 }
@@ -258,6 +266,9 @@ export async function createChatProposal(
   const messageId = requireNonEmpty(input.messageId, 'messageId');
   if (!isTargetKind(input.targetKind)) {
     throw new ChatHandoffError('targetKind is invalid', 'INVALID_ARGUMENT', 400);
+  }
+  if (input.governedSnapshotRef) {
+    await validateGovernedSnapshotRef(organizationId, input.governedSnapshotRef);
   }
 
   const provider = input.sourceProvider ?? pgChatMessageSourceProvider;
@@ -315,6 +326,9 @@ export async function createChatProposal(
       unverified: extraction.unverified,
     },
     clientCitations: Array.isArray(input.clientCitations) ? input.clientCitations : null,
+    ...(input.governedSnapshotRef
+      ? { governedSnapshotRef: input.governedSnapshotRef }
+      : {}),
   };
 
   try {
@@ -331,6 +345,22 @@ export async function createChatProposal(
   } catch (err) {
     throw translateSpineError(err);
   }
+}
+
+export async function createGovernedChatProposal(
+  input: CreateChatProposalInput & { governedSnapshotRef: GovernedSnapshotRef }
+): Promise<CreateChatProposalResult & { binding: GovernedConsumerBinding }> {
+  await validateGovernedSnapshotRef(input.organizationId, input.governedSnapshotRef);
+  const result = await createChatProposal(input);
+  const bound = await recordGovernedConsumerBinding({
+    organizationId: input.organizationId,
+    consumerKind: 'chat',
+    consumerRecordId: input.messageId,
+    proposalId: result.proposal.proposalId,
+    snapshotRef: input.governedSnapshotRef,
+    boundBy: input.userId,
+  });
+  return { ...result, binding: bound.binding };
 }
 
 // ---------------------------------------------------------------------------

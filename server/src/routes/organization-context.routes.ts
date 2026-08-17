@@ -7,6 +7,7 @@ import {
 } from '../middleware/auth.middleware.js';
 import { emitOrgContextRebuilt } from '../realtime/orgContextRealtime.js';
 import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
+import { resolveLatestGovernedSnapshotRef } from '../services/organizationContext/governedSnapshotConsumerBindingService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
@@ -202,6 +203,23 @@ router.get(
     const limit = Math.max(1, Math.min(Number(req.query.limit || 20), 100));
     const versions = await organizationContextService.listSnapshotVersions(orgId, limit);
     res.json({ versions });
+  })
+);
+
+router.get(
+  '/governed/resolve-latest',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = requireOrgId(req, res);
+    if (!orgId) return;
+    const snapshotRef = await resolveLatestGovernedSnapshotRef(orgId);
+    if (!snapshotRef) {
+      res.status(404).json({ error: 'No governed snapshot has been published' });
+      return;
+    }
+    // This endpoint resolves "latest" NOW into an exact immutable ref. The
+    // returned ref must be persisted in the consumer command; no execution
+    // path is allowed to call buildResolvedContext/latest again on replay.
+    res.json({ snapshotRef });
   })
 );
 

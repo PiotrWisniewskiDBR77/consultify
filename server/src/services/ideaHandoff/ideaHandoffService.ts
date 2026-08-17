@@ -74,6 +74,12 @@ import {
   type HandoffProposal,
   type HandoffReceipt,
 } from '../artifactHandoff/handoffSpineService.js';
+import {
+  recordGovernedConsumerBinding,
+  validateGovernedSnapshotRef,
+  type GovernedConsumerBinding,
+  type GovernedSnapshotRef,
+} from '../organizationContext/governedSnapshotConsumerBindingService.js';
 
 export { HandoffSpineError } from '../artifactHandoff/handoffSpineService.js';
 
@@ -121,6 +127,7 @@ export interface IdeaArtifactPayload {
   actionContract: unknown;
   sourcePack: unknown;
   evidenceRefs: unknown;
+  governedSnapshotRef?: GovernedSnapshotRef;
 }
 
 export const IDEA_ARTIFACT_CONTRACT_VERSION = 'idea-artifact-v1';
@@ -179,7 +186,10 @@ function parseJsonField(raw: string | null | undefined, fallback: unknown): unkn
  * approved" is verified (the proposal keeps its ORIGINAL hash; only a NEW
  * proposal would pin the edited content).
  */
-export function buildIdeaArtifactPayload(idea: MyIdeaRow): IdeaArtifactPayload {
+export function buildIdeaArtifactPayload(
+  idea: MyIdeaRow,
+  governedSnapshotRef?: GovernedSnapshotRef
+): IdeaArtifactPayload {
   return {
     ideaId: idea.id,
     title: idea.title,
@@ -194,6 +204,7 @@ export function buildIdeaArtifactPayload(idea: MyIdeaRow): IdeaArtifactPayload {
     actionContract: parseJsonField(idea.action_contract_json, {}),
     sourcePack: parseJsonField(idea.source_pack_json, {}),
     evidenceRefs: parseJsonField(idea.evidence_refs_json, []),
+    ...(governedSnapshotRef ? { governedSnapshotRef } : {}),
   };
 }
 
@@ -241,6 +252,7 @@ export interface ProposeIdeaArtifactInput {
   targetKind: IdeaArtifactTargetKind;
   createdBy: string;
   idempotencyKey?: string | null;
+  governedSnapshotRef?: GovernedSnapshotRef;
 }
 
 export interface ProposeIdeaArtifactResult {
@@ -266,7 +278,10 @@ export async function proposeIdeaArtifact(
     );
   }
   const idea = await loadTenantScopedIdea(input.ideaId, input.organizationId);
-  const payload = buildIdeaArtifactPayload(idea);
+  if (input.governedSnapshotRef) {
+    await validateGovernedSnapshotRef(input.organizationId, input.governedSnapshotRef);
+  }
+  const payload = buildIdeaArtifactPayload(idea, input.governedSnapshotRef);
 
   const { proposal, replayed } = await createProposal({
     organizationId: input.organizationId,
@@ -279,6 +294,22 @@ export async function proposeIdeaArtifact(
     contractVersion: IDEA_ARTIFACT_CONTRACT_VERSION,
   });
   return { proposal, replayed };
+}
+
+export async function proposeGovernedIdeaArtifact(
+  input: ProposeIdeaArtifactInput & { governedSnapshotRef: GovernedSnapshotRef }
+): Promise<ProposeIdeaArtifactResult & { binding: GovernedConsumerBinding }> {
+  await validateGovernedSnapshotRef(input.organizationId, input.governedSnapshotRef);
+  const result = await proposeIdeaArtifact(input);
+  const bound = await recordGovernedConsumerBinding({
+    organizationId: input.organizationId,
+    consumerKind: 'idea',
+    consumerRecordId: input.ideaId,
+    proposalId: result.proposal.proposalId,
+    snapshotRef: input.governedSnapshotRef,
+    boundBy: input.createdBy,
+  });
+  return { ...result, binding: bound.binding };
 }
 
 // ---------------------------------------------------------------------------

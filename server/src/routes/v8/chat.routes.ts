@@ -12,6 +12,7 @@ import { TARGET_KINDS } from '../../services/artifactHandoff/handoffSpineService
 import * as caseIntakeService from '../../services/caseWorkspace/caseIntakeService.js';
 import { ChatHandoffError } from '../../services/chatHandoff/chatHandoffService.js';
 import * as chatHandoffService from '../../services/chatHandoff/chatHandoffService.js';
+import { GovernedSnapshotBindingError } from '../../services/organizationContext/governedSnapshotConsumerBindingService.js';
 import {
   ChatTargetOwnerIngressError,
   claimNextChatOwnerIngress,
@@ -566,6 +567,14 @@ const createChatProposalBody = z.object({
   idempotencyKey: z.string().trim().min(1).max(200).nullable().optional(),
   clientCitations: z.array(z.unknown()).nullable().optional(),
 });
+const governedSnapshotRefSchema = z.object({
+  snapshotId: z.string().uuid(),
+  version: z.number().int().positive(),
+  contentHash: z.string().regex(/^[a-f0-9]{64}$/i),
+});
+const createGovernedChatProposalBody = createChatProposalBody.extend({
+  governedSnapshotRef: governedSnapshotRefSchema,
+});
 
 const decideChatProposalBody = z.object({
   reason: z.string().trim().min(1).max(2000).nullable().optional(),
@@ -638,6 +647,40 @@ router.post(
         .status(result.replayed ? 200 : 201)
         .json({ data: result, meta: { version: 'v8' } });
     } catch (err) {
+      handleChatHandoffError(err, res);
+    }
+  })
+);
+
+router.post(
+  '/conversations/:conversationId/governed-handoff-proposals',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const { conversationId } = req.params;
+    const parsed = createGovernedChatProposalBody.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ code: 'SNAPSHOT_REF_REQUIRED', details: parsed.error.issues });
+      return;
+    }
+    try {
+      const data = await chatHandoffService.createGovernedChatProposal({
+        organizationId,
+        userId,
+        conversationId,
+        messageId: parsed.data.messageId,
+        targetKind: parsed.data.targetKind,
+        note: parsed.data.note ?? null,
+        suggestedTitle: parsed.data.suggestedTitle ?? null,
+        clientCitations: parsed.data.clientCitations ?? null,
+        idempotencyKey: parsed.data.idempotencyKey ?? null,
+        governedSnapshotRef: parsed.data.governedSnapshotRef,
+      });
+      res.status(data.replayed ? 200 : 201).json({ data, meta: { version: 'v8' } });
+    } catch (err) {
+      if (err instanceof GovernedSnapshotBindingError) {
+        res.status(err.httpStatus).json({ error: err.message, code: err.code });
+        return;
+      }
       handleChatHandoffError(err, res);
     }
   })
