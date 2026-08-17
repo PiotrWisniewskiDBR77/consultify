@@ -2,6 +2,20 @@
   "taskId": "FIN-MVP-CUTOVER-001",
   "baselineSha": "14889d7b087585ae6f5d4a74e86c1b5e344e7c1c",
   "productSha": "e14dbe596a4617ec0a8e81e15f1cd2f704f45123",
+  "technicalSourceSha": "74f6a15ffd6b953432531a77b8e2e58a73c4128a",
+  "reconciliationSha": "de4100cead8759afcc2ee4e3a8d349242a22fd4a",
+  "technicalVerdict": "PASS_CURRENT_LEGACY_CUTOVER_KERNEL",
+  "currentKernelRequalification": {
+    "migration": "Fresh exact-current PostgreSQL ledger 758/758/758 successful and unique with zero missing checksums; strict repeat applied 0 and dry-run reported 0 pending.",
+    "focused": "3 files / 13 tests passed: durable lifecycle 5, mounted Finance/Results/Partner observation 6, atomic bulk user plus ACTIVE membership 2.",
+    "fullLegacy": "16 files / 103 tests passed.",
+    "executionDenominator": "118/118 cumulative test executions = focused 13 + full legacy 103 + separate atomic bulk regression 2. These sets overlap and are not 118 unique test definitions.",
+    "lateUpgrade": "Seeded late apply of 20261010 and 20261011 preserved the historical NULL-organization Chat row, installed the composite tenant index, preserved a seeded terminal cutover intent, and left the intent trigger enabled O.",
+    "static": "8 GB TypeScript typecheck and backend build passed.",
+    "cleanup": "Final legacy intent, bulk-user and orphan-membership fixture residue was 0. The first full run is invalid evidence: all 103 assertions passed but the cleanup guard correctly refused the nonconforming database name b1_requal; the valid rerun used consultify_b1_requal and exited 0.",
+    "financeScope": "Finance registration is durable before the mounted handler; registration storage failure returns 503 before the leaf; exact retries, fingerprint collision, fenced repair and cold readback fail closed. Bulk import atomically creates ACTIVE membership.",
+    "reconciliationNote": "de4100 advances the tested 74f6 product state only through evidence commits relevant to this reconciliation; productSha remains the historical domain implementation authority."
+  },
   "leaseSha256": "not_applicable_integrator_bounded_task",
   "verdict": "PARTIAL",
   "open": [
