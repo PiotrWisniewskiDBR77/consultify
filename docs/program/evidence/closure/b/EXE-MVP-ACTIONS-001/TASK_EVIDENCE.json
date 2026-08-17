@@ -1,7 +1,7 @@
 {
   "taskId": "EXE-MVP-ACTIONS-001",
   "baselineSha": "eb310fb344d3339c67cad81188ce13c6f950d100",
-  "productSha": "75714ca5b4d1b874524d485b551744d72a7657a8",
+  "productSha": "7d0ce067497891c01f22b0078dee41fbbc15a7e4",
   "leaseSha256": "f4d75f0aed94f2e34acaec63d91c245495e7e0f658aa36d1122342c2acecc612",
   "changedPaths": [
     "server/migrations/20260917_execution_action_audit_immutability.sql",
@@ -20,7 +20,11 @@
     "server/src/routes/caseWorkspace/__tests__/cases.routes.test.ts",
     "server/src/routes/caseWorkspace/__tests__/actionProposals.routes.test.ts",
     "server/src/routes/caseWorkspace/__tests__/waitSubscriptions.routes.test.ts",
-    "server/src/routes/caseWorkspace/__tests__/artifactLinks.routes.test.ts"
+    "server/src/routes/caseWorkspace/__tests__/artifactLinks.routes.test.ts",
+    "server/src/routes/caseWorkspace/_shared/errors.ts",
+    "server/src/services/caseWorkspace/__tests__/e2e/liveStackHarness.ts",
+    "server/src/services/caseWorkspace/__tests__/e2e/liveStack.e2e.pg.test.ts",
+    "server/src/services/caseWorkspace/__tests__/e2e/liveStack.e2e.part2.pg.test.ts"
   ],
   "changedPathRationale": {
     "registry": "One live registry/minimum-role authority and terminal outcome audit for all nine IMPLEMENTED actions; authorized mutations and SUCCEEDED audit share one pinned UoW.",
@@ -34,7 +38,9 @@
     "cd server && npx tsc --noEmit --pretty false",
     "CI=true NODE_ENV=test DB_TYPE=postgres MOCK_DB=false RUN_DB_TESTS=1 DATABASE_URL=postgresql://iris:***@127.0.0.1:32913/consultify npx tsx server/scripts/migrate.postgres.ts",
     "NODE_ENV=test DB_TYPE=postgres MOCK_DB=false RUN_DB_TESTS=1 DATABASE_URL=postgresql://iris:***@127.0.0.1:32913/consultify npx vitest run server/src/services/__tests__/executionActionRegistryService.pg.test.ts --reporter=dot --no-file-parallelism",
-    "npm run build:backend"
+    "npm run build:backend",
+    "NODE_ENV=test DB_TYPE=postgres MOCK_DB=false RUN_DB_TESTS=1 DATABASE_URL=postgresql://case_workspace:***@127.0.0.1:55432/case_workspace_test npx vitest run src/services/caseWorkspace/__tests__/e2e/liveStack.e2e.pg.test.ts src/services/caseWorkspace/__tests__/e2e/liveStack.e2e.part2.pg.test.ts --environment node --no-file-parallelism --reporter=dot",
+    "NODE_ENV=test DB_TYPE=postgres MOCK_DB=false RUN_DB_TESTS=1 DATABASE_URL=postgresql://case_workspace:***@127.0.0.1:55432/case_workspace_test npx vitest run src/services/__tests__/executionActionRegistryService.pg.test.ts --environment node --no-file-parallelism --reporter=dot"
   ],
   "denominators": {
     "actionDisposition": "13/13: 9 IMPLEMENTED governed, 4 HIDDEN fail-closed",
@@ -42,10 +48,11 @@
     "realPostgres": "1/1 file, 21/21 tests, exit 0; nested pinned-UoW success 9/9 and forced audit failure rollback 9/9",
     "freshMigrations": "734/734 applied, exit 0",
     "typeCheck": "server TypeScript exit 0",
-    "backendBuild": "exit 0"
+    "backendBuild": "historical exit 0; current rerun blocked by foreign server/src/index.ts TS2769",
+    "mountedRealDomain": "2/2 files, 37/37 tests, exit 0; real process/JWT/membership/fresh PostgreSQL; 9/9 IMPLEMENTED success and 9/9 insufficient-role denial"
   },
   "fixtures": {
-    "database": "fresh disposable pgvector/pgvector:pg16 container consultify-exe-actions-uow-edeb on 127.0.0.1:32913",
+    "database": "fresh disposable pgvector/pgvector:pg16 container consultify-exe-actions-mounted-fac207 on 127.0.0.1:55432; 736 migrations applied",
     "organizationPrefix": "exe-actions-"
   },
   "negativeControls": {
@@ -62,5 +69,5 @@
     "method": "Revert 75714ca5b4d1b874524d485b551744d72a7657a8 and d9fcb6fea8ff5d063751d9712931ccfebaf37e3c. Retaining the additive append-only trigger is backward compatible."
   },
   "verdict": "PARTIAL",
-  "openBlocker": "G4 remains outside this packet. The transaction-client contract and 9/9 realPG rollback denominator are complete, but the current mounted route regression uses mocked domain services; a literal mounted-real-domain 9-action fixture was not executed in this bounded packet."
+  "openBlocker": "G4 remains outside this packet. Mounted real-domain success and role denial are now literal 9/9, while forced-audit-failure rollback is still proven 9/9 at the real PostgreSQL service boundary rather than by nine mounted HTTP calls; policy-drift/hidden/cold controls likewise remain service-boundary evidence."
 }
