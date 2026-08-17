@@ -2,6 +2,9 @@
   "taskId": "EXE-UI-CANON-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "productSha": "99406b784bf1332beb369be161e75a2422f00fc6",
+  "technicalSourceSha": "aa118bbdcbab2a811740eda2684eff5428aa981d",
+  "integratedProductSha": "39341f3ffbd60b1a18461f925abf3c327bd97b43",
+  "reconciliationSha": "3b55f6b627b74d1e3397b75582d3912bf3e9c557",
   "leaseSha256": "f4d75f0aed94f2e34acaec63d91c245495e7e0f658aa36d1122342c2acecc612",
   "toolchain": {
     "node": "v24.12.0",
@@ -27,6 +30,10 @@
     "CI=true DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts  (fresh, repeat, --dry-run)"
   ],
   "denominators": {
+    "exactCurrentExecutionBvpRealPg": "4/4 PASS",
+    "exactCurrentSignedUiJourneys": "2/2 PASS",
+    "exactCurrentSchema": "758 migrations; repeat 0; dry-run pending 0",
+    "fixtureResidue": "0; append-only trigger restored/enabled (O)",
     "task": "Mounted 7 (5 tab-bar + 2 side-entry), dead 5, 1 unreachable-despite-flag-ON",
     "laneRealDbPass": "110 leased realDB files on an isolated DB: 77 passed / 7 failed / 26 skipped; 675 tests: 565 passed / 51 failed / 59 skipped",
     "recoveredAcceptance": "14 leased acceptance files the mandated G2 command cannot collect, run under vitest.acceptance.config.ts: 105 tests, 91 passed / 14 failed",
@@ -114,12 +121,10 @@
   "rollback": {
     "method": "Revert the lane commits; all changes are additive application code plus new tests. NO migration was added by this lane, so no schema rollback is required and old readers are unaffected."
   },
-  "verdict": "BLOCKED_HUMAN",
-  "openBlocker": "ExecutionInitiativeStatusControl, KPIDashboard, PeopleChangeWorkspace, ReportCompactPanel, RiskSignalsPanel all confirmed zero live importers. ExecutionSummaryOneLook has its flag ON by default yet no reachable trigger anywhere. Named human UX + VoiceOver verdict required.",
+  "verdict": "PARTIAL",
+  "openBlocker": "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending.",
   "openBlockers": [
-    "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
-    "Task-specific UI states not reached by the final automated sweep: stale.",
-    "Observed console HTTP errors require task-specific qualification: total=78, 403=78, 404=0, other=0."
+    "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md."
   ],
   "blockerReconciliation": [
     {
@@ -129,6 +134,7 @@
     }
   ],
   "resolvedBlockers": [
+    "Exact-current signed technical UI 2/2 proves capacity/actions/four-eyes/close/immutable Results receipt plus stale, tenant, revoked, deep/reload/cold and no-false-success paths; historical generic G4 stale and console-403 qualification blockers are superseded by this task-specific packet.",
     "Final mounted signed-auth automated G4 completed on candidate 836bfd633af7a689e7a3fb06971cbd8fe57bafe7: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed."
   ],
   "automatedG4Verdict": {

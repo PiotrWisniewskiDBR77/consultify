@@ -2,6 +2,9 @@
   "taskId": "EXE-MVP-ACTIONS-001",
   "baselineSha": "eb310fb344d3339c67cad81188ce13c6f950d100",
   "productSha": "8578205047f1e0fd54414ad0ebe660cdbb018ab0",
+  "technicalSourceSha": "aa118bbdcbab2a811740eda2684eff5428aa981d",
+  "integratedProductSha": "39341f3ffbd60b1a18461f925abf3c327bd97b43",
+  "reconciliationSha": "3b55f6b627b74d1e3397b75582d3912bf3e9c557",
   "leaseSha256": "f4d75f0aed94f2e34acaec63d91c245495e7e0f658aa36d1122342c2acecc612",
   "changedPaths": [
     "server/migrations/20260917_execution_action_audit_immutability.sql",
@@ -44,6 +47,10 @@
     "NODE_ENV=test DB_TYPE=postgres MOCK_DB=false RUN_DB_TESTS=1 DATABASE_URL=postgresql://provider:***@127.0.0.1:56815/provider npx vitest run src/services/caseWorkspace/__tests__/e2e/liveStack.e2e.part2.pg.test.ts --environment node --no-file-parallelism --reporter=dot"
   ],
   "denominators": {
+    "exactCurrentExecutionBvpRealPg": "4/4 PASS",
+    "exactCurrentExecutionUi": "2/2 PASS with signed ACTIVE identities and action/closure/stale/tenant/revoked/cold controls",
+    "exactCurrentSchema": "758 migrations; repeat 0; dry-run pending 0",
+    "fixtureResidue": "0; append-only trigger restored/enabled (O)",
     "actionDisposition": "13/13: 9 IMPLEMENTED governed, 4 HIDDEN fail-closed",
     "focusedRegression": "6/6 files, 43/43 tests, exit 0",
     "realPostgres": "1/1 file, 21/21 tests, exit 0; nested pinned-UoW success 9/9 and forced audit failure rollback 9/9",
@@ -70,5 +77,8 @@
     "method": "Revert 75714ca5b4d1b874524d485b551744d72a7657a8 and d9fcb6fea8ff5d063751d9712931ccfebaf37e3c. Retaining the additive append-only trigger is backward compatible."
   },
   "verdict": "PARTIAL",
-  "openBlocker": "Backend/runtime DoD is complete. G4 remains the sole owner/human decision outside this authorized technical packet."
+  "openBlocker": "Backend/runtime and task-specific mounted UI DoD are complete. Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending.",
+  "resolvedBlockers": [
+    "Exact-current governed actions and delivery closure requalified patch-equivalent at 6de1fe8532/39341f3ffb (source bf55070e2f/aa118bbdcb): realPG 4/4 and signed mounted UI 2/2, residue 0, trigger restored/enabled."
+  ]
 }
