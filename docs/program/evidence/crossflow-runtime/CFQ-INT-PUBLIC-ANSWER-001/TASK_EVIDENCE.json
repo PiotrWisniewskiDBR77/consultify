@@ -2,7 +2,8 @@
   "taskId": "CFQ-INT-PUBLIC-ANSWER-001",
   "package": "A — public interview delivery (lane tasks 1-3)",
   "baselineSha": "eb310fb344d3339c67cad81188ce13c6f950d100",
-  "branch": "codex/claude-f2-crossflow-runtime-build-20260817",
+  "productSha": "be63ef1d8dfd6e68fc63dfa364ef541c86c806c3",
+  "branch": "codex/integrate-f-public-answer",
   "verdict": "DONE_CURRENT_SHA",
   "realCodeDelivered": {
     "migration": "server/migrations/952_interview_public_distribution_answers.sql",
@@ -57,12 +58,25 @@
       "exitCode": 0,
       "runs": 2,
       "note": "run twice consecutively to prove rerun-hermeticity"
+    },
+    {
+      "command": "DATABASE_URL=postgresql://provider:***@127.0.0.1:56815/provider NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres npx vitest run tests/integration/crossflow-runtime/cf-a-public-interview-answers.realdb.test.ts --no-file-parallelism --maxWorkers=1 --retry=0 --reporter=dot",
+      "exitCode": 0,
+      "runs": 2,
+      "note": "integration candidate on shared current-schema DB; exact-tenant cleanup, never TRUNCATE"
     }
   ],
   "denominators": {
     "freshMigrations": { "applied": 733, "failed": 0, "checksumsIndependentlyVerified": 733, "mismatches": 0 },
     "tables": 1589,
     "packageASuite": { "files": 1, "tests": 18, "passed": 18, "failed": 0, "skipped": 0, "todo": 0, "retries": 0 },
+    "integrationMigrations": { "applied": 1, "repeatPending": 0, "dryRunPending": 0 },
+    "integrationQuality": {
+      "scopedTypecheckExit": 0,
+      "serverTypecheckExit": 0,
+      "backendBuildExit": 0,
+      "residue": { "receipts": 0, "distributions": 0, "questions": 0, "organizations": 0 }
+    },
     "regressionSuites": {
       "command": "vitest run tests/integration/interview tests/unit/backend/rateLimiter.test.js server/src/services/__tests__/interviewManagerScope.test.ts --retry=0",
       "withChanges": { "files": 4, "passed": 15, "failed": 6, "skipped": 5 },
@@ -94,7 +108,7 @@
     "noWriteAfterCompletion": "409 DISTRIBUTION_COMPLETED; stored answer and provenance survive a COLD readback on a separate client; zero new receipts",
     "ledgerAppendOnlyInDatabase": "direct UPDATE and direct DELETE on the receipt table both refused by trigger; asserted against a NON-EMPTY table so a no-op statement cannot pass the check",
     "piiAndTenantLeak": "public GET exposes neither organization id, nor recipientEmail, nor the raw token",
-    "zeroResidue": "teardown asserts 0 residual rows across distributions/questions/sessions/organizations and throws if any remain"
+    "zeroResidue": "teardown asserts 0 residual rows across receipts/distributions/questions/sessions/organizations and throws if any remain"
   },
   "defectsFoundAndFixed": [
     {
@@ -110,12 +124,17 @@
     {
       "id": "A-D3",
       "found": "The receipt ledger is append-only at the database level, so teardown's DELETE was silently refused and receipts leaked between runs; the first write of the next run then reported `replayed:true`, invalidating every downstream idempotency assertion. Detected only by running the same suite twice.",
-      "fix": "Teardown uses TRUNCATE (bypasses row triggers, disposable database only) and the suite is verified across two consecutive runs."
+      "fix": "Integration hardening removed the inherited global TRUNCATE. Cleanup locks the ledger and disables only its named guard inside one rollback-safe transaction, deletes exact tenant rows, restores the guard, and the suite passes twice with zero own residue."
     },
     {
       "id": "A-D4",
       "found": "`ON DELETE CASCADE` into an append-only table makes the parent undeletable and reports a misleading 'append-only' error on an unrelated DELETE.",
       "fix": "FK changed to ON DELETE RESTRICT, which states the real rule: a used invite cannot be deleted."
+    },
+    {
+      "id": "A-D5",
+      "found": "The endpoint validated and fingerprinted contextNote but the canonical interview_questions writer discarded it.",
+      "fix": "context_note is updated inside the same tenant-scoped CAS transaction as answer_text and its receipt; mounted realPG cold-read asserts the exact stored value."
     }
   ],
   "leaseCheck": {
