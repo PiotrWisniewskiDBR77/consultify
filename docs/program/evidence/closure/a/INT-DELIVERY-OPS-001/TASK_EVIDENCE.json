@@ -1,7 +1,7 @@
 {
   "taskId": "INT-DELIVERY-OPS-001",
-  "baselineSha": "e613c78739b45b723ccf94decc0174390870967d",
-  "productSha": "b54ce054d2a4dc88821378d16a39027ad641fb22",
+  "baselineSha": "dfbf186bbaf78ded4540ac2532ad41690a6b96c4",
+  "productSha": "2959ab92c40e38914ef3af6d7c95cf7ffe98537f",
   "leaseSha256": "a2f9be9983e3a03e5e64f1a51dca193199a5bec963a246c3b4fe94b378af1308",
   "changedPaths": [
     "server/src/controllers/InterviewController.ts",
@@ -16,32 +16,34 @@
     "server/src/routes/interviewDelivery/__tests__/interviewNotificationPreferencesFallback.pg.test.ts"
   ],
   "changedPathRationale": {
-    "server/src/controllers/InterviewController.ts": "Requires an answer precondition, enforces millisecond-safe PostgreSQL CAS, increments timeout telemetry and durably records bounded AI timeout fallback.",
+    "server/src/controllers/InterviewController.ts": "Requires an answer precondition, enforces millisecond-safe PostgreSQL CAS, increments timeout telemetry, appends the existing platform audit log, and prevents a late provider completion from overwriting the terminal timeout snapshot.",
     "server/src/routes/interview.routes.ts": "Revalidates ACTIVE organization membership on the mounted production Interview router.",
     "src/components/Interview/InterviewWorkspace.tsx": "Refreshes a missing answer version before mutation, sends expectedUpdatedAt and handles 428 without an unguarded write.",
     "src/components/Interview/QuestionsList.tsx": "Carries the server answer version token through the editable question model.",
-    "server/src/routes/interviewDelivery/__tests__/interviewAiReviewTimeoutFallback.pg.test.ts": "Proves timeout metric delta and durable fallback readback without a fabricated AI result.",
+    "server/src/routes/interviewDelivery/__tests__/interviewAiReviewTimeoutFallback.pg.test.ts": "Proves timeout metric delta, terminal snapshot, durable platform audit and cold/restart readback after the late provider resolves.",
     "server/src/routes/interviewDelivery/__tests__/interviewAnswerCasAndNullableFixType.pg.test.ts": "Proves missing-token 428, stale 409 and concurrent same-version exactly-one-winner CAS.",
-    "server/src/routes/interviewDelivery/__tests__/interviewDeliveryMountedAuth.pg.test.ts": "Proves mounted production router behavior with signed JWT, active/revoked membership and tenant isolation.",
+    "server/src/routes/interviewDelivery/__tests__/interviewDeliveryMountedAuth.pg.test.ts": "Proves mounted production router behavior with signed JWT and active/revoked/cross-tenant controls independently for mutation and evaluation.",
     "server/src/routes/interviewDelivery/__tests__/interviewEvidenceIngestToKnowledge.pg.test.ts": "INTEGER write/readback proof.",
     "server/src/routes/interviewDelivery/__tests__/interviewGetSessionAccessMatrix.pg.test.ts": "Role and tenant access matrix.",
     "server/src/routes/interviewDelivery/__tests__/interviewNotificationPreferencesFallback.pg.test.ts": "Missing preferences-table fallback without false success."
   },
   "ownerTables": ["interview_evidence", "interview_answers", "interview_sessions", "notification_preferences"],
   "commands": [
-    {"command": "RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test CI=true DATABASE_URL=<isolated-pg> npx vitest run <six interview delivery realDB files> --no-file-parallelism --maxWorkers=1 --retry=0 --reporter=dot", "exitCode": 0},
+    {"command": "RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test CI=true DATABASE_URL=<fresh-current-pg> npx vitest run <six interview delivery realDB files> --no-file-parallelism --maxWorkers=1 --retry=0 --reporter=dot", "exitCode": 0, "result": "6/6 files; 36/36 tests; 0 failed/skipped"},
     {"command": "npx vitest run src/components/Interview/__tests__/QuestionsList.aiAudit.test.tsx --retry=0 --reporter=dot", "exitCode": 0},
     {"command": "NODE_OPTIONS=--max-old-space-size=8192 npm run type-check -- --pretty false", "exitCode": 0},
     {"command": "NODE_OPTIONS=--max-old-space-size=8192 npm run build:backend", "exitCode": 0},
-    {"command": "strict migration from zero; repeat; dry-run", "exitCode": 0}
+    {"command": "DATABASE_URL=<fresh-current-pg> DB_TYPE=postgres NODE_ENV=test npx tsx server/scripts/migrate.postgres.ts", "exitCode": 0, "result": "738/738 applied with recorded checksums"},
+    {"command": "DATABASE_URL=<fresh-current-pg> DB_TYPE=postgres NODE_ENV=test npx tsx server/scripts/migrate.postgres.ts", "exitCode": 0, "result": "repeat applied 0"},
+    {"command": "DATABASE_URL=<fresh-current-pg> DB_TYPE=postgres NODE_ENV=test npx tsx server/scripts/migrate.postgres.ts --dry-run", "exitCode": 0, "result": "pending 0"}
   ],
   "denominators": {
-    "migrations": {"applied": 733, "failed": 0, "repeatApplied": 0, "dryRunPending": 0},
-    "realDb": {"files": 6, "passed": 34, "failed": 0, "skipped": 0},
+    "migrations": {"applied": 738, "failed": 0, "repeatApplied": 0, "dryRunPending": 0, "checksumDrift": 0},
+    "realDb": {"files": 6, "passed": 36, "failed": 0, "skipped": 0},
     "ui": {"files": 1, "passed": 2, "failed": 0, "skipped": 0}
   },
   "fixtures": {"database": "disposable pgvector PostgreSQL 16 with strict current migration ledger", "aiTimeoutPositiveControl": "provider exceeds configured bound"},
-  "negativeControls": {"missingAnswerTokenDenied428": true, "staleAnswerDenied409": true, "concurrentSameVersionExactlyOneWinner": true, "inactiveMembershipDenied403": true, "missingPreferencesTableNo500": true, "crossTenantSessionDenied": true, "lateAiReviewCannotOverwrite": true, "timeoutMetricAndDurableSnapshot": true},
+  "negativeControls": {"missingAnswerTokenDenied428": true, "staleAnswerDenied409": true, "concurrentSameVersionExactlyOneWinner": true, "inactiveMembershipMutationDenied403": true, "inactiveMembershipEvaluationDenied403": true, "missingPreferencesTableNo500": true, "crossTenantMutationDenied404": true, "crossTenantEvaluationDenied404": true, "lateAiReviewCannotOverwrite": true, "timeoutMetricTerminalSnapshotAndDurableAuditColdReadback": true},
   "browserArtifacts": [],
   "rollback": {"method": "Revert code while preserving additive schema; no destructive rollback.", "executed": false},
   "verdict": "DONE_CURRENT_SHA"
