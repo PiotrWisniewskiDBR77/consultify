@@ -10,6 +10,18 @@ const router = Router();
 
 let tableReady = false;
 
+/**
+ * The G4 fixture override table is consulted only under the same fail-closed
+ * conditions that expose test-support at all: never in production, and only
+ * when `ENABLE_TEST_SUPPORT=true`. It is deliberately NOT keyed off `E2E_MODE`,
+ * because that flag also switches on an unsigned-token auth bypass which the
+ * G4 gate has to prove is inert.
+ */
+function testFlagOverridesEnabled(): boolean {
+  if (process.env.NODE_ENV === 'production') return false;
+  return process.env.ENABLE_TEST_SUPPORT === 'true';
+}
+
 async function ensureTable(): Promise<void> {
   if (tableReady) return;
 
@@ -235,6 +247,25 @@ router.get(
       flags[flag.flag_key] = evaluation.enabled;
       if (evaluation.variant) {
         variants[flag.flag_key] = evaluation.variant;
+      }
+    }
+
+    // Test-only overrides, resolved last and never in production.
+    //
+    // The G4 browser gate needs one throwaway tenant to see a flag as enabled.
+    // It used to achieve that by rewriting the shared `feature_flags` row —
+    // which is UNIQUE per key, so a real definition's type, rules, variants and
+    // targets were replaced for the duration of a run. These overrides live in
+    // their own per-organization rows instead, so a production definition is
+    // never read or written and two runs cannot collide.
+    if (testFlagOverridesEnabled() && organizationId) {
+      const overrides = await dbAll<{ flag_key: string; enabled: boolean }>(
+        `SELECT flag_key, enabled FROM g4_test_flag_overrides WHERE organization_id = ?`,
+        [organizationId],
+        { fallback: true }
+      );
+      for (const override of overrides) {
+        flags[override.flag_key] = Boolean(override.enabled);
       }
     }
 

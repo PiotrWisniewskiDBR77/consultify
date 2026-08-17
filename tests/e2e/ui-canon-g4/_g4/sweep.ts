@@ -206,9 +206,24 @@ async function blockingOverlay(page: Page) {
   });
 }
 
-async function isSurfaceVisible(page: Page, signal: RegExp) {
+async function isSurfaceVisible(page: Page, signal: RegExp, selector?: string) {
   const overlay = await blockingOverlay(page).catch(() => ({ blocked: false, detail: '' }));
   if (overlay.blocked) return { visible: false, detail: `blocked by ${overlay.detail}` };
+
+  // A DOM marker, where the surface offers one, beats a text match: it cannot
+  // be satisfied by a redirect to a sibling screen that happens to share a word.
+  if (selector) {
+    const visible = await page
+      .locator(selector)
+      .first()
+      .isVisible()
+      .catch(() => false);
+    return {
+      visible,
+      detail: visible ? `marker ${selector} present` : `marker ${selector} not found`,
+    };
+  }
+
   const visible = await page
     .locator('#root')
     .filter({ hasText: signal })
@@ -369,7 +384,7 @@ export async function sweepCell(
     await dismissOnboarding(page);
     await settle(page);
     const signal = spec.routeSignals?.[route] || spec.readySignal;
-    const vis = await isSurfaceVisible(page, signal);
+    const vis = await isSurfaceVisible(page, signal, spec.routeSelectors?.[route]);
     surfaceRendered = vis.visible;
     if (!vis.visible) consoleErrors.push(`SURFACE: ${vis.detail}`);
 

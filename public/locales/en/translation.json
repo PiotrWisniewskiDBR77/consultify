@@ -22829,6 +22829,17 @@
     "aiHintNextSteps": "Next steps",
     "noSuggestedPlan": "No suggested plan"
   },
+  "audits": {
+    "method": {
+      "tabs": {
+        "library": "Library",
+        "processes": "Sessions",
+        "outputs": "Outputs",
+        "reports": "Reports",
+        "initiatives": "Initiatives"
+      }
+    }
+  },
   "aios": {
     "wave5ArtifactRuntimePanel": {
       "titleAndContentAreRequired": "Title and content are required.",

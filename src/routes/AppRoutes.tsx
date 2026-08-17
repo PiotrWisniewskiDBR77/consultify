@@ -19,6 +19,7 @@ import { isCaseWorkspaceEnabled } from '@/components/CaseWorkspace/caseWorkspace
 import { BetaGate, ProtectedRoute } from '@/components/ProtectedRoute';
 import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import { AnimationWrapper } from '@/components/shared/AnimationWrapper';
+import { LoadingState } from '@/components/shared/states/LoadingState';
 import { V8UnavailableBanner } from '@/components/shared/V8UnavailableBanner';
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
@@ -751,12 +752,58 @@ const DRDAuditReportRoute: React.FC = () => {
  * (`/api/audit` orchestrator vs. `/api/audits` methodical kernel) and neither
  * replaces the other yet.
  */
-const AuditsMethodHubRoute: React.FC = () => {
-  const { isEnabled } = useFeatureFlagsContext();
-  if (!isEnabled('auditsFiveSurfacesV1')) {
+/**
+ * Decides a flag-gated Audits route only once the flag's value is actually
+ * known.
+ *
+ * Before this existed, the guards read `isEnabled(...)` on first render. The
+ * remote (tenant) flags arrive from `GET /api/feature-flags/runtime` after the
+ * first paint, so at that moment "no value yet" was indistinguishable from
+ * "off", and a cold deep-link to an ENABLED route redirected to the hub and
+ * only came back once the flags landed. Measured on a real signed-in session
+ * with the tenant flag on: redirected at ~3s, back on the route by ~8s, and
+ * across four sweeps the number of method tabs that survived a cold deep-link
+ * varied 5/5 → 3/5 → 4/5 → 2/5.
+ *
+ * The four states are now distinct:
+ *  - `loading`         → render a labelled progress state. Never redirect, and
+ *                        never render the gated surface's data either.
+ *  - `ready` + on      → render the surface.
+ *  - `ready` + off     → redirect, deterministically.
+ *  - `unauthenticated` → no tenant can carry flags, so code defaults are final;
+ *                        treated exactly like a settled `off`. (The auth gate
+ *                        wrapping these routes redirects anonymous users first,
+ *                        so this is a belt-and-braces branch.)
+ *  - `error`           → fail closed to the always-available hub, matching this
+ *                        product's default-OFF posture, rather than showing a
+ *                        surface whose entitlement could not be established.
+ */
+const AuditsFlagGate: React.FC<{
+  enabled: boolean;
+  label: string;
+  children: React.ReactNode;
+}> = ({ enabled, label, children }) => {
+  const { remoteFlagStatus } = useFeatureFlagsContext();
+
+  if (remoteFlagStatus === 'loading') {
+    return <LoadingState variant="progress" label={label} />;
+  }
+  if (!enabled) {
     return <Navigate to="/audit-programs" replace />;
   }
-  return <AuditsMethodHub />;
+  return <>{children}</>;
+};
+
+const AuditsMethodHubRoute: React.FC = () => {
+  const { isEnabled } = useFeatureFlagsContext();
+  return (
+    <AuditsFlagGate
+      enabled={isEnabled('auditsFiveSurfacesV1')}
+      label="Ładowanie modułu audytów…"
+    >
+      <AuditsMethodHub />
+    </AuditsFlagGate>
+  );
 };
 
 /**
@@ -767,10 +814,14 @@ const AuditsMethodHubRoute: React.FC = () => {
  */
 const CriterionWorkspaceRoute: React.FC = () => {
   const { isEnabled } = useFeatureFlagsContext();
-  if (!isEnabled('auditsFiveSurfacesV1')) {
-    return <Navigate to="/audit-programs" replace />;
-  }
-  return <CriterionWorkspace />;
+  return (
+    <AuditsFlagGate
+      enabled={isEnabled('auditsFiveSurfacesV1')}
+      label="Ładowanie kryterium audytu…"
+    >
+      <CriterionWorkspace />
+    </AuditsFlagGate>
+  );
 };
 
 /** Redirects /auth?action=trial to /trial/start */
@@ -1572,6 +1623,7 @@ export const AppRoutes: React.FC = () => {
         <Route
           path="/audit-programs"
           element={
+            <ProtectedRoute requireAuth={true}>
             <BetaGate moduleId="MODULE_AUDITS">
               <MainLayout breadcrumbs={breadcrumbs || ['Audits']}>
                 <RouteErrorBoundary>
@@ -1583,6 +1635,7 @@ export const AppRoutes: React.FC = () => {
                 </RouteErrorBoundary>
               </MainLayout>
             </BetaGate>
+            </ProtectedRoute>
           }
         />
 
@@ -1594,6 +1647,7 @@ export const AppRoutes: React.FC = () => {
         <Route
           path="/audit-programs/drd-report/:reportId"
           element={
+            <ProtectedRoute requireAuth={true}>
             <BetaGate moduleId="MODULE_AUDITS">
               <MainLayout breadcrumbs={breadcrumbs || ['Audits', 'Raport DRD']}>
                 <RouteErrorBoundary>
@@ -1605,6 +1659,7 @@ export const AppRoutes: React.FC = () => {
                 </RouteErrorBoundary>
               </MainLayout>
             </BetaGate>
+            </ProtectedRoute>
           }
         />
 
@@ -1616,6 +1671,7 @@ export const AppRoutes: React.FC = () => {
         <Route
           path="/audit-programs/method"
           element={
+            <ProtectedRoute requireAuth={true}>
             <BetaGate moduleId="MODULE_AUDITS">
               <MainLayout breadcrumbs={breadcrumbs || ['Audits']}>
                 <RouteErrorBoundary>
@@ -1627,6 +1683,7 @@ export const AppRoutes: React.FC = () => {
                 </RouteErrorBoundary>
               </MainLayout>
             </BetaGate>
+            </ProtectedRoute>
           }
         />
 
@@ -1636,6 +1693,7 @@ export const AppRoutes: React.FC = () => {
         <Route
           path="/audit-programs/method/:programId/criteria/:criterionId"
           element={
+            <ProtectedRoute requireAuth={true}>
             <BetaGate moduleId="MODULE_AUDITS">
               <MainLayout breadcrumbs={breadcrumbs || ['Audits']}>
                 <RouteErrorBoundary>
@@ -1647,6 +1705,7 @@ export const AppRoutes: React.FC = () => {
                 </RouteErrorBoundary>
               </MainLayout>
             </BetaGate>
+            </ProtectedRoute>
           }
         />
 

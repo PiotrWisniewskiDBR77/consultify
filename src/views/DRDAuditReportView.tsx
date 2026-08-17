@@ -153,6 +153,7 @@ const ReportChatPanel: React.FC<ReportChatPanelProps> = ({
         </div>
         <button
           onClick={onClose}
+          aria-label={t('common.close', 'Close')}
           className="p-1 hover:bg-slate-100 dark:hover:bg-white/5 rounded transition-colors"
         >
           <X className="w-4 h-4" />
@@ -239,6 +240,7 @@ const ReportChatPanel: React.FC<ReportChatPanelProps> = ({
           <button
             onClick={handleSend}
             disabled={!input.trim() || isTyping}
+            aria-label={t('common.send', 'Send')}
             className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Send className="w-5 h-5" />
@@ -602,6 +604,7 @@ export const DRDAuditReportView: React.FC<DRDAuditReportViewProps> = ({
                 // Back must return there, not to the unrelated Report Builder.
                 navigate('/audit-programs');
               }}
+              aria-label={t('common.back', 'Back')}
               className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
             >
               <ChevronLeft className="w-5 h-5" />
@@ -653,6 +656,11 @@ export const DRDAuditReportView: React.FC<DRDAuditReportViewProps> = ({
 
   return (
     <div
+      // The only stable marker on this surface: the whole view previously had
+      // zero data-testid and no ARIA role, so a browser gate could identify it
+      // only by translated literal text. Added while proving the DRD report
+      // route in the UI-CANON G4 Audits sweep.
+      data-testid="drd-audit-report"
       className={`flex flex-col h-full bg-slate-50 dark:bg-navy-950 ${fullScreen ? 'fixed inset-0 z-50' : ''}`}
     >
       {/* Header */}
@@ -665,6 +673,7 @@ export const DRDAuditReportView: React.FC<DRDAuditReportViewProps> = ({
               // the real host route, not the legacy AppView.
               navigate('/audit-programs');
             }}
+            aria-label={t('common.back', 'Back')}
             className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
           >
             <ChevronLeft className="w-5 h-5" />
@@ -756,7 +765,16 @@ export const DRDAuditReportView: React.FC<DRDAuditReportViewProps> = ({
           {report?.status === 'DRAFT' && (
             <button
               onClick={handleFinalize}
-              className="inline-flex items-center gap-2 px-4 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium"
+              // `bg-green-600` (#16a34a) only clears ~3.3:1 against white text —
+              // under the 4.5:1 AA floor (axe color-contrast, serious). The
+              // `--c-success` token was tried first, but it flips lightness
+              // per theme (a bright, foreground-only green in dark mode) and
+              // fails as a solid white-text fill there (~2.5:1). Using
+              // `green-700` instead — already this button's own hover shade —
+              // is a static hex (same in both themes) that clears AA on its
+              // own (white text ~5.0:1); the hover state steps one shade
+              // darker (`green-800`, ~7.1:1) instead of repeating green-700.
+              className="inline-flex items-center gap-2 px-4 py-1.5 bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors text-sm font-medium"
             >
               <CheckCircle className="w-4 h-4" />
               {t('reports.finalize', 'Finalize')}

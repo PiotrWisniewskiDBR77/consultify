@@ -2,6 +2,7 @@ import type { Express, RequestHandler } from 'express';
 
 import apiLoggingMiddleware from './middleware/apiLogging.middleware.js';
 import verifyToken, { validateOrgMembership } from './middleware/auth.middleware.js';
+import { requireActiveAuditsMembership } from './middleware/auditsStrictMembership.middleware.js';
 import { betaGate, createBetaGate } from './middleware/betaGate.middleware.js';
 import { demoContextMiddleware, demoWriteProtection } from './middleware/demoGuard.middleware.js';
 import { deprecationHeader } from './middleware/deprecationHeader.middleware.js';
@@ -421,6 +422,14 @@ import logger from './utils/Logger.js';
 import { safeFetchHtml, SsrfBlockedError } from './utils/ssrfGuard.js';
 
 const gatewayVerifyToken = verifyToken as unknown as RequestHandler;
+/**
+ * Audits-only strict membership. `validateOrgMembership` caches a positive
+ * result for 60s and fails open on a DB error; on the Audits mounts a revoked
+ * membership must be refused on the very next request, and an unreadable
+ * membership table must deny rather than admit. Scoped deliberately to these
+ * four mounts so no other route's behaviour changes.
+ */
+const auditsStrictMembership = requireActiveAuditsMembership as unknown as RequestHandler;
 const orgMembershipGuard = validateOrgMembership as unknown as RequestHandler;
 
 export class ApiGateway {
@@ -1312,12 +1321,12 @@ export class ApiGateway {
       app.use('/api/interview', insightSourceBasketsRouter);
       // Audit Orchestrator — org-scoped CRUD for audit programs (owner flagged
       // direction ⭐⭐⭐, audit #19/#19d/#19e). Paths are /api/audit/programs[...].
-      app.use('/api/audit', auditProgramsRouter);
+      app.use('/api/audit', gatewayVerifyToken, auditsStrictMembership, auditProgramsRouter);
       // Audits — kernel metodyczny (Library/Processes/Outputs/Deliverables/
       // Initiatives, evidence chain, findings, corrective actions, weryfikacja
       // skuteczności). Osobny prefiks /api/audits, żeby nie zmieniać kontraktu
       // działającego huba w tym samym kroku, w którym powstaje nowy model.
-      app.use('/api/audits', auditsMethodRouter);
+      app.use('/api/audits', gatewayVerifyToken, auditsStrictMembership, auditsMethodRouter);
       // Discovery revive — the Discovery Consultant canvas now has a real
       // backend (persistence + convert-to-project + SPIN extraction).
       app.use('/api/discovery', discoveryRoutes);
@@ -1326,8 +1335,8 @@ export class ApiGateway {
       app.use('/api/ai-operator', aiOperatorRoutes);
       mountStub('/api/workqueue', workqueueRoutes, 'workqueueRoutes');
       mountStub('/api/connectors', connectorRoutes, 'connectorRoutes');
-      app.use('/api/audit', auditEventsRoutes);
-      mountStub('/api/audit', auditRoutes, 'auditRoutes');
+      app.use('/api/audit', gatewayVerifyToken, auditsStrictMembership, auditEventsRoutes);
+      mountStub('/api/audit', [gatewayVerifyToken, auditsStrictMembership, auditRoutes], 'auditRoutes');
       app.use('/api/mfa', mfaRoutes);
       app.use('/api/raid', raidRoutes);
       app.use(

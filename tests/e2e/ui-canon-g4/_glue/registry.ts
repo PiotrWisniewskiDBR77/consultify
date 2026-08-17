@@ -296,6 +296,79 @@ export const SURFACES: SurfaceSpec[] = [
     ],
     statesNotPresent: ['stale'],
   },
+  {
+    // The sixteenth module. `UI-CANON-ALL-001` requires 16 module inventories
+    // (`denominators.requiredModuleInventories: 16`) while this registry carried
+    // only 15 — Audits was the gap. Registering it here closes the roster; it is
+    // deliberately NOT added to the 82-task authority list in
+    // `docs/cleanup/POST_CLEANUP_COMPLETION_PLAN.md`, because changing that
+    // denominator is an integrator decision, not this lane's.
+    taskId: 'AUD-UI-CANON-001',
+    key: 'AUD',
+    module: 'Audits',
+    route: '/audit-programs',
+    // `/audit-programs/method` and the criterion workspace only mount when the
+    // tenant-scoped `auditsFiveSurfacesV1` flag is on; the DRD report route
+    // needs its own client-side flag. Both are opened per-tenant by the AUD
+    // spec, never by changing a production default.
+    secondaryRoutes: [
+      '/audit-programs/method?tab=library',
+      '/audit-programs/method?tab=processes',
+      '/audit-programs/method?tab=outputs',
+      '/audit-programs/method?tab=reports',
+      '/audit-programs/method?tab=initiatives',
+    ],
+    // The hub renders `data-testid="audits-hub"` (AuditsHub.tsx:764). Text is
+    // used here because the shared sweep matches on text; the AUD spec
+    // additionally asserts the test id, which is language-independent.
+    readySignal: /Audit programs|Programy audytow|Audits|Audyty/i,
+    // All five method routes share one marker: the method hub's own tab bar.
+    //
+    // Two traps were hit while calibrating this and are recorded so nobody
+    // re-introduces them. (1) `/Raporty/` also matches the *hub*, which carries
+    // its own "Raporty DRD" tab, so a flag-race redirect to the hub would have
+    // been scored as a successful render. (2) A word-boundary regex such as
+    // `/\bReports\b/` never matches, because `textContent` concatenates the tab
+    // labels without separators into "LibrarySesjeOutputsReportsInitiatives" —
+    // that produced a FAIL for a tab whose screenshot proves it rendered fine.
+    //
+    // `OutputsReports` appears only in the method hub's tab bar and never on
+    // the hub, so it is a sound "the method hub is mounted" marker. Which of
+    // the five tabs is active is established by the deep-link URL and by the
+    // per-tab screenshot, not by this text signal.
+    routeSignals: {
+      '/audit-programs/method?tab=library': /OutputsReports|WynikiRaporty/,
+      '/audit-programs/method?tab=processes': /OutputsReports|WynikiRaporty/,
+      '/audit-programs/method?tab=outputs': /OutputsReports|WynikiRaporty/,
+      '/audit-programs/method?tab=reports': /OutputsReports|WynikiRaporty/,
+      '/audit-programs/method?tab=initiatives': /OutputsReports|WynikiRaporty/,
+    },
+    // Each tab gets its OWN marker: the *selected* tab carrying that tab's
+    // label. A redirect to the hub cannot satisfy it (the hub's tab bar has
+    // different labels), and unlike a text match it is immune to `textContent`
+    // concatenating sibling labels. Both locales are listed because the labels
+    // are translated now that `audits.method.tabs.*` exists in pl and en.
+    routeSelectors: {
+      '/audit-programs/method?tab=library':
+        '[role="tab"][aria-selected="true"]:has-text("Biblioteka"), [role="tab"][aria-selected="true"]:has-text("Library")',
+      '/audit-programs/method?tab=processes':
+        '[role="tab"][aria-selected="true"]:has-text("Sesje"), [role="tab"][aria-selected="true"]:has-text("Sessions")',
+      '/audit-programs/method?tab=outputs':
+        '[role="tab"][aria-selected="true"]:has-text("Wyniki"), [role="tab"][aria-selected="true"]:has-text("Outputs")',
+      '/audit-programs/method?tab=reports':
+        '[role="tab"][aria-selected="true"]:has-text("Raporty"), [role="tab"][aria-selected="true"]:has-text("Reports")',
+      '/audit-programs/method?tab=initiatives':
+        '[role="tab"][aria-selected="true"]:has-text("Inicjatywy"), [role="tab"][aria-selected="true"]:has-text("Initiatives")',
+    },
+    gates: [
+      "AppRoutes.tsx:1573-1587 — BetaGate moduleId='MODULE_AUDITS', status 'open' (betaAccess.ts:48), so it never blocks.",
+      'AppRoutes.tsx:754-759 / 768-773 — /audit-programs/method and the criterion workspace redirect to /audit-programs unless auditsFiveSurfacesV1 is enabled; default is FALSE (useFeatureFlags.tsx:263-272) and stays FALSE in production.',
+      'The flag is enabled for the test tenant only, as a feature_flags row scoped by organization_id, evaluated by GET /api/feature-flags/runtime — the product mechanism, not a code change.',
+      'AppRoutes.tsx:736-741 — /audit-programs/drd-report/:reportId redirects unless isDrdReportEnabled(); that flag has NO server/tenant scoping (query/localStorage/env only, src/utils/drdReportFlag.ts), which is recorded as a finding.',
+      '/audits is a public marketing showcase under AuthLayout with no BetaGate and no auth requirement (AuditsShowcasePage.tsx) and is NOT the working application.',
+    ],
+    statesNotPresent: ['stale'],
+  },
 ];
 
 export { MODULE_TABLIST };

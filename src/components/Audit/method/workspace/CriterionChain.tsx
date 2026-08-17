@@ -44,7 +44,17 @@ const STATE_DOT: Record<ChainLinkState, React.ReactNode> = {
 
 const STATE_CLASS: Record<ChainLinkState, string> = {
   done: 'border-c-success/40 bg-c-success/10 text-c-success',
-  current: 'border-c-focus/50 bg-c-focus/10 text-c-focus',
+  // `text-c-focus` is the translucent ring token (rgba, alpha 0.4) — fine for
+  // borders/rings, too low-contrast for text (axe color-contrast, serious).
+  // `text-c-focus-solid` on `bg-c-focus/10` (the pairing used elsewhere, e.g.
+  // IdeaPanelHistory) measures 4.32:1 on THIS chip in light mode — under the
+  // 4.5:1 AA floor (verified with a real Playwright + axe render, not a
+  // static-token guess: the composited chip background here differs enough
+  // from other call sites that the same pairing does not clear AA on it).
+  // `/5` instead of `/10` lightens the wash just enough to clear 4.5:1 in
+  // both themes (measured ~4.77:1 light / ~4.68:1 dark) while keeping the
+  // same blue-focus family and the same token names — no new colour.
+  current: 'border-c-focus/50 bg-c-focus/5 text-c-focus-solid',
   inactive: 'border-c-border-subtle bg-c-surface text-c-text-muted',
 };
 
@@ -53,6 +63,10 @@ export const CriterionChain: React.FC<CriterionChainProps> = ({ links, isPolish 
     <nav
       data-testid="criterion-chain"
       aria-label={isPolish ? 'Łańcuch kroków audytu' : 'Audit step chain'}
+      // Potentially-scrollable region (overflow-x-auto) must itself be
+      // reachable by keyboard (axe scrollable-region-focusable, serious) —
+      // the nav already carries a role+name, tabIndex just makes it focusable.
+      tabIndex={0}
       className="flex flex-wrap items-center gap-1.5 overflow-x-auto rounded-token-md border border-c-border-subtle bg-c-surface-raised/30 p-2"
     >
       {links.map((link, i) => (

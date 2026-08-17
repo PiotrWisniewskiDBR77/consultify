@@ -23934,6 +23934,17 @@
     "aiHintNextSteps": "Następne kroki",
     "noSuggestedPlan": "Brak sugerowanego planu"
   },
+  "audits": {
+    "method": {
+      "tabs": {
+        "library": "Biblioteka",
+        "processes": "Sesje",
+        "outputs": "Wyniki",
+        "reports": "Raporty",
+        "initiatives": "Inicjatywy"
+      }
+    }
+  },
   "aios": {
     "wave5ArtifactRuntimePanel": {
       "titleAndContentAreRequired": "Tytuł i treść są wymagane.",

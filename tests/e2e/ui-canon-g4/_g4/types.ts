@@ -62,6 +62,16 @@ export interface SurfaceSpec {
    */
   routeSignals?: Record<string, RegExp>;
   /**
+   * Per-route DOM marker, checked INSTEAD of the text signal when present.
+   *
+   * Text signals proved unsound for tabbed surfaces: `textContent` concatenates
+   * sibling labels ("LibrarySesjeOutputsReportsInitiatives"), so word-boundary
+   * regexes never match, and a label that also exists on the module's hub scores
+   * a redirect as a successful render. A CSS selector that only the intended
+   * route can satisfy — e.g. the active tab — removes both failure modes.
+   */
+  routeSelectors?: Record<string, string>;
+  /**
    * Signal that the surface itself (not just the app shell) rendered.
    * Must work in both PL and EN.
    */

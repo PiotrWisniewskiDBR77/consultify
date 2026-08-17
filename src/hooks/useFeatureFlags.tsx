@@ -58,6 +58,9 @@ export interface FeatureFlagsConfig {
   userId?: string;
 }
 
+/** Lifecycle of the remote (tenant) flag fetch. See `remoteFlagStatus`. */
+export type RemoteFlagStatus = 'loading' | 'ready' | 'unauthenticated' | 'error';
+
 export interface UseFeatureFlagsReturn {
   /** Check if a feature flag is enabled */
   isEnabled: (flagId: string) => boolean;
@@ -69,12 +72,30 @@ export interface UseFeatureFlagsReturn {
   clearOverride: (flagId: string) => void;
   /** Clear all local overrides */
   clearAllOverrides: () => void;
+  /** @see remoteFlagStatus below */
   /** Get flag metadata */
   getFlagInfo: (flagId: string) => FeatureFlag | undefined;
   /** All flag definitions */
   flagDefinitions: FeatureFlag[];
   /** Loading state for remote flags */
   isLoading: boolean;
+  /**
+   * Lifecycle of the remote-flag fetch, distinct from `isLoading`.
+   *
+   * `isLoading` starts as `false` and only flips true once the fetch effect has
+   * run, so on the very first render `isLoading === false` and `remoteFlags`
+   * is `{}` — indistinguishable from "loaded, and this flag is off". A route
+   * guard that reads a flag at that moment redirects on a flag whose tenant
+   * value is about to arrive. `remoteFlagStatus` removes that ambiguity:
+   *
+   * - `loading`          — the first fetch has not settled; a guard must WAIT.
+   * - `ready`            — remote flags are authoritative; off really means off.
+   * - `unauthenticated`  — no bearer token, so no tenant flags can exist;
+   *                        code defaults are authoritative and final.
+   * - `error`            — transport/server failure; the caller decides its own
+   *                        fail-closed or fail-open policy, deliberately.
+   */
+  remoteFlagStatus: RemoteFlagStatus;
   /** Error from remote flag fetch */
   error: Error | null;
   /** Refresh flags from remote */
@@ -467,6 +488,9 @@ export function useFeatureFlags(config: Partial<FeatureFlagsConfig> = {}): UseFe
   const [localOverrides, setLocalOverrides] = useState<Record<string, boolean>>(getStoredOverrides);
   const [remoteFlags, setRemoteFlags] = useState<Record<string, boolean>>({});
   const [isLoading, setIsLoading] = useState(false);
+  // Starts as `loading`, not `ready`: the fetch effect runs after first paint,
+  // and until it settles no consumer may treat an absent flag as a decision.
+  const [remoteFlagStatus, setRemoteFlagStatus] = useState<RemoteFlagStatus>('loading');
   const [error, setError] = useState<Error | null>(null);
 
   // Fetch remote flags
@@ -476,13 +500,17 @@ export function useFeatureFlags(config: Partial<FeatureFlagsConfig> = {}): UseFe
     const hasAuthToken = Boolean(headers.Authorization && headers.Authorization.trim());
 
     if (!remoteEndpoint && !hasAuthToken) {
+      // Anonymous: there is no tenant to carry flags, so the code defaults are
+      // already final. This is a settled state, not a pending one.
       setRemoteFlags({});
       setError(null);
+      setRemoteFlagStatus('unauthenticated');
       return;
     }
 
     setIsLoading(true);
     setError(null);
+    setRemoteFlagStatus('loading');
 
     try {
       const response = await fetch(endpoint, { headers });
@@ -493,8 +521,10 @@ export function useFeatureFlags(config: Partial<FeatureFlagsConfig> = {}): UseFe
 
       const data = await response.json();
       setRemoteFlags(data.flags || {});
+      setRemoteFlagStatus('ready');
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Unknown error'));
+      setRemoteFlagStatus('error');
     } finally {
       setIsLoading(false);
     }
@@ -605,6 +635,7 @@ export function useFeatureFlags(config: Partial<FeatureFlagsConfig> = {}): UseFe
     getFlagInfo,
     flagDefinitions,
     isLoading,
+    remoteFlagStatus,
     error,
     refresh: fetchRemoteFlags,
   };

@@ -402,7 +402,18 @@ export const ReportBuilder: React.FC<ReportBuilderProps> = ({
                         </button>
                       </>
                     )}
-                    <button className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 transition-colors">
+                    <button
+                      className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 transition-colors"
+                      aria-label={
+                        isExpanded
+                          ? t('reports.collapseSection', 'Collapse {{title}} section', {
+                              title: section.title,
+                            })
+                          : t('reports.expandSection', 'Expand {{title}} section', {
+                              title: section.title,
+                            })
+                      }
+                    >
                       {isExpanded ? (
                         <ChevronUp className="w-4 h-4" />
                       ) : (
@@ -453,6 +464,7 @@ export const ReportBuilder: React.FC<ReportBuilderProps> = ({
                     <button
                       onClick={() => setShowAddMenu(showAddMenu === index ? null : index)}
                       className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-full transition-all opacity-0 hover:opacity-100 focus:opacity-100 group-hover:opacity-100"
+                      aria-label={t('reports.addSectionHere', 'Add section here')}
                     >
                       <Plus className="w-4 h-4" />
                     </button>

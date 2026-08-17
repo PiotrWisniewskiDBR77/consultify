@@ -285,12 +285,10 @@ export const AuditsMethodHub: React.FC = () => {
       {
         id: 'processes',
         // Id URL zostaje `processes` (linki/deep-linki nie mogą się zepsuć) —
-        // zmienia się WYŁĄCZNIE etykieta widoczna. Świadomie isPolish zamiast
-        // `t()`: klucz nie ma dziś wpisu w `public/locales/*/translation.json`
-        // (i5next zwraca wtedy zawsze angielski `defaultValue`, niezależnie od
-        // języka konta) — dotykanie 35k-liniowych plików tłumaczeń dla jednej
-        // etykiety byłoby nieproporcjonalne do zmiany.
-        label: isPolish ? 'Sesje' : 'Sessions',
+        // zmienia się WYŁĄCZNIE etykieta widoczna. Etykieta jest teraz w
+        // `audits.method.tabs.processes` (PL „Sesje” / EN „Sessions”) —
+        // dodane do `public/locales/*/translation.json` 2026-08-17.
+        label: t('audits.method.tabs.processes', isPolish ? 'Sesje' : 'Sessions'),
         icon: <ClipboardList size={16} />,
       },
       { id: 'outputs', label: t('audits.method.tabs.outputs', 'Outputs'), icon: <Package size={16} /> },

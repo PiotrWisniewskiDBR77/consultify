@@ -587,6 +587,12 @@ router.get(
       // Resolve effective role: prefer organization_members.role for the
       // user's current org so that switch-organization is not silently undone.
       let membershipRole: string | null = null;
+      // Tracks whether the ACTIVE-membership lookup actually ran (vs. threw,
+      // e.g. missing table/column on a legacy schema). Kept separate from
+      // `membershipRole` so a DB/schema error still fails OPEN (matches
+      // `validateOrgMembership`'s own fail-open-on-DB-error contract) instead
+      // of being misread as "membership confirmed revoked".
+      let membershipLookupSucceeded = false;
       if (user.organization_id) {
         try {
           const orgMembership = await dbGet<{ role: string }>(
@@ -595,6 +601,7 @@ router.get(
                AND UPPER(COALESCE(status, '')) = 'ACTIVE'`,
             [user.id, user.organization_id]
           );
+          membershipLookupSucceeded = true;
           if (orgMembership?.role) {
             membershipRole = orgMembership.role;
           }
@@ -608,6 +615,26 @@ router.get(
         userRole: user.role,
         membershipRole,
       });
+
+      // AUD-G4 — /me must not hand back *organization* data (name/plan/status,
+      // surfaced here as organizationName + accessLevel) for an org the caller
+      // no longer has an ACTIVE membership row in. `user.organization_id` /
+      // `organization_name` etc. come from `users.organization_id` via a plain
+      // LEFT JOIN, which is NOT updated when `organization_members.status`
+      // flips away from ACTIVE — so without this gate a JWT minted before
+      // revocation keeps reading its old org's name/plan through this
+      // identity endpoint even though every org-scoped resource endpoint
+      // (validateOrgMembership) would now 403 it. Fails OPEN (keeps prior
+      // behavior) when the membership lookup itself didn't run/succeed, when
+      // there is no org on the account at all (nothing to leak), and for
+      // SUPERADMIN (mirrors validateOrgMembership's own bypass) — only a
+      // lookup that ran, found the account has an org, and came back
+      // definitively non-ACTIVE flips this to false.
+      const hasActiveOrgMembership =
+        effectiveRole === 'SUPERADMIN' ||
+        !user.organization_id ||
+        !membershipLookupSucceeded ||
+        Boolean(membershipRole);
 
       // ---------------------------------------------------------------------
       // Effective role changed vs the JWT, or the user was re-mapped by email:
@@ -700,13 +727,20 @@ router.get(
           email: user.email,
           role: effectiveRole,
           organizationId: user.organization_id,
-          organizationName: user.organization_name,
+          // Gated on hasActiveOrgMembership — see comment above its
+          // definition. organizationId is left ungated: it is already a
+          // claim inside the caller's own (signed, not encrypted) JWT, so
+          // echoing it back discloses nothing the caller doesn't already
+          // hold. organizationName/accessLevel below are the actual
+          // `organizations` table data and must not survive revocation.
+          organizationName: hasActiveOrgMembership ? user.organization_name : null,
           firstName: user.first_name,
           lastName: user.last_name,
           avatarUrl: user.avatar_url,
           impersonatorId: user.impersonator_id,
           isAuthenticated: true,
           accessLevel:
+            hasActiveOrgMembership &&
             user.organization_status === 'active' &&
             (user.organization_plan === 'enterprise' || user.organization_plan === 'pro')
               ? 'full'
@@ -764,7 +798,7 @@ router.get(
           companyName:
             user.company_name ||
             (profileFallbackPreferences.companyName as string | undefined) ||
-            user.organization_name,
+            (hasActiveOrgMembership ? user.organization_name : null),
           // VTS metrics
           seniorityLevel: user.seniority_level || null,
           siteLocation: user.site_location || null,

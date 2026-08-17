@@ -337,7 +337,7 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
         />
 
         {/* Section metadata */}
-        <div className="mt-4 pt-3 border-t border-slate-200 dark:border-navy-700 flex items-center justify-between text-xs text-slate-600 dark:text-slate-500">
+        <div className="mt-4 pt-3 border-t border-slate-200 dark:border-navy-700 flex items-center justify-between text-xs text-slate-600 dark:text-c-text-muted">
           <span>
             {section.isAiGenerated ? (
               <span className="inline-flex items-center gap-1">
