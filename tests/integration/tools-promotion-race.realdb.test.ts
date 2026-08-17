@@ -198,7 +198,10 @@ beforeAll(async () => {
   // Hard fail (not skip) on a misconfigured run — proves the connection
   // with real queries (SELECT version()/current_database()), not just env
   // var presence. See assertRealPostgres.ts.
-  await assertRealPostgresTestEnvironment({ expectedDatabase: 'consultinity' });
+  const configuredDatabase = decodeURIComponent(
+    new URL(process.env.DATABASE_URL as string).pathname.replace(/^\//, '')
+  );
+  await assertRealPostgresTestEnvironment({ expectedDatabase: configuredDatabase });
 
   // `audit_log.organization_id` has a real FK to `organizations` — without
   // a matching row, every promotion's (self-swallowed, see `logAudit`'s own
