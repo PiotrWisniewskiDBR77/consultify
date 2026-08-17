@@ -4,6 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { cyclonedxFromLockfile } from './generate-release-candidate-bundle.mjs';
 
 const SHA = /^[0-9a-f]{40}$/,
   HASH = /^[0-9a-f]{64}$/,
@@ -50,22 +51,27 @@ function lexicalStatements(sql) {
     }
     if (sql.startsWith('/*', index)) {
       const end = sql.indexOf('*/', index + 2);
-      index = end < 0 ? sql.length : end + 2;
+      if (end < 0) return [...statements, '__LEXICAL_ERROR_UNTERMINATED_COMMENT__'];
+      index = end + 2;
       current += ' ';
       continue;
     }
     const quote = sql[index];
     if (quote === "'" || quote === '"') {
+      let closed = false;
       index += 1;
       while (index < sql.length) {
         if (sql[index] === quote) {
           if (sql[index + 1] === quote) index += 2;
           else {
             index += 1;
+            closed = true;
             break;
           }
         } else index += 1;
       }
+      if (!closed)
+        return [...statements, '__LEXICAL_ERROR_UNTERMINATED_QUOTE__'];
       current += ' __LITERAL__ ';
       continue;
     }
@@ -74,7 +80,8 @@ function lexicalStatements(sql) {
       if (match) {
         const delimiter = match[0];
         const end = sql.indexOf(delimiter, index + delimiter.length);
-        index = end < 0 ? sql.length : end + delimiter.length;
+        if (end < 0) return [...statements, '__LEXICAL_ERROR_UNTERMINATED_DOLLAR_BODY__'];
+        index = end + delimiter.length;
         current += ' __BODY__ ';
         continue;
       }
@@ -95,6 +102,8 @@ function lexicalStatements(sql) {
 export function classifyMigrationSql(sql) {
   return lexicalStatements(sql).map((statement) => {
     const normalized = statement.replace(/\s+/g, ' ').trim().toUpperCase();
+    if (normalized.startsWith('__LEXICAL_ERROR_'))
+      return { classification: 'UNCLASSIFIED', code: 'MIGRATION_LEXICAL_ERROR' };
     if (/\bCASCADE\b/.test(normalized))
       return { classification: 'DENY', code: 'DESTRUCTIVE_CASCADE' };
     if (
@@ -110,7 +119,7 @@ export function classifyMigrationSql(sql) {
     if (/^ALTER\s+(?:TABLE|TYPE)\b.*\bRENAME\s+(?:TO|COLUMN)\b/.test(normalized))
       return { classification: 'DENY', code: 'DESTRUCTIVE_RENAME' };
     if (
-      /^(?:DELETE\s+FROM|UPDATE\s+)/.test(normalized) ||
+      /\b(?:DELETE\s+FROM|UPDATE\s+)/.test(normalized) ||
       /\bON\s+CONFLICT\b.*\bDO\s+UPDATE\b/.test(normalized)
     )
       return { classification: 'DENY', code: 'DESTRUCTIVE_DATA_REWRITE' };
@@ -181,12 +190,55 @@ export function verifyReleaseCandidateBundle({ manifest: m, repo, bundleDir = pr
   if (sb)
     try {
       const j = JSON.parse(sb);
+      const lockBytes = file(repo, c, 'package-lock.json');
+      const regenerated = cyclonedxFromLockfile(lockBytes, c);
+      if (!Buffer.from(sb).equals(Buffer.from(regenerated)))
+        add('SBOM_CANONICAL_REGEN_MISMATCH', 'SBOM differs from candidate lock regeneration');
       if (j.bomFormat !== 'CycloneDX' || j.specVersion !== '1.5')
         add('SBOM_FORMAT_UNRECOGNIZED', 'CycloneDX 1.5 required');
       if (j.metadata?.properties?.find((x) => x.name === 'consultify:candidateSha')?.value !== c)
         add('SBOM_CANDIDATE_MISMATCH', c);
       if (m.sbom.sourceLockfileSha256 !== m.lockfile.sha256)
         add('SBOM_LOCKFILE_BINDING_MISMATCH', 'lock hash differs');
+      const lock = JSON.parse(lockBytes),
+        expectedInventory = Object.entries(lock.packages ?? {})
+          .filter(([path, pkg]) => path && pkg?.version)
+          .map(([path, pkg]) => ({
+            path,
+            name:
+              pkg.name ||
+              (path.includes('node_modules/')
+                ? path.slice(path.lastIndexOf('node_modules/') + 'node_modules/'.length)
+                : path.replace(/^\.\//, '').split('/').filter(Boolean).at(-1)),
+            version: String(pkg.version),
+          }))
+          .sort((a, b) => a.path.localeCompare(b.path)),
+        components = Array.isArray(j.components) ? j.components : [],
+        actualInventory = components
+          .map((component) => ({
+            path: component.properties?.find((x) => x.name === 'consultify:lockfilePath')?.value,
+            name: component.name,
+            version: component.version,
+          }))
+          .sort((a, b) => String(a.path).localeCompare(String(b.path))),
+        declaredCount = Number(
+          j.metadata?.properties?.find((x) => x.name === 'consultify:componentCount')?.value
+        ),
+        refs = components.map((x) => x['bom-ref']),
+        purls = components.map((x) => x.purl),
+        validPurl = /^pkg:npm\/(?:%40[^/@?]+\/)?[^/@?]+@[^?]+\?install_path=.+$/;
+      if (declaredCount !== components.length || components.length !== expectedInventory.length)
+        add(
+          'SBOM_COMPONENT_COUNT_MISMATCH',
+          `${declaredCount}/${components.length}/${expectedInventory.length}`
+        );
+      if (new Set(refs).size !== refs.length)
+        add('SBOM_BOM_REF_DUPLICATE', 'bom-ref must be unique');
+      if (new Set(purls).size !== purls.length) add('SBOM_PURL_DUPLICATE', 'purl must be unique');
+      if (purls.some((purl) => typeof purl !== 'string' || !validPurl.test(purl)))
+        add('SBOM_PURL_INVALID', 'invalid npm Package URL');
+      if (JSON.stringify(actualInventory) !== JSON.stringify(expectedInventory))
+        add('SBOM_INVENTORY_MISMATCH', 'path/name/version inventory differs');
     } catch {
       add('SBOM_JSON_INVALID', 'invalid JSON');
     }

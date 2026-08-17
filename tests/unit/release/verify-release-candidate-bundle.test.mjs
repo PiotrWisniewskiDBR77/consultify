@@ -138,6 +138,41 @@ test('fails closed for tamper, stale receipt provenance, ref mismatch, dirty tre
     assert.equal(r.releaseGo, false);
   }
 });
+test('independently regenerates SBOM and rejects rehashed truncation, duplicates and malformed purl', () => {
+  const expectedCode = {
+    truncate: 'SBOM_COMPONENT_COUNT_MISMATCH',
+    'duplicate-ref': 'SBOM_BOM_REF_DUPLICATE',
+    'duplicate-purl': 'SBOM_PURL_DUPLICATE',
+    'invalid-purl': 'SBOM_PURL_INVALID',
+  };
+  for (const mode of ['truncate', 'duplicate-ref', 'duplicate-purl', 'invalid-purl']) {
+    const x = fx(),
+      m = structuredClone(x.manifest),
+      sbomPath = resolve(x.out, m.sbom.path),
+      sbom = JSON.parse(readFileSync(sbomPath));
+    if (mode === 'truncate') sbom.components.length = 0;
+    if (mode === 'duplicate-ref') {
+      sbom.components.push(structuredClone(sbom.components[0]));
+    }
+    if (mode === 'duplicate-purl') {
+      const duplicate = structuredClone(sbom.components[0]);
+      duplicate['bom-ref'] += '-different';
+      sbom.components.push(duplicate);
+    }
+    if (mode === 'invalid-purl') {
+      sbom.components[0].purl = 'not-a-purl';
+      sbom.components[0]['bom-ref'] = 'not-a-purl';
+    }
+    const bytes = `${JSON.stringify(sbom, null, 2)}\n`;
+    writeFileSync(sbomPath, bytes);
+    m.sbom.sha256 = hash(bytes);
+    m.manifestSha256 = hashCanonicalManifest(m);
+    const r = verifyReleaseCandidateBundle({ manifest: m, repo: x.repo, bundleDir: x.out });
+    assert.equal(r.verified, false, mode);
+    assert.ok(r.errors.some((error) => error.code === 'SBOM_CANONICAL_REGEN_MISMATCH'), mode);
+    assert.ok(r.errors.some((error) => error.code === expectedCode[mode]), mode);
+  }
+});
 test('rejects nonancestor and historical migration mutation/deletion', () => {
   for (const mode of ['nonancestor', 'mutation', 'deletion']) {
     const x = fx(),
@@ -176,11 +211,22 @@ test('rejects destructive and unclassified migration statements without comment/
     'UPDATE base SET id=id;',
     'ALTER TABLE base ADD COLUMN safe text CASCADE;',
     'VACUUM base;',
+    'WITH doomed AS (SELECT id FROM base) DELETE FROM base WHERE id IN (SELECT id FROM doomed);',
+    'WITH changed AS (SELECT id FROM base) UPDATE base SET id=id FROM changed;',
+    'WiTh changed AS (SELECT id FROM "base") UpDaTe "base" SET "id"="id";',
+    'INSERT INTO base(id) VALUES (1) ON CONFLICT (id) DO UPDATE SET id=excluded.id;',
+    'ALTER TABLE base ADD COLUMN safe text; DROP INDEX idx;',
+    '/* unterminated comment',
+    "COMMENT ON TABLE base IS 'unterminated",
+    'CREATE FUNCTION f() RETURNS void AS $body$ BEGIN NULL; END; LANGUAGE plpgsql;',
   ]) {
     const x = fx(sql),
       r = verifyReleaseCandidateBundle({ manifest: x.manifest, repo: x.repo, bundleDir: x.out });
     assert.equal(r.verified, false, sql);
-    assert.match(JSON.stringify(r.errors), /DESTRUCTIVE_|MIGRATION_STATEMENT_UNCLASSIFIED/);
+    assert.match(
+      JSON.stringify(r.errors),
+      /DESTRUCTIVE_|MIGRATION_STATEMENT_UNCLASSIFIED|MIGRATION_LEXICAL_ERROR/
+    );
   }
   for (const sql of [
     '-- DROP TABLE ignored;\nALTER TABLE base ADD COLUMN safe text;',
@@ -189,6 +235,9 @@ test('rejects destructive and unclassified migration statements without comment/
     "CREATE OR REPLACE FUNCTION f() RETURNS text AS $$ BEGIN RETURN 'DELETE FROM base'; END $$ LANGUAGE plpgsql;",
     'CREATE INDEX IF NOT EXISTS idx ON base(id);',
     "INSERT INTO base(id) VALUES ('UPDATE base SET id=id');",
+    'ALTER TABLE "base" ADD COLUMN "MixedCase" text;',
+    'CREATE OR REPLACE VIEW "MixedView" AS SELECT 1 AS "Value";',
+    'ALTER TABLE base ADD COLUMN safe text; CREATE INDEX safe_idx ON base(safe);',
   ]) {
     const x = fx(sql),
       r = verifyReleaseCandidateBundle({ manifest: x.manifest, repo: x.repo, bundleDir: x.out });

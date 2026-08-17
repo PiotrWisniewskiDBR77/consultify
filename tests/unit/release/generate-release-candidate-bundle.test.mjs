@@ -99,6 +99,10 @@ test('CycloneDX covers canonical-like unnamed, scoped, nested and workspace entr
     new Set(parsed.components.map((x) => x.name)),
     new Set(['z', '@scope/a', 'a', '@consultify/web'])
   );
+  assert.match(
+    parsed.components.find((x) => x.name === '@scope/a').purl,
+    /^pkg:npm\/%40scope\/a@1\?install_path=/
+  );
   assert.equal(
     parsed.metadata.properties.find((x) => x.name === 'consultify:componentCount').value,
     '4'

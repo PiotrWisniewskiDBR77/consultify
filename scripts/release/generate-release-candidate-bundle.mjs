@@ -38,12 +38,17 @@ export function cyclonedxFromLockfile(lockBytes, candidateSha) {
         : path.replace(/^\.\//, '').split('/').filter(Boolean).at(-1));
     if (!name) continue;
     const installPath = encodeURIComponent(path);
+    // Package URL's npm convention models a scope as namespace/name. The
+    // leading @ is escaped, while the namespace separator remains a slash.
+    const purlName = name.startsWith('@')
+      ? `${encodeURIComponent(name.slice(0, name.indexOf('/')))}/${encodeURIComponent(name.slice(name.indexOf('/') + 1))}`
+      : encodeURIComponent(name);
     components.push({
       type: 'library',
       name,
       version: String(pkg.version),
-      'bom-ref': `pkg:npm/${encodeURIComponent(name)}@${pkg.version}?install_path=${installPath}`,
-      purl: `pkg:npm/${encodeURIComponent(name)}@${pkg.version}?install_path=${installPath}`,
+      'bom-ref': `pkg:npm/${purlName}@${encodeURIComponent(String(pkg.version))}?install_path=${installPath}`,
+      purl: `pkg:npm/${purlName}@${encodeURIComponent(String(pkg.version))}?install_path=${installPath}`,
       properties: [{ name: 'consultify:lockfilePath', value: path }],
     });
   }
