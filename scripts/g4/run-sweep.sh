@@ -44,13 +44,14 @@ fi
 : "${G4_BASE_URL:=http://127.0.0.1:3940}"
 : "${G4_DATABASE_URL:=postgresql://consultinity:consultinity@127.0.0.1:34940/consultinity}"
 : "${G4_TMP_DIR:=/tmp/e2euig4}"
+: "${G4_E2E_MODE:=false}"
 
 for surface in "${SURFACES[@]}"; do
   echo "=== G4 sweep: ${surface} ==="
   ACTIVE_LOG="$(mktemp "${TMPDIR:-/tmp}/consultify-g4-${surface}.XXXXXX.log")"
   G4_SURFACE="${surface}" \
   E2E_USE_WEB_SERVER=true E2E_REUSE_SERVER=true E2E_BACKEND_RUNNER=tsx \
-  E2E_MOCK_DB=false E2E_MODE=true \
+  E2E_MOCK_DB=false E2E_MODE="${G4_E2E_MODE}" \
   DATABASE_URL="${G4_DATABASE_URL}" \
   E2E_API_URL="${G4_API_URL}" E2E_BASE_URL="${G4_BASE_URL}" \
   ENABLE_V8_GLOBAL=true VITE_ENABLE_LOCAL_FEATURE_FLAG_OVERRIDES=true \
