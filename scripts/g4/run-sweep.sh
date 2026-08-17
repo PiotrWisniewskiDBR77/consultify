@@ -63,7 +63,8 @@ fi
 
 for surface in "${SURFACES[@]}"; do
   echo "=== G4 sweep: ${surface} ==="
-  ACTIVE_LOG="$(mktemp "${TMPDIR:-/tmp}/consultify-g4-${surface}.XXXXXX.log")"
+  # BSD mktemp requires the X run at the end of the template.
+  ACTIVE_LOG="$(mktemp "${TMPDIR:-/tmp}/consultify-g4-${surface}.XXXXXX")"
   G4_SURFACE="${surface}" \
   E2E_USE_WEB_SERVER=true E2E_REUSE_SERVER=true E2E_BACKEND_RUNNER=tsx \
   E2E_MOCK_DB=false E2E_MODE="${G4_E2E_MODE}" \

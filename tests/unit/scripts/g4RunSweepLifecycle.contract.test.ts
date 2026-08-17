@@ -17,6 +17,15 @@ async function portIsFree(port: number): Promise<boolean> {
   });
 }
 
+async function waitForPortOccupied(port: number, timeoutMs = 5000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if (!(await portIsFree(port))) return;
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+  throw new Error(`Timed out waiting for port ${port} to be occupied`);
+}
+
 async function waitForText(file: string, text: string, timeoutMs = 5000) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
@@ -51,7 +60,17 @@ async function makeFakeNpx(mode: 'block' | 'fail') {
 }
 
 afterEach(async () => {
-  await Promise.all(sandboxes.splice(0).map((dir) => rm(dir, { recursive: true, force: true })));
+  await Promise.all(sandboxes.splice(0).map(async (dir) => {
+    const detachedProcessId = Number((await readFile(path.join(dir, 'detached.pid'), 'utf8').catch(() => '')).trim());
+    if (Number.isInteger(detachedProcessId) && detachedProcessId > 0) {
+      try {
+        process.kill(detachedProcessId, 'SIGTERM');
+      } catch {
+        // The lifecycle assertion expects the wrapper to have terminated it.
+      }
+    }
+    await rm(dir, { recursive: true, force: true });
+  }));
 });
 
 describe('G4 sweep wrapper lifecycle', () => {
@@ -73,9 +92,7 @@ describe('G4 sweep wrapper lifecycle', () => {
 
     await waitForText(log, 'CHAT|false');
     await waitForNonEmpty(detachedPid);
-    for (let i = 0; i < 100 && (await portIsFree(portA)); i++) {
-      await new Promise((resolve) => setTimeout(resolve, 20));
-    }
+    await Promise.all([waitForPortOccupied(portA), waitForPortOccupied(portB)]);
     expect(await portIsFree(portA)).toBe(false);
     expect(await portIsFree(portB)).toBe(false);
     child.kill('SIGTERM');
