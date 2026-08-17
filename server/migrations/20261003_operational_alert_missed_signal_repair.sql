@@ -1,4 +1,54 @@
 -- Working slot 20261003; integrator must reserve the final ordinal after FIN fan-in.
+ALTER TABLE rvn_platform_outbox ADD COLUMN IF NOT EXISTS operational_alert_terminal_at TIMESTAMPTZ;
+ALTER TABLE notification_outbox ADD COLUMN IF NOT EXISTS operational_alert_terminal_at TIMESTAMPTZ;
+ALTER TABLE case_workspace_event_outbox ADD COLUMN IF NOT EXISTS operational_alert_terminal_at TIMESTAMPTZ;
+
+CREATE OR REPLACE FUNCTION stamp_rvn_operational_alert_terminal_at() RETURNS trigger AS $$
+BEGIN
+  IF NEW.status IN ('dispatched','dead_letter') AND (TG_OP='INSERT' OR OLD.status NOT IN ('dispatched','dead_letter')) THEN
+    NEW.operational_alert_terminal_at := clock_timestamp();
+  ELSIF TG_OP='INSERT' THEN
+    NEW.operational_alert_terminal_at := NULL;
+  ELSE
+    NEW.operational_alert_terminal_at := OLD.operational_alert_terminal_at;
+  END IF;
+  RETURN NEW;
+END $$ LANGUAGE plpgsql;
+DROP TRIGGER IF EXISTS trg_rvn_operational_alert_terminal_at ON rvn_platform_outbox;
+CREATE TRIGGER trg_rvn_operational_alert_terminal_at BEFORE INSERT OR UPDATE ON rvn_platform_outbox
+FOR EACH ROW EXECUTE FUNCTION stamp_rvn_operational_alert_terminal_at();
+
+CREATE OR REPLACE FUNCTION stamp_notification_operational_alert_terminal_at() RETURNS trigger AS $$
+BEGIN
+  IF NEW.status IN ('SENT','FAILED') AND (TG_OP='INSERT' OR OLD.status NOT IN ('SENT','FAILED')) THEN
+    NEW.operational_alert_terminal_at := clock_timestamp();
+  ELSIF TG_OP='INSERT' THEN
+    NEW.operational_alert_terminal_at := NULL;
+  ELSE
+    NEW.operational_alert_terminal_at := OLD.operational_alert_terminal_at;
+  END IF;
+  RETURN NEW;
+END $$ LANGUAGE plpgsql;
+DROP TRIGGER IF EXISTS trg_notification_operational_alert_terminal_at ON notification_outbox;
+CREATE TRIGGER trg_notification_operational_alert_terminal_at BEFORE INSERT OR UPDATE ON notification_outbox
+FOR EACH ROW EXECUTE FUNCTION stamp_notification_operational_alert_terminal_at();
+
+CREATE OR REPLACE FUNCTION stamp_case_operational_alert_terminal_at() RETURNS trigger AS $$
+BEGIN
+  IF (NEW.delivered_at IS NOT NULL OR NEW.delivery_attempt_count>=8)
+     AND (TG_OP='INSERT' OR (OLD.delivered_at IS NULL AND OLD.delivery_attempt_count<8)) THEN
+    NEW.operational_alert_terminal_at := clock_timestamp();
+  ELSIF TG_OP='INSERT' THEN
+    NEW.operational_alert_terminal_at := NULL;
+  ELSE
+    NEW.operational_alert_terminal_at := OLD.operational_alert_terminal_at;
+  END IF;
+  RETURN NEW;
+END $$ LANGUAGE plpgsql;
+DROP TRIGGER IF EXISTS trg_case_operational_alert_terminal_at ON case_workspace_event_outbox;
+CREATE TRIGGER trg_case_operational_alert_terminal_at BEFORE INSERT OR UPDATE ON case_workspace_event_outbox
+FOR EACH ROW EXECUTE FUNCTION stamp_case_operational_alert_terminal_at();
+
 CREATE TABLE IF NOT EXISTS operational_alert_repair_intents (
   intent_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id TEXT NOT NULL,
@@ -41,9 +91,9 @@ CREATE TABLE IF NOT EXISTS operational_alert_repair_cursors (
 INSERT INTO operational_alert_repair_cursors(source_type)
 VALUES ('rvn_platform_outbox'),('notification_outbox'),('case_workspace_event_outbox')
 ON CONFLICT DO NOTHING;
-CREATE INDEX IF NOT EXISTS idx_rvn_platform_outbox_repair_scan ON rvn_platform_outbox(status,dispatched_at,outbox_id);
-CREATE INDEX IF NOT EXISTS idx_notification_outbox_repair_scan ON notification_outbox(status,updated_at,id);
-CREATE INDEX IF NOT EXISTS idx_case_workspace_outbox_repair_scan ON case_workspace_event_outbox(delivered_at,delivery_attempt_count,created_at,event_id);
+CREATE INDEX IF NOT EXISTS idx_rvn_platform_outbox_repair_scan ON rvn_platform_outbox(operational_alert_terminal_at,outbox_id) WHERE operational_alert_terminal_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_notification_outbox_repair_scan ON notification_outbox(operational_alert_terminal_at,id) WHERE operational_alert_terminal_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_case_workspace_outbox_repair_scan ON case_workspace_event_outbox(operational_alert_terminal_at,event_id) WHERE operational_alert_terminal_at IS NOT NULL;
 
 ALTER TABLE operational_alert_signals ADD CONSTRAINT uq_operational_alert_signal_org UNIQUE(signal_id,organization_id);
 CREATE TABLE IF NOT EXISTS operational_alert_repair_receipts (

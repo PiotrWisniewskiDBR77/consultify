@@ -22,11 +22,20 @@ const input = {
   kind: 'WRITE_FAILURE_RATE' as const,
   outcome: 'FAILURE' as const,
 };
+let cursorSnapshot: Array<{ source_type: string; effective_at: Date; terminal_id: string }> = [];
 
 describe.skipIf(!enabled)('OPS durable missed-signal repair realPG', () => {
-  beforeAll(() => {
+  beforeAll(async () => {
     process.env.OPERATIONAL_ALERT_DURABLE_ENABLED = 'true';
     process.env.OPERATIONAL_ALERT_REPAIR_ENABLED = 'true';
+    const db = new Client({ connectionString: url });
+    await db.connect();
+    cursorSnapshot = (
+      await db.query(
+        `SELECT source_type,effective_at,terminal_id FROM operational_alert_repair_cursors ORDER BY source_type`
+      )
+    ).rows;
+    await db.end();
   });
   afterAll(async () => {
     delete process.env.OPERATIONAL_ALERT_DURABLE_ENABLED;
@@ -78,7 +87,11 @@ describe.skipIf(!enabled)('OPS durable missed-signal repair realPG', () => {
     await db.query(
       `ALTER TABLE operational_alert_signals ENABLE TRIGGER trg_operational_alert_signals_immutable`
     );
-    await db.query(`DELETE FROM operational_alert_repair_cursors`);
+    for (const cursor of cursorSnapshot)
+      await db.query(
+        `INSERT INTO operational_alert_repair_cursors(source_type,effective_at,terminal_id) VALUES($1,$2,$3) ON CONFLICT(source_type) DO UPDATE SET effective_at=excluded.effective_at,terminal_id=excluded.terminal_id,updated_at=now()`,
+        [cursor.source_type, cursor.effective_at, cursor.terminal_id]
+      );
     await db.end();
   });
   it('collapses 8-way intent, rejects collision, repairs exactly one signal and cold-reads receipt', async () => {
@@ -408,3 +421,98 @@ describe.skipIf(!enabled)('OPS durable missed-signal repair realPG', () => {
     await db.end();
   });
 });
+
+const latePrefix = process.env.OPS_REPAIR_LATE_PREFIX ?? '';
+describe.runIf(enabled && Boolean(latePrefix))(
+  'OPS repair transition cursor late-apply proof',
+  () => {
+    let db: Client;
+    let snapshot: Array<{ source_type: string; effective_at: Date; terminal_id: string }> = [];
+    beforeAll(async () => {
+      process.env.OPERATIONAL_ALERT_DURABLE_ENABLED = 'true';
+      process.env.OPERATIONAL_ALERT_REPAIR_ENABLED = 'true';
+      db = new Client({ connectionString: url });
+      await db.connect();
+      snapshot = (
+        await db.query(
+          `SELECT source_type,effective_at,terminal_id FROM operational_alert_repair_cursors ORDER BY source_type`
+        )
+      ).rows;
+    });
+    afterAll(async () => {
+      await db.query(`DELETE FROM operational_alert_repair_intents WHERE organization_id=$1`, [
+        `${latePrefix}-org`,
+      ]);
+      await db.query(`DELETE FROM notification_outbox WHERE id LIKE $1`, [`${latePrefix}-n-%`]);
+      await db.query(
+        `ALTER TABLE case_workspace_event_outbox DISABLE TRIGGER trg_case_workspace_event_outbox_guard`
+      );
+      await db.query(`DELETE FROM case_workspace_event_outbox WHERE event_id LIKE $1`, [
+        `${latePrefix}-case-%`,
+      ]);
+      await db.query(
+        `ALTER TABLE case_workspace_event_outbox ENABLE TRIGGER trg_case_workspace_event_outbox_guard`
+      );
+      await db.query(`DELETE FROM rvn_platform_outbox WHERE consumer_group LIKE $1`, [
+        `${latePrefix}:%`,
+      ]);
+      await db.query(`DELETE FROM rvn_platform_events WHERE aggregate_id LIKE $1`, [
+        `${latePrefix}:%`,
+      ]);
+      for (const cursor of snapshot)
+        await db.query(
+          `UPDATE operational_alert_repair_cursors SET effective_at=$2,terminal_id=$3,updated_at=now() WHERE source_type=$1`,
+          [cursor.source_type, cursor.effective_at, cursor.terminal_id]
+        );
+      delete process.env.OPERATIONAL_ALERT_DURABLE_ENABLED;
+      delete process.env.OPERATIONAL_ALERT_REPAIR_ENABLED;
+      await db.end();
+    });
+    it('excludes pre-install terminal history, includes late transitions for all three sources and continues bounded batches', async () => {
+      expect(
+        (
+          await db.query(
+            `SELECT
+              (SELECT count(*)::int FROM notification_outbox WHERE id=$1 AND operational_alert_terminal_at IS NULL) notification_history,
+              (SELECT count(*)::int FROM rvn_platform_outbox WHERE consumer_group=$2 AND operational_alert_terminal_at IS NULL) results_history,
+              (SELECT count(*)::int FROM case_workspace_event_outbox WHERE event_id=$3 AND operational_alert_terminal_at IS NULL) case_history`,
+            [`${latePrefix}-n-hist`, `${latePrefix}:hist`, `${latePrefix}-case-hist`]
+          )
+        ).rows[0]
+      ).toEqual({ notification_history: 1, results_history: 1, case_history: 1 });
+      expect(await reconstructTerminalOperationalAlertIntents(1)).toBe(0);
+
+      await db.query(`UPDATE notification_outbox SET status='SENT' WHERE id=ANY($1)`, [
+        [`${latePrefix}-n-late-1`, `${latePrefix}-n-late-2`],
+      ]);
+      await db.query(
+        `UPDATE rvn_platform_outbox SET status='dispatched',dispatched_at=clock_timestamp() WHERE consumer_group=ANY($1)`,
+        [[`${latePrefix}:late:1`, `${latePrefix}:late:2`]]
+      );
+      await db.query(
+        `UPDATE case_workspace_event_outbox SET delivered_at=clock_timestamp() WHERE event_id=ANY($1)`,
+        [[`${latePrefix}-case-late-1`, `${latePrefix}-case-late-2`]]
+      );
+      expect(await reconstructTerminalOperationalAlertIntents(1)).toBe(3);
+      expect(await reconstructTerminalOperationalAlertIntents(1)).toBe(3);
+      expect(await reconstructTerminalOperationalAlertIntents(1)).toBe(0);
+      const proof = await db.query(
+        `SELECT source_type,count(*)::int n FROM operational_alert_repair_intents WHERE organization_id=$1 GROUP BY source_type ORDER BY source_type`,
+        [`${latePrefix}-org`]
+      );
+      expect(proof.rows).toEqual([
+        { source_type: 'case_workspace_event_outbox', n: 2 },
+        { source_type: 'notification_outbox', n: 2 },
+        { source_type: 'rvn_platform_outbox', n: 2 },
+      ]);
+      expect(
+        (
+          await db.query(
+            `SELECT count(*)::int n FROM operational_alert_repair_intents WHERE organization_id=$1 AND source_terminal_id LIKE '%hist%'`,
+            [`${latePrefix}-org`]
+          )
+        ).rows[0].n
+      ).toBe(0);
+    });
+  }
+);

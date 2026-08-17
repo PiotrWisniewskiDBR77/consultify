@@ -6,12 +6,12 @@ import { Pool } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import config from '../../config/Config.js';
-import verifyToken, { validateOrgMembership } from '../../middleware/auth.middleware.js';
 import {
   flushPendingOperationalAuthDenialIntents,
   metricsMiddleware,
   trackOperationalAuthIntentForShutdown,
 } from '../../middleware/metrics.middleware.js';
+import organizationContextRouter from '../../routes/organization-context.routes.js';
 
 const url = process.env.DATABASE_URL ?? '';
 const enabled = process.env.RUN_DB_TESTS === '1' && process.env.MOCK_DB === 'false';
@@ -52,9 +52,8 @@ describe.skipIf(!enabled)('OPS mounted signed-JWT auth denial repair intent', ()
     }
     app = express();
     app.use(metricsMiddleware);
-    app.get('/denied', verifyToken, validateOrgMembership, (_req, res) =>
-      res.status(403).json({ error: 'policy_denied' })
-    );
+    app.use(express.json());
+    app.use('/api/organization-context', organizationContextRouter);
   });
   afterAll(async () => {
     delete process.env.OPERATIONAL_ALERT_DURABLE_ENABLED;
@@ -86,15 +85,13 @@ describe.skipIf(!enabled)('OPS mounted signed-JWT auth denial repair intent', ()
     await pool.query(`DELETE FROM organizations WHERE id=ANY($1)`, [[org, foreign]]);
     await pool.end();
   });
-  it('persists identity-complete denials, excludes missing correlation, and never attributes a forged foreign tenant', async () => {
-    expect(
-      (
-        await request(app)
-          .get('/denied')
-          .set('Authorization', `Bearer ${sign(active, org)}`)
-          .set('x-request-id', `${p}-ok`)
-      ).status
-    ).toBe(403);
+  it('mounts the production route and persists exact active, revoked and forged-tenant denial identity', async () => {
+    const activeDenied = await request(app)
+      .post('/api/organization-context/rebuild')
+      .set('Authorization', `Bearer ${sign(active, org)}`)
+      .set('x-request-id', `${p}-ok`);
+    expect(activeDenied.status).toBe(403);
+    expect(activeDenied.body).toMatchObject({ error: 'Admin access required' });
     await flushPendingOperationalAuthDenialIntents();
     expect(
       (
@@ -107,26 +104,22 @@ describe.skipIf(!enabled)('OPS mounted signed-JWT auth denial repair intent', ()
     expect(
       (
         await request(app)
-          .get('/denied')
+          .post('/api/organization-context/rebuild')
           .set('Authorization', `Bearer ${sign(active, org)}`)
       ).status
     ).toBe(403);
-    expect([401, 403]).toContain(
-      (
-        await request(app)
-          .get('/denied')
-          .set('Authorization', `Bearer ${sign(revoked, org)}`)
-          .set('x-request-id', `${p}-revoked`)
-      ).status
-    );
-    expect([401, 403]).toContain(
-      (
-        await request(app)
-          .get('/denied')
-          .set('Authorization', `Bearer ${sign(active, foreign)}`)
-          .set('x-request-id', `${p}-foreign`)
-      ).status
-    );
+    const revokedDenied = await request(app)
+      .post('/api/organization-context/rebuild')
+      .set('Authorization', `Bearer ${sign(revoked, org)}`)
+      .set('x-request-id', `${p}-revoked`);
+    expect(revokedDenied.status).toBe(403);
+    expect(revokedDenied.body).toMatchObject({ code: 'ORG_MEMBERSHIP_REVOKED' });
+    const forgedTenantDenied = await request(app)
+      .post('/api/organization-context/rebuild')
+      .set('Authorization', `Bearer ${sign(active, foreign)}`)
+      .set('x-request-id', `${p}-foreign`);
+    expect(forgedTenantDenied.status).toBe(403);
+    expect(forgedTenantDenied.body).toMatchObject({ error: 'Admin access required' });
     await flushPendingOperationalAuthDenialIntents();
     const rows = await pool.query(
       `SELECT organization_id,actor_id,correlation_id,kind,outcome,source_type FROM operational_alert_repair_intents WHERE organization_id=ANY($1) ORDER BY correlation_id`,

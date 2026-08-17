@@ -63,15 +63,15 @@ type Source = { name: string; sql: string };
 const sources: Source[] = [
   {
     name: 'rvn_platform_outbox',
-    sql: `SELECT e.organization_id,COALESCE(e.actor_user_id,'system') actor_id,e.event_id::text correlation_id,o.outbox_id::text terminal_id,COALESCE(o.dispatched_at,o.next_attempt_at,o.created_at) effective_at,CASE WHEN o.status='dispatched' THEN 'SUCCESS' ELSE 'FAILURE' END outcome FROM rvn_platform_outbox o JOIN rvn_platform_events e ON e.event_id=o.event_id WHERE o.status IN ('dispatched','dead_letter')`,
+    sql: `SELECT e.organization_id,COALESCE(e.actor_user_id,'system') actor_id,e.event_id::text correlation_id,o.outbox_id::text terminal_id,o.operational_alert_terminal_at effective_at,CASE WHEN o.status='dispatched' THEN 'SUCCESS' ELSE 'FAILURE' END outcome FROM rvn_platform_outbox o JOIN rvn_platform_events e ON e.event_id=o.event_id WHERE o.operational_alert_terminal_at IS NOT NULL`,
   },
   {
     name: 'notification_outbox',
-    sql: `SELECT organization_id,user_id actor_id,id correlation_id,id terminal_id,COALESCE(updated_at,created_at) effective_at,CASE WHEN status='SENT' THEN 'SUCCESS' ELSE 'FAILURE' END outcome FROM notification_outbox WHERE status IN ('SENT','FAILED')`,
+    sql: `SELECT organization_id,user_id actor_id,id correlation_id,id terminal_id,operational_alert_terminal_at effective_at,CASE WHEN status='SENT' THEN 'SUCCESS' ELSE 'FAILURE' END outcome FROM notification_outbox WHERE operational_alert_terminal_at IS NOT NULL`,
   },
   {
     name: 'case_workspace_event_outbox',
-    sql: `SELECT organization_id,'system:case-workspace-outbox' actor_id,correlation_id,event_id terminal_id,COALESCE(delivered_at,next_retry_at,created_at) effective_at,CASE WHEN delivered_at IS NOT NULL THEN 'SUCCESS' ELSE 'FAILURE' END outcome FROM case_workspace_event_outbox WHERE delivered_at IS NOT NULL OR delivery_attempt_count>=8`,
+    sql: `SELECT organization_id,'system:case-workspace-outbox' actor_id,correlation_id,event_id terminal_id,operational_alert_terminal_at effective_at,CASE WHEN delivered_at IS NOT NULL THEN 'SUCCESS' ELSE 'FAILURE' END outcome FROM case_workspace_event_outbox WHERE operational_alert_terminal_at IS NOT NULL`,
   },
 ];
 
@@ -134,8 +134,12 @@ export async function reconstructTerminalOperationalAlertIntents(
       const last = rows.at(-1);
       if (last)
         await tx.query(
-          `UPDATE operational_alert_repair_cursors SET effective_at=?,terminal_id=?,updated_at=now() WHERE source_type=?`,
-          [last.effective_at, last.terminal_id, source.name]
+          `UPDATE operational_alert_repair_cursors SET
+             (effective_at,terminal_id)=
+               (SELECT effective_at,terminal_id FROM (${source.sql}) cursor_source WHERE terminal_id=?),
+             updated_at=now()
+           WHERE source_type=?`,
+          [last.terminal_id, source.name]
         );
       return rows.length;
     });
