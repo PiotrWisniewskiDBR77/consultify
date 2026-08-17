@@ -291,6 +291,74 @@ describe('EditableSpreadsheetGrid Artifact Studio contract', () => {
     await waitFor(() => expect(onSaveStateChange).toHaveBeenCalledWith('saved'));
   });
 
+  it.each([
+    ['Enter', '23.1'],
+    ['Tab', '24.2'],
+  ])('persists a %s commit exactly once when the editor then blurs', async (key, value) => {
+    const persistCells = vi.fn().mockResolvedValue(undefined);
+    render(
+      <Harness
+        onSelectionChange={vi.fn()}
+        onSaveStateChange={vi.fn()}
+        persistCells={persistCells}
+      />
+    );
+
+    fireEvent.click(screen.getByText('21,2'));
+    fireEvent.click(screen.getByRole('button', { name: 'edit selected' }));
+    const editor = screen.getAllByDisplayValue('21.2')[0];
+    fireEvent.change(editor, { target: { value } });
+    fireEvent.keyDown(editor, { key });
+    fireEvent.blur(editor);
+
+    await waitFor(() => expect(persistCells).toHaveBeenCalledTimes(1));
+    expect(persistCells).toHaveBeenCalledWith([
+      expect.objectContaining({ rowIndex: 0, columnKey: 'actual', value: Number(value) }),
+    ]);
+  });
+
+  it('does not persist an Escape cancellation when the editor then blurs', () => {
+    const persistCells = vi.fn().mockResolvedValue(undefined);
+    render(
+      <Harness
+        onSelectionChange={vi.fn()}
+        onSaveStateChange={vi.fn()}
+        persistCells={persistCells}
+      />
+    );
+
+    fireEvent.click(screen.getByText('21,2'));
+    fireEvent.click(screen.getByRole('button', { name: 'edit selected' }));
+    const editor = screen.getAllByDisplayValue('21.2')[0];
+    fireEvent.change(editor, { target: { value: '99.9' } });
+    fireEvent.keyDown(editor, { key: 'Escape' });
+    fireEvent.blur(editor);
+
+    expect(persistCells).not.toHaveBeenCalled();
+  });
+
+  it('persists an ordinary blur edit exactly once', async () => {
+    const persistCells = vi.fn().mockResolvedValue(undefined);
+    render(
+      <Harness
+        onSelectionChange={vi.fn()}
+        onSaveStateChange={vi.fn()}
+        persistCells={persistCells}
+      />
+    );
+
+    fireEvent.click(screen.getByText('21,2'));
+    fireEvent.click(screen.getByRole('button', { name: 'edit selected' }));
+    const editor = screen.getAllByDisplayValue('21.2')[0];
+    fireEvent.change(editor, { target: { value: '25.3' } });
+    fireEvent.blur(editor);
+
+    await waitFor(() => expect(persistCells).toHaveBeenCalledTimes(1));
+    expect(persistCells).toHaveBeenCalledWith([
+      expect.objectContaining({ rowIndex: 0, columnKey: 'actual', value: 25.3 }),
+    ]);
+  });
+
   it('persists edit, undo and redo as ordered inverse cell commands', async () => {
     vi.clearAllMocks();
     vi.mocked(Api.updateWorkbookCell).mockResolvedValue({} as never);
