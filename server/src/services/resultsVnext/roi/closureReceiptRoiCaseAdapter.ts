@@ -24,6 +24,7 @@ interface BindingSourceRow {
   budget_currency: string | null;
   owner_user_id: string | null;
   actor_role: string | null;
+  owner_role: string | null;
 }
 
 export interface EnsureClosureReceiptRoiCaseInput {
@@ -64,15 +65,20 @@ export async function ensureRoiCaseForClosureReceipt(
             i.name AS initiative_title,
             i.budget_currency,
             COALESCE(i.owner_business_id, i.created_by) AS owner_user_id,
-            om.role AS actor_role
+            actor_membership.role AS actor_role,
+            owner_membership.role AS owner_role
        FROM closure_delivery_receipts r
        JOIN initiatives i
          ON i.id = r.initiative_id
         AND i.organization_id = r.organization_id
-       LEFT JOIN organization_members om
-         ON om.organization_id = r.organization_id
-        AND om.user_id = r.actor_id
-        AND UPPER(om.status) = 'ACTIVE'
+       LEFT JOIN organization_members actor_membership
+         ON actor_membership.organization_id = r.organization_id
+        AND actor_membership.user_id = r.actor_id
+        AND UPPER(actor_membership.status) = 'ACTIVE'
+       LEFT JOIN organization_members owner_membership
+         ON owner_membership.organization_id = r.organization_id
+        AND owner_membership.user_id = COALESCE(i.owner_business_id, i.created_by)
+        AND UPPER(owner_membership.status) = 'ACTIVE'
       WHERE r.id = ? AND r.organization_id = ?`,
     [input.receiptId, input.organizationId]
   );
@@ -83,13 +89,19 @@ export async function ensureRoiCaseForClosureReceipt(
       'CLOSURE_RECEIPT_NOT_FOUND'
     );
   }
-  if (!source.owner_user_id) {
+  if (!source.owner_user_id || !source.owner_role) {
     throw new ClosureReceiptRoiBindingError(
       'Initiative has no explicit tenant owner for the ROI case',
       'CLOSURE_RECEIPT_OWNER_REQUIRED'
     );
   }
-  if (!source.actor_id || !source.actor_role) {
+  if (!source.actor_id) {
+    throw new ClosureReceiptRoiBindingError(
+      'Closure receipt has no actor identity and cannot be bound automatically',
+      'CLOSURE_RECEIPT_ACTOR_REQUIRED'
+    );
+  }
+  if (!source.actor_role) {
     throw new ClosureReceiptRoiBindingError(
       'Closure receipt actor is not an ACTIVE tenant member; owner impersonation is forbidden',
       'CLOSURE_RECEIPT_ACTOR_NOT_ACTIVE'
@@ -105,12 +117,19 @@ export async function ensureRoiCaseForClosureReceipt(
   const idempotencyKey = `closure-receipt:${source.receipt_id}:roi-case:v1`;
   const correlationId = closureTextIdentityUuid('closure-receipt', source.receipt_id);
   const causationId = closureTextIdentityUuid('closure-transition', source.transition_audit_ref);
+  const expectedTitle = `${source.initiative_title} — post-closure ROI`;
   const existing = await queryHelpers.queryOne<{
     initiative_id: string;
+    title: string;
+    owner_user_id: string;
+    currency: string;
+    actor_user_id: string | null;
+    source: string;
     correlation_id: string;
     causation_id: string | null;
   }>(
-    `SELECT c.initiative_id,e.correlation_id,e.causation_id
+    `SELECT c.initiative_id,c.title,c.owner_user_id,c.currency,
+            e.actor_user_id,e.source,e.correlation_id,e.causation_id
        FROM rvn_platform_events e
        JOIN rvn_roi_cases c
          ON c.organization_id=e.organization_id AND c.case_id::text=e.aggregate_id
@@ -120,6 +139,11 @@ export async function ensureRoiCaseForClosureReceipt(
   if (
     existing &&
     (existing.initiative_id !== source.initiative_id ||
+      existing.title !== expectedTitle ||
+      existing.owner_user_id !== source.owner_user_id ||
+      existing.currency !== source.budget_currency ||
+      existing.actor_user_id !== source.actor_id ||
+      existing.source !== 'resultsVnext.roi' ||
       existing.correlation_id !== correlationId ||
       existing.causation_id !== causationId)
   ) {
@@ -132,7 +156,7 @@ export async function ensureRoiCaseForClosureReceipt(
   return createRoiCase({
     organizationId: source.organization_id,
     initiativeId: source.initiative_id,
-    title: `${source.initiative_title} — post-closure ROI`,
+    title: expectedTitle,
     ownerUserId: source.owner_user_id,
     currency: source.budget_currency,
     createdBy: source.actor_id,

@@ -68,7 +68,7 @@ import * as queryHelpers from '../utils/queryHelpers.js';
 import { type PgTransactionClient, withPgTransaction } from '../utils/queryHelpers.js';
 import { CLOSURE_HANDOFF_SOURCE, handoffFromClosure } from './executionResultsBridge.js';
 import { observeWriter } from './results/resultsWriterObservationService.js';
-import { ensureRoiCaseForClosureReceipt } from './resultsVnext/roi/closureReceiptRoiCaseAdapter.js';
+import { ClosureReceiptRoiBindingError, ensureRoiCaseForClosureReceipt } from './resultsVnext/roi/closureReceiptRoiCaseAdapter.js';
 
 const LOG_PREFIX = '[ClosureDeliveryReceipt]';
 
@@ -682,6 +682,17 @@ export async function attemptDeliveryInternal(
         [JSON.stringify({ roiCaseId: binding.result.case.caseId }), receiptId, organizationId]
       );
     } catch (err) {
+      if (err instanceof ClosureReceiptRoiBindingError && err.code === 'CLOSURE_RECEIPT_ACTOR_REQUIRED') {
+        await queryHelpers.queryRun(
+          `UPDATE closure_delivery_receipts
+              SET finance_payload = COALESCE(finance_payload, '{}'::jsonb) || ?::jsonb,
+                  next_retry_at = NULL,
+                  updated_at = CURRENT_TIMESTAMP
+            WHERE id = ? AND organization_id = ?`,
+          [JSON.stringify({ roiBindingDisposition: 'NON_BINDABLE_MISSING_ACTOR' }), receiptId, organizationId]
+        );
+        logger.warn(`${LOG_PREFIX} ROI case binding permanently skipped for receipt ${receiptId}: missing actor identity`);
+      } else {
       logger.warn(`${LOG_PREFIX} ROI case binding deferred for receipt ${receiptId}`, {
         message: err instanceof Error ? err.message : String(err),
       });
@@ -692,6 +703,7 @@ export async function attemptDeliveryInternal(
           WHERE id = ? AND organization_id = ?`,
         [receiptId, organizationId]
       );
+      }
     }
   }
 
@@ -706,7 +718,9 @@ export async function attemptDeliveryInternal(
     result.resultsStatus === 'FAILED' ||
     result.financeStatus === 'PENDING' ||
     result.financeStatus === 'FAILED' ||
-    (closureRoiBindingEnabled() && typeof result.financePayload?.roiCaseId !== 'string');
+    (closureRoiBindingEnabled() &&
+      typeof result.financePayload?.roiCaseId !== 'string' &&
+      result.financePayload?.roiBindingDisposition !== 'NON_BINDABLE_MISSING_ACTOR');
   const nextRetryAt = stillPending
     ? new Date(
         Date.now() + backoffMs(Math.max(result.resultsAttempts, result.financeAttempts))
@@ -815,7 +829,8 @@ async function claimDueReceipts(limit: number): Promise<string[]> {
           OR (finance_status IN ('PENDING', 'FAILED') AND finance_attempts < max_attempts)
           OR (results_status = 'DELIVERING' AND updated_at < CURRENT_TIMESTAMP - INTERVAL '${STALE_DELIVERING_LEASE_MINUTES} minutes')
           OR (finance_status = 'DELIVERING' AND updated_at < CURRENT_TIMESTAMP - INTERVAL '${STALE_DELIVERING_LEASE_MINUTES} minutes')
-          OR (? = 1 AND finance_payload->>'roiCaseId' IS NULL)
+          OR (? = 1 AND finance_payload->>'roiCaseId' IS NULL
+              AND COALESCE(finance_payload->>'roiBindingDisposition','') <> 'NON_BINDABLE_MISSING_ACTOR')
         )
           AND (next_retry_at IS NULL OR next_retry_at <= CURRENT_TIMESTAMP)
         ORDER BY created_at ASC
