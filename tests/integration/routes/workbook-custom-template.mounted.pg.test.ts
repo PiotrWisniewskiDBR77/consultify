@@ -21,10 +21,7 @@ describe.skipIf(!enabled)('mounted custom workbook template', () => {
   const templateId = randomUUID(),
     privateId = randomUUID(),
     draftId = randomUUID(),
-    deprecatedId = randomUUID(),
-    systemNullId = randomUUID(),
-    orgNullId = randomUUID(),
-    privateNullId = randomUUID();
+    deprecatedId = randomUUID();
   const pool = new Pool({ connectionString: url });
   let app: express.Express;
   const token = (id: string, org: string) =>
@@ -86,20 +83,6 @@ describe.skipIf(!enabled)('mounted custom workbook template', () => {
              ($6,'Deprecated','workbook',$2::jsonb,$3,$3,$5,'deprecated','organization','4.0.0')`,
       [draftId, JSON.stringify(schema), ownerA, memberA, orgA, deprecatedId]
     );
-    // Late-upgrade control: historical deployments admitted NULL lifecycle
-    // values before the current NOT NULL contract. The resolver must remain
-    // explicit about those preserved rows even though a fresh writer cannot
-    // create another one today.
-    await pool.query(`ALTER TABLE tp_base_templates ALTER COLUMN status DROP NOT NULL`);
-    await pool.query(
-      `INSERT INTO tp_base_templates
-         (id,name,category,schema_snapshot,created_by,organization_id,status,visibility,version)
-       VALUES
-         ($1,'Legacy system','workbook',$2::jsonb,NULL,NULL,NULL,'organization','legacy-system'),
-         ($3,'Legacy org','workbook',$2::jsonb,$4,$5,NULL,'organization','legacy-org'),
-         ($6,'Legacy private','workbook',$2::jsonb,$4,$5,NULL,'private','legacy-private')`,
-      [systemNullId, JSON.stringify(schema), orgNullId, ownerA, orgA, privateNullId]
-    );
     const { default: routes } = await import('../../../server/src/routes/workbook.routes.js');
     app = express();
     app.use(express.json());
@@ -111,9 +94,8 @@ describe.skipIf(!enabled)('mounted custom workbook template', () => {
       [orgA, orgB],
     ]);
     await pool.query(`DELETE FROM tp_base_templates WHERE id=ANY($1::uuid[])`, [
-      [templateId, privateId, draftId, deprecatedId, systemNullId, orgNullId, privateNullId],
+      [templateId, privateId, draftId, deprecatedId],
     ]);
-    await pool.query(`ALTER TABLE tp_base_templates ALTER COLUMN status SET NOT NULL`);
     await pool.query(`DELETE FROM organization_members WHERE organization_id=ANY($1)`, [
       [orgA, orgB],
     ]);
@@ -167,9 +149,6 @@ describe.skipIf(!enabled)('mounted custom workbook template', () => {
           .set('Authorization', `Bearer ${token(ownerA, orgA)}`)
       ).status
     ).toBe(200);
-    expect((await callTemplate(systemNullId, ownerA, orgA)).status).toBe(200);
-    expect((await callTemplate(orgNullId, memberA, orgA)).status).toBe(200);
-    expect((await callTemplate(privateNullId, ownerA, orgA)).status).toBe(200);
   });
 
   it('enforces lifecycle, ownership, membership and tenant walls without false artifacts', async () => {
@@ -195,11 +174,79 @@ describe.skipIf(!enabled)('mounted custom workbook template', () => {
     expect((await callTemplate(templateId, revoked, orgA)).status).toBe(403);
     expect((await callTemplate(privateId, memberA, orgA)).status).toBe(404);
     expect((await callTemplate(draftId, ownerA, orgA)).status).toBe(404);
-    expect((await callTemplate(privateNullId, memberA, orgA)).status).toBe(404);
     expect((await callTemplate(deprecatedId, ownerA, orgA)).status).toBe(404);
     expect((await callTemplate(randomUUID(), ownerA, orgA)).status).toBe(404);
     expect(await state()).toEqual(beforeDenied);
     expect((await callTemplate(draftId, memberA, orgA, { title: 'Transferred' })).status).toBe(200);
+
+    const { listCustomWorkbookTemplates, resolveCustomWorkbookTemplate } = await import(
+      '../../../server/src/services/workbook/customWorkbookTemplateService.js'
+    );
+    const fixtureIds = new Set([templateId, privateId, draftId, deprecatedId]);
+    const ownerListed = (await listCustomWorkbookTemplates(orgA, ownerA))
+      .map((row) => row.id)
+      .filter((id) => fixtureIds.has(id))
+      .sort();
+    expect(ownerListed).toEqual([privateId, templateId].sort());
+    for (const id of ownerListed)
+      expect(await resolveCustomWorkbookTemplate(id, orgA, ownerA)).not.toBeNull();
+    expect(await resolveCustomWorkbookTemplate(draftId, orgA, ownerA)).toBeNull();
+    expect(await resolveCustomWorkbookTemplate(deprecatedId, orgA, ownerA)).toBeNull();
+
+    const lateSchema = `wb_late_${randomUUID().replace(/-/g, '')}`;
+    const control = await pool.connect();
+    await control.query(`SELECT pg_advisory_lock(hashtext('workbook-null-late-upgrade-test'))`);
+    let latePool: Pool | null = null;
+    try {
+      await control.query(`CREATE SCHEMA ${lateSchema}`);
+      await control.query(
+        `CREATE TABLE ${lateSchema}.tp_base_templates
+           (LIKE public.tp_base_templates INCLUDING ALL)`
+      );
+      await control.query(
+        `ALTER TABLE ${lateSchema}.tp_base_templates ALTER COLUMN status DROP NOT NULL`
+      );
+      const systemId = randomUUID(), orgId = randomUUID(), privateIdLate = randomUUID();
+      await control.query(
+        `INSERT INTO ${lateSchema}.tp_base_templates
+           (id,name,category,schema_snapshot,created_by,organization_id,status,visibility,version)
+         VALUES
+           ($1,'Legacy system','workbook',$2::jsonb,NULL,NULL,NULL,'organization','legacy-system'),
+           ($3,'Legacy org','workbook',$2::jsonb,$4,$5,NULL,'organization','legacy-org'),
+           ($6,'Legacy private','workbook',$2::jsonb,$4,$5,NULL,'private','legacy-private')`,
+        [systemId, JSON.stringify(schema), orgId, ownerA, orgA, privateIdLate]
+      );
+      latePool = new Pool({
+        connectionString: url,
+        options: `-c search_path=${lateSchema},public`,
+      });
+      const pgSql = (sql: string) => {
+        let index = 0;
+        return sql.replace(/\?/g, () => `$${++index}`);
+      };
+      const reader = {
+        queryOne: async <T>(sql: string, params: unknown[] = []) =>
+          (await latePool!.query<T>(pgSql(sql), params)).rows[0] ?? null,
+        queryAll: async <T>(sql: string, params: unknown[] = []) =>
+          (await latePool!.query<T>(pgSql(sql), params)).rows,
+      };
+      const ownerNullIds = (await listCustomWorkbookTemplates(orgA, ownerA, reader))
+        .map((row) => row.id)
+        .sort();
+      expect(ownerNullIds).toEqual([systemId, orgId, privateIdLate].sort());
+      for (const id of ownerNullIds)
+        expect(await resolveCustomWorkbookTemplate(id, orgA, ownerA, reader)).not.toBeNull();
+      const memberNullIds = (await listCustomWorkbookTemplates(orgA, memberA, reader))
+        .map((row) => row.id)
+        .sort();
+      expect(memberNullIds).toEqual([systemId, orgId].sort());
+      expect(await resolveCustomWorkbookTemplate(privateIdLate, orgA, memberA, reader)).toBeNull();
+    } finally {
+      await latePool?.end();
+      await control.query(`DROP SCHEMA IF EXISTS ${lateSchema} CASCADE`);
+      await control.query(`SELECT pg_advisory_unlock(hashtext('workbook-null-late-upgrade-test'))`);
+      control.release();
+    }
     expect(
       (
         await pool.query(

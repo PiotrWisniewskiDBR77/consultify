@@ -26,11 +26,17 @@ export interface CustomWorkbookTemplateSummary {
   description: string | null;
 }
 
+export interface WorkbookTemplateQueryReader {
+  queryOne<T>(sql: string, params?: unknown[]): Promise<T | null>;
+  queryAll<T>(sql: string, params?: unknown[]): Promise<T[]>;
+}
+
 export async function listCustomWorkbookTemplates(
   organizationId: string,
-  userId: string
+  userId: string,
+  reader: WorkbookTemplateQueryReader = queryHelpers
 ): Promise<CustomWorkbookTemplateSummary[]> {
-  return queryHelpers.queryAll<CustomWorkbookTemplateSummary>(
+  return reader.queryAll<CustomWorkbookTemplateSummary>(
     `SELECT CAST(id AS TEXT) AS id, name, description
        FROM tp_base_templates
       WHERE (status IS NULL OR status <> 'deprecated')
@@ -188,9 +194,10 @@ export function convertCustomTemplateSnapshot(
 export async function resolveCustomWorkbookTemplate(
   templateId: string,
   organizationId: string,
-  userId: string
+  userId: string,
+  reader: WorkbookTemplateQueryReader = queryHelpers
 ): Promise<CustomWorkbookTemplate | null> {
-  const row = await queryHelpers.queryOne<{
+  const row = await reader.queryOne<{
     id: string;
     name: string;
     description: string | null;

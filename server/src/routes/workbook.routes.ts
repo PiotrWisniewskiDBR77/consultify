@@ -1147,12 +1147,17 @@ router.post(
       await import('../services/workbook/templates/index.js');
     const entry = getWorkbookTemplate(id);
     if (!entry) {
-      const { resolveCustomWorkbookTemplate, materializeCustomWorkbookSchema } =
+      const {
+        CustomWorkbookTemplateInvalidError,
+        resolveCustomWorkbookTemplate,
+        materializeCustomWorkbookSchema,
+      } =
         await import('../services/workbook/customWorkbookTemplateService.js');
       let custom;
       try {
         custom = await resolveCustomWorkbookTemplate(id, user.organizationId, user.id);
       } catch (err) {
+        if (!(err instanceof CustomWorkbookTemplateInvalidError)) throw err;
         logger.error('[WorkbookRoutes] Custom template validation failed:', err);
         res.status(422).json({
           error: 'Invalid custom workbook template',
@@ -1174,6 +1179,7 @@ router.post(
           const { buildWorkbookBuffer } = await import('../services/workbook/WorkbookBuilder.js');
           buffer = await buildWorkbookBuffer(customSchema);
         } catch (err) {
+          if (!(err instanceof CustomWorkbookTemplateInvalidError)) throw err;
           logger.error('[WorkbookRoutes] Custom template build failed:', err);
           res.status(422).json({
             error: 'Invalid custom workbook template',

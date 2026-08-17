@@ -294,6 +294,22 @@ describe('workbook.routes — C3 parametric templates', () => {
   });
 
   it('does not return success or register an artifact when durable persistence fails', async () => {
+    queryOneMock.mockImplementation(async (sql: string) => {
+      if (sql.includes('FROM tp_base_templates')) throw new Error('database timeout');
+      return null;
+    });
+    const app = await buildApp();
+    const { workbookRuntimeCache } = await import(
+      '../../../../server/src/services/workbook/workbookRuntimeCache.js'
+    );
+    const cacheSizeBefore = workbookRuntimeCache.size;
+    const outage = await request(app)
+      .post('/workbook/templates/custom-query-fail/build')
+      .send({ params: {} });
+    expect(outage.status).toBe(500);
+    expect(workbookRuntimeCache.size).toBe(cacheSizeBefore);
+    expect(registerArtifactOriginMock).not.toHaveBeenCalled();
+
     queryOneMock.mockResolvedValue({
       id: 'custom-persist-fail',
       name: 'Persistence failure template',
@@ -308,11 +324,6 @@ describe('workbook.routes — C3 parametric templates', () => {
       sql.includes('INSERT INTO generated_workbooks') ? { changes: 0 } : { changes: 1 }
     );
 
-    const app = await buildApp();
-    const { workbookRuntimeCache } = await import(
-      '../../../../server/src/services/workbook/workbookRuntimeCache.js'
-    );
-    const cacheSizeBefore = workbookRuntimeCache.size;
     const res = await request(app)
       .post('/workbook/templates/custom-persist-fail/build')
       .send({ params: {} });
