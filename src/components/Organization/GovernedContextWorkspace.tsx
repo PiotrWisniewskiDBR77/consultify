@@ -7,7 +7,7 @@ import {
   ShieldCheck,
   X,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/primitives';
@@ -40,6 +40,9 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
   const [error, setError] = useState<string | null>(null);
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const uploadInFlight = useRef(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -72,6 +75,37 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
     [claims]
   );
   const approvedCount = useMemo(() => claims.filter((claim) => claim.approved).length, [claims]);
+
+  const ingest = async (file: File) => {
+    if (uploadInFlight.current) return;
+    uploadInFlight.current = true;
+    setBusyKey('upload');
+    setUploadError(null);
+    setNotice(null);
+    setUploadFile(file);
+    try {
+      const result = await organizationGovernedContextApi.ingestDocument(file);
+      if (!result.success || !result.docId) throw new Error('Incomplete ingest receipt');
+      await load();
+      setNotice(
+        t(
+          'organization.governance.uploaded',
+          'The document was ingested and its pending governed claim was loaded.'
+        )
+      );
+      setUploadFile(null);
+    } catch {
+      setUploadError(
+        t(
+          'organization.governance.uploadError',
+          'The document could not be ingested. No governed claim was accepted.'
+        )
+      );
+    } finally {
+      uploadInFlight.current = false;
+      setBusyKey(null);
+    }
+  };
 
   const decide = async (claim: GovernedClaim, decision: 'approve' | 'reject') => {
     setBusyKey(`${claim.claimId}:${decision}`);
@@ -167,14 +201,34 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
             </p>
           </div>
           {isAdmin && (
-            <Button
-              onClick={() => void publish()}
-              disabled={busyKey !== null || pendingCount > 0 || approvedCount === 0}
-              aria-describedby="governed-publish-requirements"
-            >
-              {busyKey === 'publish' ? <Loader2 className="animate-spin" size={16} /> : <FileCheck2 size={16} />}
-              {t('organization.governance.publish', 'Publish approved claims')}
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <label className="inline-flex">
+                <input
+                  className="sr-only"
+                  type="file"
+                  accept=".txt,.md,.pdf,.doc,.docx,text/plain,text/markdown,application/pdf"
+                  disabled={busyKey !== null}
+                  aria-label={t('organization.governance.upload', 'Upload source document')}
+                  onChange={(event) => {
+                    const file = event.currentTarget.files?.[0];
+                    event.currentTarget.value = '';
+                    if (file) void ingest(file);
+                  }}
+                />
+                <span className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-md border border-c-border px-4 py-2 text-sm font-medium text-c-text">
+                  {busyKey === 'upload' && <Loader2 className="animate-spin" size={16} />}
+                  {t('organization.governance.upload', 'Upload source document')}
+                </span>
+              </label>
+              <Button
+                onClick={() => void publish()}
+                disabled={busyKey !== null || pendingCount > 0 || approvedCount === 0}
+                aria-describedby="governed-publish-requirements"
+              >
+                {busyKey === 'publish' ? <Loader2 className="animate-spin" size={16} /> : <FileCheck2 size={16} />}
+                {t('organization.governance.publish', 'Publish approved claims')}
+              </Button>
+            </div>
           )}
         </div>
         {isAdmin && (pendingCount > 0 || approvedCount === 0) && (
@@ -199,6 +253,20 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
           </p>
         )}
         {notice && <p className="mt-4 text-sm text-c-success" role="status">{notice}</p>}
+        {uploadError && (
+          <div className="mt-4" role="alert">
+            <p className="text-sm text-c-danger">{uploadError}</p>
+            <Button
+              className="mt-2"
+              size="sm"
+              variant="outline"
+              disabled={!uploadFile || busyKey !== null}
+              onClick={() => uploadFile && void ingest(uploadFile)}
+            >
+              <RefreshCw size={15} /> {t('common.retry', 'Retry')}
+            </Button>
+          </div>
+        )}
         {error && <p className="mt-4 text-sm text-c-danger" role="alert">{error}</p>}
       </header>
 

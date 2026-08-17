@@ -3,6 +3,8 @@
  * Complete AI API - Enterprise PMO Brain
  */
 
+import { createHash } from 'node:crypto';
+
 import * as cheerio from 'cheerio';
 import { Response, Router } from 'express';
 import multer from 'multer';
@@ -11,6 +13,7 @@ import { z } from 'zod';
 
 import { featureFlags } from '../config/FeatureFlags.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { requireActiveTenantMembership } from '../middleware/auditsStrictMembership.middleware.js';
 import { aiRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import {
   validateBody,
@@ -400,6 +403,7 @@ router.post(
   '/attachments/ingest',
   verifyToken,
   attachmentsUpload.single('file'),
+  requireActiveTenantMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
     const orgId = req.organizationId;
@@ -445,26 +449,6 @@ router.post(
         mimeType,
       });
     }
-
-    // M01-P04C: `organization_id` and `category` are set in the SAME INSERT
-    // as the row's creation — not via a follow-up best-effort UPDATE. Before
-    // this fix, `organization_id` was assigned by a SEPARATE, try/catch-
-    // swallowed `UPDATE ... WHERE id = ?` issued right after this INSERT
-    // (see migration 942_chat_m01p04a_attachment_status.sql's own comment on
-    // this exact gap); if that second statement ever failed silently, the
-    // row was left with `organization_id IS NULL` — an attachment with NO
-    // resolved owner, retrievable only through the fail-closed paths this
-    // packet added (KnowledgeService/ragService), i.e. effectively orphaned
-    // and unreachable by ANY org rather than reachable by every org. A
-    // single INSERT removes that window entirely: the row is born with its
-    // real owner or the whole insert fails (caught by the caller's existing
-    // error handling), never half-created.
-    await dbRun(
-      `INSERT INTO knowledge_docs (id, filename, filepath, status, organization_id, category, created_at)
-       VALUES (?, ?, ?, 'indexed', ?, 'chat_attachment', CURRENT_TIMESTAMP)`,
-      [docId, filename, '', orgId],
-      { fallback: true } as any
-    );
 
     const makeChunks = (raw: string): Array<{ chunkIndex: number; content: string }> => {
       const normalized = String(raw || '')
@@ -528,32 +512,63 @@ router.post(
 
     const chunks = makeChunks(text);
     let embeddedChunks = 0;
+    const embedded: Array<{ chunkIndex: number; content: string; embedding: unknown[] }> = [];
     for (const c of chunks) {
       const chunkIndex = Number(c.chunkIndex || 0);
       const content = String(c.content || '').trim();
       if (!content) continue;
       const embedding = await ragService.generateEmbedding(content);
-      await dbRun(
-        `INSERT INTO knowledge_chunks (id, doc_id, content, chunk_index, embedding)
-         VALUES (?, ?, ?, ?, ?)`,
-        [`${docId}-chk-${chunkIndex}`, docId, content, chunkIndex, JSON.stringify(embedding || [])],
-        { fallback: true } as any
-      );
+      embedded.push({ chunkIndex, content, embedding: Array.isArray(embedding) ? embedding : [] });
       if (embedding && Array.isArray(embedding) && embedding.length > 0) embeddedChunks += 1;
     }
 
-    await organizationContextService.recordAttachmentExtraction({
-      organizationId: orgId,
-      userId: req.userId || null,
-      payload: {
-        docId,
-        filename,
-        mimeType,
-        extractedText: text,
-        totalChunks: chunks.length,
-        embeddedChunks,
-      },
-    });
+    const { getPoolClientForPinnedTransaction } = await import('../database/PostgresDatabase.js');
+    const client = await getPoolClientForPinnedTransaction();
+    try {
+      await client.query('BEGIN');
+      const fileHash = createHash('sha256').update(req.file.buffer).digest('hex');
+      await client.query(
+        `INSERT INTO knowledge_docs
+         (id, filename, filepath, status, organization_id, source_type, file_hash, version, created_at)
+         VALUES ($1, $2, $3, 'ready', $4, 'document_extraction', $5, 1, CURRENT_TIMESTAMP)`,
+        [docId, filename, '', orgId, fileHash]
+      );
+      for (const chunk of embedded) {
+        await client.query(
+          `INSERT INTO knowledge_chunks (id, doc_id, content, chunk_index, embedding)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [
+            `${docId}-chk-${chunk.chunkIndex}`,
+            docId,
+            chunk.content,
+            chunk.chunkIndex,
+            JSON.stringify(chunk.embedding),
+          ]
+        );
+      }
+
+      await organizationContextService.recordAttachmentExtraction({
+        organizationId: orgId,
+        userId: req.userId || null,
+        payload: {
+          docId,
+          filename,
+          mimeType,
+          extractedText: text,
+          totalChunks: chunks.length,
+          embeddedChunks,
+        },
+        writeExecutor: async (sql, params) => client.query(sql, params),
+      });
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK').catch((rollbackError) => {
+        logger.error('[AI Attachments] Rollback failed:', rollbackError);
+      });
+      throw error;
+    } finally {
+      client.release();
+    }
 
     return res.status(201).json({
       success: true,

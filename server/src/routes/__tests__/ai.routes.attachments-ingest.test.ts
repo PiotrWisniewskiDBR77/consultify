@@ -31,9 +31,23 @@ vi.mock('../../utils/DbPromise.js', () => ({
   get: (...args: unknown[]) => dbGet(...args),
 }));
 
+const pgQuery = vi.fn().mockResolvedValue({ rows: [], rowCount: 1 });
+const pgRelease = vi.fn();
+vi.mock('../../database/PostgresDatabase.js', () => ({
+  getPoolClientForPinnedTransaction: vi.fn().mockResolvedValue({
+    query: (...args: unknown[]) => pgQuery(...args),
+    release: () => pgRelease(),
+  }),
+}));
+
 const generateEmbedding = vi.fn().mockResolvedValue([0.1, 0.2, 0.3]);
 vi.mock('../../services/ragService.js', () => ({
   default: { generateEmbedding: (...args: unknown[]) => generateEmbedding(...args) },
+}));
+
+const extractTextFromBuffer = vi.fn().mockResolvedValue('');
+vi.mock('../../services/pdfParserService.js', () => ({
+  default: { extractTextFromBuffer: (...args: unknown[]) => extractTextFromBuffer(...args) },
 }));
 
 const recordAttachmentExtraction = vi.fn().mockResolvedValue(undefined);
@@ -41,6 +55,17 @@ vi.mock('../../services/organizationContext/OrganizationContextService.js', () =
   default: {
     recordAttachmentExtraction: (...args: unknown[]) => recordAttachmentExtraction(...args),
   },
+}));
+
+const requireActiveTenantMembership = vi.fn((req: any, res: any, next: any) => {
+  if (req.headers['x-test-membership'] === 'revoked') {
+    return res.status(403).json({ code: 'ACTIVE_MEMBERSHIP_REQUIRED' });
+  }
+  next();
+});
+vi.mock('../../middleware/auditsStrictMembership.middleware.js', () => ({
+  requireActiveTenantMembership: (req: any, res: any, next: any) =>
+    requireActiveTenantMembership(req, res, next),
 }));
 
 const getEffectivePolicy = vi.fn().mockResolvedValue({ internetEnabled: true });
@@ -76,7 +101,29 @@ describe('POST /ai/attachments/ingest (file ingest)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     dbRun.mockResolvedValue({ success: true });
+    pgQuery.mockResolvedValue({ rows: [], rowCount: 1 });
     generateEmbedding.mockResolvedValue([0.1, 0.2, 0.3]);
+    requireActiveTenantMembership.mockClear();
+  });
+
+  it('runs the active-membership wall after identity and multipart parsing but before durable writes', async () => {
+    const app = await createApp();
+    const denied = await request(app)
+      .post('/api/ai/attachments/ingest')
+      .set('x-test-membership', 'revoked')
+      .attach('file', Buffer.from('must not be parsed'), {
+        filename: 'denied.txt',
+        contentType: 'text/plain',
+      });
+
+    expect(denied.status).toBe(403);
+    expect(requireActiveTenantMembership).toHaveBeenCalledTimes(1);
+    expect(requireActiveTenantMembership.mock.calls[0]?.[0]).toMatchObject({
+      userId: 'user-ingest-1',
+      organizationId: 'org-ingest-1',
+    });
+    expect(dbRun).not.toHaveBeenCalled();
+    expect(recordAttachmentExtraction).not.toHaveBeenCalled();
   });
 
   it('extracts text, chunks + embeds it, and persists the doc scoped to the caller org', async () => {
@@ -99,30 +146,79 @@ describe('POST /ai/attachments/ingest (file ingest)', () => {
     // The doc row must be born with organization_id already set (M01-P04C —
     // single INSERT, not a follow-up UPDATE that could silently no-op and
     // leave the row ownerless).
-    const docInsertCall = dbRun.mock.calls.find((c) => String(c[0]).includes('INSERT INTO knowledge_docs'));
+    const docInsertCall = pgQuery.mock.calls.find((c) => String(c[0]).includes('INSERT INTO knowledge_docs'));
     expect(docInsertCall).toBeDefined();
     const [, docParams] = docInsertCall as [string, unknown[]];
     expect(docParams).toContain('org-ingest-1');
     expect(docParams).toContain(res.body.docId);
 
     // At least one chunk row keyed to the same doc_id.
-    const chunkInsertCall = dbRun.mock.calls.find((c) =>
+    const chunkInsertCall = pgQuery.mock.calls.find((c) =>
       String(c[0]).includes('INSERT INTO knowledge_chunks')
     );
     expect(chunkInsertCall).toBeDefined();
     const [, chunkParams] = chunkInsertCall as [string, unknown[]];
     expect(chunkParams).toContain(res.body.docId);
     expect(generateEmbedding).toHaveBeenCalled();
+    expect(pgQuery.mock.calls.map((call) => call[0])).toEqual(
+      expect.arrayContaining(['BEGIN', 'COMMIT'])
+    );
+    expect(pgRelease).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ['document', 'INSERT INTO knowledge_docs'],
+    ['chunk', 'INSERT INTO knowledge_chunks'],
+  ])('rolls back and returns non-2xx when the %s write fails', async (_label, failingSql) => {
+    pgQuery.mockImplementation(async (sql: unknown) => {
+      if (String(sql).includes(String(failingSql))) throw new Error('forced write failure');
+      return { rows: [], rowCount: 1 };
+    });
+    const app = await createApp();
+    const res = await request(app)
+      .post('/api/ai/attachments/ingest')
+      .attach('file', Buffer.from('Durable governed source.'), {
+        filename: 'failure.txt',
+        contentType: 'text/plain',
+      });
+
+    expect(res.status).toBeGreaterThanOrEqual(500);
+    expect(pgQuery).toHaveBeenCalledWith('ROLLBACK');
+    expect(recordAttachmentExtraction).not.toHaveBeenCalled();
+    expect(pgQuery.mock.calls.some((call) => call[0] === 'COMMIT')).toBe(false);
+    expect(pgRelease).toHaveBeenCalledTimes(1);
+  });
+
+  it('rolls back and returns non-2xx when governed claim creation fails', async () => {
+    recordAttachmentExtraction.mockRejectedValueOnce(new Error('forced claim failure'));
+    const app = await createApp();
+    const res = await request(app)
+      .post('/api/ai/attachments/ingest')
+      .attach('file', Buffer.from('Durable governed source.'), {
+        filename: 'claim-failure.txt',
+        contentType: 'text/plain',
+      });
+
+    expect(res.status).toBeGreaterThanOrEqual(500);
+    expect(pgQuery).toHaveBeenCalledWith('ROLLBACK');
+    expect(pgQuery.mock.calls.some((call) => call[0] === 'COMMIT')).toBe(false);
+    expect(pgRelease).toHaveBeenCalledTimes(1);
   });
 
   it('rejects with 400 when no readable text can be extracted (empty file)', async () => {
     const app = await createApp();
     const res = await request(app)
       .post('/api/ai/attachments/ingest')
-      .attach('file', Buffer.from(''), { filename: 'empty.txt', contentType: 'text/plain' });
+      .attach('file', Buffer.from('not-readable-as-pdf'), {
+        filename: 'empty.pdf',
+        contentType: 'application/pdf',
+      });
 
-    expect(res.status).toBe(400);
-    expect(res.body.code).toBe('TEXT_EXTRACTION_FAILED');
+    expect({ status: res.status, body: res.body }).toEqual({
+      status: 400,
+      body: expect.objectContaining({ code: 'PDF_TEXT_EXTRACTION_FAILED' }),
+    });
+    expect(extractTextFromBuffer).toHaveBeenCalledTimes(1);
   });
 });
 

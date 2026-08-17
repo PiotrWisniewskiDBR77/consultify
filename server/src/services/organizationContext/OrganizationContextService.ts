@@ -94,6 +94,11 @@ export interface ContextClaimInput {
   reviewStatus?: string;
 }
 
+export type ContextWriteExecutor = (
+  sql: string,
+  params: unknown[]
+) => Promise<unknown>;
+
 export interface ContextSourceRecordInput {
   organizationId: string;
   sourceType: string;
@@ -107,6 +112,12 @@ export interface ContextSourceRecordInput {
   visibilityScope?: string;
   claims?: ContextClaimInput[];
   rebuildSnapshot?: boolean;
+  /**
+   * Narrow atomic-ingest seam. Callers that already own a pinned transaction
+   * may route the source and claim INSERTs through that same connection.
+   * Existing callers keep using DbPromise unchanged.
+   */
+  writeExecutor?: ContextWriteExecutor;
 }
 
 export interface OrganizationContextTimelineItem {
@@ -949,10 +960,11 @@ export class OrganizationContextService {
   async recordContextSource(input: ContextSourceRecordInput): Promise<{ itemId: string }> {
     const id = uuidv4();
     const now = new Date().toISOString();
-    await dbRun(
+    const write = input.writeExecutor || dbRun;
+    await write(
       `INSERT INTO organization_context_items
        (id, organization_id, source_type, source_id, author_user_id, channel, source_label, content_json, metadata_json, is_explicit, visibility_scope, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
       [
         id,
         input.organizationId,
@@ -972,10 +984,10 @@ export class OrganizationContextService {
 
     for (const claim of input.claims || []) {
       if (!isKnownClaimPath(claim.claimPath)) continue;
-      await dbRun(
+      await write(
         `INSERT INTO organization_context_claims
          (id, organization_id, item_id, claim_path, value_json, confidence, claim_type, status, review_status, supersedes_claim_id, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, 'active', ?, NULL, ?)`,
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', $8, NULL, $9)`,
         [
           uuidv4(),
           input.organizationId,
@@ -1808,6 +1820,7 @@ export class OrganizationContextService {
     organizationId: string;
     userId?: string | null;
     payload: Record<string, unknown>;
+    writeExecutor?: ContextWriteExecutor;
   }): Promise<{ itemId: string }> {
     const extractedText = asString(params.payload.extractedText) || '';
     return this.recordContextSource({
@@ -1823,6 +1836,12 @@ export class OrganizationContextService {
         truncated: extractedText.length > 12000,
       },
       isExplicit: true,
+      // A pinned upload transaction cannot safely rebuild through the
+      // module-global connection: that connection cannot see uncommitted
+      // source/claim rows. The governed claim is the durable authority; a
+      // later explicit publish/rebuild owns snapshot materialization.
+      rebuildSnapshot: params.writeExecutor ? false : undefined,
+      writeExecutor: params.writeExecutor,
       claims: buildDocumentExtractionClaims({
         ...params.payload,
         snippet: extractedText.slice(0, 2000),

@@ -8,17 +8,16 @@ const api = vi.hoisted(() => ({
   decide: vi.fn(),
   publish: vi.fn(),
   getVersion: vi.fn(),
+  ingestDocument: vi.fn(),
 }));
+const translate = (_key: string, fallback: string | Record<string, unknown>) =>
+  typeof fallback === 'string'
+    ? fallback
+    : String(fallback.defaultValue ?? '').replace('{{version}}', String(fallback.version ?? ''));
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback: string | Record<string, unknown>) =>
-      typeof fallback === 'string'
-        ? fallback
-        : String(fallback.defaultValue ?? '').replace(
-            '{{version}}',
-            String(fallback.version ?? '')
-          ),
+    t: translate,
   }),
 }));
 
@@ -109,6 +108,44 @@ describe('GovernedContextWorkspace', () => {
     expect(screen.queryByRole('button', { name: /Approve/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Reject/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Publish approved/i })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Upload source document/i)).not.toBeInTheDocument();
+  });
+
+  it('ingests one admin document, reloads its pending claim, and ignores a duplicate change while busy', async () => {
+    let release!: (value: { success: boolean; docId: string; filename: string }) => void;
+    const receipt = new Promise<{ success: boolean; docId: string; filename: string }>((resolve) => {
+      release = resolve;
+    });
+    api.ingestDocument.mockReturnValue(receipt);
+    api.listClaims.mockResolvedValueOnce([]).mockResolvedValueOnce([pendingClaim]);
+    render(<GovernedContextWorkspace isAdmin />);
+    await screen.findByText(/No sourced claims/i);
+    const input = screen.getByLabelText(/Upload source document/i);
+    const file = new File(['strategy'], 'strategy.pdf', { type: 'application/pdf' });
+    fireEvent.change(input, { target: { files: [file] } });
+    fireEvent.change(input, { target: { files: [file] } });
+    expect(api.ingestDocument).toHaveBeenCalledTimes(1);
+    release({ success: true, docId: 'doc-1', filename: 'strategy.pdf' });
+    expect(await screen.findByText('evidence.documentExtraction')).toBeInTheDocument();
+    expect(await screen.findByRole('status')).toHaveTextContent('pending governed claim');
+  });
+
+  it('fails closed on ingest error and retries the exact selected file without false success', async () => {
+    api.ingestDocument.mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce({
+      success: true,
+      docId: 'doc-1',
+      filename: 'strategy.pdf',
+    });
+    api.listClaims.mockResolvedValueOnce([]).mockResolvedValueOnce([pendingClaim]);
+    render(<GovernedContextWorkspace isAdmin />);
+    await screen.findByText(/No sourced claims/i);
+    const file = new File(['strategy'], 'strategy.pdf', { type: 'application/pdf' });
+    fireEvent.change(screen.getByLabelText(/Upload source document/i), { target: { files: [file] } });
+    expect(await screen.findByRole('alert')).toHaveTextContent('No governed claim was accepted');
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Retry/i }));
+    expect(await screen.findByText('evidence.documentExtraction')).toBeInTheDocument();
+    expect(api.ingestDocument).toHaveBeenNthCalledWith(2, file);
   });
 
   it.each([

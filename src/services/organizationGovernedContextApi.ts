@@ -54,9 +54,21 @@ export interface PinnedGovernedSnapshot extends GovernedSnapshotVersion {
   sourceRefs: GovernedSourceRef[];
 }
 
+export interface GovernedDocumentIngestResult {
+  success: boolean;
+  docId: string;
+  filename: string;
+  mimeType?: string;
+  extractionStatus?: string;
+}
+
 const root = '/organization-context/governed';
 
 export const organizationGovernedContextApi = {
+  async ingestDocument(file: File): Promise<GovernedDocumentIngestResult> {
+    return Api.uploadChatAttachment(file);
+  },
+
   async listClaims(limit = 200): Promise<GovernedClaim[]> {
     const response = (await Api.get(`${root}/claims?limit=${limit}`)) as {
       claims?: GovernedClaim[];
