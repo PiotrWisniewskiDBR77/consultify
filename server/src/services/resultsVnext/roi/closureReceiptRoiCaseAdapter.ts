@@ -63,7 +63,7 @@ export async function ensureRoiCaseForClosureReceipt(
             r.actor_id,
             i.name AS initiative_title,
             i.budget_currency,
-            COALESCE(i.owner_business_id, i.created_by, r.actor_id) AS owner_user_id,
+            COALESCE(i.owner_business_id, i.created_by) AS owner_user_id,
             om.role AS actor_role
        FROM closure_delivery_receipts r
        JOIN initiatives i
@@ -71,7 +71,7 @@ export async function ensureRoiCaseForClosureReceipt(
         AND i.organization_id = r.organization_id
        LEFT JOIN organization_members om
          ON om.organization_id = r.organization_id
-        AND om.user_id = COALESCE(i.owner_business_id, i.created_by, r.actor_id)
+        AND om.user_id = r.actor_id
         AND UPPER(om.status) = 'ACTIVE'
       WHERE r.id = ? AND r.organization_id = ?`,
     [input.receiptId, input.organizationId]
@@ -83,9 +83,15 @@ export async function ensureRoiCaseForClosureReceipt(
       'CLOSURE_RECEIPT_NOT_FOUND'
     );
   }
-  if (!source.owner_user_id || !source.actor_role) {
+  if (!source.owner_user_id) {
     throw new ClosureReceiptRoiBindingError(
-      'Closure receipt has no ACTIVE tenant member capable of owning the ROI case',
+      'Initiative has no explicit tenant owner for the ROI case',
+      'CLOSURE_RECEIPT_OWNER_REQUIRED'
+    );
+  }
+  if (!source.actor_id || !source.actor_role) {
+    throw new ClosureReceiptRoiBindingError(
+      'Closure receipt actor is not an ACTIVE tenant member; owner impersonation is forbidden',
       'CLOSURE_RECEIPT_ACTOR_NOT_ACTIVE'
     );
   }
@@ -96,17 +102,44 @@ export async function ensureRoiCaseForClosureReceipt(
     );
   }
 
+  const idempotencyKey = `closure-receipt:${source.receipt_id}:roi-case:v1`;
+  const correlationId = closureTextIdentityUuid('closure-receipt', source.receipt_id);
+  const causationId = closureTextIdentityUuid('closure-transition', source.transition_audit_ref);
+  const existing = await queryHelpers.queryOne<{
+    initiative_id: string;
+    correlation_id: string;
+    causation_id: string | null;
+  }>(
+    `SELECT c.initiative_id,e.correlation_id,e.causation_id
+       FROM rvn_platform_events e
+       JOIN rvn_roi_cases c
+         ON c.organization_id=e.organization_id AND c.case_id::text=e.aggregate_id
+      WHERE e.organization_id=? AND e.idempotency_key=?`,
+    [source.organization_id, idempotencyKey]
+  );
+  if (
+    existing &&
+    (existing.initiative_id !== source.initiative_id ||
+      existing.correlation_id !== correlationId ||
+      existing.causation_id !== causationId)
+  ) {
+    throw new ClosureReceiptRoiBindingError(
+      'Closure receipt binding fingerprint differs from the committed ROI event',
+      'CLOSURE_RECEIPT_BINDING_COLLISION'
+    );
+  }
+
   return createRoiCase({
     organizationId: source.organization_id,
     initiativeId: source.initiative_id,
     title: `${source.initiative_title} — post-closure ROI`,
     ownerUserId: source.owner_user_id,
     currency: source.budget_currency,
-    createdBy: source.owner_user_id,
+    createdBy: source.actor_id,
     actorEffectiveRole: source.actor_role,
-    idempotencyKey: `closure-receipt:${source.receipt_id}:roi-case:v1`,
-    correlationId: closureTextIdentityUuid('closure-receipt', source.receipt_id),
-    causationId: closureTextIdentityUuid('closure-transition', source.transition_audit_ref),
+    idempotencyKey,
+    correlationId,
+    causationId,
     reason: `Create an inert ROI case shell for closure receipt ${source.receipt_id}; transition ${source.transition_audit_ref}`,
   });
 }
