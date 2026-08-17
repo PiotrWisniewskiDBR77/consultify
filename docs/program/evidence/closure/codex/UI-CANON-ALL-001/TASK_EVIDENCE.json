@@ -2,18 +2,44 @@
   "taskId": "UI-CANON-ALL-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "productSha": "748c801eb7ade1661a9ab5d43fd7dc73ca4badde",
+  "technicalSourceSha": "06cf1cdfe91a1342de04a122e8cffc4497655d56",
+  "reconciliationSha": "06cf1cdfe91a1342de04a122e8cffc4497655d56",
   "leaseSha256": "18eb0f2e24aee1d6415a29e1605597117f24c42a1f74439842581e7a92583742",
-  "changedPaths": [
-    "docs/program/evidence/closure/codex/UI-CANON-ALL-001/TASK_EVIDENCE.json"
-  ],
+  "changedPaths": ["docs/program/evidence/closure/codex/UI-CANON-ALL-001/TASK_EVIDENCE.json"],
   "changedPathRationale": {
     "docs/program/evidence/closure/codex/UI-CANON-ALL-001/TASK_EVIDENCE.json": "Records that module-level screenshots and focused tests do not yet satisfy the full sixteen-module cross-product UI matrix."
+  },
+  "boundedAggregatorPacket": {
+    "paths": [
+      "docs/program/evidence/closure/codex/UI-CANON-ALL-001/UI_MODULE_INVENTORY.json",
+      "scripts/cleanup/verify-ui-canon-all.mjs",
+      "scripts/cleanup/__tests__/verify-ui-canon-all.test.mjs",
+      "docs/program/evidence/closure/codex/UI-CANON-ALL-001/TASK_EVIDENCE.json"
+    ],
+    "scope": "Consumes existing module evidence without replaying or duplicating module E2E. Validates exactly sixteen route/surface/state inventories, frozen authority identity, evidence denominators, commit ancestry or explicit reconciliation, and referenced G4 result hashes.",
+    "auditDisposition": "Audits is explicitly MISSING_FROZEN_MODULE_PACKET. Its outside-authority proposal and historical G4 result are inventory inputs only and can never be promoted to synthetic completion by this aggregator.",
+    "runtimeClaim": "No browser, screenshot, deployed runtime or new module journey was executed or claimed by this evidence-only aggregation."
   },
   "ownerTables": [],
   "commands": [
     {
       "command": "node scripts/cleanup/report-closure-progress.mjs",
       "exitCode": 0
+    },
+    {
+      "command": "node scripts/cleanup/verify-ui-canon-all.mjs",
+      "exitCode": 0,
+      "result": "16 modules; 15 frozen packets; AUD missing explicitly; 3 technical-current human-only; 12 technical-current with gaps; 15 referenced result hashes verified; verdict ceiling PARTIAL"
+    },
+    {
+      "command": "node --test scripts/cleanup/__tests__/verify-ui-canon-all.test.mjs",
+      "exitCode": 0,
+      "result": "3/3 including fail-closed 15-module and synthetic-Audit negative controls"
+    },
+    {
+      "command": "node scripts/cleanup/report-closure-progress.mjs && node scripts/cleanup/verify-closure-plan.mjs",
+      "exitCode": 0,
+      "result": "82 authority tasks; missing evidence 0; invalid evidence 0; plan, ownership, leases and graph PASS"
     }
   ],
   "denominators": {
@@ -23,6 +49,13 @@
     "requiredLocales": 2,
     "requiredAxeCriticalSerious": 0,
     "aggregateMatrixComplete": false,
+    "currentInventories": "16/16",
+    "currentFrozenModulePackets": "15/16",
+    "currentMissingFrozenModulePackets": ["AUD"],
+    "currentTechnicalHumanOnly": "3/16",
+    "currentTechnicalWithTaskGaps": "12/16",
+    "currentVerifiedResultHashes": "15/15 referenced",
+    "aggregatorTests": "3/3",
     "automatedG4Surfaces": "15/15",
     "automatedG4Cells": "206/206",
     "automatedG4Screenshots": "214/214",
@@ -37,7 +70,10 @@
     "localScreenshotsNotAcceptedAsAggregatePass": true,
     "mountedAxeAllModules": false,
     "fullKeyboardFocusReturn": false,
-    "manualVoiceOver": false
+    "manualVoiceOver": false,
+    "fifteenModulesRejected": true,
+    "syntheticAuditPassRejected": true,
+    "moduleEvidenceNotEquivalentToAggregatePass": true
   },
   "browserArtifacts": [
     {
@@ -120,16 +156,19 @@
     "method": "Evidence-only record; no runtime or schema change.",
     "executed": false
   },
-  "verdict": "NOT_VERIFIED",
+  "verdict": "PARTIAL",
   "blockers": [
-    "Complete the 16-module mounted matrix on one frozen SHA.",
-    "Run axe and full keyboard/focus-return coverage.",
-    "Obtain named visual and VoiceOver acceptance."
+    "Close the task-specific technical gaps recorded in twelve module inventories.",
+    "Create or authorize a frozen-82 Audit UI module packet; the current proposal remains outside authority.",
+    "Requalify the complete matrix on the final frozen candidate without treating historical G4 artifacts as current runtime proof.",
+    "Obtain named visual/UX and manual VoiceOver acceptance."
   ],
   "openBlockers": [
     "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
-    "Observed console HTTP errors require task-specific qualification: total=98, 403=78, 404=20, other=0.",
-    "The proposed Audit UI surface is outside the 82-task authority and remains NOT_VERIFIED."
+    "Twelve module inventories retain task-specific state, reachability, policy, error or concurrency gaps; UI_MODULE_INVENTORY.json is authoritative for the exact list.",
+    "The proposed Audit UI surface is outside the 82-task authority and remains MISSING_FROZEN_MODULE_PACKET.",
+    "The 15-surface G4 run is historical exact-SHA evidence, not an exact-current sixteen-module runtime matrix.",
+    "No aggregator browser or screenshot run was performed; this packet validates evidence integrity only."
   ],
   "blockerReconciliation": [
     {
@@ -139,7 +178,10 @@
     }
   ],
   "resolvedBlockers": [
-    "Final mounted signed-auth automated G4 completed on candidate 836bfd633af7a689e7a3fb06971cbd8fe57bafe7: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed."
+    "Final mounted signed-auth automated G4 completed on candidate 836bfd633af7a689e7a3fb06971cbd8fe57bafe7: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed.",
+    "The aggregate now has a machine-validated sixteen-module inventory with explicit route, surface, state coverage and open-gap classification.",
+    "All fifteen frozen module evidence packets have readable denominators, valid commit lineage or reconciliation, and verified referenced G4 result hashes.",
+    "The verifier fails closed if the denominator falls below sixteen or the Audit proposal is relabeled as synthetic completion."
   ],
   "automatedG4Verdict": {
     "verdict": "PASS_EXACT_SHA",
