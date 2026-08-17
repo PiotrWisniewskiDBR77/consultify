@@ -10,6 +10,19 @@ const router = Router();
 const id = z.string().trim().min(1);
 const expectedVersion = z.number().int().positive();
 
+router.get(
+  '/execution-bvp/links/:linkId',
+  caseWorkspaceHandler(async (req, res, actor) => {
+    const params = parseParams(z.object({ linkId: id }), req.params);
+    await requireOrgRoleForActor(actor, 'MEMBER');
+    const snapshot = await svc.readExecutionDeliverySnapshot({
+      organizationId: actor.organizationId,
+      linkId: params.linkId,
+    });
+    res.status(200).json({ data: snapshot });
+  })
+);
+
 router.post(
   '/execution-bvp/links',
   caseWorkspaceHandler(async (req, res, actor) => {

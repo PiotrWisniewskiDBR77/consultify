@@ -267,6 +267,37 @@ describe.skipIf(!REAL_PG)(
       });
       expect(persisted.rows[0].payload_json.evidenceId).toBe(evidenceId);
       expect(persisted.rows[0].observation_payload).toEqual(persisted.rows[0].payload_json);
+
+      const mountedSnapshot = await request(app)
+        .get(`/api/v8/case-workspace/execution-bvp/links/${linkId}`)
+        .set(auth(approverToken))
+        .expect(200);
+      expect(mountedSnapshot.body.data.link).toMatchObject({
+        link_id: linkId,
+        organization_id: orgA,
+        status: 'CLOSED',
+      });
+      expect(mountedSnapshot.body.data.evidence).toHaveLength(1);
+      expect(mountedSnapshot.body.data.resultsReceipt).toMatchObject({
+        signalId: signalIds[0],
+        deliveryStatus: 'DELIVERED',
+        attemptCount: 1,
+        receiptId: persisted.rows[0].receipt_id,
+        observationPayload: persisted.rows[0].payload_json,
+      });
+      const foreignSnapshot = await request(app)
+        .get(`/api/v8/case-workspace/execution-bvp/links/${linkId}`)
+        .set(auth(foreignToken));
+      expect([403, 404]).toContain(foreignSnapshot.status);
+      await db.query(
+        `UPDATE organization_members SET status='REVOKED'
+          WHERE organization_id=$1 AND user_id=$2`,
+        [orgA, approver]
+      );
+      await request(app)
+        .get(`/api/v8/case-workspace/execution-bvp/links/${linkId}`)
+        .set(auth(approverToken))
+        .expect(403);
       await expect(
         db.query(
           `UPDATE rvn_execution_signal_receipts SET signal_type='tampered' WHERE receipt_id=$1`,

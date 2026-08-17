@@ -126,6 +126,7 @@ import { isExecutionFlagEnabled } from './executionFeatureFlags';
 import { ExecutionInitiativesKanbanView } from './ExecutionInitiativesKanbanView';
 import ExecutionIntelligencePanel from './ExecutionIntelligencePanel';
 import { ExecutionManagementView } from './ExecutionManagementView';
+import { ExecutionDeliveryClosurePanel } from './ExecutionDeliveryClosurePanel';
 import { normalizeExecutionArrayEnvelope } from './executionPayloadGuards';
 import { ExecutionRealizationsSurface } from './ExecutionRealizationsSurface';
 import {
@@ -5526,10 +5527,21 @@ Please return:
       );
     if (activeTab === ('control' as ModuleTab))
       return (
-        <ExecutionControlSurface
-          activePreset={canonicalMenu3Preset.control}
-          onCountsChange={menu3CountHandlers.control}
-        />
+        <div className="min-h-0 flex-1 overflow-auto p-4">
+          <ExecutionDeliveryClosurePanel
+            initialLinkId={searchParams.get('executionLinkId')}
+            onLinkIdChange={(linkId) => {
+              const next = new URLSearchParams(searchParams);
+              next.set('tab', 'control');
+              next.set('executionLinkId', linkId);
+              setSearchParams(next, { replace: true });
+            }}
+          />
+          <ExecutionControlSurface
+            activePreset={canonicalMenu3Preset.control}
+            onCountsChange={menu3CountHandlers.control}
+          />
+        </div>
       );
     if (activeTab === 'reports')
       return (

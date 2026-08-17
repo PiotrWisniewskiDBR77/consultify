@@ -114,10 +114,76 @@ type EvidenceRow = {
   version: number;
 };
 
+export type ExecutionDeliverySnapshot = {
+  link: ExecutionLinkRow;
+  evidence: EvidenceRow[];
+  resultsReceipt: {
+    signalId: string;
+    deliveryStatus: string;
+    attemptCount: number;
+    payload: Record<string, unknown>;
+    receiptId: string | null;
+    observationPayload: Record<string, unknown> | null;
+  } | null;
+};
+
 function required(value: string, code: string): string {
   const normalized = String(value || '').trim();
   if (!normalized) throw new Error(code);
   return normalized;
+}
+
+export async function readExecutionDeliverySnapshot(input: {
+  organizationId: string;
+  linkId: string;
+}): Promise<ExecutionDeliverySnapshot> {
+  return withPgTransaction(async (tx) => {
+    const linkResult = await tx.query<ExecutionLinkRow>(
+      `SELECT * FROM execution_case_links WHERE link_id = ? AND organization_id = ?`,
+      [required(input.linkId, 'execution_link_required'), required(input.organizationId, 'execution_org_required')]
+    );
+    const link = linkResult.rows[0];
+    if (!link) throw new Error('execution_link_not_found');
+    const evidence = await tx.query<EvidenceRow>(
+      `SELECT evidence_id,execution_link_id,artifact_link_id,artifact_revision,
+              content_digest,approval_status,submitted_by,approved_by,version
+         FROM execution_delivery_evidence
+        WHERE execution_link_id = ? AND organization_id = ? ORDER BY created_at,evidence_id`,
+      [link.link_id, input.organizationId]
+    );
+    const receipt = await tx.query<{
+      signal_id: string;
+      delivery_status: string;
+      attempt_count: number;
+      payload_json: Record<string, unknown>;
+      receipt_id: string | null;
+      observation_payload: Record<string, unknown> | null;
+    }>(
+      `SELECT s.signal_id,s.delivery_status,s.attempt_count,s.payload_json,
+              r.receipt_id,r.observation_payload
+         FROM execution_results_signal_outbox s
+         LEFT JOIN rvn_execution_signal_receipts r
+           ON r.source_signal_id=s.signal_id AND r.organization_id=s.organization_id
+        WHERE s.execution_link_id = ? AND s.organization_id = ?
+        ORDER BY s.created_at DESC LIMIT 1`,
+      [link.link_id, input.organizationId]
+    );
+    const row = receipt.rows[0];
+    return {
+      link,
+      evidence: evidence.rows,
+      resultsReceipt: row
+        ? {
+            signalId: row.signal_id,
+            deliveryStatus: row.delivery_status,
+            attemptCount: Number(row.attempt_count),
+            payload: row.payload_json,
+            receiptId: row.receipt_id,
+            observationPayload: row.observation_payload,
+          }
+        : null,
+    };
+  });
 }
 
 export async function linkInitiativeToExecutionCase(input: {
