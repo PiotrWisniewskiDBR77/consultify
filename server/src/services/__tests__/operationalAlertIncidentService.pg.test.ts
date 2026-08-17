@@ -3,7 +3,7 @@
 import { randomUUID } from 'node:crypto';
 
 import { Client } from 'pg';
-import { describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it } from 'vitest';
 
 import {
   acknowledgeOperationalIncident,
@@ -17,6 +17,7 @@ const REAL_PG =
   process.env.RUN_DB_TESTS === '1' &&
   process.env.MOCK_DB === 'false' &&
   DATABASE_URL.startsWith('postgres');
+const fixtureIncidentIds = new Set<string>();
 
 function alert(active: boolean): OperationalAlert {
   return {
@@ -33,6 +34,29 @@ function alert(active: boolean): OperationalAlert {
 }
 
 describe.skipIf(!REAL_PG)('OPS-OBS-001 durable incident ledger (real PostgreSQL)', () => {
+  afterAll(async () => {
+    if (fixtureIncidentIds.size === 0) return;
+    const cleanup = new Client({ connectionString: DATABASE_URL });
+    await cleanup.connect();
+    const ids = [...fixtureIncidentIds];
+    try {
+      await cleanup.query('BEGIN');
+      await cleanup.query('ALTER TABLE operational_alert_incident_events DISABLE TRIGGER trg_operational_alert_events_append_only');
+      await cleanup.query('DELETE FROM operational_alert_incident_events WHERE incident_id = ANY($1::uuid[])', [ids]);
+      await cleanup.query('ALTER TABLE operational_alert_incident_events ENABLE TRIGGER trg_operational_alert_events_append_only');
+      await cleanup.query('DELETE FROM operational_alert_incidents WHERE incident_id = ANY($1::uuid[])', [ids]);
+      await cleanup.query('COMMIT');
+    } catch (error) {
+      await cleanup.query('ROLLBACK').catch(() => undefined);
+      // DDL is transactional in PostgreSQL, but force the production guard back on even if
+      // the cleanup transaction failed after disabling it.
+      await cleanup.query('ALTER TABLE operational_alert_incident_events ENABLE TRIGGER trg_operational_alert_events_append_only').catch(() => undefined);
+      throw error;
+    } finally {
+      await cleanup.end();
+    }
+  });
+
   it('serializes concurrent detection, survives cold read, recovers, acknowledges and denies event mutation', async () => {
     const detections = await Promise.all(
       Array.from({ length: 8 }, (_, index) =>
@@ -45,6 +69,7 @@ describe.skipIf(!REAL_PG)('OPS-OBS-001 durable incident ledger (real PostgreSQL)
     const incidentIds = detections.flat().map((incident) => incident.incidentId);
     expect(new Set(incidentIds).size).toBe(1);
     const incidentId = incidentIds[0];
+    fixtureIncidentIds.add(incidentId);
 
     const cold = new Client({ connectionString: DATABASE_URL });
     await cold.connect();
@@ -128,6 +153,7 @@ describe.skipIf(!REAL_PG)('OPS-OBS-001 durable incident ledger (real PostgreSQL)
       ],
       evaluatorId: 'ops-active-control',
     });
+    fixtureIncidentIds.add(created[0].incidentId);
     await expect(
       acknowledgeOperationalIncident({
         incidentId: created[0].incidentId,
