@@ -2,6 +2,9 @@
   "taskId": "MAT-BVP-001",
   "baselineSha": "459b2d0da5d30b79d3c31d89ad0dcc7612b3c932",
   "productSha": "dd27522c52f830f0c5d76dde048f2159900a3fd7",
+  "reconciliationSha": "80c4a5fc6f",
+  "technicalSourceSha": "68bfe27977",
+  "currentRequalification": "Fresh exact-current PostgreSQL: 758/758 unique successful migrations with non-empty checksums, repeat 0, dry 0; workbook closure 12/12; mounted DOC/PPT/XLSX journey 1/1; route/grid 19/19; typecheck, backend build and frontend build passed; fixture residue 0.",
   "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
   "changedPaths": [
     "server/src/services/materialExport/__tests__/materialsMountedAuth.pg.test.ts",

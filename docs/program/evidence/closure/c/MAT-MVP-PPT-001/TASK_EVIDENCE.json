@@ -2,6 +2,9 @@
   "taskId": "MAT-MVP-PPT-001",
   "baselineSha": "14889d7b087585ae6f5d4a74e86c1b5e344e7c1c",
   "productSha": "9dbc93169d9ef4fb2f6487eeeeb623e0292a1e81",
+  "reconciliationSha": "80c4a5fc6f",
+  "technicalSourceSha": "68bfe27977",
+  "currentRequalification": "Mounted exact-current DOC/PPT/XLSX journey passed 1/1 on fresh migration ledger 758; PPT create, version, restore, cold reopen and real PPTX export were exercised with tenant identity. PPT export route regression passed 5/5; residue was zero.",
   "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
   "changedPaths": [
     "server/src/services/presentationExport/__tests__/presentationDeckLifecycle.pg.test.ts",

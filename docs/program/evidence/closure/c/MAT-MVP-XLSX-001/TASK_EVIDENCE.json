@@ -1,6 +1,9 @@
 {
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "productSha": "9a7b1a723a6864b204ebcef0681b2881b978d6fd",
+  "reconciliationSha": "80c4a5fc6f",
+  "technicalSourceSha": "68bfe27977",
+  "currentRequalification": "Canonical workbook version starts at 0. Exact-current closure passed 12/12 using cold-read baseVersion for CAS, concurrency, commands, export receipts, archive/share and tenant negatives; mounted XLSX value/formula/cold/export journey passed 1/1; grid regression passed 14/14; residue was zero.",
   "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
   "environment": {
     "node": "v24.12.0",

@@ -2,6 +2,9 @@
   "taskId": "MAT-MVP-DOC-001",
   "baselineSha": "f7d13be860a6c5a3cfa681a729b1483d9335338a",
   "productSha": "811b4709f98b5ad11c2151b6e91c7bd86447e873",
+  "reconciliationSha": "80c4a5fc6f",
+  "technicalSourceSha": "68bfe27977",
+  "currentRequalification": "Mounted exact-current DOC/PPT/XLSX journey passed 1/1 on fresh migration ledger 758; DOC create, CAS edit, checkpoint, rollback, cold reopen and DOCX export were exercised with tenant identity. Full static builds passed and residue was zero.",
   "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
   "changedPaths": [
     "server/src/services/documentStudio/__tests__/documentBvpExport.pg.test.ts",

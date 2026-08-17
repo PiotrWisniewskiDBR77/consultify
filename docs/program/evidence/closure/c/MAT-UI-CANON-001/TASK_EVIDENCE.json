@@ -1,6 +1,9 @@
 {
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "productSha": "a62dbe340114d87eda75a0d2da2d77bee2a90685",
+  "reconciliationSha": "80c4a5fc6f",
+  "technicalSourceSha": "68bfe27977",
+  "currentRequalification": "Mounted signed-auth exact-current DOC/PPT/XLSX journey passed 1/1, including edit, version/restore, reload/cold readback and export. Workbook locale-robust PL/EN formula-bar interaction is deterministic. Existing automated G4 remains 14/14; typecheck and both builds passed; residue was zero.",
   "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
   "environment": {
     "node": "v24.12.0",
@@ -12,9 +15,9 @@
   "gateG1": "PASS — npm run type-check exit 0; npm run build:backend exit 0; test:discovery-gate PASS 4997/4997 discovered, 4698 executed.",
   "gateG3": "PASS — strict migrate on FRESH from-zero DB exit 0; repeat run applied 0; --dry-run 0 pending; schema_migrations 709 success / 0 failed / 0 pending.",
   "taskId": "MAT-UI-CANON-001",
-  "verdict": "NOT_VERIFIED",
+  "verdict": "PARTIAL",
   "open": [
-    "No browser/visual evidence produced in this lane run. Requires G4: 1440x900/768x1024/390x844, light+dark, PL+EN, all states, axe critical/serious = 0, keyboard/focus.",
+    "The exact-current mounted technical journey is proven, and historical automated G4 remains 14/14. Human VoiceOver, persona and brand/visual-owner acceptance are not automated technical claims.",
     "Manual VoiceOver and human brand/UX acceptance remain literally BLOCKED_HUMAN per the gate catalog regardless of automated results."
   ],
   "changedPaths": [],
