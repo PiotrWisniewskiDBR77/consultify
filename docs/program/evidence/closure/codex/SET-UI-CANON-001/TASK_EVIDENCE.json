@@ -3,15 +3,181 @@
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "productSha": "bd488700fca5bda3d82d6063470a71b37d9781e0",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
-  "changedPaths": ["src/views/SettingsView.tsx", "src/components/settings/SettingsSidebar.tsx", "tests/unit/components/settings/SettingsCanonicalAccessibility.test.tsx"],
-  "changedPathRationale": {"shell": "semantic responsive navigation, mobile dismissal and focus/scroll management", "accessibility": "landmarks, heading, aria-expanded, aria-controls and aria-current", "tests": "canonical Settings accessibility and honesty states"},
+  "changedPaths": [
+    "src/views/SettingsView.tsx",
+    "src/components/settings/SettingsSidebar.tsx",
+    "tests/unit/components/settings/SettingsCanonicalAccessibility.test.tsx"
+  ],
+  "changedPathRationale": {
+    "shell": "semantic responsive navigation, mobile dismissal and focus/scroll management",
+    "accessibility": "landmarks, heading, aria-expanded, aria-controls and aria-current",
+    "tests": "canonical Settings accessibility and honesty states"
+  },
   "ownerTables": [],
-  "commands": [{"command": "vitest Settings canonical accessibility plus authentication, privacy, accessibility and keyboard honesty suites", "exitCode": 0, "result": "11/11 across 5 files"}, {"command": "npm run type-check -- --pretty false", "exitCode": 0}],
-  "denominators": {"focusedTests": "11/11", "testFiles": "5/5"},
-  "fixtures": {"states": ["authentication", "privacy", "accessibility", "keyboard", "mobile navigation"]},
-  "negativeControls": {"collapsedNavigation": "hidden descendants leave the keyboard tree", "escape": "mobile overlay closes and restores body scroll", "semantics": "active section and expanded groups are programmatically exposed"},
-  "browserArtifacts": [],
-  "rollback": {"code": "revert bd488700fc before deployment", "data": "no schema or production data change"},
+  "commands": [
+    {
+      "command": "vitest Settings canonical accessibility plus authentication, privacy, accessibility and keyboard honesty suites",
+      "exitCode": 0,
+      "result": "11/11 across 5 files"
+    },
+    {
+      "command": "npm run type-check -- --pretty false",
+      "exitCode": 0
+    }
+  ],
+  "denominators": {
+    "focusedTests": "11/11",
+    "testFiles": "5/5",
+    "automatedG4Cells": "14/14",
+    "automatedG4Screenshots": "14/14",
+    "automatedG4AxeCriticalSerious": "0/0",
+    "automatedG4UnnamedControls": 0,
+    "automatedG4VisibleFocus": "PASS"
+  },
+  "fixtures": {
+    "states": [
+      "authentication",
+      "privacy",
+      "accessibility",
+      "keyboard",
+      "mobile navigation"
+    ]
+  },
+  "negativeControls": {
+    "collapsedNavigation": "hidden descendants leave the keyboard tree",
+    "escape": "mobile overlay closes and restores body scroll",
+    "semantics": "active section and expanded groups are programmatically exposed"
+  },
+  "browserArtifacts": [
+    {
+      "kind": "mounted_signed_auth_g4_final",
+      "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
+      "reconciliationSha": "086219464dd61d6134d057705d5a19d118a806e4",
+      "resultPath": "docs/program/evidence/closure/ui-g4/SET-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "resultSha256": "8cc2f9fe3f0d40887ec9fc5e81d33bcbf94ee73926fa7e224d39e32afc988014",
+      "screenshots": [
+        {
+          "path": "docs/program/evidence/closure/ui-g4/SET-UI-CANON-001/screens/SET__desktop__pl__light.png",
+          "sha256": "b94e4386bd351029ce422fcdf0bdd528590ae0107d8df4eaacd6fe935782476b"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/SET-UI-CANON-001/screens/SET__desktop__pl__dark.png",
+          "sha256": "d14011c8d930f7f66b501ab05a6066807eb25f70b0e7bc51250c888604c33eee"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/SET-UI-CANON-001/screens/SET__desktop__en__light.png",
+          "sha256": "ddaa104ba8e0ed51fc067a252bee6e9fc84dacd154158a032bdca1953f3b1383"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/SET-UI-CANON-001/screens/SET__desktop__en__dark.png",
+          "sha256": "848607cde4f847ace2d4abf2fde7fe223bb9af92e6f9aeb687f9e810661fbe9a"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/SET-UI-CANON-001/screens/SET__tablet__pl__light.png",
+          "sha256": "bb9481a5bd55f600683a68b6bf9fc262c1bcf2276127e8c63876caad6a86f896"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/SET-UI-CANON-001/screens/SET__tablet__pl__dark.png",
+          "sha256": "3ec7393c78306c27a522045b8d656021354a4c65408699a9710a26851decb02e"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/SET-UI-CANON-001/screens/SET__tablet__en__light.png",
+          "sha256": "ff0dfe25791d3bfef9cab3ab2b0b8ef0fd14063fb896142c9f3fb78a092c8f00"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/SET-UI-CANON-001/screens/SET__tablet__en__dark.png",
+          "sha256": "fd4eda0b6f5f4a5db15f15b36a4a797939939613931e94140604af235eef91fa"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/SET-UI-CANON-001/screens/SET__mobile__pl__light.png",
+          "sha256": "66b6d8cfc249d1a2434bc4f587012c4d0231f84a8d7e70e7bfd142c6838b1d46"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/SET-UI-CANON-001/screens/SET__mobile__pl__dark.png",
+          "sha256": "c07f82ddc50936fd3b9c8a3f347f06d8dee3d1809218cc4a25ab5e3f4b56847d"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/SET-UI-CANON-001/screens/SET__mobile__en__light.png",
+          "sha256": "5c8c8065ba803bcd7e8cb28907f98d23dcda1091a2942d03dc084c33c446caa3"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/SET-UI-CANON-001/screens/SET__mobile__en__dark.png",
+          "sha256": "ad22d6fa3e92916519dacf8f2cbebb5288a0e6f53a1d6ed6aff4fd20f9efa357"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/SET-UI-CANON-001/screens/SET__settings-profile__desktop__pl__light.png",
+          "sha256": "b93a9fb12dbf330eea03ca8cef94c0d8d2e96a2b3582abca9b5f43144f9b2d39"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/SET-UI-CANON-001/screens/SET__settings-security-dashboard__desktop__pl__light.png",
+          "sha256": "678b6a7b8c5e1177117ca7b89732394523d639eacb04a39a4db823db134ed452"
+        }
+      ],
+      "consoleErrors": {
+        "total": 4,
+        "forbidden403": 0,
+        "notFound404": 4,
+        "other": 0
+      }
+    }
+  ],
+  "rollback": {
+    "code": "revert bd488700fc before deployment",
+    "data": "no schema or production data change"
+  },
   "verdict": "PARTIAL",
-  "openBlockers": ["Mounted signed-in desktop/mobile browser, axe scan and human keyboard/visual sign-off remain missing."]
+  "openBlockers": [
+    "Mounted signed-in desktop/mobile browser, axe scan and human keyboard/visual sign-off remain missing."
+  ],
+  "automatedG4Verdict": {
+    "verdict": "PASS_EXACT_SHA",
+    "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
+    "reconciliationSha": "086219464dd61d6134d057705d5a19d118a806e4",
+    "authentication": "real signed JWT from /api/test-support/bootstrap",
+    "e2eMode": false,
+    "database": "real PostgreSQL; current schema apply 0, repeat 0, dry-run pending 0",
+    "cells": {
+      "total": 14,
+      "rendered": 14
+    },
+    "axe": {
+      "critical": 0,
+      "serious": 0
+    },
+    "unnamedControls": 0,
+    "keyboard": {
+      "reachableControls": 40,
+      "focusAlwaysVisible": true,
+      "invisibleFocusSamples": [],
+      "escapeHandled": "Escape pressed on the surface; surface stayed mounted (no dialog was open to close).",
+      "focusReturn": "Focus remained inside the document after Escape.",
+      "tabOrderMonotonic": true
+    },
+    "deepLink": {
+      "ok": true,
+      "detail": "deep-link /settings settled at /settings/profile — surface content matched"
+    },
+    "reload": {
+      "ok": true,
+      "detail": "reload settled at /settings/profile — surface content matched"
+    },
+    "coldReopen": {
+      "ok": true,
+      "detail": "cold context (fresh storage state, no SPA memory) settled at /settings/profile — surface content matched"
+    },
+    "horizontalOverflowCells": 0,
+    "consoleErrors": {
+      "total": 4,
+      "forbidden403": 0,
+      "notFound404": 4,
+      "other": 0
+    },
+    "humanAcceptance": "PENDING — automated G4 does not sign VoiceOver, persona or visual-owner acceptance",
+    "reachabilityAndStates": {
+      "states": [],
+      "statesNotPresent": [
+        "stale"
+      ]
+    }
+  }
 }

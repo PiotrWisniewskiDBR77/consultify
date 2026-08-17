@@ -29,7 +29,12 @@
   "denominators": {
     "task": "Mounted 7 (5 tab-bar + 2 side-entry), dead 5, 1 unreachable-despite-flag-ON",
     "laneRealDbPass": "110 leased realDB files on an isolated DB: 77 passed / 7 failed / 26 skipped; 675 tests: 565 passed / 51 failed / 59 skipped",
-    "recoveredAcceptance": "14 leased acceptance files the mandated G2 command cannot collect, run under vitest.acceptance.config.ts: 105 tests, 91 passed / 14 failed"
+    "recoveredAcceptance": "14 leased acceptance files the mandated G2 command cannot collect, run under vitest.acceptance.config.ts: 105 tests, 91 passed / 14 failed",
+    "automatedG4Cells": "13/13",
+    "automatedG4Screenshots": "13/13",
+    "automatedG4AxeCriticalSerious": "0/0",
+    "automatedG4UnnamedControls": 0,
+    "automatedG4VisibleFocus": "PASS"
   },
   "fixtures": {
     "prefix": "claude_b_",
@@ -37,10 +42,129 @@
     "env": "NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false (all three required — NODE_ENV=test alone substitutes a mock DB)"
   },
   "negativeControls": {},
-  "browserArtifacts": [],
+  "browserArtifacts": [
+    {
+      "kind": "mounted_signed_auth_g4_final",
+      "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
+      "reconciliationSha": "086219464dd61d6134d057705d5a19d118a806e4",
+      "resultPath": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "resultSha256": "c17b5d7f142ef7a1de512bf791e628d049a6ed56a379c65d6ead87272864a11b",
+      "screenshots": [
+        {
+          "path": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__desktop__pl__light.png",
+          "sha256": "0840d8b679e2adcab2ca6acfb2d27a663c6cd64ad9180d383ca883cf2ca82726"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__desktop__pl__dark.png",
+          "sha256": "5dba4585586a9e6e1b477a27e93f5bbcc6c9d17448f7bcab055e6abcedce1b01"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__desktop__en__light.png",
+          "sha256": "229d57121f96832e0112fb8d2ed0afa60d5130d103f609e81dd490a64f7ae56b"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__desktop__en__dark.png",
+          "sha256": "6910c12b6233d26f7623805a18b5e0e9f2c69c90fe5bfee52698630692dc0efa"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__tablet__pl__light.png",
+          "sha256": "a044e27e035f2f7ab6467a96df6aa0a58e8b5798c7ebee3415c42a7ee34a9453"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__tablet__pl__dark.png",
+          "sha256": "08f66fd3164637f12ebabf45e0972d58e50aec27179dec0411b2d99bb77b3e7a"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__tablet__en__light.png",
+          "sha256": "251c0ab2e907e6c67a4df88f1888c089bf6f1254f13a4e5db1f6b132119eb189"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__tablet__en__dark.png",
+          "sha256": "1a96c86e0ab176953f4c3e2931d5fdad28bb75169039e751a91c56c2402f2c73"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__mobile__pl__light.png",
+          "sha256": "30afe2b92dc7c22d3e4d61aca9b507596e8ef78fb86744c91dc5718888a5d373"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__mobile__pl__dark.png",
+          "sha256": "4acb778a912f6066b934804debf8b81356ea4d59b3f3b4f0852fe8456236145d"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__mobile__en__light.png",
+          "sha256": "9a26d9cec11e97b49295afb58e8c0cd12359e3b3921b06cf83a18747c167b436"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__mobile__en__dark.png",
+          "sha256": "6f4296b53de42bfe4e15d06269aa3ee086cbd1747a63cbaffd4057eae7a1e9f4"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__execution-tab-rollout__desktop__pl__light.png",
+          "sha256": "e75b06b5f42b588b2f06c8d4b2c40a7d6c17c3137b0d805197467d900850f1d8"
+        }
+      ],
+      "consoleErrors": {
+        "total": 78,
+        "forbidden403": 78,
+        "notFound404": 0,
+        "other": 0
+      }
+    }
+  ],
   "rollback": {
     "method": "Revert the lane commits; all changes are additive application code plus new tests. NO migration was added by this lane, so no schema rollback is required and old readers are unaffected."
   },
   "verdict": "BLOCKED_HUMAN",
-  "openBlocker": "ExecutionInitiativeStatusControl, KPIDashboard, PeopleChangeWorkspace, ReportCompactPanel, RiskSignalsPanel all confirmed zero live importers. ExecutionSummaryOneLook has its flag ON by default yet no reachable trigger anywhere. Named human UX + VoiceOver verdict required."
+  "openBlocker": "ExecutionInitiativeStatusControl, KPIDashboard, PeopleChangeWorkspace, ReportCompactPanel, RiskSignalsPanel all confirmed zero live importers. ExecutionSummaryOneLook has its flag ON by default yet no reachable trigger anywhere. Named human UX + VoiceOver verdict required.",
+  "automatedG4Verdict": {
+    "verdict": "PASS_EXACT_SHA",
+    "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
+    "reconciliationSha": "086219464dd61d6134d057705d5a19d118a806e4",
+    "authentication": "real signed JWT from /api/test-support/bootstrap",
+    "e2eMode": false,
+    "database": "real PostgreSQL; current schema apply 0, repeat 0, dry-run pending 0",
+    "cells": {
+      "total": 13,
+      "rendered": 13
+    },
+    "axe": {
+      "critical": 0,
+      "serious": 0
+    },
+    "unnamedControls": 0,
+    "keyboard": {
+      "reachableControls": 40,
+      "focusAlwaysVisible": true,
+      "invisibleFocusSamples": [],
+      "escapeHandled": "Escape pressed on the surface; surface stayed mounted (no dialog was open to close).",
+      "focusReturn": "Focus remained inside the document after Escape.",
+      "tabOrderMonotonic": true
+    },
+    "deepLink": {
+      "ok": true,
+      "detail": "deep-link /execution settled at /execution — surface content matched"
+    },
+    "reload": {
+      "ok": true,
+      "detail": "reload settled at /execution — surface content matched"
+    },
+    "coldReopen": {
+      "ok": true,
+      "detail": "cold context (fresh storage state, no SPA memory) settled at /execution — surface content matched"
+    },
+    "horizontalOverflowCells": 0,
+    "consoleErrors": {
+      "total": 78,
+      "forbidden403": 78,
+      "notFound404": 0,
+      "other": 0
+    },
+    "humanAcceptance": "PENDING — automated G4 does not sign VoiceOver, persona or visual-owner acceptance",
+    "reachabilityAndStates": {
+      "states": [],
+      "statesNotPresent": [
+        "stale"
+      ]
+    }
+  }
 }

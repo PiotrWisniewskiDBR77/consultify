@@ -20,12 +20,145 @@
   "changedPathRationale": {},
   "ownerTables": [],
   "commands": [],
-  "denominators": {},
+  "denominators": {
+    "automatedG4Cells": "15/15",
+    "automatedG4Screenshots": "15/15",
+    "automatedG4AxeCriticalSerious": "0/0",
+    "automatedG4UnnamedControls": 0,
+    "automatedG4VisibleFocus": "PASS"
+  },
   "fixtures": {},
   "negativeControls": {},
-  "browserArtifacts": [],
+  "browserArtifacts": [
+    {
+      "kind": "mounted_signed_auth_g4_final",
+      "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
+      "reconciliationSha": "086219464dd61d6134d057705d5a19d118a806e4",
+      "resultPath": "docs/program/evidence/closure/ui-g4/ORG-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "resultSha256": "b2f29e56a0b1d216d6f6dae37369e14905f31dce959accf29799d3f9be31c806",
+      "screenshots": [
+        {
+          "path": "docs/program/evidence/closure/ui-g4/ORG-UI-CANON-001/screens/ORG__desktop__pl__light.png",
+          "sha256": "fcdec50cf08aa5ce19c801b9b6f8203e106a1906af77712822185990b220c734"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/ORG-UI-CANON-001/screens/ORG__desktop__pl__dark.png",
+          "sha256": "5e406aca71962751a299afb9ccf4ab17e5221ac9f7f25150083eeba0d757cc03"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/ORG-UI-CANON-001/screens/ORG__desktop__en__light.png",
+          "sha256": "53e47189e7df5f97d88215c676d28b0b9ac732773a345911f887ac0bff3fbdd3"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/ORG-UI-CANON-001/screens/ORG__desktop__en__dark.png",
+          "sha256": "02dcb4a3a91f232eb084ffc652069177d8536f7518c629d302d37ecda4aedcbc"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/ORG-UI-CANON-001/screens/ORG__tablet__pl__light.png",
+          "sha256": "c95b2755fbaaa011e97b853bbf4fa49e781eefe1977d56763b46356c3a747b69"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/ORG-UI-CANON-001/screens/ORG__tablet__pl__dark.png",
+          "sha256": "a48afe80296525cbedc03df5c2673cb12f00be85ca8c09fb3efe1815e374b906"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/ORG-UI-CANON-001/screens/ORG__tablet__en__light.png",
+          "sha256": "ba02a98c515b98f34b1cc002ef59fb43c88251696c810b07af4279548311529c"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/ORG-UI-CANON-001/screens/ORG__tablet__en__dark.png",
+          "sha256": "7f868c5b36db4ae4c741b343d66c50e4874b405c5c698379da11ecfcbe3a8e02"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/ORG-UI-CANON-001/screens/ORG__mobile__pl__light.png",
+          "sha256": "9b9e8d6a55475121be99fa931b86025f1e5755d36975af1288e922a198a5f8b0"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/ORG-UI-CANON-001/screens/ORG__mobile__pl__dark.png",
+          "sha256": "c678bcc5f414cca65c63fb4798b64f899c6232f6e1469f33e1914b123791f977"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/ORG-UI-CANON-001/screens/ORG__mobile__en__light.png",
+          "sha256": "28fee05680255dd3174190a7aa03c79769f487c5a16ddf445e04397b249a5a12"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/ORG-UI-CANON-001/screens/ORG__mobile__en__dark.png",
+          "sha256": "fc7b290bdd94f789ac4e682790a0bc30630ed9574d6a763814641d8e4e7e480f"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/ORG-UI-CANON-001/screens/ORG__organization-profile__desktop__pl__light.png",
+          "sha256": "cba6c7344bfa981cda4c9d8ace2c8efa47d4d251e6c6fe7452a711dc496cd674"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/ORG-UI-CANON-001/screens/ORG__organization-goals__desktop__pl__light.png",
+          "sha256": "2840643d3b95b7fc4f2315da5f4cb26176e7cd8913176ff533dfb55034379cd3"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/ORG-UI-CANON-001/screens/ORG__organization-strategy__desktop__pl__light.png",
+          "sha256": "c78dd75356c9079e263cec3377c110c539fda52810560eb6fc9116800c804dcb"
+        }
+      ],
+      "consoleErrors": {
+        "total": 0,
+        "forbidden403": 0,
+        "notFound404": 0,
+        "other": 0
+      }
+    }
+  ],
   "rollback": {
     "method": "Not recorded by the lane; no rollback execution or completion claim is inferred.",
     "executed": false
+  },
+  "automatedG4Verdict": {
+    "verdict": "PASS_EXACT_SHA",
+    "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
+    "reconciliationSha": "086219464dd61d6134d057705d5a19d118a806e4",
+    "authentication": "real signed JWT from /api/test-support/bootstrap",
+    "e2eMode": false,
+    "database": "real PostgreSQL; current schema apply 0, repeat 0, dry-run pending 0",
+    "cells": {
+      "total": 15,
+      "rendered": 15
+    },
+    "axe": {
+      "critical": 0,
+      "serious": 0
+    },
+    "unnamedControls": 0,
+    "keyboard": {
+      "reachableControls": 40,
+      "focusAlwaysVisible": true,
+      "invisibleFocusSamples": [],
+      "escapeHandled": "Escape pressed on the surface; surface stayed mounted (no dialog was open to close).",
+      "focusReturn": "Focus remained inside the document after Escape.",
+      "tabOrderMonotonic": true
+    },
+    "deepLink": {
+      "ok": true,
+      "detail": "deep-link /organization settled at /organization — surface content matched"
+    },
+    "reload": {
+      "ok": true,
+      "detail": "reload settled at /organization — surface content matched"
+    },
+    "coldReopen": {
+      "ok": true,
+      "detail": "cold context (fresh storage state, no SPA memory) settled at /organization — surface content matched"
+    },
+    "horizontalOverflowCells": 0,
+    "consoleErrors": {
+      "total": 0,
+      "forbidden403": 0,
+      "notFound404": 0,
+      "other": 0
+    },
+    "humanAcceptance": "PENDING — automated G4 does not sign VoiceOver, persona or visual-owner acceptance",
+    "reachabilityAndStates": {
+      "states": [],
+      "statesNotPresent": [
+        "stale"
+      ]
+    }
   }
 }

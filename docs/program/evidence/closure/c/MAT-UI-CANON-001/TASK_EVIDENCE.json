@@ -21,12 +21,141 @@
   "changedPathRationale": {},
   "ownerTables": [],
   "commands": [],
-  "denominators": {},
+  "denominators": {
+    "automatedG4Cells": "14/14",
+    "automatedG4Screenshots": "14/14",
+    "automatedG4AxeCriticalSerious": "0/0",
+    "automatedG4UnnamedControls": 0,
+    "automatedG4VisibleFocus": "PASS"
+  },
   "fixtures": {},
   "negativeControls": {},
-  "browserArtifacts": [],
+  "browserArtifacts": [
+    {
+      "kind": "mounted_signed_auth_g4_final",
+      "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
+      "reconciliationSha": "086219464dd61d6134d057705d5a19d118a806e4",
+      "resultPath": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "resultSha256": "83c3acc97b3390e54c6d67576b3008543a309a1a30c4ef3392362ece461260a2",
+      "screenshots": [
+        {
+          "path": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__desktop__pl__light.png",
+          "sha256": "1f4d2f9b961d543ffed4a83ab94ebdc17450522910512e3c4ea7ff611af419d0"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__desktop__pl__dark.png",
+          "sha256": "8f9b886f2051747cefdaaa42857991cce4e692d35c4b459ae352209c05d911ef"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__desktop__en__light.png",
+          "sha256": "8e01da0012963f6a607bbb160a767229eb107e60bb76fefe8b3da3a30857bdf9"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__desktop__en__dark.png",
+          "sha256": "4a2da518daaf9824814595bb40b4dae6ecab0d0b217dedb43d9d7d2a28d14dd4"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__tablet__pl__light.png",
+          "sha256": "209a4194bcdaa88a5baad2a7c79141c62d31056f10b4bca3deb82f8b3b386fe1"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__tablet__pl__dark.png",
+          "sha256": "d687b16719cd47d169a6b407a910b1db5b79aa2916d49f84265b419d2a61c619"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__tablet__en__light.png",
+          "sha256": "5b3164f8b81b38276575c8b462803f1447fc478f5a783900f5f583385446815c"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__tablet__en__dark.png",
+          "sha256": "87c022ede57c60327deb2cb9de2aa491b376db6758c8d0a63ece8dd9ebf52e9d"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__mobile__pl__light.png",
+          "sha256": "75c6b83da8cb53b1591e3831a4c6e98140a54fa2f34cb36282abe5a6e67c2cf4"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__mobile__pl__dark.png",
+          "sha256": "155aef831d1dd919766c078fa28d1e195fd154a8f001bbebbaa3f6f726f7855e"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__mobile__en__light.png",
+          "sha256": "e2e634609f0319d68695e12cd73da5e2a9b38cfd2d08515a555be345f542cf0c"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__mobile__en__dark.png",
+          "sha256": "b4b6191cc81375bb047225d4e4e727165d3fbe86d55b58f39fd5b9e22df3e46f"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__document-studio__desktop__pl__light.png",
+          "sha256": "1c3fac83745e8e2dbad99e788902d16d03acf7a5623bb8e220f2891a4afb24df"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__tabele__desktop__pl__light.png",
+          "sha256": "8273f2a4afeebfbb28f0187eb7505cc7f91ad153860d1b63fcd8a0d708205489"
+        }
+      ],
+      "consoleErrors": {
+        "total": 0,
+        "forbidden403": 0,
+        "notFound404": 0,
+        "other": 0
+      }
+    }
+  ],
   "rollback": {
     "method": "Not recorded by the lane; no rollback execution or completion claim is inferred.",
     "executed": false
+  },
+  "automatedG4Verdict": {
+    "verdict": "PASS_EXACT_SHA",
+    "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
+    "reconciliationSha": "086219464dd61d6134d057705d5a19d118a806e4",
+    "authentication": "real signed JWT from /api/test-support/bootstrap",
+    "e2eMode": false,
+    "database": "real PostgreSQL; current schema apply 0, repeat 0, dry-run pending 0",
+    "cells": {
+      "total": 14,
+      "rendered": 14
+    },
+    "axe": {
+      "critical": 0,
+      "serious": 0
+    },
+    "unnamedControls": 0,
+    "keyboard": {
+      "reachableControls": 40,
+      "focusAlwaysVisible": true,
+      "invisibleFocusSamples": [],
+      "escapeHandled": "Escape pressed on the surface; surface stayed mounted (no dialog was open to close).",
+      "focusReturn": "Focus remained inside the document after Escape.",
+      "tabOrderMonotonic": true
+    },
+    "deepLink": {
+      "ok": true,
+      "detail": "deep-link /presentations settled at /presentations — surface content matched"
+    },
+    "reload": {
+      "ok": true,
+      "detail": "reload settled at /presentations — surface content matched"
+    },
+    "coldReopen": {
+      "ok": true,
+      "detail": "cold context (fresh storage state, no SPA memory) settled at /presentations — surface content matched"
+    },
+    "horizontalOverflowCells": 0,
+    "consoleErrors": {
+      "total": 0,
+      "forbidden403": 0,
+      "notFound404": 0,
+      "other": 0
+    },
+    "humanAcceptance": "PENDING — automated G4 does not sign VoiceOver, persona or visual-owner acceptance",
+    "reachabilityAndStates": {
+      "states": [],
+      "statesNotPresent": [
+        "stale"
+      ]
+    }
   }
 }

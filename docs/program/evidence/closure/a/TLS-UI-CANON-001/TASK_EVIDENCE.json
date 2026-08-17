@@ -3,14 +3,177 @@
   "baselineSha": "46a55509ef9880c34ca990b3b8f0d332ade9cb61",
   "productSha": "37aa125625a3db302d3837ffb236172d51387093",
   "leaseSha256": "a2f9be9983e3a03e5e64f1a51dca193199a5bec963a246c3b4fe94b378af1308",
-  "changedPaths": ["src/components/DiscoveryTools/tools/DynamicSWOT/__tests__/SWOTBuildPhase.a11y-states.test.tsx", "docs/program/evidence/closure/a/TLS-UI-CANON-001/UI_INVENTORY.md"],
-  "changedPathRationale": {"src/components/DiscoveryTools/tools/DynamicSWOT/__tests__/SWOTBuildPhase.a11y-states.test.tsx": "Covers empty/conflict/success-adjacent, accessible names, PL and dark-mode structure.", "docs/program/evidence/closure/a/TLS-UI-CANON-001/UI_INVENTORY.md": "Records mounted-flow coverage and missing human/browser axes."},
+  "changedPaths": [
+    "src/components/DiscoveryTools/tools/DynamicSWOT/__tests__/SWOTBuildPhase.a11y-states.test.tsx",
+    "docs/program/evidence/closure/a/TLS-UI-CANON-001/UI_INVENTORY.md"
+  ],
+  "changedPathRationale": {
+    "src/components/DiscoveryTools/tools/DynamicSWOT/__tests__/SWOTBuildPhase.a11y-states.test.tsx": "Covers empty/conflict/success-adjacent, accessible names, PL and dark-mode structure.",
+    "docs/program/evidence/closure/a/TLS-UI-CANON-001/UI_INVENTORY.md": "Records mounted-flow coverage and missing human/browser axes."
+  },
   "ownerTables": [],
-  "commands": [{"command": "npx vitest run src/components/DiscoveryTools/tools/DynamicSWOT/__tests__/SWOTBuildPhase.a11y-states.test.tsx --retry=0", "exitCode": 0}],
-  "denominators": {"recordedComponentAndBrowserTests": {"passed": 24, "failed": 0}},
-  "fixtures": {"language": ["EN", "PL"], "theme": ["light-structural", "dark-structural"]},
-  "negativeControls": {"coreCompetencyWithoutEvidenceBlocked": true},
-  "browserArtifacts": [],
-  "rollback": {"method": "Test/evidence-only packet; no runtime rollback required.", "executed": false},
-  "verdict": "BLOCKED_HUMAN"
+  "commands": [
+    {
+      "command": "npx vitest run src/components/DiscoveryTools/tools/DynamicSWOT/__tests__/SWOTBuildPhase.a11y-states.test.tsx --retry=0",
+      "exitCode": 0
+    }
+  ],
+  "denominators": {
+    "recordedComponentAndBrowserTests": {
+      "passed": 24,
+      "failed": 0
+    },
+    "automatedG4Cells": "15/15",
+    "automatedG4Screenshots": "15/15",
+    "automatedG4AxeCriticalSerious": "0/0",
+    "automatedG4UnnamedControls": 0,
+    "automatedG4VisibleFocus": "PASS"
+  },
+  "fixtures": {
+    "language": [
+      "EN",
+      "PL"
+    ],
+    "theme": [
+      "light-structural",
+      "dark-structural"
+    ]
+  },
+  "negativeControls": {
+    "coreCompetencyWithoutEvidenceBlocked": true
+  },
+  "browserArtifacts": [
+    {
+      "kind": "mounted_signed_auth_g4_final",
+      "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
+      "reconciliationSha": "086219464dd61d6134d057705d5a19d118a806e4",
+      "resultPath": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "resultSha256": "adada3e244bf2d9640e1263ab29311a5d8d61f44cd064591462f4a1b1f06d8a0",
+      "screenshots": [
+        {
+          "path": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__desktop__pl__light.png",
+          "sha256": "3ebe4bbd83eb3f0c8179fab8b5741d11d9467ae951c3e817f14a66d5988c7f30"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__desktop__pl__dark.png",
+          "sha256": "57cc25cc94b6c5fbcc3f0cdae33c6341dd0976a8cd1b1993233e412ee0a443de"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__desktop__en__light.png",
+          "sha256": "19e9a149db955b864b8a0e7645be6aa78c014de638b8c926f4c86a8373078752"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__desktop__en__dark.png",
+          "sha256": "b014006f8df6db5d562881e504380cdeebc3afaca4156edc4f009517bc6873dc"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__tablet__pl__light.png",
+          "sha256": "cc22963eced562b4acad5770c30f2a32c39bbed7e3205ca1cd4171bd67a2c911"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__tablet__pl__dark.png",
+          "sha256": "c94e8a7531fdfb23aefdc66019737d2d17b80f6bc78a5764cf568d2d59b749f9"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__tablet__en__light.png",
+          "sha256": "642908e734536f6f59a1c61e0895e9222ef1656e7c87f4762cfb4efd3035ca19"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__tablet__en__dark.png",
+          "sha256": "feb47f421bf982e7078567c08fa18b811e2b4a0e01515ce1b630aa6b177cd5fa"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__mobile__pl__light.png",
+          "sha256": "787c49db7ea9dcb15223c0f637d6ab42bbd57d8794cf4e817c712b1b5df6da1c"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__mobile__pl__dark.png",
+          "sha256": "f28dc8159eab7ccfdf57d80ed493d4b40ebacde418fc99e2ebbecd04f70aba17"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__mobile__en__light.png",
+          "sha256": "ee3e68727d068ab7046ea364b11c3f2e6e73ae5bfd852b75ea3cd4441cce1e0d"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__mobile__en__dark.png",
+          "sha256": "9466aa8e955f4600908b5b453fd5aa2052ffa88965b0db216ec8148227b48083"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__discovery-tools-strategic__desktop__pl__light.png",
+          "sha256": "e1b0224de6517af317049e03dd916c4cc30fd84faac2ddad12b8026b409d706b"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__discovery-tools-operational__desktop__pl__light.png",
+          "sha256": "027ceea3cec114426c3e004ec0d727daaff73c2a088f68b6ecd527de492e75fd"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__discovery-tools-digital__desktop__pl__light.png",
+          "sha256": "27f68c21cf2a8dfea3d6ab8497c15281826ab5dd26f9d3dd2ea0c8c1a27ed364"
+        }
+      ],
+      "consoleErrors": {
+        "total": 0,
+        "forbidden403": 0,
+        "notFound404": 0,
+        "other": 0
+      }
+    }
+  ],
+  "rollback": {
+    "method": "Test/evidence-only packet; no runtime rollback required.",
+    "executed": false
+  },
+  "verdict": "BLOCKED_HUMAN",
+  "automatedG4Verdict": {
+    "verdict": "PASS_EXACT_SHA",
+    "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
+    "reconciliationSha": "086219464dd61d6134d057705d5a19d118a806e4",
+    "authentication": "real signed JWT from /api/test-support/bootstrap",
+    "e2eMode": false,
+    "database": "real PostgreSQL; current schema apply 0, repeat 0, dry-run pending 0",
+    "cells": {
+      "total": 15,
+      "rendered": 15
+    },
+    "axe": {
+      "critical": 0,
+      "serious": 0
+    },
+    "unnamedControls": 0,
+    "keyboard": {
+      "reachableControls": 40,
+      "focusAlwaysVisible": true,
+      "invisibleFocusSamples": [],
+      "escapeHandled": "Escape pressed on the surface; surface stayed mounted (no dialog was open to close).",
+      "focusReturn": "Focus remained inside the document after Escape.",
+      "tabOrderMonotonic": true
+    },
+    "deepLink": {
+      "ok": true,
+      "detail": "deep-link /discovery-tools settled at /discovery-tools — surface content matched"
+    },
+    "reload": {
+      "ok": true,
+      "detail": "reload settled at /discovery-tools — surface content matched"
+    },
+    "coldReopen": {
+      "ok": true,
+      "detail": "cold context (fresh storage state, no SPA memory) settled at /discovery-tools — surface content matched"
+    },
+    "horizontalOverflowCells": 0,
+    "consoleErrors": {
+      "total": 0,
+      "forbidden403": 0,
+      "notFound404": 0,
+      "other": 0
+    },
+    "humanAcceptance": "PENDING — automated G4 does not sign VoiceOver, persona or visual-owner acceptance",
+    "reachabilityAndStates": {
+      "states": [],
+      "statesNotPresent": [
+        "forbidden",
+        "stale"
+      ]
+    }
+  }
 }

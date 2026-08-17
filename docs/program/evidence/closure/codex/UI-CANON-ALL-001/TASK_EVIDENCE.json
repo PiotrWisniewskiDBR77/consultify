@@ -3,22 +3,157 @@
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "productSha": "748c801eb7ade1661a9ab5d43fd7dc73ca4badde",
   "leaseSha256": "18eb0f2e24aee1d6415a29e1605597117f24c42a1f74439842581e7a92583742",
-  "changedPaths": ["docs/program/evidence/closure/codex/UI-CANON-ALL-001/TASK_EVIDENCE.json"],
-  "changedPathRationale": {"docs/program/evidence/closure/codex/UI-CANON-ALL-001/TASK_EVIDENCE.json": "Records that module-level screenshots and focused tests do not yet satisfy the full sixteen-module cross-product UI matrix."},
+  "changedPaths": [
+    "docs/program/evidence/closure/codex/UI-CANON-ALL-001/TASK_EVIDENCE.json"
+  ],
+  "changedPathRationale": {
+    "docs/program/evidence/closure/codex/UI-CANON-ALL-001/TASK_EVIDENCE.json": "Records that module-level screenshots and focused tests do not yet satisfy the full sixteen-module cross-product UI matrix."
+  },
   "ownerTables": [],
-  "commands": [{"command": "node scripts/cleanup/report-closure-progress.mjs", "exitCode": 0}],
+  "commands": [
+    {
+      "command": "node scripts/cleanup/report-closure-progress.mjs",
+      "exitCode": 0
+    }
+  ],
   "denominators": {
     "requiredModuleInventories": 16,
     "requiredViewports": 3,
     "requiredThemes": 2,
     "requiredLocales": 2,
     "requiredAxeCriticalSerious": 0,
-    "aggregateMatrixComplete": false
+    "aggregateMatrixComplete": false,
+    "automatedG4Surfaces": "15/15",
+    "automatedG4Cells": "206/206",
+    "automatedG4Screenshots": "214/214",
+    "automatedG4AxeCriticalSerious": "0/0",
+    "automatedG4UnnamedControls": 0,
+    "automatedG4VisibleFocusSurfaces": "15/15"
   },
-  "fixtures": {"status": "Module packets include partial mounted evidence, but no one exact-SHA run covers every route, state, viewport, theme and locale."},
-  "negativeControls": {"localScreenshotsNotAcceptedAsAggregatePass": true, "mountedAxeAllModules": false, "fullKeyboardFocusReturn": false, "manualVoiceOver": false},
-  "browserArtifacts": [],
-  "rollback": {"method": "Evidence-only record; no runtime or schema change.", "executed": false},
+  "fixtures": {
+    "status": "Module packets include partial mounted evidence, but no one exact-SHA run covers every route, state, viewport, theme and locale."
+  },
+  "negativeControls": {
+    "localScreenshotsNotAcceptedAsAggregatePass": true,
+    "mountedAxeAllModules": false,
+    "fullKeyboardFocusReturn": false,
+    "manualVoiceOver": false
+  },
+  "browserArtifacts": [
+    {
+      "taskId": "ADM-UI-CANON-001",
+      "path": "docs/program/evidence/closure/ui-g4/ADM-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "sha256": "65c5ac6405d94c47f87260b46af78d6a440194835d984b20ab36a590db9737a7"
+    },
+    {
+      "taskId": "ASM-UI-CANON-001",
+      "path": "docs/program/evidence/closure/ui-g4/ASM-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "sha256": "9b6fd4df6438450cd20614ae952d6b3e481f8fd97ca3ebd28d99052c6ec3fd93"
+    },
+    {
+      "taskId": "CHAT-UI-CANON-001",
+      "path": "docs/program/evidence/closure/ui-g4/CHAT-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "sha256": "1123be93166877892802697cf077c9e8183ce9e4bcfb59434b6f90c67757ea39"
+    },
+    {
+      "taskId": "EXE-UI-CANON-001",
+      "path": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "sha256": "c17b5d7f142ef7a1de512bf791e628d049a6ed56a379c65d6ead87272864a11b"
+    },
+    {
+      "taskId": "FIN-UI-CANON-001",
+      "path": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "sha256": "0c64272aa6598649c40e72c8b0902f640c4aad51db38abbf919a292952809164"
+    },
+    {
+      "taskId": "INI-UI-CANON-001",
+      "path": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "sha256": "6cfbafd166f44acff21b9d0915761f3c0f5debdad9f2d9aa975f9e060c63775e"
+    },
+    {
+      "taskId": "INT-UI-CANON-001",
+      "path": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "sha256": "44ed2d94ccb324e93b1a820ad62e09937e105c09b8522f0f43e336ddc1da98ce"
+    },
+    {
+      "taskId": "MAT-UI-CANON-001",
+      "path": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "sha256": "83c3acc97b3390e54c6d67576b3008543a309a1a30c4ef3392362ece461260a2"
+    },
+    {
+      "taskId": "MTG-UI-CANON-001",
+      "path": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "sha256": "66b5d209c90554062faca2a705f0eda69ffd51dca28404325f7b0a329556ac5d"
+    },
+    {
+      "taskId": "MYW-AGT-UI-CANON-001",
+      "path": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "sha256": "ed6c1c800e022fbfeb1b9890d31ea3e9a73c4d68c744b2cb48208e0981fa4e61"
+    },
+    {
+      "taskId": "ORG-UI-CANON-001",
+      "path": "docs/program/evidence/closure/ui-g4/ORG-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "sha256": "b2f29e56a0b1d216d6f6dae37369e14905f31dce959accf29799d3f9be31c806"
+    },
+    {
+      "taskId": "PRT-UI-CANON-001",
+      "path": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "sha256": "4451e2a8479122bb4eb3885c6a587df8bb306a205208720ecfda11ffb605925b"
+    },
+    {
+      "taskId": "RES-UI-CANON-001",
+      "path": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "sha256": "c88c40142e6954071b74d2e06132210c149e3fcb6eb45c461b3d365d573eb75c"
+    },
+    {
+      "taskId": "SET-UI-CANON-001",
+      "path": "docs/program/evidence/closure/ui-g4/SET-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "sha256": "8cc2f9fe3f0d40887ec9fc5e81d33bcbf94ee73926fa7e224d39e32afc988014"
+    },
+    {
+      "taskId": "TLS-UI-CANON-001",
+      "path": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "sha256": "adada3e244bf2d9640e1263ab29311a5d8d61f44cd064591462f4a1b1f06d8a0"
+    }
+  ],
+  "rollback": {
+    "method": "Evidence-only record; no runtime or schema change.",
+    "executed": false
+  },
   "verdict": "NOT_VERIFIED",
-  "blockers": ["Complete the 16-module mounted matrix on one frozen SHA.", "Run axe and full keyboard/focus-return coverage.", "Obtain named visual and VoiceOver acceptance."]
+  "blockers": [
+    "Complete the 16-module mounted matrix on one frozen SHA.",
+    "Run axe and full keyboard/focus-return coverage.",
+    "Obtain named visual and VoiceOver acceptance."
+  ],
+  "automatedG4Verdict": {
+    "verdict": "PASS_EXACT_SHA",
+    "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
+    "reconciliationSha": "086219464dd61d6134d057705d5a19d118a806e4",
+    "surfaces": "15/15",
+    "cells": "206/206",
+    "screenshots": "214/214",
+    "axe": {
+      "critical": 0,
+      "serious": 0
+    },
+    "unnamedControls": 0,
+    "keyboard": {
+      "surfacesPassed": "15/15",
+      "reachableControls": 599,
+      "invisibleFocusSamples": 0
+    },
+    "deepLinkReloadCold": "15/15 each",
+    "horizontalOverflowCells": 0,
+    "authentication": "real signed JWT from /api/test-support/bootstrap",
+    "e2eMode": false,
+    "consoleErrors": {
+      "total": 98,
+      "forbidden403": 78,
+      "notFound404": 20,
+      "other": 0
+    },
+    "humanAcceptance": "PENDING — Piotr must execute and sign OWNER_UAT_VOICEOVER_RUNBOOK.md on the final candidate SHA",
+    "auditSurface": "NOT_IN_82_AUTHORITY — see ui-g4/AUD-UI-CANON-001/PROPOSAL_EVIDENCE.json"
+  }
 }

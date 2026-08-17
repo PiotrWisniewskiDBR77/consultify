@@ -9,7 +9,11 @@
   "changedPathRationale": {
     "docs/program/evidence/closure/codex/INT-UI-CANON-001/TASK_EVIDENCE.json": "Records bounded mounted Interview UI acceptance without converting the login-wall observation into a false authenticated PASS."
   },
-  "ownerTables": ["interview_sessions", "interview_assignments", "interview_assignment_members"],
+  "ownerTables": [
+    "interview_sessions",
+    "interview_assignments",
+    "interview_assignment_members"
+  ],
   "commands": [
     {
       "command": "npx vitest run src/components/Interview/__tests__/InterviewHub.smoke.test.tsx src/components/Interview/__tests__/InterviewPipelineStepper.test.tsx src/components/method-workspace/__tests__/InterviewFocusPanel.test.tsx --reporter=dot",
@@ -17,8 +21,21 @@
     }
   ],
   "denominators": {
-    "focusedComponents": {"files": 3, "passed": 23, "failed": 0, "skipped": 0},
-    "mountedAuthenticatedJourneys": {"planned": 3, "completed": 0}
+    "focusedComponents": {
+      "files": 3,
+      "passed": 23,
+      "failed": 0,
+      "skipped": 0
+    },
+    "mountedAuthenticatedJourneys": {
+      "planned": 3,
+      "completed": 0
+    },
+    "automatedG4Cells": "13/13",
+    "automatedG4Screenshots": "13/13",
+    "automatedG4AxeCriticalSerious": "0/0",
+    "automatedG4UnnamedControls": 0,
+    "automatedG4VisibleFocus": "PASS"
   },
   "fixtures": {
     "frontend": "Vite staging frontend at localhost:3110",
@@ -32,7 +49,75 @@
     "ownerRoleMatrix": false,
     "axeCriticalSeriousZero": false
   },
-  "browserArtifacts": [],
+  "browserArtifacts": [
+    {
+      "kind": "mounted_signed_auth_g4_final",
+      "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
+      "reconciliationSha": "086219464dd61d6134d057705d5a19d118a806e4",
+      "resultPath": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "resultSha256": "44ed2d94ccb324e93b1a820ad62e09937e105c09b8522f0f43e336ddc1da98ce",
+      "screenshots": [
+        {
+          "path": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__desktop__pl__light.png",
+          "sha256": "ff47e0ccf31a4368906203570c89de1c2074f599fd35a740e397f6f0bbc3f5ae"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__desktop__pl__dark.png",
+          "sha256": "f6711df8d82397c112097ff2413c2357ea85c8b2daa9aa6085e47a421b5542b0"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__desktop__en__light.png",
+          "sha256": "7d12594ee0754310417e6494c2d500ec445aa9f4786f763024965fa30d20f2da"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__desktop__en__dark.png",
+          "sha256": "c4add268084c9193b01050931d8422e8889ec7c9c361fabc6c857e8674d9c260"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__tablet__pl__light.png",
+          "sha256": "135e50dd757ae1e590572707ebd5eb56c6fb17ddee0609111ff6fa70c533d4b4"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__tablet__pl__dark.png",
+          "sha256": "3de3869c024516b9be30229455bf8e69c507440eb344aaf9dba96e9e3c9eea76"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__tablet__en__light.png",
+          "sha256": "344a32e7ec14e2c616887a4a1d5b3ebec4a495e60b45734171df48d26b5c03d4"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__tablet__en__dark.png",
+          "sha256": "788016af29bc896a302e1ba6950836643a146a93b2e1acbe5c09229c42326a63"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__mobile__pl__light.png",
+          "sha256": "c7152905fe2ab98a17c09741912c36141b4629159ebe3e8fa89c0f8871cf2198"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__mobile__pl__dark.png",
+          "sha256": "391dfb7a1c523b93f98e8bf165df105b5fb13d8180030e2f6f8a43079a7ca6a2"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__mobile__en__light.png",
+          "sha256": "ebe1f17cfb36c87a80c8030a5c1a168282bed3aa9aeb9ffe5f5cee56adf9fdf8"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__mobile__en__dark.png",
+          "sha256": "0fd9449d0cc89f64a894ff29bc02e215ccc0a6309e0ec808493d461e51c0feea"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__discovery__desktop__pl__light.png",
+          "sha256": "3f74278baa3558fec955c564276fa64683a4550459207ae8b10584a46ad28d7d"
+        }
+      ],
+      "consoleErrors": {
+        "total": 0,
+        "forbidden403": 0,
+        "notFound404": 0,
+        "other": 0
+      }
+    }
+  ],
   "rollback": {
     "method": "Evidence-only packet; no runtime or schema change to roll back.",
     "executed": false
@@ -41,5 +126,56 @@
   "blockers": [
     "Healthy isolated backend and governed respondent, manager and owner sessions are required for authenticated state, viewport, locale, theme, keyboard and axe coverage.",
     "Manual VoiceOver and named human UX approval remain BLOCKED_HUMAN."
-  ]
+  ],
+  "automatedG4Verdict": {
+    "verdict": "PASS_EXACT_SHA",
+    "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
+    "reconciliationSha": "086219464dd61d6134d057705d5a19d118a806e4",
+    "authentication": "real signed JWT from /api/test-support/bootstrap",
+    "e2eMode": false,
+    "database": "real PostgreSQL; current schema apply 0, repeat 0, dry-run pending 0",
+    "cells": {
+      "total": 13,
+      "rendered": 13
+    },
+    "axe": {
+      "critical": 0,
+      "serious": 0
+    },
+    "unnamedControls": 0,
+    "keyboard": {
+      "reachableControls": 40,
+      "focusAlwaysVisible": true,
+      "invisibleFocusSamples": [],
+      "escapeHandled": "Escape pressed on the surface; surface stayed mounted (no dialog was open to close).",
+      "focusReturn": "Focus remained inside the document after Escape.",
+      "tabOrderMonotonic": true
+    },
+    "deepLink": {
+      "ok": true,
+      "detail": "deep-link /interview settled at /interview — surface content matched"
+    },
+    "reload": {
+      "ok": true,
+      "detail": "reload settled at /interview — surface content matched"
+    },
+    "coldReopen": {
+      "ok": true,
+      "detail": "cold context (fresh storage state, no SPA memory) settled at /interview — surface content matched"
+    },
+    "horizontalOverflowCells": 0,
+    "consoleErrors": {
+      "total": 0,
+      "forbidden403": 0,
+      "notFound404": 0,
+      "other": 0
+    },
+    "humanAcceptance": "PENDING — automated G4 does not sign VoiceOver, persona or visual-owner acceptance",
+    "reachabilityAndStates": {
+      "states": [],
+      "statesNotPresent": [
+        "stale"
+      ]
+    }
+  }
 }

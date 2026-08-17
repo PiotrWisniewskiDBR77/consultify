@@ -20,12 +20,157 @@
   "changedPathRationale": {},
   "ownerTables": [],
   "commands": [],
-  "denominators": {},
+  "denominators": {
+    "automatedG4Cells": "12/12",
+    "automatedG4Screenshots": "14/14",
+    "automatedG4AxeCriticalSerious": "0/0",
+    "automatedG4UnnamedControls": 0,
+    "automatedG4VisibleFocus": "PASS"
+  },
   "fixtures": {},
   "negativeControls": {},
-  "browserArtifacts": [],
+  "browserArtifacts": [
+    {
+      "kind": "mounted_signed_auth_g4_final",
+      "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
+      "reconciliationSha": "086219464dd61d6134d057705d5a19d118a806e4",
+      "resultPath": "docs/program/evidence/closure/ui-g4/CHAT-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "resultSha256": "1123be93166877892802697cf077c9e8183ce9e4bcfb59434b6f90c67757ea39",
+      "screenshots": [
+        {
+          "path": "docs/program/evidence/closure/ui-g4/CHAT-UI-CANON-001/screens/CHAT__desktop__pl__light.png",
+          "sha256": "3c107093fbc6c2e7eb99fad9820ff9b66752743bcd9947754b18313eaeb62af2"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/CHAT-UI-CANON-001/screens/CHAT__desktop__pl__dark.png",
+          "sha256": "56d5c831ceaf9e2f659117e33f472398cdaceddd17e1234a0be817a0d94a3e70"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/CHAT-UI-CANON-001/screens/CHAT__desktop__en__light.png",
+          "sha256": "ef350facab6fa830f137e547ef146eff2ce11173f3c90516ed61861099e8b8c0"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/CHAT-UI-CANON-001/screens/CHAT__desktop__en__dark.png",
+          "sha256": "3d3314854cf24a7aad1629a8e38fd457d6a557211b13b1546de7d010f140d699"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/CHAT-UI-CANON-001/screens/CHAT__tablet__pl__light.png",
+          "sha256": "0eafbf79595200fd6177f3630322e1477ea3dc6fbb3bc58dc0dd62dc97985dfb"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/CHAT-UI-CANON-001/screens/CHAT__tablet__pl__dark.png",
+          "sha256": "c776f9618da0e2d378d4f3033e510ceee2d9c27d07b0cf492452eb6d602e3445"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/CHAT-UI-CANON-001/screens/CHAT__tablet__en__light.png",
+          "sha256": "255099a1aefeddee6b639490baaf4512f12c9f756912add2206d429d84c402a5"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/CHAT-UI-CANON-001/screens/CHAT__tablet__en__dark.png",
+          "sha256": "f8b051809986fc5d61c3518bd28765a6d6361dd00e2ecce352fb20c96dfa171b"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/CHAT-UI-CANON-001/screens/CHAT__mobile__pl__light.png",
+          "sha256": "15e14b15a15a7934b42534c7e73076b1558bf45739f6976179629f74a9e3a27f"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/CHAT-UI-CANON-001/screens/CHAT__mobile__pl__dark.png",
+          "sha256": "b08a75a88b069a70446b021db6c08bca99744ff2a25571ceebfc008814d29047"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/CHAT-UI-CANON-001/screens/CHAT__mobile__en__light.png",
+          "sha256": "4414a5c834c4b7a19a961e9142a3fb60c476d5e148e99d968dd88b8c69663fac"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/CHAT-UI-CANON-001/screens/CHAT__mobile__en__dark.png",
+          "sha256": "0d468c5d2e4590e730bfd926696dfabc448642a85d44bae987ac00def54215a7"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/CHAT-UI-CANON-001/screens/CHAT__state-ready.png",
+          "sha256": "60eefc5e0f1949a3492be3ec7b2f18570fe9482ba2ce8648cdf8329a59f38d37"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/CHAT-UI-CANON-001/screens/CHAT__state-loading.png",
+          "sha256": "977dfece5fba308d7d6cc50bfedd42d5d7bc352c4a2e4529e2c94c33eafec1e0"
+        }
+      ],
+      "consoleErrors": {
+        "total": 0,
+        "forbidden403": 0,
+        "notFound404": 0,
+        "other": 0
+      }
+    }
+  ],
   "rollback": {
     "method": "Not recorded by the lane; no rollback execution or completion claim is inferred.",
     "executed": false
+  },
+  "automatedG4Verdict": {
+    "verdict": "PASS_EXACT_SHA",
+    "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
+    "reconciliationSha": "086219464dd61d6134d057705d5a19d118a806e4",
+    "authentication": "real signed JWT from /api/test-support/bootstrap",
+    "e2eMode": false,
+    "database": "real PostgreSQL; current schema apply 0, repeat 0, dry-run pending 0",
+    "cells": {
+      "total": 12,
+      "rendered": 12
+    },
+    "axe": {
+      "critical": 0,
+      "serious": 0
+    },
+    "unnamedControls": 0,
+    "keyboard": {
+      "reachableControls": 40,
+      "focusAlwaysVisible": true,
+      "invisibleFocusSamples": [],
+      "escapeHandled": "Escape pressed on the surface; surface stayed mounted (no dialog was open to close).",
+      "focusReturn": "Focus remained inside the document after Escape.",
+      "tabOrderMonotonic": true
+    },
+    "deepLink": {
+      "ok": true,
+      "detail": "deep-link /chat settled at /chat — surface content matched"
+    },
+    "reload": {
+      "ok": true,
+      "detail": "reload settled at /chat — surface content matched"
+    },
+    "coldReopen": {
+      "ok": true,
+      "detail": "cold context (fresh storage state, no SPA memory) settled at /chat — surface content matched"
+    },
+    "horizontalOverflowCells": 0,
+    "consoleErrors": {
+      "total": 0,
+      "forbidden403": 0,
+      "notFound404": 0,
+      "other": 0
+    },
+    "humanAcceptance": "PENDING — automated G4 does not sign VoiceOver, persona or visual-owner acceptance",
+    "reachabilityAndStates": {
+      "states": [
+        {
+          "state": "ready",
+          "observed": true,
+          "path": "/chat",
+          "detail": "Matched /Zacznijmy transformację|Let's start your transformation/i on the real response.",
+          "screenshot": "docs/program/evidence/closure/ui-g4/CHAT-UI-CANON-001/screens/CHAT__state-ready.png"
+        },
+        {
+          "state": "loading",
+          "observed": false,
+          "path": "/chat",
+          "detail": "No distinct loading affordance caught in the sampled window.",
+          "screenshot": "docs/program/evidence/closure/ui-g4/CHAT-UI-CANON-001/screens/CHAT__state-loading.png"
+        }
+      ],
+      "statesNotPresent": [
+        "forbidden",
+        "stale"
+      ]
+    }
   }
 }

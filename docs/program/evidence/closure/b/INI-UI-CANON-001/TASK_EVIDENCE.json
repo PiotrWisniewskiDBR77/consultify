@@ -29,7 +29,12 @@
   "denominators": {
     "task": "Mounted 4 (list/portfolio/plan/capacity), gated 0, dead 3 (+3 unreachable-but-imported)",
     "laneRealDbPass": "110 leased realDB files on an isolated DB: 77 passed / 7 failed / 26 skipped; 675 tests: 565 passed / 51 failed / 59 skipped",
-    "recoveredAcceptance": "14 leased acceptance files the mandated G2 command cannot collect, run under vitest.acceptance.config.ts: 105 tests, 91 passed / 14 failed"
+    "recoveredAcceptance": "14 leased acceptance files the mandated G2 command cannot collect, run under vitest.acceptance.config.ts: 105 tests, 91 passed / 14 failed",
+    "automatedG4Cells": "14/14",
+    "automatedG4Screenshots": "15/15",
+    "automatedG4AxeCriticalSerious": "0/0",
+    "automatedG4UnnamedControls": 0,
+    "automatedG4VisibleFocus": "PASS"
   },
   "fixtures": {
     "prefix": "claude_b_",
@@ -37,10 +42,145 @@
     "env": "NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false (all three required — NODE_ENV=test alone substitutes a mock DB)"
   },
   "negativeControls": {},
-  "browserArtifacts": [],
+  "browserArtifacts": [
+    {
+      "kind": "mounted_signed_auth_g4_final",
+      "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
+      "reconciliationSha": "086219464dd61d6134d057705d5a19d118a806e4",
+      "resultPath": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "resultSha256": "6cfbafd166f44acff21b9d0915761f3c0f5debdad9f2d9aa975f9e060c63775e",
+      "screenshots": [
+        {
+          "path": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__desktop__pl__light.png",
+          "sha256": "90e5a7d35e4e9f084253480a6ac5276ca551081bcac85d0c6a6bb06c67bf7619"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__desktop__pl__dark.png",
+          "sha256": "7bd0520995ac6ea56d7242f6b68a16d11d3230dd48a0e2c15d88be881dfa304b"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__desktop__en__light.png",
+          "sha256": "7feb173f30afb41575f169e2bbf347580f50eece13745f1f3046bf1a1027e7c6"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__desktop__en__dark.png",
+          "sha256": "5df83b8a950608343f6349d1c11d1811464fa8e91c73adfe5786d3b3ced53be9"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__tablet__pl__light.png",
+          "sha256": "8fd89ea804d8dc9c4b03ad336a87195f32f4b9c98703f6e21269aec8b1260a19"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__tablet__pl__dark.png",
+          "sha256": "b9abc1ab34233099a8532102dd07167f6597f5bac36b98565befb6198062a023"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__tablet__en__light.png",
+          "sha256": "c8633f73b7948c0bae08f4b29f00d731ab2bb6619e24557a2b10440c5b7826f0"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__tablet__en__dark.png",
+          "sha256": "bd791d9e44e402bf6a8d81ac945c28d416f96dc77db523ba8c09d6e32e0bd209"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__mobile__pl__light.png",
+          "sha256": "c1d02949ba238c8261d6a61a752d0047b70eb8fe6024f2ccb7a80820e605202c"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__mobile__pl__dark.png",
+          "sha256": "30a7a39a1dbcdea9b1a0af4549ee5f5e0906d7ff256510daf6e28badcafd57cb"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__mobile__en__light.png",
+          "sha256": "e0bef55eccf109eebbb1ff0101a769bda2e94e743be170b437bc4491bc5bde8b"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__mobile__en__dark.png",
+          "sha256": "7e1b5ffb7b4ec6ffba4c08b4cbd47487d5c32ec662b601d66f3305163db86dad"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__roadmap__desktop__pl__light.png",
+          "sha256": "b1bc471f1f707ccff57ff9d1cdcfbf4437cb042f174db807be8c2b8b83f397f3"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__portfolio__desktop__pl__light.png",
+          "sha256": "a36d72ece78635edafacf8f52c8888166768ba40485928b31ec7a79d2ff5840e"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__state-empty.png",
+          "sha256": "b1bc471f1f707ccff57ff9d1cdcfbf4437cb042f174db807be8c2b8b83f397f3"
+        }
+      ],
+      "consoleErrors": {
+        "total": 0,
+        "forbidden403": 0,
+        "notFound404": 0,
+        "other": 0
+      }
+    }
+  ],
   "rollback": {
     "method": "Revert the lane commits; all changes are additive application code plus new tests. NO migration was added by this lane, so no schema rollback is required and old readers are unaffected."
   },
   "verdict": "BLOCKED_HUMAN",
-  "openBlocker": "No code path can set activeTab to observability/candidates/portfolioHealth. Consequence: a candidate CANNOT be actioned from /initiatives today — the backend accept API is live and mounted, but its UI is dead and the intended replacement surface is itself unreachable. Named human UX + VoiceOver verdict required."
+  "openBlocker": "No code path can set activeTab to observability/candidates/portfolioHealth. Consequence: a candidate CANNOT be actioned from /initiatives today — the backend accept API is live and mounted, but its UI is dead and the intended replacement surface is itself unreachable. Named human UX + VoiceOver verdict required.",
+  "automatedG4Verdict": {
+    "verdict": "PASS_EXACT_SHA",
+    "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
+    "reconciliationSha": "086219464dd61d6134d057705d5a19d118a806e4",
+    "authentication": "real signed JWT from /api/test-support/bootstrap",
+    "e2eMode": false,
+    "database": "real PostgreSQL; current schema apply 0, repeat 0, dry-run pending 0",
+    "cells": {
+      "total": 14,
+      "rendered": 14
+    },
+    "axe": {
+      "critical": 0,
+      "serious": 0
+    },
+    "unnamedControls": 0,
+    "keyboard": {
+      "reachableControls": 40,
+      "focusAlwaysVisible": true,
+      "invisibleFocusSamples": [],
+      "escapeHandled": "Escape pressed on the surface; surface stayed mounted (no dialog was open to close).",
+      "focusReturn": "Focus remained inside the document after Escape.",
+      "tabOrderMonotonic": true
+    },
+    "deepLink": {
+      "ok": true,
+      "detail": "deep-link /initiatives settled at /initiatives — surface content matched"
+    },
+    "reload": {
+      "ok": true,
+      "detail": "reload settled at /initiatives — surface content matched"
+    },
+    "coldReopen": {
+      "ok": true,
+      "detail": "cold context (fresh storage state, no SPA memory) settled at /initiatives — surface content matched"
+    },
+    "horizontalOverflowCells": 0,
+    "consoleErrors": {
+      "total": 0,
+      "forbidden403": 0,
+      "notFound404": 0,
+      "other": 0
+    },
+    "humanAcceptance": "PENDING — automated G4 does not sign VoiceOver, persona or visual-owner acceptance",
+    "reachabilityAndStates": {
+      "states": [
+        {
+          "state": "empty",
+          "observed": true,
+          "path": "/initiatives",
+          "detail": "Reached without an explicit text assertion.",
+          "screenshot": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__state-empty.png"
+        }
+      ],
+      "statesNotPresent": [
+        "stale"
+      ]
+    }
+  }
 }

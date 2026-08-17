@@ -20,12 +20,133 @@
   "changedPathRationale": {},
   "ownerTables": [],
   "commands": [],
-  "denominators": {},
+  "denominators": {
+    "automatedG4Cells": "12/12",
+    "automatedG4Screenshots": "12/12",
+    "automatedG4AxeCriticalSerious": "0/0",
+    "automatedG4UnnamedControls": 0,
+    "automatedG4VisibleFocus": "PASS"
+  },
   "fixtures": {},
   "negativeControls": {},
-  "browserArtifacts": [],
+  "browserArtifacts": [
+    {
+      "kind": "mounted_signed_auth_g4_final",
+      "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
+      "reconciliationSha": "086219464dd61d6134d057705d5a19d118a806e4",
+      "resultPath": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "resultSha256": "66b5d209c90554062faca2a705f0eda69ffd51dca28404325f7b0a329556ac5d",
+      "screenshots": [
+        {
+          "path": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__desktop__pl__light.png",
+          "sha256": "113981116efd0a8c53bf46cc8150ef88518b5fd3fee77e36dc84133a18d0d0f9"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__desktop__pl__dark.png",
+          "sha256": "0eaf7fde23bed1defc9e3903ead542056747f1819daa0046c1330818931d7c5a"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__desktop__en__light.png",
+          "sha256": "532b9014c4ee0e8c10e754c61155986e681cb76b74f3c4e22aad88945e65ecf1"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__desktop__en__dark.png",
+          "sha256": "12bcb59f44c24377114a9ded2e583b51977a1901ec824c4577a422142a73eb27"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__tablet__pl__light.png",
+          "sha256": "1a2980da094333203427ab68466e16e8958a28ba2effc348267a63bf9366b38c"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__tablet__pl__dark.png",
+          "sha256": "a4eba5fb7fac498f1e7ce40ea45b8899f75e84a190643a16f51366ef994e4bf6"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__tablet__en__light.png",
+          "sha256": "f9535b21e53dda0751ee0d6a6b11ed4cda43e81bcd8f1430af2ffb7beacc9fd5"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__tablet__en__dark.png",
+          "sha256": "5b323316bff06f6668ec5a326657c436d3ac2dc9be36a9e846a5a7af14e0c5a3"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__mobile__pl__light.png",
+          "sha256": "e72eacfe7cd15918480070e17fe48b0aed6200f3caa9578bf34a6efc32b537c6"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__mobile__pl__dark.png",
+          "sha256": "0b45963e2f27147a7e33ad4efbf1b79f48d406b5aebf940485d119cf4cdeedd0"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__mobile__en__light.png",
+          "sha256": "02d53be97979fb8619f69a8bb950abe064cb186cfe4535097ebc4bfc8363ecb4"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__mobile__en__dark.png",
+          "sha256": "8b985667676154bb7b8876972f66f62160fba7d79a2e9da05b2488a85ec89465"
+        }
+      ],
+      "consoleErrors": {
+        "total": 0,
+        "forbidden403": 0,
+        "notFound404": 0,
+        "other": 0
+      }
+    }
+  ],
   "rollback": {
     "method": "Not recorded by the lane; no rollback execution or completion claim is inferred.",
     "executed": false
+  },
+  "automatedG4Verdict": {
+    "verdict": "PASS_EXACT_SHA",
+    "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
+    "reconciliationSha": "086219464dd61d6134d057705d5a19d118a806e4",
+    "authentication": "real signed JWT from /api/test-support/bootstrap",
+    "e2eMode": false,
+    "database": "real PostgreSQL; current schema apply 0, repeat 0, dry-run pending 0",
+    "cells": {
+      "total": 12,
+      "rendered": 12
+    },
+    "axe": {
+      "critical": 0,
+      "serious": 0
+    },
+    "unnamedControls": 0,
+    "keyboard": {
+      "reachableControls": 40,
+      "focusAlwaysVisible": true,
+      "invisibleFocusSamples": [],
+      "escapeHandled": "Escape pressed on the surface; surface stayed mounted (no dialog was open to close).",
+      "focusReturn": "Focus remained inside the document after Escape.",
+      "tabOrderMonotonic": true
+    },
+    "deepLink": {
+      "ok": true,
+      "detail": "deep-link /meeting settled at /meeting — surface content matched"
+    },
+    "reload": {
+      "ok": true,
+      "detail": "reload settled at /meeting — surface content matched"
+    },
+    "coldReopen": {
+      "ok": true,
+      "detail": "cold context (fresh storage state, no SPA memory) settled at /meeting — surface content matched"
+    },
+    "horizontalOverflowCells": 0,
+    "consoleErrors": {
+      "total": 0,
+      "forbidden403": 0,
+      "notFound404": 0,
+      "other": 0
+    },
+    "humanAcceptance": "PENDING — automated G4 does not sign VoiceOver, persona or visual-owner acceptance",
+    "reachabilityAndStates": {
+      "states": [],
+      "statesNotPresent": [
+        "stale"
+      ]
+    }
   }
 }

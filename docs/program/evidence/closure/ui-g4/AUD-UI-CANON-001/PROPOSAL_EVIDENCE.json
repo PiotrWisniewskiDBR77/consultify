@@ -1,0 +1,36 @@
+{
+  "taskId": "AUD-UI-CANON-001",
+  "kind": "NON_AUTHORITY_TASK_PROPOSAL",
+  "authorityStatus": "NON_AUTHORITY_PROPOSAL",
+  "verdict": "NOT_VERIFIED",
+  "authorityMutation": false,
+  "authorityTaskDenominatorBefore": 82,
+  "authorityTaskDenominatorAfter": 82,
+  "allocationOrLease": "NONE",
+  "reason": "The authority-owned UI-CANON catalog contains 15 surfaces and has no Audit UI task, while Audits remains a product module. The final 15-surface G4 result therefore cannot be projected onto an Audit surface.",
+  "proposedScope": {
+    "route": "TO_BE_CONFIRMED_AGAINST_CURRENT_ROUTE_AUTHORITY",
+    "states": [
+      "loading",
+      "empty",
+      "success",
+      "error",
+      "forbidden"
+    ],
+    "matrix": "desktop/tablet/mobile x PL/EN x light/dark",
+    "gates": [
+      "signed mounted authentication and tenant isolation",
+      "deep-link, reload and cold reopen",
+      "keyboard focus and VoiceOver",
+      "axe critical=0 and serious=0",
+      "unnamed interactive controls=0",
+      "horizontal overflow=0",
+      "owner visual and persona acceptance"
+    ]
+  },
+  "evidence": [],
+  "humanAcceptance": "PENDING",
+  "releasePredecessorSatisfied": false,
+  "nextAuthorityAction": "An owner or integrator must explicitly add and define this task before implementation or evidence can affect the 82-task authority.",
+  "prohibitedInference": "This placeholder is not proof of route reachability, UI acceptance, module completion or release readiness."
+}

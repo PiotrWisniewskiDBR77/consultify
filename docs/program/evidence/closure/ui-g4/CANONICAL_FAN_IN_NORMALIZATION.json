@@ -1,37 +1,69 @@
 {
-  "kind": "UI_G4_CANONICAL_FAN_IN_NORMALIZATION",
-  "fanInProductSha": "9f2aa21b39d11a935d6ab2b8b60f1dded4a0c4f1",
-  "sourceBranch": "codex/claude-next-ui-g4",
-  "sourceTip": "5824bc84951ac29bc13b7bf79b49672df63a5977",
-  "testedUiProductSha": "40e1a89bdd118de828fd5f716839789fc340a20a",
-  "sourceHarnessCommit": "9e3091a10f",
-  "sourceEvidenceCommit": "5824bc8495",
+  "kind": "UI_G4_FINAL_EVIDENCE_RECONCILIATION",
+  "reconciliationBaseSha": "086219464dd61d6134d057705d5a19d118a806e4",
+  "testedCandidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
+  "artifactCommit": "cab3c6d62e0d233c14ba9c0f7bdddb57658326cc",
+  "automatedG4Verdict": "PASS_EXACT_SHA",
   "integrity": {
-    "taskRecords": 15,
-    "screenshots": 214,
-    "screenshotHashesVerified": 214,
-    "screenshotHashFailures": 0,
-    "primaryCellsPerSurface": 12,
-    "mountedRuntime": "Vite client and tsx backend",
-    "database": "fresh PostgreSQL 16 from the canonical migration chain",
-    "authentication": "signed JWT from the real test-support bootstrap",
-    "requestInterception": "none"
+    "authorityTaskRecords": 15,
+    "cellsPassed": 206,
+    "cellsTotal": 206,
+    "screenshotReferences": 214,
+    "screenshotReferencesPresent": 214,
+    "screenshotReferencesMissing": 0,
+    "uniqueScreenshotSha256Contents": 212,
+    "axeCritical": 0,
+    "axeSerious": 0,
+    "unnamedInteractiveControls": 0,
+    "focusSurfacesPassed": 15,
+    "focusSurfacesTotal": 15,
+    "focusControlsChecked": 599,
+    "focusInvisible": 0,
+    "horizontalOverflow": 0,
+    "deepLinkPassed": 15,
+    "reloadPassed": 15,
+    "coldReopenPassed": 15,
+    "consoleErrors": {
+      "total": 98,
+      "http403": 78,
+      "http404": 20,
+      "other": 0
+    },
+    "authentication": "signed JWT with real membership",
+    "e2eMode": false,
+    "database": "real PostgreSQL with current strict migration ledger",
+    "requestInterception": "none",
+    "migrationRepeatDrift": 0,
+    "migrationDryRunDrift": 0,
+    "teardownDescendants": 0,
+    "occupiedHarnessPortsAfterTeardown": 0
   },
-  "historicalVerdict": "AUTOMATED_G4_FAIL / BLOCKED_HUMAN",
-  "currentVerdict": "NOT_RETESTED_ON_FAN_IN_SHA",
-  "canonicalTaskEvidenceReplacements": [],
-  "replacementRationale": "No canonical TASK_EVIDENCE verdict is replaced by this fan-in. The measured sweep is exact-SHA evidence for 40e1a89bdd only. Every surface failed the automated focus gate and some also failed axe. A later canonical commit, 26d87a95fc, changes the default focus-visible contract and is included in the fan-in ancestry, so the historical focus result cannot be projected onto the current SHA without a mounted re-sweep.",
-  "claimsSupported": [
-    "At testedUiProductSha, 15 of 15 surfaces mounted with real PostgreSQL and signed authentication.",
-    "At testedUiProductSha, 214 of 214 screenshot files match their recorded sha256.",
-    "At testedUiProductSha, every surface passed its declared primary render matrix, horizontal-overflow, deep-link, reload, cold-reopen, and unnamed-control probes.",
-    "At testedUiProductSha, no surface passed the complete automated G4 gate."
-  ],
-  "claimsNotSupported": [
-    "No G4 PASS or DONE_CURRENT_SHA claim is supported for fanInProductSha.",
-    "No forbidden-state coverage is supported.",
-    "No manual VoiceOver, brand, visual-owner, or target-role acceptance is supported.",
-    "No claim is made that axe or focus findings remain unchanged on fanInProductSha."
-  ],
-  "nextGate": "Run the mounted UI-G4 sweep on the exact current candidate after all UI fan-in commits, then normalize canonical per-task evidence from those new results."
+  "preservationRule": {
+    "taskProductSha": "preserved from each authority TASK_EVIDENCE record",
+    "taskVerdict": "preserved; automated browser evidence is additive",
+    "priorBackendPersonaStateEvidence": "preserved",
+    "automatedG4CandidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
+    "reconciliationSha": "086219464dd61d6134d057705d5a19d118a806e4"
+  },
+  "humanGate": {
+    "status": "PENDING",
+    "owner": "Piotr",
+    "personasRequired": 7,
+    "runbook": "docs/program/evidence/closure/ui-g4/OWNER_UAT_VOICEOVER_RUNBOOK.md",
+    "voiceOverRequired": true,
+    "visualBrandAcceptanceRequired": true,
+    "signaturePresent": false
+  },
+  "auditCatalogGap": {
+    "authorityStatus": "NON_AUTHORITY_PROPOSAL",
+    "proposal": "docs/program/evidence/closure/ui-g4/AUD-UI-CANON-001/PROPOSAL_EVIDENCE.json",
+    "verdict": "NOT_VERIFIED",
+    "authorityDenominatorBefore": 82,
+    "authorityDenominatorAfter": 82
+  },
+  "historicalClaims": {
+    "40e1a89bdd": "provenance only; not a current-candidate verdict",
+    "2dedb7": "diagnostic baseline only; not a current-candidate verdict"
+  },
+  "releaseAuthorization": "NOT_GRANTED"
 }

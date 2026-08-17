@@ -17,18 +17,168 @@
   },
   "ownerTables": [],
   "commands": [
-    {"command": "npx vitest run drdMethodWorkspaceGating AssessmentSessionEditorView.availabilityGate AssessmentSessionEditorView.save-readback", "exitCode": 0},
-    {"command": "NODE_OPTIONS=--max-old-space-size=8192 npm run type-check -- --pretty false", "exitCode": 0}
+    {
+      "command": "npx vitest run drdMethodWorkspaceGating AssessmentSessionEditorView.availabilityGate AssessmentSessionEditorView.save-readback",
+      "exitCode": 0
+    },
+    {
+      "command": "NODE_OPTIONS=--max-old-space-size=8192 npm run type-check -- --pretty false",
+      "exitCode": 0
+    }
   ],
-  "denominators": {"focusedComponentTests": {"files": 3, "passed": 10, "failed": 0}},
-  "fixtures": {"framework": "DRD", "flagOwner": "FeatureFlagsProvider and DB-backed runtime flags"},
-  "negativeControls": {"nonDrdDoesNotMountMethodWorkspace": true, "legacyCMMIAndLeanRemainUnavailable": true, "legacyLookupSkippedForMethodCore": true},
-  "browserArtifacts": [],
-  "rollback": {"method": "Revert ca963fe511; no schema changes.", "executed": false},
+  "denominators": {
+    "focusedComponentTests": {
+      "files": 3,
+      "passed": 10,
+      "failed": 0
+    },
+    "automatedG4Cells": "14/14",
+    "automatedG4Screenshots": "14/14",
+    "automatedG4AxeCriticalSerious": "0/0",
+    "automatedG4UnnamedControls": 0,
+    "automatedG4VisibleFocus": "PASS"
+  },
+  "fixtures": {
+    "framework": "DRD",
+    "flagOwner": "FeatureFlagsProvider and DB-backed runtime flags"
+  },
+  "negativeControls": {
+    "nonDrdDoesNotMountMethodWorkspace": true,
+    "legacyCMMIAndLeanRemainUnavailable": true,
+    "legacyLookupSkippedForMethodCore": true
+  },
+  "browserArtifacts": [
+    {
+      "kind": "mounted_signed_auth_g4_final",
+      "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
+      "reconciliationSha": "086219464dd61d6134d057705d5a19d118a806e4",
+      "resultPath": "docs/program/evidence/closure/ui-g4/ASM-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "resultSha256": "9b6fd4df6438450cd20614ae952d6b3e481f8fd97ca3ebd28d99052c6ec3fd93",
+      "screenshots": [
+        {
+          "path": "docs/program/evidence/closure/ui-g4/ASM-UI-CANON-001/screens/ASM__desktop__pl__light.png",
+          "sha256": "85e4ff36e92c14024ea61dd7589a4b90a83abbc732f41993cca1130946706bb6"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/ASM-UI-CANON-001/screens/ASM__desktop__pl__dark.png",
+          "sha256": "33aa65864fcc4597e1adcc30dfedeb99deaba2b7b120f348d362d355100d1818"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/ASM-UI-CANON-001/screens/ASM__desktop__en__light.png",
+          "sha256": "2b66d7a58bbf1f7736d8da21ef844e06d235aece2806e01988da1fe0ad588b75"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/ASM-UI-CANON-001/screens/ASM__desktop__en__dark.png",
+          "sha256": "05ae411b38c406e4e33e66b38e6a1d2a9a1b8c2a46a6a328df26405b291ac206"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/ASM-UI-CANON-001/screens/ASM__tablet__pl__light.png",
+          "sha256": "a05e6e1bcfbca505b4b11bc20c869e9d5879ed31687a4dd956543250d9c1da57"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/ASM-UI-CANON-001/screens/ASM__tablet__pl__dark.png",
+          "sha256": "d75f046cd6f92ea960c4a58300ba800b69e0ecb68b4c06b305f8b5c5233ea34a"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/ASM-UI-CANON-001/screens/ASM__tablet__en__light.png",
+          "sha256": "09f67b3ab9ebc6d58d261c612bebe46c0d64f9fbdcdc14223ed194e611787c16"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/ASM-UI-CANON-001/screens/ASM__tablet__en__dark.png",
+          "sha256": "369f4c991f1a2690fb92376139df79e69653db137739b2f2329688542b97a0b9"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/ASM-UI-CANON-001/screens/ASM__mobile__pl__light.png",
+          "sha256": "1a8c23685286d71e2b1aaa6fe6a305d7f039b508567d6f5d0e649c401f2a8f71"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/ASM-UI-CANON-001/screens/ASM__mobile__pl__dark.png",
+          "sha256": "8e0010a02016cd2e2046362fd7273f50a69a548862150554858d1f6a1b6f5fe0"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/ASM-UI-CANON-001/screens/ASM__mobile__en__light.png",
+          "sha256": "0ea9c79f0822eef29ad878566cf99d152cd2f390021724f72264df4e2fb4b8b2"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/ASM-UI-CANON-001/screens/ASM__mobile__en__dark.png",
+          "sha256": "1eff43bc7c3cf60199aeb6deec280813b29bd1be518ad57f7808538e2e1c73b5"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/ASM-UI-CANON-001/screens/ASM__assessment-drd__desktop__pl__light.png",
+          "sha256": "85e4ff36e92c14024ea61dd7589a4b90a83abbc732f41993cca1130946706bb6"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/ASM-UI-CANON-001/screens/ASM__assessment-siri__desktop__pl__light.png",
+          "sha256": "1301fe52e644a12c53b8ff0be1ecd2f1f2ba1c7ebf8aeac806603b8b9f3d6204"
+        }
+      ],
+      "consoleErrors": {
+        "total": 0,
+        "forbidden403": 0,
+        "notFound404": 0,
+        "other": 0
+      }
+    }
+  ],
+  "rollback": {
+    "method": "Revert ca963fe511; no schema changes.",
+    "executed": false
+  },
   "verdict": "NOT_VERIFIED",
   "openBlockers": [
     "The complete real browser journey must be rerun after the mount fix on the exact integrated SHA.",
     "Permission, conflict and complete success states plus desktop/tablet/mobile, PL/EN, light/dark and axe need fresh artifacts.",
     "Named human and VoiceOver sign-off remains external."
-  ]
+  ],
+  "automatedG4Verdict": {
+    "verdict": "PASS_EXACT_SHA",
+    "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
+    "reconciliationSha": "086219464dd61d6134d057705d5a19d118a806e4",
+    "authentication": "real signed JWT from /api/test-support/bootstrap",
+    "e2eMode": false,
+    "database": "real PostgreSQL; current schema apply 0, repeat 0, dry-run pending 0",
+    "cells": {
+      "total": 14,
+      "rendered": 14
+    },
+    "axe": {
+      "critical": 0,
+      "serious": 0
+    },
+    "unnamedControls": 0,
+    "keyboard": {
+      "reachableControls": 40,
+      "focusAlwaysVisible": true,
+      "invisibleFocusSamples": [],
+      "escapeHandled": "Escape pressed on the surface; surface stayed mounted (no dialog was open to close).",
+      "focusReturn": "Focus remained inside the document after Escape.",
+      "tabOrderMonotonic": true
+    },
+    "deepLink": {
+      "ok": true,
+      "detail": "deep-link /assessment settled at /assessment — surface content matched"
+    },
+    "reload": {
+      "ok": true,
+      "detail": "reload settled at /assessment — surface content matched"
+    },
+    "coldReopen": {
+      "ok": true,
+      "detail": "cold context (fresh storage state, no SPA memory) settled at /assessment — surface content matched"
+    },
+    "horizontalOverflowCells": 0,
+    "consoleErrors": {
+      "total": 0,
+      "forbidden403": 0,
+      "notFound404": 0,
+      "other": 0
+    },
+    "humanAcceptance": "PENDING — automated G4 does not sign VoiceOver, persona or visual-owner acceptance",
+    "reachabilityAndStates": {
+      "states": [],
+      "statesNotPresent": [
+        "stale"
+      ]
+    }
+  }
 }

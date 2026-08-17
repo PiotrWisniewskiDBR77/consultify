@@ -3,15 +3,185 @@
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "productSha": "020eff97ac03cac5341d41a669888554bf4e696a",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
-  "changedPaths": ["src/components/Partner/PartnerCanonicalRuntimePanel.tsx", "src/views/partner/PartnerPortalView.tsx", "src/views/partner/sections/EarningsSection.tsx", "tests/components/partner/PartnerCanonicalRuntimePanel.test.tsx", "tests/components/partner/EarningsSection.v8-payout-settings.test.tsx"],
-  "changedPathRationale": {"runtime": "one honest read-only view of program, certification, attribution, ledger and policy-gated accrual", "policy": "automatic payout control removed and every outgoing settings payload forces false", "tests": "state degradation and payout-policy regression"},
-  "ownerTables": ["partner_organizations", "partner_certifications", "partner_attributions", "partner_program_ledger"],
-  "commands": [{"command": "vitest PartnerCanonicalRuntimePanel and EarningsSection payout-settings", "exitCode": 0, "result": "5/5 across 2 files"}],
-  "denominators": {"focusedTests": "5/5", "canonicalSurfaces": "5/5"},
-  "fixtures": {"surfaces": ["partner", "certification", "attribution", "ledger", "accrual"]},
-  "negativeControls": {"partialFailure": "per-surface unavailable or degraded state replaces false success", "payout": "stale true values normalize to false and cannot be written", "approval": "manual request and independent approval boundary is explicit"},
-  "browserArtifacts": [],
-  "rollback": {"code": "revert 020eff97ac before deployment", "data": "no schema or production data change"},
+  "changedPaths": [
+    "src/components/Partner/PartnerCanonicalRuntimePanel.tsx",
+    "src/views/partner/PartnerPortalView.tsx",
+    "src/views/partner/sections/EarningsSection.tsx",
+    "tests/components/partner/PartnerCanonicalRuntimePanel.test.tsx",
+    "tests/components/partner/EarningsSection.v8-payout-settings.test.tsx"
+  ],
+  "changedPathRationale": {
+    "runtime": "one honest read-only view of program, certification, attribution, ledger and policy-gated accrual",
+    "policy": "automatic payout control removed and every outgoing settings payload forces false",
+    "tests": "state degradation and payout-policy regression"
+  },
+  "ownerTables": [
+    "partner_organizations",
+    "partner_certifications",
+    "partner_attributions",
+    "partner_program_ledger"
+  ],
+  "commands": [
+    {
+      "command": "vitest PartnerCanonicalRuntimePanel and EarningsSection payout-settings",
+      "exitCode": 0,
+      "result": "5/5 across 2 files"
+    }
+  ],
+  "denominators": {
+    "focusedTests": "5/5",
+    "canonicalSurfaces": "5/5",
+    "automatedG4Cells": "14/14",
+    "automatedG4Screenshots": "14/14",
+    "automatedG4AxeCriticalSerious": "0/0",
+    "automatedG4UnnamedControls": 0,
+    "automatedG4VisibleFocus": "PASS"
+  },
+  "fixtures": {
+    "surfaces": [
+      "partner",
+      "certification",
+      "attribution",
+      "ledger",
+      "accrual"
+    ]
+  },
+  "negativeControls": {
+    "partialFailure": "per-surface unavailable or degraded state replaces false success",
+    "payout": "stale true values normalize to false and cannot be written",
+    "approval": "manual request and independent approval boundary is explicit"
+  },
+  "browserArtifacts": [
+    {
+      "kind": "mounted_signed_auth_g4_final",
+      "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
+      "reconciliationSha": "086219464dd61d6134d057705d5a19d118a806e4",
+      "resultPath": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "resultSha256": "4451e2a8479122bb4eb3885c6a587df8bb306a205208720ecfda11ffb605925b",
+      "screenshots": [
+        {
+          "path": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__desktop__pl__light.png",
+          "sha256": "59f6acf62118f858ef4a677e08c833f55a5b1f362723f46d2e5dfa61ddd563fd"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__desktop__pl__dark.png",
+          "sha256": "c3fc59a172e18da6ad2d2a8d330056fb1ab337e00ed217a1f9eb7a53c6c88426"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__desktop__en__light.png",
+          "sha256": "ea7929fa51e754ec30c794654c36798a94f2687509cf0738679b0a3093d21360"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__desktop__en__dark.png",
+          "sha256": "b20ead94e130362a39901e1087187ad0c955c3e7759d7e0424ef191fe7440dcb"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__tablet__pl__light.png",
+          "sha256": "352992bc308e809c9c4050f8a25907b062492d6b7e29a62c19a0a7ba2d98b7a9"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__tablet__pl__dark.png",
+          "sha256": "cf9e25ddf5763452a7f2ce3a8c99f29b08f7589de070dd446508fbecfed79365"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__tablet__en__light.png",
+          "sha256": "34acf2a6141b70c8720698f1f90c6fcf4601994a343683f26dd1e96ef6f6ec81"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__tablet__en__dark.png",
+          "sha256": "c7df296b9f70a56df71e0933cd9a35a09913eb9b7aa16c332d29356bb71e69b0"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__mobile__pl__light.png",
+          "sha256": "fc04efbe9d18f7939f38d519bfa3f215e96f38a73243abba6c6d7d7a5975f7ff"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__mobile__pl__dark.png",
+          "sha256": "3e85e2ace3dc626f5d65b02f64a6c836cfec0c7c1deb1dae3b441f73988e93fa"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__mobile__en__light.png",
+          "sha256": "4a70e5d5b8579444499505c2c697a68147b86a12e0ab46221feab040c85590b3"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__mobile__en__dark.png",
+          "sha256": "4f14244ce2f67af4ef4ede33fa349e9a078f1aa9ddac77179360a410abb98381"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__partner-dashboard__desktop__pl__light.png",
+          "sha256": "c1cbcb2fc1a742ae5f81c2c7c7e878a0e53005d5b61fa4675659532649c8fc92"
+        },
+        {
+          "path": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__partner-commission__desktop__pl__light.png",
+          "sha256": "39983a9e7ad3d750d018678764bb32bdb340a5eb6b99853e4ca34654778091d6"
+        }
+      ],
+      "consoleErrors": {
+        "total": 2,
+        "forbidden403": 0,
+        "notFound404": 2,
+        "other": 0
+      }
+    }
+  ],
+  "rollback": {
+    "code": "revert 020eff97ac before deployment",
+    "data": "no schema or production data change"
+  },
   "verdict": "PARTIAL",
-  "openBlockers": ["Mounted browser journey, responsive screenshots, axe and human visual sign-off remain missing.", "The legacy Earnings test still emits a pre-existing maximum-update-depth warning and required one retry."]
+  "openBlockers": [
+    "Mounted browser journey, responsive screenshots, axe and human visual sign-off remain missing.",
+    "The legacy Earnings test still emits a pre-existing maximum-update-depth warning and required one retry."
+  ],
+  "automatedG4Verdict": {
+    "verdict": "PASS_EXACT_SHA",
+    "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
+    "reconciliationSha": "086219464dd61d6134d057705d5a19d118a806e4",
+    "authentication": "real signed JWT from /api/test-support/bootstrap",
+    "e2eMode": false,
+    "database": "real PostgreSQL; current schema apply 0, repeat 0, dry-run pending 0",
+    "cells": {
+      "total": 14,
+      "rendered": 14
+    },
+    "axe": {
+      "critical": 0,
+      "serious": 0
+    },
+    "unnamedControls": 0,
+    "keyboard": {
+      "reachableControls": 40,
+      "focusAlwaysVisible": true,
+      "invisibleFocusSamples": [],
+      "escapeHandled": "Escape pressed on the surface; surface stayed mounted (no dialog was open to close).",
+      "focusReturn": "Focus remained inside the document after Escape.",
+      "tabOrderMonotonic": true
+    },
+    "deepLink": {
+      "ok": true,
+      "detail": "deep-link /partner settled at /partner — surface content matched"
+    },
+    "reload": {
+      "ok": true,
+      "detail": "reload settled at /partner — surface content matched"
+    },
+    "coldReopen": {
+      "ok": true,
+      "detail": "cold context (fresh storage state, no SPA memory) settled at /partner — surface content matched"
+    },
+    "horizontalOverflowCells": 0,
+    "consoleErrors": {
+      "total": 2,
+      "forbidden403": 0,
+      "notFound404": 2,
+      "other": 0
+    },
+    "humanAcceptance": "PENDING — automated G4 does not sign VoiceOver, persona or visual-owner acceptance",
+    "reachabilityAndStates": {
+      "states": [],
+      "statesNotPresent": [
+        "stale"
+      ]
+    }
+  }
 }
