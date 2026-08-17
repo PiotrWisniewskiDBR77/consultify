@@ -1,10 +1,10 @@
 {
   "taskId": "TLS-BVP-001",
   "lane": "a",
-  "branch": "codex/closure-claude-a-method-evidence",
-  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
+  "branch": "codex/recovery-canonical-20260816",
+  "baselineSha": "4ba0ca0d3553765f492ed48f3d382db25db37803",
   "baselineTag": "closure-execution-baseline-v2-20260816",
-  "productSha": "670794629f8b1143b055f04ca7117ead066b1608",
+  "productSha": "4dfe3ebaa7b7e8c6e489d161e68218f750efdf83",
   "leaseSha256": "a2f9be9983e3a03e5e64f1a51dca193199a5bec963a246c3b4fe94b378af1308",
   "changedPaths": [
     "server/src/controllers/ToolController.ts",
@@ -16,9 +16,9 @@
   "changedPathRationale": {
     "server/src/controllers/ToolController.ts": "Small change (part of the 16-line net diff on this file) needed so the new EmptyToolOutputError from ensureToolOutputSnapshot is caught and mapped to HTTP 409 EMPTY_TOOL_OUTPUT, the same catch-and-map convention already used for SwotCandidateHandoffError.",
     "server/src/services/tools/toolOutputSnapshotService.ts": "The actual fix. ensureToolOutputSnapshot is the single chokepoint every promotion path (initiative/report/presentation/idea) funnels through via promoteToOutput (POST /:toolId/promote) — it now refuses to freeze a tool_outputs row with zero items/tensions/conclusions, scoped to dynamic-swot only. The 18 bridge-less tool types keep their pre-existing 'honestly empty' behaviour but now emit a warning on every empty freeze.",
-    "server/src/services/toolFreeze/__tests__/tls-bvp-001-nonempty-lineage.realdb.test.ts": "New real-Postgres proof, 10/10: refusal with no row created, positive control, non-SWOT scope boundary, CAS 428/409, immutability with byte-identical re-read, reopen creating a new revision, 10-way concurrent race converging on exactly one row, cross-tenant negative, cold readback via an independent client.",
+    "server/src/services/toolFreeze/__tests__/tls-bvp-001-nonempty-lineage.realdb.test.ts": "Exact-current real-Postgres proof, 11/11: the original refusal/positive/scope/CAS/immutability/reopen/race/tenant/cold controls plus a production tools.routes mount with signed JWT, persisted membership, create, answers/evidence, review, approval, immutable nonempty output, promotion receipt and replay readback.",
     "tests/integration/tools-promote-characterization.realdb.test.ts": "Commit 6f07c1ae92 seeds one accepted, evidence-confirmed SWOT item instead of an invalid content-free APPROVED fixture.",
-    "tests/integration/tools-promotion-race.realdb.test.ts": "Commit 6f07c1ae92 applies the same publishable fixture contract to the promotion race proof."
+    "tests/integration/tools-promotion-race.realdb.test.ts": "Keeps the publishable fixture contract and removes a stale hardcoded database name: the safety guard now verifies the actual isolated database explicitly configured by DATABASE_URL while retaining real-Postgres flags and forbidden production/demo host checks."
   },
   "commands": [
     {
@@ -151,6 +151,41 @@
     "No browser/visual evidence exists for this task's user-facing surface (SWOT tool freeze/promote flow)."
   ],
   "unverifiedFields": ["Mounted browser G4 for the SWOT freeze/promote UI flow."],
+  "exactCurrentBackendRequalification20260817": {
+    "baselineSha": "4ba0ca0d3553765f492ed48f3d382db25db37803",
+    "harnessCommit": "a3924b9185",
+    "productTestCommit": "4dfe3ebaa7b7e8c6e489d161e68218f750efdf83",
+    "postgres": {
+      "container": "consultify-int-prereq-fresh",
+      "database": "consultify_int_prereq",
+      "hostPort": 56827,
+      "schema": "strict fresh exact-current: 740 migrations applied; repeat 0; dry-run 0 (shared prerequisite gate)",
+      "mockDb": false,
+      "cleanup": "own bvp001-* residue after run: sessions=0, outputs=0, links=0, organizations=0, memberships=0; shared container preserved"
+    },
+    "mountedTaskGate": {
+      "command": "DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:56827/consultify_int_prereq DB_TYPE=postgres NODE_ENV=test CI=true RUN_DB_TESTS=1 MOCK_DB=false npx vitest run server/src/services/toolFreeze/__tests__/tls-bvp-001-nonempty-lineage.realdb.test.ts --retry=0 --reporter=dot --no-file-parallelism",
+      "exitCode": 0,
+      "denominator": "1/1 file; 11/11 tests; 0 failed/skipped/todo",
+      "coverage": "production tools.routes mount; signed JWT and persisted membership; create -> answers/evidence -> request-review -> approve -> immutable nonempty output -> idea promotion receipt and replay; empty lineage refusal; missing/stale preconditions; non-SWOT boundary; byte-identical immutable readback; reopen revision; 10-way exactly-one freeze; foreign tenant denial; independent cold pg.Client readback"
+    },
+    "combinedFocusedGate": {
+      "command": "DATABASE_URL=<same isolated DB> DB_TYPE=postgres NODE_ENV=test CI=true RUN_DB_TESTS=1 MOCK_DB=false npx vitest run tests/integration/tools-promote-characterization.realdb.test.ts tests/integration/tools-promotion-race.realdb.test.ts server/src/services/toolFreeze/__tests__/tls-bvp-001-nonempty-lineage.realdb.test.ts --retry=0 --reporter=dot --no-file-parallelism",
+      "exitCode": 0,
+      "denominator": "3/3 files; 33/33 tests; 0 failed/skipped/todo",
+      "note": "A first run correctly failed before suite execution because the race harness hardcoded database consultinity. Commit a3924b9185 makes expectedDatabase equal the explicitly configured isolated DATABASE_URL database; forbidden production/demo hosts and RUN_DB_TESTS/MOCK_DB guards remain enforced."
+    },
+    "compileGates": {
+      "typeCheckCommand": "npm run type-check",
+      "typeCheckExitCode": 0,
+      "typeCheckResult": "full-repository tsc --noEmit exit 0 (an earlier typo npm run typecheck exited 1 because that script does not exist; it was replaced by the canonical command)",
+      "backendBuildCommand": "npm run build:backend",
+      "backendBuildExitCode": 0,
+      "backendBuildResult": "9 runtime mirrors verified; tsc build exit 0"
+    },
+    "technicalVerdict": "DONE_CURRENT_SHA",
+    "overallVerdict": "PARTIAL_G4_ONLY"
+  },
   "integratorClosure20260817": {
     "candidateSha": "670794629f8b1143b055f04ca7117ead066b1608",
     "defaultSuite": {
@@ -176,8 +211,20 @@
     "g4": "NOT_VERIFIED; no browser evidence added in this bounded technical pass"
   },
   "verdict": "PARTIAL",
-  "verdictRationale": "Technical closure is green on the exact candidate: named default suite 11/11 plus the two repaired fixture suites and original TLS real-PostgreSQL suite 32/32 on a fresh strict-migrated database. The task remains PARTIAL only because no mounted browser evidence exists for the SWOT freeze/promote UI flow.",
+  "verdictRationale": "Backend technical closure is green on exact product SHA 4dfe3ebaa7: mounted production-route task suite 11/11 and combined focused real-PostgreSQL suites 33/33 on the exact-current strict schema, with clean owned-fixture residue and backend build exit 0. The literal task remains PARTIAL only because mounted browser G4 belongs to Settings and is not verified here.",
   "ownerTables": [],
-  "fixtures": {},
-  "negativeControls": {}
+  "fixtures": {
+    "prefix": "bvp001-*",
+    "tenants": 2,
+    "auth": "signed JWT plus persisted organization_members ADMIN rows",
+    "cleanup": "exact owned prefix residue 0 across sessions, outputs, links, organizations and memberships"
+  },
+  "negativeControls": {
+    "emptyLineage": "409 EMPTY_TOOL_OUTPUT and zero tool_outputs rows",
+    "missingPrecondition": "428",
+    "stalePrecondition": "409",
+    "foreignTenant": "denied with zero foreign read/write",
+    "scopeBoundary": "non-dynamic-SWOT behavior unchanged",
+    "replayConcurrency": "same receipt on replay and exactly one freeze under 10 concurrent calls"
+  }
 }
