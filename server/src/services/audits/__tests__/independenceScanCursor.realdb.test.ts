@@ -29,6 +29,9 @@
  *     --no-file-parallelism --maxWorkers=1 --maxConcurrency=1 --retry=0
  */
 
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
@@ -42,7 +45,38 @@ if (REAL_PG) {
   process.env.DB_TYPE = 'postgres';
 }
 
-const suite = REAL_PG ? describe : describe.skip;
+/**
+ * FIXTURE CLEANUP SAFETY
+ * ----------------------
+ * This suite owns a GLOBAL singleton (audit_independence_scan_cursor) and it
+ * reasons about "every audit_programs row", so its fixtures are only sound on
+ * a database nobody else is using. An earlier revision expressed that by
+ * running unqualified `DELETE FROM audit_programs` / `DELETE FROM
+ * audit_independence_scan_cursor` in beforeEach — which is a loaded gun: point
+ * DATABASE_URL at a shared or real database and the suite deletes that
+ * database's audit programs.
+ *
+ * Destructive cleanup now requires ALL of the following, checked before any
+ * DELETE is issued:
+ *   1. explicit opt-in  — AUD_INDEPENDENCE_ALLOW_FIXTURE_CLEANUP=1
+ *   2. a caller-provided disposable-database prefix —
+ *      AUD_INDEPENDENCE_DISPOSABLE_DB_PREFIX (no default; the runner must name
+ *      the throwaway database it created)
+ *   3. `current_database()` actually starting with that prefix — asked of the
+ *      server, not inferred from the connection string, which can lie
+ *      (pgbouncer, search_path tricks, a copy-pasted URL)
+ *
+ * On top of that, every delete is scoped to THIS RUN's own id prefix, runs
+ * inside a transaction holding a transaction-scoped advisory lock, and is
+ * followed by a residue assertion over that same prefix. Nothing global is
+ * ever deleted or truncated.
+ */
+const CLEANUP_OPT_IN = process.env.AUD_INDEPENDENCE_ALLOW_FIXTURE_CLEANUP === '1';
+const DISPOSABLE_DB_PREFIX = process.env.AUD_INDEPENDENCE_DISPOSABLE_DB_PREFIX ?? '';
+
+const DESTRUCTIVE_FIXTURES_ENABLED = REAL_PG && CLEANUP_OPT_IN && DISPOSABLE_DB_PREFIX.length > 0;
+
+const suite = DESTRUCTIVE_FIXTURES_ENABLED ? describe : describe.skip;
 
 if (!REAL_PG) {
   // eslint-disable-next-line no-console
@@ -50,7 +84,18 @@ if (!REAL_PG) {
     '[independenceScanCursor.realdb.test.ts SKIPPED — clean skip, not a failure] wymaga ' +
       'NODE_ENV=test DB_TYPE=postgres RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=postgresql://...',
   );
+} else if (!DESTRUCTIVE_FIXTURES_ENABLED) {
+  // eslint-disable-next-line no-console
+  console.warn(
+    '[independenceScanCursor.realdb.test.ts SKIPPED — clean skip, not a failure] this suite ' +
+      'mutates a GLOBAL singleton and therefore refuses to run without an explicit disposable-database ' +
+      'declaration: set AUD_INDEPENDENCE_ALLOW_FIXTURE_CLEANUP=1 and ' +
+      'AUD_INDEPENDENCE_DISPOSABLE_DB_PREFIX=<prefix of the throwaway database you created>.',
+  );
 }
+
+/** Advisory-lock key: constant for this suite, so two concurrent runs serialise instead of interleaving. */
+const CLEANUP_LOCK_KEY = 8_113_2026;
 
 suite('independenceScanCursor — durable checkpoint + fenced lease (real Postgres)', () => {
   let cursorMod: typeof import('../independenceScanCursor.js');
@@ -58,27 +103,97 @@ suite('independenceScanCursor — durable checkpoint + fenced lease (real Postgr
   let auditsDb: typeof import('../auditsDb.js');
 
   const testOrgId = `aud-cursor-org-${randomUUID()}`;
+  /**
+   * Every row this suite creates carries this prefix in its primary key, so
+   * cleanup can target exactly what the run owns. It is also why the ids sort
+   * contiguously, which keeps the ORDER BY id ASC walk deterministic.
+   */
+  const RUN_PREFIX = `aprog_audindep_${randomUUID().replace(/-/g, '')}_`;
+  let acquirePgClient: typeof import('../../../database/PostgresDatabase.js').acquirePgClient;
+
+  /**
+   * Refuses unless the server itself reports a database whose name starts with
+   * the caller-declared disposable prefix. Throws BEFORE any destructive
+   * statement is prepared, so a mismatch cannot execute a partial cleanup.
+   */
+  async function assertDisposableDatabase(prefixOverride?: string): Promise<string> {
+    const prefix = prefixOverride ?? DISPOSABLE_DB_PREFIX;
+    if (!CLEANUP_OPT_IN) {
+      throw new Error('AUD_INDEPENDENCE_FIXTURE_CLEANUP_NOT_OPTED_IN');
+    }
+    if (!prefix) {
+      throw new Error('AUD_INDEPENDENCE_DISPOSABLE_DB_PREFIX_MISSING');
+    }
+    const row = await auditsDb.auditGet<{ db: string }>(`SELECT current_database() AS db`);
+    const db = String(row?.db ?? '');
+    if (!db.startsWith(prefix)) {
+      throw new Error(
+        `AUD_INDEPENDENCE_DISPOSABLE_DB_MISMATCH: current_database()='${db}' does not start with declared disposable prefix '${prefix}' — refusing to delete anything.`,
+      );
+    }
+    return db;
+  }
+
+  /**
+   * FK-safe, exactly-scoped cleanup of this run's rows, inside one transaction
+   * holding a transaction-scoped advisory lock. Children are removed before
+   * parents. The global cursor singleton is reset only here — after the
+   * disposable-database guard has passed — because it is the one row this
+   * suite legitimately owns on a throwaway database.
+   */
+  async function cleanupOwnFixtures(prefixOverride?: string): Promise<void> {
+    await assertDisposableDatabase(prefixOverride);
+    const client = await acquirePgClient();
+    try {
+      await client.query('BEGIN');
+      await client.query('SELECT pg_advisory_xact_lock($1)', [CLEANUP_LOCK_KEY]);
+      const like = `${RUN_PREFIX}%`;
+      // Children first (FK-safe), then the parent rows — all restricted to ids
+      // this run created. No unqualified DELETE, no TRUNCATE.
+      await client.query(`DELETE FROM audit_program_criteria WHERE program_id LIKE $1`, [like]);
+      await client.query(`DELETE FROM audit_programs WHERE id LIKE $1`, [like]);
+      await client.query(`DELETE FROM audit_independence_scan_cursor WHERE id = 'global'`);
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw err;
+    } finally {
+      client.release();
+    }
+  }
+
+  async function countOwnPrograms(): Promise<number> {
+    const row = await auditsDb.auditGet<{ n: string }>(
+      `SELECT count(*)::text AS n FROM audit_programs WHERE id LIKE $1`,
+      [`${RUN_PREFIX}%`],
+    );
+    return Number(row?.n ?? -1);
+  }
 
   beforeAll(async () => {
     cursorMod = await import('../independenceScanCursor.js');
     jobMod = await import('../../../jobs/auditIndependenceDetectorJob.js');
     auditsDb = await import('../auditsDb.js');
+    ({ acquirePgClient } = await import('../../../database/PostgresDatabase.js'));
+    await assertDisposableDatabase();
   });
 
   beforeEach(async () => {
-    await auditsDb.auditRun(`DELETE FROM audit_programs`).catch(() => {});
-    await auditsDb.auditRun(`DELETE FROM audit_independence_scan_cursor`).catch(() => {});
+    await cleanupOwnFixtures();
   });
 
   afterAll(async () => {
-    await auditsDb.auditRun(`DELETE FROM audit_programs`).catch(() => {});
-    await auditsDb.auditRun(`DELETE FROM audit_independence_scan_cursor`).catch(() => {});
+    await cleanupOwnFixtures();
+    // Residue assertion: this run must leave none of its own rows behind.
+    expect(await countOwnPrograms()).toBe(0);
   });
 
   async function seedPrograms(count: number): Promise<string[]> {
     const ids: string[] = [];
     for (let i = 0; i < count; i += 1) {
-      const id = `aprog_${randomUUID()}`;
+      // Zero-padded so lexical id order matches insertion order, keeping the
+      // ORDER BY id ASC walk predictable for the progression assertions.
+      const id = `${RUN_PREFIX}${String(i).padStart(4, '0')}`;
       ids.push(id);
       await auditsDb.auditRun(
         `INSERT INTO audit_programs (id, organization_id, name, created_by) VALUES ($1, $2, $3, $4)`,
@@ -265,5 +380,258 @@ suite('independenceScanCursor — durable checkpoint + fenced lease (real Postgr
     const secondPass = await walk();
     expect(secondPass.size).toBe(total);
     expect(ids.every((id) => secondPass.has(id))).toBe(true);
+  });
+
+  // -------------------------------------------------------------------------
+  // 8. Fixture-cleanup safety. These prove the guard itself, because a guard
+  //    nobody tests is exactly how the previous unqualified DELETE survived.
+  // -------------------------------------------------------------------------
+  describe('8. fixture cleanup is guarded, scoped and reversible', () => {
+    it('a disposable-DB prefix MISMATCH aborts before any destructive statement runs', async () => {
+      const ids = await seedPrograms(3);
+      const before = await countOwnPrograms();
+      expect(before).toBe(3);
+
+      await expect(cleanupOwnFixtures('definitely-not-this-database-')).rejects.toThrow(
+        /AUD_INDEPENDENCE_DISPOSABLE_DB_MISMATCH/,
+      );
+
+      // The canary rows are untouched: the guard refused before deleting.
+      expect(await countOwnPrograms()).toBe(before);
+      for (const id of ids) {
+        const row = await auditsDb.auditGet<{ id: string }>(
+          `SELECT id FROM audit_programs WHERE id = $1`,
+          [id],
+        );
+        expect(row?.id).toBe(id);
+      }
+    });
+
+    it('the guard asks the SERVER for current_database() and accepts only the declared prefix', async () => {
+      const db = await assertDisposableDatabase();
+      expect(db.startsWith(DISPOSABLE_DB_PREFIX)).toBe(true);
+      // A prefix that is merely a substring (not a prefix) is still rejected.
+      await expect(assertDisposableDatabase(`x${db}`)).rejects.toThrow(
+        /AUD_INDEPENDENCE_DISPOSABLE_DB_MISMATCH/,
+      );
+    });
+
+    it('a ROLLED BACK cleanup transaction deletes nothing (transaction-scoped, not autocommit)', async () => {
+      await seedPrograms(4);
+      expect(await countOwnPrograms()).toBe(4);
+
+      await assertDisposableDatabase();
+      const client = await acquirePgClient();
+      try {
+        await client.query('BEGIN');
+        await client.query('SELECT pg_advisory_xact_lock($1)', [CLEANUP_LOCK_KEY]);
+        const res = await client.query(`DELETE FROM audit_programs WHERE id LIKE $1`, [
+          `${RUN_PREFIX}%`,
+        ]);
+        expect(res.rowCount).toBe(4); // the delete really did match inside the tx
+        await client.query('ROLLBACK');
+      } finally {
+        client.release();
+      }
+
+      // After rollback the rows are still there — nothing was committed.
+      expect(await countOwnPrograms()).toBe(4);
+    });
+
+    it('cleanup removes exactly this run\'s rows and leaves a foreign-prefixed row untouched', async () => {
+      await seedPrograms(3);
+      const foreignId = `aprog_not_this_run_${randomUUID()}`;
+      await auditsDb.auditRun(
+        `INSERT INTO audit_programs (id, organization_id, name, created_by) VALUES ($1, $2, $3, $4)`,
+        [foreignId, testOrgId, 'Row owned by nobody in this run', 'foreign-seeder'],
+      );
+
+      try {
+        await cleanupOwnFixtures();
+
+        expect(await countOwnPrograms()).toBe(0); // residue assertion for our prefix
+        const survivor = await auditsDb.auditGet<{ id: string }>(
+          `SELECT id FROM audit_programs WHERE id = $1`,
+          [foreignId],
+        );
+        expect(survivor?.id).toBe(foreignId); // scoped cleanup, not a global wipe
+      } finally {
+        // Remove the deliberately foreign row by its exact id — still no
+        // unqualified DELETE.
+        await auditsDb.auditRun(`DELETE FROM audit_programs WHERE id = $1`, [foreignId]);
+      }
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // 9. Migration 20261013 is late-apply safe against a pre-existing, partial,
+  //    NON-EMPTY table — the case a bare CREATE TABLE IF NOT EXISTS silently
+  //    mishandles.
+  // -------------------------------------------------------------------------
+  describe('9. migration 20261013 converges or fails closed on a pre-existing partial table', () => {
+    const MIGRATION_PATH = path.resolve(
+      path.dirname(fileURLToPath(import.meta.url)),
+      '../../../../migrations/20261013_audit_independence_scan_cursor.sql',
+    );
+
+    function migrationSql(): string {
+      return fs.readFileSync(MIGRATION_PATH, 'utf8');
+    }
+
+    /** Runs the migration file exactly as the runner would, in its own connection. */
+    async function applyMigration(): Promise<void> {
+      const client = await acquirePgClient();
+      try {
+        await client.query(migrationSql());
+      } finally {
+        client.release();
+      }
+    }
+
+    async function dropCursorTable(): Promise<void> {
+      await assertDisposableDatabase();
+      await auditsDb.auditRun(`DROP TABLE IF EXISTS audit_independence_scan_cursor`);
+    }
+
+    afterAll(async () => {
+      // Leave the table in its canonical shape for anything running after us.
+      await dropCursorTable();
+      await applyMigration();
+    });
+
+    it('is idempotent on the already-correct table (re-running changes nothing)', async () => {
+      await applyMigration();
+      await applyMigration();
+      const cols = await auditsDb.auditAll<{ attname: string }>(
+        `SELECT attname FROM pg_attribute
+          WHERE attrelid = 'audit_independence_scan_cursor'::regclass AND attnum > 0 AND NOT attisdropped
+          ORDER BY attnum`,
+      );
+      expect(cols.map((c) => c.attname)).toEqual([
+        'id',
+        'last_program_id',
+        'cycles_completed',
+        'lease_fence',
+        'leased_by',
+        'leased_until',
+        'last_tick_at',
+        'updated_at',
+      ]);
+    });
+
+    it('CONVERGES a partial, NON-EMPTY legacy table and preserves its historical cursor/fence/progress', async () => {
+      await dropCursorTable();
+      // A legacy shape: correct PK, but missing the fencing and bookkeeping
+      // columns that were added later — and already carrying real progress.
+      await auditsDb.auditRun(`
+        CREATE TABLE audit_independence_scan_cursor (
+          id TEXT PRIMARY KEY DEFAULT 'global',
+          last_program_id TEXT NOT NULL DEFAULT '',
+          cycles_completed BIGINT NOT NULL DEFAULT 0
+        )`);
+      await auditsDb.auditRun(
+        `INSERT INTO audit_independence_scan_cursor (id, last_program_id, cycles_completed)
+         VALUES ('global', $1, 7)`,
+        ['aprog_historical_position'],
+      );
+
+      await applyMigration();
+
+      const row = await auditsDb.auditGet<{
+        last_program_id: string;
+        cycles_completed: string;
+        lease_fence: string;
+      }>(
+        `SELECT last_program_id, cycles_completed, lease_fence
+           FROM audit_independence_scan_cursor WHERE id = 'global'`,
+      );
+      // Historical progress survives; the new fence arrives at its default.
+      expect(row?.last_program_id).toBe('aprog_historical_position');
+      expect(Number(row?.cycles_completed)).toBe(7);
+      expect(Number(row?.lease_fence)).toBe(0);
+
+      // And the converged table is immediately usable by the real code path.
+      const lease = await cursorMod.claimLease('post-convergence-runner');
+      expect(lease.claimed).toBe(true);
+      expect(lease.lastProgramId).toBe('aprog_historical_position');
+      expect(lease.fence).toBe(1);
+      await cursorMod.releaseLeaseWithoutAdvancing(lease.fence);
+    });
+
+    it('FAILS CLOSED with an explicit code on a wrong primary key, mutating nothing', async () => {
+      await dropCursorTable();
+      // Divergent shape: PK on the wrong column. Auto-"fixing" a primary key on
+      // populated data is not a decision a migration may take.
+      await auditsDb.auditRun(`
+        CREATE TABLE audit_independence_scan_cursor (
+          id TEXT NOT NULL,
+          last_program_id TEXT NOT NULL DEFAULT '',
+          CONSTRAINT audit_independence_scan_cursor_pkey PRIMARY KEY (last_program_id)
+        )`);
+      await auditsDb.auditRun(
+        `INSERT INTO audit_independence_scan_cursor (id, last_program_id) VALUES ('global', 'legacy-key')`,
+      );
+
+      await expect(applyMigration()).rejects.toThrow(/AUD13_PK_MISMATCH/);
+
+      // Nothing was added: the refusal happened before any ALTER.
+      const cols = await auditsDb.auditAll<{ attname: string }>(
+        `SELECT attname FROM pg_attribute
+          WHERE attrelid = 'audit_independence_scan_cursor'::regclass AND attnum > 0 AND NOT attisdropped`,
+      );
+      expect(cols.map((c) => c.attname).sort()).toEqual(['id', 'last_program_id']);
+      // ...and the row is intact.
+      const row = await auditsDb.auditGet<{ id: string }>(
+        `SELECT id FROM audit_independence_scan_cursor WHERE last_program_id = 'legacy-key'`,
+      );
+      expect(row?.id).toBe('global');
+    });
+
+    it('FAILS CLOSED on a divergent lease_fence type, mutating nothing', async () => {
+      await dropCursorTable();
+      await auditsDb.auditRun(`
+        CREATE TABLE audit_independence_scan_cursor (
+          id TEXT PRIMARY KEY DEFAULT 'global',
+          last_program_id TEXT NOT NULL DEFAULT '',
+          lease_fence TEXT NOT NULL DEFAULT '0'
+        )`);
+
+      await expect(applyMigration()).rejects.toThrow(/AUD13_FENCE_TYPE_MISMATCH/);
+
+      const cols = await auditsDb.auditAll<{ attname: string }>(
+        `SELECT attname FROM pg_attribute
+          WHERE attrelid = 'audit_independence_scan_cursor'::regclass AND attnum > 0 AND NOT attisdropped`,
+      );
+      expect(cols.map((c) => c.attname).sort()).toEqual(['id', 'last_program_id', 'lease_fence']);
+    });
+
+    it('resolves the primary key by conrelid, not by constraint name — a same-named constraint on another table proves nothing', async () => {
+      await dropCursorTable();
+      // A decoy: another table carrying a constraint with the exact name the
+      // cursor table's PK would have. A name-only check would be satisfied by
+      // this and skip the real verification.
+      await auditsDb.auditRun(`DROP TABLE IF EXISTS aud_decoy_same_constraint_name`);
+      await auditsDb.auditRun(`
+        CREATE TABLE aud_decoy_same_constraint_name (
+          id TEXT NOT NULL,
+          CONSTRAINT audit_independence_scan_cursor_pkey PRIMARY KEY (id)
+        )`);
+      try {
+        // With the real table absent, the migration must still create it
+        // correctly rather than believing the decoy's constraint.
+        await applyMigration();
+        const pk = await auditsDb.auditAll<{ attname: string }>(
+          `SELECT a.attname
+             FROM pg_constraint c
+             JOIN LATERAL unnest(c.conkey) WITH ORDINALITY AS k(attnum, ord) ON TRUE
+             JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = k.attnum
+            WHERE c.conrelid = 'audit_independence_scan_cursor'::regclass AND c.contype = 'p'
+            ORDER BY k.ord`,
+        );
+        expect(pk.map((r) => r.attname)).toEqual(['id']);
+      } finally {
+        await auditsDb.auditRun(`DROP TABLE IF EXISTS aud_decoy_same_constraint_name`);
+      }
+    });
   });
 });

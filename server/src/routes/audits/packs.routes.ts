@@ -78,7 +78,16 @@ router.get(
       });
       return;
     }
-    const result = await comparePackVersions(actor.organizationId, req.params.packKey, versionA, versionB);
+    // AUD-MVP-RIGHTS-001: compare exposes criterion-level pack content, so it
+    // is scoped exactly like GET /packs/:id — a non-admin cannot diff a
+    // draft/in-review version they did not author.
+    const result = await comparePackVersions(
+      actor.organizationId,
+      req.params.packKey,
+      versionA,
+      versionB,
+      isPlatformAdmin(actor) ? undefined : { actorUserId: actor.userId },
+    );
     res.json({ success: true, data: result });
   }),
 );
@@ -168,7 +177,13 @@ router.post(
   route('POST /packs/:id/validate', async (req, res) => {
     const actor = auditActor(req);
     assertActor(actor);
-    const result = await validatePackById(actor.organizationId, req.params.id);
+    // AUD-MVP-RIGHTS-001: validate echoes pack content in its findings, so it
+    // is scoped like GET /packs/:id rather than being an unscoped side channel.
+    const result = await validatePackById(
+      actor.organizationId,
+      req.params.id,
+      isPlatformAdmin(actor) ? undefined : { actorUserId: actor.userId },
+    );
     res.json({ success: true, data: result });
   }),
 );

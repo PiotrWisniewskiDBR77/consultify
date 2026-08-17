@@ -246,6 +246,23 @@ export interface PackReadScope {
   actorUserId: string;
 }
 
+/**
+ * The single predicate every read-like pack surface must apply. A scoped
+ * (non-admin) caller may read a row only when it is published, or when they
+ * authored it. Kept as one function so a new read surface cannot drift from
+ * list/get: `getPack`, `validatePackById` and `comparePackVersions` all route
+ * their decision through here.
+ *
+ * Denial is always AuditNotFoundError (404), never a permission error (403),
+ * so the existence of a foreign draft is not disclosed.
+ */
+function assertRowReadable(row: PackRow, readScope: PackReadScope | undefined, label: string): void {
+  if (!readScope) return;
+  if (row.publication_status === 'published') return;
+  if (row.created_by === readScope.actorUserId) return;
+  throw new AuditNotFoundError(label);
+}
+
 export interface ListPacksParams {
   search?: string;
   status?: PublicationStatus;
@@ -330,13 +347,9 @@ export async function getPack(
   readScope?: PackReadScope,
 ): Promise<AuditPack & { criteria: PackCriterionNode[] }> {
   const row = await getPackRow(organizationId, id);
-  if (readScope && row.publication_status !== 'published' && row.created_by !== readScope.actorUserId) {
-    // AUD-MVP-RIGHTS-001 / AMD-AUD-RIGHTS-001: a scoped (non-admin) caller
-    // cannot fetch a draft/in-review pack by id unless they authored it —
-    // this closes the direct-id path around the listPacks default above.
-    // 404, not 403, so the existence of a foreign draft is not disclosed.
-    throw new AuditNotFoundError('Pakiet audytowy');
-  }
+  // AUD-MVP-RIGHTS-001 / AMD-AUD-RIGHTS-001: closes the direct-id path around
+  // the listPacks default above.
+  assertRowReadable(row, readScope, 'Pakiet audytowy');
   const flat = await getCriteriaFlat(id);
   return { ...mapPackRow(row), criteria: buildCriteriaTree(flat) };
 }
@@ -754,8 +767,16 @@ export async function replaceCriteria(
 // Walidacja i publikacja
 // ---------------------------------------------------------------------------
 
-export async function validatePackById(organizationId: string, id: string): Promise<PackValidationResult> {
+export async function validatePackById(
+  organizationId: string,
+  id: string,
+  readScope?: PackReadScope,
+): Promise<PackValidationResult> {
   const row = await getPackRow(organizationId, id);
+  // Validation echoes pack content (title, criteria coverage, source state) in
+  // its findings, so it is a read-like surface and carries the same scope as
+  // getPack — otherwise it becomes a side channel around the 404.
+  assertRowReadable(row, readScope, 'Pakiet audytowy');
   const pack = mapPackRow(row);
   const criteria = await getCriteriaFlat(id);
   const source = await getSourceForPack(pack.sourceId);
@@ -984,6 +1005,7 @@ export async function comparePackVersions(
   packKey: string,
   versionA: number,
   versionB: number,
+  readScope?: PackReadScope,
 ): Promise<PackVersionComparison> {
   const rowA = await auditGet<PackRow>(
     `SELECT * FROM audit_packs WHERE (organization_id = $1 OR organization_id IS NULL) AND pack_key = $2 AND version = $3`,
@@ -995,6 +1017,12 @@ export async function comparePackVersions(
   );
   if (!rowA) throw new AuditNotFoundError(`Pakiet „${packKey}" w wersji ${versionA}`);
   if (!rowB) throw new AuditNotFoundError(`Pakiet „${packKey}" w wersji ${versionB}`);
+  // Compare returns criterion-level diffs — i.e. pack CONTENT — so both sides
+  // carry the same scope as getPack. Denial is the same 404 shape used when a
+  // version is genuinely absent, so a scoped caller cannot distinguish "exists
+  // but not yours" from "does not exist".
+  assertRowReadable(rowA, readScope, `Pakiet „${packKey}" w wersji ${versionA}`);
+  assertRowReadable(rowB, readScope, `Pakiet „${packKey}" w wersji ${versionB}`);
 
   const criteriaA = await getCriteriaFlat(rowA.id);
   const criteriaB = await getCriteriaFlat(rowB.id);

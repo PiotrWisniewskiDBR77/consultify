@@ -423,6 +423,138 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
       expect(after).toEqual(before);
     });
 
+    it('COMPARE is scoped like get: a stranger cannot diff two draft versions, the author can, admin can', async () => {
+      const packKey = `aud-rights-compare-${randomUUID()}`;
+      const v1 = await packService.createPack(memberActor, {
+        packKey,
+        title: 'Pakiet autora — wersja 1',
+        classification: 'INTERNAL_FRAMEWORK',
+        scope: 'Zakres',
+        objectives: 'Cele',
+        requiredRoles: ['lead_auditor'],
+        findingTaxonomy: validTaxonomy,
+      });
+      expect(v1.publicationStatus).toBe('draft');
+      await packService.replaceCriteria(memberActor, v1.id, [validLeafCriterion]);
+      const v2 = await packService.createNewVersion(memberActor, packKey);
+      expect(v2.version).toBeGreaterThan(v1.version);
+
+      const stranger = `aud-rights-compare-stranger-${randomUUID()}`;
+      // A stranger gets the same 404 shape used when a version genuinely does
+      // not exist — no existence leak, no criterion content.
+      await expect(
+        packService.comparePackVersions(orgA, packKey, v1.version, v2.version, {
+          actorUserId: stranger,
+        }),
+      ).rejects.toMatchObject({ code: 'AUDIT_NOT_FOUND' });
+
+      // The author diffs their own drafts.
+      const asAuthor = await packService.comparePackVersions(orgA, packKey, v1.version, v2.version, {
+        actorUserId: memberActor.userId,
+      });
+      expect(asAuthor).toBeTruthy();
+
+      // Admin path (unscoped, per existing policy) still works.
+      const asAdmin = await packService.comparePackVersions(orgA, packKey, v1.version, v2.version);
+      expect(asAdmin).toBeTruthy();
+    });
+
+    it('VALIDATE is scoped like get: a stranger cannot validate a foreign draft, the author and admin can', async () => {
+      const draft = await createDraftPack({
+        packKey: `aud-rights-validate-${randomUUID()}`,
+        title: 'Pakiet roboczy — walidacja',
+      });
+      await packService.replaceCriteria(adminActor, draft.id, [validLeafCriterion]);
+
+      const stranger = `aud-rights-validate-stranger-${randomUUID()}`;
+      await expect(
+        packService.validatePackById(orgA, draft.id, { actorUserId: stranger }),
+      ).rejects.toMatchObject({ code: 'AUDIT_NOT_FOUND' });
+
+      // The author of this one is adminActor (createDraftPack uses it).
+      const asAuthor = await packService.validatePackById(orgA, draft.id, {
+        actorUserId: adminActor.userId,
+      });
+      expect(asAuthor).toBeTruthy();
+
+      const asAdmin = await packService.validatePackById(orgA, draft.id);
+      expect(asAdmin).toBeTruthy();
+    });
+
+    it('a PUBLISHED pack stays readable/comparable/validatable for an ordinary member (contract unchanged)', async () => {
+      const demo = await packSeed.seedDemoAuditPack(orgA, adminActor.userId);
+      const published =
+        demo.publicationStatus === 'published'
+          ? demo
+          : await packService.publishPack(adminActor, demo.id);
+      expect(published.publicationStatus).toBe('published');
+
+      const memberScope = { actorUserId: `aud-rights-published-reader-${randomUUID()}` };
+      expect((await packService.getPack(orgA, published.id, memberScope)).id).toBe(published.id);
+      expect(await packService.validatePackById(orgA, published.id, memberScope)).toBeTruthy();
+      const listed = await packService.listPacks(orgA, { readScope: memberScope });
+      expect(listed.items.some((p) => p.id === published.id)).toBe(true);
+    });
+
+    it('ROUTE-level: compare and validate on a foreign draft both 404 for a member and mutate nothing', async () => {
+      const { default: packsRouter } = await import('../../../routes/audits/packs.routes.js');
+      const packKey = `aud-rights-route-cv-${randomUUID()}`;
+      const v1 = await createDraftPack({ packKey, title: 'Cudzy draft — trasa compare/validate' });
+      await packService.replaceCriteria(adminActor, v1.id, [validLeafCriterion]);
+      await packService.createNewVersion(adminActor, packKey);
+
+      const beforeRows = await auditsDb.auditAll<Record<string, unknown>>(
+        `SELECT * FROM audit_packs WHERE pack_key = $1 ORDER BY version`,
+        [packKey],
+      );
+
+      const app = express();
+      app.use(express.json());
+      app.use((req: Request, _res: Response, next: NextFunction) => {
+        (req as any).user = { id: memberActor.userId, organizationId: memberActor.organizationId };
+        (req as any).organizationId = memberActor.organizationId;
+        (req as any).userId = memberActor.userId;
+        next();
+      });
+      app.use('/', packsRouter);
+
+      const cmp = await request(app).get(`/${packKey}/compare?a=1&b=2`);
+      expect(cmp.status).toBe(404);
+      expect(cmp.body.code).toBe('AUDIT_NOT_FOUND');
+
+      const val = await request(app).post(`/${v1.id}/validate`).send({});
+      expect(val.status).toBe(404);
+      expect(val.body.code).toBe('AUDIT_NOT_FOUND');
+
+      const afterRows = await auditsDb.auditAll<Record<string, unknown>>(
+        `SELECT * FROM audit_packs WHERE pack_key = $1 ORDER BY version`,
+        [packKey],
+      );
+      expect(afterRows).toEqual(beforeRows);
+    });
+
+    it('FOREIGN TENANT gets 404 on get/compare/validate for org A content', async () => {
+      const packKey = `aud-rights-foreign-${randomUUID()}`;
+      const pack = await createDraftPack({ packKey, title: 'Pakiet org A' });
+      await packService.replaceCriteria(adminActor, pack.id, [validLeafCriterion]);
+      await packService.createNewVersion(adminActor, packKey);
+
+      const scopeB = { actorUserId: actorB.userId };
+      await expect(packService.getPack(orgB, pack.id, scopeB)).rejects.toMatchObject({
+        code: 'AUDIT_NOT_FOUND',
+      });
+      await expect(packService.validatePackById(orgB, pack.id, scopeB)).rejects.toMatchObject({
+        code: 'AUDIT_NOT_FOUND',
+      });
+      await expect(
+        packService.comparePackVersions(orgB, packKey, 1, 2, scopeB),
+      ).rejects.toMatchObject({ code: 'AUDIT_NOT_FOUND' });
+      // Even an unscoped (admin-shaped) call from org B is refused by tenant scoping.
+      await expect(packService.comparePackVersions(orgB, packKey, 1, 2)).rejects.toMatchObject({
+        code: 'AUDIT_NOT_FOUND',
+      });
+    });
+
     it('cold readback: a separate pg.Pool confirms the draft is still draft and still owned by its author after all denied reads', async () => {
       const { Pool } = await import('pg');
       const draft = await createDraftPack({
