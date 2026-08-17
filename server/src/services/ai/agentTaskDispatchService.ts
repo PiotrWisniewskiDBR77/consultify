@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 
 import { operationalAlerts } from '../operationalAlertService.js';
-import { queryOne, withPgTransaction } from '../../utils/queryHelpers.js';
+import { withPgTransaction } from '../../utils/queryHelpers.js';
 
 export const AI_TASKS_WORKER_FLAG = 'ENABLE_AI_TASKS_WORKER';
 const SAFE_ID = /^[A-Za-z0-9._:-]{1,128}$/;
@@ -55,7 +55,7 @@ async function awaitWithTimeout<T>(promise: Promise<T>, timeoutMs: number): Prom
 
 export async function dispatchAgentTask(
   input: AgentDispatchInput,
-  options: { env?: NodeJS.ProcessEnv; beforeEnqueue?: () => Promise<void> } = {}
+  options: { env?: NodeJS.ProcessEnv; beforeEnqueue?: () => Promise<void>; replaceExistingJob?: boolean } = {}
 ): Promise<{ status: 'DISABLED' | 'ENQUEUED' | 'REPLAY' | 'PENDING'; receiptId?: string; bullJobId?: string }> {
   const env = options.env ?? process.env;
   if (env[AI_TASKS_WORKER_FLAG] !== 'true') return { status: 'DISABLED' };
@@ -90,19 +90,28 @@ export async function dispatchAgentTask(
         getJob: (id: string) => Promise<{ remove: () => Promise<void> } | null>;
       };
     };
-    if (receipt.status === 'FAILED') {
+    if (receipt.status === 'FAILED' || options.replaceExistingJob) {
       const failedJob = await aiQueue.getJob(id.bullJobId);
       if (failedJob) await failedJob.remove();
     }
-    const enqueuePromise = aiQueue.add('AGENT_BACKGROUND_TASK', {
-      taskType: 'AGENT_BACKGROUND_TASK', userId: id.userId,
-      payload: { planId: id.planId, organizationId: id.organizationId, userId: id.userId,
-        dispatchKey: id.dispatchKey, receiptId: receipt.receipt_id, payloadDigest: id.payloadDigest },
-    }, { jobId: id.bullJobId, removeOnComplete: false, removeOnFail: false });
-    await awaitWithTimeout(enqueuePromise, ENQUEUE_TIMEOUT_MS);
-    await withPgTransaction(async (tx) => { await tx.query(
-      `UPDATE ai_agent_job_receipts SET status='ENQUEUED',updated_at=now() WHERE receipt_id=? AND status IN ('PENDING','FAILED')`,
-      [receipt.receipt_id]); });
+    // Serialize durable state and queue publication for this logical job. The
+    // row lock also makes a fast worker wait for the ENQUEUED commit, while a
+    // Redis failure rolls the state update back to recoverable PENDING.
+    await withPgTransaction(async (tx) => {
+      await tx.query(`SELECT * FROM ai_agent_job_receipts WHERE receipt_id=? FOR UPDATE`,
+        [receipt.receipt_id]);
+      await tx.query(
+        `UPDATE ai_agent_job_receipts SET status='ENQUEUED',updated_at=now()
+          WHERE receipt_id=? AND status IN ('PENDING','FAILED')`,
+        [receipt.receipt_id]
+      );
+      const enqueuePromise = aiQueue.add('AGENT_BACKGROUND_TASK', {
+        taskType: 'AGENT_BACKGROUND_TASK', userId: id.userId,
+        payload: { planId: id.planId, organizationId: id.organizationId, userId: id.userId,
+          dispatchKey: id.dispatchKey, receiptId: receipt.receipt_id, payloadDigest: id.payloadDigest },
+      }, { jobId: id.bullJobId, removeOnComplete: false, removeOnFail: false });
+      await awaitWithTimeout(enqueuePromise, ENQUEUE_TIMEOUT_MS);
+    });
     return { status: 'ENQUEUED', receiptId: receipt.receipt_id, bullJobId: id.bullJobId };
   } catch {
     operationalAlerts.recordWrite({ correlationId: receipt.receipt_id, tenantId: id.organizationId,
@@ -152,12 +161,54 @@ export async function finishAgentTask(receiptId: string, workerId: string, ok: b
   });
 }
 
-export async function redriveAgentTask(receiptId: string, operatorId: string) {
-  const row = await queryOne<ReceiptRow>(`SELECT * FROM ai_agent_job_receipts WHERE receipt_id=?`, [receiptId]);
-  if (!row || row.status !== 'FAILED') throw new Error('AGENT_DISPATCH_NOT_REDRIVABLE');
-  await withPgTransaction(async (tx) => { await tx.query(
-    `INSERT INTO ai_agent_job_attempts(receipt_id,attempt_no,event_type,worker_id) VALUES(?,?,'REDRIVEN',?)`,
-    [receiptId,row.attempt_count + 1,requireId(operatorId,'AGENT_OPERATOR_INVALID')]); });
-  return dispatchAgentTask({ planId: row.plan_id, organizationId: row.organization_id,
-    userId: row.user_id, dispatchKey: row.dispatch_key });
+export async function redriveAgentTask(
+  receiptId: string,
+  operatorId: string,
+  options: { env?: NodeJS.ProcessEnv; beforeEnqueue?: () => Promise<void> } = {}
+) {
+  const env = options.env ?? process.env;
+  // A disabled worker is a hard kill switch: even an operator request must leave
+  // both the receipt and its append-only attempt ledger untouched.
+  if (env[AI_TASKS_WORKER_FLAG] !== 'true') return { status: 'DISABLED' as const };
+  if (env.MOCK_REDIS === 'true') throw new Error('AI_TASKS_WORKER_REQUIRES_REAL_REDIS');
+  const normalizedOperatorId = requireId(operatorId, 'AGENT_OPERATOR_INVALID');
+  const row = await withPgTransaction(async (tx) => {
+    await tx.query(`SELECT pg_advisory_xact_lock(hashtext(?))`, [`agent-redrive:${receiptId}`]);
+    const selected = await tx.query<ReceiptRow>(
+      `SELECT * FROM ai_agent_job_receipts WHERE receipt_id=? FOR UPDATE`,
+      [receiptId]
+    );
+    const current = selected.rows[0];
+    if (!current) throw new Error('AGENT_DISPATCH_NOT_REDRIVABLE');
+    if (current.status === 'FAILED') {
+      const transitioned = await tx.query<ReceiptRow>(
+        `UPDATE ai_agent_job_receipts
+            SET status='PENDING', completed_at=NULL, last_error_code=NULL, updated_at=now()
+          WHERE receipt_id=? AND status='FAILED' RETURNING *`,
+        [receiptId]
+      );
+      await tx.query(
+        `INSERT INTO ai_agent_job_attempts(receipt_id,attempt_no,event_type,worker_id)
+         VALUES(?,?,'REDRIVEN',?)`,
+        [receiptId, transitioned.rows[0].attempt_count + 1, normalizedOperatorId]
+      );
+      return transitioned.rows[0];
+    }
+    if (current.status === 'PENDING') {
+      const prior = await tx.query<{ present: boolean }>(
+        `SELECT EXISTS(
+           SELECT 1 FROM ai_agent_job_attempts
+            WHERE receipt_id=? AND attempt_no=? AND event_type='REDRIVEN'
+         ) AS present`,
+        [receiptId, current.attempt_count + 1]
+      );
+      if (prior.rows[0]?.present) return current;
+    }
+    throw new Error('AGENT_DISPATCH_NOT_REDRIVABLE');
+  });
+  return dispatchAgentTask(
+    { planId: row.plan_id, organizationId: row.organization_id,
+      userId: row.user_id, dispatchKey: row.dispatch_key },
+    { ...options, env, replaceExistingJob: true }
+  );
 }

@@ -1,7 +1,8 @@
 /** @vitest-environment node */
 import { randomUUID } from 'node:crypto';
+import { QueueEvents } from 'bullmq';
 import { Pool } from 'pg';
-import { beforeAll, afterAll, describe, expect, it } from 'vitest';
+import { beforeAll, afterAll, describe, expect, it, vi } from 'vitest';
 
 const enabled = process.env.RUN_DB_TESTS === '1' && process.env.RUN_REDIS_TESTS === '1';
 
@@ -93,4 +94,91 @@ describe.skipIf(!enabled)('DEC-AGT-AUTONOMY durable dispatch — real PG + Redis
     expect(reclaimed.attemptNo).toBe(2);
     await service.finishAgentTask(crashRow.rows[0].receipt_id, 'worker-restarted', true);
   });
+
+  it('keeps OFF redrive immutable and converges two operators through one recoverable Redis-down transition', async () => {
+    const target = { ...input, planId: `redrive-${tag}`, dispatchKey: `redrive-${tag}` };
+    const dispatched = await service.dispatchAgentTask(target);
+    const row = (await pool.query(`SELECT * FROM ai_agent_job_receipts WHERE receipt_id=$1`, [dispatched.receiptId])).rows[0];
+    await service.claimAgentTask({ ...target, receiptId: row.receipt_id,
+      payloadDigest: row.payload_digest, workerId: 'worker-redrive' });
+    await service.finishAgentTask(row.receipt_id, 'worker-redrive', false, new Error('EXHAUSTED'));
+    const before = await pool.query(`SELECT status,attempt_count FROM ai_agent_job_receipts WHERE receipt_id=$1`, [row.receipt_id]);
+    const beforeEvents = await pool.query(`SELECT count(*)::int n FROM ai_agent_job_attempts WHERE receipt_id=$1`, [row.receipt_id]);
+    expect((await service.redriveAgentTask(row.receipt_id, 'operator-off', { env: {} as NodeJS.ProcessEnv })).status)
+      .toBe('DISABLED');
+    expect((await pool.query(`SELECT status,attempt_count FROM ai_agent_job_receipts WHERE receipt_id=$1`, [row.receipt_id])).rows[0])
+      .toEqual(before.rows[0]);
+    expect((await pool.query(`SELECT count(*)::int n FROM ai_agent_job_attempts WHERE receipt_id=$1`, [row.receipt_id])).rows[0].n)
+      .toBe(beforeEvents.rows[0].n);
+
+    const redisDown = async () => { throw new Error('REDIS_DOWN'); };
+    const concurrent = await Promise.all([
+      service.redriveAgentTask(row.receipt_id, 'operator-a', { beforeEnqueue: redisDown }),
+      service.redriveAgentTask(row.receipt_id, 'operator-b', { beforeEnqueue: redisDown }),
+    ]);
+    expect(concurrent.map((result) => result.status)).toEqual(['PENDING', 'PENDING']);
+    const pending = await pool.query(`SELECT status,attempt_count FROM ai_agent_job_receipts WHERE receipt_id=$1`, [row.receipt_id]);
+    expect(pending.rows[0]).toMatchObject({ status: 'PENDING', attempt_count: 1 });
+    const redrives = await pool.query(
+      `SELECT event_type,attempt_no FROM ai_agent_job_attempts WHERE receipt_id=$1 AND event_type='REDRIVEN'`,
+      [row.receipt_id]
+    );
+    expect(redrives.rows).toEqual([{ event_type: 'REDRIVEN', attempt_no: 2 }]);
+    const recovered = await Promise.all([
+      service.redriveAgentTask(row.receipt_id, 'operator-a'),
+      service.redriveAgentTask(row.receipt_id, 'operator-b'),
+    ]);
+    expect(recovered.every((result) => ['ENQUEUED', 'REPLAY'].includes(result.status))).toBe(true);
+    expect((await pool.query(
+      `SELECT count(*)::int n FROM ai_agent_job_attempts WHERE receipt_id=$1 AND event_type='REDRIVEN'`,
+      [row.receipt_id]
+    )).rows[0].n).toBe(1);
+  });
+
+  it('rejects literal UPDATE and DELETE of the append-only attempt ledger', async () => {
+    const attempt = await pool.query(`SELECT attempt_id FROM ai_agent_job_attempts ORDER BY created_at LIMIT 1`);
+    expect(attempt.rows[0]?.attempt_id).toBeTruthy();
+    await expect(pool.query(`UPDATE ai_agent_job_attempts SET worker_id='tampered' WHERE attempt_id=$1`, [attempt.rows[0].attempt_id]))
+      .rejects.toThrow(/append.only/i);
+    await expect(pool.query(`DELETE FROM ai_agent_job_attempts WHERE attempt_id=$1`, [attempt.rows[0].attempt_id]))
+      .rejects.toThrow(/append.only/i);
+  });
+
+  it('links Bull exhaustion to durable FAILED, explicit redrive and terminal success', async () => {
+    const { default: queue } = await import('../../../queues/aiQueue.js');
+    await queue.obliterate({ force: true });
+    const queueEvents = new QueueEvents('ai-tasks', { connection: queue.opts.connection as never });
+    await queueEvents.waitUntilReady();
+    const { agentPlannerService } = await import('../agentPlannerService.js');
+    const planner = vi.spyOn(agentPlannerService, 'executeBackgroundPlan')
+      .mockRejectedValue(new Error('INVALID_PLAN_ENVELOPE'));
+    const { initWorker } = await import('../../../workers/aiWorker.js');
+    const worker = initWorker();
+    expect(worker).not.toBeNull();
+    try {
+      const target = { ...input, planId: `bull-${tag}`, dispatchKey: `bull-${tag}` };
+      const dispatched = await service.dispatchAgentTask(target);
+      const firstJob = await queue.getJob(dispatched.bullJobId!);
+      await expect(firstJob!.waitUntilFinished(queueEvents, 30_000)).rejects.toThrow('INVALID_PLAN_ENVELOPE');
+      const failed = await pool.query(`SELECT status,attempt_count FROM ai_agent_job_receipts WHERE receipt_id=$1`,
+        [dispatched.receiptId]);
+      expect(failed.rows[0]).toMatchObject({ status: 'FAILED', attempt_count: 3 });
+
+      planner.mockResolvedValue({ id: target.planId } as never);
+      expect((await service.redriveAgentTask(dispatched.receiptId!, 'operator-recovery')).status).toBe('ENQUEUED');
+      const recoveryJob = await queue.getJob(dispatched.bullJobId!);
+      await expect(recoveryJob!.waitUntilFinished(queueEvents, 30_000)).resolves.toBeTruthy();
+      const terminal = await pool.query(`SELECT status,attempt_count FROM ai_agent_job_receipts WHERE receipt_id=$1`,
+        [dispatched.receiptId]);
+      expect(terminal.rows[0]).toMatchObject({ status: 'SUCCEEDED', attempt_count: 4 });
+      expect((await pool.query(
+        `SELECT count(*)::int n FROM ai_agent_job_attempts WHERE receipt_id=$1 AND event_type='REDRIVEN'`,
+        [dispatched.receiptId]
+      )).rows[0].n).toBe(1);
+    } finally {
+      planner.mockRestore();
+      await worker?.close();
+      await queueEvents.close();
+    }
+  }, 60_000);
 });
