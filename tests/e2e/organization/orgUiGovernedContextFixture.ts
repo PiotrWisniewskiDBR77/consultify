@@ -1,4 +1,5 @@
-import { createHash, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
+import fs from 'node:fs/promises';
 
 import jwt from 'jsonwebtoken';
 import { Pool } from 'pg';
@@ -10,9 +11,12 @@ export interface OrgUiGovernedFixture {
   pool: Pool;
   organizationId: string;
   foreignOrganizationId: string;
-  docId: string;
+  readonly docId: string | null;
   tokens: Record<OrgUiPersona, string>;
   users: Record<OrgUiPersona, { id: string; organizationId: string; role: string }>;
+  bindUploadedDocument(docId: string, filename: string): Promise<string>;
+  setUploadedDocumentHash(fileHash: string | null): Promise<void>;
+  deleteUploadedDocument(): Promise<void>;
   cleanup(): Promise<void>;
 }
 
@@ -39,7 +43,8 @@ export async function createOrgUiGovernedFixture(): Promise<OrgUiGovernedFixture
   }
   const organizationId = randomUUID();
   const foreignOrganizationId = randomUUID();
-  const docId = randomUUID();
+  let docId: string | null = null;
+  let uploadedFilePath: string | null = null;
   const users = {
     owner: { id: randomUUID(), organizationId, role: 'OWNER' },
     member: { id: randomUUID(), organizationId, role: 'MEMBER' },
@@ -76,12 +81,6 @@ export async function createOrgUiGovernedFixture(): Promise<OrgUiGovernedFixture
       ]
     );
   }
-  await pool.query(
-    `INSERT INTO knowledge_docs (id,filename,file_hash,version,organization_id,status)
-     VALUES ($1,'governed-strategy.txt',$2,1,$3,'ready')`,
-    [docId, createHash('sha256').update('ORG UI governed source').digest('hex'), organizationId]
-  );
-
   const { default: config } = await import('../../../server/src/config/Config.js');
   const tokens = Object.fromEntries(
     (Object.entries(users) as Array<[OrgUiPersona, (typeof users)[OrgUiPersona]]>).map(
@@ -130,7 +129,7 @@ export async function createOrgUiGovernedFixture(): Promise<OrgUiGovernedFixture
         `DELETE FROM organization_context_snapshots WHERE organization_id = ANY($1)`,
         [orgIds]
       );
-      await cleanupClient.query(`DELETE FROM knowledge_docs WHERE id=$1`, [docId]);
+      if (docId) await cleanupClient.query(`DELETE FROM knowledge_docs WHERE id=$1`, [docId]);
       await cleanupClient.query(
         `DELETE FROM organization_members WHERE organization_id = ANY($1)`,
         [orgIds]
@@ -162,25 +161,51 @@ export async function createOrgUiGovernedFixture(): Promise<OrgUiGovernedFixture
     }
   };
 
-  try {
-    const { default: organizationContextService } = await import(
-      '../../../server/src/services/organizationContext/OrganizationContextService.js'
+  const bindUploadedDocument = async (uploadedDocId: string, filename: string) => {
+    if (docId && docId !== uploadedDocId) throw new Error('ORG UI source document already bound');
+    const persisted = await pool.query<{
+      file_hash: string | null;
+      filepath: string | null;
+      original_name: string | null;
+    }>(
+      `SELECT file_hash, filepath, original_name FROM knowledge_docs WHERE id=$1 AND organization_id=$2`,
+      [uploadedDocId, organizationId]
     );
-    await organizationContextService.recordAttachmentExtraction({
+    if (persisted.rows.length !== 1 || !persisted.rows[0].file_hash) {
+      throw new Error('production upload did not persist a verifiable source digest');
+    }
+    docId = uploadedDocId;
+    uploadedFilePath = persisted.rows[0].filepath;
+    expectFilename(filename, persisted.rows[0].original_name);
+    return persisted.rows[0].file_hash;
+  };
+
+  const setUploadedDocumentHash = async (fileHash: string | null) => {
+    if (!docId) throw new Error('ORG UI source document is not bound');
+    await pool.query(`UPDATE knowledge_docs SET file_hash=$1 WHERE id=$2 AND organization_id=$3`, [
+      fileHash,
+      docId,
       organizationId,
-      userId: users.owner.id,
-      payload: {
-        docId,
-        filename: 'governed-strategy.txt',
-        extractedText: 'The organization serves industrial transformation customers.',
-      },
-    });
+    ]);
+  };
+
+  const deleteUploadedDocument = async () => {
+    if (!docId) throw new Error('ORG UI source document is not bound');
+    await pool.query(`DELETE FROM knowledge_docs WHERE id=$1 AND organization_id=$2`, [
+      docId,
+      organizationId,
+    ]);
+  };
+
+  try {
+    const { default: organizationContextService } =
+      await import('../../../server/src/services/organizationContext/OrganizationContextService.js');
     // The source writer creates organization-visible evidence. Add one restricted
     // claim through the same production service contract to prove API filtering.
     await organizationContextService.recordContextSource({
       organizationId,
       sourceType: 'manual_context',
-      sourceId: `restricted-${docId}`,
+      sourceId: `restricted-${organizationId}`,
       sourceVersion: '1',
       visibilityScope: 'restricted',
       createdBy: users.owner.id,
@@ -204,12 +229,30 @@ export async function createOrgUiGovernedFixture(): Promise<OrgUiGovernedFixture
   const cleanup = async () => {
     try {
       await cleanupRows();
+      if (uploadedFilePath) await fs.rm(uploadedFilePath, { force: true });
     } finally {
       await pool.end();
     }
   };
 
-  return { pool, organizationId, foreignOrganizationId, docId, tokens, users, cleanup };
+  return {
+    pool,
+    organizationId,
+    foreignOrganizationId,
+    get docId() {
+      return docId;
+    },
+    tokens,
+    users,
+    bindUploadedDocument,
+    setUploadedDocumentHash,
+    deleteUploadedDocument,
+    cleanup,
+  };
+}
+
+function expectFilename(actual: string, expected: string | null): void {
+  if (actual !== expected) throw new Error(`unexpected ORG UI source filename: ${actual}`);
 }
 
 export async function seedOrgUiBrowserAuth(

@@ -808,7 +808,13 @@ export interface GovernedSnapshotVersion {
 
 export interface DanglingSourceRef extends GovernedSourceRef {
   dangling: boolean;
-  danglingReason: 'deleted' | 'soft_deleted' | 'hash_mismatch' | null;
+  danglingReason:
+    | 'deleted'
+    | 'soft_deleted'
+    | 'source_hash_unverified'
+    | 'hash_unavailable'
+    | 'hash_mismatch'
+    | null;
 }
 
 export interface PinnedSnapshotRead extends GovernedSnapshotVersion {
@@ -2260,8 +2266,15 @@ export class OrganizationContextService {
         }
         const live = liveDocById.get(r.sourceDocId);
         if (!live) return { ...r, dangling: true, danglingReason: 'deleted' as const };
-        if (live.deleted_at) return { ...r, dangling: true, danglingReason: 'soft_deleted' as const };
-        if (r.fileHash && live.file_hash && live.file_hash !== r.fileHash) {
+        if (live.deleted_at)
+          return { ...r, dangling: true, danglingReason: 'soft_deleted' as const };
+        if (!r.fileHash) {
+          return { ...r, dangling: true, danglingReason: 'source_hash_unverified' as const };
+        }
+        if (!live.file_hash) {
+          return { ...r, dangling: true, danglingReason: 'hash_unavailable' as const };
+        }
+        if (live.file_hash !== r.fileHash) {
           return { ...r, dangling: true, danglingReason: 'hash_mismatch' as const };
         }
         return { ...r, dangling: false, danglingReason: null };

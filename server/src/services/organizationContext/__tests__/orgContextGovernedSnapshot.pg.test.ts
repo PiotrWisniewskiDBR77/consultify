@@ -164,33 +164,25 @@ describe('ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spi
 
   afterAll(async () => {
     if (!connected) return; // beforeAll threw before connecting — nothing to clean up.
-    await client
-      .query(`DELETE FROM organization_context_snapshot_versions WHERE organization_id = ANY($1)`, [
-        [orgA, orgB, orgEmpty],
-      ])
-      .catch(() => {});
-    await client
-      .query(`DELETE FROM organization_context_claim_reviews WHERE organization_id = ANY($1)`, [
-        [orgA, orgB, orgEmpty],
-      ])
-      .catch(() => {});
-    await client
-      .query(`DELETE FROM organization_context_claims WHERE organization_id = ANY($1)`, [
-        [orgA, orgB, orgEmpty],
-      ])
-      .catch(() => {});
-    await client
-      .query(`DELETE FROM organization_context_items WHERE organization_id = ANY($1)`, [
-        [orgA, orgB, orgEmpty],
-      ])
-      .catch(() => {});
-    await client.query(`DELETE FROM knowledge_docs WHERE id = $1`, [docId]).catch(() => {});
-    await client
-      .query(`DELETE FROM users WHERE id = ANY($1)`, [[userA, userB, userEmpty]])
-      .catch(() => {});
-    await client
-      .query(`DELETE FROM organizations WHERE id = ANY($1)`, [[orgA, orgB, orgEmpty]])
-      .catch(() => {});
+    await client.query('BEGIN');
+    await client.query(`SELECT pg_advisory_xact_lock(hashtext('org-context-governed-snapshot'))`);
+    await client.query(
+      `DELETE FROM organization_context_snapshot_versions WHERE organization_id = ANY($1)`,
+      [[orgA, orgB, orgEmpty]]
+    );
+    await client.query(
+      `DELETE FROM organization_context_claim_reviews WHERE organization_id = ANY($1)`,
+      [[orgA, orgB, orgEmpty]]
+    );
+    await client.query(`DELETE FROM organization_context_claims WHERE organization_id = ANY($1)`, [
+      [orgA, orgB, orgEmpty],
+    ]);
+    await client.query(`DELETE FROM organization_context_items WHERE organization_id = ANY($1)`, [
+      [orgA, orgB, orgEmpty],
+    ]);
+    await client.query(`DELETE FROM knowledge_docs WHERE id = $1`, [docId]);
+    await client.query(`DELETE FROM users WHERE id = ANY($1)`, [[userA, userB, userEmpty]]);
+    await client.query(`DELETE FROM organizations WHERE id = ANY($1)`, [[orgA, orgB, orgEmpty]]);
 
     // Test-hygiene proof: zero leftovers for every fixture id, across every
     // table this suite touched.
@@ -207,6 +199,28 @@ describe('ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spi
       [[orgA, orgB, orgEmpty], docId, [userA, userB, userEmpty]]
     );
     expect(Number(leftovers.rows[0].n)).toBe(0);
+
+    const schemaState = await client.query<{
+      trigger_enabled: string;
+      constraint_valid: boolean;
+      file_hash_rows: string;
+    }>(
+      `SELECT
+         (SELECT tgenabled FROM pg_trigger
+           WHERE tgrelid = 'organization_context_snapshot_versions'::regclass
+             AND tgname = 'trg_ocsv_block_update') AS trigger_enabled,
+         (SELECT convalidated FROM pg_constraint
+           WHERE conrelid = 'knowledge_docs'::regclass
+             AND conname = 'ck_knowledge_docs_file_hash_sha256') AS constraint_valid,
+         (SELECT COUNT(*) FROM knowledge_docs WHERE id = $1) AS file_hash_rows`,
+      [docId]
+    );
+    expect(schemaState.rows[0]).toMatchObject({
+      trigger_enabled: 'O',
+      constraint_valid: true,
+      file_hash_rows: '0',
+    });
+    await client.query('COMMIT');
 
     await client.end();
   });
@@ -445,18 +459,29 @@ describe('ORG-BVP-001/ORG-OPS-001 — governed organization-context snapshot spi
     expect(changedRef?.dangling).toBe(true);
     expect(changedRef?.danglingReason).toBe('hash_mismatch');
 
-    // Historical documents whose original bytes were unavailable are
-    // deliberately NULL, never assigned a fabricated digest. NULL means
-    // "unknown", so the reader preserves the frozen ref without inventing a
-    // mismatch against an unverifiable live value.
+    // A frozen hash cannot be verified when the live source has no digest.
+    // This is fail-closed and distinct from a proven byte mismatch.
     await client.query(`UPDATE knowledge_docs SET file_hash = NULL WHERE id = $1`, [docId]);
     const unknown = await organizationContextService.getSnapshotVersion(orgA, 1, {
       includeRestricted: true,
     });
     const unknownRef = unknown!.sourceRefs.find((r: any) => r.claimId === claimWithDoc);
     expect(unknownRef?.fileHash).toBe(docHashV1);
-    expect(unknownRef?.dangling).toBe(false);
-    expect(unknownRef?.danglingReason).toBeNull();
+    expect(unknownRef?.dangling).toBe(true);
+    expect(unknownRef?.danglingReason).toBe('hash_unavailable');
+
+    // A snapshot frozen while the source digest is unknown is also explicitly
+    // unverifiable: NULL is never treated as equality or assigned a digest.
+    const unverified = await organizationContextService.publishSnapshotVersion(orgA, userA);
+    const unverifiedRead = await organizationContextService.getSnapshotVersion(
+      orgA,
+      unverified.version,
+      { includeRestricted: true }
+    );
+    const unverifiedRef = unverifiedRead!.sourceRefs.find((r: any) => r.claimId === claimWithDoc);
+    expect(unverifiedRef?.fileHash).toBeNull();
+    expect(unverifiedRef?.dangling).toBe(true);
+    expect(unverifiedRef?.danglingReason).toBe('source_hash_unverified');
   });
 
   it('canonicalizeForHash sorts object keys recursively (order-independent hashing)', () => {

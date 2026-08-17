@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { createHash } from 'node:crypto';
 
 import {
   type OrgUiGovernedFixture,
@@ -36,7 +37,26 @@ test.describe('ORG-UI-CANON-001 governed context journey', () => {
   test('owner reviews document claims, publishes, reopens exact versions and cold-reloads them', async ({
     page,
     browser,
+    request,
   }) => {
+    const apiBase = process.env.E2E_BACKEND_URL || 'http://127.0.0.1:3001';
+    const knownBytes = Buffer.from('ORG UI governed source\nknown byte fixture v1', 'utf8');
+    const expectedDigest = createHash('sha256').update(knownBytes).digest('hex');
+    const upload = await request.post(`${apiBase}/api/documents/upload`, {
+      headers: { Authorization: `Bearer ${fixture.tokens.owner}` },
+      multipart: {
+        scope: 'user',
+        file: { name: 'governed-strategy.txt', mimeType: 'text/plain', buffer: knownBytes },
+      },
+    });
+    const uploaded = await upload.json();
+    expect(upload.status(), JSON.stringify(uploaded)).toBe(201);
+    const persistedDigest = await fixture.bindUploadedDocument(
+      uploaded.document.id,
+      'governed-strategy.txt'
+    );
+    expect(persistedDigest).toBe(expectedDigest);
+
     await seedOrgUiBrowserAuth(page, fixture, 'owner');
     await page.goto('/organization/context-governance');
     await expect(page.getByTestId('governed-context-workspace')).toBeVisible();
@@ -53,7 +73,11 @@ test.describe('ORG-UI-CANON-001 governed context journey', () => {
     await expect(publish).toBeEnabled();
     await publish.click();
     await expect(page.getByText('Immutable version 1 was published.')).toBeVisible();
-    const firstHash = (await page.getByText(/^[a-f0-9]{64}$/).first().textContent()) ?? '';
+    const firstHash =
+      (await page
+        .getByText(/^[a-f0-9]{64}$/)
+        .first()
+        .textContent()) ?? '';
     expect(firstHash).toHaveLength(64);
 
     await publish.click();
@@ -68,6 +92,42 @@ test.describe('ORG-UI-CANON-001 governed context journey', () => {
     await expect(coldPage.getByText('Version 2')).toBeVisible();
     await expect(coldPage.getByText('Version 1')).toBeVisible();
     await cold.close();
+
+    const exactVersion = await request.get(
+      `${apiBase}/api/organization-context/governed/versions/1`,
+      { headers: { Authorization: `Bearer ${fixture.tokens.owner}` } }
+    );
+    expect(exactVersion.status()).toBe(200);
+    const exactBody = await exactVersion.json();
+    const sourceRef = exactBody.sourceRefs.find(
+      (ref: { sourceDocId?: string }) => ref.sourceDocId === fixture.docId
+    );
+    expect(sourceRef).toMatchObject({ fileHash: expectedDigest, dangling: false });
+
+    await fixture.setUploadedDocumentHash('f'.repeat(64));
+    const mismatch = await request.get(`${apiBase}/api/organization-context/governed/versions/1`, {
+      headers: { Authorization: `Bearer ${fixture.tokens.owner}` },
+    });
+    expect((await mismatch.json()).sourceRefs).toContainEqual(
+      expect.objectContaining({ sourceDocId: fixture.docId, danglingReason: 'hash_mismatch' })
+    );
+
+    await fixture.setUploadedDocumentHash(null);
+    const unavailable = await request.get(
+      `${apiBase}/api/organization-context/governed/versions/1`,
+      { headers: { Authorization: `Bearer ${fixture.tokens.owner}` } }
+    );
+    expect((await unavailable.json()).sourceRefs).toContainEqual(
+      expect.objectContaining({ sourceDocId: fixture.docId, danglingReason: 'hash_unavailable' })
+    );
+
+    await fixture.deleteUploadedDocument();
+    const deleted = await request.get(`${apiBase}/api/organization-context/governed/versions/1`, {
+      headers: { Authorization: `Bearer ${fixture.tokens.owner}` },
+    });
+    expect((await deleted.json()).sourceRefs).toContainEqual(
+      expect.objectContaining({ sourceDocId: fixture.docId, danglingReason: 'deleted' })
+    );
   });
 
   test('member is read-only, confidentiality filtered, revoked and foreign tenants fail closed', async ({
