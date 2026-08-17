@@ -8,10 +8,50 @@ Nie wolno: push, merge, deploy, release, produkcyjny rollout, usuwanie branchy/w
 
 ## Start i izolacja
 
-1. Utwórz nową gałąź `codex/claude-e2-safe-legacy-cutover` z exact SHA canonical przekazanego przez integratora. Nie kontynuuj na starym tipie `97dd6077f6`.
+1. Utwórz nową gałąź `codex/claude-e2-safe-legacy-cutover` z canonical SHA
+   `3e16c031d92d47fee45120ca4f946a2cc5ae4bf3`. Nie kontynuuj na starym
+   tipie `97dd6077f6`. Ten SHA zawiera selektywnie zintegrowany kernel
+   `bf0c28e3b77cf726899cb91fc42b011623248413`; E2-01 zaczyna się więc od
+   weryfikacji i adaptacji tego kernela, a nie od ponownego portowania E1.
 2. Stary branch `codex/claude-next-legacy-cutover` jest źródłem diffów i dowodów, nie bazą integracji.
 3. Przed każdą edycją zapisz `pwd`, branch, HEAD, status i merge-base. Zatrzymaj się przy obcej zmianie w owned path.
 4. Każdy nowy plik i migracja muszą należeć do jawnej allowlisty w handoffie.
+
+### Allowlista E2
+
+- `server/src/services/legacyCutover/**`
+- `server/scripts/legacy-cutover-*.{ts,mjs}`
+- nowe migracje wyłącznie `server/migrations/20260926_legacy_cutover_*.sql`
+  lub późniejsze; **nie edytuj zastosowanych** `20260923` i `20260924`
+- nowe testy pod `server/src/services/legacyCutover/__tests__/**` oraz
+  `tests/integration/legacy-cutover/**`
+- route-local pliki posiadające konkretny writer tylko dla minimalnego mountu
+  po istniejącym auth/membership; każdy taki plik musi znaleźć się w
+  `E2_ROUTE_MOUNT_ALLOWLIST.json` z writer IDs i uzasadnieniem hunków
+- `docs/program/evidence/closure/claude-e2/**` oraz wygenerowane raporty E2
+
+Denylista: `server/src/Gateway.ts`, `server/src/routes/v8/index.ts`, globalne
+mounty, auth middleware, zmiany domyślnego rollout flag, usuwanie istniejących
+tabel/tras, edycja zastosowanych migracji, automatyczne przejście do `DISABLED`.
+
+### Mierzalny budżet E2-03/E2-05
+
+Test: 30 minut, 50 równoległych uwierzytelnionych klientów oraz ciągły drugi
+tenant jako kontrola negatywna. Porównanie observation OFF vs ON:
+
+- przy zdrowym storage: wzrost p95 <= 10 ms, wzrost p99 <= 25 ms;
+- przy niedostępnym storage: wzrost p95 <= 10 ms, wzrost p99 <= 25 ms,
+  zero dodatkowych 5xx dla `OBSERVED/PROTECTED`;
+- `DISABLED` pozostaje 100% fail-closed także przy awarii storage;
+- zdrowy storage: 0 utraconych zaakceptowanych eventów i 0 tenant leak;
+- kolejka jest ograniczona, a każdy drop/overflow ma licznik; wymuszony overflow
+  nie może zwiększyć heapu po warm-up o >=20%;
+- średnio nie więcej niż 1 DB round-trip na 100 observation events (bulk/batch)
+  w stabilnym oknie;
+- request error rate <0.5%; p95 całego non-AI API nadal <=750 ms i p99 <=1500 ms.
+
+Przekroczenie któregokolwiek progu to literalny `FAIL`, nie ostrzeżenie ani
+średnia ukrywająca czerwony przebieg.
 
 ## Cel końcowy
 
