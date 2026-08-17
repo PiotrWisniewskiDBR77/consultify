@@ -757,17 +757,22 @@ describe('FIN-005 seed — the ROI model economics are transcribed, not invented
   });
 
   it('does not import the only writer of financial_model_outputs — it deletes', () => {
-    // `persistComputeResult` opens with `DELETE FROM financial_model_outputs`,
-    // so importing it would put a destructive statement inside a command whose
-    // whole contract is that it has none. Prove the premise, then the abstention.
+    // The canonical modeling module performs `DELETE FROM
+    // financial_model_outputs`, so importing it would put a destructive
+    // statement inside a command whose whole contract is that it has none.
+    // Prove the premise, then the abstention.
+    //
+    // The premise is checked against the WHOLE module rather than a fixed
+    // character window under `persistComputeResult`: which function inside
+    // this module physically holds the DELETE is an implementation detail
+    // (it legitimately moves when the write path is refactored, e.g. to
+    // share one transaction with approveModel), whereas "this module is the
+    // destructive writer" is the property this test actually depends on.
     const modelingSource = fs.readFileSync(
       path.join(REPO_ROOT, 'server/src/services/financialModelingService.ts'),
       'utf8'
     );
-    const persist = modelingSource.slice(
-      modelingSource.indexOf('export async function persistComputeResult')
-    );
-    expect(persist.slice(0, 800)).toMatch(/DELETE FROM financial_model_outputs/);
+    expect(modelingSource).toMatch(/DELETE FROM financial_model_outputs/);
     // Comments stripped: the module's prose EXPLAINS why it abstains, and must
     // be allowed to name what it abstains from.
     const code = MODULE_SOURCE.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');

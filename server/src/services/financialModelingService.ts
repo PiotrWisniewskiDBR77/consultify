@@ -1112,19 +1112,57 @@ function round2(n: number): number {
 // Persist outputs & validations
 // ---------------------------------------------------------------------------
 
-export async function persistComputeResult(
+/** Minimal shape both `PoolClient` and our own pinned-transaction wrapper satisfy. */
+type SqlClient = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[]; rowCount?: number | null }> };
+
+/**
+ * Build a chunked multi-row INSERT (native $N placeholders) so N rows cost a
+ * handful of round-trips instead of N. Chunk size is bounded well under
+ * Postgres's ~65535 bind-parameter limit.
+ */
+async function insertRowsBatched(
+  client: SqlClient,
+  sql: string,
+  columnCount: number,
+  rows: unknown[][],
+  batchSize = 500
+): Promise<void> {
+  for (let offset = 0; offset < rows.length; offset += batchSize) {
+    const batch = rows.slice(offset, offset + batchSize);
+    let paramIndex = 1;
+    const placeholders = batch
+      .map(() => `(${Array.from({ length: columnCount }, () => `$${paramIndex++}`).join(', ')})`)
+      .join(', ');
+    await client.query(`${sql} VALUES ${placeholders}`, batch.flat());
+  }
+}
+
+/**
+ * CORRECTNESS (B2 correction): everything computeModel() produces for one
+ * model -- output rows, inline validations, and the R1-R8 shadow-reconcile
+ * checks -- written on the CALLER's client, inside the CALLER's transaction.
+ * This function issues no BEGIN/COMMIT/ROLLBACK of its own and does not
+ * acquire or release a connection; it is only ever called with an
+ * already-open, caller-owned client so that a failure at ANY point here
+ * (an output row, a validation row, a shadow-reconcile row) rolls back
+ * everything the caller wrote before calling this, not just this function's
+ * own writes. There is deliberately no non-fatal try/catch around the
+ * shadow-reconcile write here anymore: a fault there now fails the whole
+ * unit of work rather than silently completing with a missing shadow
+ * observation while claiming success.
+ */
+async function writeComputeResultRows(
+  client: SqlClient,
   modelId: string,
   result: ComputeResult,
-  scenario: string = 'base'
+  scenario: string
 ): Promise<void> {
-  // Clear previous outputs and validations
-  await dbRun(`DELETE FROM financial_model_outputs WHERE model_id = ? AND scenario = ?`, [
+  await client.query(`DELETE FROM financial_model_outputs WHERE model_id = $1 AND scenario = $2`, [
     modelId,
     scenario,
   ]);
-  await dbRun(`DELETE FROM financial_model_validations WHERE model_id = ?`, [modelId]);
+  await client.query(`DELETE FROM financial_model_validations WHERE model_id = $1`, [modelId]);
 
-  // Save outputs
   const outputRows: unknown[][] = [];
   for (const period of result.periods) {
     for (const [type, lines] of [
@@ -1147,71 +1185,96 @@ export async function persistComputeResult(
       }
     }
   }
+  await insertRowsBatched(
+    client,
+    `INSERT INTO financial_model_outputs
+     (id, model_id, period_date, period_label, statement_type, line_code, line_name, value, scenario)`,
+    9,
+    outputRows
+  );
 
-  // One query per output made a normal 60-month model issue 2460 sequential
-  // round-trips. Apart from taking over a minute locally, a timeout could be
-  // swallowed by the per-row catch and still return a hollow success. Persist
-  // bounded batches and fail closed: either every advertised output lands or
-  // the compute request fails visibly.
-  const OUTPUT_BATCH_SIZE = 250;
-  for (let offset = 0; offset < outputRows.length; offset += OUTPUT_BATCH_SIZE) {
-    const batch = outputRows.slice(offset, offset + OUTPUT_BATCH_SIZE);
-    const placeholders = batch.map(() => '(?, ?, ?, ?, ?, ?, ?, ?, ?)').join(', ');
-    await dbRun(
-      `INSERT INTO financial_model_outputs
-       (id, model_id, period_date, period_label, statement_type, line_code, line_name, value, scenario)
-       VALUES ${placeholders}`,
-      batch.flat()
-    );
-  }
-
-  logger.info('[financialModeling] persistComputeResult outputs', {
+  logger.info('[financialModeling] writeComputeResultRows outputs', {
     modelId,
     scenario,
     periods: result.periods.length,
     outputsInserted: outputRows.length,
-    outputsFailed: 0,
-    firstOutputError: null,
   });
 
-  // Save validations
-  for (const v of result.validations) {
-    await dbRun(
-      `INSERT INTO financial_model_validations (id, model_id, period_date, check_code, check_name, status, expected_value, actual_value, difference, message) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        uuidv4(),
-        modelId,
-        v.periodDate || null,
-        v.checkCode,
-        v.checkName,
-        v.status,
-        v.expected,
-        v.actual,
-        v.difference,
-        v.message,
-      ]
-    );
-  }
+  const validationRows = result.validations.map((v) => [
+    uuidv4(),
+    modelId,
+    v.periodDate || null,
+    v.checkCode,
+    v.checkName,
+    v.status,
+    v.expected,
+    v.actual,
+    v.difference,
+    v.message,
+  ]);
+  await insertRowsBatched(
+    client,
+    `INSERT INTO financial_model_validations
+     (id, model_id, period_date, check_code, check_name, status, expected_value, actual_value, difference, message)`,
+    10,
+    validationRows
+  );
 
-  // ── SHADOW: reconcile R1-R8 over the computed periods (observational) ──────
-  // Adds R1-R8 records ALONGSIDE the existing inline checks. It does NOT touch
-  // result.validations, result.overallStatus, or the model status below, so the
-  // existing compute contract is unchanged. Wrapped so a fault is non-fatal.
-  try {
-    await shadowReconcileModel(modelId, result);
-  } catch (err) {
-    logger.warn('[reconcile-shadow] model reconcile failed (non-fatal)', {
-      modelId,
-      error: err instanceof Error ? err.message : String(err),
-    });
-  }
+  // SHADOW: R1-R8 reconcile over the computed periods. Part of the SAME unit
+  // of work now -- see the function doc comment above for why this is no
+  // longer wrapped in a non-fatal try/catch.
+  await shadowReconcileModel(client, modelId, result);
 
-  // Update model validation status
-  const modelStatus = result.overallStatus === 'fail' ? 'draft' : undefined;
-  if (modelStatus) {
-    await dbRun(`UPDATE financial_models SET updated_at = CURRENT_TIMESTAMP WHERE id = ?`, [
+  // Preserved from the pre-correction implementation: touches only
+  // updated_at, not status, on a failing compute. Kept verbatim rather than
+  // removed or "fixed" -- out of scope for this correctness pass.
+  if (result.overallStatus === 'fail') {
+    await client.query(`UPDATE financial_models SET updated_at = CURRENT_TIMESTAMP WHERE id = $1`, [
       modelId,
     ]);
+  }
+}
+
+/**
+ * Public entry point for the three non-approve callers (compute-preview
+ * routes and valuationService.ts) that just need "recompute and persist",
+ * with no CAS/version/approval semantics. Owns its own connection and
+ * transaction boundary: BEGIN, write everything via writeComputeResultRows,
+ * COMMIT -- genuinely atomic for the first time (previously each DELETE/
+ * INSERT/shadow-check was its own independent connection checkout with no
+ * transaction at all). The PoolClient is released in `finally` on every
+ * path: BEGIN failure, a write failure, COMMIT failure, and ROLLBACK
+ * failure (which is logged, never thrown in place of the original error).
+ */
+export async function persistComputeResult(
+  modelId: string,
+  result: ComputeResult,
+  scenario: string = 'base'
+): Promise<void> {
+  const { getPoolClientForPinnedTransaction } = await import('../database/PostgresDatabase.js');
+  const client = await getPoolClientForPinnedTransaction();
+  let began = false;
+  try {
+    await client.query('BEGIN');
+    began = true;
+    await writeComputeResultRows(client, modelId, result, scenario);
+    await client.query('COMMIT');
+    began = false;
+  } catch (error) {
+    if (began) {
+      try {
+        await client.query('ROLLBACK');
+      } catch (rollbackError) {
+        logger.error('[financialModeling] persistComputeResult ROLLBACK failed after a prior error', {
+          modelId,
+          originalError: error instanceof Error ? error.message : String(error),
+          rollbackError: rollbackError instanceof Error ? rollbackError.message : String(rollbackError),
+        });
+      }
+    }
+    throw error;
+  } finally {
+    client.release();
   }
 }
 
@@ -1222,8 +1285,23 @@ export async function persistComputeResult(
  *   - severity + tolerance + rich details are written to the `details` TEXT col;
  *   - skipped checks are NOT written as rows (captured in RECONCILE_SUMMARY).
  * No migration required. Never changes model status (RECONCILE_ENFORCE=false).
+ *
+ * CORRECTNESS (B2 correction): writes on the CALLER's client, inside the
+ * caller's transaction -- no longer wrapped in a non-fatal try/catch by its
+ * caller. A shadow-reconcile fault now fails (and rolls back) the whole
+ * write, the same as an outputs or validations fault. That is a deliberate
+ * behaviour change from the pre-correction contract ("shadow never blocks
+ * approve"): the correction explicitly required that nothing claim
+ * atomicity while shadow writes happen after commit or on a different
+ * connection, and the forced-failure matrix requires a shadow fault to
+ * prove a full rollback with no partial data -- both are only true if
+ * shadow reconcile is a first-class part of the same unit of work.
  */
-async function shadowReconcileModel(modelId: string, result: ComputeResult): Promise<void> {
+async function shadowReconcileModel(
+  client: SqlClient,
+  modelId: string,
+  result: ComputeResult
+): Promise<void> {
   const periods: PeriodStatements[] = result.periods.map((p) => ({
     pnl: p.pl,
     bs: p.bs,
@@ -1234,57 +1312,60 @@ async function shadowReconcileModel(modelId: string, result: ComputeResult): Pro
   const rec = reconcileStatements({ context: 'model', periods });
 
   const skippedCodes: string[] = [];
+  const rows: unknown[][] = [];
   for (const check of rec.checks) {
     if (check.status === 'skipped') {
       skippedCodes.push(`${check.checkCode}@${check.periodDate || ''}`);
       continue;
     }
-    await dbRun(
-      `INSERT INTO financial_model_validations (id, model_id, period_date, check_code, check_name, status, expected_value, actual_value, difference, message, details) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        uuidv4(),
-        modelId,
-        check.periodDate || null,
-        check.checkCode,
-        check.checkName,
-        check.status,
-        check.expected,
-        check.actual,
-        check.difference,
-        check.message,
-        JSON.stringify({
-          shadow: true,
-          severity: check.severity,
-          tolerance: check.tolerance,
-          ...(check.details || {}),
-        }),
-      ]
-    );
-  }
-
-  await dbRun(
-    `INSERT INTO financial_model_validations (id, model_id, period_date, check_code, check_name, status, expected_value, actual_value, difference, message, details) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
+    rows.push([
       uuidv4(),
       modelId,
-      null,
-      'RECONCILE_SUMMARY',
-      'Reconcile R1-R8 (shadow)',
-      'pass',
-      rec.summary.passed,
-      rec.summary.failed,
-      rec.summary.warnings,
-      `Reconcile shadow: ${rec.summary.passed} pass, ${rec.summary.warnings} warn, ${rec.summary.failed} fail, ${rec.summary.skipped} skipped.`,
+      check.periodDate || null,
+      check.checkCode,
+      check.checkName,
+      check.status,
+      check.expected,
+      check.actual,
+      check.difference,
+      check.message,
       JSON.stringify({
         shadow: true,
-        enforce: RECONCILE_ENFORCE,
-        summary: rec.summary,
-        overallStatus: rec.overallStatus,
-        blocksReady: rec.blocksReady,
-        wouldBlockReady: shouldBlockReady(rec), // false in shadow mode
-        skippedChecks: skippedCodes,
+        severity: check.severity,
+        tolerance: check.tolerance,
+        ...(check.details || {}),
       }),
-    ]
+    ]);
+  }
+
+  rows.push([
+    uuidv4(),
+    modelId,
+    null,
+    'RECONCILE_SUMMARY',
+    'Reconcile R1-R8 (shadow)',
+    'pass',
+    rec.summary.passed,
+    rec.summary.failed,
+    rec.summary.warnings,
+    `Reconcile shadow: ${rec.summary.passed} pass, ${rec.summary.warnings} warn, ${rec.summary.failed} fail, ${rec.summary.skipped} skipped.`,
+    JSON.stringify({
+      shadow: true,
+      enforce: RECONCILE_ENFORCE,
+      summary: rec.summary,
+      overallStatus: rec.overallStatus,
+      blocksReady: rec.blocksReady,
+      wouldBlockReady: shouldBlockReady(rec), // false in shadow mode
+      skippedChecks: skippedCodes,
+    }),
+  ]);
+
+  await insertRowsBatched(
+    client,
+    `INSERT INTO financial_model_validations
+     (id, model_id, period_date, check_code, check_name, status, expected_value, actual_value, difference, message, details)`,
+    11,
+    rows
   );
 }
 
@@ -1730,6 +1811,10 @@ export async function approveModel(
   const model = await getModel(modelId);
   if (!model) return { success: false, error: 'Model not found' };
 
+  // Cheap pre-check outside the transaction: rejects an obviously stale
+  // caller before doing the expensive recompute. It is NOT the authority --
+  // the row-lock + CAS re-check inside the transaction below is, because
+  // anything read here can go stale before the write.
   if (opts?.expectedVersion !== undefined && Number(model.version || 1) !== opts.expectedVersion) {
     return {
       success: false,
@@ -1739,53 +1824,121 @@ export async function approveModel(
     };
   }
 
-  // Recompute and validate
+  // Recompute and validate BEFORE opening the transaction: this is pure
+  // read+CPU work and holding a row lock across it would serialize every
+  // concurrent approve for no correctness benefit.
   const result = await computeModel(modelId);
   if (result.overallStatus === 'fail') {
     return { success: false, error: 'Model has failing validations. Fix issues before approving.' };
   }
 
-  await persistComputeResult(modelId, result, model.scenario || 'base');
-
-  // Create approved snapshot
   const snapshot = JSON.stringify({
     periods: result.periods,
     validations: result.validations,
     computedAt: new Date().toISOString(),
   });
-  const nextVersion = (model.version || 1) + 1;
-  // Compare-and-swap: pin the UPDATE to the version we just read above, same
-  // as updateModel()'s CAS path — the loser of a concurrent double-approve
-  // (double-click, network retry) gets changes=0 here and a VERSION_CONFLICT,
-  // instead of silently bumping the version a second time / racing the
-  // financial_model_versions INSERT into a duplicate row.
-  const updateResult = (await dbRun(
-    `UPDATE financial_models SET status = 'approved', approved_by = ?, approved_at = CURRENT_TIMESTAMP, approved_snapshot = ?, version = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND version = ?`,
-    [userId, snapshot, nextVersion, modelId, model.version || 1]
-  )) as { changes?: number } | undefined;
-  if ((updateResult?.changes ?? 0) === 0) {
-    const latest = await dbGet<{ version: number }>(
-      `SELECT version FROM financial_models WHERE id = ?`,
+  const scenario = model.scenario || 'base';
+
+  // ── ONE unit of work ──────────────────────────────────────────────────
+  // Ownership is claimed FIRST, by locking the model row, and only then is
+  // anything written. This is the substantive correctness fix: previously
+  // outputs were replaced before the CAS ran, so N concurrent approves for
+  // the same model all deleted and rewrote the same outputs and only then
+  // discovered they had lost -- losers destroyed and rewrote the winner's
+  // data. Now a loser is rejected while holding no more than a row lock,
+  // having written nothing at all.
+  //
+  // Order inside the transaction:
+  //   1. SELECT ... FOR UPDATE  -- serialize same-model approvers
+  //   2. CAS re-check on the locked row  -- authoritative version check
+  //   3. output replacement + validations + shadow reconcile
+  //   4. model row UPDATE (status/version/snapshot)
+  //   5. version-history INSERT
+  //   6. COMMIT
+  // All six either land together or none do.
+  const { getPoolClientForPinnedTransaction } = await import('../database/PostgresDatabase.js');
+  const client = await getPoolClientForPinnedTransaction();
+  let began = false;
+  try {
+    await client.query('BEGIN');
+    began = true;
+
+    const locked = await client.query(
+      `SELECT version FROM financial_models WHERE id = $1 FOR UPDATE`,
       [modelId]
     );
-    return {
-      success: false,
-      code: 'VERSION_CONFLICT',
-      serverVersion: latest?.version,
-      error: 'Version conflict: model was modified concurrently. Refresh and retry.',
-    };
-  }
+    if (locked.rows.length === 0) {
+      await client.query('ROLLBACK');
+      began = false;
+      return { success: false, error: 'Model not found' };
+    }
+    const lockedVersion = Number(locked.rows[0].version || 1);
 
-  try {
-    await dbRun(
-      `INSERT INTO financial_model_versions (id, model_id, version, snapshot_data, approved_by, created_at) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+    // Authoritative CAS. An explicit expectedVersion must still match the
+    // row we now hold the lock on; without one, the version read before the
+    // recompute must not have moved underneath us.
+    const requiredVersion =
+      opts?.expectedVersion !== undefined ? opts.expectedVersion : Number(model.version || 1);
+    if (lockedVersion !== requiredVersion) {
+      await client.query('ROLLBACK');
+      began = false;
+      return {
+        success: false,
+        code: 'VERSION_CONFLICT',
+        serverVersion: lockedVersion,
+        error: 'Version conflict: model was modified concurrently. Refresh and retry.',
+      };
+    }
+
+    const nextVersion = lockedVersion + 1;
+
+    await writeComputeResultRows(client, modelId, result, scenario);
+
+    const updated = await client.query(
+      `UPDATE financial_models
+          SET status = 'approved', approved_by = $1, approved_at = CURRENT_TIMESTAMP,
+              approved_snapshot = $2, version = $3, updated_at = CURRENT_TIMESTAMP
+        WHERE id = $4 AND version = $5`,
+      [userId, snapshot, nextVersion, modelId, lockedVersion]
+    );
+    if ((updated.rowCount ?? 0) === 0) {
+      // Unreachable while we hold FOR UPDATE on this row, but treated as a
+      // hard failure rather than an ignorable one: a silent 0-row UPDATE
+      // here would mean the lock did not do what this code assumes.
+      throw new Error('APPROVE_CAS_UNEXPECTED_NOOP');
+    }
+
+    // Version history is part of the unit of work, not a fire-and-forget
+    // afterthought. The pre-correction code swallowed every error here with
+    // an empty catch ("table may not exist yet"), which meant an approved
+    // model could exist with no history row and still report success.
+    await client.query(
+      `INSERT INTO financial_model_versions (id, model_id, version, snapshot_data, approved_by, created_at)
+       VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)`,
       [uuidv4(), modelId, nextVersion, snapshot, userId]
     );
-  } catch {
-    // Table may not exist yet if migration not applied
-  }
 
-  return { success: true };
+    await client.query('COMMIT');
+    began = false;
+    return { success: true };
+  } catch (error) {
+    if (began) {
+      try {
+        await client.query('ROLLBACK');
+      } catch (rollbackError) {
+        // Never let a rollback failure mask the original error.
+        logger.error('[financialModeling] approveModel ROLLBACK failed after a prior error', {
+          modelId,
+          originalError: error instanceof Error ? error.message : String(error),
+          rollbackError:
+            rollbackError instanceof Error ? rollbackError.message : String(rollbackError),
+        });
+      }
+    }
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 // ---------------------------------------------------------------------------
