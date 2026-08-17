@@ -1,7 +1,7 @@
 {
   "taskId": "EXE-MVP-ACTIONS-001",
   "baselineSha": "eb310fb344d3339c67cad81188ce13c6f950d100",
-  "productSha": "7d0ce067497891c01f22b0078dee41fbbc15a7e4",
+  "productSha": "8578205047f1e0fd54414ad0ebe660cdbb018ab0",
   "leaseSha256": "f4d75f0aed94f2e34acaec63d91c245495e7e0f658aa36d1122342c2acecc612",
   "changedPaths": [
     "server/migrations/20260917_execution_action_audit_immutability.sql",
@@ -40,28 +40,29 @@
     "NODE_ENV=test DB_TYPE=postgres MOCK_DB=false RUN_DB_TESTS=1 DATABASE_URL=postgresql://iris:***@127.0.0.1:32913/consultify npx vitest run server/src/services/__tests__/executionActionRegistryService.pg.test.ts --reporter=dot --no-file-parallelism",
     "npm run build:backend",
     "NODE_ENV=test DB_TYPE=postgres MOCK_DB=false RUN_DB_TESTS=1 DATABASE_URL=postgresql://case_workspace:***@127.0.0.1:55432/case_workspace_test npx vitest run src/services/caseWorkspace/__tests__/e2e/liveStack.e2e.pg.test.ts src/services/caseWorkspace/__tests__/e2e/liveStack.e2e.part2.pg.test.ts --environment node --no-file-parallelism --reporter=dot",
-    "NODE_ENV=test DB_TYPE=postgres MOCK_DB=false RUN_DB_TESTS=1 DATABASE_URL=postgresql://case_workspace:***@127.0.0.1:55432/case_workspace_test npx vitest run src/services/__tests__/executionActionRegistryService.pg.test.ts --environment node --no-file-parallelism --reporter=dot"
+    "NODE_ENV=test DB_TYPE=postgres MOCK_DB=false RUN_DB_TESTS=1 DATABASE_URL=postgresql://case_workspace:***@127.0.0.1:55432/case_workspace_test npx vitest run src/services/__tests__/executionActionRegistryService.pg.test.ts --environment node --no-file-parallelism --reporter=dot",
+    "NODE_ENV=test DB_TYPE=postgres MOCK_DB=false RUN_DB_TESTS=1 DATABASE_URL=postgresql://provider:***@127.0.0.1:56815/provider npx vitest run src/services/caseWorkspace/__tests__/e2e/liveStack.e2e.part2.pg.test.ts --environment node --no-file-parallelism --reporter=dot"
   ],
   "denominators": {
     "actionDisposition": "13/13: 9 IMPLEMENTED governed, 4 HIDDEN fail-closed",
     "focusedRegression": "6/6 files, 43/43 tests, exit 0",
     "realPostgres": "1/1 file, 21/21 tests, exit 0; nested pinned-UoW success 9/9 and forced audit failure rollback 9/9",
-    "freshMigrations": "734/734 applied, exit 0",
+    "freshMigrations": "shared cluster ledger 738, repeat 0, dry 0; no new schema in this packet",
     "typeCheck": "server TypeScript exit 0",
-    "backendBuild": "historical exit 0; current rerun blocked by foreign server/src/index.ts TS2769",
-    "mountedRealDomain": "2/2 files, 37/37 tests, exit 0; real process/JWT/membership/fresh PostgreSQL; 9/9 IMPLEMENTED success and 9/9 insufficient-role denial"
+    "backendBuild": "exit 0 at productSha",
+    "mountedRealDomain": "1/1 file, 15/15 tests, exit 0 at productSha; real process/JWT/membership/PostgreSQL; 9/9 success, 9/9 insufficient-role denial and 9/9 forced-audit rollback"
   },
   "fixtures": {
-    "database": "fresh disposable pgvector/pgvector:pg16 container consultify-exe-actions-mounted-fac207 on 127.0.0.1:55432; 736 migrations applied",
+    "database": "shared disposable PostgreSQL container consultify-provider-contract-3455, database provider on 127.0.0.1:56815; ledger 738, repeat 0, dry 0 supplied by the cluster owner",
     "organizationPrefix": "exe-actions-"
   },
   "negativeControls": {
-    "policyDrift": "ADMIN denied after live minimum_role changes to OWNER; operation not invoked",
-    "hidden": "execution.initiative.delete denied and DENIED audit persisted",
+    "policyDrift": "mounted real ADMIN JWT denied 403 after live minimum_role changes to OWNER; closure_type remains NULL",
+    "hidden": "mounted hidden execution.initiative.delete and an unregistered action URL both return 404; no generic action route is exposed",
     "immutableAudit": "direct UPDATE and DELETE rejected by PostgreSQL trigger",
     "outcomes": "DENIED, NOT_FOUND and CONFLICT classification covered",
-    "coldReadback": "independent Pool reads persisted audit denominator",
-    "auditFailureRollback": "9/9 forced SUCCEEDED-audit insert failures leave zero domain and zero outbox probe rows",
+    "coldReadback": "new independent ControlDb/Pool reads all 9 persisted action ids after mounted calls",
+    "auditFailureRollback": "9/9 mounted production endpoints with real domain services and forced terminal audit insert failure return 500 and leave domain rows, outbox counts and budget entry unchanged",
     "nestedTransaction": "inner service-style withPgTransaction inherits the exact outer pinned client without double BEGIN/COMMIT"
   },
   "browserArtifacts": [],
@@ -69,5 +70,5 @@
     "method": "Revert 75714ca5b4d1b874524d485b551744d72a7657a8 and d9fcb6fea8ff5d063751d9712931ccfebaf37e3c. Retaining the additive append-only trigger is backward compatible."
   },
   "verdict": "PARTIAL",
-  "openBlocker": "G4 remains outside this packet. Mounted real-domain success and role denial are now literal 9/9, while forced-audit-failure rollback is still proven 9/9 at the real PostgreSQL service boundary rather than by nine mounted HTTP calls; policy-drift/hidden/cold controls likewise remain service-boundary evidence."
+  "openBlocker": "Backend/runtime DoD is complete. G4 remains the sole owner/human decision outside this authorized technical packet."
 }
