@@ -3,7 +3,10 @@ import { randomUUID } from 'node:crypto';
 import { Client } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { consumeNextExecutionSignal } from '../executionSignalIngress.js';
+import {
+  consumeNextExecutionSignal,
+  redriveExecutionSignalDeadLetter,
+} from '../executionSignalIngress.js';
 
 const DATABASE_URL = process.env.DATABASE_URL || '';
 const REAL_PG = process.env.RUN_DB_TESTS === '1' && process.env.MOCK_DB === 'false';
@@ -135,9 +138,11 @@ describe.skipIf(!REAL_PG)('RES-FLOW-ADAPTER-001 execution signal ingress', () =>
       [ids[1]]
     );
     expect(rejected.rows[0]).toMatchObject({
-      delivery_status: 'FAILED',
+      delivery_status: 'DEAD_LETTER',
       last_error: 'unsupported_execution_signal_payload_version:99',
     });
+    expect(await redriveExecutionSignalDeadLetter(orgA, ids[1])).toBe(false);
+    expect(await redriveExecutionSignalDeadLetter(orgB, ids[1])).toBe(true);
     await db.query(
       `UPDATE execution_results_signal_outbox SET payload_version=1,delivery_status='PROCESSING',claimed_at=now()-interval '10 minutes' WHERE signal_id=$1`,
       [ids[1]]
@@ -153,7 +158,7 @@ describe.skipIf(!REAL_PG)('RES-FLOW-ADAPTER-001 execution signal ingress', () =>
     expect(persisted.rows[0]).toMatchObject({
       source_signal_id: ids[1],
       delivery_status: 'DELIVERED',
-      attempt_count: 2,
+      attempt_count: 1,
     });
     await expect(
       db.query(

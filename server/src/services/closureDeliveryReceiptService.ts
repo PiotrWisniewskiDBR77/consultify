@@ -72,8 +72,8 @@ const LOG_PREFIX = '[ClosureDeliveryReceipt]';
 
 export const SYSTEM_ACTOR_LABEL = 'system:exe-009-closure-receipt';
 
-export type ResultsStatus = 'PENDING' | 'DELIVERING' | 'DELIVERED' | 'FAILED';
-export type FinanceStatus = 'PENDING' | 'DELIVERING' | 'DELIVERED' | 'FAILED' | 'NEEDS_DECISION';
+export type ResultsStatus = 'PENDING' | 'DELIVERING' | 'DELIVERED' | 'FAILED' | 'DEAD_LETTER';
+export type FinanceStatus = 'PENDING' | 'DELIVERING' | 'DELIVERED' | 'FAILED' | 'NEEDS_DECISION' | 'DEAD_LETTER';
 
 export interface ClosureDeliveryReceipt {
   id: string;
@@ -92,6 +92,9 @@ export interface ClosureDeliveryReceipt {
   financeLastError: string | null;
   financeDeliveredAt: string | null;
   financePayload: Record<string, unknown> | null;
+  payloadVersion: number;
+  maxAttempts: number;
+  deadLetteredAt: string | null;
   nextRetryAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -114,6 +117,9 @@ interface ReceiptRow {
   finance_last_error: string | null;
   finance_delivered_at: string | null;
   finance_payload: unknown;
+  payload_version: number;
+  max_attempts: number;
+  dead_lettered_at: string | null;
   next_retry_at: string | null;
   created_at: string;
   updated_at: string;
@@ -147,6 +153,9 @@ function toReceipt(row: ReceiptRow): ClosureDeliveryReceipt {
     financeLastError: row.finance_last_error,
     financeDeliveredAt: row.finance_delivered_at,
     financePayload: parseJsonColumn(row.finance_payload),
+    payloadVersion: row.payload_version,
+    maxAttempts: row.max_attempts,
+    deadLetteredAt: row.dead_lettered_at,
     nextRetryAt: row.next_retry_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -183,6 +192,26 @@ export async function createReceiptOnClosure(
      ON CONFLICT (id) DO NOTHING`,
     [correlationId, organizationId, initiativeId, correlationId, actorId, SYSTEM_ACTOR_LABEL]
   );
+}
+
+/** Durable repair seam for deterministic demo/materialized DONE rows that do
+ * not pass through the transition transaction. The deterministic id makes
+ * repeated seeding a replay, never a second closure event. */
+export async function ensureReceiptForMaterializedDone(
+  organizationId:string,initiativeId:string,actorId:string|null
+):Promise<string>{
+  const receiptId=`materialized-done:${organizationId}:${initiativeId}`;
+  await queryHelpers.queryRun(
+    `INSERT INTO closure_delivery_receipts
+      (id,organization_id,initiative_id,transition_audit_ref,actor_id,actor_label)
+     SELECT ?,i.organization_id,i.id,?,?,?
+       FROM initiatives i WHERE i.id=? AND i.organization_id=? AND UPPER(i.status)='DONE'
+     ON CONFLICT (id) DO NOTHING`,
+    [receiptId,receiptId,actorId,SYSTEM_ACTOR_LABEL,initiativeId,organizationId]
+  );
+  const receipt=await getReceiptById(receiptId,organizationId);
+  if(!receipt) throw new Error(`${LOG_PREFIX} materialized DONE receipt was not persisted`);
+  return receiptId;
 }
 
 export async function getReceiptById(
@@ -406,7 +435,7 @@ async function claimLeg(receiptId: string, leg: 'results' | 'finance'): Promise<
           SET ${statusCol} = 'DELIVERING', updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
           AND (
-            ${statusCol} IN ('PENDING', 'FAILED')
+            (${statusCol} IN ('PENDING', 'FAILED') AND ${leg}_attempts < max_attempts)
             OR (${statusCol} = 'DELIVERING' AND updated_at < CURRENT_TIMESTAMP - INTERVAL '${STALE_DELIVERING_LEASE_MINUTES} minutes')
           )`,
       [receiptId]
@@ -458,6 +487,21 @@ export async function attemptDeliveryInternal(
     actor_id: actorId,
   } = receipt;
 
+  if (Number(receipt.payload_version) !== 1) {
+    await queryHelpers.queryRun(
+      `UPDATE closure_delivery_receipts SET results_status='DEAD_LETTER',
+         finance_status='DEAD_LETTER',dead_lettered_at=CURRENT_TIMESTAMP,
+         results_last_error=?,finance_last_error=?,next_retry_at=NULL,updated_at=CURRENT_TIMESTAMP
+       WHERE id=?`,
+      [`unsupported_closure_payload_version:${receipt.payload_version}`,
+       `unsupported_closure_payload_version:${receipt.payload_version}`,receiptId]
+    );
+    const unsupported=await queryHelpers.queryOne<ReceiptRow>(
+      `SELECT * FROM closure_delivery_receipts WHERE id=?`,[receiptId]
+    );
+    return toReceipt(unsupported as ReceiptRow);
+  }
+
   // ---- Results leg ----
   if (receipt.results_status !== 'DELIVERED' && (await claimLeg(receiptId, 'results'))) {
     try {
@@ -508,9 +552,10 @@ export async function attemptDeliveryInternal(
       logger.warn(`${LOG_PREFIX} Results delivery failed for receipt ${receiptId}: ${message}`);
       await queryHelpers.queryRun(
         `UPDATE closure_delivery_receipts
-            SET results_status = 'FAILED',
+            SET results_status = CASE WHEN results_attempts + 1 >= max_attempts THEN 'DEAD_LETTER' ELSE 'FAILED' END,
                 results_attempts = results_attempts + 1,
                 results_last_error = ?,
+                dead_lettered_at = CASE WHEN results_attempts + 1 >= max_attempts THEN CURRENT_TIMESTAMP ELSE dead_lettered_at END,
                 updated_at = CURRENT_TIMESTAMP
           WHERE id = ?`,
         [message, receiptId]
@@ -575,9 +620,10 @@ export async function attemptDeliveryInternal(
       logger.warn(`${LOG_PREFIX} Finance delivery failed for receipt ${receiptId}: ${message}`);
       await queryHelpers.queryRun(
         `UPDATE closure_delivery_receipts
-            SET finance_status = 'FAILED',
+            SET finance_status = CASE WHEN finance_attempts + 1 >= max_attempts THEN 'DEAD_LETTER' ELSE 'FAILED' END,
                 finance_attempts = finance_attempts + 1,
                 finance_last_error = ?,
+                dead_lettered_at = CASE WHEN finance_attempts + 1 >= max_attempts THEN CURRENT_TIMESTAMP ELSE dead_lettered_at END,
                 updated_at = CURRENT_TIMESTAMP
           WHERE id = ?`,
         [message, receiptId]
@@ -662,6 +708,25 @@ export async function retryDeliveryForOrg(
   return attemptDeliveryInternal(receiptId);
 }
 
+export async function redriveDeadLetterForOrg(
+  receiptId: string,
+  organizationId: string
+): Promise<ClosureDeliveryReceipt> {
+  const existing = await getReceiptById(receiptId, organizationId);
+  if (!existing) throw new Error(`${LOG_PREFIX} redrive: receipt not found`);
+  await queryHelpers.queryRun(
+    `UPDATE closure_delivery_receipts SET
+       results_status=CASE WHEN results_status='DEAD_LETTER' THEN 'PENDING' ELSE results_status END,
+       finance_status=CASE WHEN finance_status='DEAD_LETTER' THEN 'PENDING' ELSE finance_status END,
+       results_attempts=CASE WHEN results_status='DEAD_LETTER' THEN 0 ELSE results_attempts END,
+       finance_attempts=CASE WHEN finance_status='DEAD_LETTER' THEN 0 ELSE finance_attempts END,
+       dead_lettered_at=NULL,next_retry_at=NULL,updated_at=CURRENT_TIMESTAMP
+     WHERE id=? AND organization_id=? AND (results_status='DEAD_LETTER' OR finance_status='DEAD_LETTER')`,
+    [receiptId,organizationId]
+  );
+  return attemptDeliveryInternal(receiptId);
+}
+
 const DEFAULT_SWEEP_BATCH_SIZE = 25;
 
 /**
@@ -681,8 +746,8 @@ async function claimDueReceipts(limit: number): Promise<string[]> {
     const { rows } = await client.query<{ id: string }>(
       `SELECT id FROM closure_delivery_receipts
         WHERE (
-          results_status IN ('PENDING', 'FAILED')
-          OR finance_status IN ('PENDING', 'FAILED')
+          (results_status IN ('PENDING', 'FAILED') AND results_attempts < max_attempts)
+          OR (finance_status IN ('PENDING', 'FAILED') AND finance_attempts < max_attempts)
           OR (results_status = 'DELIVERING' AND updated_at < CURRENT_TIMESTAMP - INTERVAL '${STALE_DELIVERING_LEASE_MINUTES} minutes')
           OR (finance_status = 'DELIVERING' AND updated_at < CURRENT_TIMESTAMP - INTERVAL '${STALE_DELIVERING_LEASE_MINUTES} minutes')
         )
@@ -722,10 +787,10 @@ export async function runReconciliationSweep(
     try {
       const result = await attemptDeliveryInternal(id);
       const bothTerminal =
-        (result.resultsStatus === 'DELIVERED' || result.resultsStatus === 'FAILED') &&
+        (result.resultsStatus === 'DELIVERED' || result.resultsStatus === 'DEAD_LETTER') &&
         (result.financeStatus === 'DELIVERED' ||
           result.financeStatus === 'NEEDS_DECISION' ||
-          result.financeStatus === 'FAILED');
+          result.financeStatus === 'DEAD_LETTER');
       if (result.resultsStatus === 'DELIVERED' && result.financeStatus !== 'PENDING') {
         delivered += 1;
       } else if (!bothTerminal) {

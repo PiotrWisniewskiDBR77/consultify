@@ -1,7 +1,10 @@
 import { DRD_STRUCTURE } from '../../data/drdStructure.js';
 import * as DbPromise from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
-import { fireClosureHandoff } from '../executionResultsBridge.js';
+import {
+  ensureReceiptForMaterializedDone,
+  triggerImmediateDeliveryBestEffort,
+} from '../closureDeliveryReceiptService.js';
 import { organizationContextService } from '../organizationContext/OrganizationContextService.js';
 import { seedAtelierPresentationDecks } from './atelierPresentationDeckSeed.js';
 import {
@@ -2321,10 +2324,12 @@ async function upsertInitiatives(
     // nearly all of them were seed-created trial/demo initiatives, not live
     // transitions. Fire the same choke-point handoff here so every fresh seed
     // and every re-seed (ON CONFLICT DO UPDATE above is idempotent) lands a
-    // benefit row too. Fire-and-forget + idempotent internally — safe to call
-    // on every upsert, never blocks seeding.
+    // benefit row too. Persist a deterministic durable receipt before the
+    // best-effort delivery, so a crash cannot turn this path into a silent
+    // fire-and-forget bypass. Re-seeding reuses the same receipt.
     if (normalizeInitiativeStatus(initiative.status) === 'DONE') {
-      fireClosureHandoff(organizationId, initiativeId, null);
+      const receiptId = await ensureReceiptForMaterializedDone(organizationId, initiativeId, null);
+      triggerImmediateDeliveryBestEffort(receiptId);
     }
 
     for (const task of initiative.tasks) {

@@ -2068,6 +2068,17 @@ if (startServer && shouldStartHttpServer) {
       );
     }
 
+    // EXE-FLOW-ADAPTER-001: drain the material-command outbox into its
+    // immutable neutral delivery receipt. Product-specific projections remain
+    // separate consumers; this bootstrap only closes the durable outbox seam.
+    try {
+      const { startInitiativeExecutionOutboxConsumer } =
+        await import('./services/initiativeExecutionOutboxConsumer.js');
+      startInitiativeExecutionOutboxConsumer();
+    } catch (err: any) {
+      logger.warn('[Server] Initiative/Execution outbox consumer not started:', err?.message);
+    }
+
     // AGT-OPS-001: controlled consumer for the existing ai-tasks queue.
     // Default OFF: enabling autonomous background execution remains an owner
     // decision. When explicitly enabled, initialization is fail-closed.
