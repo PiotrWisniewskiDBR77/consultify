@@ -21,7 +21,10 @@ describe.skipIf(!enabled)('mounted custom workbook template', () => {
   const templateId = randomUUID(),
     privateId = randomUUID(),
     draftId = randomUUID(),
-    deprecatedId = randomUUID();
+    deprecatedId = randomUUID(),
+    systemNullId = randomUUID(),
+    orgNullId = randomUUID(),
+    privateNullId = randomUUID();
   const pool = new Pool({ connectionString: url });
   let app: express.Express;
   const token = (id: string, org: string) =>
@@ -30,6 +33,11 @@ describe.skipIf(!enabled)('mounted custom workbook template', () => {
       config.JWT_SECRET,
       { algorithm: 'HS256', expiresIn: '10m' }
     );
+  const callTemplate = (id: string, user: string, org: string, params: object = {}) =>
+    request(app)
+      .post(`/api/workbook/templates/${id}/build`)
+      .set('Authorization', `Bearer ${token(user, org)}`)
+      .send({ params });
   const schema = {
     title: 'Governed custom workbook',
     metadata: { sourceVersion: 'v1' },
@@ -78,6 +86,20 @@ describe.skipIf(!enabled)('mounted custom workbook template', () => {
              ($6,'Deprecated','workbook',$2::jsonb,$3,$3,$5,'deprecated','organization','4.0.0')`,
       [draftId, JSON.stringify(schema), ownerA, memberA, orgA, deprecatedId]
     );
+    // Late-upgrade control: historical deployments admitted NULL lifecycle
+    // values before the current NOT NULL contract. The resolver must remain
+    // explicit about those preserved rows even though a fresh writer cannot
+    // create another one today.
+    await pool.query(`ALTER TABLE tp_base_templates ALTER COLUMN status DROP NOT NULL`);
+    await pool.query(
+      `INSERT INTO tp_base_templates
+         (id,name,category,schema_snapshot,created_by,organization_id,status,visibility,version)
+       VALUES
+         ($1,'Legacy system','workbook',$2::jsonb,NULL,NULL,NULL,'organization','legacy-system'),
+         ($3,'Legacy org','workbook',$2::jsonb,$4,$5,NULL,'organization','legacy-org'),
+         ($6,'Legacy private','workbook',$2::jsonb,$4,$5,NULL,'private','legacy-private')`,
+      [systemNullId, JSON.stringify(schema), orgNullId, ownerA, orgA, privateNullId]
+    );
     const { default: routes } = await import('../../../server/src/routes/workbook.routes.js');
     app = express();
     app.use(express.json());
@@ -89,8 +111,9 @@ describe.skipIf(!enabled)('mounted custom workbook template', () => {
       [orgA, orgB],
     ]);
     await pool.query(`DELETE FROM tp_base_templates WHERE id=ANY($1::uuid[])`, [
-      [templateId, privateId, draftId, deprecatedId],
+      [templateId, privateId, draftId, deprecatedId, systemNullId, orgNullId, privateNullId],
     ]);
+    await pool.query(`ALTER TABLE tp_base_templates ALTER COLUMN status SET NOT NULL`);
     await pool.query(`DELETE FROM organization_members WHERE organization_id=ANY($1)`, [
       [orgA, orgB],
     ]);
@@ -144,21 +167,39 @@ describe.skipIf(!enabled)('mounted custom workbook template', () => {
           .set('Authorization', `Bearer ${token(ownerA, orgA)}`)
       ).status
     ).toBe(200);
+    expect((await callTemplate(systemNullId, ownerA, orgA)).status).toBe(200);
+    expect((await callTemplate(orgNullId, memberA, orgA)).status).toBe(200);
+    expect((await callTemplate(privateNullId, ownerA, orgA)).status).toBe(200);
   });
 
   it('enforces lifecycle, ownership, membership and tenant walls without false artifacts', async () => {
-    const call = (id: string, user: string, org: string, params: object = {}) =>
-      request(app)
-        .post(`/api/workbook/templates/${id}/build`)
-        .set('Authorization', `Bearer ${token(user, org)}`)
-        .send({ params });
-    expect((await call(templateId, ownerB, orgB)).status).toBe(404);
-    expect((await call(templateId, revoked, orgA)).status).toBe(403);
-    expect((await call(privateId, memberA, orgA)).status).toBe(404);
-    expect((await call(draftId, ownerA, orgA)).status).toBe(404);
-    expect((await call(draftId, memberA, orgA, { title: 'Transferred' })).status).toBe(200);
-    expect((await call(deprecatedId, ownerA, orgA)).status).toBe(404);
-    expect((await call(randomUUID(), ownerA, orgA)).status).toBe(404);
+    const { workbookRuntimeCache } = await import(
+      '../../../server/src/services/workbook/workbookRuntimeCache.js'
+    );
+    const state = async () => {
+      const row = (
+        await pool.query(
+          `SELECT
+             (SELECT count(*)::int FROM generated_workbooks WHERE organization_id=ANY($1)) workbooks,
+             (SELECT count(*)::int FROM v8_output_artifacts WHERE organization_id=ANY($1)) artifacts,
+             (SELECT count(*)::int FROM v8_artifact_origin_links l
+               JOIN v8_output_artifacts a ON a.artifact_id=l.artifact_id
+              WHERE a.organization_id=ANY($1)) origins`,
+          [[orgA, orgB]]
+        )
+      ).rows[0];
+      return { ...row, cache: workbookRuntimeCache.size };
+    };
+    const beforeDenied = await state();
+    expect((await callTemplate(templateId, ownerB, orgB)).status).toBe(404);
+    expect((await callTemplate(templateId, revoked, orgA)).status).toBe(403);
+    expect((await callTemplate(privateId, memberA, orgA)).status).toBe(404);
+    expect((await callTemplate(draftId, ownerA, orgA)).status).toBe(404);
+    expect((await callTemplate(privateNullId, memberA, orgA)).status).toBe(404);
+    expect((await callTemplate(deprecatedId, ownerA, orgA)).status).toBe(404);
+    expect((await callTemplate(randomUUID(), ownerA, orgA)).status).toBe(404);
+    expect(await state()).toEqual(beforeDenied);
+    expect((await callTemplate(draftId, memberA, orgA, { title: 'Transferred' })).status).toBe(200);
     expect(
       (
         await pool.query(

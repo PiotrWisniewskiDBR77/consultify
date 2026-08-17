@@ -165,6 +165,15 @@ describe('workbook.routes — C3 parametric templates', () => {
   it('builds an org-owned custom template snapshot and preserves workbook features', async () => {
     queryOneMock.mockImplementation(async (sql: string, params: unknown[]) => {
       if (sql.includes('FROM tp_base_templates')) {
+        if (params[0] === 'custom-invalid') {
+          return {
+            id: 'custom-invalid',
+            name: 'Invalid custom template',
+            description: null,
+            version: '1.0.0',
+            schema_snapshot: { title: 'Missing sheets' },
+          };
+        }
         expect(params).toEqual([
           'custom-portfolio',
           'org-1',
@@ -265,29 +274,51 @@ describe('workbook.routes — C3 parametric templates', () => {
       'Executive Summary',
     ]);
     expect(reopen.body.sheets[1].rows[0].cells.B.formula).toBe("'Inputs'!B2");
+
+    queryOneMock.mockImplementation(async (sql: string) =>
+      sql.includes('FROM tp_base_templates')
+        ? {
+            id: 'custom-invalid',
+            name: 'Invalid custom template',
+            description: null,
+            version: '1.0.0',
+            schema_snapshot: { title: 'Missing sheets' },
+          }
+        : null
+    );
+    const invalid = await request(app)
+      .post('/workbook/templates/custom-invalid/build')
+      .send({ params: {} });
+    expect(invalid.status).toBe(422);
+    expect(invalid.body.classified).toBeTruthy();
   });
 
   it('does not return success or register an artifact when durable persistence fails', async () => {
-    generateFromTemplateMock.mockResolvedValue({
-      id: 'wb-no-row',
-      buffer: Buffer.from('xlsx-bytes'),
-      fileName: 'failed.xlsx',
-      schema: { title: 'Failed', sheets: [{ name: 'Sheet1', columns: [], rows: [] }] },
-      validationErrors: [],
-      qualityScore: null,
-      pipelineLog: [],
-      generatedAt: new Date().toISOString(),
+    queryOneMock.mockResolvedValue({
+      id: 'custom-persist-fail',
+      name: 'Persistence failure template',
+      description: null,
+      version: '1.0.0',
+      schema_snapshot: {
+        title: 'Persistence failure template',
+        sheets: [{ name: 'Sheet1', columns: [], rows: [] }],
+      },
     });
     queryRunMock.mockImplementation(async (sql: string) =>
       sql.includes('INSERT INTO generated_workbooks') ? { changes: 0 } : { changes: 1 }
     );
 
     const app = await buildApp();
+    const { workbookRuntimeCache } = await import(
+      '../../../../server/src/services/workbook/workbookRuntimeCache.js'
+    );
+    const cacheSizeBefore = workbookRuntimeCache.size;
     const res = await request(app)
-      .post('/workbook/templates/threeScenarioPnL/build')
+      .post('/workbook/templates/custom-persist-fail/build')
       .send({ params: {} });
 
     expect(res.status).toBe(500);
+    expect(workbookRuntimeCache.size).toBe(cacheSizeBefore);
     expect(registerArtifactOriginMock).not.toHaveBeenCalled();
   });
 });

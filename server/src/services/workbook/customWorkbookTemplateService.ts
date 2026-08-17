@@ -33,15 +33,26 @@ export async function listCustomWorkbookTemplates(
   return queryHelpers.queryAll<CustomWorkbookTemplateSummary>(
     `SELECT CAST(id AS TEXT) AS id, name, description
        FROM tp_base_templates
-      WHERE (
-        created_by IS NULL
-        OR (COALESCE(visibility, 'organization') <> 'private' AND organization_id = ?)
-        OR (visibility = 'private' AND created_by = ?)
-      )
-        AND (status IS NULL OR status <> 'deprecated')
-        AND (created_by IS NOT NULL OR status IS NULL OR status IN ('approved', 'published'))
+      WHERE (status IS NULL OR status <> 'deprecated')
+        AND (
+          (status IN ('approved', 'published') AND (
+            created_by IS NULL OR
+            (organization_id = ? AND (
+              COALESCE(visibility, 'organization') <> 'private'
+              OR COALESCE(owner_user_id, created_by) = ?
+            ))
+          ))
+          OR (status = 'draft' AND organization_id = ? AND COALESCE(owner_user_id, created_by) = ?)
+          OR (status IS NULL AND (
+            created_by IS NULL OR
+            (organization_id = ? AND (
+              COALESCE(visibility, 'organization') <> 'private'
+              OR COALESCE(owner_user_id, created_by) = ?
+            ))
+          ))
+        )
       ORDER BY created_at DESC, name ASC`,
-    [organizationId, userId]
+    [organizationId, userId, organizationId, userId, organizationId, userId]
   );
 }
 
@@ -190,7 +201,7 @@ export async function resolveCustomWorkbookTemplate(
             COALESCE(version, '1.0.0') AS version
       FROM tp_base_templates
       WHERE CAST(id AS TEXT) = ?
-        AND status <> 'deprecated'
+        AND (status IS NULL OR status <> 'deprecated')
         AND (
           (status IN ('approved', 'published') AND (
             created_by IS NULL OR
@@ -203,7 +214,8 @@ export async function resolveCustomWorkbookTemplate(
           OR (status IS NULL AND (
             created_by IS NULL OR
             (organization_id = ? AND (
-              COALESCE(visibility, 'organization') <> 'private' OR created_by = ?
+              COALESCE(visibility, 'organization') <> 'private'
+              OR COALESCE(owner_user_id, created_by) = ?
             ))
           ))
         )`,
