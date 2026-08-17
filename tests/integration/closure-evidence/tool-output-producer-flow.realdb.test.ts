@@ -37,6 +37,7 @@ import {
   coldRead,
   fxId,
   newClient,
+  fixtureResidue,
   requireDatabase,
   seedTenants,
 } from './evidenceFixture.js';
@@ -221,6 +222,9 @@ afterAll(async () => {
       { table: 'tool_sessions', ids: [SESSION_A, SESSION_B, SESSION_FORGED] },
     ],
   });
+  // Literal, in the run: nothing this fixture created is still here. A teardown
+  // that quietly deleted zero rows is what let a whole tenant leak for months.
+  expect(await fixtureResidue(client)).toEqual({});
   await client.end();
 });
 
@@ -446,9 +450,8 @@ describe('tool_output evidence, end to end through the real producer', () => {
         )
       );
       const payload = drifted.rows[0].payload_json;
-      const { computeOutputHash } = await import(
-        '../../../server/src/sharedRuntime/toolOutputs/outputLifecycle.js'
-      );
+      const { computeOutputHash } =
+        await import('../../../server/src/sharedRuntime/toolOutputs/outputLifecycle.js');
       const items = [
         ...(payload.items as unknown[]),
         { id: 'item-added', label: 'Added after the pin', bucket: 'strengths' },

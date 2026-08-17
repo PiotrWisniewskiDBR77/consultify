@@ -26,6 +26,7 @@ import {
   fxId,
   newClient,
   raceExactly,
+  fixtureResidue,
   requireDatabase,
   seedTenants,
 } from './evidenceFixture.js';
@@ -37,6 +38,8 @@ import express from 'express';
 import type pg from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+
+import { deleteLedgerRows } from '../../support/disposableLedgerCleanup.js';
 
 const INITIATIVE_A = fxId('initiative', 'alpha');
 const INITIATIVE_A2 = fxId('initiative', 'alpha-second');
@@ -121,7 +124,13 @@ beforeAll(async () => {
     );
   }
 
-  const note = async (id: string, meetingId: string, orgId: string, status: string, summary: string) =>
+  const note = async (
+    id: string,
+    meetingId: string,
+    orgId: string,
+    status: string,
+    summary: string
+  ) =>
     client.query(
       `INSERT INTO meeting_notes
          (id, organization_id, meeting_id, source, transcript_hash, status, summary, created_by)
@@ -169,7 +178,8 @@ beforeAll(async () => {
     [fxId('pagever', 'v1'), PAGE_VERIFIED, TENANT_A.id, TENANT_A.owner.id]
   );
 
-  const router = (await import('../../../server/src/routes/pmo/initiativeClosure.routes.js')).default;
+  const router = (await import('../../../server/src/routes/pmo/initiativeClosure.routes.js'))
+    .default;
   app = express();
   app.use(express.json());
   app.use('/api/initiatives', router);
@@ -195,6 +205,9 @@ afterAll(async () => {
           + (SELECT count(*) FROM organizations  WHERE id = ANY($1::text[])) AS n`,
     [ALL_TENANTS.map((t) => t.id)]
   );
+  // Literal, in the run: nothing this fixture created is still here. A teardown
+  // that quietly deleted zero rows is what let a whole tenant leak for months.
+  expect(await fixtureResidue(client)).toEqual({});
   await client.end();
   if (Number(residue.rows[0].n) !== 0) {
     throw new Error(`fixture left ${residue.rows[0].n} residual rows behind`);
@@ -209,7 +222,11 @@ describe('Meeting/Notebook → Initiative closure evidence (real Postgres, mount
       const res = await agent()
         .post(evidenceUrl(INITIATIVE_A, requestId))
         .set('Authorization', forgedE2EBearer(TENANT_A.owner))
-        .send({ evidenceType: 'meeting_note', evidenceRefId: NOTE_APPROVED, initiativeId: INITIATIVE_A });
+        .send({
+          evidenceType: 'meeting_note',
+          evidenceRefId: NOTE_APPROVED,
+          initiativeId: INITIATIVE_A,
+        });
       expect(res.status).toBe(401);
     });
 
@@ -218,9 +235,15 @@ describe('Meeting/Notebook → Initiative closure evidence (real Postgres, mount
       const res = await agent()
         .post(evidenceUrl(INITIATIVE_A, requestId))
         .set('Authorization', bearer(TENANT_A.revoked))
-        .send({ evidenceType: 'meeting_note', evidenceRefId: NOTE_APPROVED, initiativeId: INITIATIVE_A });
+        .send({
+          evidenceType: 'meeting_note',
+          evidenceRefId: NOTE_APPROVED,
+          initiativeId: INITIATIVE_A,
+        });
       const rows = await coldRead((c) =>
-        c.query(`SELECT id FROM initiative_closure_evidence WHERE closure_request_id = $1`, [requestId])
+        c.query(`SELECT id FROM initiative_closure_evidence WHERE closure_request_id = $1`, [
+          requestId,
+        ])
       );
       expect({ status: res.status, code: res.body.code, rows: rows.rowCount }).toEqual({
         status: 403,
@@ -260,7 +283,9 @@ describe('Meeting/Notebook → Initiative closure evidence (real Postgres, mount
           idempotencyKey: 'key-not-owner01',
         });
       const rows = await coldRead((c) =>
-        c.query(`SELECT id FROM initiative_closure_evidence WHERE closure_request_id = $1`, [requestId])
+        c.query(`SELECT id FROM initiative_closure_evidence WHERE closure_request_id = $1`, [
+          requestId,
+        ])
       );
       expect({ status: res.status, code: res.body.code, rows: rows.rowCount }).toEqual({
         status: 403,
@@ -297,9 +322,13 @@ describe('Meeting/Notebook → Initiative closure evidence (real Postgres, mount
         followUpStatus: followUp.status,
         pageStatus: page.status,
         rows: stored.rowCount,
-        allHashed: stored.rows.every((r) => typeof r.source_hash === 'string' && r.source_hash.length === 64),
+        allHashed: stored.rows.every(
+          (r) => typeof r.source_hash === 'string' && r.source_hash.length === 64
+        ),
         // Only the notebook page has real version history, so only it pins a version row id.
-        versionPinning: stored.rows.map((r) => `${r.evidence_type}:${r.source_version_id ? 'pinned' : 'none'}`),
+        versionPinning: stored.rows.map(
+          (r) => `${r.evidence_type}:${r.source_version_id ? 'pinned' : 'none'}`
+        ),
       }).toEqual({
         noteStatus: 201,
         followUpStatus: 201,
@@ -319,7 +348,9 @@ describe('Meeting/Notebook → Initiative closure evidence (real Postgres, mount
         )
       );
       const evidence = await coldRead((c) =>
-        c.query(`SELECT id FROM initiative_closure_evidence WHERE organization_id = $1`, [TENANT_A.id])
+        c.query(`SELECT id FROM initiative_closure_evidence WHERE organization_id = $1`, [
+          TENANT_A.id,
+        ])
       );
       expect(events.rowCount).toBe(evidence.rowCount);
     });
@@ -333,7 +364,9 @@ describe('Meeting/Notebook → Initiative closure evidence (real Postgres, mount
         .set('Authorization', bearer(TENANT_A.owner))
         .send({ evidenceType: 'meeting_note', evidenceRefId: NOTE_APPROVED });
       const rows = await coldRead((c) =>
-        c.query(`SELECT id FROM initiative_closure_evidence WHERE closure_request_id = $1`, [requestId])
+        c.query(`SELECT id FROM initiative_closure_evidence WHERE closure_request_id = $1`, [
+          requestId,
+        ])
       );
       expect({ status: res.status, code: res.body.code, rows: rows.rowCount }).toEqual({
         status: 400,
@@ -414,7 +447,9 @@ describe('Meeting/Notebook → Initiative closure evidence (real Postgres, mount
         });
       expect(res.status).toBe(404);
       const rows = await coldRead((c) =>
-        c.query(`SELECT id FROM initiative_closure_evidence WHERE closure_request_id = $1`, [requestId])
+        c.query(`SELECT id FROM initiative_closure_evidence WHERE closure_request_id = $1`, [
+          requestId,
+        ])
       );
       expect(rows.rowCount).toBe(0);
     });
@@ -424,7 +459,11 @@ describe('Meeting/Notebook → Initiative closure evidence (real Postgres, mount
       const res = await agent()
         .post(evidenceUrl(INITIATIVE_A, requestId))
         .set('Authorization', bearer(TENANT_B.owner))
-        .send({ evidenceType: 'meeting_note', evidenceRefId: NOTE_APPROVED, initiativeId: INITIATIVE_A });
+        .send({
+          evidenceType: 'meeting_note',
+          evidenceRefId: NOTE_APPROVED,
+          initiativeId: INITIATIVE_A,
+        });
       expect(res.status).toBe(404);
     });
   });
@@ -443,7 +482,9 @@ describe('Meeting/Notebook → Initiative closure evidence (real Postgres, mount
       const page = await send('notebook_page', PAGE_UNVERIFIED);
 
       const rows = await coldRead((c) =>
-        c.query(`SELECT id FROM initiative_closure_evidence WHERE closure_request_id = $1`, [requestId])
+        c.query(`SELECT id FROM initiative_closure_evidence WHERE closure_request_id = $1`, [
+          requestId,
+        ])
       );
       expect({
         note: note.status,
@@ -480,7 +521,9 @@ describe('Meeting/Notebook → Initiative closure evidence (real Postgres, mount
         .send(body);
 
       const rows = await coldRead((c) =>
-        c.query(`SELECT id FROM initiative_closure_evidence WHERE closure_request_id = $1`, [requestId])
+        c.query(`SELECT id FROM initiative_closure_evidence WHERE closure_request_id = $1`, [
+          requestId,
+        ])
       );
       expect({
         firstStatus: first.status,
@@ -542,7 +585,9 @@ describe('Meeting/Notebook → Initiative closure evidence (real Postgres, mount
       );
 
       const rows = await coldRead((c) =>
-        c.query(`SELECT id FROM initiative_closure_evidence WHERE closure_request_id = $1`, [requestId])
+        c.query(`SELECT id FROM initiative_closure_evidence WHERE closure_request_id = $1`, [
+          requestId,
+        ])
       );
       const created = race.fulfilled.filter((r: any) => r.status === 201).length;
       const replayed = race.fulfilled.filter((r: any) => r.status === 200).length;
@@ -680,10 +725,13 @@ describe('Meeting/Notebook → Initiative closure evidence (real Postgres, mount
         secondCode: 'EVIDENCE_SOURCE_VERSION_CONFLICT',
       });
 
-      await client.query(`DELETE FROM notebook_page_versions WHERE id = $1`, [fxId('pagever', 'v2')]);
-      await client.query(`UPDATE notebook_pages SET content_text = 'verified body v1' WHERE id = $1`, [
-        PAGE_VERIFIED,
+      await client.query(`DELETE FROM notebook_page_versions WHERE id = $1`, [
+        fxId('pagever', 'v2'),
       ]);
+      await client.query(
+        `UPDATE notebook_pages SET content_text = 'verified body v1' WHERE id = $1`,
+        [PAGE_VERIFIED]
+      );
     });
 
     it('cold read recomputes the hash from the stored snapshot and gets the same digest', async () => {
@@ -809,7 +857,9 @@ describe('Meeting/Notebook → Initiative closure evidence (real Postgres, mount
 
       await client.query('BEGIN');
       await client.query("SET LOCAL closure_evidence.retention_operation = 'authorized'");
-      await client.query("SET LOCAL closure_evidence.migration_operation = 'snapshot_exemption_backfill'");
+      await client.query(
+        "SET LOCAL closure_evidence.migration_operation = 'snapshot_exemption_backfill'"
+      );
       const settingsAreSet = await client.query<{ r: string; m: string }>(
         `SELECT coalesce(current_setting('closure_evidence.retention_operation', true), '') AS r,
                 coalesce(current_setting('closure_evidence.migration_operation', true), '') AS m`
@@ -822,7 +872,9 @@ describe('Meeting/Notebook → Initiative closure evidence (real Postgres, mount
 
       await client.query('BEGIN');
       await client.query("SET LOCAL closure_evidence.retention_operation = 'authorized'");
-      await client.query("SET LOCAL closure_evidence.migration_operation = 'snapshot_exemption_backfill'");
+      await client.query(
+        "SET LOCAL closure_evidence.migration_operation = 'snapshot_exemption_backfill'"
+      );
       const upd = await client
         .query(`UPDATE initiative_closure_evidence SET snapshot_exempt = true WHERE id = $1`, [id])
         .then(() => 'ALLOWED')
@@ -885,6 +937,91 @@ describe('Meeting/Notebook → Initiative closure evidence (real Postgres, mount
     });
   });
 
+  describe('6d. the test-only cleanup cannot be aimed at a real database', () => {
+    it('refuses a database whose name is not disposable, before running any statement', async () => {
+      // The helper reads the name from the SERVER, so this probe renames the
+      // answer rather than the connection string — a mislabelled URL must not be
+      // able to talk its way in either.
+      const probe = newClient();
+      await probe.connect();
+      const original = probe.query.bind(probe);
+      let statementsAttempted = 0;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (probe as any).query = (text: any, params?: any) => {
+        const sql = typeof text === 'string' ? text : String(text?.text ?? '');
+        if (sql.includes('current_database()')) {
+          return Promise.resolve({ rows: [{ db: 'consultinity' }], rowCount: 1 });
+        }
+        statementsAttempted += 1;
+        return original(text, params);
+      };
+
+      const outcome = await deleteLedgerRows(probe, [
+        { ledger: 'initiative_closure_evidence', column: 'id', values: ['anything'] },
+      ])
+        .then(() => 'RAN')
+        .catch((e: Error) => e.message);
+      await probe.end();
+
+      expect(String(outcome)).toContain('Refusing immutable fixture cleanup');
+      expect(statementsAttempted).toBe(0);
+    });
+
+    it('deletes nothing when handed an empty scope — empty means nothing, not everything', async () => {
+      const before = await coldRead((c) =>
+        c.query<{ n: string }>(`SELECT count(*) AS n FROM initiative_closure_evidence`)
+      );
+      const removed = await deleteLedgerRows(client, [
+        { ledger: 'initiative_closure_evidence', column: 'id', values: [] },
+      ]);
+      const after = await coldRead((c) =>
+        c.query<{ n: string }>(`SELECT count(*) AS n FROM initiative_closure_evidence`)
+      );
+      expect({ removed, unchanged: before.rows[0].n === after.rows[0].n }).toEqual({
+        removed: {},
+        unchanged: true,
+      });
+    });
+
+    it('leaves the production guard enabled after it is done', async () => {
+      // The trigger is suspended and restored inside one transaction. If a bug
+      // ever left it disabled, every later assertion about immutability in this
+      // file would silently become vacuous.
+      const removed = await deleteLedgerRows(client, [
+        { ledger: 'initiative_closure_evidence', column: 'id', values: ['no-such-row'] },
+      ]);
+      const enabled = await coldRead((c) =>
+        c.query<{ tgenabled: string }>(
+          `SELECT tgenabled FROM pg_trigger
+            WHERE tgname = 'trg_initiative_closure_evidence_append_only'`
+        )
+      );
+      expect({ removed, tgenabled: enabled.rows[0].tgenabled }).toEqual({
+        removed: { 'initiative_closure_evidence.id': 0 },
+        // 'O' = enabled for origin (the default); 'D' would mean left disabled.
+        tgenabled: 'O',
+      });
+    });
+
+    it('rolls trigger suspension back after a forced cleanup failure', async () => {
+      await expect(
+        deleteLedgerRows(
+          client,
+          [{ ledger: 'initiative_closure_evidence', column: 'id', values: ['no-such-row'] }],
+          { forceFailureAfterDisable: true }
+        )
+      ).rejects.toThrow('forced immutable fixture cleanup failure');
+
+      const enabled = await coldRead((c) =>
+        c.query<{ tgenabled: string }>(
+          `SELECT tgenabled FROM pg_trigger
+            WHERE tgname = 'trg_initiative_closure_evidence_append_only'`
+        )
+      );
+      expect(enabled.rows[0]?.tgenabled).toBe('O');
+    });
+  });
+
   describe('7. immutability and deletion semantics', () => {
     it('a direct UPDATE and a direct DELETE on evidence are both refused by the database', async () => {
       const rows = await coldRead((c) =>
@@ -938,9 +1075,8 @@ describe('Meeting/Notebook → Initiative closure evidence (real Postgres, mount
 
   describe('8. rollback on forced downstream failure', () => {
     it('a failure after the evidence and audit inserts leaves neither behind', async () => {
-      const { setClosureEvidenceFaultInjectorForTests } = await import(
-        '../../../server/src/services/initiative/initiativeClosureService.js'
-      );
+      const { setClosureEvidenceFaultInjectorForTests } =
+        await import('../../../server/src/services/initiative/initiativeClosureService.js');
       const requestId = await createClosureRequest(INITIATIVE_A, TENANT_A.id);
       const auditBefore = await coldRead((c) =>
         c.query(
@@ -968,7 +1104,9 @@ describe('Meeting/Notebook → Initiative closure evidence (real Postgres, mount
       }
 
       const evidenceAfter = await coldRead((c) =>
-        c.query(`SELECT id FROM initiative_closure_evidence WHERE closure_request_id = $1`, [requestId])
+        c.query(`SELECT id FROM initiative_closure_evidence WHERE closure_request_id = $1`, [
+          requestId,
+        ])
       );
       const auditAfter = await coldRead((c) =>
         c.query(
@@ -978,9 +1116,10 @@ describe('Meeting/Notebook → Initiative closure evidence (real Postgres, mount
       );
 
       // No orphan on either side of the pair.
-      expect({ evidence: evidenceAfter.rowCount, auditDelta: auditAfter.rowCount - auditBefore.rowCount }).toEqual(
-        { evidence: 0, auditDelta: 0 }
-      );
+      expect({
+        evidence: evidenceAfter.rowCount,
+        auditDelta: auditAfter.rowCount - auditBefore.rowCount,
+      }).toEqual({ evidence: 0, auditDelta: 0 });
     });
   });
 

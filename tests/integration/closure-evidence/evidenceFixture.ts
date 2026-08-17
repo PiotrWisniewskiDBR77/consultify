@@ -2,16 +2,17 @@
  * FLOW-MEETING-NOTEBOOK-INITIATIVE-EVIDENCE-001 — fixture.
  *
  * Two tenants, three roles, real signed JWTs, deterministic ids, and cleanup
- * scoped to exactly the rows this fixture creates — with ONE deliberate
- * exception. The evidence ledger refuses UPDATE and DELETE unconditionally and
- * its parents are ON DELETE RESTRICT, so there is no scoped way to remove an
- * evidence row. Those rows go through TRUNCATE, which is DDL requiring table
- * ownership, and everything else is still removed by id.
+ * scoped to exactly the rows this fixture creates — including the append-only
+ * ledger, which needs the privileged, disposable-database-guarded helper in
+ * tests/support/disposableLedgerCleanup.ts. Nothing here deletes by anything
+ * broader than an explicit id list or this fixture's own id prefix.
  */
 import { createHash } from 'node:crypto';
 
 import jwt from 'jsonwebtoken';
 import pg from 'pg';
+
+import { deleteLedgerRows, residueByPrefix } from '../../support/disposableLedgerCleanup.js';
 
 // Pin the secret before any server module can load Config.ts and compute a
 // different deterministic default.
@@ -276,10 +277,8 @@ export async function cleanupFixture(
 ): Promise<void> {
   const tenants = ids.tenants ?? ALL_TENANTS;
   const actors = actorsOf(tenants);
-  // Evidence FIRST, and necessarily wholesale: the ledger admits no scoped
-  // delete. Suites in this directory run with --no-file-parallelism against a
-  // disposable database, so "everything" is this run's own rows.
-  await truncateEvidenceLedgerForFixture(client);
+  // Evidence FIRST, by exact closure-request id plus this fixture's own prefix.
+  await removeFixtureEvidence(client, ids.closureRequestIds);
   await client.query(`DELETE FROM initiative_closure_requests WHERE id = ANY($1::text[])`, [
     ids.closureRequestIds,
   ]);
@@ -326,51 +325,35 @@ export async function cleanupFixture(
 }
 
 /**
- * Evidence cannot be deleted. At all.
+ * Evidence cannot be deleted by anything that serves a request.
  *
- * The ledger's guard refuses UPDATE and DELETE unconditionally, and its parents
+ * The ledger's guard refuses UPDATE and DELETE unconditionally and its parents
  * are ON DELETE RESTRICT, so there is no row-level way to remove an evidence row
- * — not for a cleanup script, not for the application, not for this fixture.
+ * — not for the application, not for a cleanup script, and not for this fixture
+ * either. An earlier version used a session setting the guard honoured; that was
+ * not authorization, since any session with DELETE rights could set it.
  *
- * An earlier version of this file used a session setting
- * (`SET LOCAL closure_evidence.retention_operation = 'authorized'`) that the
- * guard honoured. That was not authorization: any session with DELETE rights
- * could set it for itself, which includes the application's own pool. The door
- * is gone and the fixture does not get a private one either.
- *
- * What is left is TRUNCATE, which is DDL and requires ownership of the table —
- * a database privilege, checked by Postgres, that a runtime role is not granted.
- * That is exactly the shape a real retention operation would have to take, and
- * it is why this is safe to use here against a disposable test database while
- * remaining unavailable to anything serving a request.
+ * Teardown therefore goes through `deleteLedgerRows`, which is TypeScript rather
+ * than anything installed in the database, refuses to run unless the server says
+ * it is on a disposable database, and deletes only the ids it is handed. See
+ * that file for why suspending the trigger inside one transaction is a
+ * privilege boundary rather than a hole.
  */
-export async function truncateEvidenceLedgerForFixture(client: pg.Client): Promise<void> {
-  await client.query('BEGIN');
-  try {
-    await assertDisposableCleanupTarget(client);
-    await client.query('TRUNCATE TABLE initiative_closure_evidence');
-    await client.query('COMMIT');
-  } catch (error) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    throw error;
-  }
-}
-
-export async function assertDisposableCleanupTarget(client: pg.Client): Promise<string> {
-  if (process.env.CLOSURE_EVIDENCE_ALLOW_IMMUTABLE_FIXTURE_CLEANUP !== '1') {
-    throw new Error(
-      'immutable fixture cleanup requires CLOSURE_EVIDENCE_ALLOW_IMMUTABLE_FIXTURE_CLEANUP=1'
-    );
-  }
-  const prefix = String(process.env.CLOSURE_EVIDENCE_DISPOSABLE_DB_PREFIX ?? '').trim();
-  if (!prefix) throw new Error('CLOSURE_EVIDENCE_DISPOSABLE_DB_PREFIX is required');
-  const result = await client.query<{ name: string }>('SELECT current_database() AS name');
-  const name = String(result.rows[0]?.name ?? '');
-  if (!name.startsWith(prefix)) {
-    throw new Error(`refusing fixture cleanup outside disposable database prefix ${prefix}`);
-  }
-  await client.query(`SELECT pg_advisory_xact_lock(hashtext('closure-evidence-fixture-cleanup'))`);
-  return name;
+async function removeFixtureEvidence(
+  client: pg.Client,
+  closureRequestIds: string[]
+): Promise<number> {
+  const removed = await deleteLedgerRows(client, [
+    {
+      ledger: 'initiative_closure_evidence',
+      column: 'closure_request_id',
+      values: closureRequestIds,
+    },
+    // Belt and braces: anything this fixture wrote under its own prefix, in case
+    // a test created evidence against a request it did not register.
+    { ledger: 'initiative_closure_evidence', column: 'id', prefix: FX },
+  ]);
+  return Object.values(removed).reduce((a, b) => a + b, 0);
 }
 
 export async function raceExactly<T>(
@@ -385,4 +368,14 @@ export async function raceExactly<T>(
       r.status === 'rejected' ? [String((r.reason as Error)?.message ?? r.reason)] : []
     ),
   };
+}
+
+/**
+ * What this fixture left behind, by its own id prefix.
+ *
+ * Suites assert on this in `afterAll` so "residue 0" is something the run
+ * measured rather than something a report claims.
+ */
+export async function fixtureResidue(client: pg.Client): Promise<Record<string, number>> {
+  return residueByPrefix(client, [FX]);
 }

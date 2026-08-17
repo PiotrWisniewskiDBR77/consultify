@@ -42,6 +42,8 @@
  */
 import { randomUUID } from 'node:crypto';
 
+import { deleteLedgerRows } from '../../support/disposableLedgerCleanup.js';
+
 import { Client, type ClientConfig } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
@@ -111,60 +113,6 @@ let addEvidence: InitiativeClosureServiceModule['addEvidence'];
 let submitClosureRequest: InitiativeClosureServiceModule['submitClosureRequest'];
 let approveClosureRequest: InitiativeClosureServiceModule['approveClosureRequest'];
 let closePgPool: (() => Promise<void>) | undefined;
-const gateFixtureIds = {
-  decisions: [] as string[],
-  cases: [] as string[],
-  proposals: [] as string[],
-  reviews: [] as string[],
-};
-
-async function cleanupImmutableClosureFixtures(): Promise<void> {
-  if (process.env.CLOSURE_EVIDENCE_ALLOW_IMMUTABLE_FIXTURE_CLEANUP !== '1') {
-    throw new Error('immutable fixture cleanup is not explicitly enabled');
-  }
-  const prefix = String(process.env.CLOSURE_EVIDENCE_DISPOSABLE_DB_PREFIX ?? '').trim();
-  const db = await client.query<{ name: string }>('SELECT current_database() AS name');
-  if (!prefix || !String(db.rows[0]?.name ?? '').startsWith(prefix)) {
-    throw new Error('refusing immutable fixture cleanup outside the disposable database prefix');
-  }
-  await client.query('BEGIN');
-  try {
-    await client.query(
-      `SELECT pg_advisory_xact_lock(hashtext('closure-evidence-fixture-cleanup'))`
-    );
-    await client.query('TRUNCATE TABLE initiative_closure_evidence');
-    await client.query(
-      'ALTER TABLE initiative_lifecycle_gate_decisions DISABLE TRIGGER initiative_lifecycle_gate_decisions_immutable'
-    );
-    await client.query(
-      `DELETE FROM initiative_lifecycle_gate_decisions WHERE decision_id = ANY($1::text[])`,
-      [gateFixtureIds.decisions]
-    );
-    await client.query(
-      'ALTER TABLE initiative_lifecycle_gate_decisions ENABLE TRIGGER initiative_lifecycle_gate_decisions_immutable'
-    );
-    await client.query(
-      `DELETE FROM v8_agent_proposal_scope_reviews WHERE review_id = ANY($1::text[])`,
-      [gateFixtureIds.reviews]
-    );
-    await client.query(
-      `DELETE FROM v8_agent_proposal_versions WHERE proposal_version_id = ANY($1::text[])`,
-      [gateFixtureIds.proposals]
-    );
-    await client.query(
-      `DELETE FROM transformation_cases WHERE transformation_case_id = ANY($1::text[])`,
-      [gateFixtureIds.cases]
-    );
-    await client.query('COMMIT');
-  } catch (error) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    const trigger = await client.query<{ enabled: string }>(
-      `SELECT tgenabled AS enabled FROM pg_trigger WHERE tgname = 'initiative_lifecycle_gate_decisions_immutable'`
-    );
-    if (trigger.rows[0]?.enabled !== 'O') throw new Error('immutable trigger was not restored');
-    throw error;
-  }
-}
 
 /**
  * A GATE UNRELATED TO ROI-E005, DISCOVERED WHILE WRITING THIS TEST, NOT THE
@@ -191,7 +139,6 @@ async function seedApprovedClosureGateDecision(
   humanActorUserId: string
 ): Promise<void> {
   const caseId = `tc_${randomUUID()}`;
-  gateFixtureIds.cases.push(caseId);
   await client.query(
     `INSERT INTO transformation_cases
        (transformation_case_id, organization_id, initiated_by_user_id, mandate, lineage_id, idempotency_key)
@@ -200,7 +147,6 @@ async function seedApprovedClosureGateDecision(
   );
 
   const proposalVersionId = `pv_${randomUUID()}`;
-  gateFixtureIds.proposals.push(proposalVersionId);
   await client.query(
     `INSERT INTO v8_agent_proposal_versions
        (proposal_version_id, proposal_id, organization_id, canonical_run_id, proposal_version, plan_version,
@@ -219,9 +165,6 @@ async function seedApprovedClosureGateDecision(
   );
 
   const reviewId = `review_${randomUUID()}`;
-  gateFixtureIds.reviews.push(reviewId);
-  const decisionId = `decision_${randomUUID()}`;
-  gateFixtureIds.decisions.push(decisionId);
   await client.query(
     `INSERT INTO v8_agent_proposal_scope_reviews
        (review_id, proposal_version_id, scope_key, decision, reason, reviewed_by_user_id)
@@ -239,7 +182,7 @@ async function seedApprovedClosureGateDecision(
              'ROI-E005 AC-02 test-fixture authority', 'ROI-E005 AC-02 test-fixture closure gate decision',
              now() + interval '1 day', $10, $11)`,
     [
-      decisionId,
+      `decision_${randomUUID()}`,
       orgId,
       initiativeId,
       caseId,
@@ -455,29 +398,90 @@ describe('ROI-E005 AC-02 — ROI obligations survive a REAL Initiative closure (
     await client.query(`DELETE FROM rvn_platform_visibility_policies WHERE organization_id = $1`, [
       ORG_ID,
     ]);
-    await cleanupImmutableClosureFixtures();
+    // `initiative_closure_evidence` refuses UPDATE and DELETE unconditionally
+    // and its parents are ON DELETE RESTRICT
+    // (20261013_closure_evidence_snapshot_and_immutability.sql), so there is no
+    // scoped delete to issue here — by design, and with no session setting that
+    // opens one. The test-only helper is bounded to this organization's rows and
+    // refuses to run anywhere but a disposable database.
+    await deleteLedgerRows(client, [
+      { ledger: 'initiative_closure_evidence', column: 'organization_id', values: [ORG_ID] },
+      {
+        ledger: 'initiative_lifecycle_gate_decisions',
+        column: 'organization_id',
+        values: [ORG_ID],
+      },
+    ]);
     await client.query(`DELETE FROM initiative_closure_requests WHERE organization_id = $1`, [
       ORG_ID,
     ]);
     await client.query(`DELETE FROM initiative_history WHERE initiative_id = $1`, [INITIATIVE_ID]);
+    // Previously NOT cleaned up: `initiative_lifecycle_gate_decisions` is immutable BY
+    // Previously this suite stopped here and documented what it could not
+    // remove as "accepted, permanent, by-design residue": the gate-decision row
+    // is immutable by trigger, and its plain foreign keys to `initiatives` and
+    // `users` transitively blocked deleting the initiative, the project, the
+    // users and the organization. The description was accurate; the conclusion
+    // was not. It meant every run of this suite permanently stranded a whole
+    // tenant, and "by design" made that look like a decision rather than a leak.
+    //
+    // The gate-decision row is cleared above by the test-only helper, so the
+    // rest of the chain can now be removed in dependency order.
     await client.query(`DELETE FROM tasks WHERE organization_id = $1`, [ORG_ID]);
     await client.query(`DELETE FROM initiative_milestones WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(`DELETE FROM initiatives WHERE id = $1`, [INITIATIVE_ID]);
-    await client.query(`DELETE FROM projects WHERE id = $1`, [PROJECT_ID]);
-    await client.query(`DELETE FROM organization_members WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(`DELETE FROM users WHERE id = ANY($1::text[])`, [
-      [USER_OWNER, USER_APPROVER],
+    // Scope reviews have no organization_id — they hang off the proposal
+    // version, so they are removed through it.
+    await client.query(
+      `DELETE FROM v8_agent_proposal_scope_reviews
+        WHERE proposal_version_id IN (
+          SELECT proposal_version_id FROM v8_agent_proposal_versions WHERE organization_id = $1
+        )`,
+      [ORG_ID]
+    );
+    await client.query(`DELETE FROM v8_agent_proposal_versions WHERE organization_id = $1`, [
+      ORG_ID,
     ]);
+    await client.query(`DELETE FROM transformation_cases WHERE organization_id = $1`, [ORG_ID]);
+    await client.query(`DELETE FROM organization_members WHERE organization_id = $1`, [ORG_ID]);
+    await client.query(`DELETE FROM initiatives WHERE organization_id = $1`, [ORG_ID]);
+    await client.query(`DELETE FROM projects WHERE organization_id = $1`, [ORG_ID]);
+    await client.query(`DELETE FROM users WHERE organization_id = $1`, [ORG_ID]);
     await client.query(`DELETE FROM organizations WHERE id = $1`, [ORG_ID]);
+
+    // Literal, in the run: this suite's own tenant is gone, or the teardown
+    // failed and says so instead of leaving it for someone to find later.
+    const residue = await client.query<{ n: string }>(
+      `SELECT (SELECT count(*) FROM initiatives  WHERE organization_id = $1)
+             + (SELECT count(*) FROM projects    WHERE organization_id = $1)
+             + (SELECT count(*) FROM users       WHERE organization_id = $1)
+             + (SELECT count(*) FROM organizations WHERE id = $1) AS n`,
+      [ORG_ID]
+    );
+    if (Number(residue.rows[0].n) !== 0) {
+      throw new Error(
+        `roi closure suite left ${residue.rows[0].n} rows behind for ${ORG_ID}; teardown is incomplete`
+      );
+    }
+
     await client.end();
     if (closePgPool) await closePgPool();
   }, 30_000);
 
+  /**
+   * No silent skip: this is a real-database suite, and a run without a database
+   * verified nothing. Reporting that as a pass makes an absent gate and a
+   * satisfied one look identical in the summary.
+   */
   const itDB = (name: string, fn: () => Promise<void>, timeoutMs = 30_000) =>
     it(
       name,
       async () => {
-        if (!reachable) return;
+        if (!reachable) {
+          throw new Error(
+            'EVIDENCE_MISSING: this suite needs a real Postgres and none was reachable, so nothing ' +
+              'was verified. Point DATABASE_URL at a migrated database and re-run.'
+          );
+        }
         await fn();
       },
       timeoutMs

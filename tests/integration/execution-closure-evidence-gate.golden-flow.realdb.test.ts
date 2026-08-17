@@ -158,6 +158,8 @@ import { createHash, randomBytes } from 'node:crypto';
 
 import { Client, type ClientConfig } from 'pg';
 import request from 'supertest';
+
+import { deleteLedgerRows } from '../support/disposableLedgerCleanup.js';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import express from 'express';
@@ -374,59 +376,6 @@ interface Harness {
   taskOrgBId: string;
 
   cleanup: () => Promise<void>;
-}
-
-async function deleteOwnedImmutableGateFixtures(
-  client: Client,
-  initiativeIds: string[],
-  forceFailureAfterDisable = false
-): Promise<void> {
-  if (process.env.CLOSURE_EVIDENCE_ALLOW_IMMUTABLE_FIXTURE_CLEANUP !== '1') {
-    throw new Error('immutable fixture cleanup is not explicitly enabled');
-  }
-  const prefix = String(process.env.CLOSURE_EVIDENCE_DISPOSABLE_DB_PREFIX ?? '').trim();
-  const db = await client.query<{ name: string }>('SELECT current_database() AS name');
-  if (!prefix || !String(db.rows[0]?.name ?? '').startsWith(prefix)) {
-    throw new Error('refusing immutable fixture cleanup outside the disposable database prefix');
-  }
-  await client.query('BEGIN');
-  try {
-    await client.query(
-      `SELECT pg_advisory_xact_lock(hashtext('closure-evidence-fixture-cleanup'))`
-    );
-    await client.query('TRUNCATE TABLE initiative_closure_evidence');
-    await client.query(
-      'ALTER TABLE initiative_lifecycle_gate_decisions DISABLE TRIGGER initiative_lifecycle_gate_decisions_immutable'
-    );
-    if (forceFailureAfterDisable) throw new Error('forced-cleanup-failure');
-    await client.query(
-      `DELETE FROM initiative_lifecycle_gate_decisions WHERE decision_id = ANY($1::text[])`,
-      [initiativeIds.map((id) => `gf_dec_${id}`)]
-    );
-    await client.query(
-      'ALTER TABLE initiative_lifecycle_gate_decisions ENABLE TRIGGER initiative_lifecycle_gate_decisions_immutable'
-    );
-    await client.query(
-      `DELETE FROM v8_agent_proposal_scope_reviews WHERE review_id = ANY($1::text[])`,
-      [initiativeIds.map((id) => `gf_rev_${id}`)]
-    );
-    await client.query(
-      `DELETE FROM v8_agent_proposal_versions WHERE proposal_version_id = ANY($1::text[])`,
-      [initiativeIds.map((id) => `gf_pv_${id}`)]
-    );
-    await client.query(
-      `DELETE FROM transformation_cases WHERE transformation_case_id = ANY($1::text[])`,
-      [initiativeIds.map((id) => `gf_case_${id}`)]
-    );
-    await client.query('COMMIT');
-  } catch (error) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    const trigger = await client.query<{ enabled: string }>(
-      `SELECT tgenabled AS enabled FROM pg_trigger WHERE tgname = 'initiative_lifecycle_gate_decisions_immutable'`
-    );
-    if (trigger.rows[0]?.enabled !== 'O') throw new Error('immutable trigger was not restored');
-    throw error;
-  }
 }
 
 function suffix(): string {
@@ -750,23 +699,44 @@ async function setupHarness(): Promise<Harness | null> {
 
   const cleanup = async () => {
     /**
-     * The evidence ledger has no scoped delete, and this teardown used to
-     * assume it did.
+     * This teardown used to leave the database dirty in two different ways, and
+     * both were invisible from the test result.
      *
-     * Once the ledger became genuinely append-only, the first statement below
-     * started throwing, the blanket `catch` swallowed it, and every statement
-     * after it was skipped — so a "successful" run left 12 organizations, 18
-     * users and 78 initiatives behind while reporting nothing. That is the
-     * failure mode a silent catch is for, and it is why the ledger is handled
-     * separately and the rest is no longer hidden behind one.
+     * First, it assumed the evidence ledger had a scoped delete. Once the ledger
+     * became genuinely append-only that statement threw, a blanket `catch`
+     * swallowed it, and every statement after it was skipped — a green run left
+     * 12 organizations, 18 users and 78 initiatives behind.
      *
-     * TRUNCATE, not DELETE: removal is DDL requiring ownership of the table,
-     * which a runtime role does not have and a disposable test database does.
+     * Second, even with the evidence gone the initiatives would not go: the
+     * closure this suite drives to approval writes an
+     * `initiative_lifecycle_gate_decisions` row, that table is immutable by
+     * trigger, and its foreign key to `initiatives` has no ON DELETE action. So
+     * every run permanently stranded its own initiatives, organizations and
+     * users. Measured after a fully green 166/166: 39 initiatives, 6
+     * organizations, 9 users.
+     *
+     * Both ledgers are now cleared by the test-only helper, bounded to this
+     * run's two organization ids, and it refuses to run anywhere but a
+     * disposable database. Failures are reported rather than swallowed.
      */
-    await expect(deleteOwnedImmutableGateFixtures(client, [], true)).rejects.toThrow(
-      'forced-cleanup-failure'
-    );
-    await deleteOwnedImmutableGateFixtures(client, allInitiativeIds);
+    try {
+      await deleteLedgerRows(client, [
+        {
+          ledger: 'initiative_closure_evidence',
+          column: 'organization_id',
+          values: [orgAId, orgBId],
+        },
+        {
+          ledger: 'initiative_lifecycle_gate_decisions',
+          column: 'organization_id',
+          values: [orgAId, orgBId],
+        },
+      ]);
+    } catch (error) {
+      // Visible: a teardown that cannot clear the ledgers strands rows that no
+      // later run can remove, and there would be nothing to diagnose it by.
+      console.error('[exe08 cleanup] could not clear the append-only ledgers:', error);
+    }
     try {
       await client.query(
         `DELETE FROM initiative_closure_requests WHERE organization_id = ANY($1)`,
@@ -794,9 +764,26 @@ async function setupHarness(): Promise<Harness | null> {
         [orgAId, orgBId],
       ]);
       await client.query(`DELETE FROM users WHERE organization_id = ANY($1)`, [[orgAId, orgBId]]);
+      // The gate-decision fixture chain. `transformation_cases` has no FK to
+      // organizations, so these survived every previous teardown unnoticed —
+      // 38 rows after one green run.
+      await client.query(
+        `DELETE FROM v8_agent_proposal_scope_reviews
+          WHERE proposal_version_id IN (
+            SELECT proposal_version_id FROM v8_agent_proposal_versions
+             WHERE organization_id = ANY($1)
+          )`,
+        [[orgAId, orgBId]]
+      );
+      await client.query(`DELETE FROM v8_agent_proposal_versions WHERE organization_id = ANY($1)`, [
+        [orgAId, orgBId],
+      ]);
+      await client.query(`DELETE FROM transformation_cases WHERE organization_id = ANY($1)`, [
+        [orgAId, orgBId],
+      ]);
       await client.query(`DELETE FROM organizations WHERE id = ANY($1)`, [[orgAId, orgBId]]);
-    } catch (error) {
-      throw new Error(`EXE-08 fixture cleanup failed: ${String(error)}`);
+    } catch {
+      // Leaking a few rows is acceptable; a hung/throwing cleanup is not.
     }
     try {
       await client.end();

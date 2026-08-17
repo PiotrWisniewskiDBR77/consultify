@@ -27,9 +27,9 @@ import {
   fxId,
   newClient,
   raceExactly,
+  fixtureResidue,
   requireDatabase,
   seedTenants,
-  truncateEvidenceLedgerForFixture,
 } from './evidenceFixture.js';
 
 import { PINNED_EVIDENCE_TYPES } from '../../../server/src/services/initiative/closureEvidenceSourceReader.js';
@@ -39,6 +39,8 @@ import type { Express } from 'express';
 import express from 'express';
 import type pg from 'pg';
 import request from 'supertest';
+
+import { deleteLedgerRows } from '../../support/disposableLedgerCleanup.js';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 /**
@@ -221,10 +223,16 @@ afterAll(async () => {
   if (!client) return;
   const orgs = ALL_TENANTS.map((t) => t.id);
 
-  // Teardown is by id, children first — except the evidence ledger, which
-  // admits no scoped delete at all. TRUNCATE is DDL and needs ownership of the
-  // table, which is the only reason a test can do it and a runtime role cannot.
-  await truncateEvidenceLedgerForFixture(client);
+  // Teardown is by id, children first. The evidence ledger goes through the
+  // disposable-database-guarded helper — exact closure-request ids, nothing
+  // wider.
+  await deleteLedgerRows(client, [
+    {
+      ledger: 'initiative_closure_evidence',
+      column: 'closure_request_id',
+      values: createdClosureRequests,
+    },
+  ]);
   await client.query(`DELETE FROM initiative_closure_requests WHERE id = ANY($1::text[])`, [
     createdClosureRequests,
   ]);
@@ -264,6 +272,9 @@ afterAll(async () => {
            + (SELECT count(*) FROM organizations  WHERE id = ANY($1::text[])))::text AS n`,
     [orgs]
   );
+  // Literal, in the run: nothing this fixture created is still here. A teardown
+  // that quietly deleted zero rows is what let a whole tenant leak for months.
+  expect(await fixtureResidue(client)).toEqual({});
   await client.end();
   if (residue.rows[0].n !== '0') {
     throw new Error(`fixture left ${residue.rows[0].n} residual rows behind`);

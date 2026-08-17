@@ -23,6 +23,7 @@ import {
   coldRead,
   fxId,
   newClient,
+  fixtureResidue,
   requireDatabase,
   seedTenants,
 } from './evidenceFixture.js';
@@ -193,7 +194,8 @@ beforeAll(async () => {
   );
   await seedMethodOutput();
 
-  const router = (await import('../../../server/src/routes/pmo/initiativeClosure.routes.js')).default;
+  const router = (await import('../../../server/src/routes/pmo/initiativeClosure.routes.js'))
+    .default;
   app = express();
   app.use(express.json());
   app.use('/api/initiatives', router);
@@ -251,6 +253,9 @@ afterAll(async () => {
       { table: 'tool_sessions', ids: [fxId('authz-toolsess', 'main')] },
     ],
   });
+  // Literal, in the run: nothing this fixture created is still here. A teardown
+  // that quietly deleted zero rows is what let a whole tenant leak for months.
+  expect(await fixtureResidue(client)).toEqual({});
   await client.end();
 });
 
