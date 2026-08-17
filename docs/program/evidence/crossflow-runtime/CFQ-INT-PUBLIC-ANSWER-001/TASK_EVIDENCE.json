@@ -1,0 +1,132 @@
+{
+  "taskId": "CFQ-INT-PUBLIC-ANSWER-001",
+  "package": "A — public interview delivery (lane tasks 1-3)",
+  "baselineSha": "eb310fb344d3339c67cad81188ce13c6f950d100",
+  "branch": "codex/claude-f2-crossflow-runtime-build-20260817",
+  "verdict": "DONE_CURRENT_SHA",
+  "realCodeDelivered": {
+    "migration": "server/migrations/952_interview_public_distribution_answers.sql",
+    "service": "server/src/services/interviewPublicAnswerService.ts",
+    "mountedRoutes": [
+      "POST /api/interview-v4/public/distributions/:token/answers/:questionId",
+      "POST /api/interview-v4/public/distributions/:token/complete"
+    ],
+    "routerFile": "server/src/routes/interview-enterprise.routes.ts",
+    "routeMountProof": "Both routes are registered ABOVE `router.use(verifyToken)` in the production router; the suite drives them through that same mounted router, and test A0 proves the authenticated half of the SAME router still rejects an unsigned token.",
+    "rateLimiter": "server/src/middleware/rateLimiting.middleware.ts :: interviewPublicAnswerRateLimiter"
+  },
+  "ownerTables": [
+    "interview_questions",
+    "interview_distributions",
+    "interview_public_answer_receipts"
+  ],
+  "singleWriterNote": "No second store was created. Answers keep living in `interview_questions`, written with the same millisecond-truncated CAS predicate the authenticated writer (`InterviewController.updateQuestion`) uses. The new table is an idempotency/audit ledger, not a parallel answer store.",
+  "commands": [
+    {
+      "command": "CI=true DATABASE_URL=<fresh-pg> DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts",
+      "note": "strict from-zero",
+      "exitCode": 0,
+      "applied": 733,
+      "failed": 0
+    },
+    {
+      "command": "… migrate.postgres.ts (repeat)",
+      "exitCode": 0,
+      "applied": 0
+    },
+    {
+      "command": "… migrate.postgres.ts --dry-run",
+      "exitCode": 0,
+      "pending": 0
+    },
+    {
+      "command": "npx tsc -p server --noEmit",
+      "exitCode": 0
+    },
+    {
+      "command": "npx tsc -p tsconfig.f2-crossflow-scoped.json",
+      "exitCode": 0,
+      "note": "scoped program that actually covers this lane's test code; neither shipped gate does"
+    },
+    {
+      "command": "npm run build:backend",
+      "exitCode": 0
+    },
+    {
+      "command": "DATABASE_URL=<fresh-pg> NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres npx vitest run tests/integration/crossflow-runtime/cf-a-public-interview-answers.realdb.test.ts --no-file-parallelism --maxWorkers=1 --retry=0",
+      "exitCode": 0,
+      "runs": 2,
+      "note": "run twice consecutively to prove rerun-hermeticity"
+    }
+  ],
+  "denominators": {
+    "freshMigrations": { "applied": 733, "failed": 0, "checksumsIndependentlyVerified": 733, "mismatches": 0 },
+    "tables": 1589,
+    "packageASuite": { "files": 1, "tests": 18, "passed": 18, "failed": 0, "skipped": 0, "todo": 0, "retries": 0 },
+    "regressionSuites": {
+      "command": "vitest run tests/integration/interview tests/unit/backend/rateLimiter.test.js server/src/services/__tests__/interviewManagerScope.test.ts --retry=0",
+      "withChanges": { "files": 4, "passed": 15, "failed": 6, "skipped": 5 },
+      "atBaselineWithChangesReverted": { "files": 2, "passed": 0, "failed": 6, "skipped": 5 },
+      "regressionIntroduced": 0,
+      "attributionMethod": "The two modified tracked files were restored to their baseline content with `git checkout --` and the same suites re-run. The identical 6 tests failed with the identical assertion (`expected 503 to be 401`), proving the red is pre-existing and not introduced here."
+    }
+  },
+  "fixtureIds": {
+    "harness": "tests/integration/crossflow-runtime/runtimeFixture.ts",
+    "tenants": ["f2-org-<sha256(alpha)>", "f2-org-<sha256(beta)>"],
+    "roles": ["OWNER", "ADMIN", "MEMBER"],
+    "determinism": "All ids derive from sha256 of a semantic path; no Date.now(), no randomUUID, fixed CF_EPOCH."
+  },
+  "negativeControls": {
+    "authBypassRejected": "Unsigned {alg:'none'} token carrying e2e:true → 401. The fixture deletes E2E_MODE and ENABLE_TEST_AUTH_BYPASS at import time.",
+    "malformedToken": "404 INVITE_NOT_FOUND, no write",
+    "unknownToken": "404, no write",
+    "expiredToken": "410 INVITE_EXPIRED, question `updated_at` unchanged",
+    "revokedToken": "410 INVITE_REVOKED, question `updated_at` unchanged",
+    "missingPrecondition": "428 PRECONDITION_REQUIRED, zero receipts written",
+    "staleCas": "409 STALE_VERSION",
+    "replaySameKeySamePayload": "second call returns replayed:true, exactly 1 receipt row, identical CAS token",
+    "changedPayloadCollision": "same key + different payload → 409 IDEMPOTENCY_PAYLOAD_MISMATCH (not a silent replay)",
+    "eightWayRace": "8 concurrent writes of one key → exactly 1 written, rest replayed, exactly 1 receipt row, 0 transport rejections",
+    "crossTenantDenial": "tenant B's token against tenant A's question returns the SAME status as a nonexistent question (404); response body contains neither the foreign organization id nor the foreign session id",
+    "noWriteAfterDenial": "tenant A's stored answer verified unchanged after the cross-tenant attempt",
+    "completionIdempotent": "6 concurrent /complete calls → exactly 1 transition, status 'completed', completed_at set",
+    "noWriteAfterCompletion": "409 DISTRIBUTION_COMPLETED; stored answer and provenance survive a COLD readback on a separate client; zero new receipts",
+    "ledgerAppendOnlyInDatabase": "direct UPDATE and direct DELETE on the receipt table both refused by trigger; asserted against a NON-EMPTY table so a no-op statement cannot pass the check",
+    "piiAndTenantLeak": "public GET exposes neither organization id, nor recipientEmail, nor the raw token",
+    "zeroResidue": "teardown asserts 0 residual rows across distributions/questions/sessions/organizations and throws if any remain"
+  },
+  "defectsFoundAndFixed": [
+    {
+      "id": "A-D1",
+      "found": "Untyped bind parameters (`$n IS NOT NULL`, `trim($n)`) made PostgreSQL fail the whole UPDATE with 42P18 'could not determine data type of parameter', surfacing as an opaque HTTP 500.",
+      "fix": "Explicit CAST on every placeholder."
+    },
+    {
+      "id": "A-D2",
+      "found": "A respondent could keep writing AFTER submitting the invite — a submitted response was mutable with no accountable actor.",
+      "fix": "New DISTRIBUTION_COMPLETED failure (409), checked inside the FOR UPDATE transaction. Checked in the service rather than the token resolver so the public READ keeps working after submission."
+    },
+    {
+      "id": "A-D3",
+      "found": "The receipt ledger is append-only at the database level, so teardown's DELETE was silently refused and receipts leaked between runs; the first write of the next run then reported `replayed:true`, invalidating every downstream idempotency assertion. Detected only by running the same suite twice.",
+      "fix": "Teardown uses TRUNCATE (bypasses row triggers, disposable database only) and the suite is verified across two consecutive runs."
+    },
+    {
+      "id": "A-D4",
+      "found": "`ON DELETE CASCADE` into an append-only table makes the parent undeletable and reports a misleading 'append-only' error on an unrelated DELETE.",
+      "fix": "FK changed to ON DELETE RESTRICT, which states the real rule: a used invite cannot be deleted."
+    }
+  ],
+  "leaseCheck": {
+    "forbiddenPackages": ["EXE-MVP-ACTIONS-001", "UI-CANON", "legacy-cutover"],
+    "touched": [],
+    "note": "No file or owner table of EXE-MVP-ACTIONS-001 (case_core, budget_entries, caseWorkspace routes, executionControl.routes.ts, executionActionRegistryService.ts, executionBudgetService.ts, 20260908_execution_bvp_spine.sql) is touched. server/src/index.ts is NOT touched — it is declared scope of AGT-OPS-001."
+  },
+  "rollback": {
+    "method": "Revert the package commit. The migration is additive and forward-only (new nullable column, new table, new index, new trigger); old readers are unaffected and no existing row is rewritten. Dropping the two routes removes the only writers of the new table.",
+    "schemaRollbackRequired": false,
+    "executed": false
+  },
+  "openBlockers": []
+}

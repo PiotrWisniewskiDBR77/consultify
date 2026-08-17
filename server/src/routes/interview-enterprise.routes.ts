@@ -12,10 +12,16 @@ import { z } from 'zod';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
+import { interviewPublicAnswerRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import {
   InterviewDistributionError,
   interviewEnterpriseService,
 } from '../services/interviewEnterpriseService.js';
+import {
+  PUBLIC_ANSWER_STATUS,
+  completeDistributionByToken,
+  savePublicAnswer,
+} from '../services/interviewPublicAnswerService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
@@ -34,6 +40,90 @@ router.get(
         anonymityMode: invite.anonymityMode,
         expiresAt: invite.expiresAt,
       });
+    } catch (error) {
+      if (error instanceof InterviewDistributionError) {
+        res.status(error.statusCode).json({ error: error.code });
+        return;
+      }
+      throw error;
+    }
+  })
+);
+
+/**
+ * Package A — the public WRITE half of the invite flow.
+ *
+ * These two routes are the only public mutations in this router and they sit
+ * here, above `router.use(verifyToken)`, on purpose: the respondent is external
+ * and has no account. Everything that would normally come from an authenticated
+ * session — tenant, interview session, permission to touch this question — is
+ * derived server-side from the invite token, never from the request. A caller
+ * cannot name an organization, and cannot reach a question outside the session
+ * their invite is bound to.
+ *
+ * `PublicAnswerSchema` deliberately declares every field the service reads.
+ * `validateBody` replaces `req.body` with the parsed result, so a field absent
+ * from the schema silently never reaches the handler.
+ */
+const PublicAnswerSchema = z.object({
+  answerText: z.string().max(20_000).optional().nullable(),
+  contextNote: z.string().max(5_000).optional().nullable(),
+  // Mandatory on the public path — see interviewPublicAnswerService for why an
+  // anonymous respondent may not last-write-wins.
+  expectedUpdatedAt: z.string().min(1).optional().nullable(),
+  idempotencyKey: z.string().min(8).max(200).optional().nullable(),
+});
+
+router.post(
+  '/public/distributions/:token/answers/:questionId',
+  interviewPublicAnswerRateLimiter,
+  asyncHandler(async (req, res) => {
+    const parsed = PublicAnswerSchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      res.status(400).json({ error: 'INVALID_BODY' });
+      return;
+    }
+    try {
+      // Resolving the token also enforces expiry/revocation and flips the
+      // invite to 'opened'; a revoked or expired token throws here.
+      const distribution = await interviewEnterpriseService.resolveActiveDistributionByToken(
+        req.params.token
+      );
+      const result = await savePublicAnswer({
+        distributionId: distribution.id,
+        questionId: req.params.questionId,
+        answerText: parsed.data.answerText ?? null,
+        contextNote: parsed.data.contextNote ?? null,
+        expectedUpdatedAt: parsed.data.expectedUpdatedAt ?? null,
+        idempotencyKey: parsed.data.idempotencyKey ?? '',
+      });
+      if (!result.ok) {
+        res.status(PUBLIC_ANSWER_STATUS[result.code]).json({ error: result.code });
+        return;
+      }
+      // The response carries the new CAS token and nothing else — no tenant id,
+      // no respondent identity, no session internals.
+      res.status(200).json({ updatedAt: result.updatedAt, replayed: result.replayed });
+    } catch (error) {
+      if (error instanceof InterviewDistributionError) {
+        res.status(error.statusCode).json({ error: error.code });
+        return;
+      }
+      throw error;
+    }
+  })
+);
+
+router.post(
+  '/public/distributions/:token/complete',
+  interviewPublicAnswerRateLimiter,
+  asyncHandler(async (req, res) => {
+    try {
+      const distribution = await interviewEnterpriseService.resolveActiveDistributionByToken(
+        req.params.token
+      );
+      const result = await completeDistributionByToken(distribution.id);
+      res.status(200).json({ completed: result.completed, alreadyComplete: result.alreadyComplete });
     } catch (error) {
       if (error instanceof InterviewDistributionError) {
         res.status(error.statusCode).json({ error: error.code });

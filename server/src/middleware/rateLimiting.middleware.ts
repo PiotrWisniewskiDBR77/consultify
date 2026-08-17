@@ -1039,6 +1039,31 @@ export const invitePublicRateLimiter = createLimiter({
   message: 'Too many invitation attempts. Please try again later.',
 });
 
+/**
+ * Public interview respondent writes (Package A, cross-flow runtime build).
+ *
+ * Deliberately NOT `invitePublicRateLimiter`. That one is tuned for
+ * anti-enumeration on a one-shot invite lookup (15 requests / 15 min in prod);
+ * an interview respondent legitimately writes once per question and may answer
+ * twenty questions in a sitting, so reusing it would throttle the happy path
+ * into failure and look like a product defect.
+ *
+ * Keyed by a hash of the invite token rather than by IP: several respondents
+ * behind one corporate NAT must not consume each other's budget, and a single
+ * leaked token must not get a fresh budget by rotating source addresses. The
+ * token never lands in the key space in clear — `hashRateLimitIdentity` is the
+ * same opacity contract `demoSignupIdentityRateLimiter` uses.
+ */
+export const interviewPublicAnswerRateLimiter = createLimiter({
+  windowMs: 15 * 60_000,
+  max: isProd ? 120 : 1000,
+  prefix: 'interview-public-answer',
+  message: 'Too many answer submissions for this invitation. Please try again shortly.',
+  keyResolver: (req: Request) =>
+    hashRateLimitIdentity('interview-public-answer', String(req.params?.token || '')),
+  sharedStore: true,
+});
+
 /** Default API: 300 req / 15 min (prod) */
 export const defaultRateLimiter = createLimiter({
   windowMs: 15 * 60_000,

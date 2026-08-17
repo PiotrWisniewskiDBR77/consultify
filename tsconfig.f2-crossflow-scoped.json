@@ -1,0 +1,51 @@
+{
+  // Cross-flow Runtime Build — scoped type-check for this lane's test tree.
+  //
+  // WHY IT IS NEEDED: neither shipped gate sees these files. The root
+  // `tsconfig.json` has `include: ["src","*.ts","*.tsx"]` and excludes `server`,
+  // so `tests/` is outside it entirely; `server/tsconfig.json` excludes
+  // `**/*.test.ts`. A lane that adds test code and reports "type-check exit 0"
+  // without this file has type-checked everything except what it wrote.
+  //
+  // WHY IT EXTENDS THE SERVER CONFIG: these suites import production modules
+  // from `server/src/**`, so the program must be built with the SERVER's
+  // `typeRoots` (which include `server/node_modules/@types`). Extending the root
+  // config instead makes TypeScript resolve those same server files without
+  // `@types/multer`, producing a phantom `Namespace 'global.Express' has no
+  // exported member 'Multer'` error in a file this lane never touched.
+  //
+  // Same pattern as tsconfig.a6/a7/a8/a13-*-scoped.json.
+  "extends": "./server/tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "skipLibCheck": true,
+    "rootDir": ".",
+    "baseUrl": "./server",
+    // `typeRoots` and `baseUrl` are resolved relative to the config file that
+    // DECLARES them, not to the one that extends it. Inheriting
+    // `server/tsconfig.json`'s `["../node_modules/@types", ...]` from a config
+    // that sits at the repo root points them one directory ABOVE the repo, so
+    // every ambient type silently disappears and unrelated server files start
+    // failing with "Namespace 'global.Express' has no exported member 'Multer'".
+    // Restated here against the repo root.
+    "typeRoots": ["./node_modules/@types", "./server/node_modules/@types", "./server/src/types"],
+    // No `vitest/globals`: `typeRoots` only holds @types folders, and
+    // `vitest/globals` is a package-local declaration file, so listing it here
+    // cannot resolve. These suites import `describe`/`it`/`expect` explicitly
+    // from 'vitest', which is the stricter habit anyway.
+    // `multer` is listed because `@types/multer` AUGMENTS the `Express`
+    // namespace. The server program loads it incidentally, through a route that
+    // imports multer; a scoped program that reaches `ContextDocumentService.ts`
+    // via a service import never does, so `Express.Multer` would appear missing
+    // even though the package is installed. Naming it here is the difference
+    // between a real type-check and a config that quietly excludes the files it
+    // cannot resolve.
+    "types": ["node", "multer"]
+  },
+  // `server/src/types/**` carries the repo's ambient declarations (notably the
+  // `Express.Multer` namespace augmentation in `custom.d.ts`). The server config
+  // picks them up incidentally via its `src/**/*` include; a scoped program that
+  // only lists test files must name them explicitly, or unrelated server files
+  // fail to type-check for a missing global that is in fact declared.
+  "include": ["tests/integration/crossflow-runtime/**/*.ts", "server/src/types/**/*.d.ts"]
+}
