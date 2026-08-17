@@ -1,0 +1,537 @@
+{
+  "taskId": "AUD-UI-CANON-001",
+  "key": "AUD",
+  "module": "Audits",
+  "route": "/audit-programs",
+  "productSha": "8883e410b8fa5ad4c67421f16804062cf40e8416",
+  "startedAt": "2026-08-17T11:31:00.922Z",
+  "cells": [
+    {
+      "viewport": "desktop",
+      "language": "pl",
+      "theme": "light",
+      "route": "/audit-programs",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/AUD-UI-CANON-001/screens/AUD__desktop__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "viewport": "desktop",
+      "language": "pl",
+      "theme": "dark",
+      "route": "/audit-programs",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/AUD-UI-CANON-001/screens/AUD__desktop__pl__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "viewport": "desktop",
+      "language": "en",
+      "theme": "light",
+      "route": "/audit-programs",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/AUD-UI-CANON-001/screens/AUD__desktop__en__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "viewport": "desktop",
+      "language": "en",
+      "theme": "dark",
+      "route": "/audit-programs",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/AUD-UI-CANON-001/screens/AUD__desktop__en__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "viewport": "tablet",
+      "language": "pl",
+      "theme": "light",
+      "route": "/audit-programs",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/AUD-UI-CANON-001/screens/AUD__tablet__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "viewport": "tablet",
+      "language": "pl",
+      "theme": "dark",
+      "route": "/audit-programs",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/AUD-UI-CANON-001/screens/AUD__tablet__pl__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "viewport": "tablet",
+      "language": "en",
+      "theme": "light",
+      "route": "/audit-programs",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/AUD-UI-CANON-001/screens/AUD__tablet__en__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "viewport": "tablet",
+      "language": "en",
+      "theme": "dark",
+      "route": "/audit-programs",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/AUD-UI-CANON-001/screens/AUD__tablet__en__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "viewport": "mobile",
+      "language": "pl",
+      "theme": "light",
+      "route": "/audit-programs",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/AUD-UI-CANON-001/screens/AUD__mobile__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "viewport": "mobile",
+      "language": "pl",
+      "theme": "dark",
+      "route": "/audit-programs",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/AUD-UI-CANON-001/screens/AUD__mobile__pl__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "viewport": "mobile",
+      "language": "en",
+      "theme": "light",
+      "route": "/audit-programs",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/AUD-UI-CANON-001/screens/AUD__mobile__en__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "viewport": "mobile",
+      "language": "en",
+      "theme": "dark",
+      "route": "/audit-programs",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/AUD-UI-CANON-001/screens/AUD__mobile__en__dark.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "viewport": "desktop",
+      "language": "pl",
+      "theme": "light",
+      "route": "/audit-programs/method?tab=library",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/AUD-UI-CANON-001/screens/AUD__audit-programs-method-tab-library__desktop__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "viewport": "desktop",
+      "language": "pl",
+      "theme": "light",
+      "route": "/audit-programs/method?tab=processes",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/AUD-UI-CANON-001/screens/AUD__audit-programs-method-tab-processes__desktop__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "viewport": "desktop",
+      "language": "pl",
+      "theme": "light",
+      "route": "/audit-programs/method?tab=outputs",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/AUD-UI-CANON-001/screens/AUD__audit-programs-method-tab-outputs__desktop__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "viewport": "desktop",
+      "language": "pl",
+      "theme": "light",
+      "route": "/audit-programs/method?tab=reports",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/AUD-UI-CANON-001/screens/AUD__audit-programs-method-tab-reports__desktop__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "viewport": "desktop",
+      "language": "pl",
+      "theme": "light",
+      "route": "/audit-programs/method?tab=initiatives",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/AUD-UI-CANON-001/screens/AUD__audit-programs-method-tab-initiatives__desktop__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "viewport": "desktop",
+      "language": "pl",
+      "theme": "light",
+      "route": "/audit-programs/method/aprog_b59c75e2-0a18-40e0-b11f-bd224a01d0b1/criteria/apcrit_508e8518-a0ae-4347-9b29-8fccca2920df",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/AUD-UI-CANON-001/screens/AUD__audit-programs-method-aprog-b59c75e2-0a18-40e0-b11f-bd224a01d0b1-criteria-apcrit-508e8518-a0ae-4347-9b29-8fccca2920df__desktop__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "viewport": "desktop",
+      "language": "pl",
+      "theme": "light",
+      "route": "/audit-programs/drd-report/report-99815084-6acc-4c33-b93a-c2bf8ea6a3b5?ff_drd_report=1",
+      "surfaceRendered": true,
+      "screenshot": "docs/program/evidence/closure/ui-g4/AUD-UI-CANON-001/screens/AUD__audit-programs-drd-report-report-99815084-6acc-4c33-b93a-c2bf8ea6a3b5-ff-drd-report-1__desktop__pl__light.png",
+      "horizontalOverflow": {
+        "overflowed": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "axe": {
+        "critical": 0,
+        "serious": 0,
+        "violations": []
+      },
+      "unnamedControls": {
+        "count": 0,
+        "samples": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    }
+  ],
+  "deepLink": {
+    "ok": true,
+    "detail": "deep-link /audit-programs settled at /audit-programs — surface content matched"
+  },
+  "reload": {
+    "ok": true,
+    "detail": "reload settled at /audit-programs — surface content matched"
+  },
+  "coldReopen": {
+    "ok": true,
+    "detail": "cold context (fresh storage state, no SPA memory) settled at /audit-programs — surface content matched"
+  },
+  "keyboard": {
+    "reachableControls": 40,
+    "focusAlwaysVisible": true,
+    "invisibleFocusSamples": [],
+    "escapeHandled": "Escape pressed on the surface; surface stayed mounted (no dialog was open to close).",
+    "focusReturn": "Focus remained inside the document after Escape.",
+    "tabOrderMonotonic": true
+  },
+  "states": [],
+  "statesNotPresent": [
+    "stale"
+  ],
+  "negativeControls": {
+    "unsignedE2eTokenRejected": "GET /api/auth/me with alg:none e2e token -> 401",
+    "anonymousRejected": "GET /api/auth/me without a token -> 401",
+    "testSupportFailClosedWithoutKey": "POST /api/test-support/rbac-fixture without key -> 404",
+    "e2eModeNotSet": "E2E_MODE=false (the unsigned-token branch in auth.middleware.ts is inert unless this is exactly \"true\")",
+    "noRequestInterception": "No page.route()/fulfill() anywhere in this fixture or spec; every response comes from the real backend on real Postgres.",
+    "noLocalStorageAuthInjection": "Sessions come from the product login form; the fixture never writes token/user into localStorage.",
+    "tokensNotMintedByTestSupport": "POST /api/test-support/rbac-fixture returns no token by design; every session is issued by POST /api/auth/login.",
+    "tenantScopedFlagEnabled": "auditsFiveSurfacesV1 -> 200 {\"flagKey\":\"auditsFiveSurfacesV1\",\"organizationId\":\"9d7143e2-e524-4501-a22b-1874271ce017\",\"override\":{\"enabled\":true,\"run_id\":\"g4aud-8883e41-a\"}}",
+    "flagOnTenantLanding": "settled /audit-programs/method?tab=library (first /audit-programs/method?tab=library, bounced=false, audits-hub=false)",
+    "flagOffTenantLanding": "settled /audit-programs (first /audit-programs, bounced=false, audits-hub=true) — production default FALSE exercised by a tenant with no flag row",
+    "flagRaceOnColdDeepLink": "Flag-gated Audits routes redirect to /audit-programs before GET /api/feature-flags/runtime answers, then return to the requested route once the remote flags arrive. Measured: redirected at ~3s, back on the route by ~8s. Recorded as finding AUD-G4-F1; the harness measures the settled path and reports the bounce rather than hiding it.",
+    "flagDoesNotLeakAcrossTenants": "GET /api/feature-flags/runtime as the foreign-tenant admin returns auditsFiveSurfacesV1 = false",
+    "revokedMembershipSequence": "login BEFORE revocation -> 200; 200 {\"userId\":\"b295c475-5369-45e4-9365-299c308e3a95\",\"organizationId\":\"9d7143e2-e524-4501-a22b-1874271ce017\",\"status\":\"REVOKED\",\"marker\":\"2026-08-17 11:29:26.356004\"}; re-login AFTER revocation -> 403 {\"error\":\"You no longer have access to this organization\",\"code\":\"ORG_MEMBERSHIP_REVOKED\"}",
+    "revokedTokenOnUnguardedRoute": "GET /api/auth/me with the pre-revocation token -> 200",
+    "revokedTokenOnMembershipGuardedRoute": "GET /api/conversations (one of only two routes carrying validateOrgMembership) -> 403",
+    "seededThroughCanonicalApi": "pack apk_9d79cd8c-d02a-4233-b1cf-1d4e90f6f2d1 (published) -> program aprog_b59c75e2-0a18-40e0-b11f-bd224a01d0b1 with 12 criteria, all via authenticated POST /api/audits/* — no SQL writes",
+    "crossTenantListDenied": "foreign tenant GET /api/audits/programs -> 200 with 0 programs while the primary tenant has a seeded program",
+    "crossTenantDirectFetchDenied": "foreign tenant GET /api/audits/programs/aprog_b59c75e2-0a18-40e0-b11f-bd224a01d0b1 -> 404 {\"success\":false,\"error\":\"Program audytowy nie został znaleziony\",\"code\":\"AUDIT_NOT_FOUND\"}",
+    "legacyWriterRetired": "POST /api/audit/programs (singular) answers 410 AUDIT_PROGRAM_LEGACY_WRITE_DISABLED; the canonical writer is POST /api/audits/programs (plural). Seeding uses the live writer only."
+  },
+  "gates": [
+    "AppRoutes.tsx:1573-1587 — BetaGate moduleId='MODULE_AUDITS', status 'open' (betaAccess.ts:48), so it never blocks.",
+    "AppRoutes.tsx:754-759 / 768-773 — /audit-programs/method and the criterion workspace redirect to /audit-programs unless auditsFiveSurfacesV1 is enabled; default is FALSE (useFeatureFlags.tsx:263-272) and stays FALSE in production.",
+    "The flag is enabled for the test tenant only, as a feature_flags row scoped by organization_id, evaluated by GET /api/feature-flags/runtime — the product mechanism, not a code change.",
+    "AppRoutes.tsx:736-741 — /audit-programs/drd-report/:reportId redirects unless isDrdReportEnabled(); that flag has NO server/tenant scoping (query/localStorage/env only, src/utils/drdReportFlag.ts), which is recorded as a finding.",
+    "/audits is a public marketing showcase under AuthLayout with no BetaGate and no auth requirement (AuditsShowcasePage.tsx) and is NOT the working application."
+  ]
+}

@@ -1,0 +1,546 @@
+{
+  "productSha": "8883e410b8fa5ad4c67421f16804062cf40e8416",
+  "runId": "g4aud-8883e41-a",
+  "personas": {
+    "platformAdmin": {
+      "memberRole": "OWNER",
+      "userRole": "ADMIN",
+      "tenant": "primary"
+    },
+    "leadAuditor": {
+      "memberRole": "CONSULTANT",
+      "userRole": "USER",
+      "tenant": "primary"
+    },
+    "auditee": {
+      "memberRole": "MEMBER",
+      "userRole": "USER",
+      "tenant": "primary"
+    },
+    "member": {
+      "memberRole": "MEMBER",
+      "userRole": "USER",
+      "tenant": "primary"
+    },
+    "revokedMember": {
+      "memberRole": "MEMBER",
+      "userRole": "USER",
+      "tenant": "primary"
+    },
+    "foreignTenant": {
+      "memberRole": "OWNER",
+      "userRole": "ADMIN",
+      "tenant": "foreign"
+    }
+  },
+  "sessionsObtainedBy": "the product login form at /auth — no token or user was written into localStorage",
+  "roleLandings": {
+    "platformAdminHub": {
+      "path": "/audit-programs",
+      "auditsHub": true,
+      "criterionWorkspace": false,
+      "text": "LOCAL ? Centrum Pomocy Opinie Dokumenty 77 Skip to main content Audits Data Model G4 platformAdmin GP Programy audytu ISO 27001 Wszystkie Szkic Aktywny Zakończony Zarchiwizowany Nowy program audytu PROGRAM STATUS CEL SZA",
+      "firstPath": "/audit-programs",
+      "bounced": false
+    },
+    "auditeeHub": {
+      "path": "/audit-programs",
+      "auditsHub": true,
+      "criterionWorkspace": false,
+      "text": "LOCAL ? Help Center Feedback Documents 77 Skip to main content Audits Data Model G4 auditee GA Audit programs ISO 27001 All Draft Active Completed Archived New audit program PROGRAM STATUS OBJECTIVE TEMPLATES ASSIGNEES S",
+      "firstPath": "/audit-programs",
+      "bounced": false
+    },
+    "memberHub": {
+      "path": "/audit-programs",
+      "auditsHub": true,
+      "criterionWorkspace": false,
+      "text": "LOCAL ? Help Center Feedback Documents 77 Skip to main content Audits Data Model G4 member GM Audit programs ISO 27001 All Draft Active Completed Archived New audit program PROGRAM STATUS OBJECTIVE TEMPLATES ASSIGNEES SU",
+      "firstPath": "/audit-programs",
+      "bounced": false
+    },
+    "foreignHub": {
+      "path": "/audit-programs",
+      "auditsHub": true,
+      "criterionWorkspace": false,
+      "text": "LOCAL ? Help Center Feedback Documents 77 Skip to main content Audits Data Model G4 foreignTenant GF Audit programs ISO 27001 All Draft Active Completed Archived New audit program PROGRAM STATUS OBJECTIVE TEMPLATES ASSIG",
+      "firstPath": "/audit-programs",
+      "bounced": false
+    },
+    "staleCriterion": {
+      "path": "/audit-programs/method/00000000-0000-0000-0000-000000000000/criteria/00000000-0000-0000-0000-000000000000",
+      "auditsHub": false,
+      "criterionWorkspace": false,
+      "text": "LOCAL ? Centrum Pomocy Opinie Dokumenty 77 Skip to main content Audits Data Model G4 platformAdmin GP Nie udało się wczytać kryterium Kryterium audytu nie zostało znalezione Spróbuj ponownie",
+      "firstPath": "/audit-programs/method/00000000-0000-0000-0000-000000000000/criteria/00000000-0000-0000-0000-000000000000",
+      "bounced": false
+    },
+    "staleDrdReport": {
+      "path": "/audit-programs/drd-report/00000000-0000-0000-0000-000000000000?ff_drd_report=1",
+      "auditsHub": false,
+      "criterionWorkspace": false,
+      "text": "LOCAL ? Centrum Pomocy Opinie Dokumenty 77 Skip to main content Audits Raport DRD Data Model G4 platformAdmin GP Nie udało się załadować raportu Spróbuj ponownie",
+      "firstPath": "/audit-programs/drd-report/00000000-0000-0000-0000-000000000000?ff_drd_report=1",
+      "bounced": false
+    },
+    "readyCriterionAsAdmin": {
+      "path": "/audit-programs/method/aprog_b59c75e2-0a18-40e0-b11f-bd224a01d0b1/criteria/apcrit_508e8518-a0ae-4347-9b29-8fccca2920df",
+      "auditsHub": false,
+      "criterionWorkspace": true,
+      "text": "LOCAL ? Centrum Pomocy Opinie Dokumenty 77 Skip to main content Audits Data Model G4 platformAdmin GP D1.1 Cel i zakres procesu są udokumentowane not_tested Kryterium/źródło → Pytanie audytowe → Oczekiwany dowód → Dostar",
+      "firstPath": "/audit-programs/method/aprog_b59c75e2-0a18-40e0-b11f-bd224a01d0b1/criteria/apcrit_508e8518-a0ae-4347-9b29-8fccca2920df",
+      "bounced": false
+    },
+    "readyCriterionAsMember": {
+      "path": "/audit-programs/method/aprog_b59c75e2-0a18-40e0-b11f-bd224a01d0b1/criteria/apcrit_508e8518-a0ae-4347-9b29-8fccca2920df",
+      "auditsHub": false,
+      "criterionWorkspace": true,
+      "text": "LOCAL ? Help Center Feedback Documents 77 Skip to main content Audits Data Model G4 member GM D1.1 Cel i zakres procesu są udokumentowane not_tested Kryterium/źródło → Pytanie audytowe → Oczekiwany dowód → Dostarczony do",
+      "firstPath": "/audit-programs/method/aprog_b59c75e2-0a18-40e0-b11f-bd224a01d0b1/criteria/apcrit_508e8518-a0ae-4347-9b29-8fccca2920df",
+      "bounced": false
+    },
+    "readyCriterionAsForeignTenant": {
+      "path": "/audit-programs",
+      "auditsHub": true,
+      "criterionWorkspace": false,
+      "text": "LOCAL ? Help Center Feedback Documents 77 Skip to main content Audits Data Model G4 foreignTenant GF Audit programs ISO 27001 All Draft Active Completed Archived New audit program PROGRAM STATUS OBJECTIVE TEMPLATES ASSIG",
+      "firstPath": "/audit-programs",
+      "bounced": false
+    }
+  },
+  "anonymousAccess": [
+    {
+      "route": "/audit-programs",
+      "finalPath": "/login",
+      "leaked": []
+    },
+    {
+      "route": "/audit-programs/method?tab=library",
+      "finalPath": "/login",
+      "leaked": []
+    },
+    {
+      "route": "/audit-programs/method/p/criteria/c",
+      "finalPath": "/login",
+      "leaked": []
+    },
+    {
+      "route": "/audit-programs/drd-report/r?ff_drd_report=1",
+      "finalPath": "/login",
+      "leaked": []
+    }
+  ],
+  "coldDeepLinkRuns": [
+    {
+      "run": 1,
+      "rendered": 5,
+      "detail": [
+        "library:OK@/audit-programs/method",
+        "processes:OK@/audit-programs/method",
+        "outputs:OK@/audit-programs/method",
+        "reports:OK@/audit-programs/method",
+        "initiatives:OK@/audit-programs/method"
+      ]
+    },
+    {
+      "run": 2,
+      "rendered": 5,
+      "detail": [
+        "library:OK@/audit-programs/method",
+        "processes:OK@/audit-programs/method",
+        "outputs:OK@/audit-programs/method",
+        "reports:OK@/audit-programs/method",
+        "initiatives:OK@/audit-programs/method"
+      ]
+    },
+    {
+      "run": 3,
+      "rendered": 5,
+      "detail": [
+        "library:OK@/audit-programs/method",
+        "processes:OK@/audit-programs/method",
+        "outputs:OK@/audit-programs/method",
+        "reports:OK@/audit-programs/method",
+        "initiatives:OK@/audit-programs/method"
+      ]
+    },
+    {
+      "run": 4,
+      "rendered": 5,
+      "detail": [
+        "library:OK@/audit-programs/method",
+        "processes:OK@/audit-programs/method",
+        "outputs:OK@/audit-programs/method",
+        "reports:OK@/audit-programs/method",
+        "initiatives:OK@/audit-programs/method"
+      ]
+    },
+    {
+      "run": 5,
+      "rendered": 5,
+      "detail": [
+        "library:OK@/audit-programs/method",
+        "processes:OK@/audit-programs/method",
+        "outputs:OK@/audit-programs/method",
+        "reports:OK@/audit-programs/method",
+        "initiatives:OK@/audit-programs/method"
+      ]
+    }
+  ],
+  "personaMatrix": {
+    "platformAdmin": {
+      "account": "g4+g4aud-8883e41-a-platformadmin@local.test",
+      "auditRole": "program_owner",
+      "allowed": {
+        "endpoint": "POST /api/audits/programs/:id/members {memberRole: \"lead_auditor\"}",
+        "capability": "program.manage_members",
+        "status": 201,
+        "ok": true
+      },
+      "forbidden": {
+        "endpoint": "POST /api/audits/criteria/:id/test",
+        "capability": "criterion.perform_test",
+        "status": 403,
+        "denied": true
+      },
+      "scopedRead": {
+        "endpoint": "GET /api/audits/programs/:id",
+        "status": 200,
+        "count": 3
+      },
+      "foreignAttempt": {
+        "endpoint": "GET /api/audits/programs/:id (session: foreignTenant, different org)",
+        "status": 404
+      }
+    },
+    "leadAuditor": {
+      "account": "g4+g4aud-8883e41-a-leadauditor@local.test",
+      "auditRole": "lead_auditor",
+      "allowed": {
+        "endpoint": "POST /api/audits/criteria/:id/test",
+        "capability": "criterion.perform_test",
+        "status": 200,
+        "ok": true
+      },
+      "forbidden": {
+        "endpoint": "POST /api/audits/findings/:id/review (reviewing own drafted finding)",
+        "capability": "finding.review (blocked by assertNotReviewingOwnFinding, a segregation-of-duties rule, not a missing capability)",
+        "status": 403,
+        "denied": true
+      },
+      "scopedRead": {
+        "endpoint": "GET /api/audits/programs/:id",
+        "status": 200,
+        "count": 3
+      },
+      "foreignAttempt": {
+        "endpoint": "GET /api/audits/programs/:id (session: foreignTenant, different org)",
+        "status": 404
+      }
+    },
+    "reviewer": {
+      "account": "g4+g4aud-8883e41-a-member@local.test",
+      "auditRole": "reviewer",
+      "allowed": {
+        "endpoint": "POST /api/audits/findings/:id/review (reviewing a DIFFERENT author's finding)",
+        "capability": "finding.review",
+        "status": 200,
+        "ok": true
+      },
+      "forbidden": {
+        "endpoint": "POST /api/audits/findings",
+        "capability": "finding.draft",
+        "status": 403,
+        "denied": true
+      },
+      "scopedRead": {
+        "endpoint": "GET /api/audits/programs/:id",
+        "status": 200,
+        "count": 4,
+        "note": "same account as the `member` row, probed AFTER the reviewer role was granted"
+      },
+      "foreignAttempt": {
+        "endpoint": "GET /api/audits/programs/:id (session: foreignTenant, different org)",
+        "status": 404
+      }
+    },
+    "auditee": {
+      "account": "g4+g4aud-8883e41-a-auditee@local.test",
+      "auditRole": "auditee",
+      "allowed": {
+        "endpoint": "POST /api/audits/criteria/:id/auditee-response",
+        "capability": "criterion.respond_as_auditee",
+        "status": 200,
+        "ok": true
+      },
+      "forbidden": {
+        "endpoint": "POST /api/audits/criteria/:id/conclude",
+        "capability": "criterion.conclude",
+        "status": 403,
+        "denied": true
+      },
+      "scopedRead": {
+        "endpoint": "GET /api/audits/programs/:id",
+        "status": 200,
+        "count": 3
+      },
+      "foreignAttempt": {
+        "endpoint": "GET /api/audits/programs/:id (session: foreignTenant, different org)",
+        "status": 404
+      }
+    },
+    "member": {
+      "account": "g4+g4aud-8883e41-a-member@local.test",
+      "auditRole": null,
+      "allowed": {
+        "endpoint": "POST /api/audits/programs",
+        "capability": "program.create (ORG_MEMBER_CAPABILITIES — granted to every org member, no audit role required)",
+        "status": 201,
+        "ok": true
+      },
+      "forbidden": {
+        "endpoint": "POST /api/audits/criteria/:id/test",
+        "capability": "criterion.perform_test",
+        "status": 403,
+        "denied": true,
+        "note": "member holds no audit_program_members row on the seeded program at all — capabilities are ORG_MEMBER_CAPABILITIES only"
+      },
+      "scopedRead": {
+        "endpoint": "GET /api/audits/programs/:id",
+        "status": 200,
+        "count": 3
+      },
+      "foreignAttempt": {
+        "endpoint": "GET /api/audits/programs/:id (session: foreignTenant, different org)",
+        "status": 404
+      }
+    },
+    "revokedMember": {
+      "account": "g4+g4aud-8883e41-a-revokedmember@local.test",
+      "auditRole": null,
+      "allowed": {
+        "endpoint": "GET /api/audits/programs/:id (the same read that returns 200 for the `member` row above)",
+        "capability": "program.read",
+        "status": 403,
+        "ok": false,
+        "note": "honestly not achievable: requireOrgAccess() on the /api/audits mount blocks every route once membership is revoked (200 {\"userId\":\"b295c475-5369-45e4-9365-299c308e3a95\",\"organizationId\":\"9d7143e2-e524-4501-a22b-1874271ce017\",\"status\":\"REVOKED\",\"marker\":\"2026-08-17 11:29:19.855612\"}), even ones that were open to any active member"
+      },
+      "forbidden": {
+        "endpoint": "POST /api/audits/criteria/:id/test",
+        "capability": "criterion.perform_test",
+        "status": 403,
+        "denied": true,
+        "note": "denied by requireOrgAccess() (membership gate) before the request reaches requireCapability — a stronger denial than the capability matrix, not a weaker one"
+      },
+      "scopedRead": {
+        "endpoint": "GET /api/audits/programs/:id",
+        "status": 403,
+        "count": null,
+        "note": "membership revoked — nothing is legitimately visible"
+      },
+      "foreignAttempt": {
+        "endpoint": "GET /api/audits/programs/:id (session: foreignTenant, different org)",
+        "status": 404
+      }
+    }
+  },
+  "mountMatrix": {
+    "rows": [
+      {
+        "caller": "activeMember",
+        "probes": [
+          {
+            "mount": "/api/audits (method kernel)",
+            "method": "GET",
+            "path": "/api/audits/programs",
+            "status": 200
+          },
+          {
+            "mount": "/api/audits (write)",
+            "method": "POST",
+            "path": "/api/audits/programs",
+            "status": 201
+          },
+          {
+            "mount": "/api/audit (orchestrator)",
+            "method": "GET",
+            "path": "/api/audit/programs",
+            "status": 200
+          },
+          {
+            "mount": "/api/audit (events)",
+            "method": "GET",
+            "path": "/api/audit/events",
+            "status": 200
+          }
+        ],
+        "allDenied": false
+      },
+      {
+        "caller": "cachedActiveThenRevoked",
+        "probes": [
+          {
+            "mount": "/api/audits (method kernel)",
+            "method": "GET",
+            "path": "/api/audits/programs",
+            "status": 403
+          },
+          {
+            "mount": "/api/audits (write)",
+            "method": "POST",
+            "path": "/api/audits/programs",
+            "status": 403
+          },
+          {
+            "mount": "/api/audit (orchestrator)",
+            "method": "GET",
+            "path": "/api/audit/programs",
+            "status": 403
+          },
+          {
+            "mount": "/api/audit (events)",
+            "method": "GET",
+            "path": "/api/audit/events",
+            "status": 403
+          }
+        ],
+        "allDenied": true
+      },
+      {
+        "caller": "foreignTenant",
+        "probes": [
+          {
+            "mount": "/api/audits (method kernel)",
+            "method": "GET",
+            "path": "/api/audits/programs",
+            "status": 200
+          },
+          {
+            "mount": "/api/audits (write)",
+            "method": "POST",
+            "path": "/api/audits/programs",
+            "status": 404
+          },
+          {
+            "mount": "/api/audit (orchestrator)",
+            "method": "GET",
+            "path": "/api/audit/programs",
+            "status": 200
+          },
+          {
+            "mount": "/api/audit (events)",
+            "method": "GET",
+            "path": "/api/audit/events",
+            "status": 200
+          }
+        ],
+        "allDenied": false
+      },
+      {
+        "caller": "anonymous",
+        "probes": [
+          {
+            "mount": "/api/audits (method kernel)",
+            "method": "GET",
+            "path": "/api/audits/programs",
+            "status": 401
+          },
+          {
+            "mount": "/api/audits (write)",
+            "method": "POST",
+            "path": "/api/audits/programs",
+            "status": 401
+          },
+          {
+            "mount": "/api/audit (orchestrator)",
+            "method": "GET",
+            "path": "/api/audit/programs",
+            "status": 401
+          },
+          {
+            "mount": "/api/audit (events)",
+            "method": "GET",
+            "path": "/api/audit/events",
+            "status": 401
+          }
+        ],
+        "allDenied": true
+      },
+      {
+        "caller": "invalidToken",
+        "probes": [
+          {
+            "mount": "/api/audits (method kernel)",
+            "method": "GET",
+            "path": "/api/audits/programs",
+            "status": 401
+          },
+          {
+            "mount": "/api/audits (write)",
+            "method": "POST",
+            "path": "/api/audits/programs",
+            "status": 401
+          },
+          {
+            "mount": "/api/audit (orchestrator)",
+            "method": "GET",
+            "path": "/api/audit/programs",
+            "status": 401
+          },
+          {
+            "mount": "/api/audit (events)",
+            "method": "GET",
+            "path": "/api/audit/events",
+            "status": 401
+          }
+        ],
+        "allDenied": true
+      }
+    ],
+    "revokedSideEffects": {
+      "auditProgramsBefore": 2,
+      "auditProgramsAfter": 2,
+      "mutated": false,
+      "telemetryRowsForRevokedUser": 0,
+      "telemetryRowsTotalIncludingRefusals": 4,
+      "telemetryNote": "counted only from the revoke instant onwards; succeeded must be 0, while the total is non-zero on purpose because access logging runs before authentication and records the refusals themselves"
+    },
+    "immediateRevoke": {
+      "primedWith": [
+        200,
+        201,
+        200,
+        200
+      ],
+      "firstRequestAfterRevoke": [
+        403,
+        403,
+        403,
+        403
+      ],
+      "sleptSeconds": 0,
+      "note": "the positive membership cache was primed by the successful requests above and deliberately left warm; requireActiveAuditsMembership re-reads organization_members per request, so the very next call is refused"
+    }
+  },
+  "negativeControls": {
+    "unsignedE2eTokenRejected": "GET /api/auth/me with alg:none e2e token -> 401",
+    "anonymousRejected": "GET /api/auth/me without a token -> 401",
+    "testSupportFailClosedWithoutKey": "POST /api/test-support/rbac-fixture without key -> 404",
+    "e2eModeNotSet": "E2E_MODE=false (the unsigned-token branch in auth.middleware.ts is inert unless this is exactly \"true\")",
+    "noRequestInterception": "No page.route()/fulfill() anywhere in this fixture or spec; every response comes from the real backend on real Postgres.",
+    "noLocalStorageAuthInjection": "Sessions come from the product login form; the fixture never writes token/user into localStorage.",
+    "tokensNotMintedByTestSupport": "POST /api/test-support/rbac-fixture returns no token by design; every session is issued by POST /api/auth/login.",
+    "tenantScopedFlagEnabled": "auditsFiveSurfacesV1 -> 200 {\"flagKey\":\"auditsFiveSurfacesV1\",\"organizationId\":\"9d7143e2-e524-4501-a22b-1874271ce017\",\"override\":{\"enabled\":true,\"run_id\":\"g4aud-8883e41-a\"}}",
+    "flagOnTenantLanding": "settled /audit-programs/method?tab=library (first /audit-programs/method?tab=library, bounced=false, audits-hub=false)",
+    "flagOffTenantLanding": "settled /audit-programs (first /audit-programs, bounced=false, audits-hub=true) — production default FALSE exercised by a tenant with no flag row",
+    "flagRaceOnColdDeepLink": "Flag-gated Audits routes redirect to /audit-programs before GET /api/feature-flags/runtime answers, then return to the requested route once the remote flags arrive. Measured: redirected at ~3s, back on the route by ~8s. Recorded as finding AUD-G4-F1; the harness measures the settled path and reports the bounce rather than hiding it.",
+    "flagDoesNotLeakAcrossTenants": "GET /api/feature-flags/runtime as the foreign-tenant admin returns auditsFiveSurfacesV1 = false",
+    "revokedMembershipSequence": "login BEFORE revocation -> 200; 200 {\"userId\":\"b295c475-5369-45e4-9365-299c308e3a95\",\"organizationId\":\"9d7143e2-e524-4501-a22b-1874271ce017\",\"status\":\"REVOKED\",\"marker\":\"2026-08-17 11:29:26.356004\"}; re-login AFTER revocation -> 403 {\"error\":\"You no longer have access to this organization\",\"code\":\"ORG_MEMBERSHIP_REVOKED\"}",
+    "revokedTokenOnUnguardedRoute": "GET /api/auth/me with the pre-revocation token -> 200",
+    "revokedTokenOnMembershipGuardedRoute": "GET /api/conversations (one of only two routes carrying validateOrgMembership) -> 403",
+    "seededThroughCanonicalApi": "pack apk_9d79cd8c-d02a-4233-b1cf-1d4e90f6f2d1 (published) -> program aprog_b59c75e2-0a18-40e0-b11f-bd224a01d0b1 with 12 criteria, all via authenticated POST /api/audits/* — no SQL writes",
+    "crossTenantListDenied": "foreign tenant GET /api/audits/programs -> 200 with 0 programs while the primary tenant has a seeded program",
+    "crossTenantDirectFetchDenied": "foreign tenant GET /api/audits/programs/aprog_b59c75e2-0a18-40e0-b11f-bd224a01d0b1 -> 404 {\"success\":false,\"error\":\"Program audytowy nie został znaleziony\",\"code\":\"AUDIT_NOT_FOUND\"}",
+    "legacyWriterRetired": "POST /api/audit/programs (singular) answers 410 AUDIT_PROGRAM_LEGACY_WRITE_DISABLED; the canonical writer is POST /api/audits/programs (plural). Seeding uses the live writer only."
+  }
+}

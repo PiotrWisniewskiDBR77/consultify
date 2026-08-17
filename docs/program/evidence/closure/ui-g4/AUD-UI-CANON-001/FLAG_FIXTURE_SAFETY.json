@@ -1,0 +1,136 @@
+{
+  "rowBefore": {
+    "id": "36ca30d6-6df6-4ca3-82f0-b1c5be4019fa",
+    "flag_key": "auditsFiveSurfacesV1",
+    "name": "Audits five surfaces",
+    "description": "Pre-existing production definition",
+    "enabled": true,
+    "rules": "{&quot;legacy&quot;:true}",
+    "flag_type": "targeting",
+    "targeting_rules": "[{&quot;type&quot;:&quot;org_id&quot;,&quot;operator&quot;:&quot;in&quot;,&quot;values&quot;:[&quot;pre-existing-org-1&quot;],&quot;enabled&quot;:true}]",
+    "rollout_percentage": 25,
+    "environment": "production",
+    "organization_id": null,
+    "variants": "[{&quot;key&quot;:&quot;a&quot;,&quot;weight&quot;:100}]",
+    "created_by": "pre-existing-owner"
+  },
+  "enableA": {
+    "status": 200,
+    "body": {
+      "flagKey": "auditsFiveSurfacesV1",
+      "organizationId": "f72ee8fc-d1be-4fda-8a53-287917700f1b",
+      "override": {
+        "enabled": true,
+        "run_id": "flagsafe-A-5196-1786966273880"
+      }
+    }
+  },
+  "enableB": {
+    "status": 200,
+    "body": {
+      "flagKey": "auditsFiveSurfacesV1",
+      "organizationId": "e6c29a71-d7de-4ff8-b8f2-21049515b3a4",
+      "override": {
+        "enabled": true,
+        "run_id": "flagsafe-B-5196-1786966273880"
+      }
+    }
+  },
+  "rowDuring": {
+    "id": "36ca30d6-6df6-4ca3-82f0-b1c5be4019fa",
+    "flag_key": "auditsFiveSurfacesV1",
+    "name": "Audits five surfaces",
+    "description": "Pre-existing production definition",
+    "enabled": true,
+    "rules": "{&quot;legacy&quot;:true}",
+    "flag_type": "targeting",
+    "targeting_rules": "[{&quot;type&quot;:&quot;org_id&quot;,&quot;operator&quot;:&quot;in&quot;,&quot;values&quot;:[&quot;pre-existing-org-1&quot;],&quot;enabled&quot;:true}]",
+    "rollout_percentage": 25,
+    "environment": "production",
+    "organization_id": null,
+    "variants": "[{&quot;key&quot;:&quot;a&quot;,&quot;weight&quot;:100}]",
+    "created_by": "pre-existing-owner"
+  },
+  "cleanupA": {
+    "runId": "flagsafe-A-5196-1786966273880",
+    "organizationIds": [
+      "f72ee8fc-d1be-4fda-8a53-287917700f1b",
+      "4baa37f9-cc95-40a3-bcc6-73e437f389c2"
+    ],
+    "flagsCleared": {
+      "auditsFiveSurfacesV1": [
+        "f72ee8fc-d1be-4fda-8a53-287917700f1b",
+        "4baa37f9-cc95-40a3-bcc6-73e437f389c2"
+      ]
+    },
+    "flagsRestored": {
+      "auditsFiveSurfacesV1": "1 override row(s) removed; production definition untouched"
+    },
+    "residualOrganizations": 0
+  },
+  "overridesAfterCleanupA": {
+    "organizations": 1,
+    "users": 5,
+    "organization_members": 5,
+    "audit_programs": 0,
+    "audit_packs": 0,
+    "g4_test_flag_overrides": 1
+  },
+  "cleanupARetry": {
+    "runId": "flagsafe-A-5196-1786966273880",
+    "organizationIds": [
+      "f72ee8fc-d1be-4fda-8a53-287917700f1b",
+      "4baa37f9-cc95-40a3-bcc6-73e437f389c2"
+    ],
+    "flagsCleared": {
+      "auditsFiveSurfacesV1": [
+        "f72ee8fc-d1be-4fda-8a53-287917700f1b",
+        "4baa37f9-cc95-40a3-bcc6-73e437f389c2"
+      ]
+    },
+    "flagsRestored": {
+      "auditsFiveSurfacesV1": "0 override row(s) removed; production definition untouched"
+    },
+    "residualOrganizations": 0
+  },
+  "cleanupB": {
+    "runId": "flagsafe-B-5196-1786966273880",
+    "organizationIds": [
+      "e6c29a71-d7de-4ff8-b8f2-21049515b3a4",
+      "92d4240b-194d-4225-befb-28d5b649036a"
+    ],
+    "flagsCleared": {
+      "auditsFiveSurfacesV1": [
+        "e6c29a71-d7de-4ff8-b8f2-21049515b3a4",
+        "92d4240b-194d-4225-befb-28d5b649036a"
+      ]
+    },
+    "flagsRestored": {
+      "auditsFiveSurfacesV1": "1 override row(s) removed; production definition untouched"
+    },
+    "residualOrganizations": 0
+  },
+  "rowAfter": {
+    "id": "36ca30d6-6df6-4ca3-82f0-b1c5be4019fa",
+    "flag_key": "auditsFiveSurfacesV1",
+    "name": "Audits five surfaces",
+    "description": "Pre-existing production definition",
+    "enabled": true,
+    "rules": "{&quot;legacy&quot;:true}",
+    "flag_type": "targeting",
+    "targeting_rules": "[{&quot;type&quot;:&quot;org_id&quot;,&quot;operator&quot;:&quot;in&quot;,&quot;values&quot;:[&quot;pre-existing-org-1&quot;],&quot;enabled&quot;:true}]",
+    "rollout_percentage": 25,
+    "environment": "production",
+    "organization_id": null,
+    "variants": "[{&quot;key&quot;:&quot;a&quot;,&quot;weight&quot;:100}]",
+    "created_by": "pre-existing-owner"
+  },
+  "residue": {
+    "organizations": 0,
+    "users": 0,
+    "organization_members": 0,
+    "audit_programs": 0,
+    "audit_packs": 0,
+    "g4_test_flag_overrides": 0
+  }
+}
