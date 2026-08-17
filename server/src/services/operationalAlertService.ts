@@ -74,7 +74,14 @@ export class OperationalAlertService {
     if (input.result !== 'SUCCESS' && input.result !== 'FAILURE') return false;
 
     const occurredAt = Number.isFinite(input.occurredAt) ? Number(input.occurredAt) : this.now();
-    this.writes.push({ correlationId, tenantId, actorId, sourceId, result: input.result, occurredAt });
+    this.writes.push({
+      correlationId,
+      tenantId,
+      actorId,
+      sourceId,
+      result: input.result,
+      occurredAt,
+    });
     this.writes = this.writes.slice(-MAX_EVENTS);
     return true;
   }
@@ -98,23 +105,46 @@ export class OperationalAlertService {
     const writeFailures = this.writes.filter((event) => event.result === 'FAILURE').length;
     const failureRate = writeTotal === 0 ? 0 : writeFailures / writeTotal;
     const outboxAge = this.outboxSamples.at(-1)?.value ?? 0;
-    const sustainedDbSamples = this.dbSamples.filter((sample) => sample.occurredAt >= now - TEN_MINUTES_MS);
-    const dbSaturation = sustainedDbSamples.length > 0
-      ? Math.min(...sustainedDbSamples.map((sample) => sample.value))
-      : 0;
+    const sustainedDbSamples = this.dbSamples.filter(
+      (sample) => sample.occurredAt >= now - TEN_MINUTES_MS
+    );
+    const dbSaturation =
+      sustainedDbSamples.length > 0
+        ? Math.min(...sustainedDbSamples.map((sample) => sample.value))
+        : 0;
     const authDenials = this.authDenials.length;
 
     return [
-      this.transition('WRITE_FAILURE_RATE', failureRate >= 0.01 && writeTotal > 0, failureRate, 0.01, this.writes.at(-1)?.correlationId ?? null),
-      this.transition('OUTBOX_OLDEST_AGE', outboxAge >= FIVE_MINUTES_MS, outboxAge, FIVE_MINUTES_MS, this.outboxSamples.at(-1)?.correlationId ?? null),
+      this.transition(
+        'WRITE_FAILURE_RATE',
+        failureRate >= 0.01 && writeTotal > 0,
+        failureRate,
+        0.01,
+        this.writes.at(-1)?.correlationId ?? null
+      ),
+      this.transition(
+        'OUTBOX_OLDEST_AGE',
+        outboxAge >= FIVE_MINUTES_MS,
+        outboxAge,
+        FIVE_MINUTES_MS,
+        this.outboxSamples.at(-1)?.correlationId ?? null
+      ),
       this.transition(
         'DB_SATURATION',
-        sustainedDbSamples.length >= 2 && sustainedDbSamples[0].occurredAt <= now - TEN_MINUTES_MS && dbSaturation >= 80,
+        sustainedDbSamples.length >= 2 &&
+          sustainedDbSamples[0].occurredAt <= now - TEN_MINUTES_MS &&
+          dbSaturation >= 80,
         dbSaturation,
         80,
         sustainedDbSamples.at(-1)?.correlationId ?? null
       ),
-      this.transition('REPEATED_AUTH_DENIALS', authDenials >= AUTH_DENIAL_THRESHOLD, authDenials, AUTH_DENIAL_THRESHOLD, this.authDenials.at(-1)?.correlationId ?? null),
+      this.transition(
+        'REPEATED_AUTH_DENIALS',
+        authDenials >= AUTH_DENIAL_THRESHOLD,
+        authDenials,
+        AUTH_DENIAL_THRESHOLD,
+        this.authDenials.at(-1)?.correlationId ?? null
+      ),
     ];
   }
 
@@ -125,6 +155,22 @@ export class OperationalAlertService {
     return true;
   }
 
+  resetForTests(): void {
+    if (process.env.NODE_ENV !== 'test') {
+      throw new Error('Operational alert reset is test-only');
+    }
+    this.writes = [];
+    this.outboxSamples = [];
+    this.dbSamples = [];
+    this.authDenials = [];
+    this.states = {
+      WRITE_FAILURE_RATE: initialAlertState(),
+      OUTBOX_OLDEST_AGE: initialAlertState(),
+      DB_SATURATION: initialAlertState(),
+      REPEATED_AUTH_DENIALS: initialAlertState(),
+    };
+  }
+
   private recordSample(target: TimedValue[], value: number, correlationId?: string): void {
     if (!Number.isFinite(value)) return;
     target.push({ value, occurredAt: this.now(), correlationId: safeIdentity(correlationId) });
@@ -133,8 +179,12 @@ export class OperationalAlertService {
 
   private prune(now: number): void {
     this.writes = this.writes.filter((event) => event.occurredAt >= now - FIVE_MINUTES_MS);
-    this.outboxSamples = this.outboxSamples.filter((event) => event.occurredAt >= now - FIVE_MINUTES_MS);
-    this.authDenials = this.authDenials.filter((event) => event.occurredAt >= now - FIVE_MINUTES_MS);
+    this.outboxSamples = this.outboxSamples.filter(
+      (event) => event.occurredAt >= now - FIVE_MINUTES_MS
+    );
+    this.authDenials = this.authDenials.filter(
+      (event) => event.occurredAt >= now - FIVE_MINUTES_MS
+    );
     this.dbSamples = this.dbSamples.filter((event) => event.occurredAt >= now - TEN_MINUTES_MS);
   }
 
@@ -166,6 +216,9 @@ export const operationalAlerts = new OperationalAlertService();
 export function getOperationalPrometheusMetrics(): string {
   return operationalAlerts
     .evaluate()
-    .map((alert) => `consultify_operational_alert_active{kind="${alert.kind}",runbook="${alert.runbookId}"} ${alert.active ? 1 : 0}`)
+    .map(
+      (alert) =>
+        `consultify_operational_alert_active{kind="${alert.kind}",runbook="${alert.runbookId}"} ${alert.active ? 1 : 0}`
+    )
     .join('\n');
 }

@@ -6,6 +6,17 @@ For every active `consultify_operational_alert_active` series, capture its `kind
 candidate SHA, UTC detection time and tenant-safe source identifier. Never paste request payloads,
 tokens, credentials or user content into the incident record.
 
+Current production wiring:
+
+- Results platform outbox ticks sample the oldest pending/failed/claimed envelope and record each
+  downstream dispatch success or failure using event/outbox identifiers only.
+- Completed HTTP 401/403 responses feed the repeated-auth-denial window; an optional sanitized
+  `X-Request-Id` is the correlation label.
+- Every Prometheus scrape samples the live primary PostgreSQL pool saturation before evaluating
+  alerts. No database pool is initialized solely for a scrape.
+- These signals are in-memory per process. A real alert transport, durable incident state and a
+  multi-instance aggregation window remain separate release gates; restart clears the local window.
+
 1. `WRITE_FAILURE_RATE`: stop retries that can duplicate effects, trace the correlation ID through
    the owner writer and outbox, verify tenant/actor/source/result fields, then replay one idempotent
    fixture. Recovery requires a fresh five-minute window below 1%.

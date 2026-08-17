@@ -620,6 +620,19 @@ export async function getPoolClientForPinnedTransaction(): Promise<PoolClient> {
   return activePool.connect();
 }
 
+/**
+ * Read-only primary-pool saturation for OPS-OBS-001. This deliberately does
+ * not create a pool: an idle process with no database traffic reports 0 rather
+ * than initializing infrastructure merely because metrics were scraped.
+ */
+export function getPrimaryPoolSaturationPercent(): number {
+  if (!pool) return 0;
+  const configuredMax = Number(pool.options.max) || 1;
+  const inUse = Math.max(0, pool.totalCount - pool.idleCount);
+  const demand = Math.max(inUse, inUse + pool.waitingCount);
+  return Math.max(0, Math.min(100, (demand / configuredMax) * 100));
+}
+
 function getReadPool(): Pool {
   if (readPool) return readPool;
 

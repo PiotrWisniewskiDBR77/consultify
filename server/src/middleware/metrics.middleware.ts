@@ -11,7 +11,11 @@
 
 import type { NextFunction, Request, Response } from 'express';
 
-import { getOperationalPrometheusMetrics } from '../services/operationalAlertService.js';
+import { getPrimaryPoolSaturationPercent } from '../database/PostgresDatabase.js';
+import {
+  getOperationalPrometheusMetrics,
+  operationalAlerts,
+} from '../services/operationalAlertService.js';
 
 interface MetricsBucket {
   requests: number;
@@ -174,6 +178,7 @@ export function getPrometheusMetrics(): string {
       );
     }
 
+    operationalAlerts.recordDbSaturation(getPrimaryPoolSaturationPercent(), 'metrics:primary-pool');
     lines.push(`# HELP consultify_operational_alert_active Whether an OPS-OBS-001 alert is active`);
     lines.push(`# TYPE consultify_operational_alert_active gauge`);
     lines.push(getOperationalPrometheusMetrics());
@@ -227,6 +232,11 @@ export const metricsMiddleware = (req: Request, res: Response, next: NextFunctio
       metrics.byStatus[status] = addBoundedMetric(metrics.byStatus[status], 1);
 
       if (status >= 500) metrics.errors = addBoundedMetric(metrics.errors, 1);
+      if (status === 401 || status === 403) {
+        operationalAlerts.recordAuthDenial(
+          normalizeOptionalString(safeRead(() => req.headers['x-request-id'], undefined))
+        );
+      }
 
       for (const bucket of LATENCY_BUCKETS) {
         if (recordedDuration <= bucket) {

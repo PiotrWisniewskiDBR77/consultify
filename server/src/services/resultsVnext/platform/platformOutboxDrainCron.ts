@@ -21,6 +21,7 @@ import os from 'node:os';
 import type { PoolClient } from 'pg';
 
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
+import { operationalAlerts } from '../../operationalAlertService.js';
 import logger from '../../../utils/Logger.js';
 import { sendSystemAlert } from '../../systemAlertNotifier.js';
 
@@ -98,6 +99,18 @@ export async function runOutboxDispatchTick(
   const claimClient = await acquirePgClient();
   let rows: RvnOutboxRow[] = [];
   try {
+    const oldest = await claimClient.query<{ age_ms: number | string }>(
+      `SELECT COALESCE(
+          EXTRACT(EPOCH FROM (now() - MIN(created_at))) * 1000,
+          0
+        ) AS age_ms
+         FROM rvn_platform_outbox
+        WHERE status IN ('pending', 'failed', 'claimed')`
+    );
+    operationalAlerts.recordOutboxOldestAge(
+      Number(oldest.rows[0]?.age_ms ?? 0),
+      'rvn-platform-outbox'
+    );
     await claimClient.query('BEGIN');
     result.reclaimed = await reclaimExpiredClaims(claimClient);
     rows = await claimOutboxBatch(claimClient, workerId, batchSize);
@@ -167,6 +180,13 @@ export async function runOutboxDispatchTick(
           'NO_CONSUMER_REGISTERED',
           DEFAULT_BACKOFF_SECONDS
         );
+        operationalAlerts.recordWrite({
+          correlationId: event.event_id,
+          tenantId: event.organization_id,
+          actorId: event.actor_user_id ?? 'system',
+          sourceId: row.outbox_id,
+          result: 'FAILURE',
+        });
         result.noConsumerRegistered++;
         result.failed++;
         if (failResult.status === 'dead_letter') {
@@ -188,6 +208,13 @@ export async function runOutboxDispatchTick(
         await consumerFn(dispatchClient, event, row);
         await dispatchClient.query('COMMIT');
         await markDispatched(dispatchClient, row.outbox_id);
+        operationalAlerts.recordWrite({
+          correlationId: event.event_id,
+          tenantId: event.organization_id,
+          actorId: event.actor_user_id ?? 'system',
+          sourceId: row.outbox_id,
+          result: 'SUCCESS',
+        });
         result.dispatched++;
       } catch (err) {
         try {
@@ -196,6 +223,13 @@ export async function runOutboxDispatchTick(
           // Same defensive double-rollback-is-a-no-op pattern as atomicWrite.ts.
         }
         const message = err instanceof Error ? err.message : String(err);
+        operationalAlerts.recordWrite({
+          correlationId: event.event_id,
+          tenantId: event.organization_id,
+          actorId: event.actor_user_id ?? 'system',
+          sourceId: row.outbox_id,
+          result: 'FAILURE',
+        });
         const failResult = await markFailed(
           dispatchClient,
           row.outbox_id,

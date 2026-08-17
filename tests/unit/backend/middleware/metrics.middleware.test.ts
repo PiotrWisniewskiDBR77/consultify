@@ -8,8 +8,29 @@ import {
   metricsMiddleware,
   getPrometheusMetrics,
 } from '../../../../server/src/middleware/metrics.middleware.ts';
+import { operationalAlerts } from '../../../../server/src/services/operationalAlertService.ts';
 
 describe('metrics.middleware', () => {
+  it('feeds completed authentication denials into the operational alert threshold', () => {
+    operationalAlerts.resetForTests();
+
+    for (let index = 0; index < 5; index += 1) {
+      const req: any = {
+        method: 'GET',
+        headers: { 'x-request-id': `auth-denial-${index}` },
+      };
+      const res: any = { statusCode: index % 2 === 0 ? 401 : 403, end: vi.fn() };
+      metricsMiddleware(req, res, vi.fn());
+      res.end();
+    }
+
+    const alert = operationalAlerts
+      .evaluate()
+      .find((candidate) => candidate.kind === 'REPEATED_AUTH_DENIALS');
+    expect(alert).toMatchObject({ active: true, value: 5, threshold: 5 });
+    expect(alert?.correlationId).toBe('auth-denial-4');
+  });
+
   it('addBoundedMetric caps counters at Number.MAX_SAFE_INTEGER', () => {
     const capped = __private__.addBoundedMetric(Number.MAX_SAFE_INTEGER - 1, 2);
     const staysCapped = __private__.addBoundedMetric(Number.MAX_SAFE_INTEGER, 1);
