@@ -22,7 +22,7 @@ import type { PoolClient } from 'pg';
 
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
 import { operationalAlerts } from '../../operationalAlertService.js';
-import { recordOperationalAlertSignal } from '../../operationalAlertSignalDeliveryService.js';
+import { durableOperationalAlertsEnabled, recordOperationalAlertSignal } from '../../operationalAlertSignalDeliveryService.js';
 import logger from '../../../utils/Logger.js';
 import { sendSystemAlert } from '../../systemAlertNotifier.js';
 
@@ -40,8 +40,9 @@ import {
   type RvnPlatformEventRow,
 } from './consumerRegistry.js';
 
-function recordDurableWrite(event: RvnPlatformEventRow, row: RvnOutboxRow, outcome: 'SUCCESS' | 'FAILURE') {
-  void recordOperationalAlertSignal({
+async function recordDurableWrite(event: RvnPlatformEventRow, row: RvnOutboxRow, outcome: 'SUCCESS' | 'FAILURE') {
+  if (!durableOperationalAlertsEnabled()) return;
+  await recordOperationalAlertSignal({
     organizationId: event.organization_id,
     actorId: event.actor_user_id ?? 'system',
     correlationId: event.event_id,
@@ -50,9 +51,7 @@ function recordDurableWrite(event: RvnPlatformEventRow, row: RvnOutboxRow, outco
     kind: 'WRITE_FAILURE_RATE',
     outcome,
     idempotencyKey: `rvn:${row.outbox_id}:${outcome}`,
-  }).catch((error) => logger.warn('[RvnPlatformOutbox] durable alert signal failed (non-fatal)', {
-    error: error instanceof Error ? error.message : String(error),
-  }));
+  });
 }
 import { drainExecutionSignalIngress } from './executionSignalIngress.js';
 
@@ -203,7 +202,7 @@ export async function runOutboxDispatchTick(
           sourceId: row.outbox_id,
           result: 'FAILURE',
         });
-        recordDurableWrite(event, row, 'FAILURE');
+        await recordDurableWrite(event, row, 'FAILURE');
         result.noConsumerRegistered++;
         result.failed++;
         if (failResult.status === 'dead_letter') {
@@ -224,6 +223,7 @@ export async function runOutboxDispatchTick(
         await dispatchClient.query('BEGIN');
         await consumerFn(dispatchClient, event, row);
         await dispatchClient.query('COMMIT');
+        await recordDurableWrite(event, row, 'SUCCESS');
         await markDispatched(dispatchClient, row.outbox_id);
         operationalAlerts.recordWrite({
           correlationId: event.event_id,
@@ -232,7 +232,6 @@ export async function runOutboxDispatchTick(
           sourceId: row.outbox_id,
           result: 'SUCCESS',
         });
-        recordDurableWrite(event, row, 'SUCCESS');
         result.dispatched++;
       } catch (err) {
         try {
@@ -248,7 +247,7 @@ export async function runOutboxDispatchTick(
           sourceId: row.outbox_id,
           result: 'FAILURE',
         });
-        recordDurableWrite(event, row, 'FAILURE');
+        await recordDurableWrite(event, row, 'FAILURE');
         const failResult = await markFailed(
           dispatchClient,
           row.outbox_id,

@@ -2,7 +2,7 @@
 import { randomUUID } from 'node:crypto';
 import { createServer, request as httpRequest } from 'node:http';
 import { Client } from 'pg';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   acknowledgeRecoveredTenantAlert,
   claimOperationalAlertDeliveries,
@@ -34,7 +34,9 @@ function signal(overrides: Record<string, unknown> = {}) {
 }
 
 describe.skipIf(!REAL_PG)('OPS-OBS tenant signal delivery (real PostgreSQL)', () => {
+  beforeAll(() => { process.env.OPERATIONAL_ALERT_DURABLE_ENABLED = 'true'; });
   afterAll(async () => {
+    delete process.env.OPERATIONAL_ALERT_DURABLE_ENABLED;
     const db = new Client({ connectionString: DATABASE_URL }); await db.connect();
     // Test DB only: disable immutable guards solely while removing this test's unique fixtures.
     await db.query(`ALTER TABLE operational_alert_delivery_receipts DISABLE TRIGGER trg_operational_alert_receipts_immutable`);
@@ -84,7 +86,11 @@ describe.skipIf(!REAL_PG)('OPS-OBS tenant signal delivery (real PostgreSQL)', ()
       ...Array.from({ length: 5 }, (_, index) => ({ kind: 'REPEATED_AUTH_DENIALS' as const, outcome: 'DENIAL' as const, observedValue: 1, occurredAt: now, suffix: `denial-${index}` })),
     ];
     for (const sample of samples) await recordOperationalAlertSignal(signal({ organizationId: thresholdOrg, idempotencyKey: `${prefix}-${sample.suffix}`, correlationId: `${prefix}-${sample.suffix}`, ...sample }));
+    await recordOperationalAlertSignal(signal({ organizationId: thresholdOrg, outcome: 'SUCCESS', observedValue: 999, idempotencyKey: `${prefix}-weighted-success`, correlationId: `${prefix}-weighted-success` }));
+    await recordOperationalAlertSignal(signal({ organizationId: thresholdOrg, outcome: 'FAILURE', observedValue: 1, idempotencyKey: `${prefix}-weighted-failure`, correlationId: `${prefix}-weighted-failure` }));
     const states = await evaluateOperationalAlertWindows({ organizationId: thresholdOrg, evaluatorId: `${prefix}-threshold-eval`, now });
+    const weighted = states.find((state) => state.kind === 'WRITE_FAILURE_RATE');
+    expect(weighted.status).toBe('INACTIVE'); expect(Number(weighted.latest_value)).toBe(0.001);
     expect(states.filter((state) => ['DB_SATURATION','OUTBOX_OLDEST_AGE','REPEATED_AUTH_DENIALS'].includes(state.kind)).map((state) => state.status)).toEqual(['ACTIVE','ACTIVE','ACTIVE']);
   });
 
@@ -116,6 +122,10 @@ describe.skipIf(!REAL_PG)('OPS-OBS tenant signal delivery (real PostgreSQL)', ()
     await evaluateOperationalAlertWindows({ organizationId: deliveryOrg, evaluatorId: `${prefix}-http-eval`, now });
     delete process.env.OPERATIONAL_ALERT_DELIVERY_ENABLED;
     expect(await deliverOperationalAlerts({ workerId: `${prefix}-http-worker` })).toEqual({ disabled: true, delivered: 0, failed: 0 });
+    process.env.OPERATIONAL_ALERT_DELIVERY_ENABLED = 'true';
+    for (const forbidden of ['https://alerts.example.com/hook', 'http://user:pass@127.0.0.1:9999/hook', 'http://[::1]:9999/hook', 'http://localhost.evil.test:9999/hook']) {
+      await expect(deliverOperationalAlerts({ endpoint: forbidden, workerId: `${prefix}-http-worker` })).rejects.toThrow('OPS_ALERT_TRANSPORT_NOT_AUTHORIZED');
+    }
     let calls = 0;
     const ids: string[] = [];
     const server = createServer((request, response) => {
@@ -125,7 +135,6 @@ describe.skipIf(!REAL_PG)('OPS-OBS tenant signal delivery (real PostgreSQL)', ()
     await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
     const address = server.address();
     if (!address || typeof address === 'string') throw new Error('local receiver unavailable');
-    process.env.OPERATIONAL_ALERT_DELIVERY_ENABLED = 'true';
     const endpoint = `http://127.0.0.1:${address.port}/ops-alerts`;
     const unavailableReceiver: typeof fetch = async (...args) => {
       await realLocalFetch(...args);

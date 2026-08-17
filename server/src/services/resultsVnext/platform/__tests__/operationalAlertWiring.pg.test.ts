@@ -51,6 +51,9 @@ describe('OPS-OBS-001 production signal wiring (real PostgreSQL)', () => {
 
   afterAll(async () => {
     if (!client) return;
+    await client.query('ALTER TABLE operational_alert_signals DISABLE TRIGGER trg_operational_alert_signals_immutable');
+    await client.query('DELETE FROM operational_alert_signals WHERE organization_id = $1', [`${marker}:tenant`]);
+    await client.query('ALTER TABLE operational_alert_signals ENABLE TRIGGER trg_operational_alert_signals_immutable');
     await client.query('DELETE FROM rvn_platform_outbox WHERE outbox_id = $1', [outboxId]);
     await client.query('DELETE FROM rvn_platform_events WHERE event_id = $1', [eventId]);
     await client.end();
@@ -72,6 +75,8 @@ describe('OPS-OBS-001 production signal wiring (real PostgreSQL)', () => {
       [outboxId]
     );
     expect(persisted.rows[0]).toMatchObject({ status: 'dead_letter', attempts: 1 });
+    const durable = await client.query(`SELECT organization_id,actor_id,correlation_id,outcome FROM operational_alert_signals WHERE organization_id=$1`, [`${marker}:tenant`]);
+    expect(durable.rows).toEqual([{ organization_id: `${marker}:tenant`, actor_id: `${marker}:actor`, correlation_id: eventId, outcome: 'FAILURE' }]);
   });
 
   it('exposes a finite primary-pool saturation sample without payload or tenant labels', () => {

@@ -6,6 +6,12 @@ const SAFE_ID = /^[A-Za-z0-9._:@/-]{1,160}$/;
 const SECRET_KEY = /(authorization|cookie|password|secret|token|api.?key)/i;
 export type SignalOutcome = 'SUCCESS' | 'FAILURE' | 'SAMPLE' | 'DENIAL';
 
+/** Internal trusted-producer gate. This service is not a public authentication API. */
+export function durableOperationalAlertsEnabled(): boolean {
+  return process.env.OPERATIONAL_ALERT_LEDGER_ENABLED !== 'false' &&
+    process.env.OPERATIONAL_ALERT_DURABLE_ENABLED === 'true';
+}
+
 function required(value: string, code: string): string {
   const normalized = value?.trim();
   if (!SAFE_ID.test(normalized)) throw new Error(code);
@@ -70,9 +76,10 @@ const SPECS: Record<OperationalAlertKind, { windowMs: number; threshold: number 
 async function measure(tx: PgTransactionClient, org: string, kind: OperationalAlertKind, now: string) {
   const spec = SPECS[kind];
   const result = await tx.query<any>(`SELECT
-    count(*)::int AS total,
-    count(*) FILTER (WHERE outcome='FAILURE')::int AS failures,
-    count(*) FILTER (WHERE outcome='DENIAL')::int AS denials,
+    COALESCE(sum(observed_value) FILTER (WHERE outcome IN ('SUCCESS','FAILURE')),0)::float8 AS total,
+    count(*)::int AS sample_count,
+    COALESCE(sum(observed_value) FILTER (WHERE outcome='FAILURE'),0)::float8 AS failures,
+    COALESCE(sum(observed_value) FILTER (WHERE outcome='DENIAL'),0)::float8 AS denials,
     max(observed_value)::float8 AS max_value,
     min(observed_value)::float8 AS min_value,
     min(occurred_at) AS first_at,
@@ -82,7 +89,7 @@ async function measure(tx: PgTransactionClient, org: string, kind: OperationalAl
   const row = result.rows[0];
   if (kind === 'WRITE_FAILURE_RATE') return { active: row.total > 0 && row.failures / row.total >= spec.threshold, value: row.total ? row.failures / row.total : 0, correlationId: row.correlation_id };
   if (kind === 'REPEATED_AUTH_DENIALS') return { active: row.denials >= spec.threshold, value: row.denials, correlationId: row.correlation_id };
-  if (kind === 'DB_SATURATION') return { active: row.total > 1 && Number(row.min_value) >= spec.threshold && new Date(row.first_at).getTime() <= new Date(now).getTime() - spec.windowMs + 1000, value: Number(row.max_value ?? 0), correlationId: row.correlation_id };
+  if (kind === 'DB_SATURATION') return { active: row.sample_count > 1 && Number(row.min_value) >= spec.threshold && new Date(row.first_at).getTime() <= new Date(now).getTime() - spec.windowMs + 1000, value: Number(row.max_value ?? 0), correlationId: row.correlation_id };
   return { active: Number(row.max_value ?? 0) >= spec.threshold, value: Number(row.max_value ?? 0), correlationId: row.correlation_id };
 }
 
@@ -182,14 +189,16 @@ export async function failOperationalAlertDelivery(params: { deliveryId: string;
 }
 
 export async function deliverOperationalAlerts(params: { endpoint?: string; workerId: string; organizationId?: string; fetchImpl?: typeof fetch; limit?: number }) {
-  if (process.env.OPERATIONAL_ALERT_DELIVERY_ENABLED !== 'true') return { disabled: true, delivered: 0, failed: 0 };
+  if (!durableOperationalAlertsEnabled() || process.env.OPERATIONAL_ALERT_DELIVERY_ENABLED !== 'true') return { disabled: true, delivered: 0, failed: 0 };
   const endpoint = params.endpoint ?? process.env.OPERATIONAL_ALERT_DELIVERY_ENDPOINT;
-  if (!endpoint || !/^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?\//.test(endpoint)) throw new Error('OPS_ALERT_TRANSPORT_NOT_AUTHORIZED');
+  let target: URL;
+  try { target = new URL(endpoint ?? ''); } catch { throw new Error('OPS_ALERT_TRANSPORT_NOT_AUTHORIZED'); }
+  if (target.protocol !== 'http:' || target.username || target.password || !['127.0.0.1', 'localhost'].includes(target.hostname) || !target.port) throw new Error('OPS_ALERT_TRANSPORT_NOT_AUTHORIZED');
   const claimed = await claimOperationalAlertDeliveries(params);
   let delivered = 0, failed = 0;
   for (const row of claimed) {
     try {
-      const response = await (params.fetchImpl ?? fetch)(endpoint, { method: 'POST', headers: { 'content-type': 'application/json', 'x-ops-delivery-id': row.delivery_id }, body: JSON.stringify(row.payload_json) });
+      const response = await (params.fetchImpl ?? fetch)(target, { method: 'POST', redirect: 'error', headers: { 'content-type': 'application/json', 'x-ops-delivery-id': row.delivery_id }, body: JSON.stringify(row.payload_json) });
       if (!response.ok) throw new Error(`HTTP_${response.status}`);
       await completeOperationalAlertDelivery({ deliveryId: row.delivery_id, workerId: params.workerId, responseStatus: response.status, responseBody: await response.text() }); delivered++;
     } catch (error) { await failOperationalAlertDelivery({ deliveryId: row.delivery_id, workerId: params.workerId, error: error instanceof Error ? error.message : 'DELIVERY_FAILED' }); failed++; }

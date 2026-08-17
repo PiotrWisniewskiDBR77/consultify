@@ -33,9 +33,17 @@ Tenant-scoped durable delivery substrate:
   with different content fail closed. Secret-bearing metadata keys are rejected.
 - The DB-window evaluator persists one state per organization and kind. It enqueues immutable
   `DETECTED` and `RECOVERED` delivery envelopes transactionally with the state transition.
-- Delivery is **default OFF**. `OPERATIONAL_ALERT_DELIVERY_ENABLED=true` is required and the current
+- Durable tenant signal writes/evaluation are **default OFF** and require
+  `OPERATIONAL_ALERT_DURABLE_ENABLED=true`; the emergency
+  `OPERATIONAL_ALERT_LEDGER_ENABLED=false` disables both legacy reconciliation and this new path.
+  Delivery additionally requires `OPERATIONAL_ALERT_DELIVERY_ENABLED=true`. The current
   repository transport intentionally accepts only an explicitly configured loopback receiver for
   controlled operator verification. This is not authorization for production paging.
+- The loopback endpoint rejects HTTPS/external hosts, userinfo, IPv6 and lookalike localhost names;
+  redirects are rejected rather than followed. Producer calls are trusted internal boundaries, not
+  public authentication APIs. HTTP denial signals are written only when authenticated tenant,
+  actor and canonical request correlation identity are all present; anonymous/missing identity is
+  deliberately not invented.
 - Claims use `FOR UPDATE SKIP LOCKED`, bounded exponential retry and a five-attempt dead-letter.
   Expired claims are reclaimable after a process crash. A successful local response writes one
   immutable receipt in the same transaction that marks the envelope delivered.

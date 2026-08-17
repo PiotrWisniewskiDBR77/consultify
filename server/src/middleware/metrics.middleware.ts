@@ -67,8 +67,8 @@ function recordDurableAuthDenial(req: Request): void {
   const actorId = normalizeOptionalString(user?.id ?? user?.userId ?? user?.user_id);
   const correlationId = normalizeOptionalString(safeRead(() => req.headers['x-request-id'], undefined));
   if (!organizationId || !actorId || !correlationId) return;
-  void import('../services/operationalAlertSignalDeliveryService.js').then(({ recordOperationalAlertSignal }) =>
-    recordOperationalAlertSignal({ organizationId, actorId, correlationId, sourceType: 'http_metrics', sourceId: `${safeMethod(req)}:${safeRead(() => req.path, 'unknown')}`, kind: 'REPEATED_AUTH_DENIALS', outcome: 'DENIAL', idempotencyKey: `auth-denial:${correlationId}` })
+  void import('../services/operationalAlertSignalDeliveryService.js').then(({ durableOperationalAlertsEnabled, recordOperationalAlertSignal }) =>
+    durableOperationalAlertsEnabled() ? recordOperationalAlertSignal({ organizationId, actorId, correlationId, sourceType: 'http_metrics', sourceId: `${safeMethod(req)}:${safeRead(() => req.path, 'unknown')}`, kind: 'REPEATED_AUTH_DENIALS', outcome: 'DENIAL', idempotencyKey: `auth-denial:${correlationId}` }) : undefined
   ).catch(() => undefined);
 }
 
