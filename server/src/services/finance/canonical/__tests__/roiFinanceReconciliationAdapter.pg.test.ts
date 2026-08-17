@@ -194,6 +194,42 @@ describe.skipIf(!REAL_PG)(
         orgId,
         'ROI-E007 Stream C Org',
       ]);
+      await raw.query(
+        `INSERT INTO users (id,organization_id,email,password,role,status,first_name,last_name,created_at)
+         VALUES ($1,$2,$3,'x','OWNER','active','Fin','Adapter',now())`,
+        [userId, orgId, `${userId}@test.local`]
+      );
+      await raw.query(
+        `INSERT INTO organization_members (id,organization_id,user_id,role,status,created_at)
+         VALUES ($1,$2,$3,'OWNER','ACTIVE',now())`,
+        [`${userId}-membership`, orgId, userId]
+      );
+      await raw.query(
+        `INSERT INTO rvn_finance_reconciliation_grant_events
+         (organization_id,user_id,grant_version,action,acted_by,policy_version,policy_digest)
+         VALUES ($1,$2,1,'granted',$2,'DEC-FIN-RESULTS-RECONCILIATION-001/v1',
+          'sha256:a0b04a2bcd42d9fa8a2680f0dd35008f4226bc92db5ecc63756732d7a8854e6d')`,
+        [orgId, userId]
+      );
+      for (const resolverId of [`resolver-${userId}`, `acceptor-${userId}`]) {
+        await raw.query(
+          `INSERT INTO users (id,organization_id,email,password,role,status,first_name,last_name,created_at)
+           VALUES ($1,$2,$3,'x','USER','active','Fin','Resolver',now())`,
+          [resolverId, orgId, `${resolverId}@test.local`]
+        );
+        await raw.query(
+          `INSERT INTO organization_members (id,organization_id,user_id,role,status,created_at)
+           VALUES ($1,$2,$3,'MEMBER','ACTIVE',now())`,
+          [`${resolverId}-membership`, orgId, resolverId]
+        );
+        await raw.query(
+          `INSERT INTO rvn_finance_reconciliation_grant_events
+           (organization_id,user_id,grant_version,action,acted_by,policy_version,policy_digest)
+           VALUES ($1,$2,1,'granted',$3,'DEC-FIN-RESULTS-RECONCILIATION-001/v1',
+            'sha256:a0b04a2bcd42d9fa8a2680f0dd35008f4226bc92db5ecc63756732d7a8854e6d')`,
+          [orgId, resolverId, userId]
+        );
+      }
       for (const [initId, label] of [
         [initiativeWithCase, 'Initiative WITH a ROI case'],
         [initiativeWithoutCase, 'Initiative WITHOUT a ROI case'],
@@ -277,6 +313,9 @@ describe.skipIf(!REAL_PG)(
     afterAll(async () => {
       if (!raw) return;
       try {
+        await raw.query(`SET session_replication_role = replica`);
+        await raw.query(`DELETE FROM rvn_finance_reconciliation_grant_events WHERE organization_id=$1`, [orgId]);
+        await raw.query(`SET session_replication_role = origin`);
         // `benefit_tracking`'s DELETE guard is part of the artifact under test;
         // drop it only for this suite's own cleanup, then put it straight back.
         await raw.query(

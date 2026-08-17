@@ -66,8 +66,10 @@ describe('FIN-MVP-RECONCILIATION mounted realPG auth/tenant matrix', () => {
       [ORG_A, OWNER]
     );
     await db.query(
-      `INSERT INTO rvn_finance_reconciliation_owner_grants (organization_id,user_id,granted_by)
-       VALUES ($1,$2,$3)`,
+      `INSERT INTO rvn_finance_reconciliation_grant_events
+       (organization_id,user_id,grant_version,action,acted_by,policy_version,policy_digest)
+       VALUES ($1,$2,1,'granted',$3,'DEC-FIN-RESULTS-RECONCILIATION-001/v1',
+               'sha256:a0b04a2bcd42d9fa8a2680f0dd35008f4226bc92db5ecc63756732d7a8854e6d')`,
       [ORG_A, FIN_OWNER, OWNER]
     );
 
@@ -84,7 +86,7 @@ describe('FIN-MVP-RECONCILIATION mounted realPG auth/tenant matrix', () => {
       idempotencyKey: `${P}case`,
     });
     caseId = createdCase.result.case.caseId;
-    for (let index = 0; index < 3; index += 1) {
+    for (let index = 0; index < 4; index += 1) {
       const link = await linkCommands.createRoiFinanceLink({
         caseId,
         organizationId: ORG_A,
@@ -110,8 +112,8 @@ describe('FIN-MVP-RECONCILIATION mounted realPG auth/tenant matrix', () => {
 
   afterAll(async () => {
     if (!db) return;
-    await db.query(`DELETE FROM rvn_finance_reconciliation_owner_grants WHERE organization_id = $1`, [ORG_A]);
     await db.query(`SET session_replication_role = replica`);
+    await db.query(`DELETE FROM rvn_finance_reconciliation_grant_events WHERE organization_id = $1`, [ORG_A]);
     await db.query(`DELETE FROM rvn_finance_reconciliation_decisions WHERE organization_id = $1`, [ORG_A]);
     await db.query(`DELETE FROM rvn_roi_finance_reconciliations WHERE organization_id = $1`, [ORG_A]);
     await db.query(`SET session_replication_role = origin`);
@@ -141,7 +143,7 @@ describe('FIN-MVP-RECONCILIATION mounted realPG auth/tenant matrix', () => {
       .send({ financeLinkId: linkId, reconciliationKind: 'proposal', roiValue: 100, financeValue: 106, idempotencyKey: key });
   }
 
-  it('member responsible may propose but cannot self/terminal resolve; OWNER may resolve', async () => {
+  it('member responsible may propose but neither self nor OWNER wildcard may terminally resolve', async () => {
     const opened = await openAsMember(linkIds[0]!, `${P}open-owner`);
     expect(opened.status).toBe(201);
     const reconciliation = opened.body.financeReconciliation;
@@ -149,14 +151,14 @@ describe('FIN-MVP-RECONCILIATION mounted realPG auth/tenant matrix', () => {
       .patch(`/api/vnext/results/roi/cases/${caseId}/finance-reconciliations/${reconciliation.reconciliationId}`)
       .set('Authorization', `Bearer ${token(MEMBER, ORG_A, 'USER')}`)
       .send({ expectedVersion: reconciliation.rowVersion, status: 'resolved', idempotencyKey: `${P}self` });
-    expect(self.status).toBe(403);
+    expect(self.status).toBe(409);
 
     const owner = await request(app)
       .patch(`/api/vnext/results/roi/cases/${caseId}/finance-reconciliations/${reconciliation.reconciliationId}`)
       .set('Authorization', `Bearer ${token(OWNER, ORG_A, 'OWNER')}`)
       .send({ expectedVersion: reconciliation.rowVersion, status: 'resolved', idempotencyKey: `${P}owner-resolve` });
-    expect(owner.status).toBe(200);
-    expect(owner.body.financeReconciliation.resolvedBy).toBe(OWNER);
+    expect(owner.status).toBe(409);
+    expect(owner.body.code).toBe('FINANCE_OWNER_GRANT_REQUIRED');
   });
 
   it('explicit Finance-owner capability resolves; foreign and revoked identities fail closed', async () => {
@@ -168,7 +170,7 @@ describe('FIN-MVP-RECONCILIATION mounted realPG auth/tenant matrix', () => {
         .patch(`/api/vnext/results/roi/cases/${caseId}/finance-reconciliations/${reconciliation.reconciliationId}`)
         .set('Authorization', `Bearer ${token(actor, org, role)}`)
         .send({ expectedVersion: reconciliation.rowVersion, status: 'accepted_divergence', idempotencyKey: `${P}deny-${actor}` });
-      expect([403, 404]).toContain(denied.status);
+      expect([403, 404, 409]).toContain(denied.status);
     }
     const explicit = await request(app)
       .patch(`/api/vnext/results/roi/cases/${caseId}/finance-reconciliations/${reconciliation.reconciliationId}`)
@@ -178,7 +180,7 @@ describe('FIN-MVP-RECONCILIATION mounted realPG auth/tenant matrix', () => {
     expect(explicit.body.financeReconciliation.resolvedBy).toBe(FIN_OWNER);
   });
 
-  it('ADMIN wildcard resolves and cold SQL readback preserves the proposal/policy stamp', async () => {
+  it('ADMIN wildcard is insufficient and revoked membership is rechecked with the same token', async () => {
     const opened = await openAsMember(linkIds[2]!, `${P}open-admin`);
     expect(opened.status).toBe(201);
     const reconciliation = opened.body.financeReconciliation;
@@ -186,7 +188,13 @@ describe('FIN-MVP-RECONCILIATION mounted realPG auth/tenant matrix', () => {
       .patch(`/api/vnext/results/roi/cases/${caseId}/finance-reconciliations/${reconciliation.reconciliationId}`)
       .set('Authorization', `Bearer ${token(ADMIN, ORG_A, 'ADMIN')}`)
       .send({ expectedVersion: reconciliation.rowVersion, status: 'resolved', idempotencyKey: `${P}admin` });
-    expect(admin.status).toBe(200);
+    expect(admin.status).toBe(409);
+    expect(admin.body.code).toBe('FINANCE_OWNER_GRANT_REQUIRED');
+    await db.query(`UPDATE organization_members SET status='REVOKED' WHERE organization_id=$1 AND user_id=$2`, [ORG_A, MEMBER]);
+    const cachedTokenDenied = await openAsMember(linkIds[2]!, `${P}cached-revoked`);
+    expect(cachedTokenDenied.status).toBe(409);
+    expect(cachedTokenDenied.body.code).toBe('ACTIVE_TENANT_MEMBERSHIP_REQUIRED');
+    await db.query(`UPDATE organization_members SET status='ACTIVE' WHERE organization_id=$1 AND user_id=$2`, [ORG_A, MEMBER]);
     const cold = await db.query(
       `SELECT reconciliation_kind, decision_policy_version, decision_policy_digest, roi_value, finance_value, resolved_by
          FROM rvn_roi_finance_reconciliations WHERE reconciliation_id=$1`,
@@ -196,9 +204,31 @@ describe('FIN-MVP-RECONCILIATION mounted realPG auth/tenant matrix', () => {
       reconciliation_kind: 'proposal',
       decision_policy_version: 'DEC-FIN-RESULTS-RECONCILIATION-001/v1',
       decision_policy_digest: 'sha256:a0b04a2bcd42d9fa8a2680f0dd35008f4226bc92db5ecc63756732d7a8854e6d',
-      resolved_by: ADMIN,
+      resolved_by: null,
     });
     expect(Number(cold.rows[0].roi_value)).toBe(100);
     expect(Number(cold.rows[0].finance_value)).toBe(106);
+  });
+
+  it('append-only revocation disables an explicit grant and cannot be mutated back', async () => {
+    const opened = await openAsMember(linkIds[3]!, `${P}open-revoked-grant`);
+    expect(opened.status).toBe(201);
+    await db.query(
+      `INSERT INTO rvn_finance_reconciliation_grant_events
+       (organization_id,user_id,grant_version,action,acted_by,policy_version,policy_digest)
+       VALUES ($1,$2,2,'revoked',$3,'DEC-FIN-RESULTS-RECONCILIATION-001/v1',
+        'sha256:a0b04a2bcd42d9fa8a2680f0dd35008f4226bc92db5ecc63756732d7a8854e6d')`,
+      [ORG_A, FIN_OWNER, OWNER]
+    );
+    const denied = await request(app)
+      .patch(`/api/vnext/results/roi/cases/${caseId}/finance-reconciliations/${opened.body.financeReconciliation.reconciliationId}`)
+      .set('Authorization', `Bearer ${token(FIN_OWNER, ORG_A, 'USER')}`)
+      .send({ expectedVersion: 1, status: 'resolved', idempotencyKey: `${P}revoked-grant` });
+    expect(denied.status).toBe(409);
+    await expect(db.query(
+      `UPDATE rvn_finance_reconciliation_grant_events SET action='granted'
+        WHERE organization_id=$1 AND user_id=$2 AND grant_version=2`,
+      [ORG_A, FIN_OWNER]
+    )).rejects.toThrow(/append-only/i);
   });
 });

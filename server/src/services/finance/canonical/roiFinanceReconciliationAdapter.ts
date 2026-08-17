@@ -251,7 +251,6 @@ export async function detectAndReconcile(
     roiValue,
     financeValue,
     reconciliationKind,
-    materialityThresholdPercent: FINANCE_RECONCILIATION_MATERIALITY_THRESHOLD_PCT,
     divergenceReason: divergenceReason ?? buildDefaultDivergenceReason(verdict),
     actorUserId: actorId,
     actorEffectiveRole,

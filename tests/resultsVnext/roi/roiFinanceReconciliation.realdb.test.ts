@@ -197,12 +197,33 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
     closePgPool = (pgModule as unknown as { closePool?: () => Promise<void> }).closePool;
 
     await insertOrganization();
+    for (const userId of [USER_MAKER, USER_RESOLVER]) {
+      await client.query(
+        `INSERT INTO users (id,organization_id,email,password,role,status,first_name,last_name,created_at)
+         VALUES ($1,$2,$3,'x','USER','active','Fin','Recon',now())`,
+        [userId, ORG_ID, `${userId}@test.local`]
+      );
+      await client.query(
+        `INSERT INTO organization_members (id,organization_id,user_id,role,status,created_at)
+         VALUES ($1,$2,$3,'MEMBER','ACTIVE',now())`,
+        [`${userId}-membership`, ORG_ID, userId]
+      );
+    }
+    await client.query(
+      `INSERT INTO rvn_finance_reconciliation_grant_events
+       (organization_id,user_id,grant_version,action,acted_by,policy_version,policy_digest)
+       VALUES ($1,$2,1,'granted',$3,$4,$5)`,
+      [ORG_ID, USER_RESOLVER, USER_MAKER,
+        'DEC-FIN-RESULTS-RECONCILIATION-001/v1',
+        'sha256:a0b04a2bcd42d9fa8a2680f0dd35008f4226bc92db5ecc63756732d7a8854e6d']
+    );
     await insertVisibilityPolicy('roi', 'OPEN_ORG', USER_MAKER);
   }, 30_000);
 
   afterAll(async () => {
     if (!reachable) return;
     await client.query(`SET session_replication_role = replica`);
+    await client.query(`DELETE FROM rvn_finance_reconciliation_grant_events WHERE organization_id = $1`, [ORG_ID]);
     await client.query(`DELETE FROM rvn_finance_reconciliation_decisions WHERE organization_id = $1`, [ORG_ID]);
     await client.query(`DELETE FROM rvn_roi_finance_reconciliations WHERE organization_id = $1`, [ORG_ID]);
     await client.query(`SET session_replication_role = origin`);
@@ -225,6 +246,8 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
     await client.query(`DELETE FROM rvn_platform_resource_visibility WHERE organization_id = $1`, [ORG_ID]);
     await client.query(`DELETE FROM rvn_platform_visibility_policies WHERE organization_id = $1`, [ORG_ID]);
     await client.query(`DELETE FROM initiatives WHERE organization_id = $1`, [ORG_ID]);
+    await client.query(`DELETE FROM organization_members WHERE organization_id = $1`, [ORG_ID]);
+    await client.query(`DELETE FROM users WHERE id = ANY($1::text[])`, [[USER_MAKER, USER_RESOLVER]]);
     await client.query(`DELETE FROM organizations WHERE id = $1`, [ORG_ID]);
     await client.end();
     if (closePgPool) await closePgPool();
@@ -291,7 +314,7 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
       organizationId: ORG_ID,
       financeLinkId: fixture.linkId,
       roiValue: 500,
-      financeValue: 480,
+      financeValue: 469,
       actorUserId: USER_MAKER,
       actorEffectiveRole: 'consultant',
       idempotencyKey: `recon-list-${randomUUID()}`,
@@ -469,9 +492,12 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
     const replayed = await openRoiFinanceReconciliation(openInput);
     expect(replayed.outcome).toBe('duplicate');
     expect(replayed.result.reconciliationId).toBe(opened.result.reconciliationId);
+    await expect(openRoiFinanceReconciliation({
+      ...openInput,
+      financeValue: -106,
+    })).rejects.toMatchObject({ code: 'IDEMPOTENCY_FINGERPRINT_CONFLICT' });
     expect(opened.result).toMatchObject({
       reconciliationKind: 'proposal',
-      materialityThresholdPercent: 5,
       decisionPolicyVersion: 'DEC-FIN-RESULTS-RECONCILIATION-001/v1',
       decisionPolicyDigest: 'sha256:a0b04a2bcd42d9fa8a2680f0dd35008f4226bc92db5ecc63756732d7a8854e6d',
     });
@@ -489,13 +515,13 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
       actorUserId: USER_MAKER,
       idempotencyKey: `self-${randomUUID()}`,
       access: { capabilities: ['*'], platformRole: null },
-    })).rejects.toMatchObject({ code: 'FINANCE_RECONCILIATION_SELF_RESOLUTION_DENIED' });
+    })).rejects.toMatchObject({ code: 'FINANCE_OWNER_GRANT_REQUIRED' });
     await expect(updateRoiFinanceReconciliationStatus({
       ...common,
-      actorUserId: USER_RESOLVER,
+      actorUserId: USER_MAKER,
       idempotencyKey: `unauthorized-${randomUUID()}`,
       access: { capabilities: [], platformRole: null },
-    })).rejects.toMatchObject({ code: 'COMMAND_CAPABILITY_DENIED' });
+    })).rejects.toMatchObject({ code: 'FINANCE_OWNER_GRANT_REQUIRED' });
 
     const attempts = await Promise.allSettled([
       updateRoiFinanceReconciliationStatus({

@@ -309,27 +309,11 @@ function requireAuth(req: AuthenticatedRequest, res: Response): RouteAuth | null
  * `roiCaseApprovalCommands.ts` are gated by this pakiet — see that file's
  * own RN-G5 comment for the exact scope. */
 async function resolveAccess(req: AuthenticatedRequest, auth: RouteAuth): Promise<CommandAccessContext> {
-  const access = await resolveEffectiveAccess({
+  return resolveEffectiveAccess({
     userId: auth.userId,
     organizationId: auth.organizationId,
     applicationRole: req.user?.role,
   });
-  if (!access.capabilities.includes('*')) {
-    const client = await acquirePgClient();
-    try {
-      const grant = await client.query<{ capability: string }>(
-        `SELECT capability FROM rvn_finance_reconciliation_owner_grants
-          WHERE organization_id = $1 AND user_id = $2 AND revoked_at IS NULL`,
-        [auth.organizationId, auth.userId]
-      );
-      access.capabilities = Array.from(
-        new Set([...access.capabilities, ...grant.rows.map((row) => row.capability)])
-      );
-    } finally {
-      client.release();
-    }
-  }
-  return access;
 }
 
 function normalizeOptionalString(value: unknown): string | undefined {

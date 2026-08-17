@@ -116,6 +116,10 @@ export interface RoiFinanceReconciliationRow {
   decision_policy_digest: string;
   terminal_decision_id: string | null;
   terminal_decision_version: number | null;
+  terminal_decision_status: RoiFinanceReconciliationStatus | null;
+  request_fingerprint: string | null;
+  request_actor_id: string | null;
+  idempotency_key: string | null;
   divergence_reason: string | null;
   status: RoiFinanceReconciliationStatus;
   opened_by: string;
