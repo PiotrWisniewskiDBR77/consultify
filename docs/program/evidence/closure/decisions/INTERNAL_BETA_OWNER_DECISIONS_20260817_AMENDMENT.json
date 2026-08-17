@@ -1,5 +1,7 @@
 {
   "recordId": "INTERNAL-BETA-OWNER-DECISIONS-20260817-AMENDMENT-01",
+  "initialContentSha256": "617b5d29c229e6c073452a17c8da1888ce18aa8d59a5913fa0d9aa59b2272702",
+  "correctionReason": "Preserve the two explicit owner messages as separate statements rather than a reconstructed combined quotation; decision meaning and safety boundaries are unchanged.",
   "amends": "INTERNAL-BETA-OWNER-DECISIONS-20260817",
   "recordedAt": "2026-08-17T12:30:00+02:00",
   "effectiveProductSha": "84de0f084746c03e46e870482ca8518dc26cb2f8",
@@ -9,7 +11,19 @@
   "productionRestoreAuthorized": false,
   "authority": {
     "programOwner": "Piotr Wisniewski",
-    "ownerStatement": "Ja biorę wszystkie role; przepchnijmy.",
+    "ownerStatements": [
+      {
+        "sequence": 1,
+        "statement": "Ja biore wszystkie role",
+        "meaning": "The program owner assumes all accountable company-side roles for the internal-beta decisions."
+      },
+      {
+        "sequence": 2,
+        "statement": "przepchnijmy może te 16...",
+        "meaning": "The program owner directs the team to move the bounded closure wave forward."
+      }
+    ],
+    "quotationBoundary": "These are two separate user statements from separate messages. They must not be concatenated or represented as one verbatim quotation.",
     "interpretation": "The program owner assumes the accountable company-side roles and authorizes fail-closed repository implementation and evidence reconciliation. This does not manufacture external facts or authorize release."
   },
   "governanceBoundary": "The owner role assumption does not create third-party IP rights, licenses, DPAs, residency, tax or KYC facts, storage or encryption-key provisioning, historical-data disposition evidence, deployed observation, production restore authority or release authority.",

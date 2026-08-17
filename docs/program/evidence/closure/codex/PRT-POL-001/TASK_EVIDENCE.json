@@ -11,13 +11,13 @@
   "changedPathRationale": {},
   "ownerTables": ["partner_program_ledger"],
   "commands": [{"command": "RUN_DB_TESTS=1 npx vitest run tests/integration/partners/partner-program-ledger-governance.realdb.test.ts", "exitCode": 0}],
-  "denominators": {"policyDecisionsRequired": 1, "policyDecisionsApproved": 1, "sharedAccrualControlProof": "22/22"},
+  "denominators": {"policyDecisionsRequired": 1, "policyDecisionsApproved": 1, "sharedAccrualControlProof": "22/22 historical PRT-MVP-ACCRUAL evidence; not independently requalified or task-bound here"},
   "fixtures": {"database": "fresh isolated PostgreSQL"},
   "negativeControls": {"payout": "automatic payout remains disabled", "ledger": "append-only and versioned"},
   "browserArtifacts": [],
   "rollback": {"policy": "manual payout only; no destructive ledger rollback"},
-  "technicalVerdict": "PASS_POLICY_BOUNDARY_FAIL_CLOSED",
-  "verdict": "DONE_CURRENT_SHA",
-  "openBlockers": [],
-  "completionBoundary": "This closes the MVP policy decision only. Economics and accrual capability remain excluded; no currency, rate, tax, KYC or payout fact is inferred."
+  "technicalVerdict": "PARTIAL_APPROVED_OUT_POLICY_BOUNDARY_DECIDED",
+  "verdict": "PARTIAL",
+  "openBlockers": ["APPROVED_OUT: economics, accrual and payout remain excluded. The absent-policy and automatic-payout controls are referenced from historical PRT-MVP-ACCRUAL evidence but are not independently current-SHA requalified or task-bound in this policy record."],
+  "completionBoundary": "The owner boundary is decided, but this record does not claim current-SHA technical qualification. No currency, rate, tax, KYC or payout fact is inferred."
 }
