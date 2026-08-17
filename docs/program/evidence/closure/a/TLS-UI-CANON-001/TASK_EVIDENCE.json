@@ -2,6 +2,19 @@
   "taskId": "TLS-UI-CANON-001",
   "baselineSha": "46a55509ef9880c34ca990b3b8f0d332ade9cb61",
   "productSha": "37aa125625a3db302d3837ffb236172d51387093",
+  "technicalClosure": {
+    "productSha": "3b49437931621494e2d18857850ea6ba36d3b7b2",
+    "testCorrectionSha": "539b2d29b2b54bf6d3dc8f7362a72577add92a88",
+    "scope": "Owner-free signed-auth SWOT lifecycle and route-local immediate-revocation enforcement; historical UI productSha and automated G4 provenance remain unchanged.",
+    "authentication": "Real server-issued HS256 JWT for ACTIVE tenant memberships; E2E_MODE=false; no local token mint or bypass.",
+    "database": "Fresh real PostgreSQL schema 756/756; repeat apply 0; dry-run pending 0.",
+    "membership": "Tools routes enforce a per-request ACTIVE tenant membership lookup after verifyToken and before organization access; a revoked membership is denied on the next request.",
+    "residue": {
+      "testSupportRuns": 0,
+      "organizations": 0,
+      "sessions": 0
+    }
+  },
   "leaseSha256": "a2f9be9983e3a03e5e64f1a51dca193199a5bec963a246c3b4fe94b378af1308",
   "changedPaths": [
     "src/components/DiscoveryTools/tools/DynamicSWOT/__tests__/SWOTBuildPhase.a11y-states.test.tsx",
@@ -16,6 +29,16 @@
     {
       "command": "npx vitest run src/components/DiscoveryTools/tools/DynamicSWOT/__tests__/SWOTBuildPhase.a11y-states.test.tsx --retry=0",
       "exitCode": 0
+    },
+    {
+      "command": "E2E_MODE=false DATABASE_URL=<isolated-real-pg> npx playwright test tests/e2e/tools/swot-real-pg-resume.spec.ts tests/e2e/tools/swot-ui-canon-technical.spec.ts --project=chromium --workers=1 --retries=0",
+      "exitCode": 0,
+      "result": "6/6 mounted signed-auth tests passed"
+    },
+    {
+      "command": "npx vitest run tests/integration/routes/tools.p27.test.ts server/src/routes/__tests__/m11-tools-cross-org-idor.test.ts server/src/routes/__tests__/m11-tools-error-leak.test.ts --no-file-parallelism",
+      "exitCode": 0,
+      "result": "3/3 files, 34/34 tests; process exited normally"
     }
   ],
   "denominators": {
@@ -23,6 +46,11 @@
       "passed": 24,
       "failed": 0
     },
+    "mountedSignedAuthTechnical": "6/6",
+    "focusedSwotComponents": "24/24",
+    "toolsRouteUnit": "2/2",
+    "toolsOrgGuardUnit": "1/1",
+    "legacyRouteRegressions": "34/34",
     "automatedG4Cells": "15/15",
     "automatedG4Screenshots": "15/15",
     "automatedG4AxeCriticalSerious": "0/0",
@@ -123,10 +151,9 @@
     "method": "Test/evidence-only packet; no runtime rollback required.",
     "executed": false
   },
-  "verdict": "BLOCKED_HUMAN",
+  "verdict": "PARTIAL",
   "openBlockers": [
-    "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
-    "Task-specific UI states not reached by the final automated sweep: forbidden, stale."
+    "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md."
   ],
   "blockerReconciliation": [
     {
@@ -136,7 +163,9 @@
     }
   ],
   "resolvedBlockers": [
-    "Final mounted signed-auth automated G4 completed on candidate 836bfd633af7a689e7a3fb06971cbd8fe57bafe7: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed."
+    "Final mounted signed-auth automated G4 completed on candidate 836bfd633af7a689e7a3fb06971cbd8fe57bafe7: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed.",
+    "Owner-free technical closure 3b49437931621494e2d18857850ea6ba36d3b7b2 passed 6/6 mounted signed-auth lifecycle tests, including creator/approver separation, forbidden role, stale concurrency, foreign tenant, immediate revoke, promotion failure without false success, retry, report/PDF and reopen.",
+    "Test-only correction 539b2d29b2b54bf6d3dc8f7362a72577add92a88 restored isolated legacy route fixtures after the strict membership mount; P27 and M11 regressions passed 34/34 and terminated normally."
   ],
   "automatedG4Verdict": {
     "verdict": "PASS_EXACT_SHA",
