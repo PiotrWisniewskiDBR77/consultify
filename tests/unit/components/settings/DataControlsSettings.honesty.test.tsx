@@ -11,6 +11,7 @@ vi.mock('@/services/api', () => ({
     get: vi.fn(),
     getGdprConsents: vi.fn(),
     getGdprRetention: vi.fn(),
+    getGdprExportStatus: vi.fn(),
     requestGdprDeletion: vi.fn(),
     requestGdprExport: vi.fn(),
     saveGdprConsents: vi.fn(),
@@ -48,6 +49,12 @@ const renderSettings = () =>
 describe('DataControlsSettings honest UI', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubGlobal('URL', {
+      createObjectURL: vi.fn(() => 'blob:export'),
+      revokeObjectURL: vi.fn(),
+    });
+    vi.mocked(Api.getGdprConsents).mockResolvedValue({ consents });
+    vi.mocked(Api.getGdprRetention).mockResolvedValue({ retention });
   });
 
   it('does not render failed data-control loads as editable defaults', async () => {
@@ -83,5 +90,136 @@ describe('DataControlsSettings honest UI', () => {
     });
 
     expect(toast.success).not.toHaveBeenCalled();
+  });
+
+  it('polls pending export to ready and downloads only through the canonical receipt route', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.mocked(Api.requestGdprExport).mockResolvedValue({
+      success: true,
+      request: { id: 'receipt-1', status: 'pending' },
+    });
+    vi.mocked(Api.getGdprExportStatus)
+      .mockResolvedValueOnce({ request: { id: 'receipt-1', status: 'pending' } })
+      .mockResolvedValueOnce({ request: { id: 'receipt-1', status: 'ready' } });
+    vi.mocked(Api.get).mockResolvedValue({ profile: { id: 'user-1' } });
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+
+    renderSettings();
+    await screen.findByText('Export Your Data');
+    fireEvent.click(screen.getByRole('button', { name: /Request Export/i }));
+    await vi.advanceTimersByTimeAsync(4_000);
+
+    await waitFor(() => {
+      expect(Api.get).toHaveBeenCalledWith('/api/gdpr/download-export/receipt-1');
+    });
+    expect(Api.getGdprExportStatus).toHaveBeenCalledTimes(2);
+    expect(click).toHaveBeenCalledTimes(1);
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:export');
+    expect(toast.success).toHaveBeenCalledWith('Data exported successfully');
+    expect(vi.mocked(Api.get).mock.calls.some(([path]) => path === '/api/user/data-export')).toBe(false);
+    click.mockRestore();
+    vi.useRealTimers();
+  });
+
+  it('deduplicates concurrent clicks into one export request', async () => {
+    let resolveRequest!: (value: unknown) => void;
+    vi.mocked(Api.requestGdprExport).mockReturnValue(
+      new Promise((resolve) => {
+        resolveRequest = resolve;
+      }) as never
+    );
+
+    renderSettings();
+    await screen.findByText('Export Your Data');
+    const button = screen.getByRole('button', { name: /Request Export/i });
+    fireEvent.click(button);
+    fireEvent.click(button);
+    expect(Api.requestGdprExport).toHaveBeenCalledTimes(1);
+    resolveRequest({ success: false });
+    await waitFor(() => expect(toast.error).toHaveBeenCalled());
+  });
+
+  it.each([
+    ['request rejection', () => vi.mocked(Api.requestGdprExport).mockResolvedValue({ success: false })],
+    [
+      'status mismatch',
+      () => {
+        vi.mocked(Api.requestGdprExport).mockResolvedValue({
+          request: { id: 'receipt-1', status: 'pending' },
+        });
+        vi.mocked(Api.getGdprExportStatus).mockResolvedValue({
+          request: { id: 'different-receipt', status: 'ready' },
+        });
+      },
+    ],
+    [
+      'status request failure',
+      () => {
+        vi.mocked(Api.requestGdprExport).mockResolvedValue({
+          request: { id: 'receipt-1', status: 'pending' },
+        });
+        vi.mocked(Api.getGdprExportStatus).mockRejectedValue(new Error('status unavailable'));
+      },
+    ],
+    [
+      'failed processing status',
+      () => {
+        vi.mocked(Api.requestGdprExport).mockResolvedValue({
+          request: { id: 'receipt-1', status: 'pending' },
+        });
+        vi.mocked(Api.getGdprExportStatus).mockResolvedValue({
+          request: { id: 'receipt-1', status: 'failed' },
+        });
+      },
+    ],
+    [
+      'download failure',
+      () => {
+        vi.mocked(Api.requestGdprExport).mockResolvedValue({
+          request: { id: 'receipt-1', status: 'ready' },
+        });
+        vi.mocked(Api.get).mockRejectedValue(new Error('download denied'));
+      },
+    ],
+  ])('fails closed on %s without claiming success or downloading', async (_label, arrange) => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    arrange();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+
+    renderSettings();
+    await screen.findByText('Export Your Data');
+    fireEvent.click(screen.getByRole('button', { name: /Request Export/i }));
+    await vi.advanceTimersByTimeAsync(2_000);
+    await waitFor(() => expect(toast.error).toHaveBeenCalled());
+
+    expect(toast.success).not.toHaveBeenCalledWith('Data exported successfully');
+    expect(click).not.toHaveBeenCalled();
+    expect(URL.createObjectURL).not.toHaveBeenCalled();
+    click.mockRestore();
+    vi.useRealTimers();
+  });
+
+  it('fails closed when processing never becomes ready', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.mocked(Api.requestGdprExport).mockResolvedValue({
+      request: { id: 'receipt-1', status: 'pending' },
+    });
+    vi.mocked(Api.getGdprExportStatus).mockResolvedValue({
+      request: { id: 'receipt-1', status: 'pending' },
+    });
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+
+    renderSettings();
+    await screen.findByText('Export Your Data');
+    fireEvent.click(screen.getByRole('button', { name: /Request Export/i }));
+    await vi.advanceTimersByTimeAsync(60_000);
+    await waitFor(() => expect(toast.error).toHaveBeenCalled());
+
+    expect(Api.getGdprExportStatus).toHaveBeenCalledTimes(30);
+    expect(Api.get).not.toHaveBeenCalled();
+    expect(click).not.toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalledWith('Data exported successfully');
+    click.mockRestore();
+    vi.useRealTimers();
   });
 });

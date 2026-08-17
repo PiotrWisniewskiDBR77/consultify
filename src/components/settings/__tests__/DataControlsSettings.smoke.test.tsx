@@ -49,8 +49,9 @@ vi.mock('@/hooks/useDemo', () => ({
   }),
 }));
 
-const { requestGdprExport, apiGet } = vi.hoisted(() => ({
+const { requestGdprExport, getGdprExportStatus, apiGet } = vi.hoisted(() => ({
   requestGdprExport: vi.fn(),
+  getGdprExportStatus: vi.fn(),
   apiGet: vi.fn(),
 }));
 
@@ -60,6 +61,7 @@ vi.mock('@/services/api', () => ({
     getGdprConsents: vi.fn(async () => ({ consents: { analytics: true } })),
     getGdprRetention: vi.fn(async () => ({ retention: { period: '365', autoDelete: false } })),
     requestGdprExport,
+    getGdprExportStatus,
     requestGdprDeletion: vi.fn(async () => ({})),
   },
 }));
@@ -71,9 +73,10 @@ const currentUser = { id: 'user-1', email: 't@e.com', firstName: 'T', lastName: 
 beforeEach(() => {
   toggleDemoMode.mockClear();
   requestGdprExport.mockReset();
+  getGdprExportStatus.mockReset();
   apiGet.mockReset();
   demoState.value.isDemoMode = false;
-  requestGdprExport.mockResolvedValue({ request: { id: 'req-1' } });
+  requestGdprExport.mockResolvedValue({ request: { id: 'req-1', status: 'ready' } });
   apiGet.mockResolvedValue({});
 });
 

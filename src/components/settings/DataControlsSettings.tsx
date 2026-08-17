@@ -31,7 +31,7 @@ import {
   Shield,
   Trash2,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
@@ -78,6 +78,12 @@ const DEFAULT_RETENTION: DataRetention = {
   period: '365',
   autoDelete: false,
 };
+
+const EXPORT_STATUS_POLL_INTERVAL_MS = 2_000;
+const EXPORT_STATUS_MAX_ATTEMPTS = 30;
+
+const waitForExportPoll = () =>
+  new Promise<void>((resolve) => window.setTimeout(resolve, EXPORT_STATUS_POLL_INTERVAL_MS));
 
 const CONSENT_ITEMS: Array<{
   key: keyof ConsentSettings;
@@ -222,6 +228,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
   const [requestingDeletion, setRequestingDeletion] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const exportInFlightRef = useRef(false);
 
   const [originalConsents, setOriginalConsents] = useState<ConsentSettings>(DEFAULT_CONSENTS);
   const [originalRetention, setOriginalRetention] = useState<DataRetention>(DEFAULT_RETENTION);
@@ -314,34 +321,48 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
   }, [consents, retention, settingsMatch, t]);
 
   const handleExportData = async () => {
+    if (exportInFlightRef.current) return;
+    exportInFlightRef.current = true;
     setExporting(true);
     try {
       setActionError(null);
       const response = await Api.requestGdprExport();
-      if (response?.request) {
-        toast.success(
-          t(
-            'settings.data.exportRequested',
-            'Data export requested. You will be notified when ready.'
-          )
-        );
-      } else {
-        if (response?.success === false) {
-          throw new Error('Data export request was rejected by the server');
-        }
-        const data = await Api.get('/api/user/data-export');
-        if (!data) {
-          throw new Error('Data export response was empty');
-        }
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `consultify-data-export-${new Date().toISOString().split('T')[0]}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-        toast.success(t('settings.data.exportSuccess', 'Data exported successfully'));
+      const requestId = response?.request?.id;
+      if (!requestId || response?.success === false) {
+        throw new Error('Data export request was not confirmed by the server');
       }
+
+      let ready = response.request.status === 'ready';
+      for (let attempt = 0; !ready && attempt < EXPORT_STATUS_MAX_ATTEMPTS; attempt += 1) {
+        await waitForExportPoll();
+        const statusResponse = await Api.getGdprExportStatus();
+        const statusRequest = statusResponse?.request;
+        if (!statusRequest || statusRequest.id !== requestId) {
+          throw new Error('Data export status did not match the requested export');
+        }
+        if (statusRequest.status === 'failed') {
+          throw new Error('Data export processing failed');
+        }
+        ready = statusRequest.status === 'ready';
+      }
+      if (!ready) throw new Error('Data export is still processing. Please try again later.');
+
+      const data = await Api.get(`/api/gdpr/download-export/${encodeURIComponent(requestId)}`);
+      if (!data) throw new Error('Data export response was empty');
+
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      try {
+        anchor.href = url;
+        anchor.download = `consultify-data-export-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(anchor);
+        anchor.click();
+      } finally {
+        anchor.remove();
+        URL.revokeObjectURL(url);
+      }
+      toast.success(t('settings.data.exportSuccess', 'Data exported successfully'));
     } catch (error: unknown) {
       const message = normalizeApiErrorMessage(
         error,
@@ -350,6 +371,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
       setActionError(message);
       toast.error(message);
     } finally {
+      exportInFlightRef.current = false;
       setExporting(false);
     }
   };
