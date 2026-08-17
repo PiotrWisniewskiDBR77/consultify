@@ -90,9 +90,40 @@ describe.skipIf(!enabled)('mounted custom workbook template', () => {
   }, 60_000);
 
   afterAll(async () => {
-    await pool.query(`DELETE FROM generated_workbooks WHERE organization_id=ANY($1)`, [
-      [orgA, orgB],
-    ]);
+    const cleanup = await pool.connect();
+    try {
+      await cleanup.query('BEGIN');
+      await cleanup.query(
+        `DELETE FROM v8_artifact_origin_links l
+          USING v8_output_artifacts a
+         WHERE l.artifact_id=a.artifact_id
+           AND a.organization_id=ANY($1)`,
+        [[orgA, orgB]]
+      );
+      await cleanup.query(`DELETE FROM v8_output_artifacts WHERE organization_id=ANY($1)`, [
+        [orgA, orgB],
+      ]);
+      await cleanup.query(`DELETE FROM generated_workbooks WHERE organization_id=ANY($1)`, [
+        [orgA, orgB],
+      ]);
+      const residue = (
+        await cleanup.query(
+          `SELECT
+             (SELECT count(*)::int FROM generated_workbooks WHERE organization_id=ANY($1)) workbooks,
+             (SELECT count(*)::int FROM v8_output_artifacts WHERE organization_id=ANY($1)) artifacts,
+             (SELECT count(*)::int FROM v8_artifact_origin_links
+              WHERE organization_id=ANY($1)) origins`,
+          [[orgA, orgB]]
+        )
+      ).rows[0];
+      expect(residue).toEqual({ workbooks: 0, artifacts: 0, origins: 0 });
+      await cleanup.query('COMMIT');
+    } catch (error) {
+      await cleanup.query('ROLLBACK');
+      throw error;
+    } finally {
+      cleanup.release();
+    }
     await pool.query(`DELETE FROM tp_base_templates WHERE id=ANY($1::uuid[])`, [
       [templateId, privateId, draftId, deprecatedId],
     ]);
