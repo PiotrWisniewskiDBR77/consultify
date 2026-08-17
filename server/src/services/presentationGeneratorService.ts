@@ -145,6 +145,8 @@ async function dbRun(
 
 export interface CreateNativeDeckParams {
   organizationId: string;
+  /** Optional owner-command identity for durable cross-service replay. */
+  deckId?: string;
   title: string;
   /** Deterministic render model, already projected from frozen facts. */
   unifiedJson: UnifiedReportJSON;
@@ -189,7 +191,7 @@ export async function createNativeDeck(
   if (!params.organizationId) throw new Error('native_deck_organization_required');
   if (!params.unifiedJson.slides.length) throw new Error('native_deck_slides_required');
 
-  const deckId = uuidv4().replace(/-/g, '');
+  const deckId = params.deckId ?? uuidv4().replace(/-/g, '');
   const status = params.status ?? 'ready';
   const deck = deckDocumentFromUnifiedJson({
     deckId,

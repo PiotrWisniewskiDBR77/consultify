@@ -453,6 +453,8 @@ export function mergeBusinessCaseOutlineRequirements(
 export interface MaterializeDocumentParams {
   organizationId: string;
   userId: string;
+  /** Optional owner-command identity for durable cross-service replay. */
+  externalArtifactId?: string;
   intake: DocumentIntake;
   outline?: DocumentOutline;
   sourceRefs?: DocumentSourceRef[];
@@ -933,7 +935,7 @@ export async function materializeDocumentArtifact(
   // corrected in the persisted `content_json_native` / `metadata_json`. Matches
   // createWave5Artifact's own default id scheme (`artifact-<uuid>`), so the
   // persisted schema's self-referential id equals the real row id on reload.
-  const provisionalArtifactId = `artifact-${randomUUID()}`;
+  const provisionalArtifactId = params.externalArtifactId || `artifact-${randomUUID()}`;
   // Premium tier (B3 structure + content-gen) when flag ON; fail-open + byte-identical
   // to the deterministic builder when OFF (default, all clients). preferPremium tied to
   // useLlm so a purely deterministic request stays deterministic even with the flag on.

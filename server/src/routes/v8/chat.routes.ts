@@ -19,6 +19,7 @@ import {
   completeChatOwnerIngress,
   deliverApprovedChatProposal,
 } from '../../services/chatHandoff/chatTargetOwnerIngressService.js';
+import { ChatTargetMappingError, materializeClaimedChatTarget } from '../../services/chatHandoff/chatTargetMappingService.js';
 import * as chatExecutionService from '../../services/v8/chatExecutionService.js';
 import * as contextConsumerBindingService from '../../services/v8/contextConsumerBindingService.js';
 import * as contextSnapshotService from '../../services/v8/contextSnapshotService.js';
@@ -557,11 +558,13 @@ function handleChatHandoffError(err: unknown, res: Response) {
   throw err;
 }
 
-const chatProposalTargetKindEnum = z.enum(TARGET_KINDS);
+const chatProposalTargetKindEnum = z.enum([...TARGET_KINDS, 'artifact_origin'] as const);
 
 const createChatProposalBody = z.object({
   messageId: z.string().trim().min(1),
   targetKind: chatProposalTargetKindEnum,
+  commandSchemaVersion: z.literal('v1').optional(),
+  targetCommand: z.record(z.string(), z.unknown()).optional(),
   note: z.string().trim().min(1).max(2000).nullable().optional(),
   suggestedTitle: z.string().trim().min(1).max(300).nullable().optional(),
   idempotencyKey: z.string().trim().min(1).max(200).nullable().optional(),
@@ -638,6 +641,8 @@ router.post(
         conversationId,
         messageId: body.messageId,
         targetKind: body.targetKind,
+        commandSchemaVersion: body.commandSchemaVersion,
+        targetCommand: body.targetCommand,
         note: body.note ?? null,
         suggestedTitle: body.suggestedTitle ?? null,
         clientCitations: body.clientCitations ?? null,
@@ -669,6 +674,8 @@ router.post(
         conversationId,
         messageId: parsed.data.messageId,
         targetKind: parsed.data.targetKind,
+        commandSchemaVersion: parsed.data.commandSchemaVersion,
+        targetCommand: parsed.data.targetCommand,
         note: parsed.data.note ?? null,
         suggestedTitle: parsed.data.suggestedTitle ?? null,
         clientCitations: parsed.data.clientCitations ?? null,
@@ -843,6 +850,7 @@ router.post(
         organizationId,
         claimedBy: userId,
         ...parsed.data,
+        targetKind: parsed.data.targetKind === 'artifact_origin' ? 'material' : parsed.data.targetKind,
       });
       res.status(data ? 200 : 204).json(data ? { data, meta: { version: 'v8' } } : undefined);
     } catch (err) {
@@ -881,5 +889,21 @@ router.post(
     }
   })
 );
+
+const materializeChatTargetBody = z.object({ claimToken: z.string().uuid() });
+router.post('/handoff-owner-ingress/:ingressId/materialize', asyncHandler(async (req:AuthRequest,res:Response)=>{
+  if(!requireChatHandoffAdmin(req,res)) return;
+  const {organizationId,userId}=getV8Context(req);
+  const ingressId=z.string().uuid().parse(req.params.ingressId);
+  const parsed=materializeChatTargetBody.safeParse(req.body??{});
+  if(!parsed.success){res.status(400).json({code:'VALIDATION_ERROR',details:parsed.error.issues});return;}
+  try{
+    const data=await materializeClaimedChatTarget({organizationId,ingressId,actorUserId:userId,claimToken:parsed.data.claimToken});
+    res.status(200).json({data,meta:{version:'v8',commandSchemaVersion:'v1'}});
+  }catch(err){
+    if(err instanceof ChatTargetMappingError){res.status(err.httpStatus).json({error:err.message,code:err.code});return;}
+    throw err;
+  }
+}));
 
 export default router;

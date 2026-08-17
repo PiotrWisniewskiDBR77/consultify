@@ -229,6 +229,11 @@ export interface ChatProposalPayloadV1 {
   /** Whatever the caller supplied, if anything. Informational only — never
    * used for the hash's authority and never trusted over `citations` above. */
   clientCitations: unknown[] | null;
+  /** Explicit owner command contract. `artifact_origin` is represented by the
+   * spine's legacy `material` discriminator but never claims material bytes. */
+  requestedTargetKind?: TargetKind | 'artifact_origin';
+  commandSchemaVersion?: string;
+  targetCommand?: unknown;
   governedSnapshotRef?: GovernedSnapshotRef;
 }
 
@@ -241,7 +246,9 @@ export interface CreateChatProposalInput {
   userId: string;
   conversationId: string;
   messageId: string;
-  targetKind: TargetKind;
+  targetKind: TargetKind | 'artifact_origin';
+  commandSchemaVersion?: string;
+  targetCommand?: unknown;
   note?: string | null;
   suggestedTitle?: string | null;
   clientCitations?: unknown[] | null;
@@ -264,7 +271,7 @@ export async function createChatProposal(
   const userId = requireNonEmpty(input.userId, 'userId');
   const conversationId = requireNonEmpty(input.conversationId, 'conversationId');
   const messageId = requireNonEmpty(input.messageId, 'messageId');
-  if (!isTargetKind(input.targetKind)) {
+  if (!isTargetKind(input.targetKind) && input.targetKind !== 'artifact_origin') {
     throw new ChatHandoffError('targetKind is invalid', 'INVALID_ARGUMENT', 400);
   }
   if (input.governedSnapshotRef) {
@@ -326,6 +333,9 @@ export async function createChatProposal(
       unverified: extraction.unverified,
     },
     clientCitations: Array.isArray(input.clientCitations) ? input.clientCitations : null,
+    requestedTargetKind: input.targetKind,
+    commandSchemaVersion: input.commandSchemaVersion ?? 'v1',
+    targetCommand: input.targetCommand ?? null,
     ...(input.governedSnapshotRef
       ? { governedSnapshotRef: input.governedSnapshotRef }
       : {}),
@@ -336,7 +346,7 @@ export async function createChatProposal(
       organizationId,
       producerKind: 'chat',
       producerRecordId: messageId,
-      targetKind: input.targetKind,
+      targetKind: input.targetKind === 'artifact_origin' ? 'material' : input.targetKind,
       payload,
       createdBy: userId,
       idempotencyKey: input.idempotencyKey ?? null,

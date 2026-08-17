@@ -40,6 +40,7 @@ import {
   workbookRuntimeCache as workbookCache,
 } from '../services/workbook/workbookRuntimeCache.js';
 import { assertWorkbookSchema } from '../services/workbook/workbookSchemaGuard.js';
+import { createCanonicalWorkbook } from '../services/workbook/workbookCreationService.js';
 import type { CellStyle, WorkbookSchema } from '../services/workbook/WorkbookSchema.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -1303,32 +1304,10 @@ router.post(
     });
     pruneCache();
 
-    // Persist metadata (best-effort — pobranie i tak działa z cache/rebuild).
+    // Persist through the canonical owner command shared with governed handoffs.
     try {
-      await queryHelpers.queryRun(
-        `INSERT INTO generated_workbooks (id, organization_id, title, description, prompt, schema_json, sheet_count, file_name, file_size, validation_errors, quality_score, pipeline_log, action_contract_json, source_pack_json, evidence_refs_json, quality_report_json, created_by, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          id,
-          user.organizationId,
-          title,
-          null,
-          '(pusty arkusz — tryb Czysto)',
-          JSON.stringify(schema),
-          schema.sheets.length,
-          fileName,
-          buffer.length,
-          null,
-          null,
-          JSON.stringify([]),
-          JSON.stringify({}),
-          JSON.stringify(sourcePack),
-          JSON.stringify(evidenceRefs),
-          JSON.stringify({}),
-          user.id,
-          generatedAt,
-        ]
-      );
+      await createCanonicalWorkbook({workbookId:id,organizationId:user.organizationId,userId:user.id,title,schema,
+        sourceIdentity:`workbook-blank:${id}`,sourceHash:'manual-blank-v1',sourcePack,evidenceRefs});
     } catch (err) {
       logger.warn('[WorkbookRoutes] Failed to persist blank workbook metadata:', err);
     }
