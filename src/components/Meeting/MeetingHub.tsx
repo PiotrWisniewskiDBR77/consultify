@@ -38,7 +38,7 @@ import {
 import { StandardModuleBar } from '@/components/standard/StandardModuleBar';
 import { ErrorState, LoadingState } from '@/components/ui/primitives';
 import { StatusChip } from '@/components/ui/primitives/chips';
-import { Api } from '@/services/api';
+import { Api, type GovernedMeetingNoteDto } from '@/services/api';
 
 type FollowUpStatus = 'open' | 'done';
 export type MeetingStatus = 'scheduled' | 'completed';
@@ -88,6 +88,11 @@ export const MeetingHub: React.FC = () => {
   const [notesTranscript, setNotesTranscript] = useState('');
   const [generatingNotes, setGeneratingNotes] = useState(false);
   const [generatedNote, setGeneratedNote] = useState<any>(null);
+  const [governedNotes, setGovernedNotes] = useState<GovernedMeetingNoteDto[]>([]);
+  const [notesLoading, setNotesLoading] = useState(false);
+  const [notesError, setNotesError] = useState<string | null>(null);
+  const [decidingNoteId, setDecidingNoteId] = useState<string | null>(null);
+  const [noteReceiptIds, setNoteReceiptIds] = useState<Record<string, string>>({});
   const [deleteTarget, setDeleteTarget] = useState<MeetingItem | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [operatorBrief, setOperatorBrief] = useState<any>(null);
@@ -649,19 +654,88 @@ export const MeetingHub: React.FC = () => {
         language: isPolish ? 'pl' : 'en',
       });
       const note = response?.note;
-      if (!note) throw new Error('No notes returned');
-      setGeneratedNote(note);
-      // The route persisted decisions/follow-ups; refresh the meeting in the list.
-      const meeting = response?.meeting as MeetingItem | undefined;
-      if (meeting) {
-        setMeetings((prev) => prev.map((item) => (item.id === activeMeeting.id ? meeting : item)));
+      const noteId = response?.meetingNoteId;
+      const proposal = response?.proposal;
+      if (!note || !noteId || !proposal?.proposalId) {
+        throw new Error('The note was not durably proposed');
       }
-      toast.success(t('meeting.notes.notifications.generated', 'AI notes generated'));
+      const durableNote: GovernedMeetingNoteDto = {
+        ...note,
+        id: noteId,
+        status:
+          proposal.state === 'rejected'
+            ? 'rejected'
+            : proposal.state === 'materialized'
+              ? 'approved'
+              : 'proposed',
+        proposalId: proposal.proposalId,
+      };
+      setGeneratedNote(durableNote);
+      setGovernedNotes((prev) => [durableNote, ...prev.filter((item) => item.id !== noteId)]);
+      toast.success(
+        t('meeting.notes.notifications.proposed', 'Meeting note proposed for human approval')
+      );
     } catch (error) {
       console.error('Failed to generate meeting notes:', error);
       toast.error(t('meeting.notes.errors.generateFailed', 'Failed to generate notes'));
     } finally {
       setGeneratingNotes(false);
+    }
+  };
+
+  const loadGovernedNotes = async (meetingId: string) => {
+    setNotesLoading(true);
+    setNotesError(null);
+    try {
+      const response = await Api.listMeetingNotes(meetingId);
+      setGovernedNotes(Array.isArray(response?.notes) ? response.notes : []);
+    } catch (error) {
+      console.error('Failed to load governed meeting notes:', error);
+      setNotesError(t('meeting.notes.errors.loadFailed', 'Could not load meeting note proposals.'));
+    } finally {
+      setNotesLoading(false);
+    }
+  };
+
+  const openGovernedNotes = () => {
+    if (!activeMeeting) return;
+    setGeneratedNote(null);
+    setNotesTranscript('');
+    setShowNotesModal(true);
+    void loadGovernedNotes(activeMeeting.id);
+  };
+
+  const decideGovernedNote = async (note: GovernedMeetingNoteDto, action: 'approve' | 'reject') => {
+    if (!activeMeeting) return;
+    setDecidingNoteId(note.id);
+    try {
+      const response = await Api.decideMeetingNote(activeMeeting.id, note.id, {
+        action,
+      });
+      if (!response?.note || !response?.proposal) throw new Error('Decision was not persisted');
+      setGovernedNotes((prev) => prev.map((item) => (item.id === note.id ? response.note : item)));
+      const receiptId = response.receipt?.receiptId;
+      if (receiptId) {
+        setNoteReceiptIds((prev) => ({ ...prev, [note.id]: receiptId }));
+      }
+      setGeneratedNote(response.note);
+      toast.success(
+        action === 'approve'
+          ? t('meeting.notes.approved', 'Meeting note approved and materialized')
+          : t('meeting.notes.rejected', 'Meeting note rejected')
+      );
+    } catch (error: any) {
+      console.error('Failed to decide meeting note:', error);
+      const stale =
+        error?.status === 409 || error?.code === 'STALE_WRITE' || error?.code === 'INVALID_STATE';
+      toast.error(
+        stale
+          ? t('meeting.notes.stale', 'This proposal changed. Reloading the authoritative state.')
+          : t('meeting.notes.errors.decisionFailed', 'Could not update the proposal.')
+      );
+      if (stale) await loadGovernedNotes(activeMeeting.id);
+    } finally {
+      setDecidingNoteId(null);
     }
   };
 
@@ -792,11 +866,7 @@ export const MeetingHub: React.FC = () => {
             onToggleStatus={() => handleToggleMeetingStatus(activeMeeting.id)}
             onAddDecision={() => setShowDecisionModal(true)}
             onAddFollowUp={() => setShowFollowUpModal(true)}
-            onGenerateNotes={() => {
-              setGeneratedNote(null);
-              setNotesTranscript('');
-              setShowNotesModal(true);
-            }}
+            onGenerateNotes={openGovernedNotes}
             onToggleFollowUpStatus={(followUpId) =>
               handleToggleFollowUpStatus(activeMeeting.id, followUpId)
             }
@@ -1235,15 +1305,117 @@ export const MeetingHub: React.FC = () => {
               </button>
             </div>
             <div className="space-y-4 p-5">
+              <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-xs text-c-text-muted">
+                <strong className="text-c-text-secondary">
+                  {t('meeting.notes.captureOff', 'Recording and automatic transcription are OFF.')}
+                </strong>{' '}
+                {t(
+                  'meeting.notes.manualTextOnly',
+                  'Only text pasted manually is processed. Nothing becomes a decision or follow-up before human approval.'
+                )}
+              </div>
               {!generatedNote ? (
-                <Field label={t('meeting.pasteTheMeetingTranscript2')}>
-                  <textarea
-                    className="w-full min-h-[180px] rounded-xl border border-c-border bg-transparent px-3 py-2 text-sm"
-                    placeholder={t('meeting.pasteTheTranscriptTeresaWillExtract2')}
-                    value={notesTranscript}
-                    onChange={(e) => setNotesTranscript(e.target.value)}
-                  />
-                </Field>
+                <div className="space-y-4">
+                  <Field label={t('meeting.notes.manualSourceText', 'Meeting source text')}>
+                    <textarea
+                      className="w-full min-h-[180px] rounded-xl border border-c-border bg-transparent px-3 py-2 text-sm"
+                      placeholder={t(
+                        'meeting.notes.manualSourcePlaceholder',
+                        'Paste meeting text to prepare a governed note proposal'
+                      )}
+                      value={notesTranscript}
+                      onChange={(e) => setNotesTranscript(e.target.value)}
+                    />
+                  </Field>
+                  <div aria-live="polite" className="space-y-2">
+                    <div className="text-[11px] uppercase tracking-wide text-c-text-muted">
+                      {t('meeting.notes.proposals', 'Governed note proposals')}
+                    </div>
+                    {notesLoading ? <LoadingState variant="spinner" /> : null}
+                    {notesError ? (
+                      <ErrorState
+                        message={notesError}
+                        retry={() => void loadGovernedNotes(activeMeeting.id)}
+                      />
+                    ) : null}
+                    {!notesLoading && !notesError && governedNotes.length === 0 ? (
+                      <p className="text-sm text-c-text-muted">
+                        {t('meeting.notes.noProposals', 'No meeting note proposals yet.')}
+                      </p>
+                    ) : null}
+                    {!notesLoading && !notesError
+                      ? governedNotes.map((note) => (
+                          <div
+                            key={note.id}
+                            className="rounded-xl border border-c-border-subtle p-3"
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <button
+                                type="button"
+                                className="min-w-0 flex-1 text-left"
+                                onClick={() => setGeneratedNote(note)}
+                              >
+                                <span className="block truncate text-sm font-medium text-c-text">
+                                  {note.summary ||
+                                    t('meeting.notes.untitled', 'Meeting note proposal')}
+                                </span>
+                                <span className="block text-xs text-c-text-muted">
+                                  {note.transcriptHash
+                                    ? `SHA-256 ${note.transcriptHash.slice(0, 12)}… · `
+                                    : ''}
+                                  {note.status}
+                                </span>
+                              </button>
+                              <StatusChip
+                                tone={
+                                  note.status === 'approved'
+                                    ? 'success'
+                                    : note.status === 'rejected'
+                                      ? 'neutral'
+                                      : 'warning'
+                                }
+                                label={
+                                  note.status === 'approved'
+                                    ? t('meeting.notes.materialized', 'Materialized')
+                                    : note.status === 'rejected'
+                                      ? t('meeting.notes.rejectedState', 'Rejected')
+                                      : t('meeting.notes.awaitingApproval', 'Awaiting approval')
+                                }
+                              />
+                            </div>
+                            {note.status === 'proposed' ? (
+                              <div className="mt-3 flex justify-end gap-2">
+                                <button
+                                  type="button"
+                                  disabled={decidingNoteId === note.id}
+                                  onClick={() => void decideGovernedNote(note, 'reject')}
+                                  className="h-8 rounded-full border border-c-border px-3 text-xs disabled:opacity-50"
+                                >
+                                  {t('meeting.notes.reject', 'Reject')}
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={decidingNoteId === note.id}
+                                  onClick={() => void decideGovernedNote(note, 'approve')}
+                                  className="h-8 rounded-full bg-c-text px-3 text-xs text-c-surface disabled:opacity-50"
+                                >
+                                  {decidingNoteId === note.id
+                                    ? t('common.saving', 'Saving…')
+                                    : t('meeting.notes.approve', 'Approve and materialize')}
+                                </button>
+                              </div>
+                            ) : null}
+                            {noteReceiptIds[note.id] ? (
+                              <p className="mt-2 break-all text-xs text-c-text-muted">
+                                {t('meeting.notes.receipt', 'Materialization receipt')}:{' '}
+                                {noteReceiptIds[note.id]}
+                              </p>
+                            ) : null}
+                          </div>
+                        ))
+                      : null}
+                  </div>
+                </div>
               ) : (
                 <div className="space-y-4">
                   {generatedNote.source === 'heuristic' && (
@@ -1258,6 +1430,12 @@ export const MeetingHub: React.FC = () => {
                     </div>
                     <p className="text-sm text-c-text-secondary">{generatedNote.summary}</p>
                   </div>
+                  {noteReceiptIds[generatedNote.id] ? (
+                    <p className="break-all rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
+                      {t('meeting.notes.receipt', 'Materialization receipt')}:{' '}
+                      {noteReceiptIds[generatedNote.id]}
+                    </p>
+                  ) : null}
                   {Array.isArray(generatedNote.keyPoints) && generatedNote.keyPoints.length > 0 && (
                     <div>
                       <div className="text-[11px] uppercase tracking-wide text-c-text-muted mb-1">
@@ -1273,7 +1451,12 @@ export const MeetingHub: React.FC = () => {
                   {Array.isArray(generatedNote.decisions) && generatedNote.decisions.length > 0 && (
                     <div>
                       <div className="text-[11px] uppercase tracking-wide text-c-text-muted mb-1">
-                        {t('meeting.decisionsSaved2')}
+                        {generatedNote.status === 'approved'
+                          ? t('meeting.notes.approvedDecisions', 'Approved proposed decisions')
+                          : t(
+                              'meeting.notes.proposedDecisions',
+                              'Proposed decisions — not saved as decisions'
+                            )}
                       </div>
                       <ul className="list-disc pl-5 text-sm text-c-text-secondary space-y-1">
                         {generatedNote.decisions.map((d: any, i: number) => (
@@ -1286,7 +1469,12 @@ export const MeetingHub: React.FC = () => {
                     generatedNote.actionItems.length > 0 && (
                       <div>
                         <div className="text-[11px] uppercase tracking-wide text-c-text-muted mb-1">
-                          {t('meeting.actionItemsSavedAsFollowUps2')}
+                          {generatedNote.status === 'approved'
+                            ? t('meeting.notes.approvedActions', 'Approved proposed action items')
+                            : t(
+                                'meeting.notes.proposedActions',
+                                'Proposed action items — not saved as follow-ups'
+                              )}
                         </div>
                         <ul className="list-disc pl-5 text-sm text-c-text-secondary space-y-1">
                           {generatedNote.actionItems.map((a: any, i: number) => (
@@ -1306,10 +1494,12 @@ export const MeetingHub: React.FC = () => {
             <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-c-border-subtle">
               <button
                 type="button"
-                onClick={() => setShowNotesModal(false)}
+                onClick={() => (generatedNote ? setGeneratedNote(null) : setShowNotesModal(false))}
                 className="h-9 px-4 rounded-full border border-c-border text-sm"
               >
-                {generatedNote ? t('common.close', 'Close') : t('common.cancel', 'Cancel')}
+                {generatedNote
+                  ? t('meeting.notes.backToProposals', 'Back to proposals')
+                  : t('common.close', 'Close')}
               </button>
               {!generatedNote && (
                 <button

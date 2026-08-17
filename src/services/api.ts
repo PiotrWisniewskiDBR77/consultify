@@ -41,6 +41,26 @@ import {
 } from './personalTasksCache';
 import { tokenService } from './tokenService';
 
+export interface GovernedMeetingNoteDto {
+  id: string;
+  source: 'ai' | 'heuristic';
+  summary: string;
+  keyPoints: string[];
+  decisions: Array<{ decision?: string } | string>;
+  actionItems: Array<{ task?: string; owner?: string } | string>;
+  status: 'proposed' | 'approved' | 'rejected';
+  proposalId: string | null;
+  transcriptHash?: string;
+  createdAt?: string;
+}
+
+export interface MeetingNoteDecisionDto {
+  note: GovernedMeetingNoteDto;
+  proposal: { proposalId: string; state: string };
+  receipt: { receiptId: string } | null;
+  replayed: boolean;
+}
+
 // Use relative path to allow Vite proxy to handle the request (avoiding CORS)
 // or use env var if provided.
 const _envApiUrl = (import.meta as any)?.env?.VITE_API_URL as string | undefined;
@@ -3439,9 +3459,9 @@ export const Api = {
     return handleResponse(res, 'Failed to add decision');
   },
 
-  // Module 13: turn a meeting transcript into structured AI notes (summary, key
-  // points, decisions, action items). Persists extracted decisions/action items
-  // as meeting decisions/follow-ups unless persist:false is passed.
+  // Module 13: turn manually supplied meeting text into a durable governed note.
+  // Extracted decisions/action items remain proposals until an authorized human
+  // approves or rejects them; this never enables recording/transcription.
   generateMeetingNotes: async (
     meetingId: string,
     data: { transcript: string; language?: string; persist?: boolean }
@@ -3454,6 +3474,28 @@ export const Api = {
       timeoutMs: 120000,
     });
     return handleResponse(res, 'Failed to generate meeting notes');
+  },
+
+  listMeetingNotes: async (
+    meetingId: string
+  ): Promise<{ notes: GovernedMeetingNoteDto[] }> => {
+    const res = await fetchWithRetry(`${API_URL}/meeting/${meetingId}/notes`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to load meeting note proposals');
+  },
+
+  decideMeetingNote: async (
+    meetingId: string,
+    noteId: string,
+    data: { action: 'approve' | 'reject'; reason?: string }
+  ): Promise<MeetingNoteDecisionDto> => {
+    const res = await fetchWithRetry(`${API_URL}/meeting/${meetingId}/notes/${noteId}/decision`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to decide meeting note proposal');
   },
 
   updateMeetingFollowUpStatus: async (

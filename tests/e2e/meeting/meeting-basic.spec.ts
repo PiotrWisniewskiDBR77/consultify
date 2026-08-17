@@ -1,9 +1,7 @@
 /**
- * M21 Meeting — first real e2e: create a meeting, add AI-generated notes
- * (decisions + follow-ups extracted from a transcript), and prove both
- * survive a hard reload (F5) — i.e. they are persisted server-side via
- * server/src/routes/meeting.routes.ts + server/src/services/meetingService.ts,
- * not just held in React state.
+ * M21 Meeting — governed UI journey: create a meeting, manually supply source
+ * text, create a durable proposal, explicitly approve/materialize it and prove
+ * the approved note survives a hard reload. Recording/transcription stay OFF.
  *
  * This module had ZERO e2e coverage before this file even though the backend
  * (meeting.routes.ts: CRUD + decisions + follow-ups + generate-notes) and the
@@ -41,6 +39,7 @@
  * target backend.
  */
 import { expect, test } from '@playwright/test';
+import { Pool } from 'pg';
 
 import { authenticate, injectSession } from '../m06/_m06';
 import { dismissOverlayIfPresent, suppressOnboarding } from '../smoke/work-canvas-helpers';
@@ -63,17 +62,66 @@ const TRANSCRIPT =
   'John will action the deployment checklist before Friday. ' +
   'The team agreed the rollout communication plan is ready.';
 
-test.describe('M21 Meeting — create + AI notes + persistence after F5 [@module:meeting]', () => {
+const createdTitles = new Set<string>();
+
+test.afterEach(async () => {
+  if (!process.env.DATABASE_URL || createdTitles.size === 0) return;
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 1 });
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const meetings = await client.query<{ id: string }>(
+      `SELECT id FROM meetings WHERE title = ANY($1::text[])`,
+      [[...createdTitles]]
+    );
+    const meetingIds = meetings.rows.map((row) => row.id);
+    if (meetingIds.length) {
+      const notes = await client.query<{ id: string; proposal_id: string | null }>(
+        `SELECT id, proposal_id FROM meeting_notes WHERE meeting_id = ANY($1::text[])`,
+        [meetingIds]
+      );
+      const proposalIds = notes.rows
+        .map((row) => row.proposal_id)
+        .filter((id): id is string => Boolean(id));
+      if (proposalIds.length) {
+        await client.query(
+          `DELETE FROM artifact_handoff_receipts WHERE proposal_id = ANY($1::text[])`,
+          [proposalIds]
+        );
+        await client.query(
+          `DELETE FROM artifact_handoff_proposals WHERE proposal_id = ANY($1::text[])`,
+          [proposalIds]
+        );
+      }
+      await client.query(`DELETE FROM meeting_notes WHERE meeting_id = ANY($1::text[])`, [
+        meetingIds,
+      ]);
+      await client.query(`DELETE FROM meeting_follow_ups WHERE meeting_id = ANY($1::text[])`, [
+        meetingIds,
+      ]);
+      await client.query(`DELETE FROM meetings WHERE id = ANY($1::text[])`, [meetingIds]);
+    }
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+    await pool.end();
+    createdTitles.clear();
+  }
+});
+
+test.describe('M21 Meeting — governed note approval + cold readback [@module:meeting]', () => {
   test.setTimeout(120000);
 
-  test('create a meeting, generate AI notes, reload — meeting + decisions/follow-ups persist', async ({
-    page,
-  }) => {
+  test('create, propose, approve/materialize and cold-read the governed note', async ({ page }) => {
     const session = await authenticate(page);
     await injectSession(page, session);
     await suppressOnboarding(page);
 
     const title = `E2E Meeting ${Date.now()}`;
+    createdTitles.add(title);
 
     await page.goto('/meeting', { waitUntil: 'domcontentloaded', timeout: 45000 });
     await dismissOverlayIfPresent(page);
@@ -114,36 +162,36 @@ test.describe('M21 Meeting — create + AI notes + persistence after F5 [@module
     await aiNotesBtn.click();
 
     // --- Generate notes from a transcript ---------------------------------
-    const transcriptField = page.getByLabel(/Paste the meeting transcript|Wklej transkrypcję/i);
+    await expect(page.getByText(/Recording and automatic transcription are OFF/i)).toBeVisible();
+    const transcriptField = page.getByLabel(/Meeting source text/i);
     await expect(transcriptField).toBeVisible({ timeout: 10000 });
     await transcriptField.fill(TRANSCRIPT);
 
-    const generateBtn = page.getByRole('button', { name: /Generate notes|Generuj notatki/i }).first();
+    const generateBtn = page
+      .getByRole('button', { name: /Generate notes|Generuj notatki/i })
+      .first();
     await expect(generateBtn).toBeEnabled();
     await generateBtn.click();
 
-    // Result view replaces the transcript field with Summary + saved
-    // decisions/action items (heuristic or real AI — either has a Summary).
+    // Result view is explicitly a proposal; nothing is presented as a saved
+    // decision/follow-up before the separate human action.
     await expect(page.getByText(/^Summary$|^Podsumowanie$/i).first()).toBeVisible({
       timeout: 30000,
     });
 
-    // Close the notes modal (persist already happened server-side on generate).
+    await expect(page.getByText(/not saved as decisions/i)).toBeVisible();
+    await page.getByRole('button', { name: /Back to proposals/i }).click();
+    const approve = page.getByRole('button', { name: /Approve and materialize/i });
+    await expect(approve).toBeVisible();
+    await approve.click();
+    await expect(page.getByText(/Materialization receipt/i)).toBeVisible({ timeout: 15000 });
+
+    // Close after the authoritative approval/materialization receipt.
+    await page.getByRole('button', { name: /Back to proposals/i }).click();
     await page
       .getByRole('button', { name: /^Close$|^Zamknij$/i })
       .first()
       .click();
-
-    // Detail view must now show at least one decision OR follow-up — proves
-    // the extracted items were persisted back onto the meeting (server writes
-    // via addMeetingDecision/addMeetingFollowUp, then the route returns the
-    // refreshed meeting which the client merges into state).
-    const noDecisionsYet = page.getByText(/^No decisions yet$|^Brak decyzji$/i);
-    const noFollowUpsYet = page.getByText(/^No follow-ups yet$|^Brak działań następczych$/i);
-    const bothEmpty =
-      (await noDecisionsYet.isVisible().catch(() => false)) &&
-      (await noFollowUpsYet.isVisible().catch(() => false));
-    expect(bothEmpty, 'generate-notes persisted at least one decision or follow-up').toBe(false);
 
     // --- Persistence proof: hard reload (F5) -------------------------------
     // useModuleOpenDocuments('meeting') persists the open/active document id in
@@ -156,12 +204,7 @@ test.describe('M21 Meeting — create + AI notes + persistence after F5 [@module
 
     await expect(page.getByText(titleRe).first()).toBeVisible({ timeout: 20000 });
 
-    const bothEmptyAfterReload =
-      (await noDecisionsYet.isVisible().catch(() => false)) &&
-      (await noFollowUpsYet.isVisible().catch(() => false));
-    expect(
-      bothEmptyAfterReload,
-      'decisions/follow-ups extracted from the transcript survive a hard reload (real DB persistence)'
-    ).toBe(false);
+    await page.getByRole('button', { name: /AI Notes|Notatki AI/i }).click();
+    await expect(page.getByText(/Materialized/i)).toBeVisible({ timeout: 15000 });
   });
 });

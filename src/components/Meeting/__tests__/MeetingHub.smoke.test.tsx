@@ -23,15 +23,22 @@ vi.mock('react-router-dom', () => ({
   useNavigate: () => vi.fn(),
 }));
 
-const { getMeetingsMock, getBriefMock } = vi.hoisted(() => ({
-  getMeetingsMock: vi.fn(),
-  getBriefMock: vi.fn(),
-}));
+const { getMeetingsMock, getBriefMock, listNotesMock, generateNotesMock, decideNoteMock } =
+  vi.hoisted(() => ({
+    getMeetingsMock: vi.fn(),
+    getBriefMock: vi.fn(),
+    listNotesMock: vi.fn(),
+    generateNotesMock: vi.fn(),
+    decideNoteMock: vi.fn(),
+  }));
 
 vi.mock('@/services/api', () => ({
   Api: {
     getMeetings: getMeetingsMock,
     getAIOperatorMeetingBrief: getBriefMock,
+    listMeetingNotes: listNotesMock,
+    generateMeetingNotes: generateNotesMock,
+    decideMeetingNote: decideNoteMock,
   },
 }));
 
@@ -56,6 +63,10 @@ describe('MeetingHub (smoke)', () => {
     getMeetingsMock.mockReset();
     getBriefMock.mockReset();
     getBriefMock.mockResolvedValue(null);
+    listNotesMock.mockReset();
+    listNotesMock.mockResolvedValue({ notes: [] });
+    generateNotesMock.mockReset();
+    decideNoteMock.mockReset();
   });
 
   it('loads and renders meetings from the API', async () => {
@@ -129,5 +140,81 @@ describe('MeetingHub (smoke)', () => {
     expect(await screen.findByText('Could not load the operator brief.')).toBeTruthy();
     expect(await screen.findByText('Retry')).toBeTruthy();
     expect(screen.queryByText('meeting.noOperatorBrief')).toBeNull();
+  });
+
+  it('loads governed proposals and exposes recording OFF', async () => {
+    getMeetingsMock.mockResolvedValue({ meetings: [meeting] });
+    listNotesMock.mockResolvedValue({
+      notes: [
+        {
+          id: 'note-1',
+          source: 'heuristic',
+          summary: 'Draft minutes',
+          keyPoints: [],
+          decisions: [],
+          actionItems: [],
+          status: 'proposed',
+          proposalId: 'proposal-1',
+          transcriptHash: 'abcdef0123456789',
+        },
+      ],
+    });
+    render(<MeetingHub />);
+    fireEvent.dblClick(await screen.findByText('Quarterly Review'));
+    fireEvent.click(await screen.findByRole('button', { name: /meeting\.aiNotes|AI Notes/i }));
+
+    expect(await screen.findByText(/Recording and automatic transcription are OFF/i)).toBeTruthy();
+    expect(await screen.findByText('Draft minutes')).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Approve and materialize/i })).toBeTruthy();
+  });
+
+  it('fails closed when generation has no durable proposal', async () => {
+    getMeetingsMock.mockResolvedValue({ meetings: [meeting] });
+    generateNotesMock.mockResolvedValue({
+      note: { summary: 'Ephemeral' },
+      meetingNoteId: null,
+      proposal: null,
+    });
+    render(<MeetingHub />);
+    fireEvent.dblClick(await screen.findByText('Quarterly Review'));
+    fireEvent.click(await screen.findByRole('button', { name: /meeting\.aiNotes|AI Notes/i }));
+    fireEvent.change(await screen.findByLabelText(/Meeting source text/i), {
+      target: { value: 'Manual meeting text' },
+    });
+    fireEvent.click(
+      screen.getByRole('button', { name: /meeting\.generateNotes2|Generate notes/i })
+    );
+
+    await waitFor(() => expect(generateNotesMock).toHaveBeenCalled());
+    expect(screen.queryByText('Ephemeral')).toBeNull();
+  });
+
+  it('materializes a proposal only after an explicit decision', async () => {
+    getMeetingsMock.mockResolvedValue({ meetings: [meeting] });
+    const note = {
+      id: 'note-1',
+      source: 'heuristic',
+      summary: 'Draft minutes',
+      keyPoints: [],
+      decisions: [],
+      actionItems: [],
+      status: 'proposed',
+      proposalId: 'proposal-1',
+    };
+    listNotesMock.mockResolvedValue({ notes: [note] });
+    decideNoteMock.mockResolvedValue({
+      note: { ...note, status: 'approved' },
+      proposal: { proposalId: 'proposal-1', state: 'materialized' },
+      receipt: { receiptId: 'receipt-1' },
+    });
+    render(<MeetingHub />);
+    fireEvent.dblClick(await screen.findByText('Quarterly Review'));
+    fireEvent.click(await screen.findByRole('button', { name: /meeting\.aiNotes|AI Notes/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /Approve and materialize/i }));
+
+    await waitFor(() =>
+      expect(decideNoteMock).toHaveBeenCalledWith('meeting-1', 'note-1', { action: 'approve' })
+    );
+    expect(await screen.findByText(/receipt-1/)).toBeTruthy();
   });
 });
