@@ -157,6 +157,7 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
     const [saveState, setSaveState] = useState<SpreadsheetSaveState>('idle');
     const inputRef = useRef<HTMLInputElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
+    const suppressNextBlurCommitRef = useRef(false);
     const undoStackRef = useRef<CellChange[][]>([]);
     const redoStackRef = useRef<CellChange[][]>([]);
 
@@ -632,14 +633,17 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
     const handleEditingKey = useCallback(
       (key: string): boolean => {
         if (key === 'Enter') {
+          suppressNextBlurCommitRef.current = true;
           commit(editingValue ?? '', 'down');
           return true;
         }
         if (key === 'Tab') {
+          suppressNextBlurCommitRef.current = true;
           commit(editingValue ?? '', 'right');
           return true;
         }
         if (key === 'Escape') {
+          suppressNextBlurCommitRef.current = true;
           setEditingValue(null);
           return true;
         }
@@ -716,6 +720,10 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
             onChange={(e) => setEditingValue(e.target.value)}
             onKeyDown={handleInputKeyDown}
             onBlur={() => {
+              if (suppressNextBlurCommitRef.current) {
+                suppressNextBlurCommitRef.current = false;
+                return;
+              }
               if (editingValue !== null) commit(editingValue, 'none');
             }}
             placeholder={t(
@@ -942,7 +950,13 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
                             value={editingValue ?? ''}
                             onChange={(e) => setEditingValue(e.target.value)}
                             onKeyDown={handleInputKeyDown}
-                            onBlur={() => commit(editingValue ?? '', 'none')}
+                            onBlur={() => {
+                              if (suppressNextBlurCommitRef.current) {
+                                suppressNextBlurCommitRef.current = false;
+                                return;
+                              }
+                              commit(editingValue ?? '', 'none');
+                            }}
                             className="absolute inset-0 w-full h-full px-3 bg-c-surface text-c-text text-xs font-mono focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                           />
                         ) : (

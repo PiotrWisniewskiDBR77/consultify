@@ -15,6 +15,17 @@ async function downloadHandlerSource(): Promise<string> {
   return rest.slice(0, end).replace(/\s+/g, ' ');
 }
 
+async function directCreateHandlerSource(): Promise<string> {
+  const routePath = fileURLToPath(new URL('../presentations.routes.ts', import.meta.url));
+  const source = fs.readFileSync(routePath, 'utf8');
+  const start = source.indexOf("'/decks',");
+  expect(start).toBeGreaterThan(-1);
+  const rest = source.slice(start);
+  const end = rest.indexOf("'/decks/from-template',");
+  expect(end).toBeGreaterThan(-1);
+  return rest.slice(0, end).replace(/\s+/g, ' ');
+}
+
 describe('GET /decks/:id/download — current PPTX contract', () => {
   it('attempts current-version rendering even when export_path is absent', async () => {
     const handler = await downloadHandlerSource();
@@ -36,5 +47,24 @@ describe('GET /decks/:id/download — current PPTX contract', () => {
     const limitBranch = handler.slice(limitStart, handler.indexOf('const filename', limitStart));
     expect(limitBranch).toContain("status: 'failed'");
     expect(limitBranch).not.toContain("status: 'completed'");
+  });
+});
+
+describe('POST /decks — renderable direct-create intent contract', () => {
+  it('normalizes the stable Table OS title alias to the canonical cover intent', async () => {
+    const handler = await directCreateHandlerSource();
+    expect(handler).toContain("title: 'cover'");
+    expect(handler).toContain("intent: typeIntent || contentIntent || 'key_messages'");
+    expect(handler).toContain('intent, key_message:');
+  });
+
+  it('rejects unknown and conflicting slide intents before persistence', async () => {
+    const handler = await directCreateHandlerSource();
+    expect(handler).toContain("code: 'INVALID_SLIDE_INTENT'");
+    expect(handler).toContain('has an unsupported intent');
+    expect(handler).toContain('has conflicting intent values');
+    expect(handler.indexOf("code: 'INVALID_SLIDE_INTENT'")).toBeLessThan(
+      handler.indexOf('INSERT INTO presentation_decks')
+    );
   });
 });

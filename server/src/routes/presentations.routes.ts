@@ -1903,6 +1903,69 @@ router.post(
 
     if (!title) return res.status(400).json({ success: false, error: 'Title is required' });
 
+    // The direct-create contract is consumed by Table OS, whose stable slide
+    // vocabulary predates the PPTX renderer's intent vocabulary. Normalize the
+    // known product aliases at ingress so the persisted editable and render
+    // models agree. Unknown or conflicting values fail closed instead of
+    // creating a deck that can only fail later during download.
+    const directSlideIntentAliases: Readonly<Record<string, string>> = {
+      title: 'cover',
+      content: 'key_messages',
+      table: 'performance_overview',
+      kanban: 'initiative_portfolio',
+      matrix: 'prioritization_matrix',
+      summary: 'executive_summary',
+      ranking: 'recommendation_portfolio',
+    };
+    const canonicalDirectSlideIntents = new Set([
+      'cover',
+      'executive_summary',
+      'section_intro',
+      'key_messages',
+      'performance_overview',
+      'single_insight',
+      'comparison',
+      'assessment',
+      'root_cause',
+      'recommendation_single',
+      'recommendation_portfolio',
+      'initiative_portfolio',
+      'prioritization_matrix',
+      'roadmap',
+      'risk_management',
+      'next_steps',
+      'appendix',
+    ]);
+    const normalizeDirectSlideIntent = (value: unknown): string | null => {
+      const raw = String(value || '').trim();
+      if (!raw) return null;
+      const normalized = directSlideIntentAliases[raw] || raw;
+      return canonicalDirectSlideIntents.has(normalized) ? normalized : null;
+    };
+    const normalizedSlides = Array.isArray(slides)
+      ? slides.map((slide: any, index: number) => {
+          const rawType = String(slide?.type || '').trim();
+          const rawContentType = String(slide?.content?.type || '').trim();
+          const typeIntent = normalizeDirectSlideIntent(rawType);
+          const contentIntent = normalizeDirectSlideIntent(rawContentType);
+          if ((rawType && !typeIntent) || (rawContentType && !contentIntent)) {
+            return { error: `Slide ${index + 1} has an unsupported intent.` };
+          }
+          if (typeIntent && contentIntent && typeIntent !== contentIntent) {
+            return { error: `Slide ${index + 1} has conflicting intent values.` };
+          }
+          return { slide, intent: typeIntent || contentIntent || 'key_messages' };
+        })
+      : [];
+    const invalidSlide = normalizedSlides.find((entry: any) => entry.error);
+    if (invalidSlide) {
+      return res.status(400).json({
+        success: false,
+        error: invalidSlide.error,
+        code: 'INVALID_SLIDE_INTENT',
+      });
+    }
+
     const deckId = uuidv4().replace(/-/g, '');
     const slideCount = Array.isArray(slides) ? slides.length : 0;
     const nowIso = new Date().toISOString();
@@ -1924,50 +1987,48 @@ router.post(
         }))
         .filter((ref) => ref.artifact_id || ref.artifact_name !== 'Source');
     const deckEvidenceRefs = normalizeEvidenceRefs(evidenceRefs);
-    const builderCards = Array.isArray(slides)
-      ? slides.map((slide: any, index: number) => {
-          const content = slide?.content || slide || {};
-          const cardId = uuidv4().replace(/-/g, '');
-          const blocks: any[] = [];
-          const pushBlock = (type: string, blockContent: Record<string, unknown>) => {
-            blocks.push({
-              block_id: uuidv4().replace(/-/g, ''),
-              card_id: cardId,
-              type,
-              content: blockContent,
-              is_refreshable: false,
-              position: { area: 'full', order: blocks.length },
-              ai_editable: true,
-            });
-          };
-          const slideTitle = String(content?.title || `Slide ${index + 1}`);
-          pushBlock('heading', { text: slideTitle, level: 2 });
-          if (Array.isArray(content?.bullets) && content.bullets.length > 0) {
-            pushBlock('bullet_list', {
-              items: content.bullets.map((item: unknown) =>
-                item && typeof item === 'object' ? item : String(item)
-              ),
-            });
-          } else if (content?.text) {
-            pushBlock('paragraph', { text: String(content.text) });
-          }
-          return {
-            card_id: cardId,
-            deck_id: deckId,
-            order_index: index,
-            intent: slide?.type || 'content',
-            layout_id: 'auto',
-            title: slideTitle,
-            blocks:
-              Array.isArray(content?.blocks) && content.blocks.length > 0 ? content.blocks : blocks,
-            source_refs: normalizeEvidenceRefs(slide?.sourceRefs || content?.sourceRefs),
-            has_refreshable_data: false,
-            background: { type: 'theme' },
-            animations: { entrance: 'none', block_stagger: false },
-            is_locked: false,
-          };
-        })
-      : [];
+    const builderCards = normalizedSlides.map(({ slide, intent }: any, index: number) => {
+      const content = slide?.content || slide || {};
+      const cardId = uuidv4().replace(/-/g, '');
+      const blocks: any[] = [];
+      const pushBlock = (type: string, blockContent: Record<string, unknown>) => {
+        blocks.push({
+          block_id: uuidv4().replace(/-/g, ''),
+          card_id: cardId,
+          type,
+          content: blockContent,
+          is_refreshable: false,
+          position: { area: 'full', order: blocks.length },
+          ai_editable: true,
+        });
+      };
+      const slideTitle = String(content?.title || `Slide ${index + 1}`);
+      pushBlock('heading', { text: slideTitle, level: 2 });
+      if (Array.isArray(content?.bullets) && content.bullets.length > 0) {
+        pushBlock('bullet_list', {
+          items: content.bullets.map((item: unknown) =>
+            item && typeof item === 'object' ? item : String(item)
+          ),
+        });
+      } else if (content?.text) {
+        pushBlock('paragraph', { text: String(content.text) });
+      }
+      return {
+        card_id: cardId,
+        deck_id: deckId,
+        order_index: index,
+        intent,
+        layout_id: 'auto',
+        title: slideTitle,
+        blocks:
+          Array.isArray(content?.blocks) && content.blocks.length > 0 ? content.blocks : blocks,
+        source_refs: normalizeEvidenceRefs(slide?.sourceRefs || content?.sourceRefs),
+        has_refreshable_data: false,
+        background: { type: 'theme' },
+        animations: { entrance: 'none', block_stagger: false },
+        is_locked: false,
+      };
+    });
     // Preserve the rich, intent-bound render model alongside the editable card
     // projection.  The card model is intentionally lossy (for example KPI,
     // roadmap and risk content become generic blocks), so exporting a deck
@@ -1978,13 +2039,13 @@ router.post(
       report_title: String(title),
       language: 'en',
       confidentiality: 'internal',
-      slides: (Array.isArray(slides) ? slides : []).map((slide: any, index: number) => ({
+      slides: normalizedSlides.map(({ slide, intent }: any, index: number) => ({
         slide_id: builderCards[index]?.card_id,
-        intent: String(slide?.type || slide?.content?.type || 'key_messages'),
+        intent,
         key_message: String(slide?.content?.title || slide?.title || `Slide ${index + 1}`),
         content: {
           ...(slide?.content || slide || {}),
-          type: String(slide?.content?.type || slide?.type || 'key_messages'),
+          type: intent,
         },
         source_refs: normalizeEvidenceRefs(slide?.sourceRefs || slide?.content?.sourceRefs),
       })),
@@ -2049,7 +2110,7 @@ router.post(
           await dbRun(
             `INSERT INTO presentation_cards (id, deck_id, card_index, intent, blocks_json, created_at, updated_at)
              VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-            [cardId, deckId, i, slide.type || 'content', JSON.stringify(content)]
+            [cardId, deckId, i, builderCards[i].intent, JSON.stringify(content)]
           );
         }
       }
