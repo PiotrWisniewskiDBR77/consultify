@@ -21,6 +21,7 @@ import { createBudget, listBudgets } from '../../services/budgetingService.js';
 import { searchStatementDocumentIntelligence } from '../../services/documentIntelligenceService.js';
 import { ensureCanonicalRegistryInDatabase } from '../../services/financeCanonicalRegistrySyncService.js';
 import { financeLegacyCutoverGuard } from '../../services/financeLegacyCutover.js';
+import { requireActiveMembership } from '../../services/legacyCutover/requireActiveMembership.js';
 import {
   getFinanceTraceId,
   logFinanceError,
@@ -138,6 +139,10 @@ const router = Router();
 
 // FIN-MVP-CUTOVER-001: observe the complete legacy surface and fail closed
 // only for writers with an explicitly proven canonical successor.
+// The V8 namespace authenticates and attaches tenant identity, but it does not
+// re-read membership state. Writers need this per-request wall so a revoked
+// token cannot mutate Finance until its JWT expires.
+router.use(requireActiveMembership);
 router.use(financeLegacyCutoverGuard);
 
 const FINANCE_PACKAGE_ROOT = process.env.FINANCE_PACKAGE_ROOT || '/data/finance-packages';

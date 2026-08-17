@@ -20,6 +20,10 @@ const mockDbRun = vi.fn();
 const mockDbGet = vi.fn();
 const mockDbAll = vi.fn();
 
+vi.mock('../../../services/legacyCutover/requireActiveMembership.js', () => ({
+  requireActiveMembership: (_req: unknown, _res: unknown, next: () => void) => next(),
+}));
+
 vi.mock('../../../utils/DbPromise.js', () => ({
   all: (...args: unknown[]) => mockDbAll(...args),
   get: (...args: unknown[]) => mockDbGet(...args),

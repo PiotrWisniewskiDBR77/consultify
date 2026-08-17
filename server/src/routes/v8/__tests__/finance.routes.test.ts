@@ -4,6 +4,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { V8_FINANCE_READ_CONTRACT } from '../finance.routes.js';
 
+vi.mock('../../../services/legacyCutover/requireActiveMembership.js', () => ({
+  requireActiveMembership: (_req: unknown, _res: unknown, next: () => void) => next(),
+}));
+
 const mockGetFinanceDashboard = vi.fn();
 const mockGetStatementPackDetail = vi.fn();
 const mockGetStatementDetail = vi.fn();
