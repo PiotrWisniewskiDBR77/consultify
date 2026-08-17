@@ -1,65 +1,60 @@
 {
   "taskId": "EXE-MVP-ACTIONS-001",
-  "baselineSha": "7bd1ed4c6f36a2ea759abb86bf37d3ae1ec935fd",
-  "productSha": "7e3fa1d1d260b1af0179bb94eb49ba6daf0a4443",
+  "baselineSha": "eb310fb344d3339c67cad81188ce13c6f950d100",
+  "productSha": "d9fcb6fea8",
   "leaseSha256": "f4d75f0aed94f2e34acaec63d91c245495e7e0f658aa36d1122342c2acecc612",
-  "toolchain": {
-    "node": "v24.12.0",
-    "npm": "11.6.2",
-    "vitest": "4.1.8",
-    "playwright": "1.62.1",
-    "postgres": "16.14 pgvector/pgvector:pg16",
-    "docker": "29.3.0"
-  },
-  "laneGates": {
-    "G0": "PASS — branch codex/closure-claude-b-transformation, HEAD==baseline at start, verify-closure-lane.mjs PASS",
-    "G1": "PASS — type-check exit 0, build:backend exit 0, build exit 0, discovery-gate PASS 4997/4997",
-    "G3_strict_migration": "PASS — fresh/repeat/dry-run exit 0; schema_migrations 703 success / 0 failed / 0 pending; 703/703 checksums independently verified; 1678 tables",
-    "G2_lane_baseline": "RED (pre-existing at sealed baseline): 747 collected of 761 real test files; 107 files failed / 557 passed / 83 skipped; 287 tests failed / 4270 passed / 617 skipped",
-    "G2_defects": "14 leased acceptance tests uncollectable by the mandated command; 110 further realDB files run without a DB by it; backend tests execute under jsdom because environmentMatchGlobs is dead in Vitest 4"
-  },
-  "ownerTables": [
-    "budget_entries",
-    "case_core"
-  ],
   "changedPaths": [
-    "server/migrations/20260908_execution_bvp_spine.sql",
+    "server/migrations/20260917_execution_action_audit_immutability.sql",
     "server/src/services/executionActionRegistryService.ts",
-    "server/src/services/executionBudgetService.ts",
+    "server/src/services/__tests__/executionActionRegistryService.test.ts",
+    "server/src/services/__tests__/executionActionRegistryService.pg.test.ts",
     "server/src/routes/executionControl.routes.ts",
+    "server/src/routes/caseWorkspace/_shared/access.ts",
     "server/src/routes/caseWorkspace/cases.routes.ts",
     "server/src/routes/caseWorkspace/actionProposals.routes.ts",
     "server/src/routes/caseWorkspace/runLifecycle.routes.ts",
     "server/src/routes/caseWorkspace/waitSubscriptions.routes.ts",
     "server/src/routes/caseWorkspace/artifactLinks.routes.ts",
-    "docs/program/evidence/closure/b/EXE-MVP-ACTIONS-001/IMPLEMENTATION_2026-08-16.md"
+    "server/src/routes/caseWorkspace/__tests__/cases.routes.test.ts",
+    "server/src/routes/caseWorkspace/__tests__/actionProposals.routes.test.ts",
+    "server/src/routes/caseWorkspace/__tests__/waitSubscriptions.routes.test.ts",
+    "server/src/routes/caseWorkspace/__tests__/artifactLinks.routes.test.ts"
   ],
   "changedPathRationale": {
-    "server/migrations/20260908_execution_bvp_spine.sql": "13-action governed registry and immutable audit table",
-    "server/src/services/executionActionRegistryService.ts": "Runtime registry truth and audit writer",
-    "server/src/services/executionBudgetService.ts": "Tenant+initiative rowcount fail-closed deletion",
-    "server/src/routes/caseWorkspace/cases.routes.ts": "ADMIN floor on terminal Case actions"
+    "registry": "One live registry/minimum-role authority and terminal outcome audit for all nine IMPLEMENTED actions.",
+    "routes": "Nine actions route through the governed guard; object access is inside the audited operation for enumeration-safe cross-tenant NOT_FOUND.",
+    "migration": "Database trigger rejects direct UPDATE and DELETE of the action ledger.",
+    "tests": "Focused route regression plus real PostgreSQL 9/9 policy/audit/immutability/cold-readback proof."
   },
+  "ownerTables": ["execution_action_registry", "execution_action_audit", "budget_entries", "case_core"],
   "commands": [
-    "node scripts/cleanup/verify-closure-lane.mjs b closure-execution-baseline-v2-20260816",
-    "jq -r '.tests.vitest[]' docs/cleanup/agents/generated/CLAUDE_LANE_B_PATH_LEASE.json | xargs -n 80 npx vitest run --no-file-parallelism --maxWorkers=1 --maxConcurrency=2 --retry=0",
-    "CI=true DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts  (fresh, repeat, --dry-run)"
+    "npx vitest run server/src/services/__tests__/executionActionRegistryService.test.ts server/src/services/__tests__/executionBudgetDelete.test.ts server/src/routes/caseWorkspace/__tests__/cases.routes.test.ts server/src/routes/caseWorkspace/__tests__/actionProposals.routes.test.ts server/src/routes/caseWorkspace/__tests__/artifactLinks.routes.test.ts server/src/routes/caseWorkspace/__tests__/waitSubscriptions.routes.test.ts --reporter=dot --no-file-parallelism",
+    "cd server && npx tsc --noEmit --pretty false",
+    "CI=true NODE_ENV=test DB_TYPE=postgres MOCK_DB=false RUN_DB_TESTS=1 DATABASE_URL=postgresql://iris:***@127.0.0.1:32912/consultify npx tsx server/scripts/migrate.postgres.ts",
+    "NODE_ENV=test DB_TYPE=postgres MOCK_DB=false RUN_DB_TESTS=1 DATABASE_URL=postgresql://iris:***@127.0.0.1:32912/consultify npx vitest run server/src/services/__tests__/executionActionRegistryService.pg.test.ts --reporter=dot --no-file-parallelism"
   ],
   "denominators": {
-    "task": "Full UI-control -> endpoint -> capability -> audit inventory produced",
-    "laneRealDbPass": "110 leased realDB files on an isolated DB: 77 passed / 7 failed / 26 skipped; 675 tests: 565 passed / 51 failed / 59 skipped",
-    "recoveredAcceptance": "14 leased acceptance files the mandated G2 command cannot collect, run under vitest.acceptance.config.ts: 105 tests, 91 passed / 14 failed"
+    "actionDisposition": "13/13: 9 IMPLEMENTED governed, 4 HIDDEN fail-closed",
+    "focusedRegression": "6/6 files, 43/43 tests, exit 0",
+    "realPostgres": "1/1 file, 12/12 tests, exit 0; success audit 9/9 actions",
+    "freshMigrations": "734/734 applied, exit 0",
+    "typeCheck": "server TypeScript exit 0"
   },
   "fixtures": {
-    "prefix": "claude_b_",
-    "isolatedDb": "consultify-closure-b-64f50785 @127.0.0.1:55811; verification replica @55812; clean-room @55813",
-    "env": "NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false (all three required — NODE_ENV=test alone substitutes a mock DB)"
+    "database": "fresh disposable pgvector/pgvector:pg16 container consultify-exe-actions-eb310 on 127.0.0.1:32912",
+    "organizationPrefix": "exe-actions-"
   },
-  "negativeControls": {},
+  "negativeControls": {
+    "policyDrift": "ADMIN denied after live minimum_role changes to OWNER; operation not invoked",
+    "hidden": "execution.initiative.delete denied and DENIED audit persisted",
+    "immutableAudit": "direct UPDATE and DELETE rejected by PostgreSQL trigger",
+    "outcomes": "DENIED, NOT_FOUND and CONFLICT classification covered",
+    "coldReadback": "independent Pool reads persisted audit denominator"
+  },
   "browserArtifacts": [],
   "rollback": {
-    "method": "Revert application code while retaining the additive execution action registry/audit schema for old-reader compatibility."
+    "method": "Revert d9fcb6fea8. Retaining the additive append-only trigger is backward compatible; removing it requires explicit DROP TRIGGER and is not automatic."
   },
   "verdict": "PARTIAL",
-  "openBlocker": "No task-local blocker. No UI change was required: 9 actions are implemented and 4 controls remain explicitly hidden; see IMPLEMENTATION_2026-08-16.md."
+  "openBlocker": "G4 remains outside this packet. Outside G4, mounted real-router tests still use mocked domain services and mutation plus SUCCEEDED audit are not one pinned PostgreSQL transaction for the Case Workspace service transactions. Current proof establishes live registry enforcement, 9/9 realPG audit writes, policy drift, hidden denial, immutable ledger and cold readback, but does not honestly prove audit-failure rollback of each domain mutation."
 }
