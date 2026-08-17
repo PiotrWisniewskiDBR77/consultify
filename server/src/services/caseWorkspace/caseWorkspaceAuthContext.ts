@@ -132,7 +132,7 @@
  *      weakens the fail-closed default.
  */
 
-import { queryOne } from '../../utils/queryHelpers.js';
+import { queryOne, type PgTransactionClient } from '../../utils/queryHelpers.js';
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -333,6 +333,35 @@ export async function requireOrgMember(
     );
   }
   return membership;
+}
+
+/**
+ * Transaction-pinned variant for a mutation that must authorize and write on
+ * one database session. This avoids a separate shared-pool checkout before a
+ * caller enters its transaction while preserving the exact same fail-closed
+ * membership/status semantics as requireOrgMember().
+ */
+export async function requireOrgMemberWithClient(
+  client: PgTransactionClient,
+  actorUserId: string,
+  organizationId: string
+): Promise<OrgMembership> {
+  const userId = requireNonBlank(actorUserId, 'auth_actor_user_id_required');
+  const orgId = requireNonBlank(organizationId, 'auth_organization_id_required');
+  const result = await client.query<OrganizationMemberRow>(
+    `SELECT id, organization_id, user_id, role, status, invited_by_user_id, created_at
+       FROM organization_members
+      WHERE user_id = ? AND organization_id = ?`,
+    [userId, orgId]
+  );
+  const row = result.rows[0];
+  if (!row || (row.status ?? '').trim().toUpperCase() !== 'ACTIVE') {
+    throw new CaseWorkspaceAuthError(
+      'not_org_member',
+      'Actor is not an active member of this organization.'
+    );
+  }
+  return mapMembershipRow(row);
 }
 
 /**

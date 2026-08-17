@@ -76,7 +76,10 @@ router.post(
   '/cases',
   caseWorkspaceHandler(async (req, res, actor) => {
     const body = parseBody(createCaseBody, req.body);
-    await requireOrgMemberForActor(actor);
+    // createCase performs the same ACTIVE-membership check inside its pinned
+    // transaction. Do not preflight it through the shared pool: under load
+    // that redundant checkout inflated tail latency and introduced a TOCTOU
+    // window between authorization and the write.
     const created = await svc.createCase({
       ...body,
       organizationId: actor.organizationId,
@@ -152,12 +155,16 @@ router.post(
     const params = parseParams(caseIdParams, req.params);
     const body = parseBody(transitionStatusBody, req.body);
     if (body.targetStatus === 'CLOSED' || body.targetStatus === 'CANCELLED') {
+      // Resolve tenant visibility before evaluating governance. Otherwise a
+      // foreign/unknown case can leak through a policy 403 instead of the
+      // enumeration-safe 404 contract. The governed action still owns the
+      // mutation and its terminal audit outcome for an accessible case.
+      await requireCaseAccessForActor(actor, params.caseId);
       const updated = await executeGovernedCaseAction({
         actor,
         actionId: body.targetStatus === 'CLOSED' ? 'case.close' : 'case.cancel',
         targetId: params.caseId,
         operation: async () => {
-          await requireCaseAccessForActor(actor, params.caseId);
           return svc.transitionStatus(params.caseId, body.targetStatus, { actorUserId: actor.actorUserId }, body.reason);
         },
       });

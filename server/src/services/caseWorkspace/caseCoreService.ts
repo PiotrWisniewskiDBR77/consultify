@@ -61,6 +61,7 @@ import {
   CaseWorkspaceAuthError,
   requireCaseAccess,
   requireOrgMember,
+  requireOrgMemberWithClient,
 } from './caseWorkspaceAuthContext.js';
 import { publishEvent, redact } from './eventOutboxService.js';
 
@@ -383,9 +384,8 @@ export async function createCase(input: {
     'case_contracted_closure_type_invalid'
   );
 
-  await requireOrgMember(createdByActorId, organizationId);
-
   return withPgTransaction(async (client) => {
+    await requireOrgMemberWithClient(client, createdByActorId, organizationId);
     const projectResult = await client.query<ProjectRefRow>(
       `SELECT id, organization_id, name, description, owner_id
          FROM projects WHERE id = ?`,
