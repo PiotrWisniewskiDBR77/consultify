@@ -1,48 +1,79 @@
 {
   "taskId": "EXE-FLOW-ADAPTER-001",
-  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "99406b784bf1332beb369be161e75a2422f00fc6",
+  "baselineSha": "cab3c6d62e0d233c14ba9c0f7bdddb57658326cc",
+  "productSha": "f6bb212050046300e80c6d96af5243b98c59f8e9",
   "leaseSha256": "f4d75f0aed94f2e34acaec63d91c245495e7e0f658aa36d1122342c2acecc612",
-  "toolchain": {
-    "node": "v24.12.0",
-    "npm": "11.6.2",
-    "vitest": "4.1.8",
-    "playwright": "1.62.1",
-    "postgres": "16.14 pgvector/pgvector:pg16",
-    "docker": "29.3.0"
-  },
-  "laneGates": {
-    "G0": "PASS — branch codex/closure-claude-b-transformation, HEAD==baseline at start, verify-closure-lane.mjs PASS",
-    "G1": "PASS — type-check exit 0, build:backend exit 0, build exit 0, discovery-gate PASS 4997/4997",
-    "G3_strict_migration": "PASS — fresh/repeat/dry-run exit 0; schema_migrations 703 success / 0 failed / 0 pending; 703/703 checksums independently verified; 1678 tables",
-    "G2_lane_baseline": "RED (pre-existing at sealed baseline): 747 collected of 761 real test files; 107 files failed / 557 passed / 83 skipped; 287 tests failed / 4270 passed / 617 skipped",
-    "G2_defects": "14 leased acceptance tests uncollectable by the mandated command; 110 further realDB files run without a DB by it; backend tests execute under jsdom because environmentMatchGlobs is dead in Vitest 4"
+  "changedPaths": [
+    "server/migrations/20260930_execution_flow_adapter_reliability.sql",
+    "server/src/index.ts",
+    "server/src/services/__tests__/initiativeExecutionOutboxConsumer.pg.test.ts",
+    "server/src/services/closureDeliveryReceiptService.ts",
+    "server/src/services/demo/demoSeedService.ts",
+    "server/src/services/initiativeExecutionOutboxConsumer.ts",
+    "server/src/services/resultsVnext/platform/__tests__/executionSignalIngress.pg.test.ts",
+    "server/src/services/resultsVnext/platform/executionSignalIngress.ts",
+    "docs/program/evidence/closure/b/EXE-FLOW-ADAPTER-001/TASK_EVIDENCE.json"
+  ],
+  "changedPathRationale": {
+    "server/migrations/20260930_execution_flow_adapter_reliability.sql": "Additive payload-version, bounded-attempt, dead-letter and immutable receipt schema for the existing Execution flow outboxes.",
+    "server/src/index.ts": "Default-off, fail-closed-when-enabled bootstrap and graceful stop before queues and the PostgreSQL pool.",
+    "server/src/services/__tests__/initiativeExecutionOutboxConsumer.pg.test.ts": "Fresh PostgreSQL proof for lifecycle, tenant scope, concurrency, reclaim, version denial, dead-letter redrive and immutable cold readback.",
+    "server/src/services/closureDeliveryReceiptService.ts": "Bound closure retries, reject unsupported versions, provide tenant-scoped redrive and deterministic materialized-DONE receipt repair.",
+    "server/src/services/demo/demoSeedService.ts": "Remove the direct demo closure bypass and persist a durable receipt before best-effort delivery.",
+    "server/src/services/initiativeExecutionOutboxConsumer.ts": "Default-inactive neutral consumer with SKIP LOCKED, tenant/version guards, bounded retries, dead letter and immutable receipt.",
+    "server/src/services/resultsVnext/platform/__tests__/executionSignalIngress.pg.test.ts": "Tenant-scoped Results ingress concurrency, reclaim, immutability and dead-letter redrive proof.",
+    "server/src/services/resultsVnext/platform/executionSignalIngress.ts": "Bound Results ingress attempts with fail-closed version handling and tenant-scoped redrive.",
+    "docs/program/evidence/closure/b/EXE-FLOW-ADAPTER-001/TASK_EVIDENCE.json": "Exact integrated-product-SHA post-fan-in evidence."
   },
   "ownerTables": [
-    "closure_delivery_receipts"
+    "ie_outbox_events",
+    "ie_outbox_delivery_receipts",
+    "closure_delivery_receipts",
+    "execution_results_signal_outbox",
+    "rvn_execution_signal_receipts"
   ],
-  "changedPaths": [],
-  "changedPathRationale": {},
   "commands": [
-    "node scripts/cleanup/verify-closure-lane.mjs b closure-execution-baseline-v2-20260816",
-    "jq -r '.tests.vitest[]' docs/cleanup/agents/generated/CLAUDE_LANE_B_PATH_LEASE.json | xargs -n 80 npx vitest run --no-file-parallelism --maxWorkers=1 --maxConcurrency=2 --retry=0",
-    "CI=true DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts  (fresh, repeat, --dry-run)"
+    {"command": "NODE_ENV=test DB_TYPE=postgres MOCK_DB=false DATABASE_URL=<fresh-tmpfs> npx tsx server/scripts/migrate.postgres.ts", "exitCode": 0, "result": "Fresh canonical f6bb212050 applied 745/745 migrations, including AGT then EXE 20260930 migrations."},
+    {"command": "NODE_ENV=test DB_TYPE=postgres MOCK_DB=false DATABASE_URL=<fresh-tmpfs> npx tsx server/scripts/migrate.postgres.ts [repeat]", "exitCode": 0, "result": "Applying migrations: 0."},
+    {"command": "NODE_ENV=test DB_TYPE=postgres MOCK_DB=false DATABASE_URL=<fresh-tmpfs> npx tsx server/scripts/migrate.postgres.ts --dry-run", "exitCode": 0, "result": "Pending migrations: 0; empty checksums 0; non-success ledger rows 0."},
+    {"command": "RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=<fresh-tmpfs> npx vitest run initiativeExecutionOutboxConsumer.pg executionSignalIngress.pg exe009-closure-delivery-receipt.realdb executionBvpService.pg --no-file-parallelism", "exitCode": 0, "result": "4/4 files, 34/34 tests on integrated product SHA."},
+    {"command": "npx vitest run aiWorkerRuntime.test agentPlanSchedulerContextGate.test --no-file-parallelism", "exitCode": 0, "result": "Combined bootstrap companion gate: 2/2 files, 7/7 tests."},
+    {"command": "same-process EXE+AGT default-off/enabled/fail-closed/shutdown control", "exitCode": 0, "result": "Both default inactive; EXE explicitly starts unref; AGT without real Redis fails closed; combined stop leaves both runtimes stopped."},
+    {"command": "NODE_OPTIONS=--max-old-space-size=8192 npm run type-check", "exitCode": 0, "result": "Static gate passed on the EXE product candidate before fan-in; post-fan-in runtime gates were executed at exact f6bb212050."},
+    {"command": "NODE_OPTIONS=--max-old-space-size=8192 npm run build:backend", "exitCode": 0, "result": "Backend static build gate passed on the EXE product candidate before fan-in."},
+    {"command": "NODE_OPTIONS=--max-old-space-size=8192 npm run build", "exitCode": 0, "result": "Frontend production build gate passed on the EXE product candidate before fan-in."},
+    {"command": "git diff --check", "exitCode": 0, "result": "No whitespace errors."}
   ],
   "denominators": {
-    "task": "Versioned contracts for Initiative->Execution and Execution->Results produced; 3 outbox mechanisms compared",
-    "laneRealDbPass": "110 leased realDB files on an isolated DB: 77 passed / 7 failed / 26 skipped; 675 tests: 565 passed / 51 failed / 59 skipped",
-    "recoveredAcceptance": "14 leased acceptance files the mandated G2 command cannot collect, run under vitest.acceptance.config.ts: 105 tests, 91 passed / 14 failed"
+    "postFanInMigration": "745/745; repeat=0; dry=0; checksum gaps=0; failures=0",
+    "postFanInRealPg": "34/34 tests in 4/4 files",
+    "combinedBootstrap": "7/7 tests in 2/2 files plus one same-process combined control",
+    "mountedClosureAndResults": "28/28 mounted signed-JWT and real-domain tests",
+    "resultsOutboxLifecycle": "6/6 direct realPG/lifecycle tests",
+    "staticGates": "3/3: type-check, backend build, frontend production build",
+    "residue": "0 EXE orgs, 0 Results orgs, 0 IE receipts, 0 RVN receipts, 0 AGT receipts, 0 AGT attempts"
   },
   "fixtures": {
-    "prefix": "claude_b_",
-    "isolatedDb": "consultify-closure-b-64f50785 @127.0.0.1:55811; verification replica @55812; clean-room @55813",
-    "env": "NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false (all three required — NODE_ENV=test alone substitutes a mock DB)"
+    "database": "Disposable isolated PostgreSQL 16 tmpfs container consultify-exe-fanin-f6bb on 127.0.0.1:32917, removed with its volume after the gate.",
+    "prefixes": ["exe-flow-", "res-flow-"],
+    "runtime": "Mounted signed-JWT Execution routes and production PostgreSQL transaction helpers; independent cold pg.Client readback. No foreign Redis resource was used."
   },
-  "negativeControls": {},
+  "negativeControls": {
+    "defaultOff": "ENABLE_INITIATIVE_EXECUTION_OUTBOX_CONSUMER must equal literal true; unset/false creates no consumer timer.",
+    "bootstrapShutdown": "Explicit enable starts exactly once, timer is unref, enabled startup errors propagate fail-closed, and graceful shutdown clears the consumer before queues/database.",
+    "tenantIsolation": "Foreign organization cannot claim or redrive another tenant's event; mounted organization spoof is denied.",
+    "unsupportedVersion": "Unknown payload versions dead-letter without creating a receipt.",
+    "boundedFailure": "Forced failure reaches max_attempts and dead letter without false success or an orphan receipt.",
+    "restartReclaim": "Stale processing leases are reclaimed and converge to one immutable receipt.",
+    "immutability": "Database triggers reject receipt UPDATE and DELETE.",
+    "legacyBypass": "Demo materialization persists the deterministic closure receipt before best-effort delivery."
+  },
   "browserArtifacts": [],
   "rollback": {
-    "method": "Revert the lane commits; all changes are additive application code plus new tests. NO migration was added by this lane, so no schema rollback is required and old readers are unaffected."
+    "code": "Set ENABLE_INITIATIVE_EXECUTION_OUTBOX_CONSUMER=false (the default) to stop new claims, perform graceful shutdown, then revert the integrated EXE product commits represented by f6bb212050.",
+    "data": "The migration is additive. Drop the new receipt table/triggers and additive columns only after the consumer is disabled and pending/dead-letter rows are inventoried and preserved or replayed."
   },
-  "verdict": "BLOCKED_OWNER",
-  "openBlocker": "closureDeliveryReceiptService.ts, migration 935, server/src/index.ts and demoSeedService.ts are ALL outside every lane lease, so Lane B cannot fix them. Confirmed gaps: no schemaVersion/payload_version on results_payload/finance_payload; no max-attempts or dead-letter ceiling despite migration 935:89 claiming otherwise; demoSeedService.ts:2318 still calls the deprecated fireClosureHandoff, bypassing the durable receipt. New finding: ie_outbox_events has ZERO consumers — a write-only dead table."
+  "verdict": "DONE_CURRENT_SHA",
+  "openBlockers": [],
+  "scopeNote": "Backend adapter closure only. Neutral immutable ingress does not invent KPI, ROI, Finance, autonomy, UI or owner-policy values."
 }
