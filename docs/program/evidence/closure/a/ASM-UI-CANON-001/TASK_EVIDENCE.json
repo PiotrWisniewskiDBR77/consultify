@@ -2,6 +2,8 @@
   "taskId": "ASM-UI-CANON-001",
   "baselineSha": "c024bde874d49fe414d18c53ccc82bb85e87efbc",
   "productSha": "ca963fe5112f6caf5bebdef04e4f0a624be00e91",
+  "technicalSourceSha": "e946c5bdaf8702fa73dacbdde57a1d4e27b409d4",
+  "reconciliationSha": "74f6a15ffd6b953432531a77b8e2e58a73c4128a",
   "leaseSha256": "integrator_fix_after_lane_a_handoff",
   "changedPaths": [
     "src/components/assessment/library/AssessmentLibraryTab.tsx",
@@ -24,14 +26,34 @@
     {
       "command": "NODE_OPTIONS=--max-old-space-size=8192 npm run type-check -- --pretty false",
       "exitCode": 0
+    },
+    {
+      "command": "CI=true E2E_USE_WEB_SERVER=false E2E_REQUIRE_TEST_SUPPORT=false E2E_ALLOW_LOCALHOST_REMOTE=true E2E_MODE=false E2E_API_URL=http://127.0.0.1:4281 E2E_BASE_URL=http://127.0.0.1:4280 TEST_SUPPORT_KEY=asm-ui-support-key DATABASE_URL=<fresh-real-postgres> npx playwright test tests/e2e/assessment/asm-ui-canon-technical.spec.ts --project=chromium --workers=1 --retries=0",
+      "exitCode": 0
+    },
+    {
+      "command": "npx vitest run src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx src/method-core/methods/drd/__tests__/drdHttpSessionRuntime.test.ts --reporter=dot",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run build:backend && VITE_ENABLE_LOCAL_FEATURE_FLAG_OVERRIDES=true VITE_API_TARGET=http://127.0.0.1:4281 NODE_OPTIONS=--max-old-space-size=8192 npm run build",
+      "exitCode": 0
     }
   ],
   "denominators": {
     "focusedComponentTests": {
       "files": 3,
-      "passed": 10,
+      "passed": 26,
       "failed": 0
     },
+    "mountedSignedTechnicalJourneys": {
+      "passed": 2,
+      "failed": 0
+    },
+    "freshPostgresMigrations": 756,
+    "repeatMigrations": 0,
+    "dryRunPendingMigrations": 0,
+    "fixtureResidue": 0,
     "automatedG4Cells": "14/14",
     "automatedG4Screenshots": "14/14",
     "automatedG4AxeCriticalSerious": "0/0",
@@ -124,11 +146,9 @@
     "method": "Revert ca963fe511; no schema changes.",
     "executed": false
   },
-  "verdict": "NOT_VERIFIED",
+  "verdict": "PARTIAL",
   "openBlockers": [
-    "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
-    "Task-specific UI states not reached by the final automated sweep: stale.",
-    "Task-specific permission, conflict and complete success journeys remain not evidenced by the final automated matrix."
+    "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md."
   ],
   "blockerReconciliation": [
     {
@@ -148,6 +168,7 @@
     }
   ],
   "resolvedBlockers": [
+    "Exact-current technical packet integrated at 74f6a15ffd6b953432531a77b8e2e58a73c4128a (source e946c5bdaf8702fa73dacbdde57a1d4e27b409d4): signed owner/non-approver denial, distinct approver freeze, persisted Output/Report/Initiative cold readback, deterministic stale CAS conflict and foreign-tenant fail-closed passed 2/2 on fresh PostgreSQL with fixture residue 0.",
     "Final mounted signed-auth automated G4 completed on candidate 836bfd633af7a689e7a3fb06971cbd8fe57bafe7: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed.",
     "Historical blocker resolved by exact-SHA G4: The complete real browser journey must be rerun after the mount fix on the exact integrated SHA.",
     "Historical blocker resolved by exact-SHA G4: Permission, conflict and complete success states plus desktop/tablet/mobile, PL/EN, light/dark and axe need fresh artifacts."
