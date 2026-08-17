@@ -214,9 +214,8 @@ mountedSuite(
         appendOnlyTriggerDisabled = true;
         await client.query(
           `DELETE FROM audit_domain_events
-            WHERE organization_id = $1 AND actor_id = $2
-              AND (entity_id = ANY($3::text[]) OR summary LIKE $4)`,
-          [ORG, USER_ACTIVE, [...createdPackIds], `%${RUN}%`]
+            WHERE organization_id = $1 AND actor_id = $2`,
+          [ORG, USER_ACTIVE]
         );
         await client.query(
           `ALTER TABLE audit_domain_events ENABLE TRIGGER trg_audit_domain_events_append_only`
@@ -290,9 +289,8 @@ mountedSuite(
          (SELECT count(*) FROM audit_events WHERE org_id = $1)::text AS events,
          (SELECT count(*) FROM audit_logs WHERE organization_id = $1)::text AS logs,
          (SELECT count(*) FROM audit_domain_events
-           WHERE organization_id = $1 AND actor_id = $2
-             AND entity_id = ANY($3::text[]))::text AS domain_events`,
-        [ORG, USER_ACTIVE, [...createdPackIds]]
+           WHERE organization_id = $1 AND actor_id = $2)::text AS domain_events`,
+        [ORG, USER_ACTIVE]
       );
       return Object.fromEntries(
         Object.entries(row ?? {}).map(([key, value]) => [key, Number(value)])
@@ -308,8 +306,7 @@ mountedSuite(
          (SELECT count(*) FROM audit_programs WHERE id = ANY($3))::text AS programs,
          (SELECT count(*) FROM audit_packs WHERE organization_id=$4 AND pack_key=$5)::text AS packs,
          (SELECT count(*) FROM audit_domain_events
-           WHERE organization_id=$4 AND actor_id=$6
-             AND (entity_id = ANY($7::text[]) OR summary LIKE $8))::text AS domain_events`,
+           WHERE organization_id=$4 AND actor_id=$6)::text AS domain_events`,
         [
           [ORG, FOREIGN_ORG],
           [USER_ACTIVE, USER_NO_MEMBERSHIP, USER_SUPERADMIN],
@@ -317,8 +314,6 @@ mountedSuite(
           ORG,
           WRITE_PACK_KEY,
           USER_ACTIVE,
-          [...createdPackIds],
-          `%${RUN}%`,
         ]
       );
       return Object.fromEntries(
