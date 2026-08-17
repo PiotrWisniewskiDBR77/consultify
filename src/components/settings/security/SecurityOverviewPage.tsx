@@ -153,7 +153,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
     scorePercentage >= 80
       ? 'text-emerald-400'
       : scorePercentage >= 50
-        ? 'text-amber-800 dark:text-amber-300'
+        ? 'text-amber-900 dark:text-amber-300'
         : 'text-danger-400';
 
   const scoreRingColor =
