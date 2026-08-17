@@ -2,6 +2,7 @@ import crypto from 'crypto';
 
 import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { recordOperationalAlertSignal } from './operationalAlertSignalDeliveryService.js';
 
 type OutboxStatus = 'PENDING' | 'SENT' | 'FAILED';
 
@@ -181,6 +182,7 @@ async function drainOnce(opts: { limit?: number } = {}): Promise<DrainResult> {
         `UPDATE notification_outbox SET status = 'SENT', updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
         [row.id]
       );
+      void recordOperationalAlertSignal({ organizationId: row.organization_id, actorId: `system:notification-outbox`, correlationId: row.id, sourceType: 'notification_outbox', sourceId: row.id, kind: 'WRITE_FAILURE_RATE', outcome: 'SUCCESS', idempotencyKey: `notification:${row.id}:SUCCESS` }).catch(() => undefined);
       result.sent++;
     } catch (err) {
       result.failed++;
@@ -193,6 +195,7 @@ async function drainOnce(opts: { limit?: number } = {}): Promise<DrainResult> {
         `UPDATE notification_outbox SET status = 'FAILED', updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
         [row.id]
       ).catch(() => undefined);
+      void recordOperationalAlertSignal({ organizationId: row.organization_id, actorId: `system:notification-outbox`, correlationId: row.id, sourceType: 'notification_outbox', sourceId: row.id, kind: 'WRITE_FAILURE_RATE', outcome: 'FAILURE', idempotencyKey: `notification:${row.id}:FAILURE` }).catch(() => undefined);
     }
   }
 

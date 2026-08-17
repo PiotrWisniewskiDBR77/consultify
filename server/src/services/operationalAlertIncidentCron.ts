@@ -2,6 +2,7 @@ import os from 'node:os';
 
 import { persistOperationalAlertSnapshot } from './operationalAlertIncidentService.js';
 import { operationalAlerts } from './operationalAlertService.js';
+import { deliverOperationalAlerts, evaluateAllOperationalAlertOrganizations } from './operationalAlertSignalDeliveryService.js';
 
 let inFlight = false;
 
@@ -20,6 +21,10 @@ export async function persistCurrentOperationalAlerts(): Promise<void> {
       alerts: operationalAlerts.evaluate(),
       evaluatorId: evaluatorId(),
     });
+    await evaluateAllOperationalAlertOrganizations({ evaluatorId: evaluatorId() });
+    if (process.env.OPERATIONAL_ALERT_DELIVERY_ENABLED === 'true') {
+      await deliverOperationalAlerts({ workerId: evaluatorId() });
+    }
   } finally {
     inFlight = false;
   }

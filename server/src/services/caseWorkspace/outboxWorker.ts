@@ -66,6 +66,7 @@
  */
 
 import logger from '../../utils/Logger.js';
+import { recordOperationalAlertSignal } from '../operationalAlertSignalDeliveryService.js';
 import {
   countDeadLetterEvents,
   dispatchPendingEvents,
@@ -325,6 +326,21 @@ async function runTickBody(
   };
 
   applyTickResultToMetrics(result);
+
+  if (options.organizationId) {
+    const bucket = Math.floor(startedAt / 60_000);
+    const base = {
+      organizationId: options.organizationId,
+      actorId: 'system:case-workspace-outbox',
+      correlationId: `case-outbox:${options.organizationId}:${bucket}`,
+      sourceType: 'case_workspace_event_outbox',
+      sourceId: `tick:${bucket}`,
+    };
+    void Promise.all([
+      recordOperationalAlertSignal({ ...base, kind: 'OUTBOX_OLDEST_AGE', outcome: 'SAMPLE', observedValue: (backlog.oldestPendingAgeSeconds ?? 0) * 1000, idempotencyKey: `case:${options.organizationId}:${bucket}:age` }),
+      recordOperationalAlertSignal({ ...base, kind: 'WRITE_FAILURE_RATE', outcome: result.failed > 0 ? 'FAILURE' : 'SUCCESS', observedValue: Math.max(1, result.claimed), idempotencyKey: `case:${options.organizationId}:${bucket}:write` }),
+    ]).catch((error) => logger.warn(`[CaseWorkspaceOutboxWorker] durable alert signal failed (non-fatal): ${error instanceof Error ? error.message : String(error)}`));
+  }
 
   if (result.failed > 0 || deadLetterCount > 0) {
     logger.warn(

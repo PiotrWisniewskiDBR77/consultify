@@ -26,6 +26,24 @@ Current production wiring:
 - A real paging transport, dashboard and deployed multi-instance observation window remain separate
   release gates. Their absence does not authorize weakening or bypassing the durable ledger.
 
+Tenant-scoped durable delivery substrate:
+
+- `operational_alert_signals` is the identity-complete append-only ingress. Every row carries
+  organization, actor, correlation, source, outcome and an idempotency fingerprint; reused keys
+  with different content fail closed. Secret-bearing metadata keys are rejected.
+- The DB-window evaluator persists one state per organization and kind. It enqueues immutable
+  `DETECTED` and `RECOVERED` delivery envelopes transactionally with the state transition.
+- Delivery is **default OFF**. `OPERATIONAL_ALERT_DELIVERY_ENABLED=true` is required and the current
+  repository transport intentionally accepts only an explicitly configured loopback receiver for
+  controlled operator verification. This is not authorization for production paging.
+- Claims use `FOR UPDATE SKIP LOCKED`, bounded exponential retry and a five-attempt dead-letter.
+  Expired claims are reclaimable after a process crash. A successful local response writes one
+  immutable receipt in the same transaction that marks the envelope delivered.
+- Operator inspection: `npx tsx server/scripts/operational-alerts.ts list [--organization ID]`.
+  Positive control: `... positive-control --organization ID --operator OPERATOR_ID`. Acknowledge:
+  `... ack --organization ID --kind KIND --operator OPERATOR_ID`. Acknowledgment fails while ACTIVE
+  and is accepted only after the DB evaluator has persisted RECOVERED.
+
 1. `WRITE_FAILURE_RATE`: stop retries that can duplicate effects, trace the correlation ID through
    the owner writer and outbox, verify tenant/actor/source/result fields, then replay one idempotent
    fixture. Recovery requires a fresh five-minute window below 1%.
