@@ -17,7 +17,11 @@ const enabled =
   /^postgres/.test(databaseUrl) &&
   /localhost|127\.0\.0\.1/.test(databaseUrl);
 const cleanupEnabled = process.env.LEGACY_CUTOVER_TEST_CLEANUP === '1';
-const jwtSecret = 'finance-two-doors-mounted-auth-secret-long-enough';
+const canonicalVitestJwtSecret = 'test-jwt-secret-key-min-32-chars-long-for-validation';
+if (process.env.JWT_SECRET !== canonicalVitestJwtSecret) {
+  throw new Error('FIN_TWO_DOORS_CANONICAL_VITEST_JWT_SECRET_MISMATCH');
+}
+const jwtSecret = process.env.JWT_SECRET;
 const prefix = `fin-auth-${randomUUID().slice(0, 8)}`;
 const org = `${prefix}-org`;
 const foreignOrg = `${prefix}-foreign-org`;
@@ -28,7 +32,6 @@ const foreign = `${prefix}-foreign`;
 const orgModel = `${prefix}-org-a-model`;
 const suiteLock = 'finance-two-doors-mounted-auth';
 
-process.env.JWT_SECRET = jwtSecret;
 process.env.NODE_ENV = 'test';
 process.env.DB_TYPE = 'postgres';
 process.env.ENABLE_V8_GLOBAL = 'true';
