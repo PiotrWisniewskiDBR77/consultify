@@ -868,6 +868,35 @@ html.caret-thick [contenteditable="true"] {
   caret-shape: block;
 }
 
+/* Focus indicators — the keyboard baseline is always on.
+ *
+ * The previous rule only existed below `html.focus-highlight`, which is an
+ * optional accessibility preference.  A keyboard user who had not enabled
+ * that preference therefore received no product focus indicator on controls
+ * whose component classes suppress the browser outline.  Keep the preference
+ * variants as enhancements, but make the canonical blue token the default.
+ * `!important` is intentional here: many older controls carry Tailwind's
+ * `focus-visible:outline-none`; an accessibility invariant must win over that
+ * local reset. */
+:root
+  :where(
+    a[href],
+    button,
+    input,
+    select,
+    summary,
+    [role='button'],
+    [role='checkbox'],
+    [role='menuitem'],
+    [role='option'],
+    [role='switch'],
+    [role='tab'],
+    [tabindex]:not([tabindex='-1'])
+  ):focus-visible {
+  outline: 2px solid var(--c-focus-solid, #2563eb) !important;
+  outline-offset: 2px !important;
+}
+
 /* Focus indicators — enhanced focus highlight + style variants.
  * focus-visible only, so mouse users are unaffected.
  * KOLOR = c-focus (niebieski), NIE akcent (decyzja Piotra 2026-07-04: focus
@@ -883,6 +912,15 @@ html.focus-highlight textarea:focus-visible,
 html.focus-highlight [contenteditable='true']:focus-visible,
 html.focus-highlight .ProseMirror:focus-visible {
   outline: none;
+}
+
+/* Piotr's frozen editor decision: typing canvases/composers do not receive the
+ * outer frame.  This remains narrower than the keyboard baseline above: normal
+ * inputs, buttons, selects and focusable application controls stay visible. */
+:root textarea:focus-visible,
+:root [contenteditable='true']:focus-visible,
+:root .ProseMirror:focus-visible {
+  outline: none !important;
 }
 html.focus-style-high-contrast :focus-visible {
   outline: 3px solid #000000 !important;
