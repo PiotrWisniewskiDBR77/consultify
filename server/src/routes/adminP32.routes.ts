@@ -4,7 +4,7 @@ import { Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
-import { getRequestAccessRole, isRequestSuperAdmin } from '../middleware/requestAccess.js';
+import { isRequestSuperAdmin } from '../middleware/requestAccess.js';
 import AccessCodeService from '../services/accessCodeService.js';
 import adminAuditService from '../services/adminAuditService.js';
 import { normalizeOrganizationRole } from '../services/organizationService.js';
@@ -299,7 +299,6 @@ async function getAdminActor(
   const orgId = tokenOrgId;
   const actorId = String(req.user?.id || '').trim();
   const isSuperAdmin = isRequestSuperAdmin(req);
-  const requestRole = getRequestAccessRole(req);
 
   if (!orgId || !actorId) {
     res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
@@ -344,9 +343,7 @@ async function getAdminActor(
     });
     return null;
   }
-  const actorRole = normalizeOrganizationRole(
-    membership?.role || (requestRole === 'superadmin' ? 'OWNER' : requestRole)
-  );
+  const actorRole = normalizeOrganizationRole(membership.role);
   // Platform SUPERADMIN is not tenant authority. Tenant admin access is derived
   // only from this organization's ACTIVE role or explicit delegated grants.
   const capabilities = await getActorCapabilities(orgId, actorId, actorRole, false);

@@ -203,6 +203,20 @@ describe('adminP32Routes', () => {
     expect(getLogs).not.toHaveBeenCalled();
   });
 
+  it.each([null, 'UNKNOWN'])(
+    'does not derive tenant authority from SUPERADMIN when ACTIVE membership role is %s',
+    async (role) => {
+      mockUserRole = 'superadmin';
+      dbGet.mockResolvedValueOnce({ role, status: 'ACTIVE' }).mockResolvedValueOnce(null);
+
+      const res = await request(createApp()).get('/api/admin/audit-logs');
+
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('ADMIN_ACCESS_REQUIRED');
+      expect(getLogs).not.toHaveBeenCalled();
+    }
+  );
+
   it('fails closed with 503 when the authoritative membership lookup fails', async () => {
     dbGet.mockRejectedValueOnce(new Error('database unavailable'));
 
