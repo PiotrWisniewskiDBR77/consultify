@@ -1,0 +1,93 @@
+{
+  "taskId": "SEC-PROVIDER-CONTRACT-001",
+  "baselineSha": "401f0aee835dd46d8c9ce5c48659950d63ff642a",
+  "productSha": "fdeff01135aefaf4d371b9455544631868bcb528",
+  "leaseSha256": "not_applicable_codex_bounded_task",
+  "changedPaths": [
+    "server/src/index.ts",
+    "tests/integration/authMeDemoTtl.contract.test.ts",
+    "tests/integration/buildSurfaceRemoved.contract.test.ts",
+    "tests/integration/demoPublicEntry.contract.test.ts",
+    "tests/integration/demoRealtimeDenial.contract.test.ts",
+    "tests/integration/mywork/my-work.ai-ownership.contract.test.ts",
+    "tests/integration/mywork/my-work.convert.contract.test.ts",
+    "tests/integration/mywork/my-work.idea-confidentiality.contract.test.ts",
+    "tests/integration/mywork/my-work.idea-duplicate.contract.test.ts",
+    "tests/integration/mywork/my-work.map-export-pptx.contract.test.ts",
+    "tests/integration/mywork/my-work.map-object-limit.contract.test.ts",
+    "tests/integration/mywork/my-work.map-orgread.contract.test.ts",
+    "tests/integration/mywork/my-work.map-readside-parity.contract.test.ts",
+    "tests/integration/mywork/my-work.map-shared-write.contract.test.ts",
+    "tests/integration/mywork/my-work.map-sync.contract.test.ts",
+    "tests/integration/mywork/my-work.node-comment-mention.contract.test.ts",
+    "tests/integration/mywork/my-work.observer-readonly.contract.test.ts",
+    "tests/integration/mywork/my-work.shared-map-routes.contract.test.ts",
+    "tests/integration/mywork/realtime-facilitation.resolve-by-tool.contract.test.ts",
+    "tests/integration/publicSystemSurface.contract.test.ts",
+    "tests/integration/routes/my-work.home.fail-closed.contract.test.ts",
+    "tests/integration/routes/my-work.link-graph.fail-closed.contract.test.ts",
+    "tests/integration/routes/pmo.initiatives.fail-closed.contract.test.ts",
+    "tests/integration/spaCatchAllDisclosure.contract.test.ts",
+    "tests/integration/systemHealthRepairRemoved.contract.test.ts",
+    "docs/program/evidence/closure/codex/SEC-PROVIDER-CONTRACT-001/TASK_EVIDENCE.json"
+  ],
+  "changedPathRationale": {
+    "server/src/index.ts": "Exports the existing startup readiness promise for mounted contract synchronization and gives four retired diagnostic aliases an explicit constant 404 JSON tombstone before SPA/API fallbacks.",
+    "tests/integration/buildSurfaceRemoved.contract.test.ts": "Requires exact 404 NOT_FOUND semantics for all retired diagnostic aliases.",
+    "tests/integration/mounted-contracts": "Wait for settled application readiness and keep route-isolated auth mocks compatible with the production validateOrgMembership middleware seam.",
+    "docs/program/evidence/closure/codex/SEC-PROVIDER-CONTRACT-001/TASK_EVIDENCE.json": "Exact current-SHA provider gate evidence."
+  },
+  "ownerTables": ["schema_migrations"],
+  "commands": [
+    {
+      "command": "NODE_ENV=test DATABASE_URL=<provider> DB_TYPE=postgres npm run db:migrate:strict",
+      "exitCode": 0,
+      "result": "Applying migrations: 0; ledger already current at 738 migrations."
+    },
+    {
+      "command": "NODE_ENV=test DATABASE_URL=<provider> DB_TYPE=postgres npm run db:migrate:strict -- --dry-run",
+      "exitCode": 0,
+      "result": "Pending migrations: 0."
+    },
+    {
+      "command": "CONTRACT_DATABASE_URL=<provider> node scripts/testing/run-contract-tests.mjs provider",
+      "exitCode": 0,
+      "result": "81/81 discovered provider contract files passed in isolated Vitest processes; the eight mounted-server files contributed 126/126 tests."
+    },
+    {
+      "command": "NODE_OPTIONS=--max-old-space-size=8192 npm run type-check",
+      "exitCode": 0,
+      "result": "Repository TypeScript check passed."
+    },
+    {
+      "command": "NODE_OPTIONS=--max-old-space-size=8192 npm run build:backend",
+      "exitCode": 0,
+      "result": "Runtime mirror check and backend TypeScript build passed."
+    }
+  ],
+  "denominators": {
+    "providerContractFiles": "81/81",
+    "mountedServerContractTests": "126/126 across 8/8 files",
+    "strictMigrationRepeat": "0 applied",
+    "strictMigrationDryRun": "0 pending",
+    "typecheck": "1/1",
+    "backendBuild": "1/1"
+  },
+  "fixtures": {
+    "database": "Disposable PostgreSQL 16 pgvector container consultify-provider-contract-3455, database provider, localhost port 56815.",
+    "runtime": "Real mounted Express application; mounted files receive DATABASE_URL, DB_TYPE=postgres, MOCK_DB=false and RUN_DB_TESTS=1 in isolated processes."
+  },
+  "negativeControls": {
+    "diagnosticAliases": "GET and POST across /__build-info, /__build-graph, /api/build-info and /api/build-graph return exact 404 NOT_FOUND without filesystem paths or SPA HTML.",
+    "authAndDemo": "Expired demo credentials, deprecated demo-login, superadmin access and realtime demo principals remain denied while ordinary authenticated realtime access remains usable.",
+    "system": "Anonymous detailed health and removed repair endpoints disclose no internals and execute no child process.",
+    "unknownRoutes": "Arbitrary unknown API routes remain fail-closed; the explicit diagnostic tombstones do not change ordinary SPA navigation."
+  },
+  "browserArtifacts": [],
+  "rollback": {
+    "code": "Revert code commit fdeff01135aefaf4d371b9455544631868bcb528.",
+    "data": "No product data or schema changed by this packet."
+  },
+  "verdict": "DONE_CURRENT_SHA",
+  "openBlockers": []
+}
