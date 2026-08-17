@@ -1,17 +1,71 @@
 {
   "taskId": "FIN-MVP-RECONCILIATION-001",
-  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "c8ffd7be0e9b848932064b70a5c8271a9da45f1e",
+  "baselineSha": "2ee37b27c10cfaf7c40ad7ed8760ba705eeb56c0",
+  "productSha": "74517d8437c338db4a8550017923d935d1a7b19b",
+  "testCleanupSha": "8b642f83c7c9e3e84d8c81e0cfd9c3562a881857",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
-  "changedPaths": [],
-  "changedPathRationale": {},
-  "ownerTables": ["rvn_roi_finance_links", "rvn_roi_finance_reconciliations"],
-  "commands": [{"command": "RUN_DB_TESTS=1 npx vitest run server/src/services/finance/canonical/__tests__/roiFinanceReconciliationAdapter.pg.test.ts", "exitCode": 0}],
-  "denominators": {"focusedRealDbTests": 1, "ownerDecisionsApproved": 0},
-  "fixtures": {"database": "isolated PostgreSQL"},
-  "negativeControls": {"actualOverwrite": "legacy Actual cannot be overwritten; proposal/reconciliation only"},
+  "decision": {
+    "decisionId": "DEC-FIN-RESULTS-RECONCILIATION-001",
+    "status": "APPROVED_RESTRICTED_SCOPE",
+    "policyVersion": "DEC-FIN-RESULTS-RECONCILIATION-001/v1",
+    "decisionTextSha256": "a0b04a2bcd42d9fa8a2680f0dd35008f4226bc92db5ecc63756732d7a8854e6d"
+  },
+  "changedPaths": [
+    "server/migrations/20260928_fin_results_reconciliation_decision.sql",
+    "server/src/routes/resultsVnext/roi.routes.ts",
+    "server/src/services/finance/canonical/__tests__/roiFinanceReconciliationAdapter.pg.test.ts",
+    "server/src/services/finance/canonical/roiFinanceReconciliationAdapter.ts",
+    "server/src/services/resultsVnext/roi/roiFinanceReconciliationCommands.ts",
+    "server/src/services/resultsVnext/roi/roiFinanceSeamTypes.ts",
+    "tests/acceptance/fin-mvp-reconciliation.mounted.pg.test.ts",
+    "tests/resultsVnext/roi/roiFinanceReconciliation.realdb.test.ts"
+  ],
+  "changedPathRationale": {
+    "server/migrations/20260928_fin_results_reconciliation_decision.sql": "Exact v1 policy, immutable proposal and decision integrity, irreversible versioned grant ledger, fixed threshold and history-shaped upgrade preflight.",
+    "server/src/services/resultsVnext/roi/roiFinanceReconciliationCommands.ts": "Active membership, explicit Finance-owner grant only, authenticated fingerprint replay, CAS and terminal state machine.",
+    "server/src/services/finance/canonical/__tests__/roiFinanceReconciliationAdapter.pg.test.ts": "RealPG threshold and Actual protection plus exact FK-safe zero-residue cleanup."
+  },
+  "ownerTables": ["rvn_roi_finance_links", "rvn_roi_finance_reconciliations", "rvn_finance_reconciliation_decisions", "rvn_finance_reconciliation_grant_events"],
+  "commands": [
+    {"command": "RUN_DB_TESTS=1 MOCK_DB=false npx vitest run tests/resultsVnext/roi/roiFinanceReconciliation.realdb.test.ts server/src/services/finance/canonical/__tests__/roiFinanceReconciliationAdapter.pg.test.ts --no-file-parallelism", "exitCode": 0, "denominator": "25/25"},
+    {"command": "RUN_DB_TESTS=1 npx vitest run --config vitest.acceptance.config.ts tests/acceptance/fin-mvp-reconciliation.mounted.pg.test.ts --no-file-parallelism", "exitCode": 0, "denominator": "4/4"},
+    {"command": "fresh strict migration; repeat; dry", "exitCode": 0, "denominator": "748/748 distinct; apply0; pending0"},
+    {"command": "empty late upgrade; repeat; dry", "exitCode": 0, "denominator": "747 -> apply1 -> 748; apply0; pending0"},
+    {"command": "history-shaped preflight with two legacy terminal rows sharing one source link", "exitCode": 1, "denominator": "controlled refusal; rows 2 before/2 after; row hash 988208932688990b6372914da0cc312f unchanged"},
+    {"command": "NODE_OPTIONS=--max-old-space-size=8192 npm run type-check", "exitCode": 0},
+    {"command": "npm run build:backend", "exitCode": 0},
+    {"command": "NODE_OPTIONS=--max-old-space-size=8192 npm run build", "exitCode": 0},
+    {"command": "post-suite exact fixture residue query", "exitCode": 0, "denominator": "10 table groups; total residue 0"}
+  ],
+  "denominators": {
+    "focusedAndRegressionTests": "29/29",
+    "mountedSignedJwtTests": "4/4",
+    "freshMigrations": "748/748",
+    "emptyLateUpgradeMigrations": "747+1=748",
+    "historyPreflightRowsUnchanged": "2/2",
+    "fixtureResidue": "0/10 table groups",
+    "ownerDecisionApproved": "1/1"
+  },
+  "fixtures": {
+    "database": "isolated disposable pgvector/pgvector:pg16 PostgreSQL",
+    "migrationChecksumSha256": "cfe497a6ed0690e94320b559bf661f84d791329f89b7ceb5eb2d56c988dc497e"
+  },
+  "negativeControls": {
+    "actualOverwrite": "Direct SQL protection rejects Results Actual mutation; Finance only proposes or disputes.",
+    "authorization": "OWNER/ADMIN wildcard, responsible/self, foreign tenant, revoked membership and revoked explicit grant fail closed.",
+    "revocation": "Raw INSERT and governed command both reject regrant after revoke.",
+    "concurrency": "Two distinct ACTIVE explicitly granted resolvers at one expectedVersion yield exactly one winner and one decision.",
+    "idempotency": "Same canonical request replays; different payload at the same key is 409 after auth/resource/actor validation.",
+    "historyMigration": "Historical rows stop the migration before mutation; no row was deleted, rewritten or falsely labelled v1."
+  },
   "browserArtifacts": [],
-  "rollback": {"code": "no policy expansion", "schema": "additive reconciliation records remain readable"},
+  "rollback": {"code": "Revert application code only.", "schema": "Retain additive immutable reconciliation, decision and grant history; no destructive rollback.", "automaticActualOverwrite": false},
+  "resolvedBlockers": [
+    {"formerBlocker": "Finance/Results owner decision on Actual writer and materiality threshold.", "resolution": "DEC-FIN approved Results as sole immutable Actual writer, Finance proposal/dispute only, and strictly greater than 5 percent as material."},
+    {"formerBlocker": "Post-fan-in test fixture residue.", "resolution": "Cleanup SHA 8b642f83c7 uses exact fixture IDs, FK-safe transaction and named triggers; post-suite residue is 0."}
+  ],
   "verdict": "BLOCKED_OWNER",
-  "openBlockers": ["Finance/Results owner must approve the writer for pinned_finance_value and tracked_metric and the reconciliation threshold."]
+  "openBlockers": [
+    "Any target database containing pre-DEC-FIN reconciliation rows requires an owner-approved data triage/backfill disposition before migration. The verified migration refuses those rows without changing or deleting them."
+  ]
 }
