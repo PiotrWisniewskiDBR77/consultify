@@ -188,7 +188,8 @@ export async function materializeApprovedProposal(input: {
       const { default: decisionService } = await import('../decisionService.js');
       const decision = await decisionService.createDecision({organizationId:input.organizationId,title,
         description:String(content.description || ''),type:'APPROVAL',decisionMakerId:proposal.approver_id,
-        createdBy:proposal.requester_id,idempotencyKey:commandKey,sourceType:'myw_agent_proposal',sourceId:sourceIdentityValue});
+        stakeholderIds:[proposal.requester_id],createdBy:proposal.requester_id,idempotencyKey:commandKey,
+        sourceType:'myw_agent_proposal',sourceId:sourceIdentityValue});
       targetId = decision.id;
     } else {
       const { createNotebookNote } = await import('../notebookService.js');

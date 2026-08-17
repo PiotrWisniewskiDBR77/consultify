@@ -38,6 +38,7 @@ describe.skipIf(!enabled)('MYW-AGT-BVP approved materialization — real PG', ()
     await pool.query(`ALTER TABLE myw_agent_materialization_approvals DISABLE TRIGGER trg_myw_agent_approval_append_only`);
     await pool.query(`ALTER TABLE myw_agent_materialization_proposals DISABLE TRIGGER trg_myw_agent_proposal_guard`);
     await pool.query(`DELETE FROM myw_agent_materialization_receipts WHERE organization_id=$1`, [org]);
+    await pool.query(`DELETE FROM myw_agent_canonical_outbox WHERE organization_id=$1`, [org]);
     await pool.query(`DELETE FROM myw_agent_materialization_approvals WHERE organization_id=$1`, [org]);
     await pool.query(`DELETE FROM myw_agent_materialization_proposals WHERE organization_id=$1`, [org]);
     await pool.query(`ALTER TABLE myw_agent_materialization_receipts ENABLE TRIGGER trg_myw_agent_receipt_append_only`);
@@ -97,8 +98,11 @@ describe.skipIf(!enabled)('MYW-AGT-BVP approved materialization — real PG', ()
       decision:'APPROVE',expectedStateVersion:1,sourceHash:current.sourceHash});
     const [{TaskService},{getDatabase}] = await Promise.all([import('../../TaskService.js'),import('../../../database/Database.js')]);
     const sourceIdentityValue=`${plan}:${current.sourceVersion}:${current.sourceHash}`;
-    const before = await new TaskService(await getDatabase() as any).createTask({title:'task title',description:'approved body',status:'todo',priority:'medium'},
-      requester,{idempotencyKey:`myw-agent:${created.proposal.proposal_id}`,sourceType:'myw_agent_proposal',sourceId:sourceIdentityValue});
+    await expect(new TaskService(await getDatabase() as any).createTask({title:'task title',description:'approved body',status:'todo',priority:'medium'},
+      requester,{idempotencyKey:`myw-agent:${created.proposal.proposal_id}`,sourceType:'myw_agent_proposal',sourceId:sourceIdentityValue,
+        faultInjection:'AFTER_CORE'})).rejects.toThrow('AFTER_CORE');
+    const before=(await pool.query(`SELECT id FROM tasks WHERE organization_id=$1 AND idempotency_key=$2`,
+      [org,`myw-agent:${created.proposal.proposal_id}`])).rows[0];
     const reconciled = await service.materializeApprovedProposal({proposalId:created.proposal.proposal_id,organizationId:org,
       actorId:approver,expectedStateVersion:2});
     expect(reconciled.receipt.target_id).toBe(before.id);
@@ -108,6 +112,37 @@ describe.skipIf(!enabled)('MYW-AGT-BVP approved materialization — real PG', ()
       [created.proposal.proposal_id])).rejects.toThrow(/append.only/i);
     await expect(pool.query(`DELETE FROM myw_agent_materialization_receipts WHERE proposal_id=$1`,
       [created.proposal.proposal_id])).rejects.toThrow(/append.only/i);
+  });
+
+  it.each(['decision','notebook'] as const)('resumes required canonical %s steps after an injected crash', async (kind) => {
+    const current=await service.getAgentPlanSourceIdentity(org,plan,requester);
+    const created=await service.createMaterializationProposal({...request(kind,`resume-${kind}-${tag}`),sourceVersion:current.sourceVersion,sourceHash:current.sourceHash});
+    await service.decideMaterializationProposal({proposalId:created.proposal.proposal_id,organizationId:org,approverId:approver,
+      decision:'APPROVE',expectedStateVersion:1,sourceHash:current.sourceHash});
+    const commandKey=`myw-agent:${created.proposal.proposal_id}`;
+    const identity=`${plan}:${current.sourceVersion}:${current.sourceHash}`;
+    if(kind==='decision'){
+      const {default:decisionService}=await import('../../decisionService.js');
+      await expect(decisionService.createDecision({organizationId:org,title:'decision title',description:'approved body',type:'APPROVAL',
+        decisionMakerId:approver,stakeholderIds:[requester],createdBy:requester,idempotencyKey:commandKey,sourceType:'myw_agent_proposal',sourceId:identity,
+        faultInjection:'AFTER_HISTORY'})).rejects.toThrow('AFTER_HISTORY');
+    }else{
+      const {createNotebookNote}=await import('../../notebookService.js');
+      await expect(createNotebookNote({organizationId:org,userId:requester,title:'notebook title',body:'approved body',
+        source:'myw_agent_proposal',proposalId:created.proposal.proposal_id,idempotencyKey:commandKey,sourceIdentity:identity,
+        faultInjection:'AFTER_CORE'})).rejects.toThrow('AFTER_CORE');
+    }
+    const completed=await service.materializeApprovedProposal({proposalId:created.proposal.proposal_id,organizationId:org,actorId:approver,expectedStateVersion:2});
+    expect(completed.receipt.status).toBe('SUCCEEDED');
+    if(kind==='decision'){
+      expect((await pool.query(`SELECT count(*)::int n FROM decision_history WHERE decision_id=$1 AND action='created'`,[completed.receipt.target_id])).rows[0].n).toBe(1);
+      expect((await pool.query(`SELECT count(*)::int n FROM decision_stakeholders WHERE decision_id=$1 AND user_id=$2`,
+        [completed.receipt.target_id,requester])).rows[0].n).toBe(1);
+    }else{
+      expect((await pool.query(`SELECT materialization_provenance IS NOT NULL provenance,materialization_fts_completed fts FROM notebook_pages WHERE id=$1`,
+        [completed.receipt.target_id])).rows[0]).toEqual({provenance:true,fts:true});
+    }
+    expect((await pool.query(`SELECT count(*)::int n FROM myw_agent_canonical_outbox WHERE organization_id=$1 AND command_key=$2`,[org,commandKey])).rows[0].n).toBe(1);
   });
 
   it('fails closed on source drift and writer failure without a false receipt, including cold readback', async () => {
@@ -133,8 +168,8 @@ describe.skipIf(!enabled)('MYW-AGT-BVP approved materialization — real PG', ()
     expect(failedReceipt.rows[0]).toMatchObject({status:'FAILED',target_id:null});
 
     const expired = await service.createMaterializationProposal({ ...request('notebook',`expired-${tag}`),
-      sourceVersion:current.sourceVersion,sourceHash:current.sourceHash,expiresAt:new Date(Date.now()+25).toISOString() });
-    await new Promise(resolve=>setTimeout(resolve,40));
+      sourceVersion:current.sourceVersion,sourceHash:current.sourceHash,expiresAt:new Date(Date.now()+300).toISOString() });
+    await new Promise(resolve=>setTimeout(resolve,350));
     const expiredDecision = await service.decideMaterializationProposal({proposalId:expired.proposal.proposal_id,organizationId:org,
       approverId:approver,decision:'APPROVE',expectedStateVersion:1,sourceHash:current.sourceHash});
     expect(expiredDecision.proposal.state).toBe('EXPIRED');

@@ -109,6 +109,8 @@ export class TaskService {
    */
   async createTask(input: CreateTaskInput, userId: string, command?: {
     idempotencyKey: string; sourceType: string; sourceId: string;
+    /** Internal acceptance hook; never exposed by an HTTP schema. */
+    faultInjection?: 'AFTER_CORE';
   }): Promise<Task> {
     // Validate input
     const validated = CreateTaskSchema.parse(input);
@@ -173,6 +175,7 @@ export class TaskService {
         command?.sourceId || null,
       ]
     );
+    if (command?.faultInjection === 'AFTER_CORE') throw new Error('TASK_TEST_CRASH_AFTER_CORE');
 
     // Notify assignee if assigned
     if (validated.assigneeId && validated.assigneeId !== userId) {

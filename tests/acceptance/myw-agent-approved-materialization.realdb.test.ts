@@ -30,6 +30,7 @@ describe.skipIf(!enabled)('MYW-AGT mounted signed-JWT acceptance', () => {
     await pool.query(`ALTER TABLE myw_agent_materialization_approvals DISABLE TRIGGER trg_myw_agent_approval_append_only`);
     await pool.query(`ALTER TABLE myw_agent_materialization_proposals DISABLE TRIGGER trg_myw_agent_proposal_guard`);
     await pool.query(`DELETE FROM myw_agent_materialization_receipts WHERE organization_id=$1`,[org]);
+    await pool.query(`DELETE FROM myw_agent_canonical_outbox WHERE organization_id=$1`,[org]);
     await pool.query(`DELETE FROM myw_agent_materialization_approvals WHERE organization_id=$1`,[org]);
     await pool.query(`DELETE FROM myw_agent_materialization_proposals WHERE organization_id=$1`,[org]);
     await pool.query(`ALTER TABLE myw_agent_materialization_receipts ENABLE TRIGGER trg_myw_agent_receipt_append_only`);

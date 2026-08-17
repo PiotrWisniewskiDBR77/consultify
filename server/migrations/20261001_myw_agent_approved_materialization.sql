@@ -51,13 +51,71 @@ CREATE TABLE IF NOT EXISTS myw_agent_materialization_receipts (
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_myw_agent_materialized_target
   ON myw_agent_materialization_receipts(target_kind,target_id) WHERE target_id IS NOT NULL;
-CREATE UNIQUE INDEX IF NOT EXISTS uq_decisions_org_idempotency
-  ON decisions(organization_id,idempotency_key) WHERE idempotency_key IS NOT NULL;
+-- Historical deployments may already contain duplicate generic keys. MYW owns
+-- only its source namespace, so never make a late upgrade fail on unrelated rows.
+DO $$
+DECLARE duplicate_groups BIGINT;
+BEGIN
+  SELECT count(*) INTO duplicate_groups FROM (
+    SELECT organization_id,idempotency_key FROM decisions WHERE idempotency_key IS NOT NULL
+    GROUP BY organization_id,idempotency_key HAVING count(*)>1
+  ) duplicates;
+  IF duplicate_groups>0 THEN
+    RAISE NOTICE 'historical decision idempotency duplicate groups retained outside MYW namespace: %',duplicate_groups;
+  END IF;
+  SELECT count(*) INTO duplicate_groups FROM (
+    SELECT organization_id,idempotency_key FROM decisions
+    WHERE idempotency_key IS NOT NULL AND source_type='myw_agent_proposal'
+    GROUP BY organization_id,idempotency_key HAVING count(*)>1
+  ) duplicates;
+  IF duplicate_groups>0 THEN
+    RAISE EXCEPTION 'myw_agent_decision_idempotency_duplicates:%',duplicate_groups;
+  END IF;
+END $$;
+DROP INDEX IF EXISTS uq_decisions_org_idempotency;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_decisions_myw_idempotency
+  ON decisions(organization_id,idempotency_key)
+  WHERE idempotency_key IS NOT NULL AND source_type='myw_agent_proposal';
 ALTER TABLE notebook_pages ADD COLUMN IF NOT EXISTS idempotency_key TEXT;
 ALTER TABLE notebook_pages ADD COLUMN IF NOT EXISTS source_type TEXT;
 ALTER TABLE notebook_pages ADD COLUMN IF NOT EXISTS source_id TEXT;
-CREATE UNIQUE INDEX IF NOT EXISTS uq_notebook_pages_org_idempotency
-  ON notebook_pages(organization_id,idempotency_key) WHERE idempotency_key IS NOT NULL;
+ALTER TABLE notebook_pages ADD COLUMN IF NOT EXISTS materialization_provenance JSONB;
+ALTER TABLE notebook_pages ADD COLUMN IF NOT EXISTS materialization_fts_completed BOOLEAN NOT NULL DEFAULT FALSE;
+DO $$
+DECLARE duplicate_groups BIGINT;
+BEGIN
+  SELECT count(*) INTO duplicate_groups FROM (
+    SELECT organization_id,idempotency_key FROM notebook_pages WHERE idempotency_key IS NOT NULL
+    GROUP BY organization_id,idempotency_key HAVING count(*)>1
+  ) duplicates;
+  IF duplicate_groups>0 THEN
+    RAISE NOTICE 'historical notebook idempotency duplicate groups retained outside MYW namespace: %',duplicate_groups;
+  END IF;
+  SELECT count(*) INTO duplicate_groups FROM (
+    SELECT organization_id,idempotency_key FROM notebook_pages
+    WHERE idempotency_key IS NOT NULL AND source_type='myw_agent_proposal'
+    GROUP BY organization_id,idempotency_key HAVING count(*)>1
+  ) duplicates;
+  IF duplicate_groups>0 THEN
+    RAISE EXCEPTION 'myw_agent_notebook_idempotency_duplicates:%',duplicate_groups;
+  END IF;
+END $$;
+DROP INDEX IF EXISTS uq_notebook_pages_org_idempotency;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_notebook_pages_myw_idempotency
+  ON notebook_pages(organization_id,idempotency_key)
+  WHERE idempotency_key IS NOT NULL AND source_type='myw_agent_proposal';
+
+CREATE TABLE IF NOT EXISTS myw_agent_canonical_outbox (
+  event_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id TEXT NOT NULL REFERENCES organizations(id),
+  command_key TEXT NOT NULL,
+  target_kind TEXT NOT NULL CHECK(target_kind IN ('task','decision','notebook')),
+  target_id TEXT NOT NULL,
+  event_type TEXT NOT NULL,
+  payload JSONB NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(organization_id,command_key,event_type)
+);
 
 CREATE OR REPLACE FUNCTION myw_agent_proposal_guard() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
