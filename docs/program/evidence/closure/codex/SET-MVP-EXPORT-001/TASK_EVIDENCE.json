@@ -1,22 +1,25 @@
 {
   "taskId": "SET-MVP-EXPORT-001",
-  "baselineSha": "59a2bae0e1fd1bdf6e81a932349fb106709a9279",
-  "productSha": "56831061f3446b372fe798055e6cca9fa3b380b0",
+  "baselineSha": "a27dc9694e213425ca8bc5ed1e2234a89fe9a564",
+  "productSha": "827f2853f960e9df332c8158215be33fa7c692f7",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
-  "changedPaths": ["server/migrations/20260915_user_data_export_receipts.sql", "server/src/services/gdprService.ts", "server/src/routes/gdpr.routes.ts", "tests/integration/settings/gdpr-settings-no-stubs.test.ts", "docs/program/evidence/closure/codex/SET-MVP-EXPORT-001/TASK_EVIDENCE.json"],
-  "changedPathRationale": {"migration": "tenant-bound immutable receipt and ready-state parity", "service": "single hash-bound materialization and owner readback", "route": "authorized receipt-backed download", "test": "realPG retry, denial and tamper controls", "evidence": "current candidate proof"},
+  "changedPaths": ["server/migrations/20260915_user_data_export_receipts.sql", "server/src/services/gdprService.ts", "server/src/routes/gdpr.routes.ts", "tests/integration/settings/gdpr-settings-no-stubs.test.ts", "src/components/settings/DataControlsSettings.tsx", "src/components/settings/__tests__/DataControlsSettings.smoke.test.tsx", "tests/unit/components/settings/DataControlsSettings.honesty.test.tsx", "docs/program/evidence/closure/codex/SET-MVP-EXPORT-001/TASK_EVIDENCE.json"],
+  "changedPathRationale": {"migration": "tenant-bound immutable receipt and ready-state parity", "service": "single hash-bound materialization and owner readback", "route": "authorized receipt-backed download", "mountedUi": "canonical request to bounded status polling to authorized receipt download; legacy direct export removed from the mounted surface", "test": "realPG retry, denial and tamper controls plus UI success, deduplication, timeout and fail-closed controls", "evidence": "current candidate proof"},
   "ownerTables": ["data_export_requests", "user_data_export_receipts"],
   "commands": [
     {"command": "DATABASE_URL=<fresh-pg> DB_TYPE=postgres NODE_ENV=test npx tsx server/scripts/migrate.postgres.ts", "exitCode": 0, "result": "725/725 applied"},
     {"command": "DATABASE_URL=<fresh-pg> RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test npx vitest run tests/integration/settings/gdpr-settings-no-stubs.test.ts --reporter=dot --maxWorkers=1 --no-file-parallelism", "exitCode": 0, "result": "1/1 file; 4/4 passed; 0 failed/skipped"},
-    {"command": "npm run type-check", "exitCode": 130, "result": "no diagnostics emitted; bounded manual interruption after non-termination"}
+    {"command": "npx vitest run src/components/settings/__tests__/DataControlsSettings.smoke.test.tsx tests/unit/components/settings/DataControlsSettings.honesty.test.tsx --reporter=dot --maxWorkers=1 --no-file-parallelism", "exitCode": 0, "result": "2/2 files; 12/12 passed; 0 failed/skipped"},
+    {"command": "NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit", "exitCode": 0, "result": "no diagnostics"},
+    {"command": "NODE_OPTIONS=--max-old-space-size=8192 npm run build", "exitCode": 0, "result": "shared TypeScript build and Vite production build passed; 10435 modules transformed"},
+    {"command": "git diff --check -- src/components/settings/DataControlsSettings.tsx src/components/settings/__tests__/DataControlsSettings.smoke.test.tsx tests/unit/components/settings/DataControlsSettings.honesty.test.tsx", "exitCode": 0, "result": "clean"}
   ],
   "databaseProof": {"engine": "pgvector/pgvector:pg16", "fixture": "fresh disposable set_export on loopback 32770", "freshMigrations": 725, "receiptReadback": "two downloads byte-identical with identical SHA-256", "immutability": "direct UPDATE rejected by PostgreSQL trigger"},
-  "denominators": {"focusedFiles": "1/1", "focusedTests": "4/4", "freshMigrations": "725/725", "negativeControls": "2/2", "typeCheck": "NOT_VERIFIED (exit 130)"},
+  "denominators": {"realPgFocusedFiles": "1/1", "realPgFocusedTests": "4/4", "uiFocusedFiles": "2/2", "uiFocusedTests": "12/12", "freshMigrations": "725/725", "realPgNegativeControls": "2/2", "uiFailClosedControls": "6/6", "typeCheck": "PASS", "frontendBuild": "PASS"},
   "fixtures": {"database": "fresh disposable PostgreSQL 16", "identity": "tenant user plus distinct authenticated user", "artifact": "portable JSON from repository-backed collector"},
-  "negativeControls": ["different authenticated user receives 404 for guessed request id", "receipt mutation rejected by database trigger"],
+  "negativeControls": ["different authenticated user receives 404 for guessed request id", "receipt mutation rejected by database trigger", "mounted UI rejects unconfirmed request", "mounted UI rejects mismatched receipt status", "mounted UI rejects status transport failure", "mounted UI rejects failed processing status", "mounted UI rejects download failure", "mounted UI times out without legacy download or success claim", "double click produces one request", "mounted UI contains no /api/user/data-export call"],
   "browserArtifacts": [],
   "rollback": {"code": "revert the listed implementation/test paths before deployment", "data": "drop receipt trigger/function/table and restore prior request status constraint; this run used disposable data only"},
   "verdict": "PARTIAL",
-  "openBlockers": ["G4 mounted-browser download/readback artifact is absent; type-check was interrupted without diagnostics and remains NOT_VERIFIED."]
+  "openBlockers": ["G4 mounted signed-in browser download/readback artifact is absent. Owner-free product wiring, focused tests, type-check and frontend build are complete at productSha; verdict remains PARTIAL until real G4 evidence exists."]
 }
