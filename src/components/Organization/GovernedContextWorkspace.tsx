@@ -22,6 +22,30 @@ interface GovernedContextWorkspaceProps {
   isAdmin: boolean;
 }
 
+const UPLOAD_KEY_PREFIX = 'org-governed-upload:';
+
+function uploadFingerprint(file: File): string {
+  return [file.name, file.size, file.type, file.lastModified].join(':');
+}
+
+function stableUploadKey(file: File): string {
+  const storageKey = `${UPLOAD_KEY_PREFIX}${uploadFingerprint(file)}`;
+  try {
+    const existing = localStorage.getItem(storageKey);
+    if (existing) return existing;
+    const generated =
+      globalThis.crypto?.randomUUID?.() ||
+      `org-upload-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+    localStorage.setItem(storageKey, generated);
+    return generated;
+  } catch {
+    return (
+      globalThis.crypto?.randomUUID?.() ||
+      `org-upload-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
+    );
+  }
+}
+
 function renderValue(value: unknown): string {
   if (typeof value === 'string') return value;
   try {
@@ -41,6 +65,7 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadIdempotencyKey, setUploadIdempotencyKey] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const uploadInFlight = useRef(false);
 
@@ -76,15 +101,17 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
   );
   const approvedCount = useMemo(() => claims.filter((claim) => claim.approved).length, [claims]);
 
-  const ingest = async (file: File) => {
+  const ingest = async (file: File, retainedKey?: string | null) => {
     if (uploadInFlight.current) return;
     uploadInFlight.current = true;
     setBusyKey('upload');
     setUploadError(null);
     setNotice(null);
     setUploadFile(file);
+    const idempotencyKey = retainedKey || stableUploadKey(file);
+    setUploadIdempotencyKey(idempotencyKey);
     try {
-      const result = await organizationGovernedContextApi.ingestDocument(file);
+      const result = await organizationGovernedContextApi.ingestDocument(file, idempotencyKey);
       if (!result.success || !result.docId) throw new Error('Incomplete ingest receipt');
       await load();
       setNotice(
@@ -261,7 +288,7 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
               size="sm"
               variant="outline"
               disabled={!uploadFile || busyKey !== null}
-              onClick={() => uploadFile && void ingest(uploadFile)}
+              onClick={() => uploadFile && void ingest(uploadFile, uploadIdempotencyKey)}
             >
               <RefreshCw size={15} /> {t('common.retry', 'Retry')}
             </Button>

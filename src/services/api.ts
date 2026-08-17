@@ -8651,7 +8651,8 @@ export const Api = {
   },
 
   uploadChatAttachment: async (
-    file: File
+    file: File,
+    idempotencyKey?: string
   ): Promise<{
     success: boolean;
     docId: string;
@@ -8669,6 +8670,7 @@ export const Api = {
     const authHeader: Record<string, string> = {};
     const token = tokenService.getToken();
     if (token) authHeader['Authorization'] = `Bearer ${token}`;
+    if (idempotencyKey) authHeader['Idempotency-Key'] = idempotencyKey;
 
     const res = await fetchWithRetry(`${API_URL}/ai/attachments/ingest`, {
       method: 'POST',

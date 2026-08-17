@@ -402,8 +402,8 @@ function mapLlmCallError(error: any): { status: number; body: Record<string, unk
 router.post(
   '/attachments/ingest',
   verifyToken,
-  attachmentsUpload.single('file'),
   requireActiveTenantMembership,
+  attachmentsUpload.single('file'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
     const orgId = req.organizationId;
@@ -511,22 +511,73 @@ router.post(
     const ragService = (ragModule.default || ragModule) as any;
 
     const chunks = makeChunks(text);
-    let embeddedChunks = 0;
-    const embedded: Array<{ chunkIndex: number; content: string; embedding: unknown[] }> = [];
-    for (const c of chunks) {
-      const chunkIndex = Number(c.chunkIndex || 0);
-      const content = String(c.content || '').trim();
-      if (!content) continue;
-      const embedding = await ragService.generateEmbedding(content);
-      embedded.push({ chunkIndex, content, embedding: Array.isArray(embedding) ? embedding : [] });
-      if (embedding && Array.isArray(embedding) && embedding.length > 0) embeddedChunks += 1;
+    const rawIdempotencyKey = String(req.get('Idempotency-Key') || '').trim();
+    if (rawIdempotencyKey.length > 200) {
+      return res.status(400).json({ code: 'INVALID_IDEMPOTENCY_KEY' });
     }
+    const requestHash = createHash('sha256')
+      .update(filename)
+      .update('\0')
+      .update(mimeType)
+      .update('\0')
+      .update(req.file.buffer)
+      .digest('hex');
+    const fileHash = createHash('sha256').update(req.file.buffer).digest('hex');
 
     const { getPoolClientForPinnedTransaction } = await import('../database/PostgresDatabase.js');
     const client = await getPoolClientForPinnedTransaction();
     try {
       await client.query('BEGIN');
-      const fileHash = createHash('sha256').update(req.file.buffer).digest('hex');
+      if (rawIdempotencyKey) {
+        const reservation = await client.query(
+          `INSERT INTO organization_context_upload_receipts
+             (organization_id, idempotency_key, request_hash, status)
+           VALUES ($1, $2, $3, 'PROCESSING')
+           ON CONFLICT (organization_id, idempotency_key) DO NOTHING
+           RETURNING idempotency_key`,
+          [orgId, rawIdempotencyKey, requestHash]
+        );
+        if (reservation.rowCount === 0) {
+          const existing = await client.query<{
+            request_hash: string;
+            status: string;
+            response_json: Record<string, unknown> | null;
+          }>(
+            `SELECT request_hash, status, response_json
+               FROM organization_context_upload_receipts
+              WHERE organization_id=$1 AND idempotency_key=$2
+              FOR UPDATE`,
+            [orgId, rawIdempotencyKey]
+          );
+          const receipt = existing.rows[0];
+          if (!receipt || receipt.request_hash !== requestHash) {
+            await client.query('ROLLBACK');
+            return res.status(409).json({ code: 'IDEMPOTENCY_KEY_REUSED' });
+          }
+          if (receipt.status === 'COMPLETED' && receipt.response_json) {
+            await client.query('COMMIT');
+            return res.status(200).json({ ...receipt.response_json, replayed: true });
+          }
+          await client.query('ROLLBACK');
+          return res.status(409).json({ code: 'IDEMPOTENCY_REQUEST_IN_PROGRESS' });
+        }
+      }
+
+      let embeddedChunks = 0;
+      const embedded: Array<{ chunkIndex: number; content: string; embedding: unknown[] }> = [];
+      for (const c of chunks) {
+        const chunkIndex = Number(c.chunkIndex || 0);
+        const content = String(c.content || '').trim();
+        if (!content) continue;
+        const embedding = await ragService.generateEmbedding(content);
+        embedded.push({
+          chunkIndex,
+          content,
+          embedding: Array.isArray(embedding) ? embedding : [],
+        });
+        if (embedding && Array.isArray(embedding) && embedding.length > 0) embeddedChunks += 1;
+      }
+
       await client.query(
         `INSERT INTO knowledge_docs
          (id, filename, filepath, status, organization_id, source_type, file_hash, version, created_at)
@@ -560,7 +611,26 @@ router.post(
         },
         writeExecutor: async (sql, params) => client.query(sql, params),
       });
+      const responseBody = {
+        success: true,
+        docId,
+        filename,
+        mimeType,
+        extractionStatus: 'extracted',
+        totalChunks: chunks.length,
+        embeddedChunks,
+      };
+      if (rawIdempotencyKey) {
+        await client.query(
+          `UPDATE organization_context_upload_receipts
+              SET status='COMPLETED', document_id=$3, response_json=$4::jsonb,
+                  completed_at=CURRENT_TIMESTAMP
+            WHERE organization_id=$1 AND idempotency_key=$2 AND status='PROCESSING'`,
+          [orgId, rawIdempotencyKey, docId, JSON.stringify(responseBody)]
+        );
+      }
       await client.query('COMMIT');
+      return res.status(201).json(responseBody);
     } catch (error) {
       await client.query('ROLLBACK').catch((rollbackError) => {
         logger.error('[AI Attachments] Rollback failed:', rollbackError);
@@ -570,15 +640,6 @@ router.post(
       client.release();
     }
 
-    return res.status(201).json({
-      success: true,
-      docId,
-      filename,
-      mimeType,
-      extractionStatus: 'extracted',
-      totalChunks: chunks.length,
-      embeddedChunks,
-    });
   })
 );
 

@@ -961,10 +961,15 @@ export class OrganizationContextService {
     const id = uuidv4();
     const now = new Date().toISOString();
     const write = input.writeExecutor || dbRun;
+    const pinned = Boolean(input.writeExecutor);
     await write(
-      `INSERT INTO organization_context_items
+      pinned
+        ? `INSERT INTO organization_context_items
        (id, organization_id, source_type, source_id, author_user_id, channel, source_label, content_json, metadata_json, is_explicit, visibility_scope, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`
+        : `INSERT INTO organization_context_items
+       (id, organization_id, source_type, source_id, author_user_id, channel, source_label, content_json, metadata_json, is_explicit, visibility_scope, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         input.organizationId,
@@ -985,9 +990,13 @@ export class OrganizationContextService {
     for (const claim of input.claims || []) {
       if (!isKnownClaimPath(claim.claimPath)) continue;
       await write(
-        `INSERT INTO organization_context_claims
+        pinned
+          ? `INSERT INTO organization_context_claims
          (id, organization_id, item_id, claim_path, value_json, confidence, claim_type, status, review_status, supersedes_claim_id, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', $8, NULL, $9)`,
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', $8, NULL, $9)`
+          : `INSERT INTO organization_context_claims
+         (id, organization_id, item_id, claim_path, value_json, confidence, claim_type, status, review_status, supersedes_claim_id, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, 'active', ?, NULL, ?)`,
         [
           uuidv4(),
           input.organizationId,

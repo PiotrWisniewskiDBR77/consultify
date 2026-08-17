@@ -57,6 +57,7 @@ const version = {
 describe('GovernedContextWorkspace', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
     api.listClaims.mockResolvedValue([]);
     api.listVersions.mockResolvedValue([]);
   });
@@ -125,6 +126,8 @@ describe('GovernedContextWorkspace', () => {
     fireEvent.change(input, { target: { files: [file] } });
     fireEvent.change(input, { target: { files: [file] } });
     expect(api.ingestDocument).toHaveBeenCalledTimes(1);
+    expect(api.ingestDocument.mock.calls[0]?.[0]).toBe(file);
+    expect(api.ingestDocument.mock.calls[0]?.[1]).toEqual(expect.any(String));
     release({ success: true, docId: 'doc-1', filename: 'strategy.pdf' });
     expect(await screen.findByText('evidence.documentExtraction')).toBeInTheDocument();
     expect(await screen.findByRole('status')).toHaveTextContent('pending governed claim');
@@ -145,7 +148,35 @@ describe('GovernedContextWorkspace', () => {
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Retry/i }));
     expect(await screen.findByText('evidence.documentExtraction')).toBeInTheDocument();
-    expect(api.ingestDocument).toHaveBeenNthCalledWith(2, file);
+    expect(api.ingestDocument.mock.calls[1]).toEqual(api.ingestDocument.mock.calls[0]);
+  });
+
+  it('reuses the persisted upload key after a cold remount', async () => {
+    api.ingestDocument.mockResolvedValue({
+      success: true,
+      docId: 'doc-1',
+      filename: 'cold.txt',
+    });
+    const file = new File(['cold'], 'cold.txt', {
+      type: 'text/plain',
+      lastModified: 12345,
+    });
+    const first = render(<GovernedContextWorkspace isAdmin />);
+    await screen.findByText(/No sourced claims/i);
+    fireEvent.change(screen.getByLabelText(/Upload source document/i), {
+      target: { files: [file] },
+    });
+    await waitFor(() => expect(api.ingestDocument).toHaveBeenCalledTimes(1));
+    const firstKey = api.ingestDocument.mock.calls[0]?.[1];
+    first.unmount();
+
+    render(<GovernedContextWorkspace isAdmin />);
+    await screen.findByText(/No sourced claims/i);
+    fireEvent.change(screen.getByLabelText(/Upload source document/i), {
+      target: { files: [file] },
+    });
+    await waitFor(() => expect(api.ingestDocument).toHaveBeenCalledTimes(2));
+    expect(api.ingestDocument.mock.calls[1]?.[1]).toBe(firstKey);
   });
 
   it.each([

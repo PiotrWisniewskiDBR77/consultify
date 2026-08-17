@@ -65,8 +65,11 @@ export interface GovernedDocumentIngestResult {
 const root = '/organization-context/governed';
 
 export const organizationGovernedContextApi = {
-  async ingestDocument(file: File): Promise<GovernedDocumentIngestResult> {
-    return Api.uploadChatAttachment(file);
+  async ingestDocument(
+    file: File,
+    idempotencyKey: string
+  ): Promise<GovernedDocumentIngestResult> {
+    return Api.uploadChatAttachment(file, idempotencyKey);
   },
 
   async listClaims(limit = 200): Promise<GovernedClaim[]> {

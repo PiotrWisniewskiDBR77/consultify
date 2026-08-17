@@ -57,7 +57,9 @@ vi.mock('../../services/organizationContext/OrganizationContextService.js', () =
   },
 }));
 
+let membershipSawFile = false;
 const requireActiveTenantMembership = vi.fn((req: any, res: any, next: any) => {
+  membershipSawFile = Boolean(req.file);
   if (req.headers['x-test-membership'] === 'revoked') {
     return res.status(403).json({ code: 'ACTIVE_MEMBERSHIP_REQUIRED' });
   }
@@ -104,9 +106,10 @@ describe('POST /ai/attachments/ingest (file ingest)', () => {
     pgQuery.mockResolvedValue({ rows: [], rowCount: 1 });
     generateEmbedding.mockResolvedValue([0.1, 0.2, 0.3]);
     requireActiveTenantMembership.mockClear();
+    membershipSawFile = false;
   });
 
-  it('runs the active-membership wall after identity and multipart parsing but before durable writes', async () => {
+  it('runs the active-membership wall after identity and before multipart parsing or durable writes', async () => {
     const app = await createApp();
     const denied = await request(app)
       .post('/api/ai/attachments/ingest')
@@ -122,6 +125,7 @@ describe('POST /ai/attachments/ingest (file ingest)', () => {
       userId: 'user-ingest-1',
       organizationId: 'org-ingest-1',
     });
+    expect(membershipSawFile).toBe(false);
     expect(dbRun).not.toHaveBeenCalled();
     expect(recordAttachmentExtraction).not.toHaveBeenCalled();
   });
