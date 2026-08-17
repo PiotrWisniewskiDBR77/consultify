@@ -1,67 +1,83 @@
 {
-  "baselineSha": "8ef54e444e030417b08a8df2a7abca05b8c7f042",
-  "productSha": "a3d3d096c6fd150f032948a187f16c17256fc163",
-  "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
-  "environment": {
-    "node": "v24.12.0",
-    "postgres": "16.14 (pgvector/pgvector:pg16)",
-    "vitest": "root vitest.config.ts",
-    "dbUrl": "127.0.0.1:32905 isolated fresh container consultify-org-bvp-8ef54e"
-  },
-  "gateG0": "PASS pre-commit (lease PASS, 25 changed paths). POST-COMMIT the verifier reports 11 new source/test files as violations; all 11 match lane C allowedNewRoots and none exist at baseline — see ICR-C-003, a verifier defect (isTracked() is true for staged/committed paths), not a scope violation.",
-  "gateG1": "PASS — npm run type-check exit 0; npm run build:backend exit 0; test:discovery-gate PASS 4997/4997 discovered, 4698 executed.",
-  "gateG3": "PASS — current migration runner on fresh from-zero PostgreSQL exit 0; schema_migrations contains 728 applied rows.",
   "taskId": "ORG-BVP-001",
+  "baselineSha": "3d58ec9f028cfaf8d2daf6dcd2d6e89ee8cb3898",
+  "productSha": "1c2549c3156b0d9c3cd6d9b27e81e94f846d12ee",
+  "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
   "verdict": "PARTIAL",
-  "ownerTables": [
-    "organization_context_snapshot_versions",
-    "organization_context_claim_reviews",
-    "organization_context_claims"
-  ],
-  "denominators": {
-    "realdbTests": "15 passed / 15 discovered across 2 files: 11 governed snapshot spine plus 4 mounted HTTP/JWT golden-path tests",
-    "typecheck": "npm run type-check exit 0"
-  },
-  "negativeControls": {
-    "immutability": "direct UPDATE on a published snapshot version rejected by DB trigger",
-    "reopen": "v2 publish leaves v1 byte-identical with matching content_hash",
-    "unapprovedExcluded": "pending claims absent from published snapshot",
-    "concurrentDecisions": "exactly one decision",
-    "crossTenant": "denied",
-    "mountedCrossTenant": "foreign owner JWT gets 404 for owner tenant claim approval and pinned version read",
-    "mountedRole": "active MEMBER JWT gets 403 for approve",
-    "mountedStaleMembership": "INACTIVE membership with otherwise valid JWT gets 403 ORG_MEMBERSHIP_REVOKED",
-    "confidentiality": "restricted claim filtered from default read",
-    "sourceDeletion": "detectable, stored content unaltered"
-  },
-  "findings": [
-    "Fixed a real integrity defect: content_hash did not match a hash recomputed from the stored snapshot_json, because node-pg returns Date for timestamptz and canonicalizeForHash reduced Date to {} while JSON.stringify wrote an ISO string. The snapshot was advertised as hash-bound while its hash did not verify."
-  ],
-  "open": [
-    "Literal DoD remains open at snapshot -> Chat/Idea consumption: current Chat/Idea context builders still call live buildResolvedContext(), and no caller contract selects a pinned governed version. Choosing latest vs explicit version is an owner/product decision; this task does not infer it. The immutable snapshot read API and exact-ref payload are implemented and proved."
-  ],
+  "technicalVerdict": "DONE_CURRENT_SHA",
+  "verdictRationale": "The owner-free pinned-consumption gap is closed on exact product SHA 1c2549c315: additive governed-only Chat and Idea routes require snapshotId+version+contentHash, persist that exact ref inside the proposal hash and an immutable binding receipt, and replay without resolving live/latest context. Legacy routes remain compatible and are not dual-written. Literal task remains PARTIAL only because browser/human G4 was outside this backend package.",
+  "open": ["Mounted browser/human G4 for the user-facing governed snapshot selection flow remains NOT_VERIFIED."],
   "changedPaths": [
-    "server/src/routes/organization-context.routes.ts",
-    "server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts"
+    "server/migrations/20260929_org_context_consumer_bindings.sql",
+    "server/src/services/organizationContext/OrganizationContextService.ts",
+    "server/src/services/organizationContext/governedSnapshotConsumerBindingService.ts",
+    "server/src/services/organizationContext/__tests__/orgPinnedConsumersMounted.pg.test.ts",
+    "server/src/services/chatHandoff/chatHandoffService.ts",
+    "server/src/routes/v8/chat.routes.ts",
+    "server/src/services/ideaHandoff/ideaHandoffService.ts",
+    "server/src/routes/ideaBusinessCase.routes.ts",
+    "server/src/routes/organization-context.routes.ts"
   ],
   "changedPathRationale": {
-    "server/src/routes/organization-context.routes.ts": "Revalidate active organization membership after JWT verification for every Organization Context endpoint.",
-    "server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts": "Fresh-PostgreSQL proof of the production document proposal writer and mounted HTTP/JWT approve, publish, tenant, role, stale-membership and cold-reopen contracts."
+    "server/migrations/20260929_org_context_consumer_bindings.sql": "Adds an immutable exact-ref receipt keyed to the governed Chat/Idea proposal; no existing table is rewritten.",
+    "server/src/services/organizationContext/OrganizationContextService.ts": "Returns stable snapshotId alongside version/hash for publish/list/read without changing immutable snapshot bytes.",
+    "server/src/services/organizationContext/governedSnapshotConsumerBindingService.ts": "Validates tenant/id/version/hash and records proposal+binding in one pinned PostgreSQL UoW with proposal locking for race-safe replay.",
+    "server/src/services/organizationContext/__tests__/orgPinnedConsumersMounted.pg.test.ts": "Signed-JWT mounted Chat+Idea, eight-way exactly-once, fail-closed, immutable, cold and restart proof.",
+    "server/src/services/chatHandoff/chatHandoffService.ts": "Embeds an explicitly supplied governed ref in the canonical Chat proposal payload and records its immutable binding.",
+    "server/src/routes/v8/chat.routes.ts": "Adds a governed-only Chat proposal endpoint that rejects missing refs while leaving the legacy endpoint unchanged.",
+    "server/src/services/ideaHandoff/ideaHandoffService.ts": "Embeds and binds an explicitly supplied governed ref in the canonical Idea artifact proposal.",
+    "server/src/routes/ideaBusinessCase.routes.ts": "Adds governed-only Idea proposal endpoint and active-membership enforcement; legacy proposal endpoint remains available.",
+    "server/src/routes/organization-context.routes.ts": "Adds an explicit latest-to-exact-ref resolver; execution/replay never calls latest or buildResolvedContext."
   },
-  "commands": [
-    "docker run -d --name consultify-org-bvp-8ef54e -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=org_bvp -p 127.0.0.1::5432 pgvector/pgvector:pg16",
-    "DATABASE_URL=postgresql://postgres:***@127.0.0.1:32905/org_bvp DB_TYPE=postgres CI=true npx tsx server/scripts/migrate.postgres.ts",
-    "DATABASE_URL=postgresql://postgres:***@127.0.0.1:32905/org_bvp DB_TYPE=postgres CI=true RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test npx vitest run server/src/services/organizationContext/__tests__/orgContextGovernedSnapshot.pg.test.ts server/src/services/organizationContext/__tests__/orgBvpMountedGoldenPath.pg.test.ts --no-file-parallelism --maxWorkers=1 --retry=0 --reporter=dot",
-    "npm run type-check"
+  "ownerTables": [
+    "organization_context_snapshot_versions",
+    "organization_context_consumer_bindings",
+    "artifact_handoff_proposals"
   ],
+  "commands": [
+    { "gate": "G3-fresh", "command": "DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32914/org_pinned DB_TYPE=postgres CI=true npx tsx server/scripts/migrate.postgres.ts", "exitCode": 0, "result": "743/743 distinct/success, including 20260929" },
+    { "gate": "G3-repeat-dry", "command": "<same env> migrate; <same env> migrate --dry-run", "exitCode": 0, "result": "repeat 0; dry pending 0" },
+    { "gate": "G2-consumers", "command": "DATABASE_URL=<org_pinned> DB_TYPE=postgres CI=true RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test ENABLE_V8_GLOBAL=true npx vitest run orgPinnedConsumersMounted orgContextGovernedSnapshot chatHandoffService ideaHandoffService --no-file-parallelism --maxWorkers=1 --retry=0 --reporter=dot", "exitCode": 0, "result": "4/4 files; 41/41 tests" },
+    { "gate": "G2-existing-mounted", "command": "DATABASE_URL=<org_pinned> ... npx vitest run orgBvpMountedGoldenPath.pg.test.ts --retry=0", "exitCode": 0, "result": "1/1 file; 4/4 tests" },
+    { "gate": "G2-chat-route", "command": "npx vitest run server/src/services/v8/__tests__/chat-routes.test.ts --retry=0 --reporter=dot", "exitCode": 0, "result": "18/18 tests" },
+    { "gate": "G1-typecheck", "command": "npm run type-check", "exitCode": 0, "result": "full repository tsc passed" },
+    { "gate": "G1-build", "command": "npm run build:backend", "exitCode": 0, "result": "9 mirrors verified; backend build passed" }
+  ],
+  "denominators": {
+    "freshMigrations": { "discovered": 743, "applied": 743, "successful": 743, "failed": 0 },
+    "repeatMigrations": { "applied": 0 },
+    "dryRun": { "pending": 0 },
+    "focusedRealPostgres": { "files": 4, "passed": 41, "failed": 0, "skipped": 0, "todo": 0 },
+    "existingMounted": { "files": 1, "passed": 4, "failed": 0, "skipped": 0, "todo": 0 },
+    "chatRouteRegression": { "files": 1, "passed": 18, "failed": 0 },
+    "typeCheck": { "passed": 1, "failed": 0 },
+    "backendBuild": { "passed": 1, "failed": 0 }
+  },
   "fixtures": {
-    "prefix": "codex_org_bvp_ with per-run UUID suffix",
-    "postgres": "fresh pgvector/pgvector:pg16 database org_bvp; 728 migrations",
-    "cleanup": "all Organization Context, knowledge document, membership, user and organization fixture rows deleted; explicit residue assertion equals zero"
+    "postgres": "fresh tmpfs pgvector/pgvector:pg16 container consultify-org-pinned-current, loopback 32914, database org_pinned",
+    "personas": "two tenant OWNERs plus INACTIVE stale owner",
+    "consumers": "real conversation/message and my_ideas rows; two own-org versions and one foreign snapshot",
+    "cleanup": "bindings=0, proposals=0, users=0 for org_pin_* after gate"
+  },
+  "negativeControls": {
+    "missingRef": "governed Chat and Idea routes return 400; no legacy fallback",
+    "tenant": "foreign snapshot and foreign consumer are 404; organization comes from signed JWT",
+    "hashVersion": "wrong hash/version/id fail closed before proposal success",
+    "membership": "INACTIVE JWT receives 403",
+    "concurrency": "8 same governed Chat commands produce one proposal/binding, one 201 and seven 200 replays",
+    "pinnedUow": "snapshot FOR SHARE plus proposal FOR UPDATE serialize exact proposal/hash/binding receipt",
+    "immutability": "direct binding UPDATE and DELETE rejected by DB trigger",
+    "restartCold": "new Express mount and independent pg.Client reopen exact refs and replay same proposal/binding",
+    "noLiveReplay": "latest resolver returns exact ref before command; persisted command/replay reads only exact id/version/hash"
+  },
+  "migrationChecksums": {
+    "20260929_org_context_consumer_bindings.sql": "188f3e814c7a5e89ee0e3cef895d983afaa0d49efa3256752b7e8d3bc39146c5"
   },
   "browserArtifacts": [],
+  "gateG4": "NOT_VERIFIED_BY_SCOPE",
   "rollback": {
-    "method": "Revert the router middleware line and delete the additive focused test. No schema or persisted production data change was introduced.",
-    "executed": false
+    "method": "Stop callers of the two governed-only endpoints and revert product commit 1c2549c315. Legacy endpoints remain intact. Preserve immutable binding rows; destructive table removal is not authorized.",
+    "executed": false,
+    "schemaImpact": "one additive table/index/trigger; existing tables are unchanged"
   }
 }
