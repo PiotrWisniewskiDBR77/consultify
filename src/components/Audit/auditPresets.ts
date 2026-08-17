@@ -19,6 +19,8 @@
  * Bilingual: every label carries { en, pl }.
  */
 
+import { AUDIT_ISO27001_LEGACY_PRESET_ENABLED } from '@/utils/auditIso27001LegacyPresetGate';
+
 export interface LocalizedLabel {
   en: string;
   pl: string;
@@ -193,7 +195,18 @@ export const NEW_COMPANY_PRESET: AuditPreset = {
   ],
 };
 
-export const AUDIT_PRESETS: AuditPreset[] = [ISO_27001_PRESET, NEW_COMPANY_PRESET];
+// AMD-AUD-RIGHTS-001: the legacy ISO 27001 preset bypasses the rights kernel
+// (no audit_norm_sources row, no packValidator gate) and is hard-disabled per
+// the 2026-08-17 owner decision — no runtime input (query / localStorage /
+// env / E2E override) may re-enable it. See
+// src/utils/auditIso27001LegacyPresetGate.ts.
+//
+// This array is the PRIMARY choke point: excluding the preset here also empties
+// getPresetById('iso27001') below, so even a hand-crafted openWizard('iso27001')
+// call resolves to no preset rather than silently applying ISO content.
+export const AUDIT_PRESETS: AuditPreset[] = AUDIT_ISO27001_LEGACY_PRESET_ENABLED
+  ? [ISO_27001_PRESET, NEW_COMPANY_PRESET]
+  : [NEW_COMPANY_PRESET];
 
 export function getPresetById(id: string | null | undefined): AuditPreset | null {
   if (!id) return null;

@@ -62,6 +62,7 @@ import {
 import { StandardModuleBar } from '@/components/standard/StandardModuleBar';
 import { EntityStatusChip, MetaChip, statusChipTone } from '@/components/ui/primitives/chips';
 import { Api } from '@/services/api';
+import { AUDIT_ISO27001_LEGACY_PRESET_ENABLED } from '@/utils/auditIso27001LegacyPresetGate';
 import { isAuditProgramEditEnabled } from '@/utils/auditProgramEditStubFlag';
 import { isDrdReportEnabled } from '@/utils/drdReportFlag';
 
@@ -786,14 +787,22 @@ export const AuditsHub: React.FC = () => {
         viewModes={['table']}
         commandRowContent={bulkCommandRowContent}
         filterControls={
-          <button
-            type="button"
-            onClick={() => openWizard('iso27001')}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-c-border px-3 py-2 text-sm text-c-text-secondary hover:bg-c-surface-raised"
-          >
-            <ShieldCheck className="h-4 w-4" />
-            {t('audit.iso27001')}
-          </button>
+          // AMD-AUD-RIGHTS-001: legacy ISO 27001 preset is hard-disabled and
+          // cannot be re-enabled by any runtime input — see
+          // auditIso27001LegacyPresetGate.ts. AUDIT_PRESETS already excludes
+          // the preset (which also empties getPresetById('iso27001')); this is
+          // the second, independent choke point so the launcher never renders.
+          // No new UI is introduced — this only removes an existing control.
+          AUDIT_ISO27001_LEGACY_PRESET_ENABLED ? (
+            <button
+              type="button"
+              onClick={() => openWizard('iso27001')}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-c-border px-3 py-2 text-sm text-c-text-secondary hover:bg-c-surface-raised"
+            >
+              <ShieldCheck className="h-4 w-4" />
+              {t('audit.iso27001')}
+            </button>
+          ) : undefined
         }
       >
         <div className="mx-auto max-w-6xl px-6 py-6">

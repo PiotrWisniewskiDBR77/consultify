@@ -173,3 +173,42 @@ describe('AuditsHub — §27 list', () => {
     });
   });
 });
+
+describe('AuditsHub — AMD-AUD-RIGHTS-001: legacy ISO 27001 preset launcher is hard-disabled', () => {
+  // The i18n mock above returns the raw key when no defaultValue is supplied,
+  // so the launcher (if rendered) would show as the literal 'audit.iso27001'.
+  const ISO_LAUNCHER_LABEL = 'audit.iso27001';
+
+  afterEach(() => {
+    window.localStorage.removeItem('ff.audit_iso27001_preset');
+    window.history.pushState({}, '', '/');
+  });
+
+  it('does not render the launcher by default', async () => {
+    render(<AuditsHub />);
+    await waitFor(() => expect(screen.getByTestId('audits-hub')).toBeInTheDocument());
+    expect(screen.queryByText(ISO_LAUNCHER_LABEL)).toBeNull();
+  });
+
+  it('the historical query override (?ff_auditIso27001Preset=1) does not change the result', async () => {
+    window.history.pushState({}, '', '/?ff_auditIso27001Preset=1');
+    render(<AuditsHub />);
+    await waitFor(() => expect(screen.getByTestId('audits-hub')).toBeInTheDocument());
+    expect(screen.queryByText(ISO_LAUNCHER_LABEL)).toBeNull();
+  });
+
+  it('the historical localStorage override (ff.audit_iso27001_preset=1) does not change the result', async () => {
+    window.localStorage.setItem('ff.audit_iso27001_preset', '1');
+    render(<AuditsHub />);
+    await waitFor(() => expect(screen.getByTestId('audits-hub')).toBeInTheDocument());
+    expect(screen.queryByText(ISO_LAUNCHER_LABEL)).toBeNull();
+  });
+
+  it('query AND localStorage together still do not change the result', async () => {
+    window.history.pushState({}, '', '/?ff_auditIso27001Preset=1');
+    window.localStorage.setItem('ff.audit_iso27001_preset', 'true');
+    render(<AuditsHub />);
+    await waitFor(() => expect(screen.getByTestId('audits-hub')).toBeInTheDocument());
+    expect(screen.queryByText(ISO_LAUNCHER_LABEL)).toBeNull();
+  });
+});

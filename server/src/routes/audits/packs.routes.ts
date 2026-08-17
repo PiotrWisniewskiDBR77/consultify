@@ -52,6 +52,11 @@ router.get(
         typeof req.query.classification === 'string' ? (req.query.classification as never) : undefined,
       limit,
       offset,
+      // AUD-MVP-RIGHTS-001 / AMD-AUD-RIGHTS-001: fail-closed default — a
+      // non-admin org member sees only published packs plus their own
+      // draft/in-review packs; platform admins keep full library visibility
+      // so they can manage packs before publication.
+      readScope: isPlatformAdmin(actor) ? undefined : { actorUserId: actor.userId },
     });
     res.json({ success: true, data: result.items, total: result.total });
   }),
@@ -93,7 +98,14 @@ router.get(
   route('GET /packs/:id', async (req, res) => {
     const actor = auditActor(req);
     assertActor(actor);
-    const pack = await getPack(actor.organizationId, req.params.id);
+    // AUD-MVP-RIGHTS-001 / AMD-AUD-RIGHTS-001: same scoping as GET / above —
+    // a non-admin cannot fetch a draft/in-review pack by id unless they
+    // authored it (fail-closed, 404 rather than a disclosure).
+    const pack = await getPack(
+      actor.organizationId,
+      req.params.id,
+      isPlatformAdmin(actor) ? undefined : { actorUserId: actor.userId },
+    );
     res.json({ success: true, data: pack });
   }),
 );

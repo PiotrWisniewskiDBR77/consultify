@@ -47,6 +47,8 @@
 
 import { randomUUID } from 'node:crypto';
 
+import express, { type Express, type NextFunction, type Request, type Response } from 'express';
+import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
@@ -281,11 +283,11 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
   });
 
   // -------------------------------------------------------------------------
-  // 5. KNOWN GAP (GAP-1, not fixed here — integrator change request) —
-  //    draft packs are readable by any org member via the read path.
+  // 5. GAP-1 CLOSED — draft/in-review packs are author-or-platform-admin
+  //    scoped, at the service layer and at the real mounted route.
   // -------------------------------------------------------------------------
-  describe('5. KNOWN GAP characterization — GAP-1 unpublished pack browsability', () => {
-    it('KNOWN GAP (unfixed, integrator-owned): plain org member CAN list a DRAFT pack because packs.routes.ts GET / and GET /:id apply no capability check and no publication_status filter unless the caller explicitly passes ?status=published', async () => {
+  describe('5. draft/in-review visibility is author-or-admin scoped (AUD-MVP-RIGHTS-001 / AMD-AUD-RIGHTS-001)', () => {
+    it('service: a scoped non-author caller sees published only — the draft is absent from list and 404s by id', async () => {
       const draft = await createDraftPack({
         packKey: `aud-rights-gap1-${randomUUID()}`,
         title: 'Pakiet roboczy — nie do publikacji jeszcze',
@@ -293,20 +295,156 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
       await packService.replaceCriteria(adminActor, draft.id, [validLeafCriterion]);
       expect(draft.publicationStatus).toBe('draft');
 
-      // memberActor has NO admin platformRole and NO pack.write/publish
-      // capability, yet listPacks/getPack — the exact functions the route
-      // calls with zero capability gate — return the draft pack anyway.
-      const listed = await packService.listPacks(orgA, {});
-      expect(listed.items.some((p) => p.id === draft.id)).toBe(true);
+      const listedAsStranger = await packService.listPacks(orgA, {
+        readScope: { actorUserId: memberActor.userId },
+      });
+      expect(listedAsStranger.items.some((p) => p.id === draft.id)).toBe(false);
 
-      const fetched = await packService.getPack(orgA, draft.id);
-      expect(fetched.id).toBe(draft.id);
-      expect(fetched.publicationStatus).toBe('draft');
+      await expect(
+        packService.getPack(orgA, draft.id, { actorUserId: memberActor.userId }),
+      ).rejects.toMatchObject({ code: 'AUDIT_NOT_FOUND' });
 
-      // Explicit status filter DOES narrow correctly — the gap is only that
-      // it is opt-in, not the default.
-      const filtered = await packService.listPacks(orgA, { status: 'published' });
-      expect(filtered.items.some((p) => p.id === draft.id)).toBe(false);
+      // An unscoped call (admin/internal caller, e.g. packSeed.ts) stays unrestricted.
+      const listedUnrestricted = await packService.listPacks(orgA, {});
+      expect(listedUnrestricted.items.some((p) => p.id === draft.id)).toBe(true);
+    });
+
+    it('service: a scoped caller cannot widen visibility via an explicit ?status= ask', async () => {
+      const draft = await createDraftPack({
+        packKey: `aud-rights-gap1-status-${randomUUID()}`,
+        title: 'Pakiet roboczy — próba rozszerzenia przez status',
+      });
+      for (const status of ['draft', 'in_review'] as const) {
+        const listed = await packService.listPacks(orgA, {
+          status,
+          readScope: { actorUserId: memberActor.userId },
+        });
+        expect(listed.items.some((p) => p.id === draft.id)).toBe(false);
+      }
+    });
+
+    it('service: the AUTHOR sees their own draft without any admin role; a different member still cannot', async () => {
+      const ownDraft = await packService.createPack(memberActor, {
+        packKey: `aud-rights-gap1-own-${randomUUID()}`,
+        title: 'Pakiet roboczy autora',
+        classification: 'INTERNAL_FRAMEWORK',
+        scope: 'Zakres testowy',
+        objectives: 'Cele testowe',
+        requiredRoles: ['lead_auditor'],
+        findingTaxonomy: validTaxonomy,
+      });
+      expect(ownDraft.publicationStatus).toBe('draft');
+
+      const listedAsAuthor = await packService.listPacks(orgA, {
+        readScope: { actorUserId: memberActor.userId },
+      });
+      expect(listedAsAuthor.items.some((p) => p.id === ownDraft.id)).toBe(true);
+      expect(
+        (await packService.getPack(orgA, ownDraft.id, { actorUserId: memberActor.userId })).id,
+      ).toBe(ownDraft.id);
+
+      const otherMember = `aud-rights-other-${randomUUID()}`;
+      const listedAsOther = await packService.listPacks(orgA, {
+        readScope: { actorUserId: otherMember },
+      });
+      expect(listedAsOther.items.some((p) => p.id === ownDraft.id)).toBe(false);
+      await expect(
+        packService.getPack(orgA, ownDraft.id, { actorUserId: otherMember }),
+      ).rejects.toMatchObject({ code: 'AUDIT_NOT_FOUND' });
+    });
+
+    it('ROUTE (supertest against the real mounted packs.routes.ts): member list omits a foreign draft, direct id 404s, admin sees both', async () => {
+      const { default: packsRouter } = await import('../../../routes/audits/packs.routes.js');
+
+      const foreignDraft = await createDraftPack({
+        packKey: `aud-rights-gap1-route-${randomUUID()}`,
+        title: 'Pakiet roboczy (trasa) — cudzy draft',
+      });
+
+      function appAs(actor: { organizationId: string; userId: string; platformRole?: string }): Express {
+        const app = express();
+        app.use(express.json());
+        app.use((req: Request, _res: Response, next: NextFunction) => {
+          (req as any).user = { id: actor.userId, organizationId: actor.organizationId, role: actor.platformRole };
+          (req as any).organizationId = actor.organizationId;
+          (req as any).userId = actor.userId;
+          next();
+        });
+        app.use('/', packsRouter);
+        return app;
+      }
+
+      const memberApp = appAs(memberActor);
+      const listRes = await request(memberApp).get('/');
+      expect(listRes.status).toBe(200);
+      expect(listRes.body.data.some((p: { id: string }) => p.id === foreignDraft.id)).toBe(false);
+
+      const getRes = await request(memberApp).get(`/${foreignDraft.id}`);
+      expect(getRes.status).toBe(404);
+      expect(getRes.body.code).toBe('AUDIT_NOT_FOUND');
+
+      const adminApp = appAs(adminActor);
+      const adminListRes = await request(adminApp).get('/');
+      expect(adminListRes.status).toBe(200);
+      expect(adminListRes.body.data.some((p: { id: string }) => p.id === foreignDraft.id)).toBe(true);
+
+      const adminGetRes = await request(adminApp).get(`/${foreignDraft.id}`);
+      expect(adminGetRes.status).toBe(200);
+      expect(adminGetRes.body.data.id).toBe(foreignDraft.id);
+    });
+
+    it('a denied read mutates nothing: the pack row is byte-identical before and after the 404', async () => {
+      const { default: packsRouter } = await import('../../../routes/audits/packs.routes.js');
+      const draft = await createDraftPack({
+        packKey: `aud-rights-gap1-nomutate-${randomUUID()}`,
+        title: 'Pakiet — brak mutacji po odmowie',
+      });
+      const before = await auditsDb.auditGet<Record<string, unknown>>(
+        `SELECT * FROM audit_packs WHERE id = $1`,
+        [draft.id],
+      );
+
+      const app = express();
+      app.use(express.json());
+      app.use((req: Request, _res: Response, next: NextFunction) => {
+        (req as any).user = { id: memberActor.userId, organizationId: memberActor.organizationId };
+        (req as any).organizationId = memberActor.organizationId;
+        (req as any).userId = memberActor.userId;
+        next();
+      });
+      app.use('/', packsRouter);
+
+      expect((await request(app).get(`/${draft.id}`)).status).toBe(404);
+
+      const after = await auditsDb.auditGet<Record<string, unknown>>(
+        `SELECT * FROM audit_packs WHERE id = $1`,
+        [draft.id],
+      );
+      expect(after).toEqual(before);
+    });
+
+    it('cold readback: a separate pg.Pool confirms the draft is still draft and still owned by its author after all denied reads', async () => {
+      const { Pool } = await import('pg');
+      const draft = await createDraftPack({
+        packKey: `aud-rights-gap1-cold-${randomUUID()}`,
+        title: 'Pakiet — zimny odczyt po odmowach',
+      });
+      await packService
+        .getPack(orgA, draft.id, { actorUserId: `stranger-${randomUUID()}` })
+        .catch(() => undefined);
+
+      const pool = new Pool({ connectionString: CONNECTION_STRING });
+      try {
+        const res = await pool.query<{ publication_status: string; created_by: string }>(
+          `SELECT publication_status, created_by FROM audit_packs WHERE id = $1`,
+          [draft.id],
+        );
+        expect(res.rows).toHaveLength(1);
+        expect(res.rows[0]!.publication_status).toBe('draft');
+        expect(res.rows[0]!.created_by).toBe(adminActor.userId);
+      } finally {
+        await pool.end();
+      }
     });
   });
 

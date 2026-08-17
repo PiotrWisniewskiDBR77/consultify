@@ -838,8 +838,46 @@ export const Scheduler = {
     });
     this.jobs.push(job42);
 
+    // 43. Audit independence detector sweep (AUD-POL-001 / AMD-AUD-RIGHTS-001)
+    // — one bounded, cursor-checkpointed, fenced tick every 15min. Read-only:
+    // it walks audit_programs via a durable cursor (see
+    // services/audits/independenceScanCursor.ts) and logs any
+    // segregation-of-duties violation that bypassed the write-time guards in
+    // permissions.ts.
+    //
+    // DEFAULT-OFF, like the other new-behaviour crons above. Enabling the flag
+    // changes ONLY whether the scan runs — it grants no access, alters no
+    // policy, mutates no audit data, and adds no UI. Until it is enabled in a
+    // real deployment and observed running, do not describe the detector as
+    // "operationalized" or "deployed"; "implemented, gated off" is the honest
+    // description (see the job file's header).
+    const job43 = cron.schedule('*/15 * * * *', async () => {
+      if (process.env.AUDIT_INDEPENDENCE_DETECTOR_CRON_ENABLED !== 'true') return;
+      try {
+        const { runTick } = await import('../jobs/auditIndependenceDetectorJob.js');
+        const result = await runTick();
+        if (
+          result.claimed &&
+          (result.withViolations > 0 || result.errors > 0 || result.cycleWrapped || !result.progressRecorded)
+        ) {
+          logger.warn('[Scheduler] Audit independence scan tick', {
+            scanned: result.scanned,
+            withViolations: result.withViolations,
+            totalViolations: result.totalViolations,
+            errors: result.errors,
+            cycleWrapped: result.cycleWrapped,
+            progressRecorded: result.progressRecorded,
+            cyclesCompletedBefore: result.cyclesCompletedBefore,
+          });
+        }
+      } catch (err: any) {
+        logger.error('[Scheduler] Audit independence detector tick failed:', err?.message || err);
+      }
+    });
+    this.jobs.push(job43);
+
     logger.info(
-      '[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st), Scheduled Reports (Hourly), Scheduled Emails (Every 15min), AI Pattern Extraction (Every 6h), AI Consolidation (Daily 4:30AM), AI Cleanup (Weekly Mon 5AM), AI Memory Cleanup (Weekly Sun 2AM), Partial Response Cleanup (Hourly), Feedback Consolidation (Daily 4AM), Memory Cleanup (Every 6h), Webhook Retry (Every 5min), Auto Recovery (Every 2min), Invoice Reminders (Daily 9AM), Interview Reminders (Hourly), Idea Map Auto-Snapshots (Every 15min default), Agent Plan Scheduler (Every 2min), Artifact Lineage Reconciliation (Every 5min), Compute Job Lease Reaper (Every 1min)'
+      '[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st), Scheduled Reports (Hourly), Scheduled Emails (Every 15min), AI Pattern Extraction (Every 6h), AI Consolidation (Daily 4:30AM), AI Cleanup (Weekly Mon 5AM), AI Memory Cleanup (Weekly Sun 2AM), Partial Response Cleanup (Hourly), Feedback Consolidation (Daily 4AM), Memory Cleanup (Every 6h), Webhook Retry (Every 5min), Auto Recovery (Every 2min), Invoice Reminders (Daily 9AM), Interview Reminders (Hourly), Idea Map Auto-Snapshots (Every 15min default), Agent Plan Scheduler (Every 2min), Artifact Lineage Reconciliation (Every 5min), Compute Job Lease Reaper (Every 1min), Audit Independence Detector Sweep (Every 15min tick, default-off)'
     );
   },
   stop(): void {

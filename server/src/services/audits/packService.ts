@@ -235,12 +235,24 @@ export function buildCriteriaTree(flat: AuditPackCriterion[]): PackCriterionNode
 // Odczyt
 // ---------------------------------------------------------------------------
 
+/**
+ * Non-admin read scoping (AUD-MVP-RIGHTS-001 / AMD-AUD-RIGHTS-001): an org
+ * member who is not a platform admin may only read PUBLISHED packs, plus
+ * their OWN draft/in-review packs (they authored them, so seeing their own
+ * unpublished work is not a rights leak). Platform admins are unrestricted —
+ * pass no `readScope` for admin or internal callers (e.g. packSeed.ts).
+ */
+export interface PackReadScope {
+  actorUserId: string;
+}
+
 export interface ListPacksParams {
   search?: string;
   status?: PublicationStatus;
   classification?: PackClassification;
   limit?: number;
   offset?: number;
+  readScope?: PackReadScope;
 }
 
 export async function listPacks(
@@ -256,7 +268,19 @@ export async function listPacks(
     values.push(`%${params.search.trim()}%`);
     conditions.push(`(title ILIKE $${values.length} OR pack_key ILIKE $${values.length} OR summary ILIKE $${values.length})`);
   }
-  if (isNonEmpty(params.status)) {
+  if (params.readScope) {
+    values.push(params.readScope.actorUserId);
+    const ownRowClause = `created_by = $${values.length}`;
+    if (isNonEmpty(params.status)) {
+      // An explicit status ask from a scoped (non-admin) caller is honored only
+      // for 'published'; anything else narrows to their own rows. A scoped
+      // caller can therefore never widen their own visibility via ?status=.
+      values.push(params.status);
+      conditions.push(`((publication_status = $${values.length} AND publication_status = 'published') OR ${ownRowClause})`);
+    } else {
+      conditions.push(`(publication_status = 'published' OR ${ownRowClause})`);
+    }
+  } else if (isNonEmpty(params.status)) {
     values.push(params.status);
     conditions.push(`publication_status = $${values.length}`);
   }
@@ -303,8 +327,16 @@ export async function getCriteriaFlat(packId: string): Promise<AuditPackCriterio
 export async function getPack(
   organizationId: string,
   id: string,
+  readScope?: PackReadScope,
 ): Promise<AuditPack & { criteria: PackCriterionNode[] }> {
   const row = await getPackRow(organizationId, id);
+  if (readScope && row.publication_status !== 'published' && row.created_by !== readScope.actorUserId) {
+    // AUD-MVP-RIGHTS-001 / AMD-AUD-RIGHTS-001: a scoped (non-admin) caller
+    // cannot fetch a draft/in-review pack by id unless they authored it —
+    // this closes the direct-id path around the listPacks default above.
+    // 404, not 403, so the existence of a foreign draft is not disclosed.
+    throw new AuditNotFoundError('Pakiet audytowy');
+  }
   const flat = await getCriteriaFlat(id);
   return { ...mapPackRow(row), criteria: buildCriteriaTree(flat) };
 }
