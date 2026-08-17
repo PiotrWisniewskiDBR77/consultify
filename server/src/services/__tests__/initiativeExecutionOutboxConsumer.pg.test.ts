@@ -4,7 +4,10 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
   consumeNextInitiativeExecutionEvent,
+  getInitiativeExecutionOutboxConsumerState,
   redriveInitiativeExecutionDeadLetter,
+  startInitiativeExecutionOutboxConsumer,
+  stopInitiativeExecutionOutboxConsumer,
 } from '../initiativeExecutionOutboxConsumer.js';
 
 const REAL_PG=process.env.RUN_DB_TESTS==='1'&&process.env.MOCK_DB==='false';
@@ -34,6 +37,7 @@ describe.skipIf(!REAL_PG)('EXE-FLOW material-command outbox consumer',()=>{
     await db.query(`INSERT INTO organizations(id,name) VALUES($1,$1),($2,$2)`,[orgA,orgB]);
   });
   afterAll(async()=>{
+    stopInitiativeExecutionOutboxConsumer();
     if(!db)return;
     await db.query('ALTER TABLE ie_outbox_delivery_receipts DISABLE TRIGGER USER');
     await db.query('DELETE FROM ie_outbox_delivery_receipts WHERE organization_id=ANY($1)',[[orgA,orgB]]);
@@ -41,6 +45,33 @@ describe.skipIf(!REAL_PG)('EXE-FLOW material-command outbox consumer',()=>{
     await db.query('DELETE FROM ie_outbox_events WHERE organization_id=ANY($1)',[[orgA,orgB]]);
     await db.query('DELETE FROM organizations WHERE id=ANY($1)',[[orgA,orgB]]);
     await db.end();
+  });
+
+  it('is default-off, starts once when explicitly enabled, and stops without a ref handle',()=>{
+    const previous=process.env.ENABLE_INITIATIVE_EXECUTION_OUTBOX_CONSUMER;
+    try {
+      delete process.env.ENABLE_INITIATIVE_EXECUTION_OUTBOX_CONSUMER;
+      stopInitiativeExecutionOutboxConsumer();
+      expect(startInitiativeExecutionOutboxConsumer(60_000)).toBe('DISABLED');
+      expect(getInitiativeExecutionOutboxConsumerState()).toEqual({
+        enabled:false,running:false,keepsProcessAlive:false,
+      });
+
+      process.env.ENABLE_INITIATIVE_EXECUTION_OUTBOX_CONSUMER='true';
+      expect(startInitiativeExecutionOutboxConsumer(60_000)).toBe('STARTED');
+      expect(startInitiativeExecutionOutboxConsumer(60_000)).toBe('ALREADY_RUNNING');
+      expect(getInitiativeExecutionOutboxConsumerState()).toEqual({
+        enabled:true,running:true,keepsProcessAlive:false,
+      });
+      stopInitiativeExecutionOutboxConsumer();
+      expect(getInitiativeExecutionOutboxConsumerState()).toEqual({
+        enabled:true,running:false,keepsProcessAlive:false,
+      });
+    } finally {
+      stopInitiativeExecutionOutboxConsumer();
+      if(previous===undefined) delete process.env.ENABLE_INITIATIVE_EXECUTION_OUTBOX_CONSUMER;
+      else process.env.ENABLE_INITIATIVE_EXECUTION_OUTBOX_CONSUMER=previous;
+    }
   });
 
   it('claims tenant-scoped exactly once under 8-way concurrency and persists immutable receipt',async()=>{

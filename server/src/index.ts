@@ -2068,15 +2068,18 @@ if (startServer && shouldStartHttpServer) {
       );
     }
 
-    // EXE-FLOW-ADAPTER-001: drain the material-command outbox into its
-    // immutable neutral delivery receipt. Product-specific projections remain
-    // separate consumers; this bootstrap only closes the durable outbox seam.
+    // EXE-FLOW-ADAPTER-001: optional neutral material-command receipt drain.
+    // Default OFF: activating consumption is an explicit operational decision.
+    // When requested, startup is fail-closed so the process cannot pretend the
+    // durable adapter is live after an import/initialisation failure.
     try {
       const { startInitiativeExecutionOutboxConsumer } =
         await import('./services/initiativeExecutionOutboxConsumer.js');
-      startInitiativeExecutionOutboxConsumer();
+      const status = startInitiativeExecutionOutboxConsumer();
+      logger.info(`[Server] Initiative/Execution outbox consumer: ${status}`);
     } catch (err: any) {
-      logger.warn('[Server] Initiative/Execution outbox consumer not started:', err?.message);
+      logger.error('[Server] Initiative/Execution outbox consumer failed to start:', err?.message);
+      if (process.env.ENABLE_INITIATIVE_EXECUTION_OUTBOX_CONSUMER === 'true') throw err;
     }
 
     // AGT-OPS-001: controlled consumer for the existing ai-tasks queue.
@@ -2230,6 +2233,19 @@ if (startServer && shouldStartHttpServer) {
             clearInterval(healthCheckInterval);
             (global as any).__HEALTH_CHECK_INTERVAL__ = null;
             logger.info('[Shutdown] Health check interval cleared');
+          }
+
+          // Stop application intervals before queues and the PostgreSQL pool.
+          try {
+            const { stopInitiativeExecutionOutboxConsumer } =
+              await import('./services/initiativeExecutionOutboxConsumer.js');
+            stopInitiativeExecutionOutboxConsumer();
+            logger.info('[Shutdown] Initiative/Execution outbox consumer stopped');
+          } catch (err: any) {
+            logger.warn(
+              '[Shutdown] Error stopping Initiative/Execution outbox consumer:',
+              err.message
+            );
           }
 
           // Close BullMQ queue

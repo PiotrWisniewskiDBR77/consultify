@@ -129,11 +129,27 @@ export async function drainInitiativeExecutionOutbox(batchSize=50):Promise<numbe
 }
 
 let cronHandle:ReturnType<typeof setInterval>|null=null;
-export function startInitiativeExecutionOutboxConsumer(intervalMs=30_000):void{
-  if(cronHandle) return;
+export type InitiativeExecutionOutboxConsumerStart = 'DISABLED' | 'STARTED' | 'ALREADY_RUNNING';
+
+export function getInitiativeExecutionOutboxConsumerState(): {
+  enabled: boolean;
+  running: boolean;
+  keepsProcessAlive: boolean;
+} {
+  return {
+    enabled: process.env.ENABLE_INITIATIVE_EXECUTION_OUTBOX_CONSUMER === 'true',
+    running: cronHandle !== null,
+    keepsProcessAlive: cronHandle?.hasRef?.() ?? false,
+  };
+}
+
+export function startInitiativeExecutionOutboxConsumer(intervalMs=30_000):InitiativeExecutionOutboxConsumerStart{
+  if(process.env.ENABLE_INITIATIVE_EXECUTION_OUTBOX_CONSUMER !== 'true') return 'DISABLED';
+  if(cronHandle) return 'ALREADY_RUNNING';
   cronHandle=setInterval(()=>{void drainInitiativeExecutionOutbox().catch((error)=>
     logger.error(`[InitiativeExecutionOutbox] tick failed: ${error instanceof Error?error.message:String(error)}`));},intervalMs);
   if(typeof cronHandle.unref==='function') cronHandle.unref();
+  return 'STARTED';
 }
 export function stopInitiativeExecutionOutboxConsumer():void{
   if(cronHandle){clearInterval(cronHandle);cronHandle=null;}
