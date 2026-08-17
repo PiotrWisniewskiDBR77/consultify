@@ -154,7 +154,7 @@
  *     --no-file-parallelism
  */
 
-import { randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 
 import { Client, type ClientConfig } from 'pg';
 import request from 'supertest';
@@ -291,7 +291,21 @@ function makeE2EToken(userId: string, organizationId: string): string {
 // App under test — REAL routers, REAL middleware chains, REAL controllers.
 // ---------------------------------------------------------------------------
 
-function buildApp() {
+/**
+ * Every app built here is bound to ONE listening socket.
+ *
+ * Passing an express app straight to supertest makes it boot an ephemeral server
+ * per call and close it again. This suite's golden flow issues roughly thirty
+ * sequential requests, and about one run in four lost one of them to
+ * `ECONNRESET` — never a domain error, never a broken invariant, just the
+ * measuring instrument dropping a socket. The same defect was already diagnosed
+ * in the closure-evidence suites by hammering the service directly (320
+ * concurrent calls, zero rejections). Binding once removes it without touching a
+ * single assertion.
+ */
+const boundServers: import('node:http').Server[] = [];
+
+async function buildApp() {
   const app = express();
   app.use(express.json());
   // Order matches server/src/Gateway.ts: initiativesRoutes mounted first,
@@ -299,7 +313,10 @@ function buildApp() {
   // slice, own auth/org middleware applied inside the router).
   app.use('/api/initiatives', initiativesRoutes);
   app.use('/api/initiatives', initiativeClosureRoutes);
-  return app;
+  const server = app.listen(0);
+  await new Promise<void>((resolve) => server.once('listening', () => resolve()));
+  boundServers.push(server);
+  return server;
 }
 
 // ---------------------------------------------------------------------------
@@ -512,6 +529,78 @@ async function setupHarness(): Promise<Harness | null> {
        VALUES ($1, $2, $3, $4, 'EXECUTING', 0, $5, '2026-01-01', '2026-12-31')`,
       [id, orgAId, projectAId, name, userAId]
     );
+
+    // The canonical transition engine refuses EXECUTING -> DONE without an
+    // APPROVED CLOSURE gate decision (`CLOSURE_GATE_DECISION_REQUIRED`), and a
+    // decision cannot exist without the A05 proposal chain that authorised it.
+    // This fixture never seeded either, so every approve in this suite came back
+    // 400 and six tests were red — a harness gap, not a product defect. The
+    // sibling EXE-09 suite has seeded this chain all along, which is why it
+    // passes; the recipe here mirrors it.
+    const caseId = `gf_case_${id}`;
+    const proposalVersionId = `gf_pv_${id}`;
+    const reviewId = `gf_rev_${id}`;
+    const digest = createHash('sha256').update(`gf|${id}`).digest('hex');
+    await client.query(
+      `INSERT INTO transformation_cases
+         (transformation_case_id, organization_id, initiated_by_user_id, mandate,
+          lineage_id, idempotency_key, version)
+       VALUES ($1,$2,$3,'EXE-08 governed closure fixture',$4,$5,1)
+       ON CONFLICT (transformation_case_id) DO NOTHING`,
+      [caseId, orgAId, userAId, `gf_lineage_${id}`, `gf_caseidem_${id}`]
+    );
+    await client.query(
+      `INSERT INTO v8_agent_proposal_versions
+         (proposal_version_id, proposal_id, organization_id, canonical_run_id,
+          proposal_version, plan_version, context_digest, before_json, after_json,
+          approval_scopes_json, reviewer_authority_json, expires_at, status,
+          created_by_user_id)
+       VALUES ($1,$2,$3,$4,1,1,$5,'{}'::jsonb,'{}'::jsonb,$6::jsonb,$7::jsonb,
+               NOW() + INTERVAL '1 day','approved',$8)
+       ON CONFLICT (proposal_version_id) DO NOTHING`,
+      [
+        proposalVersionId,
+        `gf_proposal_${id}`,
+        orgAId,
+        `gf_run_${id}`,
+        digest,
+        JSON.stringify(['closure_lock']),
+        JSON.stringify({ userId: userAId, authority: 'closure_lock' }),
+        userAId,
+      ]
+    );
+    await client.query(
+      `INSERT INTO v8_agent_proposal_scope_reviews
+         (review_id, proposal_version_id, scope_key, decision, reason, reviewed_by_user_id)
+       VALUES ($1,$2,'closure_lock','approved','EXE-08 governed fixture',$3)
+       ON CONFLICT (review_id) DO NOTHING`,
+      [reviewId, proposalVersionId, userAId]
+    );
+    await client.query(
+      `INSERT INTO initiative_lifecycle_gate_decisions
+         (decision_id, organization_id, initiative_id, transformation_case_id,
+          pmo_domain, version, decision_status, source_digest, source_case_version,
+          baseline_refs_json, a05_proposal_version_id, a05_approval_receipt_ref,
+          human_actor_user_id, human_authority_ref, rationale, deadline_at,
+          idempotency_key, input_digest)
+       VALUES ($1,$2,$3,$4,'CLOSURE',1,'approved',$5,1,$6::jsonb,$7,$8,$9,
+               'closure_lock','EXE-08 human-approved closure fixture',
+               NOW() + INTERVAL '1 day',$10,$11)
+       ON CONFLICT (decision_id) DO NOTHING`,
+      [
+        `gf_dec_${id}`,
+        orgAId,
+        id,
+        caseId,
+        digest,
+        JSON.stringify([`initiative:${id}:execution-evidence`]),
+        proposalVersionId,
+        reviewId,
+        userAId,
+        `gf_closure_${id}`,
+        createHash('sha256').update(`gf-input|${id}`).digest('hex'),
+      ]
+    );
   }
 
   // Per-initiative evidence pairs (see file header point 5 / Harness type
@@ -603,10 +692,28 @@ async function setupHarness(): Promise<Harness | null> {
   );
 
   const cleanup = async () => {
+    /**
+     * The evidence ledger has no scoped delete, and this teardown used to
+     * assume it did.
+     *
+     * Once the ledger became genuinely append-only, the first statement below
+     * started throwing, the blanket `catch` swallowed it, and every statement
+     * after it was skipped — so a "successful" run left 12 organizations, 18
+     * users and 78 initiatives behind while reporting nothing. That is the
+     * failure mode a silent catch is for, and it is why the ledger is handled
+     * separately and the rest is no longer hidden behind one.
+     *
+     * TRUNCATE, not DELETE: removal is DDL requiring ownership of the table,
+     * which a runtime role does not have and a disposable test database does.
+     */
     try {
-      await client.query(`DELETE FROM initiative_closure_evidence WHERE organization_id = ANY($1)`, [
-        [orgAId, orgBId],
-      ]);
+      await client.query('TRUNCATE TABLE initiative_closure_evidence');
+    } catch (error) {
+      // Visible, because a teardown that cannot clear the ledger will make the
+      // NEXT run's evidence counts wrong and there is nothing to diagnose it by.
+      console.error('[exe08 cleanup] could not clear the evidence ledger:', error);
+    }
+    try {
       await client.query(`DELETE FROM initiative_closure_requests WHERE organization_id = ANY($1)`, [
         [orgAId, orgBId],
       ]);
@@ -678,7 +785,7 @@ async function setupHarness(): Promise<Harness | null> {
 // ---------------------------------------------------------------------------
 
 async function driveClosureRequestToSubmitted(
-  app: express.Express,
+  app: import('node:http').Server,
   initiativeId: string,
   ownerToken: string,
   h: Harness
@@ -747,22 +854,38 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
   }, 30_000);
 
   afterAll(async () => {
+    await Promise.all(
+      boundServers.splice(0).map((s) => new Promise<void>((resolve) => s.close(() => resolve())))
+    );
     if (harness) {
       await harness.cleanup();
       harness = null;
     }
   });
 
-  // Mirrors the `itDB` convention in the sibling realdb golden-flow files:
-  // when the harness is unavailable, report a clean vacuous pass instead of
-  // failing `npm run test:integration` on a machine with no Postgres.
+  /**
+   * NO VACUOUS PASS.
+   *
+   * This used to be `if (!harness) { expect(true).toBe(true); return; }` — a
+   * green tick for a test that never ran. That convention makes a required
+   * release gate indistinguishable from an empty one: the summary reads 18/18
+   * whether the ledger was exercised or the database was simply absent, and a
+   * reader has no way to tell which run they are looking at.
+   *
+   * A gate that did not run is not a gate that passed. Without a database this
+   * now fails, loudly and with the reason, so the only way to see a green
+   * result here is to have produced one.
+   */
   const itDB = (name: string, fn: (h: Harness) => Promise<void>, timeoutMs = 20_000) =>
     it(
       name,
       async () => {
         if (!harness) {
-          expect(true).toBe(true);
-          return;
+          throw new Error(
+            'EVIDENCE_MISSING: this suite is a real-database closure/evidence gate and no ' +
+              'usable Postgres was reachable, so nothing was verified. Point DATABASE_URL at a ' +
+              'migrated database and re-run. Refusing to report a pass for a test that did not run.'
+          );
         }
         await fn(harness);
       },
@@ -779,7 +902,7 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
   itDB(
     'golden flow: draft -> readiness -> evidence -> submit(rejected) -> submit -> 403(no role) -> return -> resubmit -> approve -> DONE, coherent on reopen + history',
     async (h) => {
-      const app = buildApp();
+      const app = await buildApp();
       const ownerToken = makeE2EToken(h.userAId, h.orgAId);
       const noRoleToken = makeE2EToken(h.userCId, h.orgAId);
       const initiativeId = h.initiativeGoldenId;
@@ -927,7 +1050,7 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
       expect(finalStatus).toBe('done');
 
       // 10. GET initiative fresh ("reopen") -> DONE.
-      const reopenApp = buildApp();
+      const reopenApp = await buildApp();
       const reopenGet = await request(reopenApp)
         .get(`/api/initiatives/${initiativeId}`)
         .set('Authorization', `Bearer ${ownerToken}`);
@@ -971,7 +1094,7 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
   // -------------------------------------------------------------------------
 
   itDB('negative control A: submit with fewer than 2 evidence refs -> 422 CLOSURE_NOT_READY', async (h) => {
-    const app = buildApp();
+    const app = await buildApp();
     const ownerToken = makeE2EToken(h.userAId, h.orgAId);
     const initiativeId = h.initiativeIncompleteEvidenceId;
 
@@ -1013,7 +1136,7 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
   itDB(
     'negative control B: evidenceRefId from org B rejected as org A -> 404, no evidence row created',
     async (h) => {
-      const app = buildApp();
+      const app = await buildApp();
       const ownerToken = makeE2EToken(h.userAId, h.orgAId);
       const initiativeId = h.initiativeWrongTenantEvidenceId;
 
@@ -1056,7 +1179,7 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
   }
 
   async function assertEvidenceRejected(
-    app: express.Express,
+    app: import('node:http').Server,
     initiativeId: string,
     closureRequestId: string,
     ownerToken: string,
@@ -1073,7 +1196,7 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
   }
 
   itDB('negative control B2: task belongs to a DIFFERENT initiative in the same org -> 404, not accepted', async (h) => {
-    const app = buildApp();
+    const app = await buildApp();
     const ownerToken = makeE2EToken(h.userAId, h.orgAId);
     const initiativeId = h.initiativeEvidenceOwnershipId;
     const closureRequestId = await openDraftOn(app, initiativeId, ownerToken);
@@ -1098,7 +1221,7 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
   itDB(
     'negative control B3: milestone belongs to a DIFFERENT initiative in the same org -> 404, not accepted',
     async (h) => {
-      const app = buildApp();
+      const app = await buildApp();
       const ownerToken = makeE2EToken(h.userAId, h.orgAId);
       const initiativeId = h.initiativeEvidenceOwnershipId;
       const closureRequestId = await openDraftOn(app, initiativeId, ownerToken);
@@ -1123,7 +1246,7 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
   itDB(
     'negative control B4: decision exists but has NO relation to any initiative -> 404, not accepted',
     async (h) => {
-      const app = buildApp();
+      const app = await buildApp();
       const ownerToken = makeE2EToken(h.userAId, h.orgAId);
       const initiativeId = h.initiativeEvidenceOwnershipId;
       const closureRequestId = await openDraftOn(app, initiativeId, ownerToken);
@@ -1147,7 +1270,7 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
   itDB(
     'negative control B5: task belongs to this initiative but is NOT done -> 409 EVIDENCE_NOT_TERMINAL, not accepted',
     async (h) => {
-      const app = buildApp();
+      const app = await buildApp();
       const ownerToken = makeE2EToken(h.userAId, h.orgAId);
       const initiativeId = h.initiativeEvidenceOwnershipId;
       const closureRequestId = await openDraftOn(app, initiativeId, ownerToken);
@@ -1171,7 +1294,7 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
   itDB(
     'negative control B6: milestone belongs to this initiative but is NOT completed -> 409 EVIDENCE_NOT_TERMINAL, not accepted',
     async (h) => {
-      const app = buildApp();
+      const app = await buildApp();
       const ownerToken = makeE2EToken(h.userAId, h.orgAId);
       const initiativeId = h.initiativeEvidenceOwnershipId;
       const closureRequestId = await openDraftOn(app, initiativeId, ownerToken);
@@ -1195,7 +1318,7 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
   itDB(
     'negative control B7: decision belongs to this initiative but is still pending -> 409 EVIDENCE_NOT_TERMINAL, not accepted',
     async (h) => {
-      const app = buildApp();
+      const app = await buildApp();
       const ownerToken = makeE2EToken(h.userAId, h.orgAId);
       const initiativeId = h.initiativeEvidenceOwnershipId;
       const closureRequestId = await openDraftOn(app, initiativeId, ownerToken);
@@ -1223,7 +1346,7 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
   itDB(
     'negative control D: retrying approve with the same idempotencyKey does not re-run the engine',
     async (h) => {
-      const app = buildApp();
+      const app = await buildApp();
       const ownerToken = makeE2EToken(h.userAId, h.orgAId);
       const initiativeId = h.initiativeIdemApproveId;
       const closureRequestId = await driveClosureRequestToSubmitted(app, initiativeId, ownerToken, h);
@@ -1277,7 +1400,7 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
   itDB(
     'negative control E: concurrent double-approve settles on exactly one engine transition, closure request ends done',
     async (h) => {
-      const app = buildApp();
+      const app = await buildApp();
       const ownerToken = makeE2EToken(h.userAId, h.orgAId);
       const initiativeId = h.initiativeConcurrentApproveId;
       const closureRequestId = await driveClosureRequestToSubmitted(app, initiativeId, ownerToken, h);
@@ -1347,7 +1470,7 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
   itDB(
     'negative control F: initiative changed after submit -> approve rejects with 409 STALE_VERSION',
     async (h) => {
-      const app = buildApp();
+      const app = await buildApp();
       const ownerToken = makeE2EToken(h.userAId, h.orgAId);
       const initiativeId = h.initiativeStaleVersionId;
       const closureRequestId = await driveClosureRequestToSubmitted(app, initiativeId, ownerToken, h);
@@ -1392,7 +1515,7 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
   itDB(
     'negative control G: org B cannot read or write org A closure requests -> 404 everywhere, no state change',
     async (h) => {
-      const app = buildApp();
+      const app = await buildApp();
       const ownerToken = makeE2EToken(h.userAId, h.orgAId);
       const attackerToken = makeE2EToken(h.userBId, h.orgBId);
       const initiativeId = h.initiativeCrossTenantClosureId;
@@ -1453,7 +1576,7 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
   itDB(
     'negative control H: legacy POST /:id/complete no longer completes an initiative -> 410 CLOSURE_REQUEST_REQUIRED',
     async (h) => {
-      const app = buildApp();
+      const app = await buildApp();
       const ownerToken = makeE2EToken(h.userAId, h.orgAId);
       const initiativeId = h.initiativeCompleteBypassId;
 
@@ -1480,7 +1603,7 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
   itDB(
     'negative control: approve against a fabricated closureRequestId -> 404, no writes',
     async (h) => {
-      const app = buildApp();
+      const app = await buildApp();
       const ownerToken = makeE2EToken(h.userAId, h.orgAId);
       const initiativeId = h.initiativeFaultInjectionId;
       const fabricatedClosureRequestId = `nonexistent-closure-request-${suffix()}`;
@@ -1525,7 +1648,7 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
   itDB(
     'recovery scenario A: crash after Unit 1 commits, before the engine is called -> stuck pending, retry completes exactly once',
     async (h) => {
-      const app = buildApp();
+      const app = await buildApp();
       const ownerToken = makeE2EToken(h.userAId, h.orgAId);
       const initiativeId = h.initiativeRecoveryAId;
       const closureRequestId = await driveClosureRequestToSubmitted(app, initiativeId, ownerToken, h);
@@ -1589,7 +1712,7 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
   itDB(
     'recovery scenario B: crash after the engine succeeds, before finalize -> initiative already DONE, retry finalizes without a second transition',
     async (h) => {
-      const app = buildApp();
+      const app = await buildApp();
       const ownerToken = makeE2EToken(h.userAId, h.orgAId);
       const initiativeId = h.initiativeRecoveryBId;
       const closureRequestId = await driveClosureRequestToSubmitted(app, initiativeId, ownerToken, h);
@@ -1647,7 +1770,7 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
   itDB(
     'recovery scenario C: crash before Unit 1 commits -> nothing persisted, retry proceeds cleanly',
     async (h) => {
-      const app = buildApp();
+      const app = await buildApp();
       const ownerToken = makeE2EToken(h.userAId, h.orgAId);
       const initiativeId = h.initiativeRecoveryCId;
       const closureRequestId = await driveClosureRequestToSubmitted(app, initiativeId, ownerToken, h);

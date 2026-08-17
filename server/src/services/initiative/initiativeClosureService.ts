@@ -56,6 +56,12 @@ import { v4 as uuidv4 } from 'uuid';
 import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import { type PgTransactionClient, withPgTransaction } from '../../utils/queryHelpers.js';
+import {
+  isPinnedEvidenceType,
+  type PinnedEvidenceType,
+  type ResolvedEvidenceSource,
+  resolvePinnedEvidenceSource,
+} from './closureEvidenceSourceReader.js';
 import { resolveInitiativeAccessContext } from './initiativeAccessResolver.js';
 import { executeInitiativeTransition } from './initiativeTransitionService.js';
 
@@ -69,7 +75,18 @@ import { executeInitiativeTransition } from './initiativeTransitionService.js';
 // backstop of record when it actually performs the transition.
 const CLOSURE_APPROVER_ROLES = new Set(['ADMIN', 'INITIATIVE_OWNER', 'PMO']);
 
-export type EvidenceType = 'task' | 'milestone' | 'decision';
+/**
+ * Row-backed evidence: the referenced row's own terminal state is its identity
+ * and it is not expected to keep changing.
+ */
+export type RowEvidenceType = 'task' | 'milestone' | 'decision';
+
+/**
+ * Document-backed evidence (FLOW-MEETING-NOTEBOOK-INITIATIVE-EVIDENCE-001):
+ * sources that stay editable after reaching the state that makes them
+ * eligible, so each attachment pins the exact content it was made against.
+ */
+export type EvidenceType = RowEvidenceType | PinnedEvidenceType;
 
 export interface ClosureGateError {
   code: string;
@@ -111,22 +128,69 @@ function fail(
 // in-progress task/milestone/decision count as "done" evidence.
 // ---------------------------------------------------------------------------
 
+/**
+ * Validates one evidence reference and, for document-backed sources, returns
+ * the exact content identity to pin.
+ *
+ * Runs on the caller's transaction client rather than the shared pool: this is
+ * now one step inside a single pinned transaction that also locks the closure
+ * request and writes the evidence row, so a source that passes validation
+ * cannot be revoked, re-approved or re-parented between the check and the
+ * insert. Pooled helpers take a different physical connection per call and
+ * cannot give that guarantee.
+ */
 async function assertEvidenceRefBelongsToInitiative(
+  tx: PgTransactionClient,
   orgId: string,
   initiativeId: string,
   evidenceType: EvidenceType,
   evidenceRefId: string
-): Promise<void> {
+): Promise<ResolvedEvidenceSource | null> {
+  // Document-backed sources: explicit initiative, project agreement, ownership
+  // and eligible state are all verified by the reader. Both of its failure
+  // modes surface here the same way the row-backed branches do.
+  if (isPinnedEvidenceType(evidenceType)) {
+    const resolution = await resolvePinnedEvidenceSource(
+      tx,
+      evidenceType,
+      orgId,
+      initiativeId,
+      evidenceRefId
+    );
+    if (!resolution.ok) {
+      if (resolution.reason === 'NOT_ELIGIBLE') {
+        fail(
+          'EVIDENCE_NOT_TERMINAL',
+          `Evidence reference (${evidenceType}:${evidenceRefId}) exists but is not in a state that qualifies as closure evidence`,
+          409,
+          { state: resolution.state }
+        );
+      }
+      // Wrong tenant, wrong initiative, wrong project or simply absent — all
+      // reported identically so the caller learns nothing about what exists.
+      fail(
+        'EVIDENCE_REF_NOT_FOUND',
+        `Evidence reference (${evidenceType}:${evidenceRefId}) was not found for this initiative`,
+        404
+      );
+    }
+    return resolution.source;
+  }
+
   let row: { id: string; status: string | null } | null = null;
   let terminal = false;
+  const one = async (sql: string, params: unknown[]) => {
+    const result = await tx.query<{ id: string; status: string | null }>(sql, params);
+    return result.rows[0] ?? null;
+  };
   if (evidenceType === 'task') {
-    row = await queryHelpers.queryOne<{ id: string; status: string | null }>(
+    row = await one(
       `SELECT id, status FROM tasks WHERE id = ? AND organization_id = ? AND initiative_id = ?`,
       [evidenceRefId, orgId, initiativeId]
     );
     terminal = !!row && ['done', 'completed'].includes(String(row.status || '').toLowerCase());
   } else if (evidenceType === 'milestone') {
-    row = await queryHelpers.queryOne<{ id: string; status: string | null }>(
+    row = await one(
       `SELECT id, status FROM initiative_milestones WHERE id = ? AND organization_id = ? AND initiative_id = ?`,
       [evidenceRefId, orgId, initiativeId]
     );
@@ -135,7 +199,7 @@ async function assertEvidenceRefBelongsToInitiative(
     // decisions.status domain is 'pending' | 'approved' | 'rejected' |
     // 'deferred' (server/src/types/index.ts DecisionStatus) — 'approved' is
     // the only resolved/accepted terminal state.
-    row = await queryHelpers.queryOne<{ id: string; status: string | null }>(
+    row = await one(
       `SELECT id, status FROM decisions WHERE id = ? AND organization_id = ? AND initiative_id = ?`,
       [evidenceRefId, orgId, initiativeId]
     );
@@ -160,6 +224,7 @@ async function assertEvidenceRefBelongsToInitiative(
       409
     );
   }
+  return null;
 }
 
 // ---------------------------------------------------------------------------
@@ -266,67 +331,274 @@ async function loadClosureRequest(orgId: string, initiativeId: string, closureRe
   return row;
 }
 
-export async function addEvidence(input: AddEvidenceInput) {
-  await assertInitiativeInOrg(input.orgId, input.initiativeId);
-  const request = await loadClosureRequest(input.orgId, input.initiativeId, input.closureRequestId);
-  if (request.status !== 'draft' && request.status !== 'returned') {
-    fail(
-      'CLOSURE_REQUEST_NOT_EDITABLE',
-      `Evidence can only be added while the request is draft/returned (current: ${request.status})`,
-      409
+export interface AddEvidenceResult {
+  id: string;
+  idempotent: boolean;
+  sourceHash: string | null;
+  sourceVersionId: string | null;
+}
+
+/**
+ * Attaches one evidence reference to a closure request.
+ *
+ * ONE PINNED TRANSACTION, in this order:
+ *   1. lock the closure request row (`FOR UPDATE`) — this both serialises
+ *      concurrent attachers and freezes the editability check;
+ *   2. validate the reference against the EXPLICITLY named initiative, and for
+ *      document sources capture the exact content identity;
+ *   3. resolve idempotency / detect collision;
+ *   4. insert the evidence row;
+ *   5. append the audit event.
+ *
+ * Steps 4 and 5 share the transaction on purpose: a forced failure while
+ * writing the audit event rolls the evidence back too, so the ledger can never
+ * disagree with the evidence it is supposed to attest.
+ */
+export async function addEvidence(input: AddEvidenceInput): Promise<AddEvidenceResult> {
+  return withPgTransaction<AddEvidenceResult>(async (tx): Promise<AddEvidenceResult> => {
+    const initiative = await tx.query<{ id: string }>(
+      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ? FOR UPDATE`,
+      [input.initiativeId, input.orgId]
     );
-  }
+    if (initiative.rowCount === 0) {
+      fail('INITIATIVE_NOT_FOUND', 'Initiative not found', 404);
+    }
 
-  await assertEvidenceRefBelongsToInitiative(
-    input.orgId,
-    input.initiativeId,
-    input.evidenceType,
-    input.evidenceRefId
-  );
-
-  if (input.idempotencyKey) {
-    const existing = await queryHelpers.queryOne<{ id: string }>(
-      `SELECT id FROM initiative_closure_evidence WHERE closure_request_id = ? AND idempotency_key = ?`,
-      [input.closureRequestId, input.idempotencyKey]
+    // ---- Authorization, for EVERY evidence type, inside this transaction ----
+    //
+    // Placed here rather than in the router on purpose: the router is one entry
+    // point, the transaction is the only place where the decision cannot be
+    // raced by a concurrent revoke, and putting it here means no future caller
+    // can reach the writer without passing it.
+    //
+    // `requireOrgAccess()` (rbac.middleware.ts:211) validates only the SHAPE of
+    // the organization id in the JWT and never consults `organization_members`,
+    // so a member whose access was revoked keeps passing it until the token
+    // expires. That gap is closed here for the closure-evidence writer.
+    const membership = await tx.query<{ status: string; role: string }>(
+      `SELECT status, role FROM organization_members
+        WHERE organization_id = ? AND user_id = ?`,
+      [input.orgId, input.actorId]
     );
-    if (existing) return { id: existing.id, idempotent: true as const };
-  }
+    const member = membership.rows[0];
+    if (!member || String(member.status).toUpperCase() !== 'ACTIVE') {
+      fail(
+        'MEMBERSHIP_NOT_ACTIVE',
+        'An active organization membership is required to attach closure evidence',
+        403
+      );
+    }
 
-  const id = uuidv4();
-  try {
-    await queryHelpers.queryRun(
-      `INSERT INTO initiative_closure_evidence
-        (id, organization_id, closure_request_id, initiative_id, evidence_type, evidence_ref_id, notes, added_by, idempotency_key)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    const requestRow = await tx.query<{ id: string; status: string; requested_by: string }>(
+      `SELECT id, status, requested_by FROM initiative_closure_requests
+        WHERE id = ? AND initiative_id = ? AND organization_id = ?
+        FOR UPDATE`,
+      [input.closureRequestId, input.initiativeId, input.orgId]
+    );
+    const request = requestRow.rows[0];
+    if (!request) fail('CLOSURE_REQUEST_NOT_FOUND', 'Closure request not found', 404);
+
+    // Any ACTIVE member who happens to know an id must not be able to alter
+    // somebody else's closure request. Evidence may be attached by the person
+    // who raised the request, or by an organization OWNER/ADMIN acting above it.
+    const elevated = ['OWNER', 'ADMIN'].includes(String(member.role).toUpperCase());
+    if (!elevated && request.requested_by !== input.actorId) {
+      fail(
+        'CLOSURE_REQUEST_NOT_OWNED',
+        'Only the requester or an organization OWNER/ADMIN may attach evidence to this closure request',
+        403
+      );
+    }
+    if (request.status !== 'draft' && request.status !== 'returned') {
+      fail(
+        'CLOSURE_REQUEST_NOT_EDITABLE',
+        `Evidence can only be added while the request is draft/returned (current: ${request.status})`,
+        409
+      );
+    }
+
+    const source = await assertEvidenceRefBelongsToInitiative(
+      tx,
+      input.orgId,
+      input.initiativeId,
+      input.evidenceType,
+      input.evidenceRefId
+    );
+
+    // Anything already attached for this (request, type, ref) settles the
+    // outcome, whichever unique index it came through.
+    const priorRow = await tx.query<{
+      id: string;
+      idempotency_key: string | null;
+      source_hash: string | null;
+      source_version_id: string | null;
+    }>(
+      `SELECT id, idempotency_key, source_hash, source_version_id
+         FROM initiative_closure_evidence
+        WHERE closure_request_id = ? AND evidence_type = ? AND evidence_ref_id = ?`,
+      [input.closureRequestId, input.evidenceType, input.evidenceRefId]
+    );
+    const prior = priorRow.rows[0];
+    if (prior) {
+      // The source changed after it was pinned. Returning the old row would be
+      // a false success: the caller believes it attached the CURRENT content.
+      // The historical evidence stays exactly as it was — attaching the new
+      // version is a separate, explicit act.
+      if (source && prior.source_hash && prior.source_hash !== source.sourceHash) {
+        fail(
+          'EVIDENCE_SOURCE_VERSION_CONFLICT',
+          'This source is already attached to the closure request at a different version; the pinned evidence is unchanged',
+          409,
+          { pinnedSourceHash: prior.source_hash, currentSourceHash: source.sourceHash }
+        );
+      }
+      return {
+        id: prior.id,
+        idempotent: true,
+        sourceHash: prior.source_hash,
+        sourceVersionId: prior.source_version_id,
+      };
+    }
+
+    if (input.idempotencyKey) {
+      const byKey = await tx.query<{
+        id: string;
+        evidence_type: string;
+        evidence_ref_id: string;
+        source_hash: string | null;
+        source_version_id: string | null;
+      }>(
+        `SELECT id, evidence_type, evidence_ref_id, source_hash, source_version_id
+           FROM initiative_closure_evidence
+          WHERE closure_request_id = ? AND idempotency_key = ?`,
+        [input.closureRequestId, input.idempotencyKey]
+      );
+      const existing = byKey.rows[0];
+      if (existing) {
+        // Same key, different subject — a client bug or a replayed request with
+        // mutated content. Reporting it beats silently returning an unrelated row.
+        if (
+          existing.evidence_type !== input.evidenceType ||
+          existing.evidence_ref_id !== input.evidenceRefId ||
+          (source ? existing.source_hash !== source.sourceHash : false)
+        ) {
+          fail(
+            'EVIDENCE_IDEMPOTENCY_COLLISION',
+            'This idempotency key was already used for a different evidence reference or source version',
+            409
+          );
+        }
+        return {
+          id: existing.id,
+          idempotent: true,
+          sourceHash: existing.source_hash,
+          sourceVersionId: existing.source_version_id,
+        };
+      }
+    }
+
+    const id = uuidv4();
+    try {
+      await tx.query(
+        `INSERT INTO initiative_closure_evidence
+          (id, organization_id, closure_request_id, initiative_id, evidence_type, evidence_ref_id,
+           notes, added_by, idempotency_key, source_hash, source_version_id, source_captured_at,
+           source_snapshot_json)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CAST(? AS jsonb))`,
+        [
+          id,
+          input.orgId,
+          input.closureRequestId,
+          input.initiativeId,
+          input.evidenceType,
+          input.evidenceRefId,
+          input.notes || null,
+          input.actorId,
+          input.idempotencyKey || null,
+          source?.sourceHash ?? null,
+          source?.sourceVersionId ?? null,
+          source?.sourceCapturedAt ?? null,
+          // The snapshot and the hash come from ONE call, so a row can never
+          // store content that disagrees with the digest attesting to it.
+          source?.snapshot ? JSON.stringify(source.snapshot) : null,
+        ]
+      );
+    } catch (err: unknown) {
+      const code = (err as { code?: string } | null)?.code;
+      if (code === '23505') {
+        // Lost a race that the FOR UPDATE above could not serialise (a second
+        // request against a DIFFERENT closure request row racing on the same
+        // idempotency key). Re-read the winner rather than inventing a result.
+        const winner = await tx.query<{
+          id: string;
+          source_hash: string | null;
+          source_version_id: string | null;
+        }>(
+          `SELECT id, source_hash, source_version_id FROM initiative_closure_evidence
+            WHERE closure_request_id = ? AND evidence_type = ? AND evidence_ref_id = ?`,
+          [input.closureRequestId, input.evidenceType, input.evidenceRefId]
+        );
+        const row = winner.rows[0];
+        if (row) {
+          return {
+            id: row.id,
+            idempotent: true,
+            sourceHash: row.source_hash,
+            sourceVersionId: row.source_version_id,
+          };
+        }
+      }
+      throw err;
+    }
+
+    await tx.query(
+      `INSERT INTO audit_events
+         (id, actor_id, actor_type, org_id, action, resource_type, resource_id, after_json, metadata_json)
+       VALUES (?, ?, 'USER', ?, 'INITIATIVE_CLOSURE_EVIDENCE_ADDED', 'initiative_closure_evidence', ?, ?, ?)`,
       [
-        id,
-        input.orgId,
-        input.closureRequestId,
-        input.initiativeId,
-        input.evidenceType,
-        input.evidenceRefId,
-        input.notes || null,
+        uuidv4(),
         input.actorId,
-        input.idempotencyKey || null,
+        input.orgId,
+        id,
+        JSON.stringify({
+          closureRequestId: input.closureRequestId,
+          initiativeId: input.initiativeId,
+          evidenceType: input.evidenceType,
+          evidenceRefId: input.evidenceRefId,
+          sourceHash: source?.sourceHash ?? null,
+          sourceVersionId: source?.sourceVersionId ?? null,
+        }),
+        JSON.stringify({ idempotencyKey: input.idempotencyKey || null }),
       ]
     );
-  } catch (err: unknown) {
-    const code = (err as { code?: string } | null)?.code;
-    if (code === '23505') {
-      // Either the idempotency key OR the (request, type, ref) dedup index —
-      // both mean "this exact evidence link already exists", so re-select by
-      // the natural key rather than the idempotency key alone.
-      const winner = await queryHelpers.queryOne<{ id: string }>(
-        `SELECT id FROM initiative_closure_evidence
-         WHERE closure_request_id = ? AND evidence_type = ? AND evidence_ref_id = ?`,
-        [input.closureRequestId, input.evidenceType, input.evidenceRefId]
-      );
-      if (winner) return { id: winner.id, idempotent: true as const };
-    }
-    throw err;
-  }
 
-  return { id, idempotent: false as const };
+    await maybeFailAfterEvidenceInsertForTests();
+
+    return {
+      id,
+      idempotent: false,
+      sourceHash: source?.sourceHash ?? null,
+      sourceVersionId: source?.sourceVersionId ?? null,
+    };
+  });
+}
+
+/**
+ * Test-only fault injection point, used to prove that a failure AFTER the
+ * evidence and audit rows are written still rolls both back. Guarded by
+ * NODE_ENV so it cannot be armed from a running server.
+ */
+let evidenceFaultInjector: (() => Promise<void>) | null = null;
+
+export function setClosureEvidenceFaultInjectorForTests(fn: (() => Promise<void>) | null): void {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error('Closure evidence fault injection is test-only');
+  }
+  evidenceFaultInjector = fn;
+}
+
+async function maybeFailAfterEvidenceInsertForTests(): Promise<void> {
+  if (evidenceFaultInjector) await evidenceFaultInjector();
 }
 
 // ---------------------------------------------------------------------------

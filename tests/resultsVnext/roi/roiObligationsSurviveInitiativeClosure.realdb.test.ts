@@ -284,6 +284,17 @@ describe('ROI-E005 AC-02 — ROI obligations survive a REAL Initiative closure (
        ON CONFLICT (id) DO NOTHING`,
       [USER_OWNER, ORG_ID, `${USER_OWNER}@local.test`]
     );
+
+    // Closure evidence now requires an ACTIVE organization membership for EVERY
+    // evidence type, checked inside the writer's transaction. This fixture only
+    // created a `users` row, so it never modelled membership at all — the gap the
+    // requirement exists to close.
+    await client.query(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+       VALUES ($1, $2, $3, 'OWNER', 'ACTIVE')
+       ON CONFLICT (organization_id, user_id) DO UPDATE SET status = 'ACTIVE'`,
+      [`${ORG_ID}-member-owner`, ORG_ID, USER_OWNER]
+    );
     // Distinct ROI approver identity — approveRoiCase denies self-approval
     // (submitted_by/created_by match), unrelated to the closure-approver
     // role gate this test also exercises with USER_OWNER.
@@ -366,7 +377,13 @@ describe('ROI-E005 AC-02 — ROI obligations survive a REAL Initiative closure (
     await client.query(`DELETE FROM rvn_roi_cases WHERE organization_id = $1`, [ORG_ID]);
     await client.query(`DELETE FROM rvn_platform_resource_visibility WHERE organization_id = $1`, [ORG_ID]);
     await client.query(`DELETE FROM rvn_platform_visibility_policies WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(`DELETE FROM initiative_closure_evidence WHERE organization_id = $1`, [ORG_ID]);
+    // `initiative_closure_evidence` refuses UPDATE and DELETE unconditionally
+    // and its parents are ON DELETE RESTRICT
+    // (20261008_closure_evidence_snapshot_and_immutability.sql), so there is no
+    // scoped delete to issue here — by design, and with no session setting that
+    // opens one. TRUNCATE is DDL requiring ownership of the table; a runtime
+    // role does not have it.
+    await client.query('TRUNCATE TABLE initiative_closure_evidence');
     await client.query(`DELETE FROM initiative_closure_requests WHERE organization_id = $1`, [ORG_ID]);
     await client.query(`DELETE FROM initiative_history WHERE initiative_id = $1`, [INITIATIVE_ID]);
     // NOT cleaned up: `initiative_lifecycle_gate_decisions` is immutable BY

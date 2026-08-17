@@ -35,6 +35,7 @@ import {
   returnClosureRequest,
   submitClosureRequest,
 } from '../../services/initiative/initiativeClosureService.js';
+import { isPinnedEvidenceType } from '../../services/initiative/closureEvidenceSourceReader.js';
 import type { AuthenticatedRequest } from '../../types/index.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 
@@ -158,8 +159,15 @@ router.get('/:id/closure-requests/:requestId', async (req: AuthenticatedRequest,
       return;
     }
     const evidence = await queryHelpers.queryAll(
+      // `sourceHash`/`sourceVersionId` are what make a document-backed
+      // attachment auditable: the readback names the exact content the
+      // evidence was pinned to, so a later edit of the source is visibly a
+      // different version rather than a silent rewrite of history.
       `SELECT id, evidence_type as "evidenceType", evidence_ref_id as "evidenceRefId",
-                notes, added_by as "addedBy", added_at as "addedAt"
+                notes, added_by as "addedBy", added_at as "addedAt",
+                source_hash as "sourceHash", source_version_id as "sourceVersionId",
+                source_captured_at as "sourceCapturedAt",
+                source_snapshot_json as "sourceSnapshot"
          FROM initiative_closure_evidence
          WHERE closure_request_id = ? AND organization_id = ?
          ORDER BY added_at ASC`,
@@ -202,11 +210,45 @@ router.post(
     if (!auth) return;
     try {
       const { id: initiativeId, requestId } = req.params;
-      const { evidenceType, evidenceRefId, notes, idempotencyKey } = req.body || {};
+      const {
+        evidenceType,
+        evidenceRefId,
+        notes,
+        idempotencyKey,
+        initiativeId: bodyInitiativeId,
+      } = req.body || {};
       if (!evidenceType || !evidenceRefId) {
         res.status(400).json({ error: 'evidenceType and evidenceRefId are required' });
         return;
       }
+      // A body-supplied organization is never read anywhere in this handler —
+      // org comes from the verified session only — so a spoofed value cannot
+      // change the outcome. Rejecting it outright would leak that the field is
+      // meaningful; ignoring it is both safer and simpler.
+      //
+      // Pinned sources are reachable from many initiatives in the same project,
+      // so the target must be stated, never inferred. The path parameter stays
+      // authoritative; the body value exists so the assignment is explicit and
+      // auditable, and a disagreement is a client error rather than a silent pick.
+      if (isPinnedEvidenceType(String(evidenceType))) {
+        if (!bodyInitiativeId) {
+          res.status(400).json({
+            error: 'initiativeId is required for document-backed evidence',
+            code: 'INITIATIVE_ID_REQUIRED',
+          });
+          return;
+        }
+        if (String(bodyInitiativeId) !== String(initiativeId)) {
+          res.status(400).json({
+            error: 'initiativeId does not match the initiative in the request path',
+            code: 'INITIATIVE_ID_MISMATCH',
+          });
+          return;
+        }
+      }
+      // `organizationId` is intentionally NOT read from the body anywhere in
+      // this handler — it comes from the verified session only, so a spoofed
+      // body field changes nothing.
       const result = await addEvidence({
         orgId: auth.orgId,
         initiativeId,
