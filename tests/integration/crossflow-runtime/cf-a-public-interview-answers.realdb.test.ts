@@ -67,27 +67,41 @@ let app: Express;
 const TEARDOWN = ['interview_distributions', 'interview_questions', 'interview_sessions'];
 
 /**
- * The receipt ledger is append-only AT THE DATABASE LEVEL, so `DELETE` is
- * refused by its trigger — which is the whole point of test A6. That makes the
- * table un-cleanable by ordinary teardown, and a leaked receipt from a previous
- * run turns the very first write of the next run into a "replay", silently
- * invalidating every idempotency assertion downstream. (Found exactly that way:
- * run 3 passed, run 4 reported `replayed: true` on a fresh write.)
- *
- * `TRUNCATE` bypasses row-level triggers by design and is the correct tool for
- * resetting a DISPOSABLE database. It does not weaken the production guard —
- * no application code path can reach it — and this lane's Postgres is a
- * throwaway container owning nothing else that writes this table.
+ * Test cleanup is scoped to this suite's exact tenant ids. The production
+ * ledger is append-only, so cleanup takes an exclusive lock and disables only
+ * its named guard inside one transaction. PostgreSQL rolls the ALTER back if
+ * any later statement fails. Never TRUNCATE: the shared qualification database
+ * may contain another sequential lane's audit evidence.
  */
-async function resetReceiptLedger(c: pg.Client): Promise<void> {
-  await c.query('TRUNCATE TABLE interview_public_answer_receipts');
+async function cleanupOwnReceipts(c: pg.Client): Promise<void> {
+  const orgs = ALL_TENANTS.map((tenant) => tenant.id);
+  await c.query('BEGIN');
+  try {
+    await c.query('LOCK TABLE interview_public_answer_receipts IN ACCESS EXCLUSIVE MODE');
+    await c.query(
+      'ALTER TABLE interview_public_answer_receipts DISABLE TRIGGER trg_interview_public_answer_receipt_guard'
+    );
+    await c.query(
+      'DELETE FROM interview_public_answer_receipts WHERE organization_id = ANY($1::text[])',
+      [orgs]
+    );
+    await c.query(
+      'ALTER TABLE interview_public_answer_receipts ENABLE TRIGGER trg_interview_public_answer_receipt_guard'
+    );
+    await c.query('COMMIT');
+  } catch (error) {
+    await c.query('ROLLBACK');
+    throw error;
+  }
 }
 
 async function seedQuestion(id: string, sessionId: string, orgId: string): Promise<void> {
   await client.query(
     `INSERT INTO interview_questions (id, session_id, organization_id, category, question_text, status)
      VALUES ($1, $2, $3, 'discovery', 'Crossflow probe question', 'not_started')
-     ON CONFLICT (id) DO UPDATE SET answer_text = NULL, status = 'not_started', updated_at = NOW()`,
+     ON CONFLICT (id) DO UPDATE SET answer_text = NULL, context_note = NULL,
+       answered_at = NULL, answered_via_distribution_id = NULL,
+       status = 'not_started', updated_at = NOW()`,
     [id, sessionId, orgId]
   );
 }
@@ -106,7 +120,7 @@ beforeAll(async () => {
   await requireDatabase();
   client = newClient();
   await client.connect();
-  await resetReceiptLedger(client);
+  await cleanupOwnReceipts(client);
   await seedTenants(client);
 
   for (const [sessionId, tenant] of [
@@ -158,7 +172,7 @@ afterAll(async () => {
   // Receipts FIRST: `interview_public_answer_receipts.distribution_id` is
   // ON DELETE RESTRICT, so an invite that was used cannot be removed while its
   // receipts exist — deliberately, see the migration.
-  await resetReceiptLedger(client);
+  await cleanupOwnReceipts(client);
   for (const table of TEARDOWN) {
     await client
       .query(`DELETE FROM "${table}" WHERE organization_id = ANY($1::text[])`, [orgs])
@@ -272,11 +286,21 @@ describe('CF-A public token-bound respondent writes (real Postgres, mounted HTTP
       const before = await casToken(Q_A);
       const res = await request(app)
         .post(answerUrl(TOKEN_ACTIVE, Q_A))
-        .send({ answerText: 'respondent answer', expectedUpdatedAt: before, idempotencyKey: 'key-valid-000001' });
+        .send({
+          answerText: 'respondent answer',
+          contextNote: 'respondent context',
+          expectedUpdatedAt: before,
+          idempotencyKey: 'key-valid-000001',
+        });
 
       const stored = await coldRead((c) =>
-        c.query<{ answer_text: string; status: string; answered_via_distribution_id: string }>(
-          `SELECT answer_text, status, answered_via_distribution_id
+        c.query<{
+          answer_text: string;
+          context_note: string;
+          status: string;
+          answered_via_distribution_id: string;
+        }>(
+          `SELECT answer_text, context_note, status, answered_via_distribution_id
              FROM interview_questions WHERE id = $1`,
           [Q_A]
         )
@@ -285,6 +309,7 @@ describe('CF-A public token-bound respondent writes (real Postgres, mounted HTTP
         status: res.status,
         replayed: res.body.replayed,
         answer: stored.rows[0].answer_text,
+        contextNote: stored.rows[0].context_note,
         questionStatus: stored.rows[0].status,
         provenance: stored.rows[0].answered_via_distribution_id,
         casMoved: res.body.updatedAt !== before,
@@ -292,6 +317,7 @@ describe('CF-A public token-bound respondent writes (real Postgres, mounted HTTP
         status: 200,
         replayed: false,
         answer: 'respondent answer',
+        contextNote: 'respondent context',
         questionStatus: 'answered',
         provenance: DIST_ACTIVE,
         casMoved: true,
@@ -484,17 +510,28 @@ describe('CF-A public token-bound respondent writes (real Postgres, mounted HTTP
       // The guard is FOR EACH ROW, so it only fires when a row is actually
       // touched. Assert against a table that HAS rows, otherwise a no-op
       // statement would pass this test while proving nothing.
+      const orgs = ALL_TENANTS.map((tenant) => tenant.id);
       const seeded = await coldRead((c) =>
-        c.query(`SELECT id FROM interview_public_answer_receipts`)
+        c.query(
+          `SELECT id FROM interview_public_answer_receipts WHERE organization_id = ANY($1::text[])`,
+          [orgs]
+        )
       );
       expect(seeded.rowCount).toBeGreaterThan(0);
 
       const update = await client
-        .query(`UPDATE interview_public_answer_receipts SET idempotency_key = 'tampered'`)
+        .query(
+          `UPDATE interview_public_answer_receipts SET idempotency_key = 'tampered'
+            WHERE organization_id = ANY($1::text[])`,
+          [orgs]
+        )
         .then(() => 'ALLOWED')
         .catch((e: Error) => e.message);
       const remove = await client
-        .query(`DELETE FROM interview_public_answer_receipts`)
+        .query(
+          `DELETE FROM interview_public_answer_receipts WHERE organization_id = ANY($1::text[])`,
+          [orgs]
+        )
         .then(() => 'ALLOWED')
         .catch((e: Error) => e.message);
 

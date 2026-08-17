@@ -198,6 +198,7 @@ export async function savePublicAnswer(input: PublicAnswerInput): Promise<Public
     const updated = await tx.query<{ updated_at: Date }>(
       `UPDATE interview_questions
           SET answer_text = COALESCE(CAST(? AS text), answer_text),
+              context_note = COALESCE(CAST(? AS text), context_note),
               status = CASE WHEN COALESCE(length(trim(CAST(? AS text))), 0) > 0
                             THEN 'answered' ELSE status END,
               answered_at = CASE WHEN CAST(? AS text) IS NOT NULL
@@ -212,6 +213,7 @@ export async function savePublicAnswer(input: PublicAnswerInput): Promise<Public
         RETURNING updated_at`,
       [
         input.answerText ?? null,
+        input.contextNote ?? null,
         input.answerText ?? null,
         input.answerText ?? null,
         nowIso,
