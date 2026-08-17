@@ -167,14 +167,16 @@ test.describe('MAT exact mounted DOC/PPT/XLSX journey', () => {
     await cellA2Editor.press('Enter');
     expect((await saveA2).status()).toBe(200);
     await cellB2.click();
-    const formulaBar = page.getByRole('textbox', { name: 'Select a cell to see its content' });
+    const formulaBar = page.getByRole('textbox', {
+      name: /^(Select a cell to see its content|Zaznacz komórkę, aby zobaczyć jej treść)$/,
+    });
     await expect(formulaBar).toBeEditable();
-    await formulaBar.fill('=A2*2');
     const saveB2 = page.waitForResponse(
       (response) =>
         response.request().method() === 'PATCH' &&
         response.url().includes(`/api/workbook/${workbookId}/cell`)
     );
+    await formulaBar.fill('=A2*2');
     await formulaBar.press('Enter');
     expect((await saveB2).status()).toBe(200);
     await page.reload();
@@ -183,7 +185,9 @@ test.describe('MAT exact mounted DOC/PPT/XLSX journey', () => {
     await expect(coldFirstDataRow.getByRole('gridcell').nth(1)).toHaveText('42');
     await coldFirstDataRow.getByRole('gridcell').nth(1).click();
     await expect(
-      page.getByRole('textbox', { name: 'Select a cell to see its content' })
+      page.getByRole('textbox', {
+        name: /^(Select a cell to see its content|Zaznacz komórkę, aby zobaczyć jej treść)$/,
+      })
     ).toHaveValue('=A2*2');
     const head = await expectJsonOk(
       await request.get(`${API}/api/workbook/${workbookId}`, { headers })

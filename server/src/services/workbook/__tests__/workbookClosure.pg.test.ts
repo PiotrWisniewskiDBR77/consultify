@@ -54,6 +54,7 @@ vi.mock('../../server/src/middleware/auth.middleware.js', () => ({
     req.user = { id: userId, organizationId: orgId, role: req.headers['x-test-role'] || 'admin' };
     next();
   },
+  validateOrgMembership: (_req: unknown, _res: unknown, next: () => void) => next(),
 }));
 
 vi.mock('../../server/src/middleware/rbac.middleware.js', () => ({
@@ -156,10 +157,19 @@ describe('MAT-MVP-XLSX-001 workbook closure (real Postgres)', () => {
     return res.body.id as string;
   }
 
+  async function currentWorkbookVersion(id: string, orgId: string, userId: string) {
+    const res = await request(app)
+      .get(`/api/workbook/${id}`)
+      .set(authHeaders(orgId, userId))
+      .expect(200);
+    return Number(res.body.version);
+  }
+
   /** Governance PATCH to make a workbook `public` — required before a share
    * link is allowed to mint (see `evaluateArtifactExportPolicy` gate in
    * `POST /:id/share`). */
-  async function makePublic(id: string, orgId: string, userId: string, baseVersion: number) {
+  async function makePublic(id: string, orgId: string, userId: string) {
+    const baseVersion = await currentWorkbookVersion(id, orgId, userId);
     await request(app)
       .patch(`/api/workbook/${id}/governance`)
       .set(authHeaders(orgId, userId))
@@ -184,7 +194,7 @@ describe('MAT-MVP-XLSX-001 workbook closure (real Postgres)', () => {
       .set(authHeaders(ORG_A, USER_A))
       .expect(200);
     expect(get.body.id).toBe(id);
-    expect(get.body.version).toBe(1);
+    expect(get.body.version).toBe(0);
     expect(get.body.archived).toBe(false);
   });
 
@@ -193,12 +203,13 @@ describe('MAT-MVP-XLSX-001 workbook closure (real Postgres)', () => {
   // -------------------------------------------------------------------
   it('share -> public read (sanitized) -> revoke -> public read 404', async () => {
     const id = await createBlankWorkbook(ORG_A, USER_A, 'share-flow');
-    await makePublic(id, ORG_A, USER_A, 1);
+    await makePublic(id, ORG_A, USER_A);
+    const baseVersion = await currentWorkbookVersion(id, ORG_A, USER_A);
 
     await request(app)
       .patch(`/api/workbook/${id}/cell`)
       .set(authHeaders(ORG_A, USER_A))
-      .send({ sheetIndex: 0, rowIndex: 0, columnKey: 'A', value: 'shared-content', baseVersion: 1 })
+      .send({ sheetIndex: 0, rowIndex: 0, columnKey: 'A', value: 'shared-content', baseVersion })
       .expect(200);
 
     const share = await request(app)
@@ -254,7 +265,7 @@ describe('MAT-MVP-XLSX-001 workbook closure (real Postgres)', () => {
 
   it('NEGATIVE CONTROL: an expired share token is rejected with 404', async () => {
     const id = await createBlankWorkbook(ORG_A, USER_A, 'share-expired');
-    await makePublic(id, ORG_A, USER_A, 1);
+    await makePublic(id, ORG_A, USER_A);
     const share = await request(app)
       .post(`/api/workbook/${id}/share`)
       .set(authHeaders(ORG_A, USER_A))
@@ -290,7 +301,7 @@ describe('MAT-MVP-XLSX-001 workbook closure (real Postgres)', () => {
 
   it('NEGATIVE CONTROL: cross-tenant share mint/revoke denied (404), org A data untouched', async () => {
     const id = await createBlankWorkbook(ORG_A, USER_A, 'share-cross-tenant');
-    await makePublic(id, ORG_A, USER_A, 1);
+    await makePublic(id, ORG_A, USER_A);
 
     const crossMint = await request(app)
       .post(`/api/workbook/${id}/share`)
@@ -317,20 +328,21 @@ describe('MAT-MVP-XLSX-001 workbook closure (real Postgres)', () => {
   // -------------------------------------------------------------------
   it('NEGATIVE CONTROL: stale baseVersion on cell PATCH is rejected with 409 before any write', async () => {
     const id = await createBlankWorkbook(ORG_A, USER_A, 'cas-stale');
+    const baseVersion = await currentWorkbookVersion(id, ORG_A, USER_A);
     const first = await request(app)
       .patch(`/api/workbook/${id}/cell`)
       .set(authHeaders(ORG_A, USER_A))
-      .send({ sheetIndex: 0, rowIndex: 0, columnKey: 'A', value: 'first', baseVersion: 1 })
+      .send({ sheetIndex: 0, rowIndex: 0, columnKey: 'A', value: 'first', baseVersion })
       .expect(200);
-    expect(first.body.version).toBe(2);
+    expect(first.body.version).toBe(baseVersion + 1);
 
     const stale = await request(app)
       .patch(`/api/workbook/${id}/cell`)
       .set(authHeaders(ORG_A, USER_A))
-      .send({ sheetIndex: 0, rowIndex: 0, columnKey: 'A', value: 'stale-write', baseVersion: 1 });
+      .send({ sheetIndex: 0, rowIndex: 0, columnKey: 'A', value: 'stale-write', baseVersion });
     expect(stale.status).toBe(409);
     expect(stale.body.code).toBe('WORKBOOK_VERSION_CONFLICT');
-    expect(stale.body.currentVersion).toBe(2);
+    expect(stale.body.currentVersion).toBe(baseVersion + 1);
 
     const dbRow = await pool.query(`SELECT schema_json FROM generated_workbooks WHERE id = $1`, [
       id,
@@ -341,22 +353,21 @@ describe('MAT-MVP-XLSX-001 workbook closure (real Postgres)', () => {
 
   it('NEGATIVE CONTROL: two concurrent cell writes, same baseVersion — exactly one 200, one 409, DB holds only the winner', async () => {
     const id = await createBlankWorkbook(ORG_A, USER_A, 'cas-concurrent');
-    // Both requests pin the SAME `baseVersion: 1` (the version right after
+    const baseVersion = await currentWorkbookVersion(id, ORG_A, USER_A);
+    // Both requests pin the SAME baseVersion (the version right after
     // `/blank`) — this makes the assertion deterministic regardless of how
     // the two requests happen to interleave at the event-loop/DB-pool level:
-    // whichever `UPDATE ... WHERE COALESCE(version,0) = 1` commits first
-    // wins and bumps the row to version 2; the second, having explicitly
-    // asserted baseVersion 1, is a genuine conflict against the now-current
-    // version 2 no matter when it runs — not a race that might not trigger.
+    // whichever CAS update commits first wins and bumps the row once; the
+    // second is a genuine conflict against the now-current version.
     const [r1, r2] = await Promise.all([
       request(app)
         .patch(`/api/workbook/${id}/cell`)
         .set(authHeaders(ORG_A, USER_A))
-        .send({ sheetIndex: 0, rowIndex: 0, columnKey: 'A', value: 'writer-1', baseVersion: 1 }),
+        .send({ sheetIndex: 0, rowIndex: 0, columnKey: 'A', value: 'writer-1', baseVersion }),
       request(app)
         .patch(`/api/workbook/${id}/cell`)
         .set(authHeaders(ORG_A, USER_A))
-        .send({ sheetIndex: 0, rowIndex: 0, columnKey: 'A', value: 'writer-2', baseVersion: 1 }),
+        .send({ sheetIndex: 0, rowIndex: 0, columnKey: 'A', value: 'writer-2', baseVersion }),
     ]);
     const statuses = [r1.status, r2.status].sort();
     // If CAS were absent, BOTH would return 200 (last-write-wins) and this
@@ -370,7 +381,7 @@ describe('MAT-MVP-XLSX-001 workbook closure (real Postgres)', () => {
     );
     const cellA = JSON.parse(dbRow.rows[0].schema_json).sheets[0].rows[0].cells.A;
     expect(cellA.value).toBe(winner.body.cell.value);
-    expect(Number(dbRow.rows[0].version)).toBe(2); // exactly one version bump
+    expect(Number(dbRow.rows[0].version)).toBe(baseVersion + 1); // exactly one version bump
   });
 
   it('NEGATIVE CONTROL: two concurrent cell writes, no baseVersion sent (logged opt-out) — never both silently win over each other', async () => {
@@ -387,6 +398,7 @@ describe('MAT-MVP-XLSX-001 workbook closure (real Postgres)', () => {
     // (which plain last-write-wins would allow: both return 200, but only
     // one version bump happens).
     const id = await createBlankWorkbook(ORG_A, USER_A, 'cas-concurrent-no-baseversion');
+    const baseVersion = await currentWorkbookVersion(id, ORG_A, USER_A);
     const [r1, r2] = await Promise.all([
       request(app)
         .patch(`/api/workbook/${id}/cell`)
@@ -401,8 +413,7 @@ describe('MAT-MVP-XLSX-001 workbook closure (real Postgres)', () => {
     const conflictCount = [r1, r2].filter((r) => r.status === 409).length;
     expect(successCount + conflictCount).toBe(2);
     const dbRow = await pool.query(`SELECT version FROM generated_workbooks WHERE id = $1`, [id]);
-    // version started at 1; exactly `successCount` writes landed.
-    expect(Number(dbRow.rows[0].version)).toBe(1 + successCount);
+    expect(Number(dbRow.rows[0].version)).toBe(baseVersion + successCount);
   });
 
   it('structural command preserves formulas, creates exactly one version, replays idempotently and cold-reopens', async () => {
@@ -412,10 +423,11 @@ describe('MAT-MVP-XLSX-001 workbook closure (real Postgres)', () => {
       .set(authHeaders(ORG_A, USER_A))
       .expect(200);
     const initialRows = initial.body.schema_json.sheets[0].rows.length as number;
+    const initialVersion = Number(initial.body.version);
 
     const payload = {
       commandId: `cmd-${RUN_ID}-formula`,
-      baseVersion: 1,
+      baseVersion: initialVersion,
       idempotencyKey: `idem-${RUN_ID}-formula`,
       operations: [
         { type: 'setCell', sheetIndex: 0, rowIndex: 0, columnKey: 'A', formula: '=SUM(A2:A2)' },
@@ -427,21 +439,32 @@ describe('MAT-MVP-XLSX-001 workbook closure (real Postgres)', () => {
       .set(authHeaders(ORG_A, USER_A))
       .send(payload)
       .expect(200);
-    expect(applied.body).toMatchObject({ duplicate: false, version: 2, operationCount: 2 });
+    expect(applied.body).toMatchObject({
+      duplicate: false,
+      version: initialVersion + 1,
+      operationCount: 2,
+    });
 
     const replay = await request(app)
       .post(`/api/workbook/${id}/commands`)
       .set(authHeaders(ORG_A, USER_A))
       .send(payload)
       .expect(200);
-    expect(replay.body).toMatchObject({ duplicate: true, version: 2, operationCount: 2 });
+    expect(replay.body).toMatchObject({
+      duplicate: true,
+      version: initialVersion + 1,
+      operationCount: 2,
+    });
 
     const revisions = await request(app)
       .get(`/api/workbook/${id}/revisions`)
       .set(authHeaders(ORG_A, USER_A))
       .expect(200);
     expect(revisions.body.revisions).toHaveLength(1);
-    expect(revisions.body.revisions[0]).toMatchObject({ version: 2, command_id: payload.commandId });
+    expect(revisions.body.revisions[0]).toMatchObject({
+      version: initialVersion + 1,
+      command_id: payload.commandId,
+    });
 
     // A new HTTP read reconstructs the workbook exclusively from PostgreSQL;
     // command processing invalidates the runtime cache before this request.
@@ -449,7 +472,7 @@ describe('MAT-MVP-XLSX-001 workbook closure (real Postgres)', () => {
       .get(`/api/workbook/${id}`)
       .set(authHeaders(ORG_A, USER_A))
       .expect(200);
-    expect(reopened.body.version).toBe(2);
+    expect(reopened.body.version).toBe(initialVersion + 1);
     expect(reopened.body.schema_json.sheets[0].rows).toHaveLength(initialRows + 1);
     expect(reopened.body.schema_json.sheets[0].rows[1].cells.A.formula).toBe('SUM(A3:A3)');
 
@@ -457,16 +480,17 @@ describe('MAT-MVP-XLSX-001 workbook closure (real Postgres)', () => {
       `SELECT version, last_mutation_key, schema_json FROM generated_workbooks WHERE id=$1`,
       [id]
     );
-    expect(Number(persisted.rows[0].version)).toBe(2);
+    expect(Number(persisted.rows[0].version)).toBe(initialVersion + 1);
     expect(persisted.rows[0].last_mutation_key).toBe(payload.idempotencyKey);
   });
 
   it('mounted download exports current version with one immutable receipt; retry and tenant/auth negatives fail closed', async () => {
     const id = await createBlankWorkbook(ORG_A, USER_A, 'governed-export-receipt');
+    const baseVersion = await currentWorkbookVersion(id, ORG_A, USER_A);
     await request(app)
       .patch(`/api/workbook/${id}/cell`)
       .set(authHeaders(ORG_A, USER_A))
-      .send({ sheetIndex: 0, rowIndex: 0, columnKey: 'A', formula: '=1+2', baseVersion: 1 })
+      .send({ sheetIndex: 0, rowIndex: 0, columnKey: 'A', formula: '=1+2', baseVersion })
       .expect(200);
 
     const requestKey = `download-${RUN_ID}`;
@@ -522,7 +546,7 @@ describe('MAT-MVP-XLSX-001 workbook closure (real Postgres)', () => {
     );
     expect(receipts.rows).toHaveLength(1);
     expect(receipts.rows[0]).toMatchObject({
-      source_version: 2,
+      source_version: baseVersion + 1,
       provider_key: 'native:exceljs',
       status: 'succeeded',
       output_content_hash: createHash('sha256').update(first.body).digest('hex'),
@@ -646,7 +670,7 @@ describe('MAT-MVP-XLSX-001 workbook closure (real Postgres)', () => {
 
   it('NEGATIVE CONTROL: cross-tenant archive denied (404); archiving blocks sharing', async () => {
     const id = await createBlankWorkbook(ORG_A, USER_A, 'archive-cross-tenant-and-share-block');
-    await makePublic(id, ORG_A, USER_A, 1);
+    await makePublic(id, ORG_A, USER_A);
 
     const crossArchive = await request(app)
       .post(`/api/workbook/${id}/archive`)
