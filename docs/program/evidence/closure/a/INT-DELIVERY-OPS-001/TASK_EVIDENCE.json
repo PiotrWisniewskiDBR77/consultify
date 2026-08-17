@@ -1,34 +1,48 @@
 {
   "taskId": "INT-DELIVERY-OPS-001",
-  "baselineSha": "78a618942ea0e12e7837bf64dec05f0b30bbdff1",
-  "productSha": "d950f779d7f9ea0677ab339901e7856bd8f4dce1",
+  "baselineSha": "e613c78739b45b723ccf94decc0174390870967d",
+  "productSha": "b54ce054d2a4dc88821378d16a39027ad641fb22",
   "leaseSha256": "a2f9be9983e3a03e5e64f1a51dca193199a5bec963a246c3b4fe94b378af1308",
   "changedPaths": [
     "server/src/controllers/InterviewController.ts",
+    "server/src/routes/interview.routes.ts",
     "src/components/Interview/InterviewWorkspace.tsx",
+    "src/components/Interview/QuestionsList.tsx",
     "server/src/routes/interviewDelivery/__tests__/interviewAiReviewTimeoutFallback.pg.test.ts",
     "server/src/routes/interviewDelivery/__tests__/interviewAnswerCasAndNullableFixType.pg.test.ts",
+    "server/src/routes/interviewDelivery/__tests__/interviewDeliveryMountedAuth.pg.test.ts",
     "server/src/routes/interviewDelivery/__tests__/interviewEvidenceIngestToKnowledge.pg.test.ts",
     "server/src/routes/interviewDelivery/__tests__/interviewGetSessionAccessMatrix.pg.test.ts",
     "server/src/routes/interviewDelivery/__tests__/interviewNotificationPreferencesFallback.pg.test.ts"
   ],
   "changedPathRationale": {
-    "server/src/controllers/InterviewController.ts": "Persists INTEGER-compatible knowledge-ingest values, enforces answer CAS, nullable fixType, bounded AI fallback and governed session access.",
-    "src/components/Interview/InterviewWorkspace.tsx": "Bounds pre-submit AI review at 12 seconds and prevents a late promise from overwriting settled state.",
-    "server/src/routes/interviewDelivery/__tests__/interviewAiReviewTimeoutFallback.pg.test.ts": "Timeout positive control without fabricated result.",
-    "server/src/routes/interviewDelivery/__tests__/interviewAnswerCasAndNullableFixType.pg.test.ts": "CAS stale-write denial and nullable structured-output proof.",
+    "server/src/controllers/InterviewController.ts": "Requires an answer precondition, enforces millisecond-safe PostgreSQL CAS, increments timeout telemetry and durably records bounded AI timeout fallback.",
+    "server/src/routes/interview.routes.ts": "Revalidates ACTIVE organization membership on the mounted production Interview router.",
+    "src/components/Interview/InterviewWorkspace.tsx": "Refreshes a missing answer version before mutation, sends expectedUpdatedAt and handles 428 without an unguarded write.",
+    "src/components/Interview/QuestionsList.tsx": "Carries the server answer version token through the editable question model.",
+    "server/src/routes/interviewDelivery/__tests__/interviewAiReviewTimeoutFallback.pg.test.ts": "Proves timeout metric delta and durable fallback readback without a fabricated AI result.",
+    "server/src/routes/interviewDelivery/__tests__/interviewAnswerCasAndNullableFixType.pg.test.ts": "Proves missing-token 428, stale 409 and concurrent same-version exactly-one-winner CAS.",
+    "server/src/routes/interviewDelivery/__tests__/interviewDeliveryMountedAuth.pg.test.ts": "Proves mounted production router behavior with signed JWT, active/revoked membership and tenant isolation.",
     "server/src/routes/interviewDelivery/__tests__/interviewEvidenceIngestToKnowledge.pg.test.ts": "INTEGER write/readback proof.",
     "server/src/routes/interviewDelivery/__tests__/interviewGetSessionAccessMatrix.pg.test.ts": "Role and tenant access matrix.",
     "server/src/routes/interviewDelivery/__tests__/interviewNotificationPreferencesFallback.pg.test.ts": "Missing preferences-table fallback without false success."
   },
   "ownerTables": ["interview_evidence", "interview_answers", "interview_sessions", "notification_preferences"],
   "commands": [
-    {"command": "RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres CI=true DATABASE_URL=<isolated-pg> npx vitest run <five interview delivery realDB files> --retry=0", "exitCode": 0}
+    {"command": "RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test CI=true DATABASE_URL=<isolated-pg> npx vitest run <six interview delivery realDB files> --no-file-parallelism --maxWorkers=1 --retry=0 --reporter=dot", "exitCode": 0},
+    {"command": "npx vitest run src/components/Interview/__tests__/QuestionsList.aiAudit.test.tsx --retry=0 --reporter=dot", "exitCode": 0},
+    {"command": "NODE_OPTIONS=--max-old-space-size=8192 npm run type-check -- --pretty false", "exitCode": 0},
+    {"command": "NODE_OPTIONS=--max-old-space-size=8192 npm run build:backend", "exitCode": 0},
+    {"command": "strict migration from zero; repeat; dry-run", "exitCode": 0}
   ],
-  "denominators": {"realDb": {"files": 5, "passed": 29, "failed": 0, "skipped": 0}},
-  "fixtures": {"database": "integrator isolated PostgreSQL with current migration ledger", "aiTimeoutPositiveControl": "provider exceeds configured bound"},
-  "negativeControls": {"staleAnswerDenied409": true, "missingPreferencesTableNo500": true, "crossTenantSessionDenied": true, "lateAiReviewCannotOverwrite": true},
+  "denominators": {
+    "migrations": {"applied": 733, "failed": 0, "repeatApplied": 0, "dryRunPending": 0},
+    "realDb": {"files": 6, "passed": 34, "failed": 0, "skipped": 0},
+    "ui": {"files": 1, "passed": 2, "failed": 0, "skipped": 0}
+  },
+  "fixtures": {"database": "disposable pgvector PostgreSQL 16 with strict current migration ledger", "aiTimeoutPositiveControl": "provider exceeds configured bound"},
+  "negativeControls": {"missingAnswerTokenDenied428": true, "staleAnswerDenied409": true, "concurrentSameVersionExactlyOneWinner": true, "inactiveMembershipDenied403": true, "missingPreferencesTableNo500": true, "crossTenantSessionDenied": true, "lateAiReviewCannotOverwrite": true, "timeoutMetricAndDurableSnapshot": true},
   "browserArtifacts": [],
   "rollback": {"method": "Revert code while preserving additive schema; no destructive rollback.", "executed": false},
-  "verdict": "PARTIAL"
+  "verdict": "DONE_CURRENT_SHA"
 }
