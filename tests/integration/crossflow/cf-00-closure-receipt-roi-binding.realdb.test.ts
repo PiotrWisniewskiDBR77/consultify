@@ -73,12 +73,32 @@ suite('FLOW-TRANSFORM closure receipt -> ROI case durable binding', () => {
       await client.query(`DELETE FROM closure_delivery_receipts WHERE id=$1`, [receiptId]);
       await client.query('ROLLBACK');
       expect((await client.query(`SELECT count(*)::int n FROM closure_delivery_receipts WHERE id=$1`, [receiptId])).rows[0].n).toBe(1);
+      const capturedCaseIds = (await client.query<{ case_id: string }>(`SELECT case_id FROM rvn_roi_cases WHERE organization_id=$1`, [orgA])).rows.map((row) => row.case_id);
+      const capturedEventIds = (await client.query<{ event_id: string }>(`SELECT event_id FROM rvn_platform_events WHERE organization_id=$1`, [orgA])).rows.map((row) => row.event_id);
+      const residueSql = `SELECT
+        (SELECT count(*)::int FROM organizations WHERE id=ANY($1::text[])) organizations,
+        (SELECT count(*)::int FROM users WHERE id=ANY($2::text[])) users,
+        (SELECT count(*)::int FROM organization_members WHERE organization_id=$3) members,
+        (SELECT count(*)::int FROM initiatives WHERE id=$4) initiatives,
+        (SELECT count(*)::int FROM closure_delivery_receipts WHERE id=ANY($5::text[])) receipts,
+        (SELECT count(*)::int FROM rvn_roi_cases WHERE case_id=ANY($6::uuid[])) cases,
+        (SELECT count(*)::int FROM rvn_roi_baselines WHERE case_id=ANY($6::uuid[])) baselines,
+        (SELECT count(*)::int FROM rvn_roi_calculation_policy WHERE case_id=ANY($6::uuid[])) calculation_policies,
+        (SELECT count(*)::int FROM rvn_platform_resource_visibility WHERE resource_id=ANY($7::text[])) visibility,
+        (SELECT count(*)::int FROM rvn_platform_resource_acl WHERE resource_id=ANY($7::text[])) acl,
+        (SELECT count(*)::int FROM rvn_platform_obligations WHERE organization_id=$3) obligations,
+        (SELECT count(*)::int FROM rvn_platform_visibility_policies WHERE organization_id=$3) visibility_policies,
+        (SELECT count(*)::int FROM rvn_platform_events WHERE event_id=ANY($8::uuid[])) events,
+        (SELECT count(*)::int FROM rvn_platform_outbox WHERE event_id=ANY($8::uuid[])) outbox`;
+      const residueParams = [[orgA, orgB], [ownerA, closerA], orgA, initiativeId,
+        [receiptId, secondReceiptId, actorlessReceiptId], capturedCaseIds, capturedCaseIds, capturedEventIds];
+      const emptyResidue = { organizations: 0, users: 0, members: 0, initiatives: 0, receipts: 0,
+        cases: 0, baselines: 0, calculation_policies: 0, visibility: 0, acl: 0, obligations: 0,
+        visibility_policies: 0, events: 0, outbox: 0 };
       await client.query('BEGIN');
-    await client.query(`DELETE FROM rvn_platform_outbox WHERE event_id IN
-      (SELECT event_id FROM rvn_platform_events WHERE organization_id=$1)`, [orgA]);
-    await client.query(`DELETE FROM rvn_platform_events WHERE organization_id=$1`, [orgA]);
-    await client.query(`DELETE FROM rvn_platform_resource_acl WHERE resource_id IN
-      (SELECT case_id::text FROM rvn_roi_cases WHERE organization_id=$1)`, [orgA]);
+    await client.query(`DELETE FROM rvn_platform_outbox WHERE event_id=ANY($1::uuid[])`, [capturedEventIds]);
+    await client.query(`DELETE FROM rvn_platform_events WHERE event_id=ANY($1::uuid[])`, [capturedEventIds]);
+    await client.query(`DELETE FROM rvn_platform_resource_acl WHERE resource_id=ANY($1::text[])`, [capturedCaseIds]);
     await client.query(`DELETE FROM rvn_platform_obligations WHERE organization_id=$1`, [orgA]);
     await client.query(`DELETE FROM rvn_roi_calculation_policy WHERE organization_id=$1`, [orgA]);
     await client.query(`DELETE FROM rvn_roi_baselines WHERE organization_id=$1`, [orgA]);
@@ -90,23 +110,14 @@ suite('FLOW-TRANSFORM closure receipt -> ROI case durable binding', () => {
     await client.query(`DELETE FROM organization_members WHERE organization_id=$1`, [orgA]);
     await client.query(`DELETE FROM users WHERE id=ANY($1::text[])`, [[ownerA, closerA]]);
       await client.query(`DELETE FROM organizations WHERE id=ANY($1::text[])`, [[orgA, orgB]]);
-      const residue = await client.query(`SELECT
-        (SELECT count(*)::int FROM rvn_roi_cases WHERE organization_id=$1) cases,
-        (SELECT count(*)::int FROM rvn_platform_events WHERE organization_id=$1) events,
-        (SELECT count(*)::int FROM closure_delivery_receipts WHERE id=ANY($2::text[])) receipts,
-        (SELECT count(*)::int FROM initiatives WHERE id=$3) initiatives,
-        (SELECT count(*)::int FROM rvn_platform_outbox WHERE event_id IN (SELECT event_id FROM rvn_platform_events WHERE organization_id=$1)) outbox,
-        (SELECT count(*)::int FROM rvn_roi_baselines WHERE organization_id=$1) baselines,
-        (SELECT count(*)::int FROM rvn_roi_calculation_policy WHERE organization_id=$1) calculation_policies,
-        (SELECT count(*)::int FROM rvn_platform_resource_visibility WHERE organization_id=$1) visibility,
-        (SELECT count(*)::int FROM rvn_platform_resource_acl WHERE resource_id IN (SELECT case_id::text FROM rvn_roi_cases WHERE organization_id=$1)) acl,
-        (SELECT count(*)::int FROM rvn_platform_obligations WHERE organization_id=$1) obligations,
-        (SELECT count(*)::int FROM organization_members WHERE organization_id=$1) members,
-        (SELECT count(*)::int FROM users WHERE id=ANY($4::text[])) users`, [orgA, [receiptId, secondReceiptId, actorlessReceiptId], initiativeId, [ownerA, closerA]]);
-      expect(residue.rows[0]).toEqual({ cases: 0, events: 0, receipts: 0, initiatives: 0, outbox: 0, baselines: 0, calculation_policies: 0, visibility: 0, acl: 0, obligations: 0, members: 0, users: 0 });
+      expect((await client.query(residueSql, residueParams)).rows[0]).toEqual(emptyResidue);
       await client.query('COMMIT');
-      const postCommit = await client.query(`SELECT count(*)::int n FROM organizations WHERE id=ANY($1::text[])`, [[orgA, orgB]]);
-      expect(postCommit.rows[0].n).toBe(0);
+      const verificationPool = new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 1 });
+      try {
+        expect((await verificationPool.query(residueSql, residueParams)).rows[0]).toEqual(emptyResidue);
+      } finally {
+        await verificationPool.end();
+      }
       const triggerStates = await client.query<{ tgname: string; tgenabled: string }>(
         `SELECT t.tgname,t.tgenabled FROM pg_trigger t JOIN pg_class c ON c.oid=t.tgrelid
           WHERE NOT t.tgisinternal AND c.relname=ANY($1::text[]) ORDER BY t.tgname`,
