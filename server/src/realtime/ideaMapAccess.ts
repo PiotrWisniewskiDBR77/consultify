@@ -182,6 +182,124 @@ export interface GraphPersistResult {
   version: number;
 }
 
+export interface DurableNodeLock {
+  nodeId: string;
+  holderUserId: string;
+  leaseOwner: string;
+  fencingToken: number;
+  expiresAt: string;
+}
+
+export async function acquireDurableIdeaNodeLock(
+  db: IDatabase,
+  input: {
+    organizationId: string;
+    ideaId: string;
+    nodeId: string;
+    userId: string;
+    leaseOwner: string;
+    correlationId: string;
+    ttlSeconds?: number;
+  }
+): Promise<DurableNodeLock | null> {
+  const ttl = Math.max(5, Math.min(120, Math.trunc(input.ttlSeconds ?? 30)));
+  const row = await db.get<any>(
+    `WITH prior AS (
+       SELECT holder_user_id, lease_owner, expires_at
+       FROM idea_workspace_node_locks
+       WHERE organization_id = ? AND idea_id = ? AND node_id = ?
+     ), acquired AS (
+       INSERT INTO idea_workspace_node_locks
+         (organization_id, idea_id, node_id, holder_user_id, lease_owner, fencing_token, acquired_at, expires_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, 1, NOW(), NOW() + (? * INTERVAL '1 second'), NOW())
+       ON CONFLICT (organization_id, idea_id, node_id) DO UPDATE
+       SET holder_user_id = EXCLUDED.holder_user_id,
+           lease_owner = EXCLUDED.lease_owner,
+           fencing_token = idea_workspace_node_locks.fencing_token + 1,
+           acquired_at = NOW(),
+           expires_at = EXCLUDED.expires_at,
+           updated_at = NOW()
+       WHERE idea_workspace_node_locks.expires_at <= NOW()
+          OR (idea_workspace_node_locks.holder_user_id = EXCLUDED.holder_user_id
+              AND idea_workspace_node_locks.lease_owner = EXCLUDED.lease_owner)
+       RETURNING node_id, holder_user_id, lease_owner, fencing_token, expires_at
+     ), event AS (
+       INSERT INTO idea_workspace_lock_events
+         (organization_id, idea_id, node_id, actor_user_id, lease_owner, fencing_token, event_type, correlation_id)
+       SELECT ?, ?, node_id, ?, lease_owner, fencing_token,
+              CASE
+                WHEN EXISTS (SELECT 1 FROM prior WHERE expires_at <= NOW()) THEN 'RECLAIMED'
+                WHEN EXISTS (SELECT 1 FROM prior) THEN 'RENEWED'
+                ELSE 'ACQUIRED'
+              END,
+              ?
+       FROM acquired
+     )
+     SELECT node_id as "nodeId", holder_user_id as "holderUserId", lease_owner as "leaseOwner",
+            fencing_token::int as "fencingToken", expires_at::text as "expiresAt"
+     FROM acquired`,
+    [
+      input.organizationId, input.ideaId, input.nodeId,
+      input.organizationId, input.ideaId, input.nodeId, input.userId, input.leaseOwner, ttl,
+      input.organizationId, input.ideaId, input.userId, input.correlationId,
+    ]
+  );
+  return row ?? null;
+}
+
+export async function releaseDurableIdeaNodeLock(
+  db: IDatabase,
+  input: {
+    organizationId: string;
+    ideaId: string;
+    nodeId: string;
+    userId: string;
+    leaseOwner: string;
+    fencingToken: number;
+    correlationId: string;
+  }
+): Promise<boolean> {
+  const row = await db.get<{ released: boolean }>(
+    `WITH released AS (
+       DELETE FROM idea_workspace_node_locks
+       WHERE organization_id = ? AND idea_id = ? AND node_id = ?
+         AND holder_user_id = ? AND lease_owner = ? AND fencing_token = ?
+       RETURNING node_id, lease_owner, fencing_token
+     ), event AS (
+       INSERT INTO idea_workspace_lock_events
+         (organization_id, idea_id, node_id, actor_user_id, lease_owner, fencing_token, event_type, correlation_id)
+       SELECT ?, ?, node_id, ?, lease_owner, fencing_token, 'RELEASED', ? FROM released
+       UNION ALL
+       SELECT ?, ?, ?, ?, ?, ?, 'FENCE_REJECTED', ?
+       WHERE NOT EXISTS (SELECT 1 FROM released)
+     )
+     SELECT EXISTS (SELECT 1 FROM released) AS released`,
+    [
+      input.organizationId, input.ideaId, input.nodeId, input.userId, input.leaseOwner,
+      input.fencingToken, input.organizationId, input.ideaId, input.userId, input.correlationId,
+      input.organizationId, input.ideaId, input.nodeId, input.userId, input.leaseOwner,
+      input.fencingToken, input.correlationId,
+    ]
+  );
+  return row?.released === true;
+}
+
+export async function listDurableIdeaNodeLocks(
+  db: IDatabase,
+  organizationId: string,
+  ideaId: string
+): Promise<DurableNodeLock[]> {
+  const rows = await db.all<any>(
+    `SELECT node_id as "nodeId", holder_user_id as "holderUserId", lease_owner as "leaseOwner",
+            fencing_token::int as "fencingToken", expires_at::text as "expiresAt"
+     FROM idea_workspace_node_locks
+     WHERE organization_id = ? AND idea_id = ? AND expires_at > NOW()
+     ORDER BY node_id`,
+    [organizationId, ideaId]
+  );
+  return rows as DurableNodeLock[];
+}
+
 interface GraphNode {
   id?: string;
   [key: string]: unknown;
@@ -197,8 +315,6 @@ interface GraphEdge {
  * serialized end-to-end (read-modify-write never interleaves). Different ideas
  * run in parallel. The chain is best-effort cleaned up when it drains.
  */
-const persistQueues = new Map<string, Promise<unknown>>();
-
 function parseGraphArray<T>(raw: unknown): T[] {
   if (Array.isArray(raw)) return raw as T[];
   if (typeof raw === 'string') {
@@ -282,81 +398,92 @@ async function persistCanonicalPatch(
   ideaId: string,
   organizationId: string,
   userId: string,
-  ops: GraphPatchOp[]
+  ops: GraphPatchOp[],
+  fence?: { nodeId: string; leaseOwner: string; fencingToken: number }
 ): Promise<GraphPersistResult> {
-  const canonical = await selectCanonicalMapRowFull(db, ideaId, organizationId);
-  if (!canonical) {
-    throw new Error(`No canonical map row for idea ${ideaId} in org ${organizationId}`);
-  }
-
-  const nodes = parseGraphArray<GraphNode>(canonical.nodes_json);
-  const edges = parseGraphArray<GraphEdge>(canonical.edges_json);
-  const applied = applyOpsToGraph(nodes, edges, ops);
-
-  const currentVersion = Number(canonical.version || 1);
-  const nextVersion = currentVersion + 1;
-  const now = new Date().toISOString();
-
-  let inTx = false;
+  const { getPoolClientForPinnedTransaction } = await import('../database/PostgresDatabase.js');
+  const client = await getPoolClientForPinnedTransaction();
+  let begun = false;
   try {
-    await db.exec('BEGIN');
-    inTx = true;
-    await db.run(
+    await client.query('BEGIN');
+    begun = true;
+    const selected = await client.query<{
+      id: string; version: number; nodes_json: unknown; edges_json: unknown;
+    }>(
+      `SELECT id, version, nodes_json, edges_json
+       FROM my_idea_maps
+       WHERE idea_id = $1 AND organization_id = $2 AND is_canonical = TRUE
+       FOR UPDATE`,
+      [ideaId, organizationId]
+    );
+    const canonical = selected.rows[0];
+    if (!canonical) throw new Error(`No canonical map row for idea ${ideaId} in org ${organizationId}`);
+    const touchedNodeIds = [...new Set(ops.map((op) => String(op?.data?.id || '')).filter(Boolean))];
+    if (touchedNodeIds.length > 0) {
+      const locks = await client.query<{
+        node_id: string; lease_owner: string; fencing_token: string;
+      }>(
+        `SELECT node_id, lease_owner, fencing_token
+         FROM idea_workspace_node_locks
+         WHERE organization_id = $1 AND idea_id = $2 AND node_id = ANY($3::text[])
+           AND expires_at > NOW()
+         FOR UPDATE`,
+        [organizationId, ideaId, touchedNodeIds]
+      );
+      for (const lock of locks.rows) {
+        if (
+          !fence ||
+          fence.nodeId !== lock.node_id ||
+          fence.leaseOwner !== lock.lease_owner ||
+          fence.fencingToken !== Number(lock.fencing_token)
+        ) {
+          throw new Error('IDEA_NODE_LOCK_FENCE_REJECTED');
+        }
+      }
+    }
+    const applied = applyOpsToGraph(
+      parseGraphArray<GraphNode>(canonical.nodes_json),
+      parseGraphArray<GraphEdge>(canonical.edges_json),
+      ops
+    );
+    const currentVersion = Number(canonical.version || 1);
+    const nextVersion = currentVersion + 1;
+    const updated = await client.query(
       `UPDATE my_idea_maps
-       SET nodes_json = ?, edges_json = ?, version = ?, last_editor_user_id = ?, updated_at = ?
-       WHERE id = ?`,
+       SET nodes_json = $1, edges_json = $2, version = $3, last_editor_user_id = $4, updated_at = NOW()
+       WHERE id = $5 AND organization_id = $6 AND version = $7`,
       [
         JSON.stringify(applied.nodes),
         JSON.stringify(applied.edges),
         nextVersion,
         userId,
-        now,
         canonical.id,
+        organizationId,
+        currentVersion,
       ]
     );
-    await db.exec('COMMIT');
-    inTx = false;
+    if (updated.rowCount !== 1) throw new Error('IDEA_MAP_VERSION_CONFLICT');
+    await client.query('COMMIT');
+    begun = false;
+    return { version: nextVersion };
   } catch (err) {
-    if (inTx) {
+    if (begun) {
       try {
-        await db.exec('ROLLBACK');
+        await client.query('ROLLBACK');
       } catch {
         /* best effort */
       }
     }
     throw err;
+  } finally {
+    client.release();
   }
-
-  return { version: nextVersion };
 }
 
 /** Full canonical row read (includes nodes_json/edges_json), used by the
  *  persist path. Distinct from selectCanonicalMapRow() which returns only the
  *  lightweight membership/version view. Returns null when the is_canonical
  *  column is absent (schema not migrated) or no canonical row exists. */
-async function selectCanonicalMapRowFull(
-  db: IDatabase,
-  ideaId: string,
-  organizationId: string
-): Promise<{ id: string; version: number; nodes_json: unknown; edges_json: unknown } | null> {
-  const mapCols = await getTableColumns('my_idea_maps');
-  if (!mapCols.has('is_canonical')) return null;
-
-  const row = await db.get<{
-    id: string;
-    version: number;
-    nodes_json: unknown;
-    edges_json: unknown;
-  }>(
-    `SELECT id, version, nodes_json, edges_json
-     FROM my_idea_maps
-     WHERE idea_id = ? AND organization_id = ? AND is_canonical = TRUE
-     LIMIT 1`,
-    [ideaId, organizationId]
-  );
-  return row ?? null;
-}
-
 /**
  * Sequentially persists a graph_patch into the canonical `my_idea_maps` row.
  *
@@ -378,25 +505,8 @@ export async function applyGraphPatchToCanonical(
   ideaId: string,
   organizationId: string,
   userId: string,
-  ops: GraphPatchOp[]
+  ops: GraphPatchOp[],
+  fence?: { nodeId: string; leaseOwner: string; fencingToken: number }
 ): Promise<GraphPersistResult> {
-  const prev = persistQueues.get(ideaId) ?? Promise.resolve();
-
-  // Chain onto the previous persist regardless of whether it resolved or
-  // rejected — we must not let one failed write break the queue for the idea.
-  const next = prev
-    .catch(() => undefined)
-    .then(() => persistCanonicalPatch(db, ideaId, organizationId, userId, ops));
-
-  persistQueues.set(ideaId, next);
-
-  // Best-effort cleanup: once this is the tail of the chain and it settles,
-  // drop the entry so the map doesn't grow unbounded across ideas.
-  void next
-    .catch(() => undefined)
-    .finally(() => {
-      if (persistQueues.get(ideaId) === next) persistQueues.delete(ideaId);
-    });
-
-  return next;
+  return persistCanonicalPatch(db, ideaId, organizationId, userId, ops, fence);
 }

@@ -4,6 +4,7 @@
  */
 
 import type { Server as HttpServer } from 'http';
+import { randomUUID } from 'crypto';
 import jwt from 'jsonwebtoken';
 import { type WebSocket, WebSocketServer } from 'ws';
 
@@ -11,7 +12,13 @@ import { config } from '../config/Config.js';
 import { featureFlags } from '../config/FeatureFlags.js';
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
-import { applyGraphPatchToCanonical, assertIdeaMembership } from '../realtime/ideaMapAccess.js';
+import {
+  acquireDurableIdeaNodeLock,
+  applyGraphPatchToCanonical,
+  assertIdeaMembership,
+  listDurableIdeaNodeLocks,
+  releaseDurableIdeaNodeLock,
+} from '../realtime/ideaMapAccess.js';
 import {
   isWsOrgContextFresh,
   resolveWsOrgContext,
@@ -59,6 +66,8 @@ interface CollabSocket extends WebSocket {
    *  shared canonical map, decided once at upgrade via assertIdeaMembership.
    *  Only meaningful when the flag is ON. */
   __canWrite?: boolean;
+  __leaseOwner?: string;
+  __lockTokens?: Map<string, number>;
 }
 
 /** Message types that mutate shared/org state — all must pass the org gate.
@@ -473,6 +482,8 @@ export function attachIdeaCollabWs(server: HttpServer): void {
     ws.ideaId = ideaId;
     ws.__alive = true;
     ws.__actionsCount = 0;
+    ws.__leaseOwner = randomUUID();
+    ws.__lockTokens = new Map();
 
     const authUser = ws.__user;
     if (!ideaRooms.has(ideaId)) ideaRooms.set(ideaId, new Map());
@@ -564,15 +575,29 @@ export function attachIdeaCollabWs(server: HttpServer): void {
           case 'lock_node': {
             const nodeId = msg.nodeId;
             if (!nodeId) break;
-            const currentHolder = state.lockedNodes.get(nodeId);
-            if (currentHolder && currentHolder !== user.id) {
-              ws.send(JSON.stringify({ type: 'lock_rejected', nodeId, heldBy: currentHolder }));
+            const acquired = await acquireDurableIdeaNodeLock(db, {
+              organizationId: user.organizationId || '',
+              ideaId,
+              nodeId: String(nodeId),
+              userId: user.id,
+              leaseOwner: ws.__leaseOwner || '',
+              correlationId: String(msg.correlationId || randomUUID()),
+              ttlSeconds: Number(msg.ttlSeconds || 30),
+            });
+            if (!acquired) {
+              const locks = await listDurableIdeaNodeLocks(db, user.organizationId || '', ideaId);
+              const held = locks.find((entry) => entry.nodeId === String(nodeId));
+              ws.send(JSON.stringify({
+                type: 'lock_rejected', nodeId, heldBy: held?.holderUserId || null,
+              }));
               break;
             }
             state.lockedNodes.set(nodeId, user.id);
+            ws.__lockTokens?.set(String(nodeId), acquired.fencingToken);
             state.lastActivity = Date.now();
             ws.__actionsCount = (ws.__actionsCount || 0) + 1;
             broadcastSessionState(ideaId);
+            ws.send(JSON.stringify({ type: 'lock_acquired', ...acquired }));
             if (ws.__sessionId) persistEvent(db, ws.__sessionId, 'lock_node', { nodeId });
             break;
           }
@@ -580,12 +605,24 @@ export function attachIdeaCollabWs(server: HttpServer): void {
           case 'unlock_node': {
             const nodeId = msg.nodeId;
             if (!nodeId) break;
-            if (state.lockedNodes.get(nodeId) === user.id) {
+            const released = await releaseDurableIdeaNodeLock(db, {
+              organizationId: user.organizationId || '',
+              ideaId,
+              nodeId: String(nodeId),
+              userId: user.id,
+              leaseOwner: ws.__leaseOwner || '',
+              fencingToken: Number(msg.fencingToken || ws.__lockTokens?.get(String(nodeId)) || 0),
+              correlationId: String(msg.correlationId || randomUUID()),
+            });
+            if (released) {
               state.lockedNodes.delete(nodeId);
+              ws.__lockTokens?.delete(String(nodeId));
               state.lastActivity = Date.now();
               ws.__actionsCount = (ws.__actionsCount || 0) + 1;
               broadcastSessionState(ideaId);
               if (ws.__sessionId) persistEvent(db, ws.__sessionId, 'unlock_node', { nodeId });
+            } else if (ws.readyState === 1) {
+              ws.send(JSON.stringify({ type: 'error', code: 'LOCK_FENCE_REJECTED', nodeId }));
             }
             break;
           }
@@ -618,14 +655,12 @@ export function attachIdeaCollabWs(server: HttpServer): void {
             state.lastActivity = Date.now();
             ws.__actionsCount = (ws.__actionsCount || 0) + 1;
 
-            // (a) Relay to the rest of the room — ALWAYS, flag on or off. Even
-            // if the canonical persist fails, peers apply the live patch and
-            // rehydration reconciles later (plan §3).
+            // Relay-only mode preserves the legacy live-room behavior. Shared
+            // maps relay only after the canonical fenced write succeeds, so a
+            // stale lease cannot transiently overwrite peers before rehydrate.
             const patchStr = JSON.stringify(patch);
-            room.forEach((_, otherWs) => {
-              if (otherWs !== ws && otherWs.readyState === 1) {
-                otherWs.send(patchStr);
-              }
+            const relayPatch = () => room.forEach((_, otherWs) => {
+              if (otherWs !== ws && otherWs.readyState === 1) otherWs.send(patchStr);
             });
 
             if (ws.__sessionId) {
@@ -645,8 +680,18 @@ export function attachIdeaCollabWs(server: HttpServer): void {
                   ideaId,
                   user.organizationId || authUser?.organizationId || '',
                   user.id,
-                  ops
+                  ops,
+                  msg.nodeId && (msg.fencingToken || ws.__lockTokens?.get(String(msg.nodeId)))
+                    ? {
+                        nodeId: String(msg.nodeId),
+                        leaseOwner: ws.__leaseOwner || '',
+                        fencingToken: Number(
+                          msg.fencingToken || ws.__lockTokens?.get(String(msg.nodeId))
+                        ),
+                      }
+                    : undefined
                 );
+                relayPatch();
                 broadcastGraphVersion(ideaId, version);
               } catch (err) {
                 logger.warn('[IdeaCollabWs] Canonical graph_patch persist failed', {
@@ -658,7 +703,7 @@ export function attachIdeaCollabWs(server: HttpServer): void {
                   ws.send(JSON.stringify({ type: 'error', code: 'GRAPH_PERSIST_FAILED' }));
                 }
               }
-            }
+            } else relayPatch();
             break;
           }
 
@@ -713,8 +758,13 @@ export function attachIdeaCollabWs(server: HttpServer): void {
       logger.info(`[IdeaCollabWs] Client left idea ${ideaId}`);
     });
 
-    // Send initial state to the new client
+    // Send ephemeral presence/session projection, then overlay durable lock truth.
     ws.send(JSON.stringify({ type: 'session_state', ...serializeSessionState(state) }));
+    void listDurableIdeaNodeLocks(db, user.organizationId || '', ideaId)
+      .then((locks) => {
+        if (ws.readyState === 1) ws.send(JSON.stringify({ type: 'durable_locks', locks }));
+      })
+      .catch((error) => logger.warn('[IdeaCollabWs] Durable lock read failed', { ideaId, error }));
     broadcastPresence(ideaId);
     logger.info(`[IdeaCollabWs] Client joined idea ${ideaId} (user=${user.id})`);
   });

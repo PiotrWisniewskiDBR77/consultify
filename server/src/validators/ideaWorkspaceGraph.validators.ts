@@ -90,6 +90,33 @@ export const IdeaStageEnum = z.enum([
   'converted',
 ]);
 
+/** Closed wire set accepted by the legacy Idea record route and the V5 workspace.
+ * This validates representation only; it deliberately does not invent maturity
+ * thresholds or decide which business gate authorizes a transition. */
+export const GovernedIdeaStageEnum = z.enum([
+  'seed',
+  'idea',
+  'spark',
+  'explore',
+  'incubating',
+  'shaping',
+  'ready',
+  'promoted',
+  'framing',
+  'exploring',
+  'structuring',
+  'validating',
+  'validated',
+  'ready_to_convert',
+  'converted',
+]);
+
+export const IdeaMaturityAttestationSchema = z.object({
+  criterionId: z.string().trim().min(1).max(100).regex(/^[a-zA-Z0-9_.:-]+$/),
+  met: z.boolean(),
+  note: z.string().trim().max(500).optional(),
+});
+
 // ── V5 §18.3: Artifact link on a workspace object ──────────────────────────
 export const ArtifactLinkRoleEnum = z.enum(['context', 'source', 'output', 'evidence', 'related']);
 

@@ -58,6 +58,8 @@ import { resolveMentionsFromComment } from '../utils/mentionResolver.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import {
   ensureLatestSchema,
+  GovernedIdeaStageEnum,
+  IdeaMaturityAttestationSchema,
   normalizeGraphForStorage,
   validateAndNormalizeGraph,
 } from '../validators/ideaWorkspaceGraph.validators.js';
@@ -3131,12 +3133,14 @@ router.patch(
     if (!(await requireTables(res, ['my_ideas']))) return;
 
     const id = String(req.params.id || '').trim();
-    const criterionId = String(req.body?.criterionId || '').trim();
-    if (!criterionId) {
-      return res.status(400).json({ error: 'criterionId is required' });
+    const attestation = IdeaMaturityAttestationSchema.safeParse(req.body || {});
+    if (!attestation.success) {
+      return res.status(400).json({
+        error: 'Invalid maturity attestation',
+        code: 'IDEA_MATURITY_ATTESTATION_INVALID',
+      });
     }
-    const met = Boolean(req.body?.met);
-    const note = req.body?.note ? String(req.body.note).trim().slice(0, 500) : undefined;
+    const { criterionId, met, note } = attestation.data;
 
     const ideaColumns = await getTableColumns('my_ideas');
     if (!ideaColumns.has('maturity_gates_json')) {
@@ -3208,7 +3212,16 @@ router.put(
     if (typeof req.body?.area === 'string') set('area', req.body.area);
     if (typeof req.body?.priority === 'number')
       set('priority', Math.max(0, Math.min(100, req.body.priority)));
-    if (typeof req.body?.stage === 'string') set('stage', req.body.stage);
+    if (req.body?.stage !== undefined) {
+      const stage = GovernedIdeaStageEnum.safeParse(req.body.stage);
+      if (!stage.success) {
+        return res.status(400).json({
+          error: 'Invalid idea stage',
+          code: 'IDEA_STAGE_INVALID',
+        });
+      }
+      set('stage', stage.data);
+    }
 
     // Home-shell fields (guarded so they no-op until the M2 migration lands).
     const ideaColumns = await getTableColumns('my_ideas');

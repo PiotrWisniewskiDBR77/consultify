@@ -80,7 +80,7 @@ async function dbGet(sql: string, params: unknown[] = []): Promise<unknown> {
     return store.ideaOrg.get(ideaId) === org ? { id: ideaId } : null;
   }
   // organization_members ACTIVE check
-  if (/organization_members WHERE organization_id = \? AND user_id = \? AND status = 'ACTIVE'/.test(s)) {
+  if (/organization_members WHERE organization_id = \? AND user_id = \?.*ACTIVE/.test(s)) {
     const [org, user] = params as [string, string];
     return store.members.has(`${org}:${user}`) ? { id: `${org}:${user}` } : null;
   }
@@ -130,6 +130,7 @@ async function dbRun(sql: string, params: unknown[] = []): Promise<{ changes: nu
 }
 
 const execCalls = vi.hoisted(() => [] as string[]);
+const pinnedState = vi.hoisted(() => ({ tail: Promise.resolve(), releaseLock: null as null | (() => void) }));
 
 vi.mock('../../../server/src/database/Database.js', () => ({
   getDatabase: () => ({
@@ -144,12 +145,69 @@ vi.mock('../../../server/src/database/Database.js', () => ({
   }),
 }));
 
+vi.mock('../../../server/src/database/PostgresDatabase.js', () => ({
+  getPoolClientForPinnedTransaction: async () => {
+    let unlock: () => void = () => undefined;
+    const mine = new Promise<void>((resolve) => { unlock = resolve; });
+    const previous = pinnedState.tail;
+    pinnedState.tail = previous.then(() => mine);
+    let owns = false;
+    return {
+      query: async (sql: string, params: unknown[] = []) => {
+        const normalized = sql.replace(/\s+/g, ' ').trim();
+        if (normalized === 'BEGIN') {
+          await previous;
+          owns = true;
+          execCalls.push('BEGIN');
+          return { rows: [], rowCount: null };
+        }
+        if (normalized === 'COMMIT' || normalized === 'ROLLBACK') {
+          execCalls.push(normalized);
+          if (owns) unlock();
+          owns = false;
+          return { rows: [], rowCount: null };
+        }
+        if (/SELECT id, version, nodes_json, edges_json FROM my_idea_maps/.test(normalized)) {
+          const [ideaId] = params as [string, string];
+          const row = store.canonical.get(ideaId);
+          return { rows: row ? [{ ...row }] : [], rowCount: row ? 1 : 0 };
+        }
+        if (/FROM idea_workspace_node_locks/.test(normalized)) {
+          return { rows: [], rowCount: 0 };
+        }
+        if (/UPDATE my_idea_maps SET nodes_json = \$1/.test(normalized)) {
+          const [nodesJson, edgesJson, version, lastEditor, rowId, org, expectedVersion] = params as [
+            string, string, number, string, string, string, number,
+          ];
+          for (const [ideaId, row] of store.canonical) {
+            if (row.id === rowId && store.ideaOrg.get(ideaId) === org && row.version === expectedVersion) {
+              row.nodes_json = nodesJson;
+              row.edges_json = edgesJson;
+              row.version = version;
+              row.last_editor = lastEditor;
+              return { rows: [], rowCount: 1 };
+            }
+          }
+          return { rows: [], rowCount: 0 };
+        }
+        throw new Error(`unexpected pinned SQL: ${normalized}`);
+      },
+      release: () => { if (owns) unlock(); owns = false; },
+    };
+  },
+}));
+
 vi.mock('../../../server/src/utils/Logger.js', () => ({
   default: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
 
 vi.mock('../../../server/src/config/Config.js', () => ({
   config: { JWT_SECRET: 'test-secret' },
+}));
+
+vi.mock('../../../server/src/realtime/demoRealtimeGuard.js', () => ({
+  evaluateRealtimeAccess: vi.fn(async () => ({ allowed: true })),
+  trackRealtimeConnection: vi.fn(() => () => undefined),
 }));
 
 // ── Import after mocks ────────────────────────────────────────────────────────
@@ -269,6 +327,7 @@ describe('DP-3 T5 — ideaCollabWs shared canonical persist', () => {
     store.ideaOrg.clear();
     store.members.clear();
     store.canonical.clear();
+    pinnedState.tail = Promise.resolve();
   });
 
   it('non-member is rejected at upgrade (403) when flag ON', async () => {
@@ -352,16 +411,19 @@ describe('DP-3 T5 — ideaCollabWs shared canonical persist', () => {
       }
     });
 
-    // Fire two patches back-to-back (single-writer queue must serialize).
+    // Acknowledge the first durable DB-serialized write before issuing the
+    // second. Cross-replica overlap is covered by the real-PG subpacket suite;
+    // this gateway test owns wire broadcast ordering.
+    const firstVersion = onceMessageOfType(wsA, 'graph_version');
     wsA.send(
       JSON.stringify({ type: 'graph_patch', operations: [{ op: 'add_node', data: { id: 'a' } }] })
     );
+    expect((await firstVersion).version).toBe(11);
+    const secondVersion = onceMessageOfType(wsA, 'graph_version');
     wsA.send(
       JSON.stringify({ type: 'graph_patch', operations: [{ op: 'add_node', data: { id: 'b' } }] })
     );
-
-    // Wait for both graph_version broadcasts.
-    await delay(500);
+    expect((await secondVersion).version).toBe(12);
 
     expect(versions).toEqual([11, 12]);
     const row = store.canonical.get('idea-2')!;
@@ -370,6 +432,30 @@ describe('DP-3 T5 — ideaCollabWs shared canonical persist', () => {
     expect(nodes.map((n: any) => n.id).sort()).toEqual(['a', 'b']);
 
     wsA.close();
+  });
+
+  it('shared-map persist failure is fail-closed and does not relay the rejected patch', async () => {
+    store.ideaOrg.set('idea-fail', 'org-a');
+    store.members.add('org-a:userA');
+    store.members.add('org-a:userB');
+    const wsA = await connect(port, 'idea-fail', signToken({ id: 'userA', organizationId: 'org-a' }));
+    const wsB = await connect(port, 'idea-fail', signToken({ id: 'userB', organizationId: 'org-a' }));
+    let relayed = false;
+    wsB.on('message', (raw) => {
+      try {
+        if (JSON.parse(raw.toString()).type === 'graph_patch') relayed = true;
+      } catch { /* ignore */ }
+    });
+    const failure = onceMessageOfType(wsA, 'error');
+    wsA.send(JSON.stringify({
+      type: 'graph_patch',
+      operations: [{ op: 'add_node', data: { id: 'stale' } }],
+    }));
+    expect((await failure).code).toBe('GRAPH_PERSIST_FAILED');
+    await delay(100);
+    expect(relayed).toBe(false);
+    wsA.close();
+    wsB.close();
   });
 
   it('flag OFF → no persist (DB untouched) but relay still delivers the patch', async () => {
