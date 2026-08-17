@@ -139,6 +139,7 @@ mountedSuite(
     const OWN_PROGRAM_ID = `aprog_mount_own_${RUN}`;
     const FOREIGN_PROGRAM_ID = `aprog_mount_foreign_${RUN}`;
     const WRITE_PACK_KEY = `mount-denied-${RUN}`;
+    const createdPackIds = new Set<string>();
 
     function sign(payload: Record<string, unknown>): string {
       return jwt.sign(payload, process.env.JWT_SECRET as string, {
@@ -194,10 +195,42 @@ mountedSuite(
     async function cleanupOwnFixtures(): Promise<void> {
       await assertDisposableDatabase();
       const client = await acquirePgClient();
+      let appendOnlyTriggerDisabled = false;
       try {
         await client.query('BEGIN');
         await client.query('SELECT pg_advisory_xact_lock($1)', [MOUNTED_CLEANUP_LOCK_KEY]);
         // Children before parents; every statement bounded to this run's ids.
+        const trigger = await client.query<{ tgname: string; tgenabled: string }>(
+          `SELECT tgname,tgenabled FROM pg_trigger
+            WHERE tgrelid='audit_domain_events'::regclass
+              AND tgname='trg_audit_domain_events_append_only' AND NOT tgisinternal`
+        );
+        expect(trigger.rows).toEqual([
+          { tgname: 'trg_audit_domain_events_append_only', tgenabled: 'O' },
+        ]);
+        await client.query(
+          `ALTER TABLE audit_domain_events DISABLE TRIGGER trg_audit_domain_events_append_only`
+        );
+        appendOnlyTriggerDisabled = true;
+        await client.query(
+          `DELETE FROM audit_domain_events
+            WHERE organization_id = $1 AND actor_id = $2
+              AND (entity_id = ANY($3::text[]) OR summary LIKE $4)`,
+          [ORG, USER_ACTIVE, [...createdPackIds], `%${RUN}%`]
+        );
+        await client.query(
+          `ALTER TABLE audit_domain_events ENABLE TRIGGER trg_audit_domain_events_append_only`
+        );
+        appendOnlyTriggerDisabled = false;
+        expect(
+          (
+            await client.query<{ tgenabled: string }>(
+              `SELECT tgenabled FROM pg_trigger
+                WHERE tgrelid='audit_domain_events'::regclass
+                  AND tgname='trg_audit_domain_events_append_only' AND NOT tgisinternal`
+            )
+          ).rows
+        ).toEqual([{ tgenabled: 'O' }]);
         await client.query(`DELETE FROM audit_packs WHERE pack_key = $1 AND organization_id = $2`, [
           WRITE_PACK_KEY,
           ORG,
@@ -214,7 +247,24 @@ mountedSuite(
         await client.query(`DELETE FROM organizations WHERE id = ANY($1)`, [[ORG, FOREIGN_ORG]]);
         await client.query('COMMIT');
       } catch (err) {
+        if (appendOnlyTriggerDisabled) {
+          await client
+            .query(
+              `ALTER TABLE audit_domain_events ENABLE TRIGGER trg_audit_domain_events_append_only`
+            )
+            .catch(() => {});
+          appendOnlyTriggerDisabled = false;
+        }
         await client.query('ROLLBACK').catch(() => {});
+        expect(
+          (
+            await client.query<{ tgenabled: string }>(
+              `SELECT tgenabled FROM pg_trigger
+                WHERE tgrelid='audit_domain_events'::regclass
+                  AND tgname='trg_audit_domain_events_append_only' AND NOT tgisinternal`
+            )
+          ).rows
+        ).toEqual([{ tgenabled: 'O' }]);
         throw err; // never swallowed
       } finally {
         client.release();
@@ -238,8 +288,38 @@ mountedSuite(
          (SELECT count(*) FROM audit_packs WHERE organization_id = $1)::text AS packs,
          (SELECT count(*) FROM audits WHERE organization_id = $1)::text AS legacy_audits,
          (SELECT count(*) FROM audit_events WHERE org_id = $1)::text AS events,
-         (SELECT count(*) FROM audit_logs WHERE organization_id = $1)::text AS logs`,
-        [ORG]
+         (SELECT count(*) FROM audit_logs WHERE organization_id = $1)::text AS logs,
+         (SELECT count(*) FROM audit_domain_events
+           WHERE organization_id = $1 AND actor_id = $2
+             AND entity_id = ANY($3::text[]))::text AS domain_events`,
+        [ORG, USER_ACTIVE, [...createdPackIds]]
+      );
+      return Object.fromEntries(
+        Object.entries(row ?? {}).map(([key, value]) => [key, Number(value)])
+      );
+    }
+
+    async function ownFixtureResidue(): Promise<Record<string, number>> {
+      const row = await auditsDb.auditGet<Record<string, string>>(
+        `SELECT
+         (SELECT count(*) FROM organizations WHERE id = ANY($1))::text AS organizations,
+         (SELECT count(*) FROM users WHERE id = ANY($2))::text AS users,
+         (SELECT count(*) FROM organization_members WHERE user_id = ANY($2))::text AS memberships,
+         (SELECT count(*) FROM audit_programs WHERE id = ANY($3))::text AS programs,
+         (SELECT count(*) FROM audit_packs WHERE organization_id=$4 AND pack_key=$5)::text AS packs,
+         (SELECT count(*) FROM audit_domain_events
+           WHERE organization_id=$4 AND actor_id=$6
+             AND (entity_id = ANY($7::text[]) OR summary LIKE $8))::text AS domain_events`,
+        [
+          [ORG, FOREIGN_ORG],
+          [USER_ACTIVE, USER_NO_MEMBERSHIP, USER_SUPERADMIN],
+          [OWN_PROGRAM_ID, FOREIGN_PROGRAM_ID],
+          ORG,
+          WRITE_PACK_KEY,
+          USER_ACTIVE,
+          [...createdPackIds],
+          `%${RUN}%`,
+        ]
       );
       return Object.fromEntries(
         Object.entries(row ?? {}).map(([key, value]) => [key, Number(value)])
@@ -295,11 +375,14 @@ mountedSuite(
 
     afterAll(async () => {
       await cleanupOwnFixtures();
-      const row = await auditsDb.auditGet<{ n: string }>(
-        `SELECT count(*)::text AS n FROM organization_members WHERE user_id = ANY($1)`,
-        [[USER_ACTIVE, USER_NO_MEMBERSHIP, USER_SUPERADMIN]]
-      );
-      expect(Number(row?.n)).toBe(0); // residue0
+      expect(await ownFixtureResidue()).toEqual({
+        organizations: 0,
+        users: 0,
+        memberships: 0,
+        programs: 0,
+        packs: 0,
+        domain_events: 0,
+      });
     });
 
     it.each(MOUNT_PROBES)(
@@ -441,6 +524,23 @@ mountedSuite(
         .send({ packKey: WRITE_PACK_KEY, title: `Mounted writer ${RUN}` });
       expect(active.status).toBe(201);
       expect(active.body?.data).toMatchObject({ packKey: WRITE_PACK_KEY, organizationId: ORG });
+      const activePackId = String(active.body?.data?.id || '');
+      expect(activePackId).toMatch(/^apk_/);
+      createdPackIds.add(activePackId);
+      expect(
+        await auditsDb.auditGet(
+          `SELECT organization_id,entity_id,actor_id,event_type,summary
+             FROM audit_domain_events
+            WHERE organization_id=$1 AND entity_id=$2 AND actor_id=$3`,
+          [ORG, activePackId, USER_ACTIVE]
+        )
+      ).toMatchObject({
+        organization_id: ORG,
+        entity_id: activePackId,
+        actor_id: USER_ACTIVE,
+        event_type: 'pack.created',
+        summary: `Utworzono pakiet „Mounted writer ${RUN}" (${WRITE_PACK_KEY} v1)`,
+      });
       await auditsDb.auditRun(
         `DELETE FROM audit_packs WHERE pack_key = $1 AND organization_id = $2`,
         [WRITE_PACK_KEY, ORG]
