@@ -28,15 +28,26 @@ export function cyclonedxFromLockfile(lockBytes, candidateSha) {
   const lock = JSON.parse(lockBytes.toString()),
     components = [];
   for (const [path, pkg] of Object.entries(lock.packages ?? {})) {
-    if (!path || !pkg?.name || !pkg?.version) continue;
+    if (!path || !pkg?.version) continue;
+    const nodeModulesMarker = 'node_modules/';
+    const markerIndex = path.lastIndexOf(nodeModulesMarker);
+    const name =
+      pkg.name ||
+      (markerIndex >= 0
+        ? path.slice(markerIndex + nodeModulesMarker.length)
+        : path.replace(/^\.\//, '').split('/').filter(Boolean).at(-1));
+    if (!name) continue;
+    const installPath = encodeURIComponent(path);
     components.push({
       type: 'library',
-      name: pkg.name,
+      name,
       version: String(pkg.version),
-      purl: `pkg:npm/${encodeURIComponent(pkg.name)}@${pkg.version}`,
+      'bom-ref': `pkg:npm/${encodeURIComponent(name)}@${pkg.version}?install_path=${installPath}`,
+      purl: `pkg:npm/${encodeURIComponent(name)}@${pkg.version}?install_path=${installPath}`,
+      properties: [{ name: 'consultify:lockfilePath', value: path }],
     });
   }
-  components.sort((a, b) => `${a.name}@${a.version}`.localeCompare(`${b.name}@${b.version}`));
+  components.sort((a, b) => a['bom-ref'].localeCompare(b['bom-ref']));
   return `${JSON.stringify(
     stable({
       bomFormat: 'CycloneDX',
@@ -46,6 +57,7 @@ export function cyclonedxFromLockfile(lockBytes, candidateSha) {
         properties: [
           { name: 'consultify:candidateSha', value: candidateSha },
           { name: 'consultify:lockfileSha256', value: hash(lockBytes) },
+          { name: 'consultify:componentCount', value: String(components.length) },
         ],
       },
       components,
@@ -78,11 +90,24 @@ export function generateReleaseCandidateBundle({
   const receipts = receiptNames.map((name) => {
     const bytes = readFileSync(receiptFiles[name]);
     const parsed = JSON.parse(bytes);
-    if (parsed.candidateSha !== candidateSha || parsed.exitCode !== 0)
+    const treeSha = text(repo, ['rev-parse', `${candidateSha}^{tree}`]);
+    if (
+      parsed.gateId !== name ||
+      parsed.candidateSha !== candidateSha ||
+      parsed.treeSha !== treeSha ||
+      parsed.exitCode !== 0 ||
+      parsed.provenanceType !== 'local-process'
+    )
       throw Error(`STALE_OR_FAILED_RECEIPT:${name}`);
     const path = `receipts/${name}-${basename(receiptFiles[name])}`;
     writeFileSync(resolve(outputDir, path), bytes);
-    return { name, path, sha256: hash(bytes) };
+    return {
+      name,
+      gateId: parsed.gateId,
+      provenanceType: parsed.provenanceType,
+      path,
+      sha256: hash(bytes),
+    };
   });
   const paths = text(repo, [
     'ls-tree',
@@ -102,7 +127,7 @@ export function generateReleaseCandidateBundle({
     candidateRef,
     treeSha: text(repo, ['rev-parse', `${candidateSha}^{tree}`]),
     authorization: 'NOT_AUTHORIZED',
-    technicalStatus: 'TECHNICAL_BUNDLE_READY',
+    technicalStatus: 'UNATTESTED_LOCAL_RECEIPTS',
     lockfile: artifact(repo, candidateSha, 'package-lock.json'),
     sbom: {
       path: 'sbom.cdx.json',
@@ -149,7 +174,7 @@ async function main() {
       outputDir: resolve(a.outputDir),
     });
     process.stdout.write(
-      `${JSON.stringify({ technicalStatus: 'TECHNICAL_BUNDLE_READY', authorization: 'NOT_AUTHORIZED', candidateSha: m.candidateSha, manifestSha256: m.manifestSha256, releaseGo: false })}\n`
+      `${JSON.stringify({ technicalStatus: 'UNATTESTED_LOCAL_RECEIPTS', authorization: 'NOT_AUTHORIZED', candidateSha: m.candidateSha, manifestSha256: m.manifestSha256, releaseGo: false })}\n`
     );
   } catch (e) {
     process.stdout.write(

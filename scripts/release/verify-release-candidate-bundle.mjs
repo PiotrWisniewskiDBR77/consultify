@@ -9,16 +9,6 @@ const SHA = /^[0-9a-f]{40}$/,
   HASH = /^[0-9a-f]{64}$/,
   ROOT = 'server/migrations/';
 const REQUIRED = ['backendBuild', 'frontendBuild', 'reporter82', 'typecheck'];
-const DESTRUCTIVE = [
-  [
-    'DESTRUCTIVE_DROP',
-    /\bDROP\s+(?:TABLE|SCHEMA|TYPE|DOMAIN|DATABASE|EXTENSION|FUNCTION|TRIGGER)\b/i,
-  ],
-  ['DESTRUCTIVE_TRUNCATE', /\bTRUNCATE\b/i],
-  ['DESTRUCTIVE_DROP_COLUMN', /\bALTER\s+TABLE[\s\S]{0,300}?\bDROP\s+COLUMN\b/i],
-  ['DESTRUCTIVE_RENAME', /\bALTER\s+(?:TABLE|TYPE)[\s\S]{0,300}?\bRENAME\s+(?:TO|COLUMN)\b/i],
-  ['DESTRUCTIVE_REPLACE', /\bCREATE\s+OR\s+REPLACE\s+(?:FUNCTION|PROCEDURE|VIEW)\b/i],
-];
 const hash = (v) => createHash('sha256').update(v).digest('hex');
 const stable = (v) =>
   Array.isArray(v)
@@ -48,7 +38,99 @@ const migrations = (r, s) => {
         .sort()
     : [];
 };
-const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/--.*$/gm, ' ');
+function lexicalStatements(sql) {
+  const statements = [];
+  let current = '';
+  for (let index = 0; index < sql.length; ) {
+    if (sql.startsWith('--', index)) {
+      const end = sql.indexOf('\n', index + 2);
+      index = end < 0 ? sql.length : end + 1;
+      current += ' ';
+      continue;
+    }
+    if (sql.startsWith('/*', index)) {
+      const end = sql.indexOf('*/', index + 2);
+      index = end < 0 ? sql.length : end + 2;
+      current += ' ';
+      continue;
+    }
+    const quote = sql[index];
+    if (quote === "'" || quote === '"') {
+      index += 1;
+      while (index < sql.length) {
+        if (sql[index] === quote) {
+          if (sql[index + 1] === quote) index += 2;
+          else {
+            index += 1;
+            break;
+          }
+        } else index += 1;
+      }
+      current += ' __LITERAL__ ';
+      continue;
+    }
+    if (quote === '$') {
+      const match = sql.slice(index).match(/^\$[A-Za-z0-9_]*\$/);
+      if (match) {
+        const delimiter = match[0];
+        const end = sql.indexOf(delimiter, index + delimiter.length);
+        index = end < 0 ? sql.length : end + delimiter.length;
+        current += ' __BODY__ ';
+        continue;
+      }
+    }
+    if (quote === ';') {
+      if (current.trim()) statements.push(current.trim());
+      current = '';
+      index += 1;
+      continue;
+    }
+    current += quote;
+    index += 1;
+  }
+  if (current.trim()) statements.push(current.trim());
+  return statements;
+}
+
+export function classifyMigrationSql(sql) {
+  return lexicalStatements(sql).map((statement) => {
+    const normalized = statement.replace(/\s+/g, ' ').trim().toUpperCase();
+    if (/\bCASCADE\b/.test(normalized))
+      return { classification: 'DENY', code: 'DESTRUCTIVE_CASCADE' };
+    if (
+      /^DROP\s+(?:INDEX|SEQUENCE|POLICY|MATERIALIZED\s+VIEW|TABLE|SCHEMA|TYPE|DOMAIN|DATABASE|EXTENSION|FUNCTION|PROCEDURE|VIEW|TRIGGER)\b/.test(
+        normalized
+      )
+    )
+      return { classification: 'DENY', code: 'DESTRUCTIVE_DROP' };
+    if (/^TRUNCATE\b/.test(normalized))
+      return { classification: 'DENY', code: 'DESTRUCTIVE_TRUNCATE' };
+    if (/^ALTER\s+TABLE\b.*\bDROP\s+(?:COLUMN|CONSTRAINT)\b/.test(normalized))
+      return { classification: 'DENY', code: 'DESTRUCTIVE_ALTER_DROP' };
+    if (/^ALTER\s+(?:TABLE|TYPE)\b.*\bRENAME\s+(?:TO|COLUMN)\b/.test(normalized))
+      return { classification: 'DENY', code: 'DESTRUCTIVE_RENAME' };
+    if (
+      /^(?:DELETE\s+FROM|UPDATE\s+)/.test(normalized) ||
+      /\bON\s+CONFLICT\b.*\bDO\s+UPDATE\b/.test(normalized)
+    )
+      return { classification: 'DENY', code: 'DESTRUCTIVE_DATA_REWRITE' };
+    if (/^CREATE\s+OR\s+REPLACE\s+(?:FUNCTION|PROCEDURE|VIEW)\b/.test(normalized))
+      return { classification: 'ALLOW', code: 'SAFE_PROGRAMMABLE_REPLACE' };
+    if (
+      /^CREATE\s+(?:UNIQUE\s+)?(?:TABLE|INDEX|SEQUENCE|TYPE|POLICY|TRIGGER|EXTENSION)\b/.test(
+        normalized
+      )
+    )
+      return { classification: 'ALLOW', code: 'SAFE_CREATE' };
+    if (/^ALTER\s+TABLE\b.*\bADD\s+(?:COLUMN|CONSTRAINT)\b/.test(normalized))
+      return { classification: 'ALLOW', code: 'SAFE_ALTER_ADD' };
+    if (/^ALTER\s+TYPE\b.*\bADD\s+VALUE\b/.test(normalized))
+      return { classification: 'ALLOW', code: 'SAFE_ENUM_ADD' };
+    if (/^(?:COMMENT\s+ON|GRANT\s+|INSERT\s+INTO\s+)/.test(normalized))
+      return { classification: 'ALLOW', code: 'SAFE_METADATA_OR_APPEND' };
+    return { classification: 'UNCLASSIFIED', code: 'MIGRATION_STATEMENT_UNCLASSIFIED' };
+  });
+}
 
 export function verifyReleaseCandidateBundle({ manifest: m, repo, bundleDir = process.cwd() }) {
   const errors = [],
@@ -60,8 +142,8 @@ export function verifyReleaseCandidateBundle({ manifest: m, repo, bundleDir = pr
   if (!SHA.test(p ?? '')) add('PREVIOUS_SHA_INVALID', 'full lowercase SHA required');
   if (m?.authorization !== 'NOT_AUTHORIZED')
     add('AUTHORIZATION_MUST_REMAIN_NOT_AUTHORIZED', 'GO is owner-only');
-  if (m?.technicalStatus !== 'TECHNICAL_BUNDLE_READY')
-    add('TECHNICAL_STATUS_INVALID', 'TECHNICAL_BUNDLE_READY required');
+  if (m?.technicalStatus !== 'UNATTESTED_LOCAL_RECEIPTS')
+    add('TECHNICAL_STATUS_INVALID', 'local receipts must remain UNATTESTED_LOCAL_RECEIPTS');
   if (typeof m?.candidateRef !== 'string' || !m.candidateRef.startsWith('refs/'))
     add('CANDIDATE_REF_INVALID', 'explicit refs/* required');
   if (!SHA.test(m?.treeSha ?? '')) add('TREE_SHA_INVALID', 'full tree SHA required');
@@ -128,8 +210,11 @@ export function verifyReleaseCandidateBundle({ manifest: m, repo, bundleDir = pr
     if (!file(repo, p, x).equals(file(repo, c, x))) add('ROLLBACK_MIGRATION_MODIFIED', x);
   }
   for (const x of cm.filter((x) => !ps.has(x))) {
-    const sql = strip(file(repo, c, x).toString());
-    for (const [code, re] of DESTRUCTIVE) if (re.test(sql)) add(code, x);
+    const classifications = classifyMigrationSql(file(repo, c, x).toString());
+    if (classifications.length === 0) add('MIGRATION_STATEMENT_UNCLASSIFIED', `${x}:empty`);
+    classifications.forEach((result, index) => {
+      if (result.classification !== 'ALLOW') add(result.code, `${x}:statement-${index + 1}`);
+    });
   }
   const receipts = Array.isArray(m.receipts) ? m.receipts : [],
     names = receipts.map((x) => x?.name);
@@ -140,8 +225,26 @@ export function verifyReleaseCandidateBundle({ manifest: m, repo, bundleDir = pr
     if (!b) continue;
     try {
       const r = JSON.parse(b);
+      if (r.gateId !== e.name) add('RECEIPT_GATE_ID_MISMATCH', e.name);
+      if (typeof r.command !== 'string' || !r.command.trim())
+        add('RECEIPT_COMMAND_MISSING', e.name);
       if (r.candidateSha !== c) add('RECEIPT_CANDIDATE_MISMATCH', e.name);
+      if (r.treeSha !== m.treeSha) add('RECEIPT_TREE_MISMATCH', e.name);
       if (r.exitCode !== 0) add('RECEIPT_GATE_FAILED', e.name);
+      if (
+        !r.denominator ||
+        (typeof r.denominator !== 'number' && typeof r.denominator !== 'object')
+      )
+        add('RECEIPT_DENOMINATOR_MISSING', e.name);
+      if (!HASH.test(r.logDigest ?? '') || !HASH.test(r.artifactDigest ?? ''))
+        add('RECEIPT_DIGEST_INVALID', e.name);
+      const started = Date.parse(r.startedAt),
+        finished = Date.parse(r.finishedAt);
+      if (!Number.isFinite(started) || !Number.isFinite(finished) || finished < started)
+        add('RECEIPT_TIME_INVALID', e.name);
+      if (r.provenanceType !== 'local-process') add('RECEIPT_PROVENANCE_UNSUPPORTED', e.name);
+      if (e.provenanceType !== r.provenanceType || e.gateId !== r.gateId)
+        add('RECEIPT_PROVENANCE_BINDING_MISMATCH', e.name);
       if (
         e.name === 'reporter82' &&
         (r.denominator !== 82 || r.missingEvidence !== 0 || r.invalidEvidence !== 0)
@@ -190,7 +293,7 @@ function finish(m, errors) {
     schemaVersion: 2,
     taskId: 'REL-001-T01',
     candidateSha: m?.candidateSha ?? null,
-    technicalStatus: e.length ? 'NOT_VERIFIED' : 'TECHNICAL_BUNDLE_READY',
+    technicalStatus: e.length ? 'NOT_VERIFIED' : 'UNATTESTED_LOCAL_RECEIPTS',
     authorization: 'NOT_AUTHORIZED',
     verified: e.length === 0,
     releaseGo: false,

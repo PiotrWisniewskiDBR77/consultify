@@ -6,7 +6,10 @@ import { tmpdir } from 'node:os';
 import { dirname, resolve } from 'node:path';
 import test, { afterEach } from 'node:test';
 import { generateReleaseCandidateBundle } from '../../../scripts/release/generate-release-candidate-bundle.mjs';
-import { verifyReleaseCandidateBundle } from '../../../scripts/release/verify-release-candidate-bundle.mjs';
+import {
+  hashCanonicalManifest,
+  verifyReleaseCandidateBundle,
+} from '../../../scripts/release/verify-release-candidate-bundle.mjs';
 const roots = [],
   hash = (v) => createHash('sha256').update(v).digest('hex'),
   git = (r, a) => execFileSync('git', ['-C', r, ...a], { encoding: 'utf8' }).trim();
@@ -42,6 +45,7 @@ function fx(sql = 'ALTER TABLE base ADD COLUMN name text;\n') {
   const previousVerifiedSha = commit(repo, 'previous');
   write(repo, 'server/migrations/002.sql', sql);
   const candidateSha = commit(repo, 'candidate');
+  const treeSha = git(repo, ['rev-parse', `${candidateSha}^{tree}`]);
   git(repo, ['branch', 'release-candidate', candidateSha]);
   const receipts = {};
   for (const name of ['backendBuild', 'frontendBuild', 'reporter82', 'typecheck']) {
@@ -49,11 +53,19 @@ function fx(sql = 'ALTER TABLE base ADD COLUMN name text;\n') {
     writeFileSync(
       p,
       JSON.stringify({
+        gateId: name,
+        command: `npm run ${name}`,
         candidateSha,
+        treeSha,
         exitCode: 0,
-        denominator: name === 'reporter82' ? 82 : undefined,
+        denominator: name === 'reporter82' ? 82 : { tests: 1 },
         missingEvidence: 0,
         invalidEvidence: 0,
+        startedAt: '2026-08-17T10:00:00.000Z',
+        finishedAt: '2026-08-17T10:01:00.000Z',
+        logDigest: '1'.repeat(64),
+        artifactDigest: '2'.repeat(64),
+        provenanceType: 'local-process',
       })
     );
     receipts[name] = p;
@@ -68,11 +80,11 @@ function fx(sql = 'ALTER TABLE base ADD COLUMN name text;\n') {
   });
   return { repo, out, manifest, candidateSha, previousVerifiedSha, receipts };
 }
-test('valid bundle is technical ready but never GO', () => {
+test('valid local bundle is explicitly unattested and never GO', () => {
   const x = fx(),
     r = verifyReleaseCandidateBundle({ manifest: x.manifest, repo: x.repo, bundleDir: x.out });
   assert.equal(r.verified, true);
-  assert.equal(r.technicalStatus, 'TECHNICAL_BUNDLE_READY');
+  assert.equal(r.technicalStatus, 'UNATTESTED_LOCAL_RECEIPTS');
   assert.equal(r.authorization, 'NOT_AUTHORIZED');
   assert.equal(r.releaseGo, false);
 });
@@ -91,17 +103,32 @@ test('CLI output and exit code are deterministic', () => {
   assert.equal(a.stdout, b.stdout);
   assert.equal(JSON.parse(a.stdout).releaseGo, false);
 });
-test('fails closed for tamper, stale receipt, ref mismatch, dirty tree and GO', () => {
-  for (const mode of ['tamper', 'stale', 'ref', 'dirty', 'go']) {
+test('fails closed for tamper, stale receipt provenance, ref mismatch, dirty tree and GO', () => {
+  for (const mode of [
+    'tamper',
+    'stale',
+    'provenance',
+    'digest',
+    'tree',
+    'gate',
+    'ref',
+    'dirty',
+    'go',
+  ]) {
     const x = fx(),
       m = structuredClone(x.manifest);
     if (mode === 'tamper') writeFileSync(resolve(x.out, 'sbom.cdx.json'), '{}');
-    if (mode === 'stale') {
+    if (['stale', 'provenance', 'digest', 'tree', 'gate'].includes(mode)) {
       const e = m.receipts[0],
         b = JSON.parse(readFileSync(resolve(x.out, e.path)));
-      b.candidateSha = '0'.repeat(40);
+      if (mode === 'stale') b.candidateSha = '0'.repeat(40);
+      if (mode === 'provenance') b.provenanceType = 'self-asserted';
+      if (mode === 'digest') b.logDigest = 'bad';
+      if (mode === 'tree') b.treeSha = '0'.repeat(40);
+      if (mode === 'gate') b.gateId = 'wrong';
       writeFileSync(resolve(x.out, e.path), JSON.stringify(b));
       e.sha256 = hash(readFileSync(resolve(x.out, e.path)));
+      m.manifestSha256 = hashCanonicalManifest(m);
     }
     if (mode === 'ref') git(x.repo, ['branch', '-f', 'release-candidate', x.previousVerifiedSha]);
     if (mode === 'dirty') write(x.repo, 'dirty.txt', 'x');
@@ -133,17 +160,38 @@ test('rejects nonancestor and historical migration mutation/deletion', () => {
     assert.equal(r.verified, false, mode);
   }
 });
-test('rejects destructive SQL in every new migration class', () => {
+test('rejects destructive and unclassified migration statements without comment/string false hits', () => {
   for (const sql of [
     'DROP TABLE base;',
+    'DROP INDEX idx;',
+    'DROP SEQUENCE seq;',
+    'DROP POLICY p ON base;',
+    'DROP MATERIALIZED VIEW mv;',
+    'DROP TRIGGER t ON base;',
     'TRUNCATE base;',
     'ALTER TABLE base DROP COLUMN id;',
+    'ALTER TABLE base DROP CONSTRAINT c;',
     'ALTER TABLE base RENAME TO other;',
-    'CREATE OR REPLACE VIEW v AS SELECT 1;',
+    'DELETE FROM base;',
+    'UPDATE base SET id=id;',
+    'ALTER TABLE base ADD COLUMN safe text CASCADE;',
+    'VACUUM base;',
   ]) {
     const x = fx(sql),
       r = verifyReleaseCandidateBundle({ manifest: x.manifest, repo: x.repo, bundleDir: x.out });
     assert.equal(r.verified, false, sql);
-    assert.match(JSON.stringify(r.errors), /DESTRUCTIVE_/);
+    assert.match(JSON.stringify(r.errors), /DESTRUCTIVE_|MIGRATION_STATEMENT_UNCLASSIFIED/);
+  }
+  for (const sql of [
+    '-- DROP TABLE ignored;\nALTER TABLE base ADD COLUMN safe text;',
+    "COMMENT ON TABLE base IS 'DROP TABLE ignored';",
+    "CREATE OR REPLACE VIEW v AS SELECT 'DROP TABLE ignored' AS note;",
+    "CREATE OR REPLACE FUNCTION f() RETURNS text AS $$ BEGIN RETURN 'DELETE FROM base'; END $$ LANGUAGE plpgsql;",
+    'CREATE INDEX IF NOT EXISTS idx ON base(id);',
+    "INSERT INTO base(id) VALUES ('UPDATE base SET id=id');",
+  ]) {
+    const x = fx(sql),
+      r = verifyReleaseCandidateBundle({ manifest: x.manifest, repo: x.repo, bundleDir: x.out });
+    assert.equal(r.verified, true, sql);
   }
 });
