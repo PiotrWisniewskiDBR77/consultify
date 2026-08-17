@@ -2,6 +2,7 @@
   "taskId": "SET-UI-CANON-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "productSha": "bd488700fca5bda3d82d6063470a71b37d9781e0",
+  "technicalSourceSha": "c8da53f1f4469bc39734fa0fee76298dd4d41e3f",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
   "changedPaths": [
     "src/views/SettingsView.tsx",
@@ -23,6 +24,31 @@
     {
       "command": "npm run type-check -- --pretty false",
       "exitCode": 0
+    },
+    {
+      "command": "npx vitest run tests/unit/components/settings/ConnectedAppsSettings.honesty.test.tsx",
+      "exitCode": 0,
+      "result": "6/6: UNKNOWN, error, missing and configured=false fail closed; configured=true is the only enabled OAuth state; authenticated bearer/correlation transport and exactly-one start are asserted"
+    },
+    {
+      "command": "real signed-JWT mounted Connected Apps OAuth availability — configured=true backend window",
+      "exitCode": 0,
+      "result": "3/3: unauthenticated status 401; signed status 200 configured=true; one authenticated start response 200; PL/EN keyboard and scoped axe critical/serious 0/0"
+    },
+    {
+      "command": "real signed-JWT mounted Connected Apps OAuth availability — configured=false backend window",
+      "exitCode": 0,
+      "result": "3/3: unavailable provider remains disabled and issues zero OAuth start requests; retry remains accessible"
+    },
+    {
+      "command": "fresh PostgreSQL migration, repeat and readiness ledger checks",
+      "exitCode": 0,
+      "result": "758 migrations applied; repeat applying 0; pending 0"
+    },
+    {
+      "command": "VITEST_HEAP_MB=8192 npm run type-check -- --pretty false && npm run build:frontend",
+      "exitCode": 0,
+      "result": "full TypeScript and frontend production build passed on the bounded candidate"
     }
   ],
   "denominators": {
@@ -32,7 +58,13 @@
     "automatedG4Screenshots": "14/14",
     "automatedG4AxeCriticalSerious": "0/0",
     "automatedG4UnnamedControls": 0,
-    "automatedG4VisibleFocus": "PASS"
+    "automatedG4VisibleFocus": "PASS",
+    "oauthAvailabilityUnit": "6/6",
+    "oauthAvailabilityMountedConfiguredTrue": "3/3",
+    "oauthAvailabilityMountedConfiguredFalse": "3/3",
+    "oauthAvailabilityAxeCriticalSerious": "0/0",
+    "oauthAvailabilityFixtureResidue": "0/0/0/0 run/org/user/member",
+    "oauthAvailabilitySchema": "fresh 758; repeat 0; pending 0"
   },
   "fixtures": {
     "states": [
@@ -46,7 +78,10 @@
   "negativeControls": {
     "collapsedNavigation": "hidden descendants leave the keyboard tree",
     "escape": "mobile overlay closes and restores body scroll",
-    "semantics": "active section and expanded groups are programmatically exposed"
+    "semantics": "active section and expanded groups are programmatically exposed",
+    "oauthAvailability": "UNKNOWN, transport error, malformed/missing availability and configured=false all disable OAuth start; disabled states issue zero start requests",
+    "oauthAuthentication": "availability and OAuth start use the canonical authenticated transport with bearer and correlation headers; unauthenticated availability returns 401",
+    "oauthExplicitEnablement": "only an explicit configured=true response enables Gmail OAuth; one user activation produces exactly one authenticated start response"
   },
   "browserArtifacts": [
     {
@@ -129,7 +164,10 @@
   "openBlockers": [
     "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
     "Task-specific UI states not reached by the final automated sweep: stale.",
-    "Observed console HTTP errors require task-specific qualification: total=4, 403=0, 404=4, other=0."
+    "Observed console HTTP errors require task-specific qualification: total=4, 403=0, 404=4, other=0.",
+    "OAuth provider registry, approved scopes and residency remain owner-gated; this packet proves availability honesty and transport only, not provider rollout authorization.",
+    "MFA production rollout and the complete login/revocation browser matrix remain outside this bounded Connected Apps packet.",
+    "Account deletion remains blocked on the legal/retention decision and is not requalified by OAuth availability evidence."
   ],
   "blockerReconciliation": [
     {
@@ -139,8 +177,36 @@
     }
   ],
   "resolvedBlockers": [
-    "Final mounted signed-auth automated G4 completed on candidate 836bfd633af7a689e7a3fb06971cbd8fe57bafe7: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed."
+    "Final mounted signed-auth automated G4 completed on candidate 836bfd633af7a689e7a3fb06971cbd8fe57bafe7: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed.",
+    "Bounded OAuth availability requalification on c8da53f1f4469bc39734fa0fee76298dd4d41e3f proved fail-closed availability, canonical bearer/correlation transport, real signed configured=true 3/3 and configured=false 3/3 windows, unit 6/6, PL/EN keyboard, scoped axe 0/0, fresh schema 758/repeat 0/pending 0 and fixture residue 0."
   ],
+  "technicalRequalification": {
+    "scope": "Connected Apps OAuth availability and start honesty only",
+    "candidateSha": "c8da53f1f4469bc39734fa0fee76298dd4d41e3f",
+    "historicalProductShaPreserved": "bd488700fca5bda3d82d6063470a71b37d9781e0",
+    "authentication": "real signed JWT for mounted positive paths; unauthenticated negative returned 401; E2E route interception was not used",
+    "transport": "canonical authenticated API transport with bearer and correlation headers",
+    "availability": "fail closed unless configured=true is explicitly returned",
+    "mounted": {
+      "configuredTrue": "3/3",
+      "configuredFalse": "3/3",
+      "status": "signed 200",
+      "start": "authenticated 200, exactly one request",
+      "unauthenticated": "401"
+    },
+    "unit": "6/6",
+    "accessibility": "PL/EN keyboard focus and scoped axe critical/serious 0/0",
+    "database": "fresh 758; repeat applying 0; readiness pending 0",
+    "residue": "run/org/user/member 0/0/0/0",
+    "staticGates": "8GB typecheck and frontend production build passed",
+    "doesNotProve": [
+      "OAuth provider registry, scopes, residency or rollout authorization",
+      "MFA rollout",
+      "account deletion legal/retention authorization",
+      "complete login and revocation browser matrix",
+      "human VoiceOver, named-persona or visual/brand acceptance"
+    ]
+  },
   "automatedG4Verdict": {
     "verdict": "PASS_EXACT_SHA",
     "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
