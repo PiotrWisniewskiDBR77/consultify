@@ -14,17 +14,25 @@ describe('Settings/GDPR routes (no stub responses)', () => {
   let settingsRouter: any;
   let gdprRouter: any;
   let userControlsRouter: any;
+  let dbPromiseModule: typeof import('../../../server/src/utils/DbPromise.js');
   let realDatabaseReady = false;
 
   const userId = 'f9ddc79d-2fb4-4557-8ff0-08db960b1255';
   const orgId = '1373318f-aab6-476e-8299-993d4eb4086a';
+  const foreignUserId = '00000000-0000-4000-8000-000000000099';
+  const foreignOrgId = '00000000-0000-4000-8000-000000000199';
   const userPassword = 'Sup3rSecret!';
   const passwordHash = bcrypt.hashSync(userPassword, 4);
   const jwtSecret = 'test-secret-min-32-chars-1234567890-abcdef';
 
-  const makeToken = () =>
+  const makeToken = (claims: { id?: string; organizationId?: string; role?: string } = {}) =>
     jwt.sign(
-      { id: userId, organizationId: orgId, email: 'u1@test.local', role: 'ADMIN' },
+      {
+        id: claims.id || userId,
+        organizationId: claims.organizationId || orgId,
+        email: 'u1@test.local',
+        role: claims.role || 'ADMIN',
+      },
       jwtSecret,
       { expiresIn: '1h' }
     );
@@ -54,6 +62,7 @@ describe('Settings/GDPR routes (no stub responses)', () => {
     resetConnection = dbMod.resetConnection;
     await resetConnection();
     db = await dbMod.getDatabaseAsync();
+    dbPromiseModule = await import('../../../server/src/utils/DbPromise.js');
     await db.get('SELECT 1 AS ok');
     realDatabaseReady = true;
 
@@ -66,6 +75,25 @@ describe('Settings/GDPR routes (no stub responses)', () => {
 
   afterAll(async () => {
     try {
+      await db?.run(`DELETE FROM user_data_export_receipts WHERE user_id IN (?, ?)`, [
+        userId,
+        foreignUserId,
+      ]);
+      await db?.run(`DELETE FROM data_export_requests WHERE user_id IN (?, ?)`, [
+        userId,
+        foreignUserId,
+      ]);
+      await db?.run(`DELETE FROM gdpr_requests WHERE user_id IN (?, ?)`, [userId, foreignUserId]);
+      await db?.run(`DELETE FROM account_deletion_requests WHERE user_id IN (?, ?)`, [
+        userId,
+        foreignUserId,
+      ]);
+      await db?.run(`DELETE FROM organization_members WHERE user_id IN (?, ?)`, [
+        userId,
+        foreignUserId,
+      ]);
+      await db?.run(`DELETE FROM users WHERE id IN (?, ?)`, [userId, foreignUserId]);
+      await db?.run(`DELETE FROM organizations WHERE id IN (?, ?)`, [orgId, foreignOrgId]);
       await resetConnection?.();
     } finally {
       process.env = prevEnv;
@@ -78,12 +106,42 @@ describe('Settings/GDPR routes (no stub responses)', () => {
     await db.run(`DELETE FROM account_deletion_requests WHERE user_id = ?`, [userId]);
     await db.run(`DELETE FROM user_data_export_receipts WHERE user_id = ?`, [userId]);
     await db.run(`DELETE FROM data_export_requests WHERE user_id = ?`, [userId]);
-    await db.run(`DELETE FROM users WHERE id = ?`, [userId]);
-    await db.run(`DELETE FROM organizations WHERE id = ?`, [orgId]);
-    await db.run(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [orgId, 'GDPR Test']);
+    await db.run(`DELETE FROM organization_members WHERE user_id IN (?, ?)`, [
+      userId,
+      foreignUserId,
+    ]);
+    await db.run(`DELETE FROM users WHERE id IN (?, ?)`, [userId, foreignUserId]);
+    await db.run(`DELETE FROM organizations WHERE id IN (?, ?)`, [orgId, foreignOrgId]);
+    await db.run(`INSERT INTO organizations (id, name) VALUES (?, ?), (?, ?)`, [
+      orgId,
+      'GDPR Test',
+      foreignOrgId,
+      'GDPR Foreign',
+    ]);
     await db.run(
-      `INSERT INTO users (id, organization_id, email, first_name, last_name, password, role) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [userId, orgId, 'u1@test.local', 'U', 'One', passwordHash, 'ADMIN']
+      `INSERT INTO users (id, organization_id, email, first_name, last_name, password, role)
+       VALUES (?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        userId,
+        orgId,
+        'u1@test.local',
+        'U',
+        'One',
+        passwordHash,
+        'ADMIN',
+        foreignUserId,
+        foreignOrgId,
+        'foreign@test.local',
+        'Foreign',
+        'User',
+        passwordHash,
+        'ADMIN',
+      ]
+    );
+    await db.run(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+       VALUES (?, ?, ?, 'ADMIN', 'ACTIVE'), (?, ?, ?, 'ADMIN', 'ACTIVE')`,
+      [`member-${userId}`, orgId, userId, `member-${foreignUserId}`, foreignOrgId, foreignUserId]
     );
   });
 
@@ -124,6 +182,9 @@ describe('Settings/GDPR routes (no stub responses)', () => {
       .get(`/api/gdpr/download-export/${requestId}`)
       .set('Authorization', `Bearer ${makeToken()}`);
     expect(first.status).toBe(200);
+    expect(first.body.user).toEqual(
+      expect.objectContaining({ id: userId, email: 'u1@test.local' })
+    );
     const firstBody = JSON.stringify(first.body, null, 2);
     const expectedHash = createHash('sha256').update(firstBody, 'utf8').digest('hex');
     expect(first.headers['x-export-receipt-sha256']).toBe(expectedHash);
@@ -136,17 +197,16 @@ describe('Settings/GDPR routes (no stub responses)', () => {
     expect(second.body).toEqual(first.body);
 
     const receipt = await db.get(
-      `SELECT artifact_sha256, artifact_bytes FROM user_data_export_receipts WHERE request_id = ?`,
+      `SELECT artifact_json, artifact_sha256, artifact_bytes FROM user_data_export_receipts WHERE request_id = ?`,
       [requestId]
+    );
+    expect(JSON.parse(String(receipt.artifact_json)).user).toEqual(
+      expect.objectContaining({ id: userId, email: 'u1@test.local' })
     );
     expect(receipt.artifact_sha256).toBe(expectedHash);
     expect(Number(receipt.artifact_bytes)).toBe(Buffer.byteLength(firstBody, 'utf8'));
 
-    const otherToken = jwt.sign(
-      { id: '00000000-0000-4000-8000-000000000099', organizationId: orgId, email: 'other@test.local', role: 'ADMIN' },
-      jwtSecret,
-      { expiresIn: '1h' }
-    );
+    const otherToken = makeToken({ id: foreignUserId, organizationId: foreignOrgId });
     const denied = await request(makeApp())
       .get(`/api/gdpr/download-export/${requestId}`)
       .set('Authorization', `Bearer ${otherToken}`);
@@ -158,6 +218,87 @@ describe('Settings/GDPR routes (no stub responses)', () => {
         requestId,
       ])
     ).rejects.toThrow('user data export receipts are immutable');
+  });
+
+  it('enforces ACTIVE membership per request and fails closed without export writes', async () => {
+    const app = makeApp();
+    const countRows = async () => ({
+      requests: Number(
+        (await db.get(`SELECT count(*) AS n FROM data_export_requests WHERE user_id = ?`, [userId]))
+          ?.n
+      ),
+      receipts: Number(
+        (
+          await db.get(`SELECT count(*) AS n FROM user_data_export_receipts WHERE user_id = ?`, [
+            userId,
+          ])
+        )?.n
+      ),
+    });
+    const before = await countRows();
+
+    expect((await request(app).post('/api/gdpr/export-request').send({})).status).toBe(401);
+    expect(
+      (
+        await request(app)
+          .post('/api/gdpr/export-request')
+          .set('Authorization', 'Bearer invalid')
+          .send({})
+      ).status
+    ).toBe(401);
+
+    await db.run(
+      `UPDATE organization_members SET status = 'REVOKED' WHERE user_id = ? AND organization_id = ?`,
+      [userId, orgId]
+    );
+    const revoked = await request(app)
+      .post('/api/gdpr/export-request')
+      .set('Authorization', `Bearer ${makeToken()}`)
+      .send({});
+    expect(revoked.status).toBe(403);
+    expect(revoked.body).toMatchObject({ code: 'ORG_MEMBERSHIP_REVOKED' });
+
+    const superAdminWithoutMembership = await request(app)
+      .post('/api/gdpr/export-request')
+      .set(
+        'Authorization',
+        `Bearer ${makeToken({ id: '00000000-0000-4000-8000-000000000299', role: 'SUPERADMIN' })}`
+      )
+      .send({});
+    expect(superAdminWithoutMembership.status).toBe(403);
+    expect(await countRows()).toEqual(before);
+
+    await db.run(
+      `UPDATE organization_members SET status = 'ACTIVE' WHERE user_id = ? AND organization_id = ?`,
+      [userId, orgId]
+    );
+    const originalGet = dbPromiseModule.get;
+    const membershipFailure = vi
+      .spyOn(dbPromiseModule, 'get')
+      .mockImplementation(async (sql: string, params?: unknown[], options?: unknown) => {
+        if (/FROM\s+organization_members/i.test(sql))
+          throw new Error('forced membership lookup failure');
+        return originalGet(sql, params as any[], options as any);
+      });
+    try {
+      const unavailable = await request(app)
+        .post('/api/gdpr/export-request')
+        .set('Authorization', `Bearer ${makeToken()}`)
+        .send({});
+      expect(unavailable.status).toBe(503);
+      expect(unavailable.body).toMatchObject({ code: 'ORG_MEMBERSHIP_UNVERIFIABLE' });
+      expect(membershipFailure).toHaveBeenCalled();
+      expect(await countRows()).toEqual(before);
+    } finally {
+      membershipFailure.mockRestore();
+    }
+
+    const recovered = await request(app)
+      .post('/api/gdpr/export-request')
+      .set('Authorization', `Bearer ${makeToken()}`)
+      .send({});
+    expect(recovered.status).toBe(200);
+    expect((await countRows()).requests).toBe(before.requests + 1);
   });
 
   it('POST /api/settings/gdpr/deletion-request creates a real request', async () => {

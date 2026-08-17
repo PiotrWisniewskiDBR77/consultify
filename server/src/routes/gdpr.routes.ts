@@ -21,7 +21,8 @@ import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js'
 import logger from '../utils/Logger.js';
 import { flagOn } from '../utils/pgFlags.js';
 import { verifyUserPassword } from '../utils/verifyUserPassword.js';
-import { materializeUserDataExport } from '../services/gdprService.js';
+import { collectUserData, materializeUserDataExport } from '../services/gdprService.js';
+import { requireActiveMembership } from '../services/legacyCutover/requireActiveMembership.js';
 
 // Apply rate limiting
 const router = Router();
@@ -365,6 +366,7 @@ router.put(
  */
 router.get(
   '/export-status',
+  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const userId = req.user!.id;
@@ -396,19 +398,22 @@ router.get(
  */
 router.post(
   '/export-request',
+  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const userId = req.user!.id;
       const organizationId = req.organizationId;
       if (!organizationId) {
-        return res.status(403).json(
-          buildGdprError(
-            req,
-            403,
-            'GDPR_EXPORT_ORGANIZATION_REQUIRED',
-            'Organization context is required.'
-          )
-        );
+        return res
+          .status(403)
+          .json(
+            buildGdprError(
+              req,
+              403,
+              'GDPR_EXPORT_ORGANIZATION_REQUIRED',
+              'Organization context is required.'
+            )
+          );
       }
 
       // Check for existing pending request
@@ -487,6 +492,7 @@ router.post(
  */
 router.get(
   '/download-export/:requestId',
+  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const userId = req.user!.id;
@@ -527,9 +533,9 @@ router.get(
         payload: userData,
       });
       if (!artifact) {
-        return res.status(404).json(
-          buildGdprError(req, 404, 'GDPR_EXPORT_NOT_AUTHORIZED', 'Export was not found.')
-        );
+        return res
+          .status(404)
+          .json(buildGdprError(req, 404, 'GDPR_EXPORT_NOT_AUTHORIZED', 'Export was not found.'));
       }
 
       res.setHeader('Content-Type', 'application/json');
@@ -676,99 +682,5 @@ router.get(
     }
   })
 );
-
-// ==========================================
-// HELPER FUNCTIONS
-// ==========================================
-
-/**
- * Collect all user data for export
- */
-async function collectUserData(userId: string): Promise<UserDataExport> {
-  const data: UserDataExport = {
-    exportDate: new Date().toISOString(),
-    user: null,
-    profile: null,
-    preferences: null,
-    projects: [],
-    tasks: [],
-    assessments: [],
-    notifications: [],
-    securityEvents: [],
-  };
-
-  // Get user basic info
-  data.user = await dbGet<{
-    id: string;
-    email: string;
-    first_name: string | null;
-    last_name: string | null;
-    phone: string | null;
-    role: string;
-    created_at: string;
-    last_login_at: string | null;
-  }>(
-    `SELECT id, email, first_name, last_name, phone, role, 
-                created_at, last_login_at
-        FROM users WHERE id = ?`,
-    [userId]
-  );
-
-  // Get extended preferences
-  const prefsRow = await dbGet<{ extended_preferences?: string }>(
-    `SELECT extended_preferences FROM users WHERE id = ?`,
-    [userId]
-  );
-  data.preferences = prefsRow?.extended_preferences
-    ? JSON.parse(prefsRow.extended_preferences)
-    : null;
-
-  // Get projects
-  data.projects = await dbAll<{
-    id: string;
-    name: string;
-    description: string | null;
-    status: string;
-    created_at: string;
-    updated_at: string;
-  }>(
-    `SELECT id, name, description, status, created_at, updated_at
-        FROM projects WHERE owner_id = ? OR id IN (
-            SELECT project_id FROM project_members WHERE user_id = ?
-        )`,
-    [userId, userId]
-  );
-
-  // Get tasks
-  data.tasks = await dbAll<{
-    id: string;
-    title: string;
-    description: string | null;
-    status: string;
-    priority: string;
-    due_date: string | null;
-    created_at: string;
-  }>(
-    `SELECT id, title, description, status, priority, due_date, created_at
-        FROM tasks WHERE assignee_id = ? OR created_by = ?`,
-    [userId, userId]
-  );
-
-  // Get security events
-  data.securityEvents = await dbAll<{
-    type: string;
-    title: string;
-    description: string | null;
-    ip_address: string | null;
-    created_at: string;
-  }>(
-    `SELECT type, title, description, ip_address, created_at
-        FROM security_events WHERE user_id = ?
-        ORDER BY created_at DESC LIMIT 100`,
-    [userId]
-  );
-
-  return data;
-}
 
 export default router;
