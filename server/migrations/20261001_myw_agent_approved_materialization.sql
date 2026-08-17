@@ -35,13 +35,29 @@ CREATE TABLE IF NOT EXISTS myw_agent_materialization_receipts (
   approval_id UUID NOT NULL UNIQUE REFERENCES myw_agent_materialization_approvals(approval_id),
   organization_id TEXT NOT NULL REFERENCES organizations(id),
   target_kind TEXT NOT NULL CHECK (target_kind IN ('task','decision','notebook')),
-  target_id TEXT NOT NULL,
+  target_id TEXT,
   source_hash TEXT NOT NULL,
   content_hash TEXT NOT NULL,
+  command_version INTEGER NOT NULL DEFAULT 1,
+  status TEXT NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING','RUNNING','SUCCEEDED','FAILED')),
+  output_digest TEXT,
+  last_error_code TEXT,
+  lease_owner TEXT,
+  lease_expires_at TIMESTAMPTZ,
   materialized_by TEXT NOT NULL REFERENCES users(id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (target_kind, target_id)
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_myw_agent_materialized_target
+  ON myw_agent_materialization_receipts(target_kind,target_id) WHERE target_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_decisions_org_idempotency
+  ON decisions(organization_id,idempotency_key) WHERE idempotency_key IS NOT NULL;
+ALTER TABLE notebook_pages ADD COLUMN IF NOT EXISTS idempotency_key TEXT;
+ALTER TABLE notebook_pages ADD COLUMN IF NOT EXISTS source_type TEXT;
+ALTER TABLE notebook_pages ADD COLUMN IF NOT EXISTS source_id TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_notebook_pages_org_idempotency
+  ON notebook_pages(organization_id,idempotency_key) WHERE idempotency_key IS NOT NULL;
 
 CREATE OR REPLACE FUNCTION myw_agent_proposal_guard() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
@@ -74,6 +90,17 @@ BEGIN RAISE EXCEPTION 'myw_agent_materialization_record_is_append_only'; END $$;
 DROP TRIGGER IF EXISTS trg_myw_agent_approval_append_only ON myw_agent_materialization_approvals;
 CREATE TRIGGER trg_myw_agent_approval_append_only BEFORE UPDATE OR DELETE ON myw_agent_materialization_approvals
 FOR EACH ROW EXECUTE FUNCTION myw_agent_append_only_guard();
+CREATE OR REPLACE FUNCTION myw_agent_receipt_guard() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF TG_OP='DELETE' OR OLD.proposal_id IS DISTINCT FROM NEW.proposal_id
+    OR OLD.approval_id IS DISTINCT FROM NEW.approval_id OR OLD.organization_id IS DISTINCT FROM NEW.organization_id
+    OR OLD.target_kind IS DISTINCT FROM NEW.target_kind OR OLD.source_hash IS DISTINCT FROM NEW.source_hash
+    OR OLD.content_hash IS DISTINCT FROM NEW.content_hash OR OLD.command_version IS DISTINCT FROM NEW.command_version
+    OR OLD.materialized_by IS DISTINCT FROM NEW.materialized_by OR OLD.created_at IS DISTINCT FROM NEW.created_at THEN
+    RAISE EXCEPTION 'myw_agent_materialization_receipt_payload_is_append_only';
+  END IF;
+  RETURN NEW;
+END $$;
 DROP TRIGGER IF EXISTS trg_myw_agent_receipt_append_only ON myw_agent_materialization_receipts;
 CREATE TRIGGER trg_myw_agent_receipt_append_only BEFORE UPDATE OR DELETE ON myw_agent_materialization_receipts
-FOR EACH ROW EXECUTE FUNCTION myw_agent_append_only_guard();
+FOR EACH ROW EXECUTE FUNCTION myw_agent_receipt_guard();

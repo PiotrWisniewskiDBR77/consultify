@@ -56,6 +56,9 @@ export interface CreateDecisionInput {
   deadline?: string;
   stakeholderIds?: string[];
   createdBy: string;
+  idempotencyKey?: string;
+  sourceType?: string;
+  sourceId?: string;
 }
 
 export interface MakeDecisionInput {
@@ -208,6 +211,18 @@ class DecisionService {
    */
   async createDecision(input: CreateDecisionInput): Promise<Decision> {
     const db = await this.getDb();
+    if (input.idempotencyKey) {
+      const replay = await db.get<{ id: string; source_type?: string; source_id?: string }>(
+        `SELECT id,source_type,source_id FROM decisions WHERE organization_id=? AND idempotency_key=?`,
+        [input.organizationId,input.idempotencyKey]
+      );
+      if (replay) {
+        if (replay.source_type !== input.sourceType || replay.source_id !== input.sourceId) {
+          throw new Error('DECISION_IDEMPOTENCY_COLLISION');
+        }
+        return this.getDecision(replay.id) as Promise<Decision>;
+      }
+    }
     const id = `decision-${uuidv4()}`;
     const now = new Date().toISOString();
 
@@ -235,8 +250,8 @@ class DecisionService {
                 id, organization_id, project_id, initiative_id, task_id,
                 title, description, type, decision_maker_id,
                 options, criteria, deadline, escalation_deadline,
-                status, created_by, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)`,
+                status, created_by, created_at, updated_at, idempotency_key, source_type, source_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?)`,
       [
         id,
         input.organizationId,
@@ -254,6 +269,9 @@ class DecisionService {
         input.createdBy,
         now,
         now,
+        input.idempotencyKey || null,
+        input.sourceType || null,
+        input.sourceId || null,
       ]
     );
 

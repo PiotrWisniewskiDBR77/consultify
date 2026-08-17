@@ -32,7 +32,7 @@ router.get('/agent-materialization/source/:planId', asyncHandler(async (req: Aut
   const identity = requireUser(req, res);
   if (!identity) return;
   try {
-    res.json(await getAgentPlanSourceIdentity(identity.orgId, String(req.params.planId)));
+    res.json(await getAgentPlanSourceIdentity(identity.orgId, String(req.params.planId), identity.userId));
   } catch (error) { sendError(res, error); }
 }));
 

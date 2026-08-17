@@ -107,7 +107,9 @@ export class TaskService {
   /**
    * Create a new task
    */
-  async createTask(input: CreateTaskInput, userId: string): Promise<Task> {
+  async createTask(input: CreateTaskInput, userId: string, command?: {
+    idempotencyKey: string; sourceType: string; sourceId: string;
+  }): Promise<Task> {
     // Validate input
     const validated = CreateTaskSchema.parse(input);
 
@@ -132,13 +134,25 @@ export class TaskService {
     if (!organizationId) {
       throw new NotFoundError('User organization');
     }
+    if (command) {
+      const replay = await this.db.query<TaskRow>(
+        `SELECT * FROM tasks WHERE organization_id=$1 AND idempotency_key=$2`,
+        [organizationId, command.idempotencyKey]
+      );
+      if (replay.rows[0]) {
+        if ((replay.rows[0] as any).source_type !== command.sourceType || (replay.rows[0] as any).source_id !== command.sourceId) {
+          throw new Error('TASK_IDEMPOTENCY_COLLISION');
+        }
+        return this.mapRowToTask(replay.rows[0]);
+      }
+    }
 
     const result = await this.db.query<TaskRow>(
       `INSERT INTO tasks (
                 id, organization_id, project_id, title, description, status, priority,
                 assignee_id, due_date, estimated_hours, tags, initiative_id,
-                created_by
-             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                created_by, idempotency_key, source_type, source_id
+             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
              RETURNING *`,
       [
         id,
@@ -154,6 +168,9 @@ export class TaskService {
         validated.tags ? JSON.stringify(validated.tags) : null,
         validated.initiativeId || null,
         userId,
+        command?.idempotencyKey || null,
+        command?.sourceType || null,
+        command?.sourceId || null,
       ]
     );
 

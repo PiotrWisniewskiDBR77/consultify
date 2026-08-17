@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 
-import { withPgTransaction } from '../../utils/queryHelpers.js';
+import { queryOne, withPgTransaction } from '../../utils/queryHelpers.js';
 
 export type MaterializationTarget = 'task' | 'decision' | 'notebook';
 
@@ -38,8 +38,11 @@ async function sourceIdentity(tx: any, organizationId: string, sourcePlanId: str
   return { sourceVersion, sourceHash: sha(row) };
 }
 
-export async function getAgentPlanSourceIdentity(organizationId: string, sourcePlanId: string) {
-  return withPgTransaction((tx) => sourceIdentity(tx, organizationId, sourcePlanId));
+export async function getAgentPlanSourceIdentity(organizationId: string, sourcePlanId: string, userId: string) {
+  return withPgTransaction(async (tx) => {
+    await requireActiveMember(tx,organizationId,userId);
+    return sourceIdentity(tx, organizationId, sourcePlanId);
+  });
 }
 
 export async function createMaterializationProposal(input: {
@@ -118,7 +121,8 @@ export async function decideMaterializationProposal(input: {
 export async function materializeApprovedProposal(input: {
   proposalId: string; organizationId: string; actorId: string; expectedStateVersion: number;
 }) {
-  return withPgTransaction(async (tx) => {
+  const workerId = `myw-http-${process.pid}-${randomUUID()}`;
+  const claimed = await withPgTransaction(async (tx) => {
     await requireActiveMember(tx, input.organizationId, input.actorId);
     const selected = await tx.query<any>(
       `SELECT p.*,a.approval_id,a.approver_id,a.decision FROM myw_agent_materialization_proposals p
@@ -129,7 +133,7 @@ export async function materializeApprovedProposal(input: {
     const proposal = selected.rows[0];
     if (!proposal) throw new Error('MYW_AGENT_PROPOSAL_NOT_FOUND');
     const receipt = await tx.query<any>(`SELECT * FROM myw_agent_materialization_receipts WHERE proposal_id=?`, [input.proposalId]);
-    if (receipt.rows[0]) return { receipt: receipt.rows[0], replayed: true };
+    if (receipt.rows[0]?.status === 'SUCCEEDED') return { terminal: receipt.rows[0] };
     if (proposal.state !== 'APPROVED' || proposal.decision !== 'APPROVE' ||
         proposal.state_version !== input.expectedStateVersion) throw new Error('MYW_AGENT_MATERIALIZATION_STALE');
     if (new Date(proposal.expires_at).getTime() <= Date.now()) throw new Error('MYW_AGENT_PROPOSAL_EXPIRED');
@@ -137,43 +141,81 @@ export async function materializeApprovedProposal(input: {
     if (actual.sourceVersion !== Number(proposal.source_version) || actual.sourceHash !== proposal.source_hash) {
       throw new Error('MYW_AGENT_SOURCE_DRIFT');
     }
-    const content = proposal.content as Record<string, unknown>;
-    const title = String(content.title || '').trim();
-    if (!title) throw new Error('MYW_AGENT_CONTENT_INVALID');
-    const targetId = randomUUID();
-    if (proposal.target_kind === 'task') {
+    if (!receipt.rows[0]) {
       await tx.query(
-        `INSERT INTO tasks(id,organization_id,title,description,status,priority,created_by,created_at,updated_at)
-         VALUES(?,?,?,?,'todo','medium',?,now(),now())`,
-        [targetId,input.organizationId,title,String(content.description || ''),proposal.requester_id]
+        `INSERT INTO myw_agent_materialization_receipts
+         (proposal_id,approval_id,organization_id,target_kind,source_hash,content_hash,materialized_by,status)
+         VALUES(?,?,?,?,?,?,?,'PENDING')`,
+        [proposal.proposal_id,proposal.approval_id,input.organizationId,proposal.target_kind,
+          proposal.source_hash,proposal.content_hash,input.actorId]
       );
-    } else if (proposal.target_kind === 'decision') {
-      await tx.query(
-        `INSERT INTO decisions(id,organization_id,title,description,type,status,decision_maker_id,created_by,created_at,updated_at)
-         VALUES(?,?,?,?,'APPROVAL','pending',?,?,now(),now())`,
-        [targetId,input.organizationId,title,String(content.description || ''),proposal.approver_id,proposal.requester_id]
-      );
-    } else {
-      const body = String(content.body || content.description || '');
-      await tx.query(
-        `INSERT INTO notebook_pages(id,owner_user_id,organization_id,visibility,title,content_json,content_text,tags_json,created_at,updated_at)
-         VALUES(?,?,?,'private',?,?,'','[]',now(),now())`,
-        [targetId,proposal.requester_id,input.organizationId,title,JSON.stringify({ type: 'doc', content: body })]
-      );
-      await tx.query(`UPDATE notebook_pages SET content_text=? WHERE id=?`, [body,targetId]);
     }
-    const insertedReceipt = await tx.query<any>(
-      `INSERT INTO myw_agent_materialization_receipts
-       (proposal_id,approval_id,organization_id,target_kind,target_id,source_hash,content_hash,materialized_by)
-       VALUES(?,?,?,?,?,?,?,?) RETURNING *`,
-      [proposal.proposal_id,proposal.approval_id,input.organizationId,proposal.target_kind,targetId,
-        proposal.source_hash,proposal.content_hash,input.actorId]
+    const lease = await tx.query<any>(
+      `UPDATE myw_agent_materialization_receipts SET status='RUNNING',lease_owner=?,lease_expires_at=now()+interval '5 minutes',updated_at=now()
+       WHERE proposal_id=? AND (status IN ('PENDING','FAILED') OR (status='RUNNING' AND lease_expires_at<now())) RETURNING *`,
+      [workerId,proposal.proposal_id]
     );
-    await tx.query(
-      `UPDATE myw_agent_materialization_proposals SET state='MATERIALIZED',state_version=state_version+1,updated_at=now()
-       WHERE proposal_id=? AND state='APPROVED' AND state_version=?`,
-      [proposal.proposal_id,input.expectedStateVersion]
-    );
-    return { receipt: insertedReceipt.rows[0], replayed: false };
+    if (!lease.rows[0]) return { busy: true as const };
+    return { proposal, receipt: lease.rows[0] };
   });
+  if ('terminal' in claimed) return { receipt: claimed.terminal, replayed: true };
+  if ('busy' in claimed) {
+    for (let attempt=0;attempt<250;attempt+=1) {
+      const receipt = await queryOne<any>(`SELECT * FROM myw_agent_materialization_receipts WHERE proposal_id=?`,[input.proposalId]);
+      if (receipt?.status === 'SUCCEEDED') return {receipt,replayed:true};
+      if (receipt?.status === 'FAILED') throw new Error(receipt.last_error_code || 'MYW_AGENT_MATERIALIZATION_FAILED');
+      await new Promise(resolve=>setTimeout(resolve,20));
+    }
+    throw new Error('MYW_AGENT_MATERIALIZATION_BUSY');
+  }
+  const proposal = claimed.proposal;
+  const content = proposal.content as Record<string, unknown>;
+  const title = String(content.title || '').trim();
+  const commandKey = `myw-agent:${proposal.proposal_id}`;
+  const sourceIdentityValue = `${proposal.source_plan_id}:${proposal.source_version}:${proposal.source_hash}`;
+  try {
+    if (!title) throw new Error('MYW_AGENT_CONTENT_INVALID');
+    let targetId: string;
+    if (proposal.target_kind === 'task') {
+      const [{ TaskService }, { getDatabase }] = await Promise.all([
+        import('../TaskService.js'), import('../../database/Database.js')
+      ]);
+      const task = await new TaskService(await getDatabase() as any).createTask({
+        title,description:String(content.description || ''),status:'todo',priority:'medium'
+      },proposal.requester_id,{idempotencyKey:commandKey,sourceType:'myw_agent_proposal',sourceId:sourceIdentityValue});
+      targetId = task.id;
+    } else if (proposal.target_kind === 'decision') {
+      const { default: decisionService } = await import('../decisionService.js');
+      const decision = await decisionService.createDecision({organizationId:input.organizationId,title,
+        description:String(content.description || ''),type:'APPROVAL',decisionMakerId:proposal.approver_id,
+        createdBy:proposal.requester_id,idempotencyKey:commandKey,sourceType:'myw_agent_proposal',sourceId:sourceIdentityValue});
+      targetId = decision.id;
+    } else {
+      const { createNotebookNote } = await import('../notebookService.js');
+      const note = await createNotebookNote({organizationId:input.organizationId,userId:proposal.requester_id,title,
+        body:String(content.body || content.description || ''),source:'myw_agent_proposal',proposalId:proposal.proposal_id,
+        idempotencyKey:commandKey,sourceIdentity:sourceIdentityValue});
+      targetId = note.id;
+    }
+    const outputDigest = sha({targetKind:proposal.target_kind,targetId,commandVersion:1});
+    const completed = await withPgTransaction(async (tx) => {
+      const receipt = await tx.query<any>(
+        `UPDATE myw_agent_materialization_receipts SET status='SUCCEEDED',target_id=?,output_digest=?,last_error_code=NULL,
+         lease_owner=NULL,lease_expires_at=NULL,updated_at=now() WHERE proposal_id=? AND status='RUNNING' AND lease_owner=? RETURNING *`,
+        [targetId,outputDigest,proposal.proposal_id,workerId]
+      );
+      if (!receipt.rows[0]) throw new Error('MYW_AGENT_MATERIALIZATION_LEASE_LOST');
+      await tx.query(`UPDATE myw_agent_materialization_proposals SET state='MATERIALIZED',state_version=state_version+1,updated_at=now()
+        WHERE proposal_id=? AND state='APPROVED' AND state_version=?`,[proposal.proposal_id,input.expectedStateVersion]);
+      return receipt.rows[0];
+    });
+    return {receipt:completed,replayed:false};
+  } catch (error) {
+    await withPgTransaction(async (tx) => tx.query(
+      `UPDATE myw_agent_materialization_receipts SET status='FAILED',last_error_code=?,lease_owner=NULL,lease_expires_at=NULL,updated_at=now()
+       WHERE proposal_id=? AND status='RUNNING' AND lease_owner=?`,
+      [String(error instanceof Error ? error.message : error).slice(0,128),proposal.proposal_id,workerId]
+    ));
+    throw error;
+  }
 }

@@ -235,6 +235,8 @@ class NotebookService {
         mimetype: string;
       };
       metadata?: Record<string, unknown>;
+      idempotencyKey?: string;
+      sourceIdentity?: string;
     }
   ): Promise<IngestionResult> {
     const id = uuidv4();
@@ -275,6 +277,9 @@ class NotebookService {
       status: 'active',
       capture_source: data.source,
       capture_metadata: JSON.stringify({ ...(data.metadata || {}), ...persistedSourceMetadata }),
+      idempotency_key: data.idempotencyKey || null,
+      source_type: data.idempotencyKey ? 'myw_agent_proposal' : null,
+      source_id: data.sourceIdentity || null,
       created_at: now,
       updated_at: now,
     };
@@ -1222,6 +1227,8 @@ export async function createNote(params: {
   userId?: string;
   proposalId?: string;
   projectId?: string;
+  idempotencyKey?: string;
+  sourceIdentity?: string;
   /**
    * #21 Notatnik-centrum-myśli: opcjonalny termin przypomnienia „przypomnij mi …".
    * Persist w capture_metadata.reminder (kolumna JSON — bez migracji).
@@ -1230,6 +1237,16 @@ export async function createNote(params: {
 }): Promise<{ id: string; noteId: string; title: string }> {
   const userId = params.userId || 'system';
   const title = params.title || 'Untitled';
+  if (params.idempotencyKey) {
+    const replay = await queryHelpers.queryOne<{ id: string; title: string; source_id: string | null }>(
+      `SELECT id,title,source_id FROM notebook_pages WHERE organization_id=? AND idempotency_key=?`,
+      [params.organizationId,params.idempotencyKey]
+    );
+    if (replay) {
+      if (replay.source_id !== (params.sourceIdentity || null)) throw new Error('NOTEBOOK_IDEMPOTENCY_COLLISION');
+      return { id: replay.id,noteId: replay.id,title: replay.title };
+    }
+  }
   const hasReminder = Boolean(params.reminder && (params.reminder.dueAt || params.reminder.term));
   const result = await notebookService.ingest(params.organizationId, userId, {
     title,
@@ -1239,6 +1256,8 @@ export async function createNote(params: {
     metadata: {
       externalSource: params.source || 'api',
       proposalId: params.proposalId,
+      idempotencyKey: params.idempotencyKey,
+      sourceIdentity: params.sourceIdentity,
       ...(hasReminder
         ? {
             reminder: {
@@ -1250,6 +1269,8 @@ export async function createNote(params: {
           }
         : {}),
     },
+    idempotencyKey: params.idempotencyKey,
+    sourceIdentity: params.sourceIdentity,
   });
   return { id: result.pageId, noteId: result.pageId, title: result.title };
 }
