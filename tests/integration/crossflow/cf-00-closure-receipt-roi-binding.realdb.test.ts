@@ -96,9 +96,14 @@ suite('FLOW-TRANSFORM closure receipt -> ROI case durable binding', () => {
         (SELECT count(*)::int FROM closure_delivery_receipts WHERE id=ANY($2::text[])) receipts,
         (SELECT count(*)::int FROM initiatives WHERE id=$3) initiatives,
         (SELECT count(*)::int FROM rvn_platform_outbox WHERE event_id IN (SELECT event_id FROM rvn_platform_events WHERE organization_id=$1)) outbox,
+        (SELECT count(*)::int FROM rvn_roi_baselines WHERE organization_id=$1) baselines,
+        (SELECT count(*)::int FROM rvn_roi_calculation_policy WHERE organization_id=$1) calculation_policies,
+        (SELECT count(*)::int FROM rvn_platform_resource_visibility WHERE organization_id=$1) visibility,
+        (SELECT count(*)::int FROM rvn_platform_resource_acl WHERE resource_id IN (SELECT case_id::text FROM rvn_roi_cases WHERE organization_id=$1)) acl,
+        (SELECT count(*)::int FROM rvn_platform_obligations WHERE organization_id=$1) obligations,
         (SELECT count(*)::int FROM organization_members WHERE organization_id=$1) members,
         (SELECT count(*)::int FROM users WHERE id=ANY($4::text[])) users`, [orgA, [receiptId, secondReceiptId, actorlessReceiptId], initiativeId, [ownerA, closerA]]);
-      expect(residue.rows[0]).toEqual({ cases: 0, events: 0, receipts: 0, initiatives: 0, outbox: 0, members: 0, users: 0 });
+      expect(residue.rows[0]).toEqual({ cases: 0, events: 0, receipts: 0, initiatives: 0, outbox: 0, baselines: 0, calculation_policies: 0, visibility: 0, acl: 0, obligations: 0, members: 0, users: 0 });
       await client.query('COMMIT');
       const postCommit = await client.query(`SELECT count(*)::int n FROM organizations WHERE id=ANY($1::text[])`, [[orgA, orgB]]);
       expect(postCommit.rows[0].n).toBe(0);
@@ -191,6 +196,13 @@ suite('FLOW-TRANSFORM closure receipt -> ROI case durable binding', () => {
     expect(attribution.rows[0]).toEqual({ owner_user_id: ownerA, actor_user_id: closerA, source: 'resultsVnext.roi', correlation_id: textIdentityUuid('closure-receipt', receiptId), causation_id: textIdentityUuid('closure-transition', transitionRef) });
     const aclPrincipals = await client.query(`SELECT grantee_id FROM rvn_platform_resource_acl WHERE resource_id=$1 ORDER BY grantee_id`, [[...caseIds][0]]);
     expect(aclPrincipals.rows.map((row) => row.grantee_id)).toEqual([closerA, ownerA].sort());
+
+    await client.query(`UPDATE rvn_roi_cases SET title='Mutable projection title' WHERE case_id=$1`, [[...caseIds][0]]);
+    await expect(ensureBinding({ organizationId: orgA, receiptId })).resolves.toMatchObject({ outcome: 'duplicate' });
+    await client.query(`UPDATE initiatives SET name='Mutable projection title' WHERE id=$1`, [initiativeId]);
+    await expect(ensureBinding({ organizationId: orgA, receiptId })).rejects.toMatchObject({ code: 'CLOSURE_RECEIPT_BINDING_COLLISION' });
+    await client.query(`UPDATE initiatives SET name='Crossflow full lineage' WHERE id=$1`, [initiativeId]);
+    await client.query(`UPDATE rvn_roi_cases SET title='Crossflow full lineage — post-closure ROI' WHERE case_id=$1`, [[...caseIds][0]]);
 
     await client.query(`UPDATE closure_delivery_receipts SET transition_audit_ref=$2 WHERE id=$1`, [receiptId, `${transitionRef}:altered`]);
     await expect(ensureBinding({ organizationId: orgA, receiptId })).rejects.toMatchObject({ code: 'CLOSURE_RECEIPT_BINDING_COLLISION' });

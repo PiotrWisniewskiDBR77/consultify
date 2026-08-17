@@ -128,11 +128,12 @@ export async function ensureRoiCaseForClosureReceipt(
     correlation_id: string;
     causation_id: string | null;
   }>(
-    `SELECT c.initiative_id,c.title,c.owner_user_id,c.currency,
+    `SELECT e.after_state->'case'->>'initiativeId' AS initiative_id,
+            e.after_state->'case'->>'title' AS title,
+            e.after_state->'case'->>'ownerUserId' AS owner_user_id,
+            e.after_state->'case'->>'currency' AS currency,
             e.actor_user_id,e.source,e.correlation_id,e.causation_id
        FROM rvn_platform_events e
-       JOIN rvn_roi_cases c
-         ON c.organization_id=e.organization_id AND c.case_id::text=e.aggregate_id
       WHERE e.organization_id=? AND e.idempotency_key=?`,
     [source.organization_id, idempotencyKey]
   );
