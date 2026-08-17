@@ -5,7 +5,10 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { getPrimaryPoolSaturationPercent } from '../../../../database/PostgresDatabase.js';
 import { operationalAlerts } from '../../../operationalAlertService.js';
-import { getMissedResultsDurableAlertSignals, runOutboxDispatchTick } from '../platformOutboxDrainCron.js';
+import {
+  getMissedResultsDurableAlertSignals,
+  runOutboxDispatchTick,
+} from '../platformOutboxDrainCron.js';
 
 const databaseUrl = process.env.DATABASE_URL || '';
 const marker = `ops_obs_${Date.now()}_${randomUUID().slice(0, 8)}`;
@@ -19,6 +22,7 @@ describe('OPS-OBS-001 production signal wiring (real PostgreSQL)', () => {
       throw new Error('RUN_DB_TESTS=1 and DATABASE_URL are required; refusing a vacuous pass');
     }
     operationalAlerts.resetForTests();
+    process.env.OPERATIONAL_ALERT_DURABLE_ENABLED = 'true';
     client = new Client({ connectionString: databaseUrl });
     await client.connect();
     await client.query(
@@ -51,9 +55,37 @@ describe('OPS-OBS-001 production signal wiring (real PostgreSQL)', () => {
 
   afterAll(async () => {
     if (!client) return;
-    await client.query('ALTER TABLE operational_alert_signals DISABLE TRIGGER trg_operational_alert_signals_immutable');
-    await client.query('DELETE FROM operational_alert_signals WHERE organization_id = $1', [`${marker}:tenant`]);
-    await client.query('ALTER TABLE operational_alert_signals ENABLE TRIGGER trg_operational_alert_signals_immutable');
+    delete process.env.OPERATIONAL_ALERT_DURABLE_ENABLED;
+    await client.query(
+      'ALTER TABLE operational_alert_repair_receipts DISABLE TRIGGER trg_operational_alert_repair_receipts_immutable'
+    );
+    await client.query('DELETE FROM operational_alert_repair_receipts WHERE organization_id = $1', [
+      `${marker}:tenant`,
+    ]);
+    await client.query(
+      'ALTER TABLE operational_alert_repair_receipts ENABLE TRIGGER trg_operational_alert_repair_receipts_immutable'
+    );
+    await client.query(
+      'ALTER TABLE operational_alert_repair_attempts DISABLE TRIGGER trg_operational_alert_repair_attempts_immutable'
+    );
+    await client.query('DELETE FROM operational_alert_repair_attempts WHERE organization_id = $1', [
+      `${marker}:tenant`,
+    ]);
+    await client.query(
+      'ALTER TABLE operational_alert_repair_attempts ENABLE TRIGGER trg_operational_alert_repair_attempts_immutable'
+    );
+    await client.query('DELETE FROM operational_alert_repair_intents WHERE organization_id = $1', [
+      `${marker}:tenant`,
+    ]);
+    await client.query(
+      'ALTER TABLE operational_alert_signals DISABLE TRIGGER trg_operational_alert_signals_immutable'
+    );
+    await client.query('DELETE FROM operational_alert_signals WHERE organization_id = $1', [
+      `${marker}:tenant`,
+    ]);
+    await client.query(
+      'ALTER TABLE operational_alert_signals ENABLE TRIGGER trg_operational_alert_signals_immutable'
+    );
     await client.query('DELETE FROM rvn_platform_outbox WHERE outbox_id = $1', [outboxId]);
     await client.query('DELETE FROM rvn_platform_events WHERE event_id = $1', [eventId]);
     await client.end();
@@ -75,8 +107,20 @@ describe('OPS-OBS-001 production signal wiring (real PostgreSQL)', () => {
       [outboxId]
     );
     expect(persisted.rows[0]).toMatchObject({ status: 'dead_letter', attempts: 1 });
-    const durable = await client.query(`SELECT organization_id,actor_id,correlation_id,outcome FROM operational_alert_signals WHERE organization_id=$1`, [`${marker}:tenant`]);
-    expect(durable.rows).toEqual([{ organization_id: `${marker}:tenant`, actor_id: `${marker}:actor`, correlation_id: eventId, outcome: 'FAILURE' }]);
+    const durable = await client.query(
+      `SELECT organization_id,actor_id,correlation_id,outcome,status,source_terminal_id FROM operational_alert_repair_intents WHERE organization_id=$1`,
+      [`${marker}:tenant`]
+    );
+    expect(durable.rows).toEqual([
+      {
+        organization_id: `${marker}:tenant`,
+        actor_id: `${marker}:actor`,
+        correlation_id: eventId,
+        outcome: 'FAILURE',
+        status: 'PENDING',
+        source_terminal_id: outboxId,
+      },
+    ]);
   });
 
   it('exposes a finite primary-pool saturation sample without payload or tenant labels', () => {
@@ -87,16 +131,29 @@ describe('OPS-OBS-001 production signal wiring (real PostgreSQL)', () => {
   });
 
   it('preserves the primary terminal marker when the secondary signal store fails', async () => {
-    await client.query(`UPDATE rvn_platform_outbox SET status='pending',attempts=0,next_attempt_at=now() WHERE outbox_id=$1`, [outboxId]);
-    await client.query(`ALTER TABLE operational_alert_signals RENAME TO operational_alert_signals_forced_down`);
+    await client.query(
+      `UPDATE rvn_platform_outbox SET status='pending',attempts=0,next_attempt_at=now() WHERE outbox_id=$1`,
+      [outboxId]
+    );
+    await client.query(
+      `ALTER TABLE operational_alert_repair_intents RENAME TO operational_alert_repair_intents_forced_down`
+    );
     const before = getMissedResultsDurableAlertSignals();
     try {
       const result = await runOutboxDispatchTick(10);
       expect(result).toMatchObject({ claimed: 1, failed: 1, deadLettered: 1 });
       expect(getMissedResultsDurableAlertSignals()).toBe(before + 1);
-      expect((await client.query(`SELECT status,attempts FROM rvn_platform_outbox WHERE outbox_id=$1`, [outboxId])).rows[0]).toMatchObject({ status: 'dead_letter', attempts: 1 });
+      expect(
+        (
+          await client.query(`SELECT status,attempts FROM rvn_platform_outbox WHERE outbox_id=$1`, [
+            outboxId,
+          ])
+        ).rows[0]
+      ).toMatchObject({ status: 'dead_letter', attempts: 1 });
     } finally {
-      await client.query(`ALTER TABLE operational_alert_signals_forced_down RENAME TO operational_alert_signals`);
+      await client.query(
+        `ALTER TABLE operational_alert_repair_intents_forced_down RENAME TO operational_alert_repair_intents`
+      );
     }
   });
 });

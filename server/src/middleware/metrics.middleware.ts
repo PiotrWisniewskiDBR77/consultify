@@ -62,15 +62,23 @@ function normalizeOptionalString(value: unknown): string | undefined {
 }
 
 const pendingOperationalAuthIntents = new Set<Promise<unknown>>();
-export async function flushPendingOperationalAuthDenialIntents(params: { timeoutMs?: number } = {}): Promise<void> {
+export function trackOperationalAuthIntentForShutdown(pending: Promise<unknown>): void {
+  pendingOperationalAuthIntents.add(pending);
+  void pending.finally(() => pendingOperationalAuthIntents.delete(pending));
+}
+export async function flushPendingOperationalAuthDenialIntents(
+  params: { timeoutMs?: number } = {}
+): Promise<'flushed' | 'timed_out'> {
   const pending = [...pendingOperationalAuthIntents];
-  if (!pending.length) return;
+  if (!pending.length) return 'flushed';
   const timeoutMs = Math.min(5000, Math.max(1, params.timeoutMs ?? 5000));
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
-    await Promise.race([
-      Promise.allSettled(pending),
-      new Promise<void>((resolve) => { timer = setTimeout(resolve, timeoutMs); }),
+    return await Promise.race([
+      Promise.allSettled(pending).then(() => 'flushed' as const),
+      new Promise<'timed_out'>((resolve) => {
+        timer = setTimeout(() => resolve('timed_out'), timeoutMs);
+      }),
     ]);
   } finally {
     if (timer) clearTimeout(timer);
@@ -81,15 +89,29 @@ function recordDurableAuthDenial(req: Request): void {
   const user = safeRead(() => (req as any).user as Record<string, unknown> | undefined, undefined);
   const organizationId = normalizeOptionalString(user?.organizationId ?? user?.organization_id);
   const actorId = normalizeOptionalString(user?.id ?? user?.userId ?? user?.user_id);
-  const correlationId = normalizeOptionalString(safeRead(() => req.headers['x-request-id'], undefined));
+  const correlationId = normalizeOptionalString(
+    safeRead(() => req.headers['x-request-id'], undefined)
+  );
   if (!organizationId || !actorId || !correlationId) return;
   const pending = Promise.all([
     import('../services/operationalAlertSignalDeliveryService.js'),
     import('../services/operationalAlertRepairService.js'),
-  ]).then(([{ durableOperationalAlertsEnabled }, { enqueueOperationalAlertRepairIntent }]) =>
-    durableOperationalAlertsEnabled() ? enqueueOperationalAlertRepairIntent({ organizationId, actorId, correlationId, sourceType: 'http_auth_denial', sourceTerminalId: correlationId, kind: 'REPEATED_AUTH_DENIALS', outcome: 'DENIAL' }) : undefined
-  ).catch(() => undefined).finally(() => pendingOperationalAuthIntents.delete(pending));
-  pendingOperationalAuthIntents.add(pending);
+  ])
+    .then(([{ durableOperationalAlertsEnabled }, { enqueueOperationalAlertRepairIntent }]) =>
+      durableOperationalAlertsEnabled()
+        ? enqueueOperationalAlertRepairIntent({
+            organizationId,
+            actorId,
+            correlationId,
+            sourceType: 'http_auth_denial',
+            sourceTerminalId: correlationId,
+            kind: 'REPEATED_AUTH_DENIALS',
+            outcome: 'DENIAL',
+          })
+        : undefined
+    )
+    .catch(() => undefined);
+  trackOperationalAuthIntentForShutdown(pending);
 }
 
 function safeMethod(req: Request): string {

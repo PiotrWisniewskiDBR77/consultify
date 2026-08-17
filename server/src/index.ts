@@ -2274,10 +2274,18 @@ if (startServer && shouldStartHttpServer) {
           try {
             const { flushPendingOperationalAuthDenialIntents } =
               await import('./middleware/metrics.middleware.js');
-            await flushPendingOperationalAuthDenialIntents({ timeoutMs: 5000 });
-            logger.info('[Shutdown] Pending operational auth-denial intents flushed');
+            const flushResult = await flushPendingOperationalAuthDenialIntents({ timeoutMs: 5000 });
+            if (flushResult === 'flushed')
+              logger.info('[Shutdown] Pending operational auth-denial intents flushed');
+            else
+              logger.warn(
+                '[Shutdown] Operational auth-denial intent flush timed out after 5000ms; shutdown continues'
+              );
           } catch (err: any) {
-            logger.warn('[Shutdown] Operational auth-denial intent flush failed or timed out:', err.message);
+            logger.warn(
+              '[Shutdown] Operational auth-denial intent flush failed or timed out:',
+              err.message
+            );
           }
 
           try {

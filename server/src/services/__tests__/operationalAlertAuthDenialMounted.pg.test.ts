@@ -10,6 +10,7 @@ import verifyToken, { validateOrgMembership } from '../../middleware/auth.middle
 import {
   flushPendingOperationalAuthDenialIntents,
   metricsMiddleware,
+  trackOperationalAuthIntentForShutdown,
 } from '../../middleware/metrics.middleware.js';
 
 const url = process.env.DATABASE_URL ?? '';
@@ -67,6 +68,16 @@ describe.skipIf(!enabled)('OPS mounted signed-JWT auth denial repair intent', ()
     await pool.query(
       `ALTER TABLE operational_alert_repair_receipts ENABLE TRIGGER trg_operational_alert_repair_receipts_immutable`
     );
+    await pool.query(
+      `ALTER TABLE operational_alert_repair_attempts DISABLE TRIGGER trg_operational_alert_repair_attempts_immutable`
+    );
+    await pool.query(
+      `DELETE FROM operational_alert_repair_attempts WHERE organization_id=ANY($1)`,
+      [[org, foreign]]
+    );
+    await pool.query(
+      `ALTER TABLE operational_alert_repair_attempts ENABLE TRIGGER trg_operational_alert_repair_attempts_immutable`
+    );
     await pool.query(`DELETE FROM operational_alert_repair_intents WHERE organization_id=ANY($1)`, [
       [org, foreign],
     ]);
@@ -117,10 +128,44 @@ describe.skipIf(!enabled)('OPS mounted signed-JWT auth denial repair intent', ()
       ).status
     );
     await flushPendingOperationalAuthDenialIntents();
-    const counts = await pool.query(
-      `SELECT organization_id,count(*)::int n FROM operational_alert_repair_intents WHERE organization_id=ANY($1) GROUP BY organization_id`,
+    const rows = await pool.query(
+      `SELECT organization_id,actor_id,correlation_id,kind,outcome,source_type FROM operational_alert_repair_intents WHERE organization_id=ANY($1) ORDER BY correlation_id`,
       [[org, foreign]]
     );
-    expect(counts.rows).toEqual([{ organization_id: org, n: 3 }]);
+    expect(rows.rows).toEqual([
+      {
+        organization_id: org,
+        actor_id: active,
+        correlation_id: `${p}-foreign`,
+        kind: 'REPEATED_AUTH_DENIALS',
+        outcome: 'DENIAL',
+        source_type: 'http_auth_denial',
+      },
+      {
+        organization_id: org,
+        actor_id: active,
+        correlation_id: `${p}-ok`,
+        kind: 'REPEATED_AUTH_DENIALS',
+        outcome: 'DENIAL',
+        source_type: 'http_auth_denial',
+      },
+      {
+        organization_id: org,
+        actor_id: revoked,
+        correlation_id: `${p}-revoked`,
+        kind: 'REPEATED_AUTH_DENIALS',
+        outcome: 'DENIAL',
+        source_type: 'http_auth_denial',
+      },
+    ]);
+  });
+  it('reports a real bounded shutdown timeout and later flushes after the pending write settles', async () => {
+    const slow = new Promise<void>((resolve) => setTimeout(resolve, 80));
+    trackOperationalAuthIntentForShutdown(slow);
+    const started = Date.now();
+    expect(await flushPendingOperationalAuthDenialIntents({ timeoutMs: 20 })).toBe('timed_out');
+    expect(Date.now() - started).toBeGreaterThanOrEqual(15);
+    await slow;
+    expect(await flushPendingOperationalAuthDenialIntents({ timeoutMs: 20 })).toBe('flushed');
   });
 });

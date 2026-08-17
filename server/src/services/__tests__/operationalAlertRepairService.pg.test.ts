@@ -38,9 +38,13 @@ describe.skipIf(!enabled)('OPS durable missed-signal repair realPG', () => {
       [org]
     );
     await db.query(`DELETE FROM rvn_platform_events WHERE organization_id=$1`, [org]);
-    await db.query(`ALTER TABLE case_workspace_event_outbox DISABLE TRIGGER trg_case_workspace_event_outbox_guard`);
+    await db.query(
+      `ALTER TABLE case_workspace_event_outbox DISABLE TRIGGER trg_case_workspace_event_outbox_guard`
+    );
     await db.query(`DELETE FROM case_workspace_event_outbox WHERE organization_id=$1`, [org]);
-    await db.query(`ALTER TABLE case_workspace_event_outbox ENABLE TRIGGER trg_case_workspace_event_outbox_guard`);
+    await db.query(
+      `ALTER TABLE case_workspace_event_outbox ENABLE TRIGGER trg_case_workspace_event_outbox_guard`
+    );
     await db.query(`DELETE FROM notification_outbox WHERE organization_id=$1`, [org]);
     await db.query(
       `ALTER TABLE operational_alert_delivery_receipts DISABLE TRIGGER trg_operational_alert_receipts_immutable`
@@ -59,6 +63,13 @@ describe.skipIf(!enabled)('OPS durable missed-signal repair realPG', () => {
     await db.query(
       `ALTER TABLE operational_alert_repair_receipts ENABLE TRIGGER trg_operational_alert_repair_receipts_immutable`
     );
+    await db.query(
+      `ALTER TABLE operational_alert_repair_attempts DISABLE TRIGGER trg_operational_alert_repair_attempts_immutable`
+    );
+    await db.query(`DELETE FROM operational_alert_repair_attempts WHERE organization_id=$1`, [org]);
+    await db.query(
+      `ALTER TABLE operational_alert_repair_attempts ENABLE TRIGGER trg_operational_alert_repair_attempts_immutable`
+    );
     await db.query(`DELETE FROM operational_alert_repair_intents WHERE organization_id=$1`, [org]);
     await db.query(
       `ALTER TABLE operational_alert_signals DISABLE TRIGGER trg_operational_alert_signals_immutable`
@@ -67,6 +78,7 @@ describe.skipIf(!enabled)('OPS durable missed-signal repair realPG', () => {
     await db.query(
       `ALTER TABLE operational_alert_signals ENABLE TRIGGER trg_operational_alert_signals_immutable`
     );
+    await db.query(`DELETE FROM operational_alert_repair_cursors`);
     await db.end();
   });
   it('collapses 8-way intent, rejects collision, repairs exactly one signal and cold-reads receipt', async () => {
@@ -105,16 +117,21 @@ describe.skipIf(!enabled)('OPS durable missed-signal repair realPG', () => {
     const db = new Client({ connectionString: url });
     await db.connect();
     await db.query(
-      `UPDATE operational_alert_repair_intents SET status='PROCESSING',lease_owner='crashed',lease_expires_at=now()-interval '1 second' WHERE intent_id=$1`,
-      [stale.intent_id]
+      `UPDATE operational_alert_repair_intents SET status='PROCESSING',lease_owner='crashed',lease_token=$2,fencing_version=1,lease_expires_at=now()-interval '1 second' WHERE intent_id=$1`,
+      [stale.intent_id, randomUUID()]
     );
     expect(await runOperationalAlertRepairTick({ workerId: `${prefix}-reclaim` })).toMatchObject({
       claimed: 1,
       completed: 1,
     });
     const id = `${prefix}-notification`;
+    const lateId = `${prefix}-notification-late`;
     await db.query(
-      `INSERT INTO notification_outbox(id,user_id,organization_id,type,payload_json,status,dedupe_key) VALUES($1,$2,$3,'test','{}','SENT',$4)`,
+      `INSERT INTO notification_outbox(id,user_id,organization_id,type,payload_json,status,dedupe_key) VALUES($1,$2,$3,'test','{}','PENDING',$4)`,
+      [lateId, `${prefix}-user`, org, lateId]
+    );
+    await db.query(
+      `INSERT INTO notification_outbox(id,user_id,organization_id,type,payload_json,status,dedupe_key,updated_at) VALUES($1,$2,$3,'test','{}','SENT',$4,clock_timestamp())`,
       [id, `${prefix}-user`, org, id]
     );
     expect(await reconstructTerminalOperationalAlertIntents()).toBeGreaterThanOrEqual(1);
@@ -135,6 +152,105 @@ describe.skipIf(!enabled)('OPS durable missed-signal repair realPG', () => {
         )
       ).rows[0].n
     ).toBe(1);
+    await db.query(
+      `UPDATE notification_outbox SET status='SENT',updated_at=clock_timestamp() WHERE id=$1`,
+      [lateId]
+    );
+    expect(await reconstructTerminalOperationalAlertIntents()).toBeGreaterThanOrEqual(1);
+    expect(await runOperationalAlertRepairTick({ workerId: `${prefix}-late` })).toMatchObject({
+      completed: 1,
+    });
+    expect(
+      (
+        await db.query(
+          `SELECT count(*)::int n FROM operational_alert_repair_intents WHERE organization_id=$1 AND source_terminal_id=$2`,
+          [org, lateId]
+        )
+      ).rows[0].n
+    ).toBe(1);
+    expect(
+      (
+        await db.query(
+          `SELECT count(*)::int n FROM operational_alert_signals WHERE organization_id=$1 AND source_id=$2`,
+          [org, lateId]
+        )
+      ).rows[0].n
+    ).toBe(1);
+    await reconstructTerminalOperationalAlertIntents();
+    expect(
+      (
+        await db.query(
+          `SELECT count(*)::int n FROM operational_alert_repair_intents WHERE organization_id=$1 AND source_terminal_id=$2`,
+          [org, lateId]
+        )
+      ).rows[0].n
+    ).toBe(1);
+    await db.end();
+  });
+  it('repair OFF consumes nothing; an expired worker is fenced after a second worker reclaims', async () => {
+    const off = await enqueueOperationalAlertRepairIntent({
+      ...input,
+      sourceTerminalId: `${prefix}-off`,
+      correlationId: `${prefix}-off`,
+    });
+    process.env.OPERATIONAL_ALERT_REPAIR_ENABLED = 'false';
+    expect(await runOperationalAlertRepairTick({ workerId: `${prefix}-off-worker` })).toMatchObject(
+      { claimed: 0, completed: 0 }
+    );
+    const db = new Client({ connectionString: url });
+    await db.connect();
+    expect(
+      (
+        await db.query(`SELECT status FROM operational_alert_repair_intents WHERE intent_id=$1`, [
+          off.intent_id,
+        ])
+      ).rows[0].status
+    ).toBe('PENDING');
+    expect(
+      (
+        await db.query(`SELECT count(*)::int n FROM operational_alert_signals WHERE source_id=$1`, [
+          off.source_terminal_id,
+        ])
+      ).rows[0].n
+    ).toBe(0);
+    process.env.OPERATIONAL_ALERT_REPAIR_ENABLED = 'true';
+    let release!: () => void;
+    const barrier = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const old = runOperationalAlertRepairTick({
+      workerId: `${prefix}-old`,
+      leaseMs: 20,
+      beforeFinalize: () => barrier,
+    });
+    await new Promise((resolve) => setTimeout(resolve, 40));
+    const winner = await runOperationalAlertRepairTick({ workerId: `${prefix}-new` });
+    release();
+    const loser = await old;
+    expect(winner).toMatchObject({ completed: 1 });
+    expect(loser).toMatchObject({ completed: 0, fenced: 1 });
+    const row = (
+      await db.query(
+        `SELECT status,fencing_version FROM operational_alert_repair_intents WHERE intent_id=$1`,
+        [off.intent_id]
+      )
+    ).rows[0];
+    expect(row).toMatchObject({ status: 'COMPLETED', fencing_version: 2 });
+    const attempts = await db.query(
+      `SELECT event_type,worker_id FROM operational_alert_repair_attempts WHERE intent_id=$1 ORDER BY created_at`,
+      [off.intent_id]
+    );
+    expect(attempts.rows.map((r) => r.event_type)).toEqual(
+      expect.arrayContaining(['CLAIMED', 'RECLAIMED', 'SUCCEEDED', 'FENCED'])
+    );
+    expect(
+      (
+        await db.query(
+          `SELECT count(*)::int n FROM operational_alert_repair_receipts WHERE intent_id=$1`,
+          [off.intent_id]
+        )
+      ).rows[0].n
+    ).toBe(1);
     await db.end();
   });
   it('reconstructs terminal Results and Case rows after the simulated crash without replaying business work', async () => {
@@ -148,10 +264,12 @@ describe.skipIf(!enabled)('OPS durable missed-signal repair realPG', () => {
       `INSERT INTO rvn_platform_events(event_id,event_type,aggregate_type,aggregate_id,organization_id,actor_user_id,actor_effective_role,command_id,correlation_id,policy_version,state_hash,source,idempotency_key,resulting_version) VALUES($1,'test.completed','test',$2,$3,$4,'SYSTEM',$5,$6,'v1','hash','test',$7,1)`,
       [event, `${prefix}-aggregate`, org, `${prefix}-actor`, command, correlation, `${prefix}-idem`]
     );
-    const outbox = (await db.query(
-      `INSERT INTO rvn_platform_outbox(event_id,consumer_group,status,dispatched_at) VALUES($1,'test','dispatched',now()) RETURNING outbox_id`,
-      [event]
-    )).rows[0].outbox_id;
+    const outbox = (
+      await db.query(
+        `INSERT INTO rvn_platform_outbox(event_id,consumer_group,status,dispatched_at) VALUES($1,'test','dispatched',now()) RETURNING outbox_id`,
+        [event]
+      )
+    ).rows[0].outbox_id;
     await db.query(
       `INSERT INTO case_workspace_event_outbox(event_id,event_type,organization_id,aggregate_type,aggregate_id,actor_user_id,correlation_id,delivered_at) VALUES($1,'test.delivered',$2,'test',$3,$4,$5,now())`,
       [caseEvent, org, `${prefix}-case`, `${prefix}-actor`, `${prefix}-case-corr`]
@@ -170,7 +288,7 @@ describe.skipIf(!enabled)('OPS durable missed-signal repair realPG', () => {
       (
         await db.query(
           `SELECT count(*)::int n FROM operational_alert_signals WHERE organization_id=$1 AND source_id=ANY($2)`,
-      [org, [outbox, caseEvent]]
+          [org, [outbox, caseEvent]]
         )
       ).rows[0].n
     ).toBe(2);
@@ -221,13 +339,72 @@ describe.skipIf(!enabled)('OPS durable missed-signal repair realPG', () => {
         `ALTER TABLE operational_alert_signals_unavailable RENAME TO operational_alert_signals`
       );
     }
-    expect(await redriveOperationalAlertRepairIntent(intent.intent_id)).toMatchObject({
+    await expect(redriveOperationalAlertRepairIntent(intent.intent_id, '')).rejects.toThrow(
+      'OPS_ALERT_REPAIR_OPERATOR_REQUIRED'
+    );
+    expect(
+      await redriveOperationalAlertRepairIntent(intent.intent_id, `${prefix}-operator`)
+    ).toMatchObject({
       status: 'PENDING',
       attempt_count: 0,
     });
+    expect(
+      (
+        await db.query(
+          `SELECT operator_actor_id FROM operational_alert_repair_attempts WHERE intent_id=$1 AND event_type='REDRIVEN'`,
+          [intent.intent_id]
+        )
+      ).rows[0].operator_actor_id
+    ).toBe(`${prefix}-operator`);
     expect(await runOperationalAlertRepairTick({ workerId: `${prefix}-redrive` })).toMatchObject({
       completed: 1,
     });
+    await db.end();
+  });
+  it('enforces tenant-bound receipts, lease checks and immutable attempt/redrive history', async () => {
+    const intent = await enqueueOperationalAlertRepairIntent({
+      ...input,
+      sourceTerminalId: `${prefix}-constraints`,
+      correlationId: `${prefix}-constraints`,
+    });
+    expect(
+      await runOperationalAlertRepairTick({ workerId: `${prefix}-constraints-worker` })
+    ).toMatchObject({ completed: 1 });
+    const db = new Client({ connectionString: url });
+    await db.connect();
+    const receipt = (
+      await db.query(`SELECT signal_id FROM operational_alert_repair_receipts WHERE intent_id=$1`, [
+        intent.intent_id,
+      ])
+    ).rows[0];
+    await expect(
+      db.query(
+        `INSERT INTO operational_alert_repair_receipts(intent_id,organization_id,signal_id,fencing_version) VALUES($1,'foreign-org',$2,1)`,
+        [intent.intent_id, receipt.signal_id]
+      )
+    ).rejects.toThrow();
+    await expect(
+      db.query(
+        `UPDATE operational_alert_repair_receipts SET repaired_at=now() WHERE intent_id=$1`,
+        [intent.intent_id]
+      )
+    ).rejects.toThrow();
+    await expect(
+      db.query(`DELETE FROM operational_alert_repair_attempts WHERE intent_id=$1`, [
+        intent.intent_id,
+      ])
+    ).rejects.toThrow();
+    await expect(
+      db.query(
+        `UPDATE operational_alert_repair_intents SET status='PROCESSING' WHERE intent_id=$1`,
+        [intent.intent_id]
+      )
+    ).rejects.toThrow();
+    await expect(
+      db.query(`UPDATE operational_alert_repair_intents SET max_attempts=0 WHERE intent_id=$1`, [
+        intent.intent_id,
+      ])
+    ).rejects.toThrow();
     await db.end();
   });
 });
