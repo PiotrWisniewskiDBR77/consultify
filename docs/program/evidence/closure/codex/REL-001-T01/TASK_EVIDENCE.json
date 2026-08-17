@@ -2,6 +2,8 @@
   "taskId": "REL-001-T01",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "productSha": "2669d3eee60a42016b9e36b8afe17243ab29ac59",
+  "technicalSourceSha": "28585dd058c263c73c5f2a3f5a2295049a08cd58",
+  "reconciliationSha": "f138eba6b17fdb11d87e0bbe8c4175b0a5d755af",
   "leaseSha256": "18eb0f2e24aee1d6415a29e1605597117f24c42a1f74439842581e7a92583742",
   "changedPaths": [
     "scripts/release/verify-release-candidate-bundle.mjs",
@@ -19,6 +21,11 @@
       "command": "node --test tests/unit/release/verify-release-candidate-bundle.test.mjs",
       "exitCode": 0
     },
+    {
+      "command": "node --test tests/unit/release/verify-release-candidate-bundle.test.mjs tests/unit/release/generate-release-candidate-bundle.test.mjs",
+      "exitCode": 0,
+      "denominator": "10/10"
+    },
     { "command": "NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit", "exitCode": 0 },
     { "command": "node scripts/cleanup/report-closure-progress.mjs", "exitCode": 0 }
   ],
@@ -28,7 +35,12 @@
     "deployedGoldenFlows": "0/16 on this exact SHA",
     "telemetryWindows": "0/2",
     "rollbackRehearsals": 0,
-    "releaseVerifierTests": "7/7"
+    "releaseVerifierTestsHistorical": "7/7",
+    "releaseBundleTestsCurrent": "10/10",
+    "canonicalLockVersionedNonRootEntries": "2222/2222",
+    "sbomCanonicalRegeneration": "byte-for-byte from candidate package-lock.json",
+    "releaseAuthorization": "NOT_AUTHORIZED",
+    "releaseGo": false
   },
   "fixtures": {
     "deployment": "No production or release-candidate deployment was authorized in this program run."
@@ -44,8 +56,30 @@
     "method": "No deployment occurred, so no environment rollback was executed.",
     "executed": false
   },
-  "technicalVerdict": "PASS_FAIL_CLOSED_EXACT_SHA_BUNDLE_VERIFIER",
-  "verdict": "NOT_VERIFIED",
+  "currentTechnicalRequalification": {
+    "technicalSourceSha": "28585dd058c263c73c5f2a3f5a2295049a08cd58",
+    "reconciliationSha": "f138eba6b17fdb11d87e0bbe8c4175b0a5d755af",
+    "scope": "Repository-owned deterministic release-candidate bundle generator and independent fail-closed verifier only; no candidate bundle was generated in this evidence-only reconciliation.",
+    "status": "TECHNICAL_BUNDLE_READY_WITH_UNATTESTED_LOCAL_RECEIPTS",
+    "receiptTrust": "UNATTESTED_LOCAL_RECEIPTS",
+    "authorization": "NOT_AUTHORIZED",
+    "releaseGo": false,
+    "gates": {
+      "nodeTests": "10/10",
+      "canonicalLockInventory": "2222/2222 versioned non-root package-lock entries with stable unique bom-ref and npm purl",
+      "independentSbomVerification": "Verifier regenerates canonical CycloneDX from the candidate Git object's package-lock.json and requires byte-for-byte equality, exact componentCount, unique bom-ref/purl and path/name/version parity.",
+      "tamperControls": "Rehashed truncation, duplicate bom-ref, duplicate purl, malformed purl, stale/ref/tree/digest/provenance/GO and manifest tampering fail closed.",
+      "migrationPolicy": "Lexical statement classifier rejects destructive and unclassified SQL, including CTE rewrites, ON CONFLICT DO UPDATE, mixed safe+destructive statements and unterminated comments/strings/dollar bodies without comment/string false positives."
+    },
+    "doesNotProve": [
+      "A trusted-signed receipt or deployed release-candidate identity.",
+      "Any of the 16 deployed golden flows.",
+      "Two consecutive 60-minute production telemetry windows.",
+      "A production rollback rehearsal or owner release authorization."
+    ]
+  },
+  "technicalVerdict": "TECHNICAL_BUNDLE_READY_WITH_UNATTESTED_LOCAL_RECEIPTS_NOT_AUTHORIZED",
+  "verdict": "PARTIAL",
   "blockers": [
     "Every preceding task must be DONE_CURRENT_SHA or explicitly approved out.",
     "Exact-SHA deployment identity and 16 deployed golden flows are missing.",
