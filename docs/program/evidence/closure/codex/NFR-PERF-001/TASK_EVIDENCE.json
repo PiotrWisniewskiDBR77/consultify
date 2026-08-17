@@ -1,60 +1,46 @@
 {
   "taskId": "NFR-PERF-001",
-  "baselineSha": "8a16786480f5f9b994cabc37181bb9dcbb1be038",
-  "productSha": "c4e36f71d211fe2c8dfce84500aeed16cf9d5643",
+  "baselineSha": "9d4d7f2ccd15eb3ecfe5530ce2a23b7af971d69f",
+  "productSha": "c2ebb9db52cdc84b3ba5fb987caaa0257055b208",
   "leaseSha256": "not_applicable_integrator_bounded_task",
   "changedPaths": [
-    "server/src/utils/queryHelpers.ts",
-    "vitest.perf.config.ts",
-    "tests/performance/setup.ts",
-    "tests/performance/rollupComputation.bench.test.ts",
-    "tests/performance/ideaProcessFlowTool.mount.bench.test.tsx"
+    "server/src/routes/caseWorkspace/cases.routes.ts",
+    "server/src/services/caseWorkspace/caseCoreService.ts",
+    "server/src/services/caseWorkspace/caseWorkspaceAuthContext.ts",
+    "server/src/services/caseWorkspace/__tests__/performance/lib/steadyLoadGate.ts",
+    "server/src/services/caseWorkspace/__tests__/performance/steadyAuthenticatedLoad.ts",
+    "server/src/services/caseWorkspace/__tests__/performance/steadyLoadGate.test.ts"
   ],
   "changedPathRationale": {
-    "server/src/utils/queryHelpers.ts": "Contains pg.Client connection errors so a rejected transaction cannot also terminate the Node process through an unhandled EventEmitter error.",
-    "vitest.perf.config.ts": "Loads the dedicated minimal browser-primitives setup for jsdom performance measurements.",
-    "tests/performance/setup.ts": "Supplies only browser APIs absent from jsdom; it does not mock ReactFlow, hooks, timers or measured product logic.",
-    "tests/performance/rollupComputation.bench.test.ts": "Runs the renderHook fast-path measurements in their required jsdom environment.",
-    "tests/performance/ideaProcessFlowTool.mount.bench.test.tsx": "Measures current product truth: full hydrated source and viewport-culling DOM counts above the 300-node threshold."
+    "server/src/routes/caseWorkspace/cases.routes.ts": "Removes redundant create preflight checkout and resolves case visibility before governed close/cancel policy for enumeration-safe 404.",
+    "server/src/services/caseWorkspace/caseCoreService.ts": "Pins ACTIVE membership authorization to the createCase transaction.",
+    "server/src/services/caseWorkspace/caseWorkspaceAuthContext.ts": "Adds a transaction-client membership primitive with unchanged fail-closed semantics.",
+    "server/src/services/caseWorkspace/__tests__/performance/lib/steadyLoadGate.ts": "Encodes measurable API, write, error, tenant and heap SLOs.",
+    "server/src/services/caseWorkspace/__tests__/performance/steadyAuthenticatedLoad.ts": "Provides mounted signed-JWT steady load, second-tenant negative stream, heap sampling and atomic artifacts.",
+    "server/src/services/caseWorkspace/__tests__/performance/steadyLoadGate.test.ts": "Proves deliberately breached thresholds are detected."
   },
-  "ownerTables": [],
+  "ownerTables": ["organizations", "users", "organization_members", "projects", "case_core", "case_workspace_event_outbox"],
   "commands": [
-    {"command": "npx vitest run server/src/utils/__tests__/pinnedTransactionClient.test.ts --reporter=dot", "exitCode": 0},
-    {"command": "NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p server/tsconfig.json --noEmit --pretty false", "exitCode": 0},
-    {"command": "case-workspace real PostgreSQL performance orchestrator before and after fix", "exitCode": 0},
-    {"command": "targeted Whiteboard, ProcessFlow and rollup performance files", "exitCode": 0},
-    {"command": "npm run test:performance", "exitCode": 0},
-    {"command": "NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit", "exitCode": 0}
+    {"command": "case-workspace profile: 1000 creates at concurrency 15 before and after on the same isolated tmpfs PostgreSQL", "exitCode": 0},
+    {"command": "NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false POSTGRES_SKIP_INIT_IN_TEST=1 DATABASE_URL=<isolated-tmpfs-pg> npx vitest run <3 focused CaseWorkspace files> steadyLoadGate.test.ts --environment node --reporter=dot", "exitCode": 0},
+    {"command": "NFR_PERF_RELEASE_GATE=1 NFR_PERF_DURATION_MS=1800000 NFR_PERF_USERS=50 NODE_OPTIONS=--expose-gc npx tsx server/src/services/caseWorkspace/__tests__/performance/steadyAuthenticatedLoad.ts", "exitCode": 0},
+    {"command": "NODE_OPTIONS=--max-old-space-size=8192 npm --prefix server run typecheck", "exitCode": 0},
+    {"command": "NODE_OPTIONS=--max-old-space-size=8192 npm run build:backend", "exitCode": 0},
+    {"command": "git diff --check -- <six-path NFR allowlist>", "exitCode": 0}
   ],
   "denominators": {
-    "focusedTests": {"passed": 5, "failed": 0},
-    "profile": {"cases": 1000, "historyEvents": 9000, "outboxDelivered": 10001},
-    "performanceHarness": {
-      "whiteboard": {"passed": 5, "failed": 0},
-      "processFlow": {"passed": 5, "failed": 0},
-      "rollup": {"passed": 11, "failed": 0}
-    },
-    "fullPerformanceSuite": {
-      "completed": true,
-      "filesPassed": 6,
-      "filesSkipped": 4,
-      "filesFailed": 0,
-      "testsPassed": 38,
-      "testsSkipped": 20,
-      "testsFailed": 0,
-      "unhandledErrors": 0
-    }
+    "createCaseProfile": {"callsBefore": 1000, "callsAfter": 1000, "concurrency": 15, "beforeP95Ms": 102.3, "beforeP99Ms": 331.58, "beforeMaxMs": 352.19, "afterP95Ms": 96.39, "afterP99Ms": 111.16, "afterMaxMs": 119.8, "p99ImprovementPct": 66.5},
+    "focusedRegression": {"filesPassed": 4, "filesFailed": 0, "testsPassed": 39, "testsFailed": 0},
+    "literalSteadyLoad": {"durationMsRequested": 1800000, "durationMsActual": 1800523, "authenticatedUsers": 50, "totalRequests": 89900, "writeRequests": 3550, "errors": 0, "errorRatePct": 0, "apiP95Ms": 153.71, "apiP99Ms": 277.21, "writeP95Ms": 315.2, "writeP99Ms": 349.16, "secondTenantAttempts": 1788, "secondTenantFalseSuccesses": 0, "heapWarmMb": 52.45, "heapFinalMb": 53.35, "heapGrowthPct": 1.716, "lastTenMinutesMonotonic": false, "positiveControlDetected": true}
   },
-  "fixtures": {"database": "isolated pgvector PostgreSQL runner", "faultInjectionRecovery": "24/24"},
-  "negativeControls": {"unhandledClientErrorBefore": true, "unhandledClientErrorAfter": false, "duplicates": 0},
+  "fixtures": {"database": "isolated pgvector PostgreSQL 16 in Docker tmpfs on port 56831", "artifact": "/tmp/nfr-perf-release-30m.json", "atomicCheckpoint": true, "mutableResidueAfterRun": {"organizations": 0, "organizationMembers": 0, "cases": 0}, "immutableOutboxRowsPreservedForRun": 3551},
+  "negativeControls": {"secondTenantAttempts": 1788, "secondTenantFalseSuccesses": 0, "foreignOrUnknownCancelStatus": 404, "positiveControlDetected": true, "positiveControlBreachedChecks": 7},
   "browserArtifacts": [],
-  "rollback": {"method": "Revert the listener change; no schema or persistent state is introduced.", "executed": false},
-  "technicalVerdict": "PASS_REPOSITORY_PERFORMANCE_HARNESS",
+  "rollback": {"method": "Revert c2ebb9db52cdc84b3ba5fb987caaa0257055b208; no schema migration was introduced and append-only events remain immutable.", "executed": false},
+  "technicalVerdict": "PASS_OWNER_FREE_BACKEND_PERFORMANCE",
   "verdict": "PARTIAL",
   "openBlockers": [
-    "The required 30-minute steady run with 50 authenticated users and a second-tenant negative stream is not verified.",
-    "Browser LCP, CLS and interaction thresholds across the canonical mounted surfaces are not verified.",
-    "The Case Workspace profile observed a createCase p99 tail above the 1500ms generic threshold and has not yet been repeated three times to establish trend/determinism.",
-    "No deployed stability window or threshold-breach alert exercise is authorized or verified."
+    "Browser Web Vitals (LCP, CLS and interaction thresholds on mounted surfaces) remain a separate UI/runtime qualification.",
+    "A deployed stability window and production alert breach exercise were not authorized by this repository-only packet."
   ]
 }
