@@ -624,32 +624,43 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
     string,
     { configured: boolean; authType: string }
   > | null>(null);
+  const [availabilityState, setAvailabilityState] = useState<'loading' | 'ready' | 'error'>(
+    'loading'
+  );
 
   const { integrations, providers, connectedCount, loading, error, disconnect, refresh } =
     useUserIntegrations();
 
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      try {
-        const resp = await fetch('/api/settings/integrations/oauth/status', {
-          credentials: 'include',
-        });
-        if (!resp.ok) return;
-        const data = await resp.json();
-        if (!cancelled && data?.availability && typeof data.availability === 'object') {
-          setAvailability(
-            data.availability as Record<string, { configured: boolean; authType: string }>
-          );
-        }
-      } catch {
-        // Non-fatal: if we can't load availability, leave buttons enabled (fail open).
+  const loadAvailability = useCallback(async (signal?: AbortSignal) => {
+    setAvailabilityState('loading');
+    setAvailability(null);
+    try {
+      const resp = await fetch('/api/settings/integrations/oauth/status', {
+        credentials: 'include',
+        signal,
+      });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+      if (!data?.availability || typeof data.availability !== 'object') {
+        throw new Error('OAuth provider availability was missing');
       }
-    })();
-    return () => {
-      cancelled = true;
-    };
+      setAvailability(
+        data.availability as Record<string, { configured: boolean; authType: string }>
+      );
+      setAvailabilityState('ready');
+    } catch (error) {
+      if (signal?.aborted) return;
+      console.error('[ConnectedAppsSettings] Availability error:', error);
+      setAvailability(null);
+      setAvailabilityState('error');
+    }
   }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void loadAvailability(controller.signal);
+    return () => controller.abort();
+  }, [loadAvailability]);
 
   const connectedMap = useMemo(() => {
     const map = new Map<string, UserIntegration>();
@@ -680,12 +691,11 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
   const isProviderUnavailable = useCallback(
     (app: CatalogApp): boolean => {
       if (app.authType === 'basic' || app.authType === 'api_key') return false;
-      if (!availability) return false; // fail open until status loads
+      if (availabilityState !== 'ready' || !availability) return true;
       const entry = availability[app.id];
-      if (!entry) return false; // unknown to backend → don't block optimistically
-      return entry.configured === false;
+      return entry?.configured !== true;
     },
-    [availability]
+    [availability, availabilityState]
   );
 
   const categoryCounts = useMemo(() => {
@@ -1053,6 +1063,27 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
       {/* Search */}
       {actionError && <Banner variant="danger" title={actionError} />}
 
+      {availabilityState === 'error' && (
+        <div
+          role="alert"
+          className="flex items-center justify-between gap-3 rounded-lg border border-danger-500/30 bg-danger-500/10 p-3"
+        >
+          <span className="text-sm text-danger-600 dark:text-danger-300">
+            {t(
+              'settings.integrations.availabilityError',
+              'Provider availability could not be verified. OAuth connections remain disabled.'
+            )}
+          </span>
+          <button
+            type="button"
+            onClick={() => void loadAvailability()}
+            className="shrink-0 rounded-md border border-danger-500/40 px-3 py-1.5 text-xs font-medium text-danger-700 dark:text-danger-200"
+          >
+            {t('common.retry', 'Retry')}
+          </button>
+        </div>
+      )}
+
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-c-text-secondary" />
         <input
@@ -1221,7 +1252,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                                 </button>
                               </>
                             )}
-                            {needsReauth && (
+                            {needsReauth && !unavailable && (
                               <button
                                 onClick={() => openConnectModal(app)}
                                 className="px-2.5 py-1 text-xs font-medium text-amber-600 border border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"
@@ -1229,9 +1260,10 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                                 {t('common.reconnect', 'Reconnect')}
                               </button>
                             )}
-                            {!isConnected && !needsReauth && unavailable && (
+                            {!isConnected && unavailable && (
                               <span
                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-c-text-muted bg-c-surface-raised rounded-lg cursor-not-allowed"
+                                aria-label={`${app.name} unavailable`}
                                 title={t(
                                   'settings.integrations.notConfigured',
                                   'This integration is not available yet — it has not been configured on the server.'

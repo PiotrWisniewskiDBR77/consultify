@@ -47,6 +47,7 @@ vi.mock('react-hot-toast', () => ({
 }));
 
 vi.mock('react-i18next', () => ({
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
   useTranslation: () => ({
     t: (_key: string, fallback?: string | { defaultValue?: string }) =>
       typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key),
@@ -100,5 +101,89 @@ describe('ConnectedAppsSettings honest UI', () => {
 
     expect(toast.success).not.toHaveBeenCalled();
     expect(refreshMock).not.toHaveBeenCalled();
+  });
+
+  it('fails closed while provider availability is unknown or unavailable', async () => {
+    const fetchMock = vi.fn().mockRejectedValue(new Error('status unavailable'));
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<ConnectedAppsSettings />);
+
+    expect(screen.getByLabelText('Gmail unavailable')).toBeInTheDocument();
+    await screen.findByRole('alert');
+    expect(
+      screen.getByText(/OAuth connections remain disabled/i)
+    ).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps a provider missing from an otherwise valid registry disabled', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ availability: {} }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<ConnectedAppsSettings />);
+
+    await waitFor(() => expect(screen.getByLabelText('Gmail unavailable')).toBeInTheDocument());
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps explicit configured=false disabled without blocking basic credentials', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        availability: { gmail: { configured: false, authType: 'oauth2' } },
+      }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<ConnectedAppsSettings />);
+
+    await waitFor(() => expect(screen.getByLabelText('Gmail unavailable')).toBeInTheDocument());
+    const appleCalendar = screen.getByText('Apple Calendar (iCal)').closest('.group');
+    expect(appleCalendar?.querySelector('button')).not.toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('enables OAuth only after explicit configured=true and starts one request', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          availability: { gmail: { configured: true, authType: 'oauth2' } },
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ authUrl: 'https://accounts.example.test/oauth' }),
+      });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<ConnectedAppsSettings />);
+
+    await waitFor(() => expect(screen.queryByLabelText('Gmail unavailable')).toBeNull());
+    const gmail = screen.getByText('Gmail').closest('.group');
+    expect(gmail).not.toBeNull();
+    fireEvent.click(gmail!.querySelector('button')!);
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      '/api/settings/integrations/oauth/start/gmail',
+      expect.objectContaining({ credentials: 'include' })
+    );
+  });
+
+  it('retries availability deterministically without enabling providers on another failure', async () => {
+    const fetchMock = vi.fn().mockRejectedValue(new Error('status unavailable'));
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<ConnectedAppsSettings />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Retry' }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(screen.getByLabelText('Gmail unavailable')).toBeInTheDocument();
   });
 });
