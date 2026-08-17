@@ -1,11 +1,13 @@
 {
   "taskId": "EXE-MVP-ACTIONS-001",
   "baselineSha": "eb310fb344d3339c67cad81188ce13c6f950d100",
-  "productSha": "d9fcb6fea8ff5d063751d9712931ccfebaf37e3c",
+  "productSha": "75714ca5b4d1b874524d485b551744d72a7657a8",
   "leaseSha256": "f4d75f0aed94f2e34acaec63d91c245495e7e0f658aa36d1122342c2acecc612",
   "changedPaths": [
     "server/migrations/20260917_execution_action_audit_immutability.sql",
     "server/src/services/executionActionRegistryService.ts",
+    "server/src/services/executionBudgetService.ts",
+    "server/src/utils/queryHelpers.ts",
     "server/src/services/__tests__/executionActionRegistryService.test.ts",
     "server/src/services/__tests__/executionActionRegistryService.pg.test.ts",
     "server/src/routes/executionControl.routes.ts",
@@ -21,27 +23,29 @@
     "server/src/routes/caseWorkspace/__tests__/artifactLinks.routes.test.ts"
   ],
   "changedPathRationale": {
-    "registry": "One live registry/minimum-role authority and terminal outcome audit for all nine IMPLEMENTED actions.",
+    "registry": "One live registry/minimum-role authority and terminal outcome audit for all nine IMPLEMENTED actions; authorized mutations and SUCCEEDED audit share one pinned UoW.",
     "routes": "Nine actions route through the governed guard; object access is inside the audited operation for enumeration-safe cross-tenant NOT_FOUND.",
     "migration": "Database trigger rejects direct UPDATE and DELETE of the action ledger.",
-    "tests": "Focused route regression plus real PostgreSQL 9/9 policy/audit/immutability/cold-readback proof."
+    "tests": "Focused route regression plus real PostgreSQL 9/9 nested-UoW success and forced-audit-failure rollback proof."
   },
   "ownerTables": ["execution_action_registry", "execution_action_audit", "budget_entries", "case_core"],
   "commands": [
     "npx vitest run server/src/services/__tests__/executionActionRegistryService.test.ts server/src/services/__tests__/executionBudgetDelete.test.ts server/src/routes/caseWorkspace/__tests__/cases.routes.test.ts server/src/routes/caseWorkspace/__tests__/actionProposals.routes.test.ts server/src/routes/caseWorkspace/__tests__/artifactLinks.routes.test.ts server/src/routes/caseWorkspace/__tests__/waitSubscriptions.routes.test.ts --reporter=dot --no-file-parallelism",
     "cd server && npx tsc --noEmit --pretty false",
-    "CI=true NODE_ENV=test DB_TYPE=postgres MOCK_DB=false RUN_DB_TESTS=1 DATABASE_URL=postgresql://iris:***@127.0.0.1:32912/consultify npx tsx server/scripts/migrate.postgres.ts",
-    "NODE_ENV=test DB_TYPE=postgres MOCK_DB=false RUN_DB_TESTS=1 DATABASE_URL=postgresql://iris:***@127.0.0.1:32912/consultify npx vitest run server/src/services/__tests__/executionActionRegistryService.pg.test.ts --reporter=dot --no-file-parallelism"
+    "CI=true NODE_ENV=test DB_TYPE=postgres MOCK_DB=false RUN_DB_TESTS=1 DATABASE_URL=postgresql://iris:***@127.0.0.1:32913/consultify npx tsx server/scripts/migrate.postgres.ts",
+    "NODE_ENV=test DB_TYPE=postgres MOCK_DB=false RUN_DB_TESTS=1 DATABASE_URL=postgresql://iris:***@127.0.0.1:32913/consultify npx vitest run server/src/services/__tests__/executionActionRegistryService.pg.test.ts --reporter=dot --no-file-parallelism",
+    "npm run build:backend"
   ],
   "denominators": {
     "actionDisposition": "13/13: 9 IMPLEMENTED governed, 4 HIDDEN fail-closed",
     "focusedRegression": "6/6 files, 43/43 tests, exit 0",
-    "realPostgres": "1/1 file, 12/12 tests, exit 0; success audit 9/9 actions",
+    "realPostgres": "1/1 file, 21/21 tests, exit 0; nested pinned-UoW success 9/9 and forced audit failure rollback 9/9",
     "freshMigrations": "734/734 applied, exit 0",
-    "typeCheck": "server TypeScript exit 0"
+    "typeCheck": "server TypeScript exit 0",
+    "backendBuild": "exit 0"
   },
   "fixtures": {
-    "database": "fresh disposable pgvector/pgvector:pg16 container consultify-exe-actions-eb310 on 127.0.0.1:32912",
+    "database": "fresh disposable pgvector/pgvector:pg16 container consultify-exe-actions-uow-edeb on 127.0.0.1:32913",
     "organizationPrefix": "exe-actions-"
   },
   "negativeControls": {
@@ -49,12 +53,14 @@
     "hidden": "execution.initiative.delete denied and DENIED audit persisted",
     "immutableAudit": "direct UPDATE and DELETE rejected by PostgreSQL trigger",
     "outcomes": "DENIED, NOT_FOUND and CONFLICT classification covered",
-    "coldReadback": "independent Pool reads persisted audit denominator"
+    "coldReadback": "independent Pool reads persisted audit denominator",
+    "auditFailureRollback": "9/9 forced SUCCEEDED-audit insert failures leave zero domain and zero outbox probe rows",
+    "nestedTransaction": "inner service-style withPgTransaction inherits the exact outer pinned client without double BEGIN/COMMIT"
   },
   "browserArtifacts": [],
   "rollback": {
-    "method": "Revert d9fcb6fea8. Retaining the additive append-only trigger is backward compatible; removing it requires explicit DROP TRIGGER and is not automatic."
+    "method": "Revert 75714ca5b4d1b874524d485b551744d72a7657a8 and d9fcb6fea8ff5d063751d9712931ccfebaf37e3c. Retaining the additive append-only trigger is backward compatible."
   },
   "verdict": "PARTIAL",
-  "openBlocker": "G4 remains outside this packet. Outside G4, mounted real-router tests still use mocked domain services and mutation plus SUCCEEDED audit are not one pinned PostgreSQL transaction for the Case Workspace service transactions. Current proof establishes live registry enforcement, 9/9 realPG audit writes, policy drift, hidden denial, immutable ledger and cold readback, but does not honestly prove audit-failure rollback of each domain mutation."
+  "openBlocker": "G4 remains outside this packet. The transaction-client contract and 9/9 realPG rollback denominator are complete, but the current mounted route regression uses mocked domain services; a literal mounted-real-domain 9-action fixture was not executed in this bounded packet."
 }
