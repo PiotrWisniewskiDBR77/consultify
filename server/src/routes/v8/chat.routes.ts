@@ -12,6 +12,12 @@ import { TARGET_KINDS } from '../../services/artifactHandoff/handoffSpineService
 import * as caseIntakeService from '../../services/caseWorkspace/caseIntakeService.js';
 import { ChatHandoffError } from '../../services/chatHandoff/chatHandoffService.js';
 import * as chatHandoffService from '../../services/chatHandoff/chatHandoffService.js';
+import {
+  ChatTargetOwnerIngressError,
+  claimNextChatOwnerIngress,
+  completeChatOwnerIngress,
+  deliverApprovedChatProposal,
+} from '../../services/chatHandoff/chatTargetOwnerIngressService.js';
 import * as chatExecutionService from '../../services/v8/chatExecutionService.js';
 import * as contextConsumerBindingService from '../../services/v8/contextConsumerBindingService.js';
 import * as contextSnapshotService from '../../services/v8/contextSnapshotService.js';
@@ -567,6 +573,23 @@ const decideChatProposalBody = z.object({
 
 const chatProposalIdParams = z.object({ proposalId: z.string().trim().min(1) });
 
+function requireChatHandoffAdmin(req: AuthRequest, res: Response): boolean {
+  const { userRole, isSuperAdmin } = getV8Context(req);
+  if (!isSuperAdmin && !['ADMIN', 'OWNER', 'SUPERADMIN'].includes(userRole.toUpperCase())) {
+    res.status(403).json({ code: 'CHAT_HANDOFF_OWNER_REQUIRED' });
+    return false;
+  }
+  return true;
+}
+
+function handleChatOwnerIngressError(err: unknown, res: Response) {
+  if (err instanceof ChatTargetOwnerIngressError) {
+    res.status(err.httpStatus).json({ error: err.message, code: err.code });
+    return;
+  }
+  throw err;
+}
+
 /**
  * POST /conversations/:conversationId/handoff-proposals
  *
@@ -734,6 +757,84 @@ router.post(
       res.json({ data, meta: { version: 'v8' } });
     } catch (err) {
       handleChatHandoffError(err, res);
+    }
+  })
+);
+
+/**
+ * Neutral target-owner adapter. These routes persist and lease the exact
+ * approved Chat envelope; they never create a document/deck/workbook/material.
+ */
+router.post(
+  '/handoff-proposals/:proposalId/owner-ingress',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!requireChatHandoffAdmin(req, res)) return;
+    const { organizationId, userId } = getV8Context(req);
+    const { proposalId } = parseParams(chatProposalIdParams, req.params);
+    try {
+      const data = await deliverApprovedChatProposal({ organizationId, proposalId, deliveredBy: userId });
+      res.status(data.replayed ? 200 : 201).json({ data, meta: { version: 'v8' } });
+    } catch (err) {
+      handleChatOwnerIngressError(err, res);
+    }
+  })
+);
+
+const claimChatOwnerIngressBody = z.object({
+  targetKind: chatProposalTargetKindEnum,
+  leaseSeconds: z.number().int().min(15).max(900).optional(),
+});
+
+router.post(
+  '/handoff-owner-ingress/claim',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!requireChatHandoffAdmin(req, res)) return;
+    const { organizationId, userId } = getV8Context(req);
+    const parsed = claimChatOwnerIngressBody.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      res.status(400).json({ code: 'VALIDATION_ERROR', details: parsed.error.issues });
+      return;
+    }
+    try {
+      const data = await claimNextChatOwnerIngress({
+        organizationId,
+        claimedBy: userId,
+        ...parsed.data,
+      });
+      res.status(data ? 200 : 204).json(data ? { data, meta: { version: 'v8' } } : undefined);
+    } catch (err) {
+      handleChatOwnerIngressError(err, res);
+    }
+  })
+);
+
+const completeChatOwnerIngressBody = z.object({
+  claimToken: z.string().uuid(),
+  targetRecordId: z.string().trim().min(1).max(300),
+  outputPayload: z.unknown().optional(),
+});
+
+router.post(
+  '/handoff-owner-ingress/:ingressId/complete',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!requireChatHandoffAdmin(req, res)) return;
+    const { organizationId, userId } = getV8Context(req);
+    const ingressId = z.string().uuid().parse(req.params.ingressId);
+    const parsed = completeChatOwnerIngressBody.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      res.status(400).json({ code: 'VALIDATION_ERROR', details: parsed.error.issues });
+      return;
+    }
+    try {
+      const data = await completeChatOwnerIngress({
+        organizationId,
+        ingressId,
+        materializedBy: userId,
+        ...parsed.data,
+      });
+      res.status(200).json({ data, meta: { version: 'v8' } });
+    } catch (err) {
+      handleChatOwnerIngressError(err, res);
     }
   })
 );

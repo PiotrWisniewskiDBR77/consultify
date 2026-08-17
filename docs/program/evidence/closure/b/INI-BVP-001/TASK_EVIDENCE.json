@@ -1,61 +1,76 @@
 {
   "taskId": "INI-BVP-001",
   "baselineSha": "cbbe9a41c68fc52a04257354e15c383a504748f2",
-  "productSha": "2f1ff0a89cb95f4c09ec80f25f95c9f41f72f645",
+  "productSha": "b5a69603f3ac94b4f5b17a45396a01767af2d5ff",
   "leaseSha256": "f4d75f0aed94f2e34acaec63d91c245495e7e0f658aa36d1122342c2acecc612",
-  "verdict": "PARTIAL",
-  "open": [
-    "The actual Initiative-to-Execution handoff adapter/receipt is owner-gated and was explicitly excluded. Candidate materialization and governed lifecycle gate are proven, but this packet does not claim the final downstream Execution handoff."
-  ],
+  "verdict": "DONE_CURRENT_SHA",
+  "technicalVerdict": "PASS_FRESH_REALPG",
+  "open": [],
   "environment": {
     "node": "v24.12.0",
-    "postgres": "16 (pgvector/pgvector:pg16)",
-    "dbUrl": "127.0.0.1:32939/ini_bvp in disposable container consultify-ini-bvp-cbbe9a"
+    "postgres": "PostgreSQL 16 in tmpfs container consultify-int-prereq-fresh",
+    "dbUrl": "127.0.0.1:56827/chat_bvp_current"
   },
-  "ownerTables": ["initiative_candidates", "initiatives", "initiative_status_history", "initiative_lifecycle_gate_decisions", "ie_aggregate_state", "ie_command_receipts"],
+  "ownerTables": [
+    "initiative_candidates", "initiatives", "initiative_status_history",
+    "initiative_lifecycle_gate_decisions", "ie_aggregate_state", "ie_aggregate_relations",
+    "ie_command_receipts", "execution_case_links"
+  ],
   "changedPaths": [
-    "server/src/services/initiative/initiativeCandidateService.ts",
-    "server/src/routes/initiativeCandidates.routes.ts",
-    "server/src/services/initiative/__tests__/ini-bvp-001-candidate-single-materialization.pg.test.ts",
-    "server/src/services/initiative/__tests__/ini-bvp-001-mounted-auth.pg.test.ts"
+    "server/migrations/20260927_runtime_v1_execution_identity_seam.sql",
+    "server/src/services/executionBvpService.ts",
+    "server/src/routes/caseWorkspace/executionBvp.routes.ts",
+    "server/src/services/__tests__/initiativeRuntimeExecutionSeam.pg.test.ts"
   ],
   "changedPathRationale": {
-    "server/src/services/initiative/initiativeCandidateService.ts": "Compensates the losing A-vs-A acceptance race so exactly one Initiative row remains.",
-    "server/src/routes/initiativeCandidates.routes.ts": "Revalidates ACTIVE organization membership before every mounted candidate read/write.",
-    "server/src/services/initiative/__tests__/ini-bvp-001-candidate-single-materialization.pg.test.ts": "Strengthens the concurrency invariant from one-or-two rows to exactly one.",
-    "server/src/services/initiative/__tests__/ini-bvp-001-mounted-auth.pg.test.ts": "Adds real JWT, mounted route, tenant, stale-membership, concurrent acceptance and independent cold-readback proof."
+    "server/migrations/20260927_runtime_v1_execution_identity_seam.sql": "Adds an explicit, fail-closed RUNTIME_V1 identity branch to execution_case_links while preserving legacy compatibility and without creating initiatives/case_core shadow rows.",
+    "server/src/services/executionBvpService.ts": "Validates the exact runtime-v1 Initiative, Execution Case and INITIATIVE_EXECUTION_CASE relation, persists one tenant-bound versioned receipt, and serializes same-key concurrency before replay/collision validation.",
+    "server/src/routes/caseWorkspace/executionBvp.routes.ts": "Adds the mounted RUNTIME_V1 contract behind real JWT/org membership and role enforcement while preserving the default legacy contract.",
+    "server/src/services/__tests__/initiativeRuntimeExecutionSeam.pg.test.ts": "Proves production handoff commands through mounted signed-JWT link/spine, eight-way replay, payload collision, tenant and stale-version negatives, CAS, cold readback and zero legacy shadow rows."
   },
   "commands": [
-    {"command": "DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32939/ini_bvp DB_TYPE=postgres CI=true npx tsx server/scripts/migrate.postgres.ts", "exitCode": 0, "result": "fresh migration complete; 731 ledger rows"},
-    {"command": "DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32939/ini_bvp DB_TYPE=postgres CI=true RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test npx vitest run server/src/services/initiative/__tests__/ini-bvp-001-candidate-single-materialization.pg.test.ts server/src/services/initiative/__tests__/ini-bvp-001-mounted-auth.pg.test.ts server/src/services/initiative/__tests__/ini-mvp-gate-001-lifecycle-gate-writer.pg.test.ts --no-file-parallelism --maxWorkers=1 --retry=0 --reporter=dot", "exitCode": 0, "result": "3/3 files, 17/17 tests"},
-    {"command": "DATABASE_URL=... npx vitest run server/src/services/initiative/__tests__/ini-bvp-001-mounted-auth.pg.test.ts --no-file-parallelism --maxWorkers=1 --retry=0 --reporter=dot", "exitCode": 0, "result": "1/1 file, 3/3 tests after cleanup repair"},
-    {"command": "npm run type-check", "exitCode": 0, "result": "passed"},
-    {"command": "git diff --check", "exitCode": 0, "result": "passed"}
+    {"command": "DATABASE_URL=<fresh-tmpfs-chat_bvp_current> DB_TYPE=postgres CI=true npx tsx server/scripts/migrate.postgres.ts", "exitCode": 0, "result": "fresh exact-current 742/742 applied successfully, including 20260927 and 20260928"},
+    {"command": "same strict migration command repeated", "exitCode": 0, "result": "Applying migrations: 0; applied-arrow count 0"},
+    {"command": "DATABASE_URL=<fresh-tmpfs-chat_bvp_current> DB_TYPE=postgres CI=true npx tsx server/scripts/migrate.postgres.ts --dry-run", "exitCode": 0, "result": "Pending migrations: 0; applied-arrow count 0"},
+    {"command": "DATABASE_URL=<real-pg> RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test npx vitest run initiativeRuntimeExecutionSeam.pg.test.ts handoffAcceptance.realdb.test.ts ini-bvp-001-candidate-single-materialization.pg.test.ts ini-bvp-001-mounted-auth.pg.test.ts ini-mvp-gate-001-lifecycle-gate-writer.pg.test.ts --no-file-parallelism --maxWorkers=1 --retry=0 --reporter=dot", "exitCode": 0, "result": "18/18 passed in four active files; handoff was env-skipped here and rerun explicitly below"},
+    {"command": "DATABASE_URL=<real-pg> IE_TEST_DATABASE_URL=<real-pg> RUN_DB_TESTS=1 MOCK_DB=false npx vitest run handoffAcceptance.realdb.test.ts initiativeRuntimeExecutionSeam.pg.test.ts --no-file-parallelism --maxWorkers=1 --retry=0 --reporter=dot", "exitCode": 0, "result": "2/2 files, 3/3 tests"},
+    {"command": "NODE_OPTIONS=--max-old-space-size=8192 npm run type-check", "exitCode": 0, "result": "passed"},
+    {"command": "NODE_OPTIONS=--max-old-space-size=8192 npm run build", "exitCode": 0, "result": "10435 modules transformed; built in 48.01s"},
+    {"command": "git diff --check", "exitCode": 0, "result": "passed for the bounded product packet"}
   ],
   "denominators": {
-    "combinedRealPostgres": "17 passed / 17 discovered in 3 files",
-    "mountedAuthRerun": "3 passed / 3 discovered",
-    "migration": "731/731 ledger rows",
-    "typeCheck": "1/1 exit 0"
+    "freshMigrations": "742/742 unique successful ledger rows",
+    "repeatMigrations": "0 pending",
+    "dryRun": "0 pending",
+    "initiativeCandidateAndGateFocused": "18/18 passed in 4 active files",
+    "runtimeHandoffAndMountedSeam": "3/3 passed in 2/2 files",
+    "mountedConcurrency": "8/8 same-key HTTP requests returned the same link",
+    "typeCheck": "exit 0",
+    "build": "exit 0 with 8GB heap"
   },
   "fixtures": {
-    "tenants": "two organizations; active owner in each plus inactive stale owner in source tenant",
-    "auth": "real signed JWT through mounted initiativeCandidates router",
-    "candidate": "classic candidate plus event-sourced runtime-v1 candidate contracts",
-    "database": "fresh isolated PostgreSQL, removed after proof"
+    "database": "fresh exact-current chat_bvp_current inside tmpfs pgvector PostgreSQL 16 container",
+    "auth": "real HS256 signed JWT through verifyToken, validateOrgMembership, requireV8OrgContext and attachV8Context",
+    "runtime": "production requestHandoffAcceptance and decideHandoffAcceptance create canonical runtime aggregates and relation",
+    "identity": "RUNTIME_V1 source_kind with exact Initiative version and project identity; legacy identity columns remain null"
   },
   "negativeControls": {
-    "classicConcurrency": "two simultaneous acceptCandidate calls converge on one receipt ID and exactly one initiatives row",
-    "crossSubsystemConcurrency": "classic and runtime-v1 acceptance converge to exactly one claim column and no orphan",
-    "tenant": "foreign organization acceptance returns 404 and writes nothing",
-    "staleMembership": "inactive membership JWT returns 403 ORG_MEMBERSHIP_REVOKED",
-    "lifecycleCapability": "governed lifecycle gate writer suite covers role/capability, stale version and same-ID transition controls",
-    "coldReadback": "independent pg.Client reopens accepted candidate joined to exactly one Initiative",
-    "cleanup": "post-suite candidate and Initiative prefix residue queries both returned zero"
+    "sameKeyConcurrency": "eight simultaneous mounted requests converge on one link ID",
+    "payloadCollision": "same tenant/key with a different case identity returns HTTP 409 and creates no second link",
+    "tenant": "foreign signed-JWT tenant receives HTTP 404 despite a spoofed organizationId body",
+    "staleVersion": "non-current Initiative sourceVersion returns HTTP 404 and writes nothing",
+    "spineCas": "first exact-version spine write succeeds and stale repeat returns HTTP 404",
+    "coldReadback": "independent pg.Client reads the same versioned runtime link",
+    "noLegacyShadow": "cold query finds zero matching initiatives and case_core rows",
+    "cleanup": "bounded runtime, link, membership, user and organization fixtures are deleted transactionally"
   },
   "browserArtifacts": [],
   "rollback": {
-    "method": "Remove the A-vs-A compensation branch, route membership middleware and the mounted proof. No migration or production data rollback is required.",
+    "method": "Revert product commit b5a69603f3. The migration is additive; legacy rows retain LEGACY_CASE_CORE identity.",
     "executed": false
-  }
+  },
+  "notes": [
+    "The initial default-heap build OOMed during rendering and is invalid evidence; the 8GB rerun passed.",
+    "This task closes candidate-to-runtime Initiative-to-Execution link/spine. Existing EXE-BVP-001 owns governed evidence close and immutable Results ingress; no new delivery policy was invented."
+  ]
 }

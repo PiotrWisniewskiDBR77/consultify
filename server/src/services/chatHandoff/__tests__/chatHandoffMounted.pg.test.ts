@@ -27,6 +27,7 @@ describe.skipIf(!REAL_DB)('CHAT-BVP-001 — mounted Chat handoff golden path (re
   const conversationA = makeId('conversation_a');
   const messageA = makeId('message_a');
   const rejectMessage = makeId('message_reject');
+  const driftMessage = makeId('message_drift');
   const idempotencyKey = makeId('idempotency');
 
   let pool: Pool;
@@ -34,9 +35,12 @@ describe.skipIf(!REAL_DB)('CHAT-BVP-001 — mounted Chat handoff golden path (re
   let ownerAToken = '';
   let ownerBToken = '';
   let staleToken = '';
+  let memberToken = '';
   let proposalId = '';
   let sourceContentHash = '';
   let receiptId = '';
+  let ingressId = '';
+  let claimToken = '';
 
   const bearer = (token: string) => ({ Authorization: `Bearer ${token}` });
 
@@ -69,6 +73,7 @@ describe.skipIf(!REAL_DB)('CHAT-BVP-001 — mounted Chat handoff golden path (re
     for (const [messageId, content] of [
       [messageA, 'Use attached evidence [A1], named source [Source: Q3 Plan], and https://example.test/report.'],
       [rejectMessage, 'Reject this draft with https://example.test/reject.'],
+      [driftMessage, 'Versioned owner ingress draft with https://example.test/version.'],
     ]) {
       await pool.query(
         `INSERT INTO conversation_messages (id, conversation_id, role, content, metadata)
@@ -78,11 +83,12 @@ describe.skipIf(!REAL_DB)('CHAT-BVP-001 — mounted Chat handoff golden path (re
     }
 
     const { default: config } = await import('../../../config/Config.js');
-    const sign = (userId: string, organizationId: string) =>
-      jwt.sign({ id: userId, organizationId, role: 'OWNER', email: `${userId}@example.test` }, config.JWT_SECRET, { expiresIn: '10m' });
+    const sign = (userId: string, organizationId: string, role = 'OWNER') =>
+      jwt.sign({ id: userId, organizationId, role, email: `${userId}@example.test` }, config.JWT_SECRET, { expiresIn: '10m' });
     ownerAToken = sign(ownerA, orgA);
     ownerBToken = sign(ownerB, orgB);
     staleToken = sign(staleA, orgA);
+    memberToken = sign(ownerA, orgA, 'MEMBER');
 
     process.env.ENABLE_V8_GLOBAL = 'true';
     const { default: v8Router } = await import('../../../routes/v8/index.js');
@@ -93,6 +99,10 @@ describe.skipIf(!REAL_DB)('CHAT-BVP-001 — mounted Chat handoff golden path (re
 
   afterAll(async () => {
     if (!pool) return;
+    await pool.query(`DELETE FROM chat_handoff_owner_claims WHERE organization_id = ANY($1)`, [[orgA, orgB]]);
+    await pool.query(`ALTER TABLE chat_handoff_owner_ingress DISABLE TRIGGER trg_chat_handoff_owner_ingress_immutable`);
+    await pool.query(`DELETE FROM chat_handoff_owner_ingress WHERE organization_id = ANY($1)`, [[orgA, orgB]]);
+    await pool.query(`ALTER TABLE chat_handoff_owner_ingress ENABLE TRIGGER trg_chat_handoff_owner_ingress_immutable`);
     await pool.query(`DELETE FROM artifact_handoff_receipts WHERE organization_id = ANY($1)`, [[orgA, orgB]]);
     await pool.query(`DELETE FROM artifact_handoff_proposals WHERE organization_id = ANY($1)`, [[orgA, orgB]]);
     await pool.query(`DELETE FROM conversation_messages WHERE conversation_id = $1`, [conversationA]);
@@ -145,7 +155,7 @@ describe.skipIf(!REAL_DB)('CHAT-BVP-001 — mounted Chat handoff golden path (re
     expect(stale.body).toMatchObject({ code: 'ORG_MEMBERSHIP_REVOKED' });
   });
 
-  it('concurrent mounted human approvals converge, then consumer retry yields one receipt', async () => {
+  it('concurrent mounted approvals converge and neutral delivery is immutable/idempotent', async () => {
     const approve = () =>
       request(app)
         .post(`/api/v8/chat/handoff-proposals/${proposalId}/approve`)
@@ -157,13 +167,95 @@ describe.skipIf(!REAL_DB)('CHAT-BVP-001 — mounted Chat handoff golden path (re
     expect(a.body.data).toMatchObject({ state: 'approved', decidedBy: ownerA });
     expect(b.body.data.decidedBy).toBe(ownerA);
 
+    const deliver = () => request(app)
+      .post(`/api/v8/chat/handoff-proposals/${proposalId}/owner-ingress`)
+      .set(bearer(ownerAToken)).send({});
+    const [d1, d2] = await Promise.all([deliver(), deliver()]);
+    expect([d1.status, d2.status].sort()).toEqual([200, 201]);
+    ingressId = d1.body.data.ingress.ingressId;
+    expect(d2.body.data.ingress.ingressId).toBe(ingressId);
+    expect(d1.body.data.ingress).toMatchObject({
+      proposalId, sourceContentHash, sourceVersion: 1, contractVersion: 'v1', targetKind: 'document'
+    });
+    await expect(pool.query(`UPDATE chat_handoff_owner_ingress SET source_version=99 WHERE ingress_id=$1`, [ingressId]))
+      .rejects.toMatchObject({ message: expect.stringContaining('immutable') });
+    await expect(pool.query(`DELETE FROM chat_handoff_owner_ingress WHERE ingress_id=$1`, [ingressId]))
+      .rejects.toMatchObject({ message: expect.stringContaining('immutable') });
+  });
+
+  it('mounted claim is tenant-scoped, exclusive, reclaimable, and stale tokens fail closed', async () => {
+    const insufficient = await request(app).post('/api/v8/chat/handoff-owner-ingress/claim')
+      .set(bearer(memberToken)).send({ targetKind: 'document', leaseSeconds: 60 });
+    expect(insufficient.status).toBe(403);
+    expect(insufficient.body).toMatchObject({ code: 'CHAT_HANDOFF_OWNER_REQUIRED' });
+
+    const foreign = await request(app).post('/api/v8/chat/handoff-owner-ingress/claim')
+      .set(bearer(ownerBToken)).send({ targetKind: 'document', leaseSeconds: 60 });
+    expect(foreign.status).toBe(204);
+
+    const first = await request(app).post('/api/v8/chat/handoff-owner-ingress/claim')
+      .set(bearer(ownerAToken)).send({ targetKind: 'document', leaseSeconds: 60 });
+    expect(first.status).toBe(200);
+    expect(first.body.data).toMatchObject({ ingressId, attemptCount: 1 });
+    const staleClaimToken = first.body.data.claimToken;
+
+    const unavailable = await request(app).post('/api/v8/chat/handoff-owner-ingress/claim')
+      .set(bearer(ownerAToken)).send({ targetKind: 'document', leaseSeconds: 60 });
+    expect(unavailable.status).toBe(204);
+
+    await pool.query(`UPDATE chat_handoff_owner_claims SET lease_expires_at=NOW()-INTERVAL '1 second' WHERE ingress_id=$1`, [ingressId]);
+    const reclaimed = await request(app).post('/api/v8/chat/handoff-owner-ingress/claim')
+      .set(bearer(ownerAToken)).send({ targetKind: 'document', leaseSeconds: 60 });
+    expect(reclaimed.status).toBe(200);
+    expect(reclaimed.body.data).toMatchObject({ ingressId, attemptCount: 2 });
+    claimToken = reclaimed.body.data.claimToken;
+    expect(claimToken).not.toBe(staleClaimToken);
+
+    const staleComplete = await request(app)
+      .post(`/api/v8/chat/handoff-owner-ingress/${ingressId}/complete`)
+      .set(bearer(ownerAToken))
+      .send({ claimToken: staleClaimToken, targetRecordId: makeId('document_receipt') });
+    expect(staleComplete.status).toBe(409);
+    expect(staleComplete.body).toMatchObject({ code: 'CLAIM_MISMATCH' });
+  });
+
+  it('crash-window reclaim cold-reads the existing receipt; 8-way completion converges and conflicting replay fails closed', async () => {
     const targetRecordId = makeId('document_receipt');
-    const [m1, m2] = await Promise.all([
-      materializeProposal({ organizationId: orgA, proposalId, targetRecordId, materializedBy: ownerA }),
-      materializeProposal({ organizationId: orgA, proposalId, targetRecordId, materializedBy: ownerA }),
-    ]);
-    expect(m1.receipt.receiptId).toBe(m2.receipt.receiptId);
-    receiptId = m1.receipt.receiptId;
+    // Simulate a process dying after the shared spine committed its receipt
+    // but before chat_handoff_owner_claims was marked consumed.
+    const crashWindow = await materializeProposal({
+      organizationId: orgA,
+      proposalId,
+      targetRecordId,
+      materializedBy: ownerA,
+      outputPayload: { title: 'Approved chat artifact' },
+    });
+    receiptId = crashWindow.receipt.receiptId;
+    const beforeReclaim = await pool.query(
+      `SELECT consumed_at, handoff_receipt_id FROM chat_handoff_owner_claims WHERE ingress_id=$1`,
+      [ingressId]
+    );
+    expect(beforeReclaim.rows[0]).toMatchObject({ consumed_at: null, handoff_receipt_id: null });
+    await pool.query(`UPDATE chat_handoff_owner_claims SET lease_expires_at=NOW()-INTERVAL '1 second' WHERE ingress_id=$1`, [ingressId]);
+    const reclaimed = await request(app).post('/api/v8/chat/handoff-owner-ingress/claim')
+      .set(bearer(ownerAToken)).send({ targetKind: 'document', leaseSeconds: 60 });
+    expect(reclaimed.status).toBe(200);
+    expect(reclaimed.body.data).toMatchObject({ ingressId, attemptCount: 3 });
+    claimToken = reclaimed.body.data.claimToken;
+
+    const complete = (target = targetRecordId) => request(app)
+      .post(`/api/v8/chat/handoff-owner-ingress/${ingressId}/complete`)
+      .set(bearer(ownerAToken))
+      .send({ claimToken, targetRecordId: target, outputPayload: { title: 'Approved chat artifact' } });
+    const results = await Promise.all(Array.from({ length: 8 }, () => complete()));
+    expect(results.every((result) => result.status === 200)).toBe(true);
+    const ids = new Set(results.map((result) => result.body.data.receipt.receiptId));
+    expect(ids.size).toBe(1);
+    expect(results[0].body.data.receipt.receiptId).toBe(receiptId);
+
+    const conflict = await complete(makeId('other_target'));
+    expect(conflict.status).toBe(409);
+    expect(conflict.body).toMatchObject({ code: 'TARGET_RECORD_CONFLICT' });
   });
 
   it('mounted reject and missing-source fail closed without foreign writes', async () => {
@@ -187,6 +279,48 @@ describe.skipIf(!REAL_DB)('CHAT-BVP-001 — mounted Chat handoff golden path (re
     expect(missing.body).toMatchObject({ code: 'SOURCE_NOT_FOUND' });
   });
 
+  it('unknown proposal contract and foreign dispatch fail closed before ingress', async () => {
+    const created = await request(app)
+      .post(`/api/v8/chat/conversations/${conversationA}/handoff-proposals`)
+      .set(bearer(ownerAToken))
+      .send({ messageId: driftMessage, targetKind: 'document', idempotencyKey: makeId('drift_key') });
+    const driftProposalId = created.body.data.proposal.proposalId;
+    await request(app).post(`/api/v8/chat/handoff-proposals/${driftProposalId}/approve`)
+      .set(bearer(ownerAToken)).send({});
+    await pool.query(`UPDATE artifact_handoff_proposals SET contract_version='v2' WHERE proposal_id=$1`, [driftProposalId]);
+
+    const unsupported = await request(app)
+      .post(`/api/v8/chat/handoff-proposals/${driftProposalId}/owner-ingress`)
+      .set(bearer(ownerAToken)).send({});
+    expect(unsupported.status).toBe(409);
+    expect(unsupported.body).toMatchObject({ code: 'UNSUPPORTED_CONTRACT_VERSION' });
+
+    const foreign = await request(app)
+      .post(`/api/v8/chat/handoff-proposals/${driftProposalId}/owner-ingress`)
+      .set(bearer(ownerBToken)).send({});
+    expect(foreign.status).toBe(404);
+    const count = await pool.query(`SELECT count(*)::int AS n FROM chat_handoff_owner_ingress WHERE proposal_id=$1`, [driftProposalId]);
+    expect(count.rows[0]?.n).toBe(0);
+
+    await pool.query(`UPDATE artifact_handoff_proposals SET contract_version='v1' WHERE proposal_id=$1`, [driftProposalId]);
+    const delivered = await request(app)
+      .post(`/api/v8/chat/handoff-proposals/${driftProposalId}/owner-ingress`)
+      .set(bearer(ownerAToken)).send({});
+    expect(delivered.status).toBe(201);
+    const driftIngressId = delivered.body.data.ingress.ingressId;
+    const claimed = await request(app).post('/api/v8/chat/handoff-owner-ingress/claim')
+      .set(bearer(ownerAToken)).send({ targetKind: 'document', leaseSeconds: 60 });
+    expect(claimed.status).toBe(200);
+    expect(claimed.body.data.ingressId).toBe(driftIngressId);
+    await pool.query(`UPDATE artifact_handoff_proposals SET source_version=2 WHERE proposal_id=$1`, [driftProposalId]);
+    const policyDrift = await request(app)
+      .post(`/api/v8/chat/handoff-owner-ingress/${driftIngressId}/complete`)
+      .set(bearer(ownerAToken))
+      .send({ claimToken: claimed.body.data.claimToken, targetRecordId: makeId('drift_target') });
+    expect(policyDrift.status).toBe(409);
+    expect(policyDrift.body).toMatchObject({ code: 'INGRESS_POLICY_DRIFT' });
+  });
+
   it('fresh connection reopens exact proposal hash, citations and exactly one receipt', async () => {
     const cold = new Client({ connectionString: DATABASE_URL });
     await cold.connect();
@@ -200,6 +334,13 @@ describe.skipIf(!REAL_DB)('CHAT-BVP-001 — mounted Chat handoff golden path (re
        WHERE proposal_id = $1 AND organization_id = $2`,
       [proposalId, orgA]
     );
+    const ingress = await cold.query(
+      `SELECT i.source_content_hash, i.source_version, i.contract_version, i.payload_json,
+              c.attempt_count, c.handoff_receipt_id, c.consumed_at
+         FROM chat_handoff_owner_ingress i
+         JOIN chat_handoff_owner_claims c ON c.ingress_id=i.ingress_id
+        WHERE i.ingress_id=$1 AND i.organization_id=$2`, [ingressId, orgA]
+    );
     await cold.end();
 
     expect(proposal.rows).toHaveLength(1);
@@ -207,5 +348,14 @@ describe.skipIf(!REAL_DB)('CHAT-BVP-001 — mounted Chat handoff golden path (re
     expect(JSON.parse(proposal.rows[0].payload_json).citations.length).toBeGreaterThanOrEqual(3);
     expect(receipts.rows).toHaveLength(1);
     expect(receipts.rows[0].receipt_id).toBe(receiptId);
+    expect(ingress.rows).toHaveLength(1);
+    expect(ingress.rows[0]).toMatchObject({
+      source_content_hash: sourceContentHash,
+      source_version: 1,
+      contract_version: 'v1',
+      attempt_count: 3,
+      handoff_receipt_id: receiptId,
+    });
+    expect(ingress.rows[0].consumed_at).toBeTruthy();
   });
 });
